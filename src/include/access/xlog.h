@@ -116,7 +116,7 @@ extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool fullPageWrites;
 extern bool wal_log_hints;
-extern bool wal_compression;
+extern int	wal_compression;
 extern bool wal_init_zero;
 extern bool wal_recycle;
 extern bool *wal_consistency_checking;
@@ -166,6 +166,14 @@ typedef enum WalLevel
 	WAL_LEVEL_REPLICA,
 	WAL_LEVEL_LOGICAL
 } WalLevel;
+
+/* Compression algorithms for WAL */
+typedef enum WalCompression
+{
+	WAL_COMPRESSION_NONE = 0,
+	WAL_COMPRESSION_PGLZ,
+	WAL_COMPRESSION_LZ4
+} WalCompression;
 
 /* Recovery states */
 typedef enum RecoveryState

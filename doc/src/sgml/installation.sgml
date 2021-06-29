@@ -270,7 +270,8 @@ su - postgres
      <para>
       You need <productname>LZ4</productname>, if you want to support
       compression of data with this method; see
-      <xref linkend="guc-default-toast-compression"/>.
+      <xref linkend="guc-default-toast-compression"/> and
+      <xref linkend="guc-wal-compression"/>.
      </para>
     </listitem>
 
@@ -980,7 +981,7 @@ build-postgresql:
         <para>
          Build with <productname>LZ4</productname> compression support.
          This allows the use of <productname>LZ4</productname> for
-         compression of table data.
+         compression of table and WAL data.
         </para>
        </listitem>
       </varlistentry>

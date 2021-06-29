@@ -18,6 +18,9 @@
 #include "postgres.h"
 
 #include <unistd.h>
+#ifdef USE_LZ4
+#include <lz4.h>
+#endif
 
 #include "access/transam.h"
 #include "access/xlog_internal.h"
@@ -1290,7 +1293,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 
 				blk->apply_image = ((blk->bimg_info & BKPIMAGE_APPLY) != 0);
 
-				if (blk->bimg_info & BKPIMAGE_IS_COMPRESSED)
+				if (BKPIMAGE_COMPRESSED(blk->bimg_info))
 				{
 					if (blk->bimg_info & BKPIMAGE_HAS_HOLE)
 						COPY_HEADER_FIELD(&blk->hole_length, sizeof(uint16));
@@ -1335,29 +1338,28 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 				}
 
 				/*
-				 * cross-check that bimg_len < BLCKSZ if the IS_COMPRESSED
-				 * flag is set.
+				 * Cross-check that bimg_len < BLCKSZ if it is compressed.
 				 */
-				if ((blk->bimg_info & BKPIMAGE_IS_COMPRESSED) &&
+				if (BKPIMAGE_COMPRESSED(blk->bimg_info) &&
 					blk->bimg_len == BLCKSZ)
 				{
 					report_invalid_record(state,
-										  "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X",
+										  "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X",
 										  (unsigned int) blk->bimg_len,
 										  LSN_FORMAT_ARGS(state->ReadRecPtr));
 					goto err;
 				}
 
 				/*
-				 * cross-check that bimg_len = BLCKSZ if neither HAS_HOLE nor
-				 * IS_COMPRESSED flag is set.
+				 * cross-check that bimg_len = BLCKSZ if neither HAS_HOLE is
+				 * set nor COMPRESSED().
 				 */
 				if (!(blk->bimg_info & BKPIMAGE_HAS_HOLE) &&
-					!(blk->bimg_info & BKPIMAGE_IS_COMPRESSED) &&
+					!BKPIMAGE_COMPRESSED(blk->bimg_info) &&
 					blk->bimg_len != BLCKSZ)
 				{
 					report_invalid_record(state,
-										  "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X",
+										  "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X",
 										  (unsigned int) blk->data_len,
 										  LSN_FORMAT_ARGS(state->ReadRecPtr));
 					goto err;
@@ -1555,17 +1557,49 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 	bkpb = &record->blocks[block_id];
 	ptr = bkpb->bkp_image;
 
-	if (bkpb->bimg_info & BKPIMAGE_IS_COMPRESSED)
+	if (BKPIMAGE_COMPRESSED(bkpb->bimg_info))
 	{
 		/* If a backup block image is compressed, decompress it */
-		if (pglz_decompress(ptr, bkpb->bimg_len, tmp.data,
-							BLCKSZ - bkpb->hole_length, true) < 0)
+		bool		decomp_success = true;
+
+		if ((bkpb->bimg_info & BKPIMAGE_COMPRESS_PGLZ) != 0)
+		{
+			if (pglz_decompress(ptr, bkpb->bimg_len, tmp.data,
+								BLCKSZ - bkpb->hole_length, true) < 0)
+				decomp_success = false;
+		}
+		else if ((bkpb->bimg_info & BKPIMAGE_COMPRESS_LZ4) != 0)
+		{
+#ifdef USE_LZ4
+			if (LZ4_decompress_safe(ptr, tmp.data,
+									bkpb->bimg_len, BLCKSZ - bkpb->hole_length) <= 0)
+				decomp_success = false;
+#else
+			report_invalid_record(record, "image at %X/%X compressed with %s not supported by build, block %d",
+								  (uint32) (record->ReadRecPtr >> 32),
+								  (uint32) record->ReadRecPtr,
+								  "LZ4",
+								  block_id);
+			return false;
+#endif
+		}
+		else
+		{
+			report_invalid_record(record, "image at %X/%X compressed with unknown method, block %d",
+								  (uint32) (record->ReadRecPtr >> 32),
+								  (uint32) record->ReadRecPtr,
+								  block_id);
+			return false;
+		}
+
+		if (!decomp_success)
 		{
 			report_invalid_record(record, "invalid compressed image at %X/%X, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  block_id);
 			return false;
 		}
+
 		ptr = tmp.data;
 	}
 

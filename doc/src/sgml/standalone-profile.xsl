@@ -52,6 +52,10 @@ variant without links and references to the main documentation.
   <xsl:text>the configuration parameter default_toast_compression</xsl:text>
 </xsl:template>
 
+<xsl:template match="xref[@linkend='guc-wal-compression']">
+  <xsl:text>the configuration parameter wal_compression</xsl:text>
+</xsl:template>
+
 <xsl:template match="xref[@linkend='install-windows']">
   <xsl:text>the documentation</xsl:text>
 </xsl:template>

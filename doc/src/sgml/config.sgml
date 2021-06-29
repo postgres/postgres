@@ -3128,23 +3128,27 @@ include_dir 'conf.d'
      </varlistentry>
 
      <varlistentry id="guc-wal-compression" xreflabel="wal_compression">
-      <term><varname>wal_compression</varname> (<type>boolean</type>)
+      <term><varname>wal_compression</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>wal_compression</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        When this parameter is <literal>on</literal>, the <productname>PostgreSQL</productname>
+        This parameter enables compression of WAL using the specified 
+        compression method.
+        When enabled, the <productname>PostgreSQL</productname>
         server compresses full page images written to WAL when
         <xref linkend="guc-full-page-writes"/> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
-        The default value is <literal>off</literal>.
-        Only superusers can change this setting.
+        The supported methods are <literal>pglz</literal> and
+        <literal>lz4</literal> (if <productname>PostgreSQL</productname> was
+        compiled with <option>--with-lz4</option>). The default value is
+        <literal>off</literal>. Only superusers can change this setting.
        </para>
 
        <para>
-        Turning this parameter on can reduce the WAL volume without
+        Enabling compression can reduce the WAL volume without
         increasing the risk of unrecoverable data corruption,
         but at the cost of some extra CPU spent on the compression during
         WAL logging and on the decompression during WAL replay.

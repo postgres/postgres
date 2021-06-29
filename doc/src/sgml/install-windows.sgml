@@ -299,7 +299,7 @@ $ENV{MSBFLAGS}="/m";
      <term><productname>LZ4</productname></term>
      <listitem><para>
       Required for supporting <productname>LZ4</productname> compression
-      method for compressing the table data. Binaries and source can be
+      method for compressing table or WAL data. Binaries and source can be
       downloaded from
       <ulink url="https://github.com/lz4/lz4/releases"></ulink>.
      </para></listitem>

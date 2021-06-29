@@ -537,18 +537,29 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				   blk);
 			if (XLogRecHasBlockImage(record, block_id))
 			{
-				if (record->blocks[block_id].bimg_info &
-					BKPIMAGE_IS_COMPRESSED)
+				uint8		bimg_info = record->blocks[block_id].bimg_info;
+
+				if (BKPIMAGE_COMPRESSED(bimg_info))
 				{
+					const char *method;
+
+					if ((bimg_info & BKPIMAGE_COMPRESS_PGLZ) != 0)
+						method = "pglz";
+					else if ((bimg_info & BKPIMAGE_COMPRESS_LZ4) != 0)
+						method = "lz4";
+					else
+						method = "unknown";
+
 					printf(" (FPW%s); hole: offset: %u, length: %u, "
-						   "compression saved: %u",
+						   "compression saved: %u, method: %s",
 						   XLogRecBlockImageApply(record, block_id) ?
 						   "" : " for WAL verification",
 						   record->blocks[block_id].hole_offset,
 						   record->blocks[block_id].hole_length,
 						   BLCKSZ -
 						   record->blocks[block_id].hole_length -
-						   record->blocks[block_id].bimg_len);
+						   record->blocks[block_id].bimg_len,
+						   method);
 				}
 				else
 				{
