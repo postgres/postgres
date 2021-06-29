@@ -725,6 +725,7 @@ void
 buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 				PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
 				const char *acl_column, const char *acl_owner,
+				const char *initprivs_expr,
 				const char *obj_kind, bool binary_upgrade)
 {
 	/*
@@ -765,23 +766,25 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 					  "WITH ORDINALITY AS perm(acl,row_n) "
 					  "WHERE NOT EXISTS ( "
 					  "SELECT 1 FROM "
-					  "pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) "
+					  "pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) "
 					  "AS init(init_acl) WHERE acl = init_acl)) as foo)",
 					  acl_column,
 					  obj_kind,
 					  acl_owner,
+					  initprivs_expr,
 					  obj_kind,
 					  acl_owner);
 
 	printfPQExpBuffer(racl_subquery,
 					  "(SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM "
 					  "(SELECT acl, row_n FROM "
-					  "pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(%s,%s))) "
+					  "pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) "
 					  "WITH ORDINALITY AS initp(acl,row_n) "
 					  "WHERE NOT EXISTS ( "
 					  "SELECT 1 FROM "
 					  "pg_catalog.unnest(coalesce(%s,pg_catalog.acldefault(%s,%s))) "
 					  "AS permp(orig_acl) WHERE acl = orig_acl)) as foo)",
+					  initprivs_expr,
 					  obj_kind,
 					  acl_owner,
 					  acl_column,
@@ -807,12 +810,13 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 		printfPQExpBuffer(init_acl_subquery,
 						  "CASE WHEN privtype = 'e' THEN "
 						  "(SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM "
-						  "(SELECT acl, row_n FROM pg_catalog.unnest(pip.initprivs) "
+						  "(SELECT acl, row_n FROM pg_catalog.unnest(%s) "
 						  "WITH ORDINALITY AS initp(acl,row_n) "
 						  "WHERE NOT EXISTS ( "
 						  "SELECT 1 FROM "
 						  "pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) "
 						  "AS privm(orig_acl) WHERE acl = orig_acl)) as foo) END",
+						  initprivs_expr,
 						  obj_kind,
 						  acl_owner);
 
@@ -823,10 +827,11 @@ buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 						  "pg_catalog.unnest(pg_catalog.acldefault(%s,%s)) "
 						  "WITH ORDINALITY AS privp(acl,row_n) "
 						  "WHERE NOT EXISTS ( "
-						  "SELECT 1 FROM pg_catalog.unnest(pip.initprivs) "
+						  "SELECT 1 FROM pg_catalog.unnest(%s) "
 						  "AS initp(init_acl) WHERE acl = init_acl)) as foo) END",
 						  obj_kind,
-						  acl_owner);
+						  acl_owner,
+						  initprivs_expr);
 	}
 	else
 	{

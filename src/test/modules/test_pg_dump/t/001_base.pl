@@ -318,6 +318,14 @@ my %tests = (
 		like         => { pg_dumpall_globals => 1, },
 	},
 
+	'CREATE SCHEMA public' => {
+		regexp => qr/^CREATE SCHEMA public;/m,
+		like   => {
+			extension_schema                  => 1,
+			without_extension_explicit_schema => 1,
+		},
+	},
+
 	'CREATE SEQUENCE regress_pg_dump_table_col1_seq' => {
 		regexp => qr/^
                     \QCREATE SEQUENCE public.regress_pg_dump_table_col1_seq\E

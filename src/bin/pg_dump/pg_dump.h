@@ -142,6 +142,8 @@ typedef struct _dumpableObject
 typedef struct _namespaceInfo
 {
 	DumpableObject dobj;
+	bool		create;			/* CREATE SCHEMA, or just set owner? */
+	Oid			nspowner;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *nspacl;
 	char	   *rnspacl;

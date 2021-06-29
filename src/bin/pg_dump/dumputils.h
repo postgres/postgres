@@ -54,6 +54,7 @@ extern void emitShSecLabels(PGconn *conn, PGresult *res,
 extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
 							PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
 							const char *acl_column, const char *acl_owner,
+							const char *initprivs_expr,
 							const char *obj_kind, bool binary_upgrade);
 
 extern bool variable_is_guc_list_quote(const char *name);

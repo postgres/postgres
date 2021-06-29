@@ -128,6 +128,14 @@ my %pgdump_runs = (
 			'regress_pg_dump_test',
 		],
 	},
+	defaults_public_owner => {
+		database => 'regress_public_owner',
+		dump_cmd => [
+			'pg_dump', '--no-sync', '-f',
+			"$tempdir/defaults_public_owner.sql",
+			'regress_public_owner',
+		],
+	},
 
 	# Do not use --no-sync to give test coverage for data sync.
 	defaults_custom_format => {
@@ -620,6 +628,24 @@ my %tests = (
 		unlike => { no_owner => 1, },
 	},
 
+	'ALTER SCHEMA public OWNER TO' => {
+		# see test "REVOKE CREATE ON SCHEMA public" for causative create_sql
+		regexp => qr/^ALTER SCHEMA public OWNER TO .+;/m,
+		like   => {
+			%full_runs, section_pre_data => 1,
+		},
+		unlike => { no_owner => 1, },
+	},
+
+	'ALTER SCHEMA public OWNER TO (w/o ACL changes)' => {
+		database     => 'regress_public_owner',
+		create_order => 100,
+		create_sql =>
+		  'ALTER SCHEMA public OWNER TO "regress_quoted  \"" role";',
+		regexp => qr/^(GRANT|REVOKE)/m,
+		unlike => { defaults_public_owner => 1 },
+	},
+
 	'ALTER SEQUENCE test_table_col1_seq' => {
 		regexp => qr/^
 			\QALTER SEQUENCE dump_test.test_table_col1_seq OWNED BY dump_test.test_table.col1;\E
@@ -952,6 +978,13 @@ my %tests = (
 		regexp => qr/^COMMENT ON EXTENSION plpgsql IS .+;/m,
 
 		# this shouldn't ever get emitted anymore
+		like => {},
+	},
+
+	'COMMENT ON SCHEMA public' => {
+		regexp => qr/^COMMENT ON SCHEMA public IS .+;/m,
+
+		# this shouldn't ever get emitted
 		like => {},
 	},
 
@@ -1377,6 +1410,18 @@ my %tests = (
 		create_order => 1,
 		create_sql   => 'CREATE ROLE regress_dump_test_role;',
 		regexp       => qr/^CREATE ROLE regress_dump_test_role;/m,
+		like         => {
+			pg_dumpall_dbprivs       => 1,
+			pg_dumpall_exclude       => 1,
+			pg_dumpall_globals       => 1,
+			pg_dumpall_globals_clean => 1,
+		},
+	},
+
+	'CREATE ROLE regress_quoted...' => {
+		create_order => 1,
+		create_sql   => 'CREATE ROLE "regress_quoted  \"" role";',
+		regexp       => qr/^\QCREATE ROLE "regress_quoted  \"" role";\E/m,
 		like         => {
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_exclude       => 1,
@@ -3333,6 +3378,23 @@ my %tests = (
 		unlike => { no_privs => 1, },
 	},
 
+	# With the exception of the public schema, we don't dump ownership changes
+	# for objects originating at initdb.  Hence, any GRANT or REVOKE affecting
+	# owner privileges for those objects should reference the bootstrap
+	# superuser, not the dump-time owner.
+	'REVOKE EXECUTE ON FUNCTION pg_stat_reset FROM regress_dump_test_role' =>
+	  {
+		create_order => 15,
+		create_sql   => '
+			ALTER FUNCTION pg_stat_reset OWNER TO regress_dump_test_role;
+			REVOKE EXECUTE ON FUNCTION pg_stat_reset
+			  FROM regress_dump_test_role;',
+		regexp => qr/^[^-].*pg_stat_reset.* regress_dump_test_role/m,
+
+		# this shouldn't ever get emitted
+		like => {},
+	  },
+
 	'REVOKE SELECT ON TABLE pg_proc FROM public' => {
 		create_order => 45,
 		create_sql   => 'REVOKE SELECT ON TABLE pg_proc FROM public;',
@@ -3344,9 +3406,13 @@ my %tests = (
 
 	'REVOKE CREATE ON SCHEMA public FROM public' => {
 		create_order => 16,
-		create_sql   => 'REVOKE CREATE ON SCHEMA public FROM public;',
-		regexp       => qr/^
-			\QREVOKE ALL ON SCHEMA public FROM PUBLIC;\E
+		create_sql   => '
+			REVOKE CREATE ON SCHEMA public FROM public;
+			ALTER SCHEMA public OWNER TO "regress_quoted  \"" role";
+			REVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";',
+		regexp => qr/^
+			\QREVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";\E
+			\n\QREVOKE ALL ON SCHEMA public FROM PUBLIC;\E
 			\n\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
 			/xm,
 		like => { %full_runs, section_pre_data => 1, },
@@ -3451,8 +3517,9 @@ if ($collation_check_stderr !~ /ERROR: /)
 # Determine whether build supports LZ4.
 my $supports_lz4 = check_pg_config("#define HAVE_LIBLZ4 1");
 
-# Create a second database for certain tests to work against
+# Create additional databases for mutations of schema public
 $node->psql('postgres', 'create database regress_pg_dump_test;');
+$node->psql('postgres', 'create database regress_public_owner;');
 
 # Start with number of command_fails_like()*2 tests below (each
 # command_fails_like is actually 2 tests)
