@@ -1,0 +1,92 @@
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	34	Parse	 "" "SELECT repeat('xyzxz', 12)" 0
+F	14	Bind	 "" "" 0 0 1 0
+F	6	Describe	 P ""
+F	9	Execute	 "" 0
+F	4	Flush
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+B	4	ParseComplete
+B	4	BindComplete
+B	31	RowDescription	 1 "repeat" NNNN 0 NNNN 65535 -1 0
+B	70	DataRow	 1 60 'xyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxzxyzxz'
+B	13	CommandComplete	 "SELECT 1"
+F	4	Terminate
