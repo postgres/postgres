@@ -5102,10 +5102,13 @@ int PQflush(PGconn *conn);
      The server executes statements, and returns results, in the order the
      client sends them.  The server will begin executing the commands in the
      pipeline immediately, not waiting for the end of the pipeline.
+     Note that results are buffered on the server side; the server flushes
+     that buffer when a synchronization point is established with
+     <function>PQpipelineSync</function>, or when
+     <function>PQsendFlushRequest</function> is called.
      If any statement encounters an error, the server aborts the current
      transaction and does not execute any subsequent command in the queue
-     until the next synchronization point established by
-     <function>PQpipelineSync</function>;
+     until the next synchronization point;
      a <literal>PGRES_PIPELINE_ABORTED</literal> result is produced for
      each such command.
      (This remains true even if the commands in the pipeline would rollback
@@ -5399,6 +5402,32 @@ int PQpipelineSync(PGconn *conn);
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry id="libpq-PQsendFlushRequest">
+     <term><function>PQsendFlushRequest</function><indexterm><primary>PQsendFlushRequest</primary></indexterm></term>
+
+      <listitem>
+       <para>
+        Sends a request for the server to flush its output buffer.
+<synopsis>
+int PQsendFlushRequest(PGconn *conn);
+</synopsis>
+       </para>
+
+       <para>
+        Returns 1 for success.  Returns 0 on any failure.
+       </para>
+       <para>
+        The server flushes its output buffer automatically as a result of
+        <function>PQpipelineSync</function> being called, or
+        on any request when not in pipeline mode; this function is useful
+        to cause the server to flush its output buffer in pipeline mode
+        without establishing a synchronization point.
+        Note that the request is not itself flushed to the server automatically;
+        use <function>PQflush</function> if necessary.
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
   </sect2>
 

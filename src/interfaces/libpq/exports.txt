@@ -184,4 +184,5 @@ PQexitPipelineMode        181
 PQpipelineSync            182
 PQpipelineStatus          183
 PQsetTraceFlags           184
-PQmblenBounded              185
+PQmblenBounded            185
+PQsendFlushRequest        186
