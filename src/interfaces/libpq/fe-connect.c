@@ -7254,6 +7254,11 @@ pqGetHomeDirectory(char *buf, int bufsize)
 /*
  * To keep the API consistent, the locking stubs are always provided, even
  * if they are not required.
+ *
+ * Since we neglected to provide any error-return convention in the
+ * pgthreadlock_t API, we can't do much except Assert upon failure of any
+ * mutex primitive.  Fortunately, such failures appear to be nonexistent in
+ * the field.
  */
 
 static void
@@ -7273,7 +7278,7 @@ default_threadlock(int acquire)
 		if (singlethread_lock == NULL)
 		{
 			if (pthread_mutex_init(&singlethread_lock, NULL))
-				PGTHREAD_ERROR("failed to initialize mutex");
+				Assert(false);
 		}
 		InterlockedExchange(&mutex_initlock, 0);
 	}
@@ -7281,12 +7286,12 @@ default_threadlock(int acquire)
 	if (acquire)
 	{
 		if (pthread_mutex_lock(&singlethread_lock))
-			PGTHREAD_ERROR("failed to lock mutex");
+			Assert(false);
 	}
 	else
 	{
 		if (pthread_mutex_unlock(&singlethread_lock))
-			PGTHREAD_ERROR("failed to unlock mutex");
+			Assert(false);
 	}
 #endif
 }

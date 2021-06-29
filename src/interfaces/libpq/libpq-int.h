@@ -626,13 +626,6 @@ extern bool pqGetHomeDirectory(char *buf, int bufsize);
 #ifdef ENABLE_THREAD_SAFETY
 extern pgthreadlock_t pg_g_threadlock;
 
-#define PGTHREAD_ERROR(msg) \
-	do { \
-		fprintf(stderr, "%s\n", msg); \
-		abort(); \
-	} while (0)
-
-
 #define pglock_thread()		pg_g_threadlock(true)
 #define pgunlock_thread()	pg_g_threadlock(false)
 #else

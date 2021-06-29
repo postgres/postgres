@@ -611,15 +611,20 @@ static pthread_mutex_t *pq_lockarray;
 static void
 pq_lockingcallback(int mode, int n, const char *file, int line)
 {
+	/*
+	 * There's no way to report a mutex-primitive failure, so we just Assert
+	 * in development builds, and ignore any errors otherwise.  Fortunately
+	 * this is all obsolete in modern OpenSSL.
+	 */
 	if (mode & CRYPTO_LOCK)
 	{
 		if (pthread_mutex_lock(&pq_lockarray[n]))
-			PGTHREAD_ERROR("failed to lock mutex");
+			Assert(false);
 	}
 	else
 	{
 		if (pthread_mutex_unlock(&pq_lockarray[n]))
-			PGTHREAD_ERROR("failed to unlock mutex");
+			Assert(false);
 	}
 }
 #endif							/* ENABLE_THREAD_SAFETY && HAVE_CRYPTO_LOCK */
