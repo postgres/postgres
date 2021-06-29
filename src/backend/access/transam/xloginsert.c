@@ -863,7 +863,7 @@ XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 						char *dest, uint16 *dlen)
 {
 	int32		orig_len = BLCKSZ - hole_length;
-	int32		len;
+	int32		len = -1;
 	int32		extra_bytes = 0;
 	char	   *source;
 	PGAlignedBlock tmp;
