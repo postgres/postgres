@@ -3099,6 +3099,42 @@ sendFailed:
 	return 0;
 }
 
+/*
+ * PQsendFlushRequest
+ *		Send request for server to flush its buffer.  Useful in pipeline
+ *		mode when a sync point is not desired.
+ */
+int
+PQsendFlushRequest(PGconn *conn)
+{
+	if (!conn)
+		return 0;
+
+	/* Don't try to send if we know there's no live connection. */
+	if (conn->status != CONNECTION_OK)
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no connection to the server\n"));
+		return 0;
+	}
+
+	/* Can't send while already busy, either, unless enqueuing for later */
+	if (conn->asyncStatus != PGASYNC_IDLE &&
+		conn->pipelineStatus == PQ_PIPELINE_OFF)
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("another command is already in progress\n"));
+		return false;
+	}
+
+	if (pqPutMsgStart('H', conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+	{
+		return 0;
+	}
+
+	return 1;
+}
 
 /* ====== accessor funcs for PGresult ======== */
 
