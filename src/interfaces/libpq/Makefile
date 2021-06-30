@@ -102,13 +102,15 @@ all: all-lib check-libpq-refs
 include $(top_srcdir)/src/Makefile.shlib
 backend_src = $(top_srcdir)/src/backend
 
-# Check for functions that libpq must not call, currently abort() and exit().
-# If nm doesn't exist or doesn't work on shlibs, this test will silently
-# do nothing, which is fine.  The exclusion of _eprintf.o is to prevent
-# complaining about <assert.h> infrastructure on ancient macOS releases.
+# Check for functions that libpq must not call, currently just exit().
+# (Ideally we'd reject abort() too, but there are various scenarios where
+# build toolchains silently insert abort() calls, e.g. when profiling.)
+# If nm doesn't exist or doesn't work on shlibs, this test will do nothing,
+# which is fine.  The exclusion of __cxa_atexit is necessary on OpenBSD,
+# which seems to insert references to that even in pure C code.
 .PHONY: check-libpq-refs
 check-libpq-refs: $(shlib)
-	! nm -A -g -u $< 2>/dev/null | grep -v '_eprintf\.o:' | grep -e abort -e exit
+	! nm -A -g -u $< 2>/dev/null | grep -v __cxa_atexit | grep exit
 
 # Make dependencies on pg_config_paths.h visible in all builds.
 fe-connect.o: fe-connect.c $(top_builddir)/src/port/pg_config_paths.h
