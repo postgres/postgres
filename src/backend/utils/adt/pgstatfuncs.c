@@ -2317,8 +2317,8 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	text	   *slotname_text = PG_GETARG_TEXT_P(0);
 	NameData	slotname;
 	TupleDesc	tupdesc;
-	Datum		values[10];
-	bool		nulls[10];
+	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS];
+	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS];
 	PgStat_StatReplSlotEntry *slotent;
 	PgStat_StatReplSlotEntry allzero;
 
