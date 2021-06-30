@@ -5713,7 +5713,7 @@ recoveryStopsBefore(XLogReaderState *record)
 		xl_xact_abort *xlrec = (xl_xact_abort *) XLogRecGetData(record);
 		xl_xact_parsed_abort parsed;
 
-		isCommit = true;
+		isCommit = false;
 		ParseAbortRecord(XLogRecGetInfo(record),
 						 xlrec,
 						 &parsed);
