@@ -195,7 +195,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>schema_name</literal></term>
+     <term><literal>schema_name</literal> (<type>string</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign table, gives the
@@ -206,7 +206,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>table_name</literal></term>
+     <term><literal>table_name</literal> (<type>string</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign table, gives the
@@ -217,7 +217,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>column_name</literal></term>
+     <term><literal>column_name</literal> (<type>string</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a column of a foreign table,
@@ -249,7 +249,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>use_remote_estimate</literal></term>
+     <term><literal>use_remote_estimate</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign table or a foreign
@@ -263,7 +263,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>fdw_startup_cost</literal></term>
+     <term><literal>fdw_startup_cost</literal> (<type>floating point</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign server, is a numeric
@@ -277,7 +277,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>fdw_tuple_cost</literal></term>
+     <term><literal>fdw_tuple_cost</literal> (<type>floating point</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign server, is a numeric
@@ -329,7 +329,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>extensions</literal></term>
+     <term><literal>extensions</literal> (<type>string</type>)</term>
      <listitem>
       <para>
        This option is a comma-separated list of names
@@ -350,7 +350,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>fetch_size</literal></term>
+     <term><literal>fetch_size</literal> (<type>integer</type>)</term>
      <listitem>
       <para>
        This option specifies the number of rows <filename>postgres_fdw</filename>
@@ -363,7 +363,7 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>batch_size</literal></term>
+     <term><literal>batch_size</literal> (<type>integer</type>)</term>
      <listitem>
       <para>
        This option specifies the number of rows <filename>postgres_fdw</filename>
@@ -403,7 +403,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>async_capable</literal></term>
+     <term><literal>async_capable</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether <filename>postgres_fdw</filename> allows
@@ -452,7 +452,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>updatable</literal></term>
+     <term><literal>updatable</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether <filename>postgres_fdw</filename> allows foreign
@@ -489,7 +489,7 @@ OPTIONS (ADD password_required 'false');
    <variablelist>
 
     <varlistentry>
-     <term><literal>truncatable</literal></term>
+     <term><literal>truncatable</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether <filename>postgres_fdw</filename> allows
@@ -528,7 +528,7 @@ OPTIONS (ADD password_required 'false');
 
    <variablelist>
     <varlistentry>
-     <term><literal>import_collate</literal></term>
+     <term><literal>import_collate</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether column <literal>COLLATE</literal> options
@@ -541,7 +541,7 @@ OPTIONS (ADD password_required 'false');
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><literal>import_default</literal></term>
+     <term><literal>import_default</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether column <literal>DEFAULT</literal> expressions
@@ -556,7 +556,7 @@ OPTIONS (ADD password_required 'false');
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><literal>import_not_null</literal></term>
+     <term><literal>import_not_null</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option controls whether column <literal>NOT NULL</literal>
@@ -606,7 +606,7 @@ OPTIONS (ADD password_required 'false');
     <variablelist>
  
      <varlistentry>
-      <term><literal>keep_connections</literal></term>
+      <term><literal>keep_connections</literal> (<type>boolean</type>)</term>
       <listitem>
        <para>
         This option controls whether <filename>postgres_fdw</filename> keeps
