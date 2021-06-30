@@ -47,7 +47,8 @@ PostgreSQL documentation
 
   <para>
    When verifying checksums, every file in the cluster is scanned. When
-   enabling checksums, every file in the cluster is rewritten in-place.
+   enabling checksums, each relation file block with a changed checksum is 
+   rewritten in-place.
    Disabling checksums only updates the file <filename>pg_control</filename>.
   </para>
  </refsect1>
