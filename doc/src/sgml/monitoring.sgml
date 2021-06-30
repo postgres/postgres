@@ -3712,7 +3712,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>tup_returned</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows returned by queries in this database
+       Number of live rows fetched by sequential scans and index entries returned by index scans in this database
       </para></entry>
      </row>
 
@@ -3721,7 +3721,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>tup_fetched</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows fetched by queries in this database
+       Number of live rows fetched by index scans in this database
       </para></entry>
      </row>
 
