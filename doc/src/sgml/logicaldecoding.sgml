@@ -144,16 +144,19 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
 </programlisting>
 
    <para>
-    The following example shows how logical decoding is controlled over the
+    The following examples shows how logical decoding is controlled over the
     streaming replication protocol, using the
     program <xref linkend="app-pgrecvlogical"/> included in the PostgreSQL
     distribution.  This requires that client authentication is set up to allow
     replication connections
     (see <xref linkend="streaming-replication-authentication"/>) and
     that <varname>max_wal_senders</varname> is set sufficiently high to allow
-    an additional connection.
+    an additional connection.  The second example shows how to stream two-phase
+    transactions.  Before you use two-phase commands, you must set
+    <xref linkend="guc-max-prepared-transactions"/> to atleast 1.
    </para>
 <programlisting>
+Example 1:
 $ pg_recvlogical -d postgres --slot=test --create-slot
 $ pg_recvlogical -d postgres --slot=test --start -f -
 <keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
@@ -162,6 +165,22 @@ $ fg
 BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
+<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>
+$ pg_recvlogical -d postgres --slot=test --drop-slot
+
+Example 2:
+$ pg_recvlogical -d postgres --slot=test --create-slot --two-phase
+$ pg_recvlogical -d postgres --slot=test --start -f -
+<keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
+$ psql -d postgres -c "BEGIN;INSERT INTO data(data) VALUES('5');PREPARE TRANSACTION 'test';"
+$ fg
+BEGIN 694
+table public.data: INSERT: id[integer]:5 data[text]:'5'
+PREPARE TRANSACTION 'test', txid 694
+<keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
+$ psql -d postgres -c "COMMIT PREPARED 'test';"
+$ fg
+COMMIT PREPARED 'test', txid 694
 <keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>
 $ pg_recvlogical -d postgres --slot=test --drop-slot
 </programlisting>

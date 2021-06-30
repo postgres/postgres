@@ -741,7 +741,7 @@ main(int argc, char **argv)
 			pg_log_info("creating replication slot \"%s\"", replication_slot);
 
 		if (!CreateReplicationSlot(conn, replication_slot, NULL, false, true, false,
-								   slot_exists_ok))
+								   slot_exists_ok, false))
 			exit(1);
 		exit(0);
 	}

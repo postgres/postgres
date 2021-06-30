@@ -84,6 +84,7 @@ static SQLCmd *make_sqlcmd(void);
 %token K_SLOT
 %token K_RESERVE_WAL
 %token K_TEMPORARY
+%token K_TWO_PHASE
 %token K_EXPORT_SNAPSHOT
 %token K_NOEXPORT_SNAPSHOT
 %token K_USE_SNAPSHOT
@@ -281,6 +282,11 @@ create_slot_opt:
 			| K_RESERVE_WAL
 				{
 				  $$ = makeDefElem("reserve_wal",
+								   (Node *)makeInteger(true), -1);
+				}
+			| K_TWO_PHASE
+				{
+				  $$ = makeDefElem("two_phase",
 								   (Node *)makeInteger(true), -1);
 				}
 			;

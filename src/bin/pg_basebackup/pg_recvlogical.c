@@ -35,6 +35,7 @@
 /* Global Options */
 static char *outfile = NULL;
 static int	verbose = 0;
+static bool two_phase = false;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static int	fsync_interval = 10 * 1000; /* 10 sec = default */
@@ -93,6 +94,7 @@ usage(void)
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOTNAME    name of the logical replication slot\n"));
+	printf(_("  -t, --two-phase        enable two-phase decoding when creating a slot\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -678,6 +680,7 @@ main(int argc, char **argv)
 		{"fsync-interval", required_argument, NULL, 'F'},
 		{"no-loop", no_argument, NULL, 'n'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"two-phase", no_argument, NULL, 't'},
 		{"version", no_argument, NULL, 'V'},
 		{"help", no_argument, NULL, '?'},
 /* connection options */
@@ -726,7 +729,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "E:f:F:nvd:h:p:U:wWI:o:P:s:S:",
+	while ((c = getopt_long(argc, argv, "E:f:F:nvtd:h:p:U:wWI:o:P:s:S:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -748,6 +751,9 @@ main(int argc, char **argv)
 				break;
 			case 'v':
 				verbose++;
+				break;
+			case 't':
+				two_phase = true;
 				break;
 /* connection options */
 			case 'd':
@@ -920,6 +926,15 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (two_phase && !do_create_slot)
+	{
+		pg_log_error("--two-phase may only be specified with --create-slot");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+
 #ifndef WIN32
 	pqsignal(SIGINT, sigint_handler);
 	pqsignal(SIGHUP, sighup_handler);
@@ -976,7 +991,7 @@ main(int argc, char **argv)
 			pg_log_info("creating replication slot \"%s\"", replication_slot);
 
 		if (!CreateReplicationSlot(conn, replication_slot, plugin, false,
-								   false, false, slot_exists_ok))
+								   false, false, slot_exists_ok, two_phase))
 			exit(1);
 		startpos = InvalidXLogRecPtr;
 	}

@@ -486,7 +486,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 bool
 CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 					  bool is_temporary, bool is_physical, bool reserve_wal,
-					  bool slot_exists_ok)
+					  bool slot_exists_ok, bool two_phase)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -495,6 +495,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 
 	Assert((is_physical && plugin == NULL) ||
 		   (!is_physical && plugin != NULL));
+	Assert(!(two_phase && is_physical));
 	Assert(slot_name != NULL);
 
 	/* Build query */
@@ -510,6 +511,9 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	else
 	{
 		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
+		if (two_phase && PQserverVersion(conn) >= 150000)
+			appendPQExpBufferStr(query, " TWO_PHASE");
+
 		if (PQserverVersion(conn) >= 100000)
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
 			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 15;
+use Test::More tests => 20;
 
 program_help_ok('pg_recvlogical');
 program_version_ok('pg_recvlogical');
@@ -22,6 +22,7 @@ max_replication_slots = 4
 max_wal_senders = 4
 log_min_messages = 'debug1'
 log_error_verbosity = verbose
+max_prepared_transactions = 10
 });
 $node->dump_info;
 $node->start;
@@ -63,3 +64,45 @@ $node->command_ok(
 		'--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-'
 	],
 	'replayed a transaction');
+
+$node->command_ok(
+	[
+		'pg_recvlogical',           '-S',
+		'test',                     '-d',
+		$node->connstr('postgres'), '--drop-slot'
+	],
+	'slot dropped');
+
+#test with two-phase option enabled
+$node->command_ok(
+	[
+		'pg_recvlogical',           '-S',
+		'test',                     '-d',
+		$node->connstr('postgres'), '--create-slot', '--two-phase'
+	],
+	'slot with two-phase created');
+
+$slot = $node->slot('test');
+isnt($slot->{'restart_lsn'}, '', 'restart lsn is defined for new slot');
+
+$node->safe_psql('postgres',
+	"BEGIN; INSERT INTO test_table values (11); PREPARE TRANSACTION 'test'");
+$node->safe_psql('postgres',
+	"COMMIT PREPARED 'test'");
+$nextlsn =
+  $node->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn()');
+chomp($nextlsn);
+
+$node->command_fails(
+	[
+		'pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'),
+		'--start', '--endpos', "$nextlsn", '--two-phase', '--no-loop', '-f', '-'
+	],
+	'incorrect usage');
+
+$node->command_ok(
+	[
+		'pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'),
+		'--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-'
+	],
+	'replayed a two-phase transaction');

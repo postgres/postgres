@@ -65,6 +65,11 @@ PostgreSQL documentation
         <option>--plugin</option>, for the database specified
         by <option>--dbname</option>.
        </para>
+
+       <para>
+        The <option>--two-phase</option> can be specified with
+        <option>--create-slot</option> to enable two-phase decoding.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -254,6 +259,17 @@ PostgreSQL documentation
         mode, delete the slot with this name.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-t</option></term>
+       <term><option>--two-phase</option></term>
+       <listitem>
+       <para>
+        Enables two-phase decoding. This option should only be specified with
+        <option>--create-slot</option>
+       </para>
+       </listitem>
      </varlistentry>
 
      <varlistentry>
