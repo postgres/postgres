@@ -26,6 +26,8 @@ my $output_path = '';
 my $major_version;
 my $include_path;
 
+my $num_errors = 0;
+
 GetOptions(
 	'output:s'       => \$output_path,
 	'set-version:s'  => \$major_version,
@@ -796,7 +798,7 @@ Catalog::RenameTempFile($schemafile,       $tmpext);
 Catalog::RenameTempFile($fk_info_file,     $tmpext);
 Catalog::RenameTempFile($constraints_file, $tmpext);
 
-exit 0;
+exit ($num_errors != 0 ? 1 : 0);
 
 #################### Subroutines ########################
 
@@ -1024,8 +1026,7 @@ sub morph_row_for_schemapg
 # Perform OID lookups on an array of OID names.
 # If we don't have a unique value to substitute, warn and
 # leave the entry unchanged.
-# (A warning seems sufficient because the bootstrap backend will reject
-# non-numeric values anyway.  So we might as well detect multiple problems
+# (We don't exit right away so that we can detect multiple problems
 # within this genbki.pl run.)
 sub lookup_oids
 {
@@ -1045,16 +1046,20 @@ sub lookup_oids
 			push @lookupoids, $lookupname;
 			if ($lookupname eq '-' or $lookupname eq '0')
 			{
-				warn sprintf
-				  "invalid zero OID reference in %s.dat field %s line %s\n",
-				  $catname, $attname, $bki_values->{line_number}
-				  if !$lookup_opt;
+				if (!$lookup_opt)
+				{
+					warn sprintf
+					  "invalid zero OID reference in %s.dat field %s line %s\n",
+					  $catname, $attname, $bki_values->{line_number};
+					$num_errors++;
+				}
 			}
 			else
 			{
 				warn sprintf
 				  "unresolved OID reference \"%s\" in %s.dat field %s line %s\n",
 				  $lookupname, $catname, $attname, $bki_values->{line_number};
+				$num_errors++;
 			}
 		}
 	}
