@@ -106,6 +106,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_constraint.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/catcache.h"
@@ -799,8 +800,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 
 	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
 	{
-		while ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
-			maxSharedInvalidMessagesArray *= 2;
+		maxSharedInvalidMessagesArray = pg_nextpower2_32(numSharedInvalidMessagesArray + n);
 
 		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
 											  maxSharedInvalidMessagesArray

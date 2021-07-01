@@ -60,6 +60,7 @@
 #include "executor/executor.h"
 #include "lib/dshash.h"
 #include "optimizer/optimizer.h"
+#include "port/pg_bitutils.h"
 #include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -1708,10 +1709,7 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 
 	if (typmod >= RecordCacheArrayLen)
 	{
-		int32		newlen = RecordCacheArrayLen * 2;
-
-		while (typmod >= newlen)
-			newlen *= 2;
+		int32		newlen = pg_nextpower2_32(typmod + 1);
 
 		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
 												  newlen * sizeof(TupleDesc));

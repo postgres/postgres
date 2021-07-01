@@ -39,6 +39,7 @@
 #include "parser/gramparse.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/scansup.h"
+#include "port/pg_bitutils.h"
 #include "mb/pg_wchar.h"
 }
 
@@ -1253,10 +1254,7 @@ addlit(char *ytext, int yleng, core_yyscan_t yyscanner)
 	/* enlarge buffer if needed */
 	if ((yyextra->literallen + yleng) >= yyextra->literalalloc)
 	{
-		do
-		{
-			yyextra->literalalloc *= 2;
-		} while ((yyextra->literallen + yleng) >= yyextra->literalalloc);
+		yyextra->literalalloc = pg_nextpower2_32(yyextra->literallen + yleng + 1);
 		yyextra->literalbuf = (char *) repalloc(yyextra->literalbuf,
 												yyextra->literalalloc);
 	}

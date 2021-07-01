@@ -79,6 +79,7 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+#include "port/pg_bitutils.h"
 #include "postmaster/postmaster.h"
 #include "replication/slot.h"
 #include "storage/ipc.h"
@@ -659,9 +660,7 @@ LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 	{
 		int			newalloc;
 
-		newalloc = Max(LWLockTrancheNamesAllocated, 8);
-		while (newalloc <= tranche_id)
-			newalloc *= 2;
+		newalloc = pg_nextpower2_32(Max(8, tranche_id + 1));
 
 		if (LWLockTrancheNames == NULL)
 			LWLockTrancheNames = (const char **)
@@ -715,10 +714,7 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 
 	if (NamedLWLockTrancheRequests >= NamedLWLockTrancheRequestsAllocated)
 	{
-		int			i = NamedLWLockTrancheRequestsAllocated;
-
-		while (i <= NamedLWLockTrancheRequests)
-			i *= 2;
+		int			i = pg_nextpower2_32(NamedLWLockTrancheRequests + 1);
 
 		NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *)
 			repalloc(NamedLWLockTrancheRequestArray,

@@ -20,6 +20,7 @@
 
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/pg_bitutils.h"
 #include "postmaster/bgworker.h"
 #include "storage/procsignal.h"
 #include "storage/shm_mq.h"
@@ -720,14 +721,17 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 		 */
 		if (mqh->mqh_buflen < nbytes)
 		{
-			Size		newbuflen = Max(mqh->mqh_buflen, MQH_INITIAL_BUFSIZE);
+			Size		newbuflen;
 
 			/*
-			 * Double the buffer size until the payload fits, but limit to
-			 * MaxAllocSize.
+			 * Increase size to the next power of 2 that's >= nbytes, but
+			 * limit to MaxAllocSize.
 			 */
-			while (newbuflen < nbytes)
-				newbuflen *= 2;
+#if SIZEOF_SIZE_T == 4
+			newbuflen = pg_nextpower2_32(nbytes);
+#else
+			newbuflen = pg_nextpower2_64(nbytes);
+#endif
 			newbuflen = Min(newbuflen, MaxAllocSize);
 
 			if (mqh->mqh_buffer != NULL)
