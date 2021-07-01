@@ -1726,6 +1726,7 @@ build-postgresql:
     If you built the world without the documentation above, type instead:
 <screen>
 <userinput>make install-world-bin</userinput>
+</screen>
    </para>
 
    <para>
