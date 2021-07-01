@@ -1561,7 +1561,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
     </sect4>
 
     <sect4>
-     <title><acronym>Authentication</acronym></title>
+     <title>Authentication</title>
 
      <itemizedlist>
 
