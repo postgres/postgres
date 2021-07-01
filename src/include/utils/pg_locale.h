@@ -17,6 +17,10 @@
 #endif
 #ifdef USE_ICU
 #include <unicode/ucol.h>
+/* ICU might have a different definition of "bool", don't buy it */
+#ifdef bool
+#undef bool
+#endif
 #endif
 
 #include "utils/guc.h"

@@ -67,6 +67,10 @@
 
 #ifdef USE_ICU
 #include <unicode/ucnv.h>
+/* ICU might have a different definition of "bool", don't buy it */
+#ifdef bool
+#undef bool
+#endif
 #endif
 
 #ifdef WIN32
