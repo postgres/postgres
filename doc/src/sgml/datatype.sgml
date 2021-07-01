@@ -4925,7 +4925,7 @@ WHERE ...
   </sect1>
 
   <sect1 id="datatype-pg-lsn">
-   <title><acronym>pg_lsn Type</acronym></title>
+   <title><type>pg_lsn</type> Type</title>
 
    <indexterm zone="datatype-pg-lsn">
     <primary>pg_lsn</primary>

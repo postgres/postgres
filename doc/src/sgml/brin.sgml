@@ -753,7 +753,7 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    </variablelist>
 
    <para>
-    <acronym>minmax-multi</acronym> operator classes accept these parameters:
+    minmax-multi operator classes accept these parameters:
    </para>
 
    <variablelist>
