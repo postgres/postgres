@@ -96,7 +96,7 @@ SHLIB_EXPORTS = exports.txt
 
 PKG_CONFIG_REQUIRES_PRIVATE = libssl libcrypto
 
-all: all-lib check-libpq-refs
+all: all-lib libpq-refs-stamp
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -108,9 +108,9 @@ backend_src = $(top_srcdir)/src/backend
 # If nm doesn't exist or doesn't work on shlibs, this test will do nothing,
 # which is fine.  The exclusion of __cxa_atexit is necessary on OpenBSD,
 # which seems to insert references to that even in pure C code.
-.PHONY: check-libpq-refs
-check-libpq-refs: $(shlib)
-	! nm -A -g -u $< 2>/dev/null | grep -v __cxa_atexit | grep exit
+libpq-refs-stamp: $(shlib)
+	! nm -A -u $< 2>/dev/null | grep -v __cxa_atexit | grep exit
+	touch $@
 
 # Make dependencies on pg_config_paths.h visible in all builds.
 fe-connect.o: fe-connect.c $(top_builddir)/src/port/pg_config_paths.h
@@ -141,7 +141,7 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	$(MAKE) -C test $@
-	rm -f $(OBJS) pthread.h
+	rm -f $(OBJS) pthread.h libpq-refs-stamp
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 
