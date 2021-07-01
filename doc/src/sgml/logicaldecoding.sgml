@@ -1267,7 +1267,7 @@ stream_commit_cb(...);  &lt;-- commit of the streamed transaction
   </sect1>
 
   <sect1 id="logicaldecoding-two-phase-commits">
-   <title>Two-phase commit support for Logical Decoding</title>
+   <title>Two-phase Commit Support for Logical Decoding</title>
 
    <para>
     With the basic output plugin callbacks (eg., <function>begin_cb</function>,

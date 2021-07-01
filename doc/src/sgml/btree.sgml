@@ -630,7 +630,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
  </sect2>
 
  <sect2 id="btree-deletion">
-  <title>Bottom-up index deletion</title>
+  <title>Bottom-up Index Deletion</title>
   <para>
    B-Tree indexes are not directly aware that under MVCC, there might
    be multiple extant versions of the same logical table row; to an
