@@ -457,10 +457,7 @@ su - postgres
 </screen>
     (Remember to use <acronym>GNU</acronym> <application>make</application>.)
     The build will take a few minutes depending on your
-    hardware. The last line displayed should be:
-<screen>
-All of PostgreSQL successfully made. Ready to install.
-</screen>
+    hardware.
    </para>
 
   <para>
@@ -469,10 +466,6 @@ All of PostgreSQL successfully made. Ready to install.
    (<filename>contrib</filename>), type instead:
 <screen>
 <userinput>make world</userinput>
-</screen>
-   The last line displayed should be:
-<screen>
-PostgreSQL, contrib, and documentation successfully made. Ready to install.
 </screen>
   </para>
 
@@ -565,6 +558,7 @@ build-postgresql:
     If you built the world without the documentation above, type instead:
 <screen>
 <userinput>make install-world-bin</userinput>
+</screen>
    </para>
 
    <para>
