@@ -147,7 +147,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	/* Run the actual JSON parser. */
 	json_error = pg_parse_json(lex, &sem);
 	if (json_error != JSON_SUCCESS)
-		json_manifest_parse_failure(context, json_errdetail(json_error, lex));
+		json_manifest_parse_failure(context, "parsing failed");
 	if (parse.state != JM_EXPECT_EOF)
 		json_manifest_parse_failure(context, "manifest ended unexpectedly");
 

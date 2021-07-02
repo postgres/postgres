@@ -16,7 +16,7 @@ my $tempdir = TestLib::tempdir;
 
 test_bad_manifest(
 	'input string ended unexpectedly',
-	qr/could not parse backup manifest: The input string ended unexpectedly/,
+	qr/could not parse backup manifest: parsing failed/,
 	<<EOM);
 {
 EOM
