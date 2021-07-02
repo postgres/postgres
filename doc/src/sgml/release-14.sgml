@@ -58,8 +58,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
      <para>
-      Prevent the containment operators (&lt;@ and @&gt;) for <xref
-      linkend="intarray"/> from using GiST indexes (Tom Lane)
+      Prevent the containment operators (<literal>&lt;@</literal> and
+      <literal>@&gt;</literal>) for <xref linkend="intarray"/> from using
+      GiST indexes (Tom Lane)
      </para>
 
      <para>
@@ -78,8 +79,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
      <para>
-      Remove deprecated containment operators @ and ~ for built-in
-      <link linkend="functions-geometry">geometric data types</link> and
+      Remove deprecated containment operators <literal>@</literal>
+      and <literal>~</literal> for built-in <link
+      linkend="functions-geometry">geometric data types</link> and
       contrib modules <xref linkend="cube"/>, <xref linkend="hstore"/>,
       <xref linkend="intarray"/>, and <xref linkend="seg"/> (Justin Pryzby)
      </para>
@@ -1216,7 +1218,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
        <para>
         <link
         linkend="postgres-fdw"><application>postgres_fdw</application></link>
-        supports these type of scans if <literal>async_capable</literal>
+        supports this type of scan if <literal>async_capable</literal>
         is set.
        </para>
       </listitem>
@@ -2398,7 +2400,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       </para>
 
       <para>
-       This helps <acronym>GUI</acronym> tools analyze the system tables.
+       This helps <acronym>GUI</acronym> tools analyze the
+       system tables.  The constraints are visible using <link
+       linkend="functions-aclitem-fn-table">pg_get_catalog_foreign_keys()</link>.
       </para>
      </listitem>
 
@@ -2495,15 +2499,16 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        Add <link linkend="functions-geometry">point operators</link>
-       &lt;&lt;| and |&gt;&gt; to be strictly above/below geometry
-       (Emre Hasegeli)
+       <literal>&lt;&lt;|</literal> and <literal>|&gt;&gt;</literal>
+       to be strictly above/below geometry (Emre Hasegeli)
       </para>
 
       <para>
-       Previously &gt;^ and &lt;^ were marked as performing this test, but
-       non-point geometric operators used these operators for non-strict
-       comparisons, leading to confusion.  The old operators still exist
-       but will be eventually removed.  ACCURATE?
+       Previously <literal>&gt;^</literal> and <literal>&lt;^</literal>
+       were marked as performing this test, but non-point geometric
+       operators used these operators for non-strict comparisons, leading
+       to confusion.  The old operators still exist but will be eventually
+       removed.  ACCURATE?
       </para>
      </listitem>
 
