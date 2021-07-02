@@ -733,7 +733,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 		ovflopaque->hasho_prevblkno = InvalidBlockNumber;
 		ovflopaque->hasho_nextblkno = InvalidBlockNumber;
-		ovflopaque->hasho_bucket = -1;
+		ovflopaque->hasho_bucket = InvalidBucket;
 		ovflopaque->hasho_flag = LH_UNUSED_PAGE;
 		ovflopaque->hasho_page_id = HASHO_PAGE_ID;
 
