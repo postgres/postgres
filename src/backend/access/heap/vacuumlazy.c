@@ -3236,7 +3236,11 @@ lazy_truncate_heap(LVRelState *vacrel)
 				return;
 			}
 
-			pg_usleep(VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL * 1000L);
+			(void) WaitLatch(MyLatch,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+							 VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL,
+							 WAIT_EVENT_VACUUM_TRUNCATE);
+			ResetLatch(MyLatch);
 		}
 
 		/*

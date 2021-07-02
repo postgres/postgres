@@ -2242,6 +2242,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>VacuumDelay</literal></entry>
       <entry>Waiting in a cost-based vacuum delay point.</entry>
      </row>
+     <row>
+      <entry><literal>VacuumTruncate</literal></entry>
+      <entry>Waiting to acquire an exclusive lock to truncate off any
+       empty pages at the end of a table vacuumed.</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
