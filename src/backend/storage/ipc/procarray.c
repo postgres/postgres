@@ -4380,8 +4380,6 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 
 		/* ShmemVariableCache->nextXid must be beyond any observed xid */
 		AdvanceNextFullTransactionIdPastXid(latestObservedXid);
-		next_expected_xid = latestObservedXid;
-		TransactionIdAdvance(next_expected_xid);
 	}
 }
 
