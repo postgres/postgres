@@ -744,6 +744,28 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
       <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2020-11-25 [c98763bf5] Avoid spurious waits in concurrent indexing
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2021-01-15 [f9900df5f] Avoid spurious wait in concurrent reindex
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2021-02-23 [d9d076222] VACUUM: ignore indexing operations with CONCURRENTLY
+-->
+
+       <para>
+        Allow vacuum to be more aggressive in removing dead rows during
+        minimal-locking index operations (Álvaro Herrera)
+       </para>
+
+       <para>
+        Specifically, <command>CREATE INDEX CONCURRENTLY</command> and
+        <command>REINDEX CONCURRENTLY</command> no longer limit the dead
+        row removal of other relations.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2020-12-08 [e2ac3fed3] Speed up rechecking if relation needs to be vacuumed or 
 -->
@@ -2282,6 +2304,23 @@ Author: Michael Paquier <michael@paquier.xyz>
        indexes of a partitioned relation (Justin Pryzby, Michael Paquier)
       </para>
      </listitem>
+
+      <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2020-11-25 [c98763bf5] Avoid spurious waits in concurrent indexing
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2021-01-15 [f9900df5f] Avoid spurious wait in concurrent reindex
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2021-02-23 [d9d076222] VACUUM: ignore indexing operations with CONCURRENTLY
+-->
+
+       <para>
+        Allow index commands using <command>CONCURRENTLY</command> to
+        avoid waiting for the completion of other operations using
+        <command>CONCURRENTLY</command> (Álvaro Herrera)
+       </para>
+      </listitem>
 
      <listitem>
 <!--
