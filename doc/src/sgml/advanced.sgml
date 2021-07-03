@@ -46,7 +46,7 @@
 
 <programlisting>
 CREATE VIEW myview AS
-    SELECT city, temp_lo, temp_hi, prcp, date, location
+    SELECT name, temp_lo, temp_hi, prcp, date, location
         FROM weather, cities
         WHERE city = name;
 
@@ -101,12 +101,12 @@ SELECT * FROM myview;
 
 <programlisting>
 CREATE TABLE cities (
-        city     varchar(80) primary key,
+        name     varchar(80) primary key,
         location point
 );
 
 CREATE TABLE weather (
-        city      varchar(80) references cities(city),
+        city      varchar(80) references cities(name),
         temp_lo   int,
         temp_hi   int,
         prcp      real,
