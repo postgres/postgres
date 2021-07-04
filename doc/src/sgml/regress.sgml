@@ -678,6 +678,8 @@ make -C src/bin check PROVE_FLAGS='--timer'
    <para>
     The TAP tests require the Perl module <literal>IPC::Run</literal>.
     This module is available from CPAN or an operating system package.
+    They also require <productname>PostgreSQL</productname> to be
+    configured with the option <option>--enable-tap-tests</option>.
    </para>
   </sect1>
 
