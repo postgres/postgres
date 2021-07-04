@@ -1959,6 +1959,11 @@ resolve_aggregate_transtype(Oid aggfuncid,
  * latter may be InvalidOid, however if invtransfn_oid is set then
  * transfn_oid must also be set.
  *
+ * transfn_oid may also be passed as the aggcombinefn when the *transfnexpr is
+ * to be used for a combine aggregate phase.  We expect invtransfn_oid to be
+ * InvalidOid in this case since there is no such thing as an inverse
+ * combinefn.
+ *
  * Pointers to the constructed trees are returned into *transfnexpr,
  * *invtransfnexpr. If there is no invtransfn, the respective pointer is set
  * to NULL.  Since use of the invtransfn is optional, NULL may be passed for
@@ -2019,35 +2024,6 @@ build_aggregate_transfn_expr(Oid *agg_input_types,
 		else
 			*invtransfnexpr = NULL;
 	}
-}
-
-/*
- * Like build_aggregate_transfn_expr, but creates an expression tree for the
- * combine function of an aggregate, rather than the transition function.
- */
-void
-build_aggregate_combinefn_expr(Oid agg_state_type,
-							   Oid agg_input_collation,
-							   Oid combinefn_oid,
-							   Expr **combinefnexpr)
-{
-	Node	   *argp;
-	List	   *args;
-	FuncExpr   *fexpr;
-
-	/* combinefn takes two arguments of the aggregate state type */
-	argp = make_agg_arg(agg_state_type, agg_input_collation);
-
-	args = list_make2(argp, argp);
-
-	fexpr = makeFuncExpr(combinefn_oid,
-						 agg_state_type,
-						 args,
-						 InvalidOid,
-						 agg_input_collation,
-						 COERCE_EXPLICIT_CALL);
-	/* combinefn is currently never treated as variadic */
-	*combinefnexpr = (Expr *) fexpr;
 }
 
 /*
