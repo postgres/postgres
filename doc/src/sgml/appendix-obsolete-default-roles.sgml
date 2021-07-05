@@ -11,9 +11,9 @@
    </indexterm>
 
    <para>
-    PostgreSQL 13 and below used the term 'Default Roles', however, as these
+    PostgreSQL 13 and below used the term <quote>Default Roles</quote>.  However, as these
     roles are not able to actually be changed and are installed as part of the
-    system at initialization time, the more appropriate term to use is "Predefined Roles".
+    system at initialization time, the more appropriate term to use is <quote>Predefined Roles</quote>.
     See <xref linkend="predefined-roles"/> for current documentation regarding
     Predefined Roles, and <link linkend="release-prior">the release notes for
     PostgreSQL 14</link> for details on this change.
