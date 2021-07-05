@@ -258,6 +258,7 @@
   &spgist;
   &gin;
   &brin;
+  &hash;
   &storage;
   &bki;
   &planstats;
