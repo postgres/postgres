@@ -10,14 +10,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1describe: SELECT 'd3_listp' AS root, * FROM pg_partition_tree('d3_listp')
 					  UNION ALL SELECT 'd3_listp1', * FROM pg_partition_tree('d3_listp1');
@@ -41,14 +42,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1insert: INSERT INTO d3_listp VALUES (1);
 ERROR:  no partition of relation "d3_listp" found for row
 step s1c: COMMIT;
@@ -63,14 +65,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1insert: INSERT INTO d3_listp VALUES (1);
 step s1c: COMMIT;
 step s1spart: SELECT * FROM d3_listp1;
@@ -91,14 +94,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1insertpart: INSERT INTO d3_listp1 VALUES (1);
 
@@ -112,14 +116,15 @@ a
 (1 row)
 
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach2: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach2: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1insert: INSERT INTO d3_listp VALUES (1);
@@ -143,14 +148,15 @@ a
 (1 row)
 
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach2: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach2: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s1s: SELECT * FROM d3_listp;
@@ -179,14 +185,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1drop: DROP TABLE d3_listp;
 step s1list: SELECT relname FROM pg_catalog.pg_class
@@ -206,14 +213,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1trunc: TRUNCATE TABLE d3_listp;
 step s1spart: SELECT * FROM d3_listp1;
@@ -233,14 +241,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1noop: 
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY;
 ERROR:  partition "d3_listp1" already pending detach in partitioned table "public.d3_listp"
@@ -256,14 +265,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1noop: 
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE; <waiting ...>
 step s1c: COMMIT;
@@ -280,14 +290,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1droppart: DROP TABLE d3_listp1;
 step s2detach2: ALTER TABLE d3_listp DETACH PARTITION d3_listp2 CONCURRENTLY;
@@ -302,14 +313,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s2begin: BEGIN;
 step s2drop: DROP TABLE d3_listp1;
@@ -331,14 +343,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1spart: SELECT * FROM d3_listp1;
@@ -361,14 +374,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1s: SELECT * FROM d3_listp;
@@ -389,14 +403,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s1b: BEGIN;
 step s1spart: SELECT * FROM d3_listp1;
@@ -419,14 +434,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s2begin: BEGIN;
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE;
@@ -442,14 +458,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s2begin: BEGIN;
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE;
@@ -472,14 +489,15 @@ a
 (1 row)
 
 step s2detach: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 CONCURRENTLY; <waiting ...>
-step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid;
+step s1cancel: SELECT pg_cancel_backend(pid) FROM d3_pid; <waiting ...>
+step s2detach: <... completed>
+ERROR:  canceling statement due to user request
+step s1cancel: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2detach: <... completed>
-ERROR:  canceling statement due to user request
 step s1c: COMMIT;
 step s2begin: BEGIN;
 step s2detachfinal: ALTER TABLE d3_listp DETACH PARTITION d3_listp1 FINALIZE;

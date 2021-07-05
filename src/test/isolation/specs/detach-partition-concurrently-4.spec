@@ -5,8 +5,8 @@
 # that keeping both variants adds any extra coverage.)
 #
 # Note: When using "s1cancel", mark the target step (the one to be canceled)
-# as being blocked by "s1cancel".  This ensures consistent reporting regardless
-# of whether "s1cancel" returns before or after the other step reports failure.
+# as blocking "s1cancel".  This ensures consistent reporting regardless of
+# whether "s1cancel" finishes before or after the other step reports failure.
 # Also, ensure the step after "s1cancel" is also an s1 step (use "s1noop" if
 # necessary).  This ensures we won't move on to the next step until the cancel
 # is complete.
@@ -50,34 +50,34 @@ step s3commit		{ commit; }
 step s3vacfreeze	{ vacuum freeze pg_catalog.pg_inherits; }
 
 # Trying to insert into a partially detached partition is rejected
-permutation s2snitch s1b   s1s s2detach(s1cancel) s1cancel s1insert s1c
-permutation s2snitch s1b   s1s s2detach            s1insert s1c
+permutation s2snitch s1b   s1s s2detach s1cancel(s2detach) s1insert s1c
+permutation s2snitch s1b   s1s s2detach                    s1insert s1c
 # ... even under REPEATABLE READ mode.
-permutation s2snitch s1brr s1s s2detach(s1cancel) s1cancel s1insert s1c
-permutation s2snitch s1brr s1s s2detach            s1insert s1c
+permutation s2snitch s1brr s1s s2detach s1cancel(s2detach) s1insert s1c
+permutation s2snitch s1brr s1s s2detach                    s1insert s1c
 
 # If you read the referenced table using a cursor, you can see a row that the
 # RI query does not see.
-permutation s2snitch s1b s1declare s2detach(s1cancel) s1cancel s1fetchall s1insert s1c
-permutation s2snitch s1b s1declare s2detach            s1fetchall s1insert s1c
-permutation s2snitch s1b s1declare s2detach(s1cancel) s1cancel s1svpt s1insert s1rollback s1fetchall s1c
-permutation s2snitch s1b s1declare s2detach            s1svpt s1insert s1rollback s1fetchall s1c
-permutation s2snitch s1b s2detach(s1cancel) s1declare s1cancel s1fetchall s1insert s1c
-permutation s2snitch s1b s2detach s1declare            s1fetchall s1insert s1c
-permutation s2snitch s1b s2detach(s1cancel) s1declare s1cancel s1svpt s1insert s1rollback s1fetchall s1c
-permutation s2snitch s1b s2detach s1declare            s1svpt s1insert s1rollback s1fetchall s1c
+permutation s2snitch s1b s1declare s2detach s1cancel(s2detach) s1fetchall s1insert s1c
+permutation s2snitch s1b s1declare s2detach                    s1fetchall s1insert s1c
+permutation s2snitch s1b s1declare s2detach s1cancel(s2detach) s1svpt s1insert s1rollback s1fetchall s1c
+permutation s2snitch s1b s1declare s2detach                    s1svpt s1insert s1rollback s1fetchall s1c
+permutation s2snitch s1b s2detach s1declare s1cancel(s2detach) s1fetchall s1insert s1c
+permutation s2snitch s1b s2detach s1declare                    s1fetchall s1insert s1c
+permutation s2snitch s1b s2detach s1declare s1cancel(s2detach) s1svpt s1insert s1rollback s1fetchall s1c
+permutation s2snitch s1b s2detach s1declare                    s1svpt s1insert s1rollback s1fetchall s1c
 
 # Creating the referencing row using a cursor
-permutation s2snitch s1brr s1declare2 s1fetchone s2detach(s1cancel) s1cancel s1updcur s1c
-permutation s2snitch s1brr s1declare2 s1fetchone s2detach            s1updcur s1c
+permutation s2snitch s1brr s1declare2 s1fetchone s2detach s1cancel(s2detach) s1updcur s1c
+permutation s2snitch s1brr s1declare2 s1fetchone s2detach                    s1updcur s1c
 permutation s2snitch s1brr s1declare2 s1fetchone s1updcur s2detach s1c
 
 # Try reading the table from an independent session.
 permutation s2snitch s1b s1s s2detach s3insert s1c
-permutation s2snitch s1b s1s s2detach(s1cancel) s3brr s3insert s3commit s1cancel s1c
+permutation s2snitch s1b s1s s2detach s3brr s3insert s3commit s1cancel(s2detach) s1c
 permutation s2snitch s1b s1s s2detach s3brr s3insert s3commit s1c
 
 # Try one where we VACUUM FREEZE pg_inherits (to verify that xmin change is
 # handled correctly).
-permutation s2snitch s1brr s1s s2detach(s1cancel) s1cancel s1noop s3vacfreeze s1s s1insert s1c
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1noop s3vacfreeze s1s s1insert s1c
+permutation s2snitch s1brr s1s s2detach s1cancel(s2detach) s1noop s3vacfreeze s1s s1insert s1c
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1noop s3vacfreeze s1s s1insert s1c
