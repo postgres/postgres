@@ -2967,6 +2967,56 @@ SELECT SUM((-9999)::numeric) FROM generate_series(1, 100000);
 (1 row)
 
 --
+-- Tests for VARIANCE()
+--
+CREATE TABLE num_variance (a numeric);
+INSERT INTO num_variance VALUES (0);
+INSERT INTO num_variance VALUES (3e-500);
+INSERT INTO num_variance VALUES (-3e-500);
+INSERT INTO num_variance VALUES (4e-500 - 1e-16383);
+INSERT INTO num_variance VALUES (-4e-500 + 1e-16383);
+-- variance is just under 12.5e-1000 and so should round down to 12e-1000
+SELECT trim_scale(variance(a) * 1e1000) FROM num_variance;
+ trim_scale 
+------------
+         12
+(1 row)
+
+-- check that parallel execution produces the same result
+BEGIN;
+ALTER TABLE num_variance SET (parallel_workers = 4);
+SET LOCAL parallel_setup_cost = 0;
+SET LOCAL max_parallel_workers_per_gather = 4;
+SELECT trim_scale(variance(a) * 1e1000) FROM num_variance;
+ trim_scale 
+------------
+         12
+(1 row)
+
+ROLLBACK;
+-- case where sum of squares would overflow but variance does not
+DELETE FROM num_variance;
+INSERT INTO num_variance SELECT 9e131071 + x FROM generate_series(1, 5) x;
+SELECT variance(a) FROM num_variance;
+      variance      
+--------------------
+ 2.5000000000000000
+(1 row)
+
+-- check that parallel execution produces the same result
+BEGIN;
+ALTER TABLE num_variance SET (parallel_workers = 4);
+SET LOCAL parallel_setup_cost = 0;
+SET LOCAL max_parallel_workers_per_gather = 4;
+SELECT variance(a) FROM num_variance;
+      variance      
+--------------------
+ 2.5000000000000000
+(1 row)
+
+ROLLBACK;
+DROP TABLE num_variance;
+--
 -- Tests for GCD()
 --
 SELECT a, b, gcd(a, b), gcd(a, -b), gcd(-b, a), gcd(-b, -a)
