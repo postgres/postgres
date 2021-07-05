@@ -266,6 +266,7 @@ break is not needed in a wider output rendering.
   &spgist;
   &gin;
   &brin;
+  &hash;
   &storage;
   &bki;
   &planstats;
