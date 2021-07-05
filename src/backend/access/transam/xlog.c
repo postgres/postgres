@@ -11638,9 +11638,11 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 				reported_waiting = true;
 			}
 
-			pgstat_report_wait_start(WAIT_EVENT_BACKUP_WAIT_WAL_ARCHIVE);
-			pg_usleep(1000000L);
-			pgstat_report_wait_end();
+			(void) WaitLatch(MyLatch,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+							 1000L,
+							 WAIT_EVENT_BACKUP_WAIT_WAL_ARCHIVE);
+			ResetLatch(MyLatch);
 
 			if (++waits >= seconds_before_warning)
 			{
