@@ -1,8 +1,8 @@
 # Try various things to happen to a partition with an incomplete detach
 #
 # Note: When using "s1cancel", mark the target step (the one to be canceled)
-# as being blocked by "s1cancel".  This ensures consistent reporting regardless
-# of whether "s1cancel" returns before or after the other step reports failure.
+# as blocking "s1cancel".  This ensures consistent reporting regardless of
+# whether "s1cancel" finishes before or after the other step reports failure.
 # Also, ensure the step after "s1cancel" is also an s1 step (use "s1noop" if
 # necessary).  This ensures we won't move on to the next step until the cancel
 # is complete.
@@ -50,37 +50,37 @@ step s2commit		{ COMMIT; }
 
 # Try various things while the partition is in "being detached" state, with
 # no session waiting.
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1describe s1alter
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1insert s1c
-permutation s2snitch s1brr s1s s2detach(s1cancel) s1cancel s1insert s1c s1spart
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1insertpart
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1describe s1alter
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1insert s1c
+permutation s2snitch s1brr s1s s2detach s1cancel(s2detach) s1insert s1c s1spart
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1insertpart
 
 # Test partition descriptor caching
-permutation s2snitch s1b s1s s2detach2(s1cancel) s1cancel s1c s1brr s1insert s1s s1insert s1c
-permutation s2snitch s1b s1s s2detach2(s1cancel) s1cancel s1c s1brr s1s s1insert s1s s1c
+permutation s2snitch s1b s1s s2detach2 s1cancel(s2detach2) s1c s1brr s1insert s1s s1insert s1c
+permutation s2snitch s1b s1s s2detach2 s1cancel(s2detach2) s1c s1brr s1s s1insert s1s s1c
 
 # "drop" here does both tables
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1drop s1list
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1drop s1list
 # "truncate" only does parent, not partition
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1trunc s1spart
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1trunc s1spart
 
 # If a partition pending detach exists, we cannot drop another one
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1noop s2detach2 s1c
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1noop s2detachfinal s1c s2detach2
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1droppart s2detach2
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1noop s2detach2 s1c
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1noop s2detachfinal s1c s2detach2
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1droppart s2detach2
 
 # When a partition with incomplete detach is dropped, we grab lock on parent too.
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s2begin s2drop s1s s2commit
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s2begin s2drop s1s s2commit
 
 # Partially detach, then select and try to complete the detach.  Reading
 # from partition blocks (AEL is required on partition); reading from parent
 # does not block.
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1b s1spart s2detachfinal s1c
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1b s1s s2detachfinal s1c
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1b s1spart s2detachfinal s1c
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1b s1s s2detachfinal s1c
 
 # DETACH FINALIZE in a transaction block. No insert/select on the partition
 # is allowed concurrently with that.
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s1b s1spart s2detachfinal s1c
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s2begin s2detachfinal s2commit
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s2begin s2detachfinal s1spart s2commit
-permutation s2snitch s1b s1s s2detach(s1cancel) s1cancel s1c s2begin s2detachfinal s1insertpart s2commit
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1b s1spart s2detachfinal s1c
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s2begin s2detachfinal s2commit
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s2begin s2detachfinal s1spart s2commit
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s2begin s2detachfinal s1insertpart s2commit
