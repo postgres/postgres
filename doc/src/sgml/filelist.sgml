@@ -88,6 +88,7 @@
 <!ENTITY spgist     SYSTEM "spgist.sgml">
 <!ENTITY gin        SYSTEM "gin.sgml">
 <!ENTITY brin       SYSTEM "brin.sgml">
+<!ENTITY hash       SYSTEM "hash.sgml">
 <!ENTITY planstats    SYSTEM "planstats.sgml">
 <!ENTITY tableam    SYSTEM "tableam.sgml">
 <!ENTITY indexam    SYSTEM "indexam.sgml">
