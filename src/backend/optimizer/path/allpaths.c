@@ -2794,8 +2794,8 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 			 * gather merge path for every subpath that has pathkeys present.
 			 *
 			 * But since the subpath is already sorted, we know we don't need
-			 * to consider adding a sort (other either kind) on top of it, so
-			 * we can continue here.
+			 * to consider adding a sort (full or incremental) on top of it,
+			 * so we can continue here.
 			 */
 			if (is_sorted)
 				continue;
