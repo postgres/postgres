@@ -284,16 +284,8 @@ typedef struct
  */
 typedef struct ConversionLocation
 {
-	Relation	rel;			/* foreign table's relcache entry. */
 	AttrNumber	cur_attno;		/* attribute number being processed, or 0 */
-
-	/*
-	 * In case of foreign join push down, fdw_scan_tlist is used to identify
-	 * the Var node corresponding to the error location and
-	 * fsstate->ss.ps.state gives access to the RTEs of corresponding relation
-	 * to get the relation name and attribute name.
-	 */
-	ForeignScanState *fsstate;
+	ForeignScanState *fsstate;	/* plan node being processed */
 } ConversionLocation;
 
 /* Callback argument for ec_member_matches_foreign */
@@ -6317,7 +6309,6 @@ make_tuple_from_result_row(PGresult *res,
 	/*
 	 * Set up and install callback to report where conversion error occurs.
 	 */
-	errpos.rel = rel;
 	errpos.cur_attno = 0;
 	errpos.fsstate = fsstate;
 	errcallback.callback = conversion_error_callback;
@@ -6420,34 +6411,32 @@ make_tuple_from_result_row(PGresult *res,
 /*
  * Callback function which is called when error occurs during column value
  * conversion.  Print names of column and relation.
+ *
+ * Note that this function mustn't do any catalog lookups, since we are in
+ * an already-failed transaction.  Fortunately, we can get the needed info
+ * from the query's rangetable instead.
  */
 static void
 conversion_error_callback(void *arg)
 {
+	ConversionLocation *errpos = (ConversionLocation *) arg;
+	ForeignScanState *fsstate = errpos->fsstate;
+	ForeignScan *fsplan = castNode(ForeignScan, fsstate->ss.ps.plan);
+	int			varno = 0;
+	AttrNumber	colno = 0;
 	const char *attname = NULL;
 	const char *relname = NULL;
 	bool		is_wholerow = false;
-	ConversionLocation *errpos = (ConversionLocation *) arg;
 
-	if (errpos->rel)
+	if (fsplan->scan.scanrelid > 0)
 	{
 		/* error occurred in a scan against a foreign table */
-		TupleDesc	tupdesc = RelationGetDescr(errpos->rel);
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, errpos->cur_attno - 1);
-
-		if (errpos->cur_attno > 0 && errpos->cur_attno <= tupdesc->natts)
-			attname = NameStr(attr->attname);
-		else if (errpos->cur_attno == SelfItemPointerAttributeNumber)
-			attname = "ctid";
-
-		relname = RelationGetRelationName(errpos->rel);
+		varno = fsplan->scan.scanrelid;
+		colno = errpos->cur_attno;
 	}
 	else
 	{
 		/* error occurred in a scan against a foreign join */
-		ForeignScanState *fsstate = errpos->fsstate;
-		ForeignScan *fsplan = castNode(ForeignScan, fsstate->ss.ps.plan);
-		EState	   *estate = fsstate->ss.ps.state;
 		TargetEntry *tle;
 
 		tle = list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
@@ -6455,35 +6444,40 @@ conversion_error_callback(void *arg)
 
 		/*
 		 * Target list can have Vars and expressions.  For Vars, we can get
-		 * its relation, however for expressions we can't.  Thus for
+		 * some information, however for expressions we can't.  Thus for
 		 * expressions, just show generic context message.
 		 */
 		if (IsA(tle->expr, Var))
 		{
-			RangeTblEntry *rte;
 			Var		   *var = (Var *) tle->expr;
 
-			rte = exec_rt_fetch(var->varno, estate);
-
-			if (var->varattno == 0)
-				is_wholerow = true;
-			else
-				attname = get_attname(rte->relid, var->varattno, false);
-
-			relname = get_rel_name(rte->relid);
+			varno = var->varno;
+			colno = var->varattno;
 		}
-		else
-			errcontext("processing expression at position %d in select list",
-					   errpos->cur_attno);
 	}
 
-	if (relname)
+	if (varno > 0)
 	{
-		if (is_wholerow)
-			errcontext("whole-row reference to foreign table \"%s\"", relname);
-		else if (attname)
-			errcontext("column \"%s\" of foreign table \"%s\"", attname, relname);
+		EState	   *estate = fsstate->ss.ps.state;
+		RangeTblEntry *rte = exec_rt_fetch(varno, estate);
+
+		relname = rte->eref->aliasname;
+
+		if (colno == 0)
+			is_wholerow = true;
+		else if (colno > 0 && colno <= list_length(rte->eref->colnames))
+			attname = strVal(list_nth(rte->eref->colnames, colno - 1));
+		else if (colno == SelfItemPointerAttributeNumber)
+			attname = "ctid";
 	}
+
+	if (relname && is_wholerow)
+		errcontext("whole-row reference to foreign table \"%s\"", relname);
+	else if (relname && attname)
+		errcontext("column \"%s\" of foreign table \"%s\"", attname, relname);
+	else
+		errcontext("processing expression at position %d in select list",
+				   errpos->cur_attno);
 }
 
 /*
