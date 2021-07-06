@@ -375,9 +375,29 @@ sub system_or_bail
 {
 	if (system_log(@_) != 0)
 	{
-		BAIL_OUT("system $_[0] failed");
+		if ($? == -1)
+		{
+			BAIL_OUT(
+				sprintf(
+					"failed to execute command \"%s\": $!", join(" ", @_)));
+		}
+		elsif ($? & 127)
+		{
+			BAIL_OUT(
+				sprintf(
+					"command \"%s\" died with signal %d",
+					join(" ", @_),
+					$? & 127));
+		}
+		else
+		{
+			BAIL_OUT(
+				sprintf(
+					"command \"%s\" exited with value %d",
+					join(" ", @_),
+					$? >> 8));
+		}
 	}
-	return;
 }
 
 =pod
