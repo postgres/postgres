@@ -7046,6 +7046,10 @@ is_projection_capable_path(Path *path)
 		case T_MergeAppend:
 		case T_RecursiveUnion:
 			return false;
+		case T_CustomScan:
+			if (castNode(CustomPath, path)->flags & CUSTOMPATH_SUPPORT_PROJECTION)
+				return true;
+			return false;
 		case T_Append:
 
 			/*
@@ -7091,6 +7095,10 @@ is_projection_capable_plan(Plan *plan)
 		case T_Append:
 		case T_MergeAppend:
 		case T_RecursiveUnion:
+			return false;
+		case T_CustomScan:
+			if (((CustomScan *) plan)->flags & CUSTOMPATH_SUPPORT_PROJECTION)
+				return true;
 			return false;
 		case T_ProjectSet:
 
