@@ -3319,6 +3319,7 @@ pgParameterStatus
 pg_atomic_flag
 pg_atomic_uint32
 pg_atomic_uint64
+pg_be_sasl_mech
 pg_checksum_context
 pg_checksum_raw_context
 pg_checksum_type
@@ -3334,6 +3335,7 @@ pg_enc
 pg_enc2gettext
 pg_enc2name
 pg_encname
+pg_fe_sasl_mech
 pg_funcptr_t
 pg_gssinfo
 pg_hmac_ctx

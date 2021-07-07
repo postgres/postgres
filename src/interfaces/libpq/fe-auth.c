@@ -41,6 +41,7 @@
 #include "common/md5.h"
 #include "common/scram-common.h"
 #include "fe-auth.h"
+#include "fe-auth-sasl.h"
 #include "libpq-fe.h"
 
 #ifdef ENABLE_GSS
@@ -482,7 +483,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 				 * channel_binding is not disabled.
 				 */
 				if (conn->channel_binding[0] != 'd')	/* disable */
+				{
 					selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
+					conn->sasl = &pg_scram_mech;
+				}
 #else
 				/*
 				 * The client does not support channel binding.  If it is
@@ -516,7 +520,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		}
 		else if (strcmp(mechanism_buf.data, SCRAM_SHA_256_NAME) == 0 &&
 				 !selected_mechanism)
+		{
 			selected_mechanism = SCRAM_SHA_256_NAME;
+			conn->sasl = &pg_scram_mech;
+		}
 	}
 
 	if (!selected_mechanism)
@@ -555,20 +562,22 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		goto error;
 	}
 
+	Assert(conn->sasl);
+
 	/*
 	 * Initialize the SASL state information with all the information gathered
 	 * during the initial exchange.
 	 *
 	 * Note: Only tls-unique is supported for the moment.
 	 */
-	conn->sasl_state = pg_fe_scram_init(conn,
+	conn->sasl_state = conn->sasl->init(conn,
 										password,
 										selected_mechanism);
 	if (!conn->sasl_state)
 		goto oom_error;
 
 	/* Get the mechanism-specific Initial Client Response, if any */
-	pg_fe_scram_exchange(conn->sasl_state,
+	conn->sasl->exchange(conn->sasl_state,
 						 NULL, -1,
 						 &initialresponse, &initialresponselen,
 						 &done, &success);
@@ -649,7 +658,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	/* For safety and convenience, ensure the buffer is NULL-terminated. */
 	challenge[payloadlen] = '\0';
 
-	pg_fe_scram_exchange(conn->sasl_state,
+	conn->sasl->exchange(conn->sasl_state,
 						 challenge, payloadlen,
 						 &output, &outputlen,
 						 &done, &success);
@@ -664,6 +673,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 							 libpq_gettext("AuthenticationSASLFinal received from server, but SASL authentication was not completed\n"));
 		return STATUS_ERROR;
 	}
+
 	if (outputlen != 0)
 	{
 		/*
@@ -830,7 +840,7 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 			case AUTH_REQ_SASL_FIN:
 				break;
 			case AUTH_REQ_OK:
-				if (!pg_fe_scram_channel_bound(conn->sasl_state))
+				if (!conn->sasl || !conn->sasl->channel_bound(conn->sasl_state))
 				{
 					appendPQExpBufferStr(&conn->errorMessage,
 										 libpq_gettext("channel binding required, but server authenticated client without channel binding\n"));

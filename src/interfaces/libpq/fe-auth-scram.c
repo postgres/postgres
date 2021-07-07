@@ -21,6 +21,22 @@
 #include "fe-auth.h"
 
 
+/* The exported SCRAM callback mechanism. */
+static void *scram_init(PGconn *conn, const char *password,
+						const char *sasl_mechanism);
+static void scram_exchange(void *opaq, char *input, int inputlen,
+						   char **output, int *outputlen,
+						   bool *done, bool *success);
+static bool scram_channel_bound(void *opaq);
+static void scram_free(void *opaq);
+
+const pg_fe_sasl_mech pg_scram_mech = {
+	scram_init,
+	scram_exchange,
+	scram_channel_bound,
+	scram_free
+};
+
 /*
  * Status of exchange messages used for SCRAM authentication via the
  * SASL protocol.
@@ -72,10 +88,10 @@ static bool calculate_client_proof(fe_scram_state *state,
 /*
  * Initialize SCRAM exchange status.
  */
-void *
-pg_fe_scram_init(PGconn *conn,
-				 const char *password,
-				 const char *sasl_mechanism)
+static void *
+scram_init(PGconn *conn,
+		   const char *password,
+		   const char *sasl_mechanism)
 {
 	fe_scram_state *state;
 	char	   *prep_password;
@@ -128,8 +144,8 @@ pg_fe_scram_init(PGconn *conn,
  * Note that the caller must also ensure that the exchange was actually
  * successful.
  */
-bool
-pg_fe_scram_channel_bound(void *opaq)
+static bool
+scram_channel_bound(void *opaq)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 
@@ -152,8 +168,8 @@ pg_fe_scram_channel_bound(void *opaq)
 /*
  * Free SCRAM exchange status
  */
-void
-pg_fe_scram_free(void *opaq)
+static void
+scram_free(void *opaq)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 
@@ -188,10 +204,10 @@ pg_fe_scram_free(void *opaq)
 /*
  * Exchange a SCRAM message with backend.
  */
-void
-pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
-					 char **output, int *outputlen,
-					 bool *done, bool *success)
+static void
+scram_exchange(void *opaq, char *input, int inputlen,
+			   char **output, int *outputlen,
+			   bool *done, bool *success)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 	PGconn	   *conn = state->conn;
