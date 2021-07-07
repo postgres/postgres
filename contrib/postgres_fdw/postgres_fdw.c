@@ -2370,7 +2370,9 @@ find_modifytable_subplan(PlannerInfo *root,
 		if (subplan_index < list_length(appendplan->appendplans))
 			subplan = (Plan *) list_nth(appendplan->appendplans, subplan_index);
 	}
-	else if (IsA(subplan, Result) && IsA(outerPlan(subplan), Append))
+	else if (IsA(subplan, Result) &&
+			 outerPlan(subplan) != NULL &&
+			 IsA(outerPlan(subplan), Append))
 	{
 		Append	   *appendplan = (Append *) outerPlan(subplan);
 

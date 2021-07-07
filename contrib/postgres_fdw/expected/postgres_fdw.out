@@ -6853,6 +6853,26 @@ DROP TRIGGER trig_row_before ON rem1;
 DROP TRIGGER trig_row_after ON rem1;
 DROP TRIGGER trig_local_before ON loc1;
 -- Test direct foreign table modification functionality
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+                 QUERY PLAN                  
+---------------------------------------------
+ Delete on public.rem1
+   ->  Foreign Delete on public.rem1
+         Remote SQL: DELETE FROM public.loc1
+(3 rows)
+
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1 WHERE false;     -- currently can't be pushed down
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Delete on public.rem1
+   Remote SQL: DELETE FROM public.loc1 WHERE ctid = $1
+   ->  Result
+         Output: ctid
+         One-Time Filter: false
+(5 rows)
+
 -- Test with statement-level triggers
 CREATE TRIGGER trig_stmt_before
 	BEFORE DELETE OR INSERT OR UPDATE ON rem1

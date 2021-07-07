@@ -1738,6 +1738,10 @@ DROP TRIGGER trig_local_before ON loc1;
 
 
 -- Test direct foreign table modification functionality
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1;                 -- can be pushed down
+EXPLAIN (verbose, costs off)
+DELETE FROM rem1 WHERE false;     -- currently can't be pushed down
 
 -- Test with statement-level triggers
 CREATE TRIGGER trig_stmt_before
