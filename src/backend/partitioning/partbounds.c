@@ -3878,6 +3878,7 @@ make_partition_op_expr(PartitionKey key, int keynum,
 					saopexpr->opno = operoid;
 					saopexpr->opfuncid = get_opcode(operoid);
 					saopexpr->hashfuncid = InvalidOid;
+					saopexpr->negfuncid = InvalidOid;
 					saopexpr->useOr = true;
 					saopexpr->inputcollid = key->partcollation[keynum];
 					saopexpr->args = list_make2(arg1, arrexpr);

@@ -580,10 +580,18 @@ typedef OpExpr NullIfExpr;
  * the result type (or the collation) because it must be boolean.
  *
  * A ScalarArrayOpExpr with a valid hashfuncid is evaluated during execution
- * by building a hash table containing the Const values from the rhs arg.
- * This table is probed during expression evaluation.  Only useOr=true
- * ScalarArrayOpExpr with Const arrays on the rhs can have the hashfuncid
- * field set. See convert_saop_to_hashed_saop().
+ * by building a hash table containing the Const values from the RHS arg.
+ * This table is probed during expression evaluation.  The planner will set
+ * hashfuncid to the hash function which must be used to build and probe the
+ * hash table.  The executor determines if it should use hash-based checks or
+ * the more traditional means based on if the hashfuncid is set or not.
+ *
+ * When performing hashed NOT IN, the negfuncid will also be set to the
+ * equality function which the hash table must use to build and probe the hash
+ * table.  opno and opfuncid will remain set to the <> operator and its
+ * corresponding function and won't be used during execution.  For
+ * non-hashtable based NOT INs, negfuncid will be set to InvalidOid.  See
+ * convert_saop_to_hashed_saop().
  */
 typedef struct ScalarArrayOpExpr
 {
@@ -591,6 +599,8 @@ typedef struct ScalarArrayOpExpr
 	Oid			opno;			/* PG_OPERATOR OID of the operator */
 	Oid			opfuncid;		/* PG_PROC OID of comparison function */
 	Oid			hashfuncid;		/* PG_PROC OID of hash func or InvalidOid */
+	Oid			negfuncid;		/* PG_PROC OID of negator of opfuncid function
+								 * or InvalidOid.  See above */
 	bool		useOr;			/* true for ANY, false for ALL */
 	Oid			inputcollid;	/* OID of collation that operator should use */
 	List	   *args;			/* the scalar and array operands */

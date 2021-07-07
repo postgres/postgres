@@ -1205,19 +1205,34 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				AclResult	aclresult;
 				FmgrInfo   *hash_finfo;
 				FunctionCallInfo hash_fcinfo;
+				Oid			cmpfuncid;
+
+				/*
+				 * Select the correct comparison function.  When we do hashed
+				 * NOT IN clauses, the opfuncid will be the inequality
+				 * comparison function and negfuncid will be set to equality.
+				 * We need to use the equality function for hash probes.
+				 */
+				if (OidIsValid(opexpr->negfuncid))
+				{
+					Assert(OidIsValid(opexpr->hashfuncid));
+					cmpfuncid = opexpr->negfuncid;
+				}
+				else
+					cmpfuncid = opexpr->opfuncid;
 
 				Assert(list_length(opexpr->args) == 2);
 				scalararg = (Expr *) linitial(opexpr->args);
 				arrayarg = (Expr *) lsecond(opexpr->args);
 
 				/* Check permission to call function */
-				aclresult = pg_proc_aclcheck(opexpr->opfuncid,
+				aclresult = pg_proc_aclcheck(cmpfuncid,
 											 GetUserId(),
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
-								   get_func_name(opexpr->opfuncid));
-				InvokeFunctionExecuteHook(opexpr->opfuncid);
+								   get_func_name(cmpfuncid));
+				InvokeFunctionExecuteHook(cmpfuncid);
 
 				if (OidIsValid(opexpr->hashfuncid))
 				{
@@ -1233,7 +1248,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* Set up the primary fmgr lookup information */
 				finfo = palloc0(sizeof(FmgrInfo));
 				fcinfo = palloc0(SizeForFunctionCallInfo(2));
-				fmgr_info(opexpr->opfuncid, finfo);
+				fmgr_info(cmpfuncid, finfo);
 				fmgr_info_set_expr((Node *) node, finfo);
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
 										 opexpr->inputcollid, NULL, NULL);
@@ -1274,6 +1289,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 					/* And perform the operation */
 					scratch.opcode = EEOP_HASHED_SCALARARRAYOP;
+					scratch.d.hashedscalararrayop.inclause = opexpr->useOr;
 					scratch.d.hashedscalararrayop.finfo = finfo;
 					scratch.d.hashedscalararrayop.fcinfo_data = fcinfo;
 					scratch.d.hashedscalararrayop.fn_addr = finfo->fn_addr;

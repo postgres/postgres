@@ -3493,6 +3493,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 {
 	ScalarArrayOpExprHashTable *elements_tab = op->d.hashedscalararrayop.elements_tab;
 	FunctionCallInfo fcinfo = op->d.hashedscalararrayop.fcinfo_data;
+	bool		inclause = op->d.hashedscalararrayop.inclause;
 	bool		strictfunc = op->d.hashedscalararrayop.finfo->fn_strict;
 	Datum		scalar = fcinfo->args[0].value;
 	bool		scalar_isnull = fcinfo->args[0].isnull;
@@ -3596,7 +3597,12 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 	/* Check the hash to see if we have a match. */
 	hashfound = NULL != saophash_lookup(elements_tab->hashtab, scalar);
 
-	result = BoolGetDatum(hashfound);
+	/* the result depends on if the clause is an IN or NOT IN clause */
+	if (inclause)
+		result = BoolGetDatum(hashfound);	/* IN */
+	else
+		result = BoolGetDatum(!hashfound);	/* NOT IN */
+
 	resultnull = false;
 
 	/*
@@ -3605,7 +3611,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 	 * hashtable, but instead marked if we found any when building the table
 	 * in has_nulls.
 	 */
-	if (!DatumGetBool(result) && op->d.hashedscalararrayop.has_nulls)
+	if (!hashfound && op->d.hashedscalararrayop.has_nulls)
 	{
 		if (strictfunc)
 		{
@@ -3633,6 +3639,13 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 
 			result = op->d.hashedscalararrayop.fn_addr(fcinfo);
 			resultnull = fcinfo->isnull;
+
+			/*
+			 * Reverse the result for NOT IN clauses since the above function
+			 * is the equality function and we need not-equals.
+			 */
+			if (!inclause)
+				result = !result;
 		}
 	}
 
