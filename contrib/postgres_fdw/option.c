@@ -20,6 +20,7 @@
 #include "commands/extension.h"
 #include "postgres_fdw.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/varlena.h"
 
 /*
@@ -119,14 +120,23 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 				 strcmp(def->defname, "fdw_tuple_cost") == 0)
 		{
 			/* these must have a non-negative numeric value */
-			double		val;
-			char	   *endp;
+			char	   *value;
+			double		real_val;
+			bool		is_parsed;
 
-			val = strtod(defGetString(def), &endp);
-			if (*endp || val < 0)
+			value = defGetString(def);
+			is_parsed = parse_real(value, &real_val, 0, NULL);
+
+			if (!is_parsed)
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("%s requires a non-negative numeric value",
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid value for floating point option \"%s\": %s",
+								def->defname, value)));
+
+			if (real_val < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("\"%s\" requires a non-negative floating point value",
 								def->defname)));
 		}
 		else if (strcmp(def->defname, "extensions") == 0)
@@ -134,26 +144,26 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			/* check list syntax, warn about uninstalled extensions */
 			(void) ExtractExtensionList(defGetString(def), true);
 		}
-		else if (strcmp(def->defname, "fetch_size") == 0)
+		else if (strcmp(def->defname, "fetch_size") == 0 ||
+				 strcmp(def->defname, "batch_size") == 0)
 		{
-			int			fetch_size;
+			char	   *value;
+			int			int_val;
+			bool		is_parsed;
 
-			fetch_size = strtol(defGetString(def), NULL, 10);
-			if (fetch_size <= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("%s requires a non-negative integer value",
-								def->defname)));
-		}
-		else if (strcmp(def->defname, "batch_size") == 0)
-		{
-			int			batch_size;
+			value = defGetString(def);
+			is_parsed = parse_int(value, &int_val, 0, NULL);
 
-			batch_size = strtol(defGetString(def), NULL, 10);
-			if (batch_size <= 0)
+			if (!is_parsed)
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("%s requires a non-negative integer value",
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid value for integer option \"%s\": %s",
+								def->defname, value)));
+
+			if (int_val <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("\"%s\" requires a non-negative integer value",
 								def->defname)));
 		}
 		else if (strcmp(def->defname, "password_required") == 0)

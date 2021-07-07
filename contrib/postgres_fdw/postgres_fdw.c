@@ -5024,7 +5024,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 			if (strcmp(def->defname, "fetch_size") == 0)
 			{
-				fetch_size = strtol(defGetString(def), NULL, 10);
+				(void) parse_int(defGetString(def), &fetch_size, 0, NULL);
 				break;
 			}
 		}
@@ -5034,7 +5034,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 			if (strcmp(def->defname, "fetch_size") == 0)
 			{
-				fetch_size = strtol(defGetString(def), NULL, 10);
+				(void) parse_int(defGetString(def), &fetch_size, 0, NULL);
 				break;
 			}
 		}
@@ -5801,14 +5801,16 @@ apply_server_options(PgFdwRelationInfo *fpinfo)
 		if (strcmp(def->defname, "use_remote_estimate") == 0)
 			fpinfo->use_remote_estimate = defGetBoolean(def);
 		else if (strcmp(def->defname, "fdw_startup_cost") == 0)
-			fpinfo->fdw_startup_cost = strtod(defGetString(def), NULL);
+			(void) parse_real(defGetString(def), &fpinfo->fdw_startup_cost, 0,
+							  NULL);
 		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
-			fpinfo->fdw_tuple_cost = strtod(defGetString(def), NULL);
+			(void) parse_real(defGetString(def), &fpinfo->fdw_tuple_cost, 0,
+							  NULL);
 		else if (strcmp(def->defname, "extensions") == 0)
 			fpinfo->shippable_extensions =
 				ExtractExtensionList(defGetString(def), false);
 		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
+			(void) parse_int(defGetString(def), &fpinfo->fetch_size, 0, NULL);
 		else if (strcmp(def->defname, "async_capable") == 0)
 			fpinfo->async_capable = defGetBoolean(def);
 	}
@@ -5831,7 +5833,7 @@ apply_table_options(PgFdwRelationInfo *fpinfo)
 		if (strcmp(def->defname, "use_remote_estimate") == 0)
 			fpinfo->use_remote_estimate = defGetBoolean(def);
 		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
+			(void) parse_int(defGetString(def), &fpinfo->fetch_size, 0, NULL);
 		else if (strcmp(def->defname, "async_capable") == 0)
 			fpinfo->async_capable = defGetBoolean(def);
 	}
@@ -7341,7 +7343,7 @@ get_batch_size_option(Relation rel)
 
 		if (strcmp(def->defname, "batch_size") == 0)
 		{
-			batch_size = strtol(defGetString(def), NULL, 10);
+			(void) parse_int(defGetString(def), &batch_size, 0, NULL);
 			break;
 		}
 	}
