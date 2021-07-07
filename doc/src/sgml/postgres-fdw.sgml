@@ -266,11 +266,11 @@ OPTIONS (ADD password_required 'false');
      <term><literal>fdw_startup_cost</literal> (<type>floating point</type>)</term>
      <listitem>
       <para>
-       This option, which can be specified for a foreign server, is a numeric
-       value that is added to the estimated startup cost of any foreign-table
-       scan on that server.  This represents the additional overhead of
-       establishing a connection, parsing and planning the query on the
-       remote side, etc.
+       This option, which can be specified for a foreign server, is a floating
+       point value that is added to the estimated startup cost of any
+       foreign-table scan on that server.  This represents the additional
+       overhead of establishing a connection, parsing and planning the query on
+       the remote side, etc.
        The default value is <literal>100</literal>.
       </para>
      </listitem>
@@ -280,8 +280,8 @@ OPTIONS (ADD password_required 'false');
      <term><literal>fdw_tuple_cost</literal> (<type>floating point</type>)</term>
      <listitem>
       <para>
-       This option, which can be specified for a foreign server, is a numeric
-       value that is used as extra cost per-tuple for foreign-table
+       This option, which can be specified for a foreign server, is a floating
+       point value that is used as extra cost per-tuple for foreign-table
        scans on that server.  This represents the additional overhead of
        data transfer between servers.  You might increase or decrease this
        number to reflect higher or lower network delay to the remote server.
