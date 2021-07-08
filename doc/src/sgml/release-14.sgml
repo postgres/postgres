@@ -1374,35 +1374,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
       <listitem>
 <!--
-Author: Fujii Masao <fujii@postgresql.org>
-2020-08-19 [3e98c0baf] Add pg_backend_memory_contexts system view.
-Author: Fujii Masao <fujii@postgresql.org>
-2020-08-26 [29dd6d8bc] Prevent non-superusers from reading pg_backend_memory_co
--->
-
-       <para>
-        Add system view <link
-        linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link>
-        to report session memory usage (Atsushi Torikoshi, Fujii Masao)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2021-04-06 [43620e328] Add function to log the memory contexts of specified bac
--->
-
-       <para>
-        Add function <link
-        linkend="functions-admin-signal"><function>pg_log_backend_memory_contexts()</function></link>
-        to output the memory contexts of arbitrary backends (Atsushi
-        Torikoshi)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Stephen Frost <sfrost@snowman.net>
 2021-03-16 [94d13d474] Improve logging of auto-vacuum and auto-analyze
 -->
@@ -1454,6 +1425,35 @@ Author: Michael Paquier <michael@paquier.xyz>
         linkend="copy-progress-reporting"><structname>pg_stat_progress_copy</structname></link>
         to report <command>COPY</command> progress (Josef Šimánek,
         Matthias van de Meent)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2020-08-19 [3e98c0baf] Add pg_backend_memory_contexts system view.
+Author: Fujii Masao <fujii@postgresql.org>
+2020-08-26 [29dd6d8bc] Prevent non-superusers from reading pg_backend_memory_co
+-->
+
+       <para>
+        Add system view <link
+        linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link>
+        to report session memory usage (Atsushi Torikoshi, Fujii Masao)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2021-04-06 [43620e328] Add function to log the memory contexts of specified bac
+-->
+
+       <para>
+        Add function <link
+        linkend="functions-admin-signal"><function>pg_log_backend_memory_contexts()</function></link>
+        to output the memory contexts of arbitrary backends (Atsushi
+        Torikoshi)
        </para>
       </listitem>
 
