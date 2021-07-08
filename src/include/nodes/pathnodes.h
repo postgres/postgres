@@ -1350,7 +1350,7 @@ typedef struct TidPath
 } TidPath;
 
 /*
- * TidRangePath represents a scan by a continguous range of TIDs
+ * TidRangePath represents a scan by a contiguous range of TIDs
  *
  * tidrangequals is an implicitly AND'ed list of qual expressions of the form
  * "CTID relop pseudoconstant", where relop is one of >,>=,<,<=.

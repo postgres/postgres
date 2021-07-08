@@ -134,7 +134,7 @@ PgStat_MsgWal WalStats;
 /*
  * WAL usage counters saved from pgWALUsage at the previous call to
  * pgstat_send_wal(). This is used to calculate how much WAL usage
- * happens between pgstat_send_wal() calls, by substracting
+ * happens between pgstat_send_wal() calls, by subtracting
  * the previous counters from the current ones.
  */
 static WalUsage prevWalUsage;
@@ -2929,7 +2929,7 @@ pgstat_initialize(void)
 {
 	/*
 	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
-	 * calculate how much pgWalUsage counters are increased by substracting
+	 * calculate how much pgWalUsage counters are increased by subtracting
 	 * prevWalUsage from pgWalUsage.
 	 */
 	prevWalUsage = pgWalUsage;
@@ -3105,7 +3105,7 @@ pgstat_send_wal(bool force)
 
 		/*
 		 * Calculate how much WAL usage counters were increased by
-		 * substracting the previous counters from the current ones. Fill the
+		 * subtracting the previous counters from the current ones. Fill the
 		 * results in WAL stats message.
 		 */
 		MemSet(&walusage, 0, sizeof(WalUsage));

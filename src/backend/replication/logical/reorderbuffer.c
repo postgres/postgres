@@ -1545,7 +1545,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * streaming or decoding them at PREPARE. Keep the remaining info -
  * transactions, tuplecids, invalidations and snapshots.
  *
- * We additionaly remove tuplecids after decoding the transaction at prepare
+ * We additionally remove tuplecids after decoding the transaction at prepare
  * time as we only need to perform invalidation at rollback or commit prepared.
  *
  * 'txn_prepared' indicates that we have decoded the transaction at prepare
