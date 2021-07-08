@@ -1421,10 +1421,53 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
        <para>
-        Add view <link
+        Add system view <link
         linkend="copy-progress-reporting"><structname>pg_stat_progress_copy</structname></link>
         to report <command>COPY</command> progress (Josef Šimánek,
         Matthias van de Meent)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2020-10-02 [8d9a93596] Add pg_stat_wal statistics view.
+Author: Fujii Masao <fujii@postgresql.org>
+2020-12-02 [01469241b] Track total number of WAL records, FPIs and bytes genera
+Author: Fujii Masao <fujii@postgresql.org>
+2021-03-09 [ff99918c6] Track total amounts of times spent writing and syncing W
+-->
+
+       <para>
+        Add system view <link
+        linkend="monitoring-pg-stat-wal-view"><structname>pg_stat_wal</structname></link>
+        which reports <acronym>WAL</acronym> activity (Masahiro Ikeda)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2020-10-08 [986816750] Track statistics for spilling of changes from ReorderBuf
+Author: Amit Kapila <akapila@postgresql.org>
+2020-10-20 [03d51b776] Change the attribute name in pg_stat_replication_slots v
+Author: Amit Kapila <akapila@postgresql.org>
+2020-10-29 [8e90ec558] Track statistics for streaming of changes from ReorderBu
+Author: Amit Kapila <akapila@postgresql.org>
+2021-04-16 [f5fc2f5b2] Add information of total data processed to replication s
+-->
+
+       <para>
+        Add system view <link
+        linkend="monitoring-pg-stat-replication-slots-view"><structname>pg_stat_replication_slots</structname></link>
+        to report replication slot activity (Sawada Masahiko, Amit Kapila,
+        Vignesh C)
+       </para>
+
+       <para>
+        The function <link
+        linkend="monitoring-stats-functions"><function>pg_stat_reset_replication_slot()</function></link>
+        resets slot statistics.
        </para>
       </listitem>
 
@@ -1494,49 +1537,6 @@ Author: Fujii Masao <fujii@postgresql.org>
         Add lock wait start time to <link
         linkend="view-pg-locks"><structname>pg_locks</structname></link>
         (Atsushi Torikoshi)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2020-10-02 [8d9a93596] Add pg_stat_wal statistics view.
-Author: Fujii Masao <fujii@postgresql.org>
-2020-12-02 [01469241b] Track total number of WAL records, FPIs and bytes genera
-Author: Fujii Masao <fujii@postgresql.org>
-2021-03-09 [ff99918c6] Track total amounts of times spent writing and syncing W
--->
-
-       <para>
-        Add system view <link
-        linkend="monitoring-pg-stat-wal-view"><structname>pg_stat_wal</structname></link>
-        which reports <acronym>WAL</acronym> activity (Masahiro Ikeda)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Amit Kapila <akapila@postgresql.org>
-2020-10-08 [986816750] Track statistics for spilling of changes from ReorderBuf
-Author: Amit Kapila <akapila@postgresql.org>
-2020-10-20 [03d51b776] Change the attribute name in pg_stat_replication_slots v
-Author: Amit Kapila <akapila@postgresql.org>
-2020-10-29 [8e90ec558] Track statistics for streaming of changes from ReorderBu
-Author: Amit Kapila <akapila@postgresql.org>
-2021-04-16 [f5fc2f5b2] Add information of total data processed to replication s
--->
-
-       <para>
-        Add system view <link
-        linkend="monitoring-pg-stat-replication-slots-view"><structname>pg_stat_replication_slots</structname></link>
-        to report replication slot activity (Sawada Masahiko, Amit Kapila,
-        Vignesh C)
-       </para>
-
-       <para>
-        The function <link
-        linkend="monitoring-stats-functions"><function>pg_stat_reset_replication_slot()</function></link>
-        resets slot statistics.
        </para>
       </listitem>
 
