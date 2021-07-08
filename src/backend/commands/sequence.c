@@ -1680,8 +1680,9 @@ process_owned_by(Relation seqrel, List *owned_by, bool for_identity)
 			  tablerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("referenced relation \"%s\" is not a table or foreign table",
-							RelationGetRelationName(tablerel))));
+					 errmsg("sequence cannot be owned by relation \"%s\"",
+							RelationGetRelationName(tablerel)),
+					 errdetail_relkind_not_supported(tablerel->rd_rel->relkind)));
 
 		/* We insist on same owner and schema */
 		if (seqrel->rd_rel->relowner != tablerel->rd_rel->relowner)

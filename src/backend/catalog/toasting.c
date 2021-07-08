@@ -99,10 +99,8 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_MATVIEW)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table or materialized view",
-						relName)));
+		elog(ERROR, "\"%s\" is not a table or materialized view",
+			 relName);
 
 	/* create_toast_table does all the work */
 	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,

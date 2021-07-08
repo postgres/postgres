@@ -155,32 +155,12 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
-	/* Check that this relation has storage */
-	if (rel->rd_rel->relkind == RELKIND_VIEW)
+	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot get raw page from view \"%s\"",
-						RelationGetRelationName(rel))));
-	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot get raw page from composite type \"%s\"",
-						RelationGetRelationName(rel))));
-	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot get raw page from foreign table \"%s\"",
-						RelationGetRelationName(rel))));
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot get raw page from partitioned table \"%s\"",
-						RelationGetRelationName(rel))));
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot get raw page from partitioned index \"%s\"",
-						RelationGetRelationName(rel))));
+				 errmsg("cannot get raw page from relation \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be

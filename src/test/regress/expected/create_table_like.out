@@ -504,9 +504,10 @@ DROP TABLE noinh_con_copy, noinh_con_copy1;
 CREATE TABLE ctlt4 (a int, b text);
 CREATE SEQUENCE ctlseq1;
 CREATE TABLE ctlt10 (LIKE ctlseq1);  -- fail
-ERROR:  "ctlseq1" is not a table, view, materialized view, composite type, or foreign table
+ERROR:  relation "ctlseq1" is invalid in LIKE clause
 LINE 1: CREATE TABLE ctlt10 (LIKE ctlseq1);
                                   ^
+DETAIL:  This operation is not supported for sequences.
 CREATE VIEW ctlv1 AS SELECT * FROM ctlt4;
 CREATE TABLE ctlt11 (LIKE ctlv1);
 CREATE TABLE ctlt11a (LIKE ctlv1 INCLUDING ALL);

@@ -37,7 +37,6 @@ static int32 tidcmp(const void *a, const void *b);
 static Datum heap_force_common(FunctionCallInfo fcinfo,
 							   HeapTupleForceOption heap_force_opt);
 static void sanity_check_tid_array(ArrayType *ta, int *ntids);
-static void sanity_check_relation(Relation rel);
 static BlockNumber find_tids_one_page(ItemPointer tids, int ntids,
 									  OffsetNumber *next_start_ptr);
 
@@ -101,8 +100,28 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 
 	rel = relation_open(relid, RowExclusiveLock);
 
-	/* Check target relation. */
-	sanity_check_relation(rel);
+	/*
+	 * Check target relation.
+	 */
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot operate on relation \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
+
+	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("only heap AM is supported")));
+
+	/* Must be owner of the table or superuser. */
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER,
+					   get_relkind_objtype(rel->rd_rel->relkind),
+					   RelationGetRelationName(rel));
 
 	tids = ((ItemPointer) ARR_DATA_PTR(ta));
 
@@ -361,35 +380,6 @@ sanity_check_tid_array(ArrayType *ta, int *ntids)
 				 errmsg("argument must be empty or one-dimensional array")));
 
 	*ntids = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
-}
-
-/*-------------------------------------------------------------------------
- * sanity_check_relation()
- *
- * Perform sanity checks on the given relation.
- * ------------------------------------------------------------------------
- */
-static void
-sanity_check_relation(Relation rel)
-{
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, materialized view, or TOAST table",
-						RelationGetRelationName(rel))));
-
-	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("only heap AM is supported")));
-
-	/* Must be owner of the table or superuser. */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER,
-					   get_relkind_objtype(rel->rd_rel->relkind),
-					   RelationGetRelationName(rel));
 }
 
 /*-------------------------------------------------------------------------

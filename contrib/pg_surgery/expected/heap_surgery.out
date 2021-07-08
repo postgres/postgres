@@ -170,9 +170,11 @@ rollback;
 -- check that it fails on an unsupported relkind
 create view vw as select 1;
 select heap_force_kill('vw'::regclass, ARRAY['(0, 1)']::tid[]);
-ERROR:  "vw" is not a table, materialized view, or TOAST table
+ERROR:  cannot operate on relation "vw"
+DETAIL:  This operation is not supported for views.
 select heap_force_freeze('vw'::regclass, ARRAY['(0, 1)']::tid[]);
-ERROR:  "vw" is not a table, materialized view, or TOAST table
+ERROR:  cannot operate on relation "vw"
+DETAIL:  This operation is not supported for views.
 -- cleanup.
 drop view vw;
 drop extension pg_surgery;

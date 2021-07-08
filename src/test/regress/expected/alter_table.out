@@ -1087,9 +1087,11 @@ ERROR:  column "bar" of relation "atacc1" does not exist
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 alter table myview alter column test drop not null;
-ERROR:  "myview" is not a table or foreign table
+ERROR:  ALTER action ALTER COLUMN ... DROP NOT NULL cannot be performed on relation "myview"
+DETAIL:  This operation is not supported for views.
 alter table myview alter column test set not null;
-ERROR:  "myview" is not a table or foreign table
+ERROR:  ALTER action ALTER COLUMN ... SET NOT NULL cannot be performed on relation "myview"
+DETAIL:  This operation is not supported for views.
 drop view myview;
 drop table atacc1;
 -- set not null verified by constraints
@@ -1387,7 +1389,8 @@ select * from myview;
 (0 rows)
 
 alter table myview drop d;
-ERROR:  "myview" is not a table, composite type, or foreign table
+ERROR:  ALTER action DROP COLUMN cannot be performed on relation "myview"
+DETAIL:  This operation is not supported for views.
 drop view myview;
 -- test some commands to make sure they fail on the dropped column
 analyze atacc1(a);

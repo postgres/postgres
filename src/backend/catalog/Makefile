@@ -26,6 +26,7 @@ OBJS = \
 	partition.o \
 	pg_aggregate.o \
 	pg_cast.o \
+	pg_class.o \
 	pg_collation.o \
 	pg_constraint.o \
 	pg_conversion.o \

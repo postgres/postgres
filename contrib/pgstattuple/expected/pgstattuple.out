@@ -155,13 +155,17 @@ create table test_partitioned (a int) partition by range (a);
 create index test_partitioned_index on test_partitioned(a);
 -- these should all fail
 select pgstattuple('test_partitioned');
-ERROR:  "test_partitioned" (partitioned table) is not supported
+ERROR:  cannot get tuple-level statistics for relation "test_partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
 select pgstattuple('test_partitioned_index');
-ERROR:  "test_partitioned_index" (partitioned index) is not supported
+ERROR:  cannot get tuple-level statistics for relation "test_partitioned_index"
+DETAIL:  This operation is not supported for partitioned indexes.
 select pgstattuple_approx('test_partitioned');
-ERROR:  "test_partitioned" is not a table, materialized view, or TOAST table
+ERROR:  relation "test_partitioned" is of wrong relation kind
+DETAIL:  This operation is not supported for partitioned tables.
 select pg_relpages('test_partitioned');
-ERROR:  "test_partitioned" is not a table, index, materialized view, sequence, or TOAST table
+ERROR:  cannot get page count of relation "test_partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
 select pgstatindex('test_partitioned');
 ERROR:  relation "test_partitioned" is not a btree index
 select pgstatginindex('test_partitioned');
@@ -171,11 +175,14 @@ ERROR:  "test_partitioned" is not an index
 create view test_view as select 1;
 -- these should all fail
 select pgstattuple('test_view');
-ERROR:  "test_view" (view) is not supported
+ERROR:  cannot get tuple-level statistics for relation "test_view"
+DETAIL:  This operation is not supported for views.
 select pgstattuple_approx('test_view');
-ERROR:  "test_view" is not a table, materialized view, or TOAST table
+ERROR:  relation "test_view" is of wrong relation kind
+DETAIL:  This operation is not supported for views.
 select pg_relpages('test_view');
-ERROR:  "test_view" is not a table, index, materialized view, sequence, or TOAST table
+ERROR:  cannot get page count of relation "test_view"
+DETAIL:  This operation is not supported for views.
 select pgstatindex('test_view');
 ERROR:  relation "test_view" is not a btree index
 select pgstatginindex('test_view');
@@ -187,11 +194,14 @@ create server dummy_server foreign data wrapper dummy;
 create foreign table test_foreign_table () server dummy_server;
 -- these should all fail
 select pgstattuple('test_foreign_table');
-ERROR:  "test_foreign_table" (foreign table) is not supported
+ERROR:  cannot get tuple-level statistics for relation "test_foreign_table"
+DETAIL:  This operation is not supported for foreign tables.
 select pgstattuple_approx('test_foreign_table');
-ERROR:  "test_foreign_table" is not a table, materialized view, or TOAST table
+ERROR:  relation "test_foreign_table" is of wrong relation kind
+DETAIL:  This operation is not supported for foreign tables.
 select pg_relpages('test_foreign_table');
-ERROR:  "test_foreign_table" is not a table, index, materialized view, sequence, or TOAST table
+ERROR:  cannot get page count of relation "test_foreign_table"
+DETAIL:  This operation is not supported for foreign tables.
 select pgstatindex('test_foreign_table');
 ERROR:  relation "test_foreign_table" is not a btree index
 select pgstatginindex('test_foreign_table');

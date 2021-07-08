@@ -21,7 +21,8 @@ CREATE SEQUENCE sequence_testx OWNED BY nobody;  -- nonsense word
 ERROR:  invalid OWNED BY option
 HINT:  Specify OWNED BY table.column or OWNED BY NONE.
 CREATE SEQUENCE sequence_testx OWNED BY pg_class_oid_index.oid;  -- not a table
-ERROR:  referenced relation "pg_class_oid_index" is not a table or foreign table
+ERROR:  sequence cannot be owned by relation "pg_class_oid_index"
+DETAIL:  This operation is not supported for indexes.
 CREATE SEQUENCE sequence_testx OWNED BY pg_class.relname;  -- not same schema
 ERROR:  sequence must be in same schema as table it is linked to
 CREATE TABLE sequence_test_table (a int);

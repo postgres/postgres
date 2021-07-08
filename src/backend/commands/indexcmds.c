@@ -650,22 +650,12 @@ DefineIndex(Oid relationId,
 		case RELKIND_PARTITIONED_TABLE:
 			/* OK */
 			break;
-		case RELKIND_FOREIGN_TABLE:
-
-			/*
-			 * Custom error message for FOREIGN TABLE since the term is close
-			 * to a regular table and can confuse the user.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot create index on foreign table \"%s\"",
-							RelationGetRelationName(rel))));
-			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table or materialized view",
-							RelationGetRelationName(rel))));
+					 errmsg("cannot create index on relation \"%s\"",
+							RelationGetRelationName(rel)),
+					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 			break;
 	}
 

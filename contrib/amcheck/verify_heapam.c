@@ -147,7 +147,6 @@ typedef struct HeapCheckContext
 } HeapCheckContext;
 
 /* Internal implementation */
-static void sanity_check_relation(Relation rel);
 static void check_tuple(HeapCheckContext *ctx);
 static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 							  ToastedAttribute *ta, int32 *expected_chunk_seq,
@@ -300,7 +299,23 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 	/* Open relation, check relkind and access method */
 	ctx.rel = relation_open(relid, AccessShareLock);
-	sanity_check_relation(ctx.rel);
+
+	/*
+	 * Check that a relation's relkind and access method are both supported.
+	 */
+	if (ctx.rel->rd_rel->relkind != RELKIND_RELATION &&
+		ctx.rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		ctx.rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot check relation \"%s\"",
+						RelationGetRelationName(ctx.rel)),
+				 errdetail_relkind_not_supported(ctx.rel->rd_rel->relkind)));
+
+	if (ctx.rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("only heap AM is supported")));
 
 	/* Early exit if the relation is empty */
 	nblocks = RelationGetNumberOfBlocks(ctx.rel);
@@ -521,25 +536,6 @@ verify_heapam(PG_FUNCTION_ARGS)
 	relation_close(ctx.rel, AccessShareLock);
 
 	PG_RETURN_NULL();
-}
-
-/*
- * Check that a relation's relkind and access method are both supported.
- */
-static void
-sanity_check_relation(Relation rel)
-{
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, materialized view, or TOAST table",
-						RelationGetRelationName(rel))));
-	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("only heap AM is supported")));
 }
 
 /*

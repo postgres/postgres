@@ -98,8 +98,9 @@ CommentObject(CommentStmt *stmt)
 				relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a table, view, materialized view, composite type, or foreign table",
-								RelationGetRelationName(relation))));
+						 errmsg("cannot set comment on relation \"%s\"",
+								RelationGetRelationName(relation)),
+						 errdetail_relkind_not_supported(relation->rd_rel->relkind)));
 			break;
 		default:
 			break;

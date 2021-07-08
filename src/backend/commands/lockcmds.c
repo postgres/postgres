@@ -89,8 +89,9 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 		relkind != RELKIND_VIEW)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table or view",
-						rv->relname)));
+				 errmsg("cannot lock relation \"%s\"",
+						rv->relname),
+				 errdetail_relkind_not_supported(relkind)));
 
 	/*
 	 * Make note if a temporary relation has been accessed in this

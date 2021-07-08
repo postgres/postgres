@@ -211,14 +211,18 @@ CREATE TABLE tststats.pt (a int, b int, c text) PARTITION BY RANGE (a, b);
 CREATE TABLE tststats.pt1 PARTITION OF tststats.pt FOR VALUES FROM (-10, -10) TO (10, 10);
 CREATE STATISTICS tststats.s1 ON a, b FROM tststats.t;
 CREATE STATISTICS tststats.s2 ON a, b FROM tststats.ti;
-ERROR:  relation "ti" is not a table, foreign table, or materialized view
+ERROR:  cannot define statistics for relation "ti"
+DETAIL:  This operation is not supported for indexes.
 CREATE STATISTICS tststats.s3 ON a, b FROM tststats.s;
-ERROR:  relation "s" is not a table, foreign table, or materialized view
+ERROR:  cannot define statistics for relation "s"
+DETAIL:  This operation is not supported for sequences.
 CREATE STATISTICS tststats.s4 ON a, b FROM tststats.v;
-ERROR:  relation "v" is not a table, foreign table, or materialized view
+ERROR:  cannot define statistics for relation "v"
+DETAIL:  This operation is not supported for views.
 CREATE STATISTICS tststats.s5 ON a, b FROM tststats.mv;
 CREATE STATISTICS tststats.s6 ON a, b FROM tststats.ty;
-ERROR:  relation "ty" is not a table, foreign table, or materialized view
+ERROR:  cannot define statistics for relation "ty"
+DETAIL:  This operation is not supported for composite types.
 CREATE STATISTICS tststats.s7 ON a, b FROM tststats.f;
 CREATE STATISTICS tststats.s8 ON a, b FROM tststats.pt;
 CREATE STATISTICS tststats.s9 ON a, b FROM tststats.pt1;

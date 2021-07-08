@@ -139,7 +139,8 @@ CREATE TABLE test_partitioned (a int, b text default repeat('x', 5000))
 SELECT * FROM verify_heapam('test_partitioned',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  "test_partitioned" is not a table, materialized view, or TOAST table
+ERROR:  cannot check relation "test_partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
 -- Check that valid options are not rejected nor corruption reported
 -- for an empty partition table (the child one)
 CREATE TABLE test_partition partition OF test_partitioned FOR VALUES IN (1);
@@ -165,19 +166,22 @@ CREATE INDEX test_index ON test_partition (a);
 SELECT * FROM verify_heapam('test_index',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  "test_index" is not a table, materialized view, or TOAST table
+ERROR:  cannot check relation "test_index"
+DETAIL:  This operation is not supported for indexes.
 -- Check that views are rejected
 CREATE VIEW test_view AS SELECT 1;
 SELECT * FROM verify_heapam('test_view',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  "test_view" is not a table, materialized view, or TOAST table
+ERROR:  cannot check relation "test_view"
+DETAIL:  This operation is not supported for views.
 -- Check that sequences are rejected
 CREATE SEQUENCE test_sequence;
 SELECT * FROM verify_heapam('test_sequence',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  "test_sequence" is not a table, materialized view, or TOAST table
+ERROR:  cannot check relation "test_sequence"
+DETAIL:  This operation is not supported for sequences.
 -- Check that foreign tables are rejected
 CREATE FOREIGN DATA WRAPPER dummy;
 CREATE SERVER dummy_server FOREIGN DATA WRAPPER dummy;
@@ -185,7 +189,8 @@ CREATE FOREIGN TABLE test_foreign_table () SERVER dummy_server;
 SELECT * FROM verify_heapam('test_foreign_table',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  "test_foreign_table" is not a table, materialized view, or TOAST table
+ERROR:  cannot check relation "test_foreign_table"
+DETAIL:  This operation is not supported for foreign tables.
 -- cleanup
 DROP TABLE heaptest;
 DROP TABLE test_partition;

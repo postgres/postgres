@@ -180,9 +180,11 @@ DROP TABLE test1;
 create table test_partitioned (a int) partition by range (a);
 create index test_partitioned_index on test_partitioned (a);
 select get_raw_page('test_partitioned', 0); -- error about partitioned table
-ERROR:  cannot get raw page from partitioned table "test_partitioned"
+ERROR:  cannot get raw page from relation "test_partitioned"
+DETAIL:  This operation is not supported for partitioned tables.
 select get_raw_page('test_partitioned_index', 0); -- error about partitioned index
-ERROR:  cannot get raw page from partitioned index "test_partitioned_index"
+ERROR:  cannot get raw page from relation "test_partitioned_index"
+DETAIL:  This operation is not supported for partitioned indexes.
 -- a regular table which is a member of a partition set should work though
 create table test_part1 partition of test_partitioned for values from ( 1 ) to (100);
 select get_raw_page('test_part1', 0); -- get farther and error about empty table

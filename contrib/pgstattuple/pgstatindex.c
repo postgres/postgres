@@ -128,8 +128,8 @@ typedef struct HashIndexStat
 } HashIndexStat;
 
 static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
+static int64 pg_relpages_impl(Relation rel);
 static void GetHashPageStats(Page page, HashIndexStat *stats);
-static void check_relation_relkind(Relation rel);
 
 /* ------------------------------------------------------
  * pgstatindex()
@@ -383,7 +383,6 @@ Datum
 pg_relpages(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	int64		relpages;
 	Relation	rel;
 	RangeVar   *relrv;
 
@@ -395,16 +394,7 @@ pg_relpages(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
-	/* only some relkinds have storage */
-	check_relation_relkind(rel);
-
-	/* note: this will work OK on non-local temp tables */
-
-	relpages = RelationGetNumberOfBlocks(rel);
-
-	relation_close(rel, AccessShareLock);
-
-	PG_RETURN_INT64(relpages);
+	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
 
 /* No need for superuser checks in v1.5, see above */
@@ -412,23 +402,13 @@ Datum
 pg_relpages_v1_5(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	int64		relpages;
 	Relation	rel;
 	RangeVar   *relrv;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
-	/* only some relkinds have storage */
-	check_relation_relkind(rel);
-
-	/* note: this will work OK on non-local temp tables */
-
-	relpages = RelationGetNumberOfBlocks(rel);
-
-	relation_close(rel, AccessShareLock);
-
-	PG_RETURN_INT64(relpages);
+	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
 
 /* Must keep superuser() check, see above. */
@@ -436,7 +416,6 @@ Datum
 pg_relpagesbyid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	int64		relpages;
 	Relation	rel;
 
 	if (!superuser())
@@ -446,16 +425,7 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relid, AccessShareLock);
 
-	/* only some relkinds have storage */
-	check_relation_relkind(rel);
-
-	/* note: this will work OK on non-local temp tables */
-
-	relpages = RelationGetNumberOfBlocks(rel);
-
-	relation_close(rel, AccessShareLock);
-
-	PG_RETURN_INT64(relpages);
+	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
 
 /* No need for superuser checks in v1.5, see above */
@@ -463,13 +433,24 @@ Datum
 pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	int64		relpages;
 	Relation	rel;
 
 	rel = relation_open(relid, AccessShareLock);
 
-	/* only some relkinds have storage */
-	check_relation_relkind(rel);
+	PG_RETURN_INT64(pg_relpages_impl(rel));
+}
+
+static int64
+pg_relpages_impl(Relation rel)
+{
+	int64		relpages;
+
+	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot get page count of relation \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
 	/* note: this will work OK on non-local temp tables */
 
@@ -477,7 +458,7 @@ pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
 
 	relation_close(rel, AccessShareLock);
 
-	PG_RETURN_INT64(relpages);
+	return relpages;
 }
 
 /* ------------------------------------------------------
@@ -753,22 +734,4 @@ GetHashPageStats(Page page, HashIndexStat *stats)
 			stats->dead_items++;
 	}
 	stats->free_space += PageGetExactFreeSpace(page);
-}
-
-/*
- * check_relation_relkind - convenience routine to check that relation
- * is of the relkind supported by the callers
- */
-static void
-check_relation_relkind(Relation rel)
-{
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_INDEX &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_SEQUENCE &&
-		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, index, materialized view, sequence, or TOAST table",
-						RelationGetRelationName(rel))));
 }

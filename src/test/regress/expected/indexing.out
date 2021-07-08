@@ -137,7 +137,8 @@ select relname, relpartbound from pg_class
 (2 rows)
 
 alter table idxpart_c detach partition idxpart1_c;
-ERROR:  "idxpart_c" is not a table
+ERROR:  ALTER action DETACH PARTITION cannot be performed on relation "idxpart_c"
+DETAIL:  This operation is not supported for partitioned indexes.
 drop table idxpart;
 -- If a partition already has an index, don't create a duplicative one
 create table idxpart (a int, b int) partition by range (a, b);
