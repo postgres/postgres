@@ -720,13 +720,13 @@ Author: Peter Geoghegan <pg@bowt.ie>
 -->
 
        <para>
-        Allow vacuum to eagerly add newly deleted btree pages to the free
+        Allow vacuum to more eagerly add deleted btree pages to the free
         space map (Peter Geoghegan)
        </para>
 
        <para>
-        Previously vacuum could only place preexisting deleted pages in
-        the free space map.
+        Previously vacuum could only add pages to the free space map
+        that were marked as deleted by previous vacuums.
        </para>
       </listitem>
 
