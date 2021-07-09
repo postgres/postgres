@@ -1222,14 +1222,10 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 		/*
 		 * Wait until awakened.
 		 *
-		 * Since we share the process wait semaphore with the regular lock
-		 * manager and ProcWaitForSignal, and we may need to acquire an LWLock
-		 * while one of those is pending, it is possible that we get awakened
-		 * for a reason other than being signaled by LWLockRelease. If so,
-		 * loop back and wait again.  Once we've gotten the LWLock,
-		 * re-increment the sema by the number of additional signals received,
-		 * so that the lock manager or signal manager will see the received
-		 * signal when it next waits.
+		 * It is possible that we get awakened for a reason other than being
+		 * signaled by LWLockRelease.  If so, loop back and wait again.  Once
+		 * we've gotten the LWLock, re-increment the sema by the number of
+		 * additional signals received.
 		 */
 		LOG_LWDEBUG("LWLockAcquire", lock, "waiting");
 
@@ -1389,8 +1385,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 		{
 			/*
 			 * Wait until awakened.  Like in LWLockAcquire, be prepared for
-			 * bogus wakeups, because we share the semaphore with
-			 * ProcWaitForSignal.
+			 * bogus wakeups.
 			 */
 			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "waiting");
 
@@ -1599,14 +1594,10 @@ LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval)
 		/*
 		 * Wait until awakened.
 		 *
-		 * Since we share the process wait semaphore with the regular lock
-		 * manager and ProcWaitForSignal, and we may need to acquire an LWLock
-		 * while one of those is pending, it is possible that we get awakened
-		 * for a reason other than being signaled by LWLockRelease. If so,
-		 * loop back and wait again.  Once we've gotten the LWLock,
-		 * re-increment the sema by the number of additional signals received,
-		 * so that the lock manager or signal manager will see the received
-		 * signal when it next waits.
+		 * It is possible that we get awakened for a reason other than being
+		 * signaled by LWLockRelease.  If so, loop back and wait again.  Once
+		 * we've gotten the LWLock, re-increment the sema by the number of
+		 * additional signals received.
 		 */
 		LOG_LWDEBUG("LWLockWaitForVar", lock, "waiting");
 
