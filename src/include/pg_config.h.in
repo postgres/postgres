@@ -322,9 +322,6 @@
 /* Define to 1 if you have the `ldap' library (-lldap). */
 #undef HAVE_LIBLDAP
 
-/* Define to 1 if you have the `ldap_r' library (-lldap_r). */
-#undef HAVE_LIBLDAP_R
-
 /* Define to 1 if you have the `lz4' library (-llz4). */
 #undef HAVE_LIBLZ4
 

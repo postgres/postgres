@@ -302,7 +302,6 @@ sub GenerateFiles
 		HAVE_LDAP_INITIALIZE                        => undef,
 		HAVE_LIBCRYPTO                              => undef,
 		HAVE_LIBLDAP                                => undef,
-		HAVE_LIBLDAP_R                              => undef,
 		HAVE_LIBLZ4                                 => undef,
 		HAVE_LIBM                                   => undef,
 		HAVE_LIBPAM                                 => undef,
