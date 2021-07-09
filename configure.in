@@ -1273,9 +1273,10 @@ if test "$with_ldap" = yes ; then
     if test "$enable_thread_safety" = yes; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # If ldap_r does exist, assume without checking that ldap does too.
-      # on some platforms ldap_r fails to link without PTHREAD_LIBS
+      # On some platforms ldap_r fails to link without PTHREAD_LIBS;
+      # also, on AIX we must probe ldap_simple_bind not ldap_bind.
       LIBS=""
-      AC_SEARCH_LIBS(ldap_bind, [ldap_r ldap], [],
+      AC_SEARCH_LIBS(ldap_simple_bind, [ldap_r ldap], [],
                      [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
                      [$PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS])
       LDAP_LIBS_FE="$LIBS $EXTRA_LDAP_LIBS"

@@ -12463,11 +12463,12 @@ if test "$with_ldap" = yes ; then
     if test "$enable_thread_safety" = yes; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # If ldap_r does exist, assume without checking that ldap does too.
-      # on some platforms ldap_r fails to link without PTHREAD_LIBS
+      # On some platforms ldap_r fails to link without PTHREAD_LIBS;
+      # also, on AIX we must probe ldap_simple_bind not ldap_bind.
       LIBS=""
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing ldap_bind" >&5
-$as_echo_n "checking for library containing ldap_bind... " >&6; }
-if ${ac_cv_search_ldap_bind+:} false; then :
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing ldap_simple_bind" >&5
+$as_echo_n "checking for library containing ldap_simple_bind... " >&6; }
+if ${ac_cv_search_ldap_simple_bind+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_func_search_save_LIBS=$LIBS
@@ -12480,11 +12481,11 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char ldap_bind ();
+char ldap_simple_bind ();
 int
 main ()
 {
-return ldap_bind ();
+return ldap_simple_bind ();
   ;
   return 0;
 }
@@ -12497,25 +12498,25 @@ for ac_lib in '' ldap_r ldap; do
     LIBS="-l$ac_lib $PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_ldap_bind=$ac_res
+  ac_cv_search_ldap_simple_bind=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-  if ${ac_cv_search_ldap_bind+:} false; then :
+  if ${ac_cv_search_ldap_simple_bind+:} false; then :
   break
 fi
 done
-if ${ac_cv_search_ldap_bind+:} false; then :
+if ${ac_cv_search_ldap_simple_bind+:} false; then :
 
 else
-  ac_cv_search_ldap_bind=no
+  ac_cv_search_ldap_simple_bind=no
 fi
 rm conftest.$ac_ext
 LIBS=$ac_func_search_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ldap_bind" >&5
-$as_echo "$ac_cv_search_ldap_bind" >&6; }
-ac_res=$ac_cv_search_ldap_bind
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ldap_simple_bind" >&5
+$as_echo "$ac_cv_search_ldap_simple_bind" >&6; }
+ac_res=$ac_cv_search_ldap_simple_bind
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
