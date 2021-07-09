@@ -24,22 +24,23 @@ SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
             (10485247::numeric), (10485248::numeric),
             (10736893951::numeric), (10736893952::numeric),
             (10994579406847::numeric), (10994579406848::numeric),
-            (11258449312612351::numeric), (11258449312612352::numeric)) x(size);
+            (11258449312612351::numeric), (11258449312612352::numeric),
+            (11528652096115048447::numeric), (11528652096115048448::numeric)) x(size);
 
 -- pg_size_bytes() tests
 SELECT size, pg_size_bytes(size) FROM
     (VALUES ('1'), ('123bytes'), ('1kB'), ('1MB'), (' 1 GB'), ('1.5 GB '),
-            ('1TB'), ('3000 TB'), ('1e6 MB')) x(size);
+            ('1TB'), ('3000 TB'), ('1e6 MB'), ('99 PB')) x(size);
 
 -- case-insensitive units are supported
 SELECT size, pg_size_bytes(size) FROM
     (VALUES ('1'), ('123bYteS'), ('1kb'), ('1mb'), (' 1 Gb'), ('1.5 gB '),
-            ('1tb'), ('3000 tb'), ('1e6 mb')) x(size);
+            ('1tb'), ('3000 tb'), ('1e6 mb'), ('99 pb')) x(size);
 
 -- negative numbers are supported
 SELECT size, pg_size_bytes(size) FROM
     (VALUES ('-1'), ('-123bytes'), ('-1kb'), ('-1mb'), (' -1 Gb'), ('-1.5 gB '),
-            ('-1tb'), ('-3000 TB'), ('-10e-1 MB')) x(size);
+            ('-1tb'), ('-3000 TB'), ('-10e-1 MB'), ('-99 PB')) x(size);
 
 -- different cases with allowed points
 SELECT size, pg_size_bytes(size) FROM

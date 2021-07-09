@@ -52,6 +52,7 @@ static const struct size_pretty_unit size_pretty_units[] = {
 	{"MB", 20 * 1024 - 1, true, 20},
 	{"GB", 20 * 1024 - 1, true, 30},
 	{"TB", 20 * 1024 - 1, true, 40},
+	{"PB", 20 * 1024 - 1, true, 50},
 	{NULL, 0, false, 0}
 };
 
@@ -811,7 +812,7 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid size: \"%s\"", text_to_cstring(arg)),
 					 errdetail("Invalid size unit: \"%s\".", strptr),
-					 errhint("Valid units are \"bytes\", \"kB\", \"MB\", \"GB\", and \"TB\".")));
+					 errhint("Valid units are \"bytes\", \"kB\", \"MB\", \"GB\", \"TB\", and \"PB\".")));
 
 		if (multiplier > 1)
 		{
