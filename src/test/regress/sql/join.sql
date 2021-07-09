@@ -1100,6 +1100,9 @@ explain (costs off)
 select unique1 from tenk1, lateral f_immutable_int4(1) x where x = unique1;
 
 explain (costs off)
+select unique1 from tenk1, lateral f_immutable_int4(1) x where x in (select 17);
+
+explain (costs off)
 select unique1, x from tenk1 join f_immutable_int4(1) x on unique1 = x;
 
 explain (costs off)

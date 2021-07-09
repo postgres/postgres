@@ -1802,10 +1802,13 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 
 	/*
 	 * Convert the RTE to be RTE_RESULT type, signifying that we don't need to
-	 * scan it anymore, and zero out RTE_FUNCTION-specific fields.
+	 * scan it anymore, and zero out RTE_FUNCTION-specific fields.  Also make
+	 * sure the RTE is not marked LATERAL, since elsewhere we don't expect
+	 * RTE_RESULTs to be LATERAL.
 	 */
 	rte->rtekind = RTE_RESULT;
 	rte->functions = NIL;
+	rte->lateral = false;
 
 	/*
 	 * We can reuse the RangeTblRef node.
