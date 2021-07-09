@@ -573,11 +573,6 @@ StartReplication(StartReplicationCmd *cmd)
 	StringInfoData buf;
 	XLogRecPtr	FlushPtr;
 
-	if (ThisTimeLineID == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("IDENTIFY_SYSTEM has not been run before START_REPLICATION")));
-
 	/* create xlogreader for physical replication */
 	xlogreader =
 		XLogReaderAllocate(wal_segment_size, NULL,
@@ -619,6 +614,7 @@ StartReplication(StartReplicationCmd *cmd)
 	 * that. Otherwise use the timeline of the last replayed record, which is
 	 * kept in ThisTimeLineID.
 	 */
+	am_cascading_walsender = RecoveryInProgress();
 	if (am_cascading_walsender)
 	{
 		/* this also updates ThisTimeLineID */
