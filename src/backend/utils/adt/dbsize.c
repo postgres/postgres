@@ -31,8 +31,8 @@
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
-/* Divide by two and round towards positive infinity. */
-#define half_rounded(x)   (((x) + ((x) < 0 ? 0 : 1)) / 2)
+/* Divide by two and round away from zero */
+#define half_rounded(x)   (((x) + ((x) < 0 ? -1 : 1)) / 2)
 
 /* Return physical size of directory contents, or 0 if dir doesn't exist */
 static int64
@@ -542,25 +542,29 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 		snprintf(buf, sizeof(buf), INT64_FORMAT " bytes", size);
 	else
 	{
-		size >>= 9;				/* keep one extra bit for rounding */
+		/*
+		 * We use divide instead of bit shifting so that behavior matches for
+		 * both positive and negative size values.
+		 */
+		size /= (1 << 9);		/* keep one extra bit for rounding */
 		if (Abs(size) < limit2)
 			snprintf(buf, sizeof(buf), INT64_FORMAT " kB",
 					 half_rounded(size));
 		else
 		{
-			size >>= 10;
+			size /= (1 << 10);
 			if (Abs(size) < limit2)
 				snprintf(buf, sizeof(buf), INT64_FORMAT " MB",
 						 half_rounded(size));
 			else
 			{
-				size >>= 10;
+				size /= (1 << 10);
 				if (Abs(size) < limit2)
 					snprintf(buf, sizeof(buf), INT64_FORMAT " GB",
 							 half_rounded(size));
 				else
 				{
-					size >>= 10;
+					size /= (1 << 10);
 					snprintf(buf, sizeof(buf), INT64_FORMAT " TB",
 							 half_rounded(size));
 				}
@@ -621,13 +625,13 @@ numeric_half_rounded(Numeric n)
 }
 
 static Numeric
-numeric_shift_right(Numeric n, unsigned count)
+numeric_truncated_divide(Numeric n, int64 divisor)
 {
 	Datum		d = NumericGetDatum(n);
 	Datum		divisor_numeric;
 	Datum		result;
 
-	divisor_numeric = NumericGetDatum(int64_to_numeric(((int64) 1) << count));
+	divisor_numeric = NumericGetDatum(int64_to_numeric(divisor));
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
@@ -650,8 +654,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 	else
 	{
 		/* keep one extra bit for rounding */
-		/* size >>= 9 */
-		size = numeric_shift_right(size, 9);
+		/* size /= (1 << 9) */
+		size = numeric_truncated_divide(size, 1 << 9);
 
 		if (numeric_is_less(numeric_absolute(size), limit2))
 		{
@@ -660,8 +664,9 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* size >>= 10 */
-			size = numeric_shift_right(size, 10);
+			/* size /= (1 << 10) */
+			size = numeric_truncated_divide(size, 1 << 10);
+
 			if (numeric_is_less(numeric_absolute(size), limit2))
 			{
 				size = numeric_half_rounded(size);
@@ -669,8 +674,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				/* size >>= 10 */
-				size = numeric_shift_right(size, 10);
+				/* size /= (1 << 10) */
+				size = numeric_truncated_divide(size, 1 << 10);
 
 				if (numeric_is_less(numeric_absolute(size), limit2))
 				{
@@ -679,8 +684,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 				}
 				else
 				{
-					/* size >>= 10 */
-					size = numeric_shift_right(size, 10);
+					/* size /= (1 << 10) */
+					size = numeric_truncated_divide(size, 1 << 10);
 					size = numeric_half_rounded(size);
 					result = psprintf("%s TB", numeric_to_cstring(size));
 				}
