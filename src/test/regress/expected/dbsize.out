@@ -35,6 +35,48 @@ SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
  1000000000000000.5 | 909 TB         | -909 TB
 (12 rows)
 
+-- test where units change up
+SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
+    (VALUES (10239::bigint), (10240::bigint),
+            (10485247::bigint), (10485248::bigint),
+            (10736893951::bigint), (10736893952::bigint),
+            (10994579406847::bigint), (10994579406848::bigint),
+            (11258449312612351::bigint), (11258449312612352::bigint)) x(size);
+       size        | pg_size_pretty | pg_size_pretty 
+-------------------+----------------+----------------
+             10239 | 10239 bytes    | -10239 bytes
+             10240 | 10 kB          | -10 kB
+          10485247 | 10239 kB       | -10239 kB
+          10485248 | 10 MB          | -10 MB
+       10736893951 | 10239 MB       | -10239 MB
+       10736893952 | 10 GB          | -10 GB
+    10994579406847 | 10239 GB       | -10239 GB
+    10994579406848 | 10 TB          | -10 TB
+ 11258449312612351 | 10239 TB       | -10239 TB
+ 11258449312612352 | 10240 TB       | -10240 TB
+(10 rows)
+
+SELECT size, pg_size_pretty(size), pg_size_pretty(-1 * size) FROM
+    (VALUES (10239::numeric), (10240::numeric),
+            (10485247::numeric), (10485248::numeric),
+            (10736893951::numeric), (10736893952::numeric),
+            (10994579406847::numeric), (10994579406848::numeric),
+            (11258449312612351::numeric), (11258449312612352::numeric)) x(size);
+       size        | pg_size_pretty | pg_size_pretty 
+-------------------+----------------+----------------
+             10239 | 10239 bytes    | -10239 bytes
+             10240 | 10 kB          | -10 kB
+          10485247 | 10239 kB       | -10239 kB
+          10485248 | 10 MB          | -10 MB
+       10736893951 | 10239 MB       | -10239 MB
+       10736893952 | 10 GB          | -10 GB
+    10994579406847 | 10239 GB       | -10239 GB
+    10994579406848 | 10 TB          | -10 TB
+ 11258449312612351 | 10239 TB       | -10239 TB
+ 11258449312612352 | 10240 TB       | -10240 TB
+(10 rows)
+
+-- pg_size_bytes() tests
 SELECT size, pg_size_bytes(size) FROM
     (VALUES ('1'), ('123bytes'), ('1kB'), ('1MB'), (' 1 GB'), ('1.5 GB '),
             ('1TB'), ('3000 TB'), ('1e6 MB')) x(size);
