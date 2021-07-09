@@ -3585,15 +3585,29 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 		/*
 		 * Currently we can only handle unconditional, single-statement DO
-		 * INSTEAD rules correctly; we have to get exactly one Query out of
-		 * the rewrite operation to stuff back into the CTE node.
+		 * INSTEAD rules correctly; we have to get exactly one non-utility
+		 * Query out of the rewrite operation to stuff back into the CTE node.
 		 */
 		if (list_length(newstuff) == 1)
 		{
-			/* Push the single Query back into the CTE node */
+			/* Must check it's not a utility command */
 			ctequery = linitial_node(Query, newstuff);
+			if (!(ctequery->commandType == CMD_SELECT ||
+				  ctequery->commandType == CMD_UPDATE ||
+				  ctequery->commandType == CMD_INSERT ||
+				  ctequery->commandType == CMD_DELETE))
+			{
+				/*
+				 * Currently it could only be NOTIFY; this error message will
+				 * need work if we ever allow other utility commands in rules.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("DO INSTEAD NOTIFY rules are not supported for data-modifying statements in WITH")));
+			}
 			/* WITH queries should never be canSetTag */
 			Assert(!ctequery->canSetTag);
+			/* Push the single Query back into the CTE node */
 			cte->ctequery = (Node *) ctequery;
 		}
 		else if (newstuff == NIL)
