@@ -1797,10 +1797,14 @@ assign_record_type_typmod(TupleDesc tupDesc)
 			CreateCacheMemoryContext();
 	}
 
-	/* Find or create a hashtable entry for this tuple descriptor */
+	/*
+	 * Find a hashtable entry for this tuple descriptor. We don't use
+	 * HASH_ENTER yet, because if it's missing, we need to make sure that all
+	 * the allocations succeed before we create the new entry.
+	 */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
 												(void *) &tupDesc,
-												HASH_ENTER, &found);
+												HASH_FIND, &found);
 	if (found && recentry->tupdesc != NULL)
 	{
 		tupDesc->tdtypmod = recentry->tupdesc->tdtypmod;
@@ -1808,24 +1812,38 @@ assign_record_type_typmod(TupleDesc tupDesc)
 	}
 
 	/* Not present, so need to manufacture an entry */
-	recentry->tupdesc = NULL;
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* Look in the SharedRecordTypmodRegistry, if attached */
 	entDesc = find_or_make_matching_shared_tupledesc(tupDesc);
 	if (entDesc == NULL)
 	{
+		/*
+		 * Make sure we have room before we CreateTupleDescCopy() or advance
+		 * NextRecordTypmod.
+		 */
+		ensure_record_cache_typmod_slot_exists(NextRecordTypmod);
+
 		/* Reference-counted local cache only. */
 		entDesc = CreateTupleDescCopy(tupDesc);
 		entDesc->tdrefcount = 1;
 		entDesc->tdtypmod = NextRecordTypmod++;
 	}
-	ensure_record_cache_typmod_slot_exists(entDesc->tdtypmod);
+	else
+	{
+		ensure_record_cache_typmod_slot_exists(entDesc->tdtypmod);
+	}
+
 	RecordCacheArray[entDesc->tdtypmod] = entDesc;
-	recentry->tupdesc = entDesc;
 
 	/* Assign a unique tupdesc identifier, too. */
 	RecordIdentifierArray[entDesc->tdtypmod] = ++tupledesc_id_counter;
+
+	/* Fully initialized; create the hash table entry */
+	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
+												(void *) &tupDesc,
+												HASH_ENTER, NULL);
+	recentry->tupdesc = entDesc;
 
 	/* Update the caller's tuple descriptor. */
 	tupDesc->tdtypmod = entDesc->tdtypmod;
