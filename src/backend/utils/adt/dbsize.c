@@ -639,7 +639,8 @@ numeric_truncated_divide(Numeric n, int64 divisor)
 	Datum		divisor_numeric;
 	Datum		result;
 
-	divisor_numeric = DirectFunctionCall1(int8_numeric, divisor);
+	divisor_numeric = DirectFunctionCall1(int8_numeric,
+										  Int64GetDatum(divisor));
 	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
