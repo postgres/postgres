@@ -5171,7 +5171,10 @@ int PQflush(PGconn *conn);
 
     <para>
      <function>PQisBusy</function>, <function>PQconsumeInput</function>, etc
-     operate as normal when processing pipeline results.
+     operate as normal when processing pipeline results.  In particular,
+     a call to <function>PQisBusy</function> in the middle of a pipeline
+     returns 0 if the results for all the queries issued so far have been
+     consumed.
     </para>
 
     <para>
