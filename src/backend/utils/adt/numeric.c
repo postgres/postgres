@@ -203,6 +203,7 @@ struct NumericData
  */
 
 #define NUMERIC_DSCALE_MASK			0x3FFF
+#define NUMERIC_DSCALE_MAX			NUMERIC_DSCALE_MASK
 
 #define NUMERIC_SIGN(n) \
 	(NUMERIC_IS_SHORT(n) ? \
@@ -2488,13 +2489,20 @@ numeric_mul(PG_FUNCTION_ARGS)
 	 * Unlike add_var() and sub_var(), mul_var() will round its result. In the
 	 * case of numeric_mul(), which is invoked for the * operator on numerics,
 	 * we request exact representation for the product (rscale = sum(dscale of
-	 * arg1, dscale of arg2)).
+	 * arg1, dscale of arg2)).  If the exact result has more digits after the
+	 * decimal point than can be stored in a numeric, we round it.  Rounding
+	 * after computing the exact result ensures that the final result is
+	 * correctly rounded (rounding in mul_var() using a truncated product
+	 * would not guarantee this).
 	 */
 	init_var_from_num(num1, &arg1);
 	init_var_from_num(num2, &arg2);
 
 	init_var(&result);
 	mul_var(&arg1, &arg2, &result, arg1.dscale + arg2.dscale);
+
+	if (result.dscale > NUMERIC_DSCALE_MAX)
+		round_var(&result, NUMERIC_DSCALE_MAX);
 
 	res = make_result(&result);
 
