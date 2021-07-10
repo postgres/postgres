@@ -78,11 +78,12 @@ typedef struct pg_fe_sasl_mech
 	 * Output parameters, to be set by the callback function:
 	 *
 	 *	output:	   A malloc'd buffer containing the client's response to
-	 *			   the server, or NULL if the exchange should be aborted.
-	 *			   (*success should be set to false in the latter case.)
+	 *			   the server (can be empty), or NULL if the exchange should
+	 *			   be aborted.  (*success should be set to false in the
+	 *			   latter case.)
 	 *
-	 *	outputlen: The length of the client response buffer, or zero if no
-	 *			   data should be sent due to an exchange failure
+	 *	outputlen: The length (0 or higher) of the client response buffer,
+	 *			   ignored if output is NULL.
 	 *
 	 *	done:      Set to true if the SASL exchange should not continue,
 	 *			   because the exchange is either complete or failed

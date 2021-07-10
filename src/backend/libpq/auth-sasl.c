@@ -172,6 +172,13 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 		if (output)
 		{
 			/*
+			 * PG_SASL_EXCHANGE_FAILURE with some output is forbidden by SASL.
+			 * Make sure here that the mechanism used got that right.
+			 */
+			if (result == PG_SASL_EXCHANGE_FAILURE)
+				elog(ERROR, "output message found after SASL exchange failure");
+
+			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
 			elog(DEBUG4, "sending SASL challenge of length %u", outputlen);

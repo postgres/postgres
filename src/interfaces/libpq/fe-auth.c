@@ -674,7 +674,22 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 		return STATUS_ERROR;
 	}
 
-	if (outputlen != 0)
+	/*
+	 * If the exchange is not completed yet, we need to make sure that the
+	 * SASL mechanism has generated a message to send back.
+	 */
+	if (output == NULL && !done)
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("no client response found after SASL exchange success\n"));
+		return STATUS_ERROR;
+	}
+
+	/*
+	 * SASL allows zero-length responses, so this check uses "output" and not
+	 * "outputlen" to allow the case of an empty message.
+	 */
+	if (output)
 	{
 		/*
 		 * Send the SASL response to the server.
