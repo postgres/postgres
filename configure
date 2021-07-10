@@ -12509,6 +12509,18 @@ else
 fi
 
     LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
+    # This test is carried out against libldap.
+    for ac_func in ldap_initialize
+do :
+  ac_fn_c_check_func "$LINENO" "ldap_initialize" "ac_cv_func_ldap_initialize"
+if test "x$ac_cv_func_ldap_initialize" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LDAP_INITIALIZE 1
+_ACEOF
+
+fi
+done
+
     if test "$enable_thread_safety" = yes; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # On some platforms ldap_r fails to link without PTHREAD_LIBS.
@@ -12558,17 +12570,6 @@ fi
     else
       LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
     fi
-    for ac_func in ldap_initialize
-do :
-  ac_fn_c_check_func "$LINENO" "ldap_initialize" "ac_cv_func_ldap_initialize"
-if test "x$ac_cv_func_ldap_initialize" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LDAP_INITIALIZE 1
-_ACEOF
-
-fi
-done
-
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ldap_bind in -lwldap32" >&5
 $as_echo_n "checking for ldap_bind in -lwldap32... " >&6; }
