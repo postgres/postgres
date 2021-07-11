@@ -3200,9 +3200,17 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 	Relation	relation;
 	Oid			oldExtension;
 
-	extension.classId = ExtensionRelationId;
-	extension.objectId = get_extension_oid(stmt->extname, false);
-	extension.objectSubId = 0;
+	/*
+	 * Find the extension and acquire a lock on it, to ensure it doesn't get
+	 * dropped concurrently.  A sharable lock seems sufficient: there's no
+	 * reason not to allow other sorts of manipulations, such as add/drop of
+	 * other objects, to occur concurrently.  Concurrently adding/dropping the
+	 * *same* object would be bad, but we prevent that by using a non-sharable
+	 * lock on the individual object, below.
+	 */
+	extension = get_object_address(OBJECT_EXTENSION,
+								   (Node *) makeString(stmt->extname),
+								   &relation, AccessShareLock, false);
 
 	/* Permission check: must own extension */
 	if (!pg_extension_ownercheck(extension.objectId, GetUserId()))
