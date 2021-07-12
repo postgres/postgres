@@ -77,7 +77,6 @@ _bt_restore_page(Page page, char *from, int len)
 		if (PageAddItem(page, items[i], itemsizes[i], nitems - i,
 						false, false) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: cannot add item to page");
-		from += itemsz;
 	}
 }
 
