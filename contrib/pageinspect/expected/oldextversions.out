@@ -36,5 +36,21 @@ SELECT * FROM bt_page_items('test1_a_idx', 1);
           1 | (0,1) |      16 | f     | f    | 01 00 00 00 00 00 00 01 | f    | (0,1) | 
 (1 row)
 
+-- page_header() uses int instead of smallint for lower, upper, special and
+-- pagesize in pageinspect >= 1.10.
+ALTER EXTENSION pageinspect UPDATE TO '1.9';
+\df page_header
+                                                                                                                  List of functions
+ Schema |    Name     | Result data type |                                                                                         Argument data types                                                                                         | Type 
+--------+-------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------
+ public | page_header | record           | page bytea, OUT lsn pg_lsn, OUT checksum smallint, OUT flags smallint, OUT lower smallint, OUT upper smallint, OUT special smallint, OUT pagesize smallint, OUT version smallint, OUT prune_xid xid | func
+(1 row)
+
+SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
+ pagesize | version 
+----------+---------
+     8192 |       4
+(1 row)
+
 DROP TABLE test1;
 DROP EXTENSION pageinspect;

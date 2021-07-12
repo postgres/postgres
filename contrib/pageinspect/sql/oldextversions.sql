@@ -16,5 +16,11 @@ SELECT page_checksum(get_raw_page('test1', 0), 0) IS NOT NULL AS silly_checksum_
 SELECT * FROM bt_page_stats('test1_a_idx', 1);
 SELECT * FROM bt_page_items('test1_a_idx', 1);
 
+-- page_header() uses int instead of smallint for lower, upper, special and
+-- pagesize in pageinspect >= 1.10.
+ALTER EXTENSION pageinspect UPDATE TO '1.9';
+\df page_header
+SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
+
 DROP TABLE test1;
 DROP EXTENSION pageinspect;

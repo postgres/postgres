@@ -296,10 +296,33 @@ page_header(PG_FUNCTION_ARGS)
 		values[0] = LSNGetDatum(lsn);
 	values[1] = UInt16GetDatum(page->pd_checksum);
 	values[2] = UInt16GetDatum(page->pd_flags);
-	values[3] = UInt16GetDatum(page->pd_lower);
-	values[4] = UInt16GetDatum(page->pd_upper);
-	values[5] = UInt16GetDatum(page->pd_special);
-	values[6] = UInt16GetDatum(PageGetPageSize(page));
+
+	/* pageinspect >= 1.10 uses int4 instead of int2 for those fields */
+	switch (TupleDescAttr(tupdesc, 3)->atttypid)
+	{
+		case INT2OID:
+			Assert(TupleDescAttr(tupdesc, 4)->atttypid == INT2OID &&
+				   TupleDescAttr(tupdesc, 5)->atttypid == INT2OID &&
+				   TupleDescAttr(tupdesc, 6)->atttypid == INT2OID);
+			values[3] = UInt16GetDatum(page->pd_lower);
+			values[4] = UInt16GetDatum(page->pd_upper);
+			values[5] = UInt16GetDatum(page->pd_special);
+			values[6] = UInt16GetDatum(PageGetPageSize(page));
+			break;
+		case INT4OID:
+			Assert(TupleDescAttr(tupdesc, 4)->atttypid == INT4OID &&
+				   TupleDescAttr(tupdesc, 5)->atttypid == INT4OID &&
+				   TupleDescAttr(tupdesc, 6)->atttypid == INT4OID);
+			values[3] = Int32GetDatum(page->pd_lower);
+			values[4] = Int32GetDatum(page->pd_upper);
+			values[5] = Int32GetDatum(page->pd_special);
+			values[6] = Int32GetDatum(PageGetPageSize(page));
+			break;
+		default:
+			elog(ERROR, "incorrect output types");
+			break;
+	}
+
 	values[7] = UInt16GetDatum(PageGetPageLayoutVersion(page));
 	values[8] = TransactionIdGetDatum(page->pd_prune_xid);
 
