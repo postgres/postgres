@@ -494,6 +494,9 @@ if test "$GCC" = yes -a "$ICC" = no; then
   AC_SUBST(PERMIT_DECLARATION_AFTER_STATEMENT)
   # Really don't want VLAs to be used in our dialect of C
   PGAC_PROG_CC_CFLAGS_OPT([-Werror=vla])
+  # On macOS, complain about usage of symbols newer than the deployment target
+  PGAC_PROG_CC_CFLAGS_OPT([-Werror=unguarded-availability-new])
+  PGAC_PROG_CXX_CFLAGS_OPT([-Werror=unguarded-availability-new])
   # -Wvla is not applicable for C++
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
   PGAC_PROG_CXX_CFLAGS_OPT([-Wendif-labels])
@@ -1749,6 +1752,12 @@ AC_CHECK_DECLS(posix_fadvise, [], [], [#include <fcntl.h>])
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 AC_CHECK_DECLS([strlcat, strlcpy, strnlen])
+
+# We can't use AC_REPLACE_FUNCS to replace these functions, because it
+# won't handle deployment target restrictions on macOS
+AC_CHECK_DECLS([preadv], [], [AC_LIBOBJ(preadv)], [#include <sys/uio.h>])
+AC_CHECK_DECLS([pwritev], [], [AC_LIBOBJ(pwritev)], [#include <sys/uio.h>])
+
 # This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
@@ -1784,9 +1793,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	link
 	mkdtemp
 	pread
-	preadv
 	pwrite
-	pwritev
 	random
 	srandom
 	strlcat
