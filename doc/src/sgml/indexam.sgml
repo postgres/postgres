@@ -567,7 +567,7 @@ amrescan (IndexScanDesc scan,
 
   <para>
 <programlisting>
-boolean
+bool
 amgettuple (IndexScanDesc scan,
             ScanDirection direction);
 </programlisting>
