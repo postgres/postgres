@@ -326,9 +326,8 @@ end_heap_rewrite(RewriteState state)
 
 		PageSetChecksumInplace(state->rs_buffer, state->rs_blockno);
 
-		RelationOpenSmgr(state->rs_new_rel);
-		smgrextend(state->rs_new_rel->rd_smgr, MAIN_FORKNUM, state->rs_blockno,
-				   (char *) state->rs_buffer, true);
+		smgrextend(RelationGetSmgr(state->rs_new_rel), MAIN_FORKNUM,
+				   state->rs_blockno, (char *) state->rs_buffer, true);
 	}
 
 	/*
@@ -339,11 +338,7 @@ end_heap_rewrite(RewriteState state)
 	 * wrote before the checkpoint.
 	 */
 	if (RelationNeedsWAL(state->rs_new_rel))
-	{
-		/* for an empty table, this could be first smgr access */
-		RelationOpenSmgr(state->rs_new_rel);
-		smgrimmedsync(state->rs_new_rel->rd_smgr, MAIN_FORKNUM);
-	}
+		smgrimmedsync(RelationGetSmgr(state->rs_new_rel), MAIN_FORKNUM);
 
 	logical_end_heap_rewrite(state);
 
@@ -695,11 +690,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			 * need for smgr to schedule an fsync for this write; we'll do it
 			 * ourselves in end_heap_rewrite.
 			 */
-			RelationOpenSmgr(state->rs_new_rel);
-
 			PageSetChecksumInplace(page, state->rs_blockno);
 
-			smgrextend(state->rs_new_rel->rd_smgr, MAIN_FORKNUM,
+			smgrextend(RelationGetSmgr(state->rs_new_rel), MAIN_FORKNUM,
 					   state->rs_blockno, (char *) page, true);
 
 			state->rs_blockno++;

@@ -109,8 +109,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind), get_rel_name(relOid));
 
 	/* Check that the fork exists. */
-	RelationOpenSmgr(rel);
-	if (!smgrexists(rel->rd_smgr, forkNumber))
+	if (!smgrexists(RelationGetSmgr(rel), forkNumber))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("fork \"%s\" does not exist for this relation",
@@ -178,7 +177,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		for (block = first_block; block <= last_block; ++block)
 		{
 			CHECK_FOR_INTERRUPTS();
-			smgrread(rel->rd_smgr, forkNumber, block, blockbuffer.data);
+			smgrread(RelationGetSmgr(rel), forkNumber, block, blockbuffer.data);
 			++blocks_done;
 		}
 	}

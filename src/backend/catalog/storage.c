@@ -282,16 +282,16 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	ForkNumber	forks[MAX_FORKNUM];
 	BlockNumber blocks[MAX_FORKNUM];
 	int			nforks = 0;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(rel);
+	SMgrRelation reln;
 
 	/*
-	 * Make sure smgr_targblock etc aren't pointing somewhere past new end
+	 * Make sure smgr_targblock etc aren't pointing somewhere past new end.
+	 * (Note: don't rely on this reln pointer below this loop.)
 	 */
-	rel->rd_smgr->smgr_targblock = InvalidBlockNumber;
+	reln = RelationGetSmgr(rel);
+	reln->smgr_targblock = InvalidBlockNumber;
 	for (int i = 0; i <= MAX_FORKNUM; ++i)
-		rel->rd_smgr->smgr_cached_nblocks[i] = InvalidBlockNumber;
+		reln->smgr_cached_nblocks[i] = InvalidBlockNumber;
 
 	/* Prepare for truncation of MAIN fork of the relation */
 	forks[nforks] = MAIN_FORKNUM;
@@ -299,7 +299,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	nforks++;
 
 	/* Prepare for truncation of the FSM if it exists */
-	fsm = smgrexists(rel->rd_smgr, FSM_FORKNUM);
+	fsm = smgrexists(RelationGetSmgr(rel), FSM_FORKNUM);
 	if (fsm)
 	{
 		blocks[nforks] = FreeSpaceMapPrepareTruncateRel(rel, nblocks);
@@ -312,7 +312,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	}
 
 	/* Prepare for truncation of the visibility map too if it exists */
-	vm = smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
+	vm = smgrexists(RelationGetSmgr(rel), VISIBILITYMAP_FORKNUM);
 	if (vm)
 	{
 		blocks[nforks] = visibilitymap_prepare_truncate(rel, nblocks);
@@ -364,7 +364,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	}
 
 	/* Do the real work to truncate relation forks */
-	smgrtruncate(rel->rd_smgr, forks, nforks, blocks);
+	smgrtruncate(RelationGetSmgr(rel), forks, nforks, blocks);
 
 	/*
 	 * Update upper-level FSM pages to account for the truncation. This is
@@ -389,9 +389,9 @@ RelationPreTruncate(Relation rel)
 
 	if (!pendingSyncHash)
 		return;
-	RelationOpenSmgr(rel);
 
-	pending = hash_search(pendingSyncHash, &(rel->rd_smgr->smgr_rnode.node),
+	pending = hash_search(pendingSyncHash,
+						  &(RelationGetSmgr(rel)->smgr_rnode.node),
 						  HASH_FIND, NULL);
 	if (pending)
 		pending->is_truncated = true;
@@ -403,6 +403,12 @@ RelationPreTruncate(Relation rel)
  * Note that this requires that there is no dirty data in shared buffers. If
  * it's possible that there are, callers need to flush those using
  * e.g. FlushRelationBuffers(rel).
+ *
+ * Also note that this is frequently called via locutions such as
+ *		RelationCopyStorage(RelationGetSmgr(rel), ...);
+ * That's safe only because we perform only smgr and WAL operations here.
+ * If we invoked anything else, a relcache flush could cause our SMgrRelation
+ * argument to become a dangling pointer.
  */
 void
 RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
@@ -445,13 +451,23 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 
 		if (!PageIsVerifiedExtended(page, blkno,
 									PIV_LOG_WARNING | PIV_REPORT_STAT))
+		{
+			/*
+			 * For paranoia's sake, capture the file path before invoking the
+			 * ereport machinery.  This guards against the possibility of a
+			 * relcache flush caused by, e.g., an errcontext callback.
+			 * (errcontext callbacks shouldn't be risking any such thing, but
+			 * people have been known to forget that rule.)
+			 */
+			char	   *relpath = relpathbackend(src->smgr_rnode.node,
+												 src->smgr_rnode.backend,
+												 forkNum);
+
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("invalid page in block %u of relation %s",
-							blkno,
-							relpathbackend(src->smgr_rnode.node,
-										   src->smgr_rnode.backend,
-										   forkNum))));
+							blkno, relpath)));
+		}
 
 		/*
 		 * WAL-log the copied page. Unfortunately we don't know what kind of a

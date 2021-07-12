@@ -455,13 +455,11 @@ visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 	elog(DEBUG1, "vm_truncate %s %d", RelationGetRelationName(rel), nheapblocks);
 #endif
 
-	RelationOpenSmgr(rel);
-
 	/*
 	 * If no visibility map has been created yet for this relation, there's
 	 * nothing to truncate.
 	 */
-	if (!smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
+	if (!smgrexists(RelationGetSmgr(rel), VISIBILITYMAP_FORKNUM))
 		return InvalidBlockNumber;
 
 	/*
@@ -528,7 +526,7 @@ visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 	else
 		newnblocks = truncBlock;
 
-	if (smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM) <= newnblocks)
+	if (smgrnblocks(RelationGetSmgr(rel), VISIBILITYMAP_FORKNUM) <= newnblocks)
 	{
 		/* nothing to do, the file was already smaller than requested size */
 		return InvalidBlockNumber;
@@ -547,30 +545,29 @@ static Buffer
 vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 {
 	Buffer		buf;
+	SMgrRelation reln;
 
 	/*
-	 * We might not have opened the relation at the smgr level yet, or we
-	 * might have been forced to close it by a sinval message.  The code below
-	 * won't necessarily notice relation extension immediately when extend =
-	 * false, so we rely on sinval messages to ensure that our ideas about the
-	 * size of the map aren't too far out of date.
+	 * Caution: re-using this smgr pointer could fail if the relcache entry
+	 * gets closed.  It's safe as long as we only do smgr-level operations
+	 * between here and the last use of the pointer.
 	 */
-	RelationOpenSmgr(rel);
+	reln = RelationGetSmgr(rel);
 
 	/*
 	 * If we haven't cached the size of the visibility map fork yet, check it
 	 * first.
 	 */
-	if (rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber)
+	if (reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber)
 	{
-		if (smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
-			smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
+		if (smgrexists(reln, VISIBILITYMAP_FORKNUM))
+			smgrnblocks(reln, VISIBILITYMAP_FORKNUM);
 		else
-			rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = 0;
+			reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = 0;
 	}
 
 	/* Handle requests beyond EOF */
-	if (blkno >= rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM])
+	if (blkno >= reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM])
 	{
 		if (extend)
 			vm_extend(rel, blkno + 1);
@@ -618,6 +615,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
 	BlockNumber vm_nblocks_now;
 	PGAlignedBlock pg;
+	SMgrRelation reln;
 
 	PageInit((Page) pg.data, BLCKSZ, 0);
 
@@ -633,29 +631,32 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
-	/* Might have to re-open if a cache flush happened */
-	RelationOpenSmgr(rel);
+	/*
+	 * Caution: re-using this smgr pointer could fail if the relcache entry
+	 * gets closed.  It's safe as long as we only do smgr-level operations
+	 * between here and the last use of the pointer.
+	 */
+	reln = RelationGetSmgr(rel);
 
 	/*
 	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks is
 	 * positive then it must exist, no need for an smgrexists call.
 	 */
-	if ((rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == 0 ||
-		 rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber) &&
-		!smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
-		smgrcreate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, false);
+	if ((reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == 0 ||
+		 reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber) &&
+		!smgrexists(reln, VISIBILITYMAP_FORKNUM))
+		smgrcreate(reln, VISIBILITYMAP_FORKNUM, false);
 
 	/* Invalidate cache so that smgrnblocks() asks the kernel. */
-	rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
-	vm_nblocks_now = smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
+	reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
+	vm_nblocks_now = smgrnblocks(reln, VISIBILITYMAP_FORKNUM);
 
 	/* Now extend the file */
 	while (vm_nblocks_now < vm_nblocks)
 	{
 		PageSetChecksumInplace((Page) pg.data, vm_nblocks_now);
 
-		smgrextend(rel->rd_smgr, VISIBILITYMAP_FORKNUM, vm_nblocks_now,
-				   pg.data, false);
+		smgrextend(reln, VISIBILITYMAP_FORKNUM, vm_nblocks_now, pg.data, false);
 		vm_nblocks_now++;
 	}
 
@@ -666,7 +667,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * to keep checking for creation or extension of the file, which happens
 	 * infrequently.
 	 */
-	CacheInvalidateSmgr(rel->rd_smgr->smgr_rnode);
+	CacheInvalidateSmgr(reln->smgr_rnode);
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
 }

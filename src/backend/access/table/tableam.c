@@ -629,17 +629,14 @@ table_block_relation_size(Relation rel, ForkNumber forkNumber)
 {
 	uint64		nblocks = 0;
 
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(rel);
-
 	/* InvalidForkNumber indicates returning the size for all forks */
 	if (forkNumber == InvalidForkNumber)
 	{
 		for (int i = 0; i < MAX_FORKNUM; i++)
-			nblocks += smgrnblocks(rel->rd_smgr, i);
+			nblocks += smgrnblocks(RelationGetSmgr(rel), i);
 	}
 	else
-		nblocks = smgrnblocks(rel->rd_smgr, forkNumber);
+		nblocks = smgrnblocks(RelationGetSmgr(rel), forkNumber);
 
 	return nblocks * BLCKSZ;
 }
