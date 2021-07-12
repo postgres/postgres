@@ -3003,6 +3003,16 @@ lo_import 152801
           </para>
 
           <para>
+          When using the <literal>\watch</literal> command to execute a query
+          repeatedly, the environment variable <envar>PSQL_WATCH_PAGER</envar>
+          is used to find the pager program instead, on Unix systems.  This is
+          configured separately because it may confuse traditional pagers, but
+          can be used to send output to tools that understand
+          <application>psql</application>'s output format (such as
+          <filename>pspg --stream</filename>).
+          </para>
+
+          <para>
           When the <literal>pager</literal> option is <literal>off</literal>, the pager
           program is not used. When the <literal>pager</literal> option is
           <literal>on</literal>, the pager is used when appropriate, i.e., when the
@@ -4667,6 +4677,24 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       the first that is set is used.
       If none of them is set, the default is to use <literal>more</literal> on most
       platforms, but <literal>less</literal> on Cygwin.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PSQL_WATCH_PAGER</envar></term>
+
+    <listitem>
+     <para>
+      When a query is executed repeatedly with the <command>\watch</command>
+      command, a pager is not used by default.  This behavior can be changed
+      by setting <envar>PSQL_WATCH_PAGER</envar> to a pager command, on Unix
+      systems.  The <literal>pspg</literal> pager (not part of
+      <productname>PostgreSQL</productname> but available in many open source
+      software distributions) can display the output of
+      <command>\watch</command> if started with the option
+      <literal>--stream</literal>.
      </para>
 
     </listitem>

@@ -29,7 +29,7 @@ extern sigjmp_buf sigint_interrupt_jmp;
 extern void psql_setup_cancel_handler(void);
 
 extern PGresult *PSQLexec(const char *query);
-extern int	PSQLexecWatch(const char *query, const printQueryOpt *opt);
+extern int	PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout);
 
 extern bool SendQuery(const char *query);
 

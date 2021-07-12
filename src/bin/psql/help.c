@@ -347,7 +347,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(158, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(160, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
@@ -505,6 +505,10 @@ helpVariables(unsigned short int pager)
 					  "    alternative location for the command history file\n"));
 	fprintf(output, _("  PSQL_PAGER, PAGER\n"
 					  "    name of external pager program\n"));
+#ifndef WIN32
+	fprintf(output, _("  PSQL_WATCH_PAGER\n"
+					  "    name of external pager program used for \\watch\n"));
+#endif
 	fprintf(output, _("  PSQLRC\n"
 					  "    alternative location for the user's .psqlrc file\n"));
 	fprintf(output, _("  SHELL\n"

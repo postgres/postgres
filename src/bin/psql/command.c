@@ -13,6 +13,7 @@
 #include <utime.h>
 #ifndef WIN32
 #include <sys/stat.h>			/* for stat() */
+#include <sys/time.h>			/* for setitimer() */
 #include <fcntl.h>				/* open() flags */
 #include <unistd.h>				/* for geteuid(), getpid(), stat() */
 #else
@@ -4894,13 +4895,74 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	const char *strftime_fmt;
 	const char *user_title;
 	char	   *title;
+	const char *pagerprog = NULL;
+	FILE	   *pagerpipe = NULL;
 	int			title_len;
 	int			res = 0;
+#ifndef WIN32
+	sigset_t	sigalrm_sigchld_sigint;
+	sigset_t	sigalrm_sigchld;
+	sigset_t	sigint;
+	struct itimerval interval;
+	bool		done = false;
+#endif
 
 	if (!query_buf || query_buf->len <= 0)
 	{
 		pg_log_error("\\watch cannot be used with an empty query");
 		return false;
+	}
+
+#ifndef WIN32
+	sigemptyset(&sigalrm_sigchld_sigint);
+	sigaddset(&sigalrm_sigchld_sigint, SIGCHLD);
+	sigaddset(&sigalrm_sigchld_sigint, SIGALRM);
+	sigaddset(&sigalrm_sigchld_sigint, SIGINT);
+
+	sigemptyset(&sigalrm_sigchld);
+	sigaddset(&sigalrm_sigchld, SIGCHLD);
+	sigaddset(&sigalrm_sigchld, SIGALRM);
+
+	sigemptyset(&sigint);
+	sigaddset(&sigint, SIGINT);
+
+	/*
+	 * Block SIGALRM and SIGCHLD before we start the timer and the pager (if
+	 * configured), to avoid races.  sigwait() will receive them.
+	 */
+	sigprocmask(SIG_BLOCK, &sigalrm_sigchld, NULL);
+
+	/*
+	 * Set a timer to interrupt sigwait() so we can run the query at the
+	 * requested intervals.
+	 */
+	interval.it_value.tv_sec = sleep_ms / 1000;
+	interval.it_value.tv_usec = (sleep_ms % 1000) * 1000;
+	interval.it_interval = interval.it_value;
+	if (setitimer(ITIMER_REAL, &interval, NULL) < 0)
+	{
+		pg_log_error("could not set timer: %m");
+		done = true;
+	}
+#endif
+
+	/*
+	 * For \watch, we ignore the size of the result and always use the pager
+	 * if PSQL_WATCH_PAGER is set.  We also ignore the regular PSQL_PAGER or
+	 * PAGER environment variables, because traditional pagers probably won't
+	 * be very useful for showing a stream of results.
+	 */
+#ifndef WIN32
+	pagerprog = getenv("PSQL_WATCH_PAGER");
+#endif
+	if (pagerprog && myopt.topt.pager)
+	{
+		disable_sigpipe_trap();
+		pagerpipe = popen(pagerprog, "w");
+
+		if (!pagerpipe)
+			/* silently proceed without pager */
+			restore_sigpipe_trap();
 	}
 
 	/*
@@ -4911,10 +4973,12 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	strftime_fmt = "%c";
 
 	/*
-	 * Set up rendering options, in particular, disable the pager, because
-	 * nobody wants to be prompted while watching the output of 'watch'.
+	 * Set up rendering options, in particular, disable the pager unless
+	 * PSQL_WATCH_PAGER was successfully launched.
 	 */
-	myopt.topt.pager = 0;
+	if (!pagerpipe)
+		myopt.topt.pager = 0;
+
 
 	/*
 	 * If there's a title in the user configuration, make sure we have room
@@ -4929,7 +4993,6 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	{
 		time_t		timer;
 		char		timebuf[128];
-		long		i;
 
 		/*
 		 * Prepare title for output.  Note that we intentionally include a
@@ -4948,7 +5011,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		myopt.title = title;
 
 		/* Run the query and print out the results */
-		res = PSQLexecWatch(query_buf->data, &myopt);
+		res = PSQLexecWatch(query_buf->data, &myopt, pagerpipe);
 
 		/*
 		 * PSQLexecWatch handles the case where we can no longer repeat the
@@ -4956,6 +5019,11 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		 */
 		if (res <= 0)
 			break;
+
+		if (pagerpipe && ferror(pagerpipe))
+			break;
+
+#ifdef WIN32
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
@@ -4967,12 +5035,10 @@ do_watch(PQExpBuffer query_buf, double sleep)
 
 		/*
 		 * Enable 'watch' cancellations and wait a while before running the
-		 * query again.  Break the sleep into short intervals (at most 1s)
-		 * since pg_usleep isn't interruptible on some platforms.
+		 * query again.  Break the sleep into short intervals (at most 1s).
 		 */
 		sigint_interrupt_enabled = true;
-		i = sleep_ms;
-		while (i > 0)
+		for (long i = sleep_ms; i > 0;)
 		{
 			long		s = Min(i, 1000L);
 
@@ -4982,7 +5048,56 @@ do_watch(PQExpBuffer query_buf, double sleep)
 			i -= s;
 		}
 		sigint_interrupt_enabled = false;
+#else
+		/* sigwait() will handle SIGINT. */
+		sigprocmask(SIG_BLOCK, &sigint, NULL);
+		if (cancel_pressed)
+			done = true;
+
+		/* Wait for SIGINT, SIGCHLD or SIGALRM. */
+		while (!done)
+		{
+			int			signal_received;
+
+			if (sigwait(&sigalrm_sigchld_sigint, &signal_received) < 0)
+			{
+				/* Some other signal arrived? */
+				if (errno == EINTR)
+					continue;
+				else
+				{
+					pg_log_error("could not wait for signals: %m");
+					done = true;
+					break;
+				}
+			}
+			/* On ^C or pager exit, it's time to stop running the query. */
+			if (signal_received == SIGINT || signal_received == SIGCHLD)
+				done = true;
+			/* Otherwise, we must have SIGALRM.  Time to run the query again. */
+			break;
+		}
+
+		/* Unblock SIGINT so that slow queries can be interrupted. */
+		sigprocmask(SIG_UNBLOCK, &sigint, NULL);
+		if (done)
+			break;
+#endif
 	}
+
+	if (pagerpipe)
+	{
+		pclose(pagerpipe);
+		restore_sigpipe_trap();
+	}
+
+#ifndef WIN32
+	/* Disable the interval timer. */
+	memset(&interval, 0, sizeof(interval));
+	setitimer(ITIMER_REAL, &interval, NULL);
+	/* Unblock SIGINT, SIGCHLD and SIGALRM. */
+	sigprocmask(SIG_UNBLOCK, &sigalrm_sigchld_sigint, NULL);
+#endif
 
 	pg_free(title);
 	return (res >= 0);
