@@ -108,9 +108,9 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
      <para>
       Certain discarded tokens, like underscore, caused the output of
       these functions to produce incorrect tsquery output, e.g., both
-      websearch_to_tsquery('"pg_class pg"') and to_tsquery('pg_class
-      &lt;-&gt; pg') used to output '( pg &amp; class ) &lt;-&gt; pg',
-      but now both output 'pg &lt;-&gt; class &lt;-&gt; pg'.
+      <literal>websearch_to_tsquery('"pg_class pg"')</literal> and <literal>to_tsquery('pg_class
+      &lt;-&gt; pg')</literal> used to output <literal>( 'pg' &amp; 'class' ) &lt;-&gt; 'pg'</literal>,
+      but now both output <literal>'pg' &lt;-&gt; 'class' &lt;-&gt; 'pg'</literal>.
      </para>
     </listitem>
 
@@ -130,8 +130,8 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
      <para>
       Previously, quoted text that contained multiple adjacent discarded
       tokens were treated as multiple tokens, causing incorrect tsquery
-      output, e.g., websearch_to_tsquery('"aaa: bbb"') used to output
-      'aaa &lt;2&gt; bbb', but now  outputs 'aaa &lt;-&gt; bbb'.
+      output, e.g., <literal>websearch_to_tsquery('"aaa: bbb"')</literal> used to output
+      <literal>'aaa' &lt;2&gt; 'bbb'</literal>, but now outputs <literal>'aaa' &lt;-&gt; 'bbb'</literal>.
      </para>
     </listitem>
 
