@@ -157,9 +157,9 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 		{
 			if (loops < 10)
 			{
-				struct stat st;
+				struct microsoft_native_stat st;
 
-				if (stat(fileName, &st) != 0)
+				if (microsoft_native_stat(fileName, &st) != 0)
 				{
 					pg_usleep(100000);
 					loops++;
