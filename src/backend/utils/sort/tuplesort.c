@@ -4827,6 +4827,9 @@ movetup_datum(void *dest, void *src, unsigned int len)
 static void
 free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
 {
-	FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
-	pfree(stup->tuple);
+	if (stup->tuple)
+	{
+		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
+		pfree(stup->tuple);
+	}
 }
