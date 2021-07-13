@@ -4775,6 +4775,7 @@ writetup_datum(Tuplesortstate *state, int tapenum, SortTuple *stup)
 	{
 		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
 		pfree(stup->tuple);
+		stup->tuple = NULL;
 	}
 }
 
