@@ -4588,5 +4588,6 @@ free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
 	{
 		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
 		pfree(stup->tuple);
+		stup->tuple = NULL;
 	}
 }
