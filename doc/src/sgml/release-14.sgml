@@ -3606,13 +3606,12 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
        <para>
-        Add <xref linkend="guc-debug-invalidate-system-caches-always"/>
-        to control cache overwriting (Craig Ringer)
+        Add <xref linkend="guc-debug-discard-caches"/>
+        to control cache flushing for test purposes (Craig Ringer)
        </para>
 
        <para>
-        Previously this could only be controlled at compile time and is
-        enabled only in assert builds.
+        Previously this behavior could only be set at compile time.
        </para>
       </listitem>
 

@@ -38,6 +38,6 @@ step s4c	{ COMMIT; }
 # The expected output for this test assumes that isolationtester will
 # detect step s1b as waiting before the deadlock detector runs and
 # releases s1 from its blocked state.  To ensure that happens even in
-# very slow (CLOBBER_CACHE_ALWAYS) cases, apply a (*) annotation.
+# very slow (debug_discard_caches) cases, apply a (*) annotation.
 
 permutation s1a s2a s2b s3a s4a s1b(*) s1c s2c s3c s4c

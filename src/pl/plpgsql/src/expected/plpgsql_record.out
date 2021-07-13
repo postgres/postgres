@@ -426,7 +426,7 @@ select getf1(row(1,2));
      1
 (1 row)
 
--- the context stack is different when debug_invalidate_system_caches_always
+-- the context stack is different when debug_discard_caches
 -- is set, so suppress context output
 \set SHOW_CONTEXT never
 select getf1(row(1,2)::two_int8s);
@@ -507,7 +507,7 @@ select sillyaddone(42);
 -- test for change of type of column f1 should be here someday;
 -- for now see plpgsql_cache test
 alter table mutable drop column f1;
--- the context stack is different when debug_invalidate_system_caches_always
+-- the context stack is different when debug_discard_caches
 -- is set, so suppress context output
 \set SHOW_CONTEXT never
 select sillyaddone(42);  -- fail
@@ -527,7 +527,7 @@ select getf3(null::mutable);  -- now it works
 (1 row)
 
 alter table mutable drop column f3;
--- the context stack is different when debug_invalidate_system_caches_always
+-- the context stack is different when debug_discard_caches
 -- is set, so suppress context output
 \set SHOW_CONTEXT never
 select getf3(null::mutable);  -- fails again
@@ -552,7 +552,7 @@ select sillyaddtwo(42);
 (1 row)
 
 drop table mutable2;
--- the context stack is different when debug_invalidate_system_caches_always
+-- the context stack is different when debug_discard_caches
 -- is set, so suppress context output
 \set SHOW_CONTEXT never
 select sillyaddtwo(42);  -- fail

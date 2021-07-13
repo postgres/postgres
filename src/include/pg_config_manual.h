@@ -322,36 +322,36 @@
 /* #define RANDOMIZE_ALLOCATED_MEMORY */
 
 /*
- * For cache invalidation debugging, define CLOBBER_CACHE_ENABLED to enable
- * use of the debug_invalidate_system_caches_always GUC to aggressively flush
- * syscache/relcache entries whenever it's possible to deliver invalidations.
- * See AcceptInvalidationMessages() in src/backend/utils/cache/inval.c for
+ * For cache-invalidation debugging, define DISCARD_CACHES_ENABLED to enable
+ * use of the debug_discard_caches GUC to aggressively flush syscache/relcache
+ * entries whenever it's possible to deliver invalidations.  See
+ * AcceptInvalidationMessages() in src/backend/utils/cache/inval.c for
  * details.
  *
  * USE_ASSERT_CHECKING builds default to enabling this.  It's possible to use
- * CLOBBER_CACHE_ENABLED without a cassert build and the implied
- * CLOBBER_FREED_MEMORY and MEMORY_CONTEXT_CHECKING options but it's unlikely
+ * DISCARD_CACHES_ENABLED without a cassert build and the implied
+ * CLOBBER_FREED_MEMORY and MEMORY_CONTEXT_CHECKING options, but it's unlikely
  * to be as effective at identifying problems.
  */
-/* #define CLOBBER_CACHE_ENABLED */
+/* #define DISCARD_CACHES_ENABLED */
 
-#if defined(USE_ASSERT_CHECKING) && !defined(CLOBBER_CACHE_ENABLED)
-#define CLOBBER_CACHE_ENABLED
+#if defined(USE_ASSERT_CHECKING) && !defined(DISCARD_CACHES_ENABLED)
+#define DISCARD_CACHES_ENABLED
 #endif
 
 /*
- * Backwards compatibility for the older compile-time-only cache clobber
+ * Backwards compatibility for the older compile-time-only clobber-cache
  * macros.
  */
-#if !defined(CLOBBER_CACHE_ENABLED) && (defined(CLOBBER_CACHE_ALWAYS) || defined(CLOBBER_CACHE_RECURSIVELY))
-#define CLOBBER_CACHE_ENABLED
+#if !defined(DISCARD_CACHES_ENABLED) && (defined(CLOBBER_CACHE_ALWAYS) || defined(CLOBBER_CACHE_RECURSIVELY))
+#define DISCARD_CACHES_ENABLED
 #endif
 
 /*
  * Recover memory used for relcache entries when invalidated.  See
  * RelationBuildDescr() in src/backend/utils/cache/relcache.c.
  *
- * This is active automatically for clobber cache builds when clobbering is
+ * This is active automatically for clobber-cache builds when clobbering is
  * active, but can be overridden here by explicitly defining
  * RECOVER_RELATION_BUILD_MEMORY.  Define to 1 to always free relation cache
  * memory even when clobber is off, or to 0 to never free relation cache
