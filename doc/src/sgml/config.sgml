@@ -10341,10 +10341,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-debug-invalidate-system-caches-always" xreflabel="debug_invalidate_system_caches_always">
-      <term><varname>debug_invalidate_system_caches_always</varname> (<type>integer</type>)
+     <varlistentry id="guc-debug-discard-caches" xreflabel="debug_discard_caches">
+      <term><varname>debug_discard_caches</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>debug_invalidate_system_caches_always</varname> configuration parameter</primary>
+       <primary><varname>debug_discard_caches</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -10369,7 +10369,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
        <para>
         This parameter is supported when
-        <symbol>CLOBBER_CACHE_ENABLED</symbol> was defined at compile time
+        <symbol>DISCARD_CACHES_ENABLED</symbol> was defined at compile time
         (which happens automatically when using the
         <application>configure</application> option
         <option>--enable-cassert</option>).  In production builds, its value

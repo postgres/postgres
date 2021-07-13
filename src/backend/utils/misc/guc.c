@@ -3513,13 +3513,13 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"debug_invalidate_system_caches_always", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Aggressively invalidate system caches for debugging purposes."),
+		{"debug_discard_caches", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Aggressively flush system caches for debugging purposes."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&debug_invalidate_system_caches_always,
-#ifdef CLOBBER_CACHE_ENABLED
+		&debug_discard_caches,
+#ifdef DISCARD_CACHES_ENABLED
 		/* Set default based on older compile-time-only cache clobber macros */
 #if defined(CLOBBER_CACHE_RECURSIVELY)
 		3,
@@ -3529,9 +3529,9 @@ static struct config_int ConfigureNamesInt[] =
 		0,
 #endif
 		0, 5,
-#else							/* not CLOBBER_CACHE_ENABLED */
+#else							/* not DISCARD_CACHES_ENABLED */
 		0, 0, 0,
-#endif							/* not CLOBBER_CACHE_ENABLED */
+#endif							/* not DISCARD_CACHES_ENABLED */
 		NULL, NULL, NULL
 	},
 

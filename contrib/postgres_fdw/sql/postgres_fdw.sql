@@ -2831,11 +2831,11 @@ ROLLBACK;
 -- so that we can easily terminate the connection later.
 ALTER SERVER loopback OPTIONS (application_name 'fdw_retry_check');
 
--- If debug_invalidate_system_caches_always is active, it results in
+-- If debug_discard_caches is active, it results in
 -- dropping remote connections after every transaction, making it
 -- impossible to test termination meaningfully.  So turn that off
 -- for this test.
-SET debug_invalidate_system_caches_always = 0;
+SET debug_discard_caches = 0;
 
 -- Make sure we have a remote connection.
 SELECT 1 FROM ft1 LIMIT 1;
@@ -2861,7 +2861,7 @@ SELECT 1 FROM ft1 LIMIT 1;    -- should fail
 \set VERBOSITY default
 COMMIT;
 
-RESET debug_invalidate_system_caches_always;
+RESET debug_discard_caches;
 
 -- =============================================================================
 -- test connection invalidation cases and postgres_fdw_get_connections function

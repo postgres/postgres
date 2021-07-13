@@ -373,7 +373,7 @@ make check EXTRA_REGRESS_OPTS="--temp-config=test_postgresql.conf"
    <para>
     This can be useful to enable additional logging, adjust resource limits,
     or enable extra run-time checks such as <xref
-    linkend="guc-debug-invalidate-system-caches-always"/>.
+    linkend="guc-debug-discard-caches"/>.
    </para>
   </sect2>
 

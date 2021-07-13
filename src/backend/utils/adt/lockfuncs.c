@@ -636,10 +636,10 @@ pg_isolation_test_session_is_blocked(PG_FUNCTION_ARGS)
 	 * Check if any of these are in the list of interesting PIDs, that being
 	 * the sessions that the isolation tester is running.  We don't use
 	 * "arrayoverlaps" here, because it would lead to cache lookups and one of
-	 * our goals is to run quickly with debug_invalidate_system_caches_always
-	 * > 0.  We expect blocking_pids to be usually empty and otherwise a very
-	 * small number in isolation tester cases, so make that the outer loop of
-	 * a naive search for a match.
+	 * our goals is to run quickly with debug_discard_caches > 0.  We expect
+	 * blocking_pids to be usually empty and otherwise a very small number in
+	 * isolation tester cases, so make that the outer loop of a naive search
+	 * for a match.
 	 */
 	for (i = 0; i < num_blocking_pids; i++)
 		for (j = 0; j < num_interesting_pids; j++)

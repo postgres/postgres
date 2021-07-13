@@ -897,9 +897,8 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * rejected a generic plan, it's possible to reach here with is_valid
 	 * false due to an invalidation while making the generic plan.  In theory
 	 * the invalidation must be a false positive, perhaps a consequence of an
-	 * sinval reset event or the debug_invalidate_system_caches_always code.
-	 * But for safety, let's treat it as real and redo the
-	 * RevalidateCachedQuery call.
+	 * sinval reset event or the debug_discard_caches code.  But for safety,
+	 * let's treat it as real and redo the RevalidateCachedQuery call.
 	 */
 	if (!plansource->is_valid)
 		qlist = RevalidateCachedQuery(plansource, queryEnv);
