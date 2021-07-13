@@ -4585,6 +4585,9 @@ leader_takeover_tapes(Tuplesortstate *state)
 static void
 free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
 {
-	FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
-	pfree(stup->tuple);
+	if (stup->tuple)
+	{
+		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
+		pfree(stup->tuple);
+	}
 }
