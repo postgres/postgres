@@ -42,9 +42,10 @@
   <para>
    The statistics gathered by the module are made available via a
    view named <structname>pg_stat_statements</structname>.  This view
-   contains one row for each distinct database ID, user ID, query ID and
-   toplevel (up to the maximum number of distinct statements that the module
-   can track).  The columns of the view are shown in
+   contains one row for each distinct combination of database ID, user
+   ID, query ID and whether it's a top level statement or not (up to
+   the maximum number of distinct statements that the module can track).
+   The columns of the view are shown in
    <xref linkend="pgstatstatements-columns"/>.
   </para>
 
