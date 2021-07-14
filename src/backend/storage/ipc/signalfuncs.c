@@ -180,8 +180,10 @@ pg_wait_until_termination(int pid, int64 timeout)
 	} while (remainingtime > 0);
 
 	ereport(WARNING,
-			(errmsg("backend with PID %d did not terminate within %lld milliseconds",
-					pid, (long long int) timeout)));
+			(errmsg_plural("backend with PID %d did not terminate within %lld millisecond",
+						   "backend with PID %d did not terminate within %lld milliseconds",
+						   timeout,
+						   pid, (long long int) timeout)));
 
 	return false;
 }
