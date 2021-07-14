@@ -633,7 +633,8 @@ sub CopyIncludeFiles
 	CopyFiles(
 		'Libpq internal headers',
 		$target . '/include/internal/',
-		'src/interfaces/libpq/', 'libpq-int.h', 'pqexpbuffer.h');
+		'src/interfaces/libpq/', 'libpq-int.h', 'fe-auth-sasl.h',
+		'pqexpbuffer.h');
 
 	CopyFiles(
 		'Internal headers',
