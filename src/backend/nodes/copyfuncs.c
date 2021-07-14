@@ -950,12 +950,12 @@ _copyMaterial(const Material *from)
 
 
 /*
- * _copyResultCache
+ * _copyMemoize
  */
-static ResultCache *
-_copyResultCache(const ResultCache *from)
+static Memoize *
+_copyMemoize(const Memoize *from)
 {
-	ResultCache *newnode = makeNode(ResultCache);
+	Memoize    *newnode = makeNode(Memoize);
 
 	/*
 	 * copy node superclass fields
@@ -5079,8 +5079,8 @@ copyObjectImpl(const void *from)
 		case T_Material:
 			retval = _copyMaterial(from);
 			break;
-		case T_ResultCache:
-			retval = _copyResultCache(from);
+		case T_Memoize:
+			retval = _copyMemoize(from);
 			break;
 		case T_Sort:
 			retval = _copySort(from);

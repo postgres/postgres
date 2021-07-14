@@ -78,7 +78,7 @@ static bool check_equivalence_delay(PlannerInfo *root,
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
-static void check_resultcacheable(RestrictInfo *restrictinfo);
+static void check_memoizable(RestrictInfo *restrictinfo);
 
 
 /*****************************************************************************
@@ -2212,10 +2212,10 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
 
 			/*
 			 * Likewise, check if the clause is suitable to be used with a
-			 * Result Cache node to cache inner tuples during a parameterized
+			 * Memoize node to cache inner tuples during a parameterized
 			 * nested loop.
 			 */
-			check_resultcacheable(restrictinfo);
+			check_memoizable(restrictinfo);
 
 			/*
 			 * Add clause to the join lists of all the relevant relations.
@@ -2459,7 +2459,7 @@ build_implied_join_equality(PlannerInfo *root,
 	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);
 	check_hashjoinable(restrictinfo);
-	check_resultcacheable(restrictinfo);
+	check_memoizable(restrictinfo);
 
 	return restrictinfo;
 }
@@ -2709,13 +2709,13 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 }
 
 /*
- * check_resultcacheable
- *	  If the restrictinfo's clause is suitable to be used for a Result Cache
- *	  node, set the hasheqoperator to the hash equality operator that will be
- *	  needed during caching.
+ * check_memoizable
+ *	  If the restrictinfo's clause is suitable to be used for a Memoize node,
+ *	  set the hasheqoperator to the hash equality operator that will be needed
+ *	  during caching.
  */
 static void
-check_resultcacheable(RestrictInfo *restrictinfo)
+check_memoizable(RestrictInfo *restrictinfo)
 {
 	TypeCacheEntry *typentry;
 	Expr	   *clause = restrictinfo->clause;

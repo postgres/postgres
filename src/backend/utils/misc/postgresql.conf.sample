@@ -367,7 +367,7 @@
 #enable_indexscan = on
 #enable_indexonlyscan = on
 #enable_material = on
-#enable_resultcache = on
+#enable_memoize = on
 #enable_mergejoin = on
 #enable_nestloop = on
 #enable_parallel_append = on

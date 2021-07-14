@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodeResultCache.c
+ * nodeMemoize.c
  *	  Routines to handle caching of results from parameterized nodes
  *
  * Portions Copyright (c) 2021, PostgreSQL Global Development Group
@@ -8,9 +8,9 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/executor/nodeResultCache.c
+ *	  src/backend/executor/nodeMemoize.c
  *
- * ResultCache nodes are intended to sit above parameterized nodes in the plan
+ * Memoize nodes are intended to sit above parameterized nodes in the plan
  * tree in order to cache results from them.  The intention here is that a
  * repeat scan with a parameter value that has already been seen by the node
  * can fetch tuples from the cache rather than having to re-scan the outer
@@ -43,24 +43,24 @@
  * happens then we'll have already evicted all other cache entries.  When
  * caching another tuple would cause us to exceed our memory budget, we must
  * free the entry that we're currently populating and move the state machine
- * into RC_CACHE_BYPASS_MODE.  This means that we'll not attempt to cache any
- * further tuples for this particular scan.  We don't have the memory for it.
- * The state machine will be reset again on the next rescan.  If the memory
- * requirements to cache the next parameter's tuples are less demanding, then
- * that may allow us to start putting useful entries back into the cache
- * again.
+ * into MEMO_CACHE_BYPASS_MODE.  This means that we'll not attempt to cache
+ * any further tuples for this particular scan.  We don't have the memory for
+ * it.  The state machine will be reset again on the next rescan.  If the
+ * memory requirements to cache the next parameter's tuples are less
+ * demanding, then that may allow us to start putting useful entries back into
+ * the cache again.
  *
  *
  * INTERFACE ROUTINES
- *		ExecResultCache			- lookup cache, exec subplan when not found
- *		ExecInitResultCache		- initialize node and subnodes
- *		ExecEndResultCache		- shutdown node and subnodes
- *		ExecReScanResultCache	- rescan the result cache
+ *		ExecMemoize			- lookup cache, exec subplan when not found
+ *		ExecInitMemoize		- initialize node and subnodes
+ *		ExecEndMemoize		- shutdown node and subnodes
+ *		ExecReScanMemoize	- rescan the memoize node
  *
- *		ExecResultCacheEstimate		estimates DSM space needed for parallel plan
- *		ExecResultCacheInitializeDSM initialize DSM for parallel plan
- *		ExecResultCacheInitializeWorker attach to DSM info in parallel worker
- *		ExecResultCacheRetrieveInstrumentation get instrumentation from worker
+ *		ExecMemoizeEstimate		estimates DSM space needed for parallel plan
+ *		ExecMemoizeInitializeDSM initialize DSM for parallel plan
+ *		ExecMemoizeInitializeWorker attach to DSM info in parallel worker
+ *		ExecMemoizeRetrieveInstrumentation get instrumentation from worker
  *-------------------------------------------------------------------------
  */
 
@@ -68,79 +68,79 @@
 
 #include "common/hashfn.h"
 #include "executor/executor.h"
-#include "executor/nodeResultCache.h"
+#include "executor/nodeMemoize.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
 
-/* States of the ExecResultCache state machine */
-#define RC_CACHE_LOOKUP				1	/* Attempt to perform a cache lookup */
-#define RC_CACHE_FETCH_NEXT_TUPLE	2	/* Get another tuple from the cache */
-#define RC_FILLING_CACHE			3	/* Read outer node to fill cache */
-#define RC_CACHE_BYPASS_MODE		4	/* Bypass mode.  Just read from our
+/* States of the ExecMemoize state machine */
+#define MEMO_CACHE_LOOKUP			1	/* Attempt to perform a cache lookup */
+#define MEMO_CACHE_FETCH_NEXT_TUPLE	2	/* Get another tuple from the cache */
+#define MEMO_FILLING_CACHE			3	/* Read outer node to fill cache */
+#define MEMO_CACHE_BYPASS_MODE		4	/* Bypass mode.  Just read from our
 										 * subplan without caching anything */
-#define RC_END_OF_SCAN				5	/* Ready for rescan */
+#define MEMO_END_OF_SCAN			5	/* Ready for rescan */
 
 
 /* Helper macros for memory accounting */
-#define EMPTY_ENTRY_MEMORY_BYTES(e)		(sizeof(ResultCacheEntry) + \
-										 sizeof(ResultCacheKey) + \
+#define EMPTY_ENTRY_MEMORY_BYTES(e)		(sizeof(MemoizeEntry) + \
+										 sizeof(MemoizeKey) + \
 										 (e)->key->params->t_len);
-#define CACHE_TUPLE_BYTES(t)			(sizeof(ResultCacheTuple) + \
+#define CACHE_TUPLE_BYTES(t)			(sizeof(MemoizeTuple) + \
 										 (t)->mintuple->t_len)
 
- /* ResultCacheTuple Stores an individually cached tuple */
-typedef struct ResultCacheTuple
+ /* MemoizeTuple Stores an individually cached tuple */
+typedef struct MemoizeTuple
 {
 	MinimalTuple mintuple;		/* Cached tuple */
-	struct ResultCacheTuple *next;	/* The next tuple with the same parameter
-									 * values or NULL if it's the last one */
-} ResultCacheTuple;
+	struct MemoizeTuple *next;	/* The next tuple with the same parameter
+								 * values or NULL if it's the last one */
+} MemoizeTuple;
 
 /*
- * ResultCacheKey
+ * MemoizeKey
  * The hash table key for cached entries plus the LRU list link
  */
-typedef struct ResultCacheKey
+typedef struct MemoizeKey
 {
 	MinimalTuple params;
 	dlist_node	lru_node;		/* Pointer to next/prev key in LRU list */
-} ResultCacheKey;
+} MemoizeKey;
 
 /*
- * ResultCacheEntry
+ * MemoizeEntry
  *		The data struct that the cache hash table stores
  */
-typedef struct ResultCacheEntry
+typedef struct MemoizeEntry
 {
-	ResultCacheKey *key;		/* Hash key for hash table lookups */
-	ResultCacheTuple *tuplehead;	/* Pointer to the first tuple or NULL if
-									 * no tuples are cached for this entry */
+	MemoizeKey *key;			/* Hash key for hash table lookups */
+	MemoizeTuple *tuplehead;	/* Pointer to the first tuple or NULL if no
+								 * tuples are cached for this entry */
 	uint32		hash;			/* Hash value (cached) */
 	char		status;			/* Hash status */
 	bool		complete;		/* Did we read the outer plan to completion? */
-} ResultCacheEntry;
+} MemoizeEntry;
 
 
-#define SH_PREFIX resultcache
-#define SH_ELEMENT_TYPE ResultCacheEntry
-#define SH_KEY_TYPE ResultCacheKey *
+#define SH_PREFIX memoize
+#define SH_ELEMENT_TYPE MemoizeEntry
+#define SH_KEY_TYPE MemoizeKey *
 #define SH_SCOPE static inline
 #define SH_DECLARE
 #include "lib/simplehash.h"
 
-static uint32 ResultCacheHash_hash(struct resultcache_hash *tb,
-								   const ResultCacheKey *key);
-static int	ResultCacheHash_equal(struct resultcache_hash *tb,
-								  const ResultCacheKey *params1,
-								  const ResultCacheKey *params2);
+static uint32 MemoizeHash_hash(struct memoize_hash *tb,
+							   const MemoizeKey *key);
+static int	MemoizeHash_equal(struct memoize_hash *tb,
+							  const MemoizeKey *params1,
+							  const MemoizeKey *params2);
 
-#define SH_PREFIX resultcache
-#define SH_ELEMENT_TYPE ResultCacheEntry
-#define SH_KEY_TYPE ResultCacheKey *
+#define SH_PREFIX memoize
+#define SH_ELEMENT_TYPE MemoizeEntry
+#define SH_KEY_TYPE MemoizeKey *
 #define SH_KEY key
-#define SH_HASH_KEY(tb, key) ResultCacheHash_hash(tb, key)
-#define SH_EQUAL(tb, a, b) (ResultCacheHash_equal(tb, a, b) == 0)
+#define SH_HASH_KEY(tb, key) MemoizeHash_hash(tb, key)
+#define SH_EQUAL(tb, a, b) (MemoizeHash_equal(tb, a, b) == 0)
 #define SH_SCOPE static inline
 #define SH_STORE_HASH
 #define SH_GET_HASH(tb, a) a->hash
@@ -148,20 +148,20 @@ static int	ResultCacheHash_equal(struct resultcache_hash *tb,
 #include "lib/simplehash.h"
 
 /*
- * ResultCacheHash_hash
+ * MemoizeHash_hash
  *		Hash function for simplehash hashtable.  'key' is unused here as we
- *		require that all table lookups first populate the ResultCacheState's
+ *		require that all table lookups first populate the MemoizeState's
  *		probeslot with the key values to be looked up.
  */
 static uint32
-ResultCacheHash_hash(struct resultcache_hash *tb, const ResultCacheKey *key)
+MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 {
-	ResultCacheState *rcstate = (ResultCacheState *) tb->private_data;
-	TupleTableSlot *pslot = rcstate->probeslot;
+	MemoizeState *mstate = (MemoizeState *) tb->private_data;
+	TupleTableSlot *pslot = mstate->probeslot;
 	uint32		hashkey = 0;
-	int			numkeys = rcstate->nkeys;
-	FmgrInfo   *hashfunctions = rcstate->hashfunctions;
-	Oid		   *collations = rcstate->collations;
+	int			numkeys = mstate->nkeys;
+	FmgrInfo   *hashfunctions = mstate->hashfunctions;
+	Oid		   *collations = mstate->collations;
 
 	for (int i = 0; i < numkeys; i++)
 	{
@@ -182,56 +182,54 @@ ResultCacheHash_hash(struct resultcache_hash *tb, const ResultCacheKey *key)
 }
 
 /*
- * ResultCacheHash_equal
+ * MemoizeHash_equal
  *		Equality function for confirming hash value matches during a hash
- *		table lookup.  'key2' is never used.  Instead the ResultCacheState's
+ *		table lookup.  'key2' is never used.  Instead the MemoizeState's
  *		probeslot is always populated with details of what's being looked up.
  */
 static int
-ResultCacheHash_equal(struct resultcache_hash *tb, const ResultCacheKey *key1,
-					  const ResultCacheKey *key2)
+MemoizeHash_equal(struct memoize_hash *tb, const MemoizeKey *key1,
+				  const MemoizeKey *key2)
 {
-	ResultCacheState *rcstate = (ResultCacheState *) tb->private_data;
-	ExprContext *econtext = rcstate->ss.ps.ps_ExprContext;
-	TupleTableSlot *tslot = rcstate->tableslot;
-	TupleTableSlot *pslot = rcstate->probeslot;
+	MemoizeState *mstate = (MemoizeState *) tb->private_data;
+	ExprContext *econtext = mstate->ss.ps.ps_ExprContext;
+	TupleTableSlot *tslot = mstate->tableslot;
+	TupleTableSlot *pslot = mstate->probeslot;
 
 	/* probeslot should have already been prepared by prepare_probe_slot() */
-
 	ExecStoreMinimalTuple(key1->params, tslot, false);
 
 	econtext->ecxt_innertuple = tslot;
 	econtext->ecxt_outertuple = pslot;
-	return !ExecQualAndReset(rcstate->cache_eq_expr, econtext);
+	return !ExecQualAndReset(mstate->cache_eq_expr, econtext);
 }
 
 /*
  * Initialize the hash table to empty.
  */
 static void
-build_hash_table(ResultCacheState *rcstate, uint32 size)
+build_hash_table(MemoizeState *mstate, uint32 size)
 {
 	/* Make a guess at a good size when we're not given a valid size. */
 	if (size == 0)
 		size = 1024;
 
-	/* resultcache_create will convert the size to a power of 2 */
-	rcstate->hashtable = resultcache_create(rcstate->tableContext, size,
-											rcstate);
+	/* memoize_create will convert the size to a power of 2 */
+	mstate->hashtable = memoize_create(mstate->tableContext, size, mstate);
 }
 
 /*
  * prepare_probe_slot
- *		Populate rcstate's probeslot with the values from the tuple stored
+ *		Populate mstate's probeslot with the values from the tuple stored
  *		in 'key'.  If 'key' is NULL, then perform the population by evaluating
- *		rcstate's param_exprs.
+ *		mstate's param_exprs.
  */
 static inline void
-prepare_probe_slot(ResultCacheState *rcstate, ResultCacheKey *key)
+prepare_probe_slot(MemoizeState *mstate, MemoizeKey *key)
 {
-	TupleTableSlot *pslot = rcstate->probeslot;
-	TupleTableSlot *tslot = rcstate->tableslot;
-	int			numKeys = rcstate->nkeys;
+	TupleTableSlot *pslot = mstate->probeslot;
+	TupleTableSlot *tslot = mstate->tableslot;
+	int			numKeys = mstate->nkeys;
 
 	ExecClearTuple(pslot);
 
@@ -239,8 +237,8 @@ prepare_probe_slot(ResultCacheState *rcstate, ResultCacheKey *key)
 	{
 		/* Set the probeslot's values based on the current parameter values */
 		for (int i = 0; i < numKeys; i++)
-			pslot->tts_values[i] = ExecEvalExpr(rcstate->param_exprs[i],
-												rcstate->ss.ps.ps_ExprContext,
+			pslot->tts_values[i] = ExecEvalExpr(mstate->param_exprs[i],
+												mstate->ss.ps.ps_ExprContext,
 												&pslot->tts_isnull[i]);
 	}
 	else
@@ -262,14 +260,14 @@ prepare_probe_slot(ResultCacheState *rcstate, ResultCacheKey *key)
  *		reflect the removal of the tuples.
  */
 static inline void
-entry_purge_tuples(ResultCacheState *rcstate, ResultCacheEntry *entry)
+entry_purge_tuples(MemoizeState *mstate, MemoizeEntry *entry)
 {
-	ResultCacheTuple *tuple = entry->tuplehead;
+	MemoizeTuple *tuple = entry->tuplehead;
 	uint64		freed_mem = 0;
 
 	while (tuple != NULL)
 	{
-		ResultCacheTuple *next = tuple->next;
+		MemoizeTuple *next = tuple->next;
 
 		freed_mem += CACHE_TUPLE_BYTES(tuple);
 
@@ -284,7 +282,7 @@ entry_purge_tuples(ResultCacheState *rcstate, ResultCacheEntry *entry)
 	entry->tuplehead = NULL;
 
 	/* Update the memory accounting */
-	rcstate->mem_used -= freed_mem;
+	mstate->mem_used -= freed_mem;
 }
 
 /*
@@ -292,24 +290,24 @@ entry_purge_tuples(ResultCacheState *rcstate, ResultCacheEntry *entry)
  *		Remove 'entry' from the cache and free memory used by it.
  */
 static void
-remove_cache_entry(ResultCacheState *rcstate, ResultCacheEntry *entry)
+remove_cache_entry(MemoizeState *mstate, MemoizeEntry *entry)
 {
-	ResultCacheKey *key = entry->key;
+	MemoizeKey *key = entry->key;
 
 	dlist_delete(&entry->key->lru_node);
 
 	/* Remove all of the tuples from this entry */
-	entry_purge_tuples(rcstate, entry);
+	entry_purge_tuples(mstate, entry);
 
 	/*
 	 * Update memory accounting. entry_purge_tuples should have already
 	 * subtracted the memory used for each cached tuple.  Here we just update
 	 * the amount used by the entry itself.
 	 */
-	rcstate->mem_used -= EMPTY_ENTRY_MEMORY_BYTES(entry);
+	mstate->mem_used -= EMPTY_ENTRY_MEMORY_BYTES(entry);
 
 	/* Remove the entry from the cache */
-	resultcache_delete_item(rcstate->hashtable, entry);
+	memoize_delete_item(mstate->hashtable, entry);
 
 	pfree(key->params);
 	pfree(key);
@@ -319,37 +317,36 @@ remove_cache_entry(ResultCacheState *rcstate, ResultCacheEntry *entry)
  * cache_reduce_memory
  *		Evict older and less recently used items from the cache in order to
  *		reduce the memory consumption back to something below the
- *		ResultCacheState's mem_limit.
+ *		MemoizeState's mem_limit.
  *
  * 'specialkey', if not NULL, causes the function to return false if the entry
  * which the key belongs to is removed from the cache.
  */
 static bool
-cache_reduce_memory(ResultCacheState *rcstate, ResultCacheKey *specialkey)
+cache_reduce_memory(MemoizeState *mstate, MemoizeKey *specialkey)
 {
 	bool		specialkey_intact = true;	/* for now */
 	dlist_mutable_iter iter;
 	uint64		evictions = 0;
 
 	/* Update peak memory usage */
-	if (rcstate->mem_used > rcstate->stats.mem_peak)
-		rcstate->stats.mem_peak = rcstate->mem_used;
+	if (mstate->mem_used > mstate->stats.mem_peak)
+		mstate->stats.mem_peak = mstate->mem_used;
 
 	/* We expect only to be called when we've gone over budget on memory */
-	Assert(rcstate->mem_used > rcstate->mem_limit);
+	Assert(mstate->mem_used > mstate->mem_limit);
 
 	/* Start the eviction process starting at the head of the LRU list. */
-	dlist_foreach_modify(iter, &rcstate->lru_list)
+	dlist_foreach_modify(iter, &mstate->lru_list)
 	{
-		ResultCacheKey *key = dlist_container(ResultCacheKey, lru_node,
-											  iter.cur);
-		ResultCacheEntry *entry;
+		MemoizeKey *key = dlist_container(MemoizeKey, lru_node, iter.cur);
+		MemoizeEntry *entry;
 
 		/*
 		 * Populate the hash probe slot in preparation for looking up this LRU
 		 * entry.
 		 */
-		prepare_probe_slot(rcstate, key);
+		prepare_probe_slot(mstate, key);
 
 		/*
 		 * Ideally the LRU list pointers would be stored in the entry itself
@@ -362,7 +359,7 @@ cache_reduce_memory(ResultCacheState *rcstate, ResultCacheKey *specialkey)
 		 * pointer to the key here, we must perform a hash table lookup to
 		 * find the entry that the key belongs to.
 		 */
-		entry = resultcache_lookup(rcstate->hashtable, NULL);
+		entry = memoize_lookup(mstate->hashtable, NULL);
 
 		/* A good spot to check for corruption of the table and LRU list. */
 		Assert(entry != NULL);
@@ -383,23 +380,23 @@ cache_reduce_memory(ResultCacheState *rcstate, ResultCacheKey *specialkey)
 		/*
 		 * Finally remove the entry.  This will remove from the LRU list too.
 		 */
-		remove_cache_entry(rcstate, entry);
+		remove_cache_entry(mstate, entry);
 
 		evictions++;
 
 		/* Exit if we've freed enough memory */
-		if (rcstate->mem_used <= rcstate->mem_limit)
+		if (mstate->mem_used <= mstate->mem_limit)
 			break;
 	}
 
-	rcstate->stats.cache_evictions += evictions;	/* Update Stats */
+	mstate->stats.cache_evictions += evictions; /* Update Stats */
 
 	return specialkey_intact;
 }
 
 /*
  * cache_lookup
- *		Perform a lookup to see if we've already cached results based on the
+ *		Perform a lookup to see if we've already cached tuples based on the
  *		scan's current parameters.  If we find an existing entry we move it to
  *		the end of the LRU list, set *found to true then return it.  If we
  *		don't find an entry then we create a new one and add it to the end of
@@ -409,21 +406,21 @@ cache_reduce_memory(ResultCacheState *rcstate, ResultCacheKey *specialkey)
  *
  * Callers can assume we'll never return NULL when *found is true.
  */
-static ResultCacheEntry *
-cache_lookup(ResultCacheState *rcstate, bool *found)
+static MemoizeEntry *
+cache_lookup(MemoizeState *mstate, bool *found)
 {
-	ResultCacheKey *key;
-	ResultCacheEntry *entry;
+	MemoizeKey *key;
+	MemoizeEntry *entry;
 	MemoryContext oldcontext;
 
 	/* prepare the probe slot with the current scan parameters */
-	prepare_probe_slot(rcstate, NULL);
+	prepare_probe_slot(mstate, NULL);
 
 	/*
 	 * Add the new entry to the cache.  No need to pass a valid key since the
-	 * hash function uses rcstate's probeslot, which we populated above.
+	 * hash function uses mstate's probeslot, which we populated above.
 	 */
-	entry = resultcache_insert(rcstate->hashtable, NULL, found);
+	entry = memoize_insert(mstate->hashtable, NULL, found);
 
 	if (*found)
 	{
@@ -431,19 +428,19 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 		 * Move existing entry to the tail of the LRU list to mark it as the
 		 * most recently used item.
 		 */
-		dlist_move_tail(&rcstate->lru_list, &entry->key->lru_node);
+		dlist_move_tail(&mstate->lru_list, &entry->key->lru_node);
 
 		return entry;
 	}
 
-	oldcontext = MemoryContextSwitchTo(rcstate->tableContext);
+	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
 	/* Allocate a new key */
-	entry->key = key = (ResultCacheKey *) palloc(sizeof(ResultCacheKey));
-	key->params = ExecCopySlotMinimalTuple(rcstate->probeslot);
+	entry->key = key = (MemoizeKey *) palloc(sizeof(MemoizeKey));
+	key->params = ExecCopySlotMinimalTuple(mstate->probeslot);
 
 	/* Update the total cache memory utilization */
-	rcstate->mem_used += EMPTY_ENTRY_MEMORY_BYTES(entry);
+	mstate->mem_used += EMPTY_ENTRY_MEMORY_BYTES(entry);
 
 	/* Initialize this entry */
 	entry->complete = false;
@@ -453,9 +450,9 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 	 * Since this is the most recently used entry, push this entry onto the
 	 * end of the LRU list.
 	 */
-	dlist_push_tail(&rcstate->lru_list, &entry->key->lru_node);
+	dlist_push_tail(&mstate->lru_list, &entry->key->lru_node);
 
-	rcstate->last_tuple = NULL;
+	mstate->last_tuple = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -463,7 +460,7 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 	 * If we've gone over our memory budget, then we'll free up some space in
 	 * the cache.
 	 */
-	if (rcstate->mem_used > rcstate->mem_limit)
+	if (mstate->mem_used > mstate->mem_limit)
 	{
 		/*
 		 * Try to free up some memory.  It's highly unlikely that we'll fail
@@ -471,7 +468,7 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 		 * any tuples and we're able to remove any other entry to reduce the
 		 * memory consumption.
 		 */
-		if (unlikely(!cache_reduce_memory(rcstate, key)))
+		if (unlikely(!cache_reduce_memory(mstate, key)))
 			return NULL;
 
 		/*
@@ -482,16 +479,16 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 		 * happened by seeing if the entry is still in use and that the key
 		 * pointer matches our expected key.
 		 */
-		if (entry->status != resultcache_SH_IN_USE || entry->key != key)
+		if (entry->status != memoize_SH_IN_USE || entry->key != key)
 		{
 			/*
 			 * We need to repopulate the probeslot as lookups performed during
 			 * the cache evictions above will have stored some other key.
 			 */
-			prepare_probe_slot(rcstate, key);
+			prepare_probe_slot(mstate, key);
 
 			/* Re-find the newly added entry */
-			entry = resultcache_lookup(rcstate->hashtable, NULL);
+			entry = memoize_lookup(mstate->hashtable, NULL);
 			Assert(entry != NULL);
 		}
 	}
@@ -501,29 +498,29 @@ cache_lookup(ResultCacheState *rcstate, bool *found)
 
 /*
  * cache_store_tuple
- *		Add the tuple stored in 'slot' to the rcstate's current cache entry.
+ *		Add the tuple stored in 'slot' to the mstate's current cache entry.
  *		The cache entry must have already been made with cache_lookup().
- *		rcstate's last_tuple field must point to the tail of rcstate->entry's
+ *		mstate's last_tuple field must point to the tail of mstate->entry's
  *		list of tuples.
  */
 static bool
-cache_store_tuple(ResultCacheState *rcstate, TupleTableSlot *slot)
+cache_store_tuple(MemoizeState *mstate, TupleTableSlot *slot)
 {
-	ResultCacheTuple *tuple;
-	ResultCacheEntry *entry = rcstate->entry;
+	MemoizeTuple *tuple;
+	MemoizeEntry *entry = mstate->entry;
 	MemoryContext oldcontext;
 
 	Assert(slot != NULL);
 	Assert(entry != NULL);
 
-	oldcontext = MemoryContextSwitchTo(rcstate->tableContext);
+	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
-	tuple = (ResultCacheTuple *) palloc(sizeof(ResultCacheTuple));
+	tuple = (MemoizeTuple *) palloc(sizeof(MemoizeTuple));
 	tuple->mintuple = ExecCopySlotMinimalTuple(slot);
 	tuple->next = NULL;
 
 	/* Account for the memory we just consumed */
-	rcstate->mem_used += CACHE_TUPLE_BYTES(tuple);
+	mstate->mem_used += CACHE_TUPLE_BYTES(tuple);
 
 	if (entry->tuplehead == NULL)
 	{
@@ -536,21 +533,21 @@ cache_store_tuple(ResultCacheState *rcstate, TupleTableSlot *slot)
 	else
 	{
 		/* push this tuple onto the tail of the list */
-		rcstate->last_tuple->next = tuple;
+		mstate->last_tuple->next = tuple;
 	}
 
-	rcstate->last_tuple = tuple;
+	mstate->last_tuple = tuple;
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * If we've gone over our memory budget then free up some space in the
 	 * cache.
 	 */
-	if (rcstate->mem_used > rcstate->mem_limit)
+	if (mstate->mem_used > mstate->mem_limit)
 	{
-		ResultCacheKey *key = entry->key;
+		MemoizeKey *key = entry->key;
 
-		if (!cache_reduce_memory(rcstate, key))
+		if (!cache_reduce_memory(mstate, key))
 			return false;
 
 		/*
@@ -561,17 +558,16 @@ cache_store_tuple(ResultCacheState *rcstate, TupleTableSlot *slot)
 		 * happened by seeing if the entry is still in use and that the key
 		 * pointer matches our expected key.
 		 */
-		if (entry->status != resultcache_SH_IN_USE || entry->key != key)
+		if (entry->status != memoize_SH_IN_USE || entry->key != key)
 		{
 			/*
 			 * We need to repopulate the probeslot as lookups performed during
 			 * the cache evictions above will have stored some other key.
 			 */
-			prepare_probe_slot(rcstate, key);
+			prepare_probe_slot(mstate, key);
 
 			/* Re-find the entry */
-			rcstate->entry = entry = resultcache_lookup(rcstate->hashtable,
-														NULL);
+			mstate->entry = entry = memoize_lookup(mstate->hashtable, NULL);
 			Assert(entry != NULL);
 		}
 	}
@@ -580,17 +576,17 @@ cache_store_tuple(ResultCacheState *rcstate, TupleTableSlot *slot)
 }
 
 static TupleTableSlot *
-ExecResultCache(PlanState *pstate)
+ExecMemoize(PlanState *pstate)
 {
-	ResultCacheState *node = castNode(ResultCacheState, pstate);
+	MemoizeState *node = castNode(MemoizeState, pstate);
 	PlanState  *outerNode;
 	TupleTableSlot *slot;
 
-	switch (node->rc_status)
+	switch (node->mstatus)
 	{
-		case RC_CACHE_LOOKUP:
+		case MEMO_CACHE_LOOKUP:
 			{
-				ResultCacheEntry *entry;
+				MemoizeEntry *entry;
 				TupleTableSlot *outerslot;
 				bool		found;
 
@@ -618,7 +614,7 @@ ExecResultCache(PlanState *pstate)
 
 					/*
 					 * Set last_tuple and entry so that the state
-					 * RC_CACHE_FETCH_NEXT_TUPLE can easily find the next
+					 * MEMO_CACHE_FETCH_NEXT_TUPLE can easily find the next
 					 * tuple for these parameters.
 					 */
 					node->last_tuple = entry->tuplehead;
@@ -627,7 +623,7 @@ ExecResultCache(PlanState *pstate)
 					/* Fetch the first cached tuple, if there is one */
 					if (entry->tuplehead)
 					{
-						node->rc_status = RC_CACHE_FETCH_NEXT_TUPLE;
+						node->mstatus = MEMO_CACHE_FETCH_NEXT_TUPLE;
 
 						slot = node->ss.ps.ps_ResultTupleSlot;
 						ExecStoreMinimalTuple(entry->tuplehead->mintuple,
@@ -637,7 +633,7 @@ ExecResultCache(PlanState *pstate)
 					}
 
 					/* The cache entry is void of any tuples. */
-					node->rc_status = RC_END_OF_SCAN;
+					node->mstatus = MEMO_END_OF_SCAN;
 					return NULL;
 				}
 
@@ -666,13 +662,13 @@ ExecResultCache(PlanState *pstate)
 					 * cache_lookup may have returned NULL due to failure to
 					 * free enough cache space, so ensure we don't do anything
 					 * here that assumes it worked. There's no need to go into
-					 * bypass mode here as we're setting rc_status to end of
+					 * bypass mode here as we're setting mstatus to end of
 					 * scan.
 					 */
 					if (likely(entry))
 						entry->complete = true;
 
-					node->rc_status = RC_END_OF_SCAN;
+					node->mstatus = MEMO_END_OF_SCAN;
 					return NULL;
 				}
 
@@ -687,7 +683,7 @@ ExecResultCache(PlanState *pstate)
 				{
 					node->stats.cache_overflows += 1;	/* stats update */
 
-					node->rc_status = RC_CACHE_BYPASS_MODE;
+					node->mstatus = MEMO_CACHE_BYPASS_MODE;
 
 					/*
 					 * No need to clear out last_tuple as we'll stay in bypass
@@ -703,7 +699,7 @@ ExecResultCache(PlanState *pstate)
 					 * executed to completion.
 					 */
 					entry->complete = node->singlerow;
-					node->rc_status = RC_FILLING_CACHE;
+					node->mstatus = MEMO_FILLING_CACHE;
 				}
 
 				slot = node->ss.ps.ps_ResultTupleSlot;
@@ -711,7 +707,7 @@ ExecResultCache(PlanState *pstate)
 				return slot;
 			}
 
-		case RC_CACHE_FETCH_NEXT_TUPLE:
+		case MEMO_CACHE_FETCH_NEXT_TUPLE:
 			{
 				/* We shouldn't be in this state if these are not set */
 				Assert(node->entry != NULL);
@@ -723,7 +719,7 @@ ExecResultCache(PlanState *pstate)
 				/* No more tuples in the cache */
 				if (node->last_tuple == NULL)
 				{
-					node->rc_status = RC_END_OF_SCAN;
+					node->mstatus = MEMO_END_OF_SCAN;
 					return NULL;
 				}
 
@@ -734,18 +730,18 @@ ExecResultCache(PlanState *pstate)
 				return slot;
 			}
 
-		case RC_FILLING_CACHE:
+		case MEMO_FILLING_CACHE:
 			{
 				TupleTableSlot *outerslot;
-				ResultCacheEntry *entry = node->entry;
+				MemoizeEntry *entry = node->entry;
 
-				/* entry should already have been set by RC_CACHE_LOOKUP */
+				/* entry should already have been set by MEMO_CACHE_LOOKUP */
 				Assert(entry != NULL);
 
 				/*
-				 * When in the RC_FILLING_CACHE state, we've just had a cache
-				 * miss and are populating the cache with the current scan
-				 * tuples.
+				 * When in the MEMO_FILLING_CACHE state, we've just had a
+				 * cache miss and are populating the cache with the current
+				 * scan tuples.
 				 */
 				outerNode = outerPlanState(node);
 				outerslot = ExecProcNode(outerNode);
@@ -753,7 +749,7 @@ ExecResultCache(PlanState *pstate)
 				{
 					/* No more tuples.  Mark it as complete */
 					entry->complete = true;
-					node->rc_status = RC_END_OF_SCAN;
+					node->mstatus = MEMO_END_OF_SCAN;
 					return NULL;
 				}
 
@@ -771,7 +767,7 @@ ExecResultCache(PlanState *pstate)
 					/* Couldn't store it?  Handle overflow */
 					node->stats.cache_overflows += 1;	/* stats update */
 
-					node->rc_status = RC_CACHE_BYPASS_MODE;
+					node->mstatus = MEMO_CACHE_BYPASS_MODE;
 
 					/*
 					 * No need to clear out entry or last_tuple as we'll stay
@@ -784,7 +780,7 @@ ExecResultCache(PlanState *pstate)
 				return slot;
 			}
 
-		case RC_CACHE_BYPASS_MODE:
+		case MEMO_CACHE_BYPASS_MODE:
 			{
 				TupleTableSlot *outerslot;
 
@@ -797,7 +793,7 @@ ExecResultCache(PlanState *pstate)
 				outerslot = ExecProcNode(outerNode);
 				if (TupIsNull(outerslot))
 				{
-					node->rc_status = RC_END_OF_SCAN;
+					node->mstatus = MEMO_END_OF_SCAN;
 					return NULL;
 				}
 
@@ -806,7 +802,7 @@ ExecResultCache(PlanState *pstate)
 				return slot;
 			}
 
-		case RC_END_OF_SCAN:
+		case MEMO_END_OF_SCAN:
 
 			/*
 			 * We've already returned NULL for this scan, but just in case
@@ -815,16 +811,16 @@ ExecResultCache(PlanState *pstate)
 			return NULL;
 
 		default:
-			elog(ERROR, "unrecognized resultcache state: %d",
-				 (int) node->rc_status);
+			elog(ERROR, "unrecognized memoize state: %d",
+				 (int) node->mstatus);
 			return NULL;
 	}							/* switch */
 }
 
-ResultCacheState *
-ExecInitResultCache(ResultCache *node, EState *estate, int eflags)
+MemoizeState *
+ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 {
-	ResultCacheState *rcstate = makeNode(ResultCacheState);
+	MemoizeState *mstate = makeNode(MemoizeState);
 	Plan	   *outerNode;
 	int			i;
 	int			nkeys;
@@ -833,50 +829,50 @@ ExecInitResultCache(ResultCache *node, EState *estate, int eflags)
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
-	rcstate->ss.ps.plan = (Plan *) node;
-	rcstate->ss.ps.state = estate;
-	rcstate->ss.ps.ExecProcNode = ExecResultCache;
+	mstate->ss.ps.plan = (Plan *) node;
+	mstate->ss.ps.state = estate;
+	mstate->ss.ps.ExecProcNode = ExecMemoize;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &rcstate->ss.ps);
+	ExecAssignExprContext(estate, &mstate->ss.ps);
 
 	outerNode = outerPlan(node);
-	outerPlanState(rcstate) = ExecInitNode(outerNode, estate, eflags);
+	outerPlanState(mstate) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
 	 * Initialize return slot and type. No need to initialize projection info
 	 * because this node doesn't do projections.
 	 */
-	ExecInitResultTupleSlotTL(&rcstate->ss.ps, &TTSOpsMinimalTuple);
-	rcstate->ss.ps.ps_ProjInfo = NULL;
+	ExecInitResultTupleSlotTL(&mstate->ss.ps, &TTSOpsMinimalTuple);
+	mstate->ss.ps.ps_ProjInfo = NULL;
 
 	/*
 	 * Initialize scan slot and type.
 	 */
-	ExecCreateScanSlotFromOuterPlan(estate, &rcstate->ss, &TTSOpsMinimalTuple);
+	ExecCreateScanSlotFromOuterPlan(estate, &mstate->ss, &TTSOpsMinimalTuple);
 
 	/*
 	 * Set the state machine to lookup the cache.  We won't find anything
 	 * until we cache something, but this saves a special case to create the
 	 * first entry.
 	 */
-	rcstate->rc_status = RC_CACHE_LOOKUP;
+	mstate->mstatus = MEMO_CACHE_LOOKUP;
 
-	rcstate->nkeys = nkeys = node->numKeys;
-	rcstate->hashkeydesc = ExecTypeFromExprList(node->param_exprs);
-	rcstate->tableslot = MakeSingleTupleTableSlot(rcstate->hashkeydesc,
-												  &TTSOpsMinimalTuple);
-	rcstate->probeslot = MakeSingleTupleTableSlot(rcstate->hashkeydesc,
-												  &TTSOpsVirtual);
+	mstate->nkeys = nkeys = node->numKeys;
+	mstate->hashkeydesc = ExecTypeFromExprList(node->param_exprs);
+	mstate->tableslot = MakeSingleTupleTableSlot(mstate->hashkeydesc,
+												 &TTSOpsMinimalTuple);
+	mstate->probeslot = MakeSingleTupleTableSlot(mstate->hashkeydesc,
+												 &TTSOpsVirtual);
 
-	rcstate->param_exprs = (ExprState **) palloc(nkeys * sizeof(ExprState *));
-	rcstate->collations = node->collations; /* Just point directly to the plan
+	mstate->param_exprs = (ExprState **) palloc(nkeys * sizeof(ExprState *));
+	mstate->collations = node->collations;	/* Just point directly to the plan
 											 * data */
-	rcstate->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
+	mstate->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
 
 	eqfuncoids = palloc(nkeys * sizeof(Oid));
 
@@ -891,34 +887,34 @@ ExecInitResultCache(ResultCache *node, EState *estate, int eflags)
 			elog(ERROR, "could not find hash function for hash operator %u",
 				 hashop);
 
-		fmgr_info(left_hashfn, &rcstate->hashfunctions[i]);
+		fmgr_info(left_hashfn, &mstate->hashfunctions[i]);
 
-		rcstate->param_exprs[i] = ExecInitExpr(param_expr, (PlanState *) rcstate);
+		mstate->param_exprs[i] = ExecInitExpr(param_expr, (PlanState *) mstate);
 		eqfuncoids[i] = get_opcode(hashop);
 	}
 
-	rcstate->cache_eq_expr = ExecBuildParamSetEqual(rcstate->hashkeydesc,
-													&TTSOpsMinimalTuple,
-													&TTSOpsVirtual,
-													eqfuncoids,
-													node->collations,
-													node->param_exprs,
-													(PlanState *) rcstate);
+	mstate->cache_eq_expr = ExecBuildParamSetEqual(mstate->hashkeydesc,
+												   &TTSOpsMinimalTuple,
+												   &TTSOpsVirtual,
+												   eqfuncoids,
+												   node->collations,
+												   node->param_exprs,
+												   (PlanState *) mstate);
 
 	pfree(eqfuncoids);
-	rcstate->mem_used = 0;
+	mstate->mem_used = 0;
 
 	/* Limit the total memory consumed by the cache to this */
-	rcstate->mem_limit = get_hash_mem() * 1024L;
+	mstate->mem_limit = get_hash_mem() * 1024L;
 
 	/* A memory context dedicated for the cache */
-	rcstate->tableContext = AllocSetContextCreate(CurrentMemoryContext,
-												  "ResultCacheHashTable",
-												  ALLOCSET_DEFAULT_SIZES);
+	mstate->tableContext = AllocSetContextCreate(CurrentMemoryContext,
+												 "MemoizeHashTable",
+												 ALLOCSET_DEFAULT_SIZES);
 
-	dlist_init(&rcstate->lru_list);
-	rcstate->last_tuple = NULL;
-	rcstate->entry = NULL;
+	dlist_init(&mstate->lru_list);
+	mstate->last_tuple = NULL;
+	mstate->entry = NULL;
 
 	/*
 	 * Mark if we can assume the cache entry is completed after we get the
@@ -928,34 +924,34 @@ ExecInitResultCache(ResultCache *node, EState *estate, int eflags)
 	 * matching inner tuple.  In this case, the cache entry is complete after
 	 * getting the first tuple.  This allows us to mark it as so.
 	 */
-	rcstate->singlerow = node->singlerow;
+	mstate->singlerow = node->singlerow;
 
 	/* Zero the statistics counters */
-	memset(&rcstate->stats, 0, sizeof(ResultCacheInstrumentation));
+	memset(&mstate->stats, 0, sizeof(MemoizeInstrumentation));
 
 	/* Allocate and set up the actual cache */
-	build_hash_table(rcstate, node->est_entries);
+	build_hash_table(mstate, node->est_entries);
 
-	return rcstate;
+	return mstate;
 }
 
 void
-ExecEndResultCache(ResultCacheState *node)
+ExecEndMemoize(MemoizeState *node)
 {
 #ifdef USE_ASSERT_CHECKING
 	/* Validate the memory accounting code is correct in assert builds. */
 	{
 		int			count;
 		uint64		mem = 0;
-		resultcache_iterator i;
-		ResultCacheEntry *entry;
+		memoize_iterator i;
+		MemoizeEntry *entry;
 
-		resultcache_start_iterate(node->hashtable, &i);
+		memoize_start_iterate(node->hashtable, &i);
 
 		count = 0;
-		while ((entry = resultcache_iterate(node->hashtable, &i)) != NULL)
+		while ((entry = memoize_iterate(node->hashtable, &i)) != NULL)
 		{
-			ResultCacheTuple *tuple = entry->tuplehead;
+			MemoizeTuple *tuple = entry->tuplehead;
 
 			mem += EMPTY_ENTRY_MEMORY_BYTES(entry);
 			while (tuple != NULL)
@@ -978,7 +974,7 @@ ExecEndResultCache(ResultCacheState *node)
 	 */
 	if (node->shared_info != NULL && IsParallelWorker())
 	{
-		ResultCacheInstrumentation *si;
+		MemoizeInstrumentation *si;
 
 		/* Make mem_peak available for EXPLAIN */
 		if (node->stats.mem_peak == 0)
@@ -986,7 +982,7 @@ ExecEndResultCache(ResultCacheState *node)
 
 		Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
 		si = &node->shared_info->sinstrument[ParallelWorkerNumber];
-		memcpy(si, &node->stats, sizeof(ResultCacheInstrumentation));
+		memcpy(si, &node->stats, sizeof(MemoizeInstrumentation));
 	}
 
 	/* Remove the cache context */
@@ -1008,12 +1004,12 @@ ExecEndResultCache(ResultCacheState *node)
 }
 
 void
-ExecReScanResultCache(ResultCacheState *node)
+ExecReScanMemoize(MemoizeState *node)
 {
 	PlanState  *outerPlan = outerPlanState(node);
 
 	/* Mark that we must lookup the cache for a new set of parameters */
-	node->rc_status = RC_CACHE_LOOKUP;
+	node->mstatus = MEMO_CACHE_LOOKUP;
 
 	/* nullify pointers used for the last scan */
 	node->entry = NULL;
@@ -1036,8 +1032,8 @@ ExecReScanResultCache(ResultCacheState *node)
 double
 ExecEstimateCacheEntryOverheadBytes(double ntuples)
 {
-	return sizeof(ResultCacheEntry) + sizeof(ResultCacheKey) +
-		sizeof(ResultCacheTuple) * ntuples;
+	return sizeof(MemoizeEntry) + sizeof(MemoizeKey) + sizeof(MemoizeTuple) *
+		ntuples;
 }
 
 /* ----------------------------------------------------------------
@@ -1046,13 +1042,13 @@ ExecEstimateCacheEntryOverheadBytes(double ntuples)
  */
 
  /* ----------------------------------------------------------------
-  *		ExecResultCacheEstimate
+  *		ExecMemoizeEstimate
   *
-  *		Estimate space required to propagate result cache statistics.
+  *		Estimate space required to propagate memoize statistics.
   * ----------------------------------------------------------------
   */
 void
-ExecResultCacheEstimate(ResultCacheState *node, ParallelContext *pcxt)
+ExecMemoizeEstimate(MemoizeState *node, ParallelContext *pcxt)
 {
 	Size		size;
 
@@ -1060,20 +1056,20 @@ ExecResultCacheEstimate(ResultCacheState *node, ParallelContext *pcxt)
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = mul_size(pcxt->nworkers, sizeof(ResultCacheInstrumentation));
-	size = add_size(size, offsetof(SharedResultCacheInfo, sinstrument));
+	size = mul_size(pcxt->nworkers, sizeof(MemoizeInstrumentation));
+	size = add_size(size, offsetof(SharedMemoizeInfo, sinstrument));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 }
 
 /* ----------------------------------------------------------------
- *		ExecResultCacheInitializeDSM
+ *		ExecMemoizeInitializeDSM
  *
- *		Initialize DSM space for result cache statistics.
+ *		Initialize DSM space for memoize statistics.
  * ----------------------------------------------------------------
  */
 void
-ExecResultCacheInitializeDSM(ResultCacheState *node, ParallelContext *pcxt)
+ExecMemoizeInitializeDSM(MemoizeState *node, ParallelContext *pcxt)
 {
 	Size		size;
 
@@ -1081,8 +1077,8 @@ ExecResultCacheInitializeDSM(ResultCacheState *node, ParallelContext *pcxt)
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = offsetof(SharedResultCacheInfo, sinstrument)
-		+ pcxt->nworkers * sizeof(ResultCacheInstrumentation);
+	size = offsetof(SharedMemoizeInfo, sinstrument)
+		+ pcxt->nworkers * sizeof(MemoizeInstrumentation);
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
 	memset(node->shared_info, 0, size);
@@ -1092,35 +1088,35 @@ ExecResultCacheInitializeDSM(ResultCacheState *node, ParallelContext *pcxt)
 }
 
 /* ----------------------------------------------------------------
- *		ExecResultCacheInitializeWorker
+ *		ExecMemoizeInitializeWorker
  *
- *		Attach worker to DSM space for result cache statistics.
+ *		Attach worker to DSM space for memoize statistics.
  * ----------------------------------------------------------------
  */
 void
-ExecResultCacheInitializeWorker(ResultCacheState *node, ParallelWorkerContext *pwcxt)
+ExecMemoizeInitializeWorker(MemoizeState *node, ParallelWorkerContext *pwcxt)
 {
 	node->shared_info =
 		shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, true);
 }
 
 /* ----------------------------------------------------------------
- *		ExecResultCacheRetrieveInstrumentation
+ *		ExecMemoizeRetrieveInstrumentation
  *
- *		Transfer result cache statistics from DSM to private memory.
+ *		Transfer memoize statistics from DSM to private memory.
  * ----------------------------------------------------------------
  */
 void
-ExecResultCacheRetrieveInstrumentation(ResultCacheState *node)
+ExecMemoizeRetrieveInstrumentation(MemoizeState *node)
 {
 	Size		size;
-	SharedResultCacheInfo *si;
+	SharedMemoizeInfo *si;
 
 	if (node->shared_info == NULL)
 		return;
 
-	size = offsetof(SharedResultCacheInfo, sinstrument)
-		+ node->shared_info->num_workers * sizeof(ResultCacheInstrumentation);
+	size = offsetof(SharedMemoizeInfo, sinstrument)
+		+ node->shared_info->num_workers * sizeof(MemoizeInstrumentation);
 	si = palloc(size);
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;

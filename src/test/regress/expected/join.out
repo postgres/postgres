@@ -2536,7 +2536,7 @@ reset enable_nestloop;
 --
 set work_mem to '64kB';
 set enable_mergejoin to off;
-set enable_resultcache to off;
+set enable_memoize to off;
 explain (costs off)
 select count(*) from tenk1 a, tenk1 b
   where a.hundred = b.thousand and (b.fivethous % 10) < 10;
@@ -2560,7 +2560,7 @@ select count(*) from tenk1 a, tenk1 b
 
 reset work_mem;
 reset enable_mergejoin;
-reset enable_resultcache;
+reset enable_memoize;
 --
 -- regression test for 8.2 bug with improper re-ordering of left joins
 --
@@ -3684,7 +3684,7 @@ where t1.unique1 = 1;
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = t1.hundred)
-         ->  Result Cache
+         ->  Memoize
                Cache Key: t2.thousand
                ->  Index Scan using tenk1_unique2 on tenk1 t3
                      Index Cond: (unique2 = t2.thousand)
@@ -3706,7 +3706,7 @@ where t1.unique1 = 1;
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = t1.hundred)
-         ->  Result Cache
+         ->  Memoize
                Cache Key: t2.thousand
                ->  Index Scan using tenk1_unique2 on tenk1 t3
                      Index Cond: (unique2 = t2.thousand)
@@ -4235,7 +4235,7 @@ where t1.f1 = ss.f1;
                ->  Seq Scan on public.int8_tbl i8
                      Output: i8.q1, i8.q2
                      Filter: (i8.q2 = 123)
-   ->  Result Cache
+   ->  Memoize
          Output: (i8.q1), t2.f1
          Cache Key: i8.q1
          ->  Limit
@@ -4279,14 +4279,14 @@ where t1.f1 = ss2.f1;
                      ->  Seq Scan on public.int8_tbl i8
                            Output: i8.q1, i8.q2
                            Filter: (i8.q2 = 123)
-         ->  Result Cache
+         ->  Memoize
                Output: (i8.q1), t2.f1
                Cache Key: i8.q1
                ->  Limit
                      Output: (i8.q1), t2.f1
                      ->  Seq Scan on public.text_tbl t2
                            Output: i8.q1, t2.f1
-   ->  Result Cache
+   ->  Memoize
          Output: ((i8.q1)), (t2.f1)
          Cache Key: (i8.q1), t2.f1
          ->  Limit
@@ -4339,7 +4339,7 @@ where tt1.f1 = ss1.c0;
                      ->  Seq Scan on public.text_tbl tt4
                            Output: tt4.f1
                            Filter: (tt4.f1 = 'foo'::text)
-   ->  Result Cache
+   ->  Memoize
          Output: ss1.c0
          Cache Key: tt4.f1
          ->  Subquery Scan on ss1
@@ -5028,7 +5028,7 @@ explain (costs off)
  Aggregate
    ->  Nested Loop
          ->  Seq Scan on tenk1 a
-         ->  Result Cache
+         ->  Memoize
                Cache Key: a.two
                ->  Function Scan on generate_series g
 (6 rows)
@@ -5040,7 +5040,7 @@ explain (costs off)
  Aggregate
    ->  Nested Loop
          ->  Seq Scan on tenk1 a
-         ->  Result Cache
+         ->  Memoize
                Cache Key: a.two
                ->  Function Scan on generate_series g
 (6 rows)
@@ -5053,7 +5053,7 @@ explain (costs off)
  Aggregate
    ->  Nested Loop
          ->  Seq Scan on tenk1 a
-         ->  Result Cache
+         ->  Memoize
                Cache Key: a.two
                ->  Function Scan on generate_series g
 (6 rows)
@@ -5115,7 +5115,7 @@ explain (costs off)
          ->  Nested Loop
                ->  Index Only Scan using tenk1_unique1 on tenk1 a
                ->  Values Scan on "*VALUES*"
-         ->  Result Cache
+         ->  Memoize
                Cache Key: "*VALUES*".column1
                ->  Index Only Scan using tenk1_unique2 on tenk1 b
                      Index Cond: (unique2 = "*VALUES*".column1)

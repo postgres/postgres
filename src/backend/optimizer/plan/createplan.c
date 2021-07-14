@@ -92,9 +92,8 @@ static Result *create_group_result_plan(PlannerInfo *root,
 static ProjectSet *create_project_set_plan(PlannerInfo *root, ProjectSetPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path,
 									  int flags);
-static ResultCache *create_resultcache_plan(PlannerInfo *root,
-											ResultCachePath *best_path,
-											int flags);
+static Memoize *create_memoize_plan(PlannerInfo *root, MemoizePath *best_path,
+									int flags);
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path,
 								int flags);
 static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
@@ -278,11 +277,9 @@ static Sort *make_sort_from_groupcols(List *groupcls,
 									  AttrNumber *grpColIdx,
 									  Plan *lefttree);
 static Material *make_material(Plan *lefttree);
-static ResultCache *make_resultcache(Plan *lefttree, Oid *hashoperators,
-									 Oid *collations,
-									 List *param_exprs,
-									 bool singlerow,
-									 uint32 est_entries);
+static Memoize *make_memoize(Plan *lefttree, Oid *hashoperators,
+							 Oid *collations, List *param_exprs,
+							 bool singlerow, uint32 est_entries);
 static WindowAgg *make_windowagg(List *tlist, Index winref,
 								 int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
 								 int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
@@ -459,10 +456,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path, int flags)
 												 (MaterialPath *) best_path,
 												 flags);
 			break;
-		case T_ResultCache:
-			plan = (Plan *) create_resultcache_plan(root,
-													(ResultCachePath *) best_path,
-													flags);
+		case T_Memoize:
+			plan = (Plan *) create_memoize_plan(root,
+												(MemoizePath *) best_path,
+												flags);
 			break;
 		case T_Unique:
 			if (IsA(best_path, UpperUniquePath))
@@ -1578,16 +1575,16 @@ create_material_plan(PlannerInfo *root, MaterialPath *best_path, int flags)
 }
 
 /*
- * create_resultcache_plan
- *	  Create a ResultCache plan for 'best_path' and (recursively) plans
- *	  for its subpaths.
+ * create_memoize_plan
+ *	  Create a Memoize plan for 'best_path' and (recursively) plans for its
+ *	  subpaths.
  *
  *	  Returns a Plan node.
  */
-static ResultCache *
-create_resultcache_plan(PlannerInfo *root, ResultCachePath *best_path, int flags)
+static Memoize *
+create_memoize_plan(PlannerInfo *root, MemoizePath *best_path, int flags)
 {
-	ResultCache *plan;
+	Memoize    *plan;
 	Plan	   *subplan;
 	Oid		   *operators;
 	Oid		   *collations;
@@ -1619,8 +1616,8 @@ create_resultcache_plan(PlannerInfo *root, ResultCachePath *best_path, int flags
 		i++;
 	}
 
-	plan = make_resultcache(subplan, operators, collations, param_exprs,
-							best_path->singlerow, best_path->est_entries);
+	plan = make_memoize(subplan, operators, collations, param_exprs,
+						best_path->singlerow, best_path->est_entries);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -6417,11 +6414,11 @@ materialize_finished_plan(Plan *subplan)
 	return matplan;
 }
 
-static ResultCache *
-make_resultcache(Plan *lefttree, Oid *hashoperators, Oid *collations,
-				 List *param_exprs, bool singlerow, uint32 est_entries)
+static Memoize *
+make_memoize(Plan *lefttree, Oid *hashoperators, Oid *collations,
+			 List *param_exprs, bool singlerow, uint32 est_entries)
 {
-	ResultCache *node = makeNode(ResultCache);
+	Memoize    *node = makeNode(Memoize);
 	Plan	   *plan = &node->plan;
 
 	plan->targetlist = lefttree->targetlist;
@@ -7035,7 +7032,7 @@ is_projection_capable_path(Path *path)
 	{
 		case T_Hash:
 		case T_Material:
-		case T_ResultCache:
+		case T_Memoize:
 		case T_Sort:
 		case T_IncrementalSort:
 		case T_Unique:
@@ -7085,7 +7082,7 @@ is_projection_capable_plan(Plan *plan)
 	{
 		case T_Hash:
 		case T_Material:
-		case T_ResultCache:
+		case T_Memoize:
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:

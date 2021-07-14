@@ -1421,6 +1421,13 @@ Material
 MaterialPath
 MaterialState
 MdfdVec
+Memoize
+MemoizeEntry
+MemoizeInstrumentation
+MemoizeKey
+MemoizePath
+MemoizeState
+MemoizeTuple
 MemoryContext
 MemoryContextCallback
 MemoryContextCallbackFunction
@@ -2222,13 +2229,6 @@ RestoreOptions
 RestorePass
 RestrictInfo
 Result
-ResultCache
-ResultCacheEntry
-ResultCacheInstrumentation
-ResultCacheKey
-ResultCachePath
-ResultCacheState
-ResultCacheTuple
 ResultRelInfo
 ResultState
 ReturnSetInfo
@@ -2384,10 +2384,10 @@ SharedInvalSmgrMsg
 SharedInvalSnapshotMsg
 SharedInvalidationMessage
 SharedJitInstrumentation
+SharedMemoizeInfo
 SharedRecordTableEntry
 SharedRecordTableKey
 SharedRecordTypmodRegistry
-SharedResultCacheInfo
 SharedSortInfo
 SharedTuplestore
 SharedTuplestoreAccessor
@@ -3272,6 +3272,8 @@ mbcharacter_incrementer
 mbdisplaylen_converter
 mblen_converter
 mbstr_verifier
+memoize_hash
+memoize_iterator
 metastring
 mix_data_t
 mixedStruct
@@ -3478,8 +3480,6 @@ remoteDep
 rendezvousHashEntry
 replace_rte_variables_callback
 replace_rte_variables_context
-resultcache_hash
-resultcache_iterator
 ret_type
 rewind_source
 rewrite_event

@@ -1058,12 +1058,12 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"enable_resultcache", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables the planner's use of result caching."),
+		{"enable_memoize", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of memoization."),
 			NULL,
 			GUC_EXPLAIN
 		},
-		&enable_resultcache,
+		&enable_memoize,
 		true,
 		NULL, NULL, NULL
 	},
