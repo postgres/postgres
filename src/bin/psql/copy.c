@@ -581,13 +581,21 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 	else
 	{
 		bool		copydone = false;
+		int			buflen;
+		bool		at_line_begin = true;
 
+		/*
+		 * In text mode, we have to read the input one line at a time, so that
+		 * we can stop reading at the EOF marker (\.).  We mustn't read beyond
+		 * the EOF marker, because if the data was inlined in a SQL script, we
+		 * would eat up the commands after the EOF marker.
+		 */
+		buflen = 0;
 		while (!copydone)
-		{						/* for each input line ... */
-			bool		firstload;
-			bool		linedone;
+		{
+			char	   *fgresult;
 
-			if (showprompt)
+			if (at_line_begin && showprompt)
 			{
 				const char *prompt = get_prompt(PROMPT_COPY, NULL);
 
@@ -595,63 +603,68 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 				fflush(stdout);
 			}
 
-			firstload = true;
-			linedone = false;
+			/* enable longjmp while waiting for input */
+			sigint_interrupt_enabled = true;
 
-			while (!linedone)
-			{					/* for each bufferload in line ... */
+			fgresult = fgets(&buf[buflen], COPYBUFSIZ - buflen, copystream);
+
+			sigint_interrupt_enabled = false;
+
+			if (!fgresult)
+				copydone = true;
+			else
+			{
 				int			linelen;
-				char	   *fgresult;
 
-				/* enable longjmp while waiting for input */
-				sigint_interrupt_enabled = true;
-
-				fgresult = fgets(buf, sizeof(buf), copystream);
-
-				sigint_interrupt_enabled = false;
-
-				if (!fgresult)
-				{
-					copydone = true;
-					break;
-				}
-
-				linelen = strlen(buf);
+				linelen = strlen(fgresult);
+				buflen += linelen;
 
 				/* current line is done? */
-				if (linelen > 0 && buf[linelen - 1] == '\n')
-					linedone = true;
-
-				/* check for EOF marker, but not on a partial line */
-				if (firstload)
+				if (buf[buflen - 1] == '\n')
 				{
-					/*
-					 * This code erroneously assumes '\.' on a line alone
-					 * inside a quoted CSV string terminates the \copy.
-					 * https://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
-					 */
-					if (strcmp(buf, "\\.\n") == 0 ||
-						strcmp(buf, "\\.\r\n") == 0)
+					/* check for EOF marker, but not on a partial line */
+					if (at_line_begin)
 					{
-						copydone = true;
-						break;
+						/*
+						 * This code erroneously assumes '\.' on a line alone
+						 * inside a quoted CSV string terminates the \copy.
+						 * https://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
+						 */
+						if ((linelen == 3 && memcmp(fgresult, "\\.\n", 3) == 0) ||
+							(linelen == 4 && memcmp(fgresult, "\\.\r\n", 4) == 0))
+						{
+							copydone = true;
+						}
 					}
 
-					firstload = false;
+					if (copystream == pset.cur_cmd_source)
+					{
+						pset.lineno++;
+						pset.stmt_lineno++;
+					}
+					at_line_begin = true;
 				}
+				else
+					at_line_begin = false;
+			}
 
-				if (PQputCopyData(conn, buf, linelen) <= 0)
+			/*
+			 * If the buffer is full, or we've reached the EOF, flush it.
+			 *
+			 * Make sure there's always space for four more bytes in the
+			 * buffer, plus a NUL terminator.  That way, an EOF marker is
+			 * never split across two fgets() calls, which simplies the logic.
+			 */
+			if (buflen >= COPYBUFSIZ - 5 || (copydone && buflen > 0))
+			{
+				if (PQputCopyData(conn, buf, buflen) <= 0)
 				{
 					OK = false;
 					copydone = true;
 					break;
 				}
-			}
 
-			if (copystream == pset.cur_cmd_source)
-			{
-				pset.lineno++;
-				pset.stmt_lineno++;
+				buflen = 0;
 			}
 		}
 	}
