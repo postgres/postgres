@@ -3672,14 +3672,14 @@ ColConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_FOREIGN;
 					n->location = @1;
-					n->pktable			= $2;
-					n->fk_attrs			= NIL;
-					n->pk_attrs			= $3;
-					n->fk_matchtype		= $4;
-					n->fk_upd_action	= (char) ($5 >> 8);
-					n->fk_del_action	= (char) ($5 & 0xFF);
-					n->skip_validation  = false;
-					n->initially_valid  = true;
+					n->pktable = $2;
+					n->fk_attrs = NIL;
+					n->pk_attrs = $3;
+					n->fk_matchtype = $4;
+					n->fk_upd_action = (char) ($5 >> 8);
+					n->fk_del_action = (char) ($5 & 0xFF);
+					n->skip_validation = false;
+					n->initially_valid = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -3865,13 +3865,13 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_EXCLUSION;
 					n->location = @1;
-					n->access_method	= $2;
-					n->exclusions		= $4;
-					n->including		= $6;
-					n->options			= $7;
-					n->indexname		= NULL;
-					n->indexspace		= $8;
-					n->where_clause		= $9;
+					n->access_method = $2;
+					n->exclusions = $4;
+					n->including = $6;
+					n->options = $7;
+					n->indexname = NULL;
+					n->indexspace = $8;
+					n->where_clause = $9;
 					processCASbits($10, @10, "EXCLUDE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
@@ -3883,12 +3883,12 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_FOREIGN;
 					n->location = @1;
-					n->pktable			= $7;
-					n->fk_attrs			= $4;
-					n->pk_attrs			= $8;
-					n->fk_matchtype		= $9;
-					n->fk_upd_action	= (char) ($10 >> 8);
-					n->fk_del_action	= (char) ($10 & 0xFF);
+					n->pktable = $7;
+					n->fk_attrs = $4;
+					n->pk_attrs = $8;
+					n->fk_matchtype = $9;
+					n->fk_upd_action = (char) ($10 >> 8);
+					n->fk_del_action = (char) ($10 & 0xFF);
 					processCASbits($11, @11, "FOREIGN KEY",
 								   &n->deferrable, &n->initdeferred,
 								   &n->skip_validation, NULL,
@@ -5747,7 +5747,7 @@ DefineStmt:
 				{
 					CreateRangeStmt *n = makeNode(CreateRangeStmt);
 					n->typeName = $3;
-					n->params	= $6;
+					n->params = $6;
 					$$ = (Node *)n;
 				}
 			| CREATE TEXT_P SEARCH PARSER any_name definition
