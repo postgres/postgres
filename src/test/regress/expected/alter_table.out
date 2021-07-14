@@ -3948,6 +3948,11 @@ ERROR:  remainder for hash partition must be less than modulus
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 ERROR:  every hash partition modulus must be a factor of the next larger modulus
 DROP TABLE fail_part;
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ATTACH PARTITION dummy default;
+ERROR:  "at_v1" is not a partitioned table or index
+DROP VIEW at_v1;
 --
 -- DETACH PARTITION
 --

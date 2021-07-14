@@ -5372,6 +5372,9 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
 		case ATT_TABLE | ATT_MATVIEW | ATT_INDEX:
 			msg = _("\"%s\" is not a table, materialized view, or index");
 			break;
+		case ATT_TABLE | ATT_MATVIEW | ATT_INDEX | ATT_PARTITIONED_INDEX:
+			msg = _("\"%s\" is not a table, materialized view, index, or partitioned index");
+			break;
 		case ATT_TABLE | ATT_MATVIEW | ATT_FOREIGN_TABLE:
 			msg = _("\"%s\" is not a table, materialized view, or foreign table");
 			break;
@@ -5383,6 +5386,9 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
 			break;
 		case ATT_TABLE | ATT_MATVIEW | ATT_INDEX | ATT_FOREIGN_TABLE:
 			msg = _("\"%s\" is not a table, materialized view, index, or foreign table");
+			break;
+		case ATT_TABLE | ATT_PARTITIONED_INDEX:
+			msg = _("\"%s\" is not a table or partitioned index");
 			break;
 		case ATT_VIEW:
 			msg = _("\"%s\" is not a view");

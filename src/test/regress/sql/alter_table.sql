@@ -2593,6 +2593,11 @@ ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, R
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 DROP TABLE fail_part;
 
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ATTACH PARTITION dummy default;
+DROP VIEW at_v1;
+
 --
 -- DETACH PARTITION
 --
