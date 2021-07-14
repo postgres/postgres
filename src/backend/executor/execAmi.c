@@ -36,6 +36,7 @@
 #include "executor/nodeLimit.h"
 #include "executor/nodeLockRows.h"
 #include "executor/nodeMaterial.h"
+#include "executor/nodeMemoize.h"
 #include "executor/nodeMergeAppend.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
@@ -44,7 +45,6 @@
 #include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
-#include "executor/nodeResultCache.h"
 #include "executor/nodeSamplescan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSetOp.h"
@@ -255,8 +255,8 @@ ExecReScan(PlanState *node)
 			ExecReScanMaterial((MaterialState *) node);
 			break;
 
-		case T_ResultCacheState:
-			ExecReScanResultCache((ResultCacheState *) node);
+		case T_MemoizeState:
+			ExecReScanMemoize((MemoizeState *) node);
 			break;
 
 		case T_SortState:

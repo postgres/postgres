@@ -104,6 +104,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_indexonlyscan           | on
  enable_indexscan               | on
  enable_material                | on
+ enable_memoize                 | on
  enable_mergejoin               | on
  enable_nestloop                | on
  enable_parallel_append         | on
@@ -111,7 +112,6 @@ select name, setting from pg_settings where name like 'enable%';
  enable_partition_pruning       | on
  enable_partitionwise_aggregate | off
  enable_partitionwise_join      | off
- enable_resultcache             | on
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on

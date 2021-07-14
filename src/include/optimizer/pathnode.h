@@ -82,13 +82,13 @@ extern GroupResultPath *create_group_result_path(PlannerInfo *root,
 												 PathTarget *target,
 												 List *havingqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
-extern ResultCachePath *create_resultcache_path(PlannerInfo *root,
-												RelOptInfo *rel,
-												Path *subpath,
-												List *param_exprs,
-												List *hash_operators,
-												bool singlerow,
-												double calls);
+extern MemoizePath *create_memoize_path(PlannerInfo *root,
+										RelOptInfo *rel,
+										Path *subpath,
+										List *param_exprs,
+										List *hash_operators,
+										bool singlerow,
+										double calls);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 									  Path *subpath, SpecialJoinInfo *sjinfo);
 extern GatherPath *create_gather_path(PlannerInfo *root,

@@ -53,6 +53,7 @@ OBJS = \
 	nodeLimit.o \
 	nodeLockRows.o \
 	nodeMaterial.o \
+	nodeMemoize.o \
 	nodeMergeAppend.o \
 	nodeMergejoin.o \
 	nodeModifyTable.o \
@@ -61,7 +62,6 @@ OBJS = \
 	nodeProjectSet.o \
 	nodeRecursiveunion.o \
 	nodeResult.o \
-	nodeResultCache.o \
 	nodeSamplescan.o \
 	nodeSeqscan.o \
 	nodeSetOp.o \

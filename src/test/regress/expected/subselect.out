@@ -1097,7 +1097,7 @@ where o.ten = 1;
    ->  Nested Loop
          ->  Seq Scan on onek o
                Filter: (ten = 1)
-         ->  Result Cache
+         ->  Memoize
                Cache Key: o.four
                ->  CTE Scan on x
                      CTE x

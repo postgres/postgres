@@ -2745,8 +2745,8 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 			/* rescan_param does *not* get added to scan_params */
 			break;
 
-		case T_ResultCache:
-			finalize_primnode((Node *) ((ResultCache *) plan)->param_exprs,
+		case T_Memoize:
+			finalize_primnode((Node *) ((Memoize *) plan)->param_exprs,
 							  &context);
 			break;
 

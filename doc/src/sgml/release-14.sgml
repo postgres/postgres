@@ -1191,7 +1191,7 @@ Author: David Rowley <drowley@postgresql.org>
        <para>
         This is useful if only a small percentage of rows is checked on
         the inner side and is controlled by <xref
-        linkend="guc-enable-resultcache"/>.
+        linkend="guc-enable-memoize"/>.
        </para>
       </listitem>
 

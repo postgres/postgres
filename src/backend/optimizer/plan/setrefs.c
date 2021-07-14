@@ -752,19 +752,19 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			set_hash_references(root, plan, rtoffset);
 			break;
 
-		case T_ResultCache:
+		case T_Memoize:
 			{
-				ResultCache *rcplan = (ResultCache *) plan;
+				Memoize    *mplan = (Memoize *) plan;
 
 				/*
-				 * Result Cache does not evaluate its targetlist.  It just
-				 * uses the same targetlist from its outer subnode.
+				 * Memoize does not evaluate its targetlist.  It just uses the
+				 * same targetlist from its outer subnode.
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 
-				rcplan->param_exprs = fix_scan_list(root, rcplan->param_exprs,
-													rtoffset,
-													NUM_EXEC_TLIST(plan));
+				mplan->param_exprs = fix_scan_list(root, mplan->param_exprs,
+												   rtoffset,
+												   NUM_EXEC_TLIST(plan));
 				break;
 			}
 

@@ -1577,20 +1577,19 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 }
 
 /*
- * create_resultcache_path
- *	  Creates a path corresponding to a ResultCache plan, returning the
- *	  pathnode.
+ * create_memoize_path
+ *	  Creates a path corresponding to a Memoize plan, returning the pathnode.
  */
-ResultCachePath *
-create_resultcache_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
-						List *param_exprs, List *hash_operators,
-						bool singlerow, double calls)
+MemoizePath *
+create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+					List *param_exprs, List *hash_operators,
+					bool singlerow, double calls)
 {
-	ResultCachePath *pathnode = makeNode(ResultCachePath);
+	MemoizePath *pathnode = makeNode(MemoizePath);
 
 	Assert(subpath->parent == rel);
 
-	pathnode->path.pathtype = T_ResultCache;
+	pathnode->path.pathtype = T_Memoize;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
 	pathnode->path.param_info = subpath->param_info;
@@ -1607,17 +1606,16 @@ create_resultcache_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->calls = calls;
 
 	/*
-	 * For now we set est_entries to 0.  cost_resultcache_rescan() does all
-	 * the hard work to determine how many cache entries there are likely to
-	 * be, so it seems best to leave it up to that function to fill this field
-	 * in.  If left at 0, the executor will make a guess at a good value.
+	 * For now we set est_entries to 0.  cost_memoize_rescan() does all the
+	 * hard work to determine how many cache entries there are likely to be,
+	 * so it seems best to leave it up to that function to fill this field in.
+	 * If left at 0, the executor will make a guess at a good value.
 	 */
 	pathnode->est_entries = 0;
 
 	/*
 	 * Add a small additional charge for caching the first entry.  All the
-	 * harder calculations for rescans are performed in
-	 * cost_resultcache_rescan().
+	 * harder calculations for rescans are performed in cost_memoize_rescan().
 	 */
 	pathnode->path.startup_cost = subpath->startup_cost + cpu_tuple_cost;
 	pathnode->path.total_cost = subpath->total_cost + cpu_tuple_cost;
@@ -3936,16 +3934,16 @@ reparameterize_path(PlannerInfo *root, Path *path,
 									   apath->path.parallel_aware,
 									   -1);
 			}
-		case T_ResultCache:
+		case T_Memoize:
 			{
-				ResultCachePath *rcpath = (ResultCachePath *) path;
+				MemoizePath *mpath = (MemoizePath *) path;
 
-				return (Path *) create_resultcache_path(root, rel,
-														rcpath->subpath,
-														rcpath->param_exprs,
-														rcpath->hash_operators,
-														rcpath->singlerow,
-														rcpath->calls);
+				return (Path *) create_memoize_path(root, rel,
+													mpath->subpath,
+													mpath->param_exprs,
+													mpath->hash_operators,
+													mpath->singlerow,
+													mpath->calls);
 			}
 		default:
 			break;
@@ -4165,13 +4163,13 @@ do { \
 			}
 			break;
 
-		case T_ResultCachePath:
+		case T_MemoizePath:
 			{
-				ResultCachePath *rcpath;
+				MemoizePath *mpath;
 
-				FLAT_COPY_PATH(rcpath, path, ResultCachePath);
-				REPARAMETERIZE_CHILD_PATH(rcpath->subpath);
-				new_path = (Path *) rcpath;
+				FLAT_COPY_PATH(mpath, path, MemoizePath);
+				REPARAMETERIZE_CHILD_PATH(mpath->subpath);
+				new_path = (Path *) mpath;
 			}
 			break;
 
