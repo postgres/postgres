@@ -2329,6 +2329,7 @@ eval_const_expressions_mutator(Node *node,
 							int16		typLen;
 							bool		typByVal;
 							Datum		pval;
+							Const	   *con;
 
 							get_typlenbyval(param->paramtype,
 											&typLen, &typByVal);
@@ -2336,13 +2337,15 @@ eval_const_expressions_mutator(Node *node,
 								pval = prm->value;
 							else
 								pval = datumCopy(prm->value, typByVal, typLen);
-							return (Node *) makeConst(param->paramtype,
-													  param->paramtypmod,
-													  param->paramcollid,
-													  (int) typLen,
-													  pval,
-													  prm->isnull,
-													  typByVal);
+							con = makeConst(param->paramtype,
+											param->paramtypmod,
+											param->paramcollid,
+											(int) typLen,
+											pval,
+											prm->isnull,
+											typByVal);
+							con->location = param->location;
+							return (Node *) con;
 						}
 					}
 				}
