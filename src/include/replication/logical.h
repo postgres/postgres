@@ -90,6 +90,16 @@ typedef struct LogicalDecodingContext
 	bool		twophase;
 
 	/*
+	 * Is two-phase option given by output plugin?
+	 *
+	 * This flag indicates that the plugin passed in the two-phase option as
+	 * part of the START_STREAMING command. We can't rely solely on the
+	 * twophase flag which only tells whether the plugin provided all the
+	 * necessary two-phase callbacks.
+	 */
+	bool		twophase_opt_given;
+
+	/*
 	 * State for writing output.
 	 */
 	bool		accept_writes;

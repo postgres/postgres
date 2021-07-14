@@ -51,6 +51,7 @@
 #include "catalog/pg_largeobject_d.h"
 #include "catalog/pg_largeobject_metadata_d.h"
 #include "catalog/pg_proc_d.h"
+#include "catalog/pg_subscription.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
@@ -4320,6 +4321,7 @@ getSubscriptions(Archive *fout)
 	int			i_subname;
 	int			i_rolname;
 	int			i_substream;
+	int			i_subtwophasestate;
 	int			i_subconninfo;
 	int			i_subslotname;
 	int			i_subsynccommit;
@@ -4363,9 +4365,16 @@ getSubscriptions(Archive *fout)
 		appendPQExpBufferStr(query, " false AS subbinary,\n");
 
 	if (fout->remoteVersion >= 140000)
-		appendPQExpBufferStr(query, " s.substream\n");
+		appendPQExpBufferStr(query, " s.substream,\n");
 	else
-		appendPQExpBufferStr(query, " false AS substream\n");
+		appendPQExpBufferStr(query, " false AS substream,\n");
+
+	if (fout->remoteVersion >= 150000)
+		appendPQExpBufferStr(query, " s.subtwophasestate\n");
+	else
+		appendPQExpBuffer(query,
+						  " '%c' AS subtwophasestate\n",
+						  LOGICALREP_TWOPHASE_STATE_DISABLED);
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n"
@@ -4386,6 +4395,7 @@ getSubscriptions(Archive *fout)
 	i_subpublications = PQfnumber(res, "subpublications");
 	i_subbinary = PQfnumber(res, "subbinary");
 	i_substream = PQfnumber(res, "substream");
+	i_subtwophasestate = PQfnumber(res, "subtwophasestate");
 
 	subinfo = pg_malloc(ntups * sizeof(SubscriptionInfo));
 
@@ -4411,6 +4421,8 @@ getSubscriptions(Archive *fout)
 			pg_strdup(PQgetvalue(res, i, i_subbinary));
 		subinfo[i].substream =
 			pg_strdup(PQgetvalue(res, i, i_substream));
+		subinfo[i].subtwophasestate =
+			pg_strdup(PQgetvalue(res, i, i_subtwophasestate));
 
 		if (strlen(subinfo[i].rolname) == 0)
 			pg_log_warning("owner of subscription \"%s\" appears to be invalid",
@@ -4438,6 +4450,7 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 	char	  **pubnames = NULL;
 	int			npubnames = 0;
 	int			i;
+	char		two_phase_disabled[] = {LOGICALREP_TWOPHASE_STATE_DISABLED, '\0'};
 
 	if (!(subinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 		return;
@@ -4478,6 +4491,9 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	if (strcmp(subinfo->substream, "f") != 0)
 		appendPQExpBufferStr(query, ", streaming = on");
+
+	if (strcmp(subinfo->subtwophasestate, two_phase_disabled) != 0)
+		appendPQExpBufferStr(query, ", two_phase = on");
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));

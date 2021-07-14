@@ -297,7 +297,11 @@ typedef struct ReorderBufferTXN
 	 * Commit or Prepare time, only known when we read the actual commit or
 	 * prepare record.
 	 */
-	TimestampTz commit_time;
+	union
+	{
+		TimestampTz commit_time;
+		TimestampTz prepare_time;
+	}			xact_time;
 
 	/*
 	 * The base snapshot is used to decode all changes until either this
@@ -636,7 +640,7 @@ void		ReorderBufferCommit(ReorderBuffer *, TransactionId,
 								TimestampTz commit_time, RepOriginId origin_id, XLogRecPtr origin_lsn);
 void		ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 										XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
-										XLogRecPtr initial_consistent_point,
+										XLogRecPtr two_phase_at,
 										TimestampTz commit_time,
 										RepOriginId origin_id, XLogRecPtr origin_lsn,
 										char *gid, bool is_commit);

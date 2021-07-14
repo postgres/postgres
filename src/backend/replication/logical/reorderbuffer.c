@@ -2576,7 +2576,7 @@ ReorderBufferReplay(ReorderBufferTXN *txn,
 
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
-	txn->commit_time = commit_time;
+	txn->xact_time.commit_time = commit_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
@@ -2667,7 +2667,7 @@ ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
 	 */
 	txn->final_lsn = prepare_lsn;
 	txn->end_lsn = end_lsn;
-	txn->commit_time = prepare_time;
+	txn->xact_time.prepare_time = prepare_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
@@ -2714,7 +2714,7 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 	Assert(txn->final_lsn != InvalidXLogRecPtr);
 
 	ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
-						txn->commit_time, txn->origin_id, txn->origin_lsn);
+						txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
 
 	/*
 	 * We send the prepare for the concurrently aborted xacts so that later
@@ -2734,7 +2734,7 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 void
 ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 							XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
-							XLogRecPtr initial_consistent_point,
+							XLogRecPtr two_phase_at,
 							TimestampTz commit_time, RepOriginId origin_id,
 							XLogRecPtr origin_lsn, char *gid, bool is_commit)
 {
@@ -2753,19 +2753,20 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 	 * be later used for rollback.
 	 */
 	prepare_end_lsn = txn->end_lsn;
-	prepare_time = txn->commit_time;
+	prepare_time = txn->xact_time.prepare_time;
 
 	/* add the gid in the txn */
 	txn->gid = pstrdup(gid);
 
 	/*
 	 * It is possible that this transaction is not decoded at prepare time
-	 * either because by that time we didn't have a consistent snapshot or it
-	 * was decoded earlier but we have restarted. We only need to send the
-	 * prepare if it was not decoded earlier. We don't need to decode the xact
-	 * for aborts if it is not done already.
+	 * either because by that time we didn't have a consistent snapshot, or
+	 * two_phase was not enabled, or it was decoded earlier but we have
+	 * restarted. We only need to send the prepare if it was not decoded
+	 * earlier. We don't need to decode the xact for aborts if it is not done
+	 * already.
 	 */
-	if ((txn->final_lsn < initial_consistent_point) && is_commit)
+	if ((txn->final_lsn < two_phase_at) && is_commit)
 	{
 		txn->txn_flags |= RBTXN_PREPARE;
 
@@ -2783,12 +2784,12 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 		 * prepared after the restart.
 		 */
 		ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
-							txn->commit_time, txn->origin_id, txn->origin_lsn);
+							txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
 	}
 
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
-	txn->commit_time = commit_time;
+	txn->xact_time.commit_time = commit_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 

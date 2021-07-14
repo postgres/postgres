@@ -1405,7 +1405,12 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    servers.  It is then up to the user to reactivate the subscriptions in a
    suitable way.  If the involved hosts have changed, the connection
    information might have to be changed.  It might also be appropriate to
-   truncate the target tables before initiating a new full table copy.
+   truncate the target tables before initiating a new full table copy.  If users
+   intend to copy initial data during refresh they must create the slot with
+   <literal>two_phase = false</literal>.  After the initial sync, the
+   <literal>two_phase</literal> option will be automatically enabled by the
+   subscriber if the subscription had been originally created with
+   <literal>two_phase = true</literal> option.
   </para>
  </refsect1>
 

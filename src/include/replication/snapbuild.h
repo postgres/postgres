@@ -62,7 +62,7 @@ extern void CheckPointSnapBuild(void);
 extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *cache,
 										  TransactionId xmin_horizon, XLogRecPtr start_lsn,
 										  bool need_full_snapshot,
-										  XLogRecPtr initial_consistent_point);
+										  XLogRecPtr two_phase_at);
 extern void FreeSnapshotBuilder(SnapBuild *cache);
 
 extern void SnapBuildSnapDecRefcount(Snapshot snap);
@@ -76,7 +76,8 @@ extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder,
 											TransactionId xid);
 
 extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
-extern XLogRecPtr SnapBuildInitialConsistentPoint(SnapBuild *builder);
+extern XLogRecPtr SnapBuildGetTwoPhaseAt(SnapBuild *builder);
+extern void SnapBuildSetTwoPhaseAt(SnapBuild *builder, XLogRecPtr ptr);
 
 extern void SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn,
 							   TransactionId xid, int nsubxacts,

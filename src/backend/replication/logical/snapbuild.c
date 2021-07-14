@@ -165,15 +165,15 @@ struct SnapBuild
 	XLogRecPtr	start_decoding_at;
 
 	/*
-	 * LSN at which we found a consistent point at the time of slot creation.
-	 * This is also the point where we have exported a snapshot for the
-	 * initial copy.
+	 * LSN at which two-phase decoding was enabled or LSN at which we found a
+	 * consistent point at the time of slot creation.
 	 *
-	 * The prepared transactions that are not covered by initial snapshot
-	 * needs to be sent later along with commit prepared and they must be
-	 * before this point.
+	 * The prepared transactions, that were skipped because previously
+	 * two-phase was not enabled or are not covered by initial snapshot, need
+	 * to be sent later along with commit prepared and they must be before
+	 * this point.
 	 */
-	XLogRecPtr	initial_consistent_point;
+	XLogRecPtr	two_phase_at;
 
 	/*
 	 * Don't start decoding WAL until the "xl_running_xacts" information
@@ -281,7 +281,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 						TransactionId xmin_horizon,
 						XLogRecPtr start_lsn,
 						bool need_full_snapshot,
-						XLogRecPtr initial_consistent_point)
+						XLogRecPtr two_phase_at)
 {
 	MemoryContext context;
 	MemoryContext oldcontext;
@@ -309,7 +309,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->initial_xmin_horizon = xmin_horizon;
 	builder->start_decoding_at = start_lsn;
 	builder->building_full_snapshot = need_full_snapshot;
-	builder->initial_consistent_point = initial_consistent_point;
+	builder->two_phase_at = two_phase_at;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -370,12 +370,21 @@ SnapBuildCurrentState(SnapBuild *builder)
 }
 
 /*
- * Return the LSN at which the snapshot was exported
+ * Return the LSN at which the two-phase decoding was first enabled.
  */
 XLogRecPtr
-SnapBuildInitialConsistentPoint(SnapBuild *builder)
+SnapBuildGetTwoPhaseAt(SnapBuild *builder)
 {
-	return builder->initial_consistent_point;
+	return builder->two_phase_at;
+}
+
+/*
+ * Set the LSN at which two-phase decoding is enabled.
+ */
+void
+SnapBuildSetTwoPhaseAt(SnapBuild *builder, XLogRecPtr ptr)
+{
+	builder->two_phase_at = ptr;
 }
 
 /*

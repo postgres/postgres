@@ -84,11 +84,10 @@ typedef struct ReplicationSlotPersistentData
 	XLogRecPtr	confirmed_flush;
 
 	/*
-	 * LSN at which we found a consistent point at the time of slot creation.
-	 * This is also the point where we have exported a snapshot for the
-	 * initial copy.
+	 * LSN at which we enabled two_phase commit for this slot or LSN at which
+	 * we found a consistent point at the time of slot creation.
 	 */
-	XLogRecPtr	initial_consistent_point;
+	XLogRecPtr	two_phase_at;
 
 	/*
 	 * Allow decoding of prepared transactions?

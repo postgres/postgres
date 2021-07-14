@@ -237,6 +237,43 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           are fully decoded on the publisher, and only then sent to the
           subscriber as a whole.
          </para>
+
+         <para>
+          The <literal>streaming</literal> option cannot be used with the
+          <literal>two_phase</literal> option.
+         </para>
+
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>two_phase</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether two-phase commit is enabled for this subscription.
+          The default is <literal>false</literal>.
+         </para>
+
+         <para>
+          When two-phase commit is enabled then the decoded transactions are sent
+          to the subscriber on the PREPARE TRANSACTION. By default, the transaction
+          prepared on the publisher is decoded as a normal transaction at commit.
+         </para>
+
+         <para>
+          The two-phase commit implementation requires that the replication has
+          successfully passed the initial table synchronization phase. This means
+          even when two_phase is enabled for the subscription, the internal
+          two-phase state remains temporarily "pending" until the initialization
+          phase is completed. See column
+          <literal>subtwophasestate</literal> of <xref linkend="catalog-pg-subscription"/>
+          to know the actual two-phase state.
+         </para>
+
+         <para>
+          The <literal>two_phase</literal> option cannot be used with the
+          <literal>streaming</literal> option.
+         </para>
+
         </listitem>
        </varlistentry>
       </variablelist></para>

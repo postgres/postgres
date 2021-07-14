@@ -973,8 +973,11 @@ replorigin_advance(RepOriginId node,
 
 	/*
 	 * Due to - harmless - race conditions during a checkpoint we could see
-	 * values here that are older than the ones we already have in memory.
-	 * Don't overwrite those.
+	 * values here that are older than the ones we already have in memory. We
+	 * could also see older values for prepared transactions when the prepare
+	 * is sent at a later point of time along with commit prepared and there
+	 * are other transactions commits between prepare and commit prepared. See
+	 * ReorderBufferFinishPrepared. Don't overwrite those.
 	 */
 	if (go_backward || replication_state->remote_lsn < remote_commit)
 		replication_state->remote_lsn = remote_commit;

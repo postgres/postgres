@@ -73,6 +73,7 @@ static void libpqrcv_send(WalReceiverConn *conn, const char *buffer,
 static char *libpqrcv_create_slot(WalReceiverConn *conn,
 								  const char *slotname,
 								  bool temporary,
+								  bool two_phase,
 								  CRSSnapshotAction snapshot_action,
 								  XLogRecPtr *lsn);
 static pid_t libpqrcv_get_backend_pid(WalReceiverConn *conn);
@@ -435,6 +436,10 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		if (options->proto.logical.streaming &&
 			PQserverVersion(conn->streamConn) >= 140000)
 			appendStringInfoString(&cmd, ", streaming 'on'");
+
+		if (options->proto.logical.twophase &&
+			PQserverVersion(conn->streamConn) >= 150000)
+			appendStringInfoString(&cmd, ", two_phase 'on'");
 
 		pubnames = options->proto.logical.publication_names;
 		pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
@@ -851,7 +856,7 @@ libpqrcv_send(WalReceiverConn *conn, const char *buffer, int nbytes)
  */
 static char *
 libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
-					 bool temporary, CRSSnapshotAction snapshot_action,
+					 bool temporary, bool two_phase, CRSSnapshotAction snapshot_action,
 					 XLogRecPtr *lsn)
 {
 	PGresult   *res;
@@ -868,6 +873,9 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	if (conn->logical)
 	{
 		appendStringInfoString(&cmd, " LOGICAL pgoutput");
+		if (two_phase)
+			appendStringInfoString(&cmd, " TWO_PHASE");
+
 		switch (snapshot_action)
 		{
 			case CRS_EXPORT_SNAPSHOT:

@@ -1390,12 +1390,15 @@ LogicalOutputPluginWriterUpdateProgress
 LogicalOutputPluginWriterWrite
 LogicalRepBeginData
 LogicalRepCommitData
+LogicalRepCommitPreparedTxnData
 LogicalRepCtxStruct
 LogicalRepMsgType
 LogicalRepPartMapEntry
+LogicalRepPreparedTxnData
 LogicalRepRelId
 LogicalRepRelMapEntry
 LogicalRepRelation
+LogicalRepRollbackPreparedTxnData
 LogicalRepTupleData
 LogicalRepTyp
 LogicalRepWorker

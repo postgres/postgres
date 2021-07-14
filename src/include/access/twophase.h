@@ -58,4 +58,6 @@ extern void PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 						   XLogRecPtr end_lsn, RepOriginId origin_id);
 extern void PrepareRedoRemove(TransactionId xid, bool giveWarning);
 extern void restoreTwoPhaseData(void);
+extern bool LookupGXact(const char *gid, XLogRecPtr prepare_at_lsn,
+						TimestampTz origin_prepare_timestamp);
 #endif							/* TWOPHASE_H */

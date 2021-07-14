@@ -2811,11 +2811,17 @@ The commands accepted in replication mode are:
      </term>
      <listitem>
       <para>
-       Protocol version. Currently versions <literal>1</literal> and
-       <literal>2</literal> are supported. The version <literal>2</literal>
-       is supported only for server version 14 and above, and it allows
-       streaming of large in-progress transactions.
-     </para>
+       Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
+       and <literal>3</literal> are supported.
+      </para>
+      <para>
+       Version <literal>2</literal> is supported only for server version 14
+       and above, and it allows streaming of large in-progress transactions.
+      </para>
+      <para>
+       Version <literal>3</literal> is supported only for server version 15
+       and above, and it allows streaming of two-phase transactions.
+      </para>
      </listitem>
     </varlistentry>
 
@@ -2871,10 +2877,11 @@ The commands accepted in replication mode are:
   <para>
    The logical replication protocol sends individual transactions one by one.
    This means that all messages between a pair of Begin and Commit messages
-   belong to the same transaction. It also sends changes of large in-progress
-   transactions between a pair of Stream Start and Stream Stop messages. The
-   last stream of such a transaction contains Stream Commit or Stream Abort
-   message.
+   belong to the same transaction. Similarly, all messages between a pair of
+   Begin Prepare and Prepare messages belong to the same transaction.
+   It also sends changes of large in-progress transactions between a pair of
+   Stream Start and Stream Stop messages. The last stream of such a transaction 
+   contains a Stream Commit or Stream Abort message.
   </para>
 
   <para>
@@ -7384,6 +7391,272 @@ Stream Abort
 </varlistentry>
 
 </variablelist>
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The following messages (Begin Prepare, Prepare, Commit Prepared, Rollback Prepared)
+are available since protocol version 3.
+</para>
+
+<variablelist>
+
+<varlistentry>
+
+<term>Begin Prepare</term>
+<listitem>
+<para>
+
+<variablelist>
+
+<varlistentry>
+<term>Byte1('b')</term>
+<listitem><para>
+                Identifies the message as the beginning of a two-phase transaction message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The LSN of the prepare.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The end LSN of the prepared transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                Prepare timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int32</term>
+<listitem><para>
+                Xid of the transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>String</term>
+<listitem><para>
+                The user defined GID of the two-phase transaction.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+
+<term>Prepare</term>
+<listitem>
+<para>
+
+<variablelist>
+
+<varlistentry>
+<term>Byte1('P')</term>
+<listitem><para>
+                Identifies the message as a two-phase prepared transaction message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int8</term>
+<listitem><para>
+                Flags; currently unused (must be 0).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The LSN of the prepare.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The end LSN of the prepared transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                Prepare timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int32</term>
+<listitem><para>
+                Xid of the transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>String</term>
+<listitem><para>
+                The user defined GID of the two-phase transaction.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+
+<term>Commit Prepared</term>
+<listitem>
+<para>
+
+<variablelist>
+
+<varlistentry>
+<term>Byte1('K')</term>
+<listitem><para>
+                Identifies the message as the commit of a two-phase transaction message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int8</term>
+<listitem><para>
+                Flags; currently unused (must be 0).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The LSN of the commit prepared.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The end LSN of the commit prepared transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                Commit timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int32</term>
+<listitem><para>
+                Xid of the transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>String</term>
+<listitem><para>
+                The user defined GID of the two-phase transaction.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+
+<term>Rollback Prepared</term>
+<listitem>
+<para>
+
+<variablelist>
+
+<varlistentry>
+<term>Byte1('r')</term>
+<listitem><para>
+                Identifies the message as the rollback of a two-phase transaction message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int8</term>
+<listitem><para>
+                Flags; currently unused (must be 0).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The end LSN of the prepared transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                The end LSN of the rollback prepared transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                Prepare timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int64</term>
+<listitem><para>
+                Rollback timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Int32</term>
+<listitem><para>
+                Xid of the transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>String</term>
+<listitem><para>
+                The user defined GID of the two-phase transaction.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
 </para>
 </listitem>
 </varlistentry>

@@ -283,6 +283,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	slot->data.database = db_specific ? MyDatabaseId : InvalidOid;
 	slot->data.persistency = persistency;
 	slot->data.two_phase = two_phase;
+	slot->data.two_phase_at = InvalidXLogRecPtr;
 
 	/* and then data only present in shared memory */
 	slot->just_dirtied = false;
