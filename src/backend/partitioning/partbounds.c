@@ -246,8 +246,7 @@ static List *get_range_nulltest(PartitionKey key);
  *		expressions as partition constraint
  */
 List *
-get_qual_from_partbound(Relation rel, Relation parent,
-						PartitionBoundSpec *spec)
+get_qual_from_partbound(Relation parent, PartitionBoundSpec *spec)
 {
 	PartitionKey key = RelationGetPartitionKey(parent);
 	List	   *my_qual = NIL;

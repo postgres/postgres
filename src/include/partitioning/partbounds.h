@@ -85,7 +85,7 @@ extern int	get_hash_partition_greatest_modulus(PartitionBoundInfo b);
 extern uint64 compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
 										   Oid *partcollation,
 										   Datum *values, bool *isnull);
-extern List *get_qual_from_partbound(Relation rel, Relation parent,
+extern List *get_qual_from_partbound(Relation parent,
 									 PartitionBoundSpec *spec);
 extern PartitionBoundInfo partition_bounds_create(PartitionBoundSpec **boundspecs,
 												  int nparts, PartitionKey key, int **mapping);

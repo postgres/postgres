@@ -376,7 +376,7 @@ generate_partition_qual(Relation rel)
 		bound = castNode(PartitionBoundSpec,
 						 stringToNode(TextDatumGetCString(boundDatum)));
 
-		my_qual = get_qual_from_partbound(rel, parent, bound);
+		my_qual = get_qual_from_partbound(parent, bound);
 	}
 
 	ReleaseSysCache(tuple);
