@@ -158,6 +158,10 @@ ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS -1;
 
 DROP TABLE attmp;
 
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ALTER COLUMN a SET STATISTICS 0;
+DROP VIEW at_v1;
 
 --
 -- rename - check on both non-temp and temp tables
@@ -2639,6 +2643,11 @@ ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 0, R
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 8, REMAINDER 8);
 ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 3, REMAINDER 2);
 DROP TABLE fail_part;
+
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ATTACH PARTITION dummy default;
+DROP VIEW at_v1;
 
 --
 -- DETACH PARTITION

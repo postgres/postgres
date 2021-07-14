@@ -120,6 +120,11 @@ ALTER INDEX attmp_idx ALTER COLUMN 4 SET STATISTICS 1000;
 ERROR:  column number 4 of relation "attmp_idx" does not exist
 ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS -1;
 DROP TABLE attmp;
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ALTER COLUMN a SET STATISTICS 0;
+ERROR:  "at_v1" is not a table, materialized view, index, partitioned index, or foreign table
+DROP VIEW at_v1;
 --
 -- rename - check on both non-temp and temp tables
 --
@@ -4111,6 +4116,11 @@ ALTER TABLE hash_parted ATTACH PARTITION fail_part FOR VALUES WITH (MODULUS 3, R
 ERROR:  every hash partition modulus must be a factor of the next larger modulus
 DETAIL:  The new modulus 3 is not a factor of 4, the modulus of existing partition "hpart_1".
 DROP TABLE fail_part;
+-- fails with incorrect object type
+CREATE VIEW at_v1 AS SELECT 1 as a;
+ALTER TABLE at_v1 ATTACH PARTITION dummy default;
+ERROR:  "at_v1" is not a table or partitioned index
+DROP VIEW at_v1;
 --
 -- DETACH PARTITION
 --
