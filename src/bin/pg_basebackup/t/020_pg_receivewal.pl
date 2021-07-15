@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 19;
+use Test::More tests => 27;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -58,13 +58,88 @@ chomp($nextlsn);
 $primary->psql('postgres',
 	'INSERT INTO test_table VALUES (generate_series(1,100));');
 
-# Stream up to the given position.
+# Stream up to the given position.  This is necessary to have a fixed
+# started point for the next commands done in this test, with or without
+# compression involved.
 $primary->command_ok(
 	[
 		'pg_receivewal', '-D',     $stream_dir,     '--verbose',
 		'--endpos',      $nextlsn, '--synchronous', '--no-loop'
 	],
 	'streaming some WAL with --synchronous');
+
+# Verify that one partial file was generated and keep track of it
+my @partial_wals = glob "$stream_dir/*\.partial";
+is(scalar(@partial_wals), 1, "one partial WAL segment was created");
+
+# Check ZLIB compression if available.
+SKIP:
+{
+	skip "postgres was not built with ZLIB support", 5
+	  if (!check_pg_config("#define HAVE_LIBZ 1"));
+
+	# Generate more WAL worth one completed, compressed, segment.
+	$primary->psql('postgres', 'SELECT pg_switch_wal();');
+	$nextlsn =
+	  $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
+	chomp($nextlsn);
+	$primary->psql('postgres',
+		'INSERT INTO test_table VALUES (generate_series(100,200));');
+
+	$primary->command_ok(
+		[
+			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
+			'--endpos',      $nextlsn, '--compress', '1'
+		],
+		"streaming some WAL using ZLIB compression");
+
+	# Verify that the stored files are generated with their expected
+	# names.
+	my @zlib_wals = glob "$stream_dir/*.gz";
+	is(scalar(@zlib_wals), 1,
+		"one WAL segment compressed with ZLIB was created");
+	my @zlib_partial_wals = glob "$stream_dir/*.gz.partial";
+	is(scalar(@zlib_partial_wals),
+		1, "one partial WAL segment compressed with ZLIB was created");
+
+	# Verify that the start streaming position is computed correctly by
+	# comparing it with the partial file generated previously.  The name
+	# of the previous partial, now-completed WAL segment is updated, keeping
+	# its base number.
+	$partial_wals[0] =~ s/\.partial$/.gz/;
+	is($zlib_wals[0] =~ m/$partial_wals[0]/,
+		1, "one partial WAL segment is now completed");
+	# Update the list of partial wals with the current one.
+	@partial_wals = @zlib_partial_wals;
+
+	# There is one complete and one partial file compressed with ZLIB.
+	# Check the integrity of both, if gzip is a command available.
+	my $gzip = $ENV{GZIP_PROGRAM};
+	skip "program gzip is not found in your system", 1
+	  if ( !defined $gzip
+		|| $gzip eq ''
+		|| system_log($gzip, '--version') != 0);
+
+	push(@zlib_wals, @zlib_partial_wals);
+	my $gzip_is_valid = system_log($gzip, '--test', @zlib_wals);
+	is($gzip_is_valid, 0,
+		"gzip verified the integrity of compressed WAL segments");
+}
+
+# Verify that the start streaming position is computed and that the value is
+# correct regardless of whether ZLIB is available.
+$primary->psql('postgres', 'SELECT pg_switch_wal();');
+$nextlsn =
+  $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
+chomp($nextlsn);
+$primary->psql('postgres',
+	'INSERT INTO test_table VALUES (generate_series(200,300));');
+$primary->command_ok(
+	[ 'pg_receivewal', '-D', $stream_dir, '--verbose', '--endpos', $nextlsn ],
+	"streaming some WAL");
+
+$partial_wals[0] =~ s/(\.gz)?.partial//;
+ok(-e $partial_wals[0], "check that previously partial WAL is now complete");
 
 # Permissions on WAL files should be default
 SKIP:

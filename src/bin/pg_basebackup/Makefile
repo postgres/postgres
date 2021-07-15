@@ -18,8 +18,12 @@ subdir = src/bin/pg_basebackup
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-# make this available to TAP test scripts
+# make these available to TAP test scripts
 export TAR
+# Note that GZIP cannot be used directly as this environment variable is
+# used by the command "gzip" to pass down options, so stick with a different
+# name.
+export GZIP_PROGRAM=$(GZIP)
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
