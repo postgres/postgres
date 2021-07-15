@@ -43,10 +43,6 @@
 #include <winsock2.h>
 #endif
 
-/* Test for POSIX.1c 2-arg sigwait() and fail on single-arg version */
-#include <signal.h>
-int			sigwait(const sigset_t *set, int *sig);
-
 
 #define		TEMP_FILENAME_1 "thread_test.1"
 #define		TEMP_FILENAME_2 "thread_test.2"

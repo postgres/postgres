@@ -4899,7 +4899,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	FILE	   *pagerpipe = NULL;
 	int			title_len;
 	int			res = 0;
-#ifndef WIN32
+#ifdef HAVE_POSIX_DECL_SIGWAIT
 	sigset_t	sigalrm_sigchld_sigint;
 	sigset_t	sigalrm_sigchld;
 	sigset_t	sigint;
@@ -4913,7 +4913,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		return false;
 	}
 
-#ifndef WIN32
+#ifdef HAVE_POSIX_DECL_SIGWAIT
 	sigemptyset(&sigalrm_sigchld_sigint);
 	sigaddset(&sigalrm_sigchld_sigint, SIGCHLD);
 	sigaddset(&sigalrm_sigchld_sigint, SIGALRM);
@@ -4952,7 +4952,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	 * PAGER environment variables, because traditional pagers probably won't
 	 * be very useful for showing a stream of results.
 	 */
-#ifndef WIN32
+#ifdef HAVE_POSIX_DECL_SIGWAIT
 	pagerprog = getenv("PSQL_WATCH_PAGER");
 #endif
 	if (pagerprog && myopt.topt.pager)
@@ -5023,7 +5023,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		if (pagerpipe && ferror(pagerpipe))
 			break;
 
-#ifdef WIN32
+#ifndef HAVE_POSIX_DECL_SIGWAIT
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
@@ -5059,7 +5059,8 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		{
 			int			signal_received;
 
-			if (sigwait(&sigalrm_sigchld_sigint, &signal_received) < 0)
+			errno = sigwait(&sigalrm_sigchld_sigint, &signal_received);
+			if (errno != 0)
 			{
 				/* Some other signal arrived? */
 				if (errno == EINTR)
@@ -5091,7 +5092,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		restore_sigpipe_trap();
 	}
 
-#ifndef WIN32
+#ifdef HAVE_POSIX_DECL_SIGWAIT
 	/* Disable the interval timer. */
 	memset(&interval, 0, sizeof(interval));
 	setitimer(ITIMER_REAL, &interval, NULL);

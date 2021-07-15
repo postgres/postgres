@@ -158,6 +158,10 @@
    don't. */
 #undef HAVE_DECL_RTLD_NOW
 
+/* Define to 1 if you have the declaration of `sigwait', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SIGWAIT
+
 /* Define to 1 if you have the declaration of `strlcat', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRLCAT
@@ -413,6 +417,9 @@
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
+
+/* Define to 1 if you have a POSIX-conforming sigwait declaration. */
+#undef HAVE_POSIX_DECL_SIGWAIT
 
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE

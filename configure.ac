@@ -610,6 +610,12 @@ if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
   fi
 fi
 
+# On Solaris, we need this #define to get POSIX-conforming versions
+# of many interfaces (sigwait, getpwuid_r, ...).
+if test "$PORTNAME" = "solaris"; then
+  CPPFLAGS="$CPPFLAGS -D_POSIX_PTHREAD_SEMANTICS"
+fi
+
 # We already have this in Makefile.win32, but configure needs it too
 if test "$PORTNAME" = "win32"; then
   CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32"
@@ -1122,9 +1128,8 @@ AS_IF([test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"],
 AX_PTHREAD	# set thread flags
 
 # Some platforms use these, so just define them.  They can't hurt if they
-# are not supported.  For example, on Solaris -D_POSIX_PTHREAD_SEMANTICS
-# enables 5-arg getpwuid_r, among other things.
-PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+# are not supported.
+PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE"
 
 # Check for *_r functions
 _CFLAGS="$CFLAGS"
@@ -1740,6 +1745,33 @@ PGAC_CHECK_BUILTIN_FUNC([__builtin_popcount], [unsigned int x])
 # We require 64-bit fseeko() to be available, but run this check anyway
 # in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
 AC_FUNC_FSEEKO
+
+# Make sure there's a declaration for sigwait(), then make sure
+# that it conforms to the POSIX standard (there seem to still be
+# some platforms out there with pre-POSIX sigwait()).  On Solaris,
+# _POSIX_PTHREAD_SEMANTICS affects the result, but we already
+# added that to CPPFLAGS.
+AC_CHECK_DECLS(sigwait, [], [], [#include <signal.h>])
+if test "x$ac_cv_have_decl_sigwait" = xyes; then
+  AC_CACHE_CHECK([for POSIX-conforming sigwait declaration],
+    [pgac_cv_have_posix_decl_sigwait],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+      #include <signal.h>
+      int sigwait(const sigset_t *set, int *sig);
+      ],
+      [])],
+      [pgac_cv_have_posix_decl_sigwait=yes],
+      [pgac_cv_have_posix_decl_sigwait=no])])
+fi
+if test "x$pgac_cv_have_posix_decl_sigwait" = xyes; then
+  AC_DEFINE(HAVE_POSIX_DECL_SIGWAIT, 1,
+            [Define to 1 if you have a POSIX-conforming sigwait declaration.])
+else
+  # On non-Windows, libpq requires POSIX sigwait() for thread safety.
+  if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
+    AC_MSG_ERROR([POSIX-conforming sigwait is required to enable thread safety.])
+  fi
+fi
 
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
