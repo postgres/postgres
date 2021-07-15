@@ -112,15 +112,14 @@ SKIP:
 	# Update the list of partial wals with the current one.
 	@partial_wals = @zlib_partial_wals;
 
-	# There is one complete and one partial file compressed with ZLIB.
-	# Check the integrity of both, if gzip is a command available.
+	# Check the integrity of the completed segment, if gzip is a command
+	# available.
 	my $gzip = $ENV{GZIP_PROGRAM};
 	skip "program gzip is not found in your system", 1
 	  if ( !defined $gzip
 		|| $gzip eq ''
 		|| system_log($gzip, '--version') != 0);
 
-	push(@zlib_wals, @zlib_partial_wals);
 	my $gzip_is_valid = system_log($gzip, '--test', @zlib_wals);
 	is($gzip_is_valid, 0,
 		"gzip verified the integrity of compressed WAL segments");
