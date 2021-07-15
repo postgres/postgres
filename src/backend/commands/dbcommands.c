@@ -152,91 +152,61 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		if (strcmp(defel->defname, "tablespace") == 0)
 		{
 			if (dtablespacename)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dtablespacename = defel;
 		}
 		else if (strcmp(defel->defname, "owner") == 0)
 		{
 			if (downer)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			downer = defel;
 		}
 		else if (strcmp(defel->defname, "template") == 0)
 		{
 			if (dtemplate)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dtemplate = defel;
 		}
 		else if (strcmp(defel->defname, "encoding") == 0)
 		{
 			if (dencoding)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dencoding = defel;
 		}
 		else if (strcmp(defel->defname, "locale") == 0)
 		{
 			if (dlocale)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dlocale = defel;
 		}
 		else if (strcmp(defel->defname, "lc_collate") == 0)
 		{
 			if (dcollate)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dcollate = defel;
 		}
 		else if (strcmp(defel->defname, "lc_ctype") == 0)
 		{
 			if (dctype)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dctype = defel;
 		}
 		else if (strcmp(defel->defname, "is_template") == 0)
 		{
 			if (distemplate)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			distemplate = defel;
 		}
 		else if (strcmp(defel->defname, "allow_connections") == 0)
 		{
 			if (dallowconnections)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dallowconnections = defel;
 		}
 		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dconnlimit = defel;
 		}
 		else if (strcmp(defel->defname, "location") == 0)
@@ -1497,37 +1467,25 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 		if (strcmp(defel->defname, "is_template") == 0)
 		{
 			if (distemplate)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			distemplate = defel;
 		}
 		else if (strcmp(defel->defname, "allow_connections") == 0)
 		{
 			if (dallowconnections)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dallowconnections = defel;
 		}
 		else if (strcmp(defel->defname, "connection_limit") == 0)
 		{
 			if (dconnlimit)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dconnlimit = defel;
 		}
 		else if (strcmp(defel->defname, "tablespace") == 0)
 		{
 			if (dtablespace)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dtablespace = defel;
 		}
 		else

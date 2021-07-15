@@ -25,7 +25,7 @@ typedef void (*check_password_hook_type) (const char *username, const char *shad
 extern PGDLLIMPORT check_password_hook_type check_password_hook;
 
 extern Oid	CreateRole(ParseState *pstate, CreateRoleStmt *stmt);
-extern Oid	AlterRole(AlterRoleStmt *stmt);
+extern Oid	AlterRole(ParseState *pstate, AlterRoleStmt *stmt);
 extern Oid	AlterRoleSet(AlterRoleSetStmt *stmt);
 extern void DropRole(DropRoleStmt *stmt);
 extern void GrantRole(GrantRoleStmt *stmt);

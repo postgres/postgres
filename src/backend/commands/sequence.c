@@ -1261,90 +1261,63 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 		if (strcmp(defel->defname, "as") == 0)
 		{
 			if (as_type)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			as_type = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "increment") == 0)
 		{
 			if (increment_by)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			increment_by = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "start") == 0)
 		{
 			if (start_value)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			start_value = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "restart") == 0)
 		{
 			if (restart_value)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			restart_value = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
 			if (max_value)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			max_value = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
 		{
 			if (min_value)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			min_value = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "cache") == 0)
 		{
 			if (cache_value)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			cache_value = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "cycle") == 0)
 		{
 			if (is_cycled)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			is_cycled = defel;
 			*need_seq_rewrite = true;
 		}
 		else if (strcmp(defel->defname, "owned_by") == 0)
 		{
 			if (*owned_by)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			*owned_by = defGetQualifiedName(defel);
 		}
 		else if (strcmp(defel->defname, "sequence_name") == 0)

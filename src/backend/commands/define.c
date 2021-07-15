@@ -347,3 +347,15 @@ defGetStringList(DefElem *def)
 
 	return (List *) def->arg;
 }
+
+/*
+ * Raise an error about a conflicting DefElem.
+ */
+void
+errorConflictingDefElem(DefElem *defel, ParseState *pstate)
+{
+	ereport(ERROR,
+			errcode(ERRCODE_SYNTAX_ERROR),
+			errmsg("conflicting or redundant options"),
+			parser_errposition(pstate, defel->location));
+}

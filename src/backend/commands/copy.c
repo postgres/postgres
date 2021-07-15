@@ -357,10 +357,7 @@ ProcessCopyOptions(ParseState *pstate,
 			char	   *fmt = defGetString(defel);
 
 			if (format_specified)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			format_specified = true;
 			if (strcmp(fmt, "text") == 0)
 				 /* default format */ ;
@@ -377,66 +374,45 @@ ProcessCopyOptions(ParseState *pstate,
 		else if (strcmp(defel->defname, "freeze") == 0)
 		{
 			if (freeze_specified)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			freeze_specified = true;
 			opts_out->freeze = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "delimiter") == 0)
 		{
 			if (opts_out->delim)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->delim = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "null") == 0)
 		{
 			if (opts_out->null_print)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->null_print = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "header") == 0)
 		{
 			if (header_specified)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			header_specified = true;
 			opts_out->header_line = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
 			if (opts_out->quote)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->quote = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "escape") == 0)
 		{
 			if (opts_out->escape)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->escape = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "force_quote") == 0)
 		{
 			if (opts_out->force_quote || opts_out->force_quote_all)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			if (defel->arg && IsA(defel->arg, A_Star))
 				opts_out->force_quote_all = true;
 			else if (defel->arg && IsA(defel->arg, List))
@@ -451,10 +427,7 @@ ProcessCopyOptions(ParseState *pstate,
 		else if (strcmp(defel->defname, "force_not_null") == 0)
 		{
 			if (opts_out->force_notnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			if (defel->arg && IsA(defel->arg, List))
 				opts_out->force_notnull = castNode(List, defel->arg);
 			else
@@ -467,9 +440,7 @@ ProcessCopyOptions(ParseState *pstate,
 		else if (strcmp(defel->defname, "force_null") == 0)
 		{
 			if (opts_out->force_null)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			if (defel->arg && IsA(defel->arg, List))
 				opts_out->force_null = castNode(List, defel->arg);
 			else
@@ -487,10 +458,7 @@ ProcessCopyOptions(ParseState *pstate,
 			 * allowed for the column list to be NIL.
 			 */
 			if (opts_out->convert_selectively)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->convert_selectively = true;
 			if (defel->arg == NULL || IsA(defel->arg, List))
 				opts_out->convert_select = castNode(List, defel->arg);
@@ -504,10 +472,7 @@ ProcessCopyOptions(ParseState *pstate,
 		else if (strcmp(defel->defname, "encoding") == 0)
 		{
 			if (opts_out->file_encoding >= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			opts_out->file_encoding = pg_char_to_encoding(defGetString(defel));
 			if (opts_out->file_encoding < 0)
 				ereport(ERROR,

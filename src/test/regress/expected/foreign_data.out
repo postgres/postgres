@@ -95,6 +95,8 @@ CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
 ERROR:  function invalid_fdw_handler must return type fdw_handler
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
 ERROR:  conflicting or redundant options
+LINE 1: ...GN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER in...
+                                                             ^
 CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
 DROP FOREIGN DATA WRAPPER test_fdw;
 -- ALTER FOREIGN DATA WRAPPER
@@ -201,6 +203,8 @@ ALTER FOREIGN DATA WRAPPER foo HANDLER invalid_fdw_handler;  -- ERROR
 ERROR:  function invalid_fdw_handler must return type fdw_handler
 ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER anything;  -- ERROR
 ERROR:  conflicting or redundant options
+LINE 1: ...FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER an...
+                                                             ^
 ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler;
 WARNING:  changing the foreign-data wrapper handler can change behavior of existing foreign tables
 DROP FUNCTION invalid_fdw_handler();

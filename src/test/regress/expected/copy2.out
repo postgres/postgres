@@ -67,6 +67,8 @@ LINE 1: COPY x from stdin (force_not_null (a), force_not_null (b));
                                                ^
 COPY x from stdin (force_null (a), force_null (b));
 ERROR:  conflicting or redundant options
+LINE 1: COPY x from stdin (force_null (a), force_null (b));
+                                           ^
 COPY x from stdin (convert_selectively (a), convert_selectively (b));
 ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (convert_selectively (a), convert_selectiv...

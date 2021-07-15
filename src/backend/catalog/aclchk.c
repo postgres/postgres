@@ -59,6 +59,7 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
@@ -921,19 +922,13 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 		if (strcmp(defel->defname, "schemas") == 0)
 		{
 			if (dnspnames)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			dnspnames = defel;
 		}
 		else if (strcmp(defel->defname, "roles") == 0)
 		{
 			if (drolespecs)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			drolespecs = defel;
 		}
 		else

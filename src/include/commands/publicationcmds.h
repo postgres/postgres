@@ -18,8 +18,8 @@
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern ObjectAddress CreatePublication(CreatePublicationStmt *stmt);
-extern void AlterPublication(AlterPublicationStmt *stmt);
+extern ObjectAddress CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt);
+extern void AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt);
 extern void RemovePublicationRelById(Oid proid);
 
 extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);

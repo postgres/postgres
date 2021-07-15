@@ -1731,30 +1731,21 @@ CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 		if (strcmp(defel->defname, "schema") == 0)
 		{
 			if (d_schema)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			d_schema = defel;
 			schemaName = defGetString(d_schema);
 		}
 		else if (strcmp(defel->defname, "new_version") == 0)
 		{
 			if (d_new_version)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			d_new_version = defel;
 			versionName = defGetString(d_new_version);
 		}
 		else if (strcmp(defel->defname, "cascade") == 0)
 		{
 			if (d_cascade)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			d_cascade = defel;
 			cascade = defGetBoolean(d_cascade);
 		}
@@ -3051,10 +3042,7 @@ ExecAlterExtensionStmt(ParseState *pstate, AlterExtensionStmt *stmt)
 		if (strcmp(defel->defname, "new_version") == 0)
 		{
 			if (d_new_version)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			d_new_version = defel;
 		}
 		else

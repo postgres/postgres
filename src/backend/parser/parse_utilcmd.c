@@ -392,9 +392,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 		if (strcmp(defel->defname, "sequence_name") == 0)
 		{
 			if (nameEl)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, cxt->pstate);
 			nameEl = defel;
 			nameEl_idx = foreach_current_index(option);
 		}

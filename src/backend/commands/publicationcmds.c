@@ -55,7 +55,8 @@ static void PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 static void PublicationDropTables(Oid pubid, List *rels, bool missing_ok);
 
 static void
-parse_publication_options(List *options,
+parse_publication_options(ParseState *pstate,
+						  List *options,
 						  bool *publish_given,
 						  PublicationActions *pubactions,
 						  bool *publish_via_partition_root_given,
@@ -85,9 +86,7 @@ parse_publication_options(List *options,
 			ListCell   *lc;
 
 			if (*publish_given)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 
 			/*
 			 * If publish option was given only the explicitly listed actions
@@ -128,9 +127,7 @@ parse_publication_options(List *options,
 		else if (strcmp(defel->defname, "publish_via_partition_root") == 0)
 		{
 			if (*publish_via_partition_root_given)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			*publish_via_partition_root_given = true;
 			*publish_via_partition_root = defGetBoolean(defel);
 		}
@@ -145,7 +142,7 @@ parse_publication_options(List *options,
  * Create new publication.
  */
 ObjectAddress
-CreatePublication(CreatePublicationStmt *stmt)
+CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 {
 	Relation	rel;
 	ObjectAddress myself;
@@ -192,7 +189,8 @@ CreatePublication(CreatePublicationStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->pubname));
 	values[Anum_pg_publication_pubowner - 1] = ObjectIdGetDatum(GetUserId());
 
-	parse_publication_options(stmt->options,
+	parse_publication_options(pstate,
+							  stmt->options,
 							  &publish_given, &pubactions,
 							  &publish_via_partition_root_given,
 							  &publish_via_partition_root);
@@ -256,8 +254,8 @@ CreatePublication(CreatePublicationStmt *stmt)
  * Change options of a publication.
  */
 static void
-AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
-						HeapTuple tup)
+AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
+						Relation rel, HeapTuple tup)
 {
 	bool		nulls[Natts_pg_publication];
 	bool		replaces[Natts_pg_publication];
@@ -269,7 +267,8 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 	ObjectAddress obj;
 	Form_pg_publication pubform;
 
-	parse_publication_options(stmt->options,
+	parse_publication_options(pstate,
+							  stmt->options,
 							  &publish_given, &pubactions,
 							  &publish_via_partition_root_given,
 							  &publish_via_partition_root);
@@ -434,7 +433,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
  * AlterPublicationTables.
  */
 void
-AlterPublication(AlterPublicationStmt *stmt)
+AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 {
 	Relation	rel;
 	HeapTuple	tup;
@@ -459,7 +458,7 @@ AlterPublication(AlterPublicationStmt *stmt)
 					   stmt->pubname);
 
 	if (stmt->options)
-		AlterPublicationOptions(stmt, rel, tup);
+		AlterPublicationOptions(pstate, stmt, rel, tup);
 	else
 		AlterPublicationTables(stmt, rel, tup);
 

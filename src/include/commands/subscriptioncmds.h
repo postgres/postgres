@@ -18,9 +18,9 @@
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern ObjectAddress CreateSubscription(CreateSubscriptionStmt *stmt,
+extern ObjectAddress CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 										bool isTopLevel);
-extern ObjectAddress AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel);
+extern ObjectAddress AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt, bool isTopLevel);
 extern void DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel);
 
 extern ObjectAddress AlterSubscriptionOwner(const char *name, Oid newOwnerId);

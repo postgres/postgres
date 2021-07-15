@@ -330,10 +330,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			continue;
 		}
 		if (*defelp != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("conflicting or redundant options"),
-					 parser_errposition(pstate, defel->location)));
+			errorConflictingDefElem(defel, pstate);
 		*defelp = defel;
 	}
 
@@ -1336,7 +1333,7 @@ checkEnumOwner(HeapTuple tup)
  * and users might have queries with that same assumption.
  */
 ObjectAddress
-DefineRange(CreateRangeStmt *stmt)
+DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 {
 	char	   *typeName;
 	Oid			typeNamespace;
@@ -1411,50 +1408,38 @@ DefineRange(CreateRangeStmt *stmt)
 		if (strcmp(defel->defname, "subtype") == 0)
 		{
 			if (OidIsValid(rangeSubtype))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			/* we can look up the subtype name immediately */
 			rangeSubtype = typenameTypeId(NULL, defGetTypeName(defel));
 		}
 		else if (strcmp(defel->defname, "subtype_opclass") == 0)
 		{
 			if (rangeSubOpclassName != NIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			rangeSubOpclassName = defGetQualifiedName(defel);
 		}
 		else if (strcmp(defel->defname, "collation") == 0)
 		{
 			if (rangeCollationName != NIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			rangeCollationName = defGetQualifiedName(defel);
 		}
 		else if (strcmp(defel->defname, "canonical") == 0)
 		{
 			if (rangeCanonicalName != NIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			rangeCanonicalName = defGetQualifiedName(defel);
 		}
 		else if (strcmp(defel->defname, "subtype_diff") == 0)
 		{
 			if (rangeSubtypeDiffName != NIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			rangeSubtypeDiffName = defGetQualifiedName(defel);
 		}
 		else if (strcmp(defel->defname, "multirange_type_name") == 0)
 		{
 			if (multirangeTypeName != NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			/* we can look up the subtype name immediately */
 			multirangeNamespace = QualifiedNameGetCreationNamespace(defGetQualifiedName(defel),
 																	&multirangeTypeName);

@@ -523,7 +523,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*volatility_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*volatility_item = defel;
 	}
@@ -532,14 +532,14 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*strict_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*strict_item = defel;
 	}
 	else if (strcmp(defel->defname, "security") == 0)
 	{
 		if (*security_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*security_item = defel;
 	}
@@ -548,7 +548,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*leakproof_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*leakproof_item = defel;
 	}
@@ -561,7 +561,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*cost_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*cost_item = defel;
 	}
@@ -570,7 +570,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*rows_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*rows_item = defel;
 	}
@@ -579,7 +579,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*support_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*support_item = defel;
 	}
@@ -588,7 +588,7 @@ compute_common_attribute(ParseState *pstate,
 		if (is_procedure)
 			goto procedure_error;
 		if (*parallel_item)
-			goto duplicate_error;
+			errorConflictingDefElem(defel, pstate);
 
 		*parallel_item = defel;
 	}
@@ -597,13 +597,6 @@ compute_common_attribute(ParseState *pstate,
 
 	/* Recognized an option */
 	return true;
-
-duplicate_error:
-	ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("conflicting or redundant options"),
-			 parser_errposition(pstate, defel->location)));
-	return false;				/* keep compiler quiet */
 
 procedure_error:
 	ereport(ERROR,
@@ -765,37 +758,25 @@ compute_function_attributes(ParseState *pstate,
 		if (strcmp(defel->defname, "as") == 0)
 		{
 			if (as_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			as_item = defel;
 		}
 		else if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			language_item = defel;
 		}
 		else if (strcmp(defel->defname, "transform") == 0)
 		{
 			if (transform_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			transform_item = defel;
 		}
 		else if (strcmp(defel->defname, "window") == 0)
 		{
 			if (windowfunc_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
+				errorConflictingDefElem(defel, pstate);
 			if (is_procedure)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -2070,7 +2051,7 @@ IsThereFunctionInNamespace(const char *proname, int pronargs,
  * See at ExecuteCallStmt() about the atomic argument.
  */
 void
-ExecuteDoStmt(DoStmt *stmt, bool atomic)
+ExecuteDoStmt(ParseState *pstate, DoStmt *stmt, bool atomic)
 {
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
 	ListCell   *arg;
@@ -2089,17 +2070,13 @@ ExecuteDoStmt(DoStmt *stmt, bool atomic)
 		if (strcmp(defel->defname, "as") == 0)
 		{
 			if (as_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			as_item = defel;
 		}
 		else if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+				errorConflictingDefElem(defel, pstate);
 			language_item = defel;
 		}
 		else
