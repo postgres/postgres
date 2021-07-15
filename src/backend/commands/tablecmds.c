@@ -5960,7 +5960,7 @@ alter_table_type_to_string(AlterTableType cmdtype)
 		case AT_DropExpression:
 			return "ALTER COLUMN ... DROP EXPRESSION";
 		case AT_CheckNotNull:
-			return NULL;			/* not real grammar */
+			return NULL;		/* not real grammar */
 		case AT_SetStatistics:
 			return "ALTER COLUMN ... SET STATISTICS";
 		case AT_SetOptions:
@@ -5976,7 +5976,7 @@ alter_table_type_to_string(AlterTableType cmdtype)
 			return "DROP COLUMN";
 		case AT_AddIndex:
 		case AT_ReAddIndex:
-			return NULL;			/* not real grammar */
+			return NULL;		/* not real grammar */
 		case AT_AddConstraint:
 		case AT_AddConstraintRecurse:
 		case AT_ReAddConstraint:
@@ -5992,7 +5992,7 @@ alter_table_type_to_string(AlterTableType cmdtype)
 		case AT_DropConstraintRecurse:
 			return "DROP CONSTRAINT";
 		case AT_ReAddComment:
-			return NULL;			/* not real grammar */
+			return NULL;		/* not real grammar */
 		case AT_AlterColumnType:
 			return "ALTER COLUMN ... SET DATA TYPE";
 		case AT_AlterColumnGenericOptions:
@@ -6016,7 +6016,7 @@ alter_table_type_to_string(AlterTableType cmdtype)
 		case AT_ResetRelOptions:
 			return "RESET";
 		case AT_ReplaceRelOptions:
-			return NULL;			/* not real grammar */
+			return NULL;		/* not real grammar */
 		case AT_EnableTrig:
 			return "ENABLE TRIGGER";
 		case AT_EnableAlwaysTrig:
@@ -6074,7 +6074,7 @@ alter_table_type_to_string(AlterTableType cmdtype)
 		case AT_DropIdentity:
 			return "ALTER COLUMN ... DROP IDENTITY";
 		case AT_ReAddStatistics:
-			return NULL;			/* not real grammar */
+			return NULL;		/* not real grammar */
 	}
 
 	return NULL;
@@ -6129,7 +6129,7 @@ ATSimplePermissions(AlterTableType cmdtype, Relation rel, int allowed_targets)
 		if (action_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 /* translator: %s is a group of some SQL keywords */
+			/* translator: %s is a group of some SQL keywords */
 					 errmsg("ALTER action %s cannot be performed on relation \"%s\"",
 							action_str, RelationGetRelationName(rel)),
 					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
@@ -12079,10 +12079,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	{
 		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(depTup);
 		ObjectAddress foundObject;
-
-		/* We don't expect any PIN dependencies on columns */
-		if (foundDep->deptype == DEPENDENCY_PIN)
-			elog(ERROR, "cannot alter type of a pinned column");
 
 		foundObject.classId = foundDep->classid;
 		foundObject.objectId = foundDep->objid;

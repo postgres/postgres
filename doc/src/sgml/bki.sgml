@@ -418,19 +418,33 @@
    <para>
     If <filename>genbki.pl</filename> needs to assign an OID to a catalog
     entry that does not have a manually-assigned OID, it will use a value in
-    the range 10000&mdash;11999.  The server's OID counter is set to 12000
-    at the start of a bootstrap run.  Thus objects created by regular SQL
-    commands during the later phases of bootstrap, such as objects created
-    while running the <filename>information_schema.sql</filename> script,
-    receive OIDs of 12000 or above.
+    the range 10000&mdash;11999.  The server's OID counter is set to 10000
+    at the start of a bootstrap run, so that any objects created on-the-fly
+    during bootstrap processing also receive OIDs in this range.  (The
+    usual OID assignment mechanism takes care of preventing any conflicts.)
+   </para>
+
+   <para>
+    Objects with OIDs below <symbol>FirstUnpinnedObjectId</symbol> (12000)
+    are considered <quote>pinned</quote>, preventing them from being
+    deleted.  (There are a small number of exceptions, which are
+    hard-wired into <function>IsPinnedObject()</function>.)
+    <application>initdb</application> forces the OID counter up
+    to <symbol>FirstUnpinnedObjectId</symbol> as soon as it's ready to
+    create unpinned objects.  Thus objects created during the later phases
+    of <application>initdb</application>, such as objects created while
+    running the <filename>information_schema.sql</filename> script, will
+    not be pinned, while all objects known
+    to <filename>genbki.pl</filename> will be.
    </para>
 
    <para>
     OIDs assigned during normal database operation are constrained to be
     16384 or higher.  This ensures that the range 10000&mdash;16383 is free
     for OIDs assigned automatically by <filename>genbki.pl</filename> or
-    during bootstrap.  These automatically-assigned OIDs are not considered
-    stable, and may change from one installation to another.
+    during <application>initdb</application>.  These
+    automatically-assigned OIDs are not considered stable, and may change
+    from one installation to another.
    </para>
   </sect2>
 

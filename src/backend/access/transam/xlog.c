@@ -5318,7 +5318,7 @@ BootStrapXLOG(void)
 	checkPoint.fullPageWrites = fullPageWrites;
 	checkPoint.nextXid =
 		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
-	checkPoint.nextOid = FirstBootstrapObjectId;
+	checkPoint.nextOid = FirstGenbkiObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.nextMultiOffset = 0;
 	checkPoint.oldestXid = FirstNormalTransactionId;

@@ -3295,6 +3295,10 @@
   proname => 'pg_nextoid', provolatile => 'v', proparallel => 'u',
   prorettype => 'oid', proargtypes => 'regclass name regclass',
   prosrc => 'pg_nextoid' },
+{ oid => '8922', descr => 'stop making pinned objects during initdb',
+  proname => 'pg_stop_making_pinned_objects', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => '',
+  prosrc => 'pg_stop_making_pinned_objects' },
 
 { oid => '1579', descr => 'I/O',
   proname => 'varbit_in', prorettype => 'varbit',

@@ -31,6 +31,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
+#include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_replication_origin.h"
 #include "catalog/pg_shdepend.h"
@@ -120,9 +121,9 @@ bool
 IsCatalogRelationOid(Oid relid)
 {
 	/*
-	 * We consider a relation to be a system catalog if it has an OID that was
-	 * manually assigned or assigned by genbki.pl.  This includes all the
-	 * defined catalogs, their indexes, and their TOAST tables and indexes.
+	 * We consider a relation to be a system catalog if it has a pinned OID.
+	 * This includes all the defined catalogs, their indexes, and their TOAST
+	 * tables and indexes.
 	 *
 	 * This rule excludes the relations in information_schema, which are not
 	 * integral to the system and can be treated the same as user relations.
@@ -132,7 +133,7 @@ IsCatalogRelationOid(Oid relid)
 	 * This test is reliable since an OID wraparound will skip this range of
 	 * OIDs; see GetNewObjectId().
 	 */
-	return (relid < (Oid) FirstBootstrapObjectId);
+	return (relid < (Oid) FirstUnpinnedObjectId);
 }
 
 /*
@@ -292,6 +293,64 @@ IsSharedRelation(Oid relationId)
 		relationId == PgTablespaceToastIndex)
 		return true;
 	return false;
+}
+
+/*
+ * IsPinnedObject
+ *		Given the class + OID identity of a database object, report whether
+ *		it is "pinned", that is not droppable because the system requires it.
+ *
+ * We used to represent this explicitly in pg_depend, but that proved to be
+ * an undesirable amount of overhead, so now we rely on an OID range test.
+ */
+bool
+IsPinnedObject(Oid classId, Oid objectId)
+{
+	/*
+	 * Objects with OIDs above FirstUnpinnedObjectId are never pinned.  Since
+	 * the OID generator skips this range when wrapping around, this check
+	 * guarantees that user-defined objects are never considered pinned.
+	 */
+	if (objectId >= FirstUnpinnedObjectId)
+		return false;
+
+	/*
+	 * Large objects are never pinned.  We need this special case because
+	 * their OIDs can be user-assigned.
+	 */
+	if (classId == LargeObjectRelationId)
+		return false;
+
+	/*
+	 * There are a few objects defined in the catalog .dat files that, as a
+	 * matter of policy, we prefer not to treat as pinned.  We used to handle
+	 * that by excluding them from pg_depend, but it's just as easy to
+	 * hard-wire their OIDs here.  (If the user does indeed drop and recreate
+	 * them, they'll have new but certainly-unpinned OIDs, so no problem.)
+	 *
+	 * Checking both classId and objectId is overkill, since OIDs below
+	 * FirstGenbkiObjectId should be globally unique, but do it anyway for
+	 * robustness.
+	 */
+
+	/* template1 is not pinned */
+	if (classId == DatabaseRelationId &&
+		objectId == TemplateDbOid)
+		return false;
+
+	/* the public namespace is not pinned */
+	if (classId == NamespaceRelationId &&
+		objectId == PG_PUBLIC_NAMESPACE)
+		return false;
+
+	/*
+	 * All other initdb-created objects are pinned.  This is overkill (the
+	 * system doesn't really depend on having every last weird datatype, for
+	 * instance) but generating only the minimum required set of dependencies
+	 * seems hard, and enforcing an accurate list would be much more expensive
+	 * than the simple range test used here.
+	 */
+	return true;
 }
 
 
@@ -533,7 +592,8 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to call pg_nextoid()")));
+				 errmsg("must be superuser to call %s()",
+						"pg_nextoid")));
 
 	rel = table_open(reloid, RowExclusiveLock);
 	idx = index_open(idxoid, RowExclusiveLock);
@@ -580,5 +640,29 @@ pg_nextoid(PG_FUNCTION_ARGS)
 	table_close(rel, RowExclusiveLock);
 	index_close(idx, RowExclusiveLock);
 
-	return newoid;
+	PG_RETURN_OID(newoid);
+}
+
+/*
+ * SQL callable interface for StopGeneratingPinnedObjectIds().
+ *
+ * This is only to be used by initdb, so it's intentionally not documented in
+ * the user facing docs.
+ */
+Datum
+pg_stop_making_pinned_objects(PG_FUNCTION_ARGS)
+{
+	/*
+	 * Belt-and-suspenders check, since StopGeneratingPinnedObjectIds will
+	 * fail anyway in non-single-user mode.
+	 */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to call %s()",
+						"pg_stop_making_pinned_objects")));
+
+	StopGeneratingPinnedObjectIds();
+
+	PG_RETURN_VOID();
 }

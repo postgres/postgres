@@ -541,11 +541,11 @@ GetNewObjectId(void)
 	 * FirstNormalObjectId since that range is reserved for initdb (see
 	 * IsCatalogRelationOid()).  Note we are relying on unsigned comparison.
 	 *
-	 * During initdb, we start the OID generator at FirstBootstrapObjectId, so
-	 * we only wrap if before that point when in bootstrap or standalone mode.
+	 * During initdb, we start the OID generator at FirstGenbkiObjectId, so we
+	 * only wrap if before that point when in bootstrap or standalone mode.
 	 * The first time through this routine after normal postmaster start, the
 	 * counter will be forced up to FirstNormalObjectId.  This mechanism
-	 * leaves the OIDs between FirstBootstrapObjectId and FirstNormalObjectId
+	 * leaves the OIDs between FirstGenbkiObjectId and FirstNormalObjectId
 	 * available for automatic assignment during initdb, while ensuring they
 	 * will never conflict with user-assigned OIDs.
 	 */
@@ -560,7 +560,7 @@ GetNewObjectId(void)
 		else
 		{
 			/* we may be bootstrapping, so don't enforce the full range */
-			if (ShmemVariableCache->nextOid < ((Oid) FirstBootstrapObjectId))
+			if (ShmemVariableCache->nextOid < ((Oid) FirstGenbkiObjectId))
 			{
 				/* wraparound in standalone mode (unlikely but possible) */
 				ShmemVariableCache->nextOid = FirstNormalObjectId;
@@ -584,6 +584,47 @@ GetNewObjectId(void)
 	LWLockRelease(OidGenLock);
 
 	return result;
+}
+
+/*
+ * SetNextObjectId
+ *
+ * This may only be called during initdb; it advances the OID counter
+ * to the specified value.
+ */
+static void
+SetNextObjectId(Oid nextOid)
+{
+	/* Safety check, this is only allowable during initdb */
+	if (IsPostmasterEnvironment)
+		elog(ERROR, "cannot advance OID counter anymore");
+
+	/* Taking the lock is, therefore, just pro forma; but do it anyway */
+	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+
+	if (ShmemVariableCache->nextOid > nextOid)
+		elog(ERROR, "too late to advance OID counter to %u, it is now %u",
+			 nextOid, ShmemVariableCache->nextOid);
+
+	ShmemVariableCache->nextOid = nextOid;
+	ShmemVariableCache->oidCount = 0;
+
+	LWLockRelease(OidGenLock);
+}
+
+/*
+ * StopGeneratingPinnedObjectIds
+ *
+ * This is called once during initdb to force the OID counter up to
+ * FirstUnpinnedObjectId.  This supports letting initdb's post-bootstrap
+ * processing create some pinned objects early on.  Once it's done doing
+ * so, it calls this (via pg_stop_making_pinned_objects()) so that the
+ * remaining objects it makes will be considered un-pinned.
+ */
+void
+StopGeneratingPinnedObjectIds(void)
+{
+	SetNextObjectId(FirstUnpinnedObjectId);
 }
 
 

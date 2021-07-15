@@ -686,7 +686,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.fullPageWrites = false;
 	ControlFile.checkPointCopy.nextXid =
 		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
-	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
+	ControlFile.checkPointCopy.nextOid = FirstGenbkiObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
 	ControlFile.checkPointCopy.nextMultiOffset = 0;
 	ControlFile.checkPointCopy.oldestXid = FirstNormalTransactionId;

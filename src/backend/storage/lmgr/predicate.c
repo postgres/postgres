@@ -494,7 +494,7 @@ static void ReleasePredicateLocksLocal(void);
 static inline bool
 PredicateLockingNeededForRelation(Relation relation)
 {
-	return !(relation->rd_id < FirstBootstrapObjectId ||
+	return !(relation->rd_id < FirstUnpinnedObjectId ||
 			 RelationUsesLocalBuffers(relation) ||
 			 relation->rd_rel->relkind == RELKIND_MATVIEW);
 }

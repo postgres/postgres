@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
@@ -29,7 +30,7 @@
 #include "utils/rel.h"
 
 
-static bool isObjectPinned(const ObjectAddress *object, Relation rel);
+static bool isObjectPinned(const ObjectAddress *object);
 
 
 /*
@@ -69,8 +70,11 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		return;					/* nothing to do */
 
 	/*
-	 * During bootstrap, do nothing since pg_depend may not exist yet. initdb
-	 * will fill in appropriate pg_depend entries after bootstrap.
+	 * During bootstrap, do nothing since pg_depend may not exist yet.
+	 *
+	 * Objects created during bootstrap are most likely pinned, and the few
+	 * that are not do not have dependencies on each other, so that there
+	 * would be no need to make a pg_depend entry anyway.
 	 */
 	if (IsBootstrapProcessingMode())
 		return;
@@ -99,7 +103,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		 * need to record dependencies on it.  This saves lots of space in
 		 * pg_depend, so it's worth the time taken to check.
 		 */
-		if (isObjectPinned(referenced, dependDesc))
+		if (isObjectPinned(referenced))
 			continue;
 
 		if (slot_init_count < max_slots)
@@ -399,8 +403,6 @@ changeDependencyFor(Oid classId, Oid objectId,
 	bool		oldIsPinned;
 	bool		newIsPinned;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
-
 	/*
 	 * Check to see if either oldRefObjectId or newRefObjectId is pinned.
 	 * Pinned objects should not have any dependency entries pointing to them,
@@ -411,16 +413,14 @@ changeDependencyFor(Oid classId, Oid objectId,
 	objAddr.objectId = oldRefObjectId;
 	objAddr.objectSubId = 0;
 
-	oldIsPinned = isObjectPinned(&objAddr, depRel);
+	oldIsPinned = isObjectPinned(&objAddr);
 
 	objAddr.objectId = newRefObjectId;
 
-	newIsPinned = isObjectPinned(&objAddr, depRel);
+	newIsPinned = isObjectPinned(&objAddr);
 
 	if (oldIsPinned)
 	{
-		table_close(depRel, RowExclusiveLock);
-
 		/*
 		 * If both are pinned, we need do nothing.  However, return 1 not 0,
 		 * else callers will think this is an error case.
@@ -439,6 +439,8 @@ changeDependencyFor(Oid classId, Oid objectId,
 
 		return 1;
 	}
+
+	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/* There should be existing dependency record(s), so search. */
 	ScanKeyInit(&key[0],
@@ -574,7 +576,7 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 	objAddr.objectId = oldRefObjectId;
 	objAddr.objectSubId = 0;
 
-	if (isObjectPinned(&objAddr, depRel))
+	if (isObjectPinned(&objAddr))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot remove dependency on %s because it is a system object",
@@ -586,7 +588,7 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 	 */
 	objAddr.objectId = newRefObjectId;
 
-	newIsPinned = isObjectPinned(&objAddr, depRel);
+	newIsPinned = isObjectPinned(&objAddr);
 
 	/* Now search for dependency records */
 	ScanKeyInit(&key[0],
@@ -634,50 +636,14 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
  * isObjectPinned()
  *
  * Test if an object is required for basic database functionality.
- * Caller must already have opened pg_depend.
  *
  * The passed subId, if any, is ignored; we assume that only whole objects
  * are pinned (and that this implies pinning their components).
  */
 static bool
-isObjectPinned(const ObjectAddress *object, Relation rel)
+isObjectPinned(const ObjectAddress *object)
 {
-	bool		ret = false;
-	SysScanDesc scan;
-	HeapTuple	tup;
-	ScanKeyData key[2];
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->classId));
-
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object->objectId));
-
-	scan = systable_beginscan(rel, DependReferenceIndexId, true,
-							  NULL, 2, key);
-
-	/*
-	 * Since we won't generate additional pg_depend entries for pinned
-	 * objects, there can be at most one entry referencing a pinned object.
-	 * Hence, it's sufficient to look at the first returned tuple; we don't
-	 * need to loop.
-	 */
-	tup = systable_getnext(scan);
-	if (HeapTupleIsValid(tup))
-	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
-
-		if (foundDep->deptype == DEPENDENCY_PIN)
-			ret = true;
-	}
-
-	systable_endscan(scan);
-
-	return ret;
+	return IsPinnedObject(object->classId, object->objectId);
 }
 
 

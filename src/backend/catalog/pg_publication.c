@@ -85,7 +85,7 @@ check_publication_add_relation(Relation targetrel)
  * XXX  This also excludes all tables with relid < FirstNormalObjectId,
  * ie all tables created during initdb.  This mainly affects the preinstalled
  * information_schema.  IsCatalogRelationOid() only excludes tables with
- * relid < FirstBootstrapObjectId, making that test rather redundant,
+ * relid < FirstUnpinnedObjectId, making that test rather redundant,
  * but really we should get rid of the FirstNormalObjectId test not
  * IsCatalogRelationOid.  We can't do so today because we don't want
  * information_schema tables to be considered publishable; but this test

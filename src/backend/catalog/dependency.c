@@ -18,6 +18,7 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -521,6 +522,16 @@ findDependentObjects(const ObjectAddress *object,
 		return;
 
 	/*
+	 * If the target object is pinned, we can just error out immediately; it
+	 * won't have any objects recorded as depending on it.
+	 */
+	if (IsPinnedObject(object->classId, object->objectId))
+		ereport(ERROR,
+				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				 errmsg("cannot drop %s because it is required by the database system",
+						getObjectDescription(object, false))));
+
+	/*
 	 * The target object might be internally dependent on some other object
 	 * (its "owner"), and/or be a member of an extension (also considered its
 	 * owner).  If so, and if we aren't recursing from the owning object, we
@@ -783,15 +794,6 @@ findDependentObjects(const ObjectAddress *object,
 				objflags |= DEPFLAG_IS_PART;
 				break;
 
-			case DEPENDENCY_PIN:
-
-				/*
-				 * Should not happen; PIN dependencies should have zeroes in
-				 * the depender fields...
-				 */
-				elog(ERROR, "incorrect use of PIN dependency with %s",
-					 getObjectDescription(object, false));
-				break;
 			default:
 				elog(ERROR, "unrecognized dependency type '%c' for %s",
 					 foundDep->deptype, getObjectDescription(object, false));
@@ -919,18 +921,6 @@ findDependentObjects(const ObjectAddress *object,
 				break;
 			case DEPENDENCY_EXTENSION:
 				subflags = DEPFLAG_EXTENSION;
-				break;
-			case DEPENDENCY_PIN:
-
-				/*
-				 * For a PIN dependency we just ereport immediately; there
-				 * won't be any others to report.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-						 errmsg("cannot drop %s because it is required by the database system",
-								getObjectDescription(object, false))));
-				subflags = 0;	/* keep compiler quiet */
 				break;
 			default:
 				elog(ERROR, "unrecognized dependency type '%c' for %s",

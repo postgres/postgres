@@ -170,14 +170,14 @@ die "found $found duplicate OID(s) in catalog data\n" if $found;
 
 
 # OIDs not specified in the input files are automatically assigned,
-# starting at FirstGenbkiObjectId, extending up to FirstBootstrapObjectId.
+# starting at FirstGenbkiObjectId, extending up to FirstUnpinnedObjectId.
 # We allow such OIDs to be assigned independently within each catalog.
 my $FirstGenbkiObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
 	'FirstGenbkiObjectId');
-my $FirstBootstrapObjectId =
+my $FirstUnpinnedObjectId =
   Catalog::FindDefinedSymbol('access/transam.h', $include_path,
-	'FirstBootstrapObjectId');
+	'FirstUnpinnedObjectId');
 # Hash of next available OID, indexed by catalog name.
 my %GenbkiNextOids;
 
@@ -1101,8 +1101,8 @@ sub assign_next_oid
 
 	# Check that we didn't overrun available OIDs
 	die
-	  "genbki OID counter for $catname reached $result, overrunning FirstBootstrapObjectId\n"
-	  if $result >= $FirstBootstrapObjectId;
+	  "genbki OID counter for $catname reached $result, overrunning FirstUnpinnedObjectId\n"
+	  if $result >= $FirstUnpinnedObjectId;
 
 	return $result;
 }

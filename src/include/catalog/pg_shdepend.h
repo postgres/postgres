@@ -4,8 +4,9 @@
  *	  definition of the "shared dependency" system catalog (pg_shdepend)
  *
  * pg_shdepend has no preloaded contents, so there is no pg_shdepend.dat
- * file; system-defined dependencies are loaded into it during a late stage
- * of the initdb process.
+ * file; dependencies for system-defined objects are loaded into it
+ * on-the-fly during initdb.  Most built-in objects are pinned anyway,
+ * and hence need no explicit entries in pg_shdepend.
  *
  * NOTE: we do not represent all possible dependency pairs in pg_shdepend;
  * for example, there's not much value in creating an explicit dependency
@@ -39,13 +40,12 @@ CATALOG(pg_shdepend,1214,SharedDependRelationId) BKI_SHARED_RELATION
 	/*
 	 * Identification of the dependent (referencing) object.
 	 *
-	 * These fields are all zeroes for a DEPENDENCY_PIN entry.  Also, dbid can
-	 * be zero to denote a shared object.
+	 * Note that dbid can be zero to denote a shared object.
 	 */
 	Oid			dbid BKI_LOOKUP_OPT(pg_database);	/* OID of database
 													 * containing object */
-	Oid			classid BKI_LOOKUP_OPT(pg_class);	/* OID of table containing
-													 * object */
+	Oid			classid BKI_LOOKUP(pg_class);	/* OID of table containing
+												 * object */
 	Oid			objid;			/* OID of object itself */
 	int32		objsubid;		/* column number, or 0 if not used */
 

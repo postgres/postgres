@@ -3264,8 +3264,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the system catalog the dependent object is in,
-       or zero for a <symbol>DEPENDENCY_PIN</symbol> entry
+       The OID of the system catalog the dependent object is in
       </para></entry>
      </row>
 
@@ -3275,8 +3274,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references any OID column)
       </para>
       <para>
-       The OID of the specific dependent object,
-       or zero for a <symbol>DEPENDENCY_PIN</symbol> entry
+       The OID of the specific dependent object
       </para></entry>
      </row>
 
@@ -3467,19 +3465,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
      </listitem>
     </varlistentry>
-
-    <varlistentry>
-     <term><symbol>DEPENDENCY_PIN</symbol> (<literal>p</literal>)</term>
-     <listitem>
-      <para>
-       There is no dependent object; this type of entry is a signal
-       that the system itself depends on the referenced object, and so
-       that object must never be deleted.  Entries of this type are
-       created only by <application>initdb</application>.  The columns for the
-       dependent object contain zeroes.
-      </para>
-     </listitem>
-    </varlistentry>
    </variablelist>
 
    Other dependency flavors might be needed in future.
@@ -3496,6 +3481,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    its condition for automatic dropping.  Conversely, all the
    dependencies' restrictions about which objects must be dropped together
    must be satisfied.
+  </para>
+
+  <para>
+   Most objects created during <application>initdb</application> are
+   considered <quote>pinned</quote>, which means that the system itself
+   depends on them.  Therefore, they are never allowed to be dropped.
+   Also, knowing that pinned objects will not be dropped, the dependency
+   mechanism doesn't bother to make <structname>pg_depend</structname>
+   entries showing dependencies on them.  Thus, for example, a table
+   column of type <type>numeric</type> notionally has
+   a <literal>NORMAL</literal> dependency on the <type>numeric</type>
+   data type, but no such entry actually appears
+   in <structname>pg_depend</structname>.
   </para>
 
  </sect1>
@@ -6779,7 +6777,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        The OID of the database the dependent object is in,
        or zero for a shared object
-       or a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
       </para></entry>
      </row>
 
@@ -6789,8 +6786,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the system catalog the dependent object is in,
-       or zero for a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
+       The OID of the system catalog the dependent object is in
       </para></entry>
      </row>
 
@@ -6800,8 +6796,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references any OID column)
       </para>
       <para>
-       The OID of the specific dependent object,
-       or zero for a <symbol>SHARED_DEPENDENCY_PIN</symbol> entry
+       The OID of the specific dependent object
       </para></entry>
      </row>
 
@@ -6890,19 +6885,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SHARED_DEPENDENCY_PIN</symbol> (<literal>p</literal>)</term>
-     <listitem>
-      <para>
-       There is no dependent object; this type of entry is a signal
-       that the system itself depends on the referenced object, and so
-       that object must never be deleted.  Entries of this type are
-       created only by <application>initdb</application>.  The columns for the
-       dependent object contain zeroes.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><symbol>SHARED_DEPENDENCY_TABLESPACE</symbol> (<literal>t</literal>)</term>
      <listitem>
       <para>
@@ -6916,6 +6898,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    Other dependency flavors might be needed in future.  Note in particular
    that the current definition only supports roles and tablespaces as referenced
    objects.
+  </para>
+
+  <para>
+   As in the <structname>pg_depend</structname> catalog, most objects
+   created during <application>initdb</application> are
+   considered <quote>pinned</quote>.  No entries are made
+   in <structname>pg_shdepend</structname> that would have a pinned
+   object as either referenced or dependent object.
   </para>
 
  </sect1>

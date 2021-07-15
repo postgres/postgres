@@ -4,8 +4,9 @@
  *	  definition of the "dependency" system catalog (pg_depend)
  *
  * pg_depend has no preloaded contents, so there is no pg_depend.dat
- * file; system-defined dependencies are loaded into it during a late stage
- * of the initdb process.
+ * file; dependencies for system-defined objects are loaded into it
+ * on-the-fly during initdb.  Most built-in objects are pinned anyway,
+ * and hence need no explicit entries in pg_depend.
  *
  * NOTE: we do not represent all possible dependency pairs in pg_depend;
  * for example, there's not much value in creating an explicit dependency
@@ -42,11 +43,9 @@ CATALOG(pg_depend,2608,DependRelationId)
 {
 	/*
 	 * Identification of the dependent (referencing) object.
-	 *
-	 * These fields are all zeroes for a DEPENDENCY_PIN entry.
 	 */
-	Oid			classid BKI_LOOKUP_OPT(pg_class);	/* OID of table containing
-													 * object */
+	Oid			classid BKI_LOOKUP(pg_class);	/* OID of table containing
+												 * object */
 	Oid			objid;			/* OID of object itself */
 	int32		objsubid;		/* column number, or 0 if not used */
 
