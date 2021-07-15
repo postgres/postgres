@@ -7017,7 +7017,7 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%Q</literal></entry>
-             <entry>query identifier of the current query.  Query
+             <entry>Query identifier of the current query.  Query
              identifiers are not computed by default, so this field
              will be zero unless <xref linkend="guc-compute-query-id"/>
              parameter is enabled or a third-party module that computes
