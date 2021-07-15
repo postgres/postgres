@@ -3934,7 +3934,6 @@ PostmasterStateMachine(void)
 			Assert(CheckpointerPID == 0);
 			Assert(WalWriterPID == 0);
 			Assert(AutoVacPID == 0);
-			Assert(PgArchPID == 0);
 			/* syslogger is not considered here */
 			pmState = PM_NO_CHILDREN;
 		}
