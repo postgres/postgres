@@ -716,7 +716,7 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
    </para>
 
    <para>
-    <acronym>bloom</acronym> operator classes accept these parameters:
+    bloom operator classes accept these parameters:
    </para>
 
    <variablelist>
