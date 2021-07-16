@@ -461,7 +461,7 @@ AddForeignUpdateTargets(PlannerInfo *root,
      <structfield>vartype</structfield> = <type>RECORD</type>,
      and <literal>wholerow<replaceable>N</replaceable></literal>
      for a whole-row <structname>Var</structname> with
-     <structfield>vartype</structfield> equal to the table's declared rowtype.
+     <structfield>vartype</structfield> equal to the table's declared row type.
      Re-use these names when you can (the planner will combine duplicate
      requests for identical junk columns).  If you need another kind of
      junk column besides these, it might be wise to choose a name prefixed

@@ -655,7 +655,7 @@
      <filename>reformat_dat_file.pl</filename> can be adapted to perform
      many kinds of bulk changes.  Look for its block comments showing where
      one-off code can be inserted.  In the following example, we are going
-     to consolidate two boolean fields in <structname>pg_proc</structname>
+     to consolidate two Boolean fields in <structname>pg_proc</structname>
      into a char field:
 
      <orderedlist>

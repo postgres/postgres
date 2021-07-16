@@ -2642,7 +2642,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         Number of transactions spilled to disk once the memory used by
         logical decoding to decode changes from WAL has exceeded
         <literal>logical_decoding_work_mem</literal>. The counter gets
-        incremented for both toplevel transactions and subtransactions.
+        incremented for both top-level transactions and subtransactions.
       </para></entry>
      </row>
 
@@ -2679,7 +2679,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         plugin after the memory used by logical decoding to decode changes
         from WAL for this slot has exceeded
         <literal>logical_decoding_work_mem</literal>. Streaming only
-        works with toplevel transactions (subtransactions can't be streamed
+        works with top-level transactions (subtransactions can't be streamed
         independently), so the counter is not incremented for subtransactions.
        </para></entry>
      </row>
@@ -2715,7 +2715,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Number of decoded transactions sent to the decoding output plugin for
-        this slot. This counts toplevel transactions only, and is not incremented
+        this slot. This counts top-level transactions only, and is not incremented
         for subtransactions. Note that this includes the transactions that are
         streamed and/or spilled.
        </para></entry>

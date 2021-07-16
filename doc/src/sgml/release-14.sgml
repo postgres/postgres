@@ -153,7 +153,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       Previously it was <literal>md5</literal>.  All new passwords will
       be stored as SHA256 unless this server variable is changed or
       the password is specified in md5 format.  Also, the legacy (and
-      undocumented) boolean-like values which were previously synonyms
+      undocumented) Boolean-like values which were previously synonyms
       for <literal>md5</literal> are no longer accepted.
      </para>
     </listitem>
@@ -3168,7 +3168,7 @@ Author: Michael Meskes <meskes@postgresql.org>
 -->
 
       <para>
-       Allow an <literal>ECPG SQL</literal> identifier to be linked to
+       Allow an ECPG SQL identifier to be linked to
        a specific connection (Hayato Kuroda)
       </para>
 

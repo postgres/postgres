@@ -617,7 +617,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   <para>
    <command>UPDATE</command> statements may use subscripting in the
    <literal>SET</literal> clause to modify <type>jsonb</type> values. Subscript
-   paths must be traversible for all affected values insofar as they exist. For
+   paths must be traversable for all affected values insofar as they exist. For
    instance, the path <literal>val['a']['b']['c']</literal> can be traversed all
    the way to <literal>c</literal> if every <literal>val</literal>,
    <literal>val['a']</literal>, and <literal>val['a']['b']</literal> is an
