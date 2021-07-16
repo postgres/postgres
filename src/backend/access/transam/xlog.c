@@ -9300,7 +9300,15 @@ CreateCheckPoint(int flags)
 	 */
 	XLByteToSeg(RedoRecPtr, _logSegNo, wal_segment_size);
 	KeepLogSeg(recptr, &_logSegNo);
-	InvalidateObsoleteReplicationSlots(_logSegNo);
+	if (InvalidateObsoleteReplicationSlots(_logSegNo))
+	{
+		/*
+		 * Some slots have been invalidated; recalculate the old-segment
+		 * horizon, starting again from RedoRecPtr.
+		 */
+		XLByteToSeg(RedoRecPtr, _logSegNo, wal_segment_size);
+		KeepLogSeg(recptr, &_logSegNo);
+	}
 	_logSegNo--;
 	RemoveOldXlogFiles(_logSegNo, RedoRecPtr, recptr);
 
@@ -9640,7 +9648,15 @@ CreateRestartPoint(int flags)
 	replayPtr = GetXLogReplayRecPtr(&replayTLI);
 	endptr = (receivePtr < replayPtr) ? replayPtr : receivePtr;
 	KeepLogSeg(endptr, &_logSegNo);
-	InvalidateObsoleteReplicationSlots(_logSegNo);
+	if (InvalidateObsoleteReplicationSlots(_logSegNo))
+	{
+		/*
+		 * Some slots have been invalidated; recalculate the old-segment
+		 * horizon, starting again from RedoRecPtr.
+		 */
+		XLByteToSeg(RedoRecPtr, _logSegNo, wal_segment_size);
+		KeepLogSeg(endptr, &_logSegNo);
+	}
 	_logSegNo--;
 
 	/*
@@ -9809,6 +9825,12 @@ GetWALAvailability(XLogRecPtr targetLSN)
  * requirement of replication slots.  For the latter criterion we do consider
  * the effects of max_slot_wal_keep_size: reserve at most that much space back
  * from recptr.
+ *
+ * Note about replication slots: if this function calculates a value
+ * that's further ahead than what slots need reserved, then affected
+ * slots need to be invalidated and this function invoked again.
+ * XXX it might be a good idea to rewrite this function so that
+ * invalidation is optionally done here, instead.
  */
 static void
 KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
