@@ -415,6 +415,7 @@ typedef struct _triggerInfo
 	Oid			tgconstrrelid;
 	char	   *tgconstrrelname;
 	char		tgenabled;
+	bool		tgisinternal;
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	char	   *tgdef;

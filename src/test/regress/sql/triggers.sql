@@ -2329,6 +2329,21 @@ drop function dump_insert();
 drop function dump_update();
 drop function dump_delete();
 
+-- Leave around some objects for other tests
+create table trigger_parted (a int primary key) partition by list (a);
+create function trigger_parted_trigfunc() returns trigger language plpgsql as
+  $$ begin end; $$;
+create trigger aft_row after insert or update on trigger_parted
+  for each row execute function trigger_parted_trigfunc();
+create table trigger_parted_p1 partition of trigger_parted for values in (1)
+  partition by list (a);
+create table trigger_parted_p1_1 partition of trigger_parted_p1 for values in (1);
+create table trigger_parted_p2 partition of trigger_parted for values in (2)
+  partition by list (a);
+create table trigger_parted_p2_2 partition of trigger_parted_p2 for values in (2);
+alter table only trigger_parted_p2 disable trigger aft_row;
+alter table trigger_parted_p2_2 enable always trigger aft_row;
+
 -- verify transition table conversion slot's lifetime
 -- https://postgr.es/m/39a71864-b120-5a5c-8cc5-c632b6f16761@amazon.com
 create table convslot_test_parent (col1 text primary key);

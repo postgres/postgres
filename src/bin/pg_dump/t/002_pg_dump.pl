@@ -2386,12 +2386,68 @@ my %tests = (
 		},
 	},
 
-	# this shouldn't ever get emitted
-	'Creation of row-level trigger in partition' => {
+	'Disabled trigger on partition is altered' => {
+		create_order => 93,
+		create_sql =>
+		  'CREATE TABLE dump_test_second_schema.measurement_y2006m3
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-03-01\') TO (\'2006-04-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m3 DISABLE TRIGGER test_trigger;
+						CREATE TABLE dump_test_second_schema.measurement_y2006m4
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-04-01\') TO (\'2006-05-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m4 ENABLE REPLICA TRIGGER test_trigger;
+						CREATE TABLE dump_test_second_schema.measurement_y2006m5
+						PARTITION OF dump_test.measurement
+						FOR VALUES FROM (\'2006-05-01\') TO (\'2006-06-01\');
+						ALTER TABLE dump_test_second_schema.measurement_y2006m5 ENABLE ALWAYS TRIGGER test_trigger;
+						',
 		regexp => qr/^
-			\QCREATE TRIGGER test_trigger AFTER INSERT ON dump_test_second_schema.measurement\E
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m3 DISABLE TRIGGER test_trigger;\E
 			/xm,
-		like => {},
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	'Replica trigger on partition is altered' => {
+		regexp => qr/^
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m4 ENABLE REPLICA TRIGGER test_trigger;\E
+			/xm,
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	'Always trigger on partition is altered' => {
+		regexp => qr/^
+			\QALTER TABLE dump_test_second_schema.measurement_y2006m5 ENABLE ALWAYS TRIGGER test_trigger;\E
+			/xm,
+		like => {
+			%full_runs,
+			section_post_data => 1,
+			role              => 1,
+			binary_upgrade    => 1,
+		},
+	},
+
+	# We should never see the creation of a trigger on a partition
+	'Disabled trigger on partition is not created' => {
+		regexp => qr/CREATE TRIGGER test_trigger.*ON dump_test_second_schema/,
+		like   => {},
+		unlike => { %full_runs, %dump_test_schema_runs },
+	},
+
+	# Triggers on partitions should not be dropped individually
+	'Triggers on partitions are not dropped' => {
+		regexp => qr/DROP TRIGGER test_trigger.*ON dump_test_second_schema/,
+		like   => {}
 	},
 
 	'CREATE TABLE test_fourth_table_zero_col' => {
@@ -3018,9 +3074,12 @@ my %tests = (
 	},
 
 	'GRANT SELECT ON TABLE measurement_y2006m2' => {
-		create_order => 92,
-		create_sql   => 'GRANT SELECT ON
-						   TABLE dump_test_second_schema.measurement_y2006m2
+		create_order => 94,
+		create_sql   => 'GRANT SELECT ON TABLE
+						   dump_test_second_schema.measurement_y2006m2,
+						   dump_test_second_schema.measurement_y2006m3,
+						   dump_test_second_schema.measurement_y2006m4,
+						   dump_test_second_schema.measurement_y2006m5
 						   TO regress_dump_test_role;',
 		regexp =>
 		  qr/^\QGRANT SELECT ON TABLE dump_test_second_schema.measurement_y2006m2 TO regress_dump_test_role;\E/m,

@@ -7696,6 +7696,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_tgconstrrelid,
 				i_tgconstrrelname,
 				i_tgenabled,
+				i_tgisinternal,
 				i_tgdeferrable,
 				i_tginitdeferred,
 				i_tgdef;
@@ -7714,18 +7715,63 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 					tbinfo->dobj.name);
 
 		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 90000)
+		if (fout->remoteVersion >= 130000)
 		{
 			/*
 			 * NB: think not to use pretty=true in pg_get_triggerdef.  It
 			 * could result in non-forward-compatible dumps of WHEN clauses
 			 * due to under-parenthesization.
+			 *
+			 * NB: We need to see tgisinternal triggers in partitions, in case
+			 * the tgenabled flag has been changed from the parent.
 			 */
 			appendPQExpBuffer(query,
-							  "SELECT tgname, "
-							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(oid, false) AS tgdef, "
-							  "tgenabled, tableoid, oid "
+							  "SELECT t.tgname, "
+							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
+							  "FROM pg_catalog.pg_trigger t "
+							  "LEFT JOIN pg_catalog.pg_trigger u ON u.oid = t.tgparentid "
+							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
+							  "AND (NOT t.tgisinternal OR t.tgenabled != u.tgenabled)",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (fout->remoteVersion >= 110000)
+		{
+			/*
+			 * NB: We need to see tgisinternal triggers in partitions, in case
+			 * the tgenabled flag has been changed from the parent. No
+			 * tgparentid in version 11-12, so we have to match them via
+			 * pg_depend.
+			 *
+			 * See above about pretty=true in pg_get_triggerdef.
+			 */
+			appendPQExpBuffer(query,
+							  "SELECT t.tgname, "
+							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
+							  "FROM pg_catalog.pg_trigger t "
+							  "LEFT JOIN pg_catalog.pg_depend AS d ON "
+							  " d.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
+							  " d.refclassid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
+							  " d.objid = t.oid "
+							  "LEFT JOIN pg_catalog.pg_trigger AS pt ON pt.oid = refobjid "
+							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
+							  "AND (NOT t.tgisinternal%s)",
+							  tbinfo->dobj.catId.oid,
+							  tbinfo->ispartition ?
+							  " OR t.tgenabled != pt.tgenabled" : "");
+		}
+		else if (fout->remoteVersion >= 90000)
+		{
+			/* See above about pretty=true in pg_get_triggerdef */
+			appendPQExpBuffer(query,
+							  "SELECT t.tgname, "
+							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+							  "t.tgenabled, false as tgisinternal, "
+							  "t.tableoid, t.oid "
 							  "FROM pg_catalog.pg_trigger t "
 							  "WHERE tgrelid = '%u'::pg_catalog.oid "
 							  "AND NOT tgisinternal",
@@ -7740,6 +7786,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "SELECT tgname, "
 							  "tgfoid::pg_catalog.regproc AS tgfname, "
 							  "tgtype, tgnargs, tgargs, tgenabled, "
+							  "false as tgisinternal, "
 							  "tgisconstraint, tgconstrname, tgdeferrable, "
 							  "tgconstrrelid, tginitdeferred, tableoid, oid, "
 							  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
@@ -7788,6 +7835,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
 		i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
 		i_tgenabled = PQfnumber(res, "tgenabled");
+		i_tgisinternal = PQfnumber(res, "tgisinternal");
 		i_tgdeferrable = PQfnumber(res, "tgdeferrable");
 		i_tginitdeferred = PQfnumber(res, "tginitdeferred");
 		i_tgdef = PQfnumber(res, "tgdef");
@@ -7807,6 +7855,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			tginfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			tginfo[j].tgtable = tbinfo;
 			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled));
+			tginfo[j].tgisinternal = *(PQgetvalue(res, j, i_tgisinternal)) == 't';
 			if (i_tgdef >= 0)
 			{
 				tginfo[j].tgdef = pg_strdup(PQgetvalue(res, j, i_tgdef));
@@ -17558,7 +17607,40 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 								"pg_catalog.pg_trigger", "TRIGGER",
 								trigidentity->data);
 
-	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
+	if (tginfo->tgisinternal)
+	{
+		/*
+		 * Triggers marked internal only appear here because their 'tgenabled'
+		 * flag differs from its parent's.  The trigger is created already, so
+		 * remove the CREATE and replace it with an ALTER.  (Clear out the
+		 * DROP query too, so that pg_dump --create does not cause errors.)
+		 */
+		resetPQExpBuffer(query);
+		resetPQExpBuffer(delqry);
+		appendPQExpBuffer(query, "\nALTER %sTABLE %s ",
+						  tbinfo->relkind == RELKIND_FOREIGN_TABLE ? "FOREIGN " : "",
+						  fmtQualifiedDumpable(tbinfo));
+		switch (tginfo->tgenabled)
+		{
+			case 'f':
+			case 'D':
+				appendPQExpBufferStr(query, "DISABLE");
+				break;
+			case 't':
+			case 'O':
+				appendPQExpBufferStr(query, "ENABLE");
+				break;
+			case 'R':
+				appendPQExpBufferStr(query, "ENABLE REPLICA");
+				break;
+			case 'A':
+				appendPQExpBufferStr(query, "ENABLE ALWAYS");
+				break;
+		}
+		appendPQExpBuffer(query, " TRIGGER %s;\n",
+						  fmtId(tginfo->dobj.name));
+	}
+	else if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
 	{
 		appendPQExpBuffer(query, "\nALTER TABLE %s ",
 						  fmtQualifiedDumpable(tbinfo));
