@@ -1142,11 +1142,14 @@ ReplicationSlotReserveWal(void)
  * Returns whether ReplicationSlotControlLock was released in the interim (and
  * in that case we're not holding the lock at return, otherwise we are).
  *
+ * Sets *invalidated true if the slot was invalidated. (Untouched otherwise.)
+ *
  * This is inherently racy, because we release the LWLock
  * for syscalls, so caller must restart if we return true.
  */
 static bool
-InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN)
+InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
+							   bool *invalidated)
 {
 	int			last_signaled_pid = 0;
 	bool		released_lock = false;
@@ -1203,6 +1206,9 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN)
 			s->active_pid = MyProcPid;
 			s->data.invalidated_at = restart_lsn;
 			s->data.restart_lsn = InvalidXLogRecPtr;
+
+			/* Let caller know */
+			*invalidated = true;
 		}
 
 		SpinLockRelease(&s->mutex);
@@ -1290,12 +1296,15 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN)
  * Mark any slot that points to an LSN older than the given segment
  * as invalid; it requires WAL that's about to be removed.
  *
+ * Returns true when any slot have got invalidated.
+ *
  * NB - this runs as part of checkpoint, so avoid raising errors if possible.
  */
-void
+bool
 InvalidateObsoleteReplicationSlots(XLogSegNo oldestSegno)
 {
 	XLogRecPtr	oldestLSN;
+	bool		invalidated = false;
 
 	XLogSegNoOffsetToRecPtr(oldestSegno, 0, wal_segment_size, oldestLSN);
 
@@ -1308,13 +1317,24 @@ restart:
 		if (!s->in_use)
 			continue;
 
-		if (InvalidatePossiblyObsoleteSlot(s, oldestLSN))
+		if (InvalidatePossiblyObsoleteSlot(s, oldestLSN, &invalidated))
 		{
 			/* if the lock was released, start from scratch */
 			goto restart;
 		}
 	}
 	LWLockRelease(ReplicationSlotControlLock);
+
+	/*
+	 * If any slots have been invalidated, recalculate the resource limits.
+	 */
+	if (invalidated)
+	{
+		ReplicationSlotsComputeRequiredXmin(false);
+		ReplicationSlotsComputeRequiredLSN();
+	}
+
+	return invalidated;
 }
 
 /*
