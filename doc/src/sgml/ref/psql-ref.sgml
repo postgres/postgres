@@ -2430,7 +2430,7 @@ hello 10
         </para>
         <para>
         The <command>\if</command> and <command>\elif</command> commands read
-        their argument(s) and evaluate them as a boolean expression.  If the
+        their argument(s) and evaluate them as a Boolean expression.  If the
         expression yields <literal>true</literal> then processing continues
         normally; otherwise, lines are skipped until a
         matching <command>\elif</command>, <command>\else</command>,

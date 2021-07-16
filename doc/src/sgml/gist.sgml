@@ -374,8 +374,8 @@ my_consistent(PG_FUNCTION_ARGS)
       <para>
        Depending on which operators you have included in the class, the data
        type of <varname>query</varname> could vary with the operator, since it will
-       be whatever type is on the righthand side of the operator, which might
-       be different from the indexed data type appearing on the lefthand side.
+       be whatever type is on the right-hand side of the operator, which might
+       be different from the indexed data type appearing on the left-hand side.
        (The above code skeleton assumes that only one type is possible; if
        not, fetching the <varname>query</varname> argument value would have to depend
        on the operator.)  It is recommended that the SQL declaration of

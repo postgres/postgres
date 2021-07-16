@@ -43,7 +43,7 @@
    The statistics gathered by the module are made available via a
    view named <structname>pg_stat_statements</structname>.  This view
    contains one row for each distinct combination of database ID, user
-   ID, query ID and whether it's a top level statement or not (up to
+   ID, query ID and whether it's a top-level statement or not (up to
    the maximum number of distinct statements that the module can track).
    The columns of the view are shown in
    <xref linkend="pgstatstatements-columns"/>.
@@ -89,7 +89,7 @@
        <structfield>toplevel</structfield> <type>bool</type>
       </para>
       <para>
-       True if the query was executed as a top level statement
+       True if the query was executed as a top-level statement
        (always true if <varname>pg_stat_statements.track</varname> is set to
        <literal>top</literal>)
       </para></entry>

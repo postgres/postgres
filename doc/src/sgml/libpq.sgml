@@ -1719,7 +1719,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         There is no environment variable equivalent to this option, and no
         facility for looking it up in <filename>.pgpass</filename>. It can be
         used in a service file connection definition. Users with
-        more sophisticated uses should consider using openssl engines and
+        more sophisticated uses should consider using <productname>OpenSSL</productname> engines and
         tools like PKCS#11 or USB crypto offload devices.
        </para>
       </listitem>
@@ -5032,7 +5032,7 @@ int PQflush(PGconn *conn);
   <para>
    While the pipeline API was introduced in
    <productname>PostgreSQL</productname> 14, it is a client-side feature
-   which doesn't require special server support, and works on any server
+   which doesn't require special server support and works on any server
    that supports the v3 extended query protocol.
   </para>
 
@@ -5451,8 +5451,8 @@ int PQsendFlushRequest(PGconn *conn);
     are being performed in rapid succession.  There is usually less benefit
     in using pipelined commands when each query takes many multiples of the client/server
     round-trip time to execute.  A 100-statement operation run on a server
-    300ms round-trip-time away would take 30 seconds in network latency alone
-    without pipelining; with pipelining it may spend as little as 0.3s waiting for
+    300 ms round-trip-time away would take 30 seconds in network latency alone
+    without pipelining; with pipelining it may spend as little as 0.3 s waiting for
     results from the server.
    </para>
 
@@ -7109,9 +7109,9 @@ defaultNoticeProcessor(void *arg, const char *message)
   <para>
    Each registered event handler is associated with two pieces of data,
    known to <application>libpq</application> only as opaque <literal>void *</literal>
-   pointers.  There is a <firstterm>passthrough</firstterm> pointer that is provided
+   pointers.  There is a <firstterm>pass-through</firstterm> pointer that is provided
    by the application when the event handler is registered with a
-   <structname>PGconn</structname>.  The passthrough pointer never changes for the
+   <structname>PGconn</structname>.  The pass-through pointer never changes for the
    life of the <structname>PGconn</structname> and all <structname>PGresult</structname>s
    generated from it; so if used, it must point to long-lived data.
    In addition there is an <firstterm>instance data</firstterm> pointer, which starts
@@ -7121,9 +7121,9 @@ defaultNoticeProcessor(void *arg, const char *message)
    <xref linkend="libpq-PQsetInstanceData"/>,
    <xref linkend="libpq-PQresultInstanceData"/> and
    <function>PQsetResultInstanceData</function> functions.  Note that
-   unlike the passthrough pointer, instance data of a <structname>PGconn</structname>
+   unlike the pass-through pointer, instance data of a <structname>PGconn</structname>
    is not automatically inherited by <structname>PGresult</structname>s created from
-   it.  <application>libpq</application> does not know what passthrough
+   it.  <application>libpq</application> does not know what pass-through
    and instance data pointers point to (if anything) and will never attempt
    to free them &mdash; that is the responsibility of the event handler.
   </para>

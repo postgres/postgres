@@ -310,7 +310,7 @@ aminsert (Relation indexRelation,
   </para>
 
   <para>
-   The <literal>indexUnchanged</literal> boolean value gives a hint
+   The <literal>indexUnchanged</literal> Boolean value gives a hint
    about the nature of the tuple to be indexed.  When it is true,
    the tuple is a duplicate of some existing tuple in the index.  The
    new tuple is a logically unchanged successor MVCC tuple version.  This
@@ -493,7 +493,7 @@ amproperty (Oid index_oid, int attno,
    code, it's better to inspect <parameter>prop</parameter>.
    If the <structfield>amproperty</structfield> method returns <literal>true</literal> then
    it has determined the property test result: it must set <literal>*res</literal>
-   to the boolean value to return, or set <literal>*isnull</literal>
+   to the Boolean value to return, or set <literal>*isnull</literal>
    to <literal>true</literal> to return a NULL.  (Both of the referenced variables
    are initialized to <literal>false</literal> before the call.)
    If the <structfield>amproperty</structfield> method returns <literal>false</literal> then
