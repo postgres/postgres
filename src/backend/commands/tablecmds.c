@@ -15675,10 +15675,10 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		trigStmt->initdeferred = trigForm->tginitdeferred;
 		trigStmt->constrrel = NULL; /* passed separately */
 
-		CreateTrigger(trigStmt, NULL, RelationGetRelid(partition),
-					  trigForm->tgconstrrelid, InvalidOid, InvalidOid,
-					  trigForm->tgfoid, HeapTupleGetOid(tuple), qual,
-					  false, true);
+		CreateTriggerFiringOn(trigStmt, NULL, RelationGetRelid(partition),
+							  trigForm->tgconstrrelid, InvalidOid, InvalidOid,
+							  trigForm->tgfoid, HeapTupleGetOid(tuple), qual,
+							  false, true, trigForm->tgenabled);
 
 		MemoryContextSwitchTo(oldcxt);
 		MemoryContextReset(perTupCxt);
