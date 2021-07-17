@@ -177,18 +177,21 @@ ok( !find_in_log(
 my $logstart = get_log_size($node_primary);
 advance_wal($node_primary, 7);
 
-# This slot should be broken, wait for that to happen
-$node_primary->poll_query_until(
-	'postgres',
-	qq[SELECT wal_status = 'lost' FROM pg_replication_slots
-	WHERE slot_name = 'rep1']);
-
-# WARNING should be issued
-ok( find_in_log(
-		$node_primary,
-		"invalidating slot \"rep1\" because its restart_lsn [0-9A-F/]+ exceeds max_slot_wal_keep_size",
-		$logstart),
-	'check that the warning is logged');
+# wait until the WARNING is issued
+my $invalidated = 0;
+for (my $i = 0; $i < 10000; $i++)
+{
+	if (find_in_log(
+			$node_primary,
+			"invalidating slot \"rep1\" because its restart_lsn [0-9A-F/]+ exceeds max_slot_wal_keep_size",
+			$logstart))
+	{
+		$invalidated = 1;
+		last;
+	}
+	usleep(100_000);
+}
+ok($invalidated, 'check that slot invalidation has been logged');
 
 $result = $node_primary->safe_psql(
 	'postgres',
