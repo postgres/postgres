@@ -7777,6 +7777,68 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-transaction-isolation" xreflabel="transaction_isolation">
+      <term><varname>transaction_isolation</varname> (<type>enum</type>)
+      <indexterm>
+       <primary>transaction isolation level</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>transaction_isolation</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter reflects the current transaction's isolation level.
+        At the beginning of each transaction, it is set to the current value
+        of <xref linkend="guc-default-transaction-isolation"/>.
+        Any subsequent attempt to change it is equivalent to a <xref
+        linkend="sql-set-transaction"/> command.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-transaction-read-only" xreflabel="transaction_read_only">
+      <term><varname>transaction_read_only</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary>read-only transaction</primary>
+       <secondary>setting default</secondary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>transaction_read_only</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter reflects the current transaction's read-only status.
+        At the beginning of each transaction, it is set to the current value
+        of <xref linkend="guc-default-transaction-read-only"/>.
+        Any subsequent attempt to change it is equivalent to a <xref
+        linkend="sql-set-transaction"/> command.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-transaction-deferrable" xreflabel="transaction_deferrable">
+      <term><varname>transaction_deferrable</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary>deferrable transaction</primary>
+       <secondary>setting default</secondary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>transaction_deferrable</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter reflects the current transaction's deferrability status.
+        At the beginning of each transaction, it is set to the current value
+        of <xref linkend="guc-default-transaction-deferrable"/>.
+        Any subsequent attempt to change it is equivalent to a <xref
+        linkend="sql-set-transaction"/> command.
+       </para>
+      </listitem>
+     </varlistentry>
+
 
      <varlistentry id="guc-session-replication-role" xreflabel="session_replication_role">
       <term><varname>session_replication_role</varname> (<type>enum</type>)
