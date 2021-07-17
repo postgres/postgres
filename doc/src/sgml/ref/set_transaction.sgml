@@ -202,7 +202,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
   </para>
 
   <para>
-   The session default transaction modes can also be set by setting the
+   The session default transaction modes can also be set or examined via the
    configuration parameters <xref linkend="guc-default-transaction-isolation"/>,
    <xref linkend="guc-default-transaction-read-only"/>, and
    <xref linkend="guc-default-transaction-deferrable"/>.
@@ -211,6 +211,17 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    This means the defaults can be set in the configuration file, via
    <command>ALTER DATABASE</command>, etc.  Consult <xref linkend="runtime-config"/>
    for more information.
+  </para>
+
+  <para>
+   The current transaction's modes can similarly be set or examined via the
+   configuration parameters <xref linkend="guc-transaction-isolation"/>,
+   <xref linkend="guc-transaction-read-only"/>, and
+   <xref linkend="guc-transaction-deferrable"/>.  Setting one of these
+   parameters acts the same as the corresponding <command>SET
+   TRANSACTION</command> option, with the same restrictions on when it can
+   be done.  However, these parameters cannot be set in the configuration
+   file, or from any source other than live SQL.
   </para>
  </refsect1>
 
