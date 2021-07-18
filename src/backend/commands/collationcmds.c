@@ -108,15 +108,22 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 					 parser_errposition(pstate, defel->location)));
 			break;
 		}
-
+		if (*defelp != NULL)
+			errorConflictingDefElem(defel, pstate);
 		*defelp = defel;
 	}
 
-	if ((localeEl && (lccollateEl || lcctypeEl))
-		|| (fromEl && list_length(parameters) != 1))
+	if (localeEl && (lccollateEl || lcctypeEl))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("conflicting or redundant options")));
+				errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("conflicting or redundant options"),
+				errdetail("LOCALE cannot be specified together with LC_COLLATE or LC_CTYPE."));
+
+	if (fromEl && list_length(parameters) != 1)
+		ereport(ERROR,
+				errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("conflicting or redundant options"),
+				errdetail("FROM cannot be specified together with any other options."));
 
 	if (fromEl)
 	{
