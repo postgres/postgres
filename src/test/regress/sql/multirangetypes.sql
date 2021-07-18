@@ -78,6 +78,12 @@ select textrange('a', null)::textmultirange;
 select textrange(null, null)::textmultirange;
 
 --
+-- test unnest(multirange) function
+--
+select unnest(int4multirange(int4range('5', '6'), int4range('1', '2')));
+select unnest(textmultirange(textrange('a', 'b'), textrange('d', 'e')));
+
+--
 -- create some test data and test the operators
 --
 
@@ -658,6 +664,7 @@ create type textrange2 as range(subtype=text, multirange_type_name=_textrange1, 
 
 select multirange_of_text(textrange2('a','Z'));  -- should fail
 select multirange_of_text(textrange1('a','Z')) @> 'b'::text;
+select unnest(multirange_of_text(textrange1('a','b'), textrange1('d','e')));
 select _textrange1(textrange2('a','z')) @> 'b'::text;
 
 drop type textrange1;
