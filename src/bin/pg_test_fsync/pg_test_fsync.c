@@ -217,8 +217,10 @@ handle_args(int argc, char *argv[])
 					"%u seconds per test\n",
 					secs_per_test),
 		   secs_per_test);
-#if PG_O_DIRECT != 0
+#if defined(O_DIRECT)
 	printf(_("O_DIRECT supported on this platform for open_datasync and open_sync.\n"));
+#elif defined(F_NOCACHE)
+	printf(_("F_NOCACHE supported on this platform for open_datasync and open_sync.\n"));
 #else
 	printf(_("Direct I/O is not supported on this platform.\n"));
 #endif
@@ -258,6 +260,31 @@ test_open(void)
 	close(tmpfile);
 }
 
+static int
+open_direct(const char *path, int flags, mode_t mode)
+{
+	int			fd;
+
+#ifdef O_DIRECT
+	flags |= O_DIRECT;
+#endif
+
+	fd = open(path, flags, mode);
+
+#if !defined(O_DIRECT) && defined(F_NOCACHE)
+	if (fd >= 0 && fcntl(fd, F_NOCACHE, 1) < 0)
+	{
+		int			save_errno = errno;
+
+		close(fd);
+		errno = save_errno;
+		return -1;
+	}
+#endif
+
+	return fd;
+}
+
 static void
 test_sync(int writes_per_op)
 {
@@ -279,7 +306,7 @@ test_sync(int writes_per_op)
 	fflush(stdout);
 
 #ifdef OPEN_DATASYNC_FLAG
-	if ((tmpfile = open(filename, O_RDWR | O_DSYNC | PG_O_DIRECT | PG_BINARY, 0)) == -1)
+	if ((tmpfile = open_direct(filename, O_RDWR | O_DSYNC | PG_BINARY, 0)) == -1)
 	{
 		printf(NA_FORMAT, _("n/a*"));
 		fs_warning = true;
@@ -386,7 +413,7 @@ test_sync(int writes_per_op)
 	fflush(stdout);
 
 #ifdef OPEN_SYNC_FLAG
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT | PG_BINARY, 0)) == -1)
+	if ((tmpfile = open_direct(filename, O_RDWR | OPEN_SYNC_FLAG | PG_BINARY, 0)) == -1)
 	{
 		printf(NA_FORMAT, _("n/a*"));
 		fs_warning = true;
@@ -454,7 +481,7 @@ test_open_sync(const char *msg, int writes_size)
 	fflush(stdout);
 
 #ifdef OPEN_SYNC_FLAG
-	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG | PG_O_DIRECT | PG_BINARY, 0)) == -1)
+	if ((tmpfile = open_direct(filename, O_RDWR | OPEN_SYNC_FLAG | PG_BINARY, 0)) == -1)
 		printf(NA_FORMAT, _("n/a*"));
 	else
 	{
