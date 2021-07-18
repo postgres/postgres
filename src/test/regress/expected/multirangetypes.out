@@ -347,6 +347,23 @@ select textrange(null, null)::textmultirange;
 (1 row)
 
 --
+-- test unnest(multirange) function
+--
+select unnest(int4multirange(int4range('5', '6'), int4range('1', '2')));
+ unnest 
+--------
+ [1,2)
+ [5,6)
+(2 rows)
+
+select unnest(textmultirange(textrange('a', 'b'), textrange('d', 'e')));
+ unnest 
+--------
+ [a,b)
+ [d,e)
+(2 rows)
+
+--
 -- create some test data and test the operators
 --
 CREATE TABLE nummultirange_test (nmr NUMMULTIRANGE);
@@ -2938,6 +2955,13 @@ LINE 1: select multirange_of_text(textrange2('a','Z'));
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 select multirange_of_text(textrange1('a','Z')) @> 'b'::text;
 ERROR:  range lower bound must be less than or equal to range upper bound
+select unnest(multirange_of_text(textrange1('a','b'), textrange1('d','e')));
+ unnest 
+--------
+ [a,b)
+ [d,e)
+(2 rows)
+
 select _textrange1(textrange2('a','z')) @> 'b'::text;
  ?column? 
 ----------

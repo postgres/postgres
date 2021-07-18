@@ -10537,6 +10537,10 @@
   proname => 'range_intersect_agg', prokind => 'a', proisstrict => 'f',
   prorettype => 'anymultirange', proargtypes => 'anymultirange',
   prosrc => 'aggregate_dummy' },
+{ oid => '1293', descr => 'expand multirange to set of ranges',
+  proname => 'unnest', prorows => '100',
+  proretset => 't', prorettype => 'anyrange', proargtypes => 'anymultirange',
+  prosrc => 'multirange_unnest' },
 
 # date, time, timestamp constructors
 { oid => '3846', descr => 'construct date',
