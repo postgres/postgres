@@ -159,6 +159,8 @@ parse_subscription_options(List *options,
 			/* Setting slot_name = NONE is treated as no slot name. */
 			if (strcmp(*slot_name, "none") == 0)
 				*slot_name = NULL;
+			else
+				ReplicationSlotValidateName(*slot_name, ERROR);
 		}
 		else if (strcmp(defel->defname, "copy_data") == 0 && copy_data)
 		{
