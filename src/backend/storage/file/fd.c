@@ -1065,9 +1065,14 @@ tryAgain:
 	 */
 	StaticAssertStmt((PG_O_DIRECT &
 					  (O_APPEND |
+#if defined(O_CLOEXEC)
 					   O_CLOEXEC |
+#endif
 					   O_CREAT |
+#if defined(O_DSYNC)
 					   O_DSYNC |
+#endif
+					   O_EXCL |
 					   O_RDWR |
 					   O_RDONLY |
 					   O_SYNC |
