@@ -173,6 +173,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 			/* Setting slot_name = NONE is treated as no slot name. */
 			if (strcmp(opts->slot_name, "none") == 0)
 				opts->slot_name = NULL;
+			else
+				ReplicationSlotValidateName(opts->slot_name, ERROR);
 		}
 		else if (IsSet(supported_opts, SUBOPT_COPY_DATA) &&
 				 strcmp(defel->defname, "copy_data") == 0)
