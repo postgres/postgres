@@ -40,6 +40,7 @@
 
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
+#include "replication/slot.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "replication/worker_internal.h"
@@ -146,6 +147,8 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 			/* Setting slot_name = NONE is treated as no slot name. */
 			if (strcmp(*slot_name, "none") == 0)
 				*slot_name = NULL;
+			else
+				ReplicationSlotValidateName(*slot_name, ERROR);
 		}
 		else if (strcmp(defel->defname, "copy_data") == 0 && copy_data)
 		{
