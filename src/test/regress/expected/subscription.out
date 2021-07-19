@@ -86,6 +86,9 @@ ALTER SUBSCRIPTION testsub SET PUBLICATION testpub2, testpub3 WITH (refresh = fa
 ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
 ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 -- fail
+ALTER SUBSCRIPTION testsub SET (slot_name = '');
+ERROR:  replication slot name "" is too short
+-- fail
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ERROR:  subscription "doesnotexist" does not exist
 ALTER SUBSCRIPTION testsub SET (create_slot = false);
