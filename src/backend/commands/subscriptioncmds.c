@@ -894,6 +894,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 				if (IsSet(opts.specified_opts, SUBOPT_SLOT_NAME))
 				{
+					/*
+					 * The subscription must be disabled to allow slot_name as
+					 * 'none', otherwise, the apply worker will repeatedly try
+					 * to stream the data using that slot_name which neither
+					 * exists on the publisher nor the user will be allowed to
+					 * create it.
+					 */
 					if (sub->enabled && !opts.slot_name)
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
