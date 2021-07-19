@@ -3414,7 +3414,7 @@ static const uint32 euc_jis_2004_to_unicode_tree_table[11727] =
 };
 
 /* Combined character map */
-static const pg_local_to_utf_combined LUmapEUC_JIS_2004_combined[ 25 ] = {
+static const pg_local_to_utf_combined LUmapEUC_JIS_2004_combined[25] = {
   {0xa4f7, 0x00e3818b, 0x00e3829a},	/* U+304B+309A	 	[2000] */
   {0xa4f8, 0x00e3818d, 0x00e3829a},	/* U+304D+309A	 	[2000] */
   {0xa4f9, 0x00e3818f, 0x00e3829a},	/* U+304F+309A	 	[2000] */

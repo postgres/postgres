@@ -173,7 +173,7 @@ sub print_from_utf8_combined_map
 
 	printf $out "\n/* Combined character map */\n";
 	printf $out
-	  "static const pg_utf_to_local_combined ULmap${charset}_combined[ %d ] = {",
+	  "static const pg_utf_to_local_combined ULmap${charset}_combined[%d] = {",
 	  scalar(@$table);
 	my $first = 1;
 	foreach my $i (sort { $a->{utf8} <=> $b->{utf8} } @$table)
@@ -208,7 +208,7 @@ sub print_to_utf8_combined_map
 
 	printf $out "\n/* Combined character map */\n";
 	printf $out
-	  "static const pg_local_to_utf_combined LUmap${charset}_combined[ %d ] = {",
+	  "static const pg_local_to_utf_combined LUmap${charset}_combined[%d] = {",
 	  scalar(@$table);
 
 	my $first = 1;
