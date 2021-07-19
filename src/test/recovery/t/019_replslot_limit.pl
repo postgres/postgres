@@ -11,7 +11,7 @@ use TestLib;
 use PostgresNode;
 
 use File::Path qw(rmtree);
-use Test::More tests => $TestLib::windows_os ? 15 : 19;
+use Test::More tests => $TestLib::windows_os ? 16 : 20;
 use Time::HiRes qw(usleep);
 
 $ENV{PGDATABASE} = 'postgres';
@@ -200,6 +200,19 @@ $result = $node_primary->safe_psql(
 	FROM pg_replication_slots WHERE slot_name = 'rep1']);
 is($result, "rep1|f|t|lost|",
 	'check that the slot became inactive and the state "lost" persists');
+
+# Wait until current checkpoint ends
+my $checkpoint_ended = 0;
+for (my $i = 0; $i < 10000; $i++)
+{
+	if (find_in_log($node_primary, "checkpoint complete: ", $logstart))
+	{
+		$checkpoint_ended = 1;
+		last;
+	}
+	usleep(100_000);
+}
+ok($checkpoint_ended, 'waited for checkpoint to end');
 
 # The invalidated slot shouldn't keep the old-segment horizon back;
 # see bug #17103: https://postgr.es/m/17103-004130e8f27782c9@postgresql.org
