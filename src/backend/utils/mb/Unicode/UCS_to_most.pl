@@ -54,7 +54,8 @@ my %filename = (
 # make maps for all encodings if not specified
 my @charsets = (scalar(@ARGV) > 0) ? @ARGV : sort keys(%filename);
 
-foreach my $charset (@charsets)
+# the sort is just so that the output is easier to eyeball
+foreach my $charset (sort @charsets)
 {
 	my $mapping = &read_source($filename{$charset});
 
