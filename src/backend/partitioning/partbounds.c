@@ -452,7 +452,7 @@ get_non_null_list_datum_count(PartitionBoundSpec **boundspecs, int nparts)
 
 		foreach(lc, boundspecs[i]->listdatums)
 		{
-			Const	   *val = castNode(Const, lfirst(lc));
+			Const	   *val = lfirst_node(Const, lc);
 
 			if (!val->constisnull)
 				count++;
@@ -513,7 +513,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 
 		foreach(c, spec->listdatums)
 		{
-			Const	   *val = castNode(Const, lfirst(c));
+			Const	   *val = lfirst_node(Const, c);
 
 			if (!val->constisnull)
 			{
@@ -3014,7 +3014,7 @@ check_new_partition_bound(char *relname, Relation parent,
 
 					foreach(cell, spec->listdatums)
 					{
-						Const	   *val = castNode(Const, lfirst(cell));
+						Const	   *val = lfirst_node(Const, cell);
 
 						overlap_location = val->location;
 						if (!val->constisnull)
@@ -3399,7 +3399,7 @@ make_one_partition_rbound(PartitionKey key, int index, List *datums, bool lower)
 	i = 0;
 	foreach(lc, datums)
 	{
-		PartitionRangeDatum *datum = castNode(PartitionRangeDatum, lfirst(lc));
+		PartitionRangeDatum *datum = lfirst_node(PartitionRangeDatum, lc);
 
 		/* What's contained in this range datum? */
 		bound->kind[i] = datum->kind;
@@ -4103,7 +4103,7 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 		 */
 		foreach(cell, spec->listdatums)
 		{
-			Const	   *val = castNode(Const, lfirst(cell));
+			Const	   *val = lfirst_node(Const, cell);
 
 			if (val->constisnull)
 				list_has_null = true;
@@ -4358,8 +4358,8 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 		Datum		test_result;
 		bool		isNull;
 
-		ldatum = castNode(PartitionRangeDatum, lfirst(cell1));
-		udatum = castNode(PartitionRangeDatum, lfirst(cell2));
+		ldatum = lfirst_node(PartitionRangeDatum, cell1);
+		udatum = lfirst_node(PartitionRangeDatum, cell2);
 
 		/*
 		 * Since get_range_key_properties() modifies partexprs_item, and we
@@ -4440,11 +4440,11 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 			PartitionRangeDatum *ldatum_next = NULL,
 					   *udatum_next = NULL;
 
-			ldatum = castNode(PartitionRangeDatum, lfirst(cell1));
+			ldatum = lfirst_node(PartitionRangeDatum, cell1);
 			if (lnext(spec->lowerdatums, cell1))
 				ldatum_next = castNode(PartitionRangeDatum,
 									   lfirst(lnext(spec->lowerdatums, cell1)));
-			udatum = castNode(PartitionRangeDatum, lfirst(cell2));
+			udatum = lfirst_node(PartitionRangeDatum, cell2);
 			if (lnext(spec->upperdatums, cell2))
 				udatum_next = castNode(PartitionRangeDatum,
 									   lfirst(lnext(spec->upperdatums, cell2)));

@@ -585,7 +585,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 
 		foreach(ll, wcoList)
 		{
-			WithCheckOption *wco = castNode(WithCheckOption, lfirst(ll));
+			WithCheckOption *wco = lfirst_node(WithCheckOption, ll);
 			ExprState  *wcoExpr = ExecInitQual(castNode(List, wco->qual),
 											   &mtstate->ps);
 

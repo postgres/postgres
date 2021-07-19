@@ -2424,7 +2424,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			/* Make sure referenced column exists. */
 			foreach(columns, cxt->columns)
 			{
-				column = castNode(ColumnDef, lfirst(columns));
+				column = lfirst_node(ColumnDef, columns);
 				if (strcmp(column->colname, key) == 0)
 				{
 					found = true;
@@ -2462,7 +2462,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 				foreach(inher, cxt->inhRelations)
 				{
-					RangeVar   *inh = castNode(RangeVar, lfirst(inher));
+					RangeVar   *inh = lfirst_node(RangeVar, inher);
 					Relation	rel;
 					int			count;
 
@@ -4088,7 +4088,7 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 			duplicate = false;
 			foreach(cell2, result_spec->listdatums)
 			{
-				Const	   *value2 = castNode(Const, lfirst(cell2));
+				Const	   *value2 = lfirst_node(Const, cell2);
 
 				if (equal(value, value2))
 				{
@@ -4267,7 +4267,7 @@ validateInfiniteBounds(ParseState *pstate, List *blist)
 
 	foreach(lc, blist)
 	{
-		PartitionRangeDatum *prd = castNode(PartitionRangeDatum, lfirst(lc));
+		PartitionRangeDatum *prd = lfirst_node(PartitionRangeDatum, lc);
 
 		if (kind == prd->kind)
 			continue;

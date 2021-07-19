@@ -4770,7 +4770,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 
 			foreach(lcmd, subcmds)
 				ATExecCmd(wqueue, tab,
-						  castNode(AlterTableCmd, lfirst(lcmd)),
+						  lfirst_node(AlterTableCmd, lcmd),
 						  lockmode, pass, context);
 
 			/*
@@ -12842,7 +12842,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 
 			foreach(lcmd, stmt->cmds)
 			{
-				AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
+				AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lcmd);
 
 				if (cmd->subtype == AT_AddIndex)
 				{
@@ -16671,7 +16671,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	/* take care of any partition expressions */
 	foreach(l, partspec->partParams)
 	{
-		PartitionElem *pelem = castNode(PartitionElem, lfirst(l));
+		PartitionElem *pelem = lfirst_node(PartitionElem, l);
 
 		if (pelem->expr)
 		{
@@ -16708,7 +16708,7 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 	attn = 0;
 	foreach(lc, partParams)
 	{
-		PartitionElem *pelem = castNode(PartitionElem, lfirst(lc));
+		PartitionElem *pelem = lfirst_node(PartitionElem, lc);
 		Oid			atttype;
 		Oid			attcollation;
 

@@ -131,8 +131,8 @@ test_predtest(PG_FUNCTION_ARGS)
 		elog(ERROR, "failed to decipher query plan");
 	plan = stmt->planTree;
 	Assert(list_length(plan->targetlist) >= 2);
-	clause1 = castNode(TargetEntry, linitial(plan->targetlist))->expr;
-	clause2 = castNode(TargetEntry, lsecond(plan->targetlist))->expr;
+	clause1 = linitial_node(TargetEntry, plan->targetlist)->expr;
+	clause2 = lsecond_node(TargetEntry, plan->targetlist)->expr;
 
 	/*
 	 * Because the clauses are in the SELECT list, preprocess_expression did

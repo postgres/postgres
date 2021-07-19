@@ -514,7 +514,7 @@ OpenTableList(List *tables)
 	 */
 	foreach(lc, tables)
 	{
-		RangeVar   *rv = castNode(RangeVar, lfirst(lc));
+		RangeVar   *rv = lfirst_node(RangeVar, lc);
 		bool		recurse = rv->inh;
 		Relation	rel;
 		Oid			myrelid;

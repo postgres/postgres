@@ -2807,7 +2807,7 @@ transformWindowDefinitions(ParseState *pstate,
 						(errcode(ERRCODE_WINDOWING_ERROR),
 						 errmsg("RANGE with offset PRECEDING/FOLLOWING requires exactly one ORDER BY column"),
 						 parser_errposition(pstate, windef->location)));
-			sortcl = castNode(SortGroupClause, linitial(wc->orderClause));
+			sortcl = linitial_node(SortGroupClause, wc->orderClause);
 			sortkey = get_sortgroupclause_expr(sortcl, *targetlist);
 			/* Find the sort operator in pg_amop */
 			if (!get_ordering_op_properties(sortcl->sortop,

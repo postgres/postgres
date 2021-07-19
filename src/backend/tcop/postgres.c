@@ -785,7 +785,7 @@ pg_rewrite_query(Query *query)
 		 */
 		foreach(lc, querytree_list)
 		{
-			Query	   *query = castNode(Query, lfirst(lc));
+			Query	   *query = lfirst_node(Query, lc);
 
 			if (query->commandType != CMD_UTILITY)
 			{
