@@ -66,6 +66,9 @@ ALTER SUBSCRIPTION testsub CONNECTION 'dbname=doesnotexist2';
 ALTER SUBSCRIPTION testsub SET (slot_name = 'newname');
 
 -- fail
+ALTER SUBSCRIPTION testsub SET (slot_name = '');
+
+-- fail
 ALTER SUBSCRIPTION doesnotexist CONNECTION 'dbname=doesnotexist2';
 ALTER SUBSCRIPTION testsub SET (create_slot = false);
 
