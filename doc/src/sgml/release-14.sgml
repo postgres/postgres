@@ -784,7 +784,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
        <para>
         Reduce the default value of <xref
-        linkend="guc-vacuum-cost-page-miss"/> to better reflects current
+        linkend="guc-vacuum-cost-page-miss"/> to better reflect current
         hardware capabilities (Peter Geoghegan)
        </para>
       </listitem>
@@ -1440,7 +1440,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
        <para>
         Add system view <link
-        linkend="monitoring-pg-stat-wal-view"><structname>pg_stat_wal</structname></link>
+        linkend="monitoring-pg-stat-wal-view"><structname>pg_stat_wal</structname></link>,
         which reports <acronym>WAL</acronym> activity (Masahiro Ikeda)
        </para>
       </listitem>
@@ -1936,7 +1936,7 @@ Author: Michael Paquier <michael@paquier.xyz>
       </para>
 
       <para>
-       Previously these functions could only be executed by super-users,
+       Previously these functions could only be executed by superusers,
        and this is still the default.
       </para>
      </listitem>
@@ -2599,7 +2599,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       </para>
 
       <para>
-       Floating point data types already supported these.
+       Floating-point data types already supported these.
       </para>
      </listitem>
 
@@ -2610,7 +2610,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Improve the accuracy of floating point computations involving
+       Improve the accuracy of floating-point computations involving
        infinity (Tom Lane)
       </para>
      </listitem>
