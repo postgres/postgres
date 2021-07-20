@@ -53,6 +53,15 @@ struct WalWriteMethod
 	ssize_t		(*get_file_size) (const char *pathname);
 
 	/*
+	 * Return the name of the current file to work on, without the base
+	 * directory.  This is useful for logging.
+	 */
+	char	   *(*get_file_name) (const char *pathname, const char *temp_suffix);
+
+	/* Return the level of compression */
+	int			(*compression) (void);
+
+	/*
 	 * Write count number of bytes to the file, and return the number of bytes
 	 * actually written or -1 for error.
 	 */
