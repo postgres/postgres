@@ -3043,7 +3043,7 @@ make_execsql_stmt(int firsttoken, int location)
 
 	check_sql_expr(expr->query, expr->parseMode, location);
 
-	execsql = palloc(sizeof(PLpgSQL_stmt_execsql));
+	execsql = palloc0(sizeof(PLpgSQL_stmt_execsql));
 	execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
 	execsql->lineno  = plpgsql_location_to_lineno(location);
 	execsql->stmtid  = ++plpgsql_curr_compile->nstatements;

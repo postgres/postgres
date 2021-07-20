@@ -59,3 +59,24 @@ select simplecaller();
 \c -
 
 select simplecaller();
+
+
+-- Check case where first attempt to determine if it's simple fails
+
+create function simplesql() returns int language sql
+as $$select 1 / 0$$;
+
+create or replace function simplecaller() returns int language plpgsql
+as $$
+declare x int;
+begin
+  select simplesql() into x;
+  return x;
+end$$;
+
+select simplecaller();  -- division by zero occurs during simple-expr check
+
+create or replace function simplesql() returns int language sql
+as $$select 2 + 2$$;
+
+select simplecaller();

@@ -66,3 +66,26 @@ select simplecaller();
           555
 (1 row)
 
+-- Check case where first attempt to determine if it's simple fails
+create function simplesql() returns int language sql
+as $$select 1 / 0$$;
+create or replace function simplecaller() returns int language plpgsql
+as $$
+declare x int;
+begin
+  select simplesql() into x;
+  return x;
+end$$;
+select simplecaller();  -- division by zero occurs during simple-expr check
+ERROR:  division by zero
+CONTEXT:  SQL function "simplesql" during inlining
+SQL statement "select simplesql()"
+PL/pgSQL function simplecaller() line 4 at SQL statement
+create or replace function simplesql() returns int language sql
+as $$select 2 + 2$$;
+select simplecaller();
+ simplecaller 
+--------------
+            4
+(1 row)
+
