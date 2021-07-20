@@ -659,9 +659,9 @@ typedef struct
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
 	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE? */
-	/* note: mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
+	bool		mod_stmt_set;	/* is mod_stmt valid yet? */
 	PLpgSQL_rec *rec;			/* INTO target, if record */
 	PLpgSQL_row *row;			/* INTO target, if row */
 } PLpgSQL_stmt_execsql;
