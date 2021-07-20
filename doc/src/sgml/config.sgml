@@ -8803,7 +8803,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Specifies the maximum age (in transactions) that a table's
+        Specifies the maximum age (in multixacts) that a table's
         <structname>pg_class</structname>.<structfield>relminmxid</structfield>
         field can attain before <command>VACUUM</command> takes
         extraordinary measures to avoid system-wide multixact ID
