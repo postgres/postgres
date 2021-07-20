@@ -916,14 +916,7 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 			}
 			if (vacopts->force_index_cleanup)
 			{
-				/*
-				 * "INDEX_CLEANUP TRUE" has been supported since v12.
-				 *
-				 * Though --force-index-cleanup was added to vacuumdb in v14,
-				 * the "INDEX_CLEANUP TRUE" server/VACUUM behavior has never
-				 * changed.  No reason not to support --force-index-cleanup on
-				 * v12+.
-				 */
+				/* "INDEX_CLEANUP TRUE" has been supported since v12 */
 				Assert(serverVersion >= 120000);
 				Assert(!vacopts->no_index_cleanup);
 				appendPQExpBuffer(sql, "%sINDEX_CLEANUP TRUE", sep);
