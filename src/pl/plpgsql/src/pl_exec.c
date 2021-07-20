@@ -2160,30 +2160,30 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 		 */
 		if (plan == NULL || local_plan)
 		{
-			/* Don't let SPI save the plan if it's going to be local */
-			exec_prepare_plan(estate, expr, 0, !local_plan);
-			plan = expr->plan;
-
-			/*
-			 * A CALL or DO can never be a simple expression.  (If it could
-			 * be, we'd have to worry about saving/restoring the previous
-			 * values of the related expr fields, not just expr->plan.)
-			 */
-			Assert(!expr->expr_simple_expr);
-
-			/*
-			 * Tell SPI to allow non-atomic execution.  (The field name is a
-			 * legacy choice.)
-			 */
-			plan->no_snapshots = true;
-
 			/*
 			 * Force target to be recalculated whenever the plan changes, in
 			 * case the procedure's argument list has changed.
 			 */
 			stmt->target = NULL;
 			cur_target = NULL;
+
+			/* Don't let SPI save the plan if it's going to be local */
+			exec_prepare_plan(estate, expr, 0, !local_plan);
+			plan = expr->plan;
 		}
+
+		/*
+		 * A CALL or DO can never be a simple expression.  (If it could be,
+		 * we'd have to worry about saving/restoring the previous values of
+		 * the related expr fields, not just expr->plan.)
+		 */
+		Assert(!expr->expr_simple_expr);
+
+		/*
+		 * Tell SPI to allow non-atomic execution.  (The field name is a
+		 * legacy choice.)
+		 */
+		plan->no_snapshots = true;
 
 		/*
 		 * We construct a DTYPE_ROW datum representing the plpgsql variables
@@ -4070,6 +4070,22 @@ exec_eval_cleanup(PLpgSQL_execstate *estate)
 
 /* ----------
  * Generate a prepared plan
+ *
+ * CAUTION: it is possible for this function to throw an error after it has
+ * built a SPIPlan and saved it in expr->plan.  Therefore, be wary of doing
+ * additional things contingent on expr->plan being NULL.  That is, given
+ * code like
+ *
+ *	if (query->plan == NULL)
+ *	{
+ *		// okay to put setup code here
+ *		exec_prepare_plan(estate, query, ...);
+ *		// NOT okay to put more logic here
+ *	}
+ *
+ * extra steps at the end are unsafe because they will not be executed when
+ * re-executing the calling statement, if exec_prepare_plan failed the first
+ * time.  This is annoyingly error-prone, but the alternatives are worse.
  * ----------
  */
 static void
@@ -4099,15 +4115,15 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 		SPI_keepplan(plan);
 	expr->plan = plan;
 
-	/* Check to see if it's a simple expression */
-	exec_simple_check_plan(estate, expr);
-
 	/*
 	 * Mark expression as not using a read-write param.  exec_assign_value has
 	 * to take steps to override this if appropriate; that seems cleaner than
 	 * adding parameters to all other callers.
 	 */
 	expr->rwparam = -1;
+
+	/* Check to see if it's a simple expression */
+	exec_simple_check_plan(estate, expr);
 }
 
 
@@ -4138,10 +4154,12 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	 * whether the statement is INSERT/UPDATE/DELETE
 	 */
 	if (expr->plan == NULL)
+		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
+
+	if (!stmt->mod_stmt_set)
 	{
 		ListCell   *l;
 
-		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, true);
 		stmt->mod_stmt = false;
 		foreach(l, SPI_plan_get_plan_sources(expr->plan))
 		{
@@ -4162,6 +4180,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 				break;
 			}
 		}
+		stmt->mod_stmt_set = true;
 	}
 
 	/*
@@ -4943,6 +4962,14 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 	 * if we can pass the target variable as a read-write parameter to the
 	 * expression.  (This is a bit messy, but it seems cleaner than modifying
 	 * the API of exec_eval_expr for the purpose.)
+	 *
+	 * NOTE: this coding ignores the advice given in exec_prepare_plan's
+	 * comments, that one should not do additional setup contingent on
+	 * expr->plan being NULL.  This means that if we get an error while trying
+	 * to check for the expression being simple, we won't check for a
+	 * read-write parameter either, so that neither optimization will be
+	 * applied in future executions.  Nothing will fail though, so we live
+	 * with that bit of messiness too.
 	 */
 	if (expr->plan == NULL)
 	{
@@ -7956,6 +7983,10 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
  * exec_simple_check_plan -		Check if a plan is simple enough to
  *								be evaluated by ExecEvalExpr() instead
  *								of SPI.
+ *
+ * Note: the refcount manipulations in this function assume that expr->plan
+ * is a "saved" SPI plan.  That's a bit annoying from the caller's standpoint,
+ * but it's otherwise difficult to avoid leaking the plan on failure.
  * ----------
  */
 static void
@@ -8038,7 +8069,8 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 * OK, we can treat it as a simple plan.
 	 *
 	 * Get the generic plan for the query.  If replanning is needed, do that
-	 * work in the eval_mcontext.
+	 * work in the eval_mcontext.  (Note that replanning could throw an error,
+	 * in which case the expr is left marked "not simple", which is fine.)
 	 */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 	cplan = SPI_plan_get_cached_plan(expr->plan);
