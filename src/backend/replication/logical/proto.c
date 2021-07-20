@@ -141,7 +141,7 @@ logicalrep_read_begin_prepare(StringInfo in, LogicalRepPreparedTxnData *begin_da
 	begin_data->xid = pq_getmsgint(in, 4);
 
 	/* read gid (copy it into a pre-allocated buffer) */
-	strcpy(begin_data->gid, pq_getmsgstring(in));
+	strlcpy(begin_data->gid, pq_getmsgstring(in), sizeof(begin_data->gid));
 }
 
 /*
@@ -198,7 +198,7 @@ logicalrep_read_prepare(StringInfo in, LogicalRepPreparedTxnData *prepare_data)
 	prepare_data->xid = pq_getmsgint(in, 4);
 
 	/* read gid (copy it into a pre-allocated buffer) */
-	strcpy(prepare_data->gid, pq_getmsgstring(in));
+	strlcpy(prepare_data->gid, pq_getmsgstring(in), sizeof(prepare_data->gid));
 }
 
 /*
@@ -254,7 +254,7 @@ logicalrep_read_commit_prepared(StringInfo in, LogicalRepCommitPreparedTxnData *
 	prepare_data->xid = pq_getmsgint(in, 4);
 
 	/* read gid (copy it into a pre-allocated buffer) */
-	strcpy(prepare_data->gid, pq_getmsgstring(in));
+	strlcpy(prepare_data->gid, pq_getmsgstring(in), sizeof(prepare_data->gid));
 }
 
 /*
@@ -314,7 +314,7 @@ logicalrep_read_rollback_prepared(StringInfo in,
 	rollback_data->xid = pq_getmsgint(in, 4);
 
 	/* read gid (copy it into a pre-allocated buffer) */
-	strcpy(rollback_data->gid, pq_getmsgstring(in));
+	strlcpy(rollback_data->gid, pq_getmsgstring(in), sizeof(rollback_data->gid));
 }
 
 /*
