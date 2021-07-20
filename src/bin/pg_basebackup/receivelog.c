@@ -88,26 +88,29 @@ static bool
 open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 {
 	Walfile    *f;
-	char		fn[MAXPGPATH];
+	char	   *fn;
 	ssize_t		size;
 	XLogSegNo	segno;
 
 	XLByteToSeg(startpoint, segno, WalSegSz);
 	XLogFileName(current_walfile_name, stream->timeline, segno, WalSegSz);
 
-	snprintf(fn, sizeof(fn), "%s%s", current_walfile_name,
-			 stream->partial_suffix ? stream->partial_suffix : "");
+	/* Note that this considers the compression used if necessary */
+	fn = stream->walmethod->get_file_name(current_walfile_name,
+										  stream->partial_suffix);
 
 	/*
 	 * When streaming to files, if an existing file exists we verify that it's
 	 * either empty (just created), or a complete WalSegSz segment (in which
 	 * case it has been created and padded). Anything else indicates a corrupt
-	 * file.
+	 * file. Compressed files have no need for padding, so just ignore this
+	 * case.
 	 *
 	 * When streaming to tar, no file with this name will exist before, so we
 	 * never have to verify a size.
 	 */
-	if (stream->walmethod->existsfile(fn))
+	if (stream->walmethod->compression() == 0 &&
+		stream->walmethod->existsfile(fn))
 	{
 		size = stream->walmethod->get_file_size(fn);
 		if (size < 0)
