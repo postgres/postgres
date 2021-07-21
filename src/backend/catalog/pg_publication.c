@@ -54,23 +54,23 @@ check_publication_add_relation(Relation targetrel)
 		RelationGetForm(targetrel)->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" is not a table",
+				 errmsg("cannot add relation \"%s\" to publication",
 						RelationGetRelationName(targetrel)),
-				 errdetail("Only tables can be added to publications.")));
+				 errdetail_relkind_not_supported(RelationGetForm(targetrel)->relkind)));
 
 	/* Can't be system table */
 	if (IsCatalogRelation(targetrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" is a system table",
+				 errmsg("cannot add relation \"%s\" to publication",
 						RelationGetRelationName(targetrel)),
-				 errdetail("System tables cannot be added to publications.")));
+				 errdetail("This operation is not supported for system tables.")));
 
 	/* UNLOGGED and TEMP relations cannot be part of publication. */
 	if (!RelationIsPermanent(targetrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("table \"%s\" cannot be replicated",
+				 errmsg("cannot add relation \"%s\" to publication",
 						RelationGetRelationName(targetrel)),
 				 errdetail("Temporary and unlogged relations cannot be replicated.")));
 }
