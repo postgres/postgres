@@ -60,7 +60,7 @@ typedef Datum (*ExprStateEvalFunc) (struct ExprState *expression,
 
 typedef struct ExprState
 {
-	NodeTag		tag;
+	NodeTag		type;
 
 	uint8		flags;			/* bitmask of EEO_FLAG_* bits, see above */
 

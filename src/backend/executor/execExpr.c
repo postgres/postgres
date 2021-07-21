@@ -363,7 +363,7 @@ ExecBuildProjectionInfo(List *targetList,
 
 	projInfo->pi_exprContext = econtext;
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
-	projInfo->pi_state.tag = T_ExprState;
+	projInfo->pi_state.type = T_ExprState;
 	state = &projInfo->pi_state;
 	state->expr = (Expr *) targetList;
 	state->parent = parent;
@@ -531,7 +531,7 @@ ExecBuildUpdateProjection(List *targetList,
 
 	projInfo->pi_exprContext = econtext;
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
-	projInfo->pi_state.tag = T_ExprState;
+	projInfo->pi_state.type = T_ExprState;
 	state = &projInfo->pi_state;
 	if (evalTargetList)
 		state->expr = (Expr *) targetList;
