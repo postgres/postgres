@@ -3338,7 +3338,7 @@ _outTableSampleClause(StringInfo str, const TableSampleClause *node)
 }
 
 static void
-_outAExpr(StringInfo str, const A_Expr *node)
+_outA_Expr(StringInfo str, const A_Expr *node)
 {
 	WRITE_NODE_TYPE("AEXPR");
 
@@ -3486,7 +3486,7 @@ _outRawStmt(StringInfo str, const RawStmt *node)
 }
 
 static void
-_outAConst(StringInfo str, const A_Const *node)
+_outA_Const(StringInfo str, const A_Const *node)
 {
 	WRITE_NODE_TYPE("A_CONST");
 
@@ -4430,7 +4430,7 @@ outNode(StringInfo str, const void *obj)
 				_outTableSampleClause(str, obj);
 				break;
 			case T_A_Expr:
-				_outAExpr(str, obj);
+				_outA_Expr(str, obj);
 				break;
 			case T_ColumnRef:
 				_outColumnRef(str, obj);
@@ -4442,7 +4442,7 @@ outNode(StringInfo str, const void *obj)
 				_outRawStmt(str, obj);
 				break;
 			case T_A_Const:
-				_outAConst(str, obj);
+				_outA_Const(str, obj);
 				break;
 			case T_A_Star:
 				_outA_Star(str, obj);

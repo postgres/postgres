@@ -2377,7 +2377,7 @@ _equalAlterPolicyStmt(const AlterPolicyStmt *a, const AlterPolicyStmt *b)
 }
 
 static bool
-_equalAExpr(const A_Expr *a, const A_Expr *b)
+_equalA_Expr(const A_Expr *a, const A_Expr *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(name);
@@ -2407,7 +2407,7 @@ _equalParamRef(const ParamRef *a, const ParamRef *b)
 }
 
 static bool
-_equalAConst(const A_Const *a, const A_Const *b)
+_equalA_Const(const A_Const *a, const A_Const *b)
 {
 	if (!equal(&a->val, &b->val))	/* hack for in-line Value field */
 		return false;
@@ -2435,13 +2435,13 @@ _equalFuncCall(const FuncCall *a, const FuncCall *b)
 }
 
 static bool
-_equalAStar(const A_Star *a, const A_Star *b)
+_equalA_Star(const A_Star *a, const A_Star *b)
 {
 	return true;
 }
 
 static bool
-_equalAIndices(const A_Indices *a, const A_Indices *b)
+_equalA_Indices(const A_Indices *a, const A_Indices *b)
 {
 	COMPARE_SCALAR_FIELD(is_slice);
 	COMPARE_NODE_FIELD(lidx);
@@ -3710,7 +3710,7 @@ equal(const void *a, const void *b)
 			retval = _equalDropSubscriptionStmt(a, b);
 			break;
 		case T_A_Expr:
-			retval = _equalAExpr(a, b);
+			retval = _equalA_Expr(a, b);
 			break;
 		case T_ColumnRef:
 			retval = _equalColumnRef(a, b);
@@ -3719,16 +3719,16 @@ equal(const void *a, const void *b)
 			retval = _equalParamRef(a, b);
 			break;
 		case T_A_Const:
-			retval = _equalAConst(a, b);
+			retval = _equalA_Const(a, b);
 			break;
 		case T_FuncCall:
 			retval = _equalFuncCall(a, b);
 			break;
 		case T_A_Star:
-			retval = _equalAStar(a, b);
+			retval = _equalA_Star(a, b);
 			break;
 		case T_A_Indices:
-			retval = _equalAIndices(a, b);
+			retval = _equalA_Indices(a, b);
 			break;
 		case T_A_Indirection:
 			retval = _equalA_Indirection(a, b);
