@@ -287,8 +287,6 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
 {
 	registered_buffer *regbuf;
 
-	/* This is currently only used to WAL-log a full-page image of a page */
-	Assert(flags & REGBUF_FORCE_IMAGE);
 	Assert(begininsert_called);
 
 	if (block_id >= max_registered_block_id)
@@ -995,7 +993,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 
 	if (lsn <= RedoRecPtr)
 	{
-		int			flags;
+		int			flags = 0;
 		PGAlignedBlock copied_buffer;
 		char	   *origdata = (char *) BufferGetBlock(buffer);
 		RelFileNode rnode;
@@ -1022,7 +1020,6 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 
 		XLogBeginInsert();
 
-		flags = REGBUF_FORCE_IMAGE;
 		if (buffer_std)
 			flags |= REGBUF_STANDARD;
 
