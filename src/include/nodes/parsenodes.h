@@ -1337,7 +1337,7 @@ typedef struct SortGroupClause
  *
  * SETS( SIMPLE(1,2), CUBE( SIMPLE(3), SIMPLE(4,5) ) )
  */
-typedef enum
+typedef enum GroupingSetKind
 {
 	GROUPING_SET_EMPTY,
 	GROUPING_SET_SIMPLE,
@@ -2124,7 +2124,7 @@ typedef struct CopyStmt
  * preserve the distinction in VariableSetKind for CreateCommandTag().
  * ----------------------
  */
-typedef enum
+typedef enum VariableSetKind
 {
 	VAR_SET_VALUE,				/* SET var = value */
 	VAR_SET_DEFAULT,			/* SET var TO DEFAULT */

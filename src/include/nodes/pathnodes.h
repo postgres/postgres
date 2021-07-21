@@ -1525,7 +1525,7 @@ typedef struct MemoizePath
  * it's convenient to have a UniquePath in the path tree to signal upper-level
  * routines that the input is known distinct.)
  */
-typedef enum
+typedef enum UniquePathMethod
 {
 	UNIQUE_PATH_NOOP,			/* input is known unique already */
 	UNIQUE_PATH_HASH,			/* use hashing */

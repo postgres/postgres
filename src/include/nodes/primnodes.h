@@ -1215,7 +1215,7 @@ typedef enum XmlExprOp
 	IS_DOCUMENT					/* xmlval IS DOCUMENT */
 } XmlExprOp;
 
-typedef enum
+typedef enum XmlOptionType
 {
 	XMLOPTION_DOCUMENT,
 	XMLOPTION_CONTENT
