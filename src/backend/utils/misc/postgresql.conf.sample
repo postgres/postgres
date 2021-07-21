@@ -24,11 +24,11 @@
 # "postgres -c log_connections=on".  Some parameters can be changed at run time
 # with the "SET" SQL command.
 #
-# Memory units:  kB = kilobytes        Time units:  ms  = milliseconds
-#                MB = megabytes                     s   = seconds
-#                GB = gigabytes                     min = minutes
-#                TB = terabytes                     h   = hours
-#                                                   d   = days
+# Memory units:   B  = bytes           Time units:  ms  = milliseconds
+#                kB = kilobytes                     s   = seconds
+#                MB = megabytes                     min = minutes
+#                GB = gigabytes                     h   = hours
+#                TB = terabytes                     d   = days
 
 
 #------------------------------------------------------------------------------
