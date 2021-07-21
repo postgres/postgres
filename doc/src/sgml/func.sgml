@@ -988,16 +988,23 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
-        Exponentiation (unlike typical mathematical practice, multiple uses of
-        <literal>^</literal> will associate left to right)
+        Exponentiation
        </para>
        <para>
         <literal>2 ^ 3</literal>
         <returnvalue>8</returnvalue>
        </para>
        <para>
+        Unlike typical mathematical practice, multiple uses of
+        <literal>^</literal> will associate left to right by default:
+       </para>
+       <para>
         <literal>2 ^ 3 ^ 3</literal>
         <returnvalue>512</returnvalue>
+       </para>
+       <para>
+        <literal>2 ^ (3 ^ 3)</literal>
+        <returnvalue>134217728</returnvalue>
        </para></entry>
       </row>
 
