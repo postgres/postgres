@@ -3413,12 +3413,12 @@ _outAExpr(StringInfo str, const A_Expr *node)
 }
 
 static void
-_outValue(StringInfo str, const Value *value)
+_outValue(StringInfo str, const Value *node)
 {
-	switch (value->type)
+	switch (node->type)
 	{
 		case T_Integer:
-			appendStringInfo(str, "%d", value->val.ival);
+			appendStringInfo(str, "%d", node->val.ival);
 			break;
 		case T_Float:
 
@@ -3426,7 +3426,7 @@ _outValue(StringInfo str, const Value *value)
 			 * We assume the value is a valid numeric literal and so does not
 			 * need quoting.
 			 */
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, node->val.str);
 			break;
 		case T_String:
 
@@ -3435,20 +3435,20 @@ _outValue(StringInfo str, const Value *value)
 			 * but we don't want it to do anything with an empty string.
 			 */
 			appendStringInfoChar(str, '"');
-			if (value->val.str[0] != '\0')
-				outToken(str, value->val.str);
+			if (node->val.str[0] != '\0')
+				outToken(str, node->val.str);
 			appendStringInfoChar(str, '"');
 			break;
 		case T_BitString:
 			/* internal representation already has leading 'b' */
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, node->val.str);
 			break;
 		case T_Null:
 			/* this is seen only within A_Const, not in transformed trees */
 			appendStringInfoString(str, "NULL");
 			break;
 		default:
-			elog(ERROR, "unrecognized node type: %d", (int) value->type);
+			elog(ERROR, "unrecognized node type: %d", (int) node->type);
 			break;
 	}
 }
