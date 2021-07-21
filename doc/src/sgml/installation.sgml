@@ -354,31 +354,36 @@ su - postgres
   <title>Getting the Source</title>
 
   <para>
-   The <productname>PostgreSQL</productname> &version; sources can be obtained from the
-   download section of our
-   website: <ulink url="https://www.postgresql.org/download/"></ulink>.  You
-   should get a file named <filename>postgresql-&version;.tar.gz</filename>
-   or <filename>postgresql-&version;.tar.bz2</filename>. After
-   you have obtained the file, unpack it:
+   The version control repository for <productname>PostgreSQL</productname>
+   can be obtained from
+   <ulink url="https://git.postgresql.org/gitweb/?p=postgresql.git;a=summary"></ulink>;
+   this is the recommended way to obtain the
+   <productname>PostgreSQL</productname> source code.
+   You can obtain a clone of the repository by running
 <screen>
-<userinput>gunzip postgresql-&version;.tar.gz</userinput>
-<userinput>tar xf postgresql-&version;.tar</userinput>
+<userinput>git clone https://git.postgresql.org/git/postgresql.git</userinput>
 </screen>
-   (Use <command>bunzip2</command> instead of <command>gunzip</command> if
-   you have the <filename>.bz2</filename> file.  Also, note that most
-   modern versions of <command>tar</command> can unpack compressed archives
-   directly, so you don't really need the
-   separate <command>gunzip</command> or <command>bunzip2</command> step.)
-   This will create a directory
-   <filename>postgresql-&version;</filename> under the current directory
-   with the <productname>PostgreSQL</productname> sources.
-   Change into that directory for the rest
-   of the installation procedure.
+   This will create a directory <filename>postgresql</filename> under the current
+   directory with the <productname>PostgreSQL</productname> sources.
+   Change into that directory for the rest of the installation procedure.
+   See <xref linkend="git"/> for further information.
   </para>
 
   <para>
-   You can also get the source directly from the version control repository, see
-   <xref linkend="sourcerepo"/>.
+   Alternatively, source code for the released versions can be obtained
+   from the download section of our website:
+   <ulink url="https://www.postgresql.org/ftp/source/"></ulink>.
+   Download then
+   <filename>postgresql-<replaceable>version</replaceable>.tar.gz</filename>
+   or <filename>postgresql-<replaceable>version</replaceable>.tar.bz2</filename>
+   you're interested in, then unpack it:
+<screen>
+<userinput>tar xf postgresql-<replaceable>version</replaceable>.tar.bz2</userinput>
+</screen>
+   This will create a directory
+   <filename>postgresql-<replaceable>version</replaceable></filename> under
+   the current directory with the <productname>PostgreSQL</productname> sources.
+   Change into that directory for the rest of the installation procedure.
   </para>
  </sect1>
 
