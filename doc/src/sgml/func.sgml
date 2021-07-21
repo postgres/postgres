@@ -21687,6 +21687,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     be <literal>pg_catalog</literal>, but that is not a requirement;
     the collations could be installed into some other schema as well.
     The function returns the number of new collation objects it created.
+    Use of this function is restricted to superusers.
    </para>
 
    <table id="functions-info-partition">
