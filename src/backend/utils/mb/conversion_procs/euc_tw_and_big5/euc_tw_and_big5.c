@@ -286,8 +286,12 @@ big52euc_tw(const unsigned char *big5, unsigned char *p, int len, bool noError)
 		{
 			/* ASCII */
 			if (c1 == 0)
+			{
+				if (noError)
+					break;
 				report_invalid_encoding(PG_BIG5,
 										(const char *) big5, len);
+			}
 			*p++ = c1;
 			big5++;
 			len--;
