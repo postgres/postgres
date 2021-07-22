@@ -609,6 +609,17 @@ function_inlinable(llvm::Function &F,
 			elog(FATAL, "failed to materialize metadata");
 
 		/*
+		 * Don't inline functions that access thread local variables.  That
+		 * doesn't work on current LLVM releases (but might in future).
+		 */
+		if (rv->isThreadLocal())
+		{
+			ilog(DEBUG1, "cannot inline %s due to thread-local variable %s",
+				 F.getName().data(), rv->getName().data());
+			return false;
+		}
+
+		/*
 		 * Never want to inline externally visible vars, cheap enough to
 		 * reference.
 		 */
