@@ -3843,6 +3843,11 @@ timestamp_bin(PG_FUNCTION_ARGS)
 
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
 
+	if (stride_usecs == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("stride cannot equal zero")));
+
 	tm_diff = timestamp - origin;
 	tm_delta = tm_diff - tm_diff % stride_usecs;
 
@@ -4020,6 +4025,11 @@ timestamptz_bin(PG_FUNCTION_ARGS)
 				 errmsg("timestamps cannot be binned into intervals containing months or years")));
 
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
+
+	if (stride_usecs == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("stride cannot equal zero")));
 
 	tm_diff = timestamp - origin;
 	tm_delta = tm_diff - tm_diff % stride_usecs;
