@@ -31,9 +31,20 @@ ALTER TRIGGER <replaceable class="parameter">name</replaceable> ON <replaceable 
 
   <para>
    <command>ALTER TRIGGER</command> changes properties of an existing
-   trigger.  The <literal>RENAME</literal> clause changes the name of
+   trigger.
+  </para>
+
+  <para>
+   The <literal>RENAME</literal> clause changes the name of
    the given trigger without otherwise changing the trigger
-   definition.  The <literal>DEPENDS ON EXTENSION</literal> clause marks
+   definition.
+   If the table that the trigger is on is a partitioned table,
+   then corresponding clone triggers in the partitions are
+   renamed too.
+  </para>
+
+  <para>
+   The <literal>DEPENDS ON EXTENSION</literal> clause marks
    the trigger as dependent on an extension, such that if the extension is
    dropped, the trigger will automatically be dropped as well.
   </para>
