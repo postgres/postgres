@@ -26,7 +26,7 @@ static const pg_mb_radix_tree koi8r_from_unicode_tree =
   0x80, /* b3_3_lower */
   0xbc, /* b3_3_upper */
 
-  0x0000, /* offset of table for 3-byte inputs */
+  0x0000, /* offset of table for 4-byte inputs */
   0x00, /* b4_1_lower */
   0x00, /* b4_1_upper */
   0x00, /* b4_2_lower */

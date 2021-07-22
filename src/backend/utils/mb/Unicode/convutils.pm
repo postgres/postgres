@@ -579,7 +579,7 @@ sub print_radix_table
 	printf $out "  0x%02x, /* b3_3_lower */\n", $b3_3_lower;
 	printf $out "  0x%02x, /* b3_3_upper */\n", $b3_3_upper;
 	printf $out "\n";
-	printf $out "  0x%04x, /* offset of table for 3-byte inputs */\n",
+	printf $out "  0x%04x, /* offset of table for 4-byte inputs */\n",
 	  $b4root;
 	printf $out "  0x%02x, /* b4_1_lower */\n", $b4_1_lower;
 	printf $out "  0x%02x, /* b4_1_upper */\n", $b4_1_upper;

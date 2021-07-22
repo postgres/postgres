@@ -26,7 +26,7 @@ static const pg_mb_radix_tree euc_tw_to_unicode_tree =
   0x00, /* b3_3_lower */
   0x00, /* b3_3_upper */
 
-  0x1899, /* offset of table for 3-byte inputs */
+  0x1899, /* offset of table for 4-byte inputs */
   0x8e, /* b4_1_lower */
   0x8e, /* b4_1_upper */
   0xa1, /* b4_2_lower */
