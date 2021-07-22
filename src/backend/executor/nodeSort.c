@@ -29,6 +29,16 @@
  *		which saves the results in a temporary file or memory. After the
  *		initial call, returns a tuple from the file with each call.
  *
+ *		There are two distinct ways that this sort can be performed:
+ *
+ *		1) When the result is a single column we perform a Datum sort.
+ *
+ *		2) When the result contains multiple columns we perform a tuple sort.
+ *
+ *		We could do this by always performing a tuple sort, however sorting
+ *		Datums only can be significantly faster than sorting tuples,
+ *		especially when the Datums are of a pass-by-value type.
+ *
  *		Conditions:
  *		  -- none.
  *
@@ -86,31 +96,56 @@ ExecSort(PlanState *pstate)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
-		tuplesortstate = tuplesort_begin_heap(tupDesc,
-											  plannode->numCols,
-											  plannode->sortColIdx,
-											  plannode->sortOperators,
-											  plannode->collations,
-											  plannode->nullsFirst,
-											  work_mem,
-											  NULL,
-											  node->randomAccess);
+		if (node->datumSort)
+			tuplesortstate = tuplesort_begin_datum(TupleDescAttr(tupDesc, 0)->atttypid,
+												   plannode->sortOperators[0],
+												   plannode->collations[0],
+												   plannode->nullsFirst[0],
+												   work_mem,
+												   NULL,
+												   node->randomAccess);
+		else
+			tuplesortstate = tuplesort_begin_heap(tupDesc,
+												  plannode->numCols,
+												  plannode->sortColIdx,
+												  plannode->sortOperators,
+												  plannode->collations,
+												  plannode->nullsFirst,
+												  work_mem,
+												  NULL,
+												  node->randomAccess);
 		if (node->bounded)
 			tuplesort_set_bound(tuplesortstate, node->bound);
 		node->tuplesortstate = (void *) tuplesortstate;
 
 		/*
-		 * Scan the subplan and feed all the tuples to tuplesort.
+		 * Scan the subplan and feed all the tuples to tuplesort using the
+		 * appropriate method based on the type of sort we're doing.
 		 */
-
-		for (;;)
+		if (node->datumSort)
 		{
-			slot = ExecProcNode(outerNode);
+			for (;;)
+			{
+				slot = ExecProcNode(outerNode);
 
-			if (TupIsNull(slot))
-				break;
+				if (TupIsNull(slot))
+					break;
+				slot_getsomeattrs(slot, 1);
+				tuplesort_putdatum(tuplesortstate,
+								   slot->tts_values[0],
+								   slot->tts_isnull[0]);
+			}
+		}
+		else
+		{
+			for (;;)
+			{
+				slot = ExecProcNode(outerNode);
 
-			tuplesort_puttupleslot(tuplesortstate, slot);
+				if (TupIsNull(slot))
+					break;
+				tuplesort_puttupleslot(tuplesortstate, slot);
+			}
 		}
 
 		/*
@@ -144,15 +179,27 @@ ExecSort(PlanState *pstate)
 	SO1_printf("ExecSort: %s\n",
 			   "retrieving tuple from tuplesort");
 
-	/*
-	 * Get the first or next tuple from tuplesort. Returns NULL if no more
-	 * tuples.  Note that we only rely on slot tuple remaining valid until the
-	 * next fetch from the tuplesort.
-	 */
 	slot = node->ss.ps.ps_ResultTupleSlot;
-	(void) tuplesort_gettupleslot(tuplesortstate,
-								  ScanDirectionIsForward(dir),
-								  false, slot, NULL);
+
+	/*
+	 * Fetch the next sorted item from the appropriate tuplesort function. For
+	 * datum sorts we must manage the slot ourselves and leave it clear when
+	 * tuplesort_getdatum returns false to indicate there are no more datums.
+	 * For tuple sorts, tuplesort_gettupleslot manages the slot for us and
+	 * empties the slot when it runs out of tuples.
+	 */
+	if (node->datumSort)
+	{
+		ExecClearTuple(slot);
+		if (tuplesort_getdatum(tuplesortstate, ScanDirectionIsForward(dir),
+							   &(slot->tts_values[0]), &(slot->tts_isnull[0]), NULL))
+			ExecStoreVirtualTuple(slot);
+	}
+	else
+		(void) tuplesort_gettupleslot(tuplesortstate,
+									  ScanDirectionIsForward(dir),
+									  false, slot, NULL);
+
 	return slot;
 }
 
@@ -220,6 +267,15 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTupleSlotTL(&sortstate->ss.ps, &TTSOpsMinimalTuple);
 	sortstate->ss.ps.ps_ProjInfo = NULL;
+
+	/*
+	 * We perform a Datum sort when we're sorting just a single column,
+	 * otherwise we perform a tuple sort.
+	 */
+	if (ExecGetResultType(outerPlanState(sortstate))->natts == 1)
+		sortstate->datumSort = true;
+	else
+		sortstate->datumSort = false;
 
 	SO1_printf("ExecInitSort: %s\n",
 			   "sort node initialized");
