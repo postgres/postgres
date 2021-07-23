@@ -2589,7 +2589,7 @@ alter trigger a on grandparent rename to b;
 select tgrelid::regclass, tgname,
 (select tgname from pg_trigger tr where tr.oid = pg_trigger.tgparentid) parent_tgname
 from pg_trigger where tgrelid in (select relid from pg_partition_tree('grandparent'))
-order by tgname, tgrelid::regclass::text;
+order by tgname, tgrelid::regclass::text COLLATE "C";
 alter trigger a on only grandparent rename to b;	-- ONLY not supported
 alter trigger b on middle rename to c;	-- can't rename trigger on partition
 create trigger c after insert on middle
@@ -2603,7 +2603,7 @@ alter trigger p on grandparent rename to q;
 select tgrelid::regclass, tgname,
 (select tgname from pg_trigger tr where tr.oid = pg_trigger.tgparentid) parent_tgname
 from pg_trigger where tgrelid in (select relid from pg_partition_tree('grandparent'))
-order by tgname, tgrelid::regclass::text;
+order by tgname, tgrelid::regclass::text COLLATE "C";
 
 drop table grandparent;
 
