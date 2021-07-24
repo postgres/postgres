@@ -775,6 +775,9 @@ nextch2:
 					strvalue = argvalues[fmtpos].cptr;
 				else
 					strvalue = va_arg(args, char *);
+				/* If string is NULL, silently substitute "(null)" */
+				if (strvalue == NULL)
+					strvalue = "(null)";
 				fmtstr(strvalue, leftjust, fieldwidth, precision, pointflag,
 					   target);
 				break;
