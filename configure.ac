@@ -1178,17 +1178,13 @@ AC_SEARCH_LIBS(shm_unlink, rt)
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
-# Required for thread_test.c on Solaris
-AC_SEARCH_LIBS(sched_yield, rt)
-# Required for thread_test.c on Solaris 2.5:
-# Other ports use it too (HP-UX) so test unconditionally
-AC_SEARCH_LIBS(gethostbyname_r, nsl)
 # Cygwin:
 AC_SEARCH_LIBS(shmget, cygipc)
 # *BSD:
 AC_SEARCH_LIBS(backtrace_symbols, execinfo)
 
 if test "$enable_thread_safety" = yes; then
+  AC_SEARCH_LIBS(gethostbyname_r, nsl)
   AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
 fi
 
@@ -2360,38 +2356,6 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PROVE"; then
     AC_MSG_ERROR([prove not found])
   fi
-fi
-
-# Thread testing
-
-# We have to run the thread test near the end so we have all our symbols
-# defined.  Cross compiling throws a warning.
-#
-if test "$enable_thread_safety" = yes; then
-if test "$PORTNAME" != "win32"
-then
-AC_MSG_CHECKING([thread safety of required library functions])
-
-_CFLAGS="$CFLAGS"
-_LIBS="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-AC_RUN_IFELSE(
-  [AC_LANG_SOURCE([[#include "$srcdir/config/thread_test.c"]])],
-  [AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
-  AC_MSG_ERROR([thread test program failed
-This platform is not thread-safe.  Check the file 'config.log' for the
-exact reason, or use --disable-thread-safety to disable thread safety.])],
-  [AC_MSG_RESULT(maybe)
-  AC_MSG_WARN([
-*** Skipping thread test program because of cross-compile build.
-])])
-CFLAGS="$_CFLAGS"
-LIBS="$_LIBS"
-else
-AC_MSG_WARN([*** skipping thread test on Win32])
-fi
 fi
 
 # If compiler will take -Wl,--as-needed (or various platform-specific

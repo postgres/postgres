@@ -11939,121 +11939,6 @@ if test "$ac_res" != no; then :
 
 fi
 
-# Required for thread_test.c on Solaris
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sched_yield" >&5
-$as_echo_n "checking for library containing sched_yield... " >&6; }
-if ${ac_cv_search_sched_yield+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sched_yield ();
-int
-main ()
-{
-return sched_yield ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' rt; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_sched_yield=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_sched_yield+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_sched_yield+:} false; then :
-
-else
-  ac_cv_search_sched_yield=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_sched_yield" >&5
-$as_echo "$ac_cv_search_sched_yield" >&6; }
-ac_res=$ac_cv_search_sched_yield
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-# Required for thread_test.c on Solaris 2.5:
-# Other ports use it too (HP-UX) so test unconditionally
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname_r" >&5
-$as_echo_n "checking for library containing gethostbyname_r... " >&6; }
-if ${ac_cv_search_gethostbyname_r+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gethostbyname_r ();
-int
-main ()
-{
-return gethostbyname_r ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' nsl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_gethostbyname_r=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_gethostbyname_r+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_gethostbyname_r+:} false; then :
-
-else
-  ac_cv_search_gethostbyname_r=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethostbyname_r" >&5
-$as_echo "$ac_cv_search_gethostbyname_r" >&6; }
-ac_res=$ac_cv_search_gethostbyname_r
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
 # Cygwin:
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing shmget" >&5
 $as_echo_n "checking for library containing shmget... " >&6; }
@@ -12170,6 +12055,62 @@ fi
 
 
 if test "$enable_thread_safety" = yes; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname_r" >&5
+$as_echo_n "checking for library containing gethostbyname_r... " >&6; }
+if ${ac_cv_search_gethostbyname_r+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gethostbyname_r ();
+int
+main ()
+{
+return gethostbyname_r ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' nsl; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gethostbyname_r=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_gethostbyname_r+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_gethostbyname_r+:} false; then :
+
+else
+  ac_cv_search_gethostbyname_r=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethostbyname_r" >&5
+$as_echo "$ac_cv_search_gethostbyname_r" >&6; }
+ac_res=$ac_cv_search_gethostbyname_r
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing pthread_barrier_wait" >&5
 $as_echo_n "checking for library containing pthread_barrier_wait... " >&6; }
 if ${ac_cv_search_pthread_barrier_wait+:} false; then :
@@ -19454,57 +19395,6 @@ fi
   if test -z "$PROVE"; then
     as_fn_error $? "prove not found" "$LINENO" 5
   fi
-fi
-
-# Thread testing
-
-# We have to run the thread test near the end so we have all our symbols
-# defined.  Cross compiling throws a warning.
-#
-if test "$enable_thread_safety" = yes; then
-if test "$PORTNAME" != "win32"
-then
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking thread safety of required library functions" >&5
-$as_echo_n "checking thread safety of required library functions... " >&6; }
-
-_CFLAGS="$CFLAGS"
-_LIBS="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: maybe" >&5
-$as_echo "maybe" >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
-*** Skipping thread test program because of cross-compile build.
-" >&5
-$as_echo "$as_me: WARNING:
-*** Skipping thread test program because of cross-compile build.
-" >&2;}
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include "$srcdir/config/thread_test.c"
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  as_fn_error $? "thread test program failed
-This platform is not thread-safe.  Check the file 'config.log' for the
-exact reason, or use --disable-thread-safety to disable thread safety." "$LINENO" 5
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-CFLAGS="$_CFLAGS"
-LIBS="$_LIBS"
-else
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: *** skipping thread test on Win32" >&5
-$as_echo "$as_me: WARNING: *** skipping thread test on Win32" >&2;}
-fi
 fi
 
 # If compiler will take -Wl,--as-needed (or various platform-specific
