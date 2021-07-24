@@ -31,6 +31,7 @@
 #include "common/file_utils.h"
 #include "common/logging.h"
 #include "common/string.h"
+#include "fe_utils/option_utils.h"
 #include "fe_utils/recovery_gen.h"
 #include "fe_utils/string_utils.h"
 #include "getopt_long.h"
@@ -2371,12 +2372,9 @@ main(int argc, char **argv)
 #endif
 				break;
 			case 'Z':
-				compresslevel = atoi(optarg);
-				if (compresslevel < 0 || compresslevel > 9)
-				{
-					pg_log_error("invalid compression level \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-Z/--compress", 0, 9,
+									  &compresslevel))
 					exit(1);
-				}
 				break;
 			case 'c':
 				if (pg_strcasecmp(optarg, "fast") == 0)
@@ -2409,12 +2407,11 @@ main(int argc, char **argv)
 				dbgetpassword = 1;
 				break;
 			case 's':
-				standby_message_timeout = atoi(optarg) * 1000;
-				if (standby_message_timeout < 0)
-				{
-					pg_log_error("invalid status interval \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-s/--status-interval", 0,
+									  INT_MAX / 1000,
+									  &standby_message_timeout))
 					exit(1);
-				}
+				standby_message_timeout *= 1000;
 				break;
 			case 'v':
 				verbose++;

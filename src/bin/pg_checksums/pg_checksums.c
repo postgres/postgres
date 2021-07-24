@@ -15,6 +15,7 @@
 #include "postgres_fe.h"
 
 #include <dirent.h>
+#include <limits.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,6 +25,7 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "fe_utils/option_utils.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"
@@ -518,11 +520,10 @@ main(int argc, char *argv[])
 				mode = PG_MODE_ENABLE;
 				break;
 			case 'f':
-				if (atoi(optarg) == 0)
-				{
-					pg_log_error("invalid filenode specification, must be numeric: %s", optarg);
+				if (!option_parse_int(optarg, "-f/--filenode", 0,
+									  INT_MAX,
+									  NULL))
 					exit(1);
-				}
 				only_filenode = pstrdup(optarg);
 				break;
 			case 'N':

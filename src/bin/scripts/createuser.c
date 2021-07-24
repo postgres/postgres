@@ -11,6 +11,9 @@
  */
 
 #include "postgres_fe.h"
+
+#include <limits.h>
+
 #include "common.h"
 #include "common/logging.h"
 #include "common/string.h"
@@ -89,8 +92,6 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSrRiIlLc:PE",
 							long_options, &optindex)) != -1)
 	{
-		char	   *endptr;
-
 		switch (c)
 		{
 			case 'h':
@@ -145,13 +146,9 @@ main(int argc, char *argv[])
 				login = TRI_NO;
 				break;
 			case 'c':
-				conn_limit = strtol(optarg, &endptr, 10);
-				if (*endptr != '\0' || conn_limit < -1) /* minimum valid value */
-				{
-					pg_log_error("invalid value for --connection-limit: %s",
-								 optarg);
+				if (!option_parse_int(optarg, "-c/--connection-limit",
+									  -1, INT_MAX, &conn_limit))
 					exit(1);
-				}
 				break;
 			case 'P':
 				pwprompt = true;

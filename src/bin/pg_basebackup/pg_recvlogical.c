@@ -13,6 +13,7 @@
 #include "postgres_fe.h"
 
 #include <dirent.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #ifdef HAVE_SYS_SELECT_H
@@ -23,6 +24,7 @@
 #include "common/fe_memutils.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
+#include "fe_utils/option_utils.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"
@@ -739,12 +741,11 @@ main(int argc, char **argv)
 				outfile = pg_strdup(optarg);
 				break;
 			case 'F':
-				fsync_interval = atoi(optarg) * 1000;
-				if (fsync_interval < 0)
-				{
-					pg_log_error("invalid fsync interval \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-F/--fsync-interval", 0,
+									  INT_MAX / 1000,
+									  &fsync_interval))
 					exit(1);
-				}
+				fsync_interval *= 1000;
 				break;
 			case 'n':
 				noloop = 1;
@@ -763,11 +764,6 @@ main(int argc, char **argv)
 				dbhost = pg_strdup(optarg);
 				break;
 			case 'p':
-				if (atoi(optarg) <= 0)
-				{
-					pg_log_error("invalid port number \"%s\"", optarg);
-					exit(1);
-				}
 				dbport = pg_strdup(optarg);
 				break;
 			case 'U':
@@ -820,12 +816,11 @@ main(int argc, char **argv)
 				plugin = pg_strdup(optarg);
 				break;
 			case 's':
-				standby_message_timeout = atoi(optarg) * 1000;
-				if (standby_message_timeout < 0)
-				{
-					pg_log_error("invalid status interval \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-s/--status-interval", 0,
+									  INT_MAX / 1000,
+									  &standby_message_timeout))
 					exit(1);
-				}
+				standby_message_timeout *= 1000;
 				break;
 			case 'S':
 				replication_slot = pg_strdup(optarg);

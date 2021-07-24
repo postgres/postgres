@@ -56,6 +56,7 @@
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
 #include "dumputils.h"
+#include "fe_utils/option_utils.h"
 #include "fe_utils/string_utils.h"
 #include "getopt_long.h"
 #include "libpq/libpq-fs.h"
@@ -322,14 +323,12 @@ main(int argc, char **argv)
 	DumpableObject *boundaryObjs;
 	int			i;
 	int			optindex;
-	char	   *endptr;
 	RestoreOptions *ropt;
 	Archive    *fout;			/* the script file */
 	bool		g_verbose = false;
 	const char *dumpencoding = NULL;
 	const char *dumpsnapshot = NULL;
 	char	   *use_role = NULL;
-	long		rowsPerInsert;
 	int			numWorkers = 1;
 	int			compressLevel = -1;
 	int			plainText = 0;
@@ -487,7 +486,10 @@ main(int argc, char **argv)
 				break;
 
 			case 'j':			/* number of dump jobs */
-				numWorkers = atoi(optarg);
+				if (!option_parse_int(optarg, "-j/--jobs", 1,
+									  PG_MAX_JOBS,
+									  &numWorkers))
+					exit_nicely(1);
 				break;
 
 			case 'n':			/* include schema(s) */
@@ -550,12 +552,9 @@ main(int argc, char **argv)
 				break;
 
 			case 'Z':			/* Compression Level */
-				compressLevel = atoi(optarg);
-				if (compressLevel < 0 || compressLevel > 9)
-				{
-					pg_log_error("compression level must be in range 0..9");
+				if (!option_parse_int(optarg, "-Z/--compress", 0, 9,
+									  &compressLevel))
 					exit_nicely(1);
-				}
 				break;
 
 			case 0:
@@ -588,12 +587,9 @@ main(int argc, char **argv)
 
 			case 8:
 				have_extra_float_digits = true;
-				extra_float_digits = atoi(optarg);
-				if (extra_float_digits < -15 || extra_float_digits > 3)
-				{
-					pg_log_error("extra_float_digits must be in range -15..3");
+				if (!option_parse_int(optarg, "--extra-float-digits", -15, 3,
+									  &extra_float_digits))
 					exit_nicely(1);
-				}
 				break;
 
 			case 9:				/* inserts */
@@ -607,18 +603,9 @@ main(int argc, char **argv)
 				break;
 
 			case 10:			/* rows per insert */
-				errno = 0;
-				rowsPerInsert = strtol(optarg, &endptr, 10);
-
-				if (endptr == optarg || *endptr != '\0' ||
-					rowsPerInsert <= 0 || rowsPerInsert > INT_MAX ||
-					errno == ERANGE)
-				{
-					pg_log_error("rows-per-insert must be in range %d..%d",
-								 1, INT_MAX);
+				if (!option_parse_int(optarg, "--rows-per-insert", 1, INT_MAX,
+									  &dopt.dump_inserts))
 					exit_nicely(1);
-				}
-				dopt.dump_inserts = (int) rowsPerInsert;
 				break;
 
 			case 11:			/* include foreign data */
@@ -719,18 +706,6 @@ main(int argc, char **argv)
 	 */
 	if (!plainText)
 		dopt.outputCreateDB = 1;
-
-	/*
-	 * On Windows we can only have at most MAXIMUM_WAIT_OBJECTS (= 64 usually)
-	 * parallel jobs because that's the maximum limit for the
-	 * WaitForMultipleObjects() call.
-	 */
-	if (numWorkers <= 0
-#ifdef WIN32
-		|| numWorkers > MAXIMUM_WAIT_OBJECTS
-#endif
-		)
-		fatal("invalid number of parallel jobs");
 
 	/* Parallel backup only in the directory archive format so far */
 	if (archiveFormat != archDirectory && numWorkers > 1)

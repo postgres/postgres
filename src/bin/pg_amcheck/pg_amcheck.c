@@ -12,6 +12,7 @@
  */
 #include "postgres_fe.h"
 
+#include <limits.h>
 #include <time.h>
 
 #include "catalog/pg_am_d.h"
@@ -326,12 +327,9 @@ main(int argc, char *argv[])
 				append_btree_pattern(&opts.exclude, optarg, encoding);
 				break;
 			case 'j':
-				opts.jobs = atoi(optarg);
-				if (opts.jobs < 1)
-				{
-					pg_log_error("number of parallel jobs must be at least 1");
+				if (!option_parse_int(optarg, "-j/--jobs", 1, INT_MAX,
+									  &opts.jobs))
 					exit(1);
-				}
 				break;
 			case 'p':
 				port = pg_strdup(optarg);

@@ -12,8 +12,9 @@
 
 #include "postgres_fe.h"
 
-#include "catalog/pg_class_d.h"
+#include <limits.h>
 
+#include "catalog/pg_class_d.h"
 #include "common.h"
 #include "common/connect.h"
 #include "common/logging.h"
@@ -192,20 +193,14 @@ main(int argc, char *argv[])
 				vacopts.verbose = true;
 				break;
 			case 'j':
-				concurrentCons = atoi(optarg);
-				if (concurrentCons <= 0)
-				{
-					pg_log_error("number of parallel jobs must be at least 1");
+				if (!option_parse_int(optarg, "-j/--jobs", 1, INT_MAX,
+									  &concurrentCons))
 					exit(1);
-				}
 				break;
 			case 'P':
-				vacopts.parallel_workers = atoi(optarg);
-				if (vacopts.parallel_workers < 0)
-				{
-					pg_log_error("parallel workers for vacuum must be greater than or equal to zero");
+				if (!option_parse_int(optarg, "-P/--parallel", 0, INT_MAX,
+									  &vacopts.parallel_workers))
 					exit(1);
-				}
 				break;
 			case 2:
 				maintenance_db = pg_strdup(optarg);
@@ -220,20 +215,14 @@ main(int argc, char *argv[])
 				vacopts.skip_locked = true;
 				break;
 			case 6:
-				vacopts.min_xid_age = atoi(optarg);
-				if (vacopts.min_xid_age <= 0)
-				{
-					pg_log_error("minimum transaction ID age must be at least 1");
+				if (!option_parse_int(optarg, "--min-xid-age", 1, INT_MAX,
+									  &vacopts.min_xid_age))
 					exit(1);
-				}
 				break;
 			case 7:
-				vacopts.min_mxid_age = atoi(optarg);
-				if (vacopts.min_mxid_age <= 0)
-				{
-					pg_log_error("minimum multixact ID age must be at least 1");
+				if (!option_parse_int(optarg, "--min-mxid-age", 1, INT_MAX,
+									  &vacopts.min_mxid_age))
 					exit(1);
-				}
 				break;
 			case 8:
 				vacopts.no_index_cleanup = true;

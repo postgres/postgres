@@ -15,6 +15,7 @@
 #include "postgres_fe.h"
 
 #include <dirent.h>
+#include <limits.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,6 +23,7 @@
 #include "access/xlog_internal.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
+#include "fe_utils/option_utils.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "receivelog.h"
@@ -532,11 +534,6 @@ main(int argc, char **argv)
 				dbhost = pg_strdup(optarg);
 				break;
 			case 'p':
-				if (atoi(optarg) <= 0)
-				{
-					pg_log_error("invalid port number \"%s\"", optarg);
-					exit(1);
-				}
 				dbport = pg_strdup(optarg);
 				break;
 			case 'U':
@@ -549,12 +546,11 @@ main(int argc, char **argv)
 				dbgetpassword = 1;
 				break;
 			case 's':
-				standby_message_timeout = atoi(optarg) * 1000;
-				if (standby_message_timeout < 0)
-				{
-					pg_log_error("invalid status interval \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-s/--status-interval", 0,
+									  INT_MAX / 1000,
+									  &standby_message_timeout))
 					exit(1);
-				}
+				standby_message_timeout *= 1000;
 				break;
 			case 'S':
 				replication_slot = pg_strdup(optarg);
@@ -574,12 +570,9 @@ main(int argc, char **argv)
 				verbose++;
 				break;
 			case 'Z':
-				compresslevel = atoi(optarg);
-				if (compresslevel < 0 || compresslevel > 9)
-				{
-					pg_log_error("invalid compression level \"%s\"", optarg);
+				if (!option_parse_int(optarg, "-Z/--compress", 0, 9,
+									  &compresslevel))
 					exit(1);
-				}
 				break;
 /* action */
 			case 1:

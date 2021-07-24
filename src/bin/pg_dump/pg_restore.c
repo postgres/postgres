@@ -46,6 +46,7 @@
 #endif
 
 #include "dumputils.h"
+#include "fe_utils/option_utils.h"
 #include "getopt_long.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
@@ -181,7 +182,10 @@ main(int argc, char **argv)
 				break;
 
 			case 'j':			/* number of restore jobs */
-				numWorkers = atoi(optarg);
+				if (!option_parse_int(optarg, "-j/--jobs", 1,
+									  PG_MAX_JOBS,
+									  &numWorkers))
+					exit(1);
 				break;
 
 			case 'l':			/* Dump the TOC summary */
@@ -343,22 +347,6 @@ main(int argc, char **argv)
 		pg_log_error("options -C/--create and -1/--single-transaction cannot be used together");
 		exit_nicely(1);
 	}
-
-	if (numWorkers <= 0)
-	{
-		pg_log_error("invalid number of parallel jobs");
-		exit(1);
-	}
-
-	/* See comments in pg_dump.c */
-#ifdef WIN32
-	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
-	{
-		pg_log_error("maximum number of parallel jobs is %d",
-					 MAXIMUM_WAIT_OBJECTS);
-		exit(1);
-	}
-#endif
 
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)

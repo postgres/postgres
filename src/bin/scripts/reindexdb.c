@@ -11,6 +11,8 @@
 
 #include "postgres_fe.h"
 
+#include <limits.h>
+
 #include "catalog/pg_class_d.h"
 #include "common.h"
 #include "common/connect.h"
@@ -151,12 +153,9 @@ main(int argc, char *argv[])
 				simple_string_list_append(&indexes, optarg);
 				break;
 			case 'j':
-				concurrentCons = atoi(optarg);
-				if (concurrentCons <= 0)
-				{
-					pg_log_error("number of parallel jobs must be at least 1");
+				if (!option_parse_int(optarg, "-j/--jobs", 1, INT_MAX,
+									  &concurrentCons))
 					exit(1);
-				}
 				break;
 			case 'v':
 				verbose = true;

@@ -37,7 +37,7 @@ sub pgbench_scripts
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
 	my ($opts, $stat, $out, $err, $name, $files) = @_;
-	my @cmd = ('pgbench', split /\s+/, $opts);
+	my @cmd       = ('pgbench', split /\s+/, $opts);
 	my @filenames = ();
 	if (defined $files)
 	{
@@ -91,17 +91,26 @@ my @options = (
 		[qr{weight spec.* out of range .*: -1}]
 	],
 	[ 'too many scripts', '-S ' x 129, [qr{at most 128 SQL scripts}] ],
-	[ 'bad #clients', '-c three', [qr{invalid number of clients: "three"}] ],
 	[
-		'bad #threads', '-j eleven', [qr{invalid number of threads: "eleven"}]
+		'bad #clients', '-c three',
+		[qr{invalid value "three" for option -c/--clients}]
 	],
-	[ 'bad scale', '-i -s two', [qr{invalid scaling factor: "two"}] ],
+	[
+		'bad #threads', '-j eleven',
+		[qr{invalid value "eleven" for option -j/--jobs}]
+	],
+	[
+		'bad scale', '-i -s two',
+		[qr{invalid value "two" for option -s/--scale}]
+	],
 	[
 		'invalid #transactions',
-		'-t zil',
-		[qr{invalid number of transactions: "zil"}]
+		'-t zil', [qr{invalid value "zil" for option -t/--transactions}]
 	],
-	[ 'invalid duration', '-T ten', [qr{invalid duration: "ten"}] ],
+	[
+		'invalid duration',
+		'-T ten', [qr{invalid value "ten" for option -T/--time}]
+	],
 	[
 		'-t XOR -T',
 		'-N -l --aggregate-interval=5 --log-prefix=notused -t 1000 -T 1',
@@ -113,11 +122,11 @@ my @options = (
 		[qr{specify either }]
 	],
 	[ 'bad variable', '--define foobla', [qr{invalid variable definition}] ],
-	[ 'invalid fillfactor', '-F 1',            [qr{invalid fillfactor}] ],
+	[ 'invalid fillfactor', '-F 1', [qr{-F/--fillfactor must be in range}] ],
 	[ 'invalid query mode', '-M no-such-mode', [qr{invalid query mode}] ],
 	[
 		'invalid progress', '--progress=0',
-		[qr{invalid thread progress delay}]
+		[qr{-P/--progress must be in range}]
 	],
 	[ 'invalid rate',    '--rate=0.0',          [qr{invalid rate limit}] ],
 	[ 'invalid latency', '--latency-limit=0.0', [qr{invalid latency limit}] ],
@@ -126,8 +135,9 @@ my @options = (
 		[qr{invalid sampling rate}]
 	],
 	[
-		'invalid aggregate interval', '--aggregate-interval=-3',
-		[qr{invalid .* seconds for}]
+		'invalid aggregate interval',
+		'--aggregate-interval=-3',
+		[qr{--aggregate-interval must be in range}]
 	],
 	[
 		'weight zero',
@@ -171,7 +181,7 @@ my @options = (
 	[
 		'bad partition number',
 		'-i --partitions -1',
-		[qr{invalid number of partitions: "-1"}]
+		[qr{--partitions must be in range}]
 	],
 	[
 		'partition method without partitioning',
