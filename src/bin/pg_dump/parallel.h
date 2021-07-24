@@ -16,6 +16,8 @@
 #ifndef PG_DUMP_PARALLEL_H
 #define PG_DUMP_PARALLEL_H
 
+#include <limits.h>
+
 #include "pg_backup_archiver.h"
 
 /* Function to call in leader process on completion of a worker task */
