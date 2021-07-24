@@ -16,7 +16,7 @@
 #define PUBLICATIONCMDS_H
 
 #include "catalog/objectaddress.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
 extern ObjectAddress CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt);
 extern void AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt);

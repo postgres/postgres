@@ -16,7 +16,7 @@
 #define SUBSCRIPTIONCMDS_H
 
 #include "catalog/objectaddress.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
 extern ObjectAddress CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 										bool isTopLevel);
