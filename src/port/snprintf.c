@@ -320,7 +320,7 @@ static bool find_arguments(const char *format, va_list args,
 						   PrintfArgValue *argvalues);
 static void fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 				   int pointflag, PrintfTarget *target);
-static void fmtptr(void *value, PrintfTarget *target);
+static void fmtptr(const void *value, PrintfTarget *target);
 static void fmtint(long long value, char type, int forcesign,
 				   int leftjust, int minlen, int zpad, int precision, int pointflag,
 				   PrintfTarget *target);
@@ -394,7 +394,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	int			cvalue;
 	long long	numvalue;
 	double		fvalue;
-	char	   *strvalue;
+	const char *strvalue;
 	PrintfArgValue argvalues[PG_NL_ARGMAX + 1];
 
 	/*
@@ -439,7 +439,8 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 		{
 			format++;
 			strvalue = va_arg(args, char *);
-			Assert(strvalue != NULL);
+			if (strvalue == NULL)
+				strvalue = "(null)";
 			dostr(strvalue, strlen(strvalue), target);
 			if (target->failed)
 				break;
@@ -670,8 +671,9 @@ nextch2:
 					strvalue = argvalues[fmtpos].cptr;
 				else
 					strvalue = va_arg(args, char *);
-				/* Whine if someone tries to print a NULL string */
-				Assert(strvalue != NULL);
+				/* If string is NULL, silently substitute "(null)" */
+				if (strvalue == NULL)
+					strvalue = "(null)";
 				fmtstr(strvalue, leftjust, fieldwidth, precision, pointflag,
 					   target);
 				break;
@@ -681,7 +683,7 @@ nextch2:
 					strvalue = argvalues[fmtpos].cptr;
 				else
 					strvalue = va_arg(args, char *);
-				fmtptr((void *) strvalue, target);
+				fmtptr((const void *) strvalue, target);
 				break;
 			case 'e':
 			case 'E':
@@ -995,7 +997,7 @@ fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 }
 
 static void
-fmtptr(void *value, PrintfTarget *target)
+fmtptr(const void *value, PrintfTarget *target)
 {
 	int			vallen;
 	char		convert[64];
