@@ -151,6 +151,22 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- Clean up
 DROP TABLE pxtest1;
+-- Test detection of session-level and xact-level locks on same object
+BEGIN;
+SELECT pg_advisory_lock(1);
+ pg_advisory_lock 
+------------------
+ 
+(1 row)
+
+SELECT pg_advisory_xact_lock_shared(1);
+ pg_advisory_xact_lock_shared 
+------------------------------
+ 
+(1 row)
+
+PREPARE TRANSACTION 'foo6';  -- fails
+ERROR:  cannot PREPARE while holding both session-level and transaction-level locks on the same object
 -- Test subtransactions
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   CREATE TABLE pxtest2 (a int);
