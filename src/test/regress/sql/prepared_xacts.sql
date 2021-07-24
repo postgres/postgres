@@ -88,6 +88,12 @@ SELECT gid FROM pg_prepared_xacts;
 -- Clean up
 DROP TABLE pxtest1;
 
+-- Test detection of session-level and xact-level locks on same object
+BEGIN;
+SELECT pg_advisory_lock(1);
+SELECT pg_advisory_xact_lock_shared(1);
+PREPARE TRANSACTION 'foo6';  -- fails
+
 -- Test subtransactions
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
   CREATE TABLE pxtest2 (a int);
