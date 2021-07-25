@@ -246,6 +246,17 @@ typedef struct ComputeXidHorizonsResult
 
 } ComputeXidHorizonsResult;
 
+/*
+ * Return value for GlobalVisHorizonKindForRel().
+ */
+typedef enum GlobalVisHorizonKind
+{
+	VISHORIZON_SHARED,
+	VISHORIZON_CATALOG,
+	VISHORIZON_DATA,
+	VISHORIZON_TEMP
+} GlobalVisHorizonKind;
+
 
 static ProcArrayStruct *procArray;
 
@@ -1953,6 +1964,33 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 }
 
 /*
+ * Determine what kind of visibility horizon needs to be used for a
+ * relation. If rel is NULL, the most conservative horizon is used.
+ */
+static inline GlobalVisHorizonKind
+GlobalVisHorizonKindForRel(Relation rel)
+{
+	/*
+	 * Other relkkinds currently don't contain xids, nor always the necessary
+	 * logical decoding markers.
+	 */
+	Assert(!rel ||
+		   rel->rd_rel->relkind == RELKIND_RELATION ||
+		   rel->rd_rel->relkind == RELKIND_MATVIEW ||
+		   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+
+	if (rel == NULL || rel->rd_rel->relisshared || RecoveryInProgress())
+		return VISHORIZON_SHARED;
+	else if (IsCatalogRelation(rel) ||
+			 RelationIsAccessibleInLogicalDecoding(rel))
+		return VISHORIZON_CATALOG;
+	else if (!RELATION_IS_LOCAL(rel))
+		return VISHORIZON_DATA;
+	else
+		return VISHORIZON_TEMP;
+}
+
+/*
  * Return the oldest XID for which deleted tuples must be preserved in the
  * passed table.
  *
@@ -1970,16 +2008,20 @@ GetOldestNonRemovableTransactionId(Relation rel)
 
 	ComputeXidHorizons(&horizons);
 
-	/* select horizon appropriate for relation */
-	if (rel == NULL || rel->rd_rel->relisshared || RecoveryInProgress())
-		return horizons.shared_oldest_nonremovable;
-	else if (IsCatalogRelation(rel) ||
-			 RelationIsAccessibleInLogicalDecoding(rel))
-		return horizons.catalog_oldest_nonremovable;
-	else if (RELATION_IS_LOCAL(rel))
-		return horizons.temp_oldest_nonremovable;
-	else
-		return horizons.data_oldest_nonremovable;
+	switch (GlobalVisHorizonKindForRel(rel))
+	{
+		case VISHORIZON_SHARED:
+			return horizons.shared_oldest_nonremovable;
+		case VISHORIZON_CATALOG:
+			return horizons.catalog_oldest_nonremovable;
+		case VISHORIZON_DATA:
+			return horizons.data_oldest_nonremovable;
+		case VISHORIZON_TEMP:
+			return horizons.temp_oldest_nonremovable;
+	}
+
+	/* just to prevent compiler warnings */
+	return InvalidTransactionId;
 }
 
 /*
@@ -3986,37 +4028,26 @@ DisplayXidCache(void)
 GlobalVisState *
 GlobalVisTestFor(Relation rel)
 {
-	bool		need_shared;
-	bool		need_catalog;
-	GlobalVisState *state;
+	GlobalVisState *state = NULL;
 
 	/* XXX: we should assert that a snapshot is pushed or registered */
 	Assert(RecentXmin);
 
-	if (!rel)
-		need_shared = need_catalog = true;
-	else
+	switch (GlobalVisHorizonKindForRel(rel))
 	{
-		/*
-		 * Other kinds currently don't contain xids, nor always the necessary
-		 * logical decoding markers.
-		 */
-		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
-			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
-			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
-
-		need_shared = rel->rd_rel->relisshared || RecoveryInProgress();
-		need_catalog = IsCatalogRelation(rel) || RelationIsAccessibleInLogicalDecoding(rel);
+		case VISHORIZON_SHARED:
+			state = &GlobalVisSharedRels;
+			break;
+		case VISHORIZON_CATALOG:
+			state = &GlobalVisCatalogRels;
+			break;
+		case VISHORIZON_DATA:
+			state = &GlobalVisDataRels;
+			break;
+		case VISHORIZON_TEMP:
+			state = &GlobalVisTempRels;
+			break;
 	}
-
-	if (need_shared)
-		state = &GlobalVisSharedRels;
-	else if (need_catalog)
-		state = &GlobalVisCatalogRels;
-	else if (RELATION_IS_LOCAL(rel))
-		state = &GlobalVisTempRels;
-	else
-		state = &GlobalVisDataRels;
 
 	Assert(FullTransactionIdIsValid(state->definitely_needed) &&
 		   FullTransactionIdIsValid(state->maybe_needed));
