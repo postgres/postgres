@@ -137,7 +137,7 @@ pg_rightmost_one_pos64(uint64 word)
 
 /*
  * pg_nextpower2_32
- *		Returns the next highest power of 2 of 'num', or 'num', if it's
+ *		Returns the next higher power of 2 above 'num', or 'num' if it's
  *		already a power of 2.
  *
  * 'num' mustn't be 0 or be above PG_UINT32_MAX / 2 + 1.
@@ -160,7 +160,7 @@ pg_nextpower2_32(uint32 num)
 
 /*
  * pg_nextpower2_64
- *		Returns the next highest power of 2 of 'num', or 'num', if it's
+ *		Returns the next higher power of 2 above 'num', or 'num' if it's
  *		already a power of 2.
  *
  * 'num' mustn't be 0 or be above PG_UINT64_MAX / 2  + 1.
@@ -180,6 +180,52 @@ pg_nextpower2_64(uint64 num)
 
 	return ((uint64) 1) << (pg_leftmost_one_pos64(num) + 1);
 }
+
+/*
+ * pg_nextpower2_size_t
+ *		Returns the next higher power of 2 above 'num', for a size_t input.
+ */
+#if SIZEOF_SIZE_T == 4
+#define pg_nextpower2_size_t(num) pg_nextpower2_32(num)
+#else
+#define pg_nextpower2_size_t(num) pg_nextpower2_64(num)
+#endif
+
+/*
+ * pg_prevpower2_32
+ *		Returns the next lower power of 2 below 'num', or 'num' if it's
+ *		already a power of 2.
+ *
+ * 'num' mustn't be 0.
+ */
+static inline uint32
+pg_prevpower2_32(uint32 num)
+{
+	return ((uint32) 1) << pg_leftmost_one_pos32(num);
+}
+
+/*
+ * pg_prevpower2_64
+ *		Returns the next lower power of 2 below 'num', or 'num' if it's
+ *		already a power of 2.
+ *
+ * 'num' mustn't be 0.
+ */
+static inline uint64
+pg_prevpower2_64(uint64 num)
+{
+	return ((uint64) 1) << pg_leftmost_one_pos64(num);
+}
+
+/*
+ * pg_prevpower2_size_t
+ *		Returns the next lower power of 2 below 'num', for a size_t input.
+ */
+#if SIZEOF_SIZE_T == 4
+#define pg_prevpower2_size_t(num) pg_prevpower2_32(num)
+#else
+#define pg_prevpower2_size_t(num) pg_prevpower2_64(num)
+#endif
 
 /*
  * pg_ceil_log2_32

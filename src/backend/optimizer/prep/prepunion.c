@@ -1019,7 +1019,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 					const char *construct)
 {
 	int			numGroupCols = list_length(groupClauses);
-	int			hash_mem = get_hash_mem();
+	Size		hash_mem_limit = get_hash_memory_limit();
 	bool		can_sort;
 	bool		can_hash;
 	Size		hashentrysize;
@@ -1055,13 +1055,11 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 */
 	hashentrysize = MAXALIGN(input_path->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
 
-	if (hashentrysize * dNumGroups > hash_mem * 1024L)
+	if (hashentrysize * dNumGroups > hash_mem_limit)
 		return false;
 
 	/*
-	 * See if the estimated cost is no more than doing it the other way.  We
-	 * deliberately give the hash case more memory when hash_mem exceeds
-	 * standard work mem (i.e. when hash_mem_multiplier exceeds 1.0).
+	 * See if the estimated cost is no more than doing it the other way.
 	 *
 	 * We need to consider input_plan + hashagg versus input_plan + sort +
 	 * group.  Note that the actual result plan might involve a SetOp or
