@@ -2438,7 +2438,7 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	Cost		total_cost;
 
 	/* available cache space */
-	hash_mem_bytes = get_hash_mem() * 1024L;
+	hash_mem_bytes = get_hash_memory_limit();
 
 	/*
 	 * Set the number of bytes each cache entry should consume in the cache.
@@ -3860,7 +3860,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	Cost		run_cost = workspace->run_cost;
 	int			numbuckets = workspace->numbuckets;
 	int			numbatches = workspace->numbatches;
-	int			hash_mem;
 	Cost		cpu_per_tuple;
 	QualCost	hash_qual_cost;
 	QualCost	qp_qual_cost;
@@ -3986,10 +3985,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	 * that way, so it will be unable to drive the batch size below hash_mem
 	 * when this is true.)
 	 */
-	hash_mem = get_hash_mem();
 	if (relation_byte_size(clamp_row_est(inner_path_rows * innermcvfreq),
-						   inner_path->pathtarget->width) >
-		(hash_mem * 1024L))
+						   inner_path->pathtarget->width) > get_hash_memory_limit())
 		startup_cost += disable_cost;
 
 	/*

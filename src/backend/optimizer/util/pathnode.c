@@ -1794,9 +1794,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 * planner.c).
 		 */
 		int			hashentrysize = subpath->pathtarget->width + 64;
-		int			hash_mem = get_hash_mem();
 
-		if (hashentrysize * pathnode->path.rows > hash_mem * 1024L)
+		if (hashentrysize * pathnode->path.rows > get_hash_memory_limit())
 		{
 			/*
 			 * We should not try to hash.  Hack the SpecialJoinInfo to

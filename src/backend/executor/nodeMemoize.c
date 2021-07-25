@@ -905,7 +905,7 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 	mstate->mem_used = 0;
 
 	/* Limit the total memory consumed by the cache to this */
-	mstate->mem_limit = get_hash_mem() * 1024L;
+	mstate->mem_limit = get_hash_memory_limit();
 
 	/* A memory context dedicated for the cache */
 	mstate->tableContext = AllocSetContextCreate(CurrentMemoryContext,

@@ -486,6 +486,6 @@ extern bool BackupInProgress(void);
 extern void CancelBackup(void);
 
 /* in executor/nodeHash.c */
-extern int	get_hash_mem(void);
+extern size_t get_hash_memory_limit(void);
 
 #endif							/* MISCADMIN_H */
