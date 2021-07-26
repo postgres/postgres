@@ -53,8 +53,8 @@ struct WalWriteMethod
 	ssize_t		(*get_file_size) (const char *pathname);
 
 	/*
-	 * Return the name of the current file to work on, without the base
-	 * directory.  This is useful for logging.
+	 * Return the name of the current file to work on in pg_malloc()'d string,
+	 * without the base directory.  This is useful for logging.
 	 */
 	char	   *(*get_file_name) (const char *pathname, const char *temp_suffix);
 
