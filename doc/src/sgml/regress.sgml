@@ -359,7 +359,7 @@ make check LANG=C ENCODING=EUC_JP
     set in the <varname>PGOPTIONS</varname> environment variable (for settings
     that allow this):
 <screen>
-make check PGOPTIONS="-c log_checkpoints=on -c work_mem=50MB"
+make check PGOPTIONS="-c force_parallel_mode=regress -c work_mem=50MB"
 </screen>
     When running against a temporary installation, custom settings can also be
     set by supplying a pre-written <filename>postgresql.conf</filename>:
