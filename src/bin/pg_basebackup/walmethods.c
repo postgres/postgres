@@ -94,6 +94,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	filename = dir_get_file_name(pathname, temp_suffix);
 	snprintf(tmppath, sizeof(tmppath), "%s/%s",
 			 dir_data->basedir, filename);
+	pg_free(filename);
 
 	/*
 	 * Open a file for non-compressed as well as compressed files. Tracking
@@ -254,11 +255,13 @@ dir_close(Walfile f, WalCloseMethod method)
 			filename = dir_get_file_name(df->pathname, df->temp_suffix);
 			snprintf(tmppath, sizeof(tmppath), "%s/%s",
 					 dir_data->basedir, filename);
+			pg_free(filename);
 
 			/* permanent name, so no need for the prefix */
 			filename2 = dir_get_file_name(df->pathname, NULL);
 			snprintf(tmppath2, sizeof(tmppath2), "%s/%s",
 					 dir_data->basedir, filename2);
+			pg_free(filename2);
 			r = durable_rename(tmppath, tmppath2);
 		}
 		else if (method == CLOSE_UNLINK)
@@ -269,6 +272,7 @@ dir_close(Walfile f, WalCloseMethod method)
 			filename = dir_get_file_name(df->pathname, df->temp_suffix);
 			snprintf(tmppath, sizeof(tmppath), "%s/%s",
 					 dir_data->basedir, filename);
+			pg_free(filename);
 			r = unlink(tmppath);
 		}
 		else
@@ -625,10 +629,13 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	if (tarCreateHeader(tar_data->currentfile->header, tmppath, NULL, 0, S_IRUSR | S_IWUSR, 0, 0, time(NULL)) != TAR_OK)
 	{
 		pg_free(tar_data->currentfile);
+		pg_free(tmppath);
 		tar_data->currentfile = NULL;
 		tar_set_error("could not create tar header");
 		return NULL;
 	}
+
+	pg_free(tmppath);
 
 #ifdef HAVE_LIBZ
 	if (tar_data->compression)

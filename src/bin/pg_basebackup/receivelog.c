@@ -118,6 +118,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 		{
 			pg_log_error("could not get size of write-ahead log file \"%s\": %s",
 						 fn, stream->walmethod->getlasterror());
+			pg_free(fn);
 			return false;
 		}
 		if (size == WalSegSz)
@@ -128,6 +129,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			{
 				pg_log_error("could not open existing write-ahead log file \"%s\": %s",
 							 fn, stream->walmethod->getlasterror());
+				pg_free(fn);
 				return false;
 			}
 
@@ -141,6 +143,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			}
 
 			walfile = f;
+			pg_free(fn);
 			return true;
 		}
 		if (size != 0)
@@ -152,6 +155,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 								  "write-ahead log file \"%s\" has %d bytes, should be 0 or %d",
 								  size),
 						 fn, (int) size, WalSegSz);
+			pg_free(fn);
 			return false;
 		}
 		/* File existed and was empty, so fall through and open */
@@ -165,9 +169,11 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	{
 		pg_log_error("could not open write-ahead log file \"%s\": %s",
 					 fn, stream->walmethod->getlasterror());
+		pg_free(fn);
 		return false;
 	}
 
+	pg_free(fn);
 	walfile = f;
 	return true;
 }
