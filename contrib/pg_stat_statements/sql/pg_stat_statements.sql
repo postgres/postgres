@@ -328,6 +328,11 @@ EXECUTE prep1;
 SELECT 42;
 SELECT 42;
 SELECT 42;
-SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+SELECT query, plans, calls, rows FROM pg_stat_statements
+  WHERE query NOT LIKE 'PREPARE%' ORDER BY query COLLATE "C";
+-- for the prepared statement we expect at least one replan, but cache
+-- invalidations could force more
+SELECT query, plans >= 2 AND plans <= calls AS plans_ok, calls, rows FROM pg_stat_statements
+  WHERE query LIKE 'PREPARE%' ORDER BY query COLLATE "C";
 
 DROP EXTENSION pg_stat_statements;
