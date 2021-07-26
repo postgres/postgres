@@ -515,28 +515,24 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 
 /*
  * get_agg_clause_costs
- *	  Recursively find the Aggref nodes in an expression tree, and
- *	  accumulate cost information about them.
+ *	  Process the PlannerInfo's 'aggtransinfos' and 'agginfos' lists
+ *	  accumulating the cost information about them.
  *
  * 'aggsplit' tells us the expected partial-aggregation mode, which affects
  * the cost estimates.
  *
- * NOTE that the counts/costs are ADDED to those already in *costs ... so
- * the caller is responsible for zeroing the struct initially.
+ * NOTE that the costs are ADDED to those already in *costs ... so the caller
+ * is responsible for zeroing the struct initially.
  *
- * We count the nodes, estimate their execution costs, and estimate the total
- * space needed for their transition state values if all are evaluated in
- * parallel (as would be done in a HashAgg plan).  Also, we check whether
- * partial aggregation is feasible.  See AggClauseCosts for the exact set
- * of statistics collected.
+ * For each AggTransInfo, we add the cost of an aggregate transition using
+ * either the transfn or combinefn depending on the 'aggsplit' value.  We also
+ * account for the costs of any aggfilters and any serializations and
+ * deserializations of the transition state and also estimate the total space
+ * needed for the transition states as if each aggregate's state was stored in
+ * memory concurrently (as would be done in a HashAgg plan).
  *
- * In addition, we mark Aggref nodes with the correct aggtranstype, so
- * that that doesn't need to be done repeatedly.  (That makes this function's
- * name a bit of a misnomer.)
- *
- * This does not descend into subqueries, and so should be used only after
- * reduction of sublinks to subplans, or in contexts where it's known there
- * are no subqueries.  There mustn't be outer-aggregate references either.
+ * For each AggInfo in the 'agginfos' list we add the cost of running the
+ * final function and the direct args, if any.
  */
 void
 get_agg_clause_costs(PlannerInfo *root, AggSplit aggsplit, AggClauseCosts *costs)
