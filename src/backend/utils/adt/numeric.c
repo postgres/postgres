@@ -816,6 +816,62 @@ numeric_is_integral(Numeric num)
 }
 
 /*
+ * make_numeric_typmod() -
+ *
+ *	Pack numeric precision and scale values into a typmod.  The upper 16 bits
+ *	are used for the precision (though actually not all these bits are needed,
+ *	since the maximum allowed precision is 1000).  The lower 16 bits are for
+ *	the scale, but since the scale is constrained to the range [-1000, 1000],
+ *	we use just the lower 11 of those 16 bits, and leave the remaining 5 bits
+ *	unset, for possible future use.
+ *
+ *	For purely historical reasons VARHDRSZ is then added to the result, thus
+ *	the unused space in the upper 16 bits is not all as freely available as it
+ *	might seem.  (We can't let the result overflow to a negative int32, as
+ *	other parts of the system would interpret that as not-a-valid-typmod.)
+ */
+static inline int32
+make_numeric_typmod(int precision, int scale)
+{
+	return ((precision << 16) | (scale & 0x7ff)) + VARHDRSZ;
+}
+
+/*
+ * Because of the offset, valid numeric typmods are at least VARHDRSZ
+ */
+static inline bool
+is_valid_numeric_typmod(int32 typmod)
+{
+	return typmod >= (int32) VARHDRSZ;
+}
+
+/*
+ * numeric_typmod_precision() -
+ *
+ *	Extract the precision from a numeric typmod --- see make_numeric_typmod().
+ */
+static inline int
+numeric_typmod_precision(int32 typmod)
+{
+	return ((typmod - VARHDRSZ) >> 16) & 0xffff;
+}
+
+/*
+ * numeric_typmod_scale() -
+ *
+ *	Extract the scale from a numeric typmod --- see make_numeric_typmod().
+ *
+ *	Note that the scale may be negative, so we must do sign extension when
+ *	unpacking it.  We do this using the bit hack (x^1024)-1024, which sign
+ *	extends an 11-bit two's complement number x.
+ */
+static inline int
+numeric_typmod_scale(int32 typmod)
+{
+	return (((typmod - VARHDRSZ) & 0x7ff) ^ 1024) - 1024;
+}
+
+/*
  * numeric_maximum_size() -
  *
  *	Maximum size of a numeric with given typmod, or -1 if unlimited/unknown.
@@ -826,11 +882,11 @@ numeric_maximum_size(int32 typmod)
 	int			precision;
 	int			numeric_digits;
 
-	if (typmod < (int32) (VARHDRSZ))
+	if (!is_valid_numeric_typmod(typmod))
 		return -1;
 
 	/* precision (ie, max # of digits) is in upper bits of typmod */
-	precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+	precision = numeric_typmod_precision(typmod);
 
 	/*
 	 * This formula computes the maximum number of NumericDigits we could need
@@ -1084,20 +1140,20 @@ numeric_support(PG_FUNCTION_ARGS)
 			Node	   *source = (Node *) linitial(expr->args);
 			int32		old_typmod = exprTypmod(source);
 			int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
-			int32		old_scale = (old_typmod - VARHDRSZ) & 0xffff;
-			int32		new_scale = (new_typmod - VARHDRSZ) & 0xffff;
-			int32		old_precision = (old_typmod - VARHDRSZ) >> 16 & 0xffff;
-			int32		new_precision = (new_typmod - VARHDRSZ) >> 16 & 0xffff;
+			int32		old_scale = numeric_typmod_scale(old_typmod);
+			int32		new_scale = numeric_typmod_scale(new_typmod);
+			int32		old_precision = numeric_typmod_precision(old_typmod);
+			int32		new_precision = numeric_typmod_precision(new_typmod);
 
 			/*
-			 * If new_typmod < VARHDRSZ, the destination is unconstrained;
-			 * that's always OK.  If old_typmod >= VARHDRSZ, the source is
+			 * If new_typmod is invalid, the destination is unconstrained;
+			 * that's always OK.  If old_typmod is valid, the source is
 			 * constrained, and we're OK if the scale is unchanged and the
 			 * precision is not decreasing.  See further notes in function
 			 * header comment.
 			 */
-			if (new_typmod < (int32) VARHDRSZ ||
-				(old_typmod >= (int32) VARHDRSZ &&
+			if (!is_valid_numeric_typmod(new_typmod) ||
+				(is_valid_numeric_typmod(old_typmod) &&
 				 new_scale == old_scale && new_precision >= old_precision))
 				ret = relabel_to_typmod(source, new_typmod);
 		}
@@ -1119,11 +1175,11 @@ numeric		(PG_FUNCTION_ARGS)
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	Numeric		new;
-	int32		tmp_typmod;
 	int			precision;
 	int			scale;
 	int			ddigits;
 	int			maxdigits;
+	int			dscale;
 	NumericVar	var;
 
 	/*
@@ -1140,16 +1196,18 @@ numeric		(PG_FUNCTION_ARGS)
 	 * If the value isn't a valid type modifier, simply return a copy of the
 	 * input value
 	 */
-	if (typmod < (int32) (VARHDRSZ))
+	if (!is_valid_numeric_typmod(typmod))
 		PG_RETURN_NUMERIC(duplicate_numeric(num));
 
 	/*
 	 * Get the precision and scale out of the typmod value
 	 */
-	tmp_typmod = typmod - VARHDRSZ;
-	precision = (tmp_typmod >> 16) & 0xffff;
-	scale = tmp_typmod & 0xffff;
+	precision = numeric_typmod_precision(typmod);
+	scale = numeric_typmod_scale(typmod);
 	maxdigits = precision - scale;
+
+	/* The target display scale is non-negative */
+	dscale = Max(scale, 0);
 
 	/*
 	 * If the number is certainly in bounds and due to the target scale no
@@ -1160,17 +1218,17 @@ numeric		(PG_FUNCTION_ARGS)
 	 */
 	ddigits = (NUMERIC_WEIGHT(num) + 1) * DEC_DIGITS;
 	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num)
-		&& (NUMERIC_CAN_BE_SHORT(scale, NUMERIC_WEIGHT(num))
+		&& (NUMERIC_CAN_BE_SHORT(dscale, NUMERIC_WEIGHT(num))
 			|| !NUMERIC_IS_SHORT(num)))
 	{
 		new = duplicate_numeric(num);
 		if (NUMERIC_IS_SHORT(num))
 			new->choice.n_short.n_header =
 				(num->choice.n_short.n_header & ~NUMERIC_SHORT_DSCALE_MASK)
-				| (scale << NUMERIC_SHORT_DSCALE_SHIFT);
+				| (dscale << NUMERIC_SHORT_DSCALE_SHIFT);
 		else
 			new->choice.n_long.n_sign_dscale = NUMERIC_SIGN(new) |
-				((uint16) scale & NUMERIC_DSCALE_MASK);
+				((uint16) dscale & NUMERIC_DSCALE_MASK);
 		PG_RETURN_NUMERIC(new);
 	}
 
@@ -1206,12 +1264,12 @@ numerictypmodin(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("NUMERIC precision %d must be between 1 and %d",
 							tl[0], NUMERIC_MAX_PRECISION)));
-		if (tl[1] < 0 || tl[1] > tl[0])
+		if (tl[1] < NUMERIC_MIN_SCALE || tl[1] > NUMERIC_MAX_SCALE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("NUMERIC scale %d must be between 0 and precision %d",
-							tl[1], tl[0])));
-		typmod = ((tl[0] << 16) | tl[1]) + VARHDRSZ;
+					 errmsg("NUMERIC scale %d must be between %d and %d",
+							tl[1], NUMERIC_MIN_SCALE, NUMERIC_MAX_SCALE)));
+		typmod = make_numeric_typmod(tl[0], tl[1]);
 	}
 	else if (n == 1)
 	{
@@ -1221,7 +1279,7 @@ numerictypmodin(PG_FUNCTION_ARGS)
 					 errmsg("NUMERIC precision %d must be between 1 and %d",
 							tl[0], NUMERIC_MAX_PRECISION)));
 		/* scale defaults to zero */
-		typmod = (tl[0] << 16) + VARHDRSZ;
+		typmod = make_numeric_typmod(tl[0], 0);
 	}
 	else
 	{
@@ -1240,10 +1298,10 @@ numerictypmodout(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(0);
 	char	   *res = (char *) palloc(64);
 
-	if (typmod >= 0)
+	if (is_valid_numeric_typmod(typmod))
 		snprintf(res, 64, "(%d,%d)",
-				 ((typmod - VARHDRSZ) >> 16) & 0xffff,
-				 (typmod - VARHDRSZ) & 0xffff);
+				 numeric_typmod_precision(typmod),
+				 numeric_typmod_scale(typmod));
 	else
 		*res = '\0';
 
@@ -7428,17 +7486,20 @@ apply_typmod(NumericVar *var, int32 typmod)
 	int			ddigits;
 	int			i;
 
-	/* Do nothing if we have a default typmod (-1) */
-	if (typmod < (int32) (VARHDRSZ))
+	/* Do nothing if we have an invalid typmod */
+	if (!is_valid_numeric_typmod(typmod))
 		return;
 
-	typmod -= VARHDRSZ;
-	precision = (typmod >> 16) & 0xffff;
-	scale = typmod & 0xffff;
+	precision = numeric_typmod_precision(typmod);
+	scale = numeric_typmod_scale(typmod);
 	maxdigits = precision - scale;
 
 	/* Round to target scale (and set var->dscale) */
 	round_var(var, scale);
+
+	/* but don't allow var->dscale to be negative */
+	if (var->dscale < 0)
+		var->dscale = 0;
 
 	/*
 	 * Check for overflow - note we can't do this before rounding, because
@@ -7514,12 +7575,11 @@ apply_typmod_special(Numeric num, int32 typmod)
 		return;
 
 	/* Do nothing if we have a default typmod (-1) */
-	if (typmod < (int32) (VARHDRSZ))
+	if (!is_valid_numeric_typmod(typmod))
 		return;
 
-	typmod -= VARHDRSZ;
-	precision = (typmod >> 16) & 0xffff;
-	scale = typmod & 0xffff;
+	precision = numeric_typmod_precision(typmod);
+	scale = numeric_typmod_scale(typmod);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),

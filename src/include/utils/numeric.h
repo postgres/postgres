@@ -17,11 +17,21 @@
 #include "fmgr.h"
 
 /*
- * Limit on the precision (and hence scale) specifiable in a NUMERIC typmod.
- * Note that the implementation limit on the length of a numeric value is
- * much larger --- beware of what you use this for!
+ * Limits on the precision and scale specifiable in a NUMERIC typmod.  The
+ * precision is strictly positive, but the scale may be positive or negative.
+ * A negative scale implies rounding before the decimal point.
+ *
+ * Note that the minimum display scale defined below is zero --- we always
+ * display all digits before the decimal point, even when the scale is
+ * negative.
+ *
+ * Note that the implementation limits on the precision and display scale of a
+ * numeric value are much larger --- beware of what you use these for!
  */
 #define NUMERIC_MAX_PRECISION		1000
+
+#define NUMERIC_MIN_SCALE			(-1000)
+#define NUMERIC_MAX_SCALE			1000
 
 /*
  * Internal limits on the scales chosen for calculation results

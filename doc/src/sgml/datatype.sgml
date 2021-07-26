@@ -545,8 +545,8 @@
 <programlisting>
 NUMERIC(<replaceable>precision</replaceable>, <replaceable>scale</replaceable>)
 </programlisting>
-     The precision must be positive, the scale zero or positive.
-     Alternatively:
+     The precision must be positive, while the scale may be positive or
+     negative (see below).  Alternatively:
 <programlisting>
 NUMERIC(<replaceable>precision</replaceable>)
 </programlisting>
@@ -569,8 +569,8 @@ NUMERIC
     <note>
      <para>
       The maximum precision that can be explicitly specified in
-      a <type>NUMERIC</type> type declaration is 1000.  An
-      unconstrained <type>NUMERIC</type> column is subject to the limits
+      a <type>numeric</type> type declaration is 1000.  An
+      unconstrained <type>numeric</type> column is subject to the limits
       described in <xref linkend="datatype-numeric-table"/>.
      </para>
     </note>
@@ -581,7 +581,47 @@ NUMERIC
      number of fractional digits.  Then, if the number of digits to the
      left of the decimal point exceeds the declared precision minus the
      declared scale, an error is raised.
+     For example, a column declared as
+<programlisting>
+NUMERIC(3, 1)
+</programlisting>
+     will round values to 1 decimal place and can store values between
+     -99.9 and 99.9, inclusive.
     </para>
+
+    <para>
+     Beginning in <productname>PostgreSQL</productname> 15, it is allowed
+     to declare a <type>numeric</type> column with a negative scale.  Then
+     values will be rounded to the left of the decimal point.  The
+     precision still represents the maximum number of non-rounded digits.
+     Thus, a column declared as
+<programlisting>
+NUMERIC(2, -3)
+</programlisting>
+     will round values to the nearest thousand and can store values
+     between -99000 and 99000, inclusive.
+     It is also allowed to declare a scale larger than the declared
+     precision.  Such a column can only hold fractional values, and it
+     requires the number of zero digits just to the right of the decimal
+     point to be at least the declared scale minus the declared precision.
+     For example, a column declared as
+<programlisting>
+NUMERIC(3, 5)
+</programlisting>
+     will round values to 5 decimal places and can store values between
+     -0.00999 and 0.00999, inclusive.
+    </para>
+
+    <note>
+     <para>
+      <productname>PostgreSQL</productname> permits the scale in a
+      <type>numeric</type> type declaration to be any value in the range
+      -1000 to 1000.  However, the <acronym>SQL</acronym> standard requires
+      the scale to be in the range 0 to <replaceable>precision</replaceable>.
+      Using scales outside that range may not be portable to other database
+      systems.
+     </para>
+    </note>
 
     <para>
      Numeric values are physically stored without any extra leading or

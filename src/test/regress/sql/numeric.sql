@@ -1033,6 +1033,40 @@ INSERT INTO num_input_test(n1) VALUES ('+ infinity');
 SELECT * FROM num_input_test;
 
 --
+-- Test precision and scale typemods
+--
+
+CREATE TABLE num_typemod_test (
+  millions numeric(3, -6),
+  thousands numeric(3, -3),
+  units numeric(3, 0),
+  thousandths numeric(3, 3),
+  millionths numeric(3, 6)
+);
+\d num_typemod_test
+
+-- rounding of valid inputs
+INSERT INTO num_typemod_test VALUES (123456, 123, 0.123, 0.000123, 0.000000123);
+INSERT INTO num_typemod_test VALUES (654321, 654, 0.654, 0.000654, 0.000000654);
+INSERT INTO num_typemod_test VALUES (2345678, 2345, 2.345, 0.002345, 0.000002345);
+INSERT INTO num_typemod_test VALUES (7654321, 7654, 7.654, 0.007654, 0.000007654);
+INSERT INTO num_typemod_test VALUES (12345678, 12345, 12.345, 0.012345, 0.000012345);
+INSERT INTO num_typemod_test VALUES (87654321, 87654, 87.654, 0.087654, 0.000087654);
+INSERT INTO num_typemod_test VALUES (123456789, 123456, 123.456, 0.123456, 0.000123456);
+INSERT INTO num_typemod_test VALUES (987654321, 987654, 987.654, 0.987654, 0.000987654);
+INSERT INTO num_typemod_test VALUES ('NaN', 'NaN', 'NaN', 'NaN', 'NaN');
+
+SELECT scale(millions), * FROM num_typemod_test ORDER BY millions;
+
+-- invalid inputs
+INSERT INTO num_typemod_test (millions) VALUES ('inf');
+INSERT INTO num_typemod_test (millions) VALUES (999500000);
+INSERT INTO num_typemod_test (thousands) VALUES (999500);
+INSERT INTO num_typemod_test (units) VALUES (999.5);
+INSERT INTO num_typemod_test (thousandths) VALUES (0.9995);
+INSERT INTO num_typemod_test (millionths) VALUES (0.0009995);
+
+--
 -- Test some corner cases for multiplication
 --
 

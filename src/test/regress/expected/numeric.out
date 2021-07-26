@@ -2119,6 +2119,69 @@ SELECT * FROM num_input_test;
 (13 rows)
 
 --
+-- Test precision and scale typemods
+--
+CREATE TABLE num_typemod_test (
+  millions numeric(3, -6),
+  thousands numeric(3, -3),
+  units numeric(3, 0),
+  thousandths numeric(3, 3),
+  millionths numeric(3, 6)
+);
+\d num_typemod_test
+               Table "public.num_typemod_test"
+   Column    |     Type      | Collation | Nullable | Default 
+-------------+---------------+-----------+----------+---------
+ millions    | numeric(3,-6) |           |          | 
+ thousands   | numeric(3,-3) |           |          | 
+ units       | numeric(3,0)  |           |          | 
+ thousandths | numeric(3,3)  |           |          | 
+ millionths  | numeric(3,6)  |           |          | 
+
+-- rounding of valid inputs
+INSERT INTO num_typemod_test VALUES (123456, 123, 0.123, 0.000123, 0.000000123);
+INSERT INTO num_typemod_test VALUES (654321, 654, 0.654, 0.000654, 0.000000654);
+INSERT INTO num_typemod_test VALUES (2345678, 2345, 2.345, 0.002345, 0.000002345);
+INSERT INTO num_typemod_test VALUES (7654321, 7654, 7.654, 0.007654, 0.000007654);
+INSERT INTO num_typemod_test VALUES (12345678, 12345, 12.345, 0.012345, 0.000012345);
+INSERT INTO num_typemod_test VALUES (87654321, 87654, 87.654, 0.087654, 0.000087654);
+INSERT INTO num_typemod_test VALUES (123456789, 123456, 123.456, 0.123456, 0.000123456);
+INSERT INTO num_typemod_test VALUES (987654321, 987654, 987.654, 0.987654, 0.000987654);
+INSERT INTO num_typemod_test VALUES ('NaN', 'NaN', 'NaN', 'NaN', 'NaN');
+SELECT scale(millions), * FROM num_typemod_test ORDER BY millions;
+ scale | millions  | thousands | units | thousandths | millionths 
+-------+-----------+-----------+-------+-------------+------------
+     0 |         0 |         0 |     0 |       0.000 |   0.000000
+     0 |   1000000 |      1000 |     1 |       0.001 |   0.000001
+     0 |   2000000 |      2000 |     2 |       0.002 |   0.000002
+     0 |   8000000 |      8000 |     8 |       0.008 |   0.000008
+     0 |  12000000 |     12000 |    12 |       0.012 |   0.000012
+     0 |  88000000 |     88000 |    88 |       0.088 |   0.000088
+     0 | 123000000 |    123000 |   123 |       0.123 |   0.000123
+     0 | 988000000 |    988000 |   988 |       0.988 |   0.000988
+       |       NaN |       NaN |   NaN |         NaN |        NaN
+(9 rows)
+
+-- invalid inputs
+INSERT INTO num_typemod_test (millions) VALUES ('inf');
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale -6 cannot hold an infinite value.
+INSERT INTO num_typemod_test (millions) VALUES (999500000);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale -6 must round to an absolute value less than 10^9.
+INSERT INTO num_typemod_test (thousands) VALUES (999500);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale -3 must round to an absolute value less than 10^6.
+INSERT INTO num_typemod_test (units) VALUES (999.5);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale 0 must round to an absolute value less than 10^3.
+INSERT INTO num_typemod_test (thousandths) VALUES (0.9995);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale 3 must round to an absolute value less than 1.
+INSERT INTO num_typemod_test (millionths) VALUES (0.0009995);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 3, scale 6 must round to an absolute value less than 10^-3.
+--
 -- Test some corner cases for multiplication
 --
 select 4790999999999999999999999999999999999999999999999999999999999999999999999999999999999999 * 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;

@@ -92,6 +92,7 @@ num_exp_sqrt|t
 num_exp_sub|t
 num_input_test|f
 num_result|f
+num_typemod_test|f
 nummultirange_test|t
 numrange_test|t
 onek|t
