@@ -1529,6 +1529,7 @@ create statistics stts_s2.stts_yama (dependencies, mcv) on col1, col3 from stts_
 
 insert into stts_t1 select i,i from generate_series(1,100) i;
 analyze stts_t1;
+set search_path to public, stts_s1, stts_s2, tststats;
 
 \dX
 \dX stts_?
@@ -1538,6 +1539,9 @@ analyze stts_t1;
 \dX+ *stts_hoge
 \dX+ stts_s2.stts_yama
 
+set search_path to public, stts_s1;
+\dX
+
 create role regress_stats_ext nosuperuser;
 set role regress_stats_ext;
 \dX
@@ -1546,6 +1550,7 @@ reset role;
 drop table stts_t1, stts_t2, stts_t3;
 drop schema stts_s1, stts_s2 cascade;
 drop user regress_stats_ext;
+reset search_path;
 
 -- User with no access
 CREATE USER regress_stats_user1;
