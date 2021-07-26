@@ -850,16 +850,26 @@ SELECT 42;
        42
 (1 row)
 
-SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-                                        query                                        | plans | calls | rows 
--------------------------------------------------------------------------------------+-------+-------+------
- ALTER TABLE test ADD COLUMN x int                                                   |     0 |     1 |    0
- CREATE TABLE test ()                                                                |     0 |     1 |    0
- PREPARE prep1 AS SELECT COUNT(*) FROM test                                          |     2 |     4 |    4
- SELECT $1                                                                           |     3 |     3 |    3
- SELECT pg_stat_statements_reset()                                                   |     0 |     1 |    1
- SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |     0 |    0
-(6 rows)
+SELECT query, plans, calls, rows FROM pg_stat_statements
+  WHERE query NOT LIKE 'PREPARE%' ORDER BY query COLLATE "C";
+                          query                           | plans | calls | rows 
+----------------------------------------------------------+-------+-------+------
+ ALTER TABLE test ADD COLUMN x int                        |     0 |     1 |    0
+ CREATE TABLE test ()                                     |     0 |     1 |    0
+ SELECT $1                                                |     3 |     3 |    3
+ SELECT pg_stat_statements_reset()                        |     0 |     1 |    1
+ SELECT query, plans, calls, rows FROM pg_stat_statements+|     1 |     0 |    0
+   WHERE query NOT LIKE $1 ORDER BY query COLLATE "C"     |       |       | 
+(5 rows)
+
+-- for the prepared statement we expect at least one replan, but cache
+-- invalidations could force more
+SELECT query, plans >= 2 AND plans <= calls AS plans_ok, calls, rows FROM pg_stat_statements
+  WHERE query LIKE 'PREPARE%' ORDER BY query COLLATE "C";
+                   query                    | plans_ok | calls | rows 
+--------------------------------------------+----------+-------+------
+ PREPARE prep1 AS SELECT COUNT(*) FROM test | t        |     4 |    4
+(1 row)
 
 --
 -- access to pg_stat_statements_info view
