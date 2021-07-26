@@ -1615,7 +1615,6 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
 	SysScanDesc tgscan;
 	ScanKeyData key;
 	HeapTuple	tuple;
-	int			found PG_USED_FOR_ASSERTS_ONLY = 0;
 
 	/*
 	 * Given a relation and the OID of a trigger on parent relation, find the
@@ -1635,8 +1634,6 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
 
 		if (tgform->tgparentid != parentTriggerOid)
 			continue;			/* not our trigger */
-
-		Assert(found++ <= 0);
 
 		partitionRel = table_open(partitionId, NoLock);
 
@@ -1658,6 +1655,9 @@ renametrig_partition(Relation tgrel, Oid partitionId, Oid parentTriggerOid,
 			}
 		}
 		table_close(partitionRel, NoLock);
+
+		/* There should be at most one matching tuple */
+		break;
 	}
 	systable_endscan(tgscan);
 }
