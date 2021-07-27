@@ -2573,8 +2573,9 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Returns starting index of specified <parameter>substring</parameter>
-        within <parameter>string</parameter>, or zero if it's not present.
+        Returns first starting index of the specified
+        <parameter>substring</parameter> within
+        <parameter>string</parameter>, or zero if it's not present.
        </para>
        <para>
         <literal>position('om' in 'Thomas')</literal>
@@ -2617,7 +2618,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Extracts substring matching POSIX regular expression; see
+        Extracts the first substring matching POSIX regular expression; see
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
@@ -2636,7 +2637,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Extracts substring matching <acronym>SQL</acronym> regular expression;
+        Extracts the first substring matching <acronym>SQL</acronym> regular expression;
         see <xref linkend="functions-similarto-regexp"/>.  The first form has
         been specified since SQL:2003; the second form was only in SQL:1999
         and should be considered obsolete.
@@ -3116,7 +3117,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
-        Returns captured substring(s) resulting from the first match of a POSIX
+        Returns captured substrings resulting from the first match of a POSIX
         regular expression to the <parameter>string</parameter>; see
         <xref linkend="functions-posix-regexp"/>.
        </para>
@@ -3135,9 +3136,10 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>setof text[]</returnvalue>
        </para>
        <para>
-        Returns captured substring(s) resulting from matching a POSIX regular
-        expression to the <parameter>string</parameter>; see
-        <xref linkend="functions-posix-regexp"/>.
+        Returns captured substrings resulting from the first match of a
+        POSIX regular expression to the <parameter>string</parameter>,
+        or multiple matches if the <literal>g</literal> flag is used;
+        see <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
         <literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal>
@@ -3158,8 +3160,10 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Replaces substring(s) matching a POSIX regular expression; see
-        <xref linkend="functions-posix-regexp"/>.
+        Replaces substrings resulting from the first match of a
+        POSIX regular expression, or multiple substring matches
+        if the <literal>g</literal> flag is used; see <xref
+        linkend="functions-posix-regexp"/>.
        </para>
        <para>
         <literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal>
@@ -3364,7 +3368,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Returns starting index of specified <parameter>substring</parameter>
+        Returns first starting index of the specified <parameter>substring</parameter>
         within <parameter>string</parameter>, or zero if it's not present.
         (Same as <literal>position(<parameter>substring</parameter> in
         <parameter>string</parameter>)</literal>, but note the reversed
@@ -3965,8 +3969,9 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Returns starting index of specified <parameter>substring</parameter>
-        within <parameter>bytes</parameter>, or zero if it's not present.
+        Returns first starting index of the specified
+        <parameter>substring</parameter> within
+        <parameter>bytes</parameter>, or zero if it's not present.
        </para>
        <para>
         <literal>position('\x5678'::bytea in '\x1234567890'::bytea)</literal>
@@ -4892,7 +4897,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Returns starting index of specified <parameter>substring</parameter>
+        Returns first starting index of the specified <parameter>substring</parameter>
         within <parameter>bits</parameter>, or zero if it's not present.
        </para>
        <para>
@@ -5518,7 +5523,7 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
      <replaceable>pattern</replaceable>)</function>, provides extraction of a
      substring
      that matches a POSIX regular expression pattern.  It returns null if
-     there is no match, otherwise the portion of the text that matched the
+     there is no match, otherwise the first portion of the text that matched the
      pattern.  But if the pattern contains any parentheses, the portion
      of the text that matched the first parenthesized subexpression (the
      one whose left parenthesis comes first) is
