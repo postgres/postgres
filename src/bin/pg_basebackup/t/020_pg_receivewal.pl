@@ -111,7 +111,7 @@ SKIP:
 	# of the previous partial, now-completed WAL segment is updated, keeping
 	# its base number.
 	$partial_wals[0] =~ s/\.partial$/.gz/;
-	is($zlib_wals[0] =~ m/$partial_wals[0]/,
+	is($zlib_wals[0] eq $partial_wals[0],
 		1, "one partial WAL segment is now completed");
 	# Update the list of partial wals with the current one.
 	@partial_wals = @zlib_partial_wals;
