@@ -57,17 +57,17 @@ test_shm_mq(PG_FUNCTION_ARGS)
 	if (loop_count < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("repeat count size must be a non-negative integer")));
+				 errmsg("repeat count size must be an integer value greater than or equal to zero")));
 
 	/*
 	 * Since this test sends data using the blocking interfaces, it cannot
 	 * send data to itself.  Therefore, a minimum of 1 worker is required. Of
 	 * course, a negative worker count is nonsensical.
 	 */
-	if (nworkers < 1)
+	if (nworkers <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of workers must be a positive integer")));
+				 errmsg("number of workers must be an integer value greater than zero")));
 
 	/* Set up dynamic shared memory segment and background workers. */
 	test_shm_mq_setup(queue_size, nworkers, &seg, &outqh, &inqh);
@@ -149,7 +149,7 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 	if (loop_count < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("repeat count size must be a non-negative integer")));
+				 errmsg("repeat count size must be an integer value greater than or equal to zero")));
 
 	/*
 	 * Using the nonblocking interfaces, we can even send data to ourselves,
@@ -158,7 +158,7 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 	if (nworkers < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of workers must be a non-negative integer")));
+				 errmsg("number of workers must be an integer value greater than or equal to zero")));
 
 	/* Set up dynamic shared memory segment and background workers. */
 	test_shm_mq_setup(queue_size, nworkers, &seg, &outqh, &inqh);

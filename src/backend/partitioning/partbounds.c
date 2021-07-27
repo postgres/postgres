@@ -2761,11 +2761,11 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 	if (modulus <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("modulus for hash partition must be a positive integer")));
+				 errmsg("modulus for hash partition must be an integer value greater than zero")));
 	if (remainder < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("remainder for hash partition must be a non-negative integer")));
+				 errmsg("remainder for hash partition must be an integer value greater than or equal to zero")));
 	if (remainder >= modulus)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
