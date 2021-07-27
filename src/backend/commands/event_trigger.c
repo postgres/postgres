@@ -1982,11 +1982,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 								elog(ERROR,
 									 "invalid null namespace in object %u/%u/%d",
 									 addr.classId, addr.objectId, addr.objectSubId);
-							/* XXX not quite get_namespace_name_or_temp */
-							if (isAnyTempNamespace(schema_oid))
-								schema = pstrdup("pg_temp");
-							else
-								schema = get_namespace_name(schema_oid);
+							schema = get_namespace_name_or_temp(schema_oid);
 
 							table_close(catalog, AccessShareLock);
 						}
