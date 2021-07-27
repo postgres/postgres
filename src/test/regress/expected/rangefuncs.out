@@ -1609,7 +1609,7 @@ DROP FUNCTION dup(f1 anycompatiblerange);
 CREATE FUNCTION bad (f1 anyarray, out f2 anycompatible, out f3 anycompatiblearray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 ERROR:  cannot determine result data type
-DETAIL:  A result of type anycompatible requires at least one input of type anycompatible, anycompatiblearray, anycompatiblenonarray, or anycompatiblerange.
+DETAIL:  A result of type anycompatible requires at least one input of type anycompatible, anycompatiblearray, anycompatiblenonarray, anycompatiblerange, or anycompatiblemultirange.
 --
 -- table functions
 --

@@ -126,6 +126,54 @@ select x, pg_typeof(x), y, pg_typeof(y)
 drop function polyf(a anyelement, b anyarray,
                     c anycompatible, d anycompatible);
 
+create function polyf(anyrange) returns anymultirange
+as 'select multirange($1);' language sql;
+
+select polyf(int4range(1,10));
+select polyf(null);
+
+drop function polyf(anyrange);
+
+create function polyf(anymultirange) returns anyelement
+as 'select lower($1);' language sql;
+
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+select polyf(null);
+
+drop function polyf(anymultirange);
+
+create function polyf(anycompatiblerange) returns anycompatiblemultirange
+as 'select multirange($1);' language sql;
+
+select polyf(int4range(1,10));
+select polyf(null);
+
+drop function polyf(anycompatiblerange);
+
+create function polyf(anymultirange) returns anyrange
+as 'select range_merge($1);' language sql;
+
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+select polyf(null);
+
+drop function polyf(anymultirange);
+
+create function polyf(anycompatiblemultirange) returns anycompatiblerange
+as 'select range_merge($1);' language sql;
+
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+select polyf(null);
+
+drop function polyf(anycompatiblemultirange);
+
+create function polyf(anycompatiblemultirange) returns anycompatible
+as 'select lower($1);' language sql;
+
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+select polyf(null);
+
+drop function polyf(anycompatiblemultirange);
+
 
 --
 -- Polymorphic aggregate tests
