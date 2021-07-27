@@ -346,6 +346,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 			continue;
 		if (gconf->context < PGC_SIGHUP)
 		{
+			/* The removal can't be effective without a restart */
+			gconf->status |= GUC_PENDING_RESTART;
 			ereport(elevel,
 					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 					 errmsg("parameter \"%s\" cannot be changed without restarting the server",
