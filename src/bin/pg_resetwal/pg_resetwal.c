@@ -62,6 +62,7 @@ static XLogSegNo newXlogSegNo;	/* new XLOG segment # */
 static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
 static uint32 set_xid_epoch = (uint32) -1;
+static TransactionId set_oldest_xid = 0;
 static TransactionId set_xid = 0;
 static TransactionId set_oldest_commit_ts_xid = 0;
 static TransactionId set_newest_commit_ts_xid = 0;
@@ -115,7 +116,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "c:D:e:fl:m:no:O:x:")) != -1)
+	while ((c = getopt(argc, argv, "c:D:e:fl:m:no:O:u:x:")) != -1)
 	{
 		switch (c)
 		{
@@ -144,6 +145,21 @@ main(int argc, char *argv[])
 				if (set_xid_epoch == -1)
 				{
 					fprintf(stderr, _("%s: transaction ID epoch (-e) must not be -1\n"), progname);
+					exit(1);
+				}
+				break;
+
+			case 'u':
+				set_oldest_xid = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("invalid argument for option %s"), "-u");
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (!TransactionIdIsNormal(set_oldest_xid))
+				{
+					fprintf(stderr, _("oldest transaction ID (-u) must be greater or equal to %u"), FirstNormalTransactionId);
 					exit(1);
 				}
 				break;
@@ -369,22 +385,14 @@ main(int argc, char *argv[])
 	if (set_xid_epoch != -1)
 		ControlFile.checkPointCopy.nextXidEpoch = set_xid_epoch;
 
-	if (set_xid != 0)
+	if (set_oldest_xid != 0)
 	{
-		ControlFile.checkPointCopy.nextXid = set_xid;
-
-		/*
-		 * For the moment, just set oldestXid to a value that will force
-		 * immediate autovacuum-for-wraparound.  It's not clear whether adding
-		 * user control of this is useful, so let's just do something that's
-		 * reasonably safe.  The magic constant here corresponds to the
-		 * maximum allowed value of autovacuum_freeze_max_age.
-		 */
-		ControlFile.checkPointCopy.oldestXid = set_xid - 2000000000;
-		if (ControlFile.checkPointCopy.oldestXid < FirstNormalTransactionId)
-			ControlFile.checkPointCopy.oldestXid += FirstNormalTransactionId;
+		ControlFile.checkPointCopy.oldestXid = set_oldest_xid;
 		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	}
+
+	if (set_xid != 0)
+		ControlFile.checkPointCopy.nextXid = set_xid;
 
 	if (set_oldest_commit_ts_xid != 0)
 		ControlFile.checkPointCopy.oldestCommitTsXid = set_oldest_commit_ts_xid;
@@ -1239,6 +1247,7 @@ usage(void)
 	printf(_("  -n               no update, just show what would be done (for testing)\n"));
 	printf(_("  -o OID           set next OID\n"));
 	printf(_("  -O OFFSET        set next multitransaction offset\n"));
+	printf(_("  -u XID           set oldest transaction ID\n"));
 	printf(_("  -V, --version    output version information, then exit\n"));
 	printf(_("  -x XID           set next transaction ID\n"));
 	printf(_("  -?, --help       show this help, then exit\n"));
