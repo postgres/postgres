@@ -2854,7 +2854,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 				{
 					char	   *namespace;
 
-					namespace = get_namespace_name(get_rel_namespace(rte->relid));
+					namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
 					appendStringInfo(relations, "%s.%s",
 									 quote_identifier(namespace),
 									 quote_identifier(relname));

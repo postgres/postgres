@@ -104,5 +104,14 @@ select jsonb_pretty(
 
 rollback;
 
+-- Test display of temporary objects
+create temp table t1(f1 float8);
+
+create function pg_temp.mysin(float8) returns float8 language plpgsql
+as 'begin return sin($1); end';
+
+select explain_filter('explain (verbose) select * from t1 where pg_temp.mysin(f1) < 0.5');
+
+-- Test compute_query_id
 set compute_query_id = on;
 select explain_filter('explain (verbose) select * from int8_tbl i8');

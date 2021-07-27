@@ -1617,7 +1617,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 
 	if (!columns_only)
 	{
-		nsp = get_namespace_name(statextrec->stxnamespace);
+		nsp = get_namespace_name_or_temp(statextrec->stxnamespace);
 		appendStringInfo(&buf, "CREATE STATISTICS %s",
 						 quote_qualified_identifier(nsp,
 													NameStr(statextrec->stxname)));
@@ -2811,7 +2811,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	 * We always qualify the function name, to ensure the right function gets
 	 * replaced.
 	 */
-	nsp = get_namespace_name(proc->pronamespace);
+	nsp = get_namespace_name_or_temp(proc->pronamespace);
 	appendStringInfo(&buf, "CREATE OR REPLACE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 quote_qualified_identifier(nsp, name));
@@ -11183,7 +11183,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 			appendStringInfo(buf, " %s", quote_identifier(opcname));
 		else
 		{
-			nspname = get_namespace_name(opcrec->opcnamespace);
+			nspname = get_namespace_name_or_temp(opcrec->opcnamespace);
 			appendStringInfo(buf, " %s.%s",
 							 quote_identifier(nspname),
 							 quote_identifier(opcname));
@@ -11495,7 +11495,7 @@ generate_relation_name(Oid relid, List *namespaces)
 		need_qual = !RelationIsVisible(relid);
 
 	if (need_qual)
-		nspname = get_namespace_name(reltup->relnamespace);
+		nspname = get_namespace_name_or_temp(reltup->relnamespace);
 	else
 		nspname = NULL;
 
@@ -11527,7 +11527,7 @@ generate_qualified_relation_name(Oid relid)
 	reltup = (Form_pg_class) GETSTRUCT(tp);
 	relname = NameStr(reltup->relname);
 
-	nspname = get_namespace_name(reltup->relnamespace);
+	nspname = get_namespace_name_or_temp(reltup->relnamespace);
 	if (!nspname)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 reltup->relnamespace);
@@ -11639,7 +11639,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 		p_funcid == funcid)
 		nspname = NULL;
 	else
-		nspname = get_namespace_name(procform->pronamespace);
+		nspname = get_namespace_name_or_temp(procform->pronamespace);
 
 	result = quote_qualified_identifier(nspname, proname);
 
@@ -11702,7 +11702,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 		nspname = NULL;
 	else
 	{
-		nspname = get_namespace_name(operform->oprnamespace);
+		nspname = get_namespace_name_or_temp(operform->oprnamespace);
 		appendStringInfo(&buf, "OPERATOR(%s.", quote_identifier(nspname));
 	}
 
@@ -11790,7 +11790,7 @@ add_cast_to(StringInfo buf, Oid typid)
 	typform = (Form_pg_type) GETSTRUCT(typetup);
 
 	typname = NameStr(typform->typname);
-	nspname = get_namespace_name(typform->typnamespace);
+	nspname = get_namespace_name_or_temp(typform->typnamespace);
 
 	appendStringInfo(buf, "::%s.%s",
 					 quote_identifier(nspname), quote_identifier(typname));
@@ -11822,7 +11822,7 @@ generate_qualified_type_name(Oid typid)
 	typtup = (Form_pg_type) GETSTRUCT(tp);
 	typname = NameStr(typtup->typname);
 
-	nspname = get_namespace_name(typtup->typnamespace);
+	nspname = get_namespace_name_or_temp(typtup->typnamespace);
 	if (!nspname)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 typtup->typnamespace);
@@ -11856,7 +11856,7 @@ generate_collation_name(Oid collid)
 	collname = NameStr(colltup->collname);
 
 	if (!CollationIsVisible(collid))
-		nspname = get_namespace_name(colltup->collnamespace);
+		nspname = get_namespace_name_or_temp(colltup->collnamespace);
 	else
 		nspname = NULL;
 

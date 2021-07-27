@@ -3747,7 +3747,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
 			if (es->verbose)
-				namespace = get_namespace_name(get_rel_namespace(rte->relid));
+				namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
 			objecttag = "Relation Name";
 			break;
 		case T_FunctionScan:
@@ -3774,8 +3774,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 						objectname = get_func_name(funcid);
 						if (es->verbose)
-							namespace =
-								get_namespace_name(get_func_namespace(funcid));
+							namespace = get_namespace_name_or_temp(get_func_namespace(funcid));
 					}
 				}
 				objecttag = "Function Name";
