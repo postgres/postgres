@@ -1579,8 +1579,10 @@ select_common_typmod(ParseState *pstate, List *exprs, Oid common_type)
  * 1) All arguments declared ANYELEMENT must have the same datatype.
  * 2) All arguments declared ANYARRAY must have the same datatype,
  *	  which must be a varlena array type.
- * 3) All arguments declared ANYRANGE or ANYMULTIRANGE must be a range or
- *	  multirange type, all derived from the same base datatype.
+ * 3) All arguments declared ANYRANGE must be the same range type.
+ *	  Similarly, all arguments declared ANYMULTIRANGE must be the same
+ *	  multirange type; and if both of these appear, the ANYRANGE type
+ *	  must be the element type of the ANYMULTIRANGE type.
  * 4) If there are arguments of more than one of these polymorphic types,
  *	  the array element type and/or range subtype must be the same as each
  *	  other and the same as the ANYELEMENT type.
@@ -1605,9 +1607,11 @@ select_common_typmod(ParseState *pstate, List *exprs, Oid common_type)
  *	  let us choose one over another.  Furthermore, that range's subtype
  *	  must exactly match the common supertype chosen by rule 7.
  * 10) All ANYCOMPATIBLEMULTIRANGE arguments must be the exact same multirange
- *	  type (after domain flattening), since we have no preference rule that would
- *	  let us choose one over another.  Furthermore, that multirange's range's
- *	  subtype must exactly match the common supertype chosen by rule 7.
+ *	  type (after domain flattening), since we have no preference rule that
+ *	  would let us choose one over another.  Furthermore, if ANYCOMPATIBLERANGE
+ *	  also appears, that range type must be the multirange's element type;
+ *	  otherwise, the multirange's range's subtype must exactly match the
+ *	  common supertype chosen by rule 7.
  *
  * Domains over arrays match ANYARRAY, and are immediately flattened to their
  * base type.  (Thus, for example, we will consider it a match if one ANYARRAY
@@ -1616,9 +1620,9 @@ select_common_typmod(ParseState *pstate, List *exprs, Oid common_type)
  * for ANYCOMPATIBLEARRAY and ANYCOMPATIBLENONARRAY.
  *
  * Similarly, domains over ranges match ANYRANGE or ANYCOMPATIBLERANGE,
- * and are immediately flattened to their base type, and domains over
- * multiranges match ANYMULTIRANGE or ANYCOMPATIBLEMULTIRANGE and are immediately
- * flattened to their base type.
+ * and are immediately flattened to their base type.  Likewise, domains
+ * over multiranges match ANYMULTIRANGE or ANYCOMPATIBLEMULTIRANGE and are
+ * immediately flattened to their base type.
  *
  * Note that domains aren't currently considered to match ANYENUM,
  * even if their base type would match.
@@ -1760,26 +1764,7 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 				anycompatible_multirange_typelem = get_multirange_range(actual_type);
 				if (!OidIsValid(anycompatible_multirange_typelem))
 					return false;	/* not a multirange type */
-
-				if (OidIsValid(anycompatible_range_typeid))
-				{
-					/*
-					 * ANYCOMPATIBLEMULTIRANGE and ANYCOMPATIBLERANGE
-					 * arguments must match
-					 */
-					if (anycompatible_range_typeid != anycompatible_multirange_typelem)
-						return false;
-				}
-				else
-				{
-					anycompatible_range_typeid = anycompatible_multirange_typelem;
-					anycompatible_range_typelem = get_range_subtype(anycompatible_range_typeid);
-					if (!OidIsValid(anycompatible_range_typelem))
-						return false;	/* not a range type */
-				}
-				/* collect the subtype for common-supertype choice */
-				anycompatible_actual_types[n_anycompatible_args++] =
-					anycompatible_range_typelem;
+				/* we'll consider the subtype below */
 			}
 		}
 	}
@@ -1825,28 +1810,7 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 		}
 	}
 
-	/* Get the element type based on the range type, if we have one */
-	if (OidIsValid(range_typeid))
-	{
-		range_typelem = get_range_subtype(range_typeid);
-		if (!OidIsValid(range_typelem))
-			return false;		/* should be a range, but isn't */
-
-		if (!OidIsValid(elem_typeid))
-		{
-			/*
-			 * if we don't have an element type yet, use the one we just got
-			 */
-			elem_typeid = range_typelem;
-		}
-		else if (range_typelem != elem_typeid)
-		{
-			/* otherwise, they better match */
-			return false;
-		}
-	}
-
-	/* Get the element type based on the multirange type, if we have one */
+	/* Deduce range type from multirange type, or check that they agree */
 	if (OidIsValid(multirange_typeid))
 	{
 		Oid			multirange_typelem;
@@ -1857,9 +1821,7 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 
 		if (!OidIsValid(range_typeid))
 		{
-			/*
-			 * If we don't have a range type yet, use the one we just got
-			 */
+			/* If we don't have a range type yet, use the one we just got */
 			range_typeid = multirange_typelem;
 			range_typelem = get_range_subtype(multirange_typelem);
 			if (!OidIsValid(range_typelem))
@@ -1870,6 +1832,14 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 			/* otherwise, they better match */
 			return false;
 		}
+	}
+
+	/* Get the element type based on the range type, if we have one */
+	if (OidIsValid(range_typeid))
+	{
+		range_typelem = get_range_subtype(range_typeid);
+		if (!OidIsValid(range_typelem))
+			return false;		/* should be a range, but isn't */
 
 		if (!OidIsValid(elem_typeid))
 		{
@@ -1897,6 +1867,27 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 		/* require the element type to be an enum */
 		if (!type_is_enum(elem_typeid))
 			return false;
+	}
+
+	/* Deduce range type from multirange type, or check that they agree */
+	if (OidIsValid(anycompatible_multirange_typeid))
+	{
+		if (OidIsValid(anycompatible_range_typeid))
+		{
+			if (anycompatible_multirange_typelem !=
+				anycompatible_range_typeid)
+				return false;
+		}
+		else
+		{
+			anycompatible_range_typeid = anycompatible_multirange_typelem;
+			anycompatible_range_typelem = get_range_subtype(anycompatible_range_typeid);
+			if (!OidIsValid(anycompatible_range_typelem))
+				return false;	/* not a range type */
+			/* collect the subtype for common-supertype choice */
+			anycompatible_actual_types[n_anycompatible_args++] =
+				anycompatible_range_typelem;
+		}
 	}
 
 	/* Check matching of ANYCOMPATIBLE-family arguments, if any */
@@ -1966,39 +1957,41 @@ check_generic_type_consistency(const Oid *actual_arg_types,
  * 2) If return type is ANYARRAY, and any argument is ANYARRAY, use the
  *	  argument's actual type as the function's return type.
  * 3) Similarly, if return type is ANYRANGE or ANYMULTIRANGE, and any
- *	  argument is ANYRANGE or ANYMULTIRANGE, use that argument's
- *	  actual type, range type or multirange type as the function's return
+ *	  argument is ANYRANGE or ANYMULTIRANGE, use that argument's actual type
+ *	  (or the corresponding range or multirange type) as the function's return
  *	  type.
- * 4) Otherwise, if return type is ANYMULTIRANGE, and any argument is
- *	  ANYMULTIRANGE, use the argument's actual type as the function's return
- *	  type. Or if any argument is ANYRANGE, use its multirange type as the
- *	  function's return type.
- * 5) Otherwise, if return type is ANYELEMENT or ANYARRAY, and there is
- *	  at least one ANYELEMENT, ANYARRAY, or ANYRANGE input, deduce the
- *	  return type from those inputs, or throw error if we can't.
- * 6) Otherwise, if return type is ANYRANGE or ANYMULTIRANGE, throw error.
+ * 4) Otherwise, if return type is ANYELEMENT or ANYARRAY, and there is
+ *	  at least one ANYELEMENT, ANYARRAY, ANYRANGE, or ANYMULTIRANGE input,
+ *	  deduce the return type from those inputs, or throw error if we can't.
+ * 5) Otherwise, if return type is ANYRANGE or ANYMULTIRANGE, throw error.
  *	  (We have no way to select a specific range type if the arguments don't
- *	  include ANYRANGE.)
+ *	  include ANYRANGE or ANYMULTIRANGE.)
+ * 6) ANYENUM is treated the same as ANYELEMENT except that if it is used
  *	  (alone or in combination with plain ANYELEMENT), we add the extra
  *	  condition that the ANYELEMENT type must be an enum.
- * 8) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
+ * 7) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
- * 9) ANYCOMPATIBLE, ANYCOMPATIBLEARRAY, ANYCOMPATIBLENONARRAY, and
- *	  ANYCOMPATIBLERANGE are handled by resolving the common supertype
- *	  of those arguments (or their element types/subtypes, for array and range
- *	  inputs), and then coercing all those arguments to the common supertype,
- *	  or the array type over the common supertype for ANYCOMPATIBLEARRAY.
- *	  For ANYCOMPATIBLERANGE, there must be at least one non-UNKNOWN input,
- *	  all such inputs must be the same range type, and that type's subtype
- *	  must equal the common supertype.
+ * 8) ANYCOMPATIBLE, ANYCOMPATIBLEARRAY, and ANYCOMPATIBLENONARRAY are handled
+ *	  by resolving the common supertype of those arguments (or their element
+ *	  types, for array inputs), and then coercing all those arguments to the
+ *	  common supertype, or the array type over the common supertype for
+ *	  ANYCOMPATIBLEARRAY.
+ * 9) For ANYCOMPATIBLERANGE and ANYCOMPATIBLEMULTIRANGE, there must be at
+ *	  least one non-UNKNOWN input matching those arguments, and all such
+ *	  inputs must be the same range type (or its multirange type, as
+ *	  appropriate), since we cannot deduce a range type from non-range types.
+ *	  Furthermore, the range type's subtype is included while choosing the
+ *	  common supertype for ANYCOMPATIBLE et al, and it must exactly match
+ *	  that common supertype.
  *
  * Domains over arrays or ranges match ANYARRAY or ANYRANGE arguments,
  * respectively, and are immediately flattened to their base type.  (In
  * particular, if the return type is also ANYARRAY or ANYRANGE, we'll set
  * it to the base type not the domain type.)  The same is true for
- * ANYCOMPATIBLEARRAY and ANYCOMPATIBLERANGE.
+ * ANYMULTIRANGE, ANYCOMPATIBLEARRAY, ANYCOMPATIBLERANGE, and
+ * ANYCOMPATIBLEMULTIRANGE.
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
@@ -2046,13 +2039,13 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	Oid			anycompatible_range_typelem = InvalidOid;
 	Oid			anycompatible_multirange_typeid = InvalidOid;
 	Oid			anycompatible_multirange_typelem = InvalidOid;
-	Oid			range_typelem;
-	Oid			multirange_typelem;
 	bool		have_anynonarray = (rettype == ANYNONARRAYOID);
 	bool		have_anyenum = (rettype == ANYENUMOID);
+	bool		have_anymultirange = (rettype == ANYMULTIRANGEOID);
 	bool		have_anycompatible_nonarray = (rettype == ANYCOMPATIBLENONARRAYOID);
 	bool		have_anycompatible_array = (rettype == ANYCOMPATIBLEARRAYOID);
 	bool		have_anycompatible_range = (rettype == ANYCOMPATIBLERANGEOID);
+	bool		have_anycompatible_multirange = (rettype == ANYCOMPATIBLEMULTIRANGEOID);
 	int			n_poly_args = 0;	/* this counts all family-1 arguments */
 	int			n_anycompatible_args = 0;	/* this counts only non-unknowns */
 	Oid			anycompatible_actual_types[FUNC_MAX_ARGS];
@@ -2135,6 +2128,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		else if (decl_type == ANYMULTIRANGEOID)
 		{
 			n_poly_args++;
+			have_anymultirange = true;
 			if (actual_type == UNKNOWNOID)
 			{
 				have_poly_unknowns = true;
@@ -2223,6 +2217,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		else if (decl_type == ANYCOMPATIBLEMULTIRANGEOID)
 		{
 			have_poly_anycompatible = true;
+			have_anycompatible_multirange = true;
 			if (actual_type == UNKNOWNOID)
 				continue;
 			if (allow_poly && decl_type == actual_type)
@@ -2243,15 +2238,13 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			{
 				anycompatible_multirange_typeid = actual_type;
 				anycompatible_multirange_typelem = get_multirange_range(actual_type);
-				anycompatible_range_typelem = get_range_subtype(anycompatible_multirange_typelem);
 				if (!OidIsValid(anycompatible_multirange_typelem))
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("argument declared %s is not a multirange type but type %s",
 									"anycompatiblemultirange",
 									format_type_be(actual_type))));
-				/* collect the subtype for common-supertype choice */
-				anycompatible_actual_types[n_anycompatible_args++] = anycompatible_range_typelem;
+				/* we'll consider the subtype below */
 			}
 		}
 	}
@@ -2319,9 +2312,47 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			}
 		}
 
+		/* Deduce range type from multirange type, or vice versa */
+		if (OidIsValid(multirange_typeid))
+		{
+			Oid			multirange_typelem;
+
+			multirange_typelem = get_multirange_range(multirange_typeid);
+			if (!OidIsValid(multirange_typelem))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared %s is not a multirange type but type %s",
+								"anymultirange",
+								format_type_be(multirange_typeid))));
+
+			if (!OidIsValid(range_typeid))
+			{
+				/* if we don't have a range type yet, use the one we just got */
+				range_typeid = multirange_typelem;
+			}
+			else if (multirange_typelem != range_typeid)
+			{
+				/* otherwise, they better match */
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared %s is not consistent with argument declared %s",
+								"anymultirange", "anyrange"),
+						 errdetail("%s versus %s",
+								   format_type_be(multirange_typeid),
+								   format_type_be(range_typeid))));
+			}
+		}
+		else if (have_anymultirange && OidIsValid(range_typeid))
+		{
+			multirange_typeid = get_range_multirange(range_typeid);
+			/* We'll complain below if that didn't work */
+		}
+
 		/* Get the element type based on the range type, if we have one */
 		if (OidIsValid(range_typeid))
 		{
+			Oid			range_typelem;
+
 			range_typelem = get_range_subtype(range_typeid);
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
@@ -2350,62 +2381,6 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 								   format_type_be(elem_typeid))));
 			}
 		}
-		else
-			range_typelem = InvalidOid;
-
-		/* Get the element type based on the multirange type, if we have one */
-		if (OidIsValid(multirange_typeid))
-		{
-			multirange_typelem = get_multirange_range(multirange_typeid);
-			if (!OidIsValid(multirange_typelem))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not a multirange type but type %s",
-								"anymultirange",
-								format_type_be(multirange_typeid))));
-
-			if (!OidIsValid(range_typeid))
-			{
-				/*
-				 * If we don't have a range type yet, use the one we just got
-				 */
-				range_typeid = multirange_typelem;
-				range_typelem = get_range_subtype(range_typeid);
-			}
-			else if (multirange_typelem != range_typeid)
-			{
-				/* otherwise, they better match */
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not consistent with argument declared %s",
-								"anymultirange", "anyrange"),
-						 errdetail("%s versus %s",
-								   format_type_be(multirange_typeid),
-								   format_type_be(range_typeid))));
-			}
-
-			if (!OidIsValid(elem_typeid))
-			{
-				/*
-				 * if we don't have an element type yet, use the one we just
-				 * got
-				 */
-				elem_typeid = range_typelem;
-			}
-			else if (range_typelem != elem_typeid)
-			{
-				/* otherwise, they better match */
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not consistent with argument declared %s",
-								"anymultirange", "anyelement"),
-						 errdetail("%s versus %s",
-								   format_type_be(multirange_typeid),
-								   format_type_be(elem_typeid))));
-			}
-		}
-		else
-			multirange_typelem = InvalidOid;
 
 		if (!OidIsValid(elem_typeid))
 		{
@@ -2456,6 +2431,46 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	/* Check matching of family-2 polymorphic arguments, if any */
 	if (have_poly_anycompatible)
 	{
+		/* Deduce range type from multirange type, or vice versa */
+		if (OidIsValid(anycompatible_multirange_typeid))
+		{
+			if (OidIsValid(anycompatible_range_typeid))
+			{
+				if (anycompatible_multirange_typelem !=
+					anycompatible_range_typeid)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("argument declared %s is not consistent with argument declared %s",
+									"anycompatiblemultirange",
+									"anycompatiblerange"),
+							 errdetail("%s versus %s",
+									   format_type_be(anycompatible_multirange_typeid),
+									   format_type_be(anycompatible_range_typeid))));
+			}
+			else
+			{
+				anycompatible_range_typeid = anycompatible_multirange_typelem;
+				anycompatible_range_typelem = get_range_subtype(anycompatible_range_typeid);
+				if (!OidIsValid(anycompatible_range_typelem))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("argument declared %s is not a multirange type but type %s",
+									"anycompatiblemultirange",
+									format_type_be(anycompatible_multirange_typeid))));
+				/* this enables element type matching check below */
+				have_anycompatible_range = true;
+				/* collect the subtype for common-supertype choice */
+				anycompatible_actual_types[n_anycompatible_args++] =
+					anycompatible_range_typelem;
+			}
+		}
+		else if (have_anycompatible_multirange &&
+				 OidIsValid(anycompatible_range_typeid))
+		{
+			anycompatible_multirange_typeid = get_range_multirange(anycompatible_range_typeid);
+			/* We'll complain below if that didn't work */
+		}
+
 		if (n_anycompatible_args > 0)
 		{
 			anycompatible_typeid =
@@ -2494,6 +2509,27 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 									format_type_be(anycompatible_typeid))));
 			}
 
+			if (have_anycompatible_multirange)
+			{
+				/* we can't infer a multirange type from the others */
+				if (!OidIsValid(anycompatible_multirange_typeid))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anycompatiblemultirange", "unknown")));
+
+				/*
+				 * the anycompatible type must exactly match the multirange
+				 * element type
+				 */
+				if (anycompatible_range_typelem != anycompatible_typeid)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("anycompatiblemultirange type %s does not match anycompatible type %s",
+									format_type_be(anycompatible_multirange_typeid),
+									format_type_be(anycompatible_typeid))));
+			}
+
 			if (have_anycompatible_nonarray)
 			{
 				/*
@@ -2522,7 +2558,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 				 * Only way to get here is if all the family-2 polymorphic
 				 * arguments have UNKNOWN inputs.  Resolve to TEXT as
 				 * select_common_type() would do.  That doesn't license us to
-				 * use TEXTRANGE, though.
+				 * use TEXTRANGE or TEXTMULTIRANGE, though.
 				 */
 				anycompatible_typeid = TEXTOID;
 				anycompatible_array_typeid = TEXTARRAYOID;
@@ -2531,6 +2567,11 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("could not determine polymorphic type %s because input has type %s",
 									"anycompatiblerange", "unknown")));
+				if (have_anycompatible_multirange)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anycompatiblemultirange", "unknown")));
 			}
 		}
 
@@ -2602,10 +2643,11 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			{
 				if (!OidIsValid(multirange_typeid))
 				{
+					/* we can't infer a multirange type from the others */
 					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("could not find multirange type for data type %s",
-									format_type_be(elem_typeid))));
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anymultirange", "unknown")));
 				}
 				declared_arg_types[j] = multirange_typeid;
 			}
@@ -2640,24 +2682,20 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		if (!OidIsValid(range_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not determine polymorphic type %s because input has type %s",
-							"anyrange", "unknown")));
+					 errmsg_internal("could not determine polymorphic type %s because input has type %s",
+									 "anyrange", "unknown")));
 		return range_typeid;
 	}
 
 	/* if we return ANYMULTIRANGE use the appropriate argument type */
 	if (rettype == ANYMULTIRANGEOID)
 	{
+		/* this error is unreachable if the function signature is valid: */
 		if (!OidIsValid(multirange_typeid))
-		{
-			if (OidIsValid(range_typeid))
-				multirange_typeid = get_range_multirange(range_typeid);
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("could not find multirange type for data type %s",
-								format_type_be(elem_typeid))));
-		}
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg_internal("could not determine polymorphic type %s because input has type %s",
+									 "anymultirange", "unknown")));
 		return multirange_typeid;
 	}
 
@@ -2777,7 +2815,7 @@ check_valid_polymorphic_signature(Oid ret_type,
 				return NULL;	/* OK */
 		}
 		/* Keep this list in sync with IsPolymorphicTypeFamily2! */
-		return psprintf(_("A result of type %s requires at least one input of type anycompatible, anycompatiblearray, anycompatiblenonarray, or anycompatiblerange."),
+		return psprintf(_("A result of type %s requires at least one input of type anycompatible, anycompatiblearray, anycompatiblenonarray, anycompatiblerange, or anycompatiblemultirange."),
 						format_type_be(ret_type));
 	}
 	else
@@ -2917,7 +2955,7 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 		if (type_is_range(srctype))
 			return true;
 
-	/* Also accept any multirange type as coercible to ANMULTIYRANGE */
+	/* Also, any multirange type is coercible to ANY[COMPATIBLE]MULTIRANGE */
 	if (targettype == ANYMULTIRANGEOID || targettype == ANYCOMPATIBLEMULTIRANGEOID)
 		if (type_is_multirange(srctype))
 			return true;

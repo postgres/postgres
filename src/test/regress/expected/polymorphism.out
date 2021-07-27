@@ -179,6 +179,72 @@ LINE 2:   from polyf(11, array[1, 2.2], 42, 34.5);
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function polyf(a anyelement, b anyarray,
                     c anycompatible, d anycompatible);
+create function polyf(anyrange) returns anymultirange
+as 'select multirange($1);' language sql;
+select polyf(int4range(1,10));
+  polyf   
+----------
+ {[1,10)}
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type because input has type unknown
+drop function polyf(anyrange);
+create function polyf(anymultirange) returns anyelement
+as 'select lower($1);' language sql;
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+ polyf 
+-------
+     1
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type because input has type unknown
+drop function polyf(anymultirange);
+create function polyf(anycompatiblerange) returns anycompatiblemultirange
+as 'select multirange($1);' language sql;
+select polyf(int4range(1,10));
+  polyf   
+----------
+ {[1,10)}
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type anycompatiblerange because input has type unknown
+drop function polyf(anycompatiblerange);
+create function polyf(anymultirange) returns anyrange
+as 'select range_merge($1);' language sql;
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+ polyf  
+--------
+ [1,30)
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type because input has type unknown
+drop function polyf(anymultirange);
+create function polyf(anycompatiblemultirange) returns anycompatiblerange
+as 'select range_merge($1);' language sql;
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+ polyf  
+--------
+ [1,30)
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type anycompatiblerange because input has type unknown
+drop function polyf(anycompatiblemultirange);
+create function polyf(anycompatiblemultirange) returns anycompatible
+as 'select lower($1);' language sql;
+select polyf(int4multirange(int4range(1,10), int4range(20,30)));
+ polyf 
+-------
+     1
+(1 row)
+
+select polyf(null);
+ERROR:  could not determine polymorphic type anycompatiblemultirange because input has type unknown
+drop function polyf(anycompatiblemultirange);
 --
 -- Polymorphic aggregate tests
 --
@@ -1914,7 +1980,7 @@ LINE 1: select x, pg_typeof(x) from anyctest(11.2, multirange(int4ra...
                                     ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 select x, pg_typeof(x) from anyctest(11.2, '{[4,7)}') x;  -- fail
-ERROR:  could not identify anycompatiblemultirange type
+ERROR:  could not determine polymorphic type anycompatiblemultirange because input has type unknown
 drop function anyctest(anycompatible, anycompatiblemultirange);
 create function anyctest(anycompatiblemultirange, anycompatiblemultirange)
 returns anycompatible as $$
