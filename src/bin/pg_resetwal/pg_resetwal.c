@@ -64,6 +64,7 @@ static XLogSegNo newXlogSegNo;	/* new XLOG segment # */
 static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
 static uint32 set_xid_epoch = (uint32) -1;
+static TransactionId set_oldest_xid = 0;
 static TransactionId set_xid = 0;
 static TransactionId set_oldest_commit_ts_xid = 0;
 static TransactionId set_newest_commit_ts_xid = 0;
@@ -101,6 +102,7 @@ main(int argc, char *argv[])
 		{"dry-run", no_argument, NULL, 'n'},
 		{"next-oid", required_argument, NULL, 'o'},
 		{"multixact-offset", required_argument, NULL, 'O'},
+		{"oldest-transaction-id", required_argument, NULL, 'u'},
 		{"next-transaction-id", required_argument, NULL, 'x'},
 		{"wal-segsize", required_argument, NULL, 1},
 		{NULL, 0, NULL, 0}
@@ -135,7 +137,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:O:x:", long_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "c:D:e:fl:m:no:O:u:x:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -168,6 +170,21 @@ main(int argc, char *argv[])
 				}
 				break;
 
+			case 'u':
+				set_oldest_xid = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					pg_log_error("invalid argument for option %s", "-u");
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (!TransactionIdIsNormal(set_oldest_xid))
+				{
+					pg_log_error("oldest transaction ID (-u) must be greater or equal to %u", FirstNormalTransactionId);
+					exit(1);
+				}
+				break;
+
 			case 'x':
 				set_xid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
@@ -176,9 +193,9 @@ main(int argc, char *argv[])
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				if (set_xid == 0)
+				if (!TransactionIdIsNormal(set_xid))
 				{
-					pg_log_error("transaction ID (-x) must not be 0");
+					pg_log_error("transaction ID (-x) must be greater or equal to %u", FirstNormalTransactionId);
 					exit(1);
 				}
 				break;
@@ -428,24 +445,16 @@ main(int argc, char *argv[])
 			FullTransactionIdFromEpochAndXid(set_xid_epoch,
 											 XidFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid));
 
-	if (set_xid != 0)
+	if (set_oldest_xid != 0)
 	{
+		ControlFile.checkPointCopy.oldestXid = set_oldest_xid;
+		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
+	}
+
+	if (set_xid != 0)
 		ControlFile.checkPointCopy.nextFullXid =
 			FullTransactionIdFromEpochAndXid(EpochFromFullTransactionId(ControlFile.checkPointCopy.nextFullXid),
 											 set_xid);
-
-		/*
-		 * For the moment, just set oldestXid to a value that will force
-		 * immediate autovacuum-for-wraparound.  It's not clear whether adding
-		 * user control of this is useful, so let's just do something that's
-		 * reasonably safe.  The magic constant here corresponds to the
-		 * maximum allowed value of autovacuum_freeze_max_age.
-		 */
-		ControlFile.checkPointCopy.oldestXid = set_xid - 2000000000;
-		if (ControlFile.checkPointCopy.oldestXid < FirstNormalTransactionId)
-			ControlFile.checkPointCopy.oldestXid += FirstNormalTransactionId;
-		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
-	}
 
 	if (set_oldest_commit_ts_xid != 0)
 		ControlFile.checkPointCopy.oldestCommitTsXid = set_oldest_commit_ts_xid;
@@ -1228,19 +1237,20 @@ usage(void)
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -c, --commit-timestamp-ids=XID,XID\n"
-			 "                                 set oldest and newest transactions bearing\n"
-			 "                                 commit timestamp (zero means no change)\n"));
-	printf(_(" [-D, --pgdata=]DATADIR          data directory\n"));
-	printf(_("  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"));
-	printf(_("  -f, --force                    force update to be done\n"));
-	printf(_("  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"));
-	printf(_("  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"));
-	printf(_("  -n, --dry-run                  no update, just show what would be done\n"));
-	printf(_("  -o, --next-oid=OID             set next OID\n"));
-	printf(_("  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"));
-	printf(_("  -V, --version                  output version information, then exit\n"));
-	printf(_("  -x, --next-transaction-id=XID  set next transaction ID\n"));
-	printf(_("      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"));
-	printf(_("  -?, --help                     show this help, then exit\n"));
+			 "                                   set oldest and newest transactions bearing\n"
+			 "                                   commit timestamp (zero means no change)\n"));
+	printf(_(" [-D, --pgdata=]DATADIR            data directory\n"));
+	printf(_("  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"));
+	printf(_("  -f, --force                      force update to be done\n"));
+	printf(_("  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"));
+	printf(_("  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"));
+	printf(_("  -n, --dry-run                    no update, just show what would be done\n"));
+	printf(_("  -o, --next-oid=OID               set next OID\n"));
+	printf(_("  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"));
+	printf(_("  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"));
+	printf(_("  -V, --version                    output version information, then exit\n"));
+	printf(_("  -x, --next-transaction-id=XID    set next transaction ID\n"));
+	printf(_("      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"));
+	printf(_("  -?, --help                       show this help, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
 }
