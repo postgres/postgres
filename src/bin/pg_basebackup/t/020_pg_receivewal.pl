@@ -88,10 +88,12 @@ SKIP:
 	$primary->psql('postgres',
 		'INSERT INTO test_table VALUES (generate_series(100,200));');
 
+	# Note the trailing whitespace after the value of --compress, that is
+	# a valid value.
 	$primary->command_ok(
 		[
 			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
-			'--endpos',      $nextlsn, '--compress', '1'
+			'--endpos',      $nextlsn, '--compress', '1 '
 		],
 		"streaming some WAL using ZLIB compression");
 

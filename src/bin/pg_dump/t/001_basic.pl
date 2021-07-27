@@ -101,8 +101,9 @@ command_fails_like(
 	qr/\Qpg_dump: error: parallel backup only supported by the directory format\E/,
 	'pg_dump: parallel backup only supported by the directory format');
 
+# Note the trailing whitespace for the value of --jobs, that is valid.
 command_fails_like(
-	[ 'pg_dump', '-j', '-1' ],
+	[ 'pg_dump', '-j', '-1 ' ],
 	qr/\Qpg_dump: error: -j\/--jobs must be in range\E/,
 	'pg_dump: -j/--jobs must be in range');
 
