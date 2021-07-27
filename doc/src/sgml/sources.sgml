@@ -828,6 +828,16 @@ BETTER: unrecognized node type: 42
    </para>
   </formalpara>
 
+  <formalpara>
+    <title>Non-negative</title>
+   <para>
+    Avoid <quote>non-negative</quote> as it is ambiguous
+    about whether it accepts zero.  It's better to use
+    <quote>greater than zero</quote> or
+    <quote>greater than or equal to zero</quote>.
+   </para>
+  </formalpara>
+
   </simplesect>
 
   <simplesect>

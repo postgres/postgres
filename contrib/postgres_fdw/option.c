@@ -119,7 +119,10 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 		else if (strcmp(def->defname, "fdw_startup_cost") == 0 ||
 				 strcmp(def->defname, "fdw_tuple_cost") == 0)
 		{
-			/* these must have a non-negative numeric value */
+			/*
+			 * These must have a floating point value greater than or equal to
+			 * zero.
+			 */
 			char	   *value;
 			double		real_val;
 			bool		is_parsed;
@@ -136,7 +139,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			if (real_val < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("\"%s\" requires a non-negative floating point value",
+						 errmsg("\"%s\" must be a floating point value greater than or equal to zero",
 								def->defname)));
 		}
 		else if (strcmp(def->defname, "extensions") == 0)
@@ -163,7 +166,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			if (int_val <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("\"%s\" requires a non-negative integer value",
+						 errmsg("\"%s\" must be an integer value greater than zero",
 								def->defname)));
 		}
 		else if (strcmp(def->defname, "password_required") == 0)
