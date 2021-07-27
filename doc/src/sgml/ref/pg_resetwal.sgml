@@ -298,6 +298,26 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
+    <term><option>-u <replaceable class="parameter">xid</replaceable></option></term>
+    <term><option>--oldest-transaction-id=<replaceable class="parameter">xid</replaceable></option></term>
+    <listitem>
+     <para>
+      Manually set the oldest unfrozen transaction ID.
+     </para>
+
+     <para>
+      A safe value can be determined by looking for the numerically smallest
+      file name in the directory <filename>pg_xact</filename> under the data directory
+      and then multiplying by 1048576 (0x100000).  Note that the file names are in
+      hexadecimal.  It is usually easiest to specify the option value in
+      hexadecimal too. For example, if <filename>0007</filename> is the smallest entry
+      in <filename>pg_xact</filename>, <literal>-u 0x700000</literal> will work (five
+      trailing zeroes provide the proper multiplier).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-x <replaceable class="parameter">xid</replaceable></option></term>
     <term><option>--next-transaction-id=<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>
