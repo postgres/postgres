@@ -51,6 +51,11 @@ begin
 end;
 $$;
 
+-- Also, disable JIT, or we'll get different output on machines
+-- where that's been forced on
+set jit = off;
+
+
 -- Simple cases
 
 select explain_filter('explain select * from int8_tbl i8');
