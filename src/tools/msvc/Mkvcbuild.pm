@@ -41,7 +41,7 @@ my @contrib_uselibpq =
 my @contrib_uselibpgport   = ('libpq_pipeline', 'oid2name', 'vacuumlo');
 my @contrib_uselibpgcommon = ('libpq_pipeline', 'oid2name', 'vacuumlo');
 my $contrib_extralibs     = { 'libpq_pipeline' => ['ws2_32.lib'] };
-my $contrib_extraincludes = { 'dblink'         => ['src/backend'] };
+my $contrib_extraincludes = {};
 my $contrib_extrasource   = {
 	'cube' => [ 'contrib/cube/cubescan.l', 'contrib/cube/cubeparse.y' ],
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ],
