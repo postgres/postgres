@@ -58,7 +58,7 @@ sub AddFiles
 
 	while (my $f = shift)
 	{
-		$self->{files}->{ $dir . "/" . $f } = 1;
+		$self->AddFile($dir . "/" . $f, 1);
 	}
 	return;
 }
@@ -77,14 +77,14 @@ sub ReplaceFile
 			if ($file eq $filename)
 			{
 				delete $self->{files}{$file};
-				$self->{files}{$newname} = 1;
+				$self->AddFile($newname);
 				return;
 			}
 		}
 		elsif ($file =~ m/($re)/)
 		{
 			delete $self->{files}{$file};
-			$self->{files}{"$newname/$filename"} = 1;
+			$self->AddFile("$newname/$filename");
 			return;
 		}
 	}
@@ -259,11 +259,11 @@ sub AddDir
 			if ($f =~ /^\$\(top_builddir\)\/(.*)/)
 			{
 				$f = $1;
-				$self->{files}->{$f} = 1;
+				$self->AddFile($f);
 			}
 			else
 			{
-				$self->{files}->{"$reldir/$f"} = 1;
+				$self->AddFile("$reldir/$f");
 			}
 		}
 		$mf =~ s{OBJS[^=]*=\s*(.*)$}{}m;
