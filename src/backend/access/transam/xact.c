@@ -5983,7 +5983,16 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-	DropRelationFiles(parsed->xnodes, parsed->nrels, true);
+	if (parsed->nrels > 0)
+	{
+		/*
+		 * See comments about update of minimum recovery point on truncation,
+		 * in xact_redo_commit().
+		 */
+		XLogFlush(lsn);
+
+		DropRelationFiles(parsed->xnodes, parsed->nrels, true);
+	}
 }
 
 void
