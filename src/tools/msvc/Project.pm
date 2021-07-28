@@ -30,7 +30,7 @@ sub _new
 		references            => [],
 		libraries             => [],
 		suffixlib             => [],
-		includes              => '',
+		includes              => [],
 		prefixincludes        => '',
 		defines               => ';',
 		solution              => $solution,
@@ -151,13 +151,15 @@ sub AddLibrary
 
 sub AddIncludeDir
 {
-	my ($self, $inc) = @_;
+	my ($self, $incstr) = @_;
 
-	if ($self->{includes} ne '')
+	foreach my $inc (split(/;/, $incstr))
 	{
-		$self->{includes} .= ';';
+		if (! grep { $_ eq $inc} @{ $self->{includes} })
+		{
+			push @{ $self->{includes} }, $inc;
+		}
 	}
-	$self->{includes} .= $inc;
 	return;
 }
 

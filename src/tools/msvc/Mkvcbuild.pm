@@ -937,7 +937,7 @@ sub AddTransformModule
 	# Add PL dependencies
 	$p->AddIncludeDir($pl_src);
 	$p->AddReference($pl_proj);
-	$p->AddIncludeDir($pl_proj->{includes});
+	$p->AddIncludeDir($_) for @{$pl_proj->{includes}};
 	foreach my $pl_lib (@{ $pl_proj->{libraries} })
 	{
 		$p->AddLibrary($pl_lib);
@@ -947,7 +947,7 @@ sub AddTransformModule
 	if ($type_proj)
 	{
 		$p->AddIncludeDir($type_src);
-		$p->AddIncludeDir($type_proj->{includes});
+		$p->AddIncludeDir($_) for @{$type_proj->{includes}};
 		foreach my $type_lib (@{ $type_proj->{libraries} })
 		{
 			$p->AddLibrary($type_lib);
