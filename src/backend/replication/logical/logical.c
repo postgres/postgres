@@ -1048,7 +1048,7 @@ change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this change's lsn so replies from clients can give an up2date
+	 * Report this change's lsn so replies from clients can give an up-to-date
 	 * answer. This won't ever be enough (and shouldn't be!) to confirm
 	 * receipt of this transaction, but it might allow another transaction's
 	 * commit to be confirmed with one message.
@@ -1088,7 +1088,7 @@ truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this change's lsn so replies from clients can give an up2date
+	 * Report this change's lsn so replies from clients can give an up-to-date
 	 * answer. This won't ever be enough (and shouldn't be!) to confirm
 	 * receipt of this transaction, but it might allow another transaction's
 	 * commit to be confirmed with one message.
@@ -1225,10 +1225,10 @@ stream_start_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this message's lsn so replies from clients can give an up2date
-	 * answer. This won't ever be enough (and shouldn't be!) to confirm
-	 * receipt of this transaction, but it might allow another transaction's
-	 * commit to be confirmed with one message.
+	 * Report this message's lsn so replies from clients can give an
+	 * up-to-date answer. This won't ever be enough (and shouldn't be!) to
+	 * confirm receipt of this transaction, but it might allow another
+	 * transaction's commit to be confirmed with one message.
 	 */
 	ctx->write_location = first_lsn;
 
@@ -1272,10 +1272,10 @@ stream_stop_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this message's lsn so replies from clients can give an up2date
-	 * answer. This won't ever be enough (and shouldn't be!) to confirm
-	 * receipt of this transaction, but it might allow another transaction's
-	 * commit to be confirmed with one message.
+	 * Report this message's lsn so replies from clients can give an
+	 * up-to-date answer. This won't ever be enough (and shouldn't be!) to
+	 * confirm receipt of this transaction, but it might allow another
+	 * transaction's commit to be confirmed with one message.
 	 */
 	ctx->write_location = last_lsn;
 
@@ -1443,7 +1443,7 @@ stream_change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this change's lsn so replies from clients can give an up2date
+	 * Report this change's lsn so replies from clients can give an up-to-date
 	 * answer. This won't ever be enough (and shouldn't be!) to confirm
 	 * receipt of this transaction, but it might allow another transaction's
 	 * commit to be confirmed with one message.
@@ -1535,7 +1535,7 @@ stream_truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->write_xid = txn->xid;
 
 	/*
-	 * report this change's lsn so replies from clients can give an up2date
+	 * Report this change's lsn so replies from clients can give an up-to-date
 	 * answer. This won't ever be enough (and shouldn't be!) to confirm
 	 * receipt of this transaction, but it might allow another transaction's
 	 * commit to be confirmed with one message.
