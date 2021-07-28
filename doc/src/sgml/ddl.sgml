@@ -3963,6 +3963,11 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     </para>
 
     <para>
+     The <command>ATTACH PARTITION</command> command requires taking a
+     <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the partitioned table.
+    </para>
+
+    <para>
      Before running the <command>ATTACH PARTITION</command> command, it is
      recommended to create a <literal>CHECK</literal> constraint on the table to
      be attached that matches the expected partition constraint, as
@@ -3970,10 +3975,27 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      which is otherwise needed to validate the implicit
      partition constraint. Without the <literal>CHECK</literal> constraint,
      the table will be scanned to validate the partition constraint while
-     holding both an <literal>ACCESS EXCLUSIVE</literal> lock on that partition
-     and a <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the parent table.
+     holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition.
      It is recommended to drop the now-redundant <literal>CHECK</literal>
-     constraint after <command>ATTACH PARTITION</command> is finished.
+     constraint after the <command>ATTACH PARTITION</command> is complete.  If
+     the table being attached is itself a partitioned table then each of its
+     sub-partitions will be recursively locked and scanned until either a
+     suitable <literal>CHECK</literal> constraint is encountered or the leaf
+     partitions are reached.
+    </para>
+
+    <para>
+     Similarly, if the partitioned table has a <literal>DEFAULT</literal>
+     partition, it is recommended to create a <literal>CHECK</literal>
+     constraint which excludes the to-be-attached partition's constraint.  If
+     this is not done then the <literal>DEFAULT</literal> partition will be
+     scanned to verify that it contains no records which should be located in
+     the partition being attached.  This operation will be performed whilst
+     holding an <literal>ACCESS EXCLUSIVE</literal> lock on the <literal>
+     DEFAULT</literal> partition.  If the <literal>DEFAULT</literal> partition
+     is itself a partitioned table then each of its partitions will be
+     recursively checked in the same way as the table being attached, as
+     mentioned above.
     </para>
 
     <para>
