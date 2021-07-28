@@ -10008,12 +10008,8 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
    </para>
 
    <para>
-    Negative intervals are allowed and are treated the same as positive intervals.
-   </para>
-
-   <para>
-    The <parameter>stride</parameter> interval cannot contain units of month
-    or larger.
+    The <parameter>stride</parameter> interval must be greater than zero and
+    cannot contain units of month or larger.
    </para>
   </sect2>
 

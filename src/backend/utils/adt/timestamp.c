@@ -3843,10 +3843,10 @@ timestamp_bin(PG_FUNCTION_ARGS)
 
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
 
-	if (stride_usecs == 0)
+	if (stride_usecs <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("stride cannot equal zero")));
+				 errmsg("stride must be greater than zero")));
 
 	tm_diff = timestamp - origin;
 	tm_delta = tm_diff - tm_diff % stride_usecs;
@@ -4026,10 +4026,10 @@ timestamptz_bin(PG_FUNCTION_ARGS)
 
 	stride_usecs = stride->day * USECS_PER_DAY + stride->time;
 
-	if (stride_usecs == 0)
+	if (stride_usecs <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("stride cannot equal zero")));
+				 errmsg("stride must be greater than zero")));
 
 	tm_diff = timestamp - origin;
 	tm_delta = tm_diff - tm_diff % stride_usecs;
