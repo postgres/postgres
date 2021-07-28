@@ -124,7 +124,10 @@ sub AddReference
 
 	while (my $ref = shift)
 	{
-		push @{ $self->{references} }, $ref;
+		if (! grep { $_ eq $ref} @{ $self->{references} })
+		{
+			push @{ $self->{references} }, $ref;
+		}
 		$self->AddLibrary(
 			"__CFGNAME__/" . $ref->{name} . "/" . $ref->{name} . ".lib");
 	}
@@ -141,7 +144,11 @@ sub AddLibrary
 		$lib = '&quot;' . $lib . "&quot;";
 	}
 
-	push @{ $self->{libraries} }, $lib;
+	if (! grep { $_ eq $lib} @{ $self->{libraries} })
+	{
+		push @{ $self->{libraries} }, $lib;
+	}
+
 	if ($dbgsuffix)
 	{
 		push @{ $self->{suffixlib} }, $lib;
