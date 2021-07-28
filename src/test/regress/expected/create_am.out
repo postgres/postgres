@@ -230,6 +230,40 @@ ORDER BY classid, objid, objsubid;
  table tableam_parted_d_heap2
 (5 rows)
 
+-- ALTER TABLE SET ACCESS METHOD
+CREATE TABLE heaptable USING heap AS
+  SELECT a, repeat(a::text, 100) FROM generate_series(1,9) AS a;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
+ amname 
+--------
+ heap
+(1 row)
+
+ALTER TABLE heaptable SET ACCESS METHOD heap2;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
+ amname 
+--------
+ heap2
+(1 row)
+
+SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heaptable;
+ count | count 
+-------+-------
+     9 |     1
+(1 row)
+
+-- No support for multiple subcommands
+ALTER TABLE heaptable SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
+ERROR:  cannot have multiple SET ACCESS METHOD subcommands
+DROP TABLE heaptable;
+-- No support for partitioned tables.
+CREATE TABLE am_partitioned(x INT, y INT)
+  PARTITION BY hash (x);
+ALTER TABLE am_partitioned SET ACCESS METHOD heap2;
+ERROR:  cannot change access method of a partitioned table
+DROP TABLE am_partitioned;
 -- Second, create objects in the new AM by changing the default AM
 BEGIN;
 SET LOCAL default_table_access_method = 'heap2';
