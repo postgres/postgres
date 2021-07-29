@@ -69,7 +69,7 @@ PostgresNode - class representing PostgreSQL server instance
   $node->stop('fast');
 
   # Find a free, unprivileged TCP port to bind some other service to
-  my $port = get_free_port();
+  my $port = PostgresNode::get_free_port();
 
 =head1 DESCRIPTION
 
@@ -93,7 +93,6 @@ use warnings;
 use Carp;
 use Config;
 use Cwd;
-use Exporter 'import';
 use Fcntl qw(:mode);
 use File::Basename;
 use File::Path qw(rmtree);
@@ -108,10 +107,6 @@ use Test::More;
 use TestLib ();
 use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
-
-our @EXPORT = qw(
-  get_free_port
-);
 
 our ($use_tcp, $test_localhost, $test_pghost, $last_host_assigned,
 	$last_port_assigned, @all_nodes, $died);
@@ -1381,14 +1376,17 @@ sub installed_command
 =item get_free_port()
 
 Locate an unprivileged (high) TCP port that's not currently bound to
-anything.  This is used by new(), and is also exported for use
-by test cases that need to start other, non-Postgres servers.
+anything.  This is used by C<new()>, and also by some test cases that need to
+start other, non-Postgres servers.
 
 Ports assigned to existing PostgresNode objects are automatically
 excluded, even if those servers are not currently running.
 
 XXX A port available now may become unavailable by the time we start
 the desired service.
+
+Note: this is not an instance method. As it's not exported it should be
+called from outside the module as C<PostgresNode::get_free_port()>.
 
 =cut
 
