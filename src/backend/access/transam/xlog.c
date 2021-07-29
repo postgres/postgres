@@ -9329,7 +9329,7 @@ CreateCheckPoint(int flags)
 	if (!RecoveryInProgress())
 		TruncateSUBTRANS(GetOldestTransactionIdConsideredRunning());
 
-	/* Real work is done, but log and update stats before releasing lock. */
+	/* Real work is done; log and update stats. */
 	LogCheckpointEnd(false);
 
 	/* Reset the process title */
