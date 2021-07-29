@@ -35,7 +35,7 @@ my $libpq;
 my @unlink_on_exit;
 
 # Set of variables for modules in contrib/ and src/test/modules/
-my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
+my $contrib_defines = {};
 my @contrib_uselibpq =
   ('dblink', 'oid2name', 'postgres_fdw', 'vacuumlo', 'libpq_pipeline');
 my @contrib_uselibpgport   = ('libpq_pipeline', 'oid2name', 'vacuumlo');
@@ -964,6 +964,7 @@ sub AddContrib
 	my $subdir = shift;
 	my $n      = shift;
 	my $mf     = Project::read_file("$subdir/$n/Makefile");
+	my @projects = ();
 
 	if ($mf =~ /^MODULE_big\s*=\s*(.*)$/mg)
 	{
@@ -971,6 +972,7 @@ sub AddContrib
 		my $proj = $solution->AddProject($dn, 'dll', 'contrib', "$subdir/$n");
 		$proj->AddReference($postgres);
 		AdjustContribProj($proj);
+		push @projects, $proj;
 	}
 	elsif ($mf =~ /^MODULES\s*=\s*(.*)$/mg)
 	{
@@ -982,16 +984,33 @@ sub AddContrib
 			$proj->AddFile("$subdir/$n/$filename");
 			$proj->AddReference($postgres);
 			AdjustContribProj($proj);
+			push @projects, $proj;
 		}
 	}
 	elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
 	{
 		my $proj = $solution->AddProject($1, 'exe', 'contrib', "$subdir/$n");
 		AdjustContribProj($proj);
+		push @projects, $proj;
 	}
 	else
 	{
 		croak "Could not determine contrib module type for $n\n";
+	}
+
+	# Process custom compiler flags
+	if ($mf =~ /^PG_CPPFLAGS\s*=\s*(.*)$/mg || $mf =~ /^override\s*CPPFLAGS\s*[+:]?=\s*(.*)$/mg)
+	{
+		foreach my $flag (split /\s+/, $1)
+		{
+			if ($flag =~ /^-D(.*)$/)
+			{
+				foreach my $proj (@projects)
+				{
+					$proj->AddDefine($1);
+				}
+			}
+		}
 	}
 
 	# Are there any output data files to build?

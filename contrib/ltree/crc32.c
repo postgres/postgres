@@ -8,6 +8,7 @@
  */
 
 #include "postgres.h"
+#include "ltree.h"
 
 #ifdef LOWER_NODE
 #include <ctype.h>

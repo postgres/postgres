@@ -17,6 +17,19 @@
  */
 #define LTREE_LABEL_MAX_CHARS 255
 
+/*
+ * LOWER_NODE used to be defined in the Makefile via the compile flags.
+ * However the MSVC build scripts neglected to do the same which resulted in
+ * MSVC builds not using LOWER_NODE.  Since then, the MSVC scripts have been
+ * modified to look for -D compile flags in Makefiles, so here, in order to
+ * get the historic behavior of LOWER_NODE not being defined on MSVC, we only
+ * define it when not building in that environment.  This is important as we
+ * want to maintain the same LOWER_NODE behavior after a pg_update.
+ */
+#ifndef _MSC_VER
+#define LOWER_NODE
+#endif
+
 typedef struct
 {
 	uint16		len;			/* label string length in bytes */
