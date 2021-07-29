@@ -11,7 +11,7 @@ use TestLib;
 use Test::More tests => 2;
 
 # Test set-up
-my $node = get_new_node('test');
+my $node = PostgresNode->new('test');
 $node->init(allows_streaming => 'logical');
 $node->append_conf('postgresql.conf', 'synchronous_commit = on');
 $node->start;

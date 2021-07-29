@@ -62,7 +62,7 @@ sub test_role
 }
 
 # Initialize primary node
-my $node = get_new_node('primary');
+my $node = PostgresNode->new('primary');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;

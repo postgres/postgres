@@ -120,7 +120,7 @@ sub perform_all_corruptions()
 }
 
 # Test set-up
-$node = get_new_node('test');
+$node = PostgresNode->new('test');
 $node->init;
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->start;

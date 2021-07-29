@@ -19,11 +19,11 @@ use Test::More tests => 5;
 # fix was to avoid the constant expressions simplification in
 # RelationGetIndexAttrBitmap(), so it's safe to call in more contexts.
 
-my $node_publisher = get_new_node('publisher');
+my $node_publisher = PostgresNode->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
-my $node_subscriber = get_new_node('subscriber');
+my $node_subscriber = PostgresNode->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
@@ -81,7 +81,7 @@ $node_subscriber->stop('fast');
 # identity set before accepting updates.  If it did not it would cause
 # an error when an update was attempted.
 
-$node_publisher = get_new_node('publisher2');
+$node_publisher = PostgresNode->new('publisher2');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
@@ -108,7 +108,7 @@ $node_publisher->stop('fast');
 #
 # Initial sync doesn't complete; the protocol was not being followed per
 # expectations after commit 07082b08cc5d.
-my $node_twoways = get_new_node('twoways');
+my $node_twoways = PostgresNode->new('twoways');
 $node_twoways->init(allows_streaming => 'logical');
 $node_twoways->start;
 for my $db (qw(d1 d2))
@@ -158,15 +158,15 @@ is($node_twoways->safe_psql('d2', "SELECT count(f) FROM t2"),
 
 # Verify table data is synced with cascaded replication setup. This is mainly
 # to test whether the data written by tablesync worker gets replicated.
-my $node_pub = get_new_node('testpublisher1');
+my $node_pub = PostgresNode->new('testpublisher1');
 $node_pub->init(allows_streaming => 'logical');
 $node_pub->start;
 
-my $node_pub_sub = get_new_node('testpublisher_subscriber');
+my $node_pub_sub = PostgresNode->new('testpublisher_subscriber');
 $node_pub_sub->init(allows_streaming => 'logical');
 $node_pub_sub->start;
 
-my $node_sub = get_new_node('testsubscriber1');
+my $node_sub = PostgresNode->new('testsubscriber1');
 $node_sub->init(allows_streaming => 'logical');
 $node_sub->start;
 

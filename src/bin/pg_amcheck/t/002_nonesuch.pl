@@ -10,7 +10,7 @@ use Test::More tests => 72;
 
 # Test set-up
 my ($node, $port);
-$node = get_new_node('test');
+$node = PostgresNode->new('test');
 $node->init;
 $node->start;
 $port = $node->port;

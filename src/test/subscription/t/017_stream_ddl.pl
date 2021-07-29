@@ -9,14 +9,14 @@ use TestLib;
 use Test::More tests => 3;
 
 # Create publisher node
-my $node_publisher = get_new_node('publisher');
+my $node_publisher = PostgresNode->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf',
 	'logical_decoding_work_mem = 64kB');
 $node_publisher->start;
 
 # Create subscriber node
-my $node_subscriber = get_new_node('subscriber');
+my $node_subscriber = PostgresNode->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 

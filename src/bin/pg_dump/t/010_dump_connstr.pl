@@ -51,7 +51,7 @@ my $dbname4 = 'regression' . generate_ascii_string(203, 255);
 my $src_bootstrap_super = 'regress_postgres';
 my $dst_bootstrap_super = 'boot';
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init(extra =>
 	  [ '-U', $src_bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
 
@@ -181,7 +181,7 @@ $restore_super =~ s/"//g
 # Restore full dump through psql using environment variables for
 # dbname/user connection parameters
 
-my $envar_node = get_new_node('destination_envar');
+my $envar_node = PostgresNode->new('destination_envar');
 $envar_node->init(
 	extra =>
 	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],
@@ -208,7 +208,7 @@ is($stderr, '', 'no dump errors');
 # dbname/user connection parameters.  "\connect dbname=" forgets
 # user/port from command line.
 
-my $cmdline_node = get_new_node('destination_cmdline');
+my $cmdline_node = PostgresNode->new('destination_cmdline');
 $cmdline_node->init(
 	extra =>
 	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],

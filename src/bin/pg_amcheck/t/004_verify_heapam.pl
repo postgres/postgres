@@ -178,7 +178,7 @@ umask(0077);
 # Set up the node.  Once we create and corrupt the table,
 # autovacuum workers visiting the table could crash the backend.
 # Disable autovacuum so that won't happen.
-my $node = get_new_node('test');
+my $node = PostgresNode->new('test');
 $node->init;
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 

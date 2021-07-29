@@ -11,7 +11,7 @@ program_help_ok('pg_recvlogical');
 program_version_ok('pg_recvlogical');
 program_options_handling_ok('pg_recvlogical');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 
 # Initialize node without replication settings
 $node->init(allows_streaming => 1, has_archiving => 1);

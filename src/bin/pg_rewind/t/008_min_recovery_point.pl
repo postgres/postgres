@@ -40,7 +40,7 @@ use File::Copy;
 
 my $tmp_folder = TestLib::tempdir;
 
-my $node_1 = get_new_node('node_1');
+my $node_1 = PostgresNode->new('node_1');
 $node_1->init(allows_streaming => 1);
 $node_1->append_conf(
 	'postgresql.conf', qq(
@@ -60,11 +60,11 @@ $node_1->safe_psql('postgres', "INSERT INTO public.bar VALUES ('in both')");
 my $backup_name = 'my_backup';
 $node_1->backup($backup_name);
 
-my $node_2 = get_new_node('node_2');
+my $node_2 = PostgresNode->new('node_2');
 $node_2->init_from_backup($node_1, $backup_name, has_streaming => 1);
 $node_2->start;
 
-my $node_3 = get_new_node('node_3');
+my $node_3 = PostgresNode->new('node_3');
 $node_3->init_from_backup($node_1, $backup_name, has_streaming => 1);
 $node_3->start;
 

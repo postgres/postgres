@@ -18,13 +18,13 @@ else
 	plan skip_all => 'ICU not supported by this build';
 }
 
-my $node_publisher = get_new_node('publisher');
+my $node_publisher = PostgresNode->new('publisher');
 $node_publisher->init(
 	allows_streaming => 'logical',
 	extra            => [ '--locale=C', '--encoding=UTF8' ]);
 $node_publisher->start;
 
-my $node_subscriber = get_new_node('subscriber');
+my $node_subscriber = PostgresNode->new('subscriber');
 $node_subscriber->init(
 	allows_streaming => 'logical',
 	extra            => [ '--locale=C', '--encoding=UTF8' ]);

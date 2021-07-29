@@ -43,7 +43,7 @@ sub log_ipcs
 }
 
 # Node setup.
-my $gnat = PostgresNode->get_new_node('gnat');
+my $gnat = PostgresNode->new('gnat');
 $gnat->init;
 
 # Create a shmem segment that will conflict with gnat's first choice

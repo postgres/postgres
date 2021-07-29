@@ -10,7 +10,7 @@ use Test::More tests => 5;
 use Time::HiRes qw(usleep);
 
 # Set up node with logging collector
-my $node = get_new_node('primary');
+my $node = PostgresNode->new('primary');
 $node->init();
 $node->append_conf(
 	'postgresql.conf', qq(

@@ -14,7 +14,7 @@ use Test::More tests => 14;
 use Config;
 
 # Initialize primary node
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1);
 $node_primary->append_conf(
 	'postgresql.conf', qq(

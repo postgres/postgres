@@ -49,7 +49,7 @@ sub start_standby_and_wait
 }
 
 # Initialize primary node
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1);
 $node_primary->start;
 my $backup_name = 'primary_backup';
@@ -61,19 +61,19 @@ $node_primary->backup($backup_name);
 # the ordering of each one of them in the WAL sender array of the primary.
 
 # Create standby1 linking to primary
-my $node_standby_1 = get_new_node('standby1');
+my $node_standby_1 = PostgresNode->new('standby1');
 $node_standby_1->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 start_standby_and_wait($node_primary, $node_standby_1);
 
 # Create standby2 linking to primary
-my $node_standby_2 = get_new_node('standby2');
+my $node_standby_2 = PostgresNode->new('standby2');
 $node_standby_2->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 start_standby_and_wait($node_primary, $node_standby_2);
 
 # Create standby3 linking to primary
-my $node_standby_3 = get_new_node('standby3');
+my $node_standby_3 = PostgresNode->new('standby3');
 $node_standby_3->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 start_standby_and_wait($node_primary, $node_standby_3);
@@ -123,7 +123,7 @@ standby3|3|sync),
 start_standby_and_wait($node_primary, $node_standby_1);
 
 # Create standby4 linking to primary
-my $node_standby_4 = get_new_node('standby4');
+my $node_standby_4 = PostgresNode->new('standby4');
 $node_standby_4->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_4->start;

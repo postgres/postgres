@@ -15,7 +15,7 @@ command_fails_like(
 	qr/directory .* does not exist/,
 	'pg_ctl promote with nonexistent directory');
 
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1);
 
 command_fails_like(
@@ -30,7 +30,7 @@ command_fails_like(
 	qr/not in standby mode/,
 	'pg_ctl promote of primary instance fails');
 
-my $node_standby = get_new_node('standby');
+my $node_standby = PostgresNode->new('standby');
 $node_primary->backup('my_backup');
 $node_standby->init_from_backup($node_primary, 'my_backup',
 	has_streaming => 1);
@@ -47,7 +47,7 @@ ok( $node_standby->poll_query_until(
 	'promoted standby is not in recovery');
 
 # same again with default wait option
-$node_standby = get_new_node('standby2');
+$node_standby = PostgresNode->new('standby2');
 $node_standby->init_from_backup($node_primary, 'my_backup',
 	has_streaming => 1);
 $node_standby->start;

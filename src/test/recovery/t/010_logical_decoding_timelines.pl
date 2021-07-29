@@ -34,7 +34,7 @@ use Scalar::Util qw(blessed);
 my ($stdout, $stderr, $ret);
 
 # Initialize primary node
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1, has_archiving => 1);
 $node_primary->append_conf(
 	'postgresql.conf', q[
@@ -74,7 +74,7 @@ $node_primary->backup_fs_hot($backup_name);
 $node_primary->safe_psql('postgres',
 	q[SELECT pg_create_physical_replication_slot('phys_slot');]);
 
-my $node_replica = get_new_node('replica');
+my $node_replica = PostgresNode->new('replica');
 $node_replica->init_from_backup(
 	$node_primary, $backup_name,
 	has_streaming => 1,

@@ -11,7 +11,7 @@ use TestLib;
 use Test::More tests => 16;
 use Config;
 
-my $primary = get_new_node('primary');
+my $primary = PostgresNode->new('primary');
 $primary->init(
 	has_archiving    => 1,
 	allows_streaming => 1);
@@ -138,7 +138,7 @@ $primary->poll_query_until('postgres',
   or die "Timed out while waiting for archiving to finish";
 
 # Test standby with archive_mode = on.
-my $standby1 = get_new_node('standby');
+my $standby1 = PostgresNode->new('standby');
 $standby1->init_from_backup($primary, 'backup', has_restoring => 1);
 $standby1->append_conf('postgresql.conf', "archive_mode = on");
 my $standby1_data = $standby1->data_dir;
@@ -174,7 +174,7 @@ ok( -f "$standby1_data/$segment_path_2_done",
 # command to fail to persist the .ready files.  Note that this node
 # has inherited the archive command of the previous cold backup that
 # will cause archiving failures.
-my $standby2 = get_new_node('standby2');
+my $standby2 = PostgresNode->new('standby2');
 $standby2->init_from_backup($primary, 'backup', has_restoring => 1);
 $standby2->append_conf('postgresql.conf', 'archive_mode = always');
 my $standby2_data = $standby2->data_dir;

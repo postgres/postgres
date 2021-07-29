@@ -8,7 +8,7 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 4;
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->append_conf('postgresql.conf',
 	"shared_preload_libraries = 'auto_explain'");

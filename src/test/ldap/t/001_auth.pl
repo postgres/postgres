@@ -153,7 +153,7 @@ system_or_bail 'ldappasswd', '-x', '-y', $ldap_pwfile, '-s', 'secret2',
 
 note "setting up PostgreSQL instance";
 
-my $node = get_new_node('node');
+my $node = PostgresNode->new('node');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;

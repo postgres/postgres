@@ -18,7 +18,7 @@ program_options_handling_ok('pg_basebackup');
 
 my $tempdir = TestLib::tempdir;
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 
 # Set umask so test directories and files are created with default permissions
 umask(0077);
@@ -268,7 +268,7 @@ SKIP:
 	skip "no tar program available", 1
 	  if (!defined $tar || $tar eq '');
 
-	my $node2 = get_new_node('replica');
+	my $node2 = PostgresNode->new('replica');
 
 	# Recover main data directory
 	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar);

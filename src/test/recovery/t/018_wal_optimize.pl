@@ -43,7 +43,7 @@ sub run_wal_optimize
 {
 	my $wal_level = shift;
 
-	my $node = get_new_node("node_$wal_level");
+	my $node = PostgresNode->new("node_$wal_level");
 	$node->init;
 	$node->append_conf(
 		'postgresql.conf', qq(

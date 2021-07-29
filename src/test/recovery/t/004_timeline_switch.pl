@@ -15,7 +15,7 @@ $ENV{PGDATABASE} = 'postgres';
 # on a new timeline.
 
 # Initialize primary node
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1);
 $node_primary->start;
 
@@ -24,11 +24,11 @@ my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
 # Create two standbys linking to it
-my $node_standby_1 = get_new_node('standby_1');
+my $node_standby_1 = PostgresNode->new('standby_1');
 $node_standby_1->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_1->start;
-my $node_standby_2 = get_new_node('standby_2');
+my $node_standby_2 = PostgresNode->new('standby_2');
 $node_standby_2->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_2->start;
@@ -76,7 +76,7 @@ is($result, qq(2000), 'check content of standby 2');
 # when WAL archiving is enabled.
 
 # Initialize primary node
-my $node_primary_2 = get_new_node('primary_2');
+my $node_primary_2 = PostgresNode->new('primary_2');
 $node_primary_2->init(allows_streaming => 1, has_archiving => 1);
 $node_primary_2->append_conf(
 	'postgresql.conf', qq(
@@ -88,7 +88,7 @@ $node_primary_2->start;
 $node_primary_2->backup($backup_name);
 
 # Create standby node
-my $node_standby_3 = get_new_node('standby_3');
+my $node_standby_3 = PostgresNode->new('standby_3');
 $node_standby_3->init_from_backup($node_primary_2, $backup_name,
 	has_streaming => 1);
 

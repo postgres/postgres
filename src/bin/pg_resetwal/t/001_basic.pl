@@ -12,7 +12,7 @@ program_help_ok('pg_resetwal');
 program_version_ok('pg_resetwal');
 program_options_handling_ok('pg_resetwal');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 
 command_like([ 'pg_resetwal', '-n', $node->data_dir ],

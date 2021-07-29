@@ -11,7 +11,7 @@ use Time::HiRes qw(usleep);
 
 # Initialize and start node with wal_level = replica and WAL archiving
 # enabled.
-my $node = get_new_node('orig');
+my $node = PostgresNode->new('orig');
 $node->init(has_archiving => 1, allows_streaming => 1);
 my $replica_config = q[
 wal_level = replica
@@ -66,7 +66,7 @@ sub test_recovery_wal_level_minimal
 {
 	my ($node_name, $node_text, $standby_setting) = @_;
 
-	my $recovery_node = get_new_node($node_name);
+	my $recovery_node = PostgresNode->new($node_name);
 	$recovery_node->init_from_backup(
 		$node, $backup_name,
 		has_restoring => 1,

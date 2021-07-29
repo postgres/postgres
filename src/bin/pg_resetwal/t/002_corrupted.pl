@@ -10,7 +10,7 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 6;
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 
 my $pg_control = $node->data_dir . '/global/pg_control';

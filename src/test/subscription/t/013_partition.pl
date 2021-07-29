@@ -10,15 +10,15 @@ use Test::More tests => 62;
 
 # setup
 
-my $node_publisher = get_new_node('publisher');
+my $node_publisher = PostgresNode->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
-my $node_subscriber1 = get_new_node('subscriber1');
+my $node_subscriber1 = PostgresNode->new('subscriber1');
 $node_subscriber1->init(allows_streaming => 'logical');
 $node_subscriber1->start;
 
-my $node_subscriber2 = get_new_node('subscriber2');
+my $node_subscriber2 = PostgresNode->new('subscriber2');
 $node_subscriber2->init(allows_streaming => 'logical');
 $node_subscriber2->start;
 

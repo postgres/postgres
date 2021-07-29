@@ -26,7 +26,7 @@ else
 # is really wrong.
 my $psql_timeout = IPC::Run::timer(60);
 
-my $node = get_new_node('node_crash');
+my $node = PostgresNode->new('node_crash');
 $node->init();
 $node->start();
 

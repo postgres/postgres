@@ -12,7 +12,7 @@ use TestLib;
 use Test::More tests => 1;
 
 # Initialize primary node
-my $alpha = get_new_node('alpha');
+my $alpha = PostgresNode->new('alpha');
 $alpha->init(allows_streaming => 1);
 # Setting wal_log_hints to off is important to get invalid page
 # references.
@@ -25,7 +25,7 @@ $alpha->start;
 
 # setup/start a standby
 $alpha->backup('bkp');
-my $bravo = get_new_node('bravo');
+my $bravo = PostgresNode->new('bravo');
 $bravo->init_from_backup($alpha, 'bkp', has_streaming => 1);
 $bravo->append_conf('postgresql.conf', <<EOF);
 checkpoint_timeout=1h

@@ -10,7 +10,7 @@ use Test::More tests => 1;
 use File::Compare;
 
 # Initialize and start primary node with WAL archiving
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(has_archiving => 1, allows_streaming => 1);
 $node_primary->append_conf(
 	'postgresql.conf', qq{
@@ -24,7 +24,7 @@ $node_primary->backup($backup_name);
 # Initialize node for PITR targeting a very specific restore point, just
 # after a PREPARE TRANSACTION is issued so as we finish with a promoted
 # node where this 2PC transaction needs an explicit COMMIT PREPARED.
-my $node_pitr = get_new_node('node_pitr');
+my $node_pitr = PostgresNode->new('node_pitr');
 $node_pitr->init_from_backup(
 	$node_primary, $backup_name,
 	standby       => 0,

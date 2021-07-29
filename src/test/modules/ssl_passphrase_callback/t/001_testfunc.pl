@@ -20,7 +20,7 @@ my $rot13pass = "SbbOnE1";
 
 # see the Makefile for how the certificate and key have been generated
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->append_conf('postgresql.conf',
 	"ssl_passphrase.passphrase = '$rot13pass'");

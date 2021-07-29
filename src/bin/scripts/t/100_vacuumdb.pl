@@ -12,7 +12,7 @@ program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
 program_options_handling_ok('vacuumdb');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->start;
 

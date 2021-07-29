@@ -167,7 +167,7 @@ END
 
 note "setting up PostgreSQL instance";
 
-my $node = get_new_node('node');
+my $node = PostgresNode->new('node');
 $node->init;
 $node->append_conf(
 	'postgresql.conf', qq{

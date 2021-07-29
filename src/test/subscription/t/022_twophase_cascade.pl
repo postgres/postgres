@@ -15,19 +15,19 @@ use Test::More tests => 27;
 
 # Initialize nodes
 # node_A
-my $node_A = get_new_node('node_A');
+my $node_A = PostgresNode->new('node_A');
 $node_A->init(allows_streaming => 'logical');
 $node_A->append_conf('postgresql.conf',
 	qq(max_prepared_transactions = 10));
 $node_A->start;
 # node_B
-my $node_B = get_new_node('node_B');
+my $node_B = PostgresNode->new('node_B');
 $node_B->init(allows_streaming => 'logical');
 $node_B->append_conf('postgresql.conf',
 	qq(max_prepared_transactions = 10));
 $node_B->start;
 # node_C
-my $node_C = get_new_node('node_C');
+my $node_C = PostgresNode->new('node_C');
 $node_C->init(allows_streaming => 'logical');
 $node_C->append_conf('postgresql.conf',
 	qq(max_prepared_transactions = 10));

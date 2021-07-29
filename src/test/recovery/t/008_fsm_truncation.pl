@@ -12,7 +12,7 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 1;
 
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1);
 
 $node_primary->append_conf(
@@ -28,7 +28,7 @@ autovacuum = off
 $node_primary->start;
 
 $node_primary->backup('primary_backup');
-my $node_standby = get_new_node('standby');
+my $node_standby = PostgresNode->new('standby');
 $node_standby->init_from_backup($node_primary, 'primary_backup',
 	has_streaming => 1);
 $node_standby->start;

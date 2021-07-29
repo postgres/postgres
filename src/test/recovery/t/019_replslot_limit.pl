@@ -17,7 +17,7 @@ use Time::HiRes qw(usleep);
 $ENV{PGDATABASE} = 'postgres';
 
 # Initialize primary node, setting wal-segsize to 1MB
-my $node_primary = get_new_node('primary');
+my $node_primary = PostgresNode->new('primary');
 $node_primary->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $node_primary->append_conf(
 	'postgresql.conf', qq(
@@ -41,7 +41,7 @@ my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
 # Create a standby linking to it using the replication slot
-my $node_standby = get_new_node('standby_1');
+my $node_standby = PostgresNode->new('standby_1');
 $node_standby->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
@@ -250,7 +250,7 @@ ok($failed, 'check that replication has been broken');
 $node_primary->stop;
 $node_standby->stop;
 
-my $node_primary2 = get_new_node('primary2');
+my $node_primary2 = PostgresNode->new('primary2');
 $node_primary2->init(allows_streaming => 1);
 $node_primary2->append_conf(
 	'postgresql.conf', qq(
@@ -271,7 +271,7 @@ max_slot_wal_keep_size = 0
 ));
 $node_primary2->start;
 
-$node_standby = get_new_node('standby_2');
+$node_standby = PostgresNode->new('standby_2');
 $node_standby->init_from_backup($node_primary2, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
@@ -303,7 +303,7 @@ if ($TestLib::windows_os)
 
 # Get a slot terminated while the walsender is active
 # We do this by sending SIGSTOP to the walsender.  Skip this on Windows.
-my $node_primary3 = get_new_node('primary3');
+my $node_primary3 = PostgresNode->new('primary3');
 $node_primary3->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $node_primary3->append_conf(
 	'postgresql.conf', qq(
@@ -319,7 +319,7 @@ $node_primary3->safe_psql('postgres',
 $backup_name = 'my_backup';
 $node_primary3->backup($backup_name);
 # Create standby
-my $node_standby3 = get_new_node('standby_3');
+my $node_standby3 = PostgresNode->new('standby_3');
 $node_standby3->init_from_backup($node_primary3, $backup_name,
 	has_streaming => 1);
 $node_standby3->append_conf('postgresql.conf', "primary_slot_name = 'rep3'");

@@ -128,7 +128,7 @@ sub setup_cluster
 
 	# Initialize primary, data checksums are mandatory
 	$node_primary =
-	  get_new_node('primary' . ($extra_name ? "_${extra_name}" : ''));
+	  PostgresNode->new('primary' . ($extra_name ? "_${extra_name}" : ''));
 
 	# Set up pg_hba.conf and pg_ident.conf for the role running
 	# pg_rewind.  This role is used for all the tests, and has
@@ -176,7 +176,7 @@ sub create_standby
 	my $extra_name = shift;
 
 	$node_standby =
-	  get_new_node('standby' . ($extra_name ? "_${extra_name}" : ''));
+	  PostgresNode->new('standby' . ($extra_name ? "_${extra_name}" : ''));
 	$node_primary->backup('my_backup');
 	$node_standby->init_from_backup($node_primary, 'my_backup');
 	my $connstr_primary = $node_primary->connstr();

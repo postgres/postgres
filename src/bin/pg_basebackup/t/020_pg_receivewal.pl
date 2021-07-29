@@ -14,7 +14,7 @@ program_options_handling_ok('pg_receivewal');
 # Set umask so test directories and files are created with default permissions
 umask(0077);
 
-my $primary = get_new_node('primary');
+my $primary = PostgresNode->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 

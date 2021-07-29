@@ -23,7 +23,7 @@ my $dbname2 =
 my $dbname3 = generate_ascii_string(130, 192);
 my $dbname4 = generate_ascii_string(193, 255);
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init(extra => [ '--locale=C', '--encoding=LATIN1' ]);
 $node->start;
 

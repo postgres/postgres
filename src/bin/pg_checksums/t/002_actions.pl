@@ -92,7 +92,7 @@ sub check_relation_corruption
 }
 
 # Initialize node with checksums disabled.
-my $node = get_new_node('node_checksum');
+my $node = PostgresNode->new('node_checksum');
 $node->init();
 my $pgdata = $node->data_dir;
 

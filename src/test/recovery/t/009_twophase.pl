@@ -29,7 +29,7 @@ sub configure_and_reload
 # Set up two nodes, which will alternately be primary and replication standby.
 
 # Setup london node
-my $node_london = get_new_node("london");
+my $node_london = PostgresNode->new("london");
 $node_london->init(allows_streaming => 1);
 $node_london->append_conf(
 	'postgresql.conf', qq(
@@ -40,7 +40,7 @@ $node_london->start;
 $node_london->backup('london_backup');
 
 # Setup paris node
-my $node_paris = get_new_node('paris');
+my $node_paris = PostgresNode->new('paris');
 $node_paris->init_from_backup($node_london, 'london_backup',
 	has_streaming => 1);
 $node_paris->start;

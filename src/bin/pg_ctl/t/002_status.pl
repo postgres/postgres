@@ -14,7 +14,7 @@ my $tempdir_short = TestLib::tempdir_short;
 command_exit_is([ 'pg_ctl', 'status', '-D', "$tempdir/nonexistent" ],
 	4, 'pg_ctl status with nonexistent directory');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 
 command_exit_is([ 'pg_ctl', 'status', '-D', $node->data_dir ],

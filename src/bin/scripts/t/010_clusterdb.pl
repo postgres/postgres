@@ -12,7 +12,7 @@ program_help_ok('clusterdb');
 program_version_ok('clusterdb');
 program_options_handling_ok('clusterdb');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->start;
 

@@ -11,7 +11,7 @@ use Test::More tests => 4;
 use PostgresNode;
 
 my $bkplabel = 'backup';
-my $primary  = get_new_node('primary');
+my $primary  = PostgresNode->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->append_conf(
 	'postgresql.conf', qq{
@@ -21,7 +21,7 @@ $primary->append_conf(
 $primary->start;
 $primary->backup($bkplabel);
 
-my $standby = get_new_node('standby');
+my $standby = PostgresNode->new('standby');
 $standby->init_from_backup($primary, $bkplabel, has_streaming => 1);
 $standby->start;
 

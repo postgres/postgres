@@ -34,7 +34,7 @@ if ($@)
 }
 
 # start a new server
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->start;
 

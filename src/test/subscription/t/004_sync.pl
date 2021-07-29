@@ -9,12 +9,12 @@ use TestLib;
 use Test::More tests => 8;
 
 # Initialize publisher node
-my $node_publisher = get_new_node('publisher');
+my $node_publisher = PostgresNode->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
 # Create subscriber node
-my $node_subscriber = get_new_node('subscriber');
+my $node_subscriber = PostgresNode->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->append_conf('postgresql.conf',
 	"wal_retrieve_retry_interval = 1ms");

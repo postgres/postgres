@@ -14,7 +14,7 @@ command_fails(['pg_controldata'], 'pg_controldata without arguments fails');
 command_fails([ 'pg_controldata', 'nonexistent' ],
 	'pg_controldata with nonexistent directory fails');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 
 command_like([ 'pg_controldata', $node->data_dir ],

@@ -58,13 +58,13 @@ primary_psql("CHECKPOINT");
 #
 # A (primary) <--- B (standby) <--- C (standby)
 $node_a->backup('my_backup');
-$node_b = get_new_node('node_b');
+$node_b = PostgresNode->new('node_b');
 $node_b->init_from_backup($node_a, 'my_backup', has_streaming => 1);
 $node_b->set_standby_mode();
 $node_b->start;
 
 $node_b->backup('my_backup');
-$node_c = get_new_node('node_c');
+$node_c = PostgresNode->new('node_c');
 $node_c->init_from_backup($node_b, 'my_backup', has_streaming => 1);
 $node_c->set_standby_mode();
 $node_c->start;

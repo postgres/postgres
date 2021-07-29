@@ -12,7 +12,7 @@ program_help_ok('dropdb');
 program_version_ok('dropdb');
 program_options_handling_ok('dropdb');
 
-my $node = get_new_node('main');
+my $node = PostgresNode->new('main');
 $node->init;
 $node->start;
 

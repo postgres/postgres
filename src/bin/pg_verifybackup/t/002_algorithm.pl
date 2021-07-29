@@ -12,7 +12,7 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 19;
 
-my $primary = get_new_node('primary');
+my $primary = PostgresNode->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
