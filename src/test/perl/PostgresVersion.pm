@@ -32,6 +32,9 @@ PostgresVersion - class representing PostgreSQL version numbers
   # interpolate in a string
   my $stringyval = "version: $version";
 
+  # get the major version
+  my $maj = $version->major;
+
 =head1 DESCRIPTION
 
 PostgresVersion encapsulates Postgres version numbers, providing parsing
@@ -131,6 +134,31 @@ sub _stringify
 {
 	my $self = shift;
 	return $self->{str};
+}
+
+=pod
+
+=over
+
+=item major([separator => 'char'])
+
+Returns the major version. For versions before 10 the parts are separated by
+a dot unless the separator argument is given.
+
+=back
+
+=cut
+
+sub major
+{
+    my ($self, %params) = @_;
+    my $result = $self->{num}->[0];
+    if ($result + 0 < 10)
+    {
+        my $sep = $params{separator} || '.';
+        $result .= "$sep$self->{num}->[1]";
+    }
+    return $result;
 }
 
 1;
