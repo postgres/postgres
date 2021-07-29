@@ -238,11 +238,13 @@ $node->start;
 # to our physical temp location.  That way we can use shorter names
 # for the tablespace directories, which hopefully won't run afoul of
 # the 99 character length limit.
-my $shorter_tempdir = TestLib::tempdir_short . "/tempdir";
+my $sys_tempdir = TestLib::tempdir_short;
+my $real_sys_tempdir = TestLib::perl2host($sys_tempdir) . "/tempdir";
+my $shorter_tempdir =  $sys_tempdir . "/tempdir";
 dir_symlink "$tempdir", $shorter_tempdir;
 
 mkdir "$tempdir/tblspc1";
-my $realTsDir    = TestLib::perl2host("$shorter_tempdir/tblspc1");
+my $realTsDir    = "$real_sys_tempdir/tblspc1";
 my $real_tempdir = TestLib::perl2host($tempdir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc1 LOCATION '$realTsDir';");
@@ -275,7 +277,7 @@ SKIP:
 
 	# Recover tablespace into a new directory (not where it was!)
 	my $repTsDir     = "$tempdir/tblspc1replica";
-	my $realRepTsDir = TestLib::perl2host("$shorter_tempdir/tblspc1replica");
+	my $realRepTsDir = "$real_sys_tempdir/tblspc1replica";
 	mkdir $repTsDir;
 	TestLib::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $repTsDir);
 
@@ -390,7 +392,7 @@ ok( -d "$tempdir/backup1/pg_replslot",
 rmtree("$tempdir/backup1");
 
 mkdir "$tempdir/tbl=spc2";
-$realTsDir = TestLib::perl2host("$shorter_tempdir/tbl=spc2");
+$realTsDir = "$real_sys_tempdir/tbl=spc2";
 $node->safe_psql('postgres', "DROP TABLE test1;");
 $node->safe_psql('postgres', "DROP TABLE tblspc1_unlogged;");
 $node->safe_psql('postgres', "DROP TABLESPACE tblspc1;");
@@ -409,7 +411,7 @@ $node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
 rmtree("$tempdir/backup3");
 
 mkdir "$tempdir/$superlongname";
-$realTsDir = TestLib::perl2host("$shorter_tempdir/$superlongname");
+$realTsDir = "$real_sys_tempdir/$superlongname";
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc3 LOCATION '$realTsDir';");
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/tarbackup_l3", '-Ft' ],
