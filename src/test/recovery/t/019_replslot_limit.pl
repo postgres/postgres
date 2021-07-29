@@ -173,11 +173,21 @@ ok( !find_in_log(
 		"requested WAL segment [0-9A-F]+ has already been removed"),
 	'check that required WAL segments are still available');
 
-# Advance WAL again, the slot loses the oldest segment.
+# Create one checkpoint, to improve stability of the next steps
+$node_primary->safe_psql('postgres', "CHECKPOINT;");
+
+# Prevent other checkpoints from occurring while advancing WAL segments
+$node_primary->safe_psql('postgres',
+	"ALTER SYSTEM SET max_wal_size='40MB'; SELECT pg_reload_conf()");
+
+# Advance WAL again. The slot loses the oldest segment by the next checkpoint
 my $logstart = get_log_size($node_primary);
 advance_wal($node_primary, 7);
 
-# wait until the WARNING is issued
+# Now create another checkpoint and wait until the WARNING is issued
+$node_primary->safe_psql('postgres',
+	'ALTER SYSTEM RESET max_wal_size; SELECT pg_reload_conf()');
+$node_primary->safe_psql('postgres', "CHECKPOINT;");
 my $invalidated = 0;
 for (my $i = 0; $i < 10000; $i++)
 {
