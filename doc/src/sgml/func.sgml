@@ -4085,7 +4085,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
        </para>
        <para>
         <literal>bit_count('\x1234567890'::bytea)</literal>
-        <returnvalue>31</returnvalue>
+        <returnvalue>15</returnvalue>
        </para></entry>
       </row>
 
