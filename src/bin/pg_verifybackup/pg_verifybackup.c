@@ -304,6 +304,7 @@ main(int argc, char **argv)
 							 "but was not the same version as %s.\n"
 							 "Check your installation.",
 							 "pg_waldump", full_path, "pg_verifybackup");
+			exit(1);
 		}
 	}
 
