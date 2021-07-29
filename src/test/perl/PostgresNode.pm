@@ -19,9 +19,12 @@ PostgresNode - class representing PostgreSQL server instance
   # Start the PostgreSQL server
   $node->start();
 
-  # Change a setting and restart
+  # Add a setting and restart
   $node->append_conf('postgresql.conf', 'hot_standby = on');
   $node->restart();
+
+  # Modify or delete an existing setting
+  $node->adjust_conf('postgresql.conf', 'max_wal_senders', '10');
 
   # run a query with psql, like:
   #   echo 'SELECT 1' | psql -qAXt postgres -v ON_ERROR_STOP=1
@@ -540,6 +543,50 @@ sub append_conf
 	  or die("unable to set permissions for $conffile");
 
 	return;
+}
+
+=pod
+
+=item $node->adjust_conf(filename, setting, value, skip_equals)
+
+Modify the named config file setting with the value. If the value is undefined,
+instead delete the setting. If the setting is not present no action is taken.
+
+This will write "$setting = $value\n" in place of the existing line,
+unless skip_equals is true, in which case it will write
+"$setting $value\n". If the value needs to be quoted it is the caller's
+responsibility to do that.
+
+=cut
+
+sub adjust_conf
+{
+	my ($self, $filename, $setting, $value, $skip_equals) = @_;
+
+	my $conffile = $self->data_dir . '/' . $filename;
+
+	my $contents = TestLib::slurp_file($conffile);
+	my @lines    = split(/\n/, $contents);
+	my @result;
+	my $eq = $skip_equals ? '' : '= ';
+	foreach my $line (@lines)
+	{
+		if ($line !~ /^$setting\W/)
+		{
+			push(@result, "$line\n");
+		}
+		elsif (defined $value)
+		{
+			push(@result, "$setting $eq$value\n");
+		}
+	}
+	open my $fh, ">", $conffile
+	  or croak "could not write \"$conffile\": $!";
+	print $fh @result;
+	close $fh;
+
+	chmod($self->group_access() ? 0640 : 0600, $conffile)
+	  or die("unable to set permissions for $conffile");
 }
 
 =pod
