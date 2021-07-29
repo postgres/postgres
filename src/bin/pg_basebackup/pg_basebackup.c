@@ -1626,8 +1626,11 @@ ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf, void *callback_data)
 				}
 #ifndef WIN32
 				if (chmod(state->filename, (mode_t) filemode))
+				{
 					pg_log_error("could not set permissions on directory \"%s\": %m",
 								 state->filename);
+					exit(1);
+				}
 #endif
 			}
 			else if (copybuf[156] == '2')
@@ -1676,8 +1679,11 @@ ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf, void *callback_data)
 
 #ifndef WIN32
 		if (chmod(state->filename, (mode_t) filemode))
+		{
 			pg_log_error("could not set permissions on file \"%s\": %m",
 						 state->filename);
+			exit(1);
+		}
 #endif
 
 		if (state->current_len_left == 0)

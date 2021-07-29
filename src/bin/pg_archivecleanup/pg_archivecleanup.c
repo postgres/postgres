@@ -151,21 +151,30 @@ CleanupPriorWALFiles(void)
 				{
 					pg_log_error("could not remove file \"%s\": %m",
 								 WALFilePath);
-					break;
+					exit(1);
 				}
 			}
 		}
 
 		if (errno)
+		{
 			pg_log_error("could not read archive location \"%s\": %m",
 						 archiveLocation);
+			exit(1);
+		}
 		if (closedir(xldir))
+		{
 			pg_log_error("could not close archive location \"%s\": %m",
 						 archiveLocation);
+			exit(1);
+		}
 	}
 	else
+	{
 		pg_log_error("could not open archive location \"%s\": %m",
 					 archiveLocation);
+		exit(1);
+	}
 }
 
 /*

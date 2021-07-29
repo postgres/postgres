@@ -341,7 +341,10 @@ StreamLogicalLog(void)
 			}
 
 			if (fstat(outfd, &statbuf) != 0)
+			{
 				pg_log_error("could not stat file \"%s\": %m", outfile);
+				goto error;
+			}
 
 			output_isfile = S_ISREG(statbuf.st_mode) && !isatty(outfd);
 		}

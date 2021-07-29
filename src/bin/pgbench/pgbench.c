@@ -6469,7 +6469,10 @@ main(int argc, char **argv)
 
 	errno = THREAD_BARRIER_INIT(&barrier, nthreads);
 	if (errno != 0)
+	{
 		pg_log_fatal("could not initialize barrier: %m");
+		exit(1);
+	}
 
 #ifdef ENABLE_THREAD_SAFETY
 	/* start all threads but thread 0 which is executed directly later */
