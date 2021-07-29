@@ -191,7 +191,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 				/* non-error cases */
 				break;
 			default:
-				pqSetResultError(result, conn->errorMessage.data);
+				pqSetResultError(result, &conn->errorMessage);
 				break;
 		}
 
@@ -662,14 +662,28 @@ pqResultStrdup(PGresult *res, const char *str)
  *		assign a new error message to a PGresult
  */
 void
-pqSetResultError(PGresult *res, const char *msg)
+pqSetResultError(PGresult *res, PQExpBuffer errorMessage)
 {
+	char	   *msg;
+
 	if (!res)
 		return;
-	if (msg && *msg)
-		res->errMsg = pqResultStrdup(res, msg);
+
+	/*
+	 * We handle two OOM scenarios here.  The errorMessage buffer might be
+	 * marked "broken" due to having previously failed to allocate enough
+	 * memory for the message, or it might be fine but pqResultStrdup fails
+	 * and returns NULL.  In either case, just make res->errMsg point directly
+	 * at a constant "out of memory" string.
+	 */
+	if (!PQExpBufferBroken(errorMessage))
+		msg = pqResultStrdup(res, errorMessage->data);
 	else
-		res->errMsg = NULL;
+		msg = NULL;
+	if (msg)
+		res->errMsg = msg;
+	else
+		res->errMsg = libpq_gettext("out of memory\n");
 }
 
 /*
@@ -852,19 +866,19 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 	/* XXX should provide a SQLSTATE too? */
 
 	/*
-	 * Result text is always just the primary message + newline. If we can't
-	 * allocate it, don't bother invoking the receiver.
+	 * Result text is always just the primary message + newline.  If we can't
+	 * allocate it, substitute "out of memory", as in pqSetResultError.
 	 */
 	res->errMsg = (char *) pqResultAlloc(res, strlen(msgBuf) + 2, false);
 	if (res->errMsg)
-	{
 		sprintf(res->errMsg, "%s\n", msgBuf);
+	else
+		res->errMsg = libpq_gettext("out of memory\n");
 
-		/*
-		 * Pass to receiver, then free it.
-		 */
-		res->noticeHooks.noticeRec(res->noticeHooks.noticeRecArg, res);
-	}
+	/*
+	 * Pass to receiver, then free it.
+	 */
+	res->noticeHooks.noticeRec(res->noticeHooks.noticeRecArg, res);
 	PQclear(res);
 }
 
@@ -2122,7 +2136,7 @@ PQgetResult(PGconn *conn)
 				appendPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"),
 								  res->events[i].name);
-				pqSetResultError(res, conn->errorMessage.data);
+				pqSetResultError(res, &conn->errorMessage);
 				res->resultStatus = PGRES_FATAL_ERROR;
 				break;
 			}

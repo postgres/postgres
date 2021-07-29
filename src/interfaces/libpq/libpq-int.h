@@ -637,7 +637,7 @@ extern pgthreadlock_t pg_g_threadlock;
 
 /* === in fe-exec.c === */
 
-extern void pqSetResultError(PGresult *res, const char *msg);
+extern void pqSetResultError(PGresult *res, PQExpBuffer errorMessage);
 extern void *pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary);
 extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
