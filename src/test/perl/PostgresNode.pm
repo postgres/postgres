@@ -302,6 +302,20 @@ sub backup_dir
 
 =pod
 
+=item $node->install_path()
+
+The configured install path (if any) for the node.
+
+=cut
+
+sub install_path
+{
+	my ($self) = @_;
+	return $self->{_install_path};
+}
+
+=pod
+
 =item $node->info()
 
 Return a string containing human-readable diagnostic information (paths, etc)
