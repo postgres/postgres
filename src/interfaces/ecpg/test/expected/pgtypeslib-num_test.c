@@ -47,7 +47,7 @@ main(void)
 
 	double d;
 	long l1, l2;
-	int i;
+	int i, min, max;
 
 	ECPGdebug(1, stderr);
 	/* exec sql whenever sqlerror  do sqlprint ( ) ; */
@@ -144,17 +144,28 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	PGTYPESnumeric_free(value2);
 	PGTYPESnumeric_free(res);
 
+	/* check conversion of numeric to int */
+	value1 = PGTYPESnumeric_from_asc("-2147483648", NULL);
+	PGTYPESnumeric_to_int(value1, &min);
+	printf("min int = %d\n", min);
+	PGTYPESnumeric_free(value1);
+
+	value2 = PGTYPESnumeric_from_asc("2147483647", NULL);
+	PGTYPESnumeric_to_int(value2, &max);
+	printf("max int = %d\n", max);
+	PGTYPESnumeric_free(value2);
+
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 93 "num_test.pgc"
+#line 104 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 93 "num_test.pgc"
+#line 104 "num_test.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 94 "num_test.pgc"
+#line 105 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 94 "num_test.pgc"
+#line 105 "num_test.pgc"
 
 
 	return 0;
