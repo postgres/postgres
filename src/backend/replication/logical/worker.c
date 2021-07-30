@@ -235,8 +235,7 @@ static void maybe_reread_subscription(void);
 /* prototype needed because of stream_commit */
 static void apply_dispatch(StringInfo s);
 
-static void apply_handle_commit_internal(StringInfo s,
-										 LogicalRepCommitData *commit_data);
+static void apply_handle_commit_internal(LogicalRepCommitData *commit_data);
 static void apply_handle_insert_internal(ApplyExecutionData *edata,
 										 ResultRelInfo *relinfo,
 										 TupleTableSlot *remoteslot);
@@ -775,7 +774,7 @@ apply_handle_commit(StringInfo s)
 								 LSN_FORMAT_ARGS(commit_data.commit_lsn),
 								 LSN_FORMAT_ARGS(remote_final_lsn))));
 
-	apply_handle_commit_internal(s, &commit_data);
+	apply_handle_commit_internal(&commit_data);
 
 	/* Process any tables that are being synchronized in parallel. */
 	process_syncing_tables(commit_data.end_lsn);
@@ -1133,7 +1132,7 @@ apply_handle_stream_commit(StringInfo s)
 	elog(DEBUG1, "replayed %d (all) changes from file \"%s\"",
 		 nchanges, path);
 
-	apply_handle_commit_internal(s, &commit_data);
+	apply_handle_commit_internal(&commit_data);
 
 	/* unlink the files with serialized changes and subxact info */
 	stream_cleanup_files(MyLogicalRepWorker->subid, xid);
@@ -1148,7 +1147,7 @@ apply_handle_stream_commit(StringInfo s)
  * Helper function for apply_handle_commit and apply_handle_stream_commit.
  */
 static void
-apply_handle_commit_internal(StringInfo s, LogicalRepCommitData *commit_data)
+apply_handle_commit_internal(LogicalRepCommitData *commit_data)
 {
 	if (IsTransactionState())
 	{
