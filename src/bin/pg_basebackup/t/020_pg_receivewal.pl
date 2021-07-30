@@ -93,7 +93,8 @@ SKIP:
 	$primary->command_ok(
 		[
 			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
-			'--endpos',      $nextlsn, '--compress', '1 '
+			'--endpos',      $nextlsn, '--compress', '1 ',
+			'--no-loop'
 		],
 		"streaming some WAL using ZLIB compression");
 
@@ -138,7 +139,10 @@ chomp($nextlsn);
 $primary->psql('postgres',
 	'INSERT INTO test_table VALUES (generate_series(200,300));');
 $primary->command_ok(
-	[ 'pg_receivewal', '-D', $stream_dir, '--verbose', '--endpos', $nextlsn ],
+	[
+		'pg_receivewal', '-D',     $stream_dir, '--verbose',
+		'--endpos',      $nextlsn, '--no-loop'
+	],
 	"streaming some WAL");
 
 $partial_wals[0] =~ s/(\.gz)?.partial//;
