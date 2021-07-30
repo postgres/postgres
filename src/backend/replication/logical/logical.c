@@ -520,8 +520,12 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 		 * xlog records didn't result in anything relevant for logical
 		 * decoding. Clients have to be able to do that to support synchronous
 		 * replication.
+		 *
+		 * Starting at a different LSN than requested might not catch certain
+		 * kinds of client errors; so the client may wish to check that
+		 * confirmed_flush_lsn matches its expectations.
 		 */
-		elog(DEBUG1, "cannot stream from %X/%X, minimum is %X/%X, forwarding",
+		elog(LOG, "%X/%X has been already streamed, forwarding to %X/%X",
 			 LSN_FORMAT_ARGS(start_lsn),
 			 LSN_FORMAT_ARGS(slot->data.confirmed_flush));
 

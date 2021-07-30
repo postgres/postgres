@@ -2410,10 +2410,22 @@ The commands accepted in replication mode are:
     <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</replaceable> [ ( <replaceable>option_name</replaceable> [ <replaceable>option_value</replaceable> ] [, ...] ) ]</term>
     <listitem>
      <para>
-      Instructs server to start streaming WAL for logical replication, starting
-      at WAL location <replaceable class="parameter">XXX/XXX</replaceable>. The server can
-      reply with an error, for example if the requested section of WAL has already
-      been recycled. On success, server responds with a CopyBothResponse
+      Instructs server to start streaming WAL for logical replication,
+      starting at either WAL location <replaceable
+      class="parameter">XXX/XXX</replaceable> or the slot's
+      <literal>confirmed_flush_lsn</literal> (see <xref
+      linkend="view-pg-replication-slots"/>), whichever is greater. This
+      behavior makes it easier for clients to avoid updating their local LSN
+      status when there is no data to process. However, starting at a
+      different LSN than requested might not catch certain kinds of client
+      errors; so the client may wish to check that
+      <literal>confirmed_flush_lsn</literal> matches its expectations before
+      issuing <literal>START_REPLICATION</literal>.
+     </para>
+
+     <para>
+      The server can reply with an error, for example if the
+      slot does not exist. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 
