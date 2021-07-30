@@ -7917,33 +7917,21 @@ StartupXLOG(void)
 		{
 			if (LocalPromoteIsTriggered)
 			{
-				checkPointLoc = ControlFile->checkPoint;
+				promoted = true;
 
 				/*
-				 * Confirm the last checkpoint is available for us to recover
-				 * from if we fail.
+				 * Insert a special WAL record to mark the end of recovery,
+				 * since we aren't doing a checkpoint. That means that the
+				 * checkpointer process may likely be in the middle of a
+				 * time-smoothed restartpoint and could continue to be for
+				 * minutes after this. That sounds strange, but the effect is
+				 * roughly the same and it would be stranger to try to come
+				 * out of the restartpoint and then checkpoint. We request a
+				 * checkpoint later anyway, just for safety.
 				 */
-				record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, false);
-				if (record != NULL)
-				{
-					promoted = true;
-
-					/*
-					 * Insert a special WAL record to mark the end of
-					 * recovery, since we aren't doing a checkpoint. That
-					 * means that the checkpointer process may likely be in
-					 * the middle of a time-smoothed restartpoint and could
-					 * continue to be for minutes after this. That sounds
-					 * strange, but the effect is roughly the same and it
-					 * would be stranger to try to come out of the
-					 * restartpoint and then checkpoint. We request a
-					 * checkpoint later anyway, just for safety.
-					 */
-					CreateEndOfRecoveryRecord();
-				}
+				CreateEndOfRecoveryRecord();
 			}
-
-			if (!promoted)
+			else
 				RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
 								  CHECKPOINT_IMMEDIATE |
 								  CHECKPOINT_WAIT);
