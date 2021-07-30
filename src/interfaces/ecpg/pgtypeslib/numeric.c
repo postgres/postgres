@@ -1586,11 +1586,16 @@ PGTYPESnumeric_to_int(numeric *nv, int *ip)
 	if ((i = PGTYPESnumeric_to_long(nv, &l)) != 0)
 		return i;
 
-	if (l < -INT_MAX || l > INT_MAX)
+/* silence compilers that might complain about useless tests */
+#if SIZEOF_LONG > SIZEOF_INT
+
+	if (l < INT_MIN || l > INT_MAX)
 	{
 		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
+
+#endif
 
 	*ip = (int) l;
 	return 0;

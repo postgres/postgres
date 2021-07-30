@@ -19,7 +19,7 @@ main(void)
 	exec sql end declare section;
 	double d;
 	long l1, l2;
-	int i;
+	int i, min, max;
 
 	ECPGdebug(1, stderr);
 	exec sql whenever sqlerror do sqlprint();
@@ -86,6 +86,17 @@ main(void)
 	PGTYPESnumeric_free(value1);
 	PGTYPESnumeric_free(value2);
 	PGTYPESnumeric_free(res);
+
+	/* check conversion of numeric to int */
+	value1 = PGTYPESnumeric_from_asc("-2147483648", NULL);
+	PGTYPESnumeric_to_int(value1, &min);
+	printf("min int = %d\n", min);
+	PGTYPESnumeric_free(value1);
+
+	value2 = PGTYPESnumeric_from_asc("2147483647", NULL);
+	PGTYPESnumeric_to_int(value2, &max);
+	printf("max int = %d\n", max);
+	PGTYPESnumeric_free(value2);
 
 	exec sql rollback;
 	exec sql disconnect;
