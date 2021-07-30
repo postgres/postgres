@@ -8881,7 +8881,7 @@ int dectoint(decimal *np, int *ip);
         Note that the ECPG implementation differs from the <productname>Informix</productname>
         implementation. <productname>Informix</productname> limits an integer to the range from -32767 to
         32767, while the limits in the ECPG implementation depend on the
-        architecture (<literal>-INT_MAX .. INT_MAX</literal>).
+        architecture (<literal>INT_MIN .. INT_MAX</literal>).
        </para>
       </listitem>
      </varlistentry>
