@@ -1067,6 +1067,96 @@ SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2 order by t1.c2 limit 1;
   1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
+-- Test CASE pushdown
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT c1,c2,c3 FROM ft2 WHERE CASE WHEN c1 > 990 THEN c1 END < 1000 ORDER BY c1;
+                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft2
+   Output: c1, c2, c3
+   Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1" WHERE (((CASE WHEN ("C 1" > 990) THEN "C 1" ELSE NULL::integer END) < 1000)) ORDER BY "C 1" ASC NULLS LAST
+(3 rows)
+
+SELECT c1,c2,c3 FROM ft2 WHERE CASE WHEN c1 > 990 THEN c1 END < 1000 ORDER BY c1;
+ c1  | c2 |  c3   
+-----+----+-------
+ 991 |  1 | 00991
+ 992 |  2 | 00992
+ 993 |  3 | 00993
+ 994 |  4 | 00994
+ 995 |  5 | 00995
+ 996 |  6 | 00996
+ 997 |  7 | 00997
+ 998 |  8 | 00998
+ 999 |  9 | 00999
+(9 rows)
+
+-- Nested CASE
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT c1,c2,c3 FROM ft2 WHERE CASE CASE WHEN c2 > 0 THEN c2 END WHEN 100 THEN 601 WHEN c2 THEN c2 ELSE 0 END > 600 ORDER BY c1;
+                                                                                                QUERY PLAN                                                                                                 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft2
+   Output: c1, c2, c3
+   Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1" WHERE (((CASE (CASE WHEN (c2 > 0) THEN c2 ELSE NULL::integer END) WHEN 100 THEN 601 WHEN c2 THEN c2 ELSE 0 END) > 600)) ORDER BY "C 1" ASC NULLS LAST
+(3 rows)
+
+SELECT c1,c2,c3 FROM ft2 WHERE CASE CASE WHEN c2 > 0 THEN c2 END WHEN 100 THEN 601 WHEN c2 THEN c2 ELSE 0 END > 600 ORDER BY c1;
+ c1 | c2 | c3 
+----+----+----
+(0 rows)
+
+-- CASE arg WHEN
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1 WHERE c1 > (CASE mod(c1, 4) WHEN 0 THEN 1 WHEN 2 THEN 50 ELSE 100 END);
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE (("C 1" > (CASE mod("C 1", 4) WHEN 0 THEN 1 WHEN 2 THEN 50 ELSE 100 END)))
+(3 rows)
+
+-- CASE cannot be pushed down because of unshippable arg clause
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1 WHERE c1 > (CASE random()::integer WHEN 0 THEN 1 WHEN 2 THEN 50 ELSE 100 END);
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Filter: (ft1.c1 > CASE (random())::integer WHEN 0 THEN 1 WHEN 2 THEN 50 ELSE 100 END)
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
+(4 rows)
+
+-- these are shippable
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1 WHERE CASE c6 WHEN 'foo' THEN true ELSE c3 < 'bar' END;
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((CASE c6 WHEN 'foo'::text THEN true ELSE (c3 < 'bar'::text) END))
+(3 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1 WHERE CASE c3 WHEN c6 THEN true ELSE c3 < 'bar' END;
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1" WHERE ((CASE c3 WHEN c6 THEN true ELSE (c3 < 'bar'::text) END))
+(3 rows)
+
+-- but this is not because of collation
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1 WHERE CASE c3 COLLATE "C" WHEN c6 THEN true ELSE c3 < 'bar' END;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, c2, c3, c4, c5, c6, c7, c8
+   Filter: CASE (ft1.c3)::text WHEN ft1.c6 THEN true ELSE (ft1.c3 < 'bar'::text) END
+   Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
+(4 rows)
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================

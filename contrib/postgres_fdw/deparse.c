@@ -116,7 +116,8 @@ typedef struct deparse_expr_cxt
  */
 static bool foreign_expr_walker(Node *node,
 								foreign_glob_cxt *glob_cxt,
-								foreign_loc_cxt *outer_cxt);
+								foreign_loc_cxt *outer_cxt,
+								foreign_loc_cxt *case_arg_cxt);
 static char *deparse_type_name(Oid type_oid, int32 typemod);
 
 /*
@@ -158,6 +159,7 @@ static void deparseScalarArrayOpExpr(ScalarArrayOpExpr *node,
 static void deparseRelabelType(RelabelType *node, deparse_expr_cxt *context);
 static void deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context);
 static void deparseNullTest(NullTest *node, deparse_expr_cxt *context);
+static void deparseCaseExpr(CaseExpr *node, deparse_expr_cxt *context);
 static void deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context);
 static void printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
 							 deparse_expr_cxt *context);
@@ -254,7 +256,7 @@ is_foreign_expr(PlannerInfo *root,
 		glob_cxt.relids = baserel->relids;
 	loc_cxt.collation = InvalidOid;
 	loc_cxt.state = FDW_COLLATE_NONE;
-	if (!foreign_expr_walker((Node *) expr, &glob_cxt, &loc_cxt))
+	if (!foreign_expr_walker((Node *) expr, &glob_cxt, &loc_cxt, NULL))
 		return false;
 
 	/*
@@ -283,6 +285,10 @@ is_foreign_expr(PlannerInfo *root,
  *
  * In addition, *outer_cxt is updated with collation information.
  *
+ * case_arg_cxt is NULL if this subexpression is not inside a CASE-with-arg.
+ * Otherwise, it points to the collation info derived from the arg expression,
+ * which must be consulted by any CaseTestExpr.
+ *
  * We must check that the expression contains only node types we can deparse,
  * that all types/functions/operators are safe to send (they are "shippable"),
  * and that all collations used in the expression derive from Vars of the
@@ -294,7 +300,8 @@ is_foreign_expr(PlannerInfo *root,
 static bool
 foreign_expr_walker(Node *node,
 					foreign_glob_cxt *glob_cxt,
-					foreign_loc_cxt *outer_cxt)
+					foreign_loc_cxt *outer_cxt,
+					foreign_loc_cxt *case_arg_cxt)
 {
 	bool		check_type = true;
 	PgFdwRelationInfo *fpinfo;
@@ -432,17 +439,17 @@ foreign_expr_walker(Node *node,
 				 * result, so do those first and reset inner_cxt afterwards.
 				 */
 				if (!foreign_expr_walker((Node *) sr->refupperindexpr,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 				inner_cxt.collation = InvalidOid;
 				inner_cxt.state = FDW_COLLATE_NONE;
 				if (!foreign_expr_walker((Node *) sr->reflowerindexpr,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 				inner_cxt.collation = InvalidOid;
 				inner_cxt.state = FDW_COLLATE_NONE;
 				if (!foreign_expr_walker((Node *) sr->refexpr,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -478,7 +485,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) fe->args,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -526,7 +533,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) oe->args,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -566,7 +573,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) oe->args,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -592,7 +599,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpression.
 				 */
 				if (!foreign_expr_walker((Node *) r->arg,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -619,7 +626,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) b->args,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/* Output is always boolean and so noncollatable. */
@@ -635,12 +642,131 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) nt->arg,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/* Output is always boolean and so noncollatable. */
 				collation = InvalidOid;
 				state = FDW_COLLATE_NONE;
+			}
+			break;
+		case T_CaseExpr:
+			{
+				CaseExpr   *ce = (CaseExpr *) node;
+				foreign_loc_cxt arg_cxt;
+				foreign_loc_cxt tmp_cxt;
+				ListCell   *lc;
+
+				/*
+				 * Recurse to CASE's arg expression, if any.  Its collation
+				 * has to be saved aside for use while examining CaseTestExprs
+				 * within the WHEN expressions.
+				 */
+				arg_cxt.collation = InvalidOid;
+				arg_cxt.state = FDW_COLLATE_NONE;
+				if (ce->arg)
+				{
+					if (!foreign_expr_walker((Node *) ce->arg,
+											 glob_cxt, &arg_cxt, case_arg_cxt))
+						return false;
+				}
+
+				/* Examine the CaseWhen subexpressions. */
+				foreach(lc, ce->args)
+				{
+					CaseWhen   *cw = lfirst_node(CaseWhen, lc);
+
+					if (ce->arg)
+					{
+						/*
+						 * In a CASE-with-arg, the parser should have produced
+						 * WHEN clauses of the form "CaseTestExpr = RHS",
+						 * possibly with an implicit coercion inserted above
+						 * the CaseTestExpr.  However in an expression that's
+						 * been through the optimizer, the WHEN clause could
+						 * be almost anything (since the equality operator
+						 * could have been expanded into an inline function).
+						 * In such cases forbid pushdown, because
+						 * deparseCaseExpr can't handle it.
+						 */
+						Node	   *whenExpr = (Node *) cw->expr;
+						List	   *opArgs;
+
+						if (!IsA(whenExpr, OpExpr))
+							return false;
+
+						opArgs = ((OpExpr *) whenExpr)->args;
+						if (list_length(opArgs) != 2 ||
+							!IsA(strip_implicit_coercions(linitial(opArgs)),
+								 CaseTestExpr))
+							return false;
+					}
+
+					/*
+					 * Recurse to WHEN expression, passing down the arg info.
+					 * Its collation doesn't affect the result (really, it
+					 * should be boolean and thus not have a collation).
+					 */
+					tmp_cxt.collation = InvalidOid;
+					tmp_cxt.state = FDW_COLLATE_NONE;
+					if (!foreign_expr_walker((Node *) cw->expr,
+											 glob_cxt, &tmp_cxt, &arg_cxt))
+						return false;
+
+					/* Recurse to THEN expression. */
+					if (!foreign_expr_walker((Node *) cw->result,
+											 glob_cxt, &inner_cxt, case_arg_cxt))
+						return false;
+				}
+
+				/* Recurse to ELSE expression. */
+				if (!foreign_expr_walker((Node *) ce->defresult,
+										 glob_cxt, &inner_cxt, case_arg_cxt))
+					return false;
+
+				/*
+				 * Detect whether node is introducing a collation not derived
+				 * from a foreign Var.  (If so, we just mark it unsafe for now
+				 * rather than immediately returning false, since the parent
+				 * node might not care.)  This is the same as for function
+				 * nodes, except that the input collation is derived from only
+				 * the THEN and ELSE subexpressions.
+				 */
+				collation = ce->casecollid;
+				if (collation == InvalidOid)
+					state = FDW_COLLATE_NONE;
+				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
+						 collation == inner_cxt.collation)
+					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
+				else
+					state = FDW_COLLATE_UNSAFE;
+			}
+			break;
+		case T_CaseTestExpr:
+			{
+				CaseTestExpr *c = (CaseTestExpr *) node;
+
+				/* Punt if we seem not to be inside a CASE arg WHEN. */
+				if (!case_arg_cxt)
+					return false;
+
+				/*
+				 * Otherwise, any nondefault collation attached to the
+				 * CaseTestExpr node must be derived from foreign Var(s) in
+				 * the CASE arg.
+				 */
+				collation = c->collation;
+				if (collation == InvalidOid)
+					state = FDW_COLLATE_NONE;
+				else if (case_arg_cxt->state == FDW_COLLATE_SAFE &&
+						 collation == case_arg_cxt->collation)
+					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
+				else
+					state = FDW_COLLATE_UNSAFE;
 			}
 			break;
 		case T_ArrayExpr:
@@ -651,7 +777,7 @@ foreign_expr_walker(Node *node,
 				 * Recurse to input subexpressions.
 				 */
 				if (!foreign_expr_walker((Node *) a->elements,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -681,7 +807,7 @@ foreign_expr_walker(Node *node,
 				foreach(lc, l)
 				{
 					if (!foreign_expr_walker((Node *) lfirst(lc),
-											 glob_cxt, &inner_cxt))
+											 glob_cxt, &inner_cxt, case_arg_cxt))
 						return false;
 				}
 
@@ -730,7 +856,8 @@ foreign_expr_walker(Node *node,
 						n = (Node *) tle->expr;
 					}
 
-					if (!foreign_expr_walker(n, glob_cxt, &inner_cxt))
+					if (!foreign_expr_walker(n,
+											 glob_cxt, &inner_cxt, case_arg_cxt))
 						return false;
 				}
 
@@ -765,7 +892,7 @@ foreign_expr_walker(Node *node,
 
 				/* Check aggregate filter */
 				if (!foreign_expr_walker((Node *) agg->aggfilter,
-										 glob_cxt, &inner_cxt))
+										 glob_cxt, &inner_cxt, case_arg_cxt))
 					return false;
 
 				/*
@@ -2456,6 +2583,9 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 		case T_NullTest:
 			deparseNullTest((NullTest *) node, context);
 			break;
+		case T_CaseExpr:
+			deparseCaseExpr((CaseExpr *) node, context);
+			break;
 		case T_ArrayExpr:
 			deparseArrayExpr((ArrayExpr *) node, context);
 			break;
@@ -3005,6 +3135,56 @@ deparseNullTest(NullTest *node, deparse_expr_cxt *context)
 		else
 			appendStringInfoString(buf, " IS DISTINCT FROM NULL)");
 	}
+}
+
+/*
+ * Deparse CASE expression
+ */
+static void
+deparseCaseExpr(CaseExpr *node, deparse_expr_cxt *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *lc;
+
+	appendStringInfoString(buf, "(CASE");
+
+	/* If this is a CASE arg WHEN then emit the arg expression */
+	if (node->arg != NULL)
+	{
+		appendStringInfoChar(buf, ' ');
+		deparseExpr(node->arg, context);
+	}
+
+	/* Add each condition/result of the CASE clause */
+	foreach(lc, node->args)
+	{
+		CaseWhen   *whenclause = (CaseWhen *) lfirst(lc);
+
+		/* WHEN */
+		appendStringInfoString(buf, " WHEN ");
+		if (node->arg == NULL)	/* CASE WHEN */
+			deparseExpr(whenclause->expr, context);
+		else					/* CASE arg WHEN */
+		{
+			/* Ignore the CaseTestExpr and equality operator. */
+			deparseExpr(lsecond(castNode(OpExpr, whenclause->expr)->args),
+						context);
+		}
+
+		/* THEN */
+		appendStringInfoString(buf, " THEN ");
+		deparseExpr(whenclause->result, context);
+	}
+
+	/* add ELSE if present */
+	if (node->defresult != NULL)
+	{
+		appendStringInfoString(buf, " ELSE ");
+		deparseExpr(node->defresult, context);
+	}
+
+	/* append END */
+	appendStringInfoString(buf, " END)");
 }
 
 /*
