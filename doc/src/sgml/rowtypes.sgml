@@ -84,7 +84,8 @@ CREATE TABLE inventory_item (
   restriction of the current implementation: since no constraints are
   associated with a composite type, the constraints shown in the table
   definition <emphasis>do not apply</emphasis> to values of the composite type
-  outside the table.  (To work around this, create a domain over the composite
+  outside the table.  (To work around this, create a
+  <glossterm linkend="glossary-domain">domain</glossterm> over the composite
   type, and apply the desired constraints as <literal>CHECK</literal>
   constraints of the domain.)
  </para>

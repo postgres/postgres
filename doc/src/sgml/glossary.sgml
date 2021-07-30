@@ -390,8 +390,7 @@
      A restriction on the values of data allowed within a
      <glossterm linkend="glossary-table">table</glossterm>,
      or in attributes of a
-     <!-- XXX Should have term "domain". Need term "type" for that. -->
-     <firstterm>domain</firstterm>.
+     <glossterm linkend="glossary-domain">domain</glossterm>.
     </para>
     <para>
      For more information, see
@@ -504,6 +503,20 @@
     <para>
      For more information, see
      <xref linkend="sql-delete"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-domain">
+   <glossterm>Domain</glossterm>
+   <glossdef>
+    <para>
+     A user-defined data type that is based on another underlying data type.
+     It acts the same as the underlying type except for possibly restricting
+     the set of allowed values.
+    </para>
+    <para>
+     For more information, see <xref linkend="domains"/>.
     </para>
    </glossdef>
   </glossentry>

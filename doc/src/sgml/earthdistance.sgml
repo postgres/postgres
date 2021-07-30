@@ -50,7 +50,8 @@
   <para>
    Data is stored in cubes that are points (both corners are the same) using 3
    coordinates representing the x, y, and z distance from the center of the
-   Earth.  A domain <type>earth</type> over <type>cube</type> is provided, which
+   Earth.  A <glossterm linkend="glossary-domain">domain</glossterm>
+   <type>earth</type> over type <type>cube</type> is provided, which
    includes constraint checks that the value meets these restrictions and
    is reasonably close to the actual surface of the Earth.
   </para>

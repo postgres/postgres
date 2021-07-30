@@ -346,7 +346,8 @@ initdb --locale=sv_SE
     collation.  (The built-in collatable data types are
     <type>text</type>, <type>varchar</type>, and <type>char</type>.
     User-defined base types can also be marked collatable, and of course
-    a domain over a collatable data type is collatable.)  If the
+    a <glossterm linkend="glossary-domain">domain</glossterm> over a
+    collatable data type is collatable.)  If the
     expression is a column reference, the collation of the expression is the
     defined collation of the column.  If the expression is a constant, the
     collation is the default collation of the data type of the

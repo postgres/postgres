@@ -55,7 +55,8 @@
 
   <para>
    The module also provides a data type <type>lo</type>, which is really just
-   a domain of the <type>oid</type> type.  This is useful for differentiating
+   a <glossterm linkend="glossary-domain">domain</glossterm> over
+   the <type>oid</type> type.  This is useful for differentiating
    database columns that hold large object references from those that are
    OIDs of other things.  You don't have to use the <type>lo</type> type to
    use the trigger, but it may be convenient to use it to keep track of which
