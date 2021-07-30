@@ -10300,6 +10300,59 @@ SELECT * FROM async_pt t1, async_p2 t2 WHERE t1.a = t2.a AND t1.b === 505;
  2505 | 505 | 0505 | 2505 | 505 | 0505
 (1 row)
 
+CREATE TABLE local_tbl (a int, b int, c text);
+INSERT INTO local_tbl VALUES (1505, 505, 'foo');
+ANALYZE local_tbl;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.a, t1.b, t1.c, async_pt.a, async_pt.b, async_pt.c, ($0)
+   Join Filter: (t1.a = async_pt.a)
+   InitPlan 1 (returns $0)
+     ->  Aggregate
+           Output: count(*)
+           ->  Append
+                 ->  Async Foreign Scan on public.async_p1 async_pt_4
+                       Remote SQL: SELECT NULL FROM public.base_tbl1 WHERE ((a < 3000))
+                 ->  Async Foreign Scan on public.async_p2 async_pt_5
+                       Remote SQL: SELECT NULL FROM public.base_tbl2 WHERE ((a < 3000))
+   ->  Seq Scan on public.local_tbl t1
+         Output: t1.a, t1.b, t1.c
+   ->  Append
+         ->  Async Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c, $0
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 3000))
+         ->  Async Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c, $0
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < 3000))
+(20 rows)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Nested Loop Left Join (actual rows=1 loops=1)
+   Join Filter: (t1.a = async_pt.a)
+   Rows Removed by Join Filter: 399
+   InitPlan 1 (returns $0)
+     ->  Aggregate (actual rows=1 loops=1)
+           ->  Append (actual rows=400 loops=1)
+                 ->  Async Foreign Scan on async_p1 async_pt_4 (actual rows=200 loops=1)
+                 ->  Async Foreign Scan on async_p2 async_pt_5 (actual rows=200 loops=1)
+   ->  Seq Scan on local_tbl t1 (actual rows=1 loops=1)
+   ->  Append (actual rows=400 loops=1)
+         ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=200 loops=1)
+         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=200 loops=1)
+(12 rows)
+
+SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
+  a   |  b  |  c  |  a   |  b  |  c   | count 
+------+-----+-----+------+-----+------+-------
+ 1505 | 505 | foo | 1505 | 505 | 0505 |   400
+(1 row)
+
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
                            QUERY PLAN                           
@@ -10342,8 +10395,6 @@ SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
 (1 row)
 
 -- Check with foreign modify
-CREATE TABLE local_tbl (a int, b int, c text);
-INSERT INTO local_tbl VALUES (1505, 505, 'foo');
 CREATE TABLE base_tbl3 (a int, b int, c text);
 CREATE FOREIGN TABLE remote_tbl (a int, b int, c text)
   SERVER loopback OPTIONS (table_name 'base_tbl3');

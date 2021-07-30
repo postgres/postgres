@@ -1043,6 +1043,17 @@ ExecAppendAsyncEventWait(AppendState *node)
 			ExecAsyncConfigureWait(areq);
 	}
 
+	/*
+	 * No need for further processing if there are no configured events other
+	 * than the postmaster death event.
+	 */
+	if (GetNumRegisteredWaitEvents(node->as_eventset) == 1)
+	{
+		FreeWaitEventSet(node->as_eventset);
+		node->as_eventset = NULL;
+		return;
+	}
+
 	/* We wait on at most EVENT_BUFFER_SIZE events. */
 	if (nevents > EVENT_BUFFER_SIZE)
 		nevents = EVENT_BUFFER_SIZE;
