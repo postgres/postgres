@@ -1755,7 +1755,8 @@ EnsurePortalSnapshotExists(void)
 
 	/* Otherwise, we'd better have an active Portal */
 	portal = ActivePortal;
-	Assert(portal != NULL);
+	if (unlikely(portal == NULL))
+		elog(ERROR, "cannot execute SQL without an outer snapshot or portal");
 	Assert(portal->portalSnapshot == NULL);
 
 	/* Create a new snapshot and make it active */
