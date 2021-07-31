@@ -37,7 +37,7 @@
 
 #include "access/transam.h"
 #include "access/twophase.h"
-#include "access/xact.h"
+#include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"

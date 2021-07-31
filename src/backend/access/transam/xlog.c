@@ -193,22 +193,6 @@ CheckpointStatsData CheckpointStats;
  */
 TimeLineID	ThisTimeLineID = 0;
 
-/*
- * Are we doing recovery from XLOG?
- *
- * This is only ever true in the startup process; it should be read as meaning
- * "this process is replaying WAL records", rather than "the system is in
- * recovery mode".  It should be examined primarily by functions that need
- * to act differently when called from a WAL redo function (e.g., to skip WAL
- * logging).  To check whether the system is in recovery regardless of which
- * process you're running in, use RecoveryInProgress() but only after shared
- * memory startup and lock initialization.
- */
-bool		InRecovery = false;
-
-/* Are we in Hot Standby mode? Only valid in startup process, see xlog.h */
-HotStandbyState standbyState = STANDBY_DISABLED;
-
 static XLogRecPtr LastRec;
 
 /* Local copy of WalRcv->flushedUpto */

@@ -25,6 +25,7 @@
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "storage/fd.h"
 #include "storage/smgr.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
@@ -33,6 +34,25 @@
 
 /* GUC variable */
 bool		ignore_invalid_pages = false;
+
+/*
+ * Are we doing recovery from XLOG?
+ *
+ * This is only ever true in the startup process; it should be read as meaning
+ * "this process is replaying WAL records", rather than "the system is in
+ * recovery mode".  It should be examined primarily by functions that need
+ * to act differently when called from a WAL redo function (e.g., to skip WAL
+ * logging).  To check whether the system is in recovery regardless of which
+ * process you're running in, use RecoveryInProgress() but only after shared
+ * memory startup and lock initialization.
+ *
+ * This is updated from xlog.c, but lives here because it's mostly read by
+ * WAL redo functions.
+ */
+bool		InRecovery = false;
+
+/* Are we in Hot Standby mode? Only valid in startup process, see xlogutils.h */
+HotStandbyState standbyState = STANDBY_DISABLED;
 
 /*
  * During XLOG replay, we may see XLOG records for incremental updates of

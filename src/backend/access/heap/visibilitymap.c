@@ -88,7 +88,7 @@
 
 #include "access/heapam_xlog.h"
 #include "access/visibilitymap.h"
-#include "access/xlog.h"
+#include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/bufmgr.h"

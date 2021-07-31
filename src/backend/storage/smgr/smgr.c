@@ -17,7 +17,7 @@
  */
 #include "postgres.h"
 
-#include "access/xlog.h"
+#include "access/xlogutils.h"
 #include "lib/ilist.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
