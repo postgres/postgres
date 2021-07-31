@@ -72,13 +72,11 @@ $primary->command_ok(
 my @partial_wals = glob "$stream_dir/*\.partial";
 is(scalar(@partial_wals), 1, "one partial WAL segment was created");
 
-# Check ZLIB compression if available.  On Windows, some old versions
-# of zlib can cause some instabilities with this test, so disable it
-# for now.
+# Check ZLIB compression if available.
 SKIP:
 {
-	skip "postgres was not built with ZLIB support, or Windows is involved", 5
-	  if (!check_pg_config("#define HAVE_LIBZ 1") || $windows_os);
+	skip "postgres was not built with ZLIB support", 5
+	  if (!check_pg_config("#define HAVE_LIBZ 1"));
 
 	# Generate more WAL worth one completed, compressed, segment.
 	$primary->psql('postgres', 'SELECT pg_switch_wal();');
