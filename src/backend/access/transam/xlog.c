@@ -901,6 +901,7 @@ static void validateRecoveryParameters(void);
 static void exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog);
 static bool recoveryStopsBefore(XLogReaderState *record);
 static bool recoveryStopsAfter(XLogReaderState *record);
+static char *getRecoveryStopReason(void);
 static void ConfirmRecoveryPaused(void);
 static void recoveryPausesHere(bool endOfRecovery);
 static bool recoveryApplyDelay(XLogReaderState *record);
@@ -6060,6 +6061,42 @@ recoveryStopsAfter(XLogReaderState *record)
 }
 
 /*
+ * Create a comment for the history file to explain why and where
+ * timeline changed.
+ */
+static char *
+getRecoveryStopReason(void)
+{
+	char		reason[200];
+
+	if (recoveryTarget == RECOVERY_TARGET_XID)
+		snprintf(reason, sizeof(reason),
+				 "%s transaction %u",
+				 recoveryStopAfter ? "after" : "before",
+				 recoveryStopXid);
+	else if (recoveryTarget == RECOVERY_TARGET_TIME)
+		snprintf(reason, sizeof(reason),
+				 "%s %s\n",
+				 recoveryStopAfter ? "after" : "before",
+				 timestamptz_to_str(recoveryStopTime));
+	else if (recoveryTarget == RECOVERY_TARGET_LSN)
+		snprintf(reason, sizeof(reason),
+				 "%s LSN %X/%X\n",
+				 recoveryStopAfter ? "after" : "before",
+				 LSN_FORMAT_ARGS(recoveryStopLSN));
+	else if (recoveryTarget == RECOVERY_TARGET_NAME)
+		snprintf(reason, sizeof(reason),
+				 "at restore point \"%s\"",
+				 recoveryStopName);
+	else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
+		snprintf(reason, sizeof(reason), "reached consistency");
+	else
+		snprintf(reason, sizeof(reason), "no recovery target specified");
+
+	return pstrdup(reason);
+}
+
+/*
  * Wait until shared recoveryPauseState is set to RECOVERY_NOT_PAUSED.
  *
  * endOfRecovery is true if the recovery target is reached and
@@ -7756,7 +7793,7 @@ StartupXLOG(void)
 	PrevTimeLineID = ThisTimeLineID;
 	if (ArchiveRecoveryRequested)
 	{
-		char		reason[200];
+		char	   *reason;
 		char		recoveryPath[MAXPGPATH];
 
 		Assert(InArchiveRecovery);
@@ -7765,33 +7802,7 @@ StartupXLOG(void)
 		ereport(LOG,
 				(errmsg("selected new timeline ID: %u", ThisTimeLineID)));
 
-		/*
-		 * Create a comment for the history file to explain why and where
-		 * timeline changed.
-		 */
-		if (recoveryTarget == RECOVERY_TARGET_XID)
-			snprintf(reason, sizeof(reason),
-					 "%s transaction %u",
-					 recoveryStopAfter ? "after" : "before",
-					 recoveryStopXid);
-		else if (recoveryTarget == RECOVERY_TARGET_TIME)
-			snprintf(reason, sizeof(reason),
-					 "%s %s\n",
-					 recoveryStopAfter ? "after" : "before",
-					 timestamptz_to_str(recoveryStopTime));
-		else if (recoveryTarget == RECOVERY_TARGET_LSN)
-			snprintf(reason, sizeof(reason),
-					 "%s LSN %X/%X\n",
-					 recoveryStopAfter ? "after" : "before",
-					 LSN_FORMAT_ARGS(recoveryStopLSN));
-		else if (recoveryTarget == RECOVERY_TARGET_NAME)
-			snprintf(reason, sizeof(reason),
-					 "at restore point \"%s\"",
-					 recoveryStopName);
-		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
-			snprintf(reason, sizeof(reason), "reached consistency");
-		else
-			snprintf(reason, sizeof(reason), "no recovery target specified");
+		reason = getRecoveryStopReason();
 
 		/*
 		 * We are now done reading the old WAL.  Turn off archive fetching if
