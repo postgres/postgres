@@ -271,9 +271,6 @@ bool		InArchiveRecovery = false;
 static bool standby_signal_file_found = false;
 static bool recovery_signal_file_found = false;
 
-/* Was the last xlog file restored from archive, or local? */
-static bool restoredFromArchive = false;
-
 /* Buffers dedicated to consistency checks of size BLCKSZ */
 static char *replay_image_masked = NULL;
 static char *primary_image_masked = NULL;
@@ -3737,18 +3734,16 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 					 xlogfname);
 			set_ps_display(activitymsg);
 
-			restoredFromArchive = RestoreArchivedFile(path, xlogfname,
-													  "RECOVERYXLOG",
-													  wal_segment_size,
-													  InRedo);
-			if (!restoredFromArchive)
+			if (!RestoreArchivedFile(path, xlogfname,
+									 "RECOVERYXLOG",
+									 wal_segment_size,
+									 InRedo))
 				return -1;
 			break;
 
 		case XLOG_FROM_PG_WAL:
 		case XLOG_FROM_STREAM:
 			XLogFilePath(path, tli, segno, wal_segment_size);
-			restoredFromArchive = false;
 			break;
 
 		default:
