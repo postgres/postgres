@@ -5378,13 +5378,13 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
     <primary>substring</primary>
    </indexterm>
    <indexterm>
-    <primary>regexp_replace</primary>
-   </indexterm>
-   <indexterm>
     <primary>regexp_match</primary>
    </indexterm>
    <indexterm>
     <primary>regexp_matches</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_replace</primary>
    </indexterm>
    <indexterm>
     <primary>regexp_split_to_table</primary>
@@ -5543,46 +5543,6 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
    </para>
 
     <para>
-     The <function>regexp_replace</function> function provides substitution of
-     new text for substrings that match POSIX regular expression patterns.
-     It has the syntax
-     <function>regexp_replace</function>(<replaceable>source</replaceable>,
-     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
-     <optional>, <replaceable>flags</replaceable> </optional>).
-     The <replaceable>source</replaceable> string is returned unchanged if
-     there is no match to the <replaceable>pattern</replaceable>.  If there is a
-     match, the <replaceable>source</replaceable> string is returned with the
-     <replaceable>replacement</replaceable> string substituted for the matching
-     substring.  The <replaceable>replacement</replaceable> string can contain
-     <literal>\</literal><replaceable>n</replaceable>, where <replaceable>n</replaceable> is 1
-     through 9, to indicate that the source substring matching the
-     <replaceable>n</replaceable>'th parenthesized subexpression of the pattern should be
-     inserted, and it can contain <literal>\&amp;</literal> to indicate that the
-     substring matching the entire pattern should be inserted.  Write
-     <literal>\\</literal> if you need to put a literal backslash in the replacement
-     text.
-     The <replaceable>flags</replaceable> parameter is an optional text
-     string containing zero or more single-letter flags that change the
-     function's behavior.  Flag <literal>i</literal> specifies case-insensitive
-     matching, while flag <literal>g</literal> specifies replacement of each matching
-     substring rather than only the first one.  Supported flags (though
-     not <literal>g</literal>) are
-     described in <xref linkend="posix-embedded-options-table"/>.
-    </para>
-
-   <para>
-    Some examples:
-<programlisting>
-regexp_replace('foobarbaz', 'b..', 'X')
-                                   <lineannotation>fooXbaz</lineannotation>
-regexp_replace('foobarbaz', 'b..', 'X', 'g')
-                                   <lineannotation>fooXX</lineannotation>
-regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
-                                   <lineannotation>fooXarYXazY</lineannotation>
-</programlisting>
-   </para>
-
-    <para>
      The <function>regexp_match</function> function returns a text array of
      captured substring(s) resulting from the first match of a POSIX
      regular expression pattern to a string.  It has the syntax
@@ -5683,6 +5643,46 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      without a match, which is typically not the desired behavior.
     </para>
    </tip>
+
+    <para>
+     The <function>regexp_replace</function> function provides substitution of
+     new text for substrings that match POSIX regular expression patterns.
+     It has the syntax
+     <function>regexp_replace</function>(<replaceable>source</replaceable>,
+     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>).
+     The <replaceable>source</replaceable> string is returned unchanged if
+     there is no match to the <replaceable>pattern</replaceable>.  If there is a
+     match, the <replaceable>source</replaceable> string is returned with the
+     <replaceable>replacement</replaceable> string substituted for the matching
+     substring.  The <replaceable>replacement</replaceable> string can contain
+     <literal>\</literal><replaceable>n</replaceable>, where <replaceable>n</replaceable> is 1
+     through 9, to indicate that the source substring matching the
+     <replaceable>n</replaceable>'th parenthesized subexpression of the pattern should be
+     inserted, and it can contain <literal>\&amp;</literal> to indicate that the
+     substring matching the entire pattern should be inserted.  Write
+     <literal>\\</literal> if you need to put a literal backslash in the replacement
+     text.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Flag <literal>i</literal> specifies case-insensitive
+     matching, while flag <literal>g</literal> specifies replacement of each matching
+     substring rather than only the first one.  Supported flags (though
+     not <literal>g</literal>) are
+     described in <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+regexp_replace('foobarbaz', 'b..', 'X')
+                                   <lineannotation>fooXbaz</lineannotation>
+regexp_replace('foobarbaz', 'b..', 'X', 'g')
+                                   <lineannotation>fooXX</lineannotation>
+regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
+                                   <lineannotation>fooXarYXazY</lineannotation>
+</programlisting>
+   </para>
 
     <para>
      The <function>regexp_split_to_table</function> function splits a string using a POSIX
