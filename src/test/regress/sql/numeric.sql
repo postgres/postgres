@@ -1126,10 +1126,19 @@ select 3.789 ^ 35;
 select 1.2 ^ 345;
 select 0.12 ^ (-20);
 select 1.000000000123 ^ (-2147483648);
+select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
 
 -- cases that used to error out
 select 0.12 ^ (-25);
 select 0.5678 ^ (-85);
+select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+
+-- negative base to integer powers
+select (-1.0) ^ 2147483646;
+select (-1.0) ^ 2147483647;
+select (-1.0) ^ 2147483648;
+select (-1.0) ^ 1000000000000000;
+select (-1.0) ^ 1000000000000001;
 
 --
 -- Tests for raising to non-integer powers
@@ -1172,6 +1181,8 @@ select exp(1.0::numeric(71,70));
 select exp('nan'::numeric);
 select exp('inf'::numeric);
 select exp('-inf'::numeric);
+select exp(-5000::numeric) = 0 as rounds_to_zero;
+select exp(-10000::numeric) = 0 as underflows;
 
 -- cases that used to generate inaccurate results
 select exp(32.999);

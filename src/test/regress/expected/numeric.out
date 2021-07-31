@@ -2396,6 +2396,12 @@ select 1.000000000123 ^ (-2147483648);
  0.7678656556403084
 (1 row)
 
+select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
+ rounds_to_zero 
+----------------
+ t
+(1 row)
+
 -- cases that used to error out
 select 0.12 ^ (-25);
                  ?column?                  
@@ -2407,6 +2413,43 @@ select 0.5678 ^ (-85);
                 ?column?                
 ----------------------------------------
  782333637740774446257.7719390061997396
+(1 row)
+
+select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+ underflows 
+------------
+ t
+(1 row)
+
+-- negative base to integer powers
+select (-1.0) ^ 2147483646;
+      ?column?      
+--------------------
+ 1.0000000000000000
+(1 row)
+
+select (-1.0) ^ 2147483647;
+      ?column?       
+---------------------
+ -1.0000000000000000
+(1 row)
+
+select (-1.0) ^ 2147483648;
+      ?column?      
+--------------------
+ 1.0000000000000000
+(1 row)
+
+select (-1.0) ^ 1000000000000000;
+      ?column?      
+--------------------
+ 1.0000000000000000
+(1 row)
+
+select (-1.0) ^ 1000000000000001;
+      ?column?       
+---------------------
+ -1.0000000000000000
 (1 row)
 
 --
@@ -2543,6 +2586,18 @@ select exp('-inf'::numeric);
  exp 
 -----
    0
+(1 row)
+
+select exp(-5000::numeric) = 0 as rounds_to_zero;
+ rounds_to_zero 
+----------------
+ t
+(1 row)
+
+select exp(-10000::numeric) = 0 as underflows;
+ underflows 
+------------
+ t
 (1 row)
 
 -- cases that used to generate inaccurate results
