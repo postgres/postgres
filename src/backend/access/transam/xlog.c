@@ -5484,7 +5484,7 @@ readRecoverySignalFile(void)
 	{
 		int			fd;
 
-		fd = BasicOpenFilePerm(STANDBY_SIGNAL_FILE, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
+		fd = BasicOpenFilePerm(STANDBY_SIGNAL_FILE, O_RDWR | PG_BINARY,
 							   S_IRUSR | S_IWUSR);
 		if (fd >= 0)
 		{
@@ -5497,7 +5497,7 @@ readRecoverySignalFile(void)
 	{
 		int			fd;
 
-		fd = BasicOpenFilePerm(RECOVERY_SIGNAL_FILE, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
+		fd = BasicOpenFilePerm(RECOVERY_SIGNAL_FILE, O_RDWR | PG_BINARY,
 							   S_IRUSR | S_IWUSR);
 		if (fd >= 0)
 		{
