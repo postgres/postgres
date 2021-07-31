@@ -3137,19 +3137,15 @@ numeric_power(PG_FUNCTION_ARGS)
 	/*
 	 * The SQL spec requires that we emit a particular SQLSTATE error code for
 	 * certain error conditions.  Specifically, we don't return a
-	 * divide-by-zero error code for 0 ^ -1.
+	 * divide-by-zero error code for 0 ^ -1.  Raising a negative number to a
+	 * non-integer power must produce the same error code, but that case is
+	 * handled in power_var().
 	 */
 	if (cmp_var(&arg1, &const_zero) == 0 &&
 		cmp_var(&arg2, &const_zero) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
 				 errmsg("zero raised to a negative power is undefined")));
-
-	if (cmp_var(&arg1, &const_zero) < 0 &&
-		cmp_var(&arg2, &arg2_trunc) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
-				 errmsg("a negative number raised to a non-integer power yields a complex result")));
 
 	/*
 	 * Call power_var() to compute and return the result; note it handles
@@ -8046,12 +8042,18 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 */
 	val = numericvar_to_double_no_overflow(&x);
 
-	/* Guard against overflow */
+	/* Guard against overflow/underflow */
 	/* If you change this limit, see also power_var()'s limit */
 	if (Abs(val) >= NUMERIC_MAX_RESULT_SCALE * 3)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value overflows numeric format")));
+	{
+		if (val > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format")));
+		zero_var(result);
+		result->dscale = rscale;
+		return;
+	}
 
 	/* decimal weight = log10(e^x) = x * log10(e) */
 	dweight = (int) (val * 0.434294481903252);
@@ -8396,10 +8398,13 @@ log_var(const NumericVar *base, const NumericVar *num, NumericVar *result)
 static void
 power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 {
+	int			res_sign;
+	NumericVar	abs_base;
 	NumericVar	ln_base;
 	NumericVar	ln_num;
 	int			ln_dweight;
 	int			rscale;
+	int			sig_digits;
 	int			local_rscale;
 	double		val;
 
@@ -8439,8 +8444,39 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 		return;
 	}
 
+	init_var(&abs_base);
 	init_var(&ln_base);
 	init_var(&ln_num);
+
+	/*
+	 * If base is negative, insist that exp be an integer.  The result is then
+	 * positive if exp is even and negative if exp is odd.
+	 */
+	if (base->sign == NUMERIC_NEG)
+	{
+		/*
+		 * Check that exp is an integer.  This error code is defined by the
+		 * SQL standard, and matches other errors in numeric_power().
+		 */
+		if (exp->ndigits > 0 && exp->ndigits > exp->weight + 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
+					 errmsg("a negative number raised to a non-integer power yields a complex result")));
+
+		/* Test if exp is odd or even */
+		if (exp->ndigits > 0 && exp->ndigits == exp->weight + 1 &&
+			(exp->digits[exp->ndigits - 1] & 1))
+			res_sign = NUMERIC_NEG;
+		else
+			res_sign = NUMERIC_POS;
+
+		/* Then work with abs(base) below */
+		set_var_from_var(base, &abs_base);
+		abs_base.sign = NUMERIC_POS;
+		base = &abs_base;
+	}
+	else
+		res_sign = NUMERIC_POS;
 
 	/*----------
 	 * Decide on the scale for the ln() calculation.  For this we need an
@@ -8472,11 +8508,17 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 
 	val = numericvar_to_double_no_overflow(&ln_num);
 
-	/* initial overflow test with fuzz factor */
+	/* initial overflow/underflow test with fuzz factor */
 	if (Abs(val) > NUMERIC_MAX_RESULT_SCALE * 3.01)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value overflows numeric format")));
+	{
+		if (val > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format")));
+		zero_var(result);
+		result->dscale = NUMERIC_MAX_DISPLAY_SCALE;
+		return;
+	}
 
 	val *= 0.434294481903252;	/* approximate decimal result weight */
 
@@ -8487,8 +8529,12 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
 	rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
 
+	/* significant digits required in the result */
+	sig_digits = rscale + (int) val;
+	sig_digits = Max(sig_digits, 0);
+
 	/* set the scale for the real exp * ln(base) calculation */
-	local_rscale = rscale + (int) val - ln_dweight + 8;
+	local_rscale = sig_digits - ln_dweight + 8;
 	local_rscale = Max(local_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 
 	/* and do the real calculation */
@@ -8499,8 +8545,12 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 
 	exp_var(&ln_num, result, rscale);
 
+	if (res_sign == NUMERIC_NEG && result->ndigits > 0)
+		result->sign = NUMERIC_NEG;
+
 	free_var(&ln_num);
 	free_var(&ln_base);
+	free_var(&abs_base);
 }
 
 /*
