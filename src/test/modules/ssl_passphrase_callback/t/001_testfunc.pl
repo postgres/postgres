@@ -10,7 +10,7 @@ use TestLib;
 use Test::More;
 use PostgresNode;
 
-unless ($ENV{with_ssl} eq 'openssl')
+unless (($ENV{with_ssl} || "") eq 'openssl')
 {
 	plan skip_all => 'OpenSSL not supported by this build';
 }
