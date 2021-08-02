@@ -6989,19 +6989,22 @@ apply_scanjoin_target_to_paths(PlannerInfo *root,
 	if (rel_is_partitioned)
 	{
 		List	   *live_children = NIL;
-		int			partition_idx;
+		int			i;
 
 		/* Adjust each partition. */
-		for (partition_idx = 0; partition_idx < rel->nparts; partition_idx++)
+		i = -1;
+		while ((i = bms_next_member(rel->live_parts, i)) >= 0)
 		{
-			RelOptInfo *child_rel = rel->part_rels[partition_idx];
+			RelOptInfo *child_rel = rel->part_rels[i];
 			AppendRelInfo **appinfos;
 			int			nappinfos;
 			List	   *child_scanjoin_targets = NIL;
 			ListCell   *lc;
 
-			/* Pruned or dummy children can be ignored. */
-			if (child_rel == NULL || IS_DUMMY_REL(child_rel))
+			Assert(child_rel != NULL);
+
+			/* Dummy children can be ignored. */
+			if (IS_DUMMY_REL(child_rel))
 				continue;
 
 			/* Translate scan/join targets for this child. */
@@ -7082,31 +7085,35 @@ create_partitionwise_grouping_paths(PlannerInfo *root,
 									PartitionwiseAggregateType patype,
 									GroupPathExtraData *extra)
 {
-	int			nparts = input_rel->nparts;
-	int			cnt_parts;
 	List	   *grouped_live_children = NIL;
 	List	   *partially_grouped_live_children = NIL;
 	PathTarget *target = grouped_rel->reltarget;
 	bool		partial_grouping_valid = true;
+	int			i;
 
 	Assert(patype != PARTITIONWISE_AGGREGATE_NONE);
 	Assert(patype != PARTITIONWISE_AGGREGATE_PARTIAL ||
 		   partially_grouped_rel != NULL);
 
 	/* Add paths for partitionwise aggregation/grouping. */
-	for (cnt_parts = 0; cnt_parts < nparts; cnt_parts++)
+	i = -1;
+	while ((i = bms_next_member(input_rel->live_parts, i)) >= 0)
 	{
-		RelOptInfo *child_input_rel = input_rel->part_rels[cnt_parts];
-		PathTarget *child_target = copy_pathtarget(target);
+		RelOptInfo *child_input_rel = input_rel->part_rels[i];
+		PathTarget *child_target;
 		AppendRelInfo **appinfos;
 		int			nappinfos;
 		GroupPathExtraData child_extra;
 		RelOptInfo *child_grouped_rel;
 		RelOptInfo *child_partially_grouped_rel;
 
-		/* Pruned or dummy children can be ignored. */
-		if (child_input_rel == NULL || IS_DUMMY_REL(child_input_rel))
+		Assert(child_input_rel != NULL);
+
+		/* Dummy children can be ignored. */
+		if (IS_DUMMY_REL(child_input_rel))
 			continue;
+
+		child_target = copy_pathtarget(target);
 
 		/*
 		 * Copy the given "extra" structure as is and then override the

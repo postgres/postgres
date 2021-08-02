@@ -654,15 +654,14 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		relid_map = (Oid *) palloc0(nparts * sizeof(Oid));
 		present_parts = NULL;
 
-		for (i = 0; i < nparts; i++)
+		i = -1;
+		while ((i = bms_next_member(subpart->live_parts, i)) >= 0)
 		{
 			RelOptInfo *partrel = subpart->part_rels[i];
 			int			subplanidx;
 			int			subpartidx;
 
-			/* Skip processing pruned partitions. */
-			if (partrel == NULL)
-				continue;
+			Assert(partrel != NULL);
 
 			subplan_map[i] = subplanidx = relid_subplan_map[partrel->relid] - 1;
 			subpart_map[i] = subpartidx = relid_subpart_map[partrel->relid] - 1;
