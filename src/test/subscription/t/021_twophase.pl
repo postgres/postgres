@@ -316,7 +316,9 @@ $node_publisher->safe_psql('postgres', "
     INSERT INTO tab_copy VALUES (99);
     PREPARE TRANSACTION 'mygid';");
 
+# Wait for both subscribers to catchup
 $node_publisher->wait_for_catchup($appname_copy);
+$node_publisher->wait_for_catchup($appname);
 
 # Check that the transaction has been prepared on the subscriber, there will be 2
 # prepared transactions for the 2 subscriptions.
