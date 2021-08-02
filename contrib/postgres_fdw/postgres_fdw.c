@@ -6896,11 +6896,25 @@ postgresForeignAsyncNotify(AsyncRequest *areq)
 	ForeignScanState *node = (ForeignScanState *) areq->requestee;
 	PgFdwScanState *fsstate = (PgFdwScanState *) node->fdw_state;
 
-	/* The request should be currently in-process */
-	Assert(fsstate->conn_state->pendingAreq == areq);
-
 	/* The core code would have initialized the callback_pending flag */
 	Assert(!areq->callback_pending);
+
+	/*
+	 * If process_pending_request() has been invoked on the given request
+	 * before we get here, we might have some tuples already; in which case
+	 * produce the next tuple
+	 */
+	if (fsstate->next_tuple < fsstate->num_tuples)
+	{
+		produce_tuple_asynchronously(areq, true);
+		return;
+	}
+
+	/* We must have run out of tuples */
+	Assert(fsstate->next_tuple >= fsstate->num_tuples);
+
+	/* The request should be currently in-process */
+	Assert(fsstate->conn_state->pendingAreq == areq);
 
 	/* On error, report the original query, not the FETCH. */
 	if (!PQconsumeInput(fsstate->conn))
@@ -7027,7 +7041,7 @@ process_pending_request(AsyncRequest *areq)
 	/*
 	 * If we didn't get any tuples, must be end of data; complete the request
 	 * now.  Otherwise, we postpone completing the request until we are called
-	 * from postgresForeignAsyncConfigureWait().
+	 * from postgresForeignAsyncConfigureWait()/postgresForeignAsyncNotify().
 	 */
 	if (fsstate->next_tuple >= fsstate->num_tuples)
 	{
