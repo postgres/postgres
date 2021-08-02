@@ -2892,7 +2892,7 @@ The commands accepted in replication mode are:
    belong to the same transaction. Similarly, all messages between a pair of
    Begin Prepare and Prepare messages belong to the same transaction.
    It also sends changes of large in-progress transactions between a pair of
-   Stream Start and Stream Stop messages. The last stream of such a transaction 
+   Stream Start and Stream Stop messages. The last stream of such a transaction
    contains a Stream Commit or Stream Abort message.
   </para>
 
@@ -6407,11 +6407,12 @@ not line breaks.
 <title>Logical Replication Message Formats</title>
 
 <para>
-This section describes the detailed format of each logical replication message.
-These messages are returned either by the replication slot SQL interface or are
-sent by a walsender. In case of a walsender they are encapsulated inside the replication
-protocol WAL messages as described in <xref linkend="protocol-replication"/>
-and generally obey same message flow as physical replication.
+This section describes the detailed format of each logical replication
+message.  These messages are either returned by the replication slot SQL
+interface or are sent by a walsender.  In the case of a walsender they are
+encapsulated inside replication protocol WAL messages as described in
+<xref linkend="protocol-replication"/>, and generally obey the same message
+flow as physical replication.
 </para>
 
 <variablelist>
@@ -6436,7 +6437,7 @@ Begin
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -6446,7 +6447,7 @@ Begin
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (TimestampTz)
 </term>
 <listitem>
 <para>
@@ -6457,7 +6458,7 @@ Begin
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6491,7 +6492,7 @@ Message
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6513,7 +6514,7 @@ Message
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -6579,17 +6580,17 @@ Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int8
+        Int8(0)
 </term>
 <listitem>
 <para>
-                Flags; currently unused (must be 0).
+                Flags; currently unused.
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -6599,7 +6600,7 @@ Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -6609,7 +6610,7 @@ Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (TimestampTz)
 </term>
 <listitem>
 <para>
@@ -6644,7 +6645,7 @@ Origin
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -6693,7 +6694,7 @@ Relation
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6704,11 +6705,11 @@ Relation
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the relation.
+                OID of the relation.
 </para>
 </listitem>
 </varlistentry>
@@ -6781,11 +6782,11 @@ Relation
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the column's data type.
+                OID of the column's data type.
 </para>
 </listitem>
 </varlistentry>
@@ -6825,7 +6826,7 @@ Type
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6836,11 +6837,11 @@ Type
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the data type.
+                OID of the data type.
 </para>
 </listitem>
 </varlistentry>
@@ -6890,7 +6891,7 @@ Insert
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6901,11 +6902,11 @@ Insert
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the relation corresponding to the ID in the relation
+                OID of the relation corresponding to the ID in the relation
                 message.
 </para>
 </listitem>
@@ -6957,7 +6958,7 @@ Update
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -6968,11 +6969,11 @@ Update
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the relation corresponding to the ID in the relation
+                OID of the relation corresponding to the ID in the relation
                 message.
 </para>
 </listitem>
@@ -7071,7 +7072,7 @@ Delete
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7082,11 +7083,11 @@ Delete
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the relation corresponding to the ID in the relation
+                OID of the relation corresponding to the ID in the relation
                 message.
 </para>
 </listitem>
@@ -7160,7 +7161,7 @@ Truncate
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7192,11 +7193,11 @@ Truncate
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (Oid)
 </term>
 <listitem>
 <para>
-                ID of the relation corresponding to the ID in the relation
+                OID of the relation corresponding to the ID in the relation
                 message.  This field is repeated for each relation.
 </para>
 </listitem>
@@ -7238,7 +7239,7 @@ Stream Start
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7307,7 +7308,7 @@ Stream Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7317,17 +7318,17 @@ Stream Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int8
+        Int8(0)
 </term>
 <listitem>
 <para>
-                Flags; currently unused (must be 0).
+                Flags; currently unused.
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -7337,7 +7338,7 @@ Stream Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (XLogRecPtr)
 </term>
 <listitem>
 <para>
@@ -7347,7 +7348,7 @@ Stream Commit
 </varlistentry>
 <varlistentry>
 <term>
-        Int64
+        Int64 (TimestampTz)
 </term>
 <listitem>
 <para>
@@ -7382,7 +7383,7 @@ Stream Abort
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7392,7 +7393,7 @@ Stream Abort
 </varlistentry>
 <varlistentry>
 <term>
-        Int32
+        Int32 (TransactionId)
 </term>
 <listitem>
 <para>
@@ -7432,21 +7433,27 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The LSN of the prepare.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The end LSN of the prepared transaction.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (TimestampTz)
+</term>
 <listitem><para>
                 Prepare timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
@@ -7454,7 +7461,9 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int32</term>
+<term>
+        Int32 (TransactionId)
+</term>
 <listitem><para>
                 Xid of the transaction.
 </para></listitem>
@@ -7489,28 +7498,36 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int8</term>
+<term>
+        Int8(0)
+</term>
 <listitem><para>
-                Flags; currently unused (must be 0).
+                Flags; currently unused.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The LSN of the prepare.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The end LSN of the prepared transaction.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (TimestampTz)
+</term>
 <listitem><para>
                 Prepare timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
@@ -7518,7 +7535,9 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int32</term>
+<term>
+        Int32 (TransactionId)
+</term>
 <listitem><para>
                 Xid of the transaction.
 </para></listitem>
@@ -7553,28 +7572,36 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int8</term>
+<term>
+        Int8(0)
+</term>
 <listitem><para>
-                Flags; currently unused (must be 0).
+                Flags; currently unused.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The LSN of the commit prepared.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The end LSN of the commit prepared transaction.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (TimestampTz)
+</term>
 <listitem><para>
                 Commit timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
@@ -7582,7 +7609,9 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int32</term>
+<term>
+        Int32 (TransactionId)
+</term>
 <listitem><para>
                 Xid of the transaction.
 </para></listitem>
@@ -7617,28 +7646,36 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int8</term>
+<term>
+        Int8(0)
+</term>
 <listitem><para>
-                Flags; currently unused (must be 0).
+                Flags; currently unused.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The end LSN of the prepared transaction.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (XLogRecPtr)
+</term>
 <listitem><para>
                 The end LSN of the rollback prepared transaction.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (TimestampTz)
+</term>
 <listitem><para>
                 Prepare timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
@@ -7646,7 +7683,9 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int64</term>
+<term>
+        Int64 (TimestampTz)
+</term>
 <listitem><para>
                 Rollback timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
@@ -7654,7 +7693,9 @@ are available since protocol version 3.
 </varlistentry>
 
 <varlistentry>
-<term>Int32</term>
+<term>
+        Int32 (TransactionId)
+</term>
 <listitem><para>
                 Xid of the transaction.
 </para></listitem>
