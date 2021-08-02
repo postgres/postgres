@@ -869,9 +869,6 @@ bool		reachedConsistency = false;
 
 static bool InRedo = false;
 
-/* Have we launched bgwriter during recovery? */
-static bool bgwriterLaunched = false;
-
 /* For WALInsertLockAcquire/Release functions */
 static int	MyLockNo = 0;
 static bool holdingAllLocks = false;
@@ -7311,25 +7308,15 @@ StartupXLOG(void)
 		/* Also ensure XLogReceiptTime has a sane value */
 		XLogReceiptTime = GetCurrentTimestamp();
 
+		/* Allow ProcSendSignal() to find us, for buffer pin wakeups. */
+		PublishStartupProcessInformation();
+
 		/*
 		 * Let postmaster know we've started redo now, so that it can launch
-		 * checkpointer to perform restartpoints.  We don't bother during
-		 * crash recovery as restartpoints can only be performed during
-		 * archive recovery.  And we'd like to keep crash recovery simple, to
-		 * avoid introducing bugs that could affect you when recovering after
-		 * crash.
-		 *
-		 * After this point, we can no longer assume that we're the only
-		 * process in addition to postmaster!  Also, fsync requests are
-		 * subsequently to be handled by the checkpointer, not locally.
+		 * the archiver if necessary.
 		 */
-		if (ArchiveRecoveryRequested && IsUnderPostmaster)
-		{
-			PublishStartupProcessInformation();
-			EnableSyncRequestForwarding();
+		if (IsUnderPostmaster)
 			SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
-			bgwriterLaunched = true;
-		}
 
 		/*
 		 * Allow read-only connections immediately if we're consistent
@@ -7903,7 +7890,7 @@ StartupXLOG(void)
 		 * after we're fully out of recovery mode and already accepting
 		 * queries.
 		 */
-		if (bgwriterLaunched)
+		if (ArchiveRecoveryRequested && IsUnderPostmaster)
 		{
 			if (LocalPromoteIsTriggered)
 			{
@@ -7927,7 +7914,11 @@ StartupXLOG(void)
 								  CHECKPOINT_WAIT);
 		}
 		else
-			CreateCheckPoint(CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IMMEDIATE);
+		{
+			RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
+							  CHECKPOINT_IMMEDIATE |
+							  CHECKPOINT_WAIT);
+		}
 	}
 
 	if (ArchiveRecoveryRequested)
@@ -12182,7 +12173,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 		 * Request a restartpoint if we've replayed too much xlog since the
 		 * last one.
 		 */
-		if (bgwriterLaunched)
+		if (ArchiveRecoveryRequested && IsUnderPostmaster)
 		{
 			if (XLogCheckpointNeeded(readSegNo))
 			{

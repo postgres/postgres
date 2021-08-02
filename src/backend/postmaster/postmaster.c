@@ -1403,6 +1403,12 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_STARTING);
 
+	/* Start bgwriter and checkpointer so they can help with recovery */
+	if (CheckpointerPID == 0)
+		CheckpointerPID = StartCheckpointer();
+	if (BgWriterPID == 0)
+		BgWriterPID = StartBackgroundWriter();
+
 	/*
 	 * We're ready to rock and roll...
 	 */
@@ -1765,7 +1771,7 @@ ServerLoop(void)
 		 * fails, we'll just try again later.  Likewise for the checkpointer.
 		 */
 		if (pmState == PM_RUN || pmState == PM_RECOVERY ||
-			pmState == PM_HOT_STANDBY)
+			pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
 		{
 			if (CheckpointerPID == 0)
 				CheckpointerPID = StartCheckpointer();
@@ -5160,15 +5166,6 @@ sigusr1_handler(SIGNAL_ARGS)
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
 		AbortStartTime = 0;
-
-		/*
-		 * Crank up the background tasks.  It doesn't matter if this fails,
-		 * we'll just try again later.
-		 */
-		Assert(CheckpointerPID == 0);
-		CheckpointerPID = StartCheckpointer();
-		Assert(BgWriterPID == 0);
-		BgWriterPID = StartBackgroundWriter();
 
 		/*
 		 * Start the archiver if we're responsible for (re-)archiving received

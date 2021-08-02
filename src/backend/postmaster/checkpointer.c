@@ -10,9 +10,6 @@
  * fill WAL segments; the checkpointer itself doesn't watch for the
  * condition.)
  *
- * The checkpointer is started by the postmaster as soon as the startup
- * subprocess finishes, or as soon as recovery begins if we are doing archive
- * recovery.  It remains alive until the postmaster commands it to terminate.
  * Normal termination is by SIGUSR2, which instructs the checkpointer to
  * execute a shutdown checkpoint and then exit(0).  (All backends must be
  * stopped before SIGUSR2 is issued!)  Emergency termination is by SIGQUIT;

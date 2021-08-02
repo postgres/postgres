@@ -129,10 +129,10 @@ InitSync(void)
 {
 	/*
 	 * Create pending-operations hashtable if we need it.  Currently, we need
-	 * it if we are standalone (not under a postmaster) or if we are a startup
-	 * or checkpointer auxiliary process.
+	 * it if we are standalone (not under a postmaster) or if we are a
+	 * checkpointer auxiliary process.
 	 */
-	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
+	if (!IsUnderPostmaster || AmCheckpointerProcess())
 	{
 		HASHCTL		hash_ctl;
 
@@ -588,28 +588,4 @@ RegisterSyncRequest(const FileTag *ftag, SyncRequestType type,
 	}
 
 	return ret;
-}
-
-/*
- * In archive recovery, we rely on checkpointer to do fsyncs, but we will have
- * already created the pendingOps during initialization of the startup
- * process.  Calling this function drops the local pendingOps so that
- * subsequent requests will be forwarded to checkpointer.
- */
-void
-EnableSyncRequestForwarding(void)
-{
-	/* Perform any pending fsyncs we may have queued up, then drop table */
-	if (pendingOps)
-	{
-		ProcessSyncRequests();
-		hash_destroy(pendingOps);
-	}
-	pendingOps = NULL;
-
-	/*
-	 * We should not have any pending unlink requests, since mdunlink doesn't
-	 * queue unlink requests when isRedo.
-	 */
-	Assert(pendingUnlinks == NIL);
 }

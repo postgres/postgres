@@ -12,9 +12,6 @@
  *
  * As of Postgres 9.2 the bgwriter no longer handles checkpoints.
  *
- * The bgwriter is started by the postmaster as soon as the startup subprocess
- * finishes, or as soon as recovery begins if we are doing archive recovery.
- * It remains alive until the postmaster commands it to terminate.
  * Normal termination is by SIGTERM, which instructs the bgwriter to exit(0).
  * Emergency termination is by SIGQUIT; like any backend, the bgwriter will
  * simply abort and exit on SIGQUIT.
