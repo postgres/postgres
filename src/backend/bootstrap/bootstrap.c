@@ -418,9 +418,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
 	}
 
-	/*
-	 * XLOG operations
-	 */
 	SetProcessingMode(NormalProcessing);
 
 	switch (MyAuxProcType)
