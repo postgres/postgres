@@ -1082,16 +1082,18 @@ ExecAppendAsyncEventWait(AppendState *node)
 		{
 			AsyncRequest *areq = (AsyncRequest *) w->user_data;
 
-			/*
-			 * Mark it as no longer needing a callback.  We must do this
-			 * before dispatching the callback in case the callback resets the
-			 * flag.
-			 */
-			Assert(areq->callback_pending);
-			areq->callback_pending = false;
+			if (areq->callback_pending)
+			{
+				/*
+				 * Mark it as no longer needing a callback.  We must do this
+				 * before dispatching the callback in case the callback resets
+				 * the flag.
+				 */
+				areq->callback_pending = false;
 
-			/* Do the actual work. */
-			ExecAsyncNotify(areq);
+				/* Do the actual work. */
+				ExecAsyncNotify(areq);
+			}
 		}
 	}
 }
