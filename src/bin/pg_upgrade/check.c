@@ -241,6 +241,8 @@ issue_warnings_and_set_wal_level(void)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 906)
 		old_9_6_invalidate_hash_indexes(&new_cluster, false);
 
+	report_extension_updates(&new_cluster);
+
 	stop_postmaster(false);
 }
 
