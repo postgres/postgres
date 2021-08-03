@@ -3306,29 +3306,25 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 
 					case DTK_YEAR:
 						tm->tm_year += val;
-						if (fval != 0)
-							tm->tm_mon += fval * MONTHS_PER_YEAR;
+						tm->tm_mon += rint(fval * MONTHS_PER_YEAR);
 						tmask = DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
-						if (fval != 0)
-							tm->tm_mon += fval * MONTHS_PER_YEAR * 10;
+						tm->tm_mon += rint(fval * MONTHS_PER_YEAR * 10);
 						tmask = DTK_M(DECADE);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
-						if (fval != 0)
-							tm->tm_mon += fval * MONTHS_PER_YEAR * 100;
+						tm->tm_mon += rint(fval * MONTHS_PER_YEAR * 100);
 						tmask = DTK_M(CENTURY);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
-						if (fval != 0)
-							tm->tm_mon += fval * MONTHS_PER_YEAR * 1000;
+						tm->tm_mon += rint(fval * MONTHS_PER_YEAR * 1000);
 						tmask = DTK_M(MILLENNIUM);
 						break;
 
@@ -3565,7 +3561,7 @@ DecodeISO8601Interval(char *str,
 			{
 				case 'Y':
 					tm->tm_year += val;
-					tm->tm_mon += (fval * MONTHS_PER_YEAR);
+					tm->tm_mon += rint(fval * MONTHS_PER_YEAR);
 					break;
 				case 'M':
 					tm->tm_mon += val;
@@ -3601,7 +3597,7 @@ DecodeISO8601Interval(char *str,
 						return DTERR_BAD_FORMAT;
 
 					tm->tm_year += val;
-					tm->tm_mon += (fval * MONTHS_PER_YEAR);
+					tm->tm_mon += rint(fval * MONTHS_PER_YEAR);
 					if (unit == '\0')
 						return 0;
 					if (unit == 'T')
