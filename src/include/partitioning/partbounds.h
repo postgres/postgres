@@ -61,6 +61,18 @@ struct RelOptInfo;				/* avoid including pathnodes.h here */
  * The indexes array is indexed according to the hash key's remainder modulo
  * the greatest modulus, and it contains either the partition index accepting
  * that remainder, or -1 if there is no partition for that remainder.
+ *
+ * For LIST partitioned tables, we track the partition indexes of partitions
+ * which are possibly "interleaved" partitions.  A partition is considered
+ * interleaved if it allows multiple values and there exists at least one
+ * other partition which could contain a value that lies between those values.
+ * For example, if a partition exists FOR VALUES IN(3,5) and another partition
+ * exists FOR VALUES IN (4), then the IN(3,5) partition is an interleaved
+ * partition.  The same is possible with DEFAULT partitions since they can
+ * contain any value that does not belong in another partition.  This field
+ * only serves as proof that a particular partition is not interleaved, not
+ * proof that it is interleaved.  When we're uncertain, we marked the
+ * partition as interleaved.
  */
 typedef struct PartitionBoundInfoData
 {
@@ -70,6 +82,9 @@ typedef struct PartitionBoundInfoData
 	PartitionRangeDatumKind **kind; /* The kind of each range bound datum;
 									 * NULL for hash and list partitioned
 									 * tables */
+	Bitmapset  *interleaved_parts;	/* Partition indexes of partitions which
+									 * may be interleaved. See above. This is
+									 * only set for LIST partitioned tables */
 	int			nindexes;		/* Length of the indexes[] array */
 	int		   *indexes;		/* Partition indexes */
 	int			null_index;		/* Index of the null-accepting partition; -1
@@ -102,7 +117,8 @@ extern PartitionBoundInfo partition_bounds_merge(int partnatts,
 												 JoinType jointype,
 												 List **outer_parts,
 												 List **inner_parts);
-extern bool partitions_are_ordered(PartitionBoundInfo boundinfo, int nparts);
+extern bool partitions_are_ordered(PartitionBoundInfo boundinfo,
+								   Bitmapset *live_parts);
 extern void check_new_partition_bound(char *relname, Relation parent,
 									  PartitionBoundSpec *spec,
 									  ParseState *pstate);

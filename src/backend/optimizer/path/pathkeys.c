@@ -704,7 +704,7 @@ build_partition_pathkeys(PlannerInfo *root, RelOptInfo *partrel,
 	int			i;
 
 	Assert(partscheme != NULL);
-	Assert(partitions_are_ordered(partrel->boundinfo, partrel->nparts));
+	Assert(partitions_are_ordered(partrel->boundinfo, partrel->live_parts));
 	/* For now, we can only cope with baserels */
 	Assert(IS_SIMPLE_REL(partrel));
 

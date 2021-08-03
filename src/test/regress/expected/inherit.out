@@ -2180,6 +2180,8 @@ explain (costs off) select * from mcrparted where a < 20 order by a, abs(b), c;
          Index Cond: (a < 20)
 (9 rows)
 
+set enable_bitmapscan to off;
+set enable_sort to off;
 create table mclparted (a int) partition by list(a);
 create table mclparted1 partition of mclparted for values in(1);
 create table mclparted2 partition of mclparted for values in(2);
@@ -2208,7 +2210,113 @@ explain (costs off) select * from mclparted order by a;
    ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_4
 (6 rows)
 
+explain (costs off) select * from mclparted where a in(3,4,5) order by a;
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Merge Append
+   Sort Key: mclparted.a
+   ->  Index Only Scan using mclparted3_5_a_idx on mclparted3_5 mclparted_1
+         Index Cond: (a = ANY ('{3,4,5}'::integer[]))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_2
+         Index Cond: (a = ANY ('{3,4,5}'::integer[]))
+(6 rows)
+
+-- Introduce a NULL and DEFAULT partition so we can test more complex cases
+create table mclparted_null partition of mclparted for values in(null);
+create table mclparted_def partition of mclparted default;
+-- Append can be used providing we don't scan the interleaved partition
+explain (costs off) select * from mclparted where a in(1,2,4) order by a;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Append
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_3
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+(7 rows)
+
+explain (costs off) select * from mclparted where a in(1,2,4) or a is null order by a;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Append
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_3
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted_null_a_idx on mclparted_null mclparted_4
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+(9 rows)
+
+-- Test a more complex case where the NULL partition allows some other value
+drop table mclparted_null;
+create table mclparted_0_null partition of mclparted for values in(0,null);
+-- Ensure MergeAppend is used since 0 and NULLs are in the same partition.
+explain (costs off) select * from mclparted where a in(1,2,4) or a is null order by a;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: mclparted.a
+   ->  Index Only Scan using mclparted_0_null_a_idx on mclparted_0_null mclparted_1
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_2
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_3
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_4
+         Filter: ((a = ANY ('{1,2,4}'::integer[])) OR (a IS NULL))
+(10 rows)
+
+explain (costs off) select * from mclparted where a in(0,1,2,4) order by a;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: mclparted.a
+   ->  Index Only Scan using mclparted_0_null_a_idx on mclparted_0_null mclparted_1
+         Index Cond: (a = ANY ('{0,1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_2
+         Index Cond: (a = ANY ('{0,1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_3
+         Index Cond: (a = ANY ('{0,1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_4
+         Index Cond: (a = ANY ('{0,1,2,4}'::integer[]))
+(10 rows)
+
+-- Ensure Append is used when the null partition is pruned
+explain (costs off) select * from mclparted where a in(1,2,4) order by a;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Append
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_3
+         Index Cond: (a = ANY ('{1,2,4}'::integer[]))
+(7 rows)
+
+-- Ensure MergeAppend is used when the default partition is not pruned
+explain (costs off) select * from mclparted where a in(1,2,4,100) order by a;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: mclparted.a
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+         Index Cond: (a = ANY ('{1,2,4,100}'::integer[]))
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
+         Index Cond: (a = ANY ('{1,2,4,100}'::integer[]))
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_3
+         Index Cond: (a = ANY ('{1,2,4,100}'::integer[]))
+   ->  Index Only Scan using mclparted_def_a_idx on mclparted_def mclparted_4
+         Index Cond: (a = ANY ('{1,2,4,100}'::integer[]))
+(10 rows)
+
 drop table mclparted;
+reset enable_sort;
+reset enable_bitmapscan;
 -- Ensure subplans which don't have a path with the correct pathkeys get
 -- sorted correctly.
 drop index mcrparted_a_abs_c_idx;

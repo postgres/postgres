@@ -1689,7 +1689,7 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 	 * for both forward and reverse scans.
 	 */
 	if (rel->part_scheme != NULL && IS_SIMPLE_REL(rel) &&
-		partitions_are_ordered(rel->boundinfo, rel->nparts))
+		partitions_are_ordered(rel->boundinfo, rel->live_parts))
 	{
 		partition_pathkeys = build_partition_pathkeys(root, rel,
 													  ForwardScanDirection,
