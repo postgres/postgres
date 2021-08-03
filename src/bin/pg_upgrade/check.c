@@ -183,6 +183,8 @@ issue_warnings_and_set_wal_level(void)
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
 
+	report_extension_updates(&new_cluster);
+
 	stop_postmaster(false);
 }
 
