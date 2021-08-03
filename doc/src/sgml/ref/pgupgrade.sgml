@@ -298,17 +298,27 @@ make prefix=/usr/local/pgsql.new install
    </step>
 
    <step>
-    <title>Install custom shared object files</title>
+    <title>Install extension shared object files</title>
 
     <para>
-     Install any custom shared object files (or DLLs) used by the old cluster
-     into the new cluster, e.g., <filename>pgcrypto.so</filename>,
-     whether they are from <filename>contrib</filename>
-     or some other source. Do not install the schema definitions, e.g.,
-     <command>CREATE EXTENSION pgcrypto</command>, because these will be upgraded
-     from the old cluster.
-     Also, any custom full text search files (dictionary, synonym,
-     thesaurus, stop words) must also be copied to the new cluster.
+     Many extensions and custom modules, whether from
+     <filename>contrib</filename> or another source, use shared object
+     files (or DLLs), e.g., <filename>pgcrypto.so</filename>.  If the old
+     cluster used these, shared object files matching the new server binary
+     must be installed in the new cluster, usually via operating system
+     commands.  Do not load the schema definitions, e.g., <command>CREATE
+     EXTENSION pgcrypto</command>, because these will be duplicated from
+     the old cluster.  (Extensions with available updates can be processed
+     later using <literal>ALTER EXTENSION ... UPDATE</literal>.)
+    </para>
+   </step>
+
+   <step>
+    <title>Copy custom full-text search files</title>
+
+    <para>
+     Copy any custom full text search files (dictionary, synonym,
+     thesaurus, stop words) from the old to the new cluster.
     </para>
    </step>
 
@@ -493,10 +503,10 @@ pg_upgrade.exe
      </step>
 
      <step>
-      <title>Install custom shared object files</title>
+      <title>Install extension shared object files</title>
 
       <para>
-       Install the same custom shared object files on the new standbys
+       Install the same extension shared object files on the new standbys
        that you installed in the new primary cluster.
       </para>
      </step>
