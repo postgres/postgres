@@ -4097,7 +4097,8 @@ ALTER INDEX measurement_city_id_logdate_key
 
     <para>
      Since a partition hierarchy consisting of the partitioned table and its
-     partitions is still an inheritance hierarchy, all the normal rules of
+     partitions is still an inheritance hierarchy,
+     <structfield>tableoid</structfield> and all the normal rules of
      inheritance apply as described in <xref linkend="ddl-inherit"/>, with
      a few exceptions:
 
