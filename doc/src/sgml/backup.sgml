@@ -273,10 +273,10 @@ cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <re
      The <command>split</command> command
      allows you to split the output into smaller files that are
      acceptable in size to the underlying file system. For example, to
-     make chunks of 1 megabyte:
+     make 2 gigabyte chunks:
 
 <programlisting>
-pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>
+pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 2G - <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
      Reload with:
@@ -284,6 +284,15 @@ pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <rep
 <programlisting>
 cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable class="parameter">dbname</replaceable>
 </programlisting>
+
+     If using GNU <application>split</application>, it is possible to
+     use it and <application>gzip</application> together:
+
+<programlisting>
+pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 2G --filter='gzip > $FILE.gz'
+</programlisting>
+
+     It can be restored using <command>zcat</command>.
     </para>
    </formalpara>
 
