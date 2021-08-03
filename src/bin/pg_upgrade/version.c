@@ -495,7 +495,7 @@ report_extension_updates(ClusterInfo *cluster)
 		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
 		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
-		/* find hash indexes */
+		/* find extensions needing updates */
 		res = executeQueryOrDie(conn,
 								"SELECT name "
 								"FROM pg_available_extensions "
