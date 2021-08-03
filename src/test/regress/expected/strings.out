@@ -515,6 +515,13 @@ SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
  cde
 (1 row)
 
+-- Check case where we have a match, but not a subexpression match
+SELECT SUBSTRING('foo' FROM 'foo(bar)?') IS NULL AS t;
+ t 
+---
+ t
+(1 row)
+
 -- Check behavior of SIMILAR TO, which uses largely the same regexp variant
 SELECT 'abcdefg' SIMILAR TO '_bcd%' AS true;
  true 
@@ -592,6 +599,370 @@ SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
 -- invalid regexp option
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'z');
 ERROR:  invalid regular expression option: "z"
+-- extended regexp_replace tests
+SELECT regexp_replace('A PostgreSQL function', 'A|e|i|o|u', 'X', 1);
+    regexp_replace     
+-----------------------
+ X PostgreSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'A|e|i|o|u', 'X', 1, 2);
+    regexp_replace     
+-----------------------
+ A PXstgreSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 0, 'i');
+    regexp_replace     
+-----------------------
+ X PXstgrXSQL fXnctXXn
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 1, 'i');
+    regexp_replace     
+-----------------------
+ X PostgreSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 2, 'i');
+    regexp_replace     
+-----------------------
+ A PXstgreSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 3, 'i');
+    regexp_replace     
+-----------------------
+ A PostgrXSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 9, 'i');
+    regexp_replace     
+-----------------------
+ A PostgreSQL function
+(1 row)
+
+SELECT regexp_replace('A PostgreSQL function', 'A|e|i|o|u', 'X', 7, 0, 'i');
+    regexp_replace     
+-----------------------
+ A PostgrXSQL fXnctXXn
+(1 row)
+
+-- 'g' flag should be ignored when N is specified
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 1, 'g');
+    regexp_replace     
+-----------------------
+ A PXstgreSQL function
+(1 row)
+
+-- errors
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', -1, 0, 'i');
+ERROR:  invalid value for parameter "start": -1
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, -1, 'i');
+ERROR:  invalid value for parameter "n": -1
+-- erroneous invocation of non-extended form
+SELECT regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', '1');
+ERROR:  invalid regular expression option: "1"
+HINT:  If you meant to use regexp_replace() with a start parameter, cast the fourth argument to integer explicitly.
+--  regexp_count tests
+SELECT regexp_count('123123123123123', '(12)3');
+ regexp_count 
+--------------
+            5
+(1 row)
+
+SELECT regexp_count('123123123123', '123', 1);
+ regexp_count 
+--------------
+            4
+(1 row)
+
+SELECT regexp_count('123123123123', '123', 3);
+ regexp_count 
+--------------
+            3
+(1 row)
+
+SELECT regexp_count('123123123123', '123', 33);
+ regexp_count 
+--------------
+            0
+(1 row)
+
+SELECT regexp_count('ABCABCABCABC', 'Abc', 1, '');
+ regexp_count 
+--------------
+            0
+(1 row)
+
+SELECT regexp_count('ABCABCABCABC', 'Abc', 1, 'i');
+ regexp_count 
+--------------
+            4
+(1 row)
+
+-- errors
+SELECT regexp_count('123123123123', '123', 0);
+ERROR:  invalid value for parameter "start": 0
+SELECT regexp_count('123123123123', '123', -3);
+ERROR:  invalid value for parameter "start": -3
+-- regexp_like tests
+SELECT regexp_like('Steven', '^Ste(v|ph)en$');
+ regexp_like 
+-------------
+ t
+(1 row)
+
+SELECT regexp_like('a'||CHR(10)||'d', 'a.d', 'n');
+ regexp_like 
+-------------
+ f
+(1 row)
+
+SELECT regexp_like('a'||CHR(10)||'d', 'a.d', 's');
+ regexp_like 
+-------------
+ t
+(1 row)
+
+SELECT regexp_like('abc', ' a . c ', 'x');
+ regexp_like 
+-------------
+ t
+(1 row)
+
+SELECT regexp_like('abc', 'a.c', 'g');  -- error
+ERROR:  regexp_like() does not support the "global" option
+-- regexp_instr tests
+SELECT regexp_instr('abcdefghi', 'd.f');
+ regexp_instr 
+--------------
+            4
+(1 row)
+
+SELECT regexp_instr('abcdefghi', 'd.q');
+ regexp_instr 
+--------------
+            0
+(1 row)
+
+SELECT regexp_instr('abcabcabc', 'a.c');
+ regexp_instr 
+--------------
+            1
+(1 row)
+
+SELECT regexp_instr('abcabcabc', 'a.c', 2);
+ regexp_instr 
+--------------
+            4
+(1 row)
+
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 3);
+ regexp_instr 
+--------------
+            7
+(1 row)
+
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 4);
+ regexp_instr 
+--------------
+            0
+(1 row)
+
+SELECT regexp_instr('abcabcabc', 'A.C', 1, 2, 0, 'i');
+ regexp_instr 
+--------------
+            4
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 0);
+ regexp_instr 
+--------------
+            1
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 1);
+ regexp_instr 
+--------------
+            1
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 2);
+ regexp_instr 
+--------------
+            4
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 3);
+ regexp_instr 
+--------------
+            5
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 4);
+ regexp_instr 
+--------------
+            7
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 0, 'i', 5);
+ regexp_instr 
+--------------
+            0
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 0);
+ regexp_instr 
+--------------
+            9
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 1);
+ regexp_instr 
+--------------
+            4
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 2);
+ regexp_instr 
+--------------
+            9
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 3);
+ regexp_instr 
+--------------
+            7
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 4);
+ regexp_instr 
+--------------
+            9
+(1 row)
+
+SELECT regexp_instr('1234567890', '(123)(4(56)(78))', 1, 1, 1, 'i', 5);
+ regexp_instr 
+--------------
+            0
+(1 row)
+
+-- Check case where we have a match, but not a subexpression match
+SELECT regexp_instr('foo', 'foo(bar)?', 1, 1, 0, '', 1);
+ regexp_instr 
+--------------
+            0
+(1 row)
+
+-- errors
+SELECT regexp_instr('abcabcabc', 'a.c', 0, 1);
+ERROR:  invalid value for parameter "start": 0
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 0);
+ERROR:  invalid value for parameter "n": 0
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 1, -1);
+ERROR:  invalid value for parameter "endoption": -1
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 1, 2);
+ERROR:  invalid value for parameter "endoption": 2
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 1, 0, 'g');
+ERROR:  regexp_instr() does not support the "global" option
+SELECT regexp_instr('abcabcabc', 'a.c', 1, 1, 0, '', -1);
+ERROR:  invalid value for parameter "subexpr": -1
+-- regexp_substr tests
+SELECT regexp_substr('abcdefghi', 'd.f');
+ regexp_substr 
+---------------
+ def
+(1 row)
+
+SELECT regexp_substr('abcdefghi', 'd.q') IS NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_substr('abcabcabc', 'a.c');
+ regexp_substr 
+---------------
+ abc
+(1 row)
+
+SELECT regexp_substr('abcabcabc', 'a.c', 2);
+ regexp_substr 
+---------------
+ abc
+(1 row)
+
+SELECT regexp_substr('abcabcabc', 'a.c', 1, 3);
+ regexp_substr 
+---------------
+ abc
+(1 row)
+
+SELECT regexp_substr('abcabcabc', 'a.c', 1, 4) IS NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT regexp_substr('abcabcabc', 'A.C', 1, 2, 'i');
+ regexp_substr 
+---------------
+ abc
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 0);
+ regexp_substr 
+---------------
+ 12345678
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 1);
+ regexp_substr 
+---------------
+ 123
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 2);
+ regexp_substr 
+---------------
+ 45678
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 3);
+ regexp_substr 
+---------------
+ 56
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 4);
+ regexp_substr 
+---------------
+ 78
+(1 row)
+
+SELECT regexp_substr('1234567890', '(123)(4(56)(78))', 1, 1, 'i', 5) IS NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Check case where we have a match, but not a subexpression match
+SELECT regexp_substr('foo', 'foo(bar)?', 1, 1, '', 1) IS NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+-- errors
+SELECT regexp_substr('abcabcabc', 'a.c', 0, 1);
+ERROR:  invalid value for parameter "start": 0
+SELECT regexp_substr('abcabcabc', 'a.c', 1, 0);
+ERROR:  invalid value for parameter "n": 0
+SELECT regexp_substr('abcabcabc', 'a.c', 1, 1, 'g');
+ERROR:  regexp_substr() does not support the "global" option
+SELECT regexp_substr('abcabcabc', 'a.c', 1, 1, '', -1);
+ERROR:  invalid value for parameter "subexpr": -1
 -- set so we can tell NULL from empty string
 \pset null '\\N'
 -- return all matches from regexp

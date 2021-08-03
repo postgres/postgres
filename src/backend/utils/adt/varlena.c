@@ -4496,23 +4496,28 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 /*
  * replace_text_regexp
  *
- * replace text that matches to regexp in src_text to replace_text.
+ * replace substring(s) in src_text that match regexp with replace_text.
+ *
+ * search_start: the character (not byte) offset in src_text at which to
+ * begin searching.
+ * n: if 0, replace all matches; if > 0, replace only the N'th match.
  *
  * Note: to avoid having to include regex.h in builtins.h, we declare
  * the regexp argument as void *, but really it's regex_t *.
  */
 text *
 replace_text_regexp(text *src_text, void *regexp,
-					text *replace_text, bool glob)
+					text *replace_text,
+					int search_start, int n)
 {
 	text	   *ret_text;
 	regex_t    *re = (regex_t *) regexp;
 	int			src_text_len = VARSIZE_ANY_EXHDR(src_text);
+	int			nmatches = 0;
 	StringInfoData buf;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
 	pg_wchar   *data;
 	size_t		data_len;
-	int			search_start;
 	int			data_pos;
 	char	   *start_ptr;
 	bool		have_escape;
@@ -4530,7 +4535,6 @@ replace_text_regexp(text *src_text, void *regexp,
 	start_ptr = (char *) VARDATA_ANY(src_text);
 	data_pos = 0;
 
-	search_start = 0;
 	while (search_start <= data_len)
 	{
 		int			regexec_result;
@@ -4558,6 +4562,23 @@ replace_text_regexp(text *src_text, void *regexp,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 					 errmsg("regular expression failed: %s", errMsg)));
+		}
+
+		/*
+		 * Count matches, and decide whether to replace this match.
+		 */
+		nmatches++;
+		if (n > 0 && nmatches != n)
+		{
+			/*
+			 * No, so advance search_start, but not start_ptr/data_pos. (Thus,
+			 * we treat the matched text as if it weren't matched, and copy it
+			 * to the output later.)
+			 */
+			search_start = pmatch[0].rm_eo;
+			if (pmatch[0].rm_so == pmatch[0].rm_eo)
+				search_start++;
+			continue;
 		}
 
 		/*
@@ -4596,9 +4617,9 @@ replace_text_regexp(text *src_text, void *regexp,
 		data_pos = pmatch[0].rm_eo;
 
 		/*
-		 * When global option is off, replace the first instance only.
+		 * If we only want to replace one occurrence, we're done.
 		 */
-		if (!glob)
+		if (n > 0)
 			break;
 
 		/*

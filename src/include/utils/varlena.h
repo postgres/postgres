@@ -34,6 +34,7 @@ extern bool SplitDirectoriesString(char *rawstring, char separator,
 extern bool SplitGUCList(char *rawstring, char separator,
 						 List **namelist);
 extern text *replace_text_regexp(text *src_text, void *regexp,
-								 text *replace_text, bool glob);
+								 text *replace_text,
+								 int search_start, int n);
 
 #endif

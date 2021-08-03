@@ -3111,14 +3111,87 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>regexp_count</primary>
+        </indexterm>
+        <function>regexp_count</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         [, <parameter>start</parameter> <type>integer</type>
+         [, <parameter>flags</parameter> <type>text</type> ] ] )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of times the POSIX regular
+        expression <parameter>pattern</parameter> matches in
+        the <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_count('123456789012', '\d\d\d', 2)</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_instr</primary>
+        </indexterm>
+        <function>regexp_instr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         [, <parameter>start</parameter> <type>integer</type>
+         [, <parameter>N</parameter> <type>integer</type>
+         [, <parameter>endoption</parameter> <type>integer</type>
+         [, <parameter>flags</parameter> <type>text</type>
+         [, <parameter>subexpr</parameter> <type>integer</type> ] ] ] ] ] )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the position within <parameter>string</parameter> where
+        the <parameter>N</parameter>'th match of the POSIX regular
+        expression <parameter>pattern</parameter> occurs, or zero if there is
+        no such match; see <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_instr('ABCDEF', 'c(.)(..)', 1, 1, 0, 'i')</literal>
+        <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_instr('ABCDEF', 'c(.)(..)', 1, 1, 0, 'i', 2)</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_like</primary>
+        </indexterm>
+        <function>regexp_like</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Checks whether a match of the POSIX regular
+        expression <parameter>pattern</parameter> occurs
+        within <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_like('Hello World', 'world$', 'i')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>regexp_match</primary>
         </indexterm>
         <function>regexp_match</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
-        Returns captured substrings resulting from the first match of a POSIX
-        regular expression to the <parameter>string</parameter>; see
+        Returns substrings within the first match of the POSIX regular
+        expression <parameter>pattern</parameter> to
+        the <parameter>string</parameter>; see
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
@@ -3136,9 +3209,10 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>setof text[]</returnvalue>
        </para>
        <para>
-        Returns captured substrings resulting from the first match of a
-        POSIX regular expression to the <parameter>string</parameter>,
-        or multiple matches if the <literal>g</literal> flag is used;
+        Returns substrings within the first match of the POSIX regular
+        expression <parameter>pattern</parameter> to
+        the <parameter>string</parameter>, or substrings within all
+        such matches if the <literal>g</literal> flag is used;
         see <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
@@ -3156,18 +3230,40 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <indexterm>
          <primary>regexp_replace</primary>
         </indexterm>
-        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>
+         [, <parameter>start</parameter> <type>integer</type> ]
+         [, <parameter>flags</parameter> <type>text</type> ] )
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Replaces substrings resulting from the first match of a
-        POSIX regular expression, or multiple substring matches
-        if the <literal>g</literal> flag is used; see <xref
-        linkend="functions-posix-regexp"/>.
+        Replaces the substring that is the first match to the POSIX
+        regular expression <parameter>pattern</parameter>, or all such
+        matches if the <literal>g</literal> flag is used; see
+        <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
         <literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal>
         <returnvalue>ThM</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>,
+         <parameter>start</parameter> <type>integer</type>,
+         <parameter>N</parameter> <type>integer</type>
+         [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces the substring that is the <parameter>N</parameter>'th
+        match to the POSIX regular expression <parameter>pattern</parameter>,
+        or all such matches if <parameter>N</parameter> is zero; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_replace('Thomas', '.', 'X', 3, 2)</literal>
+        <returnvalue>ThoXas</returnvalue>
        </para></entry>
       </row>
 
@@ -3210,6 +3306,35 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
  hello
  world
 </programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_substr</primary>
+        </indexterm>
+        <function>regexp_substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         [, <parameter>start</parameter> <type>integer</type>
+         [, <parameter>N</parameter> <type>integer</type>
+         [, <parameter>flags</parameter> <type>text</type>
+         [, <parameter>subexpr</parameter> <type>integer</type> ] ] ] ] )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the substring within <parameter>string</parameter> that
+        matches the <parameter>N</parameter>'th occurrence of the POSIX
+        regular expression <parameter>pattern</parameter>,
+        or <literal>NULL</literal> if there is no such match; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_substr('ABCDEF', 'c(.)(..)', 1, 1, 'i')</literal>
+        <returnvalue>CDEF</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_substr('ABCDEF', 'c(.)(..)', 1, 1, 'i', 2)</literal>
+        <returnvalue>EF</returnvalue>
        </para></entry>
       </row>
 
@@ -5378,6 +5503,15 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
     <primary>substring</primary>
    </indexterm>
    <indexterm>
+    <primary>regexp_count</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_instr</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_like</primary>
+   </indexterm>
+   <indexterm>
     <primary>regexp_match</primary>
    </indexterm>
    <indexterm>
@@ -5391,6 +5525,9 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
    </indexterm>
    <indexterm>
     <primary>regexp_split_to_array</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_substr</primary>
    </indexterm>
 
    <para>
@@ -5543,8 +5680,111 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
    </para>
 
     <para>
+     The <function>regexp_count</function> function counts the number of
+     places where a POSIX regular expression pattern matches a string.
+     It has the syntax
+     <function>regexp_count</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     </optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  For example, including <literal>i</literal> in
+     <replaceable>flags</replaceable> specifies case-insensitive matching.
+     Supported flags are described in
+     <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_count('ABCABCAXYaxy', 'A.')          <lineannotation>3</lineannotation>
+regexp_count('ABCABCAXYaxy', 'A.', 1, 'i')  <lineannotation>4</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <function>regexp_instr</function> function returns the starting or
+     ending position of the <replaceable>N</replaceable>'th match of a
+     POSIX regular expression pattern to a string, or zero if there is no
+     such match.  It has the syntax
+     <function>regexp_instr</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     <optional>, <replaceable>endoption</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     <optional>, <replaceable>subexpr</replaceable>
+     </optional></optional></optional></optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     If <replaceable>N</replaceable> is specified
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is located, otherwise the first match is located.
+     If the <replaceable>endoption</replaceable> parameter is omitted or
+     specified as zero, the function returns the position of the first
+     character of the match.  Otherwise, <replaceable>endoption</replaceable>
+     must be one, and the function returns the position of the character
+     following the match.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     For a pattern containing parenthesized
+     subexpressions, <replaceable>subexpr</replaceable> is an integer
+     indicating which subexpression is of interest: the result identifies
+     the position of the substring matching that subexpression.
+     Subexpressions are numbered in the order of their leading parentheses.
+     When <replaceable>subexpr</replaceable> is omitted or zero, the result
+     identifies the position of the whole match regardless of
+     parenthesized subexpressions.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_instr('number of your street, town zip, FR', '[^,]+', 1, 2)
+                                   <lineannotation>23</lineannotation>
+regexp_instr('ABCDEFGHI', '(c..)(...)', 1, 1, 0, 'i', 2)
+                                   <lineannotation>6</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <function>regexp_like</function> function checks whether a match
+     of a POSIX regular expression pattern occurs within a string,
+     returning boolean true or false.  It has the syntax
+     <function>regexp_like</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>).
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     This function has the same results as the <literal>~</literal>
+     operator if no flags are specified.  If only the <literal>i</literal>
+     flag is specified, it has the same results as
+     the <literal>~*</literal> operator.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_like('Hello World', 'world')       <lineannotation>false</lineannotation>
+regexp_like('Hello World', 'world', 'i')  <lineannotation>true</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
      The <function>regexp_match</function> function returns a text array of
-     captured substring(s) resulting from the first match of a POSIX
+     matching substring(s) within the first match of a POSIX
      regular expression pattern to a string.  It has the syntax
      <function>regexp_match</function>(<replaceable>string</replaceable>,
      <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>).
@@ -5579,8 +5819,17 @@ SELECT regexp_match('foobarbequebaz', '(bar)(beque)');
  {bar,beque}
 (1 row)
 </programlisting>
-    In the common case where you just want the whole matching substring
-    or <literal>NULL</literal> for no match, write something like
+   </para>
+
+    <tip>
+     <para>
+      In the common case where you just want the whole matching substring
+      or <literal>NULL</literal> for no match, the best solution is to
+      use <function>regexp_substr()</function>.
+      However, <function>regexp_substr()</function> only exists
+      in <productname>PostgreSQL</productname> version 15 and up.  When
+      working in older versions, you can extract the first element
+      of <function>regexp_match()</function>'s result, for example:
 <programlisting>
 SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
  regexp_match
@@ -5588,11 +5837,12 @@ SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
  barbeque
 (1 row)
 </programlisting>
-   </para>
+     </para>
+    </tip>
 
     <para>
      The <function>regexp_matches</function> function returns a set of text arrays
-     of captured substring(s) resulting from matching a POSIX regular
+     of matching substring(s) within matches of a POSIX regular
      expression pattern to a string.  It has the same syntax as
      <function>regexp_match</function>.
      This function returns no rows if there is no match, one row if there is
@@ -5650,7 +5900,13 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      It has the syntax
      <function>regexp_replace</function>(<replaceable>source</replaceable>,
      <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     </optional></optional>
      <optional>, <replaceable>flags</replaceable> </optional>).
+     (Notice that <replaceable>N</replaceable> cannot be specified
+     unless <replaceable>start</replaceable> is,
+     but <replaceable>flags</replaceable> can be given in any case.)
      The <replaceable>source</replaceable> string is returned unchanged if
      there is no match to the <replaceable>pattern</replaceable>.  If there is a
      match, the <replaceable>source</replaceable> string is returned with the
@@ -5663,11 +5919,22 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
      substring matching the entire pattern should be inserted.  Write
      <literal>\\</literal> if you need to put a literal backslash in the replacement
      text.
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     By default, only the first match of the pattern is replaced.
+     If <replaceable>N</replaceable> is specified and is greater than zero,
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is replaced.
+     If the <literal>g</literal> flag is given, or
+     if <replaceable>N</replaceable> is specified and is zero, then all
+     matches at or after the <replaceable>start</replaceable> position are
+     replaced.  (The <literal>g</literal> flag is ignored
+     when <replaceable>N</replaceable> is specified.)
      The <replaceable>flags</replaceable> parameter is an optional text
      string containing zero or more single-letter flags that change the
-     function's behavior.  Flag <literal>i</literal> specifies case-insensitive
-     matching, while flag <literal>g</literal> specifies replacement of each matching
-     substring rather than only the first one.  Supported flags (though
+     function's behavior.  Supported flags (though
      not <literal>g</literal>) are
      described in <xref linkend="posix-embedded-options-table"/>.
     </para>
@@ -5681,6 +5948,10 @@ regexp_replace('foobarbaz', 'b..', 'X', 'g')
                                    <lineannotation>fooXX</lineannotation>
 regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
                                    <lineannotation>fooXarYXazY</lineannotation>
+regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 0, 'i')
+                                   <lineannotation>X PXstgrXSQL fXnctXXn</lineannotation>
+regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 3, 'i')
+                                   <lineannotation>A PostgrXSQL function</lineannotation>
 </programlisting>
    </para>
 
@@ -5712,7 +5983,6 @@ regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
    <para>
     Some examples:
 <programlisting>
-
 SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', '\s+') AS foo;
   foo   
 -------
@@ -5761,10 +6031,50 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
     zero-length matches that occur at the start or end of the string
     or immediately after a previous match.  This is contrary to the strict
     definition of regexp matching that is implemented by
-    <function>regexp_match</function> and
-    <function>regexp_matches</function>, but is usually the most convenient behavior
+    the other regexp functions, but is usually the most convenient behavior
     in practice.  Other software systems such as Perl use similar definitions.
    </para>
+
+    <para>
+     The <function>regexp_substr</function> function returns the substring
+     that matches a POSIX regular expression pattern,
+     or <literal>NULL</literal> if there is no match.  It has the syntax
+     <function>regexp_substr</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     <optional>, <replaceable>subexpr</replaceable>
+     </optional></optional></optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     If <replaceable>N</replaceable> is specified
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is returned, otherwise the first match is returned.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     For a pattern containing parenthesized
+     subexpressions, <replaceable>subexpr</replaceable> is an integer
+     indicating which subexpression is of interest: the result is the
+     substring matching that subexpression.
+     Subexpressions are numbered in the order of their leading parentheses.
+     When <replaceable>subexpr</replaceable> is omitted or zero, the result
+     is the whole match regardless of parenthesized subexpressions.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_substr('number of your street, town zip, FR', '[^,]+', 1, 2)
+                                   <lineannotation> town zip</lineannotation>
+regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
+                                   <lineannotation>FGH</lineannotation>
+</programlisting>
+    </para>
 
 <!-- derived from the re_syntax.n man page -->
 

@@ -113,6 +113,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
 												pg_re_flags *flags,
+												int start_search,
 												Oid collation,
 												bool use_subpatterns,
 												bool ignore_degenerate,
@@ -629,7 +630,7 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 
 	re = RE_compile_and_cache(p, REG_ADVANCED, PG_GET_COLLATION());
 
-	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, false));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, 0, 1));
 }
 
 /*
@@ -646,11 +647,97 @@ textregexreplace(PG_FUNCTION_ARGS)
 	regex_t    *re;
 	pg_re_flags flags;
 
+	/*
+	 * regexp_replace() with four arguments will be preferentially resolved as
+	 * this form when the fourth argument is of type UNKNOWN.  However, the
+	 * user might have intended to call textregexreplace_extended_no_n.  If we
+	 * see flags that look like an integer, emit the same error that
+	 * parse_re_flags would, but add a HINT about how to fix it.
+	 */
+	if (VARSIZE_ANY_EXHDR(opt) > 0)
+	{
+		char	   *opt_p = VARDATA_ANY(opt);
+
+		if (*opt_p >= '0' && *opt_p <= '9')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid regular expression option: \"%.*s\"",
+							pg_mblen(opt_p), opt_p),
+					 errhint("If you meant to use regexp_replace() with a start parameter, cast the fourth argument to integer explicitly.")));
+	}
+
 	parse_re_flags(&flags, opt);
 
 	re = RE_compile_and_cache(p, flags.cflags, PG_GET_COLLATION());
 
-	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, flags.glob));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, 0,
+										 flags.glob ? 0 : 1));
+}
+
+/*
+ * textregexreplace_extended()
+ *		Return a string matched by a regular expression, with replacement.
+ *		Extends textregexreplace by allowing a start position and the
+ *		choice of the occurrence to replace (0 means all occurrences).
+ */
+Datum
+textregexreplace_extended(PG_FUNCTION_ARGS)
+{
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
+	text	   *r = PG_GETARG_TEXT_PP(2);
+	int			start = 1;
+	int			n = 1;
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(5);
+	pg_re_flags re_flags;
+	regex_t    *re;
+
+	/* Collect optional parameters */
+	if (PG_NARGS() > 3)
+	{
+		start = PG_GETARG_INT32(3);
+		if (start <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"start", start)));
+	}
+	if (PG_NARGS() > 4)
+	{
+		n = PG_GETARG_INT32(4);
+		if (n < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"n", n)));
+	}
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+
+	/* If N was not specified, deduce it from the 'g' flag */
+	if (PG_NARGS() <= 4)
+		n = re_flags.glob ? 0 : 1;
+
+	/* Compile the regular expression */
+	re = RE_compile_and_cache(p, re_flags.cflags, PG_GET_COLLATION());
+
+	/* Do the replacement(s) */
+	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, start - 1, n));
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+textregexreplace_extended_no_n(PG_FUNCTION_ARGS)
+{
+	return textregexreplace_extended(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+textregexreplace_extended_no_flags(PG_FUNCTION_ARGS)
+{
+	return textregexreplace_extended(fcinfo);
 }
 
 /*
@@ -959,6 +1046,235 @@ similar_escape(PG_FUNCTION_ARGS)
 }
 
 /*
+ * regexp_count()
+ *		Return the number of matches of a pattern within a string.
+ */
+Datum
+regexp_count(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pattern = PG_GETARG_TEXT_PP(1);
+	int			start = 1;
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(3);
+	pg_re_flags re_flags;
+	regexp_matches_ctx *matchctx;
+
+	/* Collect optional parameters */
+	if (PG_NARGS() > 2)
+	{
+		start = PG_GETARG_INT32(2);
+		if (start <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"start", start)));
+	}
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_count()")));
+	/* But we find all the matches anyway */
+	re_flags.glob = true;
+
+	/* Do the matching */
+	matchctx = setup_regexp_matches(str, pattern, &re_flags, start - 1,
+									PG_GET_COLLATION(),
+									false,	/* can ignore subexprs */
+									false, false);
+
+	PG_RETURN_INT32(matchctx->nmatches);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_count_no_start(PG_FUNCTION_ARGS)
+{
+	return regexp_count(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_count_no_flags(PG_FUNCTION_ARGS)
+{
+	return regexp_count(fcinfo);
+}
+
+/*
+ * regexp_instr()
+ *		Return the match's position within the string
+ */
+Datum
+regexp_instr(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pattern = PG_GETARG_TEXT_PP(1);
+	int			start = 1;
+	int			n = 1;
+	int			endoption = 0;
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(5);
+	int			subexpr = 0;
+	int			pos;
+	pg_re_flags re_flags;
+	regexp_matches_ctx *matchctx;
+
+	/* Collect optional parameters */
+	if (PG_NARGS() > 2)
+	{
+		start = PG_GETARG_INT32(2);
+		if (start <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"start", start)));
+	}
+	if (PG_NARGS() > 3)
+	{
+		n = PG_GETARG_INT32(3);
+		if (n <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"n", n)));
+	}
+	if (PG_NARGS() > 4)
+	{
+		endoption = PG_GETARG_INT32(4);
+		if (endoption != 0 && endoption != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"endoption", endoption)));
+	}
+	if (PG_NARGS() > 6)
+	{
+		subexpr = PG_GETARG_INT32(6);
+		if (subexpr < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"subexpr", subexpr)));
+	}
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_instr()")));
+	/* But we find all the matches anyway */
+	re_flags.glob = true;
+
+	/* Do the matching */
+	matchctx = setup_regexp_matches(str, pattern, &re_flags, start - 1,
+									PG_GET_COLLATION(),
+									(subexpr > 0),	/* need submatches? */
+									false, false);
+
+	/* When n exceeds matches return 0 (includes case of no matches) */
+	if (n > matchctx->nmatches)
+		PG_RETURN_INT32(0);
+
+	/* When subexpr exceeds number of subexpressions return 0 */
+	if (subexpr > matchctx->npatterns)
+		PG_RETURN_INT32(0);
+
+	/* Select the appropriate match position to return */
+	pos = (n - 1) * matchctx->npatterns;
+	if (subexpr > 0)
+		pos += subexpr - 1;
+	pos *= 2;
+	if (endoption == 1)
+		pos += 1;
+
+	if (matchctx->match_locs[pos] >= 0)
+		PG_RETURN_INT32(matchctx->match_locs[pos] + 1);
+	else
+		PG_RETURN_INT32(0);		/* position not identifiable */
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_instr_no_start(PG_FUNCTION_ARGS)
+{
+	return regexp_instr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_instr_no_n(PG_FUNCTION_ARGS)
+{
+	return regexp_instr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_instr_no_endoption(PG_FUNCTION_ARGS)
+{
+	return regexp_instr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_instr_no_flags(PG_FUNCTION_ARGS)
+{
+	return regexp_instr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_instr_no_subexpr(PG_FUNCTION_ARGS)
+{
+	return regexp_instr(fcinfo);
+}
+
+/*
+ * regexp_like()
+ *		Test for a pattern match within a string.
+ */
+Datum
+regexp_like(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pattern = PG_GETARG_TEXT_PP(1);
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(2);
+	pg_re_flags re_flags;
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_like()")));
+
+	/* Otherwise it's like textregexeq/texticregexeq */
+	PG_RETURN_BOOL(RE_compile_and_execute(pattern,
+										  VARDATA_ANY(str),
+										  VARSIZE_ANY_EXHDR(str),
+										  re_flags.cflags,
+										  PG_GET_COLLATION(),
+										  0, NULL));
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_like_no_flags(PG_FUNCTION_ARGS)
+{
+	return regexp_like(fcinfo);
+}
+
+/*
  * regexp_match()
  *		Return the first substring(s) matching a pattern within a string.
  */
@@ -982,7 +1298,7 @@ regexp_match(PG_FUNCTION_ARGS)
 						"regexp_match()"),
 				 errhint("Use the regexp_matches function instead.")));
 
-	matchctx = setup_regexp_matches(orig_str, pattern, &re_flags,
+	matchctx = setup_regexp_matches(orig_str, pattern, &re_flags, 0,
 									PG_GET_COLLATION(), true, false, false);
 
 	if (matchctx->nmatches == 0)
@@ -1029,7 +1345,7 @@ regexp_matches(PG_FUNCTION_ARGS)
 
 		/* be sure to copy the input string into the multi-call ctx */
 		matchctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										&re_flags,
+										&re_flags, 0,
 										PG_GET_COLLATION(),
 										true, false, false);
 
@@ -1064,24 +1380,28 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
 }
 
 /*
- * setup_regexp_matches --- do the initial matching for regexp_match
- *		and regexp_split functions
+ * setup_regexp_matches --- do the initial matching for regexp_match,
+ *		regexp_split, and related functions
  *
  * To avoid having to re-find the compiled pattern on each call, we do
  * all the matching in one swoop.  The returned regexp_matches_ctx contains
  * the locations of all the substrings matching the pattern.
  *
- * The three bool parameters have only two patterns (one for matching, one for
- * splitting) but it seems clearer to distinguish the functionality this way
- * than to key it all off one "is_split" flag. We don't currently assume that
- * fetching_unmatched is exclusive of fetching the matched text too; if it's
- * set, the conversion buffer is large enough to fetch any single matched or
- * unmatched string, but not any larger substring. (In practice, when splitting
- * the matches are usually small anyway, and it didn't seem worth complicating
- * the code further.)
+ * start_search: the character (not byte) offset in orig_str at which to
+ * begin the search.  Returned positions are relative to orig_str anyway.
+ * use_subpatterns: collect data about matches to parenthesized subexpressions.
+ * ignore_degenerate: ignore zero-length matches.
+ * fetching_unmatched: caller wants to fetch unmatched substrings.
+ *
+ * We don't currently assume that fetching_unmatched is exclusive of fetching
+ * the matched text too; if it's set, the conversion buffer is large enough to
+ * fetch any single matched or unmatched string, but not any larger
+ * substring.  (In practice, when splitting the matches are usually small
+ * anyway, and it didn't seem worth complicating the code further.)
  */
 static regexp_matches_ctx *
 setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
+					 int start_search,
 					 Oid collation,
 					 bool use_subpatterns,
 					 bool ignore_degenerate,
@@ -1099,7 +1419,6 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	int			array_idx;
 	int			prev_match_end;
 	int			prev_valid_match_end;
-	int			start_search;
 	int			maxlen = 0;		/* largest fetch length in characters */
 
 	/* save original string --- we'll extract result substrings from it */
@@ -1142,7 +1461,6 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	/* search for the pattern, perhaps repeatedly */
 	prev_match_end = 0;
 	prev_valid_match_end = 0;
-	start_search = 0;
 	while (RE_wchar_execute(cpattern, wide_str, wide_len, start_search,
 							pmatch_len, pmatch))
 	{
@@ -1367,7 +1685,7 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 
 		/* be sure to copy the input string into the multi-call ctx */
 		splitctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
-										&re_flags,
+										&re_flags, 0,
 										PG_GET_COLLATION(),
 										false, true, true);
 
@@ -1422,7 +1740,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 
 	splitctx = setup_regexp_matches(PG_GETARG_TEXT_PP(0),
 									PG_GETARG_TEXT_PP(1),
-									&re_flags,
+									&re_flags, 0,
 									PG_GET_COLLATION(),
 									false, true, true);
 
@@ -1487,6 +1805,125 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
 								   Int32GetDatum(startpos + 1),
 								   Int32GetDatum(endpos - startpos));
 	}
+}
+
+/*
+ * regexp_substr()
+ *		Return the substring that matches a regular expression pattern
+ */
+Datum
+regexp_substr(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pattern = PG_GETARG_TEXT_PP(1);
+	int			start = 1;
+	int			n = 1;
+	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(4);
+	int			subexpr = 0;
+	int			so,
+				eo,
+				pos;
+	pg_re_flags re_flags;
+	regexp_matches_ctx *matchctx;
+
+	/* Collect optional parameters */
+	if (PG_NARGS() > 2)
+	{
+		start = PG_GETARG_INT32(2);
+		if (start <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"start", start)));
+	}
+	if (PG_NARGS() > 3)
+	{
+		n = PG_GETARG_INT32(3);
+		if (n <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"n", n)));
+	}
+	if (PG_NARGS() > 5)
+	{
+		subexpr = PG_GETARG_INT32(5);
+		if (subexpr < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": %d",
+							"subexpr", subexpr)));
+	}
+
+	/* Determine options */
+	parse_re_flags(&re_flags, flags);
+	/* User mustn't specify 'g' */
+	if (re_flags.glob)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a SQL function name */
+				 errmsg("%s does not support the \"global\" option",
+						"regexp_substr()")));
+	/* But we find all the matches anyway */
+	re_flags.glob = true;
+
+	/* Do the matching */
+	matchctx = setup_regexp_matches(str, pattern, &re_flags, start - 1,
+									PG_GET_COLLATION(),
+									(subexpr > 0),	/* need submatches? */
+									false, false);
+
+	/* When n exceeds matches return NULL (includes case of no matches) */
+	if (n > matchctx->nmatches)
+		PG_RETURN_NULL();
+
+	/* When subexpr exceeds number of subexpressions return NULL */
+	if (subexpr > matchctx->npatterns)
+		PG_RETURN_NULL();
+
+	/* Select the appropriate match position to return */
+	pos = (n - 1) * matchctx->npatterns;
+	if (subexpr > 0)
+		pos += subexpr - 1;
+	pos *= 2;
+	so = matchctx->match_locs[pos];
+	eo = matchctx->match_locs[pos + 1];
+
+	if (so < 0 || eo < 0)
+		PG_RETURN_NULL();		/* unidentifiable location */
+
+	PG_RETURN_DATUM(DirectFunctionCall3(text_substr,
+										PointerGetDatum(matchctx->orig_str),
+										Int32GetDatum(so + 1),
+										Int32GetDatum(eo - so)));
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_substr_no_start(PG_FUNCTION_ARGS)
+{
+	return regexp_substr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_substr_no_n(PG_FUNCTION_ARGS)
+{
+	return regexp_substr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_substr_no_flags(PG_FUNCTION_ARGS)
+{
+	return regexp_substr(fcinfo);
+}
+
+/* This is separate to keep the opr_sanity regression test from complaining */
+Datum
+regexp_substr_no_subexpr(PG_FUNCTION_ARGS)
+{
+	return regexp_substr(fcinfo);
 }
 
 /*
