@@ -67,7 +67,8 @@ typedef enum LogicalRepMsgType
 	LOGICAL_REP_MSG_STREAM_START = 'S',
 	LOGICAL_REP_MSG_STREAM_END = 'E',
 	LOGICAL_REP_MSG_STREAM_COMMIT = 'c',
-	LOGICAL_REP_MSG_STREAM_ABORT = 'A'
+	LOGICAL_REP_MSG_STREAM_ABORT = 'A',
+	LOGICAL_REP_MSG_STREAM_PREPARE = 'p'
 } LogicalRepMsgType;
 
 /*
@@ -196,7 +197,10 @@ extern void logicalrep_write_rollback_prepared(StringInfo out, ReorderBufferTXN 
 											   TimestampTz prepare_time);
 extern void logicalrep_read_rollback_prepared(StringInfo in,
 											  LogicalRepRollbackPreparedTxnData *rollback_data);
-
+extern void logicalrep_write_stream_prepare(StringInfo out, ReorderBufferTXN *txn,
+											XLogRecPtr prepare_lsn);
+extern void logicalrep_read_stream_prepare(StringInfo in,
+										   LogicalRepPreparedTxnData *prepare_data);
 
 extern void logicalrep_write_origin(StringInfo out, const char *origin,
 									XLogRecPtr origin_lsn);

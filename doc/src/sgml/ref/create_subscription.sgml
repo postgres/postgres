@@ -238,11 +238,6 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           subscriber as a whole.
          </para>
 
-         <para>
-          The <literal>streaming</literal> option cannot be used with the
-          <literal>two_phase</literal> option.
-         </para>
-
         </listitem>
        </varlistentry>
        <varlistentry>
@@ -267,11 +262,6 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           phase is completed. See column
           <literal>subtwophasestate</literal> of <xref linkend="catalog-pg-subscription"/>
           to know the actual two-phase state.
-         </para>
-
-         <para>
-          The <literal>two_phase</literal> option cannot be used with the
-          <literal>streaming</literal> option.
          </para>
 
         </listitem>

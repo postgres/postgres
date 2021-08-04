@@ -145,7 +145,8 @@ logicalrep_read_begin_prepare(StringInfo in, LogicalRepPreparedTxnData *begin_da
 }
 
 /*
- * The core functionality for logicalrep_write_prepare.
+ * The core functionality for logicalrep_write_prepare and
+ * logicalrep_write_stream_prepare.
  */
 static void
 logicalrep_write_prepare_common(StringInfo out, LogicalRepMsgType type,
@@ -188,7 +189,8 @@ logicalrep_write_prepare(StringInfo out, ReorderBufferTXN *txn,
 }
 
 /*
- * The core functionality for logicalrep_read_prepare.
+ * The core functionality for logicalrep_read_prepare and
+ * logicalrep_read_stream_prepare.
  */
 static void
 logicalrep_read_prepare_common(StringInfo in, char *msgtype,
@@ -209,6 +211,8 @@ logicalrep_read_prepare_common(StringInfo in, char *msgtype,
 		elog(ERROR, "end_lsn is not set in %s message", msgtype);
 	prepare_data->prepare_time = pq_getmsgint64(in);
 	prepare_data->xid = pq_getmsgint(in, 4);
+	if (prepare_data->xid == InvalidTransactionId)
+		elog(ERROR, "invalid two-phase transaction ID in %s message", msgtype);
 
 	/* read gid (copy it into a pre-allocated buffer) */
 	strlcpy(prepare_data->gid, pq_getmsgstring(in), sizeof(prepare_data->gid));
@@ -337,6 +341,27 @@ logicalrep_read_rollback_prepared(StringInfo in,
 
 	/* read gid (copy it into a pre-allocated buffer) */
 	strlcpy(rollback_data->gid, pq_getmsgstring(in), sizeof(rollback_data->gid));
+}
+
+/*
+ * Write STREAM PREPARE to the output stream.
+ */
+void
+logicalrep_write_stream_prepare(StringInfo out,
+								ReorderBufferTXN *txn,
+								XLogRecPtr prepare_lsn)
+{
+	logicalrep_write_prepare_common(out, LOGICAL_REP_MSG_STREAM_PREPARE,
+									txn, prepare_lsn);
+}
+
+/*
+ * Read STREAM PREPARE from the stream.
+ */
+void
+logicalrep_read_stream_prepare(StringInfo in, LogicalRepPreparedTxnData *prepare_data)
+{
+	logicalrep_read_prepare_common(in, "stream prepare", prepare_data);
 }
 
 /*

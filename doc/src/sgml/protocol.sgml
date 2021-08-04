@@ -7411,7 +7411,7 @@ Stream Abort
 </variablelist>
 
 <para>
-The following messages (Begin Prepare, Prepare, Commit Prepared, Rollback Prepared)
+The following messages (Begin Prepare, Prepare, Commit Prepared, Rollback Prepared, Stream Prepare)
 are available since protocol version 3.
 </para>
 
@@ -7688,6 +7688,80 @@ are available since protocol version 3.
 </term>
 <listitem><para>
                 Rollback timestamp of the transaction. The value is in number
+                of microseconds since PostgreSQL epoch (2000-01-01).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        Int32 (TransactionId)
+</term>
+<listitem><para>
+                Xid of the transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>String</term>
+<listitem><para>
+                The user defined GID of the two-phase transaction.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+
+<term>Stream Prepare</term>
+<listitem>
+<para>
+
+<variablelist>
+
+<varlistentry>
+<term>Byte1('p')</term>
+<listitem><para>
+                Identifies the message as a two-phase stream prepare message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        Int8(0)
+</term>
+<listitem><para>
+                Flags; currently unused.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        Int64 (XLogRecPtr)
+</term>
+<listitem><para>
+                The LSN of the prepare.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        Int64 (XLogRecPtr)
+</term>
+<listitem><para>
+                The end LSN of the prepare transaction.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        Int64 (TimestampTz)
+</term>
+<listitem><para>
+                Prepare timestamp of the transaction. The value is in number
                 of microseconds since PostgreSQL epoch (2000-01-01).
 </para></listitem>
 </varlistentry>

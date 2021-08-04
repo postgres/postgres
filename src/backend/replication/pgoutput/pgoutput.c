@@ -71,6 +71,8 @@ static void pgoutput_stream_abort(struct LogicalDecodingContext *ctx,
 static void pgoutput_stream_commit(struct LogicalDecodingContext *ctx,
 								   ReorderBufferTXN *txn,
 								   XLogRecPtr commit_lsn);
+static void pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
+										ReorderBufferTXN *txn, XLogRecPtr prepare_lsn);
 
 static bool publications_valid;
 static bool in_streaming;
@@ -175,7 +177,7 @@ _PG_output_plugin_init(OutputPluginCallbacks *cb)
 	cb->stream_message_cb = pgoutput_message;
 	cb->stream_truncate_cb = pgoutput_truncate;
 	/* transaction streaming - two-phase commit */
-	cb->stream_prepare_cb = NULL;
+	cb->stream_prepare_cb = pgoutput_stream_prepare_txn;
 }
 
 static void
@@ -280,17 +282,6 @@ parse_output_parameters(List *options, PGOutputData *data)
 		}
 		else
 			elog(ERROR, "unrecognized pgoutput option: %s", defel->defname);
-
-		/*
-		 * Do additional checking for the disallowed combination of two_phase
-		 * and streaming. While streaming and two_phase can theoretically be
-		 * supported, it needs more analysis to allow them together.
-		 */
-		if (data->two_phase && data->streaming)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("%s and %s are mutually exclusive options",
-							"two_phase", "streaming")));
 	}
 }
 
@@ -1027,6 +1018,24 @@ pgoutput_stream_commit(struct LogicalDecodingContext *ctx,
 	OutputPluginWrite(ctx, true);
 
 	cleanup_rel_sync_cache(txn->xid, true);
+}
+
+/*
+ * PREPARE callback (for streaming two-phase commit).
+ *
+ * Notify the downstream to prepare the transaction.
+ */
+static void
+pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
+							ReorderBufferTXN *txn,
+							XLogRecPtr prepare_lsn)
+{
+	Assert(rbtxn_is_streamed(txn));
+
+	OutputPluginUpdateProgress(ctx);
+	OutputPluginPrepareWrite(ctx, true);
+	logicalrep_write_stream_prepare(ctx->out, txn, prepare_lsn);
+	OutputPluginWrite(ctx, true);
 }
 
 /*
