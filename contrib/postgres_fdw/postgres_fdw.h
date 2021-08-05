@@ -176,8 +176,9 @@ extern void deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 							 List *targetAttrs, bool doNothing,
 							 List *withCheckOptionList, List *returningList,
 							 List **retrieved_attrs, int *values_end_len);
-extern void rebuildInsertSql(StringInfo buf, char *orig_query,
-							 int values_end_len, int num_cols,
+extern void rebuildInsertSql(StringInfo buf, Relation rel,
+							 char *orig_query, List *target_attrs,
+							 int values_end_len, int num_params,
 							 int num_rows);
 extern void deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 							 Index rtindex, Relation rel,
