@@ -1941,22 +1941,6 @@ Author: Michael Paquier <michael@paquier.xyz>
       </para>
      </listitem>
 
-     <listitem>
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2020-11-16 [2945a488a] Make the standby server promptly handle interrupt signal
-OTHER COMMITS
--->
-
-      <para>
-       Improve signal handling reliability (Fujii Masao)
-      </para>
-
-      <para>
-       GENERAL ENOUGH?
-      </para>
-     </listitem>
-
     </itemizedlist>
 
     <sect4>
