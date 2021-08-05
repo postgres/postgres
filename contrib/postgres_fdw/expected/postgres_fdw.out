@@ -6365,13 +6365,36 @@ select * from rem1;
 -- ===================================================================
 -- test generated columns
 -- ===================================================================
-create table gloc1 (a int, b int);
+create table gloc1 (
+  a int,
+  b int generated always as (a * 2) stored);
 alter table gloc1 set (autovacuum_enabled = 'false');
 create foreign table grem1 (
   a int,
   b int generated always as (a * 2) stored)
   server loopback options(table_name 'gloc1');
+explain (verbose, costs off)
 insert into grem1 (a) values (1), (2);
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Insert on public.grem1
+   Remote SQL: INSERT INTO public.gloc1(a, b) VALUES ($1, DEFAULT)
+   ->  Values Scan on "*VALUES*"
+         Output: "*VALUES*".column1, NULL::integer
+(4 rows)
+
+insert into grem1 (a) values (1), (2);
+explain (verbose, costs off)
+update grem1 set a = 22 where a = 2;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Update on public.grem1
+   Remote SQL: UPDATE public.gloc1 SET a = $2, b = DEFAULT WHERE ctid = $1
+   ->  Foreign Scan on public.grem1
+         Output: 22, b, ctid
+         Remote SQL: SELECT b, ctid FROM public.gloc1 WHERE ((a = 2)) FOR UPDATE
+(5 rows)
+
 update grem1 set a = 22 where a = 2;
 select * from gloc1;
  a  | b  
@@ -6387,6 +6410,24 @@ select * from grem1;
  22 | 44
 (2 rows)
 
+delete from grem1;
+-- test copy from
+copy grem1 from stdin;
+select * from gloc1;
+ a | b 
+---+---
+ 1 | 2
+ 2 | 4
+(2 rows)
+
+select * from grem1;
+ a | b 
+---+---
+ 1 | 2
+ 2 | 4
+(2 rows)
+
+delete from grem1;
 -- ===================================================================
 -- test local triggers
 -- ===================================================================
@@ -8286,6 +8327,7 @@ CREATE TABLE import_source.t3 (c1 timestamptz default now(), c2 typ1);
 CREATE TABLE import_source."x 4" (c1 float8, "C 2" text, c3 varchar(42));
 CREATE TABLE import_source."x 5" (c1 float8);
 ALTER TABLE import_source."x 5" DROP COLUMN c1;
+CREATE TABLE import_source."x 6" (c1 int, c2 int generated always as (c1 * 2) stored);
 CREATE TABLE import_source.t4 (c1 int) PARTITION BY RANGE (c1);
 CREATE TABLE import_source.t4_part PARTITION OF import_source.t4
   FOR VALUES FROM (1) TO (100);
@@ -8301,7 +8343,8 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest1;
  import_dest1 | t4    | loopback | (schema_name 'import_source', table_name 't4')  | 
  import_dest1 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
  import_dest1 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
-(6 rows)
+ import_dest1 | x 6   | loopback | (schema_name 'import_source', table_name 'x 6') | 
+(7 rows)
 
 \d import_dest1.*
                          Foreign table "import_dest1.t1"
@@ -8351,6 +8394,14 @@ FDW options: (schema_name 'import_source', table_name 'x 4')
 Server: loopback
 FDW options: (schema_name 'import_source', table_name 'x 5')
 
+                                  Foreign table "import_dest1.x 6"
+ Column |  Type   | Collation | Nullable |               Default               |    FDW options     
+--------+---------+-----------+----------+-------------------------------------+--------------------
+ c1     | integer |           |          |                                     | (column_name 'c1')
+ c2     | integer |           |          | generated always as (c1 * 2) stored | (column_name 'c2')
+Server: loopback
+FDW options: (schema_name 'import_source', table_name 'x 6')
+
 -- Options
 CREATE SCHEMA import_dest2;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
@@ -8365,7 +8416,8 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest2
  import_dest2 | t4    | loopback | (schema_name 'import_source', table_name 't4')  | 
  import_dest2 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
  import_dest2 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
-(6 rows)
+ import_dest2 | x 6   | loopback | (schema_name 'import_source', table_name 'x 6') | 
+(7 rows)
 
 \d import_dest2.*
                          Foreign table "import_dest2.t1"
@@ -8415,9 +8467,17 @@ FDW options: (schema_name 'import_source', table_name 'x 4')
 Server: loopback
 FDW options: (schema_name 'import_source', table_name 'x 5')
 
+                                  Foreign table "import_dest2.x 6"
+ Column |  Type   | Collation | Nullable |               Default               |    FDW options     
+--------+---------+-----------+----------+-------------------------------------+--------------------
+ c1     | integer |           |          |                                     | (column_name 'c1')
+ c2     | integer |           |          | generated always as (c1 * 2) stored | (column_name 'c2')
+Server: loopback
+FDW options: (schema_name 'import_source', table_name 'x 6')
+
 CREATE SCHEMA import_dest3;
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
-  OPTIONS (import_collate 'false', import_not_null 'false');
+  OPTIONS (import_collate 'false', import_generated 'false', import_not_null 'false');
 \det+ import_dest3.*
                                      List of foreign tables
     Schema    | Table |  Server  |                   FDW options                   | Description 
@@ -8428,7 +8488,8 @@ IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest3
  import_dest3 | t4    | loopback | (schema_name 'import_source', table_name 't4')  | 
  import_dest3 | x 4   | loopback | (schema_name 'import_source', table_name 'x 4') | 
  import_dest3 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
-(6 rows)
+ import_dest3 | x 6   | loopback | (schema_name 'import_source', table_name 'x 6') | 
+(7 rows)
 
 \d import_dest3.*
                          Foreign table "import_dest3.t1"
@@ -8478,6 +8539,14 @@ FDW options: (schema_name 'import_source', table_name 'x 4')
 Server: loopback
 FDW options: (schema_name 'import_source', table_name 'x 5')
 
+                    Foreign table "import_dest3.x 6"
+ Column |  Type   | Collation | Nullable | Default |    FDW options     
+--------+---------+-----------+----------+---------+--------------------
+ c1     | integer |           |          |         | (column_name 'c1')
+ c2     | integer |           |          |         | (column_name 'c2')
+Server: loopback
+FDW options: (schema_name 'import_source', table_name 'x 6')
+
 -- Check LIMIT TO and EXCEPT
 CREATE SCHEMA import_dest4;
 IMPORT FOREIGN SCHEMA import_source LIMIT TO (t1, nonesuch)
@@ -8500,7 +8569,8 @@ IMPORT FOREIGN SCHEMA import_source EXCEPT (t1, "x 4", nonesuch)
  import_dest4 | t3    | loopback | (schema_name 'import_source', table_name 't3')  | 
  import_dest4 | t4    | loopback | (schema_name 'import_source', table_name 't4')  | 
  import_dest4 | x 5   | loopback | (schema_name 'import_source', table_name 'x 5') | 
-(5 rows)
+ import_dest4 | x 6   | loopback | (schema_name 'import_source', table_name 'x 6') | 
+(6 rows)
 
 -- Assorted error cases
 IMPORT FOREIGN SCHEMA import_source FROM SERVER loopback INTO import_dest4;
