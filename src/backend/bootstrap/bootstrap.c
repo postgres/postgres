@@ -236,48 +236,46 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 	 * pushups, but there are a couple of things that need to get lit up even
 	 * in an auxiliary process.
 	 */
-	{
-		/*
-		 * Create a PGPROC so we can use LWLocks.  In the EXEC_BACKEND case,
-		 * this was already done by SubPostmasterMain().
-		 */
+
+	/*
+	 * Create a PGPROC so we can use LWLocks.  In the EXEC_BACKEND case, this
+	 * was already done by SubPostmasterMain().
+	 */
 #ifndef EXEC_BACKEND
-		InitAuxiliaryProcess();
+	InitAuxiliaryProcess();
 #endif
 
-		/*
-		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
-		 * doesn't have a BackendId, the slot is statically allocated based on
-		 * the auxiliary process type (MyAuxProcType).  Backends use slots
-		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
-		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
-		 * auxiliary process.
-		 *
-		 * This will need rethinking if we ever want more than one of a
-		 * particular auxiliary process type.
-		 */
-		ProcSignalInit(MaxBackends + MyAuxProcType + 1);
+	/*
+	 * Assign the ProcSignalSlot for an auxiliary process.  Since it doesn't
+	 * have a BackendId, the slot is statically allocated based on the
+	 * auxiliary process type (MyAuxProcType).  Backends use slots indexed in
+	 * the range from 1 to MaxBackends (inclusive), so we use MaxBackends +
+	 * AuxProcType + 1 as the index of the slot for an auxiliary process.
+	 *
+	 * This will need rethinking if we ever want more than one of a particular
+	 * auxiliary process type.
+	 */
+	ProcSignalInit(MaxBackends + MyAuxProcType + 1);
 
-		/* finish setting up bufmgr.c */
-		InitBufferPoolBackend();
+	/* finish setting up bufmgr.c */
+	InitBufferPoolBackend();
 
-		/*
-		 * Auxiliary processes don't run transactions, but they may need a
-		 * resource owner anyway to manage buffer pins acquired outside
-		 * transactions (and, perhaps, other things in future).
-		 */
-		CreateAuxProcessResourceOwner();
+	/*
+	 * Auxiliary processes don't run transactions, but they may need a
+	 * resource owner anyway to manage buffer pins acquired outside
+	 * transactions (and, perhaps, other things in future).
+	 */
+	CreateAuxProcessResourceOwner();
 
-		/* Initialize statistics reporting */
-		pgstat_initialize();
+	/* Initialize statistics reporting */
+	pgstat_initialize();
 
-		/* Initialize backend status information */
-		pgstat_beinit();
-		pgstat_bestart();
+	/* Initialize backend status information */
+	pgstat_beinit();
+	pgstat_bestart();
 
-		/* register a before-shutdown callback for LWLock cleanup */
-		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
-	}
+	/* register a before-shutdown callback for LWLock cleanup */
+	before_shmem_exit(ShutdownAuxiliaryProcess, 0);
 
 	SetProcessingMode(NormalProcessing);
 
