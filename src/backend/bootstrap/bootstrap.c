@@ -178,8 +178,8 @@ static IndexList *ILHead = NULL;
 /*
  * In shared memory checker mode, all we really want to do is create shared
  * memory and semaphores (just to prove we can do it with the current GUC
- * settings).  Since, in fact, that was already done by BaseInit(),
- * we have nothing more to do here.
+ * settings).  Since, in fact, that was already done by
+ * CreateSharedMemoryAndSemaphores(), we have nothing more to do here.
  */
 static void
 CheckerModeMain(void)
@@ -324,7 +324,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 
 	InitializeMaxBackends();
 
-	BaseInit();
+	CreateSharedMemoryAndSemaphores();
 
 	/*
 	 * XXX: It might make sense to move this into its own function at some
@@ -338,6 +338,13 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 		abort();
 	}
 
+	/*
+	 * Do backend-like initialization for bootstrap mode
+	 */
+	InitProcess();
+
+	BaseInit();
+
 	bootstrap_signals();
 	BootStrapXLOG();
 
@@ -347,11 +354,6 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	 */
 	if (pg_link_canary_is_frontend())
 		elog(ERROR, "backend is incorrectly linked to frontend functions");
-
-	/*
-	 * Do backend-like initialization for bootstrap mode
-	 */
-	InitProcess();
 
 	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
 

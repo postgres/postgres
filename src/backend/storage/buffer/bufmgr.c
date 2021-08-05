@@ -2582,11 +2582,6 @@ AtEOXact_Buffers(bool isCommit)
  * This is called during backend startup (whether standalone or under the
  * postmaster).  It sets up for this backend's access to the already-existing
  * buffer pool.
- *
- * NB: this is called before InitProcess(), so we do not have a PGPROC and
- * cannot do LWLockAcquire; hence we can't actually access stuff in
- * shared memory yet.  We are only initializing local data here.
- * (See also InitBufferPoolBackend)
  */
 void
 InitBufferPoolAccess(void)
@@ -2600,20 +2595,12 @@ InitBufferPoolAccess(void)
 
 	PrivateRefCountHash = hash_create("PrivateRefCount", 100, &hash_ctl,
 									  HASH_ELEM | HASH_BLOBS);
-}
 
-/*
- * InitBufferPoolBackend --- second-stage initialization of a new backend
- *
- * This is called after we have acquired a PGPROC and so can safely get
- * LWLocks.  We don't currently need to do anything at this stage ...
- * except register a shmem-exit callback.  AtProcExit_Buffers needs LWLock
- * access, and thereby has to be called at the corresponding phase of
- * backend shutdown.
- */
-void
-InitBufferPoolBackend(void)
-{
+	/*
+	 * AtProcExit_Buffers needs LWLock access, and thereby has to be called at
+	 * the corresponding phase of backend shutdown.
+	 */
+	Assert(MyProc != NULL);
 	on_shmem_exit(AtProcExit_Buffers, 0);
 }
 

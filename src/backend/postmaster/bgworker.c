@@ -838,14 +838,6 @@ StartBackgroundWorker(void)
 	if (worker->bgw_flags & BGWORKER_SHMEM_ACCESS)
 	{
 		/*
-		 * Early initialization.  Some of this could be useful even for
-		 * background workers that aren't using shared memory, but they can
-		 * call the individual startup routines for those subsystems if
-		 * needed.
-		 */
-		BaseInit();
-
-		/*
 		 * Create a per-backend PGPROC struct in shared memory, except in the
 		 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must
 		 * do this before we can use LWLocks (and in the EXEC_BACKEND case we
@@ -854,6 +846,14 @@ StartBackgroundWorker(void)
 #ifndef EXEC_BACKEND
 		InitProcess();
 #endif
+
+		/*
+		 * Early initialization.  Some of this could be useful even for
+		 * background workers that aren't using shared memory, but they can
+		 * call the individual startup routines for those subsystems if
+		 * needed.
+		 */
+		BaseInit();
 	}
 
 	/*

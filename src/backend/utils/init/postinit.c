@@ -67,7 +67,6 @@ static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
 static void PerformAuthentication(Port *port);
 static void CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connections);
-static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static void StatementTimeoutHandler(void);
 static void LockTimeoutHandler(void);
@@ -417,31 +416,6 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 }
 
 
-
-/* --------------------------------
- *		InitCommunication
- *
- *		This routine initializes stuff needed for ipc, locking, etc.
- *		it should be called something more informative.
- * --------------------------------
- */
-static void
-InitCommunication(void)
-{
-	/*
-	 * initialize shared memory and semaphores appropriately.
-	 */
-	if (!IsUnderPostmaster)		/* postmaster already did this */
-	{
-		/*
-		 * We're running a postgres bootstrap process or a standalone backend,
-		 * so we need to set up shmem.
-		 */
-		CreateSharedMemoryAndSemaphores();
-	}
-}
-
-
 /*
  * pg_split_opts -- split a string of options and append it to an argv array
  *
@@ -536,11 +510,11 @@ InitializeMaxBackends(void)
 void
 BaseInit(void)
 {
+	Assert(MyProc != NULL);
+
 	/*
-	 * Attach to shared memory and semaphores, and initialize our
-	 * input/output/debugging file descriptors.
+	 * Initialize our input/output/debugging file descriptors.
 	 */
-	InitCommunication();
 	DebugFileOpen();
 
 	/* Do local initialization of file, storage and buffer managers */
@@ -623,11 +597,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		RegisterTimeout(IDLE_SESSION_TIMEOUT, IdleSessionTimeoutHandler);
 		RegisterTimeout(CLIENT_CONNECTION_CHECK_TIMEOUT, ClientCheckTimeoutHandler);
 	}
-
-	/*
-	 * bufmgr needs another initialization call too
-	 */
-	InitBufferPoolBackend();
 
 	/*
 	 * Initialize local process's access to XLOG.

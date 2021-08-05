@@ -194,7 +194,6 @@ extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 
 extern void InitBufferPool(void);
 extern void InitBufferPoolAccess(void);
-extern void InitBufferPoolBackend(void);
 extern void AtEOXact_Buffers(bool isCommit);
 extern void PrintBufferLeakWarning(Buffer buffer);
 extern void CheckPointBuffers(int flags);

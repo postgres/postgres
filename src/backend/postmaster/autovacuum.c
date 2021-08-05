@@ -469,9 +469,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);
 
-	/* Early initialization */
-	BaseInit();
-
 	/*
 	 * Create a per-backend PGPROC struct in shared memory, except in the
 	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
@@ -481,6 +478,9 @@ AutoVacLauncherMain(int argc, char *argv[])
 #ifndef EXEC_BACKEND
 	InitProcess();
 #endif
+
+	/* Early initialization */
+	BaseInit();
 
 	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
 
@@ -1547,9 +1547,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);
 
-	/* Early initialization */
-	BaseInit();
-
 	/*
 	 * Create a per-backend PGPROC struct in shared memory, except in the
 	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
@@ -1559,6 +1556,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 #ifndef EXEC_BACKEND
 	InitProcess();
 #endif
+
+	/* Early initialization */
+	BaseInit();
 
 	/*
 	 * If an exception is encountered, processing resumes here.
