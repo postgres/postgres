@@ -3461,7 +3461,14 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 				 */
 			case CSTATE_WAIT_RESULT:
 				pg_log_debug("client %d receiving", st->id);
-				if (!PQconsumeInput(st->con))
+
+				/*
+				 * Only check for new network data if we processed all data
+				 * fetched prior. Otherwise we end up doing a syscall for each
+				 * individual pipelined query, which has a measurable
+				 * performance impact.
+				 */
+				if (PQisBusy(st->con) && !PQconsumeInput(st->con))
 				{
 					/* there's something wrong */
 					commandFailed(st, "SQL", "perhaps the backend died while processing");
