@@ -55,7 +55,6 @@ uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 
 static void CheckerModeMain(void);
-static void BootstrapModeMain(void);
 static void bootstrap_signals(void);
 static void ShutdownAuxiliaryProcess(int code, Datum arg);
 static Form_pg_attribute AllocateAttribute(void);
@@ -194,33 +193,171 @@ static IndexList *ILHead = NULL;
  *	 This code is here just because of historical reasons.
  */
 void
-AuxiliaryProcessMain(int argc, char *argv[])
+AuxiliaryProcessMain(AuxProcType auxtype)
 {
+	Assert(IsUnderPostmaster);
+
+	MyAuxProcType = auxtype;
+
+	switch (MyAuxProcType)
+	{
+		case StartupProcess:
+			MyBackendType = B_STARTUP;
+			break;
+		case ArchiverProcess:
+			MyBackendType = B_ARCHIVER;
+			break;
+		case BgWriterProcess:
+			MyBackendType = B_BG_WRITER;
+			break;
+		case CheckpointerProcess:
+			MyBackendType = B_CHECKPOINTER;
+			break;
+		case WalWriterProcess:
+			MyBackendType = B_WAL_WRITER;
+			break;
+		case WalReceiverProcess:
+			MyBackendType = B_WAL_RECEIVER;
+			break;
+		default:
+			elog(ERROR, "something has gone wrong");
+			MyBackendType = B_INVALID;
+	}
+
+	init_ps_display(NULL);
+
+	SetProcessingMode(BootstrapProcessing);
+	IgnoreSystemIndexes = true;
+
+	BaseInit();
+
+	/*
+	 * As an auxiliary process, we aren't going to do the full InitPostgres
+	 * pushups, but there are a couple of things that need to get lit up even
+	 * in an auxiliary process.
+	 */
+	{
+		/*
+		 * Create a PGPROC so we can use LWLocks.  In the EXEC_BACKEND case,
+		 * this was already done by SubPostmasterMain().
+		 */
+#ifndef EXEC_BACKEND
+		InitAuxiliaryProcess();
+#endif
+
+		/*
+		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
+		 * doesn't have a BackendId, the slot is statically allocated based on
+		 * the auxiliary process type (MyAuxProcType).  Backends use slots
+		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
+		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
+		 * auxiliary process.
+		 *
+		 * This will need rethinking if we ever want more than one of a
+		 * particular auxiliary process type.
+		 */
+		ProcSignalInit(MaxBackends + MyAuxProcType + 1);
+
+		/* finish setting up bufmgr.c */
+		InitBufferPoolBackend();
+
+		/*
+		 * Auxiliary processes don't run transactions, but they may need a
+		 * resource owner anyway to manage buffer pins acquired outside
+		 * transactions (and, perhaps, other things in future).
+		 */
+		CreateAuxProcessResourceOwner();
+
+		/* Initialize statistics reporting */
+		pgstat_initialize();
+
+		/* Initialize backend status information */
+		pgstat_beinit();
+		pgstat_bestart();
+
+		/* register a before-shutdown callback for LWLock cleanup */
+		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
+	}
+
+	SetProcessingMode(NormalProcessing);
+
+	switch (MyAuxProcType)
+	{
+		case CheckerProcess:
+		case BootstrapProcess:
+			pg_unreachable();
+			break;
+
+		case StartupProcess:
+			StartupProcessMain();
+			proc_exit(1);
+
+		case ArchiverProcess:
+			PgArchiverMain();
+			proc_exit(1);
+
+		case BgWriterProcess:
+			BackgroundWriterMain();
+			proc_exit(1);
+
+		case CheckpointerProcess:
+			CheckpointerMain();
+			proc_exit(1);
+
+		case WalWriterProcess:
+			InitXLOGAccess();
+			WalWriterMain();
+			proc_exit(1);
+
+		case WalReceiverProcess:
+			WalReceiverMain();
+			proc_exit(1);
+
+		default:
+			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
+			proc_exit(1);
+	}
+}
+
+/*
+ * In shared memory checker mode, all we really want to do is create shared
+ * memory and semaphores (just to prove we can do it with the current GUC
+ * settings).  Since, in fact, that was already done by BaseInit(),
+ * we have nothing more to do here.
+ */
+static void
+CheckerModeMain(void)
+{
+	proc_exit(0);
+}
+
+/*
+ *	 The main entry point for running the backend in bootstrap mode
+ *
+ *	 The bootstrap mode is used to initialize the template database.
+ *	 The bootstrap backend doesn't speak SQL, but instead expects
+ *	 commands in a special bootstrap language.
+ */
+void
+BootstrapModeMain(int argc, char *argv[])
+{
+	int			i;
 	char	   *progname = argv[0];
 	int			flag;
 	char	   *userDoption = NULL;
 
-	/*
-	 * Initialize process environment (already done if under postmaster, but
-	 * not if standalone).
-	 */
-	if (!IsUnderPostmaster)
-		InitStandaloneProcess(argv[0]);
+	Assert(!IsUnderPostmaster);
 
-	/*
-	 * process command arguments
-	 */
+	InitStandaloneProcess(argv[0]);
 
 	/* Set defaults, to be overridden by explicit options below */
-	if (!IsUnderPostmaster)
-		InitializeGUCOptions();
+	InitializeGUCOptions();
 
-	/* Ignore the initial --boot argument, if present */
-	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
-	{
-		argv++;
-		argc--;
-	}
+	/* an initial --boot should be present */
+	Assert(argc == 1
+		   || strcmp(argv[1], "--boot") != 0);
+	argv++;
+	argc--;
 
 	/* If no -x argument, we are a CheckerProcess */
 	MyAuxProcType = CheckerProcess;
@@ -259,6 +396,13 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				break;
 			case 'x':
 				MyAuxProcType = atoi(optarg);
+				if (MyAuxProcType != CheckerProcess &&
+					MyAuxProcType != BootstrapProcess)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("-x %s is invalid", optarg)));
+				}
 				break;
 			case 'X':
 				{
@@ -313,190 +457,40 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		proc_exit(1);
 	}
 
-	switch (MyAuxProcType)
-	{
-		case StartupProcess:
-			MyBackendType = B_STARTUP;
-			break;
-		case ArchiverProcess:
-			MyBackendType = B_ARCHIVER;
-			break;
-		case BgWriterProcess:
-			MyBackendType = B_BG_WRITER;
-			break;
-		case CheckpointerProcess:
-			MyBackendType = B_CHECKPOINTER;
-			break;
-		case WalWriterProcess:
-			MyBackendType = B_WAL_WRITER;
-			break;
-		case WalReceiverProcess:
-			MyBackendType = B_WAL_RECEIVER;
-			break;
-		default:
-			MyBackendType = B_INVALID;
-	}
-	if (IsUnderPostmaster)
-		init_ps_display(NULL);
-
-	/* Acquire configuration parameters, unless inherited from postmaster */
-	if (!IsUnderPostmaster)
-	{
-		if (!SelectConfigFiles(userDoption, progname))
-			proc_exit(1);
-	}
+	/* Acquire configuration parameters */
+	if (!SelectConfigFiles(userDoption, progname))
+		proc_exit(1);
 
 	/*
 	 * Validate we have been given a reasonable-looking DataDir and change
-	 * into it (if under postmaster, should be done already).
+	 * into it
 	 */
-	if (!IsUnderPostmaster)
-	{
-		checkDataDir();
-		ChangeToDataDir();
-	}
+	checkDataDir();
+	ChangeToDataDir();
 
-	/* If standalone, create lockfile for data directory */
-	if (!IsUnderPostmaster)
-		CreateDataDirLockFile(false);
+	CreateDataDirLockFile(false);
 
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes = true;
 
-	/* Initialize MaxBackends (if under postmaster, was done already) */
-	if (!IsUnderPostmaster)
-		InitializeMaxBackends();
+	InitializeMaxBackends();
 
 	BaseInit();
 
 	/*
-	 * When we are an auxiliary process, we aren't going to do the full
-	 * InitPostgres pushups, but there are a couple of things that need to get
-	 * lit up even in an auxiliary process.
+	 * XXX: It might make sense to move this into its own function at some
+	 * point. Right now it seems like it'd cause more code duplication than
+	 * it's worth.
 	 */
-	if (IsUnderPostmaster)
+	if (MyAuxProcType == CheckerProcess)
 	{
-		/*
-		 * Create a PGPROC so we can use LWLocks.  In the EXEC_BACKEND case,
-		 * this was already done by SubPostmasterMain().
-		 */
-#ifndef EXEC_BACKEND
-		InitAuxiliaryProcess();
-#endif
-
-		/*
-		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
-		 * doesn't have a BackendId, the slot is statically allocated based on
-		 * the auxiliary process type (MyAuxProcType).  Backends use slots
-		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
-		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
-		 * auxiliary process.
-		 *
-		 * This will need rethinking if we ever want more than one of a
-		 * particular auxiliary process type.
-		 */
-		ProcSignalInit(MaxBackends + MyAuxProcType + 1);
-
-		/* finish setting up bufmgr.c */
-		InitBufferPoolBackend();
-
-		/*
-		 * Auxiliary processes don't run transactions, but they may need a
-		 * resource owner anyway to manage buffer pins acquired outside
-		 * transactions (and, perhaps, other things in future).
-		 */
-		CreateAuxProcessResourceOwner();
-
-		/* Initialize statistics reporting */
-		pgstat_initialize();
-
-		/* Initialize backend status information */
-		pgstat_beinit();
-		pgstat_bestart();
-
-		/* register a before-shutdown callback for LWLock cleanup */
-		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
+		SetProcessingMode(NormalProcessing);
+		CheckerModeMain();
+		abort();
 	}
 
-	SetProcessingMode(NormalProcessing);
-
-	switch (MyAuxProcType)
-	{
-		case CheckerProcess:
-			/* don't set signals, they're useless here */
-			CheckerModeMain();
-			proc_exit(1);		/* should never return */
-
-		case BootstrapProcess:
-
-			/*
-			 * There was a brief instant during which mode was Normal; this is
-			 * okay.  We need to be in bootstrap mode during BootStrapXLOG for
-			 * the sake of multixact initialization.
-			 */
-			SetProcessingMode(BootstrapProcessing);
-			bootstrap_signals();
-			BootStrapXLOG();
-			BootstrapModeMain();
-			proc_exit(1);		/* should never return */
-
-		case StartupProcess:
-			StartupProcessMain();
-			proc_exit(1);
-
-		case ArchiverProcess:
-			PgArchiverMain();
-			proc_exit(1);
-
-		case BgWriterProcess:
-			BackgroundWriterMain();
-			proc_exit(1);
-
-		case CheckpointerProcess:
-			CheckpointerMain();
-			proc_exit(1);
-
-		case WalWriterProcess:
-			InitXLOGAccess();
-			WalWriterMain();
-			proc_exit(1);
-
-		case WalReceiverProcess:
-			WalReceiverMain();
-			proc_exit(1);
-
-		default:
-			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
-			proc_exit(1);
-	}
-}
-
-/*
- * In shared memory checker mode, all we really want to do is create shared
- * memory and semaphores (just to prove we can do it with the current GUC
- * settings).  Since, in fact, that was already done by BaseInit(),
- * we have nothing more to do here.
- */
-static void
-CheckerModeMain(void)
-{
-	proc_exit(0);
-}
-
-/*
- *	 The main entry point for running the backend in bootstrap mode
- *
- *	 The bootstrap mode is used to initialize the template database.
- *	 The bootstrap backend doesn't speak SQL, but instead expects
- *	 commands in a special bootstrap language.
- */
-static void
-BootstrapModeMain(void)
-{
-	int			i;
-
-	Assert(!IsUnderPostmaster);
-	Assert(IsBootstrapProcessingMode());
+	bootstrap_signals();
+	BootStrapXLOG();
 
 	/*
 	 * To ensure that src/common/link-canary.c is linked into the backend, we
