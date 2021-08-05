@@ -1717,6 +1717,7 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 				 List *withCheckOptionList, List *returningList,
 				 List **retrieved_attrs, int *values_end_len)
 {
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
@@ -1746,12 +1747,20 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 		first = true;
 		foreach(lc, targetAttrs)
 		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
 			if (!first)
 				appendStringInfoString(buf, ", ");
 			first = false;
 
-			appendStringInfo(buf, "$%d", pindex);
-			pindex++;
+			if (attr->attgenerated)
+				appendStringInfoString(buf, "DEFAULT");
+			else
+			{
+				appendStringInfo(buf, "$%d", pindex);
+				pindex++;
+			}
 		}
 
 		appendStringInfoChar(buf, ')');
@@ -1775,14 +1784,16 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
  * right number of parameters.
  */
 void
-rebuildInsertSql(StringInfo buf, char *orig_query,
-				 int values_end_len, int num_cols,
+rebuildInsertSql(StringInfo buf, Relation rel,
+				 char *orig_query, List *target_attrs,
+				 int values_end_len, int num_params,
 				 int num_rows)
 {
-	int			i,
-				j;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			i;
 	int			pindex;
 	bool		first;
+	ListCell   *lc;
 
 	/* Make sure the values_end_len is sensible */
 	Assert((values_end_len > 0) && (values_end_len <= strlen(orig_query)));
@@ -1794,20 +1805,28 @@ rebuildInsertSql(StringInfo buf, char *orig_query,
 	 * Add records to VALUES clause (we already have parameters for the first
 	 * row, so start at the right offset).
 	 */
-	pindex = num_cols + 1;
+	pindex = num_params + 1;
 	for (i = 0; i < num_rows; i++)
 	{
 		appendStringInfoString(buf, ", (");
 
 		first = true;
-		for (j = 0; j < num_cols; j++)
+		foreach(lc, target_attrs)
 		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
 			if (!first)
 				appendStringInfoString(buf, ", ");
 			first = false;
 
-			appendStringInfo(buf, "$%d", pindex);
-			pindex++;
+			if (attr->attgenerated)
+				appendStringInfoString(buf, "DEFAULT");
+			else
+			{
+				appendStringInfo(buf, "$%d", pindex);
+				pindex++;
+			}
 		}
 
 		appendStringInfoChar(buf, ')');
@@ -1831,6 +1850,7 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 				 List *withCheckOptionList, List *returningList,
 				 List **retrieved_attrs)
 {
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
@@ -1844,14 +1864,20 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 	foreach(lc, targetAttrs)
 	{
 		int			attnum = lfirst_int(lc);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 		if (!first)
 			appendStringInfoString(buf, ", ");
 		first = false;
 
 		deparseColumnRef(buf, rtindex, attnum, rte, false);
-		appendStringInfo(buf, " = $%d", pindex);
-		pindex++;
+		if (attr->attgenerated)
+			appendStringInfoString(buf, " = DEFAULT");
+		else
+		{
+			appendStringInfo(buf, " = $%d", pindex);
+			pindex++;
+		}
 	}
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
