@@ -965,7 +965,7 @@ test_config_settings(void)
 		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
 
 		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" --boot -x0 %s %s "
+				 "\"%s\" --check %s %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c dynamic_shared_memory_type=%s "
@@ -1001,7 +1001,7 @@ test_config_settings(void)
 		}
 
 		snprintf(cmd, sizeof(cmd),
-				 "\"%s\" --boot -x0 %s %s "
+				 "\"%s\" --check %s %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c dynamic_shared_memory_type=%s "
@@ -1406,7 +1406,7 @@ bootstrap_template1(void)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" --boot -x1 -X %u %s %s %s %s",
+			 "\"%s\" --boot -X %u %s %s %s %s",
 			 backend_exec,
 			 wal_segment_size_mb * (1024 * 1024),
 			 data_checksums ? "-k" : "",

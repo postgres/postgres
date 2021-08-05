@@ -427,9 +427,7 @@ extern ProcessingMode Mode;
 typedef enum
 {
 	NotAnAuxProcess = -1,
-	CheckerProcess = 0,
-	BootstrapProcess,
-	StartupProcess,
+	StartupProcess = 0,
 	BgWriterProcess,
 	ArchiverProcess,
 	CheckpointerProcess,
@@ -441,7 +439,6 @@ typedef enum
 
 extern AuxProcType MyAuxProcType;
 
-#define AmBootstrapProcess()		(MyAuxProcType == BootstrapProcess)
 #define AmStartupProcess()			(MyAuxProcType == StartupProcess)
 #define AmBackgroundWriterProcess() (MyAuxProcType == BgWriterProcess)
 #define AmArchiverProcess()			(MyAuxProcType == ArchiverProcess)

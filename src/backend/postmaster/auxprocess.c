@@ -142,11 +142,6 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 
 	switch (MyAuxProcType)
 	{
-		case CheckerProcess:
-		case BootstrapProcess:
-			pg_unreachable();
-			break;
-
 		case StartupProcess:
 			StartupProcessMain();
 			proc_exit(1);

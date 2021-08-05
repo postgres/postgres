@@ -193,9 +193,14 @@ CheckerModeMain(void)
  *	 The bootstrap mode is used to initialize the template database.
  *	 The bootstrap backend doesn't speak SQL, but instead expects
  *	 commands in a special bootstrap language.
+ *
+ *	 When check_only is true, startup is done only far enough to verify that
+ *	 the current configuration, particularly the passed in options pertaining
+ *	 to shared memory sizing, options work (or at least do not cause an error
+ *	 up to shared memory creation).
  */
 void
-BootstrapModeMain(int argc, char *argv[])
+BootstrapModeMain(int argc, char *argv[], bool check_only)
 {
 	int			i;
 	char	   *progname = argv[0];
@@ -209,16 +214,14 @@ BootstrapModeMain(int argc, char *argv[])
 	/* Set defaults, to be overridden by explicit options below */
 	InitializeGUCOptions();
 
-	/* an initial --boot should be present */
+	/* an initial --boot or --check should be present */
 	Assert(argc == 1
-		   || strcmp(argv[1], "--boot") != 0);
+		   || strcmp(argv[1], "--boot") != 0
+		   || strcmp(argv[1], "--check") != 0);
 	argv++;
 	argc--;
 
-	/* If no -x argument, we are a CheckerProcess */
-	MyAuxProcType = CheckerProcess;
-
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:X:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -249,16 +252,6 @@ BootstrapModeMain(int argc, char *argv[])
 				break;
 			case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
-				break;
-			case 'x':
-				MyAuxProcType = atoi(optarg);
-				if (MyAuxProcType != CheckerProcess &&
-					MyAuxProcType != BootstrapProcess)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("-x %s is invalid", optarg)));
-				}
 				break;
 			case 'X':
 				{
@@ -338,7 +331,7 @@ BootstrapModeMain(int argc, char *argv[])
 	 * point. Right now it seems like it'd cause more code duplication than
 	 * it's worth.
 	 */
-	if (MyAuxProcType == CheckerProcess)
+	if (check_only)
 	{
 		SetProcessingMode(NormalProcessing);
 		CheckerModeMain();

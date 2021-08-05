@@ -32,7 +32,7 @@ extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 
 
-extern void BootstrapModeMain(int argc, char *argv[]) pg_attribute_noreturn();
+extern void BootstrapModeMain(int argc, char *argv[], bool check_only) pg_attribute_noreturn();
 
 extern void closerel(char *name);
 extern void boot_openrel(char *name);

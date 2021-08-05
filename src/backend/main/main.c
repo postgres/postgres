@@ -197,8 +197,10 @@ main(int argc, char *argv[])
 	pgwin32_signal_initialize();
 #endif
 
-	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
-		BootstrapModeMain(argc, argv);	/* does not return */
+	if (argc > 1 && strcmp(argv[1], "--check") == 0)
+		BootstrapModeMain(argc, argv, true);
+	else if (argc > 1 && strcmp(argv[1], "--boot") == 0)
+		BootstrapModeMain(argc, argv, false);
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();			/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
@@ -350,9 +352,9 @@ help(const char *progname)
 
 	printf(_("\nOptions for bootstrapping mode:\n"));
 	printf(_("  --boot             selects bootstrapping mode (must be first argument)\n"));
+	printf(_("  --check            selects check mode (must be first argument)\n"));
 	printf(_("  DBNAME             database name (mandatory argument in bootstrapping mode)\n"));
 	printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
-	printf(_("  -x NUM             internal use\n"));
 
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
 			 "configuration settings and how to set them on the command line or in\n"
