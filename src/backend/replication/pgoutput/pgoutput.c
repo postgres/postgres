@@ -494,7 +494,7 @@ pgoutput_rollback_prepared_txn(LogicalDecodingContext *ctx,
  */
 static void
 maybe_send_schema(LogicalDecodingContext *ctx,
-				  ReorderBufferTXN *txn, ReorderBufferChange *change,
+				  ReorderBufferChange *change,
 				  Relation relation, RelationSyncEntry *relentry)
 {
 	bool		schema_sent;
@@ -671,7 +671,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	/* Avoid leaking memory by using and resetting our own context */
 	old = MemoryContextSwitchTo(data->context);
 
-	maybe_send_schema(ctx, txn, change, relation, relentry);
+	maybe_send_schema(ctx, change, relation, relentry);
 
 	/* Send the data */
 	switch (change->action)
@@ -808,7 +808,7 @@ pgoutput_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			continue;
 
 		relids[nrelids++] = relid;
-		maybe_send_schema(ctx, txn, change, relation, relentry);
+		maybe_send_schema(ctx, change, relation, relentry);
 	}
 
 	if (nrelids > 0)
