@@ -15,7 +15,6 @@
 #define BOOTSTRAP_H
 
 #include "nodes/execnodes.h"
-#include "miscadmin.h"
 
 
 /*
@@ -34,7 +33,6 @@ extern int	numattr;
 
 
 extern void BootstrapModeMain(int argc, char *argv[]) pg_attribute_noreturn();
-extern void AuxiliaryProcessMain(AuxProcType auxtype) pg_attribute_noreturn();
 
 extern void closerel(char *name);
 extern void boot_openrel(char *name);
