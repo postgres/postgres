@@ -383,16 +383,6 @@ static const NumericDigit const_two_data[1] = {2};
 static const NumericVar const_two =
 {1, 0, NUMERIC_POS, 0, NULL, (NumericDigit *) const_two_data};
 
-#if DEC_DIGITS == 4 || DEC_DIGITS == 2
-static const NumericDigit const_ten_data[1] = {10};
-static const NumericVar const_ten =
-{1, 0, NUMERIC_POS, 0, NULL, (NumericDigit *) const_ten_data};
-#elif DEC_DIGITS == 1
-static const NumericDigit const_ten_data[1] = {1};
-static const NumericVar const_ten =
-{1, 1, NUMERIC_POS, 0, NULL, (NumericDigit *) const_ten_data};
-#endif
-
 #if DEC_DIGITS == 4
 static const NumericDigit const_zero_point_five_data[1] = {5000};
 #elif DEC_DIGITS == 2
@@ -532,6 +522,7 @@ static void power_var(const NumericVar *base, const NumericVar *exp,
 					  NumericVar *result);
 static void power_var_int(const NumericVar *base, int exp, NumericVar *result,
 						  int rscale);
+static void power_ten_int(int exp, NumericVar *result);
 
 static int	cmp_abs(const NumericVar *var1, const NumericVar *var2);
 static int	cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
@@ -6159,9 +6150,7 @@ static char *
 get_str_from_var_sci(const NumericVar *var, int rscale)
 {
 	int32		exponent;
-	NumericVar	denominator;
-	NumericVar	significand;
-	int			denom_scale;
+	NumericVar	tmp_var;
 	size_t		len;
 	char	   *str;
 	char	   *sig_out;
@@ -6198,25 +6187,16 @@ get_str_from_var_sci(const NumericVar *var, int rscale)
 	}
 
 	/*
-	 * The denominator is set to 10 raised to the power of the exponent.
-	 *
-	 * We then divide var by the denominator to get the significand, rounding
-	 * to rscale decimal digits in the process.
+	 * Divide var by 10^exponent to get the significand, rounding to rscale
+	 * decimal digits in the process.
 	 */
-	if (exponent < 0)
-		denom_scale = -exponent;
-	else
-		denom_scale = 0;
+	init_var(&tmp_var);
 
-	init_var(&denominator);
-	init_var(&significand);
+	power_ten_int(exponent, &tmp_var);
+	div_var(var, &tmp_var, &tmp_var, rscale, true);
+	sig_out = get_str_from_var(&tmp_var);
 
-	power_var_int(&const_ten, exponent, &denominator, denom_scale);
-	div_var(var, &denominator, &significand, rscale, true);
-	sig_out = get_str_from_var(&significand);
-
-	free_var(&denominator);
-	free_var(&significand);
+	free_var(&tmp_var);
 
 	/*
 	 * Allocate space for the result.
@@ -8727,6 +8707,34 @@ power_var_int(const NumericVar *base, int exp, NumericVar *result, int rscale)
 		div_var_fast(&const_one, result, result, rscale, true);
 	else
 		round_var(result, rscale);
+}
+
+/*
+ * power_ten_int() -
+ *
+ *	Raise ten to the power of exp, where exp is an integer.  Note that unlike
+ *	power_var_int(), this does no overflow/underflow checking or rounding.
+ */
+static void
+power_ten_int(int exp, NumericVar *result)
+{
+	/* Construct the result directly, starting from 10^0 = 1 */
+	set_var_from_var(&const_one, result);
+
+	/* Scale needed to represent the result exactly */
+	result->dscale = exp < 0 ? -exp : 0;
+
+	/* Base-NBASE weight of result and remaining exponent */
+	if (exp >= 0)
+		result->weight = exp / DEC_DIGITS;
+	else
+		result->weight = (exp + 1) / DEC_DIGITS - 1;
+
+	exp -= result->weight * DEC_DIGITS;
+
+	/* Final adjustment of the result's single NBASE digit */
+	while (exp-- > 0)
+		result->digits[0] *= 10;
 }
 
 
