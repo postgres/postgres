@@ -939,6 +939,13 @@ SELECT val,
   to_char(val::float4, '9.999EEEE') as float4
 FROM v;
 
+WITH v(exp) AS
+  (VALUES(-16379),(-16378),(-1234),(-789),(-45),(-5),(-4),(-3),(-2),(-1),(0),
+         (1),(2),(3),(4),(5),(38),(275),(2345),(45678),(131070),(131071))
+SELECT exp,
+  to_char(('1.2345e'||exp)::numeric, '9.999EEEE') as numeric
+FROM v;
+
 WITH v(val) AS
   (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
 SELECT val,
