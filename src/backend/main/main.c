@@ -181,35 +181,24 @@ main(int argc, char *argv[])
 	 * Dispatch to one of various subprograms depending on first argument.
 	 */
 
-#ifdef EXEC_BACKEND
-	if (argc > 1 && strncmp(argv[1], "--fork", 6) == 0)
-		SubPostmasterMain(argc, argv);	/* does not return */
-#endif
-
-#ifdef WIN32
-
-	/*
-	 * Start our win32 signal implementation
-	 *
-	 * SubPostmasterMain() will do this for itself, but the remaining modes
-	 * need it here
-	 */
-	pgwin32_signal_initialize();
-#endif
-
 	if (argc > 1 && strcmp(argv[1], "--check") == 0)
 		BootstrapModeMain(argc, argv, true);
 	else if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 		BootstrapModeMain(argc, argv, false);
+#ifdef EXEC_BACKEND
+	else if (argc > 1 && strncmp(argv[1], "--fork", 6) == 0)
+		SubPostmasterMain(argc, argv);
+#endif
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
-		GucInfoMain();			/* does not return */
+		GucInfoMain();
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
 		PostgresMain(argc, argv,
 					 NULL,		/* no dbname */
-					 strdup(get_user_name_or_exit(progname)));	/* does not return */
+					 strdup(get_user_name_or_exit(progname)));
 	else
-		PostmasterMain(argc, argv); /* does not return */
-	abort();					/* should not get here */
+		PostmasterMain(argc, argv);
+	/* the functions above should not return */
+	abort();
 }
 
 

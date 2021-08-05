@@ -87,12 +87,22 @@ bool		IgnoreSystemIndexes = false;
 /*
  * Initialize the basic environment for a postmaster child
  *
- * Should be called as early as possible after the child's startup.
+ * Should be called as early as possible after the child's startup. However,
+ * on EXEC_BACKEND builds it does need to be after read_backend_variables().
  */
 void
 InitPostmasterChild(void)
 {
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
+	/*
+	 * Start our win32 signal implementation. This has to be done after we
+	 * read the backend variables, because we need to pick up the signal pipe
+	 * from the parent process.
+	 */
+#ifdef WIN32
+	pgwin32_signal_initialize();
+#endif
 
 	/*
 	 * Set reference point for stack-depth checking. We re-do that even in the
@@ -165,6 +175,13 @@ void
 InitStandaloneProcess(const char *argv0)
 {
 	Assert(!IsPostmasterEnvironment);
+
+	/*
+	 * Start our win32 signal implementation
+	 */
+#ifdef WIN32
+	pgwin32_signal_initialize();
+#endif
 
 	InitProcessGlobals();
 
