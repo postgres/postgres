@@ -72,6 +72,7 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_ANL_ANCESTORS,
 	PGSTAT_MTYPE_ARCHIVER,
 	PGSTAT_MTYPE_BGWRITER,
+	PGSTAT_MTYPE_CHECKPOINTER,
 	PGSTAT_MTYPE_WAL,
 	PGSTAT_MTYPE_SLRU,
 	PGSTAT_MTYPE_FUNCSTAT,
@@ -470,17 +471,27 @@ typedef struct PgStat_MsgBgWriter
 {
 	PgStat_MsgHdr m_hdr;
 
+	PgStat_Counter m_buf_written_clean;
+	PgStat_Counter m_maxwritten_clean;
+	PgStat_Counter m_buf_alloc;
+} PgStat_MsgBgWriter;
+
+/* ----------
+ * PgStat_MsgCheckpointer  Sent by the checkpointer to update statistics.
+ * ----------
+ */
+typedef struct PgStat_MsgCheckpointer
+{
+	PgStat_MsgHdr m_hdr;
+
 	PgStat_Counter m_timed_checkpoints;
 	PgStat_Counter m_requested_checkpoints;
 	PgStat_Counter m_buf_written_checkpoints;
-	PgStat_Counter m_buf_written_clean;
-	PgStat_Counter m_maxwritten_clean;
 	PgStat_Counter m_buf_written_backend;
 	PgStat_Counter m_buf_fsync_backend;
-	PgStat_Counter m_buf_alloc;
 	PgStat_Counter m_checkpoint_write_time; /* times in milliseconds */
 	PgStat_Counter m_checkpoint_sync_time;
-} PgStat_MsgBgWriter;
+} PgStat_MsgCheckpointer;
 
 /* ----------
  * PgStat_MsgWal			Sent by backends and background processes to update WAL statistics.
@@ -700,6 +711,7 @@ typedef union PgStat_Msg
 	PgStat_MsgAnlAncestors msg_anl_ancestors;
 	PgStat_MsgArchiver msg_archiver;
 	PgStat_MsgBgWriter msg_bgwriter;
+	PgStat_MsgCheckpointer msg_checkpointer;
 	PgStat_MsgWal msg_wal;
 	PgStat_MsgSLRU msg_slru;
 	PgStat_MsgFuncstat msg_funcstat;
@@ -721,7 +733,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCA2
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCA3
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -842,9 +854,20 @@ typedef struct PgStat_ArchiverStats
 } PgStat_ArchiverStats;
 
 /*
- * Global statistics kept in the stats collector
+ * Background writer statistics kept in the stats collector
  */
-typedef struct PgStat_GlobalStats
+typedef struct PgStat_BgWriterStats
+{
+	PgStat_Counter buf_written_clean;
+	PgStat_Counter maxwritten_clean;
+	PgStat_Counter buf_alloc;
+	TimestampTz stat_reset_timestamp;
+} PgStat_BgWriterStats;
+
+/*
+ * Checkpointer statistics kept in the stats collector
+ */
+typedef struct PgStat_CheckpointerStats
 {
 	TimestampTz stats_timestamp;	/* time of stats file update */
 	PgStat_Counter timed_checkpoints;
@@ -852,12 +875,19 @@ typedef struct PgStat_GlobalStats
 	PgStat_Counter checkpoint_write_time;	/* times in milliseconds */
 	PgStat_Counter checkpoint_sync_time;
 	PgStat_Counter buf_written_checkpoints;
-	PgStat_Counter buf_written_clean;
-	PgStat_Counter maxwritten_clean;
 	PgStat_Counter buf_written_backend;
 	PgStat_Counter buf_fsync_backend;
-	PgStat_Counter buf_alloc;
-	TimestampTz stat_reset_timestamp;
+} PgStat_CheckpointerStats;
+
+/*
+ * Global statistics kept in the stats collector
+ */
+typedef struct PgStat_GlobalStats
+{
+	TimestampTz stats_timestamp;	/* time of stats file update */
+
+	PgStat_CheckpointerStats checkpointer;
+	PgStat_BgWriterStats bgwriter;
 } PgStat_GlobalStats;
 
 /*
@@ -939,7 +969,13 @@ extern char *pgstat_stat_filename;
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr
  */
-extern PgStat_MsgBgWriter BgWriterStats;
+extern PgStat_MsgBgWriter PendingBgWriterStats;
+
+/*
+ * Checkpointer statistics counters are updated directly by checkpointer and
+ * bufmgr.
+ */
+extern PgStat_MsgCheckpointer PendingCheckpointerStats;
 
 /*
  * WAL statistics counter is updated by backends and background processes
@@ -1091,6 +1127,7 @@ extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 
 extern void pgstat_send_archiver(const char *xlog, bool failed);
 extern void pgstat_send_bgwriter(void);
+extern void pgstat_send_checkpointer(void);
 extern void pgstat_send_wal(bool force);
 
 /* ----------
@@ -1102,6 +1139,8 @@ extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid funcid);
 extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);
+extern PgStat_BgWriterStats *pgstat_fetch_stat_bgwriter(void);
+extern PgStat_CheckpointerStats *pgstat_fetch_stat_checkpointer(void);
 extern PgStat_GlobalStats *pgstat_fetch_global(void);
 extern PgStat_WalStats *pgstat_fetch_stat_wal(void);
 extern PgStat_SLRUStats *pgstat_fetch_slru(void);

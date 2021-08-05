@@ -357,7 +357,7 @@ CheckpointerMain(void)
 		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
 		{
 			do_checkpoint = true;
-			BgWriterStats.m_requested_checkpoints++;
+			PendingCheckpointerStats.m_requested_checkpoints++;
 		}
 
 		/*
@@ -371,7 +371,7 @@ CheckpointerMain(void)
 		if (elapsed_secs >= CheckPointTimeout)
 		{
 			if (!do_checkpoint)
-				BgWriterStats.m_timed_checkpoints++;
+				PendingCheckpointerStats.m_timed_checkpoints++;
 			do_checkpoint = true;
 			flags |= CHECKPOINT_CAUSE_TIME;
 		}
@@ -493,13 +493,9 @@ CheckpointerMain(void)
 		CheckArchiveTimeout();
 
 		/*
-		 * Send off activity statistics to the stats collector.  (The reason
-		 * why we re-use bgwriter-related code for this is that the bgwriter
-		 * and checkpointer used to be just one process.  It's probably not
-		 * worth the trouble to split the stats support into two independent
-		 * stats message types.)
+		 * Send off activity statistics to the stats collector.
 		 */
-		pgstat_send_bgwriter();
+		pgstat_send_checkpointer();
 
 		/* Send WAL statistics to the stats collector. */
 		pgstat_send_wal(true);
@@ -577,9 +573,9 @@ HandleCheckpointerInterrupts(void)
 		 * updates the statistics, increment the checkpoint request and send
 		 * the statistics to the stats collector.
 		 */
-		BgWriterStats.m_requested_checkpoints++;
+		PendingCheckpointerStats.m_requested_checkpoints++;
 		ShutdownXLOG(0, 0);
-		pgstat_send_bgwriter();
+		pgstat_send_checkpointer();
 		pgstat_send_wal(true);
 
 		/* Normal exit from the checkpointer is here */
@@ -719,9 +715,9 @@ CheckpointWriteDelay(int flags, double progress)
 		CheckArchiveTimeout();
 
 		/*
-		 * Report interim activity statistics to the stats collector.
+		 * Report interim activity statistics.
 		 */
-		pgstat_send_bgwriter();
+		pgstat_send_checkpointer();
 
 		/*
 		 * This sleep used to be connected to bgwriter_delay, typically 200ms.
@@ -1265,8 +1261,10 @@ AbsorbSyncRequests(void)
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Transfer stats counts into pending pgstats message */
-	BgWriterStats.m_buf_written_backend += CheckpointerShmem->num_backend_writes;
-	BgWriterStats.m_buf_fsync_backend += CheckpointerShmem->num_backend_fsync;
+	PendingCheckpointerStats.m_buf_written_backend
+		+= CheckpointerShmem->num_backend_writes;
+	PendingCheckpointerStats.m_buf_fsync_backend
+		+= CheckpointerShmem->num_backend_fsync;
 
 	CheckpointerShmem->num_backend_writes = 0;
 	CheckpointerShmem->num_backend_fsync = 0;
