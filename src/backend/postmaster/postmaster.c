@@ -4936,7 +4936,7 @@ SubPostmasterMain(int argc, char *argv[])
 	if (strcmp(argv[1], "--forkbackend") == 0 ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
 		strcmp(argv[1], "--forkavworker") == 0 ||
-		strcmp(argv[1], "--forkboot") == 0 ||
+		strcmp(argv[1], "--forkaux") == 0 ||
 		strncmp(argv[1], "--forkbgworker=", 15) == 0)
 		PGSharedMemoryReAttach();
 	else
@@ -5024,7 +5024,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* And run the backend */
 		BackendRun(&port);		/* does not return */
 	}
-	if (strcmp(argv[1], "--forkboot") == 0)
+	if (strcmp(argv[1], "--forkaux") == 0)
 	{
 		/* Restore basic shared memory pointers */
 		InitShmemAccess(UsedShmemSegAddr);
@@ -5424,7 +5424,7 @@ StartChildProcess(AuxProcType type)
 	av[ac++] = "postgres";
 
 #ifdef EXEC_BACKEND
-	av[ac++] = "--forkboot";
+	av[ac++] = "--forkaux";
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 #endif
 
