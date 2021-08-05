@@ -907,12 +907,12 @@ select 3.789 ^ 35;
 select 1.2 ^ 345;
 select 0.12 ^ (-20);
 select 1.000000000123 ^ (-2147483648);
-select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
+select coalesce(nullif(0.9999999999 ^ 23300000000000, 0), 0) as rounds_to_zero;
 
 -- cases that used to error out
 select 0.12 ^ (-25);
 select 0.5678 ^ (-85);
-select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+select coalesce(nullif(0.9999999999 ^ 70000000000000, 0), 0) as underflows;
 
 -- negative base to integer powers
 select (-1.0) ^ 2147483646;

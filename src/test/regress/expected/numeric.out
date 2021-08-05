@@ -1668,10 +1668,10 @@ select 1.000000000123 ^ (-2147483648);
  0.7678656556403084
 (1 row)
 
-select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
+select coalesce(nullif(0.9999999999 ^ 23300000000000, 0), 0) as rounds_to_zero;
  rounds_to_zero 
 ----------------
- t
+              0
 (1 row)
 
 -- cases that used to error out
@@ -1687,10 +1687,10 @@ select 0.5678 ^ (-85);
  782333637740774446257.7719390061997396
 (1 row)
 
-select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+select coalesce(nullif(0.9999999999 ^ 70000000000000, 0), 0) as underflows;
  underflows 
 ------------
- t
+          0
 (1 row)
 
 -- negative base to integer powers
