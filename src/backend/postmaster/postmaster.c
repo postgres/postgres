@@ -594,6 +594,13 @@ PostmasterMain(int argc, char *argv[])
 	IsPostmasterEnvironment = true;
 
 	/*
+	 * Start our win32 signal implementation
+	 */
+#ifdef WIN32
+	pgwin32_signal_initialize();
+#endif
+
+	/*
 	 * We should not be creating any files or directories before we check the
 	 * data directory (see checkDataDir()), but just in case set the umask to
 	 * the most restrictive (owner-only) permissions.
