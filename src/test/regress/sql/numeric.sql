@@ -655,6 +655,20 @@ INSERT INTO fract_only VALUES (8, '0.00017');
 SELECT * FROM fract_only;
 DROP TABLE fract_only;
 
+-- Check conversion to integers
+SELECT (-9223372036854775808.5)::int8; -- should fail
+SELECT (-9223372036854775808.4)::int8; -- ok
+SELECT 9223372036854775807.4::int8; -- ok
+SELECT 9223372036854775807.5::int8; -- should fail
+SELECT (-2147483648.5)::int4; -- should fail
+SELECT (-2147483648.4)::int4; -- ok
+SELECT 2147483647.4::int4; -- ok
+SELECT 2147483647.5::int4; -- should fail
+SELECT (-32768.5)::int2; -- should fail
+SELECT (-32768.4)::int2; -- ok
+SELECT 32767.4::int2; -- ok
+SELECT 32767.5::int2; -- should fail
+
 -- Check inf/nan conversion behavior
 SELECT 'NaN'::float8::numeric;
 SELECT 'Infinity'::float8::numeric;
@@ -907,12 +921,12 @@ select 3.789 ^ 35;
 select 1.2 ^ 345;
 select 0.12 ^ (-20);
 select 1.000000000123 ^ (-2147483648);
-select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
+select coalesce(nullif(0.9999999999 ^ 23300000000000, 0), 0) as rounds_to_zero;
 
 -- cases that used to error out
 select 0.12 ^ (-25);
 select 0.5678 ^ (-85);
-select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+select coalesce(nullif(0.9999999999 ^ 70000000000000, 0), 0) as underflows;
 
 -- negative base to integer powers
 select (-1.0) ^ 2147483646;
@@ -959,8 +973,8 @@ select 1.234 ^ 5678;
 select exp(0.0);
 select exp(1.0);
 select exp(1.0::numeric(71,70));
-select exp(-5000::numeric) = 0 as rounds_to_zero;
-select exp(-10000::numeric) = 0 as underflows;
+select coalesce(nullif(exp(-5000::numeric), 0), 0) as rounds_to_zero;
+select coalesce(nullif(exp(-10000::numeric), 0), 0) as underflows;
 
 -- cases that used to generate inaccurate results
 select exp(32.999);

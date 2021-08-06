@@ -708,6 +708,55 @@ SELECT * FROM fract_only;
 (6 rows)
 
 DROP TABLE fract_only;
+-- Check conversion to integers
+SELECT (-9223372036854775808.5)::int8; -- should fail
+ERROR:  bigint out of range
+SELECT (-9223372036854775808.4)::int8; -- ok
+         int8         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT 9223372036854775807.4::int8; -- ok
+        int8         
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT 9223372036854775807.5::int8; -- should fail
+ERROR:  bigint out of range
+SELECT (-2147483648.5)::int4; -- should fail
+ERROR:  integer out of range
+SELECT (-2147483648.4)::int4; -- ok
+    int4     
+-------------
+ -2147483648
+(1 row)
+
+SELECT 2147483647.4::int4; -- ok
+    int4    
+------------
+ 2147483647
+(1 row)
+
+SELECT 2147483647.5::int4; -- should fail
+ERROR:  integer out of range
+SELECT (-32768.5)::int2; -- should fail
+ERROR:  smallint out of range
+SELECT (-32768.4)::int2; -- ok
+  int2  
+--------
+ -32768
+(1 row)
+
+SELECT 32767.4::int2; -- ok
+ int2  
+-------
+ 32767
+(1 row)
+
+SELECT 32767.5::int2; -- should fail
+ERROR:  smallint out of range
 -- Check inf/nan conversion behavior
 SELECT 'NaN'::float8::numeric;
  numeric 
@@ -1668,10 +1717,10 @@ select 1.000000000123 ^ (-2147483648);
  0.7678656556403084
 (1 row)
 
-select 0.9999999999 ^ 23300000000000 = 0 as rounds_to_zero;
+select coalesce(nullif(0.9999999999 ^ 23300000000000, 0), 0) as rounds_to_zero;
  rounds_to_zero 
 ----------------
- t
+              0
 (1 row)
 
 -- cases that used to error out
@@ -1687,10 +1736,10 @@ select 0.5678 ^ (-85);
  782333637740774446257.7719390061997396
 (1 row)
 
-select 0.9999999999 ^ 70000000000000 = 0 as underflows;
+select coalesce(nullif(0.9999999999 ^ 70000000000000, 0), 0) as underflows;
  underflows 
 ------------
- t
+          0
 (1 row)
 
 -- negative base to integer powers
@@ -1842,16 +1891,16 @@ select exp(1.0::numeric(71,70));
  2.7182818284590452353602874713526624977572470936999595749669676277240766
 (1 row)
 
-select exp(-5000::numeric) = 0 as rounds_to_zero;
+select coalesce(nullif(exp(-5000::numeric), 0), 0) as rounds_to_zero;
  rounds_to_zero 
 ----------------
- t
+              0
 (1 row)
 
-select exp(-10000::numeric) = 0 as underflows;
+select coalesce(nullif(exp(-10000::numeric), 0), 0) as underflows;
  underflows 
 ------------
- t
+          0
 (1 row)
 
 -- cases that used to generate inaccurate results
