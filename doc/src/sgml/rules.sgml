@@ -546,7 +546,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
 <para>
     Now we want to write a query that finds out for which shoes currently in the store
     we have the matching shoelaces (color and length) and where the
-    total number of exactly matching pairs is greater or equal to two.
+    total number of exactly matching pairs is greater than or equal to two.
 
 <programlisting>
 SELECT * FROM shoe_ready WHERE total_avail &gt;= 2;
