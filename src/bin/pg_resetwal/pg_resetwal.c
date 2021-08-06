@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 				}
 				if (!TransactionIdIsNormal(set_oldest_xid))
 				{
-					pg_log_error("oldest transaction ID (-u) must be greater or equal to %u", FirstNormalTransactionId);
+					pg_log_error("oldest transaction ID (-u) must be greater than or equal to %u", FirstNormalTransactionId);
 					exit(1);
 				}
 				break;
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 				}
 				if (!TransactionIdIsNormal(set_xid))
 				{
-					pg_log_error("transaction ID (-x) must be greater or equal to %u", FirstNormalTransactionId);
+					pg_log_error("transaction ID (-x) must be greater than or equal to %u", FirstNormalTransactionId);
 					exit(1);
 				}
 				break;
