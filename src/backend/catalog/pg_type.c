@@ -919,7 +919,7 @@ makeMultirangeTypeName(const char *rangeTypeName, Oid typeNamespace)
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("type \"%s\" already exists", buf),
 				 errdetail("Failed while creating a multirange type for type \"%s\".", rangeTypeName),
-				 errhint("You can manually specify a multirange type name using the \"multirange_type_name\" attribute")));
+				 errhint("You can manually specify a multirange type name using the \"multirange_type_name\" attribute.")));
 
 	return pstrdup(buf);
 }

@@ -2929,13 +2929,13 @@ create type intmultirange as (x int, y int);
 create type intrange as range(subtype=int); -- should fail
 ERROR:  type "intmultirange" already exists
 DETAIL:  Failed while creating a multirange type for type "intrange".
-HINT:  You can manually specify a multirange type name using the "multirange_type_name" attribute
+HINT:  You can manually specify a multirange type name using the "multirange_type_name" attribute.
 drop type intmultirange;
 create type intr_multirange as (x int, y int);
 create type intr as range(subtype=int); -- should fail
 ERROR:  type "intr_multirange" already exists
 DETAIL:  Failed while creating a multirange type for type "intr".
-HINT:  You can manually specify a multirange type name using the "multirange_type_name" attribute
+HINT:  You can manually specify a multirange type name using the "multirange_type_name" attribute.
 drop type intr_multirange;
 --
 -- Test multiple multirange types over the same subtype and manual naming of
