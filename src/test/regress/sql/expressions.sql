@@ -66,6 +66,27 @@ select count(*) from date_tbl
 select count(*) from date_tbl
   where f1 not between symmetric '1997-01-01' and '1998-01-01';
 
+
+--
+-- Test parsing of a no-op cast to a type with unspecified typmod
+--
+begin;
+
+create table numeric_tbl (f1 numeric(18,3), f2 numeric);
+
+create view numeric_view as
+  select
+    f1, f1::numeric(16,4) as f1164, f1::numeric as f1n,
+    f2, f2::numeric(16,4) as f2164, f2::numeric as f2n
+  from numeric_tbl;
+
+\d+ numeric_view
+
+explain (verbose, costs off) select * from numeric_view;
+
+rollback;
+
+
 --
 -- Tests for ScalarArrayOpExpr with a hashfn
 --
