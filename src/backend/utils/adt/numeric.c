@@ -2939,7 +2939,6 @@ numeric_int4(PG_FUNCTION_ARGS)
 static int32
 numericvar_to_int32(NumericVar *var)
 {
-	int32		result;
 	int64		val;
 
 	if (!numericvar_to_int64(var, &val))
@@ -2947,16 +2946,13 @@ numericvar_to_int32(NumericVar *var)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	/* Down-convert to int4 */
-	result = (int32) val;
-
-	/* Test for overflow by reverse-conversion. */
-	if ((int64) result != val)
+	if (unlikely(val < PG_INT32_MIN) || unlikely(val > PG_INT32_MAX))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	return result;
+	/* Down-convert to int4 */
+	return (int32) val;
 }
 
 Datum
@@ -3044,14 +3040,13 @@ numeric_int2(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 
-	/* Down-convert to int2 */
-	result = (int16) val;
-
-	/* Test for overflow by reverse-conversion. */
-	if ((int64) result != val)
+	if (unlikely(val < PG_INT16_MIN) || unlikely(val > PG_INT16_MAX))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
+
+	/* Down-convert to int2 */
+	result = (int16) val;
 
 	PG_RETURN_INT16(result);
 }
@@ -8060,10 +8055,7 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 
 		if (numericvar_to_int64(exp, &expval64))
 		{
-			int			expval = (int) expval64;
-
-			/* Test for overflow by reverse-conversion. */
-			if ((int64) expval == expval64)
+			if (expval64 >= PG_INT32_MIN && expval64 <= PG_INT32_MAX)
 			{
 				/* Okay, select rscale */
 				rscale = NUMERIC_MIN_SIG_DIGITS;
@@ -8071,7 +8063,7 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 				rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
 				rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
 
-				power_var_int(base, expval, result, rscale);
+				power_var_int(base, (int) expval64, result, rscale);
 				return;
 			}
 		}
