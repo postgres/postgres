@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 				}
 				if (!TransactionIdIsNormal(set_oldest_xid))
 				{
-					fprintf(stderr, _("oldest transaction ID (-u) must be greater or equal to %u"), FirstNormalTransactionId);
+					fprintf(stderr, _("oldest transaction ID (-u) must be greater than or equal to %u"), FirstNormalTransactionId);
 					exit(1);
 				}
 				break;
