@@ -284,7 +284,6 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext,
 	T_AllocSetContext,
 	T_SlabContext,
 	T_GenerationContext,
