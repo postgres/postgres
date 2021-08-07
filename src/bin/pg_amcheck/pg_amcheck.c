@@ -1026,7 +1026,7 @@ verify_heap_slot_handler(PGresult *res, PGconn *conn, void *context)
 				msg = PQgetvalue(res, i, 3);
 
 			if (!PQgetisnull(res, i, 2))
-				printf("heap table \"%s\".\"%s\".\"%s\", block %s, offset %s, attribute %s:\n    %s\n",
+				printf(_("heap table \"%s\".\"%s\".\"%s\", block %s, offset %s, attribute %s:\n    %s\n"),
 					   rel->datinfo->datname, rel->nspname, rel->relname,
 					   PQgetvalue(res, i, 0),	/* blkno */
 					   PQgetvalue(res, i, 1),	/* offnum */
@@ -1034,20 +1034,20 @@ verify_heap_slot_handler(PGresult *res, PGconn *conn, void *context)
 					   msg);
 
 			else if (!PQgetisnull(res, i, 1))
-				printf("heap table \"%s\".\"%s\".\"%s\", block %s, offset %s:\n    %s\n",
+				printf(_("heap table \"%s\".\"%s\".\"%s\", block %s, offset %s:\n    %s\n"),
 					   rel->datinfo->datname, rel->nspname, rel->relname,
 					   PQgetvalue(res, i, 0),	/* blkno */
 					   PQgetvalue(res, i, 1),	/* offnum */
 					   msg);
 
 			else if (!PQgetisnull(res, i, 0))
-				printf("heap table \"%s\".\"%s\".\"%s\", block %s:\n    %s\n",
+				printf(_("heap table \"%s\".\"%s\".\"%s\", block %s:\n    %s\n"),
 					   rel->datinfo->datname, rel->nspname, rel->relname,
 					   PQgetvalue(res, i, 0),	/* blkno */
 					   msg);
 
 			else
-				printf("heap table \"%s\".\"%s\".\"%s\":\n    %s\n",
+				printf(_("heap table \"%s\".\"%s\".\"%s\":\n    %s\n"),
 					   rel->datinfo->datname, rel->nspname, rel->relname, msg);
 		}
 	}
@@ -1056,10 +1056,10 @@ verify_heap_slot_handler(PGresult *res, PGconn *conn, void *context)
 		char	   *msg = indent_lines(PQerrorMessage(conn));
 
 		all_checks_pass = false;
-		printf("heap table \"%s\".\"%s\".\"%s\":\n%s",
+		printf(_("heap table \"%s\".\"%s\".\"%s\":\n%s"),
 			   rel->datinfo->datname, rel->nspname, rel->relname, msg);
 		if (opts.verbose)
-			printf("query was: %s\n", rel->sql);
+			printf(_("query was: %s\n"), rel->sql);
 		FREE_AND_SET_NULL(msg);
 	}
 
@@ -1122,10 +1122,10 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 		char	   *msg = indent_lines(PQerrorMessage(conn));
 
 		all_checks_pass = false;
-		printf("btree index \"%s\".\"%s\".\"%s\":\n%s",
+		printf(_("btree index \"%s\".\"%s\".\"%s\":\n%s"),
 			   rel->datinfo->datname, rel->nspname, rel->relname, msg);
 		if (opts.verbose)
-			printf("query was: %s\n", rel->sql);
+			printf(_("query was: %s\n"), rel->sql);
 		FREE_AND_SET_NULL(msg);
 	}
 
