@@ -778,7 +778,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			 * reads which are also picked up by track_io_timing, if enabled,
 			 * the 'average write rate' is actually talking about the rate of
 			 * pages being dirtied, not being written out, so it's typical to
-			 * have a non-zero 'avg write rate' while I/O Timings only reports
+			 * have a non-zero 'avg write rate' while I/O timings only reports
 			 * reads.
 			 *
 			 * It's not clear that an ANALYZE will ever result in
@@ -813,12 +813,14 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							 read_rate, write_rate);
 			if (track_io_timing)
 			{
-				appendStringInfoString(&buf, _("I/O Timings:"));
+				appendStringInfoString(&buf, _("I/O timings:"));
 				if (pgStatBlockReadTime - startreadtime > 0)
-					appendStringInfo(&buf, _(" read=%.3f"),
+					appendStringInfo(&buf, _(" read: %.3f ms"),
 									 (double) (pgStatBlockReadTime - startreadtime) / 1000);
+				if ((pgStatBlockReadTime - startreadtime > 0) && (pgStatBlockWriteTime - startwritetime > 0))
+					appendStringInfoString(&buf, _(","));
 				if (pgStatBlockWriteTime - startwritetime > 0)
-					appendStringInfo(&buf, _(" write=%.3f"),
+					appendStringInfo(&buf, _(" write: %.3f ms"),
 									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
 				appendStringInfoChar(&buf, '\n');
 			}

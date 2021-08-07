@@ -807,21 +807,21 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 
 				if (vacrel->do_index_vacuuming)
 				{
-					msgfmt = _(" %u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
+					msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
 
 					if (vacrel->nindexes == 0 || vacrel->num_index_scans == 0)
-						appendStringInfoString(&buf, _("index scan not needed:"));
+						appendStringInfoString(&buf, _("index scan not needed: "));
 					else
-						appendStringInfoString(&buf, _("index scan needed:"));
+						appendStringInfoString(&buf, _("index scan needed: "));
 				}
 				else
 				{
-					msgfmt = _(" %u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
+					msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
 
 					if (!vacrel->failsafe_active)
-						appendStringInfoString(&buf, _("index scan bypassed:"));
+						appendStringInfoString(&buf, _("index scan bypassed: "));
 					else
-						appendStringInfoString(&buf, _("index scan bypassed by failsafe:"));
+						appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
 				}
 				orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
 				appendStringInfo(&buf, msgfmt,
@@ -848,12 +848,14 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 read_rate, write_rate);
 			if (track_io_timing)
 			{
-				appendStringInfoString(&buf, _("I/O Timings:"));
+				appendStringInfoString(&buf, _("I/O timings:"));
 				if (pgStatBlockReadTime - startreadtime > 0)
-					appendStringInfo(&buf, _(" read=%.3f"),
+					appendStringInfo(&buf, _(" read: %.3f ms"),
 									 (double) (pgStatBlockReadTime - startreadtime) / 1000);
+				if ((pgStatBlockReadTime - startreadtime > 0) && (pgStatBlockWriteTime - startwritetime > 0))
+					appendStringInfoString(&buf, _(","));
 				if (pgStatBlockWriteTime - startwritetime > 0)
-					appendStringInfo(&buf, _(" write=%.3f"),
+					appendStringInfo(&buf, _(" write: %.3f ms"),
 									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
 				appendStringInfoChar(&buf, '\n');
 			}
@@ -1650,7 +1652,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	 */
 	if (vacrel->nindexes == 0 && vacrel->lpdead_item_pages > 0)
 		ereport(elevel,
-				(errmsg("\"%s\": removed %lld dead item identifiers in %u pages",
+				(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
 						vacrel->relname, (long long) vacrel->lpdead_items,
 						vacrel->lpdead_item_pages)));
 
@@ -1673,7 +1675,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	appendStringInfo(&buf, _("%s."), pg_rusage_show(&ru0));
 
 	ereport(elevel,
-			(errmsg("\"%s\": found %lld removable, %lld nonremovable row versions in %u out of %u pages",
+			(errmsg("table \"%s\": found %lld removable, %lld nonremovable row versions in %u out of %u pages",
 					vacrel->relname,
 					(long long) vacrel->tuples_deleted,
 					(long long) vacrel->num_tuples, vacrel->scanned_pages,
@@ -2177,7 +2179,7 @@ lazy_vacuum(LVRelState *vacrel)
 		 */
 		vacrel->do_index_vacuuming = false;
 		ereport(elevel,
-				(errmsg("\"%s\": index scan bypassed: %u pages from table (%.2f%% of total) have %lld dead item identifiers",
+				(errmsg("table \"%s\": index scan bypassed: %u pages from table (%.2f%% of total) have %lld dead item identifiers",
 						vacrel->relname, vacrel->lpdead_item_pages,
 						100.0 * vacrel->lpdead_item_pages / vacrel->rel_pages,
 						(long long) vacrel->lpdead_items)));
@@ -2388,8 +2390,8 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 			vacuumed_pages == vacrel->lpdead_item_pages));
 
 	ereport(elevel,
-			(errmsg("\"%s\": removed %d dead item identifiers in %u pages",
-					vacrel->relname, tupindex, vacuumed_pages),
+			(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
+					vacrel->relname, (long long ) tupindex, vacuumed_pages),
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
 	/* Revert to the previous phase information for error traceback */
@@ -2625,7 +2627,7 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 						vacrel->relnamespace,
 						vacrel->relname,
 						vacrel->num_index_scans),
-				 errdetail("table's relfrozenxid or relminmxid is too far in the past"),
+				 errdetail("The table's relfrozenxid or relminmxid is too far in the past."),
 				 errhint("Consider increasing configuration parameter \"maintenance_work_mem\" or \"autovacuum_work_mem\".\n"
 						 "You might also need to consider other ways for VACUUM to keep up with the allocation of transaction IDs.")));
 
@@ -4265,7 +4267,7 @@ vacuum_error_callback(void *arg)
 			if (BlockNumberIsValid(errinfo->blkno))
 			{
 				if (OffsetNumberIsValid(errinfo->offnum))
-					errcontext("while scanning block %u and offset %u of relation \"%s.%s\"",
+					errcontext("while scanning block %u offset %u of relation \"%s.%s\"",
 							   errinfo->blkno, errinfo->offnum, errinfo->relnamespace, errinfo->relname);
 				else
 					errcontext("while scanning block %u of relation \"%s.%s\"",
@@ -4280,7 +4282,7 @@ vacuum_error_callback(void *arg)
 			if (BlockNumberIsValid(errinfo->blkno))
 			{
 				if (OffsetNumberIsValid(errinfo->offnum))
-					errcontext("while vacuuming block %u and offset %u of relation \"%s.%s\"",
+					errcontext("while vacuuming block %u offset %u of relation \"%s.%s\"",
 							   errinfo->blkno, errinfo->offnum, errinfo->relnamespace, errinfo->relname);
 				else
 					errcontext("while vacuuming block %u of relation \"%s.%s\"",
