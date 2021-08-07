@@ -517,6 +517,14 @@ BaseInit(void)
 	 */
 	DebugFileOpen();
 
+	/*
+	 * Initialize statistics reporting. This needs to happen early to ensure
+	 * that pgstat's shutdown callback runs after the shutdown callbacks of
+	 * all subsystems that can produce stats (like e.g. transaction commits
+	 * can).
+	 */
+	pgstat_initialize();
+
 	/* Do local initialization of file, storage and buffer managers */
 	InitFileAccess();
 	InitSync();
@@ -646,10 +654,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* Initialize portal manager */
 	EnablePortalManager();
 
-	/* Initialize stats collection --- must happen before first xact */
-	if (!bootstrap)
-		pgstat_initialize();
-
 	/* Initialize status reporting */
 	if (!bootstrap)
 		pgstat_beinit();
@@ -662,11 +666,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This is the
-	 * first before_shmem_exit callback we register; thus, this will be the
-	 * last thing we do before low-level modules like the buffer manager begin
-	 * to close down.  We need to have this in place before we begin our first
-	 * transaction --- if we fail during the initialization transaction, as is
-	 * entirely possible, we need the AbortTransaction call to clean up.
+	 * one of the first before_shmem_exit callbacks we register; thus, this
+	 * will be one the last things we do before low-level modules like the
+	 * buffer manager begin to close down.  We need to have this in place
+	 * before we begin our first transaction --- if we fail during the
+	 * initialization transaction, as is entirely possible, we need the
+	 * AbortTransaction call to clean up.
 	 */
 	before_shmem_exit(ShutdownPostgres, 0);
 

@@ -125,8 +125,6 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 	 */
 	CreateAuxProcessResourceOwner();
 
-	/* Initialize statistics reporting */
-	pgstat_initialize();
 
 	/* Initialize backend status information */
 	pgstat_beinit();

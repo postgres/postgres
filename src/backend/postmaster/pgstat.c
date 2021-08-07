@@ -295,6 +295,15 @@ static List *pending_write_requests = NIL;
  */
 static instr_time total_func_time;
 
+/*
+ * For assertions that check pgstat is not used before initialization / after
+ * shutdown.
+ */
+#ifdef USE_ASSERT_CHECKING
+static bool pgstat_is_initialized = false;
+static bool pgstat_is_shutdown = false;
+#endif
+
 
 /* ----------
  * Local function forward declarations
@@ -330,6 +339,7 @@ static void pgstat_send_connstats(bool disconnect, TimestampTz last_report);
 static PgStat_TableStatus *get_tabstat_entry(Oid rel_id, bool isshared);
 
 static void pgstat_setup_memcxt(void);
+static void pgstat_assert_is_up(void);
 
 static void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 static void pgstat_send(void *msg, int len);
@@ -853,6 +863,8 @@ pgstat_report_stat(bool disconnect)
 	PgStat_MsgTabstat shared_msg;
 	TabStatusArray *tsa;
 	int			i;
+
+	pgstat_assert_is_up();
 
 	/*
 	 * Don't expend a clock check if nothing to do.
@@ -1960,6 +1972,8 @@ pgstat_init_function_usage(FunctionCallInfo fcinfo,
 PgStat_BackendFunctionEntry *
 find_funcstat_entry(Oid func_id)
 {
+	pgstat_assert_is_up();
+
 	if (pgStatFunctions == NULL)
 		return NULL;
 
@@ -2077,6 +2091,8 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 	PgStat_TableStatus *entry;
 	TabStatusArray *tsa;
 	bool		found;
+
+	pgstat_assert_is_up();
 
 	/*
 	 * Create hash table if we don't have it already.
@@ -2938,6 +2954,8 @@ pgstat_fetch_replslot(NameData slotname)
 static void
 pgstat_shutdown_hook(int code, Datum arg)
 {
+	Assert(!pgstat_is_shutdown);
+
 	/*
 	 * If we got as far as discovering our own database ID, we can report what
 	 * we did to the collector.  Otherwise, we'd be sending an invalid
@@ -2946,13 +2964,17 @@ pgstat_shutdown_hook(int code, Datum arg)
 	 */
 	if (OidIsValid(MyDatabaseId))
 		pgstat_report_stat(true);
+
+#ifdef USE_ASSERT_CHECKING
+	pgstat_is_shutdown = true;
+#endif
 }
 
 /* ----------
  * pgstat_initialize() -
  *
- *	Initialize pgstats state, and set up our on-proc-exit hook.
- *	Called from InitPostgres and AuxiliaryProcessMain.
+ *	Initialize pgstats state, and set up our on-proc-exit hook. Called from
+ *	BaseInit().
  *
  *	NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
  * ----------
@@ -2960,6 +2982,8 @@ pgstat_shutdown_hook(int code, Datum arg)
 void
 pgstat_initialize(void)
 {
+	Assert(!pgstat_is_initialized);
+
 	/*
 	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
 	 * calculate how much pgWalUsage counters are increased by subtracting
@@ -2969,6 +2993,10 @@ pgstat_initialize(void)
 
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_shutdown_hook, 0);
+
+#ifdef USE_ASSERT_CHECKING
+	pgstat_is_initialized = true;
+#endif
 }
 
 /* ------------------------------------------------------------
@@ -3000,6 +3028,8 @@ static void
 pgstat_send(void *msg, int len)
 {
 	int			rc;
+
+	pgstat_assert_is_up();
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
@@ -3052,6 +3082,8 @@ pgstat_send_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
 	static const PgStat_MsgBgWriter all_zeroes;
+
+	pgstat_assert_is_up();
 
 	/*
 	 * This function can be called even if nothing at all has happened. In
@@ -4629,6 +4661,8 @@ backend_read_statsfile(void)
 	Oid			inquiry_db;
 	int			count;
 
+	pgstat_assert_is_up();
+
 	/* already read it? */
 	if (pgStatDBHash)
 		return;
@@ -4765,6 +4799,17 @@ pgstat_setup_memcxt(void)
 												   ALLOCSET_SMALL_SIZES);
 }
 
+/*
+ * Stats should only be reported after pgstat_initialize() and before
+ * pgstat_shutdown(). This check is put in a few central places to catch
+ * violations of this rule more easily.
+ */
+static void
+pgstat_assert_is_up(void)
+{
+	Assert(pgstat_is_initialized && !pgstat_is_shutdown);
+}
+
 
 /* ----------
  * pgstat_clear_snapshot() -
@@ -4779,6 +4824,8 @@ pgstat_setup_memcxt(void)
 void
 pgstat_clear_snapshot(void)
 {
+	pgstat_assert_is_up();
+
 	/* Release memory, if any was allocated */
 	if (pgStatLocalContext)
 		MemoryContextDelete(pgStatLocalContext);
@@ -5897,6 +5944,8 @@ pgstat_slru_name(int slru_idx)
 static inline PgStat_MsgSLRU *
 slru_entry(int slru_idx)
 {
+	pgstat_assert_is_up();
+
 	/*
 	 * The postmaster should never register any SLRU statistics counts; if it
 	 * did, the counts would be duplicated into child processes via fork().
