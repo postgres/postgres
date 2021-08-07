@@ -757,7 +757,7 @@ main(int argc, char *argv[])
 			{
 				if (opts.show_progress && progress_since_last_stderr)
 					fprintf(stderr, "\n");
-				pg_log_info("checking heap table \"%s\".\"%s\".\"%s\"",
+				pg_log_info("checking heap table \"%s.%s.%s\"",
 							rel->datinfo->datname, rel->nspname, rel->relname);
 				progress_since_last_stderr = false;
 			}
@@ -773,7 +773,7 @@ main(int argc, char *argv[])
 				if (opts.show_progress && progress_since_last_stderr)
 					fprintf(stderr, "\n");
 
-				pg_log_info("checking btree index \"%s\".\"%s\".\"%s\"",
+				pg_log_info("checking btree index \"%s.%s.%s\"",
 							rel->datinfo->datname, rel->nspname, rel->relname);
 				progress_since_last_stderr = false;
 			}
@@ -1108,7 +1108,7 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 			 */
 			if (opts.show_progress && progress_since_last_stderr)
 				fprintf(stderr, "\n");
-			pg_log_warning("btree index \"%s\".\"%s\".\"%s\": btree checking function returned unexpected number of rows: %d",
+			pg_log_warning("btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d",
 						   rel->datinfo->datname, rel->nspname, rel->relname, ntups);
 			if (opts.verbose)
 				pg_log_info("query was: %s", rel->sql);
@@ -1171,7 +1171,7 @@ help(const char *progname)
 	printf(_("      --startblock=BLOCK          begin checking table(s) at the given block number\n"));
 	printf(_("      --endblock=BLOCK            check table(s) only up to the given block number\n"));
 	printf(_("\nB-tree index checking options:\n"));
-	printf(_("      --heapallindexed            check all heap tuples are found within indexes\n"));
+	printf(_("      --heapallindexed            check that all heap tuples are found within indexes\n"));
 	printf(_("      --parent-check              check index parent/child relationships\n"));
 	printf(_("      --rootdescend               search from root page to refind tuples\n"));
 	printf(_("\nConnection options:\n"));
@@ -1250,7 +1250,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 			 * last call)
 			 */
 			fprintf(stderr,
-					_("%*s/%s relations (%d%%) %*s/%s pages (%d%%) %*s"),
+					_("%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"),
 					(int) strlen(total_rel),
 					checked_rel, total_rel, percent_rel,
 					(int) strlen(total_pages),
@@ -1261,7 +1261,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 			bool		truncate = (strlen(datname) > VERBOSE_DATNAME_LENGTH);
 
 			fprintf(stderr,
-					_("%*s/%s relations (%d%%) %*s/%s pages (%d%%), (%s%-*.*s)"),
+					_("%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"),
 					(int) strlen(total_rel),
 					checked_rel, total_rel, percent_rel,
 					(int) strlen(total_pages),
@@ -1276,7 +1276,7 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 	}
 	else
 		fprintf(stderr,
-				_("%*s/%s relations (%d%%) %*s/%s pages (%d%%)"),
+				_("%*s/%s relations (%d%%), %*s/%s pages (%d%%)"),
 				(int) strlen(total_rel),
 				checked_rel, total_rel, percent_rel,
 				(int) strlen(total_pages),
