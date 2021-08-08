@@ -7801,7 +7801,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <term><varname>transaction_read_only</varname> (<type>boolean</type>)
       <indexterm>
        <primary>read-only transaction</primary>
-       <secondary>setting default</secondary>
       </indexterm>
       <indexterm>
        <primary><varname>transaction_read_only</varname> configuration parameter</primary>
@@ -7822,7 +7821,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <term><varname>transaction_deferrable</varname> (<type>boolean</type>)
       <indexterm>
        <primary>deferrable transaction</primary>
-       <secondary>setting default</secondary>
       </indexterm>
       <indexterm>
        <primary><varname>transaction_deferrable</varname> configuration parameter</primary>
