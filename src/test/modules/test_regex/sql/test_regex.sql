@@ -1009,6 +1009,8 @@ select * from test_regex('(.*).*', 'abc', 'N');
 select * from test_regex('(a*)*', 'bc', 'N');
 -- expectMatch	21.35 M		{ TO (([a-z0-9._]+|"([^"]+|"")+")+)}	{asd TO foo}	{ TO foo} foo o {}
 select * from test_regex(' TO (([a-z0-9._]+|"([^"]+|"")+")+)', 'asd TO foo', 'M');
+-- expectMatch	21.36 RPQ	((.))(\2){0}	xy	x	x	x	{}
+select * from test_regex('((.))(\2){0}', 'xy', 'RPQ');
 
 -- doing 22 "multicharacter collating elements"
 -- # again ugh
