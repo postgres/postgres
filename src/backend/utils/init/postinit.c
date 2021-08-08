@@ -518,6 +518,12 @@ BaseInit(void)
 	DebugFileOpen();
 
 	/*
+	 * Initialize file access. Done early so other subsystems can access
+	 * files.
+	 */
+	InitFileAccess();
+
+	/*
 	 * Initialize statistics reporting. This needs to happen early to ensure
 	 * that pgstat's shutdown callback runs after the shutdown callbacks of
 	 * all subsystems that can produce stats (like e.g. transaction commits
@@ -525,11 +531,16 @@ BaseInit(void)
 	 */
 	pgstat_initialize();
 
-	/* Do local initialization of file, storage and buffer managers */
-	InitFileAccess();
+	/* Do local initialization of storage and buffer managers */
 	InitSync();
 	smgrinit();
 	InitBufferPoolAccess();
+
+	/*
+	 * Initialize temporary file access after pgstat, so that the temorary
+	 * file shutdown hook can report temporary file statistics.
+	 */
+	InitTemporaryFileAccess();
 }
 
 

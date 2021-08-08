@@ -231,6 +231,11 @@ static bool have_xact_temporary_files = false;
  */
 static uint64 temporary_files_size = 0;
 
+/* Temporary file access initialized and not yet shut down? */
+#ifdef USE_ASSERT_CHECKING
+static bool temporary_files_allowed = false;
+#endif
+
 /*
  * List of OS handles opened with AllocateFile, AllocateDir and
  * OpenTransientFile.
@@ -327,7 +332,7 @@ static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
 
-static void AtProcExit_Files(int code, Datum arg);
+static void BeforeShmemExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isCommit, bool isProcExit);
 static void RemovePgTempRelationFiles(const char *tsdirname);
 static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
@@ -868,6 +873,9 @@ durable_rename_excl(const char *oldfile, const char *newfile, int elevel)
  *
  * This is called during either normal or standalone backend start.
  * It is *not* called in the postmaster.
+ *
+ * Note that this does not initialize temporary file access, that is
+ * separately initialized via InitTemporaryFileAccess().
  */
 void
 InitFileAccess(void)
@@ -885,9 +893,35 @@ InitFileAccess(void)
 	VfdCache->fd = VFD_CLOSED;
 
 	SizeVfdCache = 1;
+}
 
-	/* register proc-exit hook to ensure temp files are dropped at exit */
-	on_proc_exit(AtProcExit_Files, 0);
+/*
+ * InitTemporaryFileAccess --- initialize temporary file access during startup
+ *
+ * This is called during either normal or standalone backend start.
+ * It is *not* called in the postmaster.
+ *
+ * This is separate from InitFileAccess() because temporary file cleanup can
+ * cause pgstat reporting. As pgstat is shut down during before_shmem_exit(),
+ * our reporting has to happen before that. Low level file access should be
+ * available for longer, hence the separate initialization / shutdown of
+ * temporary file handling.
+ */
+void
+InitTemporaryFileAccess(void)
+{
+	Assert(SizeVfdCache != 0);	/* InitFileAccess() needs to have run*/
+	Assert(!temporary_files_allowed);	/* call me only once */
+
+	/*
+	 * Register before-shmem-exit hook to ensure temp files are dropped while
+	 * we can still report stats.
+	 */
+	before_shmem_exit(BeforeShmemExit_Files, 0);
+
+#ifdef USE_ASSERT_CHECKING
+	temporary_files_allowed = true;
+#endif
 }
 
 /*
@@ -1670,6 +1704,8 @@ OpenTemporaryFile(bool interXact)
 {
 	File		file = 0;
 
+	Assert(temporary_files_allowed);	/* check temp file access is up */
+
 	/*
 	 * Make sure the current resource owner has space for this File before we
 	 * open it, if we'll be registering it below.
@@ -1805,6 +1841,8 @@ PathNameCreateTemporaryFile(const char *path, bool error_on_failure)
 {
 	File		file;
 
+	Assert(temporary_files_allowed);	/* check temp file access is up */
+
 	ResourceOwnerEnlargeFiles(CurrentResourceOwner);
 
 	/*
@@ -1842,6 +1880,8 @@ File
 PathNameOpenTemporaryFile(const char *path, int mode)
 {
 	File		file;
+
+	Assert(temporary_files_allowed);	/* check temp file access is up */
 
 	ResourceOwnerEnlargeFiles(CurrentResourceOwner);
 
@@ -3004,15 +3044,20 @@ AtEOXact_Files(bool isCommit)
 }
 
 /*
- * AtProcExit_Files
+ * BeforeShmemExit_Files
  *
- * on_proc_exit hook to clean up temp files during backend shutdown.
+ * before_shmem_access hook to clean up temp files during backend shutdown.
  * Here, we want to clean up *all* temp files including interXact ones.
  */
 static void
-AtProcExit_Files(int code, Datum arg)
+BeforeShmemExit_Files(int code, Datum arg)
 {
 	CleanupTempFiles(false, true);
+
+	/* prevent further temp files from being created */
+#ifdef USE_ASSERT_CHECKING
+	temporary_files_allowed = false;
+#endif
 }
 
 /*
