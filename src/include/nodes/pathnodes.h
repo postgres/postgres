@@ -1598,7 +1598,10 @@ typedef struct JoinPath
  * A nested-loop path needs no special fields.
  */
 
-typedef JoinPath NestPath;
+typedef struct NestPath
+{
+	JoinPath	jpath;
+} NestPath;
 
 /*
  * A mergejoin path has these fields.

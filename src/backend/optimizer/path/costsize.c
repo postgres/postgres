@@ -167,7 +167,7 @@ static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static void get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
 									  ParamPathInfo *param_info,
 									  QualCost *qpqual_cost);
-static bool has_indexed_join_quals(NestPath *joinpath);
+static bool has_indexed_join_quals(NestPath *path);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 								 List *quals);
 static double calc_joinrel_size_estimate(PlannerInfo *root,
@@ -2978,8 +2978,8 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 					JoinCostWorkspace *workspace,
 					JoinPathExtraData *extra)
 {
-	Path	   *outer_path = path->outerjoinpath;
-	Path	   *inner_path = path->innerjoinpath;
+	Path	   *outer_path = path->jpath.outerjoinpath;
+	Path	   *inner_path = path->jpath.innerjoinpath;
 	double		outer_path_rows = outer_path->rows;
 	double		inner_path_rows = inner_path->rows;
 	Cost		startup_cost = workspace->startup_cost;
@@ -2994,18 +2994,18 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	if (inner_path_rows <= 0)
 		inner_path_rows = 1;
 	/* Mark the path with the correct row estimate */
-	if (path->path.param_info)
-		path->path.rows = path->path.param_info->ppi_rows;
+	if (path->jpath.path.param_info)
+		path->jpath.path.rows = path->jpath.path.param_info->ppi_rows;
 	else
-		path->path.rows = path->path.parent->rows;
+		path->jpath.path.rows = path->jpath.path.parent->rows;
 
 	/* For partial paths, scale row estimate. */
-	if (path->path.parallel_workers > 0)
+	if (path->jpath.path.parallel_workers > 0)
 	{
-		double		parallel_divisor = get_parallel_divisor(&path->path);
+		double		parallel_divisor = get_parallel_divisor(&path->jpath.path);
 
-		path->path.rows =
-			clamp_row_est(path->path.rows / parallel_divisor);
+		path->jpath.path.rows =
+			clamp_row_est(path->jpath.path.rows / parallel_divisor);
 	}
 
 	/*
@@ -3018,7 +3018,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 
 	/* cost of inner-relation source data (we already dealt with outer rel) */
 
-	if (path->jointype == JOIN_SEMI || path->jointype == JOIN_ANTI ||
+	if (path->jpath.jointype == JOIN_SEMI || path->jpath.jointype == JOIN_ANTI ||
 		extra->inner_unique)
 	{
 		/*
@@ -3136,17 +3136,17 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	}
 
 	/* CPU costs */
-	cost_qual_eval(&restrict_qual_cost, path->joinrestrictinfo, root);
+	cost_qual_eval(&restrict_qual_cost, path->jpath.joinrestrictinfo, root);
 	startup_cost += restrict_qual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	/* tlist eval costs are paid per output row, not per tuple scanned */
-	startup_cost += path->path.pathtarget->cost.startup;
-	run_cost += path->path.pathtarget->cost.per_tuple * path->path.rows;
+	startup_cost += path->jpath.path.pathtarget->cost.startup;
+	run_cost += path->jpath.path.pathtarget->cost.per_tuple * path->jpath.path.rows;
 
-	path->path.startup_cost = startup_cost;
-	path->path.total_cost = startup_cost + run_cost;
+	path->jpath.path.startup_cost = startup_cost;
+	path->jpath.path.total_cost = startup_cost + run_cost;
 }
 
 /*
@@ -4771,8 +4771,9 @@ compute_semi_anti_join_factors(PlannerInfo *root,
  * expensive.
  */
 static bool
-has_indexed_join_quals(NestPath *joinpath)
+has_indexed_join_quals(NestPath *path)
 {
+	JoinPath   *joinpath = &path->jpath;
 	Relids		joinrelids = joinpath->path.parent->relids;
 	Path	   *innerpath = joinpath->innerjoinpath;
 	List	   *indexclauses;

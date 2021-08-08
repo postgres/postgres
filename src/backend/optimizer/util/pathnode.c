@@ -2443,10 +2443,10 @@ create_nestloop_path(PlannerInfo *root,
 		restrict_clauses = jclauses;
 	}
 
-	pathnode->path.pathtype = T_NestLoop;
-	pathnode->path.parent = joinrel;
-	pathnode->path.pathtarget = joinrel->reltarget;
-	pathnode->path.param_info =
+	pathnode->jpath.path.pathtype = T_NestLoop;
+	pathnode->jpath.path.parent = joinrel;
+	pathnode->jpath.path.pathtarget = joinrel->reltarget;
+	pathnode->jpath.path.param_info =
 		get_joinrel_parampathinfo(root,
 								  joinrel,
 								  outer_path,
@@ -2454,17 +2454,17 @@ create_nestloop_path(PlannerInfo *root,
 								  extra->sjinfo,
 								  required_outer,
 								  &restrict_clauses);
-	pathnode->path.parallel_aware = false;
-	pathnode->path.parallel_safe = joinrel->consider_parallel &&
+	pathnode->jpath.path.parallel_aware = false;
+	pathnode->jpath.path.parallel_safe = joinrel->consider_parallel &&
 		outer_path->parallel_safe && inner_path->parallel_safe;
 	/* This is a foolish way to estimate parallel_workers, but for now... */
-	pathnode->path.parallel_workers = outer_path->parallel_workers;
-	pathnode->path.pathkeys = pathkeys;
-	pathnode->jointype = jointype;
-	pathnode->inner_unique = extra->inner_unique;
-	pathnode->outerjoinpath = outer_path;
-	pathnode->innerjoinpath = inner_path;
-	pathnode->joinrestrictinfo = restrict_clauses;
+	pathnode->jpath.path.parallel_workers = outer_path->parallel_workers;
+	pathnode->jpath.path.pathkeys = pathkeys;
+	pathnode->jpath.jointype = jointype;
+	pathnode->jpath.inner_unique = extra->inner_unique;
+	pathnode->jpath.outerjoinpath = outer_path;
+	pathnode->jpath.innerjoinpath = inner_path;
+	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 
 	final_cost_nestloop(root, pathnode, workspace, extra);
 
@@ -4110,13 +4110,15 @@ do { \
 		case T_NestPath:
 			{
 				JoinPath   *jpath;
+				NestPath   *npath;
 
-				FLAT_COPY_PATH(jpath, path, NestPath);
+				FLAT_COPY_PATH(npath, path, NestPath);
 
+				jpath = (JoinPath *) npath;
 				REPARAMETERIZE_CHILD_PATH(jpath->outerjoinpath);
 				REPARAMETERIZE_CHILD_PATH(jpath->innerjoinpath);
 				ADJUST_CHILD_ATTRS(jpath->joinrestrictinfo);
-				new_path = (Path *) jpath;
+				new_path = (Path *) npath;
 			}
 			break;
 
