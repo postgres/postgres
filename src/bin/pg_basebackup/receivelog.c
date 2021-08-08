@@ -150,10 +150,10 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
-			pg_log_error(ngettext("write-ahead log file \"%s\" has %d byte, should be 0 or %d",
-								  "write-ahead log file \"%s\" has %d bytes, should be 0 or %d",
+			pg_log_error(ngettext("write-ahead log file \"%s\" has %zd byte, should be 0 or %d",
+								  "write-ahead log file \"%s\" has %zd bytes, should be 0 or %d",
 								  size),
-						 fn, (int) size, WalSegSz);
+						 fn, size, WalSegSz);
 			pg_free(fn);
 			return false;
 		}

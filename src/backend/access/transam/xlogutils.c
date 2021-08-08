@@ -991,8 +991,8 @@ WALReadRaiseError(WALReadError *errinfo)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("could not read from log segment %s, offset %u: read %d of %zu",
+				 errmsg("could not read from log segment %s, offset %u: read %d of %d",
 						fname, errinfo->wre_off, errinfo->wre_read,
-						(Size) errinfo->wre_req)));
+						errinfo->wre_req)));
 	}
 }

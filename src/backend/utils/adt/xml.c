@@ -959,8 +959,8 @@ pg_xml_init_library(void)
 		if (sizeof(char) != sizeof(xmlChar))
 			ereport(ERROR,
 					(errmsg("could not initialize XML library"),
-					 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
-							   (int) sizeof(char), (int) sizeof(xmlChar))));
+					 errdetail("libxml2 has incompatible char type: sizeof(char)=%zu, sizeof(xmlChar)=%zu.",
+							   sizeof(char), sizeof(xmlChar))));
 
 #ifdef USE_LIBXMLCONTEXT
 		/* Set up libxml's memory allocation our way */

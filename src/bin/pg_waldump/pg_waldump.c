@@ -211,8 +211,8 @@ search_directory(const char *directory, const char *fname)
 				fatal_error("could not read file \"%s\": %m",
 							fname);
 			else
-				fatal_error("could not read file \"%s\": read %d of %zu",
-							fname, r, (Size) XLOG_BLCKSZ);
+				fatal_error("could not read file \"%s\": read %d of %d",
+							fname, r, XLOG_BLCKSZ);
 		}
 		close(fd);
 		return true;
@@ -369,9 +369,9 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 						fname, errinfo.wre_off);
 		}
 		else
-			fatal_error("could not read from file %s, offset %u: read %d of %zu",
+			fatal_error("could not read from file %s, offset %u: read %d of %d",
 						fname, errinfo.wre_off, errinfo.wre_read,
-						(Size) errinfo.wre_req);
+						errinfo.wre_req);
 	}
 
 	return count;

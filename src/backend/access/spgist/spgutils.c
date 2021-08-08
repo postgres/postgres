@@ -1240,8 +1240,8 @@ SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
 					*startOffset = offnum + 1;
 			}
 			else
-				elog(PANIC, "failed to add item of size %u to SPGiST index page",
-					 (int) size);
+				elog(PANIC, "failed to add item of size %zu to SPGiST index page",
+					 size);
 
 			return offnum;
 		}
@@ -1252,8 +1252,8 @@ SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
 						 InvalidOffsetNumber, false, false);
 
 	if (offnum == InvalidOffsetNumber && !errorOK)
-		elog(ERROR, "failed to add item of size %u to SPGiST index page",
-			 (int) size);
+		elog(ERROR, "failed to add item of size %zu to SPGiST index page",
+			 size);
 
 	return offnum;
 }
