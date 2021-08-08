@@ -43,7 +43,7 @@ static int	freev(struct vars *, int);
 static void makesearch(struct vars *, struct nfa *);
 static struct subre *parse(struct vars *, int, int, struct state *, struct state *);
 static struct subre *parsebranch(struct vars *, int, int, struct state *, struct state *, int);
-static void parseqatom(struct vars *, int, int, struct state *, struct state *, struct subre *);
+static struct subre *parseqatom(struct vars *, int, int, struct state *, struct state *, struct subre *);
 static void nonword(struct vars *, int, struct state *, struct state *);
 static void word(struct vars *, int, struct state *, struct state *);
 static void charclass(struct vars *, enum char_classes,
@@ -756,7 +756,7 @@ parsebranch(struct vars *v,
 		seencontent = 1;
 
 		/* NB, recursion in parseqatom() may swallow rest of branch */
-		parseqatom(v, stopper, type, lp, right, t);
+		t = parseqatom(v, stopper, type, lp, right, t);
 		NOERRN();
 	}
 
@@ -777,8 +777,12 @@ parsebranch(struct vars *v,
  * The bookkeeping near the end cooperates very closely with parsebranch();
  * in particular, it contains a recursion that can involve parsing the rest
  * of the branch, making this function's name somewhat inaccurate.
+ *
+ * Usually, the return value is just "top", but in some cases where we
+ * have parsed the rest of the branch, we may deem "top" redundant and
+ * free it, returning some child subre instead.
  */
-static void
+static struct subre *
 parseqatom(struct vars *v,
 		   int stopper,			/* EOS or ')' */
 		   int type,			/* LACON (lookaround subRE) or PLAIN */
@@ -818,84 +822,84 @@ parseqatom(struct vars *v,
 			if (v->cflags & REG_NLANCH)
 				ARCV(BEHIND, v->nlcolor);
 			NEXT();
-			return;
+			return top;
 			break;
 		case '$':
 			ARCV('$', 1);
 			if (v->cflags & REG_NLANCH)
 				ARCV(AHEAD, v->nlcolor);
 			NEXT();
-			return;
+			return top;
 			break;
 		case SBEGIN:
 			ARCV('^', 1);		/* BOL */
 			ARCV('^', 0);		/* or BOS */
 			NEXT();
-			return;
+			return top;
 			break;
 		case SEND:
 			ARCV('$', 1);		/* EOL */
 			ARCV('$', 0);		/* or EOS */
 			NEXT();
-			return;
+			return top;
 			break;
 		case '<':
 			wordchrs(v);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			nonword(v, BEHIND, lp, s);
 			word(v, AHEAD, s, rp);
 			NEXT();
-			return;
+			return top;
 			break;
 		case '>':
 			wordchrs(v);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			word(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
 			NEXT();
-			return;
+			return top;
 			break;
 		case WBDRY:
 			wordchrs(v);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			nonword(v, BEHIND, lp, s);
 			word(v, AHEAD, s, rp);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			word(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
 			NEXT();
-			return;
+			return top;
 			break;
 		case NWBDRY:
 			wordchrs(v);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			word(v, BEHIND, lp, s);
 			word(v, AHEAD, s, rp);
 			s = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			nonword(v, BEHIND, lp, s);
 			nonword(v, AHEAD, s, rp);
 			NEXT();
-			return;
+			return top;
 			break;
 		case LACON:				/* lookaround constraint */
 			latype = v->nextvalue;
 			NEXT();
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			t = parse(v, ')', LACON, s, s2);
 			freesubre(v, t);	/* internal structure irrelevant */
-			NOERR();
+			NOERRN();
 			assert(SEE(')'));
 			NEXT();
 			processlacon(v, s, s2, latype, lp, rp);
-			return;
+			return top;
 			break;
 			/* then errors, to get them out of the way */
 		case '*':
@@ -903,18 +907,18 @@ parseqatom(struct vars *v,
 		case '?':
 		case '{':
 			ERR(REG_BADRPT);
-			return;
+			return top;
 			break;
 		default:
 			ERR(REG_ASSERT);
-			return;
+			return top;
 			break;
 			/* then plain characters, and minor variants on that theme */
 		case ')':				/* unbalanced paren */
 			if ((v->cflags & REG_ADVANCED) != REG_EXTENDED)
 			{
 				ERR(REG_EPAREN);
-				return;
+				return top;
 			}
 			/* legal in EREs due to specification botch */
 			NOTE(REG_UPBOTCH);
@@ -923,7 +927,7 @@ parseqatom(struct vars *v,
 		case PLAIN:
 			onechr(v, v->nextvalue, lp, rp);
 			okcolors(v->nfa, v->cm);
-			NOERR();
+			NOERRN();
 			NEXT();
 			break;
 		case '[':
@@ -972,14 +976,14 @@ parseqatom(struct vars *v,
 			 */
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
-			NOERR();
+			NOERRN();
 			EMPTYARC(lp, s);
 			EMPTYARC(s2, rp);
-			NOERR();
+			NOERRN();
 			atom = parse(v, ')', type, s, s2);
 			assert(SEE(')') || ISERR());
 			NEXT();
-			NOERR();
+			NOERRN();
 			if (cap)
 			{
 				assert(v->subs[subno] == NULL);
@@ -994,7 +998,7 @@ parseqatom(struct vars *v,
 				{
 					/* generate no-op wrapper node to handle "((x))" */
 					t = subre(v, '(', atom->flags | CAP, lp, rp);
-					NOERR();
+					NOERRN();
 					t->capno = subno;
 					t->child = atom;
 					atom = t;
@@ -1006,10 +1010,10 @@ parseqatom(struct vars *v,
 			INSIST(type != LACON, REG_ESUBREG);
 			INSIST(v->nextvalue < v->nsubs, REG_ESUBREG);
 			INSIST(v->subs[v->nextvalue] != NULL, REG_ESUBREG);
-			NOERR();
+			NOERRN();
 			assert(v->nextvalue > 0);
 			atom = subre(v, 'b', BACKR, lp, rp);
-			NOERR();
+			NOERRN();
 			subno = v->nextvalue;
 			atom->backno = subno;
 			EMPTYARC(lp, rp);	/* temporarily, so there's something */
@@ -1050,7 +1054,7 @@ parseqatom(struct vars *v,
 				if (m > n)
 				{
 					ERR(REG_BADBR);
-					return;
+					return top;
 				}
 				/* {m,n} exercises preference, even if it's {m,m} */
 				qprefer = (v->nextvalue) ? LONGER : SHORTER;
@@ -1064,7 +1068,7 @@ parseqatom(struct vars *v,
 			if (!SEE('}'))
 			{					/* catches errors too */
 				ERR(REG_BADBR);
-				return;
+				return top;
 			}
 			NEXT();
 			break;
@@ -1083,7 +1087,7 @@ parseqatom(struct vars *v,
 			v->subs[subno] = NULL;
 		delsub(v->nfa, lp, rp);
 		EMPTYARC(lp, rp);
-		return;
+		return top;
 	}
 
 	/* if not a messy case, avoid hard part */
@@ -1096,7 +1100,7 @@ parseqatom(struct vars *v,
 		if (atom != NULL)
 			freesubre(v, atom);
 		top->flags = f;
-		return;
+		return top;
 	}
 
 	/*
@@ -1110,7 +1114,7 @@ parseqatom(struct vars *v,
 	if (atom == NULL)
 	{
 		atom = subre(v, '=', 0, lp, rp);
-		NOERR();
+		NOERRN();
 	}
 
 	/*----------
@@ -1131,20 +1135,20 @@ parseqatom(struct vars *v,
 	 */
 	s = newstate(v->nfa);		/* first, new endpoints for the atom */
 	s2 = newstate(v->nfa);
-	NOERR();
+	NOERRN();
 	moveouts(v->nfa, lp, s);
 	moveins(v->nfa, rp, s2);
-	NOERR();
+	NOERRN();
 	atom->begin = s;
 	atom->end = s2;
 	s = newstate(v->nfa);		/* set up starting state */
-	NOERR();
+	NOERRN();
 	EMPTYARC(lp, s);
-	NOERR();
+	NOERRN();
 
 	/* break remaining subRE into x{...} and what follows */
 	t = subre(v, '.', COMBINE(qprefer, atom->flags), lp, rp);
-	NOERR();
+	NOERRN();
 	t->child = atom;
 	atomp = &t->child;
 
@@ -1163,7 +1167,7 @@ parseqatom(struct vars *v,
 	 */
 	assert(top->op == '=' && top->child == NULL);
 	top->child = subre(v, '=', top->flags, top->begin, lp);
-	NOERR();
+	NOERRN();
 	top->op = '.';
 	top->child->sibling = t;
 	/* top->flags will get updated later */
@@ -1182,11 +1186,11 @@ parseqatom(struct vars *v,
 		 */
 		dupnfa(v->nfa, v->subs[subno]->begin, v->subs[subno]->end,
 			   atom->begin, atom->end);
-		NOERR();
+		NOERRN();
 
 		/* The backref node's NFA should not enforce any constraints */
 		removeconstraints(v->nfa, atom->begin, atom->end);
-		NOERR();
+		NOERRN();
 	}
 
 	/*
@@ -1226,7 +1230,7 @@ parseqatom(struct vars *v,
 		repeat(v, atom->begin, atom->end, m, n);
 		f = COMBINE(qprefer, atom->flags);
 		t = subre(v, '=', f, atom->begin, atom->end);
-		NOERR();
+		NOERRN();
 		freesubre(v, atom);
 		*atomp = t;
 		/* rest of branch can be strung starting from t->end */
@@ -1247,9 +1251,9 @@ parseqatom(struct vars *v,
 		repeat(v, s, atom->begin, m - 1, (n == DUPINF) ? n : n - 1);
 		f = COMBINE(qprefer, atom->flags);
 		t = subre(v, '.', f, s, atom->end); /* prefix and atom */
-		NOERR();
+		NOERRN();
 		t->child = subre(v, '=', PREF(f), s, atom->begin);
-		NOERR();
+		NOERRN();
 		t->child->sibling = atom;
 		*atomp = t;
 		/* rest of branch can be strung starting from atom->end */
@@ -1259,14 +1263,14 @@ parseqatom(struct vars *v,
 	{
 		/* general case: need an iteration node */
 		s2 = newstate(v->nfa);
-		NOERR();
+		NOERRN();
 		moveouts(v->nfa, atom->end, s2);
-		NOERR();
+		NOERRN();
 		dupnfa(v->nfa, atom->begin, atom->end, s, s2);
 		repeat(v, s, s2, m, n);
 		f = COMBINE(qprefer, atom->flags);
 		t = subre(v, '*', f, s, s2);
-		NOERR();
+		NOERRN();
 		t->min = (short) m;
 		t->max = (short) n;
 		t->child = atom;
@@ -1280,7 +1284,7 @@ parseqatom(struct vars *v,
 	{
 		/* parse all the rest of the branch, and insert in t->child->sibling */
 		t->child->sibling = parsebranch(v, stopper, type, s2, rp, 1);
-		NOERR();
+		NOERRN();
 		assert(SEE('|') || SEE(stopper) || SEE(EOS));
 
 		/* here's the promised update of the flags */
@@ -1299,9 +1303,7 @@ parseqatom(struct vars *v,
 		 *
 		 * If the messy atom was the first thing in the branch, then
 		 * top->child is vacuous and we can get rid of one level of
-		 * concatenation.  Since the caller is holding a pointer to the top
-		 * node, we can't remove that node; but we're allowed to change its
-		 * properties.
+		 * concatenation.
 		 */
 		assert(top->child->op == '=');
 		if (top->child->begin == top->child->end)
@@ -1351,21 +1353,13 @@ parseqatom(struct vars *v,
 		{
 			assert(!MESSY(top->child->flags));
 			t = top->child->sibling;
-			freesubre(v, top->child);
-			top->op = t->op;
-			top->flags = t->flags;
-			top->latype = t->latype;
-			top->id = t->id;
-			top->capno = t->capno;
-			top->backno = t->backno;
-			top->min = t->min;
-			top->max = t->max;
-			top->child = t->child;
-			top->begin = t->begin;
-			top->end = t->end;
-			freesrnode(v, t);
+			top->child->sibling = NULL;
+			freesubre(v, top);
+			top = t;
 		}
 	}
+
+	return top;
 }
 
 /*
@@ -2109,7 +2103,9 @@ freesrnode(struct vars *v,		/* might be NULL */
 
 	if (!NULLCNFA(sr->cnfa))
 		freecnfa(&sr->cnfa);
-	sr->flags = 0;
+	sr->flags = 0;				/* in particular, not INUSE */
+	sr->child = sr->sibling = NULL;
+	sr->begin = sr->end = NULL;
 
 	if (v != NULL && v->treechain != NULL)
 	{

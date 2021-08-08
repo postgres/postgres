@@ -3468,6 +3468,14 @@ select * from test_regex(' TO (([a-z0-9._]+|"([^"]+|"")+")+)', 'asd TO foo', 'M'
  {" TO foo",foo,o,NULL}
 (2 rows)
 
+-- expectMatch	21.36 RPQ	((.))(\2){0}	xy	x	x	x	{}
+select * from test_regex('((.))(\2){0}', 'xy', 'RPQ');
+                 test_regex                 
+--------------------------------------------
+ {3,REG_UBACKREF,REG_UBOUNDS,REG_UNONPOSIX}
+ {x,x,x,NULL}
+(2 rows)
+
 -- doing 22 "multicharacter collating elements"
 -- # again ugh
 -- MCCEs are not implemented in Postgres, so we skip all these tests
