@@ -516,12 +516,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			{
 				SeqScan    *splan = (SeqScan *) plan;
 
-				splan->scanrelid += rtoffset;
-				splan->plan.targetlist =
-					fix_scan_list(root, splan->plan.targetlist,
+				splan->scan.scanrelid += rtoffset;
+				splan->scan.plan.targetlist =
+					fix_scan_list(root, splan->scan.plan.targetlist,
 								  rtoffset, NUM_EXEC_TLIST(plan));
-				splan->plan.qual =
-					fix_scan_list(root, splan->plan.qual,
+				splan->scan.plan.qual =
+					fix_scan_list(root, splan->scan.plan.qual,
 								  rtoffset, NUM_EXEC_QUAL(plan));
 			}
 			break;

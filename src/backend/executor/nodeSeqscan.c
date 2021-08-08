@@ -151,7 +151,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 */
 	scanstate->ss.ss_currentRelation =
 		ExecOpenScanRelation(estate,
-							 node->scanrelid,
+							 node->scan.scanrelid,
 							 eflags);
 
 	/* and create slot with the appropriate rowtype */
@@ -169,7 +169,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 * initialize child expressions
 	 */
 	scanstate->ss.ps.qual =
-		ExecInitQual(node->plan.qual, (PlanState *) scanstate);
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	return scanstate;
 }
