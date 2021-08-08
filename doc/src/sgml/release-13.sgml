@@ -212,6 +212,14 @@ Branch: REL_12_STABLE [5c62920fa] 2021-07-31 11:27:02 +0100
 Branch: REL_11_STABLE [dcd0ab672] 2021-07-31 11:28:10 +0100
 Branch: REL_10_STABLE [39b0bda67] 2021-07-31 11:29:50 +0100
 Branch: REL9_6_STABLE [5cf350ce0] 2021-07-31 11:31:18 +0100
+Branch: REL_11_STABLE [434ddfb79] 2021-08-05 22:24:28 +0100
+Branch: master [2642df9fa] 2021-08-06 21:29:15 +0100
+Branch: REL_14_STABLE [032556570] 2021-08-06 21:30:25 +0100
+Branch: REL_13_STABLE [da188b993] 2021-08-06 21:31:20 +0100
+Branch: REL_12_STABLE [cc4420f88] 2021-08-06 21:31:58 +0100
+Branch: REL_11_STABLE [7a9c9acfe] 2021-08-06 21:32:46 +0100
+Branch: REL_10_STABLE [f20b6bc96] 2021-08-06 21:33:25 +0100
+Branch: REL9_6_STABLE [5b7b92ad7] 2021-08-06 21:34:04 +0100
 -->
      <para>
       Fix corner-case errors and loss of precision when
@@ -335,6 +343,14 @@ Branch: REL_11_STABLE [fed35bd4a] 2021-07-16 13:01:43 -0400
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9179a82d7] 2021-08-07 13:29:32 -0400
+Branch: REL_14_STABLE [2c915905e] 2021-08-07 13:29:32 -0400
+Branch: REL_13_STABLE [ba9f665a4] 2021-08-07 13:29:32 -0400
+Branch: REL_12_STABLE [1ff1e4a60] 2021-08-07 13:29:32 -0400
+Branch: REL_11_STABLE [d33fc4110] 2021-08-07 13:29:32 -0400
+Branch: REL_10_STABLE [ac818984a] 2021-08-07 13:29:32 -0400
+Branch: REL9_6_STABLE [c08b3a9eb] 2021-08-07 13:29:32 -0400
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master Release: REL_14_BR [187682c32] 2021-06-03 15:28:24 +0900
 Branch: REL_13_STABLE [75d66d10e] 2021-06-03 15:28:37 +0900
@@ -344,14 +360,15 @@ Branch: REL_10_STABLE [20f70f558] 2021-06-03 15:28:53 +0900
 Branch: REL9_6_STABLE [d9525c46c] 2021-06-03 15:29:01 +0900
 -->
      <para>
-      Reduce the risk of alias conflicts in queries generated
+      Avoid alias conflicts in queries generated
       for <command>REFRESH MATERIALIZED VIEW CONCURRENTLY</command>
-      (Bharath Rupireddy)
+      (Tom Lane, Bharath Rupireddy)
      </para>
 
      <para>
-      Use table aliases that are less likely to collide with user column
-      names.
+      This command failed on materialized views containing columns with
+      certain names, notably <structfield>mv</structfield>
+      and <structfield>newdata</structfield>.
      </para>
     </listitem>
 
@@ -1382,23 +1399,6 @@ Branch: REL9_6_STABLE [67f925bbd] 2021-07-06 12:36:13 -0400
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_6_STABLE [c835be32c] 2021-06-23 19:24:36 -0400
--->
-     <para>
-      In <filename>contrib/pgcrypto</filename>, avoid symbol name
-      conflicts with OpenSSL (Tom Lane)
-     </para>
-
-     <para>
-      Operations using SHA224 hashing could show failures under valgrind
-      checking.  It appears that this is only a stomp of alignment-padding
-      bytes and so has no real consequences, but let's fix it to be sure.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master Release: REL_14_BR [741d7f104] 2021-06-22 21:43:12 -0400
 Branch: REL_13_STABLE [e2cde85ef] 2021-06-22 21:43:12 -0400
 Branch: REL_12_STABLE [f228c401b] 2021-06-22 21:43:12 -0400
@@ -1654,17 +1654,6 @@ Branch: REL9_6_STABLE [d173a4699] 2021-07-01 09:01:36 -0400
      <para>
       Fix make rule for TAP tests (<literal>prove_installcheck</literal>)
       to work in PGXS usage (Andrew Dunstan)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-Branch: REL_10_STABLE [e7be25039] 2021-07-01 10:54:44 +0200
--->
-     <para>
-      Allow <productname>PostgreSQL</productname> version 10 to build
-      with <productname>ICU</productname> 69 and newer (Peter Eisentraut)
      </para>
     </listitem>
 
