@@ -233,13 +233,6 @@ static int	cmp(const chr *, const chr *, size_t);
 static int	casecmp(const chr *, const chr *, size_t);
 
 
-/* info we need during compilation about a known capturing subexpression */
-struct subinfo
-{
-	struct state *left;			/* left end of its sub-NFA */
-	struct state *right;		/* right end of its sub-NFA */
-};
-
 /* internal variables, bundled for easy passing around */
 struct vars
 {
@@ -252,10 +245,10 @@ struct vars
 	int			nexttype;		/* type of next token */
 	chr			nextvalue;		/* value (if any) of next token */
 	int			lexcon;			/* lexical context type (see regc_lex.c) */
-	int			nsubexp;		/* number of known capturing subexpressions */
-	struct subinfo *subs;		/* info about known capturing subexpressions */
-	size_t		nsubs;			/* allocated length of subs[] vector */
-	struct subinfo sub10[10];	/* initial vector, enough for most */
+	int			nsubexp;		/* subexpression count */
+	struct subre **subs;		/* subRE pointer vector */
+	size_t		nsubs;			/* length of vector */
+	struct subre *sub10[10];	/* initial vector, enough for most */
 	struct nfa *nfa;			/* the NFA */
 	struct colormap *cm;		/* character color map */
 	color		nlcolor;		/* color of newline */
@@ -375,7 +368,7 @@ pg_regcomp(regex_t *re,
 	v->subs = v->sub10;
 	v->nsubs = 10;
 	for (j = 0; j < v->nsubs; j++)
-		v->subs[j].left = v->subs[j].right = NULL;
+		v->subs[j] = NULL;
 	v->nfa = NULL;
 	v->cm = NULL;
 	v->nlcolor = COLORLESS;
@@ -511,13 +504,13 @@ pg_regcomp(regex_t *re,
 }
 
 /*
- * moresubs - enlarge capturing-subexpressions vector
+ * moresubs - enlarge subRE vector
  */
 static void
 moresubs(struct vars *v,
 		 int wanted)			/* want enough room for this one */
 {
-	struct subinfo *p;
+	struct subre **p;
 	size_t		n;
 
 	assert(wanted > 0 && (size_t) wanted >= v->nsubs);
@@ -525,13 +518,13 @@ moresubs(struct vars *v,
 
 	if (v->subs == v->sub10)
 	{
-		p = (struct subinfo *) MALLOC(n * sizeof(struct subinfo));
+		p = (struct subre **) MALLOC(n * sizeof(struct subre *));
 		if (p != NULL)
 			memcpy(VS(p), VS(v->subs),
-				   v->nsubs * sizeof(struct subinfo));
+				   v->nsubs * sizeof(struct subre *));
 	}
 	else
-		p = (struct subinfo *) REALLOC(v->subs, n * sizeof(struct subinfo));
+		p = (struct subre **) REALLOC(v->subs, n * sizeof(struct subre *));
 	if (p == NULL)
 	{
 		ERR(REG_ESPACE);
@@ -539,7 +532,7 @@ moresubs(struct vars *v,
 	}
 	v->subs = p;
 	for (p = &v->subs[v->nsubs]; v->nsubs < n; p++, v->nsubs++)
-		p->left = p->right = NULL;
+		*p = NULL;
 	assert(v->nsubs == n);
 	assert((size_t) wanted < v->nsubs);
 }
@@ -988,6 +981,7 @@ parseqatom(struct vars *v,
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
 			NOERRN();
+			/* We may not need these arcs, but keep things connected for now */
 			EMPTYARC(lp, s);
 			EMPTYARC(s2, rp);
 			NOERRN();
@@ -997,10 +991,6 @@ parseqatom(struct vars *v,
 			NOERRN();
 			if (cap)
 			{
-				/* save the sub-NFA's endpoints for future backrefs to use */
-				assert(v->subs[subno].left == NULL);
-				v->subs[subno].left = s;
-				v->subs[subno].right = s2;
 				if (atom->capno == 0)
 				{
 					/* normal case: just mark the atom as capturing */
@@ -1016,13 +1006,15 @@ parseqatom(struct vars *v,
 					t->child = atom;
 					atom = t;
 				}
+				assert(v->subs[subno] == NULL);
+				v->subs[subno] = atom;
 			}
 			/* postpone everything else pending possible {0} */
 			break;
 		case BACKREF:			/* the Feature From The Black Lagoon */
 			INSIST(type != LACON, REG_ESUBREG);
 			INSIST(v->nextvalue < v->nsubs, REG_ESUBREG);
-			INSIST(v->subs[v->nextvalue].left != NULL, REG_ESUBREG);
+			INSIST(v->subs[v->nextvalue] != NULL, REG_ESUBREG);
 			NOERRN();
 			assert(v->nextvalue > 0);
 			atom = subre(v, 'b', BACKR, lp, rp);
@@ -1097,7 +1089,7 @@ parseqatom(struct vars *v,
 		if (atom != NULL)
 			freesubre(v, atom);
 		if (atomtype == '(')
-			v->subs[subno].left = v->subs[subno].right = NULL;
+			v->subs[subno] = NULL;
 		delsub(v->nfa, lp, rp);
 		EMPTYARC(lp, rp);
 		return top;
@@ -1130,30 +1122,48 @@ parseqatom(struct vars *v,
 		NOERRN();
 	}
 
+	/*
+	 * For what follows, we need the atom to have its own begin/end states
+	 * that are distinct from lp/rp, so that we can wrap iteration structure
+	 * around it.  The parenthesized-atom case above already made suitable
+	 * states (and we don't want to modify a capturing subre, since it's
+	 * already recorded in v->subs[]).  Otherwise, we need more states.
+	 */
+	if (atom->begin == lp || atom->end == rp)
+	{
+		s = newstate(v->nfa);
+		s2 = newstate(v->nfa);
+		NOERRN();
+		moveouts(v->nfa, lp, s);
+		moveins(v->nfa, rp, s2);
+		atom->begin = s;
+		atom->end = s2;
+	}
+	else
+	{
+		/* The atom's OK, but we must temporarily disconnect it from lp/rp */
+		/* (this removes the EMPTY arcs we made above) */
+		delsub(v->nfa, lp, atom->begin);
+		delsub(v->nfa, atom->end, rp);
+	}
+
 	/*----------
 	 * Prepare a general-purpose state skeleton.
 	 *
 	 * In the no-backrefs case, we want this:
 	 *
-	 * [lp] ---> [s] ---prefix---> [begin] ---atom---> [end] ---rest---> [rp]
+	 * [lp] ---> [s] ---prefix---> ---atom---> ---rest---> [rp]
 	 *
-	 * where prefix is some repetitions of atom.  In the general case we need
+	 * where prefix is some repetitions of atom, and "rest" is the remainder
+	 * of the branch.  In the general case we need:
 	 *
 	 * [lp] ---> [s] ---iterator---> [s2] ---rest---> [rp]
 	 *
-	 * where the iterator wraps around [begin] ---atom---> [end]
+	 * where the iterator wraps around the atom.
 	 *
 	 * We make the s state here for both cases; s2 is made below if needed
 	 *----------
 	 */
-	s = newstate(v->nfa);		/* first, new endpoints for the atom */
-	s2 = newstate(v->nfa);
-	NOERRN();
-	moveouts(v->nfa, lp, s);
-	moveins(v->nfa, rp, s2);
-	NOERRN();
-	atom->begin = s;
-	atom->end = s2;
 	s = newstate(v->nfa);		/* set up starting state */
 	NOERRN();
 	EMPTYARC(lp, s);
@@ -1190,14 +1200,14 @@ parseqatom(struct vars *v,
 	{
 		assert(atom->begin->nouts == 1);	/* just the EMPTY */
 		delsub(v->nfa, atom->begin, atom->end);
-		assert(v->subs[subno].left != NULL);
+		assert(v->subs[subno] != NULL);
 
 		/*
 		 * And here's why the recursion got postponed: it must wait until the
 		 * skeleton is filled in, because it may hit a backref that wants to
 		 * copy the filled-in skeleton.
 		 */
-		dupnfa(v->nfa, v->subs[subno].left, v->subs[subno].right,
+		dupnfa(v->nfa, v->subs[subno]->begin, v->subs[subno]->end,
 			   atom->begin, atom->end);
 		NOERRN();
 
