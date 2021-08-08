@@ -15,13 +15,9 @@
 #include "datatype/timestamp.h"
 #include "replication/origin.h"
 #include "storage/sync.h"
-#include "utils/guc.h"
 
 
 extern PGDLLIMPORT bool track_commit_timestamp;
-
-extern bool check_track_commit_timestamp(bool *newval, void **extra,
-										 GucSource source);
 
 extern void TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 										   TransactionId *subxids, TimestampTz timestamp,
