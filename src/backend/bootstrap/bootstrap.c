@@ -215,9 +215,9 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	InitializeGUCOptions();
 
 	/* an initial --boot or --check should be present */
-	Assert(argc == 1
-		   || strcmp(argv[1], "--boot") != 0
-		   || strcmp(argv[1], "--check") != 0);
+	Assert(argc > 1
+		   && (strcmp(argv[1], "--boot") == 0
+			   || strcmp(argv[1], "--check") == 0));
 	argv++;
 	argc--;
 
