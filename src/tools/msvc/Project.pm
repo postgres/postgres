@@ -47,7 +47,16 @@ sub AddFile
 {
 	my ($self, $filename) = @_;
 
+	$self->FindAndAddAdditionalFiles($filename);
 	$self->{files}->{$filename} = 1;
+	return;
+}
+
+sub AddDependantFiles
+{
+	my ($self, $filename) = @_;
+
+	$self->FindAndAddAdditionalFiles($filename);
 	return;
 }
 
@@ -61,6 +70,34 @@ sub AddFiles
 		$self->AddFile($dir . "/" . $f, 1);
 	}
 	return;
+}
+
+# Handle Makefile rules by searching for other files which exist with the same
+# name but a different file extension and add those files too.
+sub FindAndAddAdditionalFiles
+{
+	my $self = shift;
+	my $fname = shift;
+	$fname =~ /(.*)(\.[^.]+)$/;
+	my $filenoext = $1;
+	my $fileext = $2;
+
+	# For .c files, check if either a .l or .y file of the same name
+	# exists and add that too.
+	if ($fileext eq ".c")
+	{
+		my $file = $filenoext . ".l";
+		if (-e $file)
+		{
+			$self->AddFile($file);
+		}
+
+		$file = $filenoext . ".y";
+		if (-e $file)
+		{
+			$self->AddFile($file);
+		}
+	}
 }
 
 sub ReplaceFile
