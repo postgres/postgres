@@ -1,6 +1,6 @@
 # pg_config spanish translation
 #
-# Copyright (c) 2004-2019, PostgreSQL Global Development Group
+# Copyright (c) 2004-2021, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2013
@@ -8,7 +8,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL) 12\n"
+"Project-Id-Version: pg_config (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:46+0000\n"
 "PO-Revision-Date: 2021-05-20 23:11-0500\n"

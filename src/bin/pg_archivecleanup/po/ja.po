@@ -1,13 +1,13 @@
 # Japanese message translation file for pg_archivecleanup
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2021 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-08-21 15:54+0900\n"
-"PO-Revision-Date: 2020-09-13 08:55+0200\n"
+"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"PO-Revision-Date: 2021-05-18 17:08+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -16,17 +16,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:241
+#: ../../../src/common/logging.c:259
 #, c-format
 msgid "fatal: "
 msgstr "致命的エラー: "
 
-#: ../../../src/common/logging.c:248
+#: ../../../src/common/logging.c:266
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:255
+#: ../../../src/common/logging.c:273
 #, c-format
 msgid "warning: "
 msgstr "警告: "
@@ -176,15 +176,3 @@ msgstr "保存する最古のWALファイルを指定してください"
 #, c-format
 msgid "too many command-line arguments"
 msgstr "コマンドライン引数が多すぎます"
-
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s: ファイル \"%s\" は削除されます\n"
-
-#~ msgid "%s: removing file \"%s\"\n"
-#~ msgstr "%s: ファイル \"%s\" を削除しています\n"
-
-#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
-#~ msgstr "%s: エラー: ファイル \"%s\" を削除できませんでした: %s\n"
-
-#~ msgid "%s: keeping WAL file \"%s\" and later\n"
-#~ msgstr "%s: WAL file \"%s\" とそれ以降の分を保存しています\n"

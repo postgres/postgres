@@ -3,12 +3,14 @@
 # This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+# Use these quotes: “%s”
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:49+0000\n"
-"PO-Revision-Date: 2021-05-05 10:54+0200\n"
+"POT-Creation-Date: 2021-07-20 08:49+0000\n"
+"PO-Revision-Date: 2021-07-20 10:59+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -16,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 
 #. translator: maintain alignment with NA_FORMAT
 #: pg_test_fsync.c:31
@@ -32,7 +34,7 @@ msgstr "Χρήση: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 #: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
 
 #: pg_test_fsync.c:216
 #, c-format
@@ -134,19 +136,19 @@ msgstr " 1 * 16kB open_sync εγγραφή"
 
 #: pg_test_fsync.c:435
 msgid " 2 *  8kB open_sync writes"
-msgstr " 2 * 8kB open_sync εγγραφές"
+msgstr " 2 *  8kB open_sync εγγραφές"
 
 #: pg_test_fsync.c:436
 msgid " 4 *  4kB open_sync writes"
-msgstr " 4 * 4kB open_sync εγγραφές"
+msgstr " 4 *  4kB open_sync εγγραφές"
 
 #: pg_test_fsync.c:437
 msgid " 8 *  2kB open_sync writes"
-msgstr " 8 * 2kB open_sync εγγραφές"
+msgstr " 8 *  2kB open_sync εγγραφές"
 
 #: pg_test_fsync.c:438
 msgid "16 *  1kB open_sync writes"
-msgstr "16 * 1kB open_sync εγγραφές"
+msgstr "16 *  1kB open_sync εγγραφές"
 
 #: pg_test_fsync.c:492
 #, c-format

@@ -1,5 +1,5 @@
 # Japanese message translation file for pg_resetwal
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2021 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # Shigehiro Honda <fwif0083@mb.infoweb.ne.jp>, 2005
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-08-21 15:55+0900\n"
-"PO-Revision-Date: 2020-09-13 08:56+0200\n"
+"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"PO-Revision-Date: 2021-05-18 17:21+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -18,17 +18,17 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:241
+#: ../../../src/common/logging.c:259
 #, c-format
 msgid "fatal: "
 msgstr "致命的エラー: "
 
-#: ../../../src/common/logging.c:248
+#: ../../../src/common/logging.c:266
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:255
+#: ../../../src/common/logging.c:273
 #, c-format
 msgid "warning: "
 msgstr "警告: "
@@ -151,7 +151,7 @@ msgstr "\"root\"では実行できません"
 #: pg_resetwal.c:345
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
-msgstr "PostgreSQLのスーパユーザで%sを実行しなければなりません"
+msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません"
 
 #: pg_resetwal.c:356
 #, c-format
@@ -176,7 +176,7 @@ msgstr "ロックファイル\"%s\"が存在します"
 #: pg_resetwal.c:389
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
-msgstr "サーバが稼動していませんか? そうでなければロックファイルを削除し再実行してください。"
+msgstr "サーバーが稼動していませんか? そうでなければロックファイルを削除し再実行してください。"
 
 #: pg_resetwal.c:492
 #, c-format
@@ -194,7 +194,7 @@ msgid ""
 "Resetting the write-ahead log might cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"データベースサーバが正しくシャットダウンされていませんでした。\n"
+"データベースサーバーが正しくシャットダウンされていませんでした。\n"
 "先行書き込みログのリセットにはデータ損失の恐れがあります。\n"
 "とにかく処理したいのであれば、-fでリセットを強制してください。\n"
 
@@ -645,96 +645,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
-
-#~ msgid "%s: cannot be executed by \"root\"\n"
-#~ msgstr "%s: \"root\"では実行できません\n"
-
-#~ msgid "%s: could not change directory to \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"に移動できませんでした: %s\n"
-
-#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
-#~ msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "Transaction log reset\n"
-#~ msgstr "トランザクションログをリセットします。\n"
-
-#~ msgid "%s: could not read file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を読み込めませんでした: %s\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "浮動小数点数"
-
-#~ msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
-#~ msgstr "%s: 内部エラー -- sizeof(ControlFileData)が大きすぎます ... PG_CONTROL_SIZEを修正してください\n"
-
-#~ msgid "%s: could not create pg_control file: %s\n"
-#~ msgstr "%s: pg_controlファイルを作成できませんでした: %s\n"
-
-#~ msgid "%s: could not write pg_control file: %s\n"
-#~ msgstr "%s: pg_controlファイルを書き込めませんでした: %s\n"
-
-#~ msgid "%s: could not open directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "%s: could not read directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"を読み取ることができませんでした。: %s\n"
-
-#~ msgid "%s: could not close directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ \"%s\" をクローズできませんでした: %s\n"
-
-#~ msgid "%s: could not delete file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を削除できませんでした: %s\n"
-
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "%s: could not write file \"%s\": %s\n"
-#~ msgstr "%s: ファイル\"%s\"を書き込めませんでした: %s\n"
-
-#~ msgid "  -c XID,XID       set oldest and newest transactions bearing commit timestamp\n"
-#~ msgstr "  -c XID,XID       コミットタイムスタンプを作成する最も古いトランザクションと最も新しいトランザクションを設定します\n"
-
-#~ msgid "                   (zero in either value means no change)\n"
-#~ msgstr "                   (いずれかの値での0は変更がないことを意味します)\n"
-
-#~ msgid " [-D] DATADIR      data directory\n"
-#~ msgstr " [-D] DATADIR      データベースディレクトリ\n"
-
-#~ msgid "  -V, --version    output version information, then exit\n"
-#~ msgstr "  -V, --version    バージョン情報を出力、終了します\n"
-
-#~ msgid "  -x XID           set next transaction ID\n"
-#~ msgstr "  -x XID          次のトランザクションIDを設定します\n"
-
-#~ msgid "  -?, --help       show this help, then exit\n"
-#~ msgstr "  -?, --help                このヘルプを表示し、終了します\n"
-
-#~ msgid "First log file ID after reset:        %u\n"
-#~ msgstr "リセット後、現在のログファイルID:     %u\n"
-
-#~ msgid "  --help          show this help, then exit\n"
-#~ msgstr "  --help          ヘルプを表示し、終了します\n"
-
-#~ msgid "  --version       output version information, then exit\n"
-#~ msgstr "  --version       バージョン情報を表示し、終了します\n"
-
-#~ msgid "%s: could not read from directory \"%s\": %s\n"
-#~ msgstr "%s: ディレクトリ\"%s\"から読み込めませんでした: %s\n"
-
-#~ msgid "%s: invalid argument for option -l\n"
-#~ msgstr "%s: オプション-lの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -O\n"
-#~ msgstr "%s: オプション-Oの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -m\n"
-#~ msgstr "%s: オプション-mの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -o\n"
-#~ msgstr "%s: オプション-oの引数が無効です\n"
-
-#~ msgid "%s: invalid argument for option -x\n"
-#~ msgstr "%s: オプション-xの引数が無効です\n"
-
-#~ msgid "Float4 argument passing:              %s\n"
-#~ msgstr "Float4引数の渡し方:                          %s\n"

@@ -2,11 +2,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-21 21:15+0000\n"
-"PO-Revision-Date: 2020-09-22 13:43\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2021-06-10 08:47+0000\n"
+"PO-Revision-Date: 2021-07-17 14:14\n"
+"Last-Translator: Pavlo Golub\n"
 "Language-Team: Ukrainian\n"
-"Language: uk\n"
+"Language: uk_UA\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,20 +14,20 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /DEV_13/pg_basebackup.pot\n"
-"X-Crowdin-File-ID: 490\n"
+"X-Crowdin-File: /REL_14_DEV/pg_basebackup.pot\n"
+"X-Crowdin-File-ID: 776\n"
 
-#: ../../../src/common/logging.c:236
+#: ../../../src/common/logging.c:259
 #, c-format
 msgid "fatal: "
 msgstr "збій: "
 
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:266
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:273
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
@@ -43,35 +43,35 @@ msgstr "недостатньо пам'яті\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
-#: ../../common/file_utils.c:79 ../../common/file_utils.c:181
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
 #: pg_receivewal.c:266 pg_recvlogical.c:340
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
-#: ../../common/file_utils.c:158 pg_receivewal.c:169
+#: ../../common/file_utils.c:166 pg_receivewal.c:169
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:192 pg_receivewal.c:337
+#: ../../common/file_utils.c:200 pg_receivewal.c:337
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не вдалося прочитати каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:224 ../../common/file_utils.c:283
-#: ../../common/file_utils.c:357 ../../fe_utils/recovery_gen.c:134
+#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:365 ../../fe_utils/recovery_gen.c:134
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: ../../common/file_utils.c:295 ../../common/file_utils.c:365
+#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
 #: pg_recvlogical.c:193
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не вдалося fsync файл \"%s\": %m"
 
-#: ../../common/file_utils.c:375
+#: ../../common/file_utils.c:383
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "не вдалося перейменувати файл \"%s\" на \"%s\": %m"
@@ -519,7 +519,7 @@ msgid "could not get COPY data stream: %s"
 msgstr "не вдалося отримати потік даних COPY: %s"
 
 #: pg_basebackup.c:981 pg_recvlogical.c:435 pg_recvlogical.c:607
-#: receivelog.c:965
+#: receivelog.c:964
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "не вдалося прочитати дані COPY: %s"
@@ -604,8 +604,8 @@ msgstr "ПІДКАЗКА: використайте -X none або -X fetch, що
 msgid "initiating base backup, waiting for checkpoint to complete"
 msgstr "початок базового резервного копіювання, очікується завершення контрольної точки"
 
-#: pg_basebackup.c:1908 pg_recvlogical.c:262 receivelog.c:481 receivelog.c:530
-#: receivelog.c:569 streamutil.c:297 streamutil.c:370 streamutil.c:422
+#: pg_basebackup.c:1908 pg_recvlogical.c:262 receivelog.c:480 receivelog.c:529
+#: receivelog.c:568 streamutil.c:297 streamutil.c:370 streamutil.c:422
 #: streamutil.c:533 streamutil.c:578
 #, c-format
 msgid "could not send replication command \"%s\": %s"
@@ -696,7 +696,7 @@ msgstr "збій при очікуванні дочірнього процесу
 msgid "child %d died, expected %d"
 msgstr "завершився дочірній процес %d, очікувалося %d"
 
-#: pg_basebackup.c:2120 streamutil.c:92
+#: pg_basebackup.c:2120 streamutil.c:92 streamutil.c:203
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -758,9 +758,9 @@ msgstr "неприпустимий інтервал повідомлень пр�
 
 #: pg_basebackup.c:2445 pg_basebackup.c:2458 pg_basebackup.c:2469
 #: pg_basebackup.c:2480 pg_basebackup.c:2488 pg_basebackup.c:2496
-#: pg_basebackup.c:2506 pg_basebackup.c:2519 pg_basebackup.c:2527
-#: pg_basebackup.c:2538 pg_basebackup.c:2548 pg_basebackup.c:2565
-#: pg_basebackup.c:2573 pg_basebackup.c:2581 pg_receivewal.c:605
+#: pg_basebackup.c:2506 pg_basebackup.c:2519 pg_basebackup.c:2528
+#: pg_basebackup.c:2539 pg_basebackup.c:2549 pg_basebackup.c:2567
+#: pg_basebackup.c:2576 pg_basebackup.c:2585 pg_receivewal.c:605
 #: pg_receivewal.c:618 pg_receivewal.c:626 pg_receivewal.c:636
 #: pg_receivewal.c:644 pg_receivewal.c:655 pg_recvlogical.c:846
 #: pg_recvlogical.c:859 pg_recvlogical.c:870 pg_recvlogical.c:878
@@ -806,47 +806,33 @@ msgstr "--no-slot не можна використовувати з іменем
 msgid "%s needs a slot to be specified using --slot"
 msgstr "для %s потрібно вказати слот за допомогою --slot"
 
-#: pg_basebackup.c:2526
+#: pg_basebackup.c:2526 pg_basebackup.c:2565 pg_basebackup.c:2574
+#: pg_basebackup.c:2583
 #, c-format
-msgid "--create-slot and --no-slot are incompatible options"
-msgstr "параметри --create-slot і --no-slot несумісні"
+msgid "%s and %s are incompatible options"
+msgstr "параметри %s і %s несумісні"
 
-#: pg_basebackup.c:2537
+#: pg_basebackup.c:2538
 #, c-format
 msgid "WAL directory location can only be specified in plain mode"
 msgstr "розташування каталога WAL можна вказати лише в режимі plain"
 
-#: pg_basebackup.c:2547
+#: pg_basebackup.c:2548
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "розташування WAL каталогу має бути абсолютним шляхом"
 
-#: pg_basebackup.c:2557 pg_receivewal.c:663
+#: pg_basebackup.c:2558 pg_receivewal.c:663
 #, c-format
 msgid "this build does not support compression"
 msgstr "ця збірка не підтримує стискання"
 
-#: pg_basebackup.c:2564
-#, c-format
-msgid "--progress and --no-estimate-size are incompatible options"
-msgstr "--progress і --no-estimate-size є несумісними параметрами"
-
-#: pg_basebackup.c:2572
-#, c-format
-msgid "--no-manifest and --manifest-checksums are incompatible options"
-msgstr "--no-manifest і --manifest-checksums є несумісними параметрами"
-
-#: pg_basebackup.c:2580
-#, c-format
-msgid "--no-manifest and --manifest-force-encode are incompatible options"
-msgstr "--no-manifest і --manifest-force-encode є несумісними параметрами"
-
-#: pg_basebackup.c:2639
+#: pg_basebackup.c:2643
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "не вдалося створити символічне послання \"%s\": %m"
 
-#: pg_basebackup.c:2643
+#: pg_basebackup.c:2647
 #, c-format
 msgid "symlinks are not supported on this platform"
 msgstr "символічні посилання не підтримуються цією платформою"
@@ -949,8 +935,8 @@ msgstr "не вдалося закрити каталог \"%s\": %m"
 
 #: pg_receivewal.c:272
 #, c-format
-msgid "segment file \"%s\" has incorrect size %d, skipping"
-msgstr "файл сегмента \"%s\" має неправильний розмір %d, пропускається"
+msgid "segment file \"%s\" has incorrect size %lld, skipping"
+msgstr "файл сегменту \"%s\" має неправильний розмір %lld, пропускається"
 
 #: pg_receivewal.c:290
 #, c-format
@@ -1091,7 +1077,7 @@ msgstr "  -d, --dbname=DBNAME    бази даних для підключенн
 msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
 msgstr "підтвердження запису до %X/%X, очищення до %X/%X (слот %s)"
 
-#: pg_recvlogical.c:157 receivelog.c:343
+#: pg_recvlogical.c:157 receivelog.c:342
 #, c-format
 msgid "could not send feedback packet: %s"
 msgstr "не вдалося відправити пакет зворотнього зв'язку: %s"
@@ -1111,27 +1097,27 @@ msgstr "потокове передавання ініційовано"
 msgid "could not open log file \"%s\": %m"
 msgstr "не вдалося відкрити файл протоколу \"%s\": %m"
 
-#: pg_recvlogical.c:361 receivelog.c:873
+#: pg_recvlogical.c:361 receivelog.c:872
 #, c-format
 msgid "invalid socket: %s"
 msgstr "неприпустимий сокет: %s"
 
-#: pg_recvlogical.c:414 receivelog.c:901
+#: pg_recvlogical.c:414 receivelog.c:900
 #, c-format
-msgid "select() failed: %m"
-msgstr "помилка в select(): %m"
+msgid "%s() failed: %m"
+msgstr "%s() помилка: %m"
 
-#: pg_recvlogical.c:421 receivelog.c:951
+#: pg_recvlogical.c:421 receivelog.c:950
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "не вдалося отримати дані з WAL потоку: %s"
 
-#: pg_recvlogical.c:463 pg_recvlogical.c:514 receivelog.c:995 receivelog.c:1061
+#: pg_recvlogical.c:463 pg_recvlogical.c:514 receivelog.c:994 receivelog.c:1060
 #, c-format
 msgid "streaming header too small: %d"
 msgstr "заголовок потокового передавання занадто малий: %d"
 
-#: pg_recvlogical.c:498 receivelog.c:833
+#: pg_recvlogical.c:498 receivelog.c:832
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
 msgstr "нерозпізнаний заголовок потокового передавання: \"%c\""
@@ -1141,7 +1127,7 @@ msgstr "нерозпізнаний заголовок потокового пе�
 msgid "could not write %u bytes to log file \"%s\": %m"
 msgstr "не вдалося записати %u байт до файлу журналу \"%s\": %m"
 
-#: pg_recvlogical.c:618 receivelog.c:629 receivelog.c:666
+#: pg_recvlogical.c:618 receivelog.c:628 receivelog.c:665
 #, c-format
 msgid "unexpected termination of replication stream: %s"
 msgstr "неочікуване завершення роботи потоку реплікації: %s"
@@ -1206,27 +1192,27 @@ msgstr "кінцева позиція %X/%X досягнута наживо"
 msgid "end position %X/%X reached by WAL record at %X/%X"
 msgstr "кінцева позиція %X/%X досягнута WAL записом %X/%X"
 
-#: receivelog.c:69
+#: receivelog.c:68
 #, c-format
 msgid "could not create archive status file \"%s\": %s"
 msgstr "не вдалося створити файл статусу архіву \"%s\": %s"
 
-#: receivelog.c:116
+#: receivelog.c:115
 #, c-format
 msgid "could not get size of write-ahead log file \"%s\": %s"
 msgstr "не вдалося отримати розмір файлу випереджувального журналювання \"%s\": %s"
 
-#: receivelog.c:126
+#: receivelog.c:125
 #, c-format
 msgid "could not open existing write-ahead log file \"%s\": %s"
 msgstr "не вдалося відкрити існуючий файл випереджувального журналювання \"%s\": %s"
 
-#: receivelog.c:134
+#: receivelog.c:133
 #, c-format
 msgid "could not fsync existing write-ahead log file \"%s\": %s"
 msgstr "не вдалося fsync існуючий файл випереджувального журналювання \"%s\": %s"
 
-#: receivelog.c:148
+#: receivelog.c:147
 #, c-format
 msgid "write-ahead log file \"%s\" has %d byte, should be 0 or %d"
 msgid_plural "write-ahead log file \"%s\" has %d bytes, should be 0 or %d"
@@ -1235,134 +1221,129 @@ msgstr[1] "файл випереджувального журналювання 
 msgstr[2] "файл випереджувального журналювання \"%s\" має %d байтів, а повинен мати 0 або %d"
 msgstr[3] "файл випереджувального журналювання \"%s\" має %d байтів, а повинен мати 0 або %d"
 
-#: receivelog.c:163
+#: receivelog.c:162
 #, c-format
 msgid "could not open write-ahead log file \"%s\": %s"
 msgstr "не вдалося відкрити файл випереджувального журналювання \"%s\": %s"
 
-#: receivelog.c:189
+#: receivelog.c:188
 #, c-format
 msgid "could not determine seek position in file \"%s\": %s"
 msgstr "не вдалося визначити позицію у файлі \"%s\": %s"
 
-#: receivelog.c:203
+#: receivelog.c:202
 #, c-format
 msgid "not renaming \"%s%s\", segment is not complete"
 msgstr "не перейменовується \"%s%s\", сегмент не завершено"
 
-#: receivelog.c:215 receivelog.c:300 receivelog.c:675
+#: receivelog.c:214 receivelog.c:299 receivelog.c:674
 #, c-format
 msgid "could not close file \"%s\": %s"
 msgstr "не вдалося закрити файл \"%s\": %s"
 
-#: receivelog.c:272
+#: receivelog.c:271
 #, c-format
 msgid "server reported unexpected history file name for timeline %u: %s"
 msgstr "сервер повідомив неочікуване ім'я файлу історії часової шкали %u: %s"
 
-#: receivelog.c:280
+#: receivelog.c:279
 #, c-format
 msgid "could not create timeline history file \"%s\": %s"
 msgstr "не вдалося створити файл історії часової шкали \"%s\": %s"
 
-#: receivelog.c:287
+#: receivelog.c:286
 #, c-format
 msgid "could not write timeline history file \"%s\": %s"
 msgstr "не вдалося записати файл історії часової шкали \"%s\": %s"
 
-#: receivelog.c:377
+#: receivelog.c:376
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions older than %s"
 msgstr "несумісна версія серверу %s; клієнт не підтримує потокове передавання з версій серверу старіших, ніж %s"
 
-#: receivelog.c:386
+#: receivelog.c:385
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
 msgstr "несумісна версія серверу %s; клієнт не підтримує потокове передавання з версій серверу новіших, ніж %s"
 
-#: receivelog.c:488 streamutil.c:430 streamutil.c:467
+#: receivelog.c:487 streamutil.c:430 streamutil.c:467
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "не вдалося ідентифікувати систему: отримано %d рядків і %d полів, очікувалось %d рядків і %d або більше полів"
 
-#: receivelog.c:495
+#: receivelog.c:494
 #, c-format
 msgid "system identifier does not match between base backup and streaming connection"
 msgstr "системний ідентифікатор базової резервної копії не відповідає ідентифікатору потокового передавання підключення"
 
-#: receivelog.c:501
+#: receivelog.c:500
 #, c-format
 msgid "starting timeline %u is not present in the server"
 msgstr "початкова часова шкала %u не існує на сервері"
 
-#: receivelog.c:542
+#: receivelog.c:541
 #, c-format
 msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "неочікувана відповідь на команду TIMELINE_HISTORY: отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"
 
-#: receivelog.c:613
+#: receivelog.c:612
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
 msgstr "сервер неочікувано повідомив наступну часову шкалу %u після часової шкали %u"
 
-#: receivelog.c:619
+#: receivelog.c:618
 #, c-format
 msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
 msgstr "сервер зупинив потокове передавання часової шкали %u в позиції %X/%X, але повідомив, що наступна часова шкала %u почнеться в позиції %X/%X"
 
-#: receivelog.c:659
+#: receivelog.c:658
 #, c-format
 msgid "replication stream was terminated before stop point"
 msgstr "потік реплікації перервано до точки зупинки"
 
-#: receivelog.c:705
+#: receivelog.c:704
 #, c-format
 msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "неочікуваний набір результатів після кінця часової шкали: отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"
 
-#: receivelog.c:714
+#: receivelog.c:713
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "не вдалося аналізувати початкову точку наступної часової шкали \"%s\""
 
-#: receivelog.c:763 receivelog.c:1015
+#: receivelog.c:762 receivelog.c:1014
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "не вдалося fsync файл \"%s\": %s"
 
-#: receivelog.c:1078
+#: receivelog.c:1077
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
 msgstr "отримано запис випереджувального журналювання для зсуву %u з закритим файлом"
 
-#: receivelog.c:1088
+#: receivelog.c:1087
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
 msgstr "отримано дані зсуву WAL %08x, очікувалось %08x"
 
-#: receivelog.c:1122
+#: receivelog.c:1121
 #, c-format
 msgid "could not write %u bytes to WAL file \"%s\": %s"
 msgstr "не вдалося записати %u байт до файла WAL \"%s\": %s"
 
-#: receivelog.c:1147 receivelog.c:1187 receivelog.c:1218
+#: receivelog.c:1146 receivelog.c:1186 receivelog.c:1216
 #, c-format
 msgid "could not send copy-end packet: %s"
 msgstr "не вдалося відправити пакет кінця копіювання \"copy-end\": %s"
 
-#: streamutil.c:160
+#: streamutil.c:162
 msgid "Password: "
 msgstr "Пароль: "
 
-#: streamutil.c:185
+#: streamutil.c:186
 #, c-format
 msgid "could not connect to server"
 msgstr "не вдалося підключитись до серверу"
-
-#: streamutil.c:202
-#, c-format
-msgid "could not connect to server: %s"
-msgstr "не вдалося підключитися до сервера: %s"
 
 #: streamutil.c:231
 #, c-format
@@ -1418,7 +1399,7 @@ msgstr "не вдалося створити слот реплікації \"%s\
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "не вдалося видалити слот реплікації \"%s\": отримано %d рядків і %d полів, очікувалось %d рядків і %d полів"
 
-#: walmethods.c:438 walmethods.c:927
+#: walmethods.c:438 walmethods.c:932
 msgid "could not compress data"
 msgstr "не вдалося стиснути дані"
 
@@ -1438,15 +1419,15 @@ msgstr "помилка реалізації: файли tar не можуть м
 msgid "could not create tar header"
 msgstr "не вдалося створити заголовок tar"
 
-#: walmethods.c:608 walmethods.c:648 walmethods.c:843 walmethods.c:854
+#: walmethods.c:608 walmethods.c:650 walmethods.c:847 walmethods.c:859
 msgid "could not change compression parameters"
 msgstr "не вдалося змінити параметри стискання"
 
-#: walmethods.c:730
+#: walmethods.c:734
 msgid "unlink not supported with compression"
 msgstr "unink не підтримується зі стисканням"
 
-#: walmethods.c:952
+#: walmethods.c:957
 msgid "could not close compression stream"
 msgstr "не вдалося закрити потік стискання"
 

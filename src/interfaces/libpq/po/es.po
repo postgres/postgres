@@ -1,16 +1,16 @@
 # Spanish message translation file for libpq 2013-08-30 12:42-0400\n"
 #
-# Copyright (c) 2002-2019, PostgreSQL Global Development Group
+# Copyright (c) 2002-2021, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Karim <karim@mribti.com>, 2002.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2013
 # Mario González <gonzalemario@gmail.com>, 2005
-# Carlos Chapi <carloswaldo@babelruins.org>, 2017-2021
+# Carlos Chapi <carloswaldo@babelruins.org>, 2017, 2021
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq (PostgreSQL) 12\n"
+"Project-Id-Version: libpq (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-06-11 16:39+0000\n"
 "PO-Revision-Date: 2021-06-14 19:58-0500\n"

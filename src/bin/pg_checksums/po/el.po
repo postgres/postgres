@@ -3,19 +3,21 @@
 # This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+# Use these quotes: “%s”
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:49+0000\n"
-"PO-Revision-Date: 2021-04-28 11:54+0200\n"
+"POT-Creation-Date: 2021-07-21 05:18+0000\n"
+"PO-Revision-Date: 2021-07-21 09:45+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -49,7 +51,7 @@ msgstr "Χρήση:\n"
 #: pg_checksums.c:77
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [ΕΠΙΛΟΓΕΣ]… [DATADIR]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [DATADIR]\n"
 
 #: pg_checksums.c:78
 #, c-format
@@ -63,52 +65,52 @@ msgstr ""
 #: pg_checksums.c:79
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
-msgstr " [-Δ, --pgdata=] Κατάλογος δεδομένων DATADIR\n"
+msgstr " [-D, --pgdata=]DATADIR    κατάλογος δεδομένων\n"
 
 #: pg_checksums.c:80
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
-msgstr "  -c, —check              έλεγξε αθροίσματα ελέγχου δεδομένων (προεπιλογή)\n"
+msgstr "  -c, --check              έλεγξε αθροίσματα ελέγχου δεδομένων (προεπιλογή)\n"
 
 #: pg_checksums.c:81
 #, c-format
 msgid "  -d, --disable            disable data checksums\n"
-msgstr "  -d, —disable            απενεργοποίησε τα αθροίσματα ελέγχου δεδομένων\n"
+msgstr "  -d, --disable            απενεργοποίησε τα αθροίσματα ελέγχου δεδομένων\n"
 
 #: pg_checksums.c:82
 #, c-format
 msgid "  -e, --enable             enable data checksums\n"
-msgstr "  -e, —enable             ενεργοποίησε τα αθροίσματα ελέγχου δεδομένων\n"
+msgstr "  -e, --enable             ενεργοποίησε τα αθροίσματα ελέγχου δεδομένων\n"
 
 #: pg_checksums.c:83
 #, c-format
 msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
-msgstr "  -f, —filenode=FILENODE  έλεγξε μόνο τη σχέση με το καθορισμένο filenode\n"
+msgstr "  -f, --filenode=FILENODE  έλεγξε μόνο τη σχέση με το καθορισμένο filenode\n"
 
 #: pg_checksums.c:84
 #, c-format
 msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
-msgstr "  -N, —no-sync            να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
+msgstr "  -N, --no-sync            να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
 
 #: pg_checksums.c:85
 #, c-format
 msgid "  -P, --progress           show progress information\n"
-msgstr "  -P, —progress           εμφάνισε πληροφορίες προόδου\n"
+msgstr "  -P, --progress           εμφάνισε πληροφορίες προόδου\n"
 
 #: pg_checksums.c:86
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
-msgstr "  -v, —verbose            περιφραστικά μηνύματα εξόδου\n"
+msgstr "  -v, --verbose            περιφραστικά μηνύματα εξόδου\n"
 
 #: pg_checksums.c:87
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
-msgstr "  -V, —version             εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+msgstr "  -V, --version            εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
 #: pg_checksums.c:88
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
-msgstr "  -?, —help               εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+msgstr "  -?, --help               εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
 #: pg_checksums.c:89
 #, c-format
@@ -146,7 +148,7 @@ msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου �
 #: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο “%s”: %m"
 
 #: pg_checksums.c:226
 #, c-format
@@ -156,32 +158,32 @@ msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u σ
 #: pg_checksums.c:250
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
-msgstr "επαλήθευση του αθροίσματος ελέγχου απέτυχε στο αρχείο \"%s\", μπλοκ %u: υπολογισμένο άθροισμα ελέγχου %X αλλά το μπλοκ περιέχει %X"
+msgstr "επαλήθευση του αθροίσματος ελέγχου απέτυχε στο αρχείο “%s”, μπλοκ %u: υπολογισμένο άθροισμα ελέγχου %X αλλά το μπλοκ περιέχει %X"
 
 #: pg_checksums.c:265
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
-msgstr "αναζήτηση απέτυχε για μπλοκ %u στο αρχείο \"%s\": %m"
+msgstr "αναζήτηση απέτυχε για μπλοκ %u στο αρχείο “%s”: %m"
 
 #: pg_checksums.c:274
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο “%s”: %m"
 
 #: pg_checksums.c:277
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
-msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο \"%s\": έγραψε %d από %d"
+msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο “%s”: έγραψε %d από %d"
 
 #: pg_checksums.c:290
 #, c-format
 msgid "checksums verified in file \"%s\""
-msgstr "επαληθευμένα αθροίσματα ελέγχου στο αρχείο \"%s\""
+msgstr "επαληθευμένα αθροίσματα ελέγχου στο αρχείο “%s”"
 
 #: pg_checksums.c:292
 #, c-format
 msgid "checksums enabled in file \"%s\""
-msgstr "ενεργοποιημένα αθροίσματα ελέγχου στο αρχείο \"%s\""
+msgstr "ενεργοποιημένα αθροίσματα ελέγχου στο αρχείο “%s”"
 
 #: pg_checksums.c:317
 #, c-format
@@ -206,7 +208,7 @@ msgstr "μη έγκυρη προδιαγραφή filenode, πρέπει να ε�
 #: pg_checksums.c:522 pg_checksums.c:538 pg_checksums.c:548 pg_checksums.c:557
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
 
 #: pg_checksums.c:537
 #, c-format

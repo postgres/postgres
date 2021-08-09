@@ -3,19 +3,21 @@
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+# Use these quotes: “%s”
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:48+0000\n"
-"PO-Revision-Date: 2021-04-27 10:30+0200\n"
+"POT-Creation-Date: 2021-07-21 05:18+0000\n"
+"PO-Revision-Date: 2021-07-21 10:02+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
@@ -35,17 +37,17 @@ msgstr "προειδοποίηση: "
 #: pg_archivecleanup.c:66
 #, c-format
 msgid "archive location \"%s\" does not exist"
-msgstr "η τοποθεσία της αρχειοθήκης \"%s\" δεν υπάρχει"
+msgstr "η τοποθεσία της αρχειοθήκης “%s” δεν υπάρχει"
 
 #: pg_archivecleanup.c:152
 #, c-format
 msgid "could not remove file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου “%s”: %m"
 
 #: pg_archivecleanup.c:160
 #, c-format
 msgid "could not read archive location \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση της τοποθεσίας αρχειοθήκης \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση της τοποθεσίας αρχειοθήκης “%s”: %m"
 
 #: pg_archivecleanup.c:163
 #, c-format
@@ -66,7 +68,7 @@ msgstr "μη έγκυρη παράμετρος ονόματος αρχείου"
 #: pg_archivecleanup.c:348 pg_archivecleanup.c:355
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
 
 #: pg_archivecleanup.c:254
 #, c-format
@@ -85,7 +87,7 @@ msgstr "Χρήση:\n"
 #: pg_archivecleanup.c:256
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
-msgstr "  %s [ΕΠΙΛΟΓΗ]… ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 
 #: pg_archivecleanup.c:257
 #, c-format
@@ -109,7 +111,7 @@ msgstr "  -n             ξηρή λειτουργία, εμφάνιση των 
 #: pg_archivecleanup.c:260
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, —version  εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+msgstr "  -V, --version  εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
 #: pg_archivecleanup.c:261
 #, c-format
@@ -119,7 +121,7 @@ msgstr "  -x EXT         εκκαθάριση αρχείων εάν περιέχ
 #: pg_archivecleanup.c:262
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, —help                εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+msgstr "  -?, --help     εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
 #: pg_archivecleanup.c:263
 #, c-format
