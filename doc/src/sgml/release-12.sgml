@@ -35,6 +35,30 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_14_BR [6ee41a301] 2021-05-31 12:03:00 -0400
+Branch: REL_13_STABLE [fe6f63286] 2021-05-31 12:03:00 -0400
+Branch: REL_12_STABLE [6f9e7f21f] 2021-05-31 12:03:00 -0400
+Branch: REL_11_STABLE [fe194f731] 2021-05-31 12:03:00 -0400
+-->
+     <para>
+      Fix mis-planning of repeated application of a projection step
+      (Tom Lane)
+     </para>
+
+     <para>
+      The planner could create an incorrect plan in cases where two
+      ProjectionPaths were stacked on top of each other.  The only known
+      way to trigger that situation involves parallel sort operations, but
+      there may be other instances.  The result would be crashes or
+      incorrect query results.
+      Disclosure of server memory contents is also possible.
+      (CVE-2021-3677)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master Release: REL_14_BR [01e6f1a84] 2021-05-25 10:10:09 +0900
 Branch: REL_13_STABLE [a23c0b00f] 2021-05-25 10:11:13 +0900
@@ -586,28 +610,6 @@ Branch: REL9_6_STABLE [85ec6c322] 2021-07-27 15:44:12 -0400
       where an entry that cannot be changed without a postmaster restart
       has been modified, but not where the entry had been removed
       altogether.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master Release: REL_14_BR [6ee41a301] 2021-05-31 12:03:00 -0400
-Branch: REL_13_STABLE [fe6f63286] 2021-05-31 12:03:00 -0400
-Branch: REL_12_STABLE [6f9e7f21f] 2021-05-31 12:03:00 -0400
-Branch: REL_11_STABLE [fe194f731] 2021-05-31 12:03:00 -0400
--->
-     <para>
-      Fix mis-planning of repeated application of a projection step
-      (Tom Lane)
-     </para>
-
-     <para>
-      The planner could create an incorrect plan in cases where two
-      ProjectionPaths were stacked on top of each other.  The only known
-      way to trigger that situation involves parallel sort operations, but
-      there may be other instances.  The result would be crashes or
-      incorrect query results.
      </para>
     </listitem>
 
