@@ -308,8 +308,9 @@ make prefix=/usr/local/pgsql.new install
      must be installed in the new cluster, usually via operating system
      commands.  Do not load the schema definitions, e.g., <command>CREATE
      EXTENSION pgcrypto</command>, because these will be duplicated from
-     the old cluster.  (Extensions with available updates can be processed
-     later using <literal>ALTER EXTENSION ... UPDATE</literal>.)
+     the old cluster.  If extension updates are available,
+     <application>pg_upgrade</application> will report this and create
+     a script that can be run later to update them.
     </para>
    </step>
 
