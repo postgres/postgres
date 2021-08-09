@@ -606,10 +606,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	if (es->verbose && plannedstmt->queryId != UINT64CONST(0))
 	{
-		char		buf[MAXINT8LEN + 1];
-
-		pg_lltoa(plannedstmt->queryId, buf);
-		ExplainPropertyText("Query Identifier", buf, es);
+		/*
+		 * Output the queryid as an int64 rather than a uint64 so we match
+		 * what would be seen in the BIGINT pg_stat_statements.queryid column.
+		 */
+		ExplainPropertyInteger("Query Identifier", NULL, (int64)
+							   plannedstmt->queryId, es);
 	}
 
 	/* Show buffer usage in planning */
