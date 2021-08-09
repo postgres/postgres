@@ -48,7 +48,7 @@ $node_A->safe_psql('postgres',
 $node_A->safe_psql('postgres', "
 	INSERT INTO tab_full SELECT generate_series(1,10);");
 
-# Create the same tables on node_B amd node_C
+# Create the same tables on node_B and node_C
 $node_B->safe_psql('postgres',
 	"CREATE TABLE tab_full (a int PRIMARY KEY)");
 $node_C->safe_psql('postgres',
