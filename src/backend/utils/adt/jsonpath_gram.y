@@ -583,6 +583,14 @@ jspConvertRegexFlags(uint32 xflags)
 					 errmsg("XQuery \"x\" flag (expanded regular expressions) is not implemented")));
 	}
 
+	/*
+	 * We'll never need sub-match details at execution.  While
+	 * RE_compile_and_execute would set this flag anyway, force it on here to
+	 * ensure that the regex cache entries created by makeItemLikeRegex are
+	 * useful.
+	 */
+	cflags |= REG_NOSUB;
+
 	return cflags;
 }
 

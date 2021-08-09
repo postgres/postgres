@@ -65,7 +65,7 @@ static struct subre *subre(struct vars *, int, int, struct state *, struct state
 static void freesubre(struct vars *, struct subre *);
 static void freesubreandsiblings(struct vars *, struct subre *);
 static void freesrnode(struct vars *, struct subre *);
-static void optst(struct vars *, struct subre *);
+static void removecaptures(struct vars *, struct subre *);
 static int	numst(struct subre *, int);
 static void markst(struct subre *);
 static void cleanst(struct vars *);
@@ -431,7 +431,8 @@ pg_regcomp(regex_t *re,
 		dumpst(v->tree, debug, 1);
 	}
 #endif
-	optst(v, v->tree);
+	if (v->cflags & REG_NOSUB)
+		removecaptures(v, v->tree);
 	v->ntree = numst(v->tree, 1);
 	markst(v->tree);
 	cleanst(v);
@@ -1013,14 +1014,16 @@ parseqatom(struct vars *v,
 			break;
 		case BACKREF:			/* the Feature From The Black Lagoon */
 			INSIST(type != LACON, REG_ESUBREG);
-			INSIST(v->nextvalue < v->nsubs, REG_ESUBREG);
-			INSIST(v->subs[v->nextvalue] != NULL, REG_ESUBREG);
+			subno = v->nextvalue;
+			assert(subno > 0);
+			INSIST(subno < v->nsubs, REG_ESUBREG);
 			NOERRN();
-			assert(v->nextvalue > 0);
+			INSIST(v->subs[subno] != NULL, REG_ESUBREG);
+			NOERRN();
 			atom = subre(v, 'b', BACKR, lp, rp);
 			NOERRN();
-			subno = v->nextvalue;
 			atom->backno = subno;
+			v->subs[subno]->flags |= BRUSE;
 			EMPTYARC(lp, rp);	/* temporarily, so there's something */
 			NEXT();
 			break;
@@ -2141,19 +2144,54 @@ freesrnode(struct vars *v,		/* might be NULL */
 }
 
 /*
- * optst - optimize a subRE subtree
+ * removecaptures - remove unnecessary capture subREs
+ *
+ * If the caller said that it doesn't care about subexpression match data,
+ * we may delete the "capture" markers on subREs that are not referenced
+ * by any backrefs, and then simplify anything that's become non-messy.
+ * Call this only if REG_NOSUB flag is set.
  */
 static void
-optst(struct vars *v,
-	  struct subre *t)
+removecaptures(struct vars *v,
+			   struct subre *t)
 {
+	struct subre *t2;
+
+	assert(t != NULL);
+
 	/*
-	 * DGP (2007-11-13): I assume it was the programmer's intent to eventually
-	 * come back and add code to optimize subRE trees, but the routine coded
-	 * just spends effort traversing the tree and doing nothing. We can do
-	 * nothing with less effort.
+	 * If this isn't itself a backref target, clear capno and tentatively
+	 * clear CAP flag.
 	 */
-	return;
+	if (!(t->flags & BRUSE))
+	{
+		t->capno = 0;
+		t->flags &= ~CAP;
+	}
+
+	/* Now recurse to children */
+	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
+	{
+		removecaptures(v, t2);
+		/* Propagate child CAP flag back up, if it's still set */
+		if (t2->flags & CAP)
+			t->flags |= CAP;
+	}
+
+	/*
+	 * If t now contains neither captures nor backrefs, there's no longer any
+	 * need to care where its sub-match boundaries are, so we can reduce it to
+	 * a simple DFA node.  (Note in particular that MIXED child greediness is
+	 * not a hindrance here, so we don't use the MESSY() macro.)
+	 */
+	if ((t->flags & (CAP | BACKR)) == 0)
+	{
+		if (t->child)
+			freesubreandsiblings(v, t->child);
+		t->child = NULL;
+		t->op = '=';
+		t->flags &= ~MIXED;
+	}
 }
 
 /*
@@ -2501,6 +2539,8 @@ stdump(struct subre *t,
 		fprintf(f, " hascapture");
 	if (t->flags & BACKR)
 		fprintf(f, " hasbackref");
+	if (t->flags & BRUSE)
+		fprintf(f, " isreferenced");
 	if (!(t->flags & INUSE))
 		fprintf(f, " UNUSED");
 	if (t->latype != (char) -1)

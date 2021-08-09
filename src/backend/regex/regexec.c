@@ -213,12 +213,9 @@ pg_regexec(regex_t *re,
 		return REG_NOMATCH;
 	backref = (v->g->info & REG_UBACKREF) ? 1 : 0;
 	v->eflags = flags;
-	if (v->g->cflags & REG_NOSUB)
-		nmatch = 0;				/* override client */
-	v->nmatch = nmatch;
-	if (backref)
+	if (backref && nmatch <= v->g->nsub)
 	{
-		/* need work area */
+		/* need larger work area */
 		if (v->g->nsub + 1 <= LOCALMAT)
 			v->pmatch = mat;
 		else
@@ -229,7 +226,17 @@ pg_regexec(regex_t *re,
 		v->nmatch = v->g->nsub + 1;
 	}
 	else
+	{
+		/* we can store results directly in caller's array */
 		v->pmatch = pmatch;
+		/* ensure any extra entries in caller's array are filled with -1 */
+		if (nmatch > 0)
+			zapallsubs(pmatch, nmatch);
+		/* then forget about extra entries, to avoid useless work in find() */
+		if (nmatch > v->g->nsub + 1)
+			nmatch = v->g->nsub + 1;
+		v->nmatch = nmatch;
+	}
 	v->details = details;
 	v->start = (chr *) string;
 	v->search_start = (chr *) string + search_start;
@@ -290,12 +297,20 @@ pg_regexec(regex_t *re,
 	else
 		st = find(v, &v->g->tree->cnfa, &v->g->cmap);
 
-	/* copy (portion of) match vector over if necessary */
-	if (st == REG_OKAY && v->pmatch != pmatch && nmatch > 0)
+	/* on success, ensure caller's match vector is filled correctly */
+	if (st == REG_OKAY && nmatch > 0)
 	{
-		zapallsubs(pmatch, nmatch);
-		n = (nmatch < v->nmatch) ? nmatch : v->nmatch;
-		memcpy(VS(pmatch), VS(v->pmatch), n * sizeof(regmatch_t));
+		if (v->pmatch != pmatch)
+		{
+			/* copy portion of match vector over from (larger) work area */
+			assert(nmatch <= v->nmatch);
+			memcpy(VS(pmatch), VS(v->pmatch), nmatch * sizeof(regmatch_t));
+		}
+		if (v->g->cflags & REG_NOSUB)
+		{
+			/* don't expose possibly-partial sub-match results to caller */
+			zapallsubs(pmatch, nmatch);
+		}
 	}
 
 	/* clean up */
@@ -752,7 +767,6 @@ cdissect(struct vars *v,
 			break;
 		case '(':				/* no-op capture node */
 			assert(t->child != NULL);
-			assert(t->capno > 0);
 			er = cdissect(v, t->child, begin, end);
 			break;
 		default:

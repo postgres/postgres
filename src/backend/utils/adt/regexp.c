@@ -347,6 +347,10 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 {
 	regex_t    *re;
 
+	/* Use REG_NOSUB if caller does not want sub-match details */
+	if (nmatch < 2)
+		cflags |= REG_NOSUB;
+
 	/* Compile RE */
 	re = RE_compile_and_cache(text_re, cflags, collation);
 
@@ -1412,6 +1416,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	int			orig_len;
 	pg_wchar   *wide_str;
 	int			wide_len;
+	int			cflags;
 	regex_t    *cpattern;
 	regmatch_t *pmatch;
 	int			pmatch_len;
@@ -1430,7 +1435,10 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
 	/* set up the compiled pattern */
-	cpattern = RE_compile_and_cache(pattern, re_flags->cflags, collation);
+	cflags = re_flags->cflags;
+	if (!use_subpatterns)
+		cflags |= REG_NOSUB;
+	cpattern = RE_compile_and_cache(pattern, cflags, collation);
 
 	/* do we want to remember subpatterns? */
 	if (use_subpatterns && cpattern->re_nsub > 0)
@@ -1952,7 +1960,7 @@ regexp_fixed_prefix(text *text_re, bool case_insensitive, Oid collation,
 	if (case_insensitive)
 		cflags |= REG_ICASE;
 
-	re = RE_compile_and_cache(text_re, cflags, collation);
+	re = RE_compile_and_cache(text_re, cflags | REG_NOSUB, collation);
 
 	/* Examine it to see if there's a fixed prefix */
 	re_result = pg_regprefix(re, &str, &slen);

@@ -477,13 +477,14 @@ struct subre
 #define  MIXED	 04				/* mixed preference below */
 #define  CAP	 010			/* capturing parens here or below */
 #define  BACKR	 020			/* back reference here or below */
+#define  BRUSE	 040			/* is referenced by a back reference */
 #define  INUSE	 0100			/* in use in final tree */
-#define  NOPROP  03				/* bits which may not propagate up */
+#define  UPPROP  (MIXED|CAP|BACKR)	/* flags which should propagate up */
 #define  LMIX(f) ((f)<<2)		/* LONGER -> MIXED */
 #define  SMIX(f) ((f)<<1)		/* SHORTER -> MIXED */
-#define  UP(f)	 (((f)&~NOPROP) | (LMIX(f) & SMIX(f) & MIXED))
+#define  UP(f)	 (((f)&UPPROP) | (LMIX(f) & SMIX(f) & MIXED))
 #define  MESSY(f)	 ((f)&(MIXED|CAP|BACKR))
-#define  PREF(f) ((f)&NOPROP)
+#define  PREF(f)	 ((f)&(LONGER|SHORTER))
 #define  PREF2(f1, f2)	 ((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
 	char		latype;			/* LATYPE code, if lookaround constraint */

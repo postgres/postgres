@@ -63,8 +63,8 @@ select * from test_regex('ab', 'ab', 'b');
 
 -- expectMatch	4.1  -		(a)e		ae	ae	a
 select * from test_regex('(a)e', 'ae', '-');
--- expectMatch	4.2  o		(a)e		ae
-select * from test_regex('(a)e', 'ae', 'o');
+-- expectMatch	4.2  oPR	(.)\1e		abeaae	aae	{}
+select * from test_regex('(.)\1e', 'abeaae', 'oPR');
 -- expectMatch	4.3  b		{\(a\)b}	ab	ab	a
 select * from test_regex('\(a\)b', 'ab', 'b');
 -- expectMatch	4.4  -		a((b)c)		abc	abc	bc	b
@@ -775,6 +775,11 @@ select * from test_regex('(^\w+).*\1', 'abc abc abc', 'LRP');
 select * from test_regex('(^\w+\M).*\1', 'abc abcd abd', 'LRP');
 select * from test_regex('(\w+(?= )).*\1', 'abc abcd abd', 'HLRP');
 
+-- exercise oversize-regmatch_t-array paths in regexec()
+-- (that case is not reachable via test_regex, sadly)
+select substring('fffoooooooooooooooooooooooooooooooo', '^(.)\1(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)');
+select regexp_split_to_array('abcxxxdefyyyghi', '((.))(\1\2)');
+
 -- doing 15 "octal escapes vs back references"
 
 -- # initial zero is always octal
@@ -1011,6 +1016,10 @@ select * from test_regex('(a*)*', 'bc', 'N');
 select * from test_regex(' TO (([a-z0-9._]+|"([^"]+|"")+")+)', 'asd TO foo', 'M');
 -- expectMatch	21.36 RPQ	((.))(\2){0}	xy	x	x	x	{}
 select * from test_regex('((.))(\2){0}', 'xy', 'RPQ');
+-- expectMatch	21.37 RP	((.))(\2)	xyy	yy	y	y	y
+select * from test_regex('((.))(\2)', 'xyy', 'RP');
+-- expectMatch	21.38 oRP	((.))(\2)	xyy	yy	{}	{}	{}
+select * from test_regex('((.))(\2)', 'xyy', 'oRP');
 
 -- doing 22 "multicharacter collating elements"
 -- # again ugh

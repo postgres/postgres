@@ -146,12 +146,12 @@ select * from test_regex('(a)e', 'ae', '-');
  {ae,a}
 (2 rows)
 
--- expectMatch	4.2  o		(a)e		ae
-select * from test_regex('(a)e', 'ae', 'o');
- test_regex 
-------------
- {0}
- {NULL}
+-- expectMatch	4.2  oPR	(.)\1e		abeaae	aae	{}
+select * from test_regex('(.)\1e', 'abeaae', 'oPR');
+           test_regex           
+--------------------------------
+ {1,REG_UBACKREF,REG_UNONPOSIX}
+ {aae,NULL}
 (2 rows)
 
 -- expectMatch	4.3  b		{\(a\)b}	ab	ab	a
@@ -2658,6 +2658,20 @@ select * from test_regex('(\w+(?= )).*\1', 'abc abcd abd', 'HLRP');
  {"abc abc",abc}
 (2 rows)
 
+-- exercise oversize-regmatch_t-array paths in regexec()
+-- (that case is not reachable via test_regex, sadly)
+select substring('fffoooooooooooooooooooooooooooooooo', '^(.)\1(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)');
+ substring 
+-----------
+ f
+(1 row)
+
+select regexp_split_to_array('abcxxxdefyyyghi', '((.))(\1\2)');
+ regexp_split_to_array 
+-----------------------
+ {abc,def,ghi}
+(1 row)
+
 -- doing 15 "octal escapes vs back references"
 -- # initial zero is always octal
 -- expectMatch	15.1  MP	"a\\010b"	"a\bb"	"a\bb"
@@ -3474,6 +3488,22 @@ select * from test_regex('((.))(\2){0}', 'xy', 'RPQ');
 --------------------------------------------
  {3,REG_UBACKREF,REG_UBOUNDS,REG_UNONPOSIX}
  {x,x,x,NULL}
+(2 rows)
+
+-- expectMatch	21.37 RP	((.))(\2)	xyy	yy	y	y	y
+select * from test_regex('((.))(\2)', 'xyy', 'RP');
+           test_regex           
+--------------------------------
+ {3,REG_UBACKREF,REG_UNONPOSIX}
+ {yy,y,y,y}
+(2 rows)
+
+-- expectMatch	21.38 oRP	((.))(\2)	xyy	yy	{}	{}	{}
+select * from test_regex('((.))(\2)', 'xyy', 'oRP');
+           test_regex           
+--------------------------------
+ {3,REG_UBACKREF,REG_UNONPOSIX}
+ {yy,NULL,NULL,NULL}
 (2 rows)
 
 -- doing 22 "multicharacter collating elements"

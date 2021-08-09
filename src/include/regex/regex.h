@@ -106,7 +106,7 @@ typedef struct
 #define REG_QUOTE	000004		/* no special characters, none */
 #define REG_NOSPEC	REG_QUOTE	/* historical synonym */
 #define REG_ICASE	000010		/* ignore case */
-#define REG_NOSUB	000020		/* don't care about subexpressions */
+#define REG_NOSUB	000020		/* caller doesn't need subexpr match data */
 #define REG_EXPANDED	000040	/* expanded format, white space & comments */
 #define REG_NLSTOP	000100		/* \n doesn't match . or [^ ] */
 #define REG_NLANCH	000200		/* ^ matches after \n, $ before */

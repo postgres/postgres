@@ -541,9 +541,11 @@ createTrgmNFA(text *text_re, Oid collation,
 	 * Stage 1: Compile the regexp into a NFA, using the regexp library.
 	 */
 #ifdef IGNORECASE
-	RE_compile(&regex, text_re, REG_ADVANCED | REG_ICASE, collation);
+	RE_compile(&regex, text_re,
+			   REG_ADVANCED | REG_NOSUB | REG_ICASE, collation);
 #else
-	RE_compile(&regex, text_re, REG_ADVANCED, collation);
+	RE_compile(&regex, text_re,
+			   REG_ADVANCED | REG_NOSUB, collation);
 #endif
 
 	/*
