@@ -104,6 +104,16 @@ const uint8 pg_number_of_ones[256] = {
 };
 
 /*
+ * With MSVC on x86_64 builds, try using native popcnt instructions via the
+ * __popcnt and __popcnt64 intrinsics.  These don't work the same as GCC's
+ * __builtin_popcount* intrinsic functions as they always emit popcnt
+ * instructions.
+ */
+#if defined(_MSC_VER) && defined(_M_AMD64)
+#define HAVE_X86_64_POPCNTQ
+#endif
+
+/*
  * On x86_64, we can use the hardware popcount instruction, but only if
  * we can verify that the CPU supports it via the cpuid instruction.
  *
@@ -112,28 +122,28 @@ const uint8 pg_number_of_ones[256] = {
  */
 #ifdef HAVE_X86_64_POPCNTQ
 #if defined(HAVE__GET_CPUID) || defined(HAVE__CPUID)
-#define USE_POPCNT_ASM 1
+#define TRY_POPCNT_FAST 1
 #endif
 #endif
 
 static int	pg_popcount32_slow(uint32 word);
 static int	pg_popcount64_slow(uint64 word);
 
-#ifdef USE_POPCNT_ASM
+#ifdef TRY_POPCNT_FAST
 static bool pg_popcount_available(void);
 static int	pg_popcount32_choose(uint32 word);
 static int	pg_popcount64_choose(uint64 word);
-static int	pg_popcount32_asm(uint32 word);
-static int	pg_popcount64_asm(uint64 word);
+static int	pg_popcount32_fast(uint32 word);
+static int	pg_popcount64_fast(uint64 word);
 
 int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
 #else
 int			(*pg_popcount32) (uint32 word) = pg_popcount32_slow;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_slow;
-#endif							/* USE_POPCNT_ASM */
+#endif							/* TRY_POPCNT_FAST */
 
-#ifdef USE_POPCNT_ASM
+#ifdef TRY_POPCNT_FAST
 
 /*
  * Return true if CPUID indicates that the POPCNT instruction is available.
@@ -165,8 +175,8 @@ pg_popcount32_choose(uint32 word)
 {
 	if (pg_popcount_available())
 	{
-		pg_popcount32 = pg_popcount32_asm;
-		pg_popcount64 = pg_popcount64_asm;
+		pg_popcount32 = pg_popcount32_fast;
+		pg_popcount64 = pg_popcount64_fast;
 	}
 	else
 	{
@@ -182,8 +192,8 @@ pg_popcount64_choose(uint64 word)
 {
 	if (pg_popcount_available())
 	{
-		pg_popcount32 = pg_popcount32_asm;
-		pg_popcount64 = pg_popcount64_asm;
+		pg_popcount32 = pg_popcount32_fast;
+		pg_popcount64 = pg_popcount64_fast;
 	}
 	else
 	{
@@ -195,32 +205,40 @@ pg_popcount64_choose(uint64 word)
 }
 
 /*
- * pg_popcount32_asm
+ * pg_popcount32_fast
  *		Return the number of 1 bits set in word
  */
 static int
-pg_popcount32_asm(uint32 word)
+pg_popcount32_fast(uint32 word)
 {
+#ifdef _MSC_VER
+	return __popcnt(word);
+#else
 	uint32		res;
 
 __asm__ __volatile__(" popcntl %1,%0\n":"=q"(res):"rm"(word):"cc");
 	return (int) res;
+#endif
 }
 
 /*
- * pg_popcount64_asm
+ * pg_popcount64_fast
  *		Return the number of 1 bits set in word
  */
 static int
-pg_popcount64_asm(uint64 word)
+pg_popcount64_fast(uint64 word)
 {
+#ifdef _MSC_VER
+	return __popcnt64(word);
+#else
 	uint64		res;
 
 __asm__ __volatile__(" popcntq %1,%0\n":"=q"(res):"rm"(word):"cc");
 	return (int) res;
+#endif
 }
 
-#endif							/* USE_POPCNT_ASM */
+#endif							/* TRY_POPCNT_FAST */
 
 
 /*
