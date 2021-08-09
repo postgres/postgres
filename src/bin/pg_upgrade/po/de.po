@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-06 21:40+0000\n"
+"POT-Creation-Date: 2021-08-06 20:39+0000\n"
 "PO-Revision-Date: 2020-04-05 09:31+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -55,7 +55,7 @@ msgstr ""
 "neuen Cluster neu mit initdb initialisieren, bevor fortgesetzt\n"
 "werden kann.\n"
 
-#: check.c:236
+#: check.c:238
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade so,\n"
@@ -68,7 +68,7 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:242
+#: check.c:244
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -77,7 +77,7 @@ msgstr ""
 "Mit diesem Skript können die Dateien des alten Clusters gelöscht werden:\n"
 "    %s\n"
 
-#: check.c:247
+#: check.c:249
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -90,93 +90,93 @@ msgstr ""
 "Datenverzeichnis des neuen Clusters im alten Cluster-Verzeichnis\n"
 "liegen.  Der Inhalt des alten Clusters muss von Hand gelöscht werden.\n"
 
-#: check.c:257
+#: check.c:259
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Prüfe Cluster-Versionen"
 
-#: check.c:269
+#: check.c:271
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
 msgstr "Dieses Programm kann nur Upgrades von PostgreSQL Version 8.4 oder später durchführen.\n"
 
-#: check.c:273
+#: check.c:275
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Dieses Programm kann nur Upgrades auf PostgreSQL Version %s durchführen.\n"
 
-#: check.c:282
+#: check.c:284
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
 msgstr "Dieses Programm kann keine Downgrades auf ältere Hauptversionen von PostgreSQL durchführen.\n"
 
-#: check.c:287
+#: check.c:289
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions.\n"
 msgstr "Die Daten- und Programmverzeichnisse des alten Clusters stammen von verschiedenen Hauptversionen.\n"
 
-#: check.c:290
+#: check.c:292
 #, c-format
 msgid "New cluster data and binary directories are from different major versions.\n"
 msgstr "Die Daten- und Programmverzeichnisse des neuen Clusters stammen von verschiedenen Hauptversionen.\n"
 
-#: check.c:307
+#: check.c:309
 #, c-format
 msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
 msgstr "Wenn ein laufender alter Server vor Version 9.1 geprüft wird, muss die Portnummer des alten Servers angegeben werden.\n"
 
-#: check.c:311
+#: check.c:313
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different.\n"
 msgstr "Wenn ein laufender Server geprüft wird, müssen die alte und die neue Portnummer verschieden sein.\n"
 
-#: check.c:326
+#: check.c:328
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "Kodierungen für Datenbank »%s« stimmen nicht überein: alt »%s«, neu »%s«\n"
 
-#: check.c:331
+#: check.c:333
 #, c-format
 msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_collate-Werte für Datenbank »%s« stimmen nicht überein: alt »%s«, neu »%s«\n"
 
-#: check.c:334
+#: check.c:336
 #, c-format
 msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "lc_ctype-Werte für Datenbank »%s« stimmen nicht überein: alt »%s«, neu »%s«\n"
 
-#: check.c:407
+#: check.c:409
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr "Datenbank »%s« im neuen Cluster ist nicht leer: Relation »%s.%s« gefunden\n"
 
-#: check.c:456
+#: check.c:458
 #, c-format
 msgid "Creating script to analyze new cluster"
 msgstr "Erzeuge Skript zum Analysieren des neuen Clusters"
 
-#: check.c:470 check.c:629 check.c:893 check.c:972 file.c:341 function.c:246
-#: option.c:495 version.c:57 version.c:207 version.c:377
+#: check.c:472 check.c:631 check.c:895 check.c:974 file.c:341 function.c:246
+#: option.c:495 version.c:57 version.c:207 version.c:377 version.c:512
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht öffnen: %s\n"
 
-#: check.c:518 check.c:685
+#: check.c:520 check.c:687
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht ausführbar machen: %s\n"
 
-#: check.c:548
+#: check.c:550
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Prüfe Tablespace-Verzeichnisse des neuen Clusters"
 
-#: check.c:559
+#: check.c:561
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\"\n"
 msgstr "Tablespace-Verzeichnis für neuen Cluster existiert bereits: »%s«\n"
 
-#: check.c:592
+#: check.c:594
 #, c-format
 msgid ""
 "\n"
@@ -185,7 +185,7 @@ msgstr ""
 "\n"
 "WARNUNG:  das neue Datenverzeichnis sollte nicht im alten Datenverzeichnis liegen, z.B. %s\n"
 
-#: check.c:616
+#: check.c:618
 #, c-format
 msgid ""
 "\n"
@@ -194,73 +194,73 @@ msgstr ""
 "\n"
 "WARNUNG:  benutzerdefinierte Tablespace-Pfade sollten nicht im Datenverzeichnis liegen, z.B. %s\n"
 
-#: check.c:626
+#: check.c:628
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Erzeuge Skript zum Löschen des alten Clusters"
 
-#: check.c:705
+#: check.c:707
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Prüfe ob der Datenbankbenutzer der Installationsbenutzer ist"
 
-#: check.c:721
+#: check.c:723
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "Datenbankbenutzer »%s« ist nicht der Installationsbenutzer\n"
 
-#: check.c:732
+#: check.c:734
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "konnte die Anzahl der Benutzer nicht ermitteln\n"
 
-#: check.c:740
+#: check.c:742
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "Nur der Installationsbenutzer darf im neuen Cluster definiert sein.\n"
 
-#: check.c:760
+#: check.c:762
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Prüfe Verbindungseinstellungen der Datenbank"
 
-#: check.c:782
+#: check.c:784
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 darf keine Verbindungen erlauben, d.h. ihr pg_database.datallowconn muss falsch sein\n"
 
-#: check.c:792
+#: check.c:794
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
 msgstr "Alle Datenbanken außer template0 müssen Verbindungen erlauben, d.h. ihr pg_database.datallowconn muss wahr sein\n"
 
-#: check.c:817
+#: check.c:819
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Prüfe auf vorbereitete Transaktionen"
 
-#: check.c:826
+#: check.c:828
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "Der alte Cluster enthält vorbereitete Transaktionen\n"
 
-#: check.c:828
+#: check.c:830
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "Der neue Cluster enthält vorbereitete Transaktionen\n"
 
-#: check.c:854
+#: check.c:856
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Prüfe auf contrib/isn mit unpassender bigint-Übergabe"
 
-#: check.c:915 check.c:994 check.c:1051 check.c:1110 check.c:1139
+#: check.c:917 check.c:996 check.c:1053 check.c:1112 check.c:1141
 #: function.c:268 version.c:281 version.c:318 version.c:461
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
 
-#: check.c:916
+#: check.c:918
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -282,12 +282,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:940
+#: check.c:942
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Prüfe auf Tabellen mit WITH OIDS"
 
-#: check.c:995
+#: check.c:997
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not supported\n"
@@ -304,12 +304,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1023
+#: check.c:1025
 #, c-format
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Prüfe auf systemdefinierte zusammengesetzte Typen in Benutzertabellen"
 
-#: check.c:1052
+#: check.c:1054
 #, c-format
 msgid ""
 "Your installation contains system-defined composite type(s) in user tables.\n"
@@ -329,12 +329,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1080
+#: check.c:1082
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Prüfe auf reg*-Datentypen in Benutzertabellen"
 
-#: check.c:1111
+#: check.c:1113
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -354,12 +354,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1133
+#: check.c:1135
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Prüfe auf inkompatiblen Datentyp »jsonb«"
 
-#: check.c:1140
+#: check.c:1142
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -377,204 +377,209 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1161
+#: check.c:1163
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Prüfe auf Rollen, die mit »pg_« anfangen"
 
-#: check.c:1171
+#: check.c:1173
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "Der alte Cluster enthält Rollen, die mit »pg_« anfangen\n"
 
-#: check.c:1173
+#: check.c:1175
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "Der neue Cluster enthält Rollen, die mit »pg_« anfangen\n"
 
-#: check.c:1199
+#: check.c:1201
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "konnte aktuelle Locale nicht ermitteln\n"
 
-#: check.c:1208
+#: check.c:1210
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "konnte System-Locale-Namen für »%s« nicht ermitteln\n"
 
-#: check.c:1214
+#: check.c:1216
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "konnte alte Locale »%s« nicht wiederherstellen\n"
 
-#: controldata.c:127 controldata.c:195
+#: controldata.c:128 controldata.c:196
 #, c-format
 msgid "could not get control data using %s: %s\n"
 msgstr "konnte Kontrolldaten mit %s nicht ermitteln: %s\n"
 
-#: controldata.c:138
+#: controldata.c:139
 #, c-format
 msgid "%d: database cluster state problem\n"
 msgstr "%d: Problem mit dem Zustand des Clusters\n"
 
-#: controldata.c:156
+#: controldata.c:157
 #, c-format
 msgid "The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n"
 msgstr "Der alte Cluster wurde im Wiederherstellungsmodus heruntergefahren. Um ihn zu aktualisieren, verwenden Sie »rsync« wie in der Dokumentation beschrieben oder fahren Sie ihn im Primärmodus herunter.\n"
 
-#: controldata.c:158
+#: controldata.c:159
 #, c-format
 msgid "The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n"
 msgstr "Der neue Cluster wurde im Wiederherstellungsmodus heruntergefahren. Um ihn zu aktualisieren, verwenden Sie »rsync« wie in der Dokumentation beschrieben oder fahren Sie ihn im Primärmodus herunter.\n"
 
-#: controldata.c:163
+#: controldata.c:164
 #, c-format
 msgid "The source cluster was not shut down cleanly.\n"
 msgstr "Der alte Cluster wurde nicht sauber heruntergefahren.\n"
 
-#: controldata.c:165
+#: controldata.c:166
 #, c-format
 msgid "The target cluster was not shut down cleanly.\n"
 msgstr "Der neue Cluster wurde nicht sauber heruntergefahren.\n"
 
-#: controldata.c:176
+#: controldata.c:177
 #, c-format
 msgid "The source cluster lacks cluster state information:\n"
 msgstr "Im alten Cluster fehlen Cluster-Zustandsinformationen:\n"
 
-#: controldata.c:178
+#: controldata.c:179
 #, c-format
 msgid "The target cluster lacks cluster state information:\n"
 msgstr "Im neuen Cluster fehlen Cluster-Zustandsinformationen:\n"
 
-#: controldata.c:208 dump.c:51 pg_upgrade.c:336 pg_upgrade.c:373
+#: controldata.c:209 dump.c:51 pg_upgrade.c:336 pg_upgrade.c:373
 #: relfilenode.c:248 util.c:80
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: controldata.c:215
+#: controldata.c:216
 #, c-format
 msgid "%d: pg_resetwal problem\n"
 msgstr "%d: Problem mit pg_resetwal\n"
 
-#: controldata.c:225 controldata.c:235 controldata.c:246 controldata.c:257
-#: controldata.c:268 controldata.c:287 controldata.c:298 controldata.c:309
-#: controldata.c:320 controldata.c:331 controldata.c:342 controldata.c:345
-#: controldata.c:349 controldata.c:359 controldata.c:371 controldata.c:382
-#: controldata.c:393 controldata.c:404 controldata.c:415 controldata.c:426
-#: controldata.c:437 controldata.c:448 controldata.c:459 controldata.c:470
-#: controldata.c:481
+#: controldata.c:226 controldata.c:236 controldata.c:247 controldata.c:258
+#: controldata.c:269 controldata.c:288 controldata.c:299 controldata.c:310
+#: controldata.c:321 controldata.c:332 controldata.c:343 controldata.c:354
+#: controldata.c:357 controldata.c:361 controldata.c:371 controldata.c:383
+#: controldata.c:394 controldata.c:405 controldata.c:416 controldata.c:427
+#: controldata.c:438 controldata.c:449 controldata.c:460 controldata.c:471
+#: controldata.c:482 controldata.c:493
 #, c-format
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: Problem beim Ermitteln der Kontrolldaten\n"
 
-#: controldata.c:546
+#: controldata.c:558
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "Im alten Cluster fehlen einige notwendige Kontrollinformationen:\n"
 
-#: controldata.c:549
+#: controldata.c:561
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "Im neuen Cluster fehlen einige notwendige Kontrollinformationen:\n"
 
-#: controldata.c:552
+#: controldata.c:564
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  Checkpoint nächste XID\n"
 
-#: controldata.c:555
+#: controldata.c:567
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  NextOID des letzten Checkpoints\n"
 
-#: controldata.c:558
+#: controldata.c:570
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  NextMultiXactId des letzten Checkpoints\n"
 
-#: controldata.c:562
+#: controldata.c:574
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  oldestMultiXid des letzten Checkpoints\n"
 
-#: controldata.c:565
+#: controldata.c:577
+#, c-format
+msgid "  latest checkpoint oldestXID\n"
+msgstr "  oldestXID des letzten Checkpoints\n"
+
+#: controldata.c:580
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  NextMultiOffset des letzten Checkpoints\n"
 
-#: controldata.c:568
+#: controldata.c:583
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  erstes WAL-Segment nach dem Reset\n"
 
-#: controldata.c:571
+#: controldata.c:586
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  Übergabe von Float8-Argumenten\n"
 
-#: controldata.c:574
+#: controldata.c:589
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  maximale Ausrichtung (Alignment)\n"
 
-#: controldata.c:577
+#: controldata.c:592
 #, c-format
 msgid "  block size\n"
 msgstr "  Blockgröße\n"
 
-#: controldata.c:580
+#: controldata.c:595
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  Segmentgröße für große Relationen\n"
 
-#: controldata.c:583
+#: controldata.c:598
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  WAL-Blockgröße\n"
 
-#: controldata.c:586
+#: controldata.c:601
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  WAL-Segmentgröße\n"
 
-#: controldata.c:589
+#: controldata.c:604
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  maximale Bezeichnerlänge\n"
 
-#: controldata.c:592
+#: controldata.c:607
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  maximale Anzahl indizierter Spalten\n"
 
-#: controldata.c:595
+#: controldata.c:610
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  maximale TOAST-Chunk-Größe\n"
 
-#: controldata.c:599
+#: controldata.c:614
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  Large-Object-Chunk-Größe\n"
 
-#: controldata.c:602
+#: controldata.c:617
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  Datum/Zeit sind Ganzzahlen?\n"
 
-#: controldata.c:606
+#: controldata.c:621
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  Datenprüfsummenversion\n"
 
-#: controldata.c:608
+#: controldata.c:623
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr "Kann ohne die benötigten Kontrollinformationen nicht fortsetzen, Programm wird beendet\n"
 
-#: controldata.c:623
+#: controldata.c:638
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match\n"
@@ -583,77 +588,77 @@ msgstr ""
 "altes und neues Alignment in pg_controldata ist ungültig oder stimmt nicht überein\n"
 "Wahrscheinlich ist ein Cluster eine 32-Bit-Installation und der andere 64-Bit\n"
 
-#: controldata.c:627
+#: controldata.c:642
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr "alte und neue Blockgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:630
+#: controldata.c:645
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
 msgstr "alte und neue maximale Relationssegmentgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:633
+#: controldata.c:648
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
 msgstr "alte und neue WAL-Blockgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:636
+#: controldata.c:651
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
 msgstr "alte und neue WAL-Segmentgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:639
+#: controldata.c:654
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
 msgstr "alte und neue maximale Bezeichnerlängen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:642
+#: controldata.c:657
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
 msgstr "alte und neue Maximalzahlen indizierter Spalten von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:645
+#: controldata.c:660
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
 msgstr "alte und neue maximale TOAST-Chunk-Größen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:650
+#: controldata.c:665
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
 msgstr "alte und neue Large-Object-Chunk-Größen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:653
+#: controldata.c:668
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr "alte und neue Speicherung von Datums- und Zeittypen von pg_controldata ist ungültig oder stimmt nicht überein\n"
 
-#: controldata.c:666
+#: controldata.c:681
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr "der alte Cluster verwendet keine Datenprüfsummen, aber der neue verwendet sie\n"
 
-#: controldata.c:669
+#: controldata.c:684
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr "die alte Cluster verwendet Datenprüfsummen, aber der neue nicht\n"
 
-#: controldata.c:671
+#: controldata.c:686
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr "Prüfsummenversionen im alten und neuen Cluster stimmen nicht überein\n"
 
-#: controldata.c:682
+#: controldata.c:697
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Füge Endung ».old« an altes global/pg_control an"
 
-#: controldata.c:687
+#: controldata.c:702
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "Konnte %s nicht in %s umbenennen.\n"
 
-#: controldata.c:690
+#: controldata.c:705
 #, c-format
 msgid ""
 "\n"
@@ -1433,32 +1438,37 @@ msgstr "konnte Verzeichnis »%s« nicht löschen\n"
 msgid "Copying old %s to new server"
 msgstr "Kopiere altes %s zum neuen Server"
 
-#: pg_upgrade.c:474
+#: pg_upgrade.c:473
+#, c-format
+msgid "Setting oldest XID for new cluster"
+msgstr "Setze älteste XID im neuen Cluster"
+
+#: pg_upgrade.c:481
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "Setze nächste Transaktions-ID und -epoche im neuen Cluster"
 
-#: pg_upgrade.c:504
+#: pg_upgrade.c:511
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "Setze nächste Multixact-ID und nächstes Offset im neuen Cluster"
 
-#: pg_upgrade.c:528
+#: pg_upgrade.c:535
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "Setze älteste Multixact-ID im neuen Cluster"
 
-#: pg_upgrade.c:548
+#: pg_upgrade.c:555
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "Setze WAL-Archive zurück"
 
-#: pg_upgrade.c:591
+#: pg_upgrade.c:598
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "Setze frozenxid und minmxid im neuen Cluster"
 
-#: pg_upgrade.c:593
+#: pg_upgrade.c:600
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "Setze minmxid im neuen Cluster"
@@ -1793,4 +1803,33 @@ msgstr ""
 "Datentyp in »name« ändern und das Upgrade neu starten. Eine Liste der\n"
 "Problemspalten ist in der Datei:\n"
 "    %s\n"
+"\n"
+
+#: version.c:486
+#, c-format
+msgid "Checking for extension updates"
+msgstr "Prüfe auf Aktualisierungen von Erweiterungen"
+
+#: version.c:538
+#, c-format
+msgid "notice"
+msgstr "Hinweis"
+
+#: version.c:539
+#, c-format
+msgid ""
+"\n"
+"Your installation contains extensions that should be updated\n"
+"with the ALTER EXTENSION command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will update\n"
+"these extensions.\n"
+"\n"
+msgstr ""
+"\n"
+"Ihre Installation enthält Erweiterungen, die mit dem Befehl ALTER\n"
+"EXTENSION aktualisiert werden sollten. Die Datei\n"
+"    %s\n"
+"kann mit psql als Datenbank-Superuser ausgeführt werden, um die\n"
+"Erweiterungen zu aktualisieren.\n"
 "\n"

@@ -2234,8 +2234,8 @@ msgstr "n'a pas pu identifier la boucle de dépendance"
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
-msgstr[0] "NOTE : il existe des constraintes de clés étrangères circulaires sur cette table :"
-msgstr[1] "NOTE : il existe des constraintes de clés étrangères circulaires sur ces tables :"
+msgstr[0] "NOTE : il existe des contraintes de clés étrangères circulaires sur cette table :"
+msgstr[1] "NOTE : il existe des contraintes de clés étrangères circulaires sur ces tables :"
 
 #: pg_dump_sort.c:1172 pg_dump_sort.c:1192
 #, c-format
@@ -2245,7 +2245,7 @@ msgstr "  %s"
 #: pg_dump_sort.c:1173
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
-msgstr "Il est possible de restaurer la sauvegarde sans utiliser --disable-triggers ou sans supprimer temporairement les constraintes."
+msgstr "Il est possible de restaurer la sauvegarde sans utiliser --disable-triggers ou sans supprimer temporairement les contraintes."
 
 #: pg_dump_sort.c:1174
 #, c-format
