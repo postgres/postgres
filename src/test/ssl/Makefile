@@ -17,7 +17,7 @@ export with_ssl
 
 CERTIFICATES := server_ca server-cn-and-alt-names \
 	server-cn-only server-single-alt-name server-multiple-alt-names \
-	server-no-names server-revoked server-ss \
+	server-no-names server-revoked \
 	client_ca client client-dn client-revoked \
 	root_ca
 
@@ -73,12 +73,6 @@ ssl/server-%.crt: ssl/server-%.key ssl/server_ca.crt server-%.config
 	openssl ca -name server_ca -batch -config cas.config -in ssl/server-$*.csr -out ssl/temp.crt  -extensions v3_req -extfile server-$*.config
 	openssl x509 -in ssl/temp.crt -out ssl/server-$*.crt # to keep just the PEM cert
 	rm ssl/server-$*.csr
-
-# Self-signed version of server-cn-only.crt
-ssl/server-ss.crt: ssl/server-cn-only.key ssl/server-cn-only.crt server-cn-only.config
-	openssl req -new -key ssl/server-cn-only.key -out ssl/server-ss.csr -config server-cn-only.config
-	openssl x509 -req -days 10000 -in ssl/server-ss.csr -signkey ssl/server-cn-only.key -out ssl/server-ss.crt  -extensions v3_req -extfile server-cn-only.config
-	rm ssl/server-ss.csr
 
 # Password-protected version of server-cn-only.key
 ssl/server-password.key: ssl/server-cn-only.key

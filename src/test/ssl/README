@@ -52,9 +52,6 @@ server-no-names
 	server certificates, with small variations in the hostnames present
         in the certificate. Signed by server_ca.
 
-server-ss
-	same as server-cn-only, but self-signed.
-
 server-password
 	same as server-cn-only, but password-protected.
 
