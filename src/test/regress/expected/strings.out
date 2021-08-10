@@ -571,11 +571,30 @@ SELECT 'abcdefg' SIMILAR TO '_bcd%' ESCAPE NULL AS null;
 SELECT 'abcdefg' SIMILAR TO '_bcd#%' ESCAPE '##' AS error;
 ERROR:  invalid escape string
 HINT:  Escape string must be empty or one character.
--- Test back reference in regexp_replace
+-- Test backslash escapes in regexp_replace's replacement string
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 
 ----------------
  (111) 222-3333
+(1 row)
+
+SELECT regexp_replace('foobarrbazz', E'(.)\\1', E'X\\&Y', 'g');
+  regexp_replace   
+-------------------
+ fXooYbaXrrYbaXzzY
+(1 row)
+
+SELECT regexp_replace('foobarrbazz', E'(.)\\1', E'X\\\\Y', 'g');
+ regexp_replace 
+----------------
+ fX\YbaX\YbaX\Y
+(1 row)
+
+-- not an error, though perhaps it should be:
+SELECT regexp_replace('foobarrbazz', E'(.)\\1', E'X\\Y\\1Z\\');
+ regexp_replace  
+-----------------
+ fX\YoZ\barrbazz
 (1 row)
 
 SELECT regexp_replace('AAA   BBB   CCC   ', E'\\s+', ' ', 'g');

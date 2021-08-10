@@ -4359,34 +4359,36 @@ replace_text(PG_FUNCTION_ARGS)
 }
 
 /*
- * check_replace_text_has_escape_char
+ * check_replace_text_has_escape
  *
- * check whether replace_text contains escape char.
+ * Returns 0 if text contains no backslashes that need processing.
+ * Returns 1 if text contains backslashes, but not regexp submatch specifiers.
+ * Returns 2 if text contains regexp submatch specifiers (\1 .. \9).
  */
-static bool
-check_replace_text_has_escape_char(const text *replace_text)
+static int
+check_replace_text_has_escape(const text *replace_text)
 {
+	int			result = 0;
 	const char *p = VARDATA_ANY(replace_text);
 	const char *p_end = p + VARSIZE_ANY_EXHDR(replace_text);
 
-	if (pg_database_encoding_max_length() == 1)
+	while (p < p_end)
 	{
-		for (; p < p_end; p++)
+		/* Find next escape char, if any. */
+		p = memchr(p, '\\', p_end - p);
+		if (p == NULL)
+			break;
+		p++;
+		/* Note: a backslash at the end doesn't require extra processing. */
+		if (p < p_end)
 		{
-			if (*p == '\\')
-				return true;
+			if (*p >= '1' && *p <= '9')
+				return 2;		/* Found a submatch specifier, so done */
+			result = 1;			/* Found some other sequence, keep looking */
+			p++;
 		}
 	}
-	else
-	{
-		for (; p < p_end; p += pg_mblen(p))
-		{
-			if (*p == '\\')
-				return true;
-		}
-	}
-
-	return false;
+	return result;
 }
 
 /*
@@ -4403,25 +4405,17 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 {
 	const char *p = VARDATA_ANY(replace_text);
 	const char *p_end = p + VARSIZE_ANY_EXHDR(replace_text);
-	int			eml = pg_database_encoding_max_length();
 
-	for (;;)
+	while (p < p_end)
 	{
 		const char *chunk_start = p;
 		int			so;
 		int			eo;
 
-		/* Find next escape char. */
-		if (eml == 1)
-		{
-			for (; p < p_end && *p != '\\'; p++)
-				 /* nothing */ ;
-		}
-		else
-		{
-			for (; p < p_end && *p != '\\'; p += pg_mblen(p))
-				 /* nothing */ ;
-		}
+		/* Find next escape char, if any. */
+		p = memchr(p, '\\', p_end - p);
+		if (p == NULL)
+			p = p_end;
 
 		/* Copy the text we just scanned over, if any. */
 		if (p > chunk_start)
@@ -4473,7 +4467,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			continue;
 		}
 
-		if (so != -1 && eo != -1)
+		if (so >= 0 && eo >= 0)
 		{
 			/*
 			 * Copy the text that is back reference of regexp.  Note so and eo
@@ -4491,36 +4485,37 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 	}
 }
 
-#define REGEXP_REPLACE_BACKREF_CNT		10
-
 /*
  * replace_text_regexp
  *
- * replace substring(s) in src_text that match regexp with replace_text.
+ * replace substring(s) in src_text that match pattern with replace_text.
+ * The replace_text can contain backslash markers to substitute
+ * (parts of) the matched text.
  *
+ * cflags: regexp compile flags.
+ * collation: collation to use.
  * search_start: the character (not byte) offset in src_text at which to
  * begin searching.
  * n: if 0, replace all matches; if > 0, replace only the N'th match.
- *
- * Note: to avoid having to include regex.h in builtins.h, we declare
- * the regexp argument as void *, but really it's regex_t *.
  */
 text *
-replace_text_regexp(text *src_text, void *regexp,
+replace_text_regexp(text *src_text, text *pattern_text,
 					text *replace_text,
+					int cflags, Oid collation,
 					int search_start, int n)
 {
 	text	   *ret_text;
-	regex_t    *re = (regex_t *) regexp;
+	regex_t    *re;
 	int			src_text_len = VARSIZE_ANY_EXHDR(src_text);
 	int			nmatches = 0;
 	StringInfoData buf;
-	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
+	regmatch_t	pmatch[10];		/* main match, plus \1 to \9 */
+	int			nmatch = lengthof(pmatch);
 	pg_wchar   *data;
 	size_t		data_len;
 	int			data_pos;
 	char	   *start_ptr;
-	bool		have_escape;
+	int			escape_status;
 
 	initStringInfo(&buf);
 
@@ -4528,8 +4523,19 @@ replace_text_regexp(text *src_text, void *regexp,
 	data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
 	data_len = pg_mb2wchar_with_len(VARDATA_ANY(src_text), data, src_text_len);
 
-	/* Check whether replace_text has escape char. */
-	have_escape = check_replace_text_has_escape_char(replace_text);
+	/* Check whether replace_text has escapes, especially regexp submatches. */
+	escape_status = check_replace_text_has_escape(replace_text);
+
+	/* If no regexp submatches, we can use REG_NOSUB. */
+	if (escape_status < 2)
+	{
+		cflags |= REG_NOSUB;
+		/* Also tell pg_regexec we only want the whole-match location. */
+		nmatch = 1;
+	}
+
+	/* Prepare the regexp. */
+	re = RE_compile_and_cache(pattern_text, cflags, collation);
 
 	/* start_ptr points to the data_pos'th character of src_text */
 	start_ptr = (char *) VARDATA_ANY(src_text);
@@ -4546,7 +4552,7 @@ replace_text_regexp(text *src_text, void *regexp,
 									data_len,
 									search_start,
 									NULL,	/* no details */
-									REGEXP_REPLACE_BACKREF_CNT,
+									nmatch,
 									pmatch,
 									0);
 
@@ -4602,10 +4608,9 @@ replace_text_regexp(text *src_text, void *regexp,
 		}
 
 		/*
-		 * Copy the replace_text. Process back references when the
-		 * replace_text has escape characters.
+		 * Copy the replace_text, processing escapes if any are present.
 		 */
-		if (have_escape)
+		if (escape_status > 0)
 			appendStringInfoRegexpSubstr(&buf, replace_text, pmatch,
 										 start_ptr, data_pos);
 		else

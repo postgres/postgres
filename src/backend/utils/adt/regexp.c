@@ -630,11 +630,10 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_PP(0);
 	text	   *p = PG_GETARG_TEXT_PP(1);
 	text	   *r = PG_GETARG_TEXT_PP(2);
-	regex_t    *re;
 
-	re = RE_compile_and_cache(p, REG_ADVANCED, PG_GET_COLLATION());
-
-	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, 0, 1));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, p, r,
+										 REG_ADVANCED, PG_GET_COLLATION(),
+										 0, 1));
 }
 
 /*
@@ -648,7 +647,6 @@ textregexreplace(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_PP(1);
 	text	   *r = PG_GETARG_TEXT_PP(2);
 	text	   *opt = PG_GETARG_TEXT_PP(3);
-	regex_t    *re;
 	pg_re_flags flags;
 
 	/*
@@ -672,10 +670,9 @@ textregexreplace(PG_FUNCTION_ARGS)
 
 	parse_re_flags(&flags, opt);
 
-	re = RE_compile_and_cache(p, flags.cflags, PG_GET_COLLATION());
-
-	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, 0,
-										 flags.glob ? 0 : 1));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, p, r,
+										 flags.cflags, PG_GET_COLLATION(),
+										 0, flags.glob ? 0 : 1));
 }
 
 /*
@@ -694,7 +691,6 @@ textregexreplace_extended(PG_FUNCTION_ARGS)
 	int			n = 1;
 	text	   *flags = PG_GETARG_TEXT_PP_IF_EXISTS(5);
 	pg_re_flags re_flags;
-	regex_t    *re;
 
 	/* Collect optional parameters */
 	if (PG_NARGS() > 3)
@@ -723,11 +719,10 @@ textregexreplace_extended(PG_FUNCTION_ARGS)
 	if (PG_NARGS() <= 4)
 		n = re_flags.glob ? 0 : 1;
 
-	/* Compile the regular expression */
-	re = RE_compile_and_cache(p, re_flags.cflags, PG_GET_COLLATION());
-
 	/* Do the replacement(s) */
-	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, start - 1, n));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, p, r,
+										 re_flags.cflags, PG_GET_COLLATION(),
+										 start - 1, n));
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */
