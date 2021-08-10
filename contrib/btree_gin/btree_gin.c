@@ -357,7 +357,7 @@ GIN_SUPPORT(bpchar, true, leftmostvalue_text, bpcharcmp)
 static Datum
 leftmostvalue_char(void)
 {
-	return CharGetDatum(SCHAR_MIN);
+	return CharGetDatum(0);
 }
 
 GIN_SUPPORT(char, false, leftmostvalue_char, btcharcmp)
