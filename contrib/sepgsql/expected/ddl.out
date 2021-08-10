@@ -283,6 +283,7 @@ LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_reg
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_table_4.y"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.float8(integer)"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_4"
 DROP INDEX regtest_index_tbl4_y;
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_table_4"
@@ -359,6 +360,7 @@ LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_re
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_column name="regtest_schema.regtest_ptable_4_ones.y"
 LOG:  SELinux: allowed { execute } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="pg_catalog.float8(integer)"
+LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_ptable_4_ones"
 DROP INDEX regtest_pindex_tbl4_y;
 LOG:  SELinux: allowed { remove_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema"
 LOG:  SELinux: allowed { setattr } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_table_t:s0 tclass=db_table name="regtest_schema.regtest_ptable_4_ones"
