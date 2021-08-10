@@ -3055,8 +3055,8 @@ psql_completion(const char *text, int start, int end)
 /* DECLARE */
 
 	/*
-	 * Complete DECLARE <name> with one of BINARY, INSENSITIVE, SCROLL, NO
-	 * SCROLL, and CURSOR.
+	 * Complete DECLARE <name> with one of BINARY, ASENSITIVE, INSENSITIVE,
+	 * SCROLL, NO SCROLL, and CURSOR.
 	 */
 	else if (Matches("DECLARE", MatchAny))
 		COMPLETE_WITH("BINARY", "ASENSITIVE", "INSENSITIVE", "SCROLL", "NO SCROLL",
@@ -3070,8 +3070,8 @@ psql_completion(const char *text, int start, int end)
 	 * indicates.
 	 */
 	else if (HeadMatches("DECLARE") && TailMatches("BINARY"))
-		COMPLETE_WITH("INSENSITIVE", "SCROLL", "NO SCROLL", "CURSOR");
-	else if (HeadMatches("DECLARE") && TailMatches("INSENSITIVE"))
+		COMPLETE_WITH("ASENSITIVE", "INSENSITIVE", "SCROLL", "NO SCROLL", "CURSOR");
+	else if (HeadMatches("DECLARE") && TailMatches("ASENSITIVE|INSENSITIVE"))
 		COMPLETE_WITH("SCROLL", "NO SCROLL", "CURSOR");
 	else if (HeadMatches("DECLARE") && TailMatches("SCROLL"))
 		COMPLETE_WITH("CURSOR");
