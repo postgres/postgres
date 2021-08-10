@@ -5475,6 +5475,8 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 							 RecentXmin,
 							 ReadNextMultiXactId(),
 							 persistence);
+
+			InvokeObjectPostAlterHook(RelationRelationId, tab->relid, 0);
 		}
 		else
 		{
