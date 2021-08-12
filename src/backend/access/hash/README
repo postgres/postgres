@@ -215,7 +215,7 @@ Pseudocode Algorithms
 Various flags that are used in hash index operations are described as below:
 
 The bucket-being-split and bucket-being-populated flags indicate that split
-the operation is in progress for a bucket.  During split operation, a
+operation is in progress for a bucket.  During split operation, a
 bucket-being-split flag is set on the old bucket and bucket-being-populated
 flag is set on new bucket.  These flags are cleared once the split operation
 is finished.
