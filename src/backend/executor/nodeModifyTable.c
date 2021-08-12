@@ -709,17 +709,19 @@ ExecInsert(ModifyTableState *mtstate,
 			 * keep them across batches. To mitigate an inefficiency in how
 			 * resource owner handles objects with many references (as with
 			 * many slots all referencing the same tuple descriptor) we copy
-			 * the tuple descriptor for each slot.
+			 * the appropriate tuple descriptor for each slot.
 			 */
 			if (resultRelInfo->ri_NumSlots >= resultRelInfo->ri_NumSlotsInitialized)
 			{
 				TupleDesc	tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
+				TupleDesc	plan_tdesc =
+					CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);
 
 				resultRelInfo->ri_PlanSlots[resultRelInfo->ri_NumSlots] =
-					MakeSingleTupleTableSlot(tdesc, planSlot->tts_ops);
+					MakeSingleTupleTableSlot(plan_tdesc, planSlot->tts_ops);
 
 				/* remember how many batch slots we initialized */
 				resultRelInfo->ri_NumSlotsInitialized++;
