@@ -87,13 +87,13 @@ sub generate_hash_function
 	my $hash_seed2;
 	my @subresult;
   FIND_PARAMS:
-	foreach (17, 31, 127, 8191)
+	for ($hash_seed1 = 0; $hash_seed1 < 10; $hash_seed1++)
 	{
-		$hash_mult2 = $_;    # "foreach $hash_mult2" doesn't work
-		for ($hash_seed1 = 0; $hash_seed1 < 10; $hash_seed1++)
+		for ($hash_seed2 = 0; $hash_seed2 < 10; $hash_seed2++)
 		{
-			for ($hash_seed2 = 0; $hash_seed2 < 10; $hash_seed2++)
+			foreach (17, 31, 127, 8191)
 			{
+				$hash_mult2 = $_;    # "foreach $hash_mult2" doesn't work
 				@subresult = _construct_hash_table(
 					$keys_ref,   $hash_mult1, $hash_mult2,
 					$hash_seed1, $hash_seed2);
