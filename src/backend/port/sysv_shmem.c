@@ -143,6 +143,16 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 
 		if (pg_shmem_addr)
 			requestedAddress = (void *) strtoul(pg_shmem_addr, NULL, 0);
+		else
+		{
+#if defined(__darwin__) && SIZEOF_VOID_P == 8
+			/*
+			 * Provide a default value that is believed to avoid problems with
+			 * ASLR on the current macOS release.
+			 */
+			requestedAddress = (void *) 0x80000000000;
+#endif
+		}
 	}
 #endif
 
