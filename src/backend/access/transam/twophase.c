@@ -1520,13 +1520,17 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	 * Handle cache invalidation messages.
 	 *
 	 * Relcache init file invalidation requires processing both before and
-	 * after we send the SI messages. See AtEOXact_Inval()
+	 * after we send the SI messages, only when committing.  See
+	 * AtEOXact_Inval().
 	 */
-	if (hdr->initfileinval)
-		RelationCacheInitFilePreInvalidate();
-	SendSharedInvalidMessages(invalmsgs, hdr->ninvalmsgs);
-	if (hdr->initfileinval)
-		RelationCacheInitFilePostInvalidate();
+	if (isCommit)
+	{
+		if (hdr->initfileinval)
+			RelationCacheInitFilePreInvalidate();
+		SendSharedInvalidMessages(invalmsgs, hdr->ninvalmsgs);
+		if (hdr->initfileinval)
+			RelationCacheInitFilePostInvalidate();
+	}
 
 	/*
 	 * Acquire the two-phase lock.  We want to work on the two-phase callbacks
