@@ -537,7 +537,7 @@ BaseInit(void)
 	InitBufferPoolAccess();
 
 	/*
-	 * Initialize temporary file access after pgstat, so that the temorary
+	 * Initialize temporary file access after pgstat, so that the temporary
 	 * file shutdown hook can report temporary file statistics.
 	 */
 	InitTemporaryFileAccess();
