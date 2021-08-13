@@ -48,6 +48,7 @@
 
 /*
  * Pass this flag to have your worker be able to connect to shared memory.
+ * This flag is required.
  */
 #define BGWORKER_SHMEM_ACCESS						0x0001
 

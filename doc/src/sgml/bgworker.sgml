@@ -11,8 +11,8 @@
   PostgreSQL can be extended to run user-supplied code in separate processes.
   Such processes are started, stopped and monitored by <command>postgres</command>,
   which permits them to have a lifetime closely linked to the server's status.
-  These processes have the option to attach to <productname>PostgreSQL</productname>'s
-  shared memory area and to connect to databases internally; they can also run
+  These processes are attached to <productname>PostgreSQL</productname>'s
+  shared memory area and have the option to connect to databases internally; they can also run
   multiple transactions serially, just like a regular client-connected server
   process.  Also, by linking to <application>libpq</application> they can connect to the
   server and behave like a regular client application.
@@ -89,11 +89,7 @@ typedef struct BackgroundWorker
      <listitem>
       <para>
        <indexterm><primary>BGWORKER_SHMEM_ACCESS</primary></indexterm>
-       Requests shared memory access.  Workers without shared memory access
-       cannot access any of <productname>PostgreSQL's</productname> shared
-       data structures, such as heavyweight or lightweight locks, shared
-       buffers, or any custom data structures which the worker itself may
-       wish to create and use.
+       Requests shared memory access.  This flag is required.
       </para>
      </listitem>
     </varlistentry>
