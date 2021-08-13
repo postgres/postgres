@@ -1782,7 +1782,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>sslsni</literal><indexterm><primary>Server Name Indication</primary></indexterm></term>
       <listitem>
        <para>
-        By default, libpq sets the TLS extension <quote>Server Name
+        If set to 1 (default), libpq sets the TLS extension <quote>Server Name
         Indication</quote> (<acronym>SNI</acronym>) on SSL-enabled connections.
         By setting this parameter to 0, this is turned off.
        </para>
