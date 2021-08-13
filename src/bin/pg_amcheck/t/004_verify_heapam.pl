@@ -327,14 +327,14 @@ sub header
 {
 	my ($blkno, $offnum, $attnum) = @_;
 	return
-	  qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum, attribute $attnum:\s+/ms
+	  qr/heap table "postgres\.public\.test", block $blkno, offset $offnum, attribute $attnum:\s+/ms
 	  if (defined $attnum);
 	return
-	  qr/heap table "postgres"\."public"\."test", block $blkno, offset $offnum:\s+/ms
+	  qr/heap table "postgres\.public\.test", block $blkno, offset $offnum:\s+/ms
 	  if (defined $offnum);
-	return qr/heap table "postgres"\."public"\."test", block $blkno:\s+/ms
+	return qr/heap table "postgres\.public\.test", block $blkno:\s+/ms
 	  if (defined $blkno);
-	return qr/heap table "postgres"\."public"\."test":\s+/ms;
+	return qr/heap table "postgres\.public\.test":\s+/ms;
 }
 
 # Corrupt the tuples, one type of corruption per tuple.  Some types of
