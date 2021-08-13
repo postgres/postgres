@@ -590,13 +590,14 @@ check_declared_list(const char *name)
 	struct declared_list *ptr = NULL;
 	for (ptr = g_declared_list; ptr != NULL; ptr = ptr -> next)
 	{
+		if (!ptr->connection)
+			continue;
 		if (strcmp(name, ptr -> name) == 0)
 		{
-			if (ptr -> connection)
-				{
-					connection = mm_strdup(ptr -> connection);
-					return true;
-				}
+			if (connection)
+				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten to %s.", connection, ptr->connection);
+			connection = mm_strdup(ptr -> connection);
+			return true;
 		}
 	}
 	return false;
@@ -621,4 +622,5 @@ check_declared_list(const char *name)
 	struct  su_symbol	struct_union;
 	struct	prep		prep;
 	struct	exec		exec;
+	struct describe		describe;
 }

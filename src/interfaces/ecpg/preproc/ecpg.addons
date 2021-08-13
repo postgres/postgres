@@ -132,13 +132,15 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGDescribe
 	{
-		fprintf(base_yyout, "{ ECPGdescribe(__LINE__, %d, %s,", compat, $1);
+		check_declared_list($1.stmt_name);
+
+		fprintf(base_yyout, "{ ECPGdescribe(__LINE__, %d, %d, %s, %s,", compat, $1.input, connection ? connection : "NULL", $1.stmt_name);
 		dump_variables(argsresult, 1);
 		fputs("ECPGt_EORT);", base_yyout);
 		fprintf(base_yyout, "}");
 		output_line_number();
 
-		free($1);
+		free($1.stmt_name);
 	}
 	| ECPGDisconnect
 	{
@@ -397,7 +399,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		this->next = cur;
 		this->name = $2;
 		this->function = (current_function ? mm_strdup(current_function) : NULL);
-		this->connection = connection;
+		this->connection = connection ? mm_strdup(connection) : NULL;
 		this->opened = false;
 		this->command =  cat_str(7, mm_strdup("declare"), cursor_marker, $3, mm_strdup("cursor"), $5, mm_strdup("for"), $7);
 		this->argsinsert = argsinsert;

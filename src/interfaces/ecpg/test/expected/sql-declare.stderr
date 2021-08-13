@@ -40,9 +40,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 182: action "commit"; connection "con1"
+[NO_PID]: ECPGtrans on line 212: action "commit"; connection "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 183: action "commit"; connection "con2"
+[NO_PID]: ECPGtrans on line 213: action "commit"; connection "con2"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 74: name stmt_1; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -138,9 +138,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 110: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -230 on line 111: invalid statement name "stmt_2" on line 111
-[NO_PID]: sqlca: code: -230, state: 26000
-SQL error: invalid statement name "stmt_2" on line 111
+[NO_PID]: deallocate_one on line 111: name stmt_2
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 123: name stmt_3; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 125: query: declare cur_3 cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con1
@@ -187,9 +186,8 @@ SQL error: invalid statement name "stmt_2" on line 111
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 134: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -230 on line 135: invalid statement name "stmt_3" on line 135
-[NO_PID]: sqlca: code: -230, state: 26000
-SQL error: invalid statement name "stmt_3" on line 135
+[NO_PID]: deallocate_one on line 135: name stmt_3
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 148: name stmt_4; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: query: declare cur_4 cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con2
@@ -260,6 +258,40 @@ SQL error: invalid statement name "stmt_3" on line 135
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 175: name stmt_5
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: prepare_common on line 183: name stmt_desc; query: "SELECT f1,f2,f3 FROM source"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 185: query: declare cur_desc cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 185: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 185: OK: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc_header: found 3 attributes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: reading items for tuple 3
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: LENGTH = 20
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 198: query: fetch cur_desc; with 0 parameter(s) on connection con1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 198: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 198: correctly got 1 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 198: putting result (1 tuples) into descriptor desc_for_fetch
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: reading items for tuple 3
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 200: RESULT: db on con1 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 203: query: close cur_desc; with 0 parameter(s) on connection con1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 203: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 203: OK: CLOSE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: deallocate_one on line 204: name stmt_desc
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: query: drop table if exists source; with 0 parameter(s) on connection con1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: using PQexec
@@ -272,15 +304,11 @@ SQL error: invalid statement name "stmt_3" on line 135
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 46: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 182: action "commit"; connection "con1"
+[NO_PID]: ECPGtrans on line 212: action "commit"; connection "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 183: action "commit"; connection "con2"
+[NO_PID]: ECPGtrans on line 213: action "commit"; connection "con2"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection con2 closed
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 0: name stmt_3
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 0: name stmt_2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection con1 closed
 [NO_PID]: sqlca: code: 0, state: 00000
