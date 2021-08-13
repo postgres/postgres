@@ -198,8 +198,8 @@ SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
 /* void <prefix>_reset(<prefix>_hash *tb) */
 SH_SCOPE void SH_RESET(SH_TYPE * tb);
 
-/* void <prefix>_grow(<prefix>_hash *tb) */
-SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);
+/* void <prefix>_grow(<prefix>_hash *tb, uint64 newsize) */
+SH_SCOPE void SH_GROW(SH_TYPE * tb, uint64 newsize);
 
 /* <element> *<prefix>_insert(<prefix>_hash *tb, <key> key, bool *found) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found);
@@ -302,7 +302,7 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
  * the hashtable.
  */
 static inline void
-SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint32 newsize)
+SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint64 newsize)
 {
 	uint64		size;
 
@@ -322,11 +322,7 @@ SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint32 newsize)
 
 	/* now set size */
 	tb->size = size;
-
-	if (tb->size == SH_MAX_SIZE)
-		tb->sizemask = 0;
-	else
-		tb->sizemask = tb->size - 1;
+	tb->sizemask = (uint32) (size - 1);
 
 	/*
 	 * Compute the next threshold at which we need to grow the hash table
@@ -476,7 +472,7 @@ SH_RESET(SH_TYPE * tb)
  * performance-wise, when known at some point.
  */
 SH_SCOPE void
-SH_GROW(SH_TYPE * tb, uint32 newsize)
+SH_GROW(SH_TYPE * tb, uint64 newsize)
 {
 	uint64		oldsize = tb->size;
 	SH_ELEMENT_TYPE *olddata = tb->data;
