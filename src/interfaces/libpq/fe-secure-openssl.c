@@ -1092,7 +1092,7 @@ initialize_SSL(PGconn *conn)
 	 * Per RFC 6066, do not set it if the host is a literal IP address (IPv4
 	 * or IPv6).
 	 */
-	if (conn->sslsni && conn->sslsni[0])
+	if (conn->sslsni && conn->sslsni[0] == '1')
 	{
 		const char *host = conn->connhost[conn->whichhost].host;
 
