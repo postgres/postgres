@@ -368,7 +368,7 @@ main()
 	printf("             if S_LOCK() and TAS() are working.\n");
 	fflush(stdout);
 
-	s_lock(&test_lock.lock, __FILE__, __LINE__);
+	s_lock(&test_lock.lock, __FILE__, __LINE__, PG_FUNCNAME_MACRO);
 
 	printf("S_LOCK_TEST: failed, lock not locked\n");
 	return 1;
