@@ -164,9 +164,6 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 
 	whenever_action(whenever_mode | 2);
 	free(stmt);
-	if (connection != NULL)
-		free(connection);
-	connection = NULL;
 }
 
 void
@@ -179,9 +176,6 @@ output_prepare_statement(char *name, char *stmt)
 	fputs(");", base_yyout);
 	whenever_action(2);
 	free(name);
-	if (connection != NULL)
-		free(connection);
-	connection = NULL;
 }
 
 void
@@ -200,9 +194,6 @@ output_deallocate_prepare_statement(char *name)
 
 	whenever_action(2);
 	free(name);
-	if (connection != NULL)
-		free(connection);
-	connection = NULL;
 }
 
 static void

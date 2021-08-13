@@ -207,4 +207,10 @@ struct fetch_desc
 	char	   *name;
 };
 
+struct describe
+{
+	int			input;
+	char	   *stmt_name;
+};
+
 #endif							/* _ECPG_PREPROC_TYPE_H */

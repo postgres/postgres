@@ -4,8 +4,18 @@ statements: /*EMPTY*/
 				| statements statement
 		;
 
-statement: ecpgstart at toplevel_stmt ';' { connection = NULL; }
+statement: ecpgstart at toplevel_stmt ';'
+				{
+					if (connection)
+						free(connection);
+					connection = NULL;
+				}
 				| ecpgstart toplevel_stmt ';'
+				{
+					if (connection)
+						free(connection);
+					connection = NULL;
+				}
 				| ecpgstart ECPGVarDeclaration
 				{
 					fprintf(base_yyout, "%s", $2);
@@ -1101,41 +1111,33 @@ UsingConst: Iconst			{ $$ = $1; }
  */
 ECPGDescribe: SQL_DESCRIBE INPUT_P prepared_name using_descriptor
 	{
-		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
-		$$ = (char *) mm_alloc(sizeof("1, , ") + strlen(con) + strlen($3));
-		sprintf($$, "1, %s, %s", con, $3);
+		$$.input = 1;
+		$$.stmt_name = $3;
 	}
 	| SQL_DESCRIBE opt_output prepared_name using_descriptor
 	{
-		const char *con = connection ? connection : "NULL";
 		struct variable *var;
-
 		var = argsinsert->variable;
 		remove_variable_from_list(&argsinsert, var);
 		add_variable_to_head(&argsresult, var, &no_indicator);
 
-		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
-		sprintf($$, "0, %s, %s", con, $3);
+		$$.input = 0;
+		$$.stmt_name = $3;
 	}
 	| SQL_DESCRIBE opt_output prepared_name into_descriptor
 	{
-		const char *con = connection ? connection : "NULL";
-		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
-		sprintf($$, "0, %s, %s", con, $3);
+		$$.input = 0;
+		$$.stmt_name = $3;
 	}
 	| SQL_DESCRIBE INPUT_P prepared_name into_sqlda
 	{
-		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
-		$$ = (char *) mm_alloc(sizeof("1, , ") + strlen(con) + strlen($3));
-		sprintf($$, "1, %s, %s", con, $3);
+		$$.input = 1;
+		$$.stmt_name = $3;
 	}
 	| SQL_DESCRIBE opt_output prepared_name into_sqlda
 	{
-		const char *con = connection ? connection : "NULL";
-		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
-		sprintf($$, "0, %s, %s", con, $3);
+		$$.input = 0;
+		$$.stmt_name = $3;
 	}
 	;
 
@@ -1862,8 +1864,8 @@ c_anything:  ecpg_ident				{ $$ = $1; }
 		| ':'				{ $$ = mm_strdup(":"); }
 		;
 
-DeallocateStmt: DEALLOCATE prepared_name	{ $$ = $2; }
-		| DEALLOCATE PREPARE prepared_name	{ $$ = $3; }
+DeallocateStmt: DEALLOCATE prepared_name	{ check_declared_list($2); $$ = $2; }
+		| DEALLOCATE PREPARE prepared_name	{ check_declared_list($3); $$ = $3; }
 		| DEALLOCATE ALL					{ $$ = mm_strdup("all"); }
 		| DEALLOCATE PREPARE ALL			{ $$ = mm_strdup("all"); }
 		;

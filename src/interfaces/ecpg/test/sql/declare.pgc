@@ -7,7 +7,7 @@ EXEC SQL WHENEVER SQLERROR SQLPRINT;
 EXEC SQL INCLUDE sqlca;
 EXEC SQL INCLUDE ../regression;
 
-#define ARRAY_SZIE 20
+#define ARRAY_SIZE 2
 
 void execute_test(void);
 void commitTable(void);
@@ -15,9 +15,9 @@ void reset(void);
 void printResult(char *tc_name, int loop);
 
 EXEC SQL BEGIN DECLARE SECTION;
-int f1[ARRAY_SZIE];
-int f2[ARRAY_SZIE];
-char f3[ARRAY_SZIE][20];
+int f1[ARRAY_SIZE];
+int f2[ARRAY_SIZE];
+char f3[ARRAY_SIZE][20];
 EXEC SQL END DECLARE SECTION;
 
 int main(void)
@@ -60,7 +60,7 @@ int main(void)
 void execute_test(void)
 {
     EXEC SQL BEGIN DECLARE SECTION;
-    int i;
+    int i, count, length;
     char *selectString = "SELECT f1,f2,f3 FROM source";
     EXEC SQL END DECLARE SECTION;
 
@@ -175,6 +175,36 @@ void execute_test(void)
     EXEC SQL DEALLOCATE PREPARE stmt_5;
 
     printResult("testcase5", 2);
+
+    /*
+     * DESCRIBE statement is also supported.
+     */
+    EXEC SQL AT con1 DECLARE stmt_desc STATEMENT;
+    EXEC SQL PREPARE stmt_desc FROM :selectString;
+    EXEC SQL DECLARE cur_desc CURSOR FOR stmt_desc;
+    EXEC SQL OPEN cur_desc;
+
+    /* descriptor can be used for describe statement */
+    EXEC SQL AT con1 ALLOCATE DESCRIPTOR desc_for_describe;
+    EXEC SQL DESCRIBE stmt_desc INTO SQL DESCRIPTOR desc_for_describe;
+
+    EXEC SQL AT con1 GET DESCRIPTOR desc_for_describe :count = COUNT;
+    EXEC SQL AT con1 GET DESCRIPTOR desc_for_describe VALUE 3 :length = LENGTH;
+
+    EXEC SQL AT con1 DEALLOCATE DESCRIPTOR desc_for_describe;
+
+    /* for fetch statement */
+    EXEC SQL AT con1 ALLOCATE DESCRIPTOR desc_for_fetch;
+    EXEC SQL FETCH cur_desc INTO SQL DESCRIPTOR desc_for_fetch;
+
+    EXEC SQL AT con1 GET DESCRIPTOR desc_for_fetch VALUE 3 :f3[0] = DATA;
+
+    EXEC SQL AT con1 DEALLOCATE DESCRIPTOR desc_for_fetch;
+    EXEC SQL CLOSE cur_desc;
+    EXEC SQL DEALLOCATE stmt_desc;
+
+    printf("****descriptor results****\n");
+    printf("count: %d, length: %d, data: %s\n", count, length, f3[0]);
 }
 
 void commitTable()

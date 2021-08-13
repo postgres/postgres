@@ -18,3 +18,5 @@ f1=2, f2=20, f3=db on con2
 f1=1, f2=10, f3=db on con2
 f1=2, f2=20, f3=db on con2
 
+****descriptor results****
+count: 3, length: 20, data: db on con1
