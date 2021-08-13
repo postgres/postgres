@@ -314,6 +314,7 @@ tas(volatile slock_t *lock)
 #endif /* __INTEL_COMPILER */
 #endif	 /* __ia64__ || __ia64 */
 
+
 /*
  * On ARM and ARM64, we use __sync_lock_test_and_set(int *, int) if available.
  *
@@ -338,6 +339,29 @@ tas(volatile slock_t *lock)
 
 #endif	 /* HAVE_GCC__SYNC_INT32_TAS */
 #endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
+
+
+/*
+ * RISC-V likewise uses __sync_lock_test_and_set(int *, int) if available.
+ */
+#if defined(__riscv)
+#ifdef HAVE_GCC__SYNC_INT32_TAS
+#define HAS_TEST_AND_SET
+
+#define TAS(lock) tas(lock)
+
+typedef int slock_t;
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	return __sync_lock_test_and_set(lock, 1);
+}
+
+#define S_UNLOCK(lock) __sync_lock_release(lock)
+
+#endif	 /* HAVE_GCC__SYNC_INT32_TAS */
+#endif	 /* __riscv */
 
 
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
