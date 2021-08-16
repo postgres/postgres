@@ -253,9 +253,39 @@ pg_ceil_log2_64(uint64 num)
 		return pg_leftmost_one_pos64(num - 1) + 1;
 }
 
-/* Count the number of one-bits in a uint32 or uint64 */
+/*
+ * With MSVC on x86_64 builds, try using native popcnt instructions via the
+ * __popcnt and __popcnt64 intrinsics.  These don't work the same as GCC's
+ * __builtin_popcount* intrinsic functions as they always emit popcnt
+ * instructions.
+ */
+#if defined(_MSC_VER) && defined(_M_AMD64)
+#define HAVE_X86_64_POPCNTQ
+#endif
+
+/*
+ * On x86_64, we can use the hardware popcount instruction, but only if
+ * we can verify that the CPU supports it via the cpuid instruction.
+ *
+ * Otherwise, we fall back to a hand-rolled implementation.
+ */
+#ifdef HAVE_X86_64_POPCNTQ
+#if defined(HAVE__GET_CPUID) || defined(HAVE__CPUID)
+#define TRY_POPCNT_FAST 1
+#endif
+#endif
+
+#ifdef TRY_POPCNT_FAST
+/* Attempt to use the POPCNT instruction, but perform a runtime check first */
 extern int	(*pg_popcount32) (uint32 word);
 extern int	(*pg_popcount64) (uint64 word);
+
+#else
+/* Use a portable implementation -- no need for a function pointer. */
+extern int	pg_popcount32(uint32 word);
+extern int	pg_popcount64(uint64 word);
+
+#endif							/* TRY_POPCNT_FAST */
 
 /* Count the number of one-bits in a byte array */
 extern uint64 pg_popcount(const char *buf, int bytes);

@@ -103,29 +103,6 @@ const uint8 pg_number_of_ones[256] = {
 	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-/*
- * With MSVC on x86_64 builds, try using native popcnt instructions via the
- * __popcnt and __popcnt64 intrinsics.  These don't work the same as GCC's
- * __builtin_popcount* intrinsic functions as they always emit popcnt
- * instructions.
- */
-#if defined(_MSC_VER) && defined(_M_AMD64)
-#define HAVE_X86_64_POPCNTQ
-#endif
-
-/*
- * On x86_64, we can use the hardware popcount instruction, but only if
- * we can verify that the CPU supports it via the cpuid instruction.
- *
- * Otherwise, we fall back to __builtin_popcount if the compiler has that,
- * or a hand-rolled implementation if not.
- */
-#ifdef HAVE_X86_64_POPCNTQ
-#if defined(HAVE__GET_CPUID) || defined(HAVE__CPUID)
-#define TRY_POPCNT_FAST 1
-#endif
-#endif
-
 static int	pg_popcount32_slow(uint32 word);
 static int	pg_popcount64_slow(uint64 word);
 
@@ -138,9 +115,6 @@ static int	pg_popcount64_fast(uint64 word);
 
 int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
-#else
-int			(*pg_popcount32) (uint32 word) = pg_popcount32_slow;
-int			(*pg_popcount64) (uint64 word) = pg_popcount64_slow;
 #endif							/* TRY_POPCNT_FAST */
 
 #ifdef TRY_POPCNT_FAST
@@ -291,6 +265,28 @@ pg_popcount64_slow(uint64 word)
 #endif							/* HAVE__BUILTIN_POPCOUNT */
 }
 
+#ifndef TRY_POPCNT_FAST
+
+/*
+ * When the POPCNT instruction is not available, there's no point in using
+ * function pointers to vary the implementation between the fast and slow
+ * method.  We instead just make these actual external functions when
+ * TRY_POPCNT_FAST is not defined.  The compiler should be able to inline
+ * the slow versions here.
+ */
+int
+pg_popcount32(uint32 word)
+{
+	return pg_popcount32_slow(word);
+}
+
+int
+pg_popcount64(uint64 word)
+{
+	return pg_popcount64_slow(word);
+}
+
+#endif							/* !TRY_POPCNT_FAST */
 
 /*
  * pg_popcount
