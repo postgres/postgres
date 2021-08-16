@@ -1675,7 +1675,8 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	appendStringInfo(&buf, _("%s."), pg_rusage_show(&ru0));
 
 	ereport(elevel,
-			(errmsg("table \"%s\": found %lld removable, %lld nonremovable row versions in %u out of %u pages",
+			(errmsg("table \"%s.%s\": found %lld removable, %lld nonremovable row versions in %u out of %u pages",
+					vacrel->relnamespace,
 					vacrel->relname,
 					(long long) vacrel->tuples_deleted,
 					(long long) vacrel->num_tuples, vacrel->scanned_pages,
