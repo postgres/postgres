@@ -38,7 +38,6 @@
 #include "access/transam.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
-#include "catalog/partition.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
 #include "common/ip.h"
@@ -356,7 +355,6 @@ static void pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg
 static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
 static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
 static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
-static void pgstat_recv_anl_ancestors(PgStat_MsgAnlAncestors *msg, int len);
 static void pgstat_recv_archiver(PgStat_MsgArchiver *msg, int len);
 static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 static void pgstat_recv_checkpointer(PgStat_MsgCheckpointer *msg, int len);
@@ -1613,9 +1611,6 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
  *
  * Caller must provide new live- and dead-tuples estimates, as well as a
  * flag indicating whether to reset the changes_since_analyze counter.
- * Exceptional support only changes_since_analyze for partitioned tables,
- * though they don't have any data.  This counter will tell us whether
- * partitioned tables need autoanalyze or not.
  * --------
  */
 void
@@ -1637,31 +1632,21 @@ pgstat_report_analyze(Relation rel,
 	 * be double-counted after commit.  (This approach also ensures that the
 	 * collector ends up with the right numbers if we abort instead of
 	 * committing.)
-	 *
-	 * For partitioned tables, we don't report live and dead tuples, because
-	 * such tables don't have any data.
 	 */
 	if (rel->pgstat_info != NULL)
 	{
 		PgStat_TableXactStatus *trans;
 
-		if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-			/* If this rel is partitioned, skip modifying */
-			livetuples = deadtuples = 0;
-		else
+		for (trans = rel->pgstat_info->trans; trans; trans = trans->upper)
 		{
-			for (trans = rel->pgstat_info->trans; trans; trans = trans->upper)
-			{
-				livetuples -= trans->tuples_inserted - trans->tuples_deleted;
-				deadtuples -= trans->tuples_updated + trans->tuples_deleted;
-			}
-			/* count stuff inserted by already-aborted subxacts, too */
-			deadtuples -= rel->pgstat_info->t_counts.t_delta_dead_tuples;
-			/* Since ANALYZE's counts are estimates, we could have underflowed */
-			livetuples = Max(livetuples, 0);
-			deadtuples = Max(deadtuples, 0);
+			livetuples -= trans->tuples_inserted - trans->tuples_deleted;
+			deadtuples -= trans->tuples_updated + trans->tuples_deleted;
 		}
-
+		/* count stuff inserted by already-aborted subxacts, too */
+		deadtuples -= rel->pgstat_info->t_counts.t_delta_dead_tuples;
+		/* Since ANALYZE's counts are estimates, we could have underflowed */
+		livetuples = Max(livetuples, 0);
+		deadtuples = Max(deadtuples, 0);
 	}
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
@@ -1673,48 +1658,6 @@ pgstat_report_analyze(Relation rel,
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
 	pgstat_send(&msg, sizeof(msg));
-
-}
-
-/*
- * pgstat_report_anl_ancestors
- *
- *	Send list of partitioned table ancestors of the given partition to the
- *	collector.  The collector is in charge of propagating the analyze tuple
- *	counts from the partition to its ancestors.  This is necessary so that
- *	other processes can decide whether to analyze the partitioned tables.
- */
-void
-pgstat_report_anl_ancestors(Oid relid)
-{
-	PgStat_MsgAnlAncestors msg;
-	List	   *ancestors;
-	ListCell   *lc;
-
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANL_ANCESTORS);
-	msg.m_databaseid = MyDatabaseId;
-	msg.m_tableoid = relid;
-	msg.m_nancestors = 0;
-
-	ancestors = get_partition_ancestors(relid);
-	foreach(lc, ancestors)
-	{
-		Oid			ancestor = lfirst_oid(lc);
-
-		msg.m_ancestors[msg.m_nancestors] = ancestor;
-		if (++msg.m_nancestors >= PGSTAT_NUM_ANCESTORENTRIES)
-		{
-			pgstat_send(&msg, offsetof(PgStat_MsgAnlAncestors, m_ancestors[0]) +
-						msg.m_nancestors * sizeof(Oid));
-			msg.m_nancestors = 0;
-		}
-	}
-
-	if (msg.m_nancestors > 0)
-		pgstat_send(&msg, offsetof(PgStat_MsgAnlAncestors, m_ancestors[0]) +
-					msg.m_nancestors * sizeof(Oid));
-
-	list_free(ancestors);
 }
 
 /* --------
@@ -2055,8 +1998,7 @@ pgstat_initstats(Relation rel)
 	char		relkind = rel->rd_rel->relkind;
 
 	/* We only count stats for things that have storage */
-	if (!RELKIND_HAS_STORAGE(relkind) &&
-		relkind != RELKIND_PARTITIONED_TABLE)
+	if (!RELKIND_HAS_STORAGE(relkind))
 	{
 		rel->pgstat_info = NULL;
 		return;
@@ -3467,10 +3409,6 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_analyze(&msg.msg_analyze, len);
 					break;
 
-				case PGSTAT_MTYPE_ANL_ANCESTORS:
-					pgstat_recv_anl_ancestors(&msg.msg_anl_ancestors, len);
-					break;
-
 				case PGSTAT_MTYPE_ARCHIVER:
 					pgstat_recv_archiver(&msg.msg_archiver, len);
 					break;
@@ -3689,7 +3627,6 @@ pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
 		result->n_live_tuples = 0;
 		result->n_dead_tuples = 0;
 		result->changes_since_analyze = 0;
-		result->changes_since_analyze_reported = 0;
 		result->inserts_since_vacuum = 0;
 		result->blocks_fetched = 0;
 		result->blocks_hit = 0;
@@ -4988,7 +4925,6 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->n_live_tuples = tabmsg->t_counts.t_delta_live_tuples;
 			tabentry->n_dead_tuples = tabmsg->t_counts.t_delta_dead_tuples;
 			tabentry->changes_since_analyze = tabmsg->t_counts.t_changed_tuples;
-			tabentry->changes_since_analyze_reported = 0;
 			tabentry->inserts_since_vacuum = tabmsg->t_counts.t_tuples_inserted;
 			tabentry->blocks_fetched = tabmsg->t_counts.t_blocks_fetched;
 			tabentry->blocks_hit = tabmsg->t_counts.t_blocks_hit;
@@ -5386,10 +5322,7 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	 * have no good way to estimate how many of those there were.
 	 */
 	if (msg->m_resetcounter)
-	{
 		tabentry->changes_since_analyze = 0;
-		tabentry->changes_since_analyze_reported = 0;
-	}
 
 	if (msg->m_autovacuum)
 	{
@@ -5403,29 +5336,6 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	}
 }
 
-static void
-pgstat_recv_anl_ancestors(PgStat_MsgAnlAncestors *msg, int len)
-{
-	PgStat_StatDBEntry *dbentry;
-	PgStat_StatTabEntry *tabentry;
-
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
-
-	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
-
-	for (int i = 0; i < msg->m_nancestors; i++)
-	{
-		Oid			ancestor_relid = msg->m_ancestors[i];
-		PgStat_StatTabEntry *ancestor;
-
-		ancestor = pgstat_get_tab_entry(dbentry, ancestor_relid, true);
-		ancestor->changes_since_analyze +=
-			tabentry->changes_since_analyze - tabentry->changes_since_analyze_reported;
-	}
-
-	tabentry->changes_since_analyze_reported = tabentry->changes_since_analyze;
-
-}
 
 /* ----------
  * pgstat_recv_archiver() -

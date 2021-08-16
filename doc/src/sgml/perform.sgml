@@ -1767,8 +1767,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <para>
     Whenever you have significantly altered the distribution of data
     within a table, running <link linkend="sql-analyze"><command>ANALYZE</command></link> is strongly recommended. This
-    includes bulk loading large amounts of data into the table as well as
-    attaching, detaching or dropping partitions.  Running
+    includes bulk loading large amounts of data into the table.  Running
     <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
     ensures that the planner has up-to-date statistics about the
     table.  With no statistics or obsolete statistics, the planner might
