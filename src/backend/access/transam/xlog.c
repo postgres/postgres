@@ -6120,14 +6120,23 @@ recoveryApplyDelay(XLogReaderState *record)
 	{
 		ResetLatch(&XLogCtl->recoveryWakeupLatch);
 
-		/* might change the trigger file's location */
+		/*
+		 * This might change recovery_min_apply_delay or the trigger file's
+		 * location.
+		 */
 		HandleStartupProcInterrupts();
 
 		if (CheckForStandbyTrigger())
 			break;
 
 		/*
-		 * Wait for difference between GetCurrentTimestamp() and delayUntil
+		 * Recalculate delayUntil as recovery_min_apply_delay could have
+		 * changed while waiting in this loop.
+		 */
+		delayUntil = TimestampTzPlusMilliseconds(xtime, recovery_min_apply_delay);
+
+		/*
+		 * Wait for difference between GetCurrentTimestamp() and delayUntil.
 		 */
 		msecs = TimestampDifferenceMilliseconds(GetCurrentTimestamp(),
 												delayUntil);
