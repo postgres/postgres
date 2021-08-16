@@ -1374,8 +1374,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     If a table parameter value is set and the
     equivalent <literal>toast.</literal> parameter is not, the TOAST table
     will use the table's parameter value.
-    Except where noted, these parameters are not supported on partitioned
-    tables; however, you can specify them on individual leaf partitions.
+    Specifying these parameters for partitioned tables is not supported,
+    but you may specify them for individual leaf partitions.
    </para>
 
    <variablelist>
@@ -1457,8 +1457,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      If true, the autovacuum daemon will perform automatic <command>VACUUM</command>
      and/or <command>ANALYZE</command> operations on this table following the rules
      discussed in <xref linkend="autovacuum"/>.
-     This parameter can be set for partitioned tables to prevent autovacuum
-     from running <command>ANALYZE</command> on them.
      If false, this table will not be autovacuumed, except to prevent
      transaction ID wraparound. See <xref linkend="vacuum-for-wraparound"/> for
      more about wraparound prevention.
@@ -1590,7 +1588,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-threshold"/>
       parameter.
-      This parameter can be set for partitioned tables.
      </para>
     </listitem>
    </varlistentry>
@@ -1606,7 +1603,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor"/>
       parameter.
-      This parameter can be set for partitioned tables.
      </para>
     </listitem>
    </varlistentry>

@@ -817,12 +817,6 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 </programlisting>
     is compared to the total number of tuples inserted, updated, or deleted
     since the last <command>ANALYZE</command>.
-    For partitioned tables, inserts, updates and deletes on partitions
-    are counted towards this threshold; however, DDL
-    operations such as <literal>ATTACH</literal>, <literal>DETACH</literal>
-    and <literal>DROP</literal> are not, so running a manual
-    <command>ANALYZE</command> is recommended if the partition added or
-    removed contains a statistically significant volume of data.
    </para>
 
    <para>

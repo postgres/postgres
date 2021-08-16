@@ -250,38 +250,20 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   </para>
 
   <para>
-   If the table being analyzed is partitioned, <command>ANALYZE</command>
-   will gather statistics by sampling blocks randomly from its partitions;
-   in addition, it will recurse into each partition and update its statistics.
-   (However, in multi-level partitioning scenarios, each leaf partition
-   will only be analyzed once.)
-   By contrast, if the table being analyzed has inheritance children,
-   <command>ANALYZE</command> will gather statistics for it twice:
-   once on the rows of the parent table only, and a second time on the
-   rows of the parent table with all of its children.  This second set of
-   statistics is needed when planning queries that traverse the entire
-   inheritance tree.  The child tables themselves are not individually
-   analyzed in this case.
+    If the table being analyzed has one or more children,
+    <command>ANALYZE</command> will gather statistics twice: once on the
+    rows of the parent table only, and a second time on the rows of the
+    parent table with all of its children.  This second set of statistics
+    is needed when planning queries that traverse the entire inheritance
+    tree.  The autovacuum daemon, however, will only consider inserts or
+    updates on the parent table itself when deciding whether to trigger an
+    automatic analyze for that table.  If that table is rarely inserted into
+    or updated, the inheritance statistics will not be up to date unless you
+    run <command>ANALYZE</command> manually.
   </para>
 
   <para>
-   The autovacuum daemon counts inserts, updates and deletes in the
-   partitions to determine if auto-analyze is needed.  However, adding
-   or removing partitions does not affect autovacuum daemon decisions,
-   so triggering a manual <command>ANALYZE</command> is recommended
-   when this occurs.
-  </para>
-
-  <para>
-   Tuples changed in inheritance children do not count towards analyze
-   on the parent table.  If the parent table is empty or rarely modified,
-   it may never be processed by autovacuum.  It's necessary to
-   periodically run a manual <command>ANALYZE</command> to keep the
-   statistics of the table hierarchy up to date.
-  </para>
-
-  <para>
-    If any of the child tables or partitions are foreign tables whose foreign data wrappers
+    If any of the child tables are foreign tables whose foreign data wrappers
     do not support <command>ANALYZE</command>, those child tables are ignored while
     gathering inheritance statistics.
   </para>
