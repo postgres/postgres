@@ -306,6 +306,9 @@ PostgreSQL documentation
        <para>
         Safely write all database files to disk and exit.  This does not
         perform any of the normal <application>initdb</application> operations.
+        Generally, this option is useful for ensuring reliable recovery after
+        changing <xref linkend="guc-fsync"/> from <literal>off</literal> to
+        <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
