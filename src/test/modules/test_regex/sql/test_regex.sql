@@ -304,6 +304,12 @@ select * from test_regex('a[[=x=]]', 'ay', '+Lb');
 -- expectNomatch	9.9  &+L	{a[[=x=]]}	az
 select * from test_regex('a[[=x=]]', 'az', '+L');
 select * from test_regex('a[[=x=]]', 'az', '+Lb');
+-- expectMatch	9.9b  &iL	{a[[=Y=]]}	ay	ay
+select * from test_regex('a[[=Y=]]', 'ay', 'iL');
+select * from test_regex('a[[=Y=]]', 'ay', 'iLb');
+-- expectNomatch	9.9c  &L	{a[[=Y=]]}	ay
+select * from test_regex('a[[=Y=]]', 'ay', 'L');
+select * from test_regex('a[[=Y=]]', 'ay', 'Lb');
 -- expectError	9.10 &		{a[0-[=x=]]}	ERANGE
 select * from test_regex('a[0-[=x=]]', '', '');
 select * from test_regex('a[0-[=x=]]', '', 'b');
@@ -864,6 +870,12 @@ select * from test_regex('a[b-d]', 'aC', 'iMb');
 -- expectNomatch	19.5 &iM	{a[^b-d]}	aC
 select * from test_regex('a[^b-d]', 'aC', 'iM');
 select * from test_regex('a[^b-d]', 'aC', 'iMb');
+-- expectMatch	19.6 &iM	{a[B-Z]}	aC	aC
+select * from test_regex('a[B-Z]', 'aC', 'iM');
+select * from test_regex('a[B-Z]', 'aC', 'iMb');
+-- expectNomatch	19.7 &iM	{a[^B-Z]}	aC
+select * from test_regex('a[^B-Z]', 'aC', 'iM');
+select * from test_regex('a[^B-Z]', 'aC', 'iMb');
 
 -- doing 20 "directors and embedded options"
 
@@ -1171,6 +1183,8 @@ select * from test_regex('z*4', '123zzzz456', '-');
 select * from test_regex('z*?4', '123zzzz456', 'PT');
 -- expectMatch	24.13 PT	{^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$}	{foo/bar/baz}	{foo/bar/baz} {foo} {bar} {baz}
 select * from test_regex('^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$', 'foo/bar/baz', 'PT');
+-- expectMatch	24.14 PRT	{^(.+?)(?:/(.+?))(?:/(.+?)\3)?$}	{foo/bar/baz/quux}	{foo/bar/baz/quux}	{foo}	{bar/baz/quux}	{}
+select * from test_regex('^(.+?)(?:/(.+?))(?:/(.+?)\3)?$', 'foo/bar/baz/quux', 'PRT');
 
 -- doing 25 "mixed quantifiers"
 -- # this is very incomplete as yet
@@ -1741,3 +1755,21 @@ select * from test_regex(repeat('x*y*z*', 200), 'x', 'N');
 --     regexp {(\Y)+} foo
 -- } 1
 select * from test_regex('(\Y)+', 'foo', 'LNP');
+
+
+-- and now, tests not from either Spencer or the Tcl project
+
+-- These cases exercise additional code paths in pushfwd()/push()/combine()
+select * from test_regex('a\Y(?=45)', 'a45', 'HLP');
+select * from test_regex('a(?=.)c', 'ac', 'HP');
+select * from test_regex('a(?=.).*(?=3)3*', 'azz33', 'HP');
+select * from test_regex('a(?=\w)\w*(?=.).*', 'az3%', 'HLP');
+
+-- These exercise the bulk-arc-movement paths in moveins() and moveouts();
+-- you may need to make them longer if you change BULK_ARC_OP_USE_SORT()
+select * from test_regex('ABCDEFGHIJKLMNOPQRSTUVWXYZ(?:\w|a|b|c|d|e|f|0|1|2|3|4|5|6|Q)',
+                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ3', 'LP');
+select * from test_regex('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789(\Y\Y)+',
+                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789Z', 'LP');
+select * from test_regex('((x|xabcdefghijklmnopqrstuvwxyz0123456789)x*|[^y]z)$',
+                         'az', '');

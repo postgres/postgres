@@ -937,6 +937,34 @@ select * from test_regex('a[[=x=]]', 'az', '+Lb');
  {0,REG_ULOCALE}
 (1 row)
 
+-- expectMatch	9.9b  &iL	{a[[=Y=]]}	ay	ay
+select * from test_regex('a[[=Y=]]', 'ay', 'iL');
+   test_regex    
+-----------------
+ {0,REG_ULOCALE}
+ {ay}
+(2 rows)
+
+select * from test_regex('a[[=Y=]]', 'ay', 'iLb');
+   test_regex    
+-----------------
+ {0,REG_ULOCALE}
+ {ay}
+(2 rows)
+
+-- expectNomatch	9.9c  &L	{a[[=Y=]]}	ay
+select * from test_regex('a[[=Y=]]', 'ay', 'L');
+   test_regex    
+-----------------
+ {0,REG_ULOCALE}
+(1 row)
+
+select * from test_regex('a[[=Y=]]', 'ay', 'Lb');
+   test_regex    
+-----------------
+ {0,REG_ULOCALE}
+(1 row)
+
 -- expectError	9.10 &		{a[0-[=x=]]}	ERANGE
 select * from test_regex('a[0-[=x=]]', '', '');
 ERROR:  invalid regular expression: invalid character range
@@ -2932,6 +2960,34 @@ select * from test_regex('a[^b-d]', 'aC', 'iMb');
  {0,REG_UUNPORT}
 (1 row)
 
+-- expectMatch	19.6 &iM	{a[B-Z]}	aC	aC
+select * from test_regex('a[B-Z]', 'aC', 'iM');
+   test_regex    
+-----------------
+ {0,REG_UUNPORT}
+ {aC}
+(2 rows)
+
+select * from test_regex('a[B-Z]', 'aC', 'iMb');
+   test_regex    
+-----------------
+ {0,REG_UUNPORT}
+ {aC}
+(2 rows)
+
+-- expectNomatch	19.7 &iM	{a[^B-Z]}	aC
+select * from test_regex('a[^B-Z]', 'aC', 'iM');
+   test_regex    
+-----------------
+ {0,REG_UUNPORT}
+(1 row)
+
+select * from test_regex('a[^B-Z]', 'aC', 'iMb');
+   test_regex    
+-----------------
+ {0,REG_UUNPORT}
+(1 row)
+
 -- doing 20 "directors and embedded options"
 -- expectError	20.1  &		***?		BADPAT
 select * from test_regex('***?', '', '');
@@ -3848,6 +3904,14 @@ select * from test_regex('^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$', 'foo/bar/baz',
 ---------------------------------
  {3,REG_UNONPOSIX,REG_USHORTEST}
  {foo/bar/baz,foo,bar,baz}
+(2 rows)
+
+-- expectMatch	24.14 PRT	{^(.+?)(?:/(.+?))(?:/(.+?)\3)?$}	{foo/bar/baz/quux}	{foo/bar/baz/quux}	{foo}	{bar/baz/quux}	{}
+select * from test_regex('^(.+?)(?:/(.+?))(?:/(.+?)\3)?$', 'foo/bar/baz/quux', 'PRT');
+                  test_regex                  
+----------------------------------------------
+ {3,REG_UBACKREF,REG_UNONPOSIX,REG_USHORTEST}
+ {foo/bar/baz/quux,foo,bar/baz/quux,NULL}
 (2 rows)
 
 -- doing 25 "mixed quantifiers"
@@ -4924,5 +4988,61 @@ select * from test_regex('(\Y)+', 'foo', 'LNP');
 -----------------------------------------------
  {1,REG_UNONPOSIX,REG_ULOCALE,REG_UEMPTYMATCH}
  {"",""}
+(2 rows)
+
+-- and now, tests not from either Spencer or the Tcl project
+-- These cases exercise additional code paths in pushfwd()/push()/combine()
+select * from test_regex('a\Y(?=45)', 'a45', 'HLP');
+                  test_regex                   
+-----------------------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX,REG_ULOCALE}
+ {a}
+(2 rows)
+
+select * from test_regex('a(?=.)c', 'ac', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {ac}
+(2 rows)
+
+select * from test_regex('a(?=.).*(?=3)3*', 'azz33', 'HP');
+            test_regex             
+-----------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX}
+ {azz33}
+(2 rows)
+
+select * from test_regex('a(?=\w)\w*(?=.).*', 'az3%', 'HLP');
+                  test_regex                   
+-----------------------------------------------
+ {0,REG_ULOOKAROUND,REG_UNONPOSIX,REG_ULOCALE}
+ {az3%}
+(2 rows)
+
+-- These exercise the bulk-arc-movement paths in moveins() and moveouts();
+-- you may need to make them longer if you change BULK_ARC_OP_USE_SORT()
+select * from test_regex('ABCDEFGHIJKLMNOPQRSTUVWXYZ(?:\w|a|b|c|d|e|f|0|1|2|3|4|5|6|Q)',
+                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ3', 'LP');
+          test_regex           
+-------------------------------
+ {0,REG_UNONPOSIX,REG_ULOCALE}
+ {ABCDEFGHIJKLMNOPQRSTUVWXYZ3}
+(2 rows)
+
+select * from test_regex('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789(\Y\Y)+',
+                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789Z', 'LP');
+                test_regex                 
+-------------------------------------------
+ {1,REG_UNONPOSIX,REG_ULOCALE}
+ {ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,""}
+(2 rows)
+
+select * from test_regex('((x|xabcdefghijklmnopqrstuvwxyz0123456789)x*|[^y]z)$',
+                         'az', '');
+  test_regex  
+--------------
+ {2}
+ {az,az,NULL}
 (2 rows)
 

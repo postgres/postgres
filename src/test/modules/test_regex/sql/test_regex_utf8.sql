@@ -58,3 +58,21 @@ select * from test_regex('[[:alnum:]]*[[:upper:]]*[\u1000-\u2000]*\u1237',
   E'\u1500\u1237', 'ELMP');
 select * from test_regex('[[:alnum:]]*[[:upper:]]*[\u1000-\u2000]*\u1237',
   E'A\u1239', 'ELMP');
+select * from test_regex('[[:alnum:]]*[[:upper:]]*[\u1000-\u2000]*\u1237',
+  E'\u1500\u1237', 'iELMP');
+
+-- systematically test char classes
+select * from test_regex('[[:alnum:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:alpha:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:ascii:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:blank:]]+',  E'x \t\u1500\u1237', 'L');
+select * from test_regex('[[:cntrl:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:digit:]]+',  E'x9\u1500\u1237', 'L');
+select * from test_regex('[[:graph:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:lower:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:print:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:punct:]]+',  E'x.\u1500\u1237', 'L');
+select * from test_regex('[[:space:]]+',  E'x \t\u1500\u1237', 'L');
+select * from test_regex('[[:upper:]]+',  E'xX\u1500\u1237', 'L');
+select * from test_regex('[[:xdigit:]]+',  E'xa9\u1500\u1237', 'L');
+select * from test_regex('[[:word:]]+',  E'x_\u1500\u1237', 'L');
