@@ -268,7 +268,7 @@ OperatorShellMake(const char *operatorName,
 	CatalogTupleInsert(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
-	makeOperatorDependencies(tup, false);
+	makeOperatorDependencies(tup, true, false);
 
 	heap_freetuple(tup);
 
@@ -546,7 +546,7 @@ OperatorCreate(const char *operatorName,
 	}
 
 	/* Add dependencies for the entry */
-	address = makeOperatorDependencies(tup, isUpdate);
+	address = makeOperatorDependencies(tup, true, isUpdate);
 
 	/* Post creation hook for new operator */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
@@ -766,11 +766,17 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete)
  * complete operator, a new shell operator, a just-updated shell,
  * or an operator that's being modified by ALTER OPERATOR).
  *
+ * makeExtensionDep should be true when making a new operator or
+ * replacing a shell, false for ALTER OPERATOR.  Passing false
+ * will prevent any change in the operator's extension membership.
+ *
  * NB: the OidIsValid tests in this routine are necessary, in case
  * the given operator is a shell.
  */
 ObjectAddress
-makeOperatorDependencies(HeapTuple tuple, bool isUpdate)
+makeOperatorDependencies(HeapTuple tuple,
+						 bool makeExtensionDep,
+						 bool isUpdate)
 {
 	Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tuple);
 	ObjectAddress myself,
@@ -857,7 +863,8 @@ makeOperatorDependencies(HeapTuple tuple, bool isUpdate)
 							oper->oprowner);
 
 	/* Dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, true);
+	if (makeExtensionDep)
+		recordDependencyOnCurrentExtension(&myself, true);
 
 	return myself;
 }

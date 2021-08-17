@@ -542,7 +542,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 
 	CatalogTupleUpdate(catalog, &tup->t_self, tup);
 
-	address = makeOperatorDependencies(tup, true);
+	address = makeOperatorDependencies(tup, false, true);
 
 	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
 
