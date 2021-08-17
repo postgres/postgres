@@ -636,12 +636,12 @@ COPY <replaceable class="parameter">count</replaceable>
       <row>
        <entry><literal>\</literal><replaceable>digits</replaceable></entry>
        <entry>Backslash followed by one to three octal digits specifies
-       the character with that numeric code</entry>
+       the byte with that numeric code</entry>
       </row>
       <row>
        <entry><literal>\x</literal><replaceable>digits</replaceable></entry>
        <entry>Backslash <literal>x</literal> followed by one or two hex digits specifies
-       the character with that numeric code</entry>
+       the byte with that numeric code</entry>
       </row>
      </tbody>
     </tgroup>
@@ -671,6 +671,12 @@ COPY <replaceable class="parameter">count</replaceable>
     They are also highly vulnerable to corruption if the <command>COPY</command> file is
     transferred across different machines (for example, from Unix to Windows
     or vice versa).
+   </para>
+
+   <para>
+     All backslash sequences are interpreted after encoding conversion.
+     The bytes specified with the octal and hex-digit backslash sequences must
+     form valid characters in the database encoding.
    </para>
 
    <para>
