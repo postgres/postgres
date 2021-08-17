@@ -2253,6 +2253,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 0, /* relation kind is n/a */
 							 false, /* a domain isn't an implicit array */
 							 false, /* nor is it any kind of dependent type */
+							 false, /* don't touch extension membership */
 							 true); /* We do need to rebuild dependencies */
 
 	InvokeObjectPostAlterHook(TypeRelationId, domainoid, 0);
@@ -3984,6 +3985,7 @@ AlterTypeRecurse(Oid typeOid, bool isImplicitArray,
 							 0, /* we rejected composite types above */
 							 isImplicitArray,	/* it might be an array */
 							 isImplicitArray,	/* dependent iff it's array */
+							 false, /* don't touch extension membership */
 							 true);
 
 	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
