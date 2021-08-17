@@ -40,9 +40,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 212: action "commit"; connection "con1"
+[NO_PID]: ECPGtrans on line 187: action "commit"; connection "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 213: action "commit"; connection "con2"
+[NO_PID]: ECPGtrans on line 188: action "commit"; connection "con2"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 74: name stmt_1; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -142,129 +142,81 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 123: name stmt_3; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 125: query: declare cur_3 cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_execute on line 124: query: SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 125: using PQexec
+[NO_PID]: ecpg_execute on line 124: using PQexecPrepared for "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 125: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 124: correctly got 2 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: query: fetch cur_3; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_get_data on line 124: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: using PQexec
+[NO_PID]: ecpg_get_data on line 124: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 131: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_get_data on line 124: RESULT: 10 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: 1 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 124: RESULT: 20 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: 10 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 124: RESULT: db on con2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: db on con1 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 124: RESULT: db on con2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: query: fetch cur_3; with 0 parameter(s) on connection con1
+[NO_PID]: deallocate_one on line 126: name stmt_3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: using PQexec
+[NO_PID]: prepare_common on line 137: name stmt_4; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 131: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_execute on line 139: query: declare cur_4 cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: 2 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 139: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: 20 offset: -1; array: no
+[NO_PID]: ecpg_process_output on line 139: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 131: RESULT: db on con1 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 145: query: fetch cur_4; with 0 parameter(s) on connection con2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: query: fetch cur_3; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_execute on line 145: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 131: using PQexec
+[NO_PID]: ecpg_process_output on line 145: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 131: correctly got 0 tuples with 3 fields
+[NO_PID]: ecpg_get_data on line 145: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 131: no data found on line 131
+[NO_PID]: ecpg_get_data on line 145: RESULT: 10 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 145: RESULT: db on con2 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 145: query: fetch cur_4; with 0 parameter(s) on connection con2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 145: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 145: correctly got 1 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 145: RESULT: 2 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 145: RESULT: 20 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 145: RESULT: db on con2 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 145: query: fetch cur_4; with 0 parameter(s) on connection con2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 145: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 145: correctly got 0 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 100 on line 145: no data found on line 145
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 134: query: close cur_3; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_execute on line 148: query: close cur_4; with 0 parameter(s) on connection con2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 134: using PQexec
+[NO_PID]: ecpg_execute on line 148: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 134: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 148: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 135: name stmt_3
+[NO_PID]: deallocate_one on line 149: name stmt_4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: prepare_common on line 148: name stmt_4; query: "SELECT f1,f2,f3 FROM source"
+[NO_PID]: prepare_common on line 158: name stmt_desc; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 150: query: declare cur_4 cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con2
+[NO_PID]: ecpg_execute on line 160: query: declare cur_desc cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 150: using PQexec
+[NO_PID]: ecpg_execute on line 160: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 150: OK: DECLARE CURSOR
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: query: fetch cur_4; with 0 parameter(s) on connection con2
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 156: correctly got 1 tuples with 3 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: 1 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: 10 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: db on con2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: query: fetch cur_4; with 0 parameter(s) on connection con2
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 156: correctly got 1 tuples with 3 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: 2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: 20 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 156: RESULT: db on con2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: query: fetch cur_4; with 0 parameter(s) on connection con2
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 156: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 156: correctly got 0 tuples with 3 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 156: no data found on line 156
-[NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 159: query: close cur_4; with 0 parameter(s) on connection con2
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 159: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 159: OK: CLOSE CURSOR
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 160: name stmt_4
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: prepare_common on line 172: name stmt_5; query: "SELECT f1,f2,f3 FROM source"
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 173: query: SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con2
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 173: using PQexecPrepared for "SELECT f1,f2,f3 FROM source"
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 173: correctly got 2 tuples with 3 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: 1 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: 2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: 10 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: 20 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: db on con2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 173: RESULT: db on con2 offset: -1; array: no
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 175: name stmt_5
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: prepare_common on line 183: name stmt_desc; query: "SELECT f1,f2,f3 FROM source"
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 185: query: declare cur_desc cursor for SELECT f1,f2,f3 FROM source; with 0 parameter(s) on connection con1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 185: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 185: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 160: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc_header: found 3 attributes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -272,25 +224,25 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: LENGTH = 20
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 198: query: fetch cur_desc; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_execute on line 173: query: fetch cur_desc; with 0 parameter(s) on connection con1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 198: using PQexec
+[NO_PID]: ecpg_execute on line 173: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 198: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 173: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 198: putting result (1 tuples) into descriptor desc_for_fetch
+[NO_PID]: ecpg_process_output on line 173: putting result (1 tuples) into descriptor desc_for_fetch
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 200: RESULT: db on con1 offset: -1; array: no
+[NO_PID]: ecpg_get_data on line 175: RESULT: db on con1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 203: query: close cur_desc; with 0 parameter(s) on connection con1
+[NO_PID]: ecpg_execute on line 178: query: close cur_desc; with 0 parameter(s) on connection con1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 203: using PQexec
+[NO_PID]: ecpg_execute on line 178: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_process_output on line 203: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 178: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: deallocate_one on line 204: name stmt_desc
+[NO_PID]: deallocate_one on line 179: name stmt_desc
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: query: drop table if exists source; with 0 parameter(s) on connection con1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -304,9 +256,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 46: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 212: action "commit"; connection "con1"
+[NO_PID]: ECPGtrans on line 187: action "commit"; connection "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 213: action "commit"; connection "con2"
+[NO_PID]: ECPGtrans on line 188: action "commit"; connection "con2"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection con2 closed
 [NO_PID]: sqlca: code: 0, state: 00000
