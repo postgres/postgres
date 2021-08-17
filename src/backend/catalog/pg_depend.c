@@ -175,6 +175,13 @@ recordMultipleDependencies(const ObjectAddress *depender,
  * existed), so we must check for a pre-existing extension membership entry.
  * Passing false is a guarantee that the object is newly created, and so
  * could not already be a member of any extension.
+ *
+ * Note: isReplace = true is typically used when updating a object in
+ * CREATE OR REPLACE and similar commands.  The net effect is that if an
+ * extension script uses such a command on a pre-existing free-standing
+ * object, the object will be absorbed into the extension.  If the object
+ * is already a member of some other extension, the command will fail.
+ * This behavior is desirable for cases such as replacing a shell type.
  */
 void
 recordDependencyOnCurrentExtension(const ObjectAddress *object,

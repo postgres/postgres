@@ -388,6 +388,7 @@ extern void GenerateTypeDependencies(HeapTuple typeTuple,
 														 * rowtypes */
 									 bool isImplicitArray,
 									 bool isDependentType,
+									 bool makeExtensionDep,
 									 bool rebuild);
 
 extern void RenameTypeInternal(Oid typeOid, const char *newTypeName,
