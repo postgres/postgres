@@ -114,29 +114,18 @@ void execute_test(void)
     printResult("testcase2", 2);
 
     /*
-     * testcase3. using DECLARE STATEMENT at con1,
-     * using PREPARE and CURSOR statement at con2
+     * testcase3. using DECLARE STATEMENT without using AT clause,
+     * using PREPARE and EXECUTE statement without using AT clause
      */
     reset();
 
-    EXEC SQL AT con1 DECLARE stmt_3 STATEMENT;
-    EXEC SQL AT con2 PREPARE stmt_3 FROM :selectString;
-    EXEC SQL AT con2 DECLARE cur_3 CURSOR FOR stmt_3;
-    EXEC SQL AT con2 OPEN cur_3;
+    EXEC SQL DECLARE stmt_3 STATEMENT;
+    EXEC SQL PREPARE stmt_3 FROM :selectString;
+    EXEC SQL EXECUTE stmt_3 INTO :f1, :f2, :f3;
 
-    EXEC SQL WHENEVER NOT FOUND DO BREAK;
-    i = 0;
-    while (1)
-    {
-        EXEC SQL AT con2 FETCH cur_3 INTO :f1[i], :f2[i], :f3[i];
-        i++;
-    }
-    EXEC SQL AT con2 CLOSE cur_3;
-    EXEC SQL AT con2 DEALLOCATE PREPARE stmt_3;
-    EXEC SQL WHENEVER NOT FOUND CONTINUE;
+    EXEC SQL DEALLOCATE PREPARE stmt_3;
 
     printResult("testcase3", 2);
-
 
     /*
      * testcase4. using DECLARE STATEMENT without using AT clause,
@@ -161,20 +150,6 @@ void execute_test(void)
     EXEC SQL WHENEVER NOT FOUND CONTINUE;
 
     printResult("testcase4", 2);
-
-    /*
-     * testcase5. using DECLARE STATEMENT without using AT clause,
-     * using PREPARE and EXECUTE statement without using AT clause
-     */
-    reset();
-
-    EXEC SQL DECLARE stmt_5 STATEMENT;
-    EXEC SQL PREPARE stmt_5 FROM :selectString;
-    EXEC SQL EXECUTE stmt_5 INTO :f1, :f2, :f3;
-
-    EXEC SQL DEALLOCATE PREPARE stmt_5;
-
-    printResult("testcase5", 2);
 
     /*
      * DESCRIBE statement is also supported.
