@@ -1845,6 +1845,36 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b) filter (where a > 1)
  {"(2,2,bar)","(3,1,baz)"}
 (1 row)
 
+-- check handling of bare boolean Var in FILTER
+select max(0) filter (where b1) from bool_test;
+ max 
+-----
+   0
+(1 row)
+
+select (select max(0) filter (where b1)) from bool_test;
+ max 
+-----
+   0
+(1 row)
+
+-- check for correct detection of nested-aggregate errors in FILTER
+select max(unique1) filter (where sum(ten) > 0) from tenk1;
+ERROR:  aggregate functions are not allowed in FILTER
+LINE 1: select max(unique1) filter (where sum(ten) > 0) from tenk1;
+                                          ^
+select (select max(unique1) filter (where sum(ten) > 0) from int8_tbl) from tenk1;
+ERROR:  aggregate function calls cannot be nested
+LINE 1: select (select max(unique1) filter (where sum(ten) > 0) from...
+                                                  ^
+select max(unique1) filter (where bool_or(ten > 0)) from tenk1;
+ERROR:  aggregate functions are not allowed in FILTER
+LINE 1: select max(unique1) filter (where bool_or(ten > 0)) from ten...
+                                          ^
+select (select max(unique1) filter (where bool_or(ten > 0)) from int8_tbl) from tenk1;
+ERROR:  aggregate function calls cannot be nested
+LINE 1: select (select max(unique1) filter (where bool_or(ten > 0)) ...
+                                                  ^
 -- ordered-set aggregates
 select p, percentile_cont(p) within group (order by x::float8)
 from generate_series(1,5) x,
