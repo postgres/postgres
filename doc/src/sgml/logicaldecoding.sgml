@@ -153,7 +153,7 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     that <varname>max_wal_senders</varname> is set sufficiently high to allow
     an additional connection.  The second example shows how to stream two-phase
     transactions.  Before you use two-phase commands, you must set
-    <xref linkend="guc-max-prepared-transactions"/> to atleast 1.
+    <xref linkend="guc-max-prepared-transactions"/> to at least 1.
    </para>
 <programlisting>
 Example 1:
