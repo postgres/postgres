@@ -395,9 +395,11 @@ main(int argc, char *argv[])
 				break;
 			case 6:
 				if (pg_strcasecmp(optarg, "all-visible") == 0)
-					opts.skip = "all visible";
+					opts.skip = "all-visible";
 				else if (pg_strcasecmp(optarg, "all-frozen") == 0)
-					opts.skip = "all frozen";
+					opts.skip = "all-frozen";
+				else if (pg_strcasecmp(optarg, "none") == 0)
+					opts.skip = "none";
 				else
 				{
 					pg_log_error("invalid argument for option %s", "--skip");
