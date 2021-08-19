@@ -7178,7 +7178,7 @@ Truncate
 
 <para>
 
-The following messages (Stream Start, Stream End, Stream Commit, and
+The following messages (Stream Start, Stream Stop, Stream Commit, and
 Stream Abort) are available since protocol version 2.
 
 </para>
