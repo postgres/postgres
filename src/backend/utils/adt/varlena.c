@@ -22,7 +22,6 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
-#include "common/hex.h"
 #include "common/int.h"
 #include "common/unicode_norm.h"
 #include "lib/hyperloglog.h"
@@ -305,12 +304,10 @@ byteain(PG_FUNCTION_ARGS)
 	if (inputText[0] == '\\' && inputText[1] == 'x')
 	{
 		size_t		len = strlen(inputText);
-		uint64		dstlen = pg_hex_dec_len(len - 2);
 
-		bc = dstlen + VARHDRSZ; /* maximum possible length */
+		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
-
-		bc = pg_hex_decode(inputText + 2, len - 2, VARDATA(result), dstlen);
+		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);
@@ -399,15 +396,11 @@ byteaout(PG_FUNCTION_ARGS)
 
 	if (bytea_output == BYTEA_OUTPUT_HEX)
 	{
-		uint64		dstlen = pg_hex_enc_len(VARSIZE_ANY_EXHDR(vlena));
-
 		/* Print hex format */
-		rp = result = palloc(dstlen + 2 + 1);
+		rp = result = palloc(VARSIZE_ANY_EXHDR(vlena) * 2 + 2 + 1);
 		*rp++ = '\\';
 		*rp++ = 'x';
-
-		rp += pg_hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp,
-							dstlen);
+		rp += hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp);
 	}
 	else if (bytea_output == BYTEA_OUTPUT_ESCAPE)
 	{

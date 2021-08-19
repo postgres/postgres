@@ -15,7 +15,6 @@
 
 #include <ctype.h>
 
-#include "common/hex.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -32,12 +31,10 @@
  */
 struct pg_encoding
 {
-	uint64		(*encode_len) (const char *src, size_t srclen);
-	uint64		(*decode_len) (const char *src, size_t srclen);
-	uint64		(*encode) (const char *src, size_t srclen,
-						   char *dst, size_t dstlen);
-	uint64		(*decode) (const char *src, size_t srclen,
-						   char *dst, size_t dstlen);
+	uint64		(*encode_len) (const char *data, size_t dlen);
+	uint64		(*decode_len) (const char *data, size_t dlen);
+	uint64		(*encode) (const char *data, size_t dlen, char *res);
+	uint64		(*decode) (const char *data, size_t dlen, char *res);
 };
 
 static const struct pg_encoding *pg_find_encoding(const char *name);
@@ -83,7 +80,11 @@ binary_encode(PG_FUNCTION_ARGS)
 
 	result = palloc(VARHDRSZ + resultlen);
 
-	res = enc->encode(dataptr, datalen, VARDATA(result), resultlen);
+	res = enc->encode(dataptr, datalen, VARDATA(result));
+
+	/* Make this FATAL 'cause we've trodden on memory ... */
+	if (res > resultlen)
+		elog(FATAL, "overflow - encode estimate too small");
 
 	SET_VARSIZE(result, VARHDRSZ + res);
 
@@ -127,7 +128,11 @@ binary_decode(PG_FUNCTION_ARGS)
 
 	result = palloc(VARHDRSZ + resultlen);
 
-	res = enc->decode(dataptr, datalen, VARDATA(result), resultlen);
+	res = enc->decode(dataptr, datalen, VARDATA(result));
+
+	/* Make this FATAL 'cause we've trodden on memory ... */
+	if (res > resultlen)
+		elog(FATAL, "overflow - decode estimate too small");
 
 	SET_VARSIZE(result, VARHDRSZ + res);
 
@@ -139,20 +144,95 @@ binary_decode(PG_FUNCTION_ARGS)
  * HEX
  */
 
-/*
- * Those two wrappers are still needed to match with the layer of
- * src/common/.
- */
+static const char hextbl[] = "0123456789abcdef";
+
+static const int8 hexlookup[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+uint64
+hex_encode(const char *src, size_t len, char *dst)
+{
+	const char *end = src + len;
+
+	while (src < end)
+	{
+		*dst++ = hextbl[(*src >> 4) & 0xF];
+		*dst++ = hextbl[*src & 0xF];
+		src++;
+	}
+	return (uint64) len * 2;
+}
+
+static inline char
+get_hex(const char *cp)
+{
+	unsigned char c = (unsigned char) *cp;
+	int			res = -1;
+
+	if (c < 127)
+		res = hexlookup[c];
+
+	if (res < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid hexadecimal digit: \"%.*s\"",
+						pg_mblen(cp), cp)));
+
+	return (char) res;
+}
+
+uint64
+hex_decode(const char *src, size_t len, char *dst)
+{
+	const char *s,
+			   *srcend;
+	char		v1,
+				v2,
+			   *p;
+
+	srcend = src + len;
+	s = src;
+	p = dst;
+	while (s < srcend)
+	{
+		if (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
+		{
+			s++;
+			continue;
+		}
+		v1 = get_hex(s) << 4;
+		s++;
+		if (s >= srcend)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid hexadecimal data: odd number of digits")));
+
+		v2 = get_hex(s);
+		s++;
+		*p++ = v1 | v2;
+	}
+
+	return p - dst;
+}
+
 static uint64
 hex_enc_len(const char *src, size_t srclen)
 {
-	return pg_hex_enc_len(srclen);
+	return (uint64) srclen << 1;
 }
 
 static uint64
 hex_dec_len(const char *src, size_t srclen)
 {
-	return pg_hex_dec_len(srclen);
+	return (uint64) srclen >> 1;
 }
 
 /*
@@ -174,12 +254,12 @@ static const int8 b64lookup[128] = {
 };
 
 static uint64
-pg_base64_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
+pg_base64_encode(const char *src, size_t len, char *dst)
 {
 	char	   *p,
 			   *lend = dst + 76;
 	const char *s,
-			   *end = src + srclen;
+			   *end = src + len;
 	int			pos = 2;
 	uint32		buf = 0;
 
@@ -195,8 +275,6 @@ pg_base64_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		/* write it out */
 		if (pos < 0)
 		{
-			if ((p - dst + 4) > dstlen)
-				elog(ERROR, "overflow of destination buffer in base64 encoding");
 			*p++ = _base64[(buf >> 18) & 0x3f];
 			*p++ = _base64[(buf >> 12) & 0x3f];
 			*p++ = _base64[(buf >> 6) & 0x3f];
@@ -207,30 +285,25 @@ pg_base64_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		}
 		if (p >= lend)
 		{
-			if ((p - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in base64 encoding");
 			*p++ = '\n';
 			lend = p + 76;
 		}
 	}
 	if (pos != 2)
 	{
-		if ((p - dst + 4) > dstlen)
-			elog(ERROR, "overflow of destination buffer in base64 encoding");
 		*p++ = _base64[(buf >> 18) & 0x3f];
 		*p++ = _base64[(buf >> 12) & 0x3f];
 		*p++ = (pos == 0) ? _base64[(buf >> 6) & 0x3f] : '=';
 		*p++ = '=';
 	}
 
-	Assert((p - dst) <= dstlen);
 	return p - dst;
 }
 
 static uint64
-pg_base64_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
+pg_base64_decode(const char *src, size_t len, char *dst)
 {
-	const char *srcend = src + srclen,
+	const char *srcend = src + len,
 			   *s = src;
 	char	   *p = dst;
 	char		c;
@@ -278,21 +351,11 @@ pg_base64_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		pos++;
 		if (pos == 4)
 		{
-			if ((p - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in base64 decoding");
 			*p++ = (buf >> 16) & 255;
 			if (end == 0 || end > 1)
-			{
-				if ((p - dst + 1) > dstlen)
-					elog(ERROR, "overflow of destination buffer in base64 decoding");
 				*p++ = (buf >> 8) & 255;
-			}
 			if (end == 0 || end > 2)
-			{
-				if ((p - dst + 1) > dstlen)
-					elog(ERROR, "overflow of destination buffer in base64 decoding");
 				*p++ = buf & 255;
-			}
 			buf = 0;
 			pos = 0;
 		}
@@ -304,7 +367,6 @@ pg_base64_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
 				 errmsg("invalid base64 end sequence"),
 				 errhint("Input data is missing padding, is truncated, or is otherwise corrupted.")));
 
-	Assert((p - dst) <= dstlen);
 	return p - dst;
 }
 
@@ -340,7 +402,7 @@ pg_base64_dec_len(const char *src, size_t srclen)
 #define DIG(VAL)		((VAL) + '0')
 
 static uint64
-esc_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
+esc_encode(const char *src, size_t srclen, char *dst)
 {
 	const char *end = src + srclen;
 	char	   *rp = dst;
@@ -352,8 +414,6 @@ esc_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 
 		if (c == '\0' || IS_HIGHBIT_SET(c))
 		{
-			if ((rp - dst + 4) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape encoding");
 			rp[0] = '\\';
 			rp[1] = DIG(c >> 6);
 			rp[2] = DIG((c >> 3) & 7);
@@ -363,8 +423,6 @@ esc_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		}
 		else if (c == '\\')
 		{
-			if ((rp - dst + 2) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape encoding");
 			rp[0] = '\\';
 			rp[1] = '\\';
 			rp += 2;
@@ -372,8 +430,6 @@ esc_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		}
 		else
 		{
-			if ((rp - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape encoding");
 			*rp++ = c;
 			len++;
 		}
@@ -381,12 +437,11 @@ esc_encode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		src++;
 	}
 
-	Assert((rp - dst) <= dstlen);
 	return len;
 }
 
 static uint64
-esc_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
+esc_decode(const char *src, size_t srclen, char *dst)
 {
 	const char *end = src + srclen;
 	char	   *rp = dst;
@@ -395,11 +450,7 @@ esc_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
 	while (src < end)
 	{
 		if (src[0] != '\\')
-		{
-			if ((rp - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape decoding");
 			*rp++ = *src++;
-		}
 		else if (src + 3 < end &&
 				 (src[1] >= '0' && src[1] <= '3') &&
 				 (src[2] >= '0' && src[2] <= '7') &&
@@ -411,16 +462,12 @@ esc_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
 			val <<= 3;
 			val += VAL(src[2]);
 			val <<= 3;
-			if ((rp - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape decoding");
 			*rp++ = val + VAL(src[3]);
 			src += 4;
 		}
 		else if (src + 1 < end &&
 				 (src[1] == '\\'))
 		{
-			if ((rp - dst + 1) > dstlen)
-				elog(ERROR, "overflow of destination buffer in escape decoding");
 			*rp++ = '\\';
 			src += 2;
 		}
@@ -438,7 +485,6 @@ esc_decode(const char *src, size_t srclen, char *dst, size_t dstlen)
 		len++;
 	}
 
-	Assert((rp - dst) <= dstlen);
 	return len;
 }
 
@@ -520,7 +566,7 @@ static const struct
 	{
 		"hex",
 		{
-			hex_enc_len, hex_dec_len, pg_hex_encode, pg_hex_decode
+			hex_enc_len, hex_dec_len, hex_encode, hex_decode
 		}
 	},
 	{
