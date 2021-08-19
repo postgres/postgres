@@ -2380,7 +2380,7 @@ apply_dispatch(StringInfo s)
 			apply_handle_stream_start(s);
 			return;
 
-		case LOGICAL_REP_MSG_STREAM_END:
+		case LOGICAL_REP_MSG_STREAM_STOP:
 			apply_handle_stream_stop(s);
 			return;
 

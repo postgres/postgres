@@ -1074,7 +1074,7 @@ logicalrep_read_stream_start(StringInfo in, bool *first_segment)
 void
 logicalrep_write_stream_stop(StringInfo out)
 {
-	pq_sendbyte(out, LOGICAL_REP_MSG_STREAM_END);
+	pq_sendbyte(out, LOGICAL_REP_MSG_STREAM_STOP);
 }
 
 /*
