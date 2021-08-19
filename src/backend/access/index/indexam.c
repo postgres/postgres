@@ -131,9 +131,8 @@ static IndexScanDesc index_beginscan_internal(Relation indexRelation,
 Relation
 index_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
 
-	r = relation_open(relationId, lockmode);
+	Relation	r = relation_open(relationId, lockmode);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX &&
 		r->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
@@ -207,9 +206,8 @@ index_beginscan(Relation heapRelation,
 				Snapshot snapshot,
 				int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
+	IndexScanDesc scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -235,9 +233,8 @@ index_beginscan_bitmap(Relation indexRelation,
 					   Snapshot snapshot,
 					   int nkeys)
 {
-	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, 0, snapshot, NULL, false);
+	IndexScanDesc scan = index_beginscan_internal(indexRelation, nkeys, 0, snapshot, NULL, false);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -256,7 +253,6 @@ index_beginscan_internal(Relation indexRelation,
 						 int nkeys, int norderbys, Snapshot snapshot,
 						 ParallelIndexScanDesc pscan, bool temp_snap)
 {
-	IndexScanDesc scan;
 
 	RELATION_CHECKS;
 	CHECK_REL_PROCEDURE(ambeginscan);
@@ -272,7 +268,7 @@ index_beginscan_internal(Relation indexRelation,
 	/*
 	 * Tell the AM to open a scan.
 	 */
-	scan = indexRelation->rd_indam->ambeginscan(indexRelation, nkeys,
+	IndexScanDesc scan = indexRelation->rd_indam->ambeginscan(indexRelation, nkeys,
 												norderbys);
 	/* Initialize information for parallel scan. */
 	scan->parallel_scan = pscan;
@@ -401,11 +397,10 @@ index_restrpos(IndexScanDesc scan)
 Size
 index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
 {
-	Size		nbytes;
 
 	RELATION_CHECKS;
 
-	nbytes = offsetof(ParallelIndexScanDescData, ps_snapshot_data);
+	Size		nbytes = offsetof(ParallelIndexScanDescData, ps_snapshot_data);
 	nbytes = add_size(nbytes, EstimateSnapshotSpace(snapshot));
 	nbytes = MAXALIGN(nbytes);
 
@@ -435,11 +430,10 @@ void
 index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 							  Snapshot snapshot, ParallelIndexScanDesc target)
 {
-	Size		offset;
 
 	RELATION_CHECKS;
 
-	offset = add_size(offsetof(ParallelIndexScanDescData, ps_snapshot_data),
+	Size		offset = add_size(offsetof(ParallelIndexScanDescData, ps_snapshot_data),
 					  EstimateSnapshotSpace(snapshot));
 	offset = MAXALIGN(offset);
 
@@ -451,9 +445,8 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 	/* aminitparallelscan is optional; assume no-op if not provided by AM */
 	if (indexRelation->rd_indam->aminitparallelscan != NULL)
 	{
-		void	   *amtarget;
 
-		amtarget = OffsetToPointer(target, offset);
+		void	   *amtarget = OffsetToPointer(target, offset);
 		indexRelation->rd_indam->aminitparallelscan(amtarget);
 	}
 }
@@ -484,13 +477,11 @@ IndexScanDesc
 index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
 						 int norderbys, ParallelIndexScanDesc pscan)
 {
-	Snapshot	snapshot;
-	IndexScanDesc scan;
 
 	Assert(RelationGetRelid(heaprel) == pscan->ps_relid);
-	snapshot = RestoreSnapshot(pscan->ps_snapshot_data);
+	Snapshot	snapshot = RestoreSnapshot(pscan->ps_snapshot_data);
 	RegisterSnapshot(snapshot);
-	scan = index_beginscan_internal(indexrel, nkeys, norderbys, snapshot,
+	IndexScanDesc scan = index_beginscan_internal(indexrel, nkeys, norderbys, snapshot,
 									pscan, true);
 
 	/*
@@ -516,7 +507,6 @@ index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
 ItemPointer
 index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 {
-	bool		found;
 
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amgettuple);
@@ -530,7 +520,7 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	 * scan->xs_recheck and possibly scan->xs_itup/scan->xs_hitup, though we
 	 * pay no attention to those fields here.
 	 */
-	found = scan->indexRelation->rd_indam->amgettuple(scan, direction);
+	bool		found = scan->indexRelation->rd_indam->amgettuple(scan, direction);
 
 	/* Reset kill flag immediately for safety */
 	scan->kill_prior_tuple = false;
@@ -575,9 +565,8 @@ bool
 index_fetch_heap(IndexScanDesc scan, TupleTableSlot *slot)
 {
 	bool		all_dead = false;
-	bool		found;
 
-	found = table_index_fetch_tuple(scan->xs_heapfetch, &scan->xs_heaptid,
+	bool		found = table_index_fetch_tuple(scan->xs_heapfetch, &scan->xs_heaptid,
 									scan->xs_snapshot, slot,
 									&scan->xs_heap_continue, &all_dead);
 
@@ -619,10 +608,9 @@ index_getnext_slot(IndexScanDesc scan, ScanDirection direction, TupleTableSlot *
 	{
 		if (!scan->xs_heap_continue)
 		{
-			ItemPointer tid;
 
 			/* Time to fetch the next TID from the index */
-			tid = index_getnext_tid(scan, direction);
+			ItemPointer tid = index_getnext_tid(scan, direction);
 
 			/* If we're out of index entries, we're done */
 			if (tid == NULL)
@@ -660,7 +648,6 @@ index_getnext_slot(IndexScanDesc scan, ScanDirection direction, TupleTableSlot *
 int64
 index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap)
 {
-	int64		ntids;
 
 	SCAN_CHECKS;
 	CHECK_SCAN_PROCEDURE(amgetbitmap);
@@ -671,7 +658,7 @@ index_getbitmap(IndexScanDesc scan, TIDBitmap *bitmap)
 	/*
 	 * have the am's getbitmap proc do all the work.
 	 */
-	ntids = scan->indexRelation->rd_indam->amgetbitmap(scan, bitmap);
+	int64		ntids = scan->indexRelation->rd_indam->amgetbitmap(scan, bitmap);
 
 	pgstat_count_index_tuples(scan->indexRelation, ntids);
 
@@ -770,17 +757,14 @@ index_getprocid(Relation irel,
 				AttrNumber attnum,
 				uint16 procnum)
 {
-	RegProcedure *loc;
-	int			nproc;
-	int			procindex;
 
-	nproc = irel->rd_indam->amsupport;
+	int			nproc = irel->rd_indam->amsupport;
 
 	Assert(procnum > 0 && procnum <= (uint16) nproc);
 
-	procindex = (nproc * (attnum - 1)) + (procnum - 1);
+	int			procindex = (nproc * (attnum - 1)) + (procnum - 1);
 
-	loc = irel->rd_support;
+	RegProcedure *loc = irel->rd_support;
 
 	Assert(loc != NULL);
 
@@ -804,19 +788,15 @@ index_getprocinfo(Relation irel,
 				  AttrNumber attnum,
 				  uint16 procnum)
 {
-	FmgrInfo   *locinfo;
-	int			nproc;
-	int			optsproc;
-	int			procindex;
 
-	nproc = irel->rd_indam->amsupport;
-	optsproc = irel->rd_indam->amoptsprocnum;
+	int			nproc = irel->rd_indam->amsupport;
+	int			optsproc = irel->rd_indam->amoptsprocnum;
 
 	Assert(procnum > 0 && procnum <= (uint16) nproc);
 
-	procindex = (nproc * (attnum - 1)) + (procnum - 1);
+	int			procindex = (nproc * (attnum - 1)) + (procnum - 1);
 
-	locinfo = irel->rd_supportinfo;
+	FmgrInfo   *locinfo = irel->rd_supportinfo;
 
 	Assert(locinfo != NULL);
 
@@ -826,11 +806,10 @@ index_getprocinfo(Relation irel,
 	if (locinfo->fn_oid == InvalidOid)
 	{
 		RegProcedure *loc = irel->rd_support;
-		RegProcedure procId;
 
 		Assert(loc != NULL);
 
-		procId = loc[procindex];
+		RegProcedure procId = loc[procindex];
 
 		/*
 		 * Complain if function was not found during IndexSupportInitialize.
@@ -941,7 +920,6 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 {
 	int			amoptsprocnum = indrel->rd_indam->amoptsprocnum;
 	Oid			procid = InvalidOid;
-	FmgrInfo   *procinfo;
 	local_relopts relopts;
 
 	/* fetch options support procedure if specified */
@@ -950,9 +928,6 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 
 	if (!OidIsValid(procid))
 	{
-		Oid			opclass;
-		Datum		indclassDatum;
-		oidvector  *indclass;
 		bool		isnull;
 
 		if (!DatumGetPointer(attoptions))
@@ -962,11 +937,11 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 		 * Report an error if the opclass's options-parsing procedure does not
 		 * exist but the opclass options are specified.
 		 */
-		indclassDatum = SysCacheGetAttr(INDEXRELID, indrel->rd_indextuple,
+		Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, indrel->rd_indextuple,
 										Anum_pg_index_indclass, &isnull);
 		Assert(!isnull);
-		indclass = (oidvector *) DatumGetPointer(indclassDatum);
-		opclass = indclass->values[attnum - 1];
+		oidvector  *indclass = (oidvector *) DatumGetPointer(indclassDatum);
+		Oid			opclass = indclass->values[attnum - 1];
 
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -976,7 +951,7 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 
 	init_local_reloptions(&relopts, 0);
 
-	procinfo = index_getprocinfo(indrel, attnum, amoptsprocnum);
+	FmgrInfo   *procinfo = index_getprocinfo(indrel, attnum, amoptsprocnum);
 
 	(void) FunctionCall1(procinfo, PointerGetDatum(&relopts));
 

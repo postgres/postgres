@@ -76,7 +76,6 @@ SpinlockSemas(void)
 void
 SpinlockSemaInit(void)
 {
-	PGSemaphore *spinsemas;
 	int			nsemas = SpinlockSemas();
 	int			i;
 
@@ -84,7 +83,7 @@ SpinlockSemaInit(void)
 	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
 	 * ShmemAlloc() obviously can't be ready yet.
 	 */
-	spinsemas = (PGSemaphore *) ShmemAllocUnlocked(SpinlockSemaSize());
+	PGSemaphore *spinsemas = (PGSemaphore *) ShmemAllocUnlocked(SpinlockSemaSize());
 	for (i = 0; i < nsemas; ++i)
 		spinsemas[i] = PGSemaphoreCreate();
 	SpinlockSemaArray = spinsemas;
@@ -123,7 +122,6 @@ s_init_lock_sema(volatile slock_t *lock, bool nested)
 	static uint32 counter = 0;
 	uint32		offset;
 	uint32		sema_total;
-	uint32		idx;
 
 	if (nested)
 	{
@@ -140,7 +138,7 @@ s_init_lock_sema(volatile slock_t *lock, bool nested)
 		sema_total = NUM_SPINLOCK_SEMAPHORES;
 	}
 
-	idx = (counter++ % sema_total) + offset;
+	uint32		idx = (counter++ % sema_total) + offset;
 
 	/* double check we did things correctly */
 	s_check_valid(idx);

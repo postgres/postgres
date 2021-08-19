@@ -53,8 +53,6 @@ ObjectAddress
 DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_exists)
 {
 	char	   *collName;
-	Oid			collNamespace;
-	AclResult	aclresult;
 	ListCell   *pl;
 	DefElem    *fromEl = NULL;
 	DefElem    *localeEl = NULL;
@@ -70,12 +68,11 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	int			collencoding = 0;
 	char		collprovider = 0;
 	char	   *collversion = NULL;
-	Oid			newoid;
 	ObjectAddress address;
 
-	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
+	Oid			collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
-	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
+	AclResult	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(collNamespace));
@@ -127,11 +124,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 	if (fromEl)
 	{
-		Oid			collid;
-		HeapTuple	tp;
 
-		collid = get_collation_oid(defGetQualifiedName(fromEl), false);
-		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+		Oid			collid = get_collation_oid(defGetQualifiedName(fromEl), false);
+		HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 
@@ -226,7 +221,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	if (!collversion)
 		collversion = get_collation_actual_version(collprovider, collcollate);
 
-	newoid = CollationCreate(collName,
+	Oid			newoid = CollationCreate(collName,
 							 collNamespace,
 							 GetUserId(),
 							 collprovider,
@@ -291,33 +286,26 @@ IsThereCollationInNamespace(const char *collname, Oid nspOid)
 ObjectAddress
 AlterCollation(AlterCollationStmt *stmt)
 {
-	Relation	rel;
-	Oid			collOid;
-	HeapTuple	tup;
-	Form_pg_collation collForm;
-	Datum		collversion;
 	bool		isnull;
-	char	   *oldversion;
-	char	   *newversion;
 	ObjectAddress address;
 
-	rel = table_open(CollationRelationId, RowExclusiveLock);
-	collOid = get_collation_oid(stmt->collname, false);
+	Relation	rel = table_open(CollationRelationId, RowExclusiveLock);
+	Oid			collOid = get_collation_oid(stmt->collname, false);
 
 	if (!pg_collation_ownercheck(collOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
 					   NameListToString(stmt->collname));
 
-	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collOid));
+	HeapTuple	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collOid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for collation %u", collOid);
 
-	collForm = (Form_pg_collation) GETSTRUCT(tup);
-	collversion = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion,
+	Form_pg_collation collForm = (Form_pg_collation) GETSTRUCT(tup);
+	Datum		collversion = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion,
 								  &isnull);
-	oldversion = isnull ? NULL : TextDatumGetCString(collversion);
+	char	   *oldversion = isnull ? NULL : TextDatumGetCString(collversion);
 
-	newversion = get_collation_actual_version(collForm->collprovider, NameStr(collForm->collcollate));
+	char	   *newversion = get_collation_actual_version(collForm->collprovider, NameStr(collForm->collcollate));
 
 	/* cannot change from NULL to non-NULL or vice versa */
 	if ((!oldversion && newversion) || (oldversion && !newversion))
@@ -363,23 +351,19 @@ Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GETARG_OID(0);
-	HeapTuple	tp;
-	char	   *collcollate;
-	char		collprovider;
-	char	   *version;
 
-	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+	HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("collation with OID %u does not exist", collid)));
 
-	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
-	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
+	char	   *collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
+	char		collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
 
 	ReleaseSysCache(tp);
 
-	version = get_collation_actual_version(collprovider, collcollate);
+	char	   *version = get_collation_actual_version(collprovider, collcollate);
 
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
@@ -452,9 +436,8 @@ static char *
 get_icu_language_tag(const char *localename)
 {
 	char		buf[ULOC_FULLNAME_CAPACITY];
-	UErrorCode	status;
 
-	status = U_ZERO_ERROR;
+	UErrorCode	status = U_ZERO_ERROR;
 	uloc_toLanguageTag(localename, buf, sizeof(buf), true, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
@@ -473,14 +456,11 @@ get_icu_language_tag(const char *localename)
 static char *
 get_icu_locale_comment(const char *localename)
 {
-	UErrorCode	status;
 	UChar		displayname[128];
-	int32		len_uchar;
 	int32		i;
-	char	   *result;
 
-	status = U_ZERO_ERROR;
-	len_uchar = uloc_getDisplayName(localename, "en",
+	UErrorCode	status = U_ZERO_ERROR;
+	int32		len_uchar = uloc_getDisplayName(localename, "en",
 									displayname, lengthof(displayname),
 									&status);
 	if (U_FAILURE(status))
@@ -494,7 +474,7 @@ get_icu_locale_comment(const char *localename)
 	}
 
 	/* OK, transcribe */
-	result = palloc(len_uchar + 1);
+	char	   *result = palloc(len_uchar + 1);
 	for (i = 0; i < len_uchar; i++)
 		result[i] = displayname[i];
 	result[len_uchar] = '\0';
@@ -526,21 +506,19 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	/* Load collations known to libc, using "locale -a" to enumerate them */
 #ifdef READ_LOCALE_A_OUTPUT
 	{
-		FILE	   *locale_a_handle;
 		char		localebuf[NAMEDATALEN]; /* we assume ASCII so this is fine */
 		int			nvalid = 0;
 		Oid			collid;
-		CollAliasData *aliases;
 		int			naliases,
 					maxaliases,
 					i;
 
 		/* expansible array of aliases */
 		maxaliases = 100;
-		aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
+		CollAliasData *aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
 		naliases = 0;
 
-		locale_a_handle = OpenPipeStream("locale -a", "r");
+		FILE	   *locale_a_handle = OpenPipeStream("locale -a", "r");
 		if (locale_a_handle == NULL)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -549,11 +527,9 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 		while (fgets(localebuf, sizeof(localebuf), locale_a_handle))
 		{
-			size_t		len;
-			int			enc;
 			char		alias[NAMEDATALEN];
 
-			len = strlen(localebuf);
+			size_t		len = strlen(localebuf);
 
 			if (len == 0 || localebuf[len - 1] != '\n')
 			{
@@ -575,7 +551,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				continue;
 			}
 
-			enc = pg_get_encoding_from_locale(localebuf, false);
+			int			enc = pg_get_encoding_from_locale(localebuf, false);
 			if (enc < 0)
 			{
 				/* error message printed by pg_get_encoding_from_locale() */
@@ -700,18 +676,15 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		for (i = -1; i < uloc_countAvailable(); i++)
 		{
 			const char *name;
-			char	   *langtag;
 			char	   *icucomment;
-			const char *collcollate;
-			Oid			collid;
 
 			if (i == -1)
 				name = "";		/* ICU root locale */
 			else
 				name = uloc_getAvailable(i);
 
-			langtag = get_icu_language_tag(name);
-			collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
+			char	   *langtag = get_icu_language_tag(name);
+			const char *collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
 
 			/*
 			 * Be paranoid about not allowing any non-ASCII strings into
@@ -720,7 +693,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			if (!pg_is_ascii(langtag) || !pg_is_ascii(collcollate))
 				continue;
 
-			collid = CollationCreate(psprintf("%s-x-icu", langtag),
+			Oid			collid = CollationCreate(psprintf("%s-x-icu", langtag),
 									 nspid, GetUserId(),
 									 COLLPROVIDER_ICU, true, -1,
 									 collcollate, collcollate,

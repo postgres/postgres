@@ -90,7 +90,6 @@ ecpg_dynamic_type_DDT(Oid type)
 bool
 ECPGget_desc_header(int lineno, const char *desc_name, int *count)
 {
-	PGresult   *ECPGresult;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	if (sqlca == NULL)
@@ -101,7 +100,7 @@ ECPGget_desc_header(int lineno, const char *desc_name, int *count)
 	}
 
 	ecpg_init_sqlca(sqlca);
-	ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
+	PGresult   *ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
 	if (!ECPGresult)
 		return false;
 
@@ -241,8 +240,6 @@ bool
 ECPGget_desc(int lineno, const char *desc_name, int index,...)
 {
 	va_list		args;
-	PGresult   *ECPGresult;
-	enum ECPGdtype type;
 	int			ntuples,
 				act_tuple;
 	struct variable data_var;
@@ -257,7 +254,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 
 	va_start(args, index);
 	ecpg_init_sqlca(sqlca);
-	ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
+	PGresult   *ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
 	if (!ECPGresult)
 	{
 		va_end(args);
@@ -276,7 +273,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	ecpg_log("ECPGget_desc: reading items for tuple %d\n", index);
 	--index;
 
-	type = va_arg(args, enum ECPGdtype);
+	enum ECPGdtype type = va_arg(args, enum ECPGdtype);
 
 	memset(&data_var, 0, sizeof data_var);
 	data_var.type = ECPGt_EORT;
@@ -285,17 +282,12 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	while (type != ECPGd_EODT)
 	{
 		char		type_str[20];
-		long		varcharsize;
-		long		offset;
-		long		arrsize;
-		enum ECPGttype vartype;
-		void	   *var;
 
-		vartype = va_arg(args, enum ECPGttype);
-		var = va_arg(args, void *);
-		varcharsize = va_arg(args, long);
-		arrsize = va_arg(args, long);
-		offset = va_arg(args, long);
+		enum ECPGttype vartype = va_arg(args, enum ECPGttype);
+		void	   *var = va_arg(args, void *);
+		long		varcharsize = va_arg(args, long);
+		long		arrsize = va_arg(args, long);
+		long		offset = va_arg(args, long);
 
 		switch (type)
 		{
@@ -607,11 +599,10 @@ bool
 ECPGset_desc(int lineno, const char *desc_name, int index,...)
 {
 	va_list		args;
-	struct descriptor *desc;
 	struct descriptor_item *desc_item;
 	struct variable *var;
 
-	desc = ecpg_find_desc(lineno, desc_name);
+	struct descriptor *desc = ecpg_find_desc(lineno, desc_name);
 	if (desc == NULL)
 		return false;
 
@@ -640,10 +631,9 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 
 	for (;;)
 	{
-		enum ECPGdtype itemtype;
 		char	   *tobeinserted = NULL;
 
-		itemtype = va_arg(args, enum ECPGdtype);
+		enum ECPGdtype itemtype = va_arg(args, enum ECPGdtype);
 
 		if (itemtype == ECPGd_EODT)
 			break;
@@ -733,10 +723,9 @@ descriptor_free(struct descriptor *desc)
 
 	for (desc_item = desc->items; desc_item;)
 	{
-		struct descriptor_item *di;
 
 		ecpg_free(desc_item->data);
-		di = desc_item;
+		struct descriptor_item *di = desc_item;
 		desc_item = desc_item->next;
 		ecpg_free(di);
 	}
@@ -796,7 +785,6 @@ descriptor_deallocate_all(struct descriptor *list)
 bool
 ECPGallocate_desc(int line, const char *name)
 {
-	struct descriptor *new;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	if (sqlca == NULL)
@@ -807,7 +795,7 @@ ECPGallocate_desc(int line, const char *name)
 	}
 
 	ecpg_init_sqlca(sqlca);
-	new = (struct descriptor *) ecpg_alloc(sizeof(struct descriptor), line);
+	struct descriptor *new = (struct descriptor *) ecpg_alloc(sizeof(struct descriptor), line);
 	if (!new)
 		return false;
 	new->next = get_descriptors();
@@ -852,8 +840,6 @@ bool
 ECPGdescribe(int line, int compat, bool input, const char *connection_name, const char *stmt_name,...)
 {
 	bool		ret = false;
-	struct connection *con;
-	struct prepared_statement *prep;
 	PGresult   *res;
 	va_list		args;
 
@@ -864,14 +850,14 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 		return ret;
 	}
 
-	con = ecpg_get_connection(connection_name);
+	struct connection *con = ecpg_get_connection(connection_name);
 	if (!con)
 	{
 		ecpg_raise(line, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
 				   connection_name ? connection_name : ecpg_gettext("NULL"));
 		return ret;
 	}
-	prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
+	struct prepared_statement *prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
 	if (!prep)
 	{
 		ecpg_raise(line, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, stmt_name);
@@ -882,17 +868,15 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 	for (;;)
 	{
-		enum ECPGttype type;
-		void	   *ptr;
 
 		/* variable type */
-		type = va_arg(args, enum ECPGttype);
+		enum ECPGttype type = va_arg(args, enum ECPGttype);
 
 		if (type == ECPGt_EORT)
 			break;
 
 		/* rest of variable parameters */
-		ptr = va_arg(args, void *);
+		void	   *ptr = va_arg(args, void *);
 		(void) va_arg(args, long);	/* skip args */
 		(void) va_arg(args, long);
 		(void) va_arg(args, long);
@@ -930,13 +914,12 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 					if (INFORMIX_MODE(compat))
 					{
 						struct sqlda_compat **_sqlda = ptr;
-						struct sqlda_compat *sqlda;
 
 						res = PQdescribePrepared(con->connection, stmt_name);
 						if (!ecpg_check_PQresult(res, line, con->connection, compat))
 							break;
 
-						sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
+						struct sqlda_compat *sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
 						if (sqlda)
 						{
 							struct sqlda_compat *sqlda_old = *_sqlda;
@@ -958,13 +941,12 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 					else
 					{
 						struct sqlda_struct **_sqlda = ptr;
-						struct sqlda_struct *sqlda;
 
 						res = PQdescribePrepared(con->connection, stmt_name);
 						if (!ecpg_check_PQresult(res, line, con->connection, compat))
 							break;
 
-						sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
+						struct sqlda_struct *sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
 						if (sqlda)
 						{
 							struct sqlda_struct *sqlda_old = *_sqlda;

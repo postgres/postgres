@@ -35,11 +35,9 @@
 void
 print(const void *obj)
 {
-	char	   *s;
-	char	   *f;
 
-	s = nodeToString(obj);
-	f = format_node_dump(s);
+	char	   *s = nodeToString(obj);
+	char	   *f = format_node_dump(s);
 	pfree(s);
 	printf("%s\n", f);
 	fflush(stdout);
@@ -53,11 +51,9 @@ print(const void *obj)
 void
 pprint(const void *obj)
 {
-	char	   *s;
-	char	   *f;
 
-	s = nodeToString(obj);
-	f = pretty_format_node_dump(s);
+	char	   *s = nodeToString(obj);
+	char	   *f = pretty_format_node_dump(s);
 	pfree(s);
 	printf("%s\n", f);
 	fflush(stdout);
@@ -71,10 +67,9 @@ pprint(const void *obj)
 void
 elog_node_display(int lev, const char *title, const void *obj, bool pretty)
 {
-	char	   *s;
 	char	   *f;
 
-	s = nodeToString(obj);
+	char	   *s = nodeToString(obj);
 	if (pretty)
 		f = pretty_format_node_dump(s);
 	else
@@ -99,12 +94,11 @@ format_node_dump(const char *dump)
 #define LINELEN		78
 	char		line[LINELEN + 1];
 	StringInfoData str;
-	int			i;
 	int			j;
 	int			k;
 
 	initStringInfo(&str);
-	i = 0;
+	int			i = 0;
 	for (;;)
 	{
 		for (j = 0; j < LINELEN && dump[i] != '\0'; i++, j++)
@@ -155,15 +149,12 @@ pretty_format_node_dump(const char *dump)
 #define LINELEN		78
 	char		line[LINELEN + 1];
 	StringInfoData str;
-	int			indentLev;
-	int			indentDist;
-	int			i;
 	int			j;
 
 	initStringInfo(&str);
-	indentLev = 0;				/* logical indent level */
-	indentDist = 0;				/* physical indent distance */
-	i = 0;
+	int			indentLev = 0;				/* logical indent level */
+	int			indentDist = 0;				/* physical indent distance */
+	int			i = 0;
 	for (;;)
 	{
 		for (j = 0; j < indentDist; j++)
@@ -348,11 +339,10 @@ print_expr(const Node *expr, const List *rtable)
 				break;
 			default:
 				{
-					RangeTblEntry *rte;
 
 					Assert(var->varno > 0 &&
 						   (int) var->varno <= list_length(rtable));
-					rte = rt_fetch(var->varno, rtable);
+					RangeTblEntry *rte = rt_fetch(var->varno, rtable);
 					relname = rte->eref->aliasname;
 					attname = get_rte_attribute_name(rte, var->varattno);
 				}
@@ -365,7 +355,6 @@ print_expr(const Node *expr, const List *rtable)
 		const Const *c = (const Const *) expr;
 		Oid			typoutput;
 		bool		typIsVarlena;
-		char	   *outputstr;
 
 		if (c->constisnull)
 		{
@@ -376,16 +365,15 @@ print_expr(const Node *expr, const List *rtable)
 		getTypeOutputInfo(c->consttype,
 						  &typoutput, &typIsVarlena);
 
-		outputstr = OidOutputFunctionCall(typoutput, c->constvalue);
+		char	   *outputstr = OidOutputFunctionCall(typoutput, c->constvalue);
 		printf("%s", outputstr);
 		pfree(outputstr);
 	}
 	else if (IsA(expr, OpExpr))
 	{
 		const OpExpr *e = (const OpExpr *) expr;
-		char	   *opname;
 
-		opname = get_opname(e->opno);
+		char	   *opname = get_opname(e->opno);
 		if (list_length(e->args) > 1)
 		{
 			print_expr(get_leftop((const Expr *) e), rtable);
@@ -401,10 +389,9 @@ print_expr(const Node *expr, const List *rtable)
 	else if (IsA(expr, FuncExpr))
 	{
 		const FuncExpr *e = (const FuncExpr *) expr;
-		char	   *funcname;
 		ListCell   *l;
 
-		funcname = get_func_name(e->funcid);
+		char	   *funcname = get_func_name(e->funcid);
 		printf("%s(", ((funcname != NULL) ? funcname : "(invalid function)"));
 		foreach(l, e->args)
 		{
@@ -431,11 +418,10 @@ print_pathkeys(const List *pathkeys, const List *rtable)
 	foreach(i, pathkeys)
 	{
 		PathKey    *pathkey = (PathKey *) lfirst(i);
-		EquivalenceClass *eclass;
 		ListCell   *k;
 		bool		first = true;
 
-		eclass = pathkey->pk_eclass;
+		EquivalenceClass *eclass = pathkey->pk_eclass;
 		/* chase up, in case pathkey is non-canonical */
 		while (eclass->ec_merged)
 			eclass = eclass->ec_merged;

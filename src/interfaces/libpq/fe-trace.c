@@ -80,7 +80,6 @@ static void
 pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 {
 	struct timeval tval;
-	time_t		now;
 
 	gettimeofday(&tval, NULL);
 
@@ -90,7 +89,7 @@ pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 	 * local time_t variable so that we pass localtime() the correct pointer
 	 * type.
 	 */
-	now = tval.tv_sec;
+	time_t		now = tval.tv_sec;
 	strftime(timestr, ts_len,
 			 "%Y-%m-%d %H:%M:%S",
 			 localtime(&now));
@@ -125,11 +124,10 @@ static int
 pqTraceOutputInt16(FILE *pfdebug, const char *data, int *cursor)
 {
 	uint16		tmp;
-	int			result;
 
 	memcpy(&tmp, data + *cursor, 2);
 	*cursor += 2;
-	result = (int) pg_ntoh16(tmp);
+	int			result = (int) pg_ntoh16(tmp);
 	fprintf(pfdebug, " %d", result);
 
 	return result;
@@ -229,12 +227,11 @@ pqTraceOutputA(FILE *f, const char *message, int *cursor, bool regress)
 static void
 pqTraceOutputB(FILE *f, const char *message, int *cursor)
 {
-	int			nparams;
 
 	fprintf(f, "Bind\t");
 	pqTraceOutputString(f, message, cursor, false);
 	pqTraceOutputString(f, message, cursor, false);
-	nparams = pqTraceOutputInt16(f, message, cursor);
+	int			nparams = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nparams; i++)
 		pqTraceOutputInt16(f, message, cursor);
@@ -243,9 +240,8 @@ pqTraceOutputB(FILE *f, const char *message, int *cursor)
 
 	for (int i = 0; i < nparams; i++)
 	{
-		int			nbytes;
 
-		nbytes = pqTraceOutputInt32(f, message, cursor, false);
+		int			nbytes = pqTraceOutputInt32(f, message, cursor, false);
 		if (nbytes == -1)
 			continue;
 		pqTraceOutputNchar(f, nbytes, message, cursor);
@@ -285,12 +281,11 @@ pqTraceOutputD(FILE *f, bool toServer, const char *message, int *cursor)
 	}
 	else
 	{
-		int			nfields;
 		int			len;
 		int			i;
 
 		fprintf(f, "DataRow\t");
-		nfields = pqTraceOutputInt16(f, message, cursor);
+		int			nfields = pqTraceOutputInt16(f, message, cursor);
 		for (i = 0; i < nfields; i++)
 		{
 			len = pqTraceOutputInt32(f, message, cursor, false);
@@ -309,15 +304,13 @@ pqTraceOutputNR(FILE *f, const char *type, const char *message, int *cursor,
 	fprintf(f, "%s\t", type);
 	for (;;)
 	{
-		char		field;
-		bool		suppress;
 
 		pqTraceOutputByte1(f, message, cursor);
-		field = message[*cursor - 1];
+		char		field = message[*cursor - 1];
 		if (field == '\0')
 			break;
 
-		suppress = regress && (field == 'L' || field == 'F' || field == 'R');
+		bool		suppress = regress && (field == 'L' || field == 'F' || field == 'R');
 		pqTraceOutputString(f, message, cursor, suppress);
 	}
 }
@@ -348,12 +341,11 @@ pqTraceOutputf(FILE *f, const char *message, int *cursor)
 static void
 pqTraceOutputF(FILE *f, const char *message, int *cursor, bool regress)
 {
-	int			nfields;
 	int			nbytes;
 
 	fprintf(f, "FunctionCall\t");
 	pqTraceOutputInt32(f, message, cursor, regress);
-	nfields = pqTraceOutputInt16(f, message, cursor);
+	int			nfields = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nfields; i++)
 		pqTraceOutputInt16(f, message, cursor);
@@ -375,11 +367,10 @@ pqTraceOutputF(FILE *f, const char *message, int *cursor, bool regress)
 static void
 pqTraceOutputG(FILE *f, const char *message, int *cursor)
 {
-	int			nfields;
 
 	fprintf(f, "CopyInResponse\t");
 	pqTraceOutputByte1(f, message, cursor);
-	nfields = pqTraceOutputInt16(f, message, cursor);
+	int			nfields = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nfields; i++)
 		pqTraceOutputInt16(f, message, cursor);
@@ -389,11 +380,10 @@ pqTraceOutputG(FILE *f, const char *message, int *cursor)
 static void
 pqTraceOutputH(FILE *f, const char *message, int *cursor)
 {
-	int			nfields;
 
 	fprintf(f, "CopyOutResponse\t");
 	pqTraceOutputByte1(f, message, cursor);
-	nfields = pqTraceOutputInt16(f, message, cursor);
+	int			nfields = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nfields; i++)
 		pqTraceOutputInt16(f, message, cursor);
@@ -412,12 +402,11 @@ pqTraceOutputK(FILE *f, const char *message, int *cursor, bool regress)
 static void
 pqTraceOutputP(FILE *f, const char *message, int *cursor, bool regress)
 {
-	int			nparams;
 
 	fprintf(f, "Parse\t");
 	pqTraceOutputString(f, message, cursor, false);
 	pqTraceOutputString(f, message, cursor, false);
-	nparams = pqTraceOutputInt16(f, message, cursor);
+	int			nparams = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nparams; i++)
 		pqTraceOutputInt32(f, message, cursor, regress);
@@ -452,10 +441,9 @@ pqTraceOutputS(FILE *f, const char *message, int *cursor)
 static void
 pqTraceOutputt(FILE *f, const char *message, int *cursor, bool regress)
 {
-	int			nfields;
 
 	fprintf(f, "ParameterDescription\t");
-	nfields = pqTraceOutputInt16(f, message, cursor);
+	int			nfields = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nfields; i++)
 		pqTraceOutputInt32(f, message, cursor, regress);
@@ -465,10 +453,9 @@ pqTraceOutputt(FILE *f, const char *message, int *cursor, bool regress)
 static void
 pqTraceOutputT(FILE *f, const char *message, int *cursor, bool regress)
 {
-	int			nfields;
 
 	fprintf(f, "RowDescription\t");
-	nfields = pqTraceOutputInt16(f, message, cursor);
+	int			nfields = pqTraceOutputInt16(f, message, cursor);
 
 	for (int i = 0; i < nfields; i++)
 	{
@@ -495,10 +482,9 @@ pqTraceOutputv(FILE *f, const char *message, int *cursor)
 static void
 pqTraceOutputV(FILE *f, const char *message, int *cursor)
 {
-	int			len;
 
 	fprintf(f, "FunctionCallResponse\t");
-	len = pqTraceOutputInt32(f, message, cursor, false);
+	int			len = pqTraceOutputInt32(f, message, cursor, false);
 	if (len != -1)
 		pqTraceOutputNchar(f, len, message, cursor);
 }
@@ -528,11 +514,9 @@ pqTraceOutputZ(FILE *f, const char *message, int *cursor)
 void
 pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 {
-	char		id;
 	int			length;
 	char	   *prefix = toServer ? "F" : "B";
 	int			logCursor = 0;
-	bool		regress;
 
 	if ((conn->traceFlags & PQTRACE_SUPPRESS_TIMESTAMPS) == 0)
 	{
@@ -541,9 +525,9 @@ pqTraceOutputMessage(PGconn *conn, const char *message, bool toServer)
 		pqTraceFormatTimestamp(timestr, sizeof(timestr));
 		fprintf(conn->Pfdebug, "%s\t", timestr);
 	}
-	regress = (conn->traceFlags & PQTRACE_REGRESS_MODE) != 0;
+	bool		regress = (conn->traceFlags & PQTRACE_REGRESS_MODE) != 0;
 
-	id = message[logCursor++];
+	char		id = message[logCursor++];
 
 	memcpy(&length, message + logCursor, 4);
 	length = (int) pg_ntoh32(length);

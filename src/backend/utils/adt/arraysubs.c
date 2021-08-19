@@ -475,7 +475,6 @@ array_exec_setup(const SubscriptingRef *sbsref,
 				 SubscriptExecSteps *methods)
 {
 	bool		is_slice = (sbsrefstate->numlower != 0);
-	ArraySubWorkspace *workspace;
 
 	/*
 	 * Enforce the implementation limit on number of array subscripts.  This
@@ -496,7 +495,7 @@ array_exec_setup(const SubscriptingRef *sbsref,
 	/*
 	 * Allocate type-specific workspace.
 	 */
-	workspace = (ArraySubWorkspace *) palloc(sizeof(ArraySubWorkspace));
+	ArraySubWorkspace *workspace = (ArraySubWorkspace *) palloc(sizeof(ArraySubWorkspace));
 	sbsrefstate->workspace = workspace;
 
 	/*

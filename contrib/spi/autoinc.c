@@ -71,8 +71,6 @@ autoinc(PG_FUNCTION_ARGS)
 	for (i = 0; i < nargs;)
 	{
 		int			attnum = SPI_fnumber(tupdesc, args[i]);
-		int32		val;
-		Datum		seqname;
 
 		if (attnum <= 0)
 			ereport(ERROR,
@@ -86,7 +84,7 @@ autoinc(PG_FUNCTION_ARGS)
 					 errmsg("attribute \"%s\" of \"%s\" must be type INT4",
 							args[i], relname)));
 
-		val = DatumGetInt32(SPI_getbinval(rettuple, tupdesc, attnum, &isnull));
+		int32		val = DatumGetInt32(SPI_getbinval(rettuple, tupdesc, attnum, &isnull));
 
 		if (!isnull && val != 0)
 		{
@@ -96,7 +94,7 @@ autoinc(PG_FUNCTION_ARGS)
 
 		i++;
 		chattrs[chnattrs] = attnum;
-		seqname = CStringGetTextDatum(args[i]);
+		Datum		seqname = CStringGetTextDatum(args[i]);
 		newvals[chnattrs] = DirectFunctionCall1(nextval, seqname);
 		/* nextval now returns int64; coerce down to int32 */
 		newvals[chnattrs] = Int32GetDatum((int32) DatumGetInt64(newvals[chnattrs]));

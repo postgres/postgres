@@ -116,10 +116,9 @@
 static RowExpr *
 make_path_rowexpr(const CommonTableExpr *cte, const List *col_list)
 {
-	RowExpr    *rowexpr;
 	ListCell   *lc;
 
-	rowexpr = makeNode(RowExpr);
+	RowExpr    *rowexpr = makeNode(RowExpr);
 	rowexpr->row_typeid = RECORDOID;
 	rowexpr->row_format = COERCE_IMPLICIT_CAST;
 	rowexpr->location = -1;
@@ -134,9 +133,8 @@ make_path_rowexpr(const CommonTableExpr *cte, const List *col_list)
 
 			if (strcmp(colname, colname2) == 0)
 			{
-				Var		   *var;
 
-				var = makeVar(1, i + 1,
+				Var		   *var = makeVar(1, i + 1,
 							  list_nth_oid(cte->ctecoltypes, i),
 							  list_nth_int(cte->ctecoltypmods, i),
 							  list_nth_oid(cte->ctecolcollations, i),
@@ -158,9 +156,8 @@ make_path_rowexpr(const CommonTableExpr *cte, const List *col_list)
 static Expr *
 make_path_initial_array(RowExpr *rowexpr)
 {
-	ArrayExpr  *arr;
 
-	arr = makeNode(ArrayExpr);
+	ArrayExpr  *arr = makeNode(ArrayExpr);
 	arr->array_typeid = RECORDARRAYOID;
 	arr->element_typeid = RECORDOID;
 	arr->location = -1;
@@ -179,16 +176,14 @@ make_path_initial_array(RowExpr *rowexpr)
 static Expr *
 make_path_cat_expr(RowExpr *rowexpr, AttrNumber path_varattno)
 {
-	ArrayExpr  *arr;
-	FuncExpr   *fexpr;
 
-	arr = makeNode(ArrayExpr);
+	ArrayExpr  *arr = makeNode(ArrayExpr);
 	arr->array_typeid = RECORDARRAYOID;
 	arr->element_typeid = RECORDOID;
 	arr->location = -1;
 	arr->elements = list_make1(rowexpr);
 
-	fexpr = makeFuncExpr(F_ARRAY_CAT, RECORDARRAYOID,
+	FuncExpr   *fexpr = makeFuncExpr(F_ARRAY_CAT, RECORDARRAYOID,
 						 list_make2(makeVar(1, path_varattno, RECORDARRAYOID, -1, 0, 0),
 									arr),
 						 InvalidOid, InvalidOid, COERCE_EXPLICIT_CALL);
@@ -202,8 +197,6 @@ make_path_cat_expr(RowExpr *rowexpr, AttrNumber path_varattno)
 CommonTableExpr *
 rewriteSearchAndCycle(CommonTableExpr *cte)
 {
-	Query	   *ctequery;
-	SetOperationStmt *sos;
 	int			rti1,
 				rti2;
 	RangeTblEntry *rte1,
@@ -211,8 +204,6 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 			   *newrte;
 	Query	   *newq1,
 			   *newq2;
-	Query	   *newsubquery;
-	RangeTblRef *rtr;
 	Oid			search_seq_type = InvalidOid;
 	AttrNumber	sqc_attno = InvalidAttrNumber;
 	AttrNumber	cmc_attno = InvalidAttrNumber;
@@ -220,21 +211,20 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	TargetEntry *tle;
 	RowExpr    *cycle_col_rowexpr = NULL;
 	RowExpr    *search_col_rowexpr = NULL;
-	List	   *ewcl;
 	int			cte_rtindex = -1;
 
 	Assert(cte->search_clause || cte->cycle_clause);
 
 	cte = copyObject(cte);
 
-	ctequery = castNode(Query, cte->ctequery);
+	Query	   *ctequery = castNode(Query, cte->ctequery);
 
 	/*
 	 * The top level of the CTE's query should be a UNION.  Find the two
 	 * subqueries.
 	 */
 	Assert(ctequery->setOperations);
-	sos = castNode(SetOperationStmt, ctequery->setOperations);
+	SetOperationStmt *sos = castNode(SetOperationStmt, ctequery->setOperations);
 	Assert(sos->op == SETOP_UNION);
 
 	rti1 = castNode(RangeTblRef, sos->larg)->rtindex;
@@ -284,13 +274,13 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	newrte->rtekind = RTE_SUBQUERY;
 	newrte->alias = makeAlias("*TLOCRN*", cte->ctecolnames);
 	newrte->eref = newrte->alias;
-	newsubquery = copyObject(rte1->subquery);
+	Query	   *newsubquery = copyObject(rte1->subquery);
 	IncrementVarSublevelsUp((Node *) newsubquery, 1, 1);
 	newrte->subquery = newsubquery;
 	newrte->inFromCl = true;
 	newq1->rtable = list_make1(newrte);
 
-	rtr = makeNode(RangeTblRef);
+	RangeTblRef *rtr = makeNode(RangeTblRef);
 	rtr->rtindex = 1;
 	newq1->jointree = makeFromExpr(list_make1(rtr), NULL);
 
@@ -299,9 +289,8 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	 */
 	for (int i = 0; i < list_length(cte->ctecolnames); i++)
 	{
-		Var		   *var;
 
-		var = makeVar(1, i + 1,
+		Var		   *var = makeVar(1, i + 1,
 					  list_nth_oid(cte->ctecoltypes, i),
 					  list_nth_int(cte->ctecoltypmods, i),
 					  list_nth_oid(cte->ctecolcollations, i),
@@ -369,7 +358,7 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 	newrte = makeNode(RangeTblEntry);
 	newrte->rtekind = RTE_SUBQUERY;
-	ewcl = copyObject(cte->ctecolnames);
+	List	   *ewcl = copyObject(cte->ctecolnames);
 	if (cte->search_clause)
 	{
 		ewcl = lappend(ewcl, makeString(cte->search_clause->search_seq_column));
@@ -405,10 +394,9 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	 */
 	if (cte->search_clause)
 	{
-		Var		   *var;
 
 		/* ctename.sqc */
-		var = makeVar(cte_rtindex, sqc_attno,
+		Var		   *var = makeVar(cte_rtindex, sqc_attno,
 					  search_seq_type, -1, InvalidOid, 0);
 		tle = makeTargetEntry((Expr *) var,
 							  list_length(newsubquery->targetList) + 1,
@@ -418,10 +406,9 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	}
 	if (cte->cycle_clause)
 	{
-		Var		   *var;
 
 		/* ctename.cmc */
-		var = makeVar(cte_rtindex, cmc_attno,
+		Var		   *var = makeVar(cte_rtindex, cmc_attno,
 					  cte->cycle_clause->cycle_mark_type,
 					  cte->cycle_clause->cycle_mark_typmod,
 					  cte->cycle_clause->cycle_mark_collation, 0);
@@ -450,12 +437,11 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 	if (cte->cycle_clause)
 	{
-		Expr	   *expr;
 
 		/*
 		 * Add cmc <> cmv condition
 		 */
-		expr = make_opclause(cte->cycle_clause->cycle_mark_neop, BOOLOID, false,
+		Expr	   *expr = make_opclause(cte->cycle_clause->cycle_mark_neop, BOOLOID, false,
 							 (Expr *) makeVar(1, cmc_attno,
 											  cte->cycle_clause->cycle_mark_type,
 											  cte->cycle_clause->cycle_mark_typmod,
@@ -474,9 +460,8 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	 */
 	for (int i = 0; i < list_length(cte->ctecolnames); i++)
 	{
-		Var		   *var;
 
-		var = makeVar(1, i + 1,
+		Var		   *var = makeVar(1, i + 1,
 					  list_nth_oid(cte->ctecoltypes, i),
 					  list_nth_int(cte->ctecoltypmods, i),
 					  list_nth_oid(cte->ctecolcollations, i),
@@ -493,8 +478,6 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 		if (cte->search_clause->search_breadth_first)
 		{
-			FieldSelect *fs;
-			FuncExpr   *fexpr;
 
 			/*
 			 * ROW(sqc.depth + 1, cols)
@@ -502,13 +485,13 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 			search_col_rowexpr = copyObject(search_col_rowexpr);
 
-			fs = makeNode(FieldSelect);
+			FieldSelect *fs = makeNode(FieldSelect);
 			fs->arg = (Expr *) makeVar(1, sqc_attno, RECORDOID, -1, 0, 0);
 			fs->fieldnum = 1;
 			fs->resulttype = INT8OID;
 			fs->resulttypmod = -1;
 
-			fexpr = makeFuncExpr(F_INT8INC, INT8OID, list_make1(fs), InvalidOid, InvalidOid, COERCE_EXPLICIT_CALL);
+			FuncExpr   *fexpr = makeFuncExpr(F_INT8INC, INT8OID, list_make1(fs), InvalidOid, InvalidOid, COERCE_EXPLICIT_CALL);
 
 			lfirst(list_head(search_col_rowexpr->args)) = fexpr;
 
@@ -530,26 +513,23 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 
 	if (cte->cycle_clause)
 	{
-		ScalarArrayOpExpr *saoe;
-		CaseExpr   *caseexpr;
-		CaseWhen   *casewhen;
 
 		/*
 		 * CASE WHEN ROW(cols) = ANY (ARRAY[cpa]) THEN cmv ELSE cmd END
 		 */
 
-		saoe = makeNode(ScalarArrayOpExpr);
+		ScalarArrayOpExpr *saoe = makeNode(ScalarArrayOpExpr);
 		saoe->location = -1;
 		saoe->opno = RECORD_EQ_OP;
 		saoe->useOr = true;
 		saoe->args = list_make2(cycle_col_rowexpr,
 								makeVar(1, cpa_attno, RECORDARRAYOID, -1, 0, 0));
 
-		caseexpr = makeNode(CaseExpr);
+		CaseExpr   *caseexpr = makeNode(CaseExpr);
 		caseexpr->location = -1;
 		caseexpr->casetype = cte->cycle_clause->cycle_mark_type;
 		caseexpr->casecollid = cte->cycle_clause->cycle_mark_collation;
-		casewhen = makeNode(CaseWhen);
+		CaseWhen   *casewhen = makeNode(CaseWhen);
 		casewhen->location = -1;
 		casewhen->expr = (Expr *) saoe;
 		casewhen->result = (Expr *) cte->cycle_clause->cycle_mark_value;

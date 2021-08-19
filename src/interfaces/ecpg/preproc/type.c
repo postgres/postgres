@@ -250,9 +250,8 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brac
 		type->type != ECPGt_char_variable && type->type != ECPGt_const &&
 		brace_level >= 0)
 	{
-		char	   *str;
 
-		str = mm_strdup(name);
+		char	   *str = mm_strdup(name);
 		var = find_variable(str);
 		free(str);
 

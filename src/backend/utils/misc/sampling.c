@@ -287,10 +287,9 @@ anl_init_selection_state(int n)
 double
 anl_get_next_S(double t, int n, double *stateptr)
 {
-	double		result;
 
 	oldrs.W = *stateptr;
-	result = reservoir_get_next_S(&oldrs, t, n);
+	double		result = reservoir_get_next_S(&oldrs, t, n);
 	*stateptr = oldrs.W;
 	return result;
 }

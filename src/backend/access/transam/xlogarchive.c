@@ -288,10 +288,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 {
 	char		xlogRecoveryCmd[MAXPGPATH];
 	char		lastRestartPointFname[MAXPGPATH];
-	char	   *dp;
-	char	   *endp;
 	const char *sp;
-	int			rc;
 	XLogSegNo	restartSegNo;
 	XLogRecPtr	restartRedoPtr;
 	TimeLineID	restartTli;
@@ -311,8 +308,8 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	/*
 	 * construct the command to be executed
 	 */
-	dp = xlogRecoveryCmd;
-	endp = xlogRecoveryCmd + MAXPGPATH - 1;
+	char	   *dp = xlogRecoveryCmd;
+	char	   *endp = xlogRecoveryCmd + MAXPGPATH - 1;
 	*endp = '\0';
 
 	for (sp = command; *sp; sp++)
@@ -354,7 +351,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	/*
 	 * execute the constructed command
 	 */
-	rc = system(xlogRecoveryCmd);
+	int			rc = system(xlogRecoveryCmd);
 	if (rc != 0)
 	{
 		/*
@@ -467,11 +464,10 @@ void
 XLogArchiveNotify(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
-	FILE	   *fd;
 
 	/* insert an otherwise empty file called <XLOG>.ready */
 	StatusFilePath(archiveStatusPath, xlog, ".ready");
-	fd = AllocateFile(archiveStatusPath, "w");
+	FILE	   *fd = AllocateFile(archiveStatusPath, "w");
 	if (fd == NULL)
 	{
 		ereport(LOG,
@@ -519,7 +515,6 @@ XLogArchiveForceDone(const char *xlog)
 	char		archiveReady[MAXPGPATH];
 	char		archiveDone[MAXPGPATH];
 	struct stat stat_buf;
-	FILE	   *fd;
 
 	/* Exit if already known done */
 	StatusFilePath(archiveDone, xlog, ".done");
@@ -535,7 +530,7 @@ XLogArchiveForceDone(const char *xlog)
 	}
 
 	/* insert an otherwise empty file called <XLOG>.done */
-	fd = AllocateFile(archiveDone, "w");
+	FILE	   *fd = AllocateFile(archiveDone, "w");
 	if (fd == NULL)
 	{
 		ereport(LOG,

@@ -310,11 +310,10 @@ koi8r_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_MULE_INTERNAL);
 
-	converted = latin2mic(src, dest, len, LC_KOI8_R, PG_KOI8R, noError);
+	int			converted = latin2mic(src, dest, len, LC_KOI8_R, PG_KOI8R, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -326,11 +325,10 @@ mic_to_koi8r(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_KOI8R);
 
-	converted = mic2latin(src, dest, len, LC_KOI8_R, PG_KOI8R, noError);
+	int			converted = mic2latin(src, dest, len, LC_KOI8_R, PG_KOI8R, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -342,11 +340,10 @@ iso_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_MULE_INTERNAL);
 
-	converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_ISO_8859_5, iso2koi, noError);
+	int			converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_ISO_8859_5, iso2koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -358,11 +355,10 @@ mic_to_iso(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_ISO_8859_5);
 
-	converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_ISO_8859_5, koi2iso, noError);
+	int			converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_ISO_8859_5, koi2iso, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -374,11 +370,10 @@ win1251_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_MULE_INTERNAL);
 
-	converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_WIN1251, win12512koi, noError);
+	int			converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_WIN1251, win12512koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -390,11 +385,10 @@ mic_to_win1251(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_WIN1251);
 
-	converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_WIN1251, koi2win1251, noError);
+	int			converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_WIN1251, koi2win1251, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -406,11 +400,10 @@ win866_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_MULE_INTERNAL);
 
-	converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_WIN866, win8662koi, noError);
+	int			converted = latin2mic_with_table(src, dest, len, LC_KOI8_R, PG_WIN866, win8662koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -422,11 +415,10 @@ mic_to_win866(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_WIN866);
 
-	converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_WIN866, koi2win866, noError);
+	int			converted = mic2latin_with_table(src, dest, len, LC_KOI8_R, PG_WIN866, koi2win866, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -438,11 +430,10 @@ koi8r_to_win1251(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_WIN1251);
 
-	converted = local2local(src, dest, len, PG_KOI8R, PG_WIN1251, koi2win1251, noError);
+	int			converted = local2local(src, dest, len, PG_KOI8R, PG_WIN1251, koi2win1251, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -454,11 +445,10 @@ win1251_to_koi8r(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_KOI8R);
 
-	converted = local2local(src, dest, len, PG_WIN1251, PG_KOI8R, win12512koi, noError);
+	int			converted = local2local(src, dest, len, PG_WIN1251, PG_KOI8R, win12512koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -470,11 +460,10 @@ koi8r_to_win866(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_WIN866);
 
-	converted = local2local(src, dest, len, PG_KOI8R, PG_WIN866, koi2win866, noError);
+	int			converted = local2local(src, dest, len, PG_KOI8R, PG_WIN866, koi2win866, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -486,11 +475,10 @@ win866_to_koi8r(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_KOI8R);
 
-	converted = local2local(src, dest, len, PG_WIN866, PG_KOI8R, win8662koi, noError);
+	int			converted = local2local(src, dest, len, PG_WIN866, PG_KOI8R, win8662koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -502,11 +490,10 @@ win866_to_win1251(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_WIN1251);
 
-	converted = local2local(src, dest, len, PG_WIN866, PG_WIN1251, win8662win1251, noError);
+	int			converted = local2local(src, dest, len, PG_WIN866, PG_WIN1251, win8662win1251, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -518,11 +505,10 @@ win1251_to_win866(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_WIN866);
 
-	converted = local2local(src, dest, len, PG_WIN1251, PG_WIN866, win12512win866, noError);
+	int			converted = local2local(src, dest, len, PG_WIN1251, PG_WIN866, win12512win866, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -534,11 +520,10 @@ iso_to_koi8r(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_KOI8R);
 
-	converted = local2local(src, dest, len, PG_ISO_8859_5, PG_KOI8R, iso2koi, noError);
+	int			converted = local2local(src, dest, len, PG_ISO_8859_5, PG_KOI8R, iso2koi, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -550,11 +535,10 @@ koi8r_to_iso(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_ISO_8859_5);
 
-	converted = local2local(src, dest, len, PG_KOI8R, PG_ISO_8859_5, koi2iso, noError);
+	int			converted = local2local(src, dest, len, PG_KOI8R, PG_ISO_8859_5, koi2iso, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -566,11 +550,10 @@ iso_to_win1251(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN1251);
 
-	converted = local2local(src, dest, len, PG_ISO_8859_5, PG_WIN1251, iso2win1251, noError);
+	int			converted = local2local(src, dest, len, PG_ISO_8859_5, PG_WIN1251, iso2win1251, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -582,11 +565,10 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_ISO_8859_5);
 
-	converted = local2local(src, dest, len, PG_WIN1251, PG_ISO_8859_5, win12512iso, noError);
+	int			converted = local2local(src, dest, len, PG_WIN1251, PG_ISO_8859_5, win12512iso, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -598,11 +580,10 @@ iso_to_win866(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN866);
 
-	converted = local2local(src, dest, len, PG_ISO_8859_5, PG_WIN866, iso2win866, noError);
+	int			converted = local2local(src, dest, len, PG_ISO_8859_5, PG_WIN866, iso2win866, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -614,11 +595,10 @@ win866_to_iso(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_ISO_8859_5);
 
-	converted = local2local(src, dest, len, PG_WIN866, PG_ISO_8859_5, win8662iso, noError);
+	int			converted = local2local(src, dest, len, PG_WIN866, PG_ISO_8859_5, win8662iso, noError);
 
 	PG_RETURN_INT32(converted);
 }

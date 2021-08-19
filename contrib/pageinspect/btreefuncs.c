@@ -155,11 +155,10 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat *stat)
 	/* count live and dead tuples, and free space */
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
-		IndexTuple	itup;
 
 		ItemId		id = PageGetItemId(page, off);
 
-		itup = (IndexTuple) PageGetItem(page, id);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, id);
 
 		item_size += IndexTupleSize(itup);
 
@@ -187,13 +186,7 @@ bt_page_stats_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
 	int64		blkno = (ext_version == PAGEINSPECT_V1_8 ? PG_GETARG_UINT32(1) : PG_GETARG_INT64(1));
-	Buffer		buffer;
-	Relation	rel;
-	RangeVar   *relrv;
-	Datum		result;
-	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
-	int			j;
 	char	   *values[11];
 	BTPageStat	stat;
 
@@ -202,8 +195,8 @@ bt_page_stats_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pageinspect functions")));
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "relation \"%s\" is not a btree index",
@@ -231,7 +224,7 @@ bt_page_stats_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 
 	CHECK_RELATION_BLOCK_RANGE(rel, blkno);
 
-	buffer = ReadBuffer(rel, blkno);
+	Buffer		buffer = ReadBuffer(rel, blkno);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/* keep compiler quiet */
@@ -247,7 +240,7 @@ bt_page_stats_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	j = 0;
+	int			j = 0;
 	values[j++] = psprintf("%u", stat.blkno);
 	values[j++] = psprintf("%c", stat.type);
 	values[j++] = psprintf("%u", stat.live_items);
@@ -260,10 +253,10 @@ bt_page_stats_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 	values[j++] = psprintf("%u", stat.btpo_level);
 	values[j++] = psprintf("%d", stat.btpo_flags);
 
-	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
+	HeapTuple	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 								   values);
 
-	result = HeapTupleGetDatum(tuple);
+	Datum		result = HeapTupleGetDatum(tuple);
 
 	PG_RETURN_DATUM(result);
 }
@@ -307,28 +300,20 @@ bt_page_print_tuples(struct user_args *uargs)
 	OffsetNumber offset = uargs->offset;
 	bool		leafpage = uargs->leafpage;
 	bool		rightmost = uargs->rightmost;
-	bool		ispivottuple;
 	Datum		values[9];
 	bool		nulls[9];
-	HeapTuple	tuple;
-	ItemId		id;
-	IndexTuple	itup;
-	int			j;
 	int			off;
-	int			dlen;
 	char	   *dump,
 			   *datacstring;
-	char	   *ptr;
-	ItemPointer htid;
 
-	id = PageGetItemId(page, offset);
+	ItemId		id = PageGetItemId(page, offset);
 
 	if (!ItemIdIsValid(id))
 		elog(ERROR, "invalid ItemId");
 
-	itup = (IndexTuple) PageGetItem(page, id);
+	IndexTuple	itup = (IndexTuple) PageGetItem(page, id);
 
-	j = 0;
+	int			j = 0;
 	memset(nulls, 0, sizeof(nulls));
 	values[j++] = DatumGetInt16(offset);
 	values[j++] = ItemPointerGetDatum(&itup->t_tid);
@@ -336,8 +321,8 @@ bt_page_print_tuples(struct user_args *uargs)
 	values[j++] = BoolGetDatum(IndexTupleHasNulls(itup));
 	values[j++] = BoolGetDatum(IndexTupleHasVarwidths(itup));
 
-	ptr = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
-	dlen = IndexTupleSize(itup) - IndexInfoFindDataOffset(itup->t_info);
+	char	   *ptr = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
+	int			dlen = IndexTupleSize(itup) - IndexInfoFindDataOffset(itup->t_info);
 
 	/*
 	 * Make sure that "data" column does not include posting list or pivot
@@ -388,7 +373,7 @@ bt_page_print_tuples(struct user_args *uargs)
 	 * whether or not the page is a leaf page, as well as the page offset
 	 * number of the tuple.
 	 */
-	ispivottuple = (!leafpage || (!rightmost && offset == P_HIKEY));
+	bool		ispivottuple = (!leafpage || (!rightmost && offset == P_HIKEY));
 
 	/* LP_DEAD bit can never be set for pivot tuples, so show a NULL there */
 	if (!ispivottuple)
@@ -399,7 +384,7 @@ bt_page_print_tuples(struct user_args *uargs)
 		nulls[j++] = true;
 	}
 
-	htid = BTreeTupleGetHeapTID(itup);
+	ItemPointer htid = BTreeTupleGetHeapTID(itup);
 	if (ispivottuple && !BTreeTupleIsPivot(itup))
 	{
 		/* Don't show bogus heap TID in !heapkeyspace pivot tuple */
@@ -414,13 +399,10 @@ bt_page_print_tuples(struct user_args *uargs)
 	if (BTreeTupleIsPosting(itup))
 	{
 		/* Build an array of item pointers */
-		ItemPointer tids;
-		Datum	   *tids_datum;
-		int			nposting;
 
-		tids = BTreeTupleGetPosting(itup);
-		nposting = BTreeTupleGetNPosting(itup);
-		tids_datum = (Datum *) palloc(nposting * sizeof(Datum));
+		ItemPointer tids = BTreeTupleGetPosting(itup);
+		int			nposting = BTreeTupleGetNPosting(itup);
+		Datum	   *tids_datum = (Datum *) palloc(nposting * sizeof(Datum));
 		for (int i = 0; i < nposting; i++)
 			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
 		values[j++] = PointerGetDatum(construct_array(tids_datum,
@@ -434,7 +416,7 @@ bt_page_print_tuples(struct user_args *uargs)
 		nulls[j++] = true;
 
 	/* Build and return the result tuple */
-	tuple = heap_form_tuple(uargs->tupd, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(uargs->tupd, values, nulls);
 
 	return HeapTupleGetDatum(tuple);
 }
@@ -464,16 +446,12 @@ bt_page_items_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		RangeVar   *relrv;
-		Relation	rel;
-		Buffer		buffer;
-		BTPageOpaque opaque;
 		TupleDesc	tupleDesc;
 
 		fctx = SRF_FIRSTCALL_INIT();
 
-		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-		rel = relation_openrv(relrv, AccessShareLock);
+		RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+		Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 		if (!IS_INDEX(rel) || !IS_BTREE(rel))
 			elog(ERROR, "relation \"%s\" is not a btree index",
@@ -501,7 +479,7 @@ bt_page_items_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 
 		CHECK_RELATION_BLOCK_RANGE(rel, blkno);
 
-		buffer = ReadBuffer(rel, blkno);
+		Buffer		buffer = ReadBuffer(rel, blkno);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		/*
@@ -521,7 +499,7 @@ bt_page_items_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 
 		uargs->offset = FirstOffsetNumber;
 
-		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
+		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
 
 		if (!P_ISDELETED(opaque))
 			fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
@@ -597,8 +575,6 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		BTPageOpaque opaque;
-		MemoryContext mctx;
 		TupleDesc	tupleDesc;
 
 		raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
@@ -609,7 +585,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 					 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+		MemoryContext mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		uargs = palloc(sizeof(struct user_args));
 
@@ -617,7 +593,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 		uargs->offset = FirstOffsetNumber;
 
-		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
+		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
 
 		if (P_ISMETA(opaque))
 			ereport(ERROR,
@@ -678,24 +654,16 @@ Datum
 bt_metap(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Datum		result;
-	Relation	rel;
-	RangeVar   *relrv;
-	BTMetaPageData *metad;
 	TupleDesc	tupleDesc;
-	int			j;
 	char	   *values[9];
-	Buffer		buffer;
-	Page		page;
-	HeapTuple	tuple;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pageinspect functions")));
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "relation \"%s\" is not a btree index",
@@ -711,11 +679,11 @@ bt_metap(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary tables of other sessions")));
 
-	buffer = ReadBuffer(rel, 0);
+	Buffer		buffer = ReadBuffer(rel, 0);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	page = BufferGetPage(buffer);
-	metad = BTPageGetMeta(page);
+	Page		page = BufferGetPage(buffer);
+	BTMetaPageData *metad = BTPageGetMeta(page);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
@@ -735,7 +703,7 @@ bt_metap(PG_FUNCTION_ARGS)
 				 errmsg("function has wrong number of declared columns"),
 				 errhint("To resolve the problem, update the \"pageinspect\" extension to the latest version.")));
 
-	j = 0;
+	int			j = 0;
 	values[j++] = psprintf("%d", metad->btm_magic);
 	values[j++] = psprintf("%d", metad->btm_version);
 	values[j++] = psprintf(INT64_FORMAT, (int64) metad->btm_root);
@@ -763,10 +731,10 @@ bt_metap(PG_FUNCTION_ARGS)
 		values[j++] = "f";
 	}
 
-	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
+	HeapTuple	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 								   values);
 
-	result = HeapTupleGetDatum(tuple);
+	Datum		result = HeapTupleGetDatum(tuple);
 
 	UnlockReleaseBuffer(buffer);
 	relation_close(rel, AccessShareLock);

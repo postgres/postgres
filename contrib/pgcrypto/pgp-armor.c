@@ -208,8 +208,6 @@ pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
 				 int num_headers, char **keys, char **values)
 {
 	int			n;
-	int			res;
-	unsigned	b64len;
 	unsigned	crc = crc24(src, len);
 
 	appendStringInfoString(dst, armor_header);
@@ -219,10 +217,10 @@ pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
 	appendStringInfoChar(dst, '\n');
 
 	/* make sure we have enough room to pg_base64_encode() */
-	b64len = pg_base64_enc_len(len);
+	unsigned	b64len = pg_base64_enc_len(len);
 	enlargeStringInfo(dst, (int) b64len);
 
-	res = pg_base64_encode(src, len, (uint8 *) dst->data + dst->len);
+	int			res = pg_base64_encode(src, len, (uint8 *) dst->data + dst->len);
 	if (res > b64len)
 		elog(FATAL, "overflow - encode estimate too small");
 	dst->len += res;
@@ -320,12 +318,11 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 			   *armor_end;
 	const uint8 *base64_end = NULL;
 	uint8		buf[4];
-	int			hlen;
 	int			blen;
 	int			res = PXE_PGP_CORRUPT_ARMOR;
 
 	/* armor start */
-	hlen = find_header(src, data_end, &p, 0);
+	int			hlen = find_header(src, data_end, &p, 0);
 	if (hlen <= 0)
 		goto out;
 	p += hlen;
@@ -391,22 +388,15 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 						  int *nheaders, char ***keys, char ***values)
 {
 	const uint8 *data_end = src + len;
-	const uint8 *p;
-	const uint8 *base64_start;
 	const uint8 *armor_start;
 	const uint8 *armor_end;
-	Size		armor_len;
-	char	   *line;
 	char	   *nextline;
 	char	   *eol,
 			   *colon;
-	int			hlen;
-	char	   *buf;
-	int			hdrlines;
 	int			n;
 
 	/* armor start */
-	hlen = find_header(src, data_end, &armor_start, 0);
+	int			hlen = find_header(src, data_end, &armor_start, 0);
 	if (hlen <= 0)
 		return PXE_PGP_CORRUPT_ARMOR;
 	armor_start += hlen;
@@ -417,8 +407,8 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 		return PXE_PGP_CORRUPT_ARMOR;
 
 	/* Count the number of armor header lines. */
-	hdrlines = 0;
-	p = armor_start;
+	int			hdrlines = 0;
+	const uint8 *p = armor_start;
 	while (p < armor_end && *p != '\n' && *p != '\r')
 	{
 		p = memchr(p, '\n', armor_end - p);
@@ -429,14 +419,14 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 		p++;
 		hdrlines++;
 	}
-	base64_start = p;
+	const uint8 *base64_start = p;
 
 	/*
 	 * Make a modifiable copy of the part of the input that contains the
 	 * headers. The returned key/value pointers will point inside the buffer.
 	 */
-	armor_len = base64_start - armor_start;
-	buf = palloc(armor_len + 1);
+	Size		armor_len = base64_start - armor_start;
+	char	   *buf = palloc(armor_len + 1);
 	memcpy(buf, armor_start, armor_len);
 	buf[armor_len] = '\0';
 
@@ -449,7 +439,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 	 * pointers to the keys and values in the return arrays.
 	 */
 	n = 0;
-	line = buf;
+	char	   *line = buf;
 	for (;;)
 	{
 		/* find end of line */

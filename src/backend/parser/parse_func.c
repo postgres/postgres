@@ -99,22 +99,17 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	bool		agg_distinct = (fn ? fn->agg_distinct : false);
 	bool		func_variadic = (fn ? fn->func_variadic : false);
 	CoercionForm funcformat = (fn ? fn->funcformat : COERCE_EXPLICIT_CALL);
-	bool		could_be_projection;
 	Oid			rettype;
 	Oid			funcid;
 	ListCell   *l;
 	Node	   *first_arg = NULL;
-	int			nargs;
-	int			nargsplusdefs;
 	Oid			actual_arg_types[FUNC_MAX_ARGS];
 	Oid		   *declared_arg_types;
-	List	   *argnames;
 	List	   *argdefaults;
 	Node	   *retval;
 	bool		retset;
 	int			nvargs;
 	Oid			vatype;
-	FuncDetailCode fdresult;
 	char		aggkind = 0;
 	ParseCallbackState pcbstate;
 
@@ -151,7 +146,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * nor if we had WITHIN GROUP (because in that case it's critical to keep
 	 * the argument count unchanged).
 	 */
-	nargs = 0;
+	int			nargs = 0;
 	foreach(l, fargs)
 	{
 		Node	   *arg = lfirst(l);
@@ -175,7 +170,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * corresponds to the last N actual parameters and we don't need any extra
 	 * bookkeeping to match things up.
 	 */
-	argnames = NIL;
+	List	   *argnames = NIL;
 	foreach(l, fargs)
 	{
 		Node	   *arg = lfirst(l);
@@ -220,7 +215,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * syntactic decoration that'd require it to be a function (such as
 	 * aggregate or variadic decoration, or named arguments).
 	 */
-	could_be_projection = (nargs == 1 && !proc_call &&
+	bool		could_be_projection = (nargs == 1 && !proc_call &&
 						   agg_order == NIL && agg_filter == NULL &&
 						   !agg_star && !agg_distinct && over == NULL &&
 						   !func_variadic && argnames == NIL &&
@@ -263,7 +258,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	setup_parser_errposition_callback(&pcbstate, pstate, location);
 
-	fdresult = func_get_detail(funcname, fargs, argnames, nargs,
+	FuncDetailCode fdresult = func_get_detail(funcname, fargs, argnames, nargs,
 							   actual_arg_types,
 							   !func_variadic, true, proc_call,
 							   &funcid, &rettype, &retset,
@@ -360,23 +355,18 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * It's an aggregate; fetch needed info from the pg_aggregate entry.
 		 */
-		HeapTuple	tup;
-		Form_pg_aggregate classForm;
-		int			catDirectArgs;
 
-		tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
+		HeapTuple	tup = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for aggregate %u", funcid);
-		classForm = (Form_pg_aggregate) GETSTRUCT(tup);
+		Form_pg_aggregate classForm = (Form_pg_aggregate) GETSTRUCT(tup);
 		aggkind = classForm->aggkind;
-		catDirectArgs = classForm->aggnumdirectargs;
+		int			catDirectArgs = classForm->aggnumdirectargs;
 		ReleaseSysCache(tup);
 
 		/* Now check various disallowed cases. */
 		if (AGGKIND_IS_ORDERED_SET(aggkind))
 		{
-			int			numAggregatedArgs;
-			int			numDirectArgs;
 
 			if (!agg_within_group)
 				ereport(ERROR,
@@ -404,8 +394,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			 * error, similarly to the case where a misplaced ORDER BY is used
 			 * in a regular aggregate call.
 			 */
-			numAggregatedArgs = list_length(agg_order);
-			numDirectArgs = nargs - numAggregatedArgs;
+			int			numAggregatedArgs = list_length(agg_order);
+			int			numDirectArgs = nargs - numAggregatedArgs;
 			Assert(numDirectArgs >= 0);
 
 			if (!OidIsValid(vatype))
@@ -434,9 +424,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				 * pronargs; to save a catalog lookup, we reverse-engineer
 				 * pronargs from the info we got from func_get_detail.
 				 */
-				int			pronargs;
 
-				pronargs = nargs;
+				int			pronargs = nargs;
 				if (nvargs > 1)
 					pronargs -= nvargs - 1;
 				if (catDirectArgs < pronargs)
@@ -643,7 +632,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * their actual values might change before the query gets run.  The
 	 * planner has to insert the up-to-date values at plan time.
 	 */
-	nargsplusdefs = nargs;
+	int			nargsplusdefs = nargs;
 	foreach(l, argdefaults)
 	{
 		Node	   *expr = (Node *) lfirst(l);
@@ -694,10 +683,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	{
 		ArrayExpr  *newa = makeNode(ArrayExpr);
 		int			non_var_args = nargs - nvargs;
-		List	   *vargs;
 
 		Assert(non_var_args >= 0);
-		vargs = list_copy_tail(fargs, non_var_args);
+		List	   *vargs = list_copy_tail(fargs, non_var_args);
 		fargs = list_truncate(fargs, non_var_args);
 
 		newa->elements = vargs;
@@ -1013,7 +1001,6 @@ func_select_candidate(int nargs,
 	Oid		   *current_typeids;
 	Oid			current_type;
 	int			i;
-	int			ncandidates;
 	int			nbestMatch,
 				nmatch,
 				nunknowns;
@@ -1022,7 +1009,6 @@ func_select_candidate(int nargs,
 				current_category;
 	bool		current_is_preferred;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
-	bool		resolved_unknowns;
 
 	/* protect local fixed-size arrays */
 	if (nargs > FUNC_MAX_ARGS)
@@ -1063,7 +1049,7 @@ func_select_candidate(int nargs,
 	 * Run through all candidates and keep those with the most matches on
 	 * exact types. Keep all candidates if none match.
 	 */
-	ncandidates = 0;
+	int			ncandidates = 0;
 	nbestMatch = 0;
 	last_candidate = NULL;
 	for (current_candidate = candidates;
@@ -1180,17 +1166,16 @@ func_select_candidate(int nargs,
 	 * that one.  However, if this rule turns out to reject all candidates,
 	 * keep them all instead.
 	 */
-	resolved_unknowns = false;
+	bool		resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
 	{
-		bool		have_conflict;
 
 		if (input_base_typeids[i] != UNKNOWNOID)
 			continue;
 		resolved_unknowns = true;	/* assume we can do it */
 		slot_category[i] = TYPCATEGORY_INVALID;
 		slot_has_preferred_type[i] = false;
-		have_conflict = false;
+		bool		have_conflict = false;
 		for (current_candidate = candidates;
 			 current_candidate != NULL;
 			 current_candidate = current_candidate->next)
@@ -1406,7 +1391,6 @@ func_get_detail(List *funcname,
 				Oid **true_typeids, /* return value */
 				List **argdefaults) /* optional return value */
 {
-	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
 	/* initialize output arguments to silence compiler warnings */
@@ -1420,7 +1404,7 @@ func_get_detail(List *funcname,
 		*argdefaults = NIL;
 
 	/* Get list of possible candidates from namespace search */
-	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
+	FuncCandidateList raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
 										   include_out_arguments, false);
 
@@ -1496,10 +1480,9 @@ func_get_detail(List *funcname,
 				}
 				else
 				{
-					CoercionPathType cpathtype;
 					Oid			cfuncid;
 
-					cpathtype = find_coercion_pathway(targetType, sourceType,
+					CoercionPathType cpathtype = find_coercion_pathway(targetType, sourceType,
 													  COERCION_EXPLICIT,
 													  &cfuncid);
 					switch (cpathtype)
@@ -1541,9 +1524,8 @@ func_get_detail(List *funcname,
 		if (raw_candidates != NULL)
 		{
 			FuncCandidateList current_candidates;
-			int			ncandidates;
 
-			ncandidates = func_match_argtypes(nargs,
+			int			ncandidates = func_match_argtypes(nargs,
 											  argtypes,
 											  raw_candidates,
 											  &current_candidates);
@@ -1573,8 +1555,6 @@ func_get_detail(List *funcname,
 
 	if (best_candidate)
 	{
-		HeapTuple	ftup;
-		Form_pg_proc pform;
 		FuncDetailCode result;
 
 		/*
@@ -1618,33 +1598,30 @@ func_get_detail(List *funcname,
 			}
 		}
 
-		ftup = SearchSysCache1(PROCOID,
+		HeapTuple	ftup = SearchSysCache1(PROCOID,
 							   ObjectIdGetDatum(best_candidate->oid));
 		if (!HeapTupleIsValid(ftup))	/* should not happen */
 			elog(ERROR, "cache lookup failed for function %u",
 				 best_candidate->oid);
-		pform = (Form_pg_proc) GETSTRUCT(ftup);
+		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
 		*vatype = pform->provariadic;
 		/* fetch default args if caller wants 'em */
 		if (argdefaults && best_candidate->ndargs > 0)
 		{
-			Datum		proargdefaults;
 			bool		isnull;
-			char	   *str;
-			List	   *defaults;
 
 			/* shouldn't happen, FuncnameGetCandidates messed up */
 			if (best_candidate->ndargs > pform->pronargdefaults)
 				elog(ERROR, "not enough default arguments");
 
-			proargdefaults = SysCacheGetAttr(PROCOID, ftup,
+			Datum		proargdefaults = SysCacheGetAttr(PROCOID, ftup,
 											 Anum_pg_proc_proargdefaults,
 											 &isnull);
 			Assert(!isnull);
-			str = TextDatumGetCString(proargdefaults);
-			defaults = castNode(List, stringToNode(str));
+			char	   *str = TextDatumGetCString(proargdefaults);
+			List	   *defaults = castNode(List, stringToNode(str));
 			pfree(str);
 
 			/* Delete any unused defaults from the returned list */
@@ -1658,18 +1635,15 @@ func_get_detail(List *funcname,
 				 * the needed items.  (This assumes that defaulted arguments
 				 * should be supplied in their positional order.)
 				 */
-				Bitmapset  *defargnumbers;
-				int		   *firstdefarg;
-				List	   *newdefaults;
 				ListCell   *lc;
 				int			i;
 
-				defargnumbers = NULL;
-				firstdefarg = &best_candidate->argnumbers[best_candidate->nargs - best_candidate->ndargs];
+				Bitmapset  *defargnumbers = NULL;
+				int		   *firstdefarg = &best_candidate->argnumbers[best_candidate->nargs - best_candidate->ndargs];
 				for (i = 0; i < best_candidate->ndargs; i++)
 					defargnumbers = bms_add_member(defargnumbers,
 												   firstdefarg[i]);
-				newdefaults = NIL;
+				List	   *newdefaults = NIL;
 				i = best_candidate->nominalnargs - pform->pronargdefaults;
 				foreach(lc, defaults)
 				{
@@ -1687,9 +1661,8 @@ func_get_detail(List *funcname,
 				 * Defaults for positional notation are lots easier; just
 				 * remove any unwanted ones from the front.
 				 */
-				int			ndelete;
 
-				ndelete = list_length(defaults) - best_candidate->ndargs;
+				int			ndelete = list_length(defaults) - best_candidate->ndargs;
 				if (ndelete > 0)
 					defaults = list_copy_tail(defaults, ndelete);
 				*argdefaults = defaults;
@@ -1761,8 +1734,6 @@ unify_hypothetical_args(ParseState *pstate,
 		int			aargpos = numDirectArgs + (hargpos - numNonHypotheticalArgs);
 		ListCell   *harg = list_nth_cell(fargs, hargpos);
 		ListCell   *aarg = list_nth_cell(fargs, aargpos);
-		Oid			commontype;
-		int32		commontypmod;
 
 		/* A mismatch means AggregateCreate didn't check properly ... */
 		if (declared_arg_types[hargpos] != declared_arg_types[aargpos])
@@ -1777,11 +1748,11 @@ unify_hypothetical_args(ParseState *pstate,
 		 * type (we'd rather coerce the direct argument once than coerce all
 		 * the aggregated values).
 		 */
-		commontype = select_common_type(pstate,
+		Oid			commontype = select_common_type(pstate,
 										list_make2(lfirst(aarg), lfirst(harg)),
 										"WITHIN GROUP",
 										NULL);
-		commontypmod = select_common_typmod(pstate,
+		int32		commontypmod = select_common_typmod(pstate,
 											list_make2(lfirst(aarg), lfirst(harg)),
 											commontype);
 
@@ -1882,13 +1853,12 @@ static Oid
 FuncNameAsType(List *funcname)
 {
 	Oid			result;
-	Type		typtup;
 
 	/*
 	 * temp_ok=false protects the <refsect1 id="sql-createfunction-security">
 	 * contract for writing SECURITY DEFINER functions safely.
 	 */
-	typtup = LookupTypeNameExtended(NULL, makeTypeNameFromNameList(funcname),
+	Type		typtup = LookupTypeNameExtended(NULL, makeTypeNameFromNameList(funcname),
 									NULL, false, false);
 	if (typtup == NULL)
 		return InvalidOid;
@@ -1929,9 +1899,8 @@ ParseComplexProjection(ParseState *pstate, const char *funcname, Node *first_arg
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->varattno == InvalidAttrNumber)
 	{
-		ParseNamespaceItem *nsitem;
 
-		nsitem = GetNSItemByRangeTablePosn(pstate,
+		ParseNamespaceItem *nsitem = GetNSItemByRangeTablePosn(pstate,
 										   ((Var *) first_arg)->varno,
 										   ((Var *) first_arg)->varlevelsup);
 		/* Return a Var if funcname matches a column, else NULL */
@@ -1995,16 +1964,14 @@ funcname_signature_string(const char *funcname, int nargs,
 						  List *argnames, const Oid *argtypes)
 {
 	StringInfoData argbuf;
-	int			numposargs;
-	ListCell   *lc;
 	int			i;
 
 	initStringInfo(&argbuf);
 
 	appendStringInfo(&argbuf, "%s(", funcname);
 
-	numposargs = nargs - list_length(argnames);
-	lc = list_head(argnames);
+	int			numposargs = nargs - list_length(argnames);
+	ListCell   *lc = list_head(argnames);
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -2053,7 +2020,6 @@ LookupFuncNameInternal(ObjectType objtype, List *funcname,
 					   FuncLookupError *lookupError)
 {
 	Oid			result = InvalidOid;
-	FuncCandidateList clist;
 
 	/* NULL argtypes allowed for nullary functions only */
 	Assert(argtypes != NULL || nargs == 0);
@@ -2062,7 +2028,7 @@ LookupFuncNameInternal(ObjectType objtype, List *funcname,
 	*lookupError = FUNCLOOKUP_NOSUCHFUNC;
 
 	/* Get list of candidate objects */
-	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false,
+	FuncCandidateList clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false,
 								  include_out_arguments, missing_ok);
 
 	/* Scan list for a match to the arg types (if specified) and the objtype */
@@ -2144,10 +2110,9 @@ LookupFuncNameInternal(ObjectType objtype, List *funcname,
 Oid
 LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool missing_ok)
 {
-	Oid			funcoid;
 	FuncLookupError lookupError;
 
-	funcoid = LookupFuncNameInternal(OBJECT_FUNCTION,
+	Oid			funcoid = LookupFuncNameInternal(OBJECT_FUNCTION,
 									 funcname, nargs, argtypes,
 									 false, missing_ok,
 									 &lookupError);
@@ -2207,11 +2172,7 @@ Oid
 LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 {
 	Oid			argoids[FUNC_MAX_ARGS];
-	int			argcount;
-	int			nargs;
-	int			i;
 	ListCell   *args_item;
-	Oid			oid;
 	FuncLookupError lookupError;
 
 	Assert(objtype == OBJECT_AGGREGATE ||
@@ -2219,7 +2180,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 		   objtype == OBJECT_PROCEDURE ||
 		   objtype == OBJECT_ROUTINE);
 
-	argcount = list_length(func->objargs);
+	int			argcount = list_length(func->objargs);
 	if (argcount > FUNC_MAX_ARGS)
 	{
 		if (objtype == OBJECT_PROCEDURE)
@@ -2242,7 +2203,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 	 * First, perform a lookup considering only input arguments (traditional
 	 * Postgres rules).
 	 */
-	i = 0;
+	int			i = 0;
 	foreach(args_item, func->objargs)
 	{
 		TypeName   *t = lfirst_node(TypeName, args_item);
@@ -2257,7 +2218,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 	 * Set nargs for LookupFuncNameInternal. It expects -1 to mean no args
 	 * were specified.
 	 */
-	nargs = func->args_unspecified ? -1 : argcount;
+	int			nargs = func->args_unspecified ? -1 : argcount;
 
 	/*
 	 * In args_unspecified mode, also tell LookupFuncNameInternal to consider
@@ -2268,7 +2229,7 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 	 * only one argtype match, so we're not risking an ambiguity failure via
 	 * this choice.)
 	 */
-	oid = LookupFuncNameInternal(func->args_unspecified ? objtype : OBJECT_ROUTINE,
+	Oid			oid = LookupFuncNameInternal(func->args_unspecified ? objtype : OBJECT_ROUTINE,
 								 func->objname, nargs, argoids,
 								 false, missing_ok,
 								 &lookupError);
@@ -2308,13 +2269,12 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 
 		if (!have_param_mode)
 		{
-			Oid			poid;
 
 			/* Without mode marks, objargs surely includes all params */
 			Assert(list_length(func->objfuncargs) == argcount);
 
 			/* For objtype == OBJECT_PROCEDURE, we can ignore non-procedures */
-			poid = LookupFuncNameInternal(objtype, func->objname,
+			Oid			poid = LookupFuncNameInternal(objtype, func->objname,
 										  argcount, argoids,
 										  true, missing_ok,
 										  &lookupError);
@@ -2511,8 +2471,6 @@ LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 void
 check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 {
-	const char *err;
-	bool		errkind;
 
 	/*
 	 * Check to see if the set-returning function is in an invalid place
@@ -2526,8 +2484,8 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 	 * what it will return is just a SQL keyword.  (Otherwise, use a custom
 	 * message to avoid creating translation problems.)
 	 */
-	err = NULL;
-	errkind = false;
+	const char *err = NULL;
+	bool		errkind = false;
 	switch (pstate->p_expr_kind)
 	{
 		case EXPR_KIND_NONE:

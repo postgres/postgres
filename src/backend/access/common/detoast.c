@@ -82,11 +82,9 @@ detoast_external_attr(struct varlena *attr)
 		/*
 		 * This is an expanded-object pointer --- get flat format
 		 */
-		ExpandedObjectHeader *eoh;
-		Size		resultsize;
 
-		eoh = DatumGetEOHP(PointerGetDatum(attr));
-		resultsize = EOH_get_flat_size(eoh);
+		ExpandedObjectHeader *eoh = DatumGetEOHP(PointerGetDatum(attr));
+		Size		resultsize = EOH_get_flat_size(eoh);
 		result = (struct varlena *) palloc(resultsize);
 		EOH_flatten_into(eoh, (void *) result, resultsize);
 	}
@@ -149,9 +147,8 @@ detoast_attr(struct varlena *attr)
 		/* if it isn't, we'd better copy it */
 		if (attr == (struct varlena *) redirect.pointer)
 		{
-			struct varlena *result;
 
-			result = (struct varlena *) palloc(VARSIZE_ANY(attr));
+			struct varlena *result = (struct varlena *) palloc(VARSIZE_ANY(attr));
 			memcpy(result, attr, VARSIZE_ANY(attr));
 			attr = result;
 		}
@@ -179,9 +176,8 @@ detoast_attr(struct varlena *attr)
 		 */
 		Size		data_size = VARSIZE_SHORT(attr) - VARHDRSZ_SHORT;
 		Size		new_size = data_size + VARHDRSZ;
-		struct varlena *new_attr;
 
-		new_attr = (struct varlena *) palloc(new_size);
+		struct varlena *new_attr = (struct varlena *) palloc(new_size);
 		SET_VARSIZE(new_attr, new_size);
 		memcpy(VARDATA(new_attr), VARDATA_SHORT(attr), data_size);
 		attr = new_attr;
@@ -206,7 +202,6 @@ detoast_attr_slice(struct varlena *attr,
 				   int32 sliceoffset, int32 slicelength)
 {
 	struct varlena *preslice;
-	struct varlena *result;
 	char	   *attrdata;
 	int32		slicelimit;
 	int32		attrsize;
@@ -321,7 +316,7 @@ detoast_attr_slice(struct varlena *attr,
 	else if (slicelength < 0 || slicelimit > attrsize)
 		slicelength = attrsize - sliceoffset;
 
-	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 	SET_VARSIZE(result, slicelength + VARHDRSZ);
 
 	memcpy(VARDATA(result), attrdata + sliceoffset, slicelength);
@@ -342,10 +337,7 @@ detoast_attr_slice(struct varlena *attr,
 static struct varlena *
 toast_fetch_datum(struct varlena *attr)
 {
-	Relation	toastrel;
-	struct varlena *result;
 	struct varatt_external toast_pointer;
-	int32		attrsize;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum shouldn't be called for non-ondisk datums");
@@ -353,9 +345,9 @@ toast_fetch_datum(struct varlena *attr)
 	/* Must copy to access aligned fields */
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
-	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
+	int32		attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
 
-	result = (struct varlena *) palloc(attrsize + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(attrsize + VARHDRSZ);
 
 	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
 		SET_VARSIZE_COMPRESSED(result, attrsize + VARHDRSZ);
@@ -369,7 +361,7 @@ toast_fetch_datum(struct varlena *attr)
 	/*
 	 * Open the toast relation and its indexes
 	 */
-	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
+	Relation	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
 
 	/* Fetch all chunks */
 	table_relation_fetch_toast_slice(toastrel, toast_pointer.va_valueid,
@@ -396,10 +388,7 @@ static struct varlena *
 toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 						int32 slicelength)
 {
-	Relation	toastrel;
-	struct varlena *result;
 	struct varatt_external toast_pointer;
-	int32		attrsize;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		elog(ERROR, "toast_fetch_datum_slice shouldn't be called for non-ondisk datums");
@@ -414,7 +403,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 	 */
 	Assert(!VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) || 0 == sliceoffset);
 
-	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
+	int32		attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
 
 	if (sliceoffset >= attrsize)
 	{
@@ -438,7 +427,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
 		slicelength = attrsize - sliceoffset;
 
-	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
 		SET_VARSIZE_COMPRESSED(result, slicelength + VARHDRSZ);
@@ -449,7 +438,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 		return result;			/* Can save a lot of work at this point! */
 
 	/* Open the toast relation */
-	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
+	Relation	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
 
 	/* Fetch all chunks */
 	table_relation_fetch_toast_slice(toastrel, toast_pointer.va_valueid,
@@ -470,7 +459,6 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 static struct varlena *
 toast_decompress_datum(struct varlena *attr)
 {
-	ToastCompressionId cmid;
 
 	Assert(VARATT_IS_COMPRESSED(attr));
 
@@ -478,7 +466,7 @@ toast_decompress_datum(struct varlena *attr)
 	 * Fetch the compression method id stored in the compression header and
 	 * decompress the data using the appropriate decompression routine.
 	 */
-	cmid = TOAST_COMPRESS_METHOD(attr);
+	ToastCompressionId cmid = TOAST_COMPRESS_METHOD(attr);
 	switch (cmid)
 	{
 		case TOAST_PGLZ_COMPRESSION_ID:
@@ -502,7 +490,6 @@ toast_decompress_datum(struct varlena *attr)
 static struct varlena *
 toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
 {
-	ToastCompressionId cmid;
 
 	Assert(VARATT_IS_COMPRESSED(attr));
 
@@ -521,7 +508,7 @@ toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
 	 * Fetch the compression method id stored in the compression header and
 	 * decompress the data slice using the appropriate decompression routine.
 	 */
-	cmid = TOAST_COMPRESS_METHOD(attr);
+	ToastCompressionId cmid = TOAST_COMPRESS_METHOD(attr);
 	switch (cmid)
 	{
 		case TOAST_PGLZ_COMPRESSION_ID:

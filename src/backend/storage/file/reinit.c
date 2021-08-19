@@ -46,7 +46,6 @@ void
 ResetUnloggedRelations(int op)
 {
 	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
-	DIR		   *spc_dir;
 	struct dirent *spc_de;
 	MemoryContext tmpctx,
 				oldctx;
@@ -73,7 +72,7 @@ ResetUnloggedRelations(int op)
 	/*
 	 * Cycle through directories for all non-default tablespaces.
 	 */
-	spc_dir = AllocateDir("pg_tblspc");
+	DIR		   *spc_dir = AllocateDir("pg_tblspc");
 
 	while ((spc_de = ReadDir(spc_dir, "pg_tblspc")) != NULL)
 	{
@@ -101,11 +100,10 @@ ResetUnloggedRelations(int op)
 static void
 ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 {
-	DIR		   *ts_dir;
 	struct dirent *de;
 	char		dbspace_path[MAXPGPATH * 2];
 
-	ts_dir = AllocateDir(tsdirname);
+	DIR		   *ts_dir = AllocateDir(tsdirname);
 
 	/*
 	 * If we get ENOENT on a tablespace directory, log it and return.  This
@@ -162,7 +160,6 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 	 */
 	if ((op & UNLOGGED_RELATION_CLEANUP) != 0)
 	{
-		HTAB	   *hash;
 		HASHCTL		ctl;
 
 		/*
@@ -175,7 +172,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(unlogged_relation_entry);
 		ctl.hcxt = CurrentMemoryContext;
-		hash = hash_create("unlogged relation OIDs", 32, &ctl,
+		HTAB	   *hash = hash_create("unlogged relation OIDs", 32, &ctl,
 						   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 		/* Scan the directory. */
@@ -383,9 +380,8 @@ parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 		*fork = MAIN_FORKNUM;
 	else
 	{
-		int			forkchar;
 
-		forkchar = forkname_chars(&name[pos + 1], fork);
+		int			forkchar = forkname_chars(&name[pos + 1], fork);
 		if (forkchar <= 0)
 			return false;
 		pos += forkchar + 1;

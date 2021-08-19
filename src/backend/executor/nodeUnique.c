@@ -48,17 +48,15 @@ ExecUnique(PlanState *pstate)
 {
 	UniqueState *node = castNode(UniqueState, pstate);
 	ExprContext *econtext = node->ps.ps_ExprContext;
-	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
-	PlanState  *outerPlan;
 
 	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from the node
 	 */
-	outerPlan = outerPlanState(node);
-	resultTupleSlot = node->ps.ps_ResultTupleSlot;
+	PlanState  *outerPlan = outerPlanState(node);
+	TupleTableSlot *resultTupleSlot = node->ps.ps_ResultTupleSlot;
 
 	/*
 	 * now loop, returning only non-duplicate tuples. We assume that the
@@ -114,7 +112,6 @@ ExecUnique(PlanState *pstate)
 UniqueState *
 ExecInitUnique(Unique *node, EState *estate, int eflags)
 {
-	UniqueState *uniquestate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -122,7 +119,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	uniquestate = makeNode(UniqueState);
+	UniqueState *uniquestate = makeNode(UniqueState);
 	uniquestate->ps.plan = (Plan *) node;
 	uniquestate->ps.state = estate;
 	uniquestate->ps.ExecProcNode = ExecUnique;

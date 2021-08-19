@@ -43,7 +43,6 @@ pglz_compress_datum(const struct varlena *value)
 {
 	int32		valsize,
 				len;
-	struct varlena *tmp = NULL;
 
 	valsize = VARSIZE_ANY_EXHDR(DatumGetPointer(value));
 
@@ -59,7 +58,7 @@ pglz_compress_datum(const struct varlena *value)
 	 * Figure out the maximum possible size of the pglz output, add the bytes
 	 * that will be needed for varlena overhead, and allocate that amount.
 	 */
-	tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize) +
+	struct varlena *tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize) +
 									VARHDRSZ_COMPRESSED);
 
 	len = pglz_compress(VARDATA_ANY(value),
@@ -83,14 +82,12 @@ pglz_compress_datum(const struct varlena *value)
 struct varlena *
 pglz_decompress_datum(const struct varlena *value)
 {
-	struct varlena *result;
-	int32		rawsize;
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+	int32		rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
 							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
 							  VARDATA_COMPRESSED_GET_EXTSIZE(value), true);
@@ -111,14 +108,12 @@ struct varlena *
 pglz_decompress_datum_slice(const struct varlena *value,
 							int32 slicelength)
 {
-	struct varlena *result;
-	int32		rawsize;
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
+	int32		rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
 							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 							  VARDATA(result),
 							  slicelength, false);
@@ -144,21 +139,17 @@ lz4_compress_datum(const struct varlena *value)
 	NO_LZ4_SUPPORT();
 	return NULL;				/* keep compiler quiet */
 #else
-	int32		valsize;
-	int32		len;
-	int32		max_size;
-	struct varlena *tmp = NULL;
 
-	valsize = VARSIZE_ANY_EXHDR(value);
+	int32		valsize = VARSIZE_ANY_EXHDR(value);
 
 	/*
 	 * Figure out the maximum possible size of the LZ4 output, add the bytes
 	 * that will be needed for varlena overhead, and allocate that amount.
 	 */
-	max_size = LZ4_compressBound(valsize);
-	tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED);
+	int32		max_size = LZ4_compressBound(valsize);
+	struct varlena *tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED);
 
-	len = LZ4_compress_default(VARDATA_ANY(value),
+	int32		len = LZ4_compress_default(VARDATA_ANY(value),
 							   (char *) tmp + VARHDRSZ_COMPRESSED,
 							   valsize, max_size);
 	if (len <= 0)
@@ -187,14 +178,12 @@ lz4_decompress_datum(const struct varlena *value)
 	NO_LZ4_SUPPORT();
 	return NULL;				/* keep compiler quiet */
 #else
-	int32		rawsize;
-	struct varlena *result;
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESSED,
+	int32		rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESSED,
 								  VARDATA(result),
 								  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 								  VARDATA_COMPRESSED_GET_EXTSIZE(value));
@@ -220,18 +209,16 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 	NO_LZ4_SUPPORT();
 	return NULL;				/* keep compiler quiet */
 #else
-	int32		rawsize;
-	struct varlena *result;
 
 	/* slice decompression not supported prior to 1.8.3 */
 	if (LZ4_versionNumber() < 10803)
 		return lz4_decompress_datum(value);
 
 	/* allocate memory for the uncompressed data */
-	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+	struct varlena *result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
-	rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESSED,
+	int32		rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESSED,
 										  VARDATA(result),
 										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
 										  slicelength,

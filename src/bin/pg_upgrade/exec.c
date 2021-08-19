@@ -420,11 +420,10 @@ check_exec(const char *dir, const char *program, bool check_version)
 	char		line[MAXPGPATH];
 	char		cmd[MAXPGPATH];
 	char		versionstr[128];
-	int			ret;
 
 	snprintf(path, sizeof(path), "%s/%s", dir, program);
 
-	ret = validate_exec(path);
+	int			ret = validate_exec(path);
 
 	if (ret == -1)
 		pg_fatal("check for \"%s\" failed: not a regular file\n",

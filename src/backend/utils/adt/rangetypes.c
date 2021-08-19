@@ -80,8 +80,6 @@ range_in(PG_FUNCTION_ARGS)
 	char	   *input_str = PG_GETARG_CSTRING(0);
 	Oid			rngtypoid = PG_GETARG_OID(1);
 	Oid			typmod = PG_GETARG_INT32(2);
-	RangeType  *range;
-	RangeIOData *cache;
 	char		flags;
 	char	   *lbound_str;
 	char	   *ubound_str;
@@ -90,7 +88,7 @@ range_in(PG_FUNCTION_ARGS)
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
-	cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_input);
+	RangeIOData *cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_input);
 
 	/* parse */
 	range_parse(input_str, &flags, &lbound_str, &ubound_str);
@@ -111,7 +109,7 @@ range_in(PG_FUNCTION_ARGS)
 	upper.lower = false;
 
 	/* serialize and canonicalize */
-	range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
+	RangeType  *range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
 
 	PG_RETURN_RANGE_P(range);
 }
@@ -120,9 +118,6 @@ Datum
 range_out(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE_P(0);
-	char	   *output_str;
-	RangeIOData *cache;
-	char		flags;
 	char	   *lbound_str = NULL;
 	char	   *ubound_str = NULL;
 	RangeBound	lower;
@@ -131,11 +126,11 @@ range_out(PG_FUNCTION_ARGS)
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
-	cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_output);
+	RangeIOData *cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_output);
 
 	/* deserialize */
 	range_deserialize(cache->typcache, range, &lower, &upper, &empty);
-	flags = range_get_flags(range);
+	char		flags = range_get_flags(range);
 
 	/* call element type's output function */
 	if (RANGE_HAS_LBOUND(flags))
@@ -144,7 +139,7 @@ range_out(PG_FUNCTION_ARGS)
 		ubound_str = OutputFunctionCall(&cache->typioproc, upper.val);
 
 	/* construct result string */
-	output_str = range_deparse(flags, lbound_str, ubound_str);
+	char	   *output_str = range_deparse(flags, lbound_str, ubound_str);
 
 	PG_RETURN_CSTRING(output_str);
 }
@@ -162,18 +157,15 @@ range_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			rngtypoid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
-	RangeType  *range;
-	RangeIOData *cache;
-	char		flags;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
-	cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_receive);
+	RangeIOData *cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_receive);
 
 	/* receive the flags... */
-	flags = (unsigned char) pq_getmsgbyte(buf);
+	char		flags = (unsigned char) pq_getmsgbyte(buf);
 
 	/*
 	 * Mask out any unsupported flags, particularly RANGE_xB_NULL which would
@@ -234,7 +226,7 @@ range_recv(PG_FUNCTION_ARGS)
 	upper.lower = false;
 
 	/* serialize and canonicalize */
-	range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
+	RangeType  *range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
 
 	PG_RETURN_RANGE_P(range);
 }
@@ -244,19 +236,17 @@ range_send(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE_P(0);
 	StringInfo	buf = makeStringInfo();
-	RangeIOData *cache;
-	char		flags;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
-	cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_send);
+	RangeIOData *cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_send);
 
 	/* deserialize */
 	range_deserialize(cache->typcache, range, &lower, &upper, &empty);
-	flags = range_get_flags(range);
+	char		flags = range_get_flags(range);
 
 	/* construct output */
 	pq_begintypsend(buf);
@@ -361,12 +351,10 @@ range_constructor2(PG_FUNCTION_ARGS)
 	Datum		arg1 = PG_GETARG_DATUM(0);
 	Datum		arg2 = PG_GETARG_DATUM(1);
 	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType  *range;
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
-	typcache = range_get_typcache(fcinfo, rngtypid);
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, rngtypid);
 
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.infinite = PG_ARGISNULL(0);
@@ -378,7 +366,7 @@ range_constructor2(PG_FUNCTION_ARGS)
 	upper.inclusive = false;
 	upper.lower = false;
 
-	range = make_range(typcache, &lower, &upper, false);
+	RangeType  *range = make_range(typcache, &lower, &upper, false);
 
 	PG_RETURN_RANGE_P(range);
 }
@@ -390,20 +378,17 @@ range_constructor3(PG_FUNCTION_ARGS)
 	Datum		arg1 = PG_GETARG_DATUM(0);
 	Datum		arg2 = PG_GETARG_DATUM(1);
 	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType  *range;
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
-	char		flags;
 
-	typcache = range_get_typcache(fcinfo, rngtypid);
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, rngtypid);
 
 	if (PG_ARGISNULL(2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("range constructor flags argument must not be null")));
 
-	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_PP(2)));
+	char		flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_PP(2)));
 
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.infinite = PG_ARGISNULL(0);
@@ -415,7 +400,7 @@ range_constructor3(PG_FUNCTION_ARGS)
 	upper.inclusive = (flags & RANGE_UB_INC) != 0;
 	upper.lower = false;
 
-	range = make_range(typcache, &lower, &upper, false);
+	RangeType  *range = make_range(typcache, &lower, &upper, false);
 
 	PG_RETURN_RANGE_P(range);
 }
@@ -428,12 +413,11 @@ Datum
 range_lower(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	range_deserialize(typcache, r1, &lower, &upper, &empty);
 
@@ -449,12 +433,11 @@ Datum
 range_upper(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	range_deserialize(typcache, r1, &lower, &upper, &empty);
 
@@ -527,9 +510,8 @@ range_contains_elem(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	Datum		val = PG_GETARG_DATUM(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	PG_RETURN_BOOL(range_contains_elem_internal(typcache, r, val));
 }
@@ -540,9 +522,8 @@ elem_contained_by_range(PG_FUNCTION_ARGS)
 {
 	Datum		val = PG_GETARG_DATUM(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	PG_RETURN_BOOL(range_contains_elem_internal(typcache, r, val));
 }
@@ -588,9 +569,8 @@ range_eq(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_eq_internal(typcache, r1, r2));
 }
@@ -608,9 +588,8 @@ range_ne(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_ne_internal(typcache, r1, r2));
 }
@@ -621,9 +600,8 @@ range_contains(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
 }
@@ -634,9 +612,8 @@ range_contained_by(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_contained_by_internal(typcache, r1, r2));
 }
@@ -672,9 +649,8 @@ range_before(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_before_internal(typcache, r1, r2));
 }
@@ -710,9 +686,8 @@ range_after(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_after_internal(typcache, r1, r2));
 }
@@ -738,14 +713,12 @@ range_after(PG_FUNCTION_ARGS)
 bool
 bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 {
-	int			cmp;
 
 	Assert(!boundA.lower && boundB.lower);
 
-	cmp = range_cmp_bound_values(typcache, &boundA, &boundB);
+	int			cmp = range_cmp_bound_values(typcache, &boundA, &boundB);
 	if (cmp < 0)
 	{
-		RangeType  *r;
 
 		/*
 		 * Bounds do not overlap; see if there are points in between.
@@ -766,7 +739,7 @@ bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 		/* change upper/lower labels to avoid Assert failures */
 		boundA.lower = true;
 		boundB.lower = false;
-		r = make_range(typcache, &boundA, &boundB, false);
+		RangeType  *r = make_range(typcache, &boundA, &boundB, false);
 		return RangeIsEmpty(r);
 	}
 	else if (cmp == 0)
@@ -811,9 +784,8 @@ range_adjacent(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_adjacent_internal(typcache, r1, r2));
 }
@@ -857,9 +829,8 @@ range_overlaps(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_overlaps_internal(typcache, r1, r2));
 }
@@ -898,9 +869,8 @@ range_overleft(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_overleft_internal(typcache, r1, r2));
 }
@@ -939,9 +909,8 @@ range_overright(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_BOOL(range_overright_internal(typcache, r1, r2));
 }
@@ -955,16 +924,14 @@ range_minus(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	RangeType  *ret;
-	TypeCacheEntry *typcache;
 
 	/* Different types should be prevented by ANYRANGE matching rules */
 	if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
 		elog(ERROR, "range types do not match");
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
-	ret = range_minus_internal(typcache, r1, r2);
+	RangeType  *ret = range_minus_internal(typcache, r1, r2);
 	if (ret)
 		PG_RETURN_RANGE_P(ret);
 	else
@@ -1081,9 +1048,8 @@ range_union(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_RANGE_P(range_union_internal(typcache, r1, r2, true));
 }
@@ -1097,9 +1063,8 @@ range_merge(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_RANGE_P(range_union_internal(typcache, r1, r2, false));
 }
@@ -1110,13 +1075,12 @@ range_intersect(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
 	/* Different types should be prevented by ANYRANGE matching rules */
 	if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
 		elog(ERROR, "range types do not match");
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	PG_RETURN_RANGE_P(range_intersect_internal(typcache, r1, r2));
 }
@@ -1201,23 +1165,19 @@ Datum
 range_intersect_agg_transfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext aggContext;
-	Oid			rngtypoid;
-	TypeCacheEntry *typcache;
-	RangeType  *result;
-	RangeType  *current;
 
 	if (!AggCheckCallContext(fcinfo, &aggContext))
 		elog(ERROR, "range_intersect_agg_transfn called in non-aggregate context");
 
-	rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	Oid			rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_range(rngtypoid))
 		ereport(ERROR, (errmsg("range_intersect_agg must be called with a range")));
 
-	typcache = range_get_typcache(fcinfo, rngtypoid);
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, rngtypoid);
 
 	/* strictness ensures these are non-null */
-	result = PG_GETARG_RANGE_P(0);
-	current = PG_GETARG_RANGE_P(1);
+	RangeType  *result = PG_GETARG_RANGE_P(0);
+	RangeType  *current = PG_GETARG_RANGE_P(1);
 
 	result = range_intersect_internal(typcache, result, current);
 	PG_RETURN_RANGE_P(result);
@@ -1232,7 +1192,6 @@ range_cmp(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE_P(0);
 	RangeType  *r2 = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -1247,7 +1206,7 @@ range_cmp(PG_FUNCTION_ARGS)
 	if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
 		elog(ERROR, "range types do not match");
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	range_deserialize(typcache, r1, &lower1, &upper1, &empty1);
 	range_deserialize(typcache, r2, &lower2, &upper2, &empty2);
@@ -1312,28 +1271,24 @@ Datum
 hash_range(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
-	uint32		result;
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *scache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
-	char		flags;
 	uint32		lower_hash;
 	uint32		upper_hash;
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	/* deserialize */
 	range_deserialize(typcache, r, &lower, &upper, &empty);
-	flags = range_get_flags(r);
+	char		flags = range_get_flags(r);
 
 	/*
 	 * Look up the element type's hash function, if not done already.
 	 */
-	scache = typcache->rngelemtype;
+	TypeCacheEntry *scache = typcache->rngelemtype;
 	if (!OidIsValid(scache->hash_proc_finfo.fn_oid))
 	{
 		scache = lookup_type_cache(scache->type_id, TYPECACHE_HASH_PROC_FINFO);
@@ -1362,7 +1317,7 @@ hash_range(PG_FUNCTION_ARGS)
 		upper_hash = 0;
 
 	/* Merge hashes of flags and bounds */
-	result = hash_uint32((uint32) flags);
+	uint32		result = hash_uint32((uint32) flags);
 	result ^= lower_hash;
 	result = (result << 1) | (result >> 31);
 	result ^= upper_hash;
@@ -1379,24 +1334,20 @@ hash_range_extended(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	Datum		seed = PG_GETARG_DATUM(1);
-	uint64		result;
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *scache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
-	char		flags;
 	uint64		lower_hash;
 	uint64		upper_hash;
 
 	check_stack_depth();
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	range_deserialize(typcache, r, &lower, &upper, &empty);
-	flags = range_get_flags(r);
+	char		flags = range_get_flags(r);
 
-	scache = typcache->rngelemtype;
+	TypeCacheEntry *scache = typcache->rngelemtype;
 	if (!OidIsValid(scache->hash_extended_proc_finfo.fn_oid))
 	{
 		scache = lookup_type_cache(scache->type_id,
@@ -1425,7 +1376,7 @@ hash_range_extended(PG_FUNCTION_ARGS)
 		upper_hash = 0;
 
 	/* Merge hashes of flags and bounds */
-	result = DatumGetUInt64(hash_uint32_extended((uint32) flags,
+	uint64		result = DatumGetUInt64(hash_uint32_extended((uint32) flags,
 												 DatumGetInt64(seed)));
 	result ^= lower_hash;
 	result = ROTATE_HIGH_AND_LOW_32BITS(result);
@@ -1446,12 +1397,11 @@ Datum
 int4range_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	range_deserialize(typcache, r, &lower, &upper, &empty);
 
@@ -1477,12 +1427,11 @@ Datum
 int8range_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	range_deserialize(typcache, r, &lower, &upper, &empty);
 
@@ -1508,12 +1457,11 @@ Datum
 daterange_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
 	range_deserialize(typcache, r, &lower, &upper, &empty);
 
@@ -1572,12 +1520,10 @@ numrange_subdiff(PG_FUNCTION_ARGS)
 {
 	Datum		v1 = PG_GETARG_DATUM(0);
 	Datum		v2 = PG_GETARG_DATUM(1);
-	Datum		numresult;
-	float8		floatresult;
 
-	numresult = DirectFunctionCall2(numeric_sub, v1, v2);
+	Datum		numresult = DirectFunctionCall2(numeric_sub, v1, v2);
 
-	floatresult = DatumGetFloat8(DirectFunctionCall1(numeric_float8,
+	float8		floatresult = DatumGetFloat8(DirectFunctionCall1(numeric_float8,
 													 numresult));
 
 	PG_RETURN_FLOAT8(floatresult);
@@ -1597,9 +1543,8 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 {
 	Timestamp	v1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
-	float8		result;
 
-	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
+	float8		result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1608,9 +1553,8 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 {
 	Timestamp	v1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
-	float8		result;
 
-	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
+	float8		result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1659,14 +1603,7 @@ RangeType *
 range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 				bool empty)
 {
-	RangeType  *range;
 	int			cmp;
-	Size		msize;
-	Pointer		ptr;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-	char		typstorage;
 	char		flags = 0;
 
 	/*
@@ -1706,13 +1643,13 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 	}
 
 	/* Fetch information about range's element type */
-	typlen = typcache->rngelemtype->typlen;
-	typbyval = typcache->rngelemtype->typbyval;
-	typalign = typcache->rngelemtype->typalign;
-	typstorage = typcache->rngelemtype->typstorage;
+	int16		typlen = typcache->rngelemtype->typlen;
+	bool		typbyval = typcache->rngelemtype->typbyval;
+	char		typalign = typcache->rngelemtype->typalign;
+	char		typstorage = typcache->rngelemtype->typstorage;
 
 	/* Count space for varlena header and range type's OID */
-	msize = sizeof(RangeType);
+	Size		msize = sizeof(RangeType);
 	Assert(msize == MAXALIGN(msize));
 
 	/* Count space for bounds */
@@ -1748,13 +1685,13 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 	msize += sizeof(char);
 
 	/* Note: zero-fill is required here, just as in heap tuples */
-	range = (RangeType *) palloc0(msize);
+	RangeType  *range = (RangeType *) palloc0(msize);
 	SET_VARSIZE(range, msize);
 
 	/* Now fill in the datum */
 	range->rangetypid = typcache->type_id;
 
-	ptr = (char *) (range + 1);
+	Pointer		ptr = (char *) (range + 1);
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
@@ -1788,11 +1725,6 @@ void
 range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 				  RangeBound *lower, RangeBound *upper, bool *empty)
 {
-	char		flags;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-	Pointer		ptr;
 	Datum		lbound;
 	Datum		ubound;
 
@@ -1800,15 +1732,15 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	Assert(RangeTypeGetOid(range) == typcache->type_id);
 
 	/* fetch the flag byte from datum's last byte */
-	flags = *((const char *) range + VARSIZE(range) - 1);
+	char		flags = *((const char *) range + VARSIZE(range) - 1);
 
 	/* fetch information about range's element type */
-	typlen = typcache->rngelemtype->typlen;
-	typbyval = typcache->rngelemtype->typbyval;
-	typalign = typcache->rngelemtype->typalign;
+	int16		typlen = typcache->rngelemtype->typlen;
+	bool		typbyval = typcache->rngelemtype->typbyval;
+	char		typalign = typcache->rngelemtype->typalign;
 
 	/* initialize data pointer just after the range OID */
-	ptr = (Pointer) (range + 1);
+	Pointer		ptr = (Pointer) (range + 1);
 
 	/* fetch lower bound, if any */
 	if (RANGE_HAS_LBOUND(flags))
@@ -1868,10 +1800,9 @@ range_get_flags(const RangeType *range)
 void
 range_set_contain_empty(RangeType *range)
 {
-	char	   *flagsp;
 
 	/* flag byte is datum's last byte */
-	flagsp = (char *) range + VARSIZE(range) - 1;
+	char	   *flagsp = (char *) range + VARSIZE(range) - 1;
 
 	*flagsp |= RANGE_CONTAIN_EMPTY;
 }
@@ -1884,9 +1815,8 @@ RangeType *
 make_range(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 		   bool empty)
 {
-	RangeType  *range;
 
-	range = range_serialize(typcache, lower, upper, empty);
+	RangeType  *range = range_serialize(typcache, lower, upper, empty);
 
 	/* no need to call canonical on empty ranges ... */
 	if (OidIsValid(typcache->rng_canonical_finfo.fn_oid) &&
@@ -1923,7 +1853,6 @@ make_range(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 int
 range_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *b1, const RangeBound *b2)
 {
-	int32		result;
 
 	/*
 	 * First, handle cases involving infinity, which don't require invoking
@@ -1948,7 +1877,7 @@ range_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *b1, const RangeBoun
 	/*
 	 * Both boundaries are finite, so compare the held values.
 	 */
-	result = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
+	int32		result = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
 											 typcache->rng_collation,
 											 b1->val, b2->val));
 
@@ -2382,14 +2311,13 @@ range_deparse(char flags, const char *lbound_str, const char *ubound_str)
 static char *
 range_bound_escape(const char *value)
 {
-	bool		nq;
 	const char *ptr;
 	StringInfoData buf;
 
 	initStringInfo(&buf);
 
 	/* Detect whether we need double quotes for this value */
-	nq = (value[0] == '\0');	/* force quotes for empty string */
+	bool		nq = (value[0] == '\0');	/* force quotes for empty string */
 	for (ptr = value; *ptr; ptr++)
 	{
 		char		ch = *ptr;

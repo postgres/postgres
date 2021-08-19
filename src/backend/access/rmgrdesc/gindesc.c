@@ -91,12 +91,10 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				if (!(xlrec->flags & GIN_INSERT_ISLEAF))
 				{
 					char	   *payload = rec + sizeof(ginxlogInsert);
-					BlockNumber leftChildBlkno;
-					BlockNumber rightChildBlkno;
 
-					leftChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
+					BlockNumber leftChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
 					payload += sizeof(BlockIdData);
-					rightChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
+					BlockNumber rightChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
 					payload += sizeof(BlockNumber);
 					appendStringInfo(buf, " children: %u/%u",
 									 leftChildBlkno, rightChildBlkno);

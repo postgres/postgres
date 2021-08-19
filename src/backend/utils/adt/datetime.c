@@ -268,8 +268,6 @@ static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
 int
 date2j(int y, int m, int d)
 {
-	int			julian;
-	int			century;
 
 	if (m > 2)
 	{
@@ -282,8 +280,8 @@ date2j(int y, int m, int d)
 		y += 4799;
 	}
 
-	century = y / 100;
-	julian = y * 365 - 32167;
+	int			century = y / 100;
+	int			julian = y * 365 - 32167;
 	julian += y / 4 - century + century / 4;
 	julian += 7834 * m / 256 + d;
 
@@ -293,19 +291,15 @@ date2j(int y, int m, int d)
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int julian;
-	unsigned int quad;
-	unsigned int extra;
-	int			y;
 
-	julian = jd;
+	unsigned int julian = jd;
 	julian += 32044;
-	quad = julian / 146097;
-	extra = (julian - quad * 146097) * 4 + 3;
+	unsigned int quad = julian / 146097;
+	unsigned int extra = (julian - quad * 146097) * 4 + 3;
 	julian += 60 + quad * 3 + extra / 146097;
 	quad = julian / 1461;
 	julian -= quad * 1461;
-	y = julian * 4 / 1461;
+	int			y = julian * 4 / 1461;
 	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
 		+ 123;
 	y += quad * 4;
@@ -454,10 +448,9 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 		while (precision--)
 		{
 			int32		oldval = value;
-			int32		remainder;
 
 			value /= 10;
-			remainder = oldval - value * 10;
+			int32		remainder = oldval - value * 10;
 
 			/* check if we got a non-zero */
 			if (remainder)
@@ -503,12 +496,11 @@ AppendTimestampSeconds(char *cp, struct pg_tm *tm, fsec_t fsec)
 static void
 AdjustFractSeconds(double frac, struct pg_tm *tm, fsec_t *fsec, int scale)
 {
-	int			sec;
 
 	if (frac == 0)
 		return;
 	frac *= scale;
-	sec = (int) frac;
+	int			sec = (int) frac;
 	tm->tm_sec += sec;
 	frac -= sec;
 	*fsec += rint(frac * 1000000);
@@ -518,12 +510,11 @@ AdjustFractSeconds(double frac, struct pg_tm *tm, fsec_t *fsec, int scale)
 static void
 AdjustFractDays(double frac, struct pg_tm *tm, fsec_t *fsec, int scale)
 {
-	int			extra_days;
 
 	if (frac == 0)
 		return;
 	frac *= scale;
-	extra_days = (int) frac;
+	int			extra_days = (int) frac;
 	tm->tm_mday += extra_days;
 	frac -= extra_days;
 	AdjustFractSeconds(frac, tm, fsec, SECS_PER_DAY);
@@ -533,12 +524,11 @@ AdjustFractDays(double frac, struct pg_tm *tm, fsec_t *fsec, int scale)
 static int
 ParseFractionalSecond(char *cp, fsec_t *fsec)
 {
-	double		frac;
 
 	/* Caller should always pass the start of the fraction part */
 	Assert(*cp == '.');
 	errno = 0;
-	frac = strtod(cp, &cp);
+	double		frac = strtod(cp, &cp);
 	/* check for parse failure */
 	if (*cp != '\0' || errno != 0)
 		return DTERR_BAD_FORMAT;
@@ -688,7 +678,6 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 		 */
 		else if (isalpha((unsigned char) *cp))
 		{
-			bool		is_date;
 
 			ftype[nf] = DTK_STRING;
 			APPEND_CHAR(bufp, bufend, pg_tolower((unsigned char) *cp++));
@@ -703,7 +692,7 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			 * we have so far is a recognized non-timezone keyword --- if so,
 			 * don't believe that this is the start of a timezone.
 			 */
-			is_date = false;
+			bool		is_date = false;
 			if (*cp == '-' || *cp == '/' || *cp == '.')
 				is_date = true;
 			else if (*cp == '+' || isdigit((unsigned char) *cp))
@@ -849,13 +838,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype == DTK_JULIAN)
 				{
 					char	   *cp;
-					int			val;
 
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					int			val = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE || val < 0)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -1011,10 +999,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					int			val = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -1143,11 +1130,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					char	   *cp;
-					int			flen;
 
-					flen = strlen(field[i]);
-					cp = strchr(field[i], '.');
+					int			flen = strlen(field[i]);
+					char	   *cp = strchr(field[i], '.');
 
 					/* Embedded decimal and no date yet? */
 					if (cp != NULL && !(fmask & DTK_DATE_M))
@@ -1639,7 +1624,6 @@ int
 DetermineTimeZoneAbbrevOffset(struct pg_tm *tm, const char *abbr, pg_tz *tzp)
 {
 	pg_time_t	t;
-	int			zone_offset;
 	int			abbr_offset;
 	int			abbr_isdst;
 
@@ -1647,7 +1631,7 @@ DetermineTimeZoneAbbrevOffset(struct pg_tm *tm, const char *abbr, pg_tz *tzp)
 	 * Compute the UTC time we want to probe at.  (In event of overflow, we'll
 	 * probe at the epoch, which is a bit random but probably doesn't matter.)
 	 */
-	zone_offset = DetermineTimeZoneOffsetInternal(tm, tzp, &t);
+	int			zone_offset = DetermineTimeZoneOffsetInternal(tm, tzp, &t);
 
 	/*
 	 * Try to match the abbreviation to something in the zone definition.
@@ -1678,7 +1662,6 @@ DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 								pg_tz *tzp, int *isdst)
 {
 	pg_time_t	t = timestamptz_to_time_t(ts);
-	int			zone_offset;
 	int			abbr_offset;
 	int			tz;
 	struct pg_tm tm;
@@ -1699,7 +1682,7 @@ DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	zone_offset = DetermineTimeZoneOffset(&tm, tzp);
+	int			zone_offset = DetermineTimeZoneOffset(&tm, tzp);
 	*isdst = tm.tm_isdst;
 	return zone_offset;
 }
@@ -1897,7 +1880,6 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
 
 					/* Only accept a date under limited circumstances */
 					switch (ptype)
@@ -1913,7 +1895,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					}
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					int			val = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -2043,11 +2025,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					char	   *cp;
-					int			flen;
 
-					flen = strlen(field[i]);
-					cp = strchr(field[i], '.');
+					int			flen = strlen(field[i]);
+					char	   *cp = strchr(field[i], '.');
 
 					/* Embedded decimal? */
 					if (cp != NULL)
@@ -2635,14 +2615,13 @@ static int
 DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			 int *tmask, struct pg_tm *tm, fsec_t *fsec, bool *is2digits)
 {
-	int			val;
 	char	   *cp;
 	int			dterr;
 
 	*tmask = 0;
 
 	errno = 0;
-	val = strtoint(str, &cp, 10);
+	int			val = strtoint(str, &cp, 10);
 	if (errno == ERANGE)
 		return DTERR_FIELD_OVERFLOW;
 	if (cp == str)
@@ -2832,10 +2811,9 @@ DecodeNumberField(int len, char *str, int fmask,
 		 * Can we use ParseFractionalSecond here?  Not clear whether trailing
 		 * junk should be rejected ...
 		 */
-		double		frac;
 
 		errno = 0;
-		frac = strtod(cp, NULL);
+		double		frac = strtod(cp, NULL);
 		if (errno != 0)
 			return DTERR_BAD_FORMAT;
 		*fsec = rint(frac * 1000000);
@@ -2906,7 +2884,6 @@ DecodeNumberField(int len, char *str, int fmask,
 int
 DecodeTimezone(char *str, int *tzp)
 {
-	int			tz;
 	int			hr,
 				min,
 				sec = 0;
@@ -2954,7 +2931,7 @@ DecodeTimezone(char *str, int *tzp)
 	if (sec < 0 || sec >= SECS_PER_MINUTE)
 		return DTERR_TZDISP_OVERFLOW;
 
-	tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE + sec;
+	int			tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE + sec;
 	if (*str == '-')
 		tz = -tz;
 
@@ -2986,9 +2963,8 @@ DecodeTimezoneAbbrev(int field, char *lowtoken,
 					 int *offset, pg_tz **tz)
 {
 	int			type;
-	const datetkn *tp;
 
-	tp = abbrevcache[field];
+	const datetkn *tp = abbrevcache[field];
 	/* use strncmp so that we match truncated tokens */
 	if (tp == NULL || strncmp(lowtoken, tp->token, TOKMAXLEN) != 0)
 	{
@@ -3040,9 +3016,8 @@ int
 DecodeSpecial(int field, char *lowtoken, int *val)
 {
 	int			type;
-	const datetkn *tp;
 
-	tp = datecache[field];
+	const datetkn *tp = datecache[field];
 	/* use strncmp so that we match truncated tokens */
 	if (tp == NULL || strncmp(lowtoken, tp->token, TOKMAXLEN) != 0)
 	{
@@ -3211,9 +3186,8 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				if (*cp == '-')
 				{
 					/* SQL "years-months" syntax */
-					int			val2;
 
-					val2 = strtoint(cp + 1, &cp, 10);
+					int			val2 = strtoint(cp + 1, &cp, 10);
 					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
 						return DTERR_FIELD_OVERFLOW;
 					if (*cp != '\0')
@@ -3377,9 +3351,8 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 	/* ensure fractional seconds are fractional */
 	if (*fsec != 0)
 	{
-		int			sec;
 
-		sec = *fsec / USECS_PER_SEC;
+		int			sec = *fsec / USECS_PER_SEC;
 		*fsec -= sec * USECS_PER_SEC;
 		tm->tm_sec += sec;
 	}
@@ -3462,12 +3435,11 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 static int
 ParseISO8601Number(char *str, char **endptr, int *ipart, double *fpart)
 {
-	double		val;
 
 	if (!(isdigit((unsigned char) *str) || *str == '-' || *str == '.'))
 		return DTERR_BAD_FORMAT;
 	errno = 0;
-	val = strtod(str, endptr);
+	double		val = strtod(str, endptr);
 	/* did we not see anything that looks like a double? */
 	if (*endptr == str || errno != 0)
 		return DTERR_BAD_FORMAT;
@@ -3530,11 +3502,8 @@ DecodeISO8601Interval(char *str,
 	str++;
 	while (*str)
 	{
-		char	   *fieldstart;
 		int			val;
 		double		fval;
-		char		unit;
-		int			dterr;
 
 		if (*str == 'T')		/* T indicates the beginning of the time part */
 		{
@@ -3544,8 +3513,8 @@ DecodeISO8601Interval(char *str,
 			continue;
 		}
 
-		fieldstart = str;
-		dterr = ParseISO8601Number(str, &str, &val, &fval);
+		char	   *fieldstart = str;
+		int			dterr = ParseISO8601Number(str, &str, &val, &fval);
 		if (dterr)
 			return dterr;
 
@@ -3553,7 +3522,7 @@ DecodeISO8601Interval(char *str,
 		 * Note: we could step off the end of the string here.  Code below
 		 * *must* exit the loop if unit == '\0'.
 		 */
-		unit = *str++;
+		char		unit = *str++;
 
 		if (datepart)
 		{
@@ -3727,9 +3696,8 @@ int
 DecodeUnits(int field, char *lowtoken, int *val)
 {
 	int			type;
-	const datetkn *tp;
 
-	tp = deltacache[field];
+	const datetkn *tp = deltacache[field];
 	/* use strncmp so that we match truncated tokens */
 	if (tp == NULL || strncmp(lowtoken, tp->token, TOKMAXLEN) != 0)
 	{
@@ -4495,11 +4463,10 @@ TemporalSimplify(int32 max_precis, Node *node)
 {
 	FuncExpr   *expr = castNode(FuncExpr, node);
 	Node	   *ret = NULL;
-	Node	   *typmod;
 
 	Assert(list_length(expr->args) >= 2);
 
-	typmod = (Node *) lsecond(expr->args);
+	Node	   *typmod = (Node *) lsecond(expr->args);
 
 	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 	{
@@ -4526,12 +4493,10 @@ TemporalSimplify(int32 max_precis, Node *node)
 TimeZoneAbbrevTable *
 ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 {
-	TimeZoneAbbrevTable *tbl;
-	Size		tbl_size;
 	int			i;
 
 	/* Space for fixed fields and datetkn array */
-	tbl_size = offsetof(TimeZoneAbbrevTable, abbrevs) +
+	Size		tbl_size = offsetof(TimeZoneAbbrevTable, abbrevs) +
 		n * sizeof(datetkn);
 	tbl_size = MAXALIGN(tbl_size);
 	/* Count up space for dynamic abbreviations */
@@ -4541,16 +4506,15 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 
 		if (abbr->zone != NULL)
 		{
-			Size		dsize;
 
-			dsize = offsetof(DynamicZoneAbbrev, zone) +
+			Size		dsize = offsetof(DynamicZoneAbbrev, zone) +
 				strlen(abbr->zone) + 1;
 			tbl_size += MAXALIGN(dsize);
 		}
 	}
 
 	/* Alloc the result ... */
-	tbl = malloc(tbl_size);
+	TimeZoneAbbrevTable *tbl = malloc(tbl_size);
 	if (!tbl)
 		return NULL;
 
@@ -4571,10 +4535,8 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 		if (abbr->zone != NULL)
 		{
 			/* Allocate a DynamicZoneAbbrev for this abbreviation */
-			DynamicZoneAbbrev *dtza;
-			Size		dsize;
 
-			dtza = (DynamicZoneAbbrev *) ((char *) tbl + tbl_size);
+			DynamicZoneAbbrev *dtza = (DynamicZoneAbbrev *) ((char *) tbl + tbl_size);
 			dtza->tz = NULL;
 			strcpy(dtza->zone, abbr->zone);
 
@@ -4582,7 +4544,7 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 			/* value is offset from table start to DynamicZoneAbbrev */
 			dtoken->value = (int32) tbl_size;
 
-			dsize = offsetof(DynamicZoneAbbrev, zone) +
+			Size		dsize = offsetof(DynamicZoneAbbrev, zone) +
 				strlen(abbr->zone) + 1;
 			tbl_size += MAXALIGN(dsize);
 		}
@@ -4621,13 +4583,12 @@ InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl)
 static pg_tz *
 FetchDynamicTimeZone(TimeZoneAbbrevTable *tbl, const datetkn *tp)
 {
-	DynamicZoneAbbrev *dtza;
 
 	/* Just some sanity checks to prevent indexing off into nowhere */
 	Assert(tp->type == DYNTZ);
 	Assert(tp->value > 0 && tp->value < tbl->tblsize);
 
-	dtza = (DynamicZoneAbbrev *) ((char *) tbl + tp->value);
+	DynamicZoneAbbrev *dtza = (DynamicZoneAbbrev *) ((char *) tbl + tp->value);
 
 	/* Look up the underlying zone if we haven't already */
 	if (dtza->tz == NULL)
@@ -4659,23 +4620,17 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	int		   *pindex;
-	Datum		result;
-	HeapTuple	tuple;
 	Datum		values[3];
 	bool		nulls[3];
-	const datetkn *tp;
 	char		buffer[TOKMAXLEN + 1];
 	int			gmtoffset;
 	bool		is_dst;
 	unsigned char *p;
 	struct pg_tm tm;
-	Interval   *resInterval;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc	tupdesc;
-		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4683,7 +4638,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 		/*
 		 * switch to memory context appropriate for multiple function calls
 		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
 		pindex = (int *) palloc(sizeof(int));
@@ -4694,7 +4649,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 		 * build tupdesc for result tuples. This must match this function's
 		 * pg_proc entry!
 		 */
-		tupdesc = CreateTemplateTupleDesc(3);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "abbrev",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "utc_offset",
@@ -4714,7 +4669,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 		*pindex >= zoneabbrevtbl->numabbrevs)
 		SRF_RETURN_DONE(funcctx);
 
-	tp = zoneabbrevtbl->abbrevs + *pindex;
+	const datetkn *tp = zoneabbrevtbl->abbrevs + *pindex;
 
 	switch (tp->type)
 	{
@@ -4729,12 +4684,10 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 		case DYNTZ:
 			{
 				/* Determine the current meaning of the abbrev */
-				pg_tz	   *tzp;
-				TimestampTz now;
 				int			isdst;
 
-				tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp);
-				now = GetCurrentTransactionStartTimestamp();
+				pg_tz	   *tzp = FetchDynamicTimeZone(zoneabbrevtbl, tp);
+				TimestampTz now = GetCurrentTransactionStartTimestamp();
 				gmtoffset = -DetermineTimeZoneAbbrevOffsetTS(now,
 															 tp->token,
 															 tzp,
@@ -4764,7 +4717,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 	/* Convert offset (in seconds) to an interval */
 	MemSet(&tm, 0, sizeof(struct pg_tm));
 	tm.tm_sec = gmtoffset;
-	resInterval = (Interval *) palloc(sizeof(Interval));
+	Interval   *resInterval = (Interval *) palloc(sizeof(Interval));
 	tm2interval(&tm, 0, resInterval);
 	values[1] = IntervalPGetDatum(resInterval);
 
@@ -4772,8 +4725,8 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 
 	(*pindex)++;
 
-	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-	result = HeapTupleGetDatum(tuple);
+	HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+	Datum		result = HeapTupleGetDatum(tuple);
 
 	SRF_RETURN_NEXT(funcctx, result);
 }
@@ -4786,10 +4739,7 @@ Datum
 pg_timezone_names(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	pg_tzenum  *tzenum;
 	pg_tz	   *tz;
 	Datum		values[4];
 	bool		nulls[4];
@@ -4799,7 +4749,6 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	const char *tzn;
 	Interval   *resInterval;
 	struct pg_tm itm;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -4812,13 +4761,13 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -4826,7 +4775,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* initialize timezone scanning code */
-	tzenum = pg_tzenumerate_start();
+	pg_tzenum  *tzenum = pg_tzenumerate_start();
 
 	/* search for another zone to display */
 	for (;;)

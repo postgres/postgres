@@ -72,11 +72,8 @@ typedef struct DomainIOData
 static DomainIOData *
 domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 {
-	DomainIOData *my_extra;
-	TypeCacheEntry *typentry;
-	Oid			baseType;
 
-	my_extra = (DomainIOData *) MemoryContextAlloc(mcxt, sizeof(DomainIOData));
+	DomainIOData *my_extra = (DomainIOData *) MemoryContextAlloc(mcxt, sizeof(DomainIOData));
 
 	/*
 	 * Verify that domainType represents a valid domain type.  We need to be
@@ -85,7 +82,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 	 * because it will throw a clean user-facing error for a bad OID; but also
 	 * it can cache the underlying base type info.
 	 */
-	typentry = lookup_type_cache(domainType, TYPECACHE_DOMAIN_BASE_INFO);
+	TypeCacheEntry *typentry = lookup_type_cache(domainType, TYPECACHE_DOMAIN_BASE_INFO);
 	if (typentry->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -93,7 +90,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 						format_type_be(domainType))));
 
 	/* Find out the base type */
-	baseType = typentry->domainBaseType;
+	Oid			baseType = typentry->domainBaseType;
 	my_extra->typtypmod = typentry->domainBaseTypmod;
 
 	/* Look up underlying I/O function */
@@ -155,9 +152,8 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					/* Make the econtext if we didn't already */
 					if (econtext == NULL)
 					{
-						MemoryContext oldcontext;
 
-						oldcontext = MemoryContextSwitchTo(my_extra->mcxt);
+						MemoryContext oldcontext = MemoryContextSwitchTo(my_extra->mcxt);
 						econtext = CreateStandaloneExprContext();
 						MemoryContextSwitchTo(oldcontext);
 						my_extra->econtext = econtext;
@@ -212,9 +208,6 @@ Datum
 domain_in(PG_FUNCTION_ARGS)
 {
 	char	   *string;
-	Oid			domainType;
-	DomainIOData *my_extra;
-	Datum		value;
 
 	/*
 	 * Since domain_in is not strict, we have to check for null inputs. The
@@ -227,14 +220,14 @@ domain_in(PG_FUNCTION_ARGS)
 		string = PG_GETARG_CSTRING(0);
 	if (PG_ARGISNULL(1))
 		PG_RETURN_NULL();
-	domainType = PG_GETARG_OID(1);
+	Oid			domainType = PG_GETARG_OID(1);
 
 	/*
 	 * We arrange to look up the needed info just once per series of calls,
 	 * assuming the domain type doesn't change underneath us (which really
 	 * shouldn't happen, but cope if it does).
 	 */
-	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
+	DomainIOData *my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
 		my_extra = domain_state_setup(domainType, false,
@@ -245,7 +238,7 @@ domain_in(PG_FUNCTION_ARGS)
 	/*
 	 * Invoke the base type's typinput procedure to convert the data.
 	 */
-	value = InputFunctionCall(&my_extra->proc,
+	Datum		value = InputFunctionCall(&my_extra->proc,
 							  string,
 							  my_extra->typioparam,
 							  my_extra->typtypmod);
@@ -268,9 +261,6 @@ Datum
 domain_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf;
-	Oid			domainType;
-	DomainIOData *my_extra;
-	Datum		value;
 
 	/*
 	 * Since domain_recv is not strict, we have to check for null inputs. The
@@ -283,14 +273,14 @@ domain_recv(PG_FUNCTION_ARGS)
 		buf = (StringInfo) PG_GETARG_POINTER(0);
 	if (PG_ARGISNULL(1))
 		PG_RETURN_NULL();
-	domainType = PG_GETARG_OID(1);
+	Oid			domainType = PG_GETARG_OID(1);
 
 	/*
 	 * We arrange to look up the needed info just once per series of calls,
 	 * assuming the domain type doesn't change underneath us (which really
 	 * shouldn't happen, but cope if it does).
 	 */
-	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
+	DomainIOData *my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
 		my_extra = domain_state_setup(domainType, true,
@@ -301,7 +291,7 @@ domain_recv(PG_FUNCTION_ARGS)
 	/*
 	 * Invoke the base type's typreceive procedure to convert the data.
 	 */
-	value = ReceiveFunctionCall(&my_extra->proc,
+	Datum		value = ReceiveFunctionCall(&my_extra->proc,
 								buf,
 								my_extra->typioparam,
 								my_extra->typtypmod);
@@ -359,13 +349,11 @@ domain_check(Datum value, bool isnull, Oid domainType,
 int
 errdatatype(Oid datatypeOid)
 {
-	HeapTuple	tup;
-	Form_pg_type typtup;
 
-	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(datatypeOid));
+	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(datatypeOid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", datatypeOid);
-	typtup = (Form_pg_type) GETSTRUCT(tup);
+	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tup);
 
 	err_generic_string(PG_DIAG_SCHEMA_NAME,
 					   get_namespace_name(typtup->typnamespace));

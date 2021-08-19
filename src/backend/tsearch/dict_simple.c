@@ -77,10 +77,9 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 	DictSimple *d = (DictSimple *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
-	char	   *txt;
 	TSLexeme   *res;
 
-	txt = lowerstr_with_len(in, len);
+	char	   *txt = lowerstr_with_len(in, len);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
 	{

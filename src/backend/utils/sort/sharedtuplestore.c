@@ -131,7 +131,6 @@ sts_initialize(SharedTuplestore *sts, int participants,
 			   SharedFileSet *fileset,
 			   const char *name)
 {
-	SharedTuplestoreAccessor *accessor;
 	int			i;
 
 	Assert(my_participant_number < participants);
@@ -161,7 +160,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 		sts->participants[i].writing = false;
 	}
 
-	accessor = palloc0(sizeof(SharedTuplestoreAccessor));
+	SharedTuplestoreAccessor *accessor = palloc0(sizeof(SharedTuplestoreAccessor));
 	accessor->participant = my_participant_number;
 	accessor->sts = sts;
 	accessor->fileset = fileset;
@@ -179,11 +178,10 @@ sts_attach(SharedTuplestore *sts,
 		   int my_participant_number,
 		   SharedFileSet *fileset)
 {
-	SharedTuplestoreAccessor *accessor;
 
 	Assert(my_participant_number < sts->nparticipants);
 
-	accessor = palloc0(sizeof(SharedTuplestoreAccessor));
+	SharedTuplestoreAccessor *accessor = palloc0(sizeof(SharedTuplestoreAccessor));
 	accessor->participant = my_participant_number;
 	accessor->sts = sts;
 	accessor->fileset = fileset;
@@ -195,9 +193,8 @@ sts_attach(SharedTuplestore *sts,
 static void
 sts_flush_chunk(SharedTuplestoreAccessor *accessor)
 {
-	size_t		size;
 
-	size = STS_CHUNK_PAGES * BLCKSZ;
+	size_t		size = STS_CHUNK_PAGES * BLCKSZ;
 	BufFileWrite(accessor->write_file, accessor->write_chunk, size);
 	memset(accessor->write_chunk, 0, size);
 	accessor->write_pointer = &accessor->write_chunk->data[0];
@@ -300,7 +297,6 @@ void
 sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 			 MinimalTuple tuple)
 {
-	size_t		size;
 
 	/* Do we have our own file yet? */
 	if (accessor->write_file == NULL)
@@ -318,7 +314,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 	}
 
 	/* Do we have space? */
-	size = accessor->sts->meta_data_size + tuple->t_len;
+	size_t		size = accessor->sts->meta_data_size + tuple->t_len;
 	if (accessor->write_pointer + size >= accessor->write_end)
 	{
 		if (accessor->write_chunk == NULL)
@@ -341,7 +337,6 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 		/* It may still not be enough in the case of a gigantic tuple. */
 		if (accessor->write_pointer + size >= accessor->write_end)
 		{
-			size_t		written;
 
 			/*
 			 * We'll write the beginning of the oversized tuple, and then
@@ -364,7 +359,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 			 * Write as much of the tuple as we can fit. This includes the
 			 * tuple's size at the start.
 			 */
-			written = accessor->write_end - accessor->write_pointer -
+			size_t		written = accessor->write_end - accessor->write_pointer -
 				accessor->sts->meta_data_size;
 			memcpy(accessor->write_pointer + accessor->sts->meta_data_size,
 				   tuple, written);
@@ -374,7 +369,6 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 			/* Now write as many overflow chunks as we need for the rest. */
 			while (size > 0)
 			{
-				size_t		written_this_chunk;
 
 				sts_flush_chunk(accessor);
 
@@ -384,7 +378,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 				 */
 				accessor->write_chunk->overflow = (size + STS_CHUNK_DATA_SIZE - 1) /
 					STS_CHUNK_DATA_SIZE;
-				written_this_chunk =
+				size_t		written_this_chunk =
 					Min(accessor->write_end - accessor->write_pointer, size);
 				memcpy(accessor->write_pointer, (char *) tuple + written,
 					   written_this_chunk);
@@ -409,11 +403,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 static MinimalTuple
 sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 {
-	MinimalTuple tuple;
 	uint32		size;
-	size_t		remaining_size;
-	size_t		this_chunk_size;
-	char	   *destination;
 
 	/*
 	 * We'll keep track of bytes read from this chunk so that we can detect an
@@ -441,19 +431,18 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 	accessor->read_bytes += sizeof(size);
 	if (size > accessor->read_buffer_size)
 	{
-		size_t		new_read_buffer_size;
 
 		if (accessor->read_buffer != NULL)
 			pfree(accessor->read_buffer);
-		new_read_buffer_size = Max(size, accessor->read_buffer_size * 2);
+		size_t		new_read_buffer_size = Max(size, accessor->read_buffer_size * 2);
 		accessor->read_buffer =
 			MemoryContextAlloc(accessor->context, new_read_buffer_size);
 		accessor->read_buffer_size = new_read_buffer_size;
 	}
-	remaining_size = size - sizeof(uint32);
-	this_chunk_size = Min(remaining_size,
+	size_t		remaining_size = size - sizeof(uint32);
+	size_t		this_chunk_size = Min(remaining_size,
 						  BLCKSZ * STS_CHUNK_PAGES - accessor->read_bytes);
-	destination = accessor->read_buffer + sizeof(uint32);
+	char	   *destination = accessor->read_buffer + sizeof(uint32);
 	if (BufFileRead(accessor->read_file,
 					destination,
 					this_chunk_size) != this_chunk_size)
@@ -507,7 +496,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 		accessor->read_ntuples_available = chunk_header.ntuples;
 	}
 
-	tuple = (MinimalTuple) accessor->read_buffer;
+	MinimalTuple tuple = (MinimalTuple) accessor->read_buffer;
 	tuple->t_len = size;
 
 	return tuple;
@@ -550,7 +539,6 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 		if (!eof)
 		{
 			SharedTuplestoreChunk chunk_header;
-			size_t		nread;
 
 			/* Make sure we have the file open. */
 			if (accessor->read_file == NULL)
@@ -568,7 +556,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 						(errcode_for_file_access(),
 						 errmsg("could not seek to block %u in shared tuplestore temporary file",
 								read_page)));
-			nread = BufFileRead(accessor->read_file, &chunk_header,
+			size_t		nread = BufFileRead(accessor->read_file, &chunk_header,
 								STS_CHUNK_HEADER_SIZE);
 			if (nread != STS_CHUNK_HEADER_SIZE)
 				ereport(ERROR,

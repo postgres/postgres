@@ -91,10 +91,9 @@ write_normal_header(PushFilter *dst, int tag, int len)
 static int
 mdc_init(PushFilter *dst, void *init_arg, void **priv_p)
 {
-	int			res;
 	PX_MD	   *md;
 
-	res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
+	int			res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
 	if (res < 0)
 		return res;
 
@@ -114,7 +113,6 @@ mdc_write(PushFilter *dst, void *priv, const uint8 *data, int len)
 static int
 mdc_flush(PushFilter *dst, void *priv)
 {
-	int			res;
 	uint8		pkt[2 + MDC_DIGEST_LEN];
 	PX_MD	   *md = priv;
 
@@ -126,7 +124,7 @@ mdc_flush(PushFilter *dst, void *priv)
 	px_md_update(md, pkt, 2);
 	px_md_finish(md, pkt + 2);
 
-	res = pushf_write(dst, pkt, 2 + MDC_DIGEST_LEN);
+	int			res = pushf_write(dst, pkt, 2 + MDC_DIGEST_LEN);
 	px_memset(pkt, 0, 2 + MDC_DIGEST_LEN);
 	return res;
 }
@@ -251,7 +249,6 @@ pkt_stream_init(PushFilter *next, void *init_arg, void **priv_p)
 static int
 pkt_stream_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {
-	int			res;
 	uint8		hdr[8];
 	uint8	   *h = hdr;
 	struct PktStreamStat *st = priv;
@@ -267,7 +264,7 @@ pkt_stream_process(PushFilter *next, void *priv, const uint8 *data, int len)
 		st->final_done = 1;
 	}
 
-	res = pushf_write(next, hdr, h - hdr);
+	int			res = pushf_write(next, hdr, h - hdr);
 	if (res < 0)
 		return res;
 
@@ -310,9 +307,8 @@ static const PushFilterOps pkt_stream_filter = {
 int
 pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p)
 {
-	int			res;
 
-	res = write_tag_only(dst, tag);
+	int			res = write_tag_only(dst, tag);
 	if (res < 0)
 		return res;
 
@@ -373,8 +369,6 @@ static const PushFilterOps crlf_filter = {
 static int
 init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
-	int			res;
-	int			hdrlen;
 	uint8		hdr[6];
 	uint32		t;
 	PushFilter *pkt;
@@ -401,9 +395,9 @@ init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 	hdr[3] = (t >> 16) & 255;
 	hdr[4] = (t >> 8) & 255;
 	hdr[5] = t & 255;
-	hdrlen = 6;
+	int			hdrlen = 6;
 
-	res = write_tag_only(dst, PGP_PKT_LITERAL_DATA);
+	int			res = write_tag_only(dst, PGP_PKT_LITERAL_DATA);
 	if (res < 0)
 		return res;
 
@@ -428,11 +422,10 @@ init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 static int
 init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
-	int			res;
 	uint8		type = ctx->compress_algo;
 	PushFilter *pkt;
 
-	res = write_tag_only(dst, PGP_PKT_COMPRESSED_DATA);
+	int			res = write_tag_only(dst, PGP_PKT_COMPRESSED_DATA);
 	if (res < 0)
 		return res;
 
@@ -456,7 +449,6 @@ init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 static int
 init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
-	int			res;
 	int			tag;
 
 	if (ctx->disable_mdc)
@@ -464,7 +456,7 @@ init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 	else
 		tag = PGP_PKT_SYMENCRYPTED_DATA_MDC;
 
-	res = write_tag_only(dst, tag);
+	int			res = write_tag_only(dst, tag);
 	if (res < 0)
 		return res;
 
@@ -500,11 +492,10 @@ write_prefix(PGP_Context *ctx, PushFilter *dst)
 static int
 symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
 {
-	int			res;
 	PGP_CFB    *cfb;
 	uint8		algo = ctx->cipher_algo;
 
-	res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
+	int			res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
 						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
 	if (res < 0)
 		return res;
@@ -521,7 +512,6 @@ static int
 write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 {
 	uint8		pkt[256];
-	int			pktlen;
 	int			res;
 	uint8	   *p = pkt;
 
@@ -546,7 +536,7 @@ write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 		p += res;
 	}
 
-	pktlen = p - pkt;
+	int			pktlen = p - pkt;
 	res = write_normal_header(dst, PGP_PKT_SYMENCRYPTED_SESSKEY, pktlen);
 	if (res >= 0)
 		res = pushf_write(dst, pkt, pktlen);
@@ -561,12 +551,11 @@ write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 static int
 init_s2k_key(PGP_Context *ctx)
 {
-	int			res;
 
 	if (ctx->s2k_cipher_algo < 0)
 		ctx->s2k_cipher_algo = ctx->cipher_algo;
 
-	res = pgp_s2k_fill(&ctx->s2k, ctx->s2k_mode, ctx->s2k_digest_algo, ctx->s2k_count);
+	int			res = pgp_s2k_fill(&ctx->s2k, ctx->s2k_mode, ctx->s2k_digest_algo, ctx->s2k_count);
 	if (res < 0)
 		return res;
 
@@ -598,7 +587,6 @@ init_sess_key(PGP_Context *ctx)
 int
 pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst)
 {
-	int			res;
 	int			len;
 	uint8	   *buf;
 	PushFilter *pf,
@@ -611,7 +599,7 @@ pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst)
 		return PXE_ARGUMENT_ERROR;
 
 	/* MBuf writer */
-	res = pushf_create_mbuf_writer(&pf, dst);
+	int			res = pushf_create_mbuf_writer(&pf, dst);
 	if (res < 0)
 		goto out;
 

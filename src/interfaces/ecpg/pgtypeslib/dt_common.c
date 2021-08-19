@@ -580,8 +580,6 @@ DecodeUnits(int field, char *lowtoken, int *val)
 int
 date2j(int y, int m, int d)
 {
-	int			julian;
-	int			century;
 
 	if (m > 2)
 	{
@@ -594,8 +592,8 @@ date2j(int y, int m, int d)
 		y += 4799;
 	}
 
-	century = y / 100;
-	julian = y * 365 - 32167;
+	int			century = y / 100;
+	int			julian = y * 365 - 32167;
 	julian += y / 4 - century + century / 4;
 	julian += 7834 * m / 256 + d;
 
@@ -605,19 +603,15 @@ date2j(int y, int m, int d)
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int julian;
-	unsigned int quad;
-	unsigned int extra;
-	int			y;
 
-	julian = jd;
+	unsigned int julian = jd;
 	julian += 32044;
-	quad = julian / 146097;
-	extra = (julian - quad * 146097) * 4 + 3;
+	unsigned int quad = julian / 146097;
+	unsigned int extra = (julian - quad * 146097) * 4 + 3;
 	julian += 60 + quad * 3 + extra / 146097;
 	quad = julian / 1461;
 	julian -= quad * 1461;
-	y = julian * 4 / 1461;
+	int			y = julian * 4 / 1461;
 	julian = ((y != 0) ? (julian + 305) % 365 : (julian + 306) % 366) + 123;
 	y += quad * 4;
 	*year = y - 4800;
@@ -948,10 +942,9 @@ EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tz
 int
 GetEpochTime(struct tm *tm)
 {
-	struct tm  *t0;
 	time_t		epoch = 0;
 
-	t0 = gmtime(&epoch);
+	struct tm  *t0 = gmtime(&epoch);
 
 	if (t0)
 	{
@@ -1065,9 +1058,8 @@ GetCurrentDateTime(struct tm *tm)
 void
 dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
-	int64		time;
 
-	time = jd;
+	int64		time = jd;
 	*hour = time / USECS_PER_HOUR;
 	time -= (*hour) * USECS_PER_HOUR;
 	*min = time / USECS_PER_MINUTE;
@@ -1197,12 +1189,11 @@ static int
 DecodeNumber(int flen, char *str, int fmask,
 			 int *tmask, struct tm *tm, fsec_t *fsec, bool *is2digits, bool EuroDates)
 {
-	int			val;
 	char	   *cp;
 
 	*tmask = 0;
 
-	val = strtoint(str, &cp, 10);
+	int			val = strtoint(str, &cp, 10);
 	if (cp == str)
 		return -1;
 
@@ -1499,7 +1490,6 @@ DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 static int
 DecodeTimezone(char *str, int *tzp)
 {
-	int			tz;
 	int			hr,
 				min;
 	char	   *cp;
@@ -1526,7 +1516,7 @@ DecodeTimezone(char *str, int *tzp)
 	else
 		min = 0;
 
-	tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE;
+	int			tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE;
 	if (*str == '-')
 		tz = -tz;
 
@@ -1546,20 +1536,17 @@ DecodePosixTimezone(char *str, int *tzp)
 {
 	int			val,
 				tz;
-	int			type;
-	char	   *cp;
-	char		delim;
 
-	cp = str;
+	char	   *cp = str;
 	while (*cp != '\0' && isalpha((unsigned char) *cp))
 		cp++;
 
 	if (DecodeTimezone(cp, &tz) != 0)
 		return -1;
 
-	delim = *cp;
+	char		delim = *cp;
 	*cp = '\0';
-	type = DecodeSpecial(MAXDATEFIELDS - 1, str, &val);
+	int			type = DecodeSpecial(MAXDATEFIELDS - 1, str, &val);
 	*cp = delim;
 
 	switch (type)
@@ -1821,12 +1808,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype == DTK_JULIAN)
 				{
 					char	   *cp;
-					int			val;
 
 					if (tzp == NULL)
 						return -1;
 
-					val = strtoint(field[i], &cp, 10);
+					int			val = strtoint(field[i], &cp, 10);
 					if (*cp != '-')
 						return -1;
 
@@ -1959,9 +1945,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
 
-					val = strtoint(field[i], &cp, 10);
+					int			val = strtoint(field[i], &cp, 10);
 
 					/*
 					 * only a few kinds are allowed to have an embedded
@@ -2082,11 +2067,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					char	   *cp;
-					int			flen;
 
-					flen = strlen(field[i]);
-					cp = strchr(field[i], '.');
+					int			flen = strlen(field[i]);
+					char	   *cp = strchr(field[i], '.');
 
 					/* Embedded decimal and no date yet? */
 					if (cp != NULL && !(fmask & DTK_DATE_M))
@@ -2462,20 +2445,18 @@ pgtypes_defmt_scan(union un_fmt_comb *scan_val, int scan_type, char **pstr, char
 	 * last character so we might set it to '\0' for the parsing
 	 */
 
-	char		last_char;
 	int			err = 0;
-	char	   *pstr_end;
 	char	   *strtol_end = NULL;
 
 	while (**pstr == ' ')
 		pstr++;
-	pstr_end = find_end_token(*pstr, pfmt);
+	char	   *pstr_end = find_end_token(*pstr, pfmt);
 	if (!pstr_end)
 	{
 		/* there was an error, no match */
 		return 1;
 	}
-	last_char = *pstr_end;
+	char		last_char = *pstr_end;
 	*pstr_end = '\0';
 
 	switch (scan_type)
@@ -2804,10 +2785,9 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
 				/* number of seconds in scan_val.luint_val */
 				{
-					struct tm  *tms;
 					time_t		et = (time_t) scan_val.luint_val;
 
-					tms = gmtime(&et);
+					struct tm  *tms = gmtime(&et);
 
 					if (tms)
 					{

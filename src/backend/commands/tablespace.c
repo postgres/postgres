@@ -115,7 +115,6 @@ void
 TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 {
 	struct stat st;
-	char	   *dir;
 
 	/*
 	 * The global tablespace doesn't have per-database subdirectories, so
@@ -127,7 +126,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 	Assert(OidIsValid(spcNode));
 	Assert(OidIsValid(dbNode));
 
-	dir = GetDatabasePath(dbNode, spcNode);
+	char	   *dir = GetDatabasePath(dbNode, spcNode);
 
 	if (stat(dir, &st) < 0)
 	{
@@ -153,7 +152,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 				/* Directory creation failed? */
 				if (MakePGDirectory(dir) < 0)
 				{
-					char	   *parentdir;
 
 					/* Failure other than not exists or not in WAL replay? */
 					if (errno != ENOENT || !isRedo)
@@ -169,7 +167,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 					 */
 
 					/* create two parents up if not exist */
-					parentdir = pstrdup(dir);
+					char	   *parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
 					get_parent_directory(parentdir);
 					/* Can't create parent and it doesn't already exist? */
@@ -238,7 +236,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	bool		nulls[Natts_pg_tablespace];
 	HeapTuple	tuple;
 	Oid			tablespaceoid;
-	char	   *location;
 	Oid			ownerId;
 	Datum		newOptions;
 
@@ -257,7 +254,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		ownerId = GetUserId();
 
 	/* Unix-ify the offered path, and strip any trailing slashes */
-	location = pstrdup(stmt->location);
+	char	   *location = pstrdup(stmt->location);
 	canonicalize_path(location);
 
 	/* disallow quotes, else CREATE DATABASE would be at risk */
@@ -414,26 +411,21 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 {
 #ifdef HAVE_SYMLINK
 	char	   *tablespacename = stmt->tablespacename;
-	TableScanDesc scandesc;
-	Relation	rel;
-	HeapTuple	tuple;
-	Form_pg_tablespace spcform;
 	ScanKeyData entry[1];
-	Oid			tablespaceoid;
 	char	   *detail;
 	char	   *detail_log;
 
 	/*
 	 * Find the target tuple
 	 */
-	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(tablespacename));
-	scandesc = table_beginscan_catalog(rel, 1, entry);
-	tuple = heap_getnext(scandesc, ForwardScanDirection);
+	TableScanDesc scandesc = table_beginscan_catalog(rel, 1, entry);
+	HeapTuple	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -455,8 +447,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		return;
 	}
 
-	spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
-	tablespaceoid = spcform->oid;
+	Form_pg_tablespace spcform = (Form_pg_tablespace) GETSTRUCT(tuple);
+	Oid			tablespaceoid = spcform->oid;
 
 	/* Must be tablespace owner */
 	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
@@ -587,12 +579,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 static void
 create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
-	char	   *linkloc;
-	char	   *location_with_version_dir;
 	struct stat st;
 
-	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
-	location_with_version_dir = psprintf("%s/%s", location,
+	char	   *linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
+	char	   *location_with_version_dir = psprintf("%s/%s", location,
 										 TABLESPACE_VERSION_DIRECTORY);
 
 	/*
@@ -686,13 +676,11 @@ static bool
 destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 {
 	char	   *linkloc;
-	char	   *linkloc_with_version_dir;
-	DIR		   *dirdesc;
 	struct dirent *de;
 	char	   *subfile;
 	struct stat st;
 
-	linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
+	char	   *linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
 										TABLESPACE_VERSION_DIRECTORY);
 
 	/*
@@ -717,7 +705,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * removing the catalog entries (and symlink if still present), so we
 	 * should not give a hard error here.
 	 */
-	dirdesc = AllocateDir(linkloc_with_version_dir);
+	DIR		   *dirdesc = AllocateDir(linkloc_with_version_dir);
 	if (dirdesc == NULL)
 	{
 		if (errno == ENOENT)
@@ -855,10 +843,9 @@ remove_symlink:
 bool
 directory_is_empty(const char *path)
 {
-	DIR		   *dirdesc;
 	struct dirent *de;
 
-	dirdesc = AllocateDir(path);
+	DIR		   *dirdesc = AllocateDir(path);
 
 	while ((de = ReadDir(dirdesc, path)) != NULL)
 	{
@@ -934,33 +921,27 @@ remove_tablespace_symlink(const char *linkloc)
 ObjectAddress
 RenameTableSpace(const char *oldname, const char *newname)
 {
-	Oid			tspId;
-	Relation	rel;
 	ScanKeyData entry[1];
-	TableScanDesc scan;
-	HeapTuple	tup;
-	HeapTuple	newtuple;
-	Form_pg_tablespace newform;
 	ObjectAddress address;
 
 	/* Search pg_tablespace */
-	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(oldname));
-	scan = table_beginscan_catalog(rel, 1, entry);
-	tup = heap_getnext(scan, ForwardScanDirection);
+	TableScanDesc scan = table_beginscan_catalog(rel, 1, entry);
+	HeapTuple	tup = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("tablespace \"%s\" does not exist",
 						oldname)));
 
-	newtuple = heap_copytuple(tup);
-	newform = (Form_pg_tablespace) GETSTRUCT(newtuple);
-	tspId = newform->oid;
+	HeapTuple	newtuple = heap_copytuple(tup);
+	Form_pg_tablespace newform = (Form_pg_tablespace) GETSTRUCT(newtuple);
+	Oid			tspId = newform->oid;
 
 	table_endscan(scan);
 
@@ -1019,35 +1000,28 @@ RenameTableSpace(const char *oldname, const char *newname)
 Oid
 AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 {
-	Relation	rel;
 	ScanKeyData entry[1];
-	TableScanDesc scandesc;
-	HeapTuple	tup;
-	Oid			tablespaceoid;
-	Datum		datum;
-	Datum		newOptions;
 	Datum		repl_val[Natts_pg_tablespace];
 	bool		isnull;
 	bool		repl_null[Natts_pg_tablespace];
 	bool		repl_repl[Natts_pg_tablespace];
-	HeapTuple	newtuple;
 
 	/* Search pg_tablespace */
-	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(stmt->tablespacename));
-	scandesc = table_beginscan_catalog(rel, 1, entry);
-	tup = heap_getnext(scandesc, ForwardScanDirection);
+	TableScanDesc scandesc = table_beginscan_catalog(rel, 1, entry);
+	HeapTuple	tup = heap_getnext(scandesc, ForwardScanDirection);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("tablespace \"%s\" does not exist",
 						stmt->tablespacename)));
 
-	tablespaceoid = ((Form_pg_tablespace) GETSTRUCT(tup))->oid;
+	Oid			tablespaceoid = ((Form_pg_tablespace) GETSTRUCT(tup))->oid;
 
 	/* Must be owner of the existing object */
 	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
@@ -1055,9 +1029,9 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 					   stmt->tablespacename);
 
 	/* Generate new proposed spcoptions (text array) */
-	datum = heap_getattr(tup, Anum_pg_tablespace_spcoptions,
+	Datum		datum = heap_getattr(tup, Anum_pg_tablespace_spcoptions,
 						 RelationGetDescr(rel), &isnull);
-	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
+	Datum		newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
 									 stmt->options, NULL, NULL, false,
 									 stmt->isReset);
 	(void) tablespace_reloptions(newOptions, true);
@@ -1070,7 +1044,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	else
 		repl_null[Anum_pg_tablespace_spcoptions - 1] = true;
 	repl_repl[Anum_pg_tablespace_spcoptions - 1] = true;
-	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val,
+	HeapTuple	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val,
 								 repl_null, repl_repl);
 
 	/* Update system catalog. */
@@ -1147,7 +1121,6 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
 Oid
 GetDefaultTablespace(char relpersistence, bool partitioned)
 {
-	Oid			result;
 
 	/* The temp-table case is handled elsewhere */
 	if (relpersistence == RELPERSISTENCE_TEMP)
@@ -1167,7 +1140,7 @@ GetDefaultTablespace(char relpersistence, bool partitioned)
 	 * to refer to an existing tablespace; we just silently return InvalidOid,
 	 * causing the new object to be created in the database's tablespace.
 	 */
-	result = get_tablespace_oid(default_tablespace, true);
+	Oid			result = get_tablespace_oid(default_tablespace, true);
 
 	/*
 	 * Allow explicit specification of database's default tablespace in
@@ -1202,11 +1175,10 @@ typedef struct
 bool
 check_temp_tablespaces(char **newval, void **extra, GucSource source)
 {
-	char	   *rawname;
 	List	   *namelist;
 
 	/* Need a modifiable copy of string */
-	rawname = pstrdup(*newval);
+	char	   *rawname = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
@@ -1226,19 +1198,14 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 	 */
 	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
-		temp_tablespaces_extra *myextra;
-		Oid		   *tblSpcs;
-		int			numSpcs;
 		ListCell   *l;
 
 		/* temporary workspace until we are done verifying the list */
-		tblSpcs = (Oid *) palloc(list_length(namelist) * sizeof(Oid));
-		numSpcs = 0;
+		Oid		   *tblSpcs = (Oid *) palloc(list_length(namelist) * sizeof(Oid));
+		int			numSpcs = 0;
 		foreach(l, namelist)
 		{
 			char	   *curname = (char *) lfirst(l);
-			Oid			curoid;
-			AclResult	aclresult;
 
 			/* Allow an empty string (signifying database default) */
 			if (curname[0] == '\0')
@@ -1253,7 +1220,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			 * source == PGC_S_TEST, don't throw a hard error for a
 			 * nonexistent tablespace, only a NOTICE.  See comments in guc.h.
 			 */
-			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
+			Oid			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
 			if (curoid == InvalidOid)
 			{
 				if (source == PGC_S_TEST)
@@ -1276,7 +1243,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			}
 
 			/* Check permissions, similarly complaining only if interactive */
-			aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
+			AclResult	aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
 											   ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 			{
@@ -1289,7 +1256,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 		}
 
 		/* Now prepare an "extra" struct for assign_temp_tablespaces */
-		myextra = malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
+		temp_tablespaces_extra *myextra = malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
 						 numSpcs * sizeof(Oid));
 		if (!myextra)
 			return false;
@@ -1335,10 +1302,7 @@ assign_temp_tablespaces(const char *newval, void *extra)
 void
 PrepareTempTablespaces(void)
 {
-	char	   *rawname;
 	List	   *namelist;
-	Oid		   *tblSpcs;
-	int			numSpcs;
 	ListCell   *l;
 
 	/* No work if already done in current transaction */
@@ -1356,7 +1320,7 @@ PrepareTempTablespaces(void)
 		return;
 
 	/* Need a modifiable copy of string */
-	rawname = pstrdup(temp_tablespaces);
+	char	   *rawname = pstrdup(temp_tablespaces);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
@@ -1369,14 +1333,12 @@ PrepareTempTablespaces(void)
 	}
 
 	/* Store tablespace OIDs in an array in TopTransactionContext */
-	tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
+	Oid		   *tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
 										 list_length(namelist) * sizeof(Oid));
-	numSpcs = 0;
+	int			numSpcs = 0;
 	foreach(l, namelist)
 	{
 		char	   *curname = (char *) lfirst(l);
-		Oid			curoid;
-		AclResult	aclresult;
 
 		/* Allow an empty string (signifying database default) */
 		if (curname[0] == '\0')
@@ -1387,7 +1349,7 @@ PrepareTempTablespaces(void)
 		}
 
 		/* Else verify that name is a valid tablespace name */
-		curoid = get_tablespace_oid(curname, true);
+		Oid			curoid = get_tablespace_oid(curname, true);
 		if (curoid == InvalidOid)
 		{
 			/* Skip any bad list elements */
@@ -1406,7 +1368,7 @@ PrepareTempTablespaces(void)
 		}
 
 		/* Check permissions similarly */
-		aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
+		AclResult	aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
 										   ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			continue;
@@ -1431,9 +1393,6 @@ Oid
 get_tablespace_oid(const char *tablespacename, bool missing_ok)
 {
 	Oid			result;
-	Relation	rel;
-	TableScanDesc scandesc;
-	HeapTuple	tuple;
 	ScanKeyData entry[1];
 
 	/*
@@ -1441,14 +1400,14 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 	 * index on name, on the theory that pg_tablespace will usually have just
 	 * a few entries and so an indexed lookup is a waste of effort.
 	 */
-	rel = table_open(TableSpaceRelationId, AccessShareLock);
+	Relation	rel = table_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(tablespacename));
-	scandesc = table_beginscan_catalog(rel, 1, entry);
-	tuple = heap_getnext(scandesc, ForwardScanDirection);
+	TableScanDesc scandesc = table_beginscan_catalog(rel, 1, entry);
+	HeapTuple	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(tuple))
@@ -1477,9 +1436,6 @@ char *
 get_tablespace_name(Oid spc_oid)
 {
 	char	   *result;
-	Relation	rel;
-	TableScanDesc scandesc;
-	HeapTuple	tuple;
 	ScanKeyData entry[1];
 
 	/*
@@ -1487,14 +1443,14 @@ get_tablespace_name(Oid spc_oid)
 	 * index on oid, on the theory that pg_tablespace will usually have just a
 	 * few entries and so an indexed lookup is a waste of effort.
 	 */
-	rel = table_open(TableSpaceRelationId, AccessShareLock);
+	Relation	rel = table_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(spc_oid));
-	scandesc = table_beginscan_catalog(rel, 1, entry);
-	tuple = heap_getnext(scandesc, ForwardScanDirection);
+	TableScanDesc scandesc = table_beginscan_catalog(rel, 1, entry);
+	HeapTuple	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(tuple))

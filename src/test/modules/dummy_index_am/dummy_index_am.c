@@ -140,9 +140,8 @@ create_reloptions_table(void)
 static IndexBuildResult *
 dibuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
-	IndexBuildResult *result;
 
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	IndexBuildResult *result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 
 	/* let's pretend that no tuples were scanned */
 	result->heap_tuples = 0;
@@ -247,10 +246,9 @@ divalidate(Oid opclassoid)
 static IndexScanDesc
 dibeginscan(Relation r, int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
 
 	/* Let's pretend we are doing something */
-	scan = RelationGetIndexScan(r, nkeys, norderbys);
+	IndexScanDesc scan = RelationGetIndexScan(r, nkeys, norderbys);
 	return scan;
 }
 

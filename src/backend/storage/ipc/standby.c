@@ -208,12 +208,11 @@ static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 static bool
 WaitExceedsMaxStandbyDelay(uint32 wait_event_info)
 {
-	TimestampTz ltime;
 
 	CHECK_FOR_INTERRUPTS();
 
 	/* Are we past the limit time? */
-	ltime = GetStandbyLimitTime();
+	TimestampTz ltime = GetStandbyLimitTime();
 	if (ltime && GetCurrentTimestamp() >= ltime)
 		return true;
 
@@ -252,7 +251,6 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 {
 	long		secs;
 	int			usecs;
-	long		msecs;
 	StringInfoData buf;
 	int			nprocs = 0;
 
@@ -263,15 +261,14 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 	Assert(still_waiting || wait_list == NULL);
 
 	TimestampDifference(wait_start, now, &secs, &usecs);
-	msecs = secs * 1000 + usecs / 1000;
+	long		msecs = secs * 1000 + usecs / 1000;
 	usecs = usecs % 1000;
 
 	if (wait_list)
 	{
-		VirtualTransactionId *vxids;
 
 		/* Construct a string of list of the conflicting processes */
-		vxids = wait_list;
+		VirtualTransactionId *vxids = wait_list;
 		while (VirtualTransactionIdIsValid(*vxids))
 		{
 			PGPROC	   *proc = BackendIdGetProc(vxids->backendId);
@@ -359,13 +356,12 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			/* Is it time to kill it? */
 			if (WaitExceedsMaxStandbyDelay(wait_event_info))
 			{
-				pid_t		pid;
 
 				/*
 				 * Now find out who to throw out of the balloon.
 				 */
 				Assert(VirtualTransactionIdIsValid(*waitlist));
-				pid = CancelVirtualTransaction(*waitlist, reason);
+				pid_t		pid = CancelVirtualTransaction(*waitlist, reason);
 
 				/*
 				 * Wait a little bit for it to die so that we avoid flooding
@@ -378,11 +374,9 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			if (waitStart != 0 && (!logged_recovery_conflict || new_status == NULL))
 			{
 				TimestampTz now = 0;
-				bool		maybe_log_conflict;
-				bool		maybe_update_title;
 
-				maybe_log_conflict = (log_recovery_conflict_waits && !logged_recovery_conflict);
-				maybe_update_title = (update_process_title && new_status == NULL);
+				bool		maybe_log_conflict = (log_recovery_conflict_waits && !logged_recovery_conflict);
+				bool		maybe_update_title = (update_process_title && new_status == NULL);
 
 				/* Get the current timestamp if not report yet */
 				if (maybe_log_conflict || maybe_update_title)
@@ -395,10 +389,9 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				if (maybe_update_title &&
 					TimestampDifferenceExceeds(waitStart, now, 500))
 				{
-					const char *old_status;
 					int			len;
 
-					old_status = get_ps_display(&len);
+					const char *old_status = get_ps_display(&len);
 					new_status = (char *) palloc(len + 8 + 1);
 					memcpy(new_status, old_status, len);
 					strcpy(new_status + len, " waiting");
@@ -442,7 +435,6 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 void
 ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode node)
 {
-	VirtualTransactionId *backends;
 
 	/*
 	 * If we get passed InvalidTransactionId then we do nothing (no conflict).
@@ -458,7 +450,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 	if (!TransactionIdIsValid(latestRemovedXid))
 		return;
 
-	backends = GetConflictingVirtualXIDs(latestRemovedXid,
+	VirtualTransactionId *backends = GetConflictingVirtualXIDs(latestRemovedXid,
 										 node.dbNode);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
@@ -482,15 +474,13 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 	 * snapshots that still see it.
 	 */
 	FullTransactionId nextXid = ReadNextFullTransactionId();
-	uint64		diff;
 
-	diff = U64FromFullTransactionId(nextXid) -
+	uint64		diff = U64FromFullTransactionId(nextXid) -
 		U64FromFullTransactionId(latestRemovedFullXid);
 	if (diff < MaxTransactionId / 2)
 	{
-		TransactionId latestRemovedXid;
 
-		latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
+		TransactionId latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
 		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, node);
 	}
 }
@@ -498,7 +488,6 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 void
 ResolveRecoveryConflictWithTablespace(Oid tsid)
 {
-	VirtualTransactionId *temp_file_users;
 
 	/*
 	 * Standby users may be currently using this tablespace for their
@@ -517,7 +506,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	 *
 	 * We don't wait for commit because drop tablespace is non-transactional.
 	 */
-	temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
+	VirtualTransactionId *temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
 												InvalidOid);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
 										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE,
@@ -582,13 +571,11 @@ ResolveRecoveryConflictWithDatabase(Oid dbid)
 void
 ResolveRecoveryConflictWithLock(LOCKTAG locktag, bool logging_conflict)
 {
-	TimestampTz ltime;
-	TimestampTz now;
 
 	Assert(InHotStandby);
 
-	ltime = GetStandbyLimitTime();
-	now = GetCurrentTimestamp();
+	TimestampTz ltime = GetStandbyLimitTime();
+	TimestampTz now = GetCurrentTimestamp();
 
 	/*
 	 * Update waitStart if first time through after the startup process
@@ -615,9 +602,8 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag, bool logging_conflict)
 		/*
 		 * We're already behind, so clear a path as quickly as possible.
 		 */
-		VirtualTransactionId *backends;
 
-		backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
+		VirtualTransactionId *backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
 
 		/*
 		 * Prevent ResolveRecoveryConflictWithVirtualXIDs() from reporting
@@ -669,9 +655,8 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag, bool logging_conflict)
 
 	if (got_standby_deadlock_timeout)
 	{
-		VirtualTransactionId *backends;
 
-		backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
+		VirtualTransactionId *backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
 
 		/* Quick exit if there's no work to be done */
 		if (!VirtualTransactionIdIsValid(*backends))
@@ -752,11 +737,10 @@ cleanup:
 void
 ResolveRecoveryConflictWithBufferPin(void)
 {
-	TimestampTz ltime;
 
 	Assert(InHotStandby);
 
-	ltime = GetStandbyLimitTime();
+	TimestampTz ltime = GetStandbyLimitTime();
 
 	if (GetCurrentTimestamp() >= ltime && ltime != 0)
 	{
@@ -947,8 +931,6 @@ StandbyLockTimeoutHandler(void)
 void
 StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 {
-	RecoveryLockListsEntry *entry;
-	xl_standby_lock *newlock;
 	LOCKTAG		locktag;
 	bool		found;
 
@@ -965,14 +947,14 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 	Assert(OidIsValid(relOid));
 
 	/* Create a new list for this xid, if we don't have one already. */
-	entry = hash_search(RecoveryLockLists, &xid, HASH_ENTER, &found);
+	RecoveryLockListsEntry *entry = hash_search(RecoveryLockLists, &xid, HASH_ENTER, &found);
 	if (!found)
 	{
 		entry->xid = xid;
 		entry->locks = NIL;
 	}
 
-	newlock = palloc(sizeof(xl_standby_lock));
+	xl_standby_lock *newlock = palloc(sizeof(xl_standby_lock));
 	newlock->xid = xid;
 	newlock->dbOid = dbOid;
 	newlock->relOid = relOid;
@@ -1219,9 +1201,6 @@ standby_redo(XLogReaderState *record)
 XLogRecPtr
 LogStandbySnapshot(void)
 {
-	XLogRecPtr	recptr;
-	RunningTransactions running;
-	xl_standby_lock *locks;
 	int			nlocks;
 
 	Assert(XLogStandbyInfoActive());
@@ -1229,7 +1208,7 @@ LogStandbySnapshot(void)
 	/*
 	 * Get details of any AccessExclusiveLocks being held at the moment.
 	 */
-	locks = GetRunningTransactionLocks(&nlocks);
+	xl_standby_lock *locks = GetRunningTransactionLocks(&nlocks);
 	if (nlocks > 0)
 		LogAccessExclusiveLocks(nlocks, locks);
 	pfree(locks);
@@ -1238,7 +1217,7 @@ LogStandbySnapshot(void)
 	 * Log details of all in-progress transactions. This should be the last
 	 * record we write, because standby will open up when it sees this.
 	 */
-	running = GetRunningTransactionData();
+	RunningTransactions running = GetRunningTransactionData();
 
 	/*
 	 * GetRunningTransactionData() acquired ProcArrayLock, we must release it.
@@ -1255,7 +1234,7 @@ LogStandbySnapshot(void)
 	if (wal_level < WAL_LEVEL_LOGICAL)
 		LWLockRelease(ProcArrayLock);
 
-	recptr = LogCurrentRunningXacts(running);
+	XLogRecPtr	recptr = LogCurrentRunningXacts(running);
 
 	/* Release lock if we kept it longer ... */
 	if (wal_level >= WAL_LEVEL_LOGICAL)
@@ -1280,7 +1259,6 @@ static XLogRecPtr
 LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 {
 	xl_running_xacts xlrec;
-	XLogRecPtr	recptr;
 
 	xlrec.xcnt = CurrRunningXacts->xcnt;
 	xlrec.subxcnt = CurrRunningXacts->subxcnt;
@@ -1299,7 +1277,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 		XLogRegisterData((char *) CurrRunningXacts->xids,
 						 (xlrec.xcnt + xlrec.subxcnt) * sizeof(TransactionId));
 
-	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
+	XLogRecPtr	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
 
 	if (CurrRunningXacts->subxid_overflow)
 		elog(trace_recovery(DEBUG2),

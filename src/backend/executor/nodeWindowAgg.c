@@ -245,14 +245,11 @@ advance_windowaggregate(WindowAggState *winstate,
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	WindowFuncExprState *wfuncstate = perfuncstate->wfuncstate;
 	int			numArguments = perfuncstate->numArguments;
-	Datum		newVal;
 	ListCell   *arg;
-	int			i;
-	MemoryContext oldContext;
 	ExprContext *econtext = winstate->tmpcontext;
 	ExprState  *filter = wfuncstate->aggfilter;
 
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/* Skip anything FILTERed out */
 	if (filter)
@@ -268,7 +265,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	}
 
 	/* We start from 1, since the 0th arg will be the transition value */
-	i = 1;
+	int			i = 1;
 	foreach(arg, wfuncstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -342,7 +339,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
-	newVal = FunctionCallInvoke(fcinfo);
+	Datum		newVal = FunctionCallInvoke(fcinfo);
 	winstate->curaggcontext = NULL;
 
 	/*
@@ -421,14 +418,11 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	WindowFuncExprState *wfuncstate = perfuncstate->wfuncstate;
 	int			numArguments = perfuncstate->numArguments;
-	Datum		newVal;
 	ListCell   *arg;
-	int			i;
-	MemoryContext oldContext;
 	ExprContext *econtext = winstate->tmpcontext;
 	ExprState  *filter = wfuncstate->aggfilter;
 
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/* Skip anything FILTERed out */
 	if (filter)
@@ -444,7 +438,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	}
 
 	/* We start from 1, since the 0th arg will be the transition value */
-	i = 1;
+	int			i = 1;
 	foreach(arg, wfuncstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -512,7 +506,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
-	newVal = FunctionCallInvoke(fcinfo);
+	Datum		newVal = FunctionCallInvoke(fcinfo);
 	winstate->curaggcontext = NULL;
 
 	/*
@@ -581,9 +575,8 @@ finalize_windowaggregate(WindowAggState *winstate,
 						 WindowStatePerAgg peraggstate,
 						 Datum *result, bool *isnull)
 {
-	MemoryContext oldContext;
 
-	oldContext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
 
 	/*
 	 * Apply the agg's finalfn if one is provided, else return transValue.
@@ -592,7 +585,6 @@ finalize_windowaggregate(WindowAggState *winstate,
 	{
 		LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 		int			numFinalArgs = peraggstate->numFinalArgs;
-		bool		anynull;
 		int			i;
 
 		InitFunctionCallInfoData(fcinfodata.fcinfo, &(peraggstate->finalfn),
@@ -604,7 +596,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 									   peraggstate->transValueIsNull,
 									   peraggstate->transtypeLen);
 		fcinfo->args[0].isnull = peraggstate->transValueIsNull;
-		anynull = peraggstate->transValueIsNull;
+		bool		anynull = peraggstate->transValueIsNull;
 
 		/* Fill any remaining argument positions with nulls */
 		for (i = 1; i < numFinalArgs; i++)
@@ -666,22 +658,17 @@ eval_windowaggregates(WindowAggState *winstate)
 				numaggs,
 				numaggs_restart,
 				i;
-	int64		aggregatedupto_nonrestarted;
 	MemoryContext oldContext;
-	ExprContext *econtext;
-	WindowObject agg_winobj;
-	TupleTableSlot *agg_row_slot;
-	TupleTableSlot *temp_slot;
 
 	numaggs = winstate->numaggs;
 	if (numaggs == 0)
 		return;					/* nothing to do */
 
 	/* final output execution is in ps_ExprContext */
-	econtext = winstate->ss.ps.ps_ExprContext;
-	agg_winobj = winstate->agg_winobj;
-	agg_row_slot = winstate->agg_row_slot;
-	temp_slot = winstate->temp_slot_1;
+	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
+	WindowObject agg_winobj = winstate->agg_winobj;
+	TupleTableSlot *agg_row_slot = winstate->agg_row_slot;
+	TupleTableSlot *temp_slot = winstate->temp_slot_1;
 
 	/*
 	 * If the window's frame start clause is UNBOUNDED_PRECEDING and no
@@ -823,14 +810,13 @@ eval_windowaggregates(WindowAggState *winstate)
 		 */
 		for (i = 0; i < numaggs; i++)
 		{
-			bool		ok;
 
 			peraggstate = &winstate->peragg[i];
 			if (peraggstate->restart)
 				continue;
 
 			wfuncno = peraggstate->wfuncno;
-			ok = advance_windowaggregate_base(winstate,
+			bool		ok = advance_windowaggregate_base(winstate,
 											  &winstate->perfunc[wfuncno],
 											  peraggstate);
 			if (!ok)
@@ -910,7 +896,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * aggregates.  If we modify aggregatedupto, we must also clear
 	 * agg_row_slot, per the loop invariant below.
 	 */
-	aggregatedupto_nonrestarted = winstate->aggregatedupto;
+	int64		aggregatedupto_nonrestarted = winstate->aggregatedupto;
 	if (numaggs_restart > 0 &&
 		winstate->aggregatedupto != winstate->frameheadpos)
 	{
@@ -927,7 +913,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	 */
 	for (;;)
 	{
-		int			ret;
 
 		/* Fetch next row if we didn't already */
 		if (TupIsNull(agg_row_slot))
@@ -941,7 +926,7 @@ eval_windowaggregates(WindowAggState *winstate)
 		 * Exit loop if no more rows can be in frame.  Skip aggregation if
 		 * current row is not in frame but there might be more in the frame.
 		 */
-		ret = row_is_in_frame(winstate, winstate->aggregatedupto, agg_row_slot);
+		int			ret = row_is_in_frame(winstate, winstate->aggregatedupto, agg_row_slot);
 		if (ret < 0)
 			break;
 		if (ret == 0)
@@ -983,13 +968,11 @@ next_tuple:
 	 */
 	for (i = 0; i < numaggs; i++)
 	{
-		Datum	   *result;
-		bool	   *isnull;
 
 		peraggstate = &winstate->peragg[i];
 		wfuncno = peraggstate->wfuncno;
-		result = &econtext->ecxt_aggvalues[wfuncno];
-		isnull = &econtext->ecxt_aggnulls[wfuncno];
+		Datum	   *result = &econtext->ecxt_aggvalues[wfuncno];
+		bool	   *isnull = &econtext->ecxt_aggnulls[wfuncno];
 		finalize_windowaggregate(winstate,
 								 &winstate->perfunc[wfuncno],
 								 peraggstate,
@@ -1033,9 +1016,8 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 					Datum *result, bool *isnull)
 {
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
-	MemoryContext oldContext;
 
-	oldContext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
 
 	/*
 	 * We don't pass any normal arguments to a window function, but we do pass
@@ -1239,9 +1221,7 @@ static void
 spool_tuples(WindowAggState *winstate, int64 pos)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	PlanState  *outerPlan;
 	TupleTableSlot *outerslot;
-	MemoryContext oldcontext;
 
 	if (!winstate->buffer)
 		return;					/* just a safety check */
@@ -1259,10 +1239,10 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 	if (!tuplestore_in_memory(winstate->buffer))
 		pos = -1;
 
-	outerPlan = outerPlanState(winstate);
+	PlanState  *outerPlan = outerPlanState(winstate);
 
 	/* Must be in query context to call outerplan */
-	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	while (winstate->spooled_rows <= pos || pos == -1)
 	{
@@ -1463,13 +1443,12 @@ update_frameheadpos(WindowAggState *winstate)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
 	int			frameOptions = winstate->frameOptions;
-	MemoryContext oldcontext;
 
 	if (winstate->framehead_valid)
 		return;					/* already known for current row */
 
 	/* We may be called in a short-lived context */
-	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	if (frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 	{
@@ -1713,13 +1692,12 @@ update_frametailpos(WindowAggState *winstate)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
 	int			frameOptions = winstate->frameOptions;
-	MemoryContext oldcontext;
 
 	if (winstate->frametail_valid)
 		return;					/* already known for current row */
 
 	/* We may be called in a short-lived context */
-	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
 	{
@@ -1962,13 +1940,12 @@ static void
 update_grouptailpos(WindowAggState *winstate)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	MemoryContext oldcontext;
 
 	if (winstate->grouptail_valid)
 		return;					/* already known for current row */
 
 	/* We may be called in a short-lived context */
-	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	/* If no ORDER BY, all rows are peers with each other */
 	if (node->ordNumCols == 0)
@@ -2025,7 +2002,6 @@ ExecWindowAgg(PlanState *pstate)
 	WindowAggState *winstate = castNode(WindowAggState, pstate);
 	ExprContext *econtext;
 	int			i;
-	int			numfuncs;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -2188,7 +2164,7 @@ ExecWindowAgg(PlanState *pstate)
 	/*
 	 * Evaluate true window functions
 	 */
-	numfuncs = winstate->numfuncs;
+	int			numfuncs = winstate->numfuncs;
 	for (i = 0; i < numfuncs; i++)
 	{
 		WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
@@ -2248,18 +2224,12 @@ ExecWindowAgg(PlanState *pstate)
 WindowAggState *
 ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 {
-	WindowAggState *winstate;
 	Plan	   *outerPlan;
-	ExprContext *econtext;
-	ExprContext *tmpcontext;
-	WindowStatePerFunc perfunc;
-	WindowStatePerAgg peragg;
 	int			frameOptions = node->frameOptions;
 	int			numfuncs,
 				wfuncno,
 				numaggs,
 				aggno;
-	TupleDesc	scanDesc;
 	ListCell   *l;
 
 	/* check for unsupported flags */
@@ -2268,7 +2238,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	winstate = makeNode(WindowAggState);
+	WindowAggState *winstate = makeNode(WindowAggState);
 	winstate->ss.ps.plan = (Plan *) node;
 	winstate->ss.ps.state = estate;
 	winstate->ss.ps.ExecProcNode = ExecWindowAgg;
@@ -2279,7 +2249,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &winstate->ss.ps);
-	tmpcontext = winstate->ss.ps.ps_ExprContext;
+	ExprContext *tmpcontext = winstate->ss.ps.ps_ExprContext;
 	winstate->tmpcontext = tmpcontext;
 	ExecAssignExprContext(estate, &winstate->ss.ps);
 
@@ -2318,7 +2288,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * store in the tuplestore and use in all our working slots).
 	 */
 	ExecCreateScanSlotFromOuterPlan(estate, &winstate->ss, &TTSOpsMinimalTuple);
-	scanDesc = winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+	TupleDesc	scanDesc = winstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 
 	/* the outer tuple isn't the child's tuple, but always a minimal tuple */
 	winstate->ss.ps.outeropsset = true;
@@ -2388,15 +2358,15 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	numfuncs = winstate->numfuncs;
 	numaggs = winstate->numaggs;
-	econtext = winstate->ss.ps.ps_ExprContext;
+	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numfuncs);
 	econtext->ecxt_aggnulls = (bool *) palloc0(sizeof(bool) * numfuncs);
 
 	/*
 	 * allocate per-wfunc/per-agg state information.
 	 */
-	perfunc = (WindowStatePerFunc) palloc0(sizeof(WindowStatePerFuncData) * numfuncs);
-	peragg = (WindowStatePerAgg) palloc0(sizeof(WindowStatePerAggData) * numaggs);
+	WindowStatePerFunc perfunc = (WindowStatePerFunc) palloc0(sizeof(WindowStatePerFuncData) * numfuncs);
+	WindowStatePerAgg peragg = (WindowStatePerAgg) palloc0(sizeof(WindowStatePerAggData) * numaggs);
 	winstate->perfunc = perfunc;
 	winstate->peragg = peragg;
 
@@ -2406,8 +2376,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	{
 		WindowFuncExprState *wfuncstate = (WindowFuncExprState *) lfirst(l);
 		WindowFunc *wfunc = wfuncstate->wfunc;
-		WindowStatePerFunc perfuncstate;
-		AclResult	aclresult;
 		int			i;
 
 		if (wfunc->winref != node->winref)	/* planner screwed up? */
@@ -2429,13 +2397,13 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		}
 
 		/* Nope, so assign a new PerAgg record */
-		perfuncstate = &perfunc[++wfuncno];
+		WindowStatePerFunc perfuncstate = &perfunc[++wfuncno];
 
 		/* Mark WindowFunc state node with assigned index in the result array */
 		wfuncstate->wfuncno = wfuncno;
 
 		/* Check permission to call window function */
-		aclresult = pg_proc_aclcheck(wfunc->winfnoid, GetUserId(),
+		AclResult	aclresult = pg_proc_aclcheck(wfunc->winfnoid, GetUserId(),
 									 ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -2459,10 +2427,9 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		perfuncstate->plain_agg = wfunc->winagg;
 		if (wfunc->winagg)
 		{
-			WindowStatePerAgg peraggstate;
 
 			perfuncstate->aggno = ++aggno;
-			peraggstate = &winstate->peragg[aggno];
+			WindowStatePerAgg peraggstate = &winstate->peragg[aggno];
 			initialize_peragg(winstate, wfunc, peraggstate);
 			peraggstate->wfuncno = wfuncno;
 		}
@@ -2532,7 +2499,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 void
 ExecEndWindowAgg(WindowAggState *node)
 {
-	PlanState  *outerPlan;
 	int			i;
 
 	release_partition(node);
@@ -2565,7 +2531,7 @@ ExecEndWindowAgg(WindowAggState *node)
 	pfree(node->perfunc);
 	pfree(node->peragg);
 
-	outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 	ExecEndNode(outerPlan);
 }
 
@@ -2618,9 +2584,6 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 				  WindowStatePerAgg peraggstate)
 {
 	Oid			inputTypes[FUNC_MAX_ARGS];
-	int			numArguments;
-	HeapTuple	aggTuple;
-	Form_pg_aggregate aggform;
 	Oid			aggtranstype;
 	AttrNumber	initvalAttNo;
 	AclResult	aclresult;
@@ -2633,23 +2596,21 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	Expr	   *transfnexpr,
 			   *invtransfnexpr,
 			   *finalfnexpr;
-	Datum		textInitVal;
-	int			i;
 	ListCell   *lc;
 
-	numArguments = list_length(wfunc->args);
+	int			numArguments = list_length(wfunc->args);
 
-	i = 0;
+	int			i = 0;
 	foreach(lc, wfunc->args)
 	{
 		inputTypes[i++] = exprType((Node *) lfirst(lc));
 	}
 
-	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(wfunc->winfnoid));
+	HeapTuple	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(wfunc->winfnoid));
 	if (!HeapTupleIsValid(aggTuple))
 		elog(ERROR, "cache lookup failed for aggregate %u",
 			 wfunc->winfnoid);
-	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+	Form_pg_aggregate aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 	/*
 	 * Figure out whether we want to use the moving-aggregate implementation,
@@ -2702,15 +2663,13 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	/* Check that aggregate owner has permission to call component fns */
 	{
-		HeapTuple	procTuple;
-		Oid			aggOwner;
 
-		procTuple = SearchSysCache1(PROCOID,
+		HeapTuple	procTuple = SearchSysCache1(PROCOID,
 									ObjectIdGetDatum(wfunc->winfnoid));
 		if (!HeapTupleIsValid(procTuple))
 			elog(ERROR, "cache lookup failed for function %u",
 				 wfunc->winfnoid);
-		aggOwner = ((Form_pg_proc) GETSTRUCT(procTuple))->proowner;
+		Oid			aggOwner = ((Form_pg_proc) GETSTRUCT(procTuple))->proowner;
 		ReleaseSysCache(procTuple);
 
 		aclresult = pg_proc_aclcheck(transfn_oid, aggOwner,
@@ -2811,7 +2770,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	 * initval is potentially null, so don't try to access it as a struct
 	 * field. Must do it the hard way with SysCacheGetAttr.
 	 */
-	textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple, initvalAttNo,
+	Datum		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple, initvalAttNo,
 								  &peraggstate->initValueIsNull);
 
 	if (peraggstate->initValueIsNull)
@@ -2883,12 +2842,10 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 {
 	Oid			typinput,
 				typioparam;
-	char	   *strInitVal;
-	Datum		initVal;
 
 	getTypeInputInfo(transtype, &typinput, &typioparam);
-	strInitVal = TextDatumGetCString(textInitVal);
-	initVal = OidInputFunctionCall(typinput, strInitVal,
+	char	   *strInitVal = TextDatumGetCString(textInitVal);
+	Datum		initVal = OidInputFunctionCall(typinput, strInitVal,
 								   typioparam, -1);
 	pfree(strInitVal);
 	return initVal;
@@ -2927,7 +2884,6 @@ static bool
 window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 {
 	WindowAggState *winstate = winobj->winstate;
-	MemoryContext oldcontext;
 
 	/* often called repeatedly in a row */
 	CHECK_FOR_INTERRUPTS();
@@ -2945,7 +2901,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	if (pos < winobj->markpos)
 		elog(ERROR, "cannot fetch row before WindowObject's mark position");
 
-	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	tuplestore_select_read_pointer(winstate->buffer, winobj->readptr);
 
@@ -3074,10 +3030,9 @@ WinGetPartitionRowCount(WindowObject winobj)
 void
 WinSetMarkPosition(WindowObject winobj, int64 markpos)
 {
-	WindowAggState *winstate;
 
 	Assert(WindowObjectIsValid(winobj));
-	winstate = winobj->winstate;
+	WindowAggState *winstate = winobj->winstate;
 
 	if (markpos < winobj->markpos)
 		elog(ERROR, "cannot move WindowObject's mark position backward");
@@ -3109,15 +3064,10 @@ WinSetMarkPosition(WindowObject winobj, int64 markpos)
 bool
 WinRowsArePeers(WindowObject winobj, int64 pos1, int64 pos2)
 {
-	WindowAggState *winstate;
-	WindowAgg  *node;
-	TupleTableSlot *slot1;
-	TupleTableSlot *slot2;
-	bool		res;
 
 	Assert(WindowObjectIsValid(winobj));
-	winstate = winobj->winstate;
-	node = (WindowAgg *) winstate->ss.ps.plan;
+	WindowAggState *winstate = winobj->winstate;
+	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
 
 	/* If no ORDER BY, all rows are peers; don't bother to fetch them */
 	if (node->ordNumCols == 0)
@@ -3127,8 +3077,8 @@ WinRowsArePeers(WindowObject winobj, int64 pos1, int64 pos2)
 	 * Note: OK to use temp_slot_2 here because we aren't calling any
 	 * frame-related functions (those tend to clobber temp_slot_2).
 	 */
-	slot1 = winstate->temp_slot_1;
-	slot2 = winstate->temp_slot_2;
+	TupleTableSlot *slot1 = winstate->temp_slot_1;
+	TupleTableSlot *slot2 = winstate->temp_slot_2;
 
 	if (!window_gettupleslot(winobj, pos1, slot1))
 		elog(ERROR, "specified position is out of window: " INT64_FORMAT,
@@ -3137,7 +3087,7 @@ WinRowsArePeers(WindowObject winobj, int64 pos1, int64 pos2)
 		elog(ERROR, "specified position is out of window: " INT64_FORMAT,
 			 pos2);
 
-	res = are_peers(winstate, slot1, slot2);
+	bool		res = are_peers(winstate, slot1, slot2);
 
 	ExecClearTuple(slot1);
 	ExecClearTuple(slot2);
@@ -3168,16 +3118,12 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 						 int relpos, int seektype, bool set_mark,
 						 bool *isnull, bool *isout)
 {
-	WindowAggState *winstate;
-	ExprContext *econtext;
-	TupleTableSlot *slot;
-	bool		gottuple;
 	int64		abs_pos;
 
 	Assert(WindowObjectIsValid(winobj));
-	winstate = winobj->winstate;
-	econtext = winstate->ss.ps.ps_ExprContext;
-	slot = winstate->temp_slot_1;
+	WindowAggState *winstate = winobj->winstate;
+	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
+	TupleTableSlot *slot = winstate->temp_slot_1;
 
 	switch (seektype)
 	{
@@ -3197,7 +3143,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			break;
 	}
 
-	gottuple = window_gettupleslot(winobj, abs_pos, slot);
+	bool		gottuple = window_gettupleslot(winobj, abs_pos, slot);
 
 	if (!gottuple)
 	{
@@ -3256,16 +3202,13 @@ WinGetFuncArgInFrame(WindowObject winobj, int argno,
 					 int relpos, int seektype, bool set_mark,
 					 bool *isnull, bool *isout)
 {
-	WindowAggState *winstate;
-	ExprContext *econtext;
-	TupleTableSlot *slot;
 	int64		abs_pos;
 	int64		mark_pos;
 
 	Assert(WindowObjectIsValid(winobj));
-	winstate = winobj->winstate;
-	econtext = winstate->ss.ps.ps_ExprContext;
-	slot = winstate->temp_slot_1;
+	WindowAggState *winstate = winobj->winstate;
+	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
+	TupleTableSlot *slot = winstate->temp_slot_1;
 
 	switch (seektype)
 	{
@@ -3449,13 +3392,11 @@ out_of_frame:
 Datum
 WinGetFuncArgCurrent(WindowObject winobj, int argno, bool *isnull)
 {
-	WindowAggState *winstate;
-	ExprContext *econtext;
 
 	Assert(WindowObjectIsValid(winobj));
-	winstate = winobj->winstate;
+	WindowAggState *winstate = winobj->winstate;
 
-	econtext = winstate->ss.ps.ps_ExprContext;
+	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
 
 	econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
 	return ExecEvalExpr((ExprState *) list_nth(winobj->argstates, argno),

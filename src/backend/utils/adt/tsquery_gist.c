@@ -30,10 +30,9 @@ gtsquery_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		TSQuerySign sign;
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
-		sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
+		TSQuerySign sign = makeTSQuerySign(DatumGetTSQuery(entry->key));
 
 		gistentryinit(*retval, TSQuerySignGetDatum(sign),
 					  entry->rel, entry->page,
@@ -89,10 +88,9 @@ gtsquery_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	TSQuerySign sign;
 	int			i;
 
-	sign = 0;
+	TSQuerySign sign = 0;
 
 	for (i = 0; i < entryvec->n; i++)
 		sign |= GETENTRY(entryvec, i);
@@ -178,15 +176,13 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 				size_beta;
 	int32		size_waste,
 				waste = -1;
-	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
 
-	SPLITCOST  *costvector;
 
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	left = v->spl_left = (OffsetNumber *) palloc(nbytes);
 	right = v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = v->spl_nright = 0;
@@ -214,7 +210,7 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 	datum_r = GETENTRY(entryvec, seed_2);
 
 	maxoff = OffsetNumberNext(maxoff);
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

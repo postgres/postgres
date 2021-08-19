@@ -109,7 +109,6 @@ static PyObject *
 PLy_result_colnames(PyObject *self, PyObject *unused)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
-	PyObject   *list;
 	int			i;
 
 	if (!ob->tupdesc)
@@ -118,7 +117,7 @@ PLy_result_colnames(PyObject *self, PyObject *unused)
 		return NULL;
 	}
 
-	list = PyList_New(ob->tupdesc->natts);
+	PyObject   *list = PyList_New(ob->tupdesc->natts);
 	if (!list)
 		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
@@ -135,7 +134,6 @@ static PyObject *
 PLy_result_coltypes(PyObject *self, PyObject *unused)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
-	PyObject   *list;
 	int			i;
 
 	if (!ob->tupdesc)
@@ -144,7 +142,7 @@ PLy_result_coltypes(PyObject *self, PyObject *unused)
 		return NULL;
 	}
 
-	list = PyList_New(ob->tupdesc->natts);
+	PyObject   *list = PyList_New(ob->tupdesc->natts);
 	if (!list)
 		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
@@ -161,7 +159,6 @@ static PyObject *
 PLy_result_coltypmods(PyObject *self, PyObject *unused)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
-	PyObject   *list;
 	int			i;
 
 	if (!ob->tupdesc)
@@ -170,7 +167,7 @@ PLy_result_coltypmods(PyObject *self, PyObject *unused)
 		return NULL;
 	}
 
-	list = PyList_New(ob->tupdesc->natts);
+	PyObject   *list = PyList_New(ob->tupdesc->natts);
 	if (!list)
 		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
@@ -212,10 +209,9 @@ PLy_result_length(PyObject *arg)
 static PyObject *
 PLy_result_item(PyObject *arg, Py_ssize_t idx)
 {
-	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
 
-	rv = PyList_GetItem(ob->rows, idx);
+	PyObject   *rv = PyList_GetItem(ob->rows, idx);
 	if (rv != NULL)
 		Py_INCREF(rv);
 	return rv;

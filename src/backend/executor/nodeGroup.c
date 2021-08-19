@@ -37,8 +37,6 @@ static TupleTableSlot *
 ExecGroup(PlanState *pstate)
 {
 	GroupState *node = castNode(GroupState, pstate);
-	ExprContext *econtext;
-	TupleTableSlot *firsttupleslot;
 	TupleTableSlot *outerslot;
 
 	CHECK_FOR_INTERRUPTS();
@@ -48,12 +46,12 @@ ExecGroup(PlanState *pstate)
 	 */
 	if (node->grp_done)
 		return NULL;
-	econtext = node->ss.ps.ps_ExprContext;
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
 	/*
 	 * The ScanTupleSlot holds the (copied) first tuple of each group.
 	 */
-	firsttupleslot = node->ss.ss_ScanTupleSlot;
+	TupleTableSlot *firsttupleslot = node->ss.ss_ScanTupleSlot;
 
 	/*
 	 * We need not call ResetExprContext here because ExecQualAndReset() will
@@ -161,8 +159,6 @@ ExecGroup(PlanState *pstate)
 GroupState *
 ExecInitGroup(Group *node, EState *estate, int eflags)
 {
-	GroupState *grpstate;
-	const TupleTableSlotOps *tts_ops;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -170,7 +166,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	grpstate = makeNode(GroupState);
+	GroupState *grpstate = makeNode(GroupState);
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
 	grpstate->ss.ps.ExecProcNode = ExecGroup;
@@ -189,7 +185,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * Initialize scan slot and type.
 	 */
-	tts_ops = ExecGetResultSlotOps(outerPlanState(&grpstate->ss), NULL);
+	const TupleTableSlotOps *tts_ops = ExecGetResultSlotOps(outerPlanState(&grpstate->ss), NULL);
 	ExecCreateScanSlotFromOuterPlan(estate, &grpstate->ss, tts_ops);
 
 	/*
@@ -226,14 +222,13 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 void
 ExecEndGroup(GroupState *node)
 {
-	PlanState  *outerPlan;
 
 	ExecFreeExprContext(&node->ss.ps);
 
 	/* clean up tuple table */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
-	outerPlan = outerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
 	ExecEndNode(outerPlan);
 }
 

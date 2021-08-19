@@ -155,10 +155,9 @@ static void SlruInternalDeleteSegment(SlruCtl ctl, int segno);
 Size
 SimpleLruShmemSize(int nslots, int nlsns)
 {
-	Size		sz;
 
 	/* we assume nslots isn't so large as to risk overflow */
-	sz = MAXALIGN(sizeof(SlruSharedData));
+	Size		sz = MAXALIGN(sizeof(SlruSharedData));
 	sz += MAXALIGN(nslots * sizeof(char *));	/* page_buffer[] */
 	sz += MAXALIGN(nslots * sizeof(SlruPageStatus));	/* page_status[] */
 	sz += MAXALIGN(nslots * sizeof(bool));	/* page_dirty[] */
@@ -188,18 +187,15 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			  LWLock *ctllock, const char *subdir, int tranche_id,
 			  SyncRequestHandler sync_handler)
 {
-	SlruShared	shared;
 	bool		found;
 
-	shared = (SlruShared) ShmemInitStruct(name,
+	SlruShared	shared = (SlruShared) ShmemInitStruct(name,
 										  SimpleLruShmemSize(nslots, nlsns),
 										  &found);
 
 	if (!IsUnderPostmaster)
 	{
 		/* Initialize locks and shared memory area */
-		char	   *ptr;
-		Size		offset;
 		int			slotno;
 
 		Assert(!found);
@@ -217,8 +213,8 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 
 		shared->slru_stats_idx = pgstat_slru_index(name);
 
-		ptr = (char *) shared;
-		offset = MAXALIGN(sizeof(SlruSharedData));
+		char	   *ptr = (char *) shared;
+		Size		offset = MAXALIGN(sizeof(SlruSharedData));
 		shared->page_buffer = (char **) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(char *));
 		shared->page_status = (SlruPageStatus *) (ptr + offset);
@@ -280,10 +276,9 @@ int
 SimpleLruZeroPage(SlruCtl ctl, int pageno)
 {
 	SlruShared	shared = ctl->shared;
-	int			slotno;
 
 	/* Find a suitable buffer slot for the page */
-	slotno = SlruSelectLRUPage(ctl, pageno);
+	int			slotno = SlruSelectLRUPage(ctl, pageno);
 	Assert(shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
 		   (shared->page_status[slotno] == SLRU_PAGE_VALID &&
 			!shared->page_dirty[slotno]) ||
@@ -400,11 +395,9 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 	/* Outer loop handles restart if we must wait for someone else's I/O */
 	for (;;)
 	{
-		int			slotno;
-		bool		ok;
 
 		/* See if page already is in memory; if not, pick victim slot */
-		slotno = SlruSelectLRUPage(ctl, pageno);
+		int			slotno = SlruSelectLRUPage(ctl, pageno);
 
 		/* Did we find the page in memory? */
 		if (shared->page_number[slotno] == pageno &&
@@ -448,7 +441,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 		LWLockRelease(shared->ControlLock);
 
 		/* Do the read */
-		ok = SlruPhysicalReadPage(ctl, pageno, slotno);
+		bool		ok = SlruPhysicalReadPage(ctl, pageno, slotno);
 
 		/* Set the LSNs for this newly read-in page to zero */
 		SimpleLruZeroLSNs(ctl, slotno);
@@ -540,7 +533,6 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata)
 {
 	SlruShared	shared = ctl->shared;
 	int			pageno = shared->page_number[slotno];
-	bool		ok;
 
 	/* If a write is in progress, wait for it to finish */
 	while (shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS &&
@@ -572,7 +564,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruWriteAll fdata)
 	LWLockRelease(shared->ControlLock);
 
 	/* Do the write */
-	ok = SlruPhysicalWritePage(ctl, pageno, slotno, fdata);
+	bool		ok = SlruPhysicalWritePage(ctl, pageno, slotno, fdata);
 
 	/* If we failed, and we're in a flush, better close the files */
 	if (!ok && fdata)
@@ -629,8 +621,6 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	int			offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
-	int			fd;
-	bool		result;
 	off_t		endpos;
 
 	/* update the stats counter of checked pages */
@@ -638,7 +628,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	SlruFileName(ctl, path, segno);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		/* expected: file doesn't exist */
@@ -658,7 +648,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 		SlruReportIOError(ctl, pageno, 0);
 	}
 
-	result = endpos >= (off_t) (offset + BLCKSZ);
+	bool		result = endpos >= (off_t) (offset + BLCKSZ);
 
 	if (CloseTransientFile(fd) != 0)
 	{
@@ -688,7 +678,6 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
 	off_t		offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
-	int			fd;
 
 	SlruFileName(ctl, path, segno);
 
@@ -699,7 +688,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * SlruPhysicalWritePage).  Hence, if we are InRecovery, allow the case
 	 * where the file doesn't exist, and return zeroes instead.
 	 */
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno != ENOENT || !InRecovery)
@@ -779,12 +768,11 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruWriteAll fdata)
 		 * LSN variable (which'd need an extra comparison in the
 		 * transaction-commit path).
 		 */
-		XLogRecPtr	max_lsn;
 		int			lsnindex,
 					lsnoff;
 
 		lsnindex = slotno * shared->lsn_groups_per_page;
-		max_lsn = shared->group_lsn[lsnindex++];
+		XLogRecPtr	max_lsn = shared->group_lsn[lsnindex++];
 		for (lsnoff = 1; lsnoff < shared->lsn_groups_per_page; lsnoff++)
 		{
 			XLogRecPtr	this_lsn = shared->group_lsn[lsnindex++];
@@ -1021,7 +1009,6 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 	for (;;)
 	{
 		int			slotno;
-		int			cur_count;
 		int			bestvalidslot = 0;	/* keep compiler quiet */
 		int			best_valid_delta = -1;
 		int			best_valid_page_number = 0; /* keep compiler quiet */
@@ -1064,15 +1051,13 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		 * That gets us back on the path to having good data when there are
 		 * multiple pages with the same lru_count.
 		 */
-		cur_count = (shared->cur_lru_count)++;
+		int			cur_count = (shared->cur_lru_count)++;
 		for (slotno = 0; slotno < shared->num_slots; slotno++)
 		{
-			int			this_delta;
-			int			this_page_number;
 
 			if (shared->page_status[slotno] == SLRU_PAGE_EMPTY)
 				return slotno;
-			this_delta = cur_count - shared->page_lru_count[slotno];
+			int			this_delta = cur_count - shared->page_lru_count[slotno];
 			if (this_delta < 0)
 			{
 				/*
@@ -1085,7 +1070,7 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 				shared->page_lru_count[slotno] = cur_count;
 				this_delta = 0;
 			}
-			this_page_number = shared->page_number[slotno];
+			int			this_page_number = shared->page_number[slotno];
 			if (this_page_number == shared->latest_page_number)
 				continue;
 			if (shared->page_status[slotno] == SLRU_PAGE_VALID)
@@ -1160,7 +1145,6 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 	int			slotno;
 	int			pageno = 0;
 	int			i;
-	bool		ok;
 
 	/* update the stats counter of flushes */
 	pgstat_count_slru_flush(shared->slru_stats_idx);
@@ -1192,7 +1176,7 @@ SimpleLruWriteAll(SlruCtl ctl, bool allow_redirtied)
 	/*
 	 * Now close any files that were open
 	 */
-	ok = true;
+	bool		ok = true;
 	for (i = 0; i < fdata.num_files; i++)
 	{
 		if (CloseTransientFile(fdata.fd[i]) != 0)
@@ -1553,17 +1537,15 @@ bool
 SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 {
 	bool		retval = false;
-	DIR		   *cldir;
 	struct dirent *clde;
 	int			segno;
 	int			segpage;
 
-	cldir = AllocateDir(ctl->Dir);
+	DIR		   *cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
-		size_t		len;
 
-		len = strlen(clde->d_name);
+		size_t		len = strlen(clde->d_name);
 
 		if ((len == 4 || len == 5 || len == 6) &&
 			strspn(clde->d_name, "0123456789ABCDEF") == len)
@@ -1592,18 +1574,15 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 int
 SlruSyncFileTag(SlruCtl ctl, const FileTag *ftag, char *path)
 {
-	int			fd;
-	int			save_errno;
-	int			result;
 
 	SlruFileName(ctl, path, ftag->segno);
 
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 	if (fd < 0)
 		return -1;
 
-	result = pg_fsync(fd);
-	save_errno = errno;
+	int			result = pg_fsync(fd);
+	int			save_errno = errno;
 
 	CloseTransientFile(fd);
 

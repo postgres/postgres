@@ -89,11 +89,10 @@ bernoulli_samplescangetsamplesize(PlannerInfo *root,
 								  BlockNumber *pages,
 								  double *tuples)
 {
-	Node	   *pctnode;
 	float4		samplefract;
 
 	/* Try to extract an estimate for the sample percentage */
-	pctnode = (Node *) linitial(paramexprs);
+	Node	   *pctnode = (Node *) linitial(paramexprs);
 	pctnode = estimate_expression_value(root, pctnode);
 
 	if (IsA(pctnode, Const) &&
@@ -140,7 +139,6 @@ bernoulli_beginsamplescan(SampleScanState *node,
 {
 	BernoulliSamplerData *sampler = (BernoulliSamplerData *) node->tsm_state;
 	double		percent = DatumGetFloat4(params[0]);
-	double		dcutoff;
 
 	if (percent < 0 || percent > 100 || isnan(percent))
 		ereport(ERROR,
@@ -152,7 +150,7 @@ bernoulli_beginsamplescan(SampleScanState *node,
 	 * store that as a uint64, of course.  Note that this gives strictly
 	 * correct behavior at the limits of zero or one probability.
 	 */
-	dcutoff = rint(((double) PG_UINT32_MAX + 1) * percent / 100);
+	double		dcutoff = rint(((double) PG_UINT32_MAX + 1) * percent / 100);
 	sampler->cutoff = (uint64) dcutoff;
 	sampler->seed = seed;
 	sampler->lt = InvalidOffsetNumber;
@@ -210,11 +208,10 @@ bernoulli_nextsampletuple(SampleScanState *node,
 	 */
 	for (; tupoffset <= maxoffset; tupoffset++)
 	{
-		uint32		hash;
 
 		hashinput[1] = tupoffset;
 
-		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
+		uint32		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
 									   (int) sizeof(hashinput)));
 		if (hash < sampler->cutoff)
 			break;

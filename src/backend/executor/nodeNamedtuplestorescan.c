@@ -31,7 +31,6 @@ static TupleTableSlot *NamedTuplestoreScanNext(NamedTuplestoreScanState *node);
 static TupleTableSlot *
 NamedTuplestoreScanNext(NamedTuplestoreScanState *node)
 {
-	TupleTableSlot *slot;
 
 	/* We intentionally do not support backward scan. */
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
@@ -39,7 +38,7 @@ NamedTuplestoreScanNext(NamedTuplestoreScanState *node)
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
-	slot = node->ss.ss_ScanTupleSlot;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 	tuplestore_select_read_pointer(node->relation, node->readptr);
 	(void) tuplestore_gettupleslot(node->relation, true, false, slot);
 	return slot;
@@ -82,8 +81,6 @@ ExecNamedTuplestoreScan(PlanState *pstate)
 NamedTuplestoreScanState *
 ExecInitNamedTuplestoreScan(NamedTuplestoreScan *node, EState *estate, int eflags)
 {
-	NamedTuplestoreScanState *scanstate;
-	EphemeralNamedRelation enr;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -97,12 +94,12 @@ ExecInitNamedTuplestoreScan(NamedTuplestoreScan *node, EState *estate, int eflag
 	/*
 	 * create new NamedTuplestoreScanState for node
 	 */
-	scanstate = makeNode(NamedTuplestoreScanState);
+	NamedTuplestoreScanState *scanstate = makeNode(NamedTuplestoreScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecNamedTuplestoreScan;
 
-	enr = get_ENR(estate->es_queryEnv, node->enrname);
+	EphemeralNamedRelation enr = get_ENR(estate->es_queryEnv, node->enrname);
 	if (!enr)
 		elog(ERROR, "executor could not find named tuplestore \"%s\"",
 			 node->enrname);

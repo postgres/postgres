@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	const char *progname;
 	int			optindex;
 	int			c;
 	const char *dbname = NULL;
@@ -135,7 +134,7 @@ main(int argc, char *argv[])
 	vacopts.process_toast = true;
 
 	pg_logging_init(argv[0]);
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
@@ -427,13 +426,9 @@ vacuum_one_database(ConnParams *cparams,
 	PQExpBufferData sql;
 	PQExpBufferData buf;
 	PQExpBufferData catalog_query;
-	PGresult   *res;
-	PGconn	   *conn;
 	SimpleStringListCell *cell;
-	ParallelSlotArray *sa;
 	SimpleStringList dbtables = {NULL, NULL};
 	int			i;
-	int			ntups;
 	bool		failed = false;
 	bool		tables_listed = false;
 	bool		has_where = false;
@@ -452,7 +447,7 @@ vacuum_one_database(ConnParams *cparams,
 	Assert(stage == ANALYZE_NO_STAGE ||
 		   (stage >= 0 && stage < ANALYZE_NUM_STAGES));
 
-	conn = connectDatabase(cparams, progname, echo, false, true);
+	PGconn	   *conn = connectDatabase(cparams, progname, echo, false, true);
 
 	if (vacopts->disable_page_skipping && PQserverVersion(conn) < 90600)
 	{
@@ -657,14 +652,14 @@ vacuum_one_database(ConnParams *cparams,
 	 */
 	appendPQExpBufferStr(&catalog_query, " ORDER BY c.relpages DESC;");
 	executeCommand(conn, "RESET search_path;", echo);
-	res = executeQuery(conn, catalog_query.data, echo);
+	PGresult   *res = executeQuery(conn, catalog_query.data, echo);
 	termPQExpBuffer(&catalog_query);
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
 
 	/*
 	 * If no rows are returned, there are no matching tables, so we are done.
 	 */
-	ntups = PQntuples(res);
+	int			ntups = PQntuples(res);
 	if (ntups == 0)
 	{
 		PQclear(res);
@@ -719,7 +714,7 @@ vacuum_one_database(ConnParams *cparams,
 	 * for the first slot.  If not in parallel mode, the first slot in the
 	 * array contains the connection.
 	 */
-	sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
+	ParallelSlotArray *sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
 	ParallelSlotsAdoptConn(sa, conn);
 
 	initPQExpBuffer(&sql);
@@ -784,13 +779,11 @@ vacuum_all_databases(ConnParams *cparams,
 					 int concurrentCons,
 					 const char *progname, bool echo, bool quiet)
 {
-	PGconn	   *conn;
-	PGresult   *result;
 	int			stage;
 	int			i;
 
-	conn = connectMaintenanceDatabase(cparams, progname, echo);
-	result = executeQuery(conn,
+	PGconn	   *conn = connectMaintenanceDatabase(cparams, progname, echo);
+	PGresult   *result = executeQuery(conn,
 						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
 						  echo);
 	PQfinish(conn);
@@ -989,12 +982,11 @@ static void
 run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 				   const char *table)
 {
-	bool		status;
 
 	if (echo)
 		printf("%s\n", sql);
 
-	status = PQsendQuery(conn, sql) == 1;
+	bool		status = PQsendQuery(conn, sql) == 1;
 
 	if (!status)
 	{

@@ -60,8 +60,6 @@ uuid_out(PG_FUNCTION_ARGS)
 	initStringInfo(&buf);
 	for (i = 0; i < UUID_LEN; i++)
 	{
-		int			hi;
-		int			lo;
 
 		/*
 		 * We print uuid values as a string of 8, 4, 4, 4, and then 12
@@ -71,8 +69,8 @@ uuid_out(PG_FUNCTION_ARGS)
 		if (i == 4 || i == 6 || i == 8 || i == 10)
 			appendStringInfoChar(&buf, '-');
 
-		hi = uuid->data[i] >> 4;
-		lo = uuid->data[i] & 0x0F;
+		int			hi = uuid->data[i] >> 4;
+		int			lo = uuid->data[i] & 0x0F;
 
 		appendStringInfoChar(&buf, hex_chars[hi]);
 		appendStringInfoChar(&buf, hex_chars[lo]);
@@ -141,9 +139,8 @@ Datum
 uuid_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buffer = (StringInfo) PG_GETARG_POINTER(0);
-	pg_uuid_t  *uuid;
 
-	uuid = (pg_uuid_t *) palloc(UUID_LEN);
+	pg_uuid_t  *uuid = (pg_uuid_t *) palloc(UUID_LEN);
 	memcpy(uuid->data, pq_getmsgbytes(buffer, UUID_LEN), UUID_LEN);
 	PG_RETURN_POINTER(uuid);
 }
@@ -243,12 +240,10 @@ uuid_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		uuid_sortsupport_state *uss;
-		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(uuid_sortsupport_state));
+		uuid_sortsupport_state *uss = palloc(sizeof(uuid_sortsupport_state));
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);
@@ -302,12 +297,11 @@ static bool
 uuid_abbrev_abort(int memtupcount, SortSupport ssup)
 {
 	uuid_sortsupport_state *uss = ssup->ssup_extra;
-	double		abbr_card;
 
 	if (memtupcount < 10000 || uss->input_count < 10000 || !uss->estimating)
 		return false;
 
-	abbr_card = estimateHyperLogLog(&uss->abbr_card);
+	double		abbr_card = estimateHyperLogLog(&uss->abbr_card);
 
 	/*
 	 * If we have >100k distinct values, then even if we were sorting many

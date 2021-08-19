@@ -73,9 +73,8 @@ markPQExpBufferBroken(PQExpBuffer str)
 PQExpBuffer
 createPQExpBuffer(void)
 {
-	PQExpBuffer res;
 
-	res = (PQExpBuffer) malloc(sizeof(PQExpBufferData));
+	PQExpBuffer res = (PQExpBuffer) malloc(sizeof(PQExpBufferData));
 	if (res != NULL)
 		initPQExpBuffer(res);
 
@@ -173,8 +172,6 @@ resetPQExpBuffer(PQExpBuffer str)
 int
 enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 {
-	size_t		newlen;
-	char	   *newdata;
 
 	if (PQExpBufferBroken(str))
 		return 0;				/* already failed */
@@ -202,7 +199,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	 * for efficiency, double the buffer size each time it overflows.
 	 * Actually, we might need to more than double it if 'needed' is big...
 	 */
-	newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
+	size_t		newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
@@ -214,7 +211,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	if (newlen > (size_t) INT_MAX)
 		newlen = (size_t) INT_MAX;
 
-	newdata = (char *) realloc(str->data, newlen);
+	char	   *newdata = (char *) realloc(str->data, newlen);
 	if (newdata != NULL)
 	{
 		str->data = newdata;

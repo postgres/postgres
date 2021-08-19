@@ -35,10 +35,9 @@
 int
 pg_reg_getnumstates(const regex_t *regex)
 {
-	struct cnfa *cnfa;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	return cnfa->nstates;
 }
@@ -49,10 +48,9 @@ pg_reg_getnumstates(const regex_t *regex)
 int
 pg_reg_getinitialstate(const regex_t *regex)
 {
-	struct cnfa *cnfa;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	return cnfa->pre;
 }
@@ -63,10 +61,9 @@ pg_reg_getinitialstate(const regex_t *regex)
 int
 pg_reg_getfinalstate(const regex_t *regex)
 {
-	struct cnfa *cnfa;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	return cnfa->post;
 }
@@ -133,15 +130,13 @@ traverse_lacons(struct cnfa *cnfa, int st,
 int
 pg_reg_getnumoutarcs(const regex_t *regex, int st)
 {
-	struct cnfa *cnfa;
-	int			arcs_count;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (st < 0 || st >= cnfa->nstates)
 		return 0;
-	arcs_count = 0;
+	int			arcs_count = 0;
 	traverse_lacons(cnfa, st, &arcs_count, NULL, 0);
 	return arcs_count;
 }
@@ -155,15 +150,13 @@ void
 pg_reg_getoutarcs(const regex_t *regex, int st,
 				  regex_arc_t *arcs, int arcs_len)
 {
-	struct cnfa *cnfa;
-	int			arcs_count;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (st < 0 || st >= cnfa->nstates || arcs_len <= 0)
 		return;
-	arcs_count = 0;
+	int			arcs_count = 0;
 	traverse_lacons(cnfa, st, &arcs_count, arcs, arcs_len);
 }
 
@@ -173,10 +166,9 @@ pg_reg_getoutarcs(const regex_t *regex, int st,
 int
 pg_reg_getnumcolors(const regex_t *regex)
 {
-	struct colormap *cm;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cm = &((struct guts *) regex->re_guts)->cmap;
+	struct colormap *cm = &((struct guts *) regex->re_guts)->cmap;
 
 	return cm->max + 1;
 }
@@ -190,10 +182,9 @@ pg_reg_getnumcolors(const regex_t *regex)
 int
 pg_reg_colorisbegin(const regex_t *regex, int co)
 {
-	struct cnfa *cnfa;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (co == cnfa->bos[0] || co == cnfa->bos[1])
 		return true;
@@ -207,10 +198,9 @@ pg_reg_colorisbegin(const regex_t *regex, int co)
 int
 pg_reg_colorisend(const regex_t *regex, int co)
 {
-	struct cnfa *cnfa;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cnfa = &((struct guts *) regex->re_guts)->search;
+	struct cnfa *cnfa = &((struct guts *) regex->re_guts)->search;
 
 	if (co == cnfa->eos[0] || co == cnfa->eos[1])
 		return true;
@@ -229,10 +219,9 @@ pg_reg_colorisend(const regex_t *regex, int co)
 int
 pg_reg_getnumcharacters(const regex_t *regex, int co)
 {
-	struct colormap *cm;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cm = &((struct guts *) regex->re_guts)->cmap;
+	struct colormap *cm = &((struct guts *) regex->re_guts)->cmap;
 
 	if (co <= 0 || co > cm->max)	/* <= 0 rejects WHITE and RAINBOW */
 		return -1;
@@ -266,11 +255,10 @@ void
 pg_reg_getcharacters(const regex_t *regex, int co,
 					 pg_wchar *chars, int chars_len)
 {
-	struct colormap *cm;
 	chr			c;
 
 	assert(regex != NULL && regex->re_magic == REMAGIC);
-	cm = &((struct guts *) regex->re_guts)->cmap;
+	struct colormap *cm = &((struct guts *) regex->re_guts)->cmap;
 
 	if (co <= 0 || co > cm->max || chars_len <= 0)
 		return;

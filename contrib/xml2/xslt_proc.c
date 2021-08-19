@@ -51,10 +51,8 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	text	   *doct = PG_GETARG_TEXT_PP(0);
 	text	   *ssheet = PG_GETARG_TEXT_PP(1);
-	text	   *result;
 	text	   *paramstr;
 	const char **params;
-	PgXmlErrorContext *xmlerrcxt;
 	volatile xsltStylesheetPtr stylesheet = NULL;
 	volatile xmlDocPtr doctree = NULL;
 	volatile xmlDocPtr restree = NULL;
@@ -77,12 +75,10 @@ xslt_process(PG_FUNCTION_ARGS)
 	}
 
 	/* Setup parser */
-	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
+	PgXmlErrorContext *xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
 	PG_TRY();
 	{
-		xmlDocPtr	ssdoc;
-		bool		xslt_sec_prefs_error;
 
 		/* Parse document */
 		doctree = xmlParseMemory((char *) VARDATA_ANY(doct),
@@ -93,7 +89,7 @@ xslt_process(PG_FUNCTION_ARGS)
 						"error parsing XML document");
 
 		/* Same for stylesheet */
-		ssdoc = xmlParseMemory((char *) VARDATA_ANY(ssheet),
+		xmlDocPtr	ssdoc = xmlParseMemory((char *) VARDATA_ANY(ssheet),
 							   VARSIZE_ANY_EXHDR(ssheet));
 
 		if (ssdoc == NULL)
@@ -109,7 +105,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 		xslt_ctxt = xsltNewTransformContext(stylesheet, doctree);
 
-		xslt_sec_prefs_error = false;
+		bool		xslt_sec_prefs_error = false;
 		if ((xslt_sec_prefs = xsltNewSecurityPrefs()) == NULL)
 			xslt_sec_prefs_error = true;
 
@@ -177,7 +173,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
-	result = cstring_to_text_with_len((char *) resstr, reslen);
+	text	   *result = cstring_to_text_with_len((char *) resstr, reslen);
 
 	if (resstr)
 		xmlFree(resstr);
@@ -197,21 +193,16 @@ xslt_process(PG_FUNCTION_ARGS)
 static const char **
 parse_params(text *paramstr)
 {
-	char	   *pos;
-	char	   *pstr;
 	char	   *nvsep = "=";
 	char	   *itsep = ",";
-	const char **params;
-	int			max_params;
-	int			nparams;
 
-	pstr = text_to_cstring(paramstr);
+	char	   *pstr = text_to_cstring(paramstr);
 
-	max_params = 20;			/* must be even! */
-	params = (const char **) palloc((max_params + 1) * sizeof(char *));
-	nparams = 0;
+	int			max_params = 20;			/* must be even! */
+	const char **params = (const char **) palloc((max_params + 1) * sizeof(char *));
+	int			nparams = 0;
 
-	pos = pstr;
+	char	   *pos = pstr;
 
 	while (*pos != '\0')
 	{

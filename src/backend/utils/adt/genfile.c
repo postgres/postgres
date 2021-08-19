@@ -52,9 +52,8 @@
 static char *
 convert_and_check_filename(text *arg)
 {
-	char	   *filename;
 
-	filename = text_to_cstring(arg);
+	char	   *filename = text_to_cstring(arg);
 	canonicalize_path(filename);	/* filename can change length here */
 
 	/*
@@ -216,9 +215,8 @@ static text *
 read_text_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 			   bool missing_ok)
 {
-	bytea	   *buf;
 
-	buf = read_binary_file(filename, seek_offset, bytes_to_read, missing_ok);
+	bytea	   *buf = read_binary_file(filename, seek_offset, bytes_to_read, missing_ok);
 
 	if (buf != NULL)
 	{
@@ -244,8 +242,6 @@ pg_read_file(PG_FUNCTION_ARGS)
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
-	char	   *filename;
-	text	   *result;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -269,9 +265,9 @@ pg_read_file(PG_FUNCTION_ARGS)
 	if (PG_NARGS() >= 4)
 		missing_ok = PG_GETARG_BOOL(3);
 
-	filename = convert_and_check_filename(filename_t);
+	char	   *filename = convert_and_check_filename(filename_t);
 
-	result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
+	text	   *result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
 	if (result)
 		PG_RETURN_TEXT_P(result);
 	else
@@ -291,8 +287,6 @@ pg_read_file_v2(PG_FUNCTION_ARGS)
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
-	char	   *filename;
-	text	   *result;
 
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)
@@ -308,9 +302,9 @@ pg_read_file_v2(PG_FUNCTION_ARGS)
 	if (PG_NARGS() >= 4)
 		missing_ok = PG_GETARG_BOOL(3);
 
-	filename = convert_and_check_filename(filename_t);
+	char	   *filename = convert_and_check_filename(filename_t);
 
-	result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
+	text	   *result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
 	if (result)
 		PG_RETURN_TEXT_P(result);
 	else
@@ -327,8 +321,6 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
-	char	   *filename;
-	bytea	   *result;
 
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)
@@ -344,9 +336,9 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 	if (PG_NARGS() >= 4)
 		missing_ok = PG_GETARG_BOOL(3);
 
-	filename = convert_and_check_filename(filename_t);
+	char	   *filename = convert_and_check_filename(filename_t);
 
-	result = read_binary_file(filename, seek_offset,
+	bytea	   *result = read_binary_file(filename, seek_offset,
 							  bytes_to_read, missing_ok);
 	if (result)
 		PG_RETURN_BYTEA_P(result);
@@ -394,19 +386,17 @@ Datum
 pg_stat_file(PG_FUNCTION_ARGS)
 {
 	text	   *filename_t = PG_GETARG_TEXT_PP(0);
-	char	   *filename;
 	struct stat fst;
 	Datum		values[6];
 	bool		isnull[6];
 	HeapTuple	tuple;
-	TupleDesc	tupdesc;
 	bool		missing_ok = false;
 
 	/* check the optional argument */
 	if (PG_NARGS() == 2)
 		missing_ok = PG_GETARG_BOOL(1);
 
-	filename = convert_and_check_filename(filename_t);
+	char	   *filename = convert_and_check_filename(filename_t);
 
 	if (stat(filename, &fst) < 0)
 	{
@@ -422,7 +412,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	 * This record type had better match the output parameters declared for me
 	 * in pg_proc.h.
 	 */
-	tupdesc = CreateTemplateTupleDesc(6);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "size", INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
@@ -479,17 +469,11 @@ Datum
 pg_ls_dir(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	char	   *location;
 	bool		missing_ok = false;
 	bool		include_dot_dirs = false;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
-	location = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
+	char	   *location = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	/* check the optional arguments */
 	if (PG_NARGS() == 3)
@@ -511,20 +495,20 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_ls_dir", TEXTOID, -1, 0);
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	dirdesc = AllocateDir(location);
+	DIR		   *dirdesc = AllocateDir(location);
 	if (!dirdesc)
 	{
 		/* Return empty tuplestore if appropriate */
@@ -576,12 +560,8 @@ static Datum
 pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -594,13 +574,13 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -612,7 +592,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	 * call, not leave the directory open across multiple calls, since we
 	 * can't count on the SRF being run to completion.
 	 */
-	dirdesc = AllocateDir(dir);
+	DIR		   *dirdesc = AllocateDir(dir);
 	if (!dirdesc)
 	{
 		/* Return empty tuplestore if appropriate */

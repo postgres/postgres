@@ -126,8 +126,6 @@ static WalReceiverConn *
 libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 				 char **err)
 {
-	WalReceiverConn *conn;
-	PostgresPollingStatusType status;
 	const char *keys[5];
 	const char *vals[5];
 	int			i = 0;
@@ -161,7 +159,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 
 	Assert(i < sizeof(keys));
 
-	conn = palloc0(sizeof(WalReceiverConn));
+	WalReceiverConn *conn = palloc0(sizeof(WalReceiverConn));
 	conn->streamConn = PQconnectStartParams(keys, vals,
 											 /* expand_dbname = */ true);
 	if (PQstatus(conn->streamConn) == CONNECTION_BAD)
@@ -175,7 +173,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	 *
 	 * Per spec for PQconnectPoll, first wait till socket is write-ready.
 	 */
-	status = PGRES_POLLING_WRITING;
+	PostgresPollingStatusType status = PGRES_POLLING_WRITING;
 	do
 	{
 		int			io_flag;
@@ -217,9 +215,8 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 
 	if (logical)
 	{
-		PGresult   *res;
 
-		res = libpqrcv_PQexec(conn->streamConn,
+		PGresult   *res = libpqrcv_PQexec(conn->streamConn,
 							  ALWAYS_SECURE_SEARCH_PATH_SQL);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -242,10 +239,9 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 static void
 libpqrcv_check_conninfo(const char *conninfo)
 {
-	PQconninfoOption *opts = NULL;
 	char	   *err = NULL;
 
-	opts = PQconninfoParse(conninfo, &err);
+	PQconninfoOption *opts = PQconninfoParse(conninfo, &err);
 	if (opts == NULL)
 	{
 		/* The error string is malloc'd, so we must free it explicitly */
@@ -267,15 +263,13 @@ libpqrcv_check_conninfo(const char *conninfo)
 static char *
 libpqrcv_get_conninfo(WalReceiverConn *conn)
 {
-	PQconninfoOption *conn_opts;
 	PQconninfoOption *conn_opt;
 	PQExpBufferData buf;
-	char	   *retval;
 
 	Assert(conn->streamConn != NULL);
 
 	initPQExpBuffer(&buf);
-	conn_opts = PQconninfo(conn->streamConn);
+	PQconninfoOption *conn_opts = PQconninfo(conn->streamConn);
 
 	if (conn_opts == NULL)
 		ereport(ERROR,
@@ -286,7 +280,6 @@ libpqrcv_get_conninfo(WalReceiverConn *conn)
 	/* build a clean connection string from pieces */
 	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 	{
-		bool		obfuscate;
 
 		/* Skip debug and empty options */
 		if (strchr(conn_opt->dispchar, 'D') ||
@@ -295,7 +288,7 @@ libpqrcv_get_conninfo(WalReceiverConn *conn)
 			continue;
 
 		/* Obfuscate security-sensitive options */
-		obfuscate = strchr(conn_opt->dispchar, '*') != NULL;
+		bool		obfuscate = strchr(conn_opt->dispchar, '*') != NULL;
 
 		appendPQExpBuffer(&buf, "%s%s=%s",
 						  buf.len == 0 ? "" : " ",
@@ -305,7 +298,7 @@ libpqrcv_get_conninfo(WalReceiverConn *conn)
 
 	PQconninfoFree(conn_opts);
 
-	retval = PQExpBufferDataBroken(buf) ? NULL : pstrdup(buf.data);
+	char	   *retval = PQExpBufferDataBroken(buf) ? NULL : pstrdup(buf.data);
 	termPQExpBuffer(&buf);
 	return retval;
 }
@@ -317,14 +310,13 @@ static void
 libpqrcv_get_senderinfo(WalReceiverConn *conn, char **sender_host,
 						int *sender_port)
 {
-	char	   *ret = NULL;
 
 	*sender_host = NULL;
 	*sender_port = 0;
 
 	Assert(conn->streamConn != NULL);
 
-	ret = PQhost(conn->streamConn);
+	char	   *ret = PQhost(conn->streamConn);
 	if (ret && strlen(ret) != 0)
 		*sender_host = pstrdup(ret);
 
@@ -340,14 +332,12 @@ libpqrcv_get_senderinfo(WalReceiverConn *conn, char **sender_host,
 static char *
 libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 {
-	PGresult   *res;
-	char	   *primary_sysid;
 
 	/*
 	 * Get the system identifier and timeline ID as a DataRow message from the
 	 * primary server.
 	 */
-	res = libpqrcv_PQexec(conn->streamConn, "IDENTIFY_SYSTEM");
+	PGresult   *res = libpqrcv_PQexec(conn->streamConn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		PQclear(res);
@@ -369,7 +359,7 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 				 errdetail("Could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields.",
 						   ntuples, nfields, 3, 1)));
 	}
-	primary_sysid = pstrdup(PQgetvalue(res, 0, 0));
+	char	   *primary_sysid = pstrdup(PQgetvalue(res, 0, 0));
 	*primary_tli = pg_strtoint32(PQgetvalue(res, 0, 1));
 	PQclear(res);
 
@@ -400,7 +390,6 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 						const WalRcvStreamOptions *options)
 {
 	StringInfoData cmd;
-	PGresult   *res;
 
 	Assert(options->logical == conn->logical);
 	Assert(options->slotname || !options->logical);
@@ -424,9 +413,6 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 	 */
 	if (options->logical)
 	{
-		char	   *pubnames_str;
-		List	   *pubnames;
-		char	   *pubnames_literal;
 
 		appendStringInfoString(&cmd, " (");
 
@@ -441,14 +427,14 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 			PQserverVersion(conn->streamConn) >= 150000)
 			appendStringInfoString(&cmd, ", two_phase 'on'");
 
-		pubnames = options->proto.logical.publication_names;
-		pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
+		List	   *pubnames = options->proto.logical.publication_names;
+		char	   *pubnames_str = stringlist_to_identifierstr(conn->streamConn, pubnames);
 		if (!pubnames_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),	/* likely guess */
 					 errmsg("could not start WAL streaming: %s",
 							pchomp(PQerrorMessage(conn->streamConn)))));
-		pubnames_literal = PQescapeLiteral(conn->streamConn, pubnames_str,
+		char	   *pubnames_literal = PQescapeLiteral(conn->streamConn, pubnames_str,
 										   strlen(pubnames_str));
 		if (!pubnames_literal)
 			ereport(ERROR,
@@ -470,7 +456,7 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 						 options->proto.physical.startpointTLI);
 
 	/* Start streaming. */
-	res = libpqrcv_PQexec(conn->streamConn, cmd.data);
+	PGresult   *res = libpqrcv_PQexec(conn->streamConn, cmd.data);
 	pfree(cmd.data);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -497,7 +483,6 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 static void
 libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 {
-	PGresult   *res;
 
 	/*
 	 * Send copy-end message.  As in libpqrcv_PQexec, this could theoretically
@@ -520,7 +505,7 @@ libpqrcv_endstreaming(WalReceiverConn *conn, TimeLineID *next_tli)
 	 * If we had not yet received CopyDone from the backend, PGRES_COPY_OUT is
 	 * also possible in case we aborted the copy in mid-stream.
 	 */
-	res = libpqrcv_PQgetResult(conn->streamConn);
+	PGresult   *res = libpqrcv_PQgetResult(conn->streamConn);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
 		/*
@@ -576,7 +561,6 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 								 TimeLineID tli, char **filename,
 								 char **content, int *len)
 {
-	PGresult   *res;
 	char		cmd[64];
 
 	Assert(!conn->logical);
@@ -585,7 +569,7 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 	 * Request the primary to send over the history file for given timeline.
 	 */
 	snprintf(cmd, sizeof(cmd), "TIMELINE_HISTORY %u", tli);
-	res = libpqrcv_PQexec(conn->streamConn, cmd);
+	PGresult   *res = libpqrcv_PQexec(conn->streamConn, cmd);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		PQclear(res);
@@ -651,9 +635,8 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 	for (;;)
 	{
 		/* Wait for, and collect, the next PGresult. */
-		PGresult   *result;
 
-		result = libpqrcv_PQgetResult(streamConn);
+		PGresult   *result = libpqrcv_PQgetResult(streamConn);
 		if (result == NULL)
 			break;				/* query is complete, or failure */
 
@@ -686,14 +669,13 @@ libpqrcv_PQgetResult(PGconn *streamConn)
 	 */
 	while (PQisBusy(streamConn))
 	{
-		int			rc;
 
 		/*
 		 * We don't need to break down the sleep into smaller increments,
 		 * since we'll get interrupted by signals and can handle any
 		 * interrupts here.
 		 */
-		rc = WaitLatchOrSocket(MyLatch,
+		int			rc = WaitLatchOrSocket(MyLatch,
 							   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
 							   WL_LATCH_SET,
 							   PQsocket(streamConn),
@@ -751,14 +733,13 @@ static int
 libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 				 pgsocket *wait_fd)
 {
-	int			rawlen;
 
 	if (conn->recvBuf != NULL)
 		PQfreemem(conn->recvBuf);
 	conn->recvBuf = NULL;
 
 	/* Try to receive a CopyData message */
-	rawlen = PQgetCopyData(conn->streamConn, &conn->recvBuf, 1);
+	int			rawlen = PQgetCopyData(conn->streamConn, &conn->recvBuf, 1);
 	if (rawlen == 0)
 	{
 		/* Try consuming some data. */
@@ -779,9 +760,8 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 	}
 	if (rawlen == -1)			/* end-of-streaming or error */
 	{
-		PGresult   *res;
 
-		res = libpqrcv_PQgetResult(conn->streamConn);
+		PGresult   *res = libpqrcv_PQgetResult(conn->streamConn);
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
 			PQclear(res);
@@ -859,7 +839,6 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 					 bool temporary, bool two_phase, CRSSnapshotAction snapshot_action,
 					 XLogRecPtr *lsn)
 {
-	PGresult   *res;
 	StringInfoData cmd;
 	char	   *snapshot;
 
@@ -894,7 +873,7 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 		appendStringInfoString(&cmd, " PHYSICAL RESERVE_WAL");
 	}
 
-	res = libpqrcv_PQexec(conn->streamConn, cmd.data);
+	PGresult   *res = libpqrcv_PQexec(conn->streamConn, cmd.data);
 	pfree(cmd.data);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -940,8 +919,6 @@ libpqrcv_processTuples(PGresult *pgres, WalRcvExecResult *walres,
 	int			coln;
 	int			nfields = PQnfields(pgres);
 	HeapTuple	tuple;
-	AttInMetadata *attinmeta;
-	MemoryContext rowcontext;
 	MemoryContext oldcontext;
 
 	/* Make sure we got expected number of fields. */
@@ -959,14 +936,14 @@ libpqrcv_processTuples(PGresult *pgres, WalRcvExecResult *walres,
 	for (coln = 0; coln < nRetTypes; coln++)
 		TupleDescInitEntry(walres->tupledesc, (AttrNumber) coln + 1,
 						   PQfname(pgres, coln), retTypes[coln], -1, 0);
-	attinmeta = TupleDescGetAttInMetadata(walres->tupledesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(walres->tupledesc);
 
 	/* No point in doing more here if there were no tuples returned. */
 	if (PQntuples(pgres) == 0)
 		return;
 
 	/* Create temporary context for local allocations. */
-	rowcontext = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext rowcontext = AllocSetContextCreate(CurrentMemoryContext,
 									   "libpqrcv query result context",
 									   ALLOCSET_DEFAULT_SIZES);
 
@@ -1012,7 +989,6 @@ static WalRcvExecResult *
 libpqrcv_exec(WalReceiverConn *conn, const char *query,
 			  const int nRetTypes, const Oid *retTypes)
 {
-	PGresult   *pgres = NULL;
 	WalRcvExecResult *walres = palloc0(sizeof(WalRcvExecResult));
 	char	   *diag_sqlstate;
 
@@ -1021,7 +997,7 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("the query interface requires a database connection")));
 
-	pgres = libpqrcv_PQexec(conn->streamConn, query);
+	PGresult   *pgres = libpqrcv_PQexec(conn->streamConn, query);
 
 	switch (PQresultStatus(pgres))
 	{
@@ -1099,14 +1075,13 @@ stringlist_to_identifierstr(PGconn *conn, List *strings)
 	foreach(lc, strings)
 	{
 		char	   *val = strVal(lfirst(lc));
-		char	   *val_escaped;
 
 		if (first)
 			first = false;
 		else
 			appendStringInfoChar(&res, ',');
 
-		val_escaped = PQescapeIdentifier(conn, val, strlen(val));
+		char	   *val_escaped = PQescapeIdentifier(conn, val, strlen(val));
 		if (!val_escaped)
 		{
 			free(res.data);

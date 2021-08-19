@@ -266,10 +266,9 @@ computeDelta(PageData *pageData, Page curpage, Page targetpage)
 GenericXLogState *
 GenericXLogStart(Relation relation)
 {
-	GenericXLogState *state;
 	int			i;
 
-	state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
+	GenericXLogState *state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
 	state->isLogged = RelationNeedsWAL(relation);
 
 	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
@@ -345,14 +344,12 @@ GenericXLogFinish(GenericXLogState *state)
 		for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
 		{
 			PageData   *pageData = &state->pages[i];
-			Page		page;
-			PageHeader	pageHeader;
 
 			if (BufferIsInvalid(pageData->buffer))
 				continue;
 
-			page = BufferGetPage(pageData->buffer);
-			pageHeader = (PageHeader) pageData->image;
+			Page		page = BufferGetPage(pageData->buffer);
+			PageHeader	pageHeader = (PageHeader) pageData->image;
 
 			if (pageData->flags & GENERIC_XLOG_FULL_IMAGE)
 			{
@@ -487,7 +484,6 @@ generic_redo(XLogReaderState *record)
 	/* Iterate over blocks */
 	for (block_id = 0; block_id <= record->max_block_id; block_id++)
 	{
-		XLogRedoAction action;
 
 		if (!XLogRecHasBlockRef(record, block_id))
 		{
@@ -495,18 +491,15 @@ generic_redo(XLogReaderState *record)
 			continue;
 		}
 
-		action = XLogReadBufferForRedo(record, block_id, &buffers[block_id]);
+		XLogRedoAction action = XLogReadBufferForRedo(record, block_id, &buffers[block_id]);
 
 		/* Apply redo to given block if needed */
 		if (action == BLK_NEEDS_REDO)
 		{
-			Page		page;
-			PageHeader	pageHeader;
-			char	   *blockDelta;
 			Size		blockDeltaSize;
 
-			page = BufferGetPage(buffers[block_id]);
-			blockDelta = XLogRecGetBlockData(record, block_id, &blockDeltaSize);
+			Page		page = BufferGetPage(buffers[block_id]);
+			char	   *blockDelta = XLogRecGetBlockData(record, block_id, &blockDeltaSize);
 			applyPageRedo(page, blockDelta, blockDeltaSize);
 
 			/*
@@ -515,7 +508,7 @@ generic_redo(XLogReaderState *record)
 			 * ensure we produce the same page state that application of the
 			 * logged action by GenericXLogFinish did.
 			 */
-			pageHeader = (PageHeader) page;
+			PageHeader	pageHeader = (PageHeader) page;
 			memset(page + pageHeader->pd_lower, 0,
 				   pageHeader->pd_upper - pageHeader->pd_lower);
 

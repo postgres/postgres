@@ -108,11 +108,9 @@ PLyObject_FromJsonbValue(JsonbValue *jsonbValue)
 
 		case jbvNumeric:
 			{
-				Datum		num;
-				char	   *str;
 
-				num = NumericGetDatum(jsonbValue->val.numeric);
-				str = DatumGetCString(DirectFunctionCall1(numeric_out, num));
+				Datum		num = NumericGetDatum(jsonbValue->val.numeric);
+				char	   *str = DatumGetCString(DirectFunctionCall1(numeric_out, num));
 
 				return PyObject_CallFunction(decimal_constructor, "s", str);
 			}
@@ -140,13 +138,11 @@ PLyObject_FromJsonbValue(JsonbValue *jsonbValue)
 static PyObject *
 PLyObject_FromJsonbContainer(JsonbContainer *jsonb)
 {
-	JsonbIteratorToken r;
 	JsonbValue	v;
-	JsonbIterator *it;
 	PyObject   *result;
 
-	it = JsonbIteratorInit(jsonb);
-	r = JsonbIteratorNext(&it, &v, true);
+	JsonbIterator *it = JsonbIteratorInit(jsonb);
+	JsonbIteratorToken r = JsonbIteratorNext(&it, &v, true);
 
 	switch (r)
 	{
@@ -268,11 +264,10 @@ PLyObject_FromJsonbContainer(JsonbContainer *jsonb)
 static JsonbValue *
 PLyMapping_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 {
-	Py_ssize_t	pcount;
 	PyObject   *volatile items;
 	JsonbValue *volatile out;
 
-	pcount = PyMapping_Size(obj);
+	Py_ssize_t	pcount = PyMapping_Size(obj);
 	items = PyMapping_Items(obj);
 
 	PG_TRY();
@@ -326,10 +321,9 @@ static JsonbValue *
 PLySequence_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 {
 	Py_ssize_t	i;
-	Py_ssize_t	pcount;
 	PyObject   *volatile value = NULL;
 
-	pcount = PySequence_Size(obj);
+	Py_ssize_t	pcount = PySequence_Size(obj);
 
 	pushJsonbValue(jsonb_state, WJB_BEGIN_ARRAY, NULL);
 
@@ -368,9 +362,8 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 
 	PG_TRY();
 	{
-		Datum		numd;
 
-		numd = DirectFunctionCall3(numeric_in,
+		Datum		numd = DirectFunctionCall3(numeric_in,
 								   CStringGetDatum(str),
 								   ObjectIdGetDatum(InvalidOid),
 								   Int32GetDatum(-1));
@@ -413,7 +406,6 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 static JsonbValue *
 PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_elem)
 {
-	JsonbValue *out;
 
 	if (!(PyString_Check(obj) || PyUnicode_Check(obj)))
 	{
@@ -423,7 +415,7 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 			return PLyMapping_ToJsonbValue(obj, jsonb_state);
 	}
 
-	out = palloc(sizeof(JsonbValue));
+	JsonbValue *out = palloc(sizeof(JsonbValue));
 
 	if (obj == Py_None)
 		out->type = jbvNull;
@@ -462,12 +454,10 @@ PG_FUNCTION_INFO_V1(plpython_to_jsonb);
 Datum
 plpython_to_jsonb(PG_FUNCTION_ARGS)
 {
-	PyObject   *obj;
-	JsonbValue *out;
 	JsonbParseState *jsonb_state = NULL;
 
-	obj = (PyObject *) PG_GETARG_POINTER(0);
-	out = PLyObject_ToJsonbValue(obj, &jsonb_state, true);
+	PyObject   *obj = (PyObject *) PG_GETARG_POINTER(0);
+	JsonbValue *out = PLyObject_ToJsonbValue(obj, &jsonb_state, true);
 	PG_RETURN_POINTER(JsonbValueToJsonb(out));
 }
 
@@ -480,7 +470,6 @@ PG_FUNCTION_INFO_V1(jsonb_to_plpython);
 Datum
 jsonb_to_plpython(PG_FUNCTION_ARGS)
 {
-	PyObject   *result;
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 
 	/*
@@ -501,7 +490,7 @@ jsonb_to_plpython(PG_FUNCTION_ARGS)
 		decimal_constructor = PyObject_GetAttrString(decimal_module, "Decimal");
 	}
 
-	result = PLyObject_FromJsonbContainer(&in->root);
+	PyObject   *result = PLyObject_FromJsonbContainer(&in->root);
 	if (!result)
 		PLy_elog(ERROR, "transformation from jsonb to Python failed");
 

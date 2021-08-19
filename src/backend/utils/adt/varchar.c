@@ -32,11 +32,9 @@
 static int32
 anychar_typmodin(ArrayType *ta, const char *typename)
 {
-	int32		typmod;
-	int32	   *tl;
 	int			n;
 
-	tl = ArrayGetIntegerTypmods(ta, &n);
+	int32	   *tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
 	 * we're not too tense about good error message here because grammar
@@ -62,7 +60,7 @@ anychar_typmodin(ArrayType *ta, const char *typename)
 	 * of characters; there is enough client-side code that knows about that
 	 * that we'd better not change it.
 	 */
-	typmod = VARHDRSZ + *tl;
+	int32		typmod = VARHDRSZ + *tl;
 
 	return typmod;
 }
@@ -125,8 +123,6 @@ anychar_typmodout(int32 typmod)
 static BpChar *
 bpchar_input(const char *s, size_t len, int32 atttypmod)
 {
-	BpChar	   *result;
-	char	   *r;
 	size_t		maxlen;
 
 	/* If typmod is -1 (or invalid), use the actual string length */
@@ -174,9 +170,9 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 		}
 	}
 
-	result = (BpChar *) palloc(maxlen + VARHDRSZ);
+	BpChar	   *result = (BpChar *) palloc(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
-	r = VARDATA(result);
+	char	   *r = VARDATA(result);
 	memcpy(r, s, len);
 
 	/* blank pad the string if necessary */
@@ -199,9 +195,8 @@ bpcharin(PG_FUNCTION_ARGS)
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	BpChar	   *result;
 
-	result = bpchar_input(s, strlen(s), atttypmod);
+	BpChar	   *result = bpchar_input(s, strlen(s), atttypmod);
 	PG_RETURN_BPCHAR_P(result);
 }
 
@@ -232,12 +227,10 @@ bpcharrecv(PG_FUNCTION_ARGS)
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	BpChar	   *result;
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-	result = bpchar_input(str, nbytes, atttypmod);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	BpChar	   *result = bpchar_input(str, nbytes, atttypmod);
 	pfree(str);
 	PG_RETURN_BPCHAR_P(result);
 }
@@ -271,10 +264,6 @@ bpchar(PG_FUNCTION_ARGS)
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
 	int32		maxlen = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
-	BpChar	   *result;
-	int32		len;
-	char	   *r;
-	char	   *s;
 	int			i;
 	int			charlen;		/* number of characters in the input string +
 								 * VARHDRSZ */
@@ -285,8 +274,8 @@ bpchar(PG_FUNCTION_ARGS)
 
 	maxlen -= VARHDRSZ;
 
-	len = VARSIZE_ANY_EXHDR(source);
-	s = VARDATA_ANY(source);
+	int32		len = VARSIZE_ANY_EXHDR(source);
+	char	   *s = VARDATA_ANY(source);
 
 	charlen = pg_mbstrlen_with_len(s, len);
 
@@ -297,9 +286,8 @@ bpchar(PG_FUNCTION_ARGS)
 	if (charlen > maxlen)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
-		size_t		maxmblen;
 
-		maxmblen = pg_mbcharcliplen(s, len, maxlen);
+		size_t		maxmblen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (!isExplicit)
 		{
@@ -330,9 +318,9 @@ bpchar(PG_FUNCTION_ARGS)
 
 	Assert(maxlen >= len);
 
-	result = palloc(maxlen + VARHDRSZ);
+	BpChar	   *result = palloc(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
-	r = VARDATA(result);
+	char	   *r = VARDATA(result);
 
 	memcpy(r, s, len);
 
@@ -351,9 +339,8 @@ Datum
 char_bpchar(PG_FUNCTION_ARGS)
 {
 	char		c = PG_GETARG_CHAR(0);
-	BpChar	   *result;
 
-	result = (BpChar *) palloc(VARHDRSZ + 1);
+	BpChar	   *result = (BpChar *) palloc(VARHDRSZ + 1);
 
 	SET_VARSIZE(result, VARHDRSZ + 1);
 	*(VARDATA(result)) = c;
@@ -369,12 +356,9 @@ Datum
 bpchar_name(PG_FUNCTION_ARGS)
 {
 	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
-	char	   *s_data;
-	Name		result;
-	int			len;
 
-	len = VARSIZE_ANY_EXHDR(s);
-	s_data = VARDATA_ANY(s);
+	int			len = VARSIZE_ANY_EXHDR(s);
+	char	   *s_data = VARDATA_ANY(s);
 
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
@@ -389,7 +373,7 @@ bpchar_name(PG_FUNCTION_ARGS)
 	}
 
 	/* We use palloc0 here to ensure result is zero-padded */
-	result = (Name) palloc0(NAMEDATALEN);
+	Name		result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s_data, len);
 
 	PG_RETURN_NAME(result);
@@ -405,9 +389,8 @@ Datum
 name_bpchar(PG_FUNCTION_ARGS)
 {
 	Name		s = PG_GETARG_NAME(0);
-	BpChar	   *result;
 
-	result = (BpChar *) cstring_to_text(NameStr(*s));
+	BpChar	   *result = (BpChar *) cstring_to_text(NameStr(*s));
 	PG_RETURN_BPCHAR_P(result);
 }
 
@@ -453,10 +436,8 @@ bpchartypmodout(PG_FUNCTION_ARGS)
 static VarChar *
 varchar_input(const char *s, size_t len, int32 atttypmod)
 {
-	VarChar    *result;
-	size_t		maxlen;
 
-	maxlen = atttypmod - VARHDRSZ;
+	size_t		maxlen = atttypmod - VARHDRSZ;
 
 	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)
 	{
@@ -476,7 +457,7 @@ varchar_input(const char *s, size_t len, int32 atttypmod)
 		len = mbmaxlen;
 	}
 
-	result = (VarChar *) cstring_to_text_with_len(s, len);
+	VarChar    *result = (VarChar *) cstring_to_text_with_len(s, len);
 	return result;
 }
 
@@ -493,9 +474,8 @@ varcharin(PG_FUNCTION_ARGS)
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	VarChar    *result;
 
-	result = varchar_input(s, strlen(s), atttypmod);
+	VarChar    *result = varchar_input(s, strlen(s), atttypmod);
 	PG_RETURN_VARCHAR_P(result);
 }
 
@@ -526,12 +506,10 @@ varcharrecv(PG_FUNCTION_ARGS)
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	VarChar    *result;
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-	result = varchar_input(str, nbytes, atttypmod);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	VarChar    *result = varchar_input(str, nbytes, atttypmod);
 	pfree(str);
 	PG_RETURN_VARCHAR_P(result);
 }
@@ -566,11 +544,10 @@ varchar_support(PG_FUNCTION_ARGS)
 	{
 		SupportRequestSimplify *req = (SupportRequestSimplify *) rawreq;
 		FuncExpr   *expr = req->fcall;
-		Node	   *typmod;
 
 		Assert(list_length(expr->args) >= 2);
 
-		typmod = (Node *) lsecond(expr->args);
+		Node	   *typmod = (Node *) lsecond(expr->args);
 
 		if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 		{
@@ -608,12 +585,10 @@ varchar(PG_FUNCTION_ARGS)
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		len,
 				maxlen;
-	size_t		maxmblen;
 	int			i;
-	char	   *s_data;
 
 	len = VARSIZE_ANY_EXHDR(source);
-	s_data = VARDATA_ANY(source);
+	char	   *s_data = VARDATA_ANY(source);
 	maxlen = typmod - VARHDRSZ;
 
 	/* No work if typmod is invalid or supplied data fits it already */
@@ -623,7 +598,7 @@ varchar(PG_FUNCTION_ARGS)
 	/* only reach here if string is too long... */
 
 	/* truncate multibyte string preserving multibyte boundary */
-	maxmblen = pg_mbcharcliplen(s_data, len, maxlen);
+	size_t		maxmblen = pg_mbcharcliplen(s_data, len, maxlen);
 
 	if (!isExplicit)
 	{
@@ -688,10 +663,9 @@ Datum
 bpcharlen(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg = PG_GETARG_BPCHAR_PP(0);
-	int			len;
 
 	/* get number of bytes, ignoring trailing spaces */
-	len = bcTruelen(arg);
+	int			len = bcTruelen(arg);
 
 	/* in multibyte encoding, convert to number of characters */
 	if (pg_database_encoding_max_length() != 1)
@@ -821,12 +795,11 @@ bpcharlt(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
@@ -842,12 +815,11 @@ bpcharle(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
@@ -863,12 +835,11 @@ bpchargt(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
@@ -884,12 +855,11 @@ bpcharge(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
@@ -905,12 +875,11 @@ bpcharcmp(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
@@ -924,9 +893,8 @@ bpchar_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 	Oid			collid = ssup->ssup_collation;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport */
 	varstr_sortsupport(ssup, BPCHAROID, collid);
@@ -943,12 +911,11 @@ bpchar_larger(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_RETURN_BPCHAR_P((cmp >= 0) ? arg1 : arg2);
@@ -961,12 +928,11 @@ bpchar_smaller(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
+	int			cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2,
 					 PG_GET_COLLATION());
 
 	PG_RETURN_BPCHAR_P((cmp <= 0) ? arg1 : arg2);
@@ -982,8 +948,6 @@ hashbpchar(PG_FUNCTION_ARGS)
 {
 	BpChar	   *key = PG_GETARG_BPCHAR_PP(0);
 	Oid			collid = PG_GET_COLLATION();
-	char	   *keydata;
-	int			keylen;
 	pg_locale_t mylocale = 0;
 	Datum		result;
 
@@ -993,8 +957,8 @@ hashbpchar(PG_FUNCTION_ARGS)
 				 errmsg("could not determine which collation to use for string hashing"),
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 
-	keydata = VARDATA_ANY(key);
-	keylen = bcTruelen(key);
+	char	   *keydata = VARDATA_ANY(key);
+	int			keylen = bcTruelen(key);
 
 	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
 		mylocale = pg_newlocale_from_collation(collid);
@@ -1008,16 +972,13 @@ hashbpchar(PG_FUNCTION_ARGS)
 #ifdef USE_ICU
 		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
-			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
-			Size		bsize;
-			uint8_t    *buf;
 
-			ulen = icu_to_uchar(&uchar, keydata, keylen);
+			int32_t		ulen = icu_to_uchar(&uchar, keydata, keylen);
 
-			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
+			Size		bsize = ucol_getSortKey(mylocale->info.icu.ucol,
 									uchar, ulen, NULL, 0);
-			buf = palloc(bsize);
+			uint8_t    *buf = palloc(bsize);
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
 
@@ -1042,8 +1003,6 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 {
 	BpChar	   *key = PG_GETARG_BPCHAR_PP(0);
 	Oid			collid = PG_GET_COLLATION();
-	char	   *keydata;
-	int			keylen;
 	pg_locale_t mylocale = 0;
 	Datum		result;
 
@@ -1053,8 +1012,8 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 				 errmsg("could not determine which collation to use for string hashing"),
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 
-	keydata = VARDATA_ANY(key);
-	keylen = bcTruelen(key);
+	char	   *keydata = VARDATA_ANY(key);
+	int			keylen = bcTruelen(key);
 
 	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
 		mylocale = pg_newlocale_from_collation(collid);
@@ -1069,16 +1028,13 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 #ifdef USE_ICU
 		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
-			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
-			Size		bsize;
-			uint8_t    *buf;
 
-			ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+			int32_t		ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
-			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
+			Size		bsize = ucol_getSortKey(mylocale->info.icu.ucol,
 									uchar, ulen, NULL, 0);
-			buf = palloc(bsize);
+			uint8_t    *buf = palloc(bsize);
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
 
@@ -1108,14 +1064,13 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 static int
 internal_bpchar_pattern_compare(BpChar *arg1, BpChar *arg2)
 {
-	int			result;
 	int			len1,
 				len2;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if (result != 0)
 		return result;
 	else if (len1 < len2)
@@ -1132,9 +1087,8 @@ bpchar_pattern_lt(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
-	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2);
+	int			result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1148,9 +1102,8 @@ bpchar_pattern_le(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
-	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2);
+	int			result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1164,9 +1117,8 @@ bpchar_pattern_ge(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
-	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2);
+	int			result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1180,9 +1132,8 @@ bpchar_pattern_gt(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
-	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2);
+	int			result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1196,9 +1147,8 @@ btbpchar_pattern_cmp(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
-	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2);
+	int			result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1211,9 +1161,8 @@ Datum
 btbpchar_pattern_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport, forcing "C" collation */
 	varstr_sortsupport(ssup, BPCHAROID, C_COLLATION_OID);

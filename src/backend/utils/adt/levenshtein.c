@@ -270,8 +270,6 @@ varstr_levenshtein(const char *source, int slen,
 		{
 			for (; i < STOP_COLUMN; i++)
 			{
-				int			ins;
-				int			del;
 				int			sub;
 				int			x_char_len = s_char_len[i - 1];
 
@@ -284,8 +282,8 @@ varstr_levenshtein(const char *source, int slen,
 				 * get past that test, then we compare the lengths and the
 				 * remaining bytes.
 				 */
-				ins = prev[i] + ins_c;
-				del = curr[i - 1] + del_c;
+				int			ins = prev[i] + ins_c;
+				int			del = curr[i - 1] + del_c;
 				if (x[x_char_len - 1] == y[y_char_len - 1]
 					&& x_char_len == y_char_len &&
 					(x_char_len == 1 || rest_of_char_same(x, y, x_char_len)))
@@ -305,14 +303,11 @@ varstr_levenshtein(const char *source, int slen,
 		{
 			for (; i < STOP_COLUMN; i++)
 			{
-				int			ins;
-				int			del;
-				int			sub;
 
 				/* Calculate costs for insertion, deletion, and substitution. */
-				ins = prev[i] + ins_c;
-				del = curr[i - 1] + del_c;
-				sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);
+				int			ins = prev[i] + ins_c;
+				int			del = curr[i - 1] + del_c;
+				int			sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);
 
 				/* Take the one with minimum cost. */
 				curr[i] = Min(ins, del);

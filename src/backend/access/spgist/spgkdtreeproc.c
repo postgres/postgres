@@ -56,13 +56,12 @@ spg_kd_choose(PG_FUNCTION_ARGS)
 	spgChooseIn *in = (spgChooseIn *) PG_GETARG_POINTER(0);
 	spgChooseOut *out = (spgChooseOut *) PG_GETARG_POINTER(1);
 	Point	   *inPoint = DatumGetPointP(in->datum);
-	double		coord;
 
 	if (in->allTheSame)
 		elog(ERROR, "allTheSame should not occur for k-d trees");
 
 	Assert(in->hasPrefix);
-	coord = DatumGetFloat8(in->prefixDatum);
+	double		coord = DatumGetFloat8(in->prefixDatum);
 
 	Assert(in->nNodes == 2);
 
@@ -110,9 +109,7 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 	spgPickSplitIn *in = (spgPickSplitIn *) PG_GETARG_POINTER(0);
 	spgPickSplitOut *out = (spgPickSplitOut *) PG_GETARG_POINTER(1);
 	int			i;
-	int			middle;
 	SortedPoint *sorted;
-	double		coord;
 
 	sorted = palloc(sizeof(*sorted) * in->nTuples);
 	for (i = 0; i < in->nTuples; i++)
@@ -123,8 +120,8 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 
 	qsort(sorted, in->nTuples, sizeof(*sorted),
 		  (in->level % 2) ? x_cmp : y_cmp);
-	middle = in->nTuples >> 1;
-	coord = (in->level % 2) ? sorted[middle].p->x : sorted[middle].p->y;
+	int			middle = in->nTuples >> 1;
+	double		coord = (in->level % 2) ? sorted[middle].p->x : sorted[middle].p->y;
 
 	out->hasPrefix = true;
 	out->prefixDatum = Float8GetDatum(coord);
@@ -161,13 +158,11 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	double		coord;
-	int			which;
 	int			i;
 	BOX			bboxes[2];
 
 	Assert(in->hasPrefix);
-	coord = DatumGetFloat8(in->prefixDatum);
+	double		coord = DatumGetFloat8(in->prefixDatum);
 
 	if (in->allTheSame)
 		elog(ERROR, "allTheSame should not occur for k-d trees");
@@ -175,7 +170,7 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 	Assert(in->nNodes == 2);
 
 	/* "which" is a bitmask of children that satisfy all constraints */
-	which = (1 << 1) | (1 << 2);
+	int			which = (1 << 1) | (1 << 2);
 
 	for (i = 0; i < in->nkeys; i++)
 	{

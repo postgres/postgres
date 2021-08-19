@@ -175,9 +175,8 @@ preparePresortedCols(IncrementalSortState *node)
 	{
 		Oid			equalityOp,
 					equalityFunc;
-		PresortedKeyData *key;
 
-		key = &node->presorted_keys[i];
+		PresortedKeyData *key = &node->presorted_keys[i];
 		key->attno = plannode->sort.sortColIdx[i];
 
 		equalityOp = get_equality_op_for_ordering_op(plannode->sort.sortOperators[i],
@@ -212,9 +211,8 @@ preparePresortedCols(IncrementalSortState *node)
 static bool
 isCurrentGroup(IncrementalSortState *node, TupleTableSlot *pivot, TupleTableSlot *tuple)
 {
-	int			nPresortedCols;
 
-	nPresortedCols = castNode(IncrementalSort, node->ss.ps.plan)->nPresortedCols;
+	int			nPresortedCols = castNode(IncrementalSort, node->ss.ps.plan)->nPresortedCols;
 
 	/*
 	 * That the input is sorted by keys * (0, ... n) implies that the tail
@@ -230,7 +228,6 @@ isCurrentGroup(IncrementalSortState *node, TupleTableSlot *pivot, TupleTableSlot
 		bool		isnullA,
 					isnullB;
 		AttrNumber	attno = node->presorted_keys[i].attno;
-		PresortedKeyData *key;
 
 		datumA = slot_getattr(pivot, attno, &isnullA);
 		datumB = slot_getattr(tuple, attno, &isnullB);
@@ -244,7 +241,7 @@ isCurrentGroup(IncrementalSortState *node, TupleTableSlot *pivot, TupleTableSlot
 				return false;
 		}
 
-		key = &node->presorted_keys[i];
+		PresortedKeyData *key = &node->presorted_keys[i];
 
 		key->fcinfo->args[0].value = datumA;
 		key->fcinfo->args[1].value = datumB;
@@ -287,27 +284,23 @@ static void
 switchToPresortedPrefixMode(PlanState *pstate)
 {
 	IncrementalSortState *node = castNode(IncrementalSortState, pstate);
-	ScanDirection dir;
 	int64		nTuples;
-	TupleDesc	tupDesc;
-	PlanState  *outerNode;
 	IncrementalSort *plannode = castNode(IncrementalSort, node->ss.ps.plan);
 
-	dir = node->ss.ps.state->es_direction;
-	outerNode = outerPlanState(node);
-	tupDesc = ExecGetResultType(outerNode);
+	ScanDirection dir = node->ss.ps.state->es_direction;
+	PlanState  *outerNode = outerPlanState(node);
+	TupleDesc	tupDesc = ExecGetResultType(outerNode);
 
 	/* Configure the prefix sort state the first time around. */
 	if (node->prefixsort_state == NULL)
 	{
-		Tuplesortstate *prefixsort_state;
 		int			nPresortedCols = plannode->nPresortedCols;
 
 		/*
 		 * Optimize the sort by assuming the prefix columns are all equal and
 		 * thus we only need to sort by any remaining columns.
 		 */
-		prefixsort_state = tuplesort_begin_heap(tupDesc,
+		Tuplesortstate *prefixsort_state = tuplesort_begin_heap(tupDesc,
 												plannode->sort.numCols - nPresortedCols,
 												&(plannode->sort.sortColIdx[nPresortedCols]),
 												&(plannode->sort.sortOperators[nPresortedCols]),
@@ -496,22 +489,17 @@ static TupleTableSlot *
 ExecIncrementalSort(PlanState *pstate)
 {
 	IncrementalSortState *node = castNode(IncrementalSortState, pstate);
-	EState	   *estate;
-	ScanDirection dir;
 	Tuplesortstate *read_sortstate;
-	Tuplesortstate *fullsort_state;
 	TupleTableSlot *slot;
 	IncrementalSort *plannode = (IncrementalSort *) node->ss.ps.plan;
-	PlanState  *outerNode;
-	TupleDesc	tupDesc;
 	int64		nTuples = 0;
 	int64		minGroupSize;
 
 	CHECK_FOR_INTERRUPTS();
 
-	estate = node->ss.ps.state;
-	dir = estate->es_direction;
-	fullsort_state = node->fullsort_state;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection dir = estate->es_direction;
+	Tuplesortstate *fullsort_state = node->fullsort_state;
 
 	/*
 	 * If a previous iteration has sorted a batch, then we need to check to
@@ -581,8 +569,8 @@ ExecIncrementalSort(PlanState *pstate)
 	 */
 	estate->es_direction = ForwardScanDirection;
 
-	outerNode = outerPlanState(node);
-	tupDesc = ExecGetResultType(outerNode);
+	PlanState  *outerNode = outerPlanState(node);
+	TupleDesc	tupDesc = ExecGetResultType(outerNode);
 
 	/* Load tuples into the full sort state. */
 	if (node->execution_status == INCSORT_LOADFULLSORT)
@@ -974,7 +962,6 @@ ExecIncrementalSort(PlanState *pstate)
 IncrementalSortState *
 ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 {
-	IncrementalSortState *incrsortstate;
 
 	SO_printf("ExecInitIncrementalSort: initializing sort node\n");
 
@@ -986,7 +973,7 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 	Assert((eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) == 0);
 
 	/* Initialize state structure. */
-	incrsortstate = makeNode(IncrementalSortState);
+	IncrementalSortState *incrsortstate = makeNode(IncrementalSortState);
 	incrsortstate->ss.ps.plan = (Plan *) node;
 	incrsortstate->ss.ps.state = estate;
 	incrsortstate->ss.ps.ExecProcNode = ExecIncrementalSort;
@@ -1183,13 +1170,12 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 void
 ExecIncrementalSortEstimate(IncrementalSortState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = mul_size(pcxt->nworkers, sizeof(IncrementalSortInfo));
+	Size		size = mul_size(pcxt->nworkers, sizeof(IncrementalSortInfo));
 	size = add_size(size, offsetof(SharedIncrementalSortInfo, sinfo));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -1204,13 +1190,12 @@ ExecIncrementalSortEstimate(IncrementalSortState *node, ParallelContext *pcxt)
 void
 ExecIncrementalSortInitializeDSM(IncrementalSortState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = offsetof(SharedIncrementalSortInfo, sinfo)
+	Size		size = offsetof(SharedIncrementalSortInfo, sinfo)
 		+ pcxt->nworkers * sizeof(IncrementalSortInfo);
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
@@ -1243,15 +1228,13 @@ ExecIncrementalSortInitializeWorker(IncrementalSortState *node, ParallelWorkerCo
 void
 ExecIncrementalSortRetrieveInstrumentation(IncrementalSortState *node)
 {
-	Size		size;
-	SharedIncrementalSortInfo *si;
 
 	if (node->shared_info == NULL)
 		return;
 
-	size = offsetof(SharedIncrementalSortInfo, sinfo)
+	Size		size = offsetof(SharedIncrementalSortInfo, sinfo)
 		+ node->shared_info->num_workers * sizeof(IncrementalSortInfo);
-	si = palloc(size);
+	SharedIncrementalSortInfo *si = palloc(size);
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

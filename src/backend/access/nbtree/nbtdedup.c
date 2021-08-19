@@ -59,8 +59,6 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 				maxoff;
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	Page		newpage;
-	BTDedupState state;
 	Size		pagesaving = 0;
 	bool		singlevalstrat = false;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
@@ -77,7 +75,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 * That ought to leave us with a good split point when pages full of
 	 * duplicates can be split several times.
 	 */
-	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+	BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = Min(BTMaxItemSize(page) / 2, INDEX_SIZE_MASK);
@@ -108,7 +106,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 * updated version of the page.  We need this because XLogInsert will
 	 * examine the LSN and possibly dump it in a page image.
 	 */
-	newpage = PageGetTempPageCopySpecial(page);
+	Page		newpage = PageGetTempPageCopySpecial(page);
 	PageSetLSN(newpage, PageGetLSN(page));
 
 	/* Copy high key, if any */
@@ -237,7 +235,6 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
-		XLogRecPtr	recptr;
 		xl_btree_dedup xlrec_dedup;
 
 		xlrec_dedup.nintervals = state->nintervals;
@@ -254,7 +251,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 		XLogRegisterBufData(0, (char *) state->intervals,
 							state->nintervals * sizeof(BTDedupInterval));
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DEDUP);
+		XLogRecPtr	recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DEDUP);
 
 		PageSetLSN(page, recptr);
 	}
@@ -304,16 +301,14 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 				maxoff;
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTDedupState state;
 	TM_IndexDeleteOp delstate;
-	bool		neverdedup;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 
 	/* Initialize deduplication state */
-	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+	BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = BLCKSZ; /* We're not really deduplicating */
@@ -389,7 +384,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 	 * caller do a useless deduplication pass after we return in the event of
 	 * zero promising tuples, though.
 	 */
-	neverdedup = false;
+	bool		neverdedup = false;
 	if (state->nintervals == 0)
 		neverdedup = true;
 
@@ -439,9 +434,8 @@ _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
 	}
 	else
 	{
-		int			nposting;
 
-		nposting = BTreeTupleGetNPosting(base);
+		int			nposting = BTreeTupleGetNPosting(base);
 		memcpy(state->htids, BTreeTupleGetPosting(base),
 			   sizeof(ItemPointerData) * nposting);
 		state->nhtids = nposting;
@@ -475,7 +469,6 @@ _bt_dedup_save_htid(BTDedupState state, IndexTuple itup)
 {
 	int			nhtids;
 	ItemPointer htids;
-	Size		mergedtupsz;
 
 	Assert(!BTreeTupleIsPivot(itup));
 
@@ -497,7 +490,7 @@ _bt_dedup_save_htid(BTDedupState state, IndexTuple itup)
 	 * This calculation needs to match the code used within _bt_form_posting()
 	 * for new posting list tuples.
 	 */
-	mergedtupsz = MAXALIGN(state->basetupsize +
+	Size		mergedtupsz = MAXALIGN(state->basetupsize +
 						   (state->nhtids + nhtids) * sizeof(ItemPointerData));
 
 	if (mergedtupsz > state->maxpostingsize)
@@ -544,7 +537,6 @@ _bt_dedup_save_htid(BTDedupState state, IndexTuple itup)
 Size
 _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 {
-	OffsetNumber tupoff;
 	Size		tuplesz;
 	Size		spacesaving;
 
@@ -552,7 +544,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 	Assert(state->nitems <= state->nhtids);
 	Assert(state->intervals[state->nintervals].baseoff == state->baseoff);
 
-	tupoff = OffsetNumberNext(PageGetMaxOffsetNumber(newpage));
+	OffsetNumber tupoff = OffsetNumberNext(PageGetMaxOffsetNumber(newpage));
 	if (state->nitems == 1)
 	{
 		/* Use original, unchanged base tuple */
@@ -565,10 +557,9 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 	}
 	else
 	{
-		IndexTuple	final;
 
 		/* Form a tuple with a posting list */
-		final = _bt_form_posting(state->base, state->htids, state->nhtids);
+		IndexTuple	final = _bt_form_posting(state->base, state->htids, state->nhtids);
 		tuplesz = IndexTupleSize(final);
 		Assert(tuplesz <= state->maxpostingsize);
 
@@ -778,11 +769,9 @@ _bt_do_singleval(Relation rel, Page page, BTDedupState state,
 				 OffsetNumber minoff, IndexTuple newitem)
 {
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	ItemId		itemid;
-	IndexTuple	itup;
 
-	itemid = PageGetItemId(page, minoff);
-	itup = (IndexTuple) PageGetItem(page, itemid);
+	ItemId		itemid = PageGetItemId(page, minoff);
+	IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
 
 	if (_bt_keep_natts_fast(rel, newitem, itup) > nkeyatts)
 	{
@@ -816,11 +805,9 @@ _bt_do_singleval(Relation rel, Page page, BTDedupState state,
 static void
 _bt_singleval_fillfactor(Page page, BTDedupState state, Size newitemsz)
 {
-	Size		leftfree;
-	int			reduction;
 
 	/* This calculation needs to match nbtsplitloc.c */
-	leftfree = PageGetPageSize(page) - SizeOfPageHeaderData -
+	Size		leftfree = PageGetPageSize(page) - SizeOfPageHeaderData -
 		MAXALIGN(sizeof(BTPageOpaqueData));
 	/* Subtract size of new high key (includes pivot heap TID space) */
 	leftfree -= newitemsz + MAXALIGN(sizeof(ItemPointerData));
@@ -829,7 +816,7 @@ _bt_singleval_fillfactor(Page page, BTDedupState state, Size newitemsz)
 	 * Reduce maxpostingsize by an amount equal to target free space on left
 	 * half of page
 	 */
-	reduction = leftfree * ((100 - BTREE_SINGLEVAL_FILLFACTOR) / 100.0);
+	int			reduction = leftfree * ((100 - BTREE_SINGLEVAL_FILLFACTOR) / 100.0);
 	if (state->maxpostingsize > reduction)
 		state->maxpostingsize -= reduction;
 	else
@@ -860,7 +847,6 @@ _bt_form_posting(IndexTuple base, ItemPointer htids, int nhtids)
 {
 	uint32		keysize,
 				newsize;
-	IndexTuple	itup;
 
 	if (BTreeTupleIsPosting(base))
 		keysize = BTreeTupleGetPostingOffset(base);
@@ -882,7 +868,7 @@ _bt_form_posting(IndexTuple base, ItemPointer htids, int nhtids)
 	Assert(newsize == MAXALIGN(newsize));
 
 	/* Allocate memory using palloc0() (matches index_form_tuple()) */
-	itup = palloc0(newsize);
+	IndexTuple	itup = palloc0(newsize);
 	memcpy(itup, base, keysize);
 	itup->t_info &= ~INDEX_SIZE_MASK;
 	itup->t_info |= newsize;
@@ -921,13 +907,11 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	IndexTuple	origtuple = vacposting->itup;
 	uint32		keysize,
 				newsize;
-	IndexTuple	itup;
-	int			nhtids;
 	int			ui,
 				d;
 	ItemPointer htids;
 
-	nhtids = BTreeTupleGetNPosting(origtuple) - vacposting->ndeletedtids;
+	int			nhtids = BTreeTupleGetNPosting(origtuple) - vacposting->ndeletedtids;
 
 	Assert(_bt_posting_valid(origtuple));
 	Assert(nhtids > 0 && nhtids < BTreeTupleGetNPosting(origtuple));
@@ -950,7 +934,7 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	Assert(newsize == MAXALIGN(newsize));
 
 	/* Allocate memory using palloc0() (matches index_form_tuple()) */
-	itup = palloc0(newsize);
+	IndexTuple	itup = palloc0(newsize);
 	memcpy(itup, origtuple, keysize);
 	itup->t_info &= ~INDEX_SIZE_MASK;
 	itup->t_info |= newsize;
@@ -1016,13 +1000,8 @@ _bt_update_posting(BTVacuumPosting vacposting)
 IndexTuple
 _bt_swap_posting(IndexTuple newitem, IndexTuple oposting, int postingoff)
 {
-	int			nhtids;
-	char	   *replacepos;
-	char	   *replaceposright;
-	Size		nmovebytes;
-	IndexTuple	nposting;
 
-	nhtids = BTreeTupleGetNPosting(oposting);
+	int			nhtids = BTreeTupleGetNPosting(oposting);
 	Assert(_bt_posting_valid(oposting));
 
 	/*
@@ -1044,10 +1023,10 @@ _bt_swap_posting(IndexTuple newitem, IndexTuple oposting, int postingoff)
 	 * rightmost TID. (nmovebytes must not include TIDs to the left of
 	 * postingoff, nor the existing rightmost/max TID that gets overwritten.)
 	 */
-	nposting = CopyIndexTuple(oposting);
-	replacepos = (char *) BTreeTupleGetPostingN(nposting, postingoff);
-	replaceposright = (char *) BTreeTupleGetPostingN(nposting, postingoff + 1);
-	nmovebytes = (nhtids - postingoff - 1) * sizeof(ItemPointerData);
+	IndexTuple	nposting = CopyIndexTuple(oposting);
+	char	   *replacepos = (char *) BTreeTupleGetPostingN(nposting, postingoff);
+	char	   *replaceposright = (char *) BTreeTupleGetPostingN(nposting, postingoff + 1);
+	Size		nmovebytes = (nhtids - postingoff - 1) * sizeof(ItemPointerData);
 	memmove(replaceposright, replacepos, nmovebytes);
 
 	/* Fill the gap at postingoff with TID of new item (original new TID) */

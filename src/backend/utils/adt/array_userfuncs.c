@@ -43,11 +43,10 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 {
 	ExpandedArrayHeader *eah;
 	Oid			element_type;
-	ArrayMetaState *my_extra;
 	MemoryContext resultcxt;
 
 	/* If first time through, create datatype cache struct */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		my_extra = (ArrayMetaState *)
@@ -100,17 +99,13 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 Datum
 array_append(PG_FUNCTION_ARGS)
 {
-	ExpandedArrayHeader *eah;
 	Datum		newelem;
-	bool		isNull;
-	Datum		result;
 	int		   *dimv,
 			   *lb;
 	int			indx;
-	ArrayMetaState *my_extra;
 
-	eah = fetch_array_arg_replace_nulls(fcinfo, 0);
-	isNull = PG_ARGISNULL(1);
+	ExpandedArrayHeader *eah = fetch_array_arg_replace_nulls(fcinfo, 0);
+	bool		isNull = PG_ARGISNULL(1);
 	if (isNull)
 		newelem = (Datum) 0;
 	else
@@ -136,9 +131,9 @@ array_append(PG_FUNCTION_ARGS)
 				 errmsg("argument must be empty or one-dimensional array")));
 
 	/* Perform element insertion */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
-	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
+	Datum		result = array_set_element(EOHPGetRWDatum(&eah->hdr),
 							   1, &indx, newelem, isNull,
 							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
@@ -153,21 +148,17 @@ array_append(PG_FUNCTION_ARGS)
 Datum
 array_prepend(PG_FUNCTION_ARGS)
 {
-	ExpandedArrayHeader *eah;
 	Datum		newelem;
-	bool		isNull;
-	Datum		result;
 	int		   *lb;
 	int			indx;
 	int			lb0;
-	ArrayMetaState *my_extra;
 
-	isNull = PG_ARGISNULL(0);
+	bool		isNull = PG_ARGISNULL(0);
 	if (isNull)
 		newelem = (Datum) 0;
 	else
 		newelem = PG_GETARG_DATUM(0);
-	eah = fetch_array_arg_replace_nulls(fcinfo, 1);
+	ExpandedArrayHeader *eah = fetch_array_arg_replace_nulls(fcinfo, 1);
 
 	if (eah->ndims == 1)
 	{
@@ -191,9 +182,9 @@ array_prepend(PG_FUNCTION_ARGS)
 				 errmsg("argument must be empty or one-dimensional array")));
 
 	/* Perform element insertion */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
-	result = array_set_element(EOHPGetRWDatum(&eah->hdr),
+	Datum		result = array_set_element(EOHPGetRWDatum(&eah->hdr),
 							   1, &indx, newelem, isNull,
 							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
@@ -241,9 +232,6 @@ array_cat(PG_FUNCTION_ARGS)
 			   *dat2;
 	bits8	   *bitmap1,
 			   *bitmap2;
-	Oid			element_type;
-	Oid			element_type1;
-	Oid			element_type2;
 	int32		dataoffset;
 
 	/* Concatenating a null array is a no-op, just return the other input */
@@ -263,8 +251,8 @@ array_cat(PG_FUNCTION_ARGS)
 	v1 = PG_GETARG_ARRAYTYPE_P(0);
 	v2 = PG_GETARG_ARRAYTYPE_P(1);
 
-	element_type1 = ARR_ELEMTYPE(v1);
-	element_type2 = ARR_ELEMTYPE(v2);
+	Oid			element_type1 = ARR_ELEMTYPE(v1);
+	Oid			element_type2 = ARR_ELEMTYPE(v2);
 
 	/* Check we have matching element types */
 	if (element_type1 != element_type2)
@@ -277,7 +265,7 @@ array_cat(PG_FUNCTION_ARGS)
 						   format_type_be(element_type2))));
 
 	/* OK, use it */
-	element_type = element_type1;
+	Oid			element_type = element_type1;
 
 	/*----------
 	 * We must have one of the following combinations of inputs:
@@ -459,7 +447,6 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	MemoryContext aggcontext;
 	ArrayBuildState *state;
-	Datum		elem;
 
 	if (arg1_typeid == InvalidOid)
 		ereport(ERROR,
@@ -483,7 +470,7 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 	else
 		state = (ArrayBuildState *) PG_GETARG_POINTER(0);
 
-	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	Datum		elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
 
 	state = accumArrayResult(state,
 							 elem,
@@ -502,15 +489,13 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 array_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	Datum		result;
-	ArrayBuildState *state;
 	int			dims[1];
 	int			lbs[1];
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+	ArrayBuildState *state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
 
 	if (state == NULL)
 		PG_RETURN_NULL();		/* returns null iff no input values */
@@ -524,7 +509,7 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	 * nodeAgg.c's responsibility to reset the aggcontext when it's safe to do
 	 * so.
 	 */
-	result = makeMdArrayResult(state, 1, dims, lbs,
+	Datum		result = makeMdArrayResult(state, 1, dims, lbs,
 							   CurrentMemoryContext,
 							   false);
 
@@ -581,13 +566,11 @@ array_agg_array_transfn(PG_FUNCTION_ARGS)
 Datum
 array_agg_array_finalfn(PG_FUNCTION_ARGS)
 {
-	Datum		result;
-	ArrayBuildStateArr *state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
+	ArrayBuildStateArr *state = PG_ARGISNULL(0) ? NULL : (ArrayBuildStateArr *) PG_GETARG_POINTER(0);
 
 	if (state == NULL)
 		PG_RETURN_NULL();		/* returns null iff no input values */
@@ -598,7 +581,7 @@ array_agg_array_finalfn(PG_FUNCTION_ARGS)
 	 * nodeAgg.c's responsibility to reset the aggcontext when it's safe to do
 	 * so.
 	 */
-	result = makeArrayResultArr(state, CurrentMemoryContext, false);
+	Datum		result = makeArrayResultArr(state, CurrentMemoryContext, false);
 
 	PG_RETURN_DATUM(result);
 }
@@ -633,9 +616,7 @@ array_position_start(PG_FUNCTION_ARGS)
 static Datum
 array_position_common(FunctionCallInfo fcinfo)
 {
-	ArrayType  *array;
 	Oid			collation = PG_GET_COLLATION();
-	Oid			element_type;
 	Datum		searched_element,
 				value;
 	bool		isnull;
@@ -643,15 +624,13 @@ array_position_common(FunctionCallInfo fcinfo)
 				position_min;
 	bool		found = false;
 	TypeCacheEntry *typentry;
-	ArrayMetaState *my_extra;
 	bool		null_search;
-	ArrayIterator array_iterator;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	array = PG_GETARG_ARRAYTYPE_P(0);
-	element_type = ARR_ELEMTYPE(array);
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(0);
+	Oid			element_type = ARR_ELEMTYPE(array);
 
 	/*
 	 * We refuse to search for elements in multi-dimensional arrays, since we
@@ -696,7 +675,7 @@ array_position_common(FunctionCallInfo fcinfo)
 	 * series of calls, assuming the element type doesn't change underneath
 	 * us.
 	 */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -726,7 +705,7 @@ array_position_common(FunctionCallInfo fcinfo)
 	}
 
 	/* Examine each array element until we find a match. */
-	array_iterator = array_create_iterator(array, 0, my_extra);
+	ArrayIterator array_iterator = array_create_iterator(array, 0, my_extra);
 	while (array_iterate(array_iterator, &value, &isnull))
 	{
 		position++;
@@ -784,26 +763,20 @@ array_position_common(FunctionCallInfo fcinfo)
 Datum
 array_positions(PG_FUNCTION_ARGS)
 {
-	ArrayType  *array;
 	Oid			collation = PG_GET_COLLATION();
-	Oid			element_type;
 	Datum		searched_element,
 				value;
 	bool		isnull;
-	int			position;
 	TypeCacheEntry *typentry;
-	ArrayMetaState *my_extra;
 	bool		null_search;
-	ArrayIterator array_iterator;
-	ArrayBuildState *astate = NULL;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	array = PG_GETARG_ARRAYTYPE_P(0);
-	element_type = ARR_ELEMTYPE(array);
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(0);
+	Oid			element_type = ARR_ELEMTYPE(array);
 
-	position = (ARR_LBOUND(array))[0] - 1;
+	int			position = (ARR_LBOUND(array))[0] - 1;
 
 	/*
 	 * We refuse to search for elements in multi-dimensional arrays, since we
@@ -814,7 +787,7 @@ array_positions(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("searching for elements in multidimensional arrays is not supported")));
 
-	astate = initArrayResult(INT4OID, CurrentMemoryContext, false);
+	ArrayBuildState *astate = initArrayResult(INT4OID, CurrentMemoryContext, false);
 
 	if (PG_ARGISNULL(1))
 	{
@@ -835,7 +808,7 @@ array_positions(PG_FUNCTION_ARGS)
 	 * series of calls, assuming the element type doesn't change underneath
 	 * us.
 	 */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -868,7 +841,7 @@ array_positions(PG_FUNCTION_ARGS)
 	 * Accumulate each array position iff the element matches the given
 	 * element.
 	 */
-	array_iterator = array_create_iterator(array, 0, my_extra);
+	ArrayIterator array_iterator = array_create_iterator(array, 0, my_extra);
 	while (array_iterate(array_iterator, &value, &isnull))
 	{
 		position += 1;

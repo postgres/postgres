@@ -64,11 +64,10 @@ euc_jp_to_sjis(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JP, PG_SJIS);
 
-	converted = euc_jp2sjis(src, dest, len, noError);
+	int			converted = euc_jp2sjis(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -80,11 +79,10 @@ sjis_to_euc_jp(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SJIS, PG_EUC_JP);
 
-	converted = sjis2euc_jp(src, dest, len, noError);
+	int			converted = sjis2euc_jp(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -96,11 +94,10 @@ euc_jp_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JP, PG_MULE_INTERNAL);
 
-	converted = euc_jp2mic(src, dest, len, noError);
+	int			converted = euc_jp2mic(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -112,11 +109,10 @@ mic_to_euc_jp(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_JP);
 
-	converted = mic2euc_jp(src, dest, len, noError);
+	int			converted = mic2euc_jp(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -128,11 +124,10 @@ sjis_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SJIS, PG_MULE_INTERNAL);
 
-	converted = sjis2mic(src, dest, len, noError);
+	int			converted = sjis2mic(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -144,11 +139,10 @@ mic_to_sjis(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_SJIS);
 
-	converted = mic2sjis(src, dest, len, noError);
+	int			converted = mic2sjis(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }

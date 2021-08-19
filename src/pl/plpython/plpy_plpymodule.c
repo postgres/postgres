@@ -131,9 +131,8 @@ static PyModuleDef PLy_exc_module = {
 PyMODINIT_FUNC
 PyInit_plpy(void)
 {
-	PyObject   *m;
 
-	m = PyModule_Create(&PLy_module);
+	PyObject   *m = PyModule_Create(&PLy_module);
 	if (m == NULL)
 		return NULL;
 
@@ -229,9 +228,8 @@ static PyObject *
 PLy_create_exception(char *name, PyObject *base, PyObject *dict,
 					 const char *modname, PyObject *mod)
 {
-	PyObject   *exc;
 
-	exc = PyErr_NewException(name, base, dict);
+	PyObject   *exc = PyErr_NewException(name, base, dict);
 	if (exc == NULL)
 		PLy_elog(ERROR, NULL);
 
@@ -262,8 +260,6 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 	for (i = 0; exception_map[i].name != NULL; i++)
 	{
 		bool		found;
-		PyObject   *exc;
-		PLyExceptionEntry *entry;
 		PyObject   *sqlstate;
 		PyObject   *dict = PyDict_New();
 
@@ -277,10 +273,10 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 		PyDict_SetItemString(dict, "sqlstate", sqlstate);
 		Py_DECREF(sqlstate);
 
-		exc = PLy_create_exception(exception_map[i].name, base, dict,
+		PyObject   *exc = PLy_create_exception(exception_map[i].name, base, dict,
 								   exception_map[i].classname, mod);
 
-		entry = hash_search(PLy_spi_exceptions, &exception_map[i].sqlstate,
+		PLyExceptionEntry *entry = hash_search(PLy_spi_exceptions, &exception_map[i].sqlstate,
 							HASH_ENTER, &found);
 		Assert(!found);
 		entry->exc = exc;
@@ -341,14 +337,12 @@ static PyObject *
 PLy_quote_literal(PyObject *self, PyObject *args)
 {
 	const char *str;
-	char	   *quoted;
-	PyObject   *ret;
 
 	if (!PyArg_ParseTuple(args, "s:quote_literal", &str))
 		return NULL;
 
-	quoted = quote_literal_cstr(str);
-	ret = PyString_FromString(quoted);
+	char	   *quoted = quote_literal_cstr(str);
+	PyObject   *ret = PyString_FromString(quoted);
 	pfree(quoted);
 
 	return ret;
@@ -358,8 +352,6 @@ static PyObject *
 PLy_quote_nullable(PyObject *self, PyObject *args)
 {
 	const char *str;
-	char	   *quoted;
-	PyObject   *ret;
 
 	if (!PyArg_ParseTuple(args, "z:quote_nullable", &str))
 		return NULL;
@@ -367,8 +359,8 @@ PLy_quote_nullable(PyObject *self, PyObject *args)
 	if (str == NULL)
 		return PyString_FromString("NULL");
 
-	quoted = quote_literal_cstr(str);
-	ret = PyString_FromString(quoted);
+	char	   *quoted = quote_literal_cstr(str);
+	PyObject   *ret = PyString_FromString(quoted);
 	pfree(quoted);
 
 	return ret;
@@ -378,14 +370,12 @@ static PyObject *
 PLy_quote_ident(PyObject *self, PyObject *args)
 {
 	const char *str;
-	const char *quoted;
-	PyObject   *ret;
 
 	if (!PyArg_ParseTuple(args, "s:quote_ident", &str))
 		return NULL;
 
-	quoted = quote_identifier(str);
-	ret = PyString_FromString(quoted);
+	const char *quoted = quote_identifier(str);
+	PyObject   *ret = PyString_FromString(quoted);
 
 	return ret;
 }
@@ -400,9 +390,8 @@ object_to_string(PyObject *obj)
 
 		if (so != NULL)
 		{
-			char	   *str;
 
-			str = pstrdup(PyString_AsString(so));
+			char	   *str = pstrdup(PyString_AsString(so));
 			Py_DECREF(so);
 
 			return str;
@@ -425,7 +414,6 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	char	   *volatile datatype_name = NULL;
 	char	   *volatile table_name = NULL;
 	char	   *volatile schema_name = NULL;
-	volatile MemoryContext oldcontext;
 	PyObject   *key,
 			   *value;
 	PyObject   *volatile so;
@@ -521,7 +509,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 								 sqlstatestr[4]);
 	}
 
-	oldcontext = CurrentMemoryContext;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
 		if (message != NULL)
@@ -559,10 +547,9 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	}
 	PG_CATCH();
 	{
-		ErrorData  *edata;
 
 		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
+		ErrorData  *edata = CopyErrorData();
 		FlushErrorState();
 
 		PLy_exception_set_with_details(PLy_exc_error, edata);

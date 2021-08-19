@@ -56,11 +56,8 @@ static void usage(const char *progname);
 int
 main(int argc, char **argv)
 {
-	RestoreOptions *opts;
 	int			c;
-	int			exit_code;
 	int			numWorkers = 1;
-	Archive    *AH;
 	char	   *inputFileSpec;
 	static int	disable_triggers = 0;
 	static int	enable_row_security = 0;
@@ -131,7 +128,7 @@ main(int argc, char **argv)
 
 	init_parallel_dump_utils();
 
-	opts = NewRestoreOptions();
+	RestoreOptions *opts = NewRestoreOptions();
 
 	progname = get_progname(argv[0]);
 
@@ -399,7 +396,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	AH = OpenArchive(inputFileSpec, opts->format);
+	Archive    *AH = OpenArchive(inputFileSpec, opts->format);
 
 	SetArchiveOptions(AH, NULL, opts);
 
@@ -436,7 +433,7 @@ main(int argc, char **argv)
 		pg_log_warning("errors ignored on restore: %d", AH->n_errors);
 
 	/* AH may be freed in CloseArchive? */
-	exit_code = AH->n_errors ? 1 : 0;
+	int			exit_code = AH->n_errors ? 1 : 0;
 
 	CloseArchive(AH);
 

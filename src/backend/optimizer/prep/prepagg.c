@@ -116,29 +116,15 @@ preprocess_aggrefs(PlannerInfo *root, Node *clause)
 static void
 preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 {
-	HeapTuple	aggTuple;
-	Form_pg_aggregate aggform;
-	Oid			aggtransfn;
-	Oid			aggfinalfn;
-	Oid			aggcombinefn;
-	Oid			aggserialfn;
-	Oid			aggdeserialfn;
-	Oid			aggtranstype;
-	int32		aggtranstypmod;
-	int32		aggtransspace;
-	bool		shareable;
-	int			aggno;
 	int			transno;
 	List	   *same_input_transnos;
 	int16		resulttypeLen;
 	bool		resulttypeByVal;
-	Datum		textInitVal;
 	Datum		initValue;
 	bool		initValueIsNull;
 	bool		transtypeByVal;
 	int16		transtypeLen;
 	Oid			inputTypes[FUNC_MAX_ARGS];
-	int			numArguments;
 
 	Assert(aggref->agglevelsup == 0);
 
@@ -147,26 +133,26 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * ignore the moving-aggregate variant, since what we're concerned with
 	 * here is aggregates not window functions.
 	 */
-	aggTuple = SearchSysCache1(AGGFNOID,
+	HeapTuple	aggTuple = SearchSysCache1(AGGFNOID,
 							   ObjectIdGetDatum(aggref->aggfnoid));
 	if (!HeapTupleIsValid(aggTuple))
 		elog(ERROR, "cache lookup failed for aggregate %u",
 			 aggref->aggfnoid);
-	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
-	aggtransfn = aggform->aggtransfn;
-	aggfinalfn = aggform->aggfinalfn;
-	aggcombinefn = aggform->aggcombinefn;
-	aggserialfn = aggform->aggserialfn;
-	aggdeserialfn = aggform->aggdeserialfn;
-	aggtranstype = aggform->aggtranstype;
-	aggtransspace = aggform->aggtransspace;
+	Form_pg_aggregate aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+	Oid			aggtransfn = aggform->aggtransfn;
+	Oid			aggfinalfn = aggform->aggfinalfn;
+	Oid			aggcombinefn = aggform->aggcombinefn;
+	Oid			aggserialfn = aggform->aggserialfn;
+	Oid			aggdeserialfn = aggform->aggdeserialfn;
+	Oid			aggtranstype = aggform->aggtranstype;
+	int32		aggtransspace = aggform->aggtransspace;
 
 	/*
 	 * Resolve the possibly-polymorphic aggregate transition type.
 	 */
 
 	/* extract argument types (ignoring any ORDER BY expressions) */
-	numArguments = get_aggregate_argtypes(aggref, inputTypes);
+	int			numArguments = get_aggregate_argtypes(aggref, inputTypes);
 
 	/* resolve actual type of transition state, if polymorphic */
 	aggtranstype = resolve_aggregate_transtype(aggref->aggfnoid,
@@ -180,7 +166,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * it's the same typmod (same width) as well.  This works for cases like
 	 * MAX/MIN and is probably somewhat reasonable otherwise.
 	 */
-	aggtranstypmod = -1;
+	int32		aggtranstypmod = -1;
 	if (aggref->args)
 	{
 		TargetEntry *tle = (TargetEntry *) linitial(aggref->args);
@@ -198,7 +184,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * partial aggregate doesn't execute the final function.  But it's too
 	 * early to know whether we're going perform a partial aggregate.
 	 */
-	shareable = (aggform->aggfinalmodify != AGGMODIFY_READ_WRITE);
+	bool		shareable = (aggform->aggfinalmodify != AGGMODIFY_READ_WRITE);
 
 	/* get info about the output value's datatype */
 	get_typlenbyval(aggref->aggtype,
@@ -206,7 +192,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 					&resulttypeByVal);
 
 	/* get initial value */
-	textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
+	Datum		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
 								  Anum_pg_aggregate_agginitval,
 								  &initValueIsNull);
 	if (initValueIsNull)
@@ -220,7 +206,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * 1. See if this is identical to another aggregate function call that
 	 * we've seen already.
 	 */
-	aggno = find_compatible_agg(root, aggref, &same_input_transnos);
+	int			aggno = find_compatible_agg(root, aggref, &same_input_transnos);
 	if (aggno != -1)
 	{
 		AggInfo    *agginfo = list_nth(root->agginfos, aggno);
@@ -361,7 +347,6 @@ find_compatible_agg(PlannerInfo *root, Aggref *newagg,
 					List **same_input_transnos)
 {
 	ListCell   *lc;
-	int			aggno;
 
 	*same_input_transnos = NIL;
 
@@ -378,15 +363,14 @@ find_compatible_agg(PlannerInfo *root, Aggref *newagg,
 	 * just compare the parsetrees; whether different aggregates share the
 	 * same transition function will be checked later.)
 	 */
-	aggno = -1;
+	int			aggno = -1;
 	foreach(lc, root->agginfos)
 	{
 		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
-		Aggref	   *existingRef;
 
 		aggno++;
 
-		existingRef = agginfo->representative_aggref;
+		Aggref	   *existingRef = agginfo->representative_aggref;
 
 		/* all of the following must be the same or it's no match */
 		if (newagg->inputcollid != existingRef->inputcollid ||
@@ -501,12 +485,10 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 {
 	Oid			typinput,
 				typioparam;
-	char	   *strInitVal;
-	Datum		initVal;
 
 	getTypeInputInfo(transtype, &typinput, &typioparam);
-	strInitVal = TextDatumGetCString(textInitVal);
-	initVal = OidInputFunctionCall(typinput, strInitVal,
+	char	   *strInitVal = TextDatumGetCString(textInitVal);
+	Datum		initVal = OidInputFunctionCall(typinput, strInitVal,
 								   typioparam, -1);
 	pfree(strInitVal);
 	return initVal;

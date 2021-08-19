@@ -150,13 +150,12 @@ hk_depth_search(BipartiteMatchState *state, int u)
 	short	   *pair_vu = state->pair_vu;
 	short	   *u_adj = state->adjacency[u];
 	int			i = u_adj ? u_adj[0] : 0;
-	short		nextdist;
 
 	if (u == 0)
 		return true;
 	if (distance[u] == HK_INFINITY)
 		return false;
-	nextdist = distance[u] + 1;
+	short		nextdist = distance[u] + 1;
 
 	check_stack_depth();
 

@@ -25,9 +25,8 @@ replorigin_desc(StringInfo buf, XLogReaderState *record)
 	{
 		case XLOG_REPLORIGIN_SET:
 			{
-				xl_replorigin_set *xlrec;
 
-				xlrec = (xl_replorigin_set *) rec;
+				xl_replorigin_set *xlrec = (xl_replorigin_set *) rec;
 
 				appendStringInfo(buf, "set %u; lsn %X/%X; force: %d",
 								 xlrec->node_id,
@@ -37,9 +36,8 @@ replorigin_desc(StringInfo buf, XLogReaderState *record)
 			}
 		case XLOG_REPLORIGIN_DROP:
 			{
-				xl_replorigin_drop *xlrec;
 
-				xlrec = (xl_replorigin_drop *) rec;
+				xl_replorigin_drop *xlrec = (xl_replorigin_drop *) rec;
 
 				appendStringInfo(buf, "drop %u", xlrec->node_id);
 				break;

@@ -98,7 +98,6 @@ int8_dist(PG_FUNCTION_ARGS)
 	int64		a = PG_GETARG_INT64(0);
 	int64		b = PG_GETARG_INT64(1);
 	int64		r;
-	int64		ra;
 
 	if (pg_sub_s64_overflow(a, b, &r) ||
 		r == PG_INT64_MIN)
@@ -106,7 +105,7 @@ int8_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 
-	ra = Abs(r);
+	int64		ra = Abs(r);
 
 	PG_RETURN_INT64(ra);
 }

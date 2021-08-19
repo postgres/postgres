@@ -123,12 +123,10 @@ pg_logging_init(const char *argv0)
 
 					if (e)
 					{
-						char	   *name;
-						char	   *value;
 
 						*e = '\0';
-						name = token;
-						value = e + 1;
+						char	   *name = token;
+						char	   *value = e + 1;
 
 						if (strcmp(name, "error") == 0)
 							sgr_error = strdup(value);
@@ -210,8 +208,6 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 	const char *filename = NULL;
 	uint64		lineno = 0;
 	va_list		ap2;
-	size_t		required_len;
-	char	   *buf;
 
 	Assert(progname);
 	Assert(level);
@@ -282,10 +278,10 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 	errno = save_errno;
 
 	va_copy(ap2, ap);
-	required_len = vsnprintf(NULL, 0, fmt, ap2) + 1;
+	size_t		required_len = vsnprintf(NULL, 0, fmt, ap2) + 1;
 	va_end(ap2);
 
-	buf = pg_malloc_extended(required_len, MCXT_ALLOC_NO_OOM);
+	char	   *buf = pg_malloc_extended(required_len, MCXT_ALLOC_NO_OOM);
 
 	errno = save_errno;			/* malloc might change errno */
 

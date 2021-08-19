@@ -96,7 +96,6 @@ control_cksum(uint8 *msg, int msglen)
 static int
 decrypt_elgamal(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 {
-	int			res;
 	PGP_MPI    *c1 = NULL;
 	PGP_MPI    *c2 = NULL;
 
@@ -104,7 +103,7 @@ decrypt_elgamal(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 		return PXE_PGP_WRONG_KEY;
 
 	/* read elgamal encrypted data */
-	res = pgp_mpi_read(pkt, &c1);
+	int			res = pgp_mpi_read(pkt, &c1);
 	if (res < 0)
 		goto out;
 	res = pgp_mpi_read(pkt, &c2);
@@ -123,7 +122,6 @@ out:
 static int
 decrypt_rsa(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 {
-	int			res;
 	PGP_MPI    *c;
 
 	if (pk->algo != PGP_PUB_RSA_ENCRYPT
@@ -131,7 +129,7 @@ decrypt_rsa(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 		return PXE_PGP_WRONG_KEY;
 
 	/* read rsa encrypted data */
-	res = pgp_mpi_read(pkt, &c);
+	int			res = pgp_mpi_read(pkt, &c);
 	if (res < 0)
 		return res;
 
@@ -151,14 +149,11 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 {
 	int			ver;
 	int			algo;
-	int			res;
 	uint8		key_id[8];
-	PGP_PubKey *pk;
-	uint8	   *msg;
 	int			msglen;
 	PGP_MPI    *m;
 
-	pk = ctx->pub_key;
+	PGP_PubKey *pk = ctx->pub_key;
 	if (pk == NULL)
 	{
 		px_debug("no pubkey?");
@@ -175,7 +170,7 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	/*
 	 * check if keyid's match - user-friendly msg
 	 */
-	res = pullf_read_fixed(pkt, 8, key_id);
+	int			res = pullf_read_fixed(pkt, 8, key_id);
 	if (res < 0)
 		return res;
 	if (memcmp(key_id, any_key, 8) != 0
@@ -207,7 +202,7 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	/*
 	 * extract message
 	 */
-	msg = check_eme_pkcs1_v15(m->data, m->bytes);
+	uint8	   *msg = check_eme_pkcs1_v15(m->data, m->bytes);
 	if (msg == NULL)
 	{
 		px_debug("check_eme_pkcs1_v15 failed");

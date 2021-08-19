@@ -238,10 +238,7 @@ match_pattern_prefix(Node *leftop,
 					 Oid indexcollation)
 {
 	List	   *result;
-	Const	   *patt;
 	Const	   *prefix;
-	Pattern_Prefix_Status pstatus;
-	Oid			ldatatype;
 	Oid			rdatatype;
 	Oid			eqopr;
 	Oid			ltopr;
@@ -249,7 +246,6 @@ match_pattern_prefix(Node *leftop,
 	bool		collation_aware;
 	Expr	   *expr;
 	FmgrInfo	ltproc;
-	Const	   *greaterstr;
 
 	/*
 	 * Can't do anything with a non-constant or NULL pattern argument.
@@ -261,7 +257,7 @@ match_pattern_prefix(Node *leftop,
 	if (!IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 		return NIL;
-	patt = (Const *) rightop;
+	Const	   *patt = (Const *) rightop;
 
 	/*
 	 * Not supported if the expression collation is nondeterministic.  The
@@ -282,7 +278,7 @@ match_pattern_prefix(Node *leftop,
 	/*
 	 * Try to extract a fixed prefix from the pattern.
 	 */
-	pstatus = pattern_fixed_prefix(patt, ptype, expr_coll,
+	Pattern_Prefix_Status pstatus = pattern_fixed_prefix(patt, ptype, expr_coll,
 								   &prefix, NULL);
 
 	/* fail if no fixed prefix */
@@ -298,7 +294,7 @@ match_pattern_prefix(Node *leftop,
 	 * selected operators also determine the needed type of the prefix
 	 * constant.
 	 */
-	ldatatype = exprType(leftop);
+	Oid			ldatatype = exprType(leftop);
 	switch (ldatatype)
 	{
 		case TEXTOID:
@@ -431,7 +427,7 @@ match_pattern_prefix(Node *leftop,
 	if (!op_in_opfamily(ltopr, opfamily))
 		return result;
 	fmgr_info(get_opcode(ltopr), &ltproc);
-	greaterstr = make_greater_string(prefix, &ltproc, indexcollation);
+	Const	   *greaterstr = make_greater_string(prefix, &ltproc, indexcollation);
 	if (greaterstr)
 	{
 		expr = make_opclause(ltopr, BOOLOID, false,
@@ -469,15 +465,11 @@ patternsel_common(PlannerInfo *root,
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
-	Datum		constval;
-	Oid			consttype;
 	Oid			vartype;
 	Oid			rdatatype;
 	Oid			eqopr;
 	Oid			ltopr;
 	Oid			geopr;
-	Pattern_Prefix_Status pstatus;
-	Const	   *patt;
 	Const	   *prefix = NULL;
 	Selectivity rest_selec = 0;
 	double		nullfrac = 0.0;
@@ -514,8 +506,8 @@ patternsel_common(PlannerInfo *root,
 		ReleaseVariableStats(vardata);
 		return 0.0;
 	}
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
+	Datum		constval = ((Const *) other)->constvalue;
+	Oid			consttype = ((Const *) other)->consttype;
 
 	/*
 	 * The right-hand const is type text or bytea for all supported operators.
@@ -580,9 +572,8 @@ patternsel_common(PlannerInfo *root,
 	 */
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
-		Form_pg_statistic stats;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
 		nullfrac = stats->stanullfrac;
 	}
 
@@ -595,8 +586,8 @@ patternsel_common(PlannerInfo *root,
 	 * but because we want to be sure we cache compiled regexps under the
 	 * right cache key, so that they can be re-used at runtime.
 	 */
-	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, collation,
+	Const	   *patt = (Const *) other;
+	Pattern_Prefix_Status pstatus = pattern_fixed_prefix(patt, ptype, collation,
 								   &prefix, &rest_selec);
 
 	/*
@@ -638,7 +629,6 @@ patternsel_common(PlannerInfo *root,
 		 * approximate.  (If the MCVs cover a significant part of the total
 		 * population, this gives us a big leg up in accuracy.)
 		 */
-		Selectivity selec;
 		int			hist_size;
 		FmgrInfo	opproc;
 		double		mcv_selec,
@@ -649,14 +639,13 @@ patternsel_common(PlannerInfo *root,
 			opfuncid = get_opcode(oprid);
 		fmgr_info(opfuncid, &opproc);
 
-		selec = histogram_selectivity(&vardata, &opproc, collation,
+		Selectivity selec = histogram_selectivity(&vardata, &opproc, collation,
 									  constval, true,
 									  10, 1, &hist_size);
 
 		/* If not at least 100 entries, use the heuristic method */
 		if (hist_size < 100)
 		{
-			Selectivity heursel;
 			Selectivity prefixsel;
 
 			if (pstatus == Pattern_Prefix_Partial)
@@ -666,7 +655,7 @@ patternsel_common(PlannerInfo *root,
 											   prefix);
 			else
 				prefixsel = 1.0;
-			heursel = prefixsel * rest_selec;
+			Selectivity heursel = prefixsel * rest_selec;
 
 			if (selec < 0)		/* fewer than 10 histogram entries? */
 				selec = heursel;
@@ -966,7 +955,6 @@ static Pattern_Prefix_Status
 like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				  Const **prefix_const, Selectivity *rest_selec)
 {
-	char	   *match;
 	char	   *patt;
 	int			pattlen;
 	Oid			typeid = patt_const->consttype;
@@ -1021,7 +1009,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		Assert((Pointer) bstr == DatumGetPointer(patt_const->constvalue));
 	}
 
-	match = palloc(pattlen + 1);
+	char	   *match = palloc(pattlen + 1);
 	match_pos = 0;
 	for (pos = 0; pos < pattlen; pos++)
 	{
@@ -1075,7 +1063,6 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				   Const **prefix_const, Selectivity *rest_selec)
 {
 	Oid			typeid = patt_const->consttype;
-	char	   *prefix;
 	bool		exact;
 
 	/*
@@ -1089,7 +1076,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				 errmsg("regular-expression matching not supported on type bytea")));
 
 	/* Use the regexp machinery to extract the prefix, if any */
-	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
+	char	   *prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
 								 case_insensitive, collation,
 								 &exact);
 
@@ -1208,15 +1195,12 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 				   Oid collation,
 				   Const *prefixcon)
 {
-	Selectivity prefixsel;
 	FmgrInfo	opproc;
-	Const	   *greaterstrcon;
-	Selectivity eq_sel;
 
 	/* Estimate the selectivity of "x >= prefix" */
 	fmgr_info(get_opcode(geopr), &opproc);
 
-	prefixsel = ineq_histogram_selectivity(root, vardata,
+	Selectivity prefixsel = ineq_histogram_selectivity(root, vardata,
 										   geopr, &opproc, true, true,
 										   collation,
 										   prefixcon->constvalue,
@@ -1232,12 +1216,11 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 * If we can create a string larger than the prefix, say "x < greaterstr".
 	 */
 	fmgr_info(get_opcode(ltopr), &opproc);
-	greaterstrcon = make_greater_string(prefixcon, &opproc, collation);
+	Const	   *greaterstrcon = make_greater_string(prefixcon, &opproc, collation);
 	if (greaterstrcon)
 	{
-		Selectivity topsel;
 
-		topsel = ineq_histogram_selectivity(root, vardata,
+		Selectivity topsel = ineq_histogram_selectivity(root, vardata,
 											ltopr, &opproc, false, false,
 											collation,
 											greaterstrcon->constvalue,
@@ -1268,7 +1251,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 * probably off the end of the histogram, and thus we probably got a very
 	 * small estimate from the >= condition; so we still need to clamp.
 	 */
-	eq_sel = var_eq_const(vardata, eqopr, collation, prefixcon->constvalue,
+	Selectivity eq_sel = var_eq_const(vardata, eqopr, collation, prefixcon->constvalue,
 						  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);
@@ -1586,9 +1569,8 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 
 			if (!suffixchar || suffixcollation != collation)
 			{
-				char	   *best;
 
-				best = "Z";
+				char	   *best = "Z";
 				if (varstr_cmp(best, 1, "z", 1, collation) < 0)
 					best = "z";
 				if (varstr_cmp(best, 1, "y", 1, collation) < 0)
@@ -1629,14 +1611,13 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 	while (len > 0)
 	{
 		int			charlen;
-		unsigned char *lastchar;
 
 		/* Identify the last character --- for bytea, just the last byte */
 		if (datatype == BYTEAOID)
 			charlen = 1;
 		else
 			charlen = len - pg_mbcliplen(workstr, len, len - 1);
-		lastchar = (unsigned char *) (workstr + len - charlen);
+		unsigned char *lastchar = (unsigned char *) (workstr + len - charlen);
 
 		/*
 		 * Try to generate a larger string by incrementing the last character
@@ -1760,11 +1741,10 @@ static Const *
 string_to_bytea_const(const char *str, size_t str_len)
 {
 	bytea	   *bstr = palloc(VARHDRSZ + str_len);
-	Datum		conval;
 
 	memcpy(VARDATA(bstr), str, str_len);
 	SET_VARSIZE(bstr, VARHDRSZ + str_len);
-	conval = PointerGetDatum(bstr);
+	Datum		conval = PointerGetDatum(bstr);
 
 	return makeConst(BYTEAOID, -1, InvalidOid, -1, conval, false, false);
 }

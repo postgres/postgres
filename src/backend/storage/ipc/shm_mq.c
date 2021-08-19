@@ -199,12 +199,11 @@ shm_mq_create(void *address, Size size)
 void
 shm_mq_set_receiver(shm_mq *mq, PGPROC *proc)
 {
-	PGPROC	   *sender;
 
 	SpinLockAcquire(&mq->mq_mutex);
 	Assert(mq->mq_receiver == NULL);
 	mq->mq_receiver = proc;
-	sender = mq->mq_sender;
+	PGPROC	   *sender = mq->mq_sender;
 	SpinLockRelease(&mq->mq_mutex);
 
 	if (sender != NULL)
@@ -217,12 +216,11 @@ shm_mq_set_receiver(shm_mq *mq, PGPROC *proc)
 void
 shm_mq_set_sender(shm_mq *mq, PGPROC *proc)
 {
-	PGPROC	   *receiver;
 
 	SpinLockAcquire(&mq->mq_mutex);
 	Assert(mq->mq_sender == NULL);
 	mq->mq_sender = proc;
-	receiver = mq->mq_receiver;
+	PGPROC	   *receiver = mq->mq_receiver;
 	SpinLockRelease(&mq->mq_mutex);
 
 	if (receiver != NULL)
@@ -235,10 +233,9 @@ shm_mq_set_sender(shm_mq *mq, PGPROC *proc)
 PGPROC *
 shm_mq_get_receiver(shm_mq *mq)
 {
-	PGPROC	   *receiver;
 
 	SpinLockAcquire(&mq->mq_mutex);
-	receiver = mq->mq_receiver;
+	PGPROC	   *receiver = mq->mq_receiver;
 	SpinLockRelease(&mq->mq_mutex);
 
 	return receiver;
@@ -250,10 +247,9 @@ shm_mq_get_receiver(shm_mq *mq)
 PGPROC *
 shm_mq_get_sender(shm_mq *mq)
 {
-	PGPROC	   *sender;
 
 	SpinLockAcquire(&mq->mq_mutex);
-	sender = mq->mq_sender;
+	PGPROC	   *sender = mq->mq_sender;
 	SpinLockRelease(&mq->mq_mutex);
 
 	return sender;
@@ -354,7 +350,6 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 	Size		bytes_written;
 	int			i;
 	int			which_iov = 0;
-	Size		offset;
 
 	Assert(mq->mq_sender == MyProc);
 
@@ -403,10 +398,9 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 
 	/* Write the actual data bytes into the buffer. */
 	Assert(mqh->mqh_partial_bytes <= nbytes);
-	offset = mqh->mqh_partial_bytes;
+	Size		offset = mqh->mqh_partial_bytes;
 	do
 	{
-		Size		chunksize;
 
 		/* Figure out which bytes need to be sent next. */
 		if (offset >= iov[which_iov].len)
@@ -473,7 +467,7 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait)
 		 * isn't a multiple of MAXIMUM_ALIGNOF.  Otherwise, we need to
 		 * MAXALIGN_DOWN the write size.
 		 */
-		chunksize = iov[which_iov].len - offset;
+		Size		chunksize = iov[which_iov].len - offset;
 		if (which_iov + 1 < iovcnt)
 			chunksize = MAXALIGN_DOWN(chunksize);
 		res = shm_mq_send_bytes(mqh, chunksize, &iov[which_iov].data[offset],
@@ -561,7 +555,6 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 	{
 		if (nowait)
 		{
-			int			counterparty_gone;
 
 			/*
 			 * We shouldn't return at this point at all unless the sender
@@ -574,7 +567,7 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 			 * counterparty is definitively gone first, and only afterwards
 			 * check whether the sender ever attached in the first place.
 			 */
-			counterparty_gone = shm_mq_counterparty_gone(mq, mqh->mqh_handle);
+			int			counterparty_gone = shm_mq_counterparty_gone(mq, mqh->mqh_handle);
 			if (shm_mq_get_sender(mq) == NULL)
 			{
 				if (counterparty_gone)
@@ -622,12 +615,11 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 		 */
 		if (mqh->mqh_partial_bytes == 0 && rb >= sizeof(Size))
 		{
-			Size		needed;
 
 			nbytes = *(Size *) rawdata;
 
 			/* If we've already got the whole message, we're done. */
-			needed = MAXALIGN(sizeof(Size)) + MAXALIGN(nbytes);
+			Size		needed = MAXALIGN(sizeof(Size)) + MAXALIGN(nbytes);
 			if (rb >= needed)
 			{
 				mqh->mqh_consume_pending += needed;
@@ -721,13 +713,12 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 		 */
 		if (mqh->mqh_buflen < nbytes)
 		{
-			Size		newbuflen;
 
 			/*
 			 * Increase size to the next power of 2 that's >= nbytes, but
 			 * limit to MaxAllocSize.
 			 */
-			newbuflen = pg_nextpower2_size_t(nbytes);
+			Size		newbuflen = pg_nextpower2_size_t(nbytes);
 			newbuflen = Min(newbuflen, MaxAllocSize);
 
 			if (mqh->mqh_buffer != NULL)
@@ -744,7 +735,6 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 	/* Loop until we've copied the entire message. */
 	for (;;)
 	{
-		Size		still_needed;
 
 		/* Copy as much as we can. */
 		Assert(mqh->mqh_partial_bytes + rb <= nbytes);
@@ -765,7 +755,7 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 			break;
 
 		/* Wait for some more data. */
-		still_needed = nbytes - mqh->mqh_partial_bytes;
+		Size		still_needed = nbytes - mqh->mqh_partial_bytes;
 		res = shm_mq_receive_bytes(mqh, still_needed, nowait, &rb, &rawdata);
 		if (res != SHM_MQ_SUCCESS)
 			return res;
@@ -889,12 +879,10 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 
 	while (sent < nbytes)
 	{
-		uint64		rb;
-		uint64		wb;
 
 		/* Compute number of ring buffer bytes used and available. */
-		rb = pg_atomic_read_u64(&mq->mq_bytes_read);
-		wb = pg_atomic_read_u64(&mq->mq_bytes_written);
+		uint64		rb = pg_atomic_read_u64(&mq->mq_bytes_read);
+		uint64		wb = pg_atomic_read_u64(&mq->mq_bytes_written);
 		Assert(wb >= rb);
 		used = wb - rb;
 		Assert(used <= ringsize);
@@ -984,11 +972,9 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, const void *data,
 		}
 		else
 		{
-			Size		offset;
-			Size		sendnow;
 
-			offset = wb % (uint64) ringsize;
-			sendnow = Min(available, ringsize - offset);
+			Size		offset = wb % (uint64) ringsize;
+			Size		sendnow = Min(available, ringsize - offset);
 
 			/*
 			 * Write as much data as we can via a single memcpy(). Make sure
@@ -1043,8 +1029,6 @@ shm_mq_receive_bytes(shm_mq_handle *mqh, Size bytes_needed, bool nowait,
 
 	for (;;)
 	{
-		Size		offset;
-		uint64		read;
 
 		/* Get bytes written, so we can compute what's available to read. */
 		written = pg_atomic_read_u64(&mq->mq_bytes_written);
@@ -1053,11 +1037,11 @@ shm_mq_receive_bytes(shm_mq_handle *mqh, Size bytes_needed, bool nowait,
 		 * Get bytes read.  Include bytes we could consume but have not yet
 		 * consumed.
 		 */
-		read = pg_atomic_read_u64(&mq->mq_bytes_read) +
+		uint64		read = pg_atomic_read_u64(&mq->mq_bytes_read) +
 			mqh->mqh_consume_pending;
 		used = written - read;
 		Assert(used <= ringsize);
-		offset = read % (uint64) ringsize;
+		Size		offset = read % (uint64) ringsize;
 
 		/* If we have enough data or buffer has wrapped, we're done. */
 		if (used >= bytes_needed || offset + used >= ringsize)
@@ -1144,10 +1128,9 @@ shm_mq_counterparty_gone(shm_mq *mq, BackgroundWorkerHandle *handle)
 	/* If there's a handle, check worker status. */
 	if (handle != NULL)
 	{
-		BgwHandleStatus status;
 
 		/* Check for unexpected worker death. */
-		status = GetBackgroundWorkerPid(handle, &pid);
+		BgwHandleStatus status = GetBackgroundWorkerPid(handle, &pid);
 		if (status != BGWH_STARTED && status != BGWH_NOT_YET_STARTED)
 		{
 			/* Mark it detached, just to make it official. */
@@ -1226,7 +1209,6 @@ shm_mq_wait_internal(shm_mq *mq, PGPROC **ptr, BackgroundWorkerHandle *handle)
 static void
 shm_mq_inc_bytes_read(shm_mq *mq, Size n)
 {
-	PGPROC	   *sender;
 
 	/*
 	 * Separate prior reads of mq_ring from the increment of mq_bytes_read
@@ -1248,7 +1230,7 @@ shm_mq_inc_bytes_read(shm_mq *mq, Size n)
 	 * We shouldn't have any bytes to read without a sender, so we can read
 	 * mq_sender here without a lock.  Once it's initialized, it can't change.
 	 */
-	sender = mq->mq_sender;
+	PGPROC	   *sender = mq->mq_sender;
 	Assert(sender != NULL);
 	SetLatch(&sender->procLatch);
 }

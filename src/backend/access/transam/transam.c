@@ -51,7 +51,6 @@ static XidStatus TransactionLogFetch(TransactionId transactionId);
 static XidStatus
 TransactionLogFetch(TransactionId transactionId)
 {
-	XidStatus	xidstatus;
 	XLogRecPtr	xidlsn;
 
 	/*
@@ -76,7 +75,7 @@ TransactionLogFetch(TransactionId transactionId)
 	/*
 	 * Get the transaction status.
 	 */
-	xidstatus = TransactionIdGetStatus(transactionId, &xidlsn);
+	XidStatus	xidstatus = TransactionIdGetStatus(transactionId, &xidlsn);
 
 	/*
 	 * Cache it, but DO NOT cache status for unfinished or sub-committed
@@ -124,9 +123,8 @@ TransactionLogFetch(TransactionId transactionId)
 bool							/* true if given transaction committed */
 TransactionIdDidCommit(TransactionId transactionId)
 {
-	XidStatus	xidstatus;
 
-	xidstatus = TransactionLogFetch(transactionId);
+	XidStatus	xidstatus = TransactionLogFetch(transactionId);
 
 	/*
 	 * If it's marked committed, it's committed.
@@ -150,11 +148,10 @@ TransactionIdDidCommit(TransactionId transactionId)
 	 */
 	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{
-		TransactionId parentXid;
 
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return false;
-		parentXid = SubTransGetParent(transactionId);
+		TransactionId parentXid = SubTransGetParent(transactionId);
 		if (!TransactionIdIsValid(parentXid))
 		{
 			elog(WARNING, "no pg_subtrans entry for subcommitted XID %u",
@@ -180,9 +177,8 @@ TransactionIdDidCommit(TransactionId transactionId)
 bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)
 {
-	XidStatus	xidstatus;
 
-	xidstatus = TransactionLogFetch(transactionId);
+	XidStatus	xidstatus = TransactionLogFetch(transactionId);
 
 	/*
 	 * If it's marked aborted, it's aborted.
@@ -198,11 +194,10 @@ TransactionIdDidAbort(TransactionId transactionId)
 	 */
 	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{
-		TransactionId parentXid;
 
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return true;
-		parentXid = SubTransGetParent(transactionId);
+		TransactionId parentXid = SubTransGetParent(transactionId);
 		if (!TransactionIdIsValid(parentXid))
 		{
 			/* see notes in TransactionIdDidCommit */
@@ -303,12 +298,11 @@ TransactionIdPrecedes(TransactionId id1, TransactionId id2)
 	 * If either ID is a permanent XID then we can just do unsigned
 	 * comparison.  If both are normal, do a modulo-2^32 comparison.
 	 */
-	int32		diff;
 
 	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
 		return (id1 < id2);
 
-	diff = (int32) (id1 - id2);
+	int32		diff = (int32) (id1 - id2);
 	return (diff < 0);
 }
 
@@ -318,12 +312,11 @@ TransactionIdPrecedes(TransactionId id1, TransactionId id2)
 bool
 TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2)
 {
-	int32		diff;
 
 	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
 		return (id1 <= id2);
 
-	diff = (int32) (id1 - id2);
+	int32		diff = (int32) (id1 - id2);
 	return (diff <= 0);
 }
 
@@ -333,12 +326,11 @@ TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2)
 bool
 TransactionIdFollows(TransactionId id1, TransactionId id2)
 {
-	int32		diff;
 
 	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
 		return (id1 > id2);
 
-	diff = (int32) (id1 - id2);
+	int32		diff = (int32) (id1 - id2);
 	return (diff > 0);
 }
 
@@ -348,12 +340,11 @@ TransactionIdFollows(TransactionId id1, TransactionId id2)
 bool
 TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2)
 {
-	int32		diff;
 
 	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
 		return (id1 >= id2);
 
-	diff = (int32) (id1 - id2);
+	int32		diff = (int32) (id1 - id2);
 	return (diff >= 0);
 }
 
@@ -365,7 +356,6 @@ TransactionId
 TransactionIdLatest(TransactionId mainxid,
 					int nxids, const TransactionId *xids)
 {
-	TransactionId result;
 
 	/*
 	 * In practice it is highly likely that the xids[] array is sorted, and so
@@ -374,7 +364,7 @@ TransactionIdLatest(TransactionId mainxid,
 	 * that assumption.  But just to show we're not totally stupid, scan the
 	 * array back-to-front to avoid useless assignments.
 	 */
-	result = mainxid;
+	TransactionId result = mainxid;
 	while (--nxids >= 0)
 	{
 		if (TransactionIdPrecedes(result, xids[nxids]))

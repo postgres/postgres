@@ -159,16 +159,14 @@ EnableQueryId(void)
 static uint64
 compute_utility_query_id(const char *query_text, int query_location, int query_len)
 {
-	uint64		queryId;
-	const char *sql;
 
 	/*
 	 * Confine our attention to the relevant part of the string, if the query
 	 * is a portion of a multi-statement source string.
 	 */
-	sql = CleanQuerytext(query_text, &query_location, &query_len);
+	const char *sql = CleanQuerytext(query_text, &query_location, &query_len);
 
-	queryId = DatumGetUInt64(hash_any_extended((const unsigned char *) sql,
+	uint64		queryId = DatumGetUInt64(hash_any_extended((const unsigned char *) sql,
 											   query_len, 0));
 
 	/*
@@ -198,18 +196,16 @@ AppendJumble(JumbleState *jstate, const unsigned char *item, Size size)
 	 */
 	while (size > 0)
 	{
-		Size		part_size;
 
 		if (jumble_len >= JUMBLE_SIZE)
 		{
-			uint64		start_hash;
 
-			start_hash = DatumGetUInt64(hash_any_extended(jumble,
+			uint64		start_hash = DatumGetUInt64(hash_any_extended(jumble,
 														  JUMBLE_SIZE, 0));
 			memcpy(jumble, &start_hash, sizeof(start_hash));
 			jumble_len = sizeof(start_hash);
 		}
-		part_size = Min(size, JUMBLE_SIZE - jumble_len);
+		Size		part_size = Min(size, JUMBLE_SIZE - jumble_len);
 		memcpy(jumble + jumble_len, item, part_size);
 		jumble_len += part_size;
 		item += part_size;

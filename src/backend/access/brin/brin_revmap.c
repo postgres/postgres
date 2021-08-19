@@ -71,18 +71,14 @@ BrinRevmap *
 brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange,
 					 Snapshot snapshot)
 {
-	BrinRevmap *revmap;
-	Buffer		meta;
-	BrinMetaPageData *metadata;
-	Page		page;
 
-	meta = ReadBuffer(idxrel, BRIN_METAPAGE_BLKNO);
+	Buffer		meta = ReadBuffer(idxrel, BRIN_METAPAGE_BLKNO);
 	LockBuffer(meta, BUFFER_LOCK_SHARE);
-	page = BufferGetPage(meta);
+	Page		page = BufferGetPage(meta);
 	TestForOldSnapshot(snapshot, idxrel, page);
-	metadata = (BrinMetaPageData *) PageGetContents(page);
+	BrinMetaPageData *metadata = (BrinMetaPageData *) PageGetContents(page);
 
-	revmap = palloc(sizeof(BrinRevmap));
+	BrinRevmap *revmap = palloc(sizeof(BrinRevmap));
 	revmap->rm_irel = idxrel;
 	revmap->rm_pagesPerRange = metadata->pagesPerRange;
 	revmap->rm_lastRevmapPage = metadata->lastRevmapPage;
@@ -136,9 +132,8 @@ brinRevmapExtend(BrinRevmap *revmap, BlockNumber heapBlk)
 Buffer
 brinLockRevmapPageForUpdate(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	Buffer		rmBuf;
 
-	rmBuf = revmap_get_buffer(revmap, heapBlk);
+	Buffer		rmBuf = revmap_get_buffer(revmap, heapBlk);
 	LockBuffer(rmBuf, BUFFER_LOCK_EXCLUSIVE);
 
 	return rmBuf;
@@ -158,14 +153,11 @@ void
 brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
 						BlockNumber heapBlk, ItemPointerData tid)
 {
-	RevmapContents *contents;
-	ItemPointerData *iptr;
-	Page		page;
 
 	/* The correct page should already be pinned and locked */
-	page = BufferGetPage(buf);
-	contents = (RevmapContents *) PageGetContents(page);
-	iptr = (ItemPointerData *) contents->rm_tids;
+	Page		page = BufferGetPage(buf);
+	RevmapContents *contents = (RevmapContents *) PageGetContents(page);
+	ItemPointerData *iptr = (ItemPointerData *) contents->rm_tids;
 	iptr += HEAPBLK_TO_REVMAP_INDEX(pagesPerRange, heapBlk);
 
 	if (ItemPointerIsValid(&tid))
@@ -199,7 +191,6 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 						 Snapshot snapshot)
 {
 	Relation	idxRel = revmap->rm_irel;
-	BlockNumber mapBlk;
 	RevmapContents *contents;
 	ItemPointerData *iptr;
 	BlockNumber blk;
@@ -216,7 +207,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 	 * the revmap page hasn't been created yet), the requested page range is
 	 * not summarized.
 	 */
-	mapBlk = revmap_get_blkno(revmap, heapBlk);
+	BlockNumber mapBlk = revmap_get_blkno(revmap, heapBlk);
 	if (mapBlk == InvalidBlockNumber)
 	{
 		*off = InvalidOffsetNumber;
@@ -327,23 +318,12 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 bool
 brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 {
-	BrinRevmap *revmap;
 	BlockNumber pagesPerRange;
-	RevmapContents *contents;
-	ItemPointerData *iptr;
 	ItemPointerData invalidIptr;
-	BlockNumber revmapBlk;
-	Buffer		revmapBuf;
-	Buffer		regBuf;
-	Page		revmapPg;
-	Page		regPg;
-	OffsetNumber revmapOffset;
-	OffsetNumber regOffset;
-	ItemId		lp;
 
-	revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
+	BrinRevmap *revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
 
-	revmapBlk = revmap_get_blkno(revmap, heapBlk);
+	BlockNumber revmapBlk = revmap_get_blkno(revmap, heapBlk);
 	if (!BlockNumberIsValid(revmapBlk))
 	{
 		/* revmap page doesn't exist: range not summarized, we're done */
@@ -352,12 +332,12 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	}
 
 	/* Lock the revmap page, obtain the index tuple pointer from it */
-	revmapBuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
-	revmapPg = BufferGetPage(revmapBuf);
-	revmapOffset = HEAPBLK_TO_REVMAP_INDEX(revmap->rm_pagesPerRange, heapBlk);
+	Buffer		revmapBuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
+	Page		revmapPg = BufferGetPage(revmapBuf);
+	OffsetNumber revmapOffset = HEAPBLK_TO_REVMAP_INDEX(revmap->rm_pagesPerRange, heapBlk);
 
-	contents = (RevmapContents *) PageGetContents(revmapPg);
-	iptr = contents->rm_tids;
+	RevmapContents *contents = (RevmapContents *) PageGetContents(revmapPg);
+	ItemPointerData *iptr = contents->rm_tids;
 	iptr += revmapOffset;
 
 	if (!ItemPointerIsValid(iptr))
@@ -368,9 +348,9 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		return true;
 	}
 
-	regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
+	Buffer		regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
 	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
-	regPg = BufferGetPage(regBuf);
+	Page		regPg = BufferGetPage(regBuf);
 
 	/*
 	 * We're only removing data, not reading it, so there's no need to
@@ -386,13 +366,13 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		return false;
 	}
 
-	regOffset = ItemPointerGetOffsetNumber(iptr);
+	OffsetNumber regOffset = ItemPointerGetOffsetNumber(iptr);
 	if (regOffset > PageGetMaxOffsetNumber(regPg))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("corrupted BRIN index: inconsistent range map")));
 
-	lp = PageGetItemId(regPg, regOffset);
+	ItemId		lp = PageGetItemId(regPg, regOffset);
 	if (!ItemIdIsUsed(lp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -419,7 +399,6 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	if (RelationNeedsWAL(idxrel))
 	{
 		xl_brin_desummarize xlrec;
-		XLogRecPtr	recptr;
 
 		xlrec.pagesPerRange = revmap->rm_pagesPerRange;
 		xlrec.heapBlk = heapBlk;
@@ -429,7 +408,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		XLogRegisterData((char *) &xlrec, SizeOfBrinDesummarize);
 		XLogRegisterBuffer(0, revmapBuf, 0);
 		XLogRegisterBuffer(1, regBuf, REGBUF_STANDARD);
-		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_DESUMMARIZE);
+		XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_DESUMMARIZE);
 		PageSetLSN(revmapPg, recptr);
 		PageSetLSN(regPg, recptr);
 	}
@@ -451,10 +430,9 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 static BlockNumber
 revmap_get_blkno(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber targetblk;
 
 	/* obtain revmap block number, skip 1 for metapage block */
-	targetblk = HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk) + 1;
+	BlockNumber targetblk = HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk) + 1;
 
 	/* Normal case: the revmap page is already allocated */
 	if (targetblk <= revmap->rm_lastRevmapPage)
@@ -472,10 +450,9 @@ revmap_get_blkno(BrinRevmap *revmap, BlockNumber heapBlk)
 static Buffer
 revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber mapBlk;
 
 	/* Translate the heap block number to physical index location. */
-	mapBlk = revmap_get_blkno(revmap, heapBlk);
+	BlockNumber mapBlk = revmap_get_blkno(revmap, heapBlk);
 
 	if (mapBlk == InvalidBlockNumber)
 		elog(ERROR, "revmap does not cover heap block %u", heapBlk);
@@ -509,10 +486,9 @@ revmap_get_buffer(BrinRevmap *revmap, BlockNumber heapBlk)
 static BlockNumber
 revmap_extend_and_get_blkno(BrinRevmap *revmap, BlockNumber heapBlk)
 {
-	BlockNumber targetblk;
 
 	/* obtain revmap block number, skip 1 for metapage block */
-	targetblk = HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk) + 1;
+	BlockNumber targetblk = HEAPBLK_TO_REVMAP_BLK(revmap->rm_pagesPerRange, heapBlk) + 1;
 
 	/* Extend the revmap, if necessary */
 	while (targetblk > revmap->rm_lastRevmapPage)
@@ -533,10 +509,6 @@ revmap_physical_extend(BrinRevmap *revmap)
 {
 	Buffer		buf;
 	Page		page;
-	Page		metapage;
-	BrinMetaPageData *metadata;
-	BlockNumber mapBlk;
-	BlockNumber nblocks;
 	Relation	irel = revmap->rm_irel;
 	bool		needLock = !RELATION_IS_LOCAL(irel);
 
@@ -546,8 +518,8 @@ revmap_physical_extend(BrinRevmap *revmap)
 	 * another backend can extend the index with regular BRIN pages.
 	 */
 	LockBuffer(revmap->rm_metaBuf, BUFFER_LOCK_EXCLUSIVE);
-	metapage = BufferGetPage(revmap->rm_metaBuf);
-	metadata = (BrinMetaPageData *) PageGetContents(metapage);
+	Page		metapage = BufferGetPage(revmap->rm_metaBuf);
+	BrinMetaPageData *metadata = (BrinMetaPageData *) PageGetContents(metapage);
 
 	/*
 	 * Check that our cached lastRevmapPage value was up-to-date; if it
@@ -559,9 +531,9 @@ revmap_physical_extend(BrinRevmap *revmap)
 		LockBuffer(revmap->rm_metaBuf, BUFFER_LOCK_UNLOCK);
 		return;
 	}
-	mapBlk = metadata->lastRevmapPage + 1;
+	BlockNumber mapBlk = metadata->lastRevmapPage + 1;
 
-	nblocks = RelationGetNumberOfBlocks(irel);
+	BlockNumber nblocks = RelationGetNumberOfBlocks(irel);
 	if (mapBlk < nblocks)
 	{
 		buf = ReadBuffer(irel, mapBlk);
@@ -641,7 +613,6 @@ revmap_physical_extend(BrinRevmap *revmap)
 	if (RelationNeedsWAL(revmap->rm_irel))
 	{
 		xl_brin_revmap_extend xlrec;
-		XLogRecPtr	recptr;
 
 		xlrec.targetBlk = mapBlk;
 
@@ -651,7 +622,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 
 		XLogRegisterBuffer(1, buf, REGBUF_WILL_INIT);
 
-		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_REVMAP_EXTEND);
+		XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_REVMAP_EXTEND);
 		PageSetLSN(metapage, recptr);
 		PageSetLSN(page, recptr);
 	}

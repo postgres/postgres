@@ -497,7 +497,6 @@ pgss_shmem_startup(void)
 	bool		found;
 	HASHCTL		info;
 	FILE	   *file = NULL;
-	FILE	   *qfile = NULL;
 	uint32		header;
 	int32		num;
 	int32		pgver;
@@ -566,7 +565,7 @@ pgss_shmem_startup(void)
 	unlink(PGSS_TEXT_FILE);
 
 	/* Allocate new query text temp file */
-	qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+	FILE	   *qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
 	if (qfile == NULL)
 		goto write_error;
 
@@ -718,7 +717,6 @@ fail:
 static void
 pgss_shmem_shutdown(int code, Datum arg)
 {
-	FILE	   *file;
 	char	   *qbuffer = NULL;
 	Size		qbuffer_size = 0;
 	HASH_SEQ_STATUS hash_seq;
@@ -737,7 +735,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 	if (!pgss_save)
 		return;
 
-	file = AllocateFile(PGSS_DUMP_FILE ".tmp", PG_BINARY_W);
+	FILE	   *file = AllocateFile(PGSS_DUMP_FILE ".tmp", PG_BINARY_W);
 	if (file == NULL)
 		goto error;
 
@@ -978,9 +976,8 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		 */
 		if (queryDesc->totaltime == NULL)
 		{
-			MemoryContext oldcxt;
 
-			oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+			MemoryContext oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
 			queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
 			MemoryContextSwitchTo(oldcxt);
 		}
@@ -1114,7 +1111,6 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	{
 		instr_time	start;
 		instr_time	duration;
-		uint64		rows;
 		BufferUsage bufusage_start,
 					bufusage;
 		WalUsage	walusage_start,
@@ -1150,7 +1146,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		 * statements of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED
 		 * VIEW, REFRESH MATERIALIZED VIEW and SELECT INTO.
 		 */
-		rows = (qc && (qc->commandTag == CMDTAG_COPY ||
+		uint64		rows = (qc && (qc->commandTag == CMDTAG_COPY ||
 					   qc->commandTag == CMDTAG_FETCH ||
 					   qc->commandTag == CMDTAG_SELECT ||
 					   qc->commandTag == CMDTAG_REFRESH_MATERIALIZED_VIEW)) ?
@@ -1213,7 +1209,6 @@ pgss_store(const char *query, uint64 queryId,
 		   JumbleState *jstate)
 {
 	pgssHashKey key;
-	pgssEntry  *entry;
 	char	   *norm_query = NULL;
 	int			encoding = GetDatabaseEncoding();
 
@@ -1250,15 +1245,13 @@ pgss_store(const char *query, uint64 queryId,
 	/* Lookup the hash table entry with shared lock. */
 	LWLockAcquire(pgss->lock, LW_SHARED);
 
-	entry = (pgssEntry *) hash_search(pgss_hash, &key, HASH_FIND, NULL);
+	pgssEntry  *entry = (pgssEntry *) hash_search(pgss_hash, &key, HASH_FIND, NULL);
 
 	/* Create new entry, if not present */
 	if (!entry)
 	{
 		Size		query_offset;
 		int			gc_count;
-		bool		stored;
-		bool		do_gc;
 
 		/*
 		 * Create a new, normalized query string if caller asked.  We don't
@@ -1277,7 +1270,7 @@ pgss_store(const char *query, uint64 queryId,
 		}
 
 		/* Append new query text to file with only shared lock held */
-		stored = qtext_store(norm_query ? norm_query : query, query_len,
+		bool		stored = qtext_store(norm_query ? norm_query : query, query_len,
 							 &query_offset, &gc_count);
 
 		/*
@@ -1285,7 +1278,7 @@ pgss_store(const char *query, uint64 queryId,
 		 * while the shared lock is still held.  This micro-optimization
 		 * avoids taking the time to decide this while holding exclusive lock.
 		 */
-		do_gc = need_gc_qtexts();
+		bool		do_gc = need_gc_qtexts();
 
 		/* Need exclusive lock to make a new hashtable entry - promote */
 		LWLockRelease(pgss->lock);
@@ -1395,13 +1388,10 @@ done:
 Datum
 pg_stat_statements_reset_1_7(PG_FUNCTION_ARGS)
 {
-	Oid			userid;
-	Oid			dbid;
-	uint64		queryid;
 
-	userid = PG_GETARG_OID(0);
-	dbid = PG_GETARG_OID(1);
-	queryid = (uint64) PG_GETARG_INT64(2);
+	Oid			userid = PG_GETARG_OID(0);
+	Oid			dbid = PG_GETARG_OID(1);
+	uint64		queryid = (uint64) PG_GETARG_INT64(2);
 
 	entry_reset(userid, dbid, queryid);
 
@@ -1499,11 +1489,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	Oid			userid = GetUserId();
-	bool		is_allowed_role = false;
 	char	   *qbuffer = NULL;
 	Size		qbuffer_size = 0;
 	Size		extent = 0;
@@ -1512,7 +1498,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	pgssEntry  *entry;
 
 	/* Superusers or members of pg_read_all_stats members are allowed */
-	is_allowed_role = is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS);
+	bool		is_allowed_role = is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS);
 
 	/* hash table must exist already */
 	if (!pgss || !pgss_hash)
@@ -1531,8 +1517,8 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* Switch into long-lived context to construct returned data structures */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -1575,7 +1561,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			elog(ERROR, "incorrect number of output arguments");
 	}
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1679,9 +1665,8 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 				if (qstr)
 				{
-					char	   *enc;
 
-					enc = pg_any_to_server(qstr,
+					char	   *enc = pg_any_to_server(qstr,
 										   entry->query_len,
 										   entry->encoding);
 
@@ -1863,9 +1848,8 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 static Size
 pgss_memsize(void)
 {
-	Size		size;
 
-	size = MAXALIGN(sizeof(pgssSharedState));
+	Size		size = MAXALIGN(sizeof(pgssSharedState));
 	size = add_size(size, hash_estimate_size(pgss_max, sizeof(pgssEntry)));
 
 	return size;
@@ -1892,7 +1876,6 @@ static pgssEntry *
 entry_alloc(pgssHashKey *key, Size query_offset, int query_len, int encoding,
 			bool sticky)
 {
-	pgssEntry  *entry;
 	bool		found;
 
 	/* Make space if needed */
@@ -1900,7 +1883,7 @@ entry_alloc(pgssHashKey *key, Size query_offset, int query_len, int encoding,
 		entry_dealloc();
 
 	/* Find or create an entry with desired hash code */
-	entry = (pgssEntry *) hash_search(pgss_hash, key, HASH_ENTER, &found);
+	pgssEntry  *entry = (pgssEntry *) hash_search(pgss_hash, key, HASH_ENTER, &found);
 
 	if (!found)
 	{
@@ -1948,12 +1931,7 @@ static void
 entry_dealloc(void)
 {
 	HASH_SEQ_STATUS hash_seq;
-	pgssEntry **entries;
 	pgssEntry  *entry;
-	int			nvictims;
-	int			i;
-	Size		tottextlen;
-	int			nvalidtexts;
 
 	/*
 	 * Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them.
@@ -1967,11 +1945,11 @@ entry_dealloc(void)
 	 * cur_median_usage includes the entries we're about to zap.
 	 */
 
-	entries = palloc(hash_get_num_entries(pgss_hash) * sizeof(pgssEntry *));
+	pgssEntry **entries = palloc(hash_get_num_entries(pgss_hash) * sizeof(pgssEntry *));
 
-	i = 0;
-	tottextlen = 0;
-	nvalidtexts = 0;
+	int			i = 0;
+	Size		tottextlen = 0;
+	int			nvalidtexts = 0;
 
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
@@ -2003,7 +1981,7 @@ entry_dealloc(void)
 		pgss->mean_query_len = ASSUMED_LENGTH_INIT;
 
 	/* Now zap an appropriate fraction of lowest-usage entries */
-	nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
+	int			nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
 	nvictims = Min(nvictims, i);
 
 	for (i = 0; i < nvictims; i++)
@@ -2044,7 +2022,6 @@ qtext_store(const char *query, int query_len,
 			Size *query_offset, int *gc_count)
 {
 	Size		off;
-	int			fd;
 
 	/*
 	 * We use a spinlock to protect extent/n_writers/gc_count, so that
@@ -2065,7 +2042,7 @@ qtext_store(const char *query, int query_len,
 	*query_offset = off;
 
 	/* Now write the data into the successfully-reserved part of the file */
-	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY);
+	int			fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY);
 	if (fd < 0)
 		goto error;
 
@@ -2123,10 +2100,9 @@ static char *
 qtext_load_file(Size *buffer_size)
 {
 	char	   *buf;
-	int			fd;
 	struct stat stat;
 
-	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
@@ -2272,7 +2248,6 @@ need_gc_qtexts(void)
 static void
 gc_qtexts(void)
 {
-	char	   *qbuffer;
 	Size		qbuffer_size;
 	FILE	   *qfile = NULL;
 	HASH_SEQ_STATUS hash_seq;
@@ -2295,7 +2270,7 @@ gc_qtexts(void)
 	 * file is only going to get bigger; hoping for a future non-OOM result is
 	 * risky and can easily lead to complete denial of service.
 	 */
-	qbuffer = qtext_load_file(&qbuffer_size);
+	char	   *qbuffer = qtext_load_file(&qbuffer_size);
 	if (qbuffer == NULL)
 		goto gc_fail;
 
@@ -2459,7 +2434,6 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid)
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 	FILE	   *qfile;
-	long		num_entries;
 	long		num_remove = 0;
 	pgssHashKey key;
 
@@ -2469,7 +2443,7 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid)
 				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
 
 	LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
-	num_entries = hash_get_num_entries(pgss_hash);
+	long		num_entries = hash_get_num_entries(pgss_hash);
 
 	if (userid != 0 && dbid != 0 && queryid != UINT64CONST(0))
 	{
@@ -2592,7 +2566,6 @@ static char *
 generate_normalized_query(JumbleState *jstate, const char *query,
 						  int query_loc, int *query_len_p)
 {
-	char	   *norm_query;
 	int			query_len = *query_len_p;
 	int			i,
 				norm_query_buflen,	/* Space allowed for norm_query */
@@ -2618,7 +2591,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 	norm_query_buflen = query_len + jstate->clocations_count * 10;
 
 	/* Allocate result buffer */
-	norm_query = palloc(norm_query_buflen + 1);
+	char	   *norm_query = palloc(norm_query_buflen + 1);
 
 	for (i = 0; i < jstate->clocations_count; i++)
 	{
@@ -2699,8 +2672,6 @@ static void
 fill_in_constant_lengths(JumbleState *jstate, const char *query,
 						 int query_loc)
 {
-	LocationLen *locs;
-	core_yyscan_t yyscanner;
 	core_yy_extra_type yyextra;
 	core_YYSTYPE yylval;
 	YYLTYPE		yylloc;
@@ -2714,10 +2685,10 @@ fill_in_constant_lengths(JumbleState *jstate, const char *query,
 	if (jstate->clocations_count > 1)
 		qsort(jstate->clocations, jstate->clocations_count,
 			  sizeof(LocationLen), comp_location);
-	locs = jstate->clocations;
+	LocationLen *locs = jstate->clocations;
 
 	/* initialize the flex scanner --- should match raw_parser() */
-	yyscanner = scanner_init(query,
+	core_yyscan_t yyscanner = scanner_init(query,
 							 &yyextra,
 							 &ScanKeywords,
 							 ScanKeywordTokens);

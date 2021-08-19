@@ -105,7 +105,6 @@ macaddr8_in(PG_FUNCTION_ARGS)
 {
 	const unsigned char *str = (unsigned char *) PG_GETARG_CSTRING(0);
 	const unsigned char *ptr = str;
-	macaddr8   *result;
 	unsigned char a = 0,
 				b = 0,
 				c = 0,
@@ -221,7 +220,7 @@ macaddr8_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
 						str)));
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
 	result->a = a;
 	result->b = b;
@@ -242,9 +241,8 @@ Datum
 macaddr8_out(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
-	char	   *result;
 
-	result = (char *) palloc(32);
+	char	   *result = (char *) palloc(32);
 
 	snprintf(result, 32, "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
 			 addr->a, addr->b, addr->c, addr->d,
@@ -262,9 +260,8 @@ Datum
 macaddr8_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	macaddr8   *addr;
 
-	addr = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *addr = (macaddr8 *) palloc0(sizeof(macaddr8));
 
 	addr->a = pq_getmsgbyte(buf);
 	addr->b = pq_getmsgbyte(buf);
@@ -423,9 +420,8 @@ Datum
 macaddr8_not(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -443,9 +439,8 @@ macaddr8_and(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr1 = PG_GETARG_MACADDR8_P(0);
 	macaddr8   *addr2 = PG_GETARG_MACADDR8_P(1);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -463,9 +458,8 @@ macaddr8_or(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr1 = PG_GETARG_MACADDR8_P(0);
 	macaddr8   *addr2 = PG_GETARG_MACADDR8_P(1);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;
@@ -485,9 +479,8 @@ Datum
 macaddr8_trunc(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
 	result->a = addr->a;
 	result->b = addr->b;
@@ -508,9 +501,8 @@ Datum
 macaddr8_set7bit(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
 	result->a = addr->a | 0x02;
 	result->b = addr->b;
@@ -532,9 +524,8 @@ Datum
 macaddrtomacaddr8(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr6 = PG_GETARG_MACADDR_P(0);
-	macaddr8   *result;
 
-	result = (macaddr8 *) palloc0(sizeof(macaddr8));
+	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
 
 	result->a = addr6->a;
 	result->b = addr6->b;
@@ -553,9 +544,8 @@ Datum
 macaddr8tomacaddr(PG_FUNCTION_ARGS)
 {
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
-	macaddr    *result;
 
-	result = (macaddr *) palloc0(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc0(sizeof(macaddr));
 
 	if ((addr->d != 0xFF) || (addr->e != 0xFE))
 		ereport(ERROR,

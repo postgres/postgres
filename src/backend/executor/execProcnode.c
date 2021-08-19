@@ -141,7 +141,6 @@ PlanState *
 ExecInitNode(Plan *node, EState *estate, int eflags)
 {
 	PlanState  *result;
-	List	   *subps;
 	ListCell   *l;
 
 	/*
@@ -393,14 +392,13 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	 * Initialize any initPlans present in this node.  The planner put them in
 	 * a separate list for us.
 	 */
-	subps = NIL;
+	List	   *subps = NIL;
 	foreach(l, node->initPlan)
 	{
 		SubPlan    *subplan = (SubPlan *) lfirst(l);
-		SubPlanState *sstate;
 
 		Assert(IsA(subplan, SubPlan));
-		sstate = ExecInitSubPlan(subplan, result);
+		SubPlanState *sstate = ExecInitSubPlan(subplan, result);
 		subps = lappend(subps, sstate);
 	}
 	result->initPlan = subps;
@@ -472,11 +470,10 @@ ExecProcNodeFirst(PlanState *node)
 static TupleTableSlot *
 ExecProcNodeInstr(PlanState *node)
 {
-	TupleTableSlot *result;
 
 	InstrStartNode(node->instrument);
 
-	result = node->ExecProcNodeReal(node);
+	TupleTableSlot *result = node->ExecProcNodeReal(node);
 
 	InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
 

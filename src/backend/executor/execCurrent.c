@@ -47,9 +47,6 @@ execCurrentOf(CurrentOfExpr *cexpr,
 			  ItemPointer current_tid)
 {
 	char	   *cursor_name;
-	char	   *table_name;
-	Portal		portal;
-	QueryDesc  *queryDesc;
 
 	/* Get the cursor name --- may have to look up a parameter reference */
 	if (cexpr->cursor_name)
@@ -58,12 +55,12 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		cursor_name = fetch_cursor_param_value(econtext, cexpr->cursor_param);
 
 	/* Fetch table name for possible use in error messages */
-	table_name = get_rel_name(table_oid);
+	char	   *table_name = get_rel_name(table_oid);
 	if (table_name == NULL)
 		elog(ERROR, "cache lookup failed for relation %u", table_oid);
 
 	/* Find the cursor's portal */
-	portal = GetPortalByName(cursor_name);
+	Portal		portal = GetPortalByName(cursor_name);
 	if (!PortalIsValid(portal))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
@@ -78,7 +75,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cursor \"%s\" is not a SELECT query",
 						cursor_name)));
-	queryDesc = portal->queryDesc;
+	QueryDesc  *queryDesc = portal->queryDesc;
 	if (queryDesc == NULL || queryDesc->estate == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -94,14 +91,13 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	 */
 	if (queryDesc->estate->es_rowmarks)
 	{
-		ExecRowMark *erm;
 		Index		i;
 
 		/*
 		 * Here, the query must have exactly one FOR UPDATE/SHARE reference to
 		 * the target table, and we dig the ctid info out of that.
 		 */
-		erm = NULL;
+		ExecRowMark *erm = NULL;
 		for (i = 0; i < queryDesc->estate->es_range_table_size; i++)
 		{
 			ExecRowMark *thiserm = queryDesc->estate->es_rowmarks[i];
@@ -158,10 +154,9 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		 * scan node.  Fail if it's not there or buried underneath
 		 * aggregation.
 		 */
-		ScanState  *scanstate;
 		bool		pending_rescan = false;
 
-		scanstate = search_plan_tree(queryDesc->planstate, table_oid,
+		ScanState  *scanstate = search_plan_tree(queryDesc->planstate, table_oid,
 									 &pending_rescan);
 		if (!scanstate)
 			ereport(ERROR,

@@ -421,13 +421,11 @@ logicalrep_write_insert(StringInfo out, TransactionId xid, Relation rel,
 LogicalRepRelId
 logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup)
 {
-	char		action;
-	LogicalRepRelId relid;
 
 	/* read the relation id */
-	relid = pq_getmsgint(in, 4);
+	LogicalRepRelId relid = pq_getmsgint(in, 4);
 
-	action = pq_getmsgbyte(in);
+	char		action = pq_getmsgbyte(in);
 	if (action != 'N')
 		elog(ERROR, "expected new tuple but got %d",
 			 action);
@@ -478,14 +476,12 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
 					   LogicalRepTupleData *oldtup,
 					   LogicalRepTupleData *newtup)
 {
-	char		action;
-	LogicalRepRelId relid;
 
 	/* read the relation id */
-	relid = pq_getmsgint(in, 4);
+	LogicalRepRelId relid = pq_getmsgint(in, 4);
 
 	/* read and verify action */
-	action = pq_getmsgbyte(in);
+	char		action = pq_getmsgbyte(in);
 	if (action != 'K' && action != 'O' && action != 'N')
 		elog(ERROR, "expected action 'N', 'O' or 'K', got %c",
 			 action);
@@ -547,14 +543,12 @@ logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 LogicalRepRelId
 logicalrep_read_delete(StringInfo in, LogicalRepTupleData *oldtup)
 {
-	char		action;
-	LogicalRepRelId relid;
 
 	/* read the relation id */
-	relid = pq_getmsgint(in, 4);
+	LogicalRepRelId relid = pq_getmsgint(in, 4);
 
 	/* read and verify action */
-	action = pq_getmsgbyte(in);
+	char		action = pq_getmsgbyte(in);
 	if (action != 'K' && action != 'O')
 		elog(ERROR, "expected action 'O' or 'K', got %c", action);
 
@@ -603,14 +597,12 @@ logicalrep_read_truncate(StringInfo in,
 						 bool *cascade, bool *restart_seqs)
 {
 	int			i;
-	int			nrelids;
 	List	   *relids = NIL;
-	uint8		flags;
 
-	nrelids = pq_getmsgint(in, 4);
+	int			nrelids = pq_getmsgint(in, 4);
 
 	/* read and decode truncate flags */
-	flags = pq_getmsgint(in, 1);
+	uint8		flags = pq_getmsgint(in, 1);
 	*cascade = (flags & TRUNCATE_CASCADE) > 0;
 	*restart_seqs = (flags & TRUNCATE_RESTART_SEQS) > 0;
 
@@ -653,7 +645,6 @@ logicalrep_write_message(StringInfo out, TransactionId xid, XLogRecPtr lsn,
 void
 logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel)
 {
-	char	   *relname;
 
 	pq_sendbyte(out, LOGICAL_REP_MSG_RELATION);
 
@@ -666,7 +657,7 @@ logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel)
 
 	/* send qualified relation name */
 	logicalrep_write_namespace(out, RelationGetNamespace(rel));
-	relname = RelationGetRelationName(rel);
+	char	   *relname = RelationGetRelationName(rel);
 	pq_sendstring(out, relname);
 
 	/* send replica identity */
@@ -708,8 +699,6 @@ void
 logicalrep_write_typ(StringInfo out, TransactionId xid, Oid typoid)
 {
 	Oid			basetypoid = getBaseType(typoid);
-	HeapTuple	tup;
-	Form_pg_type typtup;
 
 	pq_sendbyte(out, LOGICAL_REP_MSG_TYPE);
 
@@ -717,10 +706,10 @@ logicalrep_write_typ(StringInfo out, TransactionId xid, Oid typoid)
 	if (TransactionIdIsValid(xid))
 		pq_sendint32(out, xid);
 
-	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(basetypoid));
+	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(basetypoid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", basetypoid);
-	typtup = (Form_pg_type) GETSTRUCT(tup);
+	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* use Oid as relation identifier */
 	pq_sendint32(out, typoid);
@@ -751,13 +740,12 @@ logicalrep_read_typ(StringInfo in, LogicalRepTyp *ltyp)
 static void
 logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binary)
 {
-	TupleDesc	desc;
 	Datum		values[MaxTupleAttributeNumber];
 	bool		isnull[MaxTupleAttributeNumber];
 	int			i;
 	uint16		nliveatts = 0;
 
-	desc = RelationGetDescr(rel);
+	TupleDesc	desc = RelationGetDescr(rel);
 
 	for (i = 0; i < desc->natts; i++)
 	{
@@ -776,8 +764,6 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 	/* Write the values */
 	for (i = 0; i < desc->natts; i++)
 	{
-		HeapTuple	typtup;
-		Form_pg_type typclass;
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
 		if (att->attisdropped || att->attgenerated)
@@ -800,32 +786,29 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 			continue;
 		}
 
-		typtup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(att->atttypid));
+		HeapTuple	typtup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(att->atttypid));
 		if (!HeapTupleIsValid(typtup))
 			elog(ERROR, "cache lookup failed for type %u", att->atttypid);
-		typclass = (Form_pg_type) GETSTRUCT(typtup);
+		Form_pg_type typclass = (Form_pg_type) GETSTRUCT(typtup);
 
 		/*
 		 * Send in binary if requested and type has suitable send function.
 		 */
 		if (binary && OidIsValid(typclass->typsend))
 		{
-			bytea	   *outputbytes;
-			int			len;
 
 			pq_sendbyte(out, LOGICALREP_COLUMN_BINARY);
-			outputbytes = OidSendFunctionCall(typclass->typsend, values[i]);
-			len = VARSIZE(outputbytes) - VARHDRSZ;
+			bytea	   *outputbytes = OidSendFunctionCall(typclass->typsend, values[i]);
+			int			len = VARSIZE(outputbytes) - VARHDRSZ;
 			pq_sendint(out, len, 4);	/* length */
 			pq_sendbytes(out, VARDATA(outputbytes), len);	/* data */
 			pfree(outputbytes);
 		}
 		else
 		{
-			char	   *outputstr;
 
 			pq_sendbyte(out, LOGICALREP_COLUMN_TEXT);
-			outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
+			char	   *outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
 			pq_sendcountedtext(out, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -841,10 +824,9 @@ static void
 logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 {
 	int			i;
-	int			natts;
 
 	/* Get number of attributes */
-	natts = pq_getmsgint(in, 2);
+	int			natts = pq_getmsgint(in, 2);
 
 	/* Allocate space for per-column values; zero out unused StringInfoDatas */
 	tuple->colvalues = (StringInfoData *) palloc0(natts * sizeof(StringInfoData));
@@ -854,11 +836,10 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	/* Read the data */
 	for (i = 0; i < natts; i++)
 	{
-		char		kind;
 		int			len;
 		StringInfo	value = &tuple->colvalues[i];
 
-		kind = pq_getmsgbyte(in);
+		char		kind = pq_getmsgbyte(in);
 		tuple->colstatus[i] = kind;
 
 		switch (kind)
@@ -906,13 +887,11 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 static void
 logicalrep_write_attrs(StringInfo out, Relation rel)
 {
-	TupleDesc	desc;
 	int			i;
 	uint16		nliveatts = 0;
 	Bitmapset  *idattrs = NULL;
-	bool		replidentfull;
 
-	desc = RelationGetDescr(rel);
+	TupleDesc	desc = RelationGetDescr(rel);
 
 	/* send number of live attributes */
 	for (i = 0; i < desc->natts; i++)
@@ -924,7 +903,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 	pq_sendint16(out, nliveatts);
 
 	/* fetch bitmap of REPLICATION IDENTITY attributes */
-	replidentfull = (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL);
+	bool		replidentfull = (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL);
 	if (!replidentfull)
 		idattrs = RelationGetIdentityKeyBitmap(rel);
 
@@ -965,22 +944,18 @@ static void
 logicalrep_read_attrs(StringInfo in, LogicalRepRelation *rel)
 {
 	int			i;
-	int			natts;
-	char	  **attnames;
-	Oid		   *atttyps;
 	Bitmapset  *attkeys = NULL;
 
-	natts = pq_getmsgint(in, 2);
-	attnames = palloc(natts * sizeof(char *));
-	atttyps = palloc(natts * sizeof(Oid));
+	int			natts = pq_getmsgint(in, 2);
+	char	  **attnames = palloc(natts * sizeof(char *));
+	Oid		   *atttyps = palloc(natts * sizeof(Oid));
 
 	/* read the attributes */
 	for (i = 0; i < natts; i++)
 	{
-		uint8		flags;
 
 		/* Check for replica identity column */
-		flags = pq_getmsgbyte(in);
+		uint8		flags = pq_getmsgbyte(in);
 		if (flags & LOGICALREP_IS_REPLICA_IDENTITY)
 			attkeys = bms_add_member(attkeys, i);
 
@@ -1058,11 +1033,10 @@ logicalrep_write_stream_start(StringInfo out,
 TransactionId
 logicalrep_read_stream_start(StringInfo in, bool *first_segment)
 {
-	TransactionId xid;
 
 	Assert(first_segment);
 
-	xid = pq_getmsgint(in, 4);
+	TransactionId xid = pq_getmsgint(in, 4);
 	*first_segment = (pq_getmsgbyte(in) == 1);
 
 	return xid;
@@ -1108,13 +1082,11 @@ logicalrep_write_stream_commit(StringInfo out, ReorderBufferTXN *txn,
 TransactionId
 logicalrep_read_stream_commit(StringInfo in, LogicalRepCommitData *commit_data)
 {
-	TransactionId xid;
-	uint8		flags;
 
-	xid = pq_getmsgint(in, 4);
+	TransactionId xid = pq_getmsgint(in, 4);
 
 	/* read flags (unused for now) */
-	flags = pq_getmsgbyte(in);
+	uint8		flags = pq_getmsgbyte(in);
 
 	if (flags != 0)
 		elog(ERROR, "unrecognized flags %u in commit message", flags);

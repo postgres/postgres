@@ -105,7 +105,6 @@ static size_t _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen);
 void
 InitArchiveFmt_Custom(ArchiveHandle *AH)
 {
-	lclContext *ctx;
 
 	/* Assuming static functions, this can be copied for each format. */
 	AH->ArchiveEntryPtr = _ArchiveEntry;
@@ -137,7 +136,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->WorkerJobRestorePtr = _WorkerJobRestoreCustom;
 
 	/* Set up a private area. */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	lclContext *ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
 	/* Initialize LO buffering */
@@ -202,9 +201,8 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 static void
 _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
-	lclTocEntry *ctx;
 
-	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	lclTocEntry *ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (te->dataDumper)
 		ctx->dataState = K_OFFSET_POS_NOT_SET;
 	else
@@ -572,11 +570,10 @@ _PrintData(ArchiveHandle *AH)
 static void
 _LoadBlobs(ArchiveHandle *AH, bool drop)
 {
-	Oid			oid;
 
 	StartRestoreBlobs(AH);
 
-	oid = ReadInt(AH);
+	Oid			oid = ReadInt(AH);
 	while (oid != 0)
 	{
 		StartRestoreBlob(AH, oid, drop);
@@ -597,9 +594,8 @@ _LoadBlobs(ArchiveHandle *AH, bool drop)
 static void
 _skipBlobs(ArchiveHandle *AH)
 {
-	Oid			oid;
 
-	oid = ReadInt(AH);
+	Oid			oid = ReadInt(AH);
 	while (oid != 0)
 	{
 		_skipData(AH);
@@ -616,11 +612,10 @@ static void
 _skipData(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		blkLen;
 	char	   *buf = NULL;
 	int			buflen = 0;
 
-	blkLen = ReadInt(AH);
+	size_t		blkLen = ReadInt(AH);
 	while (blkLen != 0)
 	{
 		if (ctx->hasSeek)
@@ -680,9 +675,8 @@ _WriteByte(ArchiveHandle *AH, const int i)
 static int
 _ReadByte(ArchiveHandle *AH)
 {
-	int			res;
 
-	res = getc(AH->FH);
+	int			res = getc(AH->FH);
 	if (res == EOF)
 		READ_ERROR_EXIT(AH->FH);
 	return res;
@@ -779,7 +773,6 @@ static void
 _ReopenArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	pgoff_t		tpos;
 
 	if (AH->mode == archModeWrite)
 		fatal("can only reopen input archives");
@@ -793,7 +786,7 @@ _ReopenArchive(ArchiveHandle *AH)
 	if (!ctx->hasSeek)
 		fatal("parallel restore from non-seekable file is not supported");
 
-	tpos = ftello(AH->FH);
+	pgoff_t		tpos = ftello(AH->FH);
 	if (tpos < 0)
 		fatal("could not determine seek position in archive file: %m");
 
@@ -859,11 +852,10 @@ _PrepParallelRestore(ArchiveHandle *AH)
 	/* If OK to seek, we can determine the length of the last item */
 	if (prev_te && ctx->hasSeek)
 	{
-		pgoff_t		endpos;
 
 		if (fseeko(AH->FH, 0, SEEK_END) != 0)
 			fatal("error during file seek: %m");
-		endpos = ftello(AH->FH);
+		pgoff_t		endpos = ftello(AH->FH);
 		if (endpos > prev_tctx->dataPos)
 			prev_te->dataLength = endpos - prev_tctx->dataPos;
 	}
@@ -933,9 +925,8 @@ _WorkerJobRestoreCustom(ArchiveHandle *AH, TocEntry *te)
 static pgoff_t
 _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 {
-	pgoff_t		pos;
 
-	pos = ftello(AH->FH);
+	pgoff_t		pos = ftello(AH->FH);
 	if (pos < 0)
 	{
 		/* Not expected if we found we can seek. */
@@ -1000,10 +991,9 @@ _CustomWriteFunc(ArchiveHandle *AH, const char *buf, size_t len)
 static size_t
 _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 {
-	size_t		blkLen;
 
 	/* Read length */
-	blkLen = ReadInt(AH);
+	size_t		blkLen = ReadInt(AH);
 	if (blkLen == 0)
 		return 0;
 

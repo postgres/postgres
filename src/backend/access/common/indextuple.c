@@ -103,9 +103,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 			(att->attstorage == TYPSTORAGE_EXTENDED ||
 			 att->attstorage == TYPSTORAGE_MAIN))
 		{
-			Datum		cvalue;
 
-			cvalue = toast_compress_datum(untoasted_values[i],
+			Datum		cvalue = toast_compress_datum(untoasted_values[i],
 										  att->attcompression);
 
 			if (DatumGetPointer(cvalue) != NULL)
@@ -284,13 +283,12 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		Form_pg_attribute att;
 
 		/*
 		 * If we get here, there are no nulls up to and including the target
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
-		att = TupleDescAttr(tupleDesc, attnum);
+		Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
 		if (att->attcacheoff >= 0)
 			return fetchatt(att, tp + att->attcacheoff);
 
@@ -527,11 +525,9 @@ index_deform_tuple_internal(TupleDesc tupleDescriptor,
 IndexTuple
 CopyIndexTuple(IndexTuple source)
 {
-	IndexTuple	result;
-	Size		size;
 
-	size = IndexTupleSize(source);
-	result = (IndexTuple) palloc(size);
+	Size		size = IndexTupleSize(source);
+	IndexTuple	result = (IndexTuple) palloc(size);
 	memcpy(result, source, size);
 	return result;
 }
@@ -557,10 +553,8 @@ IndexTuple
 index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 					 int leavenatts)
 {
-	TupleDesc	truncdesc;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
-	IndexTuple	truncated;
 
 	Assert(leavenatts <= sourceDescriptor->natts);
 
@@ -569,13 +563,13 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 		return CopyIndexTuple(source);
 
 	/* Create temporary descriptor to scribble on */
-	truncdesc = palloc(TupleDescSize(sourceDescriptor));
+	TupleDesc	truncdesc = palloc(TupleDescSize(sourceDescriptor));
 	TupleDescCopy(truncdesc, sourceDescriptor);
 	truncdesc->natts = leavenatts;
 
 	/* Deform, form copy of tuple with fewer attributes */
 	index_deform_tuple(source, truncdesc, values, isnull);
-	truncated = index_form_tuple(truncdesc, values, isnull);
+	IndexTuple	truncated = index_form_tuple(truncdesc, values, isnull);
 	truncated->t_tid = source->t_tid;
 	Assert(IndexTupleSize(truncated) <= IndexTupleSize(source));
 

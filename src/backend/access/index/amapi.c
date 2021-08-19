@@ -32,11 +32,9 @@
 IndexAmRoutine *
 GetIndexAmRoutine(Oid amhandler)
 {
-	Datum		datum;
-	IndexAmRoutine *routine;
 
-	datum = OidFunctionCall0(amhandler);
-	routine = (IndexAmRoutine *) DatumGetPointer(datum);
+	Datum		datum = OidFunctionCall0(amhandler);
+	IndexAmRoutine *routine = (IndexAmRoutine *) DatumGetPointer(datum);
 
 	if (routine == NULL || !IsA(routine, IndexAmRoutine))
 		elog(ERROR, "index access method handler function %u did not return an IndexAmRoutine struct",
@@ -55,12 +53,9 @@ GetIndexAmRoutine(Oid amhandler)
 IndexAmRoutine *
 GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
 {
-	HeapTuple	tuple;
-	Form_pg_am	amform;
-	regproc		amhandler;
 
 	/* Get handler function OID for the access method */
-	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
+	HeapTuple	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (noerror)
@@ -68,7 +63,7 @@ GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
 		elog(ERROR, "cache lookup failed for access method %u",
 			 amoid);
 	}
-	amform = (Form_pg_am) GETSTRUCT(tuple);
+	Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tuple);
 
 	/* Check if it's an index access method as opposed to some other AM */
 	if (amform->amtype != AMTYPE_INDEX)
@@ -84,7 +79,7 @@ GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
 						NameStr(amform->amname), "INDEX")));
 	}
 
-	amhandler = amform->amhandler;
+	regproc		amhandler = amform->amhandler;
 
 	/* Complain if handler OID is invalid */
 	if (!RegProcedureIsValid(amhandler))
@@ -114,28 +109,23 @@ Datum
 amvalidate(PG_FUNCTION_ARGS)
 {
 	Oid			opclassoid = PG_GETARG_OID(0);
-	bool		result;
-	HeapTuple	classtup;
-	Form_pg_opclass classform;
-	Oid			amoid;
-	IndexAmRoutine *amroutine;
 
-	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
+	HeapTuple	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup failed for operator class %u", opclassoid);
-	classform = (Form_pg_opclass) GETSTRUCT(classtup);
+	Form_pg_opclass classform = (Form_pg_opclass) GETSTRUCT(classtup);
 
-	amoid = classform->opcmethod;
+	Oid			amoid = classform->opcmethod;
 
 	ReleaseSysCache(classtup);
 
-	amroutine = GetIndexAmRoutineByAmId(amoid, false);
+	IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid, false);
 
 	if (amroutine->amvalidate == NULL)
 		elog(ERROR, "function amvalidate is not defined for index access method %u",
 			 amoid);
 
-	result = amroutine->amvalidate(opclassoid);
+	bool		result = amroutine->amvalidate(opclassoid);
 
 	pfree(amroutine);
 

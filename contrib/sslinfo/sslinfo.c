@@ -53,12 +53,11 @@ PG_FUNCTION_INFO_V1(ssl_version);
 Datum
 ssl_version(PG_FUNCTION_ARGS)
 {
-	const char *version;
 
 	if (!MyProcPort->ssl_in_use)
 		PG_RETURN_NULL();
 
-	version = be_tls_get_version(MyProcPort);
+	const char *version = be_tls_get_version(MyProcPort);
 	if (version == NULL)
 		PG_RETURN_NULL();
 
@@ -73,12 +72,11 @@ PG_FUNCTION_INFO_V1(ssl_cipher);
 Datum
 ssl_cipher(PG_FUNCTION_ARGS)
 {
-	const char *cipher;
 
 	if (!MyProcPort->ssl_in_use)
 		PG_RETURN_NULL();
 
-	cipher = be_tls_get_cipher(MyProcPort);
+	const char *cipher = be_tls_get_cipher(MyProcPort);
 	if (cipher == NULL)
 		PG_RETURN_NULL();
 
@@ -113,7 +111,6 @@ Datum
 ssl_client_serial(PG_FUNCTION_ARGS)
 {
 	char decimal[NAMEDATALEN];
-	Datum		result;
 
 	if (!MyProcPort->ssl_in_use || !MyProcPort->peer_cert_valid)
 		PG_RETURN_NULL();
@@ -123,7 +120,7 @@ ssl_client_serial(PG_FUNCTION_ARGS)
 	if (!*decimal)
 		PG_RETURN_NULL();
 
-	result = DirectFunctionCall3(numeric_in,
+	Datum		result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(decimal),
 								 ObjectIdGetDatum(0),
 								 Int32GetDatum(-1));
@@ -147,14 +144,9 @@ ssl_client_serial(PG_FUNCTION_ARGS)
 static Datum
 ASN1_STRING_to_text(ASN1_STRING *str)
 {
-	BIO		   *membuf;
-	size_t		size;
-	char		nullterm;
 	char	   *sp;
-	char	   *dp;
-	text	   *result;
 
-	membuf = BIO_new(BIO_s_mem());
+	BIO		   *membuf = BIO_new(BIO_s_mem());
 	if (membuf == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -164,11 +156,11 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 						 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 						  | ASN1_STRFLGS_UTF8_CONVERT));
 	/* ensure null termination of the BIO's content */
-	nullterm = '\0';
+	char		nullterm = '\0';
 	BIO_write(membuf, &nullterm, 1);
-	size = BIO_get_mem_data(membuf, &sp);
-	dp = pg_any_to_server(sp, size - 1, PG_UTF8);
-	result = cstring_to_text(dp);
+	size_t		size = BIO_get_mem_data(membuf, &sp);
+	char	   *dp = pg_any_to_server(sp, size - 1, PG_UTF8);
+	text	   *result = cstring_to_text(dp);
 	if (dp != sp)
 		pfree(dp);
 	if (BIO_free(membuf) != 1)
@@ -193,12 +185,10 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 static Datum
 X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 {
-	char	   *string_fieldname;
 	int			nid,
 				index;
-	ASN1_STRING *data;
 
-	string_fieldname = text_to_cstring(fieldName);
+	char	   *string_fieldname = text_to_cstring(fieldName);
 	nid = OBJ_txt2nid(string_fieldname);
 	if (nid == NID_undef)
 		ereport(ERROR,
@@ -209,7 +199,7 @@ X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 	index = X509_NAME_get_index_by_NID(name, nid, -1);
 	if (index < 0)
 		return (Datum) 0;
-	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
+	ASN1_STRING *data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
 	return ASN1_STRING_to_text(data);
 }
 
@@ -235,12 +225,11 @@ Datum
 ssl_client_dn_field(PG_FUNCTION_ARGS)
 {
 	text	   *fieldname = PG_GETARG_TEXT_PP(0);
-	Datum		result;
 
 	if (!MyProcPort->ssl_in_use || !MyProcPort->peer_cert_valid)
 		PG_RETURN_NULL();
 
-	result = X509_NAME_field_to_text(X509_get_subject_name(MyProcPort->peer), fieldname);
+	Datum		result = X509_NAME_field_to_text(X509_get_subject_name(MyProcPort->peer), fieldname);
 
 	if (!result)
 		PG_RETURN_NULL();
@@ -270,12 +259,11 @@ Datum
 ssl_issuer_field(PG_FUNCTION_ARGS)
 {
 	text	   *fieldname = PG_GETARG_TEXT_PP(0);
-	Datum		result;
 
 	if (!(MyProcPort->peer))
 		PG_RETURN_NULL();
 
-	result = X509_NAME_field_to_text(X509_get_issuer_name(MyProcPort->peer), fieldname);
+	Datum		result = X509_NAME_field_to_text(X509_get_issuer_name(MyProcPort->peer), fieldname);
 
 	if (!result)
 		PG_RETURN_NULL();
@@ -352,7 +340,6 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 {
 	X509	   *cert = MyProcPort->peer;
 	FuncCallContext *funcctx;
-	int			call_cntr;
 	int			max_calls;
 	MemoryContext oldcontext;
 	SSLExtensionInfoContext *fctx;
@@ -405,7 +392,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 	/*
 	 * Initialize per-call variables.
 	 */
-	call_cntr = funcctx->call_cntr;
+	int			call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
 	fctx = funcctx->user_fctx;
 
@@ -415,27 +402,20 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 		Datum		values[3];
 		bool		nulls[3];
 		char	   *buf;
-		HeapTuple	tuple;
-		Datum		result;
-		BIO		   *membuf;
-		X509_EXTENSION *ext;
-		ASN1_OBJECT *obj;
-		int			nid;
-		int			len;
 
 		/* need a BIO for this */
-		membuf = BIO_new(BIO_s_mem());
+		BIO		   *membuf = BIO_new(BIO_s_mem());
 		if (membuf == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("could not create OpenSSL BIO structure")));
 
 		/* Get the extension from the certificate */
-		ext = X509_get_ext(cert, call_cntr);
-		obj = X509_EXTENSION_get_object(ext);
+		X509_EXTENSION *ext = X509_get_ext(cert, call_cntr);
+		ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
 
 		/* Get the extension name */
-		nid = OBJ_obj2nid(obj);
+		int			nid = OBJ_obj2nid(obj);
 		if (nid == NID_undef)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -450,7 +430,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not print extension value in certificate at position %d",
 							call_cntr)));
-		len = BIO_get_mem_data(membuf, &buf);
+		int			len = BIO_get_mem_data(membuf, &buf);
 		values[1] = PointerGetDatum(cstring_to_text_with_len(buf, len));
 		nulls[1] = false;
 
@@ -459,8 +439,8 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 		nulls[2] = false;
 
 		/* Build tuple */
-		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
+		Datum		result = HeapTupleGetDatum(tuple);
 
 		if (BIO_free(membuf) != 1)
 			elog(ERROR, "could not free OpenSSL BIO structure");

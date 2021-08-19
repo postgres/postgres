@@ -86,9 +86,6 @@ scalararraysel_containment(PlannerInfo *root,
 {
 	Selectivity selec;
 	VariableStatData vardata;
-	Datum		constval;
-	TypeCacheEntry *typentry;
-	FmgrInfo   *cmpfunc;
 
 	/*
 	 * rightop must be a variable, else punt.
@@ -114,16 +111,16 @@ scalararraysel_containment(PlannerInfo *root,
 		ReleaseVariableStats(vardata);
 		return (Selectivity) 0.0;
 	}
-	constval = ((Const *) leftop)->constvalue;
+	Datum		constval = ((Const *) leftop)->constvalue;
 
 	/* Get element type's default comparison function */
-	typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
+	TypeCacheEntry *typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
 	if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 	{
 		ReleaseVariableStats(vardata);
 		return -1.0;
 	}
-	cmpfunc = &typentry->cmp_proc_finfo;
+	FmgrInfo   *cmpfunc = &typentry->cmp_proc_finfo;
 
 	/*
 	 * If the operator is <>, swap ANY/ALL, then invert the result later.
@@ -135,11 +132,10 @@ scalararraysel_containment(PlannerInfo *root,
 	if (HeapTupleIsValid(vardata.statsTuple) &&
 		statistic_proc_security_check(&vardata, cmpfunc->fn_oid))
 	{
-		Form_pg_statistic stats;
 		AttStatsSlot sslot;
 		AttStatsSlot hslot;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
 
 		/* MCELEM will be an array of same type as element */
 		if (get_attstatsslot(&sslot, vardata.statsTuple,
@@ -249,7 +245,6 @@ arraycontsel(PG_FUNCTION_ARGS)
 	Node	   *other;
 	bool		varonleft;
 	Selectivity selec;
-	Oid			element_typeid;
 
 	/*
 	 * If expression is not (variable op something) or (something op
@@ -296,7 +291,7 @@ arraycontsel(PG_FUNCTION_ARGS)
 	 * anything useful.  (Such cases will likely fail at runtime, but here
 	 * we'd rather just return a default estimate.)
 	 */
-	element_typeid = get_base_element_type(((Const *) other)->consttype);
+	Oid			element_typeid = get_base_element_type(((Const *) other)->consttype);
 	if (element_typeid != InvalidOid &&
 		element_typeid == get_base_element_type(vardata.vartype))
 	{
@@ -339,30 +334,26 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 				  Oid elemtype, Oid operator)
 {
 	Selectivity selec;
-	TypeCacheEntry *typentry;
-	FmgrInfo   *cmpfunc;
-	ArrayType  *array;
 
 	/* Get element type's default comparison function */
-	typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
+	TypeCacheEntry *typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
 	if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 		return DEFAULT_SEL(operator);
-	cmpfunc = &typentry->cmp_proc_finfo;
+	FmgrInfo   *cmpfunc = &typentry->cmp_proc_finfo;
 
 	/*
 	 * The caller made sure the const is an array with same element type, so
 	 * get it now
 	 */
-	array = DatumGetArrayTypeP(constval);
+	ArrayType  *array = DatumGetArrayTypeP(constval);
 
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, cmpfunc->fn_oid))
 	{
-		Form_pg_statistic stats;
 		AttStatsSlot sslot;
 		AttStatsSlot hslot;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/* MCELEM will be an array of same type as column */
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
@@ -436,8 +427,6 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 	int			num_elems;
 	Datum	   *elem_values;
 	bool	   *elem_nulls;
-	bool		null_present;
-	int			nonnull_nitems;
 	int			i;
 
 	/*
@@ -452,8 +441,8 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 					  &elem_values, &elem_nulls, &num_elems);
 
 	/* Collapse out any null elements */
-	nonnull_nitems = 0;
-	null_present = false;
+	int			nonnull_nitems = 0;
+	bool		null_present = false;
 	for (i = 0; i < num_elems; i++)
 	{
 		if (elem_nulls[i])
@@ -712,7 +701,6 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	float		avg_count,
 				mult,
 				rest;
-	float	   *elem_selec;
 
 	/*
 	 * There should be three more Numbers than Values in the MCELEM slot,
@@ -754,7 +742,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	 * elem_selec is array of estimated frequencies for elements in the
 	 * constant.
 	 */
-	elem_selec = (float *) palloc(sizeof(float) * nitems);
+	float	   *elem_selec = (float *) palloc(sizeof(float) * nitems);
 
 	/* Scan mcelem and array in parallel. */
 	mcelem_index = 0;
@@ -861,9 +849,8 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 		 * have A = 1, B = nmcelem, C = - EFFORT * nmcelem.
 		 */
 		double		b = (double) nmcelem;
-		int			n;
 
-		n = (int) ((sqrt(b * b + 4 * EFFORT * b) - b) / 2);
+		int			n = (int) ((sqrt(b * b + 4 * EFFORT * b) - b) / 2);
 
 		/* Sort, then take just the first n elements */
 		qsort(elem_selec, unique_nitems, sizeof(float),
@@ -921,21 +908,19 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 static float *
 calc_hist(const float4 *hist, int nhist, int n)
 {
-	float	   *hist_part;
 	int			k,
 				i = 0;
 	float		prev_interval = 0,
 				next_interval;
-	float		frac;
 
-	hist_part = (float *) palloc((n + 1) * sizeof(float));
+	float	   *hist_part = (float *) palloc((n + 1) * sizeof(float));
 
 	/*
 	 * frac is a probability contribution for each interval between histogram
 	 * values.  We have nhist - 1 intervals, so contribution of each one will
 	 * be 1 / (nhist - 1).
 	 */
-	frac = 1.0f / ((float) (nhist - 1));
+	float		frac = 1.0f / ((float) (nhist - 1));
 
 	for (k = 0; k <= n; k++)
 	{
@@ -956,7 +941,6 @@ calc_hist(const float4 *hist, int nhist, int n)
 		if (count > 0)
 		{
 			/* k is an exact bound for at least one histogram box. */
-			float		val;
 
 			/* Find length between current histogram value and the next one */
 			if (i < nhist)
@@ -969,7 +953,7 @@ calc_hist(const float4 *hist, int nhist, int n)
 			 * contribute a total of (count - 1) * frac probability.  Also
 			 * factor in the partial histogram boxes on either side.
 			 */
-			val = (float) (count - 1);
+			float		val = (float) (count - 1);
 			if (next_interval > 0)
 				val += 0.5f / next_interval;
 			if (prev_interval > 0)
@@ -1054,7 +1038,6 @@ calc_distr(const float *p, int n, int m, float rest)
 	 */
 	if (rest > DEFAULT_CONTAIN_SEL)
 	{
-		float		t;
 
 		/* Swap rows */
 		tmp = row;
@@ -1065,7 +1048,7 @@ calc_distr(const float *p, int n, int m, float rest)
 			row[i] = 0.0f;
 
 		/* Value of Poisson distribution for 0 occurrences */
-		t = exp(-rest);
+		float		t = exp(-rest);
 
 		/*
 		 * Calculate convolution of previously computed distribution and the
@@ -1169,9 +1152,8 @@ element_compare(const void *key1, const void *key2, void *arg)
 	Datum		d2 = *((const Datum *) key2);
 	TypeCacheEntry *typentry = (TypeCacheEntry *) arg;
 	FmgrInfo   *cmpfunc = &typentry->cmp_proc_finfo;
-	Datum		c;
 
-	c = FunctionCall2Coll(cmpfunc, typentry->typcollation, d1, d2);
+	Datum		c = FunctionCall2Coll(cmpfunc, typentry->typcollation, d1, d2);
 	return DatumGetInt32(c);
 }
 

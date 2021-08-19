@@ -59,18 +59,13 @@ static void StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup,
 static TupleTableSlot *
 IndexOnlyNext(IndexOnlyScanState *node)
 {
-	EState	   *estate;
-	ExprContext *econtext;
-	ScanDirection direction;
-	IndexScanDesc scandesc;
-	TupleTableSlot *slot;
 	ItemPointer tid;
 
 	/*
 	 * extract necessary information from index scan node
 	 */
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection direction = estate->es_direction;
 	/* flip direction if this is an overall backward scan */
 	if (ScanDirectionIsBackward(((IndexOnlyScan *) node->ss.ps.plan)->indexorderdir))
 	{
@@ -79,9 +74,9 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		else if (ScanDirectionIsBackward(direction))
 			direction = ForwardScanDirection;
 	}
-	scandesc = node->ioss_ScanDesc;
-	econtext = node->ss.ps.ps_ExprContext;
-	slot = node->ss.ss_ScanTupleSlot;
+	IndexScanDesc scandesc = node->ioss_ScanDesc;
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 
 	if (scandesc == NULL)
 	{
@@ -368,14 +363,12 @@ ExecReScanIndexOnlyScan(IndexOnlyScanState *node)
 void
 ExecEndIndexOnlyScan(IndexOnlyScanState *node)
 {
-	Relation	indexRelationDesc;
-	IndexScanDesc indexScanDesc;
 
 	/*
 	 * extract information from the node
 	 */
-	indexRelationDesc = node->ioss_RelationDesc;
-	indexScanDesc = node->ioss_ScanDesc;
+	Relation	indexRelationDesc = node->ioss_RelationDesc;
+	IndexScanDesc indexScanDesc = node->ioss_ScanDesc;
 
 	/* Release VM buffer pin, if any. */
 	if (node->ioss_VMBuffer != InvalidBuffer)
@@ -492,15 +485,11 @@ ExecIndexOnlyRestrPos(IndexOnlyScanState *node)
 IndexOnlyScanState *
 ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 {
-	IndexOnlyScanState *indexstate;
-	Relation	currentRelation;
-	LOCKMODE	lockmode;
-	TupleDesc	tupDesc;
 
 	/*
 	 * create state structure
 	 */
-	indexstate = makeNode(IndexOnlyScanState);
+	IndexOnlyScanState *indexstate = makeNode(IndexOnlyScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
 	indexstate->ss.ps.ExecProcNode = ExecIndexOnlyScan;
@@ -515,7 +504,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	/*
 	 * open the scan relation
 	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
+	Relation	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	indexstate->ss.ss_currentRelation = currentRelation;
 	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
@@ -527,7 +516,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 * types of the original datums.  (It's the AM's responsibility to return
 	 * suitable data anyway.)
 	 */
-	tupDesc = ExecTypeFromTL(node->indextlist);
+	TupleDesc	tupDesc = ExecTypeFromTL(node->indextlist);
 	ExecInitScanTupleSlot(estate, &indexstate->ss, tupDesc,
 						  &TTSOpsVirtual);
 
@@ -567,7 +556,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 		return indexstate;
 
 	/* Open the index relation. */
-	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
+	LOCKMODE	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
 	indexstate->ioss_RelationDesc = index_open(node->indexid, lockmode);
 
 	/*
@@ -665,9 +654,8 @@ ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 							   ParallelContext *pcxt)
 {
 	EState	   *estate = node->ss.ps.state;
-	ParallelIndexScanDesc piscan;
 
-	piscan = shm_toc_allocate(pcxt->toc, node->ioss_PscanLen);
+	ParallelIndexScanDesc piscan = shm_toc_allocate(pcxt->toc, node->ioss_PscanLen);
 	index_parallelscan_initialize(node->ss.ss_currentRelation,
 								  node->ioss_RelationDesc,
 								  estate->es_snapshot,
@@ -715,9 +703,8 @@ void
 ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 								  ParallelWorkerContext *pwcxt)
 {
-	ParallelIndexScanDesc piscan;
 
-	piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+	ParallelIndexScanDesc piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->ioss_RelationDesc,

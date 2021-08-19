@@ -62,7 +62,6 @@ static getnameinfo_ptr_t getnameinfo_ptr = NULL;
 static bool
 haveNativeWindowsIPv6routines(void)
 {
-	void	   *hLibrary = NULL;
 	static bool alreadyLookedForIpv6routines = false;
 
 	if (alreadyLookedForIpv6routines)
@@ -72,7 +71,7 @@ haveNativeWindowsIPv6routines(void)
 	 * For Windows XP and later versions, the IPv6 routines are present in the
 	 * WinSock 2 library (ws2_32.dll).
 	 */
-	hLibrary = LoadLibraryA("ws2_32");
+	void	   *hLibrary = LoadLibraryA("ws2_32");
 
 	/* If hLibrary is null, we couldn't find a dll with functions */
 	if (hLibrary != NULL)

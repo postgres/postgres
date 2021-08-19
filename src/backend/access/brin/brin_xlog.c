@@ -25,13 +25,11 @@ brin_xlog_createidx(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_createidx *xlrec = (xl_brin_createidx *) XLogRecGetData(record);
-	Buffer		buf;
-	Page		page;
 
 	/* create the index' metapage */
-	buf = XLogInitBufferForRedo(record, 0);
+	Buffer		buf = XLogInitBufferForRedo(record, 0);
 	Assert(BufferIsValid(buf));
-	page = (Page) BufferGetPage(buf);
+	Page		page = (Page) BufferGetPage(buf);
 	brin_metapage_init(page, xlrec->pagesPerRange, xlrec->version);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buf);
@@ -48,7 +46,6 @@ brin_xlog_insert_update(XLogReaderState *record,
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	Buffer		buffer;
-	BlockNumber regpgno;
 	Page		page;
 	XLogRedoAction action;
 
@@ -69,21 +66,19 @@ brin_xlog_insert_update(XLogReaderState *record,
 	}
 
 	/* need this page's blkno to store in revmap */
-	regpgno = BufferGetBlockNumber(buffer);
+	BlockNumber regpgno = BufferGetBlockNumber(buffer);
 
 	/* insert the index item into the page */
 	if (action == BLK_NEEDS_REDO)
 	{
-		OffsetNumber offnum;
-		BrinTuple  *tuple;
 		Size		tuplen;
 
-		tuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
+		BrinTuple  *tuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
 		Assert(tuple->bt_blkno == xlrec->heapBlk);
 
 		page = (Page) BufferGetPage(buffer);
-		offnum = xlrec->offnum;
+		OffsetNumber offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_insert_update: invalid max offset number");
 
@@ -137,18 +132,15 @@ brin_xlog_update(XLogReaderState *record)
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_brin_update *xlrec = (xl_brin_update *) XLogRecGetData(record);
 	Buffer		buffer;
-	XLogRedoAction action;
 
 	/* First remove the old tuple */
-	action = XLogReadBufferForRedo(record, 2, &buffer);
+	XLogRedoAction action = XLogReadBufferForRedo(record, 2, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
-		Page		page;
-		OffsetNumber offnum;
 
-		page = (Page) BufferGetPage(buffer);
+		Page		page = (Page) BufferGetPage(buffer);
 
-		offnum = xlrec->oldOffnum;
+		OffsetNumber offnum = xlrec->oldOffnum;
 
 		PageIndexTupleDeleteNoCompact(page, offnum);
 
@@ -170,24 +162,19 @@ static void
 brin_xlog_samepage_update(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
-	xl_brin_samepage_update *xlrec;
 	Buffer		buffer;
-	XLogRedoAction action;
 
-	xlrec = (xl_brin_samepage_update *) XLogRecGetData(record);
-	action = XLogReadBufferForRedo(record, 0, &buffer);
+	xl_brin_samepage_update *xlrec = (xl_brin_samepage_update *) XLogRecGetData(record);
+	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
 		Size		tuplen;
-		BrinTuple  *brintuple;
-		Page		page;
-		OffsetNumber offnum;
 
-		brintuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
+		BrinTuple  *brintuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
-		page = (Page) BufferGetPage(buffer);
+		Page		page = (Page) BufferGetPage(buffer);
 
-		offnum = xlrec->offnum;
+		OffsetNumber offnum = xlrec->offnum;
 
 		if (!PageIndexTupleOverwrite(page, offnum, (Item) brintuple, tuplen))
 			elog(PANIC, "brin_xlog_samepage_update: failed to replace tuple");
@@ -208,27 +195,21 @@ static void
 brin_xlog_revmap_extend(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
-	xl_brin_revmap_extend *xlrec;
 	Buffer		metabuf;
-	Buffer		buf;
-	Page		page;
 	BlockNumber targetBlk;
-	XLogRedoAction action;
 
-	xlrec = (xl_brin_revmap_extend *) XLogRecGetData(record);
+	xl_brin_revmap_extend *xlrec = (xl_brin_revmap_extend *) XLogRecGetData(record);
 
 	XLogRecGetBlockTag(record, 1, NULL, NULL, &targetBlk);
 	Assert(xlrec->targetBlk == targetBlk);
 
 	/* Update the metapage */
-	action = XLogReadBufferForRedo(record, 0, &metabuf);
+	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &metabuf);
 	if (action == BLK_NEEDS_REDO)
 	{
-		Page		metapg;
-		BrinMetaPageData *metadata;
 
-		metapg = BufferGetPage(metabuf);
-		metadata = (BrinMetaPageData *) PageGetContents(metapg);
+		Page		metapg = BufferGetPage(metabuf);
+		BrinMetaPageData *metadata = (BrinMetaPageData *) PageGetContents(metapg);
 
 		Assert(metadata->lastRevmapPage == xlrec->targetBlk - 1);
 		metadata->lastRevmapPage = xlrec->targetBlk;
@@ -253,8 +234,8 @@ brin_xlog_revmap_extend(XLogReaderState *record)
 	 * image here.
 	 */
 
-	buf = XLogInitBufferForRedo(record, 1);
-	page = (Page) BufferGetPage(buf);
+	Buffer		buf = XLogInitBufferForRedo(record, 1);
+	Page		page = (Page) BufferGetPage(buf);
 	brin_page_init(page, BRIN_PAGETYPE_REVMAP);
 
 	PageSetLSN(page, lsn);
@@ -269,14 +250,12 @@ static void
 brin_xlog_desummarize_page(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
-	xl_brin_desummarize *xlrec;
 	Buffer		buffer;
-	XLogRedoAction action;
 
-	xlrec = (xl_brin_desummarize *) XLogRecGetData(record);
+	xl_brin_desummarize *xlrec = (xl_brin_desummarize *) XLogRecGetData(record);
 
 	/* Update the revmap */
-	action = XLogReadBufferForRedo(record, 0, &buffer);
+	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &buffer);
 	if (action == BLK_NEEDS_REDO)
 	{
 		ItemPointerData iptr;

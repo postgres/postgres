@@ -152,11 +152,10 @@ pg_strong_random_init(void)
 bool
 pg_strong_random(void *buf, size_t len)
 {
-	int			f;
 	char	   *p = buf;
 	ssize_t		res;
 
-	f = open("/dev/urandom", O_RDONLY, 0);
+	int			f = open("/dev/urandom", O_RDONLY, 0);
 	if (f == -1)
 		return false;
 

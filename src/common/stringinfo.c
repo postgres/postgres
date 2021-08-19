@@ -40,9 +40,8 @@
 StringInfo
 makeStringInfo(void)
 {
-	StringInfo	res;
 
-	res = (StringInfo) palloc(sizeof(StringInfoData));
+	StringInfo	res = (StringInfo) palloc(sizeof(StringInfoData));
 
 	initStringInfo(res);
 
@@ -95,12 +94,11 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 	for (;;)
 	{
 		va_list		args;
-		int			needed;
 
 		/* Try to format the data. */
 		errno = save_errno;
 		va_start(args, fmt);
-		needed = appendStringInfoVA(str, fmt, args);
+		int			needed = appendStringInfoVA(str, fmt, args);
 		va_end(args);
 
 		if (needed == 0)
@@ -132,8 +130,6 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 int
 appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 {
-	int			avail;
-	size_t		nprinted;
 
 	Assert(str != NULL);
 
@@ -142,11 +138,11 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	 * caller enlarge the buffer first.  We have to guess at how much to
 	 * enlarge, since we're skipping the formatting work.
 	 */
-	avail = str->maxlen - str->len;
+	int			avail = str->maxlen - str->len;
 	if (avail < 16)
 		return 32;
 
-	nprinted = pvsnprintf(str->data + str->len, (size_t) avail, fmt, args);
+	size_t		nprinted = pvsnprintf(str->data + str->len, (size_t) avail, fmt, args);
 
 	if (nprinted < (size_t) avail)
 	{

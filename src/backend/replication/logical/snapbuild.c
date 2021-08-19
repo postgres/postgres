@@ -284,16 +284,14 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 						XLogRecPtr two_phase_at)
 {
 	MemoryContext context;
-	MemoryContext oldcontext;
-	SnapBuild  *builder;
 
 	/* allocate memory in own context, to have better accountability */
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"snapshot builder context",
 									ALLOCSET_DEFAULT_SIZES);
-	oldcontext = MemoryContextSwitchTo(context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(context);
 
-	builder = palloc0(sizeof(SnapBuild));
+	SnapBuild  *builder = palloc0(sizeof(SnapBuild));
 
 	builder->state = SNAPBUILD_START;
 	builder->context = context;
@@ -449,16 +447,14 @@ SnapBuildSnapDecRefcount(Snapshot snap)
 static Snapshot
 SnapBuildBuildSnapshot(SnapBuild *builder)
 {
-	Snapshot	snapshot;
-	Size		ssize;
 
 	Assert(builder->state >= SNAPBUILD_FULL_SNAPSHOT);
 
-	ssize = sizeof(SnapshotData)
+	Size		ssize = sizeof(SnapshotData)
 		+ sizeof(TransactionId) * builder->committed.xcnt
 		+ sizeof(TransactionId) * 1 /* toplevel xid */ ;
 
-	snapshot = MemoryContextAllocZero(builder->context, ssize);
+	Snapshot	snapshot = MemoryContextAllocZero(builder->context, ssize);
 
 	snapshot->snapshot_type = SNAPSHOT_HISTORIC_MVCC;
 
@@ -529,7 +525,6 @@ SnapBuildBuildSnapshot(SnapBuild *builder)
 Snapshot
 SnapBuildInitialSnapshot(SnapBuild *builder)
 {
-	Snapshot	snap;
 	TransactionId xid;
 	TransactionId *newxip;
 	int			newxcnt = 0;
@@ -547,7 +542,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	if (TransactionIdIsValid(MyProc->xmin))
 		elog(ERROR, "cannot build an initial slot snapshot when MyProc->xmin already is valid");
 
-	snap = SnapBuildBuildSnapshot(builder);
+	Snapshot	snap = SnapBuildBuildSnapshot(builder);
 
 	/*
 	 * We know that snap->xmin is alive, enforced by the logical xmin
@@ -556,10 +551,9 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	 */
 #ifdef USE_ASSERT_CHECKING
 	{
-		TransactionId safeXid;
 
 		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		safeXid = GetOldestSafeDecodingTransactionId(false);
+		TransactionId safeXid = GetOldestSafeDecodingTransactionId(false);
 		LWLockRelease(ProcArrayLock);
 
 		Assert(TransactionIdPrecedesOrEquals(safeXid, snap->xmin));
@@ -580,13 +574,12 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	 */
 	for (xid = snap->xmin; NormalTransactionIdPrecedes(xid, snap->xmax);)
 	{
-		void	   *test;
 
 		/*
 		 * Check whether transaction committed using the decoding snapshot
 		 * meaning of ->xip.
 		 */
-		test = bsearch(&xid, snap->xip, snap->xcnt,
+		void	   *test = bsearch(&xid, snap->xip, snap->xcnt,
 					   sizeof(TransactionId), xidComparator);
 
 		if (test == NULL)
@@ -621,8 +614,6 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 const char *
 SnapBuildExportSnapshot(SnapBuild *builder)
 {
-	Snapshot	snap;
-	char	   *snapname;
 
 	if (IsTransactionOrTransactionBlock())
 		elog(ERROR, "cannot export a snapshot from within a transaction");
@@ -639,13 +630,13 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 	XactIsoLevel = XACT_REPEATABLE_READ;
 	XactReadOnly = true;
 
-	snap = SnapBuildInitialSnapshot(builder);
+	Snapshot	snap = SnapBuildInitialSnapshot(builder);
 
 	/*
 	 * now that we've built a plain snapshot, make it active and use the
 	 * normal mechanisms for exporting it
 	 */
-	snapname = ExportSnapshot(snap);
+	char	   *snapname = ExportSnapshot(snap);
 
 	ereport(LOG,
 			(errmsg_plural("exported logical decoding snapshot: \"%s\" with %u transaction ID",
@@ -880,7 +871,6 @@ static void
 SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 {
 	int			off;
-	TransactionId *workspace;
 	int			surviving_xids = 0;
 
 	/* not ready yet */
@@ -888,7 +878,7 @@ SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 		return;
 
 	/* TODO: Neater algorithm than just copying and iterating? */
-	workspace =
+	TransactionId *workspace =
 		MemoryContextAlloc(builder->context,
 						   builder->committed.xcnt * sizeof(TransactionId));
 
@@ -1087,7 +1077,6 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 void
 SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *running)
 {
-	ReorderBufferTXN *txn;
 	TransactionId xmin;
 
 	/*
@@ -1156,7 +1145,7 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 	if (builder->state < SNAPBUILD_CONSISTENT)
 		return;
 
-	txn = ReorderBufferGetOldestTXN(builder->reorder);
+	ReorderBufferTXN *txn = ReorderBufferGetOldestTXN(builder->reorder);
 
 	/*
 	 * oldest ongoing txn might have started when we didn't yet serialize
@@ -1483,7 +1472,6 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	int			fd;
 	char		tmppath[MAXPGPATH];
 	char		path[MAXPGPATH];
-	int			ret;
 	struct stat stat_buf;
 	Size		sz;
 
@@ -1515,7 +1503,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	 * for this LSN. It's perfectly fine if there's none, so we accept ENOENT
 	 * as a valid state. Everything else is an unexpected error.
 	 */
-	ret = stat(path, &stat_buf);
+	int			ret = stat(path, &stat_buf);
 
 	if (ret != 0 && errno != ENOENT)
 		ereport(ERROR,
@@ -1690,10 +1678,7 @@ static bool
 SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 {
 	SnapBuildOnDisk ondisk;
-	int			fd;
 	char		path[MAXPGPATH];
-	Size		sz;
-	int			readBytes;
 	pg_crc32c	checksum;
 
 	/* no point in loading a snapshot if we're already there */
@@ -1703,7 +1688,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
 			LSN_FORMAT_ARGS(lsn));
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
 	if (fd < 0 && errno == ENOENT)
 		return false;
@@ -1726,7 +1711,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* read statically sized portion of snapshot */
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_READ);
-	readBytes = read(fd, &ondisk, SnapBuildOnDiskConstantSize);
+	int			readBytes = read(fd, &ondisk, SnapBuildOnDiskConstantSize);
 	pgstat_report_wait_end();
 	if (readBytes != SnapBuildOnDiskConstantSize)
 	{
@@ -1792,7 +1777,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	COMP_CRC32C(checksum, &ondisk.builder, sizeof(SnapBuild));
 
 	/* restore committed xacts information */
-	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;
+	Size		sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;
 	ondisk.builder.committed.xip = MemoryContextAllocZero(builder->context, sz);
 	pgstat_report_wait_start(WAIT_EVENT_SNAPBUILD_READ);
 	readBytes = read(fd, ondisk.builder.committed.xip, sz);
@@ -1906,9 +1891,6 @@ snapshot_not_interesting:
 void
 CheckPointSnapBuild(void)
 {
-	XLogRecPtr	cutoff;
-	XLogRecPtr	redo;
-	DIR		   *snap_dir;
 	struct dirent *snap_de;
 	char		path[MAXPGPATH + 21];
 
@@ -1917,21 +1899,20 @@ CheckPointSnapBuild(void)
 	 * replication slot will start before that, so that's a safe upper bound
 	 * for removal.
 	 */
-	redo = GetRedoRecPtr();
+	XLogRecPtr	redo = GetRedoRecPtr();
 
 	/* now check for the restart ptrs from existing slots */
-	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
+	XLogRecPtr	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
 
 	/* don't start earlier than the restart lsn */
 	if (redo < cutoff)
 		cutoff = redo;
 
-	snap_dir = AllocateDir("pg_logical/snapshots");
+	DIR		   *snap_dir = AllocateDir("pg_logical/snapshots");
 	while ((snap_de = ReadDir(snap_dir, "pg_logical/snapshots")) != NULL)
 	{
 		uint32		hi;
 		uint32		lo;
-		XLogRecPtr	lsn;
 		struct stat statbuf;
 
 		if (strcmp(snap_de->d_name, ".") == 0 ||
@@ -1962,7 +1943,7 @@ CheckPointSnapBuild(void)
 			continue;
 		}
 
-		lsn = ((uint64) hi) << 32 | lo;
+		XLogRecPtr	lsn = ((uint64) hi) << 32 | lo;
 
 		/* check whether we still need it */
 		if (lsn < cutoff || cutoff == InvalidXLogRecPtr)

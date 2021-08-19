@@ -74,13 +74,12 @@ static Relation lo_index_r = NULL;
 static void
 open_lo_relation(void)
 {
-	ResourceOwner currentOwner;
 
 	if (lo_heap_r && lo_index_r)
 		return;					/* already open in current xact */
 
 	/* Arrange for the top xact to own these relation references */
-	currentOwner = CurrentResourceOwner;
+	ResourceOwner currentOwner = CurrentResourceOwner;
 	CurrentResourceOwner = TopTransactionResourceOwner;
 
 	/* Use RowExclusiveLock since we might either read or write */
@@ -106,9 +105,8 @@ close_lo_relation(bool isCommit)
 		 */
 		if (isCommit)
 		{
-			ResourceOwner currentOwner;
 
-			currentOwner = CurrentResourceOwner;
+			ResourceOwner currentOwner = CurrentResourceOwner;
 			CurrentResourceOwner = TopTransactionResourceOwner;
 
 			if (lo_index_r)
@@ -131,10 +129,7 @@ close_lo_relation(bool isCommit)
 static bool
 myLargeObjectExists(Oid loid, Snapshot snapshot)
 {
-	Relation	pg_lo_meta;
 	ScanKeyData skey[1];
-	SysScanDesc sd;
-	HeapTuple	tuple;
 	bool		retval = false;
 
 	ScanKeyInit(&skey[0],
@@ -142,14 +137,14 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							AccessShareLock);
 
-	sd = systable_beginscan(pg_lo_meta,
+	SysScanDesc sd = systable_beginscan(pg_lo_meta,
 							LargeObjectMetadataOidIndexId, true,
 							snapshot, 1, skey);
 
-	tuple = systable_getnext(sd);
+	HeapTuple	tuple = systable_getnext(sd);
 	if (HeapTupleIsValid(tuple))
 		retval = true;
 
@@ -172,19 +167,16 @@ getdatafield(Form_pg_largeobject tuple,
 			 int *plen,
 			 bool *pfreeit)
 {
-	bytea	   *datafield;
-	int			len;
-	bool		freeit;
 
-	datafield = &(tuple->data); /* see note at top of file */
-	freeit = false;
+	bytea	   *datafield = &(tuple->data); /* see note at top of file */
+	bool		freeit = false;
 	if (VARATT_IS_EXTENDED(datafield))
 	{
 		datafield = (bytea *)
 			detoast_attr((struct varlena *) datafield);
 		freeit = true;
 	}
-	len = VARSIZE(datafield) - VARHDRSZ;
+	int			len = VARSIZE(datafield) - VARHDRSZ;
 	if (len < 0 || len > LOBLKSIZE)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -211,12 +203,11 @@ getdatafield(Form_pg_largeobject tuple,
 Oid
 inv_create(Oid lobjId)
 {
-	Oid			lobjId_new;
 
 	/*
 	 * Create a new largeobject with empty data pages
 	 */
-	lobjId_new = LargeObjectCreate(lobjId);
+	Oid			lobjId_new = LargeObjectCreate(lobjId);
 
 	/*
 	 * dependency on the owner of largeobject
@@ -252,7 +243,6 @@ inv_create(Oid lobjId)
 LargeObjectDesc *
 inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 {
-	LargeObjectDesc *retval;
 	Snapshot	snapshot = NULL;
 	int			descflags = 0;
 
@@ -311,7 +301,7 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 	}
 
 	/* OK to create a descriptor */
-	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
+	LargeObjectDesc *retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
 													sizeof(LargeObjectDesc));
 	retval->id = lobjId;
 	retval->subid = GetCurrentSubTransactionId();
@@ -386,8 +376,6 @@ inv_getsize(LargeObjectDesc *obj_desc)
 {
 	uint64		lastbyte = 0;
 	ScanKeyData skey[1];
-	SysScanDesc sd;
-	HeapTuple	tuple;
 
 	Assert(PointerIsValid(obj_desc));
 
@@ -398,7 +386,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(obj_desc->id));
 
-	sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
+	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
 									obj_desc->snapshot, 1, skey);
 
 	/*
@@ -407,17 +395,16 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	 * large object in reverse pageno order.  So, it's sufficient to examine
 	 * the first valid tuple (== last valid page).
 	 */
-	tuple = systable_getnext_ordered(sd, BackwardScanDirection);
+	HeapTuple	tuple = systable_getnext_ordered(sd, BackwardScanDirection);
 	if (HeapTupleIsValid(tuple))
 	{
-		Form_pg_largeobject data;
 		bytea	   *datafield;
 		int			len;
 		bool		pfreeit;
 
 		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
-		data = (Form_pg_largeobject) GETSTRUCT(tuple);
+		Form_pg_largeobject data = (Form_pg_largeobject) GETSTRUCT(tuple);
 		getdatafield(data, &datafield, &len, &pfreeit);
 		lastbyte = (uint64) data->pageno * LOBLKSIZE + len;
 		if (pfreeit)
@@ -501,7 +488,6 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
 	uint64		pageoff;
 	ScanKeyData skey[2];
-	SysScanDesc sd;
 	HeapTuple	tuple;
 
 	Assert(PointerIsValid(obj_desc));
@@ -528,18 +514,17 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
+	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
 									obj_desc->snapshot, 2, skey);
 
 	while ((tuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 	{
-		Form_pg_largeobject data;
 		bytea	   *datafield;
 		bool		pfreeit;
 
 		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
-		data = (Form_pg_largeobject) GETSTRUCT(tuple);
+		Form_pg_largeobject data = (Form_pg_largeobject) GETSTRUCT(tuple);
 
 		/*
 		 * We expect the indexscan will deliver pages in order.  However,
@@ -593,10 +578,6 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	int			len;
 	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
 	ScanKeyData skey[2];
-	SysScanDesc sd;
-	HeapTuple	oldtuple;
-	Form_pg_largeobject olddata;
-	bool		neednextpage;
 	bytea	   *datafield;
 	bool		pfreeit;
 	union
@@ -612,7 +593,6 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	Datum		values[Natts_pg_largeobject];
 	bool		nulls[Natts_pg_largeobject];
 	bool		replace[Natts_pg_largeobject];
-	CatalogIndexState indstate;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -636,7 +616,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 
 	open_lo_relation();
 
-	indstate = CatalogOpenIndexes(lo_heap_r);
+	CatalogIndexState indstate = CatalogOpenIndexes(lo_heap_r);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
@@ -648,12 +628,12 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
+	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
 									obj_desc->snapshot, 2, skey);
 
-	oldtuple = NULL;
-	olddata = NULL;
-	neednextpage = true;
+	HeapTuple	oldtuple = NULL;
+	Form_pg_largeobject olddata = NULL;
+	bool		neednextpage = true;
 
 	while (nwritten < nbytes)
 	{
@@ -787,9 +767,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	int32		pageno = (int32) (len / LOBLKSIZE);
 	int32		off;
 	ScanKeyData skey[2];
-	SysScanDesc sd;
 	HeapTuple	oldtuple;
-	Form_pg_largeobject olddata;
 	union
 	{
 		bytea		hdr;
@@ -803,7 +781,6 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	Datum		values[Natts_pg_largeobject];
 	bool		nulls[Natts_pg_largeobject];
 	bool		replace[Natts_pg_largeobject];
-	CatalogIndexState indstate;
 
 	Assert(PointerIsValid(obj_desc));
 
@@ -826,7 +803,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 
 	open_lo_relation();
 
-	indstate = CatalogOpenIndexes(lo_heap_r);
+	CatalogIndexState indstate = CatalogOpenIndexes(lo_heap_r);
 
 	/*
 	 * Set up to find all pages with desired loid and pageno >= target
@@ -841,14 +818,14 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
+	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
 									obj_desc->snapshot, 2, skey);
 
 	/*
 	 * If possible, get the page the truncation point is in. The truncation
 	 * point may be beyond the end of the LO or in a hole.
 	 */
-	olddata = NULL;
+	Form_pg_largeobject olddata = NULL;
 	if ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 	{
 		if (HeapTupleHasNulls(oldtuple))	/* paranoia */

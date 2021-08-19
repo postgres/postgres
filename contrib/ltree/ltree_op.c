@@ -194,7 +194,6 @@ inner_subltree(ltree *t, int32 startpos, int32 endpos)
 	char	   *start = NULL,
 			   *end = NULL;
 	ltree_level *ptr = LTREE_FIRST(t);
-	ltree	   *res;
 	int			i;
 
 	if (startpos < 0 || endpos < 0 || startpos >= t->numlevel || startpos > endpos)
@@ -218,7 +217,7 @@ inner_subltree(ltree *t, int32 startpos, int32 endpos)
 		ptr = LEVEL_NEXT(ptr);
 	}
 
-	res = (ltree *) palloc0(LTREE_HDRSIZE + (end - start));
+	ltree	   *res = (ltree *) palloc0(LTREE_HDRSIZE + (end - start));
 	SET_VARSIZE(res, LTREE_HDRSIZE + (end - start));
 	res->numlevel = endpos - startpos;
 
@@ -243,10 +242,8 @@ subpath(PG_FUNCTION_ARGS)
 	ltree	   *t = PG_GETARG_LTREE_P(0);
 	int32		start = PG_GETARG_INT32(1);
 	int32		len = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
-	int32		end;
-	ltree	   *res;
 
-	end = start + len;
+	int32		end = start + len;
 
 	if (start < 0)
 	{
@@ -264,7 +261,7 @@ subpath(PG_FUNCTION_ARGS)
 	else if (len == 0)
 		end = (fcinfo->nargs == 3) ? start : 0xffff;
 
-	res = inner_subltree(t, start, end);
+	ltree	   *res = inner_subltree(t, start, end);
 
 	PG_FREE_IF_COPY(t, 0);
 	PG_RETURN_POINTER(res);
@@ -273,7 +270,6 @@ subpath(PG_FUNCTION_ARGS)
 static ltree *
 ltree_concat(ltree *a, ltree *b)
 {
-	ltree	   *r;
 	int			numlevel = (int) a->numlevel + b->numlevel;
 
 	if (numlevel > LTREE_MAX_LEVELS)
@@ -282,7 +278,7 @@ ltree_concat(ltree *a, ltree *b)
 				 errmsg("number of ltree levels (%d) exceeds the maximum allowed (%d)",
 						numlevel, LTREE_MAX_LEVELS)));
 
-	r = (ltree *) palloc0(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
+	ltree	   *r = (ltree *) palloc0(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	SET_VARSIZE(r, VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	r->numlevel = (uint16) numlevel;
 
@@ -298,9 +294,8 @@ ltree_addltree(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE_P(0);
 	ltree	   *b = PG_GETARG_LTREE_P(1);
-	ltree	   *r;
 
-	r = ltree_concat(a, b);
+	ltree	   *r = ltree_concat(a, b);
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_POINTER(r);
@@ -311,11 +306,10 @@ ltree_addtext(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE_P(0);
 	text	   *b = PG_GETARG_TEXT_PP(1);
-	char	   *s;
 	ltree	   *r,
 			   *tmp;
 
-	s = text_to_cstring(b);
+	char	   *s = text_to_cstring(b);
 
 	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
 														PointerGetDatum(s)));
@@ -396,11 +390,10 @@ ltree_textadd(PG_FUNCTION_ARGS)
 {
 	ltree	   *a = PG_GETARG_LTREE_P(1);
 	text	   *b = PG_GETARG_TEXT_PP(0);
-	char	   *s;
 	ltree	   *r,
 			   *tmp;
 
-	s = text_to_cstring(b);
+	char	   *s = text_to_cstring(b);
 
 	tmp = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
 														PointerGetDatum(s)));
@@ -429,10 +422,8 @@ lca_inner(ltree **a, int len)
 				num,
 				i,
 				reslen;
-	ltree	  **ptr;
 	ltree_level *l1,
 			   *l2;
-	ltree	   *res;
 
 	if (len <= 0)
 		return NULL;			/* no inputs? */
@@ -443,7 +434,7 @@ lca_inner(ltree **a, int len)
 	num = (*a)->numlevel - 1;
 
 	/* Compare each additional input to *a */
-	ptr = a + 1;
+	ltree	  **ptr = a + 1;
 	while (ptr - a < len)
 	{
 		if ((*ptr)->numlevel == 0)
@@ -480,7 +471,7 @@ lca_inner(ltree **a, int len)
 	}
 
 	/* ... and construct it by copying from *a */
-	res = (ltree *) palloc0(reslen);
+	ltree	   *res = (ltree *) palloc0(reslen);
 	SET_VARSIZE(res, reslen);
 	res->numlevel = num;
 
@@ -522,12 +513,10 @@ Datum
 text2ltree(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_PP(0);
-	char	   *s;
-	ltree	   *out;
 
-	s = text_to_cstring(in);
+	char	   *s = text_to_cstring(in);
 
-	out = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
+	ltree	   *out = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
 														PointerGetDatum(s)));
 	pfree(s);
 	PG_FREE_IF_COPY(in, 0);
@@ -539,14 +528,11 @@ Datum
 ltree2text(PG_FUNCTION_ARGS)
 {
 	ltree	   *in = PG_GETARG_LTREE_P(0);
-	char	   *ptr;
 	int			i;
-	ltree_level *curlevel;
-	text	   *out;
 
-	out = (text *) palloc(VARSIZE(in) + VARHDRSZ);
-	ptr = VARDATA(out);
-	curlevel = LTREE_FIRST(in);
+	text	   *out = (text *) palloc(VARSIZE(in) + VARHDRSZ);
+	char	   *ptr = VARDATA(out);
+	ltree_level *curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
 		if (i != 0)
@@ -579,10 +565,9 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
-	double		selec;
 
 	/* Use generic restriction selectivity logic, with default 0.001. */
-	selec = generic_restriction_selectivity(root, operator, InvalidOid,
+	double		selec = generic_restriction_selectivity(root, operator, InvalidOid,
 											args, varRelid,
 											0.001);
 

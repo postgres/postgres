@@ -120,9 +120,8 @@ seg_out(PG_FUNCTION_ARGS)
 {
 	SEG		   *seg = PG_GETARG_SEG_P(0);
 	char	   *result;
-	char	   *p;
 
-	p = result = (char *) palloc(40);
+	char	   *p = result = (char *) palloc(40);
 
 	if (seg->l_ext == '>' || seg->l_ext == '<' || seg->l_ext == '~')
 		p += sprintf(p, "%c", seg->l_ext);
@@ -271,11 +270,10 @@ gseg_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
-	SEG		   *ud;
 	float		tmp1,
 				tmp2;
 
-	ud = DatumGetSegP(DirectFunctionCall2(seg_union,
+	SEG		   *ud = DatumGetSegP(DirectFunctionCall2(seg_union,
 										  origentry->key,
 										  newentry->key));
 	rt_seg_size(ud, &tmp1);
@@ -523,9 +521,8 @@ gseg_internal_consistent(Datum key, Datum query, StrategyNumber strategy)
 static Datum
 gseg_binary_union(Datum r1, Datum r2, int *sizep)
 {
-	Datum		retval;
 
-	retval = DirectFunctionCall2(seg_union, r1, r2);
+	Datum		retval = DirectFunctionCall2(seg_union, r1, r2);
 	*sizep = sizeof(SEG);
 
 	return retval;
@@ -919,8 +916,6 @@ restore(char *result, float val, int n)
 		'0', '0', '0', '0', '0',
 		'0', '0', '0', '0', '\0'
 	};
-	char	   *p;
-	int			exp;
 	int			i,
 				dp,
 				sign;
@@ -938,13 +933,13 @@ restore(char *result, float val, int n)
 	sprintf(result, "%.*e", n - 1, val);
 
 	/* find the exponent */
-	p = strchr(result, 'e');
+	char	   *p = strchr(result, 'e');
 
 	/* punt if we have 'inf' or similar */
 	if (p == NULL)
 		return strlen(result);
 
-	exp = atoi(p + 1);
+	int			exp = atoi(p + 1);
 	if (exp == 0)
 	{
 		/* just truncate off the 'e+00' */

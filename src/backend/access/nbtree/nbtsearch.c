@@ -114,13 +114,6 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 	/* Loop iterates once per level descended in the tree */
 	for (;;)
 	{
-		Page		page;
-		BTPageOpaque opaque;
-		OffsetNumber offnum;
-		ItemId		itemid;
-		IndexTuple	itup;
-		BlockNumber child;
-		BTStack		new_stack;
 
 		/*
 		 * Race -- the page we just grabbed may have split since we read its
@@ -138,8 +131,8 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 							  page_access, snapshot);
 
 		/* if this is a leaf page, we're done */
-		page = BufferGetPage(*bufP);
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		Page		page = BufferGetPage(*bufP);
+		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (P_ISLEAF(opaque))
 			break;
 
@@ -147,11 +140,11 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * Find the appropriate pivot tuple on this page.  Its downlink points
 		 * to the child page that we're about to descend to.
 		 */
-		offnum = _bt_binsrch(rel, key, *bufP);
-		itemid = PageGetItemId(page, offnum);
-		itup = (IndexTuple) PageGetItem(page, itemid);
+		OffsetNumber offnum = _bt_binsrch(rel, key, *bufP);
+		ItemId		itemid = PageGetItemId(page, offnum);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
 		Assert(BTreeTupleIsPivot(itup) || !key->heapkeyspace);
-		child = BTreeTupleGetDownLink(itup);
+		BlockNumber child = BTreeTupleGetDownLink(itup);
 
 		/*
 		 * We need to save the location of the pivot tuple we chose in a new
@@ -159,7 +152,7 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 		 * page one level down, it usually ends up inserting a new pivot
 		 * tuple/downlink immediately after the location recorded here.
 		 */
-		new_stack = (BTStack) palloc(sizeof(BTStackData));
+		BTStack		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = BufferGetBlockNumber(*bufP);
 		new_stack->bts_offset = offnum;
 		new_stack->bts_parent = stack_in;
@@ -248,7 +241,6 @@ _bt_moveright(Relation rel,
 {
 	Page		page;
 	BTPageOpaque opaque;
-	int32		cmpval;
 
 	/*
 	 * When nextkey = false (normal case): if the scan key that brought us to
@@ -267,7 +259,7 @@ _bt_moveright(Relation rel,
 	 * We also have to move right if we followed a link that brought us to a
 	 * dead page.
 	 */
-	cmpval = key->nextkey ? 0 : 1;
+	int32		cmpval = key->nextkey ? 0 : 1;
 
 	for (;;)
 	{
@@ -344,15 +336,13 @@ _bt_binsrch(Relation rel,
 			BTScanInsert key,
 			Buffer buf)
 {
-	Page		page;
-	BTPageOpaque opaque;
 	OffsetNumber low,
 				high;
 	int32		result,
 				cmpval;
 
-	page = BufferGetPage(buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/* Requesting nextkey semantics while using scantid seems nonsensical */
 	Assert(!key->nextkey || key->scantid == NULL);
@@ -447,16 +437,14 @@ OffsetNumber
 _bt_binsrch_insert(Relation rel, BTInsertState insertstate)
 {
 	BTScanInsert key = insertstate->itup_key;
-	Page		page;
-	BTPageOpaque opaque;
 	OffsetNumber low,
 				high,
 				stricthigh;
 	int32		result,
 				cmpval;
 
-	page = BufferGetPage(insertstate->buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(insertstate->buf);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	Assert(P_ISLEAF(opaque));
 	Assert(!key->nextkey);
@@ -557,8 +545,6 @@ _bt_binsrch_insert(Relation rel, BTInsertState insertstate)
 static int
 _bt_binsrch_posting(BTScanInsert key, Page page, OffsetNumber offnum)
 {
-	IndexTuple	itup;
-	ItemId		itemid;
 	int			low,
 				high,
 				mid,
@@ -574,8 +560,8 @@ _bt_binsrch_posting(BTScanInsert key, Page page, OffsetNumber offnum)
 	 * (This is also needed because contrib/amcheck's rootdescend option needs
 	 * to be able to relocate a non-pivot tuple using _bt_binsrch_insert().)
 	 */
-	itemid = PageGetItemId(page, offnum);
-	itup = (IndexTuple) PageGetItem(page, itemid);
+	ItemId		itemid = PageGetItemId(page, offnum);
+	IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
 	if (!BTreeTupleIsPosting(itup))
 		return 0;
 
@@ -648,11 +634,6 @@ _bt_compare(Relation rel,
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	IndexTuple	itup;
-	ItemPointer heapTid;
-	ScanKey		scankey;
-	int			ncmpkey;
-	int			ntupatts;
 	int32		result;
 
 	Assert(_bt_check_natts(rel, key->heapkeyspace, page, offnum));
@@ -666,8 +647,8 @@ _bt_compare(Relation rel,
 	if (!P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
 		return 1;
 
-	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	ntupatts = BTreeTupleGetNAtts(itup, rel);
+	IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+	int			ntupatts = BTreeTupleGetNAtts(itup, rel);
 
 	/*
 	 * The scan key is set up with the attribute number associated with each
@@ -681,16 +662,15 @@ _bt_compare(Relation rel,
 	 * _bt_first).
 	 */
 
-	ncmpkey = Min(ntupatts, key->keysz);
+	int			ncmpkey = Min(ntupatts, key->keysz);
 	Assert(key->heapkeyspace || ncmpkey == key->keysz);
 	Assert(!BTreeTupleIsPosting(itup) || key->allequalimage);
-	scankey = key->scankeys;
+	ScanKey		scankey = key->scankeys;
 	for (int i = 1; i <= ncmpkey; i++)
 	{
-		Datum		datum;
 		bool		isNull;
 
-		datum = index_getattr(itup, scankey->sk_attno, itupdesc, &isNull);
+		Datum		datum = index_getattr(itup, scankey->sk_attno, itupdesc, &isNull);
 
 		if (scankey->sk_flags & SK_ISNULL)	/* key is NULL */
 		{
@@ -751,7 +731,7 @@ _bt_compare(Relation rel,
 	 * rules are the same as any other key attribute -- only the
 	 * representation differs.
 	 */
-	heapTid = BTreeTupleGetHeapTID(itup);
+	ItemPointer heapTid = BTreeTupleGetHeapTID(itup);
 	if (key->scantid == NULL)
 	{
 		/*
@@ -959,9 +939,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	strat_total = BTEqualStrategyNumber;
 	if (so->numberOfKeys > 0)
 	{
-		AttrNumber	curattr;
-		ScanKey		chosen;
-		ScanKey		impliesNN;
 		ScanKey		cur;
 
 		/*
@@ -969,10 +946,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		 * We don't cast the decision in stone until we reach keys for the
 		 * next attribute.
 		 */
-		curattr = 1;
-		chosen = NULL;
+		AttrNumber	curattr = 1;
+		ScanKey		chosen = NULL;
 		/* Also remember any scankey that implies a NOT NULL constraint */
-		impliesNN = NULL;
+		ScanKey		impliesNN = NULL;
 
 		/*
 		 * Loop iterates from 0 to numberOfKeys inclusive; we use the last
@@ -1090,9 +1067,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 */
 	if (keysCount == 0)
 	{
-		bool		match;
 
-		match = _bt_endpoint(scan, dir);
+		bool		match = _bt_endpoint(scan, dir);
 
 		if (!match)
 		{
@@ -1212,9 +1188,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (cur->sk_subtype == rel->rd_opcintype[i] ||
 				cur->sk_subtype == InvalidOid)
 			{
-				FmgrInfo   *procinfo;
 
-				procinfo = index_getprocinfo(rel, cur->sk_attno, BTORDER_PROC);
+				FmgrInfo   *procinfo = index_getprocinfo(rel, cur->sk_attno, BTORDER_PROC);
 				ScanKeyEntryInitializeWithInfo(inskey.scankeys + i,
 											   cur->sk_flags,
 											   cur->sk_attno,
@@ -1226,9 +1201,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			}
 			else
 			{
-				RegProcedure cmp_proc;
 
-				cmp_proc = get_opfamily_proc(rel->rd_opfamily[i],
+				RegProcedure cmp_proc = get_opfamily_proc(rel->rd_opfamily[i],
 											 rel->rd_opcintype[i],
 											 cur->sk_subtype,
 											 BTORDER_PROC);
@@ -1454,7 +1428,6 @@ bool
 _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	BTScanPosItem *currItem;
 
 	/*
 	 * Advance to next tuple on current page; or if there's no more, try to
@@ -1478,7 +1451,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* OK, itemIndex says what to return */
-	currItem = &so->currPos.items[so->currPos.itemIndex];
+	BTScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
 	scan->xs_heaptid = currItem->heapTid;
 	if (scan->xs_want_itup)
 		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
@@ -1509,13 +1482,7 @@ static bool
 _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Page		page;
-	BTPageOpaque opaque;
-	OffsetNumber minoff;
-	OffsetNumber maxoff;
 	int			itemIndex;
-	bool		continuescan;
-	int			indnatts;
 
 	/*
 	 * We must have the buffer pinned and locked, but the usual macro can't be
@@ -1523,8 +1490,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 	 */
 	Assert(BufferIsValid(so->currPos.buf));
 
-	page = BufferGetPage(so->currPos.buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(so->currPos.buf);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/* allow next page be processed by parallel worker */
 	if (scan->parallel_scan)
@@ -1535,10 +1502,10 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 			_bt_parallel_release(scan, BufferGetBlockNumber(so->currPos.buf));
 	}
 
-	continuescan = true;		/* default assumption */
-	indnatts = IndexRelationGetNumberOfAttributes(scan->indexRelation);
-	minoff = P_FIRSTDATAKEY(opaque);
-	maxoff = PageGetMaxOffsetNumber(page);
+	bool		continuescan = true;		/* default assumption */
+	int			indnatts = IndexRelationGetNumberOfAttributes(scan->indexRelation);
+	OffsetNumber minoff = P_FIRSTDATAKEY(opaque);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 
 	/*
 	 * We note the buffer's block number so that we can release the pin later.
@@ -1579,7 +1546,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 		while (offnum <= maxoff)
 		{
 			ItemId		iid = PageGetItemId(page, offnum);
-			IndexTuple	itup;
 
 			/*
 			 * If the scan specifies not to return killed tuples, then we
@@ -1591,7 +1557,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 				continue;
 			}
 
-			itup = (IndexTuple) PageGetItem(page, iid);
+			IndexTuple	itup = (IndexTuple) PageGetItem(page, iid);
 
 			if (_bt_checkkeys(scan, itup, indnatts, dir, &continuescan))
 			{
@@ -1604,13 +1570,12 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 				}
 				else
 				{
-					int			tupleOffset;
 
 					/*
 					 * Set up state to return posting list, and remember first
 					 * TID
 					 */
-					tupleOffset =
+					int			tupleOffset =
 						_bt_setuppostingitems(so, itemIndex, offnum,
 											  BTreeTupleGetPostingN(itup, 0),
 											  itup);
@@ -1647,9 +1612,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 		{
 			ItemId		iid = PageGetItemId(page, P_HIKEY);
 			IndexTuple	itup = (IndexTuple) PageGetItem(page, iid);
-			int			truncatt;
 
-			truncatt = BTreeTupleGetNAtts(itup, scan->indexRelation);
+			int			truncatt = BTreeTupleGetNAtts(itup, scan->indexRelation);
 			_bt_checkkeys(scan, itup, truncatt, dir, &continuescan);
 		}
 
@@ -1671,9 +1635,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 		while (offnum >= minoff)
 		{
 			ItemId		iid = PageGetItemId(page, offnum);
-			IndexTuple	itup;
 			bool		tuple_alive;
-			bool		passes_quals;
 
 			/*
 			 * If the scan specifies not to return killed tuples, then we
@@ -1699,9 +1661,9 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 			else
 				tuple_alive = true;
 
-			itup = (IndexTuple) PageGetItem(page, iid);
+			IndexTuple	itup = (IndexTuple) PageGetItem(page, iid);
 
-			passes_quals = _bt_checkkeys(scan, itup, indnatts, dir,
+			bool		passes_quals = _bt_checkkeys(scan, itup, indnatts, dir,
 										 &continuescan);
 			if (passes_quals && tuple_alive)
 			{
@@ -1714,7 +1676,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 				}
 				else
 				{
-					int			tupleOffset;
 
 					/*
 					 * Set up state to return posting list, and remember first
@@ -1727,7 +1688,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 					 * associated with the same posting list tuple.
 					 */
 					itemIndex--;
-					tupleOffset =
+					int			tupleOffset =
 						_bt_setuppostingitems(so, itemIndex, offnum,
 											  BTreeTupleGetPostingN(itup, 0),
 											  itup);
@@ -1804,12 +1765,11 @@ _bt_setuppostingitems(BTScanOpaque so, int itemIndex, OffsetNumber offnum,
 	if (so->currTuples)
 	{
 		/* Save base IndexTuple (truncate posting list) */
-		IndexTuple	base;
 		Size		itupsz = BTreeTupleGetPostingOffset(itup);
 
 		itupsz = MAXALIGN(itupsz);
 		currItem->tupleOffset = so->currPos.nextTupleOffset;
-		base = (IndexTuple) (so->currTuples + so->currPos.nextTupleOffset);
+		IndexTuple	base = (IndexTuple) (so->currTuples + so->currPos.nextTupleOffset);
 		memcpy(base, itup, itupsz);
 		/* Defensively reduce work area index tuple header size */
 		base->t_info &= ~INDEX_SIZE_MASK;
@@ -1968,12 +1928,11 @@ static bool
 _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Relation	rel;
 	Page		page;
 	BTPageOpaque opaque;
 	bool		status;
 
-	rel = scan->indexRelation;
+	Relation	rel = scan->indexRelation;
 
 	if (ScanDirectionIsForward(dir))
 	{
@@ -2175,18 +2134,13 @@ _bt_parallel_readpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 static Buffer
 _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
 {
-	Page		page;
-	BTPageOpaque opaque;
 
-	page = BufferGetPage(buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	for (;;)
 	{
-		BlockNumber obknum;
 		BlockNumber lblkno;
-		BlockNumber blkno;
-		int			tries;
 
 		/* if we're at end of tree, release buf and return failure */
 		if (P_LEFTMOST(opaque))
@@ -2195,9 +2149,9 @@ _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
 			break;
 		}
 		/* remember original page we are stepping left from */
-		obknum = BufferGetBlockNumber(buf);
+		BlockNumber obknum = BufferGetBlockNumber(buf);
 		/* step left */
-		blkno = lblkno = opaque->btpo_prev;
+		BlockNumber blkno = lblkno = opaque->btpo_prev;
 		_bt_relbuf(rel, buf);
 		/* check for interrupts while we're not holding any buffer lock */
 		CHECK_FOR_INTERRUPTS();
@@ -2217,7 +2171,7 @@ _bt_walk_left(Relation rel, Buffer buf, Snapshot snapshot)
 		 * because half-dead pages are still in the sibling chain.  Caller
 		 * must reject half-dead pages if wanted.
 		 */
-		tries = 0;
+		int			tries = 0;
 		for (;;)
 		{
 			if (!P_ISDELETED(opaque) && opaque->btpo_next == obknum)
@@ -2296,8 +2250,6 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 				 Snapshot snapshot)
 {
 	Buffer		buf;
-	Page		page;
-	BTPageOpaque opaque;
 	OffsetNumber offnum;
 	BlockNumber blkno;
 	IndexTuple	itup;
@@ -2315,9 +2267,9 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 	if (!BufferIsValid(buf))
 		return InvalidBuffer;
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 	TestForOldSnapshot(snapshot, rel, page);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	for (;;)
 	{
@@ -2380,18 +2332,14 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Buffer		buf;
-	Page		page;
-	BTPageOpaque opaque;
 	OffsetNumber start;
-	BTScanPosItem *currItem;
 
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a simplified
 	 * version of _bt_search().  We don't maintain a stack since we know we
 	 * won't need it.
 	 */
-	buf = _bt_get_endpoint(rel, 0, ScanDirectionIsBackward(dir), scan->xs_snapshot);
+	Buffer		buf = _bt_get_endpoint(rel, 0, ScanDirectionIsBackward(dir), scan->xs_snapshot);
 
 	if (!BufferIsValid(buf))
 	{
@@ -2405,8 +2353,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	PredicateLockPage(rel, BufferGetBlockNumber(buf), scan->xs_snapshot);
-	page = BufferGetPage(buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	Assert(P_ISLEAF(opaque));
 
 	if (ScanDirectionIsForward(dir))
@@ -2453,7 +2401,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* OK, itemIndex says what to return */
-	currItem = &so->currPos.items[so->currPos.itemIndex];
+	BTScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
 	scan->xs_heaptid = currItem->heapTid;
 	if (scan->xs_want_itup)
 		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);

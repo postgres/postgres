@@ -168,7 +168,6 @@ static Datum
 jsonPathFromCstring(char *in, int len)
 {
 	JsonPathParseResult *jsonpath = parsejsonpath(in, len);
-	JsonPath   *res;
 	StringInfoData buf;
 
 	initStringInfo(&buf);
@@ -184,7 +183,7 @@ jsonPathFromCstring(char *in, int len)
 
 	flattenJsonPathParseItem(&buf, jsonpath->expr, 0, false);
 
-	res = (JsonPath *) buf.data;
+	JsonPath   *res = (JsonPath *) buf.data;
 	SET_VARSIZE(res, buf.len);
 	res->header = JSONPATH_VERSION;
 	if (jsonpath->lax)
@@ -232,7 +231,6 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 	/* position from beginning of jsonpath data */
 	int32		pos = buf->len - JSONPATH_HDRSZ;
 	int32		chld;
-	int32		next;
 	int			argNestingLevel = 0;
 
 	check_stack_depth();
@@ -251,7 +249,7 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 	 * Reserve space for next item pointer.  Actual value will be recorded
 	 * later, after next and children items processing.
 	 */
-	next = reserveSpaceForItemPointer(buf);
+	int32		next = reserveSpaceForItemPointer(buf);
 
 	switch (item->type)
 	{
@@ -310,12 +308,11 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 			break;
 		case jpiLikeRegex:
 			{
-				int32		offs;
 
 				appendBinaryStringInfo(buf,
 									   (char *) &item->value.like_regex.flags,
 									   sizeof(item->value.like_regex.flags));
-				offs = reserveSpaceForItemPointer(buf);
+				int32		offs = reserveSpaceForItemPointer(buf);
 				appendBinaryStringInfo(buf,
 									   (char *) &item->value.like_regex.patternlen,
 									   sizeof(item->value.like_regex.patternlen));
@@ -370,18 +367,16 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 		case jpiIndexArray:
 			{
 				int32		nelems = item->value.array.nelems;
-				int			offset;
 				int			i;
 
 				appendBinaryStringInfo(buf, (char *) &nelems, sizeof(nelems));
 
-				offset = buf->len;
+				int			offset = buf->len;
 
 				appendStringInfoSpaces(buf, sizeof(int32) * 2 * nelems);
 
 				for (i = 0; i < nelems; i++)
 				{
-					int32	   *ppos;
 					int32		topos;
 					int32		frompos =
 					flattenJsonPathParseItem(buf,
@@ -395,7 +390,7 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 					else
 						topos = 0;
 
-					ppos = (int32 *) &buf->data[offset + i * 2 * sizeof(int32)];
+					int32	   *ppos = (int32 *) &buf->data[offset + i * 2 * sizeof(int32)];
 
 					ppos[0] = frompos;
 					ppos[1] = topos;

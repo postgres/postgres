@@ -201,11 +201,9 @@ pg_wait_until_termination(int pid, int64 timeout)
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {
-	int			pid;
-	int			r;
 	int			timeout;		/* milliseconds */
 
-	pid = PG_GETARG_INT32(0);
+	int			pid = PG_GETARG_INT32(0);
 	timeout = PG_GETARG_INT64(1);
 
 	if (timeout < 0)
@@ -213,7 +211,7 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("\"timeout\" must not be negative")));
 
-	r = pg_signal_backend(pid, SIGTERM);
+	int			r = pg_signal_backend(pid, SIGTERM);
 
 	if (r == SIGNAL_BACKEND_NOSUPERUSER)
 		ereport(ERROR,

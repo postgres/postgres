@@ -66,14 +66,13 @@ writeListPage(Relation index, Buffer buffer,
 	OffsetNumber l,
 				off;
 	PGAlignedBlock workspace;
-	char	   *ptr;
 
 	START_CRIT_SECTION();
 
 	GinInitBuffer(buffer, GIN_LIST);
 
 	off = FirstOffsetNumber;
-	ptr = workspace.data;
+	char	   *ptr = workspace.data;
 
 	for (i = 0; i < ntuples; i++)
 	{
@@ -116,7 +115,6 @@ writeListPage(Relation index, Buffer buffer,
 	if (RelationNeedsWAL(index))
 	{
 		ginxlogInsertListPage data;
-		XLogRecPtr	recptr;
 
 		data.rightlink = rightlink;
 		data.ntuples = ntuples;
@@ -127,7 +125,7 @@ writeListPage(Relation index, Buffer buffer,
 		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
 		XLogRegisterBufData(0, workspace.data, size);
 
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE);
+		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE);
 		PageSetLSN(page, recptr);
 	}
 
@@ -219,28 +217,24 @@ void
 ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 {
 	Relation	index = ginstate->index;
-	Buffer		metabuffer;
-	Page		metapage;
 	GinMetaPageData *metadata = NULL;
 	Buffer		buffer = InvalidBuffer;
 	Page		page = NULL;
 	ginxlogUpdateMeta data;
 	bool		separateList = false;
 	bool		needCleanup = false;
-	int			cleanupSize;
-	bool		needWal;
 
 	if (collector->ntuples == 0)
 		return;
 
-	needWal = RelationNeedsWAL(index);
+	bool		needWal = RelationNeedsWAL(index);
 
 	data.node = index->rd_node;
 	data.ntuples = 0;
 	data.newRightlink = data.prevTail = InvalidBlockNumber;
 
-	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
-	metapage = BufferGetPage(metabuffer);
+	Buffer		metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
+	Page		metapage = BufferGetPage(metabuffer);
 
 	/*
 	 * An insertion to the pending list could logically belong anywhere in the
@@ -348,7 +342,6 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		int			i,
 					tupsize;
 		char	   *ptr;
-		char	   *collectordata;
 
 		buffer = ReadBuffer(index, metadata->tail);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
@@ -357,7 +350,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		off = (PageIsEmpty(page)) ? FirstOffsetNumber :
 			OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
-		collectordata = ptr = (char *) palloc(collector->sumsize);
+		char	   *collectordata = ptr = (char *) palloc(collector->sumsize);
 
 		data.ntuples = collector->ntuples;
 
@@ -417,14 +410,13 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 	if (needWal)
 	{
-		XLogRecPtr	recptr;
 
 		memcpy(&data.metadata, metadata, sizeof(GinMetaPageData));
 
 		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT | REGBUF_STANDARD);
 		XLogRegisterData((char *) &data, sizeof(ginxlogUpdateMeta));
 
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
+		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
 		PageSetLSN(metapage, recptr);
 
 		if (buffer != InvalidBuffer)
@@ -446,7 +438,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 *
 	 * ginInsertCleanup() should not be called inside our CRIT_SECTION.
 	 */
-	cleanupSize = GinGetPendingListCleanupSize(index);
+	int			cleanupSize = GinGetPendingListCleanupSize(index);
 	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * 1024L)
 		needCleanup = true;
 
@@ -476,7 +468,6 @@ ginHeapTupleFastCollect(GinState *ginstate,
 						OffsetNumber attnum, Datum value, bool isNull,
 						ItemPointer ht_ctid)
 {
-	Datum	   *entries;
 	GinNullCategory *categories;
 	int32		i,
 				nentries;
@@ -484,7 +475,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	/*
 	 * Extract the key values that need to be inserted in the index
 	 */
-	entries = ginExtractEntries(ginstate, attnum, value, isNull,
+	Datum	   *entries = ginExtractEntries(ginstate, attnum, value, isNull,
 								&nentries, &categories);
 
 	/*
@@ -525,9 +516,8 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	 */
 	for (i = 0; i < nentries; i++)
 	{
-		IndexTuple	itup;
 
-		itup = GinFormTuple(ginstate, attnum, entries[i], categories[i],
+		IndexTuple	itup = GinFormTuple(ginstate, attnum, entries[i], categories[i],
 							NULL, 0, 0, true);
 		itup->t_tid = *ht_ctid;
 		collector->tuples[collector->ntuples++] = itup;
@@ -545,13 +535,10 @@ static void
 shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 		  bool fill_fsm, IndexBulkDeleteResult *stats)
 {
-	Page		metapage;
-	GinMetaPageData *metadata;
-	BlockNumber blknoToDelete;
 
-	metapage = BufferGetPage(metabuffer);
-	metadata = GinPageGetMeta(metapage);
-	blknoToDelete = metadata->head;
+	Page		metapage = BufferGetPage(metabuffer);
+	GinMetaPageData *metadata = GinPageGetMeta(metapage);
+	BlockNumber blknoToDelete = metadata->head;
 
 	do
 	{
@@ -627,7 +614,6 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 
 		if (RelationNeedsWAL(index))
 		{
-			XLogRecPtr	recptr;
 
 			XLogBeginInsert();
 			XLogRegisterBuffer(0, metabuffer,
@@ -640,7 +626,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 			XLogRegisterData((char *) &data,
 							 sizeof(ginxlogDeleteListPages));
 
-			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_LISTPAGE);
+			XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_LISTPAGE);
 			PageSetLSN(metapage, recptr);
 
 			for (i = 0; i < data.ndeleted; i++)
@@ -706,7 +692,6 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
 	ItemPointerData heapptr;
 	OffsetNumber i,
 				maxoff;
-	OffsetNumber attrnum;
 
 	/* reset *ka to empty */
 	ka->nvalues = 0;
@@ -714,17 +699,15 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
 	maxoff = PageGetMaxOffsetNumber(page);
 	Assert(maxoff >= FirstOffsetNumber);
 	ItemPointerSetInvalid(&heapptr);
-	attrnum = 0;
+	OffsetNumber attrnum = 0;
 
 	for (i = startoff; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-		OffsetNumber curattnum;
-		Datum		curkey;
 		GinNullCategory curcategory;
 
 		/* Check for change of heap TID or attnum */
-		curattnum = gintuple_get_attrnum(accum->ginstate, itup);
+		OffsetNumber curattnum = gintuple_get_attrnum(accum->ginstate, itup);
 
 		if (!ItemPointerIsValid(&heapptr))
 		{
@@ -747,7 +730,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
 		}
 
 		/* Add key to KeyArray */
-		curkey = gintuple_get_key(accum->ginstate, itup, &curcategory);
+		Datum		curkey = gintuple_get_key(accum->ginstate, itup, &curcategory);
 		addDatum(ka, curkey, curcategory);
 	}
 
@@ -780,7 +763,6 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 				buffer;
 	Page		metapage,
 				page;
-	GinMetaPageData *metadata;
 	MemoryContext opCtx,
 				oldCtx;
 	BuildAccumulator accum;
@@ -824,7 +806,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 	metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
 	LockBuffer(metabuffer, GIN_SHARE);
 	metapage = BufferGetPage(metabuffer);
-	metadata = GinPageGetMeta(metapage);
+	GinMetaPageData *metadata = GinPageGetMeta(metapage);
 
 	if (metadata->head == InvalidBlockNumber)
 	{

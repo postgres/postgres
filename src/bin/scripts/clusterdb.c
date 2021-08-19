@@ -45,7 +45,6 @@ main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	const char *progname;
 	int			optindex;
 	int			c;
 
@@ -63,7 +62,7 @@ main(int argc, char *argv[])
 	SimpleStringList tables = {NULL, NULL};
 
 	pg_logging_init(argv[0]);
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "clusterdb", help);
@@ -198,9 +197,8 @@ cluster_one_database(const ConnParams *cparams, const char *table,
 {
 	PQExpBufferData sql;
 
-	PGconn	   *conn;
 
-	conn = connectDatabase(cparams, progname, echo, false, false);
+	PGconn	   *conn = connectDatabase(cparams, progname, echo, false, false);
 
 	initPQExpBuffer(&sql);
 
@@ -234,12 +232,10 @@ static void
 cluster_all_databases(ConnParams *cparams, const char *progname,
 					  bool verbose, bool echo, bool quiet)
 {
-	PGconn	   *conn;
-	PGresult   *result;
 	int			i;
 
-	conn = connectMaintenanceDatabase(cparams, progname, echo);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
+	PGconn	   *conn = connectMaintenanceDatabase(cparams, progname, echo);
+	PGresult   *result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
 	PQfinish(conn);
 
 	for (i = 0; i < PQntuples(result); i++)

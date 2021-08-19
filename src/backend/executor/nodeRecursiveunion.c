@@ -166,8 +166,6 @@ ExecRecursiveUnion(PlanState *pstate)
 RecursiveUnionState *
 ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 {
-	RecursiveUnionState *rustate;
-	ParamExecData *prmdata;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -175,7 +173,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	rustate = makeNode(RecursiveUnionState);
+	RecursiveUnionState *rustate = makeNode(RecursiveUnionState);
 	rustate->ps.plan = (Plan *) node;
 	rustate->ps.state = estate;
 	rustate->ps.ExecProcNode = ExecRecursiveUnion;
@@ -214,7 +212,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * Make the state structure available to descendant WorkTableScan nodes
 	 * via the Param slot reserved for it.
 	 */
-	prmdata = &(estate->es_param_exec_vals[node->wtParam]);
+	ParamExecData *prmdata = &(estate->es_param_exec_vals[node->wtParam]);
 	Assert(prmdata->execPlan == NULL);
 	prmdata->value = PointerGetDatum(rustate);
 	prmdata->isnull = false;

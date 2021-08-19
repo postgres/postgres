@@ -65,7 +65,6 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 	const struct rerr *r;
 	const char *msg;
 	char		convbuf[sizeof(unk) + 50];	/* 50 = plenty for int */
-	size_t		len;
 	int			icode;
 
 	switch (errcode)
@@ -104,7 +103,7 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 			break;
 	}
 
-	len = strlen(msg) + 1;		/* space needed, including NUL */
+	size_t		len = strlen(msg) + 1;		/* space needed, including NUL */
 	if (errbuf_size > 0)
 	{
 		if (errbuf_size > len)

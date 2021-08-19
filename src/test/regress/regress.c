@@ -173,7 +173,6 @@ widget_in(PG_FUNCTION_ARGS)
 	char	   *p,
 			   *coord[NARGS];
 	int			i;
-	WIDGET	   *result;
 
 	for (i = 0, p = str; *p && i < NARGS && *p != RDELIM; p++)
 	{
@@ -187,7 +186,7 @@ widget_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"widget", str)));
 
-	result = (WIDGET *) palloc(sizeof(WIDGET));
+	WIDGET	   *result = (WIDGET *) palloc(sizeof(WIDGET));
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
@@ -212,9 +211,8 @@ pt_in_widget(PG_FUNCTION_ARGS)
 {
 	Point	   *point = PG_GETARG_POINT_P(0);
 	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(1);
-	float8		distance;
 
-	distance = DatumGetFloat8(DirectFunctionCall2(point_distance,
+	float8		distance = DatumGetFloat8(DirectFunctionCall2(point_distance,
 												  PointPGetDatum(point),
 												  PointPGetDatum(&widget->center)));
 
@@ -228,15 +226,13 @@ reverse_name(PG_FUNCTION_ARGS)
 {
 	char	   *string = PG_GETARG_CSTRING(0);
 	int			i;
-	int			len;
-	char	   *new_string;
 
-	new_string = palloc0(NAMEDATALEN);
+	char	   *new_string = palloc0(NAMEDATALEN);
 	for (i = 0; i < NAMEDATALEN && string[i]; ++i)
 		;
 	if (i == NAMEDATALEN || !string[i])
 		--i;
-	len = i;
+	int			len = i;
 	for (; i >= 0; --i)
 		new_string[len - i] = string[i];
 	PG_RETURN_CSTRING(new_string);
@@ -248,12 +244,11 @@ Datum
 trigger_return_old(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	HeapTuple	tuple;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "trigger_return_old: not fired by trigger manager");
 
-	tuple = trigdata->tg_trigtuple;
+	HeapTuple	tuple = trigdata->tg_trigtuple;
 
 	return PointerGetDatum(tuple);
 }
@@ -280,7 +275,6 @@ ttdummy(PG_FUNCTION_ARGS)
 	char	   *cnulls;			/* column nulls */
 	char	   *relname;		/* triggered relation name */
 	Relation	rel;			/* triggered relation */
-	HeapTuple	trigtuple;
 	HeapTuple	newtuple = NULL;
 	HeapTuple	rettuple;
 	TupleDesc	tupdesc;		/* tuple description */
@@ -300,7 +294,7 @@ ttdummy(PG_FUNCTION_ARGS)
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		newtuple = trigdata->tg_newtuple;
 
-	trigtuple = trigdata->tg_trigtuple;
+	HeapTuple	trigtuple = trigdata->tg_trigtuple;
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
@@ -404,13 +398,10 @@ ttdummy(PG_FUNCTION_ARGS)
 	/* if there is no plan ... */
 	if (splan == NULL)
 	{
-		SPIPlanPtr	pplan;
-		Oid		   *ctypes;
-		char	   *query;
 
 		/* allocate space in preparation */
-		ctypes = (Oid *) palloc(natts * sizeof(Oid));
-		query = (char *) palloc(100 + 16 * natts);
+		Oid		   *ctypes = (Oid *) palloc(natts * sizeof(Oid));
+		char	   *query = (char *) palloc(100 + 16 * natts);
 
 		/*
 		 * Construct query: INSERT INTO _relation_ VALUES ($1, ...)
@@ -424,7 +415,7 @@ ttdummy(PG_FUNCTION_ARGS)
 		}
 
 		/* Prepare plan for query */
-		pplan = SPI_prepare(query, natts, ctypes);
+		SPIPlanPtr	pplan = SPI_prepare(query, natts, ctypes);
 		if (pplan == NULL)
 			elog(ERROR, "ttdummy (%s): SPI_prepare returned %s", relname, SPI_result_code_string(SPI_result));
 
@@ -497,9 +488,8 @@ int44in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
 	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
-	int			i;
 
-	i = sscanf(input_string,
+	int			i = sscanf(input_string,
 			   "%d, %d, %d, %d",
 			   &result[0],
 			   &result[1],
@@ -537,25 +527,17 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleData tuple;
-	int			ncolumns;
-	Datum	   *values;
-	bool	   *nulls;
 
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 
-	HeapTuple	newtup;
 
 	int			i;
 
-	MemoryContext old_context;
 
 	/* Extract type info from the tuple itself */
-	tupType = HeapTupleHeaderGetTypeId(rec);
-	tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	Oid			tupType = HeapTupleHeaderGetTypeId(rec);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/* Build a temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
@@ -563,17 +545,15 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	tuple.t_tableOid = InvalidOid;
 	tuple.t_data = rec;
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
-	old_context = MemoryContextSwitchTo(TopTransactionContext);
+	MemoryContext old_context = MemoryContextSwitchTo(TopTransactionContext);
 
 	for (i = 0; i < ncolumns; i++)
 	{
-		struct varlena *attr;
-		struct varlena *new_attr;
 		struct varatt_indirect redirect_pointer;
 
 		/* only work on existing, not-null varlenas */
@@ -582,7 +562,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 			TupleDescAttr(tupdesc, i)->attlen != -1)
 			continue;
 
-		attr = (struct varlena *) DatumGetPointer(values[i]);
+		struct varlena *attr = (struct varlena *) DatumGetPointer(values[i]);
 
 		/* don't recursively indirect */
 		if (VARATT_IS_EXTERNAL_INDIRECT(attr))
@@ -600,7 +580,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 		}
 
 		/* build indirection Datum */
-		new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
+		struct varlena *new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
 		redirect_pointer.pointer = attr;
 		SET_VARTAG_EXTERNAL(new_attr, VARTAG_INDIRECT);
 		memcpy(VARDATA_EXTERNAL(new_attr), &redirect_pointer,
@@ -609,7 +589,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 		values[i] = PointerGetDatum(new_attr);
 	}
 
-	newtup = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	newtup = heap_form_tuple(tupdesc, values, nulls);
 	pfree(values);
 	pfree(nulls);
 	ReleaseTupleDesc(tupdesc);
@@ -688,7 +668,6 @@ static void
 test_atomic_uint32(void)
 {
 	pg_atomic_uint32 var;
-	uint32		expected;
 	int			i;
 
 	pg_atomic_init_u32(&var, 0);
@@ -720,7 +699,7 @@ test_atomic_uint32(void)
 	EXPECT_EQ_U32(pg_atomic_read_u32(&var), (uint32) INT_MAX + 1);
 	EXPECT_EQ_U32(pg_atomic_sub_fetch_u32(&var, INT_MAX), 1);
 	pg_atomic_sub_fetch_u32(&var, 1);
-	expected = PG_INT16_MAX;
+	uint32		expected = PG_INT16_MAX;
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
 	expected = PG_INT16_MAX + 1;
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
@@ -760,7 +739,6 @@ static void
 test_atomic_uint64(void)
 {
 	pg_atomic_uint64 var;
-	uint64		expected;
 	int			i;
 
 	pg_atomic_init_u64(&var, 0);
@@ -776,7 +754,7 @@ test_atomic_uint64(void)
 	EXPECT_EQ_U64(pg_atomic_exchange_u64(&var, 0), 5);
 
 	/* fail exchange because of old expected */
-	expected = 10;
+	uint64		expected = 10;
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u64(&var, &expected, 1));
 
 	/* CAS is allowed to fail due to interrupts, try a couple of times */
@@ -1090,17 +1068,14 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	int			dest_encoding = pg_char_to_encoding(dest_encoding_name);
 	bool		noError = PG_GETARG_BOOL(3);
 	TupleDesc	tupdesc;
-	char	   *src;
 	char	   *dst;
 	bytea	   *retval;
-	Size		srclen;
 	Size		dstsize;
 	Oid			proc;
 	int			convertedbytes;
 	int			dstlen;
 	Datum		values[2];
 	bool		nulls[2];
-	HeapTuple	tuple;
 
 	if (src_encoding < 0)
 		ereport(ERROR,
@@ -1118,15 +1093,14 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 	tupdesc = BlessTupleDesc(tupdesc);
 
-	srclen = VARSIZE_ANY_EXHDR(string);
-	src = VARDATA_ANY(string);
+	Size		srclen = VARSIZE_ANY_EXHDR(string);
+	char	   *src = VARDATA_ANY(string);
 
 	if (src_encoding == dest_encoding)
 	{
 		/* just check that the source string is valid */
-		int			oklen;
 
-		oklen = pg_encoding_verifymbstr(src_encoding, src, srclen);
+		int			oklen = pg_encoding_verifymbstr(src_encoding, src, srclen);
 
 		if (oklen == srclen)
 		{
@@ -1191,7 +1165,7 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int32GetDatum(convertedbytes);
 	values[1] = PointerGetDatum(retval);
-	tuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupdesc, values, nulls);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }

@@ -352,19 +352,17 @@ calc_inet_union_params(GISTENTRY *ent,
 				maxfamily,
 				minbits,
 				commonbits;
-	unsigned char *addr;
-	GistInetKey *tmp;
 	int			i;
 
 	/* Must be at least one key. */
 	Assert(m <= n);
 
 	/* Initialize variables using the first key. */
-	tmp = DatumGetInetKeyP(ent[m].key);
+	GistInetKey *tmp = DatumGetInetKeyP(ent[m].key);
 	minfamily = maxfamily = gk_ip_family(tmp);
 	minbits = gk_ip_minbits(tmp);
 	commonbits = gk_ip_commonbits(tmp);
-	addr = gk_ip_addr(tmp);
+	unsigned char *addr = gk_ip_addr(tmp);
 
 	/* Scan remaining keys. */
 	for (i = m + 1; i <= n; i++)
@@ -414,19 +412,17 @@ calc_inet_union_params_indexed(GISTENTRY *ent,
 				maxfamily,
 				minbits,
 				commonbits;
-	unsigned char *addr;
-	GistInetKey *tmp;
 	int			i;
 
 	/* Must be at least one key. */
 	Assert(noffsets > 0);
 
 	/* Initialize variables using the first key. */
-	tmp = DatumGetInetKeyP(ent[offsets[0]].key);
+	GistInetKey *tmp = DatumGetInetKeyP(ent[offsets[0]].key);
 	minfamily = maxfamily = gk_ip_family(tmp);
 	minbits = gk_ip_minbits(tmp);
 	commonbits = gk_ip_commonbits(tmp);
-	addr = gk_ip_addr(tmp);
+	unsigned char *addr = gk_ip_addr(tmp);
 
 	/* Scan remaining keys. */
 	for (i = 1; i < noffsets; i++)
@@ -471,10 +467,9 @@ static GistInetKey *
 build_inet_union_key(int family, int minbits, int commonbits,
 					 unsigned char *addr)
 {
-	GistInetKey *result;
 
 	/* Make sure any unused bits are zeroed. */
-	result = (GistInetKey *) palloc0(sizeof(GistInetKey));
+	GistInetKey *result = (GistInetKey *) palloc0(sizeof(GistInetKey));
 
 	gk_ip_family(result) = family;
 	gk_ip_minbits(result) = minbits;
@@ -509,7 +504,6 @@ inet_gist_union(PG_FUNCTION_ARGS)
 				maxfamily,
 				minbits,
 				commonbits;
-	unsigned char *addr;
 	GistInetKey *tmp,
 			   *result;
 
@@ -524,7 +518,7 @@ inet_gist_union(PG_FUNCTION_ARGS)
 
 	/* Initialize address using the first key. */
 	tmp = DatumGetInetKeyP(ent[0].key);
-	addr = gk_ip_addr(tmp);
+	unsigned char *addr = gk_ip_addr(tmp);
 
 	/* Construct the union value. */
 	result = build_inet_union_key(minfamily, minbits, commonbits, addr);
@@ -549,9 +543,8 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 		if (DatumGetPointer(entry->key) != NULL)
 		{
 			inet	   *in = DatumGetInetPP(entry->key);
-			GistInetKey *r;
 
-			r = (GistInetKey *) palloc0(sizeof(GistInetKey));
+			GistInetKey *r = (GistInetKey *) palloc0(sizeof(GistInetKey));
 
 			gk_ip_family(r) = ip_family(in);
 			gk_ip_minbits(r) = ip_bits(in);
@@ -590,17 +583,15 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GistInetKey *key = DatumGetInetKeyP(entry->key);
-	GISTENTRY  *retval;
-	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	inet	   *dst = (inet *) palloc0(sizeof(inet));
 
 	ip_family(dst) = gk_ip_family(key);
 	ip_bits(dst) = gk_ip_minbits(key);
 	memcpy(ip_addr(dst), gk_ip_addr(key), ip_addrsize(dst));
 	SET_INET_VARSIZE(dst);
 
-	retval = palloc(sizeof(GISTENTRY));
+	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
 				  entry->offset, false);
 

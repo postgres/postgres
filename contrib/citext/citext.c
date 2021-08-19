@@ -36,7 +36,6 @@ citextcmp(text *left, text *right, Oid collid)
 {
 	char	   *lcstr,
 			   *rcstr;
-	int32		result;
 
 	/*
 	 * We must do our str_tolower calls with DEFAULT_COLLATION_OID, not the
@@ -49,7 +48,7 @@ citextcmp(text *left, text *right, Oid collid)
 	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
 	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
 
-	result = varstr_cmp(lcstr, strlen(lcstr),
+	int32		result = varstr_cmp(lcstr, strlen(lcstr),
 						rcstr, strlen(rcstr),
 						collid);
 
@@ -71,7 +70,6 @@ internal_citext_pattern_cmp(text *left, text *right, Oid collid)
 			   *rcstr;
 	int			llen,
 				rlen;
-	int32		result;
 
 	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
 	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
@@ -79,7 +77,7 @@ internal_citext_pattern_cmp(text *left, text *right, Oid collid)
 	llen = strlen(lcstr);
 	rlen = strlen(rcstr);
 
-	result = memcmp((void *) lcstr, (void *) rcstr, Min(llen, rlen));
+	int32		result = memcmp((void *) lcstr, (void *) rcstr, Min(llen, rlen));
 	if (result == 0)
 	{
 		if (llen < rlen)
@@ -107,9 +105,8 @@ citext_cmp(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	int32		result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION());
+	int32		result = citextcmp(left, right, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -124,9 +121,8 @@ citext_pattern_cmp(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	int32		result;
 
-	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION());
+	int32		result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -140,11 +136,9 @@ Datum
 citext_hash(PG_FUNCTION_ARGS)
 {
 	text	   *txt = PG_GETARG_TEXT_PP(0);
-	char	   *str;
-	Datum		result;
 
-	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
-	result = hash_any((unsigned char *) str, strlen(str));
+	char	   *str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
+	Datum		result = hash_any((unsigned char *) str, strlen(str));
 	pfree(str);
 
 	/* Avoid leaking memory for toasted inputs */
@@ -160,11 +154,9 @@ citext_hash_extended(PG_FUNCTION_ARGS)
 {
 	text	   *txt = PG_GETARG_TEXT_PP(0);
 	uint64		seed = PG_GETARG_INT64(1);
-	char	   *str;
-	Datum		result;
 
-	str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
-	result = hash_any_extended((unsigned char *) str, strlen(str), seed);
+	char	   *str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
+	Datum		result = hash_any_extended((unsigned char *) str, strlen(str), seed);
 	pfree(str);
 
 	/* Avoid leaking memory for toasted inputs */
@@ -188,7 +180,6 @@ citext_eq(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	char	   *lcstr,
 			   *rcstr;
-	bool		result;
 
 	/* We can't compare lengths in advance of downcasing ... */
 
@@ -199,7 +190,7 @@ citext_eq(PG_FUNCTION_ARGS)
 	 * Since we only care about equality or not-equality, we can avoid all the
 	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
-	result = (strcmp(lcstr, rcstr) == 0);
+	bool		result = (strcmp(lcstr, rcstr) == 0);
 
 	pfree(lcstr);
 	pfree(rcstr);
@@ -218,7 +209,6 @@ citext_ne(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 	char	   *lcstr,
 			   *rcstr;
-	bool		result;
 
 	/* We can't compare lengths in advance of downcasing ... */
 
@@ -229,7 +219,7 @@ citext_ne(PG_FUNCTION_ARGS)
 	 * Since we only care about equality or not-equality, we can avoid all the
 	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
-	result = (strcmp(lcstr, rcstr) != 0);
+	bool		result = (strcmp(lcstr, rcstr) != 0);
 
 	pfree(lcstr);
 	pfree(rcstr);
@@ -246,9 +236,8 @@ citext_lt(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) < 0;
+	bool		result = citextcmp(left, right, PG_GET_COLLATION()) < 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -263,9 +252,8 @@ citext_le(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) <= 0;
+	bool		result = citextcmp(left, right, PG_GET_COLLATION()) <= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -280,9 +268,8 @@ citext_gt(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) > 0;
+	bool		result = citextcmp(left, right, PG_GET_COLLATION()) > 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -297,9 +284,8 @@ citext_ge(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) >= 0;
+	bool		result = citextcmp(left, right, PG_GET_COLLATION()) >= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -314,9 +300,8 @@ citext_pattern_lt(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) < 0;
+	bool		result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) < 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -331,9 +316,8 @@ citext_pattern_le(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) <= 0;
+	bool		result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) <= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -348,9 +332,8 @@ citext_pattern_gt(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) > 0;
+	bool		result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) > 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -365,9 +348,8 @@ citext_pattern_ge(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) >= 0;
+	bool		result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) >= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -388,9 +370,8 @@ citext_smaller(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	text	   *result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) < 0 ? left : right;
+	text	   *result = citextcmp(left, right, PG_GET_COLLATION()) < 0 ? left : right;
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -401,8 +382,7 @@ citext_larger(PG_FUNCTION_ARGS)
 {
 	text	   *left = PG_GETARG_TEXT_PP(0);
 	text	   *right = PG_GETARG_TEXT_PP(1);
-	text	   *result;
 
-	result = citextcmp(left, right, PG_GET_COLLATION()) > 0 ? left : right;
+	text	   *result = citextcmp(left, right, PG_GET_COLLATION()) > 0 ? left : right;
 	PG_RETURN_TEXT_P(result);
 }

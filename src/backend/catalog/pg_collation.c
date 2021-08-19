@@ -53,15 +53,11 @@ CollationCreate(const char *collname, Oid collnamespace,
 				bool if_not_exists,
 				bool quiet)
 {
-	Relation	rel;
-	TupleDesc	tupDesc;
-	HeapTuple	tup;
 	Datum		values[Natts_pg_collation];
 	bool		nulls[Natts_pg_collation];
 	NameData	name_name,
 				name_collate,
 				name_ctype;
-	Oid			oid;
 	ObjectAddress myself,
 				referenced;
 
@@ -107,7 +103,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	}
 
 	/* open pg_collation; see below about the lock level */
-	rel = table_open(CollationRelationId, ShareRowExclusiveLock);
+	Relation	rel = table_open(CollationRelationId, ShareRowExclusiveLock);
 
 	/*
 	 * Also forbid a specific-encoding collation shadowing an any-encoding
@@ -148,13 +144,13 @@ CollationCreate(const char *collname, Oid collnamespace,
 							collname)));
 	}
 
-	tupDesc = RelationGetDescr(rel);
+	TupleDesc	tupDesc = RelationGetDescr(rel);
 
 	/* form a tuple */
 	memset(nulls, 0, sizeof(nulls));
 
 	namestrcpy(&name_name, collname);
-	oid = GetNewOidWithIndex(rel, CollationOidIndexId,
+	Oid			oid = GetNewOidWithIndex(rel, CollationOidIndexId,
 							 Anum_pg_collation_oid);
 	values[Anum_pg_collation_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
@@ -172,7 +168,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	else
 		nulls[Anum_pg_collation_collversion - 1] = true;
 
-	tup = heap_form_tuple(tupDesc, values, nulls);
+	HeapTuple	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/* insert a new tuple */
 	CatalogTupleInsert(rel, tup);

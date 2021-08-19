@@ -56,9 +56,6 @@ BitmapOrState *
 ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 {
 	BitmapOrState *bitmaporstate = makeNode(BitmapOrState);
-	PlanState **bitmapplanstates;
-	int			nplans;
-	int			i;
 	ListCell   *l;
 	Plan	   *initNode;
 
@@ -68,9 +65,9 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	/*
 	 * Set up empty vector of subplan states
 	 */
-	nplans = list_length(node->bitmapplans);
+	int			nplans = list_length(node->bitmapplans);
 
-	bitmapplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
+	PlanState **bitmapplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
 	/*
 	 * create new BitmapOrState for our BitmapOr node
@@ -85,7 +82,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "bitmapplanstates".
 	 */
-	i = 0;
+	int			i = 0;
 	foreach(l, node->bitmapplans)
 	{
 		initNode = (Plan *) lfirst(l);
@@ -110,8 +107,6 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 Node *
 MultiExecBitmapOr(BitmapOrState *node)
 {
-	PlanState **bitmapplans;
-	int			nplans;
 	int			i;
 	TIDBitmap  *result = NULL;
 
@@ -122,8 +117,8 @@ MultiExecBitmapOr(BitmapOrState *node)
 	/*
 	 * get information from the node
 	 */
-	bitmapplans = node->bitmapplans;
-	nplans = node->nplans;
+	PlanState **bitmapplans = node->bitmapplans;
+	int			nplans = node->nplans;
 
 	/*
 	 * Scan all the subplans and OR their result bitmaps
@@ -195,15 +190,13 @@ MultiExecBitmapOr(BitmapOrState *node)
 void
 ExecEndBitmapOr(BitmapOrState *node)
 {
-	PlanState **bitmapplans;
-	int			nplans;
 	int			i;
 
 	/*
 	 * get information from the node
 	 */
-	bitmapplans = node->bitmapplans;
-	nplans = node->nplans;
+	PlanState **bitmapplans = node->bitmapplans;
+	int			nplans = node->nplans;
 
 	/*
 	 * shut down each of the subscans (that we've initialized)

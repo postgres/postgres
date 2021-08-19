@@ -106,14 +106,10 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 {
 	Tuplestorestate *tupstore = NULL;
 	TupleDesc	tupdesc = NULL;
-	Oid			funcrettype;
-	bool		returnsTuple;
 	bool		returnsSet = false;
-	FunctionCallInfo fcinfo;
 	PgStat_FunctionCallUsage fcusage;
 	ReturnSetInfo rsinfo;
 	HeapTupleData tmptup;
-	MemoryContext callerContext;
 	bool		first_time = true;
 
 	/*
@@ -130,11 +126,11 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 	 * and can be reset each time through to avoid bloat.
 	 */
 	MemoryContextReset(argContext);
-	callerContext = MemoryContextSwitchTo(argContext);
+	MemoryContext callerContext = MemoryContextSwitchTo(argContext);
 
-	funcrettype = exprType((Node *) setexpr->expr);
+	Oid			funcrettype = exprType((Node *) setexpr->expr);
 
-	returnsTuple = type_is_rowtype(funcrettype);
+	bool		returnsTuple = type_is_rowtype(funcrettype);
 
 	/*
 	 * Prepare a resultinfo node for communication.  We always do this even if
@@ -154,7 +150,7 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 	rsinfo.setResult = NULL;
 	rsinfo.setDesc = NULL;
 
-	fcinfo = palloc(SizeForFunctionCallInfo(list_length(setexpr->args)));
+	FunctionCallInfo fcinfo = palloc(SizeForFunctionCallInfo(list_length(setexpr->args)));
 
 	/*
 	 * Normally the passed expression tree will be a SetExprState, since the
@@ -335,9 +331,8 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 					 * what we get from the function itself.  But it doesn't.)
 					 */
 					int			natts = expectedDesc->natts;
-					bool	   *nullflags;
 
-					nullflags = (bool *) palloc(natts * sizeof(bool));
+					bool	   *nullflags = (bool *) palloc(natts * sizeof(bool));
 					memset(nullflags, true, natts * sizeof(bool));
 					tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
 				}
@@ -403,9 +398,8 @@ no_function_result:
 		if (!returnsSet)
 		{
 			int			natts = expectedDesc->natts;
-			bool	   *nullflags;
 
-			nullflags = (bool *) palloc(natts * sizeof(bool));
+			bool	   *nullflags = (bool *) palloc(natts * sizeof(bool));
 			memset(nullflags, true, natts * sizeof(bool));
 			tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
 		}
@@ -500,12 +494,9 @@ ExecMakeFunctionResultSet(SetExprState *fcache,
 						  bool *isNull,
 						  ExprDoneCond *isDone)
 {
-	List	   *arguments;
 	Datum		result;
-	FunctionCallInfo fcinfo;
 	PgStat_FunctionCallUsage fcusage;
 	ReturnSetInfo rsinfo;
-	bool		callit;
 	int			i;
 
 restart:
@@ -521,16 +512,14 @@ restart:
 	if (fcache->funcResultStore)
 	{
 		TupleTableSlot *slot = fcache->funcResultSlot;
-		MemoryContext oldContext;
-		bool		foundTup;
 
 		/*
 		 * Have to make sure tuple in slot lives long enough, otherwise
 		 * clearing the slot could end up trying to free something already
 		 * freed.
 		 */
-		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-		foundTup = tuplestore_gettupleslot(fcache->funcResultStore, true, false,
+		MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+		bool		foundTup = tuplestore_gettupleslot(fcache->funcResultStore, true, false,
 										   fcache->funcResultSlot);
 		MemoryContextSwitchTo(oldContext);
 
@@ -567,8 +556,8 @@ restart:
 	 * rows from this SRF have been returned, otherwise ValuePerCall SRFs
 	 * would reference freed memory after the first returned row.
 	 */
-	fcinfo = fcache->fcinfo;
-	arguments = fcache->args;
+	FunctionCallInfo fcinfo = fcache->fcinfo;
+	List	   *arguments = fcache->args;
 	if (!fcache->setArgsValid)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(argContext);
@@ -602,7 +591,7 @@ restart:
 	 * If function is strict, and there are any NULL arguments, skip calling
 	 * the function.
 	 */
-	callit = true;
+	bool		callit = true;
 	if (fcache->func.fn_strict)
 	{
 		for (i = 0; i < fcinfo->nargs; i++)
@@ -697,11 +686,10 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 		   SetExprState *sexpr, PlanState *parent,
 		   MemoryContext sexprCxt, bool allowSRF, bool needDescForSRF)
 {
-	AclResult	aclresult;
 	size_t		numargs = list_length(sexpr->args);
 
 	/* Check permission to call function */
-	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+	AclResult	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 	InvokeFunctionExecuteHook(foid);
@@ -745,17 +733,15 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 	/* If function returns set, prepare expected tuple descriptor */
 	if (sexpr->func.fn_retset && needDescForSRF)
 	{
-		TypeFuncClass functypclass;
 		Oid			funcrettype;
 		TupleDesc	tupdesc;
-		MemoryContext oldcontext;
 
-		functypclass = get_expr_result_type(sexpr->func.fn_expr,
+		TypeFuncClass functypclass = get_expr_result_type(sexpr->func.fn_expr,
 											&funcrettype,
 											&tupdesc);
 
 		/* Must save tupdesc in sexpr's context */
-		oldcontext = MemoryContextSwitchTo(sexprCxt);
+		MemoryContext oldcontext = MemoryContextSwitchTo(sexprCxt);
 
 		if (functypclass == TYPEFUNC_COMPOSITE ||
 			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
@@ -835,10 +821,9 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList,
 				 ExprContext *econtext)
 {
-	int			i;
 	ListCell   *arg;
 
-	i = 0;
+	int			i = 0;
 	foreach(arg, argList)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -872,9 +857,8 @@ ExecPrepareTuplestoreResult(SetExprState *sexpr,
 	{
 		/* Create a slot so we can read data out of the tuplestore */
 		TupleDesc	slotDesc;
-		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(sexpr->func.fn_mcxt);
+		MemoryContext oldcontext = MemoryContextSwitchTo(sexpr->func.fn_mcxt);
 
 		/*
 		 * If we were not able to determine the result rowtype from context,

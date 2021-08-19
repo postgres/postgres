@@ -47,10 +47,9 @@ static void WriteTempFileBlock(BufFile *file, long blknum, void *ptr);
 GISTBuildBuffers *
 gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 {
-	GISTBuildBuffers *gfbb;
 	HASHCTL		hashCtl;
 
-	gfbb = palloc(sizeof(GISTBuildBuffers));
+	GISTBuildBuffers *gfbb = palloc(sizeof(GISTBuildBuffers));
 	gfbb->pagesPerBuffer = pagesPerBuffer;
 	gfbb->levelStep = levelStep;
 
@@ -117,11 +116,10 @@ GISTNodeBuffer *
 gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 				  BlockNumber nodeBlocknum, int level)
 {
-	GISTNodeBuffer *nodeBuffer;
 	bool		found;
 
 	/* Find node buffer in hash table */
-	nodeBuffer = (GISTNodeBuffer *) hash_search(gfbb->nodeBuffersTab,
+	GISTNodeBuffer *nodeBuffer = (GISTNodeBuffer *) hash_search(gfbb->nodeBuffersTab,
 												(const void *) &nodeBlocknum,
 												HASH_ENTER,
 												&found);
@@ -184,9 +182,8 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 static GISTNodeBufferPage *
 gistAllocateNewPageBuffer(GISTBuildBuffers *gfbb)
 {
-	GISTNodeBufferPage *pageBuffer;
 
-	pageBuffer = (GISTNodeBufferPage *) MemoryContextAllocZero(gfbb->context,
+	GISTNodeBufferPage *pageBuffer = (GISTNodeBufferPage *) MemoryContextAllocZero(gfbb->context,
 															   BLCKSZ);
 	pageBuffer->prev = InvalidBlockNumber;
 
@@ -252,10 +249,9 @@ gistUnloadNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer)
 	/* Check if we have something to write */
 	if (nodeBuffer->pageBuffer)
 	{
-		BlockNumber blkno;
 
 		/* Get free file block */
-		blkno = gistBuffersGetFreeBlock(gfbb);
+		BlockNumber blkno = gistBuffersGetFreeBlock(gfbb);
 
 		/* Write block to the temporary file */
 		WriteTempFileBlock(gfbb->pfile, blkno, nodeBuffer->pageBuffer);
@@ -292,7 +288,6 @@ static void
 gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer, IndexTuple itup)
 {
 	Size		itupsz = IndexTupleSize(itup);
-	char	   *ptr;
 
 	/* There should be enough of space. */
 	Assert(PAGE_FREE_SPACE(pageBuffer) >= MAXALIGN(itupsz));
@@ -301,7 +296,7 @@ gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer, IndexTuple itup)
 	PAGE_FREE_SPACE(pageBuffer) -= MAXALIGN(itupsz);
 
 	/* Get pointer to the spot we reserved (ie. end of free space). */
-	ptr = (char *) pageBuffer + BUFFER_PAGE_DATA_OFFSET
+	char	   *ptr = (char *) pageBuffer + BUFFER_PAGE_DATA_OFFSET
 		+ PAGE_FREE_SPACE(pageBuffer);
 
 	/* Copy the index tuple there. */
@@ -314,16 +309,14 @@ gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer, IndexTuple itup)
 static void
 gistGetItupFromPage(GISTNodeBufferPage *pageBuffer, IndexTuple *itup)
 {
-	IndexTuple	ptr;
-	Size		itupsz;
 
 	Assert(!PAGE_IS_EMPTY(pageBuffer)); /* Page shouldn't be empty */
 
 	/* Get pointer to last index tuple */
-	ptr = (IndexTuple) ((char *) pageBuffer
+	IndexTuple	ptr = (IndexTuple) ((char *) pageBuffer
 						+ BUFFER_PAGE_DATA_OFFSET
 						+ PAGE_FREE_SPACE(pageBuffer));
-	itupsz = IndexTupleSize(ptr);
+	Size		itupsz = IndexTupleSize(ptr);
 
 	/* Make a copy of the tuple */
 	*itup = (IndexTuple) palloc(itupsz);
@@ -368,10 +361,9 @@ gistPushItupToNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer,
 		/*
 		 * Nope. Swap previous block to disk and allocate a new one.
 		 */
-		BlockNumber blkno;
 
 		/* Write filled page to the disk */
-		blkno = gistBuffersGetFreeBlock(gfbb);
+		BlockNumber blkno = gistBuffersGetFreeBlock(gfbb);
 		WriteTempFileBlock(gfbb->pfile, blkno, nodeBuffer->pageBuffer);
 
 		/*
@@ -431,7 +423,6 @@ gistPopItupFromNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer,
 	 */
 	if (PAGE_IS_EMPTY(nodeBuffer->pageBuffer))
 	{
-		BlockNumber prevblkno;
 
 		/*
 		 * blocksCount includes the page in pageBuffer, so decrease it now.
@@ -441,7 +432,7 @@ gistPopItupFromNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer,
 		/*
 		 * If there's more pages, fetch previous one.
 		 */
-		prevblkno = nodeBuffer->pageBuffer->prev;
+		BlockNumber prevblkno = nodeBuffer->pageBuffer->prev;
 		if (prevblkno != InvalidBlockNumber)
 		{
 			/* There is a previous page. Fetch it. */
@@ -488,7 +479,6 @@ gistBuffersGetFreeBlock(GISTBuildBuffers *gfbb)
 static void
 gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum)
 {
-	int			ndx;
 
 	/* Enlarge freeBlocks array if full. */
 	if (gfbb->nFreeBlocks >= gfbb->freeBlocksLen)
@@ -500,7 +490,7 @@ gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum)
 	}
 
 	/* Add blocknum to array */
-	ndx = gfbb->nFreeBlocks++;
+	int			ndx = gfbb->nFreeBlocks++;
 	gfbb->freeBlocks[ndx] = blocknum;
 }
 
@@ -538,10 +528,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 								Relation r, int level,
 								Buffer buffer, List *splitinfo)
 {
-	RelocationBufferInfo *relocationBuffersInfos;
 	bool		found;
-	GISTNodeBuffer *nodeBuffer;
-	BlockNumber blocknum;
 	IndexTuple	itup;
 	int			splitPagesCount = 0,
 				i;
@@ -557,8 +544,8 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	/*
 	 * Get the node buffer of the splitted page.
 	 */
-	blocknum = BufferGetBlockNumber(buffer);
-	nodeBuffer = hash_search(gfbb->nodeBuffersTab, &blocknum,
+	BlockNumber blocknum = BufferGetBlockNumber(buffer);
+	GISTNodeBuffer *nodeBuffer = hash_search(gfbb->nodeBuffersTab, &blocknum,
 							 HASH_FIND, &found);
 	if (!found)
 	{
@@ -587,7 +574,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Allocate memory for information about relocation buffers.
 	 */
 	splitPagesCount = list_length(splitinfo);
-	relocationBuffersInfos =
+	RelocationBufferInfo *relocationBuffersInfos =
 		(RelocationBufferInfo *) palloc(sizeof(RelocationBufferInfo) *
 										splitPagesCount);
 
@@ -599,7 +586,6 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	foreach(lc, splitinfo)
 	{
 		GISTPageSplitInfo *si = (GISTPageSplitInfo *) lfirst(lc);
-		GISTNodeBuffer *newNodeBuffer;
 
 		/* Decompress parent index tuple of node buffer page. */
 		gistDeCompressAtt(giststate, r,
@@ -614,7 +600,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		 * were relinked to the temporary buffer, so the original one is now
 		 * empty.
 		 */
-		newNodeBuffer = gistGetNodeBuffer(gfbb, giststate, BufferGetBlockNumber(si->buf), level);
+		GISTNodeBuffer *newNodeBuffer = gistGetNodeBuffer(gfbb, giststate, BufferGetBlockNumber(si->buf), level);
 
 		relocationBuffersInfos[i].nodeBuffer = newNodeBuffer;
 		relocationBuffersInfos[i].splitinfo = si;
@@ -636,8 +622,6 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		float		best_penalty[INDEX_MAX_KEYS];
 		int			i,
 					which;
-		IndexTuple	newtup;
-		RelocationBufferInfo *targetBufferInfo;
 
 		gistDeCompressAtt(giststate, r,
 						  itup, NULL, (OffsetNumber) 0, entry, isnull);
@@ -659,18 +643,16 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		for (i = 0; i < splitPagesCount; i++)
 		{
 			RelocationBufferInfo *splitPageInfo = &relocationBuffersInfos[i];
-			bool		zero_penalty;
 			int			j;
 
-			zero_penalty = true;
+			bool		zero_penalty = true;
 
 			/* Loop over index attributes. */
 			for (j = 0; j < IndexRelationGetNumberOfKeyAttributes(r); j++)
 			{
-				float		usize;
 
 				/* Compute penalty for this column. */
-				usize = gistpenalty(giststate, j,
+				float		usize = gistpenalty(giststate, j,
 									&splitPageInfo->entry[j],
 									splitPageInfo->isnull[j],
 									&entry[j], isnull[j]);
@@ -724,13 +706,13 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		}
 
 		/* OK, "which" is the page index to push the tuple to */
-		targetBufferInfo = &relocationBuffersInfos[which];
+		RelocationBufferInfo *targetBufferInfo = &relocationBuffersInfos[which];
 
 		/* Push item to selected node buffer */
 		gistPushItupToNodeBuffer(gfbb, targetBufferInfo->nodeBuffer, itup);
 
 		/* Adjust the downlink for this page, if needed. */
-		newtup = gistgetadjusted(r, targetBufferInfo->splitinfo->downlink,
+		IndexTuple	newtup = gistgetadjusted(r, targetBufferInfo->splitinfo->downlink,
 								 itup, giststate);
 		if (newtup)
 		{
@@ -756,11 +738,10 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 static void
 ReadTempFileBlock(BufFile *file, long blknum, void *ptr)
 {
-	size_t		nread;
 
 	if (BufFileSeekBlock(file, blknum) != 0)
 		elog(ERROR, "could not seek to block %ld in temporary file", blknum);
-	nread = BufFileRead(file, ptr, BLCKSZ);
+	size_t		nread = BufFileRead(file, ptr, BLCKSZ);
 	if (nread != BLCKSZ)
 		elog(ERROR, "could not read temporary file: read only %zu of %zu bytes",
 			 nread, (size_t) BLCKSZ);

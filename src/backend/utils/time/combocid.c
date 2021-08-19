@@ -205,7 +205,6 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 {
 	CommandId	combocid;
 	ComboCidKeyData key;
-	ComboCidEntry entry;
 	bool		found;
 
 	/*
@@ -252,7 +251,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	/* We assume there is no struct padding in ComboCidKeyData! */
 	key.cmin = cmin;
 	key.cmax = cmax;
-	entry = (ComboCidEntry) hash_search(comboHash,
+	ComboCidEntry entry = (ComboCidEntry) hash_search(comboHash,
 										(void *) &key,
 										HASH_ENTER,
 										&found);
@@ -296,10 +295,9 @@ GetRealCmax(CommandId combocid)
 Size
 EstimateComboCIDStateSpace(void)
 {
-	Size		size;
 
 	/* Add space required for saving usedComboCids */
-	size = sizeof(int);
+	Size		size = sizeof(int);
 
 	/* Add space required for saving ComboCidKeyData */
 	size = add_size(size, mul_size(sizeof(ComboCidKeyData), usedComboCids));
@@ -315,13 +313,12 @@ EstimateComboCIDStateSpace(void)
 void
 SerializeComboCIDState(Size maxsize, char *start_address)
 {
-	char	   *endptr;
 
 	/* First, we store the number of currently-existing combo CIDs. */
 	*(int *) start_address = usedComboCids;
 
 	/* If maxsize is too small, throw an error. */
-	endptr = start_address + sizeof(int) +
+	char	   *endptr = start_address + sizeof(int) +
 		(sizeof(ComboCidKeyData) * usedComboCids);
 	if (endptr < start_address || endptr > start_address + maxsize)
 		elog(ERROR, "not enough space to serialize ComboCID state");
@@ -341,16 +338,14 @@ SerializeComboCIDState(Size maxsize, char *start_address)
 void
 RestoreComboCIDState(char *comboCIDstate)
 {
-	int			num_elements;
-	ComboCidKeyData *keydata;
 	int			i;
 	CommandId	cid;
 
 	Assert(!comboCids && !comboHash);
 
 	/* First, we retrieve the number of combo CIDs that were serialized. */
-	num_elements = *(int *) comboCIDstate;
-	keydata = (ComboCidKeyData *) (comboCIDstate + sizeof(int));
+	int			num_elements = *(int *) comboCIDstate;
+	ComboCidKeyData *keydata = (ComboCidKeyData *) (comboCIDstate + sizeof(int));
 
 	/* Use GetComboCommandId to restore each combo CID. */
 	for (i = 0; i < num_elements; i++)

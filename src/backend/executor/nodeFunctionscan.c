@@ -59,20 +59,14 @@ static TupleTableSlot *FunctionNext(FunctionScanState *node);
 static TupleTableSlot *
 FunctionNext(FunctionScanState *node)
 {
-	EState	   *estate;
-	ScanDirection direction;
-	TupleTableSlot *scanslot;
-	bool		alldone;
-	int64		oldpos;
 	int			funcno;
-	int			att;
 
 	/*
 	 * get information from the estate and scan state
 	 */
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-	scanslot = node->ss.ss_ScanTupleSlot;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection direction = estate->es_direction;
+	TupleTableSlot *scanslot = node->ss.ss_ScanTupleSlot;
 
 	if (node->simple)
 	{
@@ -122,7 +116,7 @@ FunctionNext(FunctionScanState *node)
 	 * 1) without losing correct count.  See PortalRunSelect for why we can
 	 * assume that we won't be called repeatedly in the end-of-data state.
 	 */
-	oldpos = node->ordinal;
+	int64		oldpos = node->ordinal;
 	if (ScanDirectionIsForward(direction))
 		node->ordinal++;
 	else
@@ -136,8 +130,8 @@ FunctionNext(FunctionScanState *node)
 	 * scan result type), setting the ordinal column (if any) as well.
 	 */
 	ExecClearTuple(scanslot);
-	att = 0;
-	alldone = true;
+	int			att = 0;
+	bool		alldone = true;
 	for (funcno = 0; funcno < node->nfuncs; funcno++)
 	{
 		FunctionScanPerFuncState *fs = &node->funcstates[funcno];
@@ -279,7 +273,6 @@ ExecFunctionScan(PlanState *pstate)
 FunctionScanState *
 ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 {
-	FunctionScanState *scanstate;
 	int			nfuncs = list_length(node->functions);
 	TupleDesc	scan_tupdesc;
 	int			i,
@@ -298,7 +291,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	/*
 	 * create new ScanState for node
 	 */
-	scanstate = makeNode(FunctionScanState);
+	FunctionScanState *scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecFunctionScan;
@@ -344,7 +337,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		Node	   *funcexpr = rtfunc->funcexpr;
 		int			colcount = rtfunc->funccolcount;
 		FunctionScanPerFuncState *fs = &scanstate->funcstates[i];
-		TypeFuncClass functypclass;
 		Oid			funcrettype;
 		TupleDesc	tupdesc;
 
@@ -367,7 +359,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		 * the function may now return more columns than it did when the plan
 		 * was made; we have to ignore any columns beyond "colcount".
 		 */
-		functypclass = get_expr_result_type(funcexpr,
+		TypeFuncClass functypclass = get_expr_result_type(funcexpr,
 											&funcrettype,
 											&tupdesc);
 

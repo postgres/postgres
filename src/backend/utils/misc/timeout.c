@@ -208,7 +208,6 @@ schedule_alarm(TimestampTz now)
 	if (num_active_timeouts > 0)
 	{
 		struct itimerval timeval;
-		TimestampTz nearest_timeout;
 		long		secs;
 		int			usecs;
 
@@ -220,7 +219,7 @@ schedule_alarm(TimestampTz now)
 		 * signal_pending off.  This gives us a chance to recover if the
 		 * kernel drops a timeout request for some reason.
 		 */
-		nearest_timeout = active_timeouts[0]->fin_time;
+		TimestampTz nearest_timeout = active_timeouts[0]->fin_time;
 		if (now > nearest_timeout)
 		{
 			signal_pending = false;
@@ -523,15 +522,13 @@ reschedule_timeouts(void)
 void
 enable_timeout_after(TimeoutId id, int delay_ms)
 {
-	TimestampTz now;
-	TimestampTz fin_time;
 
 	/* Disable timeout interrupts for safety. */
 	disable_alarm();
 
 	/* Queue the timeout at the appropriate time. */
-	now = GetCurrentTimestamp();
-	fin_time = TimestampTzPlusMilliseconds(now, delay_ms);
+	TimestampTz now = GetCurrentTimestamp();
+	TimestampTz fin_time = TimestampTzPlusMilliseconds(now, delay_ms);
 	enable_timeout(id, now, fin_time);
 
 	/* Set the timer interrupt. */
@@ -548,13 +545,12 @@ enable_timeout_after(TimeoutId id, int delay_ms)
 void
 enable_timeout_at(TimeoutId id, TimestampTz fin_time)
 {
-	TimestampTz now;
 
 	/* Disable timeout interrupts for safety. */
 	disable_alarm();
 
 	/* Queue the timeout at the appropriate time. */
-	now = GetCurrentTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 	enable_timeout(id, now, fin_time);
 
 	/* Set the timer interrupt. */
@@ -571,14 +567,13 @@ enable_timeout_at(TimeoutId id, TimestampTz fin_time)
 void
 enable_timeouts(const EnableTimeoutParams *timeouts, int count)
 {
-	TimestampTz now;
 	int			i;
 
 	/* Disable timeout interrupts for safety. */
 	disable_alarm();
 
 	/* Queue the timeout(s) at the appropriate times. */
-	now = GetCurrentTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 
 	for (i = 0; i < count; i++)
 	{

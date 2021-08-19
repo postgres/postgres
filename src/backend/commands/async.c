@@ -473,7 +473,6 @@ static void ClearPendingActionsAndNotifies(void);
 static int
 asyncQueuePageDiff(int p, int q)
 {
-	int			diff;
 
 	/*
 	 * We have to compare modulo (QUEUE_MAX_PAGE+1)/2.  Both inputs should be
@@ -482,7 +481,7 @@ asyncQueuePageDiff(int p, int q)
 	Assert(p >= 0 && p <= QUEUE_MAX_PAGE);
 	Assert(q >= 0 && q <= QUEUE_MAX_PAGE);
 
-	diff = p - q;
+	int			diff = p - q;
 	if (diff >= ((QUEUE_MAX_PAGE + 1) / 2))
 		diff -= QUEUE_MAX_PAGE + 1;
 	else if (diff < -((QUEUE_MAX_PAGE + 1) / 2))
@@ -508,10 +507,9 @@ asyncQueuePagePrecedes(int p, int q)
 Size
 AsyncShmemSize(void)
 {
-	Size		size;
 
 	/* This had better match AsyncShmemInit */
-	size = mul_size(MaxBackends + 1, sizeof(QueueBackendStatus));
+	Size		size = mul_size(MaxBackends + 1, sizeof(QueueBackendStatus));
 	size = add_size(size, offsetof(AsyncQueueControl, backend));
 
 	size = add_size(size, SimpleLruShmemSize(NUM_NOTIFY_BUFFERS, 0));
@@ -526,7 +524,6 @@ void
 AsyncShmemInit(void)
 {
 	bool		found;
-	Size		size;
 
 	/*
 	 * Create or attach to the AsyncQueueControl structure.
@@ -534,7 +531,7 @@ AsyncShmemInit(void)
 	 * The used entries in the backend[] array run from 1 to MaxBackends; the
 	 * zero'th entry is unused but must be allocated.
 	 */
-	size = mul_size(MaxBackends + 1, sizeof(QueueBackendStatus));
+	Size		size = mul_size(MaxBackends + 1, sizeof(QueueBackendStatus));
 	size = add_size(size, offsetof(AsyncQueueControl, backend));
 
 	asyncQueueControl = (AsyncQueueControl *)
@@ -618,10 +615,6 @@ void
 Async_Notify(const char *channel, const char *payload)
 {
 	int			my_level = GetCurrentTransactionNestLevel();
-	size_t		channel_len;
-	size_t		payload_len;
-	Notification *n;
-	MemoryContext oldcontext;
 
 	if (IsParallelWorker())
 		elog(ERROR, "cannot send notifications from a parallel worker");
@@ -629,8 +622,8 @@ Async_Notify(const char *channel, const char *payload)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Notify(%s)", channel);
 
-	channel_len = channel ? strlen(channel) : 0;
-	payload_len = payload ? strlen(payload) : 0;
+	size_t		channel_len = channel ? strlen(channel) : 0;
+	size_t		payload_len = payload ? strlen(payload) : 0;
 
 	/* a channel name must be specified */
 	if (channel_len == 0)
@@ -656,9 +649,9 @@ Async_Notify(const char *channel, const char *payload)
 	 * The notification list needs to live until end of transaction, so store
 	 * it in the transaction context.
 	 */
-	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
-	n = (Notification *) palloc(offsetof(Notification, data) +
+	Notification *n = (Notification *) palloc(offsetof(Notification, data) +
 								channel_len + payload_len + 2);
 	n->channel_len = channel_len;
 	n->payload_len = payload_len;
@@ -670,14 +663,13 @@ Async_Notify(const char *channel, const char *payload)
 
 	if (pendingNotifies == NULL || my_level > pendingNotifies->nestingLevel)
 	{
-		NotificationList *notifies;
 
 		/*
 		 * First notify event in current (sub)xact. Note that we allocate the
 		 * NotificationList in TopTransactionContext; the nestingLevel might
 		 * get changed later by AtSubCommit_Notify.
 		 */
-		notifies = (NotificationList *)
+		NotificationList *notifies = (NotificationList *)
 			MemoryContextAlloc(TopTransactionContext,
 							   sizeof(NotificationList));
 		notifies->nestingLevel = my_level;
@@ -716,8 +708,6 @@ Async_Notify(const char *channel, const char *payload)
 static void
 queue_listen(ListenActionKind action, const char *channel)
 {
-	MemoryContext oldcontext;
-	ListenAction *actrec;
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
@@ -726,24 +716,23 @@ queue_listen(ListenActionKind action, const char *channel)
 	 * conflicting LISTEN/UNLISTEN/UNLISTEN_ALL, and it's unlikely that there
 	 * would be any performance benefit anyway in sane applications.
 	 */
-	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
 	/* space for terminating null is included in sizeof(ListenAction) */
-	actrec = (ListenAction *) palloc(offsetof(ListenAction, channel) +
+	ListenAction *actrec = (ListenAction *) palloc(offsetof(ListenAction, channel) +
 									 strlen(channel) + 1);
 	actrec->action = action;
 	strcpy(actrec->channel, channel);
 
 	if (pendingActions == NULL || my_level > pendingActions->nestingLevel)
 	{
-		ActionList *actions;
 
 		/*
 		 * First action in current sub(xact). Note that we allocate the
 		 * ActionList in TopTransactionContext; the nestingLevel might get
 		 * changed later by AtSubCommit_Notify.
 		 */
-		actions = (ActionList *)
+		ActionList *actions = (ActionList *)
 			MemoryContextAlloc(TopTransactionContext, sizeof(ActionList));
 		actions->nestingLevel = my_level;
 		actions->actions = list_make1(actrec);
@@ -920,7 +909,6 @@ PreCommit_Notify(void)
 	/* Queue any pending notifies (must happen after the above) */
 	if (pendingNotifies)
 	{
-		ListCell   *nextNotify;
 
 		/*
 		 * Make sure that we have an XID assigned to the current transaction.
@@ -952,7 +940,7 @@ PreCommit_Notify(void)
 		/* Now push the notifications into the queue */
 		backendHasSentNotifications = true;
 
-		nextNotify = list_head(pendingNotifies->events);
+		ListCell   *nextNotify = list_head(pendingNotifies->events);
 		while (nextNotify != NULL)
 		{
 			/*
@@ -1039,9 +1027,6 @@ AtCommit_Notify(void)
 static void
 Exec_ListenPreCommit(void)
 {
-	QueuePosition head;
-	QueuePosition max;
-	BackendId	prevListener;
 
 	/*
 	 * Nothing to do if we are already listening to something, nor if we
@@ -1084,9 +1069,9 @@ Exec_ListenPreCommit(void)
 	 * and manipulate the list links.
 	 */
 	LWLockAcquire(NotifyQueueLock, LW_EXCLUSIVE);
-	head = QUEUE_HEAD;
-	max = QUEUE_TAIL;
-	prevListener = InvalidBackendId;
+	QueuePosition head = QUEUE_HEAD;
+	QueuePosition max = QUEUE_TAIL;
+	BackendId	prevListener = InvalidBackendId;
 	for (BackendId i = QUEUE_FIRST_LISTENER; i > 0; i = QUEUE_NEXT_LISTENER(i))
 	{
 		if (QUEUE_BACKEND_DBOID(i) == MyDatabaseId)
@@ -1134,7 +1119,6 @@ Exec_ListenPreCommit(void)
 static void
 Exec_ListenCommit(const char *channel)
 {
-	MemoryContext oldcontext;
 
 	/* Do nothing if we are already listening on this channel */
 	if (IsListeningOn(channel))
@@ -1148,7 +1132,7 @@ Exec_ListenCommit(const char *channel)
 	 * doesn't seem worth trying to guard against that, but maybe improve this
 	 * later.
 	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	listenChannels = lappend(listenChannels, pstrdup(channel));
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -1225,7 +1209,6 @@ Exec_UnlistenAllCommit(void)
 void
 ProcessCompletedNotifies(void)
 {
-	MemoryContext caller_context;
 
 	/* Nothing to do if we didn't send any notifications */
 	if (!backendHasSentNotifications)
@@ -1242,7 +1225,7 @@ ProcessCompletedNotifies(void)
 	 * We must preserve the caller's memory context (probably MessageContext)
 	 * across the transaction we do here.
 	 */
-	caller_context = CurrentMemoryContext;
+	MemoryContext caller_context = CurrentMemoryContext;
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessCompletedNotifies");
@@ -1349,8 +1332,6 @@ asyncQueueUnregister(void)
 static bool
 asyncQueueIsFull(void)
 {
-	int			nexthead;
-	int			boundary;
 
 	/*
 	 * The queue is full if creating a new head page would create a page that
@@ -1364,10 +1345,10 @@ asyncQueueIsFull(void)
 	 * the current head page.  This is necessary because asyncQueueAddEntries
 	 * might try to create the next head page in any case.
 	 */
-	nexthead = QUEUE_POS_PAGE(QUEUE_HEAD) + 1;
+	int			nexthead = QUEUE_POS_PAGE(QUEUE_HEAD) + 1;
 	if (nexthead > QUEUE_MAX_PAGE)
 		nexthead = 0;			/* wrap around */
-	boundary = QUEUE_STOP_PAGE;
+	int			boundary = QUEUE_STOP_PAGE;
 	boundary -= boundary % SLRU_PAGES_PER_SEGMENT;
 	return asyncQueuePagePrecedes(nexthead, boundary);
 }
@@ -1417,13 +1398,12 @@ asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe)
 {
 	size_t		channellen = n->channel_len;
 	size_t		payloadlen = n->payload_len;
-	int			entryLength;
 
 	Assert(channellen < NAMEDATALEN);
 	Assert(payloadlen < NOTIFY_PAYLOAD_MAX_LENGTH);
 
 	/* The terminators are already included in AsyncQueueEntryEmptySize */
-	entryLength = AsyncQueueEntryEmptySize + payloadlen + channellen;
+	int			entryLength = AsyncQueueEntryEmptySize + payloadlen + channellen;
 	entryLength = QUEUEALIGN(entryLength);
 	qe->length = entryLength;
 	qe->dboid = MyDatabaseId;
@@ -1452,8 +1432,6 @@ static ListCell *
 asyncQueueAddEntries(ListCell *nextNotify)
 {
 	AsyncQueueEntry qe;
-	QueuePosition queue_head;
-	int			pageno;
 	int			offset;
 	int			slotno;
 
@@ -1471,7 +1449,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	 * this is okay, since they'd be useless anyway after our transaction
 	 * rolls back.
 	 */
-	queue_head = QUEUE_HEAD;
+	QueuePosition queue_head = QUEUE_HEAD;
 
 	/*
 	 * If this is the first write since the postmaster started, we need to
@@ -1481,7 +1459,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	 * (We could also take the first path when the SLRU position has just
 	 * wrapped around, but re-zeroing the page is harmless in that case.)
 	 */
-	pageno = QUEUE_POS_PAGE(queue_head);
+	int			pageno = QUEUE_POS_PAGE(queue_head);
 	if (QUEUE_POS_IS_ZERO(queue_head))
 		slotno = SimpleLruZeroPage(NotifyCtl, pageno);
 	else
@@ -1565,13 +1543,12 @@ asyncQueueAddEntries(ListCell *nextNotify)
 Datum
 pg_notification_queue_usage(PG_FUNCTION_ARGS)
 {
-	double		usage;
 
 	/* Advance the queue tail so we don't report a too-large result */
 	asyncQueueAdvanceTail();
 
 	LWLockAcquire(NotifyQueueLock, LW_SHARED);
-	usage = asyncQueueUsage();
+	double		usage = asyncQueueUsage();
 	LWLockRelease(NotifyQueueLock);
 
 	PG_RETURN_FLOAT8(usage);
@@ -1592,9 +1569,8 @@ asyncQueueUsage(void)
 {
 	int			headPage = QUEUE_POS_PAGE(QUEUE_HEAD);
 	int			tailPage = QUEUE_POS_PAGE(QUEUE_TAIL);
-	int			occupied;
 
-	occupied = headPage - tailPage;
+	int			occupied = headPage - tailPage;
 
 	if (occupied == 0)
 		return (double) 0;		/* fast exit for common case */
@@ -1619,14 +1595,12 @@ asyncQueueUsage(void)
 static void
 asyncQueueFillWarning(void)
 {
-	double		fillDegree;
-	TimestampTz t;
 
-	fillDegree = asyncQueueUsage();
+	double		fillDegree = asyncQueueUsage();
 	if (fillDegree < 0.5)
 		return;
 
-	t = GetCurrentTimestamp();
+	TimestampTz t = GetCurrentTimestamp();
 
 	if (TimestampDifferenceExceeds(asyncQueueControl->lastQueueFillWarn,
 								   t, QUEUE_FULL_WARN_INTERVAL))
@@ -1672,9 +1646,6 @@ asyncQueueFillWarning(void)
 static void
 SignalBackends(void)
 {
-	int32	   *pids;
-	BackendId  *ids;
-	int			count;
 
 	/*
 	 * Identify backends that we need to signal.  We don't want to send
@@ -1685,20 +1656,19 @@ SignalBackends(void)
 	 * preallocate the arrays?	But in practice this is only run in trivial
 	 * transactions, so there should surely be space available.
 	 */
-	pids = (int32 *) palloc(MaxBackends * sizeof(int32));
-	ids = (BackendId *) palloc(MaxBackends * sizeof(BackendId));
-	count = 0;
+	int32	   *pids = (int32 *) palloc(MaxBackends * sizeof(int32));
+	BackendId  *ids = (BackendId *) palloc(MaxBackends * sizeof(BackendId));
+	int			count = 0;
 
 	LWLockAcquire(NotifyQueueLock, LW_EXCLUSIVE);
 	for (BackendId i = QUEUE_FIRST_LISTENER; i > 0; i = QUEUE_NEXT_LISTENER(i))
 	{
 		int32		pid = QUEUE_BACKEND_PID(i);
-		QueuePosition pos;
 
 		Assert(pid != InvalidPid);
 		if (pid == MyProcPid)
 			continue;			/* never signal self */
-		pos = QUEUE_BACKEND_POS(i);
+		QueuePosition pos = QUEUE_BACKEND_POS(i);
 		if (QUEUE_BACKEND_DBOID(i) == MyDatabaseId)
 		{
 			/*
@@ -1930,9 +1900,6 @@ ProcessNotifyInterrupt(void)
 static void
 asyncQueueReadAllNotifications(void)
 {
-	volatile QueuePosition pos;
-	QueuePosition head;
-	Snapshot	snapshot;
 
 	/* page_buffer must be adequately aligned, so use a union */
 	union
@@ -1945,8 +1912,8 @@ asyncQueueReadAllNotifications(void)
 	LWLockAcquire(NotifyQueueLock, LW_SHARED);
 	/* Assert checks that we have a valid state entry */
 	Assert(MyProcPid == QUEUE_BACKEND_PID(MyBackendId));
-	pos = QUEUE_BACKEND_POS(MyBackendId);
-	head = QUEUE_HEAD;
+	volatile QueuePosition pos = QUEUE_BACKEND_POS(MyBackendId);
+	QueuePosition head = QUEUE_HEAD;
 	LWLockRelease(NotifyQueueLock);
 
 	if (QUEUE_POS_EQUAL(pos, head))
@@ -1994,7 +1961,7 @@ asyncQueueReadAllNotifications(void)
 	 * before we see them.
 	 *----------
 	 */
-	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	/*
 	 * It is possible that we fail while trying to send a message to our
@@ -2014,7 +1981,6 @@ asyncQueueReadAllNotifications(void)
 		{
 			int			curpage = QUEUE_POS_PAGE(pos);
 			int			curoffset = QUEUE_POS_OFFSET(pos);
-			int			slotno;
 			int			copysize;
 
 			/*
@@ -2023,7 +1989,7 @@ asyncQueueReadAllNotifications(void)
 			 * and possibly transmitting them to our frontend.  Copy only the
 			 * part of the page we will actually inspect.
 			 */
-			slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
+			int			slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
 												InvalidTransactionId);
 			if (curpage == QUEUE_POS_PAGE(head))
 			{
@@ -2184,10 +2150,6 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 static void
 asyncQueueAdvanceTail(void)
 {
-	QueuePosition min;
-	int			oldtailpage;
-	int			newtailpage;
-	int			boundary;
 
 	/* Restrict task to one backend per cluster; see SimpleLruTruncate(). */
 	LWLockAcquire(NotifyQueueTailLock, LW_EXCLUSIVE);
@@ -2210,14 +2172,14 @@ asyncQueueAdvanceTail(void)
 	 * to access the pages we are in the midst of truncating.
 	 */
 	LWLockAcquire(NotifyQueueLock, LW_EXCLUSIVE);
-	min = QUEUE_HEAD;
+	QueuePosition min = QUEUE_HEAD;
 	for (BackendId i = QUEUE_FIRST_LISTENER; i > 0; i = QUEUE_NEXT_LISTENER(i))
 	{
 		Assert(QUEUE_BACKEND_PID(i) != InvalidPid);
 		min = QUEUE_POS_MIN(min, QUEUE_BACKEND_POS(i));
 	}
 	QUEUE_TAIL = min;
-	oldtailpage = QUEUE_STOP_PAGE;
+	int			oldtailpage = QUEUE_STOP_PAGE;
 	LWLockRelease(NotifyQueueLock);
 
 	/*
@@ -2227,8 +2189,8 @@ asyncQueueAdvanceTail(void)
 	 * XXX it might be better to truncate only once every several segments, to
 	 * reduce the number of directory scans.
 	 */
-	newtailpage = QUEUE_POS_PAGE(min);
-	boundary = newtailpage - (newtailpage % SLRU_PAGES_PER_SEGMENT);
+	int			newtailpage = QUEUE_POS_PAGE(min);
+	int			boundary = newtailpage - (newtailpage % SLRU_PAGES_PER_SEGMENT);
 	if (asyncQueuePagePrecedes(oldtailpage, boundary))
 	{
 		/*
@@ -2394,10 +2356,9 @@ AddEventToPendingNotifies(Notification *n)
 		foreach(l, pendingNotifies->events)
 		{
 			Notification *oldn = (Notification *) lfirst(l);
-			NotificationHash *hentry;
 			bool		found;
 
-			hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
+			NotificationHash *hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
 													  &oldn,
 													  HASH_ENTER,
 													  &found);
@@ -2412,10 +2373,9 @@ AddEventToPendingNotifies(Notification *n)
 	/* Add event to the hash table if needed */
 	if (pendingNotifies->hashtab != NULL)
 	{
-		NotificationHash *hentry;
 		bool		found;
 
-		hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
+		NotificationHash *hentry = (NotificationHash *) hash_search(pendingNotifies->hashtab,
 												  &n,
 												  HASH_ENTER,
 												  &found);

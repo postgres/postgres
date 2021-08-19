@@ -50,9 +50,8 @@ ExceptionalCondition(const char *conditionName,
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	{
 		void	   *buf[100];
-		int			nframes;
 
-		nframes = backtrace(buf, lengthof(buf));
+		int			nframes = backtrace(buf, lengthof(buf));
 		backtrace_symbols_fd(buf, nframes, fileno(stderr));
 	}
 #endif

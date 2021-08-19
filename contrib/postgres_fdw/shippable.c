@@ -115,13 +115,12 @@ InitializeShippableCache(void)
 static bool
 lookup_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 {
-	Oid			extensionOid;
 
 	/*
 	 * Is object a member of some extension?  (Note: this is a fairly
 	 * expensive lookup, which is why we try to cache the results.)
 	 */
-	extensionOid = getExtensionOfObject(classId, objectId);
+	Oid			extensionOid = getExtensionOfObject(classId, objectId);
 
 	/* If so, is that extension in fpinfo->shippable_extensions? */
 	if (OidIsValid(extensionOid) &&
@@ -162,7 +161,6 @@ bool
 is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 {
 	ShippableCacheKey key;
-	ShippableCacheEntry *entry;
 
 	/* Built-in objects are presumed shippable. */
 	if (is_builtin(objectId))
@@ -182,7 +180,7 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 	key.serverid = fpinfo->server->serverid;
 
 	/* See if we already cached the result. */
-	entry = (ShippableCacheEntry *)
+	ShippableCacheEntry *entry = (ShippableCacheEntry *)
 		hash_search(ShippableCacheHash,
 					(void *) &key,
 					HASH_FIND,

@@ -30,13 +30,12 @@ Datum
 dispell_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictISpell *d;
 	bool		affloaded = false,
 				dictloaded = false,
 				stoploaded = false;
 	ListCell   *l;
 
-	d = (DictISpell *) palloc0(sizeof(DictISpell));
+	DictISpell *d = (DictISpell *) palloc0(sizeof(DictISpell));
 
 	NIStartBuild(&(d->obj));
 
@@ -113,16 +112,14 @@ dispell_lexize(PG_FUNCTION_ARGS)
 	DictISpell *d = (DictISpell *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
-	char	   *txt;
-	TSLexeme   *res;
 	TSLexeme   *ptr,
 			   *cptr;
 
 	if (len <= 0)
 		PG_RETURN_POINTER(NULL);
 
-	txt = lowerstr_with_len(in, len);
-	res = NINormalizeWord(&(d->obj), txt);
+	char	   *txt = lowerstr_with_len(in, len);
+	TSLexeme   *res = NINormalizeWord(&(d->obj), txt);
 
 	if (res == NULL)
 		PG_RETURN_POINTER(NULL);

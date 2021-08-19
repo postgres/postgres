@@ -28,10 +28,9 @@ pg_pread(int fd, void *buf, size_t size, off_t offset)
 {
 #ifdef WIN32
 	OVERLAPPED	overlapped = {0};
-	HANDLE		handle;
 	DWORD		result;
 
-	handle = (HANDLE) _get_osfhandle(fd);
+	HANDLE		handle = (HANDLE) _get_osfhandle(fd);
 	if (handle == INVALID_HANDLE_VALUE)
 	{
 		errno = EBADF;

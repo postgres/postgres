@@ -1577,12 +1577,10 @@ static int32_t
 icu_convert_case(ICU_Convert_Func func, pg_locale_t mylocale,
 				 UChar **buff_dest, UChar *buff_source, int32_t len_source)
 {
-	UErrorCode	status;
-	int32_t		len_dest;
 
-	len_dest = len_source;		/* try first with same length */
+	int32_t		len_dest = len_source;		/* try first with same length */
 	*buff_dest = palloc(len_dest * sizeof(**buff_dest));
-	status = U_ZERO_ERROR;
+	UErrorCode	status = U_ZERO_ERROR;
 	len_dest = func(*buff_dest, len_dest, buff_source, len_source,
 					mylocale->info.icu.locale, &status);
 	if (status == U_BUFFER_OVERFLOW_ERROR)
@@ -1671,13 +1669,11 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 #ifdef USE_ICU
 		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
 		{
-			int32_t		len_uchar;
-			int32_t		len_conv;
 			UChar	   *buff_uchar;
 			UChar	   *buff_conv;
 
-			len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
-			len_conv = icu_convert_case(u_strToLower, mylocale,
+			int32_t		len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
+			int32_t		len_conv = icu_convert_case(u_strToLower, mylocale,
 										&buff_conv, buff_uchar, len_uchar);
 			icu_from_uchar(&result, buff_conv, len_conv);
 			pfree(buff_uchar);
@@ -1688,7 +1684,6 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 		{
 			if (pg_database_encoding_max_length() > 1)
 			{
-				wchar_t    *workspace;
 				size_t		curr_char;
 				size_t		result_size;
 
@@ -1699,7 +1694,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 							 errmsg("out of memory")));
 
 				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+				wchar_t    *workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
 				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
@@ -1812,7 +1807,6 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 		{
 			if (pg_database_encoding_max_length() > 1)
 			{
-				wchar_t    *workspace;
 				size_t		curr_char;
 				size_t		result_size;
 
@@ -1823,7 +1817,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 							 errmsg("out of memory")));
 
 				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+				wchar_t    *workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
 				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
@@ -1937,7 +1931,6 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 		{
 			if (pg_database_encoding_max_length() > 1)
 			{
-				wchar_t    *workspace;
 				size_t		curr_char;
 				size_t		result_size;
 
@@ -1948,7 +1941,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 							 errmsg("out of memory")));
 
 				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+				wchar_t    *workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
 
 				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
 
@@ -2034,13 +2027,12 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 char *
 asc_tolower(const char *buff, size_t nbytes)
 {
-	char	   *result;
 	char	   *p;
 
 	if (!buff)
 		return NULL;
 
-	result = pnstrdup(buff, nbytes);
+	char	   *result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
 		*p = pg_ascii_tolower((unsigned char) *p);
@@ -2057,13 +2049,12 @@ asc_tolower(const char *buff, size_t nbytes)
 char *
 asc_toupper(const char *buff, size_t nbytes)
 {
-	char	   *result;
 	char	   *p;
 
 	if (!buff)
 		return NULL;
 
-	result = pnstrdup(buff, nbytes);
+	char	   *result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
 		*p = pg_ascii_toupper((unsigned char) *p);
@@ -2080,14 +2071,13 @@ asc_toupper(const char *buff, size_t nbytes)
 char *
 asc_initcap(const char *buff, size_t nbytes)
 {
-	char	   *result;
 	char	   *p;
 	int			wasalnum = false;
 
 	if (!buff)
 		return NULL;
 
-	result = pnstrdup(buff, nbytes);
+	char	   *result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
 	{
@@ -2347,7 +2337,6 @@ from_char_parse_int_len(int *dest, const char **src, const int len, FormatNode *
 	long		result;
 	char		copy[DCH_MAX_ITEM_SIZ + 1];
 	const char *init = *src;
-	int			used;
 
 	/*
 	 * Skip any whitespace before parsing the integer.
@@ -2355,7 +2344,7 @@ from_char_parse_int_len(int *dest, const char **src, const int len, FormatNode *
 	*src += strspace_len(*src);
 
 	Assert(len <= DCH_MAX_ITEM_SIZ);
-	used = (int) strlcpy(copy, *src, len + 1);
+	int			used = (int) strlcpy(copy, *src, len + 1);
 
 	if (S_FM(node->suffix) || is_next_separator(node))
 	{
@@ -2463,7 +2452,6 @@ from_char_parse_int(int *dest, const char **src, FormatNode *node, bool *have_er
 static int
 seq_search_ascii(const char *name, const char *const *array, int *len)
 {
-	unsigned char firstc;
 	const char *const *a;
 
 	*len = 0;
@@ -2473,7 +2461,7 @@ seq_search_ascii(const char *name, const char *const *array, int *len)
 		return -1;
 
 	/* we handle first char specially to gain some speed */
-	firstc = pg_ascii_tolower((unsigned char) *name);
+	unsigned char firstc = pg_ascii_tolower((unsigned char) *name);
 
 	for (a = array; *a != NULL; a++)
 	{
@@ -2521,8 +2509,6 @@ static int
 seq_search_localized(const char *name, char **array, int *len, Oid collid)
 {
 	char	  **a;
-	char	   *upper_name;
-	char	   *lower_name;
 
 	*len = 0;
 
@@ -2549,22 +2535,19 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 	 * Fold to upper case, then to lower case, so that we can match reliably
 	 * even in languages in which case conversions are not injective.
 	 */
-	upper_name = str_toupper(unconstify(char *, name), strlen(name), collid);
-	lower_name = str_tolower(upper_name, strlen(upper_name), collid);
+	char	   *upper_name = str_toupper(unconstify(char *, name), strlen(name), collid);
+	char	   *lower_name = str_tolower(upper_name, strlen(upper_name), collid);
 	pfree(upper_name);
 
 	for (a = array; *a != NULL; a++)
 	{
-		char	   *upper_element;
-		char	   *lower_element;
-		int			element_len;
 
 		/* Likewise upper/lower-case array element */
-		upper_element = str_toupper(*a, strlen(*a), collid);
-		lower_element = str_tolower(upper_element, strlen(upper_element),
+		char	   *upper_element = str_toupper(*a, strlen(*a), collid);
+		char	   *lower_element = str_tolower(upper_element, strlen(upper_element),
 									collid);
 		pfree(upper_element);
-		element_len = strlen(lower_element);
+		int			element_len = strlen(lower_element);
 
 		/* Match? */
 		if (strncmp(lower_name, lower_element, element_len) == 0)
@@ -2654,14 +2637,13 @@ static void
 DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid collid)
 {
 	FormatNode *n;
-	char	   *s;
 	struct pg_tm *tm = &in->tm;
 	int			i;
 
 	/* cache localized days and months */
 	cache_locale_time();
 
-	s = out;
+	char	   *s = out;
 	for (n = node; n->type != NODE_TYPE_END; n++)
 	{
 		if (n->type != NODE_TYPE_ACTION)
@@ -4025,14 +4007,12 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 	char	   *fmt_str,
 			   *result;
 	bool		incache;
-	int			fmt_len;
-	text	   *res;
 
 	/*
 	 * Convert fmt to C string
 	 */
 	fmt_str = text_to_cstring(fmt);
-	fmt_len = strlen(fmt_str);
+	int			fmt_len = strlen(fmt_str);
 
 	/*
 	 * Allocate workspace for result as C string
@@ -4073,7 +4053,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 	pfree(fmt_str);
 
 	/* convert C-string result to TEXT format */
-	res = cstring_to_text(result);
+	text	   *res = cstring_to_text(result);
 
 	pfree(result);
 	return res;
@@ -4094,21 +4074,19 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
-	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
-	tm = tmtcTm(&tmtc);
+	struct pg_tm *tm = tmtcTm(&tmtc);
 
 	if (timestamp2tm(dt, NULL, tm, &tmtcFsec(&tmtc), NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+	int			thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
@@ -4126,21 +4104,19 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 			   *res;
 	TmToChar	tmtc;
 	int			tz;
-	struct pg_tm *tm;
-	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
-	tm = tmtcTm(&tmtc);
+	struct pg_tm *tm = tmtcTm(&tmtc);
 
 	if (timestamp2tm(dt, &tz, tm, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+	int			thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
@@ -4162,13 +4138,12 @@ interval_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0)
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
-	tm = tmtcTm(&tmtc);
+	struct pg_tm *tm = tmtcTm(&tmtc);
 
 	if (interval2tm(*it, tm, &tmtcFsec(&tmtc)) != 0)
 		PG_RETURN_NULL();
@@ -4238,7 +4213,6 @@ to_date(PG_FUNCTION_ARGS)
 	text	   *date_txt = PG_GETARG_TEXT_PP(0);
 	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	Oid			collid = PG_GET_COLLATION();
-	DateADT		result;
 	struct pg_tm tm;
 	fsec_t		fsec;
 
@@ -4252,7 +4226,7 @@ to_date(PG_FUNCTION_ARGS)
 				 errmsg("date out of range: \"%s\"",
 						text_to_cstring(date_txt))));
 
-	result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+	DateADT		result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
 
 	/* Now check for just-out-of-range dates */
 	if (!IS_VALID_DATE(result))
@@ -4358,7 +4332,6 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 			}
 			else
 			{
-				DateADT		result;
 
 				/* Prevent overflow in Julian-day routines */
 				if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
@@ -4367,7 +4340,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 										  errmsg("date out of range: \"%s\"",
 												 text_to_cstring(date_txt)))));
 
-				result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) -
+				DateADT		result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) -
 					POSTGRES_EPOCH_JDATE;
 
 				/* Now check for just-out-of-range dates */
@@ -4471,15 +4444,12 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 {
 	FormatNode *format = NULL;
 	TmFromChar	tmfc;
-	int			fmt_len;
-	char	   *date_str;
-	int			fmask;
 	bool		incache = false;
 
 	Assert(tm != NULL);
 	Assert(fsec != NULL);
 
-	date_str = text_to_cstring(date_txt);
+	char	   *date_str = text_to_cstring(date_txt);
 
 	ZERO_tmfc(&tmfc);
 	ZERO_tm(tm);
@@ -4488,15 +4458,14 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		*fprec = 0;
 	if (flags)
 		*flags = 0;
-	fmask = 0;					/* bit mask for ValidateDate() */
+	int			fmask = 0;					/* bit mask for ValidateDate() */
 
-	fmt_len = VARSIZE_ANY_EXHDR(fmt);
+	int			fmt_len = VARSIZE_ANY_EXHDR(fmt);
 
 	if (fmt_len)
 	{
-		char	   *fmt_str;
 
-		fmt_str = text_to_cstring(fmt);
+		char	   *fmt_str = text_to_cstring(fmt);
 
 		if (fmt_len > DCH_CACHE_SIZE)
 		{
@@ -4698,14 +4667,13 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		}
 		else
 		{
-			const int  *y;
 			int			i;
 
 			static const int ysum[2][13] = {
 				{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},
 			{0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}};
 
-			y = ysum[isleap(tm->tm_year)];
+			const int  *y = ysum[isleap(tm->tm_year)];
 
 			for (i = 1; i <= MONTHS_PER_YEAR; i++)
 			{
@@ -4758,7 +4726,6 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 	/* Save parsed time-zone into tm->tm_zone if it was specified */
 	if (tmfc.tzsign)
 	{
-		char	   *tz;
 
 		if (tmfc.tzh < 0 || tmfc.tzh > MAX_TZDISP_HOUR ||
 			tmfc.tzm < 0 || tmfc.tzm >= MINS_PER_HOUR)
@@ -4766,7 +4733,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			RETURN_ERROR(DateTimeParseError(DTERR_TZDISP_OVERFLOW, date_str, "timestamp"));
 		}
 
-		tz = psprintf("%c%02d:%02d",
+		char	   *tz = psprintf("%c%02d:%02d",
 					  tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
 
 		tm->tm_zone = tz;
@@ -4934,9 +4901,8 @@ static FormatNode *
 NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 {
 	FormatNode *format = NULL;
-	char	   *str;
 
-	str = text_to_cstring(pars_str);
+	char	   *str = text_to_cstring(pars_str);
 
 	if (len > NUM_CACHE_SIZE)
 	{
@@ -5042,12 +5008,11 @@ NUM_prepare_locale(NUMProc *Np)
 {
 	if (Np->Num->need_locale)
 	{
-		struct lconv *lconv;
 
 		/*
 		 * Get locales
 		 */
-		lconv = PGLC_localeconv();
+		struct lconv *lconv = PGLC_localeconv();
 
 		/*
 		 * Positive / Negative number sign
@@ -5688,9 +5653,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 			 */
 			if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
 			{
-				char	   *last_zero;
 
-				last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
+				char	   *last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
 				if (Np->last_relevant < last_zero)
 					Np->last_relevant = last_zero;
 			}
@@ -6096,22 +6060,18 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	text	   *value = PG_GETARG_TEXT_PP(0);
 	text	   *fmt = PG_GETARG_TEXT_PP(1);
 	NUMDesc		Num;
-	Datum		result;
-	FormatNode *format;
-	char	   *numstr;
 	bool		shouldFree;
-	int			len = 0;
 	int			scale,
 				precision;
 
-	len = VARSIZE_ANY_EXHDR(fmt);
+	int			len = VARSIZE_ANY_EXHDR(fmt);
 
 	if (len <= 0 || len >= INT_MAX / NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
 
-	format = NUM_cache(len, &Num, fmt, &shouldFree);
+	FormatNode *format = NUM_cache(len, &Num, fmt, &shouldFree);
 
-	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
+	char	   *numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
 	NUM_processor(format, &Num, VARDATA_ANY(value), numstr,
 				  VARSIZE_ANY_EXHDR(value), 0, 0, false, PG_GET_COLLATION());
@@ -6122,18 +6082,17 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	if (shouldFree)
 		pfree(format);
 
-	result = DirectFunctionCall3(numeric_in,
+	Datum		result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(numstr),
 								 ObjectIdGetDatum(InvalidOid),
 								 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
 
 	if (IS_MULTI(&Num))
 	{
-		Numeric		x;
 		Numeric		a = int64_to_numeric(10);
 		Numeric		b = int64_to_numeric(-Num.multi);
 
-		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
+		Numeric		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
 												NumericGetDatum(a),
 												NumericGetDatum(b)));
 		result = DirectFunctionCall2(numeric_mul,
@@ -6312,7 +6271,6 @@ int4_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
 		{
@@ -6334,7 +6292,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 		else
 			sign = '+';
 
-		numstr_pre_len = strlen(orgnum);
+		int			numstr_pre_len = strlen(orgnum);
 
 		/* post-decimal digits?  Pad out with zeros. */
 		if (Num.post)
@@ -6416,7 +6374,6 @@ int8_to_char(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
 		{
@@ -6440,7 +6397,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 		else
 			sign = '+';
 
-		numstr_pre_len = strlen(orgnum);
+		int			numstr_pre_len = strlen(orgnum);
 
 		/* post-decimal digits?  Pad out with zeros. */
 		if (Num.post)
@@ -6519,8 +6476,6 @@ float4_to_char(PG_FUNCTION_ARGS)
 	else
 	{
 		float4		val = value;
-		char	   *orgnum;
-		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
 		{
@@ -6530,8 +6485,8 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 
-		orgnum = psprintf("%.0f", fabs(val));
-		numstr_pre_len = strlen(orgnum);
+		char	   *orgnum = psprintf("%.0f", fabs(val));
+		int			numstr_pre_len = strlen(orgnum);
 
 		/* adjust post digits to fit max float digits */
 		if (numstr_pre_len >= FLT_DIG)
@@ -6621,8 +6576,6 @@ float8_to_char(PG_FUNCTION_ARGS)
 	else
 	{
 		float8		val = value;
-		char	   *orgnum;
-		int			numstr_pre_len;
 
 		if (IS_MULTI(&Num))
 		{
@@ -6632,8 +6585,8 @@ float8_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 
-		orgnum = psprintf("%.0f", fabs(val));
-		numstr_pre_len = strlen(orgnum);
+		char	   *orgnum = psprintf("%.0f", fabs(val));
+		int			numstr_pre_len = strlen(orgnum);
 
 		/* adjust post digits to fit max double digits */
 		if (numstr_pre_len >= DBL_DIG)

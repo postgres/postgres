@@ -36,7 +36,6 @@ fsm_page_contents(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	StringInfoData sinfo;
-	FSMPage		fsmpage;
 	int			i;
 
 	if (!superuser())
@@ -44,7 +43,7 @@ fsm_page_contents(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	fsmpage = (FSMPage) PageGetContents(VARDATA(raw_page));
+	FSMPage		fsmpage = (FSMPage) PageGetContents(VARDATA(raw_page));
 
 	initStringInfo(&sinfo);
 

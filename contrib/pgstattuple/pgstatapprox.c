@@ -68,19 +68,15 @@ statapprox_heap(Relation rel, output_type *stat)
 				nblocks,
 				blkno;
 	Buffer		vmbuffer = InvalidBuffer;
-	BufferAccessStrategy bstrategy;
-	TransactionId OldestXmin;
 
-	OldestXmin = GetOldestNonRemovableTransactionId(rel);
-	bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	TransactionId OldestXmin = GetOldestNonRemovableTransactionId(rel);
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 	scanned = 0;
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
-		Buffer		buf;
-		Page		page;
 		OffsetNumber offnum,
 					maxoff;
 		Size		freespace;
@@ -99,12 +95,12 @@ statapprox_heap(Relation rel, output_type *stat)
 			continue;
 		}
 
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno,
+		Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno,
 								 RBM_NORMAL, bstrategy);
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buf);
+		Page		page = BufferGetPage(buf);
 
 		/*
 		 * It's not safe to call PageGetHeapFreeSpace() on new pages, so we
@@ -135,10 +131,9 @@ statapprox_heap(Relation rel, output_type *stat)
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
-			ItemId		itemid;
 			HeapTupleData tuple;
 
-			itemid = PageGetItemId(page, offnum);
+			ItemId		itemid = PageGetItemId(page, offnum);
 
 			if (!ItemIdIsUsed(itemid) || ItemIdIsRedirected(itemid) ||
 				ItemIdIsDead(itemid))
@@ -254,12 +249,10 @@ pgstattuple_approx_v1_5(PG_FUNCTION_ARGS)
 Datum
 pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 {
-	Relation	rel;
 	output_type stat = {0};
 	TupleDesc	tupdesc;
 	bool		nulls[NUM_OUTPUT_COLUMNS];
 	Datum		values[NUM_OUTPUT_COLUMNS];
-	HeapTuple	ret;
 	int			i = 0;
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -268,7 +261,7 @@ pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 	if (tupdesc->natts != NUM_OUTPUT_COLUMNS)
 		elog(ERROR, "incorrect number of output arguments");
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -314,6 +307,6 @@ pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 	values[i++] = Int64GetDatum(stat.free_space);
 	values[i++] = Float8GetDatum(stat.free_percent);
 
-	ret = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	ret = heap_form_tuple(tupdesc, values, nulls);
 	return HeapTupleGetDatum(ret);
 }

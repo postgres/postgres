@@ -165,8 +165,6 @@ main(int argc, char *argv[])
 	bool		roles_only = false;
 	bool		tablespaces_only = false;
 	PGconn	   *conn;
-	int			encoding;
-	const char *std_strings;
 	int			c,
 				ret;
 	int			optindex;
@@ -511,8 +509,8 @@ main(int argc, char *argv[])
 	 * Get the active encoding and the standard_conforming_strings setting, so
 	 * we know how to escape strings.
 	 */
-	encoding = PQclientEncoding(conn);
-	std_strings = PQparameterStatus(conn, "standard_conforming_strings");
+	int			encoding = PQclientEncoding(conn);
+	const char *std_strings = PQparameterStatus(conn, "standard_conforming_strings");
 	if (!std_strings)
 		std_strings = "off";
 
@@ -688,8 +686,6 @@ static void
 dropRoles(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	PGresult   *res;
-	int			i_rolname;
 	int			i;
 
 	if (server_version >= 90600)
@@ -712,18 +708,17 @@ dropRoles(PGconn *conn)
 						  "FROM pg_group "
 						  "ORDER BY 1");
 
-	res = executeQuery(conn, buf->data);
+	PGresult   *res = executeQuery(conn, buf->data);
 
-	i_rolname = PQfnumber(res, "rolname");
+	int			i_rolname = PQfnumber(res, "rolname");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Drop roles\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		const char *rolename;
 
-		rolename = PQgetvalue(res, i, i_rolname);
+		const char *rolename = PQgetvalue(res, i, i_rolname);
 
 		fprintf(OPF, "DROP ROLE %s%s;\n",
 				if_exists ? "IF EXISTS " : "",
@@ -743,7 +738,6 @@ static void
 dumpRoles(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	PGresult   *res;
 	int			i_oid,
 				i_rolname,
 				i_rolsuper,
@@ -850,7 +844,7 @@ dumpRoles(PGconn *conn)
 						  " WHERE usename = groname) "
 						  "ORDER BY 2");
 
-	res = executeQuery(conn, buf->data);
+	PGresult   *res = executeQuery(conn, buf->data);
 
 	i_oid = PQfnumber(res, "oid");
 	i_rolname = PQfnumber(res, "rolname");
@@ -872,11 +866,9 @@ dumpRoles(PGconn *conn)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		const char *rolename;
-		Oid			auth_oid;
 
-		auth_oid = atooid(PQgetvalue(res, i, i_oid));
-		rolename = PQgetvalue(res, i, i_rolname);
+		Oid			auth_oid = atooid(PQgetvalue(res, i, i_oid));
+		const char *rolename = PQgetvalue(res, i, i_rolname);
 
 		if (strncmp(rolename, "pg_", 3) == 0)
 		{
@@ -1001,7 +993,6 @@ static void
 dumpRoleMembership(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	PGresult   *res;
 	int			i;
 
 	printfPQExpBuffer(buf, "SELECT ur.rolname AS roleid, "
@@ -1014,7 +1005,7 @@ dumpRoleMembership(PGconn *conn)
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
 					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
 					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
-	res = executeQuery(conn, buf->data);
+	PGresult   *res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
@@ -1061,10 +1052,9 @@ static void
 dumpGroups(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	PGresult   *res;
 	int			i;
 
-	res = executeQuery(conn,
+	PGresult   *res = executeQuery(conn,
 					   "SELECT groname, grolist FROM pg_group ORDER BY 1");
 
 	if (PQntuples(res) > 0)
@@ -1074,7 +1064,6 @@ dumpGroups(PGconn *conn)
 	{
 		char	   *groname = PQgetvalue(res, i, 0);
 		char	   *grolist = PQgetvalue(res, i, 1);
-		PGresult   *res2;
 		int			j;
 
 		/*
@@ -1092,7 +1081,7 @@ dumpGroups(PGconn *conn)
 						  grolist);
 		free(grolist);
 
-		res2 = executeQuery(conn, buf->data);
+		PGresult   *res2 = executeQuery(conn, buf->data);
 
 		for (j = 0; j < PQntuples(res2); j++)
 		{
@@ -1125,14 +1114,13 @@ dumpGroups(PGconn *conn)
 static void
 dropTablespaces(PGconn *conn)
 {
-	PGresult   *res;
 	int			i;
 
 	/*
 	 * Get all tablespaces except built-in ones (which we assume are named
 	 * pg_xxx)
 	 */
-	res = executeQuery(conn, "SELECT spcname "
+	PGresult   *res = executeQuery(conn, "SELECT spcname "
 					   "FROM pg_catalog.pg_tablespace "
 					   "WHERE spcname !~ '^pg_' "
 					   "ORDER BY 1");
@@ -1260,10 +1248,9 @@ dumpTablespaces(PGconn *conn)
 		char	   *rspcacl = PQgetvalue(res, i, 5);
 		char	   *spcoptions = PQgetvalue(res, i, 6);
 		char	   *spccomment = PQgetvalue(res, i, 7);
-		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
-		fspcname = pg_strdup(fmtId(spcname));
+		char	   *fspcname = pg_strdup(fmtId(spcname));
 
 		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
@@ -1316,14 +1303,13 @@ dumpTablespaces(PGconn *conn)
 static void
 dropDBs(PGconn *conn)
 {
-	PGresult   *res;
 	int			i;
 
 	/*
 	 * Skip databases marked not datallowconn, since we'd be unable to connect
 	 * to them anyway.  This must agree with dumpDatabases().
 	 */
-	res = executeQuery(conn,
+	PGresult   *res = executeQuery(conn,
 					   "SELECT datname "
 					   "FROM pg_database d "
 					   "WHERE datallowconn "
@@ -1369,7 +1355,6 @@ dumpUserConfig(PGconn *conn, const char *username)
 
 	for (;;)
 	{
-		PGresult   *res;
 
 		if (server_version >= 90000)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
@@ -1383,7 +1368,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 		if (server_version >= 90000)
 			appendPQExpBufferChar(buf, ')');
 
-		res = executeQuery(conn, buf->data);
+		PGresult   *res = executeQuery(conn, buf->data);
 		if (PQntuples(res) == 1 &&
 			!PQgetisnull(res, 0, 0))
 		{
@@ -1422,13 +1407,12 @@ expand_dbname_patterns(PGconn *conn,
 					   SimpleStringList *patterns,
 					   SimpleStringList *names)
 {
-	PQExpBuffer query;
 	PGresult   *res;
 
 	if (patterns->head == NULL)
 		return;					/* nothing to do */
 
-	query = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
 
 	/*
 	 * The loop below runs multiple SELECTs, which might sometimes result in
@@ -1462,7 +1446,6 @@ expand_dbname_patterns(PGconn *conn,
 static void
 dumpDatabases(PGconn *conn)
 {
-	PGresult   *res;
 	int			i;
 
 	/*
@@ -1476,7 +1459,7 @@ dumpDatabases(PGconn *conn)
 	 * connected to "template1" a bad idea, but there's no fixed order that
 	 * doesn't have some failure mode with --clean.
 	 */
-	res = executeQuery(conn,
+	PGresult   *res = executeQuery(conn,
 					   "SELECT datname "
 					   "FROM pg_database d "
 					   "WHERE datallowconn "
@@ -1489,7 +1472,6 @@ dumpDatabases(PGconn *conn)
 	{
 		char	   *dbname = PQgetvalue(res, i, 0);
 		const char *create_opts;
-		int			ret;
 
 		/* Skip template0, even if it's not marked !datallowconn. */
 		if (strcmp(dbname, "template0") == 0)
@@ -1531,7 +1513,7 @@ dumpDatabases(PGconn *conn)
 		if (filename)
 			fclose(OPF);
 
-		ret = runPgDump(dbname, create_opts);
+		int			ret = runPgDump(dbname, create_opts);
 		if (ret != 0)
 		{
 			pg_log_error("pg_dump failed on database \"%s\", exiting", dbname);
@@ -1564,7 +1546,6 @@ runPgDump(const char *dbname, const char *create_opts)
 {
 	PQExpBuffer connstrbuf = createPQExpBuffer();
 	PQExpBuffer cmd = createPQExpBuffer();
-	int			ret;
 
 	appendPQExpBuffer(cmd, "\"%s\" %s %s", pg_dump_bin,
 					  pgdumpopts->data, create_opts);
@@ -1592,7 +1573,7 @@ runPgDump(const char *dbname, const char *create_opts)
 	fflush(stdout);
 	fflush(stderr);
 
-	ret = system(cmd->data);
+	int			ret = system(cmd->data);
 
 	destroyPQExpBuffer(cmd);
 	destroyPQExpBuffer(connstrbuf);
@@ -1617,10 +1598,9 @@ buildShSecLabels(PGconn *conn, const char *catalog_name, Oid objectId,
 				 PQExpBuffer buffer)
 {
 	PQExpBuffer sql = createPQExpBuffer();
-	PGresult   *res;
 
 	buildShSecLabelQuery(catalog_name, objectId, sql);
-	res = executeQuery(conn, sql->data);
+	PGresult   *res = executeQuery(conn, sql->data);
 	emitShSecLabels(conn, res, buffer, objtype, objname);
 
 	PQclear(res);
@@ -1644,8 +1624,6 @@ connectDatabase(const char *dbname, const char *connection_string,
 {
 	PGconn	   *conn;
 	bool		new_pass;
-	const char *remoteversion_str;
-	int			my_version;
 	const char **keywords = NULL;
 	const char **values = NULL;
 	PQconninfoOption *conn_opts = NULL;
@@ -1799,7 +1777,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 	PQconninfoFree(conn_opts);
 
 	/* Check version */
-	remoteversion_str = PQparameterStatus(conn, "server_version");
+	const char *remoteversion_str = PQparameterStatus(conn, "server_version");
 	if (!remoteversion_str)
 	{
 		pg_log_error("could not get server version");
@@ -1813,7 +1791,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 		exit_nicely(1);
 	}
 
-	my_version = PG_VERSION_NUM;
+	int			my_version = PG_VERSION_NUM;
 
 	/*
 	 * We allow the server to be back to 8.0, and up to any minor release of
@@ -1848,7 +1826,6 @@ static char *
 constructConnStr(const char **keywords, const char **values)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	char	   *connstr;
 	int			i;
 	bool		firstkeyword = true;
 
@@ -1867,7 +1844,7 @@ constructConnStr(const char **keywords, const char **values)
 		appendConnStrVal(buf, values[i]);
 	}
 
-	connstr = pg_strdup(buf->data);
+	char	   *connstr = pg_strdup(buf->data);
 	destroyPQExpBuffer(buf);
 	return connstr;
 }
@@ -1878,11 +1855,10 @@ constructConnStr(const char **keywords, const char **values)
 static PGresult *
 executeQuery(PGconn *conn, const char *query)
 {
-	PGresult   *res;
 
 	pg_log_info("executing %s", query);
 
-	res = PQexec(conn, query);
+	PGresult   *res = PQexec(conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1901,11 +1877,10 @@ executeQuery(PGconn *conn, const char *query)
 static void
 executeCommand(PGconn *conn, const char *query)
 {
-	PGresult   *res;
 
 	pg_log_info("executing %s", query);
 
-	res = PQexec(conn, query);
+	PGresult   *res = PQexec(conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{

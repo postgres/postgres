@@ -119,8 +119,6 @@ void
 json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 					size_t size)
 {
-	JsonLexContext *lex;
-	JsonParseErrorType json_error;
 	JsonSemAction sem;
 	JsonManifestParseState parse;
 
@@ -130,7 +128,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	parse.saw_version_field = false;
 
 	/* Create a JSON lexing context. */
-	lex = makeJsonLexContextCstringLen(buffer, size, PG_UTF8, true);
+	JsonLexContext *lex = makeJsonLexContextCstringLen(buffer, size, PG_UTF8, true);
 
 	/* Set up semantic actions. */
 	sem.semstate = &parse;
@@ -145,7 +143,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	sem.scalar = json_manifest_scalar;
 
 	/* Run the actual JSON parser. */
-	json_error = pg_parse_json(lex, &sem);
+	JsonParseErrorType json_error = pg_parse_json(lex, &sem);
 	if (json_error != JSON_SUCCESS)
 		json_manifest_parse_failure(context, "parsing failed");
 	if (parse.state != JM_EXPECT_EOF)
@@ -462,7 +460,6 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 	JsonManifestParseContext *context = parse->context;
 	size_t		size;
 	char	   *ep;
-	int			checksum_string_length;
 	pg_checksum_type checksum_type;
 	int			checksum_length;
 	uint8	   *checksum_payload;
@@ -511,7 +508,7 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 						  parse->algorithm);
 
 	/* Parse the checksum payload, if it's present. */
-	checksum_string_length = parse->checksum == NULL ? 0
+	int			checksum_string_length = parse->checksum == NULL ? 0
 		: strlen(parse->checksum);
 	if (checksum_string_length == 0)
 	{
@@ -562,7 +559,6 @@ static void
 json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 {
 	JsonManifestParseContext *context = parse->context;
-	TimeLineID	tli;
 	XLogRecPtr	start_lsn,
 				end_lsn;
 	char	   *ep;
@@ -576,7 +572,7 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 		json_manifest_parse_failure(parse->context, "missing end LSN");
 
 	/* Parse timeline. */
-	tli = strtoul(parse->timeline, &ep, 10);
+	TimeLineID	tli = strtoul(parse->timeline, &ep, 10);
 	if (*ep)
 		json_manifest_parse_failure(parse->context,
 									"timeline is not an integer");
@@ -624,7 +620,6 @@ verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
 	size_t		number_of_newlines = 0;
 	size_t		ultimate_newline = 0;
 	size_t		penultimate_newline = 0;
-	pg_cryptohash_ctx *manifest_ctx;
 	uint8		manifest_checksum_actual[PG_SHA256_DIGEST_LENGTH];
 	uint8		manifest_checksum_expected[PG_SHA256_DIGEST_LENGTH];
 
@@ -652,7 +647,7 @@ verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
 									"last line not newline-terminated");
 
 	/* Checksum the rest. */
-	manifest_ctx = pg_cryptohash_create(PG_SHA256);
+	pg_cryptohash_ctx *manifest_ctx = pg_cryptohash_create(PG_SHA256);
 	if (manifest_ctx == NULL)
 		context->error_cb(context, "out of memory");
 	if (pg_cryptohash_init(manifest_ctx) < 0)

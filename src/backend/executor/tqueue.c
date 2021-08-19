@@ -54,13 +54,11 @@ static bool
 tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 {
 	TQueueDestReceiver *tqueue = (TQueueDestReceiver *) self;
-	MinimalTuple tuple;
-	shm_mq_result result;
 	bool		should_free;
 
 	/* Send the tuple itself. */
-	tuple = ExecFetchSlotMinimalTuple(slot, &should_free);
-	result = shm_mq_send(tqueue->queue, tuple->t_len, tuple, false);
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &should_free);
+	shm_mq_result result = shm_mq_send(tqueue->queue, tuple->t_len, tuple, false);
 
 	if (should_free)
 		pfree(tuple);
@@ -118,9 +116,8 @@ tqueueDestroyReceiver(DestReceiver *self)
 DestReceiver *
 CreateTupleQueueDestReceiver(shm_mq_handle *handle)
 {
-	TQueueDestReceiver *self;
 
-	self = (TQueueDestReceiver *) palloc0(sizeof(TQueueDestReceiver));
+	TQueueDestReceiver *self = (TQueueDestReceiver *) palloc0(sizeof(TQueueDestReceiver));
 
 	self->pub.receiveSlot = tqueueReceiveSlot;
 	self->pub.rStartup = tqueueStartupReceiver;
@@ -175,8 +172,6 @@ DestroyTupleQueueReader(TupleQueueReader *reader)
 MinimalTuple
 TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 {
-	MinimalTuple tuple;
-	shm_mq_result result;
 	Size		nbytes;
 	void	   *data;
 
@@ -184,7 +179,7 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 		*done = false;
 
 	/* Attempt to read a message. */
-	result = shm_mq_receive(reader->queue, &nbytes, &data, nowait);
+	shm_mq_result result = shm_mq_receive(reader->queue, &nbytes, &data, nowait);
 
 	/* If queue is detached, set *done and return NULL. */
 	if (result == SHM_MQ_DETACHED)
@@ -203,7 +198,7 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 	 * Return a pointer to the queue memory directly (which had better be
 	 * sufficiently aligned).
 	 */
-	tuple = (MinimalTuple) data;
+	MinimalTuple tuple = (MinimalTuple) data;
 	Assert(tuple->t_len == nbytes);
 
 	return tuple;

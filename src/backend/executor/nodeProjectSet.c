@@ -46,11 +46,10 @@ ExecProjectSet(PlanState *pstate)
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
 	PlanState  *outerPlan;
-	ExprContext *econtext;
 
 	CHECK_FOR_INTERRUPTS();
 
-	econtext = node->ps.ps_ExprContext;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 
 	/*
 	 * Reset per-tuple context to free expression-evaluation storage allocated
@@ -133,7 +132,6 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 {
 	TupleTableSlot *resultSlot = node->ps.ps_ResultTupleSlot;
 	ExprContext *econtext = node->ps.ps_ExprContext;
-	MemoryContext oldcontext;
 	bool		hassrf PG_USED_FOR_ASSERTS_ONLY;
 	bool		hasresult;
 	int			argno;
@@ -141,7 +139,7 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 	ExecClearTuple(resultSlot);
 
 	/* Call SRFs, as well as plain expressions, in per-tuple context */
-	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Assume no further tuples are produced unless an ExprMultipleResult is
@@ -219,9 +217,7 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 ProjectSetState *
 ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 {
-	ProjectSetState *state;
 	ListCell   *lc;
-	int			off;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_MARK | EXEC_FLAG_BACKWARD)));
@@ -229,7 +225,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	state = makeNode(ProjectSetState);
+	ProjectSetState *state = makeNode(ProjectSetState);
 	state->ps.plan = (Plan *) node;
 	state->ps.state = estate;
 	state->ps.ExecProcNode = ExecProjectSet;
@@ -271,7 +267,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	 * Instead compile each expression separately, using
 	 * ExecInitFunctionResultSet where applicable.
 	 */
-	off = 0;
+	int			off = 0;
 	foreach(lc, node->plan.targetlist)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);

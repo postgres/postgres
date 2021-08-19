@@ -167,15 +167,13 @@ makeJsonLexContextCstringLen(char *json, int len, int encoding, bool need_escape
 JsonParseErrorType
 pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
 {
-	JsonTokenType tok;
-	JsonParseErrorType result;
 
 	/* get the initial token */
-	result = json_lex(lex);
+	JsonParseErrorType result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		return result;
 
-	tok = lex_peek(lex);
+	JsonTokenType tok = lex_peek(lex);
 
 	/* parse by recursive descent */
 	switch (tok)
@@ -208,8 +206,6 @@ JsonParseErrorType
 json_count_array_elements(JsonLexContext *lex, int *elements)
 {
 	JsonLexContext copylex;
-	int			count;
-	JsonParseErrorType result;
 
 	/*
 	 * It's safe to do this with a shallow copy because the lexical routines
@@ -220,8 +216,8 @@ json_count_array_elements(JsonLexContext *lex, int *elements)
 	copylex.strval = NULL;		/* not interested in values here */
 	copylex.lex_level++;
 
-	count = 0;
-	result = lex_expect(JSON_PARSE_ARRAY_START, &copylex,
+	int			count = 0;
+	JsonParseErrorType result = lex_expect(JSON_PARSE_ARRAY_START, &copylex,
 						JSON_TOKEN_ARRAY_START);
 	if (result != JSON_SUCCESS)
 		return result;
@@ -264,7 +260,6 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 	char	   *val = NULL;
 	json_scalar_action sfunc = sem->scalar;
 	JsonTokenType tok = lex_peek(lex);
-	JsonParseErrorType result;
 
 	/* a scalar must be a string, a number, true, false, or null */
 	if (tok != JSON_TOKEN_STRING && tok != JSON_TOKEN_NUMBER &&
@@ -292,7 +287,7 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 	}
 
 	/* consume the token */
-	result = json_lex(lex);
+	JsonParseErrorType result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		return result;
 
@@ -314,15 +309,12 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	char	   *fname = NULL;	/* keep compiler quiet */
 	json_ofield_action ostart = sem->object_field_start;
 	json_ofield_action oend = sem->object_field_end;
-	bool		isnull;
-	JsonTokenType tok;
-	JsonParseErrorType result;
 
 	if (lex_peek(lex) != JSON_TOKEN_STRING)
 		return report_parse_error(JSON_PARSE_STRING, lex);
 	if ((ostart != NULL || oend != NULL) && lex->strval != NULL)
 		fname = pstrdup(lex->strval->data);
-	result = json_lex(lex);
+	JsonParseErrorType result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		return result;
 
@@ -330,8 +322,8 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	if (result != JSON_SUCCESS)
 		return result;
 
-	tok = lex_peek(lex);
-	isnull = tok == JSON_TOKEN_NULL;
+	JsonTokenType tok = lex_peek(lex);
+	bool		isnull = tok == JSON_TOKEN_NULL;
 
 	if (ostart != NULL)
 		(*ostart) (sem->semstate, fname, isnull);
@@ -429,9 +421,8 @@ parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 	JsonTokenType tok = lex_peek(lex);
 	JsonParseErrorType result;
 
-	bool		isnull;
 
-	isnull = tok == JSON_TOKEN_NULL;
+	bool		isnull = tok == JSON_TOKEN_NULL;
 
 	if (astart != NULL)
 		(*astart) (sem->semstate, isnull);
@@ -518,13 +509,11 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 JsonParseErrorType
 json_lex(JsonLexContext *lex)
 {
-	char	   *s;
-	int			len;
 	JsonParseErrorType result;
 
 	/* Skip leading whitespace. */
-	s = lex->token_terminator;
-	len = s - lex->input;
+	char	   *s = lex->token_terminator;
+	int			len = s - lex->input;
 	while (len < lex->input_length &&
 		   (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
 	{
@@ -672,16 +661,14 @@ json_lex(JsonLexContext *lex)
 static inline JsonParseErrorType
 json_lex_string(JsonLexContext *lex)
 {
-	char	   *s;
-	int			len;
 	int			hi_surrogate = -1;
 
 	if (lex->strval != NULL)
 		resetStringInfo(lex->strval);
 
 	Assert(lex->input_length > 0);
-	s = lex->token_start;
-	len = lex->token_start - lex->input;
+	char	   *s = lex->token_start;
+	int			len = lex->token_start - lex->input;
 	for (;;)
 	{
 		s++;
@@ -793,10 +780,9 @@ json_lex_string(JsonLexContext *lex)
 					{
 						/* OK, we can map the code point to UTF8 easily */
 						char		utf8str[5];
-						int			utf8len;
 
 						unicode_to_utf8(ch, (unsigned char *) utf8str);
-						utf8len = pg_utf_mblen((unsigned char *) utf8str);
+						int			utf8len = pg_utf_mblen((unsigned char *) utf8str);
 						appendBinaryStringInfo(lex->strval, utf8str, utf8len);
 					}
 					else if (ch <= 0x007f)

@@ -152,14 +152,12 @@ levenshtein_with_costs(PG_FUNCTION_ARGS)
 	int			ins_c = PG_GETARG_INT32(2);
 	int			del_c = PG_GETARG_INT32(3);
 	int			sub_c = PG_GETARG_INT32(4);
-	const char *s_data;
-	const char *t_data;
 	int			s_bytes,
 				t_bytes;
 
 	/* Extract a pointer to the actual character data */
-	s_data = VARDATA_ANY(src);
-	t_data = VARDATA_ANY(dst);
+	const char *s_data = VARDATA_ANY(src);
+	const char *t_data = VARDATA_ANY(dst);
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -175,14 +173,12 @@ levenshtein(PG_FUNCTION_ARGS)
 {
 	text	   *src = PG_GETARG_TEXT_PP(0);
 	text	   *dst = PG_GETARG_TEXT_PP(1);
-	const char *s_data;
-	const char *t_data;
 	int			s_bytes,
 				t_bytes;
 
 	/* Extract a pointer to the actual character data */
-	s_data = VARDATA_ANY(src);
-	t_data = VARDATA_ANY(dst);
+	const char *s_data = VARDATA_ANY(src);
+	const char *t_data = VARDATA_ANY(dst);
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -202,14 +198,12 @@ levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS)
 	int			del_c = PG_GETARG_INT32(3);
 	int			sub_c = PG_GETARG_INT32(4);
 	int			max_d = PG_GETARG_INT32(5);
-	const char *s_data;
-	const char *t_data;
 	int			s_bytes,
 				t_bytes;
 
 	/* Extract a pointer to the actual character data */
-	s_data = VARDATA_ANY(src);
-	t_data = VARDATA_ANY(dst);
+	const char *s_data = VARDATA_ANY(src);
+	const char *t_data = VARDATA_ANY(dst);
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -228,14 +222,12 @@ levenshtein_less_equal(PG_FUNCTION_ARGS)
 	text	   *src = PG_GETARG_TEXT_PP(0);
 	text	   *dst = PG_GETARG_TEXT_PP(1);
 	int			max_d = PG_GETARG_INT32(2);
-	const char *s_data;
-	const char *t_data;
 	int			s_bytes,
 				t_bytes;
 
 	/* Extract a pointer to the actual character data */
-	s_data = VARDATA_ANY(src);
-	t_data = VARDATA_ANY(dst);
+	const char *s_data = VARDATA_ANY(src);
+	const char *t_data = VARDATA_ANY(dst);
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -258,7 +250,6 @@ metaphone(PG_FUNCTION_ARGS)
 {
 	char	   *str_i = TextDatumGetCString(PG_GETARG_DATUM(0));
 	size_t		str_i_len = strlen(str_i);
-	int			reqlen;
 	char	   *metaph;
 
 	/* return an empty string if we receive one */
@@ -271,7 +262,7 @@ metaphone(PG_FUNCTION_ARGS)
 				 errmsg("argument exceeds the maximum length of %d bytes",
 						MAX_METAPHONE_STRLEN)));
 
-	reqlen = PG_GETARG_INT32(1);
+	int			reqlen = PG_GETARG_INT32(1);
 	if (reqlen > MAX_METAPHONE_STRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -710,9 +701,8 @@ Datum
 soundex(PG_FUNCTION_ARGS)
 {
 	char		outstr[SOUNDEX_LEN + 1];
-	char	   *arg;
 
-	arg = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *arg = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	_soundex(arg, outstr);
 
@@ -722,7 +712,6 @@ soundex(PG_FUNCTION_ARGS)
 static void
 _soundex(const char *instr, char *outstr)
 {
-	int			count;
 
 	AssertArg(instr);
 	AssertArg(outstr);
@@ -743,7 +732,7 @@ _soundex(const char *instr, char *outstr)
 	/* Take the first letter as is */
 	*outstr++ = (char) toupper((unsigned char) *instr++);
 
-	count = 1;
+	int			count = 1;
 	while (*instr && count < SOUNDEX_LEN)
 	{
 		if (isalpha((unsigned char) *instr) &&

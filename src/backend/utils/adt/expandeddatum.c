@@ -94,14 +94,13 @@ EOH_flatten_into(ExpandedObjectHeader *eohptr,
 Datum
 MakeExpandedObjectReadOnlyInternal(Datum d)
 {
-	ExpandedObjectHeader *eohptr;
 
 	/* Nothing to do if not a read-write expanded-object pointer */
 	if (!VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(d)))
 		return d;
 
 	/* Now safe to extract the object pointer */
-	eohptr = DatumGetEOHP(d);
+	ExpandedObjectHeader *eohptr = DatumGetEOHP(d);
 
 	/* Return the built-in read-only pointer instead of given pointer */
 	return EOHPGetRODatum(eohptr);

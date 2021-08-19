@@ -118,9 +118,8 @@ postmaster_death_handler(int signo)
 Size
 PMSignalShmemSize(void)
 {
-	Size		size;
 
-	size = offsetof(PMSignalData, PMChildFlags);
+	Size		size = offsetof(PMSignalData, PMChildFlags);
 	size = add_size(size, mul_size(MaxLivePostmasterChildren(),
 								   sizeof(sig_atomic_t)));
 
@@ -252,7 +251,6 @@ AssignPostmasterChildSlot(void)
 bool
 ReleasePostmasterChildSlot(int slot)
 {
-	bool		result;
 
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
@@ -262,7 +260,7 @@ ReleasePostmasterChildSlot(int slot)
 	 * postmaster.c is such that this might get called twice when a child
 	 * crashes.  So we don't try to Assert anything about the state.
 	 */
-	result = (PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
+	bool		result = (PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_UNUSED;
 	return result;
 }
@@ -355,9 +353,8 @@ PostmasterIsAliveInternal(void)
 #ifndef WIN32
 	{
 		char		c;
-		ssize_t		rc;
 
-		rc = read(postmaster_alive_fds[POSTMASTER_FD_WATCH], &c, 1);
+		ssize_t		rc = read(postmaster_alive_fds[POSTMASTER_FD_WATCH], &c, 1);
 
 		/*
 		 * In the usual case, the postmaster is still alive, and there is no

@@ -476,12 +476,11 @@ ean2ISMN(char *isn)
 static inline void
 ean2ISSN(char *isn)
 {
-	unsigned	check;
 
 	/* the number should come in this format: 977-0000-000-00-0 */
 	/* Strip the first part, crop, and calculate the new check digit */
 	hyphenate(isn, isn + 4, NULL, NULL);
-	check = weight_checkdig(isn, 8);
+	unsigned	check = weight_checkdig(isn, 8);
 	if (check == 10)
 		isn[8] = 'X';
 	else
@@ -951,12 +950,11 @@ Datum
 isn_out(PG_FUNCTION_ARGS)
 {
 	ean13		val = PG_GETARG_EAN13(0);
-	char	   *result;
 	char		buf[MAXEAN13LEN + 1];
 
 	(void) ean2string(val, false, buf, true);
 
-	result = pstrdup(buf);
+	char	   *result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -967,12 +965,11 @@ Datum
 ean13_out(PG_FUNCTION_ARGS)
 {
 	ean13		val = PG_GETARG_EAN13(0);
-	char	   *result;
 	char		buf[MAXEAN13LEN + 1];
 
 	(void) ean2string(val, false, buf, false);
 
-	result = pstrdup(buf);
+	char	   *result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
 

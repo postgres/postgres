@@ -144,10 +144,9 @@ deparse_ltree(const ltree *in)
 	char	   *buf,
 			   *ptr;
 	int			i;
-	ltree_level *curlevel;
 
 	ptr = buf = (char *) palloc(VARSIZE(in));
-	curlevel = LTREE_FIRST(in);
+	ltree_level *curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
 		if (i != 0)
@@ -224,15 +223,13 @@ ltree_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	int			version = pq_getmsgint(buf, 1);
-	char	   *str;
 	int			nbytes;
-	ltree	   *res;
 
 	if (version != 1)
 		elog(ERROR, "unsupported ltree version number %d", version);
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-	res = parse_ltree(str);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	ltree	   *res = parse_ltree(str);
 	pfree(str);
 
 	PG_RETURN_POINTER(res);
@@ -617,10 +614,9 @@ deparse_lquery(const lquery *in)
 	int			i,
 				j,
 				totallen = 1;
-	lquery_level *curqlevel;
 	lquery_variant *curtlevel;
 
-	curqlevel = LQUERY_FIRST(in);
+	lquery_level *curqlevel = LQUERY_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
 		totallen++;
@@ -782,15 +778,13 @@ lquery_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	int			version = pq_getmsgint(buf, 1);
-	char	   *str;
 	int			nbytes;
-	lquery	   *res;
 
 	if (version != 1)
 		elog(ERROR, "unsupported lquery version number %d", version);
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-	res = parse_lquery(str);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	lquery	   *res = parse_lquery(str);
 	pfree(str);
 
 	PG_RETURN_POINTER(res);

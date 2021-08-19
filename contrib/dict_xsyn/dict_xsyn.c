@@ -85,18 +85,16 @@ read_dictionary(DictSyn *d, const char *filename)
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
-		char	   *value;
 		char	   *key;
-		char	   *pos;
 		char	   *end;
 
 		if (*line == '\0')
 			continue;
 
-		value = lowerstr(line);
+		char	   *value = lowerstr(line);
 		pfree(line);
 
-		pos = value;
+		char	   *pos = value;
 		while ((key = find_word(pos, &end)) != NULL)
 		{
 			/* Enlarge syn structure if full */
@@ -141,11 +139,10 @@ Datum
 dxsyn_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictSyn    *d;
 	ListCell   *l;
 	char	   *filename = NULL;
 
-	d = (DictSyn *) palloc0(sizeof(DictSyn));
+	DictSyn    *d = (DictSyn *) palloc0(sizeof(DictSyn));
 	d->len = 0;
 	d->syn = NULL;
 	d->matchorig = true;
@@ -200,7 +197,6 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int			length = PG_GETARG_INT32(2);
 	Syn			word;
-	Syn		   *found;
 	TSLexeme   *res = NULL;
 
 	if (!length || d->len == 0)
@@ -216,7 +212,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 	}
 
 	/* Look for matching syn */
-	found = (Syn *) bsearch(&word, d->syn, d->len, sizeof(Syn), compare_syn);
+	Syn		   *found = (Syn *) bsearch(&word, d->syn, d->len, sizeof(Syn), compare_syn);
 	pfree(word.key);
 
 	if (!found)
@@ -226,13 +222,12 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 	{
 		char	   *value = found->value;
 		char	   *syn;
-		char	   *pos;
 		char	   *end;
 		int			nsyns = 0;
 
 		res = palloc(sizeof(TSLexeme));
 
-		pos = value;
+		char	   *pos = value;
 		while ((syn = find_word(pos, &end)) != NULL)
 		{
 			res = repalloc(res, sizeof(TSLexeme) * (nsyns + 2));

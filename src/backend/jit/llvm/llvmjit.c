@@ -145,7 +145,6 @@ _PG_jit_provider_init(JitProviderCallbacks *cb)
 LLVMJitContext *
 llvm_create_context(int jitFlags)
 {
-	LLVMJitContext *context;
 
 	llvm_assert_in_fatal_section();
 
@@ -153,7 +152,7 @@ llvm_create_context(int jitFlags)
 
 	ResourceOwnerEnlargeJIT(CurrentResourceOwner);
 
-	context = MemoryContextAllocZero(TopMemoryContext,
+	LLVMJitContext *context = MemoryContextAllocZero(TopMemoryContext,
 									 sizeof(LLVMJitContext));
 	context->base.flags = jitFlags;
 
@@ -190,15 +189,12 @@ llvm_release_context(JitContext *context)
 
 	while (llvm_context->handles != NIL)
 	{
-		LLVMJitHandle *jit_handle;
 
-		jit_handle = (LLVMJitHandle *) linitial(llvm_context->handles);
+		LLVMJitHandle *jit_handle = (LLVMJitHandle *) linitial(llvm_context->handles);
 		llvm_context->handles = list_delete_first(llvm_context->handles);
 
 #if LLVM_VERSION_MAJOR > 11
 		{
-			LLVMOrcExecutionSessionRef ee;
-			LLVMOrcSymbolStringPoolRef sp;
 
 			LLVMOrcResourceTrackerRemove(jit_handle->resource_tracker);
 			LLVMOrcReleaseResourceTracker(jit_handle->resource_tracker);
@@ -209,8 +205,8 @@ llvm_release_context(JitContext *context)
 			 * experiments the required time was small enough to just always
 			 * do it.
 			 */
-			ee = LLVMOrcLLJITGetExecutionSession(jit_handle->lljit);
-			sp = LLVMOrcExecutionSessionGetSymbolStringPool(ee);
+			LLVMOrcExecutionSessionRef ee = LLVMOrcLLJITGetExecutionSession(jit_handle->lljit);
+			LLVMOrcSymbolStringPoolRef sp = LLVMOrcExecutionSessionGetSymbolStringPool(ee);
 			LLVMOrcSymbolStringPoolClearDeadEntries(sp);
 		}
 #else							/* LLVM_VERSION_MAJOR > 11 */
@@ -302,13 +298,11 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 		LLVMJitHandle *handle = (LLVMJitHandle *) lfirst(lc);
 		instr_time	starttime;
 		instr_time	endtime;
-		LLVMErrorRef error;
-		LLVMOrcJITTargetAddress addr;
 
 		INSTR_TIME_SET_CURRENT(starttime);
 
-		addr = 0;
-		error = LLVMOrcLLJITLookup(handle->lljit, &addr, funcname);
+		LLVMOrcJITTargetAddress addr = 0;
+		LLVMErrorRef error = LLVMOrcLLJITLookup(handle->lljit, &addr, funcname);
 		if (error)
 			elog(ERROR, "failed to look up symbol \"%s\": %s",
 				 funcname, llvm_error_message(error));
@@ -329,10 +323,9 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 #elif defined(HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN) && HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
 	foreach(lc, context->handles)
 	{
-		LLVMOrcTargetAddress addr;
 		LLVMJitHandle *handle = (LLVMJitHandle *) lfirst(lc);
 
-		addr = 0;
+		LLVMOrcTargetAddress addr = 0;
 		if (LLVMOrcGetSymbolAddressIn(handle->stack, &addr, handle->orc_handle, funcname))
 			elog(ERROR, "failed to look up symbol \"%s\"", funcname);
 		if (addr)
@@ -374,16 +367,14 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 LLVMTypeRef
 llvm_pg_var_type(const char *varname)
 {
-	LLVMValueRef v_srcvar;
-	LLVMTypeRef typ;
 
 	/* this'll return a *pointer* to the global */
-	v_srcvar = LLVMGetNamedGlobal(llvm_types_module, varname);
+	LLVMValueRef v_srcvar = LLVMGetNamedGlobal(llvm_types_module, varname);
 	if (!v_srcvar)
 		elog(ERROR, "variable %s not in llvmjit_types.c", varname);
 
 	/* look at the contained type */
-	typ = LLVMTypeOf(v_srcvar);
+	LLVMTypeRef typ = LLVMTypeOf(v_srcvar);
 	Assert(typ != NULL && LLVMGetTypeKind(typ) == LLVMPointerTypeKind);
 	typ = LLVMGetElementType(typ);
 	Assert(typ != NULL);
@@ -418,15 +409,13 @@ llvm_pg_var_func_type(const char *varname)
 LLVMValueRef
 llvm_pg_func(LLVMModuleRef mod, const char *funcname)
 {
-	LLVMValueRef v_srcfn;
-	LLVMValueRef v_fn;
 
 	/* don't repeatedly add function */
-	v_fn = LLVMGetNamedFunction(mod, funcname);
+	LLVMValueRef v_fn = LLVMGetNamedFunction(mod, funcname);
 	if (v_fn)
 		return v_fn;
 
-	v_srcfn = LLVMGetNamedFunction(llvm_types_module, funcname);
+	LLVMValueRef v_srcfn = LLVMGetNamedFunction(llvm_types_module, funcname);
 
 	if (!v_srcfn)
 		elog(ERROR, "function %s not in llvmjit_types.c", funcname);
@@ -446,10 +435,8 @@ llvm_pg_func(LLVMModuleRef mod, const char *funcname)
 static void
 llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 index)
 {
-	int			num_attributes;
-	LLVMAttributeRef *attrs;
 
-	num_attributes = LLVMGetAttributeCountAtIndexPG(v_from, index);
+	int			num_attributes = LLVMGetAttributeCountAtIndexPG(v_from, index);
 
 	/*
 	 * Not just for efficiency: LLVM <= 3.9 crashes when
@@ -458,7 +445,7 @@ llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 ind
 	if (num_attributes == 0)
 		return;
 
-	attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
+	LLVMAttributeRef *attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
 	LLVMGetAttributesAtIndex(v_from, index, attrs);
 
 	for (int attno = 0; attno < num_attributes; attno++)
@@ -474,7 +461,6 @@ llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 ind
 void
 llvm_copy_attributes(LLVMValueRef v_from, LLVMValueRef v_to)
 {
-	uint32		param_count;
 
 	/* copy function attributes */
 	llvm_copy_attributes_at_index(v_from, v_to, LLVMAttributeFunctionIndex);
@@ -483,7 +469,7 @@ llvm_copy_attributes(LLVMValueRef v_from, LLVMValueRef v_to)
 	llvm_copy_attributes_at_index(v_from, v_to, LLVMAttributeReturnIndex);
 
 	/* and each function parameter's attribute */
-	param_count = LLVMCountParams(v_from);
+	uint32		param_count = LLVMCountParams(v_from);
 
 	for (int paramidx = 1; paramidx <= param_count; paramidx++)
 		llvm_copy_attributes_at_index(v_from, v_to, paramidx);
@@ -523,7 +509,6 @@ llvm_function_reference(LLVMJitContext *context,
 		 * creating a global constant containing a pointer to the function.
 		 * Makes IR more readable.
 		 */
-		LLVMValueRef v_fn_addr;
 
 		funcname = psprintf("pgoidextern.%u",
 							fcinfo->flinfo->fn_oid);
@@ -531,7 +516,7 @@ llvm_function_reference(LLVMJitContext *context,
 		if (v_fn != 0)
 			return LLVMBuildLoad(builder, v_fn, "");
 
-		v_fn_addr = l_ptr_const(fcinfo->flinfo->fn_addr, TypePGFunction);
+		LLVMValueRef v_fn_addr = l_ptr_const(fcinfo->flinfo->fn_addr, TypePGFunction);
 
 		v_fn = LLVMAddGlobal(mod, TypePGFunction, funcname);
 		LLVMSetInitializer(v_fn, v_fn_addr);
@@ -558,9 +543,6 @@ llvm_function_reference(LLVMJitContext *context,
 static void
 llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 {
-	LLVMPassManagerBuilderRef llvm_pmb;
-	LLVMPassManagerRef llvm_mpm;
-	LLVMPassManagerRef llvm_fpm;
 	LLVMValueRef func;
 	int			compile_optlevel;
 
@@ -574,9 +556,9 @@ llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 	 * inliner has some per-builder state. Otherwise one ends up only inlining
 	 * a function the first time though.
 	 */
-	llvm_pmb = LLVMPassManagerBuilderCreate();
+	LLVMPassManagerBuilderRef llvm_pmb = LLVMPassManagerBuilderCreate();
 	LLVMPassManagerBuilderSetOptLevel(llvm_pmb, compile_optlevel);
-	llvm_fpm = LLVMCreateFunctionPassManagerForModule(module);
+	LLVMPassManagerRef llvm_fpm = LLVMCreateFunctionPassManagerForModule(module);
 
 	if (context->base.flags & PGJIT_OPT3)
 	{
@@ -607,7 +589,7 @@ llvm_optimize_module(LLVMJitContext *context, LLVMModuleRef module)
 	 * Perform module level optimization. We do so even in the non-optimized
 	 * case, so always-inline functions etc get inlined. It's cheap enough.
 	 */
-	llvm_mpm = LLVMCreatePassManager();
+	LLVMPassManagerRef llvm_mpm = LLVMCreatePassManager();
 	LLVMPassManagerBuilderPopulateModulePassManager(llvm_pmb,
 													llvm_mpm);
 	/* always use always-inliner pass */
@@ -656,9 +638,8 @@ llvm_compile_module(LLVMJitContext *context)
 
 	if (jit_dump_bitcode)
 	{
-		char	   *filename;
 
-		filename = psprintf("%u.%zu.bc",
+		char	   *filename = psprintf("%u.%zu.bc",
 							MyProcPid,
 							context->module_generation);
 		LLVMWriteBitcodeToFile(context->module, filename);
@@ -675,9 +656,8 @@ llvm_compile_module(LLVMJitContext *context)
 
 	if (jit_dump_bitcode)
 	{
-		char	   *filename;
 
-		filename = psprintf("%u.%zu.optimized.bc",
+		char	   *filename = psprintf("%u.%zu.optimized.bc",
 							MyProcPid,
 							context->module_generation);
 		LLVMWriteBitcodeToFile(context->module, filename);
@@ -696,11 +676,9 @@ llvm_compile_module(LLVMJitContext *context)
 	INSTR_TIME_SET_CURRENT(starttime);
 #if LLVM_VERSION_MAJOR > 11
 	{
-		LLVMOrcThreadSafeModuleRef ts_module;
-		LLVMErrorRef error;
 		LLVMOrcJITDylibRef jd = LLVMOrcLLJITGetMainJITDylib(compile_orc);
 
-		ts_module = LLVMOrcCreateNewThreadSafeModule(context->module, llvm_ts_context);
+		LLVMOrcThreadSafeModuleRef ts_module = LLVMOrcCreateNewThreadSafeModule(context->module, llvm_ts_context);
 
 		handle->lljit = compile_orc;
 		handle->resource_tracker = LLVMOrcJITDylibCreateResourceTracker(jd);
@@ -712,7 +690,7 @@ llvm_compile_module(LLVMJitContext *context)
 		 */
 
 		context->module = NULL; /* will be owned by LLJIT */
-		error = LLVMOrcLLJITAddLLVMIRModuleWithRT(compile_orc,
+		LLVMErrorRef error = LLVMOrcLLJITAddLLVMIRModuleWithRT(compile_orc,
 												  handle->resource_tracker,
 												  ts_module);
 
@@ -735,9 +713,8 @@ llvm_compile_module(LLVMJitContext *context)
 	}
 #elif LLVM_VERSION_MAJOR > 4
 	{
-		LLVMSharedModuleRef smod;
 
-		smod = LLVMOrcMakeSharedModule(context->module);
+		LLVMSharedModuleRef smod = LLVMOrcMakeSharedModule(context->module);
 		handle->stack = compile_orc;
 		if (LLVMOrcAddEagerlyCompiledIR(compile_orc, &handle->orc_handle, smod,
 										llvm_resolve_symbol, NULL))
@@ -782,17 +759,12 @@ llvm_compile_module(LLVMJitContext *context)
 static void
 llvm_session_initialize(void)
 {
-	MemoryContext oldcontext;
 	char	   *error = NULL;
-	char	   *cpu = NULL;
-	char	   *features = NULL;
-	LLVMTargetMachineRef opt0_tm;
-	LLVMTargetMachineRef opt3_tm;
 
 	if (llvm_session_initialized)
 		return;
 
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
 	LLVMInitializeNativeTarget();
 	LLVMInitializeNativeAsmPrinter();
@@ -815,17 +787,17 @@ llvm_session_initialize(void)
 	 * latter is needed because some CPU architectures default to enabling
 	 * features not all CPUs have (weird, huh).
 	 */
-	cpu = LLVMGetHostCPUName();
-	features = LLVMGetHostCPUFeatures();
+	char	   *cpu = LLVMGetHostCPUName();
+	char	   *features = LLVMGetHostCPUFeatures();
 	elog(DEBUG2, "LLVMJIT detected CPU \"%s\", with features \"%s\"",
 		 cpu, features);
 
-	opt0_tm =
+	LLVMTargetMachineRef opt0_tm =
 		LLVMCreateTargetMachine(llvm_targetref, llvm_triple, cpu, features,
 								LLVMCodeGenLevelNone,
 								LLVMRelocDefault,
 								LLVMCodeModelJITDefault);
-	opt3_tm =
+	LLVMTargetMachineRef opt3_tm =
 		LLVMCreateTargetMachine(llvm_targetref, llvm_triple, cpu, features,
 								LLVMCodeGenLevelAggressive,
 								LLVMRelocDefault,
@@ -934,16 +906,14 @@ llvm_shutdown(int code, Datum arg)
 static LLVMTypeRef
 load_return_type(LLVMModuleRef mod, const char *name)
 {
-	LLVMValueRef value;
-	LLVMTypeRef typ;
 
 	/* this'll return a *pointer* to the function */
-	value = LLVMGetNamedFunction(mod, name);
+	LLVMValueRef value = LLVMGetNamedFunction(mod, name);
 	if (!value)
 		elog(ERROR, "function %s is unknown", name);
 
 	/* get type of function pointer */
-	typ = LLVMTypeOf(value);
+	LLVMTypeRef typ = LLVMTypeOf(value);
 	Assert(typ != NULL);
 	/* dereference pointer */
 	typ = LLVMGetElementType(typ);
@@ -1178,21 +1148,17 @@ static LLVMOrcLLJITRef
 llvm_create_jit_instance(LLVMTargetMachineRef tm)
 {
 	LLVMOrcLLJITRef lljit;
-	LLVMOrcJITTargetMachineBuilderRef tm_builder;
-	LLVMOrcLLJITBuilderRef lljit_builder;
-	LLVMErrorRef error;
 	LLVMOrcDefinitionGeneratorRef main_gen;
-	LLVMOrcDefinitionGeneratorRef ref_gen;
 
-	lljit_builder = LLVMOrcCreateLLJITBuilder();
-	tm_builder = LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(tm);
+	LLVMOrcLLJITBuilderRef lljit_builder = LLVMOrcCreateLLJITBuilder();
+	LLVMOrcJITTargetMachineBuilderRef tm_builder = LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(tm);
 	LLVMOrcLLJITBuilderSetJITTargetMachineBuilder(lljit_builder, tm_builder);
 
 	LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(lljit_builder,
 													llvm_create_object_layer,
 													NULL);
 
-	error = LLVMOrcCreateLLJIT(&lljit, lljit_builder);
+	LLVMErrorRef error = LLVMOrcCreateLLJIT(&lljit, lljit_builder);
 	if (error)
 		elog(ERROR, "failed to create lljit instance: %s",
 			 llvm_error_message(error));
@@ -1216,7 +1182,7 @@ llvm_create_jit_instance(LLVMTargetMachineRef tm)
 	 * Symbol resolution support for "special" functions, e.g. a call into an
 	 * SQL callable function.
 	 */
-	ref_gen = LLVMOrcCreateCustomCAPIDefinitionGenerator(llvm_resolve_symbols, NULL);
+	LLVMOrcDefinitionGeneratorRef ref_gen = LLVMOrcCreateCustomCAPIDefinitionGenerator(llvm_resolve_symbols, NULL);
 	LLVMOrcJITDylibAddGenerator(LLVMOrcLLJITGetMainJITDylib(lljit), ref_gen);
 
 	return lljit;

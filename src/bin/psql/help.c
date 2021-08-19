@@ -47,13 +47,10 @@
 void
 usage(unsigned short int pager)
 {
-	const char *env;
-	const char *user;
 	char	   *errstr;
-	FILE	   *output;
 
 	/* Find default user, in case we need it. */
-	user = getenv("PGUSER");
+	const char *user = getenv("PGUSER");
 	if (!user)
 	{
 		user = get_user_name(&errstr);
@@ -68,7 +65,7 @@ usage(unsigned short int pager)
 	 * Keep this line count in sync with the number of lines printed below!
 	 * Use "psql --help=options | wc" to count correctly.
 	 */
-	output = PageOutput(63, pager ? &(pset.popt.topt) : NULL);
+	FILE	   *output = PageOutput(63, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
 	fprintf(output, _("Usage:\n"));
@@ -76,7 +73,7 @@ usage(unsigned short int pager)
 
 	fprintf(output, _("General options:\n"));
 	/* Display default database */
-	env = getenv("PGDATABASE");
+	const char *env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
 	fprintf(output, _("  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"));
@@ -156,17 +153,15 @@ usage(unsigned short int pager)
 void
 slashUsage(unsigned short int pager)
 {
-	FILE	   *output;
-	char	   *currdb;
 
-	currdb = PQdb(pset.db);
+	char	   *currdb = PQdb(pset.db);
 
 	/*
 	 * Keep this line count in sync with the number of lines printed below!
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(135, pager ? &(pset.popt.topt) : NULL);
+	FILE	   *output = PageOutput(135, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -339,7 +334,6 @@ slashUsage(unsigned short int pager)
 void
 helpVariables(unsigned short int pager)
 {
-	FILE	   *output;
 
 	/*
 	 * Keep this line count in sync with the number of lines printed below!
@@ -347,7 +341,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(160, pager ? &(pset.popt.topt) : NULL);
+	FILE	   *output = PageOutput(160, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
@@ -645,11 +639,10 @@ helpSQL(const char *topic, unsigned short int pager)
 					strcmp(topic, "*") == 0)
 				{
 					PQExpBufferData buffer;
-					char	   *url;
 
 					initPQExpBuffer(&buffer);
 					QL_HELP[i].syntaxfunc(&buffer);
-					url = psprintf("https://www.postgresql.org/docs/%s/%s.html",
+					char	   *url = psprintf("https://www.postgresql.org/docs/%s/%s.html",
 								   strstr(PG_VERSION, "devel") ? "devel" : PG_MAJORVERSION,
 								   QL_HELP[i].docbook_id);
 					/* # of newlines in format must match constant above! */

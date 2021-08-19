@@ -35,15 +35,8 @@
 void
 sepgsql_schema_post_create(Oid namespaceId)
 {
-	Relation	rel;
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	tuple;
-	char	   *tcontext;
-	char	   *ncontext;
-	const char *nsp_name;
 	ObjectAddress object;
-	Form_pg_namespace nspForm;
 	StringInfoData audit_name;
 
 	/*
@@ -54,28 +47,28 @@ sepgsql_schema_post_create(Oid namespaceId)
 	 * handle special treatment on default security label; such as special
 	 * label on "pg_temp" schema.
 	 */
-	rel = table_open(NamespaceRelationId, AccessShareLock);
+	Relation	rel = table_open(NamespaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_namespace_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(namespaceId));
 
-	sscan = systable_beginscan(rel, NamespaceOidIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, NamespaceOidIndexId, true,
 							   SnapshotSelf, 1, &skey);
-	tuple = systable_getnext(sscan);
+	HeapTuple	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for namespace %u", namespaceId);
 
-	nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
-	nsp_name = NameStr(nspForm->nspname);
+	Form_pg_namespace nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
+	const char *nsp_name = NameStr(nspForm->nspname);
 	if (strncmp(nsp_name, "pg_temp_", 8) == 0)
 		nsp_name = "pg_temp";
 	else if (strncmp(nsp_name, "pg_toast_temp_", 14) == 0)
 		nsp_name = "pg_toast_temp";
 
-	tcontext = sepgsql_get_label(DatabaseRelationId, MyDatabaseId, 0);
-	ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
+	char	   *tcontext = sepgsql_get_label(DatabaseRelationId, MyDatabaseId, 0);
+	char	   *ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
 									  tcontext,
 									  SEPG_CLASS_DB_SCHEMA,
 									  nsp_name);
@@ -114,7 +107,6 @@ void
 sepgsql_schema_drop(Oid namespaceId)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 
 	/*
 	 * check db_schema:{drop} permission
@@ -122,7 +114,7 @@ sepgsql_schema_drop(Oid namespaceId)
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -142,12 +134,11 @@ void
 sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_schema:{setattr relabelfrom} permission
@@ -179,15 +170,13 @@ static bool
 check_schema_perms(Oid namespaceId, uint32 required, bool abort_on_violation)
 {
 	ObjectAddress object;
-	char	   *audit_name;
-	bool		result;
 
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
-	result = sepgsql_avc_check_perms(&object,
+	bool		result = sepgsql_avc_check_perms(&object,
 									 SEPG_CLASS_DB_SCHEMA,
 									 required,
 									 audit_name,

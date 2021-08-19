@@ -162,10 +162,9 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 static DIR *
 get_destination_dir(char *dest_folder)
 {
-	DIR		   *dir;
 
 	Assert(dest_folder != NULL);
-	dir = opendir(dest_folder);
+	DIR		   *dir = opendir(dest_folder);
 	if (dir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", basedir);
@@ -201,13 +200,12 @@ close_destination_dir(DIR *dest_dir, char *dest_folder)
 static XLogRecPtr
 FindStreamingStart(uint32 *tli)
 {
-	DIR		   *dir;
 	struct dirent *dirent;
 	XLogSegNo	high_segno = 0;
 	uint32		high_tli = 0;
 	bool		high_ispartial = false;
 
-	dir = get_destination_dir(basedir);
+	DIR		   *dir = get_destination_dir(basedir);
 
 	while (errno = 0, (dirent = readdir(dir)) != NULL)
 	{
@@ -278,15 +276,12 @@ FindStreamingStart(uint32 *tli)
 		}
 		else if (!ispartial && iscompress)
 		{
-			int			fd;
 			char		buf[4];
-			int			bytes_out;
 			char		fullpath[MAXPGPATH * 2];
-			int			r;
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 
-			fd = open(fullpath, O_RDONLY | PG_BINARY, 0);
+			int			fd = open(fullpath, O_RDONLY | PG_BINARY, 0);
 			if (fd < 0)
 			{
 				pg_log_error("could not open compressed file \"%s\": %m",
@@ -299,7 +294,7 @@ FindStreamingStart(uint32 *tli)
 							 fullpath);
 				exit(1);
 			}
-			r = read(fd, (char *) buf, sizeof(buf));
+			int			r = read(fd, (char *) buf, sizeof(buf));
 			if (r != sizeof(buf))
 			{
 				if (r < 0)
@@ -312,7 +307,7 @@ FindStreamingStart(uint32 *tli)
 			}
 
 			close(fd);
-			bytes_out = (buf[3] << 24) | (buf[2] << 16) |
+			int			bytes_out = (buf[3] << 24) | (buf[2] << 16) |
 				(buf[1] << 8) | buf[0];
 
 			if (bytes_out != WalSegSz)

@@ -126,8 +126,6 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 {
 	bool		found;
 	bool		retry = false;
-	ConnCacheEntry *entry;
-	ConnCacheKey key;
 	MemoryContext ccxt = CurrentMemoryContext;
 
 	/* First time through, initialize connection cache hashtable */
@@ -157,12 +155,12 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 	xact_got_connection = true;
 
 	/* Create hash key for the entry.  Assume no pad bytes in key struct */
-	key = user->umid;
+	ConnCacheKey key = user->umid;
 
 	/*
 	 * Find or create cached entry for requested connection.
 	 */
-	entry = hash_search(ConnectionHash, &key, HASH_ENTER, &found);
+	ConnCacheEntry *entry = hash_search(ConnectionHash, &key, HASH_ENTER, &found);
 	if (!found)
 	{
 		/*
@@ -346,9 +344,6 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 	 */
 	PG_TRY();
 	{
-		const char **keywords;
-		const char **values;
-		int			n;
 
 		/*
 		 * Construct connection params from generic options of ForeignServer
@@ -356,9 +351,9 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		 * which case we'll just waste a few array slots.)  Add 3 extra slots
 		 * for fallback_application_name, client_encoding, end marker.
 		 */
-		n = list_length(server->options) + list_length(user->options) + 3;
-		keywords = (const char **) palloc(n * sizeof(char *));
-		values = (const char **) palloc(n * sizeof(char *));
+		int			n = list_length(server->options) + list_length(user->options) + 3;
+		const char **keywords = (const char **) palloc(n * sizeof(char *));
+		const char **values = (const char **) palloc(n * sizeof(char *));
 
 		n = 0;
 		n += ExtractConnectionOptions(server->options,
@@ -570,11 +565,10 @@ configure_remote_session(PGconn *conn)
 void
 do_sql_command(PGconn *conn, const char *sql)
 {
-	PGresult   *res;
 
 	if (!PQsendQuery(conn, sql))
 		pgfdw_report_error(ERROR, NULL, conn, false, sql);
-	res = pgfdw_get_result(conn, sql);
+	PGresult   *res = pgfdw_get_result(conn, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, conn, true, sql);
 	PQclear(res);
@@ -719,14 +713,12 @@ pgfdw_get_result(PGconn *conn, const char *query)
 	{
 		for (;;)
 		{
-			PGresult   *res;
 
 			while (PQisBusy(conn))
 			{
-				int			wc;
 
 				/* Sleep until there's something to do */
-				wc = WaitLatchOrSocket(MyLatch,
+				int			wc = WaitLatchOrSocket(MyLatch,
 									   WL_LATCH_SET | WL_SOCKET_READABLE |
 									   WL_EXIT_ON_PM_DEATH,
 									   PQsocket(conn),
@@ -743,7 +735,7 @@ pgfdw_get_result(PGconn *conn, const char *query)
 				}
 			}
 
-			res = PQgetResult(conn);
+			PGresult   *res = PQgetResult(conn);
 			if (res == NULL)
 				break;			/* query is complete */
 
@@ -1028,7 +1020,6 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
-	int			curlevel;
 
 	/* Nothing to do at subxact start, nor after commit. */
 	if (!(event == SUBXACT_EVENT_PRE_COMMIT_SUB ||
@@ -1043,7 +1034,7 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 	 * Scan all connection cache entries to find open remote subtransactions
 	 * of the current level, and close them.
 	 */
-	curlevel = GetCurrentTransactionNestLevel();
+	int			curlevel = GetCurrentTransactionNestLevel();
 	hash_seq_init(&scan, ConnectionHash);
 	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
 	{
@@ -1192,7 +1183,6 @@ pgfdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 static void
 pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
 {
-	ForeignServer *server;
 
 	/* nothing to do for inactive entries and entries of sane state */
 	if (entry->conn == NULL || !entry->changing_xact_state)
@@ -1202,7 +1192,7 @@ pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
 	disconnect_pg_server(entry);
 
 	/* find server name to be shown in the message below */
-	server = GetForeignServer(entry->serverid);
+	ForeignServer *server = GetForeignServer(entry->serverid);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_CONNECTION_EXCEPTION),
@@ -1225,13 +1215,12 @@ pgfdw_cancel_query(PGconn *conn)
 	PGcancel   *cancel;
 	char		errbuf[256];
 	PGresult   *result = NULL;
-	TimestampTz endtime;
 
 	/*
 	 * If it takes too long to cancel the query and discard the result, assume
 	 * the connection is dead.
 	 */
-	endtime = TimestampTzPlusMilliseconds(GetCurrentTimestamp(), 30000);
+	TimestampTz endtime = TimestampTzPlusMilliseconds(GetCurrentTimestamp(), 30000);
 
 	/*
 	 * Issue cancel request.  Unfortunately, there's no good way to limit the
@@ -1270,7 +1259,6 @@ static bool
 pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
 {
 	PGresult   *result = NULL;
-	TimestampTz endtime;
 
 	/*
 	 * If it takes too long to execute a cleanup query, assume the connection
@@ -1278,7 +1266,7 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
 	 * place (e.g. statement timeout, user cancel), so the timeout shouldn't
 	 * be too long.
 	 */
-	endtime = TimestampTzPlusMilliseconds(GetCurrentTimestamp(), 30000);
+	TimestampTz endtime = TimestampTzPlusMilliseconds(GetCurrentTimestamp(), 30000);
 
 	/*
 	 * Submit a query.  Since we don't use non-blocking mode, this also can
@@ -1337,10 +1325,9 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 			{
 				int			wc;
 				TimestampTz now = GetCurrentTimestamp();
-				long		cur_timeout;
 
 				/* If timeout has expired, give up, else get sleep time. */
-				cur_timeout = TimestampDifferenceMilliseconds(now, endtime);
+				long		cur_timeout = TimestampDifferenceMilliseconds(now, endtime);
 				if (cur_timeout <= 0)
 				{
 					timed_out = true;
@@ -1411,9 +1398,6 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 #define POSTGRES_FDW_GET_CONNECTIONS_COLS	2
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
 
@@ -1432,10 +1416,10 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 
 	/* Build tuplestore to hold the result rows */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1454,7 +1438,6 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 	hash_seq_init(&scan, ConnectionHash);
 	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
 	{
-		ForeignServer *server;
 		Datum		values[POSTGRES_FDW_GET_CONNECTIONS_COLS];
 		bool		nulls[POSTGRES_FDW_GET_CONNECTIONS_COLS];
 
@@ -1462,7 +1445,7 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 		if (!entry->conn)
 			continue;
 
-		server = GetForeignServerExtended(entry->serverid, FSV_MISSING_OK);
+		ForeignServer *server = GetForeignServerExtended(entry->serverid, FSV_MISSING_OK);
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
@@ -1535,11 +1518,9 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 Datum
 postgres_fdw_disconnect(PG_FUNCTION_ARGS)
 {
-	ForeignServer *server;
-	char	   *servername;
 
-	servername = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	server = GetForeignServerByName(servername, false);
+	char	   *servername = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	ForeignServer *server = GetForeignServerByName(servername, false);
 
 	PG_RETURN_BOOL(disconnect_cached_connections(server->serverid));
 }
@@ -1611,9 +1592,8 @@ disconnect_cached_connections(Oid serverid)
 			 */
 			if (entry->xact_depth > 0)
 			{
-				ForeignServer *server;
 
-				server = GetForeignServerExtended(entry->serverid,
+				ForeignServer *server = GetForeignServerExtended(entry->serverid,
 												  FSV_MISSING_OK);
 
 				if (!server)

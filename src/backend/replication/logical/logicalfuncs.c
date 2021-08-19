@@ -67,13 +67,12 @@ LogicalOutputWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 {
 	Datum		values[3];
 	bool		nulls[3];
-	DecodingOutputState *p;
 
 	/* SQL Datums can only be of a limited length... */
 	if (ctx->out->len > MaxAllocSize - VARHDRSZ)
 		elog(ERROR, "too much output for sql interface");
 
-	p = (DecodingOutputState *) ctx->output_writer_private;
+	DecodingOutputState *p = (DecodingOutputState *) ctx->output_writer_private;
 
 	memset(nulls, 0, sizeof(nulls));
 	values[0] = LSNGetDatum(lsn);
@@ -110,19 +109,13 @@ check_permissions(void)
 static Datum
 pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool binary)
 {
-	Name		name;
 	XLogRecPtr	upto_lsn;
 	int32		upto_nchanges;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	XLogRecPtr	end_of_wal;
 	LogicalDecodingContext *ctx;
 	ResourceOwner old_resowner = CurrentResourceOwner;
-	ArrayType  *arr;
-	Size		ndim;
 	List	   *options = NIL;
-	DecodingOutputState *p;
 
 	check_permissions();
 
@@ -132,7 +125,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("slot name must not be null")));
-	name = PG_GETARG_NAME(0);
+	Name		name = PG_GETARG_NAME(0);
 
 	if (PG_ARGISNULL(1))
 		upto_lsn = InvalidXLogRecPtr;
@@ -148,7 +141,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("options array must not be null")));
-	arr = PG_GETARG_ARRAYTYPE_P(3);
+	ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(3);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -161,7 +154,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* state to write output to */
-	p = palloc0(sizeof(DecodingOutputState));
+	DecodingOutputState *p = palloc0(sizeof(DecodingOutputState));
 
 	p->binary_output = binary;
 
@@ -169,11 +162,11 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	if (get_call_result_type(fcinfo, NULL, &p->tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* Deconstruct options array */
-	ndim = ARR_NDIM(arr);
+	Size		ndim = ARR_NDIM(arr);
 	if (ndim > 1)
 	{
 		ereport(ERROR,
@@ -281,10 +274,9 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		/* Decode until we run out of records */
 		while (ctx->reader->EndRecPtr < end_of_wal)
 		{
-			XLogRecord *record;
 			char	   *errm = NULL;
 
-			record = XLogReadRecord(ctx->reader, &errm);
+			XLogRecord *record = XLogReadRecord(ctx->reader, &errm);
 			if (errm)
 				elog(ERROR, "%s", errm);
 
@@ -402,9 +394,8 @@ pg_logical_emit_message_bytea(PG_FUNCTION_ARGS)
 	bool		transactional = PG_GETARG_BOOL(0);
 	char	   *prefix = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bytea	   *data = PG_GETARG_BYTEA_PP(2);
-	XLogRecPtr	lsn;
 
-	lsn = LogLogicalMessage(prefix, VARDATA_ANY(data), VARSIZE_ANY_EXHDR(data),
+	XLogRecPtr	lsn = LogLogicalMessage(prefix, VARDATA_ANY(data), VARSIZE_ANY_EXHDR(data),
 							transactional);
 	PG_RETURN_LSN(lsn);
 }

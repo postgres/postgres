@@ -145,35 +145,30 @@ static void location_lineno_init(void);
 int
 plpgsql_yylex(void)
 {
-	int			tok1;
 	TokenAuxData aux1;
 	int			kwnum;
 
-	tok1 = internal_yylex(&aux1);
+	int			tok1 = internal_yylex(&aux1);
 	if (tok1 == IDENT || tok1 == PARAM)
 	{
-		int			tok2;
 		TokenAuxData aux2;
 
-		tok2 = internal_yylex(&aux2);
+		int			tok2 = internal_yylex(&aux2);
 		if (tok2 == '.')
 		{
-			int			tok3;
 			TokenAuxData aux3;
 
-			tok3 = internal_yylex(&aux3);
+			int			tok3 = internal_yylex(&aux3);
 			if (tok3 == IDENT)
 			{
-				int			tok4;
 				TokenAuxData aux4;
 
-				tok4 = internal_yylex(&aux4);
+				int			tok4 = internal_yylex(&aux4);
 				if (tok4 == '.')
 				{
-					int			tok5;
 					TokenAuxData aux5;
 
-					tok5 = internal_yylex(&aux5);
+					int			tok5 = internal_yylex(&aux5);
 					if (tok5 == IDENT)
 					{
 						if (plpgsql_parse_tripword(aux1.lval.str,
@@ -419,10 +414,9 @@ plpgsql_append_source_text(StringInfo buf,
 int
 plpgsql_peek(void)
 {
-	int			tok1;
 	TokenAuxData aux1;
 
-	tok1 = internal_yylex(&aux1);
+	int			tok1 = internal_yylex(&aux1);
 	push_back_token(tok1, &aux1);
 	return tok1;
 }
@@ -471,13 +465,12 @@ plpgsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc, int *tok2_loc)
 int
 plpgsql_scanner_errposition(int location)
 {
-	int			pos;
 
 	if (location < 0 || scanorig == NULL)
 		return 0;				/* no-op if location is unknown */
 
 	/* Convert byte offset to character number */
-	pos = pg_mbstrlen_with_len(scanorig, location) + 1;
+	int			pos = pg_mbstrlen_with_len(scanorig, location) + 1;
 	/* And pass it to the ereport mechanism */
 	(void) internalerrposition(pos);
 	/* Also pass the function body string */
@@ -537,11 +530,10 @@ plpgsql_yyerror(const char *message)
 int
 plpgsql_location_to_lineno(int location)
 {
-	const char *loc;
 
 	if (location < 0 || scanorig == NULL)
 		return 0;				/* garbage in, garbage out */
-	loc = scanorig + location;
+	const char *loc = scanorig + location;
 
 	/* be correct, but not fast, if input location goes backwards */
 	if (loc < cur_line_start)

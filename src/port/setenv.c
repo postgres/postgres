@@ -19,7 +19,6 @@
 int
 setenv(const char *name, const char *value, int overwrite)
 {
-	char	   *envstr;
 
 	/* Error conditions, per POSIX */
 	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL ||
@@ -38,7 +37,7 @@ setenv(const char *name, const char *value, int overwrite)
 	 * same variable is repeatedly redefined, but there's little we can do
 	 * about that when sitting atop putenv().
 	 */
-	envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
+	char	   *envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 

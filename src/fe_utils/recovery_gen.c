@@ -22,14 +22,11 @@ static char *escape_quotes(const char *src);
 PQExpBuffer
 GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 {
-	PQconninfoOption *connOptions;
 	PQExpBufferData conninfo_buf;
-	char	   *escaped;
-	PQExpBuffer contents;
 
 	Assert(pgconn != NULL);
 
-	contents = createPQExpBuffer();
+	PQExpBuffer contents = createPQExpBuffer();
 	if (!contents)
 	{
 		pg_log_error("out of memory");
@@ -43,7 +40,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 	if (PQserverVersion(pgconn) < MINIMUM_VERSION_FOR_RECOVERY_GUC)
 		appendPQExpBufferStr(contents, "standby_mode = 'on'\n");
 
-	connOptions = PQconninfo(pgconn);
+	PQconninfoOption *connOptions = PQconninfo(pgconn);
 	if (connOptions == NULL)
 	{
 		pg_log_error("out of memory");
@@ -83,7 +80,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 	 * Note that this is different from the escaping of individual connection
 	 * options above!
 	 */
-	escaped = escape_quotes(conninfo_buf.data);
+	char	   *escaped = escape_quotes(conninfo_buf.data);
 	termPQExpBuffer(&conninfo_buf);
 	appendPQExpBuffer(contents, "primary_conninfo = '%s'\n", escaped);
 	free(escaped);
@@ -117,18 +114,16 @@ void
 WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
 {
 	char		filename[MAXPGPATH];
-	FILE	   *cf;
-	bool		use_recovery_conf;
 
 	Assert(pgconn != NULL);
 
-	use_recovery_conf =
+	bool		use_recovery_conf =
 		PQserverVersion(pgconn) < MINIMUM_VERSION_FOR_RECOVERY_GUC;
 
 	snprintf(filename, MAXPGPATH, "%s/%s", target_dir,
 			 use_recovery_conf ? "recovery.conf" : "postgresql.auto.conf");
 
-	cf = fopen(filename, use_recovery_conf ? "w" : "a");
+	FILE	   *cf = fopen(filename, use_recovery_conf ? "w" : "a");
 	if (cf == NULL)
 	{
 		pg_log_error("could not open file \"%s\": %m", filename);

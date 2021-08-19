@@ -103,11 +103,10 @@ Datum
 gtsvectorout(PG_FUNCTION_ARGS)
 {
 	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
-	char	   *outbuf;
 
 	if (outbuf_maxlen == 0)
 		outbuf_maxlen = 2 * EXTRALEN + Max(strlen(SINGOUTSTR), strlen(ARROUTSTR)) + 1;
-	outbuf = palloc(outbuf_maxlen);
+	char	   *outbuf = palloc(outbuf_maxlen);
 
 	if (ISARRKEY(key))
 		sprintf(outbuf, ARROUTSTR, (int) ARRNELEM(key));
@@ -173,13 +172,11 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 	{							/* tsvector */
 		TSVector	val = DatumGetTSVector(entry->key);
 		SignTSVector *res = gtsvector_alloc(ARRKEY, val->size, NULL);
-		int32		len;
-		int32	   *arr;
 		WordEntry  *ptr = ARRPTR(val);
 		char	   *words = STRPTR(val);
 
-		arr = GETARR(res);
-		len = val->size;
+		int32	   *arr = GETARR(res);
+		int32		len = val->size;
 		while (len--)
 		{
 			pg_crc32	c;
@@ -224,7 +221,6 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			 !ISALLTRUE(DatumGetPointer(entry->key)))
 	{
 		int32		i;
-		SignTSVector *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
 		LOOPBYTE(siglen)
@@ -233,7 +229,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 				PG_RETURN_POINTER(retval);
 		}
 
-		res = gtsvector_alloc(SIGNKEY | ALLISTRUE, siglen, sign);
+		SignTSVector *res = gtsvector_alloc(SIGNKEY | ALLISTRUE, siglen, sign);
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -630,25 +626,20 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 				size_beta;
 	int32		size_waste,
 				waste = -1;
-	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
-	OffsetNumber maxoff;
 	BITVECP		ptr;
 	int			i;
-	CACHESIGN  *cache;
-	char	   *cache_sign;
-	SPLITCOST  *costvector;
 
-	maxoff = entryvec->n - 2;
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	OffsetNumber maxoff = entryvec->n - 2;
+	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
-	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
-	cache_sign = palloc(siglen * (maxoff + 2));
+	CACHESIGN  *cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
+	char	   *cache_sign = palloc(siglen * (maxoff + 2));
 
 	for (j = 0; j < maxoff + 2; j++)
 		cache[j].sign = &cache_sign[siglen * j];
@@ -694,7 +685,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	maxoff = OffsetNumberNext(maxoff);
 	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff), siglen);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

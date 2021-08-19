@@ -118,15 +118,13 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 Param *
 replace_outer_var(PlannerInfo *root, Var *var)
 {
-	Param	   *retval;
-	int			i;
 
 	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
 
 	/* Find the Var in the appropriate plan_params, or add it if not present */
-	i = assign_param_for_var(root, var);
+	int			i = assign_param_for_var(root, var);
 
-	retval = makeNode(Param);
+	Param	   *retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = i;
 	retval->paramtype = var->vartype;
@@ -195,15 +193,13 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 Param *
 replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 {
-	Param	   *retval;
-	int			i;
 
 	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
 
 	/* Find the PHV in the appropriate plan_params, or add it if not present */
-	i = assign_param_for_placeholdervar(root, phv);
+	int			i = assign_param_for_placeholdervar(root, phv);
 
-	retval = makeNode(Param);
+	Param	   *retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = i;
 	retval->paramtype = exprType((Node *) phv->phexpr);
@@ -222,8 +218,6 @@ replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 Param *
 replace_outer_agg(PlannerInfo *root, Aggref *agg)
 {
-	Param	   *retval;
-	PlannerParamItem *pitem;
 	Index		levelsup;
 
 	Assert(agg->agglevelsup > 0 && agg->agglevelsup < root->query_level);
@@ -240,7 +234,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 	IncrementVarSublevelsUp((Node *) agg, -((int) agg->agglevelsup), 0);
 	Assert(agg->agglevelsup == 0);
 
-	pitem = makeNode(PlannerParamItem);
+	PlannerParamItem *pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) agg;
 	pitem->paramId = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
@@ -248,7 +242,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
-	retval = makeNode(Param);
+	Param	   *retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
 	retval->paramtype = agg->aggtype;
@@ -268,8 +262,6 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 Param *
 replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 {
-	Param	   *retval;
-	PlannerParamItem *pitem;
 	Index		levelsup;
 	Oid			ptype = exprType((Node *) grp);
 
@@ -287,7 +279,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
 	Assert(grp->agglevelsup == 0);
 
-	pitem = makeNode(PlannerParamItem);
+	PlannerParamItem *pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) grp;
 	pitem->paramId = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
@@ -295,7 +287,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
-	retval = makeNode(Param);
+	Param	   *retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
 	retval->paramtype = ptype;
@@ -507,10 +499,9 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 List *
 identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
 {
-	List	   *result;
 	ListCell   *cell;
 
-	result = NIL;
+	List	   *result = NIL;
 	foreach(cell, root->curOuterParams)
 	{
 		NestLoopParam *nlp = (NestLoopParam *) lfirst(cell);
@@ -557,9 +548,8 @@ Param *
 generate_new_exec_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 						Oid paramcollation)
 {
-	Param	   *retval;
 
-	retval = makeNode(Param);
+	Param	   *retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,

@@ -123,14 +123,12 @@ StartupRereadConfig(void)
 	char	   *conninfo = pstrdup(PrimaryConnInfo);
 	char	   *slotname = pstrdup(PrimarySlotName);
 	bool		tempSlot = wal_receiver_create_temp_slot;
-	bool		conninfoChanged;
-	bool		slotnameChanged;
 	bool		tempSlotChanged = false;
 
 	ProcessConfigFile(PGC_SIGHUP);
 
-	conninfoChanged = strcmp(conninfo, PrimaryConnInfo) != 0;
-	slotnameChanged = strcmp(slotname, PrimarySlotName) != 0;
+	bool		conninfoChanged = strcmp(conninfo, PrimaryConnInfo) != 0;
+	bool		slotnameChanged = strcmp(slotname, PrimarySlotName) != 0;
 
 	/*
 	 * wal_receiver_create_temp_slot is used only when we have no slot

@@ -21,12 +21,11 @@
 PGresult *
 executeQuery(PGconn *conn, const char *query, bool echo)
 {
-	PGresult   *res;
 
 	if (echo)
 		printf("%s\n", query);
 
-	res = PQexec(conn, query);
+	PGresult   *res = PQexec(conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -46,12 +45,11 @@ executeQuery(PGconn *conn, const char *query, bool echo)
 void
 executeCommand(PGconn *conn, const char *query, bool echo)
 {
-	PGresult   *res;
 
 	if (echo)
 		printf("%s\n", query);
 
-	res = PQexec(conn, query);
+	PGresult   *res = PQexec(conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -73,17 +71,15 @@ executeCommand(PGconn *conn, const char *query, bool echo)
 bool
 executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 {
-	PGresult   *res;
-	bool		r;
 
 	if (echo)
 		printf("%s\n", query);
 
 	SetCancelConn(conn);
-	res = PQexec(conn, query);
+	PGresult   *res = PQexec(conn, query);
 	ResetCancelConn();
 
-	r = (res && PQresultStatus(res) == PGRES_COMMAND_OK);
+	bool		r = (res && PQresultStatus(res) == PGRES_COMMAND_OK);
 
 	if (res)
 		PQclear(res);

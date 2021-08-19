@@ -32,11 +32,9 @@ struct DIR
 DIR *
 opendir(const char *dirname)
 {
-	DWORD		attr;
-	DIR		   *d;
 
 	/* Make sure it is a directory */
-	attr = GetFileAttributes(dirname);
+	DWORD		attr = GetFileAttributes(dirname);
 	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		errno = ENOENT;
@@ -48,7 +46,7 @@ opendir(const char *dirname)
 		return NULL;
 	}
 
-	d = malloc(sizeof(DIR));
+	DIR		   *d = malloc(sizeof(DIR));
 	if (!d)
 	{
 		errno = ENOMEM;

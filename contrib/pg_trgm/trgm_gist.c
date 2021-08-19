@@ -113,10 +113,9 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{							/* trgm */
-		TRGM	   *res;
 		text	   *val = DatumGetTextPP(entry->key);
 
-		res = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
+		TRGM	   *res = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -126,7 +125,6 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 			 !ISALLTRUE(DatumGetPointer(entry->key)))
 	{
 		int32		i;
-		TRGM	   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
 		LOOPBYTE(siglen)
@@ -135,7 +133,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 				PG_RETURN_POINTER(retval);
 		}
 
-		res = gtrgm_alloc(true, siglen, sign);
+		TRGM	   *res = gtrgm_alloc(true, siglen, sign);
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -149,9 +147,8 @@ gtrgm_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
-	text	   *key;
 
-	key = DatumGetTextPP(entry->key);
+	text	   *key = DatumGetTextPP(entry->key);
 
 	if (key != (text *) DatumGetPointer(entry->key))
 	{
@@ -200,7 +197,6 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	TRGM	   *qtrg;
 	bool		res;
 	Size		querysize = VARSIZE(query);
-	gtrgm_consistent_cache *cache;
 	double		nlimit;
 
 	/*
@@ -217,7 +213,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	 * approach can leak regex graphs across index rescans.  Not clear if
 	 * that's worth fixing.)
 	 */
-	cache = (gtrgm_consistent_cache *) fcinfo->flinfo->fn_extra;
+	gtrgm_consistent_cache *cache = (gtrgm_consistent_cache *) fcinfo->flinfo->fn_extra;
 	if (cache == NULL ||
 		cache->strategy != strategy ||
 		VARSIZE(cache->query) != querysize ||
@@ -389,9 +385,8 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 			{
 				if (GIST_LEAF(entry))
 				{				/* all leafs contains orig trgm */
-					bool	   *check;
 
-					check = trgm_presence_map(qtrg, key);
+					bool	   *check = trgm_presence_map(qtrg, key);
 					res = trigramsMatchGraph(cache->graph, check);
 					pfree(check);
 				}
@@ -406,7 +401,6 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 								len = ARRNELEM(qtrg);
 					trgm	   *ptr = GETARR(qtrg);
 					BITVECP		sign = GETSIGN(key);
-					bool	   *check;
 
 					/*
 					 * GETBIT() tests may give false positives, due to limited
@@ -416,7 +410,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 					 * So we can apply trigramsMatchGraph despite uncertainty,
 					 * and that usefully improves the quality of the search.
 					 */
-					check = (bool *) palloc(len * sizeof(bool));
+					bool	   *check = (bool *) palloc(len * sizeof(bool));
 					for (k = 0; k < len; k++)
 					{
 						CPTRGM(((char *) &tmp), ptr + k);
@@ -464,11 +458,10 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 		VARSIZE(cache) != querysize ||
 		memcmp(cache, query, querysize) != 0)
 	{
-		char	   *newcache;
 
 		qtrg = generate_trgm(VARDATA(query), querysize - VARHDRSZ);
 
-		newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+		char	   *newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 									  MAXALIGN(querysize) +
 									  VARSIZE(qtrg));
 
@@ -694,7 +687,6 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 		char	   *cache = (char *) fcinfo->flinfo->fn_extra;
 		TRGM	   *cachedVal = (TRGM *) (cache + MAXALIGN(siglen));
 		Size		newvalsize = VARSIZE(newval);
-		BITVECP		sign;
 
 		/*
 		 * Cache the sign data across multiple calls with the same newval.
@@ -703,9 +695,8 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 			VARSIZE(cachedVal) != newvalsize ||
 			memcmp(cachedVal, newval, newvalsize) != 0)
 		{
-			char	   *newcache;
 
-			newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+			char	   *newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 										  MAXALIGN(siglen) +
 										  newvalsize);
 
@@ -720,7 +711,7 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 			cache = newcache;
 		}
 
-		sign = (BITVECP) cache;
+		BITVECP		sign = (BITVECP) cache;
 
 		if (ISALLTRUE(origval))
 			*penalty = ((float) (SIGLENBIT(siglen) - sizebitvec(sign, siglen))) / (float) (SIGLENBIT(siglen) + 1);
@@ -801,20 +792,16 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 				size_beta;
 	int32		size_waste,
 				waste = -1;
-	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
 	BITVECP		ptr;
 	int			i;
-	CACHESIGN  *cache;
-	char	   *cache_sign;
-	SPLITCOST  *costvector;
 
 	/* cache the sign data for each existing item */
-	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 1));
-	cache_sign = palloc(siglen * (maxoff + 1));
+	CACHESIGN  *cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 1));
+	char	   *cache_sign = palloc(siglen * (maxoff + 1));
 
 	for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k))
 		fillcache(&cache[k], GETENTRY(entryvec, k), &cache_sign[siglen * k],
@@ -843,7 +830,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/* initialize the result vectors */
-	nbytes = maxoff * sizeof(OffsetNumber);
+	int32		nbytes = maxoff * sizeof(OffsetNumber);
 	v->spl_left = left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;
@@ -857,7 +844,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	union_r = GETSIGN(datum_r);
 
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

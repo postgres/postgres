@@ -159,16 +159,14 @@ ExecScan(ScanState *node,
 		 ExecScanAccessMtd accessMtd,	/* function returning a tuple */
 		 ExecScanRecheckMtd recheckMtd)
 {
-	ExprContext *econtext;
 	ExprState  *qual;
-	ProjectionInfo *projInfo;
 
 	/*
 	 * Fetch data from node
 	 */
 	qual = node->ps.qual;
-	projInfo = node->ps.ps_ProjInfo;
-	econtext = node->ps.ps_ExprContext;
+	ProjectionInfo *projInfo = node->ps.ps_ProjInfo;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 
 	/* interrupt checks are in ExecScanFetch */
 
@@ -194,9 +192,8 @@ ExecScan(ScanState *node,
 	 */
 	for (;;)
 	{
-		TupleTableSlot *slot;
 
-		slot = ExecScanFetch(node, accessMtd, recheckMtd);
+		TupleTableSlot *slot = ExecScanFetch(node, accessMtd, recheckMtd);
 
 		/*
 		 * if the slot returned by the accessMtd contains NULL, then it means

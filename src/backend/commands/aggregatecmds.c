@@ -61,8 +61,6 @@ DefineAggregate(ParseState *pstate,
 				bool replace)
 {
 	char	   *aggName;
-	Oid			aggNamespace;
-	AclResult	aclresult;
 	char		aggKind = AGGKIND_NORMAL;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
@@ -93,18 +91,16 @@ DefineAggregate(ParseState *pstate,
 	ArrayType  *parameterNames;
 	List	   *parameterDefaults;
 	Oid			variadicArgType;
-	Oid			transTypeId;
 	Oid			mtransTypeId = InvalidOid;
-	char		transTypeType;
 	char		mtransTypeType = 0;
 	char		proparallel = PROPARALLEL_UNSAFE;
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
-	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
+	Oid			aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
 
 	/* Check we have creation rights in target namespace */
-	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
+	AclResult	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(aggNamespace));
@@ -337,8 +333,8 @@ DefineAggregate(ParseState *pstate,
 	 * worse) by connecting up incompatible internal-using functions in an
 	 * aggregate.
 	 */
-	transTypeId = typenameTypeId(NULL, transType);
-	transTypeType = get_typtype(transTypeId);
+	Oid			transTypeId = typenameTypeId(NULL, transType);
+	char		transTypeType = get_typtype(transTypeId);
 	if (transTypeType == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
 	{

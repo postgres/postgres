@@ -30,13 +30,11 @@ isolation_start_test(const char *testname,
 					 _stringlist **expectfiles,
 					 _stringlist **tags)
 {
-	PID_TYPE	pid;
 	char		infile[MAXPGPATH];
 	char		outfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH];
 	char		psql_cmd[MAXPGPATH * 3];
 	size_t		offset = 0;
-	char	   *appnameenv;
 
 	/* need to do the path lookup here, check isolation_init() for details */
 	if (!looked_up_isolation_exec)
@@ -98,11 +96,11 @@ isolation_start_test(const char *testname,
 		exit(2);
 	}
 
-	appnameenv = psprintf("isolation/%s", testname);
+	char	   *appnameenv = psprintf("isolation/%s", testname);
 	setenv("PGAPPNAME", appnameenv, 1);
 	free(appnameenv);
 
-	pid = spawn_process(psql_cmd);
+	PID_TYPE	pid = spawn_process(psql_cmd);
 
 	if (pid == INVALID_PID)
 	{
@@ -119,7 +117,6 @@ isolation_start_test(const char *testname,
 static void
 isolation_init(int argc, char **argv)
 {
-	size_t		argv0_len;
 
 	/*
 	 * We unfortunately cannot do the find_other_exec() lookup to find the
@@ -130,7 +127,7 @@ isolation_init(int argc, char **argv)
 	 * does to fail since it's linked to libpq.  So we instead copy argv[0]
 	 * and do the lookup the first time through isolation_start_test().
 	 */
-	argv0_len = strlcpy(saved_argv0, argv[0], MAXPGPATH);
+	size_t		argv0_len = strlcpy(saved_argv0, argv[0], MAXPGPATH);
 	if (argv0_len >= MAXPGPATH)
 	{
 		fprintf(stderr, _("path for isolationtester executable is longer than %d bytes\n"),

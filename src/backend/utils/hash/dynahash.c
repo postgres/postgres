@@ -348,7 +348,6 @@ string_compare(const char *key1, const char *key2, Size keysize)
 HTAB *
 hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 {
-	HTAB	   *hashp;
 	HASHHDR    *hctl;
 
 	/*
@@ -387,7 +386,7 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 	}
 
 	/* Initialize the hash header, plus a copy of the table name */
-	hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) + 1);
+	HTAB	   *hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) + 1);
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	hashp->tabname = (char *) (hashp + 1);
@@ -653,12 +652,10 @@ static int
 choose_nelem_alloc(Size entrysize)
 {
 	int			nelem_alloc;
-	Size		elementSize;
-	Size		allocSize;
 
 	/* Each element has a HASHELEMENT header plus user data. */
 	/* NB: this had better match element_alloc() */
-	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
+	Size		elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
 
 	/*
 	 * The idea here is to choose nelem_alloc at least 32, but round up so
@@ -668,7 +665,7 @@ choose_nelem_alloc(Size entrysize)
 	 * a power of 2 anyway.  If we fail to take this into account, we'll waste
 	 * as much as half the allocated space.
 	 */
-	allocSize = 32 * 4;			/* assume elementSize at least 8 */
+	Size		allocSize = 32 * 4;			/* assume elementSize at least 8 */
 	do
 	{
 		allocSize <<= 1;
@@ -687,8 +684,6 @@ init_htab(HTAB *hashp, long nelem)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT *segp;
-	int			nbuckets;
-	int			nsegs;
 	int			i;
 
 	/*
@@ -702,7 +697,7 @@ init_htab(HTAB *hashp, long nelem)
 	 * Allocate space for the next greater power of two number of buckets,
 	 * assuming a desired maximum load factor of 1.
 	 */
-	nbuckets = next_pow2_int(nelem);
+	int			nbuckets = next_pow2_int(nelem);
 
 	/*
 	 * In a partitioned table, nbuckets must be at least equal to
@@ -719,7 +714,7 @@ init_htab(HTAB *hashp, long nelem)
 	/*
 	 * Figure number of directory segments needed, round up to a power of 2
 	 */
-	nsegs = (nbuckets - 1) / hctl->ssize + 1;
+	int			nsegs = (nbuckets - 1) / hctl->ssize + 1;
 	nsegs = next_pow2_int(nsegs);
 
 	/*
@@ -779,7 +774,6 @@ init_htab(HTAB *hashp, long nelem)
 Size
 hash_estimate_size(long num_entries, Size entrysize)
 {
-	Size		size;
 	long		nBuckets,
 				nSegments,
 				nDirEntries,
@@ -797,7 +791,7 @@ hash_estimate_size(long num_entries, Size entrysize)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
-	size = MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
+	Size		size = MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
 	/* directory */
 	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
@@ -914,9 +908,8 @@ get_hash_value(HTAB *hashp, const void *keyPtr)
 static inline uint32
 calc_bucket(HASHHDR *hctl, uint32 hash_val)
 {
-	uint32		bucket;
 
-	bucket = hash_val & hctl->high_mask;
+	uint32		bucket = hash_val & hctl->high_mask;
 	if (bucket > hctl->max_bucket)
 		bucket = bucket & hctl->low_mask;
 
@@ -1328,13 +1321,12 @@ get_hash_entry(HTAB *hashp, int freelist_idx)
 		 */
 		if (!element_alloc(hashp, hctl->nelem_alloc, freelist_idx))
 		{
-			int			borrow_from_idx;
 
 			if (!IS_PARTITIONED(hctl))
 				return NULL;	/* out of memory */
 
 			/* try to borrow element from another freelist */
-			borrow_from_idx = freelist_idx;
+			int			borrow_from_idx = freelist_idx;
 			for (;;)
 			{
 				borrow_from_idx = (borrow_from_idx + 1) % NUM_FREELISTS;
@@ -1435,13 +1427,6 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 void *
 hash_seq_search(HASH_SEQ_STATUS *status)
 {
-	HTAB	   *hashp;
-	HASHHDR    *hctl;
-	uint32		max_bucket;
-	long		ssize;
-	long		segment_num;
-	long		segment_ndx;
-	HASHSEGMENT segp;
 	uint32		curBucket;
 	HASHELEMENT *curElem;
 
@@ -1458,10 +1443,10 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	 * Search for next nonempty bucket starting at curBucket.
 	 */
 	curBucket = status->curBucket;
-	hashp = status->hashp;
-	hctl = hashp->hctl;
-	ssize = hashp->ssize;
-	max_bucket = hctl->max_bucket;
+	HTAB	   *hashp = status->hashp;
+	HASHHDR    *hctl = hashp->hctl;
+	long		ssize = hashp->ssize;
+	uint32		max_bucket = hctl->max_bucket;
 
 	if (curBucket > max_bucket)
 	{
@@ -1472,10 +1457,10 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	/*
 	 * first find the right segment in the table directory.
 	 */
-	segment_num = curBucket >> hashp->sshift;
-	segment_ndx = MOD(curBucket, ssize);
+	long		segment_num = curBucket >> hashp->sshift;
+	long		segment_ndx = MOD(curBucket, ssize);
 
-	segp = hashp->dir[segment_num];
+	HASHSEGMENT segp = hashp->dir[segment_num];
 
 	/*
 	 * Pick up the first item in this bucket's chain.  If chain is not empty
@@ -1645,23 +1630,18 @@ expand_table(HTAB *hashp)
 static bool
 dir_realloc(HTAB *hashp)
 {
-	HASHSEGMENT *p;
-	HASHSEGMENT *old_p;
-	long		new_dsize;
-	long		old_dirsize;
-	long		new_dirsize;
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
 		return false;
 
 	/* Reallocate directory */
-	new_dsize = hashp->hctl->dsize << 1;
-	old_dirsize = hashp->hctl->dsize * sizeof(HASHSEGMENT);
-	new_dirsize = new_dsize * sizeof(HASHSEGMENT);
+	long		new_dsize = hashp->hctl->dsize << 1;
+	long		old_dirsize = hashp->hctl->dsize * sizeof(HASHSEGMENT);
+	long		new_dirsize = new_dsize * sizeof(HASHSEGMENT);
 
-	old_p = hashp->dir;
+	HASHSEGMENT *old_p = hashp->dir;
 	CurrentDynaHashCxt = hashp->hcxt;
-	p = (HASHSEGMENT *) hashp->alloc((Size) new_dirsize);
+	HASHSEGMENT *p = (HASHSEGMENT *) hashp->alloc((Size) new_dirsize);
 
 	if (p != NULL)
 	{
@@ -1684,10 +1664,9 @@ dir_realloc(HTAB *hashp)
 static HASHSEGMENT
 seg_alloc(HTAB *hashp)
 {
-	HASHSEGMENT segp;
 
 	CurrentDynaHashCxt = hashp->hcxt;
-	segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * hashp->ssize);
+	HASHSEGMENT segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * hashp->ssize);
 
 	if (!segp)
 		return NULL;
@@ -1704,27 +1683,23 @@ static bool
 element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 {
 	HASHHDR    *hctl = hashp->hctl;
-	Size		elementSize;
-	HASHELEMENT *firstElement;
-	HASHELEMENT *tmpElement;
-	HASHELEMENT *prevElement;
 	int			i;
 
 	if (hashp->isfixed)
 		return false;
 
 	/* Each element has a HASHELEMENT header plus user data. */
-	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
+	Size		elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
 
 	CurrentDynaHashCxt = hashp->hcxt;
-	firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
+	HASHELEMENT *firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
 
 	if (!firstElement)
 		return false;
 
 	/* prepare to link all the new entries into the freelist */
-	prevElement = NULL;
-	tmpElement = firstElement;
+	HASHELEMENT *prevElement = NULL;
+	HASHELEMENT *tmpElement = firstElement;
 	for (i = 0; i < nelem; i++)
 	{
 		tmpElement->link = prevElement;

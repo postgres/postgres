@@ -44,7 +44,6 @@ static char *
 findwrd(char *in, char **end, uint16 *flags)
 {
 	char	   *start;
-	char	   *lastchar;
 
 	/* Skip leading spaces */
 	while (*in && t_isspace(in))
@@ -57,7 +56,7 @@ findwrd(char *in, char **end, uint16 *flags)
 		return NULL;
 	}
 
-	lastchar = start = in;
+	char	   *lastchar = start = in;
 
 	/* Find end of word */
 	while (*in && !t_isspace(in))
@@ -92,7 +91,6 @@ Datum
 dsynonym_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictSyn    *d;
 	ListCell   *l;
 	char	   *filename = NULL;
 	bool		case_sensitive = false;
@@ -132,7 +130,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 				 errmsg("could not open synonym file \"%s\": %m",
 						filename)));
 
-	d = (DictSyn *) palloc0(sizeof(DictSyn));
+	DictSyn    *d = (DictSyn *) palloc0(sizeof(DictSyn));
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
@@ -214,7 +212,6 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	int32		len = PG_GETARG_INT32(2);
 	Syn			key,
 			   *found;
-	TSLexeme   *res;
 
 	/* note: d->len test protects against Solaris bsearch-of-no-items bug */
 	if (len <= 0 || d->len <= 0)
@@ -233,7 +230,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (!found)
 		PG_RETURN_POINTER(NULL);
 
-	res = palloc0(sizeof(TSLexeme) * 2);
+	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
 	res[0].lexeme = pnstrdup(found->out, found->outlen);
 	res[0].flags = found->flags;
 

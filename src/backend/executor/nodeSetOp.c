@@ -102,10 +102,9 @@ static int
 fetch_tuple_flag(SetOpState *setopstate, TupleTableSlot *inputslot)
 {
 	SetOp	   *node = (SetOp *) setopstate->ps.plan;
-	int			flag;
 	bool		isNull;
 
-	flag = DatumGetInt32(slot_getattr(inputslot,
+	int			flag = DatumGetInt32(slot_getattr(inputslot,
 									  node->flagColIdx,
 									  &isNull));
 	Assert(!isNull);
@@ -226,18 +225,15 @@ ExecSetOp(PlanState *pstate)
 static TupleTableSlot *
 setop_retrieve_direct(SetOpState *setopstate)
 {
-	PlanState  *outerPlan;
-	SetOpStatePerGroup pergroup;
 	TupleTableSlot *outerslot;
-	TupleTableSlot *resultTupleSlot;
 	ExprContext *econtext = setopstate->ps.ps_ExprContext;
 
 	/*
 	 * get state info from node
 	 */
-	outerPlan = outerPlanState(setopstate);
-	pergroup = (SetOpStatePerGroup) setopstate->pergroup;
-	resultTupleSlot = setopstate->ps.ps_ResultTupleSlot;
+	PlanState  *outerPlan = outerPlanState(setopstate);
+	SetOpStatePerGroup pergroup = (SetOpStatePerGroup) setopstate->pergroup;
+	TupleTableSlot *resultTupleSlot = setopstate->ps.ps_ResultTupleSlot;
 
 	/*
 	 * We loop retrieving groups until we find one we should return
@@ -339,16 +335,14 @@ static void
 setop_fill_hash_table(SetOpState *setopstate)
 {
 	SetOp	   *node = (SetOp *) setopstate->ps.plan;
-	PlanState  *outerPlan;
-	int			firstFlag;
 	bool		in_first_rel PG_USED_FOR_ASSERTS_ONLY;
 	ExprContext *econtext = setopstate->ps.ps_ExprContext;
 
 	/*
 	 * get state info from node
 	 */
-	outerPlan = outerPlanState(setopstate);
-	firstFlag = node->firstFlag;
+	PlanState  *outerPlan = outerPlanState(setopstate);
+	int			firstFlag = node->firstFlag;
 	/* verify planner didn't mess up */
 	Assert(firstFlag == 0 ||
 		   (firstFlag == 1 &&
@@ -362,17 +356,15 @@ setop_fill_hash_table(SetOpState *setopstate)
 	in_first_rel = true;
 	for (;;)
 	{
-		TupleTableSlot *outerslot;
-		int			flag;
 		TupleHashEntryData *entry;
 		bool		isnew;
 
-		outerslot = ExecProcNode(outerPlan);
+		TupleTableSlot *outerslot = ExecProcNode(outerPlan);
 		if (TupIsNull(outerslot))
 			break;
 
 		/* Identify whether it's left or right input */
-		flag = fetch_tuple_flag(setopstate, outerslot);
+		int			flag = fetch_tuple_flag(setopstate, outerslot);
 
 		if (flag == firstFlag)
 		{
@@ -425,12 +417,11 @@ static TupleTableSlot *
 setop_retrieve_hash_table(SetOpState *setopstate)
 {
 	TupleHashEntryData *entry;
-	TupleTableSlot *resultTupleSlot;
 
 	/*
 	 * get state info from node
 	 */
-	resultTupleSlot = setopstate->ps.ps_ResultTupleSlot;
+	TupleTableSlot *resultTupleSlot = setopstate->ps.ps_ResultTupleSlot;
 
 	/*
 	 * We loop retrieving groups until we find one we should return
@@ -480,8 +471,6 @@ setop_retrieve_hash_table(SetOpState *setopstate)
 SetOpState *
 ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 {
-	SetOpState *setopstate;
-	TupleDesc	outerDesc;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -489,7 +478,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	setopstate = makeNode(SetOpState);
+	SetOpState *setopstate = makeNode(SetOpState);
 	setopstate->ps.plan = (Plan *) node;
 	setopstate->ps.state = estate;
 	setopstate->ps.ExecProcNode = ExecSetOp;
@@ -528,7 +517,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	if (node->strategy == SETOP_HASHED)
 		eflags &= ~EXEC_FLAG_REWIND;
 	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate, eflags);
-	outerDesc = ExecGetResultType(outerPlanState(setopstate));
+	TupleDesc	outerDesc = ExecGetResultType(outerPlanState(setopstate));
 
 	/*
 	 * Initialize result slot and type. Setop nodes do no projections, so

@@ -43,9 +43,8 @@ static void pcb_error_callback(void *arg);
 ParseState *
 make_parsestate(ParseState *parentParseState)
 {
-	ParseState *pstate;
 
-	pstate = palloc0(sizeof(ParseState));
+	ParseState *pstate = palloc0(sizeof(ParseState));
 
 	pstate->parentParseState = parentParseState;
 
@@ -110,7 +109,6 @@ free_parsestate(ParseState *pstate)
 int
 parser_errposition(ParseState *pstate, int location)
 {
-	int			pos;
 
 	/* No-op if location was not provided */
 	if (location < 0)
@@ -119,7 +117,7 @@ parser_errposition(ParseState *pstate, int location)
 	if (pstate == NULL || pstate->p_sourcetext == NULL)
 		return 0;
 	/* Convert offset to character number */
-	pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
+	int			pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
 	/* And pass it to the ereport mechanism */
 	return errposition(pos);
 }
@@ -252,8 +250,6 @@ transformContainerSubscripts(ParseState *pstate,
 							 List *indirection,
 							 bool isAssignment)
 {
-	SubscriptingRef *sbsref;
-	const SubscriptRoutines *sbsroutines;
 	Oid			elementType;
 	bool		isSlice = false;
 	ListCell   *idx;
@@ -270,7 +266,7 @@ transformContainerSubscripts(ParseState *pstate,
 	 * Verify that the container type is subscriptable, and get its support
 	 * functions and typelem.
 	 */
-	sbsroutines = getSubscriptingRoutines(containerType, &elementType);
+	const SubscriptRoutines *sbsroutines = getSubscriptingRoutines(containerType, &elementType);
 	if (!sbsroutines)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -299,7 +295,7 @@ transformContainerSubscripts(ParseState *pstate,
 	/*
 	 * Ready to build the SubscriptingRef node.
 	 */
-	sbsref = makeNode(SubscriptingRef);
+	SubscriptingRef *sbsref = makeNode(SubscriptingRef);
 
 	sbsref->refcontainertype = containerType;
 	sbsref->refelemtype = elementType;

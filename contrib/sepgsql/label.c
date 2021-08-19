@@ -111,8 +111,6 @@ static void
 sepgsql_set_client_label(const char *new_label)
 {
 	const char *tcontext;
-	MemoryContext oldcxt;
-	pending_label *plabel;
 
 	/* Reset to the initial client label, if NULL */
 	if (!new_label)
@@ -144,9 +142,9 @@ sepgsql_set_client_label(const char *new_label)
 	 * Append the supplied new_label on the pending list until the current
 	 * transaction is committed.
 	 */
-	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
-	plabel = palloc0(sizeof(pending_label));
+	pending_label *plabel = palloc0(sizeof(pending_label));
 	plabel->subid = GetCurrentSubTransactionId();
 	if (new_label)
 		plabel->label = pstrdup(new_label);
@@ -324,9 +322,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			stack = (void *) DatumGetPointer(*private);
 			if (!stack)
 			{
-				MemoryContext oldcxt;
 
-				oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+				MemoryContext oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
 				stack = palloc(sizeof(*stack));
 				stack->old_label = NULL;
 				stack->new_label = sepgsql_avc_trusted_proc(flinfo->fn_oid);
@@ -445,13 +442,12 @@ char *
 sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 {
 	ObjectAddress object;
-	char	   *label;
 
 	object.classId = classId;
 	object.objectId = objectId;
 	object.objectSubId = subId;
 
-	label = GetSecurityLabel(&object, SEPGSQL_LABEL_TAG);
+	char	   *label = GetSecurityLabel(&object, SEPGSQL_LABEL_TAG);
 	if (!label || security_check_context_raw(label))
 	{
 		char	   *unlabeled;
@@ -536,12 +532,11 @@ PG_FUNCTION_INFO_V1(sepgsql_getcon);
 Datum
 sepgsql_getcon(PG_FUNCTION_ARGS)
 {
-	char	   *client_label;
 
 	if (!sepgsql_is_enabled())
 		PG_RETURN_NULL();
 
-	client_label = sepgsql_get_client_label();
+	char	   *client_label = sepgsql_get_client_label();
 
 	PG_RETURN_TEXT_P(cstring_to_text(client_label));
 }
@@ -698,8 +693,6 @@ quote_object_name(const char *src1, const char *src2,
 static void
 exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 {
-	Relation	rel;
-	SysScanDesc sscan;
 	HeapTuple	tuple;
 	char	   *database_name = get_database_name(MyDatabaseId);
 	char	   *namespace_name;
@@ -710,9 +703,9 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 	 * Open the target catalog. We don't want to allow writable accesses by
 	 * other session during initial labeling.
 	 */
-	rel = table_open(catalogId, AccessShareLock);
+	Relation	rel = table_open(catalogId, AccessShareLock);
 
-	sscan = systable_beginscan(rel, InvalidOid, false,
+	SysScanDesc sscan = systable_beginscan(rel, InvalidOid, false,
 							   NULL, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
@@ -880,7 +873,6 @@ PG_FUNCTION_INFO_V1(sepgsql_restorecon);
 Datum
 sepgsql_restorecon(PG_FUNCTION_ARGS)
 {
-	struct selabel_handle *sehnd;
 	struct selinux_opt seopts;
 
 	/*
@@ -914,7 +906,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 		seopts.type = SELABEL_OPT_PATH;
 		seopts.value = TextDatumGetCString(PG_GETARG_DATUM(0));
 	}
-	sehnd = selabel_open(SELABEL_CTX_DB, &seopts, 1);
+	struct selabel_handle *sehnd = selabel_open(SELABEL_CTX_DB, &seopts, 1);
 	if (!sehnd)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),

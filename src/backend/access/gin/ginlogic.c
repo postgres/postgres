@@ -113,9 +113,8 @@ directTriConsistentFn(GinScanKey key)
 static bool
 shimBoolConsistentFn(GinScanKey key)
 {
-	GinTernaryValue result;
 
-	result = DatumGetGinTernaryValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
+	GinTernaryValue result = DatumGetGinTernaryValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
 													   key->collation,
 													   PointerGetDatum(key->entryRes),
 													   UInt16GetDatum(key->strategy),
@@ -151,19 +150,17 @@ shimBoolConsistentFn(GinScanKey key)
 static GinTernaryValue
 shimTriConsistentFn(GinScanKey key)
 {
-	int			nmaybe;
 	int			maybeEntries[MAX_MAYBE_ENTRIES];
 	int			i;
 	bool		boolResult;
 	bool		recheck = false;
-	GinTernaryValue curResult;
 
 	/*
 	 * Count how many MAYBE inputs there are, and store their indexes in
 	 * maybeEntries. If there are too many MAYBE inputs, it's not feasible to
 	 * test all combinations, so give up and return MAYBE.
 	 */
-	nmaybe = 0;
+	int			nmaybe = 0;
 	for (i = 0; i < key->nentries; i++)
 	{
 		if (key->entryRes[i] == GIN_MAYBE)
@@ -184,7 +181,7 @@ shimTriConsistentFn(GinScanKey key)
 	/* First call consistent function with all the maybe-inputs set FALSE */
 	for (i = 0; i < nmaybe; i++)
 		key->entryRes[maybeEntries[i]] = GIN_FALSE;
-	curResult = directBoolConsistentFn(key);
+	GinTernaryValue curResult = directBoolConsistentFn(key);
 
 	for (;;)
 	{

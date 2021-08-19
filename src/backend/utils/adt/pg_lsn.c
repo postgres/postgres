@@ -33,7 +33,6 @@ pg_lsn_in_internal(const char *str, bool *have_error)
 				len2;
 	uint32		id,
 				off;
-	XLogRecPtr	result;
 
 	Assert(have_error != NULL);
 	*have_error = false;
@@ -55,7 +54,7 @@ pg_lsn_in_internal(const char *str, bool *have_error)
 	/* Decode result. */
 	id = (uint32) strtoul(str, NULL, 16);
 	off = (uint32) strtoul(str + len1 + 1, NULL, 16);
-	result = ((uint64) id << 32) | off;
+	XLogRecPtr	result = ((uint64) id << 32) | off;
 
 	return result;
 }
@@ -64,10 +63,9 @@ Datum
 pg_lsn_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	XLogRecPtr	result;
 	bool		have_error = false;
 
-	result = pg_lsn_in_internal(str, &have_error);
+	XLogRecPtr	result = pg_lsn_in_internal(str, &have_error);
 	if (have_error)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -82,10 +80,9 @@ pg_lsn_out(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	lsn = PG_GETARG_LSN(0);
 	char		buf[MAXPG_LSNLEN + 1];
-	char	   *result;
 
 	snprintf(buf, sizeof buf, "%X/%X", LSN_FORMAT_ARGS(lsn));
-	result = pstrdup(buf);
+	char	   *result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -93,9 +90,8 @@ Datum
 pg_lsn_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	XLogRecPtr	result;
 
-	result = pq_getmsgint64(buf);
+	XLogRecPtr	result = pq_getmsgint64(buf);
 	PG_RETURN_LSN(result);
 }
 
@@ -227,7 +223,6 @@ pg_lsn_mi(PG_FUNCTION_ARGS)
 	XLogRecPtr	lsn1 = PG_GETARG_LSN(0);
 	XLogRecPtr	lsn2 = PG_GETARG_LSN(1);
 	char		buf[256];
-	Datum		result;
 
 	/* Output could be as large as plus or minus 2^63 - 1. */
 	if (lsn1 < lsn2)
@@ -236,7 +231,7 @@ pg_lsn_mi(PG_FUNCTION_ARGS)
 		snprintf(buf, sizeof buf, UINT64_FORMAT, lsn1 - lsn2);
 
 	/* Convert to numeric. */
-	result = DirectFunctionCall3(numeric_in,
+	Datum		result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(buf),
 								 ObjectIdGetDatum(0),
 								 Int32GetDatum(-1));
@@ -253,8 +248,6 @@ pg_lsn_pli(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	lsn = PG_GETARG_LSN(0);
 	Numeric		nbytes = PG_GETARG_NUMERIC(1);
-	Datum		num;
-	Datum		res;
 	char		buf[32];
 
 	if (numeric_is_nan(nbytes))
@@ -264,13 +257,13 @@ pg_lsn_pli(PG_FUNCTION_ARGS)
 
 	/* Convert to numeric */
 	snprintf(buf, sizeof(buf), UINT64_FORMAT, lsn);
-	num = DirectFunctionCall3(numeric_in,
+	Datum		num = DirectFunctionCall3(numeric_in,
 							  CStringGetDatum(buf),
 							  ObjectIdGetDatum(0),
 							  Int32GetDatum(-1));
 
 	/* Add two numerics */
-	res = DirectFunctionCall2(numeric_add,
+	Datum		res = DirectFunctionCall2(numeric_add,
 							  NumericGetDatum(num),
 							  NumericGetDatum(nbytes));
 
@@ -287,8 +280,6 @@ pg_lsn_mii(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	lsn = PG_GETARG_LSN(0);
 	Numeric		nbytes = PG_GETARG_NUMERIC(1);
-	Datum		num;
-	Datum		res;
 	char		buf[32];
 
 	if (numeric_is_nan(nbytes))
@@ -298,13 +289,13 @@ pg_lsn_mii(PG_FUNCTION_ARGS)
 
 	/* Convert to numeric */
 	snprintf(buf, sizeof(buf), UINT64_FORMAT, lsn);
-	num = DirectFunctionCall3(numeric_in,
+	Datum		num = DirectFunctionCall3(numeric_in,
 							  CStringGetDatum(buf),
 							  ObjectIdGetDatum(0),
 							  Int32GetDatum(-1));
 
 	/* Subtract two numerics */
-	res = DirectFunctionCall2(numeric_sub,
+	Datum		res = DirectFunctionCall2(numeric_sub,
 							  NumericGetDatum(num),
 							  NumericGetDatum(nbytes));
 

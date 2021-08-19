@@ -43,11 +43,10 @@ euc_jis_2004_to_shift_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JIS_2004, PG_SHIFT_JIS_2004);
 
-	converted = euc_jis_20042shift_jis_2004(src, dest, len, noError);
+	int			converted = euc_jis_20042shift_jis_2004(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -59,11 +58,10 @@ shift_jis_2004_to_euc_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SHIFT_JIS_2004, PG_EUC_JIS_2004);
 
-	converted = shift_jis_20042euc_jis_2004(src, dest, len, noError);
+	int			converted = shift_jis_20042euc_jis_2004(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }

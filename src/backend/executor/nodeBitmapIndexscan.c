@@ -50,7 +50,6 @@ Node *
 MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 {
 	TIDBitmap  *tbm;
-	IndexScanDesc scandesc;
 	double		nTuples = 0;
 	bool		doscan;
 
@@ -61,7 +60,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	/*
 	 * extract necessary information from index scan node
 	 */
-	scandesc = node->biss_ScanDesc;
+	IndexScanDesc scandesc = node->biss_ScanDesc;
 
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
@@ -175,14 +174,12 @@ ExecReScanBitmapIndexScan(BitmapIndexScanState *node)
 void
 ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 {
-	Relation	indexRelationDesc;
-	IndexScanDesc indexScanDesc;
 
 	/*
 	 * extract information from the node
 	 */
-	indexRelationDesc = node->biss_RelationDesc;
-	indexScanDesc = node->biss_ScanDesc;
+	Relation	indexRelationDesc = node->biss_RelationDesc;
+	IndexScanDesc indexScanDesc = node->biss_ScanDesc;
 
 	/*
 	 * Free the exprcontext ... now dead code, see ExecFreeExprContext
@@ -210,8 +207,6 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 BitmapIndexScanState *
 ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 {
-	BitmapIndexScanState *indexstate;
-	LOCKMODE	lockmode;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -219,7 +214,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	indexstate = makeNode(BitmapIndexScanState);
+	BitmapIndexScanState *indexstate = makeNode(BitmapIndexScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
 	indexstate->ss.ps.ExecProcNode = ExecBitmapIndexScan;
@@ -261,7 +256,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 		return indexstate;
 
 	/* Open the index relation. */
-	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
+	LOCKMODE	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
 	indexstate->biss_RelationDesc = index_open(node->indexid, lockmode);
 
 	/*

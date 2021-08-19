@@ -170,9 +170,8 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 
 		if (!pslot->tts_isnull[i])	/* treat nulls as having hash key 0 */
 		{
-			uint32		hkey;
 
-			hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i],
+			uint32		hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i],
 													collations[i], pslot->tts_values[i]));
 			hashkey ^= hkey;
 		}
@@ -340,7 +339,6 @@ cache_reduce_memory(MemoizeState *mstate, MemoizeKey *specialkey)
 	dlist_foreach_modify(iter, &mstate->lru_list)
 	{
 		MemoizeKey *key = dlist_container(MemoizeKey, lru_node, iter.cur);
-		MemoizeEntry *entry;
 
 		/*
 		 * Populate the hash probe slot in preparation for looking up this LRU
@@ -359,7 +357,7 @@ cache_reduce_memory(MemoizeState *mstate, MemoizeKey *specialkey)
 		 * pointer to the key here, we must perform a hash table lookup to
 		 * find the entry that the key belongs to.
 		 */
-		entry = memoize_lookup(mstate->hashtable, NULL);
+		MemoizeEntry *entry = memoize_lookup(mstate->hashtable, NULL);
 
 		/* A good spot to check for corruption of the table and LRU list. */
 		Assert(entry != NULL);
@@ -410,8 +408,6 @@ static MemoizeEntry *
 cache_lookup(MemoizeState *mstate, bool *found)
 {
 	MemoizeKey *key;
-	MemoizeEntry *entry;
-	MemoryContext oldcontext;
 
 	/* prepare the probe slot with the current scan parameters */
 	prepare_probe_slot(mstate, NULL);
@@ -420,7 +416,7 @@ cache_lookup(MemoizeState *mstate, bool *found)
 	 * Add the new entry to the cache.  No need to pass a valid key since the
 	 * hash function uses mstate's probeslot, which we populated above.
 	 */
-	entry = memoize_insert(mstate->hashtable, NULL, found);
+	MemoizeEntry *entry = memoize_insert(mstate->hashtable, NULL, found);
 
 	if (*found)
 	{
@@ -433,7 +429,7 @@ cache_lookup(MemoizeState *mstate, bool *found)
 		return entry;
 	}
 
-	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
 	/* Allocate a new key */
 	entry->key = key = (MemoizeKey *) palloc(sizeof(MemoizeKey));
@@ -506,16 +502,14 @@ cache_lookup(MemoizeState *mstate, bool *found)
 static bool
 cache_store_tuple(MemoizeState *mstate, TupleTableSlot *slot)
 {
-	MemoizeTuple *tuple;
 	MemoizeEntry *entry = mstate->entry;
-	MemoryContext oldcontext;
 
 	Assert(slot != NULL);
 	Assert(entry != NULL);
 
-	oldcontext = MemoryContextSwitchTo(mstate->tableContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
-	tuple = (MemoizeTuple *) palloc(sizeof(MemoizeTuple));
+	MemoizeTuple *tuple = (MemoizeTuple *) palloc(sizeof(MemoizeTuple));
 	tuple->mintuple = ExecCopySlotMinimalTuple(slot);
 	tuple->next = NULL;
 
@@ -587,7 +581,6 @@ ExecMemoize(PlanState *pstate)
 		case MEMO_CACHE_LOOKUP:
 			{
 				MemoizeEntry *entry;
-				TupleTableSlot *outerslot;
 				bool		found;
 
 				Assert(node->entry == NULL);
@@ -655,7 +648,7 @@ ExecMemoize(PlanState *pstate)
 
 				/* Scan the outer node for a tuple to cache */
 				outerNode = outerPlanState(node);
-				outerslot = ExecProcNode(outerNode);
+				TupleTableSlot *outerslot = ExecProcNode(outerNode);
 				if (TupIsNull(outerslot))
 				{
 					/*
@@ -732,7 +725,6 @@ ExecMemoize(PlanState *pstate)
 
 		case MEMO_FILLING_CACHE:
 			{
-				TupleTableSlot *outerslot;
 				MemoizeEntry *entry = node->entry;
 
 				/* entry should already have been set by MEMO_CACHE_LOOKUP */
@@ -744,7 +736,7 @@ ExecMemoize(PlanState *pstate)
 				 * scan tuples.
 				 */
 				outerNode = outerPlanState(node);
-				outerslot = ExecProcNode(outerNode);
+				TupleTableSlot *outerslot = ExecProcNode(outerNode);
 				if (TupIsNull(outerslot))
 				{
 					/* No more tuples.  Mark it as complete */
@@ -782,7 +774,6 @@ ExecMemoize(PlanState *pstate)
 
 		case MEMO_CACHE_BYPASS_MODE:
 			{
-				TupleTableSlot *outerslot;
 
 				/*
 				 * When in bypass mode we just continue to read tuples without
@@ -790,7 +781,7 @@ ExecMemoize(PlanState *pstate)
 				 * can come out of this mode.
 				 */
 				outerNode = outerPlanState(node);
-				outerslot = ExecProcNode(outerNode);
+				TupleTableSlot *outerslot = ExecProcNode(outerNode);
 				if (TupIsNull(outerslot))
 				{
 					node->mstatus = MEMO_END_OF_SCAN;
@@ -821,10 +812,8 @@ MemoizeState *
 ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 {
 	MemoizeState *mstate = makeNode(MemoizeState);
-	Plan	   *outerNode;
 	int			i;
 	int			nkeys;
-	Oid		   *eqfuncoids;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -840,7 +829,7 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &mstate->ss.ps);
 
-	outerNode = outerPlan(node);
+	Plan	   *outerNode = outerPlan(node);
 	outerPlanState(mstate) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
@@ -874,7 +863,7 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 											 * data */
 	mstate->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
 
-	eqfuncoids = palloc(nkeys * sizeof(Oid));
+	Oid		   *eqfuncoids = palloc(nkeys * sizeof(Oid));
 
 	for (i = 0; i < nkeys; i++)
 	{
@@ -941,14 +930,13 @@ ExecEndMemoize(MemoizeState *node)
 #ifdef USE_ASSERT_CHECKING
 	/* Validate the memory accounting code is correct in assert builds. */
 	{
-		int			count;
 		uint64		mem = 0;
 		memoize_iterator i;
 		MemoizeEntry *entry;
 
 		memoize_start_iterate(node->hashtable, &i);
 
-		count = 0;
+		int			count = 0;
 		while ((entry = memoize_iterate(node->hashtable, &i)) != NULL)
 		{
 			MemoizeTuple *tuple = entry->tuplehead;
@@ -974,14 +962,13 @@ ExecEndMemoize(MemoizeState *node)
 	 */
 	if (node->shared_info != NULL && IsParallelWorker())
 	{
-		MemoizeInstrumentation *si;
 
 		/* Make mem_peak available for EXPLAIN */
 		if (node->stats.mem_peak == 0)
 			node->stats.mem_peak = node->mem_used;
 
 		Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
-		si = &node->shared_info->sinstrument[ParallelWorkerNumber];
+		MemoizeInstrumentation *si = &node->shared_info->sinstrument[ParallelWorkerNumber];
 		memcpy(si, &node->stats, sizeof(MemoizeInstrumentation));
 	}
 
@@ -1050,13 +1037,12 @@ ExecEstimateCacheEntryOverheadBytes(double ntuples)
 void
 ExecMemoizeEstimate(MemoizeState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = mul_size(pcxt->nworkers, sizeof(MemoizeInstrumentation));
+	Size		size = mul_size(pcxt->nworkers, sizeof(MemoizeInstrumentation));
 	size = add_size(size, offsetof(SharedMemoizeInfo, sinstrument));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -1071,13 +1057,12 @@ ExecMemoizeEstimate(MemoizeState *node, ParallelContext *pcxt)
 void
 ExecMemoizeInitializeDSM(MemoizeState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = offsetof(SharedMemoizeInfo, sinstrument)
+	Size		size = offsetof(SharedMemoizeInfo, sinstrument)
 		+ pcxt->nworkers * sizeof(MemoizeInstrumentation);
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
@@ -1109,15 +1094,13 @@ ExecMemoizeInitializeWorker(MemoizeState *node, ParallelWorkerContext *pwcxt)
 void
 ExecMemoizeRetrieveInstrumentation(MemoizeState *node)
 {
-	Size		size;
-	SharedMemoizeInfo *si;
 
 	if (node->shared_info == NULL)
 		return;
 
-	size = offsetof(SharedMemoizeInfo, sinstrument)
+	Size		size = offsetof(SharedMemoizeInfo, sinstrument)
 		+ node->shared_info->num_workers * sizeof(MemoizeInstrumentation);
-	si = palloc(size);
+	SharedMemoizeInfo *si = palloc(size);
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

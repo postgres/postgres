@@ -37,26 +37,22 @@
 static Bitmapset *
 fixup_whole_row_references(Oid relOid, Bitmapset *columns)
 {
-	Bitmapset  *result;
-	HeapTuple	tuple;
-	AttrNumber	natts;
 	AttrNumber	attno;
-	int			index;
 
 	/* if no whole-row references, nothing to do */
-	index = InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber;
+	int			index = InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber;
 	if (!bms_is_member(index, columns))
 		return columns;
 
 	/* obtain number of attributes */
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
-	natts = ((Form_pg_class) GETSTRUCT(tuple))->relnatts;
+	AttrNumber	natts = ((Form_pg_class) GETSTRUCT(tuple))->relnatts;
 	ReleaseSysCache(tuple);
 
 	/* remove bit 0 from column set, add in all the non-dropped columns */
-	result = bms_copy(columns);
+	Bitmapset  *result = bms_copy(columns);
 	result = bms_del_member(result, index);
 
 	for (attno = 1; attno <= natts; attno++)
@@ -92,7 +88,6 @@ static Bitmapset *
 fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 {
 	Bitmapset  *result = NULL;
-	int			index;
 
 	/*
 	 * obviously, no need to do anything here
@@ -100,12 +95,11 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 	if (parentId == childId)
 		return columns;
 
-	index = -1;
+	int			index = -1;
 	while ((index = bms_next_member(columns, index)) >= 0)
 	{
 		/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
 		AttrNumber	attno = index + FirstLowInvalidHeapAttributeNumber;
-		char	   *attname;
 
 		/*
 		 * whole-row-reference shall be fixed-up later
@@ -116,7 +110,7 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 			continue;
 		}
 
-		attname = get_attname(parentId, attno, false);
+		char	   *attname = get_attname(parentId, attno, false);
 		attno = get_attnum(childId, attname);
 		if (attno == InvalidAttrNumber)
 			elog(ERROR, "cache lookup failed for attribute %s of relation %u",
@@ -146,8 +140,6 @@ check_relation_privileges(Oid relOid,
 						  bool abort_on_violation)
 {
 	ObjectAddress object;
-	char	   *audit_name;
-	Bitmapset  *columns;
 	int			index;
 	char		relkind = get_rel_relkind(relOid);
 	bool		result = true;
@@ -179,7 +171,7 @@ check_relation_privileges(Oid relOid,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
@@ -228,11 +220,10 @@ check_relation_privileges(Oid relOid,
 	selected = fixup_whole_row_references(relOid, selected);
 	inserted = fixup_whole_row_references(relOid, inserted);
 	updated = fixup_whole_row_references(relOid, updated);
-	columns = bms_union(selected, bms_union(inserted, updated));
+	Bitmapset  *columns = bms_union(selected, bms_union(inserted, updated));
 
 	while ((index = bms_first_member(columns)) >= 0)
 	{
-		AttrNumber	attnum;
 		uint32		column_perms = 0;
 
 		if (bms_is_member(index, selected))
@@ -251,7 +242,7 @@ check_relation_privileges(Oid relOid,
 			continue;
 
 		/* obtain column's permission */
-		attnum = index + FirstLowInvalidHeapAttributeNumber;
+		AttrNumber	attnum = index + FirstLowInvalidHeapAttributeNumber;
 
 		object.classId = RelationRelationId;
 		object.objectId = relOid;
@@ -331,19 +322,16 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation)
 		foreach(li, tableIds)
 		{
 			Oid			tableOid = lfirst_oid(li);
-			Bitmapset  *selectedCols;
-			Bitmapset  *insertedCols;
-			Bitmapset  *updatedCols;
 
 			/*
 			 * child table has different attribute numbers, so we need to fix
 			 * up them.
 			 */
-			selectedCols = fixup_inherited_columns(rte->relid, tableOid,
+			Bitmapset  *selectedCols = fixup_inherited_columns(rte->relid, tableOid,
 												   rte->selectedCols);
-			insertedCols = fixup_inherited_columns(rte->relid, tableOid,
+			Bitmapset  *insertedCols = fixup_inherited_columns(rte->relid, tableOid,
 												   rte->insertedCols);
-			updatedCols = fixup_inherited_columns(rte->relid, tableOid,
+			Bitmapset  *updatedCols = fixup_inherited_columns(rte->relid, tableOid,
 												  rte->updatedCols);
 
 			/*

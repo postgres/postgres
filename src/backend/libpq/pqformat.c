@@ -143,9 +143,8 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 				   bool countincludesself)
 {
 	int			extra = countincludesself ? 4 : 0;
-	char	   *p;
 
-	p = pg_server_to_client(str, slen);
+	char	   *p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -173,9 +172,8 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 void
 pq_sendtext(StringInfo buf, const char *str, int slen)
 {
-	char	   *p;
 
-	p = pg_server_to_client(str, slen);
+	char	   *p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -197,9 +195,8 @@ void
 pq_sendstring(StringInfo buf, const char *str)
 {
 	int			slen = strlen(str);
-	char	   *p;
 
-	p = pg_server_to_client(str, slen);
+	char	   *p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -369,9 +366,8 @@ void
 pq_puttextmessage(char msgtype, const char *str)
 {
 	int			slen = strlen(str);
-	char	   *p;
 
-	p = pg_server_to_client(str, slen);
+	char	   *p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		(void) pq_putmessage(msgtype, p, strlen(p) + 1);
@@ -509,13 +505,12 @@ pq_getmsgfloat8(StringInfo msg)
 const char *
 pq_getmsgbytes(StringInfo msg, int datalen)
 {
-	const char *result;
 
 	if (datalen < 0 || datalen > (msg->len - msg->cursor))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
-	result = &msg->data[msg->cursor];
+	const char *result = &msg->data[msg->cursor];
 	msg->cursor += datalen;
 	return result;
 }
@@ -547,17 +542,15 @@ pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
 char *
 pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 {
-	char	   *str;
-	char	   *p;
 
 	if (rawbytes < 0 || rawbytes > (msg->len - msg->cursor))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
-	str = &msg->data[msg->cursor];
+	char	   *str = &msg->data[msg->cursor];
 	msg->cursor += rawbytes;
 
-	p = pg_client_to_server(str, rawbytes);
+	char	   *p = pg_client_to_server(str, rawbytes);
 	if (p != str)				/* actual conversion has been done? */
 		*nbytes = strlen(p);
 	else
@@ -580,17 +573,15 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 const char *
 pq_getmsgstring(StringInfo msg)
 {
-	char	   *str;
-	int			slen;
 
-	str = &msg->data[msg->cursor];
+	char	   *str = &msg->data[msg->cursor];
 
 	/*
 	 * It's safe to use strlen() here because a StringInfo is guaranteed to
 	 * have a trailing null byte.  But check we found a null inside the
 	 * message.
 	 */
-	slen = strlen(str);
+	int			slen = strlen(str);
 	if (msg->cursor + slen >= msg->len)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -609,17 +600,15 @@ pq_getmsgstring(StringInfo msg)
 const char *
 pq_getmsgrawstring(StringInfo msg)
 {
-	char	   *str;
-	int			slen;
 
-	str = &msg->data[msg->cursor];
+	char	   *str = &msg->data[msg->cursor];
 
 	/*
 	 * It's safe to use strlen() here because a StringInfo is guaranteed to
 	 * have a trailing null byte.  But check we found a null inside the
 	 * message.
 	 */
-	slen = strlen(str);
+	int			slen = strlen(str);
 	if (msg->cursor + slen >= msg->len)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),

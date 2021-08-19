@@ -59,16 +59,14 @@ static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 Datum
 format_type(PG_FUNCTION_ARGS)
 {
-	Oid			type_oid;
 	int32		typemod;
-	char	   *result;
 	bits16		flags = FORMAT_TYPE_ALLOW_INVALID;
 
 	/* Since this function is not strict, we must test for null args */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	type_oid = PG_GETARG_OID(0);
+	Oid			type_oid = PG_GETARG_OID(0);
 
 	if (PG_ARGISNULL(1))
 		typemod = -1;
@@ -78,7 +76,7 @@ format_type(PG_FUNCTION_ARGS)
 		flags |= FORMAT_TYPE_TYPEMOD_GIVEN;
 	}
 
-	result = format_type_extended(type_oid, typemod, flags);
+	char	   *result = format_type_extended(type_oid, typemod, flags);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
@@ -111,12 +109,7 @@ format_type(PG_FUNCTION_ARGS)
 char *
 format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
-	HeapTuple	tuple;
-	Form_pg_type typeform;
-	Oid			array_base_type;
 	bool		is_array;
-	char	   *buf;
-	bool		with_typemod;
 
 	if (type_oid == InvalidOid)
 	{
@@ -126,7 +119,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 			return pstrdup("-");
 	}
 
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
+	HeapTuple	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
 	{
 		if ((flags & FORMAT_TYPE_INVALID_AS_NULL) != 0)
@@ -136,7 +129,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		else
 			elog(ERROR, "cache lookup failed for type %u", type_oid);
 	}
-	typeform = (Form_pg_type) GETSTRUCT(tuple);
+	Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
 	 * Check if it's a "true" array type.  Pseudo-array types such as "name"
@@ -144,7 +137,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * deconstruct "plain storage" array types --- this is because we don't
 	 * want to show oidvector as oid[].
 	 */
-	array_base_type = typeform->typelem;
+	Oid			array_base_type = typeform->typelem;
 
 	if (IsTrueArrayType(typeform) &&
 		typeform->typstorage != TYPSTORAGE_PLAIN)
@@ -168,7 +161,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	else
 		is_array = false;
 
-	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
+	bool		with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 
 	/*
 	 * See if we want to special-case the output for certain built-in types.
@@ -181,7 +174,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * double-quoted if it matches any lexer keyword.  This behavior is
 	 * essential for some cases, such as types "bit" and "char".
 	 */
-	buf = NULL;					/* flag for no special case */
+	char	   *buf = NULL;					/* flag for no special case */
 
 	switch (type_oid)
 	{
@@ -305,7 +298,6 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		 * not a standard identifier or if it matches any keyword.
 		 */
 		char	   *nspname;
-		char	   *typname;
 
 		if ((flags & FORMAT_TYPE_FORCE_QUALIFY) == 0 &&
 			TypeIsVisible(type_oid))
@@ -313,7 +305,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		else
 			nspname = get_namespace_name_or_temp(typeform->typnamespace);
 
-		typname = NameStr(typeform->typname);
+		char	   *typname = NameStr(typeform->typname);
 
 		buf = quote_qualified_identifier(nspname, typname);
 
@@ -379,9 +371,8 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	else
 	{
 		/* Use the type-specific typmodout procedure */
-		char	   *tmstr;
 
-		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
+		char	   *tmstr = DatumGetCString(OidFunctionCall1(typmodout,
 												 Int32GetDatum(typmod)));
 		res = psprintf("%s%s", typname, tmstr);
 	}
@@ -443,16 +434,13 @@ Datum
 oidvectortypes(PG_FUNCTION_ARGS)
 {
 	oidvector  *oidArray = (oidvector *) PG_GETARG_POINTER(0);
-	char	   *result;
 	int			numargs = oidArray->dim1;
 	int			num;
-	size_t		total;
-	size_t		left;
 
-	total = 20 * numargs + 1;
-	result = palloc(total);
+	size_t		total = 20 * numargs + 1;
+	char	   *result = palloc(total);
 	result[0] = '\0';
-	left = total - 1;
+	size_t		left = total - 1;
 
 	for (num = 0; num < numargs; num++)
 	{

@@ -42,11 +42,10 @@ euc_jis_2004_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JIS_2004, PG_UTF8);
 
-	converted = LocalToUtf(src, len, dest,
+	int			converted = LocalToUtf(src, len, dest,
 						   &euc_jis_2004_to_unicode_tree,
 						   LUmapEUC_JIS_2004_combined, lengthof(LUmapEUC_JIS_2004_combined),
 						   NULL,
@@ -63,11 +62,10 @@ utf8_to_euc_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_JIS_2004);
 
-	converted = UtfToLocal(src, len, dest,
+	int			converted = UtfToLocal(src, len, dest,
 						   &euc_jis_2004_from_unicode_tree,
 						   ULmapEUC_JIS_2004_combined, lengthof(ULmapEUC_JIS_2004_combined),
 						   NULL,

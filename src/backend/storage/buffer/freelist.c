@@ -112,14 +112,13 @@ static void AddBufferToRing(BufferAccessStrategy strategy,
 static inline uint32
 ClockSweepTick(void)
 {
-	uint32		victim;
 
 	/*
 	 * Atomically move hand ahead one buffer - if there's several processes
 	 * doing this, this can lead to buffers being returned slightly out of
 	 * apparent order.
 	 */
-	victim =
+	uint32		victim =
 		pg_atomic_fetch_add_u32(&StrategyControl->nextVictimBuffer, 1);
 
 	if (victim >= NBuffers)
@@ -137,11 +136,10 @@ ClockSweepTick(void)
 		 */
 		if (victim == 0)
 		{
-			uint32		expected;
 			uint32		wrapped;
 			bool		success = false;
 
-			expected = originalVictim + 1;
+			uint32		expected = originalVictim + 1;
 
 			while (!success)
 			{
@@ -201,8 +199,6 @@ BufferDesc *
 StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 {
 	BufferDesc *buf;
-	int			bgwprocno;
-	int			trycounter;
 	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 	/*
@@ -228,7 +224,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * deallocated the worst consequence of that is that we set the latch of
 	 * some arbitrary process.
 	 */
-	bgwprocno = INT_ACCESS_ONCE(StrategyControl->bgwprocno);
+	int			bgwprocno = INT_ACCESS_ONCE(StrategyControl->bgwprocno);
 	if (bgwprocno != -1)
 	{
 		/* reset bgwprocno first, before setting the latch */
@@ -313,7 +309,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	}
 
 	/* Nothing on the freelist, so run the "clock sweep" algorithm */
-	trycounter = NBuffers;
+	int			trycounter = NBuffers;
 	for (;;)
 	{
 		buf = GetBufferDescriptor(ClockSweepTick());
@@ -394,12 +390,10 @@ StrategyFreeBuffer(BufferDesc *buf)
 int
 StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc)
 {
-	uint32		nextVictimBuffer;
-	int			result;
 
 	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-	nextVictimBuffer = pg_atomic_read_u32(&StrategyControl->nextVictimBuffer);
-	result = nextVictimBuffer % NBuffers;
+	uint32		nextVictimBuffer = pg_atomic_read_u32(&StrategyControl->nextVictimBuffer);
+	int			result = nextVictimBuffer % NBuffers;
 
 	if (complete_passes)
 	{
@@ -541,7 +535,6 @@ StrategyInitialize(bool init)
 BufferAccessStrategy
 GetAccessStrategy(BufferAccessStrategyType btype)
 {
-	BufferAccessStrategy strategy;
 	int			ring_size;
 
 	/*
@@ -576,7 +569,7 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 	ring_size = Min(NBuffers / 8, ring_size);
 
 	/* Allocate the object and initialize all elements to zeroes */
-	strategy = (BufferAccessStrategy)
+	BufferAccessStrategy strategy = (BufferAccessStrategy)
 		palloc0(offsetof(BufferAccessStrategyData, buffers) +
 				ring_size * sizeof(Buffer));
 
@@ -610,8 +603,6 @@ FreeAccessStrategy(BufferAccessStrategy strategy)
 static BufferDesc *
 GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 {
-	BufferDesc *buf;
-	Buffer		bufnum;
 	uint32		local_buf_state;	/* to avoid repeated (de-)referencing */
 
 
@@ -624,7 +615,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * buffer with the normal allocation strategy.  He will then fill this
 	 * slot by calling AddBufferToRing with the new buffer.
 	 */
-	bufnum = strategy->buffers[strategy->current];
+	Buffer		bufnum = strategy->buffers[strategy->current];
 	if (bufnum == InvalidBuffer)
 	{
 		strategy->current_was_in_ring = false;
@@ -640,7 +631,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * higher usage_count indicates someone else has touched the buffer, so we
 	 * shouldn't re-use it.
 	 */
-	buf = GetBufferDescriptor(bufnum - 1);
+	BufferDesc *buf = GetBufferDescriptor(bufnum - 1);
 	local_buf_state = LockBufHdr(buf);
 	if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
 		&& BUF_STATE_GET_USAGECOUNT(local_buf_state) <= 1)

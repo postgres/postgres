@@ -44,14 +44,13 @@ create_queryEnv(void)
 EphemeralNamedRelationMetadata
 get_visible_ENR_metadata(QueryEnvironment *queryEnv, const char *refname)
 {
-	EphemeralNamedRelation enr;
 
 	Assert(refname != NULL);
 
 	if (queryEnv == NULL)
 		return NULL;
 
-	enr = get_ENR(queryEnv, refname);
+	EphemeralNamedRelation enr = get_ENR(queryEnv, refname);
 
 	if (enr)
 		return &(enr->md);
@@ -81,9 +80,8 @@ register_ENR(QueryEnvironment *queryEnv, EphemeralNamedRelation enr)
 void
 unregister_ENR(QueryEnvironment *queryEnv, const char *name)
 {
-	EphemeralNamedRelation match;
 
-	match = get_ENR(queryEnv, name);
+	EphemeralNamedRelation match = get_ENR(queryEnv, name);
 	if (match)
 		queryEnv->namedRelList = list_delete(queryEnv->namedRelList, match);
 }
@@ -133,9 +131,8 @@ ENRMetadataGetTupDesc(EphemeralNamedRelationMetadata enrmd)
 		tupdesc = enrmd->tupdesc;
 	else
 	{
-		Relation	relation;
 
-		relation = table_open(enrmd->reliddesc, NoLock);
+		Relation	relation = table_open(enrmd->reliddesc, NoLock);
 		tupdesc = relation->rd_att;
 		table_close(relation, NoLock);
 	}

@@ -40,9 +40,8 @@ static bool check_attrmap_match(TupleDesc indesc,
 AttrMap *
 make_attrmap(int maplen)
 {
-	AttrMap    *res;
 
-	res = (AttrMap *) palloc0(sizeof(AttrMap));
+	AttrMap    *res = (AttrMap *) palloc0(sizeof(AttrMap));
 	res->maplen = maplen;
 	res->attnums = (AttrNumber *) palloc0(sizeof(AttrNumber) * maplen);
 	return res;
@@ -77,35 +76,28 @@ build_attrmap_by_position(TupleDesc indesc,
 						  TupleDesc outdesc,
 						  const char *msg)
 {
-	AttrMap    *attrMap;
-	int			nincols;
 	int			noutcols;
-	int			n;
 	int			i;
-	int			j;
-	bool		same;
 
 	/*
 	 * The length is computed as the number of attributes of the expected
 	 * rowtype as it includes dropped attributes in its count.
 	 */
-	n = outdesc->natts;
-	attrMap = make_attrmap(n);
+	int			n = outdesc->natts;
+	AttrMap    *attrMap = make_attrmap(n);
 
-	j = 0;						/* j is next physical input attribute */
-	nincols = noutcols = 0;		/* these count non-dropped attributes */
-	same = true;
+	int			j = 0;						/* j is next physical input attribute */
+	int			nincols = noutcols = 0;		/* these count non-dropped attributes */
+	bool		same = true;
 	for (i = 0; i < n; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(outdesc, i);
-		Oid			atttypid;
-		int32		atttypmod;
 
 		if (att->attisdropped)
 			continue;			/* attrMap->attnums[i] is already 0 */
 		noutcols++;
-		atttypid = att->atttypid;
-		atttypmod = att->atttypmod;
+		Oid			atttypid = att->atttypid;
+		int32		atttypmod = att->atttypmod;
 		for (; j < indesc->natts; j++)
 		{
 			att = TupleDescAttr(indesc, j);
@@ -174,29 +166,23 @@ AttrMap *
 build_attrmap_by_name(TupleDesc indesc,
 					  TupleDesc outdesc)
 {
-	AttrMap    *attrMap;
-	int			outnatts;
-	int			innatts;
 	int			i;
 	int			nextindesc = -1;
 
-	outnatts = outdesc->natts;
-	innatts = indesc->natts;
+	int			outnatts = outdesc->natts;
+	int			innatts = indesc->natts;
 
-	attrMap = make_attrmap(outnatts);
+	AttrMap    *attrMap = make_attrmap(outnatts);
 	for (i = 0; i < outnatts; i++)
 	{
 		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
-		char	   *attname;
-		Oid			atttypid;
-		int32		atttypmod;
 		int			j;
 
 		if (outatt->attisdropped)
 			continue;			/* attrMap->attnums[i] is already 0 */
-		attname = NameStr(outatt->attname);
-		atttypid = outatt->atttypid;
-		atttypmod = outatt->atttypmod;
+		char	   *attname = NameStr(outatt->attname);
+		Oid			atttypid = outatt->atttypid;
+		int32		atttypmod = outatt->atttypmod;
 
 		/*
 		 * Now search for an attribute with the same name in the indesc. It
@@ -211,13 +197,12 @@ build_attrmap_by_name(TupleDesc indesc,
 		 */
 		for (j = 0; j < innatts; j++)
 		{
-			Form_pg_attribute inatt;
 
 			nextindesc++;
 			if (nextindesc >= innatts)
 				nextindesc = 0;
 
-			inatt = TupleDescAttr(indesc, nextindesc);
+			Form_pg_attribute inatt = TupleDescAttr(indesc, nextindesc);
 			if (inatt->attisdropped)
 				continue;
 			if (strcmp(attname, NameStr(inatt->attname)) == 0)
@@ -259,10 +244,9 @@ AttrMap *
 build_attrmap_by_name_if_req(TupleDesc indesc,
 							 TupleDesc outdesc)
 {
-	AttrMap    *attrMap;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_name(indesc, outdesc);
+	AttrMap    *attrMap = build_attrmap_by_name(indesc, outdesc);
 
 	/* Check if the map has a one-to-one match */
 	if (check_attrmap_match(indesc, outdesc, attrMap))

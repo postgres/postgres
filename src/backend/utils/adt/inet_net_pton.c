@@ -349,17 +349,14 @@ static int
 getbits(const char *src, int *bitsp)
 {
 	static const char digits[] = "0123456789";
-	int			n;
-	int			val;
 	char		ch;
 
-	val = 0;
-	n = 0;
+	int			val = 0;
+	int			n = 0;
 	while ((ch = *src++) != '\0')
 	{
-		const char *pch;
 
-		pch = strchr(digits, ch);
+		const char *pch = strchr(digits, ch);
 		if (pch != NULL)
 		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */
@@ -383,17 +380,14 @@ getv4(const char *src, u_char *dst, int *bitsp)
 {
 	static const char digits[] = "0123456789";
 	u_char	   *odst = dst;
-	int			n;
-	u_int		val;
 	char		ch;
 
-	val = 0;
-	n = 0;
+	u_int		val = 0;
+	int			n = 0;
 	while ((ch = *src++) != '\0')
 	{
-		const char *pch;
 
-		pch = strchr(digits, ch);
+		const char *pch = strchr(digits, ch);
 		if (pch != NULL)
 		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */

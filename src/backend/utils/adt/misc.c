@@ -60,11 +60,9 @@ count_nulls(FunctionCallInfo fcinfo,
 	/* Did we get a VARIADIC array argument, or separate arguments? */
 	if (get_fn_expr_variadic(fcinfo->flinfo))
 	{
-		ArrayType  *arr;
 		int			ndims,
 					nitems,
 				   *dims;
-		bits8	   *bitmap;
 
 		Assert(PG_NARGS() == 1);
 
@@ -86,7 +84,7 @@ count_nulls(FunctionCallInfo fcinfo,
 		Assert(OidIsValid(get_base_element_type(get_fn_expr_argtype(fcinfo->flinfo, 0))));
 
 		/* OK, safe to fetch the array value */
-		arr = PG_GETARG_ARRAYTYPE_P(0);
+		ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(0);
 
 		/* Count the array elements */
 		ndims = ARR_NDIM(arr);
@@ -94,7 +92,7 @@ count_nulls(FunctionCallInfo fcinfo,
 		nitems = ArrayGetNItems(ndims, dims);
 
 		/* Count those that are NULL */
-		bitmap = ARR_NULLBITMAP(arr);
+		bits8	   *bitmap = ARR_NULLBITMAP(arr);
 		if (bitmap)
 		{
 			int			bitmask = 1;
@@ -172,9 +170,8 @@ pg_num_nonnulls(PG_FUNCTION_ARGS)
 Datum
 current_database(PG_FUNCTION_ARGS)
 {
-	Name		db;
 
-	db = (Name) palloc(NAMEDATALEN);
+	Name		db = (Name) palloc(NAMEDATALEN);
 
 	namestrcpy(db, get_database_name(MyDatabaseId));
 	PG_RETURN_NAME(db);
@@ -203,13 +200,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 {
 	Oid			tablespaceOid = PG_GETARG_OID(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
 	char	   *location;
-	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -222,14 +214,14 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_tablespace_databases",
 					   OIDOID, -1, 0);
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
@@ -251,7 +243,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
 							TABLESPACE_VERSION_DIRECTORY);
 
-	dirdesc = AllocateDir(location);
+	DIR		   *dirdesc = AllocateDir(location);
 
 	if (!dirdesc)
 	{
@@ -270,8 +262,6 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	while ((de = ReadDir(dirdesc, location)) != NULL)
 	{
 		Oid			datOid = atooid(de->d_name);
-		char	   *subdir;
-		bool		isempty;
 		Datum		values[1];
 		bool		nulls[1];
 
@@ -281,8 +271,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		/* if database subdir is empty, don't report tablespace as used */
 
-		subdir = psprintf("%s/%s", location, de->d_name);
-		isempty = directory_is_empty(subdir);
+		char	   *subdir = psprintf("%s/%s", location, de->d_name);
+		bool		isempty = directory_is_empty(subdir);
 		pfree(subdir);
 
 		if (isempty)
@@ -382,12 +372,11 @@ pg_sleep(PG_FUNCTION_ARGS)
 
 	for (;;)
 	{
-		float8		delay;
 		long		delay_ms;
 
 		CHECK_FOR_INTERRUPTS();
 
-		delay = endtime - GetNowFloat();
+		float8		delay = endtime - GetNowFloat();
 		if (delay >= 600.0)
 			delay_ms = 600000;
 		else if (delay > 0.0)
@@ -413,13 +402,11 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcontext;
-		TupleDesc	tupdesc;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(5);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(5);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
@@ -441,7 +428,6 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < ScanKeywords.num_keywords)
 	{
 		char	   *values[5];
-		HeapTuple	tuple;
 
 		/* cast-away-const is ugly but alternatives aren't much better */
 		values[0] = unconstify(char *,
@@ -483,7 +469,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 			values[4] = _("requires AS");
 		}
 
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		HeapTuple	tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
 
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
@@ -501,13 +487,11 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcontext;
-		TupleDesc	tupdesc;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(6);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "fktable",
 						   REGCLASSOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "fkcols",
@@ -544,7 +528,6 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 		const SysFKRelationship *fkrel = &sys_fk_relationships[funcctx->call_cntr];
 		Datum		values[6];
 		bool		nulls[6];
-		HeapTuple	tuple;
 
 		memset(nulls, false, sizeof(nulls));
 
@@ -561,7 +544,7 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 		values[4] = BoolGetDatum(fkrel->is_array);
 		values[5] = BoolGetDatum(fkrel->is_opt);
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
@@ -587,10 +570,8 @@ pg_typeof(PG_FUNCTION_ARGS)
 Datum
 pg_collation_for(PG_FUNCTION_ARGS)
 {
-	Oid			typeid;
-	Oid			collid;
 
-	typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	if (!typeid)
 		PG_RETURN_NULL();
 	if (!type_is_collatable(typeid) && typeid != UNKNOWNOID)
@@ -599,7 +580,7 @@ pg_collation_for(PG_FUNCTION_ARGS)
 				 errmsg("collations are not supported by type %s",
 						format_type_be(typeid))));
 
-	collid = PG_GET_COLLATION();
+	Oid			collid = PG_GET_COLLATION();
 	if (!collid)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(cstring_to_text(generate_collation_name(collid)));
@@ -637,13 +618,12 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 	AttrNumber	attnum = PG_GETARG_INT16(1);
 	AttrNumber	col = attnum - FirstLowInvalidHeapAttributeNumber;
 	bool		include_triggers = PG_GETARG_BOOL(2);
-	int			events;
 
 	/* System columns are never updatable */
 	if (attnum <= 0)
 		PG_RETURN_BOOL(false);
 
-	events = relation_is_updatable(reloid, NIL, include_triggers,
+	int			events = relation_is_updatable(reloid, NIL, include_triggers,
 								   bms_make_singleton(col));
 
 	/* We require both updatability and deletability of the relation */
@@ -697,7 +677,6 @@ parse_ident(PG_FUNCTION_ARGS)
 	bool		strict = PG_GETARG_BOOL(1);
 	char	   *qualname_str = text_to_cstring(qualname);
 	ArrayBuildState *astate = NULL;
-	char	   *nextp;
 	bool		after_dot = false;
 
 	/*
@@ -705,7 +684,7 @@ parse_ident(PG_FUNCTION_ARGS)
 	 * reconvert qualname if we need to show the original string in error
 	 * messages.
 	 */
-	nextp = qualname_str;
+	char	   *nextp = qualname_str;
 
 	/* skip leading whitespace */
 	while (scanner_isspace(*nextp))
@@ -751,15 +730,12 @@ parse_ident(PG_FUNCTION_ARGS)
 		}
 		else if (is_ident_start((unsigned char) *nextp))
 		{
-			char	   *downname;
-			int			len;
-			text	   *part;
 
 			curname = nextp++;
 			while (is_ident_cont((unsigned char) *nextp))
 				nextp++;
 
-			len = nextp - curname;
+			int			len = nextp - curname;
 
 			/*
 			 * We don't implicitly truncate identifiers. This is useful for
@@ -767,8 +743,8 @@ parse_ident(PG_FUNCTION_ARGS)
 			 * being too long. It's easy enough for the user to get the
 			 * truncated names by casting our output to name[].
 			 */
-			downname = downcase_identifier(curname, len, false, false);
-			part = cstring_to_text_with_len(downname, len);
+			char	   *downname = downcase_identifier(curname, len, false, false);
+			text	   *part = cstring_to_text_with_len(downname, len);
 			astate = accumArrayResult(astate, PointerGetDatum(part), false,
 									  TEXTOID, CurrentMemoryContext);
 			missing_ident = false;
@@ -832,7 +808,6 @@ parse_ident(PG_FUNCTION_ARGS)
 Datum
 pg_current_logfile(PG_FUNCTION_ARGS)
 {
-	FILE	   *fd;
 	char		lbuffer[MAXPGPATH];
 	char	   *logfmt;
 
@@ -850,7 +825,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 					 errhint("The supported log formats are \"stderr\" and \"csvlog\".")));
 	}
 
-	fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");
+	FILE	   *fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");
 	if (fd == NULL)
 	{
 		if (errno != ENOENT)
@@ -872,13 +847,10 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 	 */
 	while (fgets(lbuffer, sizeof(lbuffer), fd) != NULL)
 	{
-		char	   *log_format;
-		char	   *log_filepath;
-		char	   *nlpos;
 
 		/* Extract log format and log file path from the line. */
-		log_format = lbuffer;
-		log_filepath = strchr(lbuffer, ' ');
+		char	   *log_format = lbuffer;
+		char	   *log_filepath = strchr(lbuffer, ' ');
 		if (log_filepath == NULL)
 		{
 			/* Uh oh.  No space found, so file content is corrupted. */
@@ -889,7 +861,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 
 		*log_filepath = '\0';
 		log_filepath++;
-		nlpos = strchr(log_filepath, '\n');
+		char	   *nlpos = strchr(log_filepath, '\n');
 		if (nlpos == NULL)
 		{
 			/* Uh oh.  No newline found, so file content is corrupted. */
@@ -932,11 +904,9 @@ Datum
 pg_get_replica_identity_index(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
-	Oid			idxoid;
-	Relation	rel;
 
-	rel = table_open(reloid, AccessShareLock);
-	idxoid = RelationGetReplicaIndex(rel);
+	Relation	rel = table_open(reloid, AccessShareLock);
+	Oid			idxoid = RelationGetReplicaIndex(rel);
 	table_close(rel, AccessShareLock);
 
 	if (OidIsValid(idxoid))

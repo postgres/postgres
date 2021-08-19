@@ -38,17 +38,12 @@
 void
 RemoveRewriteRuleById(Oid ruleOid)
 {
-	Relation	RewriteRelation;
 	ScanKeyData skey[1];
-	SysScanDesc rcscan;
-	Relation	event_relation;
-	HeapTuple	tuple;
-	Oid			eventRelationOid;
 
 	/*
 	 * Open the pg_rewrite relation.
 	 */
-	RewriteRelation = table_open(RewriteRelationId, RowExclusiveLock);
+	Relation	RewriteRelation = table_open(RewriteRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the tuple for the target rule.
@@ -58,10 +53,10 @@ RemoveRewriteRuleById(Oid ruleOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ruleOid));
 
-	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndexId, true,
+	SysScanDesc rcscan = systable_beginscan(RewriteRelation, RewriteOidIndexId, true,
 								NULL, 1, skey);
 
-	tuple = systable_getnext(rcscan);
+	HeapTuple	tuple = systable_getnext(rcscan);
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for rule %u", ruleOid);
@@ -71,8 +66,8 @@ RemoveRewriteRuleById(Oid ruleOid)
 	 * going on that might depend on this rule.  (Note: a weaker lock would
 	 * suffice if it's not an ON SELECT rule.)
 	 */
-	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-	event_relation = table_open(eventRelationOid, AccessExclusiveLock);
+	Oid			eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
+	Relation	event_relation = table_open(eventRelationOid, AccessExclusiveLock);
 
 	if (!allowSystemTableMods && IsSystemRelation(event_relation))
 		ereport(ERROR,

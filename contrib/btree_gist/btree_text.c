@@ -148,7 +148,6 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval;
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
@@ -160,7 +159,7 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 		tinfo.eml = pg_database_encoding_max_length();
 	}
 
-	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+	bool		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
 								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
 
 	PG_RETURN_BOOL(retval);
@@ -176,7 +175,6 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval;
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 	void	   *trim = (void *) DatumGetPointer(DirectFunctionCall1(rtrim1, PointerGetDatum(query)));
@@ -189,7 +187,7 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 		tinfo.eml = pg_database_encoding_max_length();
 	}
 
-	retval = gbt_var_consistent(&r, trim, strategy, PG_GET_COLLATION(),
+	bool		retval = gbt_var_consistent(&r, trim, strategy, PG_GET_COLLATION(),
 								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
 	PG_RETURN_BOOL(retval);
 }

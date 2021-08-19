@@ -204,7 +204,6 @@ gin_compare_jsonb(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int32		result;
 	char	   *a1p,
 			   *a2p;
 	int			len1,
@@ -217,7 +216,7 @@ gin_compare_jsonb(PG_FUNCTION_ARGS)
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
 	/* Compare text as bttextcmp does, but always using C collation */
-	result = varstr_cmp(a1p, len1, a2p, len2, C_COLLATION_OID);
+	int32		result = varstr_cmp(a1p, len1, a2p, len2, C_COLLATION_OID);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -231,7 +230,6 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = (Jsonb *) PG_GETARG_JSONB_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	int			total = JB_ROOT_COUNT(jb);
-	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken r;
 	GinEntries	entries;
@@ -246,7 +244,7 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 	/* Otherwise, use 2 * root count as initial estimate of result size */
 	init_gin_entries(&entries, 2 * total);
 
-	it = JsonbIteratorInit(&jb->root);
+	JsonbIterator *it = JsonbIteratorInit(&jb->root);
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
@@ -517,11 +515,10 @@ extract_jsp_path_expr_nodes(JsonPathGinContext *cxt, JsonPathGinPath path,
 			case jpiFilter:
 				{
 					JsonPathItem arg;
-					JsonPathGinNode *filter;
 
 					jspGetArg(jsp, &arg);
 
-					filter = extract_jsp_bool_expr(cxt, path, &arg, false);
+					JsonPathGinNode *filter = extract_jsp_bool_expr(cxt, path, &arg, false);
 
 					if (filter)
 						nodes = lappend(nodes, filter);
@@ -591,15 +588,13 @@ extract_jsp_bool_expr(JsonPathGinContext *cxt, JsonPathGinPath path,
 		case jpiOr:				/* expr || expr */
 			{
 				JsonPathItem arg;
-				JsonPathGinNode *larg;
-				JsonPathGinNode *rarg;
 				JsonPathGinNodeType type;
 
 				jspGetLeftArg(jsp, &arg);
-				larg = extract_jsp_bool_expr(cxt, path, &arg, not);
+				JsonPathGinNode *larg = extract_jsp_bool_expr(cxt, path, &arg, not);
 
 				jspGetRightArg(jsp, &arg);
-				rarg = extract_jsp_bool_expr(cxt, path, &arg, not);
+				JsonPathGinNode *rarg = extract_jsp_bool_expr(cxt, path, &arg, not);
 
 				if (!larg || !rarg)
 				{
@@ -750,7 +745,6 @@ extract_jsp_query(JsonPath *jp, StrategyNumber strat, bool pathOps,
 {
 	JsonPathGinContext cxt;
 	JsonPathItem root;
-	JsonPathGinNode *node;
 	JsonPathGinPath path = {0};
 	GinEntries	entries = {0};
 
@@ -769,7 +763,7 @@ extract_jsp_query(JsonPath *jp, StrategyNumber strat, bool pathOps,
 
 	jspInit(&root, jp);
 
-	node = strat == JsonbJsonpathExistsStrategyNumber
+	JsonPathGinNode *node = strat == JsonbJsonpathExistsStrategyNumber
 		? extract_jsp_path_expr(&cxt, path, &root, NULL)
 		: extract_jsp_bool_expr(&cxt, path, &root, false);
 
@@ -1093,11 +1087,9 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	int			total = JB_ROOT_COUNT(jb);
-	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken r;
 	PathHashStack tail;
-	PathHashStack *stack;
 	GinEntries	entries;
 
 	/* If the root level is empty, we certainly have no keys */
@@ -1113,9 +1105,9 @@ gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 	/* We keep a stack of partial hashes corresponding to parent key levels */
 	tail.parent = NULL;
 	tail.hash = 0;
-	stack = &tail;
+	PathHashStack *stack = &tail;
 
-	it = JsonbIteratorInit(&jb->root);
+	JsonbIterator *it = JsonbIteratorInit(&jb->root);
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
@@ -1326,14 +1318,12 @@ gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 static Datum
 make_text_key(char flag, const char *str, int len)
 {
-	text	   *item;
 	char		hashbuf[10];
 
 	if (len > JGIN_MAXLENGTH)
 	{
-		uint32		hashval;
 
-		hashval = DatumGetUInt32(hash_any((const unsigned char *) str, len));
+		uint32		hashval = DatumGetUInt32(hash_any((const unsigned char *) str, len));
 		snprintf(hashbuf, sizeof(hashbuf), "%08x", hashval);
 		str = hashbuf;
 		len = 8;
@@ -1345,7 +1335,7 @@ make_text_key(char flag, const char *str, int len)
 	 * varlena text Datum here, but we expect it will get converted to short
 	 * header format when stored in the index.
 	 */
-	item = (text *) palloc(VARHDRSZ + len + 1);
+	text	   *item = (text *) palloc(VARHDRSZ + len + 1);
 	SET_VARSIZE(item, VARHDRSZ + len + 1);
 
 	*VARDATA(item) = flag;

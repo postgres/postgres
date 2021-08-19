@@ -415,7 +415,6 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	int		   *fctx;
-	int32		result;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -436,7 +435,7 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 	fctx = funcctx->user_fctx;
 
 	fctx[0] += 1;
-	result = fctx[0];
+	int32		result = fctx[0];
 
 	if (result <= fctx[1])
 	{
@@ -462,10 +461,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	char	   *cmd = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	ProgressCommandType cmdtype;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -499,10 +495,10 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid command name: \"%s\"", cmd)));
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -511,8 +507,6 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
-		LocalPgBackendStatus *local_beentry;
-		PgBackendStatus *beentry;
 		Datum		values[PG_STAT_GET_PROGRESS_COLS];
 		bool		nulls[PG_STAT_GET_PROGRESS_COLS];
 		int			i;
@@ -520,12 +514,12 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
-		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
 
 		if (!local_beentry)
 			continue;
 
-		beentry = &local_beentry->backendStatus;
+		PgBackendStatus *beentry = &local_beentry->backendStatus;
 
 		/*
 		 * Report values for only those backends which are running the given
@@ -573,9 +567,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -591,10 +582,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -607,8 +598,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		/* for each row */
 		Datum		values[PG_STAT_GET_ACTIVITY_COLS];
 		bool		nulls[PG_STAT_GET_ACTIVITY_COLS];
-		LocalPgBackendStatus *local_beentry;
-		PgBackendStatus *beentry;
 		PGPROC	   *proc;
 		const char *wait_event_type = NULL;
 		const char *wait_event = NULL;
@@ -617,7 +606,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		/* Get the next one in the list */
-		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
 		if (!local_beentry)
 		{
 			int			i;
@@ -636,7 +625,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			continue;
 		}
 
-		beentry = &local_beentry->backendStatus;
+		PgBackendStatus *beentry = &local_beentry->backendStatus;
 
 		/* If looking for specific PID, ignore all the others */
 		if (pid != -1 && beentry->st_procpid != pid)
@@ -674,7 +663,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		if (HAS_PGSTAT_PERMISSIONS(beentry->st_userid))
 		{
 			SockAddr	zero_clientaddr;
-			char	   *clipped_activity;
 
 			switch (beentry->st_state)
 			{
@@ -701,7 +689,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					break;
 			}
 
-			clipped_activity = pgstat_clip_activity(beentry->st_activity_raw);
+			char	   *clipped_activity = pgstat_clip_activity(beentry->st_activity_raw);
 			values[5] = CStringGetTextDatum(clipped_activity);
 			pfree(clipped_activity);
 
@@ -727,14 +715,12 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			 */
 			if (proc != NULL)
 			{
-				uint32		raw_wait_event;
-				PGPROC	   *leader;
 
-				raw_wait_event = UINT32_ACCESS_ONCE(proc->wait_event_info);
+				uint32		raw_wait_event = UINT32_ACCESS_ONCE(proc->wait_event_info);
 				wait_event_type = pgstat_get_wait_event_type(raw_wait_event);
 				wait_event = pgstat_get_wait_event(raw_wait_event);
 
-				leader = proc->lockGroupLeader;
+				PGPROC	   *leader = proc->lockGroupLeader;
 
 				/*
 				 * Show the leader only for active parallel workers.  This
@@ -803,11 +789,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				{
 					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
-					int			ret;
 
 					remote_host[0] = '\0';
 					remote_port[0] = '\0';
-					ret = pg_getnameinfo_all(&beentry->st_clientaddr.addr,
+					int			ret = pg_getnameinfo_all(&beentry->st_clientaddr.addr,
 											 beentry->st_clientaddr.salen,
 											 remote_host, sizeof(remote_host),
 											 remote_port, sizeof(remote_port),
@@ -854,9 +839,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			/* Add backend type */
 			if (beentry->st_backendType == B_BG_WORKER)
 			{
-				const char *bgw_type;
 
-				bgw_type = GetBackgroundWorkerTypeByPid(beentry->st_procpid);
+				const char *bgw_type = GetBackgroundWorkerTypeByPid(beentry->st_procpid);
 				if (bgw_type)
 					values[17] = CStringGetTextDatum(bgw_type);
 				else
@@ -1012,8 +996,6 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	int32		beid = PG_GETARG_INT32(0);
 	PgBackendStatus *beentry;
 	const char *activity;
-	char	   *clipped_activity;
-	text	   *ret;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		activity = "<backend information not available>";
@@ -1024,8 +1006,8 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	else
 		activity = beentry->st_activity_raw;
 
-	clipped_activity = pgstat_clip_activity(activity);
-	ret = cstring_to_text(activity);
+	char	   *clipped_activity = pgstat_clip_activity(activity);
+	text	   *ret = cstring_to_text(activity);
 	pfree(clipped_activity);
 
 	PG_RETURN_TEXT_P(ret);
@@ -1078,7 +1060,6 @@ Datum
 pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 {
 	int32		beid = PG_GETARG_INT32(0);
-	TimestampTz result;
 	PgBackendStatus *beentry;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
@@ -1087,7 +1068,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	else if (!HAS_PGSTAT_PERMISSIONS(beentry->st_userid))
 		PG_RETURN_NULL();
 
-	result = beentry->st_activity_start_timestamp;
+	TimestampTz result = beentry->st_activity_start_timestamp;
 
 	/*
 	 * No time recorded for start of current query -- this is the case if the
@@ -1104,7 +1085,6 @@ Datum
 pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS)
 {
 	int32		beid = PG_GETARG_INT32(0);
-	TimestampTz result;
 	PgBackendStatus *beentry;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
@@ -1113,7 +1093,7 @@ pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS)
 	else if (!HAS_PGSTAT_PERMISSIONS(beentry->st_userid))
 		PG_RETURN_NULL();
 
-	result = beentry->st_xact_start_timestamp;
+	TimestampTz result = beentry->st_xact_start_timestamp;
 
 	if (result == 0)			/* not in a transaction */
 		PG_RETURN_NULL();
@@ -1126,7 +1106,6 @@ Datum
 pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 {
 	int32		beid = PG_GETARG_INT32(0);
-	TimestampTz result;
 	PgBackendStatus *beentry;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
@@ -1135,7 +1114,7 @@ pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 	else if (!HAS_PGSTAT_PERMISSIONS(beentry->st_userid))
 		PG_RETURN_NULL();
 
-	result = beentry->st_proc_start_timestamp;
+	TimestampTz result = beentry->st_proc_start_timestamp;
 
 	if (result == 0)			/* probably can't happen? */
 		PG_RETURN_NULL();
@@ -1243,11 +1222,10 @@ Datum
 pg_stat_get_db_numbackends(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);
-	int32		result;
 	int			tot_backends = pgstat_fetch_stat_numbackends();
 	int			beid;
 
-	result = 0;
+	int32		result = 0;
 	for (beid = 1; beid <= tot_backends; beid++)
 	{
 		PgBackendStatus *beentry = pgstat_fetch_stat_beentry(beid);
@@ -1803,18 +1781,16 @@ Datum
 pg_stat_get_wal(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_WAL_COLS	9
-	TupleDesc	tupdesc;
 	Datum		values[PG_STAT_GET_WAL_COLS];
 	bool		nulls[PG_STAT_GET_WAL_COLS];
 	char		buf[256];
-	PgStat_WalStats *wal_stats;
 
 	/* Initialise values and NULL flags arrays */
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "wal_records",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "wal_fpi",
@@ -1837,7 +1813,7 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 	BlessTupleDesc(tupdesc);
 
 	/* Get statistics about WAL activity */
-	wal_stats = pgstat_fetch_stat_wal();
+	PgStat_WalStats *wal_stats = pgstat_fetch_stat_wal();
 
 	/* Fill values and NULLs */
 	values[0] = Int64GetDatum(wal_stats->wal_records);
@@ -1873,11 +1849,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 #define PG_STAT_GET_SLRU_COLS	9
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	int			i;
-	PgStat_SLRUStats *stats;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -1893,10 +1865,10 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1904,7 +1876,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* request SLRU stats from the stat collector */
-	stats = pgstat_fetch_slru();
+	PgStat_SLRUStats *stats = pgstat_fetch_slru();
 
 	for (i = 0;; i++)
 	{
@@ -1912,9 +1884,8 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		Datum		values[PG_STAT_GET_SLRU_COLS];
 		bool		nulls[PG_STAT_GET_SLRU_COLS];
 		PgStat_SLRUStats stat = stats[i];
-		const char *name;
 
-		name = pgstat_slru_name(i);
+		const char *name = pgstat_slru_name(i);
 
 		if (!name)
 			break;
@@ -2208,7 +2179,6 @@ pg_stat_reset_replication_slot(PG_FUNCTION_ARGS)
 
 	if (!PG_ARGISNULL(0))
 	{
-		ReplicationSlot *slot;
 
 		target = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
@@ -2218,7 +2188,7 @@ pg_stat_reset_replication_slot(PG_FUNCTION_ARGS)
 		 * least this check will ensure that the given name is for a valid
 		 * slot.
 		 */
-		slot = SearchNamedReplicationSlot(target, true);
+		ReplicationSlot *slot = SearchNamedReplicationSlot(target, true);
 
 		if (!slot)
 			ereport(ERROR,
@@ -2242,17 +2212,15 @@ pg_stat_reset_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_archiver(PG_FUNCTION_ARGS)
 {
-	TupleDesc	tupdesc;
 	Datum		values[7];
 	bool		nulls[7];
-	PgStat_ArchiverStats *archiver_stats;
 
 	/* Initialise values and NULL flags arrays */
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(7);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(7);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "archived_count",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "last_archived_wal",
@@ -2271,7 +2239,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 	BlessTupleDesc(tupdesc);
 
 	/* Get statistics about the archiver process */
-	archiver_stats = pgstat_fetch_stat_archiver();
+	PgStat_ArchiverStats *archiver_stats = pgstat_fetch_stat_archiver();
 
 	/* Fill values and NULLs */
 	values[0] = Int64GetDatum(archiver_stats->archived_count);
@@ -2315,10 +2283,8 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 #define PG_STAT_GET_REPLICATION_SLOT_COLS 10
 	text	   *slotname_text = PG_GETARG_TEXT_P(0);
 	NameData	slotname;
-	TupleDesc	tupdesc;
 	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS];
 	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS];
-	PgStat_StatReplSlotEntry *slotent;
 	PgStat_StatReplSlotEntry allzero;
 
 	/* Initialise values and NULL flags arrays */
@@ -2326,7 +2292,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_REPLICATION_SLOT_COLS);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_REPLICATION_SLOT_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "slot_name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "spill_txns",
@@ -2350,7 +2316,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	BlessTupleDesc(tupdesc);
 
 	namestrcpy(&slotname, text_to_cstring(slotname_text));
-	slotent = pgstat_fetch_replslot(slotname);
+	PgStat_StatReplSlotEntry *slotent = pgstat_fetch_replslot(slotname);
 	if (!slotent)
 	{
 		/*

@@ -31,13 +31,12 @@ int
 pg_check_dir(const char *dir)
 {
 	int			result = 1;
-	DIR		   *chkdir;
 	struct dirent *file;
 	bool		dot_found = false;
 	bool		mount_found = false;
 	int			readdir_errno;
 
-	chkdir = opendir(dir);
+	DIR		   *chkdir = opendir(dir);
 	if (chkdir == NULL)
 		return (errno == ENOENT) ? 0 : -1;
 

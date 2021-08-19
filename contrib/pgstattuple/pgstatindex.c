@@ -145,16 +145,14 @@ Datum
 pgstatindex(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Relation	rel;
-	RangeVar   *relrv;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pgstattuple functions")));
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
@@ -170,11 +168,9 @@ Datum
 pgstatindex_v1_5(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Relation	rel;
-	RangeVar   *relrv;
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
@@ -188,14 +184,13 @@ Datum
 pgstatindexbyid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	Relation	rel;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pgstattuple functions")));
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
@@ -205,9 +200,8 @@ Datum
 pgstatindexbyid_v1_5(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	Relation	rel;
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
@@ -216,7 +210,6 @@ static Datum
 pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 {
 	Datum		result;
-	BlockNumber nblocks;
 	BlockNumber blkno;
 	BTIndexStat indexStat;
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
@@ -266,22 +259,19 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 	/*
 	 * Scan all blocks except the metapage
 	 */
-	nblocks = RelationGetNumberOfBlocks(rel);
+	BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
 
 	for (blkno = 1; blkno < nblocks; blkno++)
 	{
-		Buffer		buffer;
-		Page		page;
-		BTPageOpaque opaque;
 
 		CHECK_FOR_INTERRUPTS();
 
 		/* Read and lock buffer */
-		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+		Buffer		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buffer);
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		Page		page = BufferGetPage(buffer);
+		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		/*
 		 * Determine page type, and update totals.
@@ -295,9 +285,8 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 			indexStat.empty_pages++;	/* this is the "half dead" state */
 		else if (P_ISLEAF(opaque))
 		{
-			int			max_avail;
 
-			max_avail = BLCKSZ - (BLCKSZ - ((PageHeader) page)->pd_special + SizeOfPageHeaderData);
+			int			max_avail = BLCKSZ - (BLCKSZ - ((PageHeader) page)->pd_special + SizeOfPageHeaderData);
 			indexStat.max_avail += max_avail;
 			indexStat.free_space += PageGetFreeSpace(page);
 
@@ -326,15 +315,13 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 	 */
 	{
 		TupleDesc	tupleDesc;
-		int			j;
 		char	   *values[10];
-		HeapTuple	tuple;
 
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");
 
-		j = 0;
+		int			j = 0;
 		values[j++] = psprintf("%d", indexStat.version);
 		values[j++] = psprintf("%d", indexStat.level);
 		values[j++] = psprintf(INT64_FORMAT,
@@ -359,7 +346,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		else
 			values[j++] = pstrdup("NaN");
 
-		tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
+		HeapTuple	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 									   values);
 
 		result = HeapTupleGetDatum(tuple);
@@ -383,16 +370,14 @@ Datum
 pg_relpages(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Relation	rel;
-	RangeVar   *relrv;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pgstattuple functions")));
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
@@ -402,11 +387,9 @@ Datum
 pg_relpages_v1_5(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Relation	rel;
-	RangeVar   *relrv;
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
@@ -416,14 +399,13 @@ Datum
 pg_relpagesbyid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	Relation	rel;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use pgstattuple functions")));
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
@@ -433,9 +415,8 @@ Datum
 pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	Relation	rel;
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	PG_RETURN_INT64(pg_relpages_impl(rel));
 }
@@ -443,7 +424,6 @@ pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
 static int64
 pg_relpages_impl(Relation rel)
 {
-	int64		relpages;
 
 	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
 		ereport(ERROR,
@@ -454,7 +434,7 @@ pg_relpages_impl(Relation rel)
 
 	/* note: this will work OK on non-local temp tables */
 
-	relpages = RelationGetNumberOfBlocks(rel);
+	int64		relpages = RelationGetNumberOfBlocks(rel);
 
 	relation_close(rel, AccessShareLock);
 
@@ -494,18 +474,12 @@ pgstatginindex_v1_5(PG_FUNCTION_ARGS)
 Datum
 pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 {
-	Relation	rel;
-	Buffer		buffer;
-	Page		page;
-	GinMetaPageData *metadata;
 	GinIndexStat stats;
-	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
 	Datum		values[3];
 	bool		nulls[3] = {false, false, false};
-	Datum		result;
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_GIN(rel))
 		ereport(ERROR,
@@ -526,10 +500,10 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	/*
 	 * Read metapage
 	 */
-	buffer = ReadBuffer(rel, GIN_METAPAGE_BLKNO);
+	Buffer		buffer = ReadBuffer(rel, GIN_METAPAGE_BLKNO);
 	LockBuffer(buffer, GIN_SHARE);
-	page = BufferGetPage(buffer);
-	metadata = GinPageGetMeta(page);
+	Page		page = BufferGetPage(buffer);
+	GinMetaPageData *metadata = GinPageGetMeta(page);
 
 	stats.version = metadata->ginVersion;
 	stats.pending_pages = metadata->nPendingPages;
@@ -551,8 +525,8 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	/*
 	 * Build and return the tuple
 	 */
-	tuple = heap_form_tuple(tupleDesc, values, nulls);
-	result = HeapTupleGetDatum(tuple);
+	HeapTuple	tuple = heap_form_tuple(tupleDesc, values, nulls);
+	Datum		result = HeapTupleGetDatum(tuple);
 
 	return result;
 }
@@ -567,21 +541,14 @@ Datum
 pgstathashindex(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	BlockNumber nblocks;
 	BlockNumber blkno;
-	Relation	rel;
 	HashIndexStat stats;
-	BufferAccessStrategy bstrategy;
-	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
 	Datum		values[8];
 	bool		nulls[8];
-	Buffer		metabuf;
-	HashMetaPage metap;
 	float8		free_percent;
-	uint64		total_space;
 
-	rel = index_open(relid, AccessShareLock);
+	Relation	rel = index_open(relid, AccessShareLock);
 
 	/* index_open() checks that it's an index */
 	if (!IS_HASH(rel))
@@ -602,30 +569,28 @@ pgstathashindex(PG_FUNCTION_ARGS)
 
 	/* Get the information we need from the metapage. */
 	memset(&stats, 0, sizeof(stats));
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 	stats.version = metap->hashm_version;
 	stats.space_per_page = metap->hashm_bsize;
 	_hash_relbuf(rel, metabuf);
 
 	/* Get the current relation length */
-	nblocks = RelationGetNumberOfBlocks(rel);
+	BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
 
 	/* prepare access strategy for this index */
-	bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	/* Start from blkno 1 as 0th block is metapage */
 	for (blkno = 1; blkno < nblocks; blkno++)
 	{
-		Buffer		buf;
-		Page		page;
 
 		CHECK_FOR_INTERRUPTS();
 
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+		Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								 bstrategy);
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
-		page = (Page) BufferGetPage(buf);
+		Page		page = (Page) BufferGetPage(buf);
 
 		if (PageIsNew(page))
 			stats.unused_pages++;
@@ -638,11 +603,9 @@ pgstathashindex(PG_FUNCTION_ARGS)
 							BufferGetBlockNumber(buf))));
 		else
 		{
-			HashPageOpaque opaque;
-			int			pagetype;
 
-			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
+			HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			int			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
 
 			if (pagetype == LH_BUCKET_PAGE)
 			{
@@ -678,7 +641,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	 * Total space available for tuples excludes the metapage and the bitmap
 	 * pages.
 	 */
-	total_space = (uint64) (nblocks - (stats.bitmap_pages + 1)) *
+	uint64		total_space = (uint64) (nblocks - (stats.bitmap_pages + 1)) *
 		stats.space_per_page;
 
 	if (total_space == 0)
@@ -706,7 +669,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	values[5] = Int64GetDatum(stats.live_items);
 	values[6] = Int64GetDatum(stats.dead_items);
 	values[7] = Float8GetDatum(free_percent);
-	tuple = heap_form_tuple(tupleDesc, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupleDesc, values, nulls);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }

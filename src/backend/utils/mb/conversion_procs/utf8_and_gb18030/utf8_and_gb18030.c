@@ -197,11 +197,10 @@ gb18030_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_GB18030, PG_UTF8);
 
-	converted = LocalToUtf(src, len, dest,
+	int			converted = LocalToUtf(src, len, dest,
 						   &gb18030_to_unicode_tree,
 						   NULL, 0,
 						   conv_18030_to_utf8,
@@ -218,11 +217,10 @@ utf8_to_gb18030(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_GB18030);
 
-	converted = UtfToLocal(src, len, dest,
+	int			converted = UtfToLocal(src, len, dest,
 						   &gb18030_from_unicode_tree,
 						   NULL, 0,
 						   conv_utf8_to_18030,

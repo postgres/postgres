@@ -47,7 +47,6 @@
 Relation
 relation_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
@@ -56,7 +55,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 		LockRelationOid(relationId, lockmode);
 
 	/* The relcache does all the real work... */
-	r = RelationIdGetRelation(relationId);
+	Relation	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
@@ -88,7 +87,6 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 Relation
 try_relation_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
@@ -110,7 +108,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 	}
 
 	/* Should be safe to do a relcache load */
-	r = RelationIdGetRelation(relationId);
+	Relation	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
@@ -137,7 +135,6 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 Relation
 relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
-	Oid			relOid;
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
@@ -154,7 +151,7 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 		AcceptInvalidationMessages();
 
 	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, false);
+	Oid			relOid = RangeVarGetRelid(relation, lockmode, false);
 
 	/* Let relation_open do the rest */
 	return relation_open(relOid, NoLock);
@@ -173,7 +170,6 @@ Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
 {
-	Oid			relOid;
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
@@ -183,7 +179,7 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 		AcceptInvalidationMessages();
 
 	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
+	Oid			relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
 
 	/* Return NULL on not-found */
 	if (!OidIsValid(relOid))

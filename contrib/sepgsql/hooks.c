@@ -98,9 +98,8 @@ sepgsql_object_access(ObjectAccessType access,
 		case OAT_POST_CREATE:
 			{
 				ObjectAccessPostCreate *pc_arg = arg;
-				bool		is_internal;
 
-				is_internal = pc_arg ? pc_arg->is_internal : false;
+				bool		is_internal = pc_arg ? pc_arg->is_internal : false;
 
 				switch (classId)
 				{

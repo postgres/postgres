@@ -24,11 +24,9 @@ Datum
 quote_ident(PG_FUNCTION_ARGS)
 {
 	text	   *t = PG_GETARG_TEXT_PP(0);
-	const char *qstr;
-	char	   *str;
 
-	str = text_to_cstring(t);
-	qstr = quote_identifier(str);
+	char	   *str = text_to_cstring(t);
+	const char *qstr = quote_identifier(str);
 	PG_RETURN_TEXT_P(cstring_to_text(qstr));
 }
 
@@ -77,17 +75,13 @@ Datum
 quote_literal(PG_FUNCTION_ARGS)
 {
 	text	   *t = PG_GETARG_TEXT_PP(0);
-	text	   *result;
-	char	   *cp1;
-	char	   *cp2;
-	int			len;
 
-	len = VARSIZE_ANY_EXHDR(t);
+	int			len = VARSIZE_ANY_EXHDR(t);
 	/* We make a worst-case result area; wasting a little space is OK */
-	result = (text *) palloc(len * 2 + 3 + VARHDRSZ);
+	text	   *result = (text *) palloc(len * 2 + 3 + VARHDRSZ);
 
-	cp1 = VARDATA_ANY(t);
-	cp2 = VARDATA(result);
+	char	   *cp1 = VARDATA_ANY(t);
+	char	   *cp2 = VARDATA(result);
 
 	SET_VARSIZE(result, VARHDRSZ + quote_literal_internal(cp2, cp1, len));
 
@@ -101,15 +95,12 @@ quote_literal(PG_FUNCTION_ARGS)
 char *
 quote_literal_cstr(const char *rawstr)
 {
-	char	   *result;
-	int			len;
-	int			newlen;
 
-	len = strlen(rawstr);
+	int			len = strlen(rawstr);
 	/* We make a worst-case result area; wasting a little space is OK */
-	result = palloc(len * 2 + 3 + 1);
+	char	   *result = palloc(len * 2 + 3 + 1);
 
-	newlen = quote_literal_internal(result, rawstr, len);
+	int			newlen = quote_literal_internal(result, rawstr, len);
 	result[newlen] = '\0';
 
 	return result;

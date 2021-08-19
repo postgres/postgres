@@ -228,14 +228,12 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	Point	   *centroid;
 	BOX			infbbox;
 	BOX		   *bbox = NULL;
-	int			which;
 	int			i;
 
 	Assert(in->hasPrefix);
-	centroid = DatumGetPointP(in->prefixDatum);
+	Point	   *centroid = DatumGetPointP(in->prefixDatum);
 
 	/*
 	 * When ordering scan keys are specified, we've to calculate distance for
@@ -295,7 +293,7 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 	Assert(in->nNodes == 4);
 
 	/* "which" is a bitmask of quadrants that satisfy all constraints */
-	which = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
+	int			which = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
 
 	for (i = 0; i < in->nkeys; i++)
 	{
@@ -343,10 +341,9 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 				else
 				{
 					/* identify quadrant(s) containing all corners of box */
-					Point		p;
 					int			r = 0;
 
-					p = boxQuery->low;
+					Point		p = boxQuery->low;
 					r |= 1 << getQuadrant(centroid, &p);
 					p.y = boxQuery->high.y;
 					r |= 1 << getQuadrant(centroid, &p);
@@ -409,7 +406,6 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
 	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
 	Point	   *datum = DatumGetPointP(in->leafDatum);
-	bool		res;
 	int			i;
 
 	/* all tests are exact */
@@ -419,7 +415,7 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	out->leafValue = in->leafDatum;
 
 	/* Perform the required comparison(s) */
-	res = true;
+	bool		res = true;
 	for (i = 0; i < in->nkeys; i++)
 	{
 		Point	   *query = DatumGetPointP(in->scankeys[i].sk_argument);

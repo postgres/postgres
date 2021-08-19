@@ -220,11 +220,10 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 				maxoff;
 	BOX		   *unionL = NULL,
 			   *unionR = NULL;
-	int			nbytes;
 
 	maxoff = entryvec->n - 1;
 
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = v->spl_nright = 0;
@@ -507,13 +506,11 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 				commonEntriesCount;
 	SplitInterval *intervalsLower,
 			   *intervalsUpper;
-	CommonEntry *commonEntries;
-	int			nentries;
 
 	memset(&context, 0, sizeof(ConsiderSplitContext));
 
 	maxoff = entryvec->n - 1;
-	nentries = context.entriesCount = maxoff - FirstOffsetNumber + 1;
+	int			nentries = context.entriesCount = maxoff - FirstOffsetNumber + 1;
 
 	/* Allocate arrays for intervals along axes */
 	intervalsLower = (SplitInterval *) palloc(nentries * sizeof(SplitInterval));
@@ -707,7 +704,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	 * either group without affecting overlap along selected axis.
 	 */
 	commonEntriesCount = 0;
-	commonEntries = (CommonEntry *) palloc(nentries * sizeof(CommonEntry));
+	CommonEntry *commonEntries = (CommonEntry *) palloc(nentries * sizeof(CommonEntry));
 
 	/* Helper macros to place an entry in the left or right group */
 #define PLACE_LEFT(box, off)					\
@@ -1041,9 +1038,8 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		POLYGON    *in = DatumGetPolygonP(entry->key);
-		BOX		   *r;
 
-		r = (BOX *) palloc(sizeof(BOX));
+		BOX		   *r = (BOX *) palloc(sizeof(BOX));
 		memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -1068,7 +1064,6 @@ gist_poly_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		result;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
@@ -1081,7 +1076,7 @@ gist_poly_consistent(PG_FUNCTION_ARGS)
 	 * rtree_internal_consistent even at leaf nodes.  (This works in part
 	 * because the index entries are bounding boxes not polygons.)
 	 */
-	result = rtree_internal_consistent(DatumGetBoxP(entry->key),
+	bool		result = rtree_internal_consistent(DatumGetBoxP(entry->key),
 									   &(query->boundbox), strategy);
 
 	/* Avoid memory leak if supplied poly is toasted */
@@ -1106,9 +1101,8 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		CIRCLE	   *in = DatumGetCircleP(entry->key);
-		BOX		   *r;
 
-		r = (BOX *) palloc(sizeof(BOX));
+		BOX		   *r = (BOX *) palloc(sizeof(BOX));
 		r->high.x = float8_pl(in->center.x, in->radius);
 		r->low.x = float8_mi(in->center.x, in->radius);
 		r->high.y = float8_pl(in->center.y, in->radius);
@@ -1137,7 +1131,6 @@ gist_circle_consistent(PG_FUNCTION_ARGS)
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	BOX			bbox;
-	bool		result;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
@@ -1155,7 +1148,7 @@ gist_circle_consistent(PG_FUNCTION_ARGS)
 	bbox.high.y = float8_pl(query->center.y, query->radius);
 	bbox.low.y = float8_mi(query->center.y, query->radius);
 
-	result = rtree_internal_consistent(DatumGetBoxP(entry->key),
+	bool		result = rtree_internal_consistent(DatumGetBoxP(entry->key),
 									   &bbox, strategy);
 
 	PG_RETURN_BOOL(result);
@@ -1198,12 +1191,10 @@ gist_point_fetch(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	BOX		   *in = DatumGetBoxP(entry->key);
-	Point	   *r;
-	GISTENTRY  *retval;
 
-	retval = palloc(sizeof(GISTENTRY));
+	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
 
-	r = (Point *) palloc(sizeof(Point));
+	Point	   *r = (Point *) palloc(sizeof(Point));
 	r->x = in->high.x;
 	r->y = in->high.y;
 	gistentryinit(*retval, PointerGetDatum(r),
@@ -1260,11 +1251,10 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 	{
 		/* closest point will be a vertex */
 		Point		p;
-		float8		subresult;
 
 		result = point_point_distance(point, &box->low);
 
-		subresult = point_point_distance(point, &box->high);
+		float8		subresult = point_point_distance(point, &box->high);
 		if (result > subresult)
 			result = subresult;
 
@@ -1341,7 +1331,6 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		result;
-	StrategyNumber strategyGroup;
 
 	/*
 	 * We have to remap these strategy numbers to get this klugy
@@ -1352,7 +1341,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 	else if (strategy == RTOldAboveStrategyNumber)
 		strategy = RTAboveStrategyNumber;
 
-	strategyGroup = strategy / GeoStrategyNumberOffset;
+	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
 	switch (strategyGroup)
 	{
 		case PointStrategyNumberGroup:
@@ -1506,9 +1495,8 @@ gist_box_distance(PG_FUNCTION_ARGS)
 
 	/* Oid subtype = PG_GETARG_OID(3); */
 	/* bool	   *recheck = (bool *) PG_GETARG_POINTER(4); */
-	float8		distance;
 
-	distance = gist_bbox_distance(entry, query, strategy);
+	float8		distance = gist_bbox_distance(entry, query, strategy);
 
 	PG_RETURN_FLOAT8(distance);
 }
@@ -1532,9 +1520,8 @@ gist_circle_distance(PG_FUNCTION_ARGS)
 
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	float8		distance;
 
-	distance = gist_bbox_distance(entry, query, strategy);
+	float8		distance = gist_bbox_distance(entry, query, strategy);
 	*recheck = true;
 
 	PG_RETURN_FLOAT8(distance);
@@ -1549,9 +1536,8 @@ gist_poly_distance(PG_FUNCTION_ARGS)
 
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	float8		distance;
 
-	distance = gist_bbox_distance(entry, query, strategy);
+	float8		distance = gist_bbox_distance(entry, query, strategy);
 	*recheck = true;
 
 	PG_RETURN_FLOAT8(distance);
@@ -1683,8 +1669,6 @@ gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup)
 {
 	Point	   *p1 = &(DatumGetBoxP(a)->low);
 	Point	   *p2 = &(DatumGetBoxP(b)->low);
-	uint64		z1;
-	uint64		z2;
 
 	/*
 	 * Do a quick check for equality first. It's not clear if this is worth it
@@ -1694,8 +1678,8 @@ gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup)
 	if (p1->x == p2->x && p1->y == p2->y)
 		return 0;
 
-	z1 = point_zorder_internal(p1->x, p1->y);
-	z2 = point_zorder_internal(p2->x, p2->y);
+	uint64		z1 = point_zorder_internal(p1->x, p1->y);
+	uint64		z2 = point_zorder_internal(p2->x, p2->y);
 	if (z1 > z2)
 		return 1;
 	else if (z1 < z2)
@@ -1715,9 +1699,8 @@ static Datum
 gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup)
 {
 	Point	   *p = &(DatumGetBoxP(original)->low);
-	uint64		z;
 
-	z = point_zorder_internal(p->x, p->y);
+	uint64		z = point_zorder_internal(p->x, p->y);
 
 #if SIZEOF_DATUM == 8
 	return (Datum) z;

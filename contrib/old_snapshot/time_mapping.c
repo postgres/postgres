@@ -53,10 +53,9 @@ pg_old_snapshot_time_mapping(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		mapping = GetOldSnapshotTimeMapping();
 		funcctx->user_fctx = mapping;
 		funcctx->tuple_desc = MakeOldSnapshotTimeMappingTupleDesc();
@@ -68,9 +67,8 @@ pg_old_snapshot_time_mapping(PG_FUNCTION_ARGS)
 
 	while (mapping->current_index < mapping->count_used)
 	{
-		HeapTuple	tuple;
 
-		tuple = MakeOldSnapshotTimeMappingTuple(funcctx->tuple_desc, mapping);
+		HeapTuple	tuple = MakeOldSnapshotTimeMappingTuple(funcctx->tuple_desc, mapping);
 		++mapping->current_index;
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
@@ -84,9 +82,8 @@ pg_old_snapshot_time_mapping(PG_FUNCTION_ARGS)
 static OldSnapshotTimeMapping *
 GetOldSnapshotTimeMapping(void)
 {
-	OldSnapshotTimeMapping *mapping;
 
-	mapping = palloc(offsetof(OldSnapshotTimeMapping, xid_by_minute)
+	OldSnapshotTimeMapping *mapping = palloc(offsetof(OldSnapshotTimeMapping, xid_by_minute)
 					 + sizeof(TransactionId) * OLD_SNAPSHOT_TIME_MAP_ENTRIES);
 	mapping->current_index = 0;
 
@@ -107,9 +104,8 @@ GetOldSnapshotTimeMapping(void)
 static TupleDesc
 MakeOldSnapshotTimeMappingTupleDesc(void)
 {
-	TupleDesc	tupdesc;
 
-	tupdesc = CreateTemplateTupleDesc(NUM_TIME_MAPPING_COLUMNS);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(NUM_TIME_MAPPING_COLUMNS);
 
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "array_offset",
 					   INT4OID, -1, 0);
@@ -129,8 +125,6 @@ MakeOldSnapshotTimeMappingTuple(TupleDesc tupdesc, OldSnapshotTimeMapping *mappi
 {
 	Datum		values[NUM_TIME_MAPPING_COLUMNS];
 	bool		nulls[NUM_TIME_MAPPING_COLUMNS];
-	int			array_position;
-	TimestampTz timestamp;
 
 	/*
 	 * Figure out the array position corresponding to the current index.
@@ -140,14 +134,14 @@ MakeOldSnapshotTimeMappingTuple(TupleDesc tupdesc, OldSnapshotTimeMapping *mappi
 	 * the following index, and so on. We wrap around when we reach the end of
 	 * the array.
 	 */
-	array_position = (mapping->head_offset + mapping->current_index)
+	int			array_position = (mapping->head_offset + mapping->current_index)
 		% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 	/*
 	 * No explicit timestamp is stored for any entry other than the oldest
 	 * one, but each entry corresponds to 1-minute period, so we can just add.
 	 */
-	timestamp = TimestampTzPlusMilliseconds(mapping->head_timestamp,
+	TimestampTz timestamp = TimestampTzPlusMilliseconds(mapping->head_timestamp,
 											mapping->current_index * 60000);
 
 	/* Initialize nulls and values arrays. */

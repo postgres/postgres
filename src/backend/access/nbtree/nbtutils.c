@@ -89,18 +89,12 @@ static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
 BTScanInsert
 _bt_mkscankey(Relation rel, IndexTuple itup)
 {
-	BTScanInsert key;
-	ScanKey		skey;
-	TupleDesc	itupdesc;
-	int			indnkeyatts;
-	int16	   *indoption;
-	int			tupnatts;
 	int			i;
 
-	itupdesc = RelationGetDescr(rel);
-	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	indoption = rel->rd_indoption;
-	tupnatts = itup ? BTreeTupleGetNAtts(itup, rel) : 0;
+	TupleDesc	itupdesc = RelationGetDescr(rel);
+	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
+	int16	   *indoption = rel->rd_indoption;
+	int			tupnatts = itup ? BTreeTupleGetNAtts(itup, rel) : 0;
 
 	Assert(tupnatts <= IndexRelationGetNumberOfAttributes(rel));
 
@@ -109,7 +103,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	 * Truncated attributes and non-key attributes are omitted from the final
 	 * scan key.
 	 */
-	key = palloc(offsetof(BTScanInsertData, scankeys) +
+	BTScanInsert key = palloc(offsetof(BTScanInsertData, scankeys) +
 				 sizeof(ScanKeyData) * indnkeyatts);
 	if (itup)
 		_bt_metaversion(rel, &key->heapkeyspace, &key->allequalimage);
@@ -125,19 +119,17 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	key->keysz = Min(indnkeyatts, tupnatts);
 	key->scantid = key->heapkeyspace && itup ?
 		BTreeTupleGetHeapTID(itup) : NULL;
-	skey = key->scankeys;
+	ScanKey		skey = key->scankeys;
 	for (i = 0; i < indnkeyatts; i++)
 	{
-		FmgrInfo   *procinfo;
 		Datum		arg;
 		bool		null;
-		int			flags;
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
 		 * comparison can be needed.
 		 */
-		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
+		FmgrInfo   *procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 
 		/*
 		 * Key arguments built from truncated attributes (or when caller
@@ -151,7 +143,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 			arg = (Datum) 0;
 			null = true;
 		}
-		flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
+		int			flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
 									   flags,
 									   (AttrNumber) (i + 1),
@@ -205,13 +197,11 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			numberOfKeys = scan->numberOfKeys;
 	int16	   *indoption = scan->indexRelation->rd_indoption;
-	int			numArrayKeys;
 	ScanKey		cur;
 	int			i;
-	MemoryContext oldContext;
 
 	/* Quick check to see if there are any array keys */
-	numArrayKeys = 0;
+	int			numArrayKeys = 0;
 	for (i = 0; i < numberOfKeys; i++)
 	{
 		cur = &scan->keyData[i];
@@ -248,7 +238,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 	else
 		MemoryContextReset(so->arrayContext);
 
-	oldContext = MemoryContextSwitchTo(so->arrayContext);
+	MemoryContext oldContext = MemoryContextSwitchTo(so->arrayContext);
 
 	/* Create modifiable copy of scan->keyData in the workspace context */
 	so->arrayKeyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
@@ -263,14 +253,12 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 	numArrayKeys = 0;
 	for (i = 0; i < numberOfKeys; i++)
 	{
-		ArrayType  *arrayval;
 		int16		elmlen;
 		bool		elmbyval;
 		char		elmalign;
 		int			num_elems;
 		Datum	   *elem_values;
 		bool	   *elem_nulls;
-		int			num_nonnulls;
 		int			j;
 
 		cur = &so->arrayKeyData[i];
@@ -282,7 +270,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		 * here (including a possibly detoasted array value) is in the
 		 * workspace context.
 		 */
-		arrayval = DatumGetArrayTypeP(cur->sk_argument);
+		ArrayType  *arrayval = DatumGetArrayTypeP(cur->sk_argument);
 		/* We could cache this data, but not clear it's worth it */
 		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 							 &elmlen, &elmbyval, &elmalign);
@@ -295,7 +283,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		 * Compress out any null elements.  We can ignore them since we assume
 		 * all btree operators are strict.
 		 */
-		num_nonnulls = 0;
+		int			num_nonnulls = 0;
 		for (j = 0; j < num_elems; j++)
 		{
 			if (!elem_nulls[j])
@@ -379,9 +367,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 	Relation	rel = scan->indexRelation;
 	Oid			elemtype,
 				cmp_op;
-	RegProcedure cmp_proc;
 	FmgrInfo	flinfo;
-	Datum		result;
 	int			i;
 
 	/*
@@ -409,14 +395,14 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 		elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 			 strat, elemtype, elemtype,
 			 rel->rd_opfamily[skey->sk_attno - 1]);
-	cmp_proc = get_opcode(cmp_op);
+	RegProcedure cmp_proc = get_opcode(cmp_op);
 	if (!RegProcedureIsValid(cmp_proc))
 		elog(ERROR, "missing oprcode for operator %u", cmp_op);
 
 	fmgr_info(cmp_proc, &flinfo);
 
 	Assert(nelems > 0);
-	result = elems[0];
+	Datum		result = elems[0];
 	for (i = 1; i < nelems; i++)
 	{
 		if (DatumGetBool(FunctionCall2Coll(&flinfo,
@@ -444,8 +430,6 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 						Datum *elems, int nelems)
 {
 	Relation	rel = scan->indexRelation;
-	Oid			elemtype;
-	RegProcedure cmp_proc;
 	BTSortArrayContext cxt;
 
 	if (nelems <= 1)
@@ -456,7 +440,7 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	 * support the convention that sk_subtype == InvalidOid means the opclass
 	 * input type; this is a hack to simplify life for ScanKeyInit().
 	 */
-	elemtype = skey->sk_subtype;
+	Oid			elemtype = skey->sk_subtype;
 	if (elemtype == InvalidOid)
 		elemtype = rel->rd_opcintype[skey->sk_attno - 1];
 
@@ -468,7 +452,7 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	 * non-cross-type support functions for any datatype that it supports at
 	 * all.
 	 */
-	cmp_proc = get_opfamily_proc(rel->rd_opfamily[skey->sk_attno - 1],
+	RegProcedure cmp_proc = get_opfamily_proc(rel->rd_opfamily[skey->sk_attno - 1],
 								 elemtype,
 								 elemtype,
 								 BTORDER_PROC);
@@ -498,9 +482,8 @@ _bt_compare_array_elements(const void *a, const void *b, void *arg)
 	Datum		da = *((const Datum *) a);
 	Datum		db = *((const Datum *) b);
 	BTSortArrayContext *cxt = (BTSortArrayContext *) arg;
-	int32		compare;
 
-	compare = DatumGetInt32(FunctionCall2Coll(&cxt->flinfo,
+	int32		compare = DatumGetInt32(FunctionCall2Coll(&cxt->flinfo,
 											  cxt->collation,
 											  da, db));
 	if (cxt->reverse)
@@ -744,16 +727,11 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			numberOfKeys = scan->numberOfKeys;
 	int16	   *indoption = scan->indexRelation->rd_indoption;
-	int			new_numberOfKeys;
-	int			numberOfEqualCols;
 	ScanKey		inkeys;
-	ScanKey		outkeys;
-	ScanKey		cur;
 	ScanKey		xform[BTMaxStrategyNumber];
 	bool		test_result;
 	int			i,
 				j;
-	AttrNumber	attno;
 
 	/* initialize result variables */
 	so->qual_ok = true;
@@ -770,8 +748,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	else
 		inkeys = scan->keyData;
 
-	outkeys = so->keyData;
-	cur = &inkeys[0];
+	ScanKey		outkeys = so->keyData;
+	ScanKey		cur = &inkeys[0];
 	/* we check that input keys are correctly ordered */
 	if (cur->sk_attno < 1)
 		elog(ERROR, "btree index keys must be ordered by attribute");
@@ -793,8 +771,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	/*
 	 * Otherwise, do the full set of pushups.
 	 */
-	new_numberOfKeys = 0;
-	numberOfEqualCols = 0;
+	int			new_numberOfKeys = 0;
+	int			numberOfEqualCols = 0;
 
 	/*
 	 * Initialize for processing of keys for attr 1.
@@ -802,7 +780,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	 * xform[i] points to the currently best scan key of strategy type i+1; it
 	 * is NULL if we haven't yet found such a key for this attr.
 	 */
-	attno = 1;
+	AttrNumber	attno = 1;
 	memset(xform, 0, sizeof(xform));
 
 	/*
@@ -1195,9 +1173,8 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 static bool
 _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 {
-	int			addflags;
 
-	addflags = indoption[skey->sk_attno - 1] << SK_BT_INDOPTION_SHIFT;
+	int			addflags = indoption[skey->sk_attno - 1] << SK_BT_INDOPTION_SHIFT;
 
 	/*
 	 * We treat all btree operators as strict (even if they're not so marked
@@ -1355,9 +1332,6 @@ bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			  ScanDirection dir, bool *continuescan)
 {
-	TupleDesc	tupdesc;
-	BTScanOpaque so;
-	int			keysz;
 	int			ikey;
 	ScanKey		key;
 
@@ -1365,15 +1339,13 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 
 	*continuescan = true;		/* default assumption */
 
-	tupdesc = RelationGetDescr(scan->indexRelation);
-	so = (BTScanOpaque) scan->opaque;
-	keysz = so->numberOfKeys;
+	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	int			keysz = so->numberOfKeys;
 
 	for (key = so->keyData, ikey = 0; ikey < keysz; key++, ikey++)
 	{
-		Datum		datum;
 		bool		isNull;
-		Datum		test;
 
 		if (key->sk_attno > tupnatts)
 		{
@@ -1397,7 +1369,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			return false;
 		}
 
-		datum = index_getattr(tuple,
+		Datum		datum = index_getattr(tuple,
 							  key->sk_attno,
 							  tupdesc,
 							  &isNull);
@@ -1476,7 +1448,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 			return false;
 		}
 
-		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
+		Datum		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
 								 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
@@ -1532,7 +1504,6 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 	/* Loop over columns of the row condition */
 	for (;;)
 	{
-		Datum		datum;
 		bool		isNull;
 
 		Assert(subkey->sk_flags & SK_ROW_MEMBER);
@@ -1554,7 +1525,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			continue;
 		}
 
-		datum = index_getattr(tuple,
+		Datum		datum = index_getattr(tuple,
 							  subkey->sk_attno,
 							  tupdesc,
 							  &isNull);
@@ -1719,9 +1690,6 @@ _bt_killitems(IndexScanDesc scan)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Page		page;
-	BTPageOpaque opaque;
-	OffsetNumber minoff;
-	OffsetNumber maxoff;
 	int			i;
 	int			numKilled = so->numKilled;
 	bool		killedsomething = false;
@@ -1750,11 +1718,10 @@ _bt_killitems(IndexScanDesc scan)
 	}
 	else
 	{
-		Buffer		buf;
 
 		droppedpin = true;
 		/* Attempt to re-read the buffer, getting pin and lock. */
-		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
+		Buffer		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
 
 		page = BufferGetPage(buf);
 		if (BufferGetLSNAtomic(buf) == so->currPos.lsn)
@@ -1767,9 +1734,9 @@ _bt_killitems(IndexScanDesc scan)
 		}
 	}
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	minoff = P_FIRSTDATAKEY(opaque);
-	maxoff = PageGetMaxOffsetNumber(page);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	OffsetNumber minoff = P_FIRSTDATAKEY(opaque);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)
 	{
@@ -1968,7 +1935,6 @@ _bt_vacuum_cycleid(Relation rel)
 BTCycleId
 _bt_start_vacuum(Relation rel)
 {
-	BTCycleId	result;
 	int			i;
 	BTOneVacInfo *vac;
 
@@ -1978,7 +1944,7 @@ _bt_start_vacuum(Relation rel)
 	 * Assign the next cycle ID, being careful to avoid zero as well as the
 	 * reserved high values.
 	 */
-	result = ++(btvacinfo->cycle_ctr);
+	BTCycleId	result = ++(btvacinfo->cycle_ctr);
 	if (result == 0 || result > MAX_BT_CYCLE_ID)
 		result = btvacinfo->cycle_ctr = 1;
 
@@ -2062,9 +2028,8 @@ _bt_end_vacuum_callback(int code, Datum arg)
 Size
 BTreeShmemSize(void)
 {
-	Size		size;
 
-	size = offsetof(BTVacInfo, vacuums);
+	Size		size = offsetof(BTVacInfo, vacuums);
 	size = add_size(size, mul_size(MaxBackends, sizeof(BTOneVacInfo)));
 	return size;
 }
@@ -2202,7 +2167,6 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	int			keepnatts;
 	IndexTuple	pivot;
 	IndexTuple	tidpivot;
 	ItemPointer pivotheaptid;
@@ -2215,7 +2179,7 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	Assert(!BTreeTupleIsPivot(lastleft) && !BTreeTupleIsPivot(firstright));
 
 	/* Determine how many attributes must be kept in truncated tuple */
-	keepnatts = _bt_keep_natts(rel, lastleft, firstright, itup_key);
+	int			keepnatts = _bt_keep_natts(rel, lastleft, firstright, itup_key);
 
 #ifdef DEBUG_NO_TRUNCATE
 	/* Force truncation to be ineffective for testing purposes */
@@ -2347,8 +2311,6 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 {
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	TupleDesc	itupdesc = RelationGetDescr(rel);
-	int			keepnatts;
-	ScanKey		scankey;
 
 	/*
 	 * _bt_compare() treats truncated key attributes as having the value minus
@@ -2358,8 +2320,8 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	if (!itup_key->heapkeyspace)
 		return nkeyatts;
 
-	scankey = itup_key->scankeys;
-	keepnatts = 1;
+	ScanKey		scankey = itup_key->scankeys;
+	int			keepnatts = 1;
 	for (int attnum = 1; attnum <= nkeyatts; attnum++, scankey++)
 	{
 		Datum		datum1,
@@ -2420,20 +2382,18 @@ _bt_keep_natts_fast(Relation rel, IndexTuple lastleft, IndexTuple firstright)
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int			keysz = IndexRelationGetNumberOfKeyAttributes(rel);
-	int			keepnatts;
 
-	keepnatts = 1;
+	int			keepnatts = 1;
 	for (int attnum = 1; attnum <= keysz; attnum++)
 	{
 		Datum		datum1,
 					datum2;
 		bool		isNull1,
 					isNull2;
-		Form_pg_attribute att;
 
 		datum1 = index_getattr(lastleft, attnum, itupdesc, &isNull1);
 		datum2 = index_getattr(firstright, attnum, itupdesc, &isNull2);
-		att = TupleDescAttr(itupdesc, attnum - 1);
+		Form_pg_attribute att = TupleDescAttr(itupdesc, attnum - 1);
 
 		if (isNull1 != isNull2)
 			break;
@@ -2468,8 +2428,6 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 	int16		natts = IndexRelationGetNumberOfAttributes(rel);
 	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	IndexTuple	itup;
-	int			tupnatts;
 
 	/*
 	 * We cannot reliably test a deleted or half-dead page, since they have
@@ -2488,8 +2446,8 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 	StaticAssertStmt(BT_OFFSET_MASK >= INDEX_MAX_KEYS,
 					 "BT_OFFSET_MASK can't fit INDEX_MAX_KEYS");
 
-	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	tupnatts = BTreeTupleGetNAtts(itup, rel);
+	IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+	int			tupnatts = BTreeTupleGetNAtts(itup, rel);
 
 	/* !heapkeyspace indexes do not support deduplication */
 	if (!heapkeyspace && BTreeTupleIsPosting(itup))
@@ -2634,10 +2592,8 @@ void
 _bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
 					 Page page, IndexTuple newtup)
 {
-	Size		itemsz;
-	BTPageOpaque opaque;
 
-	itemsz = MAXALIGN(IndexTupleSize(newtup));
+	Size		itemsz = MAXALIGN(IndexTupleSize(newtup));
 
 	/* Double check item size against limit */
 	if (itemsz <= BTMaxItemSize(page))
@@ -2655,7 +2611,7 @@ _bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
 	 * Internal page insertions cannot fail here, because that would mean that
 	 * an earlier leaf level insertion that should have failed didn't
 	 */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (!P_ISLEAF(opaque))
 		elog(ERROR, "cannot insert oversized tuple of size %zu on internal page of index \"%s\"",
 			 itemsz, RelationGetRelationName(rel));
@@ -2715,9 +2671,8 @@ _bt_allequalimage(Relation rel, bool debugmessage)
 		Oid			opfamily = rel->rd_opfamily[i];
 		Oid			opcintype = rel->rd_opcintype[i];
 		Oid			collation = rel->rd_indcollation[i];
-		Oid			equalimageproc;
 
-		equalimageproc = get_opfamily_proc(opfamily, opcintype, opcintype,
+		Oid			equalimageproc = get_opfamily_proc(opfamily, opcintype, opcintype,
 										   BTEQUALIMAGE_PROC);
 
 		/*

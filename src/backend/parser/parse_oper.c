@@ -101,9 +101,8 @@ Oid
 LookupOperName(ParseState *pstate, List *opername, Oid oprleft, Oid oprright,
 			   bool noError, int location)
 {
-	Oid			result;
 
-	result = OpernameGetOprid(opername, oprleft, oprright);
+	Oid			result = OpernameGetOprid(opername, oprleft, oprright);
 	if (OidIsValid(result))
 		return result;
 
@@ -194,12 +193,7 @@ get_sort_group_operators(Oid argtype,
 						 Oid *ltOpr, Oid *eqOpr, Oid *gtOpr,
 						 bool *isHashable)
 {
-	TypeCacheEntry *typentry;
 	int			cache_flags;
-	Oid			lt_opr;
-	Oid			eq_opr;
-	Oid			gt_opr;
-	bool		hashable;
 
 	/*
 	 * Look up the operators using the type cache.
@@ -213,11 +207,11 @@ get_sort_group_operators(Oid argtype,
 	else
 		cache_flags = TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR;
 
-	typentry = lookup_type_cache(argtype, cache_flags);
-	lt_opr = typentry->lt_opr;
-	eq_opr = typentry->eq_opr;
-	gt_opr = typentry->gt_opr;
-	hashable = OidIsValid(typentry->hash_proc);
+	TypeCacheEntry *typentry = lookup_type_cache(argtype, cache_flags);
+	Oid			lt_opr = typentry->lt_opr;
+	Oid			eq_opr = typentry->eq_opr;
+	Oid			gt_opr = typentry->gt_opr;
+	bool		hashable = OidIsValid(typentry->hash_proc);
 
 	/* Report errors if needed */
 	if ((needLT && !OidIsValid(lt_opr)) ||
@@ -273,7 +267,6 @@ oprfuncid(Operator op)
 static Oid
 binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 {
-	Oid			result;
 	bool		was_unknown = false;
 
 	/* Unspecified type for one of the arguments? then use the other */
@@ -288,7 +281,7 @@ binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 		was_unknown = true;
 	}
 
-	result = OpernameGetOprid(opname, arg1, arg2);
+	Oid			result = OpernameGetOprid(opname, arg1, arg2);
 	if (OidIsValid(result))
 		return result;
 
@@ -326,13 +319,12 @@ oper_select_candidate(int nargs,
 					  FuncCandidateList candidates,
 					  Oid *operOid) /* output argument */
 {
-	int			ncandidates;
 
 	/*
 	 * Delete any candidates that cannot actually accept the given input
 	 * types, whether directly or by coercion.
 	 */
-	ncandidates = func_match_argtypes(nargs, input_typeids,
+	int			ncandidates = func_match_argtypes(nargs, input_typeids,
 									  candidates, &candidates);
 
 	/* Done if no candidate or only one candidate survives */
@@ -384,14 +376,13 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 {
 	Oid			operOid;
 	OprCacheKey key;
-	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
+	bool		key_ok = make_oper_cache_key(pstate, &key, opname, ltypeId, rtypeId, location);
 
 	if (key_ok)
 	{
@@ -413,10 +404,9 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 		/*
 		 * Otherwise, search for the most suitable candidate.
 		 */
-		FuncCandidateList clist;
 
 		/* Get binary operators of given name */
-		clist = OpernameGetCandidates(opname, 'b', false);
+		FuncCandidateList clist = OpernameGetCandidates(opname, 'b', false);
 
 		/* No operators found? Then fail... */
 		if (clist != NULL)
@@ -462,16 +452,14 @@ Operator
 compatible_oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
 				bool noError, int location)
 {
-	Operator	optup;
-	Form_pg_operator opform;
 
 	/* oper() will find the best available match */
-	optup = oper(pstate, op, arg1, arg2, noError, location);
+	Operator	optup = oper(pstate, op, arg1, arg2, noError, location);
 	if (optup == (Operator) NULL)
 		return (Operator) NULL; /* must be noError case */
 
 	/* but is it good enough? */
-	opform = (Form_pg_operator) GETSTRUCT(optup);
+	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(optup);
 	if (IsBinaryCoercible(arg1, opform->oprleft) &&
 		IsBinaryCoercible(arg2, opform->oprright))
 		return optup;
@@ -498,10 +486,9 @@ compatible_oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
 Oid
 compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 {
-	Operator	optup;
 	Oid			result;
 
-	optup = compatible_oper(NULL, op, arg1, arg2, noError, -1);
+	Operator	optup = compatible_oper(NULL, op, arg1, arg2, noError, -1);
 	if (optup != NULL)
 	{
 		result = oprid(optup);
@@ -531,14 +518,13 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
 	Oid			operOid;
 	OprCacheKey key;
-	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
 	/*
 	 * Try to find the mapping in the lookaside cache.
 	 */
-	key_ok = make_oper_cache_key(pstate, &key, op, InvalidOid, arg, location);
+	bool		key_ok = make_oper_cache_key(pstate, &key, op, InvalidOid, arg, location);
 
 	if (key_ok)
 	{
@@ -560,10 +546,9 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 		/*
 		 * Otherwise, search for the most suitable candidate.
 		 */
-		FuncCandidateList clist;
 
 		/* Get prefix operators of given name */
-		clist = OpernameGetCandidates(op, 'l', false);
+		FuncCandidateList clist = OpernameGetCandidates(op, 'l', false);
 
 		/* No operators found? Then fail... */
 		if (clist != NULL)
@@ -675,13 +660,10 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	Oid			ltypeId,
 				rtypeId;
 	Operator	tup;
-	Form_pg_operator opform;
 	Oid			actual_arg_types[2];
 	Oid			declared_arg_types[2];
 	int			nargs;
 	List	   *args;
-	Oid			rettype;
-	OpExpr	   *result;
 
 	/* Check it's not a postfix operator */
 	if (rtree == NULL)
@@ -705,7 +687,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 		tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	}
 
-	opform = (Form_pg_operator) GETSTRUCT(tup);
+	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(tup);
 
 	/* Check it's not a shell */
 	if (!RegProcedureIsValid(opform->oprcode))
@@ -743,7 +725,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	 * possibly adjusting return type or declared_arg_types (which will be
 	 * used as the cast destination by make_fn_arguments)
 	 */
-	rettype = enforce_generic_type_consistency(actual_arg_types,
+	Oid			rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
 											   nargs,
 											   opform->oprresult,
@@ -753,7 +735,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
 	/* and build the expression node */
-	result = makeNode(OpExpr);
+	OpExpr	   *result = makeNode(OpExpr);
 	result->opno = oprid(tup);
 	result->opfuncid = opform->oprcode;
 	result->opresulttype = rettype;
@@ -789,13 +771,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 				rtypeId,
 				atypeId,
 				res_atypeId;
-	Operator	tup;
-	Form_pg_operator opform;
 	Oid			actual_arg_types[2];
 	Oid			declared_arg_types[2];
-	List	   *args;
-	Oid			rettype;
-	ScalarArrayOpExpr *result;
 
 	ltypeId = exprType(ltree);
 	atypeId = exprType(rtree);
@@ -818,8 +795,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	}
 
 	/* Now resolve the operator */
-	tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
-	opform = (Form_pg_operator) GETSTRUCT(tup);
+	Operator	tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
+	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(tup);
 
 	/* Check it's not a shell */
 	if (!RegProcedureIsValid(opform->oprcode))
@@ -832,7 +809,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 											opform->oprright)),
 				 parser_errposition(pstate, location)));
 
-	args = list_make2(ltree, rtree);
+	List	   *args = list_make2(ltree, rtree);
 	actual_arg_types[0] = ltypeId;
 	actual_arg_types[1] = rtypeId;
 	declared_arg_types[0] = opform->oprleft;
@@ -843,7 +820,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	 * possibly adjusting return type or declared_arg_types (which will be
 	 * used as the cast destination by make_fn_arguments)
 	 */
-	rettype = enforce_generic_type_consistency(actual_arg_types,
+	Oid			rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
 											   2,
 											   opform->oprresult,
@@ -891,7 +868,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
 	/* and build the expression node */
-	result = makeNode(ScalarArrayOpExpr);
+	ScalarArrayOpExpr *result = makeNode(ScalarArrayOpExpr);
 	result->opno = oprid(tup);
 	result->opfuncid = opform->oprcode;
 	result->hashfuncid = InvalidOid;
@@ -994,7 +971,6 @@ make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
 static Oid
 find_oper_cache_entry(OprCacheKey *key)
 {
-	OprCacheEntry *oprentry;
 
 	if (OprCacheHash == NULL)
 	{
@@ -1016,7 +992,7 @@ find_oper_cache_entry(OprCacheKey *key)
 	}
 
 	/* Look for an existing entry */
-	oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
+	OprCacheEntry *oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
 											 (void *) key,
 											 HASH_FIND, NULL);
 	if (oprentry == NULL)
@@ -1033,11 +1009,10 @@ find_oper_cache_entry(OprCacheKey *key)
 static void
 make_oper_cache_entry(OprCacheKey *key, Oid opr_oid)
 {
-	OprCacheEntry *oprentry;
 
 	Assert(OprCacheHash != NULL);
 
-	oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
+	OprCacheEntry *oprentry = (OprCacheEntry *) hash_search(OprCacheHash,
 											 (void *) key,
 											 HASH_ENTER, NULL);
 	oprentry->opr_oid = opr_oid;

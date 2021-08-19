@@ -31,7 +31,6 @@ insert_username(PG_FUNCTION_ARGS)
 	Relation	rel;			/* triggered relation */
 	HeapTuple	rettuple = NULL;
 	TupleDesc	tupdesc;		/* tuple description */
-	int			attnum;
 
 	/* sanity checks from autoinc.c */
 	if (!CALLED_AS_TRIGGER(fcinfo))
@@ -65,7 +64,7 @@ insert_username(PG_FUNCTION_ARGS)
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
 
-	attnum = SPI_fnumber(tupdesc, args[0]);
+	int			attnum = SPI_fnumber(tupdesc, args[0]);
 
 	if (attnum <= 0)
 		ereport(ERROR,

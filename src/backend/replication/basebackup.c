@@ -258,10 +258,7 @@ perform_base_backup(basebackup_options *opt)
 	TimeLineID	starttli;
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
-	StringInfo	labelfile;
-	StringInfo	tblspc_map_file;
 	backup_manifest_info manifest;
-	int			datadirpathlen;
 	List	   *tablespaces = NIL;
 
 	backup_total = 0;
@@ -284,12 +281,12 @@ perform_base_backup(basebackup_options *opt)
 	Assert(CurrentResourceOwner == NULL);
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "base backup");
 
-	datadirpathlen = strlen(DataDir);
+	int			datadirpathlen = strlen(DataDir);
 
 	backup_started_in_recovery = RecoveryInProgress();
 
-	labelfile = makeStringInfo();
-	tblspc_map_file = makeStringInfo();
+	StringInfo	labelfile = makeStringInfo();
+	StringInfo	tblspc_map_file = makeStringInfo();
 	InitializeBackupManifest(&manifest, opt->manifest,
 							 opt->manifest_checksum_type);
 
@@ -311,7 +308,6 @@ perform_base_backup(basebackup_options *opt)
 	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));
 	{
 		ListCell   *lc;
-		tablespaceinfo *ti;
 		int			tblspc_streamed = 0;
 
 		/*
@@ -327,7 +323,7 @@ perform_base_backup(basebackup_options *opt)
 			statrelpath = pgstat_stat_directory;
 
 		/* Add a node for the base directory at the end */
-		ti = palloc0(sizeof(tablespaceinfo));
+		tablespaceinfo *ti = palloc0(sizeof(tablespaceinfo));
 		ti->size = -1;
 		tablespaces = lappend(tablespaces, ti);
 
@@ -484,7 +480,6 @@ perform_base_backup(basebackup_options *opt)
 		List	   *walFileList = NIL;
 		char		firstoff[MAXFNAMELEN];
 		char		lastoff[MAXFNAMELEN];
-		DIR		   *dir;
 		struct dirent *de;
 		ListCell   *lc;
 		TimeLineID	tli;
@@ -506,7 +501,7 @@ perform_base_backup(basebackup_options *opt)
 		XLByteToPrevSeg(endptr, endsegno, wal_segment_size);
 		XLogFileName(lastoff, ThisTimeLineID, endsegno, wal_segment_size);
 
-		dir = AllocateDir("pg_wal");
+		DIR		   *dir = AllocateDir("pg_wal");
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
@@ -590,7 +585,6 @@ perform_base_backup(basebackup_options *opt)
 		foreach(lc, walFileList)
 		{
 			char	   *walFileName = (char *) lfirst(lc);
-			int			fd;
 			char		buf[TAR_SEND_SIZE];
 			size_t		cnt;
 			pgoff_t		len = 0;
@@ -598,7 +592,7 @@ perform_base_backup(basebackup_options *opt)
 			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", walFileName);
 			XLogFromFileName(walFileName, &tli, &segno, wal_segment_size);
 
-			fd = OpenTransientFile(pathbuf, O_RDONLY | PG_BINARY);
+			int			fd = OpenTransientFile(pathbuf, O_RDONLY | PG_BINARY);
 			if (fd < 0)
 			{
 				int			save_errno = errno;
@@ -828,14 +822,13 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		}
 		else if (strcmp(defel->defname, "max_rate") == 0)
 		{
-			long		maxrate;
 
 			if (o_maxrate)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 
-			maxrate = intVal(defel->arg);
+			long		maxrate = intVal(defel->arg);
 			if (maxrate < MAX_RATE_LOWER || maxrate > MAX_RATE_UPPER)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -1011,9 +1004,8 @@ SendBackupHeader(List *tablespaces)
 		}
 		else
 		{
-			Size		len;
 
-			len = strlen(ti->oid);
+			Size		len = strlen(ti->oid);
 			pq_sendint32(&buf, len);
 			pq_sendbytes(&buf, ti->oid, len);
 
@@ -1042,7 +1034,6 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 {
 	StringInfoData buf;
 	char		str[MAXFNAMELEN];
-	Size		len;
 
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
 	pq_sendint16(&buf, 2);		/* 2 fields */
@@ -1074,7 +1065,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_beginmessage(&buf, 'D');
 	pq_sendint16(&buf, 2);		/* number of columns */
 
-	len = snprintf(str, sizeof(str),
+	Size		len = snprintf(str, sizeof(str),
 				   "%X/%X", LSN_FORMAT_ARGS(ptr));
 	pq_sendint32(&buf, len);
 	pq_sendbytes(&buf, str, len);
@@ -1158,7 +1149,6 @@ static int64
 sendTablespace(char *path, char *spcoid, bool sizeonly,
 			   backup_manifest_info *manifest)
 {
-	int64		size;
 	char		pathbuf[MAXPGPATH];
 	struct stat statbuf;
 
@@ -1185,7 +1175,7 @@ sendTablespace(char *path, char *spcoid, bool sizeonly,
 		return 0;
 	}
 
-	size = _tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf,
+	int64		size = _tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf,
 						   sizeonly);
 
 	/* Send all the files in the tablespace version directory */
@@ -1212,7 +1202,6 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		bool sendtblspclinks, backup_manifest_info *manifest,
 		const char *spcoid)
 {
-	DIR		   *dir;
 	struct dirent *de;
 	char		pathbuf[MAXPGPATH * 2];
 	struct stat statbuf;
@@ -1248,11 +1237,10 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			isDbDir = true;
 	}
 
-	dir = AllocateDir(path);
+	DIR		   *dir = AllocateDir(path);
 	while ((de = ReadDir(dir, path)) != NULL)
 	{
 		int			excludeIdx;
-		bool		excludeFound;
 		ForkNumber	relForkNum; /* Type of fork if file is a relation */
 		int			relOidChars;	/* Chars in filename that are the rel oid */
 
@@ -1284,7 +1272,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 							 "Try taking another online backup.")));
 
 		/* Scan for files that should be excluded */
-		excludeFound = false;
+		bool		excludeFound = false;
 		for (excludeIdx = 0; excludeFiles[excludeIdx].name != NULL; excludeIdx++)
 		{
 			int			cmplen = strlen(excludeFiles[excludeIdx].name);
@@ -1419,9 +1407,8 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		{
 #if defined(HAVE_READLINK) || defined(WIN32)
 			char		linkpath[MAXPGPATH];
-			int			rllen;
 
-			rllen = readlink(pathbuf, linkpath, sizeof(linkpath));
+			int			rllen = readlink(pathbuf, linkpath, sizeof(linkpath));
 			if (rllen < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
@@ -1579,7 +1566,6 @@ sendFile(const char *readfilename, const char *tarfilename,
 		 struct stat *statbuf, bool missing_ok, Oid dboid,
 		 backup_manifest_info *manifest, const char *spcoid)
 {
-	int			fd;
 	BlockNumber blkno = 0;
 	bool		block_retry = false;
 	char		buf[TAR_SEND_SIZE];
@@ -1589,7 +1575,6 @@ sendFile(const char *readfilename, const char *tarfilename,
 	int			i;
 	pgoff_t		len = 0;
 	char	   *page;
-	size_t		pad;
 	PageHeader	phdr;
 	int			segmentno = 0;
 	char	   *segmentpath;
@@ -1600,7 +1585,7 @@ sendFile(const char *readfilename, const char *tarfilename,
 		elog(ERROR, "could not initialize checksum of file \"%s\"",
 			 readfilename);
 
-	fd = OpenTransientFile(readfilename, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(readfilename, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (errno == ENOENT && missing_ok)
@@ -1614,14 +1599,13 @@ sendFile(const char *readfilename, const char *tarfilename,
 
 	if (!noverify_checksums && DataChecksumsEnabled())
 	{
-		char	   *filename;
 
 		/*
 		 * Get the filename (excluding path).  As last_dir_separator()
 		 * includes the last directory separator, we chop that off by
 		 * incrementing the pointer.
 		 */
-		filename = last_dir_separator(readfilename) + 1;
+		char	   *filename = last_dir_separator(readfilename) + 1;
 
 		if (is_checksummed_file(readfilename, filename))
 		{
@@ -1800,7 +1784,7 @@ sendFile(const char *readfilename, const char *tarfilename,
 	 * of data is probably not worth throttling, and is not checksummed
 	 * because it's not actually part of the file.)
 	 */
-	pad = tarPaddingBytesRequired(len);
+	size_t		pad = tarPaddingBytesRequired(len);
 	if (pad > 0)
 	{
 		MemSet(buf, 0, pad);
@@ -1896,7 +1880,6 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 static void
 throttle(size_t increment)
 {
-	TimeOffset	elapsed_min;
 
 	if (throttling_counter < 0)
 		return;
@@ -1906,7 +1889,7 @@ throttle(size_t increment)
 		return;
 
 	/* How much time should have elapsed at minimum? */
-	elapsed_min = elapsed_min_unit *
+	TimeOffset	elapsed_min = elapsed_min_unit *
 		(throttling_counter / throttling_sample);
 
 	/*
@@ -1917,7 +1900,6 @@ throttle(size_t increment)
 	{
 		TimeOffset	elapsed,
 					sleep;
-		int			wait_result;
 
 		/* Time elapsed since the last measurement (and possible wake up). */
 		elapsed = GetCurrentTimestamp() - throttled_last;
@@ -1936,7 +1918,7 @@ throttle(size_t increment)
 		 * (TAR_SEND_SIZE / throttling_sample * elapsed_min_unit) should be
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
-		wait_result = WaitLatch(MyLatch,
+		int			wait_result = WaitLatch(MyLatch,
 								WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 								(long) (sleep / 1000),
 								WAIT_EVENT_BASE_BACKUP_THROTTLE);
@@ -2008,10 +1990,9 @@ static int
 basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
 					 const char *filename, bool partial_read_ok)
 {
-	int			rc;
 
 	pgstat_report_wait_start(WAIT_EVENT_BASEBACKUP_READ);
-	rc = pg_pread(fd, buf, nbytes, offset);
+	int			rc = pg_pread(fd, buf, nbytes, offset);
 	pgstat_report_wait_end();
 
 	if (rc < 0)

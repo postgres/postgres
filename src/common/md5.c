@@ -312,10 +312,9 @@ md5_calc(const uint8 *b64, pg_md5_ctx *ctx)
 static void
 md5_pad(pg_md5_ctx *ctx)
 {
-	unsigned int gap;
 
 	/* Don't count up padding. Keep md5_n. */
-	gap = MD5_BUFLEN - ctx->md5_i;
+	unsigned int gap = MD5_BUFLEN - ctx->md5_i;
 	if (gap > 8)
 	{
 		memmove(ctx->md5_buf + ctx->md5_i, md5_paddat,

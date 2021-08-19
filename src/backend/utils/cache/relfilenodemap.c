@@ -138,7 +138,6 @@ Oid
 RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 {
 	RelfilenodeMapKey key;
-	RelfilenodeMapEntry *entry;
 	bool		found;
 	SysScanDesc scandesc;
 	Relation	relation;
@@ -164,7 +163,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	 * since querying invalid values isn't supposed to be a frequent thing,
 	 * but it's basically free.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found);
+	RelfilenodeMapEntry *entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found);
 
 	if (found)
 		return entry->relid;

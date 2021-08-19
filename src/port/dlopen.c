@@ -110,9 +110,8 @@ dlclose(void *handle)
 void *
 dlsym(void *handle, const char *symbol)
 {
-	void	   *ptr;
 
-	ptr = GetProcAddress((HMODULE) handle, symbol);
+	void	   *ptr = GetProcAddress((HMODULE) handle, symbol);
 	if (!ptr)
 	{
 		set_dl_error();
@@ -125,12 +124,10 @@ dlsym(void *handle, const char *symbol)
 void *
 dlopen(const char *file, int mode)
 {
-	HMODULE		h;
-	int			prevmode;
 
 	/* Disable popup error messages when loading DLLs */
-	prevmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-	h = LoadLibrary(file);
+	int			prevmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+	HMODULE		h = LoadLibrary(file);
 	SetErrorMode(prevmode);
 
 	if (!h)

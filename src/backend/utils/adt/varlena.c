@@ -224,9 +224,8 @@ text_to_cstring(const text *t)
 	/* must cast away the const, unfortunately */
 	text	   *tunpacked = pg_detoast_datum_packed(unconstify(text *, t));
 	int			len = VARSIZE_ANY_EXHDR(tunpacked);
-	char	   *result;
 
-	result = (char *) palloc(len + 1);
+	char	   *result = (char *) palloc(len + 1);
 	memcpy(result, VARDATA_ANY(tunpacked), len);
 	result[len] = '\0';
 
@@ -296,7 +295,6 @@ byteain(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *tp;
-	char	   *rp;
 	int			bc;
 	bytea	   *result;
 
@@ -343,7 +341,7 @@ byteain(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, bc);
 
 	tp = inputText;
-	rp = VARDATA(result);
+	char	   *rp = VARDATA(result);
 	while (*tp != '\0')
 	{
 		if (tp[0] != '\\')
@@ -405,12 +403,10 @@ byteaout(PG_FUNCTION_ARGS)
 	else if (bytea_output == BYTEA_OUTPUT_ESCAPE)
 	{
 		/* Print traditional escaped format */
-		char	   *vp;
-		uint64		len;
 		int			i;
 
-		len = 1;				/* empty string has 1 char */
-		vp = VARDATA_ANY(vlena);
+		uint64		len = 1;				/* empty string has 1 char */
+		char	   *vp = VARDATA_ANY(vlena);
 		for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
 		{
 			if (*vp == '\\')
@@ -474,11 +470,9 @@ Datum
 bytearecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	bytea	   *result;
-	int			nbytes;
 
-	nbytes = buf->len - buf->cursor;
-	result = (bytea *) palloc(nbytes + VARHDRSZ);
+	int			nbytes = buf->len - buf->cursor;
+	bytea	   *result = (bytea *) palloc(nbytes + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	pq_copymsgbytes(buf, VARDATA(result), nbytes);
 	PG_RETURN_BYTEA_P(result);
@@ -500,9 +494,8 @@ byteasend(PG_FUNCTION_ARGS)
 Datum
 bytea_string_agg_transfn(PG_FUNCTION_ARGS)
 {
-	StringInfo	state;
 
-	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	/* Append the value unless null. */
 	if (!PG_ARGISNULL(1))
@@ -532,18 +525,16 @@ bytea_string_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 bytea_string_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	StringInfo	state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	if (state != NULL)
 	{
-		bytea	   *result;
 
-		result = (bytea *) palloc(state->len + VARHDRSZ);
+		bytea	   *result = (bytea *) palloc(state->len + VARHDRSZ);
 		SET_VARSIZE(result, state->len + VARHDRSZ);
 		memcpy(VARDATA(result), state->data, state->len);
 		PG_RETURN_BYTEA_P(result);
@@ -581,13 +572,11 @@ Datum
 textrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	text	   *result;
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
-	result = cstring_to_text_with_len(str, nbytes);
+	text	   *result = cstring_to_text_with_len(str, nbytes);
 	pfree(str);
 	PG_RETURN_TEXT_P(result);
 }
@@ -638,10 +627,9 @@ Datum
 unknownrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	/* representation is same as cstring */
 	PG_RETURN_CSTRING(str);
 }
@@ -744,11 +732,9 @@ textcat(PG_FUNCTION_ARGS)
 static text *
 text_catenate(text *t1, text *t2)
 {
-	text	   *result;
 	int			len1,
 				len2,
 				len;
-	char	   *ptr;
 
 	len1 = VARSIZE_ANY_EXHDR(t1);
 	len2 = VARSIZE_ANY_EXHDR(t2);
@@ -760,13 +746,13 @@ text_catenate(text *t1, text *t2)
 		len2 = 0;
 
 	len = len1 + len2 + VARHDRSZ;
-	result = (text *) palloc(len);
+	text	   *result = (text *) palloc(len);
 
 	/* Set size of result string... */
 	SET_VARSIZE(result, len);
 
 	/* Fill data field of result string... */
-	ptr = VARDATA(result);
+	char	   *ptr = VARDATA(result);
 	if (len1 > 0)
 		memcpy(ptr, VARDATA_ANY(t1), len1);
 	if (len2 > 0)
@@ -925,22 +911,17 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 * detoasting, so we'll grab a conservatively large slice now and go
 		 * back later to do the right thing
 		 */
-		int32		slice_start;
 		int32		slice_size;
-		int32		slice_strlen;
 		text	   *slice;
 		int32		E1;
 		int32		i;
-		char	   *p;
-		char	   *s;
-		text	   *ret;
 
 		/*
 		 * We need to start at position zero because there is no way to know
 		 * in advance which byte offset corresponds to the supplied start
 		 * position.
 		 */
-		slice_start = 0;
+		int32		slice_start = 0;
 
 		if (length_not_specified)	/* special case - get length to end of
 									 * string */
@@ -1005,7 +986,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		}
 
 		/* Now we can get the actual length of the slice in MB characters */
-		slice_strlen = pg_mbstrlen_with_len(VARDATA_ANY(slice),
+		int32		slice_strlen = pg_mbstrlen_with_len(VARDATA_ANY(slice),
 											VARSIZE_ANY_EXHDR(slice));
 
 		/*
@@ -1031,12 +1012,12 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		/*
 		 * Find the start position in the slice; remember S1 is not zero based
 		 */
-		p = VARDATA_ANY(slice);
+		char	   *p = VARDATA_ANY(slice);
 		for (i = 0; i < S1 - 1; i++)
 			p += pg_mblen(p);
 
 		/* hang onto a pointer to our start position */
-		s = p;
+		char	   *s = p;
 
 		/*
 		 * Count the actual bytes used by the substring of the requested
@@ -1045,7 +1026,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		for (i = S1; i < E1; i++)
 			p += pg_mblen(p);
 
-		ret = (text *) palloc(VARHDRSZ + (p - s));
+		text	   *ret = (text *) palloc(VARHDRSZ + (p - s));
 		SET_VARSIZE(ret, VARHDRSZ + (p - s));
 		memcpy(VARDATA(ret), s, (p - s));
 
@@ -1085,18 +1066,14 @@ textoverlay_no_len(PG_FUNCTION_ARGS)
 	text	   *t1 = PG_GETARG_TEXT_PP(0);
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
 	int			sp = PG_GETARG_INT32(2);	/* substring start position */
-	int			sl;
 
-	sl = text_length(PointerGetDatum(t2));	/* defaults to length(t2) */
+	int			sl = text_length(PointerGetDatum(t2));	/* defaults to length(t2) */
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
 
 static text *
 text_overlay(text *t1, text *t2, int sp, int sl)
 {
-	text	   *result;
-	text	   *s1;
-	text	   *s2;
 	int			sp_pl_sl;
 
 	/*
@@ -1113,9 +1090,9 @@ text_overlay(text *t1, text *t2, int sp, int sl)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	s1 = text_substring(PointerGetDatum(t1), 1, sp - 1, false);
-	s2 = text_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
-	result = text_catenate(s1, t2);
+	text	   *s1 = text_substring(PointerGetDatum(t1), 1, sp - 1, false);
+	text	   *s2 = text_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
+	text	   *result = text_catenate(s1, t2);
 	result = text_catenate(result, s2);
 
 	return result;
@@ -1258,7 +1235,6 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 	{
 		int			searchlength = len1 - len2;
 		int			skiptablemask;
-		int			last;
 		int			i;
 		const char *str2 = state->str2;
 
@@ -1305,7 +1281,7 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 		 * entry, the one later in the needle must determine the skip
 		 * distance.
 		 */
-		last = len2 - 1;
+		int			last = len2 - 1;
 
 		for (i = 0; i < last; i++)
 			state->skiptable[(unsigned char) str2[i] & skiptablemask] = last - i;
@@ -1419,11 +1395,9 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 		while (hptr < haystack_end)
 		{
 			/* Match the needle scanning *backward* */
-			const char *nptr;
-			const char *p;
 
-			nptr = needle_last;
-			p = hptr;
+			const char *nptr = needle_last;
+			const char *p = hptr;
 			while (*nptr == *p)
 			{
 				/* Matched it all?	If so, return 1-based position */
@@ -1682,9 +1656,8 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 #ifdef HAVE_UCOL_STRCOLLUTF8
 				if (GetDatabaseEncoding() == PG_UTF8)
 				{
-					UErrorCode	status;
 
-					status = U_ZERO_ERROR;
+					UErrorCode	status = U_ZERO_ERROR;
 					result = ucol_strcollUTF8(mylocale->info.icu.ucol,
 											  arg1, len1,
 											  arg2, len2,
@@ -1879,9 +1852,8 @@ text_lt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0);
+	bool		result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1894,9 +1866,8 @@ text_le(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) <= 0);
+	bool		result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) <= 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1909,9 +1880,8 @@ text_gt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0);
+	bool		result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1924,9 +1894,8 @@ text_ge(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	bool		result;
 
-	result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) >= 0);
+	bool		result = (text_cmp(arg1, arg2, PG_GET_COLLATION()) >= 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1979,9 +1948,8 @@ bttextcmp(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int32		result;
 
-	result = text_cmp(arg1, arg2, PG_GET_COLLATION());
+	int32		result = text_cmp(arg1, arg2, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1994,9 +1962,8 @@ bttextsortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 	Oid			collid = ssup->ssup_collation;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport */
 	varstr_sortsupport(ssup, TEXTOID, collid);
@@ -2310,7 +2277,6 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 {
 	VarStringSortSupport *sss = (VarStringSortSupport *) ssup->ssup_extra;
 	int			result;
-	bool		arg1_match;
 
 	/* Fast pre-check for equality, as discussed in varstr_cmp() */
 	if (len1 == len2 && memcmp(a1p, a2p, len1) == 0)
@@ -2361,7 +2327,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 	 * memcmp() compares data from cachelines that are needed in L1 cache even
 	 * when the last comparison's result cannot be reused.
 	 */
-	arg1_match = true;
+	bool		arg1_match = true;
 	if (len1 != sss->last_len1 || memcmp(sss->buf1, a1p, len1) != 0)
 	{
 		arg1_match = false;
@@ -2396,9 +2362,8 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 #ifdef HAVE_UCOL_STRCOLLUTF8
 			if (GetDatabaseEncoding() == PG_UTF8)
 			{
-				UErrorCode	status;
 
-				status = U_ZERO_ERROR;
+				UErrorCode	status = U_ZERO_ERROR;
 				result = ucol_strcollUTF8(sss->locale->info.icu.ucol,
 										  a1p, len1,
 										  a2p, len2,
@@ -2491,14 +2456,12 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 
 	/* working state */
 	Datum		res;
-	char	   *pres;
-	int			len;
 	uint32		hash;
 
-	pres = (char *) &res;
+	char	   *pres = (char *) &res;
 	/* memset(), so any non-overwritten bytes are NUL */
 	memset(pres, 0, sizeof(Datum));
-	len = VARSIZE_ANY_EXHDR(authoritative);
+	int			len = VARSIZE_ANY_EXHDR(authoritative);
 
 	/* Get number of bytes, ignoring trailing spaces */
 	if (sss->typid == BPCHAROID)
@@ -2600,11 +2563,10 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 				{
 					UCharIterator iter;
 					uint32_t	state[2];
-					UErrorCode	status;
 
 					uiter_setUTF8(&iter, sss->buf1, len);
 					state[0] = state[1] = 0;	/* won't need that again */
-					status = U_ZERO_ERROR;
+					UErrorCode	status = U_ZERO_ERROR;
 					bsize = ucol_nextSortKeyPart(sss->locale->info.icu.ucol,
 												 &iter,
 												 state,
@@ -2861,9 +2823,8 @@ text_larger(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	text	   *result;
 
-	result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0) ? arg1 : arg2);
+	text	   *result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) > 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -2873,9 +2834,8 @@ text_smaller(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	text	   *result;
 
-	result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0) ? arg1 : arg2);
+	text	   *result = ((text_cmp(arg1, arg2, PG_GET_COLLATION()) < 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -2990,9 +2950,8 @@ btnametextcmp(PG_FUNCTION_ARGS)
 {
 	Name		arg1 = PG_GETARG_NAME(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int32		result;
 
-	result = varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
+	int32		result = varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
 						VARDATA_ANY(arg2), VARSIZE_ANY_EXHDR(arg2),
 						PG_GET_COLLATION());
 
@@ -3006,9 +2965,8 @@ bttextnamecmp(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	Name		arg2 = PG_GETARG_NAME(1);
-	int32		result;
 
-	result = varstr_cmp(VARDATA_ANY(arg1), VARSIZE_ANY_EXHDR(arg1),
+	int32		result = varstr_cmp(VARDATA_ANY(arg1), VARSIZE_ANY_EXHDR(arg1),
 						NameStr(*arg2), strlen(NameStr(*arg2)),
 						PG_GET_COLLATION());
 
@@ -3085,14 +3043,13 @@ textgename(PG_FUNCTION_ARGS)
 static int
 internal_text_pattern_compare(text *arg1, text *arg2)
 {
-	int			result;
 	int			len1,
 				len2;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if (result != 0)
 		return result;
 	else if (len1 < len2)
@@ -3109,9 +3066,8 @@ text_pattern_lt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	int			result = internal_text_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3125,9 +3081,8 @@ text_pattern_le(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	int			result = internal_text_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3141,9 +3096,8 @@ text_pattern_ge(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	int			result = internal_text_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3157,9 +3111,8 @@ text_pattern_gt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	int			result = internal_text_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3173,9 +3126,8 @@ bttext_pattern_cmp(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
-	int			result;
 
-	result = internal_text_pattern_compare(arg1, arg2);
+	int			result = internal_text_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -3188,9 +3140,8 @@ Datum
 bttext_pattern_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport, forcing "C" collation */
 	varstr_sortsupport(ssup, TEXTOID, C_COLLATION_OID);
@@ -3241,11 +3192,9 @@ byteacat(PG_FUNCTION_ARGS)
 static bytea *
 bytea_catenate(bytea *t1, bytea *t2)
 {
-	bytea	   *result;
 	int			len1,
 				len2,
 				len;
-	char	   *ptr;
 
 	len1 = VARSIZE_ANY_EXHDR(t1);
 	len2 = VARSIZE_ANY_EXHDR(t2);
@@ -3257,13 +3206,13 @@ bytea_catenate(bytea *t1, bytea *t2)
 		len2 = 0;
 
 	len = len1 + len2 + VARHDRSZ;
-	result = (bytea *) palloc(len);
+	bytea	   *result = (bytea *) palloc(len);
 
 	/* Set size of result string... */
 	SET_VARSIZE(result, len);
 
 	/* Fill data field of result string... */
-	ptr = VARDATA(result);
+	char	   *ptr = VARDATA(result);
 	if (len1 > 0)
 		memcpy(ptr, VARDATA_ANY(t1), len1);
 	if (len2 > 0)
@@ -3397,18 +3346,14 @@ byteaoverlay_no_len(PG_FUNCTION_ARGS)
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
 	int			sp = PG_GETARG_INT32(2);	/* substring start position */
-	int			sl;
 
-	sl = VARSIZE_ANY_EXHDR(t2); /* defaults to length(t2) */
+	int			sl = VARSIZE_ANY_EXHDR(t2); /* defaults to length(t2) */
 	PG_RETURN_BYTEA_P(bytea_overlay(t1, t2, sp, sl));
 }
 
 static bytea *
 bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 {
-	bytea	   *result;
-	bytea	   *s1;
-	bytea	   *s2;
 	int			sp_pl_sl;
 
 	/*
@@ -3425,9 +3370,9 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	s1 = bytea_substring(PointerGetDatum(t1), 1, sp - 1, false);
-	s2 = bytea_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
-	result = bytea_catenate(s1, t2);
+	bytea	   *s1 = bytea_substring(PointerGetDatum(t1), 1, sp - 1, false);
+	bytea	   *s2 = bytea_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
+	bytea	   *result = bytea_catenate(s1, t2);
 	result = bytea_catenate(result, s2);
 
 	return result;
@@ -3455,7 +3400,6 @@ byteapos(PG_FUNCTION_ARGS)
 {
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
-	int			pos;
 	int			px,
 				p;
 	int			len1,
@@ -3472,7 +3416,7 @@ byteapos(PG_FUNCTION_ARGS)
 	p1 = VARDATA_ANY(t1);
 	p2 = VARDATA_ANY(t2);
 
-	pos = 0;
+	int			pos = 0;
 	px = (len1 - len2);
 	for (p = 0; p <= px; p++)
 	{
@@ -3499,10 +3443,8 @@ byteaGetByte(PG_FUNCTION_ARGS)
 {
 	bytea	   *v = PG_GETARG_BYTEA_PP(0);
 	int32		n = PG_GETARG_INT32(1);
-	int			len;
-	int			byte;
 
-	len = VARSIZE_ANY_EXHDR(v);
+	int			len = VARSIZE_ANY_EXHDR(v);
 
 	if (n < 0 || n >= len)
 		ereport(ERROR,
@@ -3510,7 +3452,7 @@ byteaGetByte(PG_FUNCTION_ARGS)
 				 errmsg("index %d out of valid range, 0..%d",
 						n, len - 1)));
 
-	byte = ((unsigned char *) VARDATA_ANY(v))[n];
+	int			byte = ((unsigned char *) VARDATA_ANY(v))[n];
 
 	PG_RETURN_INT32(byte);
 }
@@ -3530,10 +3472,8 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	int64		n = PG_GETARG_INT64(1);
 	int			byteNo,
 				bitNo;
-	int			len;
-	int			byte;
 
-	len = VARSIZE_ANY_EXHDR(v);
+	int			len = VARSIZE_ANY_EXHDR(v);
 
 	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
@@ -3545,7 +3485,7 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	byteNo = (int) (n / 8);
 	bitNo = (int) (n % 8);
 
-	byte = ((unsigned char *) VARDATA_ANY(v))[byteNo];
+	int			byte = ((unsigned char *) VARDATA_ANY(v))[byteNo];
 
 	if (byte & (1 << bitNo))
 		PG_RETURN_INT32(1);
@@ -3567,9 +3507,8 @@ byteaSetByte(PG_FUNCTION_ARGS)
 	bytea	   *res = PG_GETARG_BYTEA_P_COPY(0);
 	int32		n = PG_GETARG_INT32(1);
 	int32		newByte = PG_GETARG_INT32(2);
-	int			len;
 
-	len = VARSIZE(res) - VARHDRSZ;
+	int			len = VARSIZE(res) - VARHDRSZ;
 
 	if (n < 0 || n >= len)
 		ereport(ERROR,
@@ -3599,13 +3538,12 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	bytea	   *res = PG_GETARG_BYTEA_P_COPY(0);
 	int64		n = PG_GETARG_INT64(1);
 	int32		newBit = PG_GETARG_INT32(2);
-	int			len;
 	int			oldByte,
 				newByte;
 	int			byteNo,
 				bitNo;
 
-	len = VARSIZE(res) - VARHDRSZ;
+	int			len = VARSIZE(res) - VARHDRSZ;
 
 	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
@@ -3648,17 +3586,15 @@ Datum
 text_name(PG_FUNCTION_ARGS)
 {
 	text	   *s = PG_GETARG_TEXT_PP(0);
-	Name		result;
-	int			len;
 
-	len = VARSIZE_ANY_EXHDR(s);
+	int			len = VARSIZE_ANY_EXHDR(s);
 
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
 		len = pg_mbcliplen(VARDATA_ANY(s), len, NAMEDATALEN - 1);
 
 	/* We use palloc0 here to ensure result is zero-padded */
-	result = (Name) palloc0(NAMEDATALEN);
+	Name		result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), VARDATA_ANY(s), len);
 
 	PG_RETURN_NAME(result);
@@ -3687,14 +3623,13 @@ name_text(PG_FUNCTION_ARGS)
 List *
 textToQualifiedNameList(text *textval)
 {
-	char	   *rawname;
 	List	   *result = NIL;
 	List	   *namelist;
 	ListCell   *l;
 
 	/* Convert to C string (handles possible detoasting). */
 	/* Note we rely on being able to modify rawname below. */
-	rawname = text_to_cstring(textval);
+	char	   *rawname = text_to_cstring(textval);
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
 		ereport(ERROR,
@@ -3784,8 +3719,6 @@ SplitIdentifierString(char *rawstring, char separator,
 		else
 		{
 			/* Unquoted name --- extends to separator or whitespace */
-			char	   *downname;
-			int			len;
 
 			curname = nextp;
 			while (*nextp && *nextp != separator &&
@@ -3804,8 +3737,8 @@ SplitIdentifierString(char *rawstring, char separator,
 			 * of downcase_truncate_identifier, but we'll probably have to do
 			 * something about this someday.
 			 */
-			len = endp - curname;
-			downname = downcase_truncate_identifier(curname, len, false);
+			int			len = endp - curname;
+			char	   *downname = downcase_truncate_identifier(curname, len, false);
 			Assert(strlen(downname) <= len);
 			strncpy(curname, downname, len);	/* strncpy is required here */
 			pfree(downname);
@@ -4150,12 +4083,11 @@ bytealt(PG_FUNCTION_ARGS)
 	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -4170,12 +4102,11 @@ byteale(PG_FUNCTION_ARGS)
 	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -4190,12 +4121,11 @@ byteagt(PG_FUNCTION_ARGS)
 	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -4210,12 +4140,11 @@ byteage(PG_FUNCTION_ARGS)
 	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -4230,12 +4159,11 @@ byteacmp(PG_FUNCTION_ARGS)
 	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
 	int			len1,
 				len2;
-	int			cmp;
 
 	len1 = VARSIZE_ANY_EXHDR(arg1);
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
-	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
 	if ((cmp == 0) && (len1 != len2))
 		cmp = (len1 < len2) ? -1 : 1;
 
@@ -4249,9 +4177,8 @@ Datum
 bytea_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport, forcing "C" collation */
 	varstr_sortsupport(ssup, BYTEAOID, C_COLLATION_OID);
@@ -4287,18 +4214,12 @@ replace_text(PG_FUNCTION_ARGS)
 	text	   *src_text = PG_GETARG_TEXT_PP(0);
 	text	   *from_sub_text = PG_GETARG_TEXT_PP(1);
 	text	   *to_sub_text = PG_GETARG_TEXT_PP(2);
-	int			src_text_len;
-	int			from_sub_text_len;
 	TextPositionState state;
-	text	   *ret_text;
 	int			chunk_len;
-	char	   *curr_ptr;
-	char	   *start_ptr;
 	StringInfoData str;
-	bool		found;
 
-	src_text_len = VARSIZE_ANY_EXHDR(src_text);
-	from_sub_text_len = VARSIZE_ANY_EXHDR(from_sub_text);
+	int			src_text_len = VARSIZE_ANY_EXHDR(src_text);
+	int			from_sub_text_len = VARSIZE_ANY_EXHDR(from_sub_text);
 
 	/* Return unmodified source string if empty source or pattern */
 	if (src_text_len < 1 || from_sub_text_len < 1)
@@ -4308,7 +4229,7 @@ replace_text(PG_FUNCTION_ARGS)
 
 	text_position_setup(src_text, from_sub_text, PG_GET_COLLATION(), &state);
 
-	found = text_position_next(&state);
+	bool		found = text_position_next(&state);
 
 	/* When the from_sub_text is not found, there is nothing to do. */
 	if (!found)
@@ -4316,8 +4237,8 @@ replace_text(PG_FUNCTION_ARGS)
 		text_position_cleanup(&state);
 		PG_RETURN_TEXT_P(src_text);
 	}
-	curr_ptr = text_position_get_match_ptr(&state);
-	start_ptr = VARDATA_ANY(src_text);
+	char	   *curr_ptr = text_position_get_match_ptr(&state);
+	char	   *start_ptr = VARDATA_ANY(src_text);
 
 	initStringInfo(&str);
 
@@ -4345,7 +4266,7 @@ replace_text(PG_FUNCTION_ARGS)
 
 	text_position_cleanup(&state);
 
-	ret_text = cstring_to_text_with_len(str.data, str.len);
+	text	   *ret_text = cstring_to_text_with_len(str.data, str.len);
 	pfree(str.data);
 
 	PG_RETURN_TEXT_P(ret_text);
@@ -4466,13 +4387,11 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			 * Copy the text that is back reference of regexp.  Note so and eo
 			 * are counted in characters not bytes.
 			 */
-			char	   *chunk_start;
-			int			chunk_len;
 
 			Assert(so >= data_pos);
-			chunk_start = start_ptr;
+			char	   *chunk_start = start_ptr;
 			chunk_start += charlen_to_bytelen(chunk_start, so - data_pos);
-			chunk_len = charlen_to_bytelen(chunk_start, eo - so);
+			int			chunk_len = charlen_to_bytelen(chunk_start, eo - so);
 			appendBinaryStringInfo(str, chunk_start, chunk_len);
 		}
 	}
@@ -4497,27 +4416,20 @@ replace_text_regexp(text *src_text, text *pattern_text,
 					int cflags, Oid collation,
 					int search_start, int n)
 {
-	text	   *ret_text;
-	regex_t    *re;
 	int			src_text_len = VARSIZE_ANY_EXHDR(src_text);
 	int			nmatches = 0;
 	StringInfoData buf;
 	regmatch_t	pmatch[10];		/* main match, plus \1 to \9 */
 	int			nmatch = lengthof(pmatch);
-	pg_wchar   *data;
-	size_t		data_len;
-	int			data_pos;
-	char	   *start_ptr;
-	int			escape_status;
 
 	initStringInfo(&buf);
 
 	/* Convert data string to wide characters. */
-	data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
-	data_len = pg_mb2wchar_with_len(VARDATA_ANY(src_text), data, src_text_len);
+	pg_wchar   *data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
+	size_t		data_len = pg_mb2wchar_with_len(VARDATA_ANY(src_text), data, src_text_len);
 
 	/* Check whether replace_text has escapes, especially regexp submatches. */
-	escape_status = check_replace_text_has_escape(replace_text);
+	int			escape_status = check_replace_text_has_escape(replace_text);
 
 	/* If no regexp submatches, we can use REG_NOSUB. */
 	if (escape_status < 2)
@@ -4528,19 +4440,18 @@ replace_text_regexp(text *src_text, text *pattern_text,
 	}
 
 	/* Prepare the regexp. */
-	re = RE_compile_and_cache(pattern_text, cflags, collation);
+	regex_t    *re = RE_compile_and_cache(pattern_text, cflags, collation);
 
 	/* start_ptr points to the data_pos'th character of src_text */
-	start_ptr = (char *) VARDATA_ANY(src_text);
-	data_pos = 0;
+	char	   *start_ptr = (char *) VARDATA_ANY(src_text);
+	int			data_pos = 0;
 
 	while (search_start <= data_len)
 	{
-		int			regexec_result;
 
 		CHECK_FOR_INTERRUPTS();
 
-		regexec_result = pg_regexec(re,
+		int			regexec_result = pg_regexec(re,
 									data,
 									data_len,
 									search_start,
@@ -4586,9 +4497,8 @@ replace_text_regexp(text *src_text, text *pattern_text,
 		 */
 		if (pmatch[0].rm_so - data_pos > 0)
 		{
-			int			chunk_len;
 
-			chunk_len = charlen_to_bytelen(start_ptr,
+			int			chunk_len = charlen_to_bytelen(start_ptr,
 										   pmatch[0].rm_so - data_pos);
 			appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 
@@ -4636,13 +4546,12 @@ replace_text_regexp(text *src_text, text *pattern_text,
 	 */
 	if (data_pos < data_len)
 	{
-		int			chunk_len;
 
-		chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
+		int			chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
 		appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 	}
 
-	ret_text = cstring_to_text_with_len(buf.data, buf.len);
+	text	   *ret_text = cstring_to_text_with_len(buf.data, buf.len);
 	pfree(buf.data);
 	pfree(data);
 
@@ -4660,13 +4569,10 @@ split_part(PG_FUNCTION_ARGS)
 	text	   *inputstring = PG_GETARG_TEXT_PP(0);
 	text	   *fldsep = PG_GETARG_TEXT_PP(1);
 	int			fldnum = PG_GETARG_INT32(2);
-	int			inputstring_len;
-	int			fldsep_len;
 	TextPositionState state;
 	char	   *start_ptr;
 	char	   *end_ptr;
 	text	   *result_text;
-	bool		found;
 
 	/* field number is 1 based */
 	if (fldnum == 0)
@@ -4674,8 +4580,8 @@ split_part(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field position must not be zero")));
 
-	inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
-	fldsep_len = VARSIZE_ANY_EXHDR(fldsep);
+	int			inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
+	int			fldsep_len = VARSIZE_ANY_EXHDR(fldsep);
 
 	/* return empty string for empty input string */
 	if (inputstring_len < 1)
@@ -4694,7 +4600,7 @@ split_part(PG_FUNCTION_ARGS)
 	/* find the first field separator */
 	text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);
 
-	found = text_position_next(&state);
+	bool		found = text_position_next(&state);
 
 	/* special case if fldsep not found at all */
 	if (!found)
@@ -4842,7 +4748,6 @@ text_to_table(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 	SplitTextOutputData tstate;
-	MemoryContext old_cxt;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsi == NULL || !IsA(rsi, ReturnSetInfo))
@@ -4855,7 +4760,7 @@ text_to_table(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* OK, prepare tuplestore in per-query memory */
-	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+	MemoryContext old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 
 	tstate.astate = NULL;
 	tstate.tupdesc = CreateTupleDescCopy(rsi->expectedDesc);
@@ -4901,7 +4806,6 @@ text_to_table_null(PG_FUNCTION_ARGS)
 static bool
 split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 {
-	text	   *inputstring;
 	text	   *fldsep;
 	text	   *null_string;
 	Oid			collation = PG_GET_COLLATION();
@@ -4914,7 +4818,7 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 	if (PG_ARGISNULL(0))
 		return false;
 
-	inputstring = PG_GETARG_TEXT_PP(0);
+	text	   *inputstring = PG_GETARG_TEXT_PP(0);
 
 	/* fldsep can be NULL */
 	if (!PG_ARGISNULL(1))
@@ -4957,13 +4861,12 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 
 		for (;;)
 		{
-			bool		found;
 			char	   *end_ptr;
 			int			chunk_len;
 
 			CHECK_FOR_INTERRUPTS();
 
-			found = text_position_next(&state);
+			bool		found = text_position_next(&state);
 			if (!found)
 			{
 				/* fetch last field */
@@ -5092,16 +4995,14 @@ array_to_text(PG_FUNCTION_ARGS)
 Datum
 array_to_text_null(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v;
-	char	   *fldsep;
 	char	   *null_string;
 
 	/* returns NULL when first or second parameter is NULL */
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
-	v = PG_GETARG_ARRAYTYPE_P(0);
-	fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	char	   *fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 	/* NULL null string is passed through as a null pointer */
 	if (!PG_ARGISNULL(2))
@@ -5119,21 +5020,15 @@ static text *
 array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 					   const char *fldsep, const char *null_string)
 {
-	text	   *result;
 	int			nitems,
 			   *dims,
 				ndims;
-	Oid			element_type;
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
 	StringInfoData buf;
 	bool		printed = false;
-	char	   *p;
-	bits8	   *bitmap;
-	int			bitmask;
 	int			i;
-	ArrayMetaState *my_extra;
 
 	ndims = ARR_NDIM(v);
 	dims = ARR_DIMS(v);
@@ -5143,7 +5038,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	if (nitems == 0)
 		return cstring_to_text_with_len("", 0);
 
-	element_type = ARR_ELEMTYPE(v);
+	Oid			element_type = ARR_ELEMTYPE(v);
 	initStringInfo(&buf);
 
 	/*
@@ -5151,7 +5046,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	 * conversion proc, only once per series of calls, assuming the element
 	 * type doesn't change underneath us.
 	 */
-	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -5177,9 +5072,9 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 
-	p = ARR_DATA_PTR(v);
-	bitmap = ARR_NULLBITMAP(v);
-	bitmask = 1;
+	char	   *p = ARR_DATA_PTR(v);
+	bits8	   *bitmap = ARR_NULLBITMAP(v);
+	int			bitmask = 1;
 
 	for (i = 0; i < nitems; i++)
 	{
@@ -5227,7 +5122,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 		}
 	}
 
-	result = cstring_to_text_with_len(buf.data, buf.len);
+	text	   *result = cstring_to_text_with_len(buf.data, buf.len);
 	pfree(buf.data);
 
 	return result;
@@ -5242,11 +5137,10 @@ Datum
 to_hex32(PG_FUNCTION_ARGS)
 {
 	uint32		value = (uint32) PG_GETARG_INT32(0);
-	char	   *ptr;
 	const char *digits = "0123456789abcdef";
 	char		buf[32];		/* bigger than needed, but reasonable */
 
-	ptr = buf + sizeof(buf) - 1;
+	char	   *ptr = buf + sizeof(buf) - 1;
 	*ptr = '\0';
 
 	do
@@ -5266,11 +5160,10 @@ Datum
 to_hex64(PG_FUNCTION_ARGS)
 {
 	uint64		value = (uint64) PG_GETARG_INT64(0);
-	char	   *ptr;
 	const char *digits = "0123456789abcdef";
 	char		buf[32];		/* bigger than needed, but reasonable */
 
-	ptr = buf + sizeof(buf) - 1;
+	char	   *ptr = buf + sizeof(buf) - 1;
 	*ptr = '\0';
 
 	do
@@ -5339,7 +5232,6 @@ pg_column_compression(PG_FUNCTION_ARGS)
 {
 	int			typlen;
 	char	   *result;
-	ToastCompressionId cmid;
 
 	/* On first call, get the input type's typlen, and save at *fn_extra */
 	if (fcinfo->flinfo->fn_extra == NULL)
@@ -5362,7 +5254,7 @@ pg_column_compression(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/* get the compression method id stored in the compressed varlena */
-	cmid = toast_get_compression_id((struct varlena *)
+	ToastCompressionId cmid = toast_get_compression_id((struct varlena *)
 									DatumGetPointer(PG_GETARG_DATUM(0)));
 	if (cmid == TOAST_INVALID_COMPRESSION_ID)
 		PG_RETURN_NULL();
@@ -5397,9 +5289,7 @@ pg_column_compression(PG_FUNCTION_ARGS)
 static StringInfo
 makeStringAggState(FunctionCallInfo fcinfo)
 {
-	StringInfo	state;
 	MemoryContext aggcontext;
-	MemoryContext oldcontext;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -5411,8 +5301,8 @@ makeStringAggState(FunctionCallInfo fcinfo)
 	 * Create state in aggregate context.  It'll stay there across subsequent
 	 * calls.
 	 */
-	oldcontext = MemoryContextSwitchTo(aggcontext);
-	state = makeStringInfo();
+	MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
+	StringInfo	state = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
 
 	return state;
@@ -5421,9 +5311,8 @@ makeStringAggState(FunctionCallInfo fcinfo)
 Datum
 string_agg_transfn(PG_FUNCTION_ARGS)
 {
-	StringInfo	state;
 
-	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	/* Append the value unless null. */
 	if (!PG_ARGISNULL(1))
@@ -5447,12 +5336,11 @@ string_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 string_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	StringInfo	state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	if (state != NULL)
 		PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
@@ -5469,20 +5357,18 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 static FmgrInfo *
 build_concat_foutcache(FunctionCallInfo fcinfo, int argidx)
 {
-	FmgrInfo   *foutcache;
 	int			i;
 
 	/* We keep the info in fn_mcxt so it survives across calls */
-	foutcache = (FmgrInfo *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+	FmgrInfo   *foutcache = (FmgrInfo *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 												PG_NARGS() * sizeof(FmgrInfo));
 
 	for (i = argidx; i < PG_NARGS(); i++)
 	{
-		Oid			valtype;
 		Oid			typOutput;
 		bool		typIsVarlena;
 
-		valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+		Oid			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
 		if (!OidIsValid(valtype))
 			elog(ERROR, "could not determine data type of concat() input");
 
@@ -5508,9 +5394,7 @@ static text *
 concat_internal(const char *sepstr, int argidx,
 				FunctionCallInfo fcinfo)
 {
-	text	   *result;
 	StringInfoData str;
-	FmgrInfo   *foutcache;
 	bool		first_arg = true;
 	int			i;
 
@@ -5521,7 +5405,6 @@ concat_internal(const char *sepstr, int argidx,
 	 */
 	if (get_fn_expr_variadic(fcinfo->flinfo))
 	{
-		ArrayType  *arr;
 
 		/* Should have just the one argument */
 		Assert(argidx == PG_NARGS() - 1);
@@ -5540,7 +5423,7 @@ concat_internal(const char *sepstr, int argidx,
 		Assert(OidIsValid(get_base_element_type(get_fn_expr_argtype(fcinfo->flinfo, argidx))));
 
 		/* OK, safe to fetch the array value */
-		arr = PG_GETARG_ARRAYTYPE_P(argidx);
+		ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(argidx);
 
 		/*
 		 * And serialize the array.  We tell array_to_text to ignore null
@@ -5553,7 +5436,7 @@ concat_internal(const char *sepstr, int argidx,
 	initStringInfo(&str);
 
 	/* Get output function info, building it if first time through */
-	foutcache = (FmgrInfo *) fcinfo->flinfo->fn_extra;
+	FmgrInfo   *foutcache = (FmgrInfo *) fcinfo->flinfo->fn_extra;
 	if (foutcache == NULL)
 		foutcache = build_concat_foutcache(fcinfo, argidx);
 
@@ -5575,7 +5458,7 @@ concat_internal(const char *sepstr, int argidx,
 		}
 	}
 
-	result = cstring_to_text_with_len(str.data, str.len);
+	text	   *result = cstring_to_text_with_len(str.data, str.len);
 	pfree(str.data);
 
 	return result;
@@ -5587,9 +5470,8 @@ concat_internal(const char *sepstr, int argidx,
 Datum
 text_concat(PG_FUNCTION_ARGS)
 {
-	text	   *result;
 
-	result = concat_internal("", 0, fcinfo);
+	text	   *result = concat_internal("", 0, fcinfo);
 	if (result == NULL)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(result);
@@ -5602,15 +5484,13 @@ text_concat(PG_FUNCTION_ARGS)
 Datum
 text_concat_ws(PG_FUNCTION_ARGS)
 {
-	char	   *sep;
-	text	   *result;
 
 	/* return NULL when separator is NULL */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-	sep = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *sep = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	result = concat_internal(sep, 1, fcinfo);
+	text	   *result = concat_internal(sep, 1, fcinfo);
 	if (result == NULL)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(result);
@@ -5630,10 +5510,9 @@ text_left(PG_FUNCTION_ARGS)
 		text	   *str = PG_GETARG_TEXT_PP(0);
 		const char *p = VARDATA_ANY(str);
 		int			len = VARSIZE_ANY_EXHDR(str);
-		int			rlen;
 
 		n = pg_mbstrlen_with_len(p, len) + n;
-		rlen = pg_mbcharcliplen(p, len, n);
+		int			rlen = pg_mbcharcliplen(p, len, n);
 		PG_RETURN_TEXT_P(cstring_to_text_with_len(p, rlen));
 	}
 	else
@@ -5651,13 +5530,12 @@ text_right(PG_FUNCTION_ARGS)
 	const char *p = VARDATA_ANY(str);
 	int			len = VARSIZE_ANY_EXHDR(str);
 	int			n = PG_GETARG_INT32(1);
-	int			off;
 
 	if (n < 0)
 		n = -n;
 	else
 		n = pg_mbstrlen_with_len(p, len) - n;
-	off = pg_mbcharcliplen(p, len, n);
+	int			off = pg_mbcharcliplen(p, len, n);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(p + off, len - off));
 }
@@ -5672,11 +5550,9 @@ text_reverse(PG_FUNCTION_ARGS)
 	const char *p = VARDATA_ANY(str);
 	int			len = VARSIZE_ANY_EXHDR(str);
 	const char *endp = p + len;
-	text	   *result;
-	char	   *dst;
 
-	result = palloc(len + VARHDRSZ);
-	dst = (char *) VARDATA(result) + len;
+	text	   *result = palloc(len + VARHDRSZ);
+	char	   *dst = (char *) VARDATA(result) + len;
 	SET_VARSIZE(result, len + VARHDRSZ);
 
 	if (pg_database_encoding_max_length() > 1)
@@ -5684,9 +5560,8 @@ text_reverse(PG_FUNCTION_ARGS)
 		/* multibyte version */
 		while (p < endp)
 		{
-			int			sz;
 
-			sz = pg_mblen(p);
+			int			sz = pg_mblen(p);
 			dst -= sz;
 			memcpy(dst, p, sz);
 			p += sz;
@@ -5723,13 +5598,8 @@ text_reverse(PG_FUNCTION_ARGS)
 Datum
 text_format(PG_FUNCTION_ARGS)
 {
-	text	   *fmt;
 	StringInfoData str;
 	const char *cp;
-	const char *start_ptr;
-	const char *end_ptr;
-	text	   *result;
-	int			arg;
 	bool		funcvariadic;
 	int			nargs;
 	Datum	   *elements = NULL;
@@ -5794,11 +5664,11 @@ text_format(PG_FUNCTION_ARGS)
 	}
 
 	/* Setup for main loop. */
-	fmt = PG_GETARG_TEXT_PP(0);
-	start_ptr = VARDATA_ANY(fmt);
-	end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
+	text	   *fmt = PG_GETARG_TEXT_PP(0);
+	const char *start_ptr = VARDATA_ANY(fmt);
+	const char *end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
 	initStringInfo(&str);
-	arg = 1;					/* next argument position to print */
+	int			arg = 1;					/* next argument position to print */
 
 	/* Scan format string, looking for conversion specifiers. */
 	for (cp = start_ptr; cp < end_ptr; cp++)
@@ -5889,7 +5759,6 @@ text_format(PG_FUNCTION_ARGS)
 			else
 			{
 				/* For less-usual datatypes, convert to text then to int */
-				char	   *str;
 
 				if (typid != prev_width_type)
 				{
@@ -5901,7 +5770,7 @@ text_format(PG_FUNCTION_ARGS)
 					prev_width_type = typid;
 				}
 
-				str = OutputFunctionCall(&typoutputinfo_width, value);
+				char	   *str = OutputFunctionCall(&typoutputinfo_width, value);
 
 				/* pg_strtoint32 will complain about bad data or overflow */
 				width = pg_strtoint32(str);
@@ -5981,7 +5850,7 @@ text_format(PG_FUNCTION_ARGS)
 		pfree(nulls);
 
 	/* Generate results. */
-	result = cstring_to_text_with_len(str.data, str.len);
+	text	   *result = cstring_to_text_with_len(str.data, str.len);
 	pfree(str.data);
 
 	PG_RETURN_TEXT_P(result);
@@ -6129,7 +5998,6 @@ text_format_string_conversion(StringInfo buf, char conversion,
 							  Datum value, bool isNull,
 							  int flags, int width)
 {
-	char	   *str;
 
 	/* Handle NULL arguments before trying to stringify the value. */
 	if (isNull)
@@ -6146,7 +6014,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 	}
 
 	/* Stringify. */
-	str = OutputFunctionCall(typOutputInfo, value);
+	char	   *str = OutputFunctionCall(typOutputInfo, value);
 
 	/* Escape. */
 	if (conversion == 'I')
@@ -6177,7 +6045,6 @@ text_format_append_string(StringInfo buf, const char *str,
 						  int flags, int width)
 {
 	bool		align_to_left = false;
-	int			len;
 
 	/* fast path for typical easy case */
 	if (width == 0)
@@ -6200,7 +6067,7 @@ text_format_append_string(StringInfo buf, const char *str,
 	else if (flags & TEXT_FORMAT_FLAG_MINUS)
 		align_to_left = true;
 
-	len = pg_mbstrlen(str);
+	int			len = pg_mbstrlen(str);
 	if (align_to_left)
 	{
 		/* left justify */
@@ -6290,20 +6157,14 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 {
 	text	   *input = PG_GETARG_TEXT_PP(0);
 	char	   *formstr = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	UnicodeNormalizationForm form;
-	int			size;
-	pg_wchar   *input_chars;
-	pg_wchar   *output_chars;
-	unsigned char *p;
-	text	   *result;
 	int			i;
 
-	form = unicode_norm_form_from_string(formstr);
+	UnicodeNormalizationForm form = unicode_norm_form_from_string(formstr);
 
 	/* convert to pg_wchar */
-	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
-	input_chars = palloc((size + 1) * sizeof(pg_wchar));
-	p = (unsigned char *) VARDATA_ANY(input);
+	int			size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
+	pg_wchar   *input_chars = palloc((size + 1) * sizeof(pg_wchar));
+	unsigned char *p = (unsigned char *) VARDATA_ANY(input);
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
@@ -6313,7 +6174,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 	Assert((char *) p == VARDATA_ANY(input) + VARSIZE_ANY_EXHDR(input));
 
 	/* action */
-	output_chars = unicode_normalize(form, input_chars);
+	pg_wchar   *output_chars = unicode_normalize(form, input_chars);
 
 	/* convert back to UTF-8 string */
 	size = 0;
@@ -6325,7 +6186,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 		size += pg_utf_mblen(buf);
 	}
 
-	result = palloc(size + VARHDRSZ);
+	text	   *result = palloc(size + VARHDRSZ);
 	SET_VARSIZE(result, size + VARHDRSZ);
 
 	p = (unsigned char *) VARDATA_ANY(result);
@@ -6356,22 +6217,14 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 {
 	text	   *input = PG_GETARG_TEXT_PP(0);
 	char	   *formstr = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	UnicodeNormalizationForm form;
-	int			size;
-	pg_wchar   *input_chars;
-	pg_wchar   *output_chars;
-	unsigned char *p;
 	int			i;
-	UnicodeNormalizationQC quickcheck;
-	int			output_size;
-	bool		result;
 
-	form = unicode_norm_form_from_string(formstr);
+	UnicodeNormalizationForm form = unicode_norm_form_from_string(formstr);
 
 	/* convert to pg_wchar */
-	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
-	input_chars = palloc((size + 1) * sizeof(pg_wchar));
-	p = (unsigned char *) VARDATA_ANY(input);
+	int			size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
+	pg_wchar   *input_chars = palloc((size + 1) * sizeof(pg_wchar));
+	unsigned char *p = (unsigned char *) VARDATA_ANY(input);
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
@@ -6381,20 +6234,20 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 	Assert((char *) p == VARDATA_ANY(input) + VARSIZE_ANY_EXHDR(input));
 
 	/* quick check (see UAX #15) */
-	quickcheck = unicode_is_normalized_quickcheck(form, input_chars);
+	UnicodeNormalizationQC quickcheck = unicode_is_normalized_quickcheck(form, input_chars);
 	if (quickcheck == UNICODE_NORM_QC_YES)
 		PG_RETURN_BOOL(true);
 	else if (quickcheck == UNICODE_NORM_QC_NO)
 		PG_RETURN_BOOL(false);
 
 	/* normalize and compare with original */
-	output_chars = unicode_normalize(form, input_chars);
+	pg_wchar   *output_chars = unicode_normalize(form, input_chars);
 
-	output_size = 0;
+	int			output_size = 0;
 	for (pg_wchar *wp = output_chars; *wp; wp++)
 		output_size++;
 
-	result = (size == output_size) &&
+	bool		result = (size == output_size) &&
 		(memcmp(input_chars, output_chars, size * sizeof(pg_wchar)) == 0);
 
 	PG_RETURN_BOOL(result);
@@ -6447,15 +6300,13 @@ Datum
 unistr(PG_FUNCTION_ARGS)
 {
 	text	   *input_text = PG_GETARG_TEXT_PP(0);
-	char	   *instr;
-	int			len;
 	StringInfoData str;
 	text	   *result;
 	pg_wchar	pair_first = 0;
 	char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
-	instr = VARDATA_ANY(input_text);
-	len = VARSIZE_ANY_EXHDR(input_text);
+	char	   *instr = VARDATA_ANY(input_text);
+	int			len = VARSIZE_ANY_EXHDR(input_text);
 
 	initStringInfo(&str);
 
@@ -6475,10 +6326,9 @@ unistr(PG_FUNCTION_ARGS)
 			else if ((len >= 5 && isxdigits_n(instr + 1, 4)) ||
 					 (len >= 6 && instr[1] == 'u' && isxdigits_n(instr + 2, 4)))
 			{
-				pg_wchar	unicode;
 				int			offset = instr[1] == 'u' ? 2 : 1;
 
-				unicode = hexval_n(instr + offset, 4);
+				pg_wchar	unicode = hexval_n(instr + offset, 4);
 
 				if (!is_valid_unicode_codepoint(unicode))
 					ereport(ERROR,
@@ -6511,9 +6361,8 @@ unistr(PG_FUNCTION_ARGS)
 			}
 			else if (len >= 8 && instr[1] == '+' && isxdigits_n(instr + 2, 6))
 			{
-				pg_wchar	unicode;
 
-				unicode = hexval_n(instr + 2, 6);
+				pg_wchar	unicode = hexval_n(instr + 2, 6);
 
 				if (!is_valid_unicode_codepoint(unicode))
 					ereport(ERROR,
@@ -6546,9 +6395,8 @@ unistr(PG_FUNCTION_ARGS)
 			}
 			else if (len >= 10 && instr[1] == 'U' && isxdigits_n(instr + 2, 8))
 			{
-				pg_wchar	unicode;
 
-				unicode = hexval_n(instr + 2, 8);
+				pg_wchar	unicode = hexval_n(instr + 2, 8);
 
 				if (!is_valid_unicode_codepoint(unicode))
 					ereport(ERROR,

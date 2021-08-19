@@ -24,11 +24,9 @@ print_wchar_str(const pg_wchar *s)
 {
 #define BUF_DIGITS 50
 	static char buf[BUF_DIGITS * 11 + 1];
-	int			i;
-	char	   *p;
 
-	i = 0;
-	p = buf;
+	int			i = 0;
+	char	   *p = buf;
 	while (*s && i < BUF_DIGITS)
 	{
 		p += sprintf(p, "U+%04X ", *s);
@@ -65,9 +63,8 @@ main(int argc, char **argv)
 	{
 		for (int form = 0; form < 4; form++)
 		{
-			pg_wchar   *result;
 
-			result = unicode_normalize(form, test->input);
+			pg_wchar   *result = unicode_normalize(form, test->input);
 
 			if (pg_wcscmp(test->output[form], result) != 0)
 			{

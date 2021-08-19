@@ -38,7 +38,6 @@ main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	const char *progname;
 	int			optindex;
 	int			c;
 
@@ -53,11 +52,9 @@ main(int argc, char *argv[])
 
 	PQExpBufferData sql;
 
-	PGconn	   *conn;
-	PGresult   *result;
 
 	pg_logging_init(argv[0]);
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "dropuser", help);
@@ -138,7 +135,7 @@ main(int argc, char *argv[])
 	cparams.prompt_password = prompt_password;
 	cparams.override_dbname = NULL;
 
-	conn = connectMaintenanceDatabase(&cparams, progname, echo);
+	PGconn	   *conn = connectMaintenanceDatabase(&cparams, progname, echo);
 
 	initPQExpBuffer(&sql);
 	appendPQExpBuffer(&sql, "DROP ROLE %s%s;",
@@ -146,7 +143,7 @@ main(int argc, char *argv[])
 
 	if (echo)
 		printf("%s\n", sql.data);
-	result = PQexec(conn, sql.data);
+	PGresult   *result = PQexec(conn, sql.data);
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{

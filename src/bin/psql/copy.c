@@ -77,9 +77,8 @@ free_copy_options(struct copy_options *ptr)
 static void
 xstrcat(char **var, const char *more)
 {
-	char	   *newvar;
 
-	newvar = psprintf("%s%s", *var, more);
+	char	   *newvar = psprintf("%s%s", *var, more);
 	free(*var);
 	*var = newvar;
 }
@@ -88,8 +87,6 @@ xstrcat(char **var, const char *more)
 static struct copy_options *
 parse_slash_copy(const char *args)
 {
-	struct copy_options *result;
-	char	   *token;
 	const char *whitespace = " \t\n\r";
 	char		nonstd_backslash = standard_strings() ? 0 : '\\';
 
@@ -99,11 +96,11 @@ parse_slash_copy(const char *args)
 		return NULL;
 	}
 
-	result = pg_malloc0(sizeof(struct copy_options));
+	struct copy_options *result = pg_malloc0(sizeof(struct copy_options));
 
 	result->before_tofrom = pg_strdup("");	/* initialize for appending */
 
-	token = strtokx(args, whitespace, ".,()", "\"",
+	char	   *token = strtokx(args, whitespace, ".,()", "\"",
 					0, false, false, pset.encoding);
 	if (!token)
 		goto error;
@@ -269,11 +266,9 @@ do_copy(const char *args)
 {
 	PQExpBufferData query;
 	FILE	   *copystream;
-	struct copy_options *options;
-	bool		success;
 
 	/* parse options */
-	options = parse_slash_copy(args);
+	struct copy_options *options = parse_slash_copy(args);
 
 	if (!options)
 		return false;
@@ -369,7 +364,7 @@ do_copy(const char *args)
 
 	/* run it like a user command, but with copystream as data source/sink */
 	pset.copyStream = copystream;
-	success = SendQuery(query.data);
+	bool		success = SendQuery(query.data);
 	pset.copyStream = NULL;
 	termPQExpBuffer(&query);
 
@@ -559,12 +554,11 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 
 		for (;;)
 		{
-			int			buflen;
 
 			/* enable longjmp while waiting for input */
 			sigint_interrupt_enabled = true;
 
-			buflen = fread(buf, 1, COPYBUFSIZ, copystream);
+			int			buflen = fread(buf, 1, COPYBUFSIZ, copystream);
 
 			sigint_interrupt_enabled = false;
 
@@ -581,7 +575,6 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 	else
 	{
 		bool		copydone = false;
-		int			buflen;
 		bool		at_line_begin = true;
 
 		/*
@@ -590,10 +583,9 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		 * the EOF marker, because if the data was inlined in a SQL script, we
 		 * would eat up the commands after the EOF marker.
 		 */
-		buflen = 0;
+		int			buflen = 0;
 		while (!copydone)
 		{
-			char	   *fgresult;
 
 			if (at_line_begin && showprompt)
 			{
@@ -606,7 +598,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 			/* enable longjmp while waiting for input */
 			sigint_interrupt_enabled = true;
 
-			fgresult = fgets(&buf[buflen], COPYBUFSIZ - buflen, copystream);
+			char	   *fgresult = fgets(&buf[buflen], COPYBUFSIZ - buflen, copystream);
 
 			sigint_interrupt_enabled = false;
 
@@ -614,9 +606,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 				copydone = true;
 			else
 			{
-				int			linelen;
 
-				linelen = strlen(fgresult);
+				int			linelen = strlen(fgresult);
 				buflen += linelen;
 
 				/* current line is done? */

@@ -84,21 +84,19 @@ Datum
 getmissingattr(TupleDesc tupleDesc,
 			   int attnum, bool *isnull)
 {
-	Form_pg_attribute att;
 
 	Assert(attnum <= tupleDesc->natts);
 	Assert(attnum > 0);
 
-	att = TupleDescAttr(tupleDesc, attnum - 1);
+	Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum - 1);
 
 	if (att->atthasmissing)
 	{
-		AttrMissing *attrmiss;
 
 		Assert(tupleDesc->constr);
 		Assert(tupleDesc->constr->missing);
 
-		attrmiss = tupleDesc->constr->missing + (attnum - 1);
+		AttrMissing *attrmiss = tupleDesc->constr->missing + (attnum - 1);
 
 		if (attrmiss->am_present)
 		{
@@ -126,14 +124,12 @@ heap_compute_data_size(TupleDesc tupleDesc,
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		Datum		val;
-		Form_pg_attribute atti;
 
 		if (isnull[i])
 			continue;
 
-		val = values[i];
-		atti = TupleDescAttr(tupleDesc, i);
+		Datum		val = values[i];
+		Form_pg_attribute atti = TupleDescAttr(tupleDesc, i);
 
 		if (ATT_IS_PACKABLE(atti) &&
 			VARATT_CAN_MAKE_SHORT(DatumGetPointer(val)))
@@ -474,13 +470,12 @@ nocachegetattr(HeapTuple tuple,
 
 	if (!slow)
 	{
-		Form_pg_attribute att;
 
 		/*
 		 * If we get here, there are no nulls up to and including the target
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
-		att = TupleDescAttr(tupleDesc, attnum);
+		Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
 		if (att->attcacheoff >= 0)
 			return fetchatt(att, tp + att->attcacheoff);
 
@@ -679,12 +674,11 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 HeapTuple
 heap_copytuple(HeapTuple tuple)
 {
-	HeapTuple	newTuple;
 
 	if (!HeapTupleIsValid(tuple) || tuple->t_data == NULL)
 		return NULL;
 
-	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
+	HeapTuple	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
@@ -742,11 +736,8 @@ expand_tuple(HeapTuple *targetHeapTuple,
 	HeapTupleHeader sourceTHeader = sourceTuple->t_data;
 	int			sourceNatts = HeapTupleHeaderGetNatts(sourceTHeader);
 	int			natts = tupleDesc->natts;
-	int			sourceNullLen;
 	int			targetNullLen;
 	Size		sourceDataLen = sourceTuple->t_len - sourceTHeader->t_hoff;
-	Size		targetDataLen;
-	Size		len;
 	int			hoff;
 	bits8	   *nullBits = NULL;
 	int			bitMask = 0;
@@ -758,9 +749,9 @@ expand_tuple(HeapTuple *targetHeapTuple,
 
 	Assert(sourceNatts < natts);
 
-	sourceNullLen = (hasNulls ? BITMAPLEN(sourceNatts) : 0);
+	int			sourceNullLen = (hasNulls ? BITMAPLEN(sourceNatts) : 0);
 
-	targetDataLen = sourceDataLen;
+	Size		targetDataLen = sourceDataLen;
 
 	if (tupleDesc->constr &&
 		tupleDesc->constr->missing)
@@ -823,7 +814,7 @@ expand_tuple(HeapTuple *targetHeapTuple,
 		hasNulls = true;
 	}
 
-	len = 0;
+	Size		len = 0;
 
 	if (hasNulls)
 	{
@@ -983,7 +974,6 @@ heap_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc)
 Datum
 heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 {
-	HeapTupleHeader td;
 
 	/*
 	 * If the tuple contains any external TOAST pointers, we have to inline
@@ -999,7 +989,7 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	 * correct composite-Datum header fields (since those may not be set if
 	 * the given tuple came from disk, rather than from heap_form_tuple).
 	 */
-	td = (HeapTupleHeader) palloc(tuple->t_len);
+	HeapTupleHeader td = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy((char *) td, (char *) tuple->t_data, tuple->t_len);
 
 	HeapTupleHeaderSetDatumLength(td, tuple->t_len);
@@ -1025,7 +1015,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	HeapTupleHeader td;			/* tuple data */
 	Size		len,
 				data_len;
-	int			hoff;
 	bool		hasnull = false;
 	int			numberOfAttributes = tupleDescriptor->natts;
 	int			i;
@@ -1056,7 +1045,7 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
 
-	hoff = len = MAXALIGN(len); /* align user data safely */
+	int			hoff = len = MAXALIGN(len); /* align user data safely */
 
 	data_len = heap_compute_data_size(tupleDescriptor, values, isnull);
 
@@ -1118,9 +1107,6 @@ heap_modify_tuple(HeapTuple tuple,
 {
 	int			numberOfAttributes = tupleDesc->natts;
 	int			attoff;
-	Datum	   *values;
-	bool	   *isnull;
-	HeapTuple	newTuple;
 
 	/*
 	 * allocate and fill values and isnull arrays from either the tuple or the
@@ -1133,8 +1119,8 @@ heap_modify_tuple(HeapTuple tuple,
 	 * O(N^2) if there are many non-replaced columns, so it seems better to
 	 * err on the side of linear cost.
 	 */
-	values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
-	isnull = (bool *) palloc(numberOfAttributes * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
+	bool	   *isnull = (bool *) palloc(numberOfAttributes * sizeof(bool));
 
 	heap_deform_tuple(tuple, tupleDesc, values, isnull);
 
@@ -1150,7 +1136,7 @@ heap_modify_tuple(HeapTuple tuple,
 	/*
 	 * create a new tuple from the values and isnull arrays
 	 */
-	newTuple = heap_form_tuple(tupleDesc, values, isnull);
+	HeapTuple	newTuple = heap_form_tuple(tupleDesc, values, isnull);
 
 	pfree(values);
 	pfree(isnull);
@@ -1186,17 +1172,14 @@ heap_modify_tuple_by_cols(HeapTuple tuple,
 						  bool *replIsnull)
 {
 	int			numberOfAttributes = tupleDesc->natts;
-	Datum	   *values;
-	bool	   *isnull;
-	HeapTuple	newTuple;
 	int			i;
 
 	/*
 	 * allocate and fill values and isnull arrays from the tuple, then replace
 	 * selected columns from the input arrays.
 	 */
-	values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
-	isnull = (bool *) palloc(numberOfAttributes * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
+	bool	   *isnull = (bool *) palloc(numberOfAttributes * sizeof(bool));
 
 	heap_deform_tuple(tuple, tupleDesc, values, isnull);
 
@@ -1213,7 +1196,7 @@ heap_modify_tuple_by_cols(HeapTuple tuple,
 	/*
 	 * create a new tuple from the values and isnull arrays
 	 */
-	newTuple = heap_form_tuple(tupleDesc, values, isnull);
+	HeapTuple	newTuple = heap_form_tuple(tupleDesc, values, isnull);
 
 	pfree(values);
 	pfree(isnull);
@@ -1360,7 +1343,6 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	MinimalTuple tuple;			/* return tuple */
 	Size		len,
 				data_len;
-	int			hoff;
 	bool		hasnull = false;
 	int			numberOfAttributes = tupleDescriptor->natts;
 	int			i;
@@ -1391,7 +1373,7 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	if (hasnull)
 		len += BITMAPLEN(numberOfAttributes);
 
-	hoff = len = MAXALIGN(len); /* align user data safely */
+	int			hoff = len = MAXALIGN(len); /* align user data safely */
 
 	data_len = heap_compute_data_size(tupleDescriptor, values, isnull);
 
@@ -1438,9 +1420,8 @@ heap_free_minimal_tuple(MinimalTuple mtup)
 MinimalTuple
 heap_copy_minimal_tuple(MinimalTuple mtup)
 {
-	MinimalTuple result;
 
-	result = (MinimalTuple) palloc(mtup->t_len);
+	MinimalTuple result = (MinimalTuple) palloc(mtup->t_len);
 	memcpy(result, mtup, mtup->t_len);
 	return result;
 }
@@ -1457,10 +1438,9 @@ heap_copy_minimal_tuple(MinimalTuple mtup)
 HeapTuple
 heap_tuple_from_minimal_tuple(MinimalTuple mtup)
 {
-	HeapTuple	result;
 	uint32		len = mtup->t_len + MINIMAL_TUPLE_OFFSET;
 
-	result = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	HeapTuple	result = (HeapTuple) palloc(HEAPTUPLESIZE + len);
 	result->t_len = len;
 	ItemPointerSetInvalid(&(result->t_self));
 	result->t_tableOid = InvalidOid;
@@ -1479,12 +1459,10 @@ heap_tuple_from_minimal_tuple(MinimalTuple mtup)
 MinimalTuple
 minimal_tuple_from_heap_tuple(HeapTuple htup)
 {
-	MinimalTuple result;
-	uint32		len;
 
 	Assert(htup->t_len > MINIMAL_TUPLE_OFFSET);
-	len = htup->t_len - MINIMAL_TUPLE_OFFSET;
-	result = (MinimalTuple) palloc(len);
+	uint32		len = htup->t_len - MINIMAL_TUPLE_OFFSET;
+	MinimalTuple result = (MinimalTuple) palloc(len);
 	memcpy(result, (char *) htup->t_data + MINIMAL_TUPLE_OFFSET, len);
 	result->t_len = len;
 	return result;

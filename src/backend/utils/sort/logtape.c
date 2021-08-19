@@ -283,14 +283,13 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 static void
 ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
-	size_t		nread;
 
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not seek to block %ld of temporary file",
 						blocknum)));
-	nread = BufFileRead(lts->pfile, buffer, BLCKSZ);
+	size_t		nread = BufFileRead(lts->pfile, buffer, BLCKSZ);
 	if (nread != BLCKSZ)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -345,9 +344,8 @@ ltsReadFillBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 static inline void
 swap_nodes(long *heap, unsigned long a, unsigned long b)
 {
-	unsigned long swap;
 
-	swap = heap[a];
+	unsigned long swap = heap[a];
 	heap[a] = heap[b];
 	heap[b] = swap;
 }
@@ -390,9 +388,6 @@ static long
 ltsGetFreeBlock(LogicalTapeSet *lts)
 {
 	long	   *heap = lts->freeBlocks;
-	long		blocknum;
-	int			heapsize;
-	unsigned long pos;
 
 	/* freelist empty; allocate a new block */
 	if (lts->nFreeBlocks == 0)
@@ -405,14 +400,14 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 	}
 
 	/* take top of minheap */
-	blocknum = heap[0];
+	long		blocknum = heap[0];
 
 	/* replace with end of minheap array */
 	heap[0] = heap[--lts->nFreeBlocks];
 
 	/* sift down */
-	pos = 0;
-	heapsize = lts->nFreeBlocks;
+	unsigned long pos = 0;
+	int			heapsize = lts->nFreeBlocks;
 	while (true)
 	{
 		unsigned long left = left_offset(pos);
@@ -484,8 +479,6 @@ ltsGetPreallocBlock(LogicalTapeSet *lts, LogicalTape *lt)
 static void
 ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
-	long	   *heap;
-	unsigned long pos;
 
 	/*
 	 * Do nothing if we're no longer interested in remembering free space.
@@ -510,8 +503,8 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 											lts->freeBlocksLen * sizeof(long));
 	}
 
-	heap = lts->freeBlocks;
-	pos = lts->nFreeBlocks;
+	long	   *heap = lts->freeBlocks;
+	unsigned long pos = lts->nFreeBlocks;
 
 	/* place entry at end of minheap array */
 	heap[pos] = blocknum;
@@ -558,14 +551,12 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 	for (i = 0; i < lts->nTapes - 1; i++)
 	{
 		char		filename[MAXPGPATH];
-		BufFile    *file;
-		int64		filesize;
 
 		lt = &lts->tapes[i];
 
 		pg_itoa(i, filename);
-		file = BufFileOpenShared(fileset, filename, O_RDONLY);
-		filesize = BufFileSize(file);
+		BufFile    *file = BufFileOpenShared(fileset, filename, O_RDONLY);
+		int64		filesize = BufFileSize(file);
 
 		/*
 		 * Stash first BufFile, and concatenate subsequent BufFiles to that.
@@ -685,14 +676,13 @@ LogicalTapeSet *
 LogicalTapeSetCreate(int ntapes, bool preallocate, TapeShare *shared,
 					 SharedFileSet *fileset, int worker)
 {
-	LogicalTapeSet *lts;
 	int			i;
 
 	/*
 	 * Create top-level struct including per-tape LogicalTape structs.
 	 */
 	Assert(ntapes > 0);
-	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet));
+	LogicalTapeSet *lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet));
 	lts->nBlocksAllocated = 0L;
 	lts->nBlocksWritten = 0L;
 	lts->nHoleBlocks = 0L;
@@ -775,11 +765,10 @@ void
 LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 				 void *ptr, size_t size)
 {
-	LogicalTape *lt;
 	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
 	Assert(lt->offsetBlockNumber == 0L);
 
@@ -806,7 +795,6 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 		if (lt->pos >= (int) TapeBlockPayloadSize)
 		{
 			/* Buffer full, dump it out */
-			long		nextBlockNumber;
 
 			if (!lt->dirty)
 			{
@@ -818,7 +806,7 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 			 * First allocate the next block, so that we can store it in the
 			 * 'next' pointer of this block.
 			 */
-			nextBlockNumber = ltsGetBlock(lts, lt);
+			long		nextBlockNumber = ltsGetBlock(lts, lt);
 
 			/* set the next-pointer and dump the current block. */
 			TapeBlockGetTrailer(lt->buffer)->next = nextBlockNumber;
@@ -862,10 +850,9 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 void
 LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 {
-	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 
 	/*
 	 * Round and cap buffer_size if needed.
@@ -950,10 +937,9 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 void
 LogicalTapeRewindForWrite(LogicalTapeSet *lts, int tapenum)
 {
-	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 
 	Assert(!lt->writing && !lt->frozen);
 	lt->writing = true;
@@ -977,12 +963,11 @@ size_t
 LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
 				void *ptr, size_t size)
 {
-	LogicalTape *lt;
 	size_t		nread = 0;
 	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 	Assert(!lt->writing);
 
 	if (lt->buffer == NULL)
@@ -1033,10 +1018,9 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
 void
 LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum, TapeShare *share)
 {
-	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
 	Assert(lt->offsetBlockNumber == 0L);
 
@@ -1136,11 +1120,9 @@ LogicalTapeSetExtend(LogicalTapeSet *lts, int nAdditional)
 size_t
 LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 {
-	LogicalTape *lt;
-	size_t		seekpos = 0;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 	Assert(lt->frozen);
 	Assert(lt->buffer_size == BLCKSZ);
 
@@ -1161,7 +1143,7 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 	 * implementation would be pretty inefficient for long seeks, but we
 	 * really aren't doing that (a seek over one tuple is typical).
 	 */
-	seekpos = (size_t) lt->pos; /* part within this block */
+	size_t		seekpos = (size_t) lt->pos; /* part within this block */
 	while (size > seekpos)
 	{
 		long		prev = TapeBlockGetTrailer(lt->buffer)->prev;
@@ -1211,10 +1193,9 @@ void
 LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 				long blocknum, int offset)
 {
-	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 	Assert(lt->frozen);
 	Assert(offset >= 0 && offset <= TapeBlockPayloadSize);
 	Assert(lt->buffer_size == BLCKSZ);
@@ -1245,10 +1226,9 @@ void
 LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 				long *blocknum, int *offset)
 {
-	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = &lts->tapes[tapenum];
+	LogicalTape *lt = &lts->tapes[tapenum];
 
 	if (lt->buffer == NULL)
 		ltsInitReadBuffer(lts, lt);

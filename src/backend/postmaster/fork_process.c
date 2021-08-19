@@ -94,12 +94,11 @@ fork_process(void)
 			if (fd >= 0)
 			{
 				const char *oomvalue = getenv("PG_OOM_ADJUST_VALUE");
-				int			rc;
 
 				if (oomvalue == NULL)	/* supply a useful default */
 					oomvalue = "0";
 
-				rc = write(fd, oomvalue, strlen(oomvalue));
+				int			rc = write(fd, oomvalue, strlen(oomvalue));
 				(void) rc;
 				close(fd);
 			}

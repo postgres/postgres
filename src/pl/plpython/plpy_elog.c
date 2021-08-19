@@ -91,11 +91,10 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 		for (;;)
 		{
 			va_list		ap;
-			int			needed;
 
 			errno = save_errno;
 			va_start(ap, fmt);
-			needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+			int			needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
 			va_end(ap);
 			if (needed == 0)
 				break;
@@ -165,8 +164,6 @@ static void
 PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			  char **xmsg, char **tbmsg, int *tb_depth)
 {
-	PyObject   *e_type_o;
-	PyObject   *e_module_o;
 	char	   *e_type_s = NULL;
 	char	   *e_module_s = NULL;
 	PyObject   *vob = NULL;
@@ -190,8 +187,8 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	 * Format the exception and its value and put it in xmsg.
 	 */
 
-	e_type_o = PyObject_GetAttrString(e, "__name__");
-	e_module_o = PyObject_GetAttrString(e, "__module__");
+	PyObject   *e_type_o = PyObject_GetAttrString(e, "__name__");
+	PyObject   *e_module_o = PyObject_GetAttrString(e, "__module__");
 	if (e_type_o)
 		e_type_s = PyString_AsString(e_type_o);
 	if (e_type_s)
@@ -277,11 +274,8 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 		if (*tb_depth > 0)
 		{
 			PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-			char	   *proname;
 			char	   *fname;
 			char	   *line;
-			char	   *plain_filename;
-			long		plain_lineno;
 
 			/*
 			 * The second frame points at the internal function, but to mimic
@@ -292,9 +286,9 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			else
 				fname = PyString_AsString(name);
 
-			proname = PLy_procedure_name(exec_ctx->curr_proc);
-			plain_filename = PyString_AsString(filename);
-			plain_lineno = PyInt_AsLong(lineno);
+			char	   *proname = PLy_procedure_name(exec_ctx->curr_proc);
+			char	   *plain_filename = PyString_AsString(filename);
+			long		plain_lineno = PyInt_AsLong(lineno);
 
 			if (proname == NULL)
 				appendStringInfo(&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
@@ -359,13 +353,12 @@ static void
 PLy_get_sqlerrcode(PyObject *exc, int *sqlerrcode)
 {
 	PyObject   *sqlstate;
-	char	   *buffer;
 
 	sqlstate = PyObject_GetAttrString(exc, "sqlstate");
 	if (sqlstate == NULL)
 		return;
 
-	buffer = PyString_AsString(sqlstate);
+	char	   *buffer = PyString_AsString(sqlstate);
 	if (strlen(buffer) == 5 &&
 		strspn(buffer, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") == 5)
 	{
@@ -510,10 +503,9 @@ PLy_exception_set_plural(PyObject *exc,
 void
 PLy_exception_set_with_details(PyObject *excclass, ErrorData *edata)
 {
-	PyObject   *args = NULL;
 	PyObject   *error = NULL;
 
-	args = Py_BuildValue("(s)", edata->message);
+	PyObject   *args = Py_BuildValue("(s)", edata->message);
 	if (!args)
 		goto failure;
 
@@ -568,9 +560,8 @@ failure:
 static void
 get_string_attr(PyObject *obj, char *attrname, char **str)
 {
-	PyObject   *val;
 
-	val = PyObject_GetAttrString(obj, attrname);
+	PyObject   *val = PyObject_GetAttrString(obj, attrname);
 	if (val != NULL && val != Py_None)
 	{
 		*str = pstrdup(PyString_AsString(val));
@@ -584,7 +575,6 @@ get_string_attr(PyObject *obj, char *attrname, char **str)
 static bool
 set_string_attr(PyObject *obj, char *attrname, char *str)
 {
-	int			result;
 	PyObject   *val;
 
 	if (str != NULL)
@@ -599,7 +589,7 @@ set_string_attr(PyObject *obj, char *attrname, char *str)
 		Py_INCREF(Py_None);
 	}
 
-	result = PyObject_SetAttrString(obj, attrname, val);
+	int			result = PyObject_SetAttrString(obj, attrname, val);
 	Py_DECREF(val);
 
 	return result != -1;

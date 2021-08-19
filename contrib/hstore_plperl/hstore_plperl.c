@@ -71,18 +71,15 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
-	HV		   *hv;
 
-	hv = newHV();
+	HV		   *hv = newHV();
 
 	for (i = 0; i < count; i++)
 	{
-		const char *key;
-		SV		   *value;
 
-		key = pnstrdup(HSTORE_KEY(entries, base, i),
+		const char *key = pnstrdup(HSTORE_KEY(entries, base, i),
 					   HSTORE_KEYLEN(entries, i));
-		value = HSTORE_VALISNULL(entries, i) ? newSV(0) :
+		SV		   *value = HSTORE_VALISNULL(entries, i) ? newSV(0) :
 			cstr2sv(pnstrdup(HSTORE_VAL(entries, base, i),
 							 HSTORE_VALLEN(entries, i)));
 
@@ -100,13 +97,8 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 {
 	dTHX;
 	SV		   *in = (SV *) PG_GETARG_POINTER(0);
-	HV		   *hv;
 	HE		   *he;
 	int32		buflen;
-	int32		i;
-	int32		pcount;
-	HStore	   *out;
-	Pairs	   *pairs;
 
 	/* Dereference references recursively. */
 	while (SvROK(in))
@@ -117,13 +109,13 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot transform non-hash Perl value to hstore")));
-	hv = (HV *) in;
+	HV		   *hv = (HV *) in;
 
-	pcount = hv_iterinit(hv);
+	int32		pcount = hv_iterinit(hv);
 
-	pairs = palloc(pcount * sizeof(Pairs));
+	Pairs	   *pairs = palloc(pcount * sizeof(Pairs));
 
-	i = 0;
+	int32		i = 0;
 	while ((he = hv_iternext(hv)))
 	{
 		char	   *key = sv2cstr(HeSVKEY_force(he));
@@ -150,6 +142,6 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 	}
 
 	pcount = hstoreUniquePairs(pairs, pcount, &buflen);
-	out = hstorePairs(pairs, pcount, buflen);
+	HStore	   *out = hstorePairs(pairs, pcount, buflen);
 	PG_RETURN_POINTER(out);
 }

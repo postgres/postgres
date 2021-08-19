@@ -50,10 +50,6 @@ Datum
 expand_array(Datum arraydatum, MemoryContext parentcontext,
 			 ArrayMetaState *metacache)
 {
-	ArrayType  *array;
-	ExpandedArrayHeader *eah;
-	MemoryContext objcxt;
-	MemoryContext oldcxt;
 	ArrayMetaState fakecache;
 
 	/*
@@ -61,12 +57,12 @@ expand_array(Datum arraydatum, MemoryContext parentcontext,
 	 * that the array won't be very large; but if it does grow a lot, don't
 	 * constrain aset.c's large-context behavior.
 	 */
-	objcxt = AllocSetContextCreate(parentcontext,
+	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
 								   "expanded array",
 								   ALLOCSET_START_SMALL_SIZES);
 
 	/* Set up expanded array header */
-	eah = (ExpandedArrayHeader *)
+	ExpandedArrayHeader *eah = (ExpandedArrayHeader *)
 		MemoryContextAlloc(objcxt, sizeof(ExpandedArrayHeader));
 
 	EOH_init_header(&eah->hdr, &EA_methods, objcxt);
@@ -127,8 +123,8 @@ expand_array(Datum arraydatum, MemoryContext parentcontext,
 	 * which seems worthwhile, especially if the array is large enough to need
 	 * external storage.
 	 */
-	oldcxt = MemoryContextSwitchTo(objcxt);
-	array = DatumGetArrayTypePCopy(arraydatum);
+	MemoryContext oldcxt = MemoryContextSwitchTo(objcxt);
+	ArrayType  *array = DatumGetArrayTypePCopy(arraydatum);
 	MemoryContextSwitchTo(oldcxt);
 
 	eah->ndims = ARR_NDIM(array);
@@ -233,11 +229,6 @@ static Size
 EA_get_flat_size(ExpandedObjectHeader *eohptr)
 {
 	ExpandedArrayHeader *eah = (ExpandedArrayHeader *) eohptr;
-	int			nelems;
-	int			ndims;
-	Datum	   *dvalues;
-	bool	   *dnulls;
-	Size		nbytes;
 	int			i;
 
 	Assert(eah->ea_magic == EA_MAGIC);
@@ -255,12 +246,12 @@ EA_get_flat_size(ExpandedObjectHeader *eohptr)
 	 * array will have a nulls bitmap if dnulls isn't NULL, even if the array
 	 * doesn't actually contain any nulls now.
 	 */
-	nelems = eah->nelems;
-	ndims = eah->ndims;
+	int			nelems = eah->nelems;
+	int			ndims = eah->ndims;
 	Assert(nelems == ArrayGetNItems(ndims, eah->dims));
-	dvalues = eah->dvalues;
-	dnulls = eah->dnulls;
-	nbytes = 0;
+	Datum	   *dvalues = eah->dvalues;
+	bool	   *dnulls = eah->dnulls;
+	Size		nbytes = 0;
 	for (i = 0; i < nelems; i++)
 	{
 		if (dnulls && dnulls[i])
@@ -295,8 +286,6 @@ EA_flatten_into(ExpandedObjectHeader *eohptr,
 {
 	ExpandedArrayHeader *eah = (ExpandedArrayHeader *) eohptr;
 	ArrayType  *aresult = (ArrayType *) result;
-	int			nelems;
-	int			ndims;
 	int32		dataoffset;
 
 	Assert(eah->ea_magic == EA_MAGIC);
@@ -313,8 +302,8 @@ EA_flatten_into(ExpandedObjectHeader *eohptr,
 	Assert(allocated_size == eah->flat_size);
 
 	/* Fill result array from dvalues/dnulls */
-	nelems = eah->nelems;
-	ndims = eah->ndims;
+	int			nelems = eah->nelems;
+	int			ndims = eah->ndims;
 
 	if (eah->dnulls)
 		dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nelems);
@@ -427,10 +416,9 @@ deconstruct_expanded_array(ExpandedArrayHeader *eah)
 	{
 		MemoryContext oldcxt = MemoryContextSwitchTo(eah->hdr.eoh_context);
 		Datum	   *dvalues;
-		bool	   *dnulls;
 		int			nelems;
 
-		dnulls = NULL;
+		bool	   *dnulls = NULL;
 		deconstruct_array(eah->fvalue,
 						  eah->element_type,
 						  eah->typlen, eah->typbyval, eah->typalign,

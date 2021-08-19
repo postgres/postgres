@@ -46,7 +46,6 @@ brin_page_type(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Page		page = VARDATA(raw_page);
-	int			raw_page_size;
 	char	   *type;
 
 	if (!superuser())
@@ -54,7 +53,7 @@ brin_page_type(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+	int			raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
 	if (raw_page_size != BLCKSZ)
 		ereport(ERROR,
@@ -89,10 +88,8 @@ brin_page_type(PG_FUNCTION_ARGS)
 static Page
 verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
-	Page		page;
-	int			raw_page_size;
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+	int			raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
 	if (raw_page_size != BLCKSZ)
 		ereport(ERROR,
@@ -101,7 +98,7 @@ verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 				 errdetail("Expected size %d, got %d",
 						   BLCKSZ, raw_page_size)));
 
-	page = VARDATA(raw_page);
+	Page		page = VARDATA(raw_page);
 
 	/* verify the special space says this page is what we want */
 	if (BrinPageType(page) != type)
@@ -127,16 +124,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	Oid			indexRelid = PG_GETARG_OID(1);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	MemoryContext oldcontext;
-	Tuplestorestate *tupstore;
-	Relation	indexRel;
-	brin_column_state **columns;
-	BrinDesc   *bdesc;
-	BrinMemTuple *dtup;
-	Page		page;
-	OffsetNumber offset;
 	AttrNumber	attno;
-	bool		unusedItem;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -159,36 +147,34 @@ brin_page_items(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 
 	/* Build tuplestore to hold the result rows */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	indexRel = index_open(indexRelid, AccessShareLock);
-	bdesc = brin_build_desc(indexRel);
+	Relation	indexRel = index_open(indexRelid, AccessShareLock);
+	BrinDesc   *bdesc = brin_build_desc(indexRel);
 
 	/* minimally verify the page we got */
-	page = verify_brin_page(raw_page, BRIN_PAGETYPE_REGULAR, "regular");
+	Page		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REGULAR, "regular");
 
 	/*
 	 * Initialize output functions for all indexed datatypes; simplifies
 	 * calling them later.
 	 */
-	columns = palloc(sizeof(brin_column_state *) * RelationGetDescr(indexRel)->natts);
+	brin_column_state **columns = palloc(sizeof(brin_column_state *) * RelationGetDescr(indexRel)->natts);
 	for (attno = 1; attno <= bdesc->bd_tupdesc->natts; attno++)
 	{
 		Oid			output;
 		bool		isVarlena;
-		BrinOpcInfo *opcinfo;
 		int			i;
-		brin_column_state *column;
 
-		opcinfo = bdesc->bd_info[attno - 1];
-		column = palloc(offsetof(brin_column_state, outputFn) +
+		BrinOpcInfo *opcinfo = bdesc->bd_info[attno - 1];
+		brin_column_state *column = palloc(offsetof(brin_column_state, outputFn) +
 						sizeof(FmgrInfo) * opcinfo->oi_nstored);
 
 		column->nstored = opcinfo->oi_nstored;
@@ -201,9 +187,9 @@ brin_page_items(PG_FUNCTION_ARGS)
 		columns[attno - 1] = column;
 	}
 
-	offset = FirstOffsetNumber;
-	unusedItem = false;
-	dtup = NULL;
+	OffsetNumber offset = FirstOffsetNumber;
+	bool		unusedItem = false;
+	BrinMemTuple *dtup = NULL;
 	for (;;)
 	{
 		Datum		values[7];
@@ -217,10 +203,9 @@ brin_page_items(PG_FUNCTION_ARGS)
 		 */
 		if (dtup == NULL)
 		{
-			ItemId		itemId;
 
 			/* verify item status: if there's no data, we can't decode */
-			itemId = PageGetItemId(page, offset);
+			ItemId		itemId = PageGetItemId(page, offset);
 			if (ItemIdIsUsed(itemId))
 			{
 				dtup = brin_deform_tuple(bdesc,
@@ -272,21 +257,19 @@ brin_page_items(PG_FUNCTION_ARGS)
 			{
 				BrinValues *bvalues = &dtup->bt_columns[att];
 				StringInfoData s;
-				bool		first;
 				int			i;
 
 				initStringInfo(&s);
 				appendStringInfoChar(&s, '{');
 
-				first = true;
+				bool		first = true;
 				for (i = 0; i < columns[att]->nstored; i++)
 				{
-					char	   *val;
 
 					if (!first)
 						appendStringInfoString(&s, " .. ");
 					first = false;
-					val = OutputFunctionCall(&columns[att]->outputFn[i],
+					char	   *val = OutputFunctionCall(&columns[att]->outputFn[i],
 											 bvalues->bv_values[i]);
 					appendStringInfoString(&s, val);
 					pfree(val);
@@ -337,19 +320,16 @@ Datum
 brin_metapage_info(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-	Page		page;
-	BrinMetaPageData *meta;
 	TupleDesc	tupdesc;
 	Datum		values[4];
 	bool		nulls[4];
-	HeapTuple	htup;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	page = verify_brin_page(raw_page, BRIN_PAGETYPE_META, "metapage");
+	Page		page = verify_brin_page(raw_page, BRIN_PAGETYPE_META, "metapage");
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -357,14 +337,14 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* Extract values from the metapage */
-	meta = (BrinMetaPageData *) PageGetContents(page);
+	BrinMetaPageData *meta = (BrinMetaPageData *) PageGetContents(page);
 	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = CStringGetTextDatum(psprintf("0x%08X", meta->brinMagic));
 	values[1] = Int32GetDatum(meta->brinVersion);
 	values[2] = Int32GetDatum(meta->pagesPerRange);
 	values[3] = Int64GetDatum(meta->lastRevmapPage);
 
-	htup = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	htup = heap_form_tuple(tupdesc, values, nulls);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 }
@@ -390,17 +370,15 @@ brin_revmap_data(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-		MemoryContext mctx;
-		Page		page;
 
 		/* minimally verify the page we got */
-		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REVMAP, "revmap");
+		Page		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REVMAP, "revmap");
 
 		/* create a function context for cross-call persistence */
 		fctx = SRF_FIRSTCALL_INIT();
 
 		/* switch to memory context appropriate for multiple function calls */
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+		MemoryContext mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		state = palloc(sizeof(*state));
 		state->tids = ((RevmapContents *) PageGetContents(page))->rm_tids;

@@ -32,12 +32,10 @@ static void notice_processor(void *arg, const char *message);
 static void
 _check_database_version(ArchiveHandle *AH)
 {
-	const char *remoteversion_str;
-	int			remoteversion;
 	PGresult   *res;
 
-	remoteversion_str = PQparameterStatus(AH->connection, "server_version");
-	remoteversion = PQserverVersion(AH->connection);
+	const char *remoteversion_str = PQparameterStatus(AH->connection, "server_version");
+	int			remoteversion = PQserverVersion(AH->connection);
 	if (remoteversion == 0 || !remoteversion_str)
 		fatal("could not get server_version from libpq");
 
@@ -116,17 +114,15 @@ ConnectDatabase(Archive *AHX,
 				bool isReconnect)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	trivalue	prompt_password;
-	char	   *password;
 	bool		new_pass;
 
 	if (AH->connection)
 		fatal("already connected to a database");
 
 	/* Never prompt for a password during a reconnection */
-	prompt_password = isReconnect ? TRI_NO : cparams->promptPassword;
+	trivalue	prompt_password = isReconnect ? TRI_NO : cparams->promptPassword;
 
-	password = AH->savedPassword;
+	char	   *password = AH->savedPassword;
 
 	if (prompt_password == TRI_YES && password == NULL)
 		password = simple_prompt("Password: ", false);
@@ -282,9 +278,8 @@ void
 ExecuteSqlStatement(Archive *AHX, const char *query)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	PGresult   *res;
 
-	res = PQexec(AH->connection, query);
+	PGresult   *res = PQexec(AH->connection, query);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		die_on_query_failure(AH, query);
 	PQclear(res);
@@ -294,9 +289,8 @@ PGresult *
 ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	PGresult   *res;
 
-	res = PQexec(AH->connection, query);
+	PGresult   *res = PQexec(AH->connection, query);
 	if (PQresultStatus(res) != status)
 		die_on_query_failure(AH, query);
 	return res;
@@ -308,13 +302,11 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 PGresult *
 ExecuteSqlQueryForSingleRow(Archive *fout, const char *query)
 {
-	PGresult   *res;
-	int			ntups;
 
-	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
+	PGresult   *res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
-	ntups = PQntuples(res);
+	int			ntups = PQntuples(res);
 	if (ntups != 1)
 		fatal(ngettext("query returned %d row instead of one: %s",
 					   "query returned %d rows instead of one: %s",
@@ -507,14 +499,13 @@ EndDBCopyMode(Archive *AHX, const char *tocEntryTag)
 
 	if (AH->pgCopyIn)
 	{
-		PGresult   *res;
 
 		if (PQputCopyEnd(AH->connection, NULL) <= 0)
 			fatal("error returned by PQputCopyEnd: %s",
 				  PQerrorMessage(AH->connection));
 
 		/* Check command status and return to normal libpq state */
-		res = PQgetResult(AH->connection);
+		PGresult   *res = PQgetResult(AH->connection);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			warn_or_exit_horribly(AH, "COPY failed for table \"%s\": %s",
 								  tocEntryTag, PQerrorMessage(AH->connection));

@@ -48,25 +48,22 @@ static text *headline_json_value(void *_state, char *elem_value, int elem_len);
 static void
 tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 {
-	TupleDesc	tupdesc;
-	MemoryContext oldcontext;
-	TSTokenTypeStorage *st;
 	TSParserCacheEntry *prs = lookup_ts_parser_cache(prsid);
 
 	if (!OidIsValid(prs->lextypeOid))
 		elog(ERROR, "method lextype isn't defined for text search parser %u",
 			 prsid);
 
-	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
+	TSTokenTypeStorage *st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
 	st->cur = 0;
 	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
 															 (Datum) 0));
 	funcctx->user_fctx = (void *) st;
 
-	tupdesc = CreateTemplateTupleDesc(3);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "alias",
@@ -81,23 +78,20 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 static Datum
 tt_process_call(FuncCallContext *funcctx)
 {
-	TSTokenTypeStorage *st;
 
-	st = (TSTokenTypeStorage *) funcctx->user_fctx;
+	TSTokenTypeStorage *st = (TSTokenTypeStorage *) funcctx->user_fctx;
 	if (st->list && st->list[st->cur].lexid)
 	{
-		Datum		result;
 		char	   *values[3];
 		char		txtid[16];
-		HeapTuple	tuple;
 
 		sprintf(txtid, "%d", st->list[st->cur].lexid);
 		values[0] = txtid;
 		values[1] = st->list[st->cur].alias;
 		values[2] = st->list[st->cur].descr;
 
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		Datum		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[1]);
 		pfree(values[2]);
@@ -135,10 +129,9 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *prsname = PG_GETARG_TEXT_PP(0);
-		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
+		Oid			prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
 		tt_setup_firstcall(funcctx, prsId);
 	}
 
@@ -166,23 +159,19 @@ typedef struct
 static void
 prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 {
-	TupleDesc	tupdesc;
-	MemoryContext oldcontext;
-	PrsStorage *st;
 	TSParserCacheEntry *prs = lookup_ts_parser_cache(prsid);
 	char	   *lex = NULL;
 	int			llen = 0,
 				type = 0;
-	void	   *prsdata;
 
-	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	st = (PrsStorage *) palloc(sizeof(PrsStorage));
+	PrsStorage *st = (PrsStorage *) palloc(sizeof(PrsStorage));
 	st->cur = 0;
 	st->len = 16;
 	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
+	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
 													 PointerGetDatum(VARDATA_ANY(txt)),
 													 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
 
@@ -209,7 +198,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 	st->cur = 0;
 
 	funcctx->user_fctx = (void *) st;
-	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "token",
@@ -222,21 +211,18 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 static Datum
 prs_process_call(FuncCallContext *funcctx)
 {
-	PrsStorage *st;
 
-	st = (PrsStorage *) funcctx->user_fctx;
+	PrsStorage *st = (PrsStorage *) funcctx->user_fctx;
 	if (st->cur < st->len)
 	{
-		Datum		result;
 		char	   *values[2];
 		char		tid[16];
-		HeapTuple	tuple;
 
 		values[0] = tid;
 		sprintf(tid, "%d", st->list[st->cur].type);
 		values[1] = st->list[st->cur].lexeme;
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		Datum		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[1]);
 		st->cur++;
@@ -277,10 +263,9 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 	{
 		text	   *prsname = PG_GETARG_TEXT_PP(0);
 		text	   *txt = PG_GETARG_TEXT_PP(1);
-		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
+		Oid			prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
 		prs_setup_firstcall(funcctx, prsId, txt);
 	}
 
@@ -300,12 +285,9 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_PP(3) : NULL;
 	HeadlineParsedText prs;
 	List	   *prsoptions;
-	text	   *out;
-	TSConfigCacheEntry *cfg;
-	TSParserCacheEntry *prsobj;
 
-	cfg = lookup_ts_config_cache(tsconfig);
-	prsobj = lookup_ts_parser_cache(cfg->prsId);
+	TSConfigCacheEntry *cfg = lookup_ts_config_cache(tsconfig);
+	TSParserCacheEntry *prsobj = lookup_ts_parser_cache(cfg->prsId);
 
 	if (!OidIsValid(prsobj->headlineOid))
 		ereport(ERROR,
@@ -329,7 +311,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 				  PointerGetDatum(prsoptions),
 				  PointerGetDatum(query));
 
-	out = generateHeadline(&prs);
+	text	   *out = generateHeadline(&prs);
 
 	PG_FREE_IF_COPY(in, 1);
 	PG_FREE_IF_COPY(query, 2);
@@ -377,7 +359,6 @@ ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
-	Jsonb	   *out;
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 	HeadlineParsedText prs;
 	HeadlineJsonState *state = palloc0(sizeof(HeadlineJsonState));
@@ -400,7 +381,7 @@ ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("text search parser does not support headline creation")));
 
-	out = transform_jsonb_string_values(jb, state, action);
+	Jsonb	   *out = transform_jsonb_string_values(jb, state, action);
 
 	PG_FREE_IF_COPY(jb, 1);
 	PG_FREE_IF_COPY(query, 2);
@@ -453,7 +434,6 @@ ts_headline_json_byid_opt(PG_FUNCTION_ARGS)
 	text	   *json = PG_GETARG_TEXT_P(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
-	text	   *out;
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 
 	HeadlineParsedText prs;
@@ -477,7 +457,7 @@ ts_headline_json_byid_opt(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("text search parser does not support headline creation")));
 
-	out = transform_json_string_values(json, state, action);
+	text	   *out = transform_json_string_values(json, state, action);
 
 	PG_FREE_IF_COPY(json, 1);
 	PG_FREE_IF_COPY(query, 2);

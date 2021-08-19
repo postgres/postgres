@@ -145,7 +145,6 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		GISTENTRY  *retval;
 		ArrayType  *in = DatumGetArrayTypeP(entry->key);
 		int32	   *ptr;
 		int			num;
@@ -169,7 +168,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 			ptr++;
 		}
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -181,10 +180,8 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 	}
 	else if (!ISALLTRUE(DatumGetPointer(entry->key)))
 	{
-		GISTENTRY  *retval;
 		int			i;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
-		GISTTYPE   *res;
 
 		LOOPBYTE(siglen)
 		{
@@ -192,8 +189,8 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 				PG_RETURN_POINTER(entry);
 		}
 
-		res = _intbig_alloc(true, siglen, sign);
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		GISTTYPE   *res = _intbig_alloc(true, siglen, sign);
+		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -331,20 +328,17 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 				size_beta;
 	int32		size_waste,
 				waste = -1;
-	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
-	OffsetNumber maxoff;
 	BITVECP		ptr;
 	int			i;
-	SPLITCOST  *costvector;
 	GISTTYPE   *_k,
 			   *_j;
 
-	maxoff = entryvec->n - 2;
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	OffsetNumber maxoff = entryvec->n - 2;
+	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -382,7 +376,7 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

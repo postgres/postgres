@@ -302,14 +302,13 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	if (INFORMIX_MODE(compat))
 	{
-		char	   *envname;
 
 		/*
 		 * Informix uses an environment variable DBPATH that overrides the
 		 * connection parameters given here. We do the same with PG_DBPATH as
 		 * the syntax is different.
 		 */
-		envname = getenv("PG_DBPATH");
+		char	   *envname = getenv("PG_DBPATH");
 		if (envname)
 		{
 			ecpg_free(dbname);
@@ -708,9 +707,8 @@ ECPGdisconnect(int lineno, const char *connection_name)
 PGconn *
 ECPGget_PGconn(const char *connection_name)
 {
-	struct connection *con;
 
-	con = ecpg_get_connection(connection_name);
+	struct connection *con = ecpg_get_connection(connection_name);
 	if (con == NULL)
 		return NULL;
 

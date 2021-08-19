@@ -47,7 +47,6 @@ void
 px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
    City * city_table)
 {
-	int			num_positions;
 	int			i,
 				pos,
 				tour2_index,
@@ -58,7 +57,7 @@ px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 		city_table[i].used = 0;
 
 	/* choose random positions that will be inherited directly from parent */
-	num_positions = geqo_randint(root, 2 * num_gene / 3, num_gene / 3);
+	int			num_positions = geqo_randint(root, 2 * num_gene / 3, num_gene / 3);
 
 	/* choose random position */
 	for (i = 0; i < num_positions; i++)

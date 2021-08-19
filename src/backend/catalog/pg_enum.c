@@ -60,9 +60,7 @@ static int	sort_order_cmp(const void *p1, const void *p2);
 void
 EnumValuesCreate(Oid enumTypeOid, List *vals)
 {
-	Relation	pg_enum;
 	NameData	enumlabel;
-	Oid		   *oids;
 	int			elemno,
 				num_elems;
 	Datum		values[Natts_pg_enum];
@@ -78,7 +76,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * probably not worth trying harder.
 	 */
 
-	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
+	Relation	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	/*
 	 * Allocate OIDs for the enum's members.
@@ -88,7 +86,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * allocating the next), trouble could only occur if the OID counter wraps
 	 * all the way around before we finish. Which seems unlikely.
 	 */
-	oids = (Oid *) palloc(num_elems * sizeof(Oid));
+	Oid		   *oids = (Oid *) palloc(num_elems * sizeof(Oid));
 
 	for (elemno = 0; elemno < num_elems; elemno++)
 	{
@@ -156,19 +154,17 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 void
 EnumValuesDelete(Oid enumTypeOid)
 {
-	Relation	pg_enum;
 	ScanKeyData key[1];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
+	Relation	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_enum_enumtypid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(enumTypeOid));
 
-	scan = systable_beginscan(pg_enum, EnumTypIdLabelIndexId, true,
+	SysScanDesc scan = systable_beginscan(pg_enum, EnumTypIdLabelIndexId, true,
 							  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -211,16 +207,11 @@ AddEnumLabel(Oid enumTypeOid,
 			 bool newValIsAfter,
 			 bool skipIfExists)
 {
-	Relation	pg_enum;
 	Oid			newOid;
 	Datum		values[Natts_pg_enum];
 	bool		nulls[Natts_pg_enum];
 	NameData	enumlabel;
-	HeapTuple	enum_tup;
 	float4		newelemorder;
-	HeapTuple  *existing;
-	CatCList   *list;
-	int			nelems;
 	int			i;
 
 	/* check length of new label is ok */
@@ -246,7 +237,7 @@ AddEnumLabel(Oid enumTypeOid,
 	 * catch this anyway, but we prefer a friendlier error message, and
 	 * besides we need a check to support IF NOT EXISTS.
 	 */
-	enum_tup = SearchSysCache2(ENUMTYPOIDNAME,
+	HeapTuple	enum_tup = SearchSysCache2(ENUMTYPOIDNAME,
 							   ObjectIdGetDatum(enumTypeOid),
 							   CStringGetDatum(newVal));
 	if (HeapTupleIsValid(enum_tup))
@@ -267,18 +258,18 @@ AddEnumLabel(Oid enumTypeOid,
 							newVal)));
 	}
 
-	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
+	Relation	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	/* If we have to renumber the existing members, we restart from here */
 restart:
 
 	/* Get the list of existing members of the enum */
-	list = SearchSysCacheList1(ENUMTYPOIDNAME,
+	CatCList   *list = SearchSysCacheList1(ENUMTYPOIDNAME,
 							   ObjectIdGetDatum(enumTypeOid));
-	nelems = list->n_members;
+	int			nelems = list->n_members;
 
 	/* Sort the existing members by enumsortorder */
-	existing = (HeapTuple *) palloc(nelems * sizeof(HeapTuple));
+	HeapTuple  *existing = (HeapTuple *) palloc(nelems * sizeof(HeapTuple));
 	for (i = 0; i < nelems; i++)
 		existing[i] = &(list->members[i]->tuple);
 
@@ -304,7 +295,6 @@ restart:
 		/* BEFORE or AFTER was specified */
 		int			nbr_index;
 		int			other_nbr_index;
-		Form_pg_enum nbr_en;
 		Form_pg_enum other_nbr_en;
 
 		/* Locate the neighbor element */
@@ -320,7 +310,7 @@ restart:
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("\"%s\" is not an existing enum label",
 							neighbor)));
-		nbr_en = (Form_pg_enum) GETSTRUCT(existing[nbr_index]);
+		Form_pg_enum nbr_en = (Form_pg_enum) GETSTRUCT(existing[nbr_index]);
 
 		/*
 		 * Attempt to assign an appropriate enumsortorder value: one less than
@@ -350,10 +340,9 @@ restart:
 			 * to happen with non-C-standard-compliant compilers is to store
 			 * it into a volatile variable.
 			 */
-			volatile float4 midpoint;
 
 			other_nbr_en = (Form_pg_enum) GETSTRUCT(existing[other_nbr_index]);
-			midpoint = (nbr_en->enumsortorder +
+			volatile float4 midpoint = (nbr_en->enumsortorder +
 						other_nbr_en->enumsortorder) / 2;
 
 			if (midpoint == nbr_en->enumsortorder ||
@@ -402,7 +391,6 @@ restart:
 		 */
 		for (;;)
 		{
-			bool		sorts_ok;
 
 			/* Get a new OID (different from all existing pg_enum tuples) */
 			newOid = GetNewOidWithIndex(pg_enum, EnumOidIndexId,
@@ -414,7 +402,7 @@ restart:
 			 * labels with odd Oids, since a comparison involving one of those
 			 * will not take the fast path anyway.
 			 */
-			sorts_ok = true;
+			bool		sorts_ok = true;
 			for (i = 0; i < nelems; i++)
 			{
 				HeapTuple	exists_tup = existing[i];
@@ -509,13 +497,8 @@ RenameEnumLabel(Oid enumTypeOid,
 				const char *oldVal,
 				const char *newVal)
 {
-	Relation	pg_enum;
 	HeapTuple	enum_tup;
 	Form_pg_enum en;
-	CatCList   *list;
-	int			nelems;
-	HeapTuple	old_tup;
-	bool		found_new;
 	int			i;
 
 	/* check length of new label is ok */
@@ -535,20 +518,20 @@ RenameEnumLabel(Oid enumTypeOid,
 	 */
 	LockDatabaseObject(TypeRelationId, enumTypeOid, 0, ExclusiveLock);
 
-	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
+	Relation	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	/* Get the list of existing members of the enum */
-	list = SearchSysCacheList1(ENUMTYPOIDNAME,
+	CatCList   *list = SearchSysCacheList1(ENUMTYPOIDNAME,
 							   ObjectIdGetDatum(enumTypeOid));
-	nelems = list->n_members;
+	int			nelems = list->n_members;
 
 	/*
 	 * Locate the element to rename and check if the new label is already in
 	 * use.  (The unique index on pg_enum would catch that anyway, but we
 	 * prefer a friendlier error message.)
 	 */
-	old_tup = NULL;
-	found_new = false;
+	HeapTuple	old_tup = NULL;
+	bool		found_new = false;
 	for (i = 0; i < nelems; i++)
 	{
 		enum_tup = &(list->members[i]->tuple);
@@ -651,14 +634,11 @@ RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems)
 	 */
 	for (i = nelems - 1; i >= 0; i--)
 	{
-		HeapTuple	newtup;
-		Form_pg_enum en;
-		float4		newsortorder;
 
-		newtup = heap_copytuple(existing[i]);
-		en = (Form_pg_enum) GETSTRUCT(newtup);
+		HeapTuple	newtup = heap_copytuple(existing[i]);
+		Form_pg_enum en = (Form_pg_enum) GETSTRUCT(newtup);
 
-		newsortorder = i + 1;
+		float4		newsortorder = i + 1;
 		if (en->enumsortorder != newsortorder)
 		{
 			en->enumsortorder = newsortorder;

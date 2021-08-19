@@ -241,14 +241,13 @@ init_parallel_dump_utils(void)
 	if (!parallel_init_done)
 	{
 		WSADATA		wsaData;
-		int			err;
 
 		/* Prepare for threaded operation */
 		tls_index = TlsAlloc();
 		mainThreadId = GetCurrentThreadId();
 
 		/* Initialize socket access */
-		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		int			err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
 			pg_log_error("%s() failed: error code %d", "WSAStartup", err);
@@ -474,7 +473,6 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 		/* On Windows, we must use WaitForMultipleObjects() */
 		HANDLE	   *lpHandles = pg_malloc(sizeof(HANDLE) * pstate->numWorkers);
 		int			nrun = 0;
-		DWORD		ret;
 		uintptr_t	hThread;
 
 		for (j = 0; j < pstate->numWorkers; j++)
@@ -485,7 +483,7 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 				nrun++;
 			}
 		}
-		ret = WaitForMultipleObjects(nrun, lpHandles, false, INFINITE);
+		DWORD		ret = WaitForMultipleObjects(nrun, lpHandles, false, INFINITE);
 		Assert(ret != WAIT_FAILED);
 		hThread = (uintptr_t) lpHandles[ret - WAIT_OBJECT_0];
 		free(lpHandles);
@@ -901,12 +899,11 @@ init_spawned_worker_win32(WorkerInfo *wi)
 ParallelState *
 ParallelBackupStart(ArchiveHandle *AH)
 {
-	ParallelState *pstate;
 	int			i;
 
 	Assert(AH->public.numWorkers > 0);
 
-	pstate = (ParallelState *) pg_malloc(sizeof(ParallelState));
+	ParallelState *pstate = (ParallelState *) pg_malloc(sizeof(ParallelState));
 
 	pstate->numWorkers = AH->public.numWorkers;
 	pstate->te = NULL;
@@ -1305,22 +1302,19 @@ IsEveryWorkerIdle(ParallelState *pstate)
 static void
 lockTableForWorker(ArchiveHandle *AH, TocEntry *te)
 {
-	const char *qualId;
-	PQExpBuffer query;
-	PGresult   *res;
 
 	/* Nothing to do for BLOBS */
 	if (strcmp(te->desc, "BLOBS") == 0)
 		return;
 
-	query = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
 
-	qualId = fmtQualifiedId(te->namespace, te->tag);
+	const char *qualId = fmtQualifiedId(te->namespace, te->tag);
 
 	appendPQExpBuffer(query, "LOCK TABLE %s IN ACCESS SHARE MODE NOWAIT",
 					  qualId);
 
-	res = PQexec(AH->connection, query->data);
+	PGresult   *res = PQexec(AH->connection, query->data);
 
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 		fatal("could not obtain lock on relation \"%s\"\n"
@@ -1403,10 +1397,9 @@ static bool
 ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 {
 	int			worker;
-	char	   *msg;
 
 	/* Try to collect a status message */
-	msg = getMessageFromWorker(pstate, do_wait, &worker);
+	char	   *msg = getMessageFromWorker(pstate, do_wait, &worker);
 
 	if (!msg)
 	{
@@ -1421,9 +1414,8 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 	{
 		ParallelSlot *slot = &pstate->parallelSlot[worker];
 		TocEntry   *te = pstate->te[worker];
-		int			status;
 
-		status = parseWorkerResponse(AH, te, msg);
+		int			status = parseWorkerResponse(AH, te, msg);
 		slot->callback(AH, te, status, slot->callback_data);
 		slot->workerStatus = WRKR_IDLE;
 		pstate->te[worker] = NULL;
@@ -1615,7 +1607,6 @@ getMessageFromWorker(ParallelState *pstate, bool do_wait, int *worker)
 
 	for (i = 0; i < pstate->numWorkers; i++)
 	{
-		char	   *msg;
 
 		if (!WORKER_IS_RUNNING(pstate->parallelSlot[i].workerStatus))
 			continue;
@@ -1632,7 +1623,7 @@ getMessageFromWorker(ParallelState *pstate, bool do_wait, int *worker)
 		 * since worker status messages are short and are always sent in one
 		 * operation, it shouldn't be a problem in practice.
 		 */
-		msg = readMessageFromPipe(pstate->parallelSlot[i].pipeRead);
+		char	   *msg = readMessageFromPipe(pstate->parallelSlot[i].pipeRead);
 		*worker = i;
 		return msg;
 	}
@@ -1666,7 +1657,6 @@ sendMessageToWorker(ParallelState *pstate, int worker, const char *str)
 static char *
 readMessageFromPipe(int fd)
 {
-	char	   *msg;
 	int			msgsize,
 				bufsize;
 	int			ret;
@@ -1681,7 +1671,7 @@ readMessageFromPipe(int fd)
 	 * command and status strings, it shouldn't matter.
 	 */
 	bufsize = 64;				/* could be any number */
-	msg = (char *) pg_malloc(bufsize);
+	char	   *msg = (char *) pg_malloc(bufsize);
 	msgsize = 0;
 	for (;;)
 	{

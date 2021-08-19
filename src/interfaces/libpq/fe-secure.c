@@ -231,11 +231,10 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 ssize_t
 pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 {
-	ssize_t		n;
 	int			result_errno = 0;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
 
-	n = recv(conn->sock, ptr, len, 0);
+	ssize_t		n = recv(conn->sock, ptr, len, 0);
 
 	if (n < 0)
 	{

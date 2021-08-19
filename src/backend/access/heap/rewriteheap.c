@@ -237,22 +237,19 @@ RewriteState
 begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xmin,
 				   TransactionId freeze_xid, MultiXactId cutoff_multi)
 {
-	RewriteState state;
-	MemoryContext rw_cxt;
-	MemoryContext old_cxt;
 	HASHCTL		hash_ctl;
 
 	/*
 	 * To ease cleanup, make a separate context that will contain the
 	 * RewriteState struct itself plus all subsidiary data.
 	 */
-	rw_cxt = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext rw_cxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "Table rewrite",
 								   ALLOCSET_DEFAULT_SIZES);
-	old_cxt = MemoryContextSwitchTo(rw_cxt);
+	MemoryContext old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
-	state = palloc0(sizeof(RewriteStateData));
+	RewriteState state = palloc0(sizeof(RewriteStateData));
 
 	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;
@@ -361,13 +358,11 @@ void
 rewrite_heap_tuple(RewriteState state,
 				   HeapTuple old_tuple, HeapTuple new_tuple)
 {
-	MemoryContext old_cxt;
 	ItemPointerData old_tid;
 	TidHashKey	hashkey;
 	bool		found;
-	bool		free_new;
 
-	old_cxt = MemoryContextSwitchTo(state->rs_cxt);
+	MemoryContext old_cxt = MemoryContextSwitchTo(state->rs_cxt);
 
 	/*
 	 * Copy the original tuple's visibility information into new_tuple.
@@ -409,13 +404,12 @@ rewrite_heap_tuple(RewriteState state,
 		!(ItemPointerEquals(&(old_tuple->t_self),
 							&(old_tuple->t_data->t_ctid))))
 	{
-		OldToNewMapping mapping;
 
 		memset(&hashkey, 0, sizeof(hashkey));
 		hashkey.xmin = HeapTupleHeaderGetUpdateXid(old_tuple->t_data);
 		hashkey.tid = old_tuple->t_data->t_ctid;
 
-		mapping = (OldToNewMapping)
+		OldToNewMapping mapping = (OldToNewMapping)
 			hash_search(state->rs_old_new_tid_map, &hashkey,
 						HASH_FIND, NULL);
 
@@ -439,9 +433,8 @@ rewrite_heap_tuple(RewriteState state,
 			 * We haven't seen the tuple t_ctid points to yet. Stash this
 			 * tuple into unresolved_tups to be written later.
 			 */
-			UnresolvedTup unresolved;
 
-			unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
+			UnresolvedTup unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
 									 HASH_ENTER, &found);
 			Assert(!found);
 
@@ -464,15 +457,14 @@ rewrite_heap_tuple(RewriteState state,
 	 * resolves some other pair.  Hence, we need a loop here.
 	 */
 	old_tid = old_tuple->t_self;
-	free_new = false;
+	bool		free_new = false;
 
 	for (;;)
 	{
-		ItemPointerData new_tid;
 
 		/* Insert the tuple and find out where it's put in new_heap */
 		raw_heap_insert(state, new_tuple);
-		new_tid = new_tuple->t_self;
+		ItemPointerData new_tid = new_tuple->t_self;
 
 		logical_rewrite_heap_tuple(state, old_tid, new_tuple);
 
@@ -491,13 +483,12 @@ rewrite_heap_tuple(RewriteState state,
 			/*
 			 * Okay, this is B in an update pair.  See if we've seen A.
 			 */
-			UnresolvedTup unresolved;
 
 			memset(&hashkey, 0, sizeof(hashkey));
 			hashkey.xmin = HeapTupleHeaderGetXmin(new_tuple->t_data);
 			hashkey.tid = old_tid;
 
-			unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
+			UnresolvedTup unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
 									 HASH_FIND, NULL);
 
 			if (unresolved != NULL)
@@ -531,9 +522,8 @@ rewrite_heap_tuple(RewriteState state,
 				 * Remember the new tid of this tuple. We'll use it to set the
 				 * ctid when we find the previous tuple in the chain.
 				 */
-				OldToNewMapping mapping;
 
-				mapping = hash_search(state->rs_old_new_tid_map, &hashkey,
+				OldToNewMapping mapping = hash_search(state->rs_old_new_tid_map, &hashkey,
 									  HASH_ENTER, &found);
 				Assert(!found);
 
@@ -577,7 +567,6 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 	 * because a vacuum might have removed the dead tuple in the chain before
 	 * us.
 	 */
-	UnresolvedTup unresolved;
 	TidHashKey	hashkey;
 	bool		found;
 
@@ -585,7 +574,7 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 	hashkey.xmin = HeapTupleHeaderGetXmin(old_tuple->t_data);
 	hashkey.tid = old_tuple->t_self;
 
-	unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
+	UnresolvedTup unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
 							 HASH_FIND, NULL);
 
 	if (unresolved != NULL)
@@ -615,8 +604,6 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	Page		page = state->rs_buffer;
 	Size		pageFreeSpace,
 				saveFreeSpace;
-	Size		len;
-	OffsetNumber newoff;
 	HeapTuple	heaptup;
 
 	/*
@@ -649,7 +636,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	else
 		heaptup = tup;
 
-	len = MAXALIGN(heaptup->t_len); /* be conservative */
+	Size		len = MAXALIGN(heaptup->t_len); /* be conservative */
 
 	/*
 	 * If we're gonna fail for oversize tuple, do it right away
@@ -708,7 +695,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	}
 
 	/* And now we can insert the tuple into the page */
-	newoff = PageAddItem(page, (Item) heaptup->t_data, heaptup->t_len,
+	OffsetNumber newoff = PageAddItem(page, (Item) heaptup->t_data, heaptup->t_len,
 						 InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(ERROR, "failed to add tuple");
@@ -722,11 +709,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	 */
 	if (!ItemPointerIsValid(&tup->t_data->t_ctid))
 	{
-		ItemId		newitemid;
-		HeapTupleHeader onpage_tup;
 
-		newitemid = PageGetItemId(page, newoff);
-		onpage_tup = (HeapTupleHeader) PageGetItem(page, newitemid);
+		ItemId		newitemid = PageGetItemId(page, newoff);
+		HeapTupleHeader onpage_tup = (HeapTupleHeader) PageGetItem(page, newitemid);
 
 		onpage_tup->t_ctid = tup->t_self;
 	}
@@ -858,11 +843,8 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
 		char	   *waldata;
-		char	   *waldata_start;
 		xl_heap_rewrite_mapping xlrec;
 		Oid			dboid;
-		uint32		len;
-		int			written;
 
 		/* this file hasn't got any new mappings */
 		if (src->num_mappings == 0)
@@ -881,17 +863,16 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		xlrec.start_lsn = state->rs_begin_lsn;
 
 		/* write all mappings consecutively */
-		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
-		waldata_start = waldata = palloc(len);
+		uint32		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
+		char	   *waldata_start = waldata = palloc(len);
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet
 		 */
 		dlist_foreach_modify(iter, &src->mappings)
 		{
-			RewriteMappingDataEntry *pmap;
 
-			pmap = dlist_container(RewriteMappingDataEntry, node, iter.cur);
+			RewriteMappingDataEntry *pmap = dlist_container(RewriteMappingDataEntry, node, iter.cur);
 
 			memcpy(waldata, &pmap->map, sizeof(pmap->map));
 			waldata += sizeof(pmap->map);
@@ -912,7 +893,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		 * Note that we deviate from the usual WAL coding practices here,
 		 * check the above "Logical rewrite support" comment for reasoning.
 		 */
-		written = FileWrite(src->vfd, waldata_start, len, src->off,
+		int			written = FileWrite(src->vfd, waldata_start, len, src->off,
 							WAIT_EVENT_LOGICAL_REWRITE_WRITE);
 		if (written != len)
 			ereport(ERROR,
@@ -970,15 +951,12 @@ static void
 logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 							LogicalRewriteMappingData *map)
 {
-	RewriteMappingFile *src;
-	RewriteMappingDataEntry *pmap;
-	Oid			relid;
 	bool		found;
 
-	relid = RelationGetRelid(state->rs_old_rel);
+	Oid			relid = RelationGetRelid(state->rs_old_rel);
 
 	/* look for existing mappings for this 'mapped' xid */
-	src = hash_search(state->rs_logical_mappings, &xid,
+	RewriteMappingFile *src = hash_search(state->rs_logical_mappings, &xid,
 					  HASH_ENTER, &found);
 
 	/*
@@ -1013,7 +991,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 					 errmsg("could not create file \"%s\": %m", path)));
 	}
 
-	pmap = MemoryContextAlloc(state->rs_cxt,
+	RewriteMappingDataEntry *pmap = MemoryContextAlloc(state->rs_cxt,
 							  sizeof(RewriteMappingDataEntry));
 	memcpy(&pmap->map, map, sizeof(LogicalRewriteMappingData));
 	dlist_push_tail(&src->mappings, &pmap->node);
@@ -1038,8 +1016,6 @@ logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,
 {
 	ItemPointerData new_tid = new_tuple->t_self;
 	TransactionId cutoff = state->rs_logical_xmin;
-	TransactionId xmin;
-	TransactionId xmax;
 	bool		do_log_xmin = false;
 	bool		do_log_xmax = false;
 	LogicalRewriteMappingData map;
@@ -1048,9 +1024,9 @@ logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,
 	if (!state->rs_logical_rewrite)
 		return;
 
-	xmin = HeapTupleHeaderGetXmin(new_tuple->t_data);
+	TransactionId xmin = HeapTupleHeaderGetXmin(new_tuple->t_data);
 	/* use *GetUpdateXid to correctly deal with multixacts */
-	xmax = HeapTupleHeaderGetUpdateXid(new_tuple->t_data);
+	TransactionId xmax = HeapTupleHeaderGetUpdateXid(new_tuple->t_data);
 
 	/*
 	 * Log the mapping iff the tuple has been created recently.
@@ -1110,12 +1086,8 @@ void
 heap_xlog_logical_rewrite(XLogReaderState *r)
 {
 	char		path[MAXPGPATH];
-	int			fd;
-	xl_heap_rewrite_mapping *xlrec;
-	uint32		len;
-	char	   *data;
 
-	xlrec = (xl_heap_rewrite_mapping *) XLogRecGetData(r);
+	xl_heap_rewrite_mapping *xlrec = (xl_heap_rewrite_mapping *) XLogRecGetData(r);
 
 	snprintf(path, MAXPGPATH,
 			 "pg_logical/mappings/" LOGICAL_REWRITE_FORMAT,
@@ -1123,7 +1095,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 			 LSN_FORMAT_ARGS(xlrec->start_lsn),
 			 xlrec->mapped_xid, XLogRecGetXid(r));
 
-	fd = OpenTransientFile(path,
+	int			fd = OpenTransientFile(path,
 						   O_CREAT | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
@@ -1142,9 +1114,9 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 						path, (uint32) xlrec->offset)));
 	pgstat_report_wait_end();
 
-	data = XLogRecGetData(r) + sizeof(*xlrec);
+	char	   *data = XLogRecGetData(r) + sizeof(*xlrec);
 
-	len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
+	uint32		len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
 
 	/* write out tail end of mapping file (again) */
 	errno = 0;
@@ -1191,9 +1163,6 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 void
 CheckPointLogicalRewriteHeap(void)
 {
-	XLogRecPtr	cutoff;
-	XLogRecPtr	redo;
-	DIR		   *mappings_dir;
 	struct dirent *mapping_de;
 	char		path[MAXPGPATH + 20];
 
@@ -1201,22 +1170,21 @@ CheckPointLogicalRewriteHeap(void)
 	 * We start of with a minimum of the last redo pointer. No new decoding
 	 * slot will start before that, so that's a safe upper bound for removal.
 	 */
-	redo = GetRedoRecPtr();
+	XLogRecPtr	redo = GetRedoRecPtr();
 
 	/* now check for the restart ptrs from existing slots */
-	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
+	XLogRecPtr	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
 
 	/* don't start earlier than the restart lsn */
 	if (cutoff != InvalidXLogRecPtr && redo < cutoff)
 		cutoff = redo;
 
-	mappings_dir = AllocateDir("pg_logical/mappings");
+	DIR		   *mappings_dir = AllocateDir("pg_logical/mappings");
 	while ((mapping_de = ReadDir(mappings_dir, "pg_logical/mappings")) != NULL)
 	{
 		struct stat statbuf;
 		Oid			dboid;
 		Oid			relid;
-		XLogRecPtr	lsn;
 		TransactionId rewrite_xid;
 		TransactionId create_xid;
 		uint32		hi,
@@ -1238,7 +1206,7 @@ CheckPointLogicalRewriteHeap(void)
 				   &dboid, &relid, &hi, &lo, &rewrite_xid, &create_xid) != 6)
 			elog(ERROR, "could not parse filename \"%s\"", mapping_de->d_name);
 
-		lsn = ((uint64) hi) << 32 | lo;
+		XLogRecPtr	lsn = ((uint64) hi) << 32 | lo;
 
 		if (lsn < cutoff || cutoff == InvalidXLogRecPtr)
 		{

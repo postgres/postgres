@@ -141,14 +141,12 @@ be_lo_close(PG_FUNCTION_ARGS)
 int
 lo_read(int fd, char *buf, int len)
 {
-	int			status;
-	LargeObjectDesc *lobj;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-	lobj = cookies[fd];
+	LargeObjectDesc *lobj = cookies[fd];
 
 	/*
 	 * Check state.  inv_read() would throw an error anyway, but we want the
@@ -161,7 +159,7 @@ lo_read(int fd, char *buf, int len)
 				 errmsg("large object descriptor %d was not opened for reading",
 						fd)));
 
-	status = inv_read(lobj, buf, len);
+	int			status = inv_read(lobj, buf, len);
 
 	return status;
 }
@@ -169,14 +167,12 @@ lo_read(int fd, char *buf, int len)
 int
 lo_write(int fd, const char *buf, int len)
 {
-	int			status;
-	LargeObjectDesc *lobj;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-	lobj = cookies[fd];
+	LargeObjectDesc *lobj = cookies[fd];
 
 	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
@@ -185,7 +181,7 @@ lo_write(int fd, const char *buf, int len)
 				 errmsg("large object descriptor %d was not opened for writing",
 						fd)));
 
-	status = inv_write(lobj, buf, len);
+	int			status = inv_write(lobj, buf, len);
 
 	return status;
 }
@@ -196,14 +192,13 @@ be_lo_lseek(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	int32		offset = PG_GETARG_INT32(1);
 	int32		whence = PG_GETARG_INT32(2);
-	int64		status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
 
-	status = inv_seek(cookies[fd], offset, whence);
+	int64		status = inv_seek(cookies[fd], offset, whence);
 
 	/* guard against result overflow */
 	if (status != (int32) status)
@@ -221,14 +216,13 @@ be_lo_lseek64(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	int64		offset = PG_GETARG_INT64(1);
 	int32		whence = PG_GETARG_INT32(2);
-	int64		status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
 
-	status = inv_seek(cookies[fd], offset, whence);
+	int64		status = inv_seek(cookies[fd], offset, whence);
 
 	PG_RETURN_INT64(status);
 }
@@ -236,7 +230,6 @@ be_lo_lseek64(PG_FUNCTION_ARGS)
 Datum
 be_lo_creat(PG_FUNCTION_ARGS)
 {
-	Oid			lobjId;
 
 	/*
 	 * We don't actually need to store into fscxt, but create it anyway to
@@ -244,7 +237,7 @@ be_lo_creat(PG_FUNCTION_ARGS)
 	 */
 	CreateFSContext();
 
-	lobjId = inv_create(InvalidOid);
+	Oid			lobjId = inv_create(InvalidOid);
 
 	PG_RETURN_OID(lobjId);
 }
@@ -269,14 +262,13 @@ Datum
 be_lo_tell(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
-	int64		offset;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
 
-	offset = inv_tell(cookies[fd]);
+	int64		offset = inv_tell(cookies[fd]);
 
 	/* guard against result overflow */
 	if (offset != (int32) offset)
@@ -292,14 +284,13 @@ Datum
 be_lo_tell64(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
-	int64		offset;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
 
-	offset = inv_tell(cookies[fd]);
+	int64		offset = inv_tell(cookies[fd]);
 
 	PG_RETURN_INT64(offset);
 }
@@ -353,14 +344,12 @@ be_loread(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
-	bytea	   *retval;
-	int			totalread;
 
 	if (len < 0)
 		len = 0;
 
-	retval = (bytea *) palloc(VARHDRSZ + len);
-	totalread = lo_read(fd, VARDATA(retval), len);
+	bytea	   *retval = (bytea *) palloc(VARHDRSZ + len);
+	int			totalread = lo_read(fd, VARDATA(retval), len);
 	SET_VARSIZE(retval, totalread + VARHDRSZ);
 
 	PG_RETURN_BYTEA_P(retval);
@@ -371,11 +360,9 @@ be_lowrite(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	bytea	   *wbuf = PG_GETARG_BYTEA_PP(1);
-	int			bytestowrite;
-	int			totalwritten;
 
-	bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
-	totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
+	int			bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
+	int			totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
 	PG_RETURN_INT32(totalwritten);
 }
 
@@ -411,13 +398,10 @@ be_lo_import_with_oid(PG_FUNCTION_ARGS)
 static Oid
 lo_import_internal(text *filename, Oid lobjOid)
 {
-	int			fd;
 	int			nbytes,
 				tmp PG_USED_FOR_ASSERTS_ONLY;
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
-	LargeObjectDesc *lobj;
-	Oid			oid;
 
 	CreateFSContext();
 
@@ -425,7 +409,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	 * open the file to be read in
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
-	fd = OpenTransientFile(fnamebuf, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(fnamebuf, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -435,12 +419,12 @@ lo_import_internal(text *filename, Oid lobjOid)
 	/*
 	 * create an inversion object
 	 */
-	oid = inv_create(lobjOid);
+	Oid			oid = inv_create(lobjOid);
 
 	/*
 	 * read in from the filesystem and write to the inversion object
 	 */
-	lobj = inv_open(oid, INV_WRITE, fscxt);
+	LargeObjectDesc *lobj = inv_open(oid, INV_WRITE, fscxt);
 
 	while ((nbytes = read(fd, buf, BUFSIZE)) > 0)
 	{
@@ -479,15 +463,13 @@ be_lo_export(PG_FUNCTION_ARGS)
 				tmp;
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
-	LargeObjectDesc *lobj;
-	mode_t		oumask;
 
 	CreateFSContext();
 
 	/*
 	 * open the inversion object (no need to test for failure)
 	 */
-	lobj = inv_open(lobjId, INV_READ, fscxt);
+	LargeObjectDesc *lobj = inv_open(lobjId, INV_READ, fscxt);
 
 	/*
 	 * open the file to be written to
@@ -497,7 +479,7 @@ be_lo_export(PG_FUNCTION_ARGS)
 	 * world-writable export files doesn't seem wise.
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
-	oumask = umask(S_IWGRP | S_IWOTH);
+	mode_t		oumask = umask(S_IWGRP | S_IWOTH);
 	PG_TRY();
 	{
 		fd = OpenTransientFilePerm(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
@@ -545,13 +527,12 @@ be_lo_export(PG_FUNCTION_ARGS)
 static void
 lo_truncate_internal(int32 fd, int64 len)
 {
-	LargeObjectDesc *lobj;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-	lobj = cookies[fd];
+	LargeObjectDesc *lobj = cookies[fd];
 
 	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
@@ -721,11 +702,8 @@ deleteLOfd(int fd)
 static bytea *
 lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 {
-	LargeObjectDesc *loDesc;
-	int64		loSize;
 	int64		result_length;
 	int			total_read PG_USED_FOR_ASSERTS_ONLY;
-	bytea	   *result = NULL;
 
 	/*
 	 * We don't actually need to store into fscxt, but create it anyway to
@@ -733,13 +711,13 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 	 */
 	CreateFSContext();
 
-	loDesc = inv_open(loOid, INV_READ, fscxt);
+	LargeObjectDesc *loDesc = inv_open(loOid, INV_READ, fscxt);
 
 	/*
 	 * Compute number of bytes we'll actually read, accommodating nbytes == -1
 	 * and reads beyond the end of the LO.
 	 */
-	loSize = inv_seek(loDesc, 0, SEEK_END);
+	int64		loSize = inv_seek(loDesc, 0, SEEK_END);
 	if (loSize > offset)
 	{
 		if (nbytes >= 0 && nbytes <= loSize - offset)
@@ -759,7 +737,7 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("large object read request is too large")));
 
-	result = (bytea *) palloc(VARHDRSZ + result_length);
+	bytea	   *result = (bytea *) palloc(VARHDRSZ + result_length);
 
 	inv_seek(loDesc, offset, SEEK_SET);
 	total_read = inv_read(loDesc, VARDATA(result), result_length);
@@ -778,9 +756,8 @@ Datum
 be_lo_get(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
-	bytea	   *result;
 
-	result = lo_get_fragment_internal(loOid, 0, -1);
+	bytea	   *result = lo_get_fragment_internal(loOid, 0, -1);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -794,14 +771,13 @@ be_lo_get_fragment(PG_FUNCTION_ARGS)
 	Oid			loOid = PG_GETARG_OID(0);
 	int64		offset = PG_GETARG_INT64(1);
 	int32		nbytes = PG_GETARG_INT32(2);
-	bytea	   *result;
 
 	if (nbytes < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("requested length cannot be negative")));
 
-	result = lo_get_fragment_internal(loOid, offset, nbytes);
+	bytea	   *result = lo_get_fragment_internal(loOid, offset, nbytes);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -814,13 +790,12 @@ be_lo_from_bytea(PG_FUNCTION_ARGS)
 {
 	Oid			loOid = PG_GETARG_OID(0);
 	bytea	   *str = PG_GETARG_BYTEA_PP(1);
-	LargeObjectDesc *loDesc;
 	int			written PG_USED_FOR_ASSERTS_ONLY;
 
 	CreateFSContext();
 
 	loOid = inv_create(loOid);
-	loDesc = inv_open(loOid, INV_WRITE, fscxt);
+	LargeObjectDesc *loDesc = inv_open(loOid, INV_WRITE, fscxt);
 	written = inv_write(loDesc, VARDATA_ANY(str), VARSIZE_ANY_EXHDR(str));
 	Assert(written == VARSIZE_ANY_EXHDR(str));
 	inv_close(loDesc);
@@ -837,12 +812,11 @@ be_lo_put(PG_FUNCTION_ARGS)
 	Oid			loOid = PG_GETARG_OID(0);
 	int64		offset = PG_GETARG_INT64(1);
 	bytea	   *str = PG_GETARG_BYTEA_PP(2);
-	LargeObjectDesc *loDesc;
 	int			written PG_USED_FOR_ASSERTS_ONLY;
 
 	CreateFSContext();
 
-	loDesc = inv_open(loOid, INV_WRITE, fscxt);
+	LargeObjectDesc *loDesc = inv_open(loOid, INV_WRITE, fscxt);
 
 	/* Permission check */
 	if (!lo_compat_privileges &&

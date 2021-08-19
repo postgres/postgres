@@ -19,7 +19,6 @@
 int
 unsetenv(const char *name)
 {
-	char	   *envstr;
 
 	/* Error conditions, per POSIX */
 	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL)
@@ -45,7 +44,7 @@ unsetenv(const char *name)
 	 * leak memory.
 	 */
 
-	envstr = (char *) malloc(strlen(name) + 2);
+	char	   *envstr = (char *) malloc(strlen(name) + 2);
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 

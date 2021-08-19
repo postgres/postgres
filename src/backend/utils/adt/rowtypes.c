@@ -77,16 +77,8 @@ record_in(PG_FUNCTION_ARGS)
 	char	   *string = PG_GETARG_CSTRING(0);
 	Oid			tupType = PG_GETARG_OID(1);
 	int32		tupTypmod = PG_GETARG_INT32(2);
-	HeapTupleHeader result;
-	TupleDesc	tupdesc;
-	HeapTuple	tuple;
-	RecordIOData *my_extra;
 	bool		needComma = false;
-	int			ncolumns;
 	int			i;
-	char	   *ptr;
-	Datum	   *values;
-	bool	   *nulls;
 	StringInfoData buf;
 
 	check_stack_depth();		/* recurses for record-type columns */
@@ -109,14 +101,14 @@ record_in(PG_FUNCTION_ARGS)
 	 * in user tables, specifically DatumTupleFields. This oid must be
 	 * preserved by binary upgrades.
 	 */
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/*
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -140,14 +132,14 @@ record_in(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	/*
 	 * Scan the string.  We use "buf" to accumulate the de-quoted data for
 	 * each column, which is then fed to the appropriate input converter.
 	 */
-	ptr = string;
+	char	   *ptr = string;
 	/* Allow leading whitespace */
 	while (*ptr && isspace((unsigned char) *ptr))
 		ptr++;
@@ -277,14 +269,14 @@ record_in(PG_FUNCTION_ARGS)
 				 errmsg("malformed record literal: \"%s\"", string),
 				 errdetail("Junk after right parenthesis.")));
 
-	tuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupdesc, values, nulls);
 
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
 	 * our result.  So must copy the info into a new palloc chunk.
 	 */
-	result = (HeapTupleHeader) palloc(tuple->t_len);
+	HeapTupleHeader result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);
 
 	heap_freetuple(tuple);
@@ -303,25 +295,18 @@ Datum
 record_out(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	RecordIOData *my_extra;
 	bool		needComma = false;
-	int			ncolumns;
 	int			i;
-	Datum	   *values;
-	bool	   *nulls;
 	StringInfoData buf;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuple itself */
-	tupType = HeapTupleHeaderGetTypeId(rec);
-	tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	Oid			tupType = HeapTupleHeaderGetTypeId(rec);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/* Build a temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
@@ -333,7 +318,7 @@ record_out(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -357,8 +342,8 @@ record_out(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	/* Break down the tuple into fields */
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
@@ -373,10 +358,7 @@ record_out(PG_FUNCTION_ARGS)
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = att->atttypid;
-		Datum		attr;
-		char	   *value;
 		char	   *tmp;
-		bool		nq;
 
 		/* Ignore dropped columns in datatype */
 		if (att->attisdropped)
@@ -405,11 +387,11 @@ record_out(PG_FUNCTION_ARGS)
 			column_info->column_type = column_type;
 		}
 
-		attr = values[i];
-		value = OutputFunctionCall(&column_info->proc, attr);
+		Datum		attr = values[i];
+		char	   *value = OutputFunctionCall(&column_info->proc, attr);
 
 		/* Detect whether we need double quotes for this value */
-		nq = (value[0] == '\0');	/* force quotes for empty string */
+		bool		nq = (value[0] == '\0');	/* force quotes for empty string */
 		for (tmp = value; *tmp; tmp++)
 		{
 			char		ch = *tmp;
@@ -456,16 +438,7 @@ record_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			tupType = PG_GETARG_OID(1);
 	int32		tupTypmod = PG_GETARG_INT32(2);
-	HeapTupleHeader result;
-	TupleDesc	tupdesc;
-	HeapTuple	tuple;
-	RecordIOData *my_extra;
-	int			ncolumns;
-	int			usercols;
-	int			validcols;
 	int			i;
-	Datum	   *values;
-	bool	   *nulls;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
@@ -482,14 +455,14 @@ record_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("input of anonymous composite types is not implemented")));
 
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/*
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -513,14 +486,14 @@ record_recv(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	/* Fetch number of columns user thinks it has */
-	usercols = pq_getmsgint(buf, 4);
+	int			usercols = pq_getmsgint(buf, 4);
 
 	/* Need to scan to count nondeleted columns */
-	validcols = 0;
+	int			validcols = 0;
 	for (i = 0; i < ncolumns; i++)
 	{
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
@@ -538,8 +511,6 @@ record_recv(PG_FUNCTION_ARGS)
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = att->atttypid;
-		Oid			coltypoid;
-		int			itemlen;
 		StringInfoData item_buf;
 		StringInfo	bufptr;
 		char		csave;
@@ -553,7 +524,7 @@ record_recv(PG_FUNCTION_ARGS)
 		}
 
 		/* Check column type recorded in the data */
-		coltypoid = pq_getmsgint(buf, sizeof(Oid));
+		Oid			coltypoid = pq_getmsgint(buf, sizeof(Oid));
 
 		/*
 		 * From a security standpoint, it doesn't matter whether the input's
@@ -581,7 +552,7 @@ record_recv(PG_FUNCTION_ARGS)
 							i + 1)));
 
 		/* Get and check the item length */
-		itemlen = pq_getmsgint(buf, 4);
+		int			itemlen = pq_getmsgint(buf, 4);
 		if (itemlen < -1 || itemlen > (buf->len - buf->cursor))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -645,14 +616,14 @@ record_recv(PG_FUNCTION_ARGS)
 		}
 	}
 
-	tuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupdesc, values, nulls);
 
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
 	 * our result.  So must copy the info into a new palloc chunk.
 	 */
-	result = (HeapTupleHeader) palloc(tuple->t_len);
+	HeapTupleHeader result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);
 
 	heap_freetuple(tuple);
@@ -670,25 +641,17 @@ Datum
 record_send(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	RecordIOData *my_extra;
-	int			ncolumns;
-	int			validcols;
 	int			i;
-	Datum	   *values;
-	bool	   *nulls;
 	StringInfoData buf;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuple itself */
-	tupType = HeapTupleHeaderGetTypeId(rec);
-	tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	Oid			tupType = HeapTupleHeaderGetTypeId(rec);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/* Build a temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
@@ -700,7 +663,7 @@ record_send(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -724,8 +687,8 @@ record_send(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	/* Break down the tuple into fields */
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
@@ -734,7 +697,7 @@ record_send(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 
 	/* Need to scan to count nondeleted columns */
-	validcols = 0;
+	int			validcols = 0;
 	for (i = 0; i < ncolumns; i++)
 	{
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
@@ -747,8 +710,6 @@ record_send(PG_FUNCTION_ARGS)
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = att->atttypid;
-		Datum		attr;
-		bytea	   *outputbytes;
 
 		/* Ignore dropped columns in datatype */
 		if (att->attisdropped)
@@ -776,8 +737,8 @@ record_send(PG_FUNCTION_ARGS)
 			column_info->column_type = column_type;
 		}
 
-		attr = values[i];
-		outputbytes = SendFunctionCall(&column_info->proc, attr);
+		Datum		attr = values[i];
+		bytea	   *outputbytes = SendFunctionCall(&column_info->proc, attr);
 		pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 		pq_sendbytes(&buf, VARDATA(outputbytes),
 					 VARSIZE(outputbytes) - VARHDRSZ);
@@ -808,37 +769,22 @@ record_cmp(FunctionCallInfo fcinfo)
 	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
 	int			result = 0;
-	Oid			tupType1;
-	Oid			tupType2;
-	int32		tupTypmod1;
-	int32		tupTypmod2;
-	TupleDesc	tupdesc1;
-	TupleDesc	tupdesc2;
 	HeapTupleData tuple1;
 	HeapTupleData tuple2;
-	int			ncolumns1;
-	int			ncolumns2;
-	RecordCompareData *my_extra;
-	int			ncols;
-	Datum	   *values1;
-	Datum	   *values2;
-	bool	   *nulls1;
-	bool	   *nulls2;
-	int			i1;
 	int			i2;
 	int			j;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuples */
-	tupType1 = HeapTupleHeaderGetTypeId(record1);
-	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
-	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
-	ncolumns1 = tupdesc1->natts;
-	tupType2 = HeapTupleHeaderGetTypeId(record2);
-	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
-	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
-	ncolumns2 = tupdesc2->natts;
+	Oid			tupType1 = HeapTupleHeaderGetTypeId(record1);
+	int32		tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	TupleDesc	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	int			ncolumns1 = tupdesc1->natts;
+	Oid			tupType2 = HeapTupleHeaderGetTypeId(record2);
+	int32		tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	TupleDesc	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	int			ncolumns2 = tupdesc2->natts;
 
 	/* Build temporary HeapTuple control structures */
 	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
@@ -854,8 +800,8 @@ record_cmp(FunctionCallInfo fcinfo)
 	 * We arrange to look up the needed comparison info just once per series
 	 * of calls, assuming the record types don't change underneath us.
 	 */
-	ncols = Max(ncolumns1, ncolumns2);
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	int			ncols = Max(ncolumns1, ncolumns2);
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -884,11 +830,11 @@ record_cmp(FunctionCallInfo fcinfo)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -896,13 +842,10 @@ record_cmp(FunctionCallInfo fcinfo)
 	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
-	i1 = i2 = j = 0;
+	int			i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
-		Form_pg_attribute att1;
-		Form_pg_attribute att2;
 		TypeCacheEntry *typentry;
-		Oid			collation;
 
 		/*
 		 * Skip dropped columns
@@ -920,8 +863,8 @@ record_cmp(FunctionCallInfo fcinfo)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
-		att1 = TupleDescAttr(tupdesc1, i1);
-		att2 = TupleDescAttr(tupdesc2, i2);
+		Form_pg_attribute att1 = TupleDescAttr(tupdesc1, i1);
+		Form_pg_attribute att2 = TupleDescAttr(tupdesc2, i2);
 
 		/*
 		 * Have two matching columns, they must be same type
@@ -938,7 +881,7 @@ record_cmp(FunctionCallInfo fcinfo)
 		 * If they're not same collation, we don't complain here, but the
 		 * comparison function might.
 		 */
-		collation = att1->attcollation;
+		Oid			collation = att1->attcollation;
 		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
@@ -965,7 +908,6 @@ record_cmp(FunctionCallInfo fcinfo)
 		if (!nulls1[i1] || !nulls2[i2])
 		{
 			LOCAL_FCINFO(locfcinfo, 2);
-			int32		cmpresult;
 
 			if (nulls1[i1])
 			{
@@ -987,7 +929,7 @@ record_cmp(FunctionCallInfo fcinfo)
 			locfcinfo->args[0].isnull = false;
 			locfcinfo->args[1].value = values2[i2];
 			locfcinfo->args[1].isnull = false;
-			cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
+			int32		cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
 
 			/* We don't expect comparison support functions to return null */
 			Assert(!locfcinfo->isnull);
@@ -1052,37 +994,22 @@ record_eq(PG_FUNCTION_ARGS)
 	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
 	bool		result = true;
-	Oid			tupType1;
-	Oid			tupType2;
-	int32		tupTypmod1;
-	int32		tupTypmod2;
-	TupleDesc	tupdesc1;
-	TupleDesc	tupdesc2;
 	HeapTupleData tuple1;
 	HeapTupleData tuple2;
-	int			ncolumns1;
-	int			ncolumns2;
-	RecordCompareData *my_extra;
-	int			ncols;
-	Datum	   *values1;
-	Datum	   *values2;
-	bool	   *nulls1;
-	bool	   *nulls2;
-	int			i1;
 	int			i2;
 	int			j;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from the tuples */
-	tupType1 = HeapTupleHeaderGetTypeId(record1);
-	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
-	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
-	ncolumns1 = tupdesc1->natts;
-	tupType2 = HeapTupleHeaderGetTypeId(record2);
-	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
-	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
-	ncolumns2 = tupdesc2->natts;
+	Oid			tupType1 = HeapTupleHeaderGetTypeId(record1);
+	int32		tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	TupleDesc	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	int			ncolumns1 = tupdesc1->natts;
+	Oid			tupType2 = HeapTupleHeaderGetTypeId(record2);
+	int32		tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	TupleDesc	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	int			ncolumns2 = tupdesc2->natts;
 
 	/* Build temporary HeapTuple control structures */
 	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
@@ -1098,8 +1025,8 @@ record_eq(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed comparison info just once per series
 	 * of calls, assuming the record types don't change underneath us.
 	 */
-	ncols = Max(ncolumns1, ncolumns2);
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	int			ncols = Max(ncolumns1, ncolumns2);
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1128,11 +1055,11 @@ record_eq(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1140,14 +1067,11 @@ record_eq(PG_FUNCTION_ARGS)
 	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
-	i1 = i2 = j = 0;
+	int			i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
 		LOCAL_FCINFO(locfcinfo, 2);
-		Form_pg_attribute att1;
-		Form_pg_attribute att2;
 		TypeCacheEntry *typentry;
-		Oid			collation;
 		bool		oprresult;
 
 		/*
@@ -1166,8 +1090,8 @@ record_eq(PG_FUNCTION_ARGS)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
-		att1 = TupleDescAttr(tupdesc1, i1);
-		att2 = TupleDescAttr(tupdesc2, i2);
+		Form_pg_attribute att1 = TupleDescAttr(tupdesc1, i1);
+		Form_pg_attribute att2 = TupleDescAttr(tupdesc2, i2);
 
 		/*
 		 * Have two matching columns, they must be same type
@@ -1184,7 +1108,7 @@ record_eq(PG_FUNCTION_ARGS)
 		 * If they're not same collation, we don't complain here, but the
 		 * equality function might.
 		 */
-		collation = att1->attcollation;
+		Oid			collation = att1->attcollation;
 		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
@@ -1316,35 +1240,20 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
 	int			result = 0;
-	Oid			tupType1;
-	Oid			tupType2;
-	int32		tupTypmod1;
-	int32		tupTypmod2;
-	TupleDesc	tupdesc1;
-	TupleDesc	tupdesc2;
 	HeapTupleData tuple1;
 	HeapTupleData tuple2;
-	int			ncolumns1;
-	int			ncolumns2;
-	RecordCompareData *my_extra;
-	int			ncols;
-	Datum	   *values1;
-	Datum	   *values2;
-	bool	   *nulls1;
-	bool	   *nulls2;
-	int			i1;
 	int			i2;
 	int			j;
 
 	/* Extract type info from the tuples */
-	tupType1 = HeapTupleHeaderGetTypeId(record1);
-	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
-	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
-	ncolumns1 = tupdesc1->natts;
-	tupType2 = HeapTupleHeaderGetTypeId(record2);
-	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
-	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
-	ncolumns2 = tupdesc2->natts;
+	Oid			tupType1 = HeapTupleHeaderGetTypeId(record1);
+	int32		tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	TupleDesc	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	int			ncolumns1 = tupdesc1->natts;
+	Oid			tupType2 = HeapTupleHeaderGetTypeId(record2);
+	int32		tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	TupleDesc	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	int			ncolumns2 = tupdesc2->natts;
 
 	/* Build temporary HeapTuple control structures */
 	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
@@ -1360,8 +1269,8 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	 * We arrange to look up the needed comparison info just once per series
 	 * of calls, assuming the record types don't change underneath us.
 	 */
-	ncols = Max(ncolumns1, ncolumns2);
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	int			ncols = Max(ncolumns1, ncolumns2);
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1390,11 +1299,11 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1402,11 +1311,9 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
-	i1 = i2 = j = 0;
+	int			i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
-		Form_pg_attribute att1;
-		Form_pg_attribute att2;
 
 		/*
 		 * Skip dropped columns
@@ -1424,8 +1331,8 @@ record_image_cmp(FunctionCallInfo fcinfo)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
-		att1 = TupleDescAttr(tupdesc1, i1);
-		att2 = TupleDescAttr(tupdesc2, i2);
+		Form_pg_attribute att1 = TupleDescAttr(tupdesc1, i1);
+		Form_pg_attribute att2 = TupleDescAttr(tupdesc2, i2);
 
 		/*
 		 * Have two matching columns, they must be same type
@@ -1480,13 +1387,11 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			{
 				Size		len1,
 							len2;
-				struct varlena *arg1val;
-				struct varlena *arg2val;
 
 				len1 = toast_raw_datum_size(values1[i1]);
 				len2 = toast_raw_datum_size(values2[i2]);
-				arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
-				arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);
+				struct varlena *arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
+				struct varlena *arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);
 
 				cmpresult = memcmp(VARDATA_ANY(arg1val),
 								   VARDATA_ANY(arg2val),
@@ -1562,35 +1467,20 @@ record_image_eq(PG_FUNCTION_ARGS)
 	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
 	bool		result = true;
-	Oid			tupType1;
-	Oid			tupType2;
-	int32		tupTypmod1;
-	int32		tupTypmod2;
-	TupleDesc	tupdesc1;
-	TupleDesc	tupdesc2;
 	HeapTupleData tuple1;
 	HeapTupleData tuple2;
-	int			ncolumns1;
-	int			ncolumns2;
-	RecordCompareData *my_extra;
-	int			ncols;
-	Datum	   *values1;
-	Datum	   *values2;
-	bool	   *nulls1;
-	bool	   *nulls2;
-	int			i1;
 	int			i2;
 	int			j;
 
 	/* Extract type info from the tuples */
-	tupType1 = HeapTupleHeaderGetTypeId(record1);
-	tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
-	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
-	ncolumns1 = tupdesc1->natts;
-	tupType2 = HeapTupleHeaderGetTypeId(record2);
-	tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
-	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
-	ncolumns2 = tupdesc2->natts;
+	Oid			tupType1 = HeapTupleHeaderGetTypeId(record1);
+	int32		tupTypmod1 = HeapTupleHeaderGetTypMod(record1);
+	TupleDesc	tupdesc1 = lookup_rowtype_tupdesc(tupType1, tupTypmod1);
+	int			ncolumns1 = tupdesc1->natts;
+	Oid			tupType2 = HeapTupleHeaderGetTypeId(record2);
+	int32		tupTypmod2 = HeapTupleHeaderGetTypMod(record2);
+	TupleDesc	tupdesc2 = lookup_rowtype_tupdesc(tupType2, tupTypmod2);
+	int			ncolumns2 = tupdesc2->natts;
 
 	/* Build temporary HeapTuple control structures */
 	tuple1.t_len = HeapTupleHeaderGetDatumLength(record1);
@@ -1606,8 +1496,8 @@ record_image_eq(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed comparison info just once per series
 	 * of calls, assuming the record types don't change underneath us.
 	 */
-	ncols = Max(ncolumns1, ncolumns2);
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	int			ncols = Max(ncolumns1, ncolumns2);
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1636,11 +1526,11 @@ record_image_eq(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
+	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
+	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1648,11 +1538,9 @@ record_image_eq(PG_FUNCTION_ARGS)
 	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
-	i1 = i2 = j = 0;
+	int			i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
-		Form_pg_attribute att1;
-		Form_pg_attribute att2;
 
 		/*
 		 * Skip dropped columns
@@ -1670,8 +1558,8 @@ record_image_eq(PG_FUNCTION_ARGS)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
-		att1 = TupleDescAttr(tupdesc1, i1);
-		att2 = TupleDescAttr(tupdesc2, i2);
+		Form_pg_attribute att1 = TupleDescAttr(tupdesc1, i1);
+		Form_pg_attribute att2 = TupleDescAttr(tupdesc2, i2);
 
 		/*
 		 * Have two matching columns, they must be same type
@@ -1778,22 +1666,15 @@ hash_record(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader record = PG_GETARG_HEAPTUPLEHEADER(0);
 	uint32		result = 0;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	int			ncolumns;
-	RecordCompareData *my_extra;
-	Datum	   *values;
-	bool	   *nulls;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from tuple */
-	tupType = HeapTupleHeaderGetTypeId(record);
-	tupTypmod = HeapTupleHeaderGetTypMod(record);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	Oid			tupType = HeapTupleHeaderGetTypeId(record);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(record);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/* Build temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(record);
@@ -1805,7 +1686,7 @@ hash_record(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed hashing info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncolumns)
 	{
@@ -1828,17 +1709,16 @@ hash_record(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuple into fields */
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
 	for (int i = 0; i < ncolumns; i++)
 	{
-		Form_pg_attribute att;
 		TypeCacheEntry *typentry;
 		uint32		element_hash;
 
-		att = TupleDescAttr(tupdesc, i);
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
 			continue;
@@ -1899,22 +1779,15 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	HeapTupleHeader record = PG_GETARG_HEAPTUPLEHEADER(0);
 	uint64		seed = PG_GETARG_INT64(1);
 	uint64		result = 0;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	int			ncolumns;
-	RecordCompareData *my_extra;
-	Datum	   *values;
-	bool	   *nulls;
 
 	check_stack_depth();		/* recurses for record-type columns */
 
 	/* Extract type info from tuple */
-	tupType = HeapTupleHeaderGetTypeId(record);
-	tupTypmod = HeapTupleHeaderGetTypMod(record);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
+	Oid			tupType = HeapTupleHeaderGetTypeId(record);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(record);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	int			ncolumns = tupdesc->natts;
 
 	/* Build temporary HeapTuple control structure */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(record);
@@ -1926,7 +1799,7 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed hashing info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncolumns)
 	{
@@ -1949,17 +1822,16 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuple into fields */
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
 	for (int i = 0; i < ncolumns; i++)
 	{
-		Form_pg_attribute att;
 		TypeCacheEntry *typentry;
 		uint64		element_hash;
 
-		att = TupleDescAttr(tupdesc, i);
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
 			continue;

@@ -43,13 +43,11 @@ static Node *paramlist_param_ref(ParseState *pstate, ParamRef *pref);
 ParamListInfo
 makeParamList(int numParams)
 {
-	ParamListInfo retval;
-	Size		size;
 
-	size = offsetof(ParamListInfoData, params) +
+	Size		size = offsetof(ParamListInfoData, params) +
 		numParams * sizeof(ParamExternData);
 
-	retval = (ParamListInfo) palloc(size);
+	ParamListInfo retval = (ParamListInfo) palloc(size);
 	retval->paramFetch = NULL;
 	retval->paramFetchArg = NULL;
 	retval->paramCompile = NULL;
@@ -77,12 +75,11 @@ makeParamList(int numParams)
 ParamListInfo
 copyParamList(ParamListInfo from)
 {
-	ParamListInfo retval;
 
 	if (from == NULL || from->numParams <= 0)
 		return NULL;
 
-	retval = makeParamList(from->numParams);
+	ParamListInfo retval = makeParamList(from->numParams);
 
 	for (int i = 0; i < from->numParams; i++)
 	{
@@ -134,7 +131,6 @@ paramlist_param_ref(ParseState *pstate, ParamRef *pref)
 	int			paramno = pref->number;
 	ParamExternData *prm;
 	ParamExternData prmdata;
-	Param	   *param;
 
 	/* check parameter number is valid */
 	if (paramno <= 0 || paramno > paramLI->numParams)
@@ -149,7 +145,7 @@ paramlist_param_ref(ParseState *pstate, ParamRef *pref)
 	if (!OidIsValid(prm->ptype))
 		return NULL;
 
-	param = makeNode(Param);
+	Param	   *param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = prm->ptype;
@@ -176,7 +172,6 @@ EstimateParamListSpace(ParamListInfo paramLI)
 	{
 		ParamExternData *prm;
 		ParamExternData prmdata;
-		Oid			typeOid;
 		int16		typLen;
 		bool		typByVal;
 
@@ -186,7 +181,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 		else
 			prm = &paramLI->params[i];
 
-		typeOid = prm->ptype;
+		Oid			typeOid = prm->ptype;
 
 		sz = add_size(sz, sizeof(Oid)); /* space for type OID */
 		sz = add_size(sz, sizeof(uint16));	/* space for pflags */
@@ -244,7 +239,6 @@ SerializeParamList(ParamListInfo paramLI, char **start_address)
 	{
 		ParamExternData *prm;
 		ParamExternData prmdata;
-		Oid			typeOid;
 		int16		typLen;
 		bool		typByVal;
 
@@ -254,7 +248,7 @@ SerializeParamList(ParamListInfo paramLI, char **start_address)
 		else
 			prm = &paramLI->params[i];
 
-		typeOid = prm->ptype;
+		Oid			typeOid = prm->ptype;
 
 		/* Write type OID. */
 		memcpy(*start_address, &typeOid, sizeof(Oid));
@@ -291,13 +285,12 @@ SerializeParamList(ParamListInfo paramLI, char **start_address)
 ParamListInfo
 RestoreParamList(char **start_address)
 {
-	ParamListInfo paramLI;
 	int			nparams;
 
 	memcpy(&nparams, *start_address, sizeof(int));
 	*start_address += sizeof(int);
 
-	paramLI = makeParamList(nparams);
+	ParamListInfo paramLI = makeParamList(nparams);
 
 	for (int i = 0; i < nparams; i++)
 	{
@@ -382,10 +375,9 @@ BuildParamLogString(ParamListInfo params, char **knownTextValues, int maxlen)
 			{
 				Oid			typoutput;
 				bool		typisvarlena;
-				char	   *pstring;
 
 				getTypeOutputInfo(param->ptype, &typoutput, &typisvarlena);
-				pstring = OidOutputFunctionCall(typoutput, param->value);
+				char	   *pstring = OidOutputFunctionCall(typoutput, param->value);
 				appendStringInfoStringQuoted(&buf, pstring, maxlen);
 			}
 		}

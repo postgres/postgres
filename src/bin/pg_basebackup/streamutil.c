@@ -64,11 +64,8 @@ GetConnection(void)
 	PGconn	   *tmpconn;
 	int			argcount = 7;	/* dbname, replication, fallback_app_name,
 								 * host, user, port, password */
-	int			i;
 	const char **keywords;
 	const char **values;
-	const char *tmpparam;
-	bool		need_password;
 	PQconninfoOption *conn_opts = NULL;
 	PQconninfoOption *conn_opt;
 	char	   *err_msg = NULL;
@@ -83,7 +80,7 @@ GetConnection(void)
 	 * otherwise, PQconnectdbParams() would interpret that value as being
 	 * itself a connection string.
 	 */
-	i = 0;
+	int			i = 0;
 	if (connection_string)
 	{
 		conn_opts = PQconninfoParse(connection_string, &err_msg);
@@ -150,7 +147,7 @@ GetConnection(void)
 	}
 
 	/* If -W was given, force prompt for password, but only the first time */
-	need_password = (dbgetpassword == 1 && !password);
+	bool		need_password = (dbgetpassword == 1 && !password);
 
 	do
 	{
@@ -223,9 +220,8 @@ GetConnection(void)
 	 */
 	if (dbname != NULL && PQserverVersion(tmpconn) >= 100000)
 	{
-		PGresult   *res;
 
-		res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+		PGresult   *res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
 			pg_log_error("could not clear search_path: %s",
@@ -241,7 +237,7 @@ GetConnection(void)
 	 * Ensure we have the same value of integer_datetimes (now always "on") as
 	 * the server we are connecting to.
 	 */
-	tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
+	const char *tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 	if (!tmpparam)
 	{
 		pg_log_error("could not determine server setting for integer_datetimes");
@@ -276,7 +272,6 @@ GetConnection(void)
 bool
 RetrieveWalSegSize(PGconn *conn)
 {
-	PGresult   *res;
 	char		xlog_unit[3];
 	int			xlog_val,
 				multiplier = 1;
@@ -291,7 +286,7 @@ RetrieveWalSegSize(PGconn *conn)
 		return true;
 	}
 
-	res = PQexec(conn, "SHOW wal_segment_size");
+	PGresult   *res = PQexec(conn, "SHOW wal_segment_size");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -354,7 +349,6 @@ RetrieveWalSegSize(PGconn *conn)
 static bool
 RetrieveDataDirCreatePerm(PGconn *conn)
 {
-	PGresult   *res;
 	int			data_directory_mode;
 
 	/* check connection existence */
@@ -364,7 +358,7 @@ RetrieveDataDirCreatePerm(PGconn *conn)
 	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_GROUP_ACCESS)
 		return true;
 
-	res = PQexec(conn, "SHOW data_directory_mode");
+	PGresult   *res = PQexec(conn, "SHOW data_directory_mode");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -409,14 +403,13 @@ bool
 RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 				  XLogRecPtr *startpos, char **db_name)
 {
-	PGresult   *res;
 	uint32		hi,
 				lo;
 
 	/* Check connection existence */
 	Assert(conn != NULL);
 
-	res = PQexec(conn, "IDENTIFY_SYSTEM");
+	PGresult   *res = PQexec(conn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -488,10 +481,8 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 					  bool is_temporary, bool is_physical, bool reserve_wal,
 					  bool slot_exists_ok, bool two_phase)
 {
-	PQExpBuffer query;
-	PGresult   *res;
 
-	query = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
 
 	Assert((is_physical && plugin == NULL) ||
 		   (!is_physical && plugin != NULL));
@@ -519,7 +510,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");
 	}
 
-	res = PQexec(conn, query->data);
+	PGresult   *res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -566,17 +557,15 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 bool
 DropReplicationSlot(PGconn *conn, const char *slot_name)
 {
-	PQExpBuffer query;
-	PGresult   *res;
 
 	Assert(slot_name != NULL);
 
-	query = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
 
 	/* Build query */
 	appendPQExpBuffer(query, "DROP_REPLICATION_SLOT \"%s\"",
 					  slot_name);
-	res = PQexec(conn, query->data);
+	PGresult   *res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -611,12 +600,11 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 TimestampTz
 feGetCurrentTimestamp(void)
 {
-	TimestampTz result;
 	struct timeval tp;
 
 	gettimeofday(&tp, NULL);
 
-	result = (TimestampTz) tp.tv_sec -
+	TimestampTz result = (TimestampTz) tp.tv_sec -
 		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 	result = (result * USECS_PER_SEC) + tp.tv_usec;
 

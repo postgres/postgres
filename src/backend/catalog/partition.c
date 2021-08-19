@@ -53,13 +53,11 @@ static void get_partition_ancestors_worker(Relation inhRel, Oid relid,
 Oid
 get_partition_parent(Oid relid, bool even_if_detached)
 {
-	Relation	catalogRelation;
-	Oid			result;
 	bool		detach_pending;
 
-	catalogRelation = table_open(InheritsRelationId, AccessShareLock);
+	Relation	catalogRelation = table_open(InheritsRelationId, AccessShareLock);
 
-	result = get_partition_parent_worker(catalogRelation, relid,
+	Oid			result = get_partition_parent_worker(catalogRelation, relid,
 										 &detach_pending);
 
 	if (!OidIsValid(result))
@@ -85,10 +83,8 @@ get_partition_parent(Oid relid, bool even_if_detached)
 static Oid
 get_partition_parent_worker(Relation inhRel, Oid relid, bool *detach_pending)
 {
-	SysScanDesc scan;
 	ScanKeyData key[2];
 	Oid			result = InvalidOid;
-	HeapTuple	tuple;
 
 	*detach_pending = false;
 
@@ -101,9 +97,9 @@ get_partition_parent_worker(Relation inhRel, Oid relid, bool *detach_pending)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(1));
 
-	scan = systable_beginscan(inhRel, InheritsRelidSeqnoIndexId, true,
+	SysScanDesc scan = systable_beginscan(inhRel, InheritsRelidSeqnoIndexId, true,
 							  NULL, 2, key);
-	tuple = systable_getnext(scan);
+	HeapTuple	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
 		Form_pg_inherits form = (Form_pg_inherits) GETSTRUCT(tuple);
@@ -133,9 +129,8 @@ List *
 get_partition_ancestors(Oid relid)
 {
 	List	   *result = NIL;
-	Relation	inhRel;
 
-	inhRel = table_open(InheritsRelationId, AccessShareLock);
+	Relation	inhRel = table_open(InheritsRelationId, AccessShareLock);
 
 	get_partition_ancestors_worker(inhRel, relid, &result);
 
@@ -151,14 +146,13 @@ get_partition_ancestors(Oid relid)
 static void
 get_partition_ancestors_worker(Relation inhRel, Oid relid, List **ancestors)
 {
-	Oid			parentOid;
 	bool		detach_pending;
 
 	/*
 	 * Recursion ends at the topmost level, ie., when there's no parent; also
 	 * when the partition is being detached.
 	 */
-	parentOid = get_partition_parent_worker(inhRel, relid, &detach_pending);
+	Oid			parentOid = get_partition_parent_worker(inhRel, relid, &detach_pending);
 	if (parentOid == InvalidOid || detach_pending)
 		return;
 
@@ -180,15 +174,12 @@ index_get_partition(Relation partition, Oid indexId)
 	foreach(l, idxlist)
 	{
 		Oid			partIdx = lfirst_oid(l);
-		HeapTuple	tup;
-		Form_pg_class classForm;
-		bool		ispartition;
 
-		tup = SearchSysCache1(RELOID, ObjectIdGetDatum(partIdx));
+		HeapTuple	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(partIdx));
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for relation %u", partIdx);
-		classForm = (Form_pg_class) GETSTRUCT(tup);
-		ispartition = classForm->relispartition;
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tup);
+		bool		ispartition = classForm->relispartition;
 		ReleaseSysCache(tup);
 		if (!ispartition)
 			continue;
@@ -223,10 +214,9 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 {
 	if (expr != NIL)
 	{
-		AttrMap    *part_attmap;
 		bool		found_whole_row;
 
-		part_attmap = build_attrmap_by_name(RelationGetDescr(to_rel),
+		AttrMap    *part_attmap = build_attrmap_by_name(RelationGetDescr(to_rel),
 											RelationGetDescr(from_rel));
 		expr = (List *) map_variable_attnos((Node *) expr,
 											fromrel_varno, 0,
@@ -252,20 +242,16 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 bool
 has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 {
-	PartitionKey key;
-	int			partnatts;
-	List	   *partexprs;
-	ListCell   *partexprs_item;
 	int			i;
 
 	if (attnums == NULL || rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		return false;
 
-	key = RelationGetPartitionKey(rel);
-	partnatts = get_partition_natts(key);
-	partexprs = get_partition_exprs(key);
+	PartitionKey key = RelationGetPartitionKey(rel);
+	int			partnatts = get_partition_natts(key);
+	List	   *partexprs = get_partition_exprs(key);
 
-	partexprs_item = list_head(partexprs);
+	ListCell   *partexprs_item = list_head(partexprs);
 	for (i = 0; i < partnatts; i++)
 	{
 		AttrNumber	partattno = get_partition_col_attnum(key, i);
@@ -312,16 +298,14 @@ has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 Oid
 get_default_partition_oid(Oid parentId)
 {
-	HeapTuple	tuple;
 	Oid			defaultPartId = InvalidOid;
 
-	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(parentId));
+	HeapTuple	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(parentId));
 
 	if (HeapTupleIsValid(tuple))
 	{
-		Form_pg_partitioned_table part_table_form;
 
-		part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+		Form_pg_partitioned_table part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
 		defaultPartId = part_table_form->partdefid;
 		ReleaseSysCache(tuple);
 	}
@@ -337,19 +321,16 @@ get_default_partition_oid(Oid parentId)
 void
 update_default_partition_oid(Oid parentId, Oid defaultPartId)
 {
-	HeapTuple	tuple;
-	Relation	pg_partitioned_table;
-	Form_pg_partitioned_table part_table_form;
 
-	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
+	Relation	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy1(PARTRELID, ObjectIdGetDatum(parentId));
+	HeapTuple	tuple = SearchSysCacheCopy1(PARTRELID, ObjectIdGetDatum(parentId));
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for partition key of relation %u",
 			 parentId);
 
-	part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+	Form_pg_partitioned_table part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
 	part_table_form->partdefid = defaultPartId;
 	CatalogTupleUpdate(pg_partitioned_table, &tuple->t_self, tuple);
 
@@ -367,9 +348,8 @@ update_default_partition_oid(Oid parentId, Oid defaultPartId)
 List *
 get_proposed_default_constraint(List *new_part_constraints)
 {
-	Expr	   *defPartConstraint;
 
-	defPartConstraint = make_ands_explicit(new_part_constraints);
+	Expr	   *defPartConstraint = make_ands_explicit(new_part_constraints);
 
 	/*
 	 * Derive the partition constraints of default partition by negating the

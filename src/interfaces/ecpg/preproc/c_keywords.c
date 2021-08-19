@@ -35,15 +35,12 @@ static const uint16 ScanCKeywordTokens[] = {
 int
 ScanCKeywordLookup(const char *str)
 {
-	size_t		len;
-	int			h;
-	const char *kw;
 
 	/*
 	 * Reject immediately if too long to be any keyword.  This saves useless
 	 * hashing work on long strings.
 	 */
-	len = strlen(str);
+	size_t		len = strlen(str);
 	if (len > ScanCKeywords.max_kw_len)
 		return -1;
 
@@ -51,13 +48,13 @@ ScanCKeywordLookup(const char *str)
 	 * Compute the hash function.  Since it's a perfect hash, we need only
 	 * match to the specific keyword it identifies.
 	 */
-	h = ScanCKeywords_hash_func(str, len);
+	int			h = ScanCKeywords_hash_func(str, len);
 
 	/* An out-of-range result implies no match */
 	if (h < 0 || h >= ScanCKeywords.num_keywords)
 		return -1;
 
-	kw = GetScanKeyword(h, &ScanCKeywords);
+	const char *kw = GetScanKeyword(h, &ScanCKeywords);
 
 	if (strcmp(kw, str) == 0)
 		return ScanCKeywordTokens[h];

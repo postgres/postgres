@@ -61,14 +61,9 @@ static TupleTableSlot *
 ExecNestLoop(PlanState *pstate)
 {
 	NestLoopState *node = castNode(NestLoopState, pstate);
-	NestLoop   *nl;
-	PlanState  *innerPlan;
-	PlanState  *outerPlan;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
 	ExprState  *joinqual;
-	ExprState  *otherqual;
-	ExprContext *econtext;
 	ListCell   *lc;
 
 	CHECK_FOR_INTERRUPTS();
@@ -78,12 +73,12 @@ ExecNestLoop(PlanState *pstate)
 	 */
 	ENL1_printf("getting info from node");
 
-	nl = (NestLoop *) node->js.ps.plan;
+	NestLoop   *nl = (NestLoop *) node->js.ps.plan;
 	joinqual = node->js.joinqual;
-	otherqual = node->js.ps.qual;
-	outerPlan = outerPlanState(node);
-	innerPlan = innerPlanState(node);
-	econtext = node->js.ps.ps_ExprContext;
+	ExprState  *otherqual = node->js.ps.qual;
+	PlanState  *outerPlan = outerPlanState(node);
+	PlanState  *innerPlan = innerPlanState(node);
+	ExprContext *econtext = node->js.ps.ps_ExprContext;
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -130,9 +125,8 @@ ExecNestLoop(PlanState *pstate)
 			{
 				NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
 				int			paramno = nlp->paramno;
-				ParamExecData *prm;
 
-				prm = &(econtext->ecxt_param_exec_vals[paramno]);
+				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramno]);
 				/* Param value should be an OUTER_VAR var */
 				Assert(IsA(nlp->paramval, Var));
 				Assert(nlp->paramval->varno == OUTER_VAR);
@@ -262,7 +256,6 @@ ExecNestLoop(PlanState *pstate)
 NestLoopState *
 ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 {
-	NestLoopState *nlstate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -273,7 +266,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	nlstate = makeNode(NestLoopState);
+	NestLoopState *nlstate = makeNode(NestLoopState);
 	nlstate->js.ps.plan = (Plan *) node;
 	nlstate->js.ps.state = estate;
 	nlstate->js.ps.ExecProcNode = ExecNestLoop;

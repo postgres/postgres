@@ -134,7 +134,6 @@ _bt_findsplitloc(Relation rel,
 				 IndexTuple newitem,
 				 bool *newitemonleft)
 {
-	BTPageOpaque opaque;
 	int			leftspace,
 				rightspace,
 				olddataitemstotal,
@@ -152,7 +151,7 @@ _bt_findsplitloc(Relation rel,
 	SplitPoint	leftpage,
 				rightpage;
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	maxoff = PageGetMaxOffsetNumber(origpage);
 
 	/* Total free space available on a btree page, after fixed overhead */
@@ -210,10 +209,9 @@ _bt_findsplitloc(Relation rel,
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
-		Size		itemsz;
 
 		itemid = PageGetItemId(origpage, offnum);
-		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
+		Size		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
 		 * When item offset number is not newitemoff, neither side of the
@@ -457,10 +455,9 @@ _bt_recsplitloc(FindSplitData *state,
 				rightfree;
 	Size		firstrightsz;
 	Size		postingsz = 0;
-	bool		newitemisfirstright;
 
 	/* Is the new item going to be split point's firstright tuple? */
-	newitemisfirstright = (firstrightoff == state->newitemoff &&
+	bool		newitemisfirstright = (firstrightoff == state->newitemoff &&
 						   !newitemonleft);
 
 	if (newitemisfirstright)
@@ -481,11 +478,9 @@ _bt_recsplitloc(FindSplitData *state,
 		 */
 		if (state->is_leaf && firstrightsz > 64)
 		{
-			ItemId		itemid;
-			IndexTuple	newhighkey;
 
-			itemid = PageGetItemId(state->origpage, firstrightoff);
-			newhighkey = (IndexTuple) PageGetItem(state->origpage, itemid);
+			ItemId		itemid = PageGetItemId(state->origpage, firstrightoff);
+			IndexTuple	newhighkey = (IndexTuple) PageGetItem(state->origpage, itemid);
 
 			if (BTreeTupleIsPosting(newhighkey))
 				postingsz = IndexTupleSize(newhighkey) -
@@ -636,14 +631,13 @@ static bool
 _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
 					int leaffillfactor, bool *usemult)
 {
-	int16		nkeyatts;
 	ItemId		itemid;
 	IndexTuple	tup;
 	int			keepnatts;
 
 	Assert(state->is_leaf && !state->is_rightmost);
 
-	nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
+	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 
 	/* Single key indexes not considered here */
 	if (nkeyatts == 1)
@@ -797,15 +791,13 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 	int			bestpenalty,
 				lowsplit;
 	int			highsplit = Min(state->interval, state->nsplits);
-	SplitPoint *final;
 
 	bestpenalty = INT_MAX;
 	lowsplit = 0;
 	for (int i = lowsplit; i < highsplit; i++)
 	{
-		int			penalty;
 
-		penalty = _bt_split_penalty(state, state->splits + i);
+		int			penalty = _bt_split_penalty(state, state->splits + i);
 
 		if (penalty < bestpenalty)
 		{
@@ -817,7 +809,7 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 			break;
 	}
 
-	final = &state->splits[lowsplit];
+	SplitPoint *final = &state->splits[lowsplit];
 
 	/*
 	 * There is a risk that the "many duplicates" strategy will repeatedly do
@@ -881,7 +873,6 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 static int
 _bt_defaultinterval(FindSplitData *state)
 {
-	SplitPoint *spaceoptimal;
 	int16		tolerance,
 				lowleftfree,
 				lowrightfree,
@@ -901,7 +892,7 @@ _bt_defaultinterval(FindSplitData *state)
 		tolerance = state->olddataitemstotal * INTERNAL_SPLIT_DISTANCE;
 
 	/* First candidate split point is the most evenly balanced */
-	spaceoptimal = state->splits;
+	SplitPoint *spaceoptimal = state->splits;
 	lowleftfree = spaceoptimal->leftfree - tolerance;
 	lowrightfree = spaceoptimal->rightfree - tolerance;
 	highleftfree = spaceoptimal->leftfree + tolerance;
@@ -944,7 +935,6 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 				rightmost;
 	SplitPoint *leftinterval,
 			   *rightinterval;
-	int			perfectpenalty;
 	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(state->rel);
 
 	/* Assume that alternative strategy won't be used for now */
@@ -973,7 +963,7 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 	 * avoid appending a heap TID in new high key, we're done.  Finish split
 	 * with default strategy and initial split interval.
 	 */
-	perfectpenalty = _bt_keep_natts_fast(state->rel, leftmost, rightmost);
+	int			perfectpenalty = _bt_keep_natts_fast(state->rel, leftmost, rightmost);
 	if (perfectpenalty <= indnkeyatts)
 		return perfectpenalty;
 
@@ -1027,11 +1017,9 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 		*strategy = SPLIT_SINGLE_VALUE;
 	else
 	{
-		ItemId		itemid;
-		IndexTuple	hikey;
 
-		itemid = PageGetItemId(state->origpage, P_HIKEY);
-		hikey = (IndexTuple) PageGetItem(state->origpage, itemid);
+		ItemId		itemid = PageGetItemId(state->origpage, P_HIKEY);
+		IndexTuple	hikey = (IndexTuple) PageGetItem(state->origpage, itemid);
 		perfectpenalty = _bt_keep_natts_fast(state->rel, hikey,
 											 state->newitem);
 		if (perfectpenalty <= indnkeyatts)
@@ -1059,9 +1047,8 @@ _bt_interval_edges(FindSplitData *state, SplitPoint **leftinterval,
 				   SplitPoint **rightinterval)
 {
 	int			highsplit = Min(state->interval, state->nsplits);
-	SplitPoint *deltaoptimal;
 
-	deltaoptimal = state->splits;
+	SplitPoint *deltaoptimal = state->splits;
 	*leftinterval = NULL;
 	*rightinterval = NULL;
 
@@ -1136,24 +1123,21 @@ _bt_interval_edges(FindSplitData *state, SplitPoint **leftinterval,
 static inline int
 _bt_split_penalty(FindSplitData *state, SplitPoint *split)
 {
-	IndexTuple	lastleft;
-	IndexTuple	firstright;
 
 	if (!state->is_leaf)
 	{
-		ItemId		itemid;
 
 		if (!split->newitemonleft &&
 			split->firstrightoff == state->newitemoff)
 			return state->newitemsz;
 
-		itemid = PageGetItemId(state->origpage, split->firstrightoff);
+		ItemId		itemid = PageGetItemId(state->origpage, split->firstrightoff);
 
 		return MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 	}
 
-	lastleft = _bt_split_lastleft(state, split);
-	firstright = _bt_split_firstright(state, split);
+	IndexTuple	lastleft = _bt_split_lastleft(state, split);
+	IndexTuple	firstright = _bt_split_firstright(state, split);
 
 	return _bt_keep_natts_fast(state->rel, lastleft, firstright);
 }
@@ -1164,12 +1148,11 @@ _bt_split_penalty(FindSplitData *state, SplitPoint *split)
 static inline IndexTuple
 _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
 {
-	ItemId		itemid;
 
 	if (split->newitemonleft && split->firstrightoff == state->newitemoff)
 		return state->newitem;
 
-	itemid = PageGetItemId(state->origpage,
+	ItemId		itemid = PageGetItemId(state->origpage,
 						   OffsetNumberPrev(split->firstrightoff));
 	return (IndexTuple) PageGetItem(state->origpage, itemid);
 }
@@ -1180,11 +1163,10 @@ _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
 static inline IndexTuple
 _bt_split_firstright(FindSplitData *state, SplitPoint *split)
 {
-	ItemId		itemid;
 
 	if (!split->newitemonleft && split->firstrightoff == state->newitemoff)
 		return state->newitem;
 
-	itemid = PageGetItemId(state->origpage, split->firstrightoff);
+	ItemId		itemid = PageGetItemId(state->origpage, split->firstrightoff);
 	return (IndexTuple) PageGetItem(state->origpage, itemid);
 }

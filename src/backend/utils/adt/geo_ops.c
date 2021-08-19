@@ -454,11 +454,10 @@ Datum
 box_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	BOX		   *box;
 	float8		x,
 				y;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	BOX		   *box = (BOX *) palloc(sizeof(BOX));
 
 	box->high.x = pq_getmsgfloat8(buf);
 	box->high.y = pq_getmsgfloat8(buf);
@@ -897,12 +896,11 @@ box_intersect(PG_FUNCTION_ARGS)
 {
 	BOX		   *box1 = PG_GETARG_BOX_P(0);
 	BOX		   *box2 = PG_GETARG_BOX_P(1);
-	BOX		   *result;
 
 	if (!box_ov(box1, box2))
 		PG_RETURN_NULL();
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	result->high.x = float8_min(box1->high.x, box2->high.x);
 	result->low.x = float8_max(box1->low.x, box2->low.x);
@@ -961,9 +959,8 @@ line_in(PG_FUNCTION_ARGS)
 	LINE	   *line = (LINE *) palloc(sizeof(LINE));
 	LSEG		lseg;
 	bool		isopen;
-	char	   *s;
 
-	s = str;
+	char	   *s = str;
 	while (isspace((unsigned char) *s))
 		s++;
 	if (*s == LDELIM_L)
@@ -1011,9 +1008,8 @@ Datum
 line_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	LINE	   *line;
 
-	line = (LINE *) palloc(sizeof(LINE));
+	LINE	   *line = (LINE *) palloc(sizeof(LINE));
 
 	line->A = pq_getmsgfloat8(buf);
 	line->B = pq_getmsgfloat8(buf);
@@ -1260,9 +1256,8 @@ line_interpt(PG_FUNCTION_ARGS)
 {
 	LINE	   *l1 = PG_GETARG_LINE_P(0);
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (!line_interpt_line(result, l1, l2))
 		PG_RETURN_NULL();
@@ -1377,10 +1372,7 @@ path_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	PATH	   *path;
 	bool		isopen;
-	char	   *s;
 	int			npts;
-	int			size;
-	int			base_size;
 	int			depth = 0;
 
 	if ((npts = pair_count(str, ',')) <= 0)
@@ -1389,7 +1381,7 @@ path_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"path", str)));
 
-	s = str;
+	char	   *s = str;
 	while (isspace((unsigned char) *s))
 		s++;
 
@@ -1400,8 +1392,8 @@ path_in(PG_FUNCTION_ARGS)
 		depth++;
 	}
 
-	base_size = sizeof(path->p[0]) * npts;
-	size = offsetof(PATH, p) + base_size;
+	int			base_size = sizeof(path->p[0]) * npts;
+	int			size = offsetof(PATH, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
@@ -1459,19 +1451,16 @@ path_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	PATH	   *path;
-	int			closed;
-	int32		npts;
 	int32		i;
-	int			size;
 
-	closed = pq_getmsgbyte(buf);
-	npts = pq_getmsgint(buf, sizeof(int32));
+	int			closed = pq_getmsgbyte(buf);
+	int32		npts = pq_getmsgint(buf, sizeof(int32));
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid number of points in external \"path\" value")));
 
-	size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
+	int			size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -1822,9 +1811,8 @@ Datum
 point_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Point	   *point;
 
-	point = (Point *) palloc(sizeof(Point));
+	Point	   *point = (Point *) palloc(sizeof(Point));
 	point->x = pq_getmsgfloat8(buf);
 	point->y = pq_getmsgfloat8(buf);
 	PG_RETURN_POINT_P(point);
@@ -2057,9 +2045,8 @@ Datum
 lseg_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	LSEG	   *lseg;
 
-	lseg = (LSEG *) palloc(sizeof(LSEG));
+	LSEG	   *lseg = (LSEG *) palloc(sizeof(LSEG));
 
 	lseg->p[0].x = pq_getmsgfloat8(buf);
 	lseg->p[0].y = pq_getmsgfloat8(buf);
@@ -2281,9 +2268,8 @@ Datum
 lseg_center(PG_FUNCTION_ARGS)
 {
 	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	result->x = float8_div(float8_pl(lseg->p[0].x, lseg->p[1].x), 2.0);
 	result->y = float8_div(float8_pl(lseg->p[0].y, lseg->p[1].y), 2.0);
@@ -2327,9 +2313,8 @@ lseg_interpt(PG_FUNCTION_ARGS)
 {
 	LSEG	   *l1 = PG_GETARG_LSEG_P(0);
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (!lseg_interpt_lseg(result, l1, l2))
 		PG_RETURN_NULL();
@@ -2573,10 +2558,9 @@ dist_bl(PG_FUNCTION_ARGS)
 static float8
 dist_cpoly_internal(CIRCLE *circle, POLYGON *poly)
 {
-	float8		result;
 
 	/* calculate distance to center, and subtract radius */
-	result = float8_mi(dist_ppoly_internal(&circle->center, poly),
+	float8		result = float8_mi(dist_ppoly_internal(&circle->center, poly),
 					   circle->radius);
 	if (result < 0.0)
 		result = 0.0;
@@ -2632,7 +2616,6 @@ dist_polyp(PG_FUNCTION_ARGS)
 static float8
 dist_ppoly_internal(Point *pt, POLYGON *poly)
 {
-	float8		result;
 	float8		d;
 	int			i;
 	LSEG		seg;
@@ -2645,7 +2628,7 @@ dist_ppoly_internal(Point *pt, POLYGON *poly)
 	seg.p[0].y = poly->p[0].y;
 	seg.p[1].x = poly->p[poly->npts - 1].x;
 	seg.p[1].y = poly->p[poly->npts - 1].y;
-	result = lseg_closept_point(NULL, &seg, pt);
+	float8		result = lseg_closept_point(NULL, &seg, pt);
 
 	/* check distances for other segments */
 	for (i = 0; i < poly->npts - 1; i++)
@@ -2754,9 +2737,8 @@ close_pl(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	LINE	   *line = PG_GETARG_LINE_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(line_closept_point(result, line, pt)))
 		PG_RETURN_NULL();
@@ -2795,9 +2777,8 @@ close_ps(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	LSEG	   *lseg = PG_GETARG_LSEG_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(lseg_closept_point(result, lseg, pt)))
 		PG_RETURN_NULL();
@@ -2857,12 +2838,11 @@ close_lseg(PG_FUNCTION_ARGS)
 {
 	LSEG	   *l1 = PG_GETARG_LSEG_P(0);
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
-	Point	   *result;
 
 	if (lseg_sl(l1) == lseg_sl(l2))
 		PG_RETURN_NULL();
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(lseg_closept_lseg(result, l2, l1)))
 		PG_RETURN_NULL();
@@ -2937,9 +2917,8 @@ close_pb(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(box_closept_point(result, box, pt)))
 		PG_RETURN_NULL();
@@ -2963,11 +2942,10 @@ close_sl(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
 	LINE	   *line = PG_GETARG_LINE_P(1);
-	Point	   *result;
 	float8		d1,
 				d2;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (lseg_interpt_line(result, lseg, line))
 		PG_RETURN_POINT_P(result);
@@ -3034,12 +3012,11 @@ close_ls(PG_FUNCTION_ARGS)
 {
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	LSEG	   *lseg = PG_GETARG_LSEG_P(1);
-	Point	   *result;
 
 	if (lseg_sl(lseg) == line_sl(line))
 		PG_RETURN_NULL();
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(lseg_closept_line(result, lseg, line)))
 		PG_RETURN_NULL();
@@ -3109,9 +3086,8 @@ close_sb(PG_FUNCTION_ARGS)
 {
 	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	if (isnan(box_closept_lseg(result, box, lseg)))
 		PG_RETURN_NULL();
@@ -3478,8 +3454,6 @@ poly_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	POLYGON    *poly;
 	int			npts;
-	int			size;
-	int			base_size;
 	bool		isopen;
 
 	if ((npts = pair_count(str, ',')) <= 0)
@@ -3488,8 +3462,8 @@ poly_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"polygon", str)));
 
-	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p) + base_size;
+	int			base_size = sizeof(poly->p[0]) * npts;
+	int			size = offsetof(POLYGON, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
@@ -3534,17 +3508,15 @@ poly_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	POLYGON    *poly;
-	int32		npts;
 	int32		i;
-	int			size;
 
-	npts = pq_getmsgint(buf, sizeof(int32));
+	int32		npts = pq_getmsgint(buf, sizeof(int32));
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid number of points in external \"polygon\" value")));
 
-	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
+	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
 	SET_VARSIZE(poly, size);
@@ -3592,9 +3564,8 @@ poly_left(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.high.x < polyb->boundbox.low.x;
+	bool		result = polya->boundbox.high.x < polyb->boundbox.low.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3615,9 +3586,8 @@ poly_overleft(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.high.x <= polyb->boundbox.high.x;
+	bool		result = polya->boundbox.high.x <= polyb->boundbox.high.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3638,9 +3608,8 @@ poly_right(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.low.x > polyb->boundbox.high.x;
+	bool		result = polya->boundbox.low.x > polyb->boundbox.high.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3661,9 +3630,8 @@ poly_overright(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.low.x >= polyb->boundbox.low.x;
+	bool		result = polya->boundbox.low.x >= polyb->boundbox.low.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3684,9 +3652,8 @@ poly_below(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.high.y < polyb->boundbox.low.y;
+	bool		result = polya->boundbox.high.y < polyb->boundbox.low.y;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3707,9 +3674,8 @@ poly_overbelow(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.high.y <= polyb->boundbox.high.y;
+	bool		result = polya->boundbox.high.y <= polyb->boundbox.high.y;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3730,9 +3696,8 @@ poly_above(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.low.y > polyb->boundbox.high.y;
+	bool		result = polya->boundbox.low.y > polyb->boundbox.high.y;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3753,9 +3718,8 @@ poly_overabove(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = polya->boundbox.low.y >= polyb->boundbox.low.y;
+	bool		result = polya->boundbox.low.y >= polyb->boundbox.low.y;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -3803,12 +3767,11 @@ poly_overlap(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
 	Assert(polya->npts > 0 && polyb->npts > 0);
 
 	/* Quick check by bounding box */
-	result = box_ov(&polya->boundbox, &polyb->boundbox);
+	bool		result = box_ov(&polya->boundbox, &polyb->boundbox);
 
 	/*
 	 * Brute-force algorithm - try to find intersected edges, if so then
@@ -4012,9 +3975,8 @@ poly_contain(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
-	result = poly_contain_poly(polya, polyb);
+	bool		result = poly_contain_poly(polya, polyb);
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -4034,10 +3996,9 @@ poly_contained(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-	bool		result;
 
 	/* Just switch the arguments and pass it off to poly_contain */
-	result = poly_contain_poly(polyb, polya);
+	bool		result = poly_contain_poly(polyb, polya);
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -4095,9 +4056,8 @@ construct_point(PG_FUNCTION_ARGS)
 {
 	float8		x = PG_GETARG_FLOAT8(0);
 	float8		y = PG_GETARG_FLOAT8(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	point_construct(result, x, y);
 
@@ -4118,9 +4078,8 @@ point_add(PG_FUNCTION_ARGS)
 {
 	Point	   *p1 = PG_GETARG_POINT_P(0);
 	Point	   *p2 = PG_GETARG_POINT_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	point_add_point(result, p1, p2);
 
@@ -4141,9 +4100,8 @@ point_sub(PG_FUNCTION_ARGS)
 {
 	Point	   *p1 = PG_GETARG_POINT_P(0);
 	Point	   *p2 = PG_GETARG_POINT_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	point_sub_point(result, p1, p2);
 
@@ -4166,9 +4124,8 @@ point_mul(PG_FUNCTION_ARGS)
 {
 	Point	   *p1 = PG_GETARG_POINT_P(0);
 	Point	   *p2 = PG_GETARG_POINT_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	point_mul_point(result, p1, p2);
 
@@ -4179,9 +4136,8 @@ point_mul(PG_FUNCTION_ARGS)
 static inline void
 point_div_point(Point *result, Point *pt1, Point *pt2)
 {
-	float8		div;
 
-	div = float8_pl(float8_mul(pt2->x, pt2->x), float8_mul(pt2->y, pt2->y));
+	float8		div = float8_pl(float8_mul(pt2->x, pt2->x), float8_mul(pt2->y, pt2->y));
 
 	point_construct(result,
 					float8_div(float8_pl(float8_mul(pt1->x, pt2->x),
@@ -4195,9 +4151,8 @@ point_div(PG_FUNCTION_ARGS)
 {
 	Point	   *p1 = PG_GETARG_POINT_P(0);
 	Point	   *p2 = PG_GETARG_POINT_P(1);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	point_div_point(result, p1, p2);
 
@@ -4216,9 +4171,8 @@ points_box(PG_FUNCTION_ARGS)
 {
 	Point	   *p1 = PG_GETARG_POINT_P(0);
 	Point	   *p2 = PG_GETARG_POINT_P(1);
-	BOX		   *result;
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	box_construct(result, p1, p2);
 
@@ -4230,9 +4184,8 @@ box_add(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	Point	   *p = PG_GETARG_POINT_P(1);
-	BOX		   *result;
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	point_add_point(&result->high, &box->high, p);
 	point_add_point(&result->low, &box->low, p);
@@ -4245,9 +4198,8 @@ box_sub(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	Point	   *p = PG_GETARG_POINT_P(1);
-	BOX		   *result;
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	point_sub_point(&result->high, &box->high, p);
 	point_sub_point(&result->low, &box->low, p);
@@ -4260,11 +4212,10 @@ box_mul(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	Point	   *p = PG_GETARG_POINT_P(1);
-	BOX		   *result;
 	Point		high,
 				low;
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	point_mul_point(&high, &box->high, p);
 	point_mul_point(&low, &box->low, p);
@@ -4279,11 +4230,10 @@ box_div(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	Point	   *p = PG_GETARG_POINT_P(1);
-	BOX		   *result;
 	Point		high,
 				low;
 
-	result = (BOX *) palloc(sizeof(BOX));
+	BOX		   *result = (BOX *) palloc(sizeof(BOX));
 
 	point_div_point(&high, &box->high, p);
 	point_div_point(&low, &box->low, p);
@@ -4300,9 +4250,8 @@ Datum
 point_box(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
-	BOX		   *box;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	BOX		   *box = (BOX *) palloc(sizeof(BOX));
 
 	box->high.x = pt->x;
 	box->low.x = pt->x;
@@ -4347,7 +4296,6 @@ path_add(PG_FUNCTION_ARGS)
 {
 	PATH	   *p1 = PG_GETARG_PATH_P(0);
 	PATH	   *p2 = PG_GETARG_PATH_P(1);
-	PATH	   *result;
 	int			size,
 				base_size;
 	int			i;
@@ -4365,7 +4313,7 @@ path_add(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("too many points requested")));
 
-	result = (PATH *) palloc(size);
+	PATH	   *result = (PATH *) palloc(size);
 
 	SET_VARSIZE(result, size);
 	result->npts = (p1->npts + p2->npts);
@@ -4465,7 +4413,6 @@ path_poly(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P(0);
 	POLYGON    *poly;
-	int			size;
 	int			i;
 
 	/* This is not very consistent --- other similar cases return NULL ... */
@@ -4478,7 +4425,7 @@ path_poly(PG_FUNCTION_ARGS)
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * just a small constant larger.
 	 */
-	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * path->npts;
+	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4515,10 +4462,9 @@ Datum
 poly_center(PG_FUNCTION_ARGS)
 {
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
-	Point	   *result;
 	CIRCLE		circle;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 
 	poly_to_circle(&circle, poly);
 	*result = circle.center;
@@ -4531,9 +4477,8 @@ Datum
 poly_box(PG_FUNCTION_ARGS)
 {
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
-	BOX		   *box;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	BOX		   *box = (BOX *) palloc(sizeof(BOX));
 	*box = poly->boundbox;
 
 	PG_RETURN_BOX_P(box);
@@ -4548,10 +4493,9 @@ box_poly(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	POLYGON    *poly;
-	int			size;
 
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * 4;
+	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * 4;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4577,14 +4521,13 @@ poly_path(PG_FUNCTION_ARGS)
 {
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	PATH	   *path;
-	int			size;
 	int			i;
 
 	/*
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * smaller by a small constant.
 	 */
-	size = offsetof(PATH, p) + sizeof(path->p[0]) * poly->npts;
+	int			size = offsetof(PATH, p) + sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -4710,9 +4653,8 @@ Datum
 circle_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	CIRCLE	   *circle;
 
-	circle = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *circle = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	circle->center.x = pq_getmsgfloat8(buf);
 	circle->center.y = pq_getmsgfloat8(buf);
@@ -4973,9 +4915,8 @@ circle_add_pt(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	point_add_point(&result->center, &circle->center, point);
 	result->radius = circle->radius;
@@ -4988,9 +4929,8 @@ circle_sub_pt(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	point_sub_point(&result->center, &circle->center, point);
 	result->radius = circle->radius;
@@ -5007,9 +4947,8 @@ circle_mul_pt(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	point_mul_point(&result->center, &circle->center, point);
 	result->radius = float8_mul(circle->radius, HYPOT(point->x, point->y));
@@ -5022,9 +4961,8 @@ circle_div_pt(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	point_div_point(&result->center, &circle->center, point);
 	result->radius = float8_div(circle->radius, HYPOT(point->x, point->y));
@@ -5074,9 +5012,8 @@ circle_distance(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
-	float8		result;
 
-	result = float8_mi(point_dt(&circle1->center, &circle2->center),
+	float8		result = float8_mi(point_dt(&circle1->center, &circle2->center),
 					   float8_pl(circle1->radius, circle2->radius));
 	if (result < 0.0)
 		result = 0.0;
@@ -5090,9 +5027,8 @@ circle_contain_pt(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	float8		d;
 
-	d = point_dt(&circle->center, point);
+	float8		d = point_dt(&circle->center, point);
 	PG_RETURN_BOOL(d <= circle->radius);
 }
 
@@ -5102,9 +5038,8 @@ pt_contained_circle(PG_FUNCTION_ARGS)
 {
 	Point	   *point = PG_GETARG_POINT_P(0);
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
-	float8		d;
 
-	d = point_dt(&circle->center, point);
+	float8		d = point_dt(&circle->center, point);
 	PG_RETURN_BOOL(d <= circle->radius);
 }
 
@@ -5117,9 +5052,8 @@ dist_pc(PG_FUNCTION_ARGS)
 {
 	Point	   *point = PG_GETARG_POINT_P(0);
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
-	float8		result;
 
-	result = float8_mi(point_dt(point, &circle->center),
+	float8		result = float8_mi(point_dt(point, &circle->center),
 					   circle->radius);
 	if (result < 0.0)
 		result = 0.0;
@@ -5135,9 +5069,8 @@ dist_cpoint(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 	Point	   *point = PG_GETARG_POINT_P(1);
-	float8		result;
 
-	result = float8_mi(point_dt(point, &circle->center), circle->radius);
+	float8		result = float8_mi(point_dt(point, &circle->center), circle->radius);
 	if (result < 0.0)
 		result = 0.0;
 
@@ -5150,9 +5083,8 @@ Datum
 circle_center(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
-	Point	   *result;
 
-	result = (Point *) palloc(sizeof(Point));
+	Point	   *result = (Point *) palloc(sizeof(Point));
 	result->x = circle->center.x;
 	result->y = circle->center.y;
 
@@ -5178,9 +5110,8 @@ cr_circle(PG_FUNCTION_ARGS)
 {
 	Point	   *center = PG_GETARG_POINT_P(0);
 	float8		radius = PG_GETARG_FLOAT8(1);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	result->center.x = center->x;
 	result->center.y = center->y;
@@ -5193,12 +5124,10 @@ Datum
 circle_box(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
-	BOX		   *box;
-	float8		delta;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	BOX		   *box = (BOX *) palloc(sizeof(BOX));
 
-	delta = float8_div(circle->radius, sqrt(2.0));
+	float8		delta = float8_div(circle->radius, sqrt(2.0));
 
 	box->high.x = float8_pl(circle->center.x, delta);
 	box->low.x = float8_mi(circle->center.x, delta);
@@ -5215,9 +5144,8 @@ Datum
 box_circle(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
-	CIRCLE	   *circle;
 
-	circle = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *circle = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	circle->center.x = float8_div(float8_pl(box->high.x, box->low.x), 2.0);
 	circle->center.y = float8_div(float8_pl(box->high.y, box->low.y), 2.0);
@@ -5238,7 +5166,6 @@ circle_poly(PG_FUNCTION_ARGS)
 				size;
 	int			i;
 	float8		angle;
-	float8		anglestep;
 
 	if (FPzero(circle->radius))
 		ereport(ERROR,
@@ -5263,7 +5190,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	SET_VARSIZE(poly, size);
 	poly->npts = npts;
 
-	anglestep = float8_div(2.0 * M_PI, npts);
+	float8		anglestep = float8_div(2.0 * M_PI, npts);
 
 	for (i = 0; i < npts; i++)
 	{
@@ -5314,9 +5241,8 @@ Datum
 poly_circle(PG_FUNCTION_ARGS)
 {
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
-	CIRCLE	   *result;
 
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	CIRCLE	   *result = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	poly_to_circle(result, poly);
 

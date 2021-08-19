@@ -42,9 +42,8 @@
 CatalogIndexState
 CatalogOpenIndexes(Relation heapRel)
 {
-	ResultRelInfo *resultRelInfo;
 
-	resultRelInfo = makeNode(ResultRelInfo);
+	ResultRelInfo *resultRelInfo = makeNode(ResultRelInfo);
 	resultRelInfo->ri_RangeTableIndex = 0;	/* dummy */
 	resultRelInfo->ri_RelationDesc = heapRel;
 	resultRelInfo->ri_TrigDesc = NULL;	/* we don't fire triggers */
@@ -113,11 +112,9 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	 */
 	for (i = 0; i < numIndexes; i++)
 	{
-		IndexInfo  *indexInfo;
-		Relation	index;
 
-		indexInfo = indexInfoArray[i];
-		index = relationDescs[i];
+		IndexInfo  *indexInfo = indexInfoArray[i];
+		Relation	index = relationDescs[i];
 
 		/* If the index is marked as read-only, ignore it */
 		if (!indexInfo->ii_ReadyForInserts)
@@ -220,11 +217,10 @@ CatalogTupleCheckConstraints(Relation heapRel, HeapTuple tup)
 void
 CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 {
-	CatalogIndexState indstate;
 
 	CatalogTupleCheckConstraints(heapRel, tup);
 
-	indstate = CatalogOpenIndexes(heapRel);
+	CatalogIndexState indstate = CatalogOpenIndexes(heapRel);
 
 	simple_heap_insert(heapRel, tup);
 
@@ -275,9 +271,8 @@ CatalogTuplesMultiInsertWithInfo(Relation heapRel, TupleTableSlot **slot,
 	for (int i = 0; i < ntuples; i++)
 	{
 		bool		should_free;
-		HeapTuple	tuple;
 
-		tuple = ExecFetchSlotHeapTuple(slot[i], true, &should_free);
+		HeapTuple	tuple = ExecFetchSlotHeapTuple(slot[i], true, &should_free);
 		tuple->t_tableOid = slot[i]->tts_tableOid;
 		CatalogIndexInsert(indstate, tuple);
 
@@ -300,11 +295,10 @@ CatalogTuplesMultiInsertWithInfo(Relation heapRel, TupleTableSlot **slot,
 void
 CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
 {
-	CatalogIndexState indstate;
 
 	CatalogTupleCheckConstraints(heapRel, tup);
 
-	indstate = CatalogOpenIndexes(heapRel);
+	CatalogIndexState indstate = CatalogOpenIndexes(heapRel);
 
 	simple_heap_update(heapRel, otid, tup);
 

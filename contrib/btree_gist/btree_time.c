@@ -99,9 +99,8 @@ gbt_timekey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	timeKEY    *ia = (timeKEY *) (((const Nsrt *) a)->t);
 	timeKEY    *ib = (timeKEY *) (((const Nsrt *) b)->t);
-	int			res;
 
-	res = DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->lower), TimeADTGetDatumFast(ib->lower)));
+	int			res = DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->lower), TimeADTGetDatumFast(ib->lower)));
 	if (res == 0)
 		return DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->upper), TimeADTGetDatumFast(ib->upper)));
 
@@ -113,9 +112,8 @@ gbt_time_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	const TimeADT *aa = (const TimeADT *) a;
 	const TimeADT *bb = (const TimeADT *) b;
-	Interval   *i;
 
-	i = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
+	Interval   *i = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
 											  TimeADTGetDatumFast(*aa),
 											  TimeADTGetDatumFast(*bb)));
 	return (float8) Abs(INTERVAL_TO_SEC(i));
@@ -174,12 +172,11 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 	{
 		timeKEY    *r = (timeKEY *) palloc(sizeof(timeKEY));
 		TimeTzADT  *tz = DatumGetTimeTzADTP(entry->key);
-		TimeADT		tmp;
 
 		retval = palloc(sizeof(GISTENTRY));
 
 		/* We are using the time + zone only to compress */
-		tmp = tz->time + (tz->zone * INT64CONST(1000000));
+		TimeADT		tmp = tz->time + (tz->zone * INT64CONST(1000000));
 		r->lower = r->upper = tmp;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
@@ -247,13 +244,12 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
-	TimeADT		qqq;
 	GBT_NUMKEY_R key;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	qqq = query->time + (query->zone * INT64CONST(1000000));
+	TimeADT		qqq = query->time + (query->zone * INT64CONST(1000000));
 
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
@@ -280,20 +276,17 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	timeKEY    *origentry = (timeKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	timeKEY    *newentry = (timeKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
-	Interval   *intr;
-	double		res;
-	double		res2;
 
-	intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
+	Interval   *intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
 												 TimeADTGetDatumFast(newentry->upper),
 												 TimeADTGetDatumFast(origentry->upper)));
-	res = INTERVAL_TO_SEC(intr);
+	double		res = INTERVAL_TO_SEC(intr);
 	res = Max(res, 0);
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
 												 TimeADTGetDatumFast(origentry->lower),
 												 TimeADTGetDatumFast(newentry->lower)));
-	res2 = INTERVAL_TO_SEC(intr);
+	double		res2 = INTERVAL_TO_SEC(intr);
 	res2 = Max(res2, 0);
 
 	res += res2;

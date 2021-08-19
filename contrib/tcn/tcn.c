@@ -56,17 +56,10 @@ Datum
 triggered_change_notification(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	Trigger    *trigger;
-	int			nargs;
-	HeapTuple	trigtuple;
-	Relation	rel;
-	TupleDesc	tupdesc;
 	char	   *channel;
 	char		operation;
 	StringInfo	payload = makeStringInfo();
-	bool		foundPK;
 
-	List	   *indexoidlist;
 	ListCell   *indexoidscan;
 
 	/* make sure it's called as a trigger */
@@ -99,8 +92,8 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		operation = 'X';		/* silence compiler warning */
 	}
 
-	trigger = trigdata->tg_trigger;
-	nargs = trigger->tgnargs;
+	Trigger    *trigger = trigdata->tg_trigger;
+	int			nargs = trigger->tgnargs;
 	if (nargs > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
@@ -112,29 +105,27 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		channel = trigger->tgargs[0];
 
 	/* get tuple data */
-	trigtuple = trigdata->tg_trigtuple;
-	rel = trigdata->tg_relation;
-	tupdesc = rel->rd_att;
+	HeapTuple	trigtuple = trigdata->tg_trigtuple;
+	Relation	rel = trigdata->tg_relation;
+	TupleDesc	tupdesc = rel->rd_att;
 
-	foundPK = false;
+	bool		foundPK = false;
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and look up
 	 * each one in the pg_index syscache until we find one marked primary key
 	 * (hopefully there isn't more than one such).
 	 */
-	indexoidlist = RelationGetIndexList(rel);
+	List	   *indexoidlist = RelationGetIndexList(rel);
 
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid			indexoid = lfirst_oid(indexoidscan);
-		HeapTuple	indexTuple;
-		Form_pg_index index;
 
-		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
+		HeapTuple	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
 		if (!HeapTupleIsValid(indexTuple))	/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
+		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
 		/* we're only interested if it is the primary key and valid */
 		if (index->indisprimary && index->indisvalid)
 		{

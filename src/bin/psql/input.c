@@ -198,13 +198,12 @@ gets_fromFile(FILE *source)
 
 	for (;;)
 	{
-		char	   *result;
 
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
 
 		/* Get some data */
-		result = fgets(line, sizeof(line), source);
+		char	   *result = fgets(line, sizeof(line), source);
 
 		/* Disable SIGINT again */
 		sigint_interrupt_enabled = false;
@@ -348,7 +347,6 @@ initializeInput(int flags)
 #ifdef USE_READLINE
 	if (flags & 1)
 	{
-		const char *histfile;
 		char		home[MAXPGPATH];
 
 		useReadline = true;
@@ -361,13 +359,12 @@ initializeInput(int flags)
 		using_history();
 		history_lines_added = 0;
 
-		histfile = GetVariable(pset.vars, "HISTFILE");
+		const char *histfile = GetVariable(pset.vars, "HISTFILE");
 
 		if (histfile == NULL)
 		{
-			char	   *envhist;
 
-			envhist = getenv("PSQL_HISTORY");
+			char	   *envhist = getenv("PSQL_HISTORY");
 			if (envhist != NULL && strlen(envhist) > 0)
 				histfile = envhist;
 		}
@@ -435,7 +432,6 @@ saveHistory(char *fname, int max_lines)
 #if defined(HAVE_HISTORY_TRUNCATE_FILE) && defined(HAVE_APPEND_HISTORY)
 		{
 			int			nlines;
-			int			fd;
 
 			/* truncate previous entries if needed */
 			if (max_lines >= 0)
@@ -444,7 +440,7 @@ saveHistory(char *fname, int max_lines)
 				(void) history_truncate_file(fname, nlines);
 			}
 			/* append_history fails if file doesn't already exist :-( */
-			fd = open(fname, O_CREAT | O_WRONLY | PG_BINARY, 0600);
+			int			fd = open(fname, O_CREAT | O_WRONLY | PG_BINARY, 0600);
 			if (fd >= 0)
 				close(fd);
 			/* append the appropriate number of lines */

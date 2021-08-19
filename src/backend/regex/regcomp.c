@@ -512,10 +512,9 @@ moresubs(struct vars *v,
 		 int wanted)			/* want enough room for this one */
 {
 	struct subre **p;
-	size_t		n;
 
 	assert(wanted > 0 && (size_t) wanted >= v->nsubs);
-	n = (size_t) wanted * 3 / 2 + 1;
+	size_t		n = (size_t) wanted * 3 / 2 + 1;
 
 	if (v->subs == v->sub10)
 	{
@@ -582,7 +581,6 @@ makesearch(struct vars *v,
 	struct state *pre = nfa->pre;
 	struct state *s;
 	struct state *s2;
-	struct state *slist;
 
 	/* no loops are needed if it's anchored */
 	for (a = pre->outs; a != NULL; a = a->outchain)
@@ -611,7 +609,7 @@ makesearch(struct vars *v,
 	 */
 
 	/* first, make a list of the states reachable from pre and elsewhere */
-	slist = NULL;
+	struct state *slist = NULL;
 	for (a = pre->outs; a != NULL; a = a->outchain)
 	{
 		s = a->to;
@@ -679,17 +677,15 @@ parse(struct vars *v,
 	lastbranch = NULL;
 	do
 	{							/* a branch */
-		struct subre *branch;
 		struct state *left;		/* scaffolding for branch */
-		struct state *right;
 
 		left = newstate(v->nfa);
-		right = newstate(v->nfa);
+		struct state *right = newstate(v->nfa);
 		NOERRN();
 		EMPTYARC(init, left);
 		EMPTYARC(right, final);
 		NOERRN();
-		branch = parsebranch(v, stopper, type, left, right, 0);
+		struct subre *branch = parsebranch(v, stopper, type, left, right, 0);
 		NOERRN();
 		if (lastbranch)
 			lastbranch->sibling = branch;
@@ -740,11 +736,10 @@ parsebranch(struct vars *v,
 {
 	struct state *lp;			/* left end of current construct */
 	int			seencontent;	/* is there anything in this branch yet? */
-	struct subre *t;
 
 	lp = left;
 	seencontent = 0;
-	t = subre(v, '=', 0, left, right);	/* op '=' is tentative */
+	struct subre *t = subre(v, '=', 0, left, right);	/* op '=' is tentative */
 	NOERRN();
 	while (!SEE('|') && !SEE(stopper) && !SEE(EOS))
 	{
@@ -802,9 +797,7 @@ parseqatom(struct vars *v,
 	int			cap;			/* capturing parens? */
 	int			latype;			/* lookaround constraint type */
 	int			subno;			/* capturing-parens or backref number */
-	int			atomtype;
 	int			qprefer;		/* quantifier short/long preference */
-	int			f;
 	struct subre **atomp;		/* where the pointer to atom is */
 
 	/* initial bookkeeping */
@@ -814,7 +807,7 @@ parseqatom(struct vars *v,
 	subno = 0;					/* just to shut lint up */
 
 	/* an atom or constraint... */
-	atomtype = v->nexttype;
+	int			atomtype = v->nexttype;
 	switch (atomtype)
 	{
 			/* first, constraints, which end by returning */
@@ -1100,7 +1093,7 @@ parseqatom(struct vars *v,
 
 	/* if not a messy case, avoid hard part */
 	assert(!MESSY(top->flags));
-	f = top->flags | qprefer | ((atom != NULL) ? atom->flags : 0);
+	int			f = top->flags | qprefer | ((atom != NULL) ? atom->flags : 0);
 	if (atomtype != '(' && atomtype != BACKREF && !MESSY(UP(f)))
 	{
 		if (!(m == 1 && n == 1))
@@ -1433,11 +1426,10 @@ charclass(struct vars *v,
 		  struct state *lp,
 		  struct state *rp)
 {
-	struct cvec *cv;
 
 	/* obtain possibly-cached cvec for char class */
 	NOTE(REG_ULOCALE);
-	cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+	struct cvec *cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
 	NOERR();
 
 	/* build the arcs; this may cause color splitting */
@@ -1457,16 +1449,14 @@ charclasscomplement(struct vars *v,
 					struct state *lp,
 					struct state *rp)
 {
-	struct state *cstate;
-	struct cvec *cv;
 
 	/* make dummy state to hang temporary arcs on */
-	cstate = newstate(v->nfa);
+	struct state *cstate = newstate(v->nfa);
 	NOERR();
 
 	/* obtain possibly-cached cvec for char class */
 	NOTE(REG_ULOCALE);
-	cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+	struct cvec *cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
 	NOERR();
 
 	/* build arcs for char class; this may cause color splitting */
@@ -1618,7 +1608,6 @@ bracket(struct vars *v,
 	 * them at the end.
 	 */
 	bool		have_cclassc[NUM_CCLASSES];
-	bool		any_cclassc;
 	int			i;
 
 	memset(have_cclassc, false, sizeof(have_cclassc));
@@ -1634,7 +1623,7 @@ bracket(struct vars *v,
 	NOERR();
 
 	/* now handle any complemented elements */
-	any_cclassc = false;
+	bool		any_cclassc = false;
 	for (i = 0; i < NUM_CCLASSES; i++)
 	{
 		if (have_cclassc[i])
@@ -1822,12 +1811,11 @@ brackpart(struct vars *v,
 static const chr *				/* just after end of sequence */
 scanplain(struct vars *v)
 {
-	const chr  *endp;
 
 	assert(SEE(COLLEL) || SEE(ECLASS) || SEE(CCLASS));
 	NEXT();
 
-	endp = v->now;
+	const chr  *endp = v->now;
 	while (SEE(PLAIN))
 	{
 		endp = v->now;
@@ -1878,7 +1866,6 @@ optimizebracket(struct vars *v,
 	struct colordesc *cd;
 	struct colordesc *end = CDEND(v->cm);
 	struct arc *a;
-	bool		israinbow;
 
 	/*
 	 * Scan lp's out-arcs and transiently mark the mentioned colors.  We
@@ -1896,7 +1883,7 @@ optimizebracket(struct vars *v,
 	}
 
 	/* Scan colors, clear transient marks, check for unmarked live colors */
-	israinbow = true;
+	bool		israinbow = true;
 	for (cd = v->cm->cd; cd < end; cd++)
 	{
 		if (cd->flags & COLMARK)
@@ -1929,19 +1916,17 @@ optimizebracket(struct vars *v,
 static void
 wordchrs(struct vars *v)
 {
-	struct state *cstate;
-	struct cvec *cv;
 
 	if (v->wordchrs != NULL)
 		return;					/* done already */
 
 	/* make dummy state to hang the cache arcs on */
-	cstate = newstate(v->nfa);
+	struct state *cstate = newstate(v->nfa);
 	NOERR();
 
 	/* obtain possibly-cached cvec for \w characters */
 	NOTE(REG_ULOCALE);
-	cv = cclasscvec(v, CC_WORD, (v->cflags & REG_ICASE));
+	struct cvec *cv = cclasscvec(v, CC_WORD, (v->cflags & REG_ICASE));
 	NOERR();
 
 	/* build the arcs; this may cause color splitting */
@@ -1970,14 +1955,12 @@ processlacon(struct vars *v,
 			 struct state *lp,	/* left state to hang it on */
 			 struct state *rp)	/* right state to hang it on */
 {
-	struct state *s1;
-	int			n;
 
 	/*
 	 * Check for lookaround RE consisting of a single plain color arc (or set
 	 * of arcs); this would typically be a simple chr or a bracket expression.
 	 */
-	s1 = single_color_transition(begin, end);
+	struct state *s1 = single_color_transition(begin, end);
 	switch (latype)
 	{
 		case LATYPE_AHEAD_POS:
@@ -2021,7 +2004,7 @@ processlacon(struct vars *v,
 	}
 
 	/* General case: we need a LACON subre and arc */
-	n = newlacon(v, begin, end, latype);
+	int			n = newlacon(v, begin, end, latype);
 	newarc(v->nfa, LACON, n, lp, rp);
 }
 
@@ -2201,12 +2184,11 @@ static int						/* next number */
 numst(struct subre *t,
 	  int start)				/* starting point for subtree numbers */
 {
-	int			i;
 	struct subre *t2;
 
 	assert(t != NULL);
 
-	i = start;
+	int			i = start;
 	t->id = i++;
 	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
 		i = numst(t2, i);
@@ -2331,7 +2313,6 @@ newlacon(struct vars *v,
 {
 	int			n;
 	struct subre *newlacons;
-	struct subre *sub;
 
 	if (v->nlacons == 0)
 	{
@@ -2351,7 +2332,7 @@ newlacon(struct vars *v,
 	}
 	v->lacons = newlacons;
 	v->nlacons = n + 1;
-	sub = &v->lacons[n];
+	struct subre *sub = &v->lacons[n];
 	sub->begin = begin;
 	sub->end = end;
 	sub->latype = latype;
@@ -2382,13 +2363,12 @@ freelacons(struct subre *subs,
 static void
 rfree(regex_t *re)
 {
-	struct guts *g;
 
 	if (re == NULL || re->re_magic != REMAGIC)
 		return;
 
 	re->re_magic = 0;			/* invalidate RE */
-	g = (struct guts *) re->re_guts;
+	struct guts *g = (struct guts *) re->re_guts;
 	re->re_guts = NULL;
 	re->re_fns = NULL;
 	if (g != NULL)
@@ -2446,7 +2426,6 @@ static void
 dump(regex_t *re,
 	 FILE *f)
 {
-	struct guts *g;
 	int			i;
 
 	if (re->re_magic != REMAGIC)
@@ -2457,7 +2436,7 @@ dump(regex_t *re,
 		fprintf(f, "NULL guts!!!\n");
 		return;
 	}
-	g = (struct guts *) re->re_guts;
+	struct guts *g = (struct guts *) re->re_guts;
 	if (g->magic != GUTSMAGIC)
 		fprintf(f, "bad guts magic number (0x%x not 0x%x)\n", g->magic,
 				GUTSMAGIC);

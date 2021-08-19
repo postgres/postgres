@@ -171,11 +171,10 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 	/* Handle exponent, if any */
 	if (*(*ptr) == 'e' || *(*ptr) == 'E')
 	{
-		long		exponent;
 		char	   *endptr;
 
 		(*ptr)++;
-		exponent = strtol(*ptr, &endptr, 10);
+		long		exponent = strtol(*ptr, &endptr, 10);
 		if (endptr == (*ptr))
 		{
 			errno = PGTYPES_NUM_BAD_NUMERIC;
@@ -230,9 +229,6 @@ static char *
 get_str_from_var(numeric *var, int dscale)
 {
 	char	   *str;
-	char	   *cp;
-	int			i;
-	int			d;
 
 	if (var->sign == NUMERIC_NAN)
 	{
@@ -246,7 +242,7 @@ get_str_from_var(numeric *var, int dscale)
 	/*
 	 * Check if we must round up before printing the value and do so.
 	 */
-	i = dscale + var->weight + 1;
+	int			i = dscale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
 	{
 		int			carry = (var->digits[i] > 4) ? 1 : 0;
@@ -275,7 +271,7 @@ get_str_from_var(numeric *var, int dscale)
 	 */
 	if ((str = (char *) pgtypes_alloc(Max(0, dscale) + Max(0, var->weight) + 4)) == NULL)
 		return NULL;
-	cp = str;
+	char	   *cp = str;
 
 	/*
 	 * Output a dash for negative values
@@ -287,7 +283,7 @@ get_str_from_var(numeric *var, int dscale)
 	 * Output all digits before the decimal point
 	 */
 	i = Max(var->weight, 0);
-	d = 0;
+	int			d = 0;
 
 	while (i >= 0)
 	{
@@ -325,7 +321,6 @@ numeric *
 PGTYPESnumeric_from_asc(char *str, char **endptr)
 {
 	numeric    *value = (numeric *) pgtypes_alloc(sizeof(numeric));
-	int			ret;
 
 	char	   *realptr;
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
@@ -333,7 +328,7 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 	if (!value)
 		return NULL;
 
-	ret = set_var_from_str(str, ptr, value);
+	int			ret = set_var_from_str(str, ptr, value);
 	if (ret)
 	{
 		PGTYPESnumeric_free(value);
@@ -347,7 +342,6 @@ char *
 PGTYPESnumeric_to_asc(numeric *num, int dscale)
 {
 	numeric    *numcopy = PGTYPESnumeric_new();
-	char	   *s;
 
 	if (numcopy == NULL)
 		return NULL;
@@ -362,7 +356,7 @@ PGTYPESnumeric_to_asc(numeric *num, int dscale)
 		dscale = num->dscale;
 
 	/* get_str_from_var may change its argument */
-	s = get_str_from_var(numcopy, dscale);
+	char	   *s = get_str_from_var(numcopy, dscale);
 	PGTYPESnumeric_free(numcopy);
 	return s;
 }
@@ -469,11 +463,6 @@ static int
 add_abs(numeric *var1, numeric *var2, numeric *result)
 {
 	NumericDigit *res_buf;
-	NumericDigit *res_digits;
-	int			res_ndigits;
-	int			res_weight;
-	int			res_rscale;
-	int			res_dscale;
 	int			i,
 				i1,
 				i2;
@@ -485,16 +474,16 @@ add_abs(numeric *var1, numeric *var2, numeric *result)
 	NumericDigit *var1digits = var1->digits;
 	NumericDigit *var2digits = var2->digits;
 
-	res_weight = Max(var1->weight, var2->weight) + 1;
-	res_rscale = Max(var1->rscale, var2->rscale);
-	res_dscale = Max(var1->dscale, var2->dscale);
-	res_ndigits = res_rscale + res_weight + 1;
+	int			res_weight = Max(var1->weight, var2->weight) + 1;
+	int			res_rscale = Max(var1->rscale, var2->rscale);
+	int			res_dscale = Max(var1->dscale, var2->dscale);
+	int			res_ndigits = res_rscale + res_weight + 1;
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
 	if ((res_buf = digitbuf_alloc(res_ndigits)) == NULL)
 		return -1;
-	res_digits = res_buf;
+	NumericDigit *res_digits = res_buf;
 
 	i1 = res_rscale + var1->weight + 1;
 	i2 = res_rscale + var2->weight + 1;
@@ -557,11 +546,6 @@ static int
 sub_abs(numeric *var1, numeric *var2, numeric *result)
 {
 	NumericDigit *res_buf;
-	NumericDigit *res_digits;
-	int			res_ndigits;
-	int			res_weight;
-	int			res_rscale;
-	int			res_dscale;
 	int			i,
 				i1,
 				i2;
@@ -573,16 +557,16 @@ sub_abs(numeric *var1, numeric *var2, numeric *result)
 	NumericDigit *var1digits = var1->digits;
 	NumericDigit *var2digits = var2->digits;
 
-	res_weight = var1->weight;
-	res_rscale = Max(var1->rscale, var2->rscale);
-	res_dscale = Max(var1->dscale, var2->dscale);
-	res_ndigits = res_rscale + res_weight + 1;
+	int			res_weight = var1->weight;
+	int			res_rscale = Max(var1->rscale, var2->rscale);
+	int			res_dscale = Max(var1->dscale, var2->dscale);
+	int			res_ndigits = res_rscale + res_weight + 1;
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
 	if ((res_buf = digitbuf_alloc(res_ndigits)) == NULL)
 		return -1;
-	res_digits = res_buf;
+	NumericDigit *res_digits = res_buf;
 
 	i1 = res_rscale + var1->weight + 1;
 	i2 = res_rscale + var2->weight + 1;
@@ -900,9 +884,6 @@ int
 PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
 {
 	NumericDigit *res_buf;
-	NumericDigit *res_digits;
-	int			res_ndigits;
-	int			res_weight;
 	int			res_sign;
 	int			i,
 				ri,
@@ -911,8 +892,8 @@ PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
 	long		sum = 0;
 	int			global_rscale = var1->rscale + var2->rscale;
 
-	res_weight = var1->weight + var2->weight + 2;
-	res_ndigits = var1->ndigits + var2->ndigits + 1;
+	int			res_weight = var1->weight + var2->weight + 2;
+	int			res_ndigits = var1->ndigits + var2->ndigits + 1;
 	if (var1->sign == var2->sign)
 		res_sign = NUMERIC_POS;
 	else
@@ -920,7 +901,7 @@ PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
 
 	if ((res_buf = digitbuf_alloc(res_ndigits)) == NULL)
 		return -1;
-	res_digits = res_buf;
+	NumericDigit *res_digits = res_buf;
 	memset(res_digits, 0, res_ndigits);
 
 	ri = res_ndigits;
@@ -996,7 +977,6 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 				i;
 	NumericDigit firstdigit1,
 				firstdigit2;
-	int			res_dscale;
 
 	/*
 	 * The result scale of a division isn't specified in any SQL standard. For
@@ -1041,7 +1021,7 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 		qweight--;
 
 	/* Select display scale */
-	res_dscale = NUMERIC_MIN_SIG_DIGITS - qweight;
+	int			res_dscale = NUMERIC_MIN_SIG_DIGITS - qweight;
 	res_dscale = Max(res_dscale, var1->dscale);
 	res_dscale = Max(res_dscale, var2->dscale);
 	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
@@ -1057,12 +1037,9 @@ int
 PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 {
 	NumericDigit *res_digits;
-	int			res_ndigits;
 	int			res_sign;
-	int			res_weight;
 	numeric		dividend;
 	numeric		divisor[10];
-	int			ndigits_tmp;
 	int			weight_tmp;
 	int			rscale_tmp;
 	int			ri;
@@ -1080,7 +1057,7 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	/*
 	 * First of all division by zero check
 	 */
-	ndigits_tmp = var2->ndigits + 1;
+	int			ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
 	{
 		errno = PGTYPES_NUM_DIVIDE_ZERO;
@@ -1094,8 +1071,8 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 		res_sign = NUMERIC_POS;
 	else
 		res_sign = NUMERIC_NEG;
-	res_weight = var1->weight - var2->weight + 1;
-	res_ndigits = rscale + res_weight;
+	int			res_weight = var1->weight - var2->weight + 1;
+	int			res_ndigits = rscale + res_weight;
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
@@ -1332,10 +1309,8 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	 */
 
 	int			size = 0;
-	int			i;
 	signed long int abs_long_val = long_val;
 	signed long int extract;
-	signed long int reach_limit;
 
 	if (abs_long_val < 0)
 	{
@@ -1345,7 +1320,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	else
 		var->sign = NUMERIC_POS;
 
-	reach_limit = 1;
+	signed long int reach_limit = 1;
 	do
 	{
 		size++;
@@ -1371,7 +1346,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	var->dscale = 1;
 	var->weight = size - 2;
 
-	i = 0;
+	int			i = 0;
 	do
 	{
 		extract = abs_long_val - (abs_long_val % reach_limit);
@@ -1418,14 +1393,13 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 {
 	char		buffer[DBL_DIG + 100];
 	numeric    *tmp;
-	int			i;
 
 	if (sprintf(buffer, "%.*g", DBL_DIG, d) <= 0)
 		return -1;
 
 	if ((tmp = PGTYPESnumeric_from_asc(buffer, NULL)) == NULL)
 		return -1;
-	i = PGTYPESnumeric_copy(tmp, dst);
+	int			i = PGTYPESnumeric_copy(tmp, dst);
 	PGTYPESnumeric_free(tmp);
 	if (i != 0)
 		return -1;
@@ -1437,8 +1411,6 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 static int
 numericvar_to_double(numeric *var, double *dp)
 {
-	char	   *tmp;
-	double		val;
 	char	   *endptr;
 	numeric    *varcopy = PGTYPESnumeric_new();
 
@@ -1451,7 +1423,7 @@ numericvar_to_double(numeric *var, double *dp)
 		return -1;
 	}
 
-	tmp = get_str_from_var(varcopy, varcopy->dscale);
+	char	   *tmp = get_str_from_var(varcopy, varcopy->dscale);
 	PGTYPESnumeric_free(varcopy);
 
 	if (tmp == NULL)
@@ -1461,7 +1433,7 @@ numericvar_to_double(numeric *var, double *dp)
 	 * strtod does not reset errno to 0 in case of success.
 	 */
 	errno = 0;
-	val = strtod(tmp, &endptr);
+	double		val = strtod(tmp, &endptr);
 	if (errno == ERANGE)
 	{
 		free(tmp);

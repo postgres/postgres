@@ -326,7 +326,6 @@ create_new_objects(void)
 		char		sql_file_name[MAXPGPATH],
 					log_file_name[MAXPGPATH];
 		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
-		const char *create_opts;
 
 		/* Process only template1 in this pass */
 		if (strcmp(old_db->db_name, "template1") != 0)
@@ -341,7 +340,7 @@ create_new_objects(void)
 		 * so tell pg_restore to drop and recreate it; otherwise we would fail
 		 * to propagate its database-level properties.
 		 */
-		create_opts = "--clean --create";
+		const char *create_opts = "--clean --create";
 
 		exec_prog(log_file_name,
 				  NULL,
@@ -586,10 +585,6 @@ set_frozenxids(bool minmxid_only)
 	int			dbnum;
 	PGconn	   *conn,
 			   *conn_template1;
-	PGresult   *dbres;
-	int			ntups;
-	int			i_datname;
-	int			i_datallowconn;
 
 	if (!minmxid_only)
 		prep_status("Setting frozenxid and minmxid counters in new cluster");
@@ -612,14 +607,14 @@ set_frozenxids(bool minmxid_only)
 							  old_cluster.controldata.chkpnt_nxtmulti));
 
 	/* get database names */
-	dbres = executeQueryOrDie(conn_template1,
+	PGresult   *dbres = executeQueryOrDie(conn_template1,
 							  "SELECT	datname, datallowconn "
 							  "FROM	pg_catalog.pg_database");
 
-	i_datname = PQfnumber(dbres, "datname");
-	i_datallowconn = PQfnumber(dbres, "datallowconn");
+	int			i_datname = PQfnumber(dbres, "datname");
+	int			i_datallowconn = PQfnumber(dbres, "datallowconn");
 
-	ntups = PQntuples(dbres);
+	int			ntups = PQntuples(dbres);
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);

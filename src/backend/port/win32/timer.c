@@ -35,17 +35,15 @@ static HANDLE timerThreadHandle = INVALID_HANDLE_VALUE;
 static DWORD WINAPI
 pg_timer_thread(LPVOID param)
 {
-	DWORD		waittime;
 
 	Assert(param == NULL);
 
-	waittime = INFINITE;
+	DWORD		waittime = INFINITE;
 
 	for (;;)
 	{
-		int			r;
 
-		r = WaitForSingleObjectEx(timerCommArea.event, waittime, FALSE);
+		int			r = WaitForSingleObjectEx(timerCommArea.event, waittime, FALSE);
 		if (r == WAIT_OBJECT_0)
 		{
 			/* Event signaled from main thread, change the timer */

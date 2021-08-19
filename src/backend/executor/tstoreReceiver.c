@@ -138,9 +138,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	TStoreState *myState = (TStoreState *) self;
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
-	int			nfree;
 	int			i;
-	MemoryContext oldcxt;
 
 	/* Make sure the tuple is fully deconstructed */
 	slot_getallattrs(slot);
@@ -150,7 +148,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 * myState->outvalues[] (but we can re-use the slot's isnull array). Also,
 	 * remember the fetched values to free afterwards.
 	 */
-	nfree = 0;
+	int			nfree = 0;
 	for (i = 0; i < natts; i++)
 	{
 		Datum		val = slot->tts_values[i];
@@ -172,7 +170,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	/*
 	 * Push the modified tuple into the tuplestore.
 	 */
-	oldcxt = MemoryContextSwitchTo(myState->cxt);
+	MemoryContext oldcxt = MemoryContextSwitchTo(myState->cxt);
 	tuplestore_putvalues(myState->tstore, typeinfo,
 						 myState->outvalues, slot->tts_isnull);
 	MemoryContextSwitchTo(oldcxt);

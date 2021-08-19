@@ -75,9 +75,8 @@ NewRelationCreateToastTable(Oid relOid, Datum reloptions)
 static void
 CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check)
 {
-	Relation	rel;
 
-	rel = table_open(relOid, lockmode);
+	Relation	rel = table_open(relOid, lockmode);
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check);
@@ -93,9 +92,8 @@ CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool c
 void
 BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 {
-	Relation	rel;
 
-	rel = table_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
+	Relation	rel = table_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_MATVIEW)
@@ -124,17 +122,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, LOCKMODE lockmode, bool check)
 {
 	Oid			relOid = RelationGetRelid(rel);
-	HeapTuple	reltup;
-	TupleDesc	tupdesc;
-	bool		shared_relation;
-	bool		mapped_relation;
-	Relation	toast_rel;
-	Relation	class_rel;
-	Oid			toast_relid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
 	char		toast_idxname[NAMEDATALEN];
-	IndexInfo  *indexInfo;
 	Oid			collationObjectId[2];
 	Oid			classObjectId[2];
 	int16		coloptions[2];
@@ -196,7 +186,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			 "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
 					   OIDOID,
@@ -234,12 +224,12 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		namespaceid = PG_TOAST_NAMESPACE;
 
 	/* Toast table is shared if and only if its parent is. */
-	shared_relation = rel->rd_rel->relisshared;
+	bool		shared_relation = rel->rd_rel->relisshared;
 
 	/* It's mapped if and only if its parent is, too */
-	mapped_relation = RelationIsMapped(rel);
+	bool		mapped_relation = RelationIsMapped(rel);
 
-	toast_relid = heap_create_with_catalog(toast_relname,
+	Oid			toast_relid = heap_create_with_catalog(toast_relname,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
 										   toastOid,
@@ -266,7 +256,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	CommandCounterIncrement();
 
 	/* ShareLock is not really needed here, but take it anyway */
-	toast_rel = table_open(toast_relid, ShareLock);
+	Relation	toast_rel = table_open(toast_relid, ShareLock);
 
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
@@ -280,7 +270,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 * of equal keys.
 	 */
 
-	indexInfo = makeNode(IndexInfo);
+	IndexInfo  *indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = 2;
 	indexInfo->ii_NumIndexKeyAttrs = 2;
 	indexInfo->ii_IndexAttrNumbers[0] = 1;
@@ -325,9 +315,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row
 	 */
-	class_rel = table_open(RelationRelationId, RowExclusiveLock);
+	Relation	class_rel = table_open(RelationRelationId, RowExclusiveLock);
 
-	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relOid));
+	HeapTuple	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
 

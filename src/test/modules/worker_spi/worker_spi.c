@@ -68,8 +68,6 @@ typedef struct worktable
 static void
 initialize_worker_spi(worktable *table)
 {
-	int			ret;
-	int			ntup;
 	bool		isnull;
 	StringInfoData buf;
 
@@ -85,14 +83,14 @@ initialize_worker_spi(worktable *table)
 					 table->schema);
 
 	debug_query_string = buf.data;
-	ret = SPI_execute(buf.data, true, 0);
+	int			ret = SPI_execute(buf.data, true, 0);
 	if (ret != SPI_OK_SELECT)
 		elog(FATAL, "SPI_execute failed: error code %d", ret);
 
 	if (SPI_processed != 1)
 		elog(FATAL, "not a singleton result");
 
-	ntup = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
+	int			ntup = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
 									   SPI_tuptable->tupdesc,
 									   1, &isnull));
 	if (isnull)
@@ -134,11 +132,10 @@ void
 worker_spi_main(Datum main_arg)
 {
 	int			index = DatumGetInt32(main_arg);
-	worktable  *table;
 	StringInfoData buf;
 	char		name[20];
 
-	table = palloc(sizeof(worktable));
+	worktable  *table = palloc(sizeof(worktable));
 	sprintf(name, "schema%d", index);
 	table->schema = pstrdup(name);
 	table->name = pstrdup("counted");
@@ -189,7 +186,6 @@ worker_spi_main(Datum main_arg)
 	 */
 	for (;;)
 	{
-		int			ret;
 
 		/*
 		 * Background workers mustn't call usleep() or any direct equivalent:
@@ -238,7 +234,7 @@ worker_spi_main(Datum main_arg)
 		pgstat_report_activity(STATE_RUNNING, buf.data);
 
 		/* We can now execute queries via SPI */
-		ret = SPI_execute(buf.data, false, 0);
+		int			ret = SPI_execute(buf.data, false, 0);
 
 		if (ret != SPI_OK_UPDATE_RETURNING)
 			elog(FATAL, "cannot select from table %s.%s: error code %d",
@@ -247,9 +243,8 @@ worker_spi_main(Datum main_arg)
 		if (SPI_processed > 0)
 		{
 			bool		isnull;
-			int32		val;
 
-			val = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
+			int32		val = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
 											  SPI_tuptable->tupdesc,
 											  1, &isnull));
 			if (!isnull)
@@ -355,7 +350,6 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	int32		i = PG_GETARG_INT32(0);
 	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
-	BgwHandleStatus status;
 	pid_t		pid;
 
 	memset(&worker, 0, sizeof(worker));
@@ -374,7 +368,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	if (!RegisterDynamicBackgroundWorker(&worker, &handle))
 		PG_RETURN_NULL();
 
-	status = WaitForBackgroundWorkerStartup(handle, &pid);
+	BgwHandleStatus status = WaitForBackgroundWorkerStartup(handle, &pid);
 
 	if (status == BGWH_STOPPED)
 		ereport(ERROR,

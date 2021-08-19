@@ -32,18 +32,16 @@
 ConfigData *
 get_configdata(const char *my_exec_path, size_t *configdata_len)
 {
-	ConfigData *configdata;
 	char		path[MAXPGPATH];
-	char	   *lastsep;
 	int			i = 0;
 
 	/* Adjust this to match the number of items filled below */
 	*configdata_len = 23;
-	configdata = (ConfigData *) palloc(*configdata_len * sizeof(ConfigData));
+	ConfigData *configdata = (ConfigData *) palloc(*configdata_len * sizeof(ConfigData));
 
 	configdata[i].name = pstrdup("BINDIR");
 	strlcpy(path, my_exec_path, sizeof(path));
-	lastsep = strrchr(path, '/');
+	char	   *lastsep = strrchr(path, '/');
 	if (lastsep)
 		*lastsep = '\0';
 	cleanup_path(path);

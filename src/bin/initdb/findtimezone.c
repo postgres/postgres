@@ -238,10 +238,9 @@ score_timezone(const char *tzname, struct tztry *tt)
 	struct tm  *systm;
 	struct pg_tm *pgtm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
-	pg_tz	   *tz;
 
 	/* Load timezone definition */
-	tz = pg_load_tz(tzname);
+	pg_tz	   *tz = pg_load_tz(tzname);
 	if (!tz)
 		return -1;				/* unrecognized zone name */
 
@@ -331,14 +330,8 @@ static const char *
 identify_system_timezone(void)
 {
 	static char resultbuf[TZ_STRLEN_MAX + 1];
-	time_t		tnow;
-	time_t		t;
 	struct tztry tt;
-	struct tm  *tm;
-	int			thisyear;
-	int			bestscore;
 	char		tmptzdir[MAXPGPATH];
-	int			std_ofs;
 	char		std_zone_name[TZ_STRLEN_MAX + 1],
 				dst_zone_name[TZ_STRLEN_MAX + 1];
 	char		cbuf[TZ_STRLEN_MAX + 1];
@@ -365,13 +358,13 @@ identify_system_timezone(void)
 	 * not Sundays, to avoid triggering DST-transition bugs in localtime
 	 * itself.)
 	 */
-	tnow = time(NULL);
-	tm = localtime(&tnow);
+	time_t		tnow = time(NULL);
+	struct tm  *tm = localtime(&tnow);
 	if (!tm)
 		return NULL;			/* give up if localtime is broken... */
-	thisyear = tm->tm_year + 1900;
+	int			thisyear = tm->tm_year + 1900;
 
-	t = build_time_t(thisyear, 1, 15);
+	time_t		t = build_time_t(thisyear, 1, 15);
 
 	/*
 	 * Round back to GMT midnight Thursday.  This depends on the knowledge
@@ -408,7 +401,7 @@ identify_system_timezone(void)
 
 	/* No luck, so search for the best-matching timezone file */
 	strlcpy(tmptzdir, pg_TZDIR(), sizeof(tmptzdir));
-	bestscore = -1;
+	int			bestscore = -1;
 	resultbuf[0] = '\0';
 	scan_available_timezones(tmptzdir, tmptzdir + strlen(tmptzdir) + 1,
 							 &tt,
@@ -431,7 +424,7 @@ identify_system_timezone(void)
 	 */
 	memset(std_zone_name, 0, sizeof(std_zone_name));
 	memset(dst_zone_name, 0, sizeof(dst_zone_name));
-	std_ofs = 0;
+	int			std_ofs = 0;
 
 	tnow = time(NULL);
 
@@ -546,14 +539,13 @@ check_system_link_file(const char *linkname, struct tztry *tt,
 {
 #ifdef HAVE_READLINK
 	char		link_target[MAXPGPATH];
-	int			len;
 	const char *cur_name;
 
 	/*
 	 * Try to read the symlink.  If not there, not a symlink, etc etc, just
 	 * quietly fail; the precise reason needn't concern us.
 	 */
-	len = readlink(linkname, link_target, sizeof(link_target));
+	int			len = readlink(linkname, link_target, sizeof(link_target));
 	if (len < 0 || len >= sizeof(link_target))
 		return false;
 	link_target[len] = '\0';
@@ -658,10 +650,9 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
-	char	  **names;
 	char	  **namep;
 
-	names = pgfnames(tzdir);
+	char	  **names = pgfnames(tzdir);
 	if (!names)
 		return;
 
@@ -1564,13 +1555,12 @@ identify_system_timezone(void)
 	{
 		char		keyname[256];
 		char		zonename[256];
-		DWORD		namesize;
 		FILETIME	lastwrite;
 		HKEY		key;
 		LONG		r;
 
 		memset(keyname, 0, sizeof(keyname));
-		namesize = sizeof(keyname);
+		DWORD		namesize = sizeof(keyname);
 		if ((r = RegEnumKeyEx(rootKey,
 							  idx,
 							  keyname,
@@ -1672,12 +1662,11 @@ identify_system_timezone(void)
 static bool
 validate_zone(const char *tzname)
 {
-	pg_tz	   *tz;
 
 	if (!tzname || !tzname[0])
 		return false;
 
-	tz = pg_load_tz(tzname);
+	pg_tz	   *tz = pg_load_tz(tzname);
 	if (!tz)
 		return false;
 

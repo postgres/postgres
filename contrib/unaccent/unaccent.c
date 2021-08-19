@@ -56,14 +56,13 @@ static TrieChar *
 placeChar(TrieChar *node, const unsigned char *str, int lenstr,
 		  const char *replaceTo, int replacelen)
 {
-	TrieChar   *curnode;
 
 	if (!node)
 		node = (TrieChar *) palloc0(sizeof(TrieChar) * 256);
 
 	Assert(lenstr > 0);			/* else str[0] doesn't exist */
 
-	curnode = node + *str;
+	TrieChar   *curnode = node + *str;
 
 	if (lenstr <= 1)
 	{
@@ -138,7 +137,6 @@ initTrie(const char *filename)
 				 *	-1	syntax error detected
 				 *----------
 				 */
-				int			state;
 				char	   *ptr;
 				char	   *src = NULL;
 				char	   *trg = NULL;
@@ -146,7 +144,7 @@ initTrie(const char *filename)
 				int			srclen = 0;
 				int			trglen = 0;
 
-				state = 0;
+				int			state = 0;
 				for (ptr = line; *ptr; ptr += ptrlen)
 				{
 					ptrlen = pg_mblen(ptr);
@@ -210,11 +208,9 @@ initTrie(const char *filename)
 		}
 		PG_CATCH();
 		{
-			ErrorData  *errdata;
-			MemoryContext ecxt;
 
-			ecxt = MemoryContextSwitchTo(ccxt);
-			errdata = CopyErrorData();
+			MemoryContext ecxt = MemoryContextSwitchTo(ccxt);
+			ErrorData  *errdata = CopyErrorData();
 			if (errdata->sqlerrcode == ERRCODE_UNTRANSLATABLE_CHARACTER)
 			{
 				FlushErrorState();
@@ -323,10 +319,9 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 
 	while (len > 0)
 	{
-		TrieChar   *node;
 		int			matchlen;
 
-		node = findReplaceTo(rootTrie, (unsigned char *) srcchar, len,
+		TrieChar   *node = findReplaceTo(rootTrie, (unsigned char *) srcchar, len,
 							 &matchlen);
 		if (node && node->replaceTo)
 		{
@@ -371,11 +366,8 @@ PG_FUNCTION_INFO_V1(unaccent_dict);
 Datum
 unaccent_dict(PG_FUNCTION_ARGS)
 {
-	text	   *str;
 	int			strArg;
 	Oid			dictOid;
-	TSDictionaryCacheEntry *dict;
-	TSLexeme   *res;
 
 	if (PG_NARGS() == 1)
 	{
@@ -401,11 +393,11 @@ unaccent_dict(PG_FUNCTION_ARGS)
 		dictOid = PG_GETARG_OID(0);
 		strArg = 1;
 	}
-	str = PG_GETARG_TEXT_PP(strArg);
+	text	   *str = PG_GETARG_TEXT_PP(strArg);
 
-	dict = lookup_ts_dictionary_cache(dictOid);
+	TSDictionaryCacheEntry *dict = lookup_ts_dictionary_cache(dictOid);
 
-	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
+	TSLexeme   *res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
 													 PointerGetDatum(dict->dictData),
 													 PointerGetDatum(VARDATA_ANY(str)),
 													 Int32GetDatum(VARSIZE_ANY_EXHDR(str)),

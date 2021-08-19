@@ -98,10 +98,9 @@ RelationGetPartitionDesc(Relation rel, bool omit_detached)
 		rel->rd_partdesc_nodetached &&
 		ActiveSnapshotSet())
 	{
-		Snapshot	activesnap;
 
 		Assert(TransactionIdIsValid(rel->rd_partdesc_nodetached_xmin));
-		activesnap = GetActiveSnapshot();
+		Snapshot	activesnap = GetActiveSnapshot();
 
 		if (!XidInMVCCSnapshot(rel->rd_partdesc_nodetached_xmin, activesnap))
 			return rel->rd_partdesc_nodetached;
@@ -134,20 +133,14 @@ RelationGetPartitionDesc(Relation rel, bool omit_detached)
 static PartitionDesc
 RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 {
-	PartitionDesc partdesc;
 	PartitionBoundInfo boundinfo = NULL;
-	List	   *inhoids;
 	PartitionBoundSpec **boundspecs = NULL;
 	Oid		   *oids = NULL;
 	bool	   *is_leaf = NULL;
-	bool		detached_exist;
-	bool		is_omit;
-	TransactionId detached_xmin;
 	ListCell   *cell;
 	int			i,
 				nparts;
 	PartitionKey key = RelationGetPartitionKey(rel);
-	MemoryContext new_pdcxt;
 	MemoryContext oldcxt;
 	int		   *mapping;
 
@@ -157,9 +150,9 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * concurrently, whatever this function returns will be accurate as of
 	 * some well-defined point in time.
 	 */
-	detached_exist = false;
-	detached_xmin = InvalidTransactionId;
-	inhoids = find_inheritance_children_extended(RelationGetRelid(rel),
+	bool		detached_exist = false;
+	TransactionId detached_xmin = InvalidTransactionId;
+	List	   *inhoids = find_inheritance_children_extended(RelationGetRelid(rel),
 												 omit_detached, NoLock,
 												 &detached_exist,
 												 &detached_xmin);
@@ -179,17 +172,15 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	foreach(cell, inhoids)
 	{
 		Oid			inhrelid = lfirst_oid(cell);
-		HeapTuple	tuple;
 		PartitionBoundSpec *boundspec = NULL;
 
 		/* Try fetching the tuple from the catcache, for speed. */
-		tuple = SearchSysCache1(RELOID, inhrelid);
+		HeapTuple	tuple = SearchSysCache1(RELOID, inhrelid);
 		if (HeapTupleIsValid(tuple))
 		{
-			Datum		datum;
 			bool		isnull;
 
-			datum = SysCacheGetAttr(RELOID, tuple,
+			Datum		datum = SysCacheGetAttr(RELOID, tuple,
 									Anum_pg_class_relpartbound,
 									&isnull);
 			if (!isnull)
@@ -213,21 +204,18 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 		 */
 		if (boundspec == NULL)
 		{
-			Relation	pg_class;
-			SysScanDesc scan;
 			ScanKeyData key[1];
-			Datum		datum;
 			bool		isnull;
 
-			pg_class = table_open(RelationRelationId, AccessShareLock);
+			Relation	pg_class = table_open(RelationRelationId, AccessShareLock);
 			ScanKeyInit(&key[0],
 						Anum_pg_class_oid,
 						BTEqualStrategyNumber, F_OIDEQ,
 						ObjectIdGetDatum(inhrelid));
-			scan = systable_beginscan(pg_class, ClassOidIndexId, true,
+			SysScanDesc scan = systable_beginscan(pg_class, ClassOidIndexId, true,
 									  NULL, 1, key);
 			tuple = systable_getnext(scan);
-			datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
+			Datum		datum = heap_getattr(tuple, Anum_pg_class_relpartbound,
 								 RelationGetDescr(pg_class), &isnull);
 			if (!isnull)
 				boundspec = stringToNode(TextDatumGetCString(datum));
@@ -248,9 +236,8 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 		 */
 		if (boundspec->is_default)
 		{
-			Oid			partdefid;
 
-			partdefid = get_default_partition_oid(RelationGetRelid(rel));
+			Oid			partdefid = get_default_partition_oid(RelationGetRelid(rel));
 			if (partdefid != inhrelid)
 				elog(ERROR, "expected partdefid %u, but got %u",
 					 inhrelid, partdefid);
@@ -275,13 +262,13 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * data into a new, small context.  As per above comment, we don't make
 	 * this a long-lived context until it's finished.
 	 */
-	new_pdcxt = AllocSetContextCreate(CurTransactionContext,
+	MemoryContext new_pdcxt = AllocSetContextCreate(CurTransactionContext,
 									  "partition descriptor",
 									  ALLOCSET_SMALL_SIZES);
 	MemoryContextCopyAndSetIdentifier(new_pdcxt,
 									  RelationGetRelationName(rel));
 
-	partdesc = (PartitionDescData *)
+	PartitionDesc partdesc = (PartitionDescData *)
 		MemoryContextAllocZero(new_pdcxt, sizeof(PartitionDescData));
 	partdesc->nparts = nparts;
 	partdesc->detached_exist = detached_exist;
@@ -320,7 +307,7 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	 * detached_xmin in that case), we consider there to be no "omittable"
 	 * detached partitions.
 	 */
-	is_omit = omit_detached && detached_exist && ActiveSnapshotSet() &&
+	bool		is_omit = omit_detached && detached_exist && ActiveSnapshotSet() &&
 		TransactionIdIsValid(detached_xmin);
 
 	/*
@@ -377,10 +364,9 @@ PartitionDirectory
 CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(mcxt);
-	PartitionDirectory pdir;
 	HASHCTL		ctl;
 
-	pdir = palloc(sizeof(PartitionDirectoryData));
+	PartitionDirectory pdir = palloc(sizeof(PartitionDirectoryData));
 	pdir->pdir_mcxt = mcxt;
 
 	ctl.keysize = sizeof(Oid);
@@ -409,11 +395,10 @@ CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached)
 PartitionDesc
 PartitionDirectoryLookup(PartitionDirectory pdir, Relation rel)
 {
-	PartitionDirectoryEntry *pde;
 	Oid			relid = RelationGetRelid(rel);
 	bool		found;
 
-	pde = hash_search(pdir->pdir_hash, &relid, HASH_ENTER, &found);
+	PartitionDirectoryEntry *pde = hash_search(pdir->pdir_hash, &relid, HASH_ENTER, &found);
 	if (!found)
 	{
 		/*

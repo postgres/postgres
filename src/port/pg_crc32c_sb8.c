@@ -35,7 +35,6 @@ pg_crc32c
 pg_comp_crc32c_sb8(pg_crc32c crc, const void *data, size_t len)
 {
 	const unsigned char *p = data;
-	const uint32 *p4;
 
 	/*
 	 * Handle 0-3 initial bytes one at a time, so that the loop below starts
@@ -50,7 +49,7 @@ pg_comp_crc32c_sb8(pg_crc32c crc, const void *data, size_t len)
 	/*
 	 * Process eight bytes of data at a time.
 	 */
-	p4 = (const uint32 *) p;
+	const uint32 *p4 = (const uint32 *) p;
 	while (len >= 8)
 	{
 		uint32		a = *p4++ ^ crc;

@@ -46,7 +46,6 @@ static void recurse_dir(const char *datadir, const char *parentpath,
 void
 open_target_file(const char *path, bool trunc)
 {
-	int			mode;
 
 	if (dry_run)
 		return;
@@ -59,7 +58,7 @@ open_target_file(const char *path, bool trunc)
 
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 
-	mode = O_WRONLY | O_CREAT | PG_BINARY;
+	int			mode = O_WRONLY | O_CREAT | PG_BINARY;
 	if (trunc)
 		mode |= O_TRUNC;
 	dstfd = open(dstpath, mode, pg_file_create_mode);
@@ -87,8 +86,6 @@ close_target_file(void)
 void
 write_target_range(char *buf, off_t begin, size_t size)
 {
-	size_t		writeleft;
-	char	   *p;
 
 	/* update progress report */
 	fetch_done += size;
@@ -101,14 +98,13 @@ write_target_range(char *buf, off_t begin, size_t size)
 		pg_fatal("could not seek in target file \"%s\": %m",
 				 dstpath);
 
-	writeleft = size;
-	p = buf;
+	size_t		writeleft = size;
+	char	   *p = buf;
 	while (writeleft > 0)
 	{
-		ssize_t		writelen;
 
 		errno = 0;
-		writelen = write(dstfd, p, writeleft);
+		ssize_t		writelen = write(dstfd, p, writeleft);
 		if (writelen < 0)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
@@ -206,14 +202,13 @@ void
 truncate_target_file(const char *path, off_t newsize)
 {
 	char		dstpath[MAXPGPATH];
-	int			fd;
 
 	if (dry_run)
 		return;
 
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 
-	fd = open(dstpath, O_WRONLY, pg_file_create_mode);
+	int			fd = open(dstpath, O_WRONLY, pg_file_create_mode);
 	if (fd < 0)
 		pg_fatal("could not open file \"%s\" for truncation: %m",
 				 dstpath);
@@ -314,11 +309,8 @@ char *
 slurpFile(const char *datadir, const char *path, size_t *filesize)
 {
 	int			fd;
-	char	   *buffer;
 	struct stat statbuf;
 	char		fullpath[MAXPGPATH];
-	int			len;
-	int			r;
 
 	snprintf(fullpath, sizeof(fullpath), "%s/%s", datadir, path);
 
@@ -330,11 +322,11 @@ slurpFile(const char *datadir, const char *path, size_t *filesize)
 		pg_fatal("could not open file \"%s\" for reading: %m",
 				 fullpath);
 
-	len = statbuf.st_size;
+	int			len = statbuf.st_size;
 
-	buffer = pg_malloc(len + 1);
+	char	   *buffer = pg_malloc(len + 1);
 
-	r = read(fd, buffer, len);
+	int			r = read(fd, buffer, len);
 	if (r != len)
 	{
 		if (r < 0)
@@ -374,7 +366,6 @@ static void
 recurse_dir(const char *datadir, const char *parentpath,
 			process_file_callback_t callback)
 {
-	DIR		   *xldir;
 	struct dirent *xlde;
 	char		fullparentpath[MAXPGPATH];
 
@@ -383,7 +374,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 	else
 		snprintf(fullparentpath, MAXPGPATH, "%s", datadir);
 
-	xldir = opendir(fullparentpath);
+	DIR		   *xldir = opendir(fullparentpath);
 	if (xldir == NULL)
 		pg_fatal("could not open directory \"%s\": %m",
 				 fullparentpath);
@@ -439,9 +430,8 @@ recurse_dir(const char *datadir, const char *parentpath,
 		{
 #if defined(HAVE_READLINK) || defined(WIN32)
 			char		link_target[MAXPGPATH];
-			int			len;
 
-			len = readlink(fullpath, link_target, sizeof(link_target));
+			int			len = readlink(fullpath, link_target, sizeof(link_target));
 			if (len < 0)
 				pg_fatal("could not read symbolic link \"%s\": %m",
 						 fullpath);

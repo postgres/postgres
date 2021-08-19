@@ -70,14 +70,6 @@ dsm_handle
 GetSessionDsmHandle(void)
 {
 	shm_toc_estimator estimator;
-	shm_toc    *toc;
-	dsm_segment *seg;
-	size_t		typmod_registry_size;
-	size_t		size;
-	void	   *dsa_space;
-	void	   *typmod_registry_space;
-	dsa_area   *dsa;
-	MemoryContext old_context;
 
 	/*
 	 * If we have already created a session-scope DSM segment in this backend,
@@ -88,7 +80,7 @@ GetSessionDsmHandle(void)
 		return dsm_segment_handle(CurrentSession->segment);
 
 	/* Otherwise, prepare to set one up. */
-	old_context = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext old_context = MemoryContextSwitchTo(TopMemoryContext);
 	shm_toc_initialize_estimator(&estimator);
 
 	/* Estimate space for the per-session DSA area. */
@@ -96,26 +88,26 @@ GetSessionDsmHandle(void)
 	shm_toc_estimate_chunk(&estimator, SESSION_DSA_SIZE);
 
 	/* Estimate space for the per-session record typmod registry. */
-	typmod_registry_size = SharedRecordTypmodRegistryEstimate();
+	size_t		typmod_registry_size = SharedRecordTypmodRegistryEstimate();
 	shm_toc_estimate_keys(&estimator, 1);
 	shm_toc_estimate_chunk(&estimator, typmod_registry_size);
 
 	/* Set up segment and TOC. */
-	size = shm_toc_estimate(&estimator);
-	seg = dsm_create(size, DSM_CREATE_NULL_IF_MAXSEGMENTS);
+	size_t		size = shm_toc_estimate(&estimator);
+	dsm_segment *seg = dsm_create(size, DSM_CREATE_NULL_IF_MAXSEGMENTS);
 	if (seg == NULL)
 	{
 		MemoryContextSwitchTo(old_context);
 
 		return DSM_HANDLE_INVALID;
 	}
-	toc = shm_toc_create(SESSION_MAGIC,
+	shm_toc    *toc = shm_toc_create(SESSION_MAGIC,
 						 dsm_segment_address(seg),
 						 size);
 
 	/* Create per-session DSA area. */
-	dsa_space = shm_toc_allocate(toc, SESSION_DSA_SIZE);
-	dsa = dsa_create_in_place(dsa_space,
+	void	   *dsa_space = shm_toc_allocate(toc, SESSION_DSA_SIZE);
+	dsa_area   *dsa = dsa_create_in_place(dsa_space,
 							  SESSION_DSA_SIZE,
 							  LWTRANCHE_PER_SESSION_DSA,
 							  seg);
@@ -123,7 +115,7 @@ GetSessionDsmHandle(void)
 
 
 	/* Create session-scoped shared record typmod registry. */
-	typmod_registry_space = shm_toc_allocate(toc, typmod_registry_size);
+	void	   *typmod_registry_space = shm_toc_allocate(toc, typmod_registry_size);
 	SharedRecordTypmodRegistryInit((SharedRecordTypmodRegistry *)
 								   typmod_registry_space, seg, dsa);
 	shm_toc_insert(toc, SESSION_KEY_RECORD_TYPMOD_REGISTRY,
@@ -154,31 +146,25 @@ GetSessionDsmHandle(void)
 void
 AttachSession(dsm_handle handle)
 {
-	dsm_segment *seg;
-	shm_toc    *toc;
-	void	   *dsa_space;
-	void	   *typmod_registry_space;
-	dsa_area   *dsa;
-	MemoryContext old_context;
 
-	old_context = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext old_context = MemoryContextSwitchTo(TopMemoryContext);
 
 	/* Attach to the DSM segment. */
-	seg = dsm_attach(handle);
+	dsm_segment *seg = dsm_attach(handle);
 	if (seg == NULL)
 		elog(ERROR, "could not attach to per-session DSM segment");
-	toc = shm_toc_attach(SESSION_MAGIC, dsm_segment_address(seg));
+	shm_toc    *toc = shm_toc_attach(SESSION_MAGIC, dsm_segment_address(seg));
 
 	/* Attach to the DSA area. */
-	dsa_space = shm_toc_lookup(toc, SESSION_KEY_DSA, false);
-	dsa = dsa_attach_in_place(dsa_space, seg);
+	void	   *dsa_space = shm_toc_lookup(toc, SESSION_KEY_DSA, false);
+	dsa_area   *dsa = dsa_attach_in_place(dsa_space, seg);
 
 	/* Make them available via the current session. */
 	CurrentSession->segment = seg;
 	CurrentSession->area = dsa;
 
 	/* Attach to the shared record typmod registry. */
-	typmod_registry_space =
+	void	   *typmod_registry_space =
 		shm_toc_lookup(toc, SESSION_KEY_RECORD_TYPMOD_REGISTRY, false);
 	SharedRecordTypmodRegistryAttach((SharedRecordTypmodRegistry *)
 									 typmod_registry_space);

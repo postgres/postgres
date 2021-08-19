@@ -110,12 +110,9 @@ hashhandler(PG_FUNCTION_ARGS)
 IndexBuildResult *
 hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
-	IndexBuildResult *result;
 	BlockNumber relpages;
 	double		reltuples;
 	double		allvisfrac;
-	uint32		num_buckets;
-	long		sort_threshold;
 	HashBuildState buildstate;
 
 	/*
@@ -130,7 +127,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	estimate_rel_size(heap, NULL, &relpages, &reltuples, &allvisfrac);
 
 	/* Initialize the hash index metadata page and initial buckets */
-	num_buckets = _hash_init(index, reltuples, MAIN_FORKNUM);
+	uint32		num_buckets = _hash_init(index, reltuples, MAIN_FORKNUM);
 
 	/*
 	 * If we just insert the tuples into the index in scan order, then
@@ -150,7 +147,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * one page.  Also, "initial index size" accounting does not include the
 	 * metapage, nor the first bitmap page.
 	 */
-	sort_threshold = (maintenance_work_mem * 1024L) / BLCKSZ;
+	long		sort_threshold = (maintenance_work_mem * 1024L) / BLCKSZ;
 	if (index->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
 		sort_threshold = Min(sort_threshold, NBuffers);
 	else
@@ -182,7 +179,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Return statistics
 	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	IndexBuildResult *result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
@@ -252,7 +249,6 @@ hashinsert(Relation rel, Datum *values, bool *isnull,
 {
 	Datum		index_values[1];
 	bool		index_isnull[1];
-	IndexTuple	itup;
 
 	/* convert data to a hash key; on failure, do not insert anything */
 	if (!_hash_convert_tuple(rel,
@@ -261,7 +257,7 @@ hashinsert(Relation rel, Datum *values, bool *isnull,
 		return false;
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_form_tuple(RelationGetDescr(rel), index_values, index_isnull);
+	IndexTuple	itup = index_form_tuple(RelationGetDescr(rel), index_values, index_isnull);
 	itup->t_tid = *ht_ctid;
 
 	_hash_doinsert(rel, itup, heapRel);
@@ -331,11 +327,10 @@ int64
 hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	bool		res;
 	int64		ntids = 0;
 	HashScanPosItem *currItem;
 
-	res = _hash_first(scan, ForwardScanDirection);
+	bool		res = _hash_first(scan, ForwardScanDirection);
 
 	while (res)
 	{
@@ -362,15 +357,13 @@ hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 IndexScanDesc
 hashbeginscan(Relation rel, int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
-	HashScanOpaque so;
 
 	/* no order by operators allowed */
 	Assert(norderbys == 0);
 
-	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+	IndexScanDesc scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
-	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
+	HashScanOpaque so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
 	HashScanPosInvalidate(so->currPos);
 	so->hashso_bucket_buf = InvalidBuffer;
 	so->hashso_split_bucket_buf = InvalidBuffer;
@@ -459,18 +452,10 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			   IndexBulkDeleteCallback callback, void *callback_state)
 {
 	Relation	rel = info->index;
-	double		tuples_removed;
-	double		num_index_tuples;
-	double		orig_ntuples;
-	Bucket		orig_maxbucket;
-	Bucket		cur_maxbucket;
-	Bucket		cur_bucket;
 	Buffer		metabuf = InvalidBuffer;
-	HashMetaPage metap;
-	HashMetaPage cachedmetap;
 
-	tuples_removed = 0;
-	num_index_tuples = 0;
+	double		tuples_removed = 0;
+	double		num_index_tuples = 0;
 
 	/*
 	 * We need a copy of the metapage so that we can use its hashm_spares[]
@@ -478,42 +463,36 @@ hashbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * good enough.  (If not, we'll detect that further down and refresh the
 	 * cache as necessary.)
 	 */
-	cachedmetap = _hash_getcachedmetap(rel, &metabuf, false);
+	HashMetaPage cachedmetap = _hash_getcachedmetap(rel, &metabuf, false);
 	Assert(cachedmetap != NULL);
 
-	orig_maxbucket = cachedmetap->hashm_maxbucket;
-	orig_ntuples = cachedmetap->hashm_ntuples;
+	Bucket		orig_maxbucket = cachedmetap->hashm_maxbucket;
+	double		orig_ntuples = cachedmetap->hashm_ntuples;
 
 	/* Scan the buckets that we know exist */
-	cur_bucket = 0;
-	cur_maxbucket = orig_maxbucket;
+	Bucket		cur_bucket = 0;
+	Bucket		cur_maxbucket = orig_maxbucket;
 
 loop_top:
 	while (cur_bucket <= cur_maxbucket)
 	{
-		BlockNumber bucket_blkno;
-		BlockNumber blkno;
-		Buffer		bucket_buf;
-		Buffer		buf;
-		HashPageOpaque bucket_opaque;
-		Page		page;
 		bool		split_cleanup = false;
 
 		/* Get address of bucket's start page */
-		bucket_blkno = BUCKET_TO_BLKNO(cachedmetap, cur_bucket);
+		BlockNumber bucket_blkno = BUCKET_TO_BLKNO(cachedmetap, cur_bucket);
 
-		blkno = bucket_blkno;
+		BlockNumber blkno = bucket_blkno;
 
 		/*
 		 * We need to acquire a cleanup lock on the primary bucket page to out
 		 * wait concurrent scans before deleting the dead tuples.
 		 */
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, info->strategy);
+		Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, info->strategy);
 		LockBufferForCleanup(buf);
 		_hash_checkpage(rel, buf, LH_BUCKET_PAGE);
 
-		page = BufferGetPage(buf);
-		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		Page		page = BufferGetPage(buf);
+		HashPageOpaque bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 		/*
 		 * If the bucket contains tuples that are moved by split, then we need
@@ -542,7 +521,7 @@ loop_top:
 			}
 		}
 
-		bucket_buf = buf;
+		Buffer		bucket_buf = buf;
 
 		hashbucketcleanup(rel, cur_bucket, bucket_buf, blkno, info->strategy,
 						  cachedmetap->hashm_maxbucket,
@@ -562,7 +541,7 @@ loop_top:
 
 	/* Write-lock metapage and check for split since we started */
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
 	{
@@ -607,7 +586,6 @@ loop_top:
 	if (RelationNeedsWAL(rel))
 	{
 		xl_hash_update_meta_page xlrec;
-		XLogRecPtr	recptr;
 
 		xlrec.ntuples = metap->hashm_ntuples;
 
@@ -616,7 +594,7 @@ loop_top:
 
 		XLogRegisterBuffer(0, metabuf, REGBUF_STANDARD);
 
-		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_UPDATE_META_PAGE);
+		XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_UPDATE_META_PAGE);
 		PageSetLSN(BufferGetPage(metabuf), recptr);
 	}
 
@@ -644,7 +622,6 @@ IndexBulkDeleteResult *
 hashvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 {
 	Relation	rel = info->index;
-	BlockNumber num_pages;
 
 	/* If hashbulkdelete wasn't called, return NULL signifying no change */
 	/* Note: this covers the analyze_only case too */
@@ -652,7 +629,7 @@ hashvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		return NULL;
 
 	/* update statistics */
-	num_pages = RelationGetNumberOfBlocks(rel);
+	BlockNumber num_pages = RelationGetNumberOfBlocks(rel);
 	stats->num_pages = num_pages;
 
 	return stats;
@@ -687,13 +664,11 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				  bool split_cleanup,
 				  IndexBulkDeleteCallback callback, void *callback_state)
 {
-	BlockNumber blkno;
-	Buffer		buf;
 	Bucket		new_bucket PG_USED_FOR_ASSERTS_ONLY = InvalidBucket;
 	bool		bucket_dirty = false;
 
-	blkno = bucket_blkno;
-	buf = bucket_buf;
+	BlockNumber blkno = bucket_blkno;
+	Buffer		buf = bucket_buf;
 
 	if (split_cleanup)
 		new_bucket = _hash_get_newbucket_from_oldbucket(rel, cur_bucket,
@@ -702,11 +677,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 	/* Scan each page in bucket */
 	for (;;)
 	{
-		HashPageOpaque opaque;
 		OffsetNumber offno;
-		OffsetNumber maxoffno;
-		Buffer		next_buf;
-		Page		page;
 		OffsetNumber deletable[MaxOffsetNumber];
 		int			ndeletable = 0;
 		bool		retain_pin = false;
@@ -714,23 +685,21 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 
 		vacuum_delay_point();
 
-		page = BufferGetPage(buf);
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		Page		page = BufferGetPage(buf);
+		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 		/* Scan each tuple in page */
-		maxoffno = PageGetMaxOffsetNumber(page);
+		OffsetNumber maxoffno = PageGetMaxOffsetNumber(page);
 		for (offno = FirstOffsetNumber;
 			 offno <= maxoffno;
 			 offno = OffsetNumberNext(offno))
 		{
-			ItemPointer htup;
-			IndexTuple	itup;
 			Bucket		bucket;
 			bool		kill_tuple = false;
 
-			itup = (IndexTuple) PageGetItem(page,
+			IndexTuple	itup = (IndexTuple) PageGetItem(page,
 											PageGetItemId(page, offno));
-			htup = &(itup->t_tid);
+			ItemPointer htup = &(itup->t_tid);
 
 			/*
 			 * To remove the dead tuples, we strictly want to rely on results
@@ -813,7 +782,6 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 			if (RelationNeedsWAL(rel))
 			{
 				xl_hash_delete xlrec;
-				XLogRecPtr	recptr;
 
 				xlrec.clear_dead_marking = clear_dead_marking;
 				xlrec.is_primary_bucket_page = (buf == bucket_buf) ? true : false;
@@ -832,7 +800,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				XLogRegisterBufData(1, (char *) deletable,
 									ndeletable * sizeof(OffsetNumber));
 
-				recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_DELETE);
+				XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_DELETE);
 				PageSetLSN(BufferGetPage(buf), recptr);
 			}
 
@@ -843,7 +811,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		if (!BlockNumberIsValid(blkno))
 			break;
 
-		next_buf = _hash_getbuf_with_strategy(rel, blkno, HASH_WRITE,
+		Buffer		next_buf = _hash_getbuf_with_strategy(rel, blkno, HASH_WRITE,
 											  LH_OVERFLOW_PAGE,
 											  bstrategy);
 
@@ -878,11 +846,9 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 	 */
 	if (split_cleanup)
 	{
-		HashPageOpaque bucket_opaque;
-		Page		page;
 
-		page = BufferGetPage(bucket_buf);
-		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		Page		page = BufferGetPage(bucket_buf);
+		HashPageOpaque bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 		/* No ereport(ERROR) until changes are logged */
 		START_CRIT_SECTION();
@@ -893,12 +859,11 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		/* XLOG stuff */
 		if (RelationNeedsWAL(rel))
 		{
-			XLogRecPtr	recptr;
 
 			XLogBeginInsert();
 			XLogRegisterBuffer(0, bucket_buf, REGBUF_STANDARD);
 
-			recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_CLEANUP);
+			XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_CLEANUP);
 			PageSetLSN(page, recptr);
 		}
 

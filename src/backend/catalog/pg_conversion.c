@@ -44,10 +44,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 				 Oid conproc, bool def)
 {
 	int			i;
-	Relation	rel;
-	TupleDesc	tupDesc;
-	HeapTuple	tup;
-	Oid			oid;
 	bool		nulls[Natts_pg_conversion];
 	Datum		values[Natts_pg_conversion];
 	NameData	cname;
@@ -83,8 +79,8 @@ ConversionCreate(const char *conname, Oid connamespace,
 	}
 
 	/* open pg_conversion */
-	rel = table_open(ConversionRelationId, RowExclusiveLock);
-	tupDesc = rel->rd_att;
+	Relation	rel = table_open(ConversionRelationId, RowExclusiveLock);
+	TupleDesc	tupDesc = rel->rd_att;
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_conversion; i++)
@@ -95,7 +91,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 
 	/* form a tuple */
 	namestrcpy(&cname, conname);
-	oid = GetNewOidWithIndex(rel, ConversionOidIndexId,
+	Oid			oid = GetNewOidWithIndex(rel, ConversionOidIndexId,
 							 Anum_pg_conversion_oid);
 	values[Anum_pg_conversion_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_conversion_conname - 1] = NameGetDatum(&cname);
@@ -106,7 +102,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	values[Anum_pg_conversion_conproc - 1] = ObjectIdGetDatum(conproc);
 	values[Anum_pg_conversion_condefault - 1] = BoolGetDatum(def);
 
-	tup = heap_form_tuple(tupDesc, values, nulls);
+	HeapTuple	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/* insert a new tuple */
 	CatalogTupleInsert(rel, tup);
@@ -154,13 +150,12 @@ ConversionCreate(const char *conname, Oid connamespace,
 Oid
 FindDefaultConversion(Oid name_space, int32 for_encoding, int32 to_encoding)
 {
-	CatCList   *catlist;
 	HeapTuple	tuple;
 	Form_pg_conversion body;
 	Oid			proc = InvalidOid;
 	int			i;
 
-	catlist = SearchSysCacheList3(CONDEFAULT,
+	CatCList   *catlist = SearchSysCacheList3(CONDEFAULT,
 								  ObjectIdGetDatum(name_space),
 								  Int32GetDatum(for_encoding),
 								  Int32GetDatum(to_encoding));

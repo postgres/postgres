@@ -43,7 +43,6 @@ List *
 identify_opfamily_groups(CatCList *oprlist, CatCList *proclist)
 {
 	List	   *result = NIL;
-	OpFamilyOpFuncGroup *thisgroup;
 	Form_pg_amop oprform;
 	Form_pg_amproc procform;
 	int			io,
@@ -58,7 +57,7 @@ identify_opfamily_groups(CatCList *oprlist, CatCList *proclist)
 	 * should see all operators and functions of a given datatype pair
 	 * consecutively.
 	 */
-	thisgroup = NULL;
+	OpFamilyOpFuncGroup *thisgroup = NULL;
 	io = ip = 0;
 	if (io < oprlist->n_members)
 	{
@@ -153,15 +152,13 @@ check_amproc_signature(Oid funcid, Oid restype, bool exact,
 					   int minargs, int maxargs,...)
 {
 	bool		result = true;
-	HeapTuple	tp;
-	Form_pg_proc procform;
 	va_list		ap;
 	int			i;
 
-	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	HeapTuple	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(tp);
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tp);
 
 	if (procform->prorettype != restype || procform->proretset ||
 		procform->pronargs < minargs || procform->pronargs > maxargs)
@@ -206,13 +203,11 @@ bool
 check_amop_signature(Oid opno, Oid restype, Oid lefttype, Oid righttype)
 {
 	bool		result = true;
-	HeapTuple	tp;
-	Form_pg_operator opform;
 
-	tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
+	HeapTuple	tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
 	if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for operator %u", opno);
-	opform = (Form_pg_operator) GETSTRUCT(tp);
+	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(tp);
 
 	if (opform->oprresult != restype || opform->oprkind != 'b' ||
 		opform->oprleft != lefttype || opform->oprright != righttype)
@@ -236,7 +231,6 @@ Oid
 opclass_for_family_datatype(Oid amoid, Oid opfamilyoid, Oid datatypeoid)
 {
 	Oid			result = InvalidOid;
-	CatCList   *opclist;
 	int			i;
 
 	/*
@@ -244,7 +238,7 @@ opclass_for_family_datatype(Oid amoid, Oid opfamilyoid, Oid datatypeoid)
 	 * is a bit inefficient but there is no better index available.  It also
 	 * saves making an explicit check that the opfamily belongs to the AM.
 	 */
-	opclist = SearchSysCacheList1(CLAAMNAMENSP, ObjectIdGetDatum(amoid));
+	CatCList   *opclist = SearchSysCacheList1(CLAAMNAMENSP, ObjectIdGetDatum(amoid));
 
 	for (i = 0; i < opclist->n_members; i++)
 	{

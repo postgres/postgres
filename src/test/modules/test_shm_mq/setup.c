@@ -52,14 +52,13 @@ test_shm_mq_setup(int64 queue_size, int32 nworkers, dsm_segment **segp,
 	test_shm_mq_header *hdr;
 	shm_mq	   *outq = NULL;	/* placate compiler */
 	shm_mq	   *inq = NULL;		/* placate compiler */
-	worker_state *wstate;
 
 	/* Set up a dynamic shared memory segment. */
 	setup_dynamic_shared_memory(queue_size, nworkers, &seg, &hdr, &outq, &inq);
 	*segp = seg;
 
 	/* Register background workers. */
-	wstate = setup_background_workers(nworkers, seg);
+	worker_state *wstate = setup_background_workers(nworkers, seg);
 
 	/* Attach the queues. */
 	*output = shm_mq_attach(outq, seg, wstate->handle[0]);
@@ -92,10 +91,6 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 {
 	shm_toc_estimator e;
 	int			i;
-	Size		segsize;
-	dsm_segment *seg;
-	shm_toc    *toc;
-	test_shm_mq_header *hdr;
 
 	/* Ensure a valid queue size. */
 	if (queue_size < 0 || ((uint64) queue_size) < shm_mq_minimum_size)
@@ -122,15 +117,15 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	for (i = 0; i <= nworkers; ++i)
 		shm_toc_estimate_chunk(&e, (Size) queue_size);
 	shm_toc_estimate_keys(&e, 2 + nworkers);
-	segsize = shm_toc_estimate(&e);
+	Size		segsize = shm_toc_estimate(&e);
 
 	/* Create the shared memory segment and establish a table of contents. */
-	seg = dsm_create(shm_toc_estimate(&e), 0);
-	toc = shm_toc_create(PG_TEST_SHM_MQ_MAGIC, dsm_segment_address(seg),
+	dsm_segment *seg = dsm_create(shm_toc_estimate(&e), 0);
+	shm_toc    *toc = shm_toc_create(PG_TEST_SHM_MQ_MAGIC, dsm_segment_address(seg),
 						 segsize);
 
 	/* Set up the header region. */
-	hdr = shm_toc_allocate(toc, sizeof(test_shm_mq_header));
+	test_shm_mq_header *hdr = shm_toc_allocate(toc, sizeof(test_shm_mq_header));
 	SpinLockInit(&hdr->mutex);
 	hdr->workers_total = nworkers;
 	hdr->workers_attached = 0;
@@ -140,9 +135,8 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	/* Set up one message queue per worker, plus one. */
 	for (i = 0; i <= nworkers; ++i)
 	{
-		shm_mq	   *mq;
 
-		mq = shm_mq_create(shm_toc_allocate(toc, (Size) queue_size),
+		shm_mq	   *mq = shm_mq_create(shm_toc_allocate(toc, (Size) queue_size),
 						   (Size) queue_size);
 		shm_toc_insert(toc, i + 1, mq);
 
@@ -171,9 +165,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 static worker_state *
 setup_background_workers(int nworkers, dsm_segment *seg)
 {
-	MemoryContext oldcontext;
 	BackgroundWorker worker;
-	worker_state *wstate;
 	int			i;
 
 	/*
@@ -182,10 +174,10 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 	 * ExprContext; otherwise, they'll be destroyed before the on_dsm_detach
 	 * hooks run.
 	 */
-	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
 	/* Create worker state object. */
-	wstate = MemoryContextAlloc(TopTransactionContext,
+	worker_state *wstate = MemoryContextAlloc(TopTransactionContext,
 								offsetof(worker_state, handle) +
 								sizeof(BackgroundWorkerHandle *) * nworkers);
 	wstate->nworkers = 0;
@@ -259,11 +251,10 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 
 	for (;;)
 	{
-		int			workers_ready;
 
 		/* If all the workers are ready, we have succeeded. */
 		SpinLockAcquire(&hdr->mutex);
-		workers_ready = hdr->workers_ready;
+		int			workers_ready = hdr->workers_ready;
 		SpinLockRelease(&hdr->mutex);
 		if (workers_ready >= wstate->nworkers)
 		{
@@ -303,10 +294,9 @@ check_worker_status(worker_state *wstate)
 	/* If any workers (or the postmaster) have died, we have failed. */
 	for (n = 0; n < wstate->nworkers; ++n)
 	{
-		BgwHandleStatus status;
 		pid_t		pid;
 
-		status = GetBackgroundWorkerPid(wstate->handle[n], &pid);
+		BgwHandleStatus status = GetBackgroundWorkerPid(wstate->handle[n], &pid);
 		if (status == BGWH_STOPPED || status == BGWH_POSTMASTER_DIED)
 			return false;
 	}

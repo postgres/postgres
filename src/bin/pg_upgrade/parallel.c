@@ -155,9 +155,8 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 DWORD
 win32_exec_prog(exec_thread_arg *args)
 {
-	int			ret;
 
-	ret = !exec_prog(args->log_file, args->opt_log_file, true, true, "%s", args->cmd);
+	int			ret = !exec_prog(args->log_file, args->opt_log_file, true, true, "%s", args->cmd);
 
 	/* terminates thread */
 	return ret;
@@ -324,7 +323,6 @@ reap_child(bool wait_for_child)
 	/* Move last slot into dead child's position */
 	if (thread_num != parallel_jobs - 1)
 	{
-		void	   *tmp_args;
 
 		thread_handles[thread_num] = thread_handles[parallel_jobs - 1];
 
@@ -334,7 +332,7 @@ reap_child(bool wait_for_child)
 		 * thread struct is in use by another thread, we can safely swap the
 		 * struct pointers within the array.
 		 */
-		tmp_args = cur_thread_args[thread_num];
+		void	   *tmp_args = cur_thread_args[thread_num];
 		cur_thread_args[thread_num] = cur_thread_args[parallel_jobs - 1];
 		cur_thread_args[parallel_jobs - 1] = tmp_args;
 	}

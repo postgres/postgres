@@ -495,13 +495,9 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	Datum		new_record[Natts_pg_authid];
 	bool		new_record_nulls[Natts_pg_authid];
 	bool		new_record_repl[Natts_pg_authid];
-	Relation	pg_authid_rel;
-	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple,
 				new_tuple;
-	Form_pg_authid authform;
 	ListCell   *option;
-	char	   *rolename = NULL;
 	char	   *password = NULL;	/* user password */
 	int			issuper = -1;	/* Make the user a superuser? */
 	int			inherit = -1;	/* Auto inherit privileges? */
@@ -526,7 +522,6 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *drolemembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
-	Oid			roleid;
 
 	check_rolespec_name(stmt->role,
 						"Cannot alter reserved roles.");
@@ -640,13 +635,13 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	/*
 	 * Scan the pg_authid relation to be certain the user exists.
 	 */
-	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
-	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
+	Relation	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
+	TupleDesc	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
 	tuple = get_rolespec_tuple(stmt->role);
-	authform = (Form_pg_authid) GETSTRUCT(tuple);
-	rolename = pstrdup(NameStr(authform->rolname));
-	roleid = authform->oid;
+	Form_pg_authid authform = (Form_pg_authid) GETSTRUCT(tuple);
+	char	   *rolename = pstrdup(NameStr(authform->rolname));
+	Oid			roleid = authform->oid;
 
 	/*
 	 * To mess with a superuser or replication role in any way you gotta be
@@ -954,21 +949,17 @@ DropRole(DropRoleStmt *stmt)
 	foreach(item, stmt->roles)
 	{
 		RoleSpec   *rolspec = lfirst(item);
-		char	   *role;
 		HeapTuple	tuple,
 					tmp_tuple;
-		Form_pg_authid roleform;
 		ScanKeyData scankey;
 		char	   *detail;
 		char	   *detail_log;
-		SysScanDesc sscan;
-		Oid			roleid;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot use special role specifier in DROP ROLE")));
-		role = rolspec->rolename;
+		char	   *role = rolspec->rolename;
 
 		tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 		if (!HeapTupleIsValid(tuple))
@@ -989,8 +980,8 @@ DropRole(DropRoleStmt *stmt)
 			continue;
 		}
 
-		roleform = (Form_pg_authid) GETSTRUCT(tuple);
-		roleid = roleform->oid;
+		Form_pg_authid roleform = (Form_pg_authid) GETSTRUCT(tuple);
+		Oid			roleid = roleform->oid;
 
 		if (roleid == GetUserId())
 			ereport(ERROR,
@@ -1052,7 +1043,7 @@ DropRole(DropRoleStmt *stmt)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(roleid));
 
-		sscan = systable_beginscan(pg_auth_members_rel, AuthMemRoleMemIndexId,
+		SysScanDesc sscan = systable_beginscan(pg_auth_members_rel, AuthMemRoleMemIndexId,
 								   true, NULL, 1, &scankey);
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
@@ -1115,20 +1106,16 @@ RenameRole(const char *oldname, const char *newname)
 {
 	HeapTuple	oldtuple,
 				newtuple;
-	TupleDesc	dsc;
-	Relation	rel;
 	Datum		datum;
 	bool		isnull;
 	Datum		repl_val[Natts_pg_authid];
 	bool		repl_null[Natts_pg_authid];
 	bool		repl_repl[Natts_pg_authid];
 	int			i;
-	Oid			roleid;
 	ObjectAddress address;
-	Form_pg_authid authform;
 
-	rel = table_open(AuthIdRelationId, RowExclusiveLock);
-	dsc = RelationGetDescr(rel);
+	Relation	rel = table_open(AuthIdRelationId, RowExclusiveLock);
+	TupleDesc	dsc = RelationGetDescr(rel);
 
 	oldtuple = SearchSysCache1(AUTHNAME, CStringGetDatum(oldname));
 	if (!HeapTupleIsValid(oldtuple))
@@ -1144,8 +1131,8 @@ RenameRole(const char *oldname, const char *newname)
 	 * effective userid, though.
 	 */
 
-	authform = (Form_pg_authid) GETSTRUCT(oldtuple);
-	roleid = authform->oid;
+	Form_pg_authid authform = (Form_pg_authid) GETSTRUCT(oldtuple);
+	Oid			roleid = authform->oid;
 
 	if (roleid == GetSessionUserId())
 		ereport(ERROR,
@@ -1253,9 +1240,7 @@ RenameRole(const char *oldname, const char *newname)
 void
 GrantRole(GrantRoleStmt *stmt)
 {
-	Relation	pg_authid_rel;
 	Oid			grantor;
-	List	   *grantee_ids;
 	ListCell   *item;
 
 	if (stmt->grantor)
@@ -1263,10 +1248,10 @@ GrantRole(GrantRoleStmt *stmt)
 	else
 		grantor = GetUserId();
 
-	grantee_ids = roleSpecsToIds(stmt->grantee_roles);
+	List	   *grantee_ids = roleSpecsToIds(stmt->grantee_roles);
 
 	/* AccessShareLock is enough since we aren't modifying pg_authid */
-	pg_authid_rel = table_open(AuthIdRelationId, AccessShareLock);
+	Relation	pg_authid_rel = table_open(AuthIdRelationId, AccessShareLock);
 
 	/*
 	 * Step through all of the granted roles and add/remove entries for the
@@ -1279,7 +1264,6 @@ GrantRole(GrantRoleStmt *stmt)
 	{
 		AccessPriv *priv = (AccessPriv *) lfirst(item);
 		char	   *rolename = priv->priv_name;
-		Oid			roleid;
 
 		/* Must reject priv(columns) and ALL PRIVILEGES(columns) */
 		if (rolename == NULL || priv->cols != NIL)
@@ -1287,7 +1271,7 @@ GrantRole(GrantRoleStmt *stmt)
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
-		roleid = get_role_oid(rolename, false);
+		Oid			roleid = get_role_oid(rolename, false);
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
@@ -1340,7 +1324,6 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 {
 	List	   *role_ids = roleSpecsToIds(stmt->roles);
 	ListCell   *cell;
-	Oid			newrole;
 
 	/* Check privileges */
 	foreach(cell, role_ids)
@@ -1354,7 +1337,7 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 	}
 
 	/* Must have privileges on the receiving side too */
-	newrole = get_rolespec_oid(stmt->newrole, false);
+	Oid			newrole = get_rolespec_oid(stmt->newrole, false);
 
 	if (!has_privs_of_role(GetUserId(), newrole))
 		ereport(ERROR,
@@ -1381,9 +1364,8 @@ roleSpecsToIds(List *memberNames)
 	foreach(l, memberNames)
 	{
 		RoleSpec   *rolespec = lfirst_node(RoleSpec, l);
-		Oid			roleid;
 
-		roleid = get_rolespec_oid(rolespec, false);
+		Oid			roleid = get_rolespec_oid(rolespec, false);
 		result = lappend_oid(result, roleid);
 	}
 	return result;
@@ -1404,8 +1386,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
 			Oid grantorId, bool admin_opt)
 {
-	Relation	pg_authmem_rel;
-	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
 
@@ -1463,14 +1443,13 @@ AddRoleMems(const char *rolename, Oid roleid,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to set grantor")));
 
-	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
-	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
+	Relation	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
+	TupleDesc	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
 		RoleSpec   *memberRole = lfirst_node(RoleSpec, specitem);
 		Oid			memberid = lfirst_oid(iditem);
-		HeapTuple	authmem_tuple;
 		HeapTuple	tuple;
 		Datum		new_record[Natts_pg_auth_members];
 		bool		new_record_nulls[Natts_pg_auth_members];
@@ -1517,7 +1496,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		 * Check if entry for this role/member already exists; if so, give
 		 * warning unless we are adding admin option.
 		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
+		HeapTuple	authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
 										ObjectIdGetDatum(roleid),
 										ObjectIdGetDatum(memberid));
 		if (HeapTupleIsValid(authmem_tuple) &&
@@ -1582,8 +1561,6 @@ DelRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
 			bool admin_opt)
 {
-	Relation	pg_authmem_rel;
-	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
 
@@ -1614,19 +1591,18 @@ DelRoleMems(const char *rolename, Oid roleid,
 							rolename)));
 	}
 
-	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
-	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
+	Relation	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
+	TupleDesc	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
 		RoleSpec   *memberRole = lfirst(specitem);
 		Oid			memberid = lfirst_oid(iditem);
-		HeapTuple	authmem_tuple;
 
 		/*
 		 * Find entry for this role/member
 		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
+		HeapTuple	authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
 										ObjectIdGetDatum(roleid),
 										ObjectIdGetDatum(memberid));
 		if (!HeapTupleIsValid(authmem_tuple))
@@ -1645,7 +1621,6 @@ DelRoleMems(const char *rolename, Oid roleid,
 		else
 		{
 			/* Just turn off the admin option */
-			HeapTuple	tuple;
 			Datum		new_record[Natts_pg_auth_members];
 			bool		new_record_nulls[Natts_pg_auth_members];
 			bool		new_record_repl[Natts_pg_auth_members];
@@ -1658,7 +1633,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 			new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(false);
 			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 
-			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
+			HeapTuple	tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									  new_record,
 									  new_record_nulls, new_record_repl);
 			CatalogTupleUpdate(pg_authmem_rel, &tuple->t_self, tuple);

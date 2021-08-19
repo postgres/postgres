@@ -551,7 +551,6 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 void
 CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 {
-	Index		hashIndex;
 	dlist_mutable_iter iter;
 
 	CACHE_elog(DEBUG2, "CatCacheInvalidate: called");
@@ -578,7 +577,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 	/*
 	 * inspect the proper hash bucket for tuple matches
 	 */
-	hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
+	Index		hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 	dlist_foreach_modify(iter, &cache->cc_bucket[hashIndex])
 	{
 		CatCTup    *ct = dlist_container(CatCTup, cache_elem, iter.cur);
@@ -768,7 +767,6 @@ InitCatCache(int id,
 			 int nbuckets)
 {
 	CatCache   *cp;
-	MemoryContext oldcxt;
 	size_t		sz;
 	int			i;
 
@@ -792,7 +790,7 @@ InitCatCache(int id,
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
 
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
 	 * if first time through, initialize the cache group header
@@ -859,16 +857,14 @@ InitCatCache(int id,
 static void
 RehashCatCache(CatCache *cp)
 {
-	dlist_head *newbucket;
-	int			newnbuckets;
 	int			i;
 
 	elog(DEBUG1, "rehashing catalog cache id %d for %s; %d tups, %d buckets",
 		 cp->id, cp->cc_relname, cp->cc_ntup, cp->cc_nbuckets);
 
 	/* Allocate a new, larger, hash table. */
-	newnbuckets = cp->cc_nbuckets * 2;
-	newbucket = (dlist_head *) MemoryContextAllocZero(CacheMemoryContext, newnbuckets * sizeof(dlist_head));
+	int			newnbuckets = cp->cc_nbuckets * 2;
+	dlist_head *newbucket = (dlist_head *) MemoryContextAllocZero(CacheMemoryContext, newnbuckets * sizeof(dlist_head));
 
 	/* Move all entries from old hash table to new. */
 	for (i = 0; i < cp->cc_nbuckets; i++)
@@ -922,14 +918,11 @@ do { \
 static void
 CatalogCacheInitializeCache(CatCache *cache)
 {
-	Relation	relation;
-	MemoryContext oldcxt;
-	TupleDesc	tupdesc;
 	int			i;
 
 	CatalogCacheInitializeCache_DEBUG1;
 
-	relation = table_open(cache->cc_reloid, AccessShareLock);
+	Relation	relation = table_open(cache->cc_reloid, AccessShareLock);
 
 	/*
 	 * switch to the cache context so our allocations do not vanish at the end
@@ -937,12 +930,12 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 */
 	Assert(CacheMemoryContext != NULL);
 
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
 	 * copy the relcache's tuple descriptor to permanent cache storage
 	 */
-	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
+	TupleDesc	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
 
 	/*
 	 * save the relation's name and relisshared flag, too (cc_relname is used
@@ -1038,7 +1031,6 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
 		cache->id != AMOID &&
 		cache->id != AMNAME)
 	{
-		Relation	idesc;
 
 		/*
 		 * We must lock the underlying catalog before opening the index to
@@ -1047,7 +1039,7 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
 		 * catalog and index they'll be doing it in that order.
 		 */
 		LockRelationOid(cache->cc_reloid, AccessShareLock);
-		idesc = index_open(cache->cc_indexoid, AccessShareLock);
+		Relation	idesc = index_open(cache->cc_indexoid, AccessShareLock);
 
 		/*
 		 * While we've got the index open, let's check that it's unique (and
@@ -1319,10 +1311,7 @@ SearchCatCacheMiss(CatCache *cache,
 				   Datum v4)
 {
 	ScanKeyData cur_skey[CATCACHE_MAXKEYS];
-	Relation	relation;
-	SysScanDesc scandesc;
 	HeapTuple	ntp;
-	CatCTup    *ct;
 	Datum		arguments[CATCACHE_MAXKEYS];
 
 	/* Initialize local parameter array */
@@ -1356,16 +1345,16 @@ SearchCatCacheMiss(CatCache *cache,
 	 * This case is rare enough that it's not worth expending extra cycles to
 	 * detect.
 	 */
-	relation = table_open(cache->cc_reloid, AccessShareLock);
+	Relation	relation = table_open(cache->cc_reloid, AccessShareLock);
 
-	scandesc = systable_beginscan(relation,
+	SysScanDesc scandesc = systable_beginscan(relation,
 								  cache->cc_indexoid,
 								  IndexScanOK(cache, cur_skey),
 								  NULL,
 								  nkeys,
 								  cur_skey);
 
-	ct = NULL;
+	CatCTup    *ct = NULL;
 
 	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 	{
@@ -1616,8 +1605,6 @@ SearchCatCacheList(CatCache *cache,
 	PG_TRY();
 	{
 		ScanKeyData cur_skey[CATCACHE_MAXKEYS];
-		Relation	relation;
-		SysScanDesc scandesc;
 
 		/*
 		 * Ok, need to make a lookup in the relation, copy the scankey and
@@ -1629,9 +1616,9 @@ SearchCatCacheList(CatCache *cache,
 		cur_skey[2].sk_argument = v3;
 		cur_skey[3].sk_argument = v4;
 
-		relation = table_open(cache->cc_reloid, AccessShareLock);
+		Relation	relation = table_open(cache->cc_reloid, AccessShareLock);
 
-		scandesc = systable_beginscan(relation,
+		SysScanDesc scandesc = systable_beginscan(relation,
 									  cache->cc_indexoid,
 									  IndexScanOK(cache, cur_skey),
 									  NULL,
@@ -1643,19 +1630,16 @@ SearchCatCacheList(CatCache *cache,
 
 		while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 		{
-			uint32		hashValue;
-			Index		hashIndex;
 			bool		found = false;
-			dlist_head *bucket;
 
 			/*
 			 * See if there's an entry for this tuple already.
 			 */
 			ct = NULL;
-			hashValue = CatalogCacheComputeTupleHashValue(cache, cache->cc_nkeys, ntp);
-			hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
+			uint32		hashValue = CatalogCacheComputeTupleHashValue(cache, cache->cc_nkeys, ntp);
+			Index		hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 
-			bucket = &cache->cc_bucket[hashIndex];
+			dlist_head *bucket = &cache->cc_bucket[hashIndex];
 			dlist_foreach(iter, bucket)
 			{
 				ct = dlist_container(CatCTup, cache_elem, iter.cur);
@@ -1853,10 +1837,9 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, Datum *arguments,
 		/* extract keys - they'll point into the tuple if not by-value */
 		for (i = 0; i < cache->cc_nkeys; i++)
 		{
-			Datum		atp;
 			bool		isnull;
 
-			atp = heap_getattr(&ct->tuple,
+			Datum		atp = heap_getattr(&ct->tuple,
 							   cache->cc_keyno[i],
 							   cache->cc_tupdesc,
 							   &isnull);
@@ -1917,12 +1900,11 @@ CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos, Datum *keys)
 	for (i = 0; i < nkeys; i++)
 	{
 		int			attnum = attnos[i];
-		Form_pg_attribute att;
 
 		/* system attribute are not supported in caches */
 		Assert(attnum > 0);
 
-		att = TupleDescAttr(tupdesc, attnum - 1);
+		Form_pg_attribute att = TupleDescAttr(tupdesc, attnum - 1);
 
 		if (!att->attbyval)
 			pfree(DatumGetPointer(keys[i]));
@@ -2012,7 +1994,6 @@ PrepareToInvalidateCacheTuple(Relation relation,
 							  void (*function) (int, uint32, Oid))
 {
 	slist_iter	iter;
-	Oid			reloid;
 
 	CACHE_elog(DEBUG2, "PrepareToInvalidateCacheTuple: called");
 
@@ -2024,7 +2005,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	Assert(PointerIsValid(function));
 	Assert(CacheHdr != NULL);
 
-	reloid = RelationGetRelid(relation);
+	Oid			reloid = RelationGetRelid(relation);
 
 	/* ----------------
 	 *	for each cache
@@ -2037,8 +2018,6 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
 		CatCache   *ccp = slist_container(CatCache, cc_next, iter.cur);
-		uint32		hashvalue;
-		Oid			dbid;
 
 		if (ccp->cc_reloid != reloid)
 			continue;
@@ -2047,16 +2026,15 @@ PrepareToInvalidateCacheTuple(Relation relation,
 		if (ccp->cc_tupdesc == NULL)
 			CatalogCacheInitializeCache(ccp);
 
-		hashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, tuple);
-		dbid = ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId;
+		uint32		hashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, tuple);
+		Oid			dbid = ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId;
 
 		(*function) (ccp->id, hashvalue, dbid);
 
 		if (newtuple)
 		{
-			uint32		newhashvalue;
 
-			newhashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, newtuple);
+			uint32		newhashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, newtuple);
 
 			if (newhashvalue != hashvalue)
 				(*function) (ccp->id, newhashvalue, dbid);

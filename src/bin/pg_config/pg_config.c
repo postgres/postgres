@@ -129,7 +129,6 @@ show_item(const char *configname,
 int
 main(int argc, char **argv)
 {
-	ConfigData *configdata;
 	size_t		configdata_len;
 	char		my_exec_path[MAXPGPATH];
 	int			i;
@@ -155,7 +154,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	configdata = get_configdata(my_exec_path, &configdata_len);
+	ConfigData *configdata = get_configdata(my_exec_path, &configdata_len);
 	/* no arguments -> print everything */
 	if (argc < 2)
 	{

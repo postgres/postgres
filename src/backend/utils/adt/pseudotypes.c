@@ -126,10 +126,9 @@ Datum
 cstring_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	PG_RETURN_CSTRING(str);
 }
 

@@ -91,9 +91,6 @@ void
 WalWriterMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
-	MemoryContext walwriter_context;
-	int			left_till_hibernate;
-	bool		hibernating;
 
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
@@ -121,7 +118,7 @@ WalWriterMain(void)
 	 * possible memory leaks.  Formerly this code just ran in
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
-	walwriter_context = AllocSetContextCreate(TopMemoryContext,
+	MemoryContext walwriter_context = AllocSetContextCreate(TopMemoryContext,
 											  "Wal Writer",
 											  ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(walwriter_context);
@@ -210,8 +207,8 @@ WalWriterMain(void)
 	/*
 	 * Reset hibernation state after any error.
 	 */
-	left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
-	hibernating = false;
+	int			left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
+	bool		hibernating = false;
 	SetWalWriterSleeping(false);
 
 	/*

@@ -43,7 +43,6 @@ char *
 _crypt_gensalt_extended_rn(unsigned long count,
 						   const char *input, int size, char *output, int output_size)
 {
-	unsigned long value;
 
 /* Even iteration counts make it easier to detect weak DES keys from a look
  * at the hash, so they should be avoided */
@@ -63,7 +62,7 @@ _crypt_gensalt_extended_rn(unsigned long count,
 	output[2] = _crypt_itoa64[(count >> 6) & 0x3f];
 	output[3] = _crypt_itoa64[(count >> 12) & 0x3f];
 	output[4] = _crypt_itoa64[(count >> 18) & 0x3f];
-	value = (unsigned long) (unsigned char) input[0] |
+	unsigned long value = (unsigned long) (unsigned char) input[0] |
 		((unsigned long) (unsigned char) input[1] << 8) |
 		((unsigned long) (unsigned char) input[2] << 16);
 	output[5] = _crypt_itoa64[value & 0x3f];
@@ -79,7 +78,6 @@ char *
 _crypt_gensalt_md5_rn(unsigned long count,
 					  const char *input, int size, char *output, int output_size)
 {
-	unsigned long value;
 
 	if (size < 3 || output_size < 3 + 4 + 1 || (count && count != 1000))
 	{
@@ -91,7 +89,7 @@ _crypt_gensalt_md5_rn(unsigned long count,
 	output[0] = '$';
 	output[1] = '1';
 	output[2] = '$';
-	value = (unsigned long) (unsigned char) input[0] |
+	unsigned long value = (unsigned long) (unsigned char) input[0] |
 		((unsigned long) (unsigned char) input[1] << 8) |
 		((unsigned long) (unsigned char) input[2] << 16);
 	output[3] = _crypt_itoa64[value & 0x3f];

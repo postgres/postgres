@@ -52,25 +52,20 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 {
 	int			attoff;
 	bool		isnull;
-	Datum		indclassDatum;
-	oidvector  *opclass;
 	int2vector *indkey = &idxrel->rd_index->indkey;
 	bool		hasnulls = false;
 
 	Assert(RelationGetReplicaIndex(rel) == RelationGetRelid(idxrel) ||
 		   RelationGetPrimaryKeyIndex(rel) == RelationGetRelid(idxrel));
 
-	indclassDatum = SysCacheGetAttr(INDEXRELID, idxrel->rd_indextuple,
+	Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, idxrel->rd_indextuple,
 									Anum_pg_index_indclass, &isnull);
 	Assert(!isnull);
-	opclass = (oidvector *) DatumGetPointer(indclassDatum);
+	oidvector  *opclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	/* Build scankey for every attribute in the index. */
 	for (attoff = 0; attoff < IndexRelationGetNumberOfKeyAttributes(idxrel); attoff++)
 	{
-		Oid			operator;
-		Oid			opfamily;
-		RegProcedure regop;
 		int			pkattno = attoff + 1;
 		int			mainattno = indkey->values[attoff];
 		Oid			optype = get_opclass_input_type(opclass->values[attoff]);
@@ -79,16 +74,16 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		 * Load the operator info.  We need this to get the equality operator
 		 * function for the scan key.
 		 */
-		opfamily = get_opclass_family(opclass->values[attoff]);
+		Oid			opfamily = get_opclass_family(opclass->values[attoff]);
 
-		operator = get_opfamily_member(opfamily, optype,
+		Oid			operator = get_opfamily_member(opfamily, optype,
 									   optype,
 									   BTEqualStrategyNumber);
 		if (!OidIsValid(operator))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 BTEqualStrategyNumber, optype, optype, opfamily);
 
-		regop = get_opcode(operator);
+		RegProcedure regop = get_opcode(operator);
 
 		/* Initialize the scankey. */
 		ScanKeyInit(&skey[attoff],
@@ -123,18 +118,16 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 							 TupleTableSlot *outslot)
 {
 	ScanKeyData skey[INDEX_MAX_KEYS];
-	IndexScanDesc scan;
 	SnapshotData snap;
 	TransactionId xwait;
-	Relation	idxrel;
 	bool		found;
 
 	/* Open the index. */
-	idxrel = index_open(idxoid, RowExclusiveLock);
+	Relation	idxrel = index_open(idxoid, RowExclusiveLock);
 
 	/* Start an index scan. */
 	InitDirtySnapshot(snap);
-	scan = index_beginscan(rel, idxrel, &snap,
+	IndexScanDesc scan = index_beginscan(rel, idxrel, &snap,
 						   IndexRelationGetNumberOfKeyAttributes(idxrel),
 						   0);
 
@@ -170,11 +163,10 @@ retry:
 	if (found)
 	{
 		TM_FailureData tmfd;
-		TM_Result	res;
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
-		res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
+		TM_Result	res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
 							   outslot,
 							   GetCurrentCommandId(false),
 							   lockmode,
@@ -240,8 +232,6 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 	/* Check equality of the attributes. */
 	for (attrnum = 0; attrnum < slot1->tts_tupleDescriptor->natts; attrnum++)
 	{
-		Form_pg_attribute att;
-		TypeCacheEntry *typentry;
 
 		/*
 		 * If one value is NULL and other is not, then they are certainly not
@@ -256,9 +246,9 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 		if (slot1->tts_isnull[attrnum] || slot2->tts_isnull[attrnum])
 			continue;
 
-		att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
+		Form_pg_attribute att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
 
-		typentry = eq[attrnum];
+		TypeCacheEntry *typentry = eq[attrnum];
 		if (typentry == NULL)
 		{
 			typentry = lookup_type_cache(att->atttypid,
@@ -295,8 +285,6 @@ bool
 RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 						 TupleTableSlot *searchslot, TupleTableSlot *outslot)
 {
-	TupleTableSlot *scanslot;
-	TableScanDesc scan;
 	SnapshotData snap;
 	TypeCacheEntry **eq;
 	TransactionId xwait;
@@ -309,8 +297,8 @@ RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 
 	/* Start a heap scan. */
 	InitDirtySnapshot(snap);
-	scan = table_beginscan(rel, &snap, 0, NULL);
-	scanslot = table_slot_create(rel, NULL);
+	TableScanDesc scan = table_beginscan(rel, &snap, 0, NULL);
+	TupleTableSlot *scanslot = table_slot_create(rel, NULL);
 
 retry:
 	found = false;
@@ -347,11 +335,10 @@ retry:
 	if (found)
 	{
 		TM_FailureData tmfd;
-		TM_Result	res;
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
-		res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
+		TM_Result	res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
 							   outslot,
 							   GetCurrentCommandId(false),
 							   lockmode,
@@ -567,7 +554,6 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 void
 CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 {
-	PublicationActions *pubactions;
 
 	/* We only need to do checks for UPDATE and DELETE. */
 	if (cmd != CMD_UPDATE && cmd != CMD_DELETE)
@@ -583,7 +569,7 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 	 *
 	 * Check if the table publishes UPDATES or DELETES.
 	 */
-	pubactions = GetRelationPublicationActions(rel);
+	PublicationActions *pubactions = GetRelationPublicationActions(rel);
 	if (cmd == CMD_UPDATE && pubactions->pubupdate)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

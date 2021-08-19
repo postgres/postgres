@@ -214,7 +214,6 @@ _readBitmapset(void)
 
 	for (;;)
 	{
-		int			val;
 		char	   *endptr;
 
 		token = pg_strtok(&length);
@@ -222,7 +221,7 @@ _readBitmapset(void)
 			elog(ERROR, "unterminated Bitmapset structure");
 		if (length == 1 && token[0] == ')')
 			break;
-		val = (int) strtol(token, &endptr, 10);
+		int			val = (int) strtol(token, &endptr, 10);
 		if (endptr != token + length)
 			elog(ERROR, "unrecognized integer: \"%.*s\"", length, token);
 		result = bms_add_member(result, val);
@@ -2093,8 +2092,6 @@ static CustomScan *
 _readCustomScan(void)
 {
 	READ_LOCALS(CustomScan);
-	char	   *custom_name;
-	const CustomScanMethods *methods;
 
 	ReadCommonScan(&local_node->scan);
 
@@ -2108,8 +2105,8 @@ _readCustomScan(void)
 	/* Lookup CustomScanMethods by CustomName */
 	token = pg_strtok(&length); /* skip methods: */
 	token = pg_strtok(&length); /* CustomName */
-	custom_name = nullable_string(token, length);
-	methods = GetCustomScanMethods(custom_name, false);
+	char	   *custom_name = nullable_string(token, length);
+	const CustomScanMethods *methods = GetCustomScanMethods(custom_name, false);
 	local_node->methods = methods;
 
 	READ_DONE();
@@ -2165,7 +2162,6 @@ _readNestLoop(void)
 static MergeJoin *
 _readMergeJoin(void)
 {
-	int			numCols;
 
 	READ_LOCALS(MergeJoin);
 
@@ -2174,7 +2170,7 @@ _readMergeJoin(void)
 	READ_BOOL_FIELD(skip_mark_restore);
 	READ_NODE_FIELD(mergeclauses);
 
-	numCols = list_length(local_node->mergeclauses);
+	int			numCols = list_length(local_node->mergeclauses);
 
 	READ_OID_ARRAY(mergeFamilies, numCols);
 	READ_OID_ARRAY(mergeCollations, numCols);
@@ -2643,21 +2639,18 @@ _readAlternativeSubPlan(void)
 static ExtensibleNode *
 _readExtensibleNode(void)
 {
-	const ExtensibleNodeMethods *methods;
-	ExtensibleNode *local_node;
-	const char *extnodename;
 
 	READ_TEMP_LOCALS();
 
 	token = pg_strtok(&length); /* skip :extnodename */
 	token = pg_strtok(&length); /* get extnodename */
 
-	extnodename = nullable_string(token, length);
+	const char *extnodename = nullable_string(token, length);
 	if (!extnodename)
 		elog(ERROR, "extnodename has to be supplied");
-	methods = GetExtensibleNodeMethods(extnodename, false);
+	const ExtensibleNodeMethods *methods = GetExtensibleNodeMethods(extnodename, false);
 
-	local_node = (ExtensibleNode *) newNode(methods->node_size,
+	ExtensibleNode *local_node = (ExtensibleNode *) newNode(methods->node_size,
 											T_ExtensibleNode);
 	local_node->extnodename = extnodename;
 
@@ -2996,14 +2989,13 @@ readDatum(bool typbyval)
 	Size		length,
 				i;
 	int			tokenLength;
-	const char *token;
 	Datum		res;
 	char	   *s;
 
 	/*
 	 * read the actual length of the value
 	 */
-	token = pg_strtok(&tokenLength);
+	const char *token = pg_strtok(&tokenLength);
 	length = atoui(token);
 
 	token = pg_strtok(&tokenLength);	/* read the '[' */
@@ -3053,12 +3045,11 @@ readAttrNumberCols(int numCols)
 	int			tokenLength,
 				i;
 	const char *token;
-	AttrNumber *attr_vals;
 
 	if (numCols <= 0)
 		return NULL;
 
-	attr_vals = (AttrNumber *) palloc(numCols * sizeof(AttrNumber));
+	AttrNumber *attr_vals = (AttrNumber *) palloc(numCols * sizeof(AttrNumber));
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3077,12 +3068,11 @@ readOidCols(int numCols)
 	int			tokenLength,
 				i;
 	const char *token;
-	Oid		   *oid_vals;
 
 	if (numCols <= 0)
 		return NULL;
 
-	oid_vals = (Oid *) palloc(numCols * sizeof(Oid));
+	Oid		   *oid_vals = (Oid *) palloc(numCols * sizeof(Oid));
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3101,12 +3091,11 @@ readIntCols(int numCols)
 	int			tokenLength,
 				i;
 	const char *token;
-	int		   *int_vals;
 
 	if (numCols <= 0)
 		return NULL;
 
-	int_vals = (int *) palloc(numCols * sizeof(int));
+	int		   *int_vals = (int *) palloc(numCols * sizeof(int));
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3125,12 +3114,11 @@ readBoolCols(int numCols)
 	int			tokenLength,
 				i;
 	const char *token;
-	bool	   *bool_vals;
 
 	if (numCols <= 0)
 		return NULL;
 
-	bool_vals = (bool *) palloc(numCols * sizeof(bool));
+	bool	   *bool_vals = (bool *) palloc(numCols * sizeof(bool));
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);

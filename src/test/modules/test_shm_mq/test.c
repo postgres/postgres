@@ -49,7 +49,6 @@ test_shm_mq(PG_FUNCTION_ARGS)
 	dsm_segment *seg;
 	shm_mq_handle *outqh;
 	shm_mq_handle *inqh;
-	shm_mq_result res;
 	Size		len;
 	void	   *data;
 
@@ -73,7 +72,7 @@ test_shm_mq(PG_FUNCTION_ARGS)
 	test_shm_mq_setup(queue_size, nworkers, &seg, &outqh, &inqh);
 
 	/* Send the initial message. */
-	res = shm_mq_send(outqh, message_size, message_contents, false);
+	shm_mq_result res = shm_mq_send(outqh, message_size, message_contents, false);
 	if (res != SHM_MQ_SUCCESS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

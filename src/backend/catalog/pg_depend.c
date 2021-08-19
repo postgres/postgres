@@ -58,9 +58,6 @@ recordMultipleDependencies(const ObjectAddress *depender,
 						   int nreferenced,
 						   DependencyType behavior)
 {
-	Relation	dependDesc;
-	CatalogIndexState indstate;
-	TupleTableSlot **slot;
 	int			i,
 				max_slots,
 				slot_init_count,
@@ -79,7 +76,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	if (IsBootstrapProcessingMode())
 		return;
 
-	dependDesc = table_open(DependRelationId, RowExclusiveLock);
+	Relation	dependDesc = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Allocate the slots to use, but delay costly initialization until we
@@ -87,10 +84,10 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	 */
 	max_slots = Min(nreferenced,
 					MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_depend));
-	slot = palloc(sizeof(TupleTableSlot *) * max_slots);
+	TupleTableSlot **slot = palloc(sizeof(TupleTableSlot *) * max_slots);
 
 	/* Don't open indexes unless we need to make an update */
-	indstate = NULL;
+	CatalogIndexState indstate = NULL;
 
 	/* number of slots currently storing tuples */
 	slot_stored_count = 0;
@@ -201,9 +198,8 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object,
 		/* Only need to check for existing membership if isReplace */
 		if (isReplace)
 		{
-			Oid			oldext;
 
-			oldext = getExtensionOfObject(object->classId, object->objectId);
+			Oid			oldext = getExtensionOfObject(object->classId, object->objectId);
 			if (OidIsValid(oldext))
 			{
 				/* If already a member of this extension, nothing to do */
@@ -244,12 +240,10 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 						   bool skipExtensionDeps)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -260,7 +254,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -294,12 +288,10 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 								Oid refclassId, char deptype)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -310,7 +302,7 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -341,12 +333,10 @@ deleteDependencyRecordsForSpecific(Oid classId, Oid objectId, char deptype,
 								   Oid refclassId, Oid refobjectId)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -357,7 +347,7 @@ deleteDependencyRecordsForSpecific(Oid classId, Oid objectId, char deptype,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -401,14 +391,10 @@ changeDependencyFor(Oid classId, Oid objectId,
 					Oid newRefObjectId)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress objAddr;
 	ObjectAddress depAddr;
-	bool		oldIsPinned;
-	bool		newIsPinned;
 
 	/*
 	 * Check to see if either oldRefObjectId or newRefObjectId is pinned.
@@ -420,11 +406,11 @@ changeDependencyFor(Oid classId, Oid objectId,
 	objAddr.objectId = oldRefObjectId;
 	objAddr.objectSubId = 0;
 
-	oldIsPinned = isObjectPinned(&objAddr);
+	bool		oldIsPinned = isObjectPinned(&objAddr);
 
 	objAddr.objectId = newRefObjectId;
 
-	newIsPinned = isObjectPinned(&objAddr);
+	bool		newIsPinned = isObjectPinned(&objAddr);
 
 	if (oldIsPinned)
 	{
@@ -447,7 +433,7 @@ changeDependencyFor(Oid classId, Oid objectId,
 		return 1;
 	}
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/* There should be existing dependency record(s), so search. */
 	ScanKeyInit(&key[0],
@@ -459,7 +445,7 @@ changeDependencyFor(Oid classId, Oid objectId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -508,12 +494,10 @@ changeDependenciesOf(Oid classId, Oid oldObjectId,
 					 Oid newObjectId)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -524,16 +508,15 @@ changeDependenciesOf(Oid classId, Oid oldObjectId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oldObjectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
-		Form_pg_depend depform;
 
 		/* make a modifiable copy */
 		tup = heap_copytuple(tup);
-		depform = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
 		depform->objid = newObjectId;
 
@@ -564,14 +547,11 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 					 Oid newRefObjectId)
 {
 	long		count = 0;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 	ObjectAddress objAddr;
-	bool		newIsPinned;
 
-	depRel = table_open(DependRelationId, RowExclusiveLock);
+	Relation	depRel = table_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * If oldRefObjectId is pinned, there won't be any dependency entries on
@@ -595,7 +575,7 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 	 */
 	objAddr.objectId = newRefObjectId;
 
-	newIsPinned = isObjectPinned(&objAddr);
+	bool		newIsPinned = isObjectPinned(&objAddr);
 
 	/* Now search for dependency records */
 	ScanKeyInit(&key[0],
@@ -607,7 +587,7 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oldRefObjectId));
 
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -616,11 +596,10 @@ changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 			CatalogTupleDelete(depRel, &tup->t_self);
 		else
 		{
-			Form_pg_depend depform;
 
 			/* make a modifiable copy */
 			tup = heap_copytuple(tup);
-			depform = (Form_pg_depend) GETSTRUCT(tup);
+			Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
 			depform->refobjid = newRefObjectId;
 
@@ -674,12 +653,10 @@ Oid
 getExtensionOfObject(Oid classId, Oid objectId)
 {
 	Oid			result = InvalidOid;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -690,7 +667,7 @@ getExtensionOfObject(Oid classId, Oid objectId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -720,12 +697,10 @@ List *
 getAutoExtensionsOfObject(Oid classId, Oid objectId)
 {
 	List	   *result = NIL;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -736,7 +711,7 @@ getAutoExtensionsOfObject(Oid classId, Oid objectId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -770,12 +745,10 @@ bool
 sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId)
 {
 	bool		ret = false;
-	Relation	depRel;
 	ScanKeyData key[2];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -786,7 +759,7 @@ sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(seqId));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 2, key);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -819,12 +792,10 @@ static List *
 getOwnedSequences_internal(Oid relid, AttrNumber attnum, char deptype)
 {
 	List	   *result = NIL;
-	Relation	depRel;
 	ScanKeyData key[3];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -840,7 +811,7 @@ getOwnedSequences_internal(Oid relid, AttrNumber attnum, char deptype)
 					BTEqualStrategyNumber, F_INT4EQ,
 					Int32GetDatum(attnum));
 
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  NULL, attnum ? 3 : 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -911,13 +882,11 @@ Oid
 get_index_constraint(Oid indexId)
 {
 	Oid			constraintId = InvalidOid;
-	Relation	depRel;
 	ScanKeyData key[3];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
 	/* Search the dependency table for the index */
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -932,7 +901,7 @@ get_index_constraint(Oid indexId)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(0));
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  NULL, 3, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -967,13 +936,11 @@ List *
 get_index_ref_constraints(Oid indexId)
 {
 	List	   *result = NIL;
-	Relation	depRel;
 	ScanKeyData key[3];
-	SysScanDesc scan;
 	HeapTuple	tup;
 
 	/* Search the dependency table for the index */
-	depRel = table_open(DependRelationId, AccessShareLock);
+	Relation	depRel = table_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -988,7 +955,7 @@ get_index_ref_constraints(Oid indexId)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(0));
 
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+	SysScanDesc scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  NULL, 3, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))

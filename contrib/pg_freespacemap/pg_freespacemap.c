@@ -25,17 +25,15 @@ pg_freespace(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	int64		blkno = PG_GETARG_INT64(1);
-	int16		freespace;
-	Relation	rel;
 
-	rel = relation_open(relid, AccessShareLock);
+	Relation	rel = relation_open(relid, AccessShareLock);
 
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid block number")));
 
-	freespace = GetRecordedFreeSpace(rel, blkno);
+	int16		freespace = GetRecordedFreeSpace(rel, blkno);
 
 	relation_close(rel, AccessShareLock);
 	PG_RETURN_INT16(freespace);

@@ -151,10 +151,9 @@ static void
 extendBufFile(BufFile *file)
 {
 	File		pfile;
-	ResourceOwner oldowner;
 
 	/* Be sure to associate the file with the BufFile's resource owner */
-	oldowner = CurrentResourceOwner;
+	ResourceOwner oldowner = CurrentResourceOwner;
 	CurrentResourceOwner = file->resowner;
 
 	if (file->fileset == NULL)
@@ -187,8 +186,6 @@ extendBufFile(BufFile *file)
 BufFile *
 BufFileCreateTemp(bool interXact)
 {
-	BufFile    *file;
-	File		pfile;
 
 	/*
 	 * Ensure that temp tablespaces are set up for OpenTemporaryFile to use.
@@ -201,10 +198,10 @@ BufFileCreateTemp(bool interXact)
 	 */
 	PrepareTempTablespaces();
 
-	pfile = OpenTemporaryFile(interXact);
+	File		pfile = OpenTemporaryFile(interXact);
 	Assert(pfile >= 0);
 
-	file = makeBufFile(pfile);
+	BufFile    *file = makeBufFile(pfile);
 	file->isInterXact = interXact;
 
 	return file;
@@ -226,7 +223,6 @@ static File
 MakeNewSharedSegment(BufFile *buffile, int segment)
 {
 	char		name[MAXPGPATH];
-	File		file;
 
 	/*
 	 * It is possible that there are files left over from before a crash
@@ -239,7 +235,7 @@ MakeNewSharedSegment(BufFile *buffile, int segment)
 
 	/* Create the new segment. */
 	SharedSegmentName(name, buffile->name, segment);
-	file = SharedFileSetCreate(buffile->fileset, name);
+	File		file = SharedFileSetCreate(buffile->fileset, name);
 
 	/* SharedFileSetCreate would've errored out */
 	Assert(file > 0);
@@ -261,9 +257,8 @@ MakeNewSharedSegment(BufFile *buffile, int segment)
 BufFile *
 BufFileCreateShared(SharedFileSet *fileset, const char *name)
 {
-	BufFile    *file;
 
-	file = makeBufFileCommon(1);
+	BufFile    *file = makeBufFileCommon(1);
 	file->fileset = fileset;
 	file->name = pstrdup(name);
 	file->files = (File *) palloc(sizeof(File));
@@ -283,13 +278,11 @@ BufFileCreateShared(SharedFileSet *fileset, const char *name)
 BufFile *
 BufFileOpenShared(SharedFileSet *fileset, const char *name, int mode)
 {
-	BufFile    *file;
 	char		segment_name[MAXPGPATH];
 	Size		capacity = 16;
-	File	   *files;
 	int			nfiles = 0;
 
-	files = palloc(sizeof(File) * capacity);
+	File	   *files = palloc(sizeof(File) * capacity);
 
 	/*
 	 * We don't know how many segments there are, so we'll probe the
@@ -323,7 +316,7 @@ BufFileOpenShared(SharedFileSet *fileset, const char *name, int mode)
 				 errmsg("could not open temporary file \"%s\" from BufFile \"%s\": %m",
 						segment_name, name)));
 
-	file = makeBufFileCommon(nfiles);
+	BufFile    *file = makeBufFileCommon(nfiles);
 	file->files = files;
 	file->readOnly = (mode == O_RDONLY) ? true : false;
 	file->fileset = fileset;
@@ -416,7 +409,6 @@ BufFileClose(BufFile *file)
 static void
 BufFileLoadBuffer(BufFile *file)
 {
-	File		thisfile;
 
 	/*
 	 * Advance to next component file if necessary and possible.
@@ -431,7 +423,7 @@ BufFileLoadBuffer(BufFile *file)
 	/*
 	 * Read whatever we can get, up to a full bufferload.
 	 */
-	thisfile = file->files[file->curFile];
+	File		thisfile = file->files[file->curFile];
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
 							sizeof(file->buffer),
@@ -472,7 +464,6 @@ BufFileDumpBuffer(BufFile *file)
 	 */
 	while (wpos < file->nbytes)
 	{
-		off_t		availbytes;
 
 		/*
 		 * Advance to next component file if necessary and possible.
@@ -489,7 +480,7 @@ BufFileDumpBuffer(BufFile *file)
 		 * Determine how much we need to write into this file.
 		 */
 		bytestowrite = file->nbytes - wpos;
-		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
+		off_t		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
 		if ((off_t) bytestowrite > availbytes)
 			bytestowrite = (int) availbytes;
@@ -775,9 +766,8 @@ BufFileSeekBlock(BufFile *file, long blknum)
 long
 BufFileTellBlock(BufFile *file)
 {
-	long		blknum;
 
-	blknum = (file->curOffset + file->pos) / BLCKSZ;
+	long		blknum = (file->curOffset + file->pos) / BLCKSZ;
 	blknum += file->curFile * BUFFILE_SEG_SIZE;
 	return blknum;
 }
@@ -793,12 +783,11 @@ BufFileTellBlock(BufFile *file)
 int64
 BufFileSize(BufFile *file)
 {
-	int64		lastFileSize;
 
 	Assert(file->fileset != NULL);
 
 	/* Get the size of the last physical file. */
-	lastFileSize = FileSize(file->files[file->numFiles - 1]);
+	int64		lastFileSize = FileSize(file->files[file->numFiles - 1]);
 	if (lastFileSize < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

@@ -27,9 +27,8 @@ PG_FUNCTION_INFO_V1(gin_extract_hstore);
 static text *
 makeitem(char *str, int len, char flag)
 {
-	text	   *item;
 
-	item = (text *) palloc(VARHDRSZ + len + 1);
+	text	   *item = (text *) palloc(VARHDRSZ + len + 1);
 	SET_VARSIZE(item, VARHDRSZ + len + 1);
 
 	*VARDATA(item) = flag;
@@ -57,9 +56,8 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; ++i)
 	{
-		text	   *item;
 
-		item = makeitem(HSTORE_KEY(hsent, ptr, i),
+		text	   *item = makeitem(HSTORE_KEY(hsent, ptr, i),
 						HSTORE_KEYLEN(hsent, i),
 						KEYFLAG);
 		entries[2 * i] = PointerGetDatum(item);
@@ -100,11 +98,10 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 	else if (strategy == HStoreExistsStrategyNumber)
 	{
 		text	   *query = PG_GETARG_TEXT_PP(0);
-		text	   *item;
 
 		*nentries = 1;
 		entries = (Datum *) palloc(sizeof(Datum));
-		item = makeitem(VARDATA_ANY(query), VARSIZE_ANY_EXHDR(query), KEYFLAG);
+		text	   *item = makeitem(VARDATA_ANY(query), VARSIZE_ANY_EXHDR(query), KEYFLAG);
 		entries[0] = PointerGetDatum(item);
 	}
 	else if (strategy == HStoreExistsAnyStrategyNumber ||

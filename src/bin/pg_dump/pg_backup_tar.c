@@ -125,7 +125,6 @@ static size_t _scriptOut(ArchiveHandle *AH, const void *buf, size_t len);
 void
 InitArchiveFmt_Tar(ArchiveHandle *AH)
 {
-	lclContext *ctx;
 
 	/* Assuming static functions, this can be copied for each format. */
 	AH->ArchiveEntryPtr = _ArchiveEntry;
@@ -156,7 +155,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	lclContext *ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
@@ -242,10 +241,9 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 static void
 _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
-	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	lclTocEntry *ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (te->dataDumper != NULL)
 	{
 #ifdef HAVE_LIBZ
@@ -357,7 +355,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	}
 	else
 	{
-		int			old_umask;
 
 		tm = pg_malloc0(sizeof(TAR_MEMBER));
 
@@ -367,7 +364,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		 * might retain the data but forget tmpfile()'s unlink().  If so, the
 		 * file mode protects confidentiality of the data written.
 		 */
-		old_umask = umask(S_IRWXG | S_IRWXO);
+		int			old_umask = umask(S_IRWXG | S_IRWXO);
 
 #ifndef WIN32
 		tm->tmpFH = tmpfile();
@@ -380,13 +377,11 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		 */
 		while (1)
 		{
-			char	   *name;
-			int			fd;
 
-			name = _tempnam(NULL, "pg_temp_");
+			char	   *name = _tempnam(NULL, "pg_temp_");
 			if (name == NULL)
 				break;
-			fd = open(name, O_RDWR | O_CREAT | O_EXCL | O_BINARY |
+			int			fd = open(name, O_RDWR | O_CREAT | O_EXCL | O_BINARY |
 					  O_TEMPORARY, S_IRUSR | S_IWUSR);
 			free(name);
 
@@ -505,13 +500,12 @@ static size_t
 _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		avail;
 	size_t		used = 0;
 	size_t		res = 0;
 
 	Assert(th || fh);
 
-	avail = AH->lookaheadLen - AH->lookaheadPos;
+	size_t		avail = AH->lookaheadLen - AH->lookaheadPos;
 	if (avail > 0)
 	{
 		/* We have some lookahead bytes to use */
@@ -573,7 +567,6 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 static size_t
 tarRead(void *buf, size_t len, TAR_MEMBER *th)
 {
-	size_t		res;
 
 	if (th->pos + len > th->fileLen)
 		len = th->fileLen - th->pos;
@@ -581,7 +574,7 @@ tarRead(void *buf, size_t len, TAR_MEMBER *th)
 	if (len <= 0)
 		return 0;
 
-	res = _tarReadRaw(th->AH, buf, len, th, NULL);
+	size_t		res = _tarReadRaw(th->AH, buf, len, th, NULL);
 
 	th->pos += res;
 
@@ -630,12 +623,11 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		buf[4096];
 	size_t		cnt;
-	TAR_MEMBER *th;
 
 	if (!filename)
 		return;
 
-	th = tarOpen(AH, filename, 'r');
+	TAR_MEMBER *th = tarOpen(AH, filename, 'r');
 	ctx->FH = th;
 
 	while ((cnt = tarRead(buf, 4095, th)) > 0)
@@ -710,14 +702,13 @@ _LoadBlobs(ArchiveHandle *AH)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
-	TAR_MEMBER *th;
 	size_t		cnt;
 	bool		foundBlob = false;
 	char		buf[4096];
 
 	StartRestoreBlobs(AH);
 
-	th = tarOpen(AH, NULL, 'r');	/* Open next file */
+	TAR_MEMBER *th = tarOpen(AH, NULL, 'r');	/* Open next file */
 	while (th != NULL)
 	{
 		ctx->FH = th;
@@ -778,10 +769,9 @@ static int
 _ReadByte(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 	unsigned char c;
 
-	res = tarRead(&c, 1, ctx->FH);
+	size_t		res = tarRead(&c, 1, ctx->FH);
 	if (res != 1)
 		/* We already would have exited for errors on reads, must be EOF */
 		fatal("could not read from input file: end of file");
@@ -1038,10 +1028,9 @@ tarPrintf(TAR_MEMBER *th, const char *fmt,...)
 bool
 isValidTarHeader(char *header)
 {
-	int			sum;
 	int			chk = tarChecksum(header);
 
-	sum = read_tar_number(&header[148], 8);
+	int			sum = read_tar_number(&header[148], 8);
 
 	if (sum != chk)
 		return false;

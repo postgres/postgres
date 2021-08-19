@@ -162,10 +162,9 @@ SysLoggerMain(int argc, char *argv[])
 	char	   *currentLogDir;
 	char	   *currentLogFilename;
 	int			currentLogRotationAge;
-	pg_time_t	now;
 	WaitEventSet *wes;
 
-	now = MyStartTime;
+	pg_time_t	now = MyStartTime;
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
@@ -437,9 +436,8 @@ SysLoggerMain(int argc, char *argv[])
 		 */
 		if (Log_RotationAge > 0 && !rotation_disabled)
 		{
-			pg_time_t	delay;
 
-			delay = next_rotation_time - now;
+			pg_time_t	delay = next_rotation_time - now;
 			if (delay > 0)
 			{
 				if (delay > INT_MAX / 1000)
@@ -461,9 +459,8 @@ SysLoggerMain(int argc, char *argv[])
 
 		if (rc == 1 && event.events == WL_SOCKET_READABLE)
 		{
-			int			bytesRead;
 
-			bytesRead = read(syslogPipe[0],
+			int			bytesRead = read(syslogPipe[0],
 							 logbuffer + bytes_in_logbuffer,
 							 sizeof(logbuffer) - bytes_in_logbuffer);
 			if (bytesRead < 0)
@@ -894,7 +891,6 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 			(p.is_last == 't' || p.is_last == 'f' ||
 			 p.is_last == 'T' || p.is_last == 'F'))
 		{
-			List	   *buffer_list;
 			ListCell   *cell;
 			save_buffer *existing_slot = NULL,
 					   *free_slot = NULL;
@@ -910,7 +906,7 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 				LOG_DESTINATION_CSVLOG : LOG_DESTINATION_STDERR;
 
 			/* Locate any existing buffer for this source pid */
-			buffer_list = buffer_lists[p.pid % NBUFFER_LISTS];
+			List	   *buffer_list = buffer_lists[p.pid % NBUFFER_LISTS];
 			foreach(cell, buffer_list)
 			{
 				save_buffer *buf = (save_buffer *) lfirst(cell);
@@ -1078,8 +1074,6 @@ flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 void
 write_syslogger_file(const char *buffer, int count, int destination)
 {
-	int			rc;
-	FILE	   *logfile;
 
 	/*
 	 * If we're told to write to csvlogFile, but it's not open, dump the data
@@ -1093,10 +1087,10 @@ write_syslogger_file(const char *buffer, int count, int destination)
 	 * Think not to improve this by trying to open csvlogFile on-the-fly.  Any
 	 * failure in that would lead to recursion.
 	 */
-	logfile = (destination == LOG_DESTINATION_CSVLOG &&
+	FILE	   *logfile = (destination == LOG_DESTINATION_CSVLOG &&
 			   csvlogFile != NULL) ? csvlogFile : syslogFile;
 
-	rc = fwrite(buffer, 1, count, logfile);
+	int			rc = fwrite(buffer, 1, count, logfile);
 
 	/*
 	 * Try to report any failure.  We mustn't use ereport because it would
@@ -1126,9 +1120,8 @@ pipeThread(void *arg)
 	for (;;)
 	{
 		DWORD		bytesRead;
-		BOOL		result;
 
-		result = ReadFile(syslogPipe[0],
+		BOOL		result = ReadFile(syslogPipe[0],
 						  logbuffer + bytes_in_logbuffer,
 						  sizeof(logbuffer) - bytes_in_logbuffer,
 						  &bytesRead, 0);
@@ -1196,15 +1189,13 @@ pipeThread(void *arg)
 static FILE *
 logfile_open(const char *filename, const char *mode, bool allow_errors)
 {
-	FILE	   *fh;
-	mode_t		oumask;
 
 	/*
 	 * Note we do not let Log_file_mode disable IWUSR, since we certainly want
 	 * to be able to write the files ourselves.
 	 */
-	oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
-	fh = fopen(filename, mode);
+	mode_t		oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
+	FILE	   *fh = fopen(filename, mode);
 	umask(oumask);
 
 	if (fh)
@@ -1236,7 +1227,6 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 static void
 logfile_rotate(bool time_based_rotation, int size_rotation_for)
 {
-	char	   *filename;
 	char	   *csvfilename = NULL;
 	pg_time_t	fntime;
 	FILE	   *fh;
@@ -1252,7 +1242,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		fntime = next_rotation_time;
 	else
 		fntime = time(NULL);
-	filename = logfile_getname(fntime, NULL);
+	char	   *filename = logfile_getname(fntime, NULL);
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 		csvfilename = logfile_getname(fntime, ".csv");
 
@@ -1388,14 +1378,12 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 static char *
 logfile_getname(pg_time_t timestamp, const char *suffix)
 {
-	char	   *filename;
-	int			len;
 
-	filename = palloc(MAXPGPATH);
+	char	   *filename = palloc(MAXPGPATH);
 
 	snprintf(filename, MAXPGPATH, "%s/", Log_directory);
 
-	len = strlen(filename);
+	int			len = strlen(filename);
 
 	/* treat Log_filename as a strftime pattern */
 	pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
@@ -1418,9 +1406,6 @@ logfile_getname(pg_time_t timestamp, const char *suffix)
 static void
 set_next_rotation_time(void)
 {
-	pg_time_t	now;
-	struct pg_tm *tm;
-	int			rotinterval;
 
 	/* nothing to do if time-based rotation is disabled */
 	if (Log_RotationAge <= 0)
@@ -1432,9 +1417,9 @@ set_next_rotation_time(void)
 	 * fairly loosely.  In this version we align to log_timezone rather than
 	 * GMT.
 	 */
-	rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
-	now = (pg_time_t) time(NULL);
-	tm = pg_localtime(&now, log_timezone);
+	int			rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
+	pg_time_t	now = (pg_time_t) time(NULL);
+	struct pg_tm *tm = pg_localtime(&now, log_timezone);
 	now += tm->tm_gmtoff;
 	now -= now % rotinterval;
 	now += rotinterval;
@@ -1453,8 +1438,6 @@ set_next_rotation_time(void)
 static void
 update_metainfo_datafile(void)
 {
-	FILE	   *fh;
-	mode_t		oumask;
 
 	if (!(Log_destination & LOG_DESTINATION_STDERR) &&
 		!(Log_destination & LOG_DESTINATION_CSVLOG))
@@ -1468,8 +1451,8 @@ update_metainfo_datafile(void)
 	}
 
 	/* use the same permissions as the data directory for the new file */
-	oumask = umask(pg_mode_mask);
-	fh = fopen(LOG_METAINFO_DATAFILE_TMP, "w");
+	mode_t		oumask = umask(pg_mode_mask);
+	FILE	   *fh = fopen(LOG_METAINFO_DATAFILE_TMP, "w");
 	umask(oumask);
 
 	if (fh)

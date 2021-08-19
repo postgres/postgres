@@ -100,7 +100,6 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 						pg_checksum_context *checksum_ctx)
 {
 	char		pathbuf[MAXPGPATH];
-	int			pathlen;
 	StringInfoData buf;
 
 	if (!IsManifestEnabled(manifest))
@@ -140,7 +139,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 	 * manifest is always stored in UTF-8, so we have to encode paths that are
 	 * not valid in that encoding.
 	 */
-	pathlen = strlen(pathname);
+	int			pathlen = strlen(pathname);
 	if (!manifest->force_encode &&
 		pg_verify_mbstr(PG_UTF8, pathname, pathlen, true))
 	{
@@ -175,9 +174,8 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 	if (checksum_ctx->type != CHECKSUM_TYPE_NONE)
 	{
 		uint8		checksumbuf[PG_CHECKSUM_MAX_LENGTH];
-		int			checksumlen;
 
-		checksumlen = pg_checksum_final(checksum_ctx, checksumbuf);
+		int			checksumlen = pg_checksum_final(checksum_ctx, checksumbuf);
 		if (checksumlen < 0)
 			elog(ERROR, "could not finalize checksum of file \"%s\"",
 				 pathname);
@@ -210,7 +208,6 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 						   TimeLineID starttli, XLogRecPtr endptr,
 						   TimeLineID endtli)
 {
-	List	   *timelines;
 	ListCell   *lc;
 	bool		first_wal_range = true;
 	bool		found_start_timeline = false;
@@ -222,7 +219,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 	AppendStringToManifest(manifest, "\n],\n");
 
 	/* Read the timeline history for the ending timeline. */
-	timelines = readTimeLineHistory(endtli);
+	List	   *timelines = readTimeLineHistory(endtli);
 
 	/* Start a list of LSN ranges. */
 	AppendStringToManifest(manifest, "\"WAL-Ranges\": [\n");
@@ -361,12 +358,10 @@ SendBackupManifest(backup_manifest_info *manifest)
 	while (manifest_bytes_done < manifest->manifest_size)
 	{
 		char		manifestbuf[BLCKSZ];
-		size_t		bytes_to_read;
-		size_t		rc;
 
-		bytes_to_read = Min(sizeof(manifestbuf),
+		size_t		bytes_to_read = Min(sizeof(manifestbuf),
 							manifest->manifest_size - manifest_bytes_done);
-		rc = BufFileRead(manifest->buffile, manifestbuf, bytes_to_read);
+		size_t		rc = BufFileRead(manifest->buffile, manifestbuf, bytes_to_read);
 		if (rc != bytes_to_read)
 			ereport(ERROR,
 					(errcode_for_file_access(),

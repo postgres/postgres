@@ -144,7 +144,6 @@ fmtId(const char *rawid)
 const char *
 fmtQualifiedId(const char *schema, const char *id)
 {
-	PQExpBuffer id_return;
 	PQExpBuffer lcl_pqexp = createPQExpBuffer();
 
 	/* Some callers might fail to provide a schema name */
@@ -154,7 +153,7 @@ fmtQualifiedId(const char *schema, const char *id)
 	}
 	appendPQExpBufferStr(lcl_pqexp, fmtId(id));
 
-	id_return = getLocalPQExpBuffer();
+	PQExpBuffer id_return = getLocalPQExpBuffer();
 
 	appendPQExpBufferStr(id_return, lcl_pqexp->data);
 	destroyPQExpBuffer(lcl_pqexp);
@@ -217,18 +216,16 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 {
 	size_t		length = strlen(str);
 	const char *source = str;
-	char	   *target;
 
 	if (!enlargePQExpBuffer(buf, 2 * length + 2))
 		return;
 
-	target = buf->data + buf->len;
+	char	   *target = buf->data + buf->len;
 	*target++ = '\'';
 
 	while (*source != '\0')
 	{
 		char		c = *source;
-		int			len;
 		int			i;
 
 		/* Fast path for plain ASCII */
@@ -244,7 +241,7 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 		}
 
 		/* Slow path for possible multibyte characters */
-		len = PQmblen(source, encoding);
+		int			len = PQmblen(source, encoding);
 
 		/* Copy the character */
 		for (i = 0; i < len; i++)
@@ -375,7 +372,6 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 				   bool std_strings)
 {
 	const unsigned char *source = str;
-	char	   *target;
 
 	static const char hextbl[] = "0123456789abcdef";
 
@@ -388,7 +384,7 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 	if (!enlargePQExpBuffer(buf, 2 * length + 5))
 		return;
 
-	target = buf->data + buf->len;
+	char	   *target = buf->data + buf->len;
 	*target++ = '\'';
 	if (!std_strings)
 		*target++ = '\\';
@@ -545,13 +541,12 @@ void
 appendConnStrVal(PQExpBuffer buf, const char *str)
 {
 	const char *s;
-	bool		needquotes;
 
 	/*
 	 * If the string is one or more plain ASCII characters, no need to quote
 	 * it. This is quite conservative, but better safe than sorry.
 	 */
-	needquotes = true;
+	bool		needquotes = true;
 	for (s = str; *s; s++)
 	{
 		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
@@ -590,14 +585,13 @@ void
 appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 {
 	const char *s;
-	bool complex;
 
 	/*
 	 * If the name is plain ASCII characters, emit a trivial "\connect "foo"".
 	 * For other names, even many not technically requiring it, skip to the
 	 * general case.  No database has a zero-length name.
 	 */
-	complex = false;
+	bool complex = false;
 
 	for (s = dbname; *s; s++)
 	{
@@ -656,10 +650,6 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 bool
 parsePGArray(const char *atext, char ***itemarray, int *nitems)
 {
-	int			inputlen;
-	char	  **items;
-	char	   *strings;
-	int			curitem;
 
 	/*
 	 * We expect input in the form of "{item,item,item}" where any item is
@@ -673,17 +663,17 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 	 */
 	*itemarray = NULL;
 	*nitems = 0;
-	inputlen = strlen(atext);
+	int			inputlen = strlen(atext);
 	if (inputlen < 2 || atext[0] != '{' || atext[inputlen - 1] != '}')
 		return false;			/* bad input */
-	items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
+	char	  **items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
 	if (items == NULL)
 		return false;			/* out of memory */
 	*itemarray = items;
-	strings = (char *) (items + inputlen);
+	char	   *strings = (char *) (items + inputlen);
 
 	atext++;					/* advance over initial '{' */
-	curitem = 0;
+	int			curitem = 0;
 	while (*atext != '}')
 	{
 		if (*atext == '\0')
@@ -755,16 +745,14 @@ appendReloptionsArray(PQExpBuffer buffer, const char *reloptions,
 	for (i = 0; i < noptions; i++)
 	{
 		char	   *option = options[i];
-		char	   *name;
-		char	   *separator;
 		char	   *value;
 
 		/*
 		 * Each array element should have the form name=value.  If the "=" is
 		 * missing for some reason, treat it like an empty value.
 		 */
-		name = option;
-		separator = strchr(option, '=');
+		char	   *name = option;
+		char	   *separator = strchr(option, '=');
 		if (separator)
 		{
 			*separator = '\0';
@@ -968,11 +956,8 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 				  PQExpBuffer namebuf, const char *pattern, bool force_escape)
 {
 	PQExpBufferData buf[3];
-	PQExpBuffer curbuf;
 	PQExpBuffer maxbuf;
 	int			i;
-	bool		inquotes;
-	const char *cp;
 
 	Assert(pattern != NULL);
 	Assert(namebuf != NULL);
@@ -980,8 +965,8 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 	/* callers should never expect "dbname.relname" format */
 	Assert(dbnamebuf == NULL || schemabuf != NULL);
 
-	inquotes = false;
-	cp = pattern;
+	bool		inquotes = false;
+	const char *cp = pattern;
 
 	if (dbnamebuf != NULL)
 		maxbuf = &buf[2];
@@ -990,7 +975,7 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 	else
 		maxbuf = &buf[0];
 
-	curbuf = &buf[0];
+	PQExpBuffer curbuf = &buf[0];
 	initPQExpBuffer(curbuf);
 	appendPQExpBufferStr(curbuf, "^(");
 	while (*cp)

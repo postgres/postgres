@@ -110,7 +110,6 @@ InvalidateTSCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 TSParserCacheEntry *
 lookup_ts_parser_cache(Oid prsId)
 {
-	TSParserCacheEntry *entry;
 
 	if (TSParserCacheHash == NULL)
 	{
@@ -136,7 +135,7 @@ lookup_ts_parser_cache(Oid prsId)
 		return lastUsedParser;
 
 	/* Try to look up an existing entry */
-	entry = (TSParserCacheEntry *) hash_search(TSParserCacheHash,
+	TSParserCacheEntry *entry = (TSParserCacheEntry *) hash_search(TSParserCacheHash,
 											   (void *) &prsId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
@@ -145,14 +144,12 @@ lookup_ts_parser_cache(Oid prsId)
 		 * If we didn't find one, we want to make one. But first look up the
 		 * object to be sure the OID is real.
 		 */
-		HeapTuple	tp;
-		Form_pg_ts_parser prs;
 
-		tp = SearchSysCache1(TSPARSEROID, ObjectIdGetDatum(prsId));
+		HeapTuple	tp = SearchSysCache1(TSPARSEROID, ObjectIdGetDatum(prsId));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for text search parser %u",
 				 prsId);
-		prs = (Form_pg_ts_parser) GETSTRUCT(tp);
+		Form_pg_ts_parser prs = (Form_pg_ts_parser) GETSTRUCT(tp);
 
 		/*
 		 * Sanity checks
@@ -207,7 +204,6 @@ lookup_ts_parser_cache(Oid prsId)
 TSDictionaryCacheEntry *
 lookup_ts_dictionary_cache(Oid dictId)
 {
-	TSDictionaryCacheEntry *entry;
 
 	if (TSDictionaryCacheHash == NULL)
 	{
@@ -235,7 +231,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 		return lastUsedDictionary;
 
 	/* Try to look up an existing entry */
-	entry = (TSDictionaryCacheEntry *) hash_search(TSDictionaryCacheHash,
+	TSDictionaryCacheEntry *entry = (TSDictionaryCacheEntry *) hash_search(TSDictionaryCacheHash,
 												   (void *) &dictId,
 												   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
@@ -246,15 +242,13 @@ lookup_ts_dictionary_cache(Oid dictId)
 		 */
 		HeapTuple	tpdict,
 					tptmpl;
-		Form_pg_ts_dict dict;
-		Form_pg_ts_template template;
 		MemoryContext saveCtx;
 
 		tpdict = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictId));
 		if (!HeapTupleIsValid(tpdict))
 			elog(ERROR, "cache lookup failed for text search dictionary %u",
 				 dictId);
-		dict = (Form_pg_ts_dict) GETSTRUCT(tpdict);
+		Form_pg_ts_dict dict = (Form_pg_ts_dict) GETSTRUCT(tpdict);
 
 		/*
 		 * Sanity checks
@@ -270,7 +264,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 		if (!HeapTupleIsValid(tptmpl))
 			elog(ERROR, "cache lookup failed for text search template %u",
 				 dict->dicttemplate);
-		template = (Form_pg_ts_template) GETSTRUCT(tptmpl);
+		Form_pg_ts_template template = (Form_pg_ts_template) GETSTRUCT(tptmpl);
 
 		/*
 		 * Sanity checks
@@ -315,17 +309,15 @@ lookup_ts_dictionary_cache(Oid dictId)
 		if (OidIsValid(template->tmplinit))
 		{
 			List	   *dictoptions;
-			Datum		opt;
 			bool		isnull;
-			MemoryContext oldcontext;
 
 			/*
 			 * Init method runs in dictionary's private memory context, and we
 			 * make sure the options are stored there too
 			 */
-			oldcontext = MemoryContextSwitchTo(entry->dictCtx);
+			MemoryContext oldcontext = MemoryContextSwitchTo(entry->dictCtx);
 
-			opt = SysCacheGetAttr(TSDICTOID, tpdict,
+			Datum		opt = SysCacheGetAttr(TSDICTOID, tpdict,
 								  Anum_pg_ts_dict_dictinitoption,
 								  &isnull);
 			if (isnull)
@@ -384,7 +376,6 @@ init_ts_config_cache(void)
 TSConfigCacheEntry *
 lookup_ts_config_cache(Oid cfgId)
 {
-	TSConfigCacheEntry *entry;
 
 	if (TSConfigCacheHash == NULL)
 	{
@@ -398,7 +389,7 @@ lookup_ts_config_cache(Oid cfgId)
 		return lastUsedConfig;
 
 	/* Try to look up an existing entry */
-	entry = (TSConfigCacheEntry *) hash_search(TSConfigCacheHash,
+	TSConfigCacheEntry *entry = (TSConfigCacheEntry *) hash_search(TSConfigCacheHash,
 											   (void *) &cfgId,
 											   HASH_FIND, NULL);
 	if (entry == NULL || !entry->isvalid)
@@ -407,24 +398,17 @@ lookup_ts_config_cache(Oid cfgId)
 		 * If we didn't find one, we want to make one. But first look up the
 		 * object to be sure the OID is real.
 		 */
-		HeapTuple	tp;
-		Form_pg_ts_config cfg;
-		Relation	maprel;
-		Relation	mapidx;
 		ScanKeyData mapskey;
-		SysScanDesc mapscan;
 		HeapTuple	maptup;
 		ListDictionary maplists[MAXTOKENTYPE + 1];
 		Oid			mapdicts[MAXDICTSPERTT];
-		int			maxtokentype;
-		int			ndicts;
 		int			i;
 
-		tp = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
+		HeapTuple	tp = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for text search configuration %u",
 				 cfgId);
-		cfg = (Form_pg_ts_config) GETSTRUCT(tp);
+		Form_pg_ts_config cfg = (Form_pg_ts_config) GETSTRUCT(tp);
 
 		/*
 		 * Sanity checks
@@ -469,17 +453,17 @@ lookup_ts_config_cache(Oid cfgId)
 		 * each token type, even though we didn't explicitly ask for that.
 		 */
 		MemSet(maplists, 0, sizeof(maplists));
-		maxtokentype = 0;
-		ndicts = 0;
+		int			maxtokentype = 0;
+		int			ndicts = 0;
 
 		ScanKeyInit(&mapskey,
 					Anum_pg_ts_config_map_mapcfg,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(cfgId));
 
-		maprel = table_open(TSConfigMapRelationId, AccessShareLock);
-		mapidx = index_open(TSConfigMapIndexId, AccessShareLock);
-		mapscan = systable_beginscan_ordered(maprel, mapidx,
+		Relation	maprel = table_open(TSConfigMapRelationId, AccessShareLock);
+		Relation	mapidx = index_open(TSConfigMapIndexId, AccessShareLock);
+		SysScanDesc mapscan = systable_beginscan_ordered(maprel, mapidx,
 											 NULL, 1, &mapskey);
 
 		while ((maptup = systable_getnext_ordered(mapscan, ForwardScanDirection)) != NULL)
@@ -593,12 +577,8 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 	 */
 	if (IsTransactionState() && MyDatabaseId != InvalidOid)
 	{
-		Oid			cfgId;
-		HeapTuple	tuple;
-		Form_pg_ts_config cfg;
-		char	   *buf;
 
-		cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
+		Oid			cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
 
 		/*
 		 * When source == PGC_S_TEST, don't throw a hard error for a
@@ -621,13 +601,13 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 		 * Modify the actually stored value to be fully qualified, to ensure
 		 * later changes of search_path don't affect it.
 		 */
-		tuple = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
+		HeapTuple	tuple = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for text search configuration %u",
 				 cfgId);
-		cfg = (Form_pg_ts_config) GETSTRUCT(tuple);
+		Form_pg_ts_config cfg = (Form_pg_ts_config) GETSTRUCT(tuple);
 
-		buf = quote_qualified_identifier(get_namespace_name(cfg->cfgnamespace),
+		char	   *buf = quote_qualified_identifier(get_namespace_name(cfg->cfgnamespace),
 										 NameStr(cfg->cfgname));
 
 		ReleaseSysCache(tuple);

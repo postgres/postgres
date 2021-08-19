@@ -155,9 +155,8 @@ ghstore_compress(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < count; ++i)
 		{
-			int			h;
 
-			h = crc32_sz((char *) HSTORE_KEY(hsent, ptr, i),
+			int			h = crc32_sz((char *) HSTORE_KEY(hsent, ptr, i),
 						 HSTORE_KEYLEN(hsent, i));
 			HASH(GETSIGN(res), h, siglen);
 			if (!HSTORE_VALISNULL(hsent, i))
@@ -177,7 +176,6 @@ ghstore_compress(PG_FUNCTION_ARGS)
 	else if (!ISALLTRUE(DatumGetPointer(entry->key)))
 	{
 		int32		i;
-		GISTTYPE   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
 		LOOPBYTE(siglen)
@@ -186,7 +184,7 @@ ghstore_compress(PG_FUNCTION_ARGS)
 				PG_RETURN_POINTER(retval);
 		}
 
-		res = ghstore_alloc(true, siglen, NULL);
+		GISTTYPE   *res = ghstore_alloc(true, siglen, NULL);
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
@@ -372,18 +370,16 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 				size_beta;
 	int32		size_waste,
 				waste = -1;
-	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
 			   *right;
 	BITVECP		ptr;
 	int			i;
-	SPLITCOST  *costvector;
 	GISTTYPE   *_k,
 			   *_j;
 
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -421,7 +417,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;
@@ -507,7 +503,6 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	int			siglen = GET_SIGLEN();
 	bool		res = true;
-	BITVECP		sign;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
@@ -515,7 +510,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 	if (ISALLTRUE(entry))
 		PG_RETURN_BOOL(true);
 
-	sign = GETSIGN(entry);
+	BITVECP		sign = GETSIGN(entry);
 
 	if (strategy == HStoreContainsStrategyNumber ||
 		strategy == HStoreOldContainsStrategyNumber)
@@ -566,11 +561,10 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 		for (i = 0; res && i < key_count; ++i)
 		{
-			int			crc;
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			int			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
 			if (!(GETBIT(sign, HASHVAL(crc, siglen))))
 				res = false;
 		}
@@ -591,11 +585,10 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 		for (i = 0; !res && i < key_count; ++i)
 		{
-			int			crc;
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			int			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
 			if (GETBIT(sign, HASHVAL(crc, siglen)))
 				res = true;
 		}

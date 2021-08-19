@@ -38,10 +38,9 @@ static const uint16 ECPGScanKeywordTokens[] = {
 int
 ScanECPGKeywordLookup(const char *text)
 {
-	int			kwnum;
 
 	/* First check SQL symbols defined by the backend. */
-	kwnum = ScanKeywordLookup(text, &ScanKeywords);
+	int			kwnum = ScanKeywordLookup(text, &ScanKeywords);
 	if (kwnum >= 0)
 		return SQLScanKeywordTokens[kwnum];
 

@@ -145,12 +145,10 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < NBuffers; i++)
 		{
-			BufferDesc *bufHdr;
-			uint32		buf_state;
 
-			bufHdr = GetBufferDescriptor(i);
+			BufferDesc *bufHdr = GetBufferDescriptor(i);
 			/* Lock each buffer header before inspecting. */
-			buf_state = LockBufHdr(bufHdr);
+			uint32		buf_state = LockBufHdr(bufHdr);
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
 			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;

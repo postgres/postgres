@@ -40,14 +40,13 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 				 int *nmaps,
 				 const char *old_pgdata, const char *new_pgdata)
 {
-	FileNameMap *maps;
 	int			old_relnum,
 				new_relnum;
 	int			num_maps = 0;
 	bool		all_matched = true;
 
 	/* There will certainly not be more mappings than there are old rels */
-	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
+	FileNameMap *maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
 	/*
@@ -338,10 +337,7 @@ static void
 get_db_infos(ClusterInfo *cluster)
 {
 	PGconn	   *conn = connectToServer(cluster, "template1");
-	PGresult   *res;
-	int			ntups;
 	int			tupnum;
-	DbInfo	   *dbinfos;
 	int			i_datname,
 				i_oid,
 				i_encoding,
@@ -363,7 +359,7 @@ get_db_infos(ClusterInfo *cluster)
 			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid)");
 
-	res = executeQueryOrDie(conn, "%s", query);
+	PGresult   *res = executeQueryOrDie(conn, "%s", query);
 
 	i_oid = PQfnumber(res, "oid");
 	i_datname = PQfnumber(res, "datname");
@@ -372,8 +368,8 @@ get_db_infos(ClusterInfo *cluster)
 	i_datctype = PQfnumber(res, "datctype");
 	i_spclocation = PQfnumber(res, "spclocation");
 
-	ntups = PQntuples(res);
-	dbinfos = (DbInfo *) pg_malloc(sizeof(DbInfo) * ntups);
+	int			ntups = PQntuples(res);
+	DbInfo	   *dbinfos = (DbInfo *) pg_malloc(sizeof(DbInfo) * ntups);
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
@@ -408,9 +404,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 {
 	PGconn	   *conn = connectToServer(cluster,
 									   dbinfo->db_name);
-	PGresult   *res;
-	RelInfo    *relinfos;
-	int			ntups;
 	int			relnum;
 	int			num_rels = 0;
 	char	   *nspname = NULL;
@@ -510,11 +503,11 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation" :
 			 "t.spclocation");
 
-	res = executeQueryOrDie(conn, "%s", query);
+	PGresult   *res = executeQueryOrDie(conn, "%s", query);
 
-	ntups = PQntuples(res);
+	int			ntups = PQntuples(res);
 
-	relinfos = (RelInfo *) pg_malloc(sizeof(RelInfo) * ntups);
+	RelInfo    *relinfos = (RelInfo *) pg_malloc(sizeof(RelInfo) * ntups);
 
 	i_reloid = PQfnumber(res, "reloid");
 	i_indtable = PQfnumber(res, "indtable");

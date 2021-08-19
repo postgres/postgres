@@ -82,27 +82,16 @@ plsample_call_handler(PG_FUNCTION_ARGS)
 static Datum
 plsample_func_handler(PG_FUNCTION_ARGS)
 {
-	HeapTuple	pl_tuple;
-	Datum		ret;
-	char	   *source;
 	bool		isnull;
-	FmgrInfo   *arg_out_func;
 	Form_pg_type type_struct;
 	HeapTuple	type_tuple;
-	Form_pg_proc pl_struct;
-	volatile MemoryContext proc_cxt = NULL;
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
-	char	   *proname;
-	Form_pg_type pg_type_entry;
-	Oid			result_typioparam;
-	Oid			prorettype;
 	FmgrInfo	result_in_func;
-	int			numargs;
 
 	/* Fetch the source text of the function. */
-	pl_tuple = SearchSysCache(PROCOID,
+	HeapTuple	pl_tuple = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(fcinfo->flinfo->fn_oid), 0, 0, 0);
 	if (!HeapTupleIsValid(pl_tuple))
 		elog(ERROR, "cache lookup failed for function %u",
@@ -112,13 +101,13 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	 * Extract and print the source text of the function.  This can be used as
 	 * a base for the function validation and execution.
 	 */
-	pl_struct = (Form_pg_proc) GETSTRUCT(pl_tuple);
-	proname = pstrdup(NameStr(pl_struct->proname));
-	ret = SysCacheGetAttr(PROCOID, pl_tuple, Anum_pg_proc_prosrc, &isnull);
+	Form_pg_proc pl_struct = (Form_pg_proc) GETSTRUCT(pl_tuple);
+	char	   *proname = pstrdup(NameStr(pl_struct->proname));
+	Datum		ret = SysCacheGetAttr(PROCOID, pl_tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "could not find source text of function \"%s\"",
 			 proname);
-	source = DatumGetCString(DirectFunctionCall1(textout, ret));
+	char	   *source = DatumGetCString(DirectFunctionCall1(textout, ret));
 	ereport(NOTICE,
 			(errmsg("source text of function \"%s\": %s",
 					proname, source)));
@@ -127,12 +116,12 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	 * Allocate a context that will hold all the Postgres data for the
 	 * procedure.
 	 */
-	proc_cxt = AllocSetContextCreate(TopMemoryContext,
+	volatile MemoryContext proc_cxt = AllocSetContextCreate(TopMemoryContext,
 									 "PL/Sample function",
 									 ALLOCSET_SMALL_SIZES);
 
-	arg_out_func = (FmgrInfo *) palloc0(fcinfo->nargs * sizeof(FmgrInfo));
-	numargs = get_func_arg_info(pl_tuple, &argtypes, &argnames, &argmodes);
+	FmgrInfo   *arg_out_func = (FmgrInfo *) palloc0(fcinfo->nargs * sizeof(FmgrInfo));
+	int			numargs = get_func_arg_info(pl_tuple, &argtypes, &argnames, &argmodes);
 
 	/*
 	 * Iterate through all of the function arguments, printing each input
@@ -158,7 +147,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	}
 
 	/* Type of the result */
-	prorettype = pl_struct->prorettype;
+	Oid			prorettype = pl_struct->prorettype;
 	ReleaseSysCache(pl_tuple);
 
 	/*
@@ -176,8 +165,8 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 								 ObjectIdGetDatum(prorettype));
 	if (!HeapTupleIsValid(type_tuple))
 		elog(ERROR, "cache lookup failed for type %u", prorettype);
-	pg_type_entry = (Form_pg_type) GETSTRUCT(type_tuple);
-	result_typioparam = getTypeIOParam(type_tuple);
+	Form_pg_type pg_type_entry = (Form_pg_type) GETSTRUCT(type_tuple);
+	Oid			result_typioparam = getTypeIOParam(type_tuple);
 
 	fmgr_info_cxt(pg_type_entry->typinput, &result_in_func, proc_cxt);
 	ReleaseSysCache(type_tuple);

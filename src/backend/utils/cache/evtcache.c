@@ -63,11 +63,10 @@ static Bitmapset *DecodeTextArrayToBitmapset(Datum array);
 List *
 EventCacheLookup(EventTriggerEvent event)
 {
-	EventTriggerCacheEntry *entry;
 
 	if (EventTriggerCacheState != ETCS_VALID)
 		BuildEventTriggerCache();
-	entry = hash_search(EventTriggerCache, &event, HASH_FIND, NULL);
+	EventTriggerCacheEntry *entry = hash_search(EventTriggerCache, &event, HASH_FIND, NULL);
 	return entry != NULL ? entry->triggerlist : NIL;
 }
 
@@ -78,11 +77,6 @@ static void
 BuildEventTriggerCache(void)
 {
 	HASHCTL		ctl;
-	HTAB	   *cache;
-	MemoryContext oldcontext;
-	Relation	rel;
-	Relation	irel;
-	SysScanDesc scan;
 
 	if (EventTriggerCacheContext != NULL)
 	{
@@ -112,7 +106,7 @@ BuildEventTriggerCache(void)
 	}
 
 	/* Switch to correct memory context. */
-	oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
 
 	/* Prevent the memory context from being nuked while we're rebuilding. */
 	EventTriggerCacheState = ETCS_REBUILD_STARTED;
@@ -121,15 +115,15 @@ BuildEventTriggerCache(void)
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
 	ctl.hcxt = EventTriggerCacheContext;
-	cache = hash_create("Event Trigger Cache", 32, &ctl,
+	HTAB	   *cache = hash_create("Event Trigger Cache", 32, &ctl,
 						HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
 	 * Prepare to scan pg_event_trigger in name order.
 	 */
-	rel = relation_open(EventTriggerRelationId, AccessShareLock);
-	irel = index_open(EventTriggerNameIndexId, AccessShareLock);
-	scan = systable_beginscan_ordered(rel, irel, NULL, 0, NULL);
+	Relation	rel = relation_open(EventTriggerRelationId, AccessShareLock);
+	Relation	irel = index_open(EventTriggerNameIndexId, AccessShareLock);
+	SysScanDesc scan = systable_beginscan_ordered(rel, irel, NULL, 0, NULL);
 
 	/*
 	 * Build a cache item for each pg_event_trigger tuple, and append each one
@@ -137,28 +131,22 @@ BuildEventTriggerCache(void)
 	 */
 	for (;;)
 	{
-		HeapTuple	tup;
-		Form_pg_event_trigger form;
-		char	   *evtevent;
 		EventTriggerEvent event;
-		EventTriggerCacheItem *item;
-		Datum		evttags;
 		bool		evttags_isnull;
-		EventTriggerCacheEntry *entry;
 		bool		found;
 
 		/* Get next tuple. */
-		tup = systable_getnext_ordered(scan, ForwardScanDirection);
+		HeapTuple	tup = systable_getnext_ordered(scan, ForwardScanDirection);
 		if (!HeapTupleIsValid(tup))
 			break;
 
 		/* Skip trigger if disabled. */
-		form = (Form_pg_event_trigger) GETSTRUCT(tup);
+		Form_pg_event_trigger form = (Form_pg_event_trigger) GETSTRUCT(tup);
 		if (form->evtenabled == TRIGGER_DISABLED)
 			continue;
 
 		/* Decode event name. */
-		evtevent = NameStr(form->evtevent);
+		char	   *evtevent = NameStr(form->evtevent);
 		if (strcmp(evtevent, "ddl_command_start") == 0)
 			event = EVT_DDLCommandStart;
 		else if (strcmp(evtevent, "ddl_command_end") == 0)
@@ -171,18 +159,18 @@ BuildEventTriggerCache(void)
 			continue;
 
 		/* Allocate new cache item. */
-		item = palloc0(sizeof(EventTriggerCacheItem));
+		EventTriggerCacheItem *item = palloc0(sizeof(EventTriggerCacheItem));
 		item->fnoid = form->evtfoid;
 		item->enabled = form->evtenabled;
 
 		/* Decode and sort tags array. */
-		evttags = heap_getattr(tup, Anum_pg_event_trigger_evttags,
+		Datum		evttags = heap_getattr(tup, Anum_pg_event_trigger_evttags,
 							   RelationGetDescr(rel), &evttags_isnull);
 		if (!evttags_isnull)
 			item->tagset = DecodeTextArrayToBitmapset(evttags);
 
 		/* Add to cache entry. */
-		entry = hash_search(cache, &event, HASH_ENTER, &found);
+		EventTriggerCacheEntry *entry = hash_search(cache, &event, HASH_ENTER, &found);
 		if (found)
 			entry->triggerlist = lappend(entry->triggerlist, item);
 		else

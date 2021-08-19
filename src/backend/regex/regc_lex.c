@@ -199,7 +199,6 @@ prefixes(struct vars *v)
 static int						/* 1 normal, 0 failure */
 next(struct vars *v)
 {
-	chr			c;
 
 	/* errors yield an infinite sequence of failures */
 	if (ISERR())
@@ -252,7 +251,7 @@ next(struct vars *v)
 	}
 
 	/* okay, time to actually get a character */
-	c = *v->now++;
+	chr			c = *v->now++;
 
 	/* deal with the easy contexts, punt EREs to code below */
 	switch (v->lexcon)
@@ -599,7 +598,6 @@ next(struct vars *v)
 static int
 lexescape(struct vars *v)
 {
-	chr			c;
 	static const chr alert[] = {
 		CHR('a'), CHR('l'), CHR('e'), CHR('r'), CHR('t')
 	};
@@ -611,7 +609,7 @@ lexescape(struct vars *v)
 	assert(v->cflags & REG_ADVF);
 
 	assert(!ATEOS());
-	c = *v->now++;
+	chr			c = *v->now++;
 	if (!iscalnum(c))
 		RETV(PLAIN, c);
 
@@ -1015,21 +1013,17 @@ chrnamed(struct vars *v,
 		 const chr *endp,		/* just past end of name */
 		 chr lastresort)		/* what to return if name lookup fails */
 {
-	chr			c;
-	int			errsave;
-	int			e;
-	struct cvec *cv;
 
-	errsave = v->err;
+	int			errsave = v->err;
 	v->err = 0;
-	c = element(v, startp, endp);
-	e = v->err;
+	chr			c = element(v, startp, endp);
+	int			e = v->err;
 	v->err = errsave;
 
 	if (e != 0)
 		return lastresort;
 
-	cv = range(v, c, c, 0);
+	struct cvec *cv = range(v, c, c, 0);
 	if (cv->nchrs == 0)
 		return lastresort;
 	return cv->chrs[0];

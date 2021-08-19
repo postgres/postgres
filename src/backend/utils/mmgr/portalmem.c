@@ -174,11 +174,10 @@ PortalGetPrimaryStmt(Portal portal)
 Portal
 CreatePortal(const char *name, bool allowDup, bool dupSilent)
 {
-	Portal		portal;
 
 	AssertArg(PointerIsValid(name));
 
-	portal = GetPortalByName(name);
+	Portal		portal = GetPortalByName(name);
 	if (PortalIsValid(portal))
 	{
 		if (!allowDup)
@@ -329,7 +328,6 @@ PortalReleaseCachedPlan(Portal portal)
 void
 PortalCreateHoldStore(Portal portal)
 {
-	MemoryContext oldcxt;
 
 	Assert(portal->holdContext == NULL);
 	Assert(portal->holdStore == NULL);
@@ -350,7 +348,7 @@ PortalCreateHoldStore(Portal portal)
 	 *
 	 * XXX: Should maintenance_work_mem be used for the portal size?
 	 */
-	oldcxt = MemoryContextSwitchTo(portal->holdContext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(portal->holdContext);
 
 	portal->holdStore =
 		tuplestore_begin_heap(portal->cursorOptions & CURSOR_OPT_SCROLL,
@@ -578,9 +576,8 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 */
 	if (portal->holdStore)
 	{
-		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(portal->holdContext);
+		MemoryContext oldcontext = MemoryContextSwitchTo(portal->holdContext);
 		tuplestore_end(portal->holdStore);
 		MemoryContextSwitchTo(oldcontext);
 		portal->holdStore = NULL;
@@ -1127,10 +1124,6 @@ Datum
 pg_cursor(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	HASH_SEQ_STATUS hash_seq;
 	PortalHashEnt *hentry;
 
@@ -1145,14 +1138,14 @@ pg_cursor(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* need to build tuplestore in query context */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/*
 	 * build tupdesc for result tuples. This must match the definition of the
 	 * pg_cursors view in system_views.sql
 	 */
-	tupdesc = CreateTemplateTupleDesc(6);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
@@ -1170,7 +1163,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.
 	 * This avoids any issue of the hashtable possibly changing between calls.
 	 */
-	tupstore =
+	Tuplestorestate *tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
 

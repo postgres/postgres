@@ -201,14 +201,10 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 {
 	char	   *ucontext = NULL;
 	char	   *ncontext = NULL;
-	MemoryContext oldctx;
-	avc_cache  *cache;
-	uint32		hash;
-	int			index;
 	struct av_decision avd;
 
-	hash = sepgsql_avc_hash(scontext, tcontext, tclass);
-	index = hash % AVC_NUM_SLOTS;
+	uint32		hash = sepgsql_avc_hash(scontext, tcontext, tclass);
+	int			index = hash % AVC_NUM_SLOTS;
 
 	/*
 	 * Validation check of the supplied security context. Because it always
@@ -255,9 +251,9 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 	/*
 	 * Set up an avc_cache object
 	 */
-	oldctx = MemoryContextSwitchTo(avc_mem_cxt);
+	MemoryContext oldctx = MemoryContextSwitchTo(avc_mem_cxt);
 
-	cache = palloc0(sizeof(avc_cache));
+	avc_cache  *cache = palloc0(sizeof(avc_cache));
 
 	cache->hash = hash;
 	cache->scontext = pstrdup(scontext);
@@ -298,11 +294,9 @@ sepgsql_avc_lookup(const char *scontext, const char *tcontext, uint16 tclass)
 {
 	avc_cache  *cache;
 	ListCell   *cell;
-	uint32		hash;
-	int			index;
 
-	hash = sepgsql_avc_hash(scontext, tcontext, tclass);
-	index = hash % AVC_NUM_SLOTS;
+	uint32		hash = sepgsql_avc_hash(scontext, tcontext, tclass);
+	int			index = hash % AVC_NUM_SLOTS;
 
 	foreach(cell, avc_slots[index])
 	{
@@ -422,9 +416,8 @@ sepgsql_avc_check_perms(const ObjectAddress *tobject,
 						bool abort_on_violation)
 {
 	char	   *tcontext = GetSecurityLabel(tobject, SEPGSQL_LABEL_TAG);
-	bool		rc;
 
-	rc = sepgsql_avc_check_perms_label(tcontext,
+	bool		rc = sepgsql_avc_check_perms_label(tcontext,
 									   tclass, required,
 									   audit_name, abort_on_violation);
 	if (tcontext)
@@ -444,14 +437,13 @@ char *
 sepgsql_avc_trusted_proc(Oid functionId)
 {
 	char	   *scontext = sepgsql_get_client_label();
-	char	   *tcontext;
 	ObjectAddress tobject;
 	avc_cache  *cache;
 
 	tobject.classId = ProcedureRelationId;
 	tobject.objectId = functionId;
 	tobject.objectSubId = 0;
-	tcontext = GetSecurityLabel(&tobject, SEPGSQL_LABEL_TAG);
+	char	   *tcontext = GetSecurityLabel(&tobject, SEPGSQL_LABEL_TAG);
 
 	sepgsql_avc_check_valid();
 	do
@@ -486,7 +478,6 @@ sepgsql_avc_exit(int code, Datum arg)
 void
 sepgsql_avc_init(void)
 {
-	int			rc;
 
 	/*
 	 * All the avc stuff shall be allocated in avc_mem_cxt
@@ -506,7 +497,7 @@ sepgsql_avc_init(void)
 	 * supported in Linux-2.6.38 or later, however, libselinux provides a
 	 * fallback mode to know its status using netlink sockets.
 	 */
-	rc = selinux_status_open(1);
+	int			rc = selinux_status_open(1);
 	if (rc < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),

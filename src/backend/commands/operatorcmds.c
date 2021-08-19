@@ -65,8 +65,6 @@ ObjectAddress
 DefineOperator(List *names, List *parameters)
 {
 	char	   *oprName;
-	Oid			oprNamespace;
-	AclResult	aclresult;
 	bool		canMerge = false;	/* operator merges */
 	bool		canHash = false;	/* operator hashes */
 	List	   *functionName = NIL; /* function for operator */
@@ -74,7 +72,6 @@ DefineOperator(List *names, List *parameters)
 	TypeName   *typeName2 = NULL;	/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
-	Oid			rettype;
 	List	   *commutatorName = NIL;	/* optional commutator operator name */
 	List	   *negatorName = NIL;	/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. function */
@@ -87,10 +84,10 @@ DefineOperator(List *names, List *parameters)
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
-	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
+	Oid			oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
 
 	/* Check we have creation rights in target namespace */
-	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
+	AclResult	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(oprNamespace));
@@ -230,7 +227,7 @@ DefineOperator(List *names, List *parameters)
 		aclcheck_error(aclresult, OBJECT_FUNCTION,
 					   NameListToString(functionName));
 
-	rettype = get_func_rettype(functionOid);
+	Oid			rettype = get_func_rettype(functionOid);
 	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error_type(aclresult, rettype);
@@ -273,15 +270,13 @@ static Oid
 ValidateRestrictionEstimator(List *restrictionName)
 {
 	Oid			typeId[4];
-	Oid			restrictionOid;
-	AclResult	aclresult;
 
 	typeId[0] = INTERNALOID;	/* PlannerInfo */
 	typeId[1] = OIDOID;			/* operator OID */
 	typeId[2] = INTERNALOID;	/* args list */
 	typeId[3] = INT4OID;		/* varRelid */
 
-	restrictionOid = LookupFuncName(restrictionName, 4, typeId, false);
+	Oid			restrictionOid = LookupFuncName(restrictionName, 4, typeId, false);
 
 	/* estimators must return float8 */
 	if (get_func_rettype(restrictionOid) != FLOAT8OID)
@@ -291,7 +286,7 @@ ValidateRestrictionEstimator(List *restrictionName)
 						NameListToString(restrictionName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
-	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
+	AclResult	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION,
 					   NameListToString(restrictionName));
@@ -308,9 +303,6 @@ static Oid
 ValidateJoinEstimator(List *joinName)
 {
 	Oid			typeId[5];
-	Oid			joinOid;
-	Oid			joinOid2;
-	AclResult	aclresult;
 
 	typeId[0] = INTERNALOID;	/* PlannerInfo */
 	typeId[1] = OIDOID;			/* operator OID */
@@ -323,8 +315,8 @@ ValidateJoinEstimator(List *joinName)
 	 * arguments, but we still allow the old 4-argument form.  Whine about
 	 * ambiguity if both forms exist.
 	 */
-	joinOid = LookupFuncName(joinName, 5, typeId, true);
-	joinOid2 = LookupFuncName(joinName, 4, typeId, true);
+	Oid			joinOid = LookupFuncName(joinName, 5, typeId, true);
+	Oid			joinOid2 = LookupFuncName(joinName, 4, typeId, true);
 	if (OidIsValid(joinOid))
 	{
 		if (OidIsValid(joinOid2))
@@ -349,7 +341,7 @@ ValidateJoinEstimator(List *joinName)
 						NameListToString(joinName), "float8")));
 
 	/* Require EXECUTE rights for the estimator */
-	aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
+	AclResult	aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION,
 					   NameListToString(joinName));
@@ -363,16 +355,13 @@ ValidateJoinEstimator(List *joinName)
 void
 RemoveOperatorById(Oid operOid)
 {
-	Relation	relation;
-	HeapTuple	tup;
-	Form_pg_operator op;
 
-	relation = table_open(OperatorRelationId, RowExclusiveLock);
+	Relation	relation = table_open(OperatorRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+	HeapTuple	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for operator %u", operOid);
-	op = (Form_pg_operator) GETSTRUCT(tup);
+	Form_pg_operator op = (Form_pg_operator) GETSTRUCT(tup);
 
 	/*
 	 * Reset links from commutator and negator, if any.  In case of a
@@ -408,11 +397,6 @@ RemoveOperatorById(Oid operOid)
 ObjectAddress
 AlterOperator(AlterOperatorStmt *stmt)
 {
-	ObjectAddress address;
-	Oid			oprId;
-	Relation	catalog;
-	HeapTuple	tup;
-	Form_pg_operator oprForm;
 	int			i;
 	ListCell   *pl;
 	Datum		values[Natts_pg_operator];
@@ -426,12 +410,12 @@ AlterOperator(AlterOperatorStmt *stmt)
 	Oid			joinOid;
 
 	/* Look up the operator */
-	oprId = LookupOperWithArgs(stmt->opername, false);
-	catalog = table_open(OperatorRelationId, RowExclusiveLock);
-	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
+	Oid			oprId = LookupOperWithArgs(stmt->opername, false);
+	Relation	catalog = table_open(OperatorRelationId, RowExclusiveLock);
+	HeapTuple	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for operator %u", oprId);
-	oprForm = (Form_pg_operator) GETSTRUCT(tup);
+	Form_pg_operator oprForm = (Form_pg_operator) GETSTRUCT(tup);
 
 	/* Process options */
 	foreach(pl, stmt->options)
@@ -542,7 +526,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 
 	CatalogTupleUpdate(catalog, &tup->t_self, tup);
 
-	address = makeOperatorDependencies(tup, false, true);
+	ObjectAddress address = makeOperatorDependencies(tup, false, true);
 
 	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
 

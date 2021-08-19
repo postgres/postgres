@@ -50,14 +50,11 @@ MainLoop(FILE *source)
 	volatile bool need_redisplay = false;
 	volatile int count_eof = 0;
 	volatile bool die_on_error = false;
-	FILE	   *prev_cmd_source;
-	bool		prev_cmd_interactive;
-	uint64		prev_lineno;
 
 	/* Save the prior command source */
-	prev_cmd_source = pset.cur_cmd_source;
-	prev_cmd_interactive = pset.cur_cmd_interactive;
-	prev_lineno = pset.lineno;
+	FILE	   *prev_cmd_source = pset.cur_cmd_source;
+	bool		prev_cmd_interactive = pset.cur_cmd_interactive;
+	uint64		prev_lineno = pset.lineno;
 	/* pset.stmt_lineno does not need to be saved and restored */
 
 	/* Establish new source */
@@ -388,13 +385,10 @@ MainLoop(FILE *source)
 
 		while (success || !die_on_error)
 		{
-			PsqlScanResult scan_result;
 			promptStatus_t prompt_tmp = prompt_status;
-			size_t		pos_in_query;
-			char	   *tmp_line;
 
-			pos_in_query = query_buf->len;
-			scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
+			size_t		pos_in_query = query_buf->len;
+			PsqlScanResult scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
 			prompt_status = prompt_tmp;
 
 			if (PQExpBufferBroken(query_buf))
@@ -409,7 +403,7 @@ MainLoop(FILE *source)
 			 * will be ones to add when navigating to a statement in
 			 * readline's history containing newlines.
 			 */
-			tmp_line = query_buf->data + pos_in_query;
+			char	   *tmp_line = query_buf->data + pos_in_query;
 			while (*tmp_line != '\0')
 			{
 				if (*(tmp_line++) == '\n')

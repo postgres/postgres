@@ -109,12 +109,8 @@ AppendState *
 ExecInitAppend(Append *node, EState *estate, int eflags)
 {
 	AppendState *appendstate = makeNode(AppendState);
-	PlanState **appendplanstates;
 	Bitmapset  *validsubplans;
-	Bitmapset  *asyncplans;
 	int			nplans;
-	int			nasyncplans;
-	int			firstvalid;
 	int			i,
 				j;
 
@@ -136,13 +132,12 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	/* If run-time partition pruning is enabled, then set that up now */
 	if (node->part_prune_info != NULL)
 	{
-		PartitionPruneState *prunestate;
 
 		/* We may need an expression context to evaluate partition exprs */
 		ExecAssignExprContext(estate, &appendstate->ps);
 
 		/* Create the working data structure for pruning. */
-		prunestate = ExecCreatePartitionPruneState(&appendstate->ps,
+		PartitionPruneState *prunestate = ExecCreatePartitionPruneState(&appendstate->ps,
 												   node->part_prune_info);
 		appendstate->as_prune_state = prunestate;
 
@@ -194,7 +189,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendstate->ps.resultopsset = true;
 	appendstate->ps.resultopsfixed = false;
 
-	appendplanstates = (PlanState **) palloc(nplans *
+	PlanState **appendplanstates = (PlanState **) palloc(nplans *
 											 sizeof(PlanState *));
 
 	/*
@@ -204,9 +199,9 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	 * While at it, find out the first valid partial plan.
 	 */
 	j = 0;
-	asyncplans = NULL;
-	nasyncplans = 0;
-	firstvalid = nplans;
+	Bitmapset  *asyncplans = NULL;
+	int			nasyncplans = 0;
+	int			firstvalid = nplans;
 	i = -1;
 	while ((i = bms_next_member(validsubplans, i)) >= 0)
 	{
@@ -255,9 +250,8 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		i = -1;
 		while ((i = bms_next_member(asyncplans, i)) >= 0)
 		{
-			AsyncRequest *areq;
 
-			areq = palloc(sizeof(AsyncRequest));
+			AsyncRequest *areq = palloc(sizeof(AsyncRequest));
 			areq->requestor = (PlanState *) appendstate;
 			areq->requestee = appendplanstates[i];
 			areq->request_index = i;
@@ -333,7 +327,6 @@ ExecAppend(PlanState *pstate)
 
 	for (;;)
 	{
-		PlanState  *subnode;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -352,7 +345,7 @@ ExecAppend(PlanState *pstate)
 		 * figure out which sync subplan we are currently processing
 		 */
 		Assert(node->as_whichplan >= 0 && node->as_whichplan < node->as_nplans);
-		subnode = node->appendplans[node->as_whichplan];
+		PlanState  *subnode = node->appendplans[node->as_whichplan];
 
 		/*
 		 * get a tuple from the subplan
@@ -394,15 +387,13 @@ ExecAppend(PlanState *pstate)
 void
 ExecEndAppend(AppendState *node)
 {
-	PlanState **appendplans;
-	int			nplans;
 	int			i;
 
 	/*
 	 * get information from the node
 	 */
-	appendplans = node->appendplans;
-	nplans = node->as_nplans;
+	PlanState **appendplans = node->appendplans;
+	int			nplans = node->as_nplans;
 
 	/*
 	 * shut down each of the subscans
@@ -514,9 +505,8 @@ void
 ExecAppendInitializeDSM(AppendState *node,
 						ParallelContext *pcxt)
 {
-	ParallelAppendState *pstate;
 
-	pstate = shm_toc_allocate(pcxt->toc, node->pstate_len);
+	ParallelAppendState *pstate = shm_toc_allocate(pcxt->toc, node->pstate_len);
 	memset(pstate, 0, node->pstate_len);
 	LWLockInitialize(&pstate->pa_lock, LWTRANCHE_PARALLEL_APPEND);
 	shm_toc_insert(pcxt->toc, node->ps.plan->plan_node_id, pstate);
@@ -747,9 +737,8 @@ choose_next_subplan_for_worker(AppendState *node)
 	/* Loop until we find a valid subplan to execute. */
 	while (pstate->pa_finished[pstate->pa_next_plan])
 	{
-		int			nextplan;
 
-		nextplan = bms_next_member(node->as_valid_subplans,
+		int			nextplan = bms_next_member(node->as_valid_subplans,
 								   pstate->pa_next_plan);
 		if (nextplan >= 0)
 		{
@@ -866,7 +855,6 @@ mark_invalid_subplans_as_finished(AppendState *node)
 static void
 ExecAppendAsyncBegin(AppendState *node)
 {
-	int			i;
 
 	/* Backward scan is not supported by async-aware Appends. */
 	Assert(ScanDirectionIsForward(node->ps.state->es_direction));
@@ -895,7 +883,7 @@ ExecAppendAsyncBegin(AppendState *node)
 		return;
 
 	/* Make a request for each of the valid async subplans. */
-	i = -1;
+	int			i = -1;
 	while ((i = bms_next_member(node->as_valid_asyncplans, i)) >= 0)
 	{
 		AsyncRequest *areq = node->as_asyncrequests[i];
@@ -966,8 +954,6 @@ ExecAppendAsyncGetNext(AppendState *node, TupleTableSlot **result)
 static bool
 ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
 {
-	Bitmapset  *needrequest;
-	int			i;
 
 	/* Nothing to do if there are no async subplans needing a new request. */
 	if (bms_is_empty(node->as_needrequest))
@@ -988,9 +974,9 @@ ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
 	}
 
 	/* Make a new request for each of the async subplans that need it. */
-	needrequest = node->as_needrequest;
+	Bitmapset  *needrequest = node->as_needrequest;
 	node->as_needrequest = NULL;
-	i = -1;
+	int			i = -1;
 	while ((i = bms_next_member(needrequest, i)) >= 0)
 	{
 		AsyncRequest *areq = node->as_asyncrequests[i];
@@ -1023,8 +1009,6 @@ ExecAppendAsyncEventWait(AppendState *node)
 	int			nevents = node->as_nasyncplans + 1;
 	long		timeout = node->as_syncdone ? -1 : 0;
 	WaitEvent	occurred_event[EVENT_BUFFER_SIZE];
-	int			noccurred;
-	int			i;
 
 	/* We should never be called when there are no valid async subplans. */
 	Assert(node->as_nasyncremain > 0);
@@ -1034,7 +1018,7 @@ ExecAppendAsyncEventWait(AppendState *node)
 					  NULL, NULL);
 
 	/* Give each waiting subplan a chance to add an event. */
-	i = -1;
+	int			i = -1;
 	while ((i = bms_next_member(node->as_asyncplans, i)) >= 0)
 	{
 		AsyncRequest *areq = node->as_asyncrequests[i];
@@ -1062,7 +1046,7 @@ ExecAppendAsyncEventWait(AppendState *node)
 	 * If the timeout is -1, wait until at least one event occurs.  If the
 	 * timeout is 0, poll for events, but do not wait at all.
 	 */
-	noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
+	int			noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
 								 nevents, WAIT_EVENT_APPEND_READY);
 	FreeWaitEventSet(node->as_eventset);
 	node->as_eventset = NULL;
@@ -1153,7 +1137,6 @@ ExecAsyncAppendResponse(AsyncRequest *areq)
 static void
 classify_matching_subplans(AppendState *node)
 {
-	Bitmapset  *valid_asyncplans;
 
 	Assert(node->as_valid_asyncplans == NULL);
 
@@ -1173,7 +1156,7 @@ classify_matching_subplans(AppendState *node)
 	}
 
 	/* Get valid async subplans. */
-	valid_asyncplans = bms_copy(node->as_asyncplans);
+	Bitmapset  *valid_asyncplans = bms_copy(node->as_asyncplans);
 	valid_asyncplans = bms_int_members(valid_asyncplans,
 									   node->as_valid_subplans);
 

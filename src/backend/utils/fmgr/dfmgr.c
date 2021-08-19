@@ -107,22 +107,19 @@ void *
 load_external_function(const char *filename, const char *funcname,
 					   bool signalNotFound, void **filehandle)
 {
-	char	   *fullname;
-	void	   *lib_handle;
-	void	   *retval;
 
 	/* Expand the possibly-abbreviated filename to an exact path name */
-	fullname = expand_dynamic_library_name(filename);
+	char	   *fullname = expand_dynamic_library_name(filename);
 
 	/* Load the shared library, unless we already did */
-	lib_handle = internal_load_library(fullname);
+	void	   *lib_handle = internal_load_library(fullname);
 
 	/* Return handle if caller wants it */
 	if (filehandle)
 		*filehandle = lib_handle;
 
 	/* Look up the function within the library. */
-	retval = dlsym(lib_handle, funcname);
+	void	   *retval = dlsym(lib_handle, funcname);
 
 	if (retval == NULL && signalNotFound)
 		ereport(ERROR,
@@ -145,14 +142,13 @@ load_external_function(const char *filename, const char *funcname,
 void
 load_file(const char *filename, bool restricted)
 {
-	char	   *fullname;
 
 	/* Apply security restriction if requested */
 	if (restricted)
 		check_restricted_library_name(filename);
 
 	/* Expand the possibly-abbreviated filename to an exact path name */
-	fullname = expand_dynamic_library_name(filename);
+	char	   *fullname = expand_dynamic_library_name(filename);
 
 	/* Unload the library if currently loaded */
 	internal_unload_library(fullname);
@@ -485,13 +481,11 @@ file_exists(const char *name)
 static char *
 expand_dynamic_library_name(const char *name)
 {
-	bool		have_slash;
-	char	   *new;
 	char	   *full;
 
 	AssertArg(name);
 
-	have_slash = (first_dir_separator(name) != NULL);
+	bool		have_slash = (first_dir_separator(name) != NULL);
 
 	if (!have_slash)
 	{
@@ -507,7 +501,7 @@ expand_dynamic_library_name(const char *name)
 		pfree(full);
 	}
 
-	new = psprintf("%s%s", name, DLSUFFIX);
+	char	   *new = psprintf("%s%s", name, DLSUFFIX);
 
 	if (!have_slash)
 	{
@@ -586,27 +580,22 @@ substitute_libpath_macro(const char *name)
 static char *
 find_in_dynamic_libpath(const char *basename)
 {
-	const char *p;
-	size_t		baselen;
 
 	AssertArg(basename != NULL);
 	AssertArg(first_dir_separator(basename) == NULL);
 	AssertState(Dynamic_library_path != NULL);
 
-	p = Dynamic_library_path;
+	const char *p = Dynamic_library_path;
 	if (strlen(p) == 0)
 		return NULL;
 
-	baselen = strlen(basename);
+	size_t		baselen = strlen(basename);
 
 	for (;;)
 	{
 		size_t		len;
-		char	   *piece;
-		char	   *mangled;
-		char	   *full;
 
-		piece = first_path_var_separator(p);
+		char	   *piece = first_path_var_separator(p);
 		if (piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
@@ -620,7 +609,7 @@ find_in_dynamic_libpath(const char *basename)
 		piece = palloc(len + 1);
 		strlcpy(piece, p, len + 1);
 
-		mangled = substitute_libpath_macro(piece);
+		char	   *mangled = substitute_libpath_macro(piece);
 		pfree(piece);
 
 		canonicalize_path(mangled);
@@ -631,7 +620,7 @@ find_in_dynamic_libpath(const char *basename)
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
-		full = palloc(strlen(mangled) + 1 + baselen + 1);
+		char	   *full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);
 		pfree(mangled);
 
@@ -672,7 +661,6 @@ find_rendezvous_variable(const char *varName)
 {
 	static HTAB *rendezvousHash = NULL;
 
-	rendezvousHashEntry *hentry;
 	bool		found;
 
 	/* Create a hashtable if we haven't already done so in this process */
@@ -689,7 +677,7 @@ find_rendezvous_variable(const char *varName)
 	}
 
 	/* Find or create the hashtable entry for this varName */
-	hentry = (rendezvousHashEntry *) hash_search(rendezvousHash,
+	rendezvousHashEntry *hentry = (rendezvousHashEntry *) hash_search(rendezvousHash,
 												 varName,
 												 HASH_ENTER,
 												 &found);
@@ -731,9 +719,8 @@ SerializeLibraryState(Size maxsize, char *start_address)
 		 file_scanner != NULL;
 		 file_scanner = file_scanner->next)
 	{
-		Size		len;
 
-		len = strlcpy(start_address, file_scanner->filename, maxsize) + 1;
+		Size		len = strlcpy(start_address, file_scanner->filename, maxsize) + 1;
 		Assert(len < maxsize);
 		maxsize -= len;
 		start_address += len;

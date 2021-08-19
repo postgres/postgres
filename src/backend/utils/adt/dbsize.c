@@ -62,10 +62,9 @@ db_dir_size(const char *path)
 {
 	int64		dirsize = 0;
 	struct dirent *direntry;
-	DIR		   *dirdesc;
 	char		filename[MAXPGPATH * 2];
 
-	dirdesc = AllocateDir(path);
+	DIR		   *dirdesc = AllocateDir(path);
 
 	if (!dirdesc)
 		return 0;
@@ -104,18 +103,15 @@ db_dir_size(const char *path)
 static int64
 calculate_database_size(Oid dbOid)
 {
-	int64		totalsize;
-	DIR		   *dirdesc;
 	struct dirent *direntry;
 	char		dirpath[MAXPGPATH];
 	char		pathname[MAXPGPATH + 21 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
-	AclResult	aclresult;
 
 	/*
 	 * User must have connect privilege for target database or be a member of
 	 * pg_read_all_stats
 	 */
-	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
+	AclResult	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
 	if (aclresult != ACLCHECK_OK &&
 		!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
@@ -127,11 +123,11 @@ calculate_database_size(Oid dbOid)
 
 	/* Include pg_default storage */
 	snprintf(pathname, sizeof(pathname), "base/%u", dbOid);
-	totalsize = db_dir_size(pathname);
+	int64		totalsize = db_dir_size(pathname);
 
 	/* Scan the non-default tablespaces */
 	snprintf(dirpath, MAXPGPATH, "pg_tblspc");
-	dirdesc = AllocateDir(dirpath);
+	DIR		   *dirdesc = AllocateDir(dirpath);
 
 	while ((direntry = ReadDir(dirdesc, dirpath)) != NULL)
 	{
@@ -155,9 +151,8 @@ Datum
 pg_database_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			dbOid = PG_GETARG_OID(0);
-	int64		size;
 
-	size = calculate_database_size(dbOid);
+	int64		size = calculate_database_size(dbOid);
 
 	if (size == 0)
 		PG_RETURN_NULL();
@@ -170,9 +165,8 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 {
 	Name		dbName = PG_GETARG_NAME(0);
 	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
-	int64		size;
 
-	size = calculate_database_size(dbOid);
+	int64		size = calculate_database_size(dbOid);
 
 	if (size == 0)
 		PG_RETURN_NULL();
@@ -191,7 +185,6 @@ calculate_tablespace_size(Oid tblspcOid)
 	char		tblspcPath[MAXPGPATH];
 	char		pathname[MAXPGPATH * 2];
 	int64		totalsize = 0;
-	DIR		   *dirdesc;
 	struct dirent *direntry;
 	AclResult	aclresult;
 
@@ -217,7 +210,7 @@ calculate_tablespace_size(Oid tblspcOid)
 		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u/%s", tblspcOid,
 				 TABLESPACE_VERSION_DIRECTORY);
 
-	dirdesc = AllocateDir(tblspcPath);
+	DIR		   *dirdesc = AllocateDir(tblspcPath);
 
 	if (!dirdesc)
 		return -1;
@@ -259,9 +252,8 @@ Datum
 pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			tblspcOid = PG_GETARG_OID(0);
-	int64		size;
 
-	size = calculate_tablespace_size(tblspcOid);
+	int64		size = calculate_tablespace_size(tblspcOid);
 
 	if (size < 0)
 		PG_RETURN_NULL();
@@ -274,9 +266,8 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
-	int64		size;
 
-	size = calculate_tablespace_size(tblspcOid);
+	int64		size = calculate_tablespace_size(tblspcOid);
 
 	if (size < 0)
 		PG_RETURN_NULL();
@@ -295,11 +286,10 @@ static int64
 calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)
 {
 	int64		totalsize = 0;
-	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	relationpath = relpathbackend(*rfn, backend, forknum);
+	char	   *relationpath = relpathbackend(*rfn, backend, forknum);
 
 	for (segcount = 0;; segcount++)
 	{
@@ -334,10 +324,8 @@ pg_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
 	text	   *forkName = PG_GETARG_TEXT_PP(1);
-	Relation	rel;
-	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	Relation	rel = try_relation_open(relOid, AccessShareLock);
 
 	/*
 	 * Before 9.2, we used to throw an error if the relation didn't exist, but
@@ -349,7 +337,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
+	int64		size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
 								   forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
@@ -365,12 +353,10 @@ static int64
 calculate_toast_table_size(Oid toastrelid)
 {
 	int64		size = 0;
-	Relation	toastRel;
 	ForkNumber	forkNum;
 	ListCell   *lc;
-	List	   *indexlist;
 
-	toastRel = relation_open(toastrelid, AccessShareLock);
+	Relation	toastRel = relation_open(toastrelid, AccessShareLock);
 
 	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
@@ -378,14 +364,13 @@ calculate_toast_table_size(Oid toastrelid)
 										toastRel->rd_backend, forkNum);
 
 	/* toast index size, including FSM and VM size */
-	indexlist = RelationGetIndexList(toastRel);
+	List	   *indexlist = RelationGetIndexList(toastRel);
 
 	/* Size is calculated using all the indexes available */
 	foreach(lc, indexlist)
 	{
-		Relation	toastIdxRel;
 
-		toastIdxRel = relation_open(lfirst_oid(lc),
+		Relation	toastIdxRel = relation_open(lfirst_oid(lc),
 									AccessShareLock);
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 			size += calculate_relation_size(&(toastIdxRel->rd_node),
@@ -450,10 +435,9 @@ calculate_indexes_size(Relation rel)
 		foreach(cell, index_oids)
 		{
 			Oid			idxOid = lfirst_oid(cell);
-			Relation	idxRel;
 			ForkNumber	forkNum;
 
-			idxRel = relation_open(idxOid, AccessShareLock);
+			Relation	idxRel = relation_open(idxOid, AccessShareLock);
 
 			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 				size += calculate_relation_size(&(idxRel->rd_node),
@@ -473,15 +457,13 @@ Datum
 pg_table_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
-	Relation	rel;
-	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	Relation	rel = try_relation_open(relOid, AccessShareLock);
 
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-	size = calculate_table_size(rel);
+	int64		size = calculate_table_size(rel);
 
 	relation_close(rel, AccessShareLock);
 
@@ -492,15 +474,13 @@ Datum
 pg_indexes_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
-	Relation	rel;
-	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	Relation	rel = try_relation_open(relOid, AccessShareLock);
 
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-	size = calculate_indexes_size(rel);
+	int64		size = calculate_indexes_size(rel);
 
 	relation_close(rel, AccessShareLock);
 
@@ -514,13 +494,12 @@ pg_indexes_size(PG_FUNCTION_ARGS)
 static int64
 calculate_total_relation_size(Relation rel)
 {
-	int64		size;
 
 	/*
 	 * Aggregate the table size, this includes size of the heap, toast and
 	 * toast index with free space and visibility map
 	 */
-	size = calculate_table_size(rel);
+	int64		size = calculate_table_size(rel);
 
 	/*
 	 * Add size of all attached indexes as well
@@ -534,15 +513,13 @@ Datum
 pg_total_relation_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
-	Relation	rel;
-	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	Relation	rel = try_relation_open(relOid, AccessShareLock);
 
 	if (rel == NULL)
 		PG_RETURN_NULL();
 
-	size = calculate_total_relation_size(rel);
+	int64		size = calculate_total_relation_size(rel);
 
 	relation_close(rel, AccessShareLock);
 
@@ -561,7 +538,6 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 
 	for (unit = size_pretty_units; unit->name != NULL; unit++)
 	{
-		uint8		bits;
 
 		/* use this unit if there are no more units or we're below the limit */
 		if (unit[1].name == NULL || Abs(size) < unit->limit)
@@ -582,7 +558,7 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 		 * number of bits to ensure positive and negative values are rounded
 		 * in the same way.
 		 */
-		bits = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
+		uint8		bits = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
 				+ (unit->round == true));
 		size /= ((int64) 1) << bits;
 	}
@@ -611,9 +587,8 @@ static Numeric
 numeric_absolute(Numeric n)
 {
 	Datum		d = NumericGetDatum(n);
-	Datum		result;
 
-	result = DirectFunctionCall1(numeric_abs, d);
+	Datum		result = DirectFunctionCall1(numeric_abs, d);
 	return DatumGetNumeric(result);
 }
 
@@ -621,21 +596,17 @@ static Numeric
 numeric_half_rounded(Numeric n)
 {
 	Datum		d = NumericGetDatum(n);
-	Datum		zero;
-	Datum		one;
-	Datum		two;
-	Datum		result;
 
-	zero = NumericGetDatum(int64_to_numeric(0));
-	one = NumericGetDatum(int64_to_numeric(1));
-	two = NumericGetDatum(int64_to_numeric(2));
+	Datum		zero = NumericGetDatum(int64_to_numeric(0));
+	Datum		one = NumericGetDatum(int64_to_numeric(1));
+	Datum		two = NumericGetDatum(int64_to_numeric(2));
 
 	if (DatumGetBool(DirectFunctionCall2(numeric_ge, d, zero)))
 		d = DirectFunctionCall2(numeric_add, d, one);
 	else
 		d = DirectFunctionCall2(numeric_sub, d, one);
 
-	result = DirectFunctionCall2(numeric_div_trunc, d, two);
+	Datum		result = DirectFunctionCall2(numeric_div_trunc, d, two);
 	return DatumGetNumeric(result);
 }
 
@@ -643,11 +614,9 @@ static Numeric
 numeric_truncated_divide(Numeric n, int64 divisor)
 {
 	Datum		d = NumericGetDatum(n);
-	Datum		divisor_numeric;
-	Datum		result;
 
-	divisor_numeric = NumericGetDatum(int64_to_numeric(divisor));
-	result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
+	Datum		divisor_numeric = NumericGetDatum(int64_to_numeric(divisor));
+	Datum		result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
 	return DatumGetNumeric(result);
 }
 
@@ -660,7 +629,6 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 
 	for (unit = size_pretty_units; unit->name != NULL; unit++)
 	{
-		unsigned int shiftby;
 
 		/* use this unit if there are no more units or we're below the limit */
 		if (unit[1].name == NULL ||
@@ -681,7 +649,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		 * shift an extra bit if this unit uses half rounding and the next one
 		 * does not.
 		 */
-		shiftby = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
+		unsigned int shiftby = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
 				   + (unit->round == true));
 		size = numeric_truncated_divide(size, ((int64) 1) << shiftby);
 	}
@@ -699,9 +667,6 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	char	   *str,
 			   *strptr,
 			   *endptr;
-	char		saved_char;
-	Numeric		num;
-	int64		result;
 	bool		have_digits = false;
 
 	str = text_to_cstring(arg);
@@ -749,14 +714,13 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	/* Part (4): optional exponent */
 	if (*endptr == 'e' || *endptr == 'E')
 	{
-		long		exponent;
 		char	   *cp;
 
 		/*
 		 * Note we might one day support EB units, so if what follows 'E'
 		 * isn't a number, just treat it all as a unit to be parsed.
 		 */
-		exponent = strtol(endptr + 1, &cp, 10);
+		long		exponent = strtol(endptr + 1, &cp, 10);
 		(void) exponent;		/* Silence -Wunused-result warnings */
 		if (cp > endptr + 1)
 			endptr = cp;
@@ -766,10 +730,10 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	 * Parse the number, saving the next character, which may be the first
 	 * character of the unit string.
 	 */
-	saved_char = *endptr;
+	char		saved_char = *endptr;
 	*endptr = '\0';
 
-	num = DatumGetNumeric(DirectFunctionCall3(numeric_in,
+	Numeric		num = DatumGetNumeric(DirectFunctionCall3(numeric_in,
 											  CStringGetDatum(strptr),
 											  ObjectIdGetDatum(InvalidOid),
 											  Int32GetDatum(-1)));
@@ -816,9 +780,8 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 
 		if (multiplier > 1)
 		{
-			Numeric		mul_num;
 
-			mul_num = int64_to_numeric(multiplier);
+			Numeric		mul_num = int64_to_numeric(multiplier);
 
 			num = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
 													  NumericGetDatum(mul_num),
@@ -826,7 +789,7 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 		}
 	}
 
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8,
+	int64		result = DatumGetInt64(DirectFunctionCall1(numeric_int8,
 											   NumericGetDatum(num)));
 
 	PG_RETURN_INT64(result);
@@ -851,13 +814,11 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Oid			result;
-	HeapTuple	tuple;
-	Form_pg_class relform;
 
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
-	relform = (Form_pg_class) GETSTRUCT(tuple);
+	Form_pg_class relform = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (RELKIND_HAS_STORAGE(relform->relkind))
 	{
@@ -899,13 +860,12 @@ pg_filenode_relation(PG_FUNCTION_ARGS)
 {
 	Oid			reltablespace = PG_GETARG_OID(0);
 	Oid			relfilenode = PG_GETARG_OID(1);
-	Oid			heaprel;
 
 	/* test needed so RelidByRelfilenode doesn't misbehave */
 	if (!OidIsValid(relfilenode))
 		PG_RETURN_NULL();
 
-	heaprel = RelidByRelfilenode(reltablespace, relfilenode);
+	Oid			heaprel = RelidByRelfilenode(reltablespace, relfilenode);
 
 	if (!OidIsValid(heaprel))
 		PG_RETURN_NULL();
@@ -922,16 +882,13 @@ Datum
 pg_relation_filepath(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	Form_pg_class relform;
 	RelFileNode rnode;
 	BackendId	backend;
-	char	   *path;
 
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
-	relform = (Form_pg_class) GETSTRUCT(tuple);
+	Form_pg_class relform = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (RELKIND_HAS_STORAGE(relform->relkind))
 	{
@@ -990,7 +947,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(tuple);
 
-	path = relpathbackend(rnode, backend, MAIN_FORKNUM);
+	char	   *path = relpathbackend(rnode, backend, MAIN_FORKNUM);
 
 	PG_RETURN_TEXT_P(cstring_to_text(path));
 }

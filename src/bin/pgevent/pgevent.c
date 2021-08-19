@@ -65,7 +65,6 @@ STDAPI
 DllRegisterServer(void)
 {
 	HKEY		key;
-	DWORD		data;
 	char		buffer[_MAX_PATH];
 	char		key_name[400];
 
@@ -102,7 +101,7 @@ DllRegisterServer(void)
 	}
 
 	/* Set the supported event types in the TypesSupported subkey. */
-	data = EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE;
+	DWORD		data = EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE;
 
 	if (RegSetValueEx(key,
 					  "TypesSupported",

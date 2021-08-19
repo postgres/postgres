@@ -30,13 +30,11 @@ psql_start_test(const char *testname,
 				_stringlist **expectfiles,
 				_stringlist **tags)
 {
-	PID_TYPE	pid;
 	char		infile[MAXPGPATH];
 	char		outfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH];
 	char		psql_cmd[MAXPGPATH * 3];
 	size_t		offset = 0;
-	char	   *appnameenv;
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -91,11 +89,11 @@ psql_start_test(const char *testname,
 		exit(2);
 	}
 
-	appnameenv = psprintf("pg_regress/%s", testname);
+	char	   *appnameenv = psprintf("pg_regress/%s", testname);
 	setenv("PGAPPNAME", appnameenv, 1);
 	free(appnameenv);
 
-	pid = spawn_process(psql_cmd);
+	PID_TYPE	pid = spawn_process(psql_cmd);
 
 	if (pid == INVALID_PID)
 	{

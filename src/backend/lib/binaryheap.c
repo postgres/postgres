@@ -32,11 +32,9 @@ static inline void swap_nodes(binaryheap *heap, int a, int b);
 binaryheap *
 binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 {
-	int			sz;
-	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
-	heap = (binaryheap *) palloc(sz);
+	int			sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
+	binaryheap *heap = (binaryheap *) palloc(sz);
 	heap->bh_space = capacity;
 	heap->bh_compare = compare;
 	heap->bh_arg = arg;
@@ -217,9 +215,8 @@ binaryheap_replace_first(binaryheap *heap, Datum d)
 static inline void
 swap_nodes(binaryheap *heap, int a, int b)
 {
-	Datum		swap;
 
-	swap = heap->bh_nodes[a];
+	Datum		swap = heap->bh_nodes[a];
 	heap->bh_nodes[a] = heap->bh_nodes[b];
 	heap->bh_nodes[b] = swap;
 }
@@ -233,15 +230,13 @@ sift_up(binaryheap *heap, int node_off)
 {
 	while (node_off != 0)
 	{
-		int			cmp;
-		int			parent_off;
 
 		/*
 		 * If this node is smaller than its parent, the heap condition is
 		 * satisfied, and we're done.
 		 */
-		parent_off = parent_offset(node_off);
-		cmp = heap->bh_compare(heap->bh_nodes[node_off],
+		int			parent_off = parent_offset(node_off);
+		int			cmp = heap->bh_compare(heap->bh_nodes[node_off],
 							   heap->bh_nodes[parent_off],
 							   heap->bh_arg);
 		if (cmp <= 0)

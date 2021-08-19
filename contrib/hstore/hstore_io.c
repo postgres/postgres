@@ -387,23 +387,19 @@ hstoreCheckValLen(size_t len)
 HStore *
 hstorePairs(Pairs *pairs, int32 pcount, int32 buflen)
 {
-	HStore	   *out;
-	HEntry	   *entry;
 	char	   *ptr;
-	char	   *buf;
-	int32		len;
 	int32		i;
 
-	len = CALCDATASIZE(pcount, buflen);
-	out = palloc(len);
+	int32		len = CALCDATASIZE(pcount, buflen);
+	HStore	   *out = palloc(len);
 	SET_VARSIZE(out, len);
 	HS_SETCOUNT(out, pcount);
 
 	if (pcount == 0)
 		return out;
 
-	entry = ARRPTR(out);
-	buf = ptr = STRPTR(out);
+	HEntry	   *entry = ARRPTR(out);
+	char	   *buf = ptr = STRPTR(out);
 
 	for (i = 0; i < pcount; i++)
 		HS_ADDITEM(entry, buf, ptr, pairs[i]);
@@ -420,7 +416,6 @@ hstore_in(PG_FUNCTION_ARGS)
 {
 	HSParser	state;
 	int32		buflen;
-	HStore	   *out;
 
 	state.begin = PG_GETARG_CSTRING(0);
 
@@ -428,7 +423,7 @@ hstore_in(PG_FUNCTION_ARGS)
 
 	state.pcur = hstoreUniquePairs(state.pairs, state.pcur, &buflen);
 
-	out = hstorePairs(state.pairs, state.pcur, buflen);
+	HStore	   *out = hstorePairs(state.pairs, state.pcur, buflen);
 
 	PG_RETURN_POINTER(out);
 }
@@ -440,12 +435,10 @@ hstore_recv(PG_FUNCTION_ARGS)
 {
 	int32		buflen;
 	HStore	   *out;
-	Pairs	   *pairs;
 	int32		i;
-	int32		pcount;
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
-	pcount = pq_getmsgint(buf, 4);
+	int32		pcount = pq_getmsgint(buf, 4);
 
 	if (pcount == 0)
 	{
@@ -458,7 +451,7 @@ hstore_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
 						pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
-	pairs = palloc(pcount * sizeof(Pairs));
+	Pairs	   *pairs = palloc(pcount * sizeof(Pairs));
 
 	for (i = 0; i < pcount; ++i)
 	{
@@ -501,16 +494,14 @@ PG_FUNCTION_INFO_V1(hstore_from_text);
 Datum
 hstore_from_text(PG_FUNCTION_ARGS)
 {
-	text	   *key;
 	text	   *val = NULL;
 	Pairs		p;
-	HStore	   *out;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 	p.needfree = false;
-	key = PG_GETARG_TEXT_PP(0);
+	text	   *key = PG_GETARG_TEXT_PP(0);
 	p.key = VARDATA_ANY(key);
 	p.keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key));
 
@@ -527,7 +518,7 @@ hstore_from_text(PG_FUNCTION_ARGS)
 		p.isnull = false;
 	}
 
-	out = hstorePairs(&p, 1, p.keylen + p.vallen);
+	HStore	   *out = hstorePairs(&p, 1, p.keylen + p.vallen);
 
 	PG_RETURN_POINTER(out);
 }
@@ -538,22 +529,19 @@ Datum
 hstore_from_arrays(PG_FUNCTION_ARGS)
 {
 	int32		buflen;
-	HStore	   *out;
-	Pairs	   *pairs;
 	Datum	   *key_datums;
 	bool	   *key_nulls;
 	int			key_count;
 	Datum	   *value_datums;
 	bool	   *value_nulls;
 	int			value_count;
-	ArrayType  *key_array;
 	ArrayType  *value_array;
 	int			i;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	key_array = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *key_array = PG_GETARG_ARRAYTYPE_P(0);
 
 	Assert(ARR_ELEMTYPE(key_array) == TEXTOID);
 
@@ -613,7 +601,7 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 		Assert(key_count == value_count);
 	}
 
-	pairs = palloc(key_count * sizeof(Pairs));
+	Pairs	   *pairs = palloc(key_count * sizeof(Pairs));
 
 	for (i = 0; i < key_count; ++i)
 	{
@@ -647,7 +635,7 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 
 	key_count = hstoreUniquePairs(pairs, key_count, &buflen);
 
-	out = hstorePairs(pairs, key_count, buflen);
+	HStore	   *out = hstorePairs(pairs, key_count, buflen);
 
 	PG_RETURN_POINTER(out);
 }
@@ -659,10 +647,8 @@ hstore_from_array(PG_FUNCTION_ARGS)
 {
 	ArrayType  *in_array = PG_GETARG_ARRAYTYPE_P(0);
 	int			ndims = ARR_NDIM(in_array);
-	int			count;
 	int32		buflen;
 	HStore	   *out;
-	Pairs	   *pairs;
 	Datum	   *in_datums;
 	bool	   *in_nulls;
 	int			in_count;
@@ -700,7 +686,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &in_datums, &in_nulls, &in_count);
 
-	count = in_count / 2;
+	int			count = in_count / 2;
 
 	/* see discussion in hstoreArrayToPairs() */
 	if (count > MaxAllocSize / sizeof(Pairs))
@@ -709,7 +695,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
 						count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
-	pairs = palloc(count * sizeof(Pairs));
+	Pairs	   *pairs = palloc(count * sizeof(Pairs));
 
 	for (i = 0; i < count; ++i)
 	{
@@ -777,14 +763,9 @@ hstore_from_record(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec;
 	int32		buflen;
-	HStore	   *out;
-	Pairs	   *pairs;
 	Oid			tupType;
 	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	RecordIOData *my_extra;
-	int			ncolumns;
 	int			i,
 				j;
 	Datum	   *values;
@@ -818,14 +799,14 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
-	ncolumns = tupdesc->natts;
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
+	int			ncolumns = tupdesc->natts;
 
 	/*
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -850,7 +831,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	}
 
 	Assert(ncolumns <= MaxTupleAttributeNumber);	/* thus, no overflow */
-	pairs = palloc(ncolumns * sizeof(Pairs));
+	Pairs	   *pairs = palloc(ncolumns * sizeof(Pairs));
 
 	if (rec)
 	{
@@ -877,7 +858,6 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		Oid			column_type = att->atttypid;
-		char	   *value;
 
 		/* Ignore dropped columns in datatype */
 		if (att->attisdropped)
@@ -911,7 +891,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 			column_info->column_type = column_type;
 		}
 
-		value = OutputFunctionCall(&column_info->proc, values[i]);
+		char	   *value = OutputFunctionCall(&column_info->proc, values[i]);
 
 		pairs[j].val = value;
 		pairs[j].vallen = hstoreCheckValLen(strlen(value));
@@ -922,7 +902,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 
 	ncolumns = hstoreUniquePairs(pairs, j, &buflen);
 
-	out = hstorePairs(pairs, ncolumns, buflen);
+	HStore	   *out = hstorePairs(pairs, ncolumns, buflen);
 
 	ReleaseTupleDesc(tupdesc);
 
@@ -935,20 +915,11 @@ Datum
 hstore_populate_record(PG_FUNCTION_ARGS)
 {
 	Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	HStore	   *hs;
-	HEntry	   *entries;
-	char	   *ptr;
 	HeapTupleHeader rec;
 	Oid			tupType;
 	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	HeapTuple	rettuple;
-	RecordIOData *my_extra;
-	int			ncolumns;
 	int			i;
-	Datum	   *values;
-	bool	   *nulls;
 
 	if (!type_is_rowtype(argtype))
 		ereport(ERROR,
@@ -985,9 +956,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	hs = PG_GETARG_HSTORE_P(1);
-	entries = ARRPTR(hs);
-	ptr = STRPTR(hs);
+	HStore	   *hs = PG_GETARG_HSTORE_P(1);
+	HEntry	   *entries = ARRPTR(hs);
+	char	   *ptr = STRPTR(hs);
 
 	/*
 	 * if the input hstore is empty, we can only skip the rest if we were
@@ -1002,8 +973,8 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	 * Lookup the input record's tupdesc.  For the moment, we don't worry
 	 * about whether it is a domain over composite.
 	 */
-	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
-	ncolumns = tupdesc->natts;
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
+	int			ncolumns = tupdesc->natts;
 
 	if (rec)
 	{
@@ -1018,7 +989,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	 * We arrange to look up the needed I/O info just once per series of
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
-	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -1043,8 +1014,8 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
 
 	if (rec)
 	{
@@ -1066,7 +1037,6 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		Oid			column_type = att->atttypid;
 		char	   *value;
-		int			idx;
 		int			vallen;
 
 		/* Ignore dropped columns in datatype */
@@ -1076,7 +1046,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 			continue;
 		}
 
-		idx = hstoreFindKey(hs, 0,
+		int			idx = hstoreFindKey(hs, 0,
 							NameStr(att->attname),
 							strlen(NameStr(att->attname)));
 
@@ -1129,7 +1099,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		}
 	}
 
-	rettuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	rettuple = heap_form_tuple(tupdesc, values, nulls);
 
 	/*
 	 * If the target type is domain over composite, all we know at this point
@@ -1389,7 +1359,6 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
 	JsonbParseState *state = NULL;
-	JsonbValue *res;
 
 	(void) pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
@@ -1417,7 +1386,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 		(void) pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
-	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+	JsonbValue *res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(res));
 }
@@ -1432,7 +1401,6 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
 	JsonbParseState *state = NULL;
-	JsonbValue *res;
 	StringInfoData tmp;
 
 	initStringInfo(&tmp);
@@ -1474,10 +1442,9 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 								   HSTORE_VALLEN(entries, i));
 			if (IsValidJsonNumber(tmp.data, tmp.len))
 			{
-				Datum		numd;
 
 				val.type = jbvNumeric;
-				numd = DirectFunctionCall3(numeric_in,
+				Datum		numd = DirectFunctionCall3(numeric_in,
 										   CStringGetDatum(tmp.data),
 										   ObjectIdGetDatum(InvalidOid),
 										   Int32GetDatum(-1));
@@ -1493,7 +1460,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 		(void) pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
-	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+	JsonbValue *res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
 
 	PG_RETURN_POINTER(JsonbValueToJsonb(res));
 }

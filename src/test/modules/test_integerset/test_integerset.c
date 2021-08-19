@@ -133,25 +133,15 @@ test_integerset(PG_FUNCTION_ARGS)
 static void
 test_pattern(const test_spec *spec)
 {
-	IntegerSet *intset;
-	MemoryContext intset_ctx;
-	MemoryContext old_ctx;
-	TimestampTz starttime;
-	TimestampTz endtime;
-	uint64		n;
-	uint64		last_int;
-	int			patternlen;
-	uint64	   *pattern_values;
-	uint64		pattern_num_values;
 
 	elog(NOTICE, "testing intset with pattern \"%s\"", spec->test_name);
 	if (intset_test_stats)
 		fprintf(stderr, "-----\ntesting intset with pattern \"%s\"\n", spec->test_name);
 
 	/* Pre-process the pattern, creating an array of integers from it. */
-	patternlen = strlen(spec->pattern_str);
-	pattern_values = palloc(patternlen * sizeof(uint64));
-	pattern_num_values = 0;
+	int			patternlen = strlen(spec->pattern_str);
+	uint64	   *pattern_values = palloc(patternlen * sizeof(uint64));
+	uint64		pattern_num_values = 0;
 	for (int i = 0; i < patternlen; i++)
 	{
 		if (spec->pattern_str[i] == '1')
@@ -166,21 +156,21 @@ test_pattern(const test_spec *spec)
 	 * own, too, but we don't have direct access to it, so we cannot call
 	 * MemoryContextStats() on it directly).
 	 */
-	intset_ctx = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext intset_ctx = AllocSetContextCreate(CurrentMemoryContext,
 									   "intset test",
 									   ALLOCSET_SMALL_SIZES);
 	MemoryContextSetIdentifier(intset_ctx, spec->test_name);
-	old_ctx = MemoryContextSwitchTo(intset_ctx);
-	intset = intset_create();
+	MemoryContext old_ctx = MemoryContextSwitchTo(intset_ctx);
+	IntegerSet *intset = intset_create();
 	MemoryContextSwitchTo(old_ctx);
 
 	/*
 	 * Add values to the set.
 	 */
-	starttime = GetCurrentTimestamp();
+	TimestampTz starttime = GetCurrentTimestamp();
 
-	n = 0;
-	last_int = 0;
+	uint64		n = 0;
+	uint64		last_int = 0;
 	while (n < spec->num_values)
 	{
 		uint64		x = 0;
@@ -195,7 +185,7 @@ test_pattern(const test_spec *spec)
 		last_int += spec->spacing;
 	}
 
-	endtime = GetCurrentTimestamp();
+	TimestampTz endtime = GetCurrentTimestamp();
 
 	if (intset_test_stats)
 		fprintf(stderr, "added " UINT64_FORMAT " values in %d ms\n",
@@ -211,14 +201,13 @@ test_pattern(const test_spec *spec)
 	 */
 	if (intset_test_stats)
 	{
-		uint64		mem_usage;
 
 		/*
 		 * Also print memory usage as reported by intset_memory_usage().  It
 		 * should be in the same ballpark as the usage reported by
 		 * MemoryContextStats().
 		 */
-		mem_usage = intset_memory_usage(intset);
+		uint64		mem_usage = intset_memory_usage(intset);
 		fprintf(stderr, "intset_memory_usage() reported " UINT64_FORMAT " (%0.2f bytes / integer)\n",
 				mem_usage, (double) mem_usage / spec->num_values);
 
@@ -237,9 +226,7 @@ test_pattern(const test_spec *spec)
 
 	for (n = 0; n < 100000; n++)
 	{
-		bool		b;
 		bool		expected;
-		uint64		x;
 
 		/*
 		 * Pick next value to probe at random.  We limit the probes to the
@@ -248,7 +235,7 @@ test_pattern(const test_spec *spec)
 		 * only a small part of the integer space is used.  We would very
 		 * rarely hit values that are actually in the set.
 		 */
-		x = (pg_lrand48() << 31) | pg_lrand48();
+		uint64		x = (pg_lrand48() << 31) | pg_lrand48();
 		x = x % (last_int + 1000);
 
 		/* Do we expect this value to be present in the set? */
@@ -267,7 +254,7 @@ test_pattern(const test_spec *spec)
 		}
 
 		/* Is it present according to intset_is_member() ? */
-		b = intset_is_member(intset, x);
+		bool		b = intset_is_member(intset, x);
 
 		if (b != expected)
 			elog(ERROR, "mismatch at " UINT64_FORMAT ": %d vs %d", x, b, expected);
@@ -320,19 +307,16 @@ test_pattern(const test_spec *spec)
 static void
 test_single_value(uint64 value)
 {
-	IntegerSet *intset;
 	uint64		x;
-	uint64		num_entries;
-	bool		found;
 
 	elog(NOTICE, "testing intset with single value " UINT64_FORMAT, value);
 
 	/* Create the set. */
-	intset = intset_create();
+	IntegerSet *intset = intset_create();
 	intset_add_member(intset, value);
 
 	/* Test intset_get_num_entries() */
-	num_entries = intset_num_entries(intset);
+	uint64		num_entries = intset_num_entries(intset);
 	if (num_entries != 1)
 		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected 1", num_entries);
 
@@ -353,7 +337,7 @@ test_single_value(uint64 value)
 	 * Test iterator
 	 */
 	intset_begin_iterate(intset);
-	found = intset_iterate_next(intset, &x);
+	bool		found = intset_iterate_next(intset, &x);
 	if (!found || x != value)
 		elog(ERROR, "intset_iterate_next failed for " UINT64_FORMAT, x);
 
@@ -376,20 +360,16 @@ test_single_value(uint64 value)
 static void
 test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 {
-	IntegerSet *intset;
 	uint64		x;
 	bool		found;
-	uint64	   *iter_expected;
 	uint64		n = 0;
-	uint64		num_entries = 0;
-	uint64		mem_usage;
 
 	elog(NOTICE, "testing intset with value " UINT64_FORMAT ", and all between " UINT64_FORMAT " and " UINT64_FORMAT,
 		 value, filler_min, filler_max);
 
-	intset = intset_create();
+	IntegerSet *intset = intset_create();
 
-	iter_expected = palloc(sizeof(uint64) * (filler_max - filler_min + 1));
+	uint64	   *iter_expected = palloc(sizeof(uint64) * (filler_max - filler_min + 1));
 	if (value < filler_min)
 	{
 		intset_add_member(intset, value);
@@ -409,7 +389,7 @@ test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 	}
 
 	/* Test intset_get_num_entries() */
-	num_entries = intset_num_entries(intset);
+	uint64		num_entries = intset_num_entries(intset);
 	if (num_entries != n)
 		elog(ERROR, "intset_num_entries returned " UINT64_FORMAT ", expected " UINT64_FORMAT, num_entries, n);
 
@@ -455,7 +435,7 @@ test_single_value_and_filler(uint64 value, uint64 filler_min, uint64 filler_max)
 	if (found)
 		elog(ERROR, "intset_iterate_next failed " UINT64_FORMAT, x);
 
-	mem_usage = intset_memory_usage(intset);
+	uint64		mem_usage = intset_memory_usage(intset);
 	if (mem_usage < 5000 || mem_usage > 500000000)
 		elog(ERROR, "intset_memory_usage() reported suspicious value: " UINT64_FORMAT, mem_usage);
 }
@@ -470,12 +450,10 @@ static void
 check_with_filler(IntegerSet *intset, uint64 x,
 				  uint64 value, uint64 filler_min, uint64 filler_max)
 {
-	bool		expected;
-	bool		actual;
 
-	expected = (x == value || (filler_min <= x && x < filler_max));
+	bool		expected = (x == value || (filler_min <= x && x < filler_max));
 
-	actual = intset_is_member(intset, x);
+	bool		actual = intset_is_member(intset, x);
 
 	if (actual != expected)
 		elog(ERROR, "intset_is_member failed for " UINT64_FORMAT, x);
@@ -487,12 +465,11 @@ check_with_filler(IntegerSet *intset, uint64 x,
 static void
 test_empty(void)
 {
-	IntegerSet *intset;
 	uint64		x;
 
 	elog(NOTICE, "testing intset with empty set");
 
-	intset = intset_create();
+	IntegerSet *intset = intset_create();
 
 	/* Test intset_is_member() */
 	if (intset_is_member(intset, 0) != false)
@@ -518,16 +495,14 @@ test_empty(void)
 static void
 test_huge_distances(void)
 {
-	IntegerSet *intset;
 	uint64		values[1000];
 	int			num_values = 0;
-	uint64		val = 0;
 	bool		found;
 	uint64		x;
 
 	elog(NOTICE, "testing intset with distances > 2^60 between values");
 
-	val = 0;
+	uint64		val = 0;
 	values[num_values++] = val;
 
 	/* Test differences on both sides of the 2^60 boundary. */
@@ -576,7 +551,7 @@ test_huge_distances(void)
 	}
 
 	/* Create an IntegerSet using these values */
-	intset = intset_create();
+	IntegerSet *intset = intset_create();
 	for (int i = 0; i < num_values; i++)
 		intset_add_member(intset, values[i]);
 

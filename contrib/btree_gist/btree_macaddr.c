@@ -62,9 +62,8 @@ gbt_macadkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	macKEY	   *ia = (macKEY *) (((const Nsrt *) a)->t);
 	macKEY	   *ib = (macKEY *) (((const Nsrt *) b)->t);
-	int			res;
 
-	res = DatumGetInt32(DirectFunctionCall2(macaddr_cmp, MacaddrPGetDatum(&ia->lower), MacaddrPGetDatum(&ib->lower)));
+	int			res = DatumGetInt32(DirectFunctionCall2(macaddr_cmp, MacaddrPGetDatum(&ia->lower), MacaddrPGetDatum(&ib->lower)));
 	if (res == 0)
 		return DatumGetInt32(DirectFunctionCall2(macaddr_cmp, MacaddrPGetDatum(&ia->upper), MacaddrPGetDatum(&ib->upper)));
 

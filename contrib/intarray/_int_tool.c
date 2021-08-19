@@ -134,7 +134,6 @@ inner_int_union(ArrayType *a, ArrayType *b)
 ArrayType *
 inner_int_inter(ArrayType *a, ArrayType *b)
 {
-	ArrayType  *r;
 	int			na,
 				nb;
 	int		   *da,
@@ -151,7 +150,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
 	db = ARRPTR(b);
-	r = new_intArrayType(Min(na, nb));
+	ArrayType  *r = new_intArrayType(Min(na, nb));
 	dr = ARRPTR(r);
 
 	i = j = k = 0;
@@ -221,7 +220,6 @@ ArrayType *
 new_intArrayType(int num)
 {
 	ArrayType  *r;
-	int			nbytes;
 
 	/* if no elements, return a zero-dimensional array */
 	if (num <= 0)
@@ -231,7 +229,7 @@ new_intArrayType(int num)
 		return r;
 	}
 
-	nbytes = ARR_OVERHEAD_NONULLS(1) + sizeof(int) * num;
+	int			nbytes = ARR_OVERHEAD_NONULLS(1) + sizeof(int) * num;
 
 	r = (ArrayType *) palloc0(nbytes);
 
@@ -248,7 +246,6 @@ new_intArrayType(int num)
 ArrayType *
 resize_intArrayType(ArrayType *a, int num)
 {
-	int			nbytes;
 	int			i;
 
 	/* if no elements, return a zero-dimensional array */
@@ -262,7 +259,7 @@ resize_intArrayType(ArrayType *a, int num)
 	if (num == ARRNELEMS(a))
 		return a;
 
-	nbytes = ARR_DATA_OFFSET(a) + sizeof(int) * num;
+	int			nbytes = ARR_DATA_OFFSET(a) + sizeof(int) * num;
 
 	a = (ArrayType *) repalloc(a, nbytes);
 
@@ -279,10 +276,9 @@ resize_intArrayType(ArrayType *a, int num)
 ArrayType *
 copy_intArrayType(ArrayType *a)
 {
-	ArrayType  *r;
 	int			n = ARRNELEMS(a);
 
-	r = new_intArrayType(n);
+	ArrayType  *r = new_intArrayType(n);
 	memcpy(ARRPTR(r), ARRPTR(a), n * sizeof(int32));
 	return r;
 }
@@ -350,14 +346,11 @@ intarray_match_first(ArrayType *a, int32 elem)
 ArrayType *
 intarray_add_elem(ArrayType *a, int32 elem)
 {
-	ArrayType  *result;
-	int32	   *r;
-	int32		c;
 
 	CHECKARRVALID(a);
-	c = ARRNELEMS(a);
-	result = new_intArrayType(c + 1);
-	r = ARRPTR(result);
+	int32		c = ARRNELEMS(a);
+	ArrayType  *result = new_intArrayType(c + 1);
+	int32	   *r = ARRPTR(result);
 	if (c > 0)
 		memcpy(r, ARRPTR(a), c * sizeof(int32));
 	r[c] = elem;
@@ -367,13 +360,12 @@ intarray_add_elem(ArrayType *a, int32 elem)
 ArrayType *
 intarray_concat_arrays(ArrayType *a, ArrayType *b)
 {
-	ArrayType  *result;
 	int32		ac = ARRNELEMS(a);
 	int32		bc = ARRNELEMS(b);
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
-	result = new_intArrayType(ac + bc);
+	ArrayType  *result = new_intArrayType(ac + bc);
 	if (ac)
 		memcpy(ARRPTR(result), ARRPTR(a), ac * sizeof(int32));
 	if (bc)
@@ -384,11 +376,9 @@ intarray_concat_arrays(ArrayType *a, ArrayType *b)
 ArrayType *
 int_to_intset(int32 n)
 {
-	ArrayType  *result;
-	int32	   *aa;
 
-	result = new_intArrayType(1);
-	aa = ARRPTR(result);
+	ArrayType  *result = new_intArrayType(1);
+	int32	   *aa = ARRPTR(result);
 	aa[0] = n;
 	return result;
 }

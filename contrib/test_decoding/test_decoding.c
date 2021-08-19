@@ -163,10 +163,9 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 				  bool is_init)
 {
 	ListCell   *option;
-	TestDecodingData *data;
 	bool		enable_streaming = false;
 
-	data = palloc0(sizeof(TestDecodingData));
+	TestDecodingData *data = palloc0(sizeof(TestDecodingData));
 	data->context = AllocSetContextCreate(ctx->context,
 										  "text conversion context",
 										  ALLOCSET_DEFAULT_SIZES);
@@ -594,14 +593,9 @@ static void
 pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				 Relation relation, ReorderBufferChange *change)
 {
-	TestDecodingData *data;
-	TestDecodingTxnData *txndata;
-	Form_pg_class class_form;
-	TupleDesc	tupdesc;
-	MemoryContext old;
 
-	data = ctx->output_plugin_private;
-	txndata = txn->output_plugin_private;
+	TestDecodingData *data = ctx->output_plugin_private;
+	TestDecodingTxnData *txndata = txn->output_plugin_private;
 
 	/* output BEGIN if we haven't yet */
 	if (data->skip_empty_xacts && !txndata->xact_wrote_changes)
@@ -610,11 +604,11 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	}
 	txndata->xact_wrote_changes = true;
 
-	class_form = RelationGetForm(relation);
-	tupdesc = RelationGetDescr(relation);
+	Form_pg_class class_form = RelationGetForm(relation);
+	TupleDesc	tupdesc = RelationGetDescr(relation);
 
 	/* Avoid leaking memory by using and resetting our own context */
-	old = MemoryContextSwitchTo(data->context);
+	MemoryContext old = MemoryContextSwitchTo(data->context);
 
 	OutputPluginPrepareWrite(ctx, true);
 
@@ -681,13 +675,10 @@ static void
 pg_decode_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				   int nrelations, Relation relations[], ReorderBufferChange *change)
 {
-	TestDecodingData *data;
-	TestDecodingTxnData *txndata;
-	MemoryContext old;
 	int			i;
 
-	data = ctx->output_plugin_private;
-	txndata = txn->output_plugin_private;
+	TestDecodingData *data = ctx->output_plugin_private;
+	TestDecodingTxnData *txndata = txn->output_plugin_private;
 
 	/* output BEGIN if we haven't yet */
 	if (data->skip_empty_xacts && !txndata->xact_wrote_changes)
@@ -697,7 +688,7 @@ pg_decode_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	txndata->xact_wrote_changes = true;
 
 	/* Avoid leaking memory by using and resetting our own context */
-	old = MemoryContextSwitchTo(data->context);
+	MemoryContext old = MemoryContextSwitchTo(data->context);
 
 	OutputPluginPrepareWrite(ctx, true);
 

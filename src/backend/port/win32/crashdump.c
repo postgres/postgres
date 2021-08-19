@@ -100,14 +100,9 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 	if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY))
 	{
 		/* 'crashdumps' exists and is a directory. Try to write a dump' */
-		HMODULE		hDll = NULL;
-		MINIDUMPWRITEDUMP pDump = NULL;
-		MINIDUMP_TYPE dumpType;
 		char		dumpPath[_MAX_PATH];
 		HANDLE		selfProcHandle = GetCurrentProcess();
 		DWORD		selfPid = GetProcessId(selfProcHandle);
-		HANDLE		dumpFile;
-		DWORD		systemTicks;
 		struct _MINIDUMP_EXCEPTION_INFORMATION ExInfo;
 
 		ExInfo.ThreadId = GetCurrentThreadId();
@@ -115,14 +110,14 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 		ExInfo.ClientPointers = FALSE;
 
 		/* Load the dbghelp.dll library and functions */
-		hDll = LoadLibrary("dbghelp.dll");
+		HMODULE		hDll = LoadLibrary("dbghelp.dll");
 		if (hDll == NULL)
 		{
 			write_stderr("could not load dbghelp.dll, cannot write crash dump\n");
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
-		pDump = (MINIDUMPWRITEDUMP) (pg_funcptr_t) GetProcAddress(hDll, "MiniDumpWriteDump");
+		MINIDUMPWRITEDUMP pDump = (MINIDUMPWRITEDUMP) (pg_funcptr_t) GetProcAddress(hDll, "MiniDumpWriteDump");
 
 		if (pDump == NULL)
 		{
@@ -136,7 +131,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 		 * version of dbghelp.dll, see:
 		 * http://msdn.microsoft.com/en-us/library/ms680519(v=VS.85).aspx
 		 */
-		dumpType = MiniDumpNormal | MiniDumpWithHandleData |
+		MINIDUMP_TYPE dumpType = MiniDumpNormal | MiniDumpWithHandleData |
 			MiniDumpWithDataSegs;
 
 		if (GetProcAddress(hDll, "EnumDirTree") != NULL)
@@ -146,13 +141,13 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 				MiniDumpWithPrivateReadWriteMemory;
 		}
 
-		systemTicks = GetTickCount();
+		DWORD		systemTicks = GetTickCount();
 		snprintf(dumpPath, _MAX_PATH,
 				 "crashdumps\\postgres-pid%0i-%0i.mdmp",
 				 (int) selfPid, (int) systemTicks);
 		dumpPath[_MAX_PATH - 1] = '\0';
 
-		dumpFile = CreateFile(dumpPath, GENERIC_WRITE, FILE_SHARE_WRITE,
+		HANDLE		dumpFile = CreateFile(dumpPath, GENERIC_WRITE, FILE_SHARE_WRITE,
 							  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
 							  NULL);
 		if (dumpFile == INVALID_HANDLE_VALUE)

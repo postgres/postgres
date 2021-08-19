@@ -223,14 +223,13 @@ startup_hacks(const char *progname)
 #ifdef WIN32
 	{
 		WSADATA		wsaData;
-		int			err;
 
 		/* Make output streams unbuffered by default */
 		setvbuf(stdout, NULL, _IONBF, 0);
 		setvbuf(stderr, NULL, _IONBF, 0);
 
 		/* Prepare Winsock */
-		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		int			err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
 			write_stderr("%s: WSAStartup failed: %d\n",

@@ -65,10 +65,9 @@ gin_btree_extract_query(FunctionCallInfo fcinfo,
 	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
 	Datum	   *entries = (Datum *) palloc(sizeof(Datum));
 	QueryInfo  *data = (QueryInfo *) palloc(sizeof(QueryInfo));
-	bool	   *ptr_partialmatch;
 
 	*nentries = 1;
-	ptr_partialmatch = *partialmatch = (bool *) palloc(sizeof(bool));
+	bool	   *ptr_partialmatch = *partialmatch = (bool *) palloc(sizeof(bool));
 	*ptr_partialmatch = false;
 	if (is_varlena)
 		datum = PointerGetDatum(PG_DETOAST_DATUM(datum));

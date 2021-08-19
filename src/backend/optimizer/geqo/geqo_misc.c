@@ -90,11 +90,10 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 void
 print_gen(FILE *fp, Pool *pool, int generation)
 {
-	int			lowest;
 
 	/* Get index to lowest ranking gene in population. */
 	/* Use 2nd to last since last is buffer. */
-	lowest = pool->size > 1 ? pool->size - 2 : 0;
+	int			lowest = pool->size > 1 ? pool->size - 2 : 0;
 
 	fprintf(fp,
 			"%5d | Best: %g  Worst: %g  Mean: %g  Avg: %g\n",

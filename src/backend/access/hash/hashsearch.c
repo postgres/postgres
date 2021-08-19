@@ -49,7 +49,6 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	HashScanPosItem *currItem;
 	BlockNumber blkno;
 	Buffer		buf;
 	bool		end_of_scan = false;
@@ -118,7 +117,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/* OK, itemIndex says what to return */
-	currItem = &so->currPos.items[so->currPos.itemIndex];
+	HashScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
 	scan->xs_heaptid = currItem->heapTid;
 
 	return true;
@@ -133,12 +132,11 @@ static void
 _hash_readnext(IndexScanDesc scan,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
-	BlockNumber blkno;
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		block_found = false;
 
-	blkno = (*opaquep)->hasho_nextblkno;
+	BlockNumber blkno = (*opaquep)->hasho_nextblkno;
 
 	/*
 	 * Retain the pin on primary bucket page till the end of scan.  Refer the
@@ -200,12 +198,11 @@ static void
 _hash_readprev(IndexScanDesc scan,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
-	BlockNumber blkno;
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		haveprevblk;
 
-	blkno = (*opaquep)->hasho_prevblkno;
+	BlockNumber blkno = (*opaquep)->hasho_prevblkno;
 
 	/*
 	 * Retain the pin on primary bucket page till the end of scan.  Refer the
@@ -293,13 +290,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	ScanKey		cur;
 	uint32		hashkey;
-	Bucket		bucket;
-	Buffer		buf;
-	Page		page;
-	HashPageOpaque opaque;
-	HashScanPosItem *currItem;
 
 	pgstat_count_index_scan(rel);
 
@@ -315,7 +306,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 				 errmsg("hash indexes do not support whole-index scans")));
 
 	/* There may be more than one index qual, but we hash only the first */
-	cur = &scan->keyData[0];
+	ScanKey		cur = &scan->keyData[0];
 
 	/* We support only single-column hash indexes */
 	Assert(cur->sk_attno == 1);
@@ -348,12 +339,12 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	so->hashso_sk_hash = hashkey;
 
-	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_READ, NULL);
+	Buffer		buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_READ, NULL);
 	PredicateLockPage(rel, BufferGetBlockNumber(buf), scan->xs_snapshot);
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 	TestForOldSnapshot(scan->xs_snapshot, rel, page);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	bucket = opaque->hasho_bucket;
+	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	Bucket		bucket = opaque->hasho_bucket;
 
 	so->hashso_bucket_buf = buf;
 
@@ -375,10 +366,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	 */
 	if (H_BUCKET_BEING_POPULATED(opaque))
 	{
-		BlockNumber old_blkno;
-		Buffer		old_buf;
 
-		old_blkno = _hash_get_oldblock_from_newbucket(rel, bucket);
+		BlockNumber old_blkno = _hash_get_oldblock_from_newbucket(rel, bucket);
 
 		/*
 		 * release the lock on new bucket and re-acquire it after acquiring
@@ -386,7 +375,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		 */
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-		old_buf = _hash_getbuf(rel, old_blkno, HASH_READ, LH_BUCKET_PAGE);
+		Buffer		old_buf = _hash_getbuf(rel, old_blkno, HASH_READ, LH_BUCKET_PAGE);
 		TestForOldSnapshot(scan->xs_snapshot, rel, BufferGetPage(old_buf));
 
 		/*
@@ -431,7 +420,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		return false;
 
 	/* OK, itemIndex says what to return */
-	currItem = &so->currPos.items[so->currPos.itemIndex];
+	HashScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
 	scan->xs_heaptid = currItem->heapTid;
 
 	/* if we're here, _hash_readpage found a valid tuples */
@@ -453,17 +442,14 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	Buffer		buf;
-	Page		page;
-	HashPageOpaque opaque;
 	OffsetNumber offnum;
 	uint16		itemIndex;
 
-	buf = *bufP;
+	Buffer		buf = *bufP;
 	Assert(BufferIsValid(buf));
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	so->currPos.buf = buf;
 	so->currPos.currPage = BufferGetBlockNumber(buf);
@@ -611,9 +597,8 @@ _hash_load_qualified_items(IndexScanDesc scan, Page page,
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	IndexTuple	itup;
 	int			itemIndex;
-	OffsetNumber maxoff;
 
-	maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 
 	if (ScanDirectionIsForward(dir))
 	{

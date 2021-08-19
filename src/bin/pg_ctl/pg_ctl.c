@@ -248,7 +248,6 @@ print_msg(const char *msg)
 static pgpid_t
 get_pgpid(bool is_status_request)
 {
-	FILE	   *pidf;
 	long		pid;
 	struct stat statbuf;
 
@@ -276,7 +275,7 @@ get_pgpid(bool is_status_request)
 		exit(is_status_request ? 4 : 1);
 	}
 
-	pidf = fopen(pid_file, "r");
+	FILE	   *pidf = fopen(pid_file, "r");
 	if (pidf == NULL)
 	{
 		/* No pid file, not an error on startup */
@@ -316,14 +315,9 @@ get_pgpid(bool is_status_request)
 static char **
 readfile(const char *path, int *numlines)
 {
-	int			fd;
-	int			nlines;
 	char	  **result;
-	char	   *buffer;
-	char	   *linebegin;
 	int			i;
 	int			n;
-	int			len;
 	struct stat statbuf;
 
 	*numlines = 0;				/* in case of failure or empty file */
@@ -336,7 +330,7 @@ readfile(const char *path, int *numlines)
 	 * snapshot, but in practice, for a small file, it's close enough for the
 	 * current use.
 	 */
-	fd = open(path, O_RDONLY | PG_BINARY, 0);
+	int			fd = open(path, O_RDONLY | PG_BINARY, 0);
 	if (fd < 0)
 		return NULL;
 	if (fstat(fd, &statbuf) < 0)
@@ -352,9 +346,9 @@ readfile(const char *path, int *numlines)
 		*result = NULL;
 		return result;
 	}
-	buffer = pg_malloc(statbuf.st_size + 1);
+	char	   *buffer = pg_malloc(statbuf.st_size + 1);
 
-	len = read(fd, buffer, statbuf.st_size + 1);
+	int			len = read(fd, buffer, statbuf.st_size + 1);
 	close(fd);
 	if (len != statbuf.st_size)
 	{
@@ -368,7 +362,7 @@ readfile(const char *path, int *numlines)
 	 * including one at the end of file. If there isn't a newline at the end,
 	 * any characters after the last newline will be ignored.
 	 */
-	nlines = 0;
+	int			nlines = 0;
 	for (i = 0; i < len; i++)
 	{
 		if (buffer[i] == '\n')
@@ -380,7 +374,7 @@ readfile(const char *path, int *numlines)
 	*numlines = nlines;
 
 	/* now split the buffer into lines */
-	linebegin = buffer;
+	char	   *linebegin = buffer;
 	n = 0;
 	for (i = 0; i < len; i++)
 	{
@@ -445,13 +439,12 @@ start_postmaster(void)
 	char		cmd[MAXPGPATH];
 
 #ifndef WIN32
-	pgpid_t		pm_pid;
 
 	/* Flush stdio channels just before fork, to avoid double-output problems */
 	fflush(stdout);
 	fflush(stderr);
 
-	pm_pid = fork();
+	pgpid_t		pm_pid = fork();
 	if (pm_pid < 0)
 	{
 		/* fork failed */
@@ -511,10 +504,9 @@ start_postmaster(void)
 	 * "exec", so we don't get to find out the postmaster's PID immediately.
 	 */
 	PROCESS_INFORMATION pi;
-	const char *comspec;
 
 	/* Find CMD.EXE location using COMSPEC, if it's set */
-	comspec = getenv("COMSPEC");
+	const char *comspec = getenv("COMSPEC");
 	if (comspec == NULL)
 		comspec = "CMD";
 
@@ -607,8 +599,6 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			numlines >= LOCK_FILE_LINE_PM_STATUS)
 		{
 			/* File is complete enough for us, parse it */
-			pgpid_t		pmpid;
-			time_t		pmstart;
 
 			/*
 			 * Make sanity checks.  If it's for the wrong PID, or the recorded
@@ -617,8 +607,8 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			 * that hasn't (yet?) been overwritten by our child postmaster.
 			 * Allow 2 seconds slop for possible cross-process clock skew.
 			 */
-			pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
-			pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
+			pgpid_t		pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
+			time_t		pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
 			if (pmstart >= start_time - 2 &&
 #ifndef WIN32
 				pmpid == pm_pid
@@ -729,10 +719,9 @@ read_post_opts(void)
 		post_opts = "";			/* default */
 		if (ctl_command == RESTART_COMMAND)
 		{
-			char	  **optlines;
 			int			numlines;
 
-			optlines = readfile(postopts_file, &numlines);
+			char	  **optlines = readfile(postopts_file, &numlines);
 			if (optlines == NULL)
 			{
 				write_stderr(_("%s: could not read file \"%s\"\n"), progname, postopts_file);
@@ -746,10 +735,9 @@ read_post_opts(void)
 			}
 			else
 			{
-				char	   *optline;
 				char	   *arg1;
 
-				optline = optlines[0];
+				char	   *optline = optlines[0];
 
 				/*
 				 * Are we at the first option, as defined by space and
@@ -798,9 +786,8 @@ static char *
 find_other_exec_or_die(const char *argv0, const char *target, const char *versionstr)
 {
 	int			ret;
-	char	   *found_path;
 
-	found_path = pg_malloc(MAXPGPATH);
+	char	   *found_path = pg_malloc(MAXPGPATH);
 
 	if ((ret = find_other_exec(argv0, target, versionstr, found_path)) < 0)
 	{
@@ -949,10 +936,9 @@ static void
 do_stop(void)
 {
 	int			cnt;
-	pgpid_t		pid;
 	struct stat statbuf;
 
-	pid = get_pgpid(false);
+	pgpid_t		pid = get_pgpid(false);
 
 	if (pid == 0)				/* no pid file */
 	{
@@ -1036,10 +1022,9 @@ static void
 do_restart(void)
 {
 	int			cnt;
-	pgpid_t		pid;
 	struct stat statbuf;
 
-	pid = get_pgpid(false);
+	pgpid_t		pid = get_pgpid(false);
 
 	if (pid == 0)				/* no pid file */
 	{
@@ -1129,9 +1114,8 @@ do_restart(void)
 static void
 do_reload(void)
 {
-	pgpid_t		pid;
 
-	pid = get_pgpid(false);
+	pgpid_t		pid = get_pgpid(false);
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
@@ -1167,9 +1151,8 @@ static void
 do_promote(void)
 {
 	FILE	   *prmfile;
-	pgpid_t		pid;
 
-	pid = get_pgpid(false);
+	pgpid_t		pid = get_pgpid(false);
 
 	if (pid == 0)				/* no pid file */
 	{
@@ -1261,9 +1244,8 @@ static void
 do_logrotate(void)
 {
 	FILE	   *logrotatefile;
-	pgpid_t		pid;
 
-	pid = get_pgpid(false);
+	pgpid_t		pid = get_pgpid(false);
 
 	if (pid == 0)				/* no pid file */
 	{
@@ -1341,9 +1323,8 @@ postmaster_is_alive(pid_t pid)
 static void
 do_status(void)
 {
-	pgpid_t		pid;
 
-	pid = get_pgpid(true);
+	pgpid_t		pid = get_pgpid(true);
 	/* Is there a pid file? */
 	if (pid != 0)
 	{
@@ -1363,14 +1344,13 @@ do_status(void)
 		{
 			if (postmaster_is_alive((pid_t) pid))
 			{
-				char	  **optlines;
 				char	  **curr_line;
 				int			numlines;
 
 				printf(_("%s: server is running (PID: %ld)\n"),
 					   progname, pid);
 
-				optlines = readfile(postopts_file, &numlines);
+				char	  **optlines = readfile(postopts_file, &numlines);
 				if (optlines != NULL)
 				{
 					for (curr_line = optlines; *curr_line != NULL; curr_line++)
@@ -1619,7 +1599,6 @@ static void WINAPI
 pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 {
 	PROCESS_INFORMATION pi;
-	DWORD		ret;
 
 	/* Initialize variables */
 	status.dwWin32ExitCode = S_OK;
@@ -1667,7 +1646,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	pgwin32_SetServiceStatus(SERVICE_RUNNING);
 
 	/* Wait for quit... */
-	ret = WaitForMultipleObjects(2, shutdownHandles, FALSE, INFINITE);
+	DWORD		ret = WaitForMultipleObjects(2, shutdownHandles, FALSE, INFINITE);
 
 	pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
 	switch (ret)
@@ -1752,14 +1731,11 @@ typedef BOOL (WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS,
 static int
 CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service)
 {
-	int			r;
-	BOOL		b;
 	STARTUPINFO si;
 	HANDLE		origToken;
 	HANDLE		restrictedToken;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	SID_AND_ATTRIBUTES dropSids[2];
-	PTOKEN_PRIVILEGES delPrivs;
 
 	/* Functions loaded dynamically */
 	__CreateRestrictedToken _CreateRestrictedToken = NULL;
@@ -1768,13 +1744,11 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	__SetInformationJobObject _SetInformationJobObject = NULL;
 	__AssignProcessToJobObject _AssignProcessToJobObject = NULL;
 	__QueryInformationJobObject _QueryInformationJobObject = NULL;
-	HANDLE		Kernel32Handle;
-	HANDLE		Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+	HANDLE		Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
 	if (Advapi32Handle != NULL)
 	{
 		_CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
@@ -1819,12 +1793,12 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	}
 
 	/* Get list of privileges to remove */
-	delPrivs = GetPrivilegesToDelete(origToken);
+	PTOKEN_PRIVILEGES delPrivs = GetPrivilegesToDelete(origToken);
 	if (delPrivs == NULL)
 		/* Error message already printed */
 		return 0;
 
-	b = _CreateRestrictedToken(origToken,
+	BOOL		b = _CreateRestrictedToken(origToken,
 							   0,
 							   sizeof(dropSids) / sizeof(dropSids[0]),
 							   dropSids,
@@ -1846,9 +1820,9 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	}
 
 	AddUserToTokenDacl(restrictedToken);
-	r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
+	int			r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
 
-	Kernel32Handle = LoadLibrary("KERNEL32.DLL");
+	HANDLE		Kernel32Handle = LoadLibrary("KERNEL32.DLL");
 	if (Kernel32Handle != NULL)
 	{
 		_IsProcessInJob = (__IsProcessInJob) (pg_funcptr_t) GetProcAddress(Kernel32Handle, "IsProcessInJob");
@@ -1886,13 +1860,12 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 				 * so we can create one safely. If any problems show up when
 				 * setting it, we're going to ignore them.
 				 */
-				HANDLE		job;
 				char		jobname[128];
 
 				sprintf(jobname, "PostgreSQL_%lu",
 						(unsigned long) processInfo->dwProcessId);
 
-				job = _CreateJobObject(NULL, jobname);
+				HANDLE		job = _CreateJobObject(NULL, jobname);
 				if (job)
 				{
 					JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
@@ -1961,7 +1934,6 @@ GetPrivilegesToDelete(HANDLE hToken)
 	int			i,
 				j;
 	DWORD		length;
-	PTOKEN_PRIVILEGES tokenPrivs;
 	LUID		luidLockPages;
 	LUID		luidChangeNotify;
 
@@ -1981,7 +1953,7 @@ GetPrivilegesToDelete(HANDLE hToken)
 		return NULL;
 	}
 
-	tokenPrivs = (PTOKEN_PRIVILEGES) pg_malloc_extended(length,
+	PTOKEN_PRIVILEGES tokenPrivs = (PTOKEN_PRIVILEGES) pg_malloc_extended(length,
 														MCXT_ALLOC_NO_OOM);
 	if (tokenPrivs == NULL)
 	{
@@ -2233,7 +2205,6 @@ adjust_data_dir(void)
 static DBState
 get_control_dbstate(void)
 {
-	DBState		ret;
 	bool		crc_ok;
 	ControlFileData *control_file_data = get_controlfile(pg_data, &crc_ok);
 
@@ -2243,7 +2214,7 @@ get_control_dbstate(void)
 		exit(1);
 	}
 
-	ret = control_file_data->state;
+	DBState		ret = control_file_data->state;
 	pfree(control_file_data);
 	return ret;
 }
@@ -2338,9 +2309,8 @@ main(int argc, char **argv)
 			{
 				case 'D':
 					{
-						char	   *pgdata_D;
 
-						pgdata_D = pg_strdup(optarg);
+						char	   *pgdata_D = pg_strdup(optarg);
 						canonicalize_path(pgdata_D);
 						setenv("PGDATA", pgdata_D, 1);
 

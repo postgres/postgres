@@ -100,7 +100,6 @@ fixed_paramref_hook(ParseState *pstate, ParamRef *pref)
 {
 	FixedParamState *parstate = (FixedParamState *) pstate->p_ref_hook_state;
 	int			paramno = pref->number;
-	Param	   *param;
 
 	/* Check parameter number is valid */
 	if (paramno <= 0 || paramno > parstate->numParams ||
@@ -110,7 +109,7 @@ fixed_paramref_hook(ParseState *pstate, ParamRef *pref)
 				 errmsg("there is no parameter $%d", paramno),
 				 parser_errposition(pstate, pref->location)));
 
-	param = makeNode(Param);
+	Param	   *param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = parstate->paramTypes[paramno - 1];
@@ -132,8 +131,6 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 {
 	VarParamState *parstate = (VarParamState *) pstate->p_ref_hook_state;
 	int			paramno = pref->number;
-	Oid		   *pptype;
-	Param	   *param;
 
 	/* Check parameter number is in range */
 	if (paramno <= 0 || paramno > INT_MAX / sizeof(Oid))
@@ -157,7 +154,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	}
 
 	/* Locate param's slot in array */
-	pptype = &(*parstate->paramTypes)[paramno - 1];
+	Oid		   *pptype = &(*parstate->paramTypes)[paramno - 1];
 
 	/* If not seen before, initialize to UNKNOWN type */
 	if (*pptype == InvalidOid)
@@ -172,7 +169,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	if (*pptype == VOIDOID && pstate->p_expr_kind == EXPR_KIND_CALL_ARGUMENT)
 		*pptype = UNKNOWNOID;
 
-	param = makeNode(Param);
+	Param	   *param = makeNode(Param);
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = *pptype;

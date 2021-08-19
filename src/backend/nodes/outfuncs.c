@@ -242,11 +242,10 @@ _outList(StringInfo str, const List *node)
 void
 outBitmapset(StringInfo str, const Bitmapset *bms)
 {
-	int			x;
 
 	appendStringInfoChar(str, '(');
 	appendStringInfoChar(str, 'b');
-	x = -1;
+	int			x = -1;
 	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');
@@ -750,7 +749,6 @@ _outNestLoop(StringInfo str, const NestLoop *node)
 static void
 _outMergeJoin(StringInfo str, const MergeJoin *node)
 {
-	int			numCols;
 
 	WRITE_NODE_TYPE("MERGEJOIN");
 
@@ -759,7 +757,7 @@ _outMergeJoin(StringInfo str, const MergeJoin *node)
 	WRITE_BOOL_FIELD(skip_mark_restore);
 	WRITE_NODE_FIELD(mergeclauses);
 
-	numCols = list_length(node->mergeclauses);
+	int			numCols = list_length(node->mergeclauses);
 
 	WRITE_OID_ARRAY(mergeFamilies, numCols);
 	WRITE_OID_ARRAY(mergeCollations, numCols);
@@ -2680,9 +2678,8 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
 static void
 _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
 {
-	const ExtensibleNodeMethods *methods;
 
-	methods = GetExtensibleNodeMethods(node->extnodename, false);
+	const ExtensibleNodeMethods *methods = GetExtensibleNodeMethods(node->extnodename, false);
 
 	WRITE_NODE_TYPE("EXTENSIBLENODE");
 

@@ -719,10 +719,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_FUNCEXPR)
 		{
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
-			Datum		d;
 
 			fcinfo->isnull = false;
-			d = op->d.func.fn_addr(fcinfo);
+			Datum		d = op->d.func.fn_addr(fcinfo);
 			*op->resvalue = d;
 			*op->resnull = fcinfo->isnull;
 
@@ -1152,9 +1151,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 			else
 			{
-				FunctionCallInfo fcinfo_out;
 
-				fcinfo_out = op->d.iocoerce.fcinfo_data_out;
+				FunctionCallInfo fcinfo_out = op->d.iocoerce.fcinfo_data_out;
 				fcinfo_out->args[0].value = *op->resvalue;
 				fcinfo_out->args[0].isnull = false;
 
@@ -1168,10 +1166,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			/* call input function (similar to InputFunctionCall) */
 			if (!op->d.iocoerce.finfo_in->fn_strict || str != NULL)
 			{
-				FunctionCallInfo fcinfo_in;
 				Datum		d;
 
-				fcinfo_in = op->d.iocoerce.fcinfo_data_in;
+				FunctionCallInfo fcinfo_in = op->d.iocoerce.fcinfo_data_in;
 				fcinfo_in->args[0].value = PointerGetDatum(str);
 				fcinfo_in->args[0].isnull = *op->resnull;
 				/* second and third arguments are already set up */
@@ -1225,10 +1222,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			else
 			{
 				/* Neither null, so apply the equality function */
-				Datum		eqresult;
 
 				fcinfo->isnull = false;
-				eqresult = op->d.func.fn_addr(fcinfo);
+				Datum		eqresult = op->d.func.fn_addr(fcinfo);
 				/* Must invert result of "="; safe to do even if null */
 				*op->resvalue = BoolGetDatum(!DatumGetBool(eqresult));
 				*op->resnull = fcinfo->isnull;
@@ -1254,10 +1250,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 			else
 			{
-				Datum		eqresult;
 
 				fcinfo->isnull = false;
-				eqresult = op->d.func.fn_addr(fcinfo);
+				Datum		eqresult = op->d.func.fn_addr(fcinfo);
 				*op->resvalue = eqresult;
 				*op->resnull = fcinfo->isnull;
 			}
@@ -1275,10 +1270,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			/* if either argument is NULL they can't be equal */
 			if (!fcinfo->args[0].isnull && !fcinfo->args[1].isnull)
 			{
-				Datum		result;
 
 				fcinfo->isnull = false;
-				result = op->d.func.fn_addr(fcinfo);
+				Datum		result = op->d.func.fn_addr(fcinfo);
 
 				/* if the arguments are equal return null */
 				if (!fcinfo->isnull && DatumGetBool(result))
@@ -1581,13 +1575,12 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			FunctionCallInfo fcinfo = op->d.agg_deserialize.fcinfo_data;
 			AggState   *aggstate = castNode(AggState, state->parent);
-			MemoryContext oldContext;
 
 			/*
 			 * We run the deserialization functions in per-input-tuple memory
 			 * context.
 			 */
-			oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+			MemoryContext oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
 			fcinfo->isnull = false;
 			*op->resvalue = FunctionCallInvoke(fcinfo);
 			*op->resnull = fcinfo->isnull;
@@ -1831,13 +1824,10 @@ ExecInterpExprStillValid(ExprState *state, ExprContext *econtext, bool *isNull)
 void
 CheckExprStillValid(ExprState *state, ExprContext *econtext)
 {
-	TupleTableSlot *innerslot;
-	TupleTableSlot *outerslot;
-	TupleTableSlot *scanslot;
 
-	innerslot = econtext->ecxt_innertuple;
-	outerslot = econtext->ecxt_outertuple;
-	scanslot = econtext->ecxt_scantuple;
+	TupleTableSlot *innerslot = econtext->ecxt_innertuple;
+	TupleTableSlot *outerslot = econtext->ecxt_outertuple;
+	TupleTableSlot *scanslot = econtext->ecxt_scantuple;
 
 	for (int i = 0; i < state->steps_len; i++)
 	{
@@ -1902,13 +1892,12 @@ CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype)
 	if (attnum > 0)
 	{
 		TupleDesc	slot_tupdesc = slot->tts_tupleDescriptor;
-		Form_pg_attribute attr;
 
 		if (attnum > slot_tupdesc->natts)	/* should never happen */
 			elog(ERROR, "attribute number %d exceeds number of columns %d",
 				 attnum, slot_tupdesc->natts);
 
-		attr = TupleDescAttr(slot_tupdesc, attnum - 1);
+		Form_pg_attribute attr = TupleDescAttr(slot_tupdesc, attnum - 1);
 
 		if (attr->attisdropped)
 			ereport(ERROR,
@@ -2131,8 +2120,6 @@ static Datum
 ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull)
 {
 	ExprEvalStep *op = &state->steps[0];
-	FunctionCallInfo fcinfo;
-	NullableDatum *args;
 	int			nargs;
 	Datum		d;
 
@@ -2146,8 +2133,8 @@ ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull)
 	op++;
 
 	nargs = op->d.func.nargs;
-	fcinfo = op->d.func.fcinfo_data;
-	args = fcinfo->args;
+	FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+	NullableDatum *args = fcinfo->args;
 
 	/* strict function, so check for NULL args */
 	for (int argno = 0; argno < nargs; argno++)
@@ -2321,10 +2308,9 @@ ExecEvalStepOp(ExprState *state, ExprEvalStep *op)
 	if (state->flags & EEO_FLAG_DIRECT_THREADED)
 	{
 		ExprEvalOpLookup key;
-		ExprEvalOpLookup *res;
 
 		key.opcode = (void *) op->opcode;
-		res = bsearch(&key,
+		ExprEvalOpLookup *res = bsearch(&key,
 					  reverse_dispatch_table,
 					  EEOP_LAST /* nmembers */ ,
 					  sizeof(ExprEvalOpLookup),
@@ -2350,12 +2336,11 @@ ExecEvalFuncExprFusage(ExprState *state, ExprEvalStep *op,
 {
 	FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
 	PgStat_FunctionCallUsage fcusage;
-	Datum		d;
 
 	pgstat_init_function_usage(fcinfo, &fcusage);
 
 	fcinfo->isnull = false;
-	d = op->d.func.fn_addr(fcinfo);
+	Datum		d = op->d.func.fn_addr(fcinfo);
 	*op->resvalue = d;
 	*op->resnull = fcinfo->isnull;
 
@@ -2374,7 +2359,6 @@ ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
 	PgStat_FunctionCallUsage fcusage;
 	NullableDatum *args = fcinfo->args;
 	int			nargs = op->d.func.nargs;
-	Datum		d;
 
 	/* strict function, so check for NULL args */
 	for (int argno = 0; argno < nargs; argno++)
@@ -2389,7 +2373,7 @@ ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
 	pgstat_init_function_usage(fcinfo, &fcusage);
 
 	fcinfo->isnull = false;
-	d = op->d.func.fn_addr(fcinfo);
+	Datum		d = op->d.func.fn_addr(fcinfo);
 	*op->resvalue = d;
 	*op->resnull = fcinfo->isnull;
 
@@ -2405,9 +2389,8 @@ ExecEvalFuncExprStrictFusage(ExprState *state, ExprEvalStep *op,
 void
 ExecEvalParamExec(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	ParamExecData *prm;
 
-	prm = &(econtext->ecxt_param_exec_vals[op->d.param.paramid]);
+	ParamExecData *prm = &(econtext->ecxt_param_exec_vals[op->d.param.paramid]);
 	if (unlikely(prm->execPlan != NULL))
 	{
 		/* Parameter not evaluated yet, so go do it */
@@ -2592,10 +2575,6 @@ ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
 {
 	Datum		value = *op->resvalue;
 	bool		isnull = *op->resnull;
-	HeapTupleHeader tuple;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupDesc;
 	HeapTupleData tmptup;
 
 	*op->resnull = false;
@@ -2623,13 +2602,13 @@ ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
 	 * here we consider them to vacuously satisfy both predicates.
 	 */
 
-	tuple = DatumGetHeapTupleHeader(value);
+	HeapTupleHeader tuple = DatumGetHeapTupleHeader(value);
 
-	tupType = HeapTupleHeaderGetTypeId(tuple);
-	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+	Oid			tupType = HeapTupleHeaderGetTypeId(tuple);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(tuple);
 
 	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = get_cached_rowtype(tupType, tupTypmod,
+	TupleDesc	tupDesc = get_cached_rowtype(tupType, tupTypmod,
 								 &op->d.nulltest_row.rowcache, NULL);
 
 	/*
@@ -2714,29 +2693,19 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 		bool		firstone = true;
 		bool		havenulls = false;
 		bool		haveempty = false;
-		char	  **subdata;
-		bits8	  **subbitmaps;
-		int		   *subbytes;
-		int		   *subnitems;
 		int32		dataoffset;
-		char	   *dat;
-		int			iitem;
 
-		subdata = (char **) palloc(nelems * sizeof(char *));
-		subbitmaps = (bits8 **) palloc(nelems * sizeof(bits8 *));
-		subbytes = (int *) palloc(nelems * sizeof(int));
-		subnitems = (int *) palloc(nelems * sizeof(int));
+		char	  **subdata = (char **) palloc(nelems * sizeof(char *));
+		bits8	  **subbitmaps = (bits8 **) palloc(nelems * sizeof(bits8 *));
+		int		   *subbytes = (int *) palloc(nelems * sizeof(int));
+		int		   *subnitems = (int *) palloc(nelems * sizeof(int));
 
 		/* loop through and get data area from each element */
 		for (int elemoff = 0; elemoff < nelems; elemoff++)
 		{
-			Datum		arraydatum;
-			bool		eisnull;
-			ArrayType  *array;
-			int			this_ndims;
 
-			arraydatum = op->d.arrayexpr.elemvalues[elemoff];
-			eisnull = op->d.arrayexpr.elemnulls[elemoff];
+			Datum		arraydatum = op->d.arrayexpr.elemvalues[elemoff];
+			bool		eisnull = op->d.arrayexpr.elemnulls[elemoff];
 
 			/* temporarily ignore null subarrays */
 			if (eisnull)
@@ -2745,7 +2714,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 				continue;
 			}
 
-			array = DatumGetArrayTypeP(arraydatum);
+			ArrayType  *array = DatumGetArrayTypeP(arraydatum);
 
 			/* run-time double-check on element type */
 			if (element_type != ARR_ELEMTYPE(array))
@@ -2757,7 +2726,7 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
-			this_ndims = ARR_NDIM(array);
+			int			this_ndims = ARR_NDIM(array);
 			/* temporarily ignore zero-dimensional subarrays */
 			if (this_ndims <= 0)
 			{
@@ -2859,8 +2828,8 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 		memcpy(ARR_DIMS(result), dims, ndims * sizeof(int));
 		memcpy(ARR_LBOUND(result), lbs, ndims * sizeof(int));
 
-		dat = ARR_DATA_PTR(result);
-		iitem = 0;
+		char	   *dat = ARR_DATA_PTR(result);
+		int			iitem = 0;
 		for (int i = 0; i < outer_nelems; i++)
 		{
 			memcpy(dat, subdata[i], subbytes[i]);
@@ -2884,13 +2853,12 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 void
 ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	Datum		arraydatum;
 
 	/* NULL array -> NULL result */
 	if (*op->resnull)
 		return;
 
-	arraydatum = *op->resvalue;
+	Datum		arraydatum = *op->resvalue;
 
 	/*
 	 * If it's binary-compatible, modify the element type in the array header,
@@ -2925,10 +2893,9 @@ ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 void
 ExecEvalRow(ExprState *state, ExprEvalStep *op)
 {
-	HeapTuple	tuple;
 
 	/* build tuple from evaluated field values */
-	tuple = heap_form_tuple(op->d.row.tupdesc,
+	HeapTuple	tuple = heap_form_tuple(op->d.row.tupdesc,
 							op->d.row.elemvalues,
 							op->d.row.elemnulls);
 
@@ -2971,14 +2938,13 @@ ExecEvalMinMax(ExprState *state, ExprEvalStep *op)
 		}
 		else
 		{
-			int			cmpresult;
 
 			/* apply comparison function */
 			fcinfo->args[0].value = *op->resvalue;
 			fcinfo->args[1].value = values[off];
 
 			fcinfo->isnull = false;
-			cmpresult = DatumGetInt32(FunctionCallInvoke(fcinfo));
+			int			cmpresult = DatumGetInt32(FunctionCallInvoke(fcinfo));
 			if (fcinfo->isnull) /* probably should not happen */
 				continue;
 
@@ -2999,7 +2965,6 @@ void
 ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
 	AttrNumber	fieldnum = op->d.fieldselect.fieldnum;
-	Datum		tupDatum;
 	HeapTupleHeader tuple;
 	Oid			tupType;
 	int32		tupTypmod;
@@ -3011,7 +2976,7 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (*op->resnull)
 		return;
 
-	tupDatum = *op->resvalue;
+	Datum		tupDatum = *op->resvalue;
 
 	/* We can special-case expanded records for speed */
 	if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(tupDatum)))
@@ -3123,10 +3088,9 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 void
 ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	TupleDesc	tupDesc;
 
 	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
+	TupleDesc	tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
 								 op->d.fieldstore.rowcache, NULL);
 
 	/* Check that current tupdesc doesn't have more fields than we allocated */
@@ -3147,10 +3111,9 @@ ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op, ExprContext *econte
 		 * set all the fields in the struct just in case.
 		 */
 		Datum		tupDatum = *op->resvalue;
-		HeapTupleHeader tuphdr;
 		HeapTupleData tmptup;
 
-		tuphdr = DatumGetHeapTupleHeader(tupDatum);
+		HeapTupleHeader tuphdr = DatumGetHeapTupleHeader(tupDatum);
 		tmptup.t_len = HeapTupleHeaderGetDatumLength(tuphdr);
 		ItemPointerSetInvalid(&(tmptup.t_self));
 		tmptup.t_tableOid = InvalidOid;
@@ -3169,14 +3132,12 @@ ExecEvalFieldStoreDeForm(ExprState *state, ExprEvalStep *op, ExprContext *econte
 void
 ExecEvalFieldStoreForm(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	TupleDesc	tupDesc;
-	HeapTuple	tuple;
 
 	/* Lookup tupdesc (should be valid already) */
-	tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
+	TupleDesc	tupDesc = get_cached_rowtype(op->d.fieldstore.fstore->resulttype, -1,
 								 op->d.fieldstore.rowcache, NULL);
 
-	tuple = heap_form_tuple(tupDesc,
+	HeapTuple	tuple = heap_form_tuple(tupDesc,
 							op->d.fieldstore.values,
 							op->d.fieldstore.nulls);
 
@@ -3194,8 +3155,6 @@ void
 ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
 	HeapTuple	result;
-	Datum		tupDatum;
-	HeapTupleHeader tuple;
 	HeapTupleData tmptup;
 	TupleDesc	indesc,
 				outdesc;
@@ -3205,8 +3164,8 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 	if (*op->resnull)
 		return;
 
-	tupDatum = *op->resvalue;
-	tuple = DatumGetHeapTupleHeader(tupDatum);
+	Datum		tupDatum = *op->resvalue;
+	HeapTupleHeader tuple = DatumGetHeapTupleHeader(tupDatum);
 
 	/*
 	 * Lookup tupdescs if first time through or if type changes.  We'd better
@@ -3234,10 +3193,9 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 	/* if first time through, or after change, initialize conversion map */
 	if (changed)
 	{
-		MemoryContext old_cxt;
 
 		/* allocate map in long-lived memory context */
-		old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		MemoryContext old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 		/* prepare map from old to new attribute numbers */
 		op->d.convert_rowtype.map = convert_tuples_by_name(indesc, outdesc);
@@ -3291,16 +3249,9 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 	FunctionCallInfo fcinfo = op->d.scalararrayop.fcinfo_data;
 	bool		useOr = op->d.scalararrayop.useOr;
 	bool		strictfunc = op->d.scalararrayop.finfo->fn_strict;
-	ArrayType  *arr;
-	int			nitems;
-	Datum		result;
-	bool		resultnull;
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	char	   *s;
-	bits8	   *bitmap;
-	int			bitmask;
 
 	/*
 	 * If the array is NULL then we return NULL --- it's not very meaningful
@@ -3310,7 +3261,7 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 		return;
 
 	/* Else okay to fetch and detoast the array */
-	arr = DatumGetArrayTypeP(*op->resvalue);
+	ArrayType  *arr = DatumGetArrayTypeP(*op->resvalue);
 
 	/*
 	 * If the array is empty, we return either FALSE or TRUE per the useOr
@@ -3318,7 +3269,7 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 	 * evaluate the operator zero times, it matters not whether it would want
 	 * to return NULL.
 	 */
-	nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+	int			nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
 	if (nitems <= 0)
 	{
 		*op->resvalue = BoolGetDatum(!useOr);
@@ -3354,13 +3305,13 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 	typalign = op->d.scalararrayop.typalign;
 
 	/* Initialize result appropriately depending on useOr */
-	result = BoolGetDatum(!useOr);
-	resultnull = false;
+	Datum		result = BoolGetDatum(!useOr);
+	bool		resultnull = false;
 
 	/* Loop over the array elements */
-	s = (char *) ARR_DATA_PTR(arr);
-	bitmap = ARR_NULLBITMAP(arr);
-	bitmask = 1;
+	char	   *s = (char *) ARR_DATA_PTR(arr);
+	bits8	   *bitmap = ARR_NULLBITMAP(arr);
+	int			bitmask = 1;
 
 	for (int i = 0; i < nitems; i++)
 	{
@@ -3443,12 +3394,11 @@ saop_element_hash(struct saophash_hash *tb, Datum key)
 {
 	ScalarArrayOpExprHashTable *elements_tab = (ScalarArrayOpExprHashTable *) tb->private_data;
 	FunctionCallInfo fcinfo = elements_tab->op->d.hashedscalararrayop.hash_fcinfo_data;
-	Datum		hash;
 
 	fcinfo->args[0].value = key;
 	fcinfo->args[0].isnull = false;
 
-	hash = elements_tab->op->d.hashedscalararrayop.hash_fn_addr(fcinfo);
+	Datum		hash = elements_tab->op->d.hashedscalararrayop.hash_fn_addr(fcinfo);
 
 	return DatumGetUInt32(hash);
 }
@@ -3460,7 +3410,6 @@ saop_element_hash(struct saophash_hash *tb, Datum key)
 static bool
 saop_hash_element_match(struct saophash_hash *tb, Datum key1, Datum key2)
 {
-	Datum		result;
 
 	ScalarArrayOpExprHashTable *elements_tab = (ScalarArrayOpExprHashTable *) tb->private_data;
 	FunctionCallInfo fcinfo = elements_tab->op->d.hashedscalararrayop.fcinfo_data;
@@ -3470,7 +3419,7 @@ saop_hash_element_match(struct saophash_hash *tb, Datum key1, Datum key2)
 	fcinfo->args[1].value = key2;
 	fcinfo->args[1].isnull = false;
 
-	result = elements_tab->op->d.hashedscalararrayop.fn_addr(fcinfo);
+	Datum		result = elements_tab->op->d.hashedscalararrayop.fn_addr(fcinfo);
 
 	return DatumGetBool(result);
 }
@@ -3498,7 +3447,6 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 	Datum		scalar = fcinfo->args[0].value;
 	bool		scalar_isnull = fcinfo->args[0].isnull;
 	Datum		result;
-	bool		resultnull;
 	bool		hashfound;
 
 	/* We don't setup a hashed scalar array op if the array const is null. */
@@ -3520,23 +3468,17 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 		int16		typlen;
 		bool		typbyval;
 		char		typalign;
-		int			nitems;
 		bool		has_nulls = false;
-		char	   *s;
-		bits8	   *bitmap;
-		int			bitmask;
-		MemoryContext oldcontext;
-		ArrayType  *arr;
 
-		arr = DatumGetArrayTypeP(*op->resvalue);
-		nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+		ArrayType  *arr = DatumGetArrayTypeP(*op->resvalue);
+		int			nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
 
 		get_typlenbyvalalign(ARR_ELEMTYPE(arr),
 							 &typlen,
 							 &typbyval,
 							 &typalign);
 
-		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		MemoryContext oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 		elements_tab = (ScalarArrayOpExprHashTable *)
 			palloc(sizeof(ScalarArrayOpExprHashTable));
@@ -3554,9 +3496,9 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 
 		MemoryContextSwitchTo(oldcontext);
 
-		s = (char *) ARR_DATA_PTR(arr);
-		bitmap = ARR_NULLBITMAP(arr);
-		bitmask = 1;
+		char	   *s = (char *) ARR_DATA_PTR(arr);
+		bits8	   *bitmap = ARR_NULLBITMAP(arr);
+		int			bitmask = 1;
 		for (int i = 0; i < nitems; i++)
 		{
 			/* Get array element, checking for NULL. */
@@ -3566,9 +3508,8 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 			}
 			else
 			{
-				Datum		element;
 
-				element = fetch_att(s, typbyval, typlen);
+				Datum		element = fetch_att(s, typbyval, typlen);
 				s = att_addlength_pointer(s, typlen, s);
 				s = (char *) att_align_nominal(s, typalign);
 
@@ -3603,7 +3544,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 	else
 		result = BoolGetDatum(!hashfound);	/* NOT IN */
 
-	resultnull = false;
+	bool		resultnull = false;
 
 	/*
 	 * If we didn't find a match in the array, we still might need to handle
@@ -3728,11 +3669,10 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 				StringInfoData buf;
 				ListCell   *lc;
 				ListCell   *lc2;
-				int			i;
 
 				initStringInfo(&buf);
 
-				i = 0;
+				int			i = 0;
 				forboth(lc, xexpr->named_args, lc2, xexpr->arg_names)
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
@@ -3753,9 +3693,8 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 
 				if (!*op->resnull)
 				{
-					text	   *result;
 
-					result = cstring_to_text_with_len(buf.data, buf.len);
+					text	   *result = cstring_to_text_with_len(buf.data, buf.len);
 					*op->resvalue = PointerGetDatum(result);
 				}
 
@@ -3776,8 +3715,6 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 			{
 				Datum	   *argvalue = op->d.xmlexpr.argvalue;
 				bool	   *argnull = op->d.xmlexpr.argnull;
-				text	   *data;
-				bool		preserve_whitespace;
 
 				/* arguments are known to be text, bool */
 				Assert(list_length(xexpr->args) == 2);
@@ -3785,12 +3722,12 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 				if (argnull[0])
 					return;
 				value = argvalue[0];
-				data = DatumGetTextPP(value);
+				text	   *data = DatumGetTextPP(value);
 
 				if (argnull[1]) /* probably can't happen */
 					return;
 				value = argvalue[1];
-				preserve_whitespace = DatumGetBool(value);
+				bool		preserve_whitespace = DatumGetBool(value);
 
 				*op->resvalue = PointerGetDatum(xmlparse(data,
 														 xexpr->xmloption,
@@ -3832,16 +3769,14 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 			{
 				Datum	   *argvalue = op->d.xmlexpr.argvalue;
 				bool	   *argnull = op->d.xmlexpr.argnull;
-				xmltype    *data;
 				text	   *version;
-				int			standalone;
 
 				/* arguments are known to be xml, text, int */
 				Assert(list_length(xexpr->args) == 3);
 
 				if (argnull[0])
 					return;
-				data = DatumGetXmlP(argvalue[0]);
+				xmltype    *data = DatumGetXmlP(argvalue[0]);
 
 				if (argnull[1])
 					version = NULL;
@@ -3849,7 +3784,7 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 					version = DatumGetTextPP(argvalue[1]);
 
 				Assert(!argnull[2]);	/* always present */
-				standalone = DatumGetInt32(argvalue[2]);
+				int			standalone = DatumGetInt32(argvalue[2]);
 
 				*op->resvalue = PointerGetDatum(xmlroot(data,
 														version,
@@ -3958,8 +3893,6 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	TupleTableSlot *slot;
 	TupleDesc	output_tupdesc;
 	MemoryContext oldcontext;
-	HeapTupleHeader dtuple;
-	HeapTuple	tuple;
 
 	/* This was checked by ExecInitExpr */
 	Assert(variable->varattno == InvalidAttrNumber);
@@ -4007,8 +3940,6 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 		 */
 		if (variable->vartype != RECORDOID)
 		{
-			TupleDesc	var_tupdesc;
-			TupleDesc	slot_tupdesc;
 
 			/*
 			 * We really only care about numbers of attributes and data types.
@@ -4025,10 +3956,10 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 			 * If vartype is a domain over composite, just look through that
 			 * to the base composite type.
 			 */
-			var_tupdesc = lookup_rowtype_tupdesc_domain(variable->vartype,
+			TupleDesc	var_tupdesc = lookup_rowtype_tupdesc_domain(variable->vartype,
 														-1, false);
 
-			slot_tupdesc = slot->tts_tupleDescriptor;
+			TupleDesc	slot_tupdesc = slot->tts_tupleDescriptor;
 
 			if (var_tupdesc->natts != slot_tupdesc->natts)
 				ereport(ERROR,
@@ -4162,10 +4093,10 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	 *
 	 * (Note: it is critical that we not change the slot's state here.)
 	 */
-	tuple = toast_build_flattened_tuple(slot->tts_tupleDescriptor,
+	HeapTuple	tuple = toast_build_flattened_tuple(slot->tts_tupleDescriptor,
 										slot->tts_values,
 										slot->tts_isnull);
-	dtuple = tuple->t_data;
+	HeapTupleHeader dtuple = tuple->t_data;
 
 	/*
 	 * Label the datum with the composite type info we identified before.
@@ -4184,10 +4115,9 @@ void
 ExecEvalSysVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext,
 			   TupleTableSlot *slot)
 {
-	Datum		d;
 
 	/* slot_getsysattr has sufficient defenses against bad attnums */
-	d = slot_getsysattr(slot,
+	Datum		d = slot_getsysattr(slot,
 						op->d.var.attnum,
 						op->resnull);
 	*op->resvalue = d;
@@ -4205,7 +4135,6 @@ ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup
 				 ExprContext *aggcontext)
 {
 	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
-	MemoryContext oldContext;
 
 	/*
 	 * We must copy the datum into aggcontext if it is pass-by-ref. We do not
@@ -4213,7 +4142,7 @@ ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggStatePerGroup
 	 * that the agg's input type is binary-compatible with its transtype, so
 	 * straight copy here is OK.)
 	 */
-	oldContext = MemoryContextSwitchTo(aggcontext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(aggcontext->ecxt_per_tuple_memory);
 	pergroup->transValue = datumCopy(fcinfo->args[1].value,
 									 pertrans->transtypeByVal,
 									 pertrans->transtypeLen);
@@ -4308,8 +4237,6 @@ ExecAggPlainTransByVal(AggState *aggstate, AggStatePerTrans pertrans,
 					   ExprContext *aggcontext, int setno)
 {
 	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
-	MemoryContext oldContext;
-	Datum		newVal;
 
 	/* cf. select_current_set() */
 	aggstate->curaggcontext = aggcontext;
@@ -4319,13 +4246,13 @@ ExecAggPlainTransByVal(AggState *aggstate, AggStatePerTrans pertrans,
 	aggstate->curpertrans = pertrans;
 
 	/* invoke transition function in per-tuple context */
-	oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
 
 	fcinfo->args[0].value = pergroup->transValue;
 	fcinfo->args[0].isnull = pergroup->transValueIsNull;
 	fcinfo->isnull = false;		/* just in case transfn doesn't set it */
 
-	newVal = FunctionCallInvoke(fcinfo);
+	Datum		newVal = FunctionCallInvoke(fcinfo);
 
 	pergroup->transValue = newVal;
 	pergroup->transValueIsNull = fcinfo->isnull;
@@ -4340,8 +4267,6 @@ ExecAggPlainTransByRef(AggState *aggstate, AggStatePerTrans pertrans,
 					   ExprContext *aggcontext, int setno)
 {
 	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
-	MemoryContext oldContext;
-	Datum		newVal;
 
 	/* cf. select_current_set() */
 	aggstate->curaggcontext = aggcontext;
@@ -4351,13 +4276,13 @@ ExecAggPlainTransByRef(AggState *aggstate, AggStatePerTrans pertrans,
 	aggstate->curpertrans = pertrans;
 
 	/* invoke transition function in per-tuple context */
-	oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
 
 	fcinfo->args[0].value = pergroup->transValue;
 	fcinfo->args[0].isnull = pergroup->transValueIsNull;
 	fcinfo->isnull = false;		/* just in case transfn doesn't set it */
 
-	newVal = FunctionCallInvoke(fcinfo);
+	Datum		newVal = FunctionCallInvoke(fcinfo);
 
 	/*
 	 * For pass-by-ref datatype, must copy the new value into aggcontext and

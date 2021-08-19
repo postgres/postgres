@@ -41,9 +41,8 @@ static pairingheap_node *merge_children(pairingheap *heap,
 pairingheap *
 pairingheap_allocate(pairingheap_comparator compare, void *arg)
 {
-	pairingheap *heap;
 
-	heap = (pairingheap *) palloc(sizeof(pairingheap));
+	pairingheap *heap = (pairingheap *) palloc(sizeof(pairingheap));
 	heap->ph_compare = compare;
 	heap->ph_arg = arg;
 
@@ -86,9 +85,8 @@ merge(pairingheap *heap, pairingheap_node *a, pairingheap_node *b)
 	/* swap 'a' and 'b' so that 'a' is the one with larger value */
 	if (heap->ph_compare(a, b, heap->ph_arg) < 0)
 	{
-		pairingheap_node *tmp;
 
-		tmp = a;
+		pairingheap_node *tmp = a;
 		a = b;
 		b = tmp;
 	}
@@ -144,14 +142,12 @@ pairingheap_first(pairingheap *heap)
 pairingheap_node *
 pairingheap_remove_first(pairingheap *heap)
 {
-	pairingheap_node *result;
-	pairingheap_node *children;
 
 	Assert(!pairingheap_is_empty(heap));
 
 	/* Remove the root, and form a new heap of its children. */
-	result = heap->ph_root;
-	children = result->first_child;
+	pairingheap_node *result = heap->ph_root;
+	pairingheap_node *children = result->first_child;
 
 	heap->ph_root = merge_children(heap, children);
 	if (heap->ph_root)
@@ -169,9 +165,7 @@ pairingheap_remove_first(pairingheap *heap)
 void
 pairingheap_remove(pairingheap *heap, pairingheap_node *node)
 {
-	pairingheap_node *children;
 	pairingheap_node *replacement;
-	pairingheap_node *next_sibling;
 	pairingheap_node **prev_ptr;
 
 	/*
@@ -188,8 +182,8 @@ pairingheap_remove(pairingheap *heap, pairingheap_node *node)
 	 * Before we modify anything, remember the removed node's first_child and
 	 * next_sibling pointers.
 	 */
-	children = node->first_child;
-	next_sibling = node->next_sibling;
+	pairingheap_node *children = node->first_child;
+	pairingheap_node *next_sibling = node->next_sibling;
 
 	/*
 	 * Also find the pointer to the removed node in its previous sibling, or
@@ -235,15 +229,13 @@ merge_children(pairingheap *heap, pairingheap_node *children)
 {
 	pairingheap_node *curr,
 			   *next;
-	pairingheap_node *pairs;
-	pairingheap_node *newroot;
 
 	if (children == NULL || children->next_sibling == NULL)
 		return children;
 
 	/* Walk the subheaps from left to right, merging in pairs */
 	next = children;
-	pairs = NULL;
+	pairingheap_node *pairs = NULL;
 	for (;;)
 	{
 		curr = next;
@@ -271,7 +263,7 @@ merge_children(pairingheap *heap, pairingheap_node *children)
 	/*
 	 * Merge all the pairs together to form a single heap.
 	 */
-	newroot = pairs;
+	pairingheap_node *newroot = pairs;
 	next = pairs->next_sibling;
 	while (next)
 	{

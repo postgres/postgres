@@ -521,10 +521,9 @@ pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
 
 	while (len > 0 && *from)
 	{
-		int			char_len;
 
 		unicode_to_utf8(*from, to);
-		char_len = pg_utf_mblen(to);
+		int			char_len = pg_utf_mblen(to);
 		cnt += char_len;
 		to += char_len;
 		from++;
@@ -776,9 +775,8 @@ pg_wchar2mule_with_len(const pg_wchar *from, unsigned char *to, int len)
 
 	while (len > 0 && *from)
 	{
-		unsigned char lb;
 
-		lb = (*from >> 16) & 0xff;
+		unsigned char lb = (*from >> 16) & 0xff;
 		if (IS_LC1(lb))
 		{
 			*to++ = lb;

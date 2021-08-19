@@ -31,17 +31,14 @@ struct datapagemap_iterator
 void
 datapagemap_add(datapagemap_t *map, BlockNumber blkno)
 {
-	int			offset;
-	int			bitno;
 
-	offset = blkno / 8;
-	bitno = blkno % 8;
+	int			offset = blkno / 8;
+	int			bitno = blkno % 8;
 
 	/* enlarge or create bitmap if needed */
 	if (map->bitmapsize <= offset)
 	{
 		int			oldsize = map->bitmapsize;
-		int			newsize;
 
 		/*
 		 * The minimum to hold the new bit is offset + 1. But add some
@@ -49,7 +46,7 @@ datapagemap_add(datapagemap_t *map, BlockNumber blkno)
 		 * the common case that blocks are modified in order, from beginning
 		 * of a relation to the end.
 		 */
-		newsize = offset + 1;
+		int			newsize = offset + 1;
 		newsize += 10;
 
 		map->bitmap = pg_realloc(map->bitmap, newsize);
@@ -74,9 +71,8 @@ datapagemap_add(datapagemap_t *map, BlockNumber blkno)
 datapagemap_iterator_t *
 datapagemap_iterate(datapagemap_t *map)
 {
-	datapagemap_iterator_t *iter;
 
-	iter = pg_malloc(sizeof(datapagemap_iterator_t));
+	datapagemap_iterator_t *iter = pg_malloc(sizeof(datapagemap_iterator_t));
 	iter->map = map;
 	iter->nextblkno = 0;
 
@@ -116,10 +112,9 @@ datapagemap_next(datapagemap_iterator_t *iter, BlockNumber *blkno)
 void
 datapagemap_print(datapagemap_t *map)
 {
-	datapagemap_iterator_t *iter;
 	BlockNumber blocknum;
 
-	iter = datapagemap_iterate(map);
+	datapagemap_iterator_t *iter = datapagemap_iterate(map);
 	while (datapagemap_next(iter, &blocknum))
 		pg_log_debug("block %u", blocknum);
 

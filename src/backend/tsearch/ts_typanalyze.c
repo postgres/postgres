@@ -142,20 +142,16 @@ compute_tsvector_stats(VacAttrStats *stats,
 					   int samplerows,
 					   double totalrows)
 {
-	int			num_mcelem;
 	int			null_cnt = 0;
 	double		total_width = 0;
 
 	/* This is D from the LC algorithm. */
-	HTAB	   *lexemes_tab;
 	HASHCTL		hash_ctl;
 	HASH_SEQ_STATUS scan_status;
 
 	/* This is the current bucket number from the LC algorithm */
-	int			b_current;
 
 	/* This is 'w' from the LC algorithm */
-	int			bucket_width;
 	int			vector_no,
 				lexeme_no;
 	LexemeHashKey hash_key;
@@ -167,13 +163,13 @@ compute_tsvector_stats(VacAttrStats *stats,
 	 * the number of individual lexeme values tracked in pg_statistic ought to
 	 * be more than the number of values for a simple scalar column.
 	 */
-	num_mcelem = stats->attr->attstattarget * 10;
+	int			num_mcelem = stats->attr->attstattarget * 10;
 
 	/*
 	 * We set bucket width equal to (num_mcelem + 10) / 0.007 as per the
 	 * comment above.
 	 */
-	bucket_width = (num_mcelem + 10) * 1000 / 7;
+	int			bucket_width = (num_mcelem + 10) * 1000 / 7;
 
 	/*
 	 * Create the hashtable. It will be in local memory, so we don't need to
@@ -185,28 +181,24 @@ compute_tsvector_stats(VacAttrStats *stats,
 	hash_ctl.hash = lexeme_hash;
 	hash_ctl.match = lexeme_match;
 	hash_ctl.hcxt = CurrentMemoryContext;
-	lexemes_tab = hash_create("Analyzed lexemes table",
+	HTAB	   *lexemes_tab = hash_create("Analyzed lexemes table",
 							  num_mcelem,
 							  &hash_ctl,
 							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
-	b_current = 1;
+	int			b_current = 1;
 	lexeme_no = 0;
 
 	/* Loop over the tsvectors. */
 	for (vector_no = 0; vector_no < samplerows; vector_no++)
 	{
-		Datum		value;
 		bool		isnull;
-		TSVector	vector;
-		WordEntry  *curentryptr;
-		char	   *lexemesptr;
 		int			j;
 
 		vacuum_delay_point();
 
-		value = fetchfunc(stats, vector_no, &isnull);
+		Datum		value = fetchfunc(stats, vector_no, &isnull);
 
 		/*
 		 * Check for null/nonnull.
@@ -228,14 +220,14 @@ compute_tsvector_stats(VacAttrStats *stats,
 		/*
 		 * Now detoast the tsvector if needed.
 		 */
-		vector = DatumGetTSVector(value);
+		TSVector	vector = DatumGetTSVector(value);
 
 		/*
 		 * We loop through the lexemes in the tsvector and add them to our
 		 * tracking hashtable.
 		 */
-		lexemesptr = STRPTR(vector);
-		curentryptr = ARRPTR(vector);
+		char	   *lexemesptr = STRPTR(vector);
+		WordEntry  *curentryptr = ARRPTR(vector);
 		for (j = 0; j < vector->size; j++)
 		{
 			bool		found;
@@ -292,10 +284,6 @@ compute_tsvector_stats(VacAttrStats *stats,
 	if (null_cnt < samplerows)
 	{
 		int			nonnull_cnt = samplerows - null_cnt;
-		int			i;
-		TrackItem **sort_table;
-		int			track_len;
-		int			cutoff_freq;
 		int			minfreq,
 					maxfreq;
 
@@ -315,13 +303,13 @@ compute_tsvector_stats(VacAttrStats *stats,
 		 * Since epsilon = s/10 and bucket_width = 1/epsilon, the cutoff
 		 * frequency is 9*N / bucket_width.
 		 */
-		cutoff_freq = 9 * lexeme_no / bucket_width;
+		int			cutoff_freq = 9 * lexeme_no / bucket_width;
 
-		i = hash_get_num_entries(lexemes_tab);	/* surely enough space */
-		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
+		int			i = hash_get_num_entries(lexemes_tab);	/* surely enough space */
+		TrackItem **sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
 
 		hash_seq_init(&scan_status, lexemes_tab);
-		track_len = 0;
+		int			track_len = 0;
 		minfreq = lexeme_no;
 		maxfreq = 0;
 		while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)
@@ -358,9 +346,6 @@ compute_tsvector_stats(VacAttrStats *stats,
 		/* Generate MCELEM slot entry */
 		if (num_mcelem > 0)
 		{
-			MemoryContext old_context;
-			Datum	   *mcelem_values;
-			float4	   *mcelem_freqs;
 
 			/*
 			 * We want to store statistics sorted on the lexeme value using
@@ -380,7 +365,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 				  trackitem_compare_lexemes);
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
 
 			/*
 			 * We sorted statistics on the lexeme value, but we want to be
@@ -393,8 +378,8 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * create that for a tsvector column, since null elements aren't
 			 * possible.)
 			 */
-			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
-			mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));
+			Datum	   *mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
+			float4	   *mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));
 
 			/*
 			 * See comments above about use of nonnull_cnt as the divisor for

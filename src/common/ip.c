@@ -166,7 +166,6 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 				 struct addrinfo **result)
 {
 	struct addrinfo hints;
-	struct addrinfo *aip;
 	struct sockaddr_un *unp;
 
 	*result = NULL;
@@ -193,7 +192,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 		return EAI_FAIL;
 	}
 
-	aip = calloc(1, sizeof(struct addrinfo));
+	struct addrinfo *aip = calloc(1, sizeof(struct addrinfo));
 	if (aip == NULL)
 		return EAI_MEMORY;
 

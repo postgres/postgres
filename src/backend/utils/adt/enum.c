@@ -62,7 +62,6 @@ static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
 static void
 check_safe_enum_use(HeapTuple enumval_tup)
 {
-	TransactionId xmin;
 	Form_pg_enum en = (Form_pg_enum) GETSTRUCT(enumval_tup);
 
 	/*
@@ -76,7 +75,7 @@ check_safe_enum_use(HeapTuple enumval_tup)
 	 * Usually, a row would get hinted as committed when it's read or loaded
 	 * into syscache; but just in case not, let's check the xmin directly.
 	 */
-	xmin = HeapTupleHeaderGetXmin(enumval_tup->t_data);
+	TransactionId xmin = HeapTupleHeaderGetXmin(enumval_tup->t_data);
 	if (!TransactionIdIsInProgress(xmin) &&
 		TransactionIdDidCommit(xmin))
 		return;
@@ -110,8 +109,6 @@ enum_in(PG_FUNCTION_ARGS)
 {
 	char	   *name = PG_GETARG_CSTRING(0);
 	Oid			enumtypoid = PG_GETARG_OID(1);
-	Oid			enumoid;
-	HeapTuple	tup;
 
 	/* must check length to prevent Assert failure within SearchSysCache */
 	if (strlen(name) >= NAMEDATALEN)
@@ -121,7 +118,7 @@ enum_in(PG_FUNCTION_ARGS)
 						format_type_be(enumtypoid),
 						name)));
 
-	tup = SearchSysCache2(ENUMTYPOIDNAME,
+	HeapTuple	tup = SearchSysCache2(ENUMTYPOIDNAME,
 						  ObjectIdGetDatum(enumtypoid),
 						  CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
@@ -138,7 +135,7 @@ enum_in(PG_FUNCTION_ARGS)
 	 * This comes from pg_enum.oid and stores system oids in user tables. This
 	 * oid must be preserved by binary upgrades.
 	 */
-	enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
+	Oid			enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
 
 	ReleaseSysCache(tup);
 
@@ -149,19 +146,16 @@ Datum
 enum_out(PG_FUNCTION_ARGS)
 {
 	Oid			enumval = PG_GETARG_OID(0);
-	char	   *result;
-	HeapTuple	tup;
-	Form_pg_enum en;
 
-	tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(enumval));
+	HeapTuple	tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(enumval));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid internal value for enum: %u",
 						enumval)));
-	en = (Form_pg_enum) GETSTRUCT(tup);
+	Form_pg_enum en = (Form_pg_enum) GETSTRUCT(tup);
 
-	result = pstrdup(NameStr(en->enumlabel));
+	char	   *result = pstrdup(NameStr(en->enumlabel));
 
 	ReleaseSysCache(tup);
 
@@ -174,12 +168,9 @@ enum_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			enumtypoid = PG_GETARG_OID(1);
-	Oid			enumoid;
-	HeapTuple	tup;
-	char	   *name;
 	int			nbytes;
 
-	name = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *name = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	/* must check length to prevent Assert failure within SearchSysCache */
 	if (strlen(name) >= NAMEDATALEN)
@@ -189,7 +180,7 @@ enum_recv(PG_FUNCTION_ARGS)
 						format_type_be(enumtypoid),
 						name)));
 
-	tup = SearchSysCache2(ENUMTYPOIDNAME,
+	HeapTuple	tup = SearchSysCache2(ENUMTYPOIDNAME,
 						  ObjectIdGetDatum(enumtypoid),
 						  CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
@@ -202,7 +193,7 @@ enum_recv(PG_FUNCTION_ARGS)
 	/* check it's safe to use in SQL */
 	check_safe_enum_use(tup);
 
-	enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
+	Oid			enumoid = ((Form_pg_enum) GETSTRUCT(tup))->oid;
 
 	ReleaseSysCache(tup);
 
@@ -216,16 +207,14 @@ enum_send(PG_FUNCTION_ARGS)
 {
 	Oid			enumval = PG_GETARG_OID(0);
 	StringInfoData buf;
-	HeapTuple	tup;
-	Form_pg_enum en;
 
-	tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(enumval));
+	HeapTuple	tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(enumval));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid internal value for enum: %u",
 						enumval)));
-	en = (Form_pg_enum) GETSTRUCT(tup);
+	Form_pg_enum en = (Form_pg_enum) GETSTRUCT(tup);
 
 	pq_begintypsend(&buf);
 	pq_sendtext(&buf, NameStr(en->enumlabel), strlen(NameStr(en->enumlabel)));
@@ -245,7 +234,6 @@ enum_send(PG_FUNCTION_ARGS)
 static int
 enum_cmp_internal(Oid arg1, Oid arg2, FunctionCallInfo fcinfo)
 {
-	TypeCacheEntry *tcache;
 
 	/*
 	 * We don't need the typcache except in the hopefully-uncommon case that
@@ -270,22 +258,19 @@ enum_cmp_internal(Oid arg1, Oid arg2, FunctionCallInfo fcinfo)
 	}
 
 	/* Locate the typcache entry for the enum type */
-	tcache = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+	TypeCacheEntry *tcache = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
 	if (tcache == NULL)
 	{
-		HeapTuple	enum_tup;
-		Form_pg_enum en;
-		Oid			typeoid;
 
 		/* Get the OID of the enum type containing arg1 */
-		enum_tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(arg1));
+		HeapTuple	enum_tup = SearchSysCache1(ENUMOID, ObjectIdGetDatum(arg1));
 		if (!HeapTupleIsValid(enum_tup))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 					 errmsg("invalid internal value for enum: %u",
 							arg1)));
-		en = (Form_pg_enum) GETSTRUCT(enum_tup);
-		typeoid = en->enumtypid;
+		Form_pg_enum en = (Form_pg_enum) GETSTRUCT(enum_tup);
+		Oid			typeoid = en->enumtypid;
 		ReleaseSysCache(enum_tup);
 		/* Now locate and remember the typcache entry */
 		tcache = lookup_type_cache(typeoid, 0);
@@ -385,10 +370,6 @@ enum_cmp(PG_FUNCTION_ARGS)
 static Oid
 enum_endpoint(Oid enumtypoid, ScanDirection direction)
 {
-	Relation	enum_rel;
-	Relation	enum_idx;
-	SysScanDesc enum_scan;
-	HeapTuple	enum_tuple;
 	ScanKeyData skey;
 	Oid			minmax;
 
@@ -402,12 +383,12 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(enumtypoid));
 
-	enum_rel = table_open(EnumRelationId, AccessShareLock);
-	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
-	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL,
+	Relation	enum_rel = table_open(EnumRelationId, AccessShareLock);
+	Relation	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
+	SysScanDesc enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL,
 										   1, &skey);
 
-	enum_tuple = systable_getnext_ordered(enum_scan, direction);
+	HeapTuple	enum_tuple = systable_getnext_ordered(enum_scan, direction);
 	if (HeapTupleIsValid(enum_tuple))
 	{
 		/* check it's safe to use in SQL */
@@ -430,22 +411,20 @@ enum_endpoint(Oid enumtypoid, ScanDirection direction)
 Datum
 enum_first(PG_FUNCTION_ARGS)
 {
-	Oid			enumtypoid;
-	Oid			min;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
 	 * expression tree.  Notice that the actual value of the argument isn't
 	 * examined at all; in particular it might be NULL.
 	 */
-	enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	if (enumtypoid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not determine actual enum type")));
 
 	/* Get the OID using the index */
-	min = enum_endpoint(enumtypoid, ForwardScanDirection);
+	Oid			min = enum_endpoint(enumtypoid, ForwardScanDirection);
 
 	if (!OidIsValid(min))
 		ereport(ERROR,
@@ -459,22 +438,20 @@ enum_first(PG_FUNCTION_ARGS)
 Datum
 enum_last(PG_FUNCTION_ARGS)
 {
-	Oid			enumtypoid;
-	Oid			max;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
 	 * expression tree.  Notice that the actual value of the argument isn't
 	 * examined at all; in particular it might be NULL.
 	 */
-	enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	if (enumtypoid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not determine actual enum type")));
 
 	/* Get the OID using the index */
-	max = enum_endpoint(enumtypoid, BackwardScanDirection);
+	Oid			max = enum_endpoint(enumtypoid, BackwardScanDirection);
 
 	if (!OidIsValid(max))
 		ereport(ERROR,
@@ -491,7 +468,6 @@ enum_range_bounds(PG_FUNCTION_ARGS)
 {
 	Oid			lower;
 	Oid			upper;
-	Oid			enumtypoid;
 
 	if (PG_ARGISNULL(0))
 		lower = InvalidOid;
@@ -507,7 +483,7 @@ enum_range_bounds(PG_FUNCTION_ARGS)
 	 * expression tree.  The generic type mechanism should have ensured that
 	 * both are of the same type.
 	 */
-	enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	if (enumtypoid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -520,14 +496,13 @@ enum_range_bounds(PG_FUNCTION_ARGS)
 Datum
 enum_range_all(PG_FUNCTION_ARGS)
 {
-	Oid			enumtypoid;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
 	 * expression tree.  Notice that the actual value of the argument isn't
 	 * examined at all; in particular it might be NULL.
 	 */
-	enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			enumtypoid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	if (enumtypoid == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -540,16 +515,10 @@ enum_range_all(PG_FUNCTION_ARGS)
 static ArrayType *
 enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 {
-	ArrayType  *result;
-	Relation	enum_rel;
-	Relation	enum_idx;
-	SysScanDesc enum_scan;
 	HeapTuple	enum_tuple;
 	ScanKeyData skey;
-	Datum	   *elems;
 	int			max,
 				cnt;
-	bool		left_found;
 
 	/*
 	 * Scan the enum members in order using pg_enum_typid_sortorder_index.
@@ -561,14 +530,14 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(enumtypoid));
 
-	enum_rel = table_open(EnumRelationId, AccessShareLock);
-	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
-	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL, 1, &skey);
+	Relation	enum_rel = table_open(EnumRelationId, AccessShareLock);
+	Relation	enum_idx = index_open(EnumTypIdSortOrderIndexId, AccessShareLock);
+	SysScanDesc enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL, 1, &skey);
 
 	max = 64;
-	elems = (Datum *) palloc(max * sizeof(Datum));
+	Datum	   *elems = (Datum *) palloc(max * sizeof(Datum));
 	cnt = 0;
-	left_found = !OidIsValid(lower);
+	bool		left_found = !OidIsValid(lower);
 
 	while (HeapTupleIsValid(enum_tuple = systable_getnext_ordered(enum_scan, ForwardScanDirection)))
 	{
@@ -601,7 +570,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 	/* and build the result array */
 	/* note this hardwires some details about the representation of Oid */
-	result = construct_array(elems, cnt, enumtypoid,
+	ArrayType  *result = construct_array(elems, cnt, enumtypoid,
 							 sizeof(Oid), true, TYPALIGN_INT);
 
 	pfree(elems);

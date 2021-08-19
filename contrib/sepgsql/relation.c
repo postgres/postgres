@@ -42,15 +42,8 @@ static void sepgsql_index_modify(Oid indexOid);
 void
 sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 {
-	Relation	rel;
 	ScanKeyData skey[2];
-	SysScanDesc sscan;
-	HeapTuple	tuple;
-	char	   *scontext;
-	char	   *tcontext;
-	char	   *ncontext;
 	ObjectAddress object;
-	Form_pg_attribute attForm;
 	StringInfoData audit_name;
 	char		relkind = get_rel_relkind(relOid);
 
@@ -65,7 +58,7 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	 * Compute a default security label of the new column underlying the
 	 * specified relation, and check permission to create it.
 	 */
-	rel = table_open(AttributeRelationId, AccessShareLock);
+	Relation	rel = table_open(AttributeRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_attribute_attrelid,
@@ -76,19 +69,19 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(attnum));
 
-	sscan = systable_beginscan(rel, AttributeRelidNumIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, AttributeRelidNumIndexId, true,
 							   SnapshotSelf, 2, &skey[0]);
 
-	tuple = systable_getnext(sscan);
+	HeapTuple	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for column %d of relation %u",
 			 attnum, relOid);
 
-	attForm = (Form_pg_attribute) GETSTRUCT(tuple);
+	Form_pg_attribute attForm = (Form_pg_attribute) GETSTRUCT(tuple);
 
-	scontext = sepgsql_get_client_label();
-	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
-	ncontext = sepgsql_compute_create(scontext, tcontext,
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
+	char	   *ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_COLUMN,
 									  NameStr(attForm->attname));
 
@@ -133,7 +126,6 @@ void
 sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	char		relkind = get_rel_relkind(relOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
@@ -145,7 +137,7 @@ sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -166,7 +158,6 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						  const char *seclabel)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	char		relkind = get_rel_relkind(relOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
@@ -177,7 +168,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_column:{setattr relabelfrom} permission
@@ -209,7 +200,6 @@ void
 sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	char		relkind = get_rel_relkind(relOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
@@ -221,7 +211,7 @@ sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -239,11 +229,7 @@ sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 void
 sepgsql_relation_post_create(Oid relOid)
 {
-	Relation	rel;
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	tuple;
-	Form_pg_class classForm;
 	ObjectAddress object;
 	uint16_t	tclass;
 	char	   *scontext;		/* subject */
@@ -257,21 +243,21 @@ sepgsql_relation_post_create(Oid relOid)
 	 * Fetch catalog record of the new relation. Because pg_class entry is not
 	 * visible right now, we need to scan the catalog using SnapshotSelf.
 	 */
-	rel = table_open(RelationRelationId, AccessShareLock);
+	Relation	rel = table_open(RelationRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_class_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relOid));
 
-	sscan = systable_beginscan(rel, ClassOidIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, ClassOidIndexId, true,
 							   SnapshotSelf, 1, &skey);
 
-	tuple = systable_getnext(sscan);
+	HeapTuple	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u", relOid);
 
-	classForm = (Form_pg_class) GETSTRUCT(tuple);
+	Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* ignore indexes on toast tables */
 	if (classForm->relkind == RELKIND_INDEX &&
@@ -350,20 +336,18 @@ sepgsql_relation_post_create(Oid relOid)
 	if (classForm->relkind == RELKIND_RELATION ||
 		classForm->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		Relation	arel;
 		ScanKeyData akey;
-		SysScanDesc ascan;
 		HeapTuple	atup;
 		Form_pg_attribute attForm;
 
-		arel = table_open(AttributeRelationId, AccessShareLock);
+		Relation	arel = table_open(AttributeRelationId, AccessShareLock);
 
 		ScanKeyInit(&akey,
 					Anum_pg_attribute_attrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(relOid));
 
-		ascan = systable_beginscan(arel, AttributeRelidNumIndexId, true,
+		SysScanDesc ascan = systable_beginscan(arel, AttributeRelidNumIndexId, true,
 								   SnapshotSelf, 1, &akey);
 
 		while (HeapTupleIsValid(atup = systable_getnext(ascan)))
@@ -416,7 +400,6 @@ void
 sepgsql_relation_drop(Oid relOid)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	uint16_t	tclass = 0;
 	char		relkind = get_rel_relkind(relOid);
 
@@ -449,7 +432,7 @@ sepgsql_relation_drop(Oid relOid)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_rel_namespace(relOid);
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -486,11 +469,10 @@ sepgsql_relation_drop(Oid relOid)
 	if (relkind == RELKIND_RELATION || relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		Form_pg_attribute attForm;
-		CatCList   *attrList;
 		HeapTuple	atttup;
 		int			i;
 
-		attrList = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(relOid));
+		CatCList   *attrList = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(relOid));
 		for (i = 0; i < attrList->n_members; i++)
 		{
 			atttup = &attrList->members[i]->tuple;
@@ -524,7 +506,6 @@ void
 sepgsql_relation_truncate(Oid relOid)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	uint16_t	tclass = 0;
 	char		relkind = get_rel_relkind(relOid);
 
@@ -545,7 +526,7 @@ sepgsql_relation_truncate(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
@@ -564,7 +545,6 @@ void
 sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 	char		relkind = get_rel_relkind(relOid);
 	uint16_t	tclass = 0;
 
@@ -583,7 +563,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_xxx:{setattr relabelfrom} permission
@@ -614,15 +594,8 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 void
 sepgsql_relation_setattr(Oid relOid)
 {
-	Relation	rel;
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	oldtup;
-	HeapTuple	newtup;
-	Form_pg_class oldform;
-	Form_pg_class newform;
 	ObjectAddress object;
-	char	   *audit_name;
 	uint16_t	tclass;
 
 	switch (get_rel_relkind(relOid))
@@ -649,28 +622,28 @@ sepgsql_relation_setattr(Oid relOid)
 	/*
 	 * Fetch newer catalog
 	 */
-	rel = table_open(RelationRelationId, AccessShareLock);
+	Relation	rel = table_open(RelationRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_class_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relOid));
 
-	sscan = systable_beginscan(rel, ClassOidIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, ClassOidIndexId, true,
 							   SnapshotSelf, 1, &skey);
 
-	newtup = systable_getnext(sscan);
+	HeapTuple	newtup = systable_getnext(sscan);
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "could not find tuple for relation %u", relOid);
-	newform = (Form_pg_class) GETSTRUCT(newtup);
+	Form_pg_class newform = (Form_pg_class) GETSTRUCT(newtup);
 
 	/*
 	 * Fetch older catalog
 	 */
-	oldtup = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+	HeapTuple	oldtup = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
-	oldform = (Form_pg_class) GETSTRUCT(oldtup);
+	Form_pg_class oldform = (Form_pg_class) GETSTRUCT(oldtup);
 
 	/*
 	 * Does this ALTER command takes operation to namespace?
@@ -694,7 +667,7 @@ sepgsql_relation_setattr(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
@@ -725,23 +698,20 @@ sepgsql_relation_setattr_extra(Relation catalog,
 							   AttrNumber anum_extra_id)
 {
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	tuple;
-	Datum		datum;
 	bool		isnull;
 
 	ScanKeyInit(&skey, anum_extra_id,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(extra_oid));
 
-	sscan = systable_beginscan(catalog, catindex_id, true,
+	SysScanDesc sscan = systable_beginscan(catalog, catindex_id, true,
 							   SnapshotSelf, 1, &skey);
-	tuple = systable_getnext(sscan);
+	HeapTuple	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for object %u in catalog \"%s\"",
 			 extra_oid, RelationGetRelationName(catalog));
 
-	datum = heap_getattr(tuple, anum_relation_id,
+	Datum		datum = heap_getattr(tuple, anum_relation_id,
 						 RelationGetDescr(catalog), &isnull);
 	Assert(!isnull);
 

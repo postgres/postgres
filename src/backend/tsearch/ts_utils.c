@@ -34,7 +34,6 @@ get_tsearch_config_filename(const char *basename,
 							const char *extension)
 {
 	char		sharepath[MAXPGPATH];
-	char	   *result;
 
 	/*
 	 * We limit the basename to contain a-z, 0-9, and underscores.  This may
@@ -52,7 +51,7 @@ get_tsearch_config_filename(const char *basename,
 						basename)));
 
 	get_share_path(my_exec_path, sharepath);
-	result = palloc(MAXPGPATH);
+	char	   *result = palloc(MAXPGPATH);
 	snprintf(result, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			 sharepath, basename, extension);
 

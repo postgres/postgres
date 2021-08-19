@@ -210,12 +210,10 @@ replorigin_by_name(const char *roname, bool missing_ok)
 {
 	Form_pg_replication_origin ident;
 	Oid			roident = InvalidOid;
-	HeapTuple	tuple;
-	Datum		roname_d;
 
-	roname_d = CStringGetTextDatum(roname);
+	Datum		roname_d = CStringGetTextDatum(roname);
 
-	tuple = SearchSysCache1(REPLORIGNAME, roname_d);
+	HeapTuple	tuple = SearchSysCache1(REPLORIGNAME, roname_d);
 	if (HeapTupleIsValid(tuple))
 	{
 		ident = (Form_pg_replication_origin) GETSTRUCT(tuple);
@@ -241,13 +239,11 @@ replorigin_create(const char *roname)
 {
 	Oid			roident;
 	HeapTuple	tuple = NULL;
-	Relation	rel;
-	Datum		roname_d;
 	SnapshotData SnapshotDirty;
 	SysScanDesc scan;
 	ScanKeyData key;
 
-	roname_d = CStringGetTextDatum(roname);
+	Datum		roname_d = CStringGetTextDatum(roname);
 
 	Assert(IsTransactionState());
 
@@ -268,13 +264,12 @@ replorigin_create(const char *roname)
 	 */
 	InitDirtySnapshot(SnapshotDirty);
 
-	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
+	Relation	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
 
 	for (roident = InvalidOid + 1; roident < PG_UINT16_MAX; roident++)
 	{
 		bool		nulls[Natts_pg_replication_origin];
 		Datum		values[Natts_pg_replication_origin];
-		bool		collides;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -288,7 +283,7 @@ replorigin_create(const char *roname)
 								  &SnapshotDirty,
 								  1, &key);
 
-		collides = HeapTupleIsValid(systable_getnext(scan));
+		bool		collides = HeapTupleIsValid(systable_getnext(scan));
 
 		systable_endscan(scan);
 
@@ -347,7 +342,6 @@ restart:
 			/* found our slot, is it busy? */
 			if (state->acquired_by != 0)
 			{
-				ConditionVariable *cv;
 
 				if (nowait)
 					ereport(ERROR,
@@ -363,7 +357,7 @@ restart:
 				 * wrong, since we could miss the signal if we did so); just
 				 * use ConditionVariableSleep directly.
 				 */
-				cv = &state->origin_cv;
+				ConditionVariable *cv = &state->origin_cv;
 
 				LWLockRelease(ReplicationOriginLock);
 
@@ -413,8 +407,6 @@ restart:
 void
 replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 {
-	RepOriginId roident;
-	Relation	rel;
 
 	Assert(IsTransactionState());
 
@@ -427,9 +419,9 @@ replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 	 * acquire a lock on ReplicationOriginRelationId, get the origin_id, lock
 	 * the specific origin and then re-check if the origin still exists.
 	 */
-	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
+	Relation	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
 
-	roident = replorigin_by_name(name, missing_ok);
+	RepOriginId roident = replorigin_by_name(name, missing_ok);
 
 	if (OidIsValid(roident))
 		replorigin_drop_guts(rel, roident, nowait);
@@ -448,14 +440,13 @@ replorigin_drop_by_name(const char *name, bool missing_ok, bool nowait)
 bool
 replorigin_by_oid(RepOriginId roident, bool missing_ok, char **roname)
 {
-	HeapTuple	tuple;
 	Form_pg_replication_origin ric;
 
 	Assert(OidIsValid((Oid) roident));
 	Assert(roident != InvalidRepOriginId);
 	Assert(roident != DoNotReplicateId);
 
-	tuple = SearchSysCache1(REPLORIGIDENT,
+	HeapTuple	tuple = SearchSysCache1(REPLORIGIDENT,
 							ObjectIdGetDatum((Oid) roident));
 
 	if (HeapTupleIsValid(tuple))
@@ -558,7 +549,6 @@ CheckPointReplicationOrigin(void)
 {
 	const char *tmppath = "pg_logical/replorigin_checkpoint.tmp";
 	const char *path = "pg_logical/replorigin_checkpoint";
-	int			tmpfd;
 	int			i;
 	uint32		magic = REPLICATION_STATE_MAGIC;
 	pg_crc32c	crc;
@@ -579,7 +569,7 @@ CheckPointReplicationOrigin(void)
 	 * no other backend can perform this at the same time; only one checkpoint
 	 * can happen at a time.
 	 */
-	tmpfd = OpenTransientFile(tmppath,
+	int			tmpfd = OpenTransientFile(tmppath,
 							  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
 	if (tmpfd < 0)
 		ereport(PANIC,
@@ -609,7 +599,6 @@ CheckPointReplicationOrigin(void)
 	{
 		ReplicationStateOnDisk disk_state;
 		ReplicationState *curstate = &replication_states[i];
-		XLogRecPtr	local_lsn;
 
 		if (curstate->roident == InvalidRepOriginId)
 			continue;
@@ -622,7 +611,7 @@ CheckPointReplicationOrigin(void)
 		disk_state.roident = curstate->roident;
 
 		disk_state.remote_lsn = curstate->remote_lsn;
-		local_lsn = curstate->local_lsn;
+		XLogRecPtr	local_lsn = curstate->local_lsn;
 
 		LWLockRelease(&curstate->lock);
 
@@ -827,10 +816,9 @@ replorigin_redo(XLogReaderState *record)
 			}
 		case XLOG_REPLORIGIN_DROP:
 			{
-				xl_replorigin_drop *xlrec;
 				int			i;
 
-				xlrec = (xl_replorigin_drop *) XLogRecGetData(record);
+				xl_replorigin_drop *xlrec = (xl_replorigin_drop *) XLogRecGetData(record);
 
 				for (i = 0; i < max_replication_slots; i++)
 				{
@@ -1006,9 +994,8 @@ replorigin_get_progress(RepOriginId node, bool flush)
 
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationState *state;
 
-		state = &replication_states[i];
+		ReplicationState *state = &replication_states[i];
 
 		if (state->roident == node)
 		{
@@ -1158,7 +1145,6 @@ replorigin_session_setup(RepOriginId node)
 void
 replorigin_session_reset(void)
 {
-	ConditionVariable *cv;
 
 	Assert(max_replication_slots != 0);
 
@@ -1170,7 +1156,7 @@ replorigin_session_reset(void)
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
 
 	session_replication_state->acquired_by = 0;
-	cv = &session_replication_state->origin_cv;
+	ConditionVariable *cv = &session_replication_state->origin_cv;
 	session_replication_state = NULL;
 
 	LWLockRelease(ReplicationOriginLock);
@@ -1205,14 +1191,12 @@ replorigin_session_advance(XLogRecPtr remote_commit, XLogRecPtr local_commit)
 XLogRecPtr
 replorigin_session_get_progress(bool flush)
 {
-	XLogRecPtr	remote_lsn;
-	XLogRecPtr	local_lsn;
 
 	Assert(session_replication_state != NULL);
 
 	LWLockAcquire(&session_replication_state->lock, LW_SHARED);
-	remote_lsn = session_replication_state->remote_lsn;
-	local_lsn = session_replication_state->local_lsn;
+	XLogRecPtr	remote_lsn = session_replication_state->remote_lsn;
+	XLogRecPtr	local_lsn = session_replication_state->local_lsn;
 	LWLockRelease(&session_replication_state->lock);
 
 	if (flush && local_lsn != InvalidXLogRecPtr)
@@ -1237,12 +1221,11 @@ replorigin_session_get_progress(bool flush)
 Datum
 pg_replication_origin_create(PG_FUNCTION_ARGS)
 {
-	char	   *name;
 	RepOriginId roident;
 
 	replorigin_check_prerequisites(false, false);
 
-	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 
 	/* Replication origins "pg_xxx" are reserved for internal use */
 	if (IsReservedName(name))
@@ -1274,11 +1257,10 @@ pg_replication_origin_create(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_drop(PG_FUNCTION_ARGS)
 {
-	char	   *name;
 
 	replorigin_check_prerequisites(false, false);
 
-	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 
 	replorigin_drop_by_name(name, false, true);
 
@@ -1293,13 +1275,11 @@ pg_replication_origin_drop(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_oid(PG_FUNCTION_ARGS)
 {
-	char	   *name;
-	RepOriginId roident;
 
 	replorigin_check_prerequisites(false, false);
 
-	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
-	roident = replorigin_by_name(name, true);
+	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+	RepOriginId roident = replorigin_by_name(name, true);
 
 	pfree(name);
 
@@ -1314,13 +1294,11 @@ pg_replication_origin_oid(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 {
-	char	   *name;
-	RepOriginId origin;
 
 	replorigin_check_prerequisites(true, false);
 
-	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
-	origin = replorigin_by_name(name, false);
+	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+	RepOriginId origin = replorigin_by_name(name, false);
 	replorigin_session_setup(origin);
 
 	replorigin_session_origin = origin;
@@ -1369,7 +1347,6 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_session_progress(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	remote_lsn = InvalidXLogRecPtr;
 	bool		flush = PG_GETARG_BOOL(0);
 
 	replorigin_check_prerequisites(true, false);
@@ -1379,7 +1356,7 @@ pg_replication_origin_session_progress(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("no replication origin is configured")));
 
-	remote_lsn = replorigin_session_get_progress(flush);
+	XLogRecPtr	remote_lsn = replorigin_session_get_progress(flush);
 
 	if (remote_lsn == InvalidXLogRecPtr)
 		PG_RETURN_NULL();
@@ -1422,14 +1399,13 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_PP(0);
 	XLogRecPtr	remote_commit = PG_GETARG_LSN(1);
-	RepOriginId node;
 
 	replorigin_check_prerequisites(true, false);
 
 	/* lock to prevent the replication origin from vanishing */
 	LockRelationOid(ReplicationOriginRelationId, RowExclusiveLock);
 
-	node = replorigin_by_name(text_to_cstring(name), false);
+	RepOriginId node = replorigin_by_name(text_to_cstring(name), false);
 
 	/*
 	 * Can't sensibly pass a local commit to be flushed at checkpoint - this
@@ -1455,20 +1431,16 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_progress(PG_FUNCTION_ARGS)
 {
-	char	   *name;
-	bool		flush;
-	RepOriginId roident;
-	XLogRecPtr	remote_lsn = InvalidXLogRecPtr;
 
 	replorigin_check_prerequisites(true, true);
 
-	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
-	flush = PG_GETARG_BOOL(1);
+	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
+	bool		flush = PG_GETARG_BOOL(1);
 
-	roident = replorigin_by_name(name, false);
+	RepOriginId roident = replorigin_by_name(name, false);
 	Assert(OidIsValid(roident));
 
-	remote_lsn = replorigin_get_progress(roident, flush);
+	XLogRecPtr	remote_lsn = replorigin_get_progress(roident, flush);
 
 	if (remote_lsn == InvalidXLogRecPtr)
 		PG_RETURN_NULL();
@@ -1526,12 +1498,11 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 	 */
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationState *state;
 		Datum		values[REPLICATION_ORIGIN_PROGRESS_COLS];
 		bool		nulls[REPLICATION_ORIGIN_PROGRESS_COLS];
 		char	   *roname;
 
-		state = &replication_states[i];
+		ReplicationState *state = &replication_states[i];
 
 		/* unused slot, nothing to display */
 		if (state->roident == InvalidRepOriginId)

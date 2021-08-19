@@ -378,11 +378,10 @@ element(struct vars *v,			/* context */
 		const chr *endp)		/* points just past end of name */
 {
 	const struct cname *cn;
-	size_t		len;
 
 	/* generic:  one-chr names stand for themselves */
 	assert(startp < endp);
-	len = endp - startp;
+	size_t		len = endp - startp;
 	if (len == 1)
 		return *startp;
 
@@ -414,7 +413,6 @@ range(struct vars *v,			/* context */
 	  chr b,					/* range end, might equal a */
 	  int cases)				/* case-independent? */
 {
-	int			nchrs;
 	struct cvec *cv;
 	chr			c,
 				cc;
@@ -443,7 +441,7 @@ range(struct vars *v,			/* context */
 	 * the allocation size to 100000 chrs (arbitrary) and check for overrun
 	 * inside the loop below.
 	 */
-	nchrs = b - a + 1;
+	int			nchrs = b - a + 1;
 	if (nchrs <= 0 || nchrs > 100000)
 		nchrs = 100000;
 
@@ -541,14 +539,13 @@ lookupcclass(struct vars *v,	/* context (for returning errors) */
 			 const chr *startp, /* where the name starts */
 			 const chr *endp)	/* just past the end of the name */
 {
-	size_t		len;
 	const char *const *namePtr;
 	int			i;
 
 	/*
 	 * Map the name to the corresponding enumerated value.
 	 */
-	len = endp - startp;
+	size_t		len = endp - startp;
 	for (namePtr = classNames, i = 0; *namePtr != NULL; namePtr++, i++)
 	{
 		if (strlen(*namePtr) == len &&
@@ -721,14 +718,13 @@ static struct cvec *
 allcases(struct vars *v,		/* context */
 		 chr c)					/* character to get case equivs of */
 {
-	struct cvec *cv;
 	chr			lc,
 				uc;
 
 	lc = pg_wc_tolower(c);
 	uc = pg_wc_toupper(c);
 
-	cv = getcvec(v, 2, 0);
+	struct cvec *cv = getcvec(v, 2, 0);
 	addchr(cv, lc);
 	if (lc != uc)
 		addchr(cv, uc);

@@ -54,8 +54,6 @@ tsquery_and(PG_FUNCTION_ARGS)
 {
 	TSQuery		a = PG_GETARG_TSQUERY_COPY(0);
 	TSQuery		b = PG_GETARG_TSQUERY_COPY(1);
-	QTNode	   *res;
-	TSQuery		query;
 
 	if (a->size == 0)
 	{
@@ -68,9 +66,9 @@ tsquery_and(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b, OP_AND, 0);
+	QTNode	   *res = join_tsqueries(a, b, OP_AND, 0);
 
-	query = QTN2QT(res);
+	TSQuery		query = QTN2QT(res);
 
 	QTNFree(res);
 	PG_FREE_IF_COPY(a, 0);
@@ -84,8 +82,6 @@ tsquery_or(PG_FUNCTION_ARGS)
 {
 	TSQuery		a = PG_GETARG_TSQUERY_COPY(0);
 	TSQuery		b = PG_GETARG_TSQUERY_COPY(1);
-	QTNode	   *res;
-	TSQuery		query;
 
 	if (a->size == 0)
 	{
@@ -98,9 +94,9 @@ tsquery_or(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b, OP_OR, 0);
+	QTNode	   *res = join_tsqueries(a, b, OP_OR, 0);
 
-	query = QTN2QT(res);
+	TSQuery		query = QTN2QT(res);
 
 	QTNFree(res);
 	PG_FREE_IF_COPY(a, 0);
@@ -114,8 +110,6 @@ tsquery_phrase_distance(PG_FUNCTION_ARGS)
 {
 	TSQuery		a = PG_GETARG_TSQUERY_COPY(0);
 	TSQuery		b = PG_GETARG_TSQUERY_COPY(1);
-	QTNode	   *res;
-	TSQuery		query;
 	int32		distance = PG_GETARG_INT32(2);
 
 	if (distance < 0 || distance > MAXENTRYPOS)
@@ -134,9 +128,9 @@ tsquery_phrase_distance(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b, OP_PHRASE, (uint16) distance);
+	QTNode	   *res = join_tsqueries(a, b, OP_PHRASE, (uint16) distance);
 
-	query = QTN2QT(res);
+	TSQuery		query = QTN2QT(res);
 
 	QTNFree(res);
 	PG_FREE_IF_COPY(a, 0);
@@ -158,13 +152,11 @@ Datum
 tsquery_not(PG_FUNCTION_ARGS)
 {
 	TSQuery		a = PG_GETARG_TSQUERY_COPY(0);
-	QTNode	   *res;
-	TSQuery		query;
 
 	if (a->size == 0)
 		PG_RETURN_POINTER(a);
 
-	res = (QTNode *) palloc0(sizeof(QTNode));
+	QTNode	   *res = (QTNode *) palloc0(sizeof(QTNode));
 
 	res->flags |= QTN_NEEDFREE;
 
@@ -176,7 +168,7 @@ tsquery_not(PG_FUNCTION_ARGS)
 	res->child[0] = QT2QTN(GETQUERY(a), GETOPERAND(a));
 	res->nchild = 1;
 
-	query = QTN2QT(res);
+	TSQuery		query = QTN2QT(res);
 
 	QTNFree(res);
 	PG_FREE_IF_COPY(a, 0);
@@ -267,20 +259,18 @@ collectTSQueryValues(TSQuery a, int *nvalues_p)
 {
 	QueryItem  *ptr = GETQUERY(a);
 	char	   *operand = GETOPERAND(a);
-	char	  **values;
 	int			nvalues = 0;
 	int			i;
 
-	values = (char **) palloc(sizeof(char *) * a->size);
+	char	  **values = (char **) palloc(sizeof(char *) * a->size);
 
 	for (i = 0; i < a->size; i++)
 	{
 		if (ptr->type == QI_VAL)
 		{
 			int			len = ptr->qoperand.length;
-			char	   *val;
 
-			val = palloc(len + 1);
+			char	   *val = palloc(len + 1);
 			memcpy(val, operand + ptr->qoperand.distance, len);
 			val[len] = '\0';
 
@@ -307,15 +297,13 @@ tsq_mcontains(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	TSQuery		ex = PG_GETARG_TSQUERY(1);
-	char	  **query_values;
 	int			query_nvalues;
-	char	  **ex_values;
 	int			ex_nvalues;
 	bool		result = true;
 
 	/* Extract the query terms into arrays */
-	query_values = collectTSQueryValues(query, &query_nvalues);
-	ex_values = collectTSQueryValues(ex, &ex_nvalues);
+	char	  **query_values = collectTSQueryValues(query, &query_nvalues);
+	char	  **ex_values = collectTSQueryValues(ex, &ex_nvalues);
 
 	/* Sort and remove duplicates from both arrays */
 	qsort(query_values, query_nvalues, sizeof(char *), cmp_string);

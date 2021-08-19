@@ -45,9 +45,8 @@ struct TSVectorParseStateData
 TSVectorParseState
 init_tsvector_parser(char *input, int flags)
 {
-	TSVectorParseState state;
 
-	state = (TSVectorParseState) palloc(sizeof(struct TSVectorParseStateData));
+	TSVectorParseState state = (TSVectorParseState) palloc(sizeof(struct TSVectorParseStateData));
 	state->prsbuf = input;
 	state->bufstart = input;
 	state->len = 32;

@@ -386,8 +386,6 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 
 	for (mapBlock = 0;; mapBlock++)
 	{
-		Buffer		mapBuffer;
-		uint64	   *map;
 		int			i;
 
 		/*
@@ -395,7 +393,7 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 		 * bytes in the last page are zeroed, so we don't bother excluding
 		 * them from the count.
 		 */
-		mapBuffer = vm_readbuf(rel, mapBlock, false);
+		Buffer		mapBuffer = vm_readbuf(rel, mapBlock, false);
 		if (!BufferIsValid(mapBuffer))
 			break;
 
@@ -404,7 +402,7 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 		 * immediately stale anyway if anyone is concurrently setting or
 		 * clearing bits, and we only really need an approximate value.
 		 */
-		map = (uint64 *) PageGetContents(BufferGetPage(mapBuffer));
+		uint64	   *map = (uint64 *) PageGetContents(BufferGetPage(mapBuffer));
 
 		StaticAssertStmt(MAPSIZE % sizeof(uint64) == 0,
 						 "unsupported MAPSIZE");
@@ -471,21 +469,18 @@ visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 	 */
 	if (truncByte != 0 || truncOffset != 0)
 	{
-		Buffer		mapBuffer;
-		Page		page;
-		char	   *map;
 
 		newnblocks = truncBlock + 1;
 
-		mapBuffer = vm_readbuf(rel, truncBlock, false);
+		Buffer		mapBuffer = vm_readbuf(rel, truncBlock, false);
 		if (!BufferIsValid(mapBuffer))
 		{
 			/* nothing to do, the file was already smaller */
 			return InvalidBlockNumber;
 		}
 
-		page = BufferGetPage(mapBuffer);
-		map = PageGetContents(page);
+		Page		page = BufferGetPage(mapBuffer);
+		char	   *map = PageGetContents(page);
 
 		LockBuffer(mapBuffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -544,15 +539,13 @@ visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 static Buffer
 vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 {
-	Buffer		buf;
-	SMgrRelation reln;
 
 	/*
 	 * Caution: re-using this smgr pointer could fail if the relcache entry
 	 * gets closed.  It's safe as long as we only do smgr-level operations
 	 * between here and the last use of the pointer.
 	 */
-	reln = RelationGetSmgr(rel);
+	SMgrRelation reln = RelationGetSmgr(rel);
 
 	/*
 	 * If we haven't cached the size of the visibility map fork yet, check it
@@ -594,7 +587,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	 * long as it doesn't depend on the page header having correct contents.
 	 * Current usage is safe because PageGetContents() does not require that.
 	 */
-	buf = ReadBufferExtended(rel, VISIBILITYMAP_FORKNUM, blkno,
+	Buffer		buf = ReadBufferExtended(rel, VISIBILITYMAP_FORKNUM, blkno,
 							 RBM_ZERO_ON_ERROR, NULL);
 	if (PageIsNew(BufferGetPage(buf)))
 	{
@@ -613,9 +606,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 static void
 vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
-	BlockNumber vm_nblocks_now;
 	PGAlignedBlock pg;
-	SMgrRelation reln;
 
 	PageInit((Page) pg.data, BLCKSZ, 0);
 
@@ -636,7 +627,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * gets closed.  It's safe as long as we only do smgr-level operations
 	 * between here and the last use of the pointer.
 	 */
-	reln = RelationGetSmgr(rel);
+	SMgrRelation reln = RelationGetSmgr(rel);
 
 	/*
 	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks is
@@ -649,7 +640,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 
 	/* Invalidate cache so that smgrnblocks() asks the kernel. */
 	reln->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
-	vm_nblocks_now = smgrnblocks(reln, VISIBILITYMAP_FORKNUM);
+	BlockNumber vm_nblocks_now = smgrnblocks(reln, VISIBILITYMAP_FORKNUM);
 
 	/* Now extend the file */
 	while (vm_nblocks_now < vm_nblocks)

@@ -30,10 +30,9 @@ static void WalUsageAdd(WalUsage *dst, WalUsage *add);
 Instrumentation *
 InstrAlloc(int n, int instrument_options, bool async_mode)
 {
-	Instrumentation *instr;
 
 	/* initialize all fields to zeroes, then modify as needed */
-	instr = palloc0(n * sizeof(Instrumentation));
+	Instrumentation *instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_WAL))
 	{
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
@@ -139,7 +138,6 @@ InstrUpdateTupleCount(Instrumentation *instr, double nTuples)
 void
 InstrEndLoop(Instrumentation *instr)
 {
-	double		totaltime;
 
 	/* Skip if nothing has happened, or already shut down */
 	if (!instr->running)
@@ -149,7 +147,7 @@ InstrEndLoop(Instrumentation *instr)
 		elog(ERROR, "InstrEndLoop called on running node");
 
 	/* Accumulate per-cycle statistics into totals */
-	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
+	double		totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
 
 	instr->startup += instr->firsttuple;
 	instr->total += totaltime;

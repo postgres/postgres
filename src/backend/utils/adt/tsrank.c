@@ -199,9 +199,7 @@ SortAndUniqItems(TSQuery q, int *size)
 static float
 calc_rank_and(const float *w, TSVector t, TSQuery q)
 {
-	WordEntryPosVector **pos;
 	WordEntryPosVector1 posnull;
-	WordEntryPosVector *POSNULL;
 	int			i,
 				k,
 				l,
@@ -215,22 +213,21 @@ calc_rank_and(const float *w, TSVector t, TSQuery q)
 				dist,
 				nitem;
 	float		res = -1.0;
-	QueryOperand **item;
 	int			size = q->size;
 
-	item = SortAndUniqItems(q, &size);
+	QueryOperand **item = SortAndUniqItems(q, &size);
 	if (size < 2)
 	{
 		pfree(item);
 		return calc_rank_or(w, t, q);
 	}
-	pos = (WordEntryPosVector **) palloc0(sizeof(WordEntryPosVector *) * q->size);
+	WordEntryPosVector **pos = (WordEntryPosVector **) palloc0(sizeof(WordEntryPosVector *) * q->size);
 
 	/* A dummy WordEntryPos array to use when haspos is false */
 	posnull.npos = 1;
 	posnull.pos[0] = 0;
 	WEP_SETPOS(posnull.pos[0], MAXENTRYPOS - 1);
-	POSNULL = (WordEntryPosVector *) &posnull;
+	WordEntryPosVector *POSNULL = (WordEntryPosVector *) &posnull;
 
 	for (i = 0; i < size; i++)
 	{
@@ -291,14 +288,13 @@ calc_rank_or(const float *w, TSVector t, TSQuery q)
 				i,
 				nitem;
 	float		res = 0.0;
-	QueryOperand **item;
 	int			size = q->size;
 
 	/* A dummy WordEntryPos array to use when haspos is false */
 	posnull.npos = 1;
 	posnull.pos[0] = 0;
 
-	item = SortAndUniqItems(q, &size);
+	QueryOperand **item = SortAndUniqItems(q, &size);
 
 	for (i = 0; i < size; i++)
 	{
@@ -401,7 +397,6 @@ getWeights(ArrayType *win)
 {
 	static float ws[lengthof(weights)];
 	int			i;
-	float4	   *arrdata;
 
 	if (win == NULL)
 		return weights;
@@ -421,7 +416,7 @@ getWeights(ArrayType *win)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("array of weight must not contain nulls")));
 
-	arrdata = (float4 *) ARR_DATA_PTR(win);
+	float4	   *arrdata = (float4 *) ARR_DATA_PTR(win);
 	for (i = 0; i < lengthof(weights); i++)
 	{
 		ws[i] = (arrdata[i] >= 0) ? arrdata[i] : weights[i];
@@ -441,9 +436,8 @@ ts_rank_wttf(PG_FUNCTION_ARGS)
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	int			method = PG_GETARG_INT32(3);
-	float		res;
 
-	res = calc_rank(getWeights(win), txt, query, method);
+	float		res = calc_rank(getWeights(win), txt, query, method);
 
 	PG_FREE_IF_COPY(win, 0);
 	PG_FREE_IF_COPY(txt, 1);
@@ -457,9 +451,8 @@ ts_rank_wtt(PG_FUNCTION_ARGS)
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
-	float		res;
 
-	res = calc_rank(getWeights(win), txt, query, DEF_NORM_METHOD);
+	float		res = calc_rank(getWeights(win), txt, query, DEF_NORM_METHOD);
 
 	PG_FREE_IF_COPY(win, 0);
 	PG_FREE_IF_COPY(txt, 1);
@@ -473,9 +466,8 @@ ts_rank_ttf(PG_FUNCTION_ARGS)
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
 	int			method = PG_GETARG_INT32(2);
-	float		res;
 
-	res = calc_rank(getWeights(NULL), txt, query, method);
+	float		res = calc_rank(getWeights(NULL), txt, query, method);
 
 	PG_FREE_IF_COPY(txt, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -487,9 +479,8 @@ ts_rank_tt(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
-	float		res;
 
-	res = calc_rank(getWeights(NULL), txt, query, DEF_NORM_METHOD);
+	float		res = calc_rank(getWeights(NULL), txt, query, DEF_NORM_METHOD);
 
 	PG_FREE_IF_COPY(txt, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -645,7 +636,6 @@ fillQueryRepresentationData(QueryRepresentation *qr, DocRepresentation *entry)
 static bool
 Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 {
-	DocRepresentation *ptr;
 	int			lastpos = ext->pos;
 	bool		found = false;
 
@@ -659,7 +649,7 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 
 	ext->p = INT_MAX;
 	ext->q = 0;
-	ptr = doc + ext->pos;
+	DocRepresentation *ptr = doc + ext->pos;
 
 	/* find upper bound of cover from current position, move up */
 	while (ptr - doc < len)
@@ -736,9 +726,8 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 				nitem;
 	int			len = qr->query->size * 4,
 				cur = 0;
-	DocRepresentation *doc;
 
-	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
+	DocRepresentation *doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
 
 	/*
 	 * Iterate through query to make DocRepresentation for words and it's
@@ -746,12 +735,11 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 	 */
 	for (i = 0; i < qr->query->size; i++)
 	{
-		QueryOperand *curoperand;
 
 		if (item[i].type != QI_VAL)
 			continue;
 
-		curoperand = &item[i].qoperand;
+		QueryOperand *curoperand = &item[i].qoperand;
 
 		firstentry = entry = find_wordentry(txt, qr->query, curoperand, &nitem);
 		if (!entry)
@@ -849,7 +837,6 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 static float4
 calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 {
-	DocRepresentation *doc;
 	int			len,
 				i,
 				doclen = 0;
@@ -876,7 +863,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 	qr.operandData = (QueryRepresentationOperand *)
 		palloc0(sizeof(QueryRepresentationOperand) * query->size);
 
-	doc = get_docrep(txt, &qr, &doclen);
+	DocRepresentation *doc = get_docrep(txt, &qr, &doclen);
 	if (!doc)
 	{
 		pfree(qr.operandData);
@@ -888,8 +875,6 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 	{
 		double		Cpos = 0.0;
 		double		InvSum = 0.0;
-		double		CurExtPos;
-		int			nNoise;
 		DocRepresentation *ptr = ext.begin;
 
 		while (ptr <= ext.end)
@@ -905,12 +890,12 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		 * of positional information. In this case we approximate number of
 		 * noise word as half cover's length
 		 */
-		nNoise = (ext.q - ext.p) - (ext.end - ext.begin);
+		int			nNoise = (ext.q - ext.p) - (ext.end - ext.begin);
 		if (nNoise < 0)
 			nNoise = (ext.end - ext.begin) / 2;
 		Wdoc += Cpos / ((double) (1 + nNoise));
 
-		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
+		double		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
 		if (NExtent > 0 && CurExtPos > PrevExtPos	/* prevent division by
 													 * zero in a case of
 			  * multiple lexize */ )
@@ -956,9 +941,8 @@ ts_rankcd_wttf(PG_FUNCTION_ARGS)
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	int			method = PG_GETARG_INT32(3);
-	float		res;
 
-	res = calc_rank_cd(getWeights(win), txt, query, method);
+	float		res = calc_rank_cd(getWeights(win), txt, query, method);
 
 	PG_FREE_IF_COPY(win, 0);
 	PG_FREE_IF_COPY(txt, 1);
@@ -972,9 +956,8 @@ ts_rankcd_wtt(PG_FUNCTION_ARGS)
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
-	float		res;
 
-	res = calc_rank_cd(getWeights(win), txt, query, DEF_NORM_METHOD);
+	float		res = calc_rank_cd(getWeights(win), txt, query, DEF_NORM_METHOD);
 
 	PG_FREE_IF_COPY(win, 0);
 	PG_FREE_IF_COPY(txt, 1);
@@ -988,9 +971,8 @@ ts_rankcd_ttf(PG_FUNCTION_ARGS)
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
 	int			method = PG_GETARG_INT32(2);
-	float		res;
 
-	res = calc_rank_cd(getWeights(NULL), txt, query, method);
+	float		res = calc_rank_cd(getWeights(NULL), txt, query, method);
 
 	PG_FREE_IF_COPY(txt, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -1002,9 +984,8 @@ ts_rankcd_tt(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
-	float		res;
 
-	res = calc_rank_cd(getWeights(NULL), txt, query, DEF_NORM_METHOD);
+	float		res = calc_rank_cd(getWeights(NULL), txt, query, DEF_NORM_METHOD);
 
 	PG_FREE_IF_COPY(txt, 0);
 	PG_FREE_IF_COPY(query, 1);

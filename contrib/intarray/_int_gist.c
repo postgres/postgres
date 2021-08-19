@@ -125,7 +125,6 @@ g_int_union(PG_FUNCTION_ARGS)
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	int32		i,
 			   *ptr;
-	ArrayType  *res;
 	int			totlen = 0;
 
 	for (i = 0; i < entryvec->n; i++)
@@ -136,15 +135,14 @@ g_int_union(PG_FUNCTION_ARGS)
 		totlen += ARRNELEMS(ent);
 	}
 
-	res = new_intArrayType(totlen);
+	ArrayType  *res = new_intArrayType(totlen);
 	ptr = ARRPTR(res);
 
 	for (i = 0; i < entryvec->n; i++)
 	{
 		ArrayType  *ent = GETENTRY(entryvec, i);
-		int			nel;
 
-		nel = ARRNELEMS(ent);
+		int			nel = ARRNELEMS(ent);
 		memcpy(ptr, ARRPTR(ent), nel * sizeof(int32));
 		ptr += nel;
 	}
@@ -286,17 +284,13 @@ g_int_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
-	ArrayType  *r;
 	int			num_ranges = G_INT_GET_NUMRANGES();
 	int		   *dr,
 				lenr;
-	ArrayType  *in;
-	int			lenin;
-	int		   *din;
 	int			i,
 				j;
 
-	in = DatumGetArrayTypeP(entry->key);
+	ArrayType  *in = DatumGetArrayTypeP(entry->key);
 
 	CHECKARRVALID(in);
 	if (ARRISEMPTY(in))
@@ -312,7 +306,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(entry);
 	}
 
-	lenin = ARRNELEMS(in);
+	int			lenin = ARRNELEMS(in);
 
 	if (lenin < 2 * num_ranges)
 	{							/* not compressed value */
@@ -327,13 +321,13 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(entry);
 	}
 
-	din = ARRPTR(in);
+	int		   *din = ARRPTR(in);
 	lenr = internal_size(din, lenin);
 	if (lenr < 0 || lenr > MAXNUMELTS)
 		ereport(ERROR,
 				(errmsg("compressed array is too big, recreate index using gist__intbig_ops opclass instead")));
 
-	r = new_intArrayType(lenr);
+	ArrayType  *r = new_intArrayType(lenr);
 	dr = ARRPTR(r);
 
 	for (i = 0; i < lenin; i += 2)
@@ -359,11 +353,10 @@ g_int_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
-	ArrayType  *ud;
 	float		tmp1,
 				tmp2;
 
-	ud = inner_int_union((ArrayType *) DatumGetPointer(origentry->key),
+	ArrayType  *ud = inner_int_union((ArrayType *) DatumGetPointer(origentry->key),
 						 (ArrayType *) DatumGetPointer(newentry->key));
 	rt__int_size(ud, &tmp1);
 	rt__int_size((ArrayType *) DatumGetPointer(origentry->key), &tmp2);

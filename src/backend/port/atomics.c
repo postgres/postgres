@@ -75,10 +75,9 @@ pg_atomic_init_flag_impl(volatile pg_atomic_flag *ptr)
 bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	uint32		oldval;
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
-	oldval = ptr->value;
+	uint32		oldval = ptr->value;
 	ptr->value = true;
 	SpinLockRelease((slock_t *) &ptr->sema);
 
@@ -137,7 +136,6 @@ bool
 pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 									uint32 *expected, uint32 newval)
 {
-	bool		ret;
 
 	/*
 	 * Do atomic op under a spinlock. It might look like we could just skip
@@ -150,7 +148,7 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	SpinLockAcquire((slock_t *) &ptr->sema);
 
 	/* perform compare/exchange logic */
-	ret = ptr->value == *expected;
+	bool		ret = ptr->value == *expected;
 	*expected = ptr->value;
 	if (ret)
 		ptr->value = newval;
@@ -164,10 +162,9 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
-	uint32		oldval;
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
-	oldval = ptr->value;
+	uint32		oldval = ptr->value;
 	ptr->value += add_;
 	SpinLockRelease((slock_t *) &ptr->sema);
 	return oldval;
@@ -200,7 +197,6 @@ bool
 pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 									uint64 *expected, uint64 newval)
 {
-	bool		ret;
 
 	/*
 	 * Do atomic op under a spinlock. It might look like we could just skip
@@ -213,7 +209,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 	SpinLockAcquire((slock_t *) &ptr->sema);
 
 	/* perform compare/exchange logic */
-	ret = ptr->value == *expected;
+	bool		ret = ptr->value == *expected;
 	*expected = ptr->value;
 	if (ret)
 		ptr->value = newval;
@@ -227,10 +223,9 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
-	uint64		oldval;
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
-	oldval = ptr->value;
+	uint64		oldval = ptr->value;
 	ptr->value += add_;
 	SpinLockRelease((slock_t *) &ptr->sema);
 	return oldval;

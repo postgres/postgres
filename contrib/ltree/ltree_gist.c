@@ -295,9 +295,6 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	int			siglen = LTREE_GET_ASIGLEN();
 	OffsetNumber j;
 	int32		i;
-	RIX		   *array;
-	OffsetNumber maxoff;
-	int			nbytes;
 	ltree	   *lu_l,
 			   *lu_r,
 			   *ru_l,
@@ -309,13 +306,13 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	bool		lisat = false,
 				risat = false;
 
-	maxoff = entryvec->n - 1;
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	OffsetNumber maxoff = entryvec->n - 1;
+	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;
 	v->spl_nright = 0;
-	array = (RIX *) palloc(sizeof(RIX) * (maxoff + 1));
+	RIX		   *array = (RIX *) palloc(sizeof(RIX) * (maxoff + 1));
 
 	/* copy the data into RIXes, and sort the RIXes */
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))

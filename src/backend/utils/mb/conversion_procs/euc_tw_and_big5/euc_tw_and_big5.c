@@ -54,11 +54,10 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_BIG5);
 
-	converted = euc_tw2big5(src, dest, len, noError);
+	int			converted = euc_tw2big5(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -70,11 +69,10 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_EUC_TW);
 
-	converted = big52euc_tw(src, dest, len, noError);
+	int			converted = big52euc_tw(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -86,11 +84,10 @@ euc_tw_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_MULE_INTERNAL);
 
-	converted = euc_tw2mic(src, dest, len, noError);
+	int			converted = euc_tw2mic(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -102,11 +99,10 @@ mic_to_euc_tw(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_TW);
 
-	converted = mic2euc_tw(src, dest, len, noError);
+	int			converted = mic2euc_tw(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -118,11 +114,10 @@ big5_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_MULE_INTERNAL);
 
-	converted = big52mic(src, dest, len, noError);
+	int			converted = big52mic(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -134,11 +129,10 @@ mic_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_BIG5);
 
-	converted = mic2big5(src, dest, len, noError);
+	int			converted = mic2big5(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }

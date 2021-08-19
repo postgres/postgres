@@ -30,13 +30,12 @@ _int_contains(PG_FUNCTION_ARGS)
 	/* Force copy so we can modify the arrays in-place */
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	bool		res;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
 	PREPAREARR(a);
 	PREPAREARR(b);
-	res = inner_int_contains(a, b);
+	bool		res = inner_int_contains(a, b);
 	pfree(a);
 	pfree(b);
 	PG_RETURN_BOOL(res);
@@ -60,7 +59,6 @@ _int_same(PG_FUNCTION_ARGS)
 	int			n;
 	int		   *da,
 			   *db;
-	bool		result;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
@@ -69,7 +67,7 @@ _int_same(PG_FUNCTION_ARGS)
 	da = ARRPTR(a);
 	db = ARRPTR(b);
 
-	result = false;
+	bool		result = false;
 
 	if (na == nb)
 	{
@@ -100,7 +98,6 @@ _int_overlap(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	bool		result;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
@@ -110,7 +107,7 @@ _int_overlap(PG_FUNCTION_ARGS)
 	SORT(a);
 	SORT(b);
 
-	result = inner_int_overlap(a, b);
+	bool		result = inner_int_overlap(a, b);
 
 	pfree(a);
 	pfree(b);
@@ -123,7 +120,6 @@ _int_union(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	ArrayType  *result;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
@@ -131,7 +127,7 @@ _int_union(PG_FUNCTION_ARGS)
 	SORT(a);
 	SORT(b);
 
-	result = inner_int_union(a, b);
+	ArrayType  *result = inner_int_union(a, b);
 
 	pfree(a);
 	pfree(b);
@@ -144,7 +140,6 @@ _int_inter(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	ArrayType  *result;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
@@ -152,7 +147,7 @@ _int_inter(PG_FUNCTION_ARGS)
 	SORT(a);
 	SORT(b);
 
-	result = inner_int_inter(a, b);
+	ArrayType  *result = inner_int_inter(a, b);
 
 	pfree(a);
 	pfree(b);
@@ -259,10 +254,9 @@ Datum
 idx(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
-	int32		result;
 
 	CHECKARRVALID(a);
-	result = ARRNELEMS(a);
+	int32		result = ARRNELEMS(a);
 	if (result)
 		result = intarray_match_first(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
@@ -276,8 +270,6 @@ subarray(PG_FUNCTION_ARGS)
 	int32		start = PG_GETARG_INT32(1);
 	int32		len = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
 	int32		end = 0;
-	int32		c;
-	ArrayType  *result;
 
 	start = (start > 0) ? start - 1 : start;
 
@@ -288,7 +280,7 @@ subarray(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(new_intArrayType(0));
 	}
 
-	c = ARRNELEMS(a);
+	int32		c = ARRNELEMS(a);
 
 	if (start < 0)
 		start = c + start;
@@ -312,7 +304,7 @@ subarray(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(new_intArrayType(0));
 	}
 
-	result = new_intArrayType(end - start);
+	ArrayType  *result = new_intArrayType(end - start);
 	if (end - start > 0)
 		memcpy(ARRPTR(result), ARRPTR(a) + start, (end - start) * sizeof(int32));
 	PG_FREE_IF_COPY(a, 0);
@@ -323,9 +315,8 @@ Datum
 intarray_push_elem(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
-	ArrayType  *result;
 
-	result = intarray_add_elem(a, PG_GETARG_INT32(1));
+	ArrayType  *result = intarray_add_elem(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_POINTER(result);
 }
@@ -335,9 +326,8 @@ intarray_push_array(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P(1);
-	ArrayType  *result;
 
-	result = intarray_concat_arrays(a, b);
+	ArrayType  *result = intarray_concat_arrays(a, b);
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_POINTER(result);
@@ -377,9 +367,8 @@ Datum
 intset_union_elem(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
-	ArrayType  *result;
 
-	result = intarray_add_elem(a, PG_GETARG_INT32(1));
+	ArrayType  *result = intarray_add_elem(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
 	QSORT(result, 1);
 	PG_RETURN_POINTER(_int_unique(result));
@@ -390,9 +379,6 @@ intset_subtract(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	ArrayType  *result;
-	int32		ca;
-	int32		cb;
 	int32	   *aa,
 			   *bb,
 			   *r;
@@ -405,11 +391,11 @@ intset_subtract(PG_FUNCTION_ARGS)
 
 	QSORT(a, 1);
 	a = _int_unique(a);
-	ca = ARRNELEMS(a);
+	int32		ca = ARRNELEMS(a);
 	QSORT(b, 1);
 	b = _int_unique(b);
-	cb = ARRNELEMS(b);
-	result = new_intArrayType(ca);
+	int32		cb = ARRNELEMS(b);
+	ArrayType  *result = new_intArrayType(ca);
 	aa = ARRPTR(a);
 	bb = ARRPTR(b);
 	r = ARRPTR(result);

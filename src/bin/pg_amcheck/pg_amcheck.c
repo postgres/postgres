@@ -222,9 +222,6 @@ main(int argc, char *argv[])
 	SimplePtrList databases = {NULL, NULL};
 	SimplePtrList relations = {NULL, NULL};
 	bool		failed = false;
-	const char *latest_datname;
-	int			parallel_workers;
-	ParallelSlotArray *sa;
 	PQExpBufferData sql;
 	uint64		reltotal = 0;
 	uint64		pageschecked = 0;
@@ -545,9 +542,6 @@ main(int argc, char *argv[])
 	 */
 	for (cell = databases.head; cell; cell = cell->next)
 	{
-		PGresult   *result;
-		int			ntups;
-		const char *amcheck_schema = NULL;
 		DatabaseInfo *dat = (DatabaseInfo *) cell->ptr;
 
 		cparams.override_dbname = dat->datname;
@@ -564,16 +558,14 @@ main(int argc, char *argv[])
 		 */
 		if (opts.install_missing)
 		{
-			char	   *schema;
-			char	   *install_sql;
 
 			/*
 			 * Must re-escape the schema name for each database, as the
 			 * escaping rules may change.
 			 */
-			schema = PQescapeIdentifier(conn, opts.install_schema,
+			char	   *schema = PQescapeIdentifier(conn, opts.install_schema,
 										strlen(opts.install_schema));
-			install_sql = psprintf("CREATE EXTENSION IF NOT EXISTS amcheck WITH SCHEMA %s",
+			char	   *install_sql = psprintf("CREATE EXTENSION IF NOT EXISTS amcheck WITH SCHEMA %s",
 								   schema);
 
 			executeCommand(conn, install_sql, opts.echo);
@@ -588,7 +580,7 @@ main(int argc, char *argv[])
 		 * where not all of them have amcheck installed (for example,
 		 * 'template1').
 		 */
-		result = executeQuery(conn, amcheck_sql, opts.echo);
+		PGresult   *result = executeQuery(conn, amcheck_sql, opts.echo);
 		if (PQresultStatus(result) != PGRES_TUPLES_OK)
 		{
 			/* Querying the catalog failed. */
@@ -599,7 +591,7 @@ main(int argc, char *argv[])
 			disconnectDatabase(conn);
 			exit(1);
 		}
-		ntups = PQntuples(result);
+		int			ntups = PQntuples(result);
 		if (ntups == 0)
 		{
 			/* Querying the catalog succeeded, but amcheck is missing. */
@@ -609,7 +601,7 @@ main(int argc, char *argv[])
 			conn = NULL;
 			continue;
 		}
-		amcheck_schema = PQgetvalue(result, 0, 0);
+		const char *amcheck_schema = PQgetvalue(result, 0, 0);
 		if (opts.verbose)
 			pg_log_info("in database \"%s\": using amcheck version \"%s\" in schema \"%s\"",
 						PQdb(conn), PQgetvalue(result, 0, 1), amcheck_schema);
@@ -661,7 +653,7 @@ main(int argc, char *argv[])
 	 * Set parallel_workers to the lesser of opts.jobs and the number of
 	 * relations.
 	 */
-	parallel_workers = 0;
+	int			parallel_workers = 0;
 	for (cell = relations.head; cell; cell = cell->next)
 	{
 		reltotal++;
@@ -687,8 +679,8 @@ main(int argc, char *argv[])
 	 * order, which minimizes the number of connects and disconnects as we
 	 * process the list.
 	 */
-	latest_datname = NULL;
-	sa = ParallelSlotsSetup(parallel_workers, &cparams, progname, opts.echo,
+	const char *latest_datname = NULL;
+	ParallelSlotArray *sa = ParallelSlotsSetup(parallel_workers, &cparams, progname, opts.echo,
 							NULL);
 	if (conn != NULL)
 	{
@@ -699,10 +691,8 @@ main(int argc, char *argv[])
 	initPQExpBuffer(&sql);
 	for (relprogress = 0, cell = relations.head; cell; cell = cell->next)
 	{
-		ParallelSlot *free_slot;
-		RelationInfo *rel;
 
-		rel = (RelationInfo *) cell->ptr;
+		RelationInfo *rel = (RelationInfo *) cell->ptr;
 
 		if (CancelRequested)
 		{
@@ -730,7 +720,7 @@ main(int argc, char *argv[])
 		 * command fails, indicating that we should abort checking the
 		 * remaining objects.
 		 */
-		free_slot = ParallelSlotsGetIdle(sa, rel->datinfo->datname);
+		ParallelSlot *free_slot = ParallelSlotsGetIdle(sa, rel->datinfo->datname);
 		if (!free_slot)
 		{
 			/*
@@ -978,7 +968,6 @@ indent_lines(const char *str)
 {
 	PQExpBufferData buf;
 	const char *c;
-	char	   *result;
 
 	initPQExpBuffer(&buf);
 	appendPQExpBufferStr(&buf, "    ");
@@ -988,7 +977,7 @@ indent_lines(const char *str)
 		if (c[0] == '\n' && c[1] != '\0')
 			appendPQExpBufferStr(&buf, "    ");
 	}
-	result = pstrdup(buf.data);
+	char	   *result = pstrdup(buf.data);
 	termPQExpBuffer(&buf);
 
 	return result;
@@ -1218,12 +1207,11 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 	char		total_rel[32];
 	char		checked_pages[32];
 	char		total_pages[32];
-	pg_time_t	now;
 
 	if (!opts.show_progress)
 		return;
 
-	now = time(NULL);
+	pg_time_t	now = time(NULL);
 	if (now == last_progress_report && !force && !finished)
 		return;					/* Max once per second */
 
@@ -1307,11 +1295,10 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 static PatternInfo *
 extend_pattern_info_array(PatternInfoArray *pia)
 {
-	PatternInfo *result;
 
 	pia->len++;
 	pia->data = (PatternInfo *) pg_realloc(pia->data, pia->len * sizeof(PatternInfo));
-	result = &pia->data[pia->len - 1];
+	PatternInfo *result = &pia->data[pia->len - 1];
 	memset(result, 0, sizeof(*result));
 
 	return result;
@@ -1491,11 +1478,9 @@ append_db_pattern_cte(PQExpBuffer buf, const PatternInfoArray *pia,
 					  PGconn *conn, bool inclusive)
 {
 	int			pattern_id;
-	const char *comma;
-	bool		have_values;
 
-	comma = "";
-	have_values = false;
+	const char *comma = "";
+	bool		have_values = false;
 	for (pattern_id = 0; pattern_id < pia->len; pattern_id++)
 	{
 		PatternInfo *info = &pia->data[pattern_id];
@@ -1536,9 +1521,7 @@ static void
 compile_database_list(PGconn *conn, SimplePtrList *databases,
 					  const char *initial_dbname)
 {
-	PGresult   *res;
 	PQExpBufferData sql;
-	int			ntups;
 	int			i;
 	bool		fatal;
 
@@ -1640,7 +1623,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 						 ") AS combined_records"
 						 "\nORDER BY pattern_id NULLS LAST, datname");
 
-	res = executeQuery(conn, sql.data, opts.echo);
+	PGresult   *res = executeQuery(conn, sql.data, opts.echo);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
@@ -1650,7 +1633,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 	}
 	termPQExpBuffer(&sql);
 
-	ntups = PQntuples(res);
+	int			ntups = PQntuples(res);
 	for (fatal = false, i = 0; i < ntups; i++)
 	{
 		int			pattern_id = -1;
@@ -1679,7 +1662,6 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 		}
 		else
 		{
-			DatabaseInfo *dat;
 
 			/* Current record pertains to a database */
 			Assert(datname != NULL);
@@ -1692,7 +1674,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 			if (opts.verbose)
 				pg_log_info("including database \"%s\"", datname);
 
-			dat = (DatabaseInfo *) pg_malloc0(sizeof(DatabaseInfo));
+			DatabaseInfo *dat = (DatabaseInfo *) pg_malloc0(sizeof(DatabaseInfo));
 			dat->datname = pstrdup(datname);
 			simple_ptr_list_append(databases, dat);
 		}
@@ -1732,11 +1714,9 @@ append_rel_pattern_raw_cte(PQExpBuffer buf, const PatternInfoArray *pia,
 						   PGconn *conn)
 {
 	int			pattern_id;
-	const char *comma;
-	bool		have_values;
 
-	comma = "";
-	have_values = false;
+	const char *comma = "";
+	bool		have_values = false;
 	for (pattern_id = 0; pattern_id < pia->len; pattern_id++)
 	{
 		PatternInfo *info = &pia->data[pattern_id];
@@ -1840,9 +1820,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 							 const DatabaseInfo *dat,
 							 uint64 *pagecount)
 {
-	PGresult   *res;
 	PQExpBufferData sql;
-	int			ntups;
 	int			i;
 
 	initPQExpBuffer(&sql);
@@ -2079,7 +2057,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 						 "\n) AS combined_records "
 						 "ORDER BY relpages DESC NULLS FIRST, oid");
 
-	res = executeQuery(conn, sql.data, opts.echo);
+	PGresult   *res = executeQuery(conn, sql.data, opts.echo);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
@@ -2089,7 +2067,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	}
 	termPQExpBuffer(&sql);
 
-	ntups = PQntuples(res);
+	int			ntups = PQntuples(res);
 	for (i = 0; i < ntups; i++)
 	{
 		int			pattern_id = -1;

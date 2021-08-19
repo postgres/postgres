@@ -98,7 +98,6 @@ cash_dist(PG_FUNCTION_ARGS)
 	Cash		a = PG_GETARG_CASH(0);
 	Cash		b = PG_GETARG_CASH(1);
 	Cash		r;
-	Cash		ra;
 
 	if (pg_sub_s64_overflow(a, b, &r) ||
 		r == PG_INT64_MIN)
@@ -106,7 +105,7 @@ cash_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("money out of range")));
 
-	ra = Abs(r);
+	Cash		ra = Abs(r);
 
 	PG_RETURN_CASH(ra);
 }

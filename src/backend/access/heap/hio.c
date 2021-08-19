@@ -38,8 +38,6 @@ RelationPutHeapTuple(Relation relation,
 					 HeapTuple tuple,
 					 bool token)
 {
-	Page		pageHeader;
-	OffsetNumber offnum;
 
 	/*
 	 * A tuple that's being inserted speculatively should already have its
@@ -57,9 +55,9 @@ RelationPutHeapTuple(Relation relation,
 			 (tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI)));
 
 	/* Add the tuple to the page */
-	pageHeader = BufferGetPage(buffer);
+	Page		pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
+	OffsetNumber offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
@@ -89,7 +87,6 @@ static Buffer
 ReadBufferBI(Relation relation, BlockNumber targetBlock,
 			 ReadBufferMode mode, BulkInsertState bistate)
 {
-	Buffer		buffer;
 
 	/* If not bulk-insert, exactly like ReadBuffer */
 	if (!bistate)
@@ -117,7 +114,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
 	}
 
 	/* Perform a read using the buffer strategy */
-	buffer = ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
+	Buffer		buffer = ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
 								mode, bistate->strategy);
 
 	/* Save the selected block as target for future inserts */
@@ -196,11 +193,9 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 {
 	BlockNumber blockNum,
 				firstBlock = InvalidBlockNumber;
-	int			extraBlocks;
-	int			lockWaiters;
 
 	/* Use the length of the lock wait queue to judge how much to extend. */
-	lockWaiters = RelationExtensionLockWaiterCount(relation);
+	int			lockWaiters = RelationExtensionLockWaiterCount(relation);
 	if (lockWaiters <= 0)
 		return;
 
@@ -210,13 +205,10 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 	 * were insufficient.  512 is just an arbitrary cap to prevent
 	 * pathological results.
 	 */
-	extraBlocks = Min(512, lockWaiters * 20);
+	int			extraBlocks = Min(512, lockWaiters * 20);
 
 	do
 	{
-		Buffer		buffer;
-		Page		page;
-		Size		freespace;
 
 		/*
 		 * Extend by one page.  This should generally match the main-line
@@ -224,8 +216,8 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 		 * the relation extension lock throughout, and we don't immediately
 		 * initialize the page (see below).
 		 */
-		buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
-		page = BufferGetPage(buffer);
+		Buffer		buffer = ReadBufferBI(relation, P_NEW, RBM_ZERO_AND_LOCK, bistate);
+		Page		page = BufferGetPage(buffer);
 
 		if (!PageIsNew(page))
 			elog(ERROR, "page %u of relation \"%s\" should be empty but is not",
@@ -243,7 +235,7 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 
 		/* we'll need this info below */
 		blockNum = BufferGetBlockNumber(buffer);
-		freespace = BufferGetPageSize(buffer) - SizeOfPageHeaderData;
+		Size		freespace = BufferGetPageSize(buffer) - SizeOfPageHeaderData;
 
 		UnlockReleaseBuffer(buffer);
 
@@ -344,7 +336,6 @@ RelationGetBufferForTuple(Relation relation, Size len,
 				targetFreeSpace = 0;
 	BlockNumber targetBlock,
 				otherBlock;
-	bool		needLock;
 
 	len = MAXALIGN(len);		/* be conservative */
 
@@ -574,7 +565,7 @@ loop:
 	 * can skip locking for new or temp relations, however, since no one else
 	 * could be accessing them.
 	 */
-	needLock = !RELATION_IS_LOCAL(relation);
+	bool		needLock = !RELATION_IS_LOCAL(relation);
 
 	/*
 	 * If we need the lock but are not able to acquire it immediately, we'll

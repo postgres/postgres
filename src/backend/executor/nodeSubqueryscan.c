@@ -45,12 +45,11 @@ static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 static TupleTableSlot *
 SubqueryNext(SubqueryScanState *node)
 {
-	TupleTableSlot *slot;
 
 	/*
 	 * Get the next tuple from the sub-query.
 	 */
-	slot = ExecProcNode(node->subplan);
+	TupleTableSlot *slot = ExecProcNode(node->subplan);
 
 	/*
 	 * We just return the subplan's result slot, rather than expending extra
@@ -96,7 +95,6 @@ ExecSubqueryScan(PlanState *pstate)
 SubqueryScanState *
 ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 {
-	SubqueryScanState *subquerystate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
@@ -108,7 +106,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	subquerystate = makeNode(SubqueryScanState);
+	SubqueryScanState *subquerystate = makeNode(SubqueryScanState);
 	subquerystate->ss.ps.plan = (Plan *) node;
 	subquerystate->ss.ps.state = estate;
 	subquerystate->ss.ps.ExecProcNode = ExecSubqueryScan;

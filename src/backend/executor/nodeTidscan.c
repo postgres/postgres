@@ -78,11 +78,9 @@ TidExprListCreate(TidScanState *tidstate)
 
 		if (is_opclause(expr))
 		{
-			Node	   *arg1;
-			Node	   *arg2;
 
-			arg1 = get_leftop(expr);
-			arg2 = get_rightop(expr);
+			Node	   *arg1 = get_leftop(expr);
+			Node	   *arg2 = get_rightop(expr);
 			if (IsCTIDVar(arg1))
 				tidexpr->exprstate = ExecInitExpr((Expr *) arg2,
 												  &tidstate->ss.ps);
@@ -130,10 +128,6 @@ static void
 TidListEval(TidScanState *tidstate)
 {
 	ExprContext *econtext = tidstate->ss.ps.ps_ExprContext;
-	TableScanDesc scan;
-	ItemPointerData *tidList;
-	int			numAllocTids;
-	int			numTids;
 	ListCell   *l;
 
 	/*
@@ -145,17 +139,17 @@ TidListEval(TidScanState *tidstate)
 		tidstate->ss.ss_currentScanDesc =
 			table_beginscan_tid(tidstate->ss.ss_currentRelation,
 								tidstate->ss.ps.state->es_snapshot);
-	scan = tidstate->ss.ss_currentScanDesc;
+	TableScanDesc scan = tidstate->ss.ss_currentScanDesc;
 
 	/*
 	 * We initialize the array with enough slots for the case that all quals
 	 * are simple OpExprs or CurrentOfExprs.  If there are any
 	 * ScalarArrayOpExprs, we may have to enlarge the array.
 	 */
-	numAllocTids = list_length(tidstate->tss_tidexprs);
-	tidList = (ItemPointerData *)
+	int			numAllocTids = list_length(tidstate->tss_tidexprs);
+	ItemPointerData *tidList = (ItemPointerData *)
 		palloc(numAllocTids * sizeof(ItemPointerData));
-	numTids = 0;
+	int			numTids = 0;
 
 	foreach(l, tidstate->tss_tidexprs)
 	{
@@ -193,19 +187,17 @@ TidListEval(TidScanState *tidstate)
 		}
 		else if (tidexpr->exprstate && tidexpr->isarray)
 		{
-			Datum		arraydatum;
-			ArrayType  *itemarray;
 			Datum	   *ipdatums;
 			bool	   *ipnulls;
 			int			ndatums;
 			int			i;
 
-			arraydatum = ExecEvalExprSwitchContext(tidexpr->exprstate,
+			Datum		arraydatum = ExecEvalExprSwitchContext(tidexpr->exprstate,
 												   econtext,
 												   &isNull);
 			if (isNull)
 				continue;
-			itemarray = DatumGetArrayTypeP(arraydatum);
+			ArrayType  *itemarray = DatumGetArrayTypeP(arraydatum);
 			deconstruct_array(itemarray,
 							  TIDOID, sizeof(ItemPointerData), false, TYPALIGN_SHORT,
 							  &ipdatums, &ipnulls, &ndatums);
@@ -309,24 +301,15 @@ itemptr_comparator(const void *a, const void *b)
 static TupleTableSlot *
 TidNext(TidScanState *node)
 {
-	EState	   *estate;
-	ScanDirection direction;
-	Snapshot	snapshot;
-	TableScanDesc scan;
-	Relation	heapRelation;
-	TupleTableSlot *slot;
-	ItemPointerData *tidList;
-	int			numTids;
-	bool		bBackward;
 
 	/*
 	 * extract necessary information from tid scan node
 	 */
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-	snapshot = estate->es_snapshot;
-	heapRelation = node->ss.ss_currentRelation;
-	slot = node->ss.ss_ScanTupleSlot;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection direction = estate->es_direction;
+	Snapshot	snapshot = estate->es_snapshot;
+	Relation	heapRelation = node->ss.ss_currentRelation;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 
 	/*
 	 * First time through, compute the list of TIDs to be visited
@@ -334,14 +317,14 @@ TidNext(TidScanState *node)
 	if (node->tss_TidList == NULL)
 		TidListEval(node);
 
-	scan = node->ss.ss_currentScanDesc;
-	tidList = node->tss_TidList;
-	numTids = node->tss_NumTids;
+	TableScanDesc scan = node->ss.ss_currentScanDesc;
+	ItemPointerData *tidList = node->tss_TidList;
+	int			numTids = node->tss_NumTids;
 
 	/*
 	 * Initialize or advance scan position, depending on direction.
 	 */
-	bBackward = ScanDirectionIsBackward(direction);
+	bool		bBackward = ScanDirectionIsBackward(direction);
 	if (bBackward)
 	{
 		if (node->tss_TidPtr < 0)
@@ -497,13 +480,11 @@ ExecEndTidScan(TidScanState *node)
 TidScanState *
 ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 {
-	TidScanState *tidstate;
-	Relation	currentRelation;
 
 	/*
 	 * create state structure
 	 */
-	tidstate = makeNode(TidScanState);
+	TidScanState *tidstate = makeNode(TidScanState);
 	tidstate->ss.ps.plan = (Plan *) node;
 	tidstate->ss.ps.state = estate;
 	tidstate->ss.ps.ExecProcNode = ExecTidScan;
@@ -525,7 +506,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	/*
 	 * open the scan relation
 	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
+	Relation	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	tidstate->ss.ss_currentRelation = currentRelation;
 	tidstate->ss.ss_currentScanDesc = NULL; /* no heap scan here */

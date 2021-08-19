@@ -38,9 +38,8 @@ static char *
 run_crypt_des(const char *psw, const char *salt,
 			  char *buf, unsigned len)
 {
-	char	   *res;
 
-	res = px_crypt_des(psw, salt);
+	char	   *res = px_crypt_des(psw, salt);
 	if (res == NULL || strlen(res) > len - 1)
 		return NULL;
 	strcpy(buf, res);
@@ -51,9 +50,8 @@ static char *
 run_crypt_md5(const char *psw, const char *salt,
 			  char *buf, unsigned len)
 {
-	char	   *res;
 
-	res = px_crypt_md5(psw, salt, buf, len);
+	char	   *res = px_crypt_md5(psw, salt, buf, len);
 	return res;
 }
 
@@ -61,9 +59,8 @@ static char *
 run_crypt_bf(const char *psw, const char *salt,
 			 char *buf, unsigned len)
 {
-	char	   *res;
 
-	res = _crypt_blowfish_rn(psw, salt, buf, len);
+	char	   *res = _crypt_blowfish_rn(psw, salt, buf, len);
 	return res;
 }
 
@@ -132,7 +129,6 @@ int
 px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
 	struct generator *g;
-	char	   *p;
 	char		rbuf[16];
 
 	for (g = gen_list; g->name; g++)
@@ -154,7 +150,7 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 	if (!pg_strong_random(rbuf, g->input_len))
 		return PXE_NO_RANDOM;
 
-	p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
+	char	   *p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
 	px_memset(rbuf, 0, sizeof(rbuf));
 
 	if (p == NULL)

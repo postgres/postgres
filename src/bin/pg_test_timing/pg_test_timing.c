@@ -25,14 +25,13 @@ long long int histogram[32];
 int
 main(int argc, char *argv[])
 {
-	uint64		loop_count;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_test_timing"));
 	progname = get_progname(argv[0]);
 
 	handle_args(argc, argv);
 
-	loop_count = test_timing(test_duration);
+	uint64		loop_count = test_timing(test_duration);
 
 	output(loop_count);
 
@@ -121,7 +120,6 @@ handle_args(int argc, char *argv[])
 static uint64
 test_timing(unsigned int duration)
 {
-	uint64		total_time;
 	int64		time_elapsed = 0;
 	uint64		loop_count = 0;
 	uint64		prev,
@@ -130,7 +128,7 @@ test_timing(unsigned int duration)
 				end_time,
 				temp;
 
-	total_time = duration > 0 ? duration * INT64CONST(1000000) : 0;
+	uint64		total_time = duration > 0 ? duration * INT64CONST(1000000) : 0;
 
 	INSTR_TIME_SET_CURRENT(start_time);
 	cur = INSTR_TIME_GET_MICROSEC(start_time);

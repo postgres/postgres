@@ -22,12 +22,11 @@
 static inline void *
 pg_malloc_internal(size_t size, int flags)
 {
-	void	   *tmp;
 
 	/* Avoid unportable behavior of malloc(0) */
 	if (size == 0)
 		size = 1;
-	tmp = malloc(size);
+	void	   *tmp = malloc(size);
 	if (tmp == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -64,12 +63,11 @@ pg_malloc_extended(size_t size, int flags)
 void *
 pg_realloc(void *ptr, size_t size)
 {
-	void	   *tmp;
 
 	/* Avoid unportable behavior of realloc(NULL, 0) */
 	if (ptr == NULL && size == 0)
 		size = 1;
-	tmp = realloc(ptr, size);
+	void	   *tmp = realloc(ptr, size);
 	if (!tmp)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -84,7 +82,6 @@ pg_realloc(void *ptr, size_t size)
 char *
 pg_strdup(const char *in)
 {
-	char	   *tmp;
 
 	if (!in)
 	{
@@ -92,7 +89,7 @@ pg_strdup(const char *in)
 				_("cannot duplicate null pointer (internal error)\n"));
 		exit(EXIT_FAILURE);
 	}
-	tmp = strdup(in);
+	char	   *tmp = strdup(in);
 	if (!tmp)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -145,8 +142,6 @@ pstrdup(const char *in)
 char *
 pnstrdup(const char *in, Size size)
 {
-	char	   *tmp;
-	int			len;
 
 	if (!in)
 	{
@@ -155,8 +150,8 @@ pnstrdup(const char *in, Size size)
 		exit(EXIT_FAILURE);
 	}
 
-	len = strnlen(in, size);
-	tmp = malloc(len + 1);
+	int			len = strnlen(in, size);
+	char	   *tmp = malloc(len + 1);
 	if (tmp == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));

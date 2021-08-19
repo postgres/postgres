@@ -590,8 +590,6 @@ static bool
 read_controlfile(void)
 {
 	int			fd;
-	int			len;
-	char	   *buffer;
 	pg_crc32c	crc;
 
 	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY | PG_BINARY, 0)) < 0)
@@ -612,9 +610,9 @@ read_controlfile(void)
 	}
 
 	/* Use malloc to ensure we have a maxaligned buffer */
-	buffer = (char *) pg_malloc(PG_CONTROL_FILE_SIZE);
+	char	   *buffer = (char *) pg_malloc(PG_CONTROL_FILE_SIZE);
 
-	len = read(fd, buffer, PG_CONTROL_FILE_SIZE);
+	int			len = read(fd, buffer, PG_CONTROL_FILE_SIZE);
 	if (len < 0)
 	{
 		pg_log_error("could not read file \"%s\": %m", XLOG_CONTROL_FILE);
@@ -666,7 +664,6 @@ read_controlfile(void)
 static void
 GuessControlValues(void)
 {
-	uint64		sysidentifier;
 	struct timeval tv;
 
 	/*
@@ -683,7 +680,7 @@ GuessControlValues(void)
 	 * any old XLOG records.  See notes in xlog.c about the algorithm.
 	 */
 	gettimeofday(&tv, NULL);
-	sysidentifier = ((uint64) tv.tv_sec) << 32;
+	uint64		sysidentifier = ((uint64) tv.tv_sec) << 32;
 	sysidentifier |= ((uint64) tv.tv_usec) << 12;
 	sysidentifier |= getpid() & 0xFFF;
 
@@ -941,17 +938,14 @@ RewriteControlFile(void)
 static void
 FindEndOfXLOG(void)
 {
-	DIR		   *xldir;
 	struct dirent *xlde;
-	uint64		segs_per_xlogid;
-	uint64		xlogbytepos;
 
 	/*
 	 * Initialize the max() computation using the last checkpoint address from
 	 * old pg_control.  Note that for the moment we are working with segment
 	 * numbering according to the old xlog seg size.
 	 */
-	segs_per_xlogid = (UINT64CONST(0x0000000100000000) / ControlFile.xlog_seg_size);
+	uint64		segs_per_xlogid = (UINT64CONST(0x0000000100000000) / ControlFile.xlog_seg_size);
 	newXlogSegNo = ControlFile.checkPointCopy.redo / ControlFile.xlog_seg_size;
 
 	/*
@@ -959,7 +953,7 @@ FindEndOfXLOG(void)
 	 * any present have been used; in most scenarios this should be
 	 * conservative, because of xlog.c's attempts to pre-create files.
 	 */
-	xldir = opendir(XLOGDIR);
+	DIR		   *xldir = opendir(XLOGDIR);
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", XLOGDIR);
@@ -974,7 +968,6 @@ FindEndOfXLOG(void)
 			unsigned int tli,
 						log,
 						seg;
-			XLogSegNo	segno;
 
 			/*
 			 * Note: We don't use XLogFromFileName here, because we want to
@@ -982,7 +975,7 @@ FindEndOfXLOG(void)
 			 * pg_resetwal binary was compiled with
 			 */
 			sscanf(xlde->d_name, "%08X%08X%08X", &tli, &log, &seg);
-			segno = ((uint64) log) * segs_per_xlogid + seg;
+			XLogSegNo	segno = ((uint64) log) * segs_per_xlogid + seg;
 
 			/*
 			 * Note: we take the max of all files found, regardless of their
@@ -1011,7 +1004,7 @@ FindEndOfXLOG(void)
 	 * Finally, convert to new xlog seg size, and advance by one to ensure we
 	 * are in virgin territory.
 	 */
-	xlogbytepos = newXlogSegNo * ControlFile.xlog_seg_size;
+	uint64		xlogbytepos = newXlogSegNo * ControlFile.xlog_seg_size;
 	newXlogSegNo = (xlogbytepos + ControlFile.xlog_seg_size - 1) / WalSegSz;
 	newXlogSegNo++;
 }
@@ -1023,11 +1016,10 @@ FindEndOfXLOG(void)
 static void
 KillExistingXLOG(void)
 {
-	DIR		   *xldir;
 	struct dirent *xlde;
 	char		path[MAXPGPATH + sizeof(XLOGDIR)];
 
-	xldir = opendir(XLOGDIR);
+	DIR		   *xldir = opendir(XLOGDIR);
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", XLOGDIR);
@@ -1070,11 +1062,10 @@ KillExistingArchiveStatus(void)
 {
 #define ARCHSTATDIR XLOGDIR "/archive_status"
 
-	DIR		   *xldir;
 	struct dirent *xlde;
 	char		path[MAXPGPATH + sizeof(ARCHSTATDIR)];
 
-	xldir = opendir(ARCHSTATDIR);
+	DIR		   *xldir = opendir(ARCHSTATDIR);
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", ARCHSTATDIR);
@@ -1120,31 +1111,26 @@ static void
 WriteEmptyXLOG(void)
 {
 	PGAlignedXLogBlock buffer;
-	XLogPageHeader page;
-	XLogLongPageHeader longpage;
-	XLogRecord *record;
 	pg_crc32c	crc;
 	char		path[MAXPGPATH];
-	int			fd;
 	int			nbytes;
-	char	   *recptr;
 
 	memset(buffer.data, 0, XLOG_BLCKSZ);
 
 	/* Set up the XLOG page header */
-	page = (XLogPageHeader) buffer.data;
+	XLogPageHeader page = (XLogPageHeader) buffer.data;
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ControlFile.checkPointCopy.ThisTimeLineID;
 	page->xlp_pageaddr = ControlFile.checkPointCopy.redo - SizeOfXLogLongPHD;
-	longpage = (XLogLongPageHeader) page;
+	XLogLongPageHeader longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = ControlFile.system_identifier;
 	longpage->xlp_seg_size = WalSegSz;
 	longpage->xlp_xlog_blcksz = XLOG_BLCKSZ;
 
 	/* Insert the initial checkpoint record */
-	recptr = (char *) page + SizeOfXLogLongPHD;
-	record = (XLogRecord *) recptr;
+	char	   *recptr = (char *) page + SizeOfXLogLongPHD;
+	XLogRecord *record = (XLogRecord *) recptr;
 	record->xl_prev = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_tot_len = SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint);
@@ -1169,7 +1155,7 @@ WriteEmptyXLOG(void)
 
 	unlink(path);
 
-	fd = open(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+	int			fd = open(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 			  pg_file_create_mode);
 	if (fd < 0)
 	{

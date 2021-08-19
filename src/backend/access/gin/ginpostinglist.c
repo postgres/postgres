@@ -86,12 +86,11 @@
 static inline uint64
 itemptr_to_uint64(const ItemPointer iptr)
 {
-	uint64		val;
 
 	Assert(ItemPointerIsValid(iptr));
 	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
 
-	val = GinItemPointerGetBlockNumber(iptr);
+	uint64		val = GinItemPointerGetBlockNumber(iptr);
 	val <<= MaxHeapTuplesPerPageBits;
 	val |= GinItemPointerGetOffsetNumber(iptr);
 
@@ -132,13 +131,11 @@ encode_varbyte(uint64 val, unsigned char **ptr)
 static uint64
 decode_varbyte(unsigned char **ptr)
 {
-	uint64		val;
 	unsigned char *p = *ptr;
-	uint64		c;
 
 	/* 1st byte */
-	c = *(p++);
-	val = c & 0x7F;
+	uint64		c = *(p++);
+	uint64		val = c & 0x7F;
 	if (c & 0x80)
 	{
 		/* 2nd byte */
@@ -197,27 +194,22 @@ GinPostingList *
 ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 					   int *nwritten)
 {
-	uint64		prev;
 	int			totalpacked = 0;
-	int			maxbytes;
-	GinPostingList *result;
-	unsigned char *ptr;
-	unsigned char *endptr;
 
 	maxsize = SHORTALIGN_DOWN(maxsize);
 
-	result = palloc(maxsize);
+	GinPostingList *result = palloc(maxsize);
 
-	maxbytes = maxsize - offsetof(GinPostingList, bytes);
+	int			maxbytes = maxsize - offsetof(GinPostingList, bytes);
 	Assert(maxbytes > 0);
 
 	/* Store the first special item */
 	result->first = ipd[0];
 
-	prev = itemptr_to_uint64(&result->first);
+	uint64		prev = itemptr_to_uint64(&result->first);
 
-	ptr = result->bytes;
-	endptr = result->bytes + maxbytes;
+	unsigned char *ptr = result->bytes;
+	unsigned char *endptr = result->bytes + maxbytes;
 	for (totalpacked = 1; totalpacked < nipd; totalpacked++)
 	{
 		uint64		val = itemptr_to_uint64(&ipd[totalpacked]);
@@ -296,21 +288,18 @@ ginPostingListDecode(GinPostingList *plist, int *ndecoded)
 ItemPointer
 ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_out)
 {
-	ItemPointer result;
-	int			nallocated;
 	uint64		val;
 	char	   *endseg = ((char *) segment) + len;
-	int			ndecoded;
 	unsigned char *ptr;
 	unsigned char *endptr;
 
 	/*
 	 * Guess an initial size of the array.
 	 */
-	nallocated = segment->nbytes * 2 + 1;
-	result = palloc(nallocated * sizeof(ItemPointerData));
+	int			nallocated = segment->nbytes * 2 + 1;
+	ItemPointer result = palloc(nallocated * sizeof(ItemPointerData));
 
-	ndecoded = 0;
+	int			ndecoded = 0;
 	while ((char *) segment < endseg)
 	{
 		/* enlarge output array if needed */
@@ -359,9 +348,8 @@ ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len,
 									 TIDBitmap *tbm)
 {
 	int			ndecoded;
-	ItemPointer items;
 
-	items = ginPostingListDecodeAllSegments(ptr, len, &ndecoded);
+	ItemPointer items = ginPostingListDecodeAllSegments(ptr, len, &ndecoded);
 	tbm_add_tuples(tbm, items, ndecoded, false);
 	pfree(items);
 
@@ -379,9 +367,8 @@ ginMergeItemPointers(ItemPointerData *a, uint32 na,
 					 ItemPointerData *b, uint32 nb,
 					 int *nmerged)
 {
-	ItemPointerData *dst;
 
-	dst = (ItemPointer) palloc((na + nb) * sizeof(ItemPointerData));
+	ItemPointerData *dst = (ItemPointer) palloc((na + nb) * sizeof(ItemPointerData));
 
 	/*
 	 * If the argument arrays don't overlap, we can just append them to each

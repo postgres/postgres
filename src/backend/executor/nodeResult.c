@@ -70,11 +70,10 @@ ExecResult(PlanState *pstate)
 	ResultState *node = castNode(ResultState, pstate);
 	TupleTableSlot *outerTupleSlot;
 	PlanState  *outerPlan;
-	ExprContext *econtext;
 
 	CHECK_FOR_INTERRUPTS();
 
-	econtext = node->ps.ps_ExprContext;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 
 	/*
 	 * check constant qualifications like (2 > 1), if not already done
@@ -180,7 +179,6 @@ ExecResultRestrPos(ResultState *node)
 ResultState *
 ExecInitResult(Result *node, EState *estate, int eflags)
 {
-	ResultState *resstate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_MARK | EXEC_FLAG_BACKWARD)) ||
@@ -189,7 +187,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	resstate = makeNode(ResultState);
+	ResultState *resstate = makeNode(ResultState);
 	resstate->ps.plan = (Plan *) node;
 	resstate->ps.state = estate;
 	resstate->ps.ExecProcNode = ExecResult;

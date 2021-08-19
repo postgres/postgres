@@ -92,10 +92,9 @@ create_int_rbtree(void)
 static int *
 GetPermutation(int size)
 {
-	int		   *permutation;
 	int			i;
 
-	permutation = (int *) palloc(size * sizeof(int));
+	int		   *permutation = (int *) palloc(size * sizeof(int));
 
 	permutation[0] = 0;
 
@@ -251,10 +250,9 @@ testfind(int size)
 	for (i = 0; i < size; i++)
 	{
 		IntRBTreeNode node;
-		IntRBTreeNode *resultNode;
 
 		node.key = 2 * i;
-		resultNode = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
+		IntRBTreeNode *resultNode = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
 		if (resultNode == NULL)
 			elog(ERROR, "inserted element was not found");
 		if (node.key != resultNode->key)
@@ -268,10 +266,9 @@ testfind(int size)
 	for (i = -1; i <= 2 * size; i += 2)
 	{
 		IntRBTreeNode node;
-		IntRBTreeNode *resultNode;
 
 		node.key = i;
-		resultNode = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
+		IntRBTreeNode *resultNode = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
 		if (resultNode != NULL)
 			elog(ERROR, "not-inserted element was found");
 	}
@@ -285,7 +282,6 @@ static void
 testleftmost(int size)
 {
 	RBTree	   *tree = create_int_rbtree();
-	IntRBTreeNode *result;
 
 	/* Check that empty tree has no leftmost element */
 	if (rbt_leftmost(tree) != NULL)
@@ -295,7 +291,7 @@ testleftmost(int size)
 	rbt_populate(tree, size, 1);
 
 	/* Check that leftmost element is the smallest one */
-	result = (IntRBTreeNode *) rbt_leftmost(tree);
+	IntRBTreeNode *result = (IntRBTreeNode *) rbt_leftmost(tree);
 	if (result == NULL || result->key != 0)
 		elog(ERROR, "rbt_leftmost gave wrong result");
 }
@@ -307,16 +303,14 @@ static void
 testdelete(int size, int delsize)
 {
 	RBTree	   *tree = create_int_rbtree();
-	int		   *deleteIds;
-	bool	   *chosen;
 	int			i;
 
 	/* fill tree with consecutive natural numbers */
 	rbt_populate(tree, size, 1);
 
 	/* Choose unique ids to delete */
-	deleteIds = (int *) palloc(delsize * sizeof(int));
-	chosen = (bool *) palloc0(size * sizeof(bool));
+	int		   *deleteIds = (int *) palloc(delsize * sizeof(int));
+	bool	   *chosen = (bool *) palloc0(size * sizeof(bool));
 
 	for (i = 0; i < delsize; i++)
 	{
@@ -332,11 +326,10 @@ testdelete(int size, int delsize)
 	for (i = 0; i < delsize; i++)
 	{
 		IntRBTreeNode find;
-		IntRBTreeNode *node;
 
 		find.key = deleteIds[i];
 		/* Locate the node to be deleted */
-		node = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &find);
+		IntRBTreeNode *node = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &find);
 		if (node == NULL || node->key != deleteIds[i])
 			elog(ERROR, "expected element was not found during deleting");
 		/* Delete it */
@@ -347,10 +340,9 @@ testdelete(int size, int delsize)
 	for (i = 0; i < size; i++)
 	{
 		IntRBTreeNode node;
-		IntRBTreeNode *result;
 
 		node.key = i;
-		result = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
+		IntRBTreeNode *result = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &node);
 		if (chosen[i])
 		{
 			/* Deleted element should be absent */
@@ -369,13 +361,12 @@ testdelete(int size, int delsize)
 	for (i = 0; i < size; i++)
 	{
 		IntRBTreeNode find;
-		IntRBTreeNode *node;
 
 		if (chosen[i])
 			continue;
 		find.key = i;
 		/* Locate the node to be deleted */
-		node = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &find);
+		IntRBTreeNode *node = (IntRBTreeNode *) rbt_find(tree, (RBTNode *) &find);
 		if (node == NULL || node->key != i)
 			elog(ERROR, "expected element was not found during deleting");
 		/* Delete it */

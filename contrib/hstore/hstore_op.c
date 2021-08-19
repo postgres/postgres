@@ -75,7 +75,6 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 	Datum	   *key_datums;
 	bool	   *key_nulls;
 	int			key_count;
-	Pairs	   *key_pairs;
 	int			bufsiz;
 	int			i,
 				j;
@@ -103,7 +102,7 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
 						key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
-	key_pairs = palloc(sizeof(Pairs) * key_count);
+	Pairs	   *key_pairs = palloc(sizeof(Pairs) * key_count);
 
 	for (i = 0, j = 0; i < key_count; i++)
 	{
@@ -132,14 +131,13 @@ hstore_fetchval(PG_FUNCTION_ARGS)
 	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	HEntry	   *entries = ARRPTR(hs);
-	text	   *out;
 	int			idx = hstoreFindKey(hs, NULL,
 									VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 	if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 		PG_RETURN_NULL();
 
-	out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
+	text	   *out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
 								   HSTORE_VALLEN(entries, idx));
 
 	PG_RETURN_TEXT_P(out);
@@ -577,8 +575,6 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 	ArrayType  *aout;
 	Datum	   *key_datums;
 	bool	   *key_nulls;
-	Datum	   *out_datums;
-	bool	   *out_nulls;
 	int			key_count;
 	int			i;
 
@@ -592,8 +588,8 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(aout);
 	}
 
-	out_datums = palloc(sizeof(Datum) * key_count);
-	out_nulls = palloc(sizeof(bool) * key_count);
+	Datum	   *out_datums = palloc(sizeof(Datum) * key_count);
+	bool	   *out_nulls = palloc(sizeof(bool) * key_count);
 
 	for (i = 0; i < key_count; ++i)
 	{
@@ -640,8 +636,6 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 	HStore	   *out;
 	int			nkeys;
 	Pairs	   *key_pairs = hstoreArrayToPairs(key_array, &nkeys);
-	Pairs	   *out_pairs;
-	int			bufsiz;
 	int			lastidx = 0;
 	int			i;
 	int			out_count = 0;
@@ -653,8 +647,8 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 	}
 
 	/* hstoreArrayToPairs() checked overflow */
-	out_pairs = palloc(sizeof(Pairs) * nkeys);
-	bufsiz = 0;
+	Pairs	   *out_pairs = palloc(sizeof(Pairs) * nkeys);
+	int			bufsiz = 0;
 
 	/*
 	 * we exploit the fact that the pairs list is already sorted into strictly
@@ -696,7 +690,6 @@ Datum
 hstore_akeys(PG_FUNCTION_ARGS)
 {
 	HStore	   *hs = PG_GETARG_HSTORE_P(0);
-	Datum	   *d;
 	ArrayType  *a;
 	HEntry	   *entries = ARRPTR(hs);
 	char	   *base = STRPTR(hs);
@@ -709,7 +702,7 @@ hstore_akeys(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	d = (Datum *) palloc(sizeof(Datum) * count);
+	Datum	   *d = (Datum *) palloc(sizeof(Datum) * count);
 
 	for (i = 0; i < count; ++i)
 	{
@@ -731,8 +724,6 @@ Datum
 hstore_avals(PG_FUNCTION_ARGS)
 {
 	HStore	   *hs = PG_GETARG_HSTORE_P(0);
-	Datum	   *d;
-	bool	   *nulls;
 	ArrayType  *a;
 	HEntry	   *entries = ARRPTR(hs);
 	char	   *base = STRPTR(hs);
@@ -746,8 +737,8 @@ hstore_avals(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	d = (Datum *) palloc(sizeof(Datum) * count);
-	nulls = (bool *) palloc(sizeof(bool) * count);
+	Datum	   *d = (Datum *) palloc(sizeof(Datum) * count);
+	bool	   *nulls = (bool *) palloc(sizeof(bool) * count);
 
 	for (i = 0; i < count; ++i)
 	{
@@ -781,8 +772,6 @@ hstore_to_array_internal(HStore *hs, int ndims)
 	int			count = HS_COUNT(hs);
 	int			out_size[2] = {0, 2};
 	int			lb[2] = {1, 1};
-	Datum	   *out_datums;
-	bool	   *out_nulls;
 	int			i;
 
 	Assert(ndims < 3);
@@ -791,8 +780,8 @@ hstore_to_array_internal(HStore *hs, int ndims)
 		return construct_empty_array(TEXTOID);
 
 	out_size[0] = count * 2 / ndims;
-	out_datums = palloc(sizeof(Datum) * count * 2);
-	out_nulls = palloc(sizeof(bool) * count * 2);
+	Datum	   *out_datums = palloc(sizeof(Datum) * count * 2);
+	bool	   *out_nulls = palloc(sizeof(bool) * count * 2);
 
 	for (i = 0; i < count; ++i)
 	{
@@ -855,12 +844,10 @@ static void
 setup_firstcall(FuncCallContext *funcctx, HStore *hs,
 				FunctionCallInfo fcinfo)
 {
-	MemoryContext oldcontext;
-	HStore	   *st;
 
-	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	st = (HStore *) palloc(VARSIZE(hs));
+	HStore	   *st = (HStore *) palloc(VARSIZE(hs));
 	memcpy(st, hs, VARSIZE(hs));
 
 	funcctx->user_fctx = (void *) st;
@@ -886,7 +873,6 @@ hstore_skeys(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	HStore	   *hs;
-	int			i;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -897,14 +883,13 @@ hstore_skeys(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 	hs = (HStore *) funcctx->user_fctx;
-	i = funcctx->call_cntr;
+	int			i = funcctx->call_cntr;
 
 	if (i < HS_COUNT(hs))
 	{
 		HEntry	   *entries = ARRPTR(hs);
-		text	   *item;
 
-		item = cstring_to_text_with_len(HSTORE_KEY(entries, STRPTR(hs), i),
+		text	   *item = cstring_to_text_with_len(HSTORE_KEY(entries, STRPTR(hs), i),
 										HSTORE_KEYLEN(entries, i));
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
@@ -920,7 +905,6 @@ hstore_svals(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	HStore	   *hs;
-	int			i;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -931,7 +915,7 @@ hstore_svals(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 	hs = (HStore *) funcctx->user_fctx;
-	i = funcctx->call_cntr;
+	int			i = funcctx->call_cntr;
 
 	if (i < HS_COUNT(hs))
 	{
@@ -939,19 +923,17 @@ hstore_svals(PG_FUNCTION_ARGS)
 
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			ReturnSetInfo *rsi;
 
 			/* ugly ugly ugly. why no macro for this? */
 			(funcctx)->call_cntr++;
-			rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 			rsi->isDone = ExprMultipleResult;
 			PG_RETURN_NULL();
 		}
 		else
 		{
-			text	   *item;
 
-			item = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), i),
+			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), i),
 											HSTORE_VALLEN(entries, i));
 
 			SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
@@ -1027,7 +1009,6 @@ hstore_each(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	HStore	   *hs;
-	int			i;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -1038,7 +1019,7 @@ hstore_each(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 	hs = (HStore *) funcctx->user_fctx;
-	i = funcctx->call_cntr;
+	int			i = funcctx->call_cntr;
 
 	if (i < HS_COUNT(hs))
 	{
@@ -1047,10 +1028,8 @@ hstore_each(PG_FUNCTION_ARGS)
 		Datum		res,
 					dvalues[2];
 		bool		nulls[2] = {false, false};
-		text	   *item;
-		HeapTuple	tuple;
 
-		item = cstring_to_text_with_len(HSTORE_KEY(entries, ptr, i),
+		text	   *item = cstring_to_text_with_len(HSTORE_KEY(entries, ptr, i),
 										HSTORE_KEYLEN(entries, i));
 		dvalues[0] = PointerGetDatum(item);
 
@@ -1066,7 +1045,7 @@ hstore_each(PG_FUNCTION_ARGS)
 			dvalues[1] = PointerGetDatum(item);
 		}
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, dvalues, nulls);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, dvalues, nulls);
 		res = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(res));
@@ -1260,9 +1239,8 @@ hstore_hash_extended(PG_FUNCTION_ARGS)
 {
 	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	uint64		seed = PG_GETARG_INT64(1);
-	Datum		hval;
 
-	hval = hash_any_extended((unsigned char *) VARDATA(hs),
+	Datum		hval = hash_any_extended((unsigned char *) VARDATA(hs),
 							 VARSIZE(hs) - VARHDRSZ,
 							 seed);
 

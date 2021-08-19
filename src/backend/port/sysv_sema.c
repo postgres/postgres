@@ -96,9 +96,8 @@ static void ReleaseSemaphores(int status, Datum arg);
 static IpcSemaphoreId
 InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 {
-	int			semId;
 
-	semId = semget(semKey, numSems, IPC_CREAT | IPC_EXCL | IPCProtection);
+	int			semId = semget(semKey, numSems, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 	if (semId < 0)
 	{
@@ -218,7 +217,6 @@ IpcSemaphoreCreate(int numSems)
 	/* Loop till we find a free IPC key */
 	for (nextSemaKey++;; nextSemaKey++)
 	{
-		pid_t		creatorPID;
 
 		/* Try to create new semaphore set */
 		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1);
@@ -236,7 +234,7 @@ IpcSemaphoreCreate(int numSems)
 		 * If the creator PID is my own PID or does not belong to any extant
 		 * process, it's safe to zap it.
 		 */
-		creatorPID = IpcSemaphoreGetLastPID(semId, numSems);
+		pid_t		creatorPID = IpcSemaphoreGetLastPID(semId, numSems);
 		if (creatorPID <= 0)
 			continue;			/* oops, GETPID failed */
 		if (creatorPID != getpid())
@@ -372,7 +370,6 @@ ReleaseSemaphores(int status, Datum arg)
 PGSemaphore
 PGSemaphoreCreate(void)
 {
-	PGSemaphore sema;
 
 	/* Can't do this in a backend, because static state is postmaster's */
 	Assert(!IsUnderPostmaster);
@@ -389,7 +386,7 @@ PGSemaphoreCreate(void)
 	/* Use the next shared PGSemaphoreData */
 	if (numSharedSemas >= maxSharedSemas)
 		elog(PANIC, "too many semaphores created");
-	sema = &sharedSemas[numSharedSemas++];
+	PGSemaphore sema = &sharedSemas[numSharedSemas++];
 	/* Assign the next free semaphore in the current set */
 	sema->semId = mySemaSets[numSemaSets - 1];
 	sema->semNum = nextSemaNumber++;

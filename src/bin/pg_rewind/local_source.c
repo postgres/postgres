@@ -37,9 +37,8 @@ static void local_destroy(rewind_source *source);
 rewind_source *
 init_local_source(const char *datadir)
 {
-	local_source *src;
 
-	src = pg_malloc0(sizeof(local_source));
+	local_source *src = pg_malloc0(sizeof(local_source));
 
 	src->common.traverse_files = local_traverse_files;
 	src->common.fetch_file = local_fetch_file;
@@ -75,13 +74,12 @@ local_fetch_file_range(rewind_source *source, const char *path, off_t off,
 	const char *datadir = ((local_source *) source)->datadir;
 	PGAlignedBlock buf;
 	char		srcpath[MAXPGPATH];
-	int			srcfd;
 	off_t		begin = off;
 	off_t		end = off + len;
 
 	snprintf(srcpath, sizeof(srcpath), "%s/%s", datadir, path);
 
-	srcfd = open(srcpath, O_RDONLY | PG_BINARY, 0);
+	int			srcfd = open(srcpath, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
 		pg_fatal("could not open source file \"%s\": %m",
 				 srcpath);
@@ -93,7 +91,6 @@ local_fetch_file_range(rewind_source *source, const char *path, off_t off,
 
 	while (end - begin > 0)
 	{
-		ssize_t		readlen;
 		size_t		len;
 
 		if (end - begin > sizeof(buf))
@@ -101,7 +98,7 @@ local_fetch_file_range(rewind_source *source, const char *path, off_t off,
 		else
 			len = end - begin;
 
-		readlen = read(srcfd, buf.data, len);
+		ssize_t		readlen = read(srcfd, buf.data, len);
 
 		if (readlen < 0)
 			pg_fatal("could not read file \"%s\": %m", srcpath);

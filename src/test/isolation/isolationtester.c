@@ -89,9 +89,6 @@ int
 main(int argc, char **argv)
 {
 	const char *conninfo;
-	const char *env_wait;
-	TestSpec   *testspec;
-	PGresult   *res;
 	PQExpBufferData wait_query;
 	int			opt;
 	int			i;
@@ -131,13 +128,13 @@ main(int argc, char **argv)
 	 * If PGISOLATIONTIMEOUT is set in the environment, adopt its value (given
 	 * in seconds) as the max time to wait for any one step to complete.
 	 */
-	env_wait = getenv("PGISOLATIONTIMEOUT");
+	const char *env_wait = getenv("PGISOLATIONTIMEOUT");
 	if (env_wait != NULL)
 		max_step_wait = ((int64) atoi(env_wait)) * USECS_PER_SEC;
 
 	/* Read the test spec from stdin */
 	spec_yyparse();
-	testspec = &parseresult;
+	TestSpec   *testspec = &parseresult;
 
 	/* Perform post-parse checking, and fill in linking fields */
 	check_testspec(testspec);
@@ -204,7 +201,7 @@ main(int argc, char **argv)
 		appendPQExpBuffer(&wait_query, ",%s", conns[i].backend_pid_str);
 	appendPQExpBufferStr(&wait_query, "}')");
 
-	res = PQprepare(conns[0].conn, PREP_WAITING, wait_query.data, 0, NULL);
+	PGresult   *res = PQprepare(conns[0].conn, PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "prepare of lock wait query failed: %s",
@@ -229,18 +226,16 @@ main(int argc, char **argv)
 static void
 check_testspec(TestSpec *testspec)
 {
-	int			nallsteps;
-	Step	  **allsteps;
 	int			i,
 				j,
 				k;
 
 	/* Create a sorted lookup table of all steps. */
-	nallsteps = 0;
+	int			nallsteps = 0;
 	for (i = 0; i < testspec->nsessions; i++)
 		nallsteps += testspec->sessions[i]->nsteps;
 
-	allsteps = pg_malloc(nallsteps * sizeof(Step *));
+	Step	  **allsteps = pg_malloc(nallsteps * sizeof(Step *));
 
 	k = 0;
 	for (i = 0; i < testspec->nsessions; i++)
@@ -383,20 +378,16 @@ run_testspec(TestSpec *testspec)
 static void
 run_all_permutations(TestSpec *testspec)
 {
-	int			nsteps;
 	int			i;
-	PermutationStep *steps;
-	PermutationStep **stepptrs;
-	int		   *piles;
 
 	/* Count the total number of steps in all sessions */
-	nsteps = 0;
+	int			nsteps = 0;
 	for (i = 0; i < testspec->nsessions; i++)
 		nsteps += testspec->sessions[i]->nsteps;
 
 	/* Create PermutationStep workspace array */
-	steps = (PermutationStep *) pg_malloc0(sizeof(PermutationStep) * nsteps);
-	stepptrs = (PermutationStep **) pg_malloc(sizeof(PermutationStep *) * nsteps);
+	PermutationStep *steps = (PermutationStep *) pg_malloc0(sizeof(PermutationStep) * nsteps);
+	PermutationStep **stepptrs = (PermutationStep **) pg_malloc(sizeof(PermutationStep *) * nsteps);
 	for (i = 0; i < nsteps; i++)
 		stepptrs[i] = steps + i;
 
@@ -409,7 +400,7 @@ run_all_permutations(TestSpec *testspec)
 	 * A pile is actually just an integer which tells how many steps we've
 	 * already picked from this pile.
 	 */
-	piles = pg_malloc(sizeof(int) * testspec->nsessions);
+	int		   *piles = pg_malloc(sizeof(int) * testspec->nsessions);
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
@@ -500,9 +491,8 @@ run_permutation(TestSpec *testspec, int nsteps, PermutationStep **steps)
 	PGresult   *res;
 	int			i;
 	int			nwaiting = 0;
-	PermutationStep **waiting;
 
-	waiting = pg_malloc(sizeof(PermutationStep *) * testspec->nsessions);
+	PermutationStep **waiting = pg_malloc(sizeof(PermutationStep *) * testspec->nsessions);
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -553,7 +543,6 @@ run_permutation(TestSpec *testspec, int nsteps, PermutationStep **steps)
 		Step	   *step = pstep->step;
 		IsoConnInfo *iconn = &conns[1 + step->session];
 		PGconn	   *conn = iconn->conn;
-		bool		mustwait;
 		int			j;
 
 		/*
@@ -614,10 +603,9 @@ run_permutation(TestSpec *testspec, int nsteps, PermutationStep **steps)
 				if (iconn->active_step != NULL)
 				{
 					struct timeval current_time;
-					int64		td;
 
 					gettimeofday(&current_time, NULL);
-					td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
+					int64		td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
 					td *= USECS_PER_SEC;
 					td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 					if (td > 2 * max_step_wait)
@@ -663,7 +651,7 @@ run_permutation(TestSpec *testspec, int nsteps, PermutationStep **steps)
 		}
 
 		/* Try to complete this step without blocking.  */
-		mustwait = try_complete_step(testspec, pstep, STEP_NONBLOCK);
+		bool		mustwait = try_complete_step(testspec, pstep, STEP_NONBLOCK);
 
 		/* Check for completion of any steps that were previously waiting. */
 		nwaiting = try_complete_steps(testspec, waiting, nwaiting,
@@ -855,12 +843,10 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 		else if (ret == 0)		/* select() timeout: check for lock wait */
 		{
 			struct timeval current_time;
-			int64		td;
 
 			/* If it's OK for the step to block, check whether it has. */
 			if (flags & STEP_NONBLOCK)
 			{
-				bool		waiting;
 
 				res = PQexecPrepared(conns[0].conn, PREP_WAITING, 1,
 									 &conns[step->session + 1].backend_pid_str,
@@ -872,7 +858,7 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 							PQerrorMessage(conns[0].conn));
 					exit(1);
 				}
-				waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
+				bool		waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
 				PQclear(res);
 
 				if (waiting)	/* waiting to acquire a lock */
@@ -909,7 +895,7 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 
 			/* Figure out how long we've been waiting for this step. */
 			gettimeofday(&current_time, NULL);
-			td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
+			int64		td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
 			td *= USECS_PER_SEC;
 			td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 

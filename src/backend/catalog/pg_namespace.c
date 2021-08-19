@@ -42,13 +42,9 @@
 Oid
 NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 {
-	Relation	nspdesc;
-	HeapTuple	tup;
-	Oid			nspoid;
 	bool		nulls[Natts_pg_namespace];
 	Datum		values[Natts_pg_namespace];
 	NameData	nname;
-	TupleDesc	tupDesc;
 	ObjectAddress myself;
 	int			i;
 	Acl		   *nspacl;
@@ -69,8 +65,8 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	else
 		nspacl = NULL;
 
-	nspdesc = table_open(NamespaceRelationId, RowExclusiveLock);
-	tupDesc = nspdesc->rd_att;
+	Relation	nspdesc = table_open(NamespaceRelationId, RowExclusiveLock);
+	TupleDesc	tupDesc = nspdesc->rd_att;
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_namespace; i++)
@@ -79,7 +75,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 		values[i] = (Datum) NULL;
 	}
 
-	nspoid = GetNewOidWithIndex(nspdesc, NamespaceOidIndexId,
+	Oid			nspoid = GetNewOidWithIndex(nspdesc, NamespaceOidIndexId,
 								Anum_pg_namespace_oid);
 	values[Anum_pg_namespace_oid - 1] = ObjectIdGetDatum(nspoid);
 	namestrcpy(&nname, nspName);
@@ -91,7 +87,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 		nulls[Anum_pg_namespace_nspacl - 1] = true;
 
 
-	tup = heap_form_tuple(tupDesc, values, nulls);
+	HeapTuple	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	CatalogTupleInsert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));

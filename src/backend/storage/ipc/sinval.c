@@ -92,12 +92,11 @@ ReceiveSharedInvalidMessages(void (*invalFunction) (SharedInvalidationMessage *m
 
 	do
 	{
-		int			getResult;
 
 		nextmsg = nummsgs = 0;
 
 		/* Try to get some more messages */
-		getResult = SIGetDataEntries(messages, MAXINVALMSGS);
+		int			getResult = SIGetDataEntries(messages, MAXINVALMSGS);
 
 		if (getResult < 0)
 		{

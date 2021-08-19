@@ -28,12 +28,10 @@ float
 strtof(const char *nptr, char **endptr)
 {
 	int			caller_errno = errno;
-	double		dresult;
-	float		fresult;
 
 	errno = 0;
-	dresult = strtod(nptr, endptr);
-	fresult = (float) dresult;
+	double		dresult = strtod(nptr, endptr);
+	float		fresult = (float) dresult;
 
 	if (errno == 0)
 	{
@@ -75,10 +73,9 @@ float
 pg_strtof(const char *nptr, char **endptr)
 {
 	int			caller_errno = errno;
-	float		fresult;
 
 	errno = 0;
-	fresult = (strtof) (nptr, endptr);
+	float		fresult = (strtof) (nptr, endptr);
 	if (errno)
 	{
 		/* On error, just return the error to the caller. */

@@ -95,9 +95,7 @@ ExecSampleScan(PlanState *pstate)
 SampleScanState *
 ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 {
-	SampleScanState *scanstate;
 	TableSampleClause *tsc = node->tablesample;
-	TsmRoutine *tsm;
 
 	Assert(outerPlan(node) == NULL);
 	Assert(innerPlan(node) == NULL);
@@ -105,7 +103,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	scanstate = makeNode(SampleScanState);
+	SampleScanState *scanstate = makeNode(SampleScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecSampleScan;
@@ -159,7 +157,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	/*
 	 * Finally, initialize the TABLESAMPLE method handler.
 	 */
-	tsm = GetTsmRoutine(tsc->tsmhandler);
+	TsmRoutine *tsm = GetTsmRoutine(tsc->tsmhandler);
 	scanstate->tsmroutine = tsm;
 	scanstate->tsm_state = NULL;
 
@@ -234,18 +232,15 @@ tablesample_init(SampleScanState *scanstate)
 {
 	TsmRoutine *tsm = scanstate->tsmroutine;
 	ExprContext *econtext = scanstate->ss.ps.ps_ExprContext;
-	Datum	   *params;
 	Datum		datum;
 	bool		isnull;
 	uint32		seed;
-	bool		allow_sync;
-	int			i;
 	ListCell   *arg;
 
 	scanstate->donetuples = 0;
-	params = (Datum *) palloc(list_length(scanstate->args) * sizeof(Datum));
+	Datum	   *params = (Datum *) palloc(list_length(scanstate->args) * sizeof(Datum));
 
-	i = 0;
+	int			i = 0;
 	foreach(arg, scanstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -301,7 +296,7 @@ tablesample_init(SampleScanState *scanstate)
 						 seed);
 
 	/* We'll use syncscan if there's no NextSampleBlock function */
-	allow_sync = (tsm->NextSampleBlock == NULL);
+	bool		allow_sync = (tsm->NextSampleBlock == NULL);
 
 	/* Now we can create or reset the HeapScanDesc */
 	if (scanstate->ss.ss_currentScanDesc == NULL)

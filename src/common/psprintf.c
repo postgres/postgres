@@ -50,20 +50,18 @@ psprintf(const char *fmt,...)
 
 	for (;;)
 	{
-		char	   *result;
 		va_list		args;
-		size_t		newlen;
 
 		/*
 		 * Allocate result buffer.  Note that in frontend this maps to malloc
 		 * with exit-on-error.
 		 */
-		result = (char *) palloc(len);
+		char	   *result = (char *) palloc(len);
 
 		/* Try to format the data. */
 		errno = save_errno;
 		va_start(args, fmt);
-		newlen = pvsnprintf(result, len, fmt, args);
+		size_t		newlen = pvsnprintf(result, len, fmt, args);
 		va_end(args);
 
 		if (newlen < len)
@@ -105,9 +103,8 @@ psprintf(const char *fmt,...)
 size_t
 pvsnprintf(char *buf, size_t len, const char *fmt, va_list args)
 {
-	int			nprinted;
 
-	nprinted = vsnprintf(buf, len, fmt, args);
+	int			nprinted = vsnprintf(buf, len, fmt, args);
 
 	/* We assume failure means the fmt is bogus, hence hard failure is OK */
 	if (unlikely(nprinted < 0))

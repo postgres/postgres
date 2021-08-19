@@ -59,9 +59,8 @@ getpeereid(int sock, uid_t *uid, gid_t *gid)
 	return 0;
 #elif defined(HAVE_GETPEERUCRED)
 	/* Solaris: use getpeerucred() */
-	ucred_t    *ucred;
 
-	ucred = NULL;				/* must be initialized to NULL */
+	ucred_t    *ucred = NULL;				/* must be initialized to NULL */
 	if (getpeerucred(sock, &ucred) == -1)
 		return -1;
 

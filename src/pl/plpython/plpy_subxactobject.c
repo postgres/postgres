@@ -53,9 +53,8 @@ PLy_subtransaction_init_type(void)
 PyObject *
 PLy_subtransaction_new(PyObject *self, PyObject *unused)
 {
-	PLySubtransactionObject *ob;
 
-	ob = PyObject_New(PLySubtransactionObject, &PLy_SubtransactionType);
+	PLySubtransactionObject *ob = PyObject_New(PLySubtransactionObject, &PLy_SubtransactionType);
 
 	if (ob == NULL)
 		return NULL;
@@ -83,8 +82,6 @@ PLy_subtransaction_dealloc(PyObject *subxact)
 static PyObject *
 PLy_subtransaction_enter(PyObject *self, PyObject *unused)
 {
-	PLySubtransactionData *subxactdata;
-	MemoryContext oldcontext;
 	PLySubtransactionObject *subxact = (PLySubtransactionObject *) self;
 
 	if (subxact->started)
@@ -100,9 +97,9 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused)
 	}
 
 	subxact->started = true;
-	oldcontext = CurrentMemoryContext;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
-	subxactdata = (PLySubtransactionData *)
+	PLySubtransactionData *subxactdata = (PLySubtransactionData *)
 		MemoryContextAlloc(TopTransactionContext,
 						   sizeof(PLySubtransactionData));
 
@@ -139,7 +136,6 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 	PyObject   *type;
 	PyObject   *value;
 	PyObject   *traceback;
-	PLySubtransactionData *subxactdata;
 	PLySubtransactionObject *subxact = (PLySubtransactionObject *) self;
 
 	if (!PyArg_ParseTuple(args, "OOO", &type, &value, &traceback))
@@ -175,7 +171,7 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 		ReleaseCurrentSubTransaction();
 	}
 
-	subxactdata = (PLySubtransactionData *) linitial(explicit_subtransactions);
+	PLySubtransactionData *subxactdata = (PLySubtransactionData *) linitial(explicit_subtransactions);
 	explicit_subtransactions = list_delete_first(explicit_subtransactions);
 
 	MemoryContextSwitchTo(subxactdata->oldcontext);

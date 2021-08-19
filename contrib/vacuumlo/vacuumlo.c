@@ -457,11 +457,10 @@ main(int argc, char **argv)
 	struct _param param;
 	int			c;
 	int			port;
-	const char *progname;
 	int			optindex;
 
 	pg_logging_init(argv[0]);
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 
 	/* Set default parameter values */
 	param.pg_user = NULL;

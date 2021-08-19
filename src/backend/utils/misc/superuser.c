@@ -56,7 +56,6 @@ bool
 superuser_arg(Oid roleid)
 {
 	bool		result;
-	HeapTuple	rtup;
 
 	/* Quick out for cache hit */
 	if (OidIsValid(last_roleid) && last_roleid == roleid)
@@ -67,7 +66,7 @@ superuser_arg(Oid roleid)
 		return true;
 
 	/* OK, look up the information in pg_authid */
-	rtup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	HeapTuple	rtup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (HeapTupleIsValid(rtup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(rtup))->rolsuper;

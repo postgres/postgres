@@ -37,12 +37,11 @@ appendStringInfoStringQuoted(StringInfo str, const char *s, int maxlen)
 	const char *chunk_search_start,
 			   *chunk_copy_start,
 			   *chunk_end;
-	int			slen;
 	bool		ellipsis;
 
 	Assert(str != NULL);
 
-	slen = strlen(s);
+	int			slen = strlen(s);
 	if (maxlen >= 0 && maxlen < slen)
 	{
 		int			finallen = pg_mbcliplen(s, slen, maxlen);

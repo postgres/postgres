@@ -124,11 +124,9 @@ clauselist_selectivity_ext(PlannerInfo *root,
 						   bool use_extended_stats)
 {
 	Selectivity s1 = 1.0;
-	RelOptInfo *rel;
 	Bitmapset  *estimatedclauses = NULL;
 	RangeQueryClause *rqlist = NULL;
 	ListCell   *l;
-	int			listidx;
 
 	/*
 	 * If there's exactly one clause, just go directly to
@@ -143,7 +141,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 	 * Determine if these clauses reference a single relation.  If so, and if
 	 * it has extended statistics, try to apply those.
 	 */
-	rel = find_single_rel_for_clauses(root, clauses);
+	RelOptInfo *rel = find_single_rel_for_clauses(root, clauses);
 	if (use_extended_stats && rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
 	{
 		/*
@@ -165,12 +163,11 @@ clauselist_selectivity_ext(PlannerInfo *root,
 	 * multiplied into s1 and forgotten. Anything that does gets inserted into
 	 * an rqlist entry.
 	 */
-	listidx = -1;
+	int			listidx = -1;
 	foreach(l, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
 		RestrictInfo *rinfo;
-		Selectivity s2;
 
 		listidx++;
 
@@ -182,7 +179,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 			continue;
 
 		/* Compute the selectivity of this clause in isolation */
-		s2 = clause_selectivity_ext(root, clause, varRelid, jointype, sjinfo,
+		Selectivity s2 = clause_selectivity_ext(root, clause, varRelid, jointype, sjinfo,
 									use_extended_stats);
 
 		/*
@@ -270,7 +267,6 @@ clauselist_selectivity_ext(PlannerInfo *root,
 	 */
 	while (rqlist != NULL)
 	{
-		RangeQueryClause *rqnext;
 
 		if (rqlist->have_lobound && rqlist->have_hibound)
 		{
@@ -335,7 +331,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 				s1 *= rqlist->hibound;
 		}
 		/* release storage and advance */
-		rqnext = rqlist->next;
+		RangeQueryClause *rqnext = rqlist->next;
 		pfree(rqlist);
 		rqlist = rqnext;
 	}
@@ -366,16 +362,14 @@ clauselist_selectivity_or(PlannerInfo *root,
 						  bool use_extended_stats)
 {
 	Selectivity s1 = 0.0;
-	RelOptInfo *rel;
 	Bitmapset  *estimatedclauses = NULL;
 	ListCell   *lc;
-	int			listidx;
 
 	/*
 	 * Determine if these clauses reference a single relation.  If so, and if
 	 * it has extended statistics, try to apply those.
 	 */
-	rel = find_single_rel_for_clauses(root, clauses);
+	RelOptInfo *rel = find_single_rel_for_clauses(root, clauses);
 	if (use_extended_stats && rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
 	{
 		/*
@@ -397,10 +391,9 @@ clauselist_selectivity_or(PlannerInfo *root,
 	 *
 	 * XXX is this too conservative?
 	 */
-	listidx = -1;
+	int			listidx = -1;
 	foreach(lc, clauses)
 	{
-		Selectivity s2;
 
 		listidx++;
 
@@ -411,7 +404,7 @@ clauselist_selectivity_or(PlannerInfo *root,
 		if (bms_is_member(listidx, estimatedclauses))
 			continue;
 
-		s2 = clause_selectivity_ext(root, (Node *) lfirst(lc), varRelid,
+		Selectivity s2 = clause_selectivity_ext(root, (Node *) lfirst(lc), varRelid,
 									jointype, sjinfo, use_extended_stats);
 
 		s1 = s1 + s2 - s1 * s2;
@@ -545,9 +538,8 @@ find_single_rel_for_clauses(PlannerInfo *root, List *clauses)
 		 */
 		if (is_andclause(rinfo))
 		{
-			RelOptInfo *rel;
 
-			rel = find_single_rel_for_clauses(root,
+			RelOptInfo *rel = find_single_rel_for_clauses(root,
 											  ((BoolExpr *) rinfo)->args);
 
 			if (rel == NULL)

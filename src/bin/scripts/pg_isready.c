@@ -43,9 +43,7 @@ main(int argc, char **argv)
 
 	bool		quiet = false;
 
-	PGPing		rv;
 	PQconninfoOption *opts = NULL;
-	PQconninfoOption *defs = NULL;
 	PQconninfoOption *opt;
 	PQconninfoOption *def;
 	char	   *errmsg = NULL;
@@ -147,7 +145,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	defs = PQconndefaults();
+	PQconninfoOption *defs = PQconndefaults();
 	if (defs == NULL)
 	{
 		pg_log_error("could not fetch default options");
@@ -188,7 +186,7 @@ main(int argc, char **argv)
 			opt++;
 	}
 
-	rv = PQpingParams(keywords, values, 1);
+	PGPing		rv = PQpingParams(keywords, values, 1);
 
 	if (!quiet)
 	{

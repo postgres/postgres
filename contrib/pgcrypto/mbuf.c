@@ -79,16 +79,14 @@ mbuf_free(MBuf *mbuf)
 static void
 prepare_room(MBuf *mbuf, int block_len)
 {
-	uint8	   *newbuf;
-	unsigned	newlen;
 
 	if (mbuf->data_end + block_len <= mbuf->buf_end)
 		return;
 
-	newlen = (mbuf->buf_end - mbuf->data)
+	unsigned	newlen = (mbuf->buf_end - mbuf->data)
 		+ ((block_len + STEP + STEP - 1) & -STEP);
 
-	newbuf = repalloc(mbuf->data, newlen);
+	uint8	   *newbuf = repalloc(mbuf->data, newlen);
 
 	mbuf->buf_end = newbuf + newlen;
 	mbuf->data_end = newbuf + (mbuf->data_end - mbuf->data);
@@ -313,10 +311,9 @@ pullf_read_max(PullFilter *pf, int len, uint8 **data_p, uint8 *tmpbuf)
 int
 pullf_read_fixed(PullFilter *src, int len, uint8 *dst)
 {
-	int			res;
 	uint8	   *p;
 
-	res = pullf_read_max(src, len, &p, dst);
+	int			res = pullf_read_max(src, len, &p, dst);
 	if (res < 0)
 		return res;
 	if (res != len)

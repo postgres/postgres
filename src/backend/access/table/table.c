@@ -38,9 +38,8 @@
 Relation
 table_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
 
-	r = relation_open(relationId, lockmode);
+	Relation	r = relation_open(relationId, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX ||
 		r->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
@@ -68,9 +67,8 @@ table_open(Oid relationId, LOCKMODE lockmode)
 Relation
 try_table_open(Oid relationId, LOCKMODE lockmode)
 {
-	Relation	r;
 
-	r = try_relation_open(relationId, lockmode);
+	Relation	r = try_relation_open(relationId, lockmode);
 
 	/* leave if table does not exist */
 	if (!r)
@@ -101,9 +99,8 @@ try_table_open(Oid relationId, LOCKMODE lockmode)
 Relation
 table_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
-	Relation	r;
 
-	r = relation_openrv(relation, lockmode);
+	Relation	r = relation_openrv(relation, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX ||
 		r->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
@@ -132,9 +129,8 @@ Relation
 table_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 					  bool missing_ok)
 {
-	Relation	r;
 
-	r = relation_openrv_extended(relation, lockmode, missing_ok);
+	Relation	r = relation_openrv_extended(relation, lockmode, missing_ok);
 
 	if (r)
 	{

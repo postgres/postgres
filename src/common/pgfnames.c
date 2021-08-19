@@ -36,20 +36,18 @@
 char	  **
 pgfnames(const char *path)
 {
-	DIR		   *dir;
 	struct dirent *file;
-	char	  **filenames;
 	int			numnames = 0;
 	int			fnsize = 200;	/* enough for many small dbs */
 
-	dir = opendir(path);
+	DIR		   *dir = opendir(path);
 	if (dir == NULL)
 	{
 		pg_log_warning("could not open directory \"%s\": %m", path);
 		return NULL;
 	}
 
-	filenames = (char **) palloc(fnsize * sizeof(char *));
+	char	  **filenames = (char **) palloc(fnsize * sizeof(char *));
 
 	while (errno = 0, (file = readdir(dir)) != NULL)
 	{

@@ -97,12 +97,11 @@ getopt_long(int argc, char *const argv[],
 		if (place[0] == '-' && place[1])
 		{
 			/* long option */
-			size_t		namelen;
 			int			i;
 
 			place++;
 
-			namelen = strcspn(place, "=");
+			size_t		namelen = strcspn(place, "=");
 			for (i = 0; longopts[i].name != NULL; i++)
 			{
 				if (strlen(longopts[i].name) == namelen

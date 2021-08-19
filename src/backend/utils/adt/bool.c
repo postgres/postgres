@@ -130,18 +130,16 @@ Datum
 boolin(PG_FUNCTION_ARGS)
 {
 	const char *in_str = PG_GETARG_CSTRING(0);
-	const char *str;
-	size_t		len;
 	bool		result;
 
 	/*
 	 * Skip leading and trailing whitespace
 	 */
-	str = in_str;
+	const char *str = in_str;
 	while (isspace((unsigned char) *str))
 		str++;
 
-	len = strlen(str);
+	size_t		len = strlen(str);
 	while (len > 0 && isspace((unsigned char) str[len - 1]))
 		len--;
 
@@ -181,9 +179,8 @@ Datum
 boolrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	int			ext;
 
-	ext = pq_getmsgbyte(buf);
+	int			ext = pq_getmsgbyte(buf);
 	PG_RETURN_BOOL((ext != 0) ? true : false);
 }
 
@@ -317,13 +314,12 @@ typedef struct BoolAggState
 static BoolAggState *
 makeBoolAggState(FunctionCallInfo fcinfo)
 {
-	BoolAggState *state;
 	MemoryContext agg_context;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	state = (BoolAggState *) MemoryContextAlloc(agg_context,
+	BoolAggState *state = (BoolAggState *) MemoryContextAlloc(agg_context,
 												sizeof(BoolAggState));
 	state->aggcount = 0;
 	state->aggtrue = 0;
@@ -334,9 +330,8 @@ makeBoolAggState(FunctionCallInfo fcinfo)
 Datum
 bool_accum(PG_FUNCTION_ARGS)
 {
-	BoolAggState *state;
 
-	state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
+	BoolAggState *state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
 
 	/* Create the state data on first call */
 	if (state == NULL)
@@ -355,9 +350,8 @@ bool_accum(PG_FUNCTION_ARGS)
 Datum
 bool_accum_inv(PG_FUNCTION_ARGS)
 {
-	BoolAggState *state;
 
-	state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
+	BoolAggState *state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
 
 	/* bool_accum should have created the state data */
 	if (state == NULL)
@@ -376,9 +370,8 @@ bool_accum_inv(PG_FUNCTION_ARGS)
 Datum
 bool_alltrue(PG_FUNCTION_ARGS)
 {
-	BoolAggState *state;
 
-	state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
+	BoolAggState *state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
 
 	/* if there were no non-null values, return NULL */
 	if (state == NULL || state->aggcount == 0)
@@ -391,9 +384,8 @@ bool_alltrue(PG_FUNCTION_ARGS)
 Datum
 bool_anytrue(PG_FUNCTION_ARGS)
 {
-	BoolAggState *state;
 
-	state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
+	BoolAggState *state = PG_ARGISNULL(0) ? NULL : (BoolAggState *) PG_GETARG_POINTER(0);
 
 	/* if there were no non-null values, return NULL */
 	if (state == NULL || state->aggcount == 0)

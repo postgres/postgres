@@ -72,8 +72,6 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	char	   *table;
 	const char *columns;
 	PQExpBufferData sql;
-	PGresult   *res;
-	int			ntups;
 
 	splitTableColumnsSpec(spec, PQclientEncoding(conn), &table, &columns);
 
@@ -100,8 +98,8 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	 * relation has that OID; this query returns no rows.  Catalog corruption
 	 * might elicit other row counts.
 	 */
-	res = executeQuery(conn, sql.data, echo);
-	ntups = PQntuples(res);
+	PGresult   *res = executeQuery(conn, sql.data, echo);
+	int			ntups = PQntuples(res);
 	if (ntups != 1)
 	{
 		pg_log_error(ngettext("query returned %d row instead of one: %s",
@@ -145,9 +143,8 @@ yesno_prompt(const char *question)
 
 	for (;;)
 	{
-		char	   *resp;
 
-		resp = simple_prompt(prompt, true);
+		char	   *resp = simple_prompt(prompt, true);
 
 		if (strcmp(resp, _(PG_YESLETTER)) == 0)
 		{

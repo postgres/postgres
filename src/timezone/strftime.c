@@ -127,11 +127,10 @@ static char *_yconv(int, int, bool, bool, char *, char const *);
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm *t)
 {
-	char	   *p;
 	int			saved_errno = errno;
 	enum warn	warn = IN_NONE;
 
-	p = _fmt(format, t, s, s + maxsize, &warn);
+	char	   *p = _fmt(format, t, s, s + maxsize, &warn);
 	if (!p)
 	{
 		errno = EOVERFLOW;
@@ -340,16 +339,12 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
  * (ado, 1996-01-02)
  */
 					{
-						int			year;
-						int			base;
-						int			yday;
-						int			wday;
 						int			w;
 
-						year = t->tm_year;
-						base = TM_YEAR_BASE;
-						yday = t->tm_yday;
-						wday = t->tm_wday;
+						int			year = t->tm_year;
+						int			base = TM_YEAR_BASE;
+						int			yday = t->tm_yday;
+						int			wday = t->tm_wday;
 						for (;;)
 						{
 							int			len;
@@ -463,14 +458,12 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 					continue;
 				case 'z':
 					{
-						long		diff;
 						char const *sign;
-						bool		negative;
 
 						if (t->tm_isdst < 0)
 							continue;
-						diff = t->tm_gmtoff;
-						negative = diff < 0;
+						long		diff = t->tm_gmtoff;
+						bool		negative = diff < 0;
 						if (diff == 0)
 						{
 							if (t->tm_zone != NULL)

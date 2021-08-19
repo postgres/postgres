@@ -67,7 +67,6 @@ preprocess_targetlist(PlannerInfo *root)
 	CmdType		command_type = parse->commandType;
 	RangeTblEntry *target_rte = NULL;
 	Relation	target_relation = NULL;
-	List	   *tlist;
 	ListCell   *lc;
 
 	/*
@@ -100,7 +99,7 @@ preprocess_targetlist(PlannerInfo *root)
 	 * separate list of the target attribute numbers, in tlist order, and then
 	 * renumber the processed_tlist entries to be consecutive.
 	 */
-	tlist = parse->targetList;
+	List	   *tlist = parse->targetList;
 	if (command_type == CMD_INSERT)
 		tlist = expand_insert_targetlist(tlist, target_relation);
 	else if (command_type == CMD_UPDATE)
@@ -208,17 +207,15 @@ preprocess_targetlist(PlannerInfo *root)
 	 */
 	if (parse->returningList && list_length(parse->rtable) > 1)
 	{
-		List	   *vars;
 		ListCell   *l;
 
-		vars = pull_var_clause((Node *) parse->returningList,
+		List	   *vars = pull_var_clause((Node *) parse->returningList,
 							   PVC_RECURSE_AGGREGATES |
 							   PVC_RECURSE_WINDOWFUNCS |
 							   PVC_INCLUDE_PLACEHOLDERS);
 		foreach(l, vars)
 		{
 			Var		   *var = (Var *) lfirst(l);
-			TargetEntry *tle;
 
 			if (IsA(var, Var) &&
 				var->varno == result_relation)
@@ -227,7 +224,7 @@ preprocess_targetlist(PlannerInfo *root)
 			if (tlist_member((Expr *) var, tlist))
 				continue;		/* already got it */
 
-			tle = makeTargetEntry((Expr *) var,
+			TargetEntry *tle = makeTargetEntry((Expr *) var,
 								  list_length(tlist) + 1,
 								  NULL,
 								  true);
@@ -295,11 +292,10 @@ static List *
 expand_insert_targetlist(List *tlist, Relation rel)
 {
 	List	   *new_tlist = NIL;
-	ListCell   *tlist_item;
 	int			attrno,
 				numattrs;
 
-	tlist_item = list_head(tlist);
+	ListCell   *tlist_item = list_head(tlist);
 
 	/*
 	 * The rewriter should have already ensured that the TLEs are in correct

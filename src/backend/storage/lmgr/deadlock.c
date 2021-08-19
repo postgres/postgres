@@ -142,10 +142,9 @@ static PGPROC *blocking_autovacuum_proc = NULL;
 void
 InitDeadLockChecking(void)
 {
-	MemoryContext oldcxt;
 
 	/* Make sure allocations are permanent */
-	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	/*
 	 * FindLockCycle needs at most MaxBackends entries in visitedProcs[] and
@@ -292,9 +291,8 @@ DeadLockCheck(PGPROC *proc)
 PGPROC *
 GetBlockingAutoVacuumPgproc(void)
 {
-	PGPROC	   *ptr;
 
-	ptr = blocking_autovacuum_proc;
+	PGPROC	   *ptr = blocking_autovacuum_proc;
 	blocking_autovacuum_proc = NULL;
 
 	return ptr;
@@ -314,19 +312,17 @@ GetBlockingAutoVacuumPgproc(void)
 static bool
 DeadLockCheckRecurse(PGPROC *proc)
 {
-	int			nEdges;
-	int			oldPossibleConstraints;
 	bool		savedList;
 	int			i;
 
-	nEdges = TestConfiguration(proc);
+	int			nEdges = TestConfiguration(proc);
 	if (nEdges < 0)
 		return true;			/* hard deadlock --- no solution */
 	if (nEdges == 0)
 		return false;			/* good configuration found */
 	if (nCurConstraints >= maxCurConstraints)
 		return true;			/* out of room for active constraints? */
-	oldPossibleConstraints = nPossibleConstraints;
+	int			oldPossibleConstraints = nPossibleConstraints;
 	if (nPossibleConstraints + nEdges + MaxBackends <= maxPossibleConstraints)
 	{
 		/* We can save the edge list in possibleConstraints[] */
@@ -521,9 +517,8 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	 */
 	dlist_foreach(iter, &checkProc->lockGroupMembers)
 	{
-		PGPROC	   *memberProc;
 
-		memberProc = dlist_container(PGPROC, lockGroupLink, iter.cur);
+		PGPROC	   *memberProc = dlist_container(PGPROC, lockGroupLink, iter.cur);
 
 		if (memberProc->links.next != NULL && memberProc->waitLock != NULL &&
 			memberProc != checkProc &&
@@ -544,12 +539,8 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 {
 	PGPROC	   *proc;
 	LOCK	   *lock = checkProc->waitLock;
-	PROCLOCK   *proclock;
-	SHM_QUEUE  *procLocks;
-	LockMethod	lockMethodTable;
 	PROC_QUEUE *waitQueue;
 	int			queue_size;
-	int			conflictMask;
 	int			i;
 	int			numLockModes,
 				lm;
@@ -563,25 +554,24 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 		(LOCK_LOCKTAG(*lock) == LOCKTAG_PAGE))
 		return false;
 
-	lockMethodTable = GetLocksMethodTable(lock);
+	LockMethod	lockMethodTable = GetLocksMethodTable(lock);
 	numLockModes = lockMethodTable->numLockModes;
-	conflictMask = lockMethodTable->conflictTab[checkProc->waitLockMode];
+	int			conflictMask = lockMethodTable->conflictTab[checkProc->waitLockMode];
 
 	/*
 	 * Scan for procs that already hold conflicting locks.  These are "hard"
 	 * edges in the waits-for graph.
 	 */
-	procLocks = &(lock->procLocks);
+	SHM_QUEUE  *procLocks = &(lock->procLocks);
 
-	proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
+	PROCLOCK   *proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
 										 offsetof(PROCLOCK, lockLink));
 
 	while (proclock)
 	{
-		PGPROC	   *leader;
 
 		proc = proclock->tag.myProc;
-		leader = proc->lockGroupLeader == NULL ? proc : proc->lockGroupLeader;
+		PGPROC	   *leader = proc->lockGroupLeader == NULL ? proc : proc->lockGroupLeader;
 
 		/* A proc never blocks itself or any other lock group member */
 		if (leader != checkProcLeader)
@@ -665,10 +655,9 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 
 		for (i = 0; i < queue_size; i++)
 		{
-			PGPROC	   *leader;
 
 			proc = procs[i];
-			leader = proc->lockGroupLeader == NULL ? proc :
+			PGPROC	   *leader = proc->lockGroupLeader == NULL ? proc :
 				proc->lockGroupLeader;
 
 			/*
@@ -744,9 +733,8 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 		proc = (PGPROC *) waitQueue->links.next;
 		while (queue_size-- > 0)
 		{
-			PGPROC	   *leader;
 
-			leader = proc->lockGroupLeader == NULL ? proc :
+			PGPROC	   *leader = proc->lockGroupLeader == NULL ? proc :
 				proc->lockGroupLeader;
 
 			/* Done when we reach the target proc */
@@ -882,7 +870,6 @@ TopoSort(LOCK *lock,
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PGPROC	   *proc;
 	int			i,
 				j,
 				jj,
@@ -891,7 +878,7 @@ TopoSort(LOCK *lock,
 				last;
 
 	/* First, fill topoProcs[] array with the procs in their current order */
-	proc = (PGPROC *) waitQueue->links.next;
+	PGPROC	   *proc = (PGPROC *) waitQueue->links.next;
 	for (i = 0; i < queue_size; i++)
 	{
 		topoProcs[i] = proc;
@@ -1068,11 +1055,10 @@ PrintLockQueue(LOCK *lock, const char *info)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PGPROC	   *proc;
 	int			i;
 
 	printf("%s lock %p queue ", info, lock);
-	proc = (PGPROC *) waitQueue->links.next;
+	PGPROC	   *proc = (PGPROC *) waitQueue->links.next;
 	for (i = 0; i < queue_size; i++)
 	{
 		printf(" %d", proc->pid);

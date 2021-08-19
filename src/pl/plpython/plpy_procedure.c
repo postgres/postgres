@@ -69,13 +69,12 @@ PLyProcedure *
 PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 {
 	bool		use_cache = !(is_trigger && fn_rel == InvalidOid);
-	HeapTuple	procTup;
 	PLyProcedureKey key;
 	PLyProcedureEntry *volatile entry = NULL;
 	PLyProcedure *volatile proc = NULL;
 	bool		found = false;
 
-	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
+	HeapTuple	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
@@ -133,15 +132,11 @@ static PLyProcedure *
 PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 {
 	char		procName[NAMEDATALEN + 256];
-	Form_pg_proc procStruct;
 	PLyProcedure *volatile proc;
-	MemoryContext cxt;
-	MemoryContext oldcxt;
-	int			rv;
 	char	   *ptr;
 
-	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-	rv = snprintf(procName, sizeof(procName),
+	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+	int			rv = snprintf(procName, sizeof(procName),
 				  "__plpython_procedure_%s_%u",
 				  NameStr(procStruct->proname),
 				  fn_oid);
@@ -158,21 +153,18 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	}
 
 	/* Create long-lived context that all procedure info will live in */
-	cxt = AllocSetContextCreate(TopMemoryContext,
+	MemoryContext cxt = AllocSetContextCreate(TopMemoryContext,
 								"PL/Python function",
 								ALLOCSET_DEFAULT_SIZES);
 
-	oldcxt = MemoryContextSwitchTo(cxt);
+	MemoryContext oldcxt = MemoryContextSwitchTo(cxt);
 
 	proc = (PLyProcedure *) palloc0(sizeof(PLyProcedure));
 	proc->mcxt = cxt;
 
 	PG_TRY();
 	{
-		Datum		protrftypes_datum;
-		Datum		prosrcdatum;
 		bool		isnull;
-		char	   *procSource;
 		int			i;
 
 		proc->proname = pstrdup(NameStr(procStruct->proname));
@@ -188,7 +180,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		proc->args = NULL;
 		proc->nargs = 0;
 		proc->langid = procStruct->prolang;
-		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
+		Datum		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
 											Anum_pg_proc_protrftypes,
 											&isnull);
 		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
@@ -205,13 +197,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		if (!is_trigger)
 		{
 			Oid			rettype = procStruct->prorettype;
-			HeapTuple	rvTypeTup;
-			Form_pg_type rvTypeStruct;
 
-			rvTypeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
+			HeapTuple	rvTypeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
 			if (!HeapTupleIsValid(rvTypeTup))
 				elog(ERROR, "cache lookup failed for type %u", rettype);
-			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
+			Form_pg_type rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 
 			/* Disallow pseudotype result, except for void or record */
 			if (rvTypeStruct->typtype == TYPTYPE_PSEUDO)
@@ -284,8 +274,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 			for (i = pos = 0; i < total; i++)
 			{
-				HeapTuple	argTypeTup;
-				Form_pg_type argTypeStruct;
 
 				if (modes &&
 					(modes[i] == PROARGMODE_OUT ||
@@ -294,11 +282,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 				Assert(types[i] == procStruct->proargtypes.values[pos]);
 
-				argTypeTup = SearchSysCache1(TYPEOID,
+				HeapTuple	argTypeTup = SearchSysCache1(TYPEOID,
 											 ObjectIdGetDatum(types[i]));
 				if (!HeapTupleIsValid(argTypeTup))
 					elog(ERROR, "cache lookup failed for type %u", types[i]);
-				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
+				Form_pg_type argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
 				/* disallow pseudotype arguments */
 				if (argTypeStruct->typtype == TYPTYPE_PSEUDO)
@@ -324,11 +312,11 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		/*
 		 * get the text of the function.
 		 */
-		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
+		Datum		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
 									  Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			elog(ERROR, "null prosrc");
-		procSource = TextDatumGetCString(prosrcdatum);
+		char	   *procSource = TextDatumGetCString(prosrcdatum);
 
 		PLy_procedure_compile(proc, procSource);
 
@@ -352,8 +340,6 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 void
 PLy_procedure_compile(PLyProcedure *proc, const char *src)
 {
-	PyObject   *crv = NULL;
-	char	   *msrc;
 
 	proc->globals = PyDict_Copy(PLy_interp_globals);
 
@@ -369,15 +355,14 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	/*
 	 * insert the function code into the interpreter
 	 */
-	msrc = PLy_procedure_munge_source(proc->pyname, src);
+	char	   *msrc = PLy_procedure_munge_source(proc->pyname, src);
 	/* Save the mangled source for later inclusion in tracebacks */
 	proc->src = MemoryContextStrdup(proc->mcxt, msrc);
-	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
+	PyObject   *crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
 	pfree(msrc);
 
 	if (crv != NULL)
 	{
-		int			clen;
 		char		call[NAMEDATALEN + 256];
 
 		Py_DECREF(crv);
@@ -385,7 +370,7 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 		/*
 		 * compile a call to the function
 		 */
-		clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
+		int			clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
 		if (clen < 0 || clen >= sizeof(call))
 			elog(ERROR, "string would overflow buffer");
 		proc->code = Py_CompileString(call, "<string>", Py_eval_input);
@@ -431,20 +416,17 @@ PLy_procedure_munge_source(const char *name, const char *src)
 {
 	char	   *mrc,
 			   *mp;
-	const char *sp;
-	size_t		mlen;
-	int			plen;
 
 	/*
 	 * room for function source and the def statement
 	 */
-	mlen = (strlen(src) * 2) + strlen(name) + 16;
+	size_t		mlen = (strlen(src) * 2) + strlen(name) + 16;
 
 	mrc = palloc(mlen);
-	plen = snprintf(mrc, mlen, "def %s():\n\t", name);
+	int			plen = snprintf(mrc, mlen, "def %s():\n\t", name);
 	Assert(plen >= 0 && plen < mlen);
 
-	sp = src;
+	const char *sp = src;
 	mp = mrc + plen;
 
 	while (*sp != '\0')

@@ -55,7 +55,6 @@ print_lo_result(const char *fmt,...)
 static bool
 start_lo_xact(const char *operation, bool *own_transaction)
 {
-	PGTransactionStatusType tstatus;
 	PGresult   *res;
 
 	*own_transaction = false;
@@ -66,7 +65,7 @@ start_lo_xact(const char *operation, bool *own_transaction)
 		return false;
 	}
 
-	tstatus = PQtransactionStatus(pset.db);
+	PGTransactionStatusType tstatus = PQtransactionStatus(pset.db);
 
 	switch (tstatus)
 	{
@@ -141,14 +140,13 @@ fail_lo_xact(const char *operation, bool own_transaction)
 bool
 do_lo_export(const char *loid_arg, const char *filename_arg)
 {
-	int			status;
 	bool		own_transaction;
 
 	if (!start_lo_xact("\\lo_export", &own_transaction))
 		return false;
 
 	SetCancelConn(NULL);
-	status = lo_export(pset.db, atooid(loid_arg), filename_arg);
+	int			status = lo_export(pset.db, atooid(loid_arg), filename_arg);
 	ResetCancelConn();
 
 	/* of course this status is documented nowhere :( */
@@ -176,7 +174,6 @@ bool
 do_lo_import(const char *filename_arg, const char *comment_arg)
 {
 	PGresult   *res;
-	Oid			loid;
 	char		oidbuf[32];
 	bool		own_transaction;
 
@@ -184,7 +181,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		return false;
 
 	SetCancelConn(NULL);
-	loid = lo_import(pset.db, filename_arg);
+	Oid			loid = lo_import(pset.db, filename_arg);
 	ResetCancelConn();
 
 	if (loid == InvalidOid)
@@ -196,15 +193,13 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	/* insert description if given */
 	if (comment_arg)
 	{
-		char	   *cmdbuf;
-		char	   *bufptr;
 		size_t		slen = strlen(comment_arg);
 
-		cmdbuf = pg_malloc_extended(slen * 2 + 256, MCXT_ALLOC_NO_OOM);
+		char	   *cmdbuf = pg_malloc_extended(slen * 2 + 256, MCXT_ALLOC_NO_OOM);
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);
-		bufptr = cmdbuf + strlen(cmdbuf);
+		char	   *bufptr = cmdbuf + strlen(cmdbuf);
 		bufptr += PQescapeStringConn(pset.db, bufptr, comment_arg, slen, NULL);
 		strcpy(bufptr, "'");
 
@@ -238,7 +233,6 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 bool
 do_lo_unlink(const char *loid_arg)
 {
-	int			status;
 	Oid			loid = atooid(loid_arg);
 	bool		own_transaction;
 
@@ -246,7 +240,7 @@ do_lo_unlink(const char *loid_arg)
 		return false;
 
 	SetCancelConn(NULL);
-	status = lo_unlink(pset.db, loid);
+	int			status = lo_unlink(pset.db, loid);
 	ResetCancelConn();
 
 	if (status == -1)
@@ -273,7 +267,6 @@ do_lo_unlink(const char *loid_arg)
 bool
 do_lo_list(void)
 {
-	PGresult   *res;
 	char		buf[1024];
 	printQueryOpt myopt = pset.popt;
 
@@ -300,7 +293,7 @@ do_lo_list(void)
 				 gettext_noop("Description"));
 	}
 
-	res = PSQLexec(buf);
+	PGresult   *res = PSQLexec(buf);
 	if (!res)
 		return false;
 

@@ -98,11 +98,10 @@ exprType(const Node *expr)
 				{
 					/* get the type of the subselect's first target column */
 					Query	   *qtree = (Query *) sublink->subselect;
-					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
-					tent = linitial_node(TargetEntry, qtree->targetList);
+					TargetEntry *tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					type = exprType((Node *) tent->expr);
 					if (sublink->subLinkType == ARRAY_SUBLINK)
@@ -310,11 +309,10 @@ exprTypmod(const Node *expr)
 				{
 					/* get the typmod of the subselect's first target column */
 					Query	   *qtree = (Query *) sublink->subselect;
-					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
-					tent = linitial_node(TargetEntry, qtree->targetList);
+					TargetEntry *tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					return exprTypmod((Node *) tent->expr);
 					/* note we don't need to care if it's an array */
@@ -360,14 +358,13 @@ exprTypmod(const Node *expr)
 				 */
 				const CaseExpr *cexpr = (const CaseExpr *) expr;
 				Oid			casetype = cexpr->casetype;
-				int32		typmod;
 				ListCell   *arg;
 
 				if (!cexpr->defresult)
 					return -1;
 				if (exprType((Node *) cexpr->defresult) != casetype)
 					return -1;
-				typmod = exprTypmod((Node *) cexpr->defresult);
+				int32		typmod = exprTypmod((Node *) cexpr->defresult);
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
 				foreach(arg, cexpr->args)
@@ -392,12 +389,11 @@ exprTypmod(const Node *expr)
 				 */
 				const ArrayExpr *arrayexpr = (const ArrayExpr *) expr;
 				Oid			commontype;
-				int32		typmod;
 				ListCell   *elem;
 
 				if (arrayexpr->elements == NIL)
 					return -1;
-				typmod = exprTypmod((Node *) linitial(arrayexpr->elements));
+				int32		typmod = exprTypmod((Node *) linitial(arrayexpr->elements));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
 				if (arrayexpr->multidims)
@@ -424,12 +420,11 @@ exprTypmod(const Node *expr)
 				 */
 				const CoalesceExpr *cexpr = (const CoalesceExpr *) expr;
 				Oid			coalescetype = cexpr->coalescetype;
-				int32		typmod;
 				ListCell   *arg;
 
 				if (exprType((Node *) linitial(cexpr->args)) != coalescetype)
 					return -1;
-				typmod = exprTypmod((Node *) linitial(cexpr->args));
+				int32		typmod = exprTypmod((Node *) linitial(cexpr->args));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
 				for_each_from(arg, cexpr->args, 1)
@@ -452,12 +447,11 @@ exprTypmod(const Node *expr)
 				 */
 				const MinMaxExpr *mexpr = (const MinMaxExpr *) expr;
 				Oid			minmaxtype = mexpr->minmaxtype;
-				int32		typmod;
 				ListCell   *arg;
 
 				if (exprType((Node *) linitial(mexpr->args)) != minmaxtype)
 					return -1;
-				typmod = exprTypmod((Node *) linitial(mexpr->args));
+				int32		typmod = exprTypmod((Node *) linitial(mexpr->args));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
 				for_each_from(arg, mexpr->args, 1)
@@ -512,8 +506,6 @@ exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod)
 	if (expr && IsA(expr, FuncExpr))
 	{
 		const FuncExpr *func = (const FuncExpr *) expr;
-		int			nargs;
-		Const	   *second_arg;
 
 		/*
 		 * If it didn't come from a coercion context, reject.
@@ -527,11 +519,11 @@ exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod)
 		 * second argument being an int4 constant, it can't have been created
 		 * from a length coercion (it must be a type coercion, instead).
 		 */
-		nargs = list_length(func->args);
+		int			nargs = list_length(func->args);
 		if (nargs < 2 || nargs > 3)
 			return false;
 
-		second_arg = (Const *) lsecond(func->args);
+		Const	   *second_arg = (Const *) lsecond(func->args);
 		if (!IsA(second_arg, Const) ||
 			second_arg->consttype != INT4OID ||
 			second_arg->constisnull)
@@ -818,11 +810,10 @@ exprCollation(const Node *expr)
 				{
 					/* get the collation of subselect's first target column */
 					Query	   *qtree = (Query *) sublink->subselect;
-					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get collation for untransformed sublink");
-					tent = linitial_node(TargetEntry, qtree->targetList);
+					TargetEntry *tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					coll = exprCollation((Node *) tent->expr);
 					/* collation doesn't change if it's converted to array */
@@ -1077,11 +1068,10 @@ exprSetCollation(Node *expr, Oid collation)
 				{
 					/* get the collation of subselect's first target column */
 					Query	   *qtree = (Query *) sublink->subselect;
-					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot set collation for untransformed sublink");
-					tent = linitial_node(TargetEntry, qtree->targetList);
+					TargetEntry *tent = linitial_node(TargetEntry, qtree->targetList);
 					Assert(!tent->resjunk);
 					Assert(collation == exprCollation((Node *) tent->expr));
 				}
@@ -3099,10 +3089,9 @@ expression_tree_mutator(Node *node,
 				 * per se, so just invoke it on each list element. NOTE: this
 				 * would fail badly on a list with integer elements!
 				 */
-				List	   *resultlist;
 				ListCell   *temp;
 
-				resultlist = NIL;
+				List	   *resultlist = NIL;
 				foreach(temp, (List *) node)
 				{
 					resultlist = lappend(resultlist,
@@ -3341,10 +3330,9 @@ query_tree_mutator(Query *query,
 		 * But we need to mutate the expressions under WindowClause nodes even
 		 * if we're not interested in SortGroupClause nodes.
 		 */
-		List	   *resultlist;
 		ListCell   *temp;
 
-		resultlist = NIL;
+		List	   *resultlist = NIL;
 		foreach(temp, query->windowClause)
 		{
 			WindowClause *wc = lfirst_node(WindowClause, temp);

@@ -271,8 +271,6 @@ typedef struct BloomFilter
 static BloomFilter *
 bloom_init(int ndistinct, double false_positive_rate)
 {
-	Size		len;
-	BloomFilter *filter;
 
 	int			nbits;			/* size of filter / number of bits */
 	int			nbytes;			/* size of filter / number of bytes */
@@ -322,9 +320,9 @@ bloom_init(int ndistinct, double false_positive_rate)
 	 * We allocate the whole filter. Most of it is going to be 0 bits, so the
 	 * varlena is easy to compress.
 	 */
-	len = offsetof(BloomFilter, data) + nbytes;
+	Size		len = offsetof(BloomFilter, data) + nbytes;
 
-	filter = (BloomFilter *) palloc0(len);
+	BloomFilter *filter = (BloomFilter *) palloc0(len);
 
 	filter->flags = 0;
 	filter->nhashes = (int) k;
@@ -423,7 +421,6 @@ static FmgrInfo *bloom_get_procinfo(BrinDesc *bdesc, uint16 attno,
 Datum
 brin_bloom_opcinfo(PG_FUNCTION_ARGS)
 {
-	BrinOpcInfo *result;
 
 	/*
 	 * opaque->strategy_procinfos is initialized lazily; here it is set to
@@ -432,7 +429,7 @@ brin_bloom_opcinfo(PG_FUNCTION_ARGS)
 	 * bloom indexes only store the filter as a single BYTEA column
 	 */
 
-	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(1)) +
+	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(1)) +
 					 sizeof(BloomOpaque));
 	result->oi_nstored = 1;
 	result->oi_regular_nulls = true;
@@ -470,16 +467,13 @@ brin_bloom_opcinfo(PG_FUNCTION_ARGS)
 static int
 brin_bloom_get_ndistinct(BrinDesc *bdesc, BloomOptions *opts)
 {
-	double		ndistinct;
-	double		maxtuples;
-	BlockNumber pagesPerRange;
 
-	pagesPerRange = BrinGetPagesPerRange(bdesc->bd_index);
-	ndistinct = BloomGetNDistinctPerRange(opts);
+	BlockNumber pagesPerRange = BrinGetPagesPerRange(bdesc->bd_index);
+	double		ndistinct = BloomGetNDistinctPerRange(opts);
 
 	Assert(BlockNumberIsValid(pagesPerRange));
 
-	maxtuples = MaxHeapTuplesPerPage * pagesPerRange;
+	double		maxtuples = MaxHeapTuplesPerPage * pagesPerRange;
 
 	/*
 	 * Similarly to n_distinct, negative values are relative - in this case to
@@ -519,15 +513,12 @@ brin_bloom_add_value(PG_FUNCTION_ARGS)
 	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(3);
 	BloomOptions *opts = (BloomOptions *) PG_GET_OPCLASS_OPTIONS();
 	Oid			colloid = PG_GET_COLLATION();
-	FmgrInfo   *hashFn;
-	uint32		hashValue;
 	bool		updated = false;
-	AttrNumber	attno;
 	BloomFilter *filter;
 
 	Assert(!isnull);
 
-	attno = column->bv_attno;
+	AttrNumber	attno = column->bv_attno;
 
 	/*
 	 * If this is the first non-null value, we need to initialize the bloom
@@ -549,9 +540,9 @@ brin_bloom_add_value(PG_FUNCTION_ARGS)
 	 * Compute the hash of the new value, using the supplied hash function,
 	 * and then add the hash value to the bloom filter.
 	 */
-	hashFn = bloom_get_procinfo(bdesc, attno, PROCNUM_HASH);
+	FmgrInfo   *hashFn = bloom_get_procinfo(bdesc, attno, PROCNUM_HASH);
 
-	hashValue = DatumGetUInt32(FunctionCall1Coll(hashFn, colloid, newval));
+	uint32		hashValue = DatumGetUInt32(FunctionCall1Coll(hashFn, colloid, newval));
 
 	filter = bloom_add_value(filter, hashValue, &updated);
 
@@ -575,17 +566,15 @@ brin_bloom_consistent(PG_FUNCTION_ARGS)
 	Oid			colloid = PG_GET_COLLATION();
 	AttrNumber	attno;
 	Datum		value;
-	Datum		matches;
 	FmgrInfo   *finfo;
 	uint32		hashValue;
-	BloomFilter *filter;
 	int			keyno;
 
-	filter = (BloomFilter *) PG_DETOAST_DATUM(column->bv_values[0]);
+	BloomFilter *filter = (BloomFilter *) PG_DETOAST_DATUM(column->bv_values[0]);
 
 	Assert(filter);
 
-	matches = true;
+	Datum		matches = true;
 
 	for (keyno = 0; keyno < nkeys; keyno++)
 	{
@@ -638,17 +627,14 @@ Datum
 brin_bloom_union(PG_FUNCTION_ARGS)
 {
 	int			i;
-	int			nbytes;
 	BrinValues *col_a = (BrinValues *) PG_GETARG_POINTER(1);
 	BrinValues *col_b = (BrinValues *) PG_GETARG_POINTER(2);
-	BloomFilter *filter_a;
-	BloomFilter *filter_b;
 
 	Assert(col_a->bv_attno == col_b->bv_attno);
 	Assert(!col_a->bv_allnulls && !col_b->bv_allnulls);
 
-	filter_a = (BloomFilter *) PG_DETOAST_DATUM(col_a->bv_values[0]);
-	filter_b = (BloomFilter *) PG_DETOAST_DATUM(col_b->bv_values[0]);
+	BloomFilter *filter_a = (BloomFilter *) PG_DETOAST_DATUM(col_a->bv_values[0]);
+	BloomFilter *filter_b = (BloomFilter *) PG_DETOAST_DATUM(col_b->bv_values[0]);
 
 	/* make sure the filters use the same parameters */
 	Assert(filter_a && filter_b);
@@ -656,7 +642,7 @@ brin_bloom_union(PG_FUNCTION_ARGS)
 	Assert(filter_a->nhashes == filter_b->nhashes);
 	Assert((filter_a->nbits > 0) && (filter_a->nbits % 8 == 0));
 
-	nbytes = (filter_a->nbits) / 8;
+	int			nbytes = (filter_a->nbits) / 8;
 
 	/* simply OR the bitmaps */
 	for (i = 0; i < nbytes; i++)
@@ -674,14 +660,13 @@ brin_bloom_union(PG_FUNCTION_ARGS)
 static FmgrInfo *
 bloom_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
 {
-	BloomOpaque *opaque;
 	uint16		basenum = procnum - PROCNUM_BASE;
 
 	/*
 	 * We cache these in the opaque struct, to avoid repetitive syscache
 	 * lookups.
 	 */
-	opaque = (BloomOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
+	BloomOpaque *opaque = (BloomOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
 
 	/*
 	 * If we already searched for this proc and didn't find it, don't bother
@@ -764,11 +749,10 @@ brin_bloom_summary_in(PG_FUNCTION_ARGS)
 Datum
 brin_bloom_summary_out(PG_FUNCTION_ARGS)
 {
-	BloomFilter *filter;
 	StringInfoData str;
 
 	/* detoast the data to get value with a full 4B header */
-	filter = (BloomFilter *) PG_DETOAST_DATUM(PG_GETARG_BYTEA_PP(0));
+	BloomFilter *filter = (BloomFilter *) PG_DETOAST_DATUM(PG_GETARG_BYTEA_PP(0));
 
 	initStringInfo(&str);
 	appendStringInfoChar(&str, '{');

@@ -47,39 +47,29 @@ bool
 hashvalidate(Oid opclassoid)
 {
 	bool		result = true;
-	HeapTuple	classtup;
-	Form_pg_opclass classform;
-	Oid			opfamilyoid;
-	Oid			opcintype;
-	char	   *opclassname;
-	HeapTuple	familytup;
-	Form_pg_opfamily familyform;
-	char	   *opfamilyname;
 	CatCList   *proclist,
 			   *oprlist;
-	List	   *grouplist;
-	OpFamilyOpFuncGroup *opclassgroup;
 	List	   *hashabletypes = NIL;
 	int			i;
 	ListCell   *lc;
 
 	/* Fetch opclass information */
-	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
+	HeapTuple	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup failed for operator class %u", opclassoid);
-	classform = (Form_pg_opclass) GETSTRUCT(classtup);
+	Form_pg_opclass classform = (Form_pg_opclass) GETSTRUCT(classtup);
 
-	opfamilyoid = classform->opcfamily;
-	opcintype = classform->opcintype;
-	opclassname = NameStr(classform->opcname);
+	Oid			opfamilyoid = classform->opcfamily;
+	Oid			opcintype = classform->opcintype;
+	char	   *opclassname = NameStr(classform->opcname);
 
 	/* Fetch opfamily information */
-	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
+	HeapTuple	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
 	if (!HeapTupleIsValid(familytup))
 		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
-	familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
+	Form_pg_opfamily familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
 
-	opfamilyname = NameStr(familyform->opfname);
+	char	   *opfamilyname = NameStr(familyform->opfname);
 
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
@@ -203,8 +193,8 @@ hashvalidate(Oid opclassoid)
 	}
 
 	/* Now check for inconsistent groups of operators/functions */
-	grouplist = identify_opfamily_groups(oprlist, proclist);
-	opclassgroup = NULL;
+	List	   *grouplist = identify_opfamily_groups(oprlist, proclist);
+	OpFamilyOpFuncGroup *opclassgroup = NULL;
 	foreach(lc, grouplist)
 	{
 		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);
@@ -277,8 +267,6 @@ check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 	bool		result = true;
 	Oid			restype;
 	int16		nargs;
-	HeapTuple	tp;
-	Form_pg_proc procform;
 
 	switch (amprocnum)
 	{
@@ -296,10 +284,10 @@ check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 			elog(ERROR, "invalid amprocnum");
 	}
 
-	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	HeapTuple	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(tp);
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tp);
 
 	if (procform->prorettype != restype || procform->proretset ||
 		procform->pronargs != nargs)

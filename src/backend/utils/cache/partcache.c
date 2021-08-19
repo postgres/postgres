@@ -80,21 +80,12 @@ RelationGetPartitionKey(Relation rel)
 static void
 RelationBuildPartitionKey(Relation relation)
 {
-	Form_pg_partitioned_table form;
-	HeapTuple	tuple;
 	bool		isnull;
 	int			i;
-	PartitionKey key;
-	AttrNumber *attrs;
-	oidvector  *opclass;
-	oidvector  *collation;
-	ListCell   *partexprs_item;
-	Datum		datum;
 	MemoryContext partkeycxt,
 				oldcxt;
-	int16		procnum;
 
-	tuple = SearchSysCache1(PARTRELID,
+	HeapTuple	tuple = SearchSysCache1(PARTRELID,
 							ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	if (!HeapTupleIsValid(tuple))
@@ -107,11 +98,11 @@ RelationBuildPartitionKey(Relation relation)
 	MemoryContextCopyAndSetIdentifier(partkeycxt,
 									  RelationGetRelationName(relation));
 
-	key = (PartitionKey) MemoryContextAllocZero(partkeycxt,
+	PartitionKey key = (PartitionKey) MemoryContextAllocZero(partkeycxt,
 												sizeof(PartitionKeyData));
 
 	/* Fixed-length attributes */
-	form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+	Form_pg_partitioned_table form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
 	key->strategy = form->partstrat;
 	key->partnatts = form->partnatts;
 
@@ -120,31 +111,29 @@ RelationBuildPartitionKey(Relation relation)
 	 * relevant field of the catalog's C struct, because all previous
 	 * attributes are non-nullable and fixed-length.
 	 */
-	attrs = form->partattrs.values;
+	AttrNumber *attrs = form->partattrs.values;
 
 	/* But use the hard way to retrieve further variable-length attributes */
 	/* Operator class */
-	datum = SysCacheGetAttr(PARTRELID, tuple,
+	Datum		datum = SysCacheGetAttr(PARTRELID, tuple,
 							Anum_pg_partitioned_table_partclass, &isnull);
 	Assert(!isnull);
-	opclass = (oidvector *) DatumGetPointer(datum);
+	oidvector  *opclass = (oidvector *) DatumGetPointer(datum);
 
 	/* Collation */
 	datum = SysCacheGetAttr(PARTRELID, tuple,
 							Anum_pg_partitioned_table_partcollation, &isnull);
 	Assert(!isnull);
-	collation = (oidvector *) DatumGetPointer(datum);
+	oidvector  *collation = (oidvector *) DatumGetPointer(datum);
 
 	/* Expressions */
 	datum = SysCacheGetAttr(PARTRELID, tuple,
 							Anum_pg_partitioned_table_partexprs, &isnull);
 	if (!isnull)
 	{
-		char	   *exprString;
-		Node	   *expr;
 
-		exprString = TextDatumGetCString(datum);
-		expr = stringToNode(exprString);
+		char	   *exprString = TextDatumGetCString(datum);
+		Node	   *expr = stringToNode(exprString);
 		pfree(exprString);
 
 		/*
@@ -181,31 +170,28 @@ RelationBuildPartitionKey(Relation relation)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* determine support function number to search for */
-	procnum = (key->strategy == PARTITION_STRATEGY_HASH) ?
+	int16		procnum = (key->strategy == PARTITION_STRATEGY_HASH) ?
 		HASHEXTENDED_PROC : BTORDER_PROC;
 
 	/* Copy partattrs and fill other per-attribute info */
 	memcpy(key->partattrs, attrs, key->partnatts * sizeof(int16));
-	partexprs_item = list_head(key->partexprs);
+	ListCell   *partexprs_item = list_head(key->partexprs);
 	for (i = 0; i < key->partnatts; i++)
 	{
 		AttrNumber	attno = key->partattrs[i];
-		HeapTuple	opclasstup;
-		Form_pg_opclass opclassform;
-		Oid			funcid;
 
 		/* Collect opfamily information */
-		opclasstup = SearchSysCache1(CLAOID,
+		HeapTuple	opclasstup = SearchSysCache1(CLAOID,
 									 ObjectIdGetDatum(opclass->values[i]));
 		if (!HeapTupleIsValid(opclasstup))
 			elog(ERROR, "cache lookup failed for opclass %u", opclass->values[i]);
 
-		opclassform = (Form_pg_opclass) GETSTRUCT(opclasstup);
+		Form_pg_opclass opclassform = (Form_pg_opclass) GETSTRUCT(opclasstup);
 		key->partopfamily[i] = opclassform->opcfamily;
 		key->partopcintype[i] = opclassform->opcintype;
 
 		/* Get a support function for the specified opfamily and datatypes */
-		funcid = get_opfamily_proc(opclassform->opcfamily,
+		Oid			funcid = get_opfamily_proc(opclassform->opcfamily,
 								   opclassform->opcintype,
 								   opclassform->opcintype,
 								   procnum);
@@ -303,9 +289,8 @@ get_partition_qual_relid(Oid relid)
 	if (get_rel_relispartition(relid))
 	{
 		Relation	rel = relation_open(relid, AccessShareLock);
-		List	   *and_args;
 
-		and_args = generate_partition_qual(rel);
+		List	   *and_args = generate_partition_qual(rel);
 
 		/* Convert implicit-AND list format to boolean expression */
 		if (and_args == NIL)
@@ -335,14 +320,10 @@ get_partition_qual_relid(Oid relid)
 static List *
 generate_partition_qual(Relation rel)
 {
-	HeapTuple	tuple;
 	MemoryContext oldcxt;
-	Datum		boundDatum;
 	bool		isnull;
 	List	   *my_qual = NIL,
 			   *result = NIL;
-	Oid			parentrelid;
-	Relation	parent;
 
 	/* Guard against stack overflow due to overly deep partition tree */
 	check_stack_depth();
@@ -357,23 +338,22 @@ generate_partition_qual(Relation rel)
 	 * concurrent with the detach might still be trying to use a partition
 	 * descriptor that includes it.
 	 */
-	parentrelid = get_partition_parent(RelationGetRelid(rel), true);
-	parent = relation_open(parentrelid, AccessShareLock);
+	Oid			parentrelid = get_partition_parent(RelationGetRelid(rel), true);
+	Relation	parent = relation_open(parentrelid, AccessShareLock);
 
 	/* Get pg_class.relpartbound */
-	tuple = SearchSysCache1(RELOID, RelationGetRelid(rel));
+	HeapTuple	tuple = SearchSysCache1(RELOID, RelationGetRelid(rel));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u",
 			 RelationGetRelid(rel));
 
-	boundDatum = SysCacheGetAttr(RELOID, tuple,
+	Datum		boundDatum = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_relpartbound,
 								 &isnull);
 	if (!isnull)
 	{
-		PartitionBoundSpec *bound;
 
-		bound = castNode(PartitionBoundSpec,
+		PartitionBoundSpec *bound = castNode(PartitionBoundSpec,
 						 stringToNode(TextDatumGetCString(boundDatum)));
 
 		my_qual = get_qual_from_partbound(parent, bound);

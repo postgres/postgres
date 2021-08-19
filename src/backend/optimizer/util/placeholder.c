@@ -70,7 +70,6 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 					  bool create_new_ph)
 {
 	PlaceHolderInfo *phinfo;
-	Relids		rels_used;
 	ListCell   *lc;
 
 	/* if this ever isn't true, we'd need to be able to look in parent lists */
@@ -98,7 +97,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	 * ph_eval_at.  If no referenced rels are within the syntactic scope,
 	 * force evaluation at the syntactic location.
 	 */
-	rels_used = pull_varnos(root, (Node *) phv->phexpr);
+	Relids		rels_used = pull_varnos(root, (Node *) phv->phexpr);
 	phinfo->ph_lateral = bms_difference(rels_used, phv->phrels);
 	if (bms_is_empty(phinfo->ph_lateral))
 		phinfo->ph_lateral = NULL;	/* make it exactly NULL if empty */
@@ -212,14 +211,13 @@ find_placeholders_recurse(PlannerInfo *root, Node *jtnode)
 static void
 find_placeholders_in_expr(PlannerInfo *root, Node *expr)
 {
-	List	   *vars;
 	ListCell   *vl;
 
 	/*
 	 * pull_var_clause does more than we need here, but it'll do and it's
 	 * convenient to use.
 	 */
-	vars = pull_var_clause(expr,
+	List	   *vars = pull_var_clause(expr,
 						   PVC_RECURSE_AGGREGATES |
 						   PVC_RECURSE_WINDOWFUNCS |
 						   PVC_INCLUDE_PLACEHOLDERS);
@@ -270,7 +268,6 @@ update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc1);
 		Relids		syn_level = phinfo->ph_var->phrels;
-		Relids		eval_at;
 		bool		found_some;
 		ListCell   *lc2;
 
@@ -289,7 +286,7 @@ update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
 		 * upper outer joins will be handled later, based on the eval_at
 		 * values we compute now.
 		 */
-		eval_at = phinfo->ph_eval_at;
+		Relids		eval_at = phinfo->ph_eval_at;
 
 		do
 		{

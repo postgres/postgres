@@ -413,12 +413,11 @@ checkDataDir(void)
 void
 SetDataDir(const char *dir)
 {
-	char	   *new;
 
 	AssertArg(dir);
 
 	/* If presented path is relative, convert to absolute */
-	new = make_absolute_path(dir);
+	char	   *new = make_absolute_path(dir);
 
 	if (DataDir)
 		free(DataDir);
@@ -676,9 +675,8 @@ bool
 has_rolreplication(Oid roleid)
 {
 	bool		result = false;
-	HeapTuple	utup;
 
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	HeapTuple	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (HeapTupleIsValid(utup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolreplication;
@@ -694,8 +692,6 @@ void
 InitializeSessionUserId(const char *rolename, Oid roleid)
 {
 	HeapTuple	roleTup;
-	Form_pg_authid rform;
-	char	   *rname;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -730,9 +726,9 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 					 errmsg("role with OID %u does not exist", roleid)));
 	}
 
-	rform = (Form_pg_authid) GETSTRUCT(roleTup);
+	Form_pg_authid rform = (Form_pg_authid) GETSTRUCT(roleTup);
 	roleid = rform->oid;
-	rname = NameStr(rform->rolname);
+	char	   *rname = NameStr(rform->rolname);
 
 	AuthenticatedUserId = roleid;
 	AuthenticatedUserIsSuperuser = rform->rolsuper;
@@ -909,10 +905,9 @@ SetCurrentRoleId(Oid roleid, bool is_superuser)
 char *
 GetUserNameFromId(Oid roleid, bool noerr)
 {
-	HeapTuple	tuple;
 	char	   *result;
 
-	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	HeapTuple	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (!noerr)
@@ -1347,15 +1342,11 @@ TouchSocketLockFiles(void)
 void
 AddToDataDirLockFile(int target_line, const char *str)
 {
-	int			fd;
-	int			len;
 	int			lineno;
-	char	   *srcptr;
-	char	   *destptr;
 	char		srcbuffer[BLCKSZ];
 	char		destbuffer[BLCKSZ];
 
-	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
+	int			fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
 	{
 		ereport(LOG,
@@ -1365,7 +1356,7 @@ AddToDataDirLockFile(int target_line, const char *str)
 		return;
 	}
 	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_ADDTODATADIR_READ);
-	len = read(fd, srcbuffer, sizeof(srcbuffer) - 1);
+	int			len = read(fd, srcbuffer, sizeof(srcbuffer) - 1);
 	pgstat_report_wait_end();
 	if (len < 0)
 	{
@@ -1382,7 +1373,7 @@ AddToDataDirLockFile(int target_line, const char *str)
 	 * Advance over lines we are not supposed to rewrite, then copy them to
 	 * destbuffer.
 	 */
-	srcptr = srcbuffer;
+	char	   *srcptr = srcbuffer;
 	for (lineno = 1; lineno < target_line; lineno++)
 	{
 		char	   *eol = strchr(srcptr, '\n');
@@ -1392,7 +1383,7 @@ AddToDataDirLockFile(int target_line, const char *str)
 		srcptr = eol + 1;
 	}
 	memcpy(destbuffer, srcbuffer, srcptr - srcbuffer);
-	destptr = destbuffer + (srcptr - srcbuffer);
+	char	   *destptr = destbuffer + (srcptr - srcbuffer);
 
 	/*
 	 * Fill in any missing lines before the target line, in case lines are
@@ -1474,12 +1465,9 @@ AddToDataDirLockFile(int target_line, const char *str)
 bool
 RecheckDataDirLockFile(void)
 {
-	int			fd;
-	int			len;
-	long		file_pid;
 	char		buffer[BLCKSZ];
 
-	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
+	int			fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
 	{
 		/*
@@ -1507,7 +1495,7 @@ RecheckDataDirLockFile(void)
 		}
 	}
 	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_RECHECKDATADIR_READ);
-	len = read(fd, buffer, sizeof(buffer) - 1);
+	int			len = read(fd, buffer, sizeof(buffer) - 1);
 	pgstat_report_wait_end();
 	if (len < 0)
 	{
@@ -1520,7 +1508,7 @@ RecheckDataDirLockFile(void)
 	}
 	buffer[len] = '\0';
 	close(fd);
-	file_pid = atol(buffer);
+	long		file_pid = atol(buffer);
 	if (file_pid == getpid())
 		return true;			/* all is well */
 
@@ -1547,19 +1535,15 @@ void
 ValidatePgVersion(const char *path)
 {
 	char		full_path[MAXPGPATH];
-	FILE	   *file;
-	int			ret;
-	long		file_major;
-	long		my_major;
 	char	   *endptr;
 	char		file_version_string[64];
 	const char *my_version_string = PG_VERSION;
 
-	my_major = strtol(my_version_string, &endptr, 10);
+	long		my_major = strtol(my_version_string, &endptr, 10);
 
 	snprintf(full_path, sizeof(full_path), "%s/PG_VERSION", path);
 
-	file = AllocateFile(full_path, "r");
+	FILE	   *file = AllocateFile(full_path, "r");
 	if (!file)
 	{
 		if (errno == ENOENT)
@@ -1575,8 +1559,8 @@ ValidatePgVersion(const char *path)
 	}
 
 	file_version_string[0] = '\0';
-	ret = fscanf(file, "%63s", file_version_string);
-	file_major = strtol(file_version_string, &endptr, 10);
+	int			ret = fscanf(file, "%63s", file_version_string);
+	long		file_major = strtol(file_version_string, &endptr, 10);
 
 	if (ret != 1 || endptr == file_version_string)
 		ereport(FATAL,
@@ -1623,7 +1607,6 @@ bool		process_shared_preload_libraries_in_progress = false;
 static void
 load_libraries(const char *libraries, const char *gucname, bool restricted)
 {
-	char	   *rawstring;
 	List	   *elemlist;
 	ListCell   *l;
 
@@ -1631,7 +1614,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 		return;					/* nothing to do */
 
 	/* Need a modifiable copy of string */
-	rawstring = pstrdup(libraries);
+	char	   *rawstring = pstrdup(libraries);
 
 	/* Parse string into list of filename paths */
 	if (!SplitDirectoriesString(rawstring, ',', &elemlist))

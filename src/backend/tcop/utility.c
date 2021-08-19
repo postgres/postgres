@@ -550,11 +550,8 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						DestReceiver *dest,
 						QueryCompletion *qc)
 {
-	Node	   *parsetree;
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
 	bool		isAtomicContext = (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC) || IsTransactionBlock());
-	ParseState *pstate;
-	int			readonly_flags;
 
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
@@ -569,10 +566,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 	 */
 	if (readOnlyTree)
 		pstmt = copyObject(pstmt);
-	parsetree = pstmt->utilityStmt;
+	Node	   *parsetree = pstmt->utilityStmt;
 
 	/* Prohibit read/write commands in read-only states. */
-	readonly_flags = ClassifyUtilityCommandAsReadOnly(parsetree);
+	int			readonly_flags = ClassifyUtilityCommandAsReadOnly(parsetree);
 	if (readonly_flags != COMMAND_IS_STRICTLY_READ_ONLY &&
 		(XactReadOnly || IsInParallelMode()))
 	{
@@ -586,7 +583,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			PreventCommandDuringRecovery(GetCommandTagName(commandtag));
 	}
 
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 	pstate->p_queryEnv = queryEnv;
 
@@ -1080,13 +1077,12 @@ ProcessUtilitySlow(ParseState *pstate,
 	Node	   *parsetree = pstmt->utilityStmt;
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
 	bool		isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-	bool		needCleanup;
 	bool		commandCollected = false;
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 
 	/* All event trigger calls are done only when isCompleteQuery is true */
-	needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+	bool		needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
 	/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
 	PG_TRY();
@@ -1115,11 +1111,10 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_CreateStmt:
 			case T_CreateForeignTableStmt:
 				{
-					List	   *stmts;
 					RangeVar   *table_rv = NULL;
 
 					/* Run parse analysis ... */
-					stmts = transformCreateStmt((CreateStmt *) parsetree,
+					List	   *stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
 
 					/*
@@ -1250,8 +1245,6 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_AlterTableStmt:
 				{
 					AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-					Oid			relid;
-					LOCKMODE	lockmode;
 					ListCell   *cell;
 
 					/*
@@ -1278,8 +1271,8 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * lock on (for example) a relation on which we have no
 					 * permissions.
 					 */
-					lockmode = AlterTableGetLockLevel(atstmt->cmds);
-					relid = AlterTableLookupRelation(atstmt, lockmode);
+					LOCKMODE	lockmode = AlterTableGetLockLevel(atstmt->cmds);
+					Oid			relid = AlterTableLookupRelation(atstmt, lockmode);
 
 					if (OidIsValid(relid))
 					{
@@ -1434,9 +1427,6 @@ ProcessUtilitySlow(ParseState *pstate,
 			case T_IndexStmt:	/* CREATE INDEX */
 				{
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
-					Oid			relid;
-					LOCKMODE	lockmode;
-					bool		is_alter_table;
 
 					if (stmt->concurrent)
 						PreventInTransactionBlock(isTopLevel,
@@ -1451,9 +1441,9 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * eventually be needed here, so the lockmode calculation
 					 * needs to match what DefineIndex() does.
 					 */
-					lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
+					LOCKMODE	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
 						: ShareLock;
-					relid =
+					Oid			relid =
 						RangeVarGetRelidExtended(stmt->relation, lockmode,
 												 0,
 												 RangeVarCallbackOwnsRelation,
@@ -1472,9 +1462,8 @@ ProcessUtilitySlow(ParseState *pstate,
 						get_rel_relkind(relid) == RELKIND_PARTITIONED_TABLE)
 					{
 						ListCell   *lc;
-						List	   *inheritors = NIL;
 
-						inheritors = find_all_inheritors(relid, lockmode, NULL);
+						List	   *inheritors = find_all_inheritors(relid, lockmode, NULL);
 						foreach(lc, inheritors)
 						{
 							char		relkind = get_rel_relkind(lfirst_oid(lc));
@@ -1507,7 +1496,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * (This is a bit grotty, but currently it doesn't seem
 					 * worth adding a separate bool field for the purpose.)
 					 */
-					is_alter_table = stmt->transformed;
+					bool		is_alter_table = stmt->transformed;
 
 					/* Run parse analysis ... */
 					stmt = transformIndexStmt(relid, stmt, queryString);
@@ -1835,7 +1824,6 @@ ProcessUtilitySlow(ParseState *pstate,
 
 			case T_CreateStatsStmt:
 				{
-					Oid			relid;
 					CreateStatsStmt *stmt = (CreateStatsStmt *) parsetree;
 					RangeVar   *rel = (RangeVar *) linitial(stmt->relations);
 
@@ -1855,7 +1843,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					 * XXX RangeVarCallbackOwnsRelation not needed here, to
 					 * keep the same behavior as before.
 					 */
-					relid = RangeVarGetRelid(rel, ShareUpdateExclusiveLock, false);
+					Oid			relid = RangeVarGetRelid(rel, ShareUpdateExclusiveLock, false);
 
 					/* Run parse analysis ... */
 					stmt = transformStatsStmt(relid, stmt, queryString);
@@ -1917,7 +1905,6 @@ ProcessUtilitySlow(ParseState *pstate,
 void
 ProcessUtilityForAlterTable(Node *stmt, AlterTableUtilityContext *context)
 {
-	PlannedStmt *wrapper;
 
 	/*
 	 * For event triggers, we must "close" the current complex-command set,
@@ -1927,7 +1914,7 @@ ProcessUtilityForAlterTable(Node *stmt, AlterTableUtilityContext *context)
 	EventTriggerAlterTableEnd();
 
 	/* Create a suitable wrapper */
-	wrapper = makeNode(PlannedStmt);
+	PlannedStmt *wrapper = makeNode(PlannedStmt);
 	wrapper->commandType = CMD_UTILITY;
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = stmt;
@@ -1997,11 +1984,10 @@ UtilityReturnsTuples(Node *parsetree)
 		case T_FetchStmt:
 			{
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
-				Portal		portal;
 
 				if (stmt->ismove)
 					return false;
-				portal = GetPortalByName(stmt->portalname);
+				Portal		portal = GetPortalByName(stmt->portalname);
 				if (!PortalIsValid(portal))
 					return false;	/* not our business to raise error */
 				return portal->tupDesc ? true : false;
@@ -2010,9 +1996,8 @@ UtilityReturnsTuples(Node *parsetree)
 		case T_ExecuteStmt:
 			{
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
-				PreparedStatement *entry;
 
-				entry = FetchPreparedStatement(stmt->name, false);
+				PreparedStatement *entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return false;	/* not our business to raise error */
 				if (entry->plansource->resultDesc)
@@ -2050,11 +2035,10 @@ UtilityTupleDescriptor(Node *parsetree)
 		case T_FetchStmt:
 			{
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
-				Portal		portal;
 
 				if (stmt->ismove)
 					return NULL;
-				portal = GetPortalByName(stmt->portalname);
+				Portal		portal = GetPortalByName(stmt->portalname);
 				if (!PortalIsValid(portal))
 					return NULL;	/* not our business to raise error */
 				return CreateTupleDescCopy(portal->tupDesc);
@@ -2063,9 +2047,8 @@ UtilityTupleDescriptor(Node *parsetree)
 		case T_ExecuteStmt:
 			{
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
-				PreparedStatement *entry;
 
-				entry = FetchPreparedStatement(stmt->name, false);
+				PreparedStatement *entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return NULL;	/* not our business to raise error */
 				return FetchPreparedStatementResultDesc(entry);
@@ -3309,10 +3292,9 @@ GetCommandLogLevel(Node *parsetree)
 		case T_ExecuteStmt:
 			{
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
-				PreparedStatement *ps;
 
 				/* Look through an EXECUTE to the referenced stmt */
-				ps = FetchPreparedStatement(stmt->name, false);
+				PreparedStatement *ps = FetchPreparedStatement(stmt->name, false);
 				if (ps && ps->plansource->raw_parse_tree)
 					lev = GetCommandLogLevel(ps->plansource->raw_parse_tree->stmt);
 				else

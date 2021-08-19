@@ -175,7 +175,6 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	int			is_ipv4 = 0;
 	unsigned char inbuf[16];
 	char		outbuf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
-	char	   *cp;
 	int			words;
 	u_char	   *s;
 
@@ -185,7 +184,7 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		return NULL;
 	}
 
-	cp = outbuf;
+	char	   *cp = outbuf;
 
 	if (bits == 0)
 	{

@@ -190,14 +190,12 @@ SyncScanShmemInit(void)
 static BlockNumber
 ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 {
-	ss_lru_item_t *item;
 
-	item = scan_locations->head;
+	ss_lru_item_t *item = scan_locations->head;
 	for (;;)
 	{
-		bool		match;
 
-		match = RelFileNodeEquals(item->location.relfilenode, relfilenode);
+		bool		match = RelFileNodeEquals(item->location.relfilenode, relfilenode);
 
 		if (match || item->next == NULL)
 		{
@@ -252,10 +250,9 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 BlockNumber
 ss_get_location(Relation rel, BlockNumber relnblocks)
 {
-	BlockNumber startloc;
 
 	LWLockAcquire(SyncScanLock, LW_EXCLUSIVE);
-	startloc = ss_search(rel->rd_node, 0, false);
+	BlockNumber startloc = ss_search(rel->rd_node, 0, false);
 	LWLockRelease(SyncScanLock);
 
 	/*

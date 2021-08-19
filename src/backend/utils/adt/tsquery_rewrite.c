@@ -82,8 +82,6 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 			 * Because we expect that the children are sorted, it suffices to
 			 * make one pass through the two lists to find the matches.
 			 */
-			bool	   *matched;
-			int			nmatched;
 			int			i,
 						j;
 
@@ -92,8 +90,8 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 				   node->valnode->qoperator.oper == OP_OR);
 
 			/* matched[] will record which children of node matched */
-			matched = (bool *) palloc0(node->nchild * sizeof(bool));
-			nmatched = 0;
+			bool	   *matched = (bool *) palloc0(node->nchild * sizeof(bool));
+			int			nmatched = 0;
 			i = j = 0;
 			while (i < node->nchild && j < ex->nchild)
 			{
@@ -284,8 +282,6 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	TSQuery		rewrited = query;
 	MemoryContext outercontext = CurrentMemoryContext;
 	MemoryContext oldcontext;
-	QTNode	   *tree;
-	char	   *buf;
 	SPIPlanPtr	plan;
 	Portal		portal;
 	bool		isnull;
@@ -296,11 +292,11 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(rewrited);
 	}
 
-	tree = QT2QTN(GETQUERY(query), GETOPERAND(query));
+	QTNode	   *tree = QT2QTN(GETQUERY(query), GETOPERAND(query));
 	QTNTernary(tree);
 	QTNSort(tree);
 
-	buf = text_to_cstring(in);
+	char	   *buf = text_to_cstring(in);
 
 	SPI_connect();
 
@@ -327,12 +323,11 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 		for (i = 0; i < SPI_processed && tree; i++)
 		{
 			Datum		qdata = SPI_getbinval(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 1, &isnull);
-			Datum		sdata;
 
 			if (isnull)
 				continue;
 
-			sdata = SPI_getbinval(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 2, &isnull);
+			Datum		sdata = SPI_getbinval(SPI_tuptable->vals[i], SPI_tuptable->tupdesc, 2, &isnull);
 
 			if (!isnull)
 			{

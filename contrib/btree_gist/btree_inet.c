@@ -127,10 +127,9 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	inetKEY    *kkk = (inetKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
-	double		query;
 	bool		failure = false;
 
-	query = convert_network_to_scalar(dquery, INETOID, &failure);
+	double		query = convert_network_to_scalar(dquery, INETOID, &failure);
 	Assert(!failure);
 
 	/* All cases served by this function are inexact */

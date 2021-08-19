@@ -42,11 +42,10 @@ big5_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_UTF8);
 
-	converted = LocalToUtf(src, len, dest,
+	int			converted = LocalToUtf(src, len, dest,
 						   &big5_to_unicode_tree,
 						   NULL, 0,
 						   NULL,
@@ -63,11 +62,10 @@ utf8_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_BIG5);
 
-	converted = UtfToLocal(src, len, dest,
+	int			converted = UtfToLocal(src, len, dest,
 						   &big5_from_unicode_tree,
 						   NULL, 0,
 						   NULL,

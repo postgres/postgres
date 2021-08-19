@@ -95,35 +95,28 @@ ProcedureCreate(const char *procedureName,
 				float4 procost,
 				float4 prorows)
 {
-	Oid			retval;
-	int			parameterCount;
 	int			allParamCount;
 	Oid		   *allParams;
 	char	   *paramModes = NULL;
 	Oid			variadicType = InvalidOid;
 	Acl		   *proacl = NULL;
-	Relation	rel;
 	HeapTuple	tup;
-	HeapTuple	oldtup;
 	bool		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	bool		replaces[Natts_pg_proc];
 	NameData	procname;
-	TupleDesc	tupDesc;
 	bool		is_update;
 	ObjectAddress myself,
 				referenced;
-	char	   *detailmsg;
 	int			i;
 	Oid			trfid;
-	ObjectAddresses *addrs;
 
 	/*
 	 * sanity checks
 	 */
 	Assert(PointerIsValid(prosrc));
 
-	parameterCount = parameterTypes->dim1;
+	int			parameterCount = parameterTypes->dim1;
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -180,7 +173,7 @@ ProcedureCreate(const char *procedureName,
 	 * Do not allow polymorphic return type unless there is a polymorphic
 	 * input argument that we can use to deduce the actual return type.
 	 */
-	detailmsg = check_valid_polymorphic_signature(returnType,
+	char	   *detailmsg = check_valid_polymorphic_signature(returnType,
 												  parameterTypes->values,
 												  parameterCount);
 	if (detailmsg)
@@ -351,11 +344,11 @@ ProcedureCreate(const char *procedureName,
 		nulls[Anum_pg_proc_proconfig - 1] = true;
 	/* proacl will be determined later */
 
-	rel = table_open(ProcedureRelationId, RowExclusiveLock);
-	tupDesc = RelationGetDescr(rel);
+	Relation	rel = table_open(ProcedureRelationId, RowExclusiveLock);
+	TupleDesc	tupDesc = RelationGetDescr(rel);
 
 	/* Check for pre-existing definition */
-	oldtup = SearchSysCache3(PROCNAMEARGSNSP,
+	HeapTuple	oldtup = SearchSysCache3(PROCNAMEARGSNSP,
 							 PointerGetDatum(procedureName),
 							 PointerGetDatum(parameterTypes),
 							 ObjectIdGetDatum(procNamespace));
@@ -364,9 +357,7 @@ ProcedureCreate(const char *procedureName,
 	{
 		/* There is one; okay to replace it? */
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
-		Datum		proargnames;
 		bool		isnull;
-		const char *dropcmd;
 
 		if (!replace)
 			ereport(ERROR,
@@ -392,7 +383,7 @@ ProcedureCreate(const char *procedureName,
 					  errdetail("\"%s\" is a window function.", procedureName) :
 					  0)));
 
-		dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" :
+		const char *dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" :
 				   prokind == PROKIND_AGGREGATE ? "DROP AGGREGATE" :
 				   "DROP FUNCTION");
 
@@ -426,11 +417,9 @@ ProcedureCreate(const char *procedureName,
 		 */
 		if (returnType == RECORDOID)
 		{
-			TupleDesc	olddesc;
-			TupleDesc	newdesc;
 
-			olddesc = build_function_result_tupdesc_t(oldtup);
-			newdesc = build_function_result_tupdesc_d(prokind,
+			TupleDesc	olddesc = build_function_result_tupdesc_t(oldtup);
+			TupleDesc	newdesc = build_function_result_tupdesc_d(prokind,
 													  allParameterTypes,
 													  parameterModes,
 													  parameterNames);
@@ -453,28 +442,25 @@ ProcedureCreate(const char *procedureName,
 		 * names have not been changed, as this could break existing calls. We
 		 * allow adding names to formerly unnamed parameters, though.
 		 */
-		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
+		Datum		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 									  Anum_pg_proc_proargnames,
 									  &isnull);
 		if (!isnull)
 		{
-			Datum		proargmodes;
 			char	  **old_arg_names;
 			char	  **new_arg_names;
-			int			n_old_arg_names;
-			int			n_new_arg_names;
 			int			j;
 
-			proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
+			Datum		proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 										  Anum_pg_proc_proargmodes,
 										  &isnull);
 			if (isnull)
 				proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
-			n_old_arg_names = get_func_input_arg_names(proargnames,
+			int			n_old_arg_names = get_func_input_arg_names(proargnames,
 													   proargmodes,
 													   &old_arg_names);
-			n_new_arg_names = get_func_input_arg_names(parameterNames,
+			int			n_new_arg_names = get_func_input_arg_names(parameterNames,
 													   parameterModes,
 													   &new_arg_names);
 			for (j = 0; j < n_old_arg_names; j++)
@@ -504,10 +490,7 @@ ProcedureCreate(const char *procedureName,
 		 */
 		if (oldproc->pronargdefaults != 0)
 		{
-			Datum		proargdefaults;
-			List	   *oldDefaults;
 			ListCell   *oldlc;
-			ListCell   *newlc;
 
 			if (list_length(parameterDefaults) < oldproc->pronargdefaults)
 				ereport(ERROR,
@@ -518,15 +501,15 @@ ProcedureCreate(const char *procedureName,
 								 dropcmd,
 								 format_procedure(oldproc->oid))));
 
-			proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
+			Datum		proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 											 Anum_pg_proc_proargdefaults,
 											 &isnull);
 			Assert(!isnull);
-			oldDefaults = castNode(List, stringToNode(TextDatumGetCString(proargdefaults)));
+			List	   *oldDefaults = castNode(List, stringToNode(TextDatumGetCString(proargdefaults)));
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
 			/* new list can have more defaults than old, advance over 'em */
-			newlc = list_nth_cell(parameterDefaults,
+			ListCell   *newlc = list_nth_cell(parameterDefaults,
 								  list_length(parameterDefaults) -
 								  oldproc->pronargdefaults);
 
@@ -565,7 +548,6 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
-		Oid			newOid;
 
 		/* First, get default permissions and set up proacl */
 		proacl = get_user_default_acl(OBJECT_FUNCTION, proowner,
@@ -575,7 +557,7 @@ ProcedureCreate(const char *procedureName,
 		else
 			nulls[Anum_pg_proc_proacl - 1] = true;
 
-		newOid = GetNewOidWithIndex(rel, ProcedureOidIndexId,
+		Oid			newOid = GetNewOidWithIndex(rel, ProcedureOidIndexId,
 									Anum_pg_proc_oid);
 		values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(newOid);
 		tup = heap_form_tuple(tupDesc, values, nulls);
@@ -584,7 +566,7 @@ ProcedureCreate(const char *procedureName,
 	}
 
 
-	retval = ((Form_pg_proc) GETSTRUCT(tup))->oid;
+	Oid			retval = ((Form_pg_proc) GETSTRUCT(tup))->oid;
 
 	/*
 	 * Create dependencies for the new function.  If we are updating an
@@ -595,7 +577,7 @@ ProcedureCreate(const char *procedureName,
 	if (is_update)
 		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 
-	addrs = new_object_addresses();
+	ObjectAddresses *addrs = new_object_addresses();
 
 	ObjectAddressSet(myself, ProcedureRelationId, retval);
 
@@ -723,10 +705,7 @@ Datum
 fmgr_internal_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
 	bool		isnull;
-	Datum		tmp;
-	char	   *prosrc;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -736,14 +715,14 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	 * name will be found later if it isn't there now.
 	 */
 
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	Datum		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc");
-	prosrc = TextDatumGetCString(tmp);
+	char	   *prosrc = TextDatumGetCString(tmp);
 
 	if (fmgr_internal_function(prosrc) == InvalidOid)
 		ereport(ERROR,
@@ -770,11 +749,7 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
 	void	   *libraryhandle;
-	HeapTuple	tuple;
 	bool		isnull;
-	Datum		tmp;
-	char	   *prosrc;
-	char	   *probin;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -785,19 +760,19 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	 * and for pg_dump loading it's much better if we *do* check.
 	 */
 
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	Datum		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "null prosrc for C function %u", funcoid);
-	prosrc = TextDatumGetCString(tmp);
+	char	   *prosrc = TextDatumGetCString(tmp);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_probin, &isnull);
 	if (isnull)
 		elog(ERROR, "null probin for C function %u", funcoid);
-	probin = TextDatumGetCString(tmp);
+	char	   *probin = TextDatumGetCString(tmp);
 
 	(void) load_external_function(probin, prosrc, true, &libraryhandle);
 	(void) fetch_finfo_record(libraryhandle, prosrc);
@@ -817,8 +792,6 @@ Datum
 fmgr_sql_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	Form_pg_proc proc;
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
 	ListCell   *lc;
@@ -827,16 +800,15 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	char	   *prosrc;
 	parse_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
-	bool		haspolyarg;
 	int			i;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
 
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	proc = (Form_pg_proc) GETSTRUCT(tuple);
+	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	/* Disallow pseudotype result */
 	/* except for RECORD, VOID, or polymorphic */
@@ -851,7 +823,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 	/* Disallow pseudotypes in arguments */
 	/* except for polymorphic */
-	haspolyarg = false;
+	bool		haspolyarg = false;
 	for (i = 0; i < proc->pronargs; i++)
 	{
 		if (get_typtype(proc->proargtypes.values[i]) == TYPTYPE_PSEUDO)
@@ -890,9 +862,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosqlbody, &isnull);
 		if (!isnull)
 		{
-			Node	   *n;
 
-			n = stringToNode(TextDatumGetCString(tmp));
+			Node	   *n = stringToNode(TextDatumGetCString(tmp));
 			if (IsA(n, List))
 				querytree_list = castNode(List, n);
 			else
@@ -918,17 +889,15 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 				 * OK to do full precheck: analyze and rewrite the queries,
 				 * then verify the result type.
 				 */
-				SQLFunctionParseInfoPtr pinfo;
 
 				/* But first, set up parameter information */
-				pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
+				SQLFunctionParseInfoPtr pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
 
 				foreach(lc, raw_parsetree_list)
 				{
 					RawStmt    *parsetree = lfirst_node(RawStmt, lc);
-					List	   *querytree_sublist;
 
-					querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
+					List	   *querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
 																	  prosrc,
 																	  (ParserSetupHook) sql_fn_parser_setup,
 																	  pinfo,
@@ -991,9 +960,6 @@ sql_function_parse_error_callback(void *arg)
 bool
 function_parse_error_transpose(const char *prosrc)
 {
-	int			origerrposition;
-	int			newerrposition;
-	const char *queryText;
 
 	/*
 	 * Nothing to do unless we are dealing with a syntax error that has a
@@ -1002,7 +968,7 @@ function_parse_error_transpose(const char *prosrc)
 	 * Some PLs may prefer to report the error position as an internal error
 	 * to begin with, so check that too.
 	 */
-	origerrposition = geterrposition();
+	int			origerrposition = geterrposition();
 	if (origerrposition <= 0)
 	{
 		origerrposition = getinternalerrposition();
@@ -1012,10 +978,10 @@ function_parse_error_transpose(const char *prosrc)
 
 	/* We can get the original query text from the active portal (hack...) */
 	Assert(ActivePortal && ActivePortal->status == PORTAL_ACTIVE);
-	queryText = ActivePortal->sourceText;
+	const char *queryText = ActivePortal->sourceText;
 
 	/* Try to locate the prosrc in the original text */
-	newerrposition = match_prosrc_to_query(prosrc, queryText, origerrposition);
+	int			newerrposition = match_prosrc_to_query(prosrc, queryText, origerrposition);
 
 	if (newerrposition > 0)
 	{

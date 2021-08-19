@@ -39,19 +39,8 @@ bool
 spgvalidate(Oid opclassoid)
 {
 	bool		result = true;
-	HeapTuple	classtup;
-	Form_pg_opclass classform;
-	Oid			opfamilyoid;
-	Oid			opcintype;
-	Oid			opckeytype;
-	char	   *opclassname;
-	HeapTuple	familytup;
-	Form_pg_opfamily familyform;
-	char	   *opfamilyname;
 	CatCList   *proclist,
 			   *oprlist;
-	List	   *grouplist;
-	OpFamilyOpFuncGroup *opclassgroup;
 	int			i;
 	ListCell   *lc;
 	spgConfigIn configIn;
@@ -61,28 +50,28 @@ spgvalidate(Oid opclassoid)
 	Oid			configOutLeafType = InvalidOid;
 
 	/* Fetch opclass information */
-	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
+	HeapTuple	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup failed for operator class %u", opclassoid);
-	classform = (Form_pg_opclass) GETSTRUCT(classtup);
+	Form_pg_opclass classform = (Form_pg_opclass) GETSTRUCT(classtup);
 
-	opfamilyoid = classform->opcfamily;
-	opcintype = classform->opcintype;
-	opckeytype = classform->opckeytype;
-	opclassname = NameStr(classform->opcname);
+	Oid			opfamilyoid = classform->opcfamily;
+	Oid			opcintype = classform->opcintype;
+	Oid			opckeytype = classform->opckeytype;
+	char	   *opclassname = NameStr(classform->opcname);
 
 	/* Fetch opfamily information */
-	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
+	HeapTuple	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
 	if (!HeapTupleIsValid(familytup))
 		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
-	familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
+	Form_pg_opfamily familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
 
-	opfamilyname = NameStr(familyform->opfname);
+	char	   *opfamilyname = NameStr(familyform->opfname);
 
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
 	proclist = SearchSysCacheList1(AMPROCNUM, ObjectIdGetDatum(opfamilyoid));
-	grouplist = identify_opfamily_groups(oprlist, proclist);
+	List	   *grouplist = identify_opfamily_groups(oprlist, proclist);
 
 	/* Check individual support functions */
 	for (i = 0; i < proclist->n_members; i++)
@@ -258,7 +247,7 @@ spgvalidate(Oid opclassoid)
 	}
 
 	/* Now check for inconsistent groups of operators/functions */
-	opclassgroup = NULL;
+	OpFamilyOpFuncGroup *opclassgroup = NULL;
 	foreach(lc, grouplist)
 	{
 		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);

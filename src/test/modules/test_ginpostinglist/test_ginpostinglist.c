@@ -41,8 +41,6 @@ static void
 test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 {
 	ItemPointerData orig_itemptrs[2];
-	ItemPointer decoded_itemptrs;
-	GinPostingList *pl;
 	int			nwritten;
 	int			ndecoded;
 
@@ -52,7 +50,7 @@ test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 	ItemPointerSet(&orig_itemptrs[1], blk, off);
 
 	/* Encode, and decode it back */
-	pl = ginCompressPostingList(orig_itemptrs, 2, maxsize, &nwritten);
+	GinPostingList *pl = ginCompressPostingList(orig_itemptrs, 2, maxsize, &nwritten);
 	elog(NOTICE, "encoded %d item pointers to %zu bytes",
 		 nwritten, SizeOfGinPostingList(pl));
 
@@ -60,7 +58,7 @@ test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 		elog(ERROR, "overflow: result was %zu bytes, max %d",
 			 SizeOfGinPostingList(pl), maxsize);
 
-	decoded_itemptrs = ginPostingListDecode(pl, &ndecoded);
+	ItemPointer decoded_itemptrs = ginPostingListDecode(pl, &ndecoded);
 	if (nwritten != ndecoded)
 		elog(NOTICE, "encoded %d itemptrs, %d came back", nwritten, ndecoded);
 

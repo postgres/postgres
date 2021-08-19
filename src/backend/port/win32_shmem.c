@@ -62,22 +62,19 @@ static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
 static char *
 GetSharedMemName(void)
 {
-	char	   *retptr;
-	DWORD		bufsize;
-	DWORD		r;
 	char	   *cp;
 
-	bufsize = GetFullPathName(DataDir, 0, NULL, NULL);
+	DWORD		bufsize = GetFullPathName(DataDir, 0, NULL, NULL);
 	if (bufsize == 0)
 		elog(FATAL, "could not get size for full pathname of datadir %s: error code %lu",
 			 DataDir, GetLastError());
 
-	retptr = malloc(bufsize + 18);	/* 18 for Global\PostgreSQL: */
+	char	   *retptr = malloc(bufsize + 18);	/* 18 for Global\PostgreSQL: */
 	if (retptr == NULL)
 		elog(FATAL, "could not allocate memory for shared memory name");
 
 	strcpy(retptr, "Global\\PostgreSQL:");
-	r = GetFullPathName(DataDir, bufsize, retptr + 18, NULL);
+	DWORD		r = GetFullPathName(DataDir, bufsize, retptr + 18, NULL);
 	if (r == 0 || r > bufsize)
 		elog(FATAL, "could not generate full pathname for datadir %s: error code %lu",
 			 DataDir, GetLastError());
@@ -110,12 +107,10 @@ GetSharedMemName(void)
 bool
 PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 {
-	char	   *szShareMem;
-	HANDLE		hmap;
 
-	szShareMem = GetSharedMemName();
+	char	   *szShareMem = GetSharedMemName();
 
-	hmap = OpenFileMapping(FILE_MAP_READ, FALSE, szShareMem);
+	HANDLE		hmap = OpenFileMapping(FILE_MAP_READ, FALSE, szShareMem);
 
 	free(szShareMem);
 
@@ -209,7 +204,6 @@ PGSharedMemoryCreate(Size size,
 	PGShmemHeader *hdr;
 	HANDLE		hmap,
 				hmap2;
-	char	   *szShareMem;
 	int			i;
 	DWORD		size_high;
 	DWORD		size_low;
@@ -226,7 +220,7 @@ PGSharedMemoryCreate(Size size,
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-	szShareMem = GetSharedMemName();
+	char	   *szShareMem = GetSharedMemName();
 
 	UsedShmemSegAddr = NULL;
 
@@ -408,7 +402,6 @@ retry:
 void
 PGSharedMemoryReAttach(void)
 {
-	PGShmemHeader *hdr;
 	void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
 
 	Assert(ShmemProtectiveRegion != NULL);
@@ -425,7 +418,7 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): error code %lu",
 			 UsedShmemSegAddr, GetLastError());
 
-	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
+	PGShmemHeader *hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, GetLastError());
@@ -557,14 +550,13 @@ pgwin32_SharedMemoryDelete(int status, Datum shmId)
 int
 pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 {
-	void	   *address;
 
 	Assert(ShmemProtectiveRegion != NULL);
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(UsedShmemSegSize != 0);
 
 	/* ShmemProtectiveRegion */
-	address = VirtualAllocEx(hChild, ShmemProtectiveRegion,
+	void	   *address = VirtualAllocEx(hChild, ShmemProtectiveRegion,
 							 PROTECTIVE_REGION_SIZE,
 							 MEM_RESERVE, PAGE_NOACCESS);
 	if (address == NULL)

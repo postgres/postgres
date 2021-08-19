@@ -58,17 +58,14 @@ DiscreteKnapsack(int max_weight, int num_items,
 													"Knapsack",
 													ALLOCSET_SMALL_SIZES);
 	MemoryContext oldctx = MemoryContextSwitchTo(local_ctx);
-	double	   *values;
-	Bitmapset **sets;
-	Bitmapset  *result;
 	int			i,
 				j;
 
 	Assert(max_weight >= 0);
 	Assert(num_items > 0 && item_weights);
 
-	values = palloc((1 + max_weight) * sizeof(double));
-	sets = palloc((1 + max_weight) * sizeof(Bitmapset *));
+	double	   *values = palloc((1 + max_weight) * sizeof(double));
+	Bitmapset **sets = palloc((1 + max_weight) * sizeof(Bitmapset *));
 
 	for (i = 0; i <= max_weight; ++i)
 	{
@@ -103,7 +100,7 @@ DiscreteKnapsack(int max_weight, int num_items,
 
 	MemoryContextSwitchTo(oldctx);
 
-	result = bms_del_member(bms_copy(sets[max_weight]), num_items);
+	Bitmapset  *result = bms_del_member(bms_copy(sets[max_weight]), num_items);
 
 	MemoryContextDelete(local_ctx);
 

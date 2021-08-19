@@ -65,12 +65,10 @@ _dorand48(unsigned short xseed[3])
 	/*
 	 * We do the arithmetic in uint64; any type wider than 48 bits would work.
 	 */
-	uint64		in;
-	uint64		out;
 
-	in = (uint64) xseed[2] << 32 | (uint64) xseed[1] << 16 | (uint64) xseed[0];
+	uint64		in = (uint64) xseed[2] << 32 | (uint64) xseed[1] << 16 | (uint64) xseed[0];
 
-	out = in * RAND48_MULT + RAND48_ADD;
+	uint64		out = in * RAND48_MULT + RAND48_ADD;
 
 	xseed[0] = out & 0xFFFF;
 	xseed[1] = (out >> 16) & 0xFFFF;

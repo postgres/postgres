@@ -186,7 +186,6 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	 * pointer overlays.  All the world's not a VAX.
 	 */
 	char		tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255/128"];
-	char	   *tp;
 	struct
 	{
 		int			base,
@@ -242,7 +241,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	/*
 	 * Format the result.
 	 */
-	tp = tmp;
+	char	   *tp = tmp;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
 	{
 		/* Are we inside the best run of 0x00's? */
@@ -261,9 +260,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 										 (best.len == 7 && words[7] != 0x0001) ||
 										 (best.len == 5 && words[5] == 0xffff)))
 		{
-			int			n;
 
-			n = decoct(src + 12, 4, tp, sizeof tmp - (tp - tmp));
+			int			n = decoct(src + 12, 4, tp, sizeof tmp - (tp - tmp));
 			if (n == 0)
 			{
 				errno = EMSGSIZE;

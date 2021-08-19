@@ -73,24 +73,20 @@ pairingheap_GISTSearchItem_cmp(const pairingheap_node *a, const pairingheap_node
 IndexScanDesc
 gistbeginscan(Relation r, int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
-	GISTSTATE  *giststate;
-	GISTScanOpaque so;
-	MemoryContext oldCxt;
 
-	scan = RelationGetIndexScan(r, nkeys, norderbys);
+	IndexScanDesc scan = RelationGetIndexScan(r, nkeys, norderbys);
 
 	/* First, set up a GISTSTATE with a scan-lifespan memory context */
-	giststate = initGISTstate(scan->indexRelation);
+	GISTSTATE  *giststate = initGISTstate(scan->indexRelation);
 
 	/*
 	 * Everything made below is in the scanCxt, or is a child of the scanCxt,
 	 * so it'll all go away automatically in gistendscan.
 	 */
-	oldCxt = MemoryContextSwitchTo(giststate->scanCxt);
+	MemoryContext oldCxt = MemoryContextSwitchTo(giststate->scanCxt);
 
 	/* initialize opaque data */
-	so = (GISTScanOpaque) palloc0(sizeof(GISTScanOpaqueData));
+	GISTScanOpaque so = (GISTScanOpaque) palloc0(sizeof(GISTScanOpaqueData));
 	so->giststate = giststate;
 	giststate->tempCxt = createTempGistContext();
 	so->queue = NULL;
@@ -131,7 +127,6 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	bool		first_time;
 	int			i;
-	MemoryContext oldCxt;
 
 	/* rescan an existing indexscan --- reset state */
 
@@ -173,8 +168,6 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	 */
 	if (scan->xs_want_itup && !scan->xs_hitupdesc)
 	{
-		int			natts;
-		int			nkeyatts;
 		int			attno;
 
 		/*
@@ -183,8 +176,8 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		 * descriptor. Instead, construct a descriptor with the original data
 		 * types.
 		 */
-		natts = RelationGetNumberOfAttributes(scan->indexRelation);
-		nkeyatts = IndexRelationGetNumberOfKeyAttributes(scan->indexRelation);
+		int			natts = RelationGetNumberOfAttributes(scan->indexRelation);
+		int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(scan->indexRelation);
 		so->giststate->fetchTupdesc = CreateTemplateTupleDesc(natts);
 		for (attno = 1; attno <= nkeyatts; attno++)
 		{
@@ -210,7 +203,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	}
 
 	/* create new, empty pairing heap for search queue */
-	oldCxt = MemoryContextSwitchTo(so->queueCxt);
+	MemoryContext oldCxt = MemoryContextSwitchTo(so->queueCxt);
 	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
 

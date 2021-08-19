@@ -52,10 +52,9 @@ option_parse_int(const char *optarg, const char *optname,
 				 int *result)
 {
 	char	   *endptr;
-	int			val;
 
 	errno = 0;
-	val = strtoint(optarg, &endptr, 10);
+	int			val = strtoint(optarg, &endptr, 10);
 
 	/*
 	 * Skip any trailing whitespace; if anything but whitespace remains before

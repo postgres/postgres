@@ -115,17 +115,13 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	Page		ovflpage;
 	HashPageOpaque pageopaque;
 	HashPageOpaque ovflopaque;
-	HashMetaPage metap;
 	Buffer		mapbuf = InvalidBuffer;
 	Buffer		newmapbuf = InvalidBuffer;
 	BlockNumber blkno;
-	uint32		orig_firstfree;
 	uint32		splitnum;
 	uint32	   *freep = NULL;
 	uint32		max_ovflpg;
-	uint32		bit;
 	uint32		bitmap_page_bit;
-	uint32		first_page;
 	uint32		last_bit;
 	uint32		last_page;
 	uint32		i,
@@ -155,11 +151,10 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	/* loop to find current tail page, in case someone else inserted too */
 	for (;;)
 	{
-		BlockNumber nextblkno;
 
 		page = BufferGetPage(buf);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
-		nextblkno = pageopaque->hasho_nextblkno;
+		BlockNumber nextblkno = pageopaque->hasho_nextblkno;
 
 		if (!BlockNumberIsValid(nextblkno))
 			break;
@@ -183,12 +178,12 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	LockBuffer(metabuf, BUFFER_LOCK_EXCLUSIVE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/* start search at hashm_firstfree */
-	orig_firstfree = metap->hashm_firstfree;
-	first_page = orig_firstfree >> BMPG_SHIFT(metap);
-	bit = orig_firstfree & BMPG_MASK(metap);
+	uint32		orig_firstfree = metap->hashm_firstfree;
+	uint32		first_page = orig_firstfree >> BMPG_SHIFT(metap);
+	uint32		bit = orig_firstfree & BMPG_MASK(metap);
 	i = first_page;
 	j = bit / BITS_PER_MAP;
 	bit &= ~(BITS_PER_MAP - 1);
@@ -196,8 +191,6 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	/* outer loop iterates once per bitmap page */
 	for (;;)
 	{
-		BlockNumber mapblkno;
-		Page		mappage;
 		uint32		last_inpage;
 
 		/* want to end search with the last existing overflow page */
@@ -210,7 +203,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 			break;
 
 		Assert(i < metap->hashm_nmaps);
-		mapblkno = metap->hashm_mapp[i];
+		BlockNumber mapblkno = metap->hashm_mapp[i];
 
 		if (i == last_page)
 			last_inpage = last_bit;
@@ -221,7 +214,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 		mapbuf = _hash_getbuf(rel, mapblkno, HASH_WRITE, LH_BITMAP_PAGE);
-		mappage = BufferGetPage(mapbuf);
+		Page		mappage = BufferGetPage(mapbuf);
 		freep = HashPageGetBitmap(mappage);
 
 		for (; bit <= last_inpage; j++, bit += BITS_PER_MAP)
@@ -380,7 +373,6 @@ found:
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
-		XLogRecPtr	recptr;
 		xl_hash_add_ovfl_page xlrec;
 
 		xlrec.bmpage_found = page_found;
@@ -406,7 +398,7 @@ found:
 		XLogRegisterBuffer(4, metabuf, REGBUF_STANDARD);
 		XLogRegisterBufData(4, (char *) &metap->hashm_firstfree, sizeof(uint32));
 
-		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_ADD_OVFL_PAGE);
+		XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_ADD_OVFL_PAGE);
 
 		PageSetLSN(BufferGetPage(ovflbuf), recptr);
 		PageSetLSN(BufferGetPage(buf), recptr);
@@ -491,19 +483,6 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 				   Size *tups_size, uint16 nitups,
 				   BufferAccessStrategy bstrategy)
 {
-	HashMetaPage metap;
-	Buffer		metabuf;
-	Buffer		mapbuf;
-	BlockNumber ovflblkno;
-	BlockNumber prevblkno;
-	BlockNumber blkno;
-	BlockNumber nextblkno;
-	BlockNumber writeblkno;
-	HashPageOpaque ovflopaque;
-	Page		ovflpage;
-	Page		mappage;
-	uint32	   *freep;
-	uint32		ovflbitno;
 	int32		bitmappage,
 				bitmapbit;
 	Bucket		bucket PG_USED_FOR_ASSERTS_ONLY;
@@ -513,12 +492,12 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 
 	/* Get information from the doomed page */
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);
-	ovflblkno = BufferGetBlockNumber(ovflbuf);
-	ovflpage = BufferGetPage(ovflbuf);
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
-	nextblkno = ovflopaque->hasho_nextblkno;
-	prevblkno = ovflopaque->hasho_prevblkno;
-	writeblkno = BufferGetBlockNumber(wbuf);
+	BlockNumber ovflblkno = BufferGetBlockNumber(ovflbuf);
+	Page		ovflpage = BufferGetPage(ovflbuf);
+	HashPageOpaque ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	BlockNumber nextblkno = ovflopaque->hasho_nextblkno;
+	BlockNumber prevblkno = ovflopaque->hasho_prevblkno;
+	BlockNumber writeblkno = BufferGetBlockNumber(wbuf);
 	bucket = ovflopaque->hasho_bucket;
 
 	/*
@@ -548,26 +527,26 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	/* Note: bstrategy is intentionally not used for metapage and bitmap */
 
 	/* Read the metapage so we can determine which bitmap page to use */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/* Identify which bit to set */
-	ovflbitno = _hash_ovflblkno_to_bitno(metap, ovflblkno);
+	uint32		ovflbitno = _hash_ovflblkno_to_bitno(metap, ovflblkno);
 
 	bitmappage = ovflbitno >> BMPG_SHIFT(metap);
 	bitmapbit = ovflbitno & BMPG_MASK(metap);
 
 	if (bitmappage >= metap->hashm_nmaps)
 		elog(ERROR, "invalid overflow bit number %u", ovflbitno);
-	blkno = metap->hashm_mapp[bitmappage];
+	BlockNumber blkno = metap->hashm_mapp[bitmappage];
 
 	/* Release metapage lock while we access the bitmap page */
 	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 
 	/* read the bitmap page to clear the bitmap bit */
-	mapbuf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BITMAP_PAGE);
-	mappage = BufferGetPage(mapbuf);
-	freep = HashPageGetBitmap(mappage);
+	Buffer		mapbuf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BITMAP_PAGE);
+	Page		mappage = BufferGetPage(mapbuf);
+	uint32	   *freep = HashPageGetBitmap(mappage);
 	Assert(ISSET(freep, bitmapbit));
 
 	/* Get write-lock on metapage to update firstfree */
@@ -644,7 +623,6 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	if (RelationNeedsWAL(rel))
 	{
 		xl_hash_squeeze_page xlrec;
-		XLogRecPtr	recptr;
 		int			i;
 
 		xlrec.prevblkno = prevblkno;
@@ -695,7 +673,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 			XLogRegisterBufData(6, (char *) &metap->hashm_firstfree, sizeof(uint32));
 		}
 
-		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SQUEEZE_PAGE);
+		XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SQUEEZE_PAGE);
 
 		PageSetLSN(BufferGetPage(wbuf), recptr);
 		PageSetLSN(BufferGetPage(ovflbuf), recptr);
@@ -739,18 +717,15 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 void
 _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 {
-	Page		pg;
-	HashPageOpaque op;
-	uint32	   *freep;
 
-	pg = BufferGetPage(buf);
+	Page		pg = BufferGetPage(buf);
 
 	/* initialize the page */
 	if (initpage)
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 
 	/* initialize the page's special space */
-	op = (HashPageOpaque) PageGetSpecialPointer(pg);
+	HashPageOpaque op = (HashPageOpaque) PageGetSpecialPointer(pg);
 	op->hasho_prevblkno = InvalidBlockNumber;
 	op->hasho_nextblkno = InvalidBlockNumber;
 	op->hasho_bucket = InvalidBucket;
@@ -758,7 +733,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 	op->hasho_page_id = HASHO_PAGE_ID;
 
 	/* set all of the bits to 1 */
-	freep = HashPageGetBitmap(pg);
+	uint32	   *freep = HashPageGetBitmap(pg);
 	MemSet(freep, 0xFF, bmsize);
 
 	/*
@@ -808,22 +783,16 @@ _hash_squeezebucket(Relation rel,
 					Buffer bucket_buf,
 					BufferAccessStrategy bstrategy)
 {
-	BlockNumber wblkno;
 	BlockNumber rblkno;
-	Buffer		wbuf;
-	Buffer		rbuf;
-	Page		wpage;
 	Page		rpage;
-	HashPageOpaque wopaque;
-	HashPageOpaque ropaque;
 
 	/*
 	 * start squeezing into the primary bucket page.
 	 */
-	wblkno = bucket_blkno;
-	wbuf = bucket_buf;
-	wpage = BufferGetPage(wbuf);
-	wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
+	BlockNumber wblkno = bucket_blkno;
+	Buffer		wbuf = bucket_buf;
+	Page		wpage = BufferGetPage(wbuf);
+	HashPageOpaque wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 
 	/*
 	 * if there aren't any overflow pages, there's nothing to squeeze. caller
@@ -841,8 +810,8 @@ _hash_squeezebucket(Relation rel,
 	 * usually smaller than the buffer ring being used by VACUUM, else using
 	 * the access strategy here would be counterproductive.
 	 */
-	rbuf = InvalidBuffer;
-	ropaque = wopaque;
+	Buffer		rbuf = InvalidBuffer;
+	HashPageOpaque ropaque = wopaque;
 	do
 	{
 		rblkno = ropaque->hasho_nextblkno;
@@ -882,16 +851,14 @@ readpage:
 			 roffnum <= maxroffnum;
 			 roffnum = OffsetNumberNext(roffnum))
 		{
-			IndexTuple	itup;
-			Size		itemsz;
 
 			/* skip dead tuples */
 			if (ItemIdIsDead(PageGetItemId(rpage, roffnum)))
 				continue;
 
-			itup = (IndexTuple) PageGetItem(rpage,
+			IndexTuple	itup = (IndexTuple) PageGetItem(rpage,
 											PageGetItemId(rpage, roffnum));
-			itemsz = IndexTupleSize(itup);
+			Size		itemsz = IndexTupleSize(itup);
 			itemsz = MAXALIGN(itemsz);
 
 			/*
@@ -949,7 +916,6 @@ readpage:
 					/* XLOG stuff */
 					if (RelationNeedsWAL(rel))
 					{
-						XLogRecPtr	recptr;
 						xl_hash_move_page_contents xlrec;
 
 						xlrec.ntups = nitups;
@@ -975,7 +941,7 @@ readpage:
 						XLogRegisterBufData(2, (char *) deletable,
 											ndeletable * sizeof(OffsetNumber));
 
-						recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_MOVE_PAGE_CONTENTS);
+						XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_MOVE_PAGE_CONTENTS);
 
 						PageSetLSN(BufferGetPage(wbuf), recptr);
 						PageSetLSN(BufferGetPage(rbuf), recptr);

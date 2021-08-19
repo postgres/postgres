@@ -37,7 +37,6 @@ pthread_barrier_init(pthread_barrier_t *barrier, const void *attr, int count)
 int
 pthread_barrier_wait(pthread_barrier_t *barrier)
 {
-	bool		initial_sense;
 
 	pthread_mutex_lock(&barrier->mutex);
 
@@ -57,7 +56,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	}
 
 	/* Wait for someone else to flip the sense. */
-	initial_sense = barrier->sense;
+	bool		initial_sense = barrier->sense;
 	do
 	{
 		pthread_cond_wait(&barrier->cond, &barrier->mutex);

@@ -34,55 +34,26 @@ LLVMValueRef
 slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 					const TupleTableSlotOps *ops, int natts)
 {
-	char	   *funcname;
 
-	LLVMModuleRef mod;
-	LLVMBuilderRef b;
 
 	LLVMTypeRef deform_sig;
-	LLVMValueRef v_deform_fn;
 
-	LLVMBasicBlockRef b_entry;
-	LLVMBasicBlockRef b_adjust_unavail_cols;
-	LLVMBasicBlockRef b_find_start;
 
-	LLVMBasicBlockRef b_out;
-	LLVMBasicBlockRef b_dead;
-	LLVMBasicBlockRef *attcheckattnoblocks;
-	LLVMBasicBlockRef *attstartblocks;
-	LLVMBasicBlockRef *attisnullblocks;
-	LLVMBasicBlockRef *attcheckalignblocks;
-	LLVMBasicBlockRef *attalignblocks;
-	LLVMBasicBlockRef *attstoreblocks;
 
 	LLVMValueRef v_offp;
 
 	LLVMValueRef v_tupdata_base;
-	LLVMValueRef v_tts_values;
-	LLVMValueRef v_tts_nulls;
 	LLVMValueRef v_slotoffp;
-	LLVMValueRef v_flagsp;
-	LLVMValueRef v_nvalidp;
-	LLVMValueRef v_nvalid;
-	LLVMValueRef v_maxatt;
 
-	LLVMValueRef v_slot;
 
 	LLVMValueRef v_tupleheaderp;
-	LLVMValueRef v_tuplep;
-	LLVMValueRef v_infomask1;
-	LLVMValueRef v_infomask2;
-	LLVMValueRef v_bits;
 
-	LLVMValueRef v_hoff;
 
-	LLVMValueRef v_hasnulls;
 
 	/* last column (0 indexed) guaranteed to exist */
 	int			guaranteed_column_number = -1;
 
 	/* current known alignment */
-	int			known_alignment = 0;
 
 	/* if true, known_alignment describes definite offset of column */
 	bool		attguaranteedalign = true;
@@ -98,9 +69,9 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		ops != &TTSOpsMinimalTuple)
 		return NULL;
 
-	mod = llvm_mutable_module(context);
+	LLVMModuleRef mod = llvm_mutable_module(context);
 
-	funcname = llvm_expand_funcname(context, "deform");
+	char	   *funcname = llvm_expand_funcname(context, "deform");
 
 	/*
 	 * Check which columns have to exist, so we don't have to check the row's
@@ -136,54 +107,53 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		deform_sig = LLVMFunctionType(LLVMVoidType(), param_types,
 									  lengthof(param_types), 0);
 	}
-	v_deform_fn = LLVMAddFunction(mod, funcname, deform_sig);
+	LLVMValueRef v_deform_fn = LLVMAddFunction(mod, funcname, deform_sig);
 	LLVMSetLinkage(v_deform_fn, LLVMInternalLinkage);
 	LLVMSetParamAlignment(LLVMGetParam(v_deform_fn, 0), MAXIMUM_ALIGNOF);
 	llvm_copy_attributes(AttributeTemplate, v_deform_fn);
 
-	b_entry =
+	LLVMBasicBlockRef b_entry =
 		LLVMAppendBasicBlock(v_deform_fn, "entry");
-	b_adjust_unavail_cols =
+	LLVMBasicBlockRef b_adjust_unavail_cols =
 		LLVMAppendBasicBlock(v_deform_fn, "adjust_unavail_cols");
-	b_find_start =
+	LLVMBasicBlockRef b_find_start =
 		LLVMAppendBasicBlock(v_deform_fn, "find_startblock");
-	b_out =
+	LLVMBasicBlockRef b_out =
 		LLVMAppendBasicBlock(v_deform_fn, "outblock");
-	b_dead =
+	LLVMBasicBlockRef b_dead =
 		LLVMAppendBasicBlock(v_deform_fn, "deadblock");
 
-	b = LLVMCreateBuilder();
+	LLVMBuilderRef b = LLVMCreateBuilder();
 
-	attcheckattnoblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attstartblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attisnullblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attcheckalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
-	attstoreblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attcheckattnoblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attstartblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attisnullblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attcheckalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attalignblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
+	LLVMBasicBlockRef *attstoreblocks = palloc(sizeof(LLVMBasicBlockRef) * natts);
 
-	known_alignment = 0;
+	int			known_alignment = 0;
 
 	LLVMPositionBuilderAtEnd(b, b_entry);
 
 	/* perform allocas first, llvm only converts those to registers */
 	v_offp = LLVMBuildAlloca(b, TypeSizeT, "v_offp");
 
-	v_slot = LLVMGetParam(v_deform_fn, 0);
+	LLVMValueRef v_slot = LLVMGetParam(v_deform_fn, 0);
 
-	v_tts_values =
+	LLVMValueRef v_tts_values =
 		l_load_struct_gep(b, v_slot, FIELDNO_TUPLETABLESLOT_VALUES,
 						  "tts_values");
-	v_tts_nulls =
+	LLVMValueRef v_tts_nulls =
 		l_load_struct_gep(b, v_slot, FIELDNO_TUPLETABLESLOT_ISNULL,
 						  "tts_ISNULL");
-	v_flagsp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_FLAGS, "");
-	v_nvalidp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_NVALID, "");
+	LLVMValueRef v_flagsp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_FLAGS, "");
+	LLVMValueRef v_nvalidp = LLVMBuildStructGEP(b, v_slot, FIELDNO_TUPLETABLESLOT_NVALID, "");
 
 	if (ops == &TTSOpsHeapTuple || ops == &TTSOpsBufferHeapTuple)
 	{
-		LLVMValueRef v_heapslot;
 
-		v_heapslot =
+		LLVMValueRef v_heapslot =
 			LLVMBuildBitCast(b,
 							 v_slot,
 							 l_ptr(StructHeapTupleTableSlot),
@@ -196,9 +166,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	}
 	else if (ops == &TTSOpsMinimalTuple)
 	{
-		LLVMValueRef v_minimalslot;
 
-		v_minimalslot =
+		LLVMValueRef v_minimalslot =
 			LLVMBuildBitCast(b,
 							 v_slot,
 							 l_ptr(StructMinimalTupleTableSlot),
@@ -214,27 +183,27 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		pg_unreachable();
 	}
 
-	v_tuplep =
+	LLVMValueRef v_tuplep =
 		l_load_struct_gep(b, v_tupleheaderp, FIELDNO_HEAPTUPLEDATA_DATA,
 						  "tuple");
-	v_bits =
+	LLVMValueRef v_bits =
 		LLVMBuildBitCast(b,
 						 LLVMBuildStructGEP(b, v_tuplep,
 											FIELDNO_HEAPTUPLEHEADERDATA_BITS,
 											""),
 						 l_ptr(LLVMInt8Type()),
 						 "t_bits");
-	v_infomask1 =
+	LLVMValueRef v_infomask1 =
 		l_load_struct_gep(b, v_tuplep,
 						  FIELDNO_HEAPTUPLEHEADERDATA_INFOMASK,
 						  "infomask1");
-	v_infomask2 =
+	LLVMValueRef v_infomask2 =
 		l_load_struct_gep(b,
 						  v_tuplep, FIELDNO_HEAPTUPLEHEADERDATA_INFOMASK2,
 						  "infomask2");
 
 	/* t_infomask & HEAP_HASNULL */
-	v_hasnulls =
+	LLVMValueRef v_hasnulls =
 		LLVMBuildICmp(b, LLVMIntNE,
 					  LLVMBuildAnd(b,
 								   l_int16_const(HEAP_HASNULL),
@@ -243,7 +212,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 					  "hasnulls");
 
 	/* t_infomask2 & HEAP_NATTS_MASK */
-	v_maxatt = LLVMBuildAnd(b,
+	LLVMValueRef v_maxatt = LLVMBuildAnd(b,
 							l_int16_const(HEAP_NATTS_MASK),
 							v_infomask2,
 							"maxatt");
@@ -252,7 +221,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	 * Need to zext, as getelementptr otherwise treats hoff as a signed 8bit
 	 * integer, which'd yield a negative offset for t_hoff > 127.
 	 */
-	v_hoff =
+	LLVMValueRef v_hoff =
 		LLVMBuildZExt(b,
 					  l_load_struct_gep(b, v_tuplep,
 										FIELDNO_HEAPTUPLEHEADERDATA_HOFF,
@@ -273,9 +242,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	 * no existing deformed columns in slot.
 	 */
 	{
-		LLVMValueRef v_off_start;
 
-		v_off_start = LLVMBuildLoad(b, v_slotoffp, "v_slot_off");
+		LLVMValueRef v_off_start = LLVMBuildLoad(b, v_slotoffp, "v_slot_off");
 		v_off_start = LLVMBuildZExt(b, v_off_start, TypeSizeT, "");
 		LLVMBuildStore(b, v_off_start, v_offp);
 	}
@@ -338,7 +306,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 	LLVMPositionBuilderAtEnd(b, b_find_start);
 
-	v_nvalid = LLVMBuildLoad(b, v_nvalidp, "");
+	LLVMValueRef v_nvalid = LLVMBuildLoad(b, v_nvalidp, "");
 
 	/*
 	 * Build switch to go from nvalid to the right startblock.  Callers
@@ -379,7 +347,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		int			alignto;
 		LLVMValueRef l_attno = l_int16_const(attnum);
 		LLVMValueRef v_attdatap;
-		LLVMValueRef v_resultp;
 
 		/* build block checking whether we did all the necessary attributes */
 		LLVMPositionBuilderAtEnd(b, attcheckattnoblocks[attnum]);
@@ -404,9 +371,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		}
 		else
 		{
-			LLVMValueRef v_islast;
 
-			v_islast = LLVMBuildICmp(b, LLVMIntUGE,
+			LLVMValueRef v_islast = LLVMBuildICmp(b, LLVMIntUGE,
 									 l_attno,
 									 v_maxatt,
 									 "heap_natts");
@@ -421,34 +387,27 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		 */
 		if (!att->attnotnull)
 		{
-			LLVMBasicBlockRef b_ifnotnull;
-			LLVMBasicBlockRef b_ifnull;
 			LLVMBasicBlockRef b_next;
-			LLVMValueRef v_attisnull;
-			LLVMValueRef v_nullbyteno;
-			LLVMValueRef v_nullbytemask;
-			LLVMValueRef v_nullbyte;
-			LLVMValueRef v_nullbit;
 
-			b_ifnotnull = attcheckalignblocks[attnum];
-			b_ifnull = attisnullblocks[attnum];
+			LLVMBasicBlockRef b_ifnotnull = attcheckalignblocks[attnum];
+			LLVMBasicBlockRef b_ifnull = attisnullblocks[attnum];
 
 			if (attnum + 1 == natts)
 				b_next = b_out;
 			else
 				b_next = attcheckattnoblocks[attnum + 1];
 
-			v_nullbyteno = l_int32_const(attnum >> 3);
-			v_nullbytemask = l_int8_const(1 << ((attnum) & 0x07));
-			v_nullbyte = l_load_gep1(b, v_bits, v_nullbyteno, "attnullbyte");
+			LLVMValueRef v_nullbyteno = l_int32_const(attnum >> 3);
+			LLVMValueRef v_nullbytemask = l_int8_const(1 << ((attnum) & 0x07));
+			LLVMValueRef v_nullbyte = l_load_gep1(b, v_bits, v_nullbyteno, "attnullbyte");
 
-			v_nullbit = LLVMBuildICmp(b,
+			LLVMValueRef v_nullbit = LLVMBuildICmp(b,
 									  LLVMIntEQ,
 									  LLVMBuildAnd(b, v_nullbyte, v_nullbytemask, ""),
 									  l_int8_const(0),
 									  "attisnull");
 
-			v_attisnull = LLVMBuildAnd(b, v_hasnulls, v_nullbit, "");
+			LLVMValueRef v_attisnull = LLVMBuildAnd(b, v_hasnulls, v_nullbit, "");
 
 			LLVMBuildCondBr(b, v_attisnull, b_ifnull, b_ifnotnull);
 
@@ -513,18 +472,15 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			 */
 			if (att->attlen == -1)
 			{
-				LLVMValueRef v_possible_padbyte;
-				LLVMValueRef v_ispad;
-				LLVMValueRef v_off;
 
 				/* don't know if short varlena or not */
 				attguaranteedalign = false;
 
-				v_off = LLVMBuildLoad(b, v_offp, "");
+				LLVMValueRef v_off = LLVMBuildLoad(b, v_offp, "");
 
-				v_possible_padbyte =
+				LLVMValueRef v_possible_padbyte =
 					l_load_gep1(b, v_tupdata_base, v_off, "padbyte");
-				v_ispad =
+				LLVMValueRef v_ispad =
 					LLVMBuildICmp(b, LLVMIntEQ,
 								  v_possible_padbyte, l_int8_const(0),
 								  "ispadbyte");
@@ -541,7 +497,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 			/* translation of alignment code (cf TYPEALIGN()) */
 			{
-				LLVMValueRef v_off_aligned;
 				LLVMValueRef v_off = LLVMBuildLoad(b, v_offp, "");
 
 				/* ((ALIGNVAL) - 1) */
@@ -553,7 +508,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 				/* ~((uintptr_t) ((ALIGNVAL) - 1)) */
 				LLVMValueRef v_rh = l_sizet_const(~(alignto - 1));
 
-				v_off_aligned = LLVMBuildAnd(b, v_lh, v_rh, "aligned_offset");
+				LLVMValueRef v_off_aligned = LLVMBuildAnd(b, v_lh, v_rh, "aligned_offset");
 
 				LLVMBuildStore(b, v_off_aligned, v_offp);
 			}
@@ -638,7 +593,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		}
 
 		/* compute address to store value at */
-		v_resultp = LLVMBuildGEP(b, v_tts_values, &l_attno, 1, "");
+		LLVMValueRef v_resultp = LLVMBuildGEP(b, v_tts_values, &l_attno, 1, "");
 
 		/* store null-byte (false) */
 		LLVMBuildStore(b, l_int8_const(0),
@@ -650,11 +605,10 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		 */
 		if (att->attbyval)
 		{
-			LLVMValueRef v_tmp_loaddata;
 			LLVMTypeRef vartypep =
 			LLVMPointerType(LLVMIntType(att->attlen * 8), 0);
 
-			v_tmp_loaddata =
+			LLVMValueRef v_tmp_loaddata =
 				LLVMBuildPointerCast(b, v_attdatap, vartypep, "");
 			v_tmp_loaddata = LLVMBuildLoad(b, v_tmp_loaddata, "attr_byval");
 			v_tmp_loaddata = LLVMBuildZExt(b, v_tmp_loaddata, TypeSizeT, "");
@@ -663,10 +617,9 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		}
 		else
 		{
-			LLVMValueRef v_tmp_loaddata;
 
 			/* store pointer */
-			v_tmp_loaddata =
+			LLVMValueRef v_tmp_loaddata =
 				LLVMBuildPtrToInt(b,
 								  v_attdatap,
 								  TypeSizeT,
@@ -739,12 +692,11 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 	{
 		LLVMValueRef v_off = LLVMBuildLoad(b, v_offp, "");
-		LLVMValueRef v_flags;
 
 		LLVMBuildStore(b, l_int16_const(natts), v_nvalidp);
 		v_off = LLVMBuildTrunc(b, v_off, LLVMInt32Type(), "");
 		LLVMBuildStore(b, v_off, v_slotoffp);
-		v_flags = LLVMBuildLoad(b, v_flagsp, "tts_flags");
+		LLVMValueRef v_flags = LLVMBuildLoad(b, v_flagsp, "tts_flags");
 		v_flags = LLVMBuildOr(b, v_flags, l_int16_const(TTS_FLAG_SLOW), "");
 		LLVMBuildStore(b, v_flags, v_flagsp);
 		LLVMBuildRetVoid(b);

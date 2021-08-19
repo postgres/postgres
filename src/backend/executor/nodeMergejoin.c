@@ -180,14 +180,12 @@ MJExamineQuals(List *mergeclauses,
 			   bool *mergenullsfirst,
 			   PlanState *parent)
 {
-	MergeJoinClause clauses;
 	int			nClauses = list_length(mergeclauses);
-	int			iClause;
 	ListCell   *cl;
 
-	clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
+	MergeJoinClause clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
 
-	iClause = 0;
+	int			iClause = 0;
 	foreach(cl, mergeclauses)
 	{
 		OpExpr	   *qual = (OpExpr *) lfirst(cl);
@@ -199,7 +197,6 @@ MJExamineQuals(List *mergeclauses,
 		int			op_strategy;
 		Oid			op_lefttype;
 		Oid			op_righttype;
-		Oid			sortfunc;
 
 		if (!IsA(qual, OpExpr))
 			elog(ERROR, "mergejoin clause is not an OpExpr");
@@ -240,7 +237,7 @@ MJExamineQuals(List *mergeclauses,
 
 		/* And get the matching support or comparison function */
 		Assert(clause->ssup.comparator == NULL);
-		sortfunc = get_opfamily_proc(opfamily,
+		Oid			sortfunc = get_opfamily_proc(opfamily,
 									 op_lefttype,
 									 op_righttype,
 									 BTSORTSUPPORT_PROC);
@@ -297,7 +294,6 @@ MJEvalOuterValues(MergeJoinState *mergestate)
 	ExprContext *econtext = mergestate->mj_OuterEContext;
 	MJEvalResult result = MJEVAL_MATCHABLE;
 	int			i;
-	MemoryContext oldContext;
 
 	/* Check for end of outer subplan */
 	if (TupIsNull(mergestate->mj_OuterTupleSlot))
@@ -305,7 +301,7 @@ MJEvalOuterValues(MergeJoinState *mergestate)
 
 	ResetExprContext(econtext);
 
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	econtext->ecxt_outertuple = mergestate->mj_OuterTupleSlot;
 
@@ -344,7 +340,6 @@ MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
 	ExprContext *econtext = mergestate->mj_InnerEContext;
 	MJEvalResult result = MJEVAL_MATCHABLE;
 	int			i;
-	MemoryContext oldContext;
 
 	/* Check for end of inner subplan */
 	if (TupIsNull(innerslot))
@@ -352,7 +347,7 @@ MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
 
 	ResetExprContext(econtext);
 
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	econtext->ecxt_innertuple = innerslot;
 
@@ -395,7 +390,6 @@ MJCompare(MergeJoinState *mergestate)
 	bool		nulleqnull = false;
 	ExprContext *econtext = mergestate->js.ps.ps_ExprContext;
 	int			i;
-	MemoryContext oldContext;
 
 	/*
 	 * Call the comparison functions in short-lived context, in case they leak
@@ -403,7 +397,7 @@ MJCompare(MergeJoinState *mergestate)
 	 */
 	ResetExprContext(econtext);
 
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	for (i = 0; i < mergestate->mj_NumClauses; i++)
 	{
@@ -601,29 +595,23 @@ ExecMergeJoin(PlanState *pstate)
 {
 	MergeJoinState *node = castNode(MergeJoinState, pstate);
 	ExprState  *joinqual;
-	ExprState  *otherqual;
 	bool		qualResult;
 	int			compareResult;
-	PlanState  *innerPlan;
 	TupleTableSlot *innerTupleSlot;
-	PlanState  *outerPlan;
 	TupleTableSlot *outerTupleSlot;
-	ExprContext *econtext;
-	bool		doFillOuter;
-	bool		doFillInner;
 
 	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from node
 	 */
-	innerPlan = innerPlanState(node);
-	outerPlan = outerPlanState(node);
-	econtext = node->js.ps.ps_ExprContext;
+	PlanState  *innerPlan = innerPlanState(node);
+	PlanState  *outerPlan = outerPlanState(node);
+	ExprContext *econtext = node->js.ps.ps_ExprContext;
 	joinqual = node->js.joinqual;
-	otherqual = node->js.ps.qual;
-	doFillOuter = node->mj_FillOuter;
-	doFillInner = node->mj_FillInner;
+	ExprState  *otherqual = node->js.ps.qual;
+	bool		doFillOuter = node->mj_FillOuter;
+	bool		doFillInner = node->mj_FillInner;
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -851,11 +839,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedInner = true;	/* do it only once */
 
-					result = MJFillInner(node);
+					TupleTableSlot *result = MJFillInner(node);
 					if (result)
 						return result;
 				}
@@ -953,11 +940,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedOuter = true;	/* do it only once */
 
-					result = MJFillOuter(node);
+					TupleTableSlot *result = MJFillOuter(node);
 					if (result)
 						return result;
 				}
@@ -1214,11 +1200,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedOuter = true;	/* do it only once */
 
-					result = MJFillOuter(node);
+					TupleTableSlot *result = MJFillOuter(node);
 					if (result)
 						return result;
 				}
@@ -1276,11 +1261,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedInner = true;	/* do it only once */
 
-					result = MJFillInner(node);
+					TupleTableSlot *result = MJFillInner(node);
 					if (result)
 						return result;
 				}
@@ -1346,11 +1330,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the outer
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedInner = true;	/* do it only once */
 
-					result = MJFillInner(node);
+					TupleTableSlot *result = MJFillInner(node);
 					if (result)
 						return result;
 				}
@@ -1392,11 +1375,10 @@ ExecMergeJoin(PlanState *pstate)
 					 * Generate a fake join tuple with nulls for the inner
 					 * tuple, and return it if it passes the non-join quals.
 					 */
-					TupleTableSlot *result;
 
 					node->mj_MatchedOuter = true;	/* do it only once */
 
-					result = MJFillOuter(node);
+					TupleTableSlot *result = MJFillOuter(node);
 					if (result)
 						return result;
 				}
@@ -1435,10 +1417,8 @@ ExecMergeJoin(PlanState *pstate)
 MergeJoinState *
 ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 {
-	MergeJoinState *mergestate;
 	TupleDesc	outerDesc,
 				innerDesc;
-	const TupleTableSlotOps *innerOps;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -1449,7 +1429,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	mergestate = makeNode(MergeJoinState);
+	MergeJoinState *mergestate = makeNode(MergeJoinState);
 	mergestate->js.ps.plan = (Plan *) node;
 	mergestate->js.ps.state = estate;
 	mergestate->js.ps.ExecProcNode = ExecMergeJoin;
@@ -1519,7 +1499,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	/*
 	 * tuple table initialization
 	 */
-	innerOps = ExecGetResultSlotOps(innerPlanState(mergestate), NULL);
+	const TupleTableSlotOps *innerOps = ExecGetResultSlotOps(innerPlanState(mergestate), NULL);
 	mergestate->mj_MarkedTupleSlot = ExecInitExtraTupleSlot(estate, innerDesc,
 															innerOps);
 

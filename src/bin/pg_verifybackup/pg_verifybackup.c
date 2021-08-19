@@ -282,10 +282,9 @@ main(int argc, char **argv)
 	/* Unless --no-parse-wal was specified, we will need pg_waldump. */
 	if (!no_parse_wal)
 	{
-		int			ret;
 
 		pg_waldump_path = pg_malloc(MAXPGPATH);
-		ret = find_other_exec(argv[0], "pg_waldump",
+		int			ret = find_other_exec(argv[0], "pg_waldump",
 							  "pg_waldump (PostgreSQL) " PG_VERSION "\n",
 							  pg_waldump_path);
 		if (ret < 0)
@@ -375,11 +374,6 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 {
 	int			fd;
 	struct stat statbuf;
-	off_t		estimate;
-	uint32		initial_size;
-	manifest_files_hash *ht;
-	char	   *buffer;
-	int			rc;
 	parser_context private_context;
 	JsonManifestParseContext context;
 
@@ -392,11 +386,11 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 		report_fatal_error("could not stat file \"%s\": %m", manifest_path);
 
 	/* Guess how large to make the hash table based on the manifest size. */
-	estimate = statbuf.st_size / ESTIMATED_BYTES_PER_MANIFEST_LINE;
-	initial_size = Min(PG_UINT32_MAX, Max(estimate, 256));
+	off_t		estimate = statbuf.st_size / ESTIMATED_BYTES_PER_MANIFEST_LINE;
+	uint32		initial_size = Min(PG_UINT32_MAX, Max(estimate, 256));
 
 	/* Create the hash table. */
-	ht = manifest_files_create(initial_size, NULL);
+	manifest_files_hash *ht = manifest_files_create(initial_size, NULL);
 
 	/*
 	 * Slurp in the whole file.
@@ -404,8 +398,8 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 	 * This is not ideal, but there's currently no easy way to get
 	 * pg_parse_json() to perform incremental parsing.
 	 */
-	buffer = pg_malloc(statbuf.st_size);
-	rc = read(fd, buffer, statbuf.st_size);
+	char	   *buffer = pg_malloc(statbuf.st_size);
+	int			rc = read(fd, buffer, statbuf.st_size);
 	if (rc != statbuf.st_size)
 	{
 		if (rc < 0)
@@ -466,11 +460,10 @@ record_manifest_details_for_file(JsonManifestParseContext *context,
 {
 	parser_context *pcxt = context->private_data;
 	manifest_files_hash *ht = pcxt->ht;
-	manifest_file *m;
 	bool		found;
 
 	/* Make a new entry in the hash table for this file. */
-	m = manifest_files_insert(ht, pathname, &found);
+	manifest_file *m = manifest_files_insert(ht, pathname, &found);
 	if (found)
 		report_fatal_error("duplicate path name in backup manifest: \"%s\"",
 						   pathname);
@@ -493,10 +486,9 @@ record_manifest_details_for_wal_range(JsonManifestParseContext *context,
 									  XLogRecPtr start_lsn, XLogRecPtr end_lsn)
 {
 	parser_context *pcxt = context->private_data;
-	manifest_wal_range *range;
 
 	/* Allocate and initialize a struct describing this WAL range. */
-	range = palloc(sizeof(manifest_wal_range));
+	manifest_wal_range *range = palloc(sizeof(manifest_wal_range));
 	range->tli = tli;
 	range->start_lsn = start_lsn;
 	range->end_lsn = end_lsn;
@@ -524,10 +516,9 @@ static void
 verify_backup_directory(verifier_context *context, char *relpath,
 						char *fullpath)
 {
-	DIR		   *dir;
 	struct dirent *dirent;
 
-	dir = opendir(fullpath);
+	DIR		   *dir = opendir(fullpath);
 	if (dir == NULL)
 	{
 		/*
@@ -589,7 +580,6 @@ static void
 verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 {
 	struct stat sb;
-	manifest_file *m;
 
 	if (stat(fullpath, &sb) != 0)
 	{
@@ -623,7 +613,7 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 	}
 
 	/* Check whether there's an entry in the manifest hash. */
-	m = manifest_files_lookup(context->ht, relpath);
+	manifest_file *m = manifest_files_lookup(context->ht, relpath);
 	if (m == NULL)
 	{
 		report_backup_error(context,
@@ -687,10 +677,9 @@ verify_backup_checksums(verifier_context *context)
 		if (m->matched && !m->bad && m->checksum_type != CHECKSUM_TYPE_NONE &&
 			!should_ignore_relpath(context, m->pathname))
 		{
-			char	   *fullpath;
 
 			/* Compute the full pathname to the target file. */
-			fullpath = psprintf("%s/%s", context->backup_directory,
+			char	   *fullpath = psprintf("%s/%s", context->backup_directory,
 								m->pathname);
 
 			/* Do the actual checksum verification. */
@@ -716,7 +705,6 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	size_t		bytes_read = 0;
 	uint8		buffer[READ_CHUNK_SIZE];
 	uint8		checksumbuf[PG_CHECKSUM_MAX_LENGTH];
-	int			checksumlen;
 
 	/* Open the target file. */
 	if ((fd = open(fullpath, O_RDONLY | PG_BINARY, 0)) < 0)
@@ -781,7 +769,7 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	}
 
 	/* Get the final checksum. */
-	checksumlen = pg_checksum_final(&checksum_ctx, checksumbuf);
+	int			checksumlen = pg_checksum_final(&checksum_ctx, checksumbuf);
 	if (checksumlen < 0)
 	{
 		report_backup_error(context,
@@ -813,9 +801,8 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
 
 	while (this_wal_range != NULL)
 	{
-		char	   *pg_waldump_cmd;
 
-		pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%X --end=%X/%X\n",
+		char	   *pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%X --end=%X/%X\n",
 								  pg_waldump_path, wal_directory, this_wal_range->tli,
 								  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
 								  LSN_FORMAT_ARGS(this_wal_range->end_lsn));

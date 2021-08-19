@@ -39,9 +39,6 @@ ExecLockRows(PlanState *pstate)
 {
 	LockRowsState *node = castNode(LockRowsState, pstate);
 	TupleTableSlot *slot;
-	EState	   *estate;
-	PlanState  *outerPlan;
-	bool		epq_needed;
 	ListCell   *lc;
 
 	CHECK_FOR_INTERRUPTS();
@@ -49,8 +46,8 @@ ExecLockRows(PlanState *pstate)
 	/*
 	 * get information from the node
 	 */
-	estate = node->ps.state;
-	outerPlan = outerPlanState(node);
+	EState	   *estate = node->ps.state;
+	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
 	 * Get next tuple from subplan, if any.
@@ -66,7 +63,7 @@ lnext:
 	}
 
 	/* We don't need EvalPlanQual unless we get updated tuple version(s) */
-	epq_needed = false;
+	bool		epq_needed = false;
 
 	/*
 	 * Attempt to lock the source tuple(s).  (Note we only have locking
@@ -83,16 +80,14 @@ lnext:
 		LockTupleMode lockmode;
 		int			lockflags = 0;
 		TM_Result	test;
-		TupleTableSlot *markSlot;
 
 		/* clear any leftover test tuple for this rel */
-		markSlot = EvalPlanQualSlot(&node->lr_epqstate, erm->relation, erm->rti);
+		TupleTableSlot *markSlot = EvalPlanQualSlot(&node->lr_epqstate, erm->relation, erm->rti);
 		ExecClearTuple(markSlot);
 
 		/* if child rel, must check whether it produced this row */
 		if (erm->rti != erm->prti)
 		{
-			Oid			tableoid;
 
 			datum = ExecGetJunkAttribute(slot,
 										 aerm->toidAttNo,
@@ -100,7 +95,7 @@ lnext:
 			/* shouldn't ever get a null result... */
 			if (isNull)
 				elog(ERROR, "tableoid is NULL");
-			tableoid = DatumGetObjectId(datum);
+			Oid			tableoid = DatumGetObjectId(datum);
 
 			Assert(OidIsValid(erm->relid));
 			if (tableoid != erm->relid)
@@ -125,10 +120,9 @@ lnext:
 		/* requests for foreign tables must be passed to their FDW */
 		if (erm->relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
-			FdwRoutine *fdwroutine;
 			bool		updated = false;
 
-			fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
+			FdwRoutine *fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
 			/* this should have been checked already, but let's be safe */
 			if (fdwroutine->RefetchForeignRow == NULL)
 				ereport(ERROR,
@@ -291,9 +285,7 @@ lnext:
 LockRowsState *
 ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 {
-	LockRowsState *lrstate;
 	Plan	   *outerPlan = outerPlan(node);
-	List	   *epq_arowmarks;
 	ListCell   *lc;
 
 	/* check for unsupported flags */
@@ -302,7 +294,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	lrstate = makeNode(LockRowsState);
+	LockRowsState *lrstate = makeNode(LockRowsState);
 	lrstate->ps.plan = (Plan *) node;
 	lrstate->ps.state = estate;
 	lrstate->ps.ExecProcNode = ExecLockRows;
@@ -341,20 +333,18 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	 * built the global list of ExecRowMarks.)
 	 */
 	lrstate->lr_arowMarks = NIL;
-	epq_arowmarks = NIL;
+	List	   *epq_arowmarks = NIL;
 	foreach(lc, node->rowMarks)
 	{
 		PlanRowMark *rc = lfirst_node(PlanRowMark, lc);
-		ExecRowMark *erm;
-		ExecAuxRowMark *aerm;
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)
 			continue;
 
 		/* find ExecRowMark and build ExecAuxRowMark */
-		erm = ExecFindRowMark(estate, rc->rti, false);
-		aerm = ExecBuildAuxRowMark(erm, outerPlan->targetlist);
+		ExecRowMark *erm = ExecFindRowMark(estate, rc->rti, false);
+		ExecAuxRowMark *aerm = ExecBuildAuxRowMark(erm, outerPlan->targetlist);
 
 		/*
 		 * Only locking rowmarks go into our own list.  Non-locking marks are

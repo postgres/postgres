@@ -57,9 +57,6 @@ static void ExecShutdownGatherWorkers(GatherState *node);
 GatherState *
 ExecInitGather(Gather *node, EState *estate, int eflags)
 {
-	GatherState *gatherstate;
-	Plan	   *outerNode;
-	TupleDesc	tupDesc;
 
 	/* Gather node doesn't have innerPlan node. */
 	Assert(innerPlan(node) == NULL);
@@ -67,7 +64,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	gatherstate = makeNode(GatherState);
+	GatherState *gatherstate = makeNode(GatherState);
 	gatherstate->ps.plan = (Plan *) node;
 	gatherstate->ps.state = estate;
 	gatherstate->ps.ExecProcNode = ExecGather;
@@ -87,9 +84,9 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * now initialize outer plan
 	 */
-	outerNode = outerPlan(node);
+	Plan	   *outerNode = outerPlan(node);
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
-	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
+	TupleDesc	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
 	/*
 	 * Leader may access ExecProcNode result directly (if
@@ -142,8 +139,6 @@ static TupleTableSlot *
 ExecGather(PlanState *pstate)
 {
 	GatherState *node = castNode(GatherState, pstate);
-	TupleTableSlot *slot;
-	ExprContext *econtext;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -164,7 +159,6 @@ ExecGather(PlanState *pstate)
 		 */
 		if (gather->num_workers > 0 && estate->es_use_parallel_mode)
 		{
-			ParallelContext *pcxt;
 
 			/* Initialize, or re-initialize, shared state needed by workers. */
 			if (!node->pei)
@@ -182,7 +176,7 @@ ExecGather(PlanState *pstate)
 			 * Register backend workers. We might not get as many as we
 			 * requested, or indeed any at all.
 			 */
-			pcxt = node->pei->pcxt;
+			ParallelContext *pcxt = node->pei->pcxt;
 			LaunchParallelWorkers(pcxt);
 			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
@@ -217,14 +211,14 @@ ExecGather(PlanState *pstate)
 	 * Reset per-tuple memory context to free any expression evaluation
 	 * storage allocated in the previous tuple cycle.
 	 */
-	econtext = node->ps.ps_ExprContext;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
 	/*
 	 * Get next tuple, either from one of our workers, or by running the plan
 	 * ourselves.
 	 */
-	slot = gather_getnext(node);
+	TupleTableSlot *slot = gather_getnext(node);
 	if (TupIsNull(slot))
 		return NULL;
 
@@ -315,8 +309,6 @@ gather_readnext(GatherState *gatherstate)
 
 	for (;;)
 	{
-		TupleQueueReader *reader;
-		MinimalTuple tup;
 		bool		readerdone;
 
 		/* Check for async events, particularly messages from workers. */
@@ -331,8 +323,8 @@ gather_readnext(GatherState *gatherstate)
 		 * when we get there.
 		 */
 		Assert(gatherstate->nextreader < gatherstate->nreaders);
-		reader = gatherstate->reader[gatherstate->nextreader];
-		tup = TupleQueueReaderNext(reader, true, &readerdone);
+		TupleQueueReader *reader = gatherstate->reader[gatherstate->nextreader];
+		MinimalTuple tup = TupleQueueReaderNext(reader, true, &readerdone);
 
 		/*
 		 * If this reader is done, remove it from our working array of active

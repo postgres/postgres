@@ -735,8 +735,6 @@ sepgsql_compute_avd(const char *scontext,
 					uint16 tclass,
 					struct av_decision *avd)
 {
-	const char *tclass_name;
-	security_class_t tclass_ex;
 	struct av_decision avd_ex;
 	int			i,
 				deny_unknown = security_deny_unknown();
@@ -745,8 +743,8 @@ sepgsql_compute_avd(const char *scontext,
 	Assert(tclass < SEPG_CLASS_MAX);
 	Assert(tclass == selinux_catalog[tclass].class_code);
 
-	tclass_name = selinux_catalog[tclass].class_name;
-	tclass_ex = string_to_security_class(tclass_name);
+	const char *tclass_name = selinux_catalog[tclass].class_name;
+	security_class_t tclass_ex = string_to_security_class(tclass_name);
 
 	if (tclass_ex == 0)
 	{
@@ -787,11 +785,10 @@ sepgsql_compute_avd(const char *scontext,
 
 	for (i = 0; selinux_catalog[tclass].av[i].av_name; i++)
 	{
-		access_vector_t av_code_ex;
 		const char *av_name = selinux_catalog[tclass].av[i].av_name;
 		uint32		av_code = selinux_catalog[tclass].av[i].av_code;
 
-		av_code_ex = string_to_av_perm(tclass_ex, av_name);
+		access_vector_t av_code_ex = string_to_av_perm(tclass_ex, av_name);
 		if (av_code_ex == 0)
 		{
 			/* fill up undefined permissions */
@@ -839,15 +836,13 @@ sepgsql_compute_create(const char *scontext,
 					   const char *objname)
 {
 	char	   *ncontext;
-	security_class_t tclass_ex;
-	const char *tclass_name;
 	char	   *result;
 
 	/* Get external code of the object class */
 	Assert(tclass < SEPG_CLASS_MAX);
 
-	tclass_name = selinux_catalog[tclass].class_name;
-	tclass_ex = string_to_security_class(tclass_name);
+	const char *tclass_name = selinux_catalog[tclass].class_name;
+	security_class_t tclass_ex = string_to_security_class(tclass_name);
 
 	/*
 	 * Ask SELinux what is the default context for the given object class on a
@@ -904,13 +899,12 @@ sepgsql_check_perms(const char *scontext,
 					bool abort_on_violation)
 {
 	struct av_decision avd;
-	uint32		denied;
 	uint32		audited;
 	bool		result = true;
 
 	sepgsql_compute_avd(scontext, tcontext, tclass, &avd);
 
-	denied = required & ~avd.allowed;
+	uint32		denied = required & ~avd.allowed;
 
 	if (sepgsql_get_debug_audit())
 		audited = (denied ? denied : required);

@@ -80,10 +80,9 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 		{
 			Oid			typoutput;
 			bool		typisvarlena;
-			char	   *outputstr;
 
 			getTypeOutputInfo(rettype, &typoutput, &typisvarlena);
-			outputstr = OidOutputFunctionCall(typoutput, retval);
+			char	   *outputstr = OidOutputFunctionCall(typoutput, retval);
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -91,10 +90,9 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 		{
 			Oid			typsend;
 			bool		typisvarlena;
-			bytea	   *outputbytes;
 
 			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
-			outputbytes = OidSendFunctionCall(typsend, retval);
+			bytea	   *outputbytes = OidSendFunctionCall(typsend, retval);
 			pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
@@ -118,8 +116,6 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 static void
 fetch_fp_info(Oid func_id, struct fp_info *fip)
 {
-	HeapTuple	func_htp;
-	Form_pg_proc pp;
 
 	Assert(fip != NULL);
 
@@ -134,12 +130,12 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	MemSet(fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
-	func_htp = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_id));
+	HeapTuple	func_htp = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_id));
 	if (!HeapTupleIsValid(func_htp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function with OID %u does not exist", func_id)));
-	pp = (Form_pg_proc) GETSTRUCT(func_htp);
+	Form_pg_proc pp = (Form_pg_proc) GETSTRUCT(func_htp);
 
 	/* reject pg_proc entries that are unsafe to call via fastpath */
 	if (pp->prokind != PROKIND_FUNCTION || pp->proretset)
@@ -188,13 +184,8 @@ void
 HandleFunctionRequest(StringInfo msgBuf)
 {
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
-	Oid			fid;
-	AclResult	aclresult;
-	int16		rformat;
 	Datum		retval;
 	struct fp_info my_fp;
-	struct fp_info *fip;
-	bool		callit;
 	bool		was_logged = false;
 	char		msec_str[32];
 
@@ -217,13 +208,13 @@ HandleFunctionRequest(StringInfo msgBuf)
 	/*
 	 * Begin parsing the buffer contents.
 	 */
-	fid = (Oid) pq_getmsgint(msgBuf, 4);	/* function oid */
+	Oid			fid = (Oid) pq_getmsgint(msgBuf, 4);	/* function oid */
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
 	 * just do the lookups on every call.
 	 */
-	fip = &my_fp;
+	struct fp_info *fip = &my_fp;
 	fetch_fp_info(fid, fip);
 
 	/* Log as soon as we have the function OID and name */
@@ -239,7 +230,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * Check permission to access and call function.  Since we didn't go
 	 * through a normal name lookup, we need to check schema usage too.
 	 */
-	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
+	AclResult	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(fip->namespace));
@@ -260,7 +251,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 */
 	InitFunctionCallInfoData(*fcinfo, &fip->flinfo, 0, InvalidOid, NULL, NULL);
 
-	rformat = parse_fcall_arguments(msgBuf, fip, fcinfo);
+	int16		rformat = parse_fcall_arguments(msgBuf, fip, fcinfo);
 
 	/* Verify we reached the end of the message where expected. */
 	pq_getmsgend(msgBuf);
@@ -268,7 +259,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	/*
 	 * If func is strict, must not call it for null args.
 	 */
-	callit = true;
+	bool		callit = true;
 	if (fip->flinfo.fn_strict)
 	{
 		int			i;
@@ -329,14 +320,12 @@ static int16
 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 					  FunctionCallInfo fcinfo)
 {
-	int			nargs;
 	int			i;
-	int			numAFormats;
 	int16	   *aformats = NULL;
 	StringInfoData abuf;
 
 	/* Get the argument format codes */
-	numAFormats = pq_getmsgint(msgBuf, 2);
+	int			numAFormats = pq_getmsgint(msgBuf, 2);
 	if (numAFormats > 0)
 	{
 		aformats = (int16 *) palloc(numAFormats * sizeof(int16));
@@ -344,7 +333,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 			aformats[i] = pq_getmsgint(msgBuf, 2);
 	}
 
-	nargs = pq_getmsgint(msgBuf, 2);	/* # of arguments */
+	int			nargs = pq_getmsgint(msgBuf, 2);	/* # of arguments */
 
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
@@ -367,10 +356,9 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
-		int			argsize;
 		int16		aformat;
 
-		argsize = pq_getmsgint(msgBuf, 4);
+		int			argsize = pq_getmsgint(msgBuf, 4);
 		if (argsize == -1)
 		{
 			fcinfo->args[i].isnull = true;

@@ -26,8 +26,6 @@
 int
 pgwin32_putenv(const char *envval)
 {
-	char	   *envcpy;
-	char	   *cp;
 	typedef int (_cdecl * PUTENVPROC) (const char *);
 	static const char *const modulenames[] = {
 		"msvcrt",				/* Visual Studio 6.0 / MinGW */
@@ -60,10 +58,10 @@ pgwin32_putenv(const char *envval)
 	 *
 	 * Need a copy of the string so we can modify it.
 	 */
-	envcpy = strdup(envval);
+	char	   *envcpy = strdup(envval);
 	if (!envcpy)
 		return -1;
-	cp = strchr(envcpy, '=');
+	char	   *cp = strchr(envcpy, '=');
 	if (cp == NULL)
 	{
 		free(envcpy);
@@ -100,9 +98,8 @@ pgwin32_putenv(const char *envval)
 
 		if (res != 0 && hmodule != NULL)
 		{
-			PUTENVPROC	putenvFunc;
 
-			putenvFunc = (PUTENVPROC) (pg_funcptr_t) GetProcAddress(hmodule, "_putenv");
+			PUTENVPROC	putenvFunc = (PUTENVPROC) (pg_funcptr_t) GetProcAddress(hmodule, "_putenv");
 			if (putenvFunc)
 				putenvFunc(envval);
 			FreeLibrary(hmodule);
@@ -120,8 +117,6 @@ pgwin32_putenv(const char *envval)
 int
 pgwin32_setenv(const char *name, const char *value, int overwrite)
 {
-	int			res;
-	char	   *envstr;
 
 	/* Error conditions, per POSIX */
 	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL ||
@@ -135,13 +130,13 @@ pgwin32_setenv(const char *name, const char *value, int overwrite)
 	if (overwrite == 0 && getenv(name) != NULL)
 		return 0;
 
-	envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
+	char	   *envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 
 	sprintf(envstr, "%s=%s", name, value);
 
-	res = pgwin32_putenv(envstr);
+	int			res = pgwin32_putenv(envstr);
 	free(envstr);
 	return res;
 }
@@ -149,15 +144,13 @@ pgwin32_setenv(const char *name, const char *value, int overwrite)
 int
 pgwin32_unsetenv(const char *name)
 {
-	int			res;
-	char	   *envbuf;
 
-	envbuf = (char *) malloc(strlen(name) + 2);
+	char	   *envbuf = (char *) malloc(strlen(name) + 2);
 	if (!envbuf)
 		return -1;
 
 	sprintf(envbuf, "%s=", name);
-	res = pgwin32_putenv(envbuf);
+	int			res = pgwin32_putenv(envbuf);
 	free(envbuf);
 	return res;
 }

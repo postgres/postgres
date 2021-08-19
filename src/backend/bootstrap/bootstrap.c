@@ -234,9 +234,8 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 			case 'd':
 				{
 					/* Turn on debugging for the bootstrap process. */
-					char	   *debugstr;
 
-					debugstr = psprintf("debug%s", optarg);
+					char	   *debugstr = psprintf("debug%s", optarg);
 					SetConfigOption("log_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					SetConfigOption("client_min_messages", debugstr,
@@ -503,7 +502,6 @@ closerel(char *name)
 void
 DefineAttr(char *name, char *type, int attnum, int nullness)
 {
-	Oid			typeoid;
 
 	if (boot_reldesc != NULL)
 	{
@@ -519,7 +517,7 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 	attrtypes[attnum]->attnum = attnum + 1;
 
-	typeoid = gettype(type);
+	Oid			typeoid = gettype(type);
 
 	if (Typ != NIL)
 	{
@@ -612,14 +610,12 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 void
 InsertOneTuple(void)
 {
-	HeapTuple	tuple;
-	TupleDesc	tupDesc;
 	int			i;
 
 	elog(DEBUG4, "inserting row with %d columns", numattr);
 
-	tupDesc = CreateTupleDesc(numattr, attrtypes);
-	tuple = heap_form_tuple(tupDesc, values, Nulls);
+	TupleDesc	tupDesc = CreateTupleDesc(numattr, attrtypes);
+	HeapTuple	tuple = heap_form_tuple(tupDesc, values, Nulls);
 	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	simple_heap_insert(boot_reldesc, tuple);
@@ -640,7 +636,6 @@ InsertOneTuple(void)
 void
 InsertOneValue(char *value, int i)
 {
-	Oid			typoid;
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
@@ -653,7 +648,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	typoid = TupleDescAttr(boot_reldesc->rd_att, i)->atttypid;
+	Oid			typoid = TupleDescAttr(boot_reldesc->rd_att, i)->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
@@ -709,22 +704,18 @@ cleanup(void)
 static void
 populate_typ_list(void)
 {
-	Relation	rel;
-	TableScanDesc scan;
 	HeapTuple	tup;
-	MemoryContext old;
 
 	Assert(Typ == NIL);
 
-	rel = table_open(TypeRelationId, NoLock);
-	scan = table_beginscan_catalog(rel, 0, NULL);
-	old = MemoryContextSwitchTo(TopMemoryContext);
+	Relation	rel = table_open(TypeRelationId, NoLock);
+	TableScanDesc scan = table_beginscan_catalog(rel, 0, NULL);
+	MemoryContext old = MemoryContextSwitchTo(TopMemoryContext);
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_type typForm = (Form_pg_type) GETSTRUCT(tup);
-		struct typmap *newtyp;
 
-		newtyp = (struct typmap *) palloc(sizeof(struct typmap));
+		struct typmap *newtyp = (struct typmap *) palloc(sizeof(struct typmap));
 		Typ = lappend(Typ, newtyp);
 
 		newtyp->am_oid = typForm->oid;
@@ -917,8 +908,6 @@ index_register(Oid heap,
 			   Oid ind,
 			   IndexInfo *indexInfo)
 {
-	IndexList  *newind;
-	MemoryContext oldcxt;
 
 	/*
 	 * XXX mao 10/31/92 -- don't gc index reldescs, associated info at
@@ -931,9 +920,9 @@ index_register(Oid heap,
 									 "BootstrapNoGC",
 									 ALLOCSET_DEFAULT_SIZES);
 
-	oldcxt = MemoryContextSwitchTo(nogc);
+	MemoryContext oldcxt = MemoryContextSwitchTo(nogc);
 
-	newind = (IndexList *) palloc(sizeof(IndexList));
+	IndexList  *newind = (IndexList *) palloc(sizeof(IndexList));
 	newind->il_heap = heap;
 	newind->il_ind = ind;
 	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
@@ -967,12 +956,10 @@ build_indices(void)
 {
 	for (; ILHead != NULL; ILHead = ILHead->il_next)
 	{
-		Relation	heap;
-		Relation	ind;
 
 		/* need not bother with locks during bootstrap */
-		heap = table_open(ILHead->il_heap, NoLock);
-		ind = index_open(ILHead->il_ind, NoLock);
+		Relation	heap = table_open(ILHead->il_heap, NoLock);
+		Relation	ind = index_open(ILHead->il_ind, NoLock);
 
 		index_build(heap, ind, ILHead->il_info, false, false);
 

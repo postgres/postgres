@@ -43,7 +43,6 @@ rmtree(const char *path, bool rmtopdir)
 {
 	bool		result = true;
 	char		pathbuf[MAXPGPATH];
-	char	  **filenames;
 	char	  **filename;
 	struct stat statbuf;
 
@@ -51,7 +50,7 @@ rmtree(const char *path, bool rmtopdir)
 	 * we copy all the names out of the directory before we start modifying
 	 * it.
 	 */
-	filenames = pgfnames(path);
+	char	  **filenames = pgfnames(path);
 
 	if (filenames == NULL)
 		return false;

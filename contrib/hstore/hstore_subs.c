@@ -45,8 +45,6 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 						   bool isSlice,
 						   bool isAssignment)
 {
-	A_Indices  *ai;
-	Node	   *subexpr;
 
 	/* We support only single-subscript, non-slice cases */
 	if (isSlice || list_length(indirection) != 1)
@@ -57,10 +55,10 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 									exprLocation((Node *) indirection))));
 
 	/* Transform the subscript expression to type text */
-	ai = linitial_node(A_Indices, indirection);
+	A_Indices  *ai = linitial_node(A_Indices, indirection);
 	Assert(ai->uidx != NULL && ai->lidx == NULL && !ai->is_slice);
 
-	subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
+	Node	   *subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
 	/* If it's not text already, try to coerce */
 	subexpr = coerce_to_target_type(pstate,
 									subexpr, exprType(subexpr),
@@ -96,11 +94,6 @@ hstore_subscript_fetch(ExprState *state,
 					   ExprContext *econtext)
 {
 	SubscriptingRefState *sbsrefstate = op->d.sbsref.state;
-	HStore	   *hs;
-	text	   *key;
-	HEntry	   *entries;
-	int			idx;
-	text	   *out;
 
 	/* Should not get here if source hstore is null */
 	Assert(!(*op->resnull));
@@ -113,12 +106,12 @@ hstore_subscript_fetch(ExprState *state,
 	}
 
 	/* OK, fetch/detoast the hstore and subscript */
-	hs = DatumGetHStoreP(*op->resvalue);
-	key = DatumGetTextPP(sbsrefstate->upperindex[0]);
+	HStore	   *hs = DatumGetHStoreP(*op->resvalue);
+	text	   *key = DatumGetTextPP(sbsrefstate->upperindex[0]);
 
 	/* The rest is basically the same as hstore_fetchval() */
-	entries = ARRPTR(hs);
-	idx = hstoreFindKey(hs, NULL,
+	HEntry	   *entries = ARRPTR(hs);
+	int			idx = hstoreFindKey(hs, NULL,
 						VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 	if (idx < 0 || HSTORE_VALISNULL(entries, idx))
@@ -127,7 +120,7 @@ hstore_subscript_fetch(ExprState *state,
 		return;
 	}
 
-	out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
+	text	   *out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
 								   HSTORE_VALLEN(entries, idx));
 
 	*op->resvalue = PointerGetDatum(out);
@@ -145,7 +138,6 @@ hstore_subscript_assign(ExprState *state,
 						ExprContext *econtext)
 {
 	SubscriptingRefState *sbsrefstate = op->d.sbsref.state;
-	text	   *key;
 	Pairs		p;
 	HStore	   *out;
 
@@ -156,7 +148,7 @@ hstore_subscript_assign(ExprState *state,
 				 errmsg("hstore subscript in assignment must not be null")));
 
 	/* OK, fetch/detoast the subscript */
-	key = DatumGetTextPP(sbsrefstate->upperindex[0]);
+	text	   *key = DatumGetTextPP(sbsrefstate->upperindex[0]);
 
 	/* Create a Pairs entry for subscript + replacement value */
 	p.needfree = false;
@@ -191,7 +183,6 @@ hstore_subscript_assign(ExprState *state,
 		HStore	   *hs = DatumGetHStoreP(*op->resvalue);
 		int			s1count = HS_COUNT(hs);
 		int			outcount = 0;
-		int			vsize;
 		char	   *ps1,
 				   *bufd,
 				   *pd;
@@ -201,7 +192,7 @@ hstore_subscript_assign(ExprState *state,
 		int			s2idx;
 
 		/* Allocate result without considering possibility of duplicate */
-		vsize = CALCDATASIZE(s1count + 1, VARSIZE(hs) + p.keylen + p.vallen);
+		int			vsize = CALCDATASIZE(s1count + 1, VARSIZE(hs) + p.keylen + p.vallen);
 		out = palloc(vsize);
 		SET_VARSIZE(out, vsize);
 		HS_SETCOUNT(out, s1count + 1);

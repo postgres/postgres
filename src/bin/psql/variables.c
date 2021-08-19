@@ -106,14 +106,13 @@ GetVariable(VariableSpace space, const char *name)
 bool
 ParseVariableBool(const char *value, const char *name, bool *result)
 {
-	size_t		len;
 	bool		valid = true;
 
 	/* Treat "unset" as an empty string, which will lead to error below */
 	if (value == NULL)
 		value = "";
 
-	len = strlen(value);
+	size_t		len = strlen(value);
 
 	if (len > 0 && pg_strncasecmp(value, "true", len) == 0)
 		*result = true;
@@ -156,14 +155,13 @@ bool
 ParseVariableNum(const char *value, const char *name, int *result)
 {
 	char	   *end;
-	long		numval;
 
 	/* Treat "unset" as an empty string, which will lead to error below */
 	if (value == NULL)
 		value = "";
 
 	errno = 0;
-	numval = strtol(value, &end, 0);
+	long		numval = strtol(value, &end, 0);
 	if (errno == 0 && *end == '\0' && end != value && numval == (int) numval)
 	{
 		*result = (int) numval;

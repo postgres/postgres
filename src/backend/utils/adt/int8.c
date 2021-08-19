@@ -148,16 +148,14 @@ int8out(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
 	char		buf[MAXINT8LEN + 1];
-	char	   *result;
-	int			len;
 
-	len = pg_lltoa(val, buf) + 1;
+	int			len = pg_lltoa(val, buf) + 1;
 
 	/*
 	 * Since the length is already known, we do a manual palloc() and memcpy()
 	 * to avoid the strlen() call that would otherwise be done in pstrdup().
 	 */
-	result = palloc(len);
+	char	   *result = palloc(len);
 	memcpy(result, buf, len);
 	PG_RETURN_CSTRING(result);
 }
@@ -526,13 +524,12 @@ Datum
 int8um(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
-	int64		result;
 
 	if (unlikely(arg == PG_INT64_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
-	result = -arg;
+	int64		result = -arg;
 	PG_RETURN_INT64(result);
 }
 
@@ -632,13 +629,12 @@ Datum
 int8abs(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
-	int64		result;
 
 	if (unlikely(arg1 == PG_INT64_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
-	result = (arg1 < 0) ? -arg1 : arg1;
+	int64		result = (arg1 < 0) ? -arg1 : arg1;
 	PG_RETURN_INT64(result);
 }
 
@@ -754,9 +750,8 @@ int8gcd(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
 
-	result = int8gcd_internal(arg1, arg2);
+	int64		result = int8gcd_internal(arg1, arg2);
 
 	PG_RETURN_INT64(result);
 }
@@ -769,7 +764,6 @@ int8lcm(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		gcd;
 	int64		result;
 
 	/*
@@ -781,7 +775,7 @@ int8lcm(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(0);
 
 	/* lcm(x, y) = abs(x / gcd(x, y) * y) */
-	gcd = int8gcd_internal(arg1, arg2);
+	int64		gcd = int8gcd_internal(arg1, arg2);
 	arg1 = arg1 / gcd;
 
 	if (unlikely(pg_mul_s64_overflow(arg1, arg2, &result)))
@@ -910,9 +904,8 @@ int8larger(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
 
-	result = ((arg1 > arg2) ? arg1 : arg2);
+	int64		result = ((arg1 > arg2) ? arg1 : arg2);
 
 	PG_RETURN_INT64(result);
 }
@@ -922,9 +915,8 @@ int8smaller(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
 	int64		arg2 = PG_GETARG_INT64(1);
-	int64		result;
 
-	result = ((arg1 < arg2) ? arg1 : arg2);
+	int64		result = ((arg1 < arg2) ? arg1 : arg2);
 
 	PG_RETURN_INT64(result);
 }
@@ -1326,9 +1318,8 @@ Datum
 i8tod(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
-	float8		result;
 
-	result = arg;
+	float8		result = arg;
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -1361,9 +1352,8 @@ Datum
 i8tof(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
-	float4		result;
 
-	result = arg;
+	float4		result = arg;
 
 	PG_RETURN_FLOAT4(result);
 }
@@ -1427,7 +1417,6 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	generate_series_fctx *fctx;
-	int64		result;
 	MemoryContext oldcontext;
 
 	/* stuff done only on the first call of the function */
@@ -1475,7 +1464,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 	 * get the saved state and use current as the result for this iteration
 	 */
 	fctx = funcctx->user_fctx;
-	result = fctx->current;
+	int64		result = fctx->current;
 
 	if ((fctx->step > 0 && fctx->current <= fctx->finish) ||
 		(fctx->step < 0 && fctx->current >= fctx->finish))

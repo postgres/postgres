@@ -61,10 +61,9 @@ pg_mkdir_p(char *path, int omode)
 				oumask;
 	int			last,
 				retval;
-	char	   *p;
 
 	retval = 0;
-	p = path;
+	char	   *p = path;
 
 #ifdef WIN32
 	/* skip network and drive specifiers for win32 */

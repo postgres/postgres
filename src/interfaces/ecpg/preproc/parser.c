@@ -56,10 +56,6 @@ int
 filtered_base_yylex(void)
 {
 	int			cur_token;
-	int			next_token;
-	YYSTYPE		cur_yylval;
-	YYLTYPE		cur_yylloc;
-	char	   *cur_yytext;
 
 	/* Get next token --- we might already have it */
 	if (have_lookahead)
@@ -89,12 +85,12 @@ filtered_base_yylex(void)
 	}
 
 	/* Save and restore lexer output variables around the call */
-	cur_yylval = base_yylval;
-	cur_yylloc = base_yylloc;
-	cur_yytext = base_yytext;
+	YYSTYPE		cur_yylval = base_yylval;
+	YYLTYPE		cur_yylloc = base_yylloc;
+	char	   *cur_yytext = base_yytext;
 
 	/* Get next token, saving outputs into lookahead variables */
-	next_token = base_yylex();
+	int			next_token = base_yylex();
 
 	lookahead_token = next_token;
 	lookahead_yylval = base_yylval;
@@ -151,7 +147,6 @@ filtered_base_yylex(void)
 			if (next_token == UESCAPE)
 			{
 				/* Yup, so get third token, which had better be SCONST */
-				const char *escstr;
 
 				/*
 				 * Again save and restore lexer output variables around the
@@ -171,7 +166,7 @@ filtered_base_yylex(void)
 				 * Save and check escape string, which the scanner returns
 				 * with quotes
 				 */
-				escstr = base_yylval.str;
+				const char *escstr = base_yylval.str;
 				if (strlen(escstr) != 3 || !check_uescapechar(escstr[1]))
 					mmerror(PARSE_ERROR, ET_ERROR, "invalid Unicode escape character");
 

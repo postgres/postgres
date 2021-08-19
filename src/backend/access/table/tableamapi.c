@@ -33,11 +33,9 @@
 const TableAmRoutine *
 GetTableAmRoutine(Oid amhandler)
 {
-	Datum		datum;
-	const TableAmRoutine *routine;
 
-	datum = OidFunctionCall0(amhandler);
-	routine = (TableAmRoutine *) DatumGetPointer(datum);
+	Datum		datum = OidFunctionCall0(amhandler);
+	const TableAmRoutine *routine = (TableAmRoutine *) DatumGetPointer(datum);
 
 	if (routine == NULL || !IsA(routine, TableAmRoutine))
 		elog(ERROR, "table access method handler %u did not return a TableAmRoutine struct",

@@ -91,13 +91,10 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 {
 	uint32		xid_epoch = EpochFromFullTransactionId(fxid);
 	TransactionId xid = XidFromFullTransactionId(fxid);
-	uint32		now_epoch;
-	TransactionId now_epoch_next_xid;
-	FullTransactionId now_fullxid;
 
-	now_fullxid = ReadNextFullTransactionId();
-	now_epoch_next_xid = XidFromFullTransactionId(now_fullxid);
-	now_epoch = EpochFromFullTransactionId(now_fullxid);
+	FullTransactionId now_fullxid = ReadNextFullTransactionId();
+	TransactionId now_epoch_next_xid = XidFromFullTransactionId(now_fullxid);
+	uint32		now_epoch = EpochFromFullTransactionId(now_fullxid);
 
 	if (extracted_xid != NULL)
 		*extracted_xid = xid;
@@ -216,9 +213,8 @@ is_visible_fxid(FullTransactionId value, const pg_snapshot *snap)
 #ifdef USE_BSEARCH_IF_NXIP_GREATER
 	else if (snap->nxip > USE_BSEARCH_IF_NXIP_GREATER)
 	{
-		void	   *res;
 
-		res = bsearch(&value, snap->xip, snap->nxip, sizeof(FullTransactionId),
+		void	   *res = bsearch(&value, snap->xip, snap->nxip, sizeof(FullTransactionId),
 					  cmp_fxid);
 		/* if found, transaction is still in progress */
 		return (res) ? false : true;
@@ -245,13 +241,12 @@ static StringInfo
 buf_init(FullTransactionId xmin, FullTransactionId xmax)
 {
 	pg_snapshot snap;
-	StringInfo	buf;
 
 	snap.xmin = xmin;
 	snap.xmax = xmax;
 	snap.nxip = 0;
 
-	buf = makeStringInfo();
+	StringInfo	buf = makeStringInfo();
 	appendBinaryStringInfo(buf, (char *) &snap, PG_SNAPSHOT_SIZE(0));
 	return buf;
 }
@@ -287,7 +282,6 @@ buf_finalize(StringInfo buf)
 static pg_snapshot *
 parse_snapshot(const char *str)
 {
-	FullTransactionId xmin;
 	FullTransactionId xmax;
 	FullTransactionId last_val = InvalidFullTransactionId;
 	FullTransactionId val;
@@ -295,7 +289,7 @@ parse_snapshot(const char *str)
 	char	   *endp;
 	StringInfo	buf;
 
-	xmin = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
+	FullTransactionId xmin = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
@@ -393,13 +387,11 @@ pg_current_xact_id_if_assigned(PG_FUNCTION_ARGS)
 Datum
 pg_current_snapshot(PG_FUNCTION_ARGS)
 {
-	pg_snapshot *snap;
 	uint32		nxip,
 				i;
-	Snapshot	cur;
 	FullTransactionId next_fxid = ReadNextFullTransactionId();
 
-	cur = GetActiveSnapshot();
+	Snapshot	cur = GetActiveSnapshot();
 	if (cur == NULL)
 		elog(ERROR, "no active snapshot set");
 
@@ -412,7 +404,7 @@ pg_current_snapshot(PG_FUNCTION_ARGS)
 
 	/* allocate */
 	nxip = cur->xcnt;
-	snap = palloc(PG_SNAPSHOT_SIZE(nxip));
+	pg_snapshot *snap = palloc(PG_SNAPSHOT_SIZE(nxip));
 
 	/* fill */
 	snap->xmin = widen_snapshot_xid(cur->xmin, next_fxid);
@@ -445,9 +437,8 @@ Datum
 pg_snapshot_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	pg_snapshot *snap;
 
-	snap = parse_snapshot(str);
+	pg_snapshot *snap = parse_snapshot(str);
 
 	PG_RETURN_POINTER(snap);
 }
@@ -495,13 +486,12 @@ pg_snapshot_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	pg_snapshot *snap;
 	FullTransactionId last = InvalidFullTransactionId;
-	int			nxip;
 	int			i;
 	FullTransactionId xmin;
 	FullTransactionId xmax;
 
 	/* load and validate nxip */
-	nxip = pq_getmsgint(buf, 4);
+	int			nxip = pq_getmsgint(buf, 4);
 	if (nxip < 0 || nxip > PG_SNAPSHOT_MAX_NXIP)
 		goto bad_format;
 

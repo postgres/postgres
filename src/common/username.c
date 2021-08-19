@@ -31,13 +31,12 @@ const char *
 get_user_name(char **errstr)
 {
 #ifndef WIN32
-	struct passwd *pw;
 	uid_t		user_id = geteuid();
 
 	*errstr = NULL;
 
 	errno = 0;					/* clear errno before call */
-	pw = getpwuid(user_id);
+	struct passwd *pw = getpwuid(user_id);
 	if (!pw)
 	{
 		*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
@@ -73,10 +72,9 @@ get_user_name(char **errstr)
 const char *
 get_user_name_or_exit(const char *progname)
 {
-	const char *user_name;
 	char	   *errstr;
 
-	user_name = get_user_name(&errstr);
+	const char *user_name = get_user_name(&errstr);
 
 	if (!user_name)
 	{

@@ -70,7 +70,6 @@ inet_spg_choose(PG_FUNCTION_ARGS)
 	spgChooseOut *out = (spgChooseOut *) PG_GETARG_POINTER(1);
 	inet	   *val = DatumGetInetPP(in->datum),
 			   *prefix;
-	int			commonbits;
 
 	/*
 	 * If we're looking at a tuple that splits by address family, choose the
@@ -93,7 +92,7 @@ inet_spg_choose(PG_FUNCTION_ARGS)
 	Assert(in->nNodes == 4 || in->allTheSame);
 
 	prefix = DatumGetInetPP(in->prefixDatum);
-	commonbits = ip_bits(prefix);
+	int			commonbits = ip_bits(prefix);
 
 	/*
 	 * We cannot put addresses from different families under the same inner
@@ -389,7 +388,6 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 	{
 		inet	   *argument = DatumGetInetPP(scankeys[i].sk_argument);
 		StrategyNumber strategy = scankeys[i].sk_strategy;
-		int			order;
 
 		/*
 		 * Check 0: different families
@@ -488,7 +486,7 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		 * represented values.  If these bits don't match the query, we can
 		 * eliminate some cases.
 		 */
-		order = bitncmp(ip_addr(prefix), ip_addr(argument),
+		int			order = bitncmp(ip_addr(prefix), ip_addr(argument),
 						Min(commonbits, ip_bits(argument)));
 
 		if (order != 0)
@@ -537,9 +535,8 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		if (bitmap & ((1 << 2) | (1 << 3)) &&
 			commonbits < ip_bits(argument))
 		{
-			int			nextbit;
 
-			nextbit = ip_addr(argument)[commonbits / 8] &
+			int			nextbit = ip_addr(argument)[commonbits / 8] &
 				(1 << (7 - commonbits % 8));
 
 			switch (strategy)
@@ -623,9 +620,8 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		if (!leaf && bitmap & (1 | (1 << 1)) &&
 			commonbits < ip_maxbits(argument))
 		{
-			int			nextbit;
 
-			nextbit = ip_addr(argument)[commonbits / 8] &
+			int			nextbit = ip_addr(argument)[commonbits / 8] &
 				(1 << (7 - commonbits % 8));
 
 			switch (strategy)

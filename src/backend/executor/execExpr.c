@@ -122,7 +122,6 @@ static void ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 ExprState *
 ExecInitExpr(Expr *node, PlanState *parent)
 {
-	ExprState  *state;
 	ExprEvalStep scratch = {0};
 
 	/* Special case: NULL expression produces a NULL ExprState pointer */
@@ -130,7 +129,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 		return NULL;
 
 	/* Initialize ExprState with empty step list */
-	state = makeNode(ExprState);
+	ExprState  *state = makeNode(ExprState);
 	state->expr = node;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -159,7 +158,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 ExprState *
 ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 {
-	ExprState  *state;
 	ExprEvalStep scratch = {0};
 
 	/* Special case: NULL expression produces a NULL ExprState pointer */
@@ -167,7 +165,7 @@ ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 		return NULL;
 
 	/* Initialize ExprState with empty step list */
-	state = makeNode(ExprState);
+	ExprState  *state = makeNode(ExprState);
 	state->expr = node;
 	state->parent = NULL;
 	state->ext_params = ext_params;
@@ -208,7 +206,6 @@ ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 ExprState *
 ExecInitQual(List *qual, PlanState *parent)
 {
-	ExprState  *state;
 	ExprEvalStep scratch = {0};
 	List	   *adjust_jumps = NIL;
 	ListCell   *lc;
@@ -219,7 +216,7 @@ ExecInitQual(List *qual, PlanState *parent)
 
 	Assert(IsA(qual, List));
 
-	state = makeNode(ExprState);
+	ExprState  *state = makeNode(ExprState);
 	state->expr = (Expr *) qual;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -357,14 +354,13 @@ ExecBuildProjectionInfo(List *targetList,
 						TupleDesc inputDesc)
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
-	ExprState  *state;
 	ExprEvalStep scratch = {0};
 	ListCell   *lc;
 
 	projInfo->pi_exprContext = econtext;
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
 	projInfo->pi_state.type = T_ExprState;
-	state = &projInfo->pi_state;
+	ExprState  *state = &projInfo->pi_state;
 	state->expr = (Expr *) targetList;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -519,20 +515,15 @@ ExecBuildUpdateProjection(List *targetList,
 						  PlanState *parent)
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
-	ExprState  *state;
-	int			nAssignableCols;
-	bool		sawJunk;
-	Bitmapset  *assignedCols;
 	LastAttnumInfo deform = {0, 0, 0};
 	ExprEvalStep scratch = {0};
-	int			outerattnum;
 	ListCell   *lc,
 			   *lc2;
 
 	projInfo->pi_exprContext = econtext;
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
 	projInfo->pi_state.type = T_ExprState;
-	state = &projInfo->pi_state;
+	ExprState  *state = &projInfo->pi_state;
 	if (evalTargetList)
 		state->expr = (Expr *) targetList;
 	else
@@ -546,8 +537,8 @@ ExecBuildUpdateProjection(List *targetList,
 	 * Examine the targetList to see how many non-junk columns there are, and
 	 * to verify that the non-junk columns come before the junk ones.
 	 */
-	nAssignableCols = 0;
-	sawJunk = false;
+	int			nAssignableCols = 0;
+	bool		sawJunk = false;
 	foreach(lc, targetList)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -571,7 +562,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 * list_member_int() tests, but that risks O(N^2) behavior with many
 	 * columns.)
 	 */
-	assignedCols = NULL;
+	Bitmapset  *assignedCols = NULL;
 	foreach(lc, targetColnos)
 	{
 		AttrNumber	targetattnum = lfirst_int(lc);
@@ -614,12 +605,11 @@ ExecBuildUpdateProjection(List *targetList,
 	 * be of the right data type.  The checks above ensure that the forboth()
 	 * will iterate over exactly the non-junk columns.
 	 */
-	outerattnum = 0;
+	int			outerattnum = 0;
 	forboth(lc, targetList, lc2, targetColnos)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
 		AttrNumber	targetattnum = lfirst_int(lc2);
-		Form_pg_attribute attr;
 
 		Assert(!tle->resjunk);
 
@@ -631,7 +621,7 @@ ExecBuildUpdateProjection(List *targetList,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("table row type and query-specified row type do not match"),
 					 errdetail("Query has too many columns.")));
-		attr = TupleDescAttr(relDesc, targetattnum - 1);
+		Form_pg_attribute attr = TupleDescAttr(relDesc, targetattnum - 1);
 
 		if (attr->attisdropped)
 			ereport(ERROR,
@@ -745,14 +735,12 @@ ExecBuildUpdateProjection(List *targetList,
 ExprState *
 ExecPrepareExpr(Expr *node, EState *estate)
 {
-	ExprState  *result;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	node = expression_planner(node);
 
-	result = ExecInitExpr(node, NULL);
+	ExprState  *result = ExecInitExpr(node, NULL);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -773,14 +761,12 @@ ExecPrepareExpr(Expr *node, EState *estate)
 ExprState *
 ExecPrepareQual(List *qual, EState *estate)
 {
-	ExprState  *result;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	qual = (List *) expression_planner((Expr *) qual);
 
-	result = ExecInitQual(qual, NULL);
+	ExprState  *result = ExecInitQual(qual, NULL);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -796,14 +782,12 @@ ExecPrepareQual(List *qual, EState *estate)
 ExprState *
 ExecPrepareCheck(List *qual, EState *estate)
 {
-	ExprState  *result;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	qual = (List *) expression_planner((Expr *) qual);
 
-	result = ExecInitCheck(qual, NULL);
+	ExprState  *result = ExecInitCheck(qual, NULL);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -820,11 +804,10 @@ List *
 ExecPrepareExprList(List *nodes, EState *estate)
 {
 	List	   *result = NIL;
-	MemoryContext oldcontext;
 	ListCell   *lc;
 
 	/* Ensure that the list cell nodes are in the right context too */
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	foreach(lc, nodes)
 	{
@@ -852,7 +835,6 @@ ExecPrepareExprList(List *nodes, EState *estate)
 bool
 ExecCheck(ExprState *state, ExprContext *econtext)
 {
-	Datum		ret;
 	bool		isnull;
 
 	/* short-circuit (here and in ExecInitCheck) for empty restriction list */
@@ -862,7 +844,7 @@ ExecCheck(ExprState *state, ExprContext *econtext)
 	/* verify that expression was not compiled using ExecInitQual */
 	Assert(!(state->flags & EEO_FLAG_IS_QUAL));
 
-	ret = ExecEvalExprSwitchContext(state, econtext, &isnull);
+	Datum		ret = ExecEvalExprSwitchContext(state, econtext, &isnull);
 
 	if (isnull)
 		return true;
@@ -1056,7 +1038,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_GroupingFunc:
 			{
 				GroupingFunc *grp_node = (GroupingFunc *) node;
-				Agg		   *agg;
 
 				if (!state->parent || !IsA(state->parent, AggState) ||
 					!IsA(state->parent->plan, Agg))
@@ -1064,7 +1045,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				scratch.opcode = EEOP_GROUPING_FUNC;
 
-				agg = (Agg *) (state->parent->plan);
+				Agg		   *agg = (Agg *) (state->parent->plan);
 
 				if (agg->groupingSets)
 					scratch.d.grouping_func.clauses = grp_node->cols;
@@ -1085,10 +1066,9 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				if (state->parent && IsA(state->parent, WindowAggState))
 				{
 					WindowAggState *winstate = (WindowAggState *) state->parent;
-					int			nfuncs;
 
 					winstate->funcs = lappend(winstate->funcs, wfstate);
-					nfuncs = ++winstate->numfuncs;
+					int			nfuncs = ++winstate->numfuncs;
 					if (wfunc->winagg)
 						winstate->numaggs++;
 
@@ -1198,11 +1178,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_ScalarArrayOpExpr:
 			{
 				ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) node;
-				Expr	   *scalararg;
-				Expr	   *arrayarg;
-				FmgrInfo   *finfo;
-				FunctionCallInfo fcinfo;
-				AclResult	aclresult;
 				FmgrInfo   *hash_finfo;
 				FunctionCallInfo hash_fcinfo;
 				Oid			cmpfuncid;
@@ -1222,11 +1197,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					cmpfuncid = opexpr->opfuncid;
 
 				Assert(list_length(opexpr->args) == 2);
-				scalararg = (Expr *) linitial(opexpr->args);
-				arrayarg = (Expr *) lsecond(opexpr->args);
+				Expr	   *scalararg = (Expr *) linitial(opexpr->args);
+				Expr	   *arrayarg = (Expr *) lsecond(opexpr->args);
 
 				/* Check permission to call function */
-				aclresult = pg_proc_aclcheck(cmpfuncid,
+				AclResult	aclresult = pg_proc_aclcheck(cmpfuncid,
 											 GetUserId(),
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
@@ -1246,8 +1221,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				}
 
 				/* Set up the primary fmgr lookup information */
-				finfo = palloc0(sizeof(FmgrInfo));
-				fcinfo = palloc0(SizeForFunctionCallInfo(2));
+				FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
+				FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
 				fmgr_info(cmpfuncid, finfo);
 				fmgr_info_set_expr((Node *) node, finfo);
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -1332,7 +1307,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				BoolExpr   *boolexpr = (BoolExpr *) node;
 				int			nargs = list_length(boolexpr->args);
 				List	   *adjust_jumps = NIL;
-				int			off;
 				ListCell   *lc;
 
 				/* allocate scratch memory used by all steps of AND/OR */
@@ -1352,7 +1326,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * perform different work.  The FIRST/LAST split is valid
 				 * because AND/OR have at least two arguments.
 				 */
-				off = 0;
+				int			off = 0;
 				foreach(lc, boolexpr->args)
 				{
 					Expr	   *arg = (Expr *) lfirst(lc);
@@ -1416,12 +1390,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_SubPlan:
 			{
 				SubPlan    *subplan = (SubPlan *) node;
-				SubPlanState *sstate;
 
 				if (!state->parent)
 					elog(ERROR, "SubPlan found with no parent plan");
 
-				sstate = ExecInitSubPlan(subplan, state->parent);
+				SubPlanState *sstate = ExecInitSubPlan(subplan, state->parent);
 
 				/* add SubPlanState nodes to state->parent->subPlan */
 				state->parent->subPlan = lappend(state->parent->subPlan,
@@ -1454,25 +1427,20 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_FieldStore:
 			{
 				FieldStore *fstore = (FieldStore *) node;
-				TupleDesc	tupDesc;
-				ExprEvalRowtypeCache *rowcachep;
-				Datum	   *values;
-				bool	   *nulls;
-				int			ncolumns;
 				ListCell   *l1,
 						   *l2;
 
 				/* find out the number of columns in the composite type */
-				tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
-				ncolumns = tupDesc->natts;
+				TupleDesc	tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
+				int			ncolumns = tupDesc->natts;
 				DecrTupleDescRefCount(tupDesc);
 
 				/* create workspace for column values */
-				values = (Datum *) palloc(sizeof(Datum) * ncolumns);
-				nulls = (bool *) palloc(sizeof(bool) * ncolumns);
+				Datum	   *values = (Datum *) palloc(sizeof(Datum) * ncolumns);
+				bool	   *nulls = (bool *) palloc(sizeof(bool) * ncolumns);
 
 				/* create shared composite-type-lookup cache struct */
-				rowcachep = palloc(sizeof(ExprEvalRowtypeCache));
+				ExprEvalRowtypeCache *rowcachep = palloc(sizeof(ExprEvalRowtypeCache));
 				rowcachep->cacheptr = NULL;
 
 				/* emit code to evaluate the composite input value */
@@ -1492,8 +1460,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				{
 					Expr	   *e = (Expr *) lfirst(l1);
 					AttrNumber	fieldnum = lfirst_int(l2);
-					Datum	   *save_innermost_caseval;
-					bool	   *save_innermost_casenull;
 
 					if (fieldnum <= 0 || fieldnum > ncolumns)
 						elog(ERROR, "field number %d is out of range in FieldStore",
@@ -1523,8 +1489,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					 * target the same field, they'll effectively be applied
 					 * left-to-right which is what we want.
 					 */
-					save_innermost_caseval = state->innermost_caseval;
-					save_innermost_casenull = state->innermost_casenull;
+					Datum	   *save_innermost_caseval = state->innermost_caseval;
+					bool	   *save_innermost_casenull = state->innermost_casenull;
 					state->innermost_caseval = &values[fieldnum - 1];
 					state->innermost_casenull = &nulls[fieldnum - 1];
 
@@ -1562,7 +1528,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				Oid			iofunc;
 				bool		typisvarlena;
 				Oid			typioparam;
-				FunctionCallInfo fcinfo_in;
 
 				/* evaluate argument into step's result area */
 				ExecInitExprRec(iocoerce->arg, state, resv, resnull);
@@ -1605,7 +1570,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * We can preload the second and third arguments for the input
 				 * function, since they're constants.
 				 */
-				fcinfo_in = scratch.d.iocoerce.fcinfo_data_in;
+				FunctionCallInfo fcinfo_in = scratch.d.iocoerce.fcinfo_data_in;
 				fcinfo_in->args[1].value = ObjectIdGetDatum(typioparam);
 				fcinfo_in->args[1].isnull = false;
 				fcinfo_in->args[2].value = Int32GetDatum(-1);
@@ -1618,13 +1583,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_ArrayCoerceExpr:
 			{
 				ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
-				Oid			resultelemtype;
-				ExprState  *elemstate;
 
 				/* evaluate argument into step's result area */
 				ExecInitExprRec(acoerce->arg, state, resv, resnull);
 
-				resultelemtype = get_element_type(acoerce->resulttype);
+				Oid			resultelemtype = get_element_type(acoerce->resulttype);
 				if (!OidIsValid(resultelemtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1636,7 +1599,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * We assume it hasn't any Var references, but does have a
 				 * CaseTestExpr representing the source array element values.
 				 */
-				elemstate = makeNode(ExprState);
+				ExprState  *elemstate = makeNode(ExprState);
 				elemstate->expr = acoerce->elemexpr;
 				elemstate->parent = state->parent;
 				elemstate->ext_params = state->ext_params;
@@ -1685,10 +1648,9 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_ConvertRowtypeExpr:
 			{
 				ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) node;
-				ExprEvalRowtypeCache *rowcachep;
 
 				/* cache structs must be out-of-line for space reasons */
-				rowcachep = palloc(2 * sizeof(ExprEvalRowtypeCache));
+				ExprEvalRowtypeCache *rowcachep = palloc(2 * sizeof(ExprEvalRowtypeCache));
 				rowcachep[0].cacheptr = NULL;
 				rowcachep[1].cacheptr = NULL;
 
@@ -1759,9 +1721,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				foreach(lc, caseExpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(lc);
-					Datum	   *save_innermost_caseval;
-					bool	   *save_innermost_casenull;
-					int			whenstep;
 
 					/*
 					 * Make testexpr result available to CaseTestExpr nodes
@@ -1773,8 +1732,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					 * to save and restore these fields; but it's less code to
 					 * just do so unconditionally.
 					 */
-					save_innermost_caseval = state->innermost_caseval;
-					save_innermost_casenull = state->innermost_casenull;
+					Datum	   *save_innermost_caseval = state->innermost_caseval;
+					bool	   *save_innermost_casenull = state->innermost_casenull;
 					state->innermost_caseval = caseval;
 					state->innermost_casenull = casenull;
 
@@ -1788,7 +1747,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					scratch.opcode = EEOP_JUMP_IF_NOT_TRUE;
 					scratch.d.jump.jumpdone = -1;	/* computed later */
 					ExprEvalPushStep(state, &scratch);
-					whenstep = state->steps_len - 1;
+					int			whenstep = state->steps_len - 1;
 
 					/*
 					 * If WHEN result is true, evaluate THEN result, storing
@@ -1859,7 +1818,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
 				int			nelems = list_length(arrayexpr->elements);
 				ListCell   *lc;
-				int			elemoff;
 
 				/*
 				 * Evaluate by computing each element, and then forming the
@@ -1884,7 +1842,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 									 &scratch.d.arrayexpr.elemalign);
 
 				/* prepare to evaluate all arguments */
-				elemoff = 0;
+				int			elemoff = 0;
 				foreach(lc, arrayexpr->elements)
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
@@ -1905,7 +1863,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				RowExpr    *rowexpr = (RowExpr *) node;
 				int			nelems = list_length(rowexpr->args);
 				TupleDesc	tupdesc;
-				int			i;
 				ListCell   *l;
 
 				/* Build tupdesc to describe result tuples */
@@ -1951,7 +1908,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				memset(scratch.d.row.elemnulls, true, sizeof(bool) * nelems);
 
 				/* Set up evaluation, skipping any deleted columns */
-				i = 0;
+				int			i = 0;
 				foreach(l, rowexpr->args)
 				{
 					Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -2030,15 +1987,12 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					int			strategy;
 					Oid			lefttype;
 					Oid			righttype;
-					Oid			proc;
-					FmgrInfo   *finfo;
-					FunctionCallInfo fcinfo;
 
 					get_op_opfamily_properties(opno, opfamily, false,
 											   &strategy,
 											   &lefttype,
 											   &righttype);
-					proc = get_opfamily_proc(opfamily,
+					Oid			proc = get_opfamily_proc(opfamily,
 											 lefttype,
 											 righttype,
 											 BTORDER_PROC);
@@ -2047,8 +2001,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 							 BTORDER_PROC, lefttype, righttype, opfamily);
 
 					/* Set up the primary fmgr lookup information */
-					finfo = palloc0(sizeof(FmgrInfo));
-					fcinfo = palloc0(SizeForFunctionCallInfo(2));
+					FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
+					FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
 					fmgr_info(proc, finfo);
 					fmgr_info_set_expr((Node *) node, finfo);
 					InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -2167,14 +2121,10 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				MinMaxExpr *minmaxexpr = (MinMaxExpr *) node;
 				int			nelems = list_length(minmaxexpr->args);
-				TypeCacheEntry *typentry;
-				FmgrInfo   *finfo;
-				FunctionCallInfo fcinfo;
 				ListCell   *lc;
-				int			off;
 
 				/* Look up the btree comparison function for the datatype */
-				typentry = lookup_type_cache(minmaxexpr->minmaxtype,
+				TypeCacheEntry *typentry = lookup_type_cache(minmaxexpr->minmaxtype,
 											 TYPECACHE_CMP_PROC);
 				if (!OidIsValid(typentry->cmp_proc))
 					ereport(ERROR,
@@ -2190,8 +2140,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 */
 
 				/* Perform function lookup */
-				finfo = palloc0(sizeof(FmgrInfo));
-				fcinfo = palloc0(SizeForFunctionCallInfo(2));
+				FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
+				FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
 				fmgr_info(typentry->cmp_proc, finfo);
 				fmgr_info_set_expr((Node *) node, finfo);
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -2210,7 +2160,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				scratch.d.minmax.fcinfo_data = fcinfo;
 
 				/* evaluate expressions into minmax->values/nulls */
-				off = 0;
+				int			off = 0;
 				foreach(lc, minmaxexpr->args)
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
@@ -2242,7 +2192,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				XmlExpr    *xexpr = (XmlExpr *) node;
 				int			nnamed = list_length(xexpr->named_args);
 				int			nargs = list_length(xexpr->args);
-				int			off;
 				ListCell   *arg;
 
 				scratch.opcode = EEOP_XMLEXPR;
@@ -2276,7 +2225,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				}
 
 				/* prepare argument execution */
-				off = 0;
+				int			off = 0;
 				foreach(arg, xexpr->named_args)
 				{
 					Expr	   *e = (Expr *) lfirst(arg);
@@ -2472,14 +2421,10 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 			 Oid inputcollid, ExprState *state)
 {
 	int			nargs = list_length(args);
-	AclResult	aclresult;
-	FmgrInfo   *flinfo;
-	FunctionCallInfo fcinfo;
-	int			argno;
 	ListCell   *lc;
 
 	/* Check permission to call function */
-	aclresult = pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE);
+	AclResult	aclresult = pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(funcid));
 	InvokeFunctionExecuteHook(funcid);
@@ -2501,8 +2446,8 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 	/* Allocate function lookup data and parameter workspace for this call */
 	scratch->d.func.finfo = palloc0(sizeof(FmgrInfo));
 	scratch->d.func.fcinfo_data = palloc0(SizeForFunctionCallInfo(nargs));
-	flinfo = scratch->d.func.finfo;
-	fcinfo = scratch->d.func.fcinfo_data;
+	FmgrInfo   *flinfo = scratch->d.func.finfo;
+	FunctionCallInfo fcinfo = scratch->d.func.fcinfo_data;
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info(funcid, flinfo);
@@ -2526,7 +2471,7 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 									  exprLocation((Node *) node)) : 0));
 
 	/* Build code to evaluate arguments directly into the fcinfo struct */
-	argno = 0;
+	int			argno = 0;
 	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
@@ -2866,16 +2811,12 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 	bool		isAssignment = (sbsref->refassgnexpr != NULL);
 	int			nupper = list_length(sbsref->refupperindexpr);
 	int			nlower = list_length(sbsref->reflowerindexpr);
-	const SubscriptRoutines *sbsroutines;
-	SubscriptingRefState *sbsrefstate;
 	SubscriptExecSteps methods;
-	char	   *ptr;
 	List	   *adjust_jumps = NIL;
 	ListCell   *lc;
-	int			i;
 
 	/* Look up the subscripting support methods */
-	sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
+	const SubscriptRoutines *sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
 	if (!sbsroutines)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -2886,7 +2827,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 									  exprLocation((Node *) sbsref)) : 0));
 
 	/* Allocate sbsrefstate, with enough space for per-subscript arrays too */
-	sbsrefstate = palloc0(MAXALIGN(sizeof(SubscriptingRefState)) +
+	SubscriptingRefState *sbsrefstate = palloc0(MAXALIGN(sizeof(SubscriptingRefState)) +
 						  (nupper + nlower) * (sizeof(Datum) +
 											   2 * sizeof(bool)));
 
@@ -2895,7 +2836,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 	sbsrefstate->numupper = nupper;
 	sbsrefstate->numlower = nlower;
 	/* Set up per-subscript arrays */
-	ptr = ((char *) sbsrefstate) + MAXALIGN(sizeof(SubscriptingRefState));
+	char	   *ptr = ((char *) sbsrefstate) + MAXALIGN(sizeof(SubscriptingRefState));
 	sbsrefstate->upperindex = (Datum *) ptr;
 	ptr += nupper * sizeof(Datum);
 	sbsrefstate->lowerindex = (Datum *) ptr;
@@ -2941,7 +2882,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 	}
 
 	/* Evaluate upper subscripts */
-	i = 0;
+	int			i = 0;
 	foreach(lc, sbsref->refupperindexpr)
 	{
 		Expr	   *e = (Expr *) lfirst(lc);
@@ -3000,8 +2941,6 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 
 	if (isAssignment)
 	{
-		Datum	   *save_innermost_caseval;
-		bool	   *save_innermost_casenull;
 
 		/* Check for unimplemented methods */
 		if (!methods.sbs_assign)
@@ -3038,8 +2977,8 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 		}
 
 		/* SBSREF_OLD puts extracted value into prevvalue/prevnull */
-		save_innermost_caseval = state->innermost_caseval;
-		save_innermost_casenull = state->innermost_casenull;
+		Datum	   *save_innermost_caseval = state->innermost_caseval;
+		bool	   *save_innermost_casenull = state->innermost_casenull;
 		state->innermost_caseval = &sbsrefstate->prevvalue;
 		state->innermost_casenull = &sbsrefstate->prevnull;
 
@@ -3127,7 +3066,6 @@ static void
 ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 					   ExprState *state, Datum *resv, bool *resnull)
 {
-	DomainConstraintRef *constraint_ref;
 	ListCell   *l;
 
 	scratch->d.domaincheck.resulttype = ctest->resulttype;
@@ -3159,7 +3097,7 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	 * during executor initialization.  That means we don't need typcache.c to
 	 * provide compiled exprs.
 	 */
-	constraint_ref = (DomainConstraintRef *)
+	DomainConstraintRef *constraint_ref = (DomainConstraintRef *)
 		palloc(sizeof(DomainConstraintRef));
 	InitDomainConstraintRef(ctest->resulttype,
 							constraint_ref,
@@ -3324,7 +3262,6 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		List	   *adjust_bailout = NIL;
 		NullableDatum *strictargs = NULL;
 		bool	   *strictnulls = NULL;
-		int			argno;
 		ListCell   *bail;
 
 		/*
@@ -3349,7 +3286,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		/*
 		 * Evaluate arguments to aggregate/combine function.
 		 */
-		argno = 0;
+		int			argno = 0;
 		if (isCombine)
 		{
 			/*
@@ -3357,13 +3294,12 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			 * coming from a tuple the input is a, potentially deserialized,
 			 * transition value.
 			 */
-			TargetEntry *source_tle;
 
 			Assert(pertrans->numSortCols == 0);
 			Assert(list_length(pertrans->aggref->args) == 1);
 
 			strictargs = trans_fcinfo->args + 1;
-			source_tle = (TargetEntry *) linitial(pertrans->aggref->args);
+			TargetEntry *source_tle = (TargetEntry *) linitial(pertrans->aggref->args);
 
 			/*
 			 * deserialfn_oid will be set if we must deserialize the input
@@ -3762,20 +3698,17 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		Form_pg_attribute ratt = TupleDescAttr(rdesc, attno - 1);
 		Oid			foid = eqfunctions[natt];
 		Oid			collid = collations[natt];
-		FmgrInfo   *finfo;
-		FunctionCallInfo fcinfo;
-		AclResult	aclresult;
 
 		/* Check permission to call function */
-		aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+		AclResult	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 
 		InvokeFunctionExecuteHook(foid);
 
 		/* Set up the primary fmgr lookup information */
-		finfo = palloc0(sizeof(FmgrInfo));
-		fcinfo = palloc0(SizeForFunctionCallInfo(2));
+		FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
+		FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
 		fmgr_info(foid, finfo);
 		fmgr_info_set_expr(NULL, finfo);
 		InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -3896,20 +3829,17 @@ ExecBuildParamSetEqual(TupleDesc desc,
 		Form_pg_attribute att = TupleDescAttr(desc, attno);
 		Oid			foid = eqfunctions[attno];
 		Oid			collid = collations[attno];
-		FmgrInfo   *finfo;
-		FunctionCallInfo fcinfo;
-		AclResult	aclresult;
 
 		/* Check permission to call function */
-		aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+		AclResult	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 
 		InvokeFunctionExecuteHook(foid);
 
 		/* Set up the primary fmgr lookup information */
-		finfo = palloc0(sizeof(FmgrInfo));
-		fcinfo = palloc0(SizeForFunctionCallInfo(2));
+		FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
+		FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
 		fmgr_info(foid, finfo);
 		fmgr_info_set_expr(NULL, finfo);
 		InitFunctionCallInfoData(*fcinfo, finfo, 2,

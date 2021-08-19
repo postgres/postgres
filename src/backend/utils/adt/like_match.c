@@ -248,7 +248,6 @@ MatchText(const char *t, int tlen, const char *p, int plen,
 static text *
 do_like_escape(text *pat, text *esc)
 {
-	text	   *result;
 	char	   *p,
 			   *e,
 			   *r;
@@ -265,7 +264,7 @@ do_like_escape(text *pat, text *esc)
 	 * Worst-case pattern growth is 2x --- unlikely, but it's hardly worth
 	 * trying to calculate the size more accurately than that.
 	 */
-	result = (text *) palloc(plen * 2 + VARHDRSZ);
+	text	   *result = (text *) palloc(plen * 2 + VARHDRSZ);
 	r = VARDATA(result);
 
 	if (elen == 0)

@@ -56,20 +56,17 @@ static bool type_in_list_does_not_exist_skipping(List *typenames,
 void
 RemoveObjects(DropStmt *stmt)
 {
-	ObjectAddresses *objects;
 	ListCell   *cell1;
 
-	objects = new_object_addresses();
+	ObjectAddresses *objects = new_object_addresses();
 
 	foreach(cell1, stmt->objects)
 	{
-		ObjectAddress address;
 		Node	   *object = lfirst(cell1);
 		Relation	relation = NULL;
-		Oid			namespaceId;
 
 		/* Get an ObjectAddress for the object. */
-		address = get_object_address(stmt->removeType,
+		ObjectAddress address = get_object_address(stmt->removeType,
 									 object,
 									 &relation,
 									 AccessExclusiveLock,
@@ -103,7 +100,7 @@ RemoveObjects(DropStmt *stmt)
 		}
 
 		/* Check permissions. */
-		namespaceId = get_object_namespace(&address);
+		Oid			namespaceId = get_object_namespace(&address);
 		if (!OidIsValid(namespaceId) ||
 			!pg_namespace_ownercheck(namespaceId, GetUserId()))
 			check_object_ownership(GetUserId(), stmt->removeType, address,
@@ -142,16 +139,14 @@ RemoveObjects(DropStmt *stmt)
 static bool
 owningrel_does_not_exist_skipping(List *object, const char **msg, char **name)
 {
-	List	   *parent_object;
-	RangeVar   *parent_rel;
 
-	parent_object = list_truncate(list_copy(object),
+	List	   *parent_object = list_truncate(list_copy(object),
 								  list_length(object) - 1);
 
 	if (schema_does_not_exist_skipping(parent_object, msg, name))
 		return true;
 
-	parent_rel = makeRangeVarFromNameList(parent_object);
+	RangeVar   *parent_rel = makeRangeVarFromNameList(parent_object);
 
 	if (!OidIsValid(RangeVarGetRelid(parent_rel, NoLock, true)))
 	{
@@ -178,9 +173,8 @@ owningrel_does_not_exist_skipping(List *object, const char **msg, char **name)
 static bool
 schema_does_not_exist_skipping(List *object, const char **msg, char **name)
 {
-	RangeVar   *rel;
 
-	rel = makeRangeVarFromNameList(object);
+	RangeVar   *rel = makeRangeVarFromNameList(object);
 
 	if (rel->schemaname != NULL &&
 		!OidIsValid(LookupNamespaceNoError(rel->schemaname)))

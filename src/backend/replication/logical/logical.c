@@ -153,19 +153,17 @@ StartupDecodingContext(List *output_plugin_options,
 					   LogicalOutputPluginWriterWrite do_write,
 					   LogicalOutputPluginWriterUpdateProgress update_progress)
 {
-	ReplicationSlot *slot;
 	MemoryContext context,
 				old_context;
-	LogicalDecodingContext *ctx;
 
 	/* shorter lines... */
-	slot = MyReplicationSlot;
+	ReplicationSlot *slot = MyReplicationSlot;
 
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"Logical decoding context",
 									ALLOCSET_DEFAULT_SIZES);
 	old_context = MemoryContextSwitchTo(context);
-	ctx = palloc0(sizeof(LogicalDecodingContext));
+	LogicalDecodingContext *ctx = palloc0(sizeof(LogicalDecodingContext));
 
 	ctx->context = context;
 
@@ -324,14 +322,10 @@ CreateInitDecodingContext(const char *plugin,
 						  LogicalOutputPluginWriterWrite do_write,
 						  LogicalOutputPluginWriterUpdateProgress update_progress)
 {
-	TransactionId xmin_horizon = InvalidTransactionId;
-	ReplicationSlot *slot;
 	NameData	plugin_name;
-	LogicalDecodingContext *ctx;
-	MemoryContext old_context;
 
 	/* shorter lines... */
-	slot = MyReplicationSlot;
+	ReplicationSlot *slot = MyReplicationSlot;
 
 	/* first some sanity checks that are unlikely to be violated */
 	if (slot == NULL)
@@ -404,7 +398,7 @@ CreateInitDecodingContext(const char *plugin,
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-	xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
+	TransactionId xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
 
 	SpinLockAcquire(&slot->mutex);
 	slot->effective_catalog_xmin = xmin_horizon;
@@ -420,13 +414,13 @@ CreateInitDecodingContext(const char *plugin,
 	ReplicationSlotMarkDirty();
 	ReplicationSlotSave();
 
-	ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
+	LogicalDecodingContext *ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
 								 need_full_snapshot, false,
 								 xl_routine, prepare_write, do_write,
 								 update_progress);
 
 	/* call output plugin initialization callback */
-	old_context = MemoryContextSwitchTo(ctx->context);
+	MemoryContext old_context = MemoryContextSwitchTo(ctx->context);
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, true);
 	MemoryContextSwitchTo(old_context);
@@ -483,12 +477,9 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 					  LogicalOutputPluginWriterWrite do_write,
 					  LogicalOutputPluginWriterUpdateProgress update_progress)
 {
-	LogicalDecodingContext *ctx;
-	ReplicationSlot *slot;
-	MemoryContext old_context;
 
 	/* shorter lines... */
-	slot = MyReplicationSlot;
+	ReplicationSlot *slot = MyReplicationSlot;
 
 	/* first some sanity checks that are unlikely to be violated */
 	if (slot == NULL)
@@ -532,13 +523,13 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 		start_lsn = slot->data.confirmed_flush;
 	}
 
-	ctx = StartupDecodingContext(output_plugin_options,
+	LogicalDecodingContext *ctx = StartupDecodingContext(output_plugin_options,
 								 start_lsn, InvalidTransactionId, false,
 								 fast_forward, xl_routine, prepare_write,
 								 do_write, update_progress);
 
 	/* call output plugin initialization callback */
-	old_context = MemoryContextSwitchTo(ctx->context);
+	MemoryContext old_context = MemoryContextSwitchTo(ctx->context);
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, false);
 	MemoryContextSwitchTo(old_context);
@@ -599,11 +590,10 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 	/* Wait for a consistent starting point */
 	for (;;)
 	{
-		XLogRecord *record;
 		char	   *err = NULL;
 
 		/* the read_page callback waits for new WAL */
-		record = XLogReadRecord(ctx->reader, &err);
+		XLogRecord *record = XLogReadRecord(ctx->reader, &err);
 		if (err)
 			elog(ERROR, "%s", err);
 		if (!record)
@@ -686,9 +676,8 @@ OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx)
 static void
 LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin)
 {
-	LogicalOutputPluginInit plugin_init;
 
-	plugin_init = (LogicalOutputPluginInit)
+	LogicalOutputPluginInit plugin_init = (LogicalOutputPluginInit)
 		load_external_function(plugin, "_PG_output_plugin_init", false, NULL);
 
 	if (plugin_init == NULL)
@@ -1111,7 +1100,6 @@ filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, TransactionId xid,
 {
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
-	bool		ret;
 
 	Assert(!ctx->fast_forward);
 
@@ -1128,7 +1116,7 @@ filter_prepare_cb_wrapper(LogicalDecodingContext *ctx, TransactionId xid,
 	ctx->accept_writes = false;
 
 	/* do the actual work: call callback */
-	ret = ctx->callbacks.filter_prepare_cb(ctx, xid, gid);
+	bool		ret = ctx->callbacks.filter_prepare_cb(ctx, xid, gid);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
@@ -1141,7 +1129,6 @@ filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, RepOriginId origin_id)
 {
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
-	bool		ret;
 
 	Assert(!ctx->fast_forward);
 
@@ -1158,7 +1145,7 @@ filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, RepOriginId origin_id)
 	ctx->accept_writes = false;
 
 	/* do the actual work: call callback */
-	ret = ctx->callbacks.filter_by_origin_cb(ctx, origin_id);
+	bool		ret = ctx->callbacks.filter_by_origin_cb(ctx, origin_id);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
@@ -1564,9 +1551,8 @@ void
 LogicalIncreaseXminForSlot(XLogRecPtr current_lsn, TransactionId xmin)
 {
 	bool		updated_xmin = false;
-	ReplicationSlot *slot;
 
-	slot = MyReplicationSlot;
+	ReplicationSlot *slot = MyReplicationSlot;
 
 	Assert(slot != NULL);
 
@@ -1621,9 +1607,8 @@ void
 LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart_lsn)
 {
 	bool		updated_lsn = false;
-	ReplicationSlot *slot;
 
-	slot = MyReplicationSlot;
+	ReplicationSlot *slot = MyReplicationSlot;
 
 	Assert(slot != NULL);
 	Assert(restart_lsn != InvalidXLogRecPtr);
@@ -1666,12 +1651,10 @@ LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart
 	}
 	else
 	{
-		XLogRecPtr	candidate_restart_lsn;
-		XLogRecPtr	candidate_restart_valid;
 		XLogRecPtr	confirmed_flush;
 
-		candidate_restart_lsn = slot->candidate_restart_lsn;
-		candidate_restart_valid = slot->candidate_restart_valid;
+		XLogRecPtr	candidate_restart_lsn = slot->candidate_restart_lsn;
+		XLogRecPtr	candidate_restart_valid = slot->candidate_restart_valid;
 		confirmed_flush = slot->data.confirmed_flush;
 		SpinLockRelease(&slot->mutex);
 

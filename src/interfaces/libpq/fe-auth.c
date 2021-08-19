@@ -150,7 +150,6 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 static int
 pg_GSS_startup(PGconn *conn, int payloadlen)
 {
-	int			ret;
 	char	   *host = conn->connhost[conn->whichhost].host;
 
 	if (!(host && host[0] != '\0'))
@@ -167,7 +166,7 @@ pg_GSS_startup(PGconn *conn, int payloadlen)
 		return STATUS_ERROR;
 	}
 
-	ret = pg_GSS_load_servicename(conn);
+	int			ret = pg_GSS_load_servicename(conn);
 	if (ret != STATUS_OK)
 		return ret;
 
@@ -209,7 +208,6 @@ pg_SSPI_error(PGconn *conn, const char *mprefix, SECURITY_STATUS r)
 static int
 pg_SSPI_continue(PGconn *conn, int payloadlen)
 {
-	SECURITY_STATUS r;
 	CtxtHandle	newContext;
 	ULONG		contextAttr;
 	SecBufferDesc inbuf;
@@ -257,7 +255,7 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 	outbuf.pBuffers = OutBuffers;
 	outbuf.ulVersion = SECBUFFER_VERSION;
 
-	r = InitializeSecurityContext(conn->sspicred,
+	SECURITY_STATUS r = InitializeSecurityContext(conn->sspicred,
 								  conn->sspictx,
 								  conn->sspitarget,
 								  ISC_REQ_ALLOCATE_MEMORY,
@@ -342,7 +340,6 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 static int
 pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 {
-	SECURITY_STATUS r;
 	TimeStamp	expire;
 	char	   *host = conn->connhost[conn->whichhost].host;
 
@@ -364,7 +361,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 		return STATUS_ERROR;
 	}
 
-	r = AcquireCredentialsHandle(NULL,
+	SECURITY_STATUS r = AcquireCredentialsHandle(NULL,
 								 use_negotiate ? "negotiate" : "kerberos",
 								 SECPKG_CRED_OUTBOUND,
 								 NULL,
@@ -638,10 +635,9 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 	bool		done;
 	bool		success;
 	int			res;
-	char	   *challenge;
 
 	/* Read the SASL challenge from the AuthenticationSASLContinue message. */
-	challenge = malloc(payloadlen + 1);
+	char	   *challenge = malloc(payloadlen + 1);
 	if (!challenge)
 	{
 		appendPQExpBuffer(&conn->errorMessage,
@@ -723,7 +719,6 @@ pg_local_sendauth(PGconn *conn)
 	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
-	struct cmsghdr *cmsg;
 	union
 	{
 		struct cmsghdr hdr;
@@ -746,7 +741,7 @@ pg_local_sendauth(PGconn *conn)
 	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
-	cmsg = CMSG_FIRSTHDR(&msg);
+	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct cmsgcred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDS;
@@ -771,7 +766,6 @@ pg_local_sendauth(PGconn *conn)
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
-	int			ret;
 	char	   *crypt_pwd = NULL;
 	const char *pwd_to_send;
 	char		md5Salt[4];
@@ -789,7 +783,6 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 	{
 		case AUTH_REQ_MD5:
 			{
-				char	   *crypt_pwd2;
 
 				/* Allocate enough space for two MD5 hashes */
 				crypt_pwd = malloc(2 * (MD5_PASSWD_LEN + 1));
@@ -800,7 +793,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 					return STATUS_ERROR;
 				}
 
-				crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
+				char	   *crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
 				if (!pg_md5_encrypt(password, conn->pguser,
 									strlen(conn->pguser), crypt_pwd2))
 				{
@@ -823,7 +816,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		default:
 			return STATUS_ERROR;
 	}
-	ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
+	int			ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
 	if (crypt_pwd)
 		free(crypt_pwd);
 	return ret;
@@ -1174,9 +1167,8 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 char *
 PQencryptPassword(const char *passwd, const char *user)
 {
-	char	   *crypt_pwd;
 
-	crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
+	char	   *crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
 	if (!crypt_pwd)
 		return NULL;
 
@@ -1229,10 +1221,8 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	/* If no algorithm was given, ask the server. */
 	if (algorithm == NULL)
 	{
-		PGresult   *res;
-		char	   *val;
 
-		res = PQexec(conn, "show password_encryption");
+		PGresult   *res = PQexec(conn, "show password_encryption");
 		if (res == NULL)
 		{
 			/* PQexec() should've set conn->errorMessage already */
@@ -1251,7 +1241,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 								 libpq_gettext("unexpected shape of result set returned for SHOW\n"));
 			return NULL;
 		}
-		val = PQgetvalue(res, 0, 0);
+		char	   *val = PQgetvalue(res, 0, 0);
 
 		if (strlen(val) > MAX_ALGORITHM_NAME_LEN)
 		{

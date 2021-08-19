@@ -64,10 +64,9 @@ static void cleanup_workspace(xpath_workspace *workspace);
 PgXmlErrorContext *
 pgxml_parser_init(PgXmlStrictness strictness)
 {
-	PgXmlErrorContext *xmlerrcxt;
 
 	/* Set up error handling (we share the core's error handler) */
-	xmlerrcxt = pg_xml_init(strictness);
+	PgXmlErrorContext *xmlerrcxt = pg_xml_init(strictness);
 
 	/* Note: we're assuming an elog cannot be thrown by the following calls */
 
@@ -99,9 +98,8 @@ xml_is_well_formed(PG_FUNCTION_ARGS)
 	bool		result = false;
 	int32		docsize = VARSIZE_ANY_EXHDR(t);
 	xmlDocPtr	doctree;
-	PgXmlErrorContext *xmlerrcxt;
 
-	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
+	PgXmlErrorContext *xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
 	PG_TRY();
 	{
@@ -134,7 +132,6 @@ Datum
 xml_encode_special_chars(PG_FUNCTION_ARGS)
 {
 	text	   *tin = PG_GETARG_TEXT_PP(0);
-	text	   *tout;
 	xmlChar    *ts,
 			   *tt;
 
@@ -144,7 +141,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 
 	pfree(ts);
 
-	tout = cstring_to_text((char *) tt);
+	text	   *tout = cstring_to_text((char *) tt);
 
 	xmlFree(tt);
 
@@ -168,11 +165,9 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				   xmlChar *septagname,
 				   xmlChar *plainsep)
 {
-	xmlBufferPtr buf;
-	xmlChar    *result;
 	int			i;
 
-	buf = xmlBufferCreate();
+	xmlBufferPtr buf = xmlBufferCreate();
 
 	if ((toptagname != NULL) && (xmlStrlen(toptagname) > 0))
 	{
@@ -222,7 +217,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 		xmlBufferWriteCHAR(buf, toptagname);
 		xmlBufferWriteChar(buf, ">");
 	}
-	result = xmlStrdup(buf->content);
+	xmlChar    *result = xmlStrdup(buf->content);
 	xmlBufferFree(buf);
 	return result;
 }
@@ -252,16 +247,13 @@ xpath_nodeset(PG_FUNCTION_ARGS)
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(2));
 	xmlChar    *septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(3));
-	xmlChar    *xpath;
-	text	   *xpres;
-	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
 
-	xpath = pgxml_texttoxmlchar(xpathsupp);
+	xmlChar    *xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(document, xpath, &workspace);
+	xmlXPathObjectPtr res = pgxml_xpath(document, xpath, &workspace);
 
-	xpres = pgxml_result_to_text(res, toptag, septag, NULL);
+	text	   *xpres = pgxml_result_to_text(res, toptag, septag, NULL);
 
 	cleanup_workspace(&workspace);
 
@@ -284,16 +276,13 @@ xpath_list(PG_FUNCTION_ARGS)
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(2));
-	xmlChar    *xpath;
-	text	   *xpres;
-	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
 
-	xpath = pgxml_texttoxmlchar(xpathsupp);
+	xmlChar    *xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(document, xpath, &workspace);
+	xmlXPathObjectPtr res = pgxml_xpath(document, xpath, &workspace);
 
-	xpres = pgxml_result_to_text(res, NULL, NULL, plainsep);
+	text	   *xpres = pgxml_result_to_text(res, NULL, NULL, plainsep);
 
 	cleanup_workspace(&workspace);
 
@@ -312,13 +301,9 @@ xpath_string(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
-	xmlChar    *xpath;
-	int32		pathsize;
-	text	   *xpres;
-	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
 
-	pathsize = VARSIZE_ANY_EXHDR(xpathsupp);
+	int32		pathsize = VARSIZE_ANY_EXHDR(xpathsupp);
 
 	/*
 	 * We encapsulate the supplied path with "string()" = 8 chars + 1 for NUL
@@ -326,15 +311,15 @@ xpath_string(PG_FUNCTION_ARGS)
 	 */
 	/* We could try casting to string using the libxml function? */
 
-	xpath = (xmlChar *) palloc(pathsize + 9);
+	xmlChar    *xpath = (xmlChar *) palloc(pathsize + 9);
 	memcpy((char *) xpath, "string(", 7);
 	memcpy((char *) (xpath + 7), VARDATA_ANY(xpathsupp), pathsize);
 	xpath[pathsize + 7] = ')';
 	xpath[pathsize + 8] = '\0';
 
-	res = pgxml_xpath(document, xpath, &workspace);
+	xmlXPathObjectPtr res = pgxml_xpath(document, xpath, &workspace);
 
-	xpres = pgxml_result_to_text(res, NULL, NULL, NULL);
+	text	   *xpres = pgxml_result_to_text(res, NULL, NULL, NULL);
 
 	cleanup_workspace(&workspace);
 
@@ -353,21 +338,18 @@ xpath_number(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
-	xmlChar    *xpath;
-	float4		fRes;
-	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
 
-	xpath = pgxml_texttoxmlchar(xpathsupp);
+	xmlChar    *xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(document, xpath, &workspace);
+	xmlXPathObjectPtr res = pgxml_xpath(document, xpath, &workspace);
 
 	pfree(xpath);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
 
-	fRes = xmlXPathCastToNumber(res);
+	float4		fRes = xmlXPathCastToNumber(res);
 
 	cleanup_workspace(&workspace);
 
@@ -385,21 +367,18 @@ xpath_bool(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
-	xmlChar    *xpath;
-	int			bRes;
-	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
 
-	xpath = pgxml_texttoxmlchar(xpathsupp);
+	xmlChar    *xpath = pgxml_texttoxmlchar(xpathsupp);
 
-	res = pgxml_xpath(document, xpath, &workspace);
+	xmlXPathObjectPtr res = pgxml_xpath(document, xpath, &workspace);
 
 	pfree(xpath);
 
 	if (res == NULL)
 		PG_RETURN_BOOL(false);
 
-	bRes = xmlXPathCastToBoolean(res);
+	int			bRes = xmlXPathCastToBoolean(res);
 
 	cleanup_workspace(&workspace);
 
@@ -414,14 +393,13 @@ static xmlXPathObjectPtr
 pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 {
 	int32		docsize = VARSIZE_ANY_EXHDR(document);
-	PgXmlErrorContext *xmlerrcxt;
 	xmlXPathCompExprPtr comppath;
 
 	workspace->doctree = NULL;
 	workspace->ctxt = NULL;
 	workspace->res = NULL;
 
-	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
+	PgXmlErrorContext *xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
 	PG_TRY();
 	{
@@ -484,7 +462,6 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 					 xmlChar *plainsep)
 {
 	xmlChar    *xpresstr;
-	text	   *xpres;
 
 	if (res == NULL)
 		return NULL;
@@ -507,7 +484,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	}
 
 	/* Now convert this result back to text */
-	xpres = cstring_to_text((char *) xpresstr);
+	text	   *xpres = cstring_to_text((char *) xpresstr);
 
 	/* Free various storage */
 	xmlFree(xpresstr);
@@ -532,34 +509,21 @@ xpath_table(PG_FUNCTION_ARGS)
 	char	   *condition = text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	/* SPI (input tuple) support */
-	SPITupleTable *tuptable;
 	HeapTuple	spi_tuple;
-	TupleDesc	spi_tupdesc;
 
 	/* Output tuple (tuplestore) support */
-	Tuplestorestate *tupstore = NULL;
-	TupleDesc	ret_tupdesc;
 	HeapTuple	ret_tuple;
 
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
-	char	  **values;
-	xmlChar   **xpaths;
-	char	   *pos;
 	const char *pathsep = "|";
 
-	int			numpaths;
 	int			ret;
-	uint64		proc;
 	int			j;
 	int			rownr;			/* For issuing multiple rows from one original
 								 * document */
 	bool		had_values;		/* To determine end of nodeset results */
 	StringInfoData query_buf;
-	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlDocPtr doctree = NULL;
 
 	/* We only have a valid tuple description in table function mode */
@@ -586,21 +550,21 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * The tuplestore must exist in a higher context than this function call
 	 * (per_query_ctx is used)
 	 */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/*
 	 * Create the tuplestore - work_mem is the max in-memory size before a
 	 * file is created on disk to hold it.
 	 */
-	tupstore =
+	Tuplestorestate *tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 
 	/* get the requested return tuple description */
-	ret_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	TupleDesc	ret_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/* must have at least one output column (for the pkey) */
 	if (ret_tupdesc->natts < 1)
@@ -616,22 +580,22 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * representation.
 	 */
 
-	attinmeta = TupleDescGetAttInMetadata(ret_tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(ret_tupdesc);
 
 	/* Set return mode and allocate value space. */
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setDesc = ret_tupdesc;
 
-	values = (char **) palloc(ret_tupdesc->natts * sizeof(char *));
-	xpaths = (xmlChar **) palloc(ret_tupdesc->natts * sizeof(xmlChar *));
+	char	  **values = (char **) palloc(ret_tupdesc->natts * sizeof(char *));
+	xmlChar   **xpaths = (xmlChar **) palloc(ret_tupdesc->natts * sizeof(xmlChar *));
 
 	/*
 	 * Split XPaths. xpathset is a writable CString.
 	 *
 	 * Note that we stop splitting once we've done all needed for tupdesc
 	 */
-	numpaths = 0;
-	pos = xpathset;
+	int			numpaths = 0;
+	char	   *pos = xpathset;
 	while (numpaths < (ret_tupdesc->natts - 1))
 	{
 		xpaths[numpaths++] = (xmlChar *) pos;
@@ -662,9 +626,9 @@ xpath_table(PG_FUNCTION_ARGS)
 		elog(ERROR, "xpath_table: SPI execution failed for query %s",
 			 query_buf.data);
 
-	proc = SPI_processed;
-	tuptable = SPI_tuptable;
-	spi_tupdesc = tuptable->tupdesc;
+	uint64		proc = SPI_processed;
+	SPITupleTable *tuptable = SPI_tuptable;
+	TupleDesc	spi_tupdesc = tuptable->tupdesc;
 
 	/* Switch out of SPI context */
 	MemoryContextSwitchTo(oldcontext);
@@ -685,7 +649,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * Setup the parser.  This should happen after we are done evaluating the
 	 * query, in case it calls functions that set up libxml differently.
 	 */
-	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
+	PgXmlErrorContext *xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
 	PG_TRY();
 	{
@@ -694,8 +658,6 @@ xpath_table(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < proc; i++)
 		{
-			char	   *pkey;
-			char	   *xmldoc;
 			xmlXPathContextPtr ctxt;
 			xmlXPathObjectPtr res;
 			xmlChar    *resstr;
@@ -703,8 +665,8 @@ xpath_table(PG_FUNCTION_ARGS)
 
 			/* Extract the row data as C Strings */
 			spi_tuple = tuptable->vals[i];
-			pkey = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
-			xmldoc = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
+			char	   *pkey = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			char	   *xmldoc = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
 
 			/*
 			 * Clear the values array, so that not-well-formed documents

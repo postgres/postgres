@@ -33,11 +33,10 @@ Datum
 md5_text(PG_FUNCTION_ARGS)
 {
 	text	   *in_text = PG_GETARG_TEXT_PP(0);
-	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
 
 	/* Calculate the length of the buffer using varlena metadata */
-	len = VARSIZE_ANY_EXHDR(in_text);
+	size_t		len = VARSIZE_ANY_EXHDR(in_text);
 
 	/* get the hash result */
 	if (pg_md5_hash(VARDATA_ANY(in_text), len, hexsum) == false)
@@ -56,10 +55,9 @@ Datum
 md5_bytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *in = PG_GETARG_BYTEA_PP(0);
-	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
 
-	len = VARSIZE_ANY_EXHDR(in);
+	size_t		len = VARSIZE_ANY_EXHDR(in);
 	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum) == false)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -74,12 +72,8 @@ md5_bytea(PG_FUNCTION_ARGS)
 static inline bytea *
 cryptohash_internal(pg_cryptohash_type type, bytea *input)
 {
-	const uint8 *data;
 	const char *typestr = NULL;
 	int			digest_len = 0;
-	size_t		len;
-	pg_cryptohash_ctx *ctx;
-	bytea	   *result;
 
 	switch (type)
 	{
@@ -105,11 +99,11 @@ cryptohash_internal(pg_cryptohash_type type, bytea *input)
 			break;
 	}
 
-	result = palloc0(digest_len + VARHDRSZ);
-	len = VARSIZE_ANY_EXHDR(input);
-	data = (unsigned char *) VARDATA_ANY(input);
+	bytea	   *result = palloc0(digest_len + VARHDRSZ);
+	size_t		len = VARSIZE_ANY_EXHDR(input);
+	const uint8 *data = (unsigned char *) VARDATA_ANY(input);
 
-	ctx = pg_cryptohash_create(type);
+	pg_cryptohash_ctx *ctx = pg_cryptohash_create(type);
 	if (pg_cryptohash_init(ctx) < 0)
 		elog(ERROR, "could not initialize %s context", typestr);
 	if (pg_cryptohash_update(ctx, data, len) < 0)

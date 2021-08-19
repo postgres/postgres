@@ -64,9 +64,8 @@ gbt_intvkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
 	intvKEY    *ia = (intvKEY *) (((const Nsrt *) a)->t);
 	intvKEY    *ib = (intvKEY *) (((const Nsrt *) b)->t);
-	int			res;
 
-	res = DatumGetInt32(DirectFunctionCall2(interval_cmp, IntervalPGetDatum(&ia->lower), IntervalPGetDatum(&ib->lower)));
+	int			res = DatumGetInt32(DirectFunctionCall2(interval_cmp, IntervalPGetDatum(&ia->lower), IntervalPGetDatum(&ib->lower)));
 	if (res == 0)
 		return DatumGetInt32(DirectFunctionCall2(interval_cmp, IntervalPGetDatum(&ia->upper), IntervalPGetDatum(&ib->upper)));
 

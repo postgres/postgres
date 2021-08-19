@@ -39,13 +39,11 @@
 Oid
 LargeObjectCreate(Oid loid)
 {
-	Relation	pg_lo_meta;
-	HeapTuple	ntup;
 	Oid			loid_new;
 	Datum		values[Natts_pg_largeobject_metadata];
 	bool		nulls[Natts_pg_largeobject_metadata];
 
-	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							RowExclusiveLock);
 
 	/*
@@ -66,7 +64,7 @@ LargeObjectCreate(Oid loid)
 		= ObjectIdGetDatum(GetUserId());
 	nulls[Anum_pg_largeobject_metadata_lomacl - 1] = true;
 
-	ntup = heap_form_tuple(RelationGetDescr(pg_lo_meta),
+	HeapTuple	ntup = heap_form_tuple(RelationGetDescr(pg_lo_meta),
 						   values, nulls);
 
 	CatalogTupleInsert(pg_lo_meta, ntup);
@@ -85,16 +83,12 @@ LargeObjectCreate(Oid loid)
 void
 LargeObjectDrop(Oid loid)
 {
-	Relation	pg_lo_meta;
-	Relation	pg_largeobject;
 	ScanKeyData skey[1];
-	SysScanDesc scan;
-	HeapTuple	tuple;
 
-	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							RowExclusiveLock);
 
-	pg_largeobject = table_open(LargeObjectRelationId,
+	Relation	pg_largeobject = table_open(LargeObjectRelationId,
 								RowExclusiveLock);
 
 	/*
@@ -105,11 +99,11 @@ LargeObjectDrop(Oid loid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	scan = systable_beginscan(pg_lo_meta,
+	SysScanDesc scan = systable_beginscan(pg_lo_meta,
 							  LargeObjectMetadataOidIndexId, true,
 							  NULL, 1, skey);
 
-	tuple = systable_getnext(scan);
+	HeapTuple	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -157,10 +151,7 @@ LargeObjectDrop(Oid loid)
 bool
 LargeObjectExists(Oid loid)
 {
-	Relation	pg_lo_meta;
 	ScanKeyData skey[1];
-	SysScanDesc sd;
-	HeapTuple	tuple;
 	bool		retval = false;
 
 	ScanKeyInit(&skey[0],
@@ -168,14 +159,14 @@ LargeObjectExists(Oid loid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
+	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							AccessShareLock);
 
-	sd = systable_beginscan(pg_lo_meta,
+	SysScanDesc sd = systable_beginscan(pg_lo_meta,
 							LargeObjectMetadataOidIndexId, true,
 							NULL, 1, skey);
 
-	tuple = systable_getnext(sd);
+	HeapTuple	tuple = systable_getnext(sd);
 	if (HeapTupleIsValid(tuple))
 		retval = true;
 

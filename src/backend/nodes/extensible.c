@@ -40,7 +40,6 @@ RegisterExtensibleNodeEntry(HTAB **p_htable, const char *htable_label,
 							const char *extnodename,
 							const void *extnodemethods)
 {
-	ExtensibleNodeEntry *entry;
 	bool		found;
 
 	if (*p_htable == NULL)
@@ -57,7 +56,7 @@ RegisterExtensibleNodeEntry(HTAB **p_htable, const char *htable_label,
 	if (strlen(extnodename) >= EXTNODENAME_MAX_LEN)
 		elog(ERROR, "extensible node name is too long");
 
-	entry = (ExtensibleNodeEntry *) hash_search(*p_htable,
+	ExtensibleNodeEntry *entry = (ExtensibleNodeEntry *) hash_search(*p_htable,
 												extnodename,
 												HASH_ENTER, &found);
 	if (found)

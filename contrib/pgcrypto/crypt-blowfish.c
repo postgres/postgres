@@ -598,8 +598,6 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 				tmp2,
 				tmp3,
 				tmp4;
-	BF_word    *ptr;
-	BF_word		count;
 	int			i;
 
 	if (size < 7 + 22 + 31 + 1)
@@ -630,7 +628,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 				 errmsg("invalid salt")));
 	}
 
-	count = (BF_word) 1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
+	BF_word		count = (BF_word) 1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
 	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16))
 	{
 		px_memset(data.binary.salt, 0, sizeof(data.binary.salt));
@@ -654,7 +652,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 		data.ctx.P[i + 1] = R;
 	}
 
-	ptr = data.ctx.S[0];
+	BF_word    *ptr = data.ctx.S[0];
 	do
 	{
 		ptr += 4;

@@ -58,10 +58,6 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			  const BrinTuple *newtup, Size newsz,
 			  bool samepage)
 {
-	Page		oldpage;
-	ItemId		oldlp;
-	BrinTuple  *oldtup;
-	Size		oldsz;
 	Buffer		newbuf;
 	BlockNumber newblk = InvalidBlockNumber;
 	bool		extended;
@@ -110,8 +106,8 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		newbuf = InvalidBuffer;
 		extended = false;
 	}
-	oldpage = BufferGetPage(oldbuf);
-	oldlp = PageGetItemId(oldpage, oldoff);
+	Page		oldpage = BufferGetPage(oldbuf);
+	ItemId		oldlp = PageGetItemId(oldpage, oldoff);
 
 	/*
 	 * Check that the old tuple wasn't updated concurrently: it might have
@@ -143,8 +139,8 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		return false;
 	}
 
-	oldsz = ItemIdGetLength(oldlp);
-	oldtup = (BrinTuple *) PageGetItem(oldpage, oldlp);
+	Size		oldsz = ItemIdGetLength(oldlp);
+	BrinTuple  *oldtup = (BrinTuple *) PageGetItem(oldpage, oldlp);
 
 	/*
 	 * ... or it might have been updated in place to different contents.
@@ -185,7 +181,6 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		if (RelationNeedsWAL(idxrel))
 		{
 			xl_brin_samepage_update xlrec;
-			XLogRecPtr	recptr;
 			uint8		info = XLOG_BRIN_SAMEPAGE_UPDATE;
 
 			xlrec.offnum = oldoff;
@@ -196,7 +191,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			XLogRegisterBuffer(0, oldbuf, REGBUF_STANDARD);
 			XLogRegisterBufData(0, (char *) unconstify(BrinTuple *, newtup), newsz);
 
-			recptr = XLogInsert(RM_BRIN_ID, info);
+			XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, info);
 
 			PageSetLSN(oldpage, recptr);
 		}
@@ -233,12 +228,10 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		 * page, and update the revmap.
 		 */
 		Page		newpage = BufferGetPage(newbuf);
-		Buffer		revmapbuf;
 		ItemPointerData newtid;
-		OffsetNumber newoff;
 		Size		freespace = 0;
 
-		revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
+		Buffer		revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
 
 		START_CRIT_SECTION();
 
@@ -251,7 +244,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			brin_page_init(newpage, BRIN_PAGETYPE_REGULAR);
 
 		PageIndexTupleDeleteNoCompact(oldpage, oldoff);
-		newoff = PageAddItem(newpage, (Item) unconstify(BrinTuple *, newtup), newsz,
+		OffsetNumber newoff = PageAddItem(newpage, (Item) unconstify(BrinTuple *, newtup), newsz,
 							 InvalidOffsetNumber, false, false);
 		if (newoff == InvalidOffsetNumber)
 			elog(ERROR, "failed to add BRIN tuple to new page");
@@ -270,10 +263,8 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		if (RelationNeedsWAL(idxrel))
 		{
 			xl_brin_update xlrec;
-			XLogRecPtr	recptr;
-			uint8		info;
 
-			info = XLOG_BRIN_UPDATE | (extended ? XLOG_BRIN_INIT_PAGE : 0);
+			uint8		info = XLOG_BRIN_UPDATE | (extended ? XLOG_BRIN_INIT_PAGE : 0);
 
 			xlrec.insert.offnum = newoff;
 			xlrec.insert.heapBlk = heapBlk;
@@ -294,7 +285,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			/* old page */
 			XLogRegisterBuffer(2, oldbuf, REGBUF_STANDARD);
 
-			recptr = XLogInsert(RM_BRIN_ID, info);
+			XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, info);
 
 			PageSetLSN(oldpage, recptr);
 			PageSetLSN(newpage, recptr);
@@ -344,11 +335,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 			  BrinRevmap *revmap, Buffer *buffer, BlockNumber heapBlk,
 			  BrinTuple *tup, Size itemsz)
 {
-	Page		page;
-	BlockNumber blk;
-	OffsetNumber off;
 	Size		freespace = 0;
-	Buffer		revmapbuf;
 	ItemPointerData tid;
 	bool		extended;
 
@@ -400,16 +387,16 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		extended = false;
 
 	/* Now obtain lock on revmap buffer */
-	revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
+	Buffer		revmapbuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
 
-	page = BufferGetPage(*buffer);
-	blk = BufferGetBlockNumber(*buffer);
+	Page		page = BufferGetPage(*buffer);
+	BlockNumber blk = BufferGetBlockNumber(*buffer);
 
 	/* Execute the actual insertion */
 	START_CRIT_SECTION();
 	if (extended)
 		brin_page_init(page, BRIN_PAGETYPE_REGULAR);
-	off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
+	OffsetNumber off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
 					  false, false);
 	if (off == InvalidOffsetNumber)
 		elog(ERROR, "failed to add BRIN tuple to new page");
@@ -427,10 +414,8 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	if (RelationNeedsWAL(idxrel))
 	{
 		xl_brin_insert xlrec;
-		XLogRecPtr	recptr;
-		uint8		info;
 
-		info = XLOG_BRIN_INSERT | (extended ? XLOG_BRIN_INIT_PAGE : 0);
+		uint8		info = XLOG_BRIN_INSERT | (extended ? XLOG_BRIN_INIT_PAGE : 0);
 		xlrec.heapBlk = heapBlk;
 		xlrec.pagesPerRange = pagesPerRange;
 		xlrec.offnum = off;
@@ -443,7 +428,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 
 		XLogRegisterBuffer(1, revmapbuf, 0);
 
-		recptr = XLogInsert(RM_BRIN_ID, info);
+		XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, info);
 
 		PageSetLSN(page, recptr);
 		PageSetLSN(BufferGetPage(revmapbuf), recptr);
@@ -486,11 +471,10 @@ brin_page_init(Page page, uint16 type)
 void
 brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
 {
-	BrinMetaPageData *metadata;
 
 	brin_page_init(page, BRIN_PAGETYPE_META);
 
-	metadata = (BrinMetaPageData *) PageGetContents(page);
+	BrinMetaPageData *metadata = (BrinMetaPageData *) PageGetContents(page);
 
 	metadata->brinMagic = BRIN_META_MAGIC;
 	metadata->brinVersion = version;
@@ -525,20 +509,17 @@ bool
 brin_start_evacuating_page(Relation idxRel, Buffer buf)
 {
 	OffsetNumber off;
-	OffsetNumber maxoff;
-	Page		page;
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	if (PageIsNew(page))
 		return false;
 
-	maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
-		ItemId		lp;
 
-		lp = PageGetItemId(page, off);
+		ItemId		lp = PageGetItemId(page, off);
 		if (ItemIdIsUsed(lp))
 		{
 			/* prevent other backends from adding more stuff to this page */
@@ -561,25 +542,22 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 				   BrinRevmap *revmap, Buffer buf)
 {
 	OffsetNumber off;
-	OffsetNumber maxoff;
-	Page		page;
 	BrinTuple  *btup = NULL;
 	Size		btupsz = 0;
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	Assert(BrinPageFlags(page) & BRIN_EVACUATE_PAGE);
 
-	maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
 		BrinTuple  *tup;
 		Size		sz;
-		ItemId		lp;
 
 		CHECK_FOR_INTERRUPTS();
 
-		lp = PageGetItemId(page, off);
+		ItemId		lp = PageGetItemId(page, off);
 		if (ItemIdIsUsed(lp))
 		{
 			sz = ItemIdGetLength(lp);
@@ -687,7 +665,6 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 					 bool *extended)
 {
 	BlockNumber oldblk;
-	BlockNumber newblk;
 	Page		page;
 	Size		freespace;
 
@@ -700,7 +677,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		oldblk = InvalidBlockNumber;
 
 	/* Choose initial target page, re-using existing target if known */
-	newblk = RelationGetTargetBlock(irel);
+	BlockNumber newblk = RelationGetTargetBlock(irel);
 	if (newblk == InvalidBlockNumber)
 		newblk = GetPageWithFreeSpace(irel, itemsz);
 
@@ -875,14 +852,13 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 static void
 brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 {
-	Page		page;
 
 	BRIN_elog((DEBUG2,
 			   "brin_initialize_empty_new_buffer: initializing blank page %u",
 			   BufferGetBlockNumber(buffer)));
 
 	START_CRIT_SECTION();
-	page = BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer);
 	brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	MarkBufferDirty(buffer);
 	log_newpage_buffer(buffer, true);

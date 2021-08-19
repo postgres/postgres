@@ -48,17 +48,15 @@ Datum
 namein(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
-	Name		result;
-	int			len;
 
-	len = strlen(s);
+	int			len = strlen(s);
 
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
 		len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
 	/* We use palloc0 here to ensure result is zero-padded */
-	result = (Name) palloc0(NAMEDATALEN);
+	Name		result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s, len);
 
 	PG_RETURN_NAME(result);
@@ -82,18 +80,16 @@ Datum
 namerecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Name		result;
-	char	   *str;
 	int			nbytes;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	if (nbytes >= NAMEDATALEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NAME_TOO_LONG),
 				 errmsg("identifier too long"),
 				 errdetail("Identifier must be less than %d characters.",
 						   NAMEDATALEN)));
-	result = (NameData *) palloc0(NAMEDATALEN);
+	Name		result = (NameData *) palloc0(NAMEDATALEN);
 	memcpy(result, str, nbytes);
 	pfree(str);
 	PG_RETURN_NAME(result);
@@ -212,9 +208,8 @@ btnamesortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 	Oid			collid = ssup->ssup_collation;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 	/* Use generic string SortSupport */
 	varstr_sortsupport(ssup, NAMEOID, collid);
@@ -279,11 +274,10 @@ Datum
 current_schema(PG_FUNCTION_ARGS)
 {
 	List	   *search_path = fetch_search_path(false);
-	char	   *nspname;
 
 	if (search_path == NIL)
 		PG_RETURN_NULL();
-	nspname = get_namespace_name(linitial_oid(search_path));
+	char	   *nspname = get_namespace_name(linitial_oid(search_path));
 	list_free(search_path);
 	if (!nspname)
 		PG_RETURN_NULL();		/* recently-deleted namespace? */
@@ -295,17 +289,13 @@ current_schemas(PG_FUNCTION_ARGS)
 {
 	List	   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
 	ListCell   *l;
-	Datum	   *names;
-	int			i;
-	ArrayType  *array;
 
-	names = (Datum *) palloc(list_length(search_path) * sizeof(Datum));
-	i = 0;
+	Datum	   *names = (Datum *) palloc(list_length(search_path) * sizeof(Datum));
+	int			i = 0;
 	foreach(l, search_path)
 	{
-		char	   *nspname;
 
-		nspname = get_namespace_name(lfirst_oid(l));
+		char	   *nspname = get_namespace_name(lfirst_oid(l));
 		if (nspname)			/* watch out for deleted namespace */
 		{
 			names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
@@ -314,7 +304,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	}
 	list_free(search_path);
 
-	array = construct_array(names, i,
+	ArrayType  *array = construct_array(names, i,
 							NAMEOID,
 							NAMEDATALEN,	/* sizeof(Name) */
 							false,	/* Name is not by-val */
@@ -338,20 +328,17 @@ nameconcatoid(PG_FUNCTION_ARGS)
 {
 	Name		nam = PG_GETARG_NAME(0);
 	Oid			oid = PG_GETARG_OID(1);
-	Name		result;
 	char		suffix[20];
-	int			suflen;
-	int			namlen;
 
-	suflen = snprintf(suffix, sizeof(suffix), "_%u", oid);
-	namlen = strlen(NameStr(*nam));
+	int			suflen = snprintf(suffix, sizeof(suffix), "_%u", oid);
+	int			namlen = strlen(NameStr(*nam));
 
 	/* Truncate oversize input by truncating name part, not suffix */
 	if (namlen + suflen >= NAMEDATALEN)
 		namlen = pg_mbcliplen(NameStr(*nam), namlen, NAMEDATALEN - 1 - suflen);
 
 	/* We use palloc0 here to ensure result is zero-padded */
-	result = (Name) palloc0(NAMEDATALEN);
+	Name		result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), NameStr(*nam), namlen);
 	memcpy(NameStr(*result) + namlen, suffix, suflen);
 

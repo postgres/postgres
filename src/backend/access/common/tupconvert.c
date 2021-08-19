@@ -60,12 +60,9 @@ convert_tuples_by_position(TupleDesc indesc,
 						   TupleDesc outdesc,
 						   const char *msg)
 {
-	TupleConversionMap *map;
-	int			n;
-	AttrMap    *attrMap;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_position(indesc, outdesc, msg);
+	AttrMap    *attrMap = build_attrmap_by_position(indesc, outdesc, msg);
 
 	if (attrMap == NULL)
 	{
@@ -74,12 +71,12 @@ convert_tuples_by_position(TupleDesc indesc,
 	}
 
 	/* Prepare the map structure */
-	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+	TupleConversionMap *map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;
 	/* preallocate workspace for Datum arrays */
-	n = outdesc->natts + 1;		/* +1 for NULL */
+	int			n = outdesc->natts + 1;		/* +1 for NULL */
 	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
 	map->outisnull = (bool *) palloc(n * sizeof(bool));
 	n = indesc->natts + 1;		/* +1 for NULL */
@@ -102,12 +99,10 @@ TupleConversionMap *
 convert_tuples_by_name(TupleDesc indesc,
 					   TupleDesc outdesc)
 {
-	TupleConversionMap *map;
-	AttrMap    *attrMap;
 	int			n = outdesc->natts;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_name_if_req(indesc, outdesc);
+	AttrMap    *attrMap = build_attrmap_by_name_if_req(indesc, outdesc);
 
 	if (attrMap == NULL)
 	{
@@ -116,7 +111,7 @@ convert_tuples_by_name(TupleDesc indesc,
 	}
 
 	/* Prepare the map structure */
-	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+	TupleConversionMap *map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;
@@ -178,11 +173,6 @@ execute_attr_map_slot(AttrMap *attrMap,
 					  TupleTableSlot *in_slot,
 					  TupleTableSlot *out_slot)
 {
-	Datum	   *invalues;
-	bool	   *inisnull;
-	Datum	   *outvalues;
-	bool	   *outisnull;
-	int			outnatts;
 	int			i;
 
 	/* Sanity checks */
@@ -190,7 +180,7 @@ execute_attr_map_slot(AttrMap *attrMap,
 		   out_slot->tts_tupleDescriptor != NULL);
 	Assert(in_slot->tts_values != NULL && out_slot->tts_values != NULL);
 
-	outnatts = out_slot->tts_tupleDescriptor->natts;
+	int			outnatts = out_slot->tts_tupleDescriptor->natts;
 
 	/* Extract all the values of the in slot. */
 	slot_getallattrs(in_slot);
@@ -198,10 +188,10 @@ execute_attr_map_slot(AttrMap *attrMap,
 	/* Before doing the mapping, clear any old contents from the out slot */
 	ExecClearTuple(out_slot);
 
-	invalues = in_slot->tts_values;
-	inisnull = in_slot->tts_isnull;
-	outvalues = out_slot->tts_values;
-	outisnull = out_slot->tts_isnull;
+	Datum	   *invalues = in_slot->tts_values;
+	bool	   *inisnull = in_slot->tts_isnull;
+	Datum	   *outvalues = out_slot->tts_values;
+	bool	   *outisnull = out_slot->tts_isnull;
 
 	/* Transpose into proper fields of the out slot. */
 	for (i = 0; i < outnatts; i++)
@@ -236,7 +226,6 @@ execute_attr_map_slot(AttrMap *attrMap,
 Bitmapset *
 execute_attr_map_cols(AttrMap *attrMap, Bitmapset *in_cols)
 {
-	Bitmapset  *out_cols;
 	int			out_attnum;
 
 	/* fast path for the common trivial case */
@@ -246,7 +235,7 @@ execute_attr_map_cols(AttrMap *attrMap, Bitmapset *in_cols)
 	/*
 	 * For each output column, check which input column it corresponds to.
 	 */
-	out_cols = NULL;
+	Bitmapset  *out_cols = NULL;
 
 	for (out_attnum = FirstLowInvalidHeapAttributeNumber;
 		 out_attnum <= attrMap->maplen;

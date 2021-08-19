@@ -503,9 +503,8 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 void
 aes_set_key(rijndael_ctx *ctx, const uint8 *key, unsigned keybits, int enc)
 {
-	uint32	   *k;
 
-	k = (uint32 *) key;
+	uint32	   *k = (uint32 *) key;
 	rijndael_set_key(ctx, k, keybits, enc);
 }
 

@@ -128,13 +128,12 @@ main(int argc, char *const argv[])
 	bool		verbose = false,
 				header_mode = false;
 	struct _include_path *ip;
-	const char *progname;
 	char		my_exec_path[MAXPGPATH];
 	char		include_path[MAXPGPATH];
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("ecpg"));
 
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 
 	if (find_my_exec(argv[0], my_exec_path) < 0)
 	{

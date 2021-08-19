@@ -110,9 +110,8 @@ spg_text_config(PG_FUNCTION_ARGS)
 static Datum
 formTextDatum(const char *data, int datalen)
 {
-	char	   *p;
 
-	p = (char *) palloc(datalen + VARHDRSZ);
+	char	   *p = (char *) palloc(datalen + VARHDRSZ);
 
 	if (datalen + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
 	{
@@ -268,11 +267,10 @@ spg_text_choose(PG_FUNCTION_ARGS)
 		 * to provide the correct levelAdd and restDatum values, and those are
 		 * the same regardless of which node gets chosen by core.)
 		 */
-		int			levelAdd;
 
 		out->resultType = spgMatchNode;
 		out->result.matchNode.nodeN = i;
-		levelAdd = commonLen;
+		int			levelAdd = commonLen;
 		if (nodeChar >= 0)
 			levelAdd++;
 		out->result.matchNode.levelAdd = levelAdd;
@@ -335,7 +333,6 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 	text	   *text0 = DatumGetTextPP(in->datums[0]);
 	int			i,
 				commonLen;
-	spgNodePtr *nodes;
 
 	/* Identify longest common prefix, if any */
 	commonLen = VARSIZE_ANY_EXHDR(text0);
@@ -369,7 +366,7 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/* Extract the node label (first non-common byte) from each value */
-	nodes = (spgNodePtr *) palloc(sizeof(spgNodePtr) * in->nTuples);
+	spgNodePtr *nodes = (spgNodePtr *) palloc(sizeof(spgNodePtr) * in->nTuples);
 
 	for (i = 0; i < in->nTuples; i++)
 	{
@@ -426,9 +423,6 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
 	bool		collate_is_c = lc_collate_is_c(PG_GET_COLLATION());
-	text	   *reconstructedValue;
-	text	   *reconstrText;
-	int			maxReconstrLen;
 	text	   *prefixText = NULL;
 	int			prefixSize = 0;
 	int			i;
@@ -444,11 +438,11 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	 * created by a previous invocation of this routine, and we always emit
 	 * long-format reconstructed values.
 	 */
-	reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
+	text	   *reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
 	Assert(reconstructedValue == NULL ? in->level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstructedValue) == in->level);
 
-	maxReconstrLen = in->level + 1;
+	int			maxReconstrLen = in->level + 1;
 	if (in->hasPrefix)
 	{
 		prefixText = DatumGetTextPP(in->prefixDatum);
@@ -456,7 +450,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 		maxReconstrLen += prefixSize;
 	}
 
-	reconstrText = palloc(VARHDRSZ + maxReconstrLen);
+	text	   *reconstrText = palloc(VARHDRSZ + maxReconstrLen);
 	SET_VARSIZE(reconstrText, VARHDRSZ + maxReconstrLen);
 
 	if (in->level)
@@ -498,9 +492,6 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 		for (j = 0; j < in->nkeys; j++)
 		{
 			StrategyNumber strategy = in->scankeys[j].sk_strategy;
-			text	   *inText;
-			int			inSize;
-			int			r;
 
 			/*
 			 * If it's a collation-aware operator, but the collation is C, we
@@ -518,10 +509,10 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 					continue;
 			}
 
-			inText = DatumGetTextPP(in->scankeys[j].sk_argument);
-			inSize = VARSIZE_ANY_EXHDR(inText);
+			text	   *inText = DatumGetTextPP(in->scankeys[j].sk_argument);
+			int			inSize = VARSIZE_ANY_EXHDR(inText);
 
-			r = memcmp(VARDATA(reconstrText), VARDATA_ANY(inText),
+			int			r = memcmp(VARDATA(reconstrText), VARDATA_ANY(inText),
 					   Min(inSize, thisLen));
 
 			switch (strategy)
@@ -577,8 +568,6 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	text	   *leafValue,
 			   *reconstrValue = NULL;
 	char	   *fullValue;
-	int			fullLen;
-	bool		res;
 	int			j;
 
 	/* all tests are exact */
@@ -594,7 +583,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);
 
 	/* Reconstruct the full string represented by this leaf tuple */
-	fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
+	int			fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
 	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
 	{
 		fullValue = VARDATA(reconstrValue);
@@ -615,7 +604,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	}
 
 	/* Perform the required comparison(s) */
-	res = true;
+	bool		res = true;
 	for (j = 0; j < in->nkeys; j++)
 	{
 		StrategyNumber strategy = in->scankeys[j].sk_strategy;

@@ -151,14 +151,12 @@ RecordAndGetPageWithFreeSpace(Relation rel, BlockNumber oldPage,
 {
 	int			old_cat = fsm_space_avail_to_cat(oldSpaceAvail);
 	int			search_cat = fsm_space_needed_to_cat(spaceNeeded);
-	FSMAddress	addr;
 	uint16		slot;
-	int			search_slot;
 
 	/* Get the location of the FSM byte representing the heap block */
-	addr = fsm_get_location(oldPage, &slot);
+	FSMAddress	addr = fsm_get_location(oldPage, &slot);
 
-	search_slot = fsm_set_and_search(rel, addr, slot, old_cat, search_cat);
+	int			search_slot = fsm_set_and_search(rel, addr, slot, old_cat, search_cat);
 
 	/*
 	 * If fsm_set_and_search found a suitable new block, return that.
@@ -181,11 +179,10 @@ void
 RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk, Size spaceAvail)
 {
 	int			new_cat = fsm_space_avail_to_cat(spaceAvail);
-	FSMAddress	addr;
 	uint16		slot;
 
 	/* Get the location of the FSM byte representing the heap block */
-	addr = fsm_get_location(heapBlk, &slot);
+	FSMAddress	addr = fsm_get_location(heapBlk, &slot);
 
 	fsm_set_and_search(rel, addr, slot, new_cat, 0);
 }
@@ -199,21 +196,17 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 							Size spaceAvail)
 {
 	int			new_cat = fsm_space_avail_to_cat(spaceAvail);
-	FSMAddress	addr;
 	uint16		slot;
-	BlockNumber blkno;
-	Buffer		buf;
-	Page		page;
 
 	/* Get the location of the FSM byte representing the heap block */
-	addr = fsm_get_location(heapBlk, &slot);
-	blkno = fsm_logical_to_physical(addr);
+	FSMAddress	addr = fsm_get_location(heapBlk, &slot);
+	BlockNumber blkno = fsm_logical_to_physical(addr);
 
 	/* If the page doesn't exist already, extend */
-	buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR);
+	Buffer		buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR);
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 	if (PageIsNew(page))
 		PageInit(page, BLCKSZ, 0);
 
@@ -229,18 +222,15 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 Size
 GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 {
-	FSMAddress	addr;
 	uint16		slot;
-	Buffer		buf;
-	uint8		cat;
 
 	/* Get the location of the FSM byte representing the heap block */
-	addr = fsm_get_location(heapBlk, &slot);
+	FSMAddress	addr = fsm_get_location(heapBlk, &slot);
 
-	buf = fsm_readbuf(rel, addr, false);
+	Buffer		buf = fsm_readbuf(rel, addr, false);
 	if (!BufferIsValid(buf))
 		return 0;
-	cat = fsm_get_avail(BufferGetPage(buf), slot);
+	uint8		cat = fsm_get_avail(BufferGetPage(buf), slot);
 	ReleaseBuffer(buf);
 
 	return fsm_space_cat_to_avail(cat);
@@ -261,7 +251,6 @@ BlockNumber
 FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 {
 	BlockNumber new_nfsmblocks;
-	FSMAddress	first_removed_address;
 	uint16		first_removed_slot;
 	Buffer		buf;
 
@@ -273,7 +262,7 @@ FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 		return InvalidBlockNumber;
 
 	/* Get the location in the FSM of the first removed heap block */
-	first_removed_address = fsm_get_location(nblocks, &first_removed_slot);
+	FSMAddress	first_removed_address = fsm_get_location(nblocks, &first_removed_slot);
 
 	/*
 	 * Zero out the tail of the last remaining FSM page. If the slot
@@ -366,14 +355,13 @@ FreeSpaceMapVacuumRange(Relation rel, BlockNumber start, BlockNumber end)
 static uint8
 fsm_space_avail_to_cat(Size avail)
 {
-	int			cat;
 
 	Assert(avail < BLCKSZ);
 
 	if (avail >= MaxFSMRequestSize)
 		return 255;
 
-	cat = avail / FSM_CAT_STEP;
+	int			cat = avail / FSM_CAT_STEP;
 
 	/*
 	 * The highest category, 255, is reserved for MaxFSMRequestSize bytes or
@@ -406,7 +394,6 @@ fsm_space_cat_to_avail(uint8 cat)
 static uint8
 fsm_space_needed_to_cat(Size needed)
 {
-	int			cat;
 
 	/* Can't ask for more space than the highest category represents */
 	if (needed > MaxFSMRequestSize)
@@ -415,7 +402,7 @@ fsm_space_needed_to_cat(Size needed)
 	if (needed == 0)
 		return 1;
 
-	cat = (needed + FSM_CAT_STEP - 1) / FSM_CAT_STEP;
+	int			cat = (needed + FSM_CAT_STEP - 1) / FSM_CAT_STEP;
 
 	if (cat > 255)
 		cat = 255;
@@ -429,20 +416,18 @@ fsm_space_needed_to_cat(Size needed)
 static BlockNumber
 fsm_logical_to_physical(FSMAddress addr)
 {
-	BlockNumber pages;
-	int			leafno;
 	int			l;
 
 	/*
 	 * Calculate the logical page number of the first leaf page below the
 	 * given page.
 	 */
-	leafno = addr.logpageno;
+	int			leafno = addr.logpageno;
 	for (l = 0; l < addr.level; l++)
 		leafno *= SlotsPerFSMPage;
 
 	/* Count upper level nodes required to address the leaf page */
-	pages = 0;
+	BlockNumber pages = 0;
 	for (l = 0; l < FSM_TREE_DEPTH; l++)
 	{
 		pages += leafno + 1;
@@ -529,15 +514,13 @@ static Buffer
 fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 {
 	BlockNumber blkno = fsm_logical_to_physical(addr);
-	Buffer		buf;
-	SMgrRelation reln;
 
 	/*
 	 * Caution: re-using this smgr pointer could fail if the relcache entry
 	 * gets closed.  It's safe as long as we only do smgr-level operations
 	 * between here and the last use of the pointer.
 	 */
-	reln = RelationGetSmgr(rel);
+	SMgrRelation reln = RelationGetSmgr(rel);
 
 	/*
 	 * If we haven't cached the size of the FSM yet, check it first.  Also
@@ -586,7 +569,7 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 	 * long as it doesn't depend on the page header having correct contents.
 	 * Current usage is safe because PageGetContents() does not require that.
 	 */
-	buf = ReadBufferExtended(rel, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR, NULL);
+	Buffer		buf = ReadBufferExtended(rel, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR, NULL);
 	if (PageIsNew(BufferGetPage(buf)))
 	{
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -605,9 +588,7 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 static void
 fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
-	BlockNumber fsm_nblocks_now;
 	PGAlignedBlock pg;
-	SMgrRelation reln;
 
 	PageInit((Page) pg.data, BLCKSZ, 0);
 
@@ -628,7 +609,7 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	 * gets closed.  It's safe as long as we only do smgr-level operations
 	 * between here and the last use of the pointer.
 	 */
-	reln = RelationGetSmgr(rel);
+	SMgrRelation reln = RelationGetSmgr(rel);
 
 	/*
 	 * Create the FSM file first if it doesn't exist.  If
@@ -642,7 +623,7 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 
 	/* Invalidate cache so that smgrnblocks() asks the kernel. */
 	reln->smgr_cached_nblocks[FSM_FORKNUM] = InvalidBlockNumber;
-	fsm_nblocks_now = smgrnblocks(reln, FSM_FORKNUM);
+	BlockNumber fsm_nblocks_now = smgrnblocks(reln, FSM_FORKNUM);
 
 	/* Extend as needed. */
 	while (fsm_nblocks_now < fsm_nblocks)
@@ -668,14 +649,12 @@ static int
 fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 				   uint8 newValue, uint8 minValue)
 {
-	Buffer		buf;
-	Page		page;
 	int			newslot = -1;
 
-	buf = fsm_readbuf(rel, addr, true);
+	Buffer		buf = fsm_readbuf(rel, addr, true);
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	if (fsm_set_avail(page, slot, newValue))
 		MarkBufferDirtyHint(buf, false);
@@ -705,11 +684,10 @@ fsm_search(Relation rel, uint8 min_cat)
 	for (;;)
 	{
 		int			slot;
-		Buffer		buf;
 		uint8		max_avail = 0;
 
 		/* Read the FSM page. */
-		buf = fsm_readbuf(rel, addr, false);
+		Buffer		buf = fsm_readbuf(rel, addr, false);
 
 		/* Search within the page */
 		if (BufferIsValid(buf))
@@ -747,7 +725,6 @@ fsm_search(Relation rel, uint8 min_cat)
 		else
 		{
 			uint16		parentslot;
-			FSMAddress	parent;
 
 			/*
 			 * At lower level, failure can happen if the value in the upper-
@@ -761,7 +738,7 @@ fsm_search(Relation rel, uint8 min_cat)
 			 * stale information we had. It's OK, because it should happen
 			 * rarely, and will be fixed by the next vacuum.
 			 */
-			parent = fsm_get_parent(addr, &parentslot);
+			FSMAddress	parent = fsm_get_parent(addr, &parentslot);
 			fsm_set_and_search(rel, parent, parentslot, max_avail, 0);
 
 			/*
@@ -799,12 +776,9 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 				BlockNumber start, BlockNumber end,
 				bool *eof_p)
 {
-	Buffer		buf;
-	Page		page;
-	uint8		max_avail;
 
 	/* Read the page if it exists, or return EOF */
-	buf = fsm_readbuf(rel, addr, false);
+	Buffer		buf = fsm_readbuf(rel, addr, false);
 	if (!BufferIsValid(buf))
 	{
 		*eof_p = true;
@@ -813,7 +787,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	else
 		*eof_p = false;
 
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	/*
 	 * If we're above the bottom level, recurse into children, and fix the
@@ -887,7 +861,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 	}
 
 	/* Now get the maximum value on the page, to return to caller */
-	max_avail = fsm_get_max_avail(page);
+	uint8		max_avail = fsm_get_max_avail(page);
 
 	/*
 	 * Reset the next slot pointer. This encourages the use of low-numbered

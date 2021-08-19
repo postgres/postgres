@@ -175,10 +175,9 @@ filehash_init(void)
 static file_entry_t *
 insert_filehash_entry(const char *path)
 {
-	file_entry_t *entry;
 	bool		found;
 
-	entry = filehash_insert(filehash, path, &found);
+	file_entry_t *entry = filehash_insert(filehash, path, &found);
 	if (!found)
 	{
 		entry->path = pg_strdup(path);
@@ -219,7 +218,6 @@ void
 process_source_file(const char *path, file_type_t type, size_t size,
 					const char *link_target)
 {
-	file_entry_t *entry;
 
 	/*
 	 * Pretend that pg_wal is a directory, even if it's really a symlink. We
@@ -237,7 +235,7 @@ process_source_file(const char *path, file_type_t type, size_t size,
 		pg_fatal("data file \"%s\" in source is not a regular file", path);
 
 	/* Remember this source file */
-	entry = insert_filehash_entry(path);
+	file_entry_t *entry = insert_filehash_entry(path);
 	if (entry->source_exists)
 		pg_fatal("duplicate source file \"%s\"", path);
 	entry->source_exists = true;
@@ -255,7 +253,6 @@ void
 process_target_file(const char *path, file_type_t type, size_t size,
 					const char *link_target)
 {
-	file_entry_t *entry;
 
 	/*
 	 * Do not apply any exclusion filters here.  This has advantage to remove
@@ -270,7 +267,7 @@ process_target_file(const char *path, file_type_t type, size_t size,
 		type = FILE_TYPE_DIRECTORY;
 
 	/* Remember this target file */
-	entry = insert_filehash_entry(path);
+	file_entry_t *entry = insert_filehash_entry(path);
 	if (entry->target_exists)
 		pg_fatal("duplicate source file \"%s\"", path);
 	entry->target_exists = true;
@@ -292,16 +289,12 @@ void
 process_target_wal_block_change(ForkNumber forknum, RelFileNode rnode,
 								BlockNumber blkno)
 {
-	char	   *path;
-	file_entry_t *entry;
-	BlockNumber blkno_inseg;
-	int			segno;
 
-	segno = blkno / RELSEG_SIZE;
-	blkno_inseg = blkno % RELSEG_SIZE;
+	int			segno = blkno / RELSEG_SIZE;
+	BlockNumber blkno_inseg = blkno % RELSEG_SIZE;
 
-	path = datasegpath(rnode, forknum, segno);
-	entry = lookup_filehash_entry(path);
+	char	   *path = datasegpath(rnode, forknum, segno);
+	file_entry_t *entry = lookup_filehash_entry(path);
 	pfree(path);
 
 	/*
@@ -332,9 +325,8 @@ process_target_wal_block_change(ForkNumber forknum, RelFileNode rnode,
 
 			if (entry->source_exists)
 			{
-				off_t		end_offset;
 
-				end_offset = (blkno_inseg + 1) * BLCKSZ;
+				off_t		end_offset = (blkno_inseg + 1) * BLCKSZ;
 				if (end_offset <= entry->source_size && end_offset <= entry->target_size)
 					datapagemap_add(&entry->target_pages_to_overwrite, blkno_inseg);
 			}
@@ -464,10 +456,9 @@ calculate_totals(filemap_t *filemap)
 
 		if (entry->target_pages_to_overwrite.bitmapsize > 0)
 		{
-			datapagemap_iterator_t *iter;
 			BlockNumber blk;
 
-			iter = datapagemap_iterate(&entry->target_pages_to_overwrite);
+			datapagemap_iterator_t *iter = datapagemap_iterate(&entry->target_pages_to_overwrite);
 			while (datapagemap_next(iter, &blk))
 				filemap->fetch_size += BLCKSZ;
 
@@ -510,9 +501,6 @@ static bool
 isRelDataFile(const char *path)
 {
 	RelFileNode rnode;
-	unsigned int segNo;
-	int			nmatch;
-	bool		matched;
 
 	/*----
 	 * Relation data files can be in one of the following directories:
@@ -536,10 +524,10 @@ isRelDataFile(const char *path)
 	rnode.spcNode = InvalidOid;
 	rnode.dbNode = InvalidOid;
 	rnode.relNode = InvalidOid;
-	segNo = 0;
-	matched = false;
+	unsigned int segNo = 0;
+	bool		matched = false;
 
-	nmatch = sscanf(path, "global/%u.%u", &rnode.relNode, &segNo);
+	int			nmatch = sscanf(path, "global/%u.%u", &rnode.relNode, &segNo);
 	if (nmatch == 1 || nmatch == 2)
 	{
 		rnode.spcNode = GLOBALTABLESPACE_OID;
@@ -592,10 +580,9 @@ isRelDataFile(const char *path)
 static char *
 datasegpath(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 {
-	char	   *path;
 	char	   *segpath;
 
-	path = relpathperm(rnode, forknum);
+	char	   *path = relpathperm(rnode, forknum);
 	if (segno > 0)
 	{
 		segpath = psprintf("%s.%u", path, segno);
@@ -788,10 +775,8 @@ decide_file_action(file_entry_t *entry)
 filemap_t *
 decide_file_actions(void)
 {
-	int			i;
 	filehash_iterator it;
 	file_entry_t *entry;
-	filemap_t  *filemap;
 
 	filehash_start_iterate(filehash, &it);
 	while ((entry = filehash_iterate(filehash, &it)) != NULL)
@@ -803,11 +788,11 @@ decide_file_actions(void)
 	 * Turn the hash table into an array, and sort in the order that the
 	 * actions should be performed.
 	 */
-	filemap = pg_malloc(offsetof(filemap_t, entries) +
+	filemap_t  *filemap = pg_malloc(offsetof(filemap_t, entries) +
 						filehash->members * sizeof(file_entry_t *));
 	filemap->nentries = filehash->members;
 	filehash_start_iterate(filehash, &it);
-	i = 0;
+	int			i = 0;
 	while ((entry = filehash_iterate(filehash, &it)) != NULL)
 	{
 		filemap->entries[i++] = entry;

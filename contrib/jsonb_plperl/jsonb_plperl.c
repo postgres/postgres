@@ -61,11 +61,9 @@ Jsonb_to_SV(JsonbContainer *jsonb)
 {
 	dTHX;
 	JsonbValue	v;
-	JsonbIterator *it;
-	JsonbIteratorToken r;
 
-	it = JsonbIteratorInit(jsonb);
-	r = JsonbIteratorNext(&it, &v, true);
+	JsonbIterator *it = JsonbIteratorInit(jsonb);
+	JsonbIteratorToken r = JsonbIteratorNext(&it, &v, true);
 
 	switch (r)
 	{

@@ -113,14 +113,13 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval;
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+	bool		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
 								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
 	PG_RETURN_BOOL(retval);
 }
@@ -163,13 +162,12 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 
 	GBT_VARKEY *org = (GBT_VARKEY *) DatumGetPointer(o->key);
 	GBT_VARKEY *newe = (GBT_VARKEY *) DatumGetPointer(n->key);
-	Datum		uni;
 	GBT_VARKEY_R rk,
 				ok,
 				uk;
 
 	rk = gbt_var_key_readable(org);
-	uni = PointerGetDatum(gbt_var_key_copy(&rk));
+	Datum		uni = PointerGetDatum(gbt_var_key_copy(&rk));
 	gbt_var_bin_union(&uni, newe, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	ok = gbt_var_key_readable(org);
 	uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(uni));

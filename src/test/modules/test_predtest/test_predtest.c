@@ -33,18 +33,10 @@ test_predtest(PG_FUNCTION_ARGS)
 {
 	text	   *txt = PG_GETARG_TEXT_PP(0);
 	char	   *query_string = text_to_cstring(txt);
-	SPIPlanPtr	spiplan;
-	int			spirc;
-	TupleDesc	tupdesc;
 	bool		s_i_holds,
 				w_i_holds,
 				s_r_holds,
 				w_r_holds;
-	CachedPlan *cplan;
-	PlannedStmt *stmt;
-	Plan	   *plan;
-	Expr	   *clause1;
-	Expr	   *clause2;
 	bool		strong_implied_by,
 				weak_implied_by,
 				strong_refuted_by,
@@ -63,14 +55,14 @@ test_predtest(PG_FUNCTION_ARGS)
 	 * provides an experimental indication of whether implication or
 	 * refutation holds.
 	 */
-	spiplan = SPI_prepare(query_string, 0, NULL);
+	SPIPlanPtr	spiplan = SPI_prepare(query_string, 0, NULL);
 	if (spiplan == NULL)
 		elog(ERROR, "SPI_prepare failed for \"%s\"", query_string);
 
-	spirc = SPI_execute_plan(spiplan, NULL, NULL, true, 0);
+	int			spirc = SPI_execute_plan(spiplan, NULL, NULL, true, 0);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to execute \"%s\"", query_string);
-	tupdesc = SPI_tuptable->tupdesc;
+	TupleDesc	tupdesc = SPI_tuptable->tupdesc;
 	if (tupdesc->natts != 2 ||
 		TupleDescAttr(tupdesc, 0)->atttypid != BOOLOID ||
 		TupleDescAttr(tupdesc, 1)->atttypid != BOOLOID)
@@ -80,13 +72,12 @@ test_predtest(PG_FUNCTION_ARGS)
 	for (i = 0; i < SPI_processed; i++)
 	{
 		HeapTuple	tup = SPI_tuptable->vals[i];
-		Datum		dat;
 		bool		isnull;
 		char		c1,
 					c2;
 
 		/* Extract column values in a 3-way representation */
-		dat = SPI_getbinval(tup, tupdesc, 1, &isnull);
+		Datum		dat = SPI_getbinval(tup, tupdesc, 1, &isnull);
 		if (isnull)
 			c1 = 'n';
 		else if (DatumGetBool(dat))
@@ -122,17 +113,17 @@ test_predtest(PG_FUNCTION_ARGS)
 	 * Now, dig the clause querytrees out of the plan, and see what predtest.c
 	 * does with them.
 	 */
-	cplan = SPI_plan_get_cached_plan(spiplan);
+	CachedPlan *cplan = SPI_plan_get_cached_plan(spiplan);
 
 	if (list_length(cplan->stmt_list) != 1)
 		elog(ERROR, "failed to decipher query plan");
-	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
+	PlannedStmt *stmt = linitial_node(PlannedStmt, cplan->stmt_list);
 	if (stmt->commandType != CMD_SELECT)
 		elog(ERROR, "failed to decipher query plan");
-	plan = stmt->planTree;
+	Plan	   *plan = stmt->planTree;
 	Assert(list_length(plan->targetlist) >= 2);
-	clause1 = linitial_node(TargetEntry, plan->targetlist)->expr;
-	clause2 = lsecond_node(TargetEntry, plan->targetlist)->expr;
+	Expr	   *clause1 = linitial_node(TargetEntry, plan->targetlist)->expr;
+	Expr	   *clause2 = lsecond_node(TargetEntry, plan->targetlist)->expr;
 
 	/*
 	 * Because the clauses are in the SELECT list, preprocess_expression did

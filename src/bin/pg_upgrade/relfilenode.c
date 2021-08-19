@@ -96,7 +96,6 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	{
 		DbInfo	   *old_db = &old_db_arr->dbs[old_dbnum],
 				   *new_db = NULL;
-		FileNameMap *mappings;
 		int			n_maps;
 
 		/*
@@ -115,7 +114,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 			pg_fatal("old database \"%s\" not found in the new cluster\n",
 					 old_db->db_name);
 
-		mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
+		FileNameMap *mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
 									new_pgdata);
 		if (n_maps)
 		{

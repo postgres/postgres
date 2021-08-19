@@ -49,9 +49,8 @@ pg_str_endswith(const char *str, const char *end)
 int
 strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
 {
-	long		val;
 
-	val = strtol(str, endptr, base);
+	long		val = strtol(str, endptr, base);
 	if (val != (int) val)
 		errno = ERANGE;
 	return (int) val;

@@ -101,7 +101,6 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 GISTENTRY *
 gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 {
-	GISTENTRY  *retval;
 	Datum		datum;
 
 	Assert(tinfo->indexsize >= 2 * tinfo->size);
@@ -148,7 +147,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			datum = PointerGetDatum(entry->key);
 	}
 
-	retval = palloc(sizeof(GISTENTRY));
+	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, datum, entry->rel, entry->page, entry->offset,
 				  false);
 	return retval;
@@ -165,12 +164,11 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 {
 	int			i,
 				numranges;
-	GBT_NUMKEY *cur;
 	GBT_NUMKEY_R o,
 				c;
 
 	numranges = entryvec->n;
-	cur = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[0].key));
+	GBT_NUMKEY *cur = (GBT_NUMKEY *) DatumGetPointer((entryvec->vector[0].key));
 
 
 	o.lower = &((GBT_NUMKEY *) out)[0];
@@ -333,11 +331,9 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 {
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
-	Nsrt	   *arr;
-	int			nbytes;
 
-	arr = (Nsrt *) palloc((maxoff + 1) * sizeof(Nsrt));
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	Nsrt	   *arr = (Nsrt *) palloc((maxoff + 1) * sizeof(Nsrt));
+	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_ldatum = PointerGetDatum(0);

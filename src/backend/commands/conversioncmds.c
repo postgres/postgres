@@ -36,38 +36,32 @@
 ObjectAddress
 CreateConversionCommand(CreateConversionStmt *stmt)
 {
-	Oid			namespaceId;
 	char	   *conversion_name;
-	AclResult	aclresult;
-	int			from_encoding;
-	int			to_encoding;
-	Oid			funcoid;
 	const char *from_encoding_name = stmt->for_encoding_name;
 	const char *to_encoding_name = stmt->to_encoding_name;
 	List	   *func_name = stmt->func_name;
 	static const Oid funcargs[] = {INT4OID, INT4OID, CSTRINGOID, INTERNALOID, INT4OID, BOOLOID};
 	char		result[1];
-	Datum		funcresult;
 
 	/* Convert list of names to a name and namespace */
-	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
+	Oid			namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
 													&conversion_name);
 
 	/* Check we have creation rights in target namespace */
-	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+	AclResult	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceId));
 
 	/* Check the encoding names */
-	from_encoding = pg_char_to_encoding(from_encoding_name);
+	int			from_encoding = pg_char_to_encoding(from_encoding_name);
 	if (from_encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("source encoding \"%s\" does not exist",
 						from_encoding_name)));
 
-	to_encoding = pg_char_to_encoding(to_encoding_name);
+	int			to_encoding = pg_char_to_encoding(to_encoding_name);
 	if (to_encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -90,7 +84,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * Check the existence of the conversion function. Function name could be
 	 * a qualified name.
 	 */
-	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
+	Oid			funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
 							 funcargs, false);
 
 	/* Check it returns int4, else it's probably the wrong function */
@@ -112,7 +106,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * string; the conversion function should throw an error if it can't
 	 * perform the requested conversion.
 	 */
-	funcresult = OidFunctionCall6(funcoid,
+	Datum		funcresult = OidFunctionCall6(funcoid,
 								  Int32GetDatum(from_encoding),
 								  Int32GetDatum(to_encoding),
 								  CStringGetDatum(""),

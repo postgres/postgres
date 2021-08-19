@@ -340,7 +340,6 @@ TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
 								   TransactionId *subxids, XidStatus status,
 								   XLogRecPtr lsn, int pageno)
 {
-	int			slotno;
 	int			i;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
@@ -357,7 +356,7 @@ TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
 	 * write-busy, since we don't care if the update reaches disk sooner than
 	 * we think.
 	 */
-	slotno = SimpleLruReadPage(XactCtl, pageno, XLogRecPtrIsInvalid(lsn), xid);
+	int			slotno = SimpleLruReadPage(XactCtl, pageno, XLogRecPtrIsInvalid(lsn), xid);
 
 	/*
 	 * Set the main transaction id, if any.
@@ -416,8 +415,6 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 {
 	volatile PROC_HDR *procglobal = ProcGlobal;
 	PGPROC	   *proc = MyProc;
-	uint32		nextidx;
-	uint32		wakeidx;
 
 	/* We should definitely have an XID whose status needs to be updated. */
 	Assert(TransactionIdIsValid(xid));
@@ -432,7 +429,7 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	proc->clogGroupMemberPage = pageno;
 	proc->clogGroupMemberLsn = lsn;
 
-	nextidx = pg_atomic_read_u32(&procglobal->clogGroupFirst);
+	uint32		nextidx = pg_atomic_read_u32(&procglobal->clogGroupFirst);
 
 	while (true)
 	{
@@ -510,7 +507,7 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 									 INVALID_PGPROCNO);
 
 	/* Remember head of list so we can perform wakeups after dropping lock. */
-	wakeidx = nextidx;
+	uint32		wakeidx = nextidx;
 
 	/* Walk the list and update the status of all XIDs. */
 	while (nextidx != INVALID_PGPROCNO)
@@ -571,12 +568,9 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 {
 	int			byteno = TransactionIdToByte(xid);
 	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
-	char	   *byteptr;
-	char		byteval;
-	char		curval;
 
-	byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
-	curval = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
+	char	   *byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
+	char		curval = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
 
 	/*
 	 * When replaying transactions during recovery we still need to perform
@@ -598,7 +592,7 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 		   curval == status);
 
 	/* note this assumes exclusive access to the clog page */
-	byteval = *byteptr;
+	char		byteval = *byteptr;
 	byteval &= ~(((1 << CLOG_BITS_PER_XACT) - 1) << bshift);
 	byteval |= (status << bshift);
 	*byteptr = byteval;
@@ -641,19 +635,15 @@ TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn)
 	int			pageno = TransactionIdToPage(xid);
 	int			byteno = TransactionIdToByte(xid);
 	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
-	int			slotno;
-	int			lsnindex;
-	char	   *byteptr;
-	XidStatus	status;
 
 	/* lock is acquired by SimpleLruReadPage_ReadOnly */
 
-	slotno = SimpleLruReadPage_ReadOnly(XactCtl, pageno, xid);
-	byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
+	int			slotno = SimpleLruReadPage_ReadOnly(XactCtl, pageno, xid);
+	char	   *byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
 
-	status = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
+	XidStatus	status = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
 
-	lsnindex = GetLSNIndex(slotno, xid);
+	int			lsnindex = GetLSNIndex(slotno, xid);
 	*lsn = XactCtl->shared->group_lsn[lsnindex];
 
 	LWLockRelease(XactSLRULock);
@@ -711,12 +701,11 @@ CLOGShmemInit(void)
 void
 BootStrapCLOG(void)
 {
-	int			slotno;
 
 	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
 
 	/* Create and zero the first page of the commit log */
-	slotno = ZeroCLOGPage(0, false);
+	int			slotno = ZeroCLOGPage(0, false);
 
 	/* Make sure it's written out */
 	SimpleLruWritePage(XactCtl, slotno);
@@ -737,9 +726,8 @@ BootStrapCLOG(void)
 static int
 ZeroCLOGPage(int pageno, bool writeXlog)
 {
-	int			slotno;
 
-	slotno = SimpleLruZeroPage(XactCtl, pageno);
+	int			slotno = SimpleLruZeroPage(XactCtl, pageno);
 
 	if (writeXlog)
 		WriteZeroPageXlogRec(pageno);
@@ -794,11 +782,9 @@ TrimCLOG(void)
 	{
 		int			byteno = TransactionIdToByte(xid);
 		int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
-		int			slotno;
-		char	   *byteptr;
 
-		slotno = SimpleLruReadPage(XactCtl, pageno, false, xid);
-		byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
+		int			slotno = SimpleLruReadPage(XactCtl, pageno, false, xid);
+		char	   *byteptr = XactCtl->shared->page_buffer[slotno] + byteno;
 
 		/* Zero so-far-unused positions in the current byte */
 		*byteptr &= (1 << bshift) - 1;
@@ -839,7 +825,6 @@ CheckPointCLOG(void)
 void
 ExtendCLOG(TransactionId newestXact)
 {
-	int			pageno;
 
 	/*
 	 * No work except at first XID of a page.  But beware: just after
@@ -849,7 +834,7 @@ ExtendCLOG(TransactionId newestXact)
 		!TransactionIdEquals(newestXact, FirstNormalTransactionId))
 		return;
 
-	pageno = TransactionIdToPage(newestXact);
+	int			pageno = TransactionIdToPage(newestXact);
 
 	LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
 
@@ -878,13 +863,12 @@ ExtendCLOG(TransactionId newestXact)
 void
 TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid)
 {
-	int			cutoffPage;
 
 	/*
 	 * The cutoff point is the start of the segment containing oldestXact. We
 	 * pass the *page* containing oldestXact to SimpleLruTruncate.
 	 */
-	cutoffPage = TransactionIdToPage(oldestXact);
+	int			cutoffPage = TransactionIdToPage(oldestXact);
 
 	/* Check to see if there's any files that could be removed */
 	if (!SlruScanDirectory(XactCtl, SlruScanDirCbReportPresence, &cutoffPage))
@@ -933,12 +917,10 @@ TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid)
 static bool
 CLOGPagePrecedes(int page1, int page2)
 {
-	TransactionId xid1;
-	TransactionId xid2;
 
-	xid1 = ((TransactionId) page1) * CLOG_XACTS_PER_PAGE;
+	TransactionId xid1 = ((TransactionId) page1) * CLOG_XACTS_PER_PAGE;
 	xid1 += FirstNormalTransactionId + 1;
-	xid2 = ((TransactionId) page2) * CLOG_XACTS_PER_PAGE;
+	TransactionId xid2 = ((TransactionId) page2) * CLOG_XACTS_PER_PAGE;
 	xid2 += FirstNormalTransactionId + 1;
 
 	return (TransactionIdPrecedes(xid1, xid2) &&
@@ -966,7 +948,6 @@ WriteZeroPageXlogRec(int pageno)
 static void
 WriteTruncateXlogRec(int pageno, TransactionId oldestXact, Oid oldestXactDb)
 {
-	XLogRecPtr	recptr;
 	xl_clog_truncate xlrec;
 
 	xlrec.pageno = pageno;
@@ -975,7 +956,7 @@ WriteTruncateXlogRec(int pageno, TransactionId oldestXact, Oid oldestXactDb)
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) (&xlrec), sizeof(xl_clog_truncate));
-	recptr = XLogInsert(RM_CLOG_ID, CLOG_TRUNCATE);
+	XLogRecPtr	recptr = XLogInsert(RM_CLOG_ID, CLOG_TRUNCATE);
 	XLogFlush(recptr);
 }
 
@@ -993,13 +974,12 @@ clog_redo(XLogReaderState *record)
 	if (info == CLOG_ZEROPAGE)
 	{
 		int			pageno;
-		int			slotno;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
 
 		LWLockAcquire(XactSLRULock, LW_EXCLUSIVE);
 
-		slotno = ZeroCLOGPage(pageno, false);
+		int			slotno = ZeroCLOGPage(pageno, false);
 		SimpleLruWritePage(XactCtl, slotno);
 		Assert(!XactCtl->shared->page_dirty[slotno]);
 

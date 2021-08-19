@@ -143,22 +143,18 @@ datumCopy(Datum value, bool typByVal, int typLen)
 		{
 			/* Flatten into the caller's memory context */
 			ExpandedObjectHeader *eoh = DatumGetEOHP(value);
-			Size		resultsize;
-			char	   *resultptr;
 
-			resultsize = EOH_get_flat_size(eoh);
-			resultptr = (char *) palloc(resultsize);
+			Size		resultsize = EOH_get_flat_size(eoh);
+			char	   *resultptr = (char *) palloc(resultsize);
 			EOH_flatten_into(eoh, (void *) resultptr, resultsize);
 			res = PointerGetDatum(resultptr);
 		}
 		else
 		{
 			/* Otherwise, just copy the varlena datum verbatim */
-			Size		realSize;
-			char	   *resultptr;
 
-			realSize = (Size) VARSIZE_ANY(vl);
-			resultptr = (char *) palloc(realSize);
+			Size		realSize = (Size) VARSIZE_ANY(vl);
+			char	   *resultptr = (char *) palloc(realSize);
 			memcpy(resultptr, vl, realSize);
 			res = PointerGetDatum(resultptr);
 		}
@@ -166,12 +162,10 @@ datumCopy(Datum value, bool typByVal, int typLen)
 	else
 	{
 		/* Pass by reference, but not varlena, so not toasted */
-		Size		realSize;
-		char	   *resultptr;
 
-		realSize = datumGetSize(value, typByVal, typLen);
+		Size		realSize = datumGetSize(value, typByVal, typLen);
 
-		resultptr = (char *) palloc(realSize);
+		char	   *resultptr = (char *) palloc(realSize);
 		memcpy(resultptr, DatumGetPointer(value), realSize);
 		res = PointerGetDatum(resultptr);
 	}
@@ -287,11 +281,9 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 			result = false;
 		else
 		{
-			struct varlena *arg1val;
-			struct varlena *arg2val;
 
-			arg1val = PG_DETOAST_DATUM_PACKED(value1);
-			arg2val = PG_DETOAST_DATUM_PACKED(value2);
+			struct varlena *arg1val = PG_DETOAST_DATUM_PACKED(value1);
+			struct varlena *arg2val = PG_DETOAST_DATUM_PACKED(value2);
 
 			result = (memcmp(VARDATA_ANY(arg1val),
 							 VARDATA_ANY(arg2val),
@@ -436,13 +428,12 @@ datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
 		}
 		else if (eoh)
 		{
-			char	   *tmp;
 
 			/*
 			 * EOH_flatten_into expects the target address to be maxaligned,
 			 * so we can't store directly to *start_address.
 			 */
-			tmp = (char *) palloc(header);
+			char	   *tmp = (char *) palloc(header);
 			EOH_flatten_into(eoh, (void *) tmp, header);
 			memcpy(*start_address, tmp, header);
 			*start_address += header;
@@ -469,7 +460,6 @@ Datum
 datumRestore(char **start_address, bool *isnull)
 {
 	int			header;
-	void	   *d;
 
 	/* Read header word. */
 	memcpy(&header, *start_address, sizeof(int));
@@ -497,7 +487,7 @@ datumRestore(char **start_address, bool *isnull)
 
 	/* Pass-by-reference case; copy indicated number of bytes. */
 	Assert(header > 0);
-	d = palloc(header);
+	void	   *d = palloc(header);
 	memcpy(d, *start_address, header);
 	*start_address += header;
 	return PointerGetDatum(d);

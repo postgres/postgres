@@ -285,10 +285,9 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 SOCKET
 pgwin32_socket(int af, int type, int protocol)
 {
-	SOCKET		s;
 	unsigned long on = 1;
 
-	s = WSASocket(af, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
+	SOCKET		s = WSASocket(af, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (s == INVALID_SOCKET)
 	{
 		TranslateSocketError();
@@ -308,9 +307,8 @@ pgwin32_socket(int af, int type, int protocol)
 int
 pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen)
 {
-	int			res;
 
-	res = bind(s, addr, addrlen);
+	int			res = bind(s, addr, addrlen);
 	if (res < 0)
 		TranslateSocketError();
 	return res;
@@ -319,9 +317,8 @@ pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen)
 int
 pgwin32_listen(SOCKET s, int backlog)
 {
-	int			res;
 
-	res = listen(s, backlog);
+	int			res = listen(s, backlog);
 	if (res < 0)
 		TranslateSocketError();
 	return res;
@@ -330,7 +327,6 @@ pgwin32_listen(SOCKET s, int backlog)
 SOCKET
 pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 {
-	SOCKET		rs;
 
 	/*
 	 * Poll for signals, but don't return with EINTR, since we don't handle
@@ -338,7 +334,7 @@ pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 	 */
 	pgwin32_poll_signals();
 
-	rs = WSAAccept(s, addr, addrlen, NULL, 0);
+	SOCKET		rs = WSAAccept(s, addr, addrlen, NULL, 0);
 	if (rs == INVALID_SOCKET)
 	{
 		TranslateSocketError();
@@ -352,9 +348,8 @@ pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 int
 pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen)
 {
-	int			r;
 
-	r = WSAConnect(s, addr, addrlen, NULL, NULL, NULL, NULL);
+	int			r = WSAConnect(s, addr, addrlen, NULL, NULL, NULL, NULL);
 	if (r == 0)
 		return 0;
 
@@ -376,7 +371,6 @@ int
 pgwin32_recv(SOCKET s, char *buf, int len, int f)
 {
 	WSABUF		wbuf;
-	int			r;
 	DWORD		b;
 	DWORD		flags = f;
 	int			n;
@@ -387,7 +381,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	wbuf.len = len;
 	wbuf.buf = buf;
 
-	r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
+	int			r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
 	if (r != SOCKET_ERROR)
 		return b;				/* success */
 

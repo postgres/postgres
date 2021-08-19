@@ -71,7 +71,6 @@ typedef struct
 static void
 newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 {
-	TheLexeme  *ptr;
 
 	if (d->nwrds >= d->ntwrds)
 	{
@@ -87,7 +86,7 @@ newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 		}
 	}
 
-	ptr = d->wrds + d->nwrds;
+	TheLexeme  *ptr = d->wrds + d->nwrds;
 	d->nwrds++;
 
 	ptr->lexeme = palloc(e - b + 1);
@@ -107,7 +106,6 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 {
 	static int	nres = 0;
 	static int	ntres = 0;
-	TheSubstitute *ptr;
 
 	if (nwrd == 0)
 	{
@@ -128,7 +126,7 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 		}
 	}
 
-	ptr = d->subst + idsubst;
+	TheSubstitute *ptr = d->subst + idsubst;
 
 	ptr->lastlexeme = posinsubst - 1;
 
@@ -181,13 +179,12 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
-		char	   *ptr;
 		int			state = TR_WAITLEX;
 		char	   *beginwrd = NULL;
 		uint32		posinsubst = 0;
 		uint32		nwrd = 0;
 
-		ptr = line;
+		char	   *ptr = line;
 
 		/* is it a comment? */
 		while (*ptr && t_isspace(ptr))
@@ -596,12 +593,11 @@ Datum
 thesaurus_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictThesaurus *d;
 	char	   *subdictname = NULL;
 	bool		fileloaded = false;
 	ListCell   *l;
 
-	d = (DictThesaurus *) palloc0(sizeof(DictThesaurus));
+	DictThesaurus *d = (DictThesaurus *) palloc0(sizeof(DictThesaurus));
 
 	foreach(l, dictoptions)
 	{
@@ -750,10 +746,9 @@ findVariant(LexemeInfo *in, LexemeInfo *stored, uint16 curpos, LexemeInfo **newi
 static TSLexeme *
 copyTSLexeme(TheSubstitute *ts)
 {
-	TSLexeme   *res;
 	uint16		i;
 
-	res = (TSLexeme *) palloc(sizeof(TSLexeme) * (ts->reslen + 1));
+	TSLexeme   *res = (TSLexeme *) palloc(sizeof(TSLexeme) * (ts->reslen + 1));
 	for (i = 0; i < ts->reslen; i++)
 	{
 		res[i] = ts->res[i];
@@ -787,7 +782,6 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 {
 	DictThesaurus *d = (DictThesaurus *) PG_GETARG_POINTER(0);
 	DictSubState *dstate = (DictSubState *) PG_GETARG_POINTER(3);
-	TSLexeme   *res = NULL;
 	LexemeInfo *stored,
 			   *info = NULL;
 	uint16		curpos = 0;
@@ -806,7 +800,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 	if (!d->subdict->isvalid)
 		d->subdict = lookup_ts_dictionary_cache(d->subdictOid);
 
-	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
+	TSLexeme   *res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
 													 PointerGetDatum(d->subdict->dictData),
 													 PG_GETARG_DATUM(1),
 													 PG_GETARG_DATUM(2),
@@ -822,7 +816,6 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 			uint16		nv = ptr->nvariant;
 			uint16		i,
 						nlex = 0;
-			LexemeInfo **infos;
 
 			basevar = ptr;
 			while (ptr->lexeme && nv == ptr->nvariant)
@@ -831,7 +824,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 				ptr++;
 			}
 
-			infos = (LexemeInfo **) palloc(sizeof(LexemeInfo *) * nlex);
+			LexemeInfo **infos = (LexemeInfo **) palloc(sizeof(LexemeInfo *) * nlex);
 			for (i = 0; i < nlex; i++)
 				if ((infos[i] = findTheLexeme(d, basevar[i].lexeme)) == NULL)
 					break;

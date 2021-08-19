@@ -56,7 +56,6 @@ MakeTidOpExpr(OpExpr *expr, TidRangeScanState *tidstate)
 	Node	   *arg2 = get_rightop((Expr *) expr);
 	ExprState  *exprstate = NULL;
 	bool		invert = false;
-	TidOpExpr  *tidopexpr;
 
 	if (IsCTIDVar(arg1))
 		exprstate = ExecInitExpr((Expr *) arg2, &tidstate->ss.ps);
@@ -68,7 +67,7 @@ MakeTidOpExpr(OpExpr *expr, TidRangeScanState *tidstate)
 	else
 		elog(ERROR, "could not identify CTID variable");
 
-	tidopexpr = (TidOpExpr *) palloc(sizeof(TidOpExpr));
+	TidOpExpr  *tidopexpr = (TidOpExpr *) palloc(sizeof(TidOpExpr));
 	tidopexpr->inclusive = false;	/* for now */
 
 	switch (expr->opno)
@@ -108,12 +107,11 @@ TidExprListCreate(TidRangeScanState *tidrangestate)
 	foreach(l, node->tidrangequals)
 	{
 		OpExpr	   *opexpr = lfirst(l);
-		TidOpExpr  *tidopexpr;
 
 		if (!IsA(opexpr, OpExpr))
 			elog(ERROR, "could not identify CTID expression");
 
-		tidopexpr = MakeTidOpExpr(opexpr, tidrangestate);
+		TidOpExpr  *tidopexpr = MakeTidOpExpr(opexpr, tidrangestate);
 		tidexprs = lappend(tidexprs, tidopexpr);
 	}
 
@@ -148,11 +146,10 @@ TidRangeEval(TidRangeScanState *node)
 	foreach(l, node->trss_tidexprs)
 	{
 		TidOpExpr  *tidopexpr = (TidOpExpr *) lfirst(l);
-		ItemPointer itemptr;
 		bool		isNull;
 
 		/* Evaluate this bound. */
-		itemptr = (ItemPointer)
+		ItemPointer itemptr = (ItemPointer)
 			DatumGetPointer(ExecEvalExprSwitchContext(tidopexpr->exprstate,
 													  econtext,
 													  &isNull));
@@ -215,18 +212,14 @@ TidRangeEval(TidRangeScanState *node)
 static TupleTableSlot *
 TidRangeNext(TidRangeScanState *node)
 {
-	TableScanDesc scandesc;
-	EState	   *estate;
-	ScanDirection direction;
-	TupleTableSlot *slot;
 
 	/*
 	 * extract necessary information from TID scan node
 	 */
-	scandesc = node->ss.ss_currentScanDesc;
-	estate = node->ss.ps.state;
-	slot = node->ss.ss_ScanTupleSlot;
-	direction = estate->es_direction;
+	TableScanDesc scandesc = node->ss.ss_currentScanDesc;
+	EState	   *estate = node->ss.ps.state;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
+	ScanDirection direction = estate->es_direction;
 
 	if (!node->trss_inScan)
 	{
@@ -354,13 +347,11 @@ ExecEndTidRangeScan(TidRangeScanState *node)
 TidRangeScanState *
 ExecInitTidRangeScan(TidRangeScan *node, EState *estate, int eflags)
 {
-	TidRangeScanState *tidrangestate;
-	Relation	currentRelation;
 
 	/*
 	 * create state structure
 	 */
-	tidrangestate = makeNode(TidRangeScanState);
+	TidRangeScanState *tidrangestate = makeNode(TidRangeScanState);
 	tidrangestate->ss.ps.plan = (Plan *) node;
 	tidrangestate->ss.ps.state = estate;
 	tidrangestate->ss.ps.ExecProcNode = ExecTidRangeScan;
@@ -380,7 +371,7 @@ ExecInitTidRangeScan(TidRangeScan *node, EState *estate, int eflags)
 	/*
 	 * open the scan relation
 	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
+	Relation	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	tidrangestate->ss.ss_currentRelation = currentRelation;
 	tidrangestate->ss.ss_currentScanDesc = NULL;	/* no table scan here */

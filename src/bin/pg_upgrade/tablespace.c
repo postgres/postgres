@@ -40,9 +40,7 @@ static void
 get_tablespace_paths(void)
 {
 	PGconn	   *conn = connectToServer(&old_cluster, "template1");
-	PGresult   *res;
 	int			tblnum;
-	int			i_spclocation;
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
@@ -54,7 +52,7 @@ get_tablespace_paths(void)
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
 			 "spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
 
-	res = executeQueryOrDie(conn, "%s", query);
+	PGresult   *res = executeQueryOrDie(conn, "%s", query);
 
 	if ((os_info.num_old_tablespaces = PQntuples(res)) != 0)
 		os_info.old_tablespaces =
@@ -62,7 +60,7 @@ get_tablespace_paths(void)
 	else
 		os_info.old_tablespaces = NULL;
 
-	i_spclocation = PQfnumber(res, "spclocation");
+	int			i_spclocation = PQfnumber(res, "spclocation");
 
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 	{

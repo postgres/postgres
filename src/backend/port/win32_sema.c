@@ -78,7 +78,6 @@ ReleaseSemaphores(int code, Datum arg)
 PGSemaphore
 PGSemaphoreCreate(void)
 {
-	HANDLE		cur_handle;
 	SECURITY_ATTRIBUTES sec_attrs;
 
 	/* Can't do this in a backend, because static state is postmaster's */
@@ -93,7 +92,7 @@ PGSemaphoreCreate(void)
 	sec_attrs.bInheritHandle = TRUE;
 
 	/* We don't need a named semaphore */
-	cur_handle = CreateSemaphore(&sec_attrs, 1, 32767, NULL);
+	HANDLE		cur_handle = CreateSemaphore(&sec_attrs, 1, 32767, NULL);
 	if (cur_handle)
 	{
 		/* Successfully done */
@@ -150,11 +149,10 @@ PGSemaphoreLock(PGSemaphore sema)
 	 */
 	while (!done)
 	{
-		DWORD		rc;
 
 		CHECK_FOR_INTERRUPTS();
 
-		rc = WaitForMultipleObjectsEx(2, wh, FALSE, INFINITE, TRUE);
+		DWORD		rc = WaitForMultipleObjectsEx(2, wh, FALSE, INFINITE, TRUE);
 		switch (rc)
 		{
 			case WAIT_OBJECT_0:
@@ -209,9 +207,8 @@ PGSemaphoreUnlock(PGSemaphore sema)
 bool
 PGSemaphoreTryLock(PGSemaphore sema)
 {
-	DWORD		ret;
 
-	ret = WaitForSingleObject(sema, 0);
+	DWORD		ret = WaitForSingleObject(sema, 0);
 
 	if (ret == WAIT_OBJECT_0)
 	{

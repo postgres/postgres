@@ -103,10 +103,9 @@ PLyUnicode_AsString(PyObject *unicode)
 PyObject *
 PLyUnicode_FromStringAndSize(const char *s, Py_ssize_t size)
 {
-	char	   *utf8string;
 	PyObject   *o;
 
-	utf8string = pg_server_to_any(s, size, PG_UTF8);
+	char	   *utf8string = pg_server_to_any(s, size, PG_UTF8);
 
 	if (utf8string == s)
 	{

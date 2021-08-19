@@ -51,14 +51,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 					int stmt_location, int stmt_len)
 {
 	const char *schemaName = stmt->schemaname;
-	Oid			namespaceId;
-	OverrideSearchPath *overridePath;
-	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	Oid			owner_uid;
 	Oid			saved_uid;
 	int			save_sec_context;
-	AclResult	aclresult;
 	ObjectAddress address;
 
 	GetUserIdAndSecContext(&saved_uid, &save_sec_context);
@@ -74,9 +70,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	/* fill schema name with the user name if not specified */
 	if (!schemaName)
 	{
-		HeapTuple	tuple;
 
-		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
+		HeapTuple	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for role %u", owner_uid);
 		schemaName =
@@ -91,7 +86,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * The latter provision guards against "giveaway" attacks.  Note that a
 	 * superuser will always have both of these privileges a fortiori.
 	 */
-	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
+	AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -135,7 +130,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
+	Oid			namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -145,7 +140,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * well as the default creation target namespace.  This will be undone at
 	 * the end of this routine, or upon error.
 	 */
-	overridePath = GetOverrideSearchPath(CurrentMemoryContext);
+	OverrideSearchPath *overridePath = GetOverrideSearchPath(CurrentMemoryContext);
 	overridePath->schemas = lcons_oid(namespaceId, overridePath->schemas);
 	/* XXX should we clear overridePath->useTemp? */
 	PushOverrideSearchPath(overridePath);
@@ -167,7 +162,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * we cannot, in general, run parse analysis on one statement until we
 	 * have actually executed the prior ones.
 	 */
-	parsetree_list = transformCreateSchemaStmt(stmt);
+	List	   *parsetree_list = transformCreateSchemaStmt(stmt);
 
 	/*
 	 * Execute each command contained in the CREATE SCHEMA.  Since the grammar
@@ -178,10 +173,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *stmt = (Node *) lfirst(parsetree_item);
-		PlannedStmt *wrapper;
 
 		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
+		PlannedStmt *wrapper = makeNode(PlannedStmt);
 		wrapper->commandType = CMD_UTILITY;
 		wrapper->canSetTag = false;
 		wrapper->utilityStmt = stmt;
@@ -218,23 +212,18 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 ObjectAddress
 RenameSchema(const char *oldname, const char *newname)
 {
-	Oid			nspOid;
-	HeapTuple	tup;
-	Relation	rel;
-	AclResult	aclresult;
 	ObjectAddress address;
-	Form_pg_namespace nspform;
 
-	rel = table_open(NamespaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
+	HeapTuple	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", oldname)));
 
-	nspform = (Form_pg_namespace) GETSTRUCT(tup);
-	nspOid = nspform->oid;
+	Form_pg_namespace nspform = (Form_pg_namespace) GETSTRUCT(tup);
+	Oid			nspOid = nspform->oid;
 
 	/* make sure the new name doesn't exist */
 	if (OidIsValid(get_namespace_oid(newname, true)))
@@ -248,7 +237,7 @@ RenameSchema(const char *oldname, const char *newname)
 					   oldname);
 
 	/* must have CREATE privilege on database */
-	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
+	AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -276,12 +265,10 @@ RenameSchema(const char *oldname, const char *newname)
 void
 AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 {
-	HeapTuple	tup;
-	Relation	rel;
 
-	rel = table_open(NamespaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(oid));
+	HeapTuple	tup = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(oid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for schema %u", oid);
 
@@ -299,22 +286,18 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 ObjectAddress
 AlterSchemaOwner(const char *name, Oid newOwnerId)
 {
-	Oid			nspOid;
-	HeapTuple	tup;
-	Relation	rel;
 	ObjectAddress address;
-	Form_pg_namespace nspform;
 
-	rel = table_open(NamespaceRelationId, RowExclusiveLock);
+	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
+	HeapTuple	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
 
-	nspform = (Form_pg_namespace) GETSTRUCT(tup);
-	nspOid = nspform->oid;
+	Form_pg_namespace nspform = (Form_pg_namespace) GETSTRUCT(tup);
+	Oid			nspOid = nspform->oid;
 
 	AlterSchemaOwner_internal(tup, rel, newOwnerId);
 
@@ -330,12 +313,11 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 static void
 AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 {
-	Form_pg_namespace nspForm;
 
 	Assert(tup->t_tableOid == NamespaceRelationId);
 	Assert(RelationGetRelid(rel) == NamespaceRelationId);
 
-	nspForm = (Form_pg_namespace) GETSTRUCT(tup);
+	Form_pg_namespace nspForm = (Form_pg_namespace) GETSTRUCT(tup);
 
 	/*
 	 * If the new owner is the same as the existing owner, consider the
@@ -347,10 +329,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		bool		repl_null[Natts_pg_namespace];
 		bool		repl_repl[Natts_pg_namespace];
 		Acl		   *newAcl;
-		Datum		aclDatum;
 		bool		isNull;
-		HeapTuple	newtuple;
-		AclResult	aclresult;
 
 		/* Otherwise, must be owner of the existing object */
 		if (!pg_namespace_ownercheck(nspForm->oid, GetUserId()))
@@ -369,7 +348,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		 * schemas.  Because superusers will always have this right, we need
 		 * no special case for them.
 		 */
-		aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
+		AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
 										 ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_DATABASE,
@@ -385,7 +364,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		 * Determine the modified ACL for the new owner.  This is only
 		 * necessary when the ACL is non-null.
 		 */
-		aclDatum = SysCacheGetAttr(NAMESPACENAME, tup,
+		Datum		aclDatum = SysCacheGetAttr(NAMESPACENAME, tup,
 								   Anum_pg_namespace_nspacl,
 								   &isNull);
 		if (!isNull)
@@ -396,7 +375,7 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 			repl_val[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(newAcl);
 		}
 
-		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
+		HeapTuple	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
 
 		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
 

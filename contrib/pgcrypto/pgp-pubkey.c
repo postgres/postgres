@@ -83,17 +83,15 @@ pgp_key_free(PGP_PubKey *pk)
 static int
 calc_key_id(PGP_PubKey *pk)
 {
-	int			res;
 	PX_MD	   *md;
-	int			len;
 	uint8		hdr[3];
 	uint8		hash[20];
 
-	res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
+	int			res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
 	if (res < 0)
 		return res;
 
-	len = 1 + 4 + 1;
+	int			len = 1 + 4 + 1;
 	switch (pk->algo)
 	{
 		case PGP_PUB_ELG_ENCRYPT:
@@ -157,10 +155,9 @@ calc_key_id(PGP_PubKey *pk)
 int
 _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 {
-	int			res;
 	PGP_PubKey *pk;
 
-	res = pgp_key_alloc(&pk);
+	int			res = pgp_key_alloc(&pk);
 	if (res < 0)
 		return res;
 
@@ -252,12 +249,11 @@ out:
 static int
 check_key_sha1(PullFilter *src, PGP_PubKey *pk)
 {
-	int			res;
 	uint8		got_sha1[20];
 	uint8		my_sha1[20];
 	PX_MD	   *md;
 
-	res = pullf_read_fixed(src, 20, got_sha1);
+	int			res = pullf_read_fixed(src, 20, got_sha1);
 	if (res < 0)
 		return res;
 
@@ -298,12 +294,11 @@ err:
 static int
 check_key_cksum(PullFilter *src, PGP_PubKey *pk)
 {
-	int			res;
 	unsigned	got_cksum,
 				my_cksum = 0;
 	uint8		buf[2];
 
-	res = pullf_read_fixed(src, 2, buf);
+	int			res = pullf_read_fixed(src, 2, buf);
 	if (res < 0)
 		return res;
 
@@ -337,7 +332,6 @@ static int
 process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 				   const uint8 *key, int key_len)
 {
-	int			res;
 	int			hide_type;
 	int			cipher_algo;
 	int			bs;
@@ -349,7 +343,7 @@ process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 	PGP_PubKey *pk;
 
 	/* first read public key part */
-	res = _pgp_read_public_key(pkt, &pk);
+	int			res = _pgp_read_public_key(pkt, &pk);
 	if (res < 0)
 		return res;
 
@@ -565,11 +559,10 @@ int
 pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
 			   const uint8 *key, int key_len, int pubtype)
 {
-	int			res;
 	PullFilter *src;
 	PGP_PubKey *pk = NULL;
 
-	res = pullf_create_mbuf_reader(&src, keypkt);
+	int			res = pullf_create_mbuf_reader(&src, keypkt);
 	if (res < 0)
 		return res;
 

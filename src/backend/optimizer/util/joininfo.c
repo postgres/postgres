@@ -96,9 +96,8 @@ add_join_clause_to_rels(PlannerInfo *root,
 						RestrictInfo *restrictinfo,
 						Relids join_relids)
 {
-	int			cur_relid;
 
-	cur_relid = -1;
+	int			cur_relid = -1;
 	while ((cur_relid = bms_next_member(join_relids, cur_relid)) >= 0)
 	{
 		RelOptInfo *rel = find_base_rel(root, cur_relid);
@@ -123,9 +122,8 @@ remove_join_clause_from_rels(PlannerInfo *root,
 							 RestrictInfo *restrictinfo,
 							 Relids join_relids)
 {
-	int			cur_relid;
 
-	cur_relid = -1;
+	int			cur_relid = -1;
 	while ((cur_relid = bms_next_member(join_relids, cur_relid)) >= 0)
 	{
 		RelOptInfo *rel = find_base_rel(root, cur_relid);

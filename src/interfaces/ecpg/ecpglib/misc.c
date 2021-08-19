@@ -141,11 +141,10 @@ struct sqlca_t *
 ECPGget_sqlca(void)
 {
 #ifdef ENABLE_THREAD_SAFETY
-	struct sqlca_t *sqlca;
 
 	pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
 
-	sqlca = pthread_getspecific(sqlca_key);
+	struct sqlca_t *sqlca = pthread_getspecific(sqlca_key);
 	if (sqlca == NULL)
 	{
 		sqlca = malloc(sizeof(struct sqlca_t));
@@ -181,9 +180,8 @@ ECPGstatus(int lineno, const char *connection_name)
 PGTransactionStatusType
 ECPGtransactionStatus(const char *connection_name)
 {
-	const struct connection *con;
 
-	con = ecpg_get_connection(connection_name);
+	const struct connection *con = ecpg_get_connection(connection_name);
 	if (con == NULL)
 	{
 		/* transaction status is unknown */
@@ -267,22 +265,19 @@ ecpg_log(const char *format,...)
 {
 	va_list		ap;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
-	const char *intl_format;
-	int			bufsize;
-	char	   *fmt;
 
 	if (!simple_debug)
 		return;
 
 	/* localize the error message string */
-	intl_format = ecpg_gettext(format);
+	const char *intl_format = ecpg_gettext(format);
 
 	/*
 	 * Insert PID into the format, unless ecpg_internal_regression_mode is set
 	 * (regression tests want unchanging output).
 	 */
-	bufsize = strlen(intl_format) + 100;
-	fmt = (char *) malloc(bufsize);
+	int			bufsize = strlen(intl_format) + 100;
+	char	   *fmt = (char *) malloc(bufsize);
 	if (fmt == NULL)
 		return;
 
@@ -501,11 +496,10 @@ ecpg_gettext(const char *msgid)
 #else
 		int			save_errno = errno;
 #endif
-		const char *ldir;
 
 		already_bound = true;
 		/* No relocatable lookup here because the binary could be anywhere */
-		ldir = getenv("PGLOCALEDIR");
+		const char *ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
 		bindtextdomain(PG_TEXTDOMAIN("ecpglib"), ldir);

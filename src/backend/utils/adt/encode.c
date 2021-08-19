@@ -48,26 +48,19 @@ binary_encode(PG_FUNCTION_ARGS)
 {
 	bytea	   *data = PG_GETARG_BYTEA_PP(0);
 	Datum		name = PG_GETARG_DATUM(1);
-	text	   *result;
-	char	   *namebuf;
-	char	   *dataptr;
-	size_t		datalen;
-	uint64		resultlen;
-	uint64		res;
-	const struct pg_encoding *enc;
 
-	namebuf = TextDatumGetCString(name);
+	char	   *namebuf = TextDatumGetCString(name);
 
-	enc = pg_find_encoding(namebuf);
+	const struct pg_encoding *enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
-	dataptr = VARDATA_ANY(data);
-	datalen = VARSIZE_ANY_EXHDR(data);
+	char	   *dataptr = VARDATA_ANY(data);
+	size_t		datalen = VARSIZE_ANY_EXHDR(data);
 
-	resultlen = enc->encode_len(dataptr, datalen);
+	uint64		resultlen = enc->encode_len(dataptr, datalen);
 
 	/*
 	 * resultlen possibly overflows uint32, therefore on 32-bit machines it's
@@ -78,9 +71,9 @@ binary_encode(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("result of encoding conversion is too large")));
 
-	result = palloc(VARHDRSZ + resultlen);
+	text	   *result = palloc(VARHDRSZ + resultlen);
 
-	res = enc->encode(dataptr, datalen, VARDATA(result));
+	uint64		res = enc->encode(dataptr, datalen, VARDATA(result));
 
 	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
@@ -96,26 +89,19 @@ binary_decode(PG_FUNCTION_ARGS)
 {
 	text	   *data = PG_GETARG_TEXT_PP(0);
 	Datum		name = PG_GETARG_DATUM(1);
-	bytea	   *result;
-	char	   *namebuf;
-	char	   *dataptr;
-	size_t		datalen;
-	uint64		resultlen;
-	uint64		res;
-	const struct pg_encoding *enc;
 
-	namebuf = TextDatumGetCString(name);
+	char	   *namebuf = TextDatumGetCString(name);
 
-	enc = pg_find_encoding(namebuf);
+	const struct pg_encoding *enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
-	dataptr = VARDATA_ANY(data);
-	datalen = VARSIZE_ANY_EXHDR(data);
+	char	   *dataptr = VARDATA_ANY(data);
+	size_t		datalen = VARSIZE_ANY_EXHDR(data);
 
-	resultlen = enc->decode_len(dataptr, datalen);
+	uint64		resultlen = enc->decode_len(dataptr, datalen);
 
 	/*
 	 * resultlen possibly overflows uint32, therefore on 32-bit machines it's
@@ -126,9 +112,9 @@ binary_decode(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("result of decoding conversion is too large")));
 
-	result = palloc(VARHDRSZ + resultlen);
+	bytea	   *result = palloc(VARHDRSZ + resultlen);
 
-	res = enc->decode(dataptr, datalen, VARDATA(result));
+	uint64		res = enc->decode(dataptr, datalen, VARDATA(result));
 
 	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
@@ -456,9 +442,8 @@ esc_decode(const char *src, size_t srclen, char *dst)
 				 (src[2] >= '0' && src[2] <= '7') &&
 				 (src[3] >= '0' && src[3] <= '7'))
 		{
-			int			val;
 
-			val = VAL(src[1]);
+			int			val = VAL(src[1]);
 			val <<= 3;
 			val += VAL(src[2]);
 			val <<= 3;

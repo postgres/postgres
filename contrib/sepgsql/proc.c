@@ -36,39 +36,30 @@
 void
 sepgsql_proc_post_create(Oid functionId)
 {
-	Relation	rel;
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	tuple;
-	char	   *nsp_name;
-	char	   *scontext;
-	char	   *tcontext;
-	char	   *ncontext;
-	uint32		required;
 	int			i;
 	StringInfoData audit_name;
 	ObjectAddress object;
-	Form_pg_proc proForm;
 
 	/*
 	 * Fetch namespace of the new procedure. Because pg_proc entry is not
 	 * visible right now, we need to scan the catalog using SnapshotSelf.
 	 */
-	rel = table_open(ProcedureRelationId, AccessShareLock);
+	Relation	rel = table_open(ProcedureRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_proc_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(functionId));
 
-	sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
 							   SnapshotSelf, 1, &skey);
 
-	tuple = systable_getnext(sscan);
+	HeapTuple	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for function %u", functionId);
 
-	proForm = (Form_pg_proc) GETSTRUCT(tuple);
+	Form_pg_proc proForm = (Form_pg_proc) GETSTRUCT(tuple);
 
 	/*
 	 * check db_schema:{add_name} permission of the namespace
@@ -91,10 +82,10 @@ sepgsql_proc_post_create(Oid functionId)
 	 * Compute a default security label when we create a new procedure object
 	 * under the specified namespace.
 	 */
-	scontext = sepgsql_get_client_label();
-	tcontext = sepgsql_get_label(NamespaceRelationId,
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext = sepgsql_get_label(NamespaceRelationId,
 								 proForm->pronamespace, 0);
-	ncontext = sepgsql_compute_create(scontext, tcontext,
+	char	   *ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_PROCEDURE,
 									  NameStr(proForm->proname));
 
@@ -102,7 +93,7 @@ sepgsql_proc_post_create(Oid functionId)
 	 * check db_procedure:{create (install)} permission
 	 */
 	initStringInfo(&audit_name);
-	nsp_name = get_namespace_name(proForm->pronamespace);
+	char	   *nsp_name = get_namespace_name(proForm->pronamespace);
 	appendStringInfo(&audit_name, "%s(",
 					 quote_qualified_identifier(nsp_name, NameStr(proForm->proname)));
 	for (i = 0; i < proForm->pronargs; i++)
@@ -117,7 +108,7 @@ sepgsql_proc_post_create(Oid functionId)
 	}
 	appendStringInfoChar(&audit_name, ')');
 
-	required = SEPG_DB_PROCEDURE__CREATE;
+	uint32		required = SEPG_DB_PROCEDURE__CREATE;
 	if (proForm->proleakproof)
 		required |= SEPG_DB_PROCEDURE__INSTALL;
 
@@ -155,7 +146,6 @@ void
 sepgsql_proc_drop(Oid functionId)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 
 	/*
 	 * check db_schema:{remove_name} permission
@@ -163,7 +153,7 @@ sepgsql_proc_drop(Oid functionId)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_func_namespace(functionId);
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -198,12 +188,11 @@ void
 sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_procedure:{setattr relabelfrom} permission
@@ -234,41 +223,33 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 void
 sepgsql_proc_setattr(Oid functionId)
 {
-	Relation	rel;
 	ScanKeyData skey;
-	SysScanDesc sscan;
-	HeapTuple	oldtup;
-	HeapTuple	newtup;
-	Form_pg_proc oldform;
-	Form_pg_proc newform;
-	uint32		required;
 	ObjectAddress object;
-	char	   *audit_name;
 
 	/*
 	 * Fetch newer catalog
 	 */
-	rel = table_open(ProcedureRelationId, AccessShareLock);
+	Relation	rel = table_open(ProcedureRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey,
 				Anum_pg_proc_oid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(functionId));
 
-	sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
+	SysScanDesc sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
 							   SnapshotSelf, 1, &skey);
-	newtup = systable_getnext(sscan);
+	HeapTuple	newtup = systable_getnext(sscan);
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "could not find tuple for function %u", functionId);
-	newform = (Form_pg_proc) GETSTRUCT(newtup);
+	Form_pg_proc newform = (Form_pg_proc) GETSTRUCT(newtup);
 
 	/*
 	 * Fetch older catalog
 	 */
-	oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+	HeapTuple	oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for function %u", functionId);
-	oldform = (Form_pg_proc) GETSTRUCT(oldtup);
+	Form_pg_proc oldform = (Form_pg_proc) GETSTRUCT(oldtup);
 
 	/*
 	 * Does this ALTER command takes operation to namespace?
@@ -284,14 +265,14 @@ sepgsql_proc_setattr(Oid functionId)
 	/*
 	 * check db_procedure:{setattr (install)} permission
 	 */
-	required = SEPG_DB_PROCEDURE__SETATTR;
+	uint32		required = SEPG_DB_PROCEDURE__SETATTR;
 	if (!oldform->proleakproof && newform->proleakproof)
 		required |= SEPG_DB_PROCEDURE__INSTALL;
 
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
@@ -315,7 +296,6 @@ void
 sepgsql_proc_execute(Oid functionId)
 {
 	ObjectAddress object;
-	char	   *audit_name;
 
 	/*
 	 * check db_procedure:{execute} permission
@@ -323,7 +303,7 @@ sepgsql_proc_execute(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object, false);
+	char	   *audit_name = getObjectIdentity(&object, false);
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
 							SEPG_DB_PROCEDURE__EXECUTE,

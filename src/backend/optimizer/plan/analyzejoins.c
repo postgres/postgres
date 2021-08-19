@@ -70,8 +70,6 @@ restart:
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-		int			innerrelid;
-		int			nremoved;
 
 		/* Skip if not removable */
 		if (!join_is_removable(root, sjinfo))
@@ -82,14 +80,14 @@ restart:
 		 * righthand is a single baserel.  Remove that rel from the query and
 		 * joinlist.
 		 */
-		innerrelid = bms_singleton_member(sjinfo->min_righthand);
+		int			innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
 		remove_rel_from_query(root, innerrelid,
 							  bms_union(sjinfo->min_lefthand,
 										sjinfo->min_righthand));
 
 		/* We verify that exactly one reference gets removed from joinlist */
-		nremoved = 0;
+		int			nremoved = 0;
 		joinlist = remove_rel_from_joinlist(joinlist, innerrelid, &nremoved);
 		if (nremoved != 1)
 			elog(ERROR, "failed to find relation %d in joinlist", innerrelid);
@@ -159,8 +157,6 @@ static bool
 join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 {
 	int			innerrelid;
-	RelOptInfo *innerrel;
-	Relids		joinrelids;
 	List	   *clause_list = NIL;
 	ListCell   *l;
 	int			attroff;
@@ -176,7 +172,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
 		return false;
 
-	innerrel = find_base_rel(root, innerrelid);
+	RelOptInfo *innerrel = find_base_rel(root, innerrelid);
 
 	/*
 	 * Before we go to the effort of checking whether any innerrel variables
@@ -187,7 +183,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		return false;
 
 	/* Compute the relid set for the join we are considering */
-	joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+	Relids		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
 
 	/*
 	 * We can't remove the join if any inner-rel attributes are used above the
@@ -312,7 +308,6 @@ static void
 remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 {
 	RelOptInfo *rel = find_base_rel(root, relid);
-	List	   *joininfos;
 	Index		rti;
 	ListCell   *l;
 
@@ -412,7 +407,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * loop, because otherwise remove_join_clause_from_rels would destroy the
 	 * list while we're scanning it.
 	 */
-	joininfos = list_copy(rel->joininfo);
+	List	   *joininfos = list_copy(rel->joininfo);
 	foreach(l, joininfos)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
@@ -472,9 +467,8 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 		else if (IsA(jlnode, List))
 		{
 			/* Recurse to handle subproblem */
-			List	   *sublist;
 
-			sublist = remove_rel_from_joinlist((List *) jlnode,
+			List	   *sublist = remove_rel_from_joinlist((List *) jlnode,
 											   relid, nremoved);
 			/* Avoid including empty sub-lists in the result */
 			if (sublist)
@@ -516,9 +510,6 @@ reduce_unique_semijoins(PlannerInfo *root)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
 		int			innerrelid;
-		RelOptInfo *innerrel;
-		Relids		joinrelids;
-		List	   *restrictlist;
 
 		/*
 		 * Must be a non-delaying semijoin to a single baserel, else we aren't
@@ -533,7 +524,7 @@ reduce_unique_semijoins(PlannerInfo *root)
 		if (!bms_get_singleton_member(sjinfo->min_righthand, &innerrelid))
 			continue;
 
-		innerrel = find_base_rel(root, innerrelid);
+		RelOptInfo *innerrel = find_base_rel(root, innerrelid);
 
 		/*
 		 * Before we trouble to run generate_join_implied_equalities, make a
@@ -544,14 +535,14 @@ reduce_unique_semijoins(PlannerInfo *root)
 			continue;
 
 		/* Compute the relid set for the join we are considering */
-		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+		Relids		joinrelids = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
 
 		/*
 		 * Since we're only considering a single-rel RHS, any join clauses it
 		 * has must be clauses linking it to the semijoin's min_lefthand.  We
 		 * can also consider EC-derived join clauses.
 		 */
-		restrictlist =
+		List	   *restrictlist =
 			list_concat(generate_join_implied_equalities(root,
 														 joinrelids,
 														 sjinfo->min_lefthand,
@@ -677,7 +668,6 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 		foreach(l, clause_list)
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, l);
-			Oid			op;
 			Var		   *var;
 
 			/*
@@ -688,7 +678,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 			 * caller's mergejoinability test should have selected only
 			 * OpExprs.
 			 */
-			op = castNode(OpExpr, rinfo->clause)->opno;
+			Oid			op = castNode(OpExpr, rinfo->clause)->opno;
 
 			/* caller identified the inner side for us */
 			if (rinfo->outer_is_left)
@@ -875,21 +865,19 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 		if (!topop->all)
 		{
-			ListCell   *lg;
 
 			/* We're good if all the nonjunk output columns are in colnos */
-			lg = list_head(topop->groupClauses);
+			ListCell   *lg = list_head(topop->groupClauses);
 			foreach(l, query->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
-				SortGroupClause *sgc;
 
 				if (tle->resjunk)
 					continue;	/* ignore resjunk columns */
 
 				/* non-resjunk columns should have grouping clauses */
 				Assert(lg != NULL);
-				sgc = (SortGroupClause *) lfirst(lg);
+				SortGroupClause *sgc = (SortGroupClause *) lfirst(lg);
 				lg = lnext(topop->groupClauses, lg);
 
 				opid = distinct_col_search(tle->resno, colnos, opids);

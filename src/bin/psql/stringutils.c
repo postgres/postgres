@@ -64,8 +64,6 @@ strtokx(const char *s,
 								 * next call */
 
 	/* variously abused variables: */
-	unsigned int offset;
-	char	   *start;
 	char	   *p;
 
 	if (s)
@@ -86,8 +84,8 @@ strtokx(const char *s,
 		return NULL;
 
 	/* skip leading whitespace */
-	offset = strspn(string, whitespace);
-	start = &string[offset];
+	unsigned int offset = strspn(string, whitespace);
+	char	   *start = &string[offset];
 
 	/* end of string reached? */
 	if (*start == '\0')
@@ -239,13 +237,12 @@ strtokx(const char *s,
 void
 strip_quotes(char *source, char quote, char escape, int encoding)
 {
-	char	   *src;
 	char	   *dst;
 
 	Assert(source != NULL);
 	Assert(quote != '\0');
 
-	src = dst = source;
+	char	   *src = dst = source;
 
 	if (*src && *src == quote)
 		src++;					/* skip leading quote */
@@ -253,7 +250,6 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 	while (*src)
 	{
 		char		c = *src;
-		int			i;
 
 		if (c == quote && src[1] == '\0')
 			break;				/* skip trailing quote */
@@ -262,7 +258,7 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 		else if (c == escape && src[1] != '\0')
 			src++;				/* process escaped character */
 
-		i = PQmblenBounded(src, encoding);
+		int			i = PQmblenBounded(src, encoding);
 		while (i--)
 			*dst++ = *src++;
 	}
@@ -293,23 +289,20 @@ quote_if_needed(const char *source, const char *entails_quote,
 				char quote, char escape, bool force_quote,
 				int encoding)
 {
-	const char *src;
 	char	   *ret;
-	char	   *dst;
 	bool		need_quotes = force_quote;
 
 	Assert(source != NULL);
 	Assert(quote != '\0');
 
-	src = source;
-	dst = ret = pg_malloc(2 * strlen(src) + 3); /* excess */
+	const char *src = source;
+	char	   *dst = ret = pg_malloc(2 * strlen(src) + 3); /* excess */
 
 	*dst++ = quote;
 
 	while (*src)
 	{
 		char		c = *src;
-		int			i;
 
 		if (c == quote)
 		{
@@ -324,7 +317,7 @@ quote_if_needed(const char *source, const char *entails_quote,
 		else if (strchr(entails_quote, c))
 			need_quotes = true;
 
-		i = PQmblenBounded(src, encoding);
+		int			i = PQmblenBounded(src, encoding);
 		while (i--)
 			*dst++ = *src++;
 	}

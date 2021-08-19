@@ -42,16 +42,12 @@ static const char *get_am_type_string(char amtype);
 ObjectAddress
 CreateAccessMethod(CreateAmStmt *stmt)
 {
-	Relation	rel;
 	ObjectAddress myself;
 	ObjectAddress referenced;
-	Oid			amoid;
-	Oid			amhandler;
 	bool		nulls[Natts_pg_am];
 	Datum		values[Natts_pg_am];
-	HeapTuple	tup;
 
-	rel = table_open(AccessMethodRelationId, RowExclusiveLock);
+	Relation	rel = table_open(AccessMethodRelationId, RowExclusiveLock);
 
 	/* Must be super user */
 	if (!superuser())
@@ -62,7 +58,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 				 errhint("Must be superuser to create an access method.")));
 
 	/* Check if name is used */
-	amoid = GetSysCacheOid1(AMNAME, Anum_pg_am_oid,
+	Oid			amoid = GetSysCacheOid1(AMNAME, Anum_pg_am_oid,
 							CStringGetDatum(stmt->amname));
 	if (OidIsValid(amoid))
 	{
@@ -75,7 +71,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	/*
 	 * Get the handler function oid, verifying the AM type while at it.
 	 */
-	amhandler = lookup_am_handler_func(stmt->handler_name, stmt->amtype);
+	Oid			amhandler = lookup_am_handler_func(stmt->handler_name, stmt->amtype);
 
 	/*
 	 * Insert tuple into pg_am.
@@ -90,7 +86,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 	values[Anum_pg_am_amhandler - 1] = ObjectIdGetDatum(amhandler);
 	values[Anum_pg_am_amtype - 1] = CharGetDatum(stmt->amtype);
 
-	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+	HeapTuple	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
 	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
@@ -128,10 +124,9 @@ CreateAccessMethod(CreateAmStmt *stmt)
 static Oid
 get_am_type_oid(const char *amname, char amtype, bool missing_ok)
 {
-	HeapTuple	tup;
 	Oid			oid = InvalidOid;
 
-	tup = SearchSysCache1(AMNAME, CStringGetDatum(amname));
+	HeapTuple	tup = SearchSysCache1(AMNAME, CStringGetDatum(amname));
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);
@@ -191,10 +186,9 @@ get_am_oid(const char *amname, bool missing_ok)
 char *
 get_am_name(Oid amOid)
 {
-	HeapTuple	tup;
 	char	   *result = NULL;
 
-	tup = SearchSysCache1(AMOID, ObjectIdGetDatum(amOid));
+	HeapTuple	tup = SearchSysCache1(AMOID, ObjectIdGetDatum(amOid));
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);
@@ -233,7 +227,6 @@ get_am_type_string(char amtype)
 static Oid
 lookup_am_handler_func(List *handler_name, char amtype)
 {
-	Oid			handlerOid;
 	Oid			funcargtypes[1] = {INTERNALOID};
 	Oid			expectedType = InvalidOid;
 
@@ -243,7 +236,7 @@ lookup_am_handler_func(List *handler_name, char amtype)
 				 errmsg("handler function is not specified")));
 
 	/* handlers have one argument of type internal */
-	handlerOid = LookupFuncName(handler_name, 1, funcargtypes, false);
+	Oid			handlerOid = LookupFuncName(handler_name, 1, funcargtypes, false);
 
 	/* check that handler has the correct return type */
 	switch (amtype)

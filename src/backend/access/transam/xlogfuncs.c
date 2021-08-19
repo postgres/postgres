@@ -62,11 +62,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	text	   *backupid = PG_GETARG_TEXT_PP(0);
 	bool		fast = PG_GETARG_BOOL(1);
 	bool		exclusive = PG_GETARG_BOOL(2);
-	char	   *backupidstr;
 	XLogRecPtr	startpoint;
 	SessionBackupState status = get_backup_status();
 
-	backupidstr = text_to_cstring(backupid);
+	char	   *backupidstr = text_to_cstring(backupid);
 
 	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
 		ereport(ERROR,
@@ -80,13 +79,12 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		MemoryContext oldcontext;
 
 		/*
 		 * Label file and tablespace map file need to be long-lived, since
 		 * they are read in pg_stop_backup.
 		 */
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		label_file = makeStringInfo();
 		tblspc_map_file = makeStringInfo();
 		MemoryContextSwitchTo(oldcontext);
@@ -123,7 +121,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	stoppoint;
 	SessionBackupState status = get_backup_status();
 
 	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
@@ -139,7 +136,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * exclusive backup is in fact running is handled inside
 	 * do_pg_stop_backup.
 	 */
-	stoppoint = do_pg_stop_backup(NULL, true, NULL);
+	XLogRecPtr	stoppoint = do_pg_stop_backup(NULL, true, NULL);
 
 	PG_RETURN_LSN(stoppoint);
 }
@@ -167,9 +164,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	Datum		values[3];
 	bool		nulls[3];
 
@@ -192,10 +186,10 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -266,7 +260,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 Datum
 pg_switch_wal(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	switchpoint;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -274,7 +267,7 @@ pg_switch_wal(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	switchpoint = RequestXLogSwitch(false);
+	XLogRecPtr	switchpoint = RequestXLogSwitch(false);
 
 	/*
 	 * As a convenience, return the WAL location of the switch record
@@ -292,8 +285,6 @@ Datum
 pg_create_restore_point(PG_FUNCTION_ARGS)
 {
 	text	   *restore_name = PG_GETARG_TEXT_PP(0);
-	char	   *restore_name_str;
-	XLogRecPtr	restorepoint;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -307,14 +298,14 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 				 errmsg("WAL level not sufficient for creating a restore point"),
 				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
 
-	restore_name_str = text_to_cstring(restore_name);
+	char	   *restore_name_str = text_to_cstring(restore_name);
 
 	if (strlen(restore_name_str) >= MAXFNAMELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("value too long for restore point (maximum %d characters)", MAXFNAMELEN - 1)));
 
-	restorepoint = XLogRestorePoint(restore_name_str);
+	XLogRecPtr	restorepoint = XLogRestorePoint(restore_name_str);
 
 	/*
 	 * As a convenience, return the WAL location of the restore point record
@@ -332,7 +323,6 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 Datum
 pg_current_wal_lsn(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	current_recptr;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -340,7 +330,7 @@ pg_current_wal_lsn(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	current_recptr = GetXLogWriteRecPtr();
+	XLogRecPtr	current_recptr = GetXLogWriteRecPtr();
 
 	PG_RETURN_LSN(current_recptr);
 }
@@ -353,7 +343,6 @@ pg_current_wal_lsn(PG_FUNCTION_ARGS)
 Datum
 pg_current_wal_insert_lsn(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	current_recptr;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -361,7 +350,7 @@ pg_current_wal_insert_lsn(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	current_recptr = GetXLogInsertRecPtr();
+	XLogRecPtr	current_recptr = GetXLogInsertRecPtr();
 
 	PG_RETURN_LSN(current_recptr);
 }
@@ -374,7 +363,6 @@ pg_current_wal_insert_lsn(PG_FUNCTION_ARGS)
 Datum
 pg_current_wal_flush_lsn(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	current_recptr;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -382,7 +370,7 @@ pg_current_wal_flush_lsn(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	current_recptr = GetFlushRecPtr();
+	XLogRecPtr	current_recptr = GetFlushRecPtr();
 
 	PG_RETURN_LSN(current_recptr);
 }
@@ -396,9 +384,8 @@ pg_current_wal_flush_lsn(PG_FUNCTION_ARGS)
 Datum
 pg_last_wal_receive_lsn(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	recptr;
 
-	recptr = GetWalRcvFlushRecPtr(NULL, NULL);
+	XLogRecPtr	recptr = GetWalRcvFlushRecPtr(NULL, NULL);
 
 	if (recptr == 0)
 		PG_RETURN_NULL();
@@ -415,9 +402,8 @@ pg_last_wal_receive_lsn(PG_FUNCTION_ARGS)
 Datum
 pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	recptr;
 
-	recptr = GetXLogReplayRecPtr(NULL);
+	XLogRecPtr	recptr = GetXLogReplayRecPtr(NULL);
 
 	if (recptr == 0)
 		PG_RETURN_NULL();
@@ -437,14 +423,10 @@ Datum
 pg_walfile_name_offset(PG_FUNCTION_ARGS)
 {
 	XLogSegNo	xlogsegno;
-	uint32		xrecoff;
 	XLogRecPtr	locationpoint = PG_GETARG_LSN(0);
 	char		xlogfilename[MAXFNAMELEN];
 	Datum		values[2];
 	bool		isnull[2];
-	TupleDesc	resultTupleDesc;
-	HeapTuple	resultHeapTuple;
-	Datum		result;
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -457,7 +439,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	resultTupleDesc = CreateTemplateTupleDesc(2);
+	TupleDesc	resultTupleDesc = CreateTemplateTupleDesc(2);
 	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 1, "file_name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 2, "file_offset",
@@ -477,7 +459,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * offset
 	 */
-	xrecoff = XLogSegmentOffset(locationpoint, wal_segment_size);
+	uint32		xrecoff = XLogSegmentOffset(locationpoint, wal_segment_size);
 
 	values[1] = UInt32GetDatum(xrecoff);
 	isnull[1] = false;
@@ -485,9 +467,9 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * Tuple jam: Having first prepared your Datums, then squash together
 	 */
-	resultHeapTuple = heap_form_tuple(resultTupleDesc, values, isnull);
+	HeapTuple	resultHeapTuple = heap_form_tuple(resultTupleDesc, values, isnull);
 
-	result = HeapTupleGetDatum(resultHeapTuple);
+	Datum		result = HeapTupleGetDatum(resultHeapTuple);
 
 	PG_RETURN_DATUM(result);
 }
@@ -635,9 +617,8 @@ pg_get_wal_replay_pause_state(PG_FUNCTION_ARGS)
 Datum
 pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz xtime;
 
-	xtime = GetLatestXTime();
+	TimestampTz xtime = GetLatestXTime();
 	if (xtime == 0)
 		PG_RETURN_NULL();
 
@@ -659,9 +640,8 @@ pg_is_in_recovery(PG_FUNCTION_ARGS)
 Datum
 pg_wal_lsn_diff(PG_FUNCTION_ARGS)
 {
-	Datum		result;
 
-	result = DirectFunctionCall2(pg_lsn_mi,
+	Datum		result = DirectFunctionCall2(pg_lsn_mi,
 								 PG_GETARG_DATUM(0),
 								 PG_GETARG_DATUM(1));
 
@@ -686,15 +666,13 @@ pg_is_in_backup(PG_FUNCTION_ARGS)
 Datum
 pg_backup_start_time(PG_FUNCTION_ARGS)
 {
-	Datum		xtime;
-	FILE	   *lfp;
 	char		fline[MAXPGPATH];
 	char		backup_start_time[30];
 
 	/*
 	 * See if label file is present
 	 */
-	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
+	FILE	   *lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
 	if (lfp == NULL)
 	{
 		if (errno != ENOENT)
@@ -735,7 +713,7 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 	/*
 	 * Convert the time string read from file to TimestampTz form.
 	 */
-	xtime = DirectFunctionCall3(timestamptz_in,
+	Datum		xtime = DirectFunctionCall3(timestamptz_in,
 								CStringGetDatum(backup_start_time),
 								ObjectIdGetDatum(InvalidOid),
 								Int32GetDatum(-1));
@@ -754,7 +732,6 @@ pg_promote(PG_FUNCTION_ARGS)
 {
 	bool		wait = PG_GETARG_BOOL(0);
 	int			wait_seconds = PG_GETARG_INT32(1);
-	FILE	   *promote_file;
 	int			i;
 
 	if (!RecoveryInProgress())
@@ -769,7 +746,7 @@ pg_promote(PG_FUNCTION_ARGS)
 				 errmsg("\"wait_seconds\" must not be negative or zero")));
 
 	/* create the promote signal file */
-	promote_file = AllocateFile(PROMOTE_SIGNAL_FILE, "w");
+	FILE	   *promote_file = AllocateFile(PROMOTE_SIGNAL_FILE, "w");
 	if (!promote_file)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -799,7 +776,6 @@ pg_promote(PG_FUNCTION_ARGS)
 #define WAITS_PER_SECOND 10
 	for (i = 0; i < WAITS_PER_SECOND * wait_seconds; i++)
 	{
-		int			rc;
 
 		ResetLatch(MyLatch);
 
@@ -808,7 +784,7 @@ pg_promote(PG_FUNCTION_ARGS)
 
 		CHECK_FOR_INTERRUPTS();
 
-		rc = WaitLatch(MyLatch,
+		int			rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 					   1000L / WAITS_PER_SECOND,
 					   WAIT_EVENT_PROMOTE);

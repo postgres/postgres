@@ -108,10 +108,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	if (stmt->relation)
 	{
 		LOCKMODE	lockmode = is_from ? RowExclusiveLock : AccessShareLock;
-		ParseNamespaceItem *nsitem;
-		RangeTblEntry *rte;
-		TupleDesc	tupDesc;
-		List	   *attnums;
 		ListCell   *cur;
 
 		Assert(!stmt->query);
@@ -121,9 +117,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		relid = RelationGetRelid(rel);
 
-		nsitem = addRangeTableEntryForRelation(pstate, rel, lockmode,
+		ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, rel, lockmode,
 											   NULL, false, false);
-		rte = nsitem->p_rte;
+		RangeTblEntry *rte = nsitem->p_rte;
 		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
 
 		if (stmt->whereClause)
@@ -146,8 +142,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
 		}
 
-		tupDesc = RelationGetDescr(rel);
-		attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
+		TupleDesc	tupDesc = RelationGetDescr(rel);
+		List	   *attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
 		foreach(cur, attnums)
 		{
 			int			attno = lfirst_int(cur) -
@@ -176,10 +172,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		 */
 		if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED)
 		{
-			SelectStmt *select;
 			ColumnRef  *cr;
 			ResTarget  *target;
-			RangeVar   *from;
 			List	   *targetList = NIL;
 
 			if (is_from)
@@ -246,12 +240,12 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			 * Build RangeVar for from clause, fully qualified based on the
 			 * relation which we have opened and locked.
 			 */
-			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+			RangeVar   *from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 								pstrdup(RelationGetRelationName(rel)),
 								-1);
 
 			/* Build query */
-			select = makeNode(SelectStmt);
+			SelectStmt *select = makeNode(SelectStmt);
 			select->targetList = targetList;
 			select->fromClause = list_make1(from);
 
@@ -285,7 +279,6 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 	if (is_from)
 	{
-		CopyFromState cstate;
 
 		Assert(rel);
 
@@ -293,7 +286,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		if (XactReadOnly && !rel->rd_islocaltemp)
 			PreventCommandIfReadOnly("COPY FROM");
 
-		cstate = BeginCopyFrom(pstate, rel, whereClause,
+		CopyFromState cstate = BeginCopyFrom(pstate, rel, whereClause,
 							   stmt->filename, stmt->is_program,
 							   NULL, stmt->attlist, stmt->options);
 		*processed = CopyFrom(cstate);	/* copy from file to database */
@@ -301,9 +294,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	}
 	else
 	{
-		CopyToState cstate;
 
-		cstate = BeginCopyTo(pstate, rel, query, relid,
+		CopyToState cstate = BeginCopyTo(pstate, rel, query, relid,
 							 stmt->filename, stmt->is_program,
 							 stmt->attlist, stmt->options);
 		*processed = DoCopyTo(cstate);	/* copy from database to file */
@@ -675,11 +667,10 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 		foreach(l, attnamelist)
 		{
 			char	   *name = strVal(lfirst(l));
-			int			attnum;
 			int			i;
 
 			/* Lookup column name */
-			attnum = InvalidAttrNumber;
+			int			attnum = InvalidAttrNumber;
 			for (i = 0; i < tupDesc->natts; i++)
 			{
 				Form_pg_attribute att = TupleDescAttr(tupDesc, i);

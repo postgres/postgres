@@ -72,16 +72,14 @@ static const pg_unicode_decomposition *
 get_code_entry(pg_wchar code)
 {
 #ifndef FRONTEND
-	int			h;
-	uint32		hashkey;
 	pg_unicode_decompinfo decompinfo = UnicodeDecompInfo;
 
 	/*
 	 * Compute the hash function. The hash key is the codepoint with the bytes
 	 * in network order.
 	 */
-	hashkey = pg_hton32(code);
-	h = decompinfo.hash(&hashkey);
+	uint32		hashkey = pg_hton32(code);
+	int			h = decompinfo.hash(&hashkey);
 
 	/* An out-of-range result implies no match */
 	if (h < 0 || h >= decompinfo.num_decomps)
@@ -158,10 +156,8 @@ get_code_decomposition(const pg_unicode_decomposition *entry, int *dec_size)
 static int
 get_decomposed_size(pg_wchar code, bool compat)
 {
-	const pg_unicode_decomposition *entry;
 	int			size = 0;
 	int			i;
-	const uint32 *decomp;
 	int			dec_size;
 
 	/*
@@ -183,7 +179,7 @@ get_decomposed_size(pg_wchar code, bool compat)
 		return 2;
 	}
 
-	entry = get_code_entry(code);
+	const pg_unicode_decomposition *entry = get_code_entry(code);
 
 	/*
 	 * Just count current code if no other decompositions.  A NULL entry is
@@ -197,7 +193,7 @@ get_decomposed_size(pg_wchar code, bool compat)
 	 * If this entry has other decomposition codes look at them as well. First
 	 * get its decomposition in the list of tables available.
 	 */
-	decomp = get_code_decomposition(entry, &dec_size);
+	const uint32 *decomp = get_code_decomposition(entry, &dec_size);
 	for (i = 0; i < dec_size; i++)
 	{
 		uint32		lcode = decomp[i];
@@ -258,7 +254,6 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 
 		int			h,
 					inv_lookup_index;
-		uint64		hashkey;
 		pg_unicode_recompinfo recompinfo = UnicodeRecompInfo;
 
 		/*
@@ -266,7 +261,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 		 * bytes of the two codepoints in network order. See also
 		 * src/common/unicode/generate-unicode_norm_table.pl.
 		 */
-		hashkey = pg_hton64(((uint64) start << 32) | (uint64) code);
+		uint64		hashkey = pg_hton64(((uint64) start << 32) | (uint64) code);
 		h = recompinfo.hash(&hashkey);
 
 		/* An out-of-range result implies no match */
@@ -320,9 +315,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 static void
 decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 {
-	const pg_unicode_decomposition *entry;
 	int			i;
-	const uint32 *decomp;
 	int			dec_size;
 
 	/*
@@ -358,7 +351,7 @@ decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 		return;
 	}
 
-	entry = get_code_entry(code);
+	const pg_unicode_decomposition *entry = get_code_entry(code);
 
 	/*
 	 * Just fill in with the current decomposition if there are no
@@ -379,7 +372,7 @@ decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 	/*
 	 * If this entry has other decomposition codes look at them as well.
 	 */
-	decomp = get_code_decomposition(entry, &dec_size);
+	const uint32 *decomp = get_code_decomposition(entry, &dec_size);
 	for (i = 0; i < dec_size; i++)
 	{
 		pg_wchar	lcode = (pg_wchar) decomp[i];
@@ -403,18 +396,12 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 {
 	bool		compat = (form == UNICODE_NFKC || form == UNICODE_NFKD);
 	bool		recompose = (form == UNICODE_NFC || form == UNICODE_NFKC);
-	pg_wchar   *decomp_chars;
-	pg_wchar   *recomp_chars;
 	int			decomp_size,
 				current_size;
 	int			count;
 	const pg_wchar *p;
 
 	/* variables for recomposition */
-	int			last_class;
-	int			starter_pos;
-	int			target_pos;
-	uint32		starter_ch;
 
 	/* First, do character decomposition */
 
@@ -425,7 +412,7 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 	for (p = input; *p; p++)
 		decomp_size += get_decomposed_size(*p, compat);
 
-	decomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
+	pg_wchar   *decomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
 	if (decomp_chars == NULL)
 		return NULL;
 
@@ -446,7 +433,6 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 	{
 		pg_wchar	prev = decomp_chars[count - 1];
 		pg_wchar	next = decomp_chars[count];
-		pg_wchar	tmp;
 		const uint8 prevClass = get_canonical_class(prev);
 		const uint8 nextClass = get_canonical_class(next);
 
@@ -465,7 +451,7 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 			continue;
 
 		/* exchange can happen */
-		tmp = decomp_chars[count - 1];
+		pg_wchar	tmp = decomp_chars[count - 1];
 		decomp_chars[count - 1] = decomp_chars[count];
 		decomp_chars[count] = tmp;
 
@@ -483,17 +469,17 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 	 * longer than the decomposed one, so make the allocation of the output
 	 * string based on that assumption.
 	 */
-	recomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
+	pg_wchar   *recomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
 	if (!recomp_chars)
 	{
 		FREE(decomp_chars);
 		return NULL;
 	}
 
-	last_class = -1;			/* this eliminates a special check */
-	starter_pos = 0;
-	target_pos = 1;
-	starter_ch = recomp_chars[0] = decomp_chars[0];
+	int			last_class = -1;			/* this eliminates a special check */
+	int			starter_pos = 0;
+	int			target_pos = 1;
+	uint32		starter_ch = recomp_chars[0] = decomp_chars[0];
 
 	for (count = 1; count < decomp_size; count++)
 	{
@@ -538,15 +524,13 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 static const pg_unicode_normprops *
 qc_hash_lookup(pg_wchar ch, const pg_unicode_norminfo *norminfo)
 {
-	int			h;
-	uint32		hashkey;
 
 	/*
 	 * Compute the hash function. The hash key is the codepoint with the bytes
 	 * in network order.
 	 */
-	hashkey = pg_hton32(ch);
-	h = norminfo->hash(&hashkey);
+	uint32		hashkey = pg_hton32(ch);
+	int			h = norminfo->hash(&hashkey);
 
 	/* An out-of-range result implies no match */
 	if (h < 0 || h >= norminfo->num_normprops)
@@ -609,14 +593,12 @@ unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const pg_wchar *
 	for (const pg_wchar *p = input; *p; p++)
 	{
 		pg_wchar	ch = *p;
-		uint8		canonicalClass;
-		UnicodeNormalizationQC check;
 
-		canonicalClass = get_canonical_class(ch);
+		uint8		canonicalClass = get_canonical_class(ch);
 		if (lastCanonicalClass > canonicalClass && canonicalClass != 0)
 			return UNICODE_NORM_QC_NO;
 
-		check = qc_is_allowed(form, ch);
+		UnicodeNormalizationQC check = qc_is_allowed(form, ch);
 		if (check == UNICODE_NORM_QC_NO)
 			return UNICODE_NORM_QC_NO;
 		else if (check == UNICODE_NORM_QC_MAYBE)

@@ -35,10 +35,6 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	TupleDesc	tupdesc;
-	Page		page;
-	GinPageOpaque opaq;
-	GinMetaPageData *metadata;
-	HeapTuple	resultTuple;
 	Datum		values[10];
 	bool		nulls[10];
 
@@ -47,9 +43,9 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	page = get_page_from_raw(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
-	opaq = (GinPageOpaque) PageGetSpecialPointer(page);
+	GinPageOpaque opaq = (GinPageOpaque) PageGetSpecialPointer(page);
 	if (opaq->flags != GIN_META)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -61,7 +57,7 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	metadata = GinPageGetMeta(page);
+	GinMetaPageData *metadata = GinPageGetMeta(page);
 
 	memset(nulls, 0, sizeof(nulls));
 
@@ -80,7 +76,7 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 	values[9] = Int32GetDatum(metadata->ginVersion);
 
 	/* Build and return the result tuple. */
-	resultTuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	resultTuple = heap_form_tuple(tupdesc, values, nulls);
 
 	return HeapTupleGetDatum(resultTuple);
 }
@@ -91,30 +87,26 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	TupleDesc	tupdesc;
-	Page		page;
-	GinPageOpaque opaq;
-	HeapTuple	resultTuple;
 	Datum		values[3];
 	bool		nulls[3];
 	Datum		flags[16];
 	int			nflags = 0;
-	uint16		flagbits;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	page = get_page_from_raw(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
-	opaq = (GinPageOpaque) PageGetSpecialPointer(page);
+	GinPageOpaque opaq = (GinPageOpaque) PageGetSpecialPointer(page);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
 	/* Convert the flags bitmask to an array of human-readable names */
-	flagbits = opaq->flags;
+	uint16		flagbits = opaq->flags;
 	if (flagbits & GIN_DATA)
 		flags[nflags++] = CStringGetTextDatum("data");
 	if (flagbits & GIN_LEAF)
@@ -148,7 +140,7 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 												-1, false, TYPALIGN_INT));
 
 	/* Build and return the result tuple. */
-	resultTuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	resultTuple = heap_form_tuple(tupdesc, values, nulls);
 
 	return HeapTupleGetDatum(resultTuple);
 }
@@ -175,14 +167,11 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		TupleDesc	tupdesc;
-		MemoryContext mctx;
-		Page		page;
-		GinPageOpaque opaq;
 
 		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+		MemoryContext mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
-		page = get_page_from_raw(raw_page);
+		Page		page = get_page_from_raw(raw_page);
 
 		if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GinPageOpaqueData)))
 			ereport(ERROR,
@@ -192,7 +181,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 							   (int) PageGetSpecialSize(page),
 							   (int) MAXALIGN(sizeof(GinPageOpaqueData)))));
 
-		opaq = (GinPageOpaque) PageGetSpecialPointer(page);
+		GinPageOpaque opaq = (GinPageOpaque) PageGetSpecialPointer(page);
 		if (opaq->flags != (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -225,14 +214,10 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 	if (inter_call_data->seg != inter_call_data->lastseg)
 	{
 		GinPostingList *cur = inter_call_data->seg;
-		HeapTuple	resultTuple;
-		Datum		result;
 		Datum		values[3];
 		bool		nulls[3];
 		int			ndecoded,
 					i;
-		ItemPointer tids;
-		Datum	   *tids_datum;
 
 		memset(nulls, 0, sizeof(nulls));
 
@@ -240,8 +225,8 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		values[1] = UInt16GetDatum(cur->nbytes);
 
 		/* build an array of decoded item pointers */
-		tids = ginPostingListDecode(cur, &ndecoded);
-		tids_datum = (Datum *) palloc(ndecoded * sizeof(Datum));
+		ItemPointer tids = ginPostingListDecode(cur, &ndecoded);
+		Datum	   *tids_datum = (Datum *) palloc(ndecoded * sizeof(Datum));
 		for (i = 0; i < ndecoded; i++)
 			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
 		values[2] = PointerGetDatum(construct_array(tids_datum,
@@ -253,8 +238,8 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		pfree(tids);
 
 		/* Build and return the result tuple. */
-		resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
-		result = HeapTupleGetDatum(resultTuple);
+		HeapTuple	resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
+		Datum		result = HeapTupleGetDatum(resultTuple);
 
 		inter_call_data->seg = GinNextPostingListSegment(cur);
 

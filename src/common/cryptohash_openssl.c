@@ -165,12 +165,11 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 int
 pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 {
-	int			status = 0;
 
 	if (ctx == NULL)
 		return -1;
 
-	status = EVP_DigestUpdate(ctx->evpctx, data, len);
+	int			status = EVP_DigestUpdate(ctx->evpctx, data, len);
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
@@ -186,7 +185,6 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 int
 pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 {
-	int			status = 0;
 
 	if (ctx == NULL)
 		return -1;
@@ -219,7 +217,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 			break;
 	}
 
-	status = EVP_DigestFinal_ex(ctx->evpctx, dest, 0);
+	int			status = EVP_DigestFinal_ex(ctx->evpctx, dest, 0);
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)

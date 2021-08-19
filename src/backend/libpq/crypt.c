@@ -37,13 +37,10 @@ char *
 get_role_password(const char *role, char **logdetail)
 {
 	TimestampTz vuntil = 0;
-	HeapTuple	roleTup;
-	Datum		datum;
 	bool		isnull;
-	char	   *shadow_pass;
 
 	/* Get role info from pg_authid */
-	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
+	HeapTuple	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 	if (!HeapTupleIsValid(roleTup))
 	{
 		*logdetail = psprintf(_("Role \"%s\" does not exist."),
@@ -51,7 +48,7 @@ get_role_password(const char *role, char **logdetail)
 		return NULL;			/* no such user */
 	}
 
-	datum = SysCacheGetAttr(AUTHNAME, roleTup,
+	Datum		datum = SysCacheGetAttr(AUTHNAME, roleTup,
 							Anum_pg_authid_rolpassword, &isnull);
 	if (isnull)
 	{
@@ -60,7 +57,7 @@ get_role_password(const char *role, char **logdetail)
 							  role);
 		return NULL;			/* user has no password */
 	}
-	shadow_pass = TextDatumGetCString(datum);
+	char	   *shadow_pass = TextDatumGetCString(datum);
 
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
 							Anum_pg_authid_rolvaliduntil, &isnull);

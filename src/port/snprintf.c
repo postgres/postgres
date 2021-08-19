@@ -201,11 +201,10 @@ pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 int
 pg_snprintf(char *str, size_t count, const char *fmt,...)
 {
-	int			len;
 	va_list		args;
 
 	va_start(args, fmt);
-	len = pg_vsnprintf(str, count, fmt, args);
+	int			len = pg_vsnprintf(str, count, fmt, args);
 	va_end(args);
 	return len;
 }
@@ -229,11 +228,10 @@ pg_vsprintf(char *str, const char *fmt, va_list args)
 int
 pg_sprintf(char *str, const char *fmt,...)
 {
-	int			len;
 	va_list		args;
 
 	va_start(args, fmt);
-	len = pg_vsprintf(str, fmt, args);
+	int			len = pg_vsprintf(str, fmt, args);
 	va_end(args);
 	return len;
 }
@@ -263,11 +261,10 @@ pg_vfprintf(FILE *stream, const char *fmt, va_list args)
 int
 pg_fprintf(FILE *stream, const char *fmt,...)
 {
-	int			len;
 	va_list		args;
 
 	va_start(args, fmt);
-	len = pg_vfprintf(stream, fmt, args);
+	int			len = pg_vfprintf(stream, fmt, args);
 	va_end(args);
 	return len;
 }
@@ -281,11 +278,10 @@ pg_vprintf(const char *fmt, va_list args)
 int
 pg_printf(const char *fmt,...)
 {
-	int			len;
 	va_list		args;
 
 	va_start(args, fmt);
-	len = pg_vfprintf(stdout, fmt, args);
+	int			len = pg_vfprintf(stdout, fmt, args);
 	va_end(args);
 	return len;
 }
@@ -305,9 +301,8 @@ flushbuffer(PrintfTarget *target)
 	 */
 	if (!target->failed && nc > 0)
 	{
-		size_t		written;
 
-		written = fwrite(target->bufstart, 1, nc, target->stream);
+		size_t		written = fwrite(target->bufstart, 1, nc, target->stream);
 		target->nchars += written;
 		if (written != nc)
 			target->failed = true;
@@ -378,7 +373,6 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	int			save_errno = errno;
 	const char *first_pct = NULL;
 	int			ch;
-	bool		have_dollar;
 	bool		have_star;
 	bool		afterstar;
 	int			accum;
@@ -403,7 +397,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	 * find_arguments() to check for consistent use of %n$ and fill the
 	 * argvalues array with the argument values in the correct order.
 	 */
-	have_dollar = false;
+	bool		have_dollar = false;
 
 	while (*format != '\0')
 	{
@@ -756,11 +750,10 @@ find_arguments(const char *format, va_list args,
 	int			longflag;
 	int			fmtpos;
 	int			i;
-	int			last_dollar;
 	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
 
 	/* Initialize to "no dollar arguments known" */
-	last_dollar = 0;
+	int			last_dollar = 0;
 	MemSet(argtypes, 0, sizeof(argtypes));
 
 	/*
@@ -999,11 +992,10 @@ fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 static void
 fmtptr(const void *value, PrintfTarget *target)
 {
-	int			vallen;
 	char		convert[64];
 
 	/* we rely on regular C library's sprintf to do the basic conversion */
-	vallen = sprintf(convert, "%p", value);
+	int			vallen = sprintf(convert, "%p", value);
 	if (vallen < 0)
 		target->failed = true;
 	else
@@ -1121,7 +1113,6 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		 PrintfTarget *target)
 {
 	int			signvalue = 0;
-	int			prec;
 	int			vallen;
 	char		fmt[8];
 	char		convert[1024];
@@ -1147,7 +1138,7 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	 */
 	if (precision < 0)			/* cover possible overflow of "accum" */
 		precision = 0;
-	prec = Min(precision, 350);
+	int			prec = Min(precision, 350);
 
 	if (isnan(value))
 	{
@@ -1460,9 +1451,8 @@ adjust_sign(int is_negative, int forcesign, int *signvalue)
 static int
 compute_padlen(int minlen, int vallen, int leftjust)
 {
-	int			padlen;
 
-	padlen = minlen - vallen;
+	int			padlen = minlen - vallen;
 	if (padlen < 0)
 		padlen = 0;
 	if (leftjust)
@@ -1474,7 +1464,6 @@ compute_padlen(int minlen, int vallen, int leftjust)
 static void
 leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
 {
-	int			maxpad;
 
 	if (*padlen > 0 && zpad)
 	{
@@ -1490,7 +1479,7 @@ leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
 			*padlen = 0;
 		}
 	}
-	maxpad = (signvalue != 0);
+	int			maxpad = (signvalue != 0);
 	if (*padlen > maxpad)
 	{
 		dopr_outchmulti(' ', *padlen - maxpad, target);

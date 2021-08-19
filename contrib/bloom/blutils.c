@@ -86,10 +86,9 @@ _PG_init(void)
 static BloomOptions *
 makeDefaultBloomOptions(void)
 {
-	BloomOptions *opts;
 	int			i;
 
-	opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+	BloomOptions *opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
 	/* Convert DEFAULT_BLOOM_LENGTH from # of bits to # of words */
 	opts->bloomLength = (DEFAULT_BLOOM_LENGTH + SIGNWORDBITS - 1) / SIGNWORDBITS;
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -176,21 +175,17 @@ initBloomState(BloomState *state, Relation index)
 	/* Initialize amcache if needed with options from metapage */
 	if (!index->rd_amcache)
 	{
-		Buffer		buffer;
-		Page		page;
-		BloomMetaPageData *meta;
-		BloomOptions *opts;
 
-		opts = MemoryContextAlloc(index->rd_indexcxt, sizeof(BloomOptions));
+		BloomOptions *opts = MemoryContextAlloc(index->rd_indexcxt, sizeof(BloomOptions));
 
-		buffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
+		Buffer		buffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer);
 
 		if (!BloomPageIsMeta(page))
 			elog(ERROR, "Relation is not a bloom index");
-		meta = BloomPageGetMeta(BufferGetPage(buffer));
+		BloomMetaPageData *meta = BloomPageGetMeta(BufferGetPage(buffer));
 
 		if (meta->magickNumber != BLOOM_MAGICK_NUMBER)
 			elog(ERROR, "Relation is not a bloom index");
@@ -259,7 +254,6 @@ mySrand(uint32 seed)
 void
 signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno)
 {
-	uint32		hashVal;
 	int			nBit,
 				j;
 
@@ -275,7 +269,7 @@ signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno)
 	 * different columns will be mapped into different bits because of step
 	 * above
 	 */
-	hashVal = DatumGetInt32(FunctionCall1Coll(&state->hashFn[attno], state->collations[attno], value));
+	uint32		hashVal = DatumGetInt32(FunctionCall1Coll(&state->hashFn[attno], state->collations[attno], value));
 	mySrand(hashVal ^ myRand());
 
 	for (j = 0; j < state->opts.bitSize[attno]; j++)
@@ -317,9 +311,6 @@ BloomFormTuple(BloomState *state, ItemPointer iptr, Datum *values, bool *isnull)
 bool
 BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 {
-	BloomTuple *itup;
-	BloomPageOpaque opaque;
-	Pointer		ptr;
 
 	/* We shouldn't be pointed to an invalid page */
 	Assert(!PageIsNew(page) && !BloomPageIsDeleted(page));
@@ -329,13 +320,13 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 		return false;
 
 	/* Copy new tuple to the end of page */
-	opaque = BloomPageGetOpaque(page);
-	itup = BloomPageGetTuple(state, page, opaque->maxoff + 1);
+	BloomPageOpaque opaque = BloomPageGetOpaque(page);
+	BloomTuple *itup = BloomPageGetTuple(state, page, opaque->maxoff + 1);
 	memcpy((Pointer) itup, (Pointer) tuple, state->sizeOfBloomTuple);
 
 	/* Adjust maxoff and pd_lower */
 	opaque->maxoff++;
-	ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
+	Pointer		ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
 	((PageHeader) page)->pd_lower = ptr - page;
 
 	/* Assert we didn't overrun available space */
@@ -353,7 +344,6 @@ Buffer
 BloomNewBuffer(Relation index)
 {
 	Buffer		buffer;
-	bool		needLock;
 
 	/* First, try to get a page from FSM */
 	for (;;)
@@ -387,7 +377,7 @@ BloomNewBuffer(Relation index)
 	}
 
 	/* Must extend the file */
-	needLock = !RELATION_IS_LOCAL(index);
+	bool		needLock = !RELATION_IS_LOCAL(index);
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
 
@@ -406,11 +396,10 @@ BloomNewBuffer(Relation index)
 void
 BloomInitPage(Page page, uint16 flags)
 {
-	BloomPageOpaque opaque;
 
 	PageInit(page, BLCKSZ, sizeof(BloomPageOpaqueData));
 
-	opaque = BloomPageGetOpaque(page);
+	BloomPageOpaque opaque = BloomPageGetOpaque(page);
 	opaque->flags = flags;
 	opaque->bloom_page_id = BLOOM_PAGE_ID;
 }
@@ -421,14 +410,12 @@ BloomInitPage(Page page, uint16 flags)
 void
 BloomFillMetapage(Relation index, Page metaPage)
 {
-	BloomOptions *opts;
-	BloomMetaPageData *metadata;
 
 	/*
 	 * Choose the index's options.  If reloptions have been assigned, use
 	 * those, otherwise create default options.
 	 */
-	opts = (BloomOptions *) index->rd_options;
+	BloomOptions *opts = (BloomOptions *) index->rd_options;
 	if (!opts)
 		opts = makeDefaultBloomOptions();
 
@@ -437,7 +424,7 @@ BloomFillMetapage(Relation index, Page metaPage)
 	 * which are now frozen for the life of the index.
 	 */
 	BloomInitPage(metaPage, BLOOM_META);
-	metadata = BloomPageGetMeta(metaPage);
+	BloomMetaPageData *metadata = BloomPageGetMeta(metaPage);
 	memset(metadata, 0, sizeof(BloomMetaPageData));
 	metadata->magickNumber = BLOOM_MAGICK_NUMBER;
 	metadata->opts = *opts;
@@ -453,20 +440,17 @@ BloomFillMetapage(Relation index, Page metaPage)
 void
 BloomInitMetapage(Relation index)
 {
-	Buffer		metaBuffer;
-	Page		metaPage;
-	GenericXLogState *state;
 
 	/*
 	 * Make a new page; since it is first page it should be associated with
 	 * block number 0 (BLOOM_METAPAGE_BLKNO).
 	 */
-	metaBuffer = BloomNewBuffer(index);
+	Buffer		metaBuffer = BloomNewBuffer(index);
 	Assert(BufferGetBlockNumber(metaBuffer) == BLOOM_METAPAGE_BLKNO);
 
 	/* Initialize contents of meta page */
-	state = GenericXLogStart(index);
-	metaPage = GenericXLogRegisterBuffer(state, metaBuffer,
+	GenericXLogState *state = GenericXLogStart(index);
+	Page		metaPage = GenericXLogRegisterBuffer(state, metaBuffer,
 										 GENERIC_XLOG_FULL_IMAGE);
 	BloomFillMetapage(index, metaPage);
 	GenericXLogFinish(state);
@@ -480,10 +464,9 @@ BloomInitMetapage(Relation index)
 bytea *
 bloptions(Datum reloptions, bool validate)
 {
-	BloomOptions *rdopts;
 
 	/* Parse the user-given reloptions */
-	rdopts = (BloomOptions *) build_reloptions(reloptions, validate,
+	BloomOptions *rdopts = (BloomOptions *) build_reloptions(reloptions, validate,
 											   bl_relopt_kind,
 											   sizeof(BloomOptions),
 											   bl_relopt_tab,

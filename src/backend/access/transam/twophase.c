@@ -235,10 +235,9 @@ static void RecreateTwoPhaseFile(TransactionId xid, void *content, int len);
 Size
 TwoPhaseShmemSize(void)
 {
-	Size		size;
 
 	/* Need the fixed struct, the array of pointers, and the GTD structs */
-	size = offsetof(TwoPhaseStateData, prepXacts);
+	Size		size = offsetof(TwoPhaseStateData, prepXacts);
 	size = add_size(size, mul_size(max_prepared_xacts,
 								   sizeof(GlobalTransaction)));
 	size = MAXALIGN(size);
@@ -258,7 +257,6 @@ TwoPhaseShmemInit(void)
 									&found);
 	if (!IsUnderPostmaster)
 	{
-		GlobalTransaction gxacts;
 		int			i;
 
 		Assert(!found);
@@ -268,7 +266,7 @@ TwoPhaseShmemInit(void)
 		/*
 		 * Initialize the linked list of free GlobalTransactionData structs
 		 */
-		gxacts = (GlobalTransaction)
+		GlobalTransaction gxacts = (GlobalTransaction)
 			((char *) TwoPhaseState +
 			 MAXALIGN(offsetof(TwoPhaseStateData, prepXacts) +
 					  sizeof(GlobalTransaction) * max_prepared_xacts));
@@ -446,13 +444,12 @@ static void
 MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 					TimestampTz prepared_at, Oid owner, Oid databaseid)
 {
-	PGPROC	   *proc;
 	int			i;
 
 	Assert(LWLockHeldByMeInMode(TwoPhaseStateLock, LW_EXCLUSIVE));
 
 	Assert(gxact != NULL);
-	proc = &ProcGlobal->allProcs[gxact->pgprocno];
+	PGPROC	   *proc = &ProcGlobal->allProcs[gxact->pgprocno];
 
 	/* Initialize the PGPROC entry */
 	MemSet(proc, 0, sizeof(PGPROC));
@@ -669,8 +666,6 @@ RemoveGXact(GlobalTransaction gxact)
 static int
 GetPreparedTransactionList(GlobalTransaction *gxacts)
 {
-	GlobalTransaction array;
-	int			num;
 	int			i;
 
 	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
@@ -683,8 +678,8 @@ GetPreparedTransactionList(GlobalTransaction *gxacts)
 		return 0;
 	}
 
-	num = TwoPhaseState->numPrepXacts;
-	array = (GlobalTransaction) palloc(sizeof(GlobalTransactionData) * num);
+	int			num = TwoPhaseState->numPrepXacts;
+	GlobalTransaction array = (GlobalTransaction) palloc(sizeof(GlobalTransactionData) * num);
 	*gxacts = array;
 	for (i = 0; i < num; i++)
 		memcpy(array + i, TwoPhaseState->prepXacts[i],
@@ -719,8 +714,6 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc	tupdesc;
-		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -728,11 +721,11 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		/*
 		 * Switch to memory context appropriate for multiple function calls
 		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_prepared_xacts view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(5);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(5);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "transaction",
 						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "gid",
@@ -768,8 +761,6 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		PGPROC	   *proc = &ProcGlobal->allProcs[gxact->pgprocno];
 		Datum		values[5];
 		bool		nulls[5];
-		HeapTuple	tuple;
-		Datum		result;
 
 		if (!gxact->valid)
 			continue;
@@ -786,8 +777,8 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		values[3] = ObjectIdGetDatum(gxact->owner);
 		values[4] = ObjectIdGetDatum(proc->databaseId);
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		Datum		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -1054,20 +1045,18 @@ StartPrepare(GlobalTransaction gxact)
 void
 EndPrepare(GlobalTransaction gxact)
 {
-	TwoPhaseFileHeader *hdr;
 	StateFileChunk *record;
-	bool		replorigin;
 
 	/* Add the end sentinel to the list of 2PC records */
 	RegisterTwoPhaseRecord(TWOPHASE_RM_END_ID, 0,
 						   NULL, 0);
 
 	/* Go back and fill in total_len in the file header record */
-	hdr = (TwoPhaseFileHeader *) records.head->data;
+	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) records.head->data;
 	Assert(hdr->magic == TWOPHASE_MAGIC);
 	hdr->total_len = records.total_len + sizeof(pg_crc32c);
 
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	bool		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	if (replorigin)
@@ -1205,18 +1194,13 @@ static char *
 ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 {
 	char		path[MAXPGPATH];
-	char	   *buf;
-	TwoPhaseFileHeader *hdr;
-	int			fd;
 	struct stat stat;
-	uint32		crc_offset;
 	pg_crc32c	calc_crc,
 				file_crc;
-	int			r;
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		if (missing_ok && errno == ENOENT)
@@ -1249,7 +1233,7 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 							   (long long int) stat.st_size, path,
 							   (long long int) stat.st_size)));
 
-	crc_offset = stat.st_size - sizeof(pg_crc32c);
+	uint32		crc_offset = stat.st_size - sizeof(pg_crc32c);
 	if (crc_offset != MAXALIGN(crc_offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -1259,10 +1243,10 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 	/*
 	 * OK, slurp in the file.
 	 */
-	buf = (char *) palloc(stat.st_size);
+	char	   *buf = (char *) palloc(stat.st_size);
 
 	pgstat_report_wait_start(WAIT_EVENT_TWOPHASE_FILE_READ);
-	r = read(fd, buf, stat.st_size);
+	int			r = read(fd, buf, stat.st_size);
 	if (r != stat.st_size)
 	{
 		if (r < 0)
@@ -1282,7 +1266,7 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));
 
-	hdr = (TwoPhaseFileHeader *) buf;
+	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 	if (hdr->magic != TWOPHASE_MAGIC)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -1325,12 +1309,10 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 static void
 XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 {
-	XLogRecord *record;
-	XLogReaderState *xlogreader;
 	char	   *errormsg;
 	TimeLineID	save_currtli = ThisTimeLineID;
 
-	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
+	XLogReaderState *xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page,
 											   .segment_open = &wal_segment_open,
 											   .segment_close = &wal_segment_close),
@@ -1342,7 +1324,7 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 				 errdetail("Failed while allocating a WAL reading processor.")));
 
 	XLogBeginRead(xlogreader, lsn);
-	record = XLogReadRecord(xlogreader, &errormsg);
+	XLogRecord *record = XLogReadRecord(xlogreader, &errormsg);
 
 	/*
 	 * Restore immediately the timeline where it was previously, as
@@ -1380,9 +1362,6 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 bool
 StandbyTransactionIdIsPrepared(TransactionId xid)
 {
-	char	   *buf;
-	TwoPhaseFileHeader *hdr;
-	bool		result;
 
 	Assert(TransactionIdIsValid(xid));
 
@@ -1390,13 +1369,13 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 		return false;			/* nothing to do */
 
 	/* Read and validate file */
-	buf = ReadTwoPhaseFile(xid, true);
+	char	   *buf = ReadTwoPhaseFile(xid, true);
 	if (buf == NULL)
 		return false;
 
 	/* Check header also */
-	hdr = (TwoPhaseFileHeader *) buf;
-	result = TransactionIdEquals(hdr->xid, xid);
+	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
+	bool		result = TransactionIdEquals(hdr->xid, xid);
 	pfree(buf);
 
 	return result;
@@ -1408,27 +1387,17 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 void
 FinishPreparedTransaction(const char *gid, bool isCommit)
 {
-	GlobalTransaction gxact;
-	PGPROC	   *proc;
-	TransactionId xid;
 	char	   *buf;
-	char	   *bufptr;
-	TwoPhaseFileHeader *hdr;
-	TransactionId latestXid;
-	TransactionId *children;
-	RelFileNode *commitrels;
-	RelFileNode *abortrels;
 	RelFileNode *delrels;
 	int			ndelrels;
-	SharedInvalidationMessage *invalmsgs;
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
 	 * try to commit the same GID at once.
 	 */
-	gxact = LockGXact(gid, GetUserId());
-	proc = &ProcGlobal->allProcs[gxact->pgprocno];
-	xid = gxact->xid;
+	GlobalTransaction gxact = LockGXact(gid, GetUserId());
+	PGPROC	   *proc = &ProcGlobal->allProcs[gxact->pgprocno];
+	TransactionId xid = gxact->xid;
 
 	/*
 	 * Read and validate 2PC state data. State data will typically be stored
@@ -1444,21 +1413,21 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	/*
 	 * Disassemble the header area
 	 */
-	hdr = (TwoPhaseFileHeader *) buf;
+	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 	Assert(TransactionIdEquals(hdr->xid, xid));
-	bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
+	char	   *bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
 	bufptr += MAXALIGN(hdr->gidlen);
-	children = (TransactionId *) bufptr;
+	TransactionId *children = (TransactionId *) bufptr;
 	bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-	commitrels = (RelFileNode *) bufptr;
+	RelFileNode *commitrels = (RelFileNode *) bufptr;
 	bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
-	abortrels = (RelFileNode *) bufptr;
+	RelFileNode *abortrels = (RelFileNode *) bufptr;
 	bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
-	invalmsgs = (SharedInvalidationMessage *) bufptr;
+	SharedInvalidationMessage *invalmsgs = (SharedInvalidationMessage *) bufptr;
 	bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
 
 	/* compute latestXid among all children */
-	latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
+	TransactionId latestXid = TransactionIdLatest(xid, hdr->nsubxacts, children);
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
@@ -1628,7 +1597,6 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 {
 	char		path[MAXPGPATH];
 	pg_crc32c	statefile_crc;
-	int			fd;
 
 	/* Recompute CRC */
 	INIT_CRC32C(statefile_crc);
@@ -1637,7 +1605,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = OpenTransientFile(path,
+	int			fd = OpenTransientFile(path,
 						   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
@@ -1788,22 +1756,19 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 void
 restoreTwoPhaseData(void)
 {
-	DIR		   *cldir;
 	struct dirent *clde;
 
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-	cldir = AllocateDir(TWOPHASE_DIR);
+	DIR		   *cldir = AllocateDir(TWOPHASE_DIR);
 	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
 		{
-			TransactionId xid;
-			char	   *buf;
 
-			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
+			TransactionId xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
 
-			buf = ProcessTwoPhaseBuffer(xid, InvalidXLogRecPtr,
+			char	   *buf = ProcessTwoPhaseBuffer(xid, InvalidXLogRecPtr,
 										true, false, false);
 			if (buf == NULL)
 				continue;
@@ -1861,15 +1826,13 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
-		TransactionId xid;
-		char	   *buf;
 		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
 
 		Assert(gxact->inredo);
 
-		xid = gxact->xid;
+		TransactionId xid = gxact->xid;
 
-		buf = ProcessTwoPhaseBuffer(xid,
+		char	   *buf = ProcessTwoPhaseBuffer(xid,
 									gxact->prepare_start_lsn,
 									gxact->ondisk, false, true);
 
@@ -1936,15 +1899,13 @@ StandbyRecoverPreparedTransactions(void)
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
-		TransactionId xid;
-		char	   *buf;
 		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
 
 		Assert(gxact->inredo);
 
-		xid = gxact->xid;
+		TransactionId xid = gxact->xid;
 
-		buf = ProcessTwoPhaseBuffer(xid,
+		char	   *buf = ProcessTwoPhaseBuffer(xid,
 									gxact->prepare_start_lsn,
 									gxact->ondisk, false, false);
 		if (buf != NULL)
@@ -1977,15 +1938,9 @@ RecoverPreparedTransactions(void)
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
-		TransactionId xid;
-		char	   *buf;
 		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
-		char	   *bufptr;
-		TwoPhaseFileHeader *hdr;
-		TransactionId *subxids;
-		const char *gid;
 
-		xid = gxact->xid;
+		TransactionId xid = gxact->xid;
 
 		/*
 		 * Reconstruct subtrans state for the transaction --- needed because
@@ -1996,7 +1951,7 @@ RecoverPreparedTransactions(void)
 		 * SubTransSetParent has been set before, if the prepared transaction
 		 * generated xid assignment records.
 		 */
-		buf = ProcessTwoPhaseBuffer(xid,
+		char	   *buf = ProcessTwoPhaseBuffer(xid,
 									gxact->prepare_start_lsn,
 									gxact->ondisk, true, false);
 		if (buf == NULL)
@@ -2005,12 +1960,12 @@ RecoverPreparedTransactions(void)
 		ereport(LOG,
 				(errmsg("recovering prepared transaction %u from shared memory", xid)));
 
-		hdr = (TwoPhaseFileHeader *) buf;
+		TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 		Assert(TransactionIdEquals(hdr->xid, xid));
-		bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
-		gid = (const char *) bufptr;
+		char	   *bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
+		const char *gid = (const char *) bufptr;
 		bufptr += MAXALIGN(hdr->gidlen);
-		subxids = (TransactionId *) bufptr;
+		TransactionId *subxids = (TransactionId *) bufptr;
 		bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
 		bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
 		bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
@@ -2078,9 +2033,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 {
 	FullTransactionId nextXid = ShmemVariableCache->nextXid;
 	TransactionId origNextXid = XidFromFullTransactionId(nextXid);
-	TransactionId *subxids;
 	char	   *buf;
-	TwoPhaseFileHeader *hdr;
 	int			i;
 
 	Assert(LWLockHeldByMeInMode(TwoPhaseStateLock, LW_EXCLUSIVE));
@@ -2140,7 +2093,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	}
 
 	/* Deconstruct header */
-	hdr = (TwoPhaseFileHeader *) buf;
+	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 	if (!TransactionIdEquals(hdr->xid, xid))
 	{
 		if (fromdisk)
@@ -2159,7 +2112,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	 * Examine subtransaction XIDs ... they should all follow main XID, and
 	 * they may force us to advance nextXid.
 	 */
-	subxids = (TransactionId *) (buf +
+	TransactionId *subxids = (TransactionId *) (buf +
 								 MAXALIGN(sizeof(TwoPhaseFileHeader)) +
 								 MAXALIGN(hdr->gidlen));
 	for (i = 0; i < hdr->nsubxacts; i++)
@@ -2201,15 +2154,13 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								bool initfileinval,
 								const char *gid)
 {
-	XLogRecPtr	recptr;
 	TimestampTz committs = GetCurrentTimestamp();
-	bool		replorigin;
 
 	/*
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	bool		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	START_CRIT_SECTION();
@@ -2222,7 +2173,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	 * potentially having AccessExclusiveLocks since we don't know whether or
 	 * not they do.
 	 */
-	recptr = XactLogCommitRecord(committs,
+	XLogRecPtr	recptr = XactLogCommitRecord(committs,
 								 nchildren, children, nrels, rels,
 								 ninvalmsgs, invalmsgs,
 								 initfileinval,
@@ -2292,14 +2243,12 @@ RecordTransactionAbortPrepared(TransactionId xid,
 							   RelFileNode *rels,
 							   const char *gid)
 {
-	XLogRecPtr	recptr;
-	bool		replorigin;
 
 	/*
 	 * Are we using the replication origins feature?  Or, in other words, are
 	 * we replaying remote actions?
 	 */
-	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
+	bool		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
 	/*
@@ -2317,7 +2266,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	 * potentially having AccessExclusiveLocks since we don't know whether or
 	 * not they do.
 	 */
-	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
+	XLogRecPtr	recptr = XactLogAbortRecord(GetCurrentTimestamp(),
 								nchildren, children,
 								nrels, rels,
 								MyXactFlags | XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK,
@@ -2361,15 +2310,12 @@ PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 			   XLogRecPtr end_lsn, RepOriginId origin_id)
 {
 	TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
-	char	   *bufptr;
-	const char *gid;
-	GlobalTransaction gxact;
 
 	Assert(LWLockHeldByMeInMode(TwoPhaseStateLock, LW_EXCLUSIVE));
 	Assert(RecoveryInProgress());
 
-	bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
-	gid = (const char *) bufptr;
+	char	   *bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
+	const char *gid = (const char *) bufptr;
 
 	/*
 	 * Reserve the GID for the given transaction in the redo code path.
@@ -2389,7 +2335,7 @@ PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 				 errmsg("maximum number of prepared transactions reached"),
 				 errhint("Increase max_prepared_transactions (currently %d).",
 						 max_prepared_xacts)));
-	gxact = TwoPhaseState->freeGXacts;
+	GlobalTransaction gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = gxact->next;
 
 	gxact->prepared_at = hdr->prepared_at;
@@ -2494,7 +2440,6 @@ LookupGXact(const char *gid, XLogRecPtr prepare_end_lsn,
 		if (gxact->valid && strcmp(gxact->gid, gid) == 0)
 		{
 			char	   *buf;
-			TwoPhaseFileHeader *hdr;
 
 			/*
 			 * We are not expecting collisions of GXACTs (same gid) between
@@ -2514,7 +2459,7 @@ LookupGXact(const char *gid, XLogRecPtr prepare_end_lsn,
 				XlogReadTwoPhaseData(gxact->prepare_start_lsn, &buf, NULL);
 			}
 
-			hdr = (TwoPhaseFileHeader *) buf;
+			TwoPhaseFileHeader *hdr = (TwoPhaseFileHeader *) buf;
 
 			if (hdr->origin_lsn == prepare_end_lsn &&
 				hdr->origin_timestamp == origin_prepare_timestamp)

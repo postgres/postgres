@@ -198,7 +198,6 @@ GenerationContextCreate(MemoryContext parent,
 						const char *name,
 						Size blockSize)
 {
-	GenerationContext *set;
 
 	/* Assert we padded GenerationChunk properly */
 	StaticAssertStmt(Generation_CHUNKHDRSZ == MAXALIGN(Generation_CHUNKHDRSZ),
@@ -225,7 +224,7 @@ GenerationContextCreate(MemoryContext parent,
 	 * freeing the first generation of allocations.
 	 */
 
-	set = (GenerationContext *) malloc(MAXALIGN(sizeof(GenerationContext)));
+	GenerationContext *set = (GenerationContext *) malloc(MAXALIGN(sizeof(GenerationContext)));
 	if (set == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -463,12 +462,11 @@ GenerationFree(MemoryContext context, void *pointer)
 {
 	GenerationContext *set = (GenerationContext *) context;
 	GenerationChunk *chunk = GenerationPointerGetChunk(pointer);
-	GenerationBlock *block;
 
 	/* Allow access to private part of chunk header. */
 	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
 
-	block = chunk->block;
+	GenerationBlock *block = chunk->block;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
@@ -525,12 +523,11 @@ GenerationRealloc(MemoryContext context, void *pointer, Size size)
 	GenerationContext *set = (GenerationContext *) context;
 	GenerationChunk *chunk = GenerationPointerGetChunk(pointer);
 	GenerationPointer newPointer;
-	Size		oldsize;
 
 	/* Allow access to private part of chunk header. */
 	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
 
-	oldsize = chunk->size;
+	Size		oldsize = chunk->size;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
@@ -639,10 +636,9 @@ static Size
 GenerationGetChunkSpace(MemoryContext context, void *pointer)
 {
 	GenerationChunk *chunk = GenerationPointerGetChunk(pointer);
-	Size		result;
 
 	VALGRIND_MAKE_MEM_DEFINED(chunk, GENERATIONCHUNK_PRIVATE_LEN);
-	result = chunk->size + Generation_CHUNKHDRSZ;
+	Size		result = chunk->size + Generation_CHUNKHDRSZ;
 	VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
 	return result;
 }
@@ -680,12 +676,11 @@ GenerationStats(MemoryContext context,
 	Size		nblocks = 0;
 	Size		nchunks = 0;
 	Size		nfreechunks = 0;
-	Size		totalspace;
 	Size		freespace = 0;
 	dlist_iter	iter;
 
 	/* Include context header in totalspace */
-	totalspace = MAXALIGN(sizeof(GenerationContext));
+	Size		totalspace = MAXALIGN(sizeof(GenerationContext));
 
 	dlist_foreach(iter, &set->blocks)
 	{
@@ -743,7 +738,6 @@ GenerationCheck(MemoryContext context)
 		GenerationBlock *block = dlist_container(GenerationBlock, node, iter.cur);
 		int			nfree,
 					nchunks;
-		char	   *ptr;
 
 		total_allocated += block->blksize;
 
@@ -758,7 +752,7 @@ GenerationCheck(MemoryContext context)
 		/* Now walk through the chunks and count them. */
 		nfree = 0;
 		nchunks = 0;
-		ptr = ((char *) block) + Generation_BLOCKHDRSZ;
+		char	   *ptr = ((char *) block) + Generation_BLOCKHDRSZ;
 
 		while (ptr < block->freeptr)
 		{

@@ -44,11 +44,9 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 
 	while (scanKeySize > 0)
 	{
-		Datum		datum;
 		bool		isNull;
-		Datum		test;
 
-		datum = index_getattr(itup,
+		Datum		datum = index_getattr(itup,
 							  key->sk_attno,
 							  tupdesc,
 							  &isNull);
@@ -59,7 +57,7 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 		if (key->sk_flags & SK_ISNULL)
 			return false;
 
-		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
+		Datum		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
 								 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
@@ -82,12 +80,10 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 uint32
 _hash_datum2hashkey(Relation rel, Datum key)
 {
-	FmgrInfo   *procinfo;
-	Oid			collation;
 
 	/* XXX assumes index has only one attribute */
-	procinfo = index_getprocinfo(rel, 1, HASHSTANDARD_PROC);
-	collation = rel->rd_indcollation[0];
+	FmgrInfo   *procinfo = index_getprocinfo(rel, 1, HASHSTANDARD_PROC);
+	Oid			collation = rel->rd_indcollation[0];
 
 	return DatumGetUInt32(FunctionCall1Coll(procinfo, collation, key));
 }
@@ -102,11 +98,9 @@ _hash_datum2hashkey(Relation rel, Datum key)
 uint32
 _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 {
-	RegProcedure hash_proc;
-	Oid			collation;
 
 	/* XXX assumes index has only one attribute */
-	hash_proc = get_opfamily_proc(rel->rd_opfamily[0],
+	RegProcedure hash_proc = get_opfamily_proc(rel->rd_opfamily[0],
 								  keytype,
 								  keytype,
 								  HASHSTANDARD_PROC);
@@ -114,7 +108,7 @@ _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 		elog(ERROR, "missing support function %d(%u,%u) for index \"%s\"",
 			 HASHSTANDARD_PROC, keytype, keytype,
 			 RelationGetRelationName(rel));
-	collation = rel->rd_indcollation[0];
+	Oid			collation = rel->rd_indcollation[0];
 
 	return DatumGetUInt32(OidFunctionCall1Coll(hash_proc, collation, key));
 }
@@ -126,9 +120,8 @@ Bucket
 _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 					 uint32 highmask, uint32 lowmask)
 {
-	Bucket		bucket;
 
-	bucket = hashkey & highmask;
+	Bucket		bucket = hashkey & highmask;
 	if (bucket > maxbucket)
 		bucket = bucket & lowmask;
 
@@ -142,16 +135,14 @@ _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 uint32
 _hash_spareindex(uint32 num_bucket)
 {
-	uint32		splitpoint_group;
-	uint32		splitpoint_phases;
 
-	splitpoint_group = pg_ceil_log2_32(num_bucket);
+	uint32		splitpoint_group = pg_ceil_log2_32(num_bucket);
 
 	if (splitpoint_group < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
 		return splitpoint_group;
 
 	/* account for single-phase groups */
-	splitpoint_phases = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+	uint32		splitpoint_phases = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
 
 	/* account for multi-phase groups before splitpoint_group */
 	splitpoint_phases +=
@@ -174,24 +165,21 @@ _hash_spareindex(uint32 num_bucket)
 uint32
 _hash_get_totalbuckets(uint32 splitpoint_phase)
 {
-	uint32		splitpoint_group;
-	uint32		total_buckets;
-	uint32		phases_within_splitpoint_group;
 
 	if (splitpoint_phase < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
 		return (1 << splitpoint_phase);
 
 	/* get splitpoint's group */
-	splitpoint_group = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+	uint32		splitpoint_group = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
 	splitpoint_group +=
 		((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) >>
 		 HASH_SPLITPOINT_PHASE_BITS);
 
 	/* account for buckets before splitpoint_group */
-	total_buckets = (1 << (splitpoint_group - 1));
+	uint32		total_buckets = (1 << (splitpoint_group - 1));
 
 	/* account for buckets within splitpoint_group */
-	phases_within_splitpoint_group =
+	uint32		phases_within_splitpoint_group =
 		(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
 		  HASH_SPLITPOINT_PHASE_MASK) + 1); /* from 0-based to 1-based */
 	total_buckets +=
@@ -291,13 +279,12 @@ hashoptions(Datum reloptions, bool validate)
 uint32
 _hash_get_indextuple_hashkey(IndexTuple itup)
 {
-	char	   *attp;
 
 	/*
 	 * We assume the hash key is the first attribute and can't be null, so
 	 * this can be done crudely but very very cheaply ...
 	 */
-	attp = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
+	char	   *attp = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
 	return *((uint32 *) attp);
 }
 
@@ -320,7 +307,6 @@ _hash_convert_tuple(Relation index,
 					Datum *user_values, bool *user_isnull,
 					Datum *index_values, bool *index_isnull)
 {
-	uint32		hashkey;
 
 	/*
 	 * We do not insert null values into hash indexes.  This is okay because
@@ -329,7 +315,7 @@ _hash_convert_tuple(Relation index,
 	if (user_isnull[0])
 		return false;
 
-	hashkey = _hash_datum2hashkey(index, user_values[0]);
+	uint32		hashkey = _hash_datum2hashkey(index, user_values[0]);
 	index_values[0] = UInt32GetDatum(hashkey);
 	index_isnull[0] = false;
 	return true;
@@ -350,24 +336,19 @@ _hash_convert_tuple(Relation index,
 OffsetNumber
 _hash_binsearch(Page page, uint32 hash_value)
 {
-	OffsetNumber upper;
-	OffsetNumber lower;
 
 	/* Loop invariant: lower <= desired place <= upper */
-	upper = PageGetMaxOffsetNumber(page) + 1;
-	lower = FirstOffsetNumber;
+	OffsetNumber upper = PageGetMaxOffsetNumber(page) + 1;
+	OffsetNumber lower = FirstOffsetNumber;
 
 	while (upper > lower)
 	{
-		OffsetNumber off;
-		IndexTuple	itup;
-		uint32		hashkey;
 
-		off = (upper + lower) / 2;
+		OffsetNumber off = (upper + lower) / 2;
 		Assert(OffsetNumberIsValid(off));
 
-		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
-		hashkey = _hash_get_indextuple_hashkey(itup);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
+		uint32		hashkey = _hash_get_indextuple_hashkey(itup);
 		if (hashkey < hash_value)
 			lower = off + 1;
 		else
@@ -388,24 +369,19 @@ _hash_binsearch(Page page, uint32 hash_value)
 OffsetNumber
 _hash_binsearch_last(Page page, uint32 hash_value)
 {
-	OffsetNumber upper;
-	OffsetNumber lower;
 
 	/* Loop invariant: lower <= desired place <= upper */
-	upper = PageGetMaxOffsetNumber(page);
-	lower = FirstOffsetNumber - 1;
+	OffsetNumber upper = PageGetMaxOffsetNumber(page);
+	OffsetNumber lower = FirstOffsetNumber - 1;
 
 	while (upper > lower)
 	{
-		IndexTuple	itup;
-		OffsetNumber off;
-		uint32		hashkey;
 
-		off = (upper + lower + 1) / 2;
+		OffsetNumber off = (upper + lower + 1) / 2;
 		Assert(OffsetNumberIsValid(off));
 
-		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
-		hashkey = _hash_get_indextuple_hashkey(itup);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
+		uint32		hashkey = _hash_get_indextuple_hashkey(itup);
 		if (hashkey > hash_value)
 			upper = off - 1;
 		else
@@ -422,11 +398,6 @@ _hash_binsearch_last(Page page, uint32 hash_value)
 BlockNumber
 _hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
 {
-	Bucket		old_bucket;
-	uint32		mask;
-	Buffer		metabuf;
-	HashMetaPage metap;
-	BlockNumber blkno;
 
 	/*
 	 * To get the old bucket from the current bucket, we need a mask to modulo
@@ -436,13 +407,13 @@ _hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
 	 * started.  Masking the most significant bit of new bucket would give us
 	 * old bucket.
 	 */
-	mask = (((uint32) 1) << (fls(new_bucket) - 1)) - 1;
-	old_bucket = new_bucket & mask;
+	uint32		mask = (((uint32) 1) << (fls(new_bucket) - 1)) - 1;
+	Bucket		old_bucket = new_bucket & mask;
 
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
-	blkno = BUCKET_TO_BLKNO(metap, old_bucket);
+	BlockNumber blkno = BUCKET_TO_BLKNO(metap, old_bucket);
 
 	_hash_relbuf(rel, metabuf);
 
@@ -461,18 +432,14 @@ _hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
 BlockNumber
 _hash_get_newblock_from_oldbucket(Relation rel, Bucket old_bucket)
 {
-	Bucket		new_bucket;
-	Buffer		metabuf;
-	HashMetaPage metap;
-	BlockNumber blkno;
 
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
-	new_bucket = _hash_get_newbucket_from_oldbucket(rel, old_bucket,
+	Bucket		new_bucket = _hash_get_newbucket_from_oldbucket(rel, old_bucket,
 													metap->hashm_lowmask,
 													metap->hashm_maxbucket);
-	blkno = BUCKET_TO_BLKNO(metap, new_bucket);
+	BlockNumber blkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
 	_hash_relbuf(rel, metabuf);
 
@@ -495,9 +462,8 @@ Bucket
 _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
 								   uint32 lowmask, uint32 maxbucket)
 {
-	Bucket		new_bucket;
 
-	new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+	Bucket		new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
 	if (new_bucket > maxbucket)
 	{
 		lowmask = lowmask >> 1;
@@ -538,10 +504,7 @@ _hash_kill_items(IndexScanDesc scan)
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
-	BlockNumber blkno;
 	Buffer		buf;
-	Page		page;
-	HashPageOpaque opaque;
 	OffsetNumber offnum,
 				maxoff;
 	int			numKilled = so->numKilled;
@@ -559,7 +522,7 @@ _hash_kill_items(IndexScanDesc scan)
 	 */
 	so->numKilled = 0;
 
-	blkno = so->currPos.currPage;
+	BlockNumber blkno = so->currPos.currPage;
 	if (HashScanPosIsPinned(so->currPos))
 	{
 		/*
@@ -573,8 +536,8 @@ _hash_kill_items(IndexScanDesc scan)
 	else
 		buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
 
-	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)

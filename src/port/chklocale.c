@@ -213,9 +213,8 @@ win32_langinfo(const char *ctype)
 	char	   *r = NULL;
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
-	_locale_t	loct = NULL;
 
-	loct = _create_locale(LC_CTYPE, ctype);
+	_locale_t	loct = _create_locale(LC_CTYPE, ctype);
 	if (loct != NULL)
 	{
 		r = malloc(16);			/* excess */
@@ -265,10 +264,9 @@ win32_langinfo(const char *ctype)
 		codepage = strrchr(ctype, '.');
 		if (codepage != NULL)
 		{
-			size_t		ln;
 
 			codepage++;
-			ln = strlen(codepage);
+			size_t		ln = strlen(codepage);
 			r = malloc(ln + 3);
 			if (r != NULL)
 			{
@@ -335,15 +333,13 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 	/* Get the CODESET property, and also LC_CTYPE if not passed in */
 	if (ctype)
 	{
-		char	   *save;
-		char	   *name;
 
 		/* If locale is C or POSIX, we can allow all encodings */
 		if (pg_strcasecmp(ctype, "C") == 0 ||
 			pg_strcasecmp(ctype, "POSIX") == 0)
 			return PG_SQL_ASCII;
 
-		save = setlocale(LC_CTYPE, NULL);
+		char	   *save = setlocale(LC_CTYPE, NULL);
 		if (!save)
 			return -1;			/* setlocale() broken? */
 		/* must copy result, or it might change after setlocale */
@@ -351,7 +347,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 		if (!save)
 			return -1;			/* out of memory; unlikely */
 
-		name = setlocale(LC_CTYPE, ctype);
+		char	   *name = setlocale(LC_CTYPE, ctype);
 		if (!name)
 		{
 			free(save);

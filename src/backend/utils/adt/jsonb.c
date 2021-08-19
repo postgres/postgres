@@ -132,9 +132,8 @@ Datum
 jsonb_out(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
-	char	   *out;
 
-	out = JsonbToCString(NULL, &jb->root, VARSIZE(jb));
+	char	   *out = JsonbToCString(NULL, &jb->root, VARSIZE(jb));
 
 	PG_RETURN_CSTRING(out);
 }
@@ -255,13 +254,12 @@ jsonb_typeof(PG_FUNCTION_ARGS)
 static inline Datum
 jsonb_from_cstring(char *json, int len)
 {
-	JsonLexContext *lex;
 	JsonbInState state;
 	JsonSemAction sem;
 
 	memset(&state, 0, sizeof(state));
 	memset(&sem, 0, sizeof(sem));
-	lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
+	JsonLexContext *lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 
 	sem.semstate = (void *) &state;
 
@@ -478,7 +476,6 @@ static char *
 JsonbToCStringWorker(StringInfo out, JsonbContainer *in, int estimated_len, bool indent)
 {
 	bool		first = true;
-	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken type = WJB_DONE;
 	int			level = 0;
@@ -500,7 +497,7 @@ JsonbToCStringWorker(StringInfo out, JsonbContainer *in, int estimated_len, bool
 
 	enlargeStringInfo(out, (estimated_len >= 0) ? estimated_len : 64);
 
-	it = JsonbIteratorInit(in);
+	JsonbIterator *it = JsonbIteratorInit(in);
 
 	while (redo_switch ||
 		   ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE))
@@ -693,9 +690,8 @@ jsonb_categorize_type(Oid typoid,
 				if (typoid >= FirstNormalObjectId)
 				{
 					Oid			castfunc;
-					CoercionPathType ctype;
 
-					ctype = find_coercion_pathway(JSONOID, typoid,
+					CoercionPathType ctype = find_coercion_pathway(JSONOID, typoid,
 												  COERCION_EXPLICIT, &castfunc);
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
 					{
@@ -803,10 +799,9 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 									 strchr(outputstr, 'n') != NULL);
 					if (!numeric_error)
 					{
-						Datum		numd;
 
 						jb.type = jbvNumeric;
-						numd = DirectFunctionCall3(numeric_in,
+						Datum		numd = DirectFunctionCall3(numeric_in,
 												   CStringGetDatum(outputstr),
 												   ObjectIdGetDatum(InvalidOid),
 												   Int32GetDatum(-1));
@@ -843,11 +838,10 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 			case JSONBTYPE_JSON:
 				{
 					/* parse the json right into the existing result object */
-					JsonLexContext *lex;
 					JsonSemAction sem;
 					text	   *json = DatumGetTextPP(val);
 
-					lex = makeJsonLexContext(json, true);
+					JsonLexContext *lex = makeJsonLexContext(json, true);
 
 					memset(&sem, 0, sizeof(sem));
 
@@ -867,9 +861,8 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 			case JSONBTYPE_JSONB:
 				{
 					Jsonb	   *jsonb = DatumGetJsonbP(val);
-					JsonbIterator *it;
 
-					it = JsonbIteratorInit(&jsonb->root);
+					JsonbIterator *it = JsonbIteratorInit(&jsonb->root);
 
 					if (JB_ROOT_IS_SCALAR(jsonb))
 					{
@@ -987,9 +980,6 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 {
 	ArrayType  *v = DatumGetArrayTypeP(array);
 	Oid			element_type = ARR_ELEMTYPE(v);
-	int		   *dim;
-	int			ndim;
-	int			nitems;
 	int			count = 0;
 	Datum	   *elements;
 	bool	   *nulls;
@@ -999,9 +989,9 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 	JsonbTypeCategory tcategory;
 	Oid			outfuncoid;
 
-	ndim = ARR_NDIM(v);
-	dim = ARR_DIMS(v);
-	nitems = ArrayGetNItems(ndim, dim);
+	int			ndim = ARR_NDIM(v);
+	int		   *dim = ARR_DIMS(v);
+	int			nitems = ArrayGetNItems(ndim, dim);
 
 	if (nitems <= 0)
 	{
@@ -1033,20 +1023,16 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 static void
 composite_to_jsonb(Datum composite, JsonbInState *result)
 {
-	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tmptup,
 			   *tuple;
 	int			i;
 
-	td = DatumGetHeapTupleHeader(composite);
+	HeapTupleHeader td = DatumGetHeapTupleHeader(composite);
 
 	/* Extract rowtype info and find a tupdesc */
-	tupType = HeapTupleHeaderGetTypeId(td);
-	tupTypmod = HeapTupleHeaderGetTypMod(td);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	Oid			tupType = HeapTupleHeaderGetTypeId(td);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(td);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
@@ -1059,7 +1045,6 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 	{
 		Datum		val;
 		bool		isnull;
-		char	   *attname;
 		JsonbTypeCategory tcategory;
 		Oid			outfuncoid;
 		JsonbValue	v;
@@ -1068,7 +1053,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 		if (att->attisdropped)
 			continue;
 
-		attname = NameStr(att->attname);
+		char	   *attname = NameStr(att->attname);
 
 		v.type = jbvString;
 		/* don't need checkStringLen here - can't exceed maximum name length */
@@ -1159,7 +1144,6 @@ to_jsonb(PG_FUNCTION_ARGS)
 Datum
 jsonb_build_object(PG_FUNCTION_ARGS)
 {
-	int			nargs;
 	int			i;
 	JsonbInState result;
 	Datum	   *args;
@@ -1167,7 +1151,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 	Oid		   *types;
 
 	/* build argument values to build the object */
-	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
+	int			nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
@@ -1225,7 +1209,6 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 Datum
 jsonb_build_array(PG_FUNCTION_ARGS)
 {
-	int			nargs;
 	int			i;
 	JsonbInState result;
 	Datum	   *args;
@@ -1233,7 +1216,7 @@ jsonb_build_array(PG_FUNCTION_ARGS)
 	Oid		   *types;
 
 	/* build argument values to build the array */
-	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
+	int			nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
@@ -1325,16 +1308,14 @@ jsonb_object(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; ++i)
 	{
 		JsonbValue	v;
-		char	   *str;
-		int			len;
 
 		if (in_nulls[i * 2])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("null value not allowed for object key")));
 
-		str = TextDatumGetCString(in_datums[i * 2]);
-		len = strlen(str);
+		char	   *str = TextDatumGetCString(in_datums[i * 2]);
+		int			len = strlen(str);
 
 		v.type = jbvString;
 
@@ -1420,16 +1401,14 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 	for (i = 0; i < key_count; ++i)
 	{
 		JsonbValue	v;
-		char	   *str;
-		int			len;
 
 		if (key_nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("null value not allowed for object key")));
 
-		str = TextDatumGetCString(key_datums[i]);
-		len = strlen(str);
+		char	   *str = TextDatumGetCString(key_datums[i]);
+		int			len = strlen(str);
 
 		v.type = jbvString;
 
@@ -1512,11 +1491,8 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 				aggcontext;
 	JsonbAggState *state;
 	JsonbInState elem;
-	Datum		val;
 	JsonbInState *result;
 	bool		single_scalar = false;
-	JsonbIterator *it;
-	Jsonb	   *jbelem;
 	JsonbValue	v;
 	JsonbIteratorToken type;
 
@@ -1556,20 +1532,20 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 
 	/* turn the argument into jsonb in the normal function context */
 
-	val = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	Datum		val = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
 	datum_to_jsonb(val, PG_ARGISNULL(1), &elem, state->val_category,
 				   state->val_output_func, false);
 
-	jbelem = JsonbValueToJsonb(elem.res);
+	Jsonb	   *jbelem = JsonbValueToJsonb(elem.res);
 
 	/* switch to the aggregate context for accumulation operations */
 
 	oldcontext = MemoryContextSwitchTo(aggcontext);
 
-	it = JsonbIteratorInit(&jbelem->root);
+	JsonbIterator *it = JsonbIteratorInit(&jbelem->root);
 
 	while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
@@ -1626,9 +1602,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonbAggState *arg;
 	JsonbInState result;
-	Jsonb	   *out;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
@@ -1636,7 +1610,7 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();		/* returns null iff no input values */
 
-	arg = (JsonbAggState *) PG_GETARG_POINTER(0);
+	JsonbAggState *arg = (JsonbAggState *) PG_GETARG_POINTER(0);
 
 	/*
 	 * We need to do a shallow clone of the argument in case the final
@@ -1650,7 +1624,7 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	result.res = pushJsonbValue(&result.parseState,
 								WJB_END_ARRAY, NULL);
 
-	out = JsonbValueToJsonb(result.res);
+	Jsonb	   *out = JsonbValueToJsonb(result.res);
 
 	PG_RETURN_POINTER(out);
 }
@@ -1665,10 +1639,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				aggcontext;
 	JsonbInState elem;
 	JsonbAggState *state;
-	Datum		val;
 	JsonbInState *result;
-	bool		single_scalar;
-	JsonbIterator *it;
 	Jsonb	   *jbkey,
 			   *jbval;
 	JsonbValue	v;
@@ -1684,7 +1655,6 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		Oid			arg_type;
 
 		oldcontext = MemoryContextSwitchTo(aggcontext);
 		state = palloc(sizeof(JsonbAggState));
@@ -1694,7 +1664,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 									 WJB_BEGIN_OBJECT, NULL);
 		MemoryContextSwitchTo(oldcontext);
 
-		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+		Oid			arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
 
 		if (arg_type == InvalidOid)
 			ereport(ERROR,
@@ -1727,7 +1697,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field name must not be null")));
 
-	val = PG_GETARG_DATUM(1);
+	Datum		val = PG_GETARG_DATUM(1);
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
@@ -1745,7 +1715,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	jbval = JsonbValueToJsonb(elem.res);
 
-	it = JsonbIteratorInit(&jbkey->root);
+	JsonbIterator *it = JsonbIteratorInit(&jbkey->root);
 
 	/* switch to the aggregate context for accumulation operations */
 
@@ -1793,7 +1763,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	it = JsonbIteratorInit(&jbval->root);
 
-	single_scalar = false;
+	bool		single_scalar = false;
 
 	/*
 	 * values can be anything, including structured and null, so we treat them
@@ -1857,9 +1827,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonbAggState *arg;
 	JsonbInState result;
-	Jsonb	   *out;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
@@ -1867,7 +1835,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();		/* returns null iff no input values */
 
-	arg = (JsonbAggState *) PG_GETARG_POINTER(0);
+	JsonbAggState *arg = (JsonbAggState *) PG_GETARG_POINTER(0);
 
 	/*
 	 * We need to do a shallow clone of the argument's res field in case the
@@ -1882,7 +1850,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	result.res = pushJsonbValue(&result.parseState,
 								WJB_END_OBJECT, NULL);
 
-	out = JsonbValueToJsonb(result.res);
+	Jsonb	   *out = JsonbValueToJsonb(result.res);
 
 	PG_RETURN_POINTER(out);
 }
@@ -1894,7 +1862,6 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 bool
 JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 {
-	JsonbIterator *it;
 	JsonbIteratorToken tok PG_USED_FOR_ASSERTS_ONLY;
 	JsonbValue	tmp;
 
@@ -1909,7 +1876,7 @@ JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res)
 	 * A root scalar is stored as an array of one element, so we get the array
 	 * and then its first (and only) member.
 	 */
-	it = JsonbIteratorInit(jbc);
+	JsonbIterator *it = JsonbIteratorInit(jbc);
 
 	tok = JsonbIteratorNext(&it, &tmp, true);
 	Assert(tok == WJB_BEGIN_ARRAY);
@@ -1980,7 +1947,6 @@ jsonb_numeric(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Numeric		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "numeric");
@@ -1989,7 +1955,7 @@ jsonb_numeric(PG_FUNCTION_ARGS)
 	 * v.val.numeric points into jsonb body, so we need to make a copy to
 	 * return
 	 */
-	retValue = DatumGetNumericCopy(NumericGetDatum(v.val.numeric));
+	Numeric		retValue = DatumGetNumericCopy(NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -2001,12 +1967,11 @@ jsonb_int2(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "smallint");
 
-	retValue = DirectFunctionCall1(numeric_int2,
+	Datum		retValue = DirectFunctionCall1(numeric_int2,
 								   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
@@ -2019,12 +1984,11 @@ jsonb_int4(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "integer");
 
-	retValue = DirectFunctionCall1(numeric_int4,
+	Datum		retValue = DirectFunctionCall1(numeric_int4,
 								   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
@@ -2037,12 +2001,11 @@ jsonb_int8(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "bigint");
 
-	retValue = DirectFunctionCall1(numeric_int8,
+	Datum		retValue = DirectFunctionCall1(numeric_int8,
 								   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
@@ -2055,12 +2018,11 @@ jsonb_float4(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "real");
 
-	retValue = DirectFunctionCall1(numeric_float4,
+	Datum		retValue = DirectFunctionCall1(numeric_float4,
 								   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
@@ -2073,12 +2035,11 @@ jsonb_float8(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbValue	v;
-	Datum		retValue;
 
 	if (!JsonbExtractScalar(&in->root, &v) || v.type != jbvNumeric)
 		cannotCastJsonbValue(v.type, "double precision");
 
-	retValue = DirectFunctionCall1(numeric_float8,
+	Datum		retValue = DirectFunctionCall1(numeric_float8,
 								   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);

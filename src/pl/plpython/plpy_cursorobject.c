@@ -79,8 +79,6 @@ PLy_cursor_query(const char *query)
 {
 	PLyCursorObject *cursor;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
 
 	if ((cursor = PyObject_New(PLyCursorObject, &PLy_CursorType)) == NULL)
 		return NULL;
@@ -95,24 +93,22 @@ PLy_cursor_query(const char *query)
 						 RECORDOID, -1,
 						 exec_ctx->curr_proc);
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
 	PG_TRY();
 	{
-		SPIPlanPtr	plan;
-		Portal		portal;
 
 		pg_verifymbstr(query, strlen(query), false);
 
-		plan = SPI_prepare(query, 0, NULL);
+		SPIPlanPtr	plan = SPI_prepare(query, 0, NULL);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed: %s",
 				 SPI_result_code_string(SPI_result));
 
-		portal = SPI_cursor_open(NULL, plan, NULL, NULL,
+		Portal		portal = SPI_cursor_open(NULL, plan, NULL, NULL,
 								 exec_ctx->curr_proc->fn_readonly);
 		SPI_freeplan(plan);
 
@@ -143,10 +139,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 	PLyCursorObject *cursor;
 	volatile int nargs;
 	int			i;
-	PLyPlanObject *plan;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
 
 	if (args)
 	{
@@ -160,16 +153,15 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 	else
 		nargs = 0;
 
-	plan = (PLyPlanObject *) ob;
+	PLyPlanObject *plan = (PLyPlanObject *) ob;
 
 	if (nargs != plan->nargs)
 	{
-		char	   *sv;
 		PyObject   *so = PyObject_Str(args);
 
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
-		sv = PyString_AsString(so);
+		char	   *sv = PyString_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -193,14 +185,13 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 						 RECORDOID, -1,
 						 exec_ctx->curr_proc);
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
 	PG_TRY();
 	{
-		Portal		portal;
 		char	   *volatile nulls;
 		volatile int j;
 
@@ -212,9 +203,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		for (j = 0; j < nargs; j++)
 		{
 			PLyObToDatum *arg = &plan->args[j];
-			PyObject   *elem;
 
-			elem = PySequence_GetItem(args, j);
+			PyObject   *elem = PySequence_GetItem(args, j);
 			PG_TRY();
 			{
 				bool		isnull;
@@ -229,7 +219,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PG_END_TRY();
 		}
 
-		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
+		Portal		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
 								 exec_ctx->curr_proc->fn_readonly);
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
@@ -280,10 +270,9 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 static void
 PLy_cursor_dealloc(PyObject *arg)
 {
-	PLyCursorObject *cursor;
 	Portal		portal;
 
-	cursor = (PLyCursorObject *) arg;
+	PLyCursorObject *cursor = (PLyCursorObject *) arg;
 
 	if (!cursor->closed)
 	{
@@ -307,14 +296,10 @@ PLy_cursor_dealloc(PyObject *arg)
 static PyObject *
 PLy_cursor_iternext(PyObject *self)
 {
-	PLyCursorObject *cursor;
 	PyObject   *ret;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
-	Portal		portal;
 
-	cursor = (PLyCursorObject *) self;
+	PLyCursorObject *cursor = (PLyCursorObject *) self;
 
 	if (cursor->closed)
 	{
@@ -322,7 +307,7 @@ PLy_cursor_iternext(PyObject *self)
 		return NULL;
 	}
 
-	portal = GetPortalByName(cursor->portalname);
+	Portal		portal = GetPortalByName(cursor->portalname);
 	if (!PortalIsValid(portal))
 	{
 		PLy_exception_set(PyExc_ValueError,
@@ -330,8 +315,8 @@ PLy_cursor_iternext(PyObject *self)
 		return NULL;
 	}
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
@@ -369,18 +354,13 @@ PLy_cursor_iternext(PyObject *self)
 static PyObject *
 PLy_cursor_fetch(PyObject *self, PyObject *args)
 {
-	PLyCursorObject *cursor;
 	int			count;
-	PLyResultObject *ret;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
-	Portal		portal;
 
 	if (!PyArg_ParseTuple(args, "i:fetch", &count))
 		return NULL;
 
-	cursor = (PLyCursorObject *) self;
+	PLyCursorObject *cursor = (PLyCursorObject *) self;
 
 	if (cursor->closed)
 	{
@@ -388,7 +368,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	portal = GetPortalByName(cursor->portalname);
+	Portal		portal = GetPortalByName(cursor->portalname);
 	if (!PortalIsValid(portal))
 	{
 		PLy_exception_set(PyExc_ValueError,
@@ -396,12 +376,12 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	ret = (PLyResultObject *) PLy_result_new();
+	PLyResultObject *ret = (PLyResultObject *) PLy_result_new();
 	if (ret == NULL)
 		return NULL;
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 

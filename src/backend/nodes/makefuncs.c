@@ -519,9 +519,8 @@ FuncExpr *
 makeFuncExpr(Oid funcid, Oid rettype, List *args,
 			 Oid funccollid, Oid inputcollid, CoercionForm fformat)
 {
-	FuncExpr   *funcexpr;
 
-	funcexpr = makeNode(FuncExpr);
+	FuncExpr   *funcexpr = makeNode(FuncExpr);
 	funcexpr->funcid = funcid;
 	funcexpr->funcresulttype = rettype;
 	funcexpr->funcretset = false;	/* only allowed case here */

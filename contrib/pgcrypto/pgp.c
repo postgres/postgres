@@ -166,13 +166,12 @@ pgp_get_cipher_block_size(int code)
 int
 pgp_load_cipher(int code, PX_Cipher **res)
 {
-	int			err;
 	const struct cipher_info *i = get_cipher_info(code);
 
 	if (i == NULL)
 		return PXE_PGP_CORRUPT_DATA;
 
-	err = px_find_cipher(i->int_name, res);
+	int			err = px_find_cipher(i->int_name, res);
 	if (err == 0)
 		return 0;
 
@@ -182,13 +181,12 @@ pgp_load_cipher(int code, PX_Cipher **res)
 int
 pgp_load_digest(int code, PX_MD **res)
 {
-	int			err;
 	const char *name = pgp_get_digest_name(code);
 
 	if (name == NULL)
 		return PXE_PGP_CORRUPT_DATA;
 
-	err = px_find_digest(name, res);
+	int			err = px_find_digest(name, res);
 	if (err == 0)
 		return 0;
 

@@ -73,7 +73,6 @@ static PLyExecutionContext *PLy_execution_contexts = NULL;
 void
 _PG_init(void)
 {
-	int		  **bitmask_ptr;
 
 	/*
 	 * Set up a shared bitmask variable telling which Python version(s) are
@@ -83,7 +82,7 @@ _PG_init(void)
 	 * load more than one plpython library so long as they don't try to do
 	 * anything much with the language.
 	 */
-	bitmask_ptr = (int **) find_rendezvous_variable("plpython_version_bitmask");
+	int		  **bitmask_ptr = (int **) find_rendezvous_variable("plpython_version_bitmask");
 	if (!(*bitmask_ptr))		/* am I the first? */
 		*bitmask_ptr = &plpython_version_bitmask;
 	/* Retain pointer to the agreed-on shared variable ... */
@@ -154,9 +153,8 @@ static void
 PLy_init_interp(void)
 {
 	static PyObject *PLy_interp_safe_globals = NULL;
-	PyObject   *mainmod;
 
-	mainmod = PyImport_AddModule("__main__");
+	PyObject   *mainmod = PyImport_AddModule("__main__");
 	if (mainmod == NULL || PyErr_Occurred())
 		PLy_elog(ERROR, "could not import \"__main__\" module");
 	Py_INCREF(mainmod);
@@ -174,9 +172,6 @@ Datum
 plpython_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	Form_pg_proc procStruct;
-	bool		is_trigger;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -188,12 +183,12 @@ plpython_validator(PG_FUNCTION_ARGS)
 	PLy_initialize();
 
 	/* Get the new function's pg_proc entry */
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
+	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(tuple);
 
-	is_trigger = PLy_procedure_is_trigger(procStruct);
+	bool		is_trigger = PLy_procedure_is_trigger(procStruct);
 
 	ReleaseSysCache(tuple);
 
@@ -215,14 +210,12 @@ plpython2_validator(PG_FUNCTION_ARGS)
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
-	bool		nonatomic;
 	Datum		retval;
-	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
 	PLy_initialize();
 
-	nonatomic = fcinfo->context &&
+	bool		nonatomic = fcinfo->context &&
 		IsA(fcinfo->context, CallContext) &&
 		!castNode(CallContext, fcinfo->context)->atomic;
 
@@ -235,7 +228,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	 * popped again, so avoid putting anything that could throw error between
 	 * here and the PG_TRY.
 	 */
-	exec_ctx = PLy_push_execution_context(!nonatomic);
+	PLyExecutionContext *exec_ctx = PLy_push_execution_context(!nonatomic);
 
 	PG_TRY();
 	{
@@ -256,11 +249,10 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		if (CALLED_AS_TRIGGER(fcinfo))
 		{
 			Relation	tgrel = ((TriggerData *) fcinfo->context)->tg_relation;
-			HeapTuple	trv;
 
 			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), true);
 			exec_ctx->curr_proc = proc;
-			trv = PLy_exec_trigger(fcinfo, proc);
+			HeapTuple	trv = PLy_exec_trigger(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
 		else
@@ -299,7 +291,6 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
 	FmgrInfo	flinfo;
 	PLyProcedure proc;
-	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
 	PLy_initialize();
@@ -332,7 +323,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	 * popped again, so avoid putting anything that could throw error between
 	 * here and the PG_TRY.
 	 */
-	exec_ctx = PLy_push_execution_context(codeblock->atomic);
+	PLyExecutionContext *exec_ctx = PLy_push_execution_context(codeblock->atomic);
 
 	PG_TRY();
 	{
@@ -431,10 +422,9 @@ PLy_get_scratch_context(PLyExecutionContext *context)
 static PLyExecutionContext *
 PLy_push_execution_context(bool atomic_context)
 {
-	PLyExecutionContext *context;
 
 	/* Pick a memory context similar to what SPI uses. */
-	context = (PLyExecutionContext *)
+	PLyExecutionContext *context = (PLyExecutionContext *)
 		MemoryContextAlloc(atomic_context ? TopTransactionContext : PortalContext,
 						   sizeof(PLyExecutionContext));
 	context->curr_proc = NULL;

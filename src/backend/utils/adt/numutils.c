@@ -44,7 +44,6 @@ static const char DIGIT_TABLE[200] =
 static inline int
 decimalLength32(const uint32 v)
 {
-	int			t;
 	static const uint32 PowersOfTen[] = {
 		1, 10, 100,
 		1000, 10000, 100000,
@@ -56,14 +55,13 @@ decimalLength32(const uint32 v)
 	 * Compute base-10 logarithm by dividing the base-2 logarithm by a
 	 * good-enough approximation of the base-2 logarithm of 10
 	 */
-	t = (pg_leftmost_one_pos32(v) + 1) * 1233 / 4096;
+	int			t = (pg_leftmost_one_pos32(v) + 1) * 1233 / 4096;
 	return t + (v >= PowersOfTen[t]);
 }
 
 static inline int
 decimalLength64(const uint64 v)
 {
-	int			t;
 	static const uint64 PowersOfTen[] = {
 		UINT64CONST(1), UINT64CONST(10),
 		UINT64CONST(100), UINT64CONST(1000),
@@ -81,7 +79,7 @@ decimalLength64(const uint64 v)
 	 * Compute base-10 logarithm by dividing the base-2 logarithm by a
 	 * good-enough approximation of the base-2 logarithm of 10
 	 */
-	t = (pg_leftmost_one_pos64(v) + 1) * 1233 / 4096;
+	int			t = (pg_leftmost_one_pos64(v) + 1) * 1233 / 4096;
 	return t + (v >= PowersOfTen[t]);
 }
 
@@ -101,7 +99,6 @@ decimalLength64(const uint64 v)
 int32
 pg_atoi(const char *s, int size, int c)
 {
-	long		l;
 	char	   *badp;
 
 	/*
@@ -117,7 +114,7 @@ pg_atoi(const char *s, int size, int c)
 						"integer", s)));
 
 	errno = 0;
-	l = strtol(s, &badp, 10);
+	long		l = strtol(s, &badp, 10);
 
 	/* We made no progress parsing the string, so bail out */
 	if (s == badp)
@@ -562,7 +559,6 @@ pg_lltoa(int64 value, char *a)
 char *
 pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
 {
-	int			len;
 
 	Assert(minwidth > 0);
 
@@ -572,7 +568,7 @@ pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
 		return str + 2;
 	}
 
-	len = pg_ultoa_n(value, str);
+	int			len = pg_ultoa_n(value, str);
 	if (len >= minwidth)
 		return str + len;
 

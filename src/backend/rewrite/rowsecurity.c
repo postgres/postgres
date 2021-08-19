@@ -109,10 +109,6 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 						  List **securityQuals, List **withCheckOptions,
 						  bool *hasRowSecurity, bool *hasSubLinks)
 {
-	Oid			user_id;
-	int			rls_status;
-	Relation	rel;
-	CmdType		commandType;
 	List	   *permissive_policies;
 	List	   *restrictive_policies;
 
@@ -128,10 +124,10 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		return;
 
 	/* Switch to checkAsUser if it's set */
-	user_id = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+	Oid			user_id = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/* Determine the state of RLS for this, pass checkAsUser explicitly */
-	rls_status = check_enable_rls(rte->relid, rte->checkAsUser, false);
+	int			rls_status = check_enable_rls(rte->relid, rte->checkAsUser, false);
 
 	/* If there is no RLS on this table at all, nothing to do */
 	if (rls_status == RLS_NONE)
@@ -163,9 +159,9 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * for example in UPDATE t1 ... FROM t2 we need to apply t1's UPDATE
 	 * policies and t2's SELECT policies.
 	 */
-	rel = table_open(rte->relid, NoLock);
+	Relation	rel = table_open(rte->relid, NoLock);
 
-	commandType = rt_index == root->resultRelation ?
+	CmdType		commandType = rt_index == root->resultRelation ?
 		root->commandType : CMD_SELECT;
 
 	/*
@@ -701,9 +697,8 @@ add_with_check_options(Relation rel,
 		 * to perform the update, rather than any particular policy being
 		 * violated.
 		 */
-		WithCheckOption *wco;
 
-		wco = makeNode(WithCheckOption);
+		WithCheckOption *wco = makeNode(WithCheckOption);
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;
@@ -753,9 +748,8 @@ add_with_check_options(Relation rel,
 		 * If there were no policy clauses to check new data, add a single
 		 * always-false WCO (a default-deny policy).
 		 */
-		WithCheckOption *wco;
 
-		wco = makeNode(WithCheckOption);
+		WithCheckOption *wco = makeNode(WithCheckOption);
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;

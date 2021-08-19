@@ -121,7 +121,6 @@ analyze_rel(Oid relid, RangeVar *relation,
 			VacuumParams *params, List *va_cols, bool in_outer_xact,
 			BufferAccessStrategy bstrategy)
 {
-	Relation	onerel;
 	int			elevel;
 	AcquireSampleRowsFunc acquirefunc = NULL;
 	BlockNumber relpages = 0;
@@ -149,7 +148,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 *
 	 * Make sure to generate only logs for ANALYZE in this case.
 	 */
-	onerel = vacuum_open_relation(relid, relation, params->options & ~(VACOPT_VACUUM),
+	Relation	onerel = vacuum_open_relation(relid, relation, params->options & ~(VACOPT_VACUUM),
 								  params->log_min_duration >= 0,
 								  ShareUpdateExclusiveLock);
 
@@ -211,10 +210,9 @@ analyze_rel(Oid relid, RangeVar *relation,
 		 * For a foreign table, call the FDW's hook function to see whether it
 		 * supports analysis.
 		 */
-		FdwRoutine *fdwroutine;
 		bool		ok = false;
 
-		fdwroutine = GetFdwRoutineForRelation(onerel, false);
+		FdwRoutine *fdwroutine = GetFdwRoutineForRelation(onerel, false);
 
 		if (fdwroutine->AnalyzeForeignTable != NULL)
 			ok = fdwroutine->AnalyzeForeignTable(onerel,
@@ -300,19 +298,15 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	int			nindexes;
 	bool		hasindex;
 	VacAttrStats **vacattrstats;
-	AnlIndexData *indexdata;
 	int			targrows,
 				numrows,
 				minrows;
 	double		totalrows,
 				totaldeadrows;
-	HeapTuple  *rows;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-	MemoryContext caller_context;
 	Oid			save_userid;
 	int			save_sec_context;
-	int			save_nestlevel;
 	int64		AnalyzePageHit = VacuumPageHit;
 	int64		AnalyzePageMiss = VacuumPageMiss;
 	int64		AnalyzePageDirty = VacuumPageDirty;
@@ -337,7 +331,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	anl_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Analyze",
 										ALLOCSET_DEFAULT_SIZES);
-	caller_context = MemoryContextSwitchTo(anl_context);
+	MemoryContext caller_context = MemoryContextSwitchTo(anl_context);
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -347,7 +341,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
+	int			save_nestlevel = NewGUCNestLevel();
 
 	/* measure elapsed time iff autovacuum logging requires it */
 	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
@@ -446,7 +440,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 		nindexes = 0;
 		hasindex = false;
 	}
-	indexdata = NULL;
+	AnlIndexData *indexdata = NULL;
 	if (nindexes > 0)
 	{
 		indexdata = (AnlIndexData *) palloc0(nindexes * sizeof(AnlIndexData));
@@ -471,11 +465,10 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 					if (keycol == 0)
 					{
 						/* Found an index expression */
-						Node	   *indexkey;
 
 						if (indexpr_item == NULL)	/* shouldn't happen */
 							elog(ERROR, "too few entries in indexprs list");
-						indexkey = (Node *) lfirst(indexpr_item);
+						Node	   *indexkey = (Node *) lfirst(indexpr_item);
 						indexpr_item = lnext(indexInfo->ii_Expressions,
 											 indexpr_item);
 						thisdata->vacattrstats[tcnt] =
@@ -525,7 +518,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	/*
 	 * Acquire the sample rows
 	 */
-	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
+	HeapTuple  *rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
 	pgstat_progress_update_param(PROGRESS_ANALYZE_PHASE,
 								 inh ? PROGRESS_ANALYZE_PHASE_ACQUIRE_SAMPLE_ROWS_INH :
 								 PROGRESS_ANALYZE_PHASE_ACQUIRE_SAMPLE_ROWS);
@@ -560,7 +553,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
-			AttributeOpts *aopt;
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
@@ -573,12 +565,11 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			 * If the appropriate flavor of the n_distinct option is
 			 * specified, override with the corresponding value.
 			 */
-			aopt = get_attribute_options(onerel->rd_id, stats->attr->attnum);
+			AttributeOpts *aopt = get_attribute_options(onerel->rd_id, stats->attr->attnum);
 			if (aopt != NULL)
 			{
-				float8		n_distinct;
 
-				n_distinct = inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+				float8		n_distinct = inh ? aopt->n_distinct_inherited : aopt->n_distinct;
 				if (n_distinct != 0.0)
 					stats->stadistinct = n_distinct;
 			}
@@ -656,9 +647,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
-			double		totalindexrows;
 
-			totalindexrows = ceil(thisdata->tupleFract * totalrows);
+			double		totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
 								RelationGetNumberOfBlocks(Irel[ind]),
 								totalindexrows,
@@ -694,7 +684,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
-			IndexBulkDeleteResult *stats;
 			IndexVacuumInfo ivinfo;
 
 			ivinfo.index = Irel[ind];
@@ -704,7 +693,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			ivinfo.num_heap_tuples = onerel->rd_rel->reltuples;
 			ivinfo.strategy = vac_strategy;
 
-			stats = index_vacuum_cleanup(&ivinfo, NULL);
+			IndexBulkDeleteResult *stats = index_vacuum_cleanup(&ivinfo, NULL);
 
 			if (stats)
 				pfree(stats);
@@ -723,7 +712,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			TimestampDifferenceExceeds(starttime, endtime,
 									   params->log_min_duration))
 		{
-			long		delay_in_ms;
 			double		read_rate = 0;
 			double		write_rate = 0;
 			StringInfoData buf;
@@ -741,7 +729,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			 * We do not expect an analyze to take > 25 days and it simplifies
 			 * things a bit to use TimestampDifferenceMilliseconds.
 			 */
-			delay_in_ms = TimestampDifferenceMilliseconds(starttime, endtime);
+			long		delay_in_ms = TimestampDifferenceMilliseconds(starttime, endtime);
 
 			/*
 			 * Note that we are reporting these read/write rates in the same
@@ -843,16 +831,9 @@ compute_index_stats(Relation onerel, double totalrows,
 		AnlIndexData *thisdata = &indexdata[ind];
 		IndexInfo  *indexInfo = thisdata->indexInfo;
 		int			attr_cnt = thisdata->attr_cnt;
-		TupleTableSlot *slot;
-		EState	   *estate;
-		ExprContext *econtext;
-		ExprState  *predicate;
-		Datum	   *exprvals;
-		bool	   *exprnulls;
 		int			numindexrows,
 					tcnt,
 					rowno;
-		double		totalindexrows;
 
 		/* Ignore index if no columns to analyze and not partial */
 		if (attr_cnt == 0 && indexInfo->ii_Predicate == NIL)
@@ -863,21 +844,21 @@ compute_index_stats(Relation onerel, double totalrows,
 		 * partial-index predicates.  Create it in the per-index context to be
 		 * sure it gets cleaned up at the bottom of the loop.
 		 */
-		estate = CreateExecutorState();
-		econtext = GetPerTupleExprContext(estate);
+		EState	   *estate = CreateExecutorState();
+		ExprContext *econtext = GetPerTupleExprContext(estate);
 		/* Need a slot to hold the current heap tuple, too */
-		slot = MakeSingleTupleTableSlot(RelationGetDescr(onerel),
+		TupleTableSlot *slot = MakeSingleTupleTableSlot(RelationGetDescr(onerel),
 										&TTSOpsHeapTuple);
 
 		/* Arrange for econtext's scan tuple to be the tuple under test */
 		econtext->ecxt_scantuple = slot;
 
 		/* Set up execution state for predicate. */
-		predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
+		ExprState  *predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 		/* Compute and save index expression values */
-		exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));
-		exprnulls = (bool *) palloc(numrows * attr_cnt * sizeof(bool));
+		Datum	   *exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));
+		bool	   *exprnulls = (bool *) palloc(numrows * attr_cnt * sizeof(bool));
 		numindexrows = 0;
 		tcnt = 0;
 		for (rowno = 0; rowno < numrows; rowno++)
@@ -946,7 +927,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		 * sample, we can estimate the total number of rows in the index.
 		 */
 		thisdata->tupleFract = (double) numindexrows / (double) numrows;
-		totalindexrows = ceil(thisdata->tupleFract * totalrows);
+		double		totalindexrows = ceil(thisdata->tupleFract * totalrows);
 
 		/*
 		 * Now we can compute the statistics for the expression columns.
@@ -1006,8 +987,6 @@ static VacAttrStats *
 examine_attribute(Relation onerel, int attnum, Node *index_expr)
 {
 	Form_pg_attribute attr = TupleDescAttr(onerel->rd_att, attnum - 1);
-	HeapTuple	typtuple;
-	VacAttrStats *stats;
 	int			i;
 	bool		ok;
 
@@ -1023,7 +1002,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	 * Create the VacAttrStats struct.  Note that we only have a copy of the
 	 * fixed fields of the pg_attribute tuple.
 	 */
-	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
+	VacAttrStats *stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -1058,7 +1037,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		stats->attrcollid = attr->attcollation;
 	}
 
-	typtuple = SearchSysCacheCopy1(TYPEOID,
+	HeapTuple	typtuple = SearchSysCacheCopy1(TYPEOID,
 								   ObjectIdGetDatum(stats->attrtypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
@@ -1198,12 +1177,11 @@ acquire_sample_rows(Relation onerel, int elevel,
 	{
 		for (int i = 0; i < prefetch_maximum; i++)
 		{
-			BlockNumber prefetch_block;
 
 			if (!BlockSampler_HasMore(&prefetch_bs))
 				break;
 
-			prefetch_block = BlockSampler_Next(&prefetch_bs);
+			BlockNumber prefetch_block = BlockSampler_Next(&prefetch_bs);
 			PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, prefetch_block);
 		}
 	}
@@ -1384,22 +1362,16 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows)
 {
-	List	   *tableOIDs;
-	Relation   *rels;
-	AcquireSampleRowsFunc *acquirefuncs;
-	double	   *relblocks;
-	double		totalblocks;
 	int			numrows,
 				nrels,
 				i;
 	ListCell   *lc;
-	bool		has_child;
 
 	/*
 	 * Find all members of inheritance set.  We only need AccessShareLock on
 	 * the children.
 	 */
-	tableOIDs =
+	List	   *tableOIDs =
 		find_all_inheritors(RelationGetRelid(onerel), AccessShareLock, NULL);
 
 	/*
@@ -1425,22 +1397,21 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	 * Identify acquirefuncs to use, and count blocks in all the relations.
 	 * The result could overflow BlockNumber, so we use double arithmetic.
 	 */
-	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
-	acquirefuncs = (AcquireSampleRowsFunc *)
+	Relation   *rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
+	AcquireSampleRowsFunc *acquirefuncs = (AcquireSampleRowsFunc *)
 		palloc(list_length(tableOIDs) * sizeof(AcquireSampleRowsFunc));
-	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
-	totalblocks = 0;
+	double	   *relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
+	double		totalblocks = 0;
 	nrels = 0;
-	has_child = false;
+	bool		has_child = false;
 	foreach(lc, tableOIDs)
 	{
 		Oid			childOID = lfirst_oid(lc);
-		Relation	childrel;
 		AcquireSampleRowsFunc acquirefunc = NULL;
 		BlockNumber relpages = 0;
 
 		/* We already got the needed lock */
-		childrel = table_open(childOID, NoLock);
+		Relation	childrel = table_open(childOID, NoLock);
 
 		/* Ignore if temp table of another backend */
 		if (RELATION_IS_OTHER_TEMP(childrel))
@@ -1465,10 +1436,9 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 			 * For a foreign table, call the FDW's hook function to see
 			 * whether it supports analysis.
 			 */
-			FdwRoutine *fdwroutine;
 			bool		ok = false;
 
-			fdwroutine = GetFdwRoutineForRelation(childrel, false);
+			FdwRoutine *fdwroutine = GetFdwRoutineForRelation(childrel, false);
 
 			if (fdwroutine->AnalyzeForeignTable != NULL)
 				ok = fdwroutine->AnalyzeForeignTable(childrel,
@@ -1541,19 +1511,17 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 
 		if (childblocks > 0)
 		{
-			int			childtargrows;
 
-			childtargrows = (int) rint(targrows * childblocks / totalblocks);
+			int			childtargrows = (int) rint(targrows * childblocks / totalblocks);
 			/* Make sure we don't overrun due to roundoff error */
 			childtargrows = Min(childtargrows, targrows - numrows);
 			if (childtargrows > 0)
 			{
-				int			childrows;
 				double		trows,
 							tdrows;
 
 				/* Fetch a random sample of the child's rows */
-				childrows = (*acquirefunc) (childrel, elevel,
+				int			childrows = (*acquirefunc) (childrel, elevel,
 											rows + numrows, childtargrows,
 											&trows, &tdrows);
 
@@ -1562,9 +1530,8 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 					!equalTupleDescs(RelationGetDescr(childrel),
 									 RelationGetDescr(onerel)))
 				{
-					TupleConversionMap *map;
 
-					map = convert_tuples_by_name(RelationGetDescr(childrel),
+					TupleConversionMap *map = convert_tuples_by_name(RelationGetDescr(childrel),
 												 RelationGetDescr(onerel));
 					if (map != NULL)
 					{
@@ -1627,13 +1594,12 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 static void
 update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 {
-	Relation	sd;
 	int			attno;
 
 	if (natts <= 0)
 		return;					/* nothing to do */
 
-	sd = table_open(StatisticRelationId, RowExclusiveLock);
+	Relation	sd = table_open(StatisticRelationId, RowExclusiveLock);
 
 	for (attno = 0; attno < natts; attno++)
 	{
@@ -1689,12 +1655,11 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 			if (nnum > 0)
 			{
 				Datum	   *numdatums = (Datum *) palloc(nnum * sizeof(Datum));
-				ArrayType  *arry;
 
 				for (n = 0; n < nnum; n++)
 					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
 				/* XXX knows more than it should about type float4: */
-				arry = construct_array(numdatums, nnum,
+				ArrayType  *arry = construct_array(numdatums, nnum,
 									   FLOAT4OID,
 									   sizeof(float4), true, TYPALIGN_INT);
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
@@ -1710,9 +1675,8 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		{
 			if (stats->numvalues[k] > 0)
 			{
-				ArrayType  *arry;
 
-				arry = construct_array(stats->stavalues[k],
+				ArrayType  *arry = construct_array(stats->stavalues[k],
 									   stats->numvalues[k],
 									   stats->statypid[k],
 									   stats->statyplen[k],
@@ -1782,10 +1746,9 @@ std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 static Datum
 ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 {
-	int			i;
 
 	/* exprvals and exprnulls are already offset for proper column */
-	i = rownum * stats->rowstride;
+	int			i = rownum * stats->rowstride;
 	*isNull = stats->exprnulls[i];
 	return stats->exprvals[i];
 }
@@ -1862,7 +1825,6 @@ std_typanalyze(VacAttrStats *stats)
 	Form_pg_attribute attr = stats->attr;
 	Oid			ltopr;
 	Oid			eqopr;
-	StdAnalyzeData *mystats;
 
 	/* If the attstattarget column is negative, use the default value */
 	/* NB: it is okay to scribble on stats->attr since it's a copy */
@@ -1876,7 +1838,7 @@ std_typanalyze(VacAttrStats *stats)
 							 NULL);
 
 	/* Save the operator info for compute_stats routines */
-	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
+	StdAnalyzeData *mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
 	mystats->eqfunc = OidIsValid(eqopr) ? get_opcode(eqopr) : InvalidOid;
 	mystats->ltopr = ltopr;
@@ -1953,12 +1915,11 @@ compute_trivial_stats(VacAttrStatsP stats,
 
 	for (i = 0; i < samplerows; i++)
 	{
-		Datum		value;
 		bool		isnull;
 
 		vacuum_delay_point();
 
-		value = fetchfunc(stats, i, &isnull);
+		Datum		value = fetchfunc(stats, i, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -2047,7 +2008,6 @@ compute_distinct_stats(VacAttrStatsP stats,
 		Datum		value;
 		int			count;
 	} TrackItem;
-	TrackItem  *track;
 	int			track_cnt,
 				track_max;
 	int			num_mcv = stats->attr->attstattarget;
@@ -2059,22 +2019,20 @@ compute_distinct_stats(VacAttrStatsP stats,
 	track_max = 2 * num_mcv;
 	if (track_max < 10)
 		track_max = 10;
-	track = (TrackItem *) palloc(track_max * sizeof(TrackItem));
+	TrackItem  *track = (TrackItem *) palloc(track_max * sizeof(TrackItem));
 	track_cnt = 0;
 
 	fmgr_info(mystats->eqfunc, &f_cmpeq);
 
 	for (i = 0; i < samplerows; i++)
 	{
-		Datum		value;
 		bool		isnull;
-		bool		match;
 		int			firstcount1,
 					j;
 
 		vacuum_delay_point();
 
-		value = fetchfunc(stats, i, &isnull);
+		Datum		value = fetchfunc(stats, i, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -2117,7 +2075,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 		/*
 		 * See if the value matches anything we're already tracking.
 		 */
-		match = false;
+		bool		match = false;
 		firstcount1 = track_cnt;
 		for (j = 0; j < track_cnt; j++)
 		{
@@ -2310,14 +2268,11 @@ compute_distinct_stats(VacAttrStatsP stats,
 		/* Generate MCV slot entry */
 		if (num_mcv > 0)
 		{
-			MemoryContext old_context;
-			Datum	   *mcv_values;
-			float4	   *mcv_freqs;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
-			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
-			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
+			Datum	   *mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
+			float4	   *mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
 			{
 				mcv_values[i] = datumCopy(track[i].value,
@@ -2386,18 +2341,15 @@ compute_scalar_stats(VacAttrStatsP stats,
 							   stats->attrtype->typlen < 0);
 	double		corr_xysum;
 	SortSupportData ssup;
-	ScalarItem *values;
 	int			values_cnt = 0;
-	int		   *tupnoLink;
-	ScalarMCVItem *track;
 	int			track_cnt = 0;
 	int			num_mcv = stats->attr->attstattarget;
 	int			num_bins = stats->attr->attstattarget;
 	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
 
-	values = (ScalarItem *) palloc(samplerows * sizeof(ScalarItem));
-	tupnoLink = (int *) palloc(samplerows * sizeof(int));
-	track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
+	ScalarItem *values = (ScalarItem *) palloc(samplerows * sizeof(ScalarItem));
+	int		   *tupnoLink = (int *) palloc(samplerows * sizeof(int));
+	ScalarMCVItem *track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
 
 	memset(&ssup, 0, sizeof(ssup));
 	ssup.ssup_cxt = CurrentMemoryContext;
@@ -2416,12 +2368,11 @@ compute_scalar_stats(VacAttrStatsP stats,
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)
 	{
-		Datum		value;
 		bool		isnull;
 
 		vacuum_delay_point();
 
-		value = fetchfunc(stats, i, &isnull);
+		Datum		value = fetchfunc(stats, i, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -2675,14 +2626,11 @@ compute_scalar_stats(VacAttrStatsP stats,
 		/* Generate MCV slot entry */
 		if (num_mcv > 0)
 		{
-			MemoryContext old_context;
-			Datum	   *mcv_values;
-			float4	   *mcv_freqs;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
-			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
-			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
+			Datum	   *mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
+			float4	   *mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
 			{
 				mcv_values[i] = datumCopy(values[track[i].first].value,
@@ -2717,8 +2665,6 @@ compute_scalar_stats(VacAttrStatsP stats,
 			num_hist = num_bins + 1;
 		if (num_hist >= 2)
 		{
-			MemoryContext old_context;
-			Datum	   *hist_values;
 			int			nvals;
 			int			pos,
 						posfrac,
@@ -2740,10 +2686,9 @@ compute_scalar_stats(VacAttrStatsP stats,
 			{
 				int			src,
 							dest;
-				int			j;
 
 				src = dest = 0;
-				j = 0;			/* index of next interesting MCV item */
+				int			j = 0;			/* index of next interesting MCV item */
 				while (src < values_cnt)
 				{
 					int			ncopy;
@@ -2775,8 +2720,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 			Assert(nvals >= num_hist);
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
-			hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
+			Datum	   *hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
 
 			/*
 			 * The object of this loop is to copy the first and last values[]
@@ -2824,14 +2769,12 @@ compute_scalar_stats(VacAttrStatsP stats,
 		/* Generate a correlation entry if there are multiple values */
 		if (values_cnt > 1)
 		{
-			MemoryContext old_context;
-			float4	   *corrs;
 			double		corr_xsum,
 						corr_x2sum;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
-			corrs = (float4 *) palloc(sizeof(float4));
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
+			float4	   *corrs = (float4 *) palloc(sizeof(float4));
 			MemoryContextSwitchTo(old_context);
 
 			/*----------
@@ -2906,9 +2849,8 @@ compare_scalars(const void *a, const void *b, void *arg)
 	Datum		db = ((const ScalarItem *) b)->value;
 	int			tb = ((const ScalarItem *) b)->tupno;
 	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
-	int			compare;
 
-	compare = ApplySortComparator(da, false, db, false, cxt->ssup);
+	int			compare = ApplySortComparator(da, false, db, false, cxt->ssup);
 	if (compare != 0)
 		return compare;
 
@@ -2955,8 +2897,6 @@ analyze_mcv_list(int *mcv_counts,
 				 int samplerows,
 				 double totalrows)
 {
-	double		ndistinct_table;
-	double		sumcount;
 	int			i;
 
 	/*
@@ -2967,7 +2907,7 @@ analyze_mcv_list(int *mcv_counts,
 		return num_mcv;
 
 	/* Re-extract the estimated number of distinct nonnull values in table */
-	ndistinct_table = stadistinct;
+	double		ndistinct_table = stadistinct;
 	if (ndistinct_table < 0)
 		ndistinct_table = -ndistinct_table * totalrows;
 
@@ -2990,7 +2930,7 @@ analyze_mcv_list(int *mcv_counts,
 	 * roughly the same as that of the common values.  This would lead to any
 	 * uncommon values being significantly overestimated.
 	 */
-	sumcount = 0.0;
+	double		sumcount = 0.0;
 	for (i = 0; i < num_mcv - 1; i++)
 		sumcount += mcv_counts[i];
 

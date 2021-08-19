@@ -245,14 +245,12 @@ static NodeTag
 nodeTokenType(const char *token, int length)
 {
 	NodeTag		retval;
-	const char *numptr;
-	int			numlen;
 
 	/*
 	 * Check if the token is a number
 	 */
-	numptr = token;
-	numlen = length;
+	const char *numptr = token;
+	int			numlen = length;
 	if (*numptr == '+' || *numptr == '-')
 		numptr++, numlen--;
 	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
@@ -316,7 +314,6 @@ void *
 nodeRead(const char *token, int tok_len)
 {
 	Node	   *result;
-	NodeTag		type;
 
 	if (token == NULL)			/* need to read a token? */
 	{
@@ -326,7 +323,7 @@ nodeRead(const char *token, int tok_len)
 			return NULL;
 	}
 
-	type = nodeTokenType(token, tok_len);
+	NodeTag		type = nodeTokenType(token, tok_len);
 
 	switch ((int) type)
 	{
@@ -354,7 +351,6 @@ nodeRead(const char *token, int tok_len)
 					/* List of integers */
 					for (;;)
 					{
-						int			val;
 						char	   *endptr;
 
 						token = pg_strtok(&tok_len);
@@ -362,7 +358,7 @@ nodeRead(const char *token, int tok_len)
 							elog(ERROR, "unterminated List structure");
 						if (token[0] == ')')
 							break;
-						val = (int) strtol(token, &endptr, 10);
+						int			val = (int) strtol(token, &endptr, 10);
 						if (endptr != token + tok_len)
 							elog(ERROR, "unrecognized integer: \"%.*s\"",
 								 tok_len, token);
@@ -374,7 +370,6 @@ nodeRead(const char *token, int tok_len)
 					/* List of OIDs */
 					for (;;)
 					{
-						Oid			val;
 						char	   *endptr;
 
 						token = pg_strtok(&tok_len);
@@ -382,7 +377,7 @@ nodeRead(const char *token, int tok_len)
 							elog(ERROR, "unterminated List structure");
 						if (token[0] == ')')
 							break;
-						val = (Oid) strtoul(token, &endptr, 10);
+						Oid			val = (Oid) strtoul(token, &endptr, 10);
 						if (endptr != token + tok_len)
 							elog(ERROR, "unrecognized OID: \"%.*s\"",
 								 tok_len, token);

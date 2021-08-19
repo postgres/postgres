@@ -158,7 +158,6 @@ typedef struct
 int
 pgsymlink(const char *oldpath, const char *newpath)
 {
-	HANDLE		dirhandle;
 	DWORD		len;
 	char		buffer[MAX_PATH * sizeof(WCHAR) + offsetof(REPARSE_JUNCTION_DATA_BUFFER, PathBuffer)];
 	char		nativeTarget[MAX_PATH];
@@ -166,7 +165,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
 
 	CreateDirectory(newpath, 0);
-	dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE,
+	HANDLE		dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE,
 						   0, 0, OPEN_EXISTING,
 						   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
 
@@ -239,14 +238,12 @@ pgsymlink(const char *oldpath, const char *newpath)
 int
 pgreadlink(const char *path, char *buf, size_t size)
 {
-	DWORD		attr;
-	HANDLE		h;
 	char		buffer[MAX_PATH * sizeof(WCHAR) + offsetof(REPARSE_JUNCTION_DATA_BUFFER, PathBuffer)];
 	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
 	DWORD		len;
 	int			r;
 
-	attr = GetFileAttributes(path);
+	DWORD		attr = GetFileAttributes(path);
 	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		_dosmaperr(GetLastError());
@@ -258,7 +255,7 @@ pgreadlink(const char *path, char *buf, size_t size)
 		return -1;
 	}
 
-	h = CreateFile(path,
+	HANDLE		h = CreateFile(path,
 				   GENERIC_READ,
 				   FILE_SHARE_READ | FILE_SHARE_WRITE,
 				   NULL,

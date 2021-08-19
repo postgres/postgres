@@ -98,9 +98,6 @@ Datum
 array_typanalyze(PG_FUNCTION_ARGS)
 {
 	VacAttrStats *stats = (VacAttrStats *) PG_GETARG_POINTER(0);
-	Oid			element_typeid;
-	TypeCacheEntry *typentry;
-	ArrayAnalyzeExtraData *extra_data;
 
 	/*
 	 * Call the standard typanalyze function.  It may fail to find needed
@@ -112,7 +109,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 	/*
 	 * Check attribute data type is a varlena array (or a domain over one).
 	 */
-	element_typeid = get_base_element_type(stats->attrtypid);
+	Oid			element_typeid = get_base_element_type(stats->attrtypid);
 	if (!OidIsValid(element_typeid))
 		elog(ERROR, "array_typanalyze was invoked for non-array type %u",
 			 stats->attrtypid);
@@ -121,7 +118,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 	 * Gather information about the element type.  If we fail to find
 	 * something, return leaving the state from std_typanalyze() in place.
 	 */
-	typentry = lookup_type_cache(element_typeid,
+	TypeCacheEntry *typentry = lookup_type_cache(element_typeid,
 								 TYPECACHE_EQ_OPR |
 								 TYPECACHE_CMP_PROC_FINFO |
 								 TYPECACHE_HASH_PROC_FINFO);
@@ -132,7 +129,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 
 	/* Store our findings for use by compute_array_stats() */
-	extra_data = (ArrayAnalyzeExtraData *) palloc(sizeof(ArrayAnalyzeExtraData));
+	ArrayAnalyzeExtraData *extra_data = (ArrayAnalyzeExtraData *) palloc(sizeof(ArrayAnalyzeExtraData));
 	extra_data->type_id = typentry->type_id;
 	extra_data->eq_opr = typentry->eq_opr;
 	extra_data->coll_id = stats->attrcollid;	/* collation we should use */
@@ -216,31 +213,23 @@ static void
 compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 					int samplerows, double totalrows)
 {
-	ArrayAnalyzeExtraData *extra_data;
-	int			num_mcelem;
 	int			null_cnt = 0;
 	int			null_elem_cnt = 0;
 	int			analyzed_rows = 0;
 
 	/* This is D from the LC algorithm. */
-	HTAB	   *elements_tab;
 	HASHCTL		elem_hash_ctl;
 	HASH_SEQ_STATUS scan_status;
 
 	/* This is the current bucket number from the LC algorithm */
-	int			b_current;
 
 	/* This is 'w' from the LC algorithm */
-	int			bucket_width;
 	int			array_no;
-	int64		element_no;
 	TrackItem  *item;
-	int			slot_idx;
-	HTAB	   *count_tab;
 	HASHCTL		count_hash_ctl;
 	DECountItem *count_item;
 
-	extra_data = (ArrayAnalyzeExtraData *) stats->extra_data;
+	ArrayAnalyzeExtraData *extra_data = (ArrayAnalyzeExtraData *) stats->extra_data;
 
 	/*
 	 * Invoke analyze.c's standard analysis function to create scalar-style
@@ -264,13 +253,13 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	 * the number of individual elements tracked in pg_statistic ought to be
 	 * more than the number of values for a simple scalar column.
 	 */
-	num_mcelem = stats->attr->attstattarget * 10;
+	int			num_mcelem = stats->attr->attstattarget * 10;
 
 	/*
 	 * We set bucket width equal to num_mcelem / 0.007 as per the comment
 	 * above.
 	 */
-	bucket_width = num_mcelem * 1000 / 7;
+	int			bucket_width = num_mcelem * 1000 / 7;
 
 	/*
 	 * Create the hashtable. It will be in local memory, so we don't need to
@@ -282,7 +271,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	elem_hash_ctl.hash = element_hash;
 	elem_hash_ctl.match = element_match;
 	elem_hash_ctl.hcxt = CurrentMemoryContext;
-	elements_tab = hash_create("Analyzed elements table",
+	HTAB	   *elements_tab = hash_create("Analyzed elements table",
 							   num_mcelem,
 							   &elem_hash_ctl,
 							   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
@@ -291,33 +280,29 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	count_hash_ctl.keysize = sizeof(int);
 	count_hash_ctl.entrysize = sizeof(DECountItem);
 	count_hash_ctl.hcxt = CurrentMemoryContext;
-	count_tab = hash_create("Array distinct element count table",
+	HTAB	   *count_tab = hash_create("Array distinct element count table",
 							64,
 							&count_hash_ctl,
 							HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Initialize counters. */
-	b_current = 1;
-	element_no = 0;
+	int			b_current = 1;
+	int64		element_no = 0;
 
 	/* Loop over the arrays. */
 	for (array_no = 0; array_no < samplerows; array_no++)
 	{
-		Datum		value;
 		bool		isnull;
-		ArrayType  *array;
 		int			num_elems;
 		Datum	   *elem_values;
 		bool	   *elem_nulls;
-		bool		null_present;
 		int			j;
 		int64		prev_element_no = element_no;
-		int			distinct_count;
 		bool		count_item_found;
 
 		vacuum_delay_point();
 
-		value = fetchfunc(stats, array_no, &isnull);
+		Datum		value = fetchfunc(stats, array_no, &isnull);
 		if (isnull)
 		{
 			/* array is null, just count that */
@@ -334,7 +319,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		/*
 		 * Now detoast the array if needed, and deconstruct into datums.
 		 */
-		array = DatumGetArrayTypeP(value);
+		ArrayType  *array = DatumGetArrayTypeP(value);
 
 		Assert(ARR_ELEMTYPE(array) == extra_data->type_id);
 		deconstruct_array(array,
@@ -348,10 +333,9 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		 * We loop through the elements in the array and add them to our
 		 * tracking hashtable.
 		 */
-		null_present = false;
+		bool		null_present = false;
 		for (j = 0; j < num_elems; j++)
 		{
-			Datum		elem_value;
 			bool		found;
 
 			/* No null element processing other than flag setting here */
@@ -362,7 +346,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			}
 
 			/* Lookup current element in hashtable, adding it if new */
-			elem_value = elem_values[j];
+			Datum		elem_value = elem_values[j];
 			item = (TrackItem *) hash_search(elements_tab,
 											 (const void *) &elem_value,
 											 HASH_ENTER, &found);
@@ -417,7 +401,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			null_elem_cnt++;
 
 		/* Update frequency of the particular array distinct element count. */
-		distinct_count = (int) (element_no - prev_element_no);
+		int			distinct_count = (int) (element_no - prev_element_no);
 		count_item = (DECountItem *) hash_search(count_tab, &distinct_count,
 												 HASH_ENTER,
 												 &count_item_found);
@@ -435,7 +419,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	}
 
 	/* Skip pg_statistic slots occupied by standard statistics */
-	slot_idx = 0;
+	int			slot_idx = 0;
 	while (slot_idx < STATISTIC_NUM_SLOTS && stats->stakind[slot_idx] != 0)
 		slot_idx++;
 	if (slot_idx > STATISTIC_NUM_SLOTS - 2)
@@ -445,11 +429,6 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	if (analyzed_rows > 0)
 	{
 		int			nonnull_cnt = analyzed_rows;
-		int			count_items_count;
-		int			i;
-		TrackItem **sort_table;
-		int			track_len;
-		int64		cutoff_freq;
 		int64		minfreq,
 					maxfreq;
 
@@ -468,13 +447,13 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		 * Since epsilon = s/10 and bucket_width = 1/epsilon, the cutoff
 		 * frequency is 9*N / bucket_width.
 		 */
-		cutoff_freq = 9 * element_no / bucket_width;
+		int64		cutoff_freq = 9 * element_no / bucket_width;
 
-		i = hash_get_num_entries(elements_tab); /* surely enough space */
-		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
+		int			i = hash_get_num_entries(elements_tab); /* surely enough space */
+		TrackItem **sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
 
 		hash_seq_init(&scan_status, elements_tab);
-		track_len = 0;
+		int			track_len = 0;
 		minfreq = element_no;
 		maxfreq = 0;
 		while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)
@@ -513,9 +492,6 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		/* Generate MCELEM slot entry */
 		if (num_mcelem > 0)
 		{
-			MemoryContext old_context;
-			Datum	   *mcelem_values;
-			float4	   *mcelem_freqs;
 
 			/*
 			 * We want to store statistics sorted on the element value using
@@ -526,7 +502,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				  trackitem_compare_element);
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(stats->anl_context);
+			MemoryContext old_context = MemoryContextSwitchTo(stats->anl_context);
 
 			/*
 			 * We sorted statistics on the element value, but we want to be
@@ -534,8 +510,8 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * through all the values.  We also want the frequency of null
 			 * elements.  Store these three values at the end of mcelem_freqs.
 			 */
-			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
-			mcelem_freqs = (float4 *) palloc((num_mcelem + 3) * sizeof(float4));
+			Datum	   *mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
+			float4	   *mcelem_freqs = (float4 *) palloc((num_mcelem + 3) * sizeof(float4));
 
 			/*
 			 * See comments above about use of nonnull_cnt as the divisor for
@@ -574,15 +550,10 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		}
 
 		/* Generate DECHIST slot entry */
-		count_items_count = hash_get_num_entries(count_tab);
+		int			count_items_count = hash_get_num_entries(count_tab);
 		if (count_items_count > 0)
 		{
 			int			num_hist = stats->attr->attstattarget;
-			DECountItem **sorted_count_items;
-			int			j;
-			int			delta;
-			int64		frac;
-			float4	   *hist;
 
 			/* num_hist must be at least 2 for the loop below to work */
 			num_hist = Max(num_hist, 2);
@@ -591,10 +562,10 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * Create an array of DECountItem pointers, and sort them into
 			 * increasing count order.
 			 */
-			sorted_count_items = (DECountItem **)
+			DECountItem **sorted_count_items = (DECountItem **)
 				palloc(sizeof(DECountItem *) * count_items_count);
 			hash_seq_init(&scan_status, count_tab);
-			j = 0;
+			int			j = 0;
 			while ((count_item = (DECountItem *) hash_seq_search(&scan_status)) != NULL)
 			{
 				sorted_count_items[j++] = count_item;
@@ -606,7 +577,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * Prepare to fill stanumbers with the histogram, followed by the
 			 * average count.  This array must be stored in anl_context.
 			 */
-			hist = (float4 *)
+			float4	   *hist = (float4 *)
 				MemoryContextAlloc(stats->anl_context,
 								   sizeof(float4) * (num_hist + 1));
 			hist[num_hist] = (double) element_no / (double) nonnull_cnt;
@@ -642,10 +613,10 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * math in int64.
 			 *----------
 			 */
-			delta = analyzed_rows - 1;
+			int			delta = analyzed_rows - 1;
 			j = 0;				/* current index in sorted_count_items */
 			/* Initialize frac for sorted_count_items[0]; y is initially 0 */
-			frac = (int64) sorted_count_items[0]->frequency * (num_hist - 1);
+			int64		frac = (int64) sorted_count_items[0]->frequency * (num_hist - 1);
 			for (i = 0; i < num_hist; i++)
 			{
 				while (frac <= 0)
@@ -711,9 +682,8 @@ static uint32
 element_hash(const void *key, Size keysize)
 {
 	Datum		d = *((const Datum *) key);
-	Datum		h;
 
-	h = FunctionCall1Coll(array_extra_data->hash,
+	Datum		h = FunctionCall1Coll(array_extra_data->hash,
 						  array_extra_data->coll_id,
 						  d);
 	return DatumGetUInt32(h);
@@ -742,9 +712,8 @@ element_compare(const void *key1, const void *key2)
 {
 	Datum		d1 = *((const Datum *) key1);
 	Datum		d2 = *((const Datum *) key2);
-	Datum		c;
 
-	c = FunctionCall2Coll(array_extra_data->cmp,
+	Datum		c = FunctionCall2Coll(array_extra_data->cmp,
 						  array_extra_data->coll_id,
 						  d1, d2);
 	return DatumGetInt32(c);

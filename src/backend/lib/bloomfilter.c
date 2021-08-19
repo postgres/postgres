@@ -87,10 +87,6 @@ static inline uint32 mod_m(uint32 a, uint64 m);
 bloom_filter *
 bloom_create(int64 total_elems, int bloom_work_mem, uint64 seed)
 {
-	bloom_filter *filter;
-	int			bloom_power;
-	uint64		bitset_bytes;
-	uint64		bitset_bits;
 
 	/*
 	 * Aim for two bytes per element; this is sufficient to get a false
@@ -99,19 +95,19 @@ bloom_create(int64 total_elems, int bloom_work_mem, uint64 seed)
 	 * the next lowest power of two turns out to be a significant drop, the
 	 * false positive rate still won't exceed 2% in almost all cases.
 	 */
-	bitset_bytes = Min(bloom_work_mem * UINT64CONST(1024), total_elems * 2);
+	uint64		bitset_bytes = Min(bloom_work_mem * UINT64CONST(1024), total_elems * 2);
 	bitset_bytes = Max(1024 * 1024, bitset_bytes);
 
 	/*
 	 * Size in bits should be the highest power of two <= target.  bitset_bits
 	 * is uint64 because PG_UINT32_MAX is 2^32 - 1, not 2^32
 	 */
-	bloom_power = my_bloom_power(bitset_bytes * BITS_PER_BYTE);
-	bitset_bits = UINT64CONST(1) << bloom_power;
+	int			bloom_power = my_bloom_power(bitset_bytes * BITS_PER_BYTE);
+	uint64		bitset_bits = UINT64CONST(1) << bloom_power;
 	bitset_bytes = bitset_bits / BITS_PER_BYTE;
 
 	/* Allocate bloom filter with unset bitset */
-	filter = palloc0(offsetof(bloom_filter, bitset) +
+	bloom_filter *filter = palloc0(offsetof(bloom_filter, bitset) +
 					 sizeof(unsigned char) * bitset_bytes);
 	filter->k_hash_funcs = optimal_k(bitset_bits, total_elems);
 	filter->seed = seed;
@@ -250,17 +246,15 @@ optimal_k(uint64 bitset_bits, int64 total_elems)
 static void
 k_hashes(bloom_filter *filter, uint32 *hashes, unsigned char *elem, size_t len)
 {
-	uint64		hash;
 	uint32		x,
 				y;
-	uint64		m;
 	int			i;
 
 	/* Use 64-bit hashing to get two independent 32-bit hashes */
-	hash = DatumGetUInt64(hash_any_extended(elem, len, filter->seed));
+	uint64		hash = DatumGetUInt64(hash_any_extended(elem, len, filter->seed));
 	x = (uint32) hash;
 	y = (uint32) (hash >> 32);
-	m = filter->m;
+	uint64		m = filter->m;
 
 	x = mod_m(x, m);
 	y = mod_m(y, m);

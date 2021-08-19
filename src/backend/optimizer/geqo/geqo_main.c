@@ -309,21 +309,18 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 static int
 gimme_pool_size(int nr_rel)
 {
-	double		size;
-	int			minsize;
-	int			maxsize;
 
 	/* Legal pool size *must* be at least 2, so ignore attempt to select 1 */
 	if (Geqo_pool_size >= 2)
 		return Geqo_pool_size;
 
-	size = pow(2.0, nr_rel + 1.0);
+	double		size = pow(2.0, nr_rel + 1.0);
 
-	maxsize = 50 * Geqo_effort; /* 50 to 500 individuals */
+	int			maxsize = 50 * Geqo_effort; /* 50 to 500 individuals */
 	if (size > maxsize)
 		return maxsize;
 
-	minsize = 10 * Geqo_effort; /* 10 to 100 individuals */
+	int			minsize = 10 * Geqo_effort; /* 10 to 100 individuals */
 	if (size < minsize)
 		return minsize;
 

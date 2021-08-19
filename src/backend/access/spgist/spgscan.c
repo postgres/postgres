@@ -152,11 +152,10 @@ spgAddStartItem(SpGistScanOpaque so, bool isnull)
 static void
 resetSpGistScanOpaque(SpGistScanOpaque so)
 {
-	MemoryContext oldCtx;
 
 	MemoryContextReset(so->traversalCxt);
 
-	oldCtx = MemoryContextSwitchTo(so->traversalCxt);
+	MemoryContext oldCtx = MemoryContextSwitchTo(so->traversalCxt);
 
 	/* initialize queue only for distance-ordered scans */
 	so->scanQueue = pairingheap_allocate(pairingheap_SpGistSearchItem_cmp, so);
@@ -207,10 +206,7 @@ static void
 spgPrepareScanKeys(IndexScanDesc scan)
 {
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
-	bool		qual_ok;
-	bool		haveIsNull;
 	bool		haveNotNull;
-	int			nkeys;
 	int			i;
 
 	so->numberOfOrderBys = scan->numberOfOrderBys;
@@ -254,9 +250,9 @@ spgPrepareScanKeys(IndexScanDesc scan)
 	}
 
 	/* Examine the given quals */
-	qual_ok = true;
-	haveIsNull = haveNotNull = false;
-	nkeys = 0;
+	bool		qual_ok = true;
+	bool		haveIsNull = haveNotNull = false;
+	int			nkeys = 0;
 	for (i = 0; i < scan->numberOfKeys; i++)
 	{
 		ScanKey		skey = &scan->keyData[i];
@@ -302,13 +298,11 @@ spgPrepareScanKeys(IndexScanDesc scan)
 IndexScanDesc
 spgbeginscan(Relation rel, int keysz, int orderbysz)
 {
-	IndexScanDesc scan;
-	SpGistScanOpaque so;
 	int			i;
 
-	scan = RelationGetIndexScan(rel, keysz, orderbysz);
+	IndexScanDesc scan = RelationGetIndexScan(rel, keysz, orderbysz);
 
-	so = (SpGistScanOpaque) palloc0(sizeof(SpGistScanOpaqueData));
+	SpGistScanOpaque so = (SpGistScanOpaque) palloc0(sizeof(SpGistScanOpaqueData));
 	if (keysz > 0)
 		so->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * keysz);
 	else
@@ -711,7 +705,6 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 		for (i = 0; i < out.nNodes; i++)
 		{
 			int			nodeN = out.nodeNumbers[i];
-			SpGistSearchItem *innerItem;
 			double	   *distances;
 
 			Assert(nodeN >= 0 && nodeN < nNodes);
@@ -727,7 +720,7 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 			 */
 			distances = out.distances ? out.distances[i] : so->infDistances;
 
-			innerItem = spgMakeInnerItem(so, item, node, &out, i, isnull,
+			SpGistSearchItem *innerItem = spgMakeInnerItem(so, item, node, &out, i, isnull,
 										 distances);
 
 			spgAddSearchItemToQueue(so, innerItem);
@@ -840,8 +833,6 @@ redirect:
 		{
 			BlockNumber blkno = ItemPointerGetBlockNumber(&item->heapPtr);
 			OffsetNumber offset = ItemPointerGetOffsetNumber(&item->heapPtr);
-			Page		page;
-			bool		isnull;
 
 			if (buffer == InvalidBuffer)
 			{
@@ -857,10 +848,10 @@ redirect:
 
 			/* else new pointer points to the same page, no work needed */
 
-			page = BufferGetPage(buffer);
+			Page		page = BufferGetPage(buffer);
 			TestForOldSnapshot(snapshot, index, page);
 
-			isnull = SpGistPageStoresNulls(page) ? true : false;
+			bool		isnull = SpGistPageStoresNulls(page) ? true : false;
 
 			if (SpGistPageIsLeaf(page))
 			{
@@ -1080,14 +1071,13 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 bool
 spgcanreturn(Relation index, int attno)
 {
-	SpGistCache *cache;
 
 	/* INCLUDE attributes can always be fetched for index-only scans */
 	if (attno > 1)
 		return true;
 
 	/* We can do it if the opclass config function says so */
-	cache = spgGetCache(index);
+	SpGistCache *cache = spgGetCache(index);
 
 	return cache->config.canReturnData;
 }

@@ -209,13 +209,11 @@ PrintResultsInCrosstab(const PGresult *res)
 
 	for (rn = 0; rn < PQntuples(res); rn++)
 	{
-		char	   *val;
-		char	   *val1;
 
 		/* horizontal */
-		val = PQgetisnull(res, rn, field_for_columns) ? NULL :
+		char	   *val = PQgetisnull(res, rn, field_for_columns) ? NULL :
 			PQgetvalue(res, rn, field_for_columns);
-		val1 = NULL;
+		char	   *val1 = NULL;
 
 		if (sort_field_for_columns >= 0 &&
 			!PQgetisnull(res, rn, sort_field_for_columns))
@@ -291,8 +289,6 @@ printCrosstab(const PGresult *results,
 	printTableContent cont;
 	int			i,
 				rn;
-	char		col_align;
-	int		   *horiz_map;
 	bool		retval = false;
 
 	printTableInit(&cont, &popt.topt, popt.title, num_columns + 1, num_rows);
@@ -311,20 +307,19 @@ printCrosstab(const PGresult *results,
 	 * map associating each piv_columns[].rank to its index in piv_columns.
 	 * This avoids an O(N^2) loop later.
 	 */
-	horiz_map = (int *) pg_malloc(sizeof(int) * num_columns);
+	int		   *horiz_map = (int *) pg_malloc(sizeof(int) * num_columns);
 	for (i = 0; i < num_columns; i++)
 		horiz_map[piv_columns[i].rank] = i;
 
 	/*
 	 * The display alignment depends on its PQftype().
 	 */
-	col_align = column_type_alignment(PQftype(results, field_for_data));
+	char		col_align = column_type_alignment(PQftype(results, field_for_data));
 
 	for (i = 0; i < num_columns; i++)
 	{
-		char	   *colname;
 
-		colname = piv_columns[horiz_map[i]].name ?
+		char	   *colname = piv_columns[horiz_map[i]].name ?
 			piv_columns[horiz_map[i]].name :
 			(popt.nullPrint ? popt.nullPrint : "");
 
@@ -348,8 +343,6 @@ printCrosstab(const PGresult *results,
 	 */
 	for (rn = 0; rn < PQntuples(results); rn++)
 	{
-		int			row_number;
-		int			col_number;
 		pivot_field *rp,
 				   *cp;
 		pivot_field elt;
@@ -365,7 +358,7 @@ printCrosstab(const PGresult *results,
 									 sizeof(pivot_field),
 									 pivotFieldCompare);
 		Assert(rp != NULL);
-		row_number = rp->rank;
+		int			row_number = rp->rank;
 
 		/* Find target column */
 		if (!PQgetisnull(results, rn, field_for_columns))
@@ -379,15 +372,14 @@ printCrosstab(const PGresult *results,
 									 sizeof(pivot_field),
 									 pivotFieldCompare);
 		Assert(cp != NULL);
-		col_number = cp->rank;
+		int			col_number = cp->rank;
 
 		/* Place value into cell */
 		if (col_number >= 0 && row_number >= 0)
 		{
-			int			idx;
 
 			/* index into the cont.cells array */
-			idx = 1 + col_number + row_number * (num_columns + 1);
+			int			idx = 1 + col_number + row_number * (num_columns + 1);
 
 			/*
 			 * If the cell already contains a value, raise an error.

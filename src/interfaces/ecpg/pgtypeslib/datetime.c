@@ -14,9 +14,8 @@
 date *
 PGTYPESdate_new(void)
 {
-	date	   *result;
 
-	result = (date *) pgtypes_alloc(sizeof(date));
+	date	   *result = (date *) pgtypes_alloc(sizeof(date));
 	/* result can be NULL if we run out of memory */
 	return result;
 }
@@ -30,9 +29,8 @@ PGTYPESdate_free(date * d)
 date
 PGTYPESdate_from_timestamp(timestamp dt)
 {
-	date		dDate;
 
-	dDate = 0;					/* suppress compiler warning */
+	date		dDate = 0;					/* suppress compiler warning */
 
 	if (!TIMESTAMP_NOT_FINITE(dt))
 	{
@@ -46,7 +44,6 @@ PGTYPESdate_from_timestamp(timestamp dt)
 date
 PGTYPESdate_from_asc(char *str, char **endptr)
 {
-	date		dDate;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -92,7 +89,7 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 			return INT_MIN;
 	}
 
-	dDate = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
+	date		dDate = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
 	return dDate;
 }
@@ -204,7 +201,6 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 	int			replace_type;
 
 	int			i;
-	int			dow;
 	char	   *start_pattern;
 	struct tm	tm;
 
@@ -213,7 +209,7 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
 
 	/* get the date */
 	j2date(dDate + date2j(2000, 1, 1), &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
-	dow = PGTYPESdate_dayofweek(dDate);
+	int			dow = PGTYPESdate_dayofweek(dDate);
 
 	for (i = 0; mapping[i].format != NULL; i++)
 	{
@@ -340,8 +336,6 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 			   *fmt_mstart,
 			   *fmt_dstart;
 	unsigned int i;
-	int			reading_digit;
-	int			token_count;
 	char	   *str_copy;
 	struct tm	tm;
 
@@ -415,7 +409,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 	 */
 
 	/* check if we have only digits */
-	reading_digit = 1;
+	int			reading_digit = 1;
 	for (i = 0; str[i]; i++)
 	{
 		if (!isdigit((unsigned char) str[i]))
@@ -427,7 +421,6 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 	if (reading_digit)
 	{
 		int			frag_length[3];
-		int			target_pos;
 
 		i = strlen(str);
 		if (i != 8 && i != 6)
@@ -473,7 +466,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 				frag_length[2] = 4;
 			}
 		}
-		target_pos = 0;
+		int			target_pos = 0;
 
 		/*
 		 * XXX: Here we could calculate the positions of the tokens and save
@@ -513,7 +506,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 
 	/* look for numerical tokens */
 	reading_digit = 0;
-	token_count = 0;
+	int			token_count = 0;
 	for (i = 0; i < strlen(str_copy); i++)
 	{
 		if (!isdigit((unsigned char) str_copy[i]) && reading_digit)
@@ -564,7 +557,6 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 		int			j;
 		int			offset;
 		int			found = 0;
-		char	  **list;
 
 		if (!month_lower_tmp)
 		{
@@ -572,7 +564,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 			free(str_copy);
 			return -1;
 		}
-		list = pgtypes_date_months;
+		char	  **list = pgtypes_date_months;
 		for (i = 0; list[i]; i++)
 		{
 			for (j = 0; j < PGTYPES_DATE_MONTH_MAXLENGTH; j++)

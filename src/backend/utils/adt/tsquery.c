@@ -510,11 +510,10 @@ gettoken_query_plain(TSQueryParserState state, int8 *operator,
 void
 pushOperator(TSQueryParserState state, int8 oper, int16 distance)
 {
-	QueryOperator *tmp;
 
 	Assert(oper == OP_NOT || oper == OP_AND || oper == OP_OR || oper == OP_PHRASE);
 
-	tmp = (QueryOperator *) palloc0(sizeof(QueryOperator));
+	QueryOperator *tmp = (QueryOperator *) palloc0(sizeof(QueryOperator));
 	tmp->type = QI_OPR;
 	tmp->oper = oper;
 	tmp->distance = (oper == OP_PHRASE) ? distance : 0;
@@ -526,7 +525,6 @@ pushOperator(TSQueryParserState state, int8 oper, int16 distance)
 static void
 pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int lenval, int weight, bool prefix)
 {
-	QueryOperand *tmp;
 
 	if (distance >= MAXSTRPOS)
 		ereport(ERROR,
@@ -539,7 +537,7 @@ pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int 
 				 errmsg("operand is too long in tsquery: \"%s\"",
 						state->buffer)));
 
-	tmp = (QueryOperand *) palloc0(sizeof(QueryOperand));
+	QueryOperand *tmp = (QueryOperand *) palloc0(sizeof(QueryOperand));
 	tmp->type = QI_VAL;
 	tmp->weight = weight;
 	tmp->prefix = prefix;
@@ -595,9 +593,8 @@ pushValue(TSQueryParserState state, char *strval, int lenval, int16 weight, bool
 void
 pushStop(TSQueryParserState state)
 {
-	QueryOperand *tmp;
 
-	tmp = (QueryOperand *) palloc0(sizeof(QueryOperand));
+	QueryOperand *tmp = (QueryOperand *) palloc0(sizeof(QueryOperand));
 	tmp->type = QI_VALSTOP;
 
 	state->polstr = lcons(tmp, state->polstr);
@@ -757,10 +754,9 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes, bool *needcleanup)
 static void
 findoprnd(QueryItem *ptr, int size, bool *needcleanup)
 {
-	uint32		pos;
 
 	*needcleanup = false;
-	pos = 0;
+	uint32		pos = 0;
 	findoprnd_recurse(ptr, &pos, size, needcleanup);
 
 	if (pos != size)
@@ -786,10 +782,7 @@ parse_tsquery(char *buf,
 			  int flags)
 {
 	struct TSQueryParserStateData state;
-	int			i;
 	TSQuery		query;
-	int			commonlen;
-	QueryItem  *ptr;
 	ListCell   *cell;
 	bool		needcleanup;
 	int			tsv_flags = P_TSV_OPR_IS_DELIM | P_TSV_IS_TSQUERY;
@@ -844,16 +837,16 @@ parse_tsquery(char *buf,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("tsquery is too large")));
-	commonlen = COMPUTESIZE(list_length(state.polstr), state.sumlen);
+	int			commonlen = COMPUTESIZE(list_length(state.polstr), state.sumlen);
 
 	/* Pack the QueryItems in the final TSQuery struct to return to caller */
 	query = (TSQuery) palloc0(commonlen);
 	SET_VARSIZE(query, commonlen);
 	query->size = list_length(state.polstr);
-	ptr = GETQUERY(query);
+	QueryItem  *ptr = GETQUERY(query);
 
 	/* Copy QueryItems to TSQuery */
-	i = 0;
+	int			i = 0;
 	foreach(cell, state.polstr)
 	{
 		QueryItem  *item = (QueryItem *) lfirst(cell);
@@ -1177,30 +1170,24 @@ Datum
 tsqueryrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	TSQuery		query;
 	int			i,
 				len;
-	QueryItem  *item;
-	int			datalen;
-	char	   *ptr;
-	uint32		size;
-	const char **operands;
 	bool		needcleanup;
 
-	size = pq_getmsgint(buf, sizeof(uint32));
+	uint32		size = pq_getmsgint(buf, sizeof(uint32));
 	if (size > (MaxAllocSize / sizeof(QueryItem)))
 		elog(ERROR, "invalid size of tsquery");
 
 	/* Allocate space to temporarily hold operand strings */
-	operands = palloc(size * sizeof(char *));
+	const char **operands = palloc(size * sizeof(char *));
 
 	/* Allocate space for all the QueryItems. */
 	len = HDRSIZETQ + sizeof(QueryItem) * size;
-	query = (TSQuery) palloc0(len);
+	TSQuery		query = (TSQuery) palloc0(len);
 	query->size = size;
-	item = GETQUERY(query);
+	QueryItem  *item = GETQUERY(query);
 
-	datalen = 0;
+	int			datalen = 0;
 	for (i = 0; i < size; i++)
 	{
 		item->type = (int8) pq_getmsgint(buf, sizeof(int8));
@@ -1209,14 +1196,11 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 		{
 			size_t		val_len;	/* length after recoding to server
 									 * encoding */
-			uint8		weight;
-			uint8		prefix;
-			const char *val;
 			pg_crc32	valcrc;
 
-			weight = (uint8) pq_getmsgint(buf, sizeof(uint8));
-			prefix = (uint8) pq_getmsgint(buf, sizeof(uint8));
-			val = pq_getmsgstring(buf);
+			uint8		weight = (uint8) pq_getmsgint(buf, sizeof(uint8));
+			uint8		prefix = (uint8) pq_getmsgint(buf, sizeof(uint8));
+			const char *val = pq_getmsgstring(buf);
 			val_len = strlen(val);
 
 			/* Sanity checks */
@@ -1252,9 +1236,8 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 		}
 		else if (item->type == QI_OPR)
 		{
-			int8		oper;
 
-			oper = (int8) pq_getmsgint(buf, sizeof(int8));
+			int8		oper = (int8) pq_getmsgint(buf, sizeof(int8));
 			if (oper != OP_NOT && oper != OP_OR && oper != OP_AND && oper != OP_PHRASE)
 				elog(ERROR, "invalid tsquery: unrecognized operator type %d",
 					 (int) oper);
@@ -1274,7 +1257,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	/* Enlarge buffer to make room for the operand values. */
 	query = (TSQuery) repalloc(query, len + datalen);
 	item = GETQUERY(query);
-	ptr = GETOPERAND(query);
+	char	   *ptr = GETOPERAND(query);
 
 	/*
 	 * Fill in the left-pointers. Checks that the tree is well-formed as a
@@ -1315,7 +1298,6 @@ tsquerytree(PG_FUNCTION_ARGS)
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	INFIX		nrm;
 	text	   *res;
-	QueryItem  *q;
 	int			len;
 
 	if (query->size == 0)
@@ -1325,7 +1307,7 @@ tsquerytree(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(res);
 	}
 
-	q = clean_NOT(GETQUERY(query), &len);
+	QueryItem  *q = clean_NOT(GETQUERY(query), &len);
 
 	if (!q)
 	{

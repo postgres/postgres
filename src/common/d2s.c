@@ -189,12 +189,11 @@ mulShift(const uint64 m, const uint64 *const mul, const int32 j)
 
 	/* 64 */
 	uint64		high0;
-	uint64		sum;
 
 	/* 64 */
 	umul128(m, mul[0], &high0);
 	/* 0 */
-	sum = high0 + low1;
+	uint64		sum = high0 + low1;
 
 	if (sum < high0)
 	{

@@ -147,7 +147,6 @@ tsearch_readline_begin(tsearch_readline_state *stp,
 char *
 tsearch_readline(tsearch_readline_state *stp)
 {
-	char	   *recoded;
 
 	/* Advance line number to use in error reports */
 	stp->lineno++;
@@ -165,7 +164,7 @@ tsearch_readline(tsearch_readline_state *stp)
 		return NULL;
 
 	/* Validate the input as UTF-8, then convert to DB encoding if needed */
-	recoded = pg_any_to_server(stp->buf.data, stp->buf.len, PG_UTF8);
+	char	   *recoded = pg_any_to_server(stp->buf.data, stp->buf.len, PG_UTF8);
 
 	/* Save the correctly-encoded string for possible error reports */
 	stp->curline = recoded;		/* might be equal to buf.data */
@@ -273,7 +272,6 @@ lowerstr_with_len(const char *str, int len)
 	{
 		wchar_t    *wstr,
 				   *wptr;
-		int			wlen;
 
 		/*
 		 * alloc number of wchar_t for worst case, len contains number of
@@ -282,7 +280,7 @@ lowerstr_with_len(const char *str, int len)
 		 */
 		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len + 1));
 
-		wlen = char2wchar(wstr, len + 1, str, len, mylocale);
+		int			wlen = char2wchar(wstr, len + 1, str, len, mylocale);
 		Assert(wlen <= len);
 
 		while (*wptr)
@@ -310,9 +308,8 @@ lowerstr_with_len(const char *str, int len)
 	else
 	{
 		const char *ptr = str;
-		char	   *outptr;
 
-		outptr = out = (char *) palloc(sizeof(char) * (len + 1));
+		char	   *outptr = out = (char *) palloc(sizeof(char) * (len + 1));
 		while ((ptr - str) < len && *ptr)
 		{
 			*outptr++ = tolower(TOUCHAR(ptr));

@@ -75,13 +75,11 @@ bool
 WalRcvRunning(void)
 {
 	WalRcvData *walrcv = WalRcv;
-	WalRcvState state;
-	pg_time_t	startTime;
 
 	SpinLockAcquire(&walrcv->mutex);
 
-	state = walrcv->walRcvState;
-	startTime = walrcv->startTime;
+	WalRcvState state = walrcv->walRcvState;
+	pg_time_t	startTime = walrcv->startTime;
 
 	SpinLockRelease(&walrcv->mutex);
 
@@ -126,13 +124,11 @@ bool
 WalRcvStreaming(void)
 {
 	WalRcvData *walrcv = WalRcv;
-	WalRcvState state;
-	pg_time_t	startTime;
 
 	SpinLockAcquire(&walrcv->mutex);
 
-	state = walrcv->walRcvState;
-	startTime = walrcv->startTime;
+	WalRcvState state = walrcv->walRcvState;
+	pg_time_t	startTime = walrcv->startTime;
 
 	SpinLockRelease(&walrcv->mutex);
 
@@ -248,7 +244,6 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 	WalRcvData *walrcv = WalRcv;
 	bool		launch = false;
 	pg_time_t	now = (pg_time_t) time(NULL);
-	Latch	   *latch;
 
 	/*
 	 * We always start at the beginning of the segment. That prevents a broken
@@ -309,7 +304,7 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 	walrcv->receiveStart = recptr;
 	walrcv->receiveStartTLI = tli;
 
-	latch = walrcv->latch;
+	Latch	   *latch = walrcv->latch;
 
 	SpinLockRelease(&walrcv->mutex);
 
@@ -331,10 +326,9 @@ XLogRecPtr
 GetWalRcvFlushRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI)
 {
 	WalRcvData *walrcv = WalRcv;
-	XLogRecPtr	recptr;
 
 	SpinLockAcquire(&walrcv->mutex);
-	recptr = walrcv->flushedUpto;
+	XLogRecPtr	recptr = walrcv->flushedUpto;
 	if (latestChunkStart)
 		*latestChunkStart = walrcv->latestChunkStart;
 	if (receiveTLI)
@@ -364,20 +358,17 @@ int
 GetReplicationApplyDelay(void)
 {
 	WalRcvData *walrcv = WalRcv;
-	XLogRecPtr	receivePtr;
-	XLogRecPtr	replayPtr;
-	TimestampTz chunkReplayStartTime;
 
 	SpinLockAcquire(&walrcv->mutex);
-	receivePtr = walrcv->flushedUpto;
+	XLogRecPtr	receivePtr = walrcv->flushedUpto;
 	SpinLockRelease(&walrcv->mutex);
 
-	replayPtr = GetXLogReplayRecPtr(NULL);
+	XLogRecPtr	replayPtr = GetXLogReplayRecPtr(NULL);
 
 	if (receivePtr == replayPtr)
 		return 0;
 
-	chunkReplayStartTime = GetCurrentChunkReplayStartTime();
+	TimestampTz chunkReplayStartTime = GetCurrentChunkReplayStartTime();
 
 	if (chunkReplayStartTime == 0)
 		return -1;
@@ -394,12 +385,10 @@ int
 GetReplicationTransferLatency(void)
 {
 	WalRcvData *walrcv = WalRcv;
-	TimestampTz lastMsgSendTime;
-	TimestampTz lastMsgReceiptTime;
 
 	SpinLockAcquire(&walrcv->mutex);
-	lastMsgSendTime = walrcv->lastMsgSendTime;
-	lastMsgReceiptTime = walrcv->lastMsgReceiptTime;
+	TimestampTz lastMsgSendTime = walrcv->lastMsgSendTime;
+	TimestampTz lastMsgReceiptTime = walrcv->lastMsgReceiptTime;
 	SpinLockRelease(&walrcv->mutex);
 
 	return TimestampDifferenceMilliseconds(lastMsgSendTime,

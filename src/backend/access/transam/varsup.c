@@ -49,7 +49,6 @@ VariableCache ShmemVariableCache = NULL;
 FullTransactionId
 GetNewTransactionId(bool isSubXact)
 {
-	FullTransactionId full_xid;
 	TransactionId xid;
 
 	/*
@@ -77,7 +76,7 @@ GetNewTransactionId(bool isSubXact)
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
-	full_xid = ShmemVariableCache->nextXid;
+	FullTransactionId full_xid = ShmemVariableCache->nextXid;
 	xid = XidFromFullTransactionId(full_xid);
 
 	/*----------
@@ -260,10 +259,9 @@ GetNewTransactionId(bool isSubXact)
 FullTransactionId
 ReadNextFullTransactionId(void)
 {
-	FullTransactionId fullXid;
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	fullXid = ShmemVariableCache->nextXid;
+	FullTransactionId fullXid = ShmemVariableCache->nextXid;
 	LWLockRelease(XidGenLock);
 
 	return fullXid;
@@ -276,9 +274,6 @@ ReadNextFullTransactionId(void)
 void
 AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 {
-	FullTransactionId newNextFullXid;
-	TransactionId next_xid;
-	uint32		epoch;
 
 	/*
 	 * It is safe to read nextXid without a lock, because this is only called
@@ -288,7 +283,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	Assert(AmStartupProcess() || !IsUnderPostmaster);
 
 	/* Fast return if this isn't an xid high enough to move the needle. */
-	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
 	if (!TransactionIdFollowsOrEquals(xid, next_xid))
 		return;
 
@@ -301,10 +296,10 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	 * point in the WAL stream.
 	 */
 	TransactionIdAdvance(xid);
-	epoch = EpochFromFullTransactionId(ShmemVariableCache->nextXid);
+	uint32		epoch = EpochFromFullTransactionId(ShmemVariableCache->nextXid);
 	if (unlikely(xid < next_xid))
 		++epoch;
-	newNextFullXid = FullTransactionIdFromEpochAndXid(epoch, xid);
+	FullTransactionId newNextFullXid = FullTransactionIdFromEpochAndXid(epoch, xid);
 
 	/*
 	 * We still need to take a lock to modify the value when there are
@@ -344,11 +339,6 @@ AdvanceOldestClogXid(TransactionId oldest_datfrozenxid)
 void
 SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 {
-	TransactionId xidVacLimit;
-	TransactionId xidWarnLimit;
-	TransactionId xidStopLimit;
-	TransactionId xidWrapLimit;
-	TransactionId curXid;
 
 	Assert(TransactionIdIsNormal(oldest_datfrozenxid));
 
@@ -359,7 +349,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * size of the loop a little bit.  But we throw in plenty of slop below,
 	 * so it doesn't matter.)
 	 */
-	xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1);
+	TransactionId xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1);
 	if (xidWrapLimit < FirstNormalTransactionId)
 		xidWrapLimit += FirstNormalTransactionId;
 
@@ -375,7 +365,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * page or segment arithmetic, idle segments render the bugs unreachable
 	 * outside of single-user mode.
 	 */
-	xidStopLimit = xidWrapLimit - 3000000;
+	TransactionId xidStopLimit = xidWrapLimit - 3000000;
 	if (xidStopLimit < FirstNormalTransactionId)
 		xidStopLimit -= FirstNormalTransactionId;
 
@@ -389,7 +379,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * configurable.  If you know enough to configure it, you know enough to
 	 * not get in this kind of trouble in the first place.)
 	 */
-	xidWarnLimit = xidWrapLimit - 40000000;
+	TransactionId xidWarnLimit = xidWrapLimit - 40000000;
 	if (xidWarnLimit < FirstNormalTransactionId)
 		xidWarnLimit -= FirstNormalTransactionId;
 
@@ -408,7 +398,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * to shared memory).  Perhaps this can be improved someday.  See also
 	 * SetMultiXactIdLimit.
 	 */
-	xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
+	TransactionId xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
 	if (xidVacLimit < FirstNormalTransactionId)
 		xidVacLimit += FirstNormalTransactionId;
 
@@ -420,7 +410,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	ShmemVariableCache->xidStopLimit = xidStopLimit;
 	ShmemVariableCache->xidWrapLimit = xidWrapLimit;
 	ShmemVariableCache->oldestXidDB = oldest_datoid;
-	curXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId curXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
 	LWLockRelease(XidGenLock);
 
 	/* Log the info */
@@ -489,17 +479,13 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 bool
 ForceTransactionIdLimitUpdate(void)
 {
-	TransactionId nextXid;
-	TransactionId xidVacLimit;
-	TransactionId oldestXid;
-	Oid			oldestXidDB;
 
 	/* Locking is probably not really necessary, but let's be careful */
 	LWLockAcquire(XidGenLock, LW_SHARED);
-	nextXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
-	xidVacLimit = ShmemVariableCache->xidVacLimit;
-	oldestXid = ShmemVariableCache->oldestXid;
-	oldestXidDB = ShmemVariableCache->oldestXidDB;
+	TransactionId nextXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId xidVacLimit = ShmemVariableCache->xidVacLimit;
+	TransactionId oldestXid = ShmemVariableCache->oldestXid;
+	Oid			oldestXidDB = ShmemVariableCache->oldestXidDB;
 	LWLockRelease(XidGenLock);
 
 	if (!TransactionIdIsNormal(oldestXid))
@@ -527,7 +513,6 @@ ForceTransactionIdLimitUpdate(void)
 Oid
 GetNewObjectId(void)
 {
-	Oid			result;
 
 	/* safety check, we should never get this far in a HS standby */
 	if (RecoveryInProgress())
@@ -576,7 +561,7 @@ GetNewObjectId(void)
 		ShmemVariableCache->oidCount = VAR_OID_PREFETCH;
 	}
 
-	result = ShmemVariableCache->nextOid;
+	Oid			result = ShmemVariableCache->nextOid;
 
 	(ShmemVariableCache->nextOid)++;
 	(ShmemVariableCache->oidCount)--;
@@ -645,8 +630,6 @@ StopGeneratingPinnedObjectIds(void)
 void
 AssertTransactionIdInAllowableRange(TransactionId xid)
 {
-	TransactionId oldest_xid;
-	TransactionId next_xid;
 
 	Assert(TransactionIdIsValid(xid));
 
@@ -669,8 +652,8 @@ AssertTransactionIdInAllowableRange(TransactionId xid)
 	 * before we see the updated nextXid value.
 	 */
 	pg_memory_barrier();
-	oldest_xid = ShmemVariableCache->oldestXid;
-	next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	TransactionId oldest_xid = ShmemVariableCache->oldestXid;
+	TransactionId next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
 
 	Assert(TransactionIdFollowsOrEquals(xid, oldest_xid) ||
 		   TransactionIdPrecedesOrEquals(xid, next_xid));

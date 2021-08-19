@@ -62,8 +62,6 @@ regprocin(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
 	RegProcedure result = InvalidOid;
-	List	   *names;
-	FuncCandidateList clist;
 
 	/* '-' ? */
 	if (strcmp(pro_name_or_oid, "-") == 0)
@@ -92,8 +90,8 @@ regprocin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(pro_name_or_oid);
-	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, false);
+	List	   *names = stringToQualifiedNameList(pro_name_or_oid);
+	FuncCandidateList clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, false);
 
 	if (clist == NULL)
 		ereport(ERROR,
@@ -119,15 +117,13 @@ Datum
 to_regproc(PG_FUNCTION_ARGS)
 {
 	char	   *pro_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	List	   *names;
-	FuncCandidateList clist;
 
 	/*
 	 * Parse the name into components and see if it matches any pg_proc
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(pro_name);
-	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
+	List	   *names = stringToQualifiedNameList(pro_name);
+	FuncCandidateList clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
 
 	if (clist == NULL || clist->next != NULL)
 		PG_RETURN_NULL();
@@ -143,7 +139,6 @@ regprocout(PG_FUNCTION_ARGS)
 {
 	RegProcedure proid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	proctup;
 
 	if (proid == InvalidOid)
 	{
@@ -151,7 +146,7 @@ regprocout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proid));
 
 	if (HeapTupleIsValid(proctup))
 	{
@@ -168,13 +163,12 @@ regprocout(PG_FUNCTION_ARGS)
 		else
 		{
 			char	   *nspname;
-			FuncCandidateList clist;
 
 			/*
 			 * Would this proc be found (uniquely!) by regprocin? If not,
 			 * qualify it.
 			 */
-			clist = FuncnameGetCandidates(list_make1(makeString(proname)),
+			FuncCandidateList clist = FuncnameGetCandidates(list_make1(makeString(proname)),
 										  -1, NIL, false, false, false, false);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
@@ -234,7 +228,6 @@ regprocedurein(PG_FUNCTION_ARGS)
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	FuncCandidateList clist;
 
 	/* '-' ? */
 	if (strcmp(pro_name_or_oid, "-") == 0)
@@ -262,7 +255,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 */
 	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
-	clist = FuncnameGetCandidates(names, nargs, NIL, false, false,
+	FuncCandidateList clist = FuncnameGetCandidates(names, nargs, NIL, false, false,
 								  false, false);
 
 	for (; clist; clist = clist->next)
@@ -293,7 +286,6 @@ to_regprocedure(PG_FUNCTION_ARGS)
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	FuncCandidateList clist;
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
@@ -302,7 +294,7 @@ to_regprocedure(PG_FUNCTION_ARGS)
 	 */
 	parseNameAndArgTypes(pro_name, false, &names, &nargs, argtypes);
 
-	clist = FuncnameGetCandidates(names, nargs, NIL, false, false, false, true);
+	FuncCandidateList clist = FuncnameGetCandidates(names, nargs, NIL, false, false, false, true);
 
 	for (; clist; clist = clist->next)
 	{
@@ -350,9 +342,8 @@ char *
 format_procedure_extended(Oid procedure_oid, bits16 flags)
 {
 	char	   *result;
-	HeapTuple	proctup;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
 
 	if (HeapTupleIsValid(proctup))
 	{
@@ -422,12 +413,9 @@ void
 format_procedure_parts(Oid procedure_oid, List **objnames, List **objargs,
 					   bool missing_ok)
 {
-	HeapTuple	proctup;
-	Form_pg_proc procform;
-	int			nargs;
 	int			i;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
 
 	if (!HeapTupleIsValid(proctup))
 	{
@@ -436,8 +424,8 @@ format_procedure_parts(Oid procedure_oid, List **objnames, List **objargs,
 		return;
 	}
 
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
-	nargs = procform->pronargs;
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+	int			nargs = procform->pronargs;
 
 	*objnames = list_make2(get_namespace_name_or_temp(procform->pronamespace),
 						   pstrdup(NameStr(procform->proname)));
@@ -503,8 +491,6 @@ regoperin(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result = InvalidOid;
-	List	   *names;
-	FuncCandidateList clist;
 
 	/* '0' ? */
 	if (strcmp(opr_name_or_oid, "0") == 0)
@@ -530,8 +516,8 @@ regoperin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_operator entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(opr_name_or_oid);
-	clist = OpernameGetCandidates(names, '\0', false);
+	List	   *names = stringToQualifiedNameList(opr_name_or_oid);
+	FuncCandidateList clist = OpernameGetCandidates(names, '\0', false);
 
 	if (clist == NULL)
 		ereport(ERROR,
@@ -557,15 +543,13 @@ Datum
 to_regoper(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	List	   *names;
-	FuncCandidateList clist;
 
 	/*
 	 * Parse the name into components and see if it matches any pg_operator
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(opr_name);
-	clist = OpernameGetCandidates(names, '\0', true);
+	List	   *names = stringToQualifiedNameList(opr_name);
+	FuncCandidateList clist = OpernameGetCandidates(names, '\0', true);
 
 	if (clist == NULL || clist->next != NULL)
 		PG_RETURN_NULL();
@@ -581,7 +565,6 @@ regoperout(PG_FUNCTION_ARGS)
 {
 	Oid			oprid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	opertup;
 
 	if (oprid == InvalidOid)
 	{
@@ -589,7 +572,7 @@ regoperout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
+	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
 
 	if (HeapTupleIsValid(opertup))
 	{
@@ -605,22 +588,20 @@ regoperout(PG_FUNCTION_ARGS)
 			result = pstrdup(oprname);
 		else
 		{
-			FuncCandidateList clist;
 
 			/*
 			 * Would this oper be found (uniquely!) by regoperin? If not,
 			 * qualify it.
 			 */
-			clist = OpernameGetCandidates(list_make1(makeString(oprname)),
+			FuncCandidateList clist = OpernameGetCandidates(list_make1(makeString(oprname)),
 										  '\0', false);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == oprid)
 				result = pstrdup(oprname);
 			else
 			{
-				const char *nspname;
 
-				nspname = get_namespace_name(operform->oprnamespace);
+				const char *nspname = get_namespace_name(operform->oprnamespace);
 				nspname = quote_identifier(nspname);
 				result = (char *) palloc(strlen(nspname) + strlen(oprname) + 2);
 				sprintf(result, "%s.%s", nspname, oprname);
@@ -734,7 +715,6 @@ Datum
 to_regoperator(PG_FUNCTION_ARGS)
 {
 	char	   *opr_name_or_oid = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
 	List	   *names;
 	int			nargs;
 	Oid			argtypes[FUNC_MAX_ARGS];
@@ -756,7 +736,7 @@ to_regoperator(PG_FUNCTION_ARGS)
 				 errmsg("too many arguments"),
 				 errhint("Provide two argument types for operator.")));
 
-	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
+	Oid			result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
 	if (!OidIsValid(result))
 		PG_RETURN_NULL();
@@ -781,9 +761,8 @@ char *
 format_operator_extended(Oid operator_oid, bits16 flags)
 {
 	char	   *result;
-	HeapTuple	opertup;
 
-	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
+	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
 
 	if (HeapTupleIsValid(opertup))
 	{
@@ -865,10 +844,8 @@ void
 format_operator_parts(Oid operator_oid, List **objnames, List **objargs,
 					  bool missing_ok)
 {
-	HeapTuple	opertup;
-	Form_pg_operator oprForm;
 
-	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
+	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
 	if (!HeapTupleIsValid(opertup))
 	{
 		if (!missing_ok)
@@ -877,7 +854,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs,
 		return;
 	}
 
-	oprForm = (Form_pg_operator) GETSTRUCT(opertup);
+	Form_pg_operator oprForm = (Form_pg_operator) GETSTRUCT(opertup);
 	*objnames = list_make2(get_namespace_name_or_temp(oprForm->oprnamespace),
 						   pstrdup(NameStr(oprForm->oprname)));
 	*objargs = NIL;
@@ -942,7 +919,6 @@ regclassin(PG_FUNCTION_ARGS)
 {
 	char	   *class_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result = InvalidOid;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(class_name_or_oid, "-") == 0)
@@ -968,7 +944,7 @@ regclassin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_class entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(class_name_or_oid);
+	List	   *names = stringToQualifiedNameList(class_name_or_oid);
 
 	/* We might not even have permissions on this relation; don't lock it. */
 	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, false);
@@ -985,17 +961,15 @@ Datum
 to_regclass(PG_FUNCTION_ARGS)
 {
 	char	   *class_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
 
 	/*
 	 * Parse the name into components and see if it matches any pg_class
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(class_name);
+	List	   *names = stringToQualifiedNameList(class_name);
 
 	/* We might not even have permissions on this relation; don't lock it. */
-	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
+	Oid			result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
 
 	if (OidIsValid(result))
 		PG_RETURN_OID(result);
@@ -1011,7 +985,6 @@ regclassout(PG_FUNCTION_ARGS)
 {
 	Oid			classid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	classtup;
 
 	if (classid == InvalidOid)
 	{
@@ -1019,7 +992,7 @@ regclassout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(classid));
+	HeapTuple	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(classid));
 
 	if (HeapTupleIsValid(classtup))
 	{
@@ -1094,7 +1067,6 @@ regcollationin(PG_FUNCTION_ARGS)
 {
 	char	   *collation_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result = InvalidOid;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(collation_name_or_oid, "-") == 0)
@@ -1120,7 +1092,7 @@ regcollationin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_collation entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(collation_name_or_oid);
+	List	   *names = stringToQualifiedNameList(collation_name_or_oid);
 
 	result = get_collation_oid(names, false);
 
@@ -1136,17 +1108,15 @@ Datum
 to_regcollation(PG_FUNCTION_ARGS)
 {
 	char	   *collation_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
 
 	/*
 	 * Parse the name into components and see if it matches any pg_collation
 	 * entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(collation_name);
+	List	   *names = stringToQualifiedNameList(collation_name);
 
 	/* We might not even have permissions on this relation; don't lock it. */
-	result = get_collation_oid(names, true);
+	Oid			result = get_collation_oid(names, true);
 
 	if (OidIsValid(result))
 		PG_RETURN_OID(result);
@@ -1162,7 +1132,6 @@ regcollationout(PG_FUNCTION_ARGS)
 {
 	Oid			collationid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	collationtup;
 
 	if (collationid == InvalidOid)
 	{
@@ -1170,7 +1139,7 @@ regcollationout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	collationtup = SearchSysCache1(COLLOID, ObjectIdGetDatum(collationid));
+	HeapTuple	collationtup = SearchSysCache1(COLLOID, ObjectIdGetDatum(collationid));
 
 	if (HeapTupleIsValid(collationtup))
 	{
@@ -1314,7 +1283,6 @@ regtypeout(PG_FUNCTION_ARGS)
 {
 	Oid			typid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	typetup;
 
 	if (typid == InvalidOid)
 	{
@@ -1322,7 +1290,7 @@ regtypeout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	typetup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	HeapTuple	typetup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
 
 	if (HeapTupleIsValid(typetup))
 	{
@@ -1388,7 +1356,6 @@ regconfigin(PG_FUNCTION_ARGS)
 {
 	char	   *cfg_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(cfg_name_or_oid, "-") == 0)
@@ -1412,7 +1379,7 @@ regconfigin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_ts_config entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(cfg_name_or_oid);
+	List	   *names = stringToQualifiedNameList(cfg_name_or_oid);
 
 	result = get_ts_config_oid(names, false);
 
@@ -1427,7 +1394,6 @@ regconfigout(PG_FUNCTION_ARGS)
 {
 	Oid			cfgid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	cfgtup;
 
 	if (cfgid == InvalidOid)
 	{
@@ -1435,7 +1401,7 @@ regconfigout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	cfgtup = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgid));
+	HeapTuple	cfgtup = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgid));
 
 	if (HeapTupleIsValid(cfgtup))
 	{
@@ -1499,7 +1465,6 @@ regdictionaryin(PG_FUNCTION_ARGS)
 {
 	char	   *dict_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(dict_name_or_oid, "-") == 0)
@@ -1523,7 +1488,7 @@ regdictionaryin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_ts_dict entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(dict_name_or_oid);
+	List	   *names = stringToQualifiedNameList(dict_name_or_oid);
 
 	result = get_ts_dict_oid(names, false);
 
@@ -1538,7 +1503,6 @@ regdictionaryout(PG_FUNCTION_ARGS)
 {
 	Oid			dictid = PG_GETARG_OID(0);
 	char	   *result;
-	HeapTuple	dicttup;
 
 	if (dictid == InvalidOid)
 	{
@@ -1546,7 +1510,7 @@ regdictionaryout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	dicttup = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictid));
+	HeapTuple	dicttup = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictid));
 
 	if (HeapTupleIsValid(dicttup))
 	{
@@ -1610,7 +1574,6 @@ regrolein(PG_FUNCTION_ARGS)
 {
 	char	   *role_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(role_name_or_oid, "-") == 0)
@@ -1631,7 +1594,7 @@ regrolein(PG_FUNCTION_ARGS)
 		elog(ERROR, "regrole values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_authid entry. */
-	names = stringToQualifiedNameList(role_name_or_oid);
+	List	   *names = stringToQualifiedNameList(role_name_or_oid);
 
 	if (list_length(names) != 1)
 		ereport(ERROR,
@@ -1652,17 +1615,15 @@ Datum
 to_regrole(PG_FUNCTION_ARGS)
 {
 	char	   *role_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
 
-	names = stringToQualifiedNameList(role_name);
+	List	   *names = stringToQualifiedNameList(role_name);
 
 	if (list_length(names) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
-	result = get_role_oid(strVal(linitial(names)), true);
+	Oid			result = get_role_oid(strVal(linitial(names)), true);
 
 	if (OidIsValid(result))
 		PG_RETURN_OID(result);
@@ -1735,7 +1696,6 @@ regnamespacein(PG_FUNCTION_ARGS)
 {
 	char	   *nsp_name_or_oid = PG_GETARG_CSTRING(0);
 	Oid			result;
-	List	   *names;
 
 	/* '-' ? */
 	if (strcmp(nsp_name_or_oid, "-") == 0)
@@ -1756,7 +1716,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 		elog(ERROR, "regnamespace values must be OIDs in bootstrap mode");
 
 	/* Normal case: see if the name matches any pg_namespace entry. */
-	names = stringToQualifiedNameList(nsp_name_or_oid);
+	List	   *names = stringToQualifiedNameList(nsp_name_or_oid);
 
 	if (list_length(names) != 1)
 		ereport(ERROR,
@@ -1777,17 +1737,15 @@ Datum
 to_regnamespace(PG_FUNCTION_ARGS)
 {
 	char	   *nsp_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			result;
-	List	   *names;
 
-	names = stringToQualifiedNameList(nsp_name);
+	List	   *names = stringToQualifiedNameList(nsp_name);
 
 	if (list_length(names) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
-	result = get_namespace_oid(strVal(linitial(names)), true);
+	Oid			result = get_namespace_oid(strVal(linitial(names)), true);
 
 	if (OidIsValid(result))
 		PG_RETURN_OID(result);
@@ -1858,13 +1816,11 @@ Datum
 text_regclass(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
-	Oid			result;
-	RangeVar   *rv;
 
-	rv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	RangeVar   *rv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 
 	/* We might not even have permissions on this relation; don't lock it. */
-	result = RangeVarGetRelid(rv, NoLock, false);
+	Oid			result = RangeVarGetRelid(rv, NoLock, false);
 
 	PG_RETURN_OID(result);
 }
@@ -1876,13 +1832,12 @@ text_regclass(PG_FUNCTION_ARGS)
 List *
 stringToQualifiedNameList(const char *string)
 {
-	char	   *rawname;
 	List	   *result = NIL;
 	List	   *namelist;
 	ListCell   *l;
 
 	/* We need a modifiable copy of the input string. */
-	rawname = pstrdup(string);
+	char	   *rawname = pstrdup(string);
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
 		ereport(ERROR,
@@ -1925,21 +1880,19 @@ static void
 parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 					 int *nargs, Oid *argtypes)
 {
-	char	   *rawname;
 	char	   *ptr;
 	char	   *ptr2;
 	char	   *typename;
-	bool		in_quote;
 	bool		had_comma;
 	int			paren_count;
 	Oid			typeid;
 	int32		typmod;
 
 	/* We need a modifiable copy of the input string. */
-	rawname = pstrdup(string);
+	char	   *rawname = pstrdup(string);
 
 	/* Scan to find the expected left paren; mustn't be quoted */
-	in_quote = false;
+	bool		in_quote = false;
 	for (ptr = rawname; *ptr; ptr++)
 	{
 		if (*ptr == '"')

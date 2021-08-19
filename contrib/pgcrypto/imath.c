@@ -1911,12 +1911,11 @@ mp_int_to_string(mp_int z, mp_size radix, char *str, int limit)
 		/* Generate digits in reverse order until finished or limit reached */
 		for ( /* */ ; limit > 0; --limit)
 		{
-			mp_digit	d;
 
 			if ((cmp = CMPZ(&tmp)) == 0)
 				break;
 
-			d = s_ddiv(&tmp, (mp_digit) radix);
+			mp_digit	d = s_ddiv(&tmp, (mp_digit) radix);
 			*str++ = s_val2ch(d, 1);
 		}
 		t = str - 1;
@@ -2458,7 +2457,6 @@ static int
 s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
 	   mp_size size_b)
 {
-	mp_size		bot_size;
 
 	/* Make sure b is the smaller of the two input values */
 	if (size_b > size_a)
@@ -2471,7 +2469,7 @@ s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
 	 * Insure that the bottom is the larger half in an odd-length split; the
 	 * code below relies on this being true.
 	 */
-	bot_size = (size_a + 1) / 2;
+	mp_size		bot_size = (size_a + 1) / 2;
 
 	/*
 	 * If the values are big enough to bother with recursion, use the
@@ -2706,11 +2704,10 @@ s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 static void
 s_dadd(mp_int a, mp_digit b)
 {
-	mp_word		w = 0;
 	mp_digit   *da = MP_DIGITS(a);
 	mp_size		ua = MP_USED(a);
 
-	w = (mp_word) *da + b;
+	mp_word		w = (mp_word) *da + b;
 	*da++ = LOWER_HALF(w);
 	w = UPPER_HALF(w);
 
@@ -3039,7 +3036,6 @@ s_2expt(mp_int z, mp_small k)
 {
 	mp_size		ndig,
 				rest;
-	mp_digit   *dz;
 
 	ndig = (k + MP_DIGIT_BIT) / MP_DIGIT_BIT;
 	rest = k % MP_DIGIT_BIT;
@@ -3047,7 +3043,7 @@ s_2expt(mp_int z, mp_small k)
 	if (!s_pad(z, ndig))
 		return 0;
 
-	dz = MP_DIGITS(z);
+	mp_digit   *dz = MP_DIGITS(z);
 	ZERO(dz, ndig);
 	*(dz + ndig - 1) = (1u << rest);
 	z->used = ndig;

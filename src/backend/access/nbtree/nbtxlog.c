@@ -42,15 +42,13 @@ _bt_restore_page(Page page, char *from, int len)
 	char	   *end = from + len;
 	Item		items[MaxIndexTuplesPerPage];
 	uint16		itemsizes[MaxIndexTuplesPerPage];
-	int			i;
-	int			nitems;
 
 	/*
 	 * To get the items back in the original order, we add them to the page in
 	 * reverse.  To figure out where one tuple ends and another begins, we
 	 * have to scan them in forward order first.
 	 */
-	i = 0;
+	int			i = 0;
 	while (from < end)
 	{
 		/*
@@ -70,7 +68,7 @@ _bt_restore_page(Page page, char *from, int len)
 
 		from += itemsz;
 	}
-	nitems = i;
+	int			nitems = i;
 
 	for (i = nitems - 1; i >= 0; i--)
 	{
@@ -84,25 +82,19 @@ static void
 _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
-	Buffer		metabuf;
-	Page		metapg;
-	BTMetaPageData *md;
-	BTPageOpaque pageop;
-	xl_btree_metadata *xlrec;
-	char	   *ptr;
 	Size		len;
 
-	metabuf = XLogInitBufferForRedo(record, block_id);
-	ptr = XLogRecGetBlockData(record, block_id, &len);
+	Buffer		metabuf = XLogInitBufferForRedo(record, block_id);
+	char	   *ptr = XLogRecGetBlockData(record, block_id, &len);
 
 	Assert(len == sizeof(xl_btree_metadata));
 	Assert(BufferGetBlockNumber(metabuf) == BTREE_METAPAGE);
-	xlrec = (xl_btree_metadata *) ptr;
-	metapg = BufferGetPage(metabuf);
+	xl_btree_metadata *xlrec = (xl_btree_metadata *) ptr;
+	Page		metapg = BufferGetPage(metabuf);
 
 	_bt_pageinit(metapg, BufferGetPageSize(metabuf));
 
-	md = BTPageGetMeta(metapg);
+	BTMetaPageData *md = BTPageGetMeta(metapg);
 	md->btm_magic = BTREE_MAGIC;
 	md->btm_version = xlrec->version;
 	md->btm_root = xlrec->root;
@@ -115,7 +107,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	md->btm_last_cleanup_num_heap_tuples = -1.0;
 	md->btm_allequalimage = xlrec->allequalimage;
 
-	pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
+	BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	pageop->btpo_flags = BTP_META;
 
 	/*
@@ -194,11 +186,9 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 		}
 		else
 		{
-			ItemId		itemid;
 			IndexTuple	oposting,
 						newitem,
 						nposting;
-			uint16		postingoff;
 
 			/*
 			 * A posting list split occurred during leaf page insertion.  WAL
@@ -210,11 +200,11 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 			 * not the final version of newitem that is actually inserted on
 			 * page.
 			 */
-			postingoff = *((uint16 *) datapos);
+			uint16		postingoff = *((uint16 *) datapos);
 			datapos += sizeof(uint16);
 			datalen -= sizeof(uint16);
 
-			itemid = PageGetItemId(page, OffsetNumberPrev(xlrec->offnum));
+			ItemId		itemid = PageGetItemId(page, OffsetNumberPrev(xlrec->offnum));
 			oposting = (IndexTuple) PageGetItem(page, itemid);
 
 			/* Use mutable, aligned newitem copy in _bt_swap_posting() */
@@ -256,10 +246,6 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
 	bool		isleaf = (xlrec->level == 0);
 	Buffer		buf;
-	Buffer		rbuf;
-	Page		rpage;
-	BTPageOpaque ropaque;
-	char	   *datapos;
 	Size		datalen;
 	BlockNumber origpagenumber;
 	BlockNumber rightpagenumber;
@@ -287,12 +273,12 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		_bt_clear_incomplete_split(record, 3);
 
 	/* Reconstruct right (new) sibling page from scratch */
-	rbuf = XLogInitBufferForRedo(record, 1);
-	datapos = XLogRecGetBlockData(record, 1, &datalen);
-	rpage = (Page) BufferGetPage(rbuf);
+	Buffer		rbuf = XLogInitBufferForRedo(record, 1);
+	char	   *datapos = XLogRecGetBlockData(record, 1, &datalen);
+	Page		rpage = (Page) BufferGetPage(rbuf);
 
 	_bt_pageinit(rpage, BufferGetPageSize(rbuf));
-	ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
+	BTPageOpaque ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
 
 	ropaque->btpo_prev = origpagenumber;
 	ropaque->btpo_next = spagenumber;
@@ -324,7 +310,6 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 					nposting = NULL;
 		Size		newitemsz = 0,
 					left_hikeysz = 0;
-		Page		leftpage;
 		OffsetNumber leftoff,
 					replacepostingoff = InvalidOffsetNumber;
 
@@ -339,16 +324,14 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 			if (xlrec->postingoff != 0)
 			{
-				ItemId		itemid;
-				IndexTuple	oposting;
 
 				/* Posting list must be at offset number before new item's */
 				replacepostingoff = OffsetNumberPrev(xlrec->newitemoff);
 
 				/* Use mutable, aligned newitem copy in _bt_swap_posting() */
 				newitem = CopyIndexTuple(newitem);
-				itemid = PageGetItemId(origpage, replacepostingoff);
-				oposting = (IndexTuple) PageGetItem(origpage, itemid);
+				ItemId		itemid = PageGetItemId(origpage, replacepostingoff);
+				IndexTuple	oposting = (IndexTuple) PageGetItem(origpage, itemid);
 				nposting = _bt_swap_posting(newitem, oposting,
 											xlrec->postingoff);
 			}
@@ -366,7 +349,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 		Assert(datalen == 0);
 
-		leftpage = PageGetTempPageCopySpecial(origpage);
+		Page		leftpage = PageGetTempPageCopySpecial(origpage);
 
 		/* Add high key tuple from WAL record to temp page */
 		leftoff = P_HIKEY;
@@ -377,9 +360,6 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 		for (off = P_FIRSTDATAKEY(oopaque); off < xlrec->firstrightoff; off++)
 		{
-			ItemId		itemid;
-			Size		itemsz;
-			IndexTuple	item;
 
 			/* Add replacement posting list when required */
 			if (off == replacepostingoff)
@@ -403,9 +383,9 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 				leftoff = OffsetNumberNext(leftoff);
 			}
 
-			itemid = PageGetItemId(origpage, off);
-			itemsz = ItemIdGetLength(itemid);
-			item = (IndexTuple) PageGetItem(origpage, itemid);
+			ItemId		itemid = PageGetItemId(origpage, off);
+			Size		itemsz = ItemIdGetLength(itemid);
+			IndexTuple	item = (IndexTuple) PageGetItem(origpage, itemid);
 			if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add old item to left page after split");
@@ -477,11 +457,8 @@ btree_xlog_dedup(XLogReaderState *record)
 		OffsetNumber offnum,
 					minoff,
 					maxoff;
-		BTDedupState state;
-		BTDedupInterval *intervals;
-		Page		newpage;
 
-		state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+		BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
 		state->deduplicate = true;	/* unused */
 		state->nmaxitems = 0;	/* unused */
 		/* Conservatively use larger maxpostingsize than primary */
@@ -497,7 +474,7 @@ btree_xlog_dedup(XLogReaderState *record)
 
 		minoff = P_FIRSTDATAKEY(opaque);
 		maxoff = PageGetMaxOffsetNumber(page);
-		newpage = PageGetTempPageCopySpecial(page);
+		Page		newpage = PageGetTempPageCopySpecial(page);
 
 		if (!P_RIGHTMOST(opaque))
 		{
@@ -510,7 +487,7 @@ btree_xlog_dedup(XLogReaderState *record)
 				elog(ERROR, "deduplication failed to add highkey");
 		}
 
-		intervals = (BTDedupInterval *) ptr;
+		BTDedupInterval *intervals = (BTDedupInterval *) ptr;
 		for (offnum = minoff;
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
@@ -620,12 +597,10 @@ btree_xlog_vacuum(XLogReaderState *record)
 
 		if (xlrec->nupdated > 0)
 		{
-			OffsetNumber *updatedoffsets;
-			xl_btree_update *updates;
 
-			updatedoffsets = (OffsetNumber *)
+			OffsetNumber *updatedoffsets = (OffsetNumber *)
 				(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
-			updates = (xl_btree_update *) ((char *) updatedoffsets +
+			xl_btree_update *updates = (xl_btree_update *) ((char *) updatedoffsets +
 										   xlrec->nupdated *
 										   sizeof(OffsetNumber));
 
@@ -683,12 +658,10 @@ btree_xlog_delete(XLogReaderState *record)
 
 		if (xlrec->nupdated > 0)
 		{
-			OffsetNumber *updatedoffsets;
-			xl_btree_update *updates;
 
-			updatedoffsets = (OffsetNumber *)
+			OffsetNumber *updatedoffsets = (OffsetNumber *)
 				(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
-			updates = (xl_btree_update *) ((char *) updatedoffsets +
+			xl_btree_update *updates = (xl_btree_update *) ((char *) updatedoffsets +
 										   xlrec->nupdated *
 										   sizeof(OffsetNumber));
 
@@ -730,21 +703,16 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 	/* to-be-deleted subtree's parent page */
 	if (XLogReadBufferForRedo(record, 1, &buffer) == BLK_NEEDS_REDO)
 	{
-		OffsetNumber poffset;
-		ItemId		itemid;
-		IndexTuple	itup;
-		OffsetNumber nextoffset;
-		BlockNumber rightsib;
 
 		page = (Page) BufferGetPage(buffer);
 		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-		poffset = xlrec->poffset;
+		OffsetNumber poffset = xlrec->poffset;
 
-		nextoffset = OffsetNumberNext(poffset);
-		itemid = PageGetItemId(page, nextoffset);
-		itup = (IndexTuple) PageGetItem(page, itemid);
-		rightsib = BTreeTupleGetDownLink(itup);
+		OffsetNumber nextoffset = OffsetNumberNext(poffset);
+		ItemId		itemid = PageGetItemId(page, nextoffset);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
+		BlockNumber rightsib = BTreeTupleGetDownLink(itup);
 
 		itemid = PageGetItemId(page, poffset);
 		itup = (IndexTuple) PageGetItem(page, itemid);
@@ -799,22 +767,16 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_unlink_page *xlrec = (xl_btree_unlink_page *) XLogRecGetData(record);
-	BlockNumber leftsib;
-	BlockNumber rightsib;
-	uint32		level;
-	bool		isleaf;
-	FullTransactionId safexid;
 	Buffer		leftbuf;
-	Buffer		target;
 	Buffer		rightbuf;
 	Page		page;
 	BTPageOpaque pageop;
 
-	leftsib = xlrec->leftsib;
-	rightsib = xlrec->rightsib;
-	level = xlrec->level;
-	isleaf = (level == 0);
-	safexid = xlrec->safexid;
+	BlockNumber leftsib = xlrec->leftsib;
+	BlockNumber rightsib = xlrec->rightsib;
+	uint32		level = xlrec->level;
+	bool		isleaf = (level == 0);
+	FullTransactionId safexid = xlrec->safexid;
 
 	/* No leaftopparent for level 0 (leaf page) or level 1 target */
 	Assert(!BlockNumberIsValid(xlrec->leaftopparent) || level > 1);
@@ -844,7 +806,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		leftbuf = InvalidBuffer;
 
 	/* Rewrite target page as empty deleted page */
-	target = XLogInitBufferForRedo(record, 0);
+	Buffer		target = XLogInitBufferForRedo(record, 0);
 	page = (Page) BufferGetPage(target);
 
 	_bt_pageinit(page, BufferGetPageSize(target));
@@ -897,12 +859,11 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		 * top parent link when deleting leafbuf because it's the last page
 		 * we'll delete in the subtree undergoing deletion.
 		 */
-		Buffer		leafbuf;
 		IndexTupleData trunctuple;
 
 		Assert(!isleaf);
 
-		leafbuf = XLogInitBufferForRedo(record, 3);
+		Buffer		leafbuf = XLogInitBufferForRedo(record, 3);
 		page = (Page) BufferGetPage(leafbuf);
 
 		_bt_pageinit(page, BufferGetPageSize(leafbuf));
@@ -938,17 +899,14 @@ btree_xlog_newroot(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_newroot *xlrec = (xl_btree_newroot *) XLogRecGetData(record);
-	Buffer		buffer;
-	Page		page;
-	BTPageOpaque pageop;
 	char	   *ptr;
 	Size		len;
 
-	buffer = XLogInitBufferForRedo(record, 0);
-	page = (Page) BufferGetPage(buffer);
+	Buffer		buffer = XLogInitBufferForRedo(record, 0);
+	Page		page = (Page) BufferGetPage(buffer);
 
 	_bt_pageinit(page, BufferGetPageSize(buffer));
-	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	pageop->btpo_flags = BTP_ROOT;
 	pageop->btpo_prev = pageop->btpo_next = P_NONE;
@@ -1013,9 +971,8 @@ void
 btree_redo(XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
-	MemoryContext oldCtx;
 
-	oldCtx = MemoryContextSwitchTo(opCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(opCtx);
 	switch (info)
 	{
 		case XLOG_BTREE_INSERT_LEAF:
@@ -1090,14 +1047,13 @@ void
 btree_mask(char *pagedata, BlockNumber blkno)
 {
 	Page		page = (Page) pagedata;
-	BTPageOpaque maskopaq;
 
 	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 	mask_unused_space(page);
 
-	maskopaq = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque maskopaq = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (P_ISLEAF(maskopaq))
 	{

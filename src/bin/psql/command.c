@@ -213,18 +213,16 @@ HandleSlashCmds(PsqlScanState scan_state,
 				PQExpBuffer query_buf,
 				PQExpBuffer previous_buf)
 {
-	backslashResult status;
-	char	   *cmd;
 	char	   *arg;
 
 	Assert(scan_state != NULL);
 	Assert(cstack != NULL);
 
 	/* Parse off the command name */
-	cmd = psql_scan_slash_command(scan_state);
+	char	   *cmd = psql_scan_slash_command(scan_state);
 
 	/* And try to execute it */
-	status = exec_command(cmd, scan_state, cstack, query_buf, previous_buf);
+	backslashResult status = exec_command(cmd, scan_state, cstack, query_buf, previous_buf);
 
 	if (status == PSQL_CMD_UNKNOWN)
 	{
@@ -554,11 +552,10 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 		else
 		{
 #ifndef WIN32
-			struct passwd *pw;
 			uid_t		user_id = geteuid();
 
 			errno = 0;			/* clear errno before call */
-			pw = getpwuid(user_id);
+			struct passwd *pw = getpwuid(user_id);
 			if (!pw)
 			{
 				pg_log_error("could not get home directory for user ID %ld: %s",
@@ -706,12 +703,11 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 	if (active_branch)
 	{
-		char	   *pattern;
 		bool		show_verbose,
 					show_system;
 
 		/* We don't do SQLID reduction on the pattern yet */
-		pattern = psql_scan_slash_option(scan_state,
+		char	   *pattern = psql_scan_slash_option(scan_state,
 										 OT_NORMAL, NULL, true);
 
 		show_verbose = strchr(cmd, '+') ? true : false;
@@ -1015,11 +1011,10 @@ exec_command_edit(PsqlScanState scan_state, bool active_branch,
 		}
 		else
 		{
-			char	   *fname;
 			char	   *ln = NULL;
 			int			lineno = -1;
 
-			fname = psql_scan_slash_option(scan_state,
+			char	   *fname = psql_scan_slash_option(scan_state,
 										   OT_NORMAL, NULL, true);
 			if (fname)
 			{
@@ -1302,9 +1297,8 @@ exec_command_errverbose(PsqlScanState scan_state, bool active_branch)
 	{
 		if (pset.last_error_result)
 		{
-			char	   *msg;
 
-			msg = PQresultVerboseErrorMessage(pset.last_error_result,
+			char	   *msg = PQresultVerboseErrorMessage(pset.last_error_result,
 											  PQERRORS_VERBOSE,
 											  PQSHOW_CONTEXT_ALWAYS);
 			if (msg)
@@ -1357,13 +1351,12 @@ static backslashResult
 exec_command_g(PsqlScanState scan_state, bool active_branch, const char *cmd)
 {
 	backslashResult status = PSQL_CMD_SKIP_LINE;
-	char	   *fname;
 
 	/*
 	 * Because the option processing for this is fairly complicated, we do it
 	 * and then decide whether the branch is active.
 	 */
-	fname = psql_scan_slash_option(scan_state,
+	char	   *fname = psql_scan_slash_option(scan_state,
 								   OT_FILEPIPE, NULL, false);
 
 	if (fname && fname[0] == '(')
@@ -1416,7 +1409,6 @@ process_command_g_options(char *first_option, PsqlScanState scan_state,
 	do
 	{
 		char	   *option;
-		size_t		optlen;
 
 		/* If not first time through, collect a new option */
 		if (first_option)
@@ -1437,7 +1429,7 @@ process_command_g_options(char *first_option, PsqlScanState scan_state,
 		}
 
 		/* Check for terminating right paren, and remove it from string */
-		optlen = strlen(option);
+		size_t		optlen = strlen(option);
 		if (optlen > 0 && option[optlen - 1] == ')')
 		{
 			option[--optlen] = '\0';
@@ -1869,13 +1861,11 @@ exec_command_list(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 	if (active_branch)
 	{
-		char	   *pattern;
-		bool		show_verbose;
 
-		pattern = psql_scan_slash_option(scan_state,
+		char	   *pattern = psql_scan_slash_option(scan_state,
 										 OT_NORMAL, NULL, true);
 
-		show_verbose = strchr(cmd, '+') ? true : false;
+		bool		show_verbose = strchr(cmd, '+') ? true : false;
 
 		success = listAllDbs(pattern, show_verbose);
 
@@ -2025,11 +2015,9 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 	{
 		char	   *opt0 = psql_scan_slash_option(scan_state,
 												  OT_SQLID, NULL, true);
-		char	   *pw1;
-		char	   *pw2;
 
-		pw1 = simple_prompt("Enter new password: ", false);
-		pw2 = simple_prompt("Enter it again: ", false);
+		char	   *pw1 = simple_prompt("Enter new password: ", false);
+		char	   *pw2 = simple_prompt("Enter it again: ", false);
 
 		if (strcmp(pw1, pw2) != 0)
 		{
@@ -2039,14 +2027,13 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 		else
 		{
 			char	   *user;
-			char	   *encrypted_password;
 
 			if (opt0)
 				user = opt0;
 			else
 				user = PQuser(pset.db);
 
-			encrypted_password = PQencryptPasswordConn(pset.db, pw1, user, NULL);
+			char	   *encrypted_password = PQencryptPasswordConn(pset.db, pw1, user, NULL);
 
 			if (!encrypted_password)
 			{
@@ -2056,13 +2043,12 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			else
 			{
 				PQExpBufferData buf;
-				PGresult   *res;
 
 				initPQExpBuffer(&buf);
 				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD ",
 								  fmtId(user));
 				appendStringLiteralConn(&buf, encrypted_password, pset.db);
-				res = PSQLexec(buf.data);
+				PGresult   *res = PSQLexec(buf.data);
 				termPQExpBuffer(&buf);
 				if (!res)
 					success = false;
@@ -2293,12 +2279,10 @@ exec_command_set(PsqlScanState scan_state, bool active_branch)
 			/*
 			 * Set variable to the concatenation of the arguments.
 			 */
-			char	   *newval;
-			char	   *opt;
 
-			opt = psql_scan_slash_option(scan_state,
+			char	   *opt = psql_scan_slash_option(scan_state,
 										 OT_NORMAL, NULL, false);
-			newval = pg_strdup(opt ? opt : "");
+			char	   *newval = pg_strdup(opt ? opt : "");
 			free(opt);
 
 			while ((opt = psql_scan_slash_option(scan_state,
@@ -2382,13 +2366,11 @@ exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 	if (active_branch)
 	{
 		bool		show_linenumbers = (strchr(cmd, '+') != NULL);
-		PQExpBuffer buf;
-		char	   *obj_desc;
 		Oid			obj_oid = InvalidOid;
 		EditableObjectType eot = is_func ? EditableFunction : EditableView;
 
-		buf = createPQExpBuffer();
-		obj_desc = psql_scan_slash_option(scan_state,
+		PQExpBuffer buf = createPQExpBuffer();
+		char	   *obj_desc = psql_scan_slash_option(scan_state,
 										  OT_WHOLE_LINE, NULL, true);
 		if (pset.sversion < (is_func ? 80400 : 70400))
 		{
@@ -2814,7 +2796,6 @@ exec_command_slash_command_help(PsqlScanState scan_state, bool active_branch)
 static char *
 read_connect_arg(PsqlScanState scan_state)
 {
-	char	   *result;
 	char		quote;
 
 	/*
@@ -2826,7 +2807,7 @@ read_connect_arg(PsqlScanState scan_state)
 	 * double-quote all mixed-case \connect arguments, and then we can get rid
 	 * of OT_SQLIDHACK.
 	 */
-	result = psql_scan_slash_option(scan_state, OT_SQLIDHACK, &quote, true);
+	char	   *result = psql_scan_slash_option(scan_state, OT_SQLIDHACK, &quote, true);
 
 	if (!result)
 		return NULL;
@@ -3048,9 +3029,8 @@ prompt_for_password(const char *username)
 		result = simple_prompt("Password: ", false);
 	else
 	{
-		char	   *prompt_text;
 
-		prompt_text = psprintf(_("Password for user %s: "), username);
+		char	   *prompt_text = psprintf(_("Password for user %s: "), username);
 		result = simple_prompt(prompt_text, false);
 		free(prompt_text);
 	}
@@ -3093,10 +3073,9 @@ do_connect(enum trivalue reuse_previous_specification,
 	char	   *client_encoding;
 	bool		success = true;
 	bool		keep_password = true;
-	bool		has_connection_string;
 	bool		reuse_previous;
 
-	has_connection_string = dbname ?
+	bool		has_connection_string = dbname ?
 		recognized_connection_string(dbname) : false;
 
 	/* Complain if we have additional arguments after a connection string. */
@@ -3149,10 +3128,9 @@ do_connect(enum trivalue reuse_previous_specification,
 		if (has_connection_string)
 		{
 			/* Parse the connstring and insert values into cinfo */
-			PQconninfoOption *replcinfo;
 			char	   *errmsg;
 
-			replcinfo = PQconninfoParse(dbname, &errmsg);
+			PQconninfoOption *replcinfo = PQconninfoParse(dbname, &errmsg);
 			if (replcinfo)
 			{
 				PQconninfoOption *ci;
@@ -3593,7 +3571,6 @@ printSSLInfo(void)
 {
 	const char *protocol;
 	const char *cipher;
-	const char *bits;
 	const char *compression;
 
 	if (!PQsslInUse(pset.db))
@@ -3601,7 +3578,7 @@ printSSLInfo(void)
 
 	protocol = PQsslAttribute(pset.db, "protocol");
 	cipher = PQsslAttribute(pset.db, "cipher");
-	bits = PQsslAttribute(pset.db, "key_bits");
+	const char *bits = PQsslAttribute(pset.db, "key_bits");
 	compression = PQsslAttribute(pset.db, "compression");
 
 	printf(_("SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"),
@@ -3721,7 +3698,6 @@ UnsyncVariables(void)
 static bool
 editFile(const char *fname, int lineno)
 {
-	const char *editorName;
 	const char *editor_lineno_arg = NULL;
 	char	   *sys;
 	int			result;
@@ -3729,7 +3705,7 @@ editFile(const char *fname, int lineno)
 	Assert(fname != NULL);
 
 	/* Find an editor to use */
-	editorName = getenv("PSQL_EDITOR");
+	const char *editorName = getenv("PSQL_EDITOR");
 	if (!editorName)
 		editorName = getenv("EDITOR");
 	if (!editorName)
@@ -3823,9 +3799,8 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 			tmpdir = "/tmp";
 #else
 		char		tmpdir[MAXPGPATH];
-		int			ret;
 
-		ret = GetTempPath(MAXPGPATH, tmpdir);
+		int			ret = GetTempPath(MAXPGPATH, tmpdir);
 		if (ret == 0 || ret > MAXPGPATH)
 		{
 			pg_log_error("could not locate temporary directory: %s",
@@ -3998,8 +3973,6 @@ int
 process_file(char *filename, bool use_relative_path)
 {
 	FILE	   *fd;
-	int			result;
-	char	   *oldfilename;
 	char		relpath[MAXPGPATH];
 
 	if (!filename)
@@ -4042,12 +4015,12 @@ process_file(char *filename, bool use_relative_path)
 		filename = "<stdin>";	/* for future error messages */
 	}
 
-	oldfilename = pset.inputfile;
+	char	   *oldfilename = pset.inputfile;
 	pset.inputfile = filename;
 
 	pg_logging_config(pset.inputfile ? 0 : PG_LOG_FLAG_TERSE);
 
-	result = MainLoop(fd);
+	int			result = MainLoop(fd);
 
 	if (fd != stdin)
 		fclose(fd);
@@ -4663,9 +4636,8 @@ printPsetInfo(const char *param, printQueryOpt *popt)
 printQueryOpt *
 savePsetInfo(const printQueryOpt *popt)
 {
-	printQueryOpt *save;
 
-	save = (printQueryOpt *) pg_malloc(sizeof(printQueryOpt));
+	printQueryOpt *save = (printQueryOpt *) pg_malloc(sizeof(printQueryOpt));
 
 	/* Flat-copy all the scalar fields, then duplicate sub-structures. */
 	memcpy(save, popt, sizeof(printQueryOpt));
@@ -4851,9 +4823,8 @@ do_shell(const char *command)
 	if (!command)
 	{
 		char	   *sys;
-		const char *shellName;
 
-		shellName = getenv("SHELL");
+		const char *shellName = getenv("SHELL");
 #ifdef WIN32
 		if (shellName == NULL)
 			shellName = getenv("COMSPEC");
@@ -4991,7 +4962,6 @@ do_watch(PQExpBuffer query_buf, double sleep)
 
 	for (;;)
 	{
-		time_t		timer;
 		char		timebuf[128];
 
 		/*
@@ -4999,7 +4969,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		 * newline at the end of the title; this is somewhat historical but it
 		 * makes for reasonably nicely formatted output in simple cases.
 		 */
-		timer = time(NULL);
+		time_t		timer = time(NULL);
 		strftime(timebuf, sizeof(timebuf), strftime_fmt, localtime(&timer));
 
 		if (user_title)
@@ -5146,7 +5116,6 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 {
 	bool		result = true;
 	PQExpBuffer query = createPQExpBuffer();
-	PGresult   *res;
 
 	switch (obj_type)
 	{
@@ -5181,7 +5150,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 		destroyPQExpBuffer(query);
 		return false;
 	}
-	res = PQexec(pset.db, query->data);
+	PGresult   *res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 		*obj_oid = atooid(PQgetvalue(res, 0, 0));
 	else
@@ -5206,7 +5175,6 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 {
 	bool		result = true;
 	PQExpBuffer query = createPQExpBuffer();
-	PGresult   *res;
 
 	switch (obj_type)
 	{
@@ -5276,7 +5244,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 		destroyPQExpBuffer(query);
 		return false;
 	}
-	res = PQexec(pset.db, query->data);
+	PGresult   *res = PQexec(pset.db, query->data);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1)
 	{
 		resetPQExpBuffer(buf);
@@ -5376,13 +5344,11 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 static int
 strip_lineno_from_objdesc(char *obj)
 {
-	char	   *c;
-	int			lineno;
 
 	if (!obj || obj[0] == '\0')
 		return -1;
 
-	c = obj + strlen(obj) - 1;
+	char	   *c = obj + strlen(obj) - 1;
 
 	/*
 	 * This business of parsing backwards is dangerous as can be in a
@@ -5414,7 +5380,7 @@ strip_lineno_from_objdesc(char *obj)
 
 	/* parse digit string */
 	c++;
-	lineno = atoi(c);
+	int			lineno = atoi(c);
 	if (lineno < 1)
 	{
 		pg_log_error("invalid line number: %s", c);
@@ -5468,7 +5434,6 @@ print_with_linenumbers(FILE *output, char *lines,
 
 	while (*lines != '\0')
 	{
-		char	   *eol;
 
 		if (in_header && strncmp(lines, header_keyword, header_sz) == 0)
 			in_header = false;
@@ -5478,7 +5443,7 @@ print_with_linenumbers(FILE *output, char *lines,
 			lineno++;
 
 		/* find and mark end of current line */
-		eol = strchr(lines, '\n');
+		char	   *eol = strchr(lines, '\n');
 		if (eol != NULL)
 			*eol = '\0';
 
@@ -5502,12 +5467,10 @@ print_with_linenumbers(FILE *output, char *lines,
 static void
 minimal_error_message(PGresult *res)
 {
-	PQExpBuffer msg;
-	const char *fld;
 
-	msg = createPQExpBuffer();
+	PQExpBuffer msg = createPQExpBuffer();
 
-	fld = PQresultErrorField(res, PG_DIAG_SEVERITY);
+	const char *fld = PQresultErrorField(res, PG_DIAG_SEVERITY);
 	if (fld)
 		printfPQExpBuffer(msg, "%s:  ", fld);
 	else

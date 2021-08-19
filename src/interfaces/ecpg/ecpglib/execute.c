@@ -490,11 +490,10 @@ sprintf_float_value(char *ptr, float value, const char *delim)
 static char *
 convert_bytea_to_string(char *from_data, int from_len, int lineno)
 {
-	char	   *to_data;
 	int			to_len = ecpg_hex_enc_len(from_len) + 4 + 1;	/* backslash + 'x' +
 																 * quote + quote */
 
-	to_data = ecpg_alloc(to_len, lineno);
+	char	   *to_data = ecpg_alloc(to_len, lineno);
 	if (!to_data)
 		return NULL;
 
@@ -1215,14 +1214,12 @@ store_input_from_desc(struct statement *stmt, struct descriptor_item *desc_item,
 bool
 ecpg_build_params(struct statement *stmt)
 {
-	struct variable *var;
 	int			desc_counter = 0;
 	int			position = 0;
-	const char *value;
 	bool		std_strings = false;
 
 	/* Get standard_conforming_strings setting. */
-	value = PQparameterStatus(stmt->connection->connection, "standard_conforming_strings");
+	const char *value = PQparameterStatus(stmt->connection->connection, "standard_conforming_strings");
 	if (value && strcmp(value, "on") == 0)
 		std_strings = true;
 
@@ -1231,18 +1228,15 @@ ecpg_build_params(struct statement *stmt)
 	 * enter it to our parameter array at the first position. Then if there
 	 * are any more fill in types we add more parameters.
 	 */
-	var = stmt->inlist;
+	struct variable *var = stmt->inlist;
 	while (var)
 	{
-		char	   *tobeinserted;
 		int			counter = 1;
-		bool		binary_format;
-		int			binary_length;
 
 
-		tobeinserted = NULL;
-		binary_length = 0;
-		binary_format = false;
+		char	   *tobeinserted = NULL;
+		int			binary_length = 0;
+		bool		binary_format = false;
 
 		/*
 		 * A descriptor is a special case since it contains many variables but
@@ -1254,10 +1248,9 @@ ecpg_build_params(struct statement *stmt)
 			 * We create an additional variable list here, so the same logic
 			 * applies.
 			 */
-			struct descriptor *desc;
 			struct descriptor_item *desc_item;
 
-			desc = ecpg_find_desc(stmt->lineno, var->pointer);
+			struct descriptor *desc = ecpg_find_desc(stmt->lineno, var->pointer);
 			if (desc == NULL)
 				return false;
 
@@ -1674,7 +1667,6 @@ ecpg_execute(struct statement *stmt)
 bool
 ecpg_process_output(struct statement *stmt, bool clear_result)
 {
-	struct variable *var;
 	bool		status = false;
 	char	   *cmdstat;
 	PGnotify   *notify;
@@ -1690,7 +1682,7 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 		return false;
 	}
 
-	var = stmt->outlist;
+	struct variable *var = stmt->outlist;
 	switch (PQresultStatus(stmt->results))
 	{
 		case PGRES_TUPLES_OK:
@@ -1951,7 +1943,6 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 				 enum ECPG_statement_type statement_type, const char *query,
 				 va_list args, struct statement **stmt_out)
 {
-	struct statement *stmt = NULL;
 	struct connection *con;
 	enum ECPGttype type;
 	struct variable **list;
@@ -1966,7 +1957,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 	}
 
-	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
+	struct statement *stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
 
 	if (stmt == NULL)
 		return false;
@@ -2287,10 +2278,9 @@ bool
 ECPGdo(const int lineno, const int compat, const int force_indicator, const char *connection_name, const bool questionmarks, const int st, const char *query,...)
 {
 	va_list		args;
-	bool		ret;
 
 	va_start(args, query);
-	ret = ecpg_do(lineno, compat, force_indicator, connection_name,
+	bool		ret = ecpg_do(lineno, compat, force_indicator, connection_name,
 				  questionmarks, st, query, args);
 	va_end(args);
 

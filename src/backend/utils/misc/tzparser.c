@@ -96,8 +96,6 @@ validateTzEntry(tzEntry *tzentry)
 static bool
 splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 {
-	char	   *abbrev;
-	char	   *offset;
 	char	   *offset_endptr;
 	char	   *remain;
 	char	   *is_dst;
@@ -105,7 +103,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	tzentry->lineno = lineno;
 	tzentry->filename = filename;
 
-	abbrev = strtok(line, WHITESPACE);
+	char	   *abbrev = strtok(line, WHITESPACE);
 	if (!abbrev)
 	{
 		GUC_check_errmsg("missing time zone abbreviation in time zone file \"%s\", line %d",
@@ -114,7 +112,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	}
 	tzentry->abbrev = pstrdup(abbrev);
 
-	offset = strtok(NULL, WHITESPACE);
+	char	   *offset = strtok(NULL, WHITESPACE);
 	if (!offset)
 	{
 		GUC_check_errmsg("missing time zone offset in time zone file \"%s\", line %d",
@@ -187,25 +185,21 @@ static int
 addToArray(tzEntry **base, int *arraysize, int n,
 		   tzEntry *entry, bool override)
 {
-	tzEntry    *arrayptr;
-	int			low;
-	int			high;
 
 	/*
 	 * Search the array for a duplicate; as a useful side effect, the array is
 	 * maintained in sorted order.  We use strcmp() to ensure we match the
 	 * sort order datetime.c expects.
 	 */
-	arrayptr = *base;
-	low = 0;
-	high = n - 1;
+	tzEntry    *arrayptr = *base;
+	int			low = 0;
+	int			high = n - 1;
 	while (low <= high)
 	{
 		int			mid = (low + high) >> 1;
 		tzEntry    *midptr = arrayptr + mid;
-		int			cmp;
 
-		cmp = strcmp(entry->abbrev, midptr->abbrev);
+		int			cmp = strcmp(entry->abbrev, midptr->abbrev);
 		if (cmp < 0)
 			high = mid - 1;
 		else if (cmp > 0)
@@ -277,7 +271,6 @@ ParseTzFile(const char *filename, int depth,
 {
 	char		share_path[MAXPGPATH];
 	char		file_path[MAXPGPATH];
-	FILE	   *tzFile;
 	char		tzbuf[1024];
 	char	   *line;
 	tzEntry		tzentry;
@@ -318,7 +311,7 @@ ParseTzFile(const char *filename, int depth,
 	get_share_path(my_exec_path, share_path);
 	snprintf(file_path, sizeof(file_path), "%s/timezonesets/%s",
 			 share_path, filename);
-	tzFile = AllocateFile(file_path, "r");
+	FILE	   *tzFile = AllocateFile(file_path, "r");
 	if (!tzFile)
 	{
 		/*
@@ -328,11 +321,10 @@ ParseTzFile(const char *filename, int depth,
 		 * place we notice a problem during postmaster startup.
 		 */
 		int			save_errno = errno;
-		DIR		   *tzdir;
 
 		snprintf(file_path, sizeof(file_path), "%s/timezonesets",
 				 share_path);
-		tzdir = AllocateDir(file_path);
+		DIR		   *tzdir = AllocateDir(file_path);
 		if (tzdir == NULL)
 		{
 			GUC_check_errmsg("could not open directory \"%s\": %m",
@@ -437,27 +429,22 @@ TimeZoneAbbrevTable *
 load_tzoffsets(const char *filename)
 {
 	TimeZoneAbbrevTable *result = NULL;
-	MemoryContext tmpContext;
-	MemoryContext oldContext;
-	tzEntry    *array;
-	int			arraysize;
-	int			n;
 
 	/*
 	 * Create a temp memory context to work in.  This makes it easy to clean
 	 * up afterwards.
 	 */
-	tmpContext = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext tmpContext = AllocSetContextCreate(CurrentMemoryContext,
 									   "TZParserMemory",
 									   ALLOCSET_SMALL_SIZES);
-	oldContext = MemoryContextSwitchTo(tmpContext);
+	MemoryContext oldContext = MemoryContextSwitchTo(tmpContext);
 
 	/* Initialize array at a reasonable size */
-	arraysize = 128;
-	array = (tzEntry *) palloc(arraysize * sizeof(tzEntry));
+	int			arraysize = 128;
+	tzEntry    *array = (tzEntry *) palloc(arraysize * sizeof(tzEntry));
 
 	/* Parse the file(s) */
-	n = ParseTzFile(filename, 0, &array, &arraysize, 0);
+	int			n = ParseTzFile(filename, 0, &array, &arraysize, 0);
 
 	/* If no errors so far, let datetime.c allocate memory & convert format */
 	if (n >= 0)

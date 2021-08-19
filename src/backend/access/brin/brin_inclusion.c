@@ -94,7 +94,6 @@ Datum
 brin_inclusion_opcinfo(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
-	BrinOpcInfo *result;
 	TypeCacheEntry *bool_typcache = lookup_type_cache(BOOLOID, 0);
 
 	/*
@@ -106,7 +105,7 @@ brin_inclusion_opcinfo(PG_FUNCTION_ARGS)
 	 * (which is expected), extra_proc_missing is set to true, indicating not
 	 * to look it up again.
 	 */
-	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(3)) + sizeof(InclusionOpaque));
+	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(3)) + sizeof(InclusionOpaque));
 	result->oi_nstored = 3;
 	result->oi_regular_nulls = true;
 	result->oi_opaque = (InclusionOpaque *)
@@ -142,16 +141,12 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	Datum		newval = PG_GETARG_DATUM(2);
 	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_BOOL(3);
 	Oid			colloid = PG_GET_COLLATION();
-	FmgrInfo   *finfo;
-	Datum		result;
 	bool		new = false;
-	AttrNumber	attno;
-	Form_pg_attribute attr;
 
 	Assert(!isnull);
 
-	attno = column->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	AttrNumber	attno = column->bv_attno;
+	Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/*
 	 * If the recorded value is null, copy the new value (which we know to be
@@ -179,7 +174,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	 * new value for emptiness; if it returns true, we need to set the
 	 * "contains empty" flag in the element (unless already set).
 	 */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY);
+	FmgrInfo   *finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY);
 	if (finfo != NULL && DatumGetBool(FunctionCall1Coll(finfo, colloid, newval)))
 	{
 		if (!DatumGetBool(column->bv_values[INCLUSION_CONTAINS_EMPTY]))
@@ -223,7 +218,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	/* Finally, merge the new value to the existing union. */
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
 	Assert(finfo != NULL);
-	result = FunctionCall2Coll(finfo, colloid,
+	Datum		result = FunctionCall2Coll(finfo, colloid,
 							   column->bv_values[INCLUSION_UNION], newval);
 	if (!attr->attbyval &&
 		DatumGetPointer(result) != DatumGetPointer(column->bv_values[INCLUSION_UNION]))
@@ -255,9 +250,6 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
 	Oid			colloid = PG_GET_COLLATION(),
 				subtype;
-	Datum		unionval;
-	AttrNumber	attno;
-	Datum		query;
 	FmgrInfo   *finfo;
 	Datum		result;
 
@@ -271,10 +263,10 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 	if (DatumGetBool(column->bv_values[INCLUSION_UNMERGEABLE]))
 		PG_RETURN_BOOL(true);
 
-	attno = key->sk_attno;
+	AttrNumber	attno = key->sk_attno;
 	subtype = key->sk_subtype;
-	query = key->sk_argument;
-	unionval = column->bv_values[INCLUSION_UNION];
+	Datum		query = key->sk_argument;
+	Datum		unionval = column->bv_values[INCLUSION_UNION];
 	switch (key->sk_strategy)
 	{
 			/*
@@ -478,16 +470,12 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	BrinValues *col_a = (BrinValues *) PG_GETARG_POINTER(1);
 	BrinValues *col_b = (BrinValues *) PG_GETARG_POINTER(2);
 	Oid			colloid = PG_GET_COLLATION();
-	AttrNumber	attno;
-	Form_pg_attribute attr;
-	FmgrInfo   *finfo;
-	Datum		result;
 
 	Assert(col_a->bv_attno == col_b->bv_attno);
 	Assert(!col_a->bv_allnulls && !col_b->bv_allnulls);
 
-	attno = col_a->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	AttrNumber	attno = col_a->bv_attno;
+	Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/* If B includes empty elements, mark A similarly, if needed. */
 	if (!DatumGetBool(col_a->bv_values[INCLUSION_CONTAINS_EMPTY]) &&
@@ -506,7 +494,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	}
 
 	/* Check if A and B are mergeable; if not, mark A unmergeable. */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE);
+	FmgrInfo   *finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE);
 	if (finfo != NULL &&
 		!DatumGetBool(FunctionCall2Coll(finfo, colloid,
 										col_a->bv_values[INCLUSION_UNION],
@@ -519,7 +507,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	/* Finally, merge B to A. */
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
 	Assert(finfo != NULL);
-	result = FunctionCall2Coll(finfo, colloid,
+	Datum		result = FunctionCall2Coll(finfo, colloid,
 							   col_a->bv_values[INCLUSION_UNION],
 							   col_b->bv_values[INCLUSION_UNION]);
 	if (!attr->attbyval &&
@@ -544,14 +532,13 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 static FmgrInfo *
 inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
 {
-	InclusionOpaque *opaque;
 	uint16		basenum = procnum - PROCNUM_BASE;
 
 	/*
 	 * We cache these in the opaque struct, to avoid repetitive syscache
 	 * lookups.
 	 */
-	opaque = (InclusionOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
+	InclusionOpaque *opaque = (InclusionOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
 
 	/*
 	 * If we already searched for this proc and didn't find it, don't bother
@@ -603,12 +590,11 @@ static FmgrInfo *
 inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								uint16 strategynum)
 {
-	InclusionOpaque *opaque;
 
 	Assert(strategynum >= 1 &&
 		   strategynum <= RTMaxStrategyNumber);
 
-	opaque = (InclusionOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
+	InclusionOpaque *opaque = (InclusionOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
 
 	/*
 	 * We cache the procedures for the last sub-type in the opaque struct, to
@@ -626,15 +612,13 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 
 	if (opaque->strategy_procinfos[strategynum - 1].fn_oid == InvalidOid)
 	{
-		Form_pg_attribute attr;
-		HeapTuple	tuple;
 		Oid			opfamily,
 					oprid;
 		bool		isNull;
 
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
-		attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
-		tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
+		Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+		HeapTuple	tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
 								ObjectIdGetDatum(attr->atttypid),
 								ObjectIdGetDatum(subtype),
 								Int16GetDatum(strategynum));

@@ -93,23 +93,19 @@ main(int argc, char *argv[])
 		{NULL, 0, NULL, 0}
 	};
 
-	ControlFileData *ControlFile;
 	bool		crc_ok;
 	char	   *DataDir = NULL;
-	time_t		time_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		mock_auth_nonce_str[MOCK_AUTH_NONCE_LEN * 2 + 1];
 	const char *strftime_fmt = "%c";
-	const char *progname;
 	char		xlogfilename[MAXFNAMELEN];
 	int			c;
 	int			i;
-	int			WalSegSz;
 
 	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
-	progname = get_progname(argv[0]);
+	const char *progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{
@@ -165,14 +161,14 @@ main(int argc, char *argv[])
 	}
 
 	/* get a copy of the control file */
-	ControlFile = get_controlfile(DataDir, &crc_ok);
+	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
 				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/* set wal segment size */
-	WalSegSz = ControlFile->xlog_seg_size;
+	int			WalSegSz = ControlFile->xlog_seg_size;
 
 	if (!IsValidWalSegSize(WalSegSz))
 	{
@@ -196,7 +192,7 @@ main(int argc, char *argv[])
 	 * Use variable for format to suppress overly-anal-retentive gcc warning
 	 * about %c
 	 */
-	time_tmp = (time_t) ControlFile->time;
+	time_t		time_tmp = (time_t) ControlFile->time;
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
 			 localtime(&time_tmp));
 	time_tmp = (time_t) ControlFile->checkPointCopy.time;

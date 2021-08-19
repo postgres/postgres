@@ -52,9 +52,8 @@ static void tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext);
 static TupleTableSlot *
 TableFuncNext(TableFuncScanState *node)
 {
-	TupleTableSlot *scanslot;
 
-	scanslot = node->ss.ss_ScanTupleSlot;
+	TupleTableSlot *scanslot = node->ss.ss_ScanTupleSlot;
 
 	/*
 	 * If first time through, read all tuples from function and put them in a
@@ -109,9 +108,7 @@ ExecTableFuncScan(PlanState *pstate)
 TableFuncScanState *
 ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 {
-	TableFuncScanState *scanstate;
 	TableFunc  *tf = node->tablefunc;
-	TupleDesc	tupdesc;
 	int			i;
 
 	/* check for unsupported flags */
@@ -126,7 +123,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	/*
 	 * create new ScanState for node
 	 */
-	scanstate = makeNode(TableFuncScanState);
+	TableFuncScanState *scanstate = makeNode(TableFuncScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecTableFuncScan;
@@ -141,7 +138,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	/*
 	 * initialize source tuple type
 	 */
-	tupdesc = BuildDescFromLists(tf->colnames,
+	TupleDesc	tupdesc = BuildDescFromLists(tf->colnames,
 								 tf->coltypes,
 								 tf->coltypmods,
 								 tf->colcollations);
@@ -274,14 +271,13 @@ static void
 tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 {
 	const TableFuncRoutine *routine = tstate->routine;
-	MemoryContext oldcxt;
 	Datum		value;
 	bool		isnull;
 
 	Assert(tstate->opaque == NULL);
 
 	/* build tuplestore for the result */
-	oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+	MemoryContext oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 	tstate->tupstore = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
@@ -345,11 +341,9 @@ static void
 tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 {
 	const TableFuncRoutine *routine = tstate->routine;
-	TupleDesc	tupdesc;
 	ListCell   *lc1,
 			   *lc2;
 	bool		isnull;
-	int			colno;
 	Datum		value;
 	int			ordinalitycol =
 	((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
@@ -365,18 +359,16 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	{
 		ExprState  *expr = (ExprState *) lfirst(lc1);
 		Value	   *ns_node = (Value *) lfirst(lc2);
-		char	   *ns_uri;
-		char	   *ns_name;
 
 		value = ExecEvalExpr((ExprState *) expr, econtext, &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("namespace URI must not be null")));
-		ns_uri = TextDatumGetCString(value);
+		char	   *ns_uri = TextDatumGetCString(value);
 
 		/* DEFAULT is passed down to SetNamespace as NULL */
-		ns_name = ns_node ? strVal(ns_node) : NULL;
+		char	   *ns_name = ns_node ? strVal(ns_node) : NULL;
 
 		routine->SetNamespace(tstate, ns_name, ns_uri);
 	}
@@ -395,8 +387,8 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	 * If an expression is given, use that; otherwise the column name itself
 	 * is the column filter.
 	 */
-	colno = 0;
-	tupdesc = tstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+	int			colno = 0;
+	TupleDesc	tupdesc = tstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	foreach(lc1, tstate->colexprs)
 	{
 		char	   *colfilter;
@@ -439,10 +431,8 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 	Datum	   *values = slot->tts_values;
 	bool	   *nulls = slot->tts_isnull;
 	int			natts = tupdesc->natts;
-	MemoryContext oldcxt;
-	int			ordinalitycol;
 
-	ordinalitycol =
+	int			ordinalitycol =
 		((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
 
 	/*
@@ -451,7 +441,7 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 	 * is fine for the job, since we won't have used it for anything yet in
 	 * this tuple cycle.
 	 */
-	oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContext oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Keep requesting rows from the table builder until there aren't any.

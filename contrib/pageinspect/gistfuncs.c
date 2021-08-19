@@ -36,30 +36,26 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	TupleDesc	tupdesc;
-	Page		page;
-	GISTPageOpaque opaq;
-	HeapTuple	resultTuple;
 	Datum		values[4];
 	bool		nulls[4];
 	Datum		flags[16];
 	int			nflags = 0;
-	uint16		flagbits;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	page = get_page_from_raw(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
-	opaq = (GISTPageOpaque) PageGetSpecialPointer(page);
+	GISTPageOpaque opaq = (GISTPageOpaque) PageGetSpecialPointer(page);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
 	/* Convert the flags bitmask to an array of human-readable names */
-	flagbits = opaq->flags;
+	uint16		flagbits = opaq->flags;
 	if (flagbits & F_LEAF)
 		flags[nflags++] = CStringGetTextDatum("leaf");
 	if (flagbits & F_DELETED)
@@ -87,7 +83,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 												-1, false, TYPALIGN_INT));
 
 	/* Build and return the result tuple. */
-	resultTuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	resultTuple = heap_form_tuple(tupdesc, values, nulls);
 
 	return HeapTupleGetDatum(resultTuple);
 }
@@ -97,11 +93,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext oldcontext;
-	Page		page;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
 
@@ -121,20 +113,20 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	page = get_page_from_raw(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -148,18 +140,14 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 	{
 		Datum		values[5];
 		bool		nulls[5];
-		ItemId		id;
-		IndexTuple	itup;
-		bytea	   *tuple_bytea;
-		int			tuple_len;
 
-		id = PageGetItemId(page, offset);
+		ItemId		id = PageGetItemId(page, offset);
 
 		if (!ItemIdIsValid(id))
 			elog(ERROR, "invalid ItemId");
 
-		itup = (IndexTuple) PageGetItem(page, id);
-		tuple_len = IndexTupleSize(itup);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, id);
+		int			tuple_len = IndexTupleSize(itup);
 
 		memset(nulls, 0, sizeof(nulls));
 
@@ -167,7 +155,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		values[1] = ItemPointerGetDatum(&itup->t_tid);
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 
-		tuple_bytea = (bytea *) palloc(tuple_len + VARHDRSZ);
+		bytea	   *tuple_bytea = (bytea *) palloc(tuple_len + VARHDRSZ);
 		SET_VARSIZE(tuple_bytea, tuple_len + VARHDRSZ);
 		memcpy(VARDATA(tuple_bytea), itup, tuple_len);
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
@@ -185,12 +173,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Oid			indexRelid = PG_GETARG_OID(1);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	Relation	indexRel;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext oldcontext;
-	Page		page;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
 
@@ -210,13 +193,13 @@ gist_page_items(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -224,9 +207,9 @@ gist_page_items(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Open the relation */
-	indexRel = index_open(indexRelid, AccessShareLock);
+	Relation	indexRel = index_open(indexRelid, AccessShareLock);
 
-	page = get_page_from_raw(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -240,18 +223,15 @@ gist_page_items(PG_FUNCTION_ARGS)
 	{
 		Datum		values[5];
 		bool		nulls[5];
-		ItemId		id;
-		IndexTuple	itup;
 		Datum		itup_values[INDEX_MAX_KEYS];
 		bool		itup_isnull[INDEX_MAX_KEYS];
-		char	   *key_desc;
 
-		id = PageGetItemId(page, offset);
+		ItemId		id = PageGetItemId(page, offset);
 
 		if (!ItemIdIsValid(id))
 			elog(ERROR, "invalid ItemId");
 
-		itup = (IndexTuple) PageGetItem(page, id);
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, id);
 
 		index_deform_tuple(itup, RelationGetDescr(indexRel),
 						   itup_values, itup_isnull);
@@ -263,7 +243,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
 
-		key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
+		char	   *key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
 		if (key_desc)
 			values[4] = CStringGetTextDatum(key_desc);
 		else

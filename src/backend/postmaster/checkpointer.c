@@ -180,7 +180,6 @@ void
 CheckpointerMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
-	MemoryContext checkpointer_context;
 
 	CheckpointerShmem->checkpointer_pid = MyProcPid;
 
@@ -217,7 +216,7 @@ CheckpointerMain(void)
 	 * possible memory leaks.  Formerly this code just ran in
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
-	checkpointer_context = AllocSetContextCreate(TopMemoryContext,
+	MemoryContext checkpointer_context = AllocSetContextCreate(TopMemoryContext,
 												 "Checkpointer",
 												 ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(checkpointer_context);
@@ -336,9 +335,6 @@ CheckpointerMain(void)
 	{
 		bool		do_checkpoint = false;
 		int			flags = 0;
-		pg_time_t	now;
-		int			elapsed_secs;
-		int			cur_timeout;
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
@@ -366,8 +362,8 @@ CheckpointerMain(void)
 		 * occurs without an external request, but we set the CAUSE_TIME flag
 		 * bit even if there is also an external request.
 		 */
-		now = (pg_time_t) time(NULL);
-		elapsed_secs = now - last_checkpoint_time;
+		pg_time_t	now = (pg_time_t) time(NULL);
+		int			elapsed_secs = now - last_checkpoint_time;
 		if (elapsed_secs >= CheckPointTimeout)
 		{
 			if (!do_checkpoint)
@@ -382,14 +378,13 @@ CheckpointerMain(void)
 		if (do_checkpoint)
 		{
 			bool		ckpt_performed = false;
-			bool		do_restartpoint;
 
 			/*
 			 * Check if we should perform a checkpoint or a restartpoint. As a
 			 * side-effect, RecoveryInProgress() initializes TimeLineID if
 			 * it's not set yet.
 			 */
-			do_restartpoint = RecoveryInProgress();
+			bool		do_restartpoint = RecoveryInProgress();
 
 			/*
 			 * Atomically fetch the request flags to figure out what kind of a
@@ -515,7 +510,7 @@ CheckpointerMain(void)
 		elapsed_secs = now - last_checkpoint_time;
 		if (elapsed_secs >= CheckPointTimeout)
 			continue;			/* no sleep for us ... */
-		cur_timeout = CheckPointTimeout - elapsed_secs;
+		int			cur_timeout = CheckPointTimeout - elapsed_secs;
 		if (XLogArchiveTimeout > 0 && !RecoveryInProgress())
 		{
 			elapsed_secs = now - last_xlog_switch_time;
@@ -598,14 +593,12 @@ HandleCheckpointerInterrupts(void)
 static void
 CheckArchiveTimeout(void)
 {
-	pg_time_t	now;
-	pg_time_t	last_time;
 	XLogRecPtr	last_switch_lsn;
 
 	if (XLogArchiveTimeout <= 0 || RecoveryInProgress())
 		return;
 
-	now = (pg_time_t) time(NULL);
+	pg_time_t	now = (pg_time_t) time(NULL);
 
 	/* First we do a quick check using possibly-stale local state. */
 	if ((int) (now - last_xlog_switch_time) < XLogArchiveTimeout)
@@ -615,7 +608,7 @@ CheckArchiveTimeout(void)
 	 * Update local state ... note that last_xlog_switch_time is the last time
 	 * a switch was performed *or requested*.
 	 */
-	last_time = GetLastSegSwitchData(&last_switch_lsn);
+	pg_time_t	last_time = GetLastSegSwitchData(&last_switch_lsn);
 
 	last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
 
@@ -629,10 +622,9 @@ CheckArchiveTimeout(void)
 		 */
 		if (GetLastImportantRecPtr() > last_switch_lsn)
 		{
-			XLogRecPtr	switchpoint;
 
 			/* mark switch as unimportant, avoids triggering checkpoints */
-			switchpoint = RequestXLogSwitch(true);
+			XLogRecPtr	switchpoint = RequestXLogSwitch(true);
 
 			/*
 			 * If the returned pointer points exactly to a segment boundary,
@@ -857,13 +849,12 @@ ReqCheckpointHandler(SIGNAL_ARGS)
 Size
 CheckpointerShmemSize(void)
 {
-	Size		size;
 
 	/*
 	 * Currently, the size of the requests[] array is arbitrarily set equal to
 	 * NBuffers.  This may prove too large or small ...
 	 */
-	size = offsetof(CheckpointerShmemStruct, requests);
+	Size		size = offsetof(CheckpointerShmemStruct, requests);
 	size = add_size(size, mul_size(NBuffers, sizeof(CheckpointerRequest)));
 
 	return size;
@@ -1029,10 +1020,9 @@ RequestCheckpoint(int flags)
 		ConditionVariablePrepareToSleep(&CheckpointerShmem->done_cv);
 		for (;;)
 		{
-			int			new_done;
 
 			SpinLockAcquire(&CheckpointerShmem->ckpt_lck);
-			new_done = CheckpointerShmem->ckpt_done;
+			int			new_done = CheckpointerShmem->ckpt_done;
 			new_failed = CheckpointerShmem->ckpt_failed;
 			SpinLockRelease(&CheckpointerShmem->ckpt_lck);
 
@@ -1074,8 +1064,6 @@ RequestCheckpoint(int flags)
 bool
 ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 {
-	CheckpointerRequest *request;
-	bool		too_full;
 
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
@@ -1109,12 +1097,12 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 	}
 
 	/* OK, insert request */
-	request = &CheckpointerShmem->requests[CheckpointerShmem->num_requests++];
+	CheckpointerRequest *request = &CheckpointerShmem->requests[CheckpointerShmem->num_requests++];
 	request->ftag = *ftag;
 	request->type = type;
 
 	/* If queue is more than half full, nudge the checkpointer to empty it */
-	too_full = (CheckpointerShmem->num_requests >=
+	bool		too_full = (CheckpointerShmem->num_requests >=
 				CheckpointerShmem->max_requests / 2);
 
 	LWLockRelease(CheckpointerCommLock);
@@ -1155,21 +1143,19 @@ CompactCheckpointerRequestQueue(void)
 				preserve_count;
 	int			num_skipped = 0;
 	HASHCTL		ctl;
-	HTAB	   *htab;
-	bool	   *skip_slot;
 
 	/* must hold CheckpointerCommLock in exclusive mode */
 	Assert(LWLockHeldByMe(CheckpointerCommLock));
 
 	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
+	bool	   *skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
 
 	/* Initialize temporary hash table */
 	ctl.keysize = sizeof(CheckpointerRequest);
 	ctl.entrysize = sizeof(struct CheckpointerSlotMapping);
 	ctl.hcxt = CurrentMemoryContext;
 
-	htab = hash_create("CompactCheckpointerRequestQueue",
+	HTAB	   *htab = hash_create("CompactCheckpointerRequestQueue",
 					   CheckpointerShmem->num_requests,
 					   &ctl,
 					   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
@@ -1188,8 +1174,6 @@ CompactCheckpointerRequestQueue(void)
 	 */
 	for (n = 0; n < CheckpointerShmem->num_requests; n++)
 	{
-		CheckpointerRequest *request;
-		struct CheckpointerSlotMapping *slotmap;
 		bool		found;
 
 		/*
@@ -1199,8 +1183,8 @@ CompactCheckpointerRequestQueue(void)
 		 * CheckpointerShmemInit.  Note also that RelFileNode had better
 		 * contain no pad bytes.
 		 */
-		request = &CheckpointerShmem->requests[n];
-		slotmap = hash_search(htab, request, HASH_ENTER, &found);
+		CheckpointerRequest *request = &CheckpointerShmem->requests[n];
+		struct CheckpointerSlotMapping *slotmap = hash_search(htab, request, HASH_ENTER, &found);
 		if (found)
 		{
 			/* Duplicate, so mark the previous occurrence as skippable */
@@ -1253,7 +1237,6 @@ AbsorbSyncRequests(void)
 {
 	CheckpointerRequest *requests = NULL;
 	CheckpointerRequest *request;
-	int			n;
 
 	if (!AmCheckpointerProcess())
 		return;
@@ -1279,7 +1262,7 @@ AbsorbSyncRequests(void)
 	 * to fsync what we have been told to fsync.  Fortunately, the hashtable
 	 * is so small that the problem is quite unlikely to arise in practice.
 	 */
-	n = CheckpointerShmem->num_requests;
+	int			n = CheckpointerShmem->num_requests;
 	if (n > 0)
 	{
 		requests = (CheckpointerRequest *) palloc(n * sizeof(CheckpointerRequest));
@@ -1327,11 +1310,10 @@ bool
 FirstCallSinceLastCheckpoint(void)
 {
 	static int	ckpt_done = 0;
-	int			new_done;
 	bool		FirstCall = false;
 
 	SpinLockAcquire(&CheckpointerShmem->ckpt_lck);
-	new_done = CheckpointerShmem->ckpt_done;
+	int			new_done = CheckpointerShmem->ckpt_done;
 	SpinLockRelease(&CheckpointerShmem->ckpt_lck);
 
 	if (new_done != ckpt_done)

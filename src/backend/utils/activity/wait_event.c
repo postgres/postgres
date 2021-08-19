@@ -73,14 +73,13 @@ pgstat_reset_wait_event_storage(void)
 const char *
 pgstat_get_wait_event_type(uint32 wait_event_info)
 {
-	uint32		classId;
 	const char *event_type;
 
 	/* report process as not waiting. */
 	if (wait_event_info == 0)
 		return NULL;
 
-	classId = wait_event_info & 0xFF000000;
+	uint32		classId = wait_event_info & 0xFF000000;
 
 	switch (classId)
 	{
@@ -128,16 +127,14 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 const char *
 pgstat_get_wait_event(uint32 wait_event_info)
 {
-	uint32		classId;
-	uint16		eventId;
 	const char *event_name;
 
 	/* report process as not waiting. */
 	if (wait_event_info == 0)
 		return NULL;
 
-	classId = wait_event_info & 0xFF000000;
-	eventId = wait_event_info & 0x0000FFFF;
+	uint32		classId = wait_event_info & 0xFF000000;
+	uint16		eventId = wait_event_info & 0x0000FFFF;
 
 	switch (classId)
 	{

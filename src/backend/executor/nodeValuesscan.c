@@ -47,19 +47,15 @@ static TupleTableSlot *ValuesNext(ValuesScanState *node);
 static TupleTableSlot *
 ValuesNext(ValuesScanState *node)
 {
-	TupleTableSlot *slot;
-	EState	   *estate;
-	ExprContext *econtext;
-	ScanDirection direction;
 	int			curr_idx;
 
 	/*
 	 * get information from the estate and scan state
 	 */
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-	slot = node->ss.ss_ScanTupleSlot;
-	econtext = node->rowcontext;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection direction = estate->es_direction;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
+	ExprContext *econtext = node->rowcontext;
 
 	/*
 	 * Get the next tuple. Return NULL if no more tuples.
@@ -88,11 +84,7 @@ ValuesNext(ValuesScanState *node)
 	{
 		List	   *exprlist = node->exprlists[curr_idx];
 		List	   *exprstatelist = node->exprstatelists[curr_idx];
-		MemoryContext oldContext;
-		Datum	   *values;
-		bool	   *isnull;
 		ListCell   *lc;
-		int			resind;
 
 		/*
 		 * Get rid of any prior cycle's leftovers.  We use ReScanExprContext
@@ -104,7 +96,7 @@ ValuesNext(ValuesScanState *node)
 		/*
 		 * Do per-VALUES-row work in the per-tuple context.
 		 */
-		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+		MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 		/*
 		 * Unless we already made the expression eval state for this row,
@@ -136,10 +128,10 @@ ValuesNext(ValuesScanState *node)
 		 * Compute the expressions and build a virtual result tuple. We
 		 * already did ExecClearTuple(slot).
 		 */
-		values = slot->tts_values;
-		isnull = slot->tts_isnull;
+		Datum	   *values = slot->tts_values;
+		bool	   *isnull = slot->tts_isnull;
 
-		resind = 0;
+		int			resind = 0;
 		foreach(lc, exprstatelist)
 		{
 			ExprState  *estate = (ExprState *) lfirst(lc);
@@ -210,11 +202,7 @@ ExecValuesScan(PlanState *pstate)
 ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
-	ValuesScanState *scanstate;
-	TupleDesc	tupdesc;
 	ListCell   *vtl;
-	int			i;
-	PlanState  *planstate;
 
 	/*
 	 * ValuesScan should not have any children.
@@ -225,7 +213,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * create new ScanState for node
 	 */
-	scanstate = makeNode(ValuesScanState);
+	ValuesScanState *scanstate = makeNode(ValuesScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecValuesScan;
@@ -233,7 +221,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * Miscellaneous initialization
 	 */
-	planstate = &scanstate->ss.ps;
+	PlanState  *planstate = &scanstate->ss.ps;
 
 	/*
 	 * Create expression contexts.  We need two, one for per-sublist
@@ -247,7 +235,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * Get info about values list, initialize scan slot with it.
 	 */
-	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
+	TupleDesc	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
 	ExecInitScanTupleSlot(estate, &scanstate->ss, tupdesc, &TTSOpsVirtual);
 
 	/*
@@ -282,7 +270,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 		palloc(scanstate->array_len * sizeof(List *));
 	scanstate->exprstatelists = (List **)
 		palloc0(scanstate->array_len * sizeof(List *));
-	i = 0;
+	int			i = 0;
 	foreach(vtl, node->values_lists)
 	{
 		List	   *exprs = lfirst_node(List, vtl);
@@ -296,7 +284,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 		if (estate->es_subplanstates &&
 			contain_subplans((Node *) exprs))
 		{
-			int			saved_jit_flags;
 
 			/*
 			 * As these expressions are only used once, disable JIT for them.
@@ -305,7 +292,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 			 * use of JIT *within* a subplan, since that's initialized
 			 * separately; this just affects the upper-level subexpressions.
 			 */
-			saved_jit_flags = estate->es_jit_flags;
+			int			saved_jit_flags = estate->es_jit_flags;
 			estate->es_jit_flags = PGJIT_NONE;
 
 			scanstate->exprstatelists[i] = ExecInitExprList(exprs,

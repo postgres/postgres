@@ -57,7 +57,6 @@ BuildRestoreCommand(const char *restoreCommand,
 			{
 				case 'p':
 					{
-						char	   *nativePath;
 
 						/* %p: relative path of target file */
 						if (xlogpath == NULL)
@@ -72,7 +71,7 @@ BuildRestoreCommand(const char *restoreCommand,
 						 * input with the conversion done via
 						 * make_native_path().
 						 */
-						nativePath = pstrdup(xlogpath);
+						char	   *nativePath = pstrdup(xlogpath);
 						make_native_path(nativePath);
 						appendStringInfoString(&result,
 											   nativePath);

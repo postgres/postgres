@@ -44,11 +44,10 @@ euc_kr_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_KR, PG_MULE_INTERNAL);
 
-	converted = euc_kr2mic(src, dest, len, noError);
+	int			converted = euc_kr2mic(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -60,11 +59,10 @@ mic_to_euc_kr(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	bool		noError = PG_GETARG_BOOL(5);
-	int			converted;
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_KR);
 
-	converted = mic2euc_kr(src, dest, len, noError);
+	int			converted = mic2euc_kr(src, dest, len, noError);
 
 	PG_RETURN_INT32(converted);
 }

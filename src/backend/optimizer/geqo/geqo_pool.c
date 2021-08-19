@@ -41,12 +41,10 @@ static int	compare(const void *arg1, const void *arg2);
 Pool *
 alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 {
-	Pool	   *new_pool;
-	Chromosome *chromo;
 	int			i;
 
 	/* pool */
-	new_pool = (Pool *) palloc(sizeof(Pool));
+	Pool	   *new_pool = (Pool *) palloc(sizeof(Pool));
 	new_pool->size = (int) pool_size;
 	new_pool->string_length = (int) string_length;
 
@@ -54,7 +52,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 	new_pool->data = (Chromosome *) palloc(pool_size * sizeof(Chromosome));
 
 	/* all gene */
-	chromo = (Chromosome *) new_pool->data; /* vector of all chromos */
+	Chromosome *chromo = (Chromosome *) new_pool->data; /* vector of all chromos */
 	for (i = 0; i < pool_size; i++)
 		chromo[i].string = palloc((string_length + 1) * sizeof(Gene));
 
@@ -68,11 +66,10 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 void
 free_pool(PlannerInfo *root, Pool *pool)
 {
-	Chromosome *chromo;
 	int			i;
 
 	/* all gene */
-	chromo = (Chromosome *) pool->data; /* vector of all chromos */
+	Chromosome *chromo = (Chromosome *) pool->data; /* vector of all chromos */
 	for (i = 0; i < pool->size; i++)
 		pfree(chromo[i].string);
 
@@ -91,7 +88,6 @@ void
 random_init_pool(PlannerInfo *root, Pool *pool)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
-	int			i;
 	int			bad = 0;
 
 	/*
@@ -102,7 +98,7 @@ random_init_pool(PlannerInfo *root, Pool *pool)
 	 * this probably means something is broken, and we shouldn't just let
 	 * ourselves get stuck in an infinite loop.
 	 */
-	i = 0;
+	int			i = 0;
 	while (i < pool->size)
 	{
 		init_tour(root, chromo[i].string, pool->string_length);
@@ -161,9 +157,8 @@ compare(const void *arg1, const void *arg2)
 Chromosome *
 alloc_chromo(PlannerInfo *root, int string_length)
 {
-	Chromosome *chromo;
 
-	chromo = (Chromosome *) palloc(sizeof(Chromosome));
+	Chromosome *chromo = (Chromosome *) palloc(sizeof(Chromosome));
 	chromo->string = (Gene *) palloc((string_length + 1) * sizeof(Gene));
 
 	return chromo;

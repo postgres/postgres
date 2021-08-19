@@ -79,10 +79,6 @@ void
 expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 						 RangeTblEntry *rte, Index rti)
 {
-	Oid			parentOID;
-	Relation	oldrelation;
-	LOCKMODE	lockmode;
-	PlanRowMark *oldrc;
 	bool		old_isParent = false;
 	int			old_allMarkTypes = 0;
 
@@ -96,7 +92,7 @@ expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 
 	Assert(rte->rtekind == RTE_RELATION);
 
-	parentOID = rte->relid;
+	Oid			parentOID = rte->relid;
 
 	/*
 	 * We used to check has_subclass() here, but there's no longer any need
@@ -111,15 +107,15 @@ expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 	 * those relations in the parse/rewrite/plan pipeline.  Child rels should
 	 * use the same lockmode as their parent.
 	 */
-	oldrelation = table_open(parentOID, NoLock);
-	lockmode = rte->rellockmode;
+	Relation	oldrelation = table_open(parentOID, NoLock);
+	LOCKMODE	lockmode = rte->rellockmode;
 
 	/*
 	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
 	 * PlanRowMark as isParent = true, and generate a new PlanRowMark for each
 	 * child.
 	 */
-	oldrc = get_plan_rowmark(root->rowMarks, rti);
+	PlanRowMark *oldrc = get_plan_rowmark(root->rowMarks, rti);
 	if (oldrc)
 	{
 		old_isParent = oldrc->isParent;
@@ -150,11 +146,10 @@ expand_inherited_rtentry(PlannerInfo *root, RelOptInfo *rel,
 		 * that partitioned tables are not allowed to have inheritance
 		 * children, so it's not possible for both cases to apply.)
 		 */
-		List	   *inhOIDs;
 		ListCell   *l;
 
 		/* Scan for all members of inheritance set, acquire needed locks */
-		inhOIDs = find_all_inheritors(parentOID, lockmode, NULL);
+		List	   *inhOIDs = find_all_inheritors(parentOID, lockmode, NULL);
 
 		/*
 		 * We used to special-case the situation where the table no longer has
@@ -307,16 +302,13 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 						   Index parentRTindex, Relation parentrel,
 						   PlanRowMark *top_parentrc, LOCKMODE lockmode)
 {
-	PartitionDesc partdesc;
 	Bitmapset  *live_parts;
-	int			num_live_parts;
-	int			i;
 
 	check_stack_depth();
 
 	Assert(parentrte->inh);
 
-	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
+	PartitionDesc partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
 										parentrel);
 
 	/* A partitioned table should always have a partition descriptor. */
@@ -351,7 +343,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	relinfo->live_parts = live_parts = prune_append_rel_partitions(relinfo);
 
 	/* Expand simple_rel_array and friends to hold child objects. */
-	num_live_parts = bms_num_members(live_parts);
+	int			num_live_parts = bms_num_members(live_parts);
 	if (num_live_parts > 0)
 		expand_planner_arrays(root, num_live_parts);
 
@@ -369,17 +361,15 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * traditional inheritance, we don't need a child RTE for the partitioned
 	 * table itself, because it's not going to be scanned.
 	 */
-	i = -1;
+	int			i = -1;
 	while ((i = bms_next_member(live_parts, i)) >= 0)
 	{
 		Oid			childOID = partdesc->oids[i];
-		Relation	childrel;
 		RangeTblEntry *childrte;
 		Index		childRTindex;
-		RelOptInfo *childrelinfo;
 
 		/* Open rel, acquiring required locks */
-		childrel = table_open(childOID, lockmode);
+		Relation	childrel = table_open(childOID, lockmode);
 
 		/*
 		 * Temporary partitions belonging to other sessions should have been
@@ -395,7 +385,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 										&childrte, &childRTindex);
 
 		/* Create the otherrel RelOptInfo too. */
-		childrelinfo = build_simple_rel(root, childRTindex, relinfo);
+		RelOptInfo *childrelinfo = build_simple_rel(root, childRTindex, relinfo);
 		relinfo->part_rels[i] = childrelinfo;
 		relinfo->all_partrels = bms_add_members(relinfo->all_partrels,
 												childrelinfo->relids);
@@ -441,12 +431,6 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	Query	   *parse = root->parse;
 	Oid			parentOID = RelationGetRelid(parentrel);
 	Oid			childOID = RelationGetRelid(childrel);
-	RangeTblEntry *childrte;
-	Index		childRTindex;
-	AppendRelInfo *appinfo;
-	TupleDesc	child_tupdesc;
-	List	   *parent_colnames;
-	List	   *child_colnames;
 
 	/*
 	 * Build an RTE for the child, and attach to query's rangetable list. We
@@ -463,7 +447,7 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	 * child table's column ordering, which we do below, so a "flat" copy is
 	 * sufficient to start with.
 	 */
-	childrte = makeNode(RangeTblEntry);
+	RangeTblEntry *childrte = makeNode(RangeTblEntry);
 	memcpy(childrte, parentrte, sizeof(RangeTblEntry));
 	Assert(parentrte->rtekind == RTE_RELATION); /* else this is dubious */
 	childrte->relid = childOID;
@@ -481,14 +465,14 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 
 	/* Link not-yet-fully-filled child RTE into data structures */
 	parse->rtable = lappend(parse->rtable, childrte);
-	childRTindex = list_length(parse->rtable);
+	Index		childRTindex = list_length(parse->rtable);
 	*childrte_p = childrte;
 	*childRTindex_p = childRTindex;
 
 	/*
 	 * Build an AppendRelInfo struct for each parent/child pair.
 	 */
-	appinfo = make_append_rel_info(parentrel, childrel,
+	AppendRelInfo *appinfo = make_append_rel_info(parentrel, childrel,
 								   parentRTindex, childRTindex);
 	root->append_rel_list = lappend(root->append_rel_list, appinfo);
 
@@ -503,9 +487,9 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	 * aliases right to start with.  Note that setting childrte->alias forces
 	 * ruleutils.c to use these column names, which it otherwise would not.)
 	 */
-	child_tupdesc = RelationGetDescr(childrel);
-	parent_colnames = parentrte->eref->colnames;
-	child_colnames = NIL;
+	TupleDesc	child_tupdesc = RelationGetDescr(childrel);
+	List	   *parent_colnames = parentrte->eref->colnames;
+	List	   *child_colnames = NIL;
 	for (int cattno = 0; cattno < child_tupdesc->natts; cattno++)
 	{
 		Form_pg_attribute att = TupleDescAttr(child_tupdesc, cattno);
@@ -622,7 +606,6 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 		/* Non-leaf partitions don't need any row identity info. */
 		if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
 		{
-			Var		   *rrvar;
 
 			root->leaf_result_relids = bms_add_member(root->leaf_result_relids,
 													  childRTindex);
@@ -633,7 +616,7 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 			 * pruning, we wouldn't really need this, but it's not worth
 			 * thrashing about to avoid it.)
 			 */
-			rrvar = makeVar(childRTindex,
+			Var		   *rrvar = makeVar(childRTindex,
 							TableOidAttributeNumber,
 							OIDOID,
 							-1,
@@ -664,7 +647,6 @@ translate_col_privs(const Bitmapset *parent_privs,
 					List *translated_vars)
 {
 	Bitmapset  *child_privs = NULL;
-	bool		whole_row;
 	int			attno;
 	ListCell   *lc;
 
@@ -678,7 +660,7 @@ translate_col_privs(const Bitmapset *parent_privs,
 	}
 
 	/* Check if parent has whole-row reference */
-	whole_row = bms_is_member(InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber,
+	bool		whole_row = bms_is_member(InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber,
 							  parent_privs);
 
 	/* And now translate the regular user attributes, using the vars list */
@@ -719,8 +701,6 @@ expand_appendrel_subquery(PlannerInfo *root, RelOptInfo *rel,
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
 		Index		childRTindex = appinfo->child_relid;
-		RangeTblEntry *childrte;
-		RelOptInfo *childrel;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != rti)
@@ -728,11 +708,11 @@ expand_appendrel_subquery(PlannerInfo *root, RelOptInfo *rel,
 
 		/* find the child RTE, which should already exist */
 		Assert(childRTindex < root->simple_rel_array_size);
-		childrte = root->simple_rte_array[childRTindex];
+		RangeTblEntry *childrte = root->simple_rte_array[childRTindex];
 		Assert(childrte != NULL);
 
 		/* Build the child RelOptInfo. */
-		childrel = build_simple_rel(root, childRTindex, rel);
+		RelOptInfo *childrel = build_simple_rel(root, childRTindex, rel);
 
 		/* Child may itself be an inherited rel, either table or subquery. */
 		if (childrte->inh)
@@ -755,8 +735,6 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 					  RelOptInfo *childrel, RangeTblEntry *childRTE,
 					  AppendRelInfo *appinfo)
 {
-	List	   *childquals;
-	Index		cq_min_security;
 	ListCell   *lc;
 
 	/*
@@ -767,16 +745,15 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 	 * constant or pseudoconstant.  (We must process them separately to keep
 	 * track of the security level of each qual.)
 	 */
-	childquals = NIL;
-	cq_min_security = UINT_MAX;
+	List	   *childquals = NIL;
+	Index		cq_min_security = UINT_MAX;
 	foreach(lc, parentrel->baserestrictinfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
-		Node	   *childqual;
 		ListCell   *lc2;
 
 		Assert(IsA(rinfo, RestrictInfo));
-		childqual = adjust_appendrel_attrs(root,
+		Node	   *childqual = adjust_appendrel_attrs(root,
 										   (Node *) rinfo->clause,
 										   1, &appinfo);
 		childqual = eval_const_expressions(root, childqual);
@@ -796,10 +773,9 @@ apply_child_basequals(PlannerInfo *root, RelOptInfo *parentrel,
 		foreach(lc2, make_ands_implicit((Expr *) childqual))
 		{
 			Node	   *onecq = (Node *) lfirst(lc2);
-			bool		pseudoconstant;
 
 			/* check for pseudoconstant (no Vars or volatile functions) */
-			pseudoconstant =
+			bool		pseudoconstant =
 				!contain_vars_of_level(onecq, 0) &&
 				!contain_volatile_functions(onecq);
 			if (pseudoconstant)

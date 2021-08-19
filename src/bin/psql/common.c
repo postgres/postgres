@@ -130,13 +130,12 @@ psql_get_variable(const char *varname, PsqlScanQuoteType quote,
 				  void *passthrough)
 {
 	char	   *result = NULL;
-	const char *value;
 
 	/* In an inactive \if branch, suppress all variable substitutions */
 	if (passthrough && !conditional_active((ConditionalStack) passthrough))
 		return NULL;
 
-	value = GetVariable(pset.vars, varname);
+	const char *value = GetVariable(pset.vars, varname);
 	if (!value)
 		return NULL;
 
@@ -294,9 +293,8 @@ ConnectionUp(void)
 static bool
 CheckConnection(void)
 {
-	bool		OK;
 
-	OK = ConnectionUp();
+	bool		OK = ConnectionUp();
 	if (!OK)
 	{
 		if (!pset.cur_cmd_interactive)
@@ -480,10 +478,6 @@ ClearOrSaveResult(PGresult *result)
 static void
 PrintTiming(double elapsed_msec)
 {
-	double		seconds;
-	double		minutes;
-	double		hours;
-	double		days;
 
 	if (elapsed_msec < 1000.0)
 	{
@@ -498,8 +492,8 @@ PrintTiming(double elapsed_msec)
 	 * on "s" or otherwise annotate it.  Forcing the display to include
 	 * minutes seems like a better solution.
 	 */
-	seconds = elapsed_msec / 1000.0;
-	minutes = floor(seconds / 60.0);
+	double		seconds = elapsed_msec / 1000.0;
+	double		minutes = floor(seconds / 60.0);
 	seconds -= 60.0 * minutes;
 	if (minutes < 60.0)
 	{
@@ -508,7 +502,7 @@ PrintTiming(double elapsed_msec)
 		return;
 	}
 
-	hours = floor(minutes / 60.0);
+	double		hours = floor(minutes / 60.0);
 	minutes -= 60.0 * hours;
 	if (hours < 24.0)
 	{
@@ -517,7 +511,7 @@ PrintTiming(double elapsed_msec)
 		return;
 	}
 
-	days = floor(hours / 24.0);
+	double		days = floor(hours / 24.0);
 	hours -= 24.0 * days;
 	printf(_("Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"),
 		   elapsed_msec, days, (int) hours, (int) minutes, seconds);
@@ -539,7 +533,6 @@ PrintTiming(double elapsed_msec)
 PGresult *
 PSQLexec(const char *query)
 {
-	PGresult   *res;
 
 	if (!pset.db)
 	{
@@ -568,7 +561,7 @@ PSQLexec(const char *query)
 
 	SetCancelConn(pset.db);
 
-	res = PQexec(pset.db, query);
+	PGresult   *res = PQexec(pset.db, query);
 
 	ResetCancelConn();
 
@@ -594,11 +587,9 @@ PSQLexec(const char *query)
 int
 PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout)
 {
-	PGresult   *res;
 	double		elapsed_msec = 0;
 	instr_time	before;
 	instr_time	after;
-	FILE	   *fout;
 
 	if (!pset.db)
 	{
@@ -611,7 +602,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout)
 	if (pset.timing)
 		INSTR_TIME_SET_CURRENT(before);
 
-	res = PQexec(pset.db, query);
+	PGresult   *res = PQexec(pset.db, query);
 
 	ResetCancelConn();
 
@@ -639,7 +630,7 @@ PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *printQueryFout)
 		return 0;
 	}
 
-	fout = printQueryFout ? printQueryFout : pset.queryFout;
+	FILE	   *fout = printQueryFout ? printQueryFout : pset.queryFout;
 
 	switch (PQresultStatus(res))
 	{
@@ -783,11 +774,10 @@ StoreQueryTuple(const PGresult *result)
 		for (i = 0; i < PQnfields(result); i++)
 		{
 			char	   *colname = PQfname(result, i);
-			char	   *varname;
 			char	   *value;
 
 			/* concatenate prefix and column name */
-			varname = psprintf("%s%s", pset.gset_prefix, colname);
+			char	   *varname = psprintf("%s%s", pset.gset_prefix, colname);
 
 			if (VariableHasHook(pset.vars, varname))
 			{
@@ -917,9 +907,7 @@ ProcessResult(PGresult **results)
 
 	for (;;)
 	{
-		ExecStatusType result_status;
 		bool		is_copy;
-		PGresult   *next_result;
 
 		if (!AcceptResult(*results))
 		{
@@ -932,7 +920,7 @@ ProcessResult(PGresult **results)
 			break;
 		}
 
-		result_status = PQresultStatus(*results);
+		ExecStatusType result_status = PQresultStatus(*results);
 		switch (result_status)
 		{
 			case PGRES_EMPTY_QUERY:
@@ -1058,7 +1046,7 @@ ProcessResult(PGresult **results)
 		 * string, it will return NULL.  Otherwise, we'll have other results
 		 * to process that may include other COPYs.  We keep the last result.
 		 */
-		next_result = PQgetResult(pset.db);
+		PGresult   *next_result = PQgetResult(pset.db);
 		if (!next_result)
 			break;
 
@@ -1380,9 +1368,8 @@ SendQuery(const char *query)
 
 		if (svptcmd)
 		{
-			PGresult   *svptres;
 
-			svptres = PQexec(pset.db, svptcmd);
+			PGresult   *svptres = PQexec(pset.db, svptcmd);
 			if (PQresultStatus(svptres) != PGRES_COMMAND_OK)
 			{
 				pg_log_info("%s", PQerrorMessage(pset.db));
@@ -1471,8 +1458,6 @@ sendquery_cleanup:
 static bool
 DescribeQuery(const char *query, double *elapsed_msec)
 {
-	PGresult   *results;
-	bool		OK;
 	instr_time	before,
 				after;
 
@@ -1489,7 +1474,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
 	 * anyway.  (So there's no great need to clear it when done, which is a
 	 * good thing because libpq provides no easy way to do that.)
 	 */
-	results = PQprepare(pset.db, "", query, 0, NULL);
+	PGresult   *results = PQprepare(pset.db, "", query, 0, NULL);
 	if (PQresultStatus(results) != PGRES_COMMAND_OK)
 	{
 		pg_log_info("%s", PQerrorMessage(pset.db));
@@ -1500,7 +1485,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
 	PQclear(results);
 
 	results = PQdescribePrepared(pset.db, "");
-	OK = AcceptResult(results) &&
+	bool		OK = AcceptResult(results) &&
 		(PQresultStatus(results) == PGRES_COMMAND_OK);
 	if (OK && results)
 	{
@@ -1519,14 +1504,12 @@ DescribeQuery(const char *query, double *elapsed_msec)
 
 			for (i = 0; i < PQnfields(results); i++)
 			{
-				const char *name;
-				char	   *escname;
 
 				if (i > 0)
 					appendPQExpBufferStr(&buf, ",");
 
-				name = PQfname(results, i);
-				escname = PQescapeLiteral(pset.db, name, strlen(name));
+				const char *name = PQfname(results, i);
+				char	   *escname = PQescapeLiteral(pset.db, name, strlen(name));
 
 				if (escname == NULL)
 				{
@@ -1909,7 +1892,6 @@ skip_white_space(const char *query)
 static bool
 command_no_begin(const char *query)
 {
-	int			wordlen;
 
 	/*
 	 * First we must advance over any whitespace and comments.
@@ -1919,7 +1901,7 @@ command_no_begin(const char *query)
 	/*
 	 * Check word length (since "beginx" is not "begin").
 	 */
-	wordlen = 0;
+	int			wordlen = 0;
 	while (isalpha((unsigned char) query[wordlen]))
 		wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
@@ -2124,7 +2106,6 @@ command_no_begin(const char *query)
 static bool
 is_select_command(const char *query)
 {
-	int			wordlen;
 
 	/*
 	 * First advance over any whitespace, comments and left parentheses.
@@ -2141,7 +2122,7 @@ is_select_command(const char *query)
 	/*
 	 * Check word length (since "selectx" is not "select").
 	 */
-	wordlen = 0;
+	int			wordlen = 0;
 	while (isalpha((unsigned char) query[wordlen]))
 		wordlen += PQmblenBounded(&query[wordlen], pset.encoding);
 
@@ -2161,12 +2142,11 @@ is_select_command(const char *query)
 bool
 is_superuser(void)
 {
-	const char *val;
 
 	if (!pset.db)
 		return false;
 
-	val = PQparameterStatus(pset.db, "is_superuser");
+	const char *val = PQparameterStatus(pset.db, "is_superuser");
 
 	if (val && strcmp(val, "on") == 0)
 		return true;
@@ -2181,12 +2161,11 @@ is_superuser(void)
 bool
 standard_strings(void)
 {
-	const char *val;
 
 	if (!pset.db)
 		return false;
 
-	val = PQparameterStatus(pset.db, "standard_conforming_strings");
+	const char *val = PQparameterStatus(pset.db, "standard_conforming_strings");
 
 	if (val && strcmp(val, "on") == 0)
 		return true;
@@ -2201,12 +2180,11 @@ standard_strings(void)
 const char *
 session_username(void)
 {
-	const char *val;
 
 	if (!pset.db)
 		return NULL;
 
-	val = PQparameterStatus(pset.db, "session_authorization");
+	const char *val = PQparameterStatus(pset.db, "session_authorization");
 	if (val)
 		return val;
 	else
@@ -2235,13 +2213,12 @@ expand_tilde(char **filename)
 	/* try tilde expansion */
 	if (**filename == '~')
 	{
-		char	   *fn;
 		char		oldp,
 				   *p;
 		struct passwd *pw;
 		char		home[MAXPGPATH];
 
-		fn = *filename;
+		char	   *fn = *filename;
 		*home = '\0';
 
 		p = fn + 1;
@@ -2259,9 +2236,8 @@ expand_tilde(char **filename)
 		*p = oldp;
 		if (strlen(home) != 0)
 		{
-			char	   *newfn;
 
-			newfn = psprintf("%s%s", home, p);
+			char	   *newfn = psprintf("%s%s", home, p);
 			free(fn);
 			*filename = newfn;
 		}

@@ -44,12 +44,11 @@ ecpg_sqlda_align_add_size(long offset, int alignment, int size, long *current, l
 static long
 sqlda_compat_empty_size(const PGresult *res)
 {
-	long		offset;
 	int			i;
 	int			sqld = PQnfields(res);
 
 	/* Initial size to store main structure and field structures */
-	offset = sizeof(struct sqlda_compat) + sqld * sizeof(struct sqlvar_compat);
+	long		offset = sizeof(struct sqlda_compat) + sqld * sizeof(struct sqlvar_compat);
 
 	/* Add space for field names */
 	for (i = 0; i < sqld; i++)
@@ -117,9 +116,8 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 				if (!PQgetisnull(res, row, i))
 				{
 					char	   *val = PQgetvalue(res, row, i);
-					numeric    *num;
 
-					num = PGTYPESnumeric_from_asc(val, NULL);
+					numeric    *num = PGTYPESnumeric_from_asc(val, NULL);
 					if (!num)
 						break;
 					if (num->buf)
@@ -156,9 +154,8 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 static long
 sqlda_compat_total_size(const PGresult *res, int row, enum COMPAT_MODE compat)
 {
-	long		offset;
 
-	offset = sqlda_compat_empty_size(res);
+	long		offset = sqlda_compat_empty_size(res);
 
 	if (row < 0)
 		return offset;
@@ -170,11 +167,10 @@ sqlda_compat_total_size(const PGresult *res, int row, enum COMPAT_MODE compat)
 static long
 sqlda_native_empty_size(const PGresult *res)
 {
-	long		offset;
 	int			sqld = PQnfields(res);
 
 	/* Initial size to store main structure and field structures */
-	offset = sizeof(struct sqlda_struct) + (sqld - 1) * sizeof(struct sqlvar_struct);
+	long		offset = sizeof(struct sqlda_struct) + (sqld - 1) * sizeof(struct sqlvar_struct);
 
 	/* Add padding to the first field value */
 	ecpg_sqlda_align_add_size(offset, sizeof(int), 0, &offset, NULL);
@@ -185,9 +181,8 @@ sqlda_native_empty_size(const PGresult *res)
 static long
 sqlda_native_total_size(const PGresult *res, int row, enum COMPAT_MODE compat)
 {
-	long		offset;
 
-	offset = sqlda_native_empty_size(res);
+	long		offset = sqlda_native_empty_size(res);
 
 	if (row < 0)
 		return offset;
@@ -204,22 +199,17 @@ sqlda_native_total_size(const PGresult *res, int row, enum COMPAT_MODE compat)
 struct sqlda_compat *
 ecpg_build_compat_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compat)
 {
-	struct sqlda_compat *sqlda;
-	struct sqlvar_compat *sqlvar;
-	char	   *fname;
-	long		size;
-	int			sqld;
 	int			i;
 
-	size = sqlda_compat_total_size(res, row, compat);
-	sqlda = (struct sqlda_compat *) ecpg_alloc(size, line);
+	long		size = sqlda_compat_total_size(res, row, compat);
+	struct sqlda_compat *sqlda = (struct sqlda_compat *) ecpg_alloc(size, line);
 	if (!sqlda)
 		return NULL;
 
 	memset(sqlda, 0, size);
-	sqlvar = (struct sqlvar_compat *) (sqlda + 1);
-	sqld = PQnfields(res);
-	fname = (char *) (sqlvar + sqld);
+	struct sqlvar_compat *sqlvar = (struct sqlvar_compat *) (sqlda + 1);
+	int			sqld = PQnfields(res);
+	char	   *fname = (char *) (sqlvar + sqld);
 
 	sqlda->sqld = sqld;
 	ecpg_log("ecpg_build_compat_sqlda on line %d sqld = %d\n", line, sqld);
@@ -270,7 +260,6 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 	 */
 	for (i = 0; i < sqlda->sqld; i++)
 	{
-		int			isnull;
 		int			datalen;
 		bool		set_data = true;
 
@@ -322,8 +311,6 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				break;
 			case ECPGt_numeric:
 				{
-					numeric    *num;
-					char	   *val;
 
 					set_data = false;
 
@@ -337,8 +324,8 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 						break;
 					}
 
-					val = PQgetvalue(res, row, i);
-					num = PGTYPESnumeric_from_asc(val, NULL);
+					char	   *val = PQgetvalue(res, row, i);
+					numeric    *num = PGTYPESnumeric_from_asc(val, NULL);
 					if (!num)
 					{
 						ECPGset_noind_null(ECPGt_numeric, sqlda->sqlvar[i].sqldata);
@@ -388,7 +375,7 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				break;
 		}
 
-		isnull = PQgetisnull(res, row, i);
+		int			isnull = PQgetisnull(res, row, i);
 		ecpg_log("ecpg_set_compat_sqlda on line %d row %d col %d %s\n", lineno, row, i, isnull ? "IS NULL" : "IS NOT NULL");
 		sqlda->sqlvar[i].sqlind = isnull ? &value_is_null : &value_is_not_null;
 		sqlda->sqlvar[i].sqlitype = ECPGt_short;
@@ -411,12 +398,10 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 struct sqlda_struct *
 ecpg_build_native_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compat)
 {
-	struct sqlda_struct *sqlda;
-	long		size;
 	int			i;
 
-	size = sqlda_native_total_size(res, row, compat);
-	sqlda = (struct sqlda_struct *) ecpg_alloc(size, line);
+	long		size = sqlda_native_total_size(res, row, compat);
+	struct sqlda_struct *sqlda = (struct sqlda_struct *) ecpg_alloc(size, line);
 	if (!sqlda)
 		return NULL;
 
@@ -429,10 +414,9 @@ ecpg_build_native_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compa
 
 	for (i = 0; i < sqlda->sqld; i++)
 	{
-		char	   *fname;
 
 		sqlda->sqlvar[i].sqltype = sqlda_dynamic_type(PQftype(res, i), compat);
-		fname = PQfname(res, i);
+		char	   *fname = PQfname(res, i);
 		sqlda->sqlvar[i].sqlname.length = strlen(fname);
 		strcpy(sqlda->sqlvar[i].sqlname.data, fname);
 	}
@@ -459,7 +443,6 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 	 */
 	for (i = 0; i < sqlda->sqld; i++)
 	{
-		int			isnull;
 		int			datalen;
 		bool		set_data = true;
 
@@ -511,8 +494,6 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				break;
 			case ECPGt_numeric:
 				{
-					numeric    *num;
-					char	   *val;
 
 					set_data = false;
 
@@ -526,8 +507,8 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 						break;
 					}
 
-					val = PQgetvalue(res, row, i);
-					num = PGTYPESnumeric_from_asc(val, NULL);
+					char	   *val = PQgetvalue(res, row, i);
+					numeric    *num = PGTYPESnumeric_from_asc(val, NULL);
 					if (!num)
 					{
 						ECPGset_noind_null(ECPGt_numeric, sqlda->sqlvar[i].sqldata);
@@ -575,7 +556,7 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				break;
 		}
 
-		isnull = PQgetisnull(res, row, i);
+		int			isnull = PQgetisnull(res, row, i);
 		ecpg_log("ecpg_set_native_sqlda on line %d row %d col %d %s\n", lineno, row, i, isnull ? "IS NULL" : "IS NOT NULL");
 		sqlda->sqlvar[i].sqlind = isnull ? &value_is_null : &value_is_not_null;
 		if (!isnull)

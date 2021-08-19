@@ -656,11 +656,10 @@ EstimateRelationMapSpace(void)
 void
 SerializeRelationMap(Size maxSize, char *startAddress)
 {
-	SerializedActiveRelMaps *relmaps;
 
 	Assert(maxSize >= EstimateRelationMapSpace());
 
-	relmaps = (SerializedActiveRelMaps *) startAddress;
+	SerializedActiveRelMaps *relmaps = (SerializedActiveRelMaps *) startAddress;
 	relmaps->active_shared_updates = active_shared_updates;
 	relmaps->active_local_updates = active_local_updates;
 }
@@ -673,7 +672,6 @@ SerializeRelationMap(Size maxSize, char *startAddress)
 void
 RestoreRelationMap(char *startAddress)
 {
-	SerializedActiveRelMaps *relmaps;
 
 	if (active_shared_updates.num_mappings != 0 ||
 		active_local_updates.num_mappings != 0 ||
@@ -681,7 +679,7 @@ RestoreRelationMap(char *startAddress)
 		pending_local_updates.num_mappings != 0)
 		elog(ERROR, "parallel worker has existing mappings");
 
-	relmaps = (SerializedActiveRelMaps *) startAddress;
+	SerializedActiveRelMaps *relmaps = (SerializedActiveRelMaps *) startAddress;
 	active_shared_updates = relmaps->active_shared_updates;
 	active_local_updates = relmaps->active_local_updates;
 }
@@ -700,8 +698,6 @@ load_relmap_file(bool shared, bool lock_held)
 	RelMapFile *map;
 	char		mapfilename[MAXPGPATH];
 	pg_crc32c	crc;
-	int			fd;
-	int			r;
 
 	if (shared)
 	{
@@ -717,7 +713,7 @@ load_relmap_file(bool shared, bool lock_held)
 	}
 
 	/* Read data ... */
-	fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
+	int			fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
@@ -735,7 +731,7 @@ load_relmap_file(bool shared, bool lock_held)
 		LWLockAcquire(RelationMappingLock, LW_SHARED);
 
 	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
-	r = read(fd, map, sizeof(RelMapFile));
+	int			r = read(fd, map, sizeof(RelMapFile));
 	if (r != sizeof(RelMapFile))
 	{
 		if (r < 0)
@@ -803,7 +799,6 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 				  bool write_wal, bool send_sinval, bool preserve_files,
 				  Oid dbid, Oid tsid, const char *dbpath)
 {
-	int			fd;
 	RelMapFile *realmap;
 	char		mapfilename[MAXPGPATH];
 
@@ -835,7 +830,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		realmap = &local_map;
 	}
 
-	fd = OpenTransientFile(mapfilename, O_WRONLY | O_CREAT | PG_BINARY);
+	int			fd = OpenTransientFile(mapfilename, O_WRONLY | O_CREAT | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -845,7 +840,6 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	if (write_wal)
 	{
 		xl_relmap_update xlrec;
-		XLogRecPtr	lsn;
 
 		/* now errors are fatal ... */
 		START_CRIT_SECTION();
@@ -858,7 +852,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		XLogRegisterData((char *) (&xlrec), MinSizeOfRelmapUpdate);
 		XLogRegisterData((char *) newmap, sizeof(RelMapFile));
 
-		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE);
+		XLogRecPtr	lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE);
 
 		/* As always, WAL must hit the disk before the data update does */
 		XLogFlush(lsn);
@@ -1014,7 +1008,6 @@ relmap_redo(XLogReaderState *record)
 	{
 		xl_relmap_update *xlrec = (xl_relmap_update *) XLogRecGetData(record);
 		RelMapFile	newmap;
-		char	   *dbpath;
 
 		if (xlrec->nbytes != sizeof(RelMapFile))
 			elog(PANIC, "relmap_redo: wrong size %u in relmap update record",
@@ -1022,7 +1015,7 @@ relmap_redo(XLogReaderState *record)
 		memcpy(&newmap, xlrec->data, sizeof(newmap));
 
 		/* We need to construct the pathname for this database */
-		dbpath = GetDatabasePath(xlrec->dbid, xlrec->tsid);
+		char	   *dbpath = GetDatabasePath(xlrec->dbid, xlrec->tsid);
 
 		/*
 		 * Write out the new map and send sinval, but of course don't write a

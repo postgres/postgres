@@ -256,10 +256,8 @@ resolve_symlinks(char *path)
 
 	for (;;)
 	{
-		char	   *lsep;
-		int			rllen;
 
-		lsep = last_dir_separator(path);
+		char	   *lsep = last_dir_separator(path);
 		if (lsep)
 		{
 			*lsep = '\0';
@@ -279,7 +277,7 @@ resolve_symlinks(char *path)
 			break;
 
 		errno = 0;
-		rllen = readlink(fname, link_buf, sizeof(link_buf));
+		int			rllen = readlink(fname, link_buf, sizeof(link_buf));
 		if (rllen < 0 || rllen >= sizeof(link_buf))
 		{
 			log_error(errcode_for_file_access(),
@@ -394,10 +392,9 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 int
 pclose_check(FILE *stream)
 {
-	int			exitstatus;
 	char	   *reason;
 
-	exitstatus = pclose(stream);
+	int			exitstatus = pclose(stream);
 
 	if (exitstatus == 0)
 		return 0;				/* all is well */

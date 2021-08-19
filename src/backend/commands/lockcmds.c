@@ -50,9 +50,8 @@ LockTableCommand(LockStmt *lockstmt)
 	{
 		RangeVar   *rv = (RangeVar *) lfirst(p);
 		bool		recurse = rv->inh;
-		Oid			reloid;
 
-		reloid = RangeVarGetRelidExtended(rv, lockstmt->mode,
+		Oid			reloid = RangeVarGetRelidExtended(rv, lockstmt->mode,
 										  lockstmt->nowait ? RVR_NOWAIT : 0,
 										  RangeVarCallbackForLockTable,
 										  (void *) &lockstmt->mode);
@@ -73,13 +72,10 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 							 void *arg)
 {
 	LOCKMODE	lockmode = *(LOCKMODE *) arg;
-	char		relkind;
-	char		relpersistence;
-	AclResult	aclresult;
 
 	if (!OidIsValid(relid))
 		return;					/* doesn't exist, so no permissions check */
-	relkind = get_rel_relkind(relid);
+	char		relkind = get_rel_relkind(relid);
 	if (!relkind)
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
@@ -97,12 +93,12 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	 * Make note if a temporary relation has been accessed in this
 	 * transaction.
 	 */
-	relpersistence = get_rel_persistence(relid);
+	char		relpersistence = get_rel_persistence(relid);
 	if (relpersistence == RELPERSISTENCE_TEMP)
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
 
 	/* Check permissions. */
-	aclresult = LockTableAclCheck(relid, lockmode, GetUserId());
+	AclResult	aclresult = LockTableAclCheck(relid, lockmode, GetUserId());
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 }
@@ -117,10 +113,9 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 static void
 LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait)
 {
-	List	   *children;
 	ListCell   *lc;
 
-	children = find_all_inheritors(reloid, NoLock, NULL);
+	List	   *children = find_all_inheritors(reloid, NoLock, NULL);
 
 	foreach(lc, children)
 	{
@@ -188,7 +183,6 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 		foreach(rtable, query->rtable)
 		{
 			RangeTblEntry *rte = lfirst(rtable);
-			AclResult	aclresult;
 
 			Oid			relid = rte->relid;
 			char		relkind = rte->relkind;
@@ -216,7 +210,7 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 				continue;
 
 			/* Check permissions with the view owner's privilege. */
-			aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
+			AclResult	aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, get_relkind_objtype(relkind), relname);
 
@@ -252,12 +246,10 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,
 				List *ancestor_views)
 {
 	LockViewRecurse_context context;
-	Relation	view;
-	Query	   *viewquery;
 
 	/* caller has already locked the view */
-	view = table_open(reloid, NoLock);
-	viewquery = get_view_query(view);
+	Relation	view = table_open(reloid, NoLock);
+	Query	   *viewquery = get_view_query(view);
 
 	context.lockmode = lockmode;
 	context.nowait = nowait;
@@ -278,7 +270,6 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,
 static AclResult
 LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid)
 {
-	AclResult	aclresult;
 	AclMode		aclmask;
 
 	/* Verify adequate privilege */
@@ -289,7 +280,7 @@ LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid)
 	else
 		aclmask = ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE;
 
-	aclresult = pg_class_aclcheck(reloid, userid, aclmask);
+	AclResult	aclresult = pg_class_aclcheck(reloid, userid, aclmask);
 
 	return aclresult;
 }

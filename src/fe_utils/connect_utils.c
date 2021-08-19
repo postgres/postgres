@@ -139,7 +139,6 @@ PGconn *
 connectMaintenanceDatabase(ConnParams *cparams,
 						   const char *progname, bool echo)
 {
-	PGconn	   *conn;
 
 	/* If a maintenance database name was specified, just connect to it. */
 	if (cparams->dbname)
@@ -147,7 +146,7 @@ connectMaintenanceDatabase(ConnParams *cparams,
 
 	/* Otherwise, try postgres first and then template1. */
 	cparams->dbname = "postgres";
-	conn = connectDatabase(cparams, progname, echo, true, false);
+	PGconn	   *conn = connectDatabase(cparams, progname, echo, true, false);
 	if (!conn)
 	{
 		cparams->dbname = "template1";

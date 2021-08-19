@@ -80,9 +80,8 @@
 IndexScanDesc
 RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
 
-	scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
+	IndexScanDesc scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
 
 	scan->heapRelation = NULL;	/* may be set later */
 	scan->xs_heapfetch = NULL;
@@ -178,15 +177,11 @@ BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull)
 {
 	StringInfoData buf;
-	Form_pg_index idxrec;
-	int			indnkeyatts;
 	int			i;
 	int			keyno;
 	Oid			indexrelid = RelationGetRelid(indexRelation);
-	Oid			indrelid;
-	AclResult	aclresult;
 
-	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(indexRelation);
+	int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(indexRelation);
 
 	/*
 	 * Check permissions- if the user does not have access to view all of the
@@ -198,8 +193,8 @@ BuildIndexValueDescription(Relation indexRelation,
 	 * Next we need to check table-level SELECT access and then, if there is
 	 * no access there, check column-level permissions.
 	 */
-	idxrec = indexRelation->rd_index;
-	indrelid = idxrec->indrelid;
+	Form_pg_index idxrec = indexRelation->rd_index;
+	Oid			indrelid = idxrec->indrelid;
 	Assert(indexrelid == idxrec->indexrelid);
 
 	/* RLS check- if RLS is enabled then we don't return anything. */
@@ -207,7 +202,7 @@ BuildIndexValueDescription(Relation indexRelation,
 		return NULL;
 
 	/* Table-level SELECT is enough, if the user has it */
-	aclresult = pg_class_aclcheck(indrelid, GetUserId(), ACL_SELECT);
+	AclResult	aclresult = pg_class_aclcheck(indrelid, GetUserId(), ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
 	{
 		/*
@@ -297,7 +292,6 @@ index_compute_xid_horizon_for_tuples(Relation irel,
 									 int nitems)
 {
 	TM_IndexDeleteOp delstate;
-	TransactionId latestRemovedXid = InvalidTransactionId;
 	Page		ipage = BufferGetPage(ibuf);
 	IndexTuple	itup;
 
@@ -312,9 +306,8 @@ index_compute_xid_horizon_for_tuples(Relation irel,
 	/* identify what the index tuples about to be deleted point to */
 	for (int i = 0; i < nitems; i++)
 	{
-		ItemId		iitemid;
 
-		iitemid = PageGetItemId(ipage, itemnos[i]);
+		ItemId		iitemid = PageGetItemId(ipage, itemnos[i]);
 		itup = (IndexTuple) PageGetItem(ipage, iitemid);
 
 		Assert(ItemIdIsDead(iitemid));
@@ -330,7 +323,7 @@ index_compute_xid_horizon_for_tuples(Relation irel,
 	}
 
 	/* determine the actual xid horizon */
-	latestRemovedXid = table_index_delete_tuples(hrel, &delstate);
+	TransactionId latestRemovedXid = table_index_delete_tuples(hrel, &delstate);
 
 	/* assert tableam agrees that all items are deletable */
 	Assert(delstate.ndeltids == nitems);
@@ -386,7 +379,6 @@ systable_beginscan(Relation heapRelation,
 				   Snapshot snapshot,
 				   int nkeys, ScanKey key)
 {
-	SysScanDesc sysscan;
 	Relation	irel;
 
 	if (indexOK &&
@@ -396,7 +388,7 @@ systable_beginscan(Relation heapRelation,
 	else
 		irel = NULL;
 
-	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+	SysScanDesc sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = irel;
@@ -560,8 +552,6 @@ systable_getnext(SysScanDesc sysscan)
 bool
 systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 {
-	Snapshot	freshsnap;
-	bool		result;
 
 	Assert(tup == ExecFetchSlotHeapTuple(sysscan->slot, false, NULL));
 
@@ -571,9 +561,9 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 	 * acquire snapshots, so we need not register the snapshot.  Those
 	 * facilities are too low-level to have any business scanning tables.
 	 */
-	freshsnap = GetCatalogSnapshot(RelationGetRelid(sysscan->heap_rel));
+	Snapshot	freshsnap = GetCatalogSnapshot(RelationGetRelid(sysscan->heap_rel));
 
-	result = table_tuple_satisfies_snapshot(sysscan->heap_rel,
+	bool		result = table_tuple_satisfies_snapshot(sysscan->heap_rel,
 											sysscan->slot,
 											freshsnap);
 
@@ -644,7 +634,6 @@ systable_beginscan_ordered(Relation heapRelation,
 						   Snapshot snapshot,
 						   int nkeys, ScanKey key)
 {
-	SysScanDesc sysscan;
 	int			i;
 
 	/* REINDEX can probably be a hard error here ... */
@@ -656,7 +645,7 @@ systable_beginscan_ordered(Relation heapRelation,
 		elog(WARNING, "using index \"%s\" despite IgnoreSystemIndexes",
 			 RelationGetRelationName(indexRelation));
 
-	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
+	SysScanDesc sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = indexRelation;

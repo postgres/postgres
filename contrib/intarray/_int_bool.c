@@ -48,11 +48,10 @@ static int32
 gettoken(WORKSTATE *state, int32 *val)
 {
 	char		nnn[16];
-	int			innn;
 
 	*val = 0;					/* default result */
 
-	innn = 0;
+	int			innn = 0;
 	while (1)
 	{
 		if (innn >= sizeof(nnn))
@@ -89,11 +88,10 @@ gettoken(WORKSTATE *state, int32 *val)
 				}
 				else
 				{
-					long		lval;
 
 					nnn[innn] = '\0';
 					errno = 0;
-					lval = strtol(nnn, NULL, 0);
+					long		lval = strtol(nnn, NULL, 0);
 					*val = (int32) lval;
 					if (errno != 0 || (long) *val != lval)
 						return ERR;
@@ -421,13 +419,12 @@ boolop(PG_FUNCTION_ARGS)
 	ArrayType  *val = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(1);
 	CHKVAL		chkval;
-	bool		result;
 
 	CHECKARRVALID(val);
 	PREPAREARR(val);
 	chkval.arrb = ARRPTR(val);
 	chkval.arre = chkval.arrb + ARRNELEMS(val);
-	result = execute(GETQUERY(query) + query->size - 1,
+	bool		result = execute(GETQUERY(query) + query->size - 1,
 					 &chkval, NULL, true,
 					 checkcondition_arr);
 	pfree(val);

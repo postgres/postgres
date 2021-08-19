@@ -62,9 +62,8 @@ static char *
 bits_to_text(bits8 *bits, int len)
 {
 	int			i;
-	char	   *str;
 
-	str = palloc(len + 1);
+	char	   *str = palloc(len + 1);
 
 	for (i = 0; i < len; i++)
 		str[i] = (bits[(i / 8)] & (1 << (i % 8))) ? '1' : '0';
@@ -84,11 +83,10 @@ bits_to_text(bits8 *bits, int len)
 static bits8 *
 text_to_bits(char *str, int len)
 {
-	bits8	   *bits;
 	int			off = 0;
 	char		byte = 0;
 
-	bits = palloc(len + 1);
+	bits8	   *bits = palloc(len + 1);
 
 	while (off < len)
 	{
@@ -132,19 +130,17 @@ heap_page_items(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	heap_page_items_state *inter_call_data = NULL;
 	FuncCallContext *fctx;
-	int			raw_page_size;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
+	int			raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 
 	if (SRF_IS_FIRSTCALL())
 	{
 		TupleDesc	tupdesc;
-		MemoryContext mctx;
 
 		if (raw_page_size < SizeOfPageHeaderData)
 			ereport(ERROR,
@@ -152,7 +148,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 					 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
-		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+		MemoryContext mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		inter_call_data = palloc(sizeof(heap_page_items_state));
 
@@ -177,24 +173,18 @@ heap_page_items(PG_FUNCTION_ARGS)
 	if (fctx->call_cntr < fctx->max_calls)
 	{
 		Page		page = inter_call_data->page;
-		HeapTuple	resultTuple;
-		Datum		result;
-		ItemId		id;
 		Datum		values[14];
 		bool		nulls[14];
-		uint16		lp_offset;
-		uint16		lp_flags;
-		uint16		lp_len;
 
 		memset(nulls, 0, sizeof(nulls));
 
 		/* Extract information from the line pointer */
 
-		id = PageGetItemId(page, inter_call_data->offset);
+		ItemId		id = PageGetItemId(page, inter_call_data->offset);
 
-		lp_offset = ItemIdGetOffset(id);
-		lp_flags = ItemIdGetFlags(id);
-		lp_len = ItemIdGetLength(id);
+		uint16		lp_offset = ItemIdGetOffset(id);
+		uint16		lp_flags = ItemIdGetFlags(id);
+		uint16		lp_len = ItemIdGetLength(id);
 
 		values[0] = UInt16GetDatum(inter_call_data->offset);
 		values[1] = UInt16GetDatum(lp_offset);
@@ -211,13 +201,10 @@ heap_page_items(PG_FUNCTION_ARGS)
 			lp_offset == MAXALIGN(lp_offset) &&
 			lp_offset + lp_len <= raw_page_size)
 		{
-			HeapTupleHeader tuphdr;
-			bytea	   *tuple_data_bytea;
-			int			tuple_data_len;
 
 			/* Extract information from the tuple header */
 
-			tuphdr = (HeapTupleHeader) PageGetItem(page, id);
+			HeapTupleHeader tuphdr = (HeapTupleHeader) PageGetItem(page, id);
 
 			values[4] = UInt32GetDatum(HeapTupleHeaderGetRawXmin(tuphdr));
 			values[5] = UInt32GetDatum(HeapTupleHeaderGetRawXmax(tuphdr));
@@ -229,8 +216,8 @@ heap_page_items(PG_FUNCTION_ARGS)
 			values[10] = UInt8GetDatum(tuphdr->t_hoff);
 
 			/* Copy raw tuple data into bytea attribute */
-			tuple_data_len = lp_len - tuphdr->t_hoff;
-			tuple_data_bytea = (bytea *) palloc(tuple_data_len + VARHDRSZ);
+			int			tuple_data_len = lp_len - tuphdr->t_hoff;
+			bytea	   *tuple_data_bytea = (bytea *) palloc(tuple_data_len + VARHDRSZ);
 			SET_VARSIZE(tuple_data_bytea, tuple_data_len + VARHDRSZ);
 			memcpy(VARDATA(tuple_data_bytea), (char *) tuphdr + tuphdr->t_hoff,
 				   tuple_data_len);
@@ -248,9 +235,8 @@ heap_page_items(PG_FUNCTION_ARGS)
 			{
 				if (tuphdr->t_infomask & HEAP_HASNULL)
 				{
-					int			bits_len;
 
-					bits_len =
+					int			bits_len =
 						BITMAPLEN(HeapTupleHeaderGetNatts(tuphdr)) * BITS_PER_BYTE;
 					values[11] = CStringGetTextDatum(bits_to_text(tuphdr->t_bits, bits_len));
 				}
@@ -281,8 +267,8 @@ heap_page_items(PG_FUNCTION_ARGS)
 		}
 
 		/* Build and return the result tuple. */
-		resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
-		result = HeapTupleGetDatum(resultTuple);
+		HeapTuple	resultTuple = heap_form_tuple(inter_call_data->tupd, values, nulls);
+		Datum		result = HeapTupleGetDatum(resultTuple);
 
 		inter_call_data->offset++;
 
@@ -306,19 +292,15 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 						  uint16 t_infomask2, bits8 *t_bits,
 						  bool do_detoast)
 {
-	ArrayBuildState *raw_attrs;
-	int			nattrs;
 	int			i;
 	int			off = 0;
-	Relation	rel;
-	TupleDesc	tupdesc;
 
 	/* Get tuple descriptor from relation OID */
-	rel = relation_open(relid, AccessShareLock);
-	tupdesc = RelationGetDescr(rel);
+	Relation	rel = relation_open(relid, AccessShareLock);
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 
-	raw_attrs = initArrayResult(BYTEAOID, CurrentMemoryContext, false);
-	nattrs = tupdesc->natts;
+	ArrayBuildState *raw_attrs = initArrayResult(BYTEAOID, CurrentMemoryContext, false);
+	int			nattrs = tupdesc->natts;
 
 	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -331,11 +313,10 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 
 	for (i = 0; i < nattrs; i++)
 	{
-		Form_pg_attribute attr;
 		bool		is_null;
 		bytea	   *attr_data = NULL;
 
-		attr = TupleDescAttr(tupdesc, i);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 		/*
 		 * Tuple header can specify fewer attributes than tuple descriptor as
@@ -422,20 +403,14 @@ PG_FUNCTION_INFO_V1(tuple_data_split);
 Datum
 tuple_data_split(PG_FUNCTION_ARGS)
 {
-	Oid			relid;
-	bytea	   *raw_data;
-	uint16		t_infomask;
-	uint16		t_infomask2;
-	char	   *t_bits_str;
 	bool		do_detoast = false;
 	bits8	   *t_bits = NULL;
-	Datum		res;
 
-	relid = PG_GETARG_OID(0);
-	raw_data = PG_ARGISNULL(1) ? NULL : PG_GETARG_BYTEA_P(1);
-	t_infomask = PG_GETARG_INT16(2);
-	t_infomask2 = PG_GETARG_INT16(3);
-	t_bits_str = PG_ARGISNULL(4) ? NULL :
+	Oid			relid = PG_GETARG_OID(0);
+	bytea	   *raw_data = PG_ARGISNULL(1) ? NULL : PG_GETARG_BYTEA_P(1);
+	uint16		t_infomask = PG_GETARG_INT16(2);
+	uint16		t_infomask2 = PG_GETARG_INT16(3);
+	char	   *t_bits_str = PG_ARGISNULL(4) ? NULL :
 		text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	if (PG_NARGS() >= 6)
@@ -455,16 +430,14 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	 */
 	if (t_infomask & HEAP_HASNULL)
 	{
-		int			bits_str_len;
-		int			bits_len;
 
-		bits_len = BITMAPLEN(t_infomask2 & HEAP_NATTS_MASK) * BITS_PER_BYTE;
+		int			bits_len = BITMAPLEN(t_infomask2 & HEAP_NATTS_MASK) * BITS_PER_BYTE;
 		if (!t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("t_bits string must not be NULL")));
 
-		bits_str_len = strlen(t_bits_str);
+		int			bits_str_len = strlen(t_bits_str);
 		if (bits_len != bits_str_len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -484,7 +457,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	}
 
 	/* Split tuple data */
-	res = tuple_data_split_internal(relid, (char *) raw_data + VARHDRSZ,
+	Datum		res = tuple_data_split_internal(relid, (char *) raw_data + VARHDRSZ,
 									VARSIZE(raw_data) - VARHDRSZ,
 									t_infomask, t_infomask2, t_bits,
 									do_detoast);
@@ -512,9 +485,6 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	uint16		t_infomask = PG_GETARG_INT16(0);
 	uint16		t_infomask2 = PG_GETARG_INT16(1);
 	int			cnt = 0;
-	ArrayType  *a;
-	int			bitcnt;
-	Datum	   *flags;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
 
@@ -527,7 +497,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
+	int			bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
 		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
 
 	/* Initialize values and NULL flags arrays */
@@ -544,7 +514,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	}
 
 	/* build set of raw flags */
-	flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
+	Datum	   *flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
 
 	/* decode t_infomask */
 	if ((t_infomask & HEAP_HASNULL) != 0)
@@ -590,7 +560,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 
 	/* build value */
 	Assert(cnt <= bitcnt);
-	a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
+	ArrayType  *a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
 	values[0] = PointerGetDatum(a);
 
 	/*

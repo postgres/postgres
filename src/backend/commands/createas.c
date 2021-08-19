@@ -85,15 +85,11 @@ static ObjectAddress
 create_ctas_internal(List *attrList, IntoClause *into)
 {
 	CreateStmt *create = makeNode(CreateStmt);
-	bool		is_matview;
-	char		relkind;
-	Datum		toast_options;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-	ObjectAddress intoRelationAddr;
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
-	is_matview = (into->viewQuery != NULL);
-	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
+	bool		is_matview = (into->viewQuery != NULL);
+	char		relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
 
 	/*
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
@@ -114,7 +110,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
 	 */
-	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
+	ObjectAddress intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -124,7 +120,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	CommandCounterIncrement();
 
 	/* parse and validate reloptions for the toast table */
-	toast_options = transformRelOptions((Datum) 0,
+	Datum		toast_options = transformRelOptions((Datum) 0,
 										create->options,
 										"toast",
 										validnsps,
@@ -157,7 +153,6 @@ create_ctas_internal(List *attrList, IntoClause *into)
 static ObjectAddress
 create_ctas_nodata(List *tlist, IntoClause *into)
 {
-	List	   *attrList;
 	ListCell   *t,
 			   *lc;
 
@@ -166,7 +161,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 	 * column name list was specified in CREATE TABLE AS, override the column
 	 * names in the query.  (Too few column names are OK, too many are not.)
 	 */
-	attrList = NIL;
+	List	   *attrList = NIL;
 	lc = list_head(into->colNames);
 	foreach(t, tlist)
 	{
@@ -174,7 +169,6 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 
 		if (!tle->resjunk)
 		{
-			ColumnDef  *col;
 			char	   *colname;
 
 			if (lc)
@@ -185,7 +179,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 			else
 				colname = tle->resname;
 
-			col = makeColumnDef(colname,
+			ColumnDef  *col = makeColumnDef(colname,
 								exprType((Node *) tle->expr),
 								exprTypmod((Node *) tle->expr),
 								exprCollation((Node *) tle->expr));
@@ -230,7 +224,6 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 	Query	   *query = castNode(Query, stmt->query);
 	IntoClause *into = stmt->into;
 	bool		is_matview = (into->viewQuery != NULL);
-	DestReceiver *dest;
 	Oid			save_userid = InvalidOid;
 	int			save_sec_context = 0;
 	int			save_nestlevel = 0;
@@ -246,7 +239,7 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 	/*
 	 * Create the tuple receiver object and insert info it will need
 	 */
-	dest = CreateIntoRelDestReceiver(into);
+	DestReceiver *dest = CreateIntoRelDestReceiver(into);
 
 	/*
 	 * The contained Query could be a SELECT, or an EXECUTE utility command.
@@ -392,10 +385,9 @@ GetIntoRelEFlags(IntoClause *intoClause)
 bool
 CreateTableAsRelExists(CreateTableAsStmt *ctas)
 {
-	Oid			nspid;
 	IntoClause *into = ctas->into;
 
-	nspid = RangeVarGetCreationNamespace(into->rel);
+	Oid			nspid = RangeVarGetCreationNamespace(into->rel);
 
 	if (get_relname_relid(into->rel->relname, nspid))
 	{
@@ -448,17 +440,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	IntoClause *into = myState->into;
-	bool		is_matview;
-	List	   *attrList;
-	ObjectAddress intoRelationAddr;
-	Relation	intoRelationDesc;
-	ListCell   *lc;
 	int			attnum;
 
 	Assert(into != NULL);		/* else somebody forgot to set it */
 
 	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
-	is_matview = (into->viewQuery != NULL);
+	bool		is_matview = (into->viewQuery != NULL);
 
 	/*
 	 * Build column definitions using "pre-cooked" type and collation info. If
@@ -466,12 +453,11 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * column names derived from the query.  (Too few column names are OK, too
 	 * many are not.)
 	 */
-	attrList = NIL;
-	lc = list_head(into->colNames);
+	List	   *attrList = NIL;
+	ListCell   *lc = list_head(into->colNames);
 	for (attnum = 0; attnum < typeinfo->natts; attnum++)
 	{
 		Form_pg_attribute attribute = TupleDescAttr(typeinfo, attnum);
-		ColumnDef  *col;
 		char	   *colname;
 
 		if (lc)
@@ -482,7 +468,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		else
 			colname = NameStr(attribute->attname);
 
-		col = makeColumnDef(colname,
+		ColumnDef  *col = makeColumnDef(colname,
 							attribute->atttypid,
 							attribute->atttypmod,
 							attribute->attcollation);
@@ -513,12 +499,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Actually create the target table
 	 */
-	intoRelationAddr = create_ctas_internal(attrList, into);
+	ObjectAddress intoRelationAddr = create_ctas_internal(attrList, into);
 
 	/*
 	 * Finally we can open the target table
 	 */
-	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
+	Relation	intoRelationDesc = table_open(intoRelationAddr.objectId, AccessExclusiveLock);
 
 	/*
 	 * Make sure the constructed table does not have RLS enabled.

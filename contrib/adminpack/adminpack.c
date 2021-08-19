@@ -136,11 +136,10 @@ pg_file_write(PG_FUNCTION_ARGS)
 	text	   *file = PG_GETARG_TEXT_PP(0);
 	text	   *data = PG_GETARG_TEXT_PP(1);
 	bool		replace = PG_GETARG_BOOL(2);
-	int64		count = 0;
 
 	requireSuperuser();
 
-	count = pg_file_write_internal(file, data, replace);
+	int64		count = pg_file_write_internal(file, data, replace);
 
 	PG_RETURN_INT64(count);
 }
@@ -160,9 +159,8 @@ pg_file_write_v1_1(PG_FUNCTION_ARGS)
 	text	   *file = PG_GETARG_TEXT_PP(0);
 	text	   *data = PG_GETARG_TEXT_PP(1);
 	bool		replace = PG_GETARG_BOOL(2);
-	int64		count = 0;
 
-	count = pg_file_write_internal(file, data, replace);
+	int64		count = pg_file_write_internal(file, data, replace);
 
 	PG_RETURN_INT64(count);
 }
@@ -176,10 +174,8 @@ static int64
 pg_file_write_internal(text *file, text *data, bool replace)
 {
 	FILE	   *f;
-	char	   *filename;
-	int64		count = 0;
 
-	filename = convert_and_check_filename(file);
+	char	   *filename = convert_and_check_filename(file);
 
 	if (!replace)
 	{
@@ -201,7 +197,7 @@ pg_file_write_internal(text *file, text *data, bool replace)
 				 errmsg("could not open file \"%s\" for writing: %m",
 						filename)));
 
-	count = fwrite(VARDATA_ANY(data), 1, VARSIZE_ANY_EXHDR(data), f);
+	int64		count = fwrite(VARDATA_ANY(data), 1, VARSIZE_ANY_EXHDR(data), f);
 	if (count != VARSIZE_ANY_EXHDR(data) || FreeFile(f))
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -219,10 +215,9 @@ pg_file_write_internal(text *file, text *data, bool replace)
 Datum
 pg_file_sync(PG_FUNCTION_ARGS)
 {
-	char	   *filename;
 	struct stat fst;
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
+	char	   *filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (stat(filename, &fst) < 0)
 		ereport(ERROR,
@@ -244,25 +239,22 @@ pg_file_sync(PG_FUNCTION_ARGS)
 Datum
 pg_file_rename(PG_FUNCTION_ARGS)
 {
-	text	   *file1;
-	text	   *file2;
 	text	   *file3;
-	bool		result;
 
 	requireSuperuser();
 
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
-	file1 = PG_GETARG_TEXT_PP(0);
-	file2 = PG_GETARG_TEXT_PP(1);
+	text	   *file1 = PG_GETARG_TEXT_PP(0);
+	text	   *file2 = PG_GETARG_TEXT_PP(1);
 
 	if (PG_ARGISNULL(2))
 		file3 = NULL;
 	else
 		file3 = PG_GETARG_TEXT_PP(2);
 
-	result = pg_file_rename_internal(file1, file2, file3);
+	bool		result = pg_file_rename_internal(file1, file2, file3);
 
 	PG_RETURN_BOOL(result);
 }
@@ -279,23 +271,20 @@ pg_file_rename(PG_FUNCTION_ARGS)
 Datum
 pg_file_rename_v1_1(PG_FUNCTION_ARGS)
 {
-	text	   *file1;
-	text	   *file2;
 	text	   *file3;
-	bool		result;
 
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
-	file1 = PG_GETARG_TEXT_PP(0);
-	file2 = PG_GETARG_TEXT_PP(1);
+	text	   *file1 = PG_GETARG_TEXT_PP(0);
+	text	   *file2 = PG_GETARG_TEXT_PP(1);
 
 	if (PG_ARGISNULL(2))
 		file3 = NULL;
 	else
 		file3 = PG_GETARG_TEXT_PP(2);
 
-	result = pg_file_rename_internal(file1, file2, file3);
+	bool		result = pg_file_rename_internal(file1, file2, file3);
 
 	PG_RETURN_BOOL(result);
 }
@@ -311,7 +300,6 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 	char	   *fn1,
 			   *fn2,
 			   *fn3;
-	int			rc;
 
 	fn1 = convert_and_check_filename(file1);
 	fn2 = convert_and_check_filename(file2);
@@ -339,7 +327,7 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 		return false;
 	}
 
-	rc = access(fn3 ? fn3 : fn2, W_OK);
+	int			rc = access(fn3 ? fn3 : fn2, W_OK);
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
@@ -401,11 +389,10 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 Datum
 pg_file_unlink(PG_FUNCTION_ARGS)
 {
-	char	   *filename;
 
 	requireSuperuser();
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
+	char	   *filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (access(filename, W_OK) < 0)
 	{
@@ -441,9 +428,8 @@ pg_file_unlink(PG_FUNCTION_ARGS)
 Datum
 pg_file_unlink_v1_1(PG_FUNCTION_ARGS)
 {
-	char	   *filename;
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
+	char	   *filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (access(filename, W_OK) < 0)
 	{
@@ -503,13 +489,7 @@ static Datum
 pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	AttInMetadata *attinmeta;
-	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
 	if (strcmp(Log_filename, "postgresql-%Y-%m-%d_%H%M%S.log") != 0)
 		ereport(ERROR,
@@ -527,29 +507,28 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 					   TIMESTAMPOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "filename",
 					   TEXTOID, -1, 0);
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
-	dirdesc = AllocateDir(Log_directory);
+	DIR		   *dirdesc = AllocateDir(Log_directory);
 	while ((de = ReadDir(dirdesc, Log_directory)) != NULL)
 	{
 		char	   *values[2];
-		HeapTuple	tuple;
 		char		timestampbuf[32];
 		char	   *field[MAXDATEFIELDS];
 		char		lowstr[MAXDATELEN + 1];
@@ -585,7 +564,7 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 		values[0] = timestampbuf;
 		values[1] = psprintf("%s/%s", Log_directory, de->d_name);
 
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		tuplestore_puttuple(tupstore, tuple);
 	}

@@ -48,9 +48,8 @@ rank_up(WindowObject winobj)
 {
 	bool		up = false;		/* should rank increase? */
 	int64		curpos = WinGetCurrentPosition(winobj);
-	rank_context *context;
 
-	context = (rank_context *)
+	rank_context *context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
 
 	if (context->rank == 0)
@@ -98,11 +97,9 @@ Datum
 window_rank(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	rank_context *context;
-	bool		up;
 
-	up = rank_up(winobj);
-	context = (rank_context *)
+	bool		up = rank_up(winobj);
+	rank_context *context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
 	if (up)
 		context->rank = WinGetCurrentPosition(winobj) + 1;
@@ -118,11 +115,9 @@ Datum
 window_dense_rank(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	rank_context *context;
-	bool		up;
 
-	up = rank_up(winobj);
-	context = (rank_context *)
+	bool		up = rank_up(winobj);
+	rank_context *context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
 	if (up)
 		context->rank++;
@@ -140,14 +135,12 @@ Datum
 window_percent_rank(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	rank_context *context;
-	bool		up;
 	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
 
-	up = rank_up(winobj);
-	context = (rank_context *)
+	bool		up = rank_up(winobj);
+	rank_context *context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
 	if (up)
 		context->rank = WinGetCurrentPosition(winobj) + 1;
@@ -169,14 +162,12 @@ Datum
 window_cume_dist(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	rank_context *context;
-	bool		up;
 	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
 
-	up = rank_up(winobj);
-	context = (rank_context *)
+	bool		up = rank_up(winobj);
+	rank_context *context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
 	if (up || context->rank == 1)
 	{
@@ -211,20 +202,17 @@ Datum
 window_ntile(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	ntile_context *context;
 
-	context = (ntile_context *)
+	ntile_context *context = (ntile_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(ntile_context));
 
 	if (context->ntile == 0)
 	{
 		/* first call */
-		int64		total;
-		int32		nbuckets;
 		bool		isnull;
 
-		total = WinGetPartitionRowCount(winobj);
-		nbuckets = DatumGetInt32(WinGetFuncArgCurrent(winobj, 0, &isnull));
+		int64		total = WinGetPartitionRowCount(winobj);
+		int32		nbuckets = DatumGetInt32(WinGetFuncArgCurrent(winobj, 0, &isnull));
 
 		/*
 		 * per spec: If NT is the null value, then the result is the null
@@ -289,7 +277,6 @@ leadlag_common(FunctionCallInfo fcinfo,
 	WindowObject winobj = PG_WINDOW_OBJECT();
 	int32		offset;
 	bool		const_offset;
-	Datum		result;
 	bool		isnull;
 	bool		isout;
 
@@ -306,7 +293,7 @@ leadlag_common(FunctionCallInfo fcinfo,
 		const_offset = true;
 	}
 
-	result = WinGetFuncArgInPartition(winobj, 0,
+	Datum		result = WinGetFuncArgInPartition(winobj, 0,
 									  (forward ? offset : -offset),
 									  WINDOW_SEEK_CURRENT,
 									  const_offset,
@@ -407,10 +394,9 @@ Datum
 window_first_value(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	Datum		result;
 	bool		isnull;
 
-	result = WinGetFuncArgInFrame(winobj, 0,
+	Datum		result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_HEAD, true,
 								  &isnull, NULL);
 	if (isnull)
@@ -428,10 +414,9 @@ Datum
 window_last_value(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	Datum		result;
 	bool		isnull;
 
-	result = WinGetFuncArgInFrame(winobj, 0,
+	Datum		result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_TAIL, true,
 								  &isnull, NULL);
 	if (isnull)
@@ -449,22 +434,19 @@ Datum
 window_nth_value(PG_FUNCTION_ARGS)
 {
 	WindowObject winobj = PG_WINDOW_OBJECT();
-	bool		const_offset;
-	Datum		result;
 	bool		isnull;
-	int32		nth;
 
-	nth = DatumGetInt32(WinGetFuncArgCurrent(winobj, 1, &isnull));
+	int32		nth = DatumGetInt32(WinGetFuncArgCurrent(winobj, 1, &isnull));
 	if (isnull)
 		PG_RETURN_NULL();
-	const_offset = get_fn_expr_arg_stable(fcinfo->flinfo, 1);
+	bool		const_offset = get_fn_expr_arg_stable(fcinfo->flinfo, 1);
 
 	if (nth <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_NTH_VALUE),
 				 errmsg("argument of nth_value must be greater than zero")));
 
-	result = WinGetFuncArgInFrame(winobj, 0,
+	Datum		result = WinGetFuncArgInFrame(winobj, 0,
 								  nth - 1, WINDOW_SEEK_HEAD, const_offset,
 								  &isnull, NULL);
 	if (isnull)

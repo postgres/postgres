@@ -36,7 +36,6 @@
 void
 copydir(char *fromdir, char *todir, bool recurse)
 {
-	DIR		   *xldir;
 	struct dirent *xlde;
 	char		fromfile[MAXPGPATH * 2];
 	char		tofile[MAXPGPATH * 2];
@@ -46,7 +45,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 				(errcode_for_file_access(),
 				 errmsg("could not create directory \"%s\": %m", todir)));
 
-	xldir = AllocateDir(fromdir);
+	DIR		   *xldir = AllocateDir(fromdir);
 
 	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{

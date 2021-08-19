@@ -42,17 +42,15 @@ ExecLimit(PlanState *pstate)
 {
 	LimitState *node = castNode(LimitState, pstate);
 	ExprContext *econtext = node->ps.ps_ExprContext;
-	ScanDirection direction;
 	TupleTableSlot *slot;
-	PlanState  *outerPlan;
 
 	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from the node
 	 */
-	direction = node->ps.state->es_direction;
-	outerPlan = outerPlanState(node);
+	ScanDirection direction = node->ps.state->es_direction;
+	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
 	 * The main logic is a simple state machine.
@@ -447,7 +445,6 @@ compute_tuples_needed(LimitState *node)
 LimitState *
 ExecInitLimit(Limit *node, EState *estate, int eflags)
 {
-	LimitState *limitstate;
 	Plan	   *outerPlan;
 
 	/* check for unsupported flags */
@@ -456,7 +453,7 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	limitstate = makeNode(LimitState);
+	LimitState *limitstate = makeNode(LimitState);
 	limitstate->ps.plan = (Plan *) node;
 	limitstate->ps.state = estate;
 	limitstate->ps.ExecProcNode = ExecLimit;
@@ -506,11 +503,9 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	 */
 	if (node->limitOption == LIMIT_OPTION_WITH_TIES)
 	{
-		TupleDesc	desc;
-		const TupleTableSlotOps *ops;
 
-		desc = ExecGetResultType(outerPlanState(limitstate));
-		ops = ExecGetResultSlotOps(outerPlanState(limitstate), NULL);
+		TupleDesc	desc = ExecGetResultType(outerPlanState(limitstate));
+		const TupleTableSlotOps *ops = ExecGetResultSlotOps(outerPlanState(limitstate), NULL);
 
 		limitstate->last_slot = ExecInitExtraTupleSlot(estate, desc, ops);
 		limitstate->eqfunction = execTuplesMatchPrepare(desc,

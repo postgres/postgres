@@ -25,9 +25,8 @@
 void
 simple_oid_list_append(SimpleOidList *list, Oid val)
 {
-	SimpleOidListCell *cell;
 
-	cell = (SimpleOidListCell *) pg_malloc(sizeof(SimpleOidListCell));
+	SimpleOidListCell *cell = (SimpleOidListCell *) pg_malloc(sizeof(SimpleOidListCell));
 	cell->next = NULL;
 	cell->val = val;
 
@@ -62,9 +61,8 @@ simple_oid_list_member(SimpleOidList *list, Oid val)
 void
 simple_string_list_append(SimpleStringList *list, const char *val)
 {
-	SimpleStringListCell *cell;
 
-	cell = (SimpleStringListCell *)
+	SimpleStringListCell *cell = (SimpleStringListCell *)
 		pg_malloc(offsetof(SimpleStringListCell, val) + strlen(val) + 1);
 
 	cell->next = NULL;
@@ -105,14 +103,12 @@ simple_string_list_member(SimpleStringList *list, const char *val)
 void
 simple_oid_list_destroy(SimpleOidList *list)
 {
-	SimpleOidListCell *cell;
 
-	cell = list->head;
+	SimpleOidListCell *cell = list->head;
 	while (cell != NULL)
 	{
-		SimpleOidListCell *next;
 
-		next = cell->next;
+		SimpleOidListCell *next = cell->next;
 		pg_free(cell);
 		cell = next;
 	}
@@ -124,14 +120,12 @@ simple_oid_list_destroy(SimpleOidList *list)
 void
 simple_string_list_destroy(SimpleStringList *list)
 {
-	SimpleStringListCell *cell;
 
-	cell = list->head;
+	SimpleStringListCell *cell = list->head;
 	while (cell != NULL)
 	{
-		SimpleStringListCell *next;
 
-		next = cell->next;
+		SimpleStringListCell *next = cell->next;
 		pg_free(cell);
 		cell = next;
 	}
@@ -161,9 +155,8 @@ simple_string_list_not_touched(SimpleStringList *list)
 void
 simple_ptr_list_append(SimplePtrList *list, void *ptr)
 {
-	SimplePtrListCell *cell;
 
-	cell = (SimplePtrListCell *) pg_malloc(sizeof(SimplePtrListCell));
+	SimplePtrListCell *cell = (SimplePtrListCell *) pg_malloc(sizeof(SimplePtrListCell));
 	cell->next = NULL;
 	cell->ptr = ptr;
 

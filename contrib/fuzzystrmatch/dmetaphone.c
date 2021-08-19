@@ -291,12 +291,11 @@ MakeUpper(metastring *s)
 static int
 IsVowel(metastring *s, int pos)
 {
-	char		c;
 
 	if ((pos < 0) || (pos >= s->length))
 		return 0;
 
-	c = *(s->str + pos);
+	char		c = *(s->str + pos);
 	if ((c == 'A') || (c == 'E') || (c == 'I') || (c == 'O') ||
 		(c == 'U') || (c == 'Y'))
 		return 1;
@@ -348,13 +347,12 @@ static int
 StringAt(metastring *s, int start, int length,...)
 {
 	char	   *test;
-	char	   *pos;
 	va_list		ap;
 
 	if ((start < 0) || (start >= s->length))
 		return 0;
 
-	pos = (s->str + start);
+	char	   *pos = (s->str + start);
 	va_start(ap, length);
 
 	do
@@ -377,12 +375,11 @@ StringAt(metastring *s, int start, int length,...)
 static void
 MetaphAdd(metastring *s, const char *new_str)
 {
-	int			add_length;
 
 	if (new_str == NULL)
 		return;
 
-	add_length = strlen(new_str);
+	int			add_length = strlen(new_str);
 	if ((s->length + add_length) > (s->bufsize - 1))
 		IncreaseBuffer(s, add_length);
 
@@ -394,23 +391,17 @@ MetaphAdd(metastring *s, const char *new_str)
 static void
 DoubleMetaphone(char *str, char **codes)
 {
-	int			length;
-	metastring *original;
-	metastring *primary;
-	metastring *secondary;
-	int			current;
-	int			last;
 
-	current = 0;
+	int			current = 0;
 	/* we need the real length and last prior to padding */
-	length = strlen(str);
-	last = length - 1;
-	original = NewMetaString(str);
+	int			length = strlen(str);
+	int			last = length - 1;
+	metastring *original = NewMetaString(str);
 	/* Pad original so we can index beyond end */
 	MetaphAdd(original, "     ");
 
-	primary = NewMetaString("");
-	secondary = NewMetaString("");
+	metastring *primary = NewMetaString("");
+	metastring *secondary = NewMetaString("");
 	primary->free_string_on_destroy = 0;
 	secondary->free_string_on_destroy = 0;
 

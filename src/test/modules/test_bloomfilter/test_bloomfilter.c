@@ -70,12 +70,8 @@ nfalsepos_for_missing_strings(bloom_filter *filter, int64 nelements)
 static void
 create_and_test_bloom(int power, int64 nelements, int callerseed)
 {
-	int			bloom_work_mem;
-	uint64		seed;
-	int64		nfalsepos;
-	bloom_filter *filter;
 
-	bloom_work_mem = (1L << power) / 8L / 1024L;
+	int			bloom_work_mem = (1L << power) / 8L / 1024L;
 
 	elog(DEBUG1, "bloom_work_mem (KB): %d", bloom_work_mem);
 
@@ -85,12 +81,12 @@ create_and_test_bloom(int power, int64 nelements, int callerseed)
 	 * random seed can be recreated through callerseed if the need arises.
 	 * (Don't assume that RAND_MAX cannot exceed PG_INT32_MAX.)
 	 */
-	seed = callerseed < 0 ? random() % PG_INT32_MAX : callerseed;
+	uint64		seed = callerseed < 0 ? random() % PG_INT32_MAX : callerseed;
 
 	/* Create Bloom filter, populate it, and report on false positive rate */
-	filter = bloom_create(nelements, bloom_work_mem, seed);
+	bloom_filter *filter = bloom_create(nelements, bloom_work_mem, seed);
 	populate_with_dummy_strings(filter, nelements);
-	nfalsepos = nfalsepos_for_missing_strings(filter, nelements);
+	int64		nfalsepos = nfalsepos_for_missing_strings(filter, nelements);
 
 	ereport((nfalsepos > nelements * FPOSITIVE_THRESHOLD) ? WARNING : DEBUG1,
 			(errmsg_internal("seed: " UINT64_FORMAT " false positives: " INT64_FORMAT " (%.6f%%) bitset %.2f%% set",

@@ -207,14 +207,13 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 	for (;;)
 	{
 		char		code = pq_getmsgbyte(msg);
-		const char *value;
 
 		if (code == '\0')
 		{
 			pq_getmsgend(msg);
 			break;
 		}
-		value = pq_getmsgrawstring(msg);
+		const char *value = pq_getmsgrawstring(msg);
 
 		switch (code)
 		{

@@ -134,8 +134,6 @@ spg_range_quad_choose(PG_FUNCTION_ARGS)
 	spgChooseOut *out = (spgChooseOut *) PG_GETARG_POINTER(1);
 	RangeType  *inRange = DatumGetRangeTypeP(in->datum),
 			   *centroid;
-	int16		quadrant;
-	TypeCacheEntry *typcache;
 
 	if (in->allTheSame)
 	{
@@ -146,7 +144,7 @@ spg_range_quad_choose(PG_FUNCTION_ARGS)
 		PG_RETURN_VOID();
 	}
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(inRange));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(inRange));
 
 	/*
 	 * A node with no centroid divides ranges purely on whether they're empty
@@ -166,7 +164,7 @@ spg_range_quad_choose(PG_FUNCTION_ARGS)
 	}
 
 	centroid = DatumGetRangeTypeP(in->prefixDatum);
-	quadrant = getQuadrant(typcache, centroid, inRange);
+	int16		quadrant = getQuadrant(typcache, centroid, inRange);
 
 	Assert(quadrant <= in->nNodes);
 
@@ -202,23 +200,19 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 	spgPickSplitIn *in = (spgPickSplitIn *) PG_GETARG_POINTER(0);
 	spgPickSplitOut *out = (spgPickSplitOut *) PG_GETARG_POINTER(1);
 	int			i;
-	int			j;
-	int			nonEmptyCount;
-	RangeType  *centroid;
 	bool		empty;
-	TypeCacheEntry *typcache;
 
 	/* Use the median values of lower and upper bounds as the centroid range */
 	RangeBound *lowerBounds,
 			   *upperBounds;
 
-	typcache = range_get_typcache(fcinfo,
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo,
 								  RangeTypeGetOid(DatumGetRangeTypeP(in->datums[0])));
 
 	/* Allocate memory for bounds */
 	lowerBounds = palloc(sizeof(RangeBound) * in->nTuples);
 	upperBounds = palloc(sizeof(RangeBound) * in->nTuples);
-	j = 0;
+	int			j = 0;
 
 	/* Deserialize bounds of ranges, count non-empty ranges */
 	for (i = 0; i < in->nTuples; i++)
@@ -228,7 +222,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 		if (!empty)
 			j++;
 	}
-	nonEmptyCount = j;
+	int			nonEmptyCount = j;
 
 	/*
 	 * All the ranges are empty. The best we can do is to construct an inner
@@ -264,7 +258,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 			  bound_cmp, typcache);
 
 	/* Construct "centroid" range from medians of lower and upper bounds */
-	centroid = range_serialize(typcache, &lowerBounds[nonEmptyCount / 2],
+	RangeType  *centroid = range_serialize(typcache, &lowerBounds[nonEmptyCount / 2],
 							   &upperBounds[nonEmptyCount / 2], false);
 	out->hasPrefix = true;
 	out->prefixDatum = RangeTypePGetDatum(centroid);
@@ -303,7 +297,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
 	int			which;
 	int			i;
-	MemoryContext oldCtx;
 
 	/*
 	 * For adjacent search we need also previous centroid (if any) to improve
@@ -410,12 +403,10 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 		RangeBound	centroidLower,
 					centroidUpper;
 		bool		centroidEmpty;
-		TypeCacheEntry *typcache;
-		RangeType  *centroid;
 
 		/* This node has a centroid. Fetch it. */
-		centroid = DatumGetRangeTypeP(in->prefixDatum);
-		typcache = range_get_typcache(fcinfo,
+		RangeType  *centroid = DatumGetRangeTypeP(in->prefixDatum);
+		TypeCacheEntry *typcache = range_get_typcache(fcinfo,
 									  RangeTypeGetOid(DatumGetRangeTypeP(centroid)));
 		range_deserialize(typcache, centroid, &centroidLower, &centroidUpper,
 						  &centroidEmpty);
@@ -431,7 +422,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 		for (i = 0; i < in->nkeys; i++)
 		{
-			StrategyNumber strategy;
 			RangeBound	lower,
 						upper;
 			bool		empty;
@@ -455,7 +445,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 						which1,
 						which2;
 
-			strategy = in->scankeys[i].sk_strategy;
+			StrategyNumber strategy = in->scankeys[i].sk_strategy;
 
 			/*
 			 * RANGESTRAT_CONTAINS_ELEM is just like RANGESTRAT_CONTAINS, but
@@ -693,9 +683,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
-				cmp = range_cmp_bounds(typcache, &centroidLower, maxLower);
+				int			cmp = range_cmp_bounds(typcache, &centroidLower, maxLower);
 				if (cmp > 0 || (!inclusive && cmp == 0))
 					which &= (1 << 3) | (1 << 4) | (1 << 5);
 			}
@@ -721,9 +710,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
-				cmp = range_cmp_bounds(typcache, &centroidUpper, maxUpper);
+				int			cmp = range_cmp_bounds(typcache, &centroidUpper, maxUpper);
 				if (cmp > 0 || (!inclusive && cmp == 0))
 					which &= (1 << 2) | (1 << 3) | (1 << 5);
 			}
@@ -743,7 +731,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	 * Elements of traversalValues should be allocated in
 	 * traversalMemoryContext
 	 */
-	oldCtx = MemoryContextSwitchTo(in->traversalMemoryContext);
+	MemoryContext oldCtx = MemoryContextSwitchTo(in->traversalMemoryContext);
 
 	for (i = 1; i <= in->nNodes; i++)
 	{
@@ -752,13 +740,12 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			/* Save previous prefix if needed */
 			if (needPrevious)
 			{
-				Datum		previousCentroid;
 
 				/*
 				 * We know, that in->prefixDatum in this place is varlena,
 				 * because it's range
 				 */
-				previousCentroid = datumCopy(in->prefixDatum, false, -1);
+				Datum		previousCentroid = datumCopy(in->prefixDatum, false, -1);
 				out->traversalValues[out->nNodes] = (void *) previousCentroid;
 			}
 			out->nodeNumbers[out->nNodes] = i - 1;
@@ -787,11 +774,10 @@ static int
 adjacent_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *arg,
 					const RangeBound *centroid)
 {
-	int			cmp;
 
 	Assert(arg->lower != centroid->lower);
 
-	cmp = range_cmp_bounds(typcache, arg, centroid);
+	int			cmp = range_cmp_bounds(typcache, arg, centroid);
 
 	if (centroid->lower)
 	{
@@ -891,17 +877,15 @@ adjacent_inner_consistent(TypeCacheEntry *typcache, const RangeBound *arg,
 {
 	if (prev)
 	{
-		int			prevcmp;
-		int			cmp;
 
 		/*
 		 * Which direction were we supposed to traverse at previous level,
 		 * left or right?
 		 */
-		prevcmp = adjacent_cmp_bounds(typcache, arg, prev);
+		int			prevcmp = adjacent_cmp_bounds(typcache, arg, prev);
 
 		/* and which direction did we actually go? */
-		cmp = range_cmp_bounds(typcache, centroid, prev);
+		int			cmp = range_cmp_bounds(typcache, centroid, prev);
 
 		/* if the two don't agree, there's nothing to see here */
 		if ((prevcmp < 0 && cmp >= 0) || (prevcmp > 0 && cmp < 0))
@@ -921,8 +905,6 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
 	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
 	RangeType  *leafRange = DatumGetRangeTypeP(in->leafDatum);
-	TypeCacheEntry *typcache;
-	bool		res;
 	int			i;
 
 	/* all tests are exact */
@@ -931,10 +913,10 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	/* leafDatum is what it is... */
 	out->leafValue = in->leafDatum;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(leafRange));
+	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(leafRange));
 
 	/* Perform the required comparison(s) */
-	res = true;
+	bool		res = true;
 	for (i = 0; i < in->nkeys; i++)
 	{
 		Datum		keyDatum = in->scankeys[i].sk_argument;

@@ -32,10 +32,9 @@ Datum
 dintdict_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictInt    *d;
 	ListCell   *l;
 
-	d = (DictInt *) palloc0(sizeof(DictInt));
+	DictInt    *d = (DictInt *) palloc0(sizeof(DictInt));
 	d->maxlen = 6;
 	d->rejectlong = false;
 	d->absval = false;

@@ -34,9 +34,7 @@
 static Oid
 oidin_subr(const char *s, char **endloc)
 {
-	unsigned long cvt;
 	char	   *endptr;
-	Oid			result;
 
 	if (*s == '\0')
 		ereport(ERROR,
@@ -45,7 +43,7 @@ oidin_subr(const char *s, char **endloc)
 						"oid", s)));
 
 	errno = 0;
-	cvt = strtoul(s, &endptr, 10);
+	unsigned long cvt = strtoul(s, &endptr, 10);
 
 	/*
 	 * strtoul() normally only sets ERANGE.  On some systems it also may set
@@ -87,7 +85,7 @@ oidin_subr(const char *s, char **endloc)
 							"oid", s)));
 	}
 
-	result = (Oid) cvt;
+	Oid			result = (Oid) cvt;
 
 	/*
 	 * Cope with possibility that unsigned long is wider than Oid, in which
@@ -117,9 +115,8 @@ Datum
 oidin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
-	Oid			result;
 
-	result = oidin_subr(s, NULL);
+	Oid			result = oidin_subr(s, NULL);
 	PG_RETURN_OID(result);
 }
 
@@ -166,9 +163,8 @@ oidsend(PG_FUNCTION_ARGS)
 oidvector *
 buildoidvector(const Oid *oids, int n)
 {
-	oidvector  *result;
 
-	result = (oidvector *) palloc0(OidVectorSize(n));
+	oidvector  *result = (oidvector *) palloc0(OidVectorSize(n));
 
 	if (n > 0 && oids)
 		memcpy(result->values, oids, n * sizeof(Oid));
@@ -194,10 +190,9 @@ Datum
 oidvectorin(PG_FUNCTION_ARGS)
 {
 	char	   *oidString = PG_GETARG_CSTRING(0);
-	oidvector  *result;
 	int			n;
 
-	result = (oidvector *) palloc0(OidVectorSize(FUNC_MAX_ARGS));
+	oidvector  *result = (oidvector *) palloc0(OidVectorSize(FUNC_MAX_ARGS));
 
 	for (n = 0; n < FUNC_MAX_ARGS; n++)
 	{
@@ -233,11 +228,10 @@ oidvectorout(PG_FUNCTION_ARGS)
 	oidvector  *oidArray = (oidvector *) PG_GETARG_POINTER(0);
 	int			num,
 				nnums = oidArray->dim1;
-	char	   *rp;
 	char	   *result;
 
 	/* assumes sign, 10 digits, ' ' */
-	rp = result = (char *) palloc(nnums * 12 + 1);
+	char	   *rp = result = (char *) palloc(nnums * 12 + 1);
 	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)
@@ -258,7 +252,6 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 {
 	LOCAL_FCINFO(locfcinfo, 3);
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	oidvector  *result;
 
 	/*
 	 * Normally one would call array_recv() using DirectFunctionCall3, but
@@ -276,7 +269,7 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 	locfcinfo->args[2].value = Int32GetDatum(-1);
 	locfcinfo->args[2].isnull = false;
 
-	result = (oidvector *) DatumGetPointer(array_recv(locfcinfo));
+	oidvector  *result = (oidvector *) DatumGetPointer(array_recv(locfcinfo));
 
 	Assert(!locfcinfo->isnull);
 

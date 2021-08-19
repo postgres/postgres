@@ -178,13 +178,11 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	PGAlignedBlock buffer;
 	PGAlignedBlock new_vmbuf;
 	ssize_t		totalBytesRead = 0;
-	ssize_t		src_filesize;
-	int			rewriteVmBytesPerPage;
 	BlockNumber new_blkno = 0;
 	struct stat statbuf;
 
 	/* Compute number of old-format bytes per new page */
-	rewriteVmBytesPerPage = (BLCKSZ - SizeOfPageHeaderData) / 2;
+	int			rewriteVmBytesPerPage = (BLCKSZ - SizeOfPageHeaderData) / 2;
 
 	if ((src_fd = open(fromfile, O_RDONLY | PG_BINARY, 0)) < 0)
 		pg_fatal("error while copying relation \"%s.%s\": could not open file \"%s\": %s\n",
@@ -200,7 +198,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 				 schemaName, relName, tofile, strerror(errno));
 
 	/* Save old file size */
-	src_filesize = statbuf.st_size;
+	ssize_t		src_filesize = statbuf.st_size;
 
 	/*
 	 * Turn each visibility map page into 2 pages one by one. Each new page
@@ -211,11 +209,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 	while (totalBytesRead < src_filesize)
 	{
 		ssize_t		bytesRead;
-		char	   *old_cur;
-		char	   *old_break;
-		char	   *old_blkend;
 		PageHeaderData pageheader;
-		bool		old_lastblk;
 
 		if ((bytesRead = read(src_fd, buffer.data, BLCKSZ)) != BLCKSZ)
 		{
@@ -228,7 +222,7 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		}
 
 		totalBytesRead += BLCKSZ;
-		old_lastblk = (totalBytesRead == src_filesize);
+		bool		old_lastblk = (totalBytesRead == src_filesize);
 
 		/* Save the page header data */
 		memcpy(&pageheader, buffer.data, SizeOfPageHeaderData);
@@ -239,23 +233,21 @@ rewriteVisibilityMap(const char *fromfile, const char *tofile,
 		 * old block.  old_break is the end+1 position on the old page for the
 		 * data that will be transferred to the current new page.
 		 */
-		old_cur = buffer.data + SizeOfPageHeaderData;
-		old_blkend = buffer.data + bytesRead;
-		old_break = old_cur + rewriteVmBytesPerPage;
+		char	   *old_cur = buffer.data + SizeOfPageHeaderData;
+		char	   *old_blkend = buffer.data + bytesRead;
+		char	   *old_break = old_cur + rewriteVmBytesPerPage;
 
 		while (old_break <= old_blkend)
 		{
-			char	   *new_cur;
 			bool		empty = true;
-			bool		old_lastpart;
 
 			/* First, copy old page header to new page */
 			memcpy(new_vmbuf.data, &pageheader, SizeOfPageHeaderData);
 
 			/* Rewriting the last part of the last old page? */
-			old_lastpart = old_lastblk && (old_break == old_blkend);
+			bool		old_lastpart = old_lastblk && (old_break == old_blkend);
 
-			new_cur = new_vmbuf.data + SizeOfPageHeaderData;
+			char	   *new_cur = new_vmbuf.data + SizeOfPageHeaderData;
 
 			/* Process old page bytes one by one, and turn it into new page. */
 			while (old_cur < old_break)

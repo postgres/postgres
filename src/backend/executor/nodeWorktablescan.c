@@ -29,8 +29,6 @@ static TupleTableSlot *WorkTableScanNext(WorkTableScanState *node);
 static TupleTableSlot *
 WorkTableScanNext(WorkTableScanState *node)
 {
-	TupleTableSlot *slot;
-	Tuplestorestate *tuplestorestate;
 
 	/*
 	 * get information from the estate and scan state
@@ -49,12 +47,12 @@ WorkTableScanNext(WorkTableScanState *node)
 	 */
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
 
-	tuplestorestate = node->rustate->working_table;
+	Tuplestorestate *tuplestorestate = node->rustate->working_table;
 
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
-	slot = node->ss.ss_ScanTupleSlot;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 	(void) tuplestore_gettupleslot(tuplestorestate, true, false, slot);
 	return slot;
 }
@@ -92,9 +90,8 @@ ExecWorkTableScan(PlanState *pstate)
 	{
 		WorkTableScan *plan = (WorkTableScan *) node->ss.ps.plan;
 		EState	   *estate = node->ss.ps.state;
-		ParamExecData *param;
 
-		param = &(estate->es_param_exec_vals[plan->wtParam]);
+		ParamExecData *param = &(estate->es_param_exec_vals[plan->wtParam]);
 		Assert(param->execPlan == NULL);
 		Assert(!param->isnull);
 		node->rustate = castNode(RecursiveUnionState, DatumGetPointer(param->value));
@@ -129,7 +126,6 @@ ExecWorkTableScan(PlanState *pstate)
 WorkTableScanState *
 ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 {
-	WorkTableScanState *scanstate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -143,7 +139,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	/*
 	 * create new WorkTableScanState for node
 	 */
-	scanstate = makeNode(WorkTableScanState);
+	WorkTableScanState *scanstate = makeNode(WorkTableScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecWorkTableScan;

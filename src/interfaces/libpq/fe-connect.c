@@ -555,11 +555,9 @@ pqFreeCommandQueue(PGcmdQueueEntry *queue)
 static void
 pqDropServerData(PGconn *conn)
 {
-	PGnotify   *notify;
-	pgParameterStatus *pstatus;
 
 	/* Forget pending notifies */
-	notify = conn->notifyHead;
+	PGnotify   *notify = conn->notifyHead;
 	while (notify != NULL)
 	{
 		PGnotify   *prev = notify;
@@ -576,7 +574,7 @@ pqDropServerData(PGconn *conn)
 	conn->cmd_queue_recycle = NULL;
 
 	/* Reset ParameterStatus data, as well as variables deduced from it */
-	pstatus = conn->pstatus;
+	pgParameterStatus *pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{
 		pgParameterStatus *prev = pstatus;
@@ -678,9 +676,8 @@ PQpingParams(const char *const *keywords,
 			 int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
-	PGPing		ret;
 
-	ret = internal_ping(conn);
+	PGPing		ret = internal_ping(conn);
 	PQfinish(conn);
 
 	return ret;
@@ -729,9 +726,8 @@ PGPing
 PQping(const char *conninfo)
 {
 	PGconn	   *conn = PQconnectStart(conninfo);
-	PGPing		ret;
 
-	ret = internal_ping(conn);
+	PGPing		ret = internal_ping(conn);
 	PQfinish(conn);
 
 	return ret;
@@ -761,22 +757,20 @@ PQconnectStartParams(const char *const *keywords,
 					 const char *const *values,
 					 int expand_dbname)
 {
-	PGconn	   *conn;
-	PQconninfoOption *connOptions;
 
 	/*
 	 * Allocate memory for the conn structure.  Note that we also expect this
 	 * to initialize conn->errorMessage to empty.  All subsequent steps during
 	 * connection initialization will only append to that buffer.
 	 */
-	conn = makeEmptyPGconn();
+	PGconn	   *conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return NULL;
 
 	/*
 	 * Parse the conninfo arrays
 	 */
-	connOptions = conninfo_array_parse(keywords, values,
+	PQconninfoOption *connOptions = conninfo_array_parse(keywords, values,
 									   &conn->errorMessage,
 									   true, expand_dbname);
 	if (connOptions == NULL)
@@ -840,14 +834,13 @@ PQconnectStartParams(const char *const *keywords,
 PGconn *
 PQconnectStart(const char *conninfo)
 {
-	PGconn	   *conn;
 
 	/*
 	 * Allocate memory for the conn structure.  Note that we also expect this
 	 * to initialize conn->errorMessage to empty.  All subsequent steps during
 	 * connection initialization will only append to that buffer.
 	 */
-	conn = makeEmptyPGconn();
+	PGconn	   *conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return NULL;
 
@@ -928,12 +921,11 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 static bool
 connectOptions1(PGconn *conn, const char *conninfo)
 {
-	PQconninfoOption *connOptions;
 
 	/*
 	 * Parse the conninfo string
 	 */
-	connOptions = parse_connection_string(conninfo, &conn->errorMessage, true);
+	PQconninfoOption *connOptions = parse_connection_string(conninfo, &conn->errorMessage, true);
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -965,9 +957,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 static int
 count_comma_separated_elems(const char *input)
 {
-	int			n;
 
-	n = 1;
+	int			n = 1;
 	for (; *input != '\0'; input++)
 	{
 		if (*input == ',')
@@ -989,22 +980,19 @@ count_comma_separated_elems(const char *input)
 static char *
 parse_comma_separated_list(char **startptr, bool *more)
 {
-	char	   *p;
 	char	   *s = *startptr;
-	char	   *e;
-	int			len;
 
 	/*
 	 * Search for the end of the current element; a comma or end-of-string
 	 * acts as a terminator.
 	 */
-	e = s;
+	char	   *e = s;
 	while (*e != '\0' && *e != ',')
 		++e;
 	*more = (*e == ',');
 
-	len = e - s;
-	p = (char *) malloc(sizeof(char) * (len + 1));
+	int			len = e - s;
+	char	   *p = (char *) malloc(sizeof(char) * (len + 1));
 	if (p)
 	{
 		memcpy(p, s, len);
@@ -1472,14 +1460,13 @@ PQconninfoOption *
 PQconndefaults(void)
 {
 	PQExpBufferData errorBuf;
-	PQconninfoOption *connOptions;
 
 	/* We don't actually report any errors here, but callees want a buffer */
 	initPQExpBuffer(&errorBuf);
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
 
-	connOptions = conninfo_init(&errorBuf);
+	PQconninfoOption *connOptions = conninfo_init(&errorBuf);
 	if (connOptions != NULL)
 	{
 		/* pass NULL errorBuf to ignore errors */
@@ -1511,14 +1498,13 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			 const char *pgtty, const char *dbName, const char *login,
 			 const char *pwd)
 {
-	PGconn	   *conn;
 
 	/*
 	 * Allocate memory for the conn structure.  Note that we also expect this
 	 * to initialize conn->errorMessage to empty.  All subsequent steps during
 	 * connection initialization will only append to that buffer.
 	 */
-	conn = makeEmptyPGconn();
+	PGconn	   *conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return NULL;
 
@@ -1710,14 +1696,13 @@ emitHostIdentityInfo(PGconn *conn, const char *host_addr)
 #endif							/* HAVE_UNIX_SOCKETS */
 	{
 		const char *displayed_host;
-		const char *displayed_port;
 
 		/* To which host and port were we actually connecting? */
 		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
 			displayed_host = conn->connhost[conn->whichhost].hostaddr;
 		else
 			displayed_host = conn->connhost[conn->whichhost].host;
-		displayed_port = conn->connhost[conn->whichhost].port;
+		const char *displayed_port = conn->connhost[conn->whichhost].port;
 		if (displayed_port == NULL || displayed_port[0] == '\0')
 			displayed_port = DEF_PGPORT_STR;
 
@@ -1776,11 +1761,10 @@ static int
 useKeepalives(PGconn *conn)
 {
 	char	   *ep;
-	int			val;
 
 	if (conn->keepalives == NULL)
 		return 1;
-	val = strtol(conn->keepalives, &ep, 10);
+	int			val = strtol(conn->keepalives, &ep, 10);
 	if (*ep)
 		return -1;
 	return val != 0 ? 1 : 0;
@@ -1796,7 +1780,6 @@ parse_int_param(const char *value, int *result, PGconn *conn,
 				const char *context)
 {
 	char	   *end;
-	long		numval;
 
 	Assert(value != NULL);
 
@@ -1804,7 +1787,7 @@ parse_int_param(const char *value, int *result, PGconn *conn,
 
 	/* strtol(3) skips leading whitespaces */
 	errno = 0;
-	numval = strtol(value, &end, 10);
+	long		numval = strtol(value, &end, 10);
 
 	/*
 	 * If no progress was done during the parsing or an error happened, fail.
@@ -2938,7 +2921,6 @@ keep_going:						/* We will come back to here until there is
 #endif
 					)
 				{
-					ProtocolVersion pv;
 
 					/*
 					 * Send the SSL request packet.
@@ -2947,7 +2929,7 @@ keep_going:						/* We will come back to here until there is
 					 * shouldn't since we only got here if the socket is
 					 * write-ready.
 					 */
-					pv = pg_hton32(NEGOTIATE_SSL_CODE);
+					ProtocolVersion pv = pg_hton32(NEGOTIATE_SSL_CODE);
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
@@ -3015,9 +2997,8 @@ keep_going:						/* We will come back to here until there is
 					 * conn->ssl isn't set, a plain recv() will occur.
 					 */
 					char		SSLok;
-					int			rdresult;
 
-					rdresult = pqReadData(conn);
+					int			rdresult = pqReadData(conn);
 					if (rdresult < 0)
 					{
 						/* errorMessage is already filled in */
@@ -3498,9 +3479,8 @@ keep_going:						/* We will come back to here until there is
 						 * seems no great harm in that; we'll just get the
 						 * same error again if it's unrelated.
 						 */
-						const char *sqlstate;
 
-						sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+						const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 						if (sqlstate &&
 							strcmp(sqlstate, ERRCODE_APPNAME_UNKNOWN) == 0)
 						{
@@ -4344,7 +4324,6 @@ PQresetPoll(PGconn *conn)
 PGcancel *
 PQgetCancel(PGconn *conn)
 {
-	PGcancel   *cancel;
 
 	if (!conn)
 		return NULL;
@@ -4352,7 +4331,7 @@ PQgetCancel(PGconn *conn)
 	if (conn->sock == PGINVALID_SOCKET)
 		return NULL;
 
-	cancel = malloc(sizeof(PGcancel));
+	PGcancel   *cancel = malloc(sizeof(PGcancel));
 	if (cancel == NULL)
 		return NULL;
 
@@ -4524,7 +4503,6 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 int
 PQrequestCancel(PGconn *conn)
 {
-	int			r;
 
 	/* Check we have an open connection */
 	if (!conn)
@@ -4540,7 +4518,7 @@ PQrequestCancel(PGconn *conn)
 		return false;
 	}
 
-	r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
+	int			r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
 						conn->errorMessage.data, conn->errorMessage.maxlen);
 
 	if (!r)
@@ -4727,12 +4705,11 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	/* port number? */
 	if ((p1 = strchr(hostname, ':')) != NULL)
 	{
-		long		lport;
 
 		*p1 = '\0';
 		portstr = p1 + 1;
 		errno = 0;
-		lport = strtol(portstr, &endptr, 10);
+		long		lport = strtol(portstr, &endptr, 10);
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
 			appendPQExpBuffer(errorMessage,
@@ -5156,13 +5133,12 @@ parseServiceFile(const char *serviceFile,
 	int			result = 0,
 				linenr = 0,
 				i;
-	FILE	   *f;
 	char	   *line;
 	char		buf[1024];
 
 	*group_found = false;
 
-	f = fopen(serviceFile, "r");
+	FILE	   *f = fopen(serviceFile, "r");
 	if (f == NULL)
 	{
 		appendPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
@@ -5330,14 +5306,13 @@ PQconninfoOption *
 PQconninfoParse(const char *conninfo, char **errmsg)
 {
 	PQExpBufferData errorBuf;
-	PQconninfoOption *connOptions;
 
 	if (errmsg)
 		*errmsg = NULL;			/* default */
 	initPQExpBuffer(&errorBuf);
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
-	connOptions = parse_connection_string(conninfo, &errorBuf, false);
+	PQconninfoOption *connOptions = parse_connection_string(conninfo, &errorBuf, false);
 	if (connOptions == NULL && errmsg)
 		*errmsg = errorBuf.data;
 	else
@@ -5351,22 +5326,20 @@ PQconninfoParse(const char *conninfo, char **errmsg)
 static PQconninfoOption *
 conninfo_init(PQExpBuffer errorMessage)
 {
-	PQconninfoOption *options;
-	PQconninfoOption *opt_dest;
 	const internalPQconninfoOption *cur_opt;
 
 	/*
 	 * Get enough memory for all options in PQconninfoOptions, even if some
 	 * end up being filtered out.
 	 */
-	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOption) * sizeof(PQconninfoOptions) / sizeof(PQconninfoOptions[0]));
+	PQconninfoOption *options = (PQconninfoOption *) malloc(sizeof(PQconninfoOption) * sizeof(PQconninfoOptions) / sizeof(PQconninfoOptions[0]));
 	if (options == NULL)
 	{
 		appendPQExpBufferStr(errorMessage,
 							 libpq_gettext("out of memory\n"));
 		return NULL;
 	}
-	opt_dest = options;
+	PQconninfoOption *opt_dest = options;
 
 	for (cur_opt = PQconninfoOptions; cur_opt->keyword; cur_opt++)
 	{
@@ -5449,12 +5422,10 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	char	   *pname;
 	char	   *pval;
 	char	   *buf;
-	char	   *cp;
 	char	   *cp2;
-	PQconninfoOption *options;
 
 	/* Make a working copy of PQconninfoOptions */
-	options = conninfo_init(errorMessage);
+	PQconninfoOption *options = conninfo_init(errorMessage);
 	if (options == NULL)
 		return NULL;
 
@@ -5466,7 +5437,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 		PQconninfoFree(options);
 		return NULL;
 	}
-	cp = buf;
+	char	   *cp = buf;
 
 	while (*cp)
 	{
@@ -5625,7 +5596,6 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
 					 PQExpBuffer errorMessage, bool use_defaults,
 					 int expand_dbname)
 {
-	PQconninfoOption *options;
 	PQconninfoOption *dbname_options = NULL;
 	PQconninfoOption *option;
 	int			i = 0;
@@ -5659,7 +5629,7 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
 	}
 
 	/* Make a working copy of PQconninfoOptions */
-	options = conninfo_init(errorMessage);
+	PQconninfoOption *options = conninfo_init(errorMessage);
 	if (options == NULL)
 	{
 		PQconninfoFree(dbname_options);
@@ -5893,10 +5863,9 @@ static PQconninfoOption *
 conninfo_uri_parse(const char *uri, PQExpBuffer errorMessage,
 				   bool use_defaults)
 {
-	PQconninfoOption *options;
 
 	/* Make a working copy of PQconninfoOptions */
-	options = conninfo_init(errorMessage);
+	PQconninfoOption *options = conninfo_init(errorMessage);
 	if (options == NULL)
 		return NULL;
 
@@ -6196,8 +6165,6 @@ conninfo_uri_parse_params(char *params,
 		char	   *keyword = params;
 		char	   *value = NULL;
 		char	   *p = params;
-		bool		malloced = false;
-		int			oldmsglen;
 
 		/*
 		 * Scan the params string for '=' and '&', marking the end of keyword
@@ -6255,7 +6222,7 @@ conninfo_uri_parse_params(char *params,
 			free(keyword);
 			return false;
 		}
-		malloced = true;
+		bool		malloced = true;
 
 		/*
 		 * Special keyword handling for improved JDBC compatibility.
@@ -6276,7 +6243,7 @@ conninfo_uri_parse_params(char *params,
 		 * otherwise.  At this point both keyword and value are not
 		 * URI-encoded.
 		 */
-		oldmsglen = errorMessage->len;
+		int			oldmsglen = errorMessage->len;
 		if (!conninfo_storeval(connOptions, keyword, value,
 							   errorMessage, true, false))
 		{
@@ -6322,17 +6289,15 @@ conninfo_uri_parse_params(char *params,
 static char *
 conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 {
-	char	   *buf;
-	char	   *p;
 	const char *q = str;
 
-	buf = malloc(strlen(str) + 1);
+	char	   *buf = malloc(strlen(str) + 1);
 	if (buf == NULL)
 	{
 		appendPQExpBufferStr(errorMessage, libpq_gettext("out of memory\n"));
 		return NULL;
 	}
-	p = buf;
+	char	   *p = buf;
 
 	for (;;)
 	{
@@ -6346,7 +6311,6 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 		{
 			int			hi;
 			int			lo;
-			int			c;
 
 			++q;				/* skip the percent sign itself */
 
@@ -6363,7 +6327,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 				return NULL;
 			}
 
-			c = (hi << 4) | lo;
+			int			c = (hi << 4) | lo;
 			if (c == 0)
 			{
 				appendPQExpBuffer(errorMessage,
@@ -6412,9 +6376,8 @@ static const char *
 conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword)
 {
-	PQconninfoOption *option;
 
-	option = conninfo_find(connOptions, keyword);
+	PQconninfoOption *option = conninfo_find(connOptions, keyword);
 
 	return option ? option->val : NULL;
 }
@@ -6440,7 +6403,6 @@ conninfo_storeval(PQconninfoOption *connOptions,
 				  PQExpBuffer errorMessage, bool ignoreMissing,
 				  bool uri_decode)
 {
-	PQconninfoOption *option;
 	char	   *value_copy;
 
 	/*
@@ -6457,7 +6419,7 @@ conninfo_storeval(PQconninfoOption *connOptions,
 			value = "prefer";
 	}
 
-	option = conninfo_find(connOptions, keyword);
+	PQconninfoOption *option = conninfo_find(connOptions, keyword);
 	if (option == NULL)
 	{
 		if (!ignoreMissing)
@@ -6521,7 +6483,6 @@ PQconninfoOption *
 PQconninfo(PGconn *conn)
 {
 	PQExpBufferData errorBuf;
-	PQconninfoOption *connOptions;
 
 	if (conn == NULL)
 		return NULL;
@@ -6534,7 +6495,7 @@ PQconninfo(PGconn *conn)
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
 
-	connOptions = conninfo_init(&errorBuf);
+	PQconninfoOption *connOptions = conninfo_init(&errorBuf);
 
 	if (connOptions != NULL)
 	{
@@ -6542,12 +6503,11 @@ PQconninfo(PGconn *conn)
 
 		for (option = PQconninfoOptions; option->keyword; option++)
 		{
-			char	  **connmember;
 
 			if (option->connofs < 0)
 				continue;
 
-			connmember = (char **) ((char *) conn + option->connofs);
+			char	  **connmember = (char **) ((char *) conn + option->connofs);
 
 			if (*connmember)
 				conninfo_storeval(connOptions, option->keyword, *connmember,
@@ -6787,11 +6747,10 @@ PQpipelineStatus(const PGconn *conn)
 int
 PQconnectionNeedsPassword(const PGconn *conn)
 {
-	char	   *password;
 
 	if (!conn)
 		return false;
-	password = PQpass(conn);
+	char	   *password = PQpass(conn);
 	if (conn->password_needed &&
 		(password == NULL || password[0] == '\0'))
 		return true;
@@ -6823,7 +6782,6 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
 	char		qbuf[128];
 	static const char query[] = "set client_encoding to '%s'";
-	PGresult   *res;
 	int			status;
 
 	if (!conn || conn->status != CONNECTION_OK)
@@ -6842,7 +6800,7 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 
 	/* ok, now send a query */
 	sprintf(qbuf, query, encoding);
-	res = PQexec(conn, qbuf);
+	PGresult   *res = PQexec(conn, qbuf);
 
 	if (res == NULL)
 		return -1;
@@ -6863,11 +6821,10 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 PGVerbosity
 PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity)
 {
-	PGVerbosity old;
 
 	if (!conn)
 		return PQERRORS_DEFAULT;
-	old = conn->verbosity;
+	PGVerbosity old = conn->verbosity;
 	conn->verbosity = verbosity;
 	return old;
 }
@@ -6875,11 +6832,10 @@ PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity)
 PGContextVisibility
 PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context)
 {
-	PGContextVisibility old;
 
 	if (!conn)
 		return PQSHOW_CONTEXT_ERRORS;
-	old = conn->show_context;
+	PGContextVisibility old = conn->show_context;
 	conn->show_context = show_context;
 	return old;
 }
@@ -6887,12 +6843,11 @@ PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context)
 PQnoticeReceiver
 PQsetNoticeReceiver(PGconn *conn, PQnoticeReceiver proc, void *arg)
 {
-	PQnoticeReceiver old;
 
 	if (conn == NULL)
 		return NULL;
 
-	old = conn->noticeHooks.noticeRec;
+	PQnoticeReceiver old = conn->noticeHooks.noticeRec;
 	if (proc)
 	{
 		conn->noticeHooks.noticeRec = proc;
@@ -6904,12 +6859,11 @@ PQsetNoticeReceiver(PGconn *conn, PQnoticeReceiver proc, void *arg)
 PQnoticeProcessor
 PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
-	PQnoticeProcessor old;
 
 	if (conn == NULL)
 		return NULL;
 
-	old = conn->noticeHooks.noticeProc;
+	PQnoticeProcessor old = conn->noticeHooks.noticeProc;
 	if (proc)
 	{
 		conn->noticeHooks.noticeProc = proc;
@@ -6954,14 +6908,12 @@ defaultNoticeProcessor(void *arg, const char *message)
 static char *
 pwdfMatchesString(char *buf, const char *token)
 {
-	char	   *tbuf;
-	const char *ttok;
 	bool		bslash = false;
 
 	if (buf == NULL || token == NULL)
 		return NULL;
-	tbuf = buf;
-	ttok = token;
+	char	   *tbuf = buf;
+	const char *ttok = token;
 	if (tbuf[0] == '*' && tbuf[1] == ':')
 		return tbuf + 2;
 	while (*tbuf != 0)
@@ -7072,10 +7024,9 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		if (buf.data[0] != '#')
 		{
 			char	   *t = buf.data;
-			int			len;
 
 			/* strip trailing newline and carriage return */
-			len = pg_strip_crlf(t);
+			int			len = pg_strip_crlf(t);
 
 			if (len > 0 &&
 				(t = pwdfMatchesString(t, hostname)) != NULL &&

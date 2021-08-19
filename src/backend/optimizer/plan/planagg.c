@@ -73,11 +73,6 @@ void
 preprocess_minmax_aggregates(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
-	FromExpr   *jtnode;
-	RangeTblRef *rtr;
-	RangeTblEntry *rte;
-	List	   *aggs_list;
-	RelOptInfo *grouped_rel;
 	ListCell   *lc;
 
 	/* minmax_aggs list should be empty at this point */
@@ -118,7 +113,7 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 	 * inheritance parent, too, including the case of a UNION ALL subquery
 	 * that's been flattened to an appendrel.
 	 */
-	jtnode = parse->jointree;
+	FromExpr   *jtnode = parse->jointree;
 	while (IsA(jtnode, FromExpr))
 	{
 		if (list_length(jtnode->fromlist) != 1)
@@ -127,8 +122,8 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 	}
 	if (!IsA(jtnode, RangeTblRef))
 		return;
-	rtr = (RangeTblRef *) jtnode;
-	rte = planner_rt_fetch(rtr->rtindex, root);
+	RangeTblRef *rtr = (RangeTblRef *) jtnode;
+	RangeTblEntry *rte = planner_rt_fetch(rtr->rtindex, root);
 	if (rte->rtekind == RTE_RELATION)
 		 /* ordinary relation, ok */ ;
 	else if (rte->rtekind == RTE_SUBQUERY && rte->inh)
@@ -140,7 +135,7 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 	 * Scan the tlist and HAVING qual to find all the aggregates and verify
 	 * all are MIN/MAX aggregates.  Stop as soon as we find one that isn't.
 	 */
-	aggs_list = NIL;
+	List	   *aggs_list = NIL;
 	if (!can_minmax_aggs(root, &aggs_list))
 		return;
 
@@ -153,14 +148,13 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 	foreach(lc, aggs_list)
 	{
 		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
-		Oid			eqop;
 		bool		reverse;
 
 		/*
 		 * We'll need the equality operator that goes with the aggregate's
 		 * ordering operator.
 		 */
-		eqop = get_equality_op_for_ordering_op(mminfo->aggsortop, &reverse);
+		Oid			eqop = get_equality_op_for_ordering_op(mminfo->aggsortop, &reverse);
 		if (!OidIsValid(eqop))	/* shouldn't happen */
 			elog(ERROR, "could not find equality operator for ordering operator %u",
 				 mminfo->aggsortop);
@@ -216,7 +210,7 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 	 * Also, because there are no rowmarks, we know that the processed_tlist
 	 * doesn't need to change anymore, so making the pathtarget now is safe.
 	 */
-	grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
+	RelOptInfo *grouped_rel = fetch_upper_rel(root, UPPERREL_GROUP_AGG, NULL);
 	add_path(grouped_rel, (Path *)
 			 create_minmaxagg_path(root, grouped_rel,
 								   create_pathtarget(root,
@@ -246,9 +240,6 @@ can_minmax_aggs(PlannerInfo *root, List **context)
 	{
 		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
 		Aggref	   *aggref = agginfo->representative_aggref;
-		Oid			aggsortop;
-		TargetEntry *curTarget;
-		MinMaxAggInfo *mminfo;
 
 		Assert(aggref->agglevelsup == 0);
 		if (list_length(aggref->args) != 1)
@@ -279,11 +270,11 @@ can_minmax_aggs(PlannerInfo *root, List **context)
 		if (aggref->aggfilter != NULL)
 			return false;
 
-		aggsortop = fetch_agg_sort_op(aggref->aggfnoid);
+		Oid			aggsortop = fetch_agg_sort_op(aggref->aggfnoid);
 		if (!OidIsValid(aggsortop))
 			return false;		/* not a MIN/MAX aggregate */
 
-		curTarget = (TargetEntry *) linitial(aggref->args);
+		TargetEntry *curTarget = (TargetEntry *) linitial(aggref->args);
 
 		if (contain_mutable_functions((Node *) curTarget->expr))
 			return false;		/* not potentially indexable */
@@ -291,7 +282,7 @@ can_minmax_aggs(PlannerInfo *root, List **context)
 		if (type_is_rowtype(exprType((Node *) curTarget->expr)))
 			return false;		/* IS NOT NULL would have weird semantics */
 
-		mminfo = makeNode(MinMaxAggInfo);
+		MinMaxAggInfo *mminfo = makeNode(MinMaxAggInfo);
 		mminfo->aggfnoid = aggref->aggfnoid;
 		mminfo->aggsortop = aggsortop;
 		mminfo->target = curTarget->expr;
@@ -317,15 +308,7 @@ static bool
 build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 				  Oid eqop, Oid sortop, bool nulls_first)
 {
-	PlannerInfo *subroot;
 	Query	   *parse;
-	TargetEntry *tle;
-	List	   *tlist;
-	NullTest   *ntest;
-	SortGroupClause *sortcl;
-	RelOptInfo *final_rel;
-	Path	   *sorted_path;
-	Cost		path_cost;
 	double		path_fraction;
 
 	/*
@@ -335,7 +318,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 * than before.  (This means that when we are done, there will be no Vars
 	 * of level 1, which is why the subquery can become an initplan.)
 	 */
-	subroot = (PlannerInfo *) palloc(sizeof(PlannerInfo));
+	PlannerInfo *subroot = (PlannerInfo *) palloc(sizeof(PlannerInfo));
 	memcpy(subroot, root, sizeof(PlannerInfo));
 	subroot->query_level++;
 	subroot->parent_root = root;
@@ -368,11 +351,11 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 *----------
 	 */
 	/* single tlist entry that is the aggregate target */
-	tle = makeTargetEntry(copyObject(mminfo->target),
+	TargetEntry *tle = makeTargetEntry(copyObject(mminfo->target),
 						  (AttrNumber) 1,
 						  pstrdup("agg_target"),
 						  false);
-	tlist = list_make1(tle);
+	List	   *tlist = list_make1(tle);
 	subroot->processed_tlist = parse->targetList = tlist;
 
 	/* No HAVING, no DISTINCT, no aggregates anymore */
@@ -383,7 +366,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	parse->hasAggs = false;
 
 	/* Build "target IS NOT NULL" expression */
-	ntest = makeNode(NullTest);
+	NullTest   *ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
 	ntest->arg = copyObject(mminfo->target);
 	/* we checked it wasn't a rowtype in find_minmax_aggs_walker */
@@ -396,7 +379,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 			lcons(ntest, (List *) parse->jointree->quals);
 
 	/* Build suitable ORDER BY clause */
-	sortcl = makeNode(SortGroupClause);
+	SortGroupClause *sortcl = makeNode(SortGroupClause);
 	sortcl->tleSortGroupRef = assignSortGroupRef(tle, subroot->processed_tlist);
 	sortcl->eqop = eqop;
 	sortcl->sortop = sortop;
@@ -418,7 +401,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	subroot->tuple_fraction = 1.0;
 	subroot->limit_tuples = 1.0;
 
-	final_rel = query_planner(subroot, minmax_qp_callback, NULL);
+	RelOptInfo *final_rel = query_planner(subroot, minmax_qp_callback, NULL);
 
 	/*
 	 * Since we didn't go through subquery_planner() to handle the subquery,
@@ -438,7 +421,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	else
 		path_fraction = 1.0;
 
-	sorted_path =
+	Path	   *sorted_path =
 		get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
 												  subroot->query_pathkeys,
 												  NULL,
@@ -461,7 +444,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 * Note: cost calculation here should match
 	 * compare_fractional_path_costs().
 	 */
-	path_cost = sorted_path->startup_cost +
+	Cost		path_cost = sorted_path->startup_cost +
 		path_fraction * (sorted_path->total_cost - sorted_path->startup_cost);
 
 	/* Save state for further processing */
@@ -497,16 +480,13 @@ minmax_qp_callback(PlannerInfo *root, void *extra)
 static Oid
 fetch_agg_sort_op(Oid aggfnoid)
 {
-	HeapTuple	aggTuple;
-	Form_pg_aggregate aggform;
-	Oid			aggsortop;
 
 	/* fetch aggregate entry from pg_aggregate */
-	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(aggfnoid));
+	HeapTuple	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(aggfnoid));
 	if (!HeapTupleIsValid(aggTuple))
 		return InvalidOid;
-	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
-	aggsortop = aggform->aggsortop;
+	Form_pg_aggregate aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+	Oid			aggsortop = aggform->aggsortop;
 	ReleaseSysCache(aggTuple);
 
 	return aggsortop;

@@ -56,7 +56,6 @@ Datum
 macaddr_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	macaddr    *result;
 	int			a,
 				b,
 				c,
@@ -64,11 +63,10 @@ macaddr_in(PG_FUNCTION_ARGS)
 				e,
 				f;
 	char		junk[2];
-	int			count;
 
 	/* %1s matches iff there is trailing non-whitespace garbage */
 
-	count = sscanf(str, "%x:%x:%x:%x:%x:%x%1s",
+	int			count = sscanf(str, "%x:%x:%x:%x:%x:%x%1s",
 				   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
 		count = sscanf(str, "%x-%x-%x-%x-%x-%x%1s",
@@ -101,7 +99,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
 
 	result->a = a;
 	result->b = b;
@@ -121,9 +119,8 @@ Datum
 macaddr_out(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
-	char	   *result;
 
-	result = (char *) palloc(32);
+	char	   *result = (char *) palloc(32);
 
 	snprintf(result, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
 			 addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
@@ -140,9 +137,8 @@ Datum
 macaddr_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	macaddr    *addr;
 
-	addr = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *addr = (macaddr *) palloc(sizeof(macaddr));
 
 	addr->a = pq_getmsgbyte(buf);
 	addr->b = pq_getmsgbyte(buf);
@@ -287,9 +283,8 @@ Datum
 macaddr_not(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
-	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -304,9 +299,8 @@ macaddr_and(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
-	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -321,9 +315,8 @@ macaddr_or(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
-	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;
@@ -341,9 +334,8 @@ Datum
 macaddr_trunc(PG_FUNCTION_ARGS)
 {
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
-	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
 
 	result->a = addr->a;
 	result->b = addr->b;
@@ -369,12 +361,10 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		macaddr_sortsupport_state *uss;
-		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
+		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(macaddr_sortsupport_state));
+		macaddr_sortsupport_state *uss = palloc(sizeof(macaddr_sortsupport_state));
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);
@@ -431,12 +421,11 @@ static bool
 macaddr_abbrev_abort(int memtupcount, SortSupport ssup)
 {
 	macaddr_sortsupport_state *uss = ssup->ssup_extra;
-	double		abbr_card;
 
 	if (memtupcount < 10000 || uss->input_count < 10000 || !uss->estimating)
 		return false;
 
-	abbr_card = estimateHyperLogLog(&uss->abbr_card);
+	double		abbr_card = estimateHyperLogLog(&uss->abbr_card);
 
 	/*
 	 * If we have >100k distinct values, then even if we were sorting many

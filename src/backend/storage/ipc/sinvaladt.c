@@ -202,9 +202,8 @@ static void CleanupInvalidationState(int status, Datum arg);
 Size
 SInvalShmemSize(void)
 {
-	Size		size;
 
-	size = offsetof(SISeg, procState);
+	Size		size = offsetof(SISeg, procState);
 	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
 
 	return size;
@@ -335,14 +334,13 @@ static void
 CleanupInvalidationState(int status, Datum arg)
 {
 	SISeg	   *segP = (SISeg *) DatumGetPointer(arg);
-	ProcState  *stateP;
 	int			i;
 
 	Assert(PointerIsValid(segP));
 
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 
-	stateP = &segP->procState[MyBackendId - 1];
+	ProcState  *stateP = &segP->procState[MyBackendId - 1];
 
 	/* Update next local transaction ID for next holder of this backendID */
 	stateP->nextLXID = nextLocalTransactionId;
@@ -447,7 +445,6 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 	{
 		int			nthistime = Min(n, WRITE_QUANTUM);
 		int			numMsgs;
-		int			max;
 		int			i;
 
 		n -= nthistime;
@@ -474,7 +471,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		/*
 		 * Insert new message(s) into proper slot of circular buffer
 		 */
-		max = segP->maxMsgNum;
+		int			max = segP->maxMsgNum;
 		while (nthistime-- > 0)
 		{
 			segP->buffer[max % MAXNUMMESSAGES] = *data++;
@@ -535,13 +532,9 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 int
 SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 {
-	SISeg	   *segP;
-	ProcState  *stateP;
-	int			max;
-	int			n;
 
-	segP = shmInvalBuffer;
-	stateP = &segP->procState[MyBackendId - 1];
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = &segP->procState[MyBackendId - 1];
 
 	/*
 	 * Before starting to take locks, do a quick, unlocked test to see whether
@@ -572,7 +565,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 
 	/* Fetch current value of maxMsgNum using spinlock */
 	SpinLockAcquire(&segP->msgnumLock);
-	max = segP->maxMsgNum;
+	int			max = segP->maxMsgNum;
 	SpinLockRelease(&segP->msgnumLock);
 
 	if (stateP->resetState)
@@ -597,7 +590,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 * cannot delete them here.  SICleanupQueue() will eventually remove them
 	 * from the queue.
 	 */
-	n = 0;
+	int			n = 0;
 	while (n < datasize && stateP->nextMsgNum < max)
 	{
 		data[n++] = segP->buffer[stateP->nextMsgNum % MAXNUMMESSAGES];

@@ -142,9 +142,7 @@ CommentObject(CommentStmt *stmt)
 void
 CreateComments(Oid oid, Oid classoid, int32 subid, const char *comment)
 {
-	Relation	description;
 	ScanKeyData skey[3];
-	SysScanDesc sd;
 	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_description];
@@ -185,9 +183,9 @@ CreateComments(Oid oid, Oid classoid, int32 subid, const char *comment)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(subid));
 
-	description = table_open(DescriptionRelationId, RowExclusiveLock);
+	Relation	description = table_open(DescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(description, DescriptionObjIndexId, true,
+	SysScanDesc sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							NULL, 3, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -237,9 +235,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, const char *comment)
 void
 CreateSharedComments(Oid oid, Oid classoid, const char *comment)
 {
-	Relation	shdescription;
 	ScanKeyData skey[2];
-	SysScanDesc sd;
 	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_shdescription];
@@ -275,9 +271,9 @@ CreateSharedComments(Oid oid, Oid classoid, const char *comment)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classoid));
 
-	shdescription = table_open(SharedDescriptionRelationId, RowExclusiveLock);
+	Relation	shdescription = table_open(SharedDescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
+	SysScanDesc sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
 							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -325,10 +321,8 @@ CreateSharedComments(Oid oid, Oid classoid, const char *comment)
 void
 DeleteComments(Oid oid, Oid classoid, int32 subid)
 {
-	Relation	description;
 	ScanKeyData skey[3];
 	int			nkeys;
-	SysScanDesc sd;
 	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
@@ -353,9 +347,9 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 	else
 		nkeys = 2;
 
-	description = table_open(DescriptionRelationId, RowExclusiveLock);
+	Relation	description = table_open(DescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(description, DescriptionObjIndexId, true,
+	SysScanDesc sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							NULL, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -373,9 +367,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 void
 DeleteSharedComments(Oid oid, Oid classoid)
 {
-	Relation	shdescription;
 	ScanKeyData skey[2];
-	SysScanDesc sd;
 	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
@@ -389,9 +381,9 @@ DeleteSharedComments(Oid oid, Oid classoid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classoid));
 
-	shdescription = table_open(SharedDescriptionRelationId, RowExclusiveLock);
+	Relation	shdescription = table_open(SharedDescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
+	SysScanDesc sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
 							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -409,12 +401,8 @@ DeleteSharedComments(Oid oid, Oid classoid)
 char *
 GetComment(Oid oid, Oid classoid, int32 subid)
 {
-	Relation	description;
 	ScanKeyData skey[3];
-	SysScanDesc sd;
-	TupleDesc	tupdesc;
 	HeapTuple	tuple;
-	char	   *comment;
 
 	/* Use the index to search for a matching old tuple */
 
@@ -431,20 +419,19 @@ GetComment(Oid oid, Oid classoid, int32 subid)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(subid));
 
-	description = table_open(DescriptionRelationId, AccessShareLock);
-	tupdesc = RelationGetDescr(description);
+	Relation	description = table_open(DescriptionRelationId, AccessShareLock);
+	TupleDesc	tupdesc = RelationGetDescr(description);
 
-	sd = systable_beginscan(description, DescriptionObjIndexId, true,
+	SysScanDesc sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							NULL, 3, skey);
 
-	comment = NULL;
+	char	   *comment = NULL;
 	while ((tuple = systable_getnext(sd)) != NULL)
 	{
-		Datum		value;
 		bool		isnull;
 
 		/* Found the tuple, get description field */
-		value = heap_getattr(tuple, Anum_pg_description_description, tupdesc, &isnull);
+		Datum		value = heap_getattr(tuple, Anum_pg_description_description, tupdesc, &isnull);
 		if (!isnull)
 			comment = TextDatumGetCString(value);
 		break;					/* Assume there can be only one match */

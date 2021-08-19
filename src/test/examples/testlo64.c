@@ -33,17 +33,14 @@
 static Oid
 importFile(PGconn *conn, char *filename)
 {
-	Oid			lobjId;
-	int			lobj_fd;
 	char		buf[BUFSIZE];
 	int			nbytes,
 				tmp;
-	int			fd;
 
 	/*
 	 * open the file to be read in
 	 */
-	fd = open(filename, O_RDONLY, 0666);
+	int			fd = open(filename, O_RDONLY, 0666);
 	if (fd < 0)
 	{							/* error */
 		fprintf(stderr, "cannot open unix file\"%s\"\n", filename);
@@ -52,11 +49,11 @@ importFile(PGconn *conn, char *filename)
 	/*
 	 * create the large object
 	 */
-	lobjId = lo_creat(conn, INV_READ | INV_WRITE);
+	Oid			lobjId = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjId == 0)
 		fprintf(stderr, "cannot create large object");
 
-	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+	int			lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
 	/*
 	 * read in from the Unix file and write to the inversion file
@@ -77,12 +74,9 @@ importFile(PGconn *conn, char *filename)
 static void
 pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 {
-	int			lobj_fd;
-	char	   *buf;
 	int			nbytes;
-	int			nread;
 
-	lobj_fd = lo_open(conn, lobjId, INV_READ);
+	int			lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -92,9 +86,9 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	if (lo_tell64(conn, lobj_fd) != start)
 		fprintf(stderr, "error in lo_tell64: %s", PQerrorMessage(conn));
 
-	buf = malloc(len + 1);
+	char	   *buf = malloc(len + 1);
 
-	nread = 0;
+	int			nread = 0;
 	while (len - nread > 0)
 	{
 		nbytes = lo_read(conn, lobj_fd, buf, len - nread);
@@ -112,26 +106,23 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 static void
 overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 {
-	int			lobj_fd;
-	char	   *buf;
 	int			nbytes;
-	int			nwritten;
 	int			i;
 
-	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+	int			lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
 	if (lo_lseek64(conn, lobj_fd, start, SEEK_SET) < 0)
 		fprintf(stderr, "error in lo_lseek64: %s", PQerrorMessage(conn));
 
-	buf = malloc(len + 1);
+	char	   *buf = malloc(len + 1);
 
 	for (i = 0; i < len; i++)
 		buf[i] = 'X';
 	buf[i] = '\0';
 
-	nwritten = 0;
+	int			nwritten = 0;
 	while (len - nwritten > 0)
 	{
 		nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
@@ -150,9 +141,8 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 static void
 my_truncate(PGconn *conn, Oid lobjId, pg_int64 len)
 {
-	int			lobj_fd;
 
-	lobj_fd = lo_open(conn, lobjId, INV_READ | INV_WRITE);
+	int			lobj_fd = lo_open(conn, lobjId, INV_READ | INV_WRITE);
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -171,23 +161,21 @@ my_truncate(PGconn *conn, Oid lobjId, pg_int64 len)
 static void
 exportFile(PGconn *conn, Oid lobjId, char *filename)
 {
-	int			lobj_fd;
 	char		buf[BUFSIZE];
 	int			nbytes,
 				tmp;
-	int			fd;
 
 	/*
 	 * open the large object
 	 */
-	lobj_fd = lo_open(conn, lobjId, INV_READ);
+	int			lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
 	/*
 	 * open the file to be written to
 	 */
-	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	int			fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (fd < 0)
 	{							/* error */
 		fprintf(stderr, "cannot open unix file\"%s\"",
@@ -224,10 +212,6 @@ main(int argc, char **argv)
 	char	   *in_filename,
 			   *out_filename,
 			   *out_filename2;
-	char	   *database;
-	Oid			lobjOid;
-	PGconn	   *conn;
-	PGresult   *res;
 
 	if (argc != 5)
 	{
@@ -236,7 +220,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	database = argv[1];
+	char	   *database = argv[1];
 	in_filename = argv[2];
 	out_filename = argv[3];
 	out_filename2 = argv[4];
@@ -244,7 +228,7 @@ main(int argc, char **argv)
 	/*
 	 * set up the connection
 	 */
-	conn = PQsetdb(NULL, NULL, NULL, NULL, database);
+	PGconn	   *conn = PQsetdb(NULL, NULL, NULL, NULL, database);
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
@@ -254,7 +238,7 @@ main(int argc, char **argv)
 	}
 
 	/* Set always-secure search path, so malicious users can't take control. */
-	res = PQexec(conn,
+	PGresult   *res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -268,7 +252,7 @@ main(int argc, char **argv)
 	PQclear(res);
 	printf("importing file \"%s\" ...\n", in_filename);
 /*	lobjOid = importFile(conn, in_filename); */
-	lobjOid = lo_import(conn, in_filename);
+	Oid			lobjOid = lo_import(conn, in_filename);
 	if (lobjOid == 0)
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
 	else

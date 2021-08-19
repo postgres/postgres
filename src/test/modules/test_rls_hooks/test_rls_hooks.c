@@ -63,27 +63,20 @@ _PG_fini(void)
 List *
 test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 {
-	List	   *policies = NIL;
 	RowSecurityPolicy *policy = palloc0(sizeof(RowSecurityPolicy));
-	Datum		role;
-	FuncCall   *n;
-	Node	   *e;
-	ColumnRef  *c;
-	ParseState *qual_pstate;
-	ParseNamespaceItem *nsitem;
 
 	if (strcmp(RelationGetRelationName(relation), "rls_test_permissive") != 0 &&
 		strcmp(RelationGetRelationName(relation), "rls_test_both") != 0)
 		return NIL;
 
-	qual_pstate = make_parsestate(NULL);
+	ParseState *qual_pstate = make_parsestate(NULL);
 
-	nsitem = addRangeTableEntryForRelation(qual_pstate,
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(qual_pstate,
 										   relation, AccessShareLock,
 										   NULL, false, false);
 	addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
-	role = ObjectIdGetDatum(ACL_ID_PUBLIC);
+	Datum		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
 	policy->policy_name = pstrdup("extension policy");
 	policy->polcmd = '*';
@@ -94,17 +87,17 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	 * sizeof(bool), BoolGetDatum(true), false, true);
 	 */
 
-	n = makeFuncCall(list_make2(makeString("pg_catalog"),
+	FuncCall   *n = makeFuncCall(list_make2(makeString("pg_catalog"),
 								makeString("current_user")),
 					 NIL,
 					 COERCE_EXPLICIT_CALL,
 					 -1);
 
-	c = makeNode(ColumnRef);
+	ColumnRef  *c = makeNode(ColumnRef);
 	c->fields = list_make1(makeString("username"));
 	c->location = 0;
 
-	e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
+	Node	   *e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
 
 	policy->qual = (Expr *) transformWhereClause(qual_pstate, copyObject(e),
 												 EXPR_KIND_POLICY,
@@ -115,7 +108,7 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	policy->with_check_qual = copyObject(policy->qual);
 	policy->hassublinks = false;
 
-	policies = list_make1(policy);
+	List	   *policies = list_make1(policy);
 
 	return policies;
 }
@@ -131,43 +124,36 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 List *
 test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 {
-	List	   *policies = NIL;
 	RowSecurityPolicy *policy = palloc0(sizeof(RowSecurityPolicy));
-	Datum		role;
-	FuncCall   *n;
-	Node	   *e;
-	ColumnRef  *c;
-	ParseState *qual_pstate;
-	ParseNamespaceItem *nsitem;
 
 	if (strcmp(RelationGetRelationName(relation), "rls_test_restrictive") != 0 &&
 		strcmp(RelationGetRelationName(relation), "rls_test_both") != 0)
 		return NIL;
 
-	qual_pstate = make_parsestate(NULL);
+	ParseState *qual_pstate = make_parsestate(NULL);
 
-	nsitem = addRangeTableEntryForRelation(qual_pstate,
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(qual_pstate,
 										   relation, AccessShareLock,
 										   NULL, false, false);
 	addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
-	role = ObjectIdGetDatum(ACL_ID_PUBLIC);
+	Datum		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
 	policy->policy_name = pstrdup("extension policy");
 	policy->polcmd = '*';
 	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 
-	n = makeFuncCall(list_make2(makeString("pg_catalog"),
+	FuncCall   *n = makeFuncCall(list_make2(makeString("pg_catalog"),
 								makeString("current_user")),
 					 NIL,
 					 COERCE_EXPLICIT_CALL,
 					 -1);
 
-	c = makeNode(ColumnRef);
+	ColumnRef  *c = makeNode(ColumnRef);
 	c->fields = list_make1(makeString("supervisor"));
 	c->location = 0;
 
-	e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
+	Node	   *e = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) n, (Node *) c, 0);
 
 	policy->qual = (Expr *) transformWhereClause(qual_pstate, copyObject(e),
 												 EXPR_KIND_POLICY,
@@ -178,7 +164,7 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 	policy->with_check_qual = copyObject(policy->qual);
 	policy->hassublinks = false;
 
-	policies = list_make1(policy);
+	List	   *policies = list_make1(policy);
 
 	return policies;
 }

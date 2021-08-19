@@ -73,9 +73,8 @@ RS_isRegis(const char *str)
 static RegisNode *
 newRegisNode(RegisNode *prev, int len)
 {
-	RegisNode  *ptr;
 
-	ptr = (RegisNode *) palloc0(RNHDRSZ + len + 1);
+	RegisNode  *ptr = (RegisNode *) palloc0(RNHDRSZ + len + 1);
 	if (prev)
 		prev->next = ptr;
 	return ptr;

@@ -47,9 +47,6 @@ pg_regprefix(regex_t *re,
 			 chr **string,
 			 size_t *slength)
 {
-	struct guts *g;
-	struct cnfa *cnfa;
-	int			st;
 
 	/* sanity checks */
 	if (string == NULL || slength == NULL)
@@ -65,7 +62,7 @@ pg_regprefix(regex_t *re,
 	pg_set_regex_collation(re->re_collation);
 
 	/* setup */
-	g = (struct guts *) re->re_guts;
+	struct guts *g = (struct guts *) re->re_guts;
 	if (g->info & REG_UIMPOSSIBLE)
 		return REG_NOMATCH;
 
@@ -75,7 +72,7 @@ pg_regprefix(regex_t *re,
 	 * applied, which is allowed per the function's API spec.
 	 */
 	assert(g->tree != NULL);
-	cnfa = &g->tree->cnfa;
+	struct cnfa *cnfa = &g->tree->cnfa;
 
 	/* matchall NFAs never have a fixed prefix */
 	if (cnfa->flags & MATCHALL)
@@ -91,7 +88,7 @@ pg_regprefix(regex_t *re,
 		return REG_ESPACE;
 
 	/* do it */
-	st = findprefix(cnfa, &g->cmap, *string, slength);
+	int			st = findprefix(cnfa, &g->cmap, *string, slength);
 
 	assert(*slength <= cnfa->nstates);
 
@@ -118,8 +115,6 @@ findprefix(struct cnfa *cnfa,
 		   chr *string,
 		   size_t *slength)
 {
-	int			st;
-	int			nextst;
 	color		thiscolor;
 	chr			c;
 	struct carc *ca;
@@ -129,8 +124,8 @@ findprefix(struct cnfa *cnfa,
 	 * anchored left.  If we have both BOS and BOL, they must go to the same
 	 * next state.
 	 */
-	st = cnfa->pre;
-	nextst = -1;
+	int			st = cnfa->pre;
+	int			nextst = -1;
 	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
 	{
 		if (ca->co == cnfa->bos[0] || ca->co == cnfa->bos[1])

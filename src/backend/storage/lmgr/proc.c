@@ -158,7 +158,6 @@ ProcGlobalSemas(void)
 void
 InitProcGlobal(void)
 {
-	PGPROC	   *procs;
 	int			i,
 				j;
 	bool		found;
@@ -193,7 +192,7 @@ InitProcGlobal(void)
 	 * dedicated to exactly one of these purposes, and they do not move
 	 * between groups.
 	 */
-	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
+	PGPROC	   *procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
@@ -675,11 +674,10 @@ GetStartupBufferPinWaitBufId(void)
 bool
 HaveNFreeProcs(int n)
 {
-	PGPROC	   *proc;
 
 	SpinLockAcquire(ProcStructLock);
 
-	proc = ProcGlobal->freeProcs;
+	PGPROC	   *proc = ProcGlobal->freeProcs;
 
 	while (n > 0 && proc != NULL)
 	{
@@ -715,7 +713,6 @@ IsWaitingForLock(void)
 void
 LockErrorCleanup(void)
 {
-	LWLock	   *partitionLock;
 	DisableTimeoutParams timeouts[2];
 
 	HOLD_INTERRUPTS();
@@ -744,7 +741,7 @@ LockErrorCleanup(void)
 	disable_timeouts(timeouts, 2);
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
-	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
+	LWLock	   *partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	if (MyProc->links.next != NULL)
@@ -949,7 +946,6 @@ AuxiliaryProcKill(int code, Datum arg)
 {
 	int			proctype = DatumGetInt32(arg);
 	PGPROC	   *auxproc PG_USED_FOR_ASSERTS_ONLY;
-	PGPROC	   *proc;
 
 	Assert(proctype >= 0 && proctype < NUM_AUXILIARY_PROCS);
 
@@ -967,7 +963,7 @@ AuxiliaryProcKill(int code, Datum arg)
 	SwitchBackToLocalLatch();
 	pgstat_reset_wait_event_storage();
 
-	proc = MyProc;
+	PGPROC	   *proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);
 
@@ -1025,10 +1021,9 @@ AuxiliaryPidGetProc(int pid)
 PROC_QUEUE *
 ProcQueueAlloc(const char *name)
 {
-	PROC_QUEUE *queue;
 	bool		found;
 
-	queue = (PROC_QUEUE *)
+	PROC_QUEUE *queue = (PROC_QUEUE *)
 		ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
 
 	if (!found)
@@ -1097,9 +1092,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	if (leader != NULL)
 	{
 		SHM_QUEUE  *procLocks = &(lock->procLocks);
-		PROCLOCK   *otherproclock;
 
-		otherproclock = (PROCLOCK *)
+		PROCLOCK   *otherproclock = (PROCLOCK *)
 			SHMQueueNext(procLocks, procLocks, offsetof(PROCLOCK, lockLink));
 		while (otherproclock != NULL)
 		{
@@ -1336,10 +1330,9 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				if (TimestampDifferenceExceeds(standbyWaitStart, now,
 											   DeadlockTimeout))
 				{
-					VirtualTransactionId *vxids;
 					int			cnt;
 
-					vxids = GetLockConflicts(&locallock->tag.lock,
+					VirtualTransactionId *vxids = GetLockConflicts(&locallock->tag.lock,
 											 AccessExclusiveLock, &cnt);
 
 					/*
@@ -1384,9 +1377,6 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		if (deadlock_state == DS_BLOCKED_BY_AUTOVACUUM && allow_autovacuum_cancel)
 		{
 			PGPROC	   *autovac = GetBlockingAutoVacuumPgproc();
-			uint8		statusFlags;
-			uint8		lockmethod_copy;
-			LOCKTAG		locktag_copy;
 
 			/*
 			 * Grab info we need, then release lock immediately.  Note this
@@ -1398,9 +1388,9 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			 * the lock held, which is much more undesirable.
 			 */
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-			statusFlags = ProcGlobal->statusFlags[autovac->pgxactoff];
-			lockmethod_copy = lock->tag.locktag_lockmethodid;
-			locktag_copy = lock->tag;
+			uint8		statusFlags = ProcGlobal->statusFlags[autovac->pgxactoff];
+			uint8		lockmethod_copy = lock->tag.locktag_lockmethodid;
+			LOCKTAG		locktag_copy = lock->tag;
 			LWLockRelease(ProcArrayLock);
 
 			/*
@@ -1469,12 +1459,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			StringInfoData buf,
 						lock_waiters_sbuf,
 						lock_holders_sbuf;
-			const char *modename;
 			long		secs;
 			int			usecs;
-			long		msecs;
-			SHM_QUEUE  *procLocks;
-			PROCLOCK   *proclock;
 			bool		first_holder = true,
 						first_waiter = true;
 			int			lockHoldersNum = 0;
@@ -1484,12 +1470,12 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			initStringInfo(&lock_holders_sbuf);
 
 			DescribeLockTag(&buf, &locallock->tag.lock);
-			modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
+			const char *modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
 									   lockmode);
 			TimestampDifference(get_timeout_start_time(DEADLOCK_TIMEOUT),
 								GetCurrentTimestamp(),
 								&secs, &usecs);
-			msecs = secs * 1000 + usecs / 1000;
+			long		msecs = secs * 1000 + usecs / 1000;
 			usecs = usecs % 1000;
 
 			/*
@@ -1503,8 +1489,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 			LWLockAcquire(partitionLock, LW_SHARED);
 
-			procLocks = &(lock->procLocks);
-			proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
+			SHM_QUEUE  *procLocks = &(lock->procLocks);
+			PROCLOCK   *proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
 												 offsetof(PROCLOCK, lockLink));
 
 			while (proclock)
@@ -1688,7 +1674,6 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 PGPROC *
 ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus)
 {
-	PGPROC	   *retProc;
 
 	/* Proc should be sleeping ... */
 	if (proc->links.prev == NULL ||
@@ -1697,7 +1682,7 @@ ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus)
 	Assert(proc->waitStatus == PROC_WAIT_STATUS_WAITING);
 
 	/* Save next process before we zap the list link */
-	retProc = (PGPROC *) proc->links.next;
+	PGPROC	   *retProc = (PGPROC *) proc->links.next;
 
 	/* Remove process from wait queue */
 	SHMQueueDelete(&(proc->links));
@@ -1727,7 +1712,6 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PGPROC	   *proc;
 	LOCKMASK	aheadRequests = 0;
 
 	Assert(queue_size >= 0);
@@ -1735,7 +1719,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 	if (queue_size == 0)
 		return;
 
-	proc = (PGPROC *) waitQueue->links.next;
+	PGPROC	   *proc = (PGPROC *) waitQueue->links.next;
 
 	while (queue_size-- > 0)
 	{
@@ -1946,7 +1930,6 @@ ProcSendSignal(int pid)
 void
 BecomeLockGroupLeader(void)
 {
-	LWLock	   *leader_lwlock;
 
 	/* If we already did it, we don't need to do it again. */
 	if (MyProc->lockGroupLeader == MyProc)
@@ -1956,7 +1939,7 @@ BecomeLockGroupLeader(void)
 	Assert(MyProc->lockGroupLeader == NULL);
 
 	/* Create single-member group, containing only ourselves. */
-	leader_lwlock = LockHashPartitionLockByProc(MyProc);
+	LWLock	   *leader_lwlock = LockHashPartitionLockByProc(MyProc);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 	MyProc->lockGroupLeader = MyProc;
 	dlist_push_head(&MyProc->lockGroupMembers, &MyProc->lockGroupLink);
@@ -1976,7 +1959,6 @@ BecomeLockGroupLeader(void)
 bool
 BecomeLockGroupMember(PGPROC *leader, int pid)
 {
-	LWLock	   *leader_lwlock;
 	bool		ok = false;
 
 	/* Group leader can't become member of group */
@@ -1995,7 +1977,7 @@ BecomeLockGroupMember(PGPROC *leader, int pid)
 	 * initialization and never change thereafter; so we will acquire the
 	 * correct lock even if the leader PGPROC is in process of being recycled.
 	 */
-	leader_lwlock = LockHashPartitionLockByProc(leader);
+	LWLock	   *leader_lwlock = LockHashPartitionLockByProc(leader);
 	LWLockAcquire(leader_lwlock, LW_EXCLUSIVE);
 
 	/* Is this the leader we're looking for? */

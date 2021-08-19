@@ -80,11 +80,10 @@ static void libpq_destroy(rewind_source *source);
 rewind_source *
 init_libpq_source(PGconn *conn)
 {
-	libpq_source *src;
 
 	init_libpq_conn(conn);
 
-	src = pg_malloc0(sizeof(libpq_source));
+	libpq_source *src = pg_malloc0(sizeof(libpq_source));
 
 	src->common.traverse_files = libpq_traverse_files;
 	src->common.fetch_file = libpq_fetch_file;
@@ -108,8 +107,6 @@ init_libpq_source(PGconn *conn)
 static void
 init_libpq_conn(PGconn *conn)
 {
-	PGresult   *res;
-	char	   *str;
 
 	/* disable all types of timeouts */
 	run_simple_command(conn, "SET statement_timeout = 0");
@@ -123,7 +120,7 @@ init_libpq_conn(PGconn *conn)
 	run_simple_command(conn, "SET default_transaction_read_only = on");
 
 	/* secure search_path */
-	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+	PGresult   *res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not clear search_path: %s",
 				 PQresultErrorMessage(res));
@@ -134,7 +131,7 @@ init_libpq_conn(PGconn *conn)
 	 * a page is modified while we read it with pg_read_binary_file(), and we
 	 * rely on full page images to fix them.
 	 */
-	str = run_simple_query(conn, "SHOW full_page_writes");
+	char	   *str = run_simple_query(conn, "SHOW full_page_writes");
 	if (strcmp(str, "on") != 0)
 		pg_fatal("full_page_writes must be enabled in the source server");
 	pg_free(str);
@@ -160,10 +157,8 @@ init_libpq_conn(PGconn *conn)
 static char *
 run_simple_query(PGconn *conn, const char *sql)
 {
-	PGresult   *res;
-	char	   *result;
 
-	res = PQexec(conn, sql);
+	PGresult   *res = PQexec(conn, sql);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("error running query (%s) on source server: %s",
@@ -173,7 +168,7 @@ run_simple_query(PGconn *conn, const char *sql)
 	if (PQnfields(res) != 1 || PQntuples(res) != 1 || PQgetisnull(res, 0, 0))
 		pg_fatal("unexpected result set from query");
 
-	result = pg_strdup(PQgetvalue(res, 0, 0));
+	char	   *result = pg_strdup(PQgetvalue(res, 0, 0));
 
 	PQclear(res);
 
@@ -188,9 +183,8 @@ run_simple_query(PGconn *conn, const char *sql)
 static void
 run_simple_command(PGconn *conn, const char *sql)
 {
-	PGresult   *res;
 
-	res = PQexec(conn, sql);
+	PGresult   *res = PQexec(conn, sql);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("error running query (%s) in source server: %s",
@@ -206,17 +200,15 @@ static XLogRecPtr
 libpq_get_current_wal_insert_lsn(rewind_source *source)
 {
 	PGconn	   *conn = ((libpq_source *) source)->conn;
-	XLogRecPtr	result;
 	uint32		hi;
 	uint32		lo;
-	char	   *val;
 
-	val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
+	char	   *val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
 
 	if (sscanf(val, "%X/%X", &hi, &lo) != 2)
 		pg_fatal("unrecognized result \"%s\" for current WAL insert location", val);
 
-	result = ((uint64) hi) << 32 | lo;
+	XLogRecPtr	result = ((uint64) hi) << 32 | lo;
 
 	pg_free(val);
 
@@ -230,8 +222,6 @@ static void
 libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 {
 	PGconn	   *conn = ((libpq_source *) source)->conn;
-	PGresult   *res;
-	const char *sql;
 	int			i;
 
 	/*
@@ -244,7 +234,7 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 	 * general, so if the admin has put any custom symbolic links in the data
 	 * directory, they won't be copied correctly.
 	 */
-	sql =
+	const char *sql =
 		"WITH RECURSIVE files (path, filename, size, isdir) AS (\n"
 		"  SELECT '' AS path, filename, size, isdir FROM\n"
 		"  (SELECT pg_ls_dir('.', true, false) AS filename) AS fn,\n"
@@ -262,7 +252,7 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 		"FROM files\n"
 		"LEFT OUTER JOIN pg_tablespace ON files.path = 'pg_tblspc/'\n"
 		"                             AND oid::text = files.filename\n";
-	res = PQexec(conn, sql);
+	PGresult   *res = PQexec(conn, sql);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not fetch file list: %s",
@@ -275,10 +265,6 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 	/* Read result to local variables */
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		char	   *path;
-		int64		filesize;
-		bool		isdir;
-		char	   *link_target;
 		file_type_t type;
 
 		if (PQgetisnull(res, i, 1))
@@ -290,10 +276,10 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 			continue;
 		}
 
-		path = PQgetvalue(res, i, 0);
-		filesize = atol(PQgetvalue(res, i, 1));
-		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
-		link_target = PQgetvalue(res, i, 3);
+		char	   *path = PQgetvalue(res, i, 0);
+		int64		filesize = atol(PQgetvalue(res, i, 1));
+		bool		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
+		char	   *link_target = PQgetvalue(res, i, 3);
 
 		if (link_target[0])
 			type = FILE_TYPE_SYMLINK;
@@ -337,9 +323,8 @@ libpq_queue_fetch_range(rewind_source *source, const char *path, off_t off,
 			 * Extend the previous request to cover as much of this new
 			 * request as possible, without exceeding MAX_CHUNK_SIZE.
 			 */
-			size_t		thislen;
 
-			thislen = Min(len, MAX_CHUNK_SIZE - prev->length);
+			size_t		thislen = Min(len, MAX_CHUNK_SIZE - prev->length);
 			prev->length += thislen;
 
 			off += thislen;
@@ -355,13 +340,12 @@ libpq_queue_fetch_range(rewind_source *source, const char *path, off_t off,
 	/* Divide the request into pieces of MAX_CHUNK_SIZE bytes each */
 	while (len > 0)
 	{
-		int32		thislen;
 
 		/* if the queue is full, perform all the work queued up so far */
 		if (src->num_requests == MAX_CHUNKS_PER_QUERY)
 			process_queued_fetch_requests(src);
 
-		thislen = Min(len, MAX_CHUNK_SIZE);
+		int32		thislen = Min(len, MAX_CHUNK_SIZE);
 		src->request_queue[src->num_requests].path = path;
 		src->request_queue[src->num_requests].offset = off;
 		src->request_queue[src->num_requests].length = thislen;
@@ -386,7 +370,6 @@ process_queued_fetch_requests(libpq_source *src)
 {
 	const char *params[3];
 	PGresult   *res;
-	int			chunkno;
 
 	if (src->num_requests == 0)
 		return;
@@ -445,15 +428,11 @@ process_queued_fetch_requests(libpq_source *src)
 	 * chunk	bytea	-- file content
 	 *----
 	 */
-	chunkno = 0;
+	int			chunkno = 0;
 	while ((res = PQgetResult(src->conn)) != NULL)
 	{
 		fetch_range_request *rq = &src->request_queue[chunkno];
-		char	   *filename;
-		int			filenamelen;
 		int64		chunkoff;
-		int			chunksize;
-		char	   *chunk;
 
 		switch (PQresultStatus(res))
 		{
@@ -503,14 +482,14 @@ process_queued_fetch_requests(libpq_source *src)
 		/* Read result set to local variables */
 		memcpy(&chunkoff, PQgetvalue(res, 0, 1), sizeof(int64));
 		chunkoff = pg_ntoh64(chunkoff);
-		chunksize = PQgetlength(res, 0, 2);
+		int			chunksize = PQgetlength(res, 0, 2);
 
-		filenamelen = PQgetlength(res, 0, 0);
-		filename = pg_malloc(filenamelen + 1);
+		int			filenamelen = PQgetlength(res, 0, 0);
+		char	   *filename = pg_malloc(filenamelen + 1);
 		memcpy(filename, PQgetvalue(res, 0, 0), filenamelen);
 		filename[filenamelen] = '\0';
 
-		chunk = PQgetvalue(res, 0, 2);
+		char	   *chunk = PQgetvalue(res, 0, 2);
 
 		/*
 		 * If a file has been deleted on the source, remove it on the target
@@ -593,13 +572,10 @@ static char *
 libpq_fetch_file(rewind_source *source, const char *path, size_t *filesize)
 {
 	PGconn	   *conn = ((libpq_source *) source)->conn;
-	PGresult   *res;
-	char	   *result;
-	int			len;
 	const char *paramValues[1];
 
 	paramValues[0] = path;
-	res = PQexecParams(conn, "SELECT pg_read_binary_file($1)",
+	PGresult   *res = PQexecParams(conn, "SELECT pg_read_binary_file($1)",
 					   1, NULL, paramValues, NULL, NULL, 1);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -612,8 +588,8 @@ libpq_fetch_file(rewind_source *source, const char *path, size_t *filesize)
 				 path);
 
 	/* Read result to local variables */
-	len = PQgetlength(res, 0, 0);
-	result = pg_malloc(len + 1);
+	int			len = PQgetlength(res, 0, 0);
+	char	   *result = pg_malloc(len + 1);
 	memcpy(result, PQgetvalue(res, 0, 0), len);
 	result[len] = '\0';
 

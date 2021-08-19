@@ -442,7 +442,6 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 {
 	spgPickSplitIn *in = (spgPickSplitIn *) PG_GETARG_POINTER(0);
 	spgPickSplitOut *out = (spgPickSplitOut *) PG_GETARG_POINTER(1);
-	BOX		   *centroid;
 	int			median,
 				i;
 	float8	   *lowXs = palloc(sizeof(float8) * in->nTuples);
@@ -468,7 +467,7 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 
 	median = in->nTuples / 2;
 
-	centroid = palloc(sizeof(BOX));
+	BOX		   *centroid = palloc(sizeof(BOX));
 
 	centroid->low.x = lowXs[median];
 	centroid->high.x = highXs[median];
@@ -555,7 +554,6 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
 	int			i;
-	MemoryContext old_ctx;
 	RectBox    *rect_box;
 	uint8		quadrant;
 	RangeBox   *centroid,
@@ -629,7 +627,7 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	 * traversal values (next_rect_box) and pass these pieces of memory to
 	 * further call of this function.
 	 */
-	old_ctx = MemoryContextSwitchTo(in->traversalMemoryContext);
+	MemoryContext old_ctx = MemoryContextSwitchTo(in->traversalMemoryContext);
 
 	for (quadrant = 0; quadrant < in->nNodes; quadrant++)
 	{
@@ -876,9 +874,8 @@ Datum
 spg_poly_quad_compress(PG_FUNCTION_ARGS)
 {
 	POLYGON    *polygon = PG_GETARG_POLYGON_P(0);
-	BOX		   *box;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	BOX		   *box = (BOX *) palloc(sizeof(BOX));
 	*box = polygon->boundbox;
 
 	PG_RETURN_BOX_P(box);

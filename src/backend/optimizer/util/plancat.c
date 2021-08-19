@@ -114,7 +114,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				  RelOptInfo *rel)
 {
 	Index		varno = rel->relid;
-	Relation	relation;
 	bool		hasindex;
 	List	   *indexinfos = NIL;
 
@@ -123,7 +122,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * the rewriter or when expand_inherited_rtentry() added it to the query's
 	 * rangetable.
 	 */
-	relation = table_open(relationObjectId, NoLock);
+	Relation	relation = table_open(relationObjectId, NoLock);
 
 	/* Temporary and unlogged relations are inaccessible during recovery. */
 	if (!RelationIsPermanent(relation) && RecoveryInProgress())
@@ -165,11 +164,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 	if (hasindex)
 	{
-		List	   *indexoidlist;
-		LOCKMODE	lmode;
 		ListCell   *l;
 
-		indexoidlist = RelationGetIndexList(relation);
+		List	   *indexoidlist = RelationGetIndexList(relation);
 
 		/*
 		 * For each index, we get the same type of lock that the executor will
@@ -179,15 +176,11 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		 * index while we hold lock on the parent rel, and no lock type used
 		 * for queries blocks any other kind of index operation.
 		 */
-		lmode = root->simple_rte_array[varno]->rellockmode;
+		LOCKMODE	lmode = root->simple_rte_array[varno]->rellockmode;
 
 		foreach(l, indexoidlist)
 		{
 			Oid			indexoid = lfirst_oid(l);
-			Relation	indexRelation;
-			Form_pg_index index;
-			IndexAmRoutine *amroutine;
-			IndexOptInfo *info;
 			int			ncolumns,
 						nkeycolumns;
 			int			i;
@@ -195,8 +188,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			/*
 			 * Extract info from the relation descriptor for the index.
 			 */
-			indexRelation = index_open(indexoid, lmode);
-			index = indexRelation->rd_index;
+			Relation	indexRelation = index_open(indexoid, lmode);
+			Form_pg_index index = indexRelation->rd_index;
 
 			/*
 			 * Ignore invalid indexes, since they can't safely be used for
@@ -235,7 +228,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				continue;
 			}
 
-			info = makeNode(IndexOptInfo);
+			IndexOptInfo *info = makeNode(IndexOptInfo);
 
 			info->indexoid = index->indexrelid;
 			info->reltablespace =
@@ -266,7 +259,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->relam = indexRelation->rd_rel->relam;
 
 			/* We copy just the fields we need, not all of rd_indam */
-			amroutine = indexRelation->rd_indam;
+			IndexAmRoutine *amroutine = indexRelation->rd_indam;
 			info->amcanorderbyop = amroutine->amcanorderbyop;
 			info->amoptionalkey = amroutine->amoptionalkey;
 			info->amsearcharray = amroutine->amsearcharray;
@@ -329,7 +322,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				for (i = 0; i < nkeycolumns; i++)
 				{
 					int16		opt = indexRelation->rd_indoption[i];
-					Oid			ltopr;
 					Oid			btopfamily;
 					Oid			btopcintype;
 					int16		btstrategy;
@@ -337,7 +329,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 					info->reverse_sort[i] = (opt & INDOPTION_DESC) != 0;
 					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
 
-					ltopr = get_opfamily_member(info->opfamily[i],
+					Oid			ltopr = get_opfamily_member(info->opfamily[i],
 												info->opcintype[i],
 												info->opcintype[i],
 												BTLessStrategyNumber);
@@ -497,7 +489,6 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 						  Relation relation, bool inhparent)
 {
 	List	   *rtable = root->parse->rtable;
-	List	   *cachedfkeys;
 	ListCell   *lc;
 
 	/*
@@ -523,7 +514,7 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 	 * list belongs to the relcache and might disappear in a cache flush, so
 	 * we must not do any further catalog access within this function.
 	 */
-	cachedfkeys = RelationGetFKeyList(relation);
+	List	   *cachedfkeys = RelationGetFKeyList(relation);
 
 	/*
 	 * Figure out which FKs are of interest for this query, and create
@@ -540,18 +531,16 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 	foreach(lc, cachedfkeys)
 	{
 		ForeignKeyCacheInfo *cachedfk = (ForeignKeyCacheInfo *) lfirst(lc);
-		Index		rti;
 		ListCell   *lc2;
 
 		/* conrelid should always be that of the table we're considering */
 		Assert(cachedfk->conrelid == RelationGetRelid(relation));
 
 		/* Scan to find other RTEs matching confrelid */
-		rti = 0;
+		Index		rti = 0;
 		foreach(lc2, rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
-			ForeignKeyOptInfo *info;
 
 			rti++;
 			/* Ignore if not the correct table */
@@ -566,7 +555,7 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 				continue;
 
 			/* OK, let's make an entry */
-			info = makeNode(ForeignKeyOptInfo);
+			ForeignKeyOptInfo *info = makeNode(ForeignKeyOptInfo);
 			info->con_relid = rel->relid;
 			info->ref_relid = rti;
 			info->nkeys = cachedfk->nkeys;
@@ -613,10 +602,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 	OnConflictExpr *onconflict = root->parse->onConflict;
 
 	/* Iteration state */
-	RangeTblEntry *rte;
-	Relation	relation;
 	Oid			indexOidFromConstraint = InvalidOid;
-	List	   *indexList;
 	ListCell   *l;
 
 	/* Normalized inference attributes and inference expressions: */
@@ -641,9 +627,9 @@ infer_arbiter_indexes(PlannerInfo *root)
 	 * the rewriter or when expand_inherited_rtentry() added it to the query's
 	 * rangetable.
 	 */
-	rte = rt_fetch(root->parse->resultRelation, root->parse->rtable);
+	RangeTblEntry *rte = rt_fetch(root->parse->resultRelation, root->parse->rtable);
 
-	relation = table_open(rte->relid, NoLock);
+	Relation	relation = table_open(rte->relid, NoLock);
 
 	/*
 	 * Build normalized/BMS representation of plain indexed attributes, as
@@ -653,8 +639,6 @@ infer_arbiter_indexes(PlannerInfo *root)
 	foreach(l, onconflict->arbiterElems)
 	{
 		InferenceElem *elem = (InferenceElem *) lfirst(l);
-		Var		   *var;
-		int			attno;
 
 		if (!IsA(elem->expr, Var))
 		{
@@ -663,8 +647,8 @@ infer_arbiter_indexes(PlannerInfo *root)
 			continue;
 		}
 
-		var = (Var *) elem->expr;
-		attno = var->varattno;
+		Var		   *var = (Var *) elem->expr;
+		int			attno = var->varattno;
 
 		if (attno == 0)
 			ereport(ERROR,
@@ -693,13 +677,11 @@ infer_arbiter_indexes(PlannerInfo *root)
 	 * Using that representation, iterate through the list of indexes on the
 	 * target relation to try and find a match
 	 */
-	indexList = RelationGetIndexList(relation);
+	List	   *indexList = RelationGetIndexList(relation);
 
 	foreach(l, indexList)
 	{
 		Oid			indexoid = lfirst_oid(l);
-		Relation	idxRel;
-		Form_pg_index idxForm;
 		Bitmapset  *indexedAttrs;
 		List	   *idxExprs;
 		List	   *predExprs;
@@ -714,8 +696,8 @@ infer_arbiter_indexes(PlannerInfo *root)
 		 * enforcement needs to occur there anyway when an inference clause is
 		 * omitted.
 		 */
-		idxRel = index_open(indexoid, rte->rellockmode);
-		idxForm = idxRel->rd_index;
+		Relation	idxRel = index_open(indexoid, rte->rellockmode);
+		Form_pg_index idxForm = idxRel->rd_index;
 
 		if (!idxForm->indisvalid)
 			goto next;
@@ -1033,9 +1015,8 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				 *
 				 * XXX: Should this logic be more index specific?
 				 */
-				int32		tuple_width;
 
-				tuple_width = get_rel_data_width(rel, attr_widths);
+				int32		tuple_width = get_rel_data_width(rel, attr_widths);
 				tuple_width += MAXALIGN(SizeofHeapTupleHeader);
 				tuple_width += sizeof(ItemIdData);
 				/* note: integer division is intentional here */
@@ -1102,7 +1083,6 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 	for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(rel->rd_att, i - 1);
-		int32		item_width;
 
 		if (att->attisdropped)
 			continue;
@@ -1115,7 +1095,7 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 		}
 
 		/* This should match set_rel_width() in costsize.c */
-		item_width = get_attavgwidth(RelationGetRelid(rel), i);
+		int32		item_width = get_attavgwidth(RelationGetRelid(rel), i);
 		if (item_width <= 0)
 		{
 			item_width = get_typavgwidth(att->atttypid, att->atttypmod);
@@ -1138,13 +1118,11 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 int32
 get_relation_data_width(Oid relid, int32 *attr_widths)
 {
-	int32		result;
-	Relation	relation;
 
 	/* As above, assume relation is already locked */
-	relation = table_open(relid, NoLock);
+	Relation	relation = table_open(relid, NoLock);
 
-	result = get_rel_data_width(relation, attr_widths);
+	int32		result = get_rel_data_width(relation, attr_widths);
 
 	table_close(relation, NoLock);
 
@@ -1184,15 +1162,13 @@ get_relation_constraints(PlannerInfo *root,
 {
 	List	   *result = NIL;
 	Index		varno = rel->relid;
-	Relation	relation;
-	TupleConstr *constr;
 
 	/*
 	 * We assume the relation has already been safely locked.
 	 */
-	relation = table_open(relationObjectId, NoLock);
+	Relation	relation = table_open(relationObjectId, NoLock);
 
-	constr = relation->rd_att->constr;
+	TupleConstr *constr = relation->rd_att->constr;
 	if (constr != NULL)
 	{
 		int			num_check = constr->num_check;
@@ -1200,7 +1176,6 @@ get_relation_constraints(PlannerInfo *root,
 
 		for (i = 0; i < num_check; i++)
 		{
-			Node	   *cexpr;
 
 			/*
 			 * If this constraint hasn't been fully validated yet, we must
@@ -1212,7 +1187,7 @@ get_relation_constraints(PlannerInfo *root,
 			if (constr->check[i].ccnoinherit && !include_noinherit)
 				continue;
 
-			cexpr = stringToNode(constr->check[i].ccbin);
+			Node	   *cexpr = stringToNode(constr->check[i].ccbin);
 
 			/*
 			 * Run each expression through const-simplification and
@@ -1301,28 +1276,24 @@ static List *
 get_relation_statistics(RelOptInfo *rel, Relation relation)
 {
 	Index		varno = rel->relid;
-	List	   *statoidlist;
 	List	   *stainfos = NIL;
 	ListCell   *l;
 
-	statoidlist = RelationGetStatExtList(relation);
+	List	   *statoidlist = RelationGetStatExtList(relation);
 
 	foreach(l, statoidlist)
 	{
 		Oid			statOid = lfirst_oid(l);
-		Form_pg_statistic_ext staForm;
-		HeapTuple	htup;
-		HeapTuple	dtup;
 		Bitmapset  *keys = NULL;
 		List	   *exprs = NIL;
 		int			i;
 
-		htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
+		HeapTuple	htup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statOid));
 		if (!HeapTupleIsValid(htup))
 			elog(ERROR, "cache lookup failed for statistics object %u", statOid);
-		staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
+		Form_pg_statistic_ext staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
 
-		dtup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statOid));
+		HeapTuple	dtup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statOid));
 		if (!HeapTupleIsValid(dtup))
 			elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 
@@ -1340,17 +1311,15 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 		 */
 		{
 			bool		isnull;
-			Datum		datum;
 
 			/* decode expression (if any) */
-			datum = SysCacheGetAttr(STATEXTOID, htup,
+			Datum		datum = SysCacheGetAttr(STATEXTOID, htup,
 									Anum_pg_statistic_ext_stxexprs, &isnull);
 
 			if (!isnull)
 			{
-				char	   *exprsString;
 
-				exprsString = TextDatumGetCString(datum);
+				char	   *exprsString = TextDatumGetCString(datum);
 				exprs = (List *) stringToNode(exprsString);
 				pfree(exprsString);
 
@@ -1455,12 +1424,7 @@ bool
 relation_excluded_by_constraints(PlannerInfo *root,
 								 RelOptInfo *rel, RangeTblEntry *rte)
 {
-	bool		include_noinherit;
-	bool		include_notnull;
 	bool		include_partition = false;
-	List	   *safe_restrictions;
-	List	   *constraint_pred;
-	List	   *safe_constraints;
 	ListCell   *lc;
 
 	/* As of now, constraint exclusion works only with simple relations. */
@@ -1536,7 +1500,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	 * Note: strip off RestrictInfo because predicate_refuted_by() isn't
 	 * expecting to see any in its predicate argument.
 	 */
-	safe_restrictions = NIL;
+	List	   *safe_restrictions = NIL;
 	foreach(lc, rel->baserestrictinfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
@@ -1564,19 +1528,19 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	 * tables should never have NO INHERIT constraints; but it's not necessary
 	 * for us to assume that here.)
 	 */
-	include_noinherit = !rte->inh;
+	bool		include_noinherit = !rte->inh;
 
 	/*
 	 * Currently, attnotnull constraints must be treated as NO INHERIT unless
 	 * this is a partitioned table.  In future we might track their
 	 * inheritance status more accurately, allowing this to be refined.
 	 */
-	include_notnull = (!rte->inh || rte->relkind == RELKIND_PARTITIONED_TABLE);
+	bool		include_notnull = (!rte->inh || rte->relkind == RELKIND_PARTITIONED_TABLE);
 
 	/*
 	 * Fetch the appropriate set of constraint expressions.
 	 */
-	constraint_pred = get_relation_constraints(root, rte->relid, rel,
+	List	   *constraint_pred = get_relation_constraints(root, rte->relid, rel,
 											   include_noinherit,
 											   include_notnull,
 											   include_partition);
@@ -1588,7 +1552,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	 * they're ANDed, we can just ignore any mutable constraints in the list,
 	 * and reason about the rest.
 	 */
-	safe_constraints = NIL;
+	List	   *safe_constraints = NIL;
 	foreach(lc, constraint_pred)
 	{
 		Node	   *pred = (Node *) lfirst(lc);
@@ -1765,10 +1729,9 @@ build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 {
 	List	   *tlist = NIL;
 	Index		varno = index->rel->relid;
-	ListCell   *indexpr_item;
 	int			i;
 
-	indexpr_item = list_head(index->indexprs);
+	ListCell   *indexpr_item = list_head(index->indexprs);
 	for (i = 0; i < index->ncolumns; i++)
 	{
 		int			indexkey = index->indexkeys[i];
@@ -1829,7 +1792,6 @@ restriction_selectivity(PlannerInfo *root,
 						int varRelid)
 {
 	RegProcedure oprrest = get_oprrest(operatorid);
-	float8		result;
 
 	/*
 	 * if the oprrest procedure is missing for whatever reason, use a
@@ -1838,7 +1800,7 @@ restriction_selectivity(PlannerInfo *root,
 	if (!oprrest)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall4Coll(oprrest,
+	float8		result = DatumGetFloat8(OidFunctionCall4Coll(oprrest,
 												 inputcollid,
 												 PointerGetDatum(root),
 												 ObjectIdGetDatum(operatorid),
@@ -1869,7 +1831,6 @@ join_selectivity(PlannerInfo *root,
 				 SpecialJoinInfo *sjinfo)
 {
 	RegProcedure oprjoin = get_oprjoin(operatorid);
-	float8		result;
 
 	/*
 	 * if the oprjoin procedure is missing for whatever reason, use a
@@ -1878,7 +1839,7 @@ join_selectivity(PlannerInfo *root,
 	if (!oprjoin)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall5Coll(oprjoin,
+	float8		result = DatumGetFloat8(OidFunctionCall5Coll(oprjoin,
 												 inputcollid,
 												 PointerGetDatum(root),
 												 ObjectIdGetDatum(operatorid),
@@ -1913,7 +1874,6 @@ function_selectivity(PlannerInfo *root,
 {
 	RegProcedure prosupport = get_func_support(funcid);
 	SupportRequestSelectivity req;
-	SupportRequestSelectivity *sresult;
 
 	/*
 	 * If no support function is provided, use our historical default
@@ -1936,7 +1896,7 @@ function_selectivity(PlannerInfo *root,
 	req.sjinfo = sjinfo;
 	req.selectivity = -1;		/* to catch failure to set the value */
 
-	sresult = (SupportRequestSelectivity *)
+	SupportRequestSelectivity *sresult = (SupportRequestSelectivity *)
 		DatumGetPointer(OidFunctionCall1(prosupport,
 										 PointerGetDatum(&req)));
 
@@ -1967,18 +1927,15 @@ void
 add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
 				  QualCost *cost)
 {
-	HeapTuple	proctup;
-	Form_pg_proc procform;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	if (OidIsValid(procform->prosupport))
 	{
 		SupportRequestCost req;
-		SupportRequestCost *sresult;
 
 		req.type = T_SupportRequestCost;
 		req.root = root;
@@ -1989,7 +1946,7 @@ add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
 		req.startup = 0;
 		req.per_tuple = 0;
 
-		sresult = (SupportRequestCost *)
+		SupportRequestCost *sresult = (SupportRequestCost *)
 			DatumGetPointer(OidFunctionCall1(procform->prosupport,
 											 PointerGetDatum(&req)));
 
@@ -2027,21 +1984,17 @@ add_function_cost(PlannerInfo *root, Oid funcid, Node *node,
 double
 get_function_rows(PlannerInfo *root, Oid funcid, Node *node)
 {
-	HeapTuple	proctup;
-	Form_pg_proc procform;
-	double		result;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	Assert(procform->proretset);	/* else caller error */
 
 	if (OidIsValid(procform->prosupport))
 	{
 		SupportRequestRows req;
-		SupportRequestRows *sresult;
 
 		req.type = T_SupportRequestRows;
 		req.root = root;
@@ -2050,7 +2003,7 @@ get_function_rows(PlannerInfo *root, Oid funcid, Node *node)
 
 		req.rows = 0;			/* just for sanity */
 
-		sresult = (SupportRequestRows *)
+		SupportRequestRows *sresult = (SupportRequestRows *)
 			DatumGetPointer(OidFunctionCall1(procform->prosupport,
 											 PointerGetDatum(&req)));
 
@@ -2063,7 +2016,7 @@ get_function_rows(PlannerInfo *root, Oid funcid, Node *node)
 	}
 
 	/* No support function, or it failed, so rely on prorows */
-	result = procform->prorows;
+	double		result = procform->prorows;
 
 	ReleaseSysCache(proctup);
 
@@ -2118,14 +2071,12 @@ bool
 has_row_triggers(PlannerInfo *root, Index rti, CmdType event)
 {
 	RangeTblEntry *rte = planner_rt_fetch(rti, root);
-	Relation	relation;
-	TriggerDesc *trigDesc;
 	bool		result = false;
 
 	/* Assume we already have adequate lock */
-	relation = table_open(rte->relid, NoLock);
+	Relation	relation = table_open(rte->relid, NoLock);
 
-	trigDesc = relation->trigdesc;
+	TriggerDesc *trigDesc = relation->trigdesc;
 	switch (event)
 	{
 		case CMD_INSERT:
@@ -2159,15 +2110,12 @@ bool
 has_stored_generated_columns(PlannerInfo *root, Index rti)
 {
 	RangeTblEntry *rte = planner_rt_fetch(rti, root);
-	Relation	relation;
-	TupleDesc	tupdesc;
-	bool		result = false;
 
 	/* Assume we already have adequate lock */
-	relation = table_open(rte->relid, NoLock);
+	Relation	relation = table_open(rte->relid, NoLock);
 
-	tupdesc = RelationGetDescr(relation);
-	result = tupdesc->constr && tupdesc->constr->has_generated_stored;
+	TupleDesc	tupdesc = RelationGetDescr(relation);
+	bool		result = tupdesc->constr && tupdesc->constr->has_generated_stored;
 
 	table_close(relation, NoLock);
 
@@ -2183,7 +2131,6 @@ static void
 set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 							Relation relation)
 {
-	PartitionDesc partdesc;
 
 	/*
 	 * Create the PartitionDirectory infrastructure if we didn't already.
@@ -2194,7 +2141,7 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 			CreatePartitionDirectory(CurrentMemoryContext, true);
 	}
 
-	partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
+	PartitionDesc partdesc = PartitionDirectoryLookup(root->glob->partition_directory,
 										relation);
 	rel->part_scheme = find_partition_scheme(root, relation);
 	Assert(partdesc != NULL && rel->part_scheme != NULL);
@@ -2321,10 +2268,7 @@ set_baserel_partition_key_exprs(Relation relation,
 								RelOptInfo *rel)
 {
 	PartitionKey partkey = RelationGetPartitionKey(relation);
-	int			partnatts;
 	int			cnt;
-	List	  **partexprs;
-	ListCell   *lc;
 	Index		varno = rel->relid;
 
 	Assert(IS_SIMPLE_REL(rel) && rel->relid > 0);
@@ -2332,9 +2276,9 @@ set_baserel_partition_key_exprs(Relation relation,
 	/* A partitioned table should have a partition key. */
 	Assert(partkey != NULL);
 
-	partnatts = partkey->partnatts;
-	partexprs = (List **) palloc(sizeof(List *) * partnatts);
-	lc = list_head(partkey->partexprs);
+	int			partnatts = partkey->partnatts;
+	List	  **partexprs = (List **) palloc(sizeof(List *) * partnatts);
+	ListCell   *lc = list_head(partkey->partexprs);
 
 	for (cnt = 0; cnt < partnatts; cnt++)
 	{
@@ -2387,7 +2331,6 @@ set_baserel_partition_key_exprs(Relation relation,
 static void
 set_baserel_partition_constraint(Relation relation, RelOptInfo *rel)
 {
-	List	   *partconstr;
 
 	if (rel->partition_qual)	/* already done */
 		return;
@@ -2399,7 +2342,7 @@ set_baserel_partition_constraint(Relation relation, RelOptInfo *rel)
 	 * implicit-AND format, we'd have to explicitly convert it to explicit-AND
 	 * format and back again.
 	 */
-	partconstr = RelationGetPartitionQual(relation);
+	List	   *partconstr = RelationGetPartitionQual(relation);
 	if (partconstr)
 	{
 		partconstr = (List *) expression_planner((Expr *) partconstr);

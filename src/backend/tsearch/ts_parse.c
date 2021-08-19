@@ -358,14 +358,11 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 	char	   *lemm = NULL;
 	LexizeData	ldata;
 	TSLexeme   *norms;
-	TSConfigCacheEntry *cfg;
-	TSParserCacheEntry *prsobj;
-	void	   *prsdata;
 
-	cfg = lookup_ts_config_cache(cfgId);
-	prsobj = lookup_ts_parser_cache(cfg->prsId);
+	TSConfigCacheEntry *cfg = lookup_ts_config_cache(cfgId);
+	TSParserCacheEntry *prsobj = lookup_ts_parser_cache(cfg->prsId);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&prsobj->prsstart,
+	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&prsobj->prsstart,
 													 PointerGetDatum(buf),
 													 Int32GetDatum(buflen)));
 
@@ -454,7 +451,6 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, int32 pos, char *buf, int buf
 {
 	int			i;
 	QueryItem  *item = GETQUERY(query);
-	HeadlineWordEntry *word;
 
 	while (prs->curwords + query->size >= prs->lenwords)
 	{
@@ -462,7 +458,7 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, int32 pos, char *buf, int buf
 		prs->words = (HeadlineWordEntry *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
 	}
 
-	word = &(prs->words[prs->curwords - 1]);
+	HeadlineWordEntry *word = &(prs->words[prs->curwords - 1]);
 	word->pos = LIMITPOS(pos);
 	for (i = 0; i < query->size; i++)
 	{
@@ -534,14 +530,11 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 	LexizeData	ldata;
 	TSLexeme   *norms;
 	ParsedLex  *lexs;
-	TSConfigCacheEntry *cfg;
-	TSParserCacheEntry *prsobj;
-	void	   *prsdata;
 
-	cfg = lookup_ts_config_cache(cfgId);
-	prsobj = lookup_ts_parser_cache(cfg->prsId);
+	TSConfigCacheEntry *cfg = lookup_ts_config_cache(cfgId);
+	TSParserCacheEntry *prsobj = lookup_ts_parser_cache(cfg->prsId);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&(prsobj->prsstart),
+	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&(prsobj->prsstart),
 													 PointerGetDatum(buf),
 													 Int32GetDatum(buflen)));
 
@@ -593,16 +586,14 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 text *
 generateHeadline(HeadlineParsedText *prs)
 {
-	text	   *out;
-	char	   *ptr;
 	int			len = 128;
 	int			numfragments = 0;
 	int16		infrag = 0;
 
 	HeadlineWordEntry *wrd = prs->words;
 
-	out = (text *) palloc(len);
-	ptr = ((char *) out) + VARHDRSZ;
+	text	   *out = (text *) palloc(len);
+	char	   *ptr = ((char *) out) + VARHDRSZ;
 
 	while (wrd - prs->words < prs->curwords)
 	{

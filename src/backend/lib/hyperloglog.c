@@ -166,14 +166,12 @@ freeHyperLogLog(hyperLogLogState *cState)
 void
 addHyperLogLog(hyperLogLogState *cState, uint32 hash)
 {
-	uint8		count;
-	uint32		index;
 
 	/* Use the first "k" (registerWidth) bits as a zero based index */
-	index = hash >> (BITS_PER_BYTE * sizeof(uint32) - cState->registerWidth);
+	uint32		index = hash >> (BITS_PER_BYTE * sizeof(uint32) - cState->registerWidth);
 
 	/* Compute the rank of the remaining 32 - "k" (registerWidth) bits */
-	count = rho(hash << cState->registerWidth,
+	uint8		count = rho(hash << cState->registerWidth,
 				BITS_PER_BYTE * sizeof(uint32) - cState->registerWidth);
 
 	cState->hashesArr[index] = Max(count, cState->hashesArr[index]);
@@ -185,7 +183,6 @@ addHyperLogLog(hyperLogLogState *cState, uint32 hash)
 double
 estimateHyperLogLog(hyperLogLogState *cState)
 {
-	double		result;
 	double		sum = 0.0;
 	int			i;
 
@@ -195,7 +192,7 @@ estimateHyperLogLog(hyperLogLogState *cState)
 	}
 
 	/* result set to "raw" HyperLogLog estimate (E in the HyperLogLog paper) */
-	result = cState->alphaMM / sum;
+	double		result = cState->alphaMM / sum;
 
 	if (result <= (5.0 / 2.0) * cState->nRegisters)
 	{
@@ -241,12 +238,11 @@ estimateHyperLogLog(hyperLogLogState *cState)
 static inline uint8
 rho(uint32 x, uint8 b)
 {
-	uint8		j = 1;
 
 	if (x == 0)
 		return b + 1;
 
-	j = 32 - pg_leftmost_one_pos32(x);
+	uint8		j = 32 - pg_leftmost_one_pos32(x);
 
 	if (j > b)
 		return b + 1;

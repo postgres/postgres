@@ -52,24 +52,19 @@ int
 check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 {
 	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
-	HeapTuple	tuple;
-	Form_pg_class classform;
-	bool		relrowsecurity;
-	bool		relforcerowsecurity;
-	bool		amowner;
 
 	/* Nothing to do for built-in relations */
 	if (relid < (Oid) FirstNormalObjectId)
 		return RLS_NONE;
 
 	/* Fetch relation's relrowsecurity and relforcerowsecurity flags */
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		return RLS_NONE;
-	classform = (Form_pg_class) GETSTRUCT(tuple);
+	Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
 
-	relrowsecurity = classform->relrowsecurity;
-	relforcerowsecurity = classform->relforcerowsecurity;
+	bool		relrowsecurity = classform->relrowsecurity;
+	bool		relforcerowsecurity = classform->relforcerowsecurity;
 
 	ReleaseSysCache(tuple);
 
@@ -95,7 +90,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	 * Return RLS_NONE_ENV to indicate that this decision depends on the
 	 * environment (in this case, the user_id).
 	 */
-	amowner = pg_class_ownercheck(relid, user_id);
+	bool		amowner = pg_class_ownercheck(relid, user_id);
 	if (amowner)
 	{
 		/*
@@ -143,9 +138,8 @@ row_security_active(PG_FUNCTION_ARGS)
 {
 	/* By OID */
 	Oid			tableoid = PG_GETARG_OID(0);
-	int			rls_status;
 
-	rls_status = check_enable_rls(tableoid, InvalidOid, true);
+	int			rls_status = check_enable_rls(tableoid, InvalidOid, true);
 	PG_RETURN_BOOL(rls_status == RLS_ENABLED);
 }
 
@@ -154,14 +148,11 @@ row_security_active_name(PG_FUNCTION_ARGS)
 {
 	/* By qualified name */
 	text	   *tablename = PG_GETARG_TEXT_PP(0);
-	RangeVar   *tablerel;
-	Oid			tableoid;
-	int			rls_status;
 
 	/* Look up table name.  Can't lock it - we might not have privileges. */
-	tablerel = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
-	tableoid = RangeVarGetRelid(tablerel, NoLock, false);
+	RangeVar   *tablerel = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
+	Oid			tableoid = RangeVarGetRelid(tablerel, NoLock, false);
 
-	rls_status = check_enable_rls(tableoid, InvalidOid, true);
+	int			rls_status = check_enable_rls(tableoid, InvalidOid, true);
 	PG_RETURN_BOOL(rls_status == RLS_ENABLED);
 }

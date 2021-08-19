@@ -51,10 +51,7 @@ int
 main(int argc, char **argv)
 {
 	const char *conninfo;
-	PGconn	   *conn;
-	PGresult   *res;
 	PGnotify   *notify;
-	int			nnotifies;
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
@@ -67,7 +64,7 @@ main(int argc, char **argv)
 		conninfo = "dbname = postgres";
 
 	/* Make a connection to the database */
-	conn = PQconnectdb(conninfo);
+	PGconn	   *conn = PQconnectdb(conninfo);
 
 	/* Check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
@@ -77,7 +74,7 @@ main(int argc, char **argv)
 	}
 
 	/* Set always-secure search path, so malicious users can't take control. */
-	res = PQexec(conn,
+	PGresult   *res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -105,7 +102,7 @@ main(int argc, char **argv)
 	PQclear(res);
 
 	/* Quit after four notifies are received. */
-	nnotifies = 0;
+	int			nnotifies = 0;
 	while (nnotifies < 4)
 	{
 		/*
@@ -113,10 +110,9 @@ main(int argc, char **argv)
 		 * to wait for input, but you could also use poll() or similar
 		 * facilities.
 		 */
-		int			sock;
 		fd_set		input_mask;
 
-		sock = PQsocket(conn);
+		int			sock = PQsocket(conn);
 
 		if (sock < 0)
 			break;				/* shouldn't happen */

@@ -165,7 +165,6 @@ check_primary_key(PG_FUNCTION_ARGS)
 	 */
 	if (plan->nplans <= 0)
 	{
-		SPIPlanPtr	pplan;
 		char		sql[8192];
 
 		/*
@@ -180,7 +179,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 		}
 
 		/* Prepare plan for query */
-		pplan = SPI_prepare(sql, nkeys, argtypes);
+		SPIPlanPtr	pplan = SPI_prepare(sql, nkeys, argtypes);
 		if (pplan == NULL)
 			/* internal error */
 			elog(ERROR, "check_primary_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
@@ -392,13 +391,12 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		if (newtuple != NULL)
 		{
 			char	   *oldval = SPI_getvalue(trigtuple, tupdesc, fnumber);
-			char	   *newval;
 
 			/* this shouldn't happen! SPI_ERROR_NOOUTFUNC ? */
 			if (oldval == NULL)
 				/* internal error */
 				elog(ERROR, "check_foreign_key: SPI_getvalue returned %s", SPI_result_code_string(SPI_result));
-			newval = SPI_getvalue(newtuple, tupdesc, fnumber);
+			char	   *newval = SPI_getvalue(newtuple, tupdesc, fnumber);
 			if (newval == NULL || strcmp(oldval, newval) != 0)
 				isequal = false;
 		}
@@ -469,12 +467,11 @@ check_foreign_key(PG_FUNCTION_ARGS)
 					for (k = 1; k <= nkeys; k++)
 					{
 						int			is_char_type = 0;
-						char	   *type;
 
 						fn = SPI_fnumber(tupdesc, args_temp[k - 1]);
 						Assert(fn > 0); /* already checked above */
 						nv = SPI_getvalue(newtuple, tupdesc, fn);
-						type = SPI_gettype(tupdesc, fn);
+						char	   *type = SPI_gettype(tupdesc, fn);
 
 						if (strcmp(type, "text") == 0 ||
 							strcmp(type, "varchar") == 0 ||
@@ -617,13 +614,12 @@ find_plan(char *ident, EPlan **eplan, int *nplans)
 {
 	EPlan	   *newp;
 	int			i;
-	MemoryContext oldcontext;
 
 	/*
 	 * All allocations done for the plans need to happen in a session-safe
 	 * context.
 	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
 	if (*nplans > 0)
 	{

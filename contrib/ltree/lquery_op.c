@@ -23,13 +23,12 @@ PG_FUNCTION_INFO_V1(lt_q_rregex);
 static char *
 getlexeme(char *start, char *end, int *len)
 {
-	char	   *ptr;
 	int			charlen;
 
 	while (start < end && (charlen = pg_mblen(start)) == 1 && t_iseq(start, '_'))
 		start += charlen;
 
-	ptr = start;
+	char	   *ptr = start;
 	if (ptr >= end)
 		return NULL;
 
@@ -79,9 +78,8 @@ ltree_strncasecmp(const char *a, const char *b, size_t s)
 {
 	char	   *al = str_tolower(a, s, DEFAULT_COLLATION_OID);
 	char	   *bl = str_tolower(b, s, DEFAULT_COLLATION_OID);
-	int			res;
 
-	res = strncmp(al, bl, s);
+	int			res = strncmp(al, bl, s);
 
 	pfree(al);
 	pfree(bl);
@@ -99,9 +97,8 @@ static bool
 checkLevel(lquery_level *curq, ltree_level *curt)
 {
 	lquery_variant *curvar = LQL_FIRST(curq);
-	bool		success;
 
-	success = (curq->flag & LQL_NOT) ? false : true;
+	bool		success = (curq->flag & LQL_NOT) ? false : true;
 
 	/* numvar == 0 means '*' which matches anything */
 	if (curq->numvar == 0)
@@ -147,7 +144,6 @@ checkCond(lquery_level *curq, int qlen,
 	{
 		int			low,
 					high;
-		lquery_level *nextq;
 
 		/*
 		 * Get min and max repetition counts for this query item, dealing with
@@ -174,7 +170,7 @@ checkCond(lquery_level *curq, int qlen,
 		 * Recursively check the rest of the pattern against each possible
 		 * start point following some of this item's match(es).
 		 */
-		nextq = LQL_NEXT(curq);
+		lquery_level *nextq = LQL_NEXT(curq);
 		qlen--;
 
 		for (int matchcnt = 0; matchcnt < high; matchcnt++)
@@ -216,9 +212,8 @@ ltq_regex(PG_FUNCTION_ARGS)
 {
 	ltree	   *tree = PG_GETARG_LTREE_P(0);
 	lquery	   *query = PG_GETARG_LQUERY_P(1);
-	bool		res;
 
-	res = checkCond(LQUERY_FIRST(query), query->numlevel,
+	bool		res = checkCond(LQUERY_FIRST(query), query->numlevel,
 					LTREE_FIRST(tree), tree->numlevel);
 
 	PG_FREE_IF_COPY(tree, 0);

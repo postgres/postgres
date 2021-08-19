@@ -119,22 +119,18 @@ multirange_in(PG_FUNCTION_ARGS)
 	char	   *input_str = PG_GETARG_CSTRING(0);
 	Oid			mltrngtypoid = PG_GETARG_OID(1);
 	Oid			typmod = PG_GETARG_INT32(2);
-	TypeCacheEntry *rangetyp;
 	int32		ranges_seen = 0;
 	int32		range_count = 0;
 	int32		range_capacity = 8;
 	RangeType  *range;
 	RangeType **ranges = palloc(range_capacity * sizeof(RangeType *));
-	MultirangeIOData *cache;
-	MultirangeType *ret;
-	MultirangeParseState parse_state;
 	const char *ptr = input_str;
 	const char *range_str_begin = NULL;
 	int32		range_str_len;
 	char	   *range_str;
 
-	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_input);
-	rangetyp = cache->typcache->rngtype;
+	MultirangeIOData *cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_input);
+	TypeCacheEntry *rangetyp = cache->typcache->rngtype;
 
 	/* consume whitespace */
 	while (*ptr != '\0' && isspace((unsigned char) *ptr))
@@ -150,7 +146,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				 errdetail("Missing left brace.")));
 
 	/* consume ranges */
-	parse_state = MULTIRANGE_BEFORE_RANGE;
+	MultirangeParseState parse_state = MULTIRANGE_BEFORE_RANGE;
 	for (; parse_state != MULTIRANGE_FINISHED; ptr++)
 	{
 		char		ch = *ptr;
@@ -285,7 +281,7 @@ multirange_in(PG_FUNCTION_ARGS)
 						input_str),
 				 errdetail("Junk after closing right brace.")));
 
-	ret = make_multirange(mltrngtypoid, rangetyp, range_count, ranges);
+	MultirangeType *ret = make_multirange(mltrngtypoid, rangetyp, range_count, ranges);
 	PG_RETURN_MULTIRANGE_P(ret);
 }
 
@@ -294,7 +290,6 @@ multirange_out(PG_FUNCTION_ARGS)
 {
 	MultirangeType *multirange = PG_GETARG_MULTIRANGE_P(0);
 	Oid			mltrngtypoid = MultirangeTypeGetOid(multirange);
-	MultirangeIOData *cache;
 	StringInfoData buf;
 	RangeType  *range;
 	char	   *rangeStr;
@@ -302,7 +297,7 @@ multirange_out(PG_FUNCTION_ARGS)
 	int32		i;
 	RangeType **ranges;
 
-	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_output);
+	MultirangeIOData *cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_output);
 
 	initStringInfo(&buf);
 
@@ -333,16 +328,12 @@ multirange_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			mltrngtypoid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
-	MultirangeIOData *cache;
-	uint32		range_count;
-	RangeType **ranges;
-	MultirangeType *ret;
 	StringInfoData tmpbuf;
 
-	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_receive);
+	MultirangeIOData *cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_receive);
 
-	range_count = pq_getmsgint(buf, 4);
-	ranges = palloc(range_count * sizeof(RangeType *));
+	uint32		range_count = pq_getmsgint(buf, 4);
+	RangeType **ranges = palloc(range_count * sizeof(RangeType *));
 
 	initStringInfo(&tmpbuf);
 	for (int i = 0; i < range_count; i++)
@@ -362,7 +353,7 @@ multirange_recv(PG_FUNCTION_ARGS)
 
 	pq_getmsgend(buf);
 
-	ret = make_multirange(mltrngtypoid, cache->typcache->rngtype,
+	MultirangeType *ret = make_multirange(mltrngtypoid, cache->typcache->rngtype,
 						  range_count, ranges);
 	PG_RETURN_MULTIRANGE_P(ret);
 }
@@ -375,9 +366,8 @@ multirange_send(PG_FUNCTION_ARGS)
 	StringInfo	buf = makeStringInfo();
 	RangeType **ranges;
 	int32		range_count;
-	MultirangeIOData *cache;
 
-	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_send);
+	MultirangeIOData *cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_send);
 
 	/* construct output */
 	pq_begintypsend(buf);
@@ -387,9 +377,8 @@ multirange_send(PG_FUNCTION_ARGS)
 	multirange_deserialize(cache->typcache->rngtype, multirange, &range_count, &ranges);
 	for (int i = 0; i < range_count; i++)
 	{
-		Datum		range;
 
-		range = RangeTypePGetDatum(ranges[i]);
+		Datum		range = RangeTypePGetDatum(ranges[i]);
 		range = PointerGetDatum(SendFunctionCall(&cache->typioproc, range));
 
 		pq_sendint32(buf, VARSIZE(range) - VARHDRSZ);
@@ -564,13 +553,12 @@ multirange_size_estimate(TypeCacheEntry *rangetyp, int32 range_count,
 						 RangeType **ranges)
 {
 	char		elemalign = rangetyp->rngelemtype->typalign;
-	Size		size;
 	int32		i;
 
 	/*
 	 * Count space for MultirangeType struct, items and flags.
 	 */
-	size = att_align_nominal(sizeof(MultirangeType) +
+	Size		size = att_align_nominal(sizeof(MultirangeType) +
 							 Max(range_count - 1, 0) * sizeof(uint32) +
 							 range_count * sizeof(uint8), elemalign);
 
@@ -590,20 +578,17 @@ static void
 write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 					  int32 range_count, RangeType **ranges)
 {
-	uint32	   *items;
 	uint32		prev_offset = 0;
-	uint8	   *flags;
 	int32		i;
 	Pointer		begin,
 				ptr;
 	char		elemalign = rangetyp->rngelemtype->typalign;
 
-	items = MultirangeGetItemsPtr(multirange);
-	flags = MultirangeGetFlagsPtr(multirange);
+	uint32	   *items = MultirangeGetItemsPtr(multirange);
+	uint8	   *flags = MultirangeGetFlagsPtr(multirange);
 	ptr = begin = MultirangeGetBoundariesPtr(multirange, elemalign);
 	for (i = 0; i < range_count; i++)
 	{
-		uint32		len;
 
 		if (i > 0)
 		{
@@ -620,7 +605,7 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 			prev_offset = ptr - begin;
 		}
 		flags[i] = *((Pointer) ranges[i] + VARSIZE(ranges[i]) - sizeof(char));
-		len = VARSIZE(ranges[i]) - sizeof(RangeType) - sizeof(char);
+		uint32		len = VARSIZE(ranges[i]) - sizeof(RangeType) - sizeof(char);
 		memcpy(ptr, (Pointer) (ranges[i] + 1), len);
 		ptr += att_align_nominal(len, elemalign);
 	}
@@ -640,15 +625,13 @@ MultirangeType *
 make_multirange(Oid mltrngtypoid, TypeCacheEntry *rangetyp, int32 range_count,
 				RangeType **ranges)
 {
-	MultirangeType *multirange;
-	Size		size;
 
 	/* Sort and merge input ranges. */
 	range_count = multirange_canonicalize(rangetyp, range_count, ranges);
 
 	/* Note: zero-fill is required here, just as in heap tuples */
-	size = multirange_size_estimate(rangetyp, range_count, ranges);
-	multirange = palloc0(size);
+	Size		size = multirange_size_estimate(rangetyp, range_count, ranges);
+	MultirangeType *multirange = palloc0(size);
 	SET_VARSIZE(multirange, size);
 
 	/* Now fill in the datum */
@@ -689,19 +672,15 @@ RangeType *
 multirange_get_range(TypeCacheEntry *rangetyp,
 					 const MultirangeType *multirange, int i)
 {
-	uint32		offset;
-	uint8		flags;
 	Pointer		begin,
 				ptr;
 	int16		typlen = rangetyp->rngelemtype->typlen;
 	char		typalign = rangetyp->rngelemtype->typalign;
-	uint32		len;
-	RangeType  *range;
 
 	Assert(i < multirange->rangeCount);
 
-	offset = multirange_get_bounds_offset(multirange, i);
-	flags = MultirangeGetFlagsPtr(multirange)[i];
+	uint32		offset = multirange_get_bounds_offset(multirange, i);
+	uint8		flags = MultirangeGetFlagsPtr(multirange)[i];
 	ptr = begin = MultirangeGetBoundariesPtr(multirange, typalign) + offset;
 
 	/*
@@ -714,9 +693,9 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
 	if (RANGE_HAS_UBOUND(flags))
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
-	len = (ptr - begin) + sizeof(RangeType) + sizeof(uint8);
+	uint32		len = (ptr - begin) + sizeof(RangeType) + sizeof(uint8);
 
-	range = palloc0(len);
+	RangeType  *range = palloc0(len);
 	SET_VARSIZE(range, len);
 	range->rangetypid = rangetyp->type_id;
 
@@ -736,9 +715,6 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 					  const MultirangeType *multirange,
 					  uint32 i, RangeBound *lower, RangeBound *upper)
 {
-	uint32		offset;
-	uint8		flags;
-	Pointer		ptr;
 	int16		typlen = rangetyp->rngelemtype->typlen;
 	char		typalign = rangetyp->rngelemtype->typalign;
 	bool		typbyval = rangetyp->rngelemtype->typbyval;
@@ -747,9 +723,9 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 
 	Assert(i < multirange->rangeCount);
 
-	offset = multirange_get_bounds_offset(multirange, i);
-	flags = MultirangeGetFlagsPtr(multirange)[i];
-	ptr = MultirangeGetBoundariesPtr(multirange, typalign) + offset;
+	uint32		offset = multirange_get_bounds_offset(multirange, i);
+	uint8		flags = MultirangeGetFlagsPtr(multirange)[i];
+	Pointer		ptr = MultirangeGetBoundariesPtr(multirange, typalign) + offset;
 
 	/* multirange can't contain empty ranges */
 	Assert((flags & RANGE_EMPTY) == 0);
@@ -932,19 +908,14 @@ Datum
 multirange_constructor2(PG_FUNCTION_ARGS)
 {
 	Oid			mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	Oid			rngtypid;
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *rangetyp;
-	ArrayType  *rangeArray;
 	int			range_count;
 	Datum	   *elements;
 	bool	   *nulls;
 	RangeType **ranges;
-	int			dims;
 	int			i;
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypid);
-	rangetyp = typcache->rngtype;
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypid);
+	TypeCacheEntry *rangetyp = typcache->rngtype;
 
 	/*
 	 * A no-arg invocation should call multirange_constructor0 instead, but
@@ -963,15 +934,15 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 		elog(ERROR,
 			 "multirange values cannot contain NULL members");
 
-	rangeArray = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *rangeArray = PG_GETARG_ARRAYTYPE_P(0);
 
-	dims = ARR_NDIM(rangeArray);
+	int			dims = ARR_NDIM(rangeArray);
 	if (dims > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
 				 errmsg("multiranges cannot be constructed from multidimensional arrays")));
 
-	rngtypid = ARR_ELEMTYPE(rangeArray);
+	Oid			rngtypid = ARR_ELEMTYPE(rangeArray);
 	if (rngtypid != rangetyp->type_id)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1016,13 +987,9 @@ Datum
 multirange_constructor1(PG_FUNCTION_ARGS)
 {
 	Oid			mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	Oid			rngtypid;
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *rangetyp;
-	RangeType  *range;
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypid);
-	rangetyp = typcache->rngtype;
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypid);
+	TypeCacheEntry *rangetyp = typcache->rngtype;
 
 	/*
 	 * This check should be guaranteed by our signature, but let's do it just
@@ -1033,10 +1000,10 @@ multirange_constructor1(PG_FUNCTION_ARGS)
 		elog(ERROR,
 			 "multirange values cannot contain NULL members");
 
-	range = PG_GETARG_RANGE_P(0);
+	RangeType  *range = PG_GETARG_RANGE_P(0);
 
 	/* Make sure the range type matches. */
-	rngtypid = RangeTypeGetOid(range);
+	Oid			rngtypid = RangeTypeGetOid(range);
 	if (rngtypid != rangetyp->type_id)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1053,18 +1020,15 @@ multirange_constructor1(PG_FUNCTION_ARGS)
 Datum
 multirange_constructor0(PG_FUNCTION_ARGS)
 {
-	Oid			mltrngtypid;
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *rangetyp;
 
 	/* This should always be called without arguments */
 	if (PG_NARGS() != 0)
 		elog(ERROR,
 			 "niladic multirange constructor must not receive arguments");
 
-	mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	typcache = multirange_get_typcache(fcinfo, mltrngtypid);
-	rangetyp = typcache->rngtype;
+	Oid			mltrngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypid);
+	TypeCacheEntry *rangetyp = typcache->rngtype;
 
 	PG_RETURN_MULTIRANGE_P(make_multirange(mltrngtypid, rangetyp, 0, NULL));
 }
@@ -1078,26 +1042,23 @@ multirange_union(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 	int32		range_count1;
 	int32		range_count2;
-	int32		range_count3;
 	RangeType **ranges1;
 	RangeType **ranges2;
-	RangeType **ranges3;
 
 	if (MultirangeIsEmpty(mr1))
 		PG_RETURN_MULTIRANGE_P(mr2);
 	if (MultirangeIsEmpty(mr2))
 		PG_RETURN_MULTIRANGE_P(mr1);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	multirange_deserialize(typcache->rngtype, mr1, &range_count1, &ranges1);
 	multirange_deserialize(typcache->rngtype, mr2, &range_count2, &ranges2);
 
-	range_count3 = range_count1 + range_count2;
-	ranges3 = palloc0(range_count3 * sizeof(RangeType *));
+	int32		range_count3 = range_count1 + range_count2;
+	RangeType **ranges3 = palloc0(range_count3 * sizeof(RangeType *));
 	memcpy(ranges3, ranges1, range_count1 * sizeof(RangeType *));
 	memcpy(ranges3 + range_count1, ranges2, range_count2 * sizeof(RangeType *));
 	PG_RETURN_MULTIRANGE_P(make_multirange(typcache->type_id, typcache->rngtype,
@@ -1111,15 +1072,13 @@ multirange_minus(PG_FUNCTION_ARGS)
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
 	Oid			mltrngtypoid = MultirangeTypeGetOid(mr1);
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *rangetyp;
 	int32		range_count1;
 	int32		range_count2;
 	RangeType **ranges1;
 	RangeType **ranges2;
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
-	rangetyp = typcache->rngtype;
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
+	TypeCacheEntry *rangetyp = typcache->rngtype;
 
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		PG_RETURN_MULTIRANGE_P(mr1);
@@ -1141,9 +1100,6 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 						  int32 range_count2, RangeType **ranges2)
 {
 	RangeType  *r1;
-	RangeType  *r2;
-	RangeType **ranges3;
-	int32		range_count3;
 	int32		i1;
 	int32		i2;
 
@@ -1151,8 +1107,8 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 	 * Worst case: every range in ranges1 makes a different cut to some range
 	 * in ranges2.
 	 */
-	ranges3 = palloc0((range_count1 + range_count2) * sizeof(RangeType *));
-	range_count3 = 0;
+	RangeType **ranges3 = palloc0((range_count1 + range_count2) * sizeof(RangeType *));
+	int32		range_count3 = 0;
 
 	/*
 	 * For each range in mr1, keep subtracting until it's gone or the ranges
@@ -1160,7 +1116,7 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 	 * to r1. The parallel progress through mr1 and mr2 is similar to
 	 * multirange_overlaps_multirange_internal.
 	 */
-	r2 = ranges2[0];
+	RangeType  *r2 = ranges2[0];
 	for (i1 = 0, i2 = 0; i1 < range_count1; i1++)
 	{
 		r1 = ranges1[i1];
@@ -1229,15 +1185,13 @@ multirange_intersect(PG_FUNCTION_ARGS)
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
 	Oid			mltrngtypoid = MultirangeTypeGetOid(mr1);
-	TypeCacheEntry *typcache;
-	TypeCacheEntry *rangetyp;
 	int32		range_count1;
 	int32		range_count2;
 	RangeType **ranges1;
 	RangeType **ranges2;
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
-	rangetyp = typcache->rngtype;
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
+	TypeCacheEntry *rangetyp = typcache->rngtype;
 
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		PG_RETURN_MULTIRANGE_P(make_empty_multirange(mltrngtypoid, rangetyp));
@@ -1259,9 +1213,6 @@ multirange_intersect_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 							  int32 range_count2, RangeType **ranges2)
 {
 	RangeType  *r1;
-	RangeType  *r2;
-	RangeType **ranges3;
-	int32		range_count3;
 	int32		i1;
 	int32		i2;
 
@@ -1279,8 +1230,8 @@ multirange_intersect_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 	 * but one extra won't hurt.
 	 *-----------------------------------------------
 	 */
-	ranges3 = palloc0((range_count1 + range_count2) * sizeof(RangeType *));
-	range_count3 = 0;
+	RangeType **ranges3 = palloc0((range_count1 + range_count2) * sizeof(RangeType *));
+	int32		range_count3 = 0;
 
 	/*
 	 * For each range in mr1, keep intersecting until the ranges in mr2 have
@@ -1288,7 +1239,7 @@ multirange_intersect_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 	 * multirange_minus_multirange_internal, but we don't have to assign back
 	 * to r1.
 	 */
-	r2 = ranges2[0];
+	RangeType  *r2 = ranges2[0];
 	for (i1 = 0, i2 = 0; i1 < range_count1; i1++)
 	{
 		r1 = ranges1[i1];
@@ -1337,13 +1288,12 @@ Datum
 range_agg_transfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext aggContext;
-	Oid			rngtypoid;
 	ArrayBuildState *state;
 
 	if (!AggCheckCallContext(fcinfo, &aggContext))
 		elog(ERROR, "range_agg_transfn called in non-aggregate context");
 
-	rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	Oid			rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_range(rngtypoid))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1368,30 +1318,25 @@ Datum
 range_agg_finalfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext aggContext;
-	Oid			mltrngtypoid;
-	TypeCacheEntry *typcache;
-	ArrayBuildState *state;
-	int32		range_count;
-	RangeType **ranges;
 	int			i;
 
 	if (!AggCheckCallContext(fcinfo, &aggContext))
 		elog(ERROR, "range_agg_finalfn called in non-aggregate context");
 
-	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+	ArrayBuildState *state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
 	if (state == NULL)
 		/* This shouldn't be possible, but just in case.... */
 		PG_RETURN_NULL();
 
 	/* Also return NULL if we had zero inputs, like other aggregates */
-	range_count = state->nelems;
+	int32		range_count = state->nelems;
 	if (range_count == 0)
 		PG_RETURN_NULL();
 
-	mltrngtypoid = get_fn_expr_rettype(fcinfo->flinfo);
-	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
+	Oid			mltrngtypoid = get_fn_expr_rettype(fcinfo->flinfo);
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
 
-	ranges = palloc0(range_count * sizeof(RangeType *));
+	RangeType **ranges = palloc0(range_count * sizeof(RangeType *));
 	for (i = 0; i < range_count; i++)
 		ranges[i] = DatumGetRangeTypeP(state->dvalues[i]);
 
@@ -1402,10 +1347,6 @@ Datum
 multirange_intersect_agg_transfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext aggContext;
-	Oid			mltrngtypoid;
-	TypeCacheEntry *typcache;
-	MultirangeType *result;
-	MultirangeType *current;
 	int32		range_count1;
 	int32		range_count2;
 	RangeType **ranges1;
@@ -1414,17 +1355,17 @@ multirange_intersect_agg_transfn(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, &aggContext))
 		elog(ERROR, "multirange_intersect_agg_transfn called in non-aggregate context");
 
-	mltrngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	Oid			mltrngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_multirange(mltrngtypoid))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("range_intersect_agg must be called with a multirange")));
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
 
 	/* strictness ensures these are non-null */
-	result = PG_GETARG_MULTIRANGE_P(0);
-	current = PG_GETARG_MULTIRANGE_P(1);
+	MultirangeType *result = PG_GETARG_MULTIRANGE_P(0);
+	MultirangeType *current = PG_GETARG_MULTIRANGE_P(1);
 
 	multirange_deserialize(typcache->rngtype, result, &range_count1, &ranges1);
 	multirange_deserialize(typcache->rngtype, current, &range_count2, &ranges2);
@@ -1446,14 +1387,13 @@ Datum
 multirange_lower(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_NULL();
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	multirange_get_bounds(typcache->rngtype, mr, 0,
 						  &lower, &upper);
@@ -1469,14 +1409,13 @@ Datum
 multirange_upper(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_NULL();
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	multirange_get_bounds(typcache->rngtype, mr, mr->rangeCount - 1,
 						  &lower, &upper);
@@ -1504,14 +1443,13 @@ Datum
 multirange_lower_inc(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 	multirange_get_bounds(typcache->rngtype, mr, 0,
 						  &lower, &upper);
 
@@ -1523,14 +1461,13 @@ Datum
 multirange_upper_inc(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 	multirange_get_bounds(typcache->rngtype, mr, mr->rangeCount - 1,
 						  &lower, &upper);
 
@@ -1542,14 +1479,13 @@ Datum
 multirange_lower_inf(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 	multirange_get_bounds(typcache->rngtype, mr, 0,
 						  &lower, &upper);
 
@@ -1561,14 +1497,13 @@ Datum
 multirange_upper_inf(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
-	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
 
 	if (MultirangeIsEmpty(mr))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 	multirange_get_bounds(typcache->rngtype, mr, mr->rangeCount - 1,
 						  &lower, &upper);
 
@@ -1585,9 +1520,8 @@ multirange_contains_elem(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	Datum		val = PG_GETARG_DATUM(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(multirange_contains_elem_internal(typcache->rngtype, mr, val));
 }
@@ -1598,9 +1532,8 @@ elem_contained_by_multirange(PG_FUNCTION_ARGS)
 {
 	Datum		val = PG_GETARG_DATUM(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(multirange_contains_elem_internal(typcache->rngtype, mr, val));
 }
@@ -1661,9 +1594,8 @@ multirange_contains_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(multirange_contains_range_internal(typcache->rngtype, mr, r));
 }
@@ -1673,9 +1605,8 @@ range_contains_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_contains_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -1686,9 +1617,8 @@ range_contained_by_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(multirange_contains_range_internal(typcache->rngtype, mr, r));
 }
@@ -1698,9 +1628,8 @@ multirange_contained_by_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_contains_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -1804,8 +1733,6 @@ multirange_eq_internal(TypeCacheEntry *rangetyp,
 					   const MultirangeType *mr1,
 					   const MultirangeType *mr2)
 {
-	int32		range_count_1;
-	int32		range_count_2;
 	int32		i;
 	RangeBound	lower1,
 				upper1,
@@ -1816,8 +1743,8 @@ multirange_eq_internal(TypeCacheEntry *rangetyp,
 	if (MultirangeTypeGetOid(mr1) != MultirangeTypeGetOid(mr2))
 		elog(ERROR, "multirange types do not match");
 
-	range_count_1 = mr1->rangeCount;
-	range_count_2 = mr2->rangeCount;
+	int32		range_count_1 = mr1->rangeCount;
+	int32		range_count_2 = mr2->rangeCount;
 
 	if (range_count_1 != range_count_2)
 		return false;
@@ -1841,9 +1768,8 @@ multirange_eq(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_eq_internal(typcache->rngtype, mr1, mr2));
 }
@@ -1863,9 +1789,8 @@ multirange_ne(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_ne_internal(typcache->rngtype, mr1, mr2));
 }
@@ -1876,9 +1801,8 @@ range_overlaps_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_overlaps_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -1888,9 +1812,8 @@ multirange_overlaps_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_overlaps_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -1900,9 +1823,8 @@ multirange_overlaps_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_overlaps_multirange_internal(typcache->rngtype, mr1, mr2));
 }
@@ -1955,9 +1877,6 @@ multirange_overlaps_multirange_internal(TypeCacheEntry *rangetyp,
 										const MultirangeType *mr1,
 										const MultirangeType *mr2)
 {
-	int32		range_count1;
-	int32		range_count2;
-	int32		i1;
 	int32		i2;
 	RangeBound	lower1,
 				upper1,
@@ -1971,8 +1890,8 @@ multirange_overlaps_multirange_internal(TypeCacheEntry *rangetyp,
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		return false;
 
-	range_count1 = mr1->rangeCount;
-	range_count2 = mr2->rangeCount;
+	int32		range_count1 = mr1->rangeCount;
+	int32		range_count2 = mr2->rangeCount;
 
 	/*
 	 * Every range in mr1 gets a chance to overlap with the ranges in mr2, but
@@ -1981,7 +1900,7 @@ multirange_overlaps_multirange_internal(TypeCacheEntry *rangetyp,
 	 * don't find an overlap with r we're done, and here if we don't find an
 	 * overlap with r2 we try the next r2.
 	 */
-	i1 = 0;
+	int32		i1 = 0;
 	multirange_get_bounds(rangetyp, mr1, i1, &lower1, &upper1);
 	for (i1 = 0, i2 = 0; i2 < range_count2; i2++)
 	{
@@ -2036,9 +1955,8 @@ range_overleft_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_overleft_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2048,7 +1966,6 @@ multirange_overleft_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				upper1,
 				lower2,
@@ -2058,7 +1975,7 @@ multirange_overleft_range(PG_FUNCTION_ARGS)
 	if (MultirangeIsEmpty(mr) || RangeIsEmpty(r))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	multirange_get_bounds(typcache->rngtype, mr, mr->rangeCount - 1,
 						  &lower1, &upper1);
@@ -2073,7 +1990,6 @@ multirange_overleft_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				upper1,
 				lower2,
@@ -2082,7 +1998,7 @@ multirange_overleft_multirange(PG_FUNCTION_ARGS)
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	multirange_get_bounds(typcache->rngtype, mr1, mr1->rangeCount - 1,
 						  &lower1, &upper1);
@@ -2119,9 +2035,8 @@ range_overright_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_overright_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2131,7 +2046,6 @@ multirange_overright_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				upper1,
 				lower2,
@@ -2141,7 +2055,7 @@ multirange_overright_range(PG_FUNCTION_ARGS)
 	if (MultirangeIsEmpty(mr) || RangeIsEmpty(r))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	multirange_get_bounds(typcache->rngtype, mr, 0, &lower1, &upper1);
 	range_deserialize(typcache->rngtype, r, &lower2, &upper2, &empty);
@@ -2155,7 +2069,6 @@ multirange_overright_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 	RangeBound	lower1,
 				upper1,
 				lower2,
@@ -2164,7 +2077,7 @@ multirange_overright_multirange(PG_FUNCTION_ARGS)
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		PG_RETURN_BOOL(false);
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	multirange_get_bounds(typcache->rngtype, mr1, 0, &lower1, &upper1);
 	multirange_get_bounds(typcache->rngtype, mr2, 0, &lower2, &upper2);
@@ -2178,9 +2091,8 @@ multirange_contains_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_contains_multirange_internal(typcache->rngtype, mr1, mr2));
 }
@@ -2191,9 +2103,8 @@ multirange_contained_by_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_contains_multirange_internal(typcache->rngtype, mr2, mr1));
 }
@@ -2268,9 +2179,8 @@ range_before_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_before_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2280,9 +2190,8 @@ multirange_before_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_after_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2292,9 +2201,8 @@ multirange_before_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_before_multirange_internal(typcache->rngtype, mr1, mr2));
 }
@@ -2305,9 +2213,8 @@ range_after_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_after_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2317,9 +2224,8 @@ multirange_after_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_before_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2329,9 +2235,8 @@ multirange_after_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
 	PG_RETURN_BOOL(multirange_before_multirange_internal(typcache->rngtype, mr2, mr1));
 }
@@ -2391,7 +2296,6 @@ range_after_multirange_internal(TypeCacheEntry *rangetyp,
 				lower2,
 				upper2;
 	bool		empty;
-	int32		range_count;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
 		return false;
@@ -2399,7 +2303,7 @@ range_after_multirange_internal(TypeCacheEntry *rangetyp,
 	range_deserialize(rangetyp, r, &lower1, &upper1, &empty);
 	Assert(!empty);
 
-	range_count = mr->rangeCount;
+	int32		range_count = mr->rangeCount;
 	multirange_get_bounds(rangetyp, mr, range_count - 1,
 						  &lower2, &upper2);
 
@@ -2416,7 +2320,6 @@ range_adjacent_multirange_internal(TypeCacheEntry *rangetyp,
 				lower2,
 				upper2;
 	bool		empty;
-	int32		range_count;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
 		return false;
@@ -2424,7 +2327,7 @@ range_adjacent_multirange_internal(TypeCacheEntry *rangetyp,
 	range_deserialize(rangetyp, r, &lower1, &upper1, &empty);
 	Assert(!empty);
 
-	range_count = mr->rangeCount;
+	int32		range_count = mr->rangeCount;
 	multirange_get_bounds(rangetyp, mr, 0,
 						  &lower2, &upper2);
 
@@ -2447,9 +2350,8 @@ range_adjacent_multirange(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE_P(0);
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_adjacent_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2459,12 +2361,11 @@ multirange_adjacent_range(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	RangeType  *r = PG_GETARG_RANGE_P(1);
-	TypeCacheEntry *typcache;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
 		return false;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
 	PG_RETURN_BOOL(range_adjacent_multirange_internal(typcache->rngtype, r, mr));
 }
@@ -2474,9 +2375,6 @@ multirange_adjacent_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	TypeCacheEntry *typcache;
-	int32		range_count1;
-	int32		range_count2;
 	RangeBound	lower1,
 				upper1,
 				lower2,
@@ -2485,10 +2383,10 @@ multirange_adjacent_multirange(PG_FUNCTION_ARGS)
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
 		return false;
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
-	range_count1 = mr1->rangeCount;
-	range_count2 = mr2->rangeCount;
+	int32		range_count1 = mr1->rangeCount;
+	int32		range_count2 = mr2->rangeCount;
 	multirange_get_bounds(typcache->rngtype, mr1, range_count1 - 1,
 						  &lower1, &upper1);
 	multirange_get_bounds(typcache->rngtype, mr2, 0,
@@ -2515,24 +2413,20 @@ multirange_cmp(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr1 = PG_GETARG_MULTIRANGE_P(0);
 	MultirangeType *mr2 = PG_GETARG_MULTIRANGE_P(1);
-	int32		range_count_1;
-	int32		range_count_2;
-	int32		range_count_max;
 	int32		i;
-	TypeCacheEntry *typcache;
 	int			cmp = 0;		/* If both are empty we'll use this. */
 
 	/* Different types should be prevented by ANYMULTIRANGE matching rules */
 	if (MultirangeTypeGetOid(mr1) != MultirangeTypeGetOid(mr2))
 		elog(ERROR, "multirange types do not match");
 
-	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
-	range_count_1 = mr1->rangeCount;
-	range_count_2 = mr2->rangeCount;
+	int32		range_count_1 = mr1->rangeCount;
+	int32		range_count_2 = mr2->rangeCount;
 
 	/* Loop over source data */
-	range_count_max = Max(range_count_1, range_count_2);
+	int32		range_count_max = Max(range_count_1, range_count_2);
 	for (i = 0; i < range_count_max; i++)
 	{
 		RangeBound	lower1,
@@ -2615,10 +2509,9 @@ range_merge_from_multirange(PG_FUNCTION_ARGS)
 {
 	MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 	Oid			mltrngtypoid = MultirangeTypeGetOid(mr);
-	TypeCacheEntry *typcache;
 	RangeType  *result;
 
-	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
+	TypeCacheEntry *typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
 
 	if (MultirangeIsEmpty(mr))
 	{
@@ -2664,7 +2557,6 @@ multirange_unnest(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		MultirangeType *mr;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -2681,7 +2573,7 @@ multirange_unnest(PG_FUNCTION_ARGS)
 		 * and not before.  (If no detoast happens, we assume the originally
 		 * passed multirange will stick around till then.)
 		 */
-		mr = PG_GETARG_MULTIRANGE_P(0);
+		MultirangeType *mr = PG_GETARG_MULTIRANGE_P(0);
 
 		/* allocate memory for user context */
 		fctx = (multirange_unnest_fctx *) palloc(sizeof(multirange_unnest_fctx));
@@ -2702,9 +2594,8 @@ multirange_unnest(PG_FUNCTION_ARGS)
 
 	if (fctx->index < fctx->mr->rangeCount)
 	{
-		RangeType  *range;
 
-		range = multirange_get_range(fctx->typcache->rngtype,
+		RangeType  *range = multirange_get_range(fctx->typcache->rngtype,
 									 fctx->mr,
 									 fctx->index);
 		fctx->index++;
@@ -2752,7 +2643,6 @@ hash_multirange(PG_FUNCTION_ARGS)
 		uint8		flags = MultirangeGetFlagsPtr(mr)[i];
 		uint32		lower_hash;
 		uint32		upper_hash;
-		uint32		range_hash;
 
 		multirange_get_bounds(typcache->rngtype, mr, i, &lower, &upper);
 
@@ -2771,7 +2661,7 @@ hash_multirange(PG_FUNCTION_ARGS)
 			upper_hash = 0;
 
 		/* Merge hashes of flags and bounds */
-		range_hash = hash_uint32((uint32) flags);
+		uint32		range_hash = hash_uint32((uint32) flags);
 		range_hash ^= lower_hash;
 		range_hash = (range_hash << 1) | (range_hash >> 31);
 		range_hash ^= upper_hash;
@@ -2824,7 +2714,6 @@ hash_multirange_extended(PG_FUNCTION_ARGS)
 		uint8		flags = MultirangeGetFlagsPtr(mr)[i];
 		uint64		lower_hash;
 		uint64		upper_hash;
-		uint64		range_hash;
 
 		multirange_get_bounds(typcache->rngtype, mr, i, &lower, &upper);
 
@@ -2845,7 +2734,7 @@ hash_multirange_extended(PG_FUNCTION_ARGS)
 			upper_hash = 0;
 
 		/* Merge hashes of flags and bounds */
-		range_hash = DatumGetUInt64(hash_uint32_extended((uint32) flags,
+		uint64		range_hash = DatumGetUInt64(hash_uint32_extended((uint32) flags,
 														 DatumGetInt64(seed)));
 		range_hash ^= lower_hash;
 		range_hash = ROTATE_HIGH_AND_LOW_32BITS(range_hash);

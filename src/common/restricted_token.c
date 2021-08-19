@@ -46,19 +46,16 @@ typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_
 HANDLE
 CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 {
-	BOOL		b;
 	STARTUPINFO si;
 	HANDLE		origToken;
 	HANDLE		restrictedToken;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	SID_AND_ATTRIBUTES dropSids[2];
-	__CreateRestrictedToken _CreateRestrictedToken;
-	HANDLE		Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 
-	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+	HANDLE		Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
 	if (Advapi32Handle == NULL)
 	{
 		pg_log_error("could not load library \"%s\": error code %lu",
@@ -66,7 +63,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 		return 0;
 	}
 
-	_CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+	__CreateRestrictedToken _CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
 
 	if (_CreateRestrictedToken == NULL)
 	{
@@ -101,7 +98,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 		return 0;
 	}
 
-	b = _CreateRestrictedToken(origToken,
+	BOOL		b = _CreateRestrictedToken(origToken,
 							   DISABLE_MAX_PRIVILEGE,
 							   sizeof(dropSids) / sizeof(dropSids[0]),
 							   dropSids,
@@ -165,11 +162,10 @@ get_restricted_token(void)
 		|| strcmp(restrict_env, "1") != 0)
 	{
 		PROCESS_INFORMATION pi;
-		char	   *cmdline;
 
 		ZeroMemory(&pi, sizeof(pi));
 
-		cmdline = pg_strdup(GetCommandLine());
+		char	   *cmdline = pg_strdup(GetCommandLine());
 
 		setenv("PG_RESTRICT_EXEC", "1", 1);
 

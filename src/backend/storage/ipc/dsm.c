@@ -149,8 +149,6 @@ void
 dsm_postmaster_startup(PGShmemHeader *shim)
 {
 	void	   *dsm_control_address = NULL;
-	uint32		maxitems;
-	Size		segsize;
 
 	Assert(!IsUnderPostmaster);
 
@@ -164,11 +162,11 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 		dsm_cleanup_for_mmap();
 
 	/* Determine size for new control segment. */
-	maxitems = PG_DYNSHMEM_FIXED_SLOTS
+	uint32		maxitems = PG_DYNSHMEM_FIXED_SLOTS
 		+ PG_DYNSHMEM_SLOTS_PER_BACKEND * MaxBackends;
 	elog(DEBUG2, "dynamic shared memory system will support %u segments",
 		 maxitems);
-	segsize = dsm_control_bytes_needed(maxitems);
+	Size		segsize = dsm_control_bytes_needed(maxitems);
 
 	/*
 	 * Loop until we find an unused identifier for the new control segment. We
@@ -215,9 +213,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	void	   *junk_impl_private = NULL;
 	Size		mapped_size = 0;
 	Size		junk_mapped_size = 0;
-	uint32		nitems;
 	uint32		i;
-	dsm_control_header *old_control;
 
 	/*
 	 * Try to attach the segment.  If this fails, it probably just means that
@@ -233,7 +229,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	 * We've managed to reattach it, but the contents might not be sane. If
 	 * they aren't, we disregard the segment after all.
 	 */
-	old_control = (dsm_control_header *) mapped_address;
+	dsm_control_header *old_control = (dsm_control_header *) mapped_address;
 	if (!dsm_control_segment_sane(old_control, mapped_size))
 	{
 		dsm_impl_op(DSM_OP_DETACH, old_control_handle, 0, &impl_private,
@@ -245,7 +241,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	 * OK, the control segment looks basically valid, so we can use it to get
 	 * a list of segments that need to be removed.
 	 */
-	nitems = old_control->nitems;
+	uint32		nitems = old_control->nitems;
 	for (i = 0; i < nitems; ++i)
 	{
 		dsm_handle	handle;
@@ -291,11 +287,10 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 static void
 dsm_cleanup_for_mmap(void)
 {
-	DIR		   *dir;
 	struct dirent *dent;
 
 	/* Scan the directory for something with a name of the correct format. */
-	dir = AllocateDir(PG_DYNSHMEM_DIR);
+	DIR		   *dir = AllocateDir(PG_DYNSHMEM_DIR);
 
 	while ((dent = ReadDir(dir, PG_DYNSHMEM_DIR)) != NULL)
 	{
@@ -329,9 +324,7 @@ dsm_cleanup_for_mmap(void)
 static void
 dsm_postmaster_shutdown(int code, Datum arg)
 {
-	uint32		nitems;
 	uint32		i;
-	void	   *dsm_control_address;
 	void	   *junk_mapped_address = NULL;
 	void	   *junk_impl_private = NULL;
 	Size		junk_mapped_size = 0;
@@ -344,7 +337,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	 * stray shared memory segments, but there's not much we can do about that
 	 * if the metadata is gone.
 	 */
-	nitems = dsm_control->nitems;
+	uint32		nitems = dsm_control->nitems;
 	if (!dsm_control_segment_sane(dsm_control, dsm_control_mapped_size))
 	{
 		ereport(LOG,
@@ -378,7 +371,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	elog(DEBUG2,
 		 "cleaning up dynamic shared memory control segment with ID %u",
 		 dsm_control_handle);
-	dsm_control_address = dsm_control;
+	void	   *dsm_control_address = dsm_control;
 	dsm_impl_op(DSM_OP_DESTROY, dsm_control_handle, 0,
 				&dsm_control_impl_private, &dsm_control_address,
 				&dsm_control_mapped_size, LOG);
@@ -460,7 +453,6 @@ dsm_shmem_init(void)
 	{
 		FreePageManager *fpm = (FreePageManager *) dsm_main_space_begin;
 		size_t		first_page = 0;
-		size_t		pages;
 
 		/* Reserve space for the FreePageManager. */
 		while (first_page * FPM_PAGE_SIZE < sizeof(FreePageManager))
@@ -468,7 +460,7 @@ dsm_shmem_init(void)
 
 		/* Initialize it and give it all the rest of the space. */
 		FreePageManagerInitialize(fpm, dsm_main_space_begin);
-		pages = (size / FPM_PAGE_SIZE) - first_page;
+		size_t		pages = (size / FPM_PAGE_SIZE) - first_page;
 		FreePageManagerPut(fpm, first_page, pages);
 	}
 }
@@ -486,9 +478,7 @@ dsm_shmem_init(void)
 dsm_segment *
 dsm_create(Size size, int flags)
 {
-	dsm_segment *seg;
 	uint32		i;
-	uint32		nitems;
 	size_t		npages = 0;
 	size_t		first_page = 0;
 	FreePageManager *dsm_main_space_fpm = dsm_main_space_begin;
@@ -501,7 +491,7 @@ dsm_create(Size size, int flags)
 		dsm_backend_startup();
 
 	/* Create a new segment descriptor. */
-	seg = dsm_create_descriptor();
+	dsm_segment *seg = dsm_create_descriptor();
 
 	/*
 	 * Lock the control segment while we try to allocate from the main shared
@@ -547,7 +537,7 @@ dsm_create(Size size, int flags)
 	}
 
 	/* Search the control segment for an unused slot. */
-	nitems = dsm_control->nitems;
+	uint32		nitems = dsm_control->nitems;
 	for (i = 0; i < nitems; ++i)
 	{
 		if (dsm_control->item[i].refcnt == 0)
@@ -633,7 +623,6 @@ dsm_attach(dsm_handle h)
 	dsm_segment *seg;
 	dlist_iter	iter;
 	uint32		i;
-	uint32		nitems;
 
 	/* Unsafe in postmaster (and pointless in a stand-alone backend). */
 	Assert(IsUnderPostmaster);
@@ -664,7 +653,7 @@ dsm_attach(dsm_handle h)
 
 	/* Bump reference count for this segment in shared memory. */
 	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
-	nitems = dsm_control->nitems;
+	uint32		nitems = dsm_control->nitems;
 	for (i = 0; i < nitems; ++i)
 	{
 		/*
@@ -724,9 +713,8 @@ dsm_backend_shutdown(void)
 {
 	while (!dlist_is_empty(&dsm_segment_list))
 	{
-		dsm_segment *seg;
 
-		seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
+		dsm_segment *seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
 		dsm_detach(seg);
 	}
 }
@@ -744,9 +732,8 @@ dsm_detach_all(void)
 
 	while (!dlist_is_empty(&dsm_segment_list))
 	{
-		dsm_segment *seg;
 
-		seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
+		dsm_segment *seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
 		dsm_detach(seg);
 	}
 
@@ -779,15 +766,11 @@ dsm_detach(dsm_segment *seg)
 	HOLD_INTERRUPTS();
 	while (!slist_is_empty(&seg->on_detach))
 	{
-		slist_node *node;
-		dsm_segment_detach_callback *cb;
-		on_dsm_detach_callback function;
-		Datum		arg;
 
-		node = slist_pop_head_node(&seg->on_detach);
-		cb = slist_container(dsm_segment_detach_callback, node, node);
-		function = cb->function;
-		arg = cb->arg;
+		slist_node *node = slist_pop_head_node(&seg->on_detach);
+		dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, node);
+		on_dsm_detach_callback function = cb->function;
+		Datum		arg = cb->arg;
 		pfree(cb);
 
 		function(seg, arg);
@@ -1095,9 +1078,8 @@ dsm_segment_handle(dsm_segment *seg)
 void
 on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function, Datum arg)
 {
-	dsm_segment_detach_callback *cb;
 
-	cb = MemoryContextAlloc(TopMemoryContext,
+	dsm_segment_detach_callback *cb = MemoryContextAlloc(TopMemoryContext,
 							sizeof(dsm_segment_detach_callback));
 	cb->function = function;
 	cb->arg = arg;
@@ -1115,9 +1097,8 @@ cancel_on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function,
 
 	slist_foreach_modify(iter, &seg->on_detach)
 	{
-		dsm_segment_detach_callback *cb;
 
-		cb = slist_container(dsm_segment_detach_callback, node, iter.cur);
+		dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, iter.cur);
 		if (cb->function == function && cb->arg == arg)
 		{
 			slist_delete_current(&iter);
@@ -1142,11 +1123,9 @@ reset_on_dsm_detach(void)
 		/* Throw away explicit on-detach actions one by one. */
 		while (!slist_is_empty(&seg->on_detach))
 		{
-			slist_node *node;
-			dsm_segment_detach_callback *cb;
 
-			node = slist_pop_head_node(&seg->on_detach);
-			cb = slist_container(dsm_segment_detach_callback, node, node);
+			slist_node *node = slist_pop_head_node(&seg->on_detach);
+			dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, node);
 			pfree(cb);
 		}
 
@@ -1164,12 +1143,11 @@ reset_on_dsm_detach(void)
 static dsm_segment *
 dsm_create_descriptor(void)
 {
-	dsm_segment *seg;
 
 	if (CurrentResourceOwner)
 		ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
 
-	seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
+	dsm_segment *seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
 	dlist_push_head(&dsm_segment_list, &seg->node);
 
 	/* seg->handle must be initialized by the caller */
@@ -1225,7 +1203,6 @@ dsm_control_bytes_needed(uint32 nitems)
 static inline dsm_handle
 make_main_region_dsm_handle(int slot)
 {
-	dsm_handle	handle;
 
 	/*
 	 * We need to create a handle that doesn't collide with any existing extra
@@ -1235,7 +1212,7 @@ make_main_region_dsm_handle(int slot)
 	 * effort to avoid newly created and recently destroyed handles from being
 	 * confused, so we'll make the rest of the bits random.
 	 */
-	handle = 1;
+	dsm_handle	handle = 1;
 	handle |= slot << 1;
 	handle |= random() << (pg_leftmost_one_pos32(dsm_control->maxitems) + 1);
 	return handle;

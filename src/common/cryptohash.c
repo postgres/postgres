@@ -65,7 +65,6 @@ struct pg_cryptohash_ctx
 pg_cryptohash_ctx *
 pg_cryptohash_create(pg_cryptohash_type type)
 {
-	pg_cryptohash_ctx *ctx;
 
 	/*
 	 * Note that this always allocates enough space for the largest hash. A
@@ -73,7 +72,7 @@ pg_cryptohash_create(pg_cryptohash_type type)
 	 * small extra amount of memory does not make it worth complicating this
 	 * code.
 	 */
-	ctx = ALLOC(sizeof(pg_cryptohash_ctx));
+	pg_cryptohash_ctx *ctx = ALLOC(sizeof(pg_cryptohash_ctx));
 	if (ctx == NULL)
 		return NULL;
 	memset(ctx, 0, sizeof(pg_cryptohash_ctx));

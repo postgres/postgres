@@ -49,18 +49,14 @@ static TupleTableSlot *SeqNext(SeqScanState *node);
 static TupleTableSlot *
 SeqNext(SeqScanState *node)
 {
-	TableScanDesc scandesc;
-	EState	   *estate;
-	ScanDirection direction;
-	TupleTableSlot *slot;
 
 	/*
 	 * get information from the estate and scan state
 	 */
-	scandesc = node->ss.ss_currentScanDesc;
-	estate = node->ss.ps.state;
-	direction = estate->es_direction;
-	slot = node->ss.ss_ScanTupleSlot;
+	TableScanDesc scandesc = node->ss.ss_currentScanDesc;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection direction = estate->es_direction;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 
 	if (scandesc == NULL)
 	{
@@ -122,7 +118,6 @@ ExecSeqScan(PlanState *pstate)
 SeqScanState *
 ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 {
-	SeqScanState *scanstate;
 
 	/*
 	 * Once upon a time it was possible to have an outerPlan of a SeqScan, but
@@ -134,7 +129,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	scanstate = makeNode(SeqScanState);
+	SeqScanState *scanstate = makeNode(SeqScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecSeqScan;
@@ -183,12 +178,11 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 void
 ExecEndSeqScan(SeqScanState *node)
 {
-	TableScanDesc scanDesc;
 
 	/*
 	 * get information from node
 	 */
-	scanDesc = node->ss.ss_currentScanDesc;
+	TableScanDesc scanDesc = node->ss.ss_currentScanDesc;
 
 	/*
 	 * Free the exprcontext
@@ -223,9 +217,8 @@ ExecEndSeqScan(SeqScanState *node)
 void
 ExecReScanSeqScan(SeqScanState *node)
 {
-	TableScanDesc scan;
 
-	scan = node->ss.ss_currentScanDesc;
+	TableScanDesc scan = node->ss.ss_currentScanDesc;
 
 	if (scan != NULL)
 		table_rescan(scan,		/* scan desc */
@@ -269,9 +262,8 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 						 ParallelContext *pcxt)
 {
 	EState	   *estate = node->ss.ps.state;
-	ParallelTableScanDesc pscan;
 
-	pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
+	ParallelTableScanDesc pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
 	table_parallelscan_initialize(node->ss.ss_currentRelation,
 								  pscan,
 								  estate->es_snapshot);
@@ -290,9 +282,8 @@ void
 ExecSeqScanReInitializeDSM(SeqScanState *node,
 						   ParallelContext *pcxt)
 {
-	ParallelTableScanDesc pscan;
 
-	pscan = node->ss.ss_currentScanDesc->rs_parallel;
+	ParallelTableScanDesc pscan = node->ss.ss_currentScanDesc->rs_parallel;
 	table_parallelscan_reinitialize(node->ss.ss_currentRelation, pscan);
 }
 
@@ -306,9 +297,8 @@ void
 ExecSeqScanInitializeWorker(SeqScanState *node,
 							ParallelWorkerContext *pwcxt)
 {
-	ParallelTableScanDesc pscan;
 
-	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+	ParallelTableScanDesc pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
 		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }

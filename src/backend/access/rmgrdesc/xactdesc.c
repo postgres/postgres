@@ -215,9 +215,8 @@ ParseAbortRecord(uint8 info, xl_xact_abort *xlrec, xl_xact_parsed_abort *parsed)
 void
 ParsePrepareRecord(uint8 info, xl_xact_prepare *xlrec, xl_xact_parsed_prepare *parsed)
 {
-	char	   *bufptr;
 
-	bufptr = ((char *) xlrec) + MAXALIGN(sizeof(xl_xact_prepare));
+	char	   *bufptr = ((char *) xlrec) + MAXALIGN(sizeof(xl_xact_prepare));
 
 	memset(parsed, 0, sizeof(*parsed));
 

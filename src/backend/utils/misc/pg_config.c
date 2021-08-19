@@ -25,13 +25,7 @@ Datum
 pg_config(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Tuplestorestate *tupstore;
 	HeapTuple	tuple;
-	TupleDesc	tupdesc;
-	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	ConfigData *configdata;
 	size_t		configdata_len;
 	char	   *values[2];
 	int			i = 0;
@@ -43,11 +37,11 @@ pg_config(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not "
 						"allowed in this context")));
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* get the requested return tuple description */
-	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	TupleDesc	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/*
 	 * Check to make sure we have a reasonable tuple descriptor
@@ -61,15 +55,15 @@ pg_config(PG_FUNCTION_ARGS)
 						"function return type are not compatible")));
 
 	/* OK to use it */
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 
-	configdata = get_configdata(my_exec_path, &configdata_len);
+	ConfigData *configdata = get_configdata(my_exec_path, &configdata_len);
 	for (i = 0; i < configdata_len; i++)
 	{
 		values[0] = configdata[i].name;

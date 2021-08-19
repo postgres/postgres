@@ -24,7 +24,6 @@ exit_nicely(PGconn *conn1, PGconn *conn2)
 static void
 check_prepare_conn(PGconn *conn, const char *dbName)
 {
-	PGresult   *res;
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
@@ -34,7 +33,7 @@ check_prepare_conn(PGconn *conn, const char *dbName)
 	}
 
 	/* Set always-secure search path, so malicious users can't take control. */
-	res = PQexec(conn,
+	PGresult   *res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -53,8 +52,6 @@ main(int argc, char **argv)
 			   *pgoptions;
 	char	   *dbName1,
 			   *dbName2;
-	char	   *tblName;
-	int			nFields;
 	int			i,
 				j;
 
@@ -64,7 +61,6 @@ main(int argc, char **argv)
 	/*
 	 * PGresult   *res1, *res2;
 	 */
-	PGresult   *res1;
 
 	if (argc != 4)
 	{
@@ -72,7 +68,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "      compares two tables in two databases\n");
 		exit(1);
 	}
-	tblName = argv[1];
+	char	   *tblName = argv[1];
 	dbName1 = argv[2];
 	dbName2 = argv[3];
 
@@ -96,7 +92,7 @@ main(int argc, char **argv)
 	check_prepare_conn(conn2, dbName2);
 
 	/* start a transaction block */
-	res1 = PQexec(conn1, "BEGIN");
+	PGresult   *res1 = PQexec(conn1, "BEGIN");
 	if (PQresultStatus(res1) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "BEGIN command failed\n");
@@ -131,7 +127,7 @@ main(int argc, char **argv)
 	}
 
 	/* first, print out the attribute names */
-	nFields = PQnfields(res1);
+	int			nFields = PQnfields(res1);
 	for (i = 0; i < nFields; i++)
 		printf("%-15s", PQfname(res1, i));
 	printf("\n\n");

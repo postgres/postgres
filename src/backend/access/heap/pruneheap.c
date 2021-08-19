@@ -87,11 +87,8 @@ void
 heap_page_prune_opt(Relation relation, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
-	TransactionId prune_xid;
-	GlobalVisState *vistest;
 	TransactionId limited_xmin = InvalidTransactionId;
 	TimestampTz limited_ts = 0;
-	Size		minfree;
 
 	/*
 	 * We can't write WAL in recovery mode, so there's no point trying to
@@ -115,7 +112,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * determining the appropriate horizon is a waste if there's no prune_xid
 	 * (i.e. no updates/deletes left potentially dead tuples around).
 	 */
-	prune_xid = ((PageHeader) page)->pd_prune_xid;
+	TransactionId prune_xid = ((PageHeader) page)->pd_prune_xid;
 	if (!TransactionIdIsValid(prune_xid))
 		return;
 
@@ -136,7 +133,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * unnecessarily relying on old_snapshot_threshold avoids causing
 	 * conflicts.
 	 */
-	vistest = GlobalVisTestFor(relation);
+	GlobalVisState *vistest = GlobalVisTestFor(relation);
 
 	if (!GlobalVisTestIsRemovableXid(vistest, prune_xid))
 	{
@@ -164,7 +161,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * important than sometimes getting a wrong answer in what is after all
 	 * just a heuristic estimate.
 	 */
-	minfree = RelationGetTargetPageFreeSpace(relation,
+	Size		minfree = RelationGetTargetPageFreeSpace(relation,
 											 HEAP_DEFAULT_FILLFACTOR);
 	minfree = Max(minfree, BLCKSZ / 10);
 
@@ -256,7 +253,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
-		ItemId		itemid;
 
 		/* Ignore items already processed as part of an earlier chain */
 		if (prstate.marked[offnum])
@@ -270,7 +266,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 			*off_loc = offnum;
 
 		/* Nothing to do if slot is empty or already dead */
-		itemid = PageGetItemId(page, offnum);
+		ItemId		itemid = PageGetItemId(page, offnum);
 		if (!ItemIdIsUsed(itemid) || ItemIdIsDead(itemid))
 			continue;
 
@@ -318,7 +314,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 		if (RelationNeedsWAL(relation))
 		{
 			xl_heap_prune xlrec;
-			XLogRecPtr	recptr;
 
 			xlrec.latestRemovedXid = prstate.latestRemovedXid;
 			xlrec.nredirected = prstate.nredirected;
@@ -347,7 +342,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 				XLogRegisterBufData(0, (char *) prstate.nowunused,
 									prstate.nunused * sizeof(OffsetNumber));
 
-			recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_PRUNE);
+			XLogRecPtr	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_PRUNE);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
 		}
@@ -421,10 +416,9 @@ heap_page_prune(Relation relation, Buffer buffer,
 static HTSV_Result
 heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
 {
-	HTSV_Result res;
 	TransactionId dead_after;
 
-	res = HeapTupleSatisfiesVacuumHorizon(tup, buffer, &dead_after);
+	HTSV_Result res = HeapTupleSatisfiesVacuumHorizon(tup, buffer, &dead_after);
 
 	if (res != HEAPTUPLE_RECENTLY_DEAD)
 		return res;
@@ -512,7 +506,6 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 	int			ndeleted = 0;
 	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId priorXmax = InvalidTransactionId;
-	ItemId		rootlp;
 	HeapTupleHeader htup;
 	OffsetNumber latestdead = InvalidOffsetNumber,
 				maxoff = PageGetMaxOffsetNumber(dp),
@@ -524,7 +517,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 
 	tup.t_tableOid = RelationGetRelid(prstate->rel);
 
-	rootlp = PageGetItemId(dp, rootoffnum);
+	ItemId		rootlp = PageGetItemId(dp, rootoffnum);
 
 	/*
 	 * If it's a heap-only tuple, then it is not the start of a HOT chain.
@@ -577,7 +570,6 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 	/* while not end of the chain */
 	for (;;)
 	{
-		ItemId		lp;
 		bool		tupdead,
 					recent_dead;
 
@@ -589,7 +581,7 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		if (prstate->marked[offnum])
 			break;
 
-		lp = PageGetItemId(dp, offnum);
+		ItemId		lp = PageGetItemId(dp, offnum);
 
 		/* Unused item obviously isn't part of the chain */
 		if (!ItemIdIsUsed(lp))
@@ -836,14 +828,13 @@ heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *nowunused, int nunused)
 {
 	Page		page = (Page) BufferGetPage(buffer);
-	OffsetNumber *offnum;
 	int			i;
 
 	/* Shouldn't be called unless there's something to do */
 	Assert(nredirected > 0 || ndead > 0 || nunused > 0);
 
 	/* Update all redirected line pointers */
-	offnum = redirected;
+	OffsetNumber *offnum = redirected;
 	for (i = 0; i < nredirected; i++)
 	{
 		OffsetNumber fromoff = *offnum++;

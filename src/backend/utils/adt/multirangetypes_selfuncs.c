@@ -303,10 +303,9 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
-		Form_pg_statistic stats;
 		AttStatsSlot sslot;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 		null_frac = stats->stanullfrac;
 
 		/* Try to get fraction of empty multiranges */
@@ -460,9 +459,6 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	TypeCacheEntry *rng_typcache = typcache->rngtype;
 	AttStatsSlot hslot;
 	AttStatsSlot lslot;
-	int			nhist;
-	RangeBound *hist_lower;
-	RangeBound *hist_upper;
 	int			i;
 	RangeBound	const_lower;
 	RangeBound	const_upper;
@@ -496,9 +492,9 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	 * Convert histogram of ranges into histograms of its lower and upper
 	 * bounds.
 	 */
-	nhist = hslot.nvalues;
-	hist_lower = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
-	hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
+	int			nhist = hslot.nvalues;
+	RangeBound *hist_lower = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
+	RangeBound *hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
 	for (i = 0; i < nhist; i++)
 	{
 		bool		empty;
@@ -708,15 +704,13 @@ static double
 calc_hist_selectivity_scalar(TypeCacheEntry *typcache, const RangeBound *constbound,
 							 const RangeBound *hist, int hist_nvalues, bool equal)
 {
-	Selectivity selec;
-	int			index;
 
 	/*
 	 * Find the histogram bin the given constant falls into. Estimate
 	 * selectivity as the number of preceding whole bins.
 	 */
-	index = rbound_bsearch(typcache, constbound, hist, hist_nvalues, equal);
-	selec = (Selectivity) (Max(index, 0)) / (Selectivity) (hist_nvalues - 1);
+	int			index = rbound_bsearch(typcache, constbound, hist, hist_nvalues, equal);
+	Selectivity selec = (Selectivity) (Max(index, 0)) / (Selectivity) (hist_nvalues - 1);
 
 	/* Adjust using linear interpolation within the bin */
 	if (index >= 0 && index < hist_nvalues - 1)
@@ -775,11 +769,10 @@ length_hist_bsearch(Datum *length_hist_values, int length_hist_nvalues,
 
 	while (lower < upper)
 	{
-		double		middleval;
 
 		middle = (lower + upper + 1) / 2;
 
-		middleval = DatumGetFloat8(length_hist_values[middle]);
+		double		middleval = DatumGetFloat8(length_hist_values[middle]);
 		if (middleval < value || (equal && middleval <= value))
 			lower = middle;
 		else
@@ -800,7 +793,6 @@ get_position(TypeCacheEntry *typcache, const RangeBound *value, const RangeBound
 
 	if (!hist1->infinite && !hist2->infinite)
 	{
-		float8		bin_width;
 
 		/*
 		 * Both bounds are finite. Assuming the subtype's comparison function
@@ -816,7 +808,7 @@ get_position(TypeCacheEntry *typcache, const RangeBound *value, const RangeBound
 			return 0.5;
 
 		/* Calculate relative position using subdiff function. */
-		bin_width = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+		float8		bin_width = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
 													 typcache->rng_collation,
 													 hist2->val,
 													 hist1->val));
@@ -928,9 +920,8 @@ get_distance(TypeCacheEntry *typcache, const RangeBound *bound1, const RangeBoun
 		 */
 		if (has_subdiff)
 		{
-			float8		res;
 
-			res = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+			float8		res = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
 												   typcache->rng_collation,
 												   bound2->val,
 												   bound1->val));
@@ -973,8 +964,6 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 				PA,
 				PB;
 	double		pos;
-	int			i;
-	double		area;
 
 	Assert(length2 >= length1);
 
@@ -1024,7 +1013,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 	 */
 
 	/* First bin, the one that contains lower bound */
-	i = length_hist_bsearch(length_hist_values, length_hist_nvalues, length1, equal);
+	int			i = length_hist_bsearch(length_hist_values, length_hist_nvalues, length1, equal);
 	if (i >= length_hist_nvalues - 1)
 		return 1.0;
 
@@ -1056,7 +1045,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 	 * contains the upper bound. (if lower and upper bounds are in the same
 	 * bin, this falls out immediately)
 	 */
-	area = 0.0;
+	double		area = 0.0;
 	for (; i < length_hist_nvalues - 1; i++)
 	{
 		double		bin_upper = DatumGetFloat8(length_hist_values[i + 1]);
@@ -1136,10 +1125,6 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 {
 	int			i,
 				upper_index;
-	float8		prev_dist;
-	double		bin_width;
-	double		upper_bin_width;
-	double		sum_frac;
 
 	/*
 	 * Begin by finding the bin containing the upper bound, in the lower bound
@@ -1173,7 +1158,7 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 	 * upper_index + 1) bin which is greater than upper bound of query range
 	 * using linear interpolation of subdiff function.
 	 */
-	upper_bin_width = get_position(typcache, upper,
+	double		upper_bin_width = get_position(typcache, upper,
 								   &hist_lower[upper_index],
 								   &hist_lower[upper_index + 1]);
 
@@ -1186,14 +1171,13 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 	 * and end of the loop. We start with bin_width = upper_bin_width, because
 	 * we begin at the bin containing the upper bound.
 	 */
-	prev_dist = 0.0;
-	bin_width = upper_bin_width;
+	float8		prev_dist = 0.0;
+	double		bin_width = upper_bin_width;
 
-	sum_frac = 0.0;
+	double		sum_frac = 0.0;
 	for (i = upper_index; i >= 0; i--)
 	{
 		double		dist;
-		double		length_hist_frac;
 		bool		final_bin = false;
 
 		/*
@@ -1223,7 +1207,7 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 		 * Estimate the fraction of tuples in this bin that are narrow enough
 		 * to not exceed the distance to the upper bound of the query range.
 		 */
-		length_hist_frac = calc_length_hist_frac(length_hist_values,
+		double		length_hist_frac = calc_length_hist_frac(length_hist_values,
 												 length_hist_nvalues,
 												 prev_dist, dist, true);
 
@@ -1259,8 +1243,6 @@ calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 				lower_index;
 	double		bin_width,
 				lower_bin_width;
-	double		sum_frac;
-	float8		prev_dist;
 
 	/* Find the bin containing the lower bound of query range. */
 	lower_index = rbound_bsearch(typcache, lower, hist_lower, hist_nvalues,
@@ -1303,26 +1285,24 @@ calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 	 * meaning a full width bin, except for the first bin, which is only
 	 * counted up to the constant lower bound.
 	 */
-	prev_dist = get_distance(typcache, lower, upper);
-	sum_frac = 0.0;
+	float8		prev_dist = get_distance(typcache, lower, upper);
+	double		sum_frac = 0.0;
 	bin_width = lower_bin_width;
 	for (i = lower_index; i >= 0; i--)
 	{
-		float8		dist;
-		double		length_hist_frac;
 
 		/*
 		 * dist -- distance from upper bound of query range to current value
 		 * of lower bound histogram or lower bound of query range (if we've
 		 * reach it).
 		 */
-		dist = get_distance(typcache, &hist_lower[i], upper);
+		float8		dist = get_distance(typcache, &hist_lower[i], upper);
 
 		/*
 		 * Get average fraction of length histogram which covers intervals
 		 * longer than (or equal to) distance to upper bound of query range.
 		 */
-		length_hist_frac =
+		double		length_hist_frac =
 			1.0 - calc_length_hist_frac(length_hist_values,
 										length_hist_nvalues,
 										prev_dist, dist, false);

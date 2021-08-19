@@ -38,15 +38,12 @@ int
 ScanKeywordLookup(const char *str,
 				  const ScanKeywordList *keywords)
 {
-	size_t		len;
-	int			h;
-	const char *kw;
 
 	/*
 	 * Reject immediately if too long to be any keyword.  This saves useless
 	 * hashing and downcasing work on long strings.
 	 */
-	len = strlen(str);
+	size_t		len = strlen(str);
 	if (len > keywords->max_kw_len)
 		return -1;
 
@@ -55,7 +52,7 @@ ScanKeywordLookup(const char *str,
 	 * case-insensitive results.  Since it's a perfect hash, we need only
 	 * match to the specific keyword it identifies.
 	 */
-	h = keywords->hash(str, len);
+	int			h = keywords->hash(str, len);
 
 	/* An out-of-range result implies no match */
 	if (h < 0 || h >= keywords->num_keywords)
@@ -67,7 +64,7 @@ ScanKeywordLookup(const char *str,
 	 * tolower() since it may produce the wrong translation in some locales
 	 * (eg, Turkish).
 	 */
-	kw = GetScanKeyword(h, keywords);
+	const char *kw = GetScanKeyword(h, keywords);
 	while (*str != '\0')
 	{
 		char		ch = *str++;

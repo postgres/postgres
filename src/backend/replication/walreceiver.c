@@ -167,16 +167,10 @@ void
 WalReceiverMain(void)
 {
 	char		conninfo[MAXCONNINFO];
-	char	   *tmp_conninfo;
 	char		slotname[NAMEDATALEN];
-	bool		is_temp_slot;
-	XLogRecPtr	startpoint;
-	TimeLineID	startpointTLI;
 	TimeLineID	primaryTLI;
-	bool		first_stream;
 	WalRcvData *walrcv = WalRcv;
 	TimestampTz last_recv_timestamp;
-	TimestampTz now;
 	bool		ping_sent;
 	char	   *err;
 	char	   *sender_host = NULL;
@@ -188,7 +182,7 @@ WalReceiverMain(void)
 	 */
 	Assert(walrcv != NULL);
 
-	now = GetCurrentTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 
 	/*
 	 * Mark walreceiver as running in shared memory.
@@ -232,9 +226,9 @@ WalReceiverMain(void)
 	walrcv->ready_to_display = false;
 	strlcpy(conninfo, (char *) walrcv->conninfo, MAXCONNINFO);
 	strlcpy(slotname, (char *) walrcv->slotname, NAMEDATALEN);
-	is_temp_slot = walrcv->is_temp_slot;
-	startpoint = walrcv->receiveStart;
-	startpointTLI = walrcv->receiveStartTLI;
+	bool		is_temp_slot = walrcv->is_temp_slot;
+	XLogRecPtr	startpoint = walrcv->receiveStart;
+	TimeLineID	startpointTLI = walrcv->receiveStartTLI;
 
 	/*
 	 * At most one of is_temp_slot and slotname can be set; otherwise,
@@ -292,7 +286,7 @@ WalReceiverMain(void)
 	 * conninfo, for security. Also save host and port of the sender server
 	 * this walreceiver is connected to.
 	 */
-	tmp_conninfo = walrcv_get_conninfo(wrconn);
+	char	   *tmp_conninfo = walrcv_get_conninfo(wrconn);
 	walrcv_get_senderinfo(wrconn, &sender_host, &sender_port);
 	SpinLockAcquire(&walrcv->mutex);
 	memset(walrcv->conninfo, 0, MAXCONNINFO);
@@ -313,10 +307,9 @@ WalReceiverMain(void)
 	if (sender_host)
 		pfree(sender_host);
 
-	first_stream = true;
+	bool		first_stream = true;
 	for (;;)
 	{
-		char	   *primary_sysid;
 		char		standby_sysid[32];
 		WalRcvStreamOptions options;
 
@@ -324,7 +317,7 @@ WalReceiverMain(void)
 		 * Check that we're connected to a valid server using the
 		 * IDENTIFY_SYSTEM replication command.
 		 */
-		primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
+		char	   *primary_sysid = walrcv_identify_system(wrconn, &primaryTLI);
 
 		snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
 				 GetSystemIdentifier());
@@ -419,10 +412,8 @@ WalReceiverMain(void)
 			for (;;)
 			{
 				char	   *buf;
-				int			len;
 				bool		endofwal = false;
 				pgsocket	wait_fd = PGINVALID_SOCKET;
-				int			rc;
 
 				/*
 				 * Exit walreceiver if we're not in recovery. This should not
@@ -444,7 +435,7 @@ WalReceiverMain(void)
 				}
 
 				/* See if we can read data immediately */
-				len = walrcv_receive(wrconn, &buf, &wait_fd);
+				int			len = walrcv_receive(wrconn, &buf, &wait_fd);
 				if (len != 0)
 				{
 					/*
@@ -505,7 +496,7 @@ WalReceiverMain(void)
 				 * avoiding some system calls.
 				 */
 				Assert(wait_fd != PGINVALID_SOCKET);
-				rc = WaitLatchOrSocket(MyLatch,
+				int			rc = WaitLatchOrSocket(MyLatch,
 									   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
 									   WL_TIMEOUT | WL_LATCH_SET,
 									   wait_fd,
@@ -549,9 +540,8 @@ WalReceiverMain(void)
 					if (wal_receiver_timeout > 0)
 					{
 						TimestampTz now = GetCurrentTimestamp();
-						TimestampTz timeout;
 
-						timeout =
+						TimestampTz timeout =
 							TimestampTzPlusMilliseconds(last_recv_timestamp,
 														wal_receiver_timeout);
 
@@ -639,10 +629,9 @@ static void
 WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 {
 	WalRcvData *walrcv = WalRcv;
-	int			state;
 
 	SpinLockAcquire(&walrcv->mutex);
-	state = walrcv->walRcvState;
+	int			state = walrcv->walRcvState;
 	if (state != WALRCV_STREAMING)
 	{
 		SpinLockRelease(&walrcv->mutex);
@@ -940,13 +929,12 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		if (byteswritten <= 0)
 		{
 			char		xlogfname[MAXFNAMELEN];
-			int			save_errno;
 
 			/* if write didn't set errno, assume no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
 
-			save_errno = errno;
+			int			save_errno = errno;
 			XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
 			errno = save_errno;
 			ereport(PANIC,
@@ -1038,9 +1026,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 {
 	static XLogRecPtr writePtr = 0;
 	static XLogRecPtr flushPtr = 0;
-	XLogRecPtr	applyPtr;
 	static TimestampTz sendTime = 0;
-	TimestampTz now;
 
 	/*
 	 * If the user doesn't want status to be reported to the primary, be sure
@@ -1050,7 +1036,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 		return;
 
 	/* Get current timestamp. */
-	now = GetCurrentTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 
 	/*
 	 * We can compare the write and flush positions to the last message we
@@ -1072,7 +1058,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	/* Construct a new message */
 	writePtr = LogstreamResult.Write;
 	flushPtr = LogstreamResult.Flush;
-	applyPtr = GetXLogReplayRecPtr(NULL);
+	XLogRecPtr	applyPtr = GetXLogReplayRecPtr(NULL);
 
 	resetStringInfo(&reply_message);
 	pq_sendbyte(&reply_message, 'r');
@@ -1105,9 +1091,6 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 static void
 XLogWalRcvSendHSFeedback(bool immed)
 {
-	TimestampTz now;
-	FullTransactionId nextFullXid;
-	TransactionId nextXid;
 	uint32		xmin_epoch,
 				catalog_xmin_epoch;
 	TransactionId xmin,
@@ -1126,7 +1109,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 		return;
 
 	/* Get current timestamp. */
-	now = GetCurrentTimestamp();
+	TimestampTz now = GetCurrentTimestamp();
 
 	if (!immed)
 	{
@@ -1170,8 +1153,8 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 * Get epoch and adjust if nextXid and oldestXmin are different sides of
 	 * the epoch boundary.
 	 */
-	nextFullXid = ReadNextFullTransactionId();
-	nextXid = XidFromFullTransactionId(nextFullXid);
+	FullTransactionId nextFullXid = ReadNextFullTransactionId();
+	TransactionId nextXid = XidFromFullTransactionId(nextFullXid);
 	xmin_epoch = EpochFromFullTransactionId(nextFullXid);
 	catalog_xmin_epoch = xmin_epoch;
 	if (nextXid < xmin)
@@ -1221,14 +1204,11 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 
 	if (message_level_is_interesting(DEBUG2))
 	{
-		char	   *sendtime;
-		char	   *receipttime;
-		int			applyDelay;
 
 		/* Copy because timestamptz_to_str returns a static buffer */
-		sendtime = pstrdup(timestamptz_to_str(sendTime));
-		receipttime = pstrdup(timestamptz_to_str(lastMsgReceiptTime));
-		applyDelay = GetReplicationApplyDelay();
+		char	   *sendtime = pstrdup(timestamptz_to_str(sendTime));
+		char	   *receipttime = pstrdup(timestamptz_to_str(lastMsgReceiptTime));
+		int			applyDelay = GetReplicationApplyDelay();
 
 		/* apply delay is not available */
 		if (applyDelay == -1)
@@ -1259,12 +1239,11 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 void
 WalRcvForceReply(void)
 {
-	Latch	   *latch;
 
 	WalRcv->force_reply = true;
 	/* fetching the latch pointer might not be atomic, so use spinlock */
 	SpinLockAcquire(&WalRcv->mutex);
-	latch = WalRcv->latch;
+	Latch	   *latch = WalRcv->latch;
 	SpinLockRelease(&WalRcv->mutex);
 	if (latch)
 		SetLatch(latch);
@@ -1303,41 +1282,26 @@ Datum
 pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 {
 	TupleDesc	tupdesc;
-	Datum	   *values;
-	bool	   *nulls;
-	int			pid;
-	bool		ready_to_display;
-	WalRcvState state;
-	XLogRecPtr	receive_start_lsn;
-	TimeLineID	receive_start_tli;
-	XLogRecPtr	written_lsn;
-	XLogRecPtr	flushed_lsn;
-	TimeLineID	received_tli;
-	TimestampTz last_send_time;
-	TimestampTz last_receipt_time;
-	XLogRecPtr	latest_end_lsn;
-	TimestampTz latest_end_time;
 	char		sender_host[NI_MAXHOST];
-	int			sender_port = 0;
 	char		slotname[NAMEDATALEN];
 	char		conninfo[MAXCONNINFO];
 
 	/* Take a lock to ensure value consistency */
 	SpinLockAcquire(&WalRcv->mutex);
-	pid = (int) WalRcv->pid;
-	ready_to_display = WalRcv->ready_to_display;
-	state = WalRcv->walRcvState;
-	receive_start_lsn = WalRcv->receiveStart;
-	receive_start_tli = WalRcv->receiveStartTLI;
-	flushed_lsn = WalRcv->flushedUpto;
-	received_tli = WalRcv->receivedTLI;
-	last_send_time = WalRcv->lastMsgSendTime;
-	last_receipt_time = WalRcv->lastMsgReceiptTime;
-	latest_end_lsn = WalRcv->latestWalEnd;
-	latest_end_time = WalRcv->latestWalEndTime;
+	int			pid = (int) WalRcv->pid;
+	bool		ready_to_display = WalRcv->ready_to_display;
+	WalRcvState state = WalRcv->walRcvState;
+	XLogRecPtr	receive_start_lsn = WalRcv->receiveStart;
+	TimeLineID	receive_start_tli = WalRcv->receiveStartTLI;
+	XLogRecPtr	flushed_lsn = WalRcv->flushedUpto;
+	TimeLineID	received_tli = WalRcv->receivedTLI;
+	TimestampTz last_send_time = WalRcv->lastMsgSendTime;
+	TimestampTz last_receipt_time = WalRcv->lastMsgReceiptTime;
+	XLogRecPtr	latest_end_lsn = WalRcv->latestWalEnd;
+	TimestampTz latest_end_time = WalRcv->latestWalEndTime;
 	strlcpy(slotname, (char *) WalRcv->slotname, sizeof(slotname));
 	strlcpy(sender_host, (char *) WalRcv->sender_host, sizeof(sender_host));
-	sender_port = WalRcv->sender_port;
+	int			sender_port = WalRcv->sender_port;
 	strlcpy(conninfo, (char *) WalRcv->conninfo, sizeof(conninfo));
 	SpinLockRelease(&WalRcv->mutex);
 
@@ -1354,14 +1318,14 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	 * protected by a spinlock, but this should not be used for data integrity
 	 * checks.
 	 */
-	written_lsn = pg_atomic_read_u64(&WalRcv->writtenUpto);
+	XLogRecPtr	written_lsn = pg_atomic_read_u64(&WalRcv->writtenUpto);
 
 	/* determine result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	values = palloc0(sizeof(Datum) * tupdesc->natts);
-	nulls = palloc0(sizeof(bool) * tupdesc->natts);
+	Datum	   *values = palloc0(sizeof(Datum) * tupdesc->natts);
+	bool	   *nulls = palloc0(sizeof(bool) * tupdesc->natts);
 
 	/* Fetch values */
 	values[0] = Int32GetDatum(pid);

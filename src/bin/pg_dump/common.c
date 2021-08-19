@@ -88,15 +88,6 @@ static IndxInfo *findIndexByOid(Oid oid, DumpableObject **idxinfoindex,
 TableInfo *
 getSchemaData(Archive *fout, int *numTablesPtr)
 {
-	TableInfo  *tblinfo;
-	TypeInfo   *typinfo;
-	FuncInfo   *funinfo;
-	OprInfo    *oprinfo;
-	CollInfo   *collinfo;
-	NamespaceInfo *nspinfo;
-	ExtensionInfo *extinfo;
-	PublicationInfo *pubinfo;
-	InhInfo    *inhinfo;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -122,14 +113,14 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 * whether other objects are to be dumped.
 	 */
 	pg_log_info("reading extensions");
-	extinfo = getExtensions(fout, &numExtensions);
+	ExtensionInfo *extinfo = getExtensions(fout, &numExtensions);
 	extinfoindex = buildIndexArray(extinfo, numExtensions, sizeof(ExtensionInfo));
 
 	pg_log_info("identifying extension members");
 	getExtensionMembership(fout, extinfo, numExtensions);
 
 	pg_log_info("reading schemas");
-	nspinfo = getNamespaces(fout, &numNamespaces);
+	NamespaceInfo *nspinfo = getNamespaces(fout, &numNamespaces);
 	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
 
 	/*
@@ -139,19 +130,19 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 * linked to their containing namespaces during getTables.
 	 */
 	pg_log_info("reading user-defined tables");
-	tblinfo = getTables(fout, &numTables);
+	TableInfo  *tblinfo = getTables(fout, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	/* Do this after we've built tblinfoindex */
 	getOwnedSeqs(fout, tblinfo, numTables);
 
 	pg_log_info("reading user-defined functions");
-	funinfo = getFuncs(fout, &numFuncs);
+	FuncInfo   *funinfo = getFuncs(fout, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 	/* this must be after getTables and getFuncs */
 	pg_log_info("reading user-defined types");
-	typinfo = getTypes(fout, &numTypes);
+	TypeInfo   *typinfo = getTypes(fout, &numTypes);
 	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 	/* this must be after getFuncs, too */
@@ -162,7 +153,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getAggregates(fout, &numAggregates);
 
 	pg_log_info("reading user-defined operators");
-	oprinfo = getOperators(fout, &numOperators);
+	OprInfo    *oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
 	pg_log_info("reading user-defined access methods");
@@ -196,7 +187,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getDefaultACLs(fout, &numDefaultACLs);
 
 	pg_log_info("reading user-defined collations");
-	collinfo = getCollations(fout, &numCollations);
+	CollInfo   *collinfo = getCollations(fout, &numCollations);
 	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
 
 	pg_log_info("reading user-defined conversions");
@@ -209,7 +200,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getTransforms(fout, &numTransforms);
 
 	pg_log_info("reading table inheritance information");
-	inhinfo = getInherits(fout, &numInherits);
+	InhInfo    *inhinfo = getInherits(fout, &numInherits);
 
 	pg_log_info("reading event triggers");
 	getEventTriggers(fout, &numEventTriggers);
@@ -250,7 +241,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getPolicies(fout, tblinfo, numTables);
 
 	pg_log_info("reading publications");
-	pubinfo = getPublications(fout, &numPublications);
+	PublicationInfo *pubinfo = getPublications(fout, &numPublications);
 	pubinfoindex = buildIndexArray(pubinfo, numPublications,
 								   sizeof(PublicationInfo));
 
@@ -331,7 +322,6 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 		/* Create TableAttachInfo object if needed */
 		if (tblinfo[i].dobj.dump && tblinfo[i].ispartition)
 		{
-			TableAttachInfo *attachinfo;
 
 			/* With partitions there can only be one parent */
 			if (tblinfo[i].numParents != 1)
@@ -339,7 +329,7 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 					  tblinfo[i].numParents,
 					  tblinfo[i].dobj.name);
 
-			attachinfo = (TableAttachInfo *) palloc(sizeof(TableAttachInfo));
+			TableAttachInfo *attachinfo = (TableAttachInfo *) palloc(sizeof(TableAttachInfo));
 			attachinfo->dobj.objType = DO_TABLE_ATTACH;
 			attachinfo->dobj.catId.tableoid = 0;
 			attachinfo->dobj.catId.oid = 0;
@@ -375,21 +365,18 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	int			i,
 				j,
 				k;
-	DumpableObject ***parentIndexArray;
 
-	parentIndexArray = (DumpableObject ***)
+	DumpableObject ***parentIndexArray = (DumpableObject ***)
 		pg_malloc0(getMaxDumpId() * sizeof(DumpableObject **));
 
 	for (i = 0; i < numTables; i++)
 	{
-		TableInfo  *parenttbl;
-		IndexAttachInfo *attachinfo;
 
 		if (!tblinfo[i].ispartition || tblinfo[i].numParents == 0)
 			continue;
 
 		Assert(tblinfo[i].numParents == 1);
-		parenttbl = tblinfo[i].parents[0];
+		TableInfo  *parenttbl = tblinfo[i].parents[0];
 
 		/*
 		 * We need access to each parent table's index list, but there is no
@@ -404,7 +391,7 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 								parenttbl->numIndexes,
 								sizeof(IndxInfo));
 
-		attachinfo = (IndexAttachInfo *)
+		IndexAttachInfo *attachinfo = (IndexAttachInfo *)
 			pg_malloc0(tblinfo[i].numIndexes * sizeof(IndexAttachInfo));
 		for (j = 0, k = 0; j < tblinfo[i].numIndexes; j++)
 		{
@@ -498,8 +485,6 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 	for (i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &(tblinfo[i]);
-		int			numParents;
-		TableInfo **parents;
 
 		/* Some kinds never have parents */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
@@ -511,8 +496,8 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 		if (!tbinfo->dobj.dump)
 			continue;
 
-		numParents = tbinfo->numParents;
-		parents = tbinfo->parents;
+		int			numParents = tbinfo->numParents;
+		TableInfo **parents = tbinfo->parents;
 
 		if (numParents == 0)
 			continue;			/* nothing to see here, move along */
@@ -534,9 +519,8 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 			for (k = 0; k < numParents; k++)
 			{
 				TableInfo  *parent = parents[k];
-				int			inhAttrInd;
 
-				inhAttrInd = strInArray(tbinfo->attnames[j],
+				int			inhAttrInd = strInArray(tbinfo->attnames[j],
 										parent->attnames,
 										parent->numatts);
 				if (inhAttrInd >= 0)
@@ -553,9 +537,8 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 			/* Manufacture a DEFAULT NULL clause if necessary */
 			if (foundDefault && tbinfo->attrdefs[j] == NULL)
 			{
-				AttrDefInfo *attrDef;
 
-				attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
+				AttrDefInfo *attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
 				attrDef->dobj.objType = DO_ATTRDEF;
 				attrDef->dobj.catId.tableoid = 0;
 				attrDef->dobj.catId.oid = 0;
@@ -688,8 +671,6 @@ findObjectByDumpId(DumpId dumpId)
 DumpableObject *
 findObjectByCatalogId(CatalogId catalogId)
 {
-	DumpableObject **low;
-	DumpableObject **high;
 
 	if (!catalogIdMapValid)
 	{
@@ -709,16 +690,14 @@ findObjectByCatalogId(CatalogId catalogId)
 	 */
 	if (numCatalogIds <= 0)
 		return NULL;
-	low = catalogIdMap;
-	high = catalogIdMap + (numCatalogIds - 1);
+	DumpableObject **low = catalogIdMap;
+	DumpableObject **high = catalogIdMap + (numCatalogIds - 1);
 	while (low <= high)
 	{
-		DumpableObject **middle;
-		int			difference;
 
-		middle = low + (high - low) / 2;
+		DumpableObject **middle = low + (high - low) / 2;
 		/* comparison must match DOCatalogIdCompare, below */
-		difference = oidcmp((*middle)->catId.oid, catalogId.oid);
+		int			difference = oidcmp((*middle)->catId.oid, catalogId.oid);
 		if (difference == 0)
 			difference = oidcmp((*middle)->catId.tableoid, catalogId.tableoid);
 		if (difference == 0)
@@ -739,8 +718,6 @@ findObjectByCatalogId(CatalogId catalogId)
 static DumpableObject *
 findObjectByOid(Oid oid, DumpableObject **indexArray, int numObjs)
 {
-	DumpableObject **low;
-	DumpableObject **high;
 
 	/*
 	 * This is the same as findObjectByCatalogId except we assume we need not
@@ -752,15 +729,13 @@ findObjectByOid(Oid oid, DumpableObject **indexArray, int numObjs)
 	 */
 	if (numObjs <= 0)
 		return NULL;
-	low = indexArray;
-	high = indexArray + (numObjs - 1);
+	DumpableObject **low = indexArray;
+	DumpableObject **high = indexArray + (numObjs - 1);
 	while (low <= high)
 	{
-		DumpableObject **middle;
-		int			difference;
 
-		middle = low + (high - low) / 2;
-		difference = oidcmp((*middle)->catId.oid, oid);
+		DumpableObject **middle = low + (high - low) / 2;
+		int			difference = oidcmp((*middle)->catId.oid, oid);
 		if (difference == 0)
 			return *middle;
 		else if (difference < 0)
@@ -777,13 +752,12 @@ findObjectByOid(Oid oid, DumpableObject **indexArray, int numObjs)
 static DumpableObject **
 buildIndexArray(void *objArray, int numObjs, Size objSize)
 {
-	DumpableObject **ptrs;
 	int			i;
 
 	if (numObjs <= 0)
 		return NULL;
 
-	ptrs = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
+	DumpableObject **ptrs = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
 	for (i = 0; i < numObjs; i++)
 		ptrs[i] = (DumpableObject *) ((char *) objArray + i * objSize);
 
@@ -803,13 +777,12 @@ DOCatalogIdCompare(const void *p1, const void *p2)
 {
 	const DumpableObject *obj1 = *(DumpableObject *const *) p1;
 	const DumpableObject *obj2 = *(DumpableObject *const *) p2;
-	int			cmpval;
 
 	/*
 	 * Compare OID first since it's usually unique, whereas there will only be
 	 * a few distinct values of tableoid.
 	 */
-	cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
+	int			cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
 	if (cmpval == 0)
 		cmpval = oidcmp(obj1->catId.tableoid, obj2->catId.tableoid);
 	return cmpval;
@@ -1008,8 +981,6 @@ setExtensionMembership(ExtensionMemberId *extmems, int nextmems)
 ExtensionInfo *
 findOwningExtension(CatalogId catalogId)
 {
-	ExtensionMemberId *low;
-	ExtensionMemberId *high;
 
 	/*
 	 * We could use bsearch() here, but the notational cruft of calling
@@ -1018,16 +989,14 @@ findOwningExtension(CatalogId catalogId)
 	 */
 	if (numextmembers <= 0)
 		return NULL;
-	low = extmembers;
-	high = extmembers + (numextmembers - 1);
+	ExtensionMemberId *low = extmembers;
+	ExtensionMemberId *high = extmembers + (numextmembers - 1);
 	while (low <= high)
 	{
-		ExtensionMemberId *middle;
-		int			difference;
 
-		middle = low + (high - low) / 2;
+		ExtensionMemberId *middle = low + (high - low) / 2;
 		/* comparison must match ExtensionMemberIdCompare, below */
-		difference = oidcmp(middle->catId.oid, catalogId.oid);
+		int			difference = oidcmp(middle->catId.oid, catalogId.oid);
 		if (difference == 0)
 			difference = oidcmp(middle->catId.tableoid, catalogId.tableoid);
 		if (difference == 0)
@@ -1048,13 +1017,12 @@ ExtensionMemberIdCompare(const void *p1, const void *p2)
 {
 	const ExtensionMemberId *obj1 = (const ExtensionMemberId *) p1;
 	const ExtensionMemberId *obj2 = (const ExtensionMemberId *) p2;
-	int			cmpval;
 
 	/*
 	 * Compare OID first since it's usually unique, whereas there will only be
 	 * a few distinct values of tableoid.
 	 */
-	cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
+	int			cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
 	if (cmpval == 0)
 		cmpval = oidcmp(obj1->catId.tableoid, obj2->catId.tableoid);
 	return cmpval;
@@ -1072,9 +1040,8 @@ findParentsByOid(TableInfo *self,
 	Oid			oid = self->dobj.catId.oid;
 	int			i,
 				j;
-	int			numParents;
 
-	numParents = 0;
+	int			numParents = 0;
 	for (i = 0; i < numInherits; i++)
 	{
 		if (inhinfo[i].inhrelid == oid)
@@ -1092,9 +1059,8 @@ findParentsByOid(TableInfo *self,
 		{
 			if (inhinfo[i].inhrelid == oid)
 			{
-				TableInfo  *parent;
 
-				parent = findTableByOid(inhinfo[i].inhparent);
+				TableInfo  *parent = findTableByOid(inhinfo[i].inhparent);
 				if (parent == NULL)
 				{
 					pg_log_error("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",

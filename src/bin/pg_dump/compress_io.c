@@ -217,9 +217,8 @@ EndCompressor(ArchiveHandle *AH, CompressorState *cs)
 static void
 InitCompressorZlib(CompressorState *cs, int level)
 {
-	z_streamp	zp;
 
-	zp = cs->zp = (z_streamp) pg_malloc(sizeof(z_stream));
+	z_streamp	zp = cs->zp = (z_streamp) pg_malloc(sizeof(z_stream));
 	zp->zalloc = Z_NULL;
 	zp->zfree = Z_NULL;
 	zp->opaque = Z_NULL;
@@ -312,22 +311,18 @@ WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 static void
 ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 {
-	z_streamp	zp;
-	char	   *out;
 	int			res = Z_OK;
 	size_t		cnt;
-	char	   *buf;
-	size_t		buflen;
 
-	zp = (z_streamp) pg_malloc(sizeof(z_stream));
+	z_streamp	zp = (z_streamp) pg_malloc(sizeof(z_stream));
 	zp->zalloc = Z_NULL;
 	zp->zfree = Z_NULL;
 	zp->opaque = Z_NULL;
 
-	buf = pg_malloc(ZLIB_IN_SIZE);
-	buflen = ZLIB_IN_SIZE;
+	char	   *buf = pg_malloc(ZLIB_IN_SIZE);
+	size_t		buflen = ZLIB_IN_SIZE;
 
-	out = pg_malloc(ZLIB_OUT_SIZE + 1);
+	char	   *out = pg_malloc(ZLIB_OUT_SIZE + 1);
 
 	if (inflateInit(zp) != Z_OK)
 		fatal("could not initialize compression library: %s",
@@ -385,11 +380,9 @@ static void
 ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF)
 {
 	size_t		cnt;
-	char	   *buf;
-	size_t		buflen;
 
-	buf = pg_malloc(ZLIB_OUT_SIZE);
-	buflen = ZLIB_OUT_SIZE;
+	char	   *buf = pg_malloc(ZLIB_OUT_SIZE);
+	size_t		buflen = ZLIB_OUT_SIZE;
 
 	while ((cnt = readF(AH, &buf, &buflen)))
 	{
@@ -463,9 +456,8 @@ cfopen_read(const char *path, const char *mode)
 #ifdef HAVE_LIBZ
 		if (fp == NULL)
 		{
-			char	   *fname;
 
-			fname = psprintf("%s.gz", path);
+			char	   *fname = psprintf("%s.gz", path);
 			fp = cfopen(fname, mode, 1);
 			free_keep_errno(fname);
 		}
@@ -495,9 +487,8 @@ cfopen_write(const char *path, const char *mode, int compression)
 	else
 	{
 #ifdef HAVE_LIBZ
-		char	   *fname;
 
-		fname = psprintf("%s.gz", path);
+		char	   *fname = psprintf("%s.gz", path);
 		fp = cfopen(fname, mode, compression);
 		free_keep_errno(fname);
 #else

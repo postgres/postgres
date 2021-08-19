@@ -33,15 +33,13 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 	TimeLineHistoryEntry *entries = NULL;
 	int			nlines = 0;
 	TimeLineID	lasttli = 0;
-	XLogRecPtr	prevend;
-	char	   *bufptr;
 	bool		lastline = false;
 
 	/*
 	 * Parse the file...
 	 */
-	prevend = InvalidXLogRecPtr;
-	bufptr = buffer;
+	XLogRecPtr	prevend = InvalidXLogRecPtr;
+	char	   *bufptr = buffer;
 	while (!lastline)
 	{
 		char	   *ptr;

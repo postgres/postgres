@@ -247,10 +247,9 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	unsigned long length,
 				i;
 	unsigned long n_ii = 0;
-	SOCKET		sock;
 	int			error;
 
-	sock = WSASocket(AF_INET, SOCK_DGRAM, 0, 0, 0, 0);
+	SOCKET		sock = WSASocket(AF_INET, SOCK_DGRAM, 0, 0, 0, 0);
 	if (sock == INVALID_SOCKET)
 		return -1;
 
@@ -490,9 +489,8 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	char	   *ptr,
 			   *buffer = NULL;
 	size_t		n_buffer = 1024;
-	pgsocket	sock;
 
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	pgsocket	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock == PGINVALID_SOCKET)
 		return -1;
 

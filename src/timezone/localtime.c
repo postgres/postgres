@@ -115,14 +115,13 @@ init_ttinfo(struct ttinfo *s, int32 utoff, bool isdst, int desigidx)
 static int32
 detzcode(const char *const codep)
 {
-	int32		result;
 	int			i;
 	int32		one = 1;
 	int32		halfmaxval = one << (32 - 2);
 	int32		maxval = halfmaxval - 1 + halfmaxval;
 	int32		minval = -1 - maxval;
 
-	result = codep[0] & 0x7f;
+	int32		result = codep[0] & 0x7f;
 	for (i = 1; i < 4; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
 
@@ -141,14 +140,13 @@ detzcode(const char *const codep)
 static int64
 detzcode64(const char *const codep)
 {
-	uint64		result;
 	int			i;
 	int64		one = 1;
 	int64		halfmaxval = one << (64 - 2);
 	int64		maxval = halfmaxval - 1 + halfmaxval;
 	int64		minval = -TWOS_COMPLEMENT(int64) - maxval;
 
-	result = codep[0] & 0x7f;
+	uint64		result = codep[0] & 0x7f;
 	for (i = 1; i < 8; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
 
@@ -210,9 +208,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		   union local_storage *lsp)
 {
 	int			i;
-	int			fid;
 	int			stored;
-	ssize_t		nread;
 	union input_buffer *up = &lsp->u.u;
 	int			tzheadsize = sizeof(struct tzhead);
 
@@ -228,11 +224,11 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	if (name[0] == ':')
 		++name;
 
-	fid = pg_open_tzfile(name, canonname);
+	int			fid = pg_open_tzfile(name, canonname);
 	if (fid < 0)
 		return ENOENT;			/* pg_open_tzfile may not set errno */
 
-	nread = read(fid, up->buf, sizeof up->buf);
+	ssize_t		nread = read(fid, up->buf, sizeof up->buf);
 	if (nread < tzheadsize)
 	{
 		int			err = nread < 0 ? errno : EINVAL;
@@ -324,11 +320,10 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		sp->timecnt = timecnt;
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			struct ttinfo *ttisp;
 			unsigned char isdst,
 						desigidx;
 
-			ttisp = &sp->ttis[i];
+			struct ttinfo *ttisp = &sp->ttis[i];
 			ttisp->tt_utoff = detzcode(p);
 			p += 4;
 			isdst = *p++;
@@ -375,9 +370,8 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			struct ttinfo *ttisp;
 
-			ttisp = &sp->ttis[i];
+			struct ttinfo *ttisp = &sp->ttis[i];
 			if (ttisstdcnt == 0)
 				ttisp->tt_ttisstd = false;
 			else
@@ -389,9 +383,8 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		}
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			struct ttinfo *ttisp;
 
-			ttisp = &sp->ttis[i];
+			struct ttinfo *ttisp = &sp->ttis[i];
 			if (ttisutcnt == 0)
 				ttisp->tt_ttisut = false;
 			else
@@ -678,11 +671,10 @@ static const char *
 getnum(const char *strp, int *const nump, const int min, const int max)
 {
 	char		c;
-	int			num;
 
 	if (strp == NULL || !is_digit(c = *strp))
 		return NULL;
-	num = 0;
+	int			num = 0;
 	do
 	{
 		num = num * 10 + (c - '0');
@@ -837,7 +829,6 @@ static int32
 transtime(const int year, const struct rule *const rulep,
 		  const int32 offset)
 {
-	bool		leapyear;
 	int32		value;
 	int			i;
 	int			d,
@@ -848,7 +839,7 @@ transtime(const int year, const struct rule *const rulep,
 				dow;
 
 	INITIALIZE(value);
-	leapyear = isleap(year);
+	bool		leapyear = isleap(year);
 	switch (rulep->r_type)
 	{
 
@@ -933,17 +924,13 @@ transtime(const int year, const struct rule *const rulep,
 bool
 tzparse(const char *name, struct state *sp, bool lastditch)
 {
-	const char *stdname;
 	const char *dstname = NULL;
 	size_t		stdlen;
 	size_t		dstlen;
-	size_t		charcnt;
 	int32		stdoffset;
 	int32		dstoffset;
-	char	   *cp;
-	bool		load_ok;
 
-	stdname = name;
+	const char *stdname = name;
 	if (lastditch)
 	{
 		/* Unlike IANA, don't assume name is exactly "GMT" */
@@ -974,7 +961,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		if (name == NULL)
 			return false;
 	}
-	charcnt = stdlen + 1;
+	size_t		charcnt = stdlen + 1;
 	if (sizeof sp->chars < charcnt)
 		return false;
 
@@ -987,7 +974,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 	 * will die at some point.  Desupporting it now seems like good
 	 * future-proofing.
 	 */
-	load_ok = false;
+	bool		load_ok = false;
 	sp->goback = sp->goahead = false;	/* simulate failed tzload() */
 	sp->leapcnt = 0;			/* intentionally assume no leap seconds */
 
@@ -1028,11 +1015,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			struct rule start;
 			struct rule end;
 			int			year;
-			int			yearlim;
-			int			timecnt;
-			pg_time_t	janfirst;
 			int32		janoffset = 0;
-			int			yearbeg;
 
 			++name;
 			if ((name = getrule(name, &start)) == NULL)
@@ -1051,9 +1034,9 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			init_ttinfo(&sp->ttis[0], -stdoffset, false, 0);
 			init_ttinfo(&sp->ttis[1], -dstoffset, true, stdlen + 1);
 			sp->defaulttype = 0;
-			timecnt = 0;
-			janfirst = 0;
-			yearbeg = EPOCH_YEAR;
+			int			timecnt = 0;
+			pg_time_t	janfirst = 0;
+			int			yearbeg = EPOCH_YEAR;
 
 			do
 			{
@@ -1068,7 +1051,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 				}
 			} while (EPOCH_YEAR - YEARSPERREPEAT / 2 < yearbeg);
 
-			yearlim = yearbeg + YEARSPERREPEAT + 1;
+			int			yearlim = yearbeg + YEARSPERREPEAT + 1;
 			for (year = yearbeg; year < yearlim; year++)
 			{
 				int32
@@ -1124,10 +1107,6 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		}
 		else
 		{
-			int32		theirstdoffset;
-			int32		theirdstoffset;
-			int32		theiroffset;
-			bool		isdst;
 			int			i;
 			int			j;
 
@@ -1137,7 +1116,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			/*
 			 * Initial values of theirstdoffset and theirdstoffset.
 			 */
-			theirstdoffset = 0;
+			int32		theirstdoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i)
 			{
 				j = sp->types[i];
@@ -1148,7 +1127,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 					break;
 				}
 			}
-			theirdstoffset = 0;
+			int32		theirdstoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i)
 			{
 				j = sp->types[i];
@@ -1163,8 +1142,8 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			/*
 			 * Initially we're assumed to be in standard time.
 			 */
-			isdst = false;
-			theiroffset = theirstdoffset;
+			bool		isdst = false;
+			int32		theiroffset = theirstdoffset;
 
 			/*
 			 * Now juggle transition times and types tracking offsets as you
@@ -1227,7 +1206,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		sp->defaulttype = 0;
 	}
 	sp->charcnt = charcnt;
-	cp = sp->chars;
+	char	   *cp = sp->chars;
 	memcpy(cp, stdname, stdlen);
 	cp += stdlen;
 	*cp++ = '\0';
@@ -1257,7 +1236,6 @@ static struct pg_tm *
 localsub(struct state const *sp, pg_time_t const *timep,
 		 struct pg_tm *const tmp)
 {
-	const struct ttinfo *ttisp;
 	int			i;
 	struct pg_tm *result;
 	const pg_time_t t = *timep;
@@ -1269,14 +1247,13 @@ localsub(struct state const *sp, pg_time_t const *timep,
 	{
 		pg_time_t	newt = t;
 		pg_time_t	seconds;
-		pg_time_t	years;
 
 		if (t < sp->ats[0])
 			seconds = sp->ats[0] - t;
 		else
 			seconds = t - sp->ats[sp->timecnt - 1];
 		--seconds;
-		years = (seconds / SECSPERREPEAT + 1) * YEARSPERREPEAT;
+		pg_time_t	years = (seconds / SECSPERREPEAT + 1) * YEARSPERREPEAT;
 		seconds = years * AVGSECSPERYEAR;
 		if (t < sp->ats[0])
 			newt += seconds;
@@ -1288,9 +1265,8 @@ localsub(struct state const *sp, pg_time_t const *timep,
 		result = localsub(sp, &newt, tmp);
 		if (result)
 		{
-			int64		newy;
 
-			newy = result->tm_year;
+			int64		newy = result->tm_year;
 			if (t < sp->ats[0])
 				newy -= years;
 			else
@@ -1321,7 +1297,7 @@ localsub(struct state const *sp, pg_time_t const *timep,
 		}
 		i = (int) sp->types[lo - 1];
 	}
-	ttisp = &sp->ttis[i];
+	const struct ttinfo *ttisp = &sp->ttis[i];
 
 	/*
 	 * To get (wrong) behavior that's compatible with System V Release 2.0
@@ -1355,7 +1331,6 @@ static struct pg_tm *
 gmtsub(pg_time_t const *timep, int32 offset,
 	   struct pg_tm *tmp)
 {
-	struct pg_tm *result;
 
 	/* GMT timezone state data is kept here */
 	static struct state *gmtptr = NULL;
@@ -1369,7 +1344,7 @@ gmtsub(pg_time_t const *timep, int32 offset,
 		gmtload(gmtptr);
 	}
 
-	result = timesub(timep, offset, gmtptr, tmp);
+	struct pg_tm *result = timesub(timep, offset, gmtptr, tmp);
 
 	/*
 	 * Could get fancy here and deliver something such as "+xx" or "-xx" if
@@ -1413,18 +1388,12 @@ timesub(const pg_time_t *timep, int32 offset,
 		const struct state *sp, struct pg_tm *tmp)
 {
 	const struct lsinfo *lp;
-	pg_time_t	tdays;
 	int			idays;			/* unsigned would be so 2003 */
-	int64		rem;
-	int			y;
 	const int  *ip;
-	int64		corr;
-	bool		hit;
-	int			i;
 
-	corr = 0;
-	hit = false;
-	i = (sp == NULL) ? 0 : sp->leapcnt;
+	int64		corr = 0;
+	bool		hit = false;
+	int			i = (sp == NULL) ? 0 : sp->leapcnt;
 	while (--i >= 0)
 	{
 		lp = &sp->lsis[i];
@@ -1436,17 +1405,16 @@ timesub(const pg_time_t *timep, int32 offset,
 			break;
 		}
 	}
-	y = EPOCH_YEAR;
-	tdays = *timep / SECSPERDAY;
-	rem = *timep % SECSPERDAY;
+	int			y = EPOCH_YEAR;
+	pg_time_t	tdays = *timep / SECSPERDAY;
+	int64		rem = *timep % SECSPERDAY;
 	while (tdays < 0 || tdays >= year_lengths[isleap(y)])
 	{
 		int			newy;
-		pg_time_t	tdelta;
 		int			idelta;
 		int			leapdays;
 
-		tdelta = tdays / DAYSPERLYEAR;
+		pg_time_t	tdelta = tdays / DAYSPERLYEAR;
 		if (!((!TYPE_SIGNED(pg_time_t) || INT_MIN <= tdelta)
 			  && tdelta <= INT_MAX))
 			goto out_of_range;
@@ -1572,9 +1540,8 @@ static int64
 leapcorr(struct state const *sp, pg_time_t t)
 {
 	struct lsinfo const *lp;
-	int			i;
 
-	i = sp->leapcnt;
+	int			i = sp->leapcnt;
 	while (--i >= 0)
 	{
 		lp = &sp->lsis[i];
@@ -1613,13 +1580,11 @@ pg_next_dst_boundary(const pg_time_t *timep,
 					 int *after_isdst,
 					 const pg_tz *tz)
 {
-	const struct state *sp;
 	const struct ttinfo *ttisp;
 	int			i;
-	int			j;
 	const pg_time_t t = *timep;
 
-	sp = &tz->state;
+	const struct state *sp = &tz->state;
 	if (sp->timecnt == 0)
 	{
 		/* non-DST zone, use lowest-numbered standard type */
@@ -1641,18 +1606,15 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		/* For values outside the transition table, extrapolate */
 		pg_time_t	newt = t;
 		pg_time_t	seconds;
-		pg_time_t	tcycles;
-		int64		icycles;
-		int			result;
 
 		if (t < sp->ats[0])
 			seconds = sp->ats[0] - t;
 		else
 			seconds = t - sp->ats[sp->timecnt - 1];
 		--seconds;
-		tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
+		pg_time_t	tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
 		++tcycles;
-		icycles = tcycles;
+		int64		icycles = tcycles;
 		if (tcycles - icycles >= 1 || icycles - tcycles >= 1)
 			return -1;
 		seconds = icycles;
@@ -1666,7 +1628,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 			newt > sp->ats[sp->timecnt - 1])
 			return -1;			/* "cannot happen" */
 
-		result = pg_next_dst_boundary(&newt, before_gmtoff,
+		int			result = pg_next_dst_boundary(&newt, before_gmtoff,
 									  before_isdst,
 									  boundary,
 									  after_gmtoff,
@@ -1725,7 +1687,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		}
 		i = lo;
 	}
-	j = sp->types[i - 1];
+	int			j = sp->types[i - 1];
 	ttisp = &sp->ttis[j];
 	*before_gmtoff = ttisp->tt_utoff;
 	*before_isdst = ttisp->tt_isdst;
@@ -1758,22 +1720,19 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 							 int *isdst,
 							 const pg_tz *tz)
 {
-	const struct state *sp;
-	const char *abbrs;
 	const struct ttinfo *ttisp;
-	int			abbrind;
 	int			cutoff;
 	int			i;
 	const pg_time_t t = *timep;
 
-	sp = &tz->state;
+	const struct state *sp = &tz->state;
 
 	/*
 	 * Locate the abbreviation in the zone's abbreviation list.  We assume
 	 * there are not duplicates in the list.
 	 */
-	abbrs = sp->chars;
-	abbrind = 0;
+	const char *abbrs = sp->chars;
+	int			abbrind = 0;
 	while (abbrind < sp->charcnt)
 	{
 		if (strcmp(abbrev, abbrs + abbrind) == 0)
@@ -1853,10 +1812,9 @@ pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff)
 	 * more than one abbreviation.  We return true as long as they all have
 	 * the same gmtoff.
 	 */
-	const struct state *sp;
 	int			i;
 
-	sp = &tz->state;
+	const struct state *sp = &tz->state;
 	for (i = 1; i < sp->typecnt; i++)
 	{
 		if (sp->ttis[i].tt_utoff != sp->ttis[0].tt_utoff)
@@ -1887,16 +1845,14 @@ pg_get_timezone_name(pg_tz *tz)
 bool
 pg_tz_acceptable(pg_tz *tz)
 {
-	struct pg_tm *tt;
-	pg_time_t	time2000;
 
 	/*
 	 * To detect leap-second timekeeping, run pg_localtime for what should be
 	 * GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero; any
 	 * other result has to be due to leap seconds.
 	 */
-	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
-	tt = pg_localtime(&time2000, tz);
+	pg_time_t	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
+	struct pg_tm *tt = pg_localtime(&time2000, tz);
 	if (!tt || tt->tm_sec != 0)
 		return false;
 

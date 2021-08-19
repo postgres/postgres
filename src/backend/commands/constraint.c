@@ -43,12 +43,8 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	const char *funcname = "unique_key_recheck";
 	ItemPointerData checktid;
-	ItemPointerData tmptid;
-	Relation	indexRel;
-	IndexInfo  *indexInfo;
 	EState	   *estate;
 	ExprContext *econtext;
-	TupleTableSlot *slot;
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 
@@ -86,7 +82,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 		ItemPointerSetInvalid(&checktid);	/* keep compiler quiet */
 	}
 
-	slot = table_slot_create(trigdata->tg_relation, NULL);
+	TupleTableSlot *slot = table_slot_create(trigdata->tg_relation, NULL);
 
 	/*
 	 * If the row pointed at by checktid is now dead (ie, inserted and then
@@ -106,7 +102,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * it's possible the index entry has also been marked dead, and even
 	 * removed.
 	 */
-	tmptid = checktid;
+	ItemPointerData tmptid = checktid;
 	{
 		IndexFetchTableData *scan = table_index_fetch_begin(trigdata->tg_relation);
 		bool		call_again = false;
@@ -130,9 +126,9 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * to update it.  (This protects against possible changes of the index
 	 * schema, not against concurrent updates.)
 	 */
-	indexRel = index_open(trigdata->tg_trigger->tgconstrindid,
+	Relation	indexRel = index_open(trigdata->tg_trigger->tgconstrindid,
 						  RowExclusiveLock);
-	indexInfo = BuildIndexInfo(indexRel);
+	IndexInfo  *indexInfo = BuildIndexInfo(indexRel);
 
 	/*
 	 * Typically the index won't have expressions, but if it does we need an

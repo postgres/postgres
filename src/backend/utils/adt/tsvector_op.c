@@ -164,22 +164,20 @@ Datum
 tsvector_strip(PG_FUNCTION_ARGS)
 {
 	TSVector	in = PG_GETARG_TSVECTOR(0);
-	TSVector	out;
 	int			i,
 				len = 0;
 	WordEntry  *arrin = ARRPTR(in),
 			   *arrout;
-	char	   *cur;
 
 	for (i = 0; i < in->size; i++)
 		len += arrin[i].len;
 
 	len = CALCDATASIZE(in->size, len);
-	out = (TSVector) palloc0(len);
+	TSVector	out = (TSVector) palloc0(len);
 	SET_VARSIZE(out, len);
 	out->size = in->size;
 	arrout = ARRPTR(out);
-	cur = STRPTR(out);
+	char	   *cur = STRPTR(out);
 	for (i = 0; i < in->size; i++)
 	{
 		memcpy(cur, STRPTR(in) + arrin[i].pos, arrin[i].len);
@@ -208,10 +206,8 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 {
 	TSVector	in = PG_GETARG_TSVECTOR(0);
 	char		cw = PG_GETARG_CHAR(1);
-	TSVector	out;
 	int			i,
 				j;
-	WordEntry  *entry;
 	WordEntryPos *p;
 	int			w = 0;
 
@@ -238,9 +234,9 @@ tsvector_setweight(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized weight: %d", cw);
 	}
 
-	out = (TSVector) palloc(VARSIZE(in));
+	TSVector	out = (TSVector) palloc(VARSIZE(in));
 	memcpy(out, in, VARSIZE(in));
-	entry = ARRPTR(out);
+	WordEntry  *entry = ARRPTR(out);
 	i = out->size;
 	while (i--)
 	{
@@ -272,12 +268,10 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 	char		char_weight = PG_GETARG_CHAR(1);
 	ArrayType  *lexemes = PG_GETARG_ARRAYTYPE_P(2);
 
-	TSVector	tsout;
 	int			i,
 				j,
 				nlexemes,
 				weight;
-	WordEntry  *entry;
 	Datum	   *dlexemes;
 	bool	   *nulls;
 
@@ -304,9 +298,9 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized weight: %c", char_weight);
 	}
 
-	tsout = (TSVector) palloc(VARSIZE(tsin));
+	TSVector	tsout = (TSVector) palloc(VARSIZE(tsin));
 	memcpy(tsout, tsin, VARSIZE(tsin));
-	entry = ARRPTR(tsout);
+	WordEntry  *entry = ARRPTR(tsout);
 
 	deconstruct_array(lexemes, TEXTOID, -1, false, TYPALIGN_INT,
 					  &dlexemes, &nulls, &nlexemes);
@@ -318,7 +312,6 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 	 */
 	for (i = 0; i < nlexemes; i++)
 	{
-		char	   *lex;
 		int			lex_len,
 					lex_pos;
 
@@ -327,7 +320,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
 
-		lex = VARDATA(dlexemes[i]);
+		char	   *lex = VARDATA(dlexemes[i]);
 		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsout, lex, lex_len);
 
@@ -464,7 +457,6 @@ static TSVector
 tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 						   int indices_count)
 {
-	TSVector	tsout;
 	WordEntry  *arrin = ARRPTR(tsv),
 			   *arrout;
 	char	   *data = STRPTR(tsv),
@@ -490,7 +482,7 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	 * Here we overestimate tsout size, since we don't know how much space is
 	 * used by the deleted lexeme(s).  We will set exact size below.
 	 */
-	tsout = (TSVector) palloc0(VARSIZE(tsv));
+	TSVector	tsout = (TSVector) palloc0(VARSIZE(tsv));
 
 	/* This count must be correct because STRPTR(tsout) relies on it. */
 	tsout->size = tsv->size - indices_count;
@@ -598,7 +590,6 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 	skip_indices = palloc0(nlex * sizeof(int));
 	for (i = skip_count = 0; i < nlex; i++)
 	{
-		char	   *lex;
 		int			lex_len,
 					lex_pos;
 
@@ -607,7 +598,7 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
 
-		lex = VARDATA(dlexemes[i]);
+		char	   *lex = VARDATA(dlexemes[i]);
 		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsin, lex, lex_len);
 
@@ -634,17 +625,14 @@ Datum
 tsvector_unnest(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	TSVector	tsin;
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcontext;
-		TupleDesc	tupdesc;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(3);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "lexeme",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "positions",
@@ -659,13 +647,12 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	tsin = (TSVector) funcctx->user_fctx;
+	TSVector	tsin = (TSVector) funcctx->user_fctx;
 
 	if (funcctx->call_cntr < tsin->size)
 	{
 		WordEntry  *arrin = ARRPTR(tsin);
 		char	   *data = STRPTR(tsin);
-		HeapTuple	tuple;
 		int			j,
 					i = funcctx->call_cntr;
 		bool		nulls[] = {false, false, false};
@@ -675,9 +662,6 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 
 		if (arrin[i].haspos)
 		{
-			WordEntryPosVector *posv;
-			Datum	   *positions;
-			Datum	   *weights;
 			char		weight;
 
 			/*
@@ -685,9 +669,9 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 			 * uint16 (2 bits for weight, 14 for position). Here we extract
 			 * that in two separate arrays.
 			 */
-			posv = _POSVECPTR(tsin, arrin + i);
-			positions = palloc(posv->npos * sizeof(Datum));
-			weights = palloc(posv->npos * sizeof(Datum));
+			WordEntryPosVector *posv = _POSVECPTR(tsin, arrin + i);
+			Datum	   *positions = palloc(posv->npos * sizeof(Datum));
+			Datum	   *weights = palloc(posv->npos * sizeof(Datum));
 			for (j = 0; j < posv->npos; j++)
 			{
 				positions[j] = Int16GetDatum(WEP_GETPOS(posv->pos[j]));
@@ -706,7 +690,7 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 			nulls[1] = nulls[2] = true;
 		}
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
 	else
@@ -723,11 +707,9 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 {
 	TSVector	tsin = PG_GETARG_TSVECTOR(0);
 	WordEntry  *arrin = ARRPTR(tsin);
-	Datum	   *elements;
 	int			i;
-	ArrayType  *array;
 
-	elements = palloc(tsin->size * sizeof(Datum));
+	Datum	   *elements = palloc(tsin->size * sizeof(Datum));
 
 	for (i = 0; i < tsin->size; i++)
 	{
@@ -735,7 +717,7 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 															   arrin[i].len));
 	}
 
-	array = construct_array(elements, tsin->size, TEXTOID, -1, false, TYPALIGN_INT);
+	ArrayType  *array = construct_array(elements, tsin->size, TEXTOID, -1, false, TYPALIGN_INT);
 
 	pfree(elements);
 	PG_FREE_IF_COPY(tsin, 0);
@@ -749,15 +731,12 @@ Datum
 array_to_tsvector(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
-	TSVector	tsout;
 	Datum	   *dlexemes;
-	WordEntry  *arrout;
 	bool	   *nulls;
 	int			nitems,
 				i,
 				tslen,
 				datalen = 0;
-	char	   *cur;
 
 	deconstruct_array(v, TEXTOID, -1, false, TYPALIGN_INT, &dlexemes, &nulls, &nitems);
 
@@ -784,12 +763,12 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	tslen = CALCDATASIZE(nitems, datalen);
 
 	/* Allocate and fill tsvector. */
-	tsout = (TSVector) palloc0(tslen);
+	TSVector	tsout = (TSVector) palloc0(tslen);
 	SET_VARSIZE(tsout, tslen);
 	tsout->size = nitems;
 
-	arrout = ARRPTR(tsout);
-	cur = STRPTR(tsout);
+	WordEntry  *arrout = ARRPTR(tsout);
+	char	   *cur = STRPTR(tsout);
 	for (i = 0; i < nitems; i++)
 	{
 		char	   *lex = VARDATA(dlexemes[i]);
@@ -832,14 +811,13 @@ tsvector_filter(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nweights; i++)
 	{
-		char		char_weight;
 
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("weight array may not contain nulls")));
 
-		char_weight = DatumGetChar(dweights[i]);
+		char		char_weight = DatumGetChar(dweights[i]);
 		switch (char_weight)
 		{
 			case 'A':
@@ -921,8 +899,6 @@ tsvector_concat(PG_FUNCTION_ARGS)
 {
 	TSVector	in1 = PG_GETARG_TSVECTOR(0);
 	TSVector	in2 = PG_GETARG_TSVECTOR(1);
-	TSVector	out;
-	WordEntry  *ptr;
 	WordEntry  *ptr1,
 			   *ptr2;
 	WordEntryPos *p;
@@ -939,7 +915,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 			   *data2;
 
 	/* Get max position in in1; we'll need this to offset in2's positions */
-	ptr = ARRPTR(in1);
+	WordEntry  *ptr = ARRPTR(in1);
 	i = in1->size;
 	while (i--)
 	{
@@ -970,7 +946,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	 */
 	output_bytes = VARSIZE(in1) + VARSIZE(in2) + i1 + i2;
 
-	out = (TSVector) palloc0(output_bytes);
+	TSVector	out = (TSVector) palloc0(output_bytes);
 	SET_VARSIZE(out, output_bytes);
 
 	/*
@@ -1190,24 +1166,22 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 
 	if (entry->haspos)
 	{
-		WordEntryPosVector *posvec;
 
 		/*
 		 * We can't use the _POSVECPTR macro here because the pointer to the
 		 * tsvector's lexeme storage is already contained in chkval->values.
 		 */
-		posvec = (WordEntryPosVector *)
+		WordEntryPosVector *posvec = (WordEntryPosVector *)
 			(chkval->values + SHORTALIGN(entry->pos + entry->len));
 
 		if (val->weight && data)
 		{
 			WordEntryPos *posvec_iter = posvec->pos;
-			WordEntryPos *dptr;
 
 			/*
 			 * Filter position information by weights
 			 */
-			dptr = data->pos = palloc(sizeof(WordEntryPos) * posvec->npos);
+			WordEntryPos *dptr = data->pos = palloc(sizeof(WordEntryPos) * posvec->npos);
 			data->allocated = true;
 
 			/* Is there a position with a matching weight? */
@@ -1298,10 +1272,9 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 	/* Loop invariant: StopLow <= val < StopHigh */
 	while (StopLow < StopHigh)
 	{
-		int			difference;
 
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		difference = tsCompareString(chkval->operand + val->distance,
+		int			difference = tsCompareString(chkval->operand + val->distance,
 									 val->length,
 									 chkval->values + StopMiddle->pos,
 									 StopMiddle->len,
@@ -1355,9 +1328,8 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 							   StopMiddle->len,
 							   true) == 0)
 		{
-			TSTernaryValue subres;
 
-			subres = checkclass_str(chkval, StopMiddle, val, data);
+			TSTernaryValue subres = checkclass_str(chkval, StopMiddle, val, data);
 
 			if (subres != TS_NO)
 			{
@@ -2037,7 +2009,6 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	TSVector	val = PG_GETARG_TSVECTOR(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
 	CHKVAL		chkval;
-	bool		result;
 
 	/* empty query matches nothing */
 	if (!query->size)
@@ -2051,7 +2022,7 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	chkval.arre = chkval.arrb + val->size;
 	chkval.values = STRPTR(val);
 	chkval.operand = GETOPERAND(query);
-	result = TS_execute(GETQUERY(query),
+	bool		result = TS_execute(GETQUERY(query),
 						&chkval,
 						TS_EXEC_EMPTY,
 						checkcondition_str);
@@ -2064,16 +2035,13 @@ ts_match_vq(PG_FUNCTION_ARGS)
 Datum
 ts_match_tt(PG_FUNCTION_ARGS)
 {
-	TSVector	vector;
-	TSQuery		query;
-	bool		res;
 
-	vector = DatumGetTSVector(DirectFunctionCall1(to_tsvector,
+	TSVector	vector = DatumGetTSVector(DirectFunctionCall1(to_tsvector,
 												  PG_GETARG_DATUM(0)));
-	query = DatumGetTSQuery(DirectFunctionCall1(plainto_tsquery,
+	TSQuery		query = DatumGetTSQuery(DirectFunctionCall1(plainto_tsquery,
 												PG_GETARG_DATUM(1)));
 
-	res = DatumGetBool(DirectFunctionCall2(ts_match_vq,
+	bool		res = DatumGetBool(DirectFunctionCall2(ts_match_vq,
 										   TSVectorGetDatum(vector),
 										   TSQueryGetDatum(query)));
 
@@ -2086,14 +2054,12 @@ ts_match_tt(PG_FUNCTION_ARGS)
 Datum
 ts_match_tq(PG_FUNCTION_ARGS)
 {
-	TSVector	vector;
 	TSQuery		query = PG_GETARG_TSQUERY(1);
-	bool		res;
 
-	vector = DatumGetTSVector(DirectFunctionCall1(to_tsvector,
+	TSVector	vector = DatumGetTSVector(DirectFunctionCall1(to_tsvector,
 												  PG_GETARG_DATUM(0)));
 
-	res = DatumGetBool(DirectFunctionCall2(ts_match_vq,
+	bool		res = DatumGetBool(DirectFunctionCall2(ts_match_vq,
 										   TSVectorGetDatum(vector),
 										   TSQueryGetDatum(query)));
 
@@ -2203,10 +2169,9 @@ static void
 chooseNextStatEntry(MemoryContext persistentContext, TSVectorStat *stat, TSVector txt,
 					uint32 low, uint32 high, uint32 offset)
 {
-	uint32		pos;
 	uint32		middle = (low + high) >> 1;
 
-	pos = (low + middle) >> 1;
+	uint32		pos = (low + middle) >> 1;
 	if (low != middle && pos >= offset && pos - offset < txt->size)
 		insertStatEntry(persistentContext, stat, txt, pos - offset);
 	pos = (high + middle + 1) >> 1;
@@ -2270,18 +2235,15 @@ static void
 ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 				   TSVectorStat *stat)
 {
-	TupleDesc	tupdesc;
-	MemoryContext oldcontext;
-	StatEntry  *node;
 
 	funcctx->user_fctx = (void *) stat;
 
-	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 	stat->stack = palloc0(sizeof(StatEntry *) * (stat->maxdepth + 1));
 	stat->stackpos = 0;
 
-	node = stat->root;
+	StatEntry  *node = stat->root;
 	/* find leftmost value */
 	if (node == NULL)
 		stat->stack[stat->stackpos] = NULL;
@@ -2299,7 +2261,7 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 		}
 	Assert(stat->stackpos <= stat->maxdepth);
 
-	tupdesc = CreateTemplateTupleDesc(3);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "ndoc",
@@ -2361,20 +2323,16 @@ walkStatEntryTree(TSVectorStat *stat)
 static Datum
 ts_process_call(FuncCallContext *funcctx)
 {
-	TSVectorStat *st;
-	StatEntry  *entry;
 
-	st = (TSVectorStat *) funcctx->user_fctx;
+	TSVectorStat *st = (TSVectorStat *) funcctx->user_fctx;
 
-	entry = walkStatEntryTree(st);
+	StatEntry  *entry = walkStatEntryTree(st);
 
 	if (entry != NULL)
 	{
-		Datum		result;
 		char	   *values[3];
 		char		ndoc[16];
 		char		nentry[16];
-		HeapTuple	tuple;
 
 		values[0] = palloc(entry->lenlexeme + 1);
 		memcpy(values[0], entry->lexeme, entry->lenlexeme);
@@ -2384,8 +2342,8 @@ ts_process_call(FuncCallContext *funcctx)
 		sprintf(nentry, "%d", entry->nentry);
 		values[2] = nentry;
 
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		Datum		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[0]);
 
@@ -2402,7 +2360,6 @@ static TSVectorStat *
 ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 {
 	char	   *query = text_to_cstring(txt);
-	TSVectorStat *stat;
 	bool		isnull;
 	Portal		portal;
 	SPIPlanPtr	plan;
@@ -2425,14 +2382,13 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("ts_stat query must return one tsvector column")));
 
-	stat = MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat));
+	TSVectorStat *stat = MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat));
 	stat->maxdepth = 1;
 
 	if (ws)
 	{
-		char	   *buf;
 
-		buf = VARDATA_ANY(ws);
+		char	   *buf = VARDATA_ANY(ws);
 		while (buf - VARDATA_ANY(ws) < VARSIZE_ANY_EXHDR(ws))
 		{
 			if (pg_mblen(buf) == 1)
@@ -2495,12 +2451,11 @@ ts_stat1(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		TSVectorStat *stat;
 		text	   *txt = PG_GETARG_TEXT_PP(0);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
-		stat = ts_stat_sql(funcctx->multi_call_memory_ctx, txt, NULL);
+		TSVectorStat *stat = ts_stat_sql(funcctx->multi_call_memory_ctx, txt, NULL);
 		PG_FREE_IF_COPY(txt, 0);
 		ts_setup_firstcall(fcinfo, funcctx, stat);
 		SPI_finish();
@@ -2520,13 +2475,12 @@ ts_stat2(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		TSVectorStat *stat;
 		text	   *txt = PG_GETARG_TEXT_PP(0);
 		text	   *ws = PG_GETARG_TEXT_PP(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
-		stat = ts_stat_sql(funcctx->multi_call_memory_ctx, txt, ws);
+		TSVectorStat *stat = ts_stat_sql(funcctx->multi_call_memory_ctx, txt, ws);
 		PG_FREE_IF_COPY(txt, 0);
 		PG_FREE_IF_COPY(ws, 1);
 		ts_setup_firstcall(fcinfo, funcctx, stat);
@@ -2565,9 +2519,6 @@ tsvector_update_trigger_bycolumn(PG_FUNCTION_ARGS)
 static Datum
 tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 {
-	TriggerData *trigdata;
-	Trigger    *trigger;
-	Relation	rel;
 	HeapTuple	rettuple = NULL;
 	int			tsvector_attr_num,
 				i;
@@ -2582,7 +2533,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	if (!CALLED_AS_TRIGGER(fcinfo)) /* internal error */
 		elog(ERROR, "tsvector_update_trigger: not fired by trigger manager");
 
-	trigdata = (TriggerData *) fcinfo->context;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		elog(ERROR, "tsvector_update_trigger: must be fired for row");
 	if (!TRIGGER_FIRED_BEFORE(trigdata->tg_event))
@@ -2601,8 +2552,8 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	else
 		elog(ERROR, "tsvector_update_trigger: must be fired for INSERT or UPDATE");
 
-	trigger = trigdata->tg_trigger;
-	rel = trigdata->tg_relation;
+	Trigger    *trigger = trigdata->tg_trigger;
+	Relation	rel = trigdata->tg_relation;
 
 	if (trigger->tgnargs < 3)
 		elog(ERROR, "tsvector_update_trigger: arguments must be tsvector_field, ts_config, text_field1, ...)");
@@ -2625,9 +2576,8 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	/* Find the configuration to use */
 	if (config_column)
 	{
-		int			config_attr_num;
 
-		config_attr_num = SPI_fnumber(rel->rd_att, trigger->tgargs[1]);
+		int			config_attr_num = SPI_fnumber(rel->rd_att, trigger->tgargs[1]);
 		if (config_attr_num == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -2650,9 +2600,8 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	}
 	else
 	{
-		List	   *names;
 
-		names = stringToQualifiedNameList(trigger->tgargs[1]);
+		List	   *names = stringToQualifiedNameList(trigger->tgargs[1]);
 		/* require a schema so that results are not search path dependent */
 		if (list_length(names) < 2)
 			ereport(ERROR,
@@ -2671,9 +2620,8 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	/* find all words in indexable column(s) */
 	for (i = 2; i < trigger->tgnargs; i++)
 	{
-		int			numattr;
 
-		numattr = SPI_fnumber(rel->rd_att, trigger->tgargs[i]);
+		int			numattr = SPI_fnumber(rel->rd_att, trigger->tgargs[i]);
 		if (numattr == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),

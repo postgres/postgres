@@ -21,9 +21,6 @@ int
 main(int argc, char **argv)
 {
 	const char *conninfo;
-	PGconn	   *conn;
-	PGresult   *res;
-	int			nFields;
 	int			i,
 				j;
 
@@ -38,7 +35,7 @@ main(int argc, char **argv)
 		conninfo = "dbname = postgres";
 
 	/* Make a connection to the database */
-	conn = PQconnectdb(conninfo);
+	PGconn	   *conn = PQconnectdb(conninfo);
 
 	/* Check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
@@ -48,7 +45,7 @@ main(int argc, char **argv)
 	}
 
 	/* Set always-secure search path, so malicious users can't take control. */
-	res = PQexec(conn,
+	PGresult   *res = PQexec(conn,
 				 "SELECT pg_catalog.set_config('search_path', '', false)");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -101,7 +98,7 @@ main(int argc, char **argv)
 	}
 
 	/* first, print out the attribute names */
-	nFields = PQnfields(res);
+	int			nFields = PQnfields(res);
 	for (i = 0; i < nFields; i++)
 		printf("%-15s", PQfname(res, i));
 	printf("\n\n");

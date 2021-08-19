@@ -98,8 +98,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc	tupdesc;
-		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -107,11 +105,11 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		/*
 		 * switch to memory context appropriate for multiple function calls
 		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
 		/* this had better match function's declaration in pg_proc.h */
-		tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -168,24 +166,20 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 	while (mystatus->currIdx < lockData->nelements)
 	{
-		bool		granted;
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
 		Datum		values[NUM_LOCK_STATUS_COLUMNS];
 		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
-		HeapTuple	tuple;
-		Datum		result;
-		LockInstanceData *instance;
 
-		instance = &(lockData->locks[mystatus->currIdx]);
+		LockInstanceData *instance = &(lockData->locks[mystatus->currIdx]);
 
 		/*
 		 * Look to see if there are any held lock modes in this PROCLOCK. If
 		 * so, report, and destructively modify lockData so we don't report
 		 * again.
 		 */
-		granted = false;
+		bool		granted = false;
 		if (instance->holdMask)
 		{
 			for (mode = 0; mode < MAX_LOCKMODES; mode++)
@@ -343,8 +337,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		else
 			nulls[15] = true;
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		Datum		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -355,14 +349,11 @@ pg_lock_status(PG_FUNCTION_ARGS)
 	predLockData = mystatus->predLockData;
 	if (mystatus->predLockIdx < predLockData->nelements)
 	{
-		PredicateLockTargetType lockType;
 
 		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
 		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
 		Datum		values[NUM_LOCK_STATUS_COLUMNS];
 		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
-		HeapTuple	tuple;
-		Datum		result;
 
 		mystatus->predLockIdx++;
 
@@ -373,7 +364,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(nulls, false, sizeof(nulls));
 
 		/* lock type */
-		lockType = GET_PREDICATELOCKTARGETTAG_TYPE(*predTag);
+		PredicateLockTargetType lockType = GET_PREDICATELOCKTARGETTAG_TYPE(*predTag);
 
 		values[0] = CStringGetTextDatum(PredicateLockTagTypeNames[lockType]);
 
@@ -414,8 +405,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[14] = BoolGetDatum(false);
 		nulls[15] = true;
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		Datum		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -446,8 +437,6 @@ Datum
 pg_blocking_pids(PG_FUNCTION_ARGS)
 {
 	int			blocked_pid = PG_GETARG_INT32(0);
-	Datum	   *arrayelems;
-	int			narrayelems;
 	BlockedProcsData *lockData; /* state data from lmgr */
 	int			i,
 				j;
@@ -456,8 +445,8 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 	lockData = GetBlockerStatusData(blocked_pid);
 
 	/* We can't need more output entries than there are reported PROCLOCKs */
-	arrayelems = (Datum *) palloc(lockData->nlocks * sizeof(Datum));
-	narrayelems = 0;
+	Datum	   *arrayelems = (Datum *) palloc(lockData->nlocks * sizeof(Datum));
+	int			narrayelems = 0;
 
 	/* For each blocked proc in the lock group ... */
 	for (i = 0; i < lockData->nprocs; i++)
@@ -465,15 +454,12 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 		BlockedProcData *bproc = &lockData->procs[i];
 		LockInstanceData *instances = &lockData->locks[bproc->first_lock];
 		int		   *preceding_waiters = &lockData->waiter_pids[bproc->first_waiter];
-		LockInstanceData *blocked_instance;
-		LockMethod	lockMethodTable;
-		int			conflictMask;
 
 		/*
 		 * Locate the blocked proc's own entry in the LockInstanceData array.
 		 * There should be exactly one matching entry.
 		 */
-		blocked_instance = NULL;
+		LockInstanceData *blocked_instance = NULL;
 		for (j = 0; j < bproc->num_locks; j++)
 		{
 			LockInstanceData *instance = &(instances[j]);
@@ -486,8 +472,8 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 		}
 		Assert(blocked_instance != NULL);
 
-		lockMethodTable = GetLockTagsMethodTable(&(blocked_instance->locktag));
-		conflictMask = lockMethodTable->conflictTab[blocked_instance->waitLockMode];
+		LockMethod	lockMethodTable = GetLockTagsMethodTable(&(blocked_instance->locktag));
+		int			conflictMask = lockMethodTable->conflictTab[blocked_instance->waitLockMode];
 
 		/* Now scan the PROCLOCK data for conflicting procs */
 		for (j = 0; j < bproc->num_locks; j++)
@@ -556,15 +542,13 @@ Datum
 pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 {
 	int			blocked_pid = PG_GETARG_INT32(0);
-	int		   *blockers;
-	int			num_blockers;
 	Datum	   *blocker_datums;
 
 	/* A buffer big enough for any possible blocker list without truncation */
-	blockers = (int *) palloc(MaxBackends * sizeof(int));
+	int		   *blockers = (int *) palloc(MaxBackends * sizeof(int));
 
 	/* Collect a snapshot of processes waited for by GetSafeSnapshot */
-	num_blockers =
+	int			num_blockers =
 		GetSafeSnapshotBlockingPids(blocked_pid, blockers, MaxBackends);
 
 	/* Convert int array to Datum array */
@@ -602,11 +586,6 @@ pg_isolation_test_session_is_blocked(PG_FUNCTION_ARGS)
 {
 	int			blocked_pid = PG_GETARG_INT32(0);
 	ArrayType  *interesting_pids_a = PG_GETARG_ARRAYTYPE_P(1);
-	ArrayType  *blocking_pids_a;
-	int32	   *interesting_pids;
-	int32	   *blocking_pids;
-	int			num_interesting_pids;
-	int			num_blocking_pids;
 	int			dummy;
 	int			i,
 				j;
@@ -615,21 +594,21 @@ pg_isolation_test_session_is_blocked(PG_FUNCTION_ARGS)
 	Assert(ARR_ELEMTYPE(interesting_pids_a) == INT4OID);
 	if (array_contains_nulls(interesting_pids_a))
 		elog(ERROR, "array must not contain nulls");
-	interesting_pids = (int32 *) ARR_DATA_PTR(interesting_pids_a);
-	num_interesting_pids = ArrayGetNItems(ARR_NDIM(interesting_pids_a),
+	int32	   *interesting_pids = (int32 *) ARR_DATA_PTR(interesting_pids_a);
+	int			num_interesting_pids = ArrayGetNItems(ARR_NDIM(interesting_pids_a),
 										  ARR_DIMS(interesting_pids_a));
 
 	/*
 	 * Get the PIDs of all sessions blocking the given session's attempt to
 	 * acquire heavyweight locks.
 	 */
-	blocking_pids_a =
+	ArrayType  *blocking_pids_a =
 		DatumGetArrayTypeP(DirectFunctionCall1(pg_blocking_pids, blocked_pid));
 
 	Assert(ARR_ELEMTYPE(blocking_pids_a) == INT4OID);
 	Assert(!array_contains_nulls(blocking_pids_a));
-	blocking_pids = (int32 *) ARR_DATA_PTR(blocking_pids_a);
-	num_blocking_pids = ArrayGetNItems(ARR_NDIM(blocking_pids_a),
+	int32	   *blocking_pids = (int32 *) ARR_DATA_PTR(blocking_pids_a);
+	int			num_blocking_pids = ArrayGetNItems(ARR_NDIM(blocking_pids_a),
 									   ARR_DIMS(blocking_pids_a));
 
 	/*
@@ -759,11 +738,10 @@ pg_try_advisory_lock_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockAcquire(&tag, ExclusiveLock, true, true);
+	LockAcquireResult res = LockAcquire(&tag, ExclusiveLock, true, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -779,11 +757,10 @@ pg_try_advisory_xact_lock_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockAcquire(&tag, ExclusiveLock, false, true);
+	LockAcquireResult res = LockAcquire(&tag, ExclusiveLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -798,11 +775,10 @@ pg_try_advisory_lock_shared_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockAcquire(&tag, ShareLock, true, true);
+	LockAcquireResult res = LockAcquire(&tag, ShareLock, true, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -818,11 +794,10 @@ pg_try_advisory_xact_lock_shared_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockAcquire(&tag, ShareLock, false, true);
+	LockAcquireResult res = LockAcquire(&tag, ShareLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -837,11 +812,10 @@ pg_advisory_unlock_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	bool		res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockRelease(&tag, ExclusiveLock, true);
+	bool		res = LockRelease(&tag, ExclusiveLock, true);
 
 	PG_RETURN_BOOL(res);
 }
@@ -856,11 +830,10 @@ pg_advisory_unlock_shared_int8(PG_FUNCTION_ARGS)
 {
 	int64		key = PG_GETARG_INT64(0);
 	LOCKTAG		tag;
-	bool		res;
 
 	SET_LOCKTAG_INT64(tag, key);
 
-	res = LockRelease(&tag, ShareLock, true);
+	bool		res = LockRelease(&tag, ShareLock, true);
 
 	PG_RETURN_BOOL(res);
 }
@@ -946,11 +919,10 @@ pg_try_advisory_lock_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockAcquire(&tag, ExclusiveLock, true, true);
+	LockAcquireResult res = LockAcquire(&tag, ExclusiveLock, true, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -967,11 +939,10 @@ pg_try_advisory_xact_lock_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockAcquire(&tag, ExclusiveLock, false, true);
+	LockAcquireResult res = LockAcquire(&tag, ExclusiveLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -987,11 +958,10 @@ pg_try_advisory_lock_shared_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockAcquire(&tag, ShareLock, true, true);
+	LockAcquireResult res = LockAcquire(&tag, ShareLock, true, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -1008,11 +978,10 @@ pg_try_advisory_xact_lock_shared_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	LockAcquireResult res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockAcquire(&tag, ShareLock, false, true);
+	LockAcquireResult res = LockAcquire(&tag, ShareLock, false, true);
 
 	PG_RETURN_BOOL(res != LOCKACQUIRE_NOT_AVAIL);
 }
@@ -1028,11 +997,10 @@ pg_advisory_unlock_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	bool		res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockRelease(&tag, ExclusiveLock, true);
+	bool		res = LockRelease(&tag, ExclusiveLock, true);
 
 	PG_RETURN_BOOL(res);
 }
@@ -1048,11 +1016,10 @@ pg_advisory_unlock_shared_int4(PG_FUNCTION_ARGS)
 	int32		key1 = PG_GETARG_INT32(0);
 	int32		key2 = PG_GETARG_INT32(1);
 	LOCKTAG		tag;
-	bool		res;
 
 	SET_LOCKTAG_INT32(tag, key1, key2);
 
-	res = LockRelease(&tag, ShareLock, true);
+	bool		res = LockRelease(&tag, ShareLock, true);
 
 	PG_RETURN_BOOL(res);
 }

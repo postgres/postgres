@@ -90,10 +90,9 @@ test_regex(PG_FUNCTION_ARGS)
 		Oid			collation = PG_GET_COLLATION();
 		test_re_flags re_flags;
 		regex_t		cpattern;
-		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Determine options */
 		parse_test_flags(&re_flags, flags);
@@ -163,18 +162,15 @@ test_re_compile(text *text_re, int cflags, Oid collation,
 {
 	int			text_re_len = VARSIZE_ANY_EXHDR(text_re);
 	char	   *text_re_val = VARDATA_ANY(text_re);
-	pg_wchar   *pattern;
-	int			pattern_len;
-	int			regcomp_result;
 	char		errMsg[100];
 
 	/* Convert pattern string to wide characters */
-	pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
-	pattern_len = pg_mb2wchar_with_len(text_re_val,
+	pg_wchar   *pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
+	int			pattern_len = pg_mb2wchar_with_len(text_re_val,
 									   pattern,
 									   text_re_len);
 
-	regcomp_result = pg_regcomp(result_re,
+	int			regcomp_result = pg_regcomp(result_re,
 								pattern,
 								pattern_len,
 								cflags,
@@ -214,7 +210,6 @@ test_re_execute(regex_t *re, pg_wchar *data, int data_len,
 				int nmatch, regmatch_t *pmatch,
 				int eflags)
 {
-	int			regexec_result;
 	char		errMsg[100];
 
 	/* Initialize match locations in case engine doesn't */
@@ -227,7 +222,7 @@ test_re_execute(regex_t *re, pg_wchar *data, int data_len,
 	}
 
 	/* Perform RE match and return result */
-	regexec_result = pg_regexec(re,
+	int			regexec_result = pg_regexec(re,
 								data,
 								data_len,
 								start_search,
@@ -449,15 +444,7 @@ setup_test_matches(text *orig_str,
 {
 	test_regex_ctx *matchctx = palloc0(sizeof(test_regex_ctx));
 	int			eml = pg_database_encoding_max_length();
-	int			orig_len;
-	pg_wchar   *wide_str;
-	int			wide_len;
-	regmatch_t *pmatch;
 	int			pmatch_len;
-	int			array_len;
-	int			array_idx;
-	int			prev_match_end;
-	int			start_search;
 	int			maxlen = 0;		/* largest fetch length in characters */
 
 	/* save flags */
@@ -467,9 +454,9 @@ setup_test_matches(text *orig_str,
 	matchctx->orig_str = orig_str;
 
 	/* convert string to pg_wchar form for matching */
-	orig_len = VARSIZE_ANY_EXHDR(orig_str);
-	wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
-	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
+	int			orig_len = VARSIZE_ANY_EXHDR(orig_str);
+	pg_wchar   *wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
+	int			wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
 	/* do we want to remember subpatterns? */
 	if (use_subpatterns && cpattern->re_nsub > 0)
@@ -485,7 +472,7 @@ setup_test_matches(text *orig_str,
 	}
 
 	/* temporary output space for RE package */
-	pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
+	regmatch_t *pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
 
 	/*
 	 * the real output space (grown dynamically if needed)
@@ -493,13 +480,13 @@ setup_test_matches(text *orig_str,
 	 * use values 2^n-1, not 2^n, so that we hit the limit at 2^28-1 rather
 	 * than at 2^27
 	 */
-	array_len = re_flags->glob ? 255 : 31;
+	int			array_len = re_flags->glob ? 255 : 31;
 	matchctx->match_locs = (int *) palloc(sizeof(int) * array_len);
-	array_idx = 0;
+	int			array_idx = 0;
 
 	/* search for the pattern, perhaps repeatedly */
-	prev_match_end = 0;
-	start_search = 0;
+	int			prev_match_end = 0;
+	int			start_search = 0;
 	while (test_re_execute(cpattern, wide_str, wide_len,
 						   start_search,
 						   &matchctx->details,
@@ -708,11 +695,10 @@ build_test_match_result(test_regex_ctx *matchctx)
 	char		bufstr[80];
 	int			dims[1];
 	int			lbs[1];
-	int			loc;
 	int			i;
 
 	/* Extract matching substrings from the original string */
-	loc = matchctx->next_match * matchctx->npatterns * 2;
+	int			loc = matchctx->next_match * matchctx->npatterns * 2;
 	for (i = 0; i < matchctx->npatterns; i++)
 	{
 		int			so = matchctx->match_locs[loc++];

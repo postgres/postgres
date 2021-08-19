@@ -265,7 +265,6 @@ clean_stopword_intree(NODE *node, int *ladd, int *radd)
 	else
 	{
 		NODE	   *res = node;
-		bool		isphrase;
 		int			ndistance,
 					lladd,
 					lradd,
@@ -277,7 +276,7 @@ clean_stopword_intree(NODE *node, int *ladd, int *radd)
 		node->right = clean_stopword_intree(node->right, &rladd, &rradd);
 
 		/* Check if current node is OP_PHRASE, get its distance */
-		isphrase = (node->valnode->qoperator.oper == OP_PHRASE);
+		bool		isphrase = (node->valnode->qoperator.oper == OP_PHRASE);
 		ndistance = isphrase ? node->valnode->qoperator.distance : 0;
 
 		if (node->left == NULL && node->right == NULL)
@@ -389,18 +388,15 @@ cleanup_tsquery_stopwords(TSQuery in)
 				lenstr,
 				commonlen,
 				i;
-	NODE	   *root;
 	int			ladd,
 				radd;
 	TSQuery		out;
-	QueryItem  *items;
-	char	   *operands;
 
 	if (in->size == 0)
 		return in;
 
 	/* eliminate stop words */
-	root = clean_stopword_intree(maketree(GETQUERY(in)), &ladd, &radd);
+	NODE	   *root = clean_stopword_intree(maketree(GETQUERY(in)), &ladd, &radd);
 	if (root == NULL)
 	{
 		ereport(NOTICE,
@@ -416,7 +412,7 @@ cleanup_tsquery_stopwords(TSQuery in)
 	 */
 
 	lenstr = calcstrlen(root);
-	items = plaintree(root, &len);
+	QueryItem  *items = plaintree(root, &len);
 	commonlen = COMPUTESIZE(len, lenstr);
 
 	out = palloc(commonlen);
@@ -426,7 +422,7 @@ cleanup_tsquery_stopwords(TSQuery in)
 	memcpy(GETQUERY(out), items, len * sizeof(QueryItem));
 
 	items = GETQUERY(out);
-	operands = GETOPERAND(out);
+	char	   *operands = GETOPERAND(out);
 	for (i = 0; i < out->size; i++)
 	{
 		QueryOperand *op = (QueryOperand *) &items[i];

@@ -56,7 +56,6 @@ static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
 {
 	PQExpBufferData conn_opts;
-	PGconn	   *conn;
 
 	/* Build connection string with proper quoting */
 	initPQExpBuffer(&conn_opts);
@@ -71,7 +70,7 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 		appendConnStrVal(&conn_opts, cluster->sockdir);
 	}
 
-	conn = PQconnectdb(conn_opts.data);
+	PGconn	   *conn = PQconnectdb(conn_opts.data);
 	termPQExpBuffer(&conn_opts);
 	return conn;
 }
@@ -122,16 +121,14 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 {
 	static char query[QUERY_ALLOC];
 	va_list		args;
-	PGresult   *result;
-	ExecStatusType status;
 
 	va_start(args, fmt);
 	vsnprintf(query, sizeof(query), fmt, args);
 	va_end(args);
 
 	pg_log(PG_VERBOSE, "executing: %s\n", query);
-	result = PQexec(conn, query);
-	status = PQresultStatus(result);
+	PGresult   *result = PQexec(conn, query);
+	ExecStatusType status = PQresultStatus(result);
 
 	if ((status != PGRES_TUPLES_OK) && (status != PGRES_COMMAND_OK))
 	{
@@ -357,11 +354,10 @@ void
 check_pghost_envvar(void)
 {
 	PQconninfoOption *option;
-	PQconninfoOption *start;
 
 	/* Get valid libpq env vars from the PQconndefaults function */
 
-	start = PQconndefaults();
+	PQconninfoOption *start = PQconndefaults();
 
 	if (!start)
 		pg_fatal("out of memory\n");

@@ -151,10 +151,9 @@ static Selectivity
 tsquerysel(VariableStatData *vardata, Datum constval)
 {
 	Selectivity selec;
-	TSQuery		query;
 
 	/* The caller made sure the const is a TSQuery, so get it now */
-	query = DatumGetTSQuery(constval);
+	TSQuery		query = DatumGetTSQuery(constval);
 
 	/* Empty query matches nothing */
 	if (query->size == 0)
@@ -162,10 +161,9 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
-		Form_pg_statistic stats;
 		AttStatsSlot sslot;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
 		/* MCELEM will be an array of TEXT elements for a tsvector column */
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
@@ -208,9 +206,6 @@ static Selectivity
 mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 					 float4 *numbers, int nnumbers)
 {
-	float4		minfreq;
-	TextFreq   *lookup;
-	Selectivity selec;
 	int			i;
 
 	/*
@@ -227,7 +222,7 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	/*
 	 * Transpose the data into a single array so we can use bsearch().
 	 */
-	lookup = (TextFreq *) palloc(sizeof(TextFreq) * nmcelem);
+	TextFreq   *lookup = (TextFreq *) palloc(sizeof(TextFreq) * nmcelem);
 	for (i = 0; i < nmcelem; i++)
 	{
 		/*
@@ -243,9 +238,9 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	 * Grab the lowest frequency. compute_tsvector_stats() stored it for us in
 	 * the one before the last cell of the Numbers array. See ts_typanalyze.c
 	 */
-	minfreq = numbers[nnumbers - 2];
+	float4		minfreq = numbers[nnumbers - 2];
 
-	selec = tsquery_opr_selec(GETQUERY(query), GETOPERAND(query), lookup,
+	Selectivity selec = tsquery_opr_selec(GETQUERY(query), GETOPERAND(query), lookup,
 							  nmcelem, minfreq);
 
 	pfree(lookup);
@@ -354,13 +349,12 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 		else
 		{
 			/* Regular exact lexeme match */
-			TextFreq   *searchres;
 
 			/* If no stats for the variable, use DEFAULT_TS_MATCH_SEL */
 			if (lookup == NULL)
 				return (Selectivity) DEFAULT_TS_MATCH_SEL;
 
-			searchres = (TextFreq *) bsearch(&key, lookup, length,
+			TextFreq   *searchres = (TextFreq *) bsearch(&key, lookup, length,
 											 sizeof(TextFreq),
 											 compare_lexeme_textfreq);
 

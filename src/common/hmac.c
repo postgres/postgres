@@ -68,9 +68,8 @@ struct pg_hmac_ctx
 pg_hmac_ctx *
 pg_hmac_create(pg_cryptohash_type type)
 {
-	pg_hmac_ctx *ctx;
 
-	ctx = ALLOC(sizeof(pg_hmac_ctx));
+	pg_hmac_ctx *ctx = ALLOC(sizeof(pg_hmac_ctx));
 	if (ctx == NULL)
 		return NULL;
 	memset(ctx, 0, sizeof(pg_hmac_ctx));
@@ -128,15 +127,13 @@ int
 pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 {
 	int			i;
-	int			digest_size;
-	int			block_size;
 	uint8	   *shrinkbuf = NULL;
 
 	if (ctx == NULL)
 		return -1;
 
-	digest_size = ctx->digest_size;
-	block_size = ctx->block_size;
+	int			digest_size = ctx->digest_size;
+	int			block_size = ctx->block_size;
 
 	memset(ctx->k_opad, HMAC_OPAD, ctx->block_size);
 	memset(ctx->k_ipad, HMAC_IPAD, ctx->block_size);
@@ -147,7 +144,6 @@ pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 	 */
 	if (len > block_size)
 	{
-		pg_cryptohash_ctx *hash_ctx;
 
 		/* temporary buffer for one-time shrink */
 		shrinkbuf = ALLOC(digest_size);
@@ -155,7 +151,7 @@ pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 			return -1;
 		memset(shrinkbuf, 0, digest_size);
 
-		hash_ctx = pg_cryptohash_create(ctx->type);
+		pg_cryptohash_ctx *hash_ctx = pg_cryptohash_create(ctx->type);
 		if (hash_ctx == NULL)
 		{
 			FREE(shrinkbuf);
@@ -221,12 +217,11 @@ pg_hmac_update(pg_hmac_ctx *ctx, const uint8 *data, size_t len)
 int
 pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 {
-	uint8	   *h;
 
 	if (ctx == NULL)
 		return -1;
 
-	h = ALLOC(ctx->digest_size);
+	uint8	   *h = ALLOC(ctx->digest_size);
 	if (h == NULL)
 		return -1;
 	memset(h, 0, ctx->digest_size);

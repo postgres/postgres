@@ -75,11 +75,10 @@ gbt_bitcmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 static bytea *
 gbt_bit_xfrm(bytea *leaf)
 {
-	bytea	   *out = leaf;
 	int			sz = VARBITBYTES(leaf) + VARHDRSZ;
 	int			padded_sz = INTALIGN(sz);
 
-	out = (bytea *) palloc(padded_sz);
+	bytea	   *out = (bytea *) palloc(padded_sz);
 	/* initialize the padding bytes to zero */
 	while (sz < padded_sz)
 		((char *) out)[sz++] = 0;
@@ -94,13 +93,11 @@ gbt_bit_xfrm(bytea *leaf)
 static GBT_VARKEY *
 gbt_bit_l2n(GBT_VARKEY *leaf, FmgrInfo *flinfo)
 {
-	GBT_VARKEY *out = leaf;
 	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
-	bytea	   *o;
 
-	o = gbt_bit_xfrm(r.lower);
+	bytea	   *o = gbt_bit_xfrm(r.lower);
 	r.upper = r.lower = o;
-	out = gbt_var_key_copy(&r);
+	GBT_VARKEY *out = gbt_var_key_copy(&r);
 	pfree(o);
 
 	return out;

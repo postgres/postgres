@@ -72,14 +72,12 @@ Initialize(void)
 static void
 TrimExtension(char *filename, char *extension)
 {
-	int			flen;
-	int			elen;
 
 	if (extension == NULL)
 		return;
 
-	elen = strlen(extension);
-	flen = strlen(filename);
+	int			elen = strlen(extension);
+	int			flen = strlen(filename);
 
 	if (flen > elen && strcmp(filename + flen - elen, extension) == 0)
 		filename[flen - elen] = '\0';
@@ -205,12 +203,11 @@ SetWALFileNameForCleanup(void)
 	}
 	else if (IsPartialXLogFileName(restartWALFileName))
 	{
-		int			args;
 		uint32		tli = 1,
 					log = 0,
 					seg = 0;
 
-		args = sscanf(restartWALFileName, "%08X%08X%08X.partial",
+		int			args = sscanf(restartWALFileName, "%08X%08X%08X.partial",
 					  &tli, &log, &seg);
 		if (args == 3)
 		{
@@ -225,13 +222,12 @@ SetWALFileNameForCleanup(void)
 	}
 	else if (IsBackupHistoryFileName(restartWALFileName))
 	{
-		int			args;
 		uint32		tli = 1,
 					log = 0,
 					seg = 0,
 					offset = 0;
 
-		args = sscanf(restartWALFileName, "%08X%08X%08X.%08X.backup", &tli, &log, &seg, &offset);
+		int			args = sscanf(restartWALFileName, "%08X%08X%08X.%08X.backup", &tli, &log, &seg, &offset);
 		if (args == 4)
 		{
 			fnameOK = true;

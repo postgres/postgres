@@ -48,14 +48,12 @@ check_datestyle(char **newval, void **extra, GucSource source)
 	bool		have_style = false;
 	bool		have_order = false;
 	bool		ok = true;
-	char	   *rawstring;
 	int		   *myextra;
-	char	   *result;
 	List	   *elemlist;
 	ListCell   *l;
 
 	/* Need a modifiable copy of string */
-	rawstring = pstrdup(*newval);
+	char	   *rawstring = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawstring, ',', &elemlist))
@@ -137,10 +135,9 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			 * We can't simply "return check_datestyle(...)" because we need
 			 * to handle constructs like "DEFAULT, ISO".
 			 */
-			char	   *subval;
 			void	   *subextra = NULL;
 
-			subval = strdup(GetConfigOptionResetString("datestyle"));
+			char	   *subval = strdup(GetConfigOptionResetString("datestyle"));
 			if (!subval)
 			{
 				ok = false;
@@ -181,7 +178,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 	/*
 	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
-	result = (char *) malloc(32);
+	char	   *result = (char *) malloc(32);
 	if (!result)
 		return false;
 
@@ -264,15 +261,13 @@ check_timezone(char **newval, void **extra, GucSource source)
 		 * because it has any actual real-world usefulness.
 		 */
 		const char *valueptr = *newval;
-		char	   *val;
-		Interval   *interval;
 
 		valueptr += 8;
 		while (isspace((unsigned char) *valueptr))
 			valueptr++;
 		if (*valueptr++ != '\'')
 			return false;
-		val = pstrdup(valueptr);
+		char	   *val = pstrdup(valueptr);
 		/* Check and remove trailing quote */
 		endptr = strchr(val, '\'');
 		if (!endptr || endptr[1] != '\0')
@@ -288,7 +283,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 		 * could to guard against this in flatten_set_variable_args, but a
 		 * string coming in from postgresql.conf might contain anything.
 		 */
-		interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
+		Interval   *interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
 														 CStringGetDatum(val),
 														 ObjectIdGetDatum(InvalidOid),
 														 Int32GetDatum(-1)));
@@ -381,10 +376,9 @@ assign_timezone(const char *newval, void *extra)
 const char *
 show_timezone(void)
 {
-	const char *tzn;
 
 	/* Always show the zone's canonical name */
-	tzn = pg_get_timezone_name(session_timezone);
+	const char *tzn = pg_get_timezone_name(session_timezone);
 
 	if (tzn != NULL)
 		return tzn;
@@ -407,12 +401,11 @@ show_timezone(void)
 bool
 check_log_timezone(char **newval, void **extra, GucSource source)
 {
-	pg_tz	   *new_tz;
 
 	/*
 	 * Assume it is a timezone name, and try to load it.
 	 */
-	new_tz = pg_tzset(*newval);
+	pg_tz	   *new_tz = pg_tzset(*newval);
 
 	if (!new_tz)
 	{
@@ -454,10 +447,9 @@ assign_log_timezone(const char *newval, void *extra)
 const char *
 show_log_timezone(void)
 {
-	const char *tzn;
 
 	/* Always show the zone's canonical name */
-	tzn = pg_get_timezone_name(log_timezone);
+	const char *tzn = pg_get_timezone_name(log_timezone);
 
 	if (tzn != NULL)
 		return tzn;
@@ -621,16 +613,14 @@ show_random_seed(void)
 bool
 check_client_encoding(char **newval, void **extra, GucSource source)
 {
-	int			encoding;
-	const char *canonical_name;
 
 	/* Look up the encoding by name */
-	encoding = pg_valid_client_encoding(*newval);
+	int			encoding = pg_valid_client_encoding(*newval);
 	if (encoding < 0)
 		return false;
 
 	/* Get the canonical name (no aliases, uniform case) */
-	canonical_name = pg_encoding_to_char(encoding);
+	const char *canonical_name = pg_encoding_to_char(encoding);
 
 	/*
 	 * If we are not within a transaction then PrepareClientEncoding will not
@@ -743,11 +733,6 @@ typedef struct
 bool
 check_session_authorization(char **newval, void **extra, GucSource source)
 {
-	HeapTuple	roleTup;
-	Form_pg_authid roleform;
-	Oid			roleid;
-	bool		is_superuser;
-	role_auth_extra *myextra;
 
 	/* Do nothing for the boot_val default of NULL */
 	if (*newval == NULL)
@@ -764,7 +749,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	}
 
 	/* Look up the username */
-	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
+	HeapTuple	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
 	if (!HeapTupleIsValid(roleTup))
 	{
 		/*
@@ -782,14 +767,14 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
-	roleform = (Form_pg_authid) GETSTRUCT(roleTup);
-	roleid = roleform->oid;
-	is_superuser = roleform->rolsuper;
+	Form_pg_authid roleform = (Form_pg_authid) GETSTRUCT(roleTup);
+	Oid			roleid = roleform->oid;
+	bool		is_superuser = roleform->rolsuper;
 
 	ReleaseSysCache(roleTup);
 
 	/* Set up "extra" struct for assign_session_authorization to use */
-	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	role_auth_extra *myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;
@@ -827,7 +812,6 @@ check_role(char **newval, void **extra, GucSource source)
 	HeapTuple	roleTup;
 	Oid			roleid;
 	bool		is_superuser;
-	role_auth_extra *myextra;
 	Form_pg_authid roleform;
 
 	if (strcmp(*newval, "none") == 0)
@@ -899,7 +883,7 @@ check_role(char **newval, void **extra, GucSource source)
 	}
 
 	/* Set up "extra" struct for assign_role to use */
-	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	role_auth_extra *myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;

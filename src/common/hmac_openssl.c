@@ -72,9 +72,8 @@ struct pg_hmac_ctx
 pg_hmac_ctx *
 pg_hmac_create(pg_cryptohash_type type)
 {
-	pg_hmac_ctx *ctx;
 
-	ctx = ALLOC(sizeof(pg_hmac_ctx));
+	pg_hmac_ctx *ctx = ALLOC(sizeof(pg_hmac_ctx));
 	if (ctx == NULL)
 		return NULL;
 	memset(ctx, 0, sizeof(pg_hmac_ctx));
@@ -167,12 +166,11 @@ pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 int
 pg_hmac_update(pg_hmac_ctx *ctx, const uint8 *data, size_t len)
 {
-	int			status = 0;
 
 	if (ctx == NULL)
 		return -1;
 
-	status = HMAC_Update(ctx->hmacctx, data, len);
+	int			status = HMAC_Update(ctx->hmacctx, data, len);
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
@@ -188,7 +186,6 @@ pg_hmac_update(pg_hmac_ctx *ctx, const uint8 *data, size_t len)
 int
 pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 {
-	int			status = 0;
 	uint32		outlen;
 
 	if (ctx == NULL)
@@ -222,7 +219,7 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 			break;
 	}
 
-	status = HMAC_Final(ctx->hmacctx, dest, &outlen);
+	int			status = HMAC_Final(ctx->hmacctx, dest, &outlen);
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)

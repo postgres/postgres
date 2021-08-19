@@ -53,15 +53,12 @@ int
 pgwin32_system(const char *command)
 {
 	size_t		cmdlen = strlen(command);
-	char	   *buf;
-	int			save_errno;
-	int			res;
 
 	/*
 	 * Create a malloc'd copy of the command string, enclosed with an extra
 	 * pair of quotes
 	 */
-	buf = malloc(cmdlen + 2 + 1);
+	char	   *buf = malloc(cmdlen + 2 + 1);
 	if (buf == NULL)
 	{
 		errno = ENOMEM;
@@ -72,9 +69,9 @@ pgwin32_system(const char *command)
 	buf[cmdlen + 1] = '"';
 	buf[cmdlen + 2] = '\0';
 
-	res = system(buf);
+	int			res = system(buf);
 
-	save_errno = errno;
+	int			save_errno = errno;
 	free(buf);
 	errno = save_errno;
 
@@ -86,15 +83,12 @@ FILE *
 pgwin32_popen(const char *command, const char *type)
 {
 	size_t		cmdlen = strlen(command);
-	char	   *buf;
-	int			save_errno;
-	FILE	   *res;
 
 	/*
 	 * Create a malloc'd copy of the command string, enclosed with an extra
 	 * pair of quotes
 	 */
-	buf = malloc(cmdlen + 2 + 1);
+	char	   *buf = malloc(cmdlen + 2 + 1);
 	if (buf == NULL)
 	{
 		errno = ENOMEM;
@@ -105,9 +99,9 @@ pgwin32_popen(const char *command, const char *type)
 	buf[cmdlen + 1] = '"';
 	buf[cmdlen + 2] = '\0';
 
-	res = _popen(buf, type);
+	FILE	   *res = _popen(buf, type);
 
-	save_errno = errno;
+	int			save_errno = errno;
 	free(buf);
 	errno = save_errno;
 

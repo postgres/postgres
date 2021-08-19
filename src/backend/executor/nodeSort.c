@@ -50,9 +50,6 @@ static TupleTableSlot *
 ExecSort(PlanState *pstate)
 {
 	SortState  *node = castNode(SortState, pstate);
-	EState	   *estate;
-	ScanDirection dir;
-	Tuplesortstate *tuplesortstate;
 	TupleTableSlot *slot;
 
 	CHECK_FOR_INTERRUPTS();
@@ -63,9 +60,9 @@ ExecSort(PlanState *pstate)
 	SO1_printf("ExecSort: %s\n",
 			   "entering routine");
 
-	estate = node->ss.ps.state;
-	dir = estate->es_direction;
-	tuplesortstate = (Tuplesortstate *) node->tuplesortstate;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection dir = estate->es_direction;
+	Tuplesortstate *tuplesortstate = (Tuplesortstate *) node->tuplesortstate;
 
 	/*
 	 * If first time through, read all tuples from outer plan and pass them to
@@ -75,8 +72,6 @@ ExecSort(PlanState *pstate)
 	if (!node->sort_Done)
 	{
 		Sort	   *plannode = (Sort *) node->ss.ps.plan;
-		PlanState  *outerNode;
-		TupleDesc	tupDesc;
 
 		SO1_printf("ExecSort: %s\n",
 				   "sorting subplan");
@@ -93,8 +88,8 @@ ExecSort(PlanState *pstate)
 		SO1_printf("ExecSort: %s\n",
 				   "calling tuplesort_begin");
 
-		outerNode = outerPlanState(node);
-		tupDesc = ExecGetResultType(outerNode);
+		PlanState  *outerNode = outerPlanState(node);
+		TupleDesc	tupDesc = ExecGetResultType(outerNode);
 
 		if (node->datumSort)
 			tuplesortstate = tuplesort_begin_datum(TupleDescAttr(tupDesc, 0)->atttypid,
@@ -166,11 +161,10 @@ ExecSort(PlanState *pstate)
 		node->bound_Done = node->bound;
 		if (node->shared_info && node->am_worker)
 		{
-			TuplesortInstrumentation *si;
 
 			Assert(IsParallelWorker());
 			Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
-			si = &node->shared_info->sinstrument[ParallelWorkerNumber];
+			TuplesortInstrumentation *si = &node->shared_info->sinstrument[ParallelWorkerNumber];
 			tuplesort_get_stats(tuplesortstate, si);
 		}
 		SO1_printf("ExecSort: %s\n", "sorting done");
@@ -213,7 +207,6 @@ ExecSort(PlanState *pstate)
 SortState *
 ExecInitSort(Sort *node, EState *estate, int eflags)
 {
-	SortState  *sortstate;
 
 	SO1_printf("ExecInitSort: %s\n",
 			   "initializing sort node");
@@ -221,7 +214,7 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	/*
 	 * create state structure
 	 */
-	sortstate = makeNode(SortState);
+	SortState  *sortstate = makeNode(SortState);
 	sortstate->ss.ps.plan = (Plan *) node;
 	sortstate->ss.ps.state = estate;
 	sortstate->ss.ps.ExecProcNode = ExecSort;
@@ -412,13 +405,12 @@ ExecReScanSort(SortState *node)
 void
 ExecSortEstimate(SortState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = mul_size(pcxt->nworkers, sizeof(TuplesortInstrumentation));
+	Size		size = mul_size(pcxt->nworkers, sizeof(TuplesortInstrumentation));
 	size = add_size(size, offsetof(SharedSortInfo, sinstrument));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -433,13 +425,12 @@ ExecSortEstimate(SortState *node, ParallelContext *pcxt)
 void
 ExecSortInitializeDSM(SortState *node, ParallelContext *pcxt)
 {
-	Size		size;
 
 	/* don't need this if not instrumenting or no workers */
 	if (!node->ss.ps.instrument || pcxt->nworkers == 0)
 		return;
 
-	size = offsetof(SharedSortInfo, sinstrument)
+	Size		size = offsetof(SharedSortInfo, sinstrument)
 		+ pcxt->nworkers * sizeof(TuplesortInstrumentation);
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
@@ -472,15 +463,13 @@ ExecSortInitializeWorker(SortState *node, ParallelWorkerContext *pwcxt)
 void
 ExecSortRetrieveInstrumentation(SortState *node)
 {
-	Size		size;
-	SharedSortInfo *si;
 
 	if (node->shared_info == NULL)
 		return;
 
-	size = offsetof(SharedSortInfo, sinstrument)
+	Size		size = offsetof(SharedSortInfo, sinstrument)
 		+ node->shared_info->num_workers * sizeof(TuplesortInstrumentation);
-	si = palloc(size);
+	SharedSortInfo *si = palloc(size);
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

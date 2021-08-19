@@ -66,7 +66,6 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 {
 	PrefetchBufferResult result = {InvalidBuffer, false};
 	BufferTag	newTag;			/* identity of requested block */
-	LocalBufferLookupEnt *hresult;
 
 	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
 
@@ -75,7 +74,7 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 		InitLocalBuffers();
 
 	/* See if the desired buffer already exists */
-	hresult = (LocalBufferLookupEnt *)
+	LocalBufferLookupEnt *hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
 
 	if (hresult)
@@ -110,7 +109,6 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 				 bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
-	LocalBufferLookupEnt *hresult;
 	BufferDesc *bufHdr;
 	int			b;
 	int			trycounter;
@@ -124,7 +122,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		InitLocalBuffers();
 
 	/* See if the desired buffer already exists */
-	hresult = (LocalBufferLookupEnt *)
+	LocalBufferLookupEnt *hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
 
 	if (hresult)
@@ -211,11 +209,10 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	if (buf_state & BM_DIRTY)
 	{
-		SMgrRelation oreln;
 		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 
 		/* Find smgr relation for buffer */
-		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
+		SMgrRelation oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
 
 		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
@@ -332,9 +329,8 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 	{
 		BufferDesc *bufHdr = GetLocalBufferDescriptor(i);
 		LocalBufferLookupEnt *hresult;
-		uint32		buf_state;
 
-		buf_state = pg_atomic_read_u32(&bufHdr->state);
+		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 		if ((buf_state & BM_TAG_VALID) &&
 			RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
@@ -378,9 +374,8 @@ DropRelFileNodeAllLocalBuffers(RelFileNode rnode)
 	{
 		BufferDesc *bufHdr = GetLocalBufferDescriptor(i);
 		LocalBufferLookupEnt *hresult;
-		uint32		buf_state;
 
-		buf_state = pg_atomic_read_u32(&bufHdr->state);
+		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 		if ((buf_state & BM_TAG_VALID) &&
 			RelFileNodeEquals(bufHdr->tag.rnode, rnode))
@@ -498,14 +493,12 @@ GetLocalBufferStorage(void)
 	static int	total_bufs_allocated = 0;
 	static MemoryContext LocalBufferContext = NULL;
 
-	char	   *this_buf;
 
 	Assert(total_bufs_allocated < NLocBuffer);
 
 	if (next_buf_in_block >= num_bufs_in_block)
 	{
 		/* Need to make a new request to memmgr */
-		int			num_bufs;
 
 		/*
 		 * We allocate local buffers in a context of their own, so that the
@@ -519,7 +512,7 @@ GetLocalBufferStorage(void)
 									  ALLOCSET_DEFAULT_SIZES);
 
 		/* Start with a 16-buffer request; subsequent ones double each time */
-		num_bufs = Max(num_bufs_in_block * 2, 16);
+		int			num_bufs = Max(num_bufs_in_block * 2, 16);
 		/* But not more than what we need for all remaining local bufs */
 		num_bufs = Min(num_bufs, NLocBuffer - total_bufs_allocated);
 		/* And don't overflow MaxAllocSize, either */
@@ -532,7 +525,7 @@ GetLocalBufferStorage(void)
 	}
 
 	/* Allocate next buffer in current memory block */
-	this_buf = cur_block + next_buf_in_block * BLCKSZ;
+	char	   *this_buf = cur_block + next_buf_in_block * BLCKSZ;
 	next_buf_in_block++;
 	total_bufs_allocated++;
 

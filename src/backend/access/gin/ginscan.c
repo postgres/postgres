@@ -24,16 +24,14 @@
 IndexScanDesc
 ginbeginscan(Relation rel, int nkeys, int norderbys)
 {
-	IndexScanDesc scan;
-	GinScanOpaque so;
 
 	/* no order by operators allowed */
 	Assert(norderbys == 0);
 
-	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+	IndexScanDesc scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
 	/* allocate private workspace */
-	so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
+	GinScanOpaque so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
 	so->keys = NULL;
 	so->nkeys = 0;
 	so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
@@ -60,7 +58,6 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 				 bool isPartialMatch, Pointer extra_data)
 {
 	GinState   *ginstate = &so->ginstate;
-	GinScanEntry scanEntry;
 	uint32		i;
 
 	/*
@@ -93,7 +90,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	}
 
 	/* Nope, create a new entry */
-	scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
+	GinScanEntry scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
 	scanEntry->queryKey = queryKey;
 	scanEntry->queryCategory = queryCategory;
 	scanEntry->isPartialMatch = isPartialMatch;
@@ -197,17 +194,13 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	/* Set up normal scan entries using extractQueryFn's outputs */
 	for (i = 0; i < nQueryValues; i++)
 	{
-		Datum		queryKey;
-		GinNullCategory queryCategory;
-		bool		isPartialMatch;
-		Pointer		this_extra;
 
-		queryKey = queryValues[i];
-		queryCategory = queryCategories[i];
-		isPartialMatch =
+		Datum		queryKey = queryValues[i];
+		GinNullCategory queryCategory = queryCategories[i];
+		bool		isPartialMatch =
 			(ginstate->canPartialMatch[attnum - 1] && partial_matches)
 			? partial_matches[i] : false;
-		this_extra = (extra_data) ? extra_data[i] : NULL;
+		Pointer		this_extra = (extra_data) ? extra_data[i] : NULL;
 
 		key->scanEntry[i] = ginFillScanEntry(so, attnum,
 											 strategy, searchMode,
@@ -267,14 +260,13 @@ ginNewScanKey(IndexScanDesc scan)
 	int			i;
 	bool		hasNullQuery = false;
 	bool		attrHasNormalScan[INDEX_MAX_KEYS] = {false};
-	MemoryContext oldCtx;
 
 	/*
 	 * Allocate all the scan key information in the key context. (If
 	 * extractQuery leaks anything there, it won't be reset until the end of
 	 * scan or rescan, but that's OK.)
 	 */
-	oldCtx = MemoryContextSwitchTo(so->keyCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(so->keyCtx);
 
 	/* if no scan keys provided, allocate extra EVERYTHING GinScanKey */
 	so->keys = (GinScanKey)
@@ -292,12 +284,10 @@ ginNewScanKey(IndexScanDesc scan)
 	for (i = 0; i < scan->numberOfKeys; i++)
 	{
 		ScanKey		skey = &scankey[i];
-		Datum	   *queryValues;
 		int32		nQueryValues = 0;
 		bool	   *partial_matches = NULL;
 		Pointer    *extra_data = NULL;
 		bool	   *nullFlags = NULL;
-		GinNullCategory *categories;
 		int32		searchMode = GIN_SEARCH_MODE_DEFAULT;
 
 		/*
@@ -311,7 +301,7 @@ ginNewScanKey(IndexScanDesc scan)
 		}
 
 		/* OK to call the extractQueryFn */
-		queryValues = (Datum *)
+		Datum	   *queryValues = (Datum *)
 			DatumGetPointer(FunctionCall7Coll(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
 											  so->ginstate.supportCollation[skey->sk_attno - 1],
 											  skey->sk_argument,
@@ -353,7 +343,7 @@ ginNewScanKey(IndexScanDesc scan)
 		 * didn't create a nullFlags array, we assume everything is non-null.
 		 * While at it, detect whether any null keys are present.
 		 */
-		categories = (GinNullCategory *) palloc0(nQueryValues * sizeof(GinNullCategory));
+		GinNullCategory *categories = (GinNullCategory *) palloc0(nQueryValues * sizeof(GinNullCategory));
 		if (nullFlags)
 		{
 			int32		j;

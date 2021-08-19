@@ -307,11 +307,9 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	HeapTuple	rv = NULL;
 	PyObject   *volatile plargs = NULL;
 	PyObject   *volatile plrv = NULL;
-	TriggerData *tdata;
-	TupleDesc	rel_descr;
 
 	Assert(CALLED_AS_TRIGGER(fcinfo));
-	tdata = (TriggerData *) fcinfo->context;
+	TriggerData *tdata = (TriggerData *) fcinfo->context;
 
 	/*
 	 * Input/output conversion for trigger tuples.  We use the result and
@@ -321,7 +319,7 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	 * calls should only happen once, but PLy_input_setup_tuple and
 	 * PLy_output_setup_tuple are responsible for not doing repetitive work.
 	 */
-	rel_descr = RelationGetDescr(tdata->tg_relation);
+	TupleDesc	rel_descr = RelationGetDescr(tdata->tg_relation);
 	if (proc->result.typoid != rel_descr->tdtypeid)
 		PLy_output_setup_func(&proc->result, proc->mcxt,
 							  rel_descr->tdtypeid,
@@ -487,10 +485,9 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 static PLySavedArgs *
 PLy_function_save_args(PLyProcedure *proc)
 {
-	PLySavedArgs *result;
 
 	/* saved args are always allocated in procedure's context */
-	result = (PLySavedArgs *)
+	PLySavedArgs *result = (PLySavedArgs *)
 		MemoryContextAllocZero(proc->mcxt,
 							   offsetof(PLySavedArgs, namedargs) +
 							   proc->nargs * sizeof(PyObject *));
@@ -590,10 +587,9 @@ PLy_global_args_push(PLyProcedure *proc)
 	/* We only need to push if we are already inside some active call */
 	if (proc->calldepth > 0)
 	{
-		PLySavedArgs *node;
 
 		/* Build a struct containing current argument values */
-		node = PLy_function_save_args(proc);
+		PLySavedArgs *node = PLy_function_save_args(proc);
 
 		/*
 		 * Push the saved argument values into the procedure's stack.  Once we
@@ -900,7 +896,6 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 	PG_TRY();
 	{
-		TupleDesc	tupdesc;
 		int			nkeys,
 					i;
 
@@ -917,7 +912,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 		plkeys = PyDict_Keys(plntup);
 		nkeys = PyList_Size(plkeys);
 
-		tupdesc = RelationGetDescr(tdata->tg_relation);
+		TupleDesc	tupdesc = RelationGetDescr(tdata->tg_relation);
 
 		modvalues = (Datum *) palloc0(tupdesc->natts * sizeof(Datum));
 		modnulls = (bool *) palloc0(tupdesc->natts * sizeof(bool));
@@ -925,12 +920,9 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 		for (i = 0; i < nkeys; i++)
 		{
-			PyObject   *platt;
 			char	   *plattstr;
-			int			attn;
-			PLyObToDatum *att;
 
-			platt = PyList_GetItem(plkeys, i);
+			PyObject   *platt = PyList_GetItem(plkeys, i);
 			if (PyString_Check(platt))
 				plattstr = PyString_AsString(platt);
 			else if (PyUnicode_Check(platt))
@@ -942,7 +934,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 						 errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
 				plattstr = NULL;	/* keep compiler quiet */
 			}
-			attn = SPI_fnumber(tupdesc, plattstr);
+			int			attn = SPI_fnumber(tupdesc, plattstr);
 			if (attn == SPI_ERROR_NOATTRIBUTE)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -966,7 +958,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			Py_INCREF(plval);
 
 			/* We assume proc->result is set up to convert tuples properly */
-			att = &proc->result.u.tuple.atts[attn - 1];
+			PLyObToDatum *att = &proc->result.u.tuple.atts[attn - 1];
 
 			modvalues[attn - 1] = PLy_output_convert(att,
 													 plval,
@@ -1067,7 +1059,6 @@ PLy_abort_open_subtransactions(int save_subxact_level)
 
 	while (list_length(explicit_subtransactions) > save_subxact_level)
 	{
-		PLySubtransactionData *subtransactiondata;
 
 		Assert(explicit_subtransactions != NIL);
 
@@ -1076,7 +1067,7 @@ PLy_abort_open_subtransactions(int save_subxact_level)
 
 		RollbackAndReleaseCurrentSubTransaction();
 
-		subtransactiondata = (PLySubtransactionData *) linitial(explicit_subtransactions);
+		PLySubtransactionData *subtransactiondata = (PLySubtransactionData *) linitial(explicit_subtransactions);
 		explicit_subtransactions = list_delete_first(explicit_subtransactions);
 
 		MemoryContextSwitchTo(subtransactiondata->oldcontext);

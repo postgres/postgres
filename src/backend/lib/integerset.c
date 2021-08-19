@@ -284,9 +284,8 @@ static bool simple8b_contains(uint64 codeword, uint64 key, uint64 base);
 IntegerSet *
 intset_create(void)
 {
-	IntegerSet *intset;
 
-	intset = (IntegerSet *) palloc(sizeof(IntegerSet));
+	IntegerSet *intset = (IntegerSet *) palloc(sizeof(IntegerSet));
 	intset->context = CurrentMemoryContext;
 	intset->mem_used = GetMemoryChunkSpace(intset);
 
@@ -316,9 +315,8 @@ intset_create(void)
 static intset_internal_node *
 intset_new_internal_node(IntegerSet *intset)
 {
-	intset_internal_node *n;
 
-	n = (intset_internal_node *) MemoryContextAlloc(intset->context,
+	intset_internal_node *n = (intset_internal_node *) MemoryContextAlloc(intset->context,
 													sizeof(intset_internal_node));
 	intset->mem_used += GetMemoryChunkSpace(n);
 
@@ -331,9 +329,8 @@ intset_new_internal_node(IntegerSet *intset)
 static intset_leaf_node *
 intset_new_leaf_node(IntegerSet *intset)
 {
-	intset_leaf_node *n;
 
-	n = (intset_leaf_node *) MemoryContextAlloc(intset->context,
+	intset_leaf_node *n = (intset_leaf_node *) MemoryContextAlloc(intset->context,
 												sizeof(intset_leaf_node));
 	intset->mem_used += GetMemoryChunkSpace(n);
 
@@ -399,9 +396,8 @@ intset_flush_buffered_values(IntegerSet *intset)
 	uint64	   *values = intset->buffered_values;
 	uint64		num_values = intset->num_buffered_values;
 	int			num_packed = 0;
-	intset_leaf_node *leaf;
 
-	leaf = (intset_leaf_node *) intset->rightmost_nodes[0];
+	intset_leaf_node *leaf = (intset_leaf_node *) intset->rightmost_nodes[0];
 
 	/*
 	 * If the tree is completely empty, create the first leaf page, which is
@@ -554,20 +550,16 @@ intset_update_upper(IntegerSet *intset, int level, intset_node *child,
 bool
 intset_is_member(IntegerSet *intset, uint64 x)
 {
-	intset_node *node;
-	intset_leaf_node *leaf;
 	int			level;
 	int			itemno;
-	leaf_item  *item;
 
 	/*
 	 * The value might be in the buffer of newly-added values.
 	 */
 	if (intset->num_buffered_values > 0 && x >= intset->buffered_values[0])
 	{
-		int			itemno;
 
-		itemno = intset_binsrch_uint64(x,
+		int			itemno = intset_binsrch_uint64(x,
 									   intset->buffered_values,
 									   intset->num_buffered_values,
 									   false);
@@ -583,7 +575,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	 */
 	if (!intset->root)
 		return false;
-	node = intset->root;
+	intset_node *node = intset->root;
 	for (level = intset->num_levels - 1; level > 0; level--)
 	{
 		intset_internal_node *n = (intset_internal_node *) node;
@@ -596,7 +588,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 		node = n->downlinks[itemno - 1];
 	}
 	Assert(node->level == 0);
-	leaf = (intset_leaf_node *) node;
+	intset_leaf_node *leaf = (intset_leaf_node *) node;
 
 	/*
 	 * Binary search to find the right item on the leaf page
@@ -604,7 +596,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	itemno = intset_binsrch_leaf(x, leaf->items, leaf->num_items, true);
 	if (itemno == 0)
 		return false;
-	item = &leaf->items[itemno - 1];
+	leaf_item  *item = &leaf->items[itemno - 1];
 
 	/* Is this a match to the first value on the item? */
 	if (item->first == x)
@@ -659,13 +651,11 @@ intset_iterate_next(IntegerSet *intset, uint64 *next)
 		if (intset->iter_node &&
 			intset->iter_itemno < intset->iter_node->num_items)
 		{
-			leaf_item  *item;
-			int			num_decoded;
 
-			item = &intset->iter_node->items[intset->iter_itemno++];
+			leaf_item  *item = &intset->iter_node->items[intset->iter_itemno++];
 
 			intset->iter_values_buf[0] = item->first;
-			num_decoded = simple8b_decode(item->codeword,
+			int			num_decoded = simple8b_decode(item->codeword,
 										  &intset->iter_values_buf[1],
 										  item->first);
 			intset->iter_num_values = num_decoded + 1;
@@ -875,13 +865,6 @@ static const struct simple8b_mode
 static uint64
 simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 {
-	int			selector;
-	int			nints;
-	int			bits;
-	uint64		diff;
-	uint64		last_val;
-	uint64		codeword;
-	int			i;
 
 	Assert(ints[0] > base);
 
@@ -900,12 +883,12 @@ simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 	 * second is too large to be encoded, we'll end up using the last "mode",
 	 * which has nints == 1.
 	 */
-	selector = 0;
-	nints = simple8b_modes[0].num_ints;
-	bits = simple8b_modes[0].bits_per_int;
-	diff = ints[0] - base - 1;
-	last_val = ints[0];
-	i = 0;						/* number of deltas we have accepted */
+	int			selector = 0;
+	int			nints = simple8b_modes[0].num_ints;
+	int			bits = simple8b_modes[0].bits_per_int;
+	uint64		diff = ints[0] - base - 1;
+	uint64		last_val = ints[0];
+	int			i = 0;						/* number of deltas we have accepted */
 	for (;;)
 	{
 		if (diff >= (UINT64CONST(1) << bits))
@@ -950,7 +933,7 @@ simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 	 * into the codeword in reverse order, so that they will come out in the
 	 * correct order in the decoder.
 	 */
-	codeword = 0;
+	uint64		codeword = 0;
 	if (bits > 0)
 	{
 		for (i = nints - 1; i > 0; i--)
@@ -981,12 +964,11 @@ simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 	int			nints = simple8b_modes[selector].num_ints;
 	int			bits = simple8b_modes[selector].bits_per_int;
 	uint64		mask = (UINT64CONST(1) << bits) - 1;
-	uint64		curr_value;
 
 	if (codeword == EMPTY_CODEWORD)
 		return 0;
 
-	curr_value = base;
+	uint64		curr_value = base;
 	for (int i = 0; i < nints; i++)
 	{
 		uint64		diff = codeword & mask;
@@ -1021,9 +1003,8 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 	else
 	{
 		uint64		mask = (UINT64CONST(1) << bits) - 1;
-		uint64		curr_value;
 
-		curr_value = base;
+		uint64		curr_value = base;
 		for (int i = 0; i < nints; i++)
 		{
 			uint64		diff = codeword & mask;

@@ -61,7 +61,6 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 	const char *input;
 	int			inputlen;
 	int			result;
-	bool		initial;
 
 	/*
 	 * Send the SASL authentication request to user.  It includes the list of
@@ -82,7 +81,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 	 * from the client.  All messages from client to server are password
 	 * packets (type 'p').
 	 */
-	initial = true;
+	bool		initial = true;
 	do
 	{
 		pq_startmsgread();
@@ -120,9 +119,8 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 		 */
 		if (initial)
 		{
-			const char *selected_mech;
 
-			selected_mech = pq_getmsgrawstring(&buf);
+			const char *selected_mech = pq_getmsgrawstring(&buf);
 
 			/*
 			 * Initialize the status tracker for message exchanges.

@@ -106,14 +106,13 @@ system_time_samplescangetsamplesize(PlannerInfo *root,
 									BlockNumber *pages,
 									double *tuples)
 {
-	Node	   *limitnode;
 	double		millis;
 	double		spc_random_page_cost;
 	double		npages;
 	double		ntuples;
 
 	/* Try to extract an estimate for the limit time spec */
-	limitnode = (Node *) linitial(paramexprs);
+	Node	   *limitnode = (Node *) linitial(paramexprs);
 	limitnode = estimate_expression_value(root, limitnode);
 
 	if (IsA(limitnode, Const) &&

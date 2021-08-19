@@ -409,23 +409,19 @@ find(struct vars *v,
 	 struct cnfa *cnfa,
 	 struct colormap *cm)
 {
-	struct dfa *s;
-	struct dfa *d;
 	chr		   *begin;
 	chr		   *end = NULL;
-	chr		   *cold;
 	chr		   *open;			/* open and close of range of possible starts */
-	chr		   *close;
 	int			hitend;
 	int			shorter = (v->g->tree->flags & SHORTER) ? 1 : 0;
 
 	/* first, a shot with the search RE */
-	s = newdfa(v, &v->g->search, cm, &v->dfa1);
+	struct dfa *s = newdfa(v, &v->g->search, cm, &v->dfa1);
 	if (s == NULL)
 		return v->err;
 	MDEBUG(("\nsearch at %ld\n", LOFF(v->start)));
-	cold = NULL;
-	close = shortest(v, s, v->search_start, v->search_start, v->stop,
+	chr		   *cold = NULL;
+	chr		   *close = shortest(v, s, v->search_start, v->search_start, v->stop,
 					 &cold, (int *) NULL);
 	freedfa(s);
 	NOERR();
@@ -448,7 +444,7 @@ find(struct vars *v,
 	open = cold;
 	cold = NULL;
 	MDEBUG(("between %ld and %ld\n", LOFF(open), LOFF(close)));
-	d = newdfa(v, cnfa, cm, &v->dfa1);
+	struct dfa *d = newdfa(v, cnfa, cm, &v->dfa1);
 	if (d == NULL)
 		return v->err;
 	for (begin = open; begin <= close; begin++)
@@ -500,22 +496,19 @@ cfind(struct vars *v,
 	  struct cnfa *cnfa,
 	  struct colormap *cm)
 {
-	struct dfa *s;
-	struct dfa *d;
 	chr		   *cold;
-	int			ret;
 
-	s = newdfa(v, &v->g->search, cm, &v->dfa1);
+	struct dfa *s = newdfa(v, &v->g->search, cm, &v->dfa1);
 	if (s == NULL)
 		return v->err;
-	d = newdfa(v, cnfa, cm, &v->dfa2);
+	struct dfa *d = newdfa(v, cnfa, cm, &v->dfa2);
 	if (d == NULL)
 	{
 		freedfa(s);
 		return v->err;
 	}
 
-	ret = cfindloop(v, cnfa, cm, d, s, &cold);
+	int			ret = cfindloop(v, cnfa, cm, d, s, &cold);
 
 	freedfa(d);
 	freedfa(s);
@@ -545,9 +538,7 @@ cfindloop(struct vars *v,
 {
 	chr		   *begin;
 	chr		   *end;
-	chr		   *cold;
 	chr		   *open;			/* open and close of range of possible starts */
-	chr		   *close;
 	chr		   *estart;
 	chr		   *estop;
 	int			er;
@@ -555,8 +546,8 @@ cfindloop(struct vars *v,
 	int			hitend;
 
 	assert(d != NULL && s != NULL);
-	cold = NULL;
-	close = v->search_start;
+	chr		   *cold = NULL;
+	chr		   *close = v->search_start;
 	do
 	{
 		/* Search with the search RE for match range at/beyond "close" */
@@ -801,9 +792,6 @@ ccondissect(struct vars *v,
 {
 	struct subre *left = t->child;
 	struct subre *right = left->sibling;
-	struct dfa *d;
-	struct dfa *d2;
-	chr		   *mid;
 	int			er;
 
 	assert(t->op == '.');
@@ -812,14 +800,14 @@ ccondissect(struct vars *v,
 	assert(right->sibling == NULL);
 	assert(!(left->flags & SHORTER));
 
-	d = getsubdfa(v, left);
+	struct dfa *d = getsubdfa(v, left);
 	NOERR();
-	d2 = getsubdfa(v, right);
+	struct dfa *d2 = getsubdfa(v, right);
 	NOERR();
 	MDEBUG(("%d: ccondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 	/* pick a tentative midpoint */
-	mid = longest(v, d, begin, end, (int *) NULL);
+	chr		   *mid = longest(v, d, begin, end, (int *) NULL);
 	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
@@ -882,9 +870,6 @@ crevcondissect(struct vars *v,
 {
 	struct subre *left = t->child;
 	struct subre *right = left->sibling;
-	struct dfa *d;
-	struct dfa *d2;
-	chr		   *mid;
 	int			er;
 
 	assert(t->op == '.');
@@ -893,14 +878,14 @@ crevcondissect(struct vars *v,
 	assert(right->sibling == NULL);
 	assert(left->flags & SHORTER);
 
-	d = getsubdfa(v, left);
+	struct dfa *d = getsubdfa(v, left);
 	NOERR();
-	d2 = getsubdfa(v, right);
+	struct dfa *d2 = getsubdfa(v, right);
 	NOERR();
 	MDEBUG(("%d: crevcondissect %ld-%ld\n", t->id, LOFF(begin), LOFF(end)));
 
 	/* pick a tentative midpoint */
-	mid = shortest(v, d, begin, begin, end, (chr **) NULL, (int *) NULL);
+	chr		   *mid = shortest(v, d, begin, begin, end, (chr **) NULL, (int *) NULL);
 	NOERR();
 	if (mid == NULL)
 		return REG_NOMATCH;
@@ -965,11 +950,6 @@ cbrdissect(struct vars *v,
 		   chr *end)			/* end of same */
 {
 	int			n = t->backno;
-	size_t		numreps;
-	size_t		tlen;
-	size_t		brlen;
-	chr		   *brstring;
-	chr		   *p;
 	int			min = t->min;
 	int			max = t->max;
 
@@ -984,8 +964,8 @@ cbrdissect(struct vars *v,
 	/* get the backreferenced string */
 	if (v->pmatch[n].rm_so == -1)
 		return REG_NOMATCH;
-	brstring = v->start + v->pmatch[n].rm_so;
-	brlen = v->pmatch[n].rm_eo - v->pmatch[n].rm_so;
+	chr		   *brstring = v->start + v->pmatch[n].rm_so;
+	size_t		brlen = v->pmatch[n].rm_eo - v->pmatch[n].rm_so;
 
 	/* special cases for zero-length strings */
 	if (brlen == 0)
@@ -1017,15 +997,15 @@ cbrdissect(struct vars *v,
 	 * repetitions of brstring
 	 */
 	assert(end > begin);
-	tlen = end - begin;
+	size_t		tlen = end - begin;
 	if (tlen % brlen != 0)
 		return REG_NOMATCH;
-	numreps = tlen / brlen;
+	size_t		numreps = tlen / brlen;
 	if (numreps < min || (numreps > max && max != DUPINF))
 		return REG_NOMATCH;
 
 	/* okay, compare the actual string contents */
-	p = begin;
+	chr		   *p = begin;
 	while (numreps-- > 0)
 	{
 		if ((*v->g->compare) (brstring, p, brlen) != 0)
@@ -1087,13 +1067,6 @@ citerdissect(struct vars *v,
 			 chr *begin,		/* beginning of relevant substring */
 			 chr *end)			/* end of same */
 {
-	struct dfa *d;
-	chr		  **endpts;
-	chr		   *limit;
-	int			min_matches;
-	size_t		max_matches;
-	int			nverified;
-	int			k;
 	int			i;
 	int			er;
 
@@ -1113,7 +1086,7 @@ citerdissect(struct vars *v,
 	 * code has allowed to succeed.)  Therefore, we deal with the zero-matches
 	 * case at the bottom, after failing to find any other way to match.
 	 */
-	min_matches = t->min;
+	int			min_matches = t->min;
 	if (min_matches <= 0)
 		min_matches = 1;
 
@@ -1126,17 +1099,17 @@ citerdissect(struct vars *v,
 	 * For convenience, endpts[0] contains the "begin" pointer and we store
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
-	max_matches = end - begin;
+	size_t		max_matches = end - begin;
 	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
-	endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
+	chr		  **endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
 	if (endpts == NULL)
 		return REG_ESPACE;
 	endpts[0] = begin;
 
-	d = getsubdfa(v, t->child);
+	struct dfa *d = getsubdfa(v, t->child);
 	if (ISERR())
 	{
 		FREE(endpts);
@@ -1154,9 +1127,9 @@ citerdissect(struct vars *v,
 	 */
 
 	/* initialize to consider first sub-match */
-	nverified = 0;
-	k = 1;
-	limit = end;
+	int			nverified = 0;
+	int			k = 1;
+	chr		   *limit = end;
 
 	/* iterate until satisfaction or failure */
 	while (k > 0)
@@ -1289,13 +1262,6 @@ creviterdissect(struct vars *v,
 				chr *begin,		/* beginning of relevant substring */
 				chr *end)		/* end of same */
 {
-	struct dfa *d;
-	chr		  **endpts;
-	chr		   *limit;
-	int			min_matches;
-	size_t		max_matches;
-	int			nverified;
-	int			k;
 	int			i;
 	int			er;
 
@@ -1311,7 +1277,7 @@ creviterdissect(struct vars *v,
 	 * victory.  OTOH, if target string isn't empty, zero matches can't work
 	 * so we pretend the min is 1.
 	 */
-	min_matches = t->min;
+	int			min_matches = t->min;
 	if (min_matches <= 0)
 	{
 		if (begin == end)
@@ -1331,17 +1297,17 @@ creviterdissect(struct vars *v,
 	 * For convenience, endpts[0] contains the "begin" pointer and we store
 	 * sub-match endpoints in endpts[1..max_matches].
 	 */
-	max_matches = end - begin;
+	size_t		max_matches = end - begin;
 	if (max_matches > t->max && t->max != DUPINF)
 		max_matches = t->max;
 	if (max_matches < min_matches)
 		max_matches = min_matches;
-	endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
+	chr		  **endpts = (chr **) MALLOC((max_matches + 1) * sizeof(chr *));
 	if (endpts == NULL)
 		return REG_ESPACE;
 	endpts[0] = begin;
 
-	d = getsubdfa(v, t->child);
+	struct dfa *d = getsubdfa(v, t->child);
 	if (ISERR())
 	{
 		FREE(endpts);
@@ -1359,9 +1325,9 @@ creviterdissect(struct vars *v,
 	 */
 
 	/* initialize to consider first sub-match */
-	nverified = 0;
-	k = 1;
-	limit = begin;
+	int			nverified = 0;
+	int			k = 1;
+	chr		   *limit = begin;
 
 	/* iterate until satisfaction or failure */
 	while (k > 0)

@@ -172,7 +172,6 @@ Datum
 normal_rand(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	uint64		call_cntr;
 	uint64		max_calls;
 	normal_rand_fctx *fctx;
 	float8		mean;
@@ -184,7 +183,6 @@ normal_rand(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		int32		num_tuples;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -195,7 +193,7 @@ normal_rand(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* total number of tuples to be returned */
-		num_tuples = PG_GETARG_INT32(0);
+		int32		num_tuples = PG_GETARG_INT32(0);
 		if (num_tuples < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -224,7 +222,7 @@ normal_rand(PG_FUNCTION_ARGS)
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
 
-	call_cntr = funcctx->call_cntr;
+	uint64		call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
 	fctx = funcctx->user_fctx;
 	mean = fctx->mean;
@@ -355,21 +353,10 @@ crosstab(PG_FUNCTION_ARGS)
 {
 	char	   *sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Tuplestorestate *tupstore;
 	TupleDesc	tupdesc;
 	uint64		call_cntr;
-	uint64		max_calls;
-	AttInMetadata *attinmeta;
-	SPITupleTable *spi_tuptable;
-	TupleDesc	spi_tupdesc;
-	bool		firstpass;
-	char	   *lastrowid;
 	int			i;
-	int			num_categories;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	int			ret;
-	uint64		proc;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -381,7 +368,7 @@ crosstab(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -390,7 +377,7 @@ crosstab(PG_FUNCTION_ARGS)
 
 	/* Retrieve the desired rows */
 	ret = SPI_execute(sql, true, 0);
-	proc = SPI_processed;
+	uint64		proc = SPI_processed;
 
 	/* If no qualifying tuples, fall out early */
 	if (ret != SPI_OK_SELECT || proc == 0)
@@ -400,8 +387,8 @@ crosstab(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	spi_tuptable = SPI_tuptable;
-	spi_tupdesc = spi_tuptable->tupdesc;
+	SPITupleTable *spi_tuptable = SPI_tuptable;
+	TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
 
 	/*----------
 	 * The provided SQL query must always return three columns.
@@ -455,13 +442,13 @@ crosstab(PG_FUNCTION_ARGS)
 	/*
 	 * switch to long-lived memory context
 	 */
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* make sure we have a persistent copy of the result tupdesc */
 	tupdesc = CreateTupleDescCopy(tupdesc);
 
 	/* initialize our tuplestore in long-lived context */
-	tupstore =
+	Tuplestorestate *tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
 
@@ -471,24 +458,23 @@ crosstab(PG_FUNCTION_ARGS)
 	 * Generate attribute metadata needed later to produce tuples from raw C
 	 * strings
 	 */
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* total number of tuples to be examined */
-	max_calls = proc;
+	uint64		max_calls = proc;
 
 	/* the return tuple always must have 1 rowid + num_categories columns */
-	num_categories = tupdesc->natts - 1;
+	int			num_categories = tupdesc->natts - 1;
 
-	firstpass = true;
-	lastrowid = NULL;
+	bool		firstpass = true;
+	char	   *lastrowid = NULL;
 
 	for (call_cntr = 0; call_cntr < max_calls; call_cntr++)
 	{
 		bool		skip_tuple = false;
-		char	  **values;
 
 		/* allocate and zero space */
-		values = (char **) palloc0((1 + num_categories) * sizeof(char *));
+		char	  **values = (char **) palloc0((1 + num_categories) * sizeof(char *));
 
 		/*
 		 * now loop through the sql results and assign each value in sequence
@@ -496,18 +482,16 @@ crosstab(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < num_categories; i++)
 		{
-			HeapTuple	spi_tuple;
-			char	   *rowid;
 
 			/* see if we've gone too far already */
 			if (call_cntr >= max_calls)
 				break;
 
 			/* get the next sql result tuple */
-			spi_tuple = spi_tuptable->vals[call_cntr];
+			HeapTuple	spi_tuple = spi_tuptable->vals[call_cntr];
 
 			/* get the rowid from the current sql result tuple */
-			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			char	   *rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 
 			/*
 			 * If this is the first pass through the values for this rowid,
@@ -568,10 +552,9 @@ crosstab(PG_FUNCTION_ARGS)
 
 		if (!skip_tuple)
 		{
-			HeapTuple	tuple;
 
 			/* build the tuple and store it */
-			tuple = BuildTupleFromCStrings(attinmeta, values);
+			HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
 			tuplestore_puttuple(tupstore, tuple);
 			heap_freetuple(tuple);
 		}
@@ -641,10 +624,6 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	char	   *sql = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *cats_sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	HTAB	   *crosstab_hash;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -657,11 +636,11 @@ crosstab_hash(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* get the requested return tuple description */
-	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	TupleDesc	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/*
 	 * Check to make sure we have a reasonable tuple descriptor
@@ -677,7 +656,7 @@ crosstab_hash(PG_FUNCTION_ARGS)
 						"crosstab function are not compatible")));
 
 	/* load up the categories hash table */
-	crosstab_hash = load_categories_hash(cats_sql, per_query_ctx);
+	HTAB	   *crosstab_hash = load_categories_hash(cats_sql, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -707,10 +686,8 @@ crosstab_hash(PG_FUNCTION_ARGS)
 static HTAB *
 load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 {
-	HTAB	   *crosstab_hash;
 	HASHCTL		ctl;
 	int			ret;
-	uint64		proc;
 	MemoryContext SPIcontext;
 
 	/* initialize the category hash table */
@@ -722,7 +699,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	 * use INIT_CATS, defined above as a guess of how many hash table entries
 	 * to create, initially
 	 */
-	crosstab_hash = hash_create("crosstab hash",
+	HTAB	   *crosstab_hash = hash_create("crosstab hash",
 								INIT_CATS,
 								&ctl,
 								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
@@ -734,7 +711,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 	/* Retrieve the category name rows */
 	ret = SPI_execute(cats_sql, true, 0);
-	proc = SPI_processed;
+	uint64		proc = SPI_processed;
 
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
@@ -755,15 +732,12 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 		for (i = 0; i < proc; i++)
 		{
-			crosstab_cat_desc *catdesc;
-			char	   *catname;
-			HeapTuple	spi_tuple;
 
 			/* get the next sql result tuple */
-			spi_tuple = spi_tuptable->vals[i];
+			HeapTuple	spi_tuple = spi_tuptable->vals[i];
 
 			/* get the category from the current sql result tuple */
-			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			char	   *catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 			if (catname == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -772,7 +746,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
-			catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
+			crosstab_cat_desc *catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
 			catdesc->catname = catname;
 			catdesc->attidx = i;
 
@@ -799,16 +773,14 @@ get_crosstab_tuplestore(char *sql,
 						TupleDesc tupdesc,
 						bool randomAccess)
 {
-	Tuplestorestate *tupstore;
 	int			num_categories = hash_get_num_entries(crosstab_hash);
 	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	char	  **values;
 	HeapTuple	tuple;
 	int			ret;
-	uint64		proc;
 
 	/* initialize our tuplestore (while still in query context!) */
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -817,7 +789,7 @@ get_crosstab_tuplestore(char *sql,
 
 	/* Now retrieve the crosstab source rows */
 	ret = SPI_execute(sql, true, 0);
-	proc = SPI_processed;
+	uint64		proc = SPI_processed;
 
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
@@ -830,7 +802,6 @@ get_crosstab_tuplestore(char *sql,
 		bool		firstpass = true;
 		uint64		i;
 		int			j;
-		int			result_ncols;
 
 		if (num_categories == 0)
 		{
@@ -861,7 +832,7 @@ get_crosstab_tuplestore(char *sql,
 					 errdetail("The provided SQL must return 3 " \
 							   " columns; rowid, category, and values.")));
 
-		result_ncols = (ncols - 2) + num_categories;
+		int			result_ncols = (ncols - 2) + num_categories;
 
 		/* Recheck to make sure we tuple descriptor still looks reasonable */
 		if (tupdesc->natts != result_ncols)
@@ -877,12 +848,10 @@ get_crosstab_tuplestore(char *sql,
 
 		for (i = 0; i < proc; i++)
 		{
-			HeapTuple	spi_tuple;
 			crosstab_cat_desc *catdesc;
-			char	   *catname;
 
 			/* get the next sql result tuple */
-			spi_tuple = spi_tuptable->vals[i];
+			HeapTuple	spi_tuple = spi_tuptable->vals[i];
 
 			/* get the rowid from the current sql result tuple */
 			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
@@ -917,7 +886,7 @@ get_crosstab_tuplestore(char *sql,
 			}
 
 			/* look up the category and fill in the appropriate column */
-			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
+			char	   *catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
 
 			if (catname != NULL)
 			{
@@ -998,10 +967,6 @@ connectby_text(PG_FUNCTION_ARGS)
 	bool		show_branch = false;
 	bool		show_serial = false;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -1023,17 +988,17 @@ connectby_text(PG_FUNCTION_ARGS)
 		/* default is no show, tilde for the delimiter */
 		branch_delim = pstrdup("~");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* get the requested return tuple description */
-	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	TupleDesc	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/* does it meet our needs */
 	validateConnectbyTupleDesc(tupdesc, show_branch, show_serial);
 
 	/* OK, use it then */
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* OK, go to work */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -1077,10 +1042,6 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 	bool		show_branch = false;
 	bool		show_serial = true;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -1102,17 +1063,17 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 		/* default is no show, tilde for the delimiter */
 		branch_delim = pstrdup("~");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* get the requested return tuple description */
-	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	TupleDesc	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/* does it meet our needs */
 	validateConnectbyTupleDesc(tupdesc, show_branch, show_serial);
 
 	/* OK, use it then */
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* OK, go to work */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -1160,9 +1121,7 @@ connectby(char *relname,
 		  bool randomAccess,
 		  AttInMetadata *attinmeta)
 {
-	Tuplestorestate *tupstore = NULL;
 	int			ret;
-	MemoryContext oldcontext;
 
 	int			serial = 1;
 
@@ -1172,10 +1131,10 @@ connectby(char *relname,
 		elog(ERROR, "connectby: SPI_connect returned %d", ret);
 
 	/* switch to longer term context to create the tuple store */
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -1219,8 +1178,6 @@ build_tuplestore_recursively(char *key_fld,
 							 Tuplestorestate *tupstore)
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
-	int			ret;
-	uint64		proc;
 	int			serial_column;
 	StringInfoData sql;
 	char	  **values;
@@ -1304,8 +1261,8 @@ build_tuplestore_recursively(char *key_fld,
 	}
 
 	/* Retrieve the desired rows */
-	ret = SPI_execute(sql.data, true, 0);
-	proc = SPI_processed;
+	int			ret = SPI_execute(sql.data, true, 0);
+	uint64		proc = SPI_processed;
 
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
@@ -1498,10 +1455,6 @@ validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial)
 static void
 compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
-	Oid			ret_atttypid;
-	Oid			sql_atttypid;
-	int32		ret_atttypmod;
-	int32		sql_atttypmod;
 
 	/*
 	 * Result must have at least 2 columns.
@@ -1516,10 +1469,10 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * These columns must match the result type indicated by the calling
 	 * query.
 	 */
-	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
-	sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
-	ret_atttypmod = TupleDescAttr(ret_tupdesc, 0)->atttypmod;
-	sql_atttypmod = TupleDescAttr(sql_tupdesc, 0)->atttypmod;
+	Oid			ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
+	Oid			sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
+	int32		ret_atttypmod = TupleDescAttr(ret_tupdesc, 0)->atttypmod;
+	int32		sql_atttypmod = TupleDescAttr(sql_tupdesc, 0)->atttypmod;
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
@@ -1555,17 +1508,14 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 {
 	int			i;
 	Form_pg_attribute ret_attr;
-	Oid			ret_atttypid;
-	Form_pg_attribute sql_attr;
-	Oid			sql_atttypid;
 
 	if (ret_tupdesc->natts < 2 ||
 		sql_tupdesc->natts < 3)
 		return false;
 
 	/* check the rowid types match */
-	ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
-	sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
+	Oid			ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
+	Oid			sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
 	if (ret_atttypid != sql_atttypid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1578,7 +1528,7 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * attribute [2] of the sql tuple should match attributes [1] to [natts]
 	 * of the return tuple
 	 */
-	sql_attr = TupleDescAttr(sql_tupdesc, 2);
+	Form_pg_attribute sql_attr = TupleDescAttr(sql_tupdesc, 2);
 	for (i = 1; i < ret_tupdesc->natts; i++)
 	{
 		ret_attr = TupleDescAttr(ret_tupdesc, i);

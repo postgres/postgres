@@ -75,14 +75,12 @@ pg_TZDIR(void)
 int
 pg_open_tzfile(const char *name, char *canonname)
 {
-	const char *fname;
 	char		fullname[MAXPGPATH];
 	int			fullnamelen;
-	int			orignamelen;
 
 	/* Initialize fullname with base name of tzdata directory */
 	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
-	orignamelen = fullnamelen = strlen(fullname);
+	int			orignamelen = fullnamelen = strlen(fullname);
 
 	if (fullnamelen + 1 + strlen(name) >= MAXPGPATH)
 		return -1;				/* not gonna fit */
@@ -96,12 +94,11 @@ pg_open_tzfile(const char *name, char *canonname)
 	 */
 	if (canonname == NULL)
 	{
-		int			result;
 
 		fullname[fullnamelen] = '/';
 		/* test above ensured this will fit: */
 		strcpy(fullname + fullnamelen + 1, name);
-		result = open(fullname, O_RDONLY | PG_BINARY, 0);
+		int			result = open(fullname, O_RDONLY | PG_BINARY, 0);
 		if (result >= 0)
 			return result;
 		/* If that didn't work, fall through to do it the hard way */
@@ -112,13 +109,12 @@ pg_open_tzfile(const char *name, char *canonname)
 	 * Loop to split the given name into directory levels; for each level,
 	 * search using scan_directory_ci().
 	 */
-	fname = name;
+	const char *fname = name;
 	for (;;)
 	{
-		const char *slashptr;
 		int			fnamelen;
 
-		slashptr = strchr(fname, '/');
+		const char *slashptr = strchr(fname, '/');
 		if (slashptr)
 			fnamelen = slashptr - fname;
 		else
@@ -152,10 +148,9 @@ scan_directory_ci(const char *dirname, const char *fname, int fnamelen,
 				  char *canonname, int canonnamelen)
 {
 	bool		found = false;
-	DIR		   *dirdesc;
 	struct dirent *direntry;
 
-	dirdesc = AllocateDir(dirname);
+	DIR		   *dirdesc = AllocateDir(dirname);
 
 	while ((direntry = ReadDirExtended(dirdesc, dirname, LOG)) != NULL)
 	{
@@ -233,11 +228,9 @@ init_timezone_hashtable(void)
 pg_tz *
 pg_tzset(const char *name)
 {
-	pg_tz_cache *tzp;
 	struct state tzstate;
 	char		uppername[TZ_STRLEN_MAX + 1];
 	char		canonname[TZ_STRLEN_MAX + 1];
-	char	   *p;
 
 	if (strlen(name) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
@@ -252,12 +245,12 @@ pg_tzset(const char *name)
 	 * can get consistently upcased results from tzparse() in case the name is
 	 * a POSIX-style timezone spec.)
 	 */
-	p = uppername;
+	char	   *p = uppername;
 	while (*name)
 		*p++ = pg_toupper((unsigned char) *name++);
 	*p = '\0';
 
-	tzp = (pg_tz_cache *) hash_search(timezone_cache,
+	pg_tz_cache *tzp = (pg_tz_cache *) hash_search(timezone_cache,
 									  uppername,
 									  HASH_FIND,
 									  NULL);
@@ -427,11 +420,10 @@ pg_tzenumerate_next(pg_tzenum *dir)
 {
 	while (dir->depth >= 0)
 	{
-		struct dirent *direntry;
 		char		fullname[MAXPGPATH * 2];
 		struct stat statbuf;
 
-		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
+		struct dirent *direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
 
 		if (!direntry)
 		{

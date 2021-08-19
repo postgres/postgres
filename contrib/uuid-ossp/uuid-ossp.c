@@ -156,9 +156,8 @@ get_cached_uuid_t(int which)
 
 	if (cached_uuid[which] == NULL)
 	{
-		uuid_rc_t	rc;
 
-		rc = uuid_create(&cached_uuid[which]);
+		uuid_rc_t	rc = uuid_create(&cached_uuid[which]);
 		if (rc != UUID_RC_OK)
 		{
 			cached_uuid[which] = NULL;
@@ -174,9 +173,8 @@ uuid_to_string(const uuid_t *uuid)
 	char	   *buf = palloc(UUID_LEN_STR + 1);
 	void	   *ptr = buf;
 	size_t		len = UUID_LEN_STR + 1;
-	uuid_rc_t	rc;
 
-	rc = uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
+	uuid_rc_t	rc = uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 
@@ -187,9 +185,8 @@ uuid_to_string(const uuid_t *uuid)
 static void
 string_to_uuid(const char *str, uuid_t *uuid)
 {
-	uuid_rc_t	rc;
 
-	rc = uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
+	uuid_rc_t	rc = uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 }
@@ -199,13 +196,11 @@ static Datum
 special_uuid_value(const char *name)
 {
 	uuid_t	   *uuid = get_cached_uuid_t(0);
-	char	   *str;
-	uuid_rc_t	rc;
 
-	rc = uuid_load(uuid, name);
+	uuid_rc_t	rc = uuid_load(uuid, name);
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
-	str = uuid_to_string(uuid);
+	char	   *str = uuid_to_string(uuid);
 
 	return DirectFunctionCall1(uuid_in, CStringGetDatum(str));
 }
@@ -215,13 +210,11 @@ static Datum
 uuid_generate_internal(int mode, const uuid_t *ns, const char *name, int len)
 {
 	uuid_t	   *uuid = get_cached_uuid_t(0);
-	char	   *str;
-	uuid_rc_t	rc;
 
-	rc = uuid_make(uuid, mode, ns, name);
+	uuid_rc_t	rc = uuid_make(uuid, mode, ns, name);
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
-	str = uuid_to_string(uuid);
+	char	   *str = uuid_to_string(uuid);
 
 	return DirectFunctionCall1(uuid_in, CStringGetDatum(str));
 }
@@ -474,7 +467,6 @@ uuid_generate_v1mc(PG_FUNCTION_ARGS)
 	char	   *buf = NULL;
 #elif defined(HAVE_UUID_E2FS)
 	char		strbuf[40];
-	char	   *buf;
 	uuid_t		uu;
 
 	uuid_generate_random(uu);
@@ -483,7 +475,7 @@ uuid_generate_v1mc(PG_FUNCTION_ARGS)
 	((dce_uuid_t *) &uu)->node[0] |= 0x03;
 
 	uuid_unparse(uu, strbuf);
-	buf = strbuf + 24;
+	char	   *buf = strbuf + 24;
 #else							/* BSD */
 	char		buf[16];
 

@@ -77,10 +77,9 @@ json_in(PG_FUNCTION_ARGS)
 {
 	char	   *json = PG_GETARG_CSTRING(0);
 	text	   *result = cstring_to_text(json);
-	JsonLexContext *lex;
 
 	/* validate it */
-	lex = makeJsonLexContext(result, false);
+	JsonLexContext *lex = makeJsonLexContext(result, false);
 	pg_parse_json_or_ereport(lex, &nullSemAction);
 
 	/* Internal representation is the same as text, for now */
@@ -120,14 +119,12 @@ Datum
 json_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	char	   *str;
 	int			nbytes;
-	JsonLexContext *lex;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	/* Validate it. */
-	lex = makeJsonLexContextCstringLen(str, nbytes, GetDatabaseEncoding(), false);
+	JsonLexContext *lex = makeJsonLexContextCstringLen(str, nbytes, GetDatabaseEncoding(), false);
 	pg_parse_json_or_ereport(lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));
@@ -207,9 +204,8 @@ json_categorize_type(Oid typoid,
 				if (typoid >= FirstNormalObjectId)
 				{
 					Oid			castfunc;
-					CoercionPathType ctype;
 
-					ctype = find_coercion_pathway(JSONOID, typoid,
+					CoercionPathType ctype = find_coercion_pathway(JSONOID, typoid,
 												  COERCION_EXPLICIT,
 												  &castfunc);
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
@@ -359,10 +355,9 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 	{
 		case DATEOID:
 			{
-				DateADT		date;
 				struct pg_tm tm;
 
-				date = DatumGetDateADT(value);
+				DateADT		date = DatumGetDateADT(value);
 
 				/* Same as date_out(), but forcing DateStyle */
 				if (DATE_NOT_FINITE(date))
@@ -402,11 +397,10 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 			break;
 		case TIMESTAMPOID:
 			{
-				Timestamp	timestamp;
 				struct pg_tm tm;
 				fsec_t		fsec;
 
-				timestamp = DatumGetTimestamp(value);
+				Timestamp	timestamp = DatumGetTimestamp(value);
 				/* Same as timestamp_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
@@ -420,13 +414,12 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 			break;
 		case TIMESTAMPTZOID:
 			{
-				TimestampTz timestamp;
 				struct pg_tm tm;
 				int			tz;
 				fsec_t		fsec;
 				const char *tzn = NULL;
 
-				timestamp = DatumGetTimestampTz(value);
+				TimestampTz timestamp = DatumGetTimestampTz(value);
 
 				/*
 				 * If a time zone is specified, we apply the time-zone shift,
@@ -476,11 +469,10 @@ array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
 				  Oid outfuncoid, bool use_line_feeds)
 {
 	int			i;
-	const char *sep;
 
 	Assert(dim < ndims);
 
-	sep = use_line_feeds ? ",\n " : ",";
+	const char *sep = use_line_feeds ? ",\n " : ",";
 
 	appendStringInfoChar(result, '[');
 
@@ -517,9 +509,6 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 {
 	ArrayType  *v = DatumGetArrayTypeP(array);
 	Oid			element_type = ARR_ELEMTYPE(v);
-	int		   *dim;
-	int			ndim;
-	int			nitems;
 	int			count = 0;
 	Datum	   *elements;
 	bool	   *nulls;
@@ -529,9 +518,9 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
-	ndim = ARR_NDIM(v);
-	dim = ARR_DIMS(v);
-	nitems = ArrayGetNItems(ndim, dim);
+	int			ndim = ARR_NDIM(v);
+	int		   *dim = ARR_DIMS(v);
+	int			nitems = ArrayGetNItems(ndim, dim);
 
 	if (nitems <= 0)
 	{
@@ -562,24 +551,19 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 static void
 composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 {
-	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
 	HeapTupleData tmptup,
 			   *tuple;
 	int			i;
 	bool		needsep = false;
-	const char *sep;
 
-	sep = use_line_feeds ? ",\n " : ",";
+	const char *sep = use_line_feeds ? ",\n " : ",";
 
-	td = DatumGetHeapTupleHeader(composite);
+	HeapTupleHeader td = DatumGetHeapTupleHeader(composite);
 
 	/* Extract rowtype info and find a tupdesc */
-	tupType = HeapTupleHeaderGetTypeId(td);
-	tupTypmod = HeapTupleHeaderGetTypMod(td);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	Oid			tupType = HeapTupleHeaderGetTypeId(td);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(td);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
@@ -590,9 +574,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		Datum		val;
 		bool		isnull;
-		char	   *attname;
 		JsonTypeCategory tcategory;
 		Oid			outfuncoid;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -604,11 +586,11 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			appendStringInfoString(result, sep);
 		needsep = true;
 
-		attname = NameStr(att->attname);
+		char	   *attname = NameStr(att->attname);
 		escape_json(result, attname);
 		appendStringInfoChar(result, ':');
 
-		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+		Datum		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
 		if (isnull)
 		{
@@ -663,9 +645,8 @@ Datum
 array_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	array_to_json_internal(array, result, false);
 
@@ -680,9 +661,8 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	array_to_json_internal(array, result, use_line_feeds);
 
@@ -696,9 +676,8 @@ Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	composite_to_json(array, result, false);
 
@@ -713,9 +692,8 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	composite_to_json(array, result, use_line_feeds);
 
@@ -730,7 +708,6 @@ to_json(PG_FUNCTION_ARGS)
 {
 	Datum		val = PG_GETARG_DATUM(0);
 	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	StringInfo	result;
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
@@ -742,7 +719,7 @@ to_json(PG_FUNCTION_ARGS)
 	json_categorize_type(val_type,
 						 &tcategory, &outfuncoid);
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	datum_to_json(val, false, result, tcategory, outfuncoid, false);
 
@@ -760,7 +737,6 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext,
 				oldcontext;
 	JsonAggState *state;
-	Datum		val;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -806,7 +782,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(state);
 	}
 
-	val = PG_GETARG_DATUM(1);
+	Datum		val = PG_GETARG_DATUM(1);
 
 	/* add some whitespace if structured type and not first item */
 	if (!PG_ARGISNULL(0) &&
@@ -833,12 +809,11 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 json_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonAggState *state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ?
+	JsonAggState *state = PG_ARGISNULL(0) ?
 		NULL :
 		(JsonAggState *) PG_GETARG_POINTER(0);
 
@@ -861,7 +836,6 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext,
 				oldcontext;
 	JsonAggState *state;
-	Datum		arg;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -871,7 +845,6 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		Oid			arg_type;
 
 		/*
 		 * Make the StringInfo in a context where it will persist for the
@@ -884,7 +857,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 		state->str = makeStringInfo();
 		MemoryContextSwitchTo(oldcontext);
 
-		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+		Oid			arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
 
 		if (arg_type == InvalidOid)
 			ereport(ERROR,
@@ -925,7 +898,7 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field name must not be null")));
 
-	arg = PG_GETARG_DATUM(1);
+	Datum		arg = PG_GETARG_DATUM(1);
 
 	datum_to_json(arg, false, state->str, state->key_category,
 				  state->key_output_func, true);
@@ -949,12 +922,11 @@ json_object_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 json_object_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	JsonAggState *state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = PG_ARGISNULL(0) ? NULL : (JsonAggState *) PG_GETARG_POINTER(0);
+	JsonAggState *state = PG_ARGISNULL(0) ? NULL : (JsonAggState *) PG_GETARG_POINTER(0);
 
 	/* NULL result for no rows in, as is standard with aggregates */
 	if (state == NULL)
@@ -990,16 +962,14 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 Datum
 json_build_object(PG_FUNCTION_ARGS)
 {
-	int			nargs;
 	int			i;
 	const char *sep = "";
-	StringInfo	result;
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
 
 	/* fetch argument values to build the object */
-	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
+	int			nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
@@ -1012,7 +982,7 @@ json_build_object(PG_FUNCTION_ARGS)
 				 errhint("The arguments of %s must consist of alternating keys and values.",
 						 "json_build_object()")));
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	appendStringInfoChar(result, '{');
 
@@ -1056,21 +1026,19 @@ json_build_object_noargs(PG_FUNCTION_ARGS)
 Datum
 json_build_array(PG_FUNCTION_ARGS)
 {
-	int			nargs;
 	int			i;
 	const char *sep = "";
-	StringInfo	result;
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
 
 	/* fetch argument values to build the array */
-	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
+	int			nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
 
 	if (nargs < 0)
 		PG_RETURN_NULL();
 
-	result = makeStringInfo();
+	StringInfo	result = makeStringInfo();
 
 	appendStringInfoChar(result, '[');
 
@@ -1112,7 +1080,6 @@ json_object(PG_FUNCTION_ARGS)
 	int			in_count,
 				count,
 				i;
-	text	   *rval;
 	char	   *v;
 
 	switch (ndims)
@@ -1179,7 +1146,7 @@ json_object(PG_FUNCTION_ARGS)
 	pfree(in_datums);
 	pfree(in_nulls);
 
-	rval = cstring_to_text_with_len(result.data, result.len);
+	text	   *rval = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
 
 	PG_RETURN_TEXT_P(rval);
@@ -1207,7 +1174,6 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 	int			key_count,
 				val_count,
 				i;
-	text	   *rval;
 	char	   *v;
 
 	if (nkdims > 1 || nkdims != nvdims)
@@ -1265,7 +1231,7 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 	pfree(val_datums);
 	pfree(val_nulls);
 
-	rval = cstring_to_text_with_len(result.data, result.len);
+	text	   *rval = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
 
 	PG_RETURN_TEXT_P(rval);
@@ -1332,21 +1298,17 @@ escape_json(StringInfo buf, const char *str)
 Datum
 json_typeof(PG_FUNCTION_ARGS)
 {
-	text	   *json;
 
-	JsonLexContext *lex;
-	JsonTokenType tok;
 	char	   *type;
-	JsonParseErrorType result;
 
-	json = PG_GETARG_TEXT_PP(0);
-	lex = makeJsonLexContext(json, false);
+	text	   *json = PG_GETARG_TEXT_PP(0);
+	JsonLexContext *lex = makeJsonLexContext(json, false);
 
 	/* Lex exactly one token from the input and check its type. */
-	result = json_lex(lex);
+	JsonParseErrorType result = json_lex(lex);
 	if (result != JSON_SUCCESS)
 		json_ereport_error(result, lex);
-	tok = lex->token_type;
+	JsonTokenType tok = lex->token_type;
 	switch (tok)
 	{
 		case JSON_TOKEN_OBJECT_START:

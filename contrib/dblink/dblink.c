@@ -193,9 +193,8 @@ dblink_get_conn(char *conname_or_str,
 	}
 	else
 	{
-		const char *connstr;
 
-		connstr = get_connect_string(conname_or_str);
+		const char *connstr = get_connect_string(conname_or_str);
 		if (connstr == NULL)
 			connstr = conname_or_str;
 		dblink_connstr_check(connstr);
@@ -280,7 +279,6 @@ Datum
 dblink_connect(PG_FUNCTION_ARGS)
 {
 	char	   *conname_or_str = NULL;
-	char	   *connstr = NULL;
 	char	   *connname = NULL;
 	char	   *msg;
 	PGconn	   *conn = NULL;
@@ -306,7 +304,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	}
 
 	/* first check for valid foreign data server */
-	connstr = get_connect_string(conname_or_str);
+	char	   *connstr = get_connect_string(conname_or_str);
 	if (connstr == NULL)
 		connstr = conname_or_str;
 
@@ -517,7 +515,6 @@ Datum
 dblink_close(PG_FUNCTION_ARGS)
 {
 	PGconn	   *conn;
-	PGresult   *res = NULL;
 	char	   *curname = NULL;
 	char	   *conname = NULL;
 	StringInfoData buf;
@@ -566,7 +563,7 @@ dblink_close(PG_FUNCTION_ARGS)
 	appendStringInfo(&buf, "CLOSE %s", curname);
 
 	/* close the cursor */
-	res = PQexec(conn, buf.data);
+	PGresult   *res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		dblink_res_error(conn, conname, res, fail,
@@ -603,7 +600,6 @@ PG_FUNCTION_INFO_V1(dblink_fetch);
 Datum
 dblink_fetch(PG_FUNCTION_ARGS)
 {
-	PGresult   *res = NULL;
 	char	   *conname = NULL;
 	remoteConn *rconn = NULL;
 	PGconn	   *conn = NULL;
@@ -668,7 +664,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	 * PGresult will be long-lived even though we are still in a short-lived
 	 * memory context.
 	 */
-	res = PQexec(conn, buf.data);
+	PGresult   *res = PQexec(conn, buf.data);
 	if (!res ||
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
@@ -706,7 +702,6 @@ dblink_send_query(PG_FUNCTION_ARGS)
 {
 	PGconn	   *conn;
 	char	   *sql;
-	int			retval;
 
 	if (PG_NARGS() == 2)
 	{
@@ -718,7 +713,7 @@ dblink_send_query(PG_FUNCTION_ARGS)
 		elog(ERROR, "wrong number of arguments");
 
 	/* async query send */
-	retval = PQsendQuery(conn, sql);
+	int			retval = PQsendQuery(conn, sql);
 	if (retval != 1)
 		elog(NOTICE, "could not send query: %s", pchomp(PQerrorMessage(conn)));
 
@@ -954,31 +949,26 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 
 		if (ntuples > 0)
 		{
-			AttInMetadata *attinmeta;
 			int			nestlevel = -1;
-			Tuplestorestate *tupstore;
-			MemoryContext oldcontext;
 			int			row;
-			char	  **values;
 
-			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+			AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 			/* Set GUCs to ensure we read GUC-sensitive data types correctly */
 			if (!is_sql_cmd)
 				nestlevel = applyRemoteGucs(conn);
 
-			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
+			MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+			Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 			rsinfo->setResult = tupstore;
 			rsinfo->setDesc = tupdesc;
 			MemoryContextSwitchTo(oldcontext);
 
-			values = (char **) palloc(nfields * sizeof(char *));
+			char	  **values = (char **) palloc(nfields * sizeof(char *));
 
 			/* put all tuples into the tuplestore */
 			for (row = 0; row < ntuples; row++)
 			{
-				HeapTuple	tuple;
 
 				if (!is_sql_cmd)
 				{
@@ -998,7 +988,7 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 				}
 
 				/* build the tuple and put it into the tuplestore. */
-				tuple = BuildTupleFromCStrings(attinmeta, values);
+				HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
 				tuplestore_puttuple(tupstore, tuple);
 			}
 
@@ -1072,24 +1062,19 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			 * storeRow didn't get called, so we need to convert the command
 			 * status string to a tuple manually
 			 */
-			TupleDesc	tupdesc;
-			AttInMetadata *attinmeta;
-			Tuplestorestate *tupstore;
-			HeapTuple	tuple;
 			char	   *values[1];
-			MemoryContext oldcontext;
 
 			/*
 			 * need a tuple descriptor representing one TEXT column to return
 			 * the command status string as our result tuple
 			 */
-			tupdesc = CreateTemplateTupleDesc(1);
+			TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
 							   TEXTOID, -1, 0);
-			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+			AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
-			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
+			MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+			Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 			rsinfo->setResult = tupstore;
 			rsinfo->setDesc = tupdesc;
 			MemoryContextSwitchTo(oldcontext);
@@ -1097,7 +1082,7 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 			values[0] = PQcmdStatus(res);
 
 			/* build the tuple and put it into the tuplestore. */
-			tuple = BuildTupleFromCStrings(attinmeta, values);
+			HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
 			tuplestore_puttuple(tupstore, tuple);
 
 			PQclear(res);
@@ -1145,7 +1130,6 @@ storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
 {
 	bool		first = true;
 	int			nestlevel = -1;
-	PGresult   *res;
 
 	if (!PQsendQuery(conn, sql))
 		elog(ERROR, "could not send query: %s", pchomp(PQerrorMessage(conn)));
@@ -1197,7 +1181,7 @@ storeQueryResult(volatile storeInfo *sinfo, PGconn *conn, const char *sql)
 	restoreLocalGucs(nestlevel);
 
 	/* return last_res */
-	res = sinfo->last_res;
+	PGresult   *res = sinfo->last_res;
 	sinfo->last_res = NULL;
 	return res;
 }
@@ -1212,7 +1196,6 @@ static void
 storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
 {
 	int			nfields = PQnfields(res);
-	HeapTuple	tuple;
 	int			i;
 	MemoryContext oldcontext;
 
@@ -1305,7 +1288,7 @@ storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
 	}
 
 	/* Convert row to a tuple, and add it to the tuplestore */
-	tuple = BuildTupleFromCStrings(sinfo->attinmeta, sinfo->cstrs);
+	HeapTuple	tuple = BuildTupleFromCStrings(sinfo->attinmeta, sinfo->cstrs);
 
 	tuplestore_puttuple(sinfo->tuplestore, tuple);
 
@@ -1358,10 +1341,9 @@ PG_FUNCTION_INFO_V1(dblink_is_busy);
 Datum
 dblink_is_busy(PG_FUNCTION_ARGS)
 {
-	PGconn	   *conn;
 
 	dblink_init();
-	conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+	PGconn	   *conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
 
 	PQconsumeInput(conn);
 	PG_RETURN_INT32(PQisBusy(conn));
@@ -1382,16 +1364,13 @@ PG_FUNCTION_INFO_V1(dblink_cancel_query);
 Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
-	int			res;
-	PGconn	   *conn;
-	PGcancel   *cancel;
 	char		errbuf[256];
 
 	dblink_init();
-	conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
-	cancel = PQgetCancel(conn);
+	PGconn	   *conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+	PGcancel   *cancel = PQgetCancel(conn);
 
-	res = PQcancel(cancel, errbuf, 256);
+	int			res = PQcancel(cancel, errbuf, 256);
 	PQfreeCancel(cancel);
 
 	if (res == 1)
@@ -1415,13 +1394,11 @@ PG_FUNCTION_INFO_V1(dblink_error_message);
 Datum
 dblink_error_message(PG_FUNCTION_ARGS)
 {
-	char	   *msg;
-	PGconn	   *conn;
 
 	dblink_init();
-	conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
+	PGconn	   *conn = dblink_get_named_conn(text_to_cstring(PG_GETARG_TEXT_PP(0)));
 
-	msg = PQerrorMessage(conn);
+	char	   *msg = PQerrorMessage(conn);
 	if (msg == NULL || msg[0] == '\0')
 		PG_RETURN_TEXT_P(cstring_to_text("OK"));
 	else
@@ -1443,7 +1420,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		PGresult   *res = NULL;
 		char	   *sql = NULL;
 		char	   *conname = NULL;
 		bool		fail = true;	/* default to backward compatible behavior */
@@ -1485,7 +1461,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		if (!conn)
 			dblink_conn_not_avail(conname);
 
-		res = PQexec(conn, sql);
+		PGresult   *res = PQexec(conn, sql);
 		if (!res ||
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
@@ -1544,7 +1520,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 	int16		indnkeyatts;
 	char	  **results;
 	FuncCallContext *funcctx;
-	int32		call_cntr;
 	int32		max_calls;
 	AttInMetadata *attinmeta;
 	MemoryContext oldcontext;
@@ -1552,8 +1527,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		Relation	rel;
-		TupleDesc	tupdesc;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1564,7 +1537,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* open target relation */
-		rel = get_rel_from_relname(PG_GETARG_TEXT_PP(0), AccessShareLock, ACL_SELECT);
+		Relation	rel = get_rel_from_relname(PG_GETARG_TEXT_PP(0), AccessShareLock, ACL_SELECT);
 
 		/* get the array of attnums */
 		results = get_pkey_attnames(rel, &indnkeyatts);
@@ -1574,7 +1547,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		/*
 		 * need a tuple descriptor representing one INT and one TEXT column
 		 */
-		tupdesc = CreateTemplateTupleDesc(2);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "position",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "colname",
@@ -1610,7 +1583,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 	/*
 	 * initialize per-call variables
 	 */
-	call_cntr = funcctx->call_cntr;
+	int32		call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
 
 	results = (char **) funcctx->user_fctx;
@@ -1618,19 +1591,16 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 
 	if (call_cntr < max_calls)	/* do when there is more left to send */
 	{
-		char	  **values;
-		HeapTuple	tuple;
-		Datum		result;
 
-		values = (char **) palloc(2 * sizeof(char *));
+		char	  **values = (char **) palloc(2 * sizeof(char *));
 		values[0] = psprintf("%d", call_cntr + 1);
 		values[1] = results[call_cntr];
 
 		/* build the tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
-		result = HeapTupleGetDatum(tuple);
+		Datum		result = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
@@ -1670,19 +1640,15 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	int32		pknumatts_arg = PG_GETARG_INT32(2);
 	ArrayType  *src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-	Relation	rel;
 	int		   *pkattnums;
 	int			pknumatts;
-	char	  **src_pkattvals;
-	char	  **tgt_pkattvals;
 	int			src_nitems;
 	int			tgt_nitems;
-	char	   *sql;
 
 	/*
 	 * Open target relation.
 	 */
-	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
+	Relation	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
 	/*
 	 * Process pkattnums argument.
@@ -1694,7 +1660,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 * Source array is made up of key values that will be used to locate the
 	 * tuple of interest from the local system.
 	 */
-	src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
+	char	  **src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
 
 	/*
 	 * There should be one source array key value for each key attnum
@@ -1708,7 +1674,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
+	char	  **tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1721,7 +1687,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	/*
 	 * Prep work is finally done. Go get the SQL string.
 	 */
-	sql = get_sql_insert(rel, pkattnums, pknumatts, src_pkattvals, tgt_pkattvals);
+	char	   *sql = get_sql_insert(rel, pkattnums, pknumatts, src_pkattvals, tgt_pkattvals);
 
 	/*
 	 * Now we can close the relation.
@@ -1758,17 +1724,14 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	int2vector *pkattnums_arg = (int2vector *) PG_GETARG_POINTER(1);
 	int32		pknumatts_arg = PG_GETARG_INT32(2);
 	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
-	Relation	rel;
 	int		   *pkattnums;
 	int			pknumatts;
-	char	  **tgt_pkattvals;
 	int			tgt_nitems;
-	char	   *sql;
 
 	/*
 	 * Open target relation.
 	 */
-	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
+	Relation	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
 	/*
 	 * Process pkattnums argument.
@@ -1780,7 +1743,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
+	char	  **tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1793,7 +1756,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	/*
 	 * Prep work is finally done. Go get the SQL string.
 	 */
-	sql = get_sql_delete(rel, pkattnums, pknumatts, tgt_pkattvals);
+	char	   *sql = get_sql_delete(rel, pkattnums, pknumatts, tgt_pkattvals);
 
 	/*
 	 * Now we can close the relation.
@@ -1835,19 +1798,15 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	int32		pknumatts_arg = PG_GETARG_INT32(2);
 	ArrayType  *src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-	Relation	rel;
 	int		   *pkattnums;
 	int			pknumatts;
-	char	  **src_pkattvals;
-	char	  **tgt_pkattvals;
 	int			src_nitems;
 	int			tgt_nitems;
-	char	   *sql;
 
 	/*
 	 * Open target relation.
 	 */
-	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
+	Relation	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
 	/*
 	 * Process pkattnums argument.
@@ -1859,7 +1818,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 * Source array is made up of key values that will be used to locate the
 	 * tuple of interest from the local system.
 	 */
-	src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
+	char	  **src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
 
 	/*
 	 * There should be one source array key value for each key attnum
@@ -1873,7 +1832,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
+	char	  **tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1886,7 +1845,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	/*
 	 * Prep work is finally done. Go get the SQL string.
 	 */
-	sql = get_sql_update(rel, pkattnums, pknumatts, src_pkattvals, tgt_pkattvals);
+	char	   *sql = get_sql_update(rel, pkattnums, pknumatts, src_pkattvals, tgt_pkattvals);
 
 	/*
 	 * Now we can close the relation.
@@ -1930,10 +1889,6 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 	PGconn	   *conn;
 	PGnotify   *notify;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	prepTuplestoreResult(fcinfo);
 
@@ -1944,10 +1899,10 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 		conn = pconn->conn;
 
 	/* create the tuplestore in per-query memory */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupdesc = CreateTemplateTupleDesc(DBLINK_NOTIFY_COLS);
+	TupleDesc	tupdesc = CreateTemplateTupleDesc(DBLINK_NOTIFY_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "notify_name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "be_pid",
@@ -1955,7 +1910,7 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "extra",
 					   TEXTOID, -1, 0);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
@@ -2077,27 +2032,24 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
 static char **
 get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 {
-	Relation	indexRelation;
 	ScanKeyData skey;
-	SysScanDesc scan;
 	HeapTuple	indexTuple;
 	int			i;
 	char	  **result = NULL;
-	TupleDesc	tupdesc;
 
 	/* initialize indnkeyatts to 0 in case no primary key exists */
 	*indnkeyatts = 0;
 
-	tupdesc = rel->rd_att;
+	TupleDesc	tupdesc = rel->rd_att;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
-	indexRelation = table_open(IndexRelationId, AccessShareLock);
+	Relation	indexRelation = table_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&skey,
 				Anum_pg_index_indrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
 
-	scan = systable_beginscan(indexRelation, IndexIndrelidIndexId, true,
+	SysScanDesc scan = systable_beginscan(indexRelation, IndexIndrelidIndexId, true,
 							  NULL, 1, &skey);
 
 	while (HeapTupleIsValid(indexTuple = systable_getnext(scan)))
@@ -2138,10 +2090,6 @@ get_text_array_contents(ArrayType *array, int *numitems)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	char	  **values;
-	char	   *ptr;
-	bits8	   *bitmap;
-	int			bitmask;
 	int			i;
 
 	Assert(ARR_ELEMTYPE(array) == TEXTOID);
@@ -2151,11 +2099,11 @@ get_text_array_contents(ArrayType *array, int *numitems)
 	get_typlenbyvalalign(ARR_ELEMTYPE(array),
 						 &typlen, &typbyval, &typalign);
 
-	values = (char **) palloc(nitems * sizeof(char *));
+	char	  **values = (char **) palloc(nitems * sizeof(char *));
 
-	ptr = ARR_DATA_PTR(array);
-	bitmap = ARR_NULLBITMAP(array);
-	bitmask = 1;
+	char	   *ptr = ARR_DATA_PTR(array);
+	bits8	   *bitmap = ARR_NULLBITMAP(array);
+	int			bitmask = 1;
 
 	for (i = 0; i < nitems; i++)
 	{
@@ -2188,25 +2136,20 @@ get_text_array_contents(ArrayType *array, int *numitems)
 static char *
 get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
-	char	   *relname;
-	HeapTuple	tuple;
-	TupleDesc	tupdesc;
-	int			natts;
 	StringInfoData buf;
 	char	   *val;
 	int			key;
 	int			i;
-	bool		needComma;
 
 	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
+	char	   *relname = generate_relation_name(rel);
 
-	tupdesc = rel->rd_att;
-	natts = tupdesc->natts;
+	TupleDesc	tupdesc = rel->rd_att;
+	int			natts = tupdesc->natts;
 
-	tuple = get_tuple_of_interest(rel, pkattnums, pknumatts, src_pkattvals);
+	HeapTuple	tuple = get_tuple_of_interest(rel, pkattnums, pknumatts, src_pkattvals);
 	if (!tuple)
 		ereport(ERROR,
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
@@ -2214,7 +2157,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 
 	appendStringInfo(&buf, "INSERT INTO %s(", relname);
 
-	needComma = false;
+	bool		needComma = false;
 	for (i = 0; i < natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -2268,17 +2211,15 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 static char *
 get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals)
 {
-	char	   *relname;
-	TupleDesc	tupdesc;
 	StringInfoData buf;
 	int			i;
 
 	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
+	char	   *relname = generate_relation_name(rel);
 
-	tupdesc = rel->rd_att;
+	TupleDesc	tupdesc = rel->rd_att;
 
 	appendStringInfo(&buf, "DELETE FROM %s WHERE ", relname);
 	for (i = 0; i < pknumatts; i++)
@@ -2305,25 +2246,20 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 static char *
 get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
-	char	   *relname;
-	HeapTuple	tuple;
-	TupleDesc	tupdesc;
-	int			natts;
 	StringInfoData buf;
 	char	   *val;
 	int			key;
 	int			i;
-	bool		needComma;
 
 	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
+	char	   *relname = generate_relation_name(rel);
 
-	tupdesc = rel->rd_att;
-	natts = tupdesc->natts;
+	TupleDesc	tupdesc = rel->rd_att;
+	int			natts = tupdesc->natts;
 
-	tuple = get_tuple_of_interest(rel, pkattnums, pknumatts, src_pkattvals);
+	HeapTuple	tuple = get_tuple_of_interest(rel, pkattnums, pknumatts, src_pkattvals);
 	if (!tuple)
 		ereport(ERROR,
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
@@ -2334,7 +2270,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	/*
 	 * Note: i is physical column number (counting from 0).
 	 */
-	needComma = false;
+	bool		needComma = false;
 	for (i = 0; i < natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
@@ -2396,14 +2332,11 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 static char *
 quote_ident_cstr(char *rawstr)
 {
-	text	   *rawstr_text;
-	text	   *result_text;
-	char	   *result;
 
-	rawstr_text = cstring_to_text(rawstr);
-	result_text = DatumGetTextPP(DirectFunctionCall1(quote_ident,
+	text	   *rawstr_text = cstring_to_text(rawstr);
+	text	   *result_text = DatumGetTextPP(DirectFunctionCall1(quote_ident,
 													 PointerGetDatum(rawstr_text)));
-	result = text_to_cstring(result_text);
+	char	   *result = text_to_cstring(result_text);
 
 	return result;
 }
@@ -2426,9 +2359,6 @@ get_attnum_pk_pos(int *pkattnums, int pknumatts, int key)
 static HeapTuple
 get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals)
 {
-	char	   *relname;
-	TupleDesc	tupdesc;
-	int			natts;
 	StringInfoData buf;
 	int			ret;
 	HeapTuple	tuple;
@@ -2444,10 +2374,10 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
+	char	   *relname = generate_relation_name(rel);
 
-	tupdesc = rel->rd_att;
-	natts = tupdesc->natts;
+	TupleDesc	tupdesc = rel->rd_att;
+	int			natts = tupdesc->natts;
 
 	/*
 	 * Build sql statement to look up tuple of interest, ie, the one matching
@@ -2539,14 +2469,11 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 static Relation
 get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode)
 {
-	RangeVar   *relvar;
-	Relation	rel;
-	AclResult	aclresult;
 
-	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
-	rel = table_openrv(relvar, lockmode);
+	RangeVar   *relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
+	Relation	rel = table_openrv(relvar, lockmode);
 
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+	AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  aclmode);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
@@ -2565,7 +2492,6 @@ static char *
 generate_relation_name(Relation rel)
 {
 	char	   *nspname;
-	char	   *result;
 
 	/* Qualify the name if not visible in search path */
 	if (RelationIsVisible(RelationGetRelid(rel)))
@@ -2573,7 +2499,7 @@ generate_relation_name(Relation rel)
 	else
 		nspname = get_namespace_name(rel->rd_rel->relnamespace);
 
-	result = quote_qualified_identifier(nspname, RelationGetRelationName(rel));
+	char	   *result = quote_qualified_identifier(nspname, RelationGetRelationName(rel));
 
 	return result;
 }
@@ -2582,15 +2508,13 @@ generate_relation_name(Relation rel)
 static remoteConn *
 getConnectionByName(const char *name)
 {
-	remoteConnHashEnt *hentry;
-	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	key = pstrdup(name);
+	char	   *key = pstrdup(name);
 	truncate_identifier(key, strlen(key), false);
-	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
+	remoteConnHashEnt *hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
 	if (hentry)
@@ -2614,16 +2538,14 @@ createConnHash(void)
 static void
 createNewConnection(const char *name, remoteConn *rconn)
 {
-	remoteConnHashEnt *hentry;
 	bool		found;
-	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	key = pstrdup(name);
+	char	   *key = pstrdup(name);
 	truncate_identifier(key, strlen(key), true);
-	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
+	remoteConnHashEnt *hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
 	if (found)
@@ -2644,16 +2566,14 @@ createNewConnection(const char *name, remoteConn *rconn)
 static void
 deleteConnection(const char *name)
 {
-	remoteConnHashEnt *hentry;
 	bool		found;
-	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	key = pstrdup(name);
+	char	   *key = pstrdup(name);
 	truncate_identifier(key, strlen(key), false);
-	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
+	remoteConnHashEnt *hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
 	if (!hentry)
@@ -2695,11 +2615,10 @@ dblink_connstr_check(const char *connstr)
 {
 	if (!superuser())
 	{
-		PQconninfoOption *options;
 		PQconninfoOption *option;
 		bool		connstr_gives_password = false;
 
-		options = PQconninfoParse(connstr, NULL);
+		PQconninfoOption *options = PQconninfoParse(connstr, NULL);
 		if (options)
 		{
 			for (option = options; option->keyword != NULL; option++)
@@ -2743,10 +2662,6 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	char	   *pg_diag_message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
 	char	   *pg_diag_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
 	int			sqlstate;
-	char	   *message_primary;
-	char	   *message_detail;
-	char	   *message_hint;
-	char	   *message_context;
 	va_list		ap;
 	char		dblink_context_msg[512];
 
@@ -2764,10 +2679,10 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	else
 		sqlstate = ERRCODE_CONNECTION_FAILURE;
 
-	message_primary = xpstrdup(pg_diag_message_primary);
-	message_detail = xpstrdup(pg_diag_message_detail);
-	message_hint = xpstrdup(pg_diag_message_hint);
-	message_context = xpstrdup(pg_diag_context);
+	char	   *message_primary = xpstrdup(pg_diag_message_primary);
+	char	   *message_detail = xpstrdup(pg_diag_message_detail);
+	char	   *message_hint = xpstrdup(pg_diag_message_hint);
+	char	   *message_context = xpstrdup(pg_diag_context);
 
 	/*
 	 * If we don't get a message from the PGresult, try the PGconn.  This is
@@ -2817,13 +2732,11 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 static char *
 get_connect_string(const char *servername)
 {
-	ForeignServer *foreign_server = NULL;
 	UserMapping *user_mapping;
 	ListCell   *cell;
 	StringInfoData buf;
 	ForeignDataWrapper *fdw;
 	AclResult	aclresult;
-	char	   *srvname;
 
 	static const PQconninfoOption *options = NULL;
 
@@ -2847,9 +2760,9 @@ get_connect_string(const char *servername)
 	}
 
 	/* first gather the server connstr options */
-	srvname = pstrdup(servername);
+	char	   *srvname = pstrdup(servername);
 	truncate_identifier(srvname, strlen(srvname), false);
-	foreign_server = GetForeignServerByName(srvname, true);
+	ForeignServer *foreign_server = GetForeignServerByName(srvname, true);
 
 	if (foreign_server)
 	{
@@ -2963,7 +2876,6 @@ validate_pkattnums(Relation rel,
 	for (i = 0; i < pknumatts_arg; i++)
 	{
 		int			pkattnum = pkattnums_arg->values[i];
-		int			lnum;
 		int			j;
 
 		/* Can throw error immediately if out of range */
@@ -2973,7 +2885,7 @@ validate_pkattnums(Relation rel,
 					 errmsg("invalid attribute number %d", pkattnum)));
 
 		/* Identify which physical column has this logical number */
-		lnum = 0;
+		int			lnum = 0;
 		for (j = 0; j < natts; j++)
 		{
 			/* dropped columns don't count */
@@ -3074,7 +2986,6 @@ applyRemoteGucs(PGconn *conn)
 	{
 		const char *gucName = GUCsAffectingIO[i];
 		const char *remoteVal = PQparameterStatus(conn, gucName);
-		const char *localVal;
 
 		/*
 		 * If the remote server is pre-8.4, it won't have IntervalStyle, but
@@ -3089,7 +3000,7 @@ applyRemoteGucs(PGconn *conn)
 		 * Avoid GUC-setting overhead if the remote and local GUCs already
 		 * have the same value.
 		 */
-		localVal = GetConfigOption(gucName, false, false);
+		const char *localVal = GetConfigOption(gucName, false, false);
 		Assert(localVal != NULL);
 
 		if (strcmp(remoteVal, localVal) == 0)

@@ -101,10 +101,9 @@ contain_aggs_of_level_walker(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
+		bool		result = query_tree_walker((Query *) node,
 								   contain_aggs_of_level_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
@@ -175,10 +174,9 @@ locate_agg_of_level_walker(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
+		bool		result = query_tree_walker((Query *) node,
 								   locate_agg_of_level_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
@@ -409,10 +407,9 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
+		bool		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -473,9 +470,8 @@ static Relids
 offset_relid_set(Relids relids, int offset)
 {
 	Relids		result = NULL;
-	int			rtindex;
 
-	rtindex = -1;
+	int			rtindex = -1;
 	while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
 		result = bms_add_member(result, rtindex + offset);
 	return result;
@@ -594,10 +590,9 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
+		bool		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -758,10 +753,9 @@ IncrementVarSublevelsUp_walker(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->min_sublevels_up++;
-		result = query_tree_walker((Query *) node,
+		bool		result = query_tree_walker((Query *) node,
 								   IncrementVarSublevelsUp_walker,
 								   (void *) context,
 								   QTW_EXAMINE_RTES_BEFORE);
@@ -876,10 +870,9 @@ rangeTableEntry_used_walker(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
+		bool		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -923,9 +916,6 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 Query *
 getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 {
-	Query	   *selectquery;
-	RangeTblEntry *selectrte;
-	RangeTblRef *rtr;
 
 	if (subquery_ptr)
 		*subquery_ptr = NULL;
@@ -950,10 +940,10 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (list_length(parsetree->jointree->fromlist) != 1)
 		elog(ERROR, "expected to find SELECT subquery");
-	rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
+	RangeTblRef *rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
 	Assert(IsA(rtr, RangeTblRef));
-	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
-	selectquery = selectrte->subquery;
+	RangeTblEntry *selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
+	Query	   *selectquery = selectrte->subquery;
 	if (!(selectquery && IsA(selectquery, Query) &&
 		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "expected to find SELECT subquery");
@@ -978,7 +968,6 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 void
 AddQual(Query *parsetree, Node *qual)
 {
-	Node	   *copy;
 
 	if (qual == NULL)
 		return;
@@ -1019,7 +1008,7 @@ AddQual(Query *parsetree, Node *qual)
 	}
 
 	/* INTERSECT wants the original, but we need to copy - Jan */
-	copy = copyObject(qual);
+	Node	   *copy = copyObject(qual);
 
 	parsetree->jointree->quals = make_and_qual(parsetree->jointree->quals,
 											   copy);
@@ -1046,13 +1035,12 @@ AddQual(Query *parsetree, Node *qual)
 void
 AddInvertedQual(Query *parsetree, Node *qual)
 {
-	BooleanTest *invqual;
 
 	if (qual == NULL)
 		return;
 
 	/* Need not copy input qual, because AddQual will... */
-	invqual = makeNode(BooleanTest);
+	BooleanTest *invqual = makeNode(BooleanTest);
 	invqual->arg = (Expr *) qual;
 	invqual->booltesttype = IS_NOT_TRUE;
 	invqual->location = -1;
@@ -1089,7 +1077,6 @@ replace_rte_variables(Node *node, int target_varno, int sublevels_up,
 					  void *callback_arg,
 					  bool *outer_hasSubLinks)
 {
-	Node	   *result;
 	replace_rte_variables_context context;
 
 	context.callback = callback;
@@ -1112,7 +1099,7 @@ replace_rte_variables(Node *node, int target_varno, int sublevels_up,
 	 * Must be prepared to start with a Query or a bare expression tree; if
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
-	result = query_or_expression_tree_mutator(node,
+	Node	   *result = query_or_expression_tree_mutator(node,
 											  replace_rte_variables_mutator,
 											  (void *) &context,
 											  0);
@@ -1144,9 +1131,8 @@ replace_rte_variables_mutator(Node *node,
 			var->varlevelsup == context->sublevels_up)
 		{
 			/* Found a matching variable, make the substitution */
-			Node	   *newnode;
 
-			newnode = context->callback(var, context);
+			Node	   *newnode = context->callback(var, context);
 			/* Detect if we are adding a sublink to query */
 			if (!context->inserted_sublink)
 				context->inserted_sublink = checkExprHasSubLink(newnode);
@@ -1176,13 +1162,11 @@ replace_rte_variables_mutator(Node *node,
 	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
-		bool		save_inserted_sublink;
 
 		context->sublevels_up++;
-		save_inserted_sublink = context->inserted_sublink;
+		bool		save_inserted_sublink = context->inserted_sublink;
 		context->inserted_sublink = ((Query *) node)->hasSubLinks;
-		newnode = query_tree_mutator((Query *) node,
+		Query	   *newnode = query_tree_mutator((Query *) node,
 									 replace_rte_variables_mutator,
 									 (void *) context,
 									 0);
@@ -1269,7 +1253,6 @@ map_variable_attnos_mutator(Node *node,
 				if (OidIsValid(context->to_rowtype) &&
 					context->to_rowtype != var->vartype)
 				{
-					ConvertRowtypeExpr *r;
 
 					/* This certainly won't work for a RECORD variable. */
 					Assert(var->vartype != RECORDOID);
@@ -1281,7 +1264,7 @@ map_variable_attnos_mutator(Node *node,
 					 * Add a conversion node on top to convert back to the
 					 * original type expected by the expression.
 					 */
-					r = makeNode(ConvertRowtypeExpr);
+					ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
 					r->arg = (Expr *) newvar;
 					r->resulttype = var->vartype;
 					r->convertformat = COERCE_IMPLICIT_CAST;
@@ -1313,7 +1296,6 @@ map_variable_attnos_mutator(Node *node,
 			OidIsValid(context->to_rowtype) &&
 			context->to_rowtype != var->vartype)
 		{
-			ConvertRowtypeExpr *newnode;
 			Var		   *newvar = (Var *) palloc(sizeof(Var));
 
 			/* whole-row variable, warn caller */
@@ -1327,7 +1309,7 @@ map_variable_attnos_mutator(Node *node,
 			/* Var itself is changed to the requested type. */
 			newvar->vartype = context->to_rowtype;
 
-			newnode = (ConvertRowtypeExpr *) palloc(sizeof(ConvertRowtypeExpr));
+			ConvertRowtypeExpr *newnode = (ConvertRowtypeExpr *) palloc(sizeof(ConvertRowtypeExpr));
 			*newnode = *r;		/* initially copy all fields of the CRE */
 			newnode->arg = (Expr *) newvar;
 
@@ -1338,10 +1320,9 @@ map_variable_attnos_mutator(Node *node,
 	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
 
 		context->sublevels_up++;
-		newnode = query_tree_mutator((Query *) node,
+		Query	   *newnode = query_tree_mutator((Query *) node,
 									 map_variable_attnos_mutator,
 									 (void *) context,
 									 0);
@@ -1411,12 +1392,10 @@ ReplaceVarsFromTargetList_callback(Var *var,
 								   replace_rte_variables_context *context)
 {
 	ReplaceVarsFromTargetList_context *rcon = (ReplaceVarsFromTargetList_context *) context->callback_arg;
-	TargetEntry *tle;
 
 	if (var->varattno == InvalidAttrNumber)
 	{
 		/* Must expand whole-tuple reference into RowExpr */
-		RowExpr    *rowexpr;
 		List	   *colnames;
 		List	   *fields;
 
@@ -1434,7 +1413,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		/* Adjust the generated per-field Vars... */
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
-		rowexpr = makeNode(RowExpr);
+		RowExpr    *rowexpr = makeNode(RowExpr);
 		rowexpr->args = fields;
 		rowexpr->row_typeid = var->vartype;
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;
@@ -1445,7 +1424,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 	}
 
 	/* Normal case referencing one targetlist element */
-	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
+	TargetEntry *tle = get_tle_by_resno(rcon->targetlist, var->varattno);
 
 	if (tle == NULL || tle->resjunk)
 	{

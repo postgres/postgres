@@ -215,10 +215,9 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, pull_varnos_walker,
+		bool		result = query_tree_walker((Query *) node, pull_varnos_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -331,10 +330,9 @@ pull_vars_walker(Node *node, pull_vars_context *context)
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, pull_vars_walker,
+		bool		result = query_tree_walker((Query *) node, pull_vars_walker,
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -429,10 +427,9 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		(*sublevels_up)++;
-		result = query_tree_walker((Query *) node,
+		bool		result = query_tree_walker((Query *) node,
 								   contain_vars_of_level_walker,
 								   (void *) sublevels_up,
 								   0);
@@ -503,10 +500,9 @@ locate_var_of_level_walker(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
-		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
+		bool		result = query_tree_walker((Query *) node,
 								   locate_var_of_level_walker,
 								   (void *) context,
 								   0);
@@ -717,26 +713,23 @@ flatten_join_alias_vars_mutator(Node *node,
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		RangeTblEntry *rte;
 		Node	   *newvar;
 
 		/* No change unless Var belongs to a JOIN of the target level */
 		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
-		rte = rt_fetch(var->varno, context->query->rtable);
+		RangeTblEntry *rte = rt_fetch(var->varno, context->query->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		if (var->varattno == InvalidAttrNumber)
 		{
 			/* Must expand whole-row reference */
-			RowExpr    *rowexpr;
 			List	   *fields = NIL;
 			List	   *colnames = NIL;
-			AttrNumber	attnum;
 			ListCell   *lv;
 			ListCell   *ln;
 
-			attnum = 0;
+			AttrNumber	attnum = 0;
 			Assert(list_length(rte->joinaliasvars) == list_length(rte->eref->colnames));
 			forboth(lv, rte->joinaliasvars, ln, rte->eref->colnames)
 			{
@@ -763,7 +756,7 @@ flatten_join_alias_vars_mutator(Node *node,
 				/* We need the names of non-dropped columns, too */
 				colnames = lappend(colnames, copyObject((Node *) lfirst(ln)));
 			}
-			rowexpr = makeNode(RowExpr);
+			RowExpr    *rowexpr = makeNode(RowExpr);
 			rowexpr->args = fields;
 			rowexpr->row_typeid = var->vartype;
 			rowexpr->row_format = COERCE_IMPLICIT_CAST;
@@ -802,9 +795,8 @@ flatten_join_alias_vars_mutator(Node *node,
 	if (IsA(node, PlaceHolderVar))
 	{
 		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
-		PlaceHolderVar *phv;
 
-		phv = (PlaceHolderVar *) expression_tree_mutator(node,
+		PlaceHolderVar *phv = (PlaceHolderVar *) expression_tree_mutator(node,
 														 flatten_join_alias_vars_mutator,
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
@@ -819,13 +811,11 @@ flatten_join_alias_vars_mutator(Node *node,
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *newnode;
-		bool		save_inserted_sublink;
 
 		context->sublevels_up++;
-		save_inserted_sublink = context->inserted_sublink;
+		bool		save_inserted_sublink = context->inserted_sublink;
 		context->inserted_sublink = ((Query *) node)->hasSubLinks;
-		newnode = query_tree_mutator((Query *) node,
+		Query	   *newnode = query_tree_mutator((Query *) node,
 									 flatten_join_alias_vars_mutator,
 									 (void *) context,
 									 QTW_IGNORE_JOINALIASES);
@@ -853,9 +843,8 @@ static Relids
 alias_relid_set(Query *query, Relids relids)
 {
 	Relids		result = NULL;
-	int			rtindex;
 
-	rtindex = -1;
+	int			rtindex = -1;
 	while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
 	{
 		RangeTblEntry *rte = rt_fetch(rtindex, query->rtable);

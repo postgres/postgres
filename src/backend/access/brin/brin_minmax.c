@@ -36,14 +36,13 @@ Datum
 brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 {
 	Oid			typoid = PG_GETARG_OID(0);
-	BrinOpcInfo *result;
 
 	/*
 	 * opaque->strategy_procinfos is initialized lazily; here it is set to
 	 * all-uninitialized by palloc0 which sets fn_oid to InvalidOid.
 	 */
 
-	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
+	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
 					 sizeof(MinmaxOpaque));
 	result->oi_nstored = 2;
 	result->oi_regular_nulls = true;
@@ -70,16 +69,12 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	Datum		newval = PG_GETARG_DATUM(2);
 	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(3);
 	Oid			colloid = PG_GET_COLLATION();
-	FmgrInfo   *cmpFn;
-	Datum		compar;
 	bool		updated = false;
-	Form_pg_attribute attr;
-	AttrNumber	attno;
 
 	Assert(!isnull);
 
-	attno = column->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	AttrNumber	attno = column->bv_attno;
+	Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/*
 	 * If the recorded value is null, store the new value (which we know to be
@@ -98,9 +93,9 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	 * and update them accordingly.  First check if it's less than the
 	 * existing minimum.
 	 */
-	cmpFn = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
+	FmgrInfo   *cmpFn = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
 										 BTLessStrategyNumber);
-	compar = FunctionCall2Coll(cmpFn, colloid, newval, column->bv_values[0]);
+	Datum		compar = FunctionCall2Coll(cmpFn, colloid, newval, column->bv_values[0]);
 	if (DatumGetBool(compar))
 	{
 		if (!attr->attbyval)
@@ -143,8 +138,6 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
 	Oid			colloid = PG_GET_COLLATION(),
 				subtype;
-	AttrNumber	attno;
-	Datum		value;
 	Datum		matches;
 	FmgrInfo   *finfo;
 
@@ -154,9 +147,9 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 	/* Should not be dealing with all-NULL ranges. */
 	Assert(!column->bv_allnulls);
 
-	attno = key->sk_attno;
+	AttrNumber	attno = key->sk_attno;
 	subtype = key->sk_subtype;
-	value = key->sk_argument;
+	Datum		value = key->sk_argument;
 	switch (key->sk_strategy)
 	{
 		case BTLessStrategyNumber:
@@ -213,21 +206,17 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 	BrinValues *col_a = (BrinValues *) PG_GETARG_POINTER(1);
 	BrinValues *col_b = (BrinValues *) PG_GETARG_POINTER(2);
 	Oid			colloid = PG_GET_COLLATION();
-	AttrNumber	attno;
-	Form_pg_attribute attr;
-	FmgrInfo   *finfo;
-	bool		needsadj;
 
 	Assert(col_a->bv_attno == col_b->bv_attno);
 	Assert(!col_a->bv_allnulls && !col_b->bv_allnulls);
 
-	attno = col_a->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	AttrNumber	attno = col_a->bv_attno;
+	Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/* Adjust minimum, if B's min is less than A's min */
-	finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
+	FmgrInfo   *finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
 										 BTLessStrategyNumber);
-	needsadj = FunctionCall2Coll(finfo, colloid, col_b->bv_values[0],
+	bool		needsadj = FunctionCall2Coll(finfo, colloid, col_b->bv_values[0],
 								 col_a->bv_values[0]);
 	if (needsadj)
 	{
@@ -263,12 +252,11 @@ static FmgrInfo *
 minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 							 uint16 strategynum)
 {
-	MinmaxOpaque *opaque;
 
 	Assert(strategynum >= 1 &&
 		   strategynum <= BTMaxStrategyNumber);
 
-	opaque = (MinmaxOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
+	MinmaxOpaque *opaque = (MinmaxOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
 
 	/*
 	 * We cache the procedures for the previous subtype in the opaque struct,
@@ -286,15 +274,13 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 
 	if (opaque->strategy_procinfos[strategynum - 1].fn_oid == InvalidOid)
 	{
-		Form_pg_attribute attr;
-		HeapTuple	tuple;
 		Oid			opfamily,
 					oprid;
 		bool		isNull;
 
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
-		attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
-		tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
+		Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+		HeapTuple	tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
 								ObjectIdGetDatum(attr->atttypid),
 								ObjectIdGetDatum(subtype),
 								Int16GetDatum(strategynum));

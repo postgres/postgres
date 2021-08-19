@@ -399,27 +399,23 @@ static inline int
 pglz_find_match(int16 *hstart, const char *input, const char *end,
 				int *lenp, int *offp, int good_match, int good_drop, int mask)
 {
-	PGLZ_HistEntry *hent;
-	int16		hentno;
 	int32		len = 0;
 	int32		off = 0;
 
 	/*
 	 * Traverse the linked history list until a good enough match is found.
 	 */
-	hentno = hstart[pglz_hist_idx(input, end, mask)];
-	hent = &hist_entries[hentno];
+	int16		hentno = hstart[pglz_hist_idx(input, end, mask)];
+	PGLZ_HistEntry *hent = &hist_entries[hentno];
 	while (hent != INVALID_ENTRY_PTR)
 	{
 		const char *ip = input;
 		const char *hp = hent->pos;
-		int32		thisoff;
-		int32		thislen;
 
 		/*
 		 * Stop if the offset does not fit into our tag anymore.
 		 */
-		thisoff = ip - hp;
+		int32		thisoff = ip - hp;
 		if (thisoff >= 0x0fff)
 			break;
 
@@ -431,7 +427,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 		 * character by character comparison to know the exact position where
 		 * the diff occurred.
 		 */
-		thislen = 0;
+		int32		thislen = 0;
 		if (len >= 16)
 		{
 			if (memcmp(ip, hp, len) == 0)
@@ -522,13 +518,8 @@ pglz_compress(const char *source, int32 slen, char *dest,
 	bool		found_match = false;
 	int32		match_len;
 	int32		match_off;
-	int32		good_match;
-	int32		good_drop;
-	int32		result_size;
 	int32		result_max;
-	int32		need_rate;
 	int			hashsz;
-	int			mask;
 
 	/*
 	 * Our fallback strategy is the default.
@@ -548,19 +539,19 @@ pglz_compress(const char *source, int32 slen, char *dest,
 	/*
 	 * Limit the match parameters to the supported range.
 	 */
-	good_match = strategy->match_size_good;
+	int32		good_match = strategy->match_size_good;
 	if (good_match > PGLZ_MAX_MATCH)
 		good_match = PGLZ_MAX_MATCH;
 	else if (good_match < 17)
 		good_match = 17;
 
-	good_drop = strategy->match_size_drop;
+	int32		good_drop = strategy->match_size_drop;
 	if (good_drop < 0)
 		good_drop = 0;
 	else if (good_drop > 100)
 		good_drop = 100;
 
-	need_rate = strategy->min_comp_rate;
+	int32		need_rate = strategy->min_comp_rate;
 	if (need_rate < 0)
 		need_rate = 0;
 	else if (need_rate > 99)
@@ -595,7 +586,7 @@ pglz_compress(const char *source, int32 slen, char *dest,
 		hashsz = 4096;
 	else
 		hashsz = 8192;
-	mask = hashsz - 1;
+	int			mask = hashsz - 1;
 
 	/*
 	 * Initialize the history lists to empty.  We do not need to zero the
@@ -667,7 +658,7 @@ pglz_compress(const char *source, int32 slen, char *dest,
 	 * output size allowed by the strategy.
 	 */
 	*ctrlp = ctrlb;
-	result_size = bp - bstart;
+	int32		result_size = bp - bstart;
 	if (result_size >= result_max)
 		return -1;
 
@@ -692,15 +683,11 @@ int32
 pglz_decompress(const char *source, int32 slen, char *dest,
 				int32 rawsize, bool check_complete)
 {
-	const unsigned char *sp;
-	const unsigned char *srcend;
-	unsigned char *dp;
-	unsigned char *destend;
 
-	sp = (const unsigned char *) source;
-	srcend = ((const unsigned char *) source) + slen;
-	dp = (unsigned char *) dest;
-	destend = dp + rawsize;
+	const unsigned char *sp = (const unsigned char *) source;
+	const unsigned char *srcend = ((const unsigned char *) source) + slen;
+	unsigned char *dp = (unsigned char *) dest;
+	unsigned char *destend = dp + rawsize;
 
 	while (sp < srcend && dp < destend)
 	{
@@ -724,11 +711,9 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 				 * extension tag byte tells how much longer the match really
 				 * was (0-255).
 				 */
-				int32		len;
-				int32		off;
 
-				len = (sp[0] & 0x0f) + 3;
-				off = ((sp[0] & 0xf0) << 4) | sp[1];
+				int32		len = (sp[0] & 0x0f) + 3;
+				int32		off = ((sp[0] & 0xf0) << 4) | sp[1];
 				sp += 2;
 				if (len == 18)
 					len += *sp++;
@@ -841,7 +826,6 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 int32
 pglz_maximum_compressed_size(int32 rawsize, int32 total_compressed_size)
 {
-	int64		compressed_size;
 
 	/*
 	 * pglz uses one control bit per byte, so if the entire desired prefix is
@@ -850,7 +834,7 @@ pglz_maximum_compressed_size(int32 rawsize, int32 total_compressed_size)
 	 *
 	 * Use int64 here to prevent overflow during calculation.
 	 */
-	compressed_size = ((int64) rawsize * 9 + 7) / 8;
+	int64		compressed_size = ((int64) rawsize * 9 + 7) / 8;
 
 	/*
 	 * The above fails to account for a corner case: we could have compressed

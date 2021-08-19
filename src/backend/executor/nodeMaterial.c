@@ -39,22 +39,16 @@ static TupleTableSlot *			/* result tuple from subplan */
 ExecMaterial(PlanState *pstate)
 {
 	MaterialState *node = castNode(MaterialState, pstate);
-	EState	   *estate;
-	ScanDirection dir;
-	bool		forward;
-	Tuplestorestate *tuplestorestate;
-	bool		eof_tuplestore;
-	TupleTableSlot *slot;
 
 	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get state info from node
 	 */
-	estate = node->ss.ps.state;
-	dir = estate->es_direction;
-	forward = ScanDirectionIsForward(dir);
-	tuplestorestate = node->tuplestorestate;
+	EState	   *estate = node->ss.ps.state;
+	ScanDirection dir = estate->es_direction;
+	bool		forward = ScanDirectionIsForward(dir);
+	Tuplestorestate *tuplestorestate = node->tuplestorestate;
 
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
@@ -82,7 +76,7 @@ ExecMaterial(PlanState *pstate)
 	 * If we are not at the end of the tuplestore, or are going backwards, try
 	 * to fetch a tuple from tuplestore.
 	 */
-	eof_tuplestore = (tuplestorestate == NULL) ||
+	bool		eof_tuplestore = (tuplestorestate == NULL) ||
 		tuplestore_ateof(tuplestorestate);
 
 	if (!forward && eof_tuplestore)
@@ -104,7 +98,7 @@ ExecMaterial(PlanState *pstate)
 	/*
 	 * If we can fetch another tuple from the tuplestore, return it.
 	 */
-	slot = node->ss.ps.ps_ResultTupleSlot;
+	TupleTableSlot *slot = node->ss.ps.ps_ResultTupleSlot;
 	if (!eof_tuplestore)
 	{
 		if (tuplestore_gettupleslot(tuplestorestate, forward, false, slot))
@@ -123,15 +117,13 @@ ExecMaterial(PlanState *pstate)
 	 */
 	if (eof_tuplestore && !node->eof_underlying)
 	{
-		PlanState  *outerNode;
-		TupleTableSlot *outerslot;
 
 		/*
 		 * We can only get here with forward==true, so no need to worry about
 		 * which direction the subplan will go.
 		 */
-		outerNode = outerPlanState(node);
-		outerslot = ExecProcNode(outerNode);
+		PlanState  *outerNode = outerPlanState(node);
+		TupleTableSlot *outerslot = ExecProcNode(outerNode);
 		if (TupIsNull(outerslot))
 		{
 			node->eof_underlying = true;
@@ -163,13 +155,12 @@ ExecMaterial(PlanState *pstate)
 MaterialState *
 ExecInitMaterial(Material *node, EState *estate, int eflags)
 {
-	MaterialState *matstate;
 	Plan	   *outerPlan;
 
 	/*
 	 * create state structure
 	 */
-	matstate = makeNode(MaterialState);
+	MaterialState *matstate = makeNode(MaterialState);
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
 	matstate->ss.ps.ExecProcNode = ExecMaterial;

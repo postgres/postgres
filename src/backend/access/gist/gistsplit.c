@@ -47,11 +47,10 @@ static void
 gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
 				   GistSplitUnion *gsvp)
 {
-	IndexTuple *cleanedItVec;
 	int			i,
 				cleanedLen = 0;
 
-	cleanedItVec = (IndexTuple *) palloc(sizeof(IndexTuple) * gsvp->len);
+	IndexTuple *cleanedItVec = (IndexTuple *) palloc(sizeof(IndexTuple) * gsvp->len);
 
 	for (i = 0; i < gsvp->len; i++)
 	{
@@ -169,10 +168,9 @@ removeDontCares(OffsetNumber *a, int *len, const bool *dontcare)
 	int			origlen,
 				newlen,
 				i;
-	OffsetNumber *curwpos;
 
 	origlen = newlen = *len;
-	curwpos = a;
+	OffsetNumber *curwpos = a;
 	for (i = 0; i < origlen; i++)
 	{
 		OffsetNumber ai = a[i];
@@ -345,12 +343,10 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 {
 	OffsetNumber i,
 				maxoff;
-	int			nbytes;
-	GistEntryVector *evec;
 
 	maxoff = entryvec->n - 1;
 
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -373,7 +369,7 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 	/*
 	 * Form union datums for each side
 	 */
-	evec = palloc(sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ);
+	GistEntryVector *evec = palloc(sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ);
 
 	evec->n = v->spl_nleft;
 	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber,
@@ -487,7 +483,6 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 	if (attno + 1 < giststate->nonLeafTupdesc->natts)
 	{
-		int			NumDontCare;
 
 		/*
 		 * Make a quick check to see if left and right union keys are equal;
@@ -503,7 +498,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 		 */
 		v->spl_dontcare = (bool *) palloc0(sizeof(bool) * (entryvec->n + 1));
 
-		NumDontCare = findDontCares(r, giststate, entryvec->vector, v, attno);
+		int			NumDontCare = findDontCares(r, giststate, entryvec->vector, v, attno);
 
 		if (NumDontCare > 0)
 		{
@@ -623,23 +618,20 @@ void
 gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 			   GISTSTATE *giststate, GistSplitVector *v, int attno)
 {
-	GistEntryVector *entryvec;
-	OffsetNumber *offNullTuples;
 	int			nOffNullTuples = 0;
 	int			i;
 
 	/* generate the item array, and identify tuples with null keys */
 	/* note that entryvec->vector[0] goes unused in this code */
-	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
+	GistEntryVector *entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
 	entryvec->n = len + 1;
-	offNullTuples = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
+	OffsetNumber *offNullTuples = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
 
 	for (i = 1; i <= len; i++)
 	{
-		Datum		datum;
 		bool		IsNull;
 
-		datum = index_getattr(itup[i - 1], attno + 1, giststate->leafTupdesc,
+		Datum		datum = index_getattr(itup[i - 1], attno + 1, giststate->leafTupdesc,
 							  &IsNull);
 		gistdentryinit(giststate, attno, &(entryvec->vector[i]),
 					   datum, r, page, i,
@@ -719,7 +711,6 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				IndexTuple *newitup = (IndexTuple *) palloc(len * sizeof(IndexTuple));
 				OffsetNumber *map = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
 				int			newlen = 0;
-				GIST_SPLITVEC backupSplit;
 
 				for (i = 0; i < len; i++)
 				{
@@ -737,7 +728,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				 * Make a backup copy of v->splitVector, since the recursive
 				 * call will overwrite that with its own result.
 				 */
-				backupSplit = v->splitVector;
+				GIST_SPLITVEC backupSplit = v->splitVector;
 				backupSplit.spl_left = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);
 				memcpy(backupSplit.spl_left, v->splitVector.spl_left, sizeof(OffsetNumber) * v->splitVector.spl_nleft);
 				backupSplit.spl_right = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);

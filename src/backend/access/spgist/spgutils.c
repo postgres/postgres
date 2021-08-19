@@ -110,17 +110,14 @@ spghandler(PG_FUNCTION_ARGS)
 static Oid
 GetIndexInputType(Relation index, AttrNumber indexcol)
 {
-	Oid			opcintype;
-	AttrNumber	heapcol;
 	List	   *indexprs;
-	ListCell   *indexpr_item;
 
 	Assert(index->rd_index != NULL);
 	Assert(indexcol > 0 && indexcol <= index->rd_index->indnkeyatts);
-	opcintype = index->rd_opcintype[indexcol - 1];
+	Oid			opcintype = index->rd_opcintype[indexcol - 1];
 	if (!IsPolymorphicType(opcintype))
 		return opcintype;
-	heapcol = index->rd_index->indkey.values[indexcol - 1];
+	AttrNumber	heapcol = index->rd_index->indkey.values[indexcol - 1];
 	if (heapcol != 0)			/* Simple index column? */
 		return getBaseType(get_atttype(index->rd_index->indrelid, heapcol));
 
@@ -134,7 +131,7 @@ GetIndexInputType(Relation index, AttrNumber indexcol)
 		indexprs = index->rd_indexprs;
 	else
 		indexprs = RelationGetIndexExpressions(index);
-	indexpr_item = list_head(indexprs);
+	ListCell   *indexpr_item = list_head(indexprs);
 	for (int i = 1; i <= index->rd_index->indnkeyatts; i++)
 	{
 		if (index->rd_index->indkey.values[i - 1] == 0)
@@ -155,14 +152,12 @@ GetIndexInputType(Relation index, AttrNumber indexcol)
 static void
 fillTypeDesc(SpGistTypeDesc *desc, Oid type)
 {
-	HeapTuple	tp;
-	Form_pg_type typtup;
 
 	desc->type = type;
-	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type));
+	HeapTuple	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for type %u", type);
-	typtup = (Form_pg_type) GETSTRUCT(tp);
+	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
 	desc->attlen = typtup->typlen;
 	desc->attbyval = typtup->typbyval;
 	desc->attalign = typtup->typalign;
@@ -181,11 +176,7 @@ spgGetCache(Relation index)
 
 	if (index->rd_amcache == NULL)
 	{
-		Oid			atttype;
 		spgConfigIn in;
-		FmgrInfo   *procinfo;
-		Buffer		metabuffer;
-		SpGistMetaPageData *metadata;
 
 		cache = MemoryContextAllocZero(index->rd_indexcxt,
 									   sizeof(SpGistCache));
@@ -199,12 +190,12 @@ spgGetCache(Relation index)
 		 * pass this to the opclass config function so that polymorphic
 		 * opclasses are possible.
 		 */
-		atttype = GetIndexInputType(index, spgKeyColumn + 1);
+		Oid			atttype = GetIndexInputType(index, spgKeyColumn + 1);
 
 		/* Call the config function to get config info for the opclass */
 		in.attType = atttype;
 
-		procinfo = index_getprocinfo(index, 1, SPGIST_CONFIG_PROC);
+		FmgrInfo   *procinfo = index_getprocinfo(index, 1, SPGIST_CONFIG_PROC);
 		FunctionCall2Coll(procinfo,
 						  index->rd_indcollation[spgKeyColumn],
 						  PointerGetDatum(&in),
@@ -243,10 +234,10 @@ spgGetCache(Relation index)
 		fillTypeDesc(&cache->attLabelType, cache->config.labelType);
 
 		/* Last, get the lastUsedPages data from the metapage */
-		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
+		Buffer		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
 		LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
 
-		metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
+		SpGistMetaPageData *metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
 
 		if (metadata->magicNumber != SPGIST_MAGIC_NUMBER)
 			elog(ERROR, "index \"%s\" is not an SP-GiST index",
@@ -317,12 +308,11 @@ getSpGistTupleDesc(Relation index, SpGistTypeDesc *keyType)
 void
 initSpGistState(SpGistState *state, Relation index)
 {
-	SpGistCache *cache;
 
 	state->index = index;
 
 	/* Get cached static information about index */
-	cache = spgGetCache(index);
+	SpGistCache *cache = spgGetCache(index);
 
 	state->config = cache->config;
 	state->attType = cache->attType;
@@ -353,7 +343,6 @@ Buffer
 SpGistNewBuffer(Relation index)
 {
 	Buffer		buffer;
-	bool		needLock;
 
 	/* First, try to get a page from FSM */
 	for (;;)
@@ -394,7 +383,7 @@ SpGistNewBuffer(Relation index)
 	}
 
 	/* Must extend the file */
-	needLock = !RELATION_IS_LOCAL(index);
+	bool		needLock = !RELATION_IS_LOCAL(index);
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
 
@@ -421,9 +410,8 @@ SpGistUpdateMetaPage(Relation index)
 
 	if (cache != NULL)
 	{
-		Buffer		metabuffer;
 
-		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
+		Buffer		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
 
 		if (ConditionalLockBuffer(metabuffer))
 		{
@@ -490,9 +478,8 @@ allocNewBuffer(Relation index, int flags)
 
 	for (;;)
 	{
-		Buffer		buffer;
 
-		buffer = SpGistNewBuffer(index);
+		Buffer		buffer = SpGistNewBuffer(index);
 		SpGistInitBuffer(buffer, pageflags);
 
 		if (pageflags & SPGIST_LEAF)
@@ -537,7 +524,6 @@ Buffer
 SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 {
 	SpGistCache *cache = spgGetCache(index);
-	SpGistLastUsedPage *lup;
 
 	/* Bail out if even an empty page wouldn't meet the demand */
 	if (needSpace > SPGIST_PAGE_CAPACITY)
@@ -554,7 +540,7 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 	needSpace = Min(needSpace, SPGIST_PAGE_CAPACITY);
 
 	/* Get the cache entry for this flags setting */
-	lup = GET_LUP(cache, flags);
+	SpGistLastUsedPage *lup = GET_LUP(cache, flags);
 
 	/* If we have nothing cached, just turn it over to allocNewBuffer */
 	if (lup->blkno == InvalidBlockNumber)
@@ -569,10 +555,8 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 	/* If cached freeSpace isn't enough, don't bother looking at the page */
 	if (lup->freeSpace >= needSpace)
 	{
-		Buffer		buffer;
-		Page		page;
 
-		buffer = ReadBuffer(index, lup->blkno);
+		Buffer		buffer = ReadBuffer(index, lup->blkno);
 
 		if (!ConditionalLockBuffer(buffer))
 		{
@@ -584,7 +568,7 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 			return allocNewBuffer(index, flags);
 		}
 
-		page = BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer);
 
 		if (PageIsNew(page) || SpGistPageIsDeleted(page) || PageIsEmpty(page))
 		{
@@ -641,8 +625,6 @@ void
 SpGistSetLastUsedPage(Relation index, Buffer buffer)
 {
 	SpGistCache *cache = spgGetCache(index);
-	SpGistLastUsedPage *lup;
-	int			freeSpace;
 	Page		page = BufferGetPage(buffer);
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	int			flags;
@@ -658,9 +640,9 @@ SpGistSetLastUsedPage(Relation index, Buffer buffer)
 	if (SpGistPageStoresNulls(page))
 		flags |= GBUF_NULLS;
 
-	lup = GET_LUP(cache, flags);
+	SpGistLastUsedPage *lup = GET_LUP(cache, flags);
 
-	freeSpace = PageGetExactFreeSpace(page);
+	int			freeSpace = PageGetExactFreeSpace(page);
 	if (lup->blkno == InvalidBlockNumber || lup->blkno == blkno ||
 		lup->freeSpace < freeSpace)
 	{
@@ -675,10 +657,9 @@ SpGistSetLastUsedPage(Relation index, Buffer buffer)
 void
 SpGistInitPage(Page page, uint16 f)
 {
-	SpGistPageOpaque opaque;
 
 	PageInit(page, BLCKSZ, sizeof(SpGistPageOpaqueData));
-	opaque = SpGistPageGetOpaque(page);
+	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
 	opaque->flags = f;
 	opaque->spgist_page_id = SPGIST_PAGE_ID;
 }
@@ -699,11 +680,10 @@ SpGistInitBuffer(Buffer b, uint16 f)
 void
 SpGistInitMetapage(Page page)
 {
-	SpGistMetaPageData *metadata;
 	int			i;
 
 	SpGistInitPage(page, SPGIST_META);
-	metadata = SpGistPageGetMeta(page);
+	SpGistMetaPageData *metadata = SpGistPageGetMeta(page);
 	memset(metadata, 0, sizeof(SpGistMetaPageData));
 	metadata->magicNumber = SPGIST_MAGIC_NUMBER;
 
@@ -787,8 +767,6 @@ Size
 SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
 					   Datum *datums, bool *isnulls)
 {
-	Size		size;
-	Size		data_size;
 	bool		needs_null_mask = false;
 	int			natts = tupleDescriptor->natts;
 
@@ -814,12 +792,12 @@ SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
 	/*
 	 * Calculate size of the data part; same as for heap tuples.
 	 */
-	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
+	Size		data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
 
 	/*
 	 * Compute total size.
 	 */
-	size = SGLTHDRSZ(needs_null_mask);
+	Size		size = SGLTHDRSZ(needs_null_mask);
 	size += data_size;
 	size = MAXALIGN(size);
 
@@ -840,11 +818,7 @@ SpGistLeafTuple
 spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 				 Datum *datums, bool *isnulls)
 {
-	SpGistLeafTuple tup;
 	TupleDesc	tupleDescriptor = state->leafTupDesc;
-	Size		size;
-	Size		hoff;
-	Size		data_size;
 	bool		needs_null_mask = false;
 	int			natts = tupleDescriptor->natts;
 	char	   *tp;				/* ptr to tuple data */
@@ -872,13 +846,13 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	/*
 	 * Calculate size of the data part; same as for heap tuples.
 	 */
-	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
+	Size		data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
 
 	/*
 	 * Compute total size.
 	 */
-	hoff = SGLTHDRSZ(needs_null_mask);
-	size = hoff + data_size;
+	Size		hoff = SGLTHDRSZ(needs_null_mask);
+	Size		size = hoff + data_size;
 	size = MAXALIGN(size);
 
 	/*
@@ -889,7 +863,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 		size = SGDTSIZE;
 
 	/* OK, form the tuple */
-	tup = (SpGistLeafTuple) palloc0(size);
+	SpGistLeafTuple tup = (SpGistLeafTuple) palloc0(size);
 
 	tup->size = size;
 	SGLT_SET_NEXTOFFSET(tup, InvalidOffsetNumber);
@@ -928,12 +902,10 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 SpGistNodeTuple
 spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 {
-	SpGistNodeTuple tup;
-	unsigned int size;
 	unsigned short infomask = 0;
 
 	/* compute space needed (note result is already maxaligned) */
-	size = SGNTHDRSZ;
+	unsigned int size = SGNTHDRSZ;
 	if (!isnull)
 		size += SpGistGetInnerTypeSize(&state->attLabelType, label);
 
@@ -947,7 +919,7 @@ spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 				 errmsg("index row requires %zu bytes, maximum size is %zu",
 						(Size) size, (Size) INDEX_SIZE_MASK)));
 
-	tup = (SpGistNodeTuple) palloc0(size);
+	SpGistNodeTuple tup = (SpGistNodeTuple) palloc0(size);
 
 	if (isnull)
 		infomask |= INDEX_NULL_MASK;
@@ -971,11 +943,8 @@ SpGistInnerTuple
 spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 				  int nNodes, SpGistNodeTuple *nodes)
 {
-	SpGistInnerTuple tup;
-	unsigned int size;
 	unsigned int prefixSize;
 	int			i;
-	char	   *ptr;
 
 	/* Compute size needed */
 	if (hasPrefix)
@@ -983,7 +952,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 	else
 		prefixSize = 0;
 
-	size = SGITHDRSZ + prefixSize;
+	unsigned int size = SGITHDRSZ + prefixSize;
 
 	/* Note: we rely on node tuple sizes to be maxaligned already */
 	for (i = 0; i < nNodes; i++)
@@ -1017,7 +986,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 		elog(ERROR, "SPGiST inner tuple header field is too small");
 
 	/* OK, form the tuple */
-	tup = (SpGistInnerTuple) palloc0(size);
+	SpGistInnerTuple tup = (SpGistInnerTuple) palloc0(size);
 
 	tup->nNodes = nNodes;
 	tup->prefixSize = prefixSize;
@@ -1026,7 +995,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 	if (hasPrefix)
 		memcpyInnerDatum(SGITDATAPTR(tup), &state->attPrefixType, prefix);
 
-	ptr = (char *) SGITNODEPTR(tup);
+	char	   *ptr = (char *) SGITNODEPTR(tup);
 
 	for (i = 0; i < nNodes; i++)
 	{
@@ -1131,10 +1100,9 @@ spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
 {
 	Datum	   *nodeLabels;
 	int			i;
-	SpGistNodeTuple node;
 
 	/* Either all the labels must be NULL, or none. */
-	node = SGITNODEPTR(innerTuple);
+	SpGistNodeTuple node = SGITNODEPTR(innerTuple);
 	if (IndexTupleHasNulls(node))
 	{
 		SGITITERATE(innerTuple, i, node)
@@ -1272,7 +1240,6 @@ spgproperty(Oid index_oid, int attno,
 	Oid			opclass,
 				opfamily,
 				opcintype;
-	CatCList   *catlist;
 	int			i;
 
 	/* Only answer column-level inquiries */
@@ -1309,7 +1276,7 @@ spgproperty(Oid index_oid, int attno,
 	}
 
 	/* And now we can check whether the operator is provided. */
-	catlist = SearchSysCacheList1(AMOPSTRATEGY,
+	CatCList   *catlist = SearchSysCacheList1(AMOPSTRATEGY,
 								  ObjectIdGetDatum(opfamily));
 
 	*res = false;

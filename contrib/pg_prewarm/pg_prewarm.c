@@ -53,33 +53,24 @@ static PGAlignedBlock blockbuffer;
 Datum
 pg_prewarm(PG_FUNCTION_ARGS)
 {
-	Oid			relOid;
-	text	   *forkName;
-	text	   *type;
 	int64		first_block;
 	int64		last_block;
-	int64		nblocks;
 	int64		blocks_done = 0;
 	int64		block;
-	Relation	rel;
-	ForkNumber	forkNumber;
-	char	   *forkString;
-	char	   *ttype;
 	PrewarmType ptype;
-	AclResult	aclresult;
 
 	/* Basic sanity checking. */
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("relation cannot be null")));
-	relOid = PG_GETARG_OID(0);
+	Oid			relOid = PG_GETARG_OID(0);
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("prewarm type cannot be null")));
-	type = PG_GETARG_TEXT_PP(1);
-	ttype = text_to_cstring(type);
+	text	   *type = PG_GETARG_TEXT_PP(1);
+	char	   *ttype = text_to_cstring(type);
 	if (strcmp(ttype, "prefetch") == 0)
 		ptype = PREWARM_PREFETCH;
 	else if (strcmp(ttype, "read") == 0)
@@ -98,13 +89,13 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("relation fork cannot be null")));
-	forkName = PG_GETARG_TEXT_PP(2);
-	forkString = text_to_cstring(forkName);
-	forkNumber = forkname_to_number(forkString);
+	text	   *forkName = PG_GETARG_TEXT_PP(2);
+	char	   *forkString = text_to_cstring(forkName);
+	ForkNumber	forkNumber = forkname_to_number(forkString);
 
 	/* Open relation and check privileges. */
-	rel = relation_open(relOid, AccessShareLock);
-	aclresult = pg_class_aclcheck(relOid, GetUserId(), ACL_SELECT);
+	Relation	rel = relation_open(relOid, AccessShareLock);
+	AclResult	aclresult = pg_class_aclcheck(relOid, GetUserId(), ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind), get_rel_name(relOid));
 
@@ -116,7 +107,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 						forkString)));
 
 	/* Validate block numbers, or handle nulls. */
-	nblocks = RelationGetNumberOfBlocksInFork(rel, forkNumber);
+	int64		nblocks = RelationGetNumberOfBlocksInFork(rel, forkNumber);
 	if (PG_ARGISNULL(3))
 		first_block = 0;
 	else
@@ -188,10 +179,9 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		 */
 		for (block = first_block; block <= last_block; ++block)
 		{
-			Buffer		buf;
 
 			CHECK_FOR_INTERRUPTS();
-			buf = ReadBufferExtended(rel, forkNumber, block, RBM_NORMAL, NULL);
+			Buffer		buf = ReadBufferExtended(rel, forkNumber, block, RBM_NORMAL, NULL);
 			ReleaseBuffer(buf);
 			++blocks_done;
 		}

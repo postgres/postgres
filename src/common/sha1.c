@@ -233,11 +233,10 @@ static void
 sha1_pad(pg_sha1_ctx *ctx)
 {
 	size_t		padlen;			/* pad length in bytes */
-	size_t		padstart;
 
 	PUTPAD(0x80);
 
-	padstart = COUNT % 64;
+	size_t		padstart = COUNT % 64;
 	padlen = 64 - padstart;
 	if (padlen < 8)
 	{
@@ -275,9 +274,8 @@ sha1_pad(pg_sha1_ctx *ctx)
 static void
 sha1_result(uint8 *digest0, pg_sha1_ctx *ctx)
 {
-	uint8	   *digest;
 
-	digest = (uint8 *) digest0;
+	uint8	   *digest = (uint8 *) digest0;
 
 #ifdef WORDS_BIGENDIAN
 	memmove(digest, &ctx->h.b8[0], 20);
@@ -331,14 +329,12 @@ pg_sha1_init(pg_sha1_ctx *ctx)
 void
 pg_sha1_update(pg_sha1_ctx *ctx, const uint8 *data, size_t len)
 {
-	const uint8 *input;
 	size_t		gaplen;
 	size_t		gapstart;
-	size_t		off;
 	size_t		copysiz;
 
-	input = (const uint8 *) data;
-	off = 0;
+	const uint8 *input = (const uint8 *) data;
+	size_t		off = 0;
 
 	while (off < len)
 	{

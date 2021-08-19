@@ -93,9 +93,8 @@ win_to_utf8(PG_FUNCTION_ARGS)
 	{
 		if (encoding == maps[i].encoding)
 		{
-			int			converted;
 
-			converted = LocalToUtf(src, len, dest,
+			int			converted = LocalToUtf(src, len, dest,
 								   maps[i].map1,
 								   NULL, 0,
 								   NULL,
@@ -129,9 +128,8 @@ utf8_to_win(PG_FUNCTION_ARGS)
 	{
 		if (encoding == maps[i].encoding)
 		{
-			int			converted;
 
-			converted = UtfToLocal(src, len, dest,
+			int			converted = UtfToLocal(src, len, dest,
 								   maps[i].map2,
 								   NULL, 0,
 								   NULL,

@@ -88,26 +88,23 @@ static void generate_combinations(CombinationGenerator *state);
 MVNDistinct *
 statext_ndistinct_build(double totalrows, StatsBuildData *data)
 {
-	MVNDistinct *result;
 	int			k;
-	int			itemcnt;
 	int			numattrs = data->nattnums;
 	int			numcombs = num_combinations(numattrs);
 
-	result = palloc(offsetof(MVNDistinct, items) +
+	MVNDistinct *result = palloc(offsetof(MVNDistinct, items) +
 					numcombs * sizeof(MVNDistinctItem));
 	result->magic = STATS_NDISTINCT_MAGIC;
 	result->type = STATS_NDISTINCT_TYPE_BASIC;
 	result->nitems = numcombs;
 
-	itemcnt = 0;
+	int			itemcnt = 0;
 	for (k = 2; k <= numattrs; k++)
 	{
 		int		   *combination;
-		CombinationGenerator *generator;
 
 		/* generate combinations of K out of N elements */
-		generator = generator_init(numattrs, k);
+		CombinationGenerator *generator = generator_init(numattrs, k);
 
 		while ((combination = generator_next(generator)))
 		{
@@ -148,23 +145,20 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 MVNDistinct *
 statext_ndistinct_load(Oid mvoid)
 {
-	MVNDistinct *result;
 	bool		isnull;
-	Datum		ndist;
-	HeapTuple	htup;
 
-	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
+	HeapTuple	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
-	ndist = SysCacheGetAttr(STATEXTDATASTXOID, htup,
+	Datum		ndist = SysCacheGetAttr(STATEXTDATASTXOID, htup,
 							Anum_pg_statistic_ext_data_stxdndistinct, &isnull);
 	if (isnull)
 		elog(ERROR,
 			 "requested statistics kind \"%c\" is not yet built for statistics object %u",
 			 STATS_EXT_NDISTINCT, mvoid);
 
-	result = statext_ndistinct_deserialize(DatumGetByteaPP(ndist));
+	MVNDistinct *result = statext_ndistinct_deserialize(DatumGetByteaPP(ndist));
 
 	ReleaseSysCache(htup);
 
@@ -179,9 +173,6 @@ bytea *
 statext_ndistinct_serialize(MVNDistinct *ndistinct)
 {
 	int			i;
-	bytea	   *output;
-	char	   *tmp;
-	Size		len;
 
 	Assert(ndistinct->magic == STATS_NDISTINCT_MAGIC);
 	Assert(ndistinct->type == STATS_NDISTINCT_TYPE_BASIC);
@@ -190,23 +181,22 @@ statext_ndistinct_serialize(MVNDistinct *ndistinct)
 	 * Base size is size of scalar fields in the struct, plus one base struct
 	 * for each item, including number of items for each.
 	 */
-	len = VARHDRSZ + SizeOfHeader;
+	Size		len = VARHDRSZ + SizeOfHeader;
 
 	/* and also include space for the actual attribute numbers */
 	for (i = 0; i < ndistinct->nitems; i++)
 	{
-		int			nmembers;
 
-		nmembers = ndistinct->items[i].nattributes;
+		int			nmembers = ndistinct->items[i].nattributes;
 		Assert(nmembers >= 2);
 
 		len += SizeOfItem(nmembers);
 	}
 
-	output = (bytea *) palloc(len);
+	bytea	   *output = (bytea *) palloc(len);
 	SET_VARSIZE(output, len);
 
-	tmp = VARDATA(output);
+	char	   *tmp = VARDATA(output);
 
 	/* Store the base struct values (magic, type, nitems) */
 	memcpy(tmp, &ndistinct->magic, sizeof(uint32));
@@ -250,10 +240,7 @@ MVNDistinct *
 statext_ndistinct_deserialize(bytea *data)
 {
 	int			i;
-	Size		minimum_size;
 	MVNDistinct ndist;
-	MVNDistinct *ndistinct;
-	char	   *tmp;
 
 	if (data == NULL)
 		return NULL;
@@ -264,7 +251,7 @@ statext_ndistinct_deserialize(bytea *data)
 			 VARSIZE_ANY_EXHDR(data), SizeOfHeader);
 
 	/* initialize pointer to the data part (skip the varlena header) */
-	tmp = VARDATA_ANY(data);
+	char	   *tmp = VARDATA_ANY(data);
 
 	/* read the header fields and perform basic sanity checks */
 	memcpy(&ndist.magic, tmp, sizeof(uint32));
@@ -284,7 +271,7 @@ statext_ndistinct_deserialize(bytea *data)
 		elog(ERROR, "invalid zero-length item array in MVNDistinct");
 
 	/* what minimum bytea size do we expect for those parameters */
-	minimum_size = MinSizeOfItems(ndist.nitems);
+	Size		minimum_size = MinSizeOfItems(ndist.nitems);
 	if (VARSIZE_ANY_EXHDR(data) < minimum_size)
 		elog(ERROR, "invalid MVNDistinct size %zd (expected at least %zd)",
 			 VARSIZE_ANY_EXHDR(data), minimum_size);
@@ -293,7 +280,7 @@ statext_ndistinct_deserialize(bytea *data)
 	 * Allocate space for the ndistinct items (no space for each item's
 	 * attnos: those live in bitmapsets allocated separately)
 	 */
-	ndistinct = palloc0(MAXALIGN(offsetof(MVNDistinct, items)) +
+	MVNDistinct *ndistinct = palloc0(MAXALIGN(offsetof(MVNDistinct, items)) +
 						(ndist.nitems * sizeof(MVNDistinctItem)));
 	ndistinct->magic = ndist.magic;
 	ndistinct->type = ndist.type;
@@ -430,13 +417,9 @@ ndistinct_for_combination(double totalrows, StatsBuildData *data,
 	int			f1,
 				cnt,
 				d;
-	bool	   *isnull;
-	Datum	   *values;
-	SortItem   *items;
-	MultiSortSupport mss;
 	int			numrows = data->numrows;
 
-	mss = multi_sort_init(k);
+	MultiSortSupport mss = multi_sort_init(k);
 
 	/*
 	 * In order to determine the number of distinct elements, create separate
@@ -444,9 +427,9 @@ ndistinct_for_combination(double totalrows, StatsBuildData *data,
 	 * using the specified column combination as dimensions.  We could try to
 	 * sort in place, but it'd probably be more complex and bug-prone.
 	 */
-	items = (SortItem *) palloc(numrows * sizeof(SortItem));
-	values = (Datum *) palloc0(sizeof(Datum) * numrows * k);
-	isnull = (bool *) palloc0(sizeof(bool) * numrows * k);
+	SortItem   *items = (SortItem *) palloc(numrows * sizeof(SortItem));
+	Datum	   *values = (Datum *) palloc0(sizeof(Datum) * numrows * k);
+	bool	   *isnull = (bool *) palloc0(sizeof(bool) * numrows * k);
 
 	for (i = 0; i < numrows; i++)
 	{
@@ -463,15 +446,12 @@ ndistinct_for_combination(double totalrows, StatsBuildData *data,
 	 */
 	for (i = 0; i < k; i++)
 	{
-		Oid			typid;
-		TypeCacheEntry *type;
-		Oid			collid = InvalidOid;
 		VacAttrStats *colstat = data->stats[combination[i]];
 
-		typid = colstat->attrtypid;
-		collid = colstat->attrcollid;
+		Oid			typid = colstat->attrtypid;
+		Oid			collid = colstat->attrcollid;
 
-		type = lookup_type_cache(typid, TYPECACHE_LT_OPR);
+		TypeCacheEntry *type = lookup_type_cache(typid, TYPECACHE_LT_OPR);
 		if (type->lt_opr == InvalidOid) /* shouldn't happen */
 			elog(ERROR, "cache lookup failed for ordering operator for type %u",
 				 typid);
@@ -588,12 +568,11 @@ num_combinations(int n)
 static CombinationGenerator *
 generator_init(int n, int k)
 {
-	CombinationGenerator *state;
 
 	Assert((n >= k) && (k > 0));
 
 	/* allocate the generator state as a single chunk of memory */
-	state = (CombinationGenerator *) palloc(sizeof(CombinationGenerator));
+	CombinationGenerator *state = (CombinationGenerator *) palloc(sizeof(CombinationGenerator));
 
 	state->ncombinations = n_choose_k(n, k);
 

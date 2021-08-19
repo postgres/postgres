@@ -220,11 +220,10 @@ Datum
 dsnowball_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictSnowball *d;
 	bool		stoploaded = false;
 	ListCell   *l;
 
-	d = (DictSnowball *) palloc0(sizeof(DictSnowball));
+	DictSnowball *d = (DictSnowball *) palloc0(sizeof(DictSnowball));
 
 	foreach(l, dictoptions)
 	{
@@ -281,16 +280,14 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		MemoryContext saveCtx;
 
 		/*
 		 * recode to utf8 if stemmer is utf8 and doesn't match server encoding
 		 */
 		if (d->needrecode)
 		{
-			char	   *recoded;
 
-			recoded = pg_server_to_any(txt, strlen(txt), PG_UTF8);
+			char	   *recoded = pg_server_to_any(txt, strlen(txt), PG_UTF8);
 			if (recoded != txt)
 			{
 				pfree(txt);
@@ -299,7 +296,7 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 		}
 
 		/* see comment about d->dictCtx */
-		saveCtx = MemoryContextSwitchTo(d->dictCtx);
+		MemoryContext saveCtx = MemoryContextSwitchTo(d->dictCtx);
 		SN_set_current(d->z, strlen(txt), (symbol *) txt);
 		d->stem(d->z);
 		MemoryContextSwitchTo(saveCtx);
@@ -314,9 +311,8 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 		/* back recode if needed */
 		if (d->needrecode)
 		{
-			char	   *recoded;
 
-			recoded = pg_any_to_server(txt, strlen(txt), PG_UTF8);
+			char	   *recoded = pg_any_to_server(txt, strlen(txt), PG_UTF8);
 			if (recoded != txt)
 			{
 				pfree(txt);

@@ -243,7 +243,6 @@ additional_numeric_locale_len(const char *my_str)
 static char *
 format_numeric_locale(const char *my_str)
 {
-	char	   *new_str;
 	int			new_len,
 				int_len,
 				leading_digits,
@@ -258,7 +257,7 @@ format_numeric_locale(const char *my_str)
 		return pg_strdup(my_str);
 
 	new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
-	new_str = pg_malloc(new_len + 1);
+	char	   *new_str = pg_malloc(new_len + 1);
 	new_str_pos = 0;
 	int_len = integer_digits(my_str);
 
@@ -329,9 +328,8 @@ footers_with_default(const printTableContent *cont)
 {
 	if (cont->footers == NULL && cont->opt->default_footer)
 	{
-		unsigned long total_records;
 
-		total_records = cont->opt->prior_records + cont->nrows;
+		unsigned long total_records = cont->opt->prior_records + cont->nrows;
 		snprintf(default_footer, sizeof(default_footer),
 				 ngettext("(%lu row)", "(%lu rows)", total_records),
 				 total_records);
@@ -585,7 +583,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			   *max_bytes;
 	unsigned char **format_buf;
 	unsigned int width_total;
-	unsigned int total_header_width;
 	unsigned int extra_row_output_lines = 0;
 	unsigned int extra_output_lines = 0;
 
@@ -697,7 +694,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 		width_total = col_count * 3 - ((col_count > 0) ? 1 : 0);
 	else
 		width_total = col_count * 3 + 1;
-	total_header_width = width_total;
+	unsigned int total_header_width = width_total;
 
 	for (i = 0; i < col_count; i++)
 	{
@@ -775,9 +772,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 					if (width_average[i] && width_wrap[i] > width_header[i])
 					{
 						/* Penalize wide columns by 1% of their width */
-						double		ratio;
 
-						ratio = (double) width_wrap[i] / width_average[i] +
+						double		ratio = (double) width_wrap[i] / width_average[i] +
 							max_width[i] * 0.01;
 						if (ratio > max_ratio)
 						{
@@ -838,10 +834,9 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			 */
 			if (width > 0 && width_wrap[i])
 			{
-				unsigned int extra_lines;
 
 				/* don't count the first line of nl_lines - it's not "extra" */
-				extra_lines = ((width - 1) / width_wrap[i]) + nl_lines - 1;
+				unsigned int extra_lines = ((width - 1) / width_wrap[i]) + nl_lines - 1;
 				if (extra_lines > extra_row_output_lines)
 					extra_row_output_lines = extra_lines;
 			}
@@ -882,8 +877,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 		/* print headers */
 		if (!opt_tuples_only)
 		{
-			int			more_col_wrapping;
-			int			curr_nl_line;
 
 			if (opt_border == 2)
 				_print_horizontal_line(col_count, width_wrap, opt_border,
@@ -894,8 +887,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 							 strlen(cont->headers[i]), encoding,
 							 col_lineptrs[i], max_nl_lines[i]);
 
-			more_col_wrapping = col_count;
-			curr_nl_line = 0;
+			int			more_col_wrapping = col_count;
+			int			curr_nl_line = 0;
 			memset(header_done, false, col_count * sizeof(bool));
 			while (more_col_wrapping)
 			{
@@ -1411,20 +1404,18 @@ print_aligned_vertical(const printTableContent *cont,
 		/* We might need to do the rest of the calculation twice */
 		for (;;)
 		{
-			unsigned int width;
 
 			/* Total width required to not wrap data */
-			width = hwidth + swidth + dwidth;
+			unsigned int width = hwidth + swidth + dwidth;
 			/* ... and not the header lines, either */
 			if (width < rwidth)
 				width = rwidth;
 
 			if (output_columns > 0)
 			{
-				unsigned int min_width;
 
 				/* Minimum acceptable width: room for just 3 columns of data */
-				min_width = hwidth + swidth + 3;
+				unsigned int min_width = hwidth + swidth + 3;
 				/* ... but not less than what the record header lines need */
 				if (min_width < rwidth)
 					min_width = rwidth;
@@ -2980,10 +2971,9 @@ PageOutput(int lines, const printTableOpt *topt)
 #ifdef TIOCGWINSZ
 		unsigned short int pager = topt->pager;
 		int			min_lines = topt->pager_min_lines;
-		int			result;
 		struct winsize screen_size;
 
-		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
+		int			result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
 
 		/* >= accounts for a one-line prompt */
 		if (result == -1
@@ -2991,10 +2981,8 @@ PageOutput(int lines, const printTableOpt *topt)
 			|| pager > 1)
 #endif
 		{
-			const char *pagerprog;
-			FILE	   *pagerpipe;
 
-			pagerprog = getenv("PSQL_PAGER");
+			const char *pagerprog = getenv("PSQL_PAGER");
 			if (!pagerprog)
 				pagerprog = getenv("PAGER");
 			if (!pagerprog)
@@ -3006,7 +2994,7 @@ PageOutput(int lines, const printTableOpt *topt)
 					return stdout;
 			}
 			disable_sigpipe_trap();
-			pagerpipe = popen(pagerprog, "w");
+			FILE	   *pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)
 				return pagerpipe;
 			/* if popen fails, silently proceed without pager */
@@ -3253,9 +3241,8 @@ printTableCleanup(printTableContent *const content)
 	{
 		for (content->footer = content->footers; content->footer;)
 		{
-			printTableFooter *f;
 
-			f = content->footer;
+			printTableFooter *f = content->footer;
 			content->footer = f->next;
 			free(f->data);
 			free(f);
@@ -3449,7 +3436,6 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 		{
 			char	   *cell;
 			bool		mustfree = false;
-			bool		translate;
 
 			if (PQgetisnull(result, r, c))
 				cell = opt->nullPrint ? opt->nullPrint : "";
@@ -3463,7 +3449,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 				}
 			}
 
-			translate = (opt->translate_columns && opt->translate_columns[c]);
+			bool		translate = (opt->translate_columns && opt->translate_columns[c]);
 			printTableAddCell(&cont, cell, translate, mustfree);
 		}
 	}
@@ -3511,9 +3497,8 @@ column_type_alignment(Oid ftype)
 void
 setDecimalLocale(void)
 {
-	struct lconv *extlconv;
 
-	extlconv = localeconv();
+	struct lconv *extlconv = localeconv();
 
 	/* Don't accept an empty decimal_point string */
 	if (*extlconv->decimal_point)
@@ -3563,15 +3548,12 @@ refresh_utf8format(const printTableOpt *opt)
 {
 	printTextFormat *popt = &pg_utf8format;
 
-	const unicodeStyleBorderFormat *border;
-	const unicodeStyleRowFormat *header;
-	const unicodeStyleColumnFormat *column;
 
 	popt->name = "unicode";
 
-	border = &unicode_style.border_style[opt->unicode_border_linestyle];
-	header = &unicode_style.row_style[opt->unicode_header_linestyle];
-	column = &unicode_style.column_style[opt->unicode_column_linestyle];
+	const unicodeStyleBorderFormat *border = &unicode_style.border_style[opt->unicode_border_linestyle];
+	const unicodeStyleRowFormat *header = &unicode_style.row_style[opt->unicode_header_linestyle];
+	const unicodeStyleColumnFormat *column = &unicode_style.column_style[opt->unicode_column_linestyle];
 
 	popt->lrule[PRINT_RULE_TOP].hrule = border->horizontal;
 	popt->lrule[PRINT_RULE_TOP].leftvrule = border->down_and_right;

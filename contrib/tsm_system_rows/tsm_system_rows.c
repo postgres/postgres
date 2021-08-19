@@ -106,12 +106,11 @@ system_rows_samplescangetsamplesize(PlannerInfo *root,
 									BlockNumber *pages,
 									double *tuples)
 {
-	Node	   *limitnode;
 	int64		ntuples;
 	double		npages;
 
 	/* Try to extract an estimate for the limit rowcount */
-	limitnode = (Node *) linitial(paramexprs);
+	Node	   *limitnode = (Node *) linitial(paramexprs);
 	limitnode = estimate_expression_value(root, limitnode);
 
 	if (IsA(limitnode, Const) &&

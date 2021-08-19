@@ -65,7 +65,6 @@ MergeAppendState *
 ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 {
 	MergeAppendState *mergestate = makeNode(MergeAppendState);
-	PlanState **mergeplanstates;
 	Bitmapset  *validsubplans;
 	int			nplans;
 	int			i,
@@ -84,12 +83,11 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	/* If run-time partition pruning is enabled, then set that up now */
 	if (node->part_prune_info != NULL)
 	{
-		PartitionPruneState *prunestate;
 
 		/* We may need an expression context to evaluate partition exprs */
 		ExecAssignExprContext(estate, &mergestate->ps);
 
-		prunestate = ExecCreatePartitionPruneState(&mergestate->ps,
+		PartitionPruneState *prunestate = ExecCreatePartitionPruneState(&mergestate->ps,
 												   node->part_prune_info);
 		mergestate->ms_prune_state = prunestate;
 
@@ -132,7 +130,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		mergestate->ms_prune_state = NULL;
 	}
 
-	mergeplanstates = (PlanState **) palloc(nplans * sizeof(PlanState *));
+	PlanState **mergeplanstates = (PlanState **) palloc(nplans * sizeof(PlanState *));
 	mergestate->mergeplans = mergeplanstates;
 	mergestate->ms_nplans = nplans;
 
@@ -303,12 +301,11 @@ heap_compare_slots(Datum a, Datum b, void *arg)
 					datum2;
 		bool		isNull1,
 					isNull2;
-		int			compare;
 
 		datum1 = slot_getattr(s1, attno, &isNull1);
 		datum2 = slot_getattr(s2, attno, &isNull2);
 
-		compare = ApplySortComparator(datum1, isNull1,
+		int			compare = ApplySortComparator(datum1, isNull1,
 									  datum2, isNull2,
 									  sortKey);
 		if (compare != 0)
@@ -331,15 +328,13 @@ heap_compare_slots(Datum a, Datum b, void *arg)
 void
 ExecEndMergeAppend(MergeAppendState *node)
 {
-	PlanState **mergeplans;
-	int			nplans;
 	int			i;
 
 	/*
 	 * get information from the node
 	 */
-	mergeplans = node->mergeplans;
-	nplans = node->ms_nplans;
+	PlanState **mergeplans = node->mergeplans;
+	int			nplans = node->ms_nplans;
 
 	/*
 	 * shut down each of the subscans

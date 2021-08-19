@@ -53,14 +53,13 @@ static Gene edge_failure(PlannerInfo *root, Gene *gene, int index, Edge *edge_ta
 Edge *
 alloc_edge_table(PlannerInfo *root, int num_gene)
 {
-	Edge	   *edge_table;
 
 	/*
 	 * palloc one extra location so that nodes numbered 1..n can be indexed
 	 * directly; 0 will not be used
 	 */
 
-	edge_table = (Edge *) palloc((num_gene + 1) * sizeof(Edge));
+	Edge	   *edge_table = (Edge *) palloc((num_gene + 1) * sizeof(Edge));
 
 	return edge_table;
 }
@@ -152,13 +151,12 @@ static int
 gimme_edge(PlannerInfo *root, Gene gene1, Gene gene2, Edge *edge_table)
 {
 	int			i;
-	int			edges;
 	int			city1 = (int) gene1;
 	int			city2 = (int) gene2;
 
 
 	/* check whether edge city1->city2 already exists */
-	edges = edge_table[city1].total_edges;
+	int			edges = edge_table[city1].total_edges;
 
 	for (i = 0; i < edges; i++)
 	{
@@ -283,16 +281,14 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 {
 	int			i;
 	Gene		friend;
-	int			minimum_edges;
 	int			minimum_count = -1;
-	int			rand_decision;
 
 	/*
 	 * no point has edges to more than 4 other points thus, this contrived
 	 * minimum will be replaced
 	 */
 
-	minimum_edges = 5;
+	int			minimum_edges = 5;
 
 	/* consider candidate destination points in edge list */
 
@@ -342,7 +338,7 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 
 
 	/* random decision of the possible candidates to use */
-	rand_decision = geqo_randint(root, minimum_count - 1, 0);
+	int			rand_decision = geqo_randint(root, minimum_count - 1, 0);
 
 
 	for (i = 0; i < edge.unused_edges; i++)

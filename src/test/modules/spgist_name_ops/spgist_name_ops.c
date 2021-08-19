@@ -50,9 +50,8 @@ spgist_name_config(PG_FUNCTION_ARGS)
 static Datum
 formTextDatum(const char *data, int datalen)
 {
-	char	   *p;
 
-	p = (char *) palloc(datalen + VARHDRSZ);
+	char	   *p = (char *) palloc(datalen + VARHDRSZ);
 
 	if (datalen + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
 	{
@@ -209,11 +208,10 @@ spgist_name_choose(PG_FUNCTION_ARGS)
 		 * to provide the correct levelAdd and restDatum values, and those are
 		 * the same regardless of which node gets chosen by core.)
 		 */
-		int			levelAdd;
 
 		out->resultType = spgMatchNode;
 		out->result.matchNode.nodeN = i;
-		levelAdd = commonLen;
+		int			levelAdd = commonLen;
 		if (nodeChar >= 0)
 			levelAdd++;
 		out->result.matchNode.levelAdd = levelAdd;
@@ -266,9 +264,6 @@ spgist_name_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	text	   *reconstructedValue;
-	text	   *reconstrText;
-	int			maxReconstrLen;
 	text	   *prefixText = NULL;
 	int			prefixSize = 0;
 	int			i;
@@ -287,11 +282,11 @@ spgist_name_inner_consistent(PG_FUNCTION_ARGS)
 	 * created by a previous invocation of this routine, and we always emit
 	 * long-format reconstructed values.
 	 */
-	reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
+	text	   *reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
 	Assert(reconstructedValue == NULL ? in->level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstructedValue) == in->level);
 
-	maxReconstrLen = in->level + 1;
+	int			maxReconstrLen = in->level + 1;
 	if (in->hasPrefix)
 	{
 		prefixText = DatumGetTextPP(in->prefixDatum);
@@ -299,7 +294,7 @@ spgist_name_inner_consistent(PG_FUNCTION_ARGS)
 		maxReconstrLen += prefixSize;
 	}
 
-	reconstrText = palloc(VARHDRSZ + maxReconstrLen);
+	text	   *reconstrText = palloc(VARHDRSZ + maxReconstrLen);
 	SET_VARSIZE(reconstrText, VARHDRSZ + maxReconstrLen);
 
 	if (in->level)
@@ -341,16 +336,12 @@ spgist_name_inner_consistent(PG_FUNCTION_ARGS)
 		for (j = 0; j < in->nkeys; j++)
 		{
 			StrategyNumber strategy = in->scankeys[j].sk_strategy;
-			Name		inName;
-			char	   *inStr;
-			int			inSize;
-			int			r;
 
-			inName = DatumGetName(in->scankeys[j].sk_argument);
-			inStr = NameStr(*inName);
-			inSize = strlen(inStr);
+			Name		inName = DatumGetName(in->scankeys[j].sk_argument);
+			char	   *inStr = NameStr(*inName);
+			int			inSize = strlen(inStr);
 
-			r = memcmp(VARDATA(reconstrText), inStr,
+			int			r = memcmp(VARDATA(reconstrText), inStr,
 					   Min(inSize, thisLen));
 
 			switch (strategy)
@@ -402,9 +393,6 @@ spgist_name_leaf_consistent(PG_FUNCTION_ARGS)
 	int			level = in->level;
 	text	   *leafValue,
 			   *reconstrValue = NULL;
-	char	   *fullValue;
-	int			fullLen;
-	bool		res;
 	int			j;
 
 	/* all tests are exact */
@@ -420,8 +408,8 @@ spgist_name_leaf_consistent(PG_FUNCTION_ARGS)
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);
 
 	/* Reconstruct the Name represented by this leaf tuple */
-	fullValue = palloc0(NAMEDATALEN);
-	fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
+	char	   *fullValue = palloc0(NAMEDATALEN);
+	int			fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
 	Assert(fullLen < NAMEDATALEN);
 	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
 	{
@@ -439,17 +427,16 @@ spgist_name_leaf_consistent(PG_FUNCTION_ARGS)
 	out->leafValue = PointerGetDatum(fullValue);
 
 	/* Perform the required comparison(s) */
-	res = true;
+	bool		res = true;
 	for (j = 0; j < in->nkeys; j++)
 	{
 		StrategyNumber strategy = in->scankeys[j].sk_strategy;
 		Name		queryName = DatumGetName(in->scankeys[j].sk_argument);
 		char	   *queryStr = NameStr(*queryName);
 		int			queryLen = strlen(queryStr);
-		int			r;
 
 		/* Non-collation-aware comparison */
-		r = memcmp(fullValue, queryStr, Min(queryLen, fullLen));
+		int			r = memcmp(fullValue, queryStr, Min(queryLen, fullLen));
 
 		if (r == 0)
 		{

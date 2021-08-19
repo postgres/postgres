@@ -44,10 +44,9 @@ spgistBuildCallback(Relation index, ItemPointer tid, Datum *values,
 					bool *isnull, bool tupleIsAlive, void *state)
 {
 	SpGistBuildState *buildstate = (SpGistBuildState *) state;
-	MemoryContext oldCtx;
 
 	/* Work in temp context, and reset it after each tuple */
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
 	/*
 	 * Even though no concurrent insertions can be happening, we still might
@@ -74,8 +73,6 @@ spgistBuildCallback(Relation index, ItemPointer tid, Datum *values,
 IndexBuildResult *
 spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
-	IndexBuildResult *result;
-	double		reltuples;
 	SpGistBuildState buildstate;
 	Buffer		metabuffer,
 				rootbuffer,
@@ -123,7 +120,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 											  "SP-GiST build temporary context",
 											  ALLOCSET_DEFAULT_SIZES);
 
-	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
+	double		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   spgistBuildCallback, (void *) &buildstate,
 									   NULL);
 
@@ -142,7 +139,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 						  true);
 	}
 
-	result = (IndexBuildResult *) palloc0(sizeof(IndexBuildResult));
+	IndexBuildResult *result = (IndexBuildResult *) palloc0(sizeof(IndexBuildResult));
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 
@@ -155,10 +152,9 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 void
 spgbuildempty(Relation index)
 {
-	Page		page;
 
 	/* Construct metapage. */
-	page = (Page) palloc(BLCKSZ);
+	Page		page = (Page) palloc(BLCKSZ);
 	SpGistInitMetapage(page);
 
 	/*
@@ -211,13 +207,11 @@ spginsert(Relation index, Datum *values, bool *isnull,
 		  IndexInfo *indexInfo)
 {
 	SpGistState spgstate;
-	MemoryContext oldCtx;
-	MemoryContext insertCtx;
 
-	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "SP-GiST insert temporary context",
 									  ALLOCSET_DEFAULT_SIZES);
-	oldCtx = MemoryContextSwitchTo(insertCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(insertCtx);
 
 	initSpGistState(&spgstate, index);
 

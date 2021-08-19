@@ -71,7 +71,6 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 	for (i = 0; i < tupdesc->natts; ++i)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-		Datum		value;
 
 		if (slot->tts_isnull[i])
 		{
@@ -79,7 +78,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 			continue;
 		}
 
-		value = slot->tts_values[i];
+		Datum		value = slot->tts_values[i];
 
 		/*
 		 * We can't call the regular type output functions here because we
@@ -103,9 +102,8 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 				{
 					int32		num = DatumGetInt32(value);
 					char		str[12];	/* sign, 10 digits and '\0' */
-					int			len;
 
-					len = pg_ltoa(num, str);
+					int			len = pg_ltoa(num, str);
 					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;
@@ -114,9 +112,8 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 				{
 					int64		num = DatumGetInt64(value);
 					char		str[MAXINT8LEN + 1];
-					int			len;
 
-					len = pg_lltoa(num, str);
+					int			len = pg_lltoa(num, str);
 					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;

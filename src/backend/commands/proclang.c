@@ -43,15 +43,11 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	Oid			handlerOid,
 				inlineOid,
 				valOid;
-	Oid			funcrettype;
 	Oid			funcargtypes[1];
-	Relation	rel;
-	TupleDesc	tupDesc;
 	Datum		values[Natts_pg_language];
 	bool		nulls[Natts_pg_language];
 	bool		replaces[Natts_pg_language];
 	NameData	langname;
-	HeapTuple	oldtup;
 	HeapTuple	tup;
 	Oid			langoid;
 	bool		is_update;
@@ -73,7 +69,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	Assert(stmt->plhandler);
 	handlerOid = LookupFuncName(stmt->plhandler, 0, NULL, false);
-	funcrettype = get_func_rettype(handlerOid);
+	Oid			funcrettype = get_func_rettype(handlerOid);
 	if (funcrettype != LANGUAGE_HANDLEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -101,8 +97,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		valOid = InvalidOid;
 
 	/* ok to create it */
-	rel = table_open(LanguageRelationId, RowExclusiveLock);
-	tupDesc = RelationGetDescr(rel);
+	Relation	rel = table_open(LanguageRelationId, RowExclusiveLock);
+	TupleDesc	tupDesc = RelationGetDescr(rel);
 
 	/* Prepare data to be inserted */
 	memset(values, 0, sizeof(values));
@@ -120,7 +116,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	nulls[Anum_pg_language_lanacl - 1] = true;
 
 	/* Check for pre-existing definition */
-	oldtup = SearchSysCache1(LANGNAME, PointerGetDatum(languageName));
+	HeapTuple	oldtup = SearchSysCache1(LANGNAME, PointerGetDatum(languageName));
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -227,9 +223,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 Oid
 get_language_oid(const char *langname, bool missing_ok)
 {
-	Oid			oid;
 
-	oid = GetSysCacheOid1(LANGNAME, Anum_pg_language_oid,
+	Oid			oid = GetSysCacheOid1(LANGNAME, Anum_pg_language_oid,
 						  CStringGetDatum(langname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,

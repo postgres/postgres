@@ -69,7 +69,6 @@ void
 pgwin32_signal_initialize(void)
 {
 	int			i;
-	HANDLE		signal_thread_handle;
 
 	InitializeCriticalSection(&pg_signal_crit_sec);
 
@@ -88,7 +87,7 @@ pgwin32_signal_initialize(void)
 				(errmsg_internal("could not create signal event: error code %lu", GetLastError())));
 
 	/* Create thread for handling signals */
-	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
+	HANDLE		signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
 	if (signal_thread_handle == NULL)
 		ereport(FATAL,
 				(errmsg_internal("could not create signal handler thread")));
@@ -146,9 +145,8 @@ pgwin32_dispatch_queued_signals(void)
 int
 pqsigsetmask(int mask)
 {
-	int			prevmask;
 
-	prevmask = pg_signal_mask;
+	int			prevmask = pg_signal_mask;
 	pg_signal_mask = mask;
 
 	/*
@@ -169,11 +167,10 @@ pqsigsetmask(int mask)
 pqsigfunc
 pqsignal(int signum, pqsigfunc handler)
 {
-	pqsigfunc	prevfunc;
 
 	if (signum >= PG_SIGNAL_COUNT || signum < 0)
 		return SIG_ERR;
-	prevfunc = pg_signal_array[signum];
+	pqsigfunc	prevfunc = pg_signal_array[signum];
 	pg_signal_array[signum] = handler;
 	return prevfunc;
 }
@@ -183,11 +180,10 @@ HANDLE
 pgwin32_create_signal_listener(pid_t pid)
 {
 	char		pipename[128];
-	HANDLE		pipe;
 
 	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", (int) pid);
 
-	pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
+	HANDLE		pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
 						   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
 						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
@@ -237,7 +233,6 @@ pg_signal_thread(LPVOID param)
 
 	for (;;)
 	{
-		BOOL		fConnected;
 
 		/* Create a new pipe instance if we don't have one. */
 		if (pipe == INVALID_HANDLE_VALUE)
@@ -259,7 +254,7 @@ pg_signal_thread(LPVOID param)
 		 * reach here, we'll get back a "failure" with ERROR_PIPE_CONNECTED,
 		 * which is actually a success (way to go, Microsoft).
 		 */
-		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+		BOOL		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 		if (fConnected)
 		{
 			/*

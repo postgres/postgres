@@ -64,11 +64,10 @@ fsm_set_avail(Page page, int slot, uint8 value)
 {
 	int			nodeno = NonLeafNodesPerPage + slot;
 	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
-	uint8		oldvalue;
 
 	Assert(slot < LeafNodesPerPage);
 
-	oldvalue = fsmpage->fp_nodes[nodeno];
+	uint8		oldvalue = fsmpage->fp_nodes[nodeno];
 
 	/* If the value hasn't changed, we don't need to do anything */
 	if (oldvalue == value && value <= fsmpage->fp_nodes[0])
@@ -82,15 +81,12 @@ fsm_set_avail(Page page, int slot, uint8 value)
 	 */
 	do
 	{
-		uint8		newvalue = 0;
-		int			lchild;
-		int			rchild;
 
 		nodeno = parentof(nodeno);
-		lchild = leftchild(nodeno);
-		rchild = lchild + 1;
+		int			lchild = leftchild(nodeno);
+		int			rchild = lchild + 1;
 
-		newvalue = fsmpage->fp_nodes[lchild];
+		uint8		newvalue = fsmpage->fp_nodes[lchild];
 		if (rchild < NodesPerPage)
 			newvalue = Max(newvalue,
 						   fsmpage->fp_nodes[rchild]);
@@ -160,8 +156,6 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 {
 	Page		page = BufferGetPage(buf);
 	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
-	int			nodeno;
-	int			target;
 	uint16		slot;
 
 restart:
@@ -178,7 +172,7 @@ restart:
 	 * sane.  (This also handles wrapping around when the prior call returned
 	 * the last slot on the page.)
 	 */
-	target = fsmpage->fp_next_slot;
+	int			target = fsmpage->fp_next_slot;
 	if (target < 0 || target >= LeafNodesPerPage)
 		target = 0;
 	target += NonLeafNodesPerPage;
@@ -224,7 +218,7 @@ restart:
 	 * to the right of (allowing for wraparound) our start point.
 	 *----------
 	 */
-	nodeno = target;
+	int			nodeno = target;
 	while (nodeno > 0)
 	{
 		if (fsmpage->fp_nodes[nodeno] >= minvalue)
@@ -313,13 +307,12 @@ bool
 fsm_truncate_avail(Page page, int nslots)
 {
 	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
-	uint8	   *ptr;
 	bool		changed = false;
 
 	Assert(nslots >= 0 && nslots < LeafNodesPerPage);
 
 	/* Clear all truncated leaf nodes */
-	ptr = &fsmpage->fp_nodes[NonLeafNodesPerPage + nslots];
+	uint8	   *ptr = &fsmpage->fp_nodes[NonLeafNodesPerPage + nslots];
 	for (; ptr < &fsmpage->fp_nodes[NodesPerPage]; ptr++)
 	{
 		if (*ptr != 0)

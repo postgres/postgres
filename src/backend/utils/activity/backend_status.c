@@ -83,10 +83,9 @@ static void pgstat_setup_backend_status_context(void);
 Size
 BackendStatusShmemSize(void)
 {
-	Size		size;
 
 	/* BackendStatusArray: */
-	size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+	Size		size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
 	/* BackendAppnameBuffer: */
 	size = add_size(size,
 					mul_size(NAMEDATALEN, NumBackendStatSlots));
@@ -116,13 +115,12 @@ BackendStatusShmemSize(void)
 void
 CreateSharedBackendStatus(void)
 {
-	Size		size;
 	bool		found;
 	int			i;
 	char	   *buffer;
 
 	/* Create or attach to the shared array */
-	size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+	Size		size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
 	BackendStatusArray = (PgBackendStatus *)
 		ShmemInitStruct("Backend Status Array", size, &found);
 
@@ -199,12 +197,11 @@ CreateSharedBackendStatus(void)
 
 	if (!found)
 	{
-		PgBackendSSLStatus *ptr;
 
 		MemSet(BackendSslStatusBuffer, 0, size);
 
 		/* Initialize st_sslstatus pointers. */
-		ptr = BackendSslStatusBuffer;
+		PgBackendSSLStatus *ptr = BackendSslStatusBuffer;
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_sslstatus = ptr;
@@ -221,12 +218,11 @@ CreateSharedBackendStatus(void)
 
 	if (!found)
 	{
-		PgBackendGSSStatus *ptr;
 
 		MemSet(BackendGssStatusBuffer, 0, size);
 
 		/* Initialize st_gssstatus pointers. */
-		ptr = BackendGssStatusBuffer;
+		PgBackendGSSStatus *ptr = BackendGssStatusBuffer;
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_gssstatus = ptr;
@@ -518,8 +514,6 @@ void
 pgstat_report_activity(BackendState state, const char *cmd_str)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
-	TimestampTz start_timestamp;
-	TimestampTz current_timestamp;
 	int			len = 0;
 
 	TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
@@ -556,7 +550,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	 * To minimize the time spent modifying the entry, and avoid risk of
 	 * errors inside the critical section, fetch all the needed data first.
 	 */
-	start_timestamp = GetCurrentStatementStartTimestamp();
+	TimestampTz start_timestamp = GetCurrentStatementStartTimestamp();
 	if (cmd_str != NULL)
 	{
 		/*
@@ -566,7 +560,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 		 */
 		len = Min(strlen(cmd_str), pgstat_track_activity_query_size - 1);
 	}
-	current_timestamp = GetCurrentTimestamp();
+	TimestampTz current_timestamp = GetCurrentTimestamp();
 
 	/*
 	 * If the state has changed from "active" or "idle in transaction",
@@ -668,13 +662,12 @@ void
 pgstat_report_appname(const char *appname)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
-	int			len;
 
 	if (!beentry)
 		return;
 
 	/* This should be unnecessary if GUC did its job, but be safe */
-	len = pg_mbcliplen(appname, strlen(appname), NAMEDATALEN - 1);
+	int			len = pg_mbcliplen(appname, strlen(appname), NAMEDATALEN - 1);
 
 	/*
 	 * Update my status entry, following the protocol of bumping
@@ -888,10 +881,9 @@ pgstat_read_current_status(void)
 const char *
 pgstat_get_backend_current_activity(int pid, bool checkUser)
 {
-	PgBackendStatus *beentry;
 	int			i;
 
-	beentry = BackendStatusArray;
+	PgBackendStatus *beentry = BackendStatusArray;
 	for (i = 1; i <= MaxBackends; i++)
 	{
 		/*
@@ -966,10 +958,9 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 const char *
 pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 {
-	volatile PgBackendStatus *beentry;
 	int			i;
 
-	beentry = BackendStatusArray;
+	volatile PgBackendStatus *beentry = BackendStatusArray;
 
 	/*
 	 * We probably shouldn't get here before shared memory has been set up,
@@ -984,7 +975,6 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 		{
 			/* Read pointer just once, so it can't change after validation */
 			const char *activity = beentry->st_activity_raw;
-			const char *activity_last;
 
 			/*
 			 * We mustn't access activity string before we verify that it
@@ -992,7 +982,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 			 * entire string including its ending is contained within the
 			 * buffer, subtract one activity length from the buffer size.
 			 */
-			activity_last = BackendActivityBuffer + BackendActivityBufferSize
+			const char *activity_last = BackendActivityBuffer + BackendActivityBufferSize
 				- pgstat_track_activity_query_size;
 
 			if (activity < BackendActivityBuffer ||
@@ -1113,9 +1103,6 @@ pgstat_fetch_stat_numbackends(void)
 char *
 pgstat_clip_activity(const char *raw_activity)
 {
-	char	   *activity;
-	int			rawlen;
-	int			cliplen;
 
 	/*
 	 * Some callers, like pgstat_get_backend_current_activity(), do not
@@ -1125,10 +1112,10 @@ pgstat_clip_activity(const char *raw_activity)
 	 * underlying buffer is guaranteed to be pgstat_track_activity_query_size
 	 * large.
 	 */
-	activity = pnstrdup(raw_activity, pgstat_track_activity_query_size - 1);
+	char	   *activity = pnstrdup(raw_activity, pgstat_track_activity_query_size - 1);
 
 	/* now double-guaranteed to be NUL terminated */
-	rawlen = strlen(activity);
+	int			rawlen = strlen(activity);
 
 	/*
 	 * All supported server-encodings make it possible to determine the length
@@ -1138,7 +1125,7 @@ pgstat_clip_activity(const char *raw_activity)
 	 * even if the string earlier was truncated in the middle of a multi-byte
 	 * character.
 	 */
-	cliplen = pg_mbcliplen(activity, rawlen,
+	int			cliplen = pg_mbcliplen(activity, rawlen,
 						   pgstat_track_activity_query_size - 1);
 
 	activity[cliplen] = '\0';

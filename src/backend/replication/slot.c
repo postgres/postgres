@@ -379,7 +379,6 @@ SearchNamedReplicationSlot(const char *name, bool need_lock)
 void
 ReplicationSlotAcquire(const char *name, bool nowait)
 {
-	ReplicationSlot *s;
 	int			active_pid;
 
 	AssertArg(name != NULL);
@@ -393,7 +392,7 @@ retry:
 	 * Search for the slot with the specified name if the slot to acquire is
 	 * not given. If the slot is not found, we either return -1 or error out.
 	 */
-	s = SearchNamedReplicationSlot(name, false);
+	ReplicationSlot *s = SearchNamedReplicationSlot(name, false);
 	if (s == NULL || !s->in_use)
 	{
 		LWLockRelease(ReplicationSlotControlLock);
@@ -777,15 +776,13 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 	for (i = 0; i < max_replication_slots; i++)
 	{
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
-		TransactionId effective_xmin;
-		TransactionId effective_catalog_xmin;
 
 		if (!s->in_use)
 			continue;
 
 		SpinLockAcquire(&s->mutex);
-		effective_xmin = s->effective_xmin;
-		effective_catalog_xmin = s->effective_catalog_xmin;
+		TransactionId effective_xmin = s->effective_xmin;
+		TransactionId effective_catalog_xmin = s->effective_catalog_xmin;
 		SpinLockRelease(&s->mutex);
 
 		/* check the data xmin */
@@ -869,10 +866,9 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationSlot *s;
 		XLogRecPtr	restart_lsn;
 
-		s = &ReplicationSlotCtl->replication_slots[i];
+		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 
 		/* cannot change while ReplicationSlotCtlLock is held */
 		if (!s->in_use)
@@ -921,9 +917,8 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationSlot *s;
 
-		s = &ReplicationSlotCtl->replication_slots[i];
+		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 
 		/* cannot change while ReplicationSlotCtlLock is held */
 		if (!s->in_use)
@@ -976,11 +971,8 @@ restart:
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationSlot *s;
-		char	   *slotname;
-		int			active_pid;
 
-		s = &ReplicationSlotCtl->replication_slots[i];
+		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 
 		/* cannot change while ReplicationSlotCtlLock is held */
 		if (!s->in_use)
@@ -997,8 +989,8 @@ restart:
 		/* acquire slot, so ReplicationSlotDropAcquired can be reused  */
 		SpinLockAcquire(&s->mutex);
 		/* can't change while ReplicationSlotControlLock is held */
-		slotname = NameStr(s->data.name);
-		active_pid = s->active_pid;
+		char	   *slotname = NameStr(s->data.name);
+		int			active_pid = s->active_pid;
 		if (active_pid == 0)
 		{
 			MyReplicationSlot = s;
@@ -1098,7 +1090,6 @@ ReplicationSlotReserveWal(void)
 		 */
 		if (!RecoveryInProgress() && SlotIsLogical(slot))
 		{
-			XLogRecPtr	flushptr;
 
 			/* start at current insert position */
 			restart_lsn = GetXLogInsertRecPtr();
@@ -1107,7 +1098,7 @@ ReplicationSlotReserveWal(void)
 			SpinLockRelease(&slot->mutex);
 
 			/* make sure we have enough information to start */
-			flushptr = LogStandbySnapshot();
+			XLogRecPtr	flushptr = LogStandbySnapshot();
 
 			/* and make sure it's fsynced to disk */
 			XLogFlush(flushptr);
@@ -1158,8 +1149,6 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 	for (;;)
 	{
 		XLogRecPtr	restart_lsn;
-		NameData	slotname;
-		int			active_pid = 0;
 
 		Assert(LWLockHeldByMeInMode(ReplicationSlotControlLock, LW_SHARED));
 
@@ -1193,8 +1182,8 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 			break;
 		}
 
-		slotname = s->data.name;
-		active_pid = s->active_pid;
+		NameData	slotname = s->data.name;
+		int			active_pid = s->active_pid;
 
 		/*
 		 * If the slot can be acquired, do so and mark it invalidated
@@ -1382,13 +1371,12 @@ CheckPointReplicationSlots(void)
 void
 StartupReplicationSlots(void)
 {
-	DIR		   *replication_dir;
 	struct dirent *replication_de;
 
 	elog(DEBUG1, "starting up replication slots");
 
 	/* restore all slots by iterating over all on-disk entries */
-	replication_dir = AllocateDir("pg_replslot");
+	DIR		   *replication_dir = AllocateDir("pg_replslot");
 	while ((replication_de = ReadDir(replication_dir, "pg_replslot")) != NULL)
 	{
 		struct stat statbuf;
@@ -1505,13 +1493,11 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 {
 	char		tmppath[MAXPGPATH];
 	char		path[MAXPGPATH];
-	int			fd;
 	ReplicationSlotOnDisk cp;
-	bool		was_dirty;
 
 	/* first check whether there's something to write out */
 	SpinLockAcquire(&slot->mutex);
-	was_dirty = slot->dirty;
+	bool		was_dirty = slot->dirty;
 	slot->just_dirtied = false;
 	SpinLockRelease(&slot->mutex);
 
@@ -1527,7 +1513,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	sprintf(tmppath, "%s/state.tmp", dir);
 	sprintf(path, "%s/state", dir);
 
-	fd = OpenTransientFile(tmppath, O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
+	int			fd = OpenTransientFile(tmppath, O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 	{
 		/*
@@ -1661,9 +1647,7 @@ RestoreSlotFromDisk(const char *name)
 	int			i;
 	char		slotdir[MAXPGPATH + 12];
 	char		path[MAXPGPATH + 22];
-	int			fd;
 	bool		restored = false;
-	int			readBytes;
 	pg_crc32c	checksum;
 
 	/* no need to lock here, no concurrent access allowed yet */
@@ -1681,7 +1665,7 @@ RestoreSlotFromDisk(const char *name)
 	elog(DEBUG1, "restoring replication slot from \"%s\"", path);
 
 	/* on some operating systems fsyncing a file requires O_RDWR */
-	fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+	int			fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
 
 	/*
 	 * We do not need to handle this as we are rename()ing the directory into
@@ -1711,7 +1695,7 @@ RestoreSlotFromDisk(const char *name)
 
 	/* read part of statefile that's guaranteed to be version independent */
 	pgstat_report_wait_start(WAIT_EVENT_REPLICATION_SLOT_READ);
-	readBytes = read(fd, &cp, ReplicationSlotOnDiskConstantSize);
+	int			readBytes = read(fd, &cp, ReplicationSlotOnDiskConstantSize);
 	pgstat_report_wait_end();
 	if (readBytes != ReplicationSlotOnDiskConstantSize)
 	{
@@ -1828,9 +1812,8 @@ RestoreSlotFromDisk(const char *name)
 	/* nothing can be active yet, don't lock anything */
 	for (i = 0; i < max_replication_slots; i++)
 	{
-		ReplicationSlot *slot;
 
-		slot = &ReplicationSlotCtl->replication_slots[i];
+		ReplicationSlot *slot = &ReplicationSlotCtl->replication_slots[i];
 
 		if (slot->in_use)
 			continue;

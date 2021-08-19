@@ -371,9 +371,8 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				{
 					Node	   *le = (Node *) lfirst(l);
 					Node	   *re = (Node *) lfirst(r);
-					Oid			coll;
 
-					coll = select_common_collation(context->pstate,
+					Oid			coll = select_common_collation(context->pstate,
 												   list_make2(le, re),
 												   true);
 					colls = lappend_oid(colls, coll);
@@ -510,11 +509,10 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				 * We needn't recurse, since the Query is already processed.
 				 */
 				Query	   *qtree = (Query *) node;
-				TargetEntry *tent;
 
 				if (qtree->targetList == NIL)
 					return false;
-				tent = linitial_node(TargetEntry, qtree->targetList);
+				TargetEntry *tent = linitial_node(TargetEntry, qtree->targetList);
 				if (tent->resjunk)
 					return false;
 
@@ -576,7 +574,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				 * General case for most expression nodes with children. First
 				 * recurse, then figure out what to assign to this node.
 				 */
-				Oid			typcollation;
 
 				/*
 				 * For most node types, we want to treat all the child
@@ -705,7 +702,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				/*
 				 * Now figure out what collation to assign to this node.
 				 */
-				typcollation = get_typcollation(exprType(node));
+				Oid			typcollation = get_typcollation(exprType(node));
 				if (OidIsValid(typcollation))
 				{
 					/* Node's result is collatable; what about its input? */
@@ -918,11 +915,10 @@ static void
 assign_ordered_set_collations(Aggref *aggref,
 							  assign_collations_context *loccontext)
 {
-	bool		merge_sort_collations;
 	ListCell   *lc;
 
 	/* Merge sort collations to parent only if there can be only one */
-	merge_sort_collations = (list_length(aggref->args) == 1 &&
+	bool		merge_sort_collations = (list_length(aggref->args) == 1 &&
 							 get_func_variadictype(aggref->aggfnoid) == InvalidOid);
 
 	/* Direct args, if any, are normal children of the Aggref node */
@@ -956,15 +952,13 @@ assign_hypothetical_collations(Aggref *aggref,
 {
 	ListCell   *h_cell = list_head(aggref->aggdirectargs);
 	ListCell   *s_cell = list_head(aggref->args);
-	bool		merge_sort_collations;
-	int			extra_args;
 
 	/* Merge sort collations to parent only if there can be only one */
-	merge_sort_collations = (list_length(aggref->args) == 1 &&
+	bool		merge_sort_collations = (list_length(aggref->args) == 1 &&
 							 get_func_variadictype(aggref->aggfnoid) == InvalidOid);
 
 	/* Process any non-hypothetical direct args */
-	extra_args = list_length(aggref->aggdirectargs) - list_length(aggref->args);
+	int			extra_args = list_length(aggref->aggdirectargs) - list_length(aggref->args);
 	Assert(extra_args >= 0);
 	while (extra_args-- > 0)
 	{

@@ -83,15 +83,13 @@ pg_GSS_load_servicename(PGconn *conn)
 {
 	OM_uint32	maj_stat,
 				min_stat;
-	int			maxlen;
 	gss_buffer_desc temp_gbuf;
-	char	   *host;
 
 	if (conn->gtarg_nam != NULL)
 		/* Already taken care of - move along */
 		return STATUS_OK;
 
-	host = PQhost(conn);
+	char	   *host = PQhost(conn);
 	if (!(host && host[0] != '\0'))
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
@@ -103,7 +101,7 @@ pg_GSS_load_servicename(PGconn *conn)
 	 * Import service principal name so the proper ticket can be acquired by
 	 * the GSSAPI system.
 	 */
-	maxlen = strlen(conn->krbsrvname) + strlen(host) + 2;
+	int			maxlen = strlen(conn->krbsrvname) + strlen(host) + 2;
 	temp_gbuf.value = (char *) malloc(maxlen);
 	if (!temp_gbuf.value)
 	{

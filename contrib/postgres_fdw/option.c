@@ -123,12 +123,10 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 			 * These must have a floating point value greater than or equal to
 			 * zero.
 			 */
-			char	   *value;
 			double		real_val;
-			bool		is_parsed;
 
-			value = defGetString(def);
-			is_parsed = parse_real(value, &real_val, 0, NULL);
+			char	   *value = defGetString(def);
+			bool		is_parsed = parse_real(value, &real_val, 0, NULL);
 
 			if (!is_parsed)
 				ereport(ERROR,
@@ -150,12 +148,10 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 		else if (strcmp(def->defname, "fetch_size") == 0 ||
 				 strcmp(def->defname, "batch_size") == 0)
 		{
-			char	   *value;
 			int			int_val;
-			bool		is_parsed;
 
-			value = defGetString(def);
-			is_parsed = parse_int(value, &int_val, 0, NULL);
+			char	   *value = defGetString(def);
+			bool		is_parsed = parse_int(value, &int_val, 0, NULL);
 
 			if (!is_parsed)
 				ereport(ERROR,
@@ -207,9 +203,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 static void
 InitPgFdwOptions(void)
 {
-	int			num_libpq_opts;
 	PQconninfoOption *lopt;
-	PgFdwOption *popt;
 
 	/* non-libpq FDW-specific FDW options */
 	static const PgFdwOption non_libpq_options[] = {
@@ -272,7 +266,7 @@ InitPgFdwOptions(void)
 				 errdetail("Could not get libpq's default connection options.")));
 
 	/* Count how many libpq options are available. */
-	num_libpq_opts = 0;
+	int			num_libpq_opts = 0;
 	for (lopt = libpq_options; lopt->keyword; lopt++)
 		num_libpq_opts++;
 
@@ -293,7 +287,7 @@ InitPgFdwOptions(void)
 				(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	popt = postgres_fdw_options;
+	PgFdwOption *popt = postgres_fdw_options;
 	for (lopt = libpq_options; lopt->keyword; lopt++)
 	{
 		/* Hide debug options, as well as settings we override internally. */
@@ -371,12 +365,11 @@ ExtractConnectionOptions(List *defelems, const char **keywords,
 						 const char **values)
 {
 	ListCell   *lc;
-	int			i;
 
 	/* Build our options lists if we didn't yet. */
 	InitPgFdwOptions();
 
-	i = 0;
+	int			i = 0;
 	foreach(lc, defelems)
 	{
 		DefElem    *d = (DefElem *) lfirst(lc);

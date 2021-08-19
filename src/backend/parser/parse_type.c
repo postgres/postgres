@@ -75,8 +75,6 @@ LookupTypeNameExtended(ParseState *pstate,
 					   bool temp_ok, bool missing_ok)
 {
 	Oid			typoid;
-	HeapTuple	tup;
-	int32		typmod;
 
 	if (typeName->names == NIL)
 	{
@@ -88,8 +86,6 @@ LookupTypeNameExtended(ParseState *pstate,
 		/* Handle %TYPE reference to type of an existing field */
 		RangeVar   *rel = makeRangeVar(NULL, NULL, typeName->location);
 		char	   *field = NULL;
-		Oid			relid;
-		AttrNumber	attnum;
 
 		/* deconstruct the name list */
 		switch (list_length(typeName->names))
@@ -132,8 +128,8 @@ LookupTypeNameExtended(ParseState *pstate,
 		 * concurrent DDL.  But taking a lock would carry a performance
 		 * penalty and would also require a permissions check.
 		 */
-		relid = RangeVarGetRelid(rel, NoLock, missing_ok);
-		attnum = get_attnum(relid, field);
+		Oid			relid = RangeVarGetRelid(rel, NoLock, missing_ok);
+		AttrNumber	attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
 		{
 			if (missing_ok)
@@ -171,12 +167,11 @@ LookupTypeNameExtended(ParseState *pstate,
 		if (schemaname)
 		{
 			/* Look in specific schema only */
-			Oid			namespaceId;
 			ParseCallbackState pcbstate;
 
 			setup_parser_errposition_callback(&pcbstate, pstate, typeName->location);
 
-			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+			Oid			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
 			if (OidIsValid(namespaceId))
 				typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 										 PointerGetDatum(typname),
@@ -204,11 +199,11 @@ LookupTypeNameExtended(ParseState *pstate,
 		return NULL;
 	}
 
-	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
+	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for type %u", typoid);
 
-	typmod = typenameTypeMod(pstate, typeName, (Type) tup);
+	int32		typmod = typenameTypeMod(pstate, typeName, (Type) tup);
 
 	if (typmod_p)
 		*typmod_p = typmod;
@@ -231,10 +226,8 @@ LookupTypeNameExtended(ParseState *pstate,
 Oid
 LookupTypeNameOid(ParseState *pstate, const TypeName *typeName, bool missing_ok)
 {
-	Oid			typoid;
-	Type		tup;
 
-	tup = LookupTypeName(pstate, typeName, NULL, missing_ok);
+	Type		tup = LookupTypeName(pstate, typeName, NULL, missing_ok);
 	if (tup == NULL)
 	{
 		if (!missing_ok)
@@ -247,7 +240,7 @@ LookupTypeNameOid(ParseState *pstate, const TypeName *typeName, bool missing_ok)
 		return InvalidOid;
 	}
 
-	typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
+	Oid			typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 
 	return typoid;
@@ -263,9 +256,8 @@ LookupTypeNameOid(ParseState *pstate, const TypeName *typeName, bool missing_ok)
 Type
 typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
 {
-	Type		tup;
 
-	tup = LookupTypeName(pstate, typeName, typmod_p, false);
+	Type		tup = LookupTypeName(pstate, typeName, typmod_p, false);
 	if (tup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -290,11 +282,9 @@ typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
 Oid
 typenameTypeId(ParseState *pstate, const TypeName *typeName)
 {
-	Oid			typoid;
-	Type		tup;
 
-	tup = typenameType(pstate, typeName, NULL);
-	typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
+	Type		tup = typenameType(pstate, typeName, NULL);
+	Oid			typoid = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 
 	return typoid;
@@ -310,9 +300,8 @@ void
 typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
 					 Oid *typeid_p, int32 *typmod_p)
 {
-	Type		tup;
 
-	tup = typenameType(pstate, typeName, typmod_p);
+	Type		tup = typenameType(pstate, typeName, typmod_p);
 	*typeid_p = ((Form_pg_type) GETSTRUCT(tup))->oid;
 	ReleaseSysCache(tup);
 }
@@ -331,12 +320,7 @@ typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
 static int32
 typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 {
-	int32		result;
-	Oid			typmodin;
-	Datum	   *datums;
-	int			n;
 	ListCell   *l;
-	ArrayType  *arrtypmod;
 	ParseCallbackState pcbstate;
 
 	/* Return prespecified typmod if no typmod expressions */
@@ -355,7 +339,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 						TypeNameToString(typeName)),
 				 parser_errposition(pstate, typeName->location)));
 
-	typmodin = ((Form_pg_type) GETSTRUCT(typ))->typmodin;
+	Oid			typmodin = ((Form_pg_type) GETSTRUCT(typ))->typmodin;
 
 	if (typmodin == InvalidOid)
 		ereport(ERROR,
@@ -369,8 +353,8 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 	 * Currently, we allow simple numeric constants, string literals, and
 	 * identifiers; possibly this list could be extended.
 	 */
-	datums = (Datum *) palloc(list_length(typeName->typmods) * sizeof(Datum));
-	n = 0;
+	Datum	   *datums = (Datum *) palloc(list_length(typeName->typmods) * sizeof(Datum));
+	int			n = 0;
 	foreach(l, typeName->typmods)
 	{
 		Node	   *tm = (Node *) lfirst(l);
@@ -408,13 +392,13 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 	}
 
 	/* hardwired knowledge about cstring's representation details here */
-	arrtypmod = construct_array(datums, n, CSTRINGOID,
+	ArrayType  *arrtypmod = construct_array(datums, n, CSTRINGOID,
 								-2, false, TYPALIGN_CHAR);
 
 	/* arrange to report location if type's typmodin function fails */
 	setup_parser_errposition_callback(&pcbstate, pstate, typeName->location);
 
-	result = DatumGetInt32(OidFunctionCall1(typmodin,
+	int32		result = DatumGetInt32(OidFunctionCall1(typmodin,
 											PointerGetDatum(arrtypmod)));
 
 	cancel_parser_errposition_callback(&pcbstate);
@@ -512,13 +496,12 @@ TypeNameListToString(List *typenames)
 Oid
 LookupCollation(ParseState *pstate, List *collnames, int location)
 {
-	Oid			colloid;
 	ParseCallbackState pcbstate;
 
 	if (pstate)
 		setup_parser_errposition_callback(&pcbstate, pstate, location);
 
-	colloid = get_collation_oid(collnames, false);
+	Oid			colloid = get_collation_oid(collnames, false);
 
 	if (pstate)
 		cancel_parser_errposition_callback(&pcbstate);
@@ -575,9 +558,8 @@ GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid)
 Type
 typeidType(Oid id)
 {
-	HeapTuple	tup;
 
-	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(id));
+	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(id));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", id);
 	return (Type) tup;
@@ -596,9 +578,8 @@ typeTypeId(Type tp)
 int16
 typeLen(Type t)
 {
-	Form_pg_type typ;
 
-	typ = (Form_pg_type) GETSTRUCT(t);
+	Form_pg_type typ = (Form_pg_type) GETSTRUCT(t);
 	return typ->typlen;
 }
 
@@ -606,9 +587,8 @@ typeLen(Type t)
 bool
 typeByVal(Type t)
 {
-	Form_pg_type typ;
 
-	typ = (Form_pg_type) GETSTRUCT(t);
+	Form_pg_type typ = (Form_pg_type) GETSTRUCT(t);
 	return typ->typbyval;
 }
 
@@ -616,9 +596,8 @@ typeByVal(Type t)
 char *
 typeTypeName(Type t)
 {
-	Form_pg_type typ;
 
-	typ = (Form_pg_type) GETSTRUCT(t);
+	Form_pg_type typ = (Form_pg_type) GETSTRUCT(t);
 	/* pstrdup here because result may need to outlive the syscache entry */
 	return pstrdup(NameStr(typ->typname));
 }
@@ -627,9 +606,8 @@ typeTypeName(Type t)
 Oid
 typeTypeRelid(Type typ)
 {
-	Form_pg_type typtup;
 
-	typtup = (Form_pg_type) GETSTRUCT(typ);
+	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(typ);
 	return typtup->typrelid;
 }
 
@@ -637,9 +615,8 @@ typeTypeRelid(Type typ)
 Oid
 typeTypeCollation(Type typ)
 {
-	Form_pg_type typtup;
 
-	typtup = (Form_pg_type) GETSTRUCT(typ);
+	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(typ);
 	return typtup->typcollation;
 }
 
@@ -665,15 +642,12 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 Oid
 typeidTypeRelid(Oid type_id)
 {
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-	Oid			result;
 
-	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
+	HeapTuple	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "cache lookup failed for type %u", type_id);
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	result = type->typrelid;
+	Form_pg_type type = (Form_pg_type) GETSTRUCT(typeTuple);
+	Oid			result = type->typrelid;
 	ReleaseSysCache(typeTuple);
 	return result;
 }
@@ -688,7 +662,6 @@ typeOrDomainTypeRelid(Oid type_id)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type type;
-	Oid			result;
 
 	for (;;)
 	{
@@ -705,7 +678,7 @@ typeOrDomainTypeRelid(Oid type_id)
 		type_id = type->typbasetype;
 		ReleaseSysCache(typeTuple);
 	}
-	result = type->typrelid;
+	Oid			result = type->typrelid;
 	ReleaseSysCache(typeTuple);
 	return result;
 }
@@ -777,12 +750,10 @@ fail:
 void
 parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p, bool missing_ok)
 {
-	TypeName   *typeName;
-	Type		tup;
 
-	typeName = typeStringToTypeName(str);
+	TypeName   *typeName = typeStringToTypeName(str);
 
-	tup = LookupTypeName(NULL, typeName, typmod_p, missing_ok);
+	Type		tup = LookupTypeName(NULL, typeName, typmod_p, missing_ok);
 	if (tup == NULL)
 	{
 		if (!missing_ok)

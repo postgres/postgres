@@ -64,7 +64,6 @@ void
 fsync_pgdata(const char *pg_data,
 			 int serverVersion)
 {
-	bool		xlog_is_symlink;
 	char		pg_wal[MAXPGPATH];
 	char		pg_tblspc[MAXPGPATH];
 
@@ -77,7 +76,7 @@ fsync_pgdata(const char *pg_data,
 	 * If pg_wal is a symlink, we'll need to recurse into it separately,
 	 * because the first walkdir below will ignore it.
 	 */
-	xlog_is_symlink = false;
+	bool		xlog_is_symlink = false;
 
 #ifndef WIN32
 	{
@@ -157,10 +156,9 @@ walkdir(const char *path,
 		int (*action) (const char *fname, bool isdir),
 		bool process_symlinks)
 {
-	DIR		   *dir;
 	struct dirent *de;
 
-	dir = opendir(path);
+	DIR		   *dir = opendir(path);
 	if (dir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", path);
@@ -221,9 +219,8 @@ walkdir(const char *path,
 static int
 pre_sync_fname(const char *fname, bool isdir)
 {
-	int			fd;
 
-	fd = open(fname, O_RDONLY | PG_BINARY, 0);
+	int			fd = open(fname, O_RDONLY | PG_BINARY, 0);
 
 	if (fd < 0)
 	{
@@ -262,9 +259,6 @@ pre_sync_fname(const char *fname, bool isdir)
 int
 fsync_fname(const char *fname, bool isdir)
 {
-	int			fd;
-	int			flags;
-	int			returncode;
 
 	/*
 	 * Some OSs require directories to be opened read-only whereas other
@@ -272,7 +266,7 @@ fsync_fname(const char *fname, bool isdir)
 	 * cases here.  Using O_RDWR will cause us to fail to fsync files that are
 	 * not writable by our userid, but we assume that's OK.
 	 */
-	flags = PG_BINARY;
+	int			flags = PG_BINARY;
 	if (!isdir)
 		flags |= O_RDWR;
 	else
@@ -283,7 +277,7 @@ fsync_fname(const char *fname, bool isdir)
 	 * unsupported operations, e.g. opening a directory under Windows), and
 	 * logging others.
 	 */
-	fd = open(fname, flags, 0);
+	int			fd = open(fname, flags, 0);
 	if (fd < 0)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
@@ -292,7 +286,7 @@ fsync_fname(const char *fname, bool isdir)
 		return -1;
 	}
 
-	returncode = fsync(fd);
+	int			returncode = fsync(fd);
 
 	/*
 	 * Some OSes don't allow us to fsync directories at all, so we can ignore
@@ -345,7 +339,6 @@ fsync_parent_path(const char *fname)
 int
 durable_rename(const char *oldfile, const char *newfile)
 {
-	int			fd;
 
 	/*
 	 * First fsync the old and target path (if it exists), to ensure that they
@@ -357,7 +350,7 @@ durable_rename(const char *oldfile, const char *newfile)
 	if (fsync_fname(oldfile, false) != 0)
 		return -1;
 
-	fd = open(newfile, PG_BINARY | O_RDWR, 0);
+	int			fd = open(newfile, PG_BINARY | O_RDWR, 0);
 	if (fd < 0)
 	{
 		if (errno != ENOENT)

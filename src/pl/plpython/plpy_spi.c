@@ -43,9 +43,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	PyObject   *volatile optr = NULL;
 	char	   *query;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
-	volatile int nargs;
 
 	if (!PyArg_ParseTuple(args, "s|O:prepare", &query, &list))
 		return NULL;
@@ -63,9 +60,9 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	plan->mcxt = AllocSetContextCreate(TopMemoryContext,
 									   "PL/Python plan context",
 									   ALLOCSET_DEFAULT_SIZES);
-	oldcontext = MemoryContextSwitchTo(plan->mcxt);
+	volatile MemoryContext oldcontext = MemoryContextSwitchTo(plan->mcxt);
 
-	nargs = list ? PySequence_Length(list) : 0;
+	volatile int nargs = list ? PySequence_Length(list) : 0;
 
 	plan->nargs = nargs;
 	plan->types = nargs ? palloc0(sizeof(Oid) * nargs) : NULL;
@@ -75,7 +72,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	MemoryContextSwitchTo(oldcontext);
 
 	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
@@ -179,9 +176,6 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	volatile int nargs;
 	int			i,
 				rv;
-	PLyPlanObject *plan;
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
 	PyObject   *ret;
 
 	if (list != NULL)
@@ -196,16 +190,15 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 	else
 		nargs = 0;
 
-	plan = (PLyPlanObject *) ob;
+	PLyPlanObject *plan = (PLyPlanObject *) ob;
 
 	if (nargs != plan->nargs)
 	{
-		char	   *sv;
 		PyObject   *so = PyObject_Str(list);
 
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
-		sv = PyString_AsString(so);
+		char	   *sv = PyString_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -216,8 +209,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		return NULL;
 	}
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
@@ -235,9 +228,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		for (j = 0; j < nargs; j++)
 		{
 			PLyObToDatum *arg = &plan->args[j];
-			PyObject   *elem;
 
-			elem = PySequence_GetItem(list, j);
+			PyObject   *elem = PySequence_GetItem(list, j);
 			PG_TRY();
 			{
 				bool		isnull;
@@ -308,12 +300,10 @@ static PyObject *
 PLy_spi_execute_query(char *query, long limit)
 {
 	int			rv;
-	volatile MemoryContext oldcontext;
-	volatile ResourceOwner oldowner;
 	PyObject   *ret = NULL;
 
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	volatile MemoryContext oldcontext = CurrentMemoryContext;
+	volatile ResourceOwner oldowner = CurrentResourceOwner;
 
 	PLy_spi_subtransaction_begin(oldcontext, oldowner);
 
@@ -349,11 +339,10 @@ PLy_spi_execute_query(char *query, long limit)
 static PyObject *
 PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 {
-	PLyResultObject *result;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 	volatile MemoryContext oldcontext;
 
-	result = (PLyResultObject *) PLy_result_new();
+	PLyResultObject *result = (PLyResultObject *) PLy_result_new();
 	if (!result)
 	{
 		SPI_freetuptable(tuptable);
@@ -370,12 +359,11 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 	else if (status > 0 && tuptable != NULL)
 	{
 		PLyDatumToOb ininfo;
-		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
 		result->nrows = PyLong_FromUnsignedLongLong(rows);
 
-		cxt = AllocSetContextCreate(CurrentMemoryContext,
+		MemoryContext cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",
 									ALLOCSET_DEFAULT_SIZES);
 
@@ -386,7 +374,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
 		{
-			MemoryContext oldcontext2;
 
 			if (rows)
 			{
@@ -429,7 +416,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 			 * possible, to minimize the number of ways the tupdesc could get
 			 * leaked due to errors.)
 			 */
-			oldcontext2 = MemoryContextSwitchTo(TopMemoryContext);
+			MemoryContext oldcontext2 = MemoryContextSwitchTo(TopMemoryContext);
 			result->tupdesc = CreateTupleDescCopy(tuptable->tupdesc);
 			MemoryContextSwitchTo(oldcontext2);
 		}
@@ -501,13 +488,10 @@ PLy_spi_subtransaction_commit(MemoryContext oldcontext, ResourceOwner oldowner)
 void
 PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 {
-	ErrorData  *edata;
-	PLyExceptionEntry *entry;
-	PyObject   *exc;
 
 	/* Save error info */
 	MemoryContextSwitchTo(oldcontext);
-	edata = CopyErrorData();
+	ErrorData  *edata = CopyErrorData();
 	FlushErrorState();
 
 	/* Abort the inner transaction */
@@ -516,14 +500,14 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 	CurrentResourceOwner = oldowner;
 
 	/* Look up the correct exception */
-	entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
+	PLyExceptionEntry *entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
 						HASH_FIND, NULL);
 
 	/*
 	 * This could be a custom error code, if that's the case fallback to
 	 * SPIError
 	 */
-	exc = entry ? entry->exc : PLy_exc_spi_error;
+	PyObject   *exc = entry ? entry->exc : PLy_exc_spi_error;
 	/* Make Python raise the exception */
 	PLy_spi_exception_set(exc, edata);
 	FreeErrorData(edata);
@@ -536,11 +520,10 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 static void
 PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 {
-	PyObject   *args = NULL;
 	PyObject   *spierror = NULL;
 	PyObject   *spidata = NULL;
 
-	args = Py_BuildValue("(s)", edata->message);
+	PyObject   *args = Py_BuildValue("(s)", edata->message);
 	if (!args)
 		goto failure;
 

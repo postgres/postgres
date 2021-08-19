@@ -99,11 +99,9 @@ CreateSharedMemoryAndSemaphores(void)
 	if (!IsUnderPostmaster)
 	{
 		PGShmemHeader *seghdr;
-		Size		size;
-		int			numSemas;
 
 		/* Compute number of semaphores we'll need */
-		numSemas = ProcGlobalSemas();
+		int			numSemas = ProcGlobalSemas();
 		numSemas += SpinlockSemas();
 
 		/*
@@ -115,7 +113,7 @@ CreateSharedMemoryAndSemaphores(void)
 		 * request doesn't overflow size_t.  If this gets through, we don't
 		 * need to be so careful during the actual allocation phase.
 		 */
-		size = 100000;
+		Size		size = 100000;
 		size = add_size(size, PGSemaphoreShmemSize(numSemas));
 		size = add_size(size, SpinlockSemaSize());
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,

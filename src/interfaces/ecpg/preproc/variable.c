@@ -126,12 +126,11 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int
 static struct variable *
 find_struct(char *name, char *next, char *end)
 {
-	struct variable *p;
 	char		c = *next;
 
 	/* first get the mother structure entry */
 	*next = '\0';
-	p = find_variable(name);
+	struct variable *p = find_variable(name);
 
 	if (c == '-')
 	{
@@ -437,12 +436,11 @@ remove_variable_from_list(struct arguments **list, struct variable *var)
 void
 dump_variables(struct arguments *list, int mode)
 {
-	char	   *str_zero;
 
 	if (list == NULL)
 		return;
 
-	str_zero = mm_strdup("0");
+	char	   *str_zero = mm_strdup("0");
 
 	/*
 	 * The list is build up from the beginning so lets first dump the end of

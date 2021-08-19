@@ -304,7 +304,6 @@ foreign_expr_walker(Node *node,
 					foreign_loc_cxt *case_arg_cxt)
 {
 	bool		check_type = true;
-	PgFdwRelationInfo *fpinfo;
 	foreign_loc_cxt inner_cxt;
 	Oid			collation;
 	FDWCollateState state;
@@ -314,7 +313,7 @@ foreign_expr_walker(Node *node,
 		return true;
 
 	/* May need server info from baserel's fdw_private struct */
-	fpinfo = (PgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
 
 	/* Set up inner_cxt for possible recursion to child nodes */
 	inner_cxt.collation = InvalidOid;
@@ -690,12 +689,11 @@ foreign_expr_walker(Node *node,
 						 * deparseCaseExpr can't handle it.
 						 */
 						Node	   *whenExpr = (Node *) cw->expr;
-						List	   *opArgs;
 
 						if (!IsA(whenExpr, OpExpr))
 							return false;
 
-						opArgs = ((OpExpr *) whenExpr)->args;
+						List	   *opArgs = ((OpExpr *) whenExpr)->args;
 						if (list_length(opArgs) != 2 ||
 							!IsA(strip_implicit_coercions(linitial(opArgs)),
 								 CaseTestExpr))
@@ -872,14 +870,11 @@ foreign_expr_walker(Node *node,
 					foreach(lc, agg->aggorder)
 					{
 						SortGroupClause *srt = (SortGroupClause *) lfirst(lc);
-						Oid			sortcoltype;
-						TypeCacheEntry *typentry;
-						TargetEntry *tle;
 
-						tle = get_sortgroupref_tle(srt->tleSortGroupRef,
+						TargetEntry *tle = get_sortgroupref_tle(srt->tleSortGroupRef,
 												   agg->args);
-						sortcoltype = exprType((Node *) tle->expr);
-						typentry = lookup_type_cache(sortcoltype,
+						Oid			sortcoltype = exprType((Node *) tle->expr);
+						TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
 													 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 						/* Check shippability of non-default sort operator. */
 						if (srt->sortop != typentry->lt_opr &&
@@ -1157,9 +1152,8 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (IS_UPPER_REL(rel))
 	{
-		PgFdwRelationInfo *ofpinfo;
 
-		ofpinfo = (PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
+		PgFdwRelationInfo *ofpinfo = (PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
 		quals = ofpinfo->remote_conds;
 	}
 	else
@@ -1309,17 +1303,15 @@ deparseTargetList(StringInfo buf,
 				  List **retrieved_attrs)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
-	bool		have_wholerow;
-	bool		first;
 	int			i;
 
 	*retrieved_attrs = NIL;
 
 	/* If there's a whole-row reference, we'll need all the columns. */
-	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
+	bool		have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
 								  attrs_used);
 
-	first = true;
+	bool		first = true;
 	for (i = 1; i <= tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i - 1);
@@ -1467,13 +1459,12 @@ deparseLockingClause(deparse_expr_cxt *context)
 static void
 appendConditions(List *exprs, deparse_expr_cxt *context)
 {
-	int			nestlevel;
 	ListCell   *lc;
 	bool		is_first = true;
 	StringInfo	buf = context->buf;
 
 	/* Make sure any constants in the exprs are printed portably */
-	nestlevel = set_transmission_modes();
+	int			nestlevel = set_transmission_modes();
 
 	foreach(lc, exprs)
 	{
@@ -1576,13 +1567,12 @@ deparseSubqueryTargetList(deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	RelOptInfo *foreignrel = context->foreignrel;
-	bool		first;
 	ListCell   *lc;
 
 	/* Should only be called in these cases. */
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
 
-	first = true;
+	bool		first = true;
 	foreach(lc, foreignrel->reltarget->exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
@@ -1779,7 +1769,6 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 	if (make_subquery)
 	{
 		List	   *retrieved_attrs;
-		int			ncols;
 
 		/*
 		 * The given relation shouldn't contain the target relation, because
@@ -1806,7 +1795,7 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		 * expressions specified in the relation's reltarget (see
 		 * deparseSubqueryTargetList).
 		 */
-		ncols = list_length(foreignrel->reltarget->exprs);
+		int			ncols = list_length(foreignrel->reltarget->exprs);
 		if (ncols > 0)
 		{
 			int			i;
@@ -1918,7 +1907,6 @@ rebuildInsertSql(StringInfo buf, Relation rel,
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	int			i;
-	int			pindex;
 	bool		first;
 	ListCell   *lc;
 
@@ -1932,7 +1920,7 @@ rebuildInsertSql(StringInfo buf, Relation rel,
 	 * Add records to VALUES clause (we already have parameters for the first
 	 * row, so start at the right offset).
 	 */
-	pindex = num_params + 1;
+	int			pindex = num_params + 1;
 	for (i = 0; i < num_rows; i++)
 	{
 		appendStringInfoString(buf, ", (");
@@ -1978,16 +1966,14 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 				 List **retrieved_attrs)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
-	AttrNumber	pindex;
-	bool		first;
 	ListCell   *lc;
 
 	appendStringInfoString(buf, "UPDATE ");
 	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " SET ");
 
-	pindex = 2;					/* ctid is always the first param */
-	first = true;
+	AttrNumber	pindex = 2;					/* ctid is always the first param */
+	bool		first = true;
 	foreach(lc, targetAttrs)
 	{
 		int			attnum = lfirst_int(lc);
@@ -2042,8 +2028,6 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 					   List **retrieved_attrs)
 {
 	deparse_expr_cxt context;
-	int			nestlevel;
-	bool		first;
 	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
 	ListCell   *lc,
 			   *lc2;
@@ -2062,9 +2046,9 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 	appendStringInfoString(buf, " SET ");
 
 	/* Make sure any constants in the exprs are printed portably */
-	nestlevel = set_transmission_modes();
+	int			nestlevel = set_transmission_modes();
 
-	first = true;
+	bool		first = true;
 	forboth(lc, targetlist, lc2, targetAttrs)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -2401,8 +2385,6 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 	else if (varattno == 0)
 	{
 		/* Whole row reference */
-		Relation	rel;
-		Bitmapset  *attrs_used;
 
 		/* Required only to be passed down to deparseTargetList(). */
 		List	   *retrieved_attrs;
@@ -2411,7 +2393,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * The lock on the relation will be held by upper callers, so it's
 		 * fine to open it with no lock here.
 		 */
-		rel = table_open(rte->relid, NoLock);
+		Relation	rel = table_open(rte->relid, NoLock);
 
 		/*
 		 * The local name of the foreign table can not be recognized by the
@@ -2421,7 +2403,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * ROW(columns referenced locally). Construct this by deparsing a
 		 * "whole row" attribute.
 		 */
-		attrs_used = bms_add_member(NULL,
+		Bitmapset  *attrs_used = bms_add_member(NULL,
 									0 - FirstLowInvalidHeapAttributeNumber);
 
 		/*
@@ -2452,7 +2434,6 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 	else
 	{
 		char	   *colname = NULL;
-		List	   *options;
 		ListCell   *lc;
 
 		/* varno must not be any of OUTER_VAR, INNER_VAR and INDEX_VAR. */
@@ -2462,7 +2443,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * If it's a column of a foreign table, and it has the column_name FDW
 		 * option, use that value.
 		 */
-		options = GetForeignColumnOptions(rte->relid, varattno);
+		List	   *options = GetForeignColumnOptions(rte->relid, varattno);
 		foreach(lc, options)
 		{
 			DefElem    *def = (DefElem *) lfirst(lc);
@@ -2496,13 +2477,12 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 static void
 deparseRelation(StringInfo buf, Relation rel)
 {
-	ForeignTable *table;
 	const char *nspname = NULL;
 	const char *relname = NULL;
 	ListCell   *lc;
 
 	/* obtain additional catalog information. */
-	table = GetForeignTable(RelationGetRelid(rel));
+	ForeignTable *table = GetForeignTable(RelationGetRelid(rel));
 
 	/*
 	 * Use value of FDW options if any, instead of the name of object itself.
@@ -2705,7 +2685,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	StringInfo	buf = context->buf;
 	Oid			typoutput;
 	bool		typIsVarlena;
-	char	   *extval;
 	bool		isfloat = false;
 	bool		needlabel;
 
@@ -2721,7 +2700,7 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 
 	getTypeOutputInfo(node->consttype,
 					  &typoutput, &typIsVarlena);
-	extval = OidOutputFunctionCall(typoutput, node->constvalue);
+	char	   *extval = OidOutputFunctionCall(typoutput, node->constvalue);
 
 	switch (node->consttype)
 	{
@@ -2842,7 +2821,6 @@ static void
 deparseSubscriptingRef(SubscriptingRef *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	ListCell   *lowlist_item;
 	ListCell   *uplist_item;
 
 	/* Always parenthesize the expression. */
@@ -2864,7 +2842,7 @@ deparseSubscriptingRef(SubscriptingRef *node, deparse_expr_cxt *context)
 	}
 
 	/* Deparse subscript expressions. */
-	lowlist_item = list_head(node->reflowerindexpr);	/* could be NULL */
+	ListCell   *lowlist_item = list_head(node->reflowerindexpr);	/* could be NULL */
 	foreach(uplist_item, node->refupperindexpr)
 	{
 		appendStringInfoChar(buf, '[');
@@ -2888,8 +2866,6 @@ static void
 deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	bool		use_variadic;
-	bool		first;
 	ListCell   *arg;
 
 	/*
@@ -2921,7 +2897,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 	}
 
 	/* Check if need to print VARIADIC (cf. ruleutils.c) */
-	use_variadic = node->funcvariadic;
+	bool		use_variadic = node->funcvariadic;
 
 	/*
 	 * Normal function: display as proname(args).
@@ -2930,7 +2906,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 	appendStringInfoChar(buf, '(');
 
 	/* ... and all the arguments */
-	first = true;
+	bool		first = true;
 	foreach(arg, node->args)
 	{
 		if (!first)
@@ -2951,16 +2927,13 @@ static void
 deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	HeapTuple	tuple;
-	Form_pg_operator form;
-	char		oprkind;
 
 	/* Retrieve information about the operator from system catalog. */
-	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
+	HeapTuple	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
-	form = (Form_pg_operator) GETSTRUCT(tuple);
-	oprkind = form->oprkind;
+	Form_pg_operator form = (Form_pg_operator) GETSTRUCT(tuple);
+	char		oprkind = form->oprkind;
 
 	/* Sanity check. */
 	Assert((oprkind == 'l' && list_length(node->args) == 1) ||
@@ -2994,17 +2967,15 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 static void
 deparseOperatorName(StringInfo buf, Form_pg_operator opform)
 {
-	char	   *opname;
 
 	/* opname is not a SQL identifier, so we should not quote it. */
-	opname = NameStr(opform->oprname);
+	char	   *opname = NameStr(opform->oprname);
 
 	/* Print schema name only if it's not pg_catalog */
 	if (opform->oprnamespace != PG_CATALOG_NAMESPACE)
 	{
-		const char *opnspname;
 
-		opnspname = get_namespace_name(opform->oprnamespace);
+		const char *opnspname = get_namespace_name(opform->oprnamespace);
 		/* Print fully qualified operator name. */
 		appendStringInfo(buf, "OPERATOR(%s.%s)",
 						 quote_identifier(opnspname), opname);
@@ -3041,16 +3012,12 @@ static void
 deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	HeapTuple	tuple;
-	Form_pg_operator form;
-	Expr	   *arg1;
-	Expr	   *arg2;
 
 	/* Retrieve information about the operator from system catalog. */
-	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
+	HeapTuple	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
-	form = (Form_pg_operator) GETSTRUCT(tuple);
+	Form_pg_operator form = (Form_pg_operator) GETSTRUCT(tuple);
 
 	/* Sanity check. */
 	Assert(list_length(node->args) == 2);
@@ -3059,7 +3026,7 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 	appendStringInfoChar(buf, '(');
 
 	/* Deparse left operand. */
-	arg1 = linitial(node->args);
+	Expr	   *arg1 = linitial(node->args);
 	deparseExpr(arg1, context);
 	appendStringInfoChar(buf, ' ');
 
@@ -3068,7 +3035,7 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 	appendStringInfo(buf, " %s (", node->useOr ? "ANY" : "ALL");
 
 	/* Deparse right operand. */
-	arg2 = lsecond(node->args);
+	Expr	   *arg2 = lsecond(node->args);
 	deparseExpr(arg2, context);
 
 	appendStringInfoChar(buf, ')');
@@ -3100,7 +3067,6 @@ deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	const char *op = NULL;		/* keep compiler quiet */
-	bool		first;
 	ListCell   *lc;
 
 	switch (node->boolop)
@@ -3119,7 +3085,7 @@ deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)
 	}
 
 	appendStringInfoChar(buf, '(');
-	first = true;
+	bool		first = true;
 	foreach(lc, node->args)
 	{
 		if (!first)
@@ -3246,13 +3212,12 @@ static void
 deparseAggref(Aggref *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	bool		use_variadic;
 
 	/* Only basic, non-split aggregation accepted. */
 	Assert(node->aggsplit == AGGSPLIT_SIMPLE);
 
 	/* Check if need to print VARIADIC (cf. ruleutils.c) */
-	use_variadic = node->aggvariadic;
+	bool		use_variadic = node->aggvariadic;
 
 	/* Find aggregate name from aggfnoid which is a pg_proc entry */
 	appendFunctionName(node->aggfnoid, context);
@@ -3344,19 +3309,16 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 	foreach(lc, orderList)
 	{
 		SortGroupClause *srt = (SortGroupClause *) lfirst(lc);
-		Node	   *sortexpr;
-		Oid			sortcoltype;
-		TypeCacheEntry *typentry;
 
 		if (!first)
 			appendStringInfoString(buf, ", ");
 		first = false;
 
-		sortexpr = deparseSortGroupClause(srt->tleSortGroupRef, targetList,
+		Node	   *sortexpr = deparseSortGroupClause(srt->tleSortGroupRef, targetList,
 										  false, context);
-		sortcoltype = exprType(sortexpr);
+		Oid			sortcoltype = exprType(sortexpr);
 		/* See whether operator is default < or > for datatype */
-		typentry = lookup_type_cache(sortcoltype,
+		TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
 									 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 		if (srt->sortop == typentry->lt_opr)
 			appendStringInfoString(buf, " ASC");
@@ -3364,16 +3326,14 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 			appendStringInfoString(buf, " DESC");
 		else
 		{
-			HeapTuple	opertup;
-			Form_pg_operator operform;
 
 			appendStringInfoString(buf, " USING ");
 
 			/* Append operator name. */
-			opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(srt->sortop));
+			HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(srt->sortop));
 			if (!HeapTupleIsValid(opertup))
 				elog(ERROR, "cache lookup failed for operator %u", srt->sortop);
-			operform = (Form_pg_operator) GETSTRUCT(opertup);
+			Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
 			deparseOperatorName(buf, operform);
 			ReleaseSysCache(opertup);
 		}
@@ -3474,13 +3434,12 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 					deparse_expr_cxt *context)
 {
 	ListCell   *lcell;
-	int			nestlevel;
 	char	   *delim = " ";
 	RelOptInfo *baserel = context->scanrel;
 	StringInfo	buf = context->buf;
 
 	/* Make sure any constants in the exprs are printed portably */
-	nestlevel = set_transmission_modes();
+	int			nestlevel = set_transmission_modes();
 
 	appendStringInfoString(buf, " ORDER BY");
 	foreach(lcell, pathkeys)
@@ -3528,10 +3487,9 @@ appendLimitClause(deparse_expr_cxt *context)
 {
 	PlannerInfo *root = context->root;
 	StringInfo	buf = context->buf;
-	int			nestlevel;
 
 	/* Make sure any constants in the exprs are printed portably */
-	nestlevel = set_transmission_modes();
+	int			nestlevel = set_transmission_modes();
 
 	if (root->parse->limitCount)
 	{
@@ -3555,26 +3513,22 @@ static void
 appendFunctionName(Oid funcid, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	HeapTuple	proctup;
-	Form_pg_proc procform;
-	const char *proname;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	/* Print schema name only if it's not pg_catalog */
 	if (procform->pronamespace != PG_CATALOG_NAMESPACE)
 	{
-		const char *schemaname;
 
-		schemaname = get_namespace_name(procform->pronamespace);
+		const char *schemaname = get_namespace_name(procform->pronamespace);
 		appendStringInfo(buf, "%s.", quote_identifier(schemaname));
 	}
 
 	/* Always print the function name */
-	proname = NameStr(procform->proname);
+	const char *proname = NameStr(procform->proname);
 	appendStringInfoString(buf, quote_identifier(proname));
 
 	ReleaseSysCache(proctup);
@@ -3591,11 +3545,9 @@ deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 					   deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
-	TargetEntry *tle;
-	Expr	   *expr;
 
-	tle = get_sortgroupref_tle(ref, tlist);
-	expr = tle->expr;
+	TargetEntry *tle = get_sortgroupref_tle(ref, tlist);
+	Expr	   *expr = tle->expr;
 
 	if (force_colno)
 	{
@@ -3698,14 +3650,13 @@ get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
 							  int *relno, int *colno)
 {
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
-	int			i;
 	ListCell   *lc;
 
 	/* Get the relation alias ID */
 	*relno = fpinfo->relation_index;
 
 	/* Get the column alias ID */
-	i = 1;
+	int			i = 1;
 	foreach(lc, foreignrel->reltarget->exprs)
 	{
 		if (equal(lfirst(lc), (Node *) node))

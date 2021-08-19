@@ -172,7 +172,6 @@ hstoreValidOldFormat(HStore *hs)
 {
 	int			count = hs->size_;
 	HOldEntry  *entries = (HOldEntry *) ARRPTR(hs);
-	int			vsize;
 	int			lastpos = 0;
 	int			i;
 
@@ -217,7 +216,7 @@ hstoreValidOldFormat(HStore *hs)
 					+ ((entries[i].valisnull) ? 0 : entries[i].vallen));
 	}
 
-	vsize = CALCDATASIZE(count, lastpos);
+	int			vsize = CALCDATASIZE(count, lastpos);
 
 	if (vsize > VARSIZE(hs))
 		return 0;
@@ -236,8 +235,6 @@ HStore *
 hstoreUpgrade(Datum orig)
 {
 	HStore	   *hs = (HStore *) PG_DETOAST_DATUM(orig);
-	int			valid_new;
-	int			valid_old;
 
 	/* Return immediately if no conversion needed */
 	if (hs->size_ & HS_FLAG_NEWVERSION)
@@ -255,8 +252,8 @@ hstoreUpgrade(Datum orig)
 		return hs;
 	}
 
-	valid_new = hstoreValidNewFormat(hs);
-	valid_old = hstoreValidOldFormat(hs);
+	int			valid_new = hstoreValidNewFormat(hs);
+	int			valid_old = hstoreValidOldFormat(hs);
 
 	if (!valid_old || hs->size_ == 0)
 	{

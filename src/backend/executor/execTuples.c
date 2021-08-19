@@ -171,12 +171,11 @@ tts_virtual_materialize(TupleTableSlot *slot)
 	for (int natt = 0; natt < desc->natts; natt++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, natt);
-		Datum		val;
 
 		if (att->attbyval || slot->tts_isnull[natt])
 			continue;
 
-		val = slot->tts_values[natt];
+		Datum		val = slot->tts_values[natt];
 
 		if (att->attlen == -1 &&
 			VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(val)))
@@ -207,17 +206,15 @@ tts_virtual_materialize(TupleTableSlot *slot)
 	for (int natt = 0; natt < desc->natts; natt++)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, natt);
-		Datum		val;
 
 		if (att->attbyval || slot->tts_isnull[natt])
 			continue;
 
-		val = slot->tts_values[natt];
+		Datum		val = slot->tts_values[natt];
 
 		if (att->attlen == -1 &&
 			VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(val)))
 		{
-			Size		data_length;
 
 			/*
 			 * We want to flatten the expanded value so that the materialized
@@ -227,7 +224,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 
 			data = (char *) att_align_nominal(data,
 											  att->attalign);
-			data_length = EOH_get_flat_size(eoh);
+			Size		data_length = EOH_get_flat_size(eoh);
 			EOH_flatten_into(eoh, data, data_length);
 
 			slot->tts_values[natt] = PointerGetDatum(data);
@@ -360,7 +357,6 @@ static void
 tts_heap_materialize(TupleTableSlot *slot)
 {
 	HeapTupleTableSlot *hslot = (HeapTupleTableSlot *) slot;
-	MemoryContext oldContext;
 
 	Assert(!TTS_EMPTY(slot));
 
@@ -368,7 +364,7 @@ tts_heap_materialize(TupleTableSlot *slot)
 	if (TTS_SHOULDFREE(slot))
 		return;
 
-	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 
 	/*
 	 * Have to deform from scratch, otherwise tts_values[] entries could point
@@ -399,11 +395,9 @@ tts_heap_materialize(TupleTableSlot *slot)
 static void
 tts_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
-	HeapTuple	tuple;
-	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(dstslot->tts_mcxt);
-	tuple = ExecCopySlotHeapTuple(srcslot);
+	MemoryContext oldcontext = MemoryContextSwitchTo(dstslot->tts_mcxt);
+	HeapTuple	tuple = ExecCopySlotHeapTuple(srcslot);
 	MemoryContextSwitchTo(oldcontext);
 
 	ExecStoreHeapTuple(tuple, dstslot, true);
@@ -527,7 +521,6 @@ static void
 tts_minimal_materialize(TupleTableSlot *slot)
 {
 	MinimalTupleTableSlot *mslot = (MinimalTupleTableSlot *) slot;
-	MemoryContext oldContext;
 
 	Assert(!TTS_EMPTY(slot));
 
@@ -535,7 +528,7 @@ tts_minimal_materialize(TupleTableSlot *slot)
 	if (TTS_SHOULDFREE(slot))
 		return;
 
-	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 
 	/*
 	 * Have to deform from scratch, otherwise tts_values[] entries could point
@@ -573,11 +566,9 @@ tts_minimal_materialize(TupleTableSlot *slot)
 static void
 tts_minimal_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
-	MemoryContext oldcontext;
-	MinimalTuple mintuple;
 
-	oldcontext = MemoryContextSwitchTo(dstslot->tts_mcxt);
-	mintuple = ExecCopySlotMinimalTuple(srcslot);
+	MemoryContext oldcontext = MemoryContextSwitchTo(dstslot->tts_mcxt);
+	MinimalTuple mintuple = ExecCopySlotMinimalTuple(srcslot);
 	MemoryContextSwitchTo(oldcontext);
 
 	ExecStoreMinimalTuple(mintuple, dstslot, true);
@@ -719,7 +710,6 @@ static void
 tts_buffer_heap_materialize(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
-	MemoryContext oldContext;
 
 	Assert(!TTS_EMPTY(slot));
 
@@ -727,7 +717,7 @@ tts_buffer_heap_materialize(TupleTableSlot *slot)
 	if (TTS_SHOULDFREE(slot))
 		return;
 
-	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 
 	/*
 	 * Have to deform from scratch, otherwise tts_values[] entries could point
@@ -789,11 +779,10 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 		TTS_SHOULDFREE(srcslot) ||
 		!bsrcslot->base.tuple)
 	{
-		MemoryContext oldContext;
 
 		ExecClearTuple(dstslot);
 		dstslot->tts_flags &= ~TTS_FLAG_EMPTY;
-		oldContext = MemoryContextSwitchTo(dstslot->tts_mcxt);
+		MemoryContext oldContext = MemoryContextSwitchTo(dstslot->tts_mcxt);
 		bdstslot->base.tuple = ExecCopySlotHeapTuple(srcslot);
 		dstslot->tts_flags |= TTS_FLAG_SHOULDFREE;
 		MemoryContextSwitchTo(oldContext);
@@ -930,7 +919,6 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 	bool	   *isnull = slot->tts_isnull;
 	HeapTupleHeader tup = tuple->t_data;
 	bool		hasnulls = HeapTupleHasNulls(tuple);
-	int			attnum;
 	char	   *tp;				/* ptr to tuple data */
 	uint32		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
@@ -943,7 +931,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 	 * Check whether the first call for this tuple, and initialize or restore
 	 * loop state.
 	 */
-	attnum = slot->tts_nvalid;
+	int			attnum = slot->tts_nvalid;
 	if (attnum == 0)
 	{
 		/* Start from the first attribute */
@@ -1114,7 +1102,6 @@ MakeTupleTableSlot(TupleDesc tupleDesc,
 {
 	Size		basesz,
 				allocsz;
-	TupleTableSlot *slot;
 
 	basesz = tts_ops->base_slot_size;
 
@@ -1129,7 +1116,7 @@ MakeTupleTableSlot(TupleDesc tupleDesc,
 	else
 		allocsz = basesz;
 
-	slot = palloc0(allocsz);
+	TupleTableSlot *slot = palloc0(allocsz);
 	/* const for optimization purposes, OK to modify at allocation time */
 	*((const TupleTableSlotOps **) &slot->tts_ops) = tts_ops;
 	slot->type = T_TupleTableSlot;
@@ -1476,12 +1463,11 @@ ExecForceStoreHeapTuple(HeapTuple tuple,
 	}
 	else if (TTS_IS_BUFFERTUPLE(slot))
 	{
-		MemoryContext oldContext;
 		BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
 		ExecClearTuple(slot);
 		slot->tts_flags &= ~TTS_FLAG_EMPTY;
-		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+		MemoryContext oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		bslot->base.tuple = heap_copytuple(tuple);
 		slot->tts_flags |= TTS_FLAG_SHOULDFREE;
 		MemoryContextSwitchTo(oldContext);
@@ -1606,9 +1592,8 @@ void
 ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot)
 {
 	HeapTupleData tuple = {0};
-	HeapTupleHeader td;
 
-	td = DatumGetHeapTupleHeader(data);
+	HeapTupleHeader td = DatumGetHeapTupleHeader(data);
 
 	tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 	tuple.t_self = td->t_ctid;
@@ -1722,17 +1707,14 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot,
 Datum
 ExecFetchSlotHeapTupleDatum(TupleTableSlot *slot)
 {
-	HeapTuple	tup;
-	TupleDesc	tupdesc;
 	bool		shouldFree;
-	Datum		ret;
 
 	/* Fetch slot's contents in regular-physical-tuple form */
-	tup = ExecFetchSlotHeapTuple(slot, false, &shouldFree);
-	tupdesc = slot->tts_tupleDescriptor;
+	HeapTuple	tup = ExecFetchSlotHeapTuple(slot, false, &shouldFree);
+	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
 
 	/* Convert to Datum form */
-	ret = heap_copy_tuple_as_datum(tup, tupdesc);
+	Datum		ret = heap_copy_tuple_as_datum(tup, tupdesc);
 
 	if (shouldFree)
 		pfree(tup);
@@ -1778,9 +1760,8 @@ ExecInitResultTypeTL(PlanState *planstate)
 void
 ExecInitResultSlot(PlanState *planstate, const TupleTableSlotOps *tts_ops)
 {
-	TupleTableSlot *slot;
 
-	slot = ExecAllocTableSlot(&planstate->state->es_tupleTable,
+	TupleTableSlot *slot = ExecAllocTableSlot(&planstate->state->es_tupleTable,
 							  planstate->ps_ResultTupleDesc, tts_ops);
 	planstate->ps_ResultTupleSlot = slot;
 
@@ -1955,7 +1936,6 @@ ExecCleanTypeFromTL(List *targetList)
 static TupleDesc
 ExecTypeFromTLInternal(List *targetList, bool skipjunk)
 {
-	TupleDesc	typeInfo;
 	ListCell   *l;
 	int			len;
 	int			cur_resno = 1;
@@ -1964,7 +1944,7 @@ ExecTypeFromTLInternal(List *targetList, bool skipjunk)
 		len = ExecCleanTargetListLength(targetList);
 	else
 		len = ExecTargetListLength(targetList);
-	typeInfo = CreateTemplateTupleDesc(len);
+	TupleDesc	typeInfo = CreateTemplateTupleDesc(len);
 
 	foreach(l, targetList)
 	{
@@ -1996,11 +1976,10 @@ ExecTypeFromTLInternal(List *targetList, bool skipjunk)
 TupleDesc
 ExecTypeFromExprList(List *exprList)
 {
-	TupleDesc	typeInfo;
 	ListCell   *lc;
 	int			cur_resno = 1;
 
-	typeInfo = CreateTemplateTupleDesc(list_length(exprList));
+	TupleDesc	typeInfo = CreateTemplateTupleDesc(list_length(exprList));
 
 	foreach(lc, exprList)
 	{
@@ -2042,12 +2021,11 @@ ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 	foreach(lc, namesList)
 	{
 		char	   *cname = strVal(lfirst(lc));
-		Form_pg_attribute attr;
 
 		/* Guard against too-long names list */
 		if (colno >= typeInfo->natts)
 			break;
-		attr = TupleDescAttr(typeInfo, colno);
+		Form_pg_attribute attr = TupleDescAttr(typeInfo, colno);
 		colno++;
 
 		/* Ignore empty aliases (these must be for dropped columns) */
@@ -2100,12 +2078,8 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	int			i;
 	Oid			atttypeid;
 	Oid			attinfuncid;
-	FmgrInfo   *attinfuncinfo;
-	Oid		   *attioparams;
-	int32	   *atttypmods;
-	AttInMetadata *attinmeta;
 
-	attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
+	AttInMetadata *attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
 
 	/* "Bless" the tupledesc so that we can make rowtype datums with it */
 	attinmeta->tupdesc = BlessTupleDesc(tupdesc);
@@ -2113,9 +2087,9 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	/*
 	 * Gather info needed later to call the "in" function for each attribute
 	 */
-	attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
-	attioparams = (Oid *) palloc0(natts * sizeof(Oid));
-	atttypmods = (int32 *) palloc0(natts * sizeof(int32));
+	FmgrInfo   *attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
+	Oid		   *attioparams = (Oid *) palloc0(natts * sizeof(Oid));
+	int32	   *atttypmods = (int32 *) palloc0(natts * sizeof(int32));
 
 	for (i = 0; i < natts; i++)
 	{
@@ -2147,13 +2121,10 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
 	int			natts = tupdesc->natts;
-	Datum	   *dvalues;
-	bool	   *nulls;
 	int			i;
-	HeapTuple	tuple;
 
-	dvalues = (Datum *) palloc(natts * sizeof(Datum));
-	nulls = (bool *) palloc(natts * sizeof(bool));
+	Datum	   *dvalues = (Datum *) palloc(natts * sizeof(Datum));
+	bool	   *nulls = (bool *) palloc(natts * sizeof(bool));
 
 	/*
 	 * Call the "in" function for each non-dropped attribute, even for nulls,
@@ -2184,7 +2155,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	/*
 	 * Form a tuple
 	 */
-	tuple = heap_form_tuple(tupdesc, dvalues, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupdesc, dvalues, nulls);
 
 	/*
 	 * Release locally palloc'd space.  XXX would probably be good to pfree
@@ -2234,19 +2205,17 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 Datum
 HeapTupleHeaderGetDatum(HeapTupleHeader tuple)
 {
-	Datum		result;
-	TupleDesc	tupDesc;
 
 	/* No work if there are no external TOAST pointers in the tuple */
 	if (!HeapTupleHeaderHasExternal(tuple))
 		return PointerGetDatum(tuple);
 
 	/* Use the type data saved by heap_form_tuple to look up the rowtype */
-	tupDesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(tuple),
+	TupleDesc	tupDesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(tuple),
 									 HeapTupleHeaderGetTypMod(tuple));
 
 	/* And do the flattening */
-	result = toast_flatten_tuple_to_datum(tuple,
+	Datum		result = toast_flatten_tuple_to_datum(tuple,
 										  HeapTupleHeaderGetDatumLength(tuple),
 										  tupDesc);
 
@@ -2267,9 +2236,8 @@ begin_tup_output_tupdesc(DestReceiver *dest,
 						 TupleDesc tupdesc,
 						 const TupleTableSlotOps *tts_ops)
 {
-	TupOutputState *tstate;
 
-	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
+	TupOutputState *tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
 
 	tstate->slot = MakeSingleTupleTableSlot(tupdesc, tts_ops);
 	tstate->dest = dest;
@@ -2318,10 +2286,9 @@ do_text_output_multiline(TupOutputState *tstate, const char *txt)
 
 	while (*txt)
 	{
-		const char *eol;
 		int			len;
 
-		eol = strchr(txt, '\n');
+		const char *eol = strchr(txt, '\n');
 		if (eol)
 		{
 			len = eol - txt;

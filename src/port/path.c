@@ -375,11 +375,10 @@ canonicalize_path(char *path)
 bool
 path_contains_parent_reference(const char *path)
 {
-	int			path_len;
 
 	path = skip_drive(path);	/* C: shouldn't affect our conclusion */
 
-	path_len = strlen(path);
+	int			path_len = strlen(path);
 
 	/*
 	 * ".." could be the whole path; otherwise, if it's present it must be at
@@ -452,10 +451,8 @@ path_is_prefix_of_path(const char *path1, const char *path2)
 const char *
 get_progname(const char *argv0)
 {
-	const char *nodir_name;
-	char	   *progname;
 
-	nodir_name = last_dir_separator(argv0);
+	const char *nodir_name = last_dir_separator(argv0);
 	if (nodir_name)
 		nodir_name++;
 	else
@@ -465,7 +462,7 @@ get_progname(const char *argv0)
 	 * Make a copy in case argv[0] is modified by ps_status. Leaks memory, but
 	 * called only once.
 	 */
-	progname = strdup(nodir_name);
+	char	   *progname = strdup(nodir_name);
 	if (progname == NULL)
 	{
 		fprintf(stderr, "%s: out of memory\n", nodir_name);
@@ -539,7 +536,6 @@ static void
 make_relative_path(char *ret_path, const char *target_path,
 				   const char *bin_path, const char *my_exec_path)
 {
-	int			prefix_len;
 	int			tail_start;
 	int			tail_len;
 	int			i;
@@ -548,7 +544,7 @@ make_relative_path(char *ret_path, const char *target_path,
 	 * Determine the common prefix --- note we require it to end on a
 	 * directory separator, consider eg '/usr/lib' and '/usr/libexec'.
 	 */
-	prefix_len = 0;
+	int			prefix_len = 0;
 	for (i = 0; target_path[i] && bin_path[i]; i++)
 	{
 		if (IS_DIR_SEP(target_path[i]) && IS_DIR_SEP(bin_path[i]))
@@ -616,9 +612,8 @@ make_absolute_path(const char *path)
 	if (!is_absolute_path(path))
 	{
 		char	   *buf;
-		size_t		buflen;
 
-		buflen = MAXPGPATH;
+		size_t		buflen = MAXPGPATH;
 		for (;;)
 		{
 			buf = malloc(buflen);
@@ -817,7 +812,6 @@ get_home_path(char *ret_path)
 	strlcpy(ret_path, pwd->pw_dir, MAXPGPATH);
 	return true;
 #else
-	char	   *tmppath;
 
 	/*
 	 * Note: We use getenv() here because the more modern SHGetFolderPath()
@@ -826,7 +820,7 @@ get_home_path(char *ret_path)
 	 * brings in shell32 via libpq.  Moving this function to its own file
 	 * would keep it out of the backend, freeing it from this concern.
 	 */
-	tmppath = getenv("APPDATA");
+	char	   *tmppath = getenv("APPDATA");
 	if (!tmppath)
 		return false;
 	snprintf(ret_path, MAXPGPATH, "%s/postgresql", tmppath);
@@ -898,10 +892,9 @@ trim_directory(char *path)
 static void
 trim_trailing_separator(char *path)
 {
-	char	   *p;
 
 	path = skip_drive(path);
-	p = path + strlen(path);
+	char	   *p = path + strlen(path);
 	if (p > path)
 		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';

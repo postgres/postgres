@@ -189,7 +189,6 @@ FILE *
 pgwin32_fopen(const char *fileName, const char *mode)
 {
 	int			openmode = 0;
-	int			fd;
 
 	if (strstr(mode, "r+"))
 		openmode |= O_RDWR;
@@ -207,7 +206,7 @@ pgwin32_fopen(const char *fileName, const char *mode)
 	if (strchr(mode, 't'))
 		openmode |= O_TEXT;
 
-	fd = pgwin32_open(fileName, openmode);
+	int			fd = pgwin32_open(fileName, openmode);
 	if (fd == -1)
 		return NULL;
 	return _fdopen(fd, mode);

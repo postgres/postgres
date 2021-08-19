@@ -92,9 +92,8 @@ scram_SaltedPassword(const char *password,
 int
 scram_H(const uint8 *input, int len, uint8 *result)
 {
-	pg_cryptohash_ctx *ctx;
 
-	ctx = pg_cryptohash_create(PG_SHA256);
+	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA256);
 	if (ctx == NULL)
 		return -1;
 

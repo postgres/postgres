@@ -46,12 +46,10 @@ typedef struct
 static void
 flushCachedPage(Relation index, BloomBuildState *buildstate)
 {
-	Page		page;
 	Buffer		buffer = BloomNewBuffer(index);
-	GenericXLogState *state;
 
-	state = GenericXLogStart(index);
-	page = GenericXLogRegisterBuffer(state, buffer, GENERIC_XLOG_FULL_IMAGE);
+	GenericXLogState *state = GenericXLogStart(index);
+	Page		page = GenericXLogRegisterBuffer(state, buffer, GENERIC_XLOG_FULL_IMAGE);
 	memcpy(page, buildstate->data.data, BLCKSZ);
 	GenericXLogFinish(state);
 	UnlockReleaseBuffer(buffer);
@@ -75,12 +73,10 @@ bloomBuildCallback(Relation index, ItemPointer tid, Datum *values,
 				   bool *isnull, bool tupleIsAlive, void *state)
 {
 	BloomBuildState *buildstate = (BloomBuildState *) state;
-	MemoryContext oldCtx;
-	BloomTuple *itup;
 
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	itup = BloomFormTuple(&buildstate->blstate, tid, values, isnull);
+	BloomTuple *itup = BloomFormTuple(&buildstate->blstate, tid, values, isnull);
 
 	/* Try to add next item to cached page */
 	if (BloomPageAddItem(&buildstate->blstate, buildstate->data.data, itup))
@@ -120,8 +116,6 @@ bloomBuildCallback(Relation index, ItemPointer tid, Datum *values,
 IndexBuildResult *
 blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
-	IndexBuildResult *result;
-	double		reltuples;
 	BloomBuildState buildstate;
 
 	if (RelationGetNumberOfBlocks(index) != 0)
@@ -140,7 +134,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	initCachedPage(&buildstate);
 
 	/* Do the heap scan */
-	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
+	double		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
 									   bloomBuildCallback, (void *) &buildstate,
 									   NULL);
 
@@ -150,7 +144,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	IndexBuildResult *result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 
@@ -163,10 +157,9 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 void
 blbuildempty(Relation index)
 {
-	Page		metapage;
 
 	/* Construct metapage. */
-	metapage = (Page) palloc(BLCKSZ);
+	Page		metapage = (Page) palloc(BLCKSZ);
 	BloomFillMetapage(index, metapage);
 
 	/*
@@ -201,10 +194,6 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		 IndexInfo *indexInfo)
 {
 	BloomState	blstate;
-	BloomTuple *itup;
-	MemoryContext oldCtx;
-	MemoryContext insertCtx;
-	BloomMetaPageData *metaData;
 	Buffer		buffer,
 				metaBuffer;
 	Page		page,
@@ -213,14 +202,14 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	OffsetNumber nStart;
 	GenericXLogState *state;
 
-	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "Bloom insert temporary context",
 									  ALLOCSET_DEFAULT_SIZES);
 
-	oldCtx = MemoryContextSwitchTo(insertCtx);
+	MemoryContext oldCtx = MemoryContextSwitchTo(insertCtx);
 
 	initBloomState(&blstate, index);
-	itup = BloomFormTuple(&blstate, ht_ctid, values, isnull);
+	BloomTuple *itup = BloomFormTuple(&blstate, ht_ctid, values, isnull);
 
 	/*
 	 * At first, try to insert new tuple to the first page in notFullPage
@@ -228,11 +217,10 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	 */
 	metaBuffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
 	LockBuffer(metaBuffer, BUFFER_LOCK_SHARE);
-	metaData = BloomPageGetMeta(BufferGetPage(metaBuffer));
+	BloomMetaPageData *metaData = BloomPageGetMeta(BufferGetPage(metaBuffer));
 
 	if (metaData->nEnd > metaData->nStart)
 	{
-		Page		page;
 
 		blkno = metaData->notFullPage[metaData->nStart];
 		Assert(blkno != InvalidBlockNumber);
@@ -244,7 +232,7 @@ blinsert(Relation index, Datum *values, bool *isnull,
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 		state = GenericXLogStart(index);
-		page = GenericXLogRegisterBuffer(state, buffer, 0);
+		Page		page = GenericXLogRegisterBuffer(state, buffer, 0);
 
 		/*
 		 * We might have found a page that was recently deleted by VACUUM.  If

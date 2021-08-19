@@ -94,13 +94,12 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	else if (info == XLOG_PARAMETER_CHANGE)
 	{
 		xl_parameter_change xlrec;
-		const char *wal_level_str;
 		const struct config_enum_entry *entry;
 
 		memcpy(&xlrec, rec, sizeof(xl_parameter_change));
 
 		/* Find a string representation for wal_level */
-		wal_level_str = "?";
+		const char *wal_level_str = "?";
 		for (entry = wal_level_options; entry->name; entry++)
 		{
 			if (entry->val == xlrec.wal_level)

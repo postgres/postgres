@@ -109,9 +109,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			}
 		case XLOG_BTREE_META_CLEANUP:
 			{
-				xl_btree_metadata *xlrec;
 
-				xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
+				xl_btree_metadata *xlrec = (xl_btree_metadata *) XLogRecGetBlockData(record, 0,
 																  NULL);
 				appendStringInfo(buf, "last_cleanup_num_delpages %u",
 								 xlrec->last_cleanup_num_delpages);

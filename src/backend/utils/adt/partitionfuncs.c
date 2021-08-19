@@ -34,15 +34,13 @@
 static bool
 check_rel_can_be_partition(Oid relid)
 {
-	char		relkind;
-	bool		relispartition;
 
 	/* Check if relation exists */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(relid)))
 		return false;
 
-	relkind = get_rel_relkind(relid);
-	relispartition = get_rel_relispartition(relid);
+	char		relkind = get_rel_relkind(relid);
+	bool		relispartition = get_rel_relispartition(relid);
 
 	/* Only allow relation types that can appear in partition trees. */
 	if (!relispartition &&
@@ -72,8 +70,6 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcxt;
-		TupleDesc	tupdesc;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -82,7 +78,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 
 		/* switch to memory context appropriate for multiple function calls */
-		oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/*
 		 * Find all members of inheritance set.  We only need AccessShareLock
@@ -90,7 +86,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 		 */
 		partitions = find_all_inheritors(rootrelid, AccessShareLock, NULL);
 
-		tupdesc = CreateTemplateTupleDesc(PG_PARTITION_TREE_COLS);
+		TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_PARTITION_TREE_COLS);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relid",
 						   REGCLASSOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "parentid",
@@ -114,10 +110,8 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 
 	if (funcctx->call_cntr < list_length(partitions))
 	{
-		Datum		result;
 		Datum		values[PG_PARTITION_TREE_COLS];
 		bool		nulls[PG_PARTITION_TREE_COLS];
-		HeapTuple	tuple;
 		Oid			parentid = InvalidOid;
 		Oid			relid = list_nth_oid(partitions, funcctx->call_cntr);
 		char		relkind = get_rel_relkind(relid);
@@ -158,8 +152,8 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 		}
 		values[3] = Int32GetDatum(level);
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
+		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		Datum		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -178,14 +172,12 @@ Datum
 pg_partition_root(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
-	Oid			rootrelid;
-	List	   *ancestors;
 
 	if (!check_rel_can_be_partition(relid))
 		PG_RETURN_NULL();
 
 	/* fetch the list of ancestors */
-	ancestors = get_partition_ancestors(relid);
+	List	   *ancestors = get_partition_ancestors(relid);
 
 	/*
 	 * If the input relation is already the top-most parent, just return
@@ -194,7 +186,7 @@ pg_partition_root(PG_FUNCTION_ARGS)
 	if (ancestors == NIL)
 		PG_RETURN_OID(relid);
 
-	rootrelid = llast_oid(ancestors);
+	Oid			rootrelid = llast_oid(ancestors);
 	list_free(ancestors);
 
 	/*
@@ -220,14 +212,13 @@ pg_partition_ancestors(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext oldcxt;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		if (!check_rel_can_be_partition(relid))
 			SRF_RETURN_DONE(funcctx);
 
-		oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		MemoryContext oldcxt = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		ancestors = get_partition_ancestors(relid);
 		ancestors = lcons_oid(relid, ancestors);

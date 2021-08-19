@@ -81,10 +81,8 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P_COPY(1);
-	ItemPointer tids;
 	int			ntids,
 				nblocks;
-	Relation	rel;
 	OffsetNumber curr_start_ptr,
 				next_start_ptr;
 	bool		include_this_tid[MaxHeapTuplesPerPage];
@@ -98,7 +96,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 	/* Check inputs. */
 	sanity_check_tid_array(ta, &ntids);
 
-	rel = relation_open(relid, RowExclusiveLock);
+	Relation	rel = relation_open(relid, RowExclusiveLock);
 
 	/*
 	 * Check target relation.
@@ -123,7 +121,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 					   get_relkind_objtype(rel->rd_rel->relkind),
 					   RelationGetRelationName(rel));
 
-	tids = ((ItemPointer) ARR_DATA_PTR(ta));
+	ItemPointer tids = ((ItemPointer) ARR_DATA_PTR(ta));
 
 	/*
 	 * If there is more than one TID in the array, sort them so that we can
@@ -141,12 +139,8 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 	 */
 	while (next_start_ptr != ntids)
 	{
-		Buffer		buf;
 		Buffer		vmbuf = InvalidBuffer;
-		Page		page;
-		BlockNumber blkno;
 		OffsetNumber curoff;
-		OffsetNumber maxoffset;
 		int			i;
 		bool		did_modify_page = false;
 		bool		did_modify_vm = false;
@@ -157,7 +151,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 		 * Find all the TIDs belonging to one particular page starting from
 		 * next_start_ptr and process them one by one.
 		 */
-		blkno = find_tids_one_page(tids, ntids, &next_start_ptr);
+		BlockNumber blkno = find_tids_one_page(tids, ntids, &next_start_ptr);
 
 		/* Check whether the block number is valid. */
 		if (blkno >= nblocks)
@@ -172,12 +166,12 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 			continue;
 		}
 
-		buf = ReadBuffer(rel, blkno);
+		Buffer		buf = ReadBuffer(rel, blkno);
 		LockBufferForCleanup(buf);
 
-		page = BufferGetPage(buf);
+		Page		page = BufferGetPage(buf);
 
-		maxoffset = PageGetMaxOffsetNumber(page);
+		OffsetNumber maxoffset = PageGetMaxOffsetNumber(page);
 
 		/*
 		 * Figure out which TIDs we are going to process and which ones we are
@@ -187,7 +181,6 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 		for (i = curr_start_ptr; i < next_start_ptr; i++)
 		{
 			OffsetNumber offno = ItemPointerGetOffsetNumberNoCheck(&tids[i]);
-			ItemId		itemid;
 
 			/* Check whether the offset number is valid. */
 			if (offno == InvalidOffsetNumber || offno > maxoffset)
@@ -198,7 +191,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 				continue;
 			}
 
-			itemid = PageGetItemId(page, offno);
+			ItemId		itemid = PageGetItemId(page, offno);
 
 			/* Only accept an item ID that is used. */
 			if (ItemIdIsRedirected(itemid))
@@ -242,12 +235,11 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 		for (curoff = FirstOffsetNumber; curoff <= maxoffset;
 			 curoff = OffsetNumberNext(curoff))
 		{
-			ItemId		itemid;
 
 			if (!include_this_tid[curoff])
 				continue;
 
-			itemid = PageGetItemId(page, curoff);
+			ItemId		itemid = PageGetItemId(page, curoff);
 			Assert(ItemIdIsNormal(itemid));
 
 			did_modify_page = true;
@@ -271,11 +263,10 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 			}
 			else
 			{
-				HeapTupleHeader htup;
 
 				Assert(heap_force_opt == HEAP_FORCE_FREEZE);
 
-				htup = (HeapTupleHeader) PageGetItem(page, itemid);
+				HeapTupleHeader htup = (HeapTupleHeader) PageGetItem(page, itemid);
 
 				/*
 				 * Reset all visibility-related fields of the tuple. This

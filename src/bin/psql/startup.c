@@ -327,12 +327,11 @@ main(int argc, char *argv[])
 
 	if (options.list_dbs)
 	{
-		int			success;
 
 		if (!options.no_psqlrc)
 			process_psqlrc(argv[0]);
 
-		success = listAllDbs(NULL, false);
+		int			success = listAllDbs(NULL, false);
 		PQfinish(pset.db);
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -390,19 +389,17 @@ main(int argc, char *argv[])
 			}
 			else if (cell->action == ACT_SINGLE_SLASH)
 			{
-				PsqlScanState scan_state;
-				ConditionalStack cond_stack;
 
 				pg_logging_config(PG_LOG_FLAG_TERSE);
 
 				if (pset.echo == PSQL_ECHO_ALL)
 					puts(cell->val);
 
-				scan_state = psql_scan_create(&psqlscan_callbacks);
+				PsqlScanState scan_state = psql_scan_create(&psqlscan_callbacks);
 				psql_scan_setup(scan_state,
 								cell->val, strlen(cell->val),
 								pset.encoding, standard_strings());
-				cond_stack = conditional_stack_create();
+				ConditionalStack cond_stack = conditional_stack_create();
 				psql_scan_set_passthrough(scan_state, (void *) cond_stack);
 
 				successResult = HandleSlashCmds(scan_state,
@@ -591,12 +588,10 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 				break;
 			case 'P':
 				{
-					char	   *value;
-					char	   *equal_loc;
 					bool		result;
 
-					value = pg_strdup(optarg);
-					equal_loc = strchr(value, '=');
+					char	   *value = pg_strdup(optarg);
+					char	   *equal_loc = strchr(value, '=');
 					if (!equal_loc)
 						result = do_pset(value, NULL, &pset.popt, true);
 					else
@@ -638,11 +633,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 				break;
 			case 'v':
 				{
-					char	   *value;
-					char	   *equal_loc;
 
-					value = pg_strdup(optarg);
-					equal_loc = strchr(value, '=');
+					char	   *value = pg_strdup(optarg);
+					char	   *equal_loc = strchr(value, '=');
 					if (!equal_loc)
 					{
 						if (!DeleteVariable(pset.vars, value))
@@ -748,9 +741,8 @@ static void
 simple_action_list_append(SimpleActionList *list,
 						  enum _actions action, const char *val)
 {
-	SimpleActionListCell *cell;
 
-	cell = (SimpleActionListCell *) pg_malloc(sizeof(SimpleActionListCell));
+	SimpleActionListCell *cell = (SimpleActionListCell *) pg_malloc(sizeof(SimpleActionListCell));
 
 	cell->next = NULL;
 	cell->action = action;

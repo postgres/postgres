@@ -61,7 +61,6 @@ parseCommandLine(int argc, char *argv[])
 	};
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
-	int			os_user_effective_id;
 	FILE	   *fp;
 	char	  **filename;
 	time_t		run_time = time(NULL);
@@ -74,7 +73,7 @@ parseCommandLine(int argc, char *argv[])
 	old_cluster.port = getenv("PGPORTOLD") ? atoi(getenv("PGPORTOLD")) : DEF_PGUPORT;
 	new_cluster.port = getenv("PGPORTNEW") ? atoi(getenv("PGPORTNEW")) : DEF_PGUPORT;
 
-	os_user_effective_id = get_user_info(&os_info.user);
+	int			os_user_effective_id = get_user_info(&os_info.user);
 	/* we override just the database user name;  we got the OS id above */
 	if (getenv("PGUSER"))
 	{

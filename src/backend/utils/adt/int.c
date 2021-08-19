@@ -113,9 +113,8 @@ int2send(PG_FUNCTION_ARGS)
 int2vector *
 buildint2vector(const int16 *int2s, int n)
 {
-	int2vector *result;
 
-	result = (int2vector *) palloc0(Int2VectorSize(n));
+	int2vector *result = (int2vector *) palloc0(Int2VectorSize(n));
 
 	if (n > 0 && int2s)
 		memcpy(result->values, int2s, n * sizeof(int16));
@@ -141,10 +140,9 @@ Datum
 int2vectorin(PG_FUNCTION_ARGS)
 {
 	char	   *intString = PG_GETARG_CSTRING(0);
-	int2vector *result;
 	int			n;
 
-	result = (int2vector *) palloc0(Int2VectorSize(FUNC_MAX_ARGS));
+	int2vector *result = (int2vector *) palloc0(Int2VectorSize(FUNC_MAX_ARGS));
 
 	for (n = 0; *intString && n < FUNC_MAX_ARGS; n++)
 	{
@@ -182,11 +180,10 @@ int2vectorout(PG_FUNCTION_ARGS)
 	int2vector *int2Array = (int2vector *) PG_GETARG_POINTER(0);
 	int			num,
 				nnums = int2Array->dim1;
-	char	   *rp;
 	char	   *result;
 
 	/* assumes sign, 5 digits, ' ' */
-	rp = result = (char *) palloc(nnums * 7 + 1);
+	char	   *rp = result = (char *) palloc(nnums * 7 + 1);
 	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)
@@ -205,7 +202,6 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 {
 	LOCAL_FCINFO(locfcinfo, 3);
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	int2vector *result;
 
 	/*
 	 * Normally one would call array_recv() using DirectFunctionCall3, but
@@ -223,7 +219,7 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 	locfcinfo->args[2].value = Int32GetDatum(-1);
 	locfcinfo->args[2].isnull = false;
 
-	result = (int2vector *) DatumGetPointer(array_recv(locfcinfo));
+	int2vector *result = (int2vector *) DatumGetPointer(array_recv(locfcinfo));
 
 	Assert(!locfcinfo->isnull);
 
@@ -1170,13 +1166,12 @@ Datum
 int4abs(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
-	int32		result;
 
 	if (unlikely(arg1 == PG_INT32_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
-	result = (arg1 < 0) ? -arg1 : arg1;
+	int32		result = (arg1 < 0) ? -arg1 : arg1;
 	PG_RETURN_INT32(result);
 }
 
@@ -1184,13 +1179,12 @@ Datum
 int2abs(PG_FUNCTION_ARGS)
 {
 	int16		arg1 = PG_GETARG_INT16(0);
-	int16		result;
 
 	if (unlikely(arg1 == PG_INT16_MIN))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
-	result = (arg1 < 0) ? -arg1 : arg1;
+	int16		result = (arg1 < 0) ? -arg1 : arg1;
 	PG_RETURN_INT16(result);
 }
 
@@ -1274,9 +1268,8 @@ int4gcd(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
-	int32		result;
 
-	result = int4gcd_internal(arg1, arg2);
+	int32		result = int4gcd_internal(arg1, arg2);
 
 	PG_RETURN_INT32(result);
 }
@@ -1289,7 +1282,6 @@ int4lcm(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
-	int32		gcd;
 	int32		result;
 
 	/*
@@ -1301,7 +1293,7 @@ int4lcm(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(0);
 
 	/* lcm(x, y) = abs(x / gcd(x, y) * y) */
-	gcd = int4gcd_internal(arg1, arg2);
+	int32		gcd = int4gcd_internal(arg1, arg2);
 	arg1 = arg1 / gcd;
 
 	if (unlikely(pg_mul_s32_overflow(arg1, arg2, &result)))
@@ -1489,7 +1481,6 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	generate_series_fctx *fctx;
-	int32		result;
 	MemoryContext oldcontext;
 
 	/* stuff done only on the first call of the function */
@@ -1537,7 +1528,7 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 	 * get the saved state and use current as the result for this iteration
 	 */
 	fctx = funcctx->user_fctx;
-	result = fctx->current;
+	int32		result = fctx->current;
 
 	if ((fctx->step > 0 && fctx->current <= fctx->finish) ||
 		(fctx->step < 0 && fctx->current >= fctx->finish))

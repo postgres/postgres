@@ -35,27 +35,18 @@ static void _hash_vacuum_one_page(Relation rel, Relation hrel,
 void
 _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 {
-	Buffer		buf = InvalidBuffer;
-	Buffer		bucket_buf;
-	Buffer		metabuf;
 	HashMetaPage metap;
 	HashMetaPage usedmetap = NULL;
-	Page		metapage;
-	Page		page;
-	HashPageOpaque pageopaque;
-	Size		itemsz;
 	bool		do_expand;
-	uint32		hashkey;
-	Bucket		bucket;
 	OffsetNumber itup_off;
 
 	/*
 	 * Get the hash key for the item (it's stored in the index tuple itself).
 	 */
-	hashkey = _hash_get_indextuple_hashkey(itup);
+	uint32		hashkey = _hash_get_indextuple_hashkey(itup);
 
 	/* compute item size too */
-	itemsz = IndexTupleSize(itup);
+	Size		itemsz = IndexTupleSize(itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -66,8 +57,8 @@ restart_insert:
 	 * examine pd_pagesize_version, but that can't change so we can examine it
 	 * without a lock.
 	 */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
-	metapage = BufferGetPage(metabuf);
+	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
+	Page		metapage = BufferGetPage(metabuf);
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we
@@ -84,18 +75,18 @@ restart_insert:
 				 errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/* Lock the primary bucket page for the target bucket. */
-	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,
+	Buffer		buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,
 										  &usedmetap);
 	Assert(usedmetap != NULL);
 
 	CheckForSerializableConflictIn(rel, NULL, BufferGetBlockNumber(buf));
 
 	/* remember the primary bucket buffer to release the pin on it at end. */
-	bucket_buf = buf;
+	Buffer		bucket_buf = buf;
 
-	page = BufferGetPage(buf);
-	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	bucket = pageopaque->hasho_bucket;
+	Page		page = BufferGetPage(buf);
+	HashPageOpaque pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	Bucket		bucket = pageopaque->hasho_bucket;
 
 	/*
 	 * If this bucket is in the process of being split, try to finish the
@@ -125,7 +116,6 @@ restart_insert:
 	/* Do the insertion */
 	while (PageGetFreeSpace(page) < itemsz)
 	{
-		BlockNumber nextblkno;
 
 		/*
 		 * Check if current page has any DEAD tuples. If yes, delete these
@@ -147,7 +137,7 @@ restart_insert:
 		/*
 		 * no space on this page; check for an overflow page
 		 */
-		nextblkno = pageopaque->hasho_nextblkno;
+		BlockNumber nextblkno = pageopaque->hasho_nextblkno;
 
 		if (BlockNumberIsValid(nextblkno))
 		{
@@ -214,7 +204,6 @@ restart_insert:
 	if (RelationNeedsWAL(rel))
 	{
 		xl_hash_insert xlrec;
-		XLogRecPtr	recptr;
 
 		xlrec.offnum = itup_off;
 
@@ -226,7 +215,7 @@ restart_insert:
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
 
-		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INSERT);
+		XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INSERT);
 
 		PageSetLSN(BufferGetPage(buf), recptr);
 		PageSetLSN(BufferGetPage(metabuf), recptr);
@@ -267,16 +256,13 @@ restart_insert:
 OffsetNumber
 _hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup)
 {
-	OffsetNumber itup_off;
-	Page		page;
-	uint32		hashkey;
 
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	/* Find where to insert the tuple (preserving page's hashkey ordering) */
-	hashkey = _hash_get_indextuple_hashkey(itup);
-	itup_off = _hash_binsearch(page, hashkey);
+	uint32		hashkey = _hash_get_indextuple_hashkey(itup);
+	OffsetNumber itup_off = _hash_binsearch(page, hashkey);
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off, false, false)
 		== InvalidOffsetNumber)
@@ -300,18 +286,16 @@ _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
 					OffsetNumber *itup_offsets, uint16 nitups)
 {
 	OffsetNumber itup_off;
-	Page		page;
 	uint32		hashkey;
 	int			i;
 
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 
 	for (i = 0; i < nitups; i++)
 	{
-		Size		itemsize;
 
-		itemsize = IndexTupleSize(itups[i]);
+		Size		itemsize = IndexTupleSize(itups[i]);
 		itemsize = MAXALIGN(itemsize);
 
 		/* Find where to insert the tuple (preserving page's hashkey ordering) */
@@ -359,9 +343,8 @@ _hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 
 	if (ndeletable > 0)
 	{
-		TransactionId latestRemovedXid;
 
-		latestRemovedXid =
+		TransactionId latestRemovedXid =
 			index_compute_xid_horizon_for_tuples(rel, hrel, buf,
 												 deletable, ndeletable);
 
@@ -396,7 +379,6 @@ _hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 		if (RelationNeedsWAL(rel))
 		{
 			xl_hash_vacuum_one_page xlrec;
-			XLogRecPtr	recptr;
 
 			xlrec.latestRemovedXid = latestRemovedXid;
 			xlrec.ntuples = ndeletable;
@@ -415,7 +397,7 @@ _hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 
 			XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);
 
-			recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_VACUUM_ONE_PAGE);
+			XLogRecPtr	recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_VACUUM_ONE_PAGE);
 
 			PageSetLSN(BufferGetPage(buf), recptr);
 			PageSetLSN(BufferGetPage(metabuf), recptr);

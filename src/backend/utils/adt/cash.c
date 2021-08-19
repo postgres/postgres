@@ -103,7 +103,6 @@ cash_in(PG_FUNCTION_ARGS)
 	Cash		sgn = 1;
 	bool		seen_dot = false;
 	const char *s = str;
-	int			fpoint;
 	char		dsymbol;
 	const char *ssymbol,
 			   *psymbol,
@@ -121,7 +120,7 @@ cash_in(PG_FUNCTION_ARGS)
 	 * to test for CHAR_MAX at all, but to impose a range check for plausible
 	 * frac_digits values.
 	 */
-	fpoint = lconvert->frac_digits;
+	int			fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;				/* best guess in this case, I think */
 
@@ -312,8 +311,6 @@ cash_out(PG_FUNCTION_ARGS)
 	Cash		value = PG_GETARG_CASH(0);
 	char	   *result;
 	char		buf[128];
-	char	   *bufptr;
-	int			digit_pos;
 	int			points,
 				mon_group;
 	char		dsymbol;
@@ -369,7 +366,7 @@ cash_out(PG_FUNCTION_ARGS)
 	}
 
 	/* we build the digits+decimal-point+sep string right-to-left in buf[] */
-	bufptr = buf + sizeof(buf) - 1;
+	char	   *bufptr = buf + sizeof(buf) - 1;
 	*bufptr = '\0';
 
 	/*
@@ -378,7 +375,7 @@ cash_out(PG_FUNCTION_ARGS)
 	 * current digit position, with zero as the digit just left of the decimal
 	 * point, increasing to the right.
 	 */
-	digit_pos = points;
+	int			digit_pos = points;
 	do
 	{
 		if (points && digit_pos == 0)
@@ -612,9 +609,8 @@ cash_pl(PG_FUNCTION_ARGS)
 {
 	Cash		c1 = PG_GETARG_CASH(0);
 	Cash		c2 = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = c1 + c2;
+	Cash		result = c1 + c2;
 
 	PG_RETURN_CASH(result);
 }
@@ -628,9 +624,8 @@ cash_mi(PG_FUNCTION_ARGS)
 {
 	Cash		c1 = PG_GETARG_CASH(0);
 	Cash		c2 = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = c1 - c2;
+	Cash		result = c1 - c2;
 
 	PG_RETURN_CASH(result);
 }
@@ -644,14 +639,13 @@ cash_div_cash(PG_FUNCTION_ARGS)
 {
 	Cash		dividend = PG_GETARG_CASH(0);
 	Cash		divisor = PG_GETARG_CASH(1);
-	float8		quotient;
 
 	if (divisor == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	quotient = (float8) dividend / (float8) divisor;
+	float8		quotient = (float8) dividend / (float8) divisor;
 	PG_RETURN_FLOAT8(quotient);
 }
 
@@ -664,9 +658,8 @@ cash_mul_flt8(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	float8		f = PG_GETARG_FLOAT8(1);
-	Cash		result;
 
-	result = rint(c * f);
+	Cash		result = rint(c * f);
 	PG_RETURN_CASH(result);
 }
 
@@ -679,9 +672,8 @@ flt8_mul_cash(PG_FUNCTION_ARGS)
 {
 	float8		f = PG_GETARG_FLOAT8(0);
 	Cash		c = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = rint(f * c);
+	Cash		result = rint(f * c);
 	PG_RETURN_CASH(result);
 }
 
@@ -694,14 +686,13 @@ cash_div_flt8(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	float8		f = PG_GETARG_FLOAT8(1);
-	Cash		result;
 
 	if (f == 0.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / f);
+	Cash		result = rint(c / f);
 	PG_RETURN_CASH(result);
 }
 
@@ -714,9 +705,8 @@ cash_mul_flt4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	float4		f = PG_GETARG_FLOAT4(1);
-	Cash		result;
 
-	result = rint(c * (float8) f);
+	Cash		result = rint(c * (float8) f);
 	PG_RETURN_CASH(result);
 }
 
@@ -729,9 +719,8 @@ flt4_mul_cash(PG_FUNCTION_ARGS)
 {
 	float4		f = PG_GETARG_FLOAT4(0);
 	Cash		c = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = rint((float8) f * c);
+	Cash		result = rint((float8) f * c);
 	PG_RETURN_CASH(result);
 }
 
@@ -745,14 +734,13 @@ cash_div_flt4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	float4		f = PG_GETARG_FLOAT4(1);
-	Cash		result;
 
 	if (f == 0.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = rint(c / (float8) f);
+	Cash		result = rint(c / (float8) f);
 	PG_RETURN_CASH(result);
 }
 
@@ -765,9 +753,8 @@ cash_mul_int8(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int64		i = PG_GETARG_INT64(1);
-	Cash		result;
 
-	result = c * i;
+	Cash		result = c * i;
 	PG_RETURN_CASH(result);
 }
 
@@ -780,9 +767,8 @@ int8_mul_cash(PG_FUNCTION_ARGS)
 {
 	int64		i = PG_GETARG_INT64(0);
 	Cash		c = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = i * c;
+	Cash		result = i * c;
 	PG_RETURN_CASH(result);
 }
 
@@ -794,14 +780,13 @@ cash_div_int8(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int64		i = PG_GETARG_INT64(1);
-	Cash		result;
 
 	if (i == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = c / i;
+	Cash		result = c / i;
 
 	PG_RETURN_CASH(result);
 }
@@ -815,9 +800,8 @@ cash_mul_int4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int32		i = PG_GETARG_INT32(1);
-	Cash		result;
 
-	result = c * i;
+	Cash		result = c * i;
 	PG_RETURN_CASH(result);
 }
 
@@ -830,9 +814,8 @@ int4_mul_cash(PG_FUNCTION_ARGS)
 {
 	int32		i = PG_GETARG_INT32(0);
 	Cash		c = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = i * c;
+	Cash		result = i * c;
 	PG_RETURN_CASH(result);
 }
 
@@ -846,14 +829,13 @@ cash_div_int4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int32		i = PG_GETARG_INT32(1);
-	Cash		result;
 
 	if (i == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = c / i;
+	Cash		result = c / i;
 
 	PG_RETURN_CASH(result);
 }
@@ -867,9 +849,8 @@ cash_mul_int2(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int16		s = PG_GETARG_INT16(1);
-	Cash		result;
 
-	result = c * s;
+	Cash		result = c * s;
 	PG_RETURN_CASH(result);
 }
 
@@ -881,9 +862,8 @@ int2_mul_cash(PG_FUNCTION_ARGS)
 {
 	int16		s = PG_GETARG_INT16(0);
 	Cash		c = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = s * c;
+	Cash		result = s * c;
 	PG_RETURN_CASH(result);
 }
 
@@ -896,14 +876,13 @@ cash_div_int2(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
 	int16		s = PG_GETARG_INT16(1);
-	Cash		result;
 
 	if (s == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result = c / s;
+	Cash		result = c / s;
 	PG_RETURN_CASH(result);
 }
 
@@ -915,9 +894,8 @@ cashlarger(PG_FUNCTION_ARGS)
 {
 	Cash		c1 = PG_GETARG_CASH(0);
 	Cash		c2 = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = (c1 > c2) ? c1 : c2;
+	Cash		result = (c1 > c2) ? c1 : c2;
 
 	PG_RETURN_CASH(result);
 }
@@ -930,9 +908,8 @@ cashsmaller(PG_FUNCTION_ARGS)
 {
 	Cash		c1 = PG_GETARG_CASH(0);
 	Cash		c2 = PG_GETARG_CASH(1);
-	Cash		result;
 
-	result = (c1 < c2) ? c1 : c2;
+	Cash		result = (c1 < c2) ? c1 : c2;
 
 	PG_RETURN_CASH(result);
 }
@@ -945,16 +922,8 @@ Datum
 cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
-	uint64		val;
 	char		buf[256];
 	char	   *p = buf;
-	Cash		m0;
-	Cash		m1;
-	Cash		m2;
-	Cash		m3;
-	Cash		m4;
-	Cash		m5;
-	Cash		m6;
 
 	/* work with positive numbers */
 	if (value < 0)
@@ -967,15 +936,15 @@ cash_words(PG_FUNCTION_ARGS)
 		buf[0] = '\0';
 
 	/* Now treat as unsigned, to avoid trouble at INT_MIN */
-	val = (uint64) value;
+	uint64		val = (uint64) value;
 
-	m0 = val % INT64CONST(100); /* cents */
-	m1 = (val / INT64CONST(100)) % 1000;	/* hundreds */
-	m2 = (val / INT64CONST(100000)) % 1000; /* thousands */
-	m3 = (val / INT64CONST(100000000)) % 1000;	/* millions */
-	m4 = (val / INT64CONST(100000000000)) % 1000;	/* billions */
-	m5 = (val / INT64CONST(100000000000000)) % 1000;	/* trillions */
-	m6 = (val / INT64CONST(100000000000000000)) % 1000; /* quadrillions */
+	Cash		m0 = val % INT64CONST(100); /* cents */
+	Cash		m1 = (val / INT64CONST(100)) % 1000;	/* hundreds */
+	Cash		m2 = (val / INT64CONST(100000)) % 1000; /* thousands */
+	Cash		m3 = (val / INT64CONST(100000000)) % 1000;	/* millions */
+	Cash		m4 = (val / INT64CONST(100000000000)) % 1000;	/* billions */
+	Cash		m5 = (val / INT64CONST(100000000000000)) % 1000;	/* trillions */
+	Cash		m6 = (val / INT64CONST(100000000000000000)) % 1000; /* quadrillions */
 
 	if (m6)
 	{
@@ -1032,31 +1001,26 @@ Datum
 cash_numeric(PG_FUNCTION_ARGS)
 {
 	Cash		money = PG_GETARG_CASH(0);
-	Datum		result;
-	int			fpoint;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
-	fpoint = lconvert->frac_digits;
+	int			fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* convert the integral money value to numeric */
-	result = NumericGetDatum(int64_to_numeric(money));
+	Datum		result = NumericGetDatum(int64_to_numeric(money));
 
 	/* scale appropriately, if needed */
 	if (fpoint > 0)
 	{
-		int64		scale;
 		int			i;
-		Datum		numeric_scale;
-		Datum		quotient;
 
 		/* compute required scale factor */
-		scale = 1;
+		int64		scale = 1;
 		for (i = 0; i < fpoint; i++)
 			scale *= 10;
-		numeric_scale = NumericGetDatum(int64_to_numeric(scale));
+		Datum		numeric_scale = NumericGetDatum(int64_to_numeric(scale));
 
 		/*
 		 * Given integral inputs approaching INT64_MAX, select_div_scale()
@@ -1070,7 +1034,7 @@ cash_numeric(PG_FUNCTION_ARGS)
 											Int32GetDatum(fpoint));
 
 		/* Now we can safely divide ... */
-		quotient = DirectFunctionCall2(numeric_div, result, numeric_scale);
+		Datum		quotient = DirectFunctionCall2(numeric_div, result, numeric_scale);
 
 		/* ... and forcibly round to exactly the intended number of digits */
 		result = DirectFunctionCall2(numeric_round,
@@ -1088,29 +1052,25 @@ Datum
 numeric_cash(PG_FUNCTION_ARGS)
 {
 	Datum		amount = PG_GETARG_DATUM(0);
-	Cash		result;
-	int			fpoint;
-	int64		scale;
 	int			i;
-	Datum		numeric_scale;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
-	fpoint = lconvert->frac_digits;
+	int			fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
-	scale = 1;
+	int64		scale = 1;
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* multiply the input amount by scale factor */
-	numeric_scale = NumericGetDatum(int64_to_numeric(scale));
+	Datum		numeric_scale = NumericGetDatum(int64_to_numeric(scale));
 	amount = DirectFunctionCall2(numeric_mul, amount, numeric_scale);
 
 	/* note that numeric_int8 will round to nearest integer for us */
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, amount));
+	Cash		result = DatumGetInt64(DirectFunctionCall1(numeric_int8, amount));
 
 	PG_RETURN_CASH(result);
 }
@@ -1122,24 +1082,21 @@ Datum
 int4_cash(PG_FUNCTION_ARGS)
 {
 	int32		amount = PG_GETARG_INT32(0);
-	Cash		result;
-	int			fpoint;
-	int64		scale;
 	int			i;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
-	fpoint = lconvert->frac_digits;
+	int			fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
-	scale = 1;
+	int64		scale = 1;
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
-	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
+	Cash		result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
 											   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
@@ -1152,24 +1109,21 @@ Datum
 int8_cash(PG_FUNCTION_ARGS)
 {
 	int64		amount = PG_GETARG_INT64(0);
-	Cash		result;
-	int			fpoint;
-	int64		scale;
 	int			i;
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
-	fpoint = lconvert->frac_digits;
+	int			fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
-	scale = 1;
+	int64		scale = 1;
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
-	result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
+	Cash		result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
 											   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);

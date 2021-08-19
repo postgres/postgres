@@ -164,17 +164,13 @@ static Const *transformPartitionBoundValue(ParseState *pstate, Node *con,
 List *
 transformCreateStmt(CreateStmt *stmt, const char *queryString)
 {
-	ParseState *pstate;
 	CreateStmtContext cxt;
-	List	   *result;
-	List	   *save_alist;
 	ListCell   *elements;
-	Oid			namespaceid;
 	Oid			existing_relid;
 	ParseCallbackState pcbstate;
 
 	/* Set up pstate */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
@@ -185,7 +181,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	setup_parser_errposition_callback(&pcbstate, pstate,
 									  stmt->relation->location);
-	namespaceid =
+	Oid			namespaceid =
 		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock,
 											 &existing_relid);
 	cancel_parser_errposition_callback(&pcbstate);
@@ -291,7 +287,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * not be necessary anymore, but we'll keep doing it to preserve the
 	 * historical order of execution of the alist commands.)
 	 */
-	save_alist = cxt.alist;
+	List	   *save_alist = cxt.alist;
 	cxt.alist = NIL;
 
 	Assert(stmt->constraints == NIL);
@@ -339,7 +335,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
 
-	result = lappend(cxt.blist, stmt);
+	List	   *result = lappend(cxt.blist, stmt);
 	result = list_concat(result, cxt.alist);
 	result = list_concat(result, save_alist);
 
@@ -366,9 +362,6 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	Oid			snamespaceid;
 	char	   *snamespace;
 	char	   *sname;
-	CreateSeqStmt *seqstmt;
-	AlterSeqStmt *altseqstmt;
-	List	   *attnamelist;
 	int			nameEl_idx = -1;
 
 	/*
@@ -442,7 +435,7 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	 * Build a CREATE SEQUENCE command to create the sequence object, and add
 	 * it to the list of things to be done before this CREATE/ALTER TABLE.
 	 */
-	seqstmt = makeNode(CreateSeqStmt);
+	CreateSeqStmt *seqstmt = makeNode(CreateSeqStmt);
 	seqstmt->for_identity = for_identity;
 	seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
 	seqstmt->options = seqoptions;
@@ -490,9 +483,9 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 	 * we can do the marking immediately, which improves some ALTER TABLE
 	 * behaviors.
 	 */
-	altseqstmt = makeNode(AlterSeqStmt);
+	AlterSeqStmt *altseqstmt = makeNode(AlterSeqStmt);
 	altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-	attnamelist = list_make3(makeString(snamespace),
+	List	   *attnamelist = list_make3(makeString(snamespace),
 							 makeString(cxt->relation->relname),
 							 makeString(column->colname));
 	altseqstmt->options = list_make1(makeDefElem("owned_by",
@@ -518,17 +511,12 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 static void
 transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 {
-	bool		is_serial;
-	bool		saw_nullable;
-	bool		saw_default;
-	bool		saw_identity;
-	bool		saw_generated;
 	ListCell   *clist;
 
 	cxt->columns = lappend(cxt->columns, column);
 
 	/* Check for SERIAL pseudo-types */
-	is_serial = false;
+	bool		is_serial = false;
 	if (column->typeName
 		&& list_length(column->typeName->names) == 1
 		&& !column->typeName->pct_type)
@@ -579,11 +567,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	{
 		char	   *snamespace;
 		char	   *sname;
-		char	   *qstring;
-		A_Const    *snamenode;
-		TypeCast   *castnode;
-		FuncCall   *funccallnode;
-		Constraint *constraint;
 
 		generateSerialExtraStmts(cxt, column,
 								 column->typeName->typeOid, NIL,
@@ -600,20 +583,20 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		 * form until after the sequence is created, but there's no need to do
 		 * so.
 		 */
-		qstring = quote_qualified_identifier(snamespace, sname);
-		snamenode = makeNode(A_Const);
+		char	   *qstring = quote_qualified_identifier(snamespace, sname);
+		A_Const    *snamenode = makeNode(A_Const);
 		snamenode->val.type = T_String;
 		snamenode->val.val.str = qstring;
 		snamenode->location = -1;
-		castnode = makeNode(TypeCast);
+		TypeCast   *castnode = makeNode(TypeCast);
 		castnode->typeName = SystemTypeName("regclass");
 		castnode->arg = (Node *) snamenode;
 		castnode->location = -1;
-		funccallnode = makeFuncCall(SystemFuncName("nextval"),
+		FuncCall   *funccallnode = makeFuncCall(SystemFuncName("nextval"),
 									list_make1(castnode),
 									COERCE_EXPLICIT_CALL,
 									-1);
-		constraint = makeNode(Constraint);
+		Constraint *constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
 		constraint->location = -1;
 		constraint->raw_expr = (Node *) funccallnode;
@@ -629,10 +612,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	/* Process column constraints, if any... */
 	transformConstraintAttrs(cxt, column->constraints);
 
-	saw_nullable = false;
-	saw_default = false;
-	saw_identity = false;
-	saw_generated = false;
+	bool		saw_nullable = false;
+	bool		saw_default = false;
+	bool		saw_identity = false;
+	bool		saw_generated = false;
 
 	foreach(clist, column->constraints)
 	{
@@ -679,8 +662,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 			case CONSTR_IDENTITY:
 				{
-					Type		ctype;
-					Oid			typeOid;
 
 					if (cxt->ofType)
 						ereport(ERROR,
@@ -691,8 +672,8 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("identity columns are not supported on partitions")));
 
-					ctype = typenameType(cxt->pstate, column->typeName, NULL);
-					typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
+					Type		ctype = typenameType(cxt->pstate, column->typeName, NULL);
+					Oid			typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
 					ReleaseSysCache(ctype);
 
 					if (saw_identity)
@@ -837,17 +818,15 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	 */
 	if (column->fdwoptions != NIL)
 	{
-		AlterTableStmt *stmt;
-		AlterTableCmd *cmd;
 
-		cmd = makeNode(AlterTableCmd);
+		AlterTableCmd *cmd = makeNode(AlterTableCmd);
 		cmd->subtype = AT_AlterColumnGenericOptions;
 		cmd->name = column->colname;
 		cmd->def = (Node *) column->fdwoptions;
 		cmd->behavior = DROP_RESTRICT;
 		cmd->missing_ok = false;
 
-		stmt = makeNode(AlterTableStmt);
+		AlterTableStmt *stmt = makeNode(AlterTableStmt);
 		stmt->relation = cxt->relation;
 		stmt->cmds = NIL;
 		stmt->objtype = OBJECT_FOREIGN_TABLE;
@@ -949,7 +928,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
-	TupleDesc	tupleDesc;
 	AclResult	aclresult;
 	char	   *comment;
 	ParseCallbackState pcbstate;
@@ -1000,7 +978,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 						   RelationGetRelationName(relation));
 	}
 
-	tupleDesc = RelationGetDescr(relation);
+	TupleDesc	tupleDesc = RelationGetDescr(relation);
 
 	/*
 	 * Insert the copied attributes into the cxt for the new table definition.
@@ -1013,7 +991,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		Form_pg_attribute attribute = TupleDescAttr(tupleDesc,
 													parent_attno - 1);
 		char	   *attributeName = NameStr(attribute->attname);
-		ColumnDef  *def;
 
 		/*
 		 * Ignore dropped columns in the parent.
@@ -1027,7 +1004,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 * For constraints, ONLY the NOT NULL constraint is inherited by the
 		 * new column definition per SQL99.
 		 */
-		def = makeNode(ColumnDef);
+		ColumnDef  *def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
 		def->typeName = makeTypeNameFromOid(attribute->atttypid,
 											attribute->atttypmod);
@@ -1062,15 +1039,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		if (attribute->attidentity &&
 			(table_like_clause->options & CREATE_TABLE_LIKE_IDENTITY))
 		{
-			Oid			seq_relid;
-			List	   *seq_options;
 
 			/*
 			 * find sequence owned by old column; extract sequence parameters;
 			 * build new create sequence command
 			 */
-			seq_relid = getIdentitySequence(RelationGetRelid(relation), attribute->attnum, false);
-			seq_options = sequence_options(seq_relid);
+			Oid			seq_relid = getIdentitySequence(RelationGetRelid(relation), attribute->attnum, false);
+			List	   *seq_options = sequence_options(seq_relid);
 			generateSerialExtraStmts(cxt, def,
 									 InvalidOid, seq_options,
 									 true, false,
@@ -1134,17 +1109,15 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	 */
 	if (table_like_clause->options & CREATE_TABLE_LIKE_STATISTICS)
 	{
-		List	   *parent_extstats;
 		ListCell   *l;
 
-		parent_extstats = RelationGetStatExtList(relation);
+		List	   *parent_extstats = RelationGetStatExtList(relation);
 
 		foreach(l, parent_extstats)
 		{
 			Oid			parent_stat_oid = lfirst_oid(l);
-			CreateStatsStmt *stats_stmt;
 
-			stats_stmt = generateClonedExtStatsStmt(cxt->relation,
+			CreateStatsStmt *stats_stmt = generateClonedExtStatsStmt(cxt->relation,
 													RelationGetRelid(relation),
 													parent_stat_oid);
 
@@ -1188,11 +1161,6 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 	List	   *result = NIL;
 	List	   *atsubcmds = NIL;
 	AttrNumber	parent_attno;
-	Relation	relation;
-	Relation	childrel;
-	TupleDesc	tupleDesc;
-	TupleConstr *constr;
-	AttrMap    *attmap;
 	char	   *comment;
 
 	/*
@@ -1205,22 +1173,22 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 	if (!OidIsValid(table_like_clause->relationOid))
 		elog(ERROR, "expandTableLikeClause called on untransformed LIKE clause");
 
-	relation = relation_open(table_like_clause->relationOid, NoLock);
+	Relation	relation = relation_open(table_like_clause->relationOid, NoLock);
 
-	tupleDesc = RelationGetDescr(relation);
-	constr = tupleDesc->constr;
+	TupleDesc	tupleDesc = RelationGetDescr(relation);
+	TupleConstr *constr = tupleDesc->constr;
 
 	/*
 	 * Open the newly-created child relation; we have lock on that too.
 	 */
-	childrel = relation_openrv(heapRel, NoLock);
+	Relation	childrel = relation_openrv(heapRel, NoLock);
 
 	/*
 	 * Construct a map from the LIKE relation's attnos to the child rel's.
 	 * This re-checks type match etc, although it shouldn't be possible to
 	 * have a failure since both tables are locked.
 	 */
-	attmap = build_attrmap_by_name(RelationGetDescr(childrel),
+	AttrMap    *attmap = build_attrmap_by_name(RelationGetDescr(childrel),
 								   tupleDesc);
 
 	/*
@@ -1254,7 +1222,6 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 			{
 				Node	   *this_default = NULL;
 				AttrDefault *attrdef = constr->defval;
-				AlterTableCmd *atsubcmd;
 				bool		found_whole_row;
 
 				/* Find default in constraint structure */
@@ -1270,7 +1237,7 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 					elog(ERROR, "default expression not found for attribute %d of relation \"%s\"",
 						 parent_attno, RelationGetRelationName(relation));
 
-				atsubcmd = makeNode(AlterTableCmd);
+				AlterTableCmd *atsubcmd = makeNode(AlterTableCmd);
 				atsubcmd->subtype = AT_CookedColumnDefault;
 				atsubcmd->num = attmap->attnums[parent_attno - 1];
 				atsubcmd->def = map_variable_attnos(this_default,
@@ -1311,12 +1278,9 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 			char	   *ccname = constr->check[ccnum].ccname;
 			char	   *ccbin = constr->check[ccnum].ccbin;
 			bool		ccnoinherit = constr->check[ccnum].ccnoinherit;
-			Node	   *ccbin_node;
 			bool		found_whole_row;
-			Constraint *n;
-			AlterTableCmd *atsubcmd;
 
-			ccbin_node = map_variable_attnos(stringToNode(ccbin),
+			Node	   *ccbin_node = map_variable_attnos(stringToNode(ccbin),
 											 1, 0,
 											 attmap,
 											 InvalidOid, &found_whole_row);
@@ -1335,7 +1299,7 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 								   ccname,
 								   RelationGetRelationName(relation))));
 
-			n = makeNode(Constraint);
+			Constraint *n = makeNode(Constraint);
 			n->contype = CONSTR_CHECK;
 			n->conname = pstrdup(ccname);
 			n->location = -1;
@@ -1347,7 +1311,7 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 			n->skip_validation = true;
 			n->initially_valid = true;
 
-			atsubcmd = makeNode(AlterTableCmd);
+			AlterTableCmd *atsubcmd = makeNode(AlterTableCmd);
 			atsubcmd->subtype = AT_AddConstraint;
 			atsubcmd->def = (Node *) n;
 			atsubcmds = lappend(atsubcmds, atsubcmd);
@@ -1394,21 +1358,18 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
 		relation->rd_rel->relhasindex)
 	{
-		List	   *parent_indexes;
 		ListCell   *l;
 
-		parent_indexes = RelationGetIndexList(relation);
+		List	   *parent_indexes = RelationGetIndexList(relation);
 
 		foreach(l, parent_indexes)
 		{
 			Oid			parent_index_oid = lfirst_oid(l);
-			Relation	parent_index;
-			IndexStmt  *index_stmt;
 
-			parent_index = index_open(parent_index_oid, AccessShareLock);
+			Relation	parent_index = index_open(parent_index_oid, AccessShareLock);
 
 			/* Build CREATE INDEX statement to recreate the parent_index */
-			index_stmt = generateClonedIndexStmt(heapRel,
+			IndexStmt  *index_stmt = generateClonedIndexStmt(heapRel,
 												 parent_index,
 												 attmap,
 												 NULL);
@@ -1447,28 +1408,24 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 static void
 transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 {
-	HeapTuple	tuple;
-	TupleDesc	tupdesc;
 	int			i;
-	Oid			ofTypeId;
 
 	AssertArg(ofTypename);
 
-	tuple = typenameType(NULL, ofTypename, NULL);
+	HeapTuple	tuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(tuple);
-	ofTypeId = ((Form_pg_type) GETSTRUCT(tuple))->oid;
+	Oid			ofTypeId = ((Form_pg_type) GETSTRUCT(tuple))->oid;
 	ofTypename->typeOid = ofTypeId; /* cached for later */
 
-	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
+	TupleDesc	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-		ColumnDef  *n;
 
 		if (attr->attisdropped)
 			continue;
 
-		n = makeNode(ColumnDef);
+		ColumnDef  *n = makeNode(ColumnDef);
 		n->colname = pstrdup(NameStr(attr->attname));
 		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
 		n->inhcount = 0;
@@ -1513,21 +1470,9 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 						Oid *constraintOid)
 {
 	Oid			source_relid = RelationGetRelid(source_idx);
-	HeapTuple	ht_idxrel;
-	HeapTuple	ht_idx;
-	HeapTuple	ht_am;
-	Form_pg_class idxrelrec;
-	Form_pg_index idxrec;
-	Form_pg_am	amrec;
-	oidvector  *indcollation;
-	oidvector  *indclass;
-	IndexStmt  *index;
 	List	   *indexprs;
-	ListCell   *indexpr_item;
-	Oid			indrelid;
 	int			keyno;
 	Oid			keycoltype;
-	Datum		datum;
 	bool		isnull;
 
 	if (constraintOid)
@@ -1537,37 +1482,37 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	 * Fetch pg_class tuple of source index.  We can't use the copy in the
 	 * relcache entry because it doesn't include optional fields.
 	 */
-	ht_idxrel = SearchSysCache1(RELOID, ObjectIdGetDatum(source_relid));
+	HeapTuple	ht_idxrel = SearchSysCache1(RELOID, ObjectIdGetDatum(source_relid));
 	if (!HeapTupleIsValid(ht_idxrel))
 		elog(ERROR, "cache lookup failed for relation %u", source_relid);
-	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
+	Form_pg_class idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
 
 	/* Fetch pg_index tuple for source index from relcache entry */
-	ht_idx = source_idx->rd_indextuple;
-	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
-	indrelid = idxrec->indrelid;
+	HeapTuple	ht_idx = source_idx->rd_indextuple;
+	Form_pg_index idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
+	Oid			indrelid = idxrec->indrelid;
 
 	/* Fetch the pg_am tuple of the index' access method */
-	ht_am = SearchSysCache1(AMOID, ObjectIdGetDatum(idxrelrec->relam));
+	HeapTuple	ht_am = SearchSysCache1(AMOID, ObjectIdGetDatum(idxrelrec->relam));
 	if (!HeapTupleIsValid(ht_am))
 		elog(ERROR, "cache lookup failed for access method %u",
 			 idxrelrec->relam);
-	amrec = (Form_pg_am) GETSTRUCT(ht_am);
+	Form_pg_am	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/* Extract indcollation from the pg_index tuple */
-	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
+	Datum		datum = SysCacheGetAttr(INDEXRELID, ht_idx,
 							Anum_pg_index_indcollation, &isnull);
 	Assert(!isnull);
-	indcollation = (oidvector *) DatumGetPointer(datum);
+	oidvector  *indcollation = (oidvector *) DatumGetPointer(datum);
 
 	/* Extract indclass from the pg_index tuple */
 	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
 							Anum_pg_index_indclass, &isnull);
 	Assert(!isnull);
-	indclass = (oidvector *) DatumGetPointer(datum);
+	oidvector  *indclass = (oidvector *) DatumGetPointer(datum);
 
 	/* Begin building the IndexStmt */
-	index = makeNode(IndexStmt);
+	IndexStmt  *index = makeNode(IndexStmt);
 	index->relation = heapRel;
 	index->accessMethod = pstrdup(NameStr(amrec->amname));
 	if (OidIsValid(idxrelrec->reltablespace))
@@ -1607,18 +1552,16 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 
 		if (OidIsValid(constraintId))
 		{
-			HeapTuple	ht_constr;
-			Form_pg_constraint conrec;
 
 			if (constraintOid)
 				*constraintOid = constraintId;
 
-			ht_constr = SearchSysCache1(CONSTROID,
+			HeapTuple	ht_constr = SearchSysCache1(CONSTROID,
 										ObjectIdGetDatum(constraintId));
 			if (!HeapTupleIsValid(ht_constr))
 				elog(ERROR, "cache lookup failed for constraint %u",
 					 constraintId);
-			conrec = (Form_pg_constraint) GETSTRUCT(ht_constr);
+			Form_pg_constraint conrec = (Form_pg_constraint) GETSTRUCT(ht_constr);
 
 			index->isconstraint = true;
 			index->deferrable = conrec->condeferrable;
@@ -1647,22 +1590,17 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 				for (i = 0; i < nElems; i++)
 				{
 					Oid			operid = DatumGetObjectId(elems[i]);
-					HeapTuple	opertup;
-					Form_pg_operator operform;
-					char	   *oprname;
-					char	   *nspname;
-					List	   *namelist;
 
-					opertup = SearchSysCache1(OPEROID,
+					HeapTuple	opertup = SearchSysCache1(OPEROID,
 											  ObjectIdGetDatum(operid));
 					if (!HeapTupleIsValid(opertup))
 						elog(ERROR, "cache lookup failed for operator %u",
 							 operid);
-					operform = (Form_pg_operator) GETSTRUCT(opertup);
-					oprname = pstrdup(NameStr(operform->oprname));
+					Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
+					char	   *oprname = pstrdup(NameStr(operform->oprname));
 					/* For simplicity we always schema-qualify the op name */
-					nspname = get_namespace_name(operform->oprnamespace);
-					namelist = list_make2(makeString(nspname),
+					char	   *nspname = get_namespace_name(operform->oprnamespace);
+					List	   *namelist = list_make2(makeString(nspname),
 										  makeString(oprname));
 					index->excludeOpNames = lappend(index->excludeOpNames,
 													namelist);
@@ -1683,9 +1621,8 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 							Anum_pg_index_indexprs, &isnull);
 	if (!isnull)
 	{
-		char	   *exprsString;
 
-		exprsString = TextDatumGetCString(datum);
+		char	   *exprsString = TextDatumGetCString(datum);
 		indexprs = (List *) stringToNode(exprsString);
 	}
 	else
@@ -1695,23 +1632,21 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	index->indexParams = NIL;
 	index->indexIncludingParams = NIL;
 
-	indexpr_item = list_head(indexprs);
+	ListCell   *indexpr_item = list_head(indexprs);
 	for (keyno = 0; keyno < idxrec->indnkeyatts; keyno++)
 	{
-		IndexElem  *iparam;
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		Form_pg_attribute attr = TupleDescAttr(RelationGetDescr(source_idx),
 											   keyno);
 		int16		opt = source_idx->rd_indoption[keyno];
 
-		iparam = makeNode(IndexElem);
+		IndexElem  *iparam = makeNode(IndexElem);
 
 		if (AttributeNumberIsValid(attnum))
 		{
 			/* Simple index column */
-			char	   *attname;
 
-			attname = get_attname(indrelid, attnum, false);
+			char	   *attname = get_attname(indrelid, attnum, false);
 			keycoltype = get_atttype(indrelid, attnum);
 
 			iparam->name = attname;
@@ -1720,12 +1655,11 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 		else
 		{
 			/* Expressional index */
-			Node	   *indexkey;
 			bool		found_whole_row;
 
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
-			indexkey = (Node *) lfirst(indexpr_item);
+			Node	   *indexkey = (Node *) lfirst(indexpr_item);
 			indexpr_item = lnext(indexprs, indexpr_item);
 
 			/* Adjust Vars to match new table's column numbering */
@@ -1790,19 +1724,17 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 	/* Handle included columns separately */
 	for (keyno = idxrec->indnkeyatts; keyno < idxrec->indnatts; keyno++)
 	{
-		IndexElem  *iparam;
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		Form_pg_attribute attr = TupleDescAttr(RelationGetDescr(source_idx),
 											   keyno);
 
-		iparam = makeNode(IndexElem);
+		IndexElem  *iparam = makeNode(IndexElem);
 
 		if (AttributeNumberIsValid(attnum))
 		{
 			/* Simple index column */
-			char	   *attname;
 
-			attname = get_attname(indrelid, attnum, false);
+			char	   *attname = get_attname(indrelid, attnum, false);
 
 			iparam->name = attname;
 			iparam->expr = NULL;
@@ -1828,13 +1760,11 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 							Anum_pg_index_indpred, &isnull);
 	if (!isnull)
 	{
-		char	   *pred_str;
-		Node	   *pred_tree;
 		bool		found_whole_row;
 
 		/* Convert text string to node tree */
-		pred_str = TextDatumGetCString(datum);
-		pred_tree = (Node *) stringToNode(pred_str);
+		char	   *pred_str = TextDatumGetCString(datum);
+		Node	   *pred_tree = (Node *) stringToNode(pred_str);
 
 		/* Adjust Vars to match new table's column numbering */
 		pred_tree = map_variable_attnos(pred_tree,
@@ -1869,15 +1799,9 @@ static CreateStatsStmt *
 generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 						   Oid source_statsid)
 {
-	HeapTuple	ht_stats;
-	Form_pg_statistic_ext statsrec;
-	CreateStatsStmt *stats;
 	List	   *stat_types = NIL;
 	List	   *def_names = NIL;
 	bool		isnull;
-	Datum		datum;
-	ArrayType  *arr;
-	char	   *enabled;
 	int			i;
 
 	Assert(OidIsValid(heapRelid));
@@ -1886,21 +1810,21 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	/*
 	 * Fetch pg_statistic_ext tuple of source statistics object.
 	 */
-	ht_stats = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(source_statsid));
+	HeapTuple	ht_stats = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(source_statsid));
 	if (!HeapTupleIsValid(ht_stats))
 		elog(ERROR, "cache lookup failed for statistics object %u", source_statsid);
-	statsrec = (Form_pg_statistic_ext) GETSTRUCT(ht_stats);
+	Form_pg_statistic_ext statsrec = (Form_pg_statistic_ext) GETSTRUCT(ht_stats);
 
 	/* Determine which statistics types exist */
-	datum = SysCacheGetAttr(STATEXTOID, ht_stats,
+	Datum		datum = SysCacheGetAttr(STATEXTOID, ht_stats,
 							Anum_pg_statistic_ext_stxkind, &isnull);
 	Assert(!isnull);
-	arr = DatumGetArrayTypeP(datum);
+	ArrayType  *arr = DatumGetArrayTypeP(datum);
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != CHAROID)
 		elog(ERROR, "stxkind is not a 1-D char array");
-	enabled = (char *) ARR_DATA_PTR(arr);
+	char	   *enabled = (char *) ARR_DATA_PTR(arr);
 	for (i = 0; i < ARR_DIMS(arr)[0]; i++)
 	{
 		if (enabled[i] == STATS_EXT_NDISTINCT)
@@ -1943,11 +1867,9 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	if (!isnull)
 	{
 		ListCell   *lc;
-		List	   *exprs = NIL;
-		char	   *exprsString;
 
-		exprsString = TextDatumGetCString(datum);
-		exprs = (List *) stringToNode(exprsString);
+		char	   *exprsString = TextDatumGetCString(datum);
+		List	   *exprs = (List *) stringToNode(exprsString);
 
 		foreach(lc, exprs)
 		{
@@ -1963,7 +1885,7 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 	}
 
 	/* finally, build the output node */
-	stats = makeNode(CreateStatsStmt);
+	CreateStatsStmt *stats = makeNode(CreateStatsStmt);
 	stats->defnames = NULL;
 	stats->stat_types = stat_types;
 	stats->exprs = def_names;
@@ -1987,26 +1909,21 @@ generateClonedExtStatsStmt(RangeVar *heapRel, Oid heapRelid,
 static List *
 get_collation(Oid collation, Oid actual_datatype)
 {
-	List	   *result;
-	HeapTuple	ht_coll;
-	Form_pg_collation coll_rec;
-	char	   *nsp_name;
-	char	   *coll_name;
 
 	if (!OidIsValid(collation))
 		return NIL;				/* easy case */
 	if (collation == get_typcollation(actual_datatype))
 		return NIL;				/* just let it default */
 
-	ht_coll = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
+	HeapTuple	ht_coll = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
 	if (!HeapTupleIsValid(ht_coll))
 		elog(ERROR, "cache lookup failed for collation %u", collation);
-	coll_rec = (Form_pg_collation) GETSTRUCT(ht_coll);
+	Form_pg_collation coll_rec = (Form_pg_collation) GETSTRUCT(ht_coll);
 
 	/* For simplicity, we always schema-qualify the name */
-	nsp_name = get_namespace_name(coll_rec->collnamespace);
-	coll_name = pstrdup(NameStr(coll_rec->collname));
-	result = list_make2(makeString(nsp_name), makeString(coll_name));
+	char	   *nsp_name = get_namespace_name(coll_rec->collnamespace);
+	char	   *coll_name = pstrdup(NameStr(coll_rec->collname));
+	List	   *result = list_make2(makeString(nsp_name), makeString(coll_name));
 
 	ReleaseSysCache(ht_coll);
 	return result;
@@ -2022,13 +1939,11 @@ static List *
 get_opclass(Oid opclass, Oid actual_datatype)
 {
 	List	   *result = NIL;
-	HeapTuple	ht_opc;
-	Form_pg_opclass opc_rec;
 
-	ht_opc = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
+	HeapTuple	ht_opc = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
 	if (!HeapTupleIsValid(ht_opc))
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
-	opc_rec = (Form_pg_opclass) GETSTRUCT(ht_opc);
+	Form_pg_opclass opc_rec = (Form_pg_opclass) GETSTRUCT(ht_opc);
 
 	if (GetDefaultOpClass(actual_datatype, opc_rec->opcmethod) != opclass)
 	{
@@ -2155,11 +2070,10 @@ transformIndexConstraints(CreateStmtContext *cxt)
 static IndexStmt *
 transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 {
-	IndexStmt  *index;
 	List	   *notnullcmds = NIL;
 	ListCell   *lc;
 
-	index = makeNode(IndexStmt);
+	IndexStmt  *index = makeNode(IndexStmt);
 
 	index->unique = (constraint->contype != CONSTR_EXCLUSION);
 	index->primary = (constraint->contype == CONSTR_PRIMARY);
@@ -2215,11 +2129,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	{
 		char	   *index_name = constraint->indexname;
 		Relation	heap_rel = cxt->rel;
-		Oid			index_oid;
-		Relation	index_rel;
-		Form_pg_index index_form;
-		oidvector  *indclass;
-		Datum		indclassDatum;
 		bool		isnull;
 		int			i;
 
@@ -2238,7 +2147,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Look for the index in the same schema as the table */
-		index_oid = get_relname_relid(index_name, RelationGetNamespace(heap_rel));
+		Oid			index_oid = get_relname_relid(index_name, RelationGetNamespace(heap_rel));
 
 		if (!OidIsValid(index_oid))
 			ereport(ERROR,
@@ -2247,8 +2156,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Open the index (this will throw an error if it is not an index) */
-		index_rel = index_open(index_oid, AccessShareLock);
-		index_form = index_rel->rd_index;
+		Relation	index_rel = index_open(index_oid, AccessShareLock);
+		Form_pg_index index_form = index_rel->rd_index;
 
 		/* Check that it does not have an associated constraint already */
 		if (OidIsValid(get_index_constraint(index_oid)))
@@ -2319,16 +2228,15 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* Must get indclass the hard way */
-		indclassDatum = SysCacheGetAttr(INDEXRELID, index_rel->rd_indextuple,
+		Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, index_rel->rd_indextuple,
 										Anum_pg_index_indclass, &isnull);
 		Assert(!isnull);
-		indclass = (oidvector *) DatumGetPointer(indclassDatum);
+		oidvector  *indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 		for (i = 0; i < index_form->indnatts; i++)
 		{
 			int16		attnum = index_form->indkey.values[i];
 			const FormData_pg_attribute *attform;
-			char	   *attname;
 			Oid			defopclass;
 
 			/*
@@ -2343,7 +2251,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			}
 			else
 				attform = SystemAttributeDefinition(attnum);
-			attname = pstrdup(NameStr(attform->attname));
+			char	   *attname = pstrdup(NameStr(attform->attname));
 
 			if (i < index_form->indnkeyatts)
 			{
@@ -2392,12 +2300,10 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		foreach(lc, constraint->exclusions)
 		{
 			List	   *pair = (List *) lfirst(lc);
-			IndexElem  *elem;
-			List	   *opname;
 
 			Assert(list_length(pair) == 2);
-			elem = linitial_node(IndexElem, pair);
-			opname = lsecond_node(List, pair);
+			IndexElem  *elem = linitial_node(IndexElem, pair);
+			List	   *opname = lsecond_node(List, pair);
 
 			index->indexParams = lappend(index->indexParams, elem);
 			index->excludeOpNames = lappend(index->excludeOpNames, opname);
@@ -2463,10 +2369,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				foreach(inher, cxt->inhRelations)
 				{
 					RangeVar   *inh = lfirst_node(RangeVar, inher);
-					Relation	rel;
 					int			count;
 
-					rel = table_openrv(inh, AccessShareLock);
+					Relation	rel = table_openrv(inh, AccessShareLock);
 					/* check user requested inheritance from valid relkind */
 					if (rel->rd_rel->relkind != RELKIND_RELATION &&
 						rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -2575,7 +2480,6 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		bool		found = false;
 		ColumnDef  *column = NULL;
 		ListCell   *columns;
-		IndexElem  *iparam;
 
 		foreach(columns, cxt->columns)
 		{
@@ -2605,10 +2509,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				foreach(inher, cxt->inhRelations)
 				{
 					RangeVar   *inh = lfirst_node(RangeVar, inher);
-					Relation	rel;
 					int			count;
 
-					rel = table_openrv(inh, AccessShareLock);
+					Relation	rel = table_openrv(inh, AccessShareLock);
 					/* check user requested inheritance from valid relkind */
 					if (rel->rd_rel->relkind != RELKIND_RELATION &&
 						rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
@@ -2650,7 +2553,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/* OK, add it to the index definition */
-		iparam = makeNode(IndexElem);
+		IndexElem  *iparam = makeNode(IndexElem);
 		iparam->name = pstrdup(key);
 		iparam->expr = NULL;
 		iparam->indexcolname = NULL;
@@ -2804,17 +2707,14 @@ transformFKConstraints(CreateStmtContext *cxt,
 IndexStmt *
 transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 {
-	ParseState *pstate;
-	ParseNamespaceItem *nsitem;
 	ListCell   *l;
-	Relation	rel;
 
 	/* Nothing to do if statement already transformed. */
 	if (stmt->transformed)
 		return stmt;
 
 	/* Set up pstate */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
@@ -2822,8 +2722,8 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * to its fields without qualification.  Caller is responsible for locking
 	 * relation, but we still need to open it.
 	 */
-	rel = relation_open(relid, NoLock);
-	nsitem = addRangeTableEntryForRelation(pstate, rel,
+	Relation	rel = relation_open(relid, NoLock);
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, rel,
 										   AccessShareLock,
 										   NULL, false, true);
 
@@ -2899,17 +2799,14 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 CreateStatsStmt *
 transformStatsStmt(Oid relid, CreateStatsStmt *stmt, const char *queryString)
 {
-	ParseState *pstate;
-	ParseNamespaceItem *nsitem;
 	ListCell   *l;
-	Relation	rel;
 
 	/* Nothing to do if statement already transformed. */
 	if (stmt->transformed)
 		return stmt;
 
 	/* Set up pstate */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
@@ -2917,8 +2814,8 @@ transformStatsStmt(Oid relid, CreateStatsStmt *stmt, const char *queryString)
 	 * to its fields without qualification.  Caller is responsible for locking
 	 * relation, but we still need to open it.
 	 */
-	rel = relation_open(relid, NoLock);
-	nsitem = addRangeTableEntryForRelation(pstate, rel,
+	Relation	rel = relation_open(relid, NoLock);
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, rel,
 										   AccessShareLock,
 										   NULL, false, true);
 
@@ -2975,10 +2872,6 @@ void
 transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				  List **actions, Node **whereClause)
 {
-	Relation	rel;
-	ParseState *pstate;
-	ParseNamespaceItem *oldnsitem;
-	ParseNamespaceItem *newnsitem;
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
@@ -2986,7 +2879,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
 	 * beforehand.
 	 */
-	rel = table_openrv(stmt->relation, AccessExclusiveLock);
+	Relation	rel = table_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind == RELKIND_MATVIEW)
 		ereport(ERROR,
@@ -2994,7 +2887,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				 errmsg("rules on materialized views are not supported")));
 
 	/* Set up pstate */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
@@ -3002,11 +2895,11 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * Set up their ParseNamespaceItems in the main pstate for use in parsing
 	 * the rule qualification.
 	 */
-	oldnsitem = addRangeTableEntryForRelation(pstate, rel,
+	ParseNamespaceItem *oldnsitem = addRangeTableEntryForRelation(pstate, rel,
 											  AccessShareLock,
 											  makeAlias("old", NIL),
 											  false, false);
-	newnsitem = addRangeTableEntryForRelation(pstate, rel,
+	ParseNamespaceItem *newnsitem = addRangeTableEntryForRelation(pstate, rel,
 											  AccessShareLock,
 											  makeAlias("new", NIL),
 											  false, false);
@@ -3236,7 +3129,6 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			 */
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
-				RangeTblRef *rtr;
 
 				/*
 				 * If sub_qry is a setop, manipulating its jointree will do no
@@ -3248,7 +3140,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 				/* hackishly add OLD to the already-built FROM clause */
-				rtr = makeNode(RangeTblRef);
+				RangeTblRef *rtr = makeNode(RangeTblRef);
 				rtr->rtindex = oldnsitem->p_rtindex;
 				sub_qry->jointree->fromlist =
 					lappend(sub_qry->jointree->fromlist, rtr);
@@ -3286,26 +3178,21 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 						const char *queryString,
 						List **beforeStmts, List **afterStmts)
 {
-	Relation	rel;
-	TupleDesc	tupdesc;
-	ParseState *pstate;
 	CreateStmtContext cxt;
-	List	   *save_alist;
 	ListCell   *lcmd,
 			   *l;
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
-	ParseNamespaceItem *nsitem;
 
 	/* Caller is responsible for locking the relation */
-	rel = relation_open(relid, NoLock);
-	tupdesc = RelationGetDescr(rel);
+	Relation	rel = relation_open(relid, NoLock);
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 
 	/* Set up pstate */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
-	nsitem = addRangeTableEntryForRelation(pstate,
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate,
 										   rel,
 										   AccessShareLock,
 										   NULL,
@@ -3396,7 +3283,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 			case AT_AlterColumnType:
 				{
 					ColumnDef  *def = castNode(ColumnDef, cmd->def);
-					AttrNumber	attnum;
 
 					/*
 					 * For ALTER COLUMN TYPE, transform the USING clause if
@@ -3413,7 +3299,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					 * For identity column, create ALTER SEQUENCE command to
 					 * change the data type of the sequence.
 					 */
-					attnum = get_attnum(relid, cmd->name);
+					AttrNumber	attnum = get_attnum(relid, cmd->name);
 					if (attnum == InvalidAttrNumber)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -3442,13 +3328,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				{
 					Constraint *def = castNode(Constraint, cmd->def);
 					ColumnDef  *newdef = makeNode(ColumnDef);
-					AttrNumber	attnum;
 
 					newdef->colname = cmd->name;
 					newdef->identity = def->generated_when;
 					cmd->def = (Node *) newdef;
 
-					attnum = get_attnum(relid, cmd->name);
+					AttrNumber	attnum = get_attnum(relid, cmd->name);
 					if (attnum == InvalidAttrNumber)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -3473,8 +3358,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					ListCell   *lc;
 					List	   *newseqopts = NIL;
 					List	   *newdef = NIL;
-					AttrNumber	attnum;
-					Oid			seq_relid;
 
 					/*
 					 * Split options into those handled by ALTER SEQUENCE and
@@ -3490,20 +3373,19 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 							newseqopts = lappend(newseqopts, def);
 					}
 
-					attnum = get_attnum(relid, cmd->name);
+					AttrNumber	attnum = get_attnum(relid, cmd->name);
 					if (attnum == InvalidAttrNumber)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("column \"%s\" of relation \"%s\" does not exist",
 										cmd->name, RelationGetRelationName(rel))));
 
-					seq_relid = getIdentitySequence(relid, attnum, true);
+					Oid			seq_relid = getIdentitySequence(relid, attnum, true);
 
 					if (seq_relid)
 					{
-						AlterSeqStmt *seqstmt;
 
-						seqstmt = makeNode(AlterSeqStmt);
+						AlterSeqStmt *seqstmt = makeNode(AlterSeqStmt);
 						seqstmt->sequence = makeRangeVar(get_namespace_name(get_rel_namespace(seq_relid)),
 														 get_rel_name(seq_relid), -1);
 						seqstmt->options = newseqopts;
@@ -3555,7 +3437,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 * Transfer anything we already have in cxt.alist into save_alist, to keep
 	 * it separate from the output of transformIndexConstraints.
 	 */
-	save_alist = cxt.alist;
+	List	   *save_alist = cxt.alist;
 	cxt.alist = NIL;
 
 	/* Postprocess constraints */
@@ -3814,7 +3696,6 @@ List *
 transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 {
 	CreateSchemaStmtContext cxt;
-	List	   *result;
 	ListCell   *elements;
 
 	cxt.stmtType = "CREATE SCHEMA";
@@ -3900,7 +3781,7 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 		}
 	}
 
-	result = NIL;
+	List	   *result = NIL;
 	result = list_concat(result, cxt.sequences);
 	result = list_concat(result, cxt.tables);
 	result = list_concat(result, cxt.views);
@@ -3992,14 +3873,13 @@ PartitionBoundSpec *
 transformPartitionBound(ParseState *pstate, Relation parent,
 						PartitionBoundSpec *spec)
 {
-	PartitionBoundSpec *result_spec;
 	PartitionKey key = RelationGetPartitionKey(parent);
 	char		strategy = get_partition_strategy(key);
 	int			partnatts = get_partition_natts(key);
 	List	   *partexprs = get_partition_exprs(key);
 
 	/* Avoid scribbling on input */
-	result_spec = copyObject(spec);
+	PartitionBoundSpec *result_spec = copyObject(spec);
 
 	if (spec->is_default)
 	{
@@ -4048,9 +3928,6 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 	{
 		ListCell   *cell;
 		char	   *colname;
-		Oid			coltype;
-		int32		coltypmod;
-		Oid			partcollation;
 
 		if (spec->strategy != PARTITION_STRATEGY_LIST)
 			ereport(ERROR,
@@ -4068,24 +3945,22 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 															 RelationGetRelid(parent)),
 										 false, false);
 		/* Need its type data too */
-		coltype = get_partition_col_typid(key, 0);
-		coltypmod = get_partition_col_typmod(key, 0);
-		partcollation = get_partition_col_collation(key, 0);
+		Oid			coltype = get_partition_col_typid(key, 0);
+		int32		coltypmod = get_partition_col_typmod(key, 0);
+		Oid			partcollation = get_partition_col_collation(key, 0);
 
 		result_spec->listdatums = NIL;
 		foreach(cell, spec->listdatums)
 		{
 			Node	   *expr = lfirst(cell);
-			Const	   *value;
 			ListCell   *cell2;
-			bool		duplicate;
 
-			value = transformPartitionBoundValue(pstate, expr,
+			Const	   *value = transformPartitionBoundValue(pstate, expr,
 												 colname, coltype, coltypmod,
 												 partcollation);
 
 			/* Don't add to the result if the value is a duplicate */
-			duplicate = false;
+			bool		duplicate = false;
 			foreach(cell2, result_spec->listdatums)
 			{
 				Const	   *value2 = lfirst_node(Const, cell2);
@@ -4202,10 +4077,6 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 		if (prd == NULL)
 		{
 			char	   *colname;
-			Oid			coltype;
-			int32		coltypmod;
-			Oid			partcollation;
-			Const	   *value;
 
 			/* Get the column's name in case we need to output an error */
 			if (key->partattrs[i] != 0)
@@ -4221,11 +4092,11 @@ transformPartitionRangeBounds(ParseState *pstate, List *blist,
 			}
 
 			/* Need its type data too */
-			coltype = get_partition_col_typid(key, i);
-			coltypmod = get_partition_col_typmod(key, i);
-			partcollation = get_partition_col_collation(key, i);
+			Oid			coltype = get_partition_col_typid(key, i);
+			int32		coltypmod = get_partition_col_typmod(key, i);
+			Oid			partcollation = get_partition_col_collation(key, i);
 
-			value = transformPartitionBoundValue(pstate, expr,
+			Const	   *value = transformPartitionBoundValue(pstate, expr,
 												 colname,
 												 coltype, coltypmod,
 												 partcollation);
@@ -4303,10 +4174,9 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 							 const char *colName, Oid colType, int32 colTypmod,
 							 Oid partCollation)
 {
-	Node	   *value;
 
 	/* Transform raw parsetree */
-	value = transformExpr(pstate, val, EXPR_KIND_PARTITION_BOUND);
+	Node	   *value = transformExpr(pstate, val, EXPR_KIND_PARTITION_BOUND);
 
 	/*
 	 * transformExpr() should have already rejected column references,

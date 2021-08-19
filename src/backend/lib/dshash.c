@@ -195,14 +195,12 @@ static inline bool equal_keys(dshash_table *hash_table,
 dshash_table *
 dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 {
-	dshash_table *hash_table;
-	dsa_pointer control;
 
 	/* Allocate the backend-local object representing the hash table. */
-	hash_table = palloc(sizeof(dshash_table));
+	dshash_table *hash_table = palloc(sizeof(dshash_table));
 
 	/* Allocate the control object in shared memory. */
-	control = dsa_allocate(area, sizeof(dshash_table_control));
+	dsa_pointer control = dsa_allocate(area, sizeof(dshash_table_control));
 
 	/* Set up the local and shared hash table structs. */
 	hash_table->area = area;
@@ -263,14 +261,12 @@ dshash_table *
 dshash_attach(dsa_area *area, const dshash_parameters *params,
 			  dshash_table_handle handle, void *arg)
 {
-	dshash_table *hash_table;
-	dsa_pointer control;
 
 	/* Allocate the backend-local object representing the hash table. */
-	hash_table = palloc(sizeof(dshash_table));
+	dshash_table *hash_table = palloc(sizeof(dshash_table));
 
 	/* Find the control object in shared memory. */
-	control = handle;
+	dsa_pointer control = handle;
 
 	/* Set up the local hash table struct. */
 	hash_table->area = area;
@@ -317,25 +313,22 @@ dshash_detach(dshash_table *hash_table)
 void
 dshash_destroy(dshash_table *hash_table)
 {
-	size_t		size;
 	size_t		i;
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
 	ensure_valid_bucket_pointers(hash_table);
 
 	/* Free all the entries. */
-	size = ((size_t) 1) << hash_table->size_log2;
+	size_t		size = ((size_t) 1) << hash_table->size_log2;
 	for (i = 0; i < size; ++i)
 	{
 		dsa_pointer item_pointer = hash_table->buckets[i];
 
 		while (DsaPointerIsValid(item_pointer))
 		{
-			dshash_table_item *item;
-			dsa_pointer next_item_pointer;
 
-			item = dsa_get_address(hash_table->area, item_pointer);
-			next_item_pointer = item->next;
+			dshash_table_item *item = dsa_get_address(hash_table->area, item_pointer);
+			dsa_pointer next_item_pointer = item->next;
 			dsa_free(hash_table->area, item_pointer);
 			item_pointer = next_item_pointer;
 		}
@@ -384,12 +377,9 @@ dshash_get_hash_table_handle(dshash_table *hash_table)
 void *
 dshash_find(dshash_table *hash_table, const void *key, bool exclusive)
 {
-	dshash_hash hash;
-	size_t		partition;
-	dshash_table_item *item;
 
-	hash = hash_key(hash_table, key);
-	partition = PARTITION_FOR_HASH(hash);
+	dshash_hash hash = hash_key(hash_table, key);
+	size_t		partition = PARTITION_FOR_HASH(hash);
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
 	Assert(!hash_table->find_locked);
@@ -399,7 +389,7 @@ dshash_find(dshash_table *hash_table, const void *key, bool exclusive)
 	ensure_valid_bucket_pointers(hash_table);
 
 	/* Search the active bucket. */
-	item = find_in_bucket(hash_table, key, BUCKET_FOR_HASH(hash_table, hash));
+	dshash_table_item *item = find_in_bucket(hash_table, key, BUCKET_FOR_HASH(hash_table, hash));
 
 	if (!item)
 	{
@@ -431,14 +421,10 @@ dshash_find_or_insert(dshash_table *hash_table,
 					  const void *key,
 					  bool *found)
 {
-	dshash_hash hash;
-	size_t		partition_index;
-	dshash_partition *partition;
-	dshash_table_item *item;
 
-	hash = hash_key(hash_table, key);
-	partition_index = PARTITION_FOR_HASH(hash);
-	partition = &hash_table->control->partitions[partition_index];
+	dshash_hash hash = hash_key(hash_table, key);
+	size_t		partition_index = PARTITION_FOR_HASH(hash);
+	dshash_partition *partition = &hash_table->control->partitions[partition_index];
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
 	Assert(!hash_table->find_locked);
@@ -449,7 +435,7 @@ restart:
 	ensure_valid_bucket_pointers(hash_table);
 
 	/* Search the active bucket. */
-	item = find_in_bucket(hash_table, key, BUCKET_FOR_HASH(hash_table, hash));
+	dshash_table_item *item = find_in_bucket(hash_table, key, BUCKET_FOR_HASH(hash_table, hash));
 
 	if (item)
 		*found = true;
@@ -501,15 +487,13 @@ restart:
 bool
 dshash_delete_key(dshash_table *hash_table, const void *key)
 {
-	dshash_hash hash;
-	size_t		partition;
 	bool		found;
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
 	Assert(!hash_table->find_locked);
 
-	hash = hash_key(hash_table, key);
-	partition = PARTITION_FOR_HASH(hash);
+	dshash_hash hash = hash_key(hash_table, key);
+	size_t		partition = PARTITION_FOR_HASH(hash);
 
 	LWLockAcquire(PARTITION_LOCK(hash_table, partition), LW_EXCLUSIVE);
 	ensure_valid_bucket_pointers(hash_table);
@@ -632,9 +616,8 @@ dshash_dump(dshash_table *hash_table)
 
 			while (DsaPointerIsValid(bucket))
 			{
-				dshash_table_item *item;
 
-				item = dsa_get_address(hash_table->area, bucket);
+				dshash_table_item *item = dsa_get_address(hash_table->area, bucket);
 
 				bucket = item->next;
 				++count;
@@ -679,10 +662,6 @@ delete_item(dshash_table *hash_table, dshash_table_item *item)
 static void
 resize(dshash_table *hash_table, size_t new_size_log2)
 {
-	dsa_pointer old_buckets;
-	dsa_pointer new_buckets_shared;
-	dsa_pointer *new_buckets;
-	size_t		size;
 	size_t		new_size = ((size_t) 1) << new_size_log2;
 	size_t		i;
 
@@ -709,26 +688,24 @@ resize(dshash_table *hash_table, size_t new_size_log2)
 	Assert(new_size_log2 == hash_table->control->size_log2 + 1);
 
 	/* Allocate the space for the new table. */
-	new_buckets_shared = dsa_allocate0(hash_table->area,
+	dsa_pointer new_buckets_shared = dsa_allocate0(hash_table->area,
 									   sizeof(dsa_pointer) * new_size);
-	new_buckets = dsa_get_address(hash_table->area, new_buckets_shared);
+	dsa_pointer *new_buckets = dsa_get_address(hash_table->area, new_buckets_shared);
 
 	/*
 	 * We've allocated the new bucket array; all that remains to do now is to
 	 * reinsert all items, which amounts to adjusting all the pointers.
 	 */
-	size = ((size_t) 1) << hash_table->control->size_log2;
+	size_t		size = ((size_t) 1) << hash_table->control->size_log2;
 	for (i = 0; i < size; ++i)
 	{
 		dsa_pointer item_pointer = hash_table->buckets[i];
 
 		while (DsaPointerIsValid(item_pointer))
 		{
-			dshash_table_item *item;
-			dsa_pointer next_item_pointer;
 
-			item = dsa_get_address(hash_table->area, item_pointer);
-			next_item_pointer = item->next;
+			dshash_table_item *item = dsa_get_address(hash_table->area, item_pointer);
+			dsa_pointer next_item_pointer = item->next;
 			insert_item_into_bucket(hash_table, item_pointer, item,
 									&new_buckets[BUCKET_INDEX_FOR_HASH_AND_SIZE(item->hash,
 																				new_size_log2)]);
@@ -737,7 +714,7 @@ resize(dshash_table *hash_table, size_t new_size_log2)
 	}
 
 	/* Swap the hash table into place and free the old one. */
-	old_buckets = hash_table->control->buckets;
+	dsa_pointer old_buckets = hash_table->control->buckets;
 	hash_table->control->buckets = new_buckets_shared;
 	hash_table->control->size_log2 = new_size_log2;
 	hash_table->buckets = new_buckets;
@@ -773,9 +750,8 @@ find_in_bucket(dshash_table *hash_table, const void *key,
 {
 	while (DsaPointerIsValid(item_pointer))
 	{
-		dshash_table_item *item;
 
-		item = dsa_get_address(hash_table->area, item_pointer);
+		dshash_table_item *item = dsa_get_address(hash_table->area, item_pointer);
 		if (equal_keys(hash_table, key, ENTRY_FROM_ITEM(item)))
 			return item;
 		item_pointer = item->next;
@@ -807,13 +783,11 @@ insert_into_bucket(dshash_table *hash_table,
 				   const void *key,
 				   dsa_pointer *bucket)
 {
-	dsa_pointer item_pointer;
-	dshash_table_item *item;
 
-	item_pointer = dsa_allocate(hash_table->area,
+	dsa_pointer item_pointer = dsa_allocate(hash_table->area,
 								hash_table->params.entry_size +
 								MAXALIGN(sizeof(dshash_table_item)));
-	item = dsa_get_address(hash_table->area, item_pointer);
+	dshash_table_item *item = dsa_get_address(hash_table->area, item_pointer);
 	memcpy(ENTRY_FROM_ITEM(item), key, hash_table->params.key_size);
 	insert_item_into_bucket(hash_table, item_pointer, item, bucket);
 	return item;
@@ -829,15 +803,13 @@ delete_key_from_bucket(dshash_table *hash_table,
 {
 	while (DsaPointerIsValid(*bucket_head))
 	{
-		dshash_table_item *item;
 
-		item = dsa_get_address(hash_table->area, *bucket_head);
+		dshash_table_item *item = dsa_get_address(hash_table->area, *bucket_head);
 
 		if (equal_keys(hash_table, key, ENTRY_FROM_ITEM(item)))
 		{
-			dsa_pointer next;
 
-			next = item->next;
+			dsa_pointer next = item->next;
 			dsa_free(hash_table->area, *bucket_head);
 			*bucket_head = next;
 
@@ -858,15 +830,13 @@ delete_item_from_bucket(dshash_table *hash_table,
 {
 	while (DsaPointerIsValid(*bucket_head))
 	{
-		dshash_table_item *bucket_item;
 
-		bucket_item = dsa_get_address(hash_table->area, *bucket_head);
+		dshash_table_item *bucket_item = dsa_get_address(hash_table->area, *bucket_head);
 
 		if (bucket_item == item)
 		{
-			dsa_pointer next;
 
-			next = item->next;
+			dsa_pointer next = item->next;
 			dsa_free(hash_table->area, *bucket_head);
 			*bucket_head = next;
 			return true;

@@ -339,9 +339,6 @@ errstart_cold(int elevel, const char *domain)
 bool
 errstart(int elevel, const char *domain)
 {
-	ErrorData  *edata;
-	bool		output_to_server;
-	bool		output_to_client = false;
 	int			i;
 
 	/*
@@ -394,8 +391,8 @@ errstart(int elevel, const char *domain)
 	 * warning or less and not enabled for logging, just return false without
 	 * starting up any error logging machinery.
 	 */
-	output_to_server = should_output_to_server(elevel);
-	output_to_client = should_output_to_client(elevel);
+	bool		output_to_server = should_output_to_server(elevel);
+	bool		output_to_client = should_output_to_client(elevel);
 	if (elevel < ERROR && !output_to_server && !output_to_client)
 		return false;
 
@@ -447,7 +444,7 @@ errstart(int elevel, const char *domain)
 	}
 
 	/* Initialize data for this error frame */
-	edata = &errordata[errordata_stack_depth];
+	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemSet(edata, 0, sizeof(ErrorData));
 	edata->elevel = elevel;
 	edata->output_to_server = output_to_server;
@@ -482,12 +479,11 @@ errstart(int elevel, const char *domain)
 static bool
 matches_backtrace_functions(const char *funcname)
 {
-	char	   *p;
 
 	if (!backtrace_symbol_list || funcname == NULL || funcname[0] == '\0')
 		return false;
 
-	p = backtrace_symbol_list;
+	char	   *p = backtrace_symbol_list;
 	for (;;)
 	{
 		if (*p == '\0')			/* end of backtrace_symbol_list */
@@ -513,8 +509,6 @@ void
 errfinish(const char *filename, int lineno, const char *funcname)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	int			elevel;
-	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 
 	recursion_depth++;
@@ -523,10 +517,9 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	/* Save the last few bits of error state into the stack entry */
 	if (filename)
 	{
-		const char *slash;
 
 		/* keep only base name, useful especially for vpath builds */
-		slash = strrchr(filename, '/');
+		const char *slash = strrchr(filename, '/');
 		if (slash)
 			filename = slash + 1;
 		/* Some Windows compilers use backslashes in __FILE__ strings */
@@ -539,13 +532,13 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 
-	elevel = edata->elevel;
+	int			elevel = edata->elevel;
 
 	/*
 	 * Do processing in ErrorContext, which we hope has enough reserved space
 	 * to report an error.
 	 */
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	if (!edata->backtrace &&
 		edata->funcname &&
@@ -909,11 +902,10 @@ int
 errmsg(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	edata->message_id = fmt;
 	EVALUATE_MESSAGE(edata->domain, message, false, true);
@@ -931,11 +923,10 @@ int
 errbacktrace(void)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	set_backtrace(edata, 1);
 
@@ -961,11 +952,9 @@ set_backtrace(ErrorData *edata, int num_skip)
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	{
 		void	   *buf[100];
-		int			nframes;
-		char	  **strfrms;
 
-		nframes = backtrace(buf, lengthof(buf));
-		strfrms = backtrace_symbols(buf, nframes);
+		int			nframes = backtrace(buf, lengthof(buf));
+		char	  **strfrms = backtrace_symbols(buf, nframes);
 		if (strfrms == NULL)
 			return;
 
@@ -996,11 +985,10 @@ int
 errmsg_internal(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	edata->message_id = fmt;
 	EVALUATE_MESSAGE(edata->domain, message, false, false);
@@ -1020,11 +1008,10 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 			  unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	edata->message_id = fmt_singular;
 	EVALUATE_MESSAGE_PLURAL(edata->domain, message, false);
@@ -1042,11 +1029,10 @@ int
 errdetail(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail, false, true);
 
@@ -1069,11 +1055,10 @@ int
 errdetail_internal(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail, false, false);
 
@@ -1090,11 +1075,10 @@ int
 errdetail_log(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail_log, false, true);
 
@@ -1112,11 +1096,10 @@ errdetail_log_plural(const char *fmt_singular, const char *fmt_plural,
 					 unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE_PLURAL(edata->domain, detail_log, false);
 
@@ -1135,11 +1118,10 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 				 unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE_PLURAL(edata->domain, detail, false);
 
@@ -1156,11 +1138,10 @@ int
 errhint(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, hint, false, true);
 
@@ -1179,11 +1160,10 @@ errhint_plural(const char *fmt_singular, const char *fmt_plural,
 			   unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE_PLURAL(edata->domain, hint, false);
 
@@ -1204,11 +1184,10 @@ int
 errcontext_msg(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->context_domain, context, true, true);
 
@@ -1476,18 +1455,16 @@ char *
 format_elog_string(const char *fmt,...)
 {
 	ErrorData	errdata;
-	ErrorData  *edata;
-	MemoryContext oldcontext;
 
 	/* Initialize a mostly-dummy error frame */
-	edata = &errdata;
+	ErrorData  *edata = &errdata;
 	MemSet(edata, 0, sizeof(ErrorData));
 	/* the default text domain is the backend's */
 	edata->domain = save_format_domain ? save_format_domain : PG_TEXTDOMAIN("postgres");
 	/* set the errno to be used to interpret %m */
 	edata->saved_errno = save_format_errnumber;
 
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	edata->message_id = fmt;
 	EVALUATE_MESSAGE(edata->domain, message, false, true);
@@ -1509,11 +1486,10 @@ void
 EmitErrorReport(void)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	/*
 	 * Call hook before sending message to log.  The hook function is allowed
@@ -1560,7 +1536,6 @@ ErrorData *
 CopyErrorData(void)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	ErrorData  *newedata;
 
 	/*
 	 * we don't increment recursion_depth because out-of-memory here does not
@@ -1571,7 +1546,7 @@ CopyErrorData(void)
 	Assert(CurrentMemoryContext != ErrorContext);
 
 	/* Copy the struct itself */
-	newedata = (ErrorData *) palloc(sizeof(ErrorData));
+	ErrorData  *newedata = (ErrorData *) palloc(sizeof(ErrorData));
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/* Make copies of separately-allocated fields */
@@ -1678,15 +1653,13 @@ FlushErrorState(void)
 void
 ThrowErrorData(ErrorData *edata)
 {
-	ErrorData  *newedata;
-	MemoryContext oldcontext;
 
 	if (!errstart(edata->elevel, edata->domain))
 		return;					/* error is not to be reported at all */
 
-	newedata = &errordata[errordata_stack_depth];
+	ErrorData  *newedata = &errordata[errordata_stack_depth];
 	recursion_depth++;
-	oldcontext = MemoryContextSwitchTo(newedata->assoc_context);
+	MemoryContext oldcontext = MemoryContextSwitchTo(newedata->assoc_context);
 
 	/* Copy the supplied fields to the error stack entry. */
 	if (edata->sqlerrcode != 0)
@@ -1737,7 +1710,6 @@ ThrowErrorData(ErrorData *edata)
 void
 ReThrowError(ErrorData *edata)
 {
-	ErrorData  *newedata;
 
 	Assert(edata->elevel == ERROR);
 
@@ -1756,7 +1728,7 @@ ReThrowError(ErrorData *edata)
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
-	newedata = &errordata[errordata_stack_depth];
+	ErrorData  *newedata = &errordata[errordata_stack_depth];
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/* Make copies of separately-allocated fields */
@@ -1854,7 +1826,6 @@ pg_re_throw(void)
 char *
 GetErrorContextStack(void)
 {
-	ErrorData  *edata;
 	ErrorContextCallback *econtext;
 
 	/*
@@ -1876,7 +1847,7 @@ GetErrorContextStack(void)
 	/*
 	 * Things look good so far, so initialize our error frame
 	 */
-	edata = &errordata[errordata_stack_depth];
+	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemSet(edata, 0, sizeof(ErrorData));
 
 	/*
@@ -2007,8 +1978,6 @@ write_syslog(int level, const char *line)
 {
 	static unsigned long seq = 0;
 
-	int			len;
-	const char *nlpos;
 
 	/* Open syslog connection if not done yet */
 	if (!openlog_done)
@@ -2033,8 +2002,8 @@ write_syslog(int level, const char *line)
 	 * We divide into multiple syslog() calls if message is too long or if the
 	 * message contains embedded newline(s).
 	 */
-	len = strlen(line);
-	nlpos = strchr(line, '\n');
+	int			len = strlen(line);
+	const char *nlpos = strchr(line, '\n');
 	if (syslog_split_messages && (len > PG_SYSLOG_LIMIT || nlpos != NULL))
 	{
 		int			chunk_nr = 0;
@@ -2246,16 +2215,14 @@ write_console(const char *line, int len)
 		!redirection_done &&
 		CurrentMemoryContext != NULL)
 	{
-		WCHAR	   *utf16;
 		int			utf16len;
 
-		utf16 = pgwin32_message_to_UTF16(line, len, &utf16len);
+		WCHAR	   *utf16 = pgwin32_message_to_UTF16(line, len, &utf16len);
 		if (utf16 != NULL)
 		{
-			HANDLE		stdHandle;
 			DWORD		written;
 
-			stdHandle = GetStdHandle(STD_ERROR_HANDLE);
+			HANDLE		stdHandle = GetStdHandle(STD_ERROR_HANDLE);
 			if (WriteConsoleW(stdHandle, utf16, utf16len, &written, NULL))
 			{
 				pfree(utf16);
@@ -2294,7 +2261,6 @@ write_console(const char *line, int len)
 static void
 setup_formatted_log_time(void)
 {
-	pg_time_t	stamp_time;
 	char		msbuf[13];
 
 	if (!saved_timeval_set)
@@ -2303,7 +2269,7 @@ setup_formatted_log_time(void)
 		saved_timeval_set = true;
 	}
 
-	stamp_time = (pg_time_t) saved_timeval.tv_sec;
+	pg_time_t	stamp_time = (pg_time_t) saved_timeval.tv_sec;
 
 	/*
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
@@ -2612,10 +2578,9 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'i':
 				if (MyProcPort)
 				{
-					const char *psdisp;
 					int			displen;
 
-					psdisp = get_ps_display(&displen);
+					const char *psdisp = get_ps_display(&displen);
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, psdisp);
 					else
@@ -2839,12 +2804,11 @@ write_csvlog(ErrorData *edata)
 	if (MyProcPort)
 	{
 		StringInfoData msgbuf;
-		const char *psdisp;
 		int			displen;
 
 		initStringInfo(&msgbuf);
 
-		psdisp = get_ps_display(&displen);
+		const char *psdisp = get_ps_display(&displen);
 		appendBinaryStringInfo(&msgbuf, psdisp, displen);
 		appendCSVLiteral(&buf, msgbuf.data);
 
@@ -3310,22 +3274,20 @@ send_message_to_frontend(ErrorData *edata)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3 || FrontendProtocol == 0)
 	{
 		/* New style with separate fields */
-		const char *sev;
 		char		tbuf[12];
-		int			ssval;
 		int			i;
 
 		/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
 		pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
 
-		sev = error_severity(edata->elevel);
+		const char *sev = error_severity(edata->elevel);
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
 		err_sendstring(&msgbuf, _(sev));
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY_NONLOCALIZED);
 		err_sendstring(&msgbuf, sev);
 
 		/* unpack MAKE_SQLSTATE code */
-		ssval = edata->sqlerrcode;
+		int			ssval = edata->sqlerrcode;
 		for (i = 0; i < 5; i++)
 		{
 			tbuf[i] = PGUNSIXBIT(ssval);

@@ -68,13 +68,12 @@ init_tour(PlannerInfo *root, Gene *tour, int num_gene)
 City *
 alloc_city_table(PlannerInfo *root, int num_gene)
 {
-	City	   *city_table;
 
 	/*
 	 * palloc one extra location so that nodes numbered 1..n can be indexed
 	 * directly; 0 will not be used
 	 */
-	city_table = (City *) palloc((num_gene + 1) * sizeof(City));
+	City	   *city_table = (City *) palloc((num_gene + 1) * sizeof(City));
 
 	return city_table;
 }

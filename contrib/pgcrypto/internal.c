@@ -174,9 +174,8 @@ int_sha1_free(PX_MD *h)
 static void
 init_md5(PX_MD *md)
 {
-	pg_cryptohash_ctx *ctx;
 
-	ctx = pg_cryptohash_create(PG_MD5);
+	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_MD5);
 
 	md->p.ptr = ctx;
 
@@ -193,9 +192,8 @@ init_md5(PX_MD *md)
 static void
 init_sha1(PX_MD *md)
 {
-	pg_cryptohash_ctx *ctx;
 
-	ctx = pg_cryptohash_create(PG_SHA1);
+	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA1);
 
 	md->p.ptr = ctx;
 

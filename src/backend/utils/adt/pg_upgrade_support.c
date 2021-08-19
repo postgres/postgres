@@ -130,13 +130,8 @@ binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 {
-	text	   *extName;
-	text	   *schemaName;
-	bool		relocatable;
-	text	   *extVersion;
 	Datum		extConfig;
 	Datum		extCondition;
-	List	   *requiredExtensions;
 
 	CHECK_IS_BINARY_UPGRADE;
 
@@ -147,10 +142,10 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 		PG_ARGISNULL(3))
 		elog(ERROR, "null argument to binary_upgrade_create_empty_extension is not allowed");
 
-	extName = PG_GETARG_TEXT_PP(0);
-	schemaName = PG_GETARG_TEXT_PP(1);
-	relocatable = PG_GETARG_BOOL(2);
-	extVersion = PG_GETARG_TEXT_PP(3);
+	text	   *extName = PG_GETARG_TEXT_PP(0);
+	text	   *schemaName = PG_GETARG_TEXT_PP(1);
+	bool		relocatable = PG_GETARG_BOOL(2);
+	text	   *extVersion = PG_GETARG_TEXT_PP(3);
 
 	if (PG_ARGISNULL(4))
 		extConfig = PointerGetDatum(NULL);
@@ -162,7 +157,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 	else
 		extCondition = PG_GETARG_DATUM(5);
 
-	requiredExtensions = NIL;
+	List	   *requiredExtensions = NIL;
 	if (!PG_ARGISNULL(6))
 	{
 		ArrayType  *textArray = PG_GETARG_ARRAYTYPE_P(6);

@@ -66,18 +66,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_PP(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	AttInMetadata *attinmeta;
-	Relation	rel;
-	RangeVar   *relrv;
-	TableScanDesc scan;
-	HeapScanDesc hscan;
 	HeapTuple	tuple;
-	MemoryContext oldcontext;
-	AclResult	aclresult;
-	char	  **values;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -90,13 +80,13 @@ pgrowlocks(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -104,8 +94,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Access the table */
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = relation_openrv(relrv, AccessShareLock);
+	RangeVar   *relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	Relation	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -127,7 +117,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	 * check permissions: must have SELECT on table or be in
 	 * pg_stat_scan_tables
 	 */
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+	AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
 		aclresult = is_member_of_role(GetUserId(), ROLE_PG_STAT_SCAN_TABLES) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
@@ -137,27 +127,24 @@ pgrowlocks(PG_FUNCTION_ARGS)
 					   RelationGetRelationName(rel));
 
 	/* Scan the relation */
-	scan = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
-	hscan = (HeapScanDesc) scan;
+	TableScanDesc scan = table_beginscan(rel, GetActiveSnapshot(), 0, NULL);
+	HeapScanDesc hscan = (HeapScanDesc) scan;
 
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
-	values = (char **) palloc(tupdesc->natts * sizeof(char *));
+	char	  **values = (char **) palloc(tupdesc->natts * sizeof(char *));
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		TM_Result	htsu;
-		TransactionId xmax;
-		uint16		infomask;
 
 		/* must hold a buffer lock to call HeapTupleSatisfiesUpdate */
 		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		htsu = HeapTupleSatisfiesUpdate(tuple,
+		TM_Result	htsu = HeapTupleSatisfiesUpdate(tuple,
 										GetCurrentCommandId(false),
 										hscan->rs_cbuf);
-		xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
-		infomask = tuple->t_data->t_infomask;
+		TransactionId xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
+		uint16		infomask = tuple->t_data->t_infomask;
 
 		/*
 		 * A tuple is locked if HTSU returns BeingModified.
@@ -172,14 +159,12 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			if (infomask & HEAP_XMAX_IS_MULTI)
 			{
 				MultiXactMember *members;
-				int			nmembers;
 				bool		first = true;
-				bool		allow_old;
 
 				values[Atnum_ismulti] = pstrdup("true");
 
-				allow_old = HEAP_LOCKED_UPGRADED(infomask);
-				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
+				bool		allow_old = HEAP_LOCKED_UPGRADED(infomask);
+				int			nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
 												 false);
 				if (nmembers == -1)
 				{

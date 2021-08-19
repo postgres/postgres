@@ -90,9 +90,8 @@ BufTableHashCode(BufferTag *tagPtr)
 int
 BufTableLookup(BufferTag *tagPtr, uint32 hashcode)
 {
-	BufferLookupEnt *result;
 
-	result = (BufferLookupEnt *)
+	BufferLookupEnt *result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
 									(void *) tagPtr,
 									hashcode,
@@ -118,13 +117,12 @@ BufTableLookup(BufferTag *tagPtr, uint32 hashcode)
 int
 BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id)
 {
-	BufferLookupEnt *result;
 	bool		found;
 
 	Assert(buf_id >= 0);		/* -1 is reserved for not-in-table */
 	Assert(tagPtr->blockNum != P_NEW);	/* invalid tag */
 
-	result = (BufferLookupEnt *)
+	BufferLookupEnt *result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
 									(void *) tagPtr,
 									hashcode,
@@ -148,9 +146,8 @@ BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id)
 void
 BufTableDelete(BufferTag *tagPtr, uint32 hashcode)
 {
-	BufferLookupEnt *result;
 
-	result = (BufferLookupEnt *)
+	BufferLookupEnt *result = (BufferLookupEnt *)
 		hash_search_with_hash_value(SharedBufHash,
 									(void *) tagPtr,
 									hashcode,

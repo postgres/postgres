@@ -177,10 +177,6 @@ SlabContextCreate(MemoryContext parent,
 				  Size blockSize,
 				  Size chunkSize)
 {
-	int			chunksPerBlock;
-	Size		fullChunkSize;
-	Size		freelistSize;
-	Size		headerSize;
 	SlabContext *slab;
 	int			i;
 
@@ -196,7 +192,7 @@ SlabContextCreate(MemoryContext parent,
 		chunkSize = sizeof(int);
 
 	/* chunk, including SLAB header (both addresses nicely aligned) */
-	fullChunkSize = sizeof(SlabChunk) + MAXALIGN(chunkSize);
+	Size		fullChunkSize = sizeof(SlabChunk) + MAXALIGN(chunkSize);
 
 	/* Make sure the block can store at least one chunk. */
 	if (blockSize < fullChunkSize + sizeof(SlabBlock))
@@ -204,10 +200,10 @@ SlabContextCreate(MemoryContext parent,
 			 blockSize, chunkSize);
 
 	/* Compute maximum number of chunks per block */
-	chunksPerBlock = (blockSize - sizeof(SlabBlock)) / fullChunkSize;
+	int			chunksPerBlock = (blockSize - sizeof(SlabBlock)) / fullChunkSize;
 
 	/* The freelist starts with 0, ends with chunksPerBlock. */
-	freelistSize = sizeof(dlist_head) * (chunksPerBlock + 1);
+	Size		freelistSize = sizeof(dlist_head) * (chunksPerBlock + 1);
 
 	/*
 	 * Allocate the context header.  Unlike aset.c, we never try to combine
@@ -215,7 +211,7 @@ SlabContextCreate(MemoryContext parent,
 	 */
 
 	/* Size of the memory context header */
-	headerSize = offsetof(SlabContext, freelist) + freelistSize;
+	Size		headerSize = offsetof(SlabContext, freelist) + freelistSize;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 
@@ -644,12 +640,11 @@ SlabStats(MemoryContext context,
 	SlabContext *slab = castNode(SlabContext, context);
 	Size		nblocks = 0;
 	Size		freechunks = 0;
-	Size		totalspace;
 	Size		freespace = 0;
 	int			i;
 
 	/* Include context header in totalspace */
-	totalspace = slab->headerSize;
+	Size		totalspace = slab->headerSize;
 
 	for (i = 0; i <= slab->chunksPerBlock; i++)
 	{
@@ -717,7 +712,6 @@ SlabCheck(MemoryContext context)
 		/* walk all blocks on this freelist */
 		dlist_foreach(iter, &slab->freelist[i])
 		{
-			int			idx;
 			SlabBlock  *block = dlist_container(SlabBlock, node, iter.cur);
 
 			/*
@@ -730,7 +724,7 @@ SlabCheck(MemoryContext context)
 
 			/* reset the bitmap of free chunks for this block */
 			memset(slab->freechunks, 0, (slab->chunksPerBlock * sizeof(bool)));
-			idx = block->firstFreeChunk;
+			int			idx = block->firstFreeChunk;
 
 			/*
 			 * Now walk through the chunks, count the free ones and also
@@ -742,14 +736,13 @@ SlabCheck(MemoryContext context)
 			nfree = 0;
 			while (idx < slab->chunksPerBlock)
 			{
-				SlabChunk  *chunk;
 
 				/* count the chunk as free, add it to the bitmap */
 				nfree++;
 				slab->freechunks[idx] = true;
 
 				/* read index of the next free chunk */
-				chunk = SlabBlockGetChunk(slab, block, idx);
+				SlabChunk  *chunk = SlabBlockGetChunk(slab, block, idx);
 				VALGRIND_MAKE_MEM_DEFINED(SlabChunkGetPointer(chunk), sizeof(int32));
 				idx = *(int32 *) SlabChunkGetPointer(chunk);
 			}

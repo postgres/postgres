@@ -293,12 +293,10 @@ next_token(char **lineptr, char *buf, int bufsz,
 static HbaToken *
 make_hba_token(const char *token, bool quoted)
 {
-	HbaToken   *hbatoken;
-	int			toklen;
 
-	toklen = strlen(token);
+	int			toklen = strlen(token);
 	/* we copy string into same palloc block as the struct */
-	hbatoken = (HbaToken *) palloc(sizeof(HbaToken) + toklen + 1);
+	HbaToken   *hbatoken = (HbaToken *) palloc(sizeof(HbaToken) + toklen + 1);
 	hbatoken->string = (char *) hbatoken + sizeof(HbaToken);
 	hbatoken->quoted = quoted;
 	memcpy(hbatoken->string, token, toklen + 1);
@@ -382,10 +380,8 @@ tokenize_inc_file(List *tokens,
 				  char **err_msg)
 {
 	char	   *inc_fullname;
-	FILE	   *inc_file;
 	List	   *inc_lines;
 	ListCell   *inc_line;
-	MemoryContext linecxt;
 
 	if (is_absolute_path(inc_filename))
 	{
@@ -403,7 +399,7 @@ tokenize_inc_file(List *tokens,
 		canonicalize_path(inc_fullname);
 	}
 
-	inc_file = AllocateFile(inc_fullname, "r");
+	FILE	   *inc_file = AllocateFile(inc_fullname, "r");
 	if (inc_file == NULL)
 	{
 		int			save_errno = errno;
@@ -419,7 +415,7 @@ tokenize_inc_file(List *tokens,
 	}
 
 	/* There is possible recursion here if the file contains @ */
-	linecxt = tokenize_file(inc_fullname, inc_file, &inc_lines, elevel);
+	MemoryContext linecxt = tokenize_file(inc_fullname, inc_file, &inc_lines, elevel);
 
 	FreeFile(inc_file);
 	pfree(inc_fullname);
@@ -477,13 +473,11 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 {
 	int			line_number = 1;
 	StringInfoData buf;
-	MemoryContext linecxt;
-	MemoryContext oldcxt;
 
-	linecxt = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext linecxt = AllocSetContextCreate(CurrentMemoryContext,
 									"tokenize_file",
 									ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(linecxt);
+	MemoryContext oldcxt = MemoryContextSwitchTo(linecxt);
 
 	initStringInfo(&buf);
 
@@ -491,7 +485,6 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 
 	while (!feof(file) && !ferror(file))
 	{
-		char	   *lineptr;
 		List	   *current_line = NIL;
 		char	   *err_msg = NULL;
 		int			last_backslash_buflen = 0;
@@ -538,12 +531,11 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 		}
 
 		/* Parse fields */
-		lineptr = buf.data;
+		char	   *lineptr = buf.data;
 		while (*lineptr && err_msg == NULL)
 		{
-			List	   *current_field;
 
-			current_field = next_field_expand(filename, &lineptr,
+			List	   *current_field = next_field_expand(filename, &lineptr,
 											  elevel, &err_msg);
 			/* add field to line, unless we are at EOL or comment start */
 			if (current_field != NIL)
@@ -553,9 +545,8 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 		/* Reached EOL; emit line to TokenizedLine list unless it's boring */
 		if (current_line != NIL || err_msg != NULL)
 		{
-			TokenizedLine *tok_line;
 
-			tok_line = (TokenizedLine *) palloc(sizeof(TokenizedLine));
+			TokenizedLine *tok_line = (TokenizedLine *) palloc(sizeof(TokenizedLine));
 			tok_line->fields = current_line;
 			tok_line->line_num = line_number;
 			tok_line->raw_line = pstrdup(buf.data);
@@ -581,12 +572,11 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 static bool
 is_member(Oid userid, const char *role)
 {
-	Oid			roleid;
 
 	if (!OidIsValid(userid))
 		return false;			/* if user not exist, say "no" */
 
-	roleid = get_role_oid(role, true);
+	Oid			roleid = get_role_oid(role, true);
 
 	if (!OidIsValid(roleid))
 		return false;			/* if target role not exist, say "no" */
@@ -715,7 +705,6 @@ check_hostname(hbaPort *port, const char *hostname)
 	struct addrinfo *gai_result,
 			   *gai;
 	int			ret;
-	bool		found;
 
 	/* Quick out if remote host name already known bad */
 	if (port->remote_hostname_resolv < 0)
@@ -759,7 +748,7 @@ check_hostname(hbaPort *port, const char *hostname)
 		return false;
 	}
 
-	found = false;
+	bool		found = false;
 	for (gai = gai_result; gai; gai = gai->ai_next)
 	{
 		if (gai->ai_addr->sa_family == port->raddr.addr.ss_family)
@@ -973,20 +962,16 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	int			ret;
 	char	   *cidr_slash;
 	char	   *unsupauth;
-	ListCell   *field;
-	List	   *tokens;
 	ListCell   *tokencell;
-	HbaToken   *token;
-	HbaLine    *parsedline;
 
-	parsedline = palloc0(sizeof(HbaLine));
+	HbaLine    *parsedline = palloc0(sizeof(HbaLine));
 	parsedline->linenumber = line_num;
 	parsedline->rawline = pstrdup(tok_line->raw_line);
 
 	/* Check the record type. */
 	Assert(tok_line->fields != NIL);
-	field = list_head(tok_line->fields);
-	tokens = lfirst(field);
+	ListCell   *field = list_head(tok_line->fields);
+	List	   *tokens = lfirst(field);
 	if (tokens->length > 1)
 	{
 		ereport(elevel,
@@ -998,7 +983,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		*err_msg = "multiple values specified for connection type";
 		return NULL;
 	}
-	token = linitial(tokens);
+	HbaToken   *token = linitial(tokens);
 	if (strcmp(token->string, "local") == 0)
 	{
 #ifdef HAVE_UNIX_SOCKETS
@@ -1506,12 +1491,11 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		tokens = lfirst(field);
 		foreach(tokencell, tokens)
 		{
-			char	   *val;
 
 			token = lfirst(tokencell);
 
 			str = pstrdup(token->string);
-			val = strchr(str, '=');
+			char	   *val = strchr(str, '=');
 			if (val == NULL)
 			{
 				/*
@@ -2120,12 +2104,11 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 static void
 check_hba(hbaPort *port)
 {
-	Oid			roleid;
 	ListCell   *line;
 	HbaLine    *hba;
 
 	/* Get the target role's OID.  Note we do not error out for bad role. */
-	roleid = get_role_oid(port->user_name, true);
+	Oid			roleid = get_role_oid(port->user_name, true);
 
 	foreach(line, parsed_hba_lines)
 	{
@@ -2234,16 +2217,12 @@ check_hba(hbaPort *port)
 bool
 load_hba(void)
 {
-	FILE	   *file;
 	List	   *hba_lines = NIL;
 	ListCell   *line;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
-	MemoryContext linecxt;
-	MemoryContext oldcxt;
-	MemoryContext hbacxt;
 
-	file = AllocateFile(HbaFileName, "r");
+	FILE	   *file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
 	{
 		ereport(LOG,
@@ -2253,15 +2232,15 @@ load_hba(void)
 		return false;
 	}
 
-	linecxt = tokenize_file(HbaFileName, file, &hba_lines, LOG);
+	MemoryContext linecxt = tokenize_file(HbaFileName, file, &hba_lines, LOG);
 	FreeFile(file);
 
 	/* Now parse all the lines */
 	Assert(PostmasterContext);
-	hbacxt = AllocSetContextCreate(PostmasterContext,
+	MemoryContext hbacxt = AllocSetContextCreate(PostmasterContext,
 								   "hba parser context",
 								   ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(hbacxt);
+	MemoryContext oldcxt = MemoryContextSwitchTo(hbacxt);
 	foreach(line, hba_lines)
 	{
 		TokenizedLine *tok_line = (TokenizedLine *) lfirst(line);
@@ -2341,10 +2320,9 @@ load_hba(void)
 static ArrayType *
 gethba_options(HbaLine *hba)
 {
-	int			noptions;
 	Datum		options[MAX_HBA_OPTIONS];
 
-	noptions = 0;
+	int			noptions = 0;
 
 	if (hba->auth_method == uaGSS || hba->auth_method == uaSSPI)
 	{
@@ -2469,8 +2447,6 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	Datum		values[NUM_PG_HBA_FILE_RULES_ATTS];
 	bool		nulls[NUM_PG_HBA_FILE_RULES_ATTS];
 	char		buffer[NI_MAXHOST];
-	HeapTuple	tuple;
-	int			index;
 	ListCell   *lc;
 	const char *typestr;
 	const char *addrstr;
@@ -2481,7 +2457,7 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 
 	memset(values, 0, sizeof(values));
 	memset(nulls, 0, sizeof(nulls));
-	index = 0;
+	int			index = 0;
 
 	/* line_number */
 	values[index++] = Int32GetDatum(lineno);
@@ -2635,7 +2611,7 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	else
 		nulls[NUM_PG_HBA_FILE_RULES_ATTS - 1] = true;
 
-	tuple = heap_form_tuple(tupdesc, values, nulls);
+	HeapTuple	tuple = heap_form_tuple(tupdesc, values, nulls);
 	tuplestore_puttuple(tuple_store, tuple);
 }
 
@@ -2645,12 +2621,8 @@ fill_hba_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 static void
 fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 {
-	FILE	   *file;
 	List	   *hba_lines = NIL;
 	ListCell   *line;
-	MemoryContext linecxt;
-	MemoryContext hbacxt;
-	MemoryContext oldcxt;
 
 	/*
 	 * In the unlikely event that we can't open pg_hba.conf, we throw an
@@ -2658,21 +2630,21 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 * (Most other error conditions should result in a message in a view
 	 * entry.)
 	 */
-	file = AllocateFile(HbaFileName, "r");
+	FILE	   *file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						HbaFileName)));
 
-	linecxt = tokenize_file(HbaFileName, file, &hba_lines, DEBUG3);
+	MemoryContext linecxt = tokenize_file(HbaFileName, file, &hba_lines, DEBUG3);
 	FreeFile(file);
 
 	/* Now parse all the lines */
-	hbacxt = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext hbacxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "hba parser context",
 								   ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(hbacxt);
+	MemoryContext oldcxt = MemoryContextSwitchTo(hbacxt);
 	foreach(line, hba_lines)
 	{
 		TokenizedLine *tok_line = (TokenizedLine *) lfirst(line);
@@ -2699,17 +2671,14 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 Datum
 pg_hba_file_rules(PG_FUNCTION_ARGS)
 {
-	Tuplestorestate *tuple_store;
 	TupleDesc	tupdesc;
-	MemoryContext old_cxt;
-	ReturnSetInfo *rsi;
 
 	/*
 	 * We must use the Materialize mode to be safe against HBA file changes
 	 * while the cursor is open. It's also more efficient than having to look
 	 * up our current position in the parsed list every time.
 	 */
-	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	/* Check to see if caller supports us returning a tuplestore */
 	if (rsi == NULL || !IsA(rsi, ReturnSetInfo))
@@ -2728,9 +2697,9 @@ pg_hba_file_rules(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 
 	/* Build tuplestore to hold the result rows */
-	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+	MemoryContext old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 
-	tuple_store =
+	Tuplestorestate *tuple_store =
 		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
 	rsi->setDesc = tupdesc;
@@ -2762,21 +2731,17 @@ static IdentLine *
 parse_ident_line(TokenizedLine *tok_line)
 {
 	int			line_num = tok_line->line_num;
-	ListCell   *field;
-	List	   *tokens;
-	HbaToken   *token;
-	IdentLine  *parsedline;
 
 	Assert(tok_line->fields != NIL);
-	field = list_head(tok_line->fields);
+	ListCell   *field = list_head(tok_line->fields);
 
-	parsedline = palloc0(sizeof(IdentLine));
+	IdentLine  *parsedline = palloc0(sizeof(IdentLine));
 	parsedline->linenumber = line_num;
 
 	/* Get the map token (must exist) */
-	tokens = lfirst(field);
+	List	   *tokens = lfirst(field);
 	IDENT_MULTI_VALUE(tokens);
-	token = linitial(tokens);
+	HbaToken   *token = linitial(tokens);
 	parsedline->usermap = pstrdup(token->string);
 
 	/* Get the ident user token */
@@ -2801,15 +2766,12 @@ parse_ident_line(TokenizedLine *tok_line)
 		 * When system username starts with a slash, treat it as a regular
 		 * expression. Pre-compile it.
 		 */
-		int			r;
-		pg_wchar   *wstr;
-		int			wlen;
 
-		wstr = palloc((strlen(parsedline->ident_user + 1) + 1) * sizeof(pg_wchar));
-		wlen = pg_mb2wchar_with_len(parsedline->ident_user + 1,
+		pg_wchar   *wstr = palloc((strlen(parsedline->ident_user + 1) + 1) * sizeof(pg_wchar));
+		int			wlen = pg_mb2wchar_with_len(parsedline->ident_user + 1,
 									wstr, strlen(parsedline->ident_user + 1));
 
-		r = pg_regcomp(&parsedline->re, wstr, wlen, REG_ADVANCED, C_COLLATION_OID);
+		int			r = pg_regcomp(&parsedline->re, wstr, wlen, REG_ADVANCED, C_COLLATION_OID);
 		if (r)
 		{
 			char		errstr[100];
@@ -2856,17 +2818,14 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		 * regular expression that returns exactly one match. This is replaced
 		 * for \1 in the database username string, if present.
 		 */
-		int			r;
 		regmatch_t	matches[2];
-		pg_wchar   *wstr;
-		int			wlen;
 		char	   *ofs;
 		char	   *regexp_pgrole;
 
-		wstr = palloc((strlen(ident_user) + 1) * sizeof(pg_wchar));
-		wlen = pg_mb2wchar_with_len(ident_user, wstr, strlen(ident_user));
+		pg_wchar   *wstr = palloc((strlen(ident_user) + 1) * sizeof(pg_wchar));
+		int			wlen = pg_mb2wchar_with_len(ident_user, wstr, strlen(ident_user));
 
-		r = pg_regexec(&identLine->re, wstr, wlen, 0, NULL, 2, matches, 0);
+		int			r = pg_regexec(&identLine->re, wstr, wlen, 0, NULL, 2, matches, 0);
 		if (r)
 		{
 			char		errstr[100];
@@ -2889,7 +2848,6 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 
 		if ((ofs = strstr(identLine->pg_role, "\\1")) != NULL)
 		{
-			int			offset;
 
 			/* substitution of the first argument requested */
 			if (matches[1].rm_so < 0)
@@ -2907,7 +2865,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			 * plus null terminator
 			 */
 			regexp_pgrole = palloc0(strlen(identLine->pg_role) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
-			offset = ofs - identLine->pg_role;
+			int			offset = ofs - identLine->pg_role;
 			memcpy(regexp_pgrole, identLine->pg_role, offset);
 			memcpy(regexp_pgrole + offset,
 				   ident_user + matches[1].rm_so,
@@ -3028,18 +2986,14 @@ check_usermap(const char *usermap_name,
 bool
 load_ident(void)
 {
-	FILE	   *file;
 	List	   *ident_lines = NIL;
 	ListCell   *line_cell,
 			   *parsed_line_cell;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
-	MemoryContext linecxt;
-	MemoryContext oldcxt;
-	MemoryContext ident_context;
 	IdentLine  *newline;
 
-	file = AllocateFile(IdentFileName, "r");
+	FILE	   *file = AllocateFile(IdentFileName, "r");
 	if (file == NULL)
 	{
 		/* not fatal ... we just won't do any special ident maps */
@@ -3050,15 +3004,15 @@ load_ident(void)
 		return false;
 	}
 
-	linecxt = tokenize_file(IdentFileName, file, &ident_lines, LOG);
+	MemoryContext linecxt = tokenize_file(IdentFileName, file, &ident_lines, LOG);
 	FreeFile(file);
 
 	/* Now parse all the lines */
 	Assert(PostmasterContext);
-	ident_context = AllocSetContextCreate(PostmasterContext,
+	MemoryContext ident_context = AllocSetContextCreate(PostmasterContext,
 										  "ident parser context",
 										  ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(ident_context);
+	MemoryContext oldcxt = MemoryContextSwitchTo(ident_context);
 	foreach(line_cell, ident_lines)
 	{
 		TokenizedLine *tok_line = (TokenizedLine *) lfirst(line_cell);

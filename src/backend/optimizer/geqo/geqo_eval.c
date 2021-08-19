@@ -56,12 +56,7 @@ static bool desirable_join(PlannerInfo *root,
 Cost
 geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 {
-	MemoryContext mycontext;
-	MemoryContext oldcxt;
-	RelOptInfo *joinrel;
 	Cost		fitness;
-	int			savelength;
-	struct HTAB *savehash;
 
 	/*
 	 * Create a private memory context that will hold all temp storage
@@ -72,10 +67,10 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 * temp context a child of the planner's normal context, so that it will
 	 * be freed even if we abort via ereport(ERROR).
 	 */
-	mycontext = AllocSetContextCreate(CurrentMemoryContext,
+	MemoryContext mycontext = AllocSetContextCreate(CurrentMemoryContext,
 									  "GEQO",
 									  ALLOCSET_DEFAULT_SIZES);
-	oldcxt = MemoryContextSwitchTo(mycontext);
+	MemoryContext oldcxt = MemoryContextSwitchTo(mycontext);
 
 	/*
 	 * gimme_tree will add entries to root->join_rel_list, which may or may
@@ -92,14 +87,14 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 *
 	 * join_rel_level[] shouldn't be in use, so just Assert it isn't.
 	 */
-	savelength = list_length(root->join_rel_list);
-	savehash = root->join_rel_hash;
+	int			savelength = list_length(root->join_rel_list);
+	struct HTAB *savehash = root->join_rel_hash;
 	Assert(root->join_rel_level == NULL);
 
 	root->join_rel_hash = NULL;
 
 	/* construct the best path for the given combination of relations */
-	joinrel = gimme_tree(root, tour, num_gene);
+	RelOptInfo *joinrel = gimme_tree(root, tour, num_gene);
 
 	/*
 	 * compute fitness, if we found a valid join
@@ -163,7 +158,6 @@ RelOptInfo *
 gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 {
 	GeqoPrivateData *private = (GeqoPrivateData *) root->join_search_private;
-	List	   *clumps;
 	int			rel_count;
 
 	/*
@@ -177,21 +171,18 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 	 * heuristics and try to forcibly join any remaining clumps.  If we are
 	 * unable to merge all the clumps into one, fail.
 	 */
-	clumps = NIL;
+	List	   *clumps = NIL;
 
 	for (rel_count = 0; rel_count < num_gene; rel_count++)
 	{
-		int			cur_rel_index;
-		RelOptInfo *cur_rel;
-		Clump	   *cur_clump;
 
 		/* Get the next input relation */
-		cur_rel_index = (int) tour[rel_count];
-		cur_rel = (RelOptInfo *) list_nth(private->initial_rels,
+		int			cur_rel_index = (int) tour[rel_count];
+		RelOptInfo *cur_rel = (RelOptInfo *) list_nth(private->initial_rels,
 										  cur_rel_index - 1);
 
 		/* Make it into a single-rel clump */
-		cur_clump = (Clump *) palloc(sizeof(Clump));
+		Clump	   *cur_clump = (Clump *) palloc(sizeof(Clump));
 		cur_clump->joinrel = cur_rel;
 		cur_clump->size = 1;
 
@@ -202,10 +193,9 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 	if (list_length(clumps) > 1)
 	{
 		/* Force-join the remaining clumps in some legal order */
-		List	   *fclumps;
 		ListCell   *lc;
 
-		fclumps = NIL;
+		List	   *fclumps = NIL;
 		foreach(lc, clumps)
 		{
 			Clump	   *clump = (Clump *) lfirst(lc);
@@ -249,7 +239,6 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 		if (force ||
 			desirable_join(root, old_clump->joinrel, new_clump->joinrel))
 		{
-			RelOptInfo *joinrel;
 
 			/*
 			 * Construct a RelOptInfo representing the join of these two input
@@ -257,7 +246,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 			 * root->join_rel_list yet, and so the paths constructed for it
 			 * will only include the ones we want.
 			 */
-			joinrel = make_join_rel(root,
+			RelOptInfo *joinrel = make_join_rel(root,
 									old_clump->joinrel,
 									new_clump->joinrel);
 

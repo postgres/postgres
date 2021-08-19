@@ -361,8 +361,6 @@ fillQT(QTN2QTState *state, QTNode *in)
 TSQuery
 QTN2QT(QTNode *in)
 {
-	TSQuery		out;
-	int			len;
 	int			sumlen = 0,
 				nnode = 0;
 	QTN2QTState state;
@@ -373,9 +371,9 @@ QTN2QT(QTNode *in)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("tsquery is too large")));
-	len = COMPUTESIZE(nnode, sumlen);
+	int			len = COMPUTESIZE(nnode, sumlen);
 
-	out = (TSQuery) palloc0(len);
+	TSQuery		out = (TSQuery) palloc0(len);
 	SET_VARSIZE(out, len);
 	out->size = nnode;
 
@@ -394,12 +392,11 @@ QTN2QT(QTNode *in)
 QTNode *
 QTNCopy(QTNode *in)
 {
-	QTNode	   *out;
 
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
 
-	out = (QTNode *) palloc(sizeof(QTNode));
+	QTNode	   *out = (QTNode *) palloc(sizeof(QTNode));
 
 	*out = *in;
 	out->valnode = (QueryItem *) palloc(sizeof(QueryItem));

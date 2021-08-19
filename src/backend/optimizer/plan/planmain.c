@@ -56,7 +56,6 @@ query_planner(PlannerInfo *root,
 			  query_pathkeys_callback qp_callback, void *qp_extra)
 {
 	Query	   *parse = root->parse;
-	List	   *joinlist;
 	RelOptInfo *final_rel;
 
 	/*
@@ -181,7 +180,7 @@ query_planner(PlannerInfo *root,
 
 	find_lateral_references(root);
 
-	joinlist = deconstruct_jointree(root);
+	List	   *joinlist = deconstruct_jointree(root);
 
 	/*
 	 * Reconsider any postponed outer-join quals now that we have built up

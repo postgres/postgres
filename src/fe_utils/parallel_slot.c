@@ -207,12 +207,11 @@ wait_on_slots(ParallelSlotArray *sa)
 
 	for (i = 0; i < sa->numslots; i++)
 	{
-		int			sock;
 
 		/* We shouldn't get here if we still have slots without connections */
 		Assert(sa->slots[i].connection != NULL);
 
-		sock = PQsocket(sa->slots[i].connection);
+		int			sock = PQsocket(sa->slots[i].connection);
 
 		/*
 		 * We don't really expect any connections to lose their sockets after
@@ -247,9 +246,8 @@ wait_on_slots(ParallelSlotArray *sa)
 
 	for (i = 0; i < sa->numslots; i++)
 	{
-		int			sock;
 
-		sock = PQsocket(sa->slots[i].connection);
+		int			sock = PQsocket(sa->slots[i].connection);
 
 		if (sock >= 0 && FD_ISSET(sock, &slotset))
 		{
@@ -288,10 +286,9 @@ wait_on_slots(ParallelSlotArray *sa)
 static void
 connect_slot(ParallelSlotArray *sa, int slotno, const char *dbname)
 {
-	const char *old_override;
 	ParallelSlot *slot = &sa->slots[slotno];
 
-	old_override = sa->cparams->override_dbname;
+	const char *old_override = sa->cparams->override_dbname;
 	if (dbname)
 		sa->cparams->override_dbname = dbname;
 	slot->connection = connectDatabase(sa->cparams, sa->progname, sa->echo, false, true);
@@ -400,13 +397,12 @@ ParallelSlotArray *
 ParallelSlotsSetup(int numslots, ConnParams *cparams, const char *progname,
 				   bool echo, const char *initcmd)
 {
-	ParallelSlotArray *sa;
 
 	Assert(numslots > 0);
 	Assert(cparams != NULL);
 	Assert(progname != NULL);
 
-	sa = (ParallelSlotArray *) palloc0(offsetof(ParallelSlotArray, slots) +
+	ParallelSlotArray *sa = (ParallelSlotArray *) palloc0(offsetof(ParallelSlotArray, slots) +
 									   numslots * sizeof(ParallelSlot));
 
 	sa->numslots = numslots;
@@ -431,9 +427,8 @@ ParallelSlotsSetup(int numslots, ConnParams *cparams, const char *progname,
 void
 ParallelSlotsAdoptConn(ParallelSlotArray *sa, PGconn *conn)
 {
-	int			offset;
 
-	offset = find_unconnected_slot(sa);
+	int			offset = find_unconnected_slot(sa);
 	if (offset >= 0)
 		sa->slots[offset].connection = conn;
 	else

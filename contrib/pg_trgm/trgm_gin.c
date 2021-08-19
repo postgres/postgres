@@ -36,23 +36,20 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 	text	   *val = (text *) PG_GETARG_TEXT_PP(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
-	TRGM	   *trg;
-	int32		trglen;
 
 	*nentries = 0;
 
-	trg = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
-	trglen = ARRNELEM(trg);
+	TRGM	   *trg = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
+	int32		trglen = ARRNELEM(trg);
 
 	if (trglen > 0)
 	{
-		trgm	   *ptr;
 		int32		i;
 
 		*nentries = trglen;
 		entries = (Datum *) palloc(sizeof(Datum) * trglen);
 
-		ptr = GETARR(trg);
+		trgm	   *ptr = GETARR(trg);
 		for (i = 0; i < trglen; i++)
 		{
 			int32		item = trgm2int(ptr);

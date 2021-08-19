@@ -1264,10 +1264,9 @@ word_matches(const char *pattern,
 	for (;;)
 	{
 		const char *star = NULL;
-		const char *c;
 
 		/* Find end of current alternative, and locate any wild card. */
-		c = pattern;
+		const char *c = pattern;
 		while (*c != '\0' && *c != '|')
 		{
 			if (*c == '*')
@@ -4395,7 +4394,6 @@ _complete_from_query(const char *simple_query,
 	if (state == 0)
 	{
 		PQExpBufferData query_buffer;
-		char	   *e_text;
 		char	   *e_info_charp;
 		char	   *e_info_charp2;
 		const char *pstr = text;
@@ -4419,7 +4417,7 @@ _complete_from_query(const char *simple_query,
 		result = NULL;
 
 		/* Set up suitably-escaped copies of textual inputs */
-		e_text = escape_string(text);
+		char	   *e_text = escape_string(text);
 
 		if (completion_info_charp)
 			e_info_charp = escape_string(completion_info_charp);
@@ -4702,13 +4700,12 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 						bool need_value)
 {
 	char	  **matches;
-	char	  **varnames;
 	int			nvars = 0;
 	int			maxvars = 100;
 	int			i;
 	struct _variable *ptr;
 
-	varnames = (char **) pg_malloc((maxvars + 1) * sizeof(char *));
+	char	  **varnames = (char **) pg_malloc((maxvars + 1) * sizeof(char *));
 
 	for (ptr = pset.vars->next; ptr; ptr = ptr->next)
 	{
@@ -4777,7 +4774,6 @@ complete_from_files(const char *text, int state)
 	 * Otherwise, we have to do the best we can.
 	 */
 	static const char *unquoted_text;
-	char	   *unquoted_match;
 	char	   *ret = NULL;
 
 	/* If user typed a quote, force quoting (never remove user's quote) */
@@ -4797,7 +4793,7 @@ complete_from_files(const char *text, int state)
 		}
 	}
 
-	unquoted_match = rl_filename_completion_function(unquoted_text, state);
+	char	   *unquoted_match = rl_filename_completion_function(unquoted_text, state);
 	if (unquoted_match)
 	{
 		struct stat statbuf;
@@ -4879,12 +4875,10 @@ pg_strdup_keyword_case(const char *s, const char *ref)
 static char *
 escape_string(const char *text)
 {
-	size_t		text_length;
-	char	   *result;
 
-	text_length = strlen(text);
+	size_t		text_length = strlen(text);
 
-	result = pg_malloc(text_length * 2 + 1);
+	char	   *result = pg_malloc(text_length * 2 + 1);
 	PQescapeStringConn(pset.db, result, text, text_length, NULL);
 
 	return result;
@@ -4898,12 +4892,11 @@ escape_string(const char *text)
 static PGresult *
 exec_query(const char *query)
 {
-	PGresult   *result;
 
 	if (query == NULL || !pset.db || PQstatus(pset.db) != CONNECTION_OK)
 		return NULL;
 
-	result = PQexec(pset.db, query);
+	PGresult   *result = PQexec(pset.db, query);
 
 	if (PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
@@ -4933,7 +4926,6 @@ exec_query(const char *query)
 static char **
 get_previous_words(int point, char **buffer, int *nwords)
 {
-	char	  **previous_words;
 	char	   *buf;
 	char	   *outptr;
 	int			words_found = 0;
@@ -4966,7 +4958,7 @@ get_previous_words(int point, char **buffer, int *nwords)
 	 * This is usually much more space than we need, but it's cheaper than
 	 * doing a separate malloc() for each word.
 	 */
-	previous_words = (char **) pg_malloc(point * sizeof(char *));
+	char	  **previous_words = (char **) pg_malloc(point * sizeof(char *));
 	*buffer = outptr = (char *) pg_malloc(point * 2);
 
 	/*
@@ -5061,11 +5053,9 @@ static char *
 get_guctype(const char *varname)
 {
 	PQExpBufferData query_buffer;
-	char	   *e_varname;
-	PGresult   *result;
 	char	   *guctype = NULL;
 
-	e_varname = escape_string(varname);
+	char	   *e_varname = escape_string(varname);
 
 	initPQExpBuffer(&query_buffer);
 	appendPQExpBuffer(&query_buffer,
@@ -5073,7 +5063,7 @@ get_guctype(const char *varname)
 					  "WHERE pg_catalog.lower(name) = pg_catalog.lower('%s')",
 					  e_varname);
 
-	result = exec_query(query_buffer.data);
+	PGresult   *result = exec_query(query_buffer.data);
 	termPQExpBuffer(&query_buffer);
 	free(e_varname);
 
@@ -5096,11 +5086,10 @@ get_guctype(const char *varname)
 static char *
 quote_file_name(char *fname, int match_type, char *quote_pointer)
 {
-	char	   *s;
 	struct stat statbuf;
 
 	/* Quote if needed. */
-	s = quote_if_needed(fname, " \t\r\n\"`",
+	char	   *s = quote_if_needed(fname, " \t\r\n\"`",
 						'\'', *completion_charp,
 						completion_force_quote,
 						pset.encoding);

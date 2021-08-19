@@ -107,7 +107,6 @@ static void setFilePath(ArchiveHandle *AH, char *buf,
 void
 InitArchiveFmt_Directory(ArchiveHandle *AH)
 {
-	lclContext *ctx;
 
 	/* Assuming static functions, this can be copied for each format. */
 	AH->ArchiveEntryPtr = _ArchiveEntry;
@@ -138,7 +137,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->WorkerJobDumpPtr = _WorkerJobDumpDirectory;
 
 	/* Set up our private context */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	lclContext *ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
 	ctx->dataFH = NULL;
@@ -198,11 +197,10 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	else
 	{							/* Read Mode */
 		char		fname[MAXPGPATH];
-		cfp		   *tocFH;
 
 		setFilePath(AH, fname, "toc.dat");
 
-		tocFH = cfopen_read(fname, PG_BINARY_R);
+		cfp		   *tocFH = cfopen_read(fname, PG_BINARY_R);
 		if (tocFH == NULL)
 			fatal("could not open input file \"%s\": %m", fname);
 
@@ -232,10 +230,9 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 static void
 _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
-	lclTocEntry *tctx;
 	char		fn[MAXPGPATH];
 
-	tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	lclTocEntry *tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (strcmp(te->desc, "BLOBS") == 0)
 		tctx->filename = pg_strdup("blobs.toc");
 	else if (te->dataDumper)
@@ -381,20 +378,17 @@ static void
 _PrintFileData(ArchiveHandle *AH, char *filename)
 {
 	size_t		cnt;
-	char	   *buf;
-	size_t		buflen;
-	cfp		   *cfp;
 
 	if (!filename)
 		return;
 
-	cfp = cfopen_read(filename, PG_BINARY_R);
+	cfp		   *cfp = cfopen_read(filename, PG_BINARY_R);
 
 	if (!cfp)
 		fatal("could not open input file \"%s\": %m", filename);
 
-	buf = pg_malloc(ZLIB_OUT_SIZE);
-	buflen = ZLIB_OUT_SIZE;
+	char	   *buf = pg_malloc(ZLIB_OUT_SIZE);
+	size_t		buflen = ZLIB_OUT_SIZE;
 
 	while ((cnt = cfread(buf, buflen, cfp)))
 	{
@@ -571,7 +565,6 @@ _CloseArchive(ArchiveHandle *AH)
 
 	if (AH->mode == archModeWrite)
 	{
-		cfp		   *tocFH;
 		char		fname[MAXPGPATH];
 
 		setFilePath(AH, fname, "toc.dat");
@@ -580,7 +573,7 @@ _CloseArchive(ArchiveHandle *AH)
 		ctx->pstate = ParallelBackupStart(AH);
 
 		/* The TOC is always created uncompressed */
-		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
+		cfp		   *tocFH = cfopen_write(fname, PG_BINARY_W, 0);
 		if (tocFH == NULL)
 			fatal("could not open output file \"%s\": %m", fname);
 		ctx->dataFH = tocFH;
@@ -677,14 +670,13 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		buf[50];
-	int			len;
 
 	/* Close the BLOB data file itself */
 	cfclose(ctx->dataFH);
 	ctx->dataFH = NULL;
 
 	/* register the blob in blobs.toc */
-	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
+	int			len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
 	if (cfwrite(buf, len, ctx->blobsTocFH) != len)
 		fatal("could not write to blobs TOC file");
 }
@@ -713,9 +705,8 @@ static void
 setFilePath(ArchiveHandle *AH, char *buf, const char *relativeFilename)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	char	   *dname;
 
-	dname = ctx->directory;
+	char	   *dname = ctx->directory;
 
 	if (strlen(dname) + 1 + strlen(relativeFilename) + 1 > MAXPGPATH)
 		fatal("file name too long: \"%s\"", dname);

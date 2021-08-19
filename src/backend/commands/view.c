@@ -51,16 +51,14 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 					  List *options, Query *viewParse)
 {
 	Oid			viewOid;
-	LOCKMODE	lockmode;
 	CreateStmt *createStmt = makeNode(CreateStmt);
-	List	   *attrList;
 	ListCell   *t;
 
 	/*
 	 * create a list of ColumnDef nodes based on the names and types of the
 	 * (non-junk) targetlist items from the view's SELECT list.
 	 */
-	attrList = NIL;
+	List	   *attrList = NIL;
 	foreach(t, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(t);
@@ -98,19 +96,17 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	 * relation->relpersistence to RELPERSISTENCE_TEMP if the selected
 	 * namespace is temporary.
 	 */
-	lockmode = replace ? AccessExclusiveLock : NoLock;
+	LOCKMODE	lockmode = replace ? AccessExclusiveLock : NoLock;
 	(void) RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
 
 	if (OidIsValid(viewOid) && replace)
 	{
-		Relation	rel;
-		TupleDesc	descriptor;
 		List	   *atcmds = NIL;
 		AlterTableCmd *atcmd;
 		ObjectAddress address;
 
 		/* Relation is already locked, but we must build a relcache entry. */
-		rel = relation_open(viewOid, NoLock);
+		Relation	rel = relation_open(viewOid, NoLock);
 
 		/* Make sure it *is* a view. */
 		if (rel->rd_rel->relkind != RELKIND_VIEW)
@@ -134,7 +130,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * verify that the old column list is an initial prefix of the new
 		 * column list.
 		 */
-		descriptor = BuildDescForRelation(attrList);
+		TupleDesc	descriptor = BuildDescForRelation(attrList);
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
@@ -214,7 +210,6 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	}
 	else
 	{
-		ObjectAddress address;
 
 		/*
 		 * Set the parameters for keys/inheritance etc. All of these are
@@ -234,7 +229,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * view, so we don't need more code to complain if "replace" is
 		 * false).
 		 */
-		address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
+		ObjectAddress address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
 								 NULL);
 		Assert(address.objectId != InvalidOid);
 
@@ -343,12 +338,8 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
 static Query *
 UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 {
-	Relation	viewRel;
-	List	   *new_rt;
-	ParseNamespaceItem *nsitem;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
-	ParseState *pstate;
 
 	/*
 	 * Make a copy of the given parsetree.  It's not so much that we don't
@@ -361,16 +352,16 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	viewParse = copyObject(viewParse);
 
 	/* Create a dummy ParseState for addRangeTableEntryForRelation */
-	pstate = make_parsestate(NULL);
+	ParseState *pstate = make_parsestate(NULL);
 
 	/* need to open the rel for addRangeTableEntryForRelation */
-	viewRel = relation_open(viewOid, AccessShareLock);
+	Relation	viewRel = relation_open(viewOid, AccessShareLock);
 
 	/*
 	 * Create the 2 new range table entries and form the new range table...
 	 * OLD first, then NEW....
 	 */
-	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
+	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, viewRel,
 										   AccessShareLock,
 										   makeAlias("old", NIL),
 										   false, false);
@@ -385,7 +376,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	rt_entry1->requiredPerms = 0;
 	rt_entry2->requiredPerms = 0;
 
-	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
+	List	   *new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
 
 	viewParse->rtable = new_rt;
 
@@ -407,23 +398,19 @@ ObjectAddress
 DefineView(ViewStmt *stmt, const char *queryString,
 		   int stmt_location, int stmt_len)
 {
-	RawStmt    *rawstmt;
-	Query	   *viewParse;
 	RangeVar   *view;
 	ListCell   *cell;
-	bool		check_option;
-	ObjectAddress address;
 
 	/*
 	 * Run parse analysis to convert the raw parse tree to a Query.  Note this
 	 * also acquires sufficient locks on the source table(s).
 	 */
-	rawstmt = makeNode(RawStmt);
+	RawStmt    *rawstmt = makeNode(RawStmt);
 	rawstmt->stmt = stmt->query;
 	rawstmt->stmt_location = stmt_location;
 	rawstmt->stmt_len = stmt_len;
 
-	viewParse = parse_analyze(rawstmt, queryString, NULL, 0, NULL);
+	Query	   *viewParse = parse_analyze(rawstmt, queryString, NULL, 0, NULL);
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.
@@ -466,7 +453,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * Check that the view is auto-updatable if WITH CHECK OPTION was
 	 * specified.
 	 */
-	check_option = false;
+	bool		check_option = false;
 
 	foreach(cell, stmt->options)
 	{
@@ -549,7 +536,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
-	address = DefineVirtualRelation(view, viewParse->targetList,
+	ObjectAddress address = DefineVirtualRelation(view, viewParse->targetList,
 									stmt->replace, stmt->options, viewParse);
 
 	return address;

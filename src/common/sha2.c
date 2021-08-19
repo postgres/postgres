@@ -326,7 +326,6 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 				s1;
 	uint32		T1,
 			   *W256;
-	int			j;
 
 	W256 = (uint32 *) context->buffer;
 
@@ -340,7 +339,7 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	g = context->state[6];
 	h = context->state[7];
 
-	j = 0;
+	int			j = 0;
 	do
 	{
 		/* Rounds 0 to 15 (unrolled): */
@@ -398,7 +397,6 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	uint32		T1,
 				T2,
 			   *W256;
-	int			j;
 
 	W256 = (uint32 *) context->buffer;
 
@@ -412,7 +410,7 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	g = context->state[6];
 	h = context->state[7];
 
-	j = 0;
+	int			j = 0;
 	do
 	{
 		W256[j] = (uint32) data[3] | ((uint32) data[2] << 8) |
@@ -528,9 +526,8 @@ pg_sha256_update(pg_sha256_ctx *context, const uint8 *data, size_t len)
 static void
 SHA256_Last(pg_sha256_ctx *context)
 {
-	unsigned int usedspace;
 
-	usedspace = (context->bitcount >> 3) % PG_SHA256_BLOCK_LENGTH;
+	unsigned int usedspace = (context->bitcount >> 3) % PG_SHA256_BLOCK_LENGTH;
 #ifndef WORDS_BIGENDIAN
 	/* Convert FROM host byte order */
 	REVERSE64(context->bitcount, context->bitcount);
@@ -655,7 +652,6 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 				s1;
 	uint64		T1,
 			   *W512 = (uint64 *) context->buffer;
-	int			j;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -667,7 +663,7 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	g = context->state[6];
 	h = context->state[7];
 
-	j = 0;
+	int			j = 0;
 	do
 	{
 		ROUND512_0_TO_15(a, b, c, d, e, f, g, h);
@@ -724,7 +720,6 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	uint64		T1,
 				T2,
 			   *W512 = (uint64 *) context->buffer;
-	int			j;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -736,7 +731,7 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	g = context->state[6];
 	h = context->state[7];
 
-	j = 0;
+	int			j = 0;
 	do
 	{
 		W512[j] = (uint64) data[7] | ((uint64) data[6] << 8) |
@@ -854,9 +849,8 @@ pg_sha512_update(pg_sha512_ctx *context, const uint8 *data, size_t len)
 static void
 SHA512_Last(pg_sha512_ctx *context)
 {
-	unsigned int usedspace;
 
-	usedspace = (context->bitcount[0] >> 3) % PG_SHA512_BLOCK_LENGTH;
+	unsigned int usedspace = (context->bitcount[0] >> 3) % PG_SHA512_BLOCK_LENGTH;
 #ifndef WORDS_BIGENDIAN
 	/* Convert FROM host byte order */
 	REVERSE64(context->bitcount[0], context->bitcount[0]);

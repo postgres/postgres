@@ -175,9 +175,8 @@ Datum
 xid8recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	uint64		value;
 
-	value = (uint64) pq_getmsgint64(buf);
+	uint64		value = (uint64) pq_getmsgint64(buf);
 	PG_RETURN_FULLTRANSACTIONID(FullTransactionIdFromU64(value));
 }
 

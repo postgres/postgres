@@ -24,7 +24,6 @@ jsonb_exists(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue	kval;
-	JsonbValue *v = NULL;
 
 	/*
 	 * We only match Object keys (which are naturally always Strings), or
@@ -36,7 +35,7 @@ jsonb_exists(PG_FUNCTION_ARGS)
 	kval.val.string.val = VARDATA_ANY(key);
 	kval.val.string.len = VARSIZE_ANY_EXHDR(key);
 
-	v = findJsonbValueFromContainer(&jb->root,
+	JsonbValue *v = findJsonbValueFromContainer(&jb->root,
 									JB_FOBJECT | JB_FARRAY,
 									&kval);
 
@@ -151,9 +150,8 @@ jsonb_ne(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) != 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) != 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -168,9 +166,8 @@ jsonb_lt(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) < 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) < 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -182,9 +179,8 @@ jsonb_gt(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) > 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) > 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -196,9 +192,8 @@ jsonb_le(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) <= 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) <= 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -210,9 +205,8 @@ jsonb_ge(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) >= 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) >= 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -224,9 +218,8 @@ jsonb_eq(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	bool		res;
 
-	res = (compareJsonbContainers(&jba->root, &jbb->root) == 0);
+	bool		res = (compareJsonbContainers(&jba->root, &jbb->root) == 0);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -238,9 +231,8 @@ jsonb_cmp(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
-	int			res;
 
-	res = compareJsonbContainers(&jba->root, &jbb->root);
+	int			res = compareJsonbContainers(&jba->root, &jbb->root);
 
 	PG_FREE_IF_COPY(jba, 0);
 	PG_FREE_IF_COPY(jbb, 1);
@@ -254,7 +246,6 @@ Datum
 jsonb_hash(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
-	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken r;
 	uint32		hash = 0;
@@ -262,7 +253,7 @@ jsonb_hash(PG_FUNCTION_ARGS)
 	if (JB_ROOT_COUNT(jb) == 0)
 		PG_RETURN_INT32(0);
 
-	it = JsonbIteratorInit(&jb->root);
+	JsonbIterator *it = JsonbIteratorInit(&jb->root);
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
@@ -297,7 +288,6 @@ jsonb_hash_extended(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	uint64		seed = PG_GETARG_INT64(1);
-	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken r;
 	uint64		hash = 0;
@@ -305,7 +295,7 @@ jsonb_hash_extended(PG_FUNCTION_ARGS)
 	if (JB_ROOT_COUNT(jb) == 0)
 		PG_RETURN_UINT64(seed);
 
-	it = JsonbIteratorInit(&jb->root);
+	JsonbIterator *it = JsonbIteratorInit(&jb->root);
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{

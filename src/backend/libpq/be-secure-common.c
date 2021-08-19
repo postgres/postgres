@@ -41,7 +41,6 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 	int			loglevel = is_server_start ? ERROR : LOG;
 	StringInfoData command;
 	char	   *p;
-	FILE	   *fh;
 	int			pclose_rc;
 	size_t		len = 0;
 
@@ -73,7 +72,7 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 			appendStringInfoChar(&command, p[0]);
 	}
 
-	fh = OpenPipeStream(command.data, "r");
+	FILE	   *fh = OpenPipeStream(command.data, "r");
 	if (fh == NULL)
 	{
 		ereport(loglevel,

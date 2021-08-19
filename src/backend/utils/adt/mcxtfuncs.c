@@ -43,13 +43,11 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	bool		nulls[PG_GET_BACKEND_MEMORY_CONTEXTS_COLS];
 	MemoryContextCounters stat;
 	MemoryContext child;
-	const char *name;
-	const char *ident;
 
 	AssertArg(MemoryContextIsValid(context));
 
-	name = context->name;
-	ident = context->ident;
+	const char *name = context->name;
+	const char *ident = context->ident;
 
 	/*
 	 * To be consistent with logging output, we label dynahash contexts with
@@ -121,9 +119,6 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -139,10 +134,10 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -175,7 +170,6 @@ Datum
 pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	int			pid = PG_GETARG_INT32(0);
-	PGPROC	   *proc;
 
 	/* Only allow superusers to log memory contexts. */
 	if (!superuser())
@@ -183,7 +177,7 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be a superuser to log memory contexts")));
 
-	proc = BackendPidGetProc(pid);
+	PGPROC	   *proc = BackendPidGetProc(pid);
 
 	/*
 	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time

@@ -119,11 +119,10 @@ map_locale(const struct locale_map *map, const char *locale)
 		const char *needle_start = map[i].locale_name_start;
 		const char *needle_end = map[i].locale_name_end;
 		const char *replacement = map[i].replacement;
-		char	   *match;
 		char	   *match_start = NULL;
 		char	   *match_end = NULL;
 
-		match = strstr(locale, needle_start);
+		char	   *match = strstr(locale, needle_start);
 		if (match)
 		{
 			/*
@@ -172,7 +171,6 @@ char *
 pgwin32_setlocale(int category, const char *locale)
 {
 	const char *argument;
-	char	   *result;
 
 	if (locale == NULL)
 		argument = NULL;
@@ -180,7 +178,7 @@ pgwin32_setlocale(int category, const char *locale)
 		argument = map_locale(locale_map_argument, locale);
 
 	/* Call the real setlocale() function */
-	result = setlocale(category, argument);
+	char	   *result = setlocale(category, argument);
 
 	/*
 	 * setlocale() is specified to return a "char *" that the caller is

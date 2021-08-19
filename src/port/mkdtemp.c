@@ -96,7 +96,6 @@ GETTEMP(char *path, int *doopen, int domkdir)
 	char	   *start,
 			   *trv;
 	struct stat sbuf;
-	u_int		pid;
 
 	/*
 	 * To guarantee multiple calls generate unique names even if the file is
@@ -109,7 +108,7 @@ GETTEMP(char *path, int *doopen, int domkdir)
 	_DIAGASSERT(path != NULL);
 	/* doopen may be NULL */
 
-	pid = getpid();
+	u_int		pid = getpid();
 
 	/* Move to end of path and count trailing X's. */
 	for (trv = path; *trv; ++trv)
@@ -159,10 +158,9 @@ GETTEMP(char *path, int *doopen, int domkdir)
 			break;
 		if (*trv == '/')
 		{
-			int			e;
 
 			*trv = '\0';
-			e = stat(path, &sbuf);
+			int			e = stat(path, &sbuf);
 			*trv = '/';
 			if (e == -1)
 				return doopen == NULL && !domkdir;

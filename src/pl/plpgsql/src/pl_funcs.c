@@ -91,13 +91,12 @@ plpgsql_ns_top(void)
 void
 plpgsql_ns_additem(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
 {
-	PLpgSQL_nsitem *nse;
 
 	Assert(name != NULL);
 	/* first item added must be a label */
 	Assert(ns_top != NULL || itemtype == PLPGSQL_NSTYPE_LABEL);
 
-	nse = palloc(offsetof(PLpgSQL_nsitem, name) + strlen(name) + 1);
+	PLpgSQL_nsitem *nse = palloc(offsetof(PLpgSQL_nsitem, name) + strlen(name) + 1);
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;
@@ -1188,13 +1187,12 @@ dump_open(PLpgSQL_stmt_open *stmt)
 		if (stmt->params != NIL)
 		{
 			ListCell   *lc;
-			int			i;
 
 			dump_indent += 2;
 			dump_ind();
 			printf("    USING\n");
 			dump_indent += 2;
-			i = 1;
+			int			i = 1;
 			foreach(lc, stmt->params)
 			{
 				dump_ind();
@@ -1374,13 +1372,12 @@ dump_return_query(PLpgSQL_stmt_return_query *stmt)
 		if (stmt->params != NIL)
 		{
 			ListCell   *lc;
-			int			i;
 
 			dump_indent += 2;
 			dump_ind();
 			printf("    USING\n");
 			dump_indent += 2;
-			i = 1;
+			int			i = 1;
 			foreach(lc, stmt->params)
 			{
 				dump_ind();
@@ -1519,12 +1516,11 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 	if (stmt->params != NIL)
 	{
 		ListCell   *lc;
-		int			i;
 
 		dump_ind();
 		printf("    USING\n");
 		dump_indent += 2;
-		i = 1;
+		int			i = 1;
 		foreach(lc, stmt->params)
 		{
 			dump_ind();
@@ -1547,13 +1543,12 @@ dump_dynfors(PLpgSQL_stmt_dynfors *stmt)
 	if (stmt->params != NIL)
 	{
 		ListCell   *lc;
-		int			i;
 
 		dump_indent += 2;
 		dump_ind();
 		printf("    USING\n");
 		dump_indent += 2;
-		i = 1;
+		int			i = 1;
 		foreach(lc, stmt->params)
 		{
 			dump_ind();

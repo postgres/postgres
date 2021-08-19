@@ -144,11 +144,8 @@ pgtls_open_client(PGconn *conn)
 ssize_t
 pgtls_read(PGconn *conn, void *ptr, size_t len)
 {
-	ssize_t		n;
 	int			result_errno = 0;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
-	int			err;
-	unsigned long ecode;
 
 rloop:
 
@@ -163,8 +160,8 @@ rloop:
 	 */
 	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
-	n = SSL_read(conn->ssl, ptr, len);
-	err = SSL_get_error(conn->ssl, n);
+	ssize_t		n = SSL_read(conn->ssl, ptr, len);
+	int			err = SSL_get_error(conn->ssl, n);
 
 	/*
 	 * Other clients of OpenSSL may fail to call ERR_get_error(), but we
@@ -174,7 +171,7 @@ rloop:
 	 * queue being intact, so this is the earliest possible point
 	 * ERR_get_error() may be called.
 	 */
-	ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
+	unsigned long ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 	switch (err)
 	{
 		case SSL_ERROR_NONE:
@@ -273,17 +270,14 @@ pgtls_read_pending(PGconn *conn)
 ssize_t
 pgtls_write(PGconn *conn, const void *ptr, size_t len)
 {
-	ssize_t		n;
 	int			result_errno = 0;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
-	int			err;
-	unsigned long ecode;
 
 	SOCK_ERRNO_SET(0);
 	ERR_clear_error();
-	n = SSL_write(conn->ssl, ptr, len);
-	err = SSL_get_error(conn->ssl, n);
-	ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
+	ssize_t		n = SSL_write(conn->ssl, ptr, len);
+	int			err = SSL_get_error(conn->ssl, n);
+	unsigned long ecode = (err != SSL_ERROR_NONE || n < 0) ? ERR_get_error() : 0;
 	switch (err)
 	{
 		case SSL_ERROR_NONE:
@@ -375,19 +369,17 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 char *
 pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 {
-	X509	   *peer_cert;
 	const EVP_MD *algo_type;
 	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
 	unsigned int hash_size;
 	int			algo_nid;
-	char	   *cert_hash;
 
 	*len = 0;
 
 	if (!conn->peer)
 		return NULL;
 
-	peer_cert = conn->peer;
+	X509	   *peer_cert = conn->peer;
 
 	/*
 	 * Get the signature algorithm of the certificate to determine the hash
@@ -433,7 +425,7 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 	}
 
 	/* save result */
-	cert_hash = malloc(hash_size);
+	char	   *cert_hash = malloc(hash_size);
 	if (cert_hash == NULL)
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
@@ -564,14 +556,12 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 	 */
 	if (*names_examined == 0)
 	{
-		X509_NAME  *subject_name;
 
-		subject_name = X509_get_subject_name(conn->peer);
+		X509_NAME  *subject_name = X509_get_subject_name(conn->peer);
 		if (subject_name != NULL)
 		{
-			int			cn_index;
 
-			cn_index = X509_NAME_get_index_by_NID(subject_name,
+			int			cn_index = X509_NAME_get_index_by_NID(subject_name,
 												  NID_commonName, -1);
 			if (cn_index >= 0)
 			{
@@ -787,7 +777,6 @@ destroy_ssl_system(void)
 static int
 initialize_SSL(PGconn *conn)
 {
-	SSL_CTX    *SSL_context;
 	struct stat buf;
 	char		homedir[MAXPGPATH];
 	char		fnbuf[MAXPGPATH];
@@ -818,7 +807,7 @@ initialize_SSL(PGconn *conn)
 	 * complicated if connections used different certificates. So now we
 	 * create a separate context for each connection, and accept the overhead.
 	 */
-	SSL_context = SSL_CTX_new(SSLv23_method());
+	SSL_CTX    *SSL_context = SSL_CTX_new(SSLv23_method());
 	if (!SSL_context)
 	{
 		char	   *err = SSLerrmessage(ERR_get_error());
@@ -856,9 +845,8 @@ initialize_SSL(PGconn *conn)
 	if (conn->ssl_min_protocol_version &&
 		strlen(conn->ssl_min_protocol_version) != 0)
 	{
-		int			ssl_min_ver;
 
-		ssl_min_ver = ssl_protocol_version_to_openssl(conn->ssl_min_protocol_version);
+		int			ssl_min_ver = ssl_protocol_version_to_openssl(conn->ssl_min_protocol_version);
 
 		if (ssl_min_ver == -1)
 		{
@@ -885,9 +873,8 @@ initialize_SSL(PGconn *conn)
 	if (conn->ssl_max_protocol_version &&
 		strlen(conn->ssl_max_protocol_version) != 0)
 	{
-		int			ssl_max_ver;
 
-		ssl_max_ver = ssl_protocol_version_to_openssl(conn->ssl_max_protocol_version);
+		int			ssl_max_ver = ssl_protocol_version_to_openssl(conn->ssl_max_protocol_version);
 
 		if (ssl_max_ver == -1)
 		{
@@ -1130,7 +1117,6 @@ initialize_SSL(PGconn *conn)
 		{
 			/* Colon, but not in second character, treat as engine:key */
 			char	   *engine_str = strdup(conn->sslkey);
-			char	   *engine_colon;
 
 			if (engine_str == NULL)
 			{
@@ -1140,7 +1126,7 @@ initialize_SSL(PGconn *conn)
 			}
 
 			/* cannot return NULL because we already checked before strdup */
-			engine_colon = strchr(engine_str, ':');
+			char	   *engine_colon = strchr(engine_str, ':');
 
 			*engine_colon = '\0';	/* engine_str now has engine name */
 			engine_colon++;		/* engine_colon now has key name */
@@ -1311,16 +1297,14 @@ initialize_SSL(PGconn *conn)
 static PostgresPollingStatusType
 open_client_SSL(PGconn *conn)
 {
-	int			r;
 
 	ERR_clear_error();
-	r = SSL_connect(conn->ssl);
+	int			r = SSL_connect(conn->ssl);
 	if (r <= 0)
 	{
 		int			err = SSL_get_error(conn->ssl, r);
-		unsigned long ecode;
 
-		ecode = ERR_get_error();
+		unsigned long ecode = ERR_get_error();
 		switch (err)
 		{
 			case SSL_ERROR_WANT_READ:
@@ -1515,10 +1499,8 @@ static char ssl_nomem[] = "out of memory allocating error description";
 static char *
 SSLerrmessage(unsigned long ecode)
 {
-	const char *errreason;
-	char	   *errbuf;
 
-	errbuf = malloc(SSL_ERR_LEN);
+	char	   *errbuf = malloc(SSL_ERR_LEN);
 	if (!errbuf)
 		return ssl_nomem;
 	if (ecode == 0)
@@ -1526,7 +1508,7 @@ SSLerrmessage(unsigned long ecode)
 		snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("no SSL error reported"));
 		return errbuf;
 	}
-	errreason = ERR_reason_error_string(ecode);
+	const char *errreason = ERR_reason_error_string(ecode);
 	if (errreason != NULL)
 	{
 		strlcpy(errbuf, errreason, SSL_ERR_LEN);
@@ -1637,9 +1619,8 @@ static BIO_METHOD *my_bio_methods;
 static int
 my_sock_read(BIO *h, char *buf, int size)
 {
-	int			res;
 
-	res = pqsecure_raw_read((PGconn *) BIO_get_data(h), buf, size);
+	int			res = pqsecure_raw_read((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res < 0)
 	{
@@ -1667,9 +1648,8 @@ my_sock_read(BIO *h, char *buf, int size)
 static int
 my_sock_write(BIO *h, const char *buf, int size)
 {
-	int			res;
 
-	res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
+	int			res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
@@ -1701,9 +1681,8 @@ my_BIO_s_socket(void)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
 #ifdef HAVE_BIO_METH_NEW
-		int			my_bio_index;
 
-		my_bio_index = BIO_get_new_index();
+		int			my_bio_index = BIO_get_new_index();
 		if (my_bio_index == -1)
 			return NULL;
 		my_bio_index |= (BIO_TYPE_DESCRIPTOR | BIO_TYPE_SOURCE_SINK);
@@ -1746,9 +1725,8 @@ my_SSL_set_fd(PGconn *conn, int fd)
 {
 	int			ret = 0;
 	BIO		   *bio;
-	BIO_METHOD *bio_method;
 
-	bio_method = my_BIO_s_socket();
+	BIO_METHOD *bio_method = my_BIO_s_socket();
 	if (bio_method == NULL)
 	{
 		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);

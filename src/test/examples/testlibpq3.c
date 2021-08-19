@@ -72,22 +72,17 @@ show_binary_results(PGresult *res)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		char	   *iptr;
-		char	   *tptr;
-		char	   *bptr;
-		int			blen;
-		int			ival;
 
 		/* Get the field values (we ignore possibility they are null!) */
-		iptr = PQgetvalue(res, i, i_fnum);
-		tptr = PQgetvalue(res, i, t_fnum);
-		bptr = PQgetvalue(res, i, b_fnum);
+		char	   *iptr = PQgetvalue(res, i, i_fnum);
+		char	   *tptr = PQgetvalue(res, i, t_fnum);
+		char	   *bptr = PQgetvalue(res, i, b_fnum);
 
 		/*
 		 * The binary representation of INT4 is in network byte order, which
 		 * we'd better coerce to the local byte order.
 		 */
-		ival = ntohl(*((uint32_t *) iptr));
+		int			ival = ntohl(*((uint32_t *) iptr));
 
 		/*
 		 * The binary representation of TEXT is, well, text, and since libpq
@@ -97,7 +92,7 @@ show_binary_results(PGresult *res)
 		 * The binary representation of BYTEA is a bunch of bytes, which could
 		 * include embedded nulls so we have to pay attention to field length.
 		 */
-		blen = PQgetlength(res, i, b_fnum);
+		int			blen = PQgetlength(res, i, b_fnum);
 
 		printf("tuple %d: got\n", i);
 		printf(" i = (%d bytes) %d\n",
@@ -115,12 +110,9 @@ int
 main(int argc, char **argv)
 {
 	const char *conninfo;
-	PGconn	   *conn;
-	PGresult   *res;
 	const char *paramValues[1];
 	int			paramLengths[1];
 	int			paramFormats[1];
-	uint32_t	binaryIntVal;
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
@@ -133,7 +125,7 @@ main(int argc, char **argv)
 		conninfo = "dbname = postgres";
 
 	/* Make a connection to the database */
-	conn = PQconnectdb(conninfo);
+	PGconn	   *conn = PQconnectdb(conninfo);
 
 	/* Check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
@@ -143,7 +135,7 @@ main(int argc, char **argv)
 	}
 
 	/* Set always-secure search path, so malicious users can't take control. */
-	res = PQexec(conn, "SET search_path = testlibpq3");
+	PGresult   *res = PQexec(conn, "SET search_path = testlibpq3");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
@@ -197,7 +189,7 @@ main(int argc, char **argv)
 	 */
 
 	/* Convert integer value "2" to network byte order */
-	binaryIntVal = htonl((uint32_t) 2);
+	uint32_t	binaryIntVal = htonl((uint32_t) 2);
 
 	/* Set up parameter arrays for PQexecParams */
 	paramValues[0] = (char *) &binaryIntVal;

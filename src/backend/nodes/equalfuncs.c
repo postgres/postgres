@@ -946,12 +946,11 @@ _equalPlaceHolderInfo(const PlaceHolderInfo *a, const PlaceHolderInfo *b)
 static bool
 _equalExtensibleNode(const ExtensibleNode *a, const ExtensibleNode *b)
 {
-	const ExtensibleNodeMethods *methods;
 
 	COMPARE_STRING_FIELD(extnodename);
 
 	/* At this point, we know extnodename is the same for both nodes. */
-	methods = GetExtensibleNodeMethods(a->extnodename, false);
+	const ExtensibleNodeMethods *methods = GetExtensibleNodeMethods(a->extnodename, false);
 
 	/* compare the private fields */
 	if (!methods->nodeEqual(a, b))
