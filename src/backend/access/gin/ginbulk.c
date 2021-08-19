@@ -56,6 +56,7 @@ ginCombineData(RBTNode *existing, const RBTNode *newdata, void *arg)
 	{
 
 		int			res = ginCompareItemPointers(eo->list + eo->count - 1, en->list);
+
 		Assert(res != 0);
 
 		if (res > 0)
@@ -98,6 +99,7 @@ ginAllocEntryAccumulator(void *arg)
 
 	/* Allocate new RBTNode from current chunk */
 	GinEntryAccumulator *ea = accum->entryallocator + accum->eas_used;
+
 	accum->eas_used++;
 
 	return (RBTNode *) ea;
@@ -128,6 +130,7 @@ getDatumCopy(BuildAccumulator *accum, OffsetNumber attnum, Datum value)
 	Datum		res;
 
 	Form_pg_attribute att = TupleDescAttr(accum->ginstate->origTupdesc, attnum - 1);
+
 	if (att->attbyval)
 		res = value;
 	else
@@ -160,7 +163,7 @@ ginInsertBAEntry(BuildAccumulator *accum,
 	eatmp.list = heapptr;
 
 	GinEntryAccumulator *ea = (GinEntryAccumulator *) rbt_insert(accum->tree, (RBTNode *) &eatmp,
-											&isNew);
+																 &isNew);
 
 	if (isNew)
 	{
@@ -275,6 +278,7 @@ ginGetBAEntry(BuildAccumulator *accum,
 	*key = entry->key;
 	*category = entry->category;
 	ItemPointerData *list = entry->list;
+
 	*n = entry->count;
 
 	Assert(list != NULL && entry->count > 0);

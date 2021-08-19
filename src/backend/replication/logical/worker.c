@@ -449,11 +449,13 @@ create_edata_for_relation(LogicalRepRelMapEntry *rel)
 	ResultRelInfo *resultRelInfo;
 
 	ApplyExecutionData *edata = (ApplyExecutionData *) palloc0(sizeof(ApplyExecutionData));
+
 	edata->targetRel = rel;
 
 	edata->estate = estate = CreateExecutorState();
 
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
+
 	rte->rtekind = RTE_RELATION;
 	rte->relid = RelationGetRelid(rel->localrel);
 	rte->relkind = rel->localrel->rd_rel->relkind;
@@ -587,6 +589,7 @@ slot_store_error_callback(void *arg)
 		return;
 
 	LogicalRepRelMapEntry *rel = errarg->rel;
+
 	errcontext("processing remote data for replication target relation \"%s.%s\" column \"%s\"",
 			   rel->remoterel.nspname, rel->remoterel.relname,
 			   rel->remoterel.attnames[errarg->remote_attnum]);
@@ -1250,6 +1253,7 @@ apply_handle_stream_abort(StringInfo s)
 		char		path[MAXPGPATH];
 
 		int64		subidx = -1;
+
 		begin_replication_step();
 		subxact_info_read(MyLogicalRepWorker->subid, xid);
 
@@ -1277,9 +1281,10 @@ apply_handle_stream_abort(StringInfo s)
 		}
 
 		StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-											(void *) &xid,
-											HASH_FIND,
-											NULL);
+														   (void *) &xid,
+														   HASH_FIND,
+														   NULL);
+
 		if (!ent)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -1330,9 +1335,10 @@ apply_spooled_messages(TransactionId xid, XLogRecPtr lsn)
 	elog(DEBUG1, "replaying changes from file \"%s\"", path);
 
 	StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-										(void *) &xid,
-										HASH_FIND,
-										NULL);
+													   (void *) &xid,
+													   HASH_FIND,
+													   NULL);
+
 	if (!ent)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -1342,6 +1348,7 @@ apply_spooled_messages(TransactionId xid, XLogRecPtr lsn)
 	BufFile    *fd = BufFileOpenShared(ent->stream_fileset, path, O_RDONLY);
 
 	char	   *buffer = palloc(BLCKSZ);
+
 	initStringInfo(&s2);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1362,6 +1369,7 @@ apply_spooled_messages(TransactionId xid, XLogRecPtr lsn)
 	 * apply_dispatch.
 	 */
 	int			nchanges = 0;
+
 	while (true)
 	{
 		int			len;
@@ -1503,6 +1511,7 @@ apply_handle_relation(StringInfo s)
 		return;
 
 	LogicalRepRelation *rel = logicalrep_read_rel(s);
+
 	logicalrep_relmap_update(rel);
 }
 
@@ -1555,6 +1564,7 @@ apply_handle_insert(StringInfo s)
 
 	LogicalRepRelId relid = logicalrep_read_insert(s, &newtup);
 	LogicalRepRelMapEntry *rel = logicalrep_rel_open(relid, RowExclusiveLock);
+
 	if (!should_apply_changes_for_rel(rel))
 	{
 		/*
@@ -1570,11 +1580,12 @@ apply_handle_insert(StringInfo s)
 	ApplyExecutionData *edata = create_edata_for_relation(rel);
 	EState	   *estate = edata->estate;
 	TupleTableSlot *remoteslot = ExecInitExtraTupleSlot(estate,
-										RelationGetDescr(rel->localrel),
-										&TTSOpsVirtual);
+														RelationGetDescr(rel->localrel),
+														&TTSOpsVirtual);
 
 	/* Process and store remote tuple in the slot */
 	MemoryContext oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
 	slot_store_data(remoteslot, rel, &newtup);
 	slot_fill_defaults(rel, estate, remoteslot);
 	MemoryContextSwitchTo(oldctx);
@@ -1667,8 +1678,9 @@ apply_handle_update(StringInfo s)
 	begin_replication_step();
 
 	LogicalRepRelId relid = logicalrep_read_update(s, &has_oldtup, &oldtup,
-								   &newtup);
+												   &newtup);
 	LogicalRepRelMapEntry *rel = logicalrep_rel_open(relid, RowExclusiveLock);
+
 	if (!should_apply_changes_for_rel(rel))
 	{
 		/*
@@ -1687,8 +1699,8 @@ apply_handle_update(StringInfo s)
 	ApplyExecutionData *edata = create_edata_for_relation(rel);
 	EState	   *estate = edata->estate;
 	TupleTableSlot *remoteslot = ExecInitExtraTupleSlot(estate,
-										RelationGetDescr(rel->localrel),
-										&TTSOpsVirtual);
+														RelationGetDescr(rel->localrel),
+														&TTSOpsVirtual);
 
 	/*
 	 * Populate updatedCols so that per-column triggers can fire, and so
@@ -1699,6 +1711,7 @@ apply_handle_update(StringInfo s)
 	 * on the subscriber, since we are not touching those.
 	 */
 	RangeTblEntry *target_rte = list_nth(estate->es_range_table, 0);
+
 	for (int i = 0; i < remoteslot->tts_tupleDescriptor->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(remoteslot->tts_tupleDescriptor, i);
@@ -1719,6 +1732,7 @@ apply_handle_update(StringInfo s)
 
 	/* Build the search tuple. */
 	MemoryContext oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
 	slot_store_data(remoteslot, rel,
 					has_oldtup ? &oldtup : &newtup);
 	MemoryContextSwitchTo(oldctx);
@@ -1760,8 +1774,9 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 	ExecOpenIndices(relinfo, false);
 
 	bool		found = FindReplTupleInLocalRel(estate, localrel,
-									&relmapentry->remoterel,
-									remoteslot, &localslot);
+												&relmapentry->remoterel,
+												remoteslot, &localslot);
+
 	ExecClearTuple(remoteslot);
 
 	/*
@@ -1818,6 +1833,7 @@ apply_handle_delete(StringInfo s)
 
 	LogicalRepRelId relid = logicalrep_read_delete(s, &oldtup);
 	LogicalRepRelMapEntry *rel = logicalrep_rel_open(relid, RowExclusiveLock);
+
 	if (!should_apply_changes_for_rel(rel))
 	{
 		/*
@@ -1836,11 +1852,12 @@ apply_handle_delete(StringInfo s)
 	ApplyExecutionData *edata = create_edata_for_relation(rel);
 	EState	   *estate = edata->estate;
 	TupleTableSlot *remoteslot = ExecInitExtraTupleSlot(estate,
-										RelationGetDescr(rel->localrel),
-										&TTSOpsVirtual);
+														RelationGetDescr(rel->localrel),
+														&TTSOpsVirtual);
 
 	/* Build the search tuple. */
 	MemoryContext oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
 	slot_store_data(remoteslot, rel, &oldtup);
 	MemoryContextSwitchTo(oldctx);
 
@@ -1879,7 +1896,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 	ExecOpenIndices(relinfo, false);
 
 	bool		found = FindReplTupleInLocalRel(estate, localrel, remoterel,
-									remoteslot, &localslot);
+												remoteslot, &localslot);
 
 	/* If found delete it. */
 	if (found)
@@ -1926,6 +1943,7 @@ FindReplTupleInLocalRel(EState *estate, Relation localrel,
 	*localslot = table_slot_create(localrel, &estate->es_tupleTable);
 
 	Oid			idxoid = GetRelationIdentityOrPK(localrel);
+
 	Assert(OidIsValid(idxoid) ||
 		   (remoterel->replident == REPLICA_IDENTITY_FULL));
 
@@ -1972,7 +1990,8 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	Assert(remoteslot != NULL);
 	MemoryContext oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 	ResultRelInfo *partrelinfo = ExecFindPartition(mtstate, relinfo, proute,
-									remoteslot, estate);
+												   remoteslot, estate);
+
 	Assert(partrelinfo != NULL);
 	Relation	partrel = partrelinfo->ri_RelationDesc;
 
@@ -1982,9 +2001,11 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	 * slot to store the tuple in any case.
 	 */
 	TupleTableSlot *remoteslot_part = partrelinfo->ri_PartitionTupleSlot;
+
 	if (remoteslot_part == NULL)
 		remoteslot_part = table_slot_create(partrel, &estate->es_tupleTable);
 	TupleConversionMap *map = partrelinfo->ri_RootToPartitionMap;
+
 	if (map != NULL)
 		remoteslot_part = execute_attr_map_slot(map->attrMap, remoteslot,
 												remoteslot_part);
@@ -2021,12 +2042,13 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 				ResultRelInfo *partrelinfo_new;
 
 				LogicalRepRelMapEntry *part_entry = logicalrep_partition_open(relmapentry, partrel,
-													   attrmap);
+																			  attrmap);
 
 				/* Get the matching local tuple from the partition. */
 				bool		found = FindReplTupleInLocalRel(estate, partrel,
-												&part_entry->remoterel,
-												remoteslot_part, &localslot);
+															&part_entry->remoterel,
+															remoteslot_part, &localslot);
+
 				if (!found)
 				{
 					/*
@@ -2185,6 +2207,7 @@ apply_handle_truncate(StringInfo s)
 		LogicalRepRelId relid = lfirst_oid(lc);
 
 		LogicalRepRelMapEntry *rel = logicalrep_rel_open(relid, lockmode);
+
 		if (!should_apply_changes_for_rel(rel))
 		{
 			/*
@@ -2433,6 +2456,7 @@ store_flush_position(XLogRecPtr remote_lsn)
 
 	/* Track commit lsn  */
 	FlushPosition *flushpos = (FlushPosition *) palloc(sizeof(FlushPosition));
+
 	flushpos->local_end = XactLastCommitEnd;
 	flushpos->remote_end = remote_lsn;
 
@@ -2611,10 +2635,10 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 			wait_time = NAPTIME_PER_CYCLE;
 
 		int			rc = WaitLatchOrSocket(MyLatch,
-							   WL_SOCKET_READABLE | WL_LATCH_SET |
-							   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-							   fd, wait_time,
-							   WAIT_EVENT_LOGICAL_APPLY_MAIN);
+										   WL_SOCKET_READABLE | WL_LATCH_SET |
+										   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+										   fd, wait_time,
+										   WAIT_EVENT_LOGICAL_APPLY_MAIN);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -2649,8 +2673,8 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 				TimestampTz now = GetCurrentTimestamp();
 
 				TimestampTz timeout =
-					TimestampTzPlusMilliseconds(last_recv_timestamp,
-												wal_receiver_timeout);
+				TimestampTzPlusMilliseconds(last_recv_timestamp,
+											wal_receiver_timeout);
 
 				if (now >= timeout)
 					ereport(ERROR,
@@ -2896,9 +2920,10 @@ subxact_info_write(Oid subid, TransactionId xid)
 
 	/* Find the xid entry in the xidhash */
 	StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-										(void *) &xid,
-										HASH_FIND,
-										NULL);
+													   (void *) &xid,
+													   HASH_FIND,
+													   NULL);
+
 	/* By this time we must have created the transaction entry */
 	Assert(ent);
 
@@ -2932,6 +2957,7 @@ subxact_info_write(Oid subid, TransactionId xid)
 		 * start/stop calls.  So, need to allocate it in a persistent context.
 		 */
 		MemoryContext oldctx = MemoryContextSwitchTo(ApplyContext);
+
 		ent->subxact_fileset = palloc(sizeof(SharedFileSet));
 		SharedFileSetInit(ent->subxact_fileset, NULL);
 		MemoryContextSwitchTo(oldctx);
@@ -2971,9 +2997,10 @@ subxact_info_read(Oid subid, TransactionId xid)
 
 	/* Find the stream xid entry in the xidhash */
 	StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-										(void *) &xid,
-										HASH_FIND,
-										NULL);
+													   (void *) &xid,
+													   HASH_FIND,
+													   NULL);
+
 	if (!ent)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -3012,6 +3039,7 @@ subxact_info_read(Oid subid, TransactionId xid)
 	 * to the subxact file and reset the logical streaming context.
 	 */
 	MemoryContext oldctx = MemoryContextSwitchTo(LogicalStreamingContext);
+
 	subxact_data.subxacts = palloc(subxact_data.nsubxacts_max *
 								   sizeof(SubXactInfo));
 	MemoryContextSwitchTo(oldctx);
@@ -3081,6 +3109,7 @@ subxact_info_add(TransactionId xid)
 		 * subxact_info_read.
 		 */
 		MemoryContext oldctx = MemoryContextSwitchTo(LogicalStreamingContext);
+
 		subxacts = palloc(subxact_data.nsubxacts_max * sizeof(SubXactInfo));
 		MemoryContextSwitchTo(oldctx);
 	}
@@ -3133,9 +3162,10 @@ stream_cleanup_files(Oid subid, TransactionId xid)
 
 	/* Find the xid entry in the xidhash */
 	StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-										(void *) &xid,
-										HASH_FIND,
-										NULL);
+													   (void *) &xid,
+													   HASH_FIND,
+													   NULL);
+
 	if (!ent)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -3187,9 +3217,9 @@ stream_open_file(Oid subid, TransactionId xid, bool first_segment)
 
 	/* create or find the xid entry in the xidhash */
 	StreamXidHash *ent = (StreamXidHash *) hash_search(xidhash,
-										(void *) &xid,
-										HASH_ENTER,
-										&found);
+													   (void *) &xid,
+													   HASH_ENTER,
+													   &found);
 
 	changes_filename(path, subid, xid);
 	elog(DEBUG1, "opening file \"%s\" for streamed changes", path);
@@ -3464,6 +3494,7 @@ ApplyWorkerMain(Datum main_arg)
 		StartTransactionCommand();
 		snprintf(originname, sizeof(originname), "pg_%u", MySubscription->oid);
 		RepOriginId originid = replorigin_by_name(originname, true);
+
 		if (!OidIsValid(originid))
 			originid = replorigin_create(originname);
 		replorigin_session_setup(originid);
@@ -3499,6 +3530,7 @@ ApplyWorkerMain(Datum main_arg)
 	options.slotname = myslotname;
 
 	int			server_version = walrcv_server_version(LogRepWorkerWalRcvConn);
+
 	options.proto.logical.proto_version =
 		server_version >= 150000 ? LOGICALREP_PROTO_TWOPHASE_VERSION_NUM :
 		server_version >= 140000 ? LOGICALREP_PROTO_STREAM_VERSION_NUM :

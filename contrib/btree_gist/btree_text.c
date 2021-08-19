@@ -160,7 +160,7 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 	}
 
 	bool		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+											GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
 
 	PG_RETURN_BOOL(retval);
 }
@@ -188,7 +188,8 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	}
 
 	bool		retval = gbt_var_consistent(&r, trim, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+											GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+
 	PG_RETURN_BOOL(retval);
 }
 

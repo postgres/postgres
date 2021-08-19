@@ -236,6 +236,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 					/* Turn on debugging for the bootstrap process. */
 
 					char	   *debugstr = psprintf("debug%s", optarg);
+
 					SetConfigOption("log_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					SetConfigOption("client_min_messages", debugstr,
@@ -616,6 +617,7 @@ InsertOneTuple(void)
 
 	TupleDesc	tupDesc = CreateTupleDesc(numattr, attrtypes);
 	HeapTuple	tuple = heap_form_tuple(tupDesc, values, Nulls);
+
 	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	simple_heap_insert(boot_reldesc, tuple);
@@ -711,11 +713,13 @@ populate_typ_list(void)
 	Relation	rel = table_open(TypeRelationId, NoLock);
 	TableScanDesc scan = table_beginscan_catalog(rel, 0, NULL);
 	MemoryContext old = MemoryContextSwitchTo(TopMemoryContext);
+
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_type typForm = (Form_pg_type) GETSTRUCT(tup);
 
 		struct typmap *newtyp = (struct typmap *) palloc(sizeof(struct typmap));
+
 		Typ = lappend(Typ, newtyp);
 
 		newtyp->am_oid = typForm->oid;
@@ -923,6 +927,7 @@ index_register(Oid heap,
 	MemoryContext oldcxt = MemoryContextSwitchTo(nogc);
 
 	IndexList  *newind = (IndexList *) palloc(sizeof(IndexList));
+
 	newind->il_heap = heap;
 	newind->il_ind = ind;
 	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));

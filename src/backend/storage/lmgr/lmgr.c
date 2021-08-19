@@ -954,6 +954,7 @@ WaitForLockers(LOCKTAG heaplocktag, LOCKMODE lockmode, bool progress)
 {
 
 	List	   *l = list_make1(&heaplocktag);
+
 	WaitForLockersMultiple(l, lockmode, progress);
 	list_free(l);
 }

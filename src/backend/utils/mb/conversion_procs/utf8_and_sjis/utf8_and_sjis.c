@@ -46,11 +46,11 @@ sjis_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SJIS, PG_UTF8);
 
 	int			converted = LocalToUtf(src, len, dest,
-						   &sjis_to_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_SJIS,
-						   noError);
+									   &sjis_to_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_SJIS,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -66,11 +66,11 @@ utf8_to_sjis(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_SJIS);
 
 	int			converted = UtfToLocal(src, len, dest,
-						   &sjis_from_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_SJIS,
-						   noError);
+									   &sjis_from_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_SJIS,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }

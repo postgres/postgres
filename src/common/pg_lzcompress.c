@@ -407,6 +407,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 	 */
 	int16		hentno = hstart[pglz_hist_idx(input, end, mask)];
 	PGLZ_HistEntry *hent = &hist_entries[hentno];
+
 	while (hent != INVALID_ENTRY_PTR)
 	{
 		const char *ip = input;
@@ -416,6 +417,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 		 * Stop if the offset does not fit into our tag anymore.
 		 */
 		int32		thisoff = ip - hp;
+
 		if (thisoff >= 0x0fff)
 			break;
 
@@ -428,6 +430,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 		 * the diff occurred.
 		 */
 		int32		thislen = 0;
+
 		if (len >= 16)
 		{
 			if (memcmp(ip, hp, len) == 0)
@@ -540,18 +543,21 @@ pglz_compress(const char *source, int32 slen, char *dest,
 	 * Limit the match parameters to the supported range.
 	 */
 	int32		good_match = strategy->match_size_good;
+
 	if (good_match > PGLZ_MAX_MATCH)
 		good_match = PGLZ_MAX_MATCH;
 	else if (good_match < 17)
 		good_match = 17;
 
 	int32		good_drop = strategy->match_size_drop;
+
 	if (good_drop < 0)
 		good_drop = 0;
 	else if (good_drop > 100)
 		good_drop = 100;
 
 	int32		need_rate = strategy->min_comp_rate;
+
 	if (need_rate < 0)
 		need_rate = 0;
 	else if (need_rate > 99)
@@ -659,6 +665,7 @@ pglz_compress(const char *source, int32 slen, char *dest,
 	 */
 	*ctrlp = ctrlb;
 	int32		result_size = bp - bstart;
+
 	if (result_size >= result_max)
 		return -1;
 
@@ -714,6 +721,7 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 
 				int32		len = (sp[0] & 0x0f) + 3;
 				int32		off = ((sp[0] & 0xf0) << 4) | sp[1];
+
 				sp += 2;
 				if (len == 18)
 					len += *sp++;

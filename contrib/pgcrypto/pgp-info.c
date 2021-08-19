@@ -40,6 +40,7 @@ read_pubkey_keyid(PullFilter *pkt, uint8 *keyid_buf)
 	PGP_PubKey *pk = NULL;
 
 	int			res = _pgp_read_public_key(pkt, &pk);
+
 	if (res < 0)
 		goto err;
 
@@ -76,6 +77,7 @@ read_pubenc_keyid(PullFilter *pkt, uint8 *keyid_buf)
 		return -1;
 
 	int			res = pullf_read_fixed(pkt, 8, keyid_buf);
+
 	if (res < 0)
 		return res;
 
@@ -122,6 +124,7 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 
 
 	int			res = pullf_create_mbuf_reader(&src, pgp_data);
+
 	if (res < 0)
 		return res;
 

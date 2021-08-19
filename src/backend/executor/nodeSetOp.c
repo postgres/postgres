@@ -105,8 +105,9 @@ fetch_tuple_flag(SetOpState *setopstate, TupleTableSlot *inputslot)
 	bool		isNull;
 
 	int			flag = DatumGetInt32(slot_getattr(inputslot,
-									  node->flagColIdx,
-									  &isNull));
+												  node->flagColIdx,
+												  &isNull));
+
 	Assert(!isNull);
 	Assert(flag == 0 || flag == 1);
 	return flag;
@@ -343,6 +344,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 	 */
 	PlanState  *outerPlan = outerPlanState(setopstate);
 	int			firstFlag = node->firstFlag;
+
 	/* verify planner didn't mess up */
 	Assert(firstFlag == 0 ||
 		   (firstFlag == 1 &&
@@ -360,6 +362,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 		bool		isnew;
 
 		TupleTableSlot *outerslot = ExecProcNode(outerPlan);
+
 		if (TupIsNull(outerslot))
 			break;
 
@@ -479,6 +482,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	SetOpState *setopstate = makeNode(SetOpState);
+
 	setopstate->ps.plan = (Plan *) node;
 	setopstate->ps.state = estate;
 	setopstate->ps.ExecProcNode = ExecSetOp;

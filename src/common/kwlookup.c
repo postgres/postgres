@@ -44,6 +44,7 @@ ScanKeywordLookup(const char *str,
 	 * hashing and downcasing work on long strings.
 	 */
 	size_t		len = strlen(str);
+
 	if (len > keywords->max_kw_len)
 		return -1;
 
@@ -65,6 +66,7 @@ ScanKeywordLookup(const char *str,
 	 * (eg, Turkish).
 	 */
 	const char *kw = GetScanKeyword(h, keywords);
+
 	while (*str != '\0')
 	{
 		char		ch = *str++;

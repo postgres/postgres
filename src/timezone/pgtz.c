@@ -99,6 +99,7 @@ pg_open_tzfile(const char *name, char *canonname)
 		/* test above ensured this will fit: */
 		strcpy(fullname + fullnamelen + 1, name);
 		int			result = open(fullname, O_RDONLY | PG_BINARY, 0);
+
 		if (result >= 0)
 			return result;
 		/* If that didn't work, fall through to do it the hard way */
@@ -110,11 +111,13 @@ pg_open_tzfile(const char *name, char *canonname)
 	 * search using scan_directory_ci().
 	 */
 	const char *fname = name;
+
 	for (;;)
 	{
 		int			fnamelen;
 
 		const char *slashptr = strchr(fname, '/');
+
 		if (slashptr)
 			fnamelen = slashptr - fname;
 		else
@@ -246,14 +249,16 @@ pg_tzset(const char *name)
 	 * a POSIX-style timezone spec.)
 	 */
 	char	   *p = uppername;
+
 	while (*name)
 		*p++ = pg_toupper((unsigned char) *name++);
 	*p = '\0';
 
 	pg_tz_cache *tzp = (pg_tz_cache *) hash_search(timezone_cache,
-									  uppername,
-									  HASH_FIND,
-									  NULL);
+												   uppername,
+												   HASH_FIND,
+												   NULL);
+
 	if (tzp)
 	{
 		/* Timezone found in cache, nothing more to do */

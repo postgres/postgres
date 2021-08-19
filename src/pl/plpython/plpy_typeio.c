@@ -571,6 +571,7 @@ PLyDecimal_FromNumeric(PLyDatumToOb *arg, Datum d)
 	{
 
 		PyObject   *decimal_module = PyImport_ImportModule("cdecimal");
+
 		if (!decimal_module)
 		{
 			PyErr_Clear();
@@ -586,6 +587,7 @@ PLyDecimal_FromNumeric(PLyDatumToOb *arg, Datum d)
 
 	char	   *str = DatumGetCString(DirectFunctionCall1(numeric_out, d));
 	PyObject   *pyvalue = PyObject_CallFunction(decimal_constructor, "s", str);
+
 	if (!pyvalue)
 		PLy_elog(ERROR, "conversion from numeric to Decimal failed");
 
@@ -648,6 +650,7 @@ PLyObject_FromTransform(PLyDatumToOb *arg, Datum d)
 {
 
 	Datum		t = FunctionCall1(&arg->u.transform.typtransform, d);
+
 	return (PyObject *) DatumGetPointer(t);
 }
 
@@ -666,6 +669,7 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 	/* Array dimensions and left bounds */
 	int			ndim = ARR_NDIM(array);
 	int		   *dims = ARR_DIMS(array);
+
 	Assert(ndim <= MAXDIM);
 
 	/*
@@ -696,6 +700,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 	int			i;
 
 	PyObject   *list = PyList_New(dims[dim]);
+
 	if (!list)
 		return NULL;
 
@@ -706,7 +711,8 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 		{
 
 			PyObject   *sublist = PLyList_FromArray_recurse(elm, dims, ndim, dim + 1,
-												dataptr_p, bitmap_p, bitmask_p);
+															dataptr_p, bitmap_p, bitmask_p);
+
 			PyList_SET_ITEM(list, i, sublist);
 		}
 	}
@@ -732,6 +738,7 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 			{
 
 				Datum		itemvalue = fetch_att(dataptr, elm->typbyval, elm->typlen);
+
 				PyList_SET_ITEM(list, i, elm->func(elm, itemvalue));
 				dataptr = att_addlength_pointer(dataptr, elm->typlen, dataptr);
 				dataptr = (char *) att_align_nominal(dataptr, elm->typalign);
@@ -766,6 +773,7 @@ PLyDict_FromComposite(PLyDatumToOb *arg, Datum d)
 	HeapTupleData tmptup;
 
 	HeapTupleHeader td = DatumGetHeapTupleHeader(d);
+
 	/* Extract rowtype info and find a tupdesc */
 	Oid			tupType = HeapTupleHeaderGetTypeId(td);
 	int32		tupTypmod = HeapTupleHeaderGetTypMod(td);
@@ -1085,6 +1093,7 @@ PLyObject_ToDomain(PLyObToDatum *arg, PyObject *plrv,
 	PLyObToDatum *base = arg->u.domain.base;
 
 	Datum		result = base->func(base, plrv, isnull, inarray);
+
 	domain_check(result, *isnull, arg->typoid,
 				 &arg->u.domain.domain_info, arg->mcxt);
 	return result;
@@ -1202,6 +1211,7 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	Datum	   *elems = palloc(sizeof(Datum) * len);
 	bool	   *nulls = palloc(sizeof(bool) * len);
 	int			currelem = 0;
+
 	PLySequence_ToArray_recurse(arg->u.array.elm, plrv,
 								dims, ndim, 0,
 								elems, nulls, &currelem);
@@ -1339,6 +1349,7 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 	/* Build tuple */
 	Datum	   *values = palloc(sizeof(Datum) * desc->natts);
 	bool	   *nulls = palloc(sizeof(bool) * desc->natts);
+
 	for (i = 0; i < desc->natts; ++i)
 	{
 		PyObject   *volatile value;
@@ -1352,8 +1363,10 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 		}
 
 		char	   *key = NameStr(attr->attname);
+
 		value = NULL;
 		PLyObToDatum *att = &arg->u.tuple.atts[i];
+
 		PG_TRY();
 		{
 			value = PyMapping_GetItemString(mapping, key);
@@ -1379,6 +1392,7 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 
 	tuple = heap_form_tuple(desc, values, nulls);
 	Datum		result = heap_copy_tuple_as_datum(tuple, desc);
+
 	heap_freetuple(tuple);
 
 	pfree(values);
@@ -1402,6 +1416,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 	 * plpython developer's errors we are strict here
 	 */
 	volatile int idx = 0;
+
 	for (i = 0; i < desc->natts; i++)
 	{
 		if (!TupleDescAttr(desc, i)->attisdropped)
@@ -1415,6 +1430,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 	/* Build tuple */
 	Datum	   *values = palloc(sizeof(Datum) * desc->natts);
 	bool	   *nulls = palloc(sizeof(bool) * desc->natts);
+
 	idx = 0;
 	for (i = 0; i < desc->natts; ++i)
 	{
@@ -1429,6 +1445,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 
 		value = NULL;
 		PLyObToDatum *att = &arg->u.tuple.atts[i];
+
 		PG_TRY();
 		{
 			value = PySequence_GetItem(sequence, idx);
@@ -1451,6 +1468,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 
 	tuple = heap_form_tuple(desc, values, nulls);
 	Datum		result = heap_copy_tuple_as_datum(tuple, desc);
+
 	heap_freetuple(tuple);
 
 	pfree(values);
@@ -1469,6 +1487,7 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 	/* Build tuple */
 	Datum	   *values = palloc(sizeof(Datum) * desc->natts);
 	bool	   *nulls = palloc(sizeof(bool) * desc->natts);
+
 	for (i = 0; i < desc->natts; ++i)
 	{
 		PyObject   *volatile value;
@@ -1482,8 +1501,10 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 		}
 
 		char	   *key = NameStr(attr->attname);
+
 		value = NULL;
 		PLyObToDatum *att = &arg->u.tuple.atts[i];
+
 		PG_TRY();
 		{
 			value = PyObject_GetAttrString(object, key);
@@ -1523,6 +1544,7 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 
 	tuple = heap_form_tuple(desc, values, nulls);
 	Datum		result = heap_copy_tuple_as_datum(tuple, desc);
+
 	heap_freetuple(tuple);
 
 	pfree(values);

@@ -309,6 +309,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				{
 
 					Barrier    *build_barrier = &parallel_state->build_barrier;
+
 					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_HASHING_OUTER ||
 						   BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
 					if (BarrierPhase(build_barrier) == PHJ_BUILD_HASHING_OUTER)
@@ -619,6 +620,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	HashJoinState *hjstate = makeNode(HashJoinState);
+
 	hjstate->js.ps.plan = (Plan *) node;
 	hjstate->js.ps.state = estate;
 
@@ -662,6 +664,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * tuple table initialization
 	 */
 	const TupleTableSlotOps *ops = ExecGetResultSlotOps(outerPlanState(hjstate), NULL);
+
 	hjstate->hj_OuterTupleSlot = ExecInitExtraTupleSlot(estate, outerDesc,
 														ops);
 
@@ -908,7 +911,8 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 	{
 
 		MinimalTuple tuple = sts_parallel_scan_next(hashtable->batches[curbatch].outer_tuples,
-									   hashvalue);
+													hashvalue);
+
 		if (tuple != NULL)
 		{
 			ExecForceStoreMinimalTuple(tuple,
@@ -1099,8 +1103,9 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 	 * more batches than participants.
 	 */
 	int			batchno = start_batchno =
-		pg_atomic_fetch_add_u32(&hashtable->parallel_state->distributor, 1) %
-		hashtable->nbatch;
+	pg_atomic_fetch_add_u32(&hashtable->parallel_state->distributor, 1) %
+	hashtable->nbatch;
+
 	do
 	{
 		uint32		hashvalue;
@@ -1243,6 +1248,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	 * cheating.
 	 */
 	size_t		nread = BufFileRead(file, (void *) header, sizeof(header));
+
 	if (nread == 0)				/* end of file */
 	{
 		ExecClearTuple(tupleSlot);
@@ -1255,6 +1261,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						nread, sizeof(header))));
 	*hashvalue = header[0];
 	MinimalTuple tuple = (MinimalTuple) palloc(header[1]);
+
 	tuple->t_len = header[1];
 	nread = BufFileRead(file,
 						(void *) ((char *) tuple + sizeof(uint32)),
@@ -1441,6 +1448,7 @@ ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 	 * table(s), using the plan node ID as the toc key.
 	 */
 	ParallelHashJoinState *pstate = shm_toc_allocate(pcxt->toc, sizeof(ParallelHashJoinState));
+
 	shm_toc_insert(pcxt->toc, plan_node_id, pstate);
 
 	/*
@@ -1469,6 +1477,7 @@ ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 
 	/* Initialize the shared state in the hash node. */
 	HashState  *hashNode = (HashState *) innerPlanState(state);
+
 	hashNode->parallel_state = pstate;
 }
 
@@ -1524,6 +1533,7 @@ ExecHashJoinInitializeWorker(HashJoinState *state,
 
 	/* Attach to the shared state in the hash node. */
 	HashState  *hashNode = (HashState *) innerPlanState(state);
+
 	hashNode->parallel_state = pstate;
 
 	ExecSetExecProcNode(&state->js.ps, ExecParallelHashJoin);

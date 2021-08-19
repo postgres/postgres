@@ -196,6 +196,7 @@ SyncPostCheckpoint(void)
 {
 
 	int			absorb_counter = UNLINKS_PER_ABSORB;
+
 	while (pendingUnlinks != NIL)
 	{
 		PendingUnlinkEntry *entry = (PendingUnlinkEntry *) linitial(pendingUnlinks);
@@ -329,6 +330,7 @@ ProcessSyncRequests(void)
 
 	/* Now scan the hashtable for fsync requests to process */
 	int			absorb_counter = FSYNCS_PER_ABSORB;
+
 	hash_seq_init(&hstat, pendingOps);
 	while ((entry = (PendingFsyncEntry *) hash_seq_search(&hstat)) != NULL)
 	{
@@ -462,9 +464,10 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 
 		/* Cancel previously entered request */
 		PendingFsyncEntry *entry = (PendingFsyncEntry *) hash_search(pendingOps,
-												  (void *) ftag,
-												  HASH_FIND,
-												  NULL);
+																	 (void *) ftag,
+																	 HASH_FIND,
+																	 NULL);
+
 		if (entry != NULL)
 			entry->canceled = true;
 	}
@@ -502,6 +505,7 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 		MemoryContext oldcxt = MemoryContextSwitchTo(pendingOpsCxt);
 
 		PendingUnlinkEntry *entry = palloc(sizeof(PendingUnlinkEntry));
+
 		entry->tag = *ftag;
 		entry->cycle_ctr = checkpoint_cycle_ctr;
 
@@ -518,9 +522,10 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 		Assert(type == SYNC_REQUEST);
 
 		PendingFsyncEntry *entry = (PendingFsyncEntry *) hash_search(pendingOps,
-												  (void *) ftag,
-												  HASH_ENTER,
-												  &found);
+																	 (void *) ftag,
+																	 HASH_ENTER,
+																	 &found);
+
 		/* if new entry, or was previously canceled, initialize it */
 		if (!found || entry->canceled)
 		{

@@ -59,6 +59,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 
 	/* Fetch relation's relrowsecurity and relforcerowsecurity flags */
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tuple))
 		return RLS_NONE;
 	Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
@@ -91,6 +92,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	 * environment (in this case, the user_id).
 	 */
 	bool		amowner = pg_class_ownercheck(relid, user_id);
+
 	if (amowner)
 	{
 		/*
@@ -140,6 +142,7 @@ row_security_active(PG_FUNCTION_ARGS)
 	Oid			tableoid = PG_GETARG_OID(0);
 
 	int			rls_status = check_enable_rls(tableoid, InvalidOid, true);
+
 	PG_RETURN_BOOL(rls_status == RLS_ENABLED);
 }
 
@@ -154,5 +157,6 @@ row_security_active_name(PG_FUNCTION_ARGS)
 	Oid			tableoid = RangeVarGetRelid(tablerel, NoLock, false);
 
 	int			rls_status = check_enable_rls(tableoid, InvalidOid, true);
+
 	PG_RETURN_BOOL(rls_status == RLS_ENABLED);
 }

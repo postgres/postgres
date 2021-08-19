@@ -317,10 +317,12 @@ gimme_pool_size(int nr_rel)
 	double		size = pow(2.0, nr_rel + 1.0);
 
 	int			maxsize = 50 * Geqo_effort; /* 50 to 500 individuals */
+
 	if (size > maxsize)
 		return maxsize;
 
 	int			minsize = 10 * Geqo_effort; /* 10 to 100 individuals */
+
 	if (size < minsize)
 		return minsize;
 

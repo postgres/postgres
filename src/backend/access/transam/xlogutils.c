@@ -146,7 +146,7 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	key.forkno = forkno;
 	key.blkno = blkno;
 	xl_invalid_page *hentry = (xl_invalid_page *)
-		hash_search(invalid_page_tab, (void *) &key, HASH_ENTER, &found);
+	hash_search(invalid_page_tab, (void *) &key, HASH_ENTER, &found);
 
 	if (!found)
 	{
@@ -368,6 +368,7 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 	 */
 	bool		zeromode = (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK);
 	bool		willinit = (record->blocks[block_id].flags & BKPBLOCK_WILL_INIT) != 0;
+
 	if (willinit && !zeromode)
 		elog(PANIC, "block with WILL_INIT flag in WAL record must be zeroed by redo routine");
 	if (!willinit && zeromode)
@@ -768,7 +769,8 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 		List	   *timelineHistory = readTimeLineHistory(ThisTimeLineID);
 
 		XLogRecPtr	endOfSegment = ((wantPage / state->segcxt.ws_segsize) + 1) *
-			state->segcxt.ws_segsize - 1;
+		state->segcxt.ws_segsize - 1;
+
 		Assert(wantPage / state->segcxt.ws_segsize ==
 			   endOfSegment / state->segcxt.ws_segsize);
 

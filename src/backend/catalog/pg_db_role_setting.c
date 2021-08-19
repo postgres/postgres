@@ -30,6 +30,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	/* Get the old tuple, if any. */
 
 	Relation	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
+
 	ScanKeyInit(&scankey[0],
 				Anum_pg_db_role_setting_setdatabase,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -39,7 +40,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(roleid));
 	SysScanDesc scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
-							  NULL, 2, scankey);
+										  NULL, 2, scankey);
 	HeapTuple	tuple = systable_getnext(scan);
 
 	/*
@@ -62,7 +63,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 			bool		isnull;
 
 			Datum		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
-								 RelationGetDescr(rel), &isnull);
+											 RelationGetDescr(rel), &isnull);
 
 			if (!isnull)
 				new = GUCArrayReset(DatumGetArrayTypeP(datum));
@@ -81,7 +82,8 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 				repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
 
 				HeapTuple	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-											 repl_val, repl_null, repl_repl);
+														 repl_val, repl_null, repl_repl);
+
 				CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
 			}
 			else
@@ -102,7 +104,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 		/* Extract old value of setconfig */
 		Datum		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
-							 RelationGetDescr(rel), &isnull);
+										 RelationGetDescr(rel), &isnull);
 		ArrayType  *a = isnull ? NULL : DatumGetArrayTypeP(datum);
 
 		/* Update (valuestr is NULL in RESET cases) */
@@ -185,6 +187,7 @@ DropSetting(Oid databaseid, Oid roleid)
 	}
 
 	TableScanDesc scan = table_beginscan_catalog(relsetting, numkeys, keys);
+
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
 		CatalogTupleDelete(relsetting, &tup->t_self);
@@ -223,13 +226,15 @@ ApplySetting(Snapshot snapshot, Oid databaseid, Oid roleid,
 				ObjectIdGetDatum(roleid));
 
 	SysScanDesc scan = systable_beginscan(relsetting, DbRoleSettingDatidRolidIndexId, true,
-							  snapshot, 2, keys);
+										  snapshot, 2, keys);
+
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		bool		isnull;
 
 		Datum		datum = heap_getattr(tup, Anum_pg_db_role_setting_setconfig,
-							 RelationGetDescr(relsetting), &isnull);
+										 RelationGetDescr(relsetting), &isnull);
+
 		if (!isnull)
 		{
 			ArrayType  *a = DatumGetArrayTypeP(datum);

@@ -70,9 +70,10 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 				Int16GetDatum(attnum));
 
 	SysScanDesc sscan = systable_beginscan(rel, AttributeRelidNumIndexId, true,
-							   SnapshotSelf, 2, &skey[0]);
+										   SnapshotSelf, 2, &skey[0]);
 
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for column %d of relation %u",
 			 attnum, relOid);
@@ -82,8 +83,8 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	char	   *scontext = sepgsql_get_client_label();
 	char	   *tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
 	char	   *ncontext = sepgsql_compute_create(scontext, tcontext,
-									  SEPG_CLASS_DB_COLUMN,
-									  NameStr(attForm->attname));
+												  SEPG_CLASS_DB_COLUMN,
+												  NameStr(attForm->attname));
 
 	/*
 	 * check db_column:{create} permission
@@ -251,9 +252,10 @@ sepgsql_relation_post_create(Oid relOid)
 				ObjectIdGetDatum(relOid));
 
 	SysScanDesc sscan = systable_beginscan(rel, ClassOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u", relOid);
 
@@ -348,7 +350,7 @@ sepgsql_relation_post_create(Oid relOid)
 					ObjectIdGetDatum(relOid));
 
 		SysScanDesc ascan = systable_beginscan(arel, AttributeRelidNumIndexId, true,
-								   SnapshotSelf, 1, &akey);
+											   SnapshotSelf, 1, &akey);
 
 		while (HeapTupleIsValid(atup = systable_getnext(ascan)))
 		{
@@ -473,6 +475,7 @@ sepgsql_relation_drop(Oid relOid)
 		int			i;
 
 		CatCList   *attrList = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(relOid));
+
 		for (i = 0; i < attrList->n_members; i++)
 		{
 			atttup = &attrList->members[i]->tuple;
@@ -630,9 +633,10 @@ sepgsql_relation_setattr(Oid relOid)
 				ObjectIdGetDatum(relOid));
 
 	SysScanDesc sscan = systable_beginscan(rel, ClassOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 
 	HeapTuple	newtup = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "could not find tuple for relation %u", relOid);
 	Form_pg_class newform = (Form_pg_class) GETSTRUCT(newtup);
@@ -641,6 +645,7 @@ sepgsql_relation_setattr(Oid relOid)
 	 * Fetch older catalog
 	 */
 	HeapTuple	oldtup = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
 	Form_pg_class oldform = (Form_pg_class) GETSTRUCT(oldtup);
@@ -705,14 +710,16 @@ sepgsql_relation_setattr_extra(Relation catalog,
 				ObjectIdGetDatum(extra_oid));
 
 	SysScanDesc sscan = systable_beginscan(catalog, catindex_id, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for object %u in catalog \"%s\"",
 			 extra_oid, RelationGetRelationName(catalog));
 
 	Datum		datum = heap_getattr(tuple, anum_relation_id,
-						 RelationGetDescr(catalog), &isnull);
+									 RelationGetDescr(catalog), &isnull);
+
 	Assert(!isnull);
 
 	sepgsql_relation_setattr(DatumGetObjectId(datum));

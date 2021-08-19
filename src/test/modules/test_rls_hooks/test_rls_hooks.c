@@ -72,8 +72,9 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	ParseState *qual_pstate = make_parsestate(NULL);
 
 	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(qual_pstate,
-										   relation, AccessShareLock,
-										   NULL, false, false);
+															   relation, AccessShareLock,
+															   NULL, false, false);
+
 	addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
 	Datum		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
@@ -88,12 +89,13 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 	 */
 
 	FuncCall   *n = makeFuncCall(list_make2(makeString("pg_catalog"),
-								makeString("current_user")),
-					 NIL,
-					 COERCE_EXPLICIT_CALL,
-					 -1);
+											makeString("current_user")),
+								 NIL,
+								 COERCE_EXPLICIT_CALL,
+								 -1);
 
 	ColumnRef  *c = makeNode(ColumnRef);
+
 	c->fields = list_make1(makeString("username"));
 	c->location = 0;
 
@@ -133,8 +135,9 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 	ParseState *qual_pstate = make_parsestate(NULL);
 
 	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(qual_pstate,
-										   relation, AccessShareLock,
-										   NULL, false, false);
+															   relation, AccessShareLock,
+															   NULL, false, false);
+
 	addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
 	Datum		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
@@ -144,12 +147,13 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 
 	FuncCall   *n = makeFuncCall(list_make2(makeString("pg_catalog"),
-								makeString("current_user")),
-					 NIL,
-					 COERCE_EXPLICIT_CALL,
-					 -1);
+											makeString("current_user")),
+								 NIL,
+								 COERCE_EXPLICIT_CALL,
+								 -1);
 
 	ColumnRef  *c = makeNode(ColumnRef);
+
 	c->fields = list_make1(makeString("supervisor"));
 	c->location = 0;
 

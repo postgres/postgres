@@ -44,6 +44,7 @@ pg_timer_thread(LPVOID param)
 	{
 
 		int			r = WaitForSingleObjectEx(timerCommArea.event, waittime, FALSE);
+
 		if (r == WAIT_OBJECT_0)
 		{
 			/* Event signaled from main thread, change the timer */

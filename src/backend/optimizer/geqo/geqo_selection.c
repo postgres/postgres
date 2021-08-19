@@ -105,6 +105,7 @@ linear_rand(PlannerInfo *root, int pool_size, double bias)
 	{
 
 		double		sqrtval = (bias * bias) - 4.0 * (bias - 1.0) * geqo_rand(root);
+
 		if (sqrtval > 0.0)
 			sqrtval = sqrt(sqrtval);
 		index = max * (bias - sqrtval) / 2.0 / (bias - 1.0);

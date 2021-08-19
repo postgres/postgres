@@ -45,7 +45,8 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 	snprintf(xlogpath, MAXPGPATH, "%s/" XLOGDIR "/%s", path, xlogfname);
 
 	char	   *xlogRestoreCmd = BuildRestoreCommand(restoreCommand, xlogpath,
-										 xlogfname, NULL);
+													 xlogfname, NULL);
+
 	if (xlogRestoreCmd == NULL)
 	{
 		pg_log_fatal("cannot use restore_command with %%r placeholder");
@@ -57,6 +58,7 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 	 * archival storage.
 	 */
 	int			rc = system(xlogRestoreCmd);
+
 	pfree(xlogRestoreCmd);
 
 	if (rc == 0)

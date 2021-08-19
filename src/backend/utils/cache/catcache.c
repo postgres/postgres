@@ -578,6 +578,7 @@ CatCacheInvalidate(CatCache *cache, uint32 hashValue)
 	 * inspect the proper hash bucket for tuple matches
 	 */
 	Index		hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
+
 	dlist_foreach_modify(iter, &cache->cc_bucket[hashIndex])
 	{
 		CatCTup    *ct = dlist_container(CatCTup, cache_elem, iter.cur);
@@ -1348,11 +1349,11 @@ SearchCatCacheMiss(CatCache *cache,
 	Relation	relation = table_open(cache->cc_reloid, AccessShareLock);
 
 	SysScanDesc scandesc = systable_beginscan(relation,
-								  cache->cc_indexoid,
-								  IndexScanOK(cache, cur_skey),
-								  NULL,
-								  nkeys,
-								  cur_skey);
+											  cache->cc_indexoid,
+											  IndexScanOK(cache, cur_skey),
+											  NULL,
+											  nkeys,
+											  cur_skey);
 
 	CatCTup    *ct = NULL;
 
@@ -1619,11 +1620,11 @@ SearchCatCacheList(CatCache *cache,
 		Relation	relation = table_open(cache->cc_reloid, AccessShareLock);
 
 		SysScanDesc scandesc = systable_beginscan(relation,
-									  cache->cc_indexoid,
-									  IndexScanOK(cache, cur_skey),
-									  NULL,
-									  nkeys,
-									  cur_skey);
+												  cache->cc_indexoid,
+												  IndexScanOK(cache, cur_skey),
+												  NULL,
+												  nkeys,
+												  cur_skey);
 
 		/* The list will be ordered iff we are doing an index scan */
 		ordered = (scandesc->irel != NULL);
@@ -1640,6 +1641,7 @@ SearchCatCacheList(CatCache *cache,
 			Index		hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 
 			dlist_head *bucket = &cache->cc_bucket[hashIndex];
+
 			dlist_foreach(iter, bucket)
 			{
 				ct = dlist_container(CatCTup, cache_elem, iter.cur);
@@ -1840,9 +1842,10 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, Datum *arguments,
 			bool		isnull;
 
 			Datum		atp = heap_getattr(&ct->tuple,
-							   cache->cc_keyno[i],
-							   cache->cc_tupdesc,
-							   &isnull);
+										   cache->cc_keyno[i],
+										   cache->cc_tupdesc,
+										   &isnull);
+
 			Assert(!isnull);
 			ct->keys[i] = atp;
 		}

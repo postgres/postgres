@@ -142,6 +142,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 	 * it has extended statistics, try to apply those.
 	 */
 	RelOptInfo *rel = find_single_rel_for_clauses(root, clauses);
+
 	if (use_extended_stats && rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
 	{
 		/*
@@ -164,6 +165,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 	 * an rqlist entry.
 	 */
 	int			listidx = -1;
+
 	foreach(l, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
@@ -180,7 +182,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 
 		/* Compute the selectivity of this clause in isolation */
 		Selectivity s2 = clause_selectivity_ext(root, clause, varRelid, jointype, sjinfo,
-									use_extended_stats);
+												use_extended_stats);
 
 		/*
 		 * Check for being passed a RestrictInfo.
@@ -332,6 +334,7 @@ clauselist_selectivity_ext(PlannerInfo *root,
 		}
 		/* release storage and advance */
 		RangeQueryClause *rqnext = rqlist->next;
+
 		pfree(rqlist);
 		rqlist = rqnext;
 	}
@@ -370,6 +373,7 @@ clauselist_selectivity_or(PlannerInfo *root,
 	 * it has extended statistics, try to apply those.
 	 */
 	RelOptInfo *rel = find_single_rel_for_clauses(root, clauses);
+
 	if (use_extended_stats && rel && rel->rtekind == RTE_RELATION && rel->statlist != NIL)
 	{
 		/*
@@ -392,6 +396,7 @@ clauselist_selectivity_or(PlannerInfo *root,
 	 * XXX is this too conservative?
 	 */
 	int			listidx = -1;
+
 	foreach(lc, clauses)
 	{
 
@@ -405,7 +410,7 @@ clauselist_selectivity_or(PlannerInfo *root,
 			continue;
 
 		Selectivity s2 = clause_selectivity_ext(root, (Node *) lfirst(lc), varRelid,
-									jointype, sjinfo, use_extended_stats);
+												jointype, sjinfo, use_extended_stats);
 
 		s1 = s1 + s2 - s1 * s2;
 	}
@@ -540,7 +545,7 @@ find_single_rel_for_clauses(PlannerInfo *root, List *clauses)
 		{
 
 			RelOptInfo *rel = find_single_rel_for_clauses(root,
-											  ((BoolExpr *) rinfo)->args);
+														  ((BoolExpr *) rinfo)->args);
 
 			if (rel == NULL)
 				return NULL;

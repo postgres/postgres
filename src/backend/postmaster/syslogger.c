@@ -438,6 +438,7 @@ SysLoggerMain(int argc, char *argv[])
 		{
 
 			pg_time_t	delay = next_rotation_time - now;
+
 			if (delay > 0)
 			{
 				if (delay > INT_MAX / 1000)
@@ -461,8 +462,9 @@ SysLoggerMain(int argc, char *argv[])
 		{
 
 			int			bytesRead = read(syslogPipe[0],
-							 logbuffer + bytes_in_logbuffer,
-							 sizeof(logbuffer) - bytes_in_logbuffer);
+										 logbuffer + bytes_in_logbuffer,
+										 sizeof(logbuffer) - bytes_in_logbuffer);
+
 			if (bytesRead < 0)
 			{
 				if (errno != EINTR)
@@ -907,6 +909,7 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 
 			/* Locate any existing buffer for this source pid */
 			List	   *buffer_list = buffer_lists[p.pid % NBUFFER_LISTS];
+
 			foreach(cell, buffer_list)
 			{
 				save_buffer *buf = (save_buffer *) lfirst(cell);
@@ -1088,7 +1091,7 @@ write_syslogger_file(const char *buffer, int count, int destination)
 	 * failure in that would lead to recursion.
 	 */
 	FILE	   *logfile = (destination == LOG_DESTINATION_CSVLOG &&
-			   csvlogFile != NULL) ? csvlogFile : syslogFile;
+						   csvlogFile != NULL) ? csvlogFile : syslogFile;
 
 	int			rc = fwrite(buffer, 1, count, logfile);
 
@@ -1122,9 +1125,9 @@ pipeThread(void *arg)
 		DWORD		bytesRead;
 
 		BOOL		result = ReadFile(syslogPipe[0],
-						  logbuffer + bytes_in_logbuffer,
-						  sizeof(logbuffer) - bytes_in_logbuffer,
-						  &bytesRead, 0);
+									  logbuffer + bytes_in_logbuffer,
+									  sizeof(logbuffer) - bytes_in_logbuffer,
+									  &bytesRead, 0);
 
 		/*
 		 * Enter critical section before doing anything that might touch
@@ -1196,6 +1199,7 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 	 */
 	mode_t		oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
 	FILE	   *fh = fopen(filename, mode);
+
 	umask(oumask);
 
 	if (fh)
@@ -1243,6 +1247,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 	else
 		fntime = time(NULL);
 	char	   *filename = logfile_getname(fntime, NULL);
+
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 		csvfilename = logfile_getname(fntime, ".csv");
 
@@ -1420,6 +1425,7 @@ set_next_rotation_time(void)
 	int			rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
 	pg_time_t	now = (pg_time_t) time(NULL);
 	struct pg_tm *tm = pg_localtime(&now, log_timezone);
+
 	now += tm->tm_gmtoff;
 	now -= now % rotinterval;
 	now += rotinterval;
@@ -1453,6 +1459,7 @@ update_metainfo_datafile(void)
 	/* use the same permissions as the data directory for the new file */
 	mode_t		oumask = umask(pg_mode_mask);
 	FILE	   *fh = fopen(LOG_METAINFO_DATAFILE_TMP, "w");
+
 	umask(oumask);
 
 	if (fh)

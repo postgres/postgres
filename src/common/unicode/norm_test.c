@@ -27,6 +27,7 @@ print_wchar_str(const pg_wchar *s)
 
 	int			i = 0;
 	char	   *p = buf;
+
 	while (*s && i < BUF_DIGITS)
 	{
 		p += sprintf(p, "U+%04X ", *s);

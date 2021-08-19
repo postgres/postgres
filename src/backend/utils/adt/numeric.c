@@ -625,6 +625,7 @@ numeric_in(PG_FUNCTION_ARGS)
 
 	/* Skip leading spaces */
 	const char *cp = str;
+
 	while (*cp)
 	{
 		if (!isspace((unsigned char) *cp))
@@ -1196,6 +1197,7 @@ numeric		(PG_FUNCTION_ARGS)
 	 * honest...)
 	 */
 	int			ddigits = (NUMERIC_WEIGHT(num) + 1) * DEC_DIGITS;
+
 	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num)
 		&& (NUMERIC_CAN_BE_SHORT(dscale, NUMERIC_WEIGHT(num))
 			|| !NUMERIC_IS_SHORT(num)))
@@ -1552,6 +1554,7 @@ numeric_ceil(PG_FUNCTION_ARGS)
 	ceil_var(&result, &result);
 
 	Numeric		res = make_result(&result);
+
 	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -1579,6 +1582,7 @@ numeric_floor(PG_FUNCTION_ARGS)
 	floor_var(&result, &result);
 
 	Numeric		res = make_result(&result);
+
 	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -2601,6 +2605,7 @@ hash_numeric(PG_FUNCTION_ARGS)
 	 * starting and ending offsets in units of NumericDigits, not bytes.
 	 */
 	NumericDigit *digits = NUMERIC_DIGITS(key);
+
 	for (i = 0; i < NUMERIC_NDIGITS(key); i++)
 	{
 		if (digits[i] != (NumericDigit) 0)
@@ -2641,7 +2646,7 @@ hash_numeric(PG_FUNCTION_ARGS)
 	 */
 	int			hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
 	Datum		digit_hash = hash_any((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
-						  hash_len * sizeof(NumericDigit));
+									  hash_len * sizeof(NumericDigit));
 
 	/* Mix in the weight, via XOR */
 	Datum		result = digit_hash ^ weight;
@@ -2669,6 +2674,7 @@ hash_numeric_extended(PG_FUNCTION_ARGS)
 	int			end_offset = 0;
 
 	NumericDigit *digits = NUMERIC_DIGITS(key);
+
 	for (i = 0; i < NUMERIC_NDIGITS(key); i++)
 	{
 		if (digits[i] != (NumericDigit) 0)
@@ -2694,9 +2700,9 @@ hash_numeric_extended(PG_FUNCTION_ARGS)
 
 	int			hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
 	Datum		digit_hash = hash_any_extended((unsigned char *) (NUMERIC_DIGITS(key)
-													  + start_offset),
-								   hash_len * sizeof(NumericDigit),
-								   seed);
+																  + start_offset),
+											   hash_len * sizeof(NumericDigit),
+											   seed);
 
 	Datum		result = UInt64GetDatum(DatumGetUInt64(digit_hash) ^ weight);
 
@@ -3564,6 +3570,7 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	int			sweight = (arg.weight + 1) * DEC_DIGITS / 2 - 1;
 
 	int			rscale = NUMERIC_MIN_SIG_DIGITS - sweight;
+
 	rscale = Max(rscale, arg.dscale);
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
 	rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
@@ -3628,6 +3635,7 @@ numeric_exp(PG_FUNCTION_ARGS)
 	val = Min(val, NUMERIC_MAX_RESULT_SCALE);
 
 	int			rscale = NUMERIC_MIN_SIG_DIGITS - (int) val;
+
 	rscale = Max(rscale, arg.dscale);
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
 	rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
@@ -3677,6 +3685,7 @@ numeric_ln(PG_FUNCTION_ARGS)
 	int			ln_dweight = estimate_ln_dweight(&arg);
 
 	int			rscale = NUMERIC_MIN_SIG_DIGITS - ln_dweight;
+
 	rscale = Max(rscale, arg.dscale);
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
 	rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
@@ -3977,6 +3986,7 @@ get_min_scale(NumericVar *var)
 	 * loop if it isn't, so explicitly find the last nonzero digit.
 	 */
 	int			last_digit_pos = var->ndigits - 1;
+
 	while (last_digit_pos >= 0 &&
 		   var->digits[last_digit_pos] == 0)
 		last_digit_pos--;
@@ -4027,6 +4037,7 @@ numeric_min_scale(PG_FUNCTION_ARGS)
 
 	init_var_from_num(num, &arg);
 	int			min_scale = get_min_scale(&arg);
+
 	free_var(&arg);
 
 	PG_RETURN_INT32(min_scale);
@@ -4047,6 +4058,7 @@ numeric_trim_scale(PG_FUNCTION_ARGS)
 	init_var_from_num(num, &result);
 	result.dscale = get_min_scale(&result);
 	Numeric		res = make_result(&result);
+
 	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -4089,6 +4101,7 @@ int64_div_fast_to_numeric(int64 val1, int log10val2)
 
 	/* how much to decrease the weight by */
 	int			w = log10val2 / DEC_DIGITS;
+
 	/* how much is left */
 	int			m = log10val2 % DEC_DIGITS;
 
@@ -4360,7 +4373,7 @@ numeric_float8(PG_FUNCTION_ARGS)
 	}
 
 	char	   *tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
-											  NumericGetDatum(num)));
+														  NumericGetDatum(num)));
 
 	Datum		result = DirectFunctionCall1(float8in, CStringGetDatum(tmp));
 
@@ -4450,7 +4463,7 @@ numeric_float4(PG_FUNCTION_ARGS)
 	}
 
 	char	   *tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
-											  NumericGetDatum(num)));
+														  NumericGetDatum(num)));
 
 	Datum		result = DirectFunctionCall1(float4in, CStringGetDatum(tmp));
 
@@ -4538,6 +4551,7 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 	MemoryContext old_context = MemoryContextSwitchTo(agg_context);
 
 	NumericAggState *state = (NumericAggState *) palloc0(sizeof(NumericAggState));
+
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = agg_context;
 
@@ -4555,6 +4569,7 @@ makeNumericAggStateCurrentContext(bool calcSumX2)
 {
 
 	NumericAggState *state = (NumericAggState *) palloc0(sizeof(NumericAggState));
+
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = CurrentMemoryContext;
 
@@ -5185,6 +5200,7 @@ makeInt128AggState(FunctionCallInfo fcinfo, bool calcSumX2)
 	MemoryContext old_context = MemoryContextSwitchTo(agg_context);
 
 	Int128AggState *state = (Int128AggState *) palloc0(sizeof(Int128AggState));
+
 	state->calcSumX2 = calcSumX2;
 
 	MemoryContextSwitchTo(old_context);
@@ -5201,6 +5217,7 @@ makeInt128AggStateCurrentContext(bool calcSumX2)
 {
 
 	Int128AggState *state = (Int128AggState *) palloc0(sizeof(Int128AggState));
+
 	state->calcSumX2 = calcSumX2;
 
 	return state;
@@ -5829,6 +5846,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 	init_var(&sumX_var);
 	accum_sum_final(&state->sumX, &sumX_var);
 	Datum		sumX_datum = NumericGetDatum(make_result(&sumX_var));
+
 	free_var(&sumX_var);
 
 	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div, sumX_datum, N_datum));
@@ -5859,6 +5877,7 @@ numeric_sum(PG_FUNCTION_ARGS)
 	init_var(&sumX_var);
 	accum_sum_final(&state->sumX, &sumX_var);
 	Numeric		result = make_result(&sumX_var);
+
 	free_var(&sumX_var);
 
 	PG_RETURN_NUMERIC(result);
@@ -6328,6 +6347,7 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element int8 array");
 
 	Int8TransTypeData *transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
 	transdata->count++;
 	transdata->sum += newval;
 
@@ -6355,6 +6375,7 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element int8 array");
 
 	Int8TransTypeData *transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
 	transdata->count++;
 	transdata->sum += newval;
 
@@ -6409,6 +6430,7 @@ int2_avg_accum_inv(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element int8 array");
 
 	Int8TransTypeData *transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
 	transdata->count--;
 	transdata->sum -= newval;
 
@@ -6436,6 +6458,7 @@ int4_avg_accum_inv(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element int8 array");
 
 	Int8TransTypeData *transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
 	transdata->count--;
 	transdata->sum -= newval;
 
@@ -6717,6 +6740,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 	}
 
 	int			ddigits = i - DEC_DIGITS;
+
 	/* trailing padding for digit alignment later */
 	memset(decdigits + i, 0, DEC_DIGITS - 1);
 
@@ -6727,6 +6751,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 
 		cp++;
 		long		exponent = strtol(cp, &endptr, 10);
+
 		if (endptr == cp)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -6855,6 +6880,7 @@ set_var_from_var(const NumericVar *value, NumericVar *dest)
 {
 
 	NumericDigit *newbuf = digitbuf_alloc(value->ndigits + 1);
+
 	newbuf[0] = 0;				/* spare digit for rounding */
 	if (value->ndigits > 0)		/* else value->digits might be null */
 		memcpy(newbuf + 1, value->digits,
@@ -7086,6 +7112,7 @@ get_str_from_var_sci(const NumericVar *var, int rscale)
 	 */
 	size_t		len = strlen(sig_out) + 13;
 	char	   *str = palloc(len);
+
 	snprintf(str, len, "%se%+03d", sig_out, exponent);
 
 	pfree(sig_out);
@@ -7146,6 +7173,7 @@ duplicate_numeric(Numeric num)
 {
 
 	Numeric		res = (Numeric) palloc(VARSIZE(num));
+
 	memcpy(res, num, VARSIZE(num));
 	return res;
 }
@@ -7308,6 +7336,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 	 * true zero, whose weight doesn't mean anything.
 	 */
 	int			ddigits = (var->weight + 1) * DEC_DIGITS;
+
 	if (ddigits > maxdigits)
 	{
 		/* Determine true weight; and check for all-zero result */
@@ -7430,6 +7459,7 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 	digits = rounded.digits;
 	bool		neg = (rounded.sign == NUMERIC_NEG);
 	int64		val = -digits[0];
+
 	for (i = 1; i <= weight; i++)
 	{
 		if (unlikely(pg_mul_s64_overflow(val, NBASE, &val)))
@@ -7491,6 +7521,7 @@ int64_to_numericvar(int64 val, NumericVar *var)
 		return;
 	}
 	NumericDigit *ptr = var->digits + var->ndigits;
+
 	ndigits = 0;
 	do
 	{
@@ -7551,6 +7582,7 @@ numericvar_to_uint64(const NumericVar *var, uint64 *result)
 	/* Construct the result */
 	digits = rounded.digits;
 	uint64		val = digits[0];
+
 	for (i = 1; i <= weight; i++)
 	{
 		if (unlikely(pg_mul_u64_overflow(val, NBASE, &val)))
@@ -7618,6 +7650,7 @@ numericvar_to_int128(const NumericVar *var, int128 *result)
 	/* Construct the result */
 	digits = rounded.digits;
 	bool		neg = (rounded.sign == NUMERIC_NEG);
+
 	val = digits[0];
 	for (i = 1; i <= weight; i++)
 	{
@@ -7679,6 +7712,7 @@ int128_to_numericvar(int128 val, NumericVar *var)
 		return;
 	}
 	NumericDigit *ptr = var->digits + var->ndigits;
+
 	ndigits = 0;
 	do
 	{
@@ -7706,6 +7740,7 @@ numericvar_to_double_no_overflow(const NumericVar *var)
 
 	/* unlike float8in, we ignore ERANGE from strtod */
 	double		val = strtod(tmp, &endptr);
+
 	if (*endptr != '\0')
 	{
 		/* shouldn't happen ... */
@@ -8084,7 +8119,8 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	 */
 	int			res_ndigits = var1ndigits + var2ndigits + 1;
 	int			maxdigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS +
-		MUL_GUARD_DIGITS;
+	MUL_GUARD_DIGITS;
+
 	res_ndigits = Min(res_ndigits, maxdigits);
 
 	if (res_ndigits < 3)
@@ -8182,6 +8218,7 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	 */
 	alloc_var(result, res_ndigits);
 	NumericDigit *res_digits = result->digits;
+
 	carry = 0;
 	for (i = res_ndigits - 1; i >= 0; i--)
 	{
@@ -8266,8 +8303,10 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	else
 		res_sign = NUMERIC_NEG;
 	int			res_weight = var1->weight - var2->weight;
+
 	/* The number of accurate result digits we need to produce: */
 	int			res_ndigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS;
+
 	/* ... but always at least 1 */
 	res_ndigits = Max(res_ndigits, 1);
 	/* If rounding needed, figure one more digit to ensure correct result */
@@ -8282,6 +8321,7 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	 * count that in div_ndigits.)
 	 */
 	int			div_ndigits = res_ndigits + var2ndigits;
+
 	div_ndigits = Max(div_ndigits, var1ndigits);
 
 	/*
@@ -8295,8 +8335,9 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	 * any additional dividend positions beyond var1ndigits, start out 0.
 	 */
 	NumericDigit *dividend = (NumericDigit *)
-		palloc0((div_ndigits + var2ndigits + 2) * sizeof(NumericDigit));
+	palloc0((div_ndigits + var2ndigits + 2) * sizeof(NumericDigit));
 	NumericDigit *divisor = dividend + (div_ndigits + 1);
+
 	memcpy(dividend + 1, var1->digits, var1ndigits * sizeof(NumericDigit));
 	memcpy(divisor + 1, var2->digits, var2ndigits * sizeof(NumericDigit));
 
@@ -8548,8 +8589,10 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 	else
 		res_sign = NUMERIC_NEG;
 	int			res_weight = var1->weight - var2->weight + 1;
+
 	/* The number of accurate result digits we need to produce: */
 	int			div_ndigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS;
+
 	/* Add guard digits for roundoff error */
 	div_ndigits += DIV_GUARD_DIGITS;
 	if (div_ndigits < DIV_GUARD_DIGITS)
@@ -8575,6 +8618,7 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 	 */
 	int		   *div = (int *) palloc0((div_ndigits + 1) * sizeof(int));
 	int			load_ndigits = Min(div_ndigits, var1ndigits);
+
 	for (i = 0; i < load_ndigits; i++)
 		div[i + 1] = var1digits[i];
 
@@ -8756,6 +8800,7 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 	 */
 	alloc_var(result, div_ndigits + 1);
 	NumericDigit *res_digits = result->digits;
+
 	carry = 0;
 	for (i = div_ndigits; i >= 0; i--)
 	{
@@ -8854,6 +8899,7 @@ select_div_scale(const NumericVar *var1, const NumericVar *var2)
 
 	/* Select result scale */
 	int			rscale = NUMERIC_MIN_SIG_DIGITS - qweight * DEC_DIGITS;
+
 	rscale = Max(rscale, var1->dscale);
 	rscale = Max(rscale, var2->dscale);
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
@@ -9029,6 +9075,7 @@ gcd_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
 	 * expensive modulo operation.
 	 */
 	int			cmp = cmp_abs(var1, var2);
+
 	if (cmp < 0)
 	{
 		const NumericVar *tmp = var1;
@@ -9098,6 +9145,7 @@ sqrt_var(const NumericVar *arg, NumericVar *result, int rscale)
 	NumericVar	u_var;
 
 	int			stat = cmp_var(arg, &const_zero);
+
 	if (stat == 0)
 	{
 		zero_var(result);
@@ -9149,6 +9197,7 @@ sqrt_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * result digit we round before the decimal point).
 	 */
 	int			src_ndigits = arg->weight + 1 + (res_ndigits - res_weight - 1) * 2;
+
 	src_ndigits = Max(src_ndigits, 1);
 
 	/* ----------
@@ -9219,6 +9268,7 @@ sqrt_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * ----------
 	 */
 	int			step = 0;
+
 	while ((ndigits[step] = src_ndigits) > 4)
 	{
 		/* Choose b so that a3 >= b/4, as described above */
@@ -9240,6 +9290,7 @@ sqrt_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * result with no further correction required.
 	 */
 	int64		arg_int64 = arg->digits[0];
+
 	for (src_idx = 1; src_idx < src_ndigits; src_idx++)
 	{
 		arg_int64 *= NBASE;
@@ -9614,6 +9665,7 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * extra digits of precision (plus a few more for good measure).
 	 */
 	int			sig_digits = 1 + dweight + rscale + (int) (ndiv2 * 0.301029995663981);
+
 	sig_digits = Max(sig_digits, 0) + 8;
 
 	local_rscale = sig_digits - 1;
@@ -9726,6 +9778,7 @@ estimate_ln_dweight(const NumericVar *var)
 			 *----------
 			 */
 			double		ln_var = log((double) digits) + dweight * 2.302585092994046;
+
 			ln_dweight = (int) log10(Abs(ln_var));
 		}
 		else
@@ -9755,6 +9808,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	int			local_rscale;
 
 	int			cmp = cmp_var(arg, &const_zero);
+
 	if (cmp == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
@@ -9789,6 +9843,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * will be non-negative again.
 	 */
 	int			nsqrt = 0;
+
 	while (cmp_var(&x, &const_zero_point_nine) <= 0)
 	{
 		local_rscale = rscale - x.weight * DEC_DIGITS / 2 + 8;
@@ -9882,6 +9937,7 @@ log_var(const NumericVar *base, const NumericVar *num, NumericVar *result)
 	 * input's display scale.
 	 */
 	int			rscale = NUMERIC_MIN_SIG_DIGITS - result_dweight;
+
 	rscale = Max(rscale, base->dscale);
 	rscale = Max(rscale, num->dscale);
 	rscale = Max(rscale, NUMERIC_MIN_DISPLAY_SCALE);
@@ -9892,9 +9948,11 @@ log_var(const NumericVar *base, const NumericVar *num, NumericVar *result)
 	 * significant digits than the final result.
 	 */
 	int			ln_base_rscale = rscale + result_dweight - ln_base_dweight + 8;
+
 	ln_base_rscale = Max(ln_base_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 
 	int			ln_num_rscale = rscale + result_dweight - ln_num_dweight + 8;
+
 	ln_num_rscale = Max(ln_num_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 
 	/* Form natural logarithms */
@@ -10013,6 +10071,7 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 	int			ln_dweight = estimate_ln_dweight(base);
 
 	int			local_rscale = 8 - ln_dweight;
+
 	local_rscale = Max(local_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 	local_rscale = Min(local_rscale, NUMERIC_MAX_DISPLAY_SCALE);
 
@@ -10045,6 +10104,7 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 
 	/* significant digits required in the result */
 	int			sig_digits = rscale + (int) val;
+
 	sig_digits = Max(sig_digits, 0);
 
 	/* set the scale for the real exp * ln(base) calculation */
@@ -10390,10 +10450,12 @@ add_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
 	res_rscale = Max(rscale1, rscale2);
 
 	int			res_ndigits = res_rscale + res_weight + 1;
+
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
 	NumericDigit *res_buf = digitbuf_alloc(res_ndigits + 1);
+
 	res_buf[0] = 0;				/* spare digit for later rounding */
 	NumericDigit *res_digits = res_buf + 1;
 
@@ -10470,10 +10532,12 @@ sub_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
 	res_rscale = Max(rscale1, rscale2);
 
 	int			res_ndigits = res_rscale + res_weight + 1;
+
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
 	NumericDigit *res_buf = digitbuf_alloc(res_ndigits + 1);
+
 	res_buf[0] = 0;				/* spare digit for later rounding */
 	NumericDigit *res_digits = res_buf + 1;
 
@@ -10816,6 +10880,7 @@ accum_sum_carry(NumericSumAccum *accum)
 	/* Propagate carry in the positive sum */
 	int32	   *dig = accum->pos_digits;
 	int32		carry = 0;
+
 	for (i = ndigits - 1; i >= 0; i--)
 	{
 		newdig = dig[i] + carry;
@@ -10897,6 +10962,7 @@ accum_sum_rescale(NumericSumAccum *accum, const NumericVar *val)
 	/* Is the new value wider on the right side? */
 	int			accum_rscale = accum_ndigits - accum_weight - 1;
 	int			val_rscale = val->ndigits - val->weight - 1;
+
 	if (val_rscale > accum_rscale)
 		accum_ndigits = accum_ndigits + (val_rscale - accum_rscale);
 

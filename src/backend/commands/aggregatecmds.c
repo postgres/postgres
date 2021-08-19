@@ -101,6 +101,7 @@ DefineAggregate(ParseState *pstate,
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(aggNamespace));
@@ -335,6 +336,7 @@ DefineAggregate(ParseState *pstate,
 	 */
 	Oid			transTypeId = typenameTypeId(NULL, transType);
 	char		transTypeType = get_typtype(transTypeId);
+
 	if (transTypeType == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
 	{

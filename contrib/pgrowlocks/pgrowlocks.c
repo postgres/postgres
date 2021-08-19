@@ -87,6 +87,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -118,7 +119,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	 * pg_stat_scan_tables
 	 */
 	AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  ACL_SELECT);
+											  ACL_SELECT);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = is_member_of_role(GetUserId(), ROLE_PG_STAT_SCAN_TABLES) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 
@@ -141,8 +143,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
 		TM_Result	htsu = HeapTupleSatisfiesUpdate(tuple,
-										GetCurrentCommandId(false),
-										hscan->rs_cbuf);
+													GetCurrentCommandId(false),
+													hscan->rs_cbuf);
 		TransactionId xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
 		uint16		infomask = tuple->t_data->t_infomask;
 
@@ -165,7 +167,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 				bool		allow_old = HEAP_LOCKED_UPGRADED(infomask);
 				int			nmembers = GetMultiXactIdMembers(xmax, &members, allow_old,
-												 false);
+															 false);
+
 				if (nmembers == -1)
 				{
 					values[Atnum_xids] = "{0}";

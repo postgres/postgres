@@ -300,6 +300,7 @@ ProcessArchiveRestoreOptions(Archive *AHX)
 
 	/* Decide which TOC entries will be dumped/restored, and mark them */
 	teSection	curSection = SECTION_PRE_DATA;
+
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		/*
@@ -359,6 +360,7 @@ RestoreArchive(Archive *AHX)
 	 * If we're going to do parallel restore, there are some restrictions.
 	 */
 	bool		parallel_mode = (AH->public.numWorkers > 1 && ropt->useDB);
+
 	if (parallel_mode)
 	{
 		/* We haven't got round to making this work for all archive formats */
@@ -660,6 +662,7 @@ RestoreArchive(Archive *AHX)
 
 		/* ParallelBackupStart() will actually fork the processes */
 		ParallelState *pstate = ParallelBackupStart(AH);
+
 		restore_toc_entries_parallel(AH, pstate, &pending_list);
 		ParallelBackupEnd(AH, pstate);
 
@@ -1114,6 +1117,7 @@ PrintTOCSummary(Archive *AHX)
 	char		stamp_str[64];
 
 	OutputContext sav = SaveOutput(AH);
+
 	if (ropt->filename)
 		SetOutput(AH, ropt->filename, 0 /* no compression */ );
 
@@ -1156,6 +1160,7 @@ PrintTOCSummary(Archive *AHX)
 	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
 
 	teSection	curSection = SECTION_PRE_DATA;
+
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		if (te->section != SECTION_NONE)
@@ -1359,6 +1364,7 @@ SortTocFromFile(Archive *AHX)
 
 	/* Setup the file */
 	FILE	   *fh = fopen(ropt->tocFile, PG_BINARY_R);
+
 	if (!fh)
 		fatal("could not open TOC file \"%s\": %m", ropt->tocFile);
 
@@ -1370,6 +1376,7 @@ SortTocFromFile(Archive *AHX)
 
 		/* Truncate line at comment, if any */
 		char	   *cmnt = strchr(linebuf.data, ';');
+
 		if (cmnt != NULL)
 		{
 			cmnt[0] = '\0';
@@ -1382,6 +1389,7 @@ SortTocFromFile(Archive *AHX)
 
 		/* Get an ID, check it's valid and not already seen */
 		DumpId		id = strtol(linebuf.data, &endptr, 10);
+
 		if (endptr == linebuf.data || id <= 0 || id > AH->maxDumpId ||
 			ropt->idWanted[id - 1])
 		{
@@ -1391,6 +1399,7 @@ SortTocFromFile(Archive *AHX)
 
 		/* Find TOC entry */
 		TocEntry   *te = getTocEntryByDumpId(AH, id);
+
 		if (!te)
 			fatal("could not find entry for ID %d",
 				  id);
@@ -1623,6 +1632,7 @@ dump_lo_buf(ArchiveHandle *AH)
 	{
 
 		int			res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_used);
+
 		pg_log_debug(ngettext("wrote %zu byte of large object data (result = %d)",
 							  "wrote %zu bytes of large object data (result = %d)",
 							  AH->lo_buf_used),
@@ -2025,6 +2035,7 @@ ReadStr(ArchiveHandle *AH)
 	char	   *buf;
 
 	int			l = ReadInt(AH);
+
 	if (l < 0)
 		buf = NULL;
 	else
@@ -2308,6 +2319,7 @@ WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
 
 		TocEntry  **tes = (TocEntry **) pg_malloc(AH->tocCount * sizeof(TocEntry *));
 		int			ntes = 0;
+
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
 			/* Consider only TEs with dataDumper functions ... */
@@ -2413,6 +2425,7 @@ WriteToc(ArchiveHandle *AH)
 
 	/* count entries that will actually be dumped */
 	int			tocCount = 0;
+
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_SPECIAL)) != 0)
@@ -2626,6 +2639,7 @@ processEncodingEntry(ArchiveHandle *AH, TocEntry *te)
 	int			encoding;
 
 	char	   *ptr1 = strchr(defn, '\'');
+
 	if (ptr1)
 		ptr2 = strchr(++ptr1, '\'');
 	if (ptr2)
@@ -2650,6 +2664,7 @@ processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
 	/* te->defn should have the form SET standard_conforming_strings = 'x'; */
 
 	char	   *ptr1 = strchr(te->defn, '\'');
+
 	if (ptr1 && strncmp(ptr1, "'on'", 4) == 0)
 		AH->public.std_strings = true;
 	else if (ptr1 && strncmp(ptr1, "'off'", 5) == 0)
@@ -3323,6 +3338,7 @@ _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
 		return;
 
 	PQExpBuffer cmd = createPQExpBuffer();
+
 	appendPQExpBuffer(cmd, "SET default_table_access_method = %s;", fmtId(want));
 
 	if (RestoringToDB(AH))
@@ -3487,6 +3503,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		{
 
 			char	   *sanitized_tablespace = sanitize_line(te->tablespace, false);
+
 			ahprintf(AH, "; Tablespace: %s", sanitized_tablespace);
 			free(sanitized_tablespace);
 		}
@@ -3652,6 +3669,7 @@ WriteHead(ArchiveHandle *AH)
 	AH->WriteBytePtr(AH, AH->format);
 	WriteInt(AH, AH->compression);
 	struct tm	crtm = *localtime(&AH->createDate);
+
 	WriteInt(AH, crtm.tm_sec);
 	WriteInt(AH, crtm.tm_min);
 	WriteInt(AH, crtm.tm_hour);
@@ -3793,6 +3811,7 @@ checkSeek(FILE *fp)
 
 	/* Check that ftello works on this file */
 	pgoff_t		tpos = ftello(fp);
+
 	if (tpos < 0)
 		return false;
 
@@ -3861,6 +3880,7 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 	 */
 	AH->restorePass = RESTORE_PASS_MAIN;
 	bool		skipped_some = false;
+
 	for (next_work_item = AH->toc->next; next_work_item != AH->toc; next_work_item = next_work_item->next)
 	{
 		bool		do_now = true;
@@ -4606,6 +4626,7 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 	 */
 	DumpId	   *lockids = (DumpId *) pg_malloc(te->nDeps * sizeof(DumpId));
 	int			nlockids = 0;
+
 	for (i = 0; i < te->nDeps; i++)
 	{
 		DumpId		depid = te->dependencies[i];
@@ -4712,6 +4733,7 @@ CloneArchive(ArchiveHandle *AH)
 
 	/* Make a "flat" copy */
 	ArchiveHandle *clone = (ArchiveHandle *) pg_malloc(sizeof(ArchiveHandle));
+
 	memcpy(clone, AH, sizeof(ArchiveHandle));
 
 	/* Handle format-independent fields */

@@ -56,6 +56,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	/* Convert the flags bitmask to an array of human-readable names */
 	uint16		flagbits = opaq->flags;
+
 	if (flagbits & F_LEAF)
 		flags[nflags++] = CStringGetTextDatum("leaf");
 	if (flagbits & F_DELETED)
@@ -120,6 +121,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -156,6 +158,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		values[2] = Int32GetDatum((int) IndexTupleSize(itup));
 
 		bytea	   *tuple_bytea = (bytea *) palloc(tuple_len + VARHDRSZ);
+
 		SET_VARSIZE(tuple_bytea, tuple_len + VARHDRSZ);
 		memcpy(VARDATA(tuple_bytea), itup, tuple_len);
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
@@ -200,6 +203,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -244,6 +248,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
 
 		char	   *key_desc = BuildIndexValueDescription(indexRel, itup_values, itup_isnull);
+
 		if (key_desc)
 			values[4] = CStringGetTextDatum(key_desc);
 		else

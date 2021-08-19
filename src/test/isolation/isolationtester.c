@@ -129,6 +129,7 @@ main(int argc, char **argv)
 	 * in seconds) as the max time to wait for any one step to complete.
 	 */
 	const char *env_wait = getenv("PGISOLATIONTIMEOUT");
+
 	if (env_wait != NULL)
 		max_step_wait = ((int64) atoi(env_wait)) * USECS_PER_SEC;
 
@@ -202,6 +203,7 @@ main(int argc, char **argv)
 	appendPQExpBufferStr(&wait_query, "}')");
 
 	PGresult   *res = PQprepare(conns[0].conn, PREP_WAITING, wait_query.data, 0, NULL);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "prepare of lock wait query failed: %s",
@@ -232,6 +234,7 @@ check_testspec(TestSpec *testspec)
 
 	/* Create a sorted lookup table of all steps. */
 	int			nallsteps = 0;
+
 	for (i = 0; i < testspec->nsessions; i++)
 		nallsteps += testspec->sessions[i]->nsteps;
 
@@ -382,12 +385,14 @@ run_all_permutations(TestSpec *testspec)
 
 	/* Count the total number of steps in all sessions */
 	int			nsteps = 0;
+
 	for (i = 0; i < testspec->nsessions; i++)
 		nsteps += testspec->sessions[i]->nsteps;
 
 	/* Create PermutationStep workspace array */
 	PermutationStep *steps = (PermutationStep *) pg_malloc0(sizeof(PermutationStep) * nsteps);
 	PermutationStep **stepptrs = (PermutationStep **) pg_malloc(sizeof(PermutationStep *) * nsteps);
+
 	for (i = 0; i < nsteps; i++)
 		stepptrs[i] = steps + i;
 
@@ -401,6 +406,7 @@ run_all_permutations(TestSpec *testspec)
 	 * already picked from this pile.
 	 */
 	int		   *piles = pg_malloc(sizeof(int) * testspec->nsessions);
+
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
@@ -606,6 +612,7 @@ run_permutation(TestSpec *testspec, int nsteps, PermutationStep **steps)
 
 					gettimeofday(&current_time, NULL);
 					int64		td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
+
 					td *= USECS_PER_SEC;
 					td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 					if (td > 2 * max_step_wait)
@@ -859,6 +866,7 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 					exit(1);
 				}
 				bool		waiting = ((PQgetvalue(res, 0, 0))[0] == 't');
+
 				PQclear(res);
 
 				if (waiting)	/* waiting to acquire a lock */
@@ -896,6 +904,7 @@ try_complete_step(TestSpec *testspec, PermutationStep *pstep, int flags)
 			/* Figure out how long we've been waiting for this step. */
 			gettimeofday(&current_time, NULL);
 			int64		td = (int64) current_time.tv_sec - (int64) start_time.tv_sec;
+
 			td *= USECS_PER_SEC;
 			td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 

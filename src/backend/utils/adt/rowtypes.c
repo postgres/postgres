@@ -109,6 +109,7 @@ record_in(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -140,6 +141,7 @@ record_in(PG_FUNCTION_ARGS)
 	 * each column, which is then fed to the appropriate input converter.
 	 */
 	char	   *ptr = string;
+
 	/* Allow leading whitespace */
 	while (*ptr && isspace((unsigned char) *ptr))
 		ptr++;
@@ -277,6 +279,7 @@ record_in(PG_FUNCTION_ARGS)
 	 * our result.  So must copy the info into a new palloc chunk.
 	 */
 	HeapTupleHeader result = (HeapTupleHeader) palloc(tuple->t_len);
+
 	memcpy(result, tuple->t_data, tuple->t_len);
 
 	heap_freetuple(tuple);
@@ -319,6 +322,7 @@ record_out(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -391,7 +395,9 @@ record_out(PG_FUNCTION_ARGS)
 		char	   *value = OutputFunctionCall(&column_info->proc, attr);
 
 		/* Detect whether we need double quotes for this value */
-		bool		nq = (value[0] == '\0');	/* force quotes for empty string */
+		bool		nq = (value[0] == '\0');	/* force quotes for empty
+												 * string */
+
 		for (tmp = value; *tmp; tmp++)
 		{
 			char		ch = *tmp;
@@ -463,6 +469,7 @@ record_recv(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -494,6 +501,7 @@ record_recv(PG_FUNCTION_ARGS)
 
 	/* Need to scan to count nondeleted columns */
 	int			validcols = 0;
+
 	for (i = 0; i < ncolumns; i++)
 	{
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
@@ -553,6 +561,7 @@ record_recv(PG_FUNCTION_ARGS)
 
 		/* Get and check the item length */
 		int			itemlen = pq_getmsgint(buf, 4);
+
 		if (itemlen < -1 || itemlen > (buf->len - buf->cursor))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -624,6 +633,7 @@ record_recv(PG_FUNCTION_ARGS)
 	 * our result.  So must copy the info into a new palloc chunk.
 	 */
 	HeapTupleHeader result = (HeapTupleHeader) palloc(tuple->t_len);
+
 	memcpy(result, tuple->t_data, tuple->t_len);
 
 	heap_freetuple(tuple);
@@ -664,6 +674,7 @@ record_send(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -698,6 +709,7 @@ record_send(PG_FUNCTION_ARGS)
 
 	/* Need to scan to count nondeleted columns */
 	int			validcols = 0;
+
 	for (i = 0; i < ncolumns; i++)
 	{
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
@@ -739,6 +751,7 @@ record_send(PG_FUNCTION_ARGS)
 
 		Datum		attr = values[i];
 		bytea	   *outputbytes = SendFunctionCall(&column_info->proc, attr);
+
 		pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 		pq_sendbytes(&buf, VARDATA(outputbytes),
 					 VARSIZE(outputbytes) - VARHDRSZ);
@@ -802,6 +815,7 @@ record_cmp(FunctionCallInfo fcinfo)
 	 */
 	int			ncols = Max(ncolumns1, ncolumns2);
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -832,9 +846,11 @@ record_cmp(FunctionCallInfo fcinfo)
 	/* Break down the tuples into fields */
 	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
 	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
 	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
 	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -843,6 +859,7 @@ record_cmp(FunctionCallInfo fcinfo)
 	 * the logical column index.
 	 */
 	int			i1 = i2 = j = 0;
+
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
 		TypeCacheEntry *typentry;
@@ -882,6 +899,7 @@ record_cmp(FunctionCallInfo fcinfo)
 		 * comparison function might.
 		 */
 		Oid			collation = att1->attcollation;
+
 		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
@@ -1027,6 +1045,7 @@ record_eq(PG_FUNCTION_ARGS)
 	 */
 	int			ncols = Max(ncolumns1, ncolumns2);
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1057,9 +1076,11 @@ record_eq(PG_FUNCTION_ARGS)
 	/* Break down the tuples into fields */
 	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
 	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
 	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
 	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1068,6 +1089,7 @@ record_eq(PG_FUNCTION_ARGS)
 	 * the logical column index.
 	 */
 	int			i1 = i2 = j = 0;
+
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
 		LOCAL_FCINFO(locfcinfo, 2);
@@ -1109,6 +1131,7 @@ record_eq(PG_FUNCTION_ARGS)
 		 * equality function might.
 		 */
 		Oid			collation = att1->attcollation;
+
 		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
@@ -1271,6 +1294,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	 */
 	int			ncols = Max(ncolumns1, ncolumns2);
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1301,9 +1325,11 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	/* Break down the tuples into fields */
 	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
 	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
 	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
 	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1312,6 +1338,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	 * the logical column index.
 	 */
 	int			i1 = i2 = j = 0;
+
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
 
@@ -1498,6 +1525,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 	 */
 	int			ncols = Max(ncolumns1, ncolumns2);
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncols)
 	{
@@ -1528,9 +1556,11 @@ record_image_eq(PG_FUNCTION_ARGS)
 	/* Break down the tuples into fields */
 	Datum	   *values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
 	bool	   *nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
 	Datum	   *values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
 	bool	   *nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1539,6 +1569,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 	 * the logical column index.
 	 */
 	int			i1 = i2 = j = 0;
+
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
 
@@ -1687,6 +1718,7 @@ hash_record(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncolumns)
 	{
@@ -1711,6 +1743,7 @@ hash_record(PG_FUNCTION_ARGS)
 	/* Break down the tuple into fields */
 	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
 	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
+
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
 	for (int i = 0; i < ncolumns; i++)
@@ -1800,6 +1833,7 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordCompareData *my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns < ncolumns)
 	{
@@ -1824,6 +1858,7 @@ hash_record_extended(PG_FUNCTION_ARGS)
 	/* Break down the tuple into fields */
 	Datum	   *values = (Datum *) palloc(ncolumns * sizeof(Datum));
 	bool	   *nulls = (bool *) palloc(ncolumns * sizeof(bool));
+
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
 	for (int i = 0; i < ncolumns; i++)

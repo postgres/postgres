@@ -187,6 +187,7 @@ widget_in(PG_FUNCTION_ARGS)
 						"widget", str)));
 
 	WIDGET	   *result = (WIDGET *) palloc(sizeof(WIDGET));
+
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
@@ -213,8 +214,8 @@ pt_in_widget(PG_FUNCTION_ARGS)
 	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(1);
 
 	float8		distance = DatumGetFloat8(DirectFunctionCall2(point_distance,
-												  PointPGetDatum(point),
-												  PointPGetDatum(&widget->center)));
+															  PointPGetDatum(point),
+															  PointPGetDatum(&widget->center)));
 
 	PG_RETURN_BOOL(distance < widget->radius);
 }
@@ -228,11 +229,13 @@ reverse_name(PG_FUNCTION_ARGS)
 	int			i;
 
 	char	   *new_string = palloc0(NAMEDATALEN);
+
 	for (i = 0; i < NAMEDATALEN && string[i]; ++i)
 		;
 	if (i == NAMEDATALEN || !string[i])
 		--i;
 	int			len = i;
+
 	for (; i >= 0; --i)
 		new_string[len - i] = string[i];
 	PG_RETURN_CSTRING(new_string);
@@ -416,6 +419,7 @@ ttdummy(PG_FUNCTION_ARGS)
 
 		/* Prepare plan for query */
 		SPIPlanPtr	pplan = SPI_prepare(query, natts, ctypes);
+
 		if (pplan == NULL)
 			elog(ERROR, "ttdummy (%s): SPI_prepare returned %s", relname, SPI_result_code_string(SPI_result));
 
@@ -490,11 +494,12 @@ int44in(PG_FUNCTION_ARGS)
 	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
 
 	int			i = sscanf(input_string,
-			   "%d, %d, %d, %d",
-			   &result[0],
-			   &result[1],
-			   &result[2],
-			   &result[3]);
+						   "%d, %d, %d, %d",
+						   &result[0],
+						   &result[1],
+						   &result[2],
+						   &result[3]);
+
 	while (i < 4)
 		result[i++] = 0;
 
@@ -581,6 +586,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 
 		/* build indirection Datum */
 		struct varlena *new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
+
 		redirect_pointer.pointer = attr;
 		SET_VARTAG_EXTERNAL(new_attr, VARTAG_INDIRECT);
 		memcpy(VARDATA_EXTERNAL(new_attr), &redirect_pointer,
@@ -590,6 +596,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	}
 
 	HeapTuple	newtup = heap_form_tuple(tupdesc, values, nulls);
+
 	pfree(values);
 	pfree(nulls);
 	ReleaseTupleDesc(tupdesc);
@@ -700,6 +707,7 @@ test_atomic_uint32(void)
 	EXPECT_EQ_U32(pg_atomic_sub_fetch_u32(&var, INT_MAX), 1);
 	pg_atomic_sub_fetch_u32(&var, 1);
 	uint32		expected = PG_INT16_MAX;
+
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
 	expected = PG_INT16_MAX + 1;
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u32(&var, &expected, 1));
@@ -755,6 +763,7 @@ test_atomic_uint64(void)
 
 	/* fail exchange because of old expected */
 	uint64		expected = 10;
+
 	EXPECT_TRUE(!pg_atomic_compare_exchange_u64(&var, &expected, 1));
 
 	/* CAS is allowed to fail due to interrupts, try a couple of times */

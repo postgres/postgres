@@ -52,6 +52,7 @@ gettoken(WORKSTATE *state, int32 *val)
 	*val = 0;					/* default result */
 
 	int			innn = 0;
+
 	while (1)
 	{
 		if (innn >= sizeof(nnn))
@@ -92,6 +93,7 @@ gettoken(WORKSTATE *state, int32 *val)
 					nnn[innn] = '\0';
 					errno = 0;
 					long		lval = strtol(nnn, NULL, 0);
+
 					*val = (int32) lval;
 					if (errno != 0 || (long) *val != lval)
 						return ERR;
@@ -425,8 +427,9 @@ boolop(PG_FUNCTION_ARGS)
 	chkval.arrb = ARRPTR(val);
 	chkval.arre = chkval.arrb + ARRNELEMS(val);
 	bool		result = execute(GETQUERY(query) + query->size - 1,
-					 &chkval, NULL, true,
-					 checkcondition_arr);
+								 &chkval, NULL, true,
+								 checkcondition_arr);
+
 	pfree(val);
 
 	PG_FREE_IF_COPY(query, 1);

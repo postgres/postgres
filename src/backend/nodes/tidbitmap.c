@@ -300,10 +300,12 @@ tbm_create_pagetable(TIDBitmap *tbm)
 		bool		found;
 
 		PagetableEntry *page = pagetable_insert(tbm->pagetable,
-								tbm->entry1.blockno,
-								&found);
+												tbm->entry1.blockno,
+												&found);
+
 		Assert(!found);
 		char		oldstatus = page->status;
+
 		memcpy(page, &tbm->entry1, sizeof(PagetableEntry));
 		page->status = oldstatus;
 	}
@@ -490,6 +492,7 @@ tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 			{
 
 				BlockNumber pg = bpage->blockno + (wordnum * BITS_PER_BITMAPWORD);
+
 				while (w != 0)
 				{
 					if (w & 1)
@@ -601,6 +604,7 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 
 				BlockNumber pg = apage->blockno + (wordnum * BITS_PER_BITMAPWORD);
 				int			bitnum = 0;
+
 				while (w != 0)
 				{
 					if (w & 1)
@@ -689,7 +693,8 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	 * needs of the TBMIterateResult sub-struct.
 	 */
 	TBMIterator *iterator = (TBMIterator *) palloc(sizeof(TBMIterator) +
-									  MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+												   MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+
 	iterator->tbm = tbm;
 
 	/*
@@ -994,6 +999,7 @@ tbm_iterate(TBMIterator *iterator)
 		PagetableEntry *chunk = tbm->schunks[iterator->schunkptr];
 
 		BlockNumber chunk_blockno = chunk->blockno + iterator->schunkbit;
+
 		if (iterator->spageptr >= tbm->npages ||
 			chunk_blockno < tbm->spages[iterator->spageptr]->blockno)
 		{
@@ -1018,6 +1024,7 @@ tbm_iterate(TBMIterator *iterator)
 
 		/* scan bitmap to extract individual offset numbers */
 		int			ntuples = tbm_extract_page_tuple(page, output);
+
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
 		output->recheck = page->recheck;
@@ -1105,6 +1112,7 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 
 		/* scan bitmap to extract individual offset numbers */
 		int			ntuples = tbm_extract_page_tuple(page, output);
+
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
 		output->recheck = page->recheck;
@@ -1323,6 +1331,7 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	/* Now set the original target page's bit */
 	int			wordnum = WORDNUM(bitno);
 	int			bitnum = BITNUM(bitno);
+
 	page->words[wordnum] |= ((bitmapword) 1 << bitnum);
 }
 
@@ -1448,7 +1457,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
 	TBMSharedIterator *iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator) +
-											 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+																MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 
 	TBMSharedIteratorState *istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
 
@@ -1528,7 +1537,8 @@ tbm_calculate_entries(double maxbytes)
 	 * created during iteration readout.
 	 */
 	long		nbuckets = maxbytes /
-		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
+	(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
+
 	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
 	nbuckets = Max(nbuckets, 16);	/* sanity limit */
 

@@ -267,6 +267,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * ERROR occurred if parsing failed.
 	 */
 	xmlDocPtr	doc = xml_parse(vardata, xmloption, true, GetDatabaseEncoding());
+
 	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
@@ -366,6 +367,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * than it needs to be.
 	 */
 	xmltype    *result = palloc(nbytes + 1 + VARHDRSZ);
+
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
 	str = VARDATA(result);
@@ -386,6 +388,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * xml_parse will throw ERROR if not.
 	 */
 	xmlDocPtr	doc = xml_parse(result, xmloption, true, encoding);
+
 	xmlFreeDoc(doc);
 
 	/* Now that we know what we're dealing with, convert to server encoding */
@@ -634,6 +637,7 @@ xmlelement(XmlExpr *xexpr,
 	 */
 	List	   *named_arg_strings = NIL;
 	int			i = 0;
+
 	foreach(arg, xexpr->named_args)
 	{
 		Expr	   *e = (Expr *) lfirst(arg);
@@ -650,6 +654,7 @@ xmlelement(XmlExpr *xexpr,
 	}
 
 	List	   *arg_strings = NIL;
+
 	i = 0;
 	foreach(arg, xexpr->args)
 	{
@@ -739,7 +744,8 @@ xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 #ifdef USE_LIBXML
 
 	xmlDocPtr	doc = xml_parse(data, xmloption_arg, preserve_whitespace,
-					GetDatabaseEncoding());
+								GetDatabaseEncoding());
+
 	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
@@ -778,6 +784,7 @@ xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null)
 	{
 
 		char	   *string = text_to_cstring(arg);
+
 		if (strstr(string, "?>") != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -791,6 +798,7 @@ xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null)
 	appendStringInfoString(&buf, "?>");
 
 	xmltype    *result = stringinfo_to_xmltype(&buf);
+
 	pfree(buf.data);
 	return result;
 #else
@@ -884,6 +892,7 @@ xml_is_document(xmltype *arg)
 
 		MemoryContext ecxt = MemoryContextSwitchTo(ccxt);
 		ErrorData  *errdata = CopyErrorData();
+
 		if (errdata->sqlerrcode == ERRCODE_INVALID_XML_DOCUMENT)
 		{
 			FlushErrorState();
@@ -977,6 +986,7 @@ pg_xml_init(PgXmlStrictness strictness)
 
 	/* Create error handling context structure */
 	PgXmlErrorContext *errcxt = (PgXmlErrorContext *) palloc(sizeof(PgXmlErrorContext));
+
 	errcxt->magic = ERRCXT_MAGIC;
 	errcxt->strictness = strictness;
 	errcxt->err_occurred = false;
@@ -1135,6 +1145,7 @@ xml_pnstrdup(const xmlChar *str, size_t len)
 {
 
 	xmlChar    *result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
+
 	memcpy(result, str, len * sizeof(xmlChar));
 	result[len] = 0;
 	return result;
@@ -1146,6 +1157,7 @@ pg_xmlCharStrndup(const char *str, size_t len)
 {
 
 	xmlChar    *result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
+
 	memcpy(result, str, len);
 	result[len] = '\0';
 
@@ -1247,6 +1259,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	{
 
 		const xmlChar *q = xmlStrchr(p + 1, *p);
+
 		if (!q)
 			return XML_ERR_VERSION_MISSING;
 
@@ -1274,6 +1287,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 		{
 
 			const xmlChar *q = xmlStrchr(p + 1, *p);
+
 			if (!q)
 				return XML_ERR_MISSING_ENCODING;
 
@@ -1462,6 +1476,7 @@ xml_doctype_in_content(const xmlChar *str)
 
 		/* find end of PI (the string ?> is forbidden within a PI) */
 		const xmlChar *e = xmlStrstr(p, (xmlChar *) "?>");
+
 		if (!e)
 			return false;
 
@@ -1491,9 +1506,9 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	xmlChar    *string = xml_text2xmlChar(data);
 
 	xmlChar    *utf8string = pg_do_encoding_conversion(string,
-										   len,
-										   encoding,
-										   PG_UTF8);
+													   len,
+													   encoding,
+													   PG_UTF8);
 
 	/* Start up libxml and its parser */
 	PgXmlErrorContext *xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_WELLFORMED);
@@ -2111,6 +2126,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 
 		ArrayType  *array = DatumGetArrayTypeP(value);
 		Oid			elmtype = ARR_ELEMTYPE(array);
+
 		get_typlenbyvalalign(elmtype, &elmlen, &elmbyval, &elmalign);
 
 		deconstruct_array(array, elmtype,
@@ -2165,6 +2181,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 					char		buf[MAXDATELEN + 1];
 
 					DateADT		date = DatumGetDateADT(value);
+
 					/* XSD doesn't support infinite values */
 					if (DATE_NOT_FINITE(date))
 						ereport(ERROR,
@@ -2404,6 +2421,7 @@ query_to_oid_list(const char *query)
 	List	   *list = NIL;
 
 	int			spi_result = SPI_execute(query, true, 0);
+
 	if (spi_result != SPI_OK_SELECT)
 		elog(ERROR, "SPI_execute returned %s for %s",
 			 SPI_result_code_string(spi_result), query);
@@ -2413,9 +2431,10 @@ query_to_oid_list(const char *query)
 		bool		isnull;
 
 		Datum		oid = SPI_getbinval(SPI_tuptable->vals[i],
-							SPI_tuptable->tupdesc,
-							1,
-							&isnull);
+										SPI_tuptable->tupdesc,
+										1,
+										&isnull);
+
 		if (!isnull)
 			list = lappend_oid(list, DatumGetObjectId(oid));
 	}
@@ -2544,6 +2563,7 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 
 	SPI_connect();
 	Portal		portal = SPI_cursor_find(name);
+
 	if (portal == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
@@ -2663,7 +2683,8 @@ table_to_xmlschema(PG_FUNCTION_ARGS)
 
 	Relation	rel = table_open(relid, AccessShareLock);
 	const char *result = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls,
-										tableforest, targetns);
+													tableforest, targetns);
+
 	table_close(rel, NoLock);
 
 	PG_RETURN_XML_P(cstring_to_xmltype(result));
@@ -2689,8 +2710,9 @@ query_to_xmlschema(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
 
 	const char *result = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
-													InvalidOid, nulls,
-													tableforest, targetns));
+																InvalidOid, nulls,
+																tableforest, targetns));
+
 	SPI_cursor_close(portal);
 	SPI_finish();
 
@@ -2708,14 +2730,16 @@ cursor_to_xmlschema(PG_FUNCTION_ARGS)
 
 	SPI_connect();
 	Portal		portal = SPI_cursor_find(name);
+
 	if (portal == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("cursor \"%s\" does not exist", name)));
 
 	const char *xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
-													   InvalidOid, nulls,
-													   tableforest, targetns));
+																   InvalidOid, nulls,
+																   tableforest, targetns));
+
 	SPI_finish();
 
 	PG_RETURN_XML_P(cstring_to_xmltype(xmlschema));
@@ -2732,7 +2756,8 @@ table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 
 	Relation	rel = table_open(relid, AccessShareLock);
 	const char *xmlschema = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls,
-										   tableforest, targetns);
+													   tableforest, targetns);
+
 	table_close(rel, NoLock);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(table_to_xml_internal(relid,
@@ -2761,7 +2786,8 @@ query_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
 
 	const char *xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc,
-													   InvalidOid, nulls, tableforest, targetns));
+																   InvalidOid, nulls, tableforest, targetns));
+
 	SPI_cursor_close(portal);
 	SPI_finish();
 
@@ -2783,7 +2809,7 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 	ListCell   *cell;
 
 	char	   *xmlsn = map_sql_identifier_to_xml_name(get_namespace_name(nspid),
-										   true, false);
+													   true, false);
 	StringInfo	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlsn, xmlschema, targetns, top_level);
@@ -2801,7 +2827,7 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 		Oid			relid = lfirst_oid(cell);
 
 		StringInfo	subres = table_to_xml_internal(relid, NULL, nulls, tableforest,
-									   targetns, false);
+												   targetns, false);
 
 		appendBinaryStringInfo(result, subres->data, subres->len);
 		appendStringInfoChar(result, '\n');
@@ -2876,10 +2902,12 @@ schema_to_xmlschema_internal(const char *schemaname, bool nulls,
 	List	   *relid_list = schema_get_xml_visible_tables(nspid);
 
 	List	   *tupdesc_list = NIL;
+
 	foreach(cell, relid_list)
 	{
 
 		Relation	rel = table_open(lfirst_oid(cell), AccessShareLock);
+
 		tupdesc_list = lappend(tupdesc_list, CreateTupleDescCopy(rel->rd_att));
 		table_close(rel, NoLock);
 	}
@@ -2924,7 +2952,7 @@ schema_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
 	Oid			nspid = LookupExplicitNamespace(schemaname, false);
 
 	StringInfo	xmlschema = schema_to_xmlschema_internal(schemaname, nulls,
-											 tableforest, targetns);
+														 tableforest, targetns);
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(schema_to_xml_internal(nspid,
 																 xmlschema->data, nulls,
@@ -2944,7 +2972,7 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 	ListCell   *cell;
 
 	char	   *xmlcn = map_sql_identifier_to_xml_name(get_database_name(MyDatabaseId),
-										   true, false);
+													   true, false);
 	StringInfo	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlcn, xmlschema, targetns, true);
@@ -2962,7 +2990,7 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 		Oid			nspid = lfirst_oid(cell);
 
 		StringInfo	subres = schema_to_xml_internal(nspid, NULL, nulls,
-										tableforest, targetns, false);
+													tableforest, targetns, false);
 
 		appendBinaryStringInfo(result, subres->data, subres->len);
 		appendStringInfoChar(result, '\n');
@@ -3004,10 +3032,12 @@ database_to_xmlschema_internal(bool nulls, bool tableforest,
 	List	   *nspid_list = database_get_xml_visible_schemas();
 
 	List	   *tupdesc_list = NIL;
+
 	foreach(cell, relid_list)
 	{
 
 		Relation	rel = table_open(lfirst_oid(cell), AccessShareLock);
+
 		tupdesc_list = lappend(tupdesc_list, CreateTupleDescCopy(rel->rd_att));
 		table_close(rel, NoLock);
 	}
@@ -3103,6 +3133,7 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 	{
 
 		HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", relid);
 		Form_pg_class reltuple = (Form_pg_class) GETSTRUCT(tuple);
@@ -3205,9 +3236,9 @@ map_sql_schema_to_xmlschema_types(Oid nspid, List *relid_list, bool nulls,
 	char	   *xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
 
 	char	   *schematypename = map_multipart_sql_identifier_to_xml_name("SchemaType",
-															  dbname,
-															  nspname,
-															  NULL);
+																		  dbname,
+																		  nspname,
+																		  NULL);
 
 	appendStringInfo(&result,
 					 "<xsd:complexType name=\"%s\">\n", schematypename);
@@ -3273,9 +3304,9 @@ map_sql_catalog_to_xmlschema_types(List *nspid_list, bool nulls,
 	char	   *xmlcn = map_sql_identifier_to_xml_name(dbname, true, false);
 
 	char	   *catalogtypename = map_multipart_sql_identifier_to_xml_name("CatalogType",
-															   dbname,
-															   NULL,
-															   NULL);
+																		   dbname,
+																		   NULL,
+																		   NULL);
 
 	appendStringInfo(&result,
 					 "<xsd:complexType name=\"%s\">\n", catalogtypename);
@@ -3394,6 +3425,7 @@ map_sql_type_to_xml_name(Oid typeoid, int typmod)
 			{
 
 				HeapTuple	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeoid));
+
 				if (!HeapTupleIsValid(tuple))
 					elog(ERROR, "cache lookup failed for type %u", typeoid);
 				Form_pg_type typtuple = (Form_pg_type) GETSTRUCT(tuple);
@@ -3673,11 +3705,12 @@ SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result, char *tablename,
 		bool		isnull;
 
 		char	   *colname = map_sql_identifier_to_xml_name(SPI_fname(SPI_tuptable->tupdesc, i),
-												 true, false);
+															 true, false);
 		Datum		colval = SPI_getbinval(SPI_tuptable->vals[rownum],
-							   SPI_tuptable->tupdesc,
-							   i,
-							   &isnull);
+										   SPI_tuptable->tupdesc,
+										   i,
+										   &isnull);
+
 		if (isnull)
 		{
 			if (nulls)
@@ -3752,6 +3785,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 				(void (*) (xmlNodePtr)) xmlFreeDoc : xmlFreeNode;
 
 			int			bytes = xmlNodeDump(buf, NULL, cur_copy, 0, 0);
+
 			if (bytes == -1 || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 							"could not dump node");
@@ -3771,6 +3805,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 	{
 
 		xmlChar    *str = xmlXPathCastNodeToString(cur);
+
 		PG_TRY();
 		{
 			/* Here we rely on XML having the same representation as TEXT */
@@ -3860,6 +3895,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 
 	/* Common code for scalar-value cases */
 	char	   *result_str = map_sql_value_to_xml_value(datum, datumtype, true);
+
 	datum = PointerGetDatum(cstring_to_xmltype(result_str));
 	(void) accumArrayResult(astate, datum, false,
 							XMLOID, CurrentMemoryContext);
@@ -3903,6 +3939,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	 * 'http://example2.com']].
 	 */
 	int			ndim = namespaces ? ARR_NDIM(namespaces) : 0;
+
 	if (ndim != 0)
 	{
 
@@ -3933,6 +3970,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	char	   *datastr = VARDATA(data);
 	int32		len = VARSIZE(data) - VARHDRSZ;
 	int32		xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
+
 	if (xpath_len == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
@@ -3989,6 +4027,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 							 errmsg("neither namespace name nor URI may be null")));
 				char	   *ns_name = TextDatumGetCString(ns_names_uris[i * 2]);
 				char	   *ns_uri = TextDatumGetCString(ns_names_uris[i * 2 + 1]);
+
 				if (xmlXPathRegisterNs(xpathctx,
 									   (xmlChar *) ns_name,
 									   (xmlChar *) ns_uri) != 0)
@@ -4068,6 +4107,7 @@ xpath(PG_FUNCTION_ARGS)
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 
 	ArrayBuildState *astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
+
 	xpath_internal(xpath_expr_text, data, namespaces,
 				   NULL, astate);
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
@@ -4210,6 +4250,7 @@ GetXmlTableBuilderPrivateData(TableFuncScanState *state, const char *fname)
 	if (!IsA(state, TableFuncScanState))
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
 	XmlTableBuilderData *result = (XmlTableBuilderData *) state->opaque;
+
 	if (result->magic != XMLTABLE_CONTEXT_MAGIC)
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
 
@@ -4235,6 +4276,7 @@ XmlTableInitOpaque(TableFuncScanState *state, int natts)
 	volatile xmlParserCtxtPtr ctxt = NULL;
 
 	XmlTableBuilderData *xtCxt = palloc0(sizeof(XmlTableBuilderData));
+
 	xtCxt->magic = XMLTABLE_CONTEXT_MAGIC;
 	xtCxt->natts = natts;
 	xtCxt->xpathscomp = palloc0(sizeof(xmlXPathCompExprPtr) * natts);
@@ -4534,6 +4576,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 								 errmsg("more than one value returned by column XPath expression")));
 
 					xmlChar    *str = xmlXPathCastNodeSetToString(xpathobj->nodesetval);
+
 					cstr = str ? xml_pstrdup_and_free(str) : "";
 				}
 			}
@@ -4566,6 +4609,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 		{
 
 			xmlChar    *str = xmlXPathCastNumberToString(xpathobj->floatval);
+
 			cstr = xml_pstrdup_and_free(str);
 		}
 		else

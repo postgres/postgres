@@ -144,6 +144,7 @@ BackgroundWorkerShmemSize(void)
 
 	/* Array of workers is variably sized. */
 	Size		size = offsetof(BackgroundWorkerArray, slot);
+
 	size = add_size(size, mul_size(max_worker_processes,
 								   sizeof(BackgroundWorkerSlot)));
 
@@ -181,6 +182,7 @@ BackgroundWorkerShmemInit(void)
 			BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[slotno];
 
 			RegisteredBgWorker *rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+
 			Assert(slotno < max_worker_processes);
 			slot->in_use = true;
 			slot->terminate = false;
@@ -220,6 +222,7 @@ FindRegisteredWorkerBySlotNumber(int slotno)
 	{
 
 		RegisteredBgWorker *rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+
 		if (rw->rw_shmem_slot == slotno)
 			return rw;
 	}
@@ -275,6 +278,7 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 
 		/* See whether we already know about this worker. */
 		RegisteredBgWorker *rw = FindRegisteredWorkerBySlotNumber(slotno);
+
 		if (rw != NULL)
 		{
 			/*
@@ -320,6 +324,7 @@ BackgroundWorkerStateChange(bool allow_new_workers)
 			 * complete before the store to in_use.
 			 */
 			int			notify_pid = slot->worker.bgw_notify_pid;
+
 			if ((slot->worker.bgw_flags & BGWORKER_CLASS_PARALLEL) != 0)
 				BackgroundWorkerData->parallel_terminate_count++;
 			slot->pid = 0;
@@ -425,6 +430,7 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+
 	Assert(slot->in_use);
 
 	/*
@@ -456,6 +462,7 @@ ReportBackgroundWorkerPID(RegisteredBgWorker *rw)
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+
 	slot->pid = rw->rw_pid;
 
 	if (rw->rw_worker.bgw_notify_pid != 0)
@@ -476,6 +483,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+
 	slot->pid = rw->rw_pid;
 	int			notify_pid = rw->rw_worker.bgw_notify_pid;
 
@@ -508,6 +516,7 @@ BackgroundWorkerStopNotifications(pid_t pid)
 	{
 
 		RegisteredBgWorker *rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+
 		if (rw->rw_worker.bgw_notify_pid == pid)
 			rw->rw_worker.bgw_notify_pid = 0;
 	}
@@ -534,6 +543,7 @@ ForgetUnstartedBackgroundWorkers(void)
 	{
 
 		RegisteredBgWorker *rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
+
 		Assert(rw->rw_shmem_slot < max_worker_processes);
 		BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
 
@@ -619,6 +629,7 @@ BackgroundWorkerEntry(int slotno)
 
 	Assert(slotno < BackgroundWorkerData->total_slots);
 	BackgroundWorkerSlot *slot = &BackgroundWorkerData->slot[slotno];
+
 	Assert(slot->in_use);
 
 	/* must copy this in case we don't intend to retain shmem access */
@@ -810,9 +821,9 @@ StartBackgroundWorker(void)
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory, except in the
-	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must
-	 * do this before we can use LWLocks (and in the EXEC_BACKEND case we
-	 * already had to do some stuff with LWLocks).
+	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
+	 * this before we can use LWLocks (and in the EXEC_BACKEND case we already
+	 * had to do some stuff with LWLocks).
 	 */
 #ifndef EXEC_BACKEND
 	InitProcess();
@@ -907,6 +918,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	 * Copy the registration data into the registered workers list.
 	 */
 	RegisteredBgWorker *rw = malloc(sizeof(RegisteredBgWorker));
+
 	if (rw == NULL)
 	{
 		ereport(LOG,

@@ -70,6 +70,7 @@ pg_hmac_create(pg_cryptohash_type type)
 {
 
 	pg_hmac_ctx *ctx = ALLOC(sizeof(pg_hmac_ctx));
+
 	if (ctx == NULL)
 		return NULL;
 	memset(ctx, 0, sizeof(pg_hmac_ctx));
@@ -152,6 +153,7 @@ pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 		memset(shrinkbuf, 0, digest_size);
 
 		pg_cryptohash_ctx *hash_ctx = pg_cryptohash_create(ctx->type);
+
 		if (hash_ctx == NULL)
 		{
 			FREE(shrinkbuf);
@@ -222,6 +224,7 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 		return -1;
 
 	uint8	   *h = ALLOC(ctx->digest_size);
+
 	if (h == NULL)
 		return -1;
 	memset(h, 0, ctx->digest_size);

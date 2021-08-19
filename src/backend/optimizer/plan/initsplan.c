@@ -381,6 +381,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 
 	/* Copy each Var (or PlaceHolderVar) and adjust it to match our level */
 	List	   *newvars = NIL;
+
 	foreach(lc, vars)
 	{
 		Node	   *node = (Node *) lfirst(lc);
@@ -587,6 +588,7 @@ create_lateral_join_info(PlannerInfo *root)
 
 		/* need not consider baserel further if it has no lateral refs */
 		Relids		outer_lateral_relids = brel->lateral_relids;
+
 		if (outer_lateral_relids == NULL)
 			continue;
 
@@ -619,6 +621,7 @@ create_lateral_join_info(PlannerInfo *root)
 
 		/* Nothing to do at rels with no lateral refs */
 		Relids		lateral_relids = brel->lateral_relids;
+
 		if (lateral_relids == NULL)
 			continue;
 
@@ -633,6 +636,7 @@ create_lateral_join_info(PlannerInfo *root)
 
 		/* Mark this rel's referencees */
 		int			rti2 = -1;
+
 		while ((rti2 = bms_next_member(lateral_relids, rti2)) >= 0)
 		{
 			RelOptInfo *brel2 = root->simple_rel_array[rti2];
@@ -692,8 +696,8 @@ deconstruct_jointree(PlannerInfo *root)
 	root->nullable_baserels = NULL;
 
 	List	   *result = deconstruct_recurse(root, (Node *) root->parse->jointree, false,
-								 &qualscope, &inner_join_rels,
-								 &postponed_qual_list);
+											 &qualscope, &inner_join_rels,
+											 &postponed_qual_list);
 
 	/* Shouldn't be any leftover quals */
 	Assert(postponed_qual_list == NIL);
@@ -767,17 +771,20 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		*inner_join_rels = NULL;
 		joinlist = NIL;
 		int			remaining = list_length(f->fromlist);
+
 		foreach(l, f->fromlist)
 		{
 			Relids		sub_qualscope;
 
 			List	   *sub_joinlist = deconstruct_recurse(root, lfirst(l),
-											   below_outer_join,
-											   &sub_qualscope,
-											   inner_join_rels,
-											   &child_postponed_quals);
+														   below_outer_join,
+														   &sub_qualscope,
+														   inner_join_rels,
+														   &child_postponed_quals);
+
 			*qualscope = bms_add_members(*qualscope, sub_qualscope);
 			int			sub_members = list_length(sub_joinlist);
+
 			remaining--;
 			if (sub_members <= 1 ||
 				list_length(joinlist) + sub_members + remaining <= from_collapse_limit)
@@ -946,6 +953,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * that they'll be handled properly in make_outerjoininfo.
 		 */
 		List	   *my_quals = NIL;
+
 		foreach(l, child_postponed_quals)
 		{
 			PostponedQual *pq = (PostponedQual *) lfirst(l);
@@ -1425,7 +1433,9 @@ compute_semijoin_info(PlannerInfo *root, SpecialJoinInfo *sjinfo, List *clause)
 	semi_operators = NIL;
 	semi_rhs_exprs = NIL;
 	bool		all_btree = true;
-	bool		all_hash = enable_hashagg;	/* don't consider hash if not enabled */
+	bool		all_hash = enable_hashagg;	/* don't consider hash if not
+											 * enabled */
+
 	foreach(lc, clause)
 	{
 		OpExpr	   *op = (OpExpr *) lfirst(lc);
@@ -1459,6 +1469,7 @@ compute_semijoin_info(PlannerInfo *root, SpecialJoinInfo *sjinfo, List *clause)
 		Node	   *right_expr = lsecond(op->args);
 		Relids		left_varnos = pull_varnos(root, left_expr);
 		Relids		right_varnos = pull_varnos(root, right_expr);
+
 		all_varnos = bms_union(left_varnos, right_varnos);
 		Oid			opinputtype = exprType(left_expr);
 
@@ -1816,14 +1827,14 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * Build the RestrictInfo node itself.
 	 */
 	RestrictInfo *restrictinfo = make_restrictinfo(root,
-									 (Expr *) clause,
-									 is_pushed_down,
-									 outerjoin_delayed,
-									 pseudoconstant,
-									 security_level,
-									 relids,
-									 outerjoin_nonnullable,
-									 nullable_relids);
+												   (Expr *) clause,
+												   is_pushed_down,
+												   outerjoin_delayed,
+												   pseudoconstant,
+												   security_level,
+												   relids,
+												   outerjoin_nonnullable,
+												   nullable_relids);
 
 	/*
 	 * If it's a join clause (either naturally, or because delayed by
@@ -2012,6 +2023,7 @@ check_outerjoin_delay(PlannerInfo *root,
 	Relids		relids = bms_copy(*relids_p);
 	Relids		nullable_relids = NULL;
 	bool		outerjoin_delayed = false;
+
 	do
 	{
 		ListCell   *l;
@@ -2086,6 +2098,7 @@ check_equivalence_delay(PlannerInfo *root,
 
 	/* must copy restrictinfo's relids to avoid changing it */
 	Relids		relids = bms_copy(restrictinfo->left_relids);
+
 	/* check left side does not need delay */
 	if (check_outerjoin_delay(root, &relids, &nullable_relids, true))
 		return false;
@@ -2115,6 +2128,7 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 
 	/* Check for IS NULL, and identify the Var forced to NULL */
 	Var		   *forced_null_var = find_forced_null_var(clause);
+
 	if (forced_null_var == NULL)
 		return false;
 	Index		forced_null_rel = forced_null_var->varno;
@@ -2258,12 +2272,12 @@ process_implied_equality(PlannerInfo *root,
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	Node	   *clause = (Node *) make_opclause(opno,
-									BOOLOID,	/* opresulttype */
-									false,	/* opretset */
-									copyObject(item1),
-									copyObject(item2),
-									InvalidOid,
-									collation);
+												BOOLOID,	/* opresulttype */
+												false,	/* opretset */
+												copyObject(item1),
+												copyObject(item2),
+												InvalidOid,
+												collation);
 
 	/* If both constant, try to reduce to a boolean constant. */
 	if (both_const)
@@ -2289,6 +2303,7 @@ process_implied_equality(PlannerInfo *root,
 	 * Retrieve all relids mentioned within the possibly-simplified clause.
 	 */
 	Relids		relids = pull_varnos(root, clause);
+
 	Assert(bms_is_subset(relids, qualscope));
 
 	/*
@@ -2321,14 +2336,14 @@ process_implied_equality(PlannerInfo *root,
 	 * Build the RestrictInfo node itself.
 	 */
 	RestrictInfo *restrictinfo = make_restrictinfo(root,
-									 (Expr *) clause,
-									 true,	/* is_pushed_down */
-									 false, /* outerjoin_delayed */
-									 pseudoconstant,
-									 security_level,
-									 relids,
-									 NULL,	/* outer_relids */
-									 nullable_relids);
+												   (Expr *) clause,
+												   true,	/* is_pushed_down */
+												   false,	/* outerjoin_delayed */
+												   pseudoconstant,
+												   security_level,
+												   relids,
+												   NULL,	/* outer_relids */
+												   nullable_relids);
 
 	/*
 	 * If it's a join clause, add vars used in the clause to targetlists of
@@ -2402,25 +2417,25 @@ build_implied_join_equality(PlannerInfo *root,
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	Expr	   *clause = make_opclause(opno,
-						   BOOLOID, /* opresulttype */
-						   false,	/* opretset */
-						   copyObject(item1),
-						   copyObject(item2),
-						   InvalidOid,
-						   collation);
+									   BOOLOID, /* opresulttype */
+									   false,	/* opretset */
+									   copyObject(item1),
+									   copyObject(item2),
+									   InvalidOid,
+									   collation);
 
 	/*
 	 * Build the RestrictInfo node itself.
 	 */
 	RestrictInfo *restrictinfo = make_restrictinfo(root,
-									 clause,
-									 true,	/* is_pushed_down */
-									 false, /* outerjoin_delayed */
-									 false, /* pseudoconstant */
-									 security_level,	/* security_level */
-									 qualscope, /* required_relids */
-									 NULL,	/* outer_relids */
-									 nullable_relids);	/* nullable_relids */
+												   clause,
+												   true,	/* is_pushed_down */
+												   false,	/* outerjoin_delayed */
+												   false,	/* pseudoconstant */
+												   security_level,	/* security_level */
+												   qualscope,	/* required_relids */
+												   NULL,	/* outer_relids */
+												   nullable_relids);	/* nullable_relids */
 
 	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);
@@ -2465,9 +2480,11 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 			fkinfo->ref_relid >= root->simple_rel_array_size)
 			continue;			/* just paranoia */
 		RelOptInfo *con_rel = root->simple_rel_array[fkinfo->con_relid];
+
 		if (con_rel == NULL)
 			continue;
 		RelOptInfo *ref_rel = root->simple_rel_array[fkinfo->ref_relid];
+
 		if (ref_rel == NULL)
 			continue;
 
@@ -2496,6 +2513,7 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 			ListCell   *lc2;
 
 			EquivalenceClass *ec = match_eclasses_to_foreign_key_col(root, fkinfo, colno);
+
 			/* Don't bother looking for loose quals if we got an EC match */
 			if (ec != NULL)
 			{
@@ -2511,7 +2529,8 @@ match_foreign_keys_to_quals(PlannerInfo *root)
 			 */
 			con_attno = fkinfo->conkey[colno];
 			ref_attno = fkinfo->confkey[colno];
-			Oid			fpeqop = InvalidOid;	/* we'll look this up only if needed */
+			Oid			fpeqop = InvalidOid;	/* we'll look this up only if
+												 * needed */
 
 			foreach(lc2, con_rel->joininfo)
 			{
@@ -2685,7 +2704,7 @@ check_memoizable(RestrictInfo *restrictinfo)
 	Node	   *leftarg = linitial(((OpExpr *) clause)->args);
 
 	TypeCacheEntry *typentry = lookup_type_cache(exprType(leftarg), TYPECACHE_HASH_PROC |
-								 TYPECACHE_EQ_OPR);
+												 TYPECACHE_EQ_OPR);
 
 	if (!OidIsValid(typentry->hash_proc) || !OidIsValid(typentry->eq_opr))
 		return;

@@ -90,7 +90,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 		/* Same for stylesheet */
 		xmlDocPtr	ssdoc = xmlParseMemory((char *) VARDATA_ANY(ssheet),
-							   VARSIZE_ANY_EXHDR(ssheet));
+										   VARSIZE_ANY_EXHDR(ssheet));
 
 		if (ssdoc == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
@@ -106,6 +106,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		xslt_ctxt = xsltNewTransformContext(stylesheet, doctree);
 
 		bool		xslt_sec_prefs_error = false;
+
 		if ((xslt_sec_prefs = xsltNewSecurityPrefs()) == NULL)
 			xslt_sec_prefs_error = true;
 
@@ -198,7 +199,7 @@ parse_params(text *paramstr)
 
 	char	   *pstr = text_to_cstring(paramstr);
 
-	int			max_params = 20;			/* must be even! */
+	int			max_params = 20;	/* must be even! */
 	const char **params = (const char **) palloc((max_params + 1) * sizeof(char *));
 	int			nparams = 0;
 

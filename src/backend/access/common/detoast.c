@@ -85,6 +85,7 @@ detoast_external_attr(struct varlena *attr)
 
 		ExpandedObjectHeader *eoh = DatumGetEOHP(PointerGetDatum(attr));
 		Size		resultsize = EOH_get_flat_size(eoh);
+
 		result = (struct varlena *) palloc(resultsize);
 		EOH_flatten_into(eoh, (void *) result, resultsize);
 	}
@@ -149,6 +150,7 @@ detoast_attr(struct varlena *attr)
 		{
 
 			struct varlena *result = (struct varlena *) palloc(VARSIZE_ANY(attr));
+
 			memcpy(result, attr, VARSIZE_ANY(attr));
 			attr = result;
 		}
@@ -178,6 +180,7 @@ detoast_attr(struct varlena *attr)
 		Size		new_size = data_size + VARHDRSZ;
 
 		struct varlena *new_attr = (struct varlena *) palloc(new_size);
+
 		SET_VARSIZE(new_attr, new_size);
 		memcpy(VARDATA(new_attr), VARDATA_SHORT(attr), data_size);
 		attr = new_attr;
@@ -317,6 +320,7 @@ detoast_attr_slice(struct varlena *attr,
 		slicelength = attrsize - sliceoffset;
 
 	struct varlena *result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+
 	SET_VARSIZE(result, slicelength + VARHDRSZ);
 
 	memcpy(VARDATA(result), attrdata + sliceoffset, slicelength);
@@ -467,6 +471,7 @@ toast_decompress_datum(struct varlena *attr)
 	 * decompress the data using the appropriate decompression routine.
 	 */
 	ToastCompressionId cmid = TOAST_COMPRESS_METHOD(attr);
+
 	switch (cmid)
 	{
 		case TOAST_PGLZ_COMPRESSION_ID:
@@ -509,6 +514,7 @@ toast_decompress_datum_slice(struct varlena *attr, int32 slicelength)
 	 * decompress the data slice using the appropriate decompression routine.
 	 */
 	ToastCompressionId cmid = TOAST_COMPRESS_METHOD(attr);
+
 	switch (cmid)
 	{
 		case TOAST_PGLZ_COMPRESSION_ID:

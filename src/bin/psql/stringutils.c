@@ -259,6 +259,7 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 			src++;				/* process escaped character */
 
 		int			i = PQmblenBounded(src, encoding);
+
 		while (i--)
 			*dst++ = *src++;
 	}
@@ -318,6 +319,7 @@ quote_if_needed(const char *source, const char *entails_quote,
 			need_quotes = true;
 
 		int			i = PQmblenBounded(src, encoding);
+
 		while (i--)
 			*dst++ = *src++;
 	}

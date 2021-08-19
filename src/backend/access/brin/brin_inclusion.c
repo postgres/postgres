@@ -106,6 +106,7 @@ brin_inclusion_opcinfo(PG_FUNCTION_ARGS)
 	 * to look it up again.
 	 */
 	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(3)) + sizeof(InclusionOpaque));
+
 	result->oi_nstored = 3;
 	result->oi_regular_nulls = true;
 	result->oi_opaque = (InclusionOpaque *)
@@ -175,6 +176,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	 * "contains empty" flag in the element (unless already set).
 	 */
 	FmgrInfo   *finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY);
+
 	if (finfo != NULL && DatumGetBool(FunctionCall1Coll(finfo, colloid, newval)))
 	{
 		if (!DatumGetBool(column->bv_values[INCLUSION_CONTAINS_EMPTY]))
@@ -219,7 +221,8 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
 	Assert(finfo != NULL);
 	Datum		result = FunctionCall2Coll(finfo, colloid,
-							   column->bv_values[INCLUSION_UNION], newval);
+										   column->bv_values[INCLUSION_UNION], newval);
+
 	if (!attr->attbyval &&
 		DatumGetPointer(result) != DatumGetPointer(column->bv_values[INCLUSION_UNION]))
 	{
@@ -264,9 +267,11 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 
 	AttrNumber	attno = key->sk_attno;
+
 	subtype = key->sk_subtype;
 	Datum		query = key->sk_argument;
 	Datum		unionval = column->bv_values[INCLUSION_UNION];
+
 	switch (key->sk_strategy)
 	{
 			/*
@@ -495,6 +500,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 
 	/* Check if A and B are mergeable; if not, mark A unmergeable. */
 	FmgrInfo   *finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE);
+
 	if (finfo != NULL &&
 		!DatumGetBool(FunctionCall2Coll(finfo, colloid,
 										col_a->bv_values[INCLUSION_UNION],
@@ -508,8 +514,9 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
 	Assert(finfo != NULL);
 	Datum		result = FunctionCall2Coll(finfo, colloid,
-							   col_a->bv_values[INCLUSION_UNION],
-							   col_b->bv_values[INCLUSION_UNION]);
+										   col_a->bv_values[INCLUSION_UNION],
+										   col_b->bv_values[INCLUSION_UNION]);
+
 	if (!attr->attbyval &&
 		DatumGetPointer(result) != DatumGetPointer(col_a->bv_values[INCLUSION_UNION]))
 	{
@@ -619,9 +626,9 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
 		Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 		HeapTuple	tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
-								ObjectIdGetDatum(attr->atttypid),
-								ObjectIdGetDatum(subtype),
-								Int16GetDatum(strategynum));
+											ObjectIdGetDatum(attr->atttypid),
+											ObjectIdGetDatum(subtype),
+											Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",

@@ -149,6 +149,7 @@ blbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	page = GenericXLogRegisterBuffer(gxlogState, buffer, 0);
 
 	BloomMetaPageData *metaData = BloomPageGetMeta(page);
+
 	memcpy(metaData->notFullPage, notFullPage, sizeof(BlockNumber) * countPage);
 	metaData->nStart = 0;
 	metaData->nEnd = countPage;
@@ -191,7 +192,8 @@ blvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		vacuum_delay_point();
 
 		Buffer		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
-									RBM_NORMAL, info->strategy);
+												RBM_NORMAL, info->strategy);
+
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		Page		page = (Page) BufferGetPage(buffer);
 

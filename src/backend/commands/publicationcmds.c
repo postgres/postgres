@@ -153,6 +153,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 
 	/* must have CREATE privilege on database */
 	AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -167,7 +168,8 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 
 	/* Check if name is used */
 	Oid			puboid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
-							 CStringGetDatum(stmt->pubname));
+										 CStringGetDatum(stmt->pubname));
+
 	if (OidIsValid(puboid))
 	{
 		ereport(ERROR,
@@ -225,6 +227,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		Assert(list_length(stmt->tables) > 0);
 
 		List	   *rels = OpenTableList(stmt->tables);
+
 		PublicationAddTables(puboid, rels, true, NULL);
 		CloseTableList(rels);
 	}
@@ -431,7 +434,7 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 	Relation	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCacheCopy1(PUBLICATIONNAME,
-							  CStringGetDatum(stmt->pubname));
+										  CStringGetDatum(stmt->pubname));
 
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
@@ -536,7 +539,7 @@ OpenTableList(List *tables)
 			ListCell   *child;
 
 			List	   *children = find_all_inheritors(myrelid, ShareUpdateExclusiveLock,
-										   NULL);
+													   NULL);
 
 			foreach(child, children)
 			{
@@ -602,6 +605,7 @@ PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 						   RelationGetRelationName(rel));
 
 		ObjectAddress obj = publication_add_relation(pubid, rel, if_not_exists);
+
 		if (stmt)
 		{
 			EventTriggerCollectSimpleCommand(obj, InvalidObjectAddress,
@@ -672,6 +676,7 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 		/* New owner must have CREATE privilege on database */
 		AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, newOwnerId, ACL_CREATE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_DATABASE,
 						   get_database_name(MyDatabaseId));

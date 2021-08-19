@@ -136,10 +136,12 @@ boolin(PG_FUNCTION_ARGS)
 	 * Skip leading and trailing whitespace
 	 */
 	const char *str = in_str;
+
 	while (isspace((unsigned char) *str))
 		str++;
 
 	size_t		len = strlen(str);
+
 	while (len > 0 && isspace((unsigned char) str[len - 1]))
 		len--;
 
@@ -181,6 +183,7 @@ boolrecv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
 	int			ext = pq_getmsgbyte(buf);
+
 	PG_RETURN_BOOL((ext != 0) ? true : false);
 }
 
@@ -320,7 +323,8 @@ makeBoolAggState(FunctionCallInfo fcinfo)
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
 	BoolAggState *state = (BoolAggState *) MemoryContextAlloc(agg_context,
-												sizeof(BoolAggState));
+															  sizeof(BoolAggState));
+
 	state->aggcount = 0;
 	state->aggtrue = 0;
 

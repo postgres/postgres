@@ -31,6 +31,7 @@ blbeginscan(Relation r, int nkeys, int norderbys)
 	IndexScanDesc scan = RelationGetIndexScan(r, nkeys, norderbys);
 
 	BloomScanOpaque so = (BloomScanOpaque) palloc(sizeof(BloomScanOpaqueData));
+
 	initBloomState(&so->state, scan->indexRelation);
 	so->sign = NULL;
 
@@ -117,16 +118,18 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 * buffer access strategy.
 	 */
 	BufferAccessStrategy bas = GetAccessStrategy(BAS_BULKREAD);
+
 	npages = RelationGetNumberOfBlocks(scan->indexRelation);
 
 	for (blkno = BLOOM_HEAD_BLKNO; blkno < npages; blkno++)
 	{
 
 		Buffer		buffer = ReadBufferExtended(scan->indexRelation, MAIN_FORKNUM,
-									blkno, RBM_NORMAL, bas);
+												blkno, RBM_NORMAL, bas);
 
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		Page		page = BufferGetPage(buffer);
+
 		TestForOldSnapshot(scan->xs_snapshot, scan->indexRelation, page);
 
 		if (!PageIsNew(page) && !BloomPageIsDeleted(page))

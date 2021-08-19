@@ -91,6 +91,7 @@ itemptr_to_uint64(const ItemPointer iptr)
 	Assert(GinItemPointerGetOffsetNumber(iptr) < (1 << MaxHeapTuplesPerPageBits));
 
 	uint64		val = GinItemPointerGetBlockNumber(iptr);
+
 	val <<= MaxHeapTuplesPerPageBits;
 	val |= GinItemPointerGetOffsetNumber(iptr);
 
@@ -136,6 +137,7 @@ decode_varbyte(unsigned char **ptr)
 	/* 1st byte */
 	uint64		c = *(p++);
 	uint64		val = c & 0x7F;
+
 	if (c & 0x80)
 	{
 		/* 2nd byte */
@@ -201,6 +203,7 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 	GinPostingList *result = palloc(maxsize);
 
 	int			maxbytes = maxsize - offsetof(GinPostingList, bytes);
+
 	Assert(maxbytes > 0);
 
 	/* Store the first special item */
@@ -210,6 +213,7 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 
 	unsigned char *ptr = result->bytes;
 	unsigned char *endptr = result->bytes + maxbytes;
+
 	for (totalpacked = 1; totalpacked < nipd; totalpacked++)
 	{
 		uint64		val = itemptr_to_uint64(&ipd[totalpacked]);
@@ -300,6 +304,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 	ItemPointer result = palloc(nallocated * sizeof(ItemPointerData));
 
 	int			ndecoded = 0;
+
 	while ((char *) segment < endseg)
 	{
 		/* enlarge output array if needed */
@@ -350,6 +355,7 @@ ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len,
 	int			ndecoded;
 
 	ItemPointer items = ginPostingListDecodeAllSegments(ptr, len, &ndecoded);
+
 	tbm_add_tuples(tbm, items, ndecoded, false);
 	pfree(items);
 

@@ -202,6 +202,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 					 */
 
 					Expr	   *suborclause = extract_or_clause(rinfo, rel);
+
 					if (suborclause)
 						subclauses = lappend(subclauses, suborclause);
 				}
@@ -232,6 +233,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 		 * to preserve AND/OR flatness (ie, no OR directly underneath OR).
 		 */
 		Node	   *subclause = (Node *) make_ands_explicit(subclauses);
+
 		if (is_orclause(subclause))
 			clauselist = list_concat(clauselist,
 									 ((BoolExpr *) subclause)->args);
@@ -266,14 +268,14 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 	 * as a base restriction clause.
 	 */
 	RestrictInfo *or_rinfo = make_restrictinfo(root,
-								 orclause,
-								 true,
-								 false,
-								 false,
-								 join_or_rinfo->security_level,
-								 NULL,
-								 NULL,
-								 NULL);
+											   orclause,
+											   true,
+											   false,
+											   false,
+											   join_or_rinfo->security_level,
+											   NULL,
+											   NULL,
+											   NULL);
 
 	/*
 	 * Estimate its selectivity.  (We could have done this earlier, but doing

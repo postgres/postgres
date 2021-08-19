@@ -660,6 +660,7 @@ SerializeRelationMap(Size maxSize, char *startAddress)
 	Assert(maxSize >= EstimateRelationMapSpace());
 
 	SerializedActiveRelMaps *relmaps = (SerializedActiveRelMaps *) startAddress;
+
 	relmaps->active_shared_updates = active_shared_updates;
 	relmaps->active_local_updates = active_local_updates;
 }
@@ -680,6 +681,7 @@ RestoreRelationMap(char *startAddress)
 		elog(ERROR, "parallel worker has existing mappings");
 
 	SerializedActiveRelMaps *relmaps = (SerializedActiveRelMaps *) startAddress;
+
 	active_shared_updates = relmaps->active_shared_updates;
 	active_local_updates = relmaps->active_local_updates;
 }
@@ -714,6 +716,7 @@ load_relmap_file(bool shared, bool lock_held)
 
 	/* Read data ... */
 	int			fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
+
 	if (fd < 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
@@ -732,6 +735,7 @@ load_relmap_file(bool shared, bool lock_held)
 
 	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
 	int			r = read(fd, map, sizeof(RelMapFile));
+
 	if (r != sizeof(RelMapFile))
 	{
 		if (r < 0)
@@ -831,6 +835,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	}
 
 	int			fd = OpenTransientFile(mapfilename, O_WRONLY | O_CREAT | PG_BINARY);
+
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

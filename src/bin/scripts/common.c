@@ -100,6 +100,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	 */
 	PGresult   *res = executeQuery(conn, sql.data, echo);
 	int			ntups = PQntuples(res);
+
 	if (ntups != 1)
 	{
 		pg_log_error(ngettext("query returned %d row instead of one: %s",

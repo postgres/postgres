@@ -248,6 +248,7 @@ init_parallel_dump_utils(void)
 
 		/* Initialize socket access */
 		int			err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+
 		if (err != 0)
 		{
 			pg_log_error("%s() failed: error code %d", "WSAStartup", err);
@@ -484,6 +485,7 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 			}
 		}
 		DWORD		ret = WaitForMultipleObjects(nrun, lpHandles, false, INFINITE);
+
 		Assert(ret != WAIT_FAILED);
 		hThread = (uintptr_t) lpHandles[ret - WAIT_OBJECT_0];
 		free(lpHandles);
@@ -1416,6 +1418,7 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 		TocEntry   *te = pstate->te[worker];
 
 		int			status = parseWorkerResponse(AH, te, msg);
+
 		slot->callback(AH, te, status, slot->callback_data);
 		slot->workerStatus = WRKR_IDLE;
 		pstate->te[worker] = NULL;
@@ -1624,6 +1627,7 @@ getMessageFromWorker(ParallelState *pstate, bool do_wait, int *worker)
 		 * operation, it shouldn't be a problem in practice.
 		 */
 		char	   *msg = readMessageFromPipe(pstate->parallelSlot[i].pipeRead);
+
 		*worker = i;
 		return msg;
 	}
@@ -1672,6 +1676,7 @@ readMessageFromPipe(int fd)
 	 */
 	bufsize = 64;				/* could be any number */
 	char	   *msg = (char *) pg_malloc(bufsize);
+
 	msgsize = 0;
 	for (;;)
 	{

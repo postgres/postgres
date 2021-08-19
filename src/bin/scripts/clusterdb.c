@@ -63,6 +63,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	const char *progname = get_progname(argv[0]);
+
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "clusterdb", help);
@@ -236,6 +237,7 @@ cluster_all_databases(ConnParams *cparams, const char *progname,
 
 	PGconn	   *conn = connectMaintenanceDatabase(cparams, progname, echo);
 	PGresult   *result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
+
 	PQfinish(conn);
 
 	for (i = 0; i < PQntuples(result); i++)

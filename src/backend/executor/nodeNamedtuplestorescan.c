@@ -39,6 +39,7 @@ NamedTuplestoreScanNext(NamedTuplestoreScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
+
 	tuplestore_select_read_pointer(node->relation, node->readptr);
 	(void) tuplestore_gettupleslot(node->relation, true, false, slot);
 	return slot;
@@ -95,11 +96,13 @@ ExecInitNamedTuplestoreScan(NamedTuplestoreScan *node, EState *estate, int eflag
 	 * create new NamedTuplestoreScanState for node
 	 */
 	NamedTuplestoreScanState *scanstate = makeNode(NamedTuplestoreScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecNamedTuplestoreScan;
 
 	EphemeralNamedRelation enr = get_ENR(estate->es_queryEnv, node->enrname);
+
 	if (!enr)
 		elog(ERROR, "executor could not find named tuplestore \"%s\"",
 			 node->enrname);

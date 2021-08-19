@@ -285,8 +285,9 @@ main(int argc, char **argv)
 
 		pg_waldump_path = pg_malloc(MAXPGPATH);
 		int			ret = find_other_exec(argv[0], "pg_waldump",
-							  "pg_waldump (PostgreSQL) " PG_VERSION "\n",
-							  pg_waldump_path);
+										  "pg_waldump (PostgreSQL) " PG_VERSION "\n",
+										  pg_waldump_path);
+
 		if (ret < 0)
 		{
 			char		full_path[MAXPGPATH];
@@ -400,6 +401,7 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
 	 */
 	char	   *buffer = pg_malloc(statbuf.st_size);
 	int			rc = read(fd, buffer, statbuf.st_size);
+
 	if (rc != statbuf.st_size)
 	{
 		if (rc < 0)
@@ -464,6 +466,7 @@ record_manifest_details_for_file(JsonManifestParseContext *context,
 
 	/* Make a new entry in the hash table for this file. */
 	manifest_file *m = manifest_files_insert(ht, pathname, &found);
+
 	if (found)
 		report_fatal_error("duplicate path name in backup manifest: \"%s\"",
 						   pathname);
@@ -489,6 +492,7 @@ record_manifest_details_for_wal_range(JsonManifestParseContext *context,
 
 	/* Allocate and initialize a struct describing this WAL range. */
 	manifest_wal_range *range = palloc(sizeof(manifest_wal_range));
+
 	range->tli = tli;
 	range->start_lsn = start_lsn;
 	range->end_lsn = end_lsn;
@@ -519,6 +523,7 @@ verify_backup_directory(verifier_context *context, char *relpath,
 	struct dirent *dirent;
 
 	DIR		   *dir = opendir(fullpath);
+
 	if (dir == NULL)
 	{
 		/*
@@ -614,6 +619,7 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 
 	/* Check whether there's an entry in the manifest hash. */
 	manifest_file *m = manifest_files_lookup(context->ht, relpath);
+
 	if (m == NULL)
 	{
 		report_backup_error(context,
@@ -680,7 +686,7 @@ verify_backup_checksums(verifier_context *context)
 
 			/* Compute the full pathname to the target file. */
 			char	   *fullpath = psprintf("%s/%s", context->backup_directory,
-								m->pathname);
+											m->pathname);
 
 			/* Do the actual checksum verification. */
 			verify_file_checksum(context, m, fullpath);
@@ -770,6 +776,7 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 
 	/* Get the final checksum. */
 	int			checksumlen = pg_checksum_final(&checksum_ctx, checksumbuf);
+
 	if (checksumlen < 0)
 	{
 		report_backup_error(context,
@@ -803,9 +810,10 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
 	{
 
 		char	   *pg_waldump_cmd = psprintf("\"%s\" --quiet --path=\"%s\" --timeline=%u --start=%X/%X --end=%X/%X\n",
-								  pg_waldump_path, wal_directory, this_wal_range->tli,
-								  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
-								  LSN_FORMAT_ARGS(this_wal_range->end_lsn));
+											  pg_waldump_path, wal_directory, this_wal_range->tli,
+											  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
+											  LSN_FORMAT_ARGS(this_wal_range->end_lsn));
+
 		if (system(pg_waldump_cmd) != 0)
 			report_backup_error(context,
 								"WAL parsing failed for timeline %u",

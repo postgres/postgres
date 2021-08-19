@@ -120,6 +120,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	}
 
 	HeapTuple	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if ((flags & FORMAT_TYPE_INVALID_AS_NULL) != 0)
@@ -174,7 +175,7 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * double-quoted if it matches any lexer keyword.  This behavior is
 	 * essential for some cases, such as types "bit" and "char".
 	 */
-	char	   *buf = NULL;					/* flag for no special case */
+	char	   *buf = NULL;		/* flag for no special case */
 
 	switch (type_oid)
 	{
@@ -373,7 +374,8 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 		/* Use the type-specific typmodout procedure */
 
 		char	   *tmstr = DatumGetCString(OidFunctionCall1(typmodout,
-												 Int32GetDatum(typmod)));
+															 Int32GetDatum(typmod)));
+
 		res = psprintf("%s%s", typname, tmstr);
 	}
 
@@ -439,6 +441,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 	size_t		total = 20 * numargs + 1;
 	char	   *result = palloc(total);
+
 	result[0] = '\0';
 	size_t		left = total - 1;
 

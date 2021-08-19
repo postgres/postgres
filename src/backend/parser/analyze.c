@@ -463,7 +463,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	nsitem->p_lateral_ok = true;
 
 	Node	   *qual = transformWhereClause(pstate, stmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
+											EXPR_KIND_WHERE, "WHERE");
 
 	qry->returningList = transformReturningList(pstate, stmt->returningList);
 
@@ -520,7 +520,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	qry->override = stmt->override;
 
 	bool		isOnConflictUpdate = (stmt->onConflictClause &&
-						  stmt->onConflictClause->action == ONCONFLICT_UPDATE);
+									  stmt->onConflictClause->action == ONCONFLICT_UPDATE);
 
 	/*
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
@@ -532,11 +532,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * so it will work, but you can't use DEFAULT items together with those.
 	 */
 	bool		isGeneralSelect = (selectStmt && (selectStmt->valuesLists == NIL ||
-									  selectStmt->sortClause != NIL ||
-									  selectStmt->limitOffset != NULL ||
-									  selectStmt->limitCount != NULL ||
-									  selectStmt->lockingClause != NIL ||
-									  selectStmt->withClause != NULL));
+												  selectStmt->sortClause != NIL ||
+												  selectStmt->limitOffset != NULL ||
+												  selectStmt->limitCount != NULL ||
+												  selectStmt->lockingClause != NIL ||
+												  selectStmt->withClause != NULL));
 
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
@@ -567,6 +567,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * to the joinlist or namespace.
 	 */
 	AclMode		targetPerms = ACL_INSERT;
+
 	if (isOnConflictUpdate)
 		targetPerms |= ACL_UPDATE;
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
@@ -574,6 +575,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/* Validate stmt->cols list, or build default list if no list given */
 	List	   *icolumns = checkInsertTargets(pstate, stmt->cols, &attrnos);
+
 	Assert(list_length(icolumns) == list_length(attrnos));
 
 	/*
@@ -840,6 +842,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * Also, mark all the target columns as needing insert permissions.
 	 */
 	RangeTblEntry *rte = pstate->p_target_nsitem->p_rte;
+
 	qry->targetList = NIL;
 	Assert(list_length(exprList) <= list_length(icolumns));
 	forthree(lc, exprList, icols, icolumns, attnos, attrnos)
@@ -849,9 +852,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		AttrNumber	attr_num = (AttrNumber) lfirst_int(attnos);
 
 		TargetEntry *tle = makeTargetEntry(expr,
-							  attr_num,
-							  col->name,
-							  false);
+										   attr_num,
+										   col->name,
+										   false);
+
 		qry->targetList = lappend(qry->targetList, tle);
 
 		rte->insertedCols = bms_add_member(rte->insertedCols,
@@ -953,6 +957,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 	 * Prepare columns for assignment to target table.
 	 */
 	List	   *result = NIL;
+
 	forthree(lc, exprlist, icols, icolumns, attnos, attrnos)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
@@ -1029,6 +1034,7 @@ transformOnConflictClause(ParseState *pstate,
 												   makeAlias("excluded", NIL),
 												   false, false);
 		RangeTblEntry *exclRte = exclNSItem->p_rte;
+
 		exclRelIndex = exclNSItem->p_rtindex;
 
 		/*
@@ -1193,6 +1199,7 @@ count_rowexpr_columns(ParseState *pstate, Node *expr)
 		{
 
 			RangeTblEntry *rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+
 			if (rte->rtekind == RTE_SUBQUERY)
 			{
 				/* Subselect-in-FROM: examine sub-select's output expr */
@@ -1260,7 +1267,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/* transform WHERE */
 	Node	   *qual = transformWhereClause(pstate, stmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
+											EXPR_KIND_WHERE, "WHERE");
 
 	/* initial processing of HAVING clause is much like WHERE clause */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause,
@@ -1486,11 +1493,13 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 * Finally, rearrange the coerced expressions into row-organized lists.
 	 */
 	List	   *exprsLists = NIL;
+
 	foreach(lc, colexprs[0])
 	{
 		Node	   *col = (Node *) lfirst(lc);
 
 		List	   *sublist = list_make1(col);
+
 		exprsLists = lappend(exprsLists, sublist);
 	}
 	list_free(colexprs[0]);
@@ -1520,8 +1529,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 * Generate the VALUES RTE
 	 */
 	ParseNamespaceItem *nsitem = addRangeTableEntryForValues(pstate, exprsLists,
-										 coltypes, coltypmods, colcollations,
-										 NULL, lateral, true);
+															 coltypes, coltypmods, colcollations,
+															 NULL, lateral, true);
+
 	addNSItemToQuery(pstate, nsitem, true, true, true);
 
 	/*
@@ -1601,6 +1611,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * INTO, so we produce that error in transformSetOperationTree.)
 	 */
 	SelectStmt *leftmostSelect = stmt->larg;
+
 	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
@@ -1651,7 +1662,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * Recursively transform the components of the tree.
 	 */
 	SetOperationStmt *sostmt = castNode(SetOperationStmt,
-					  transformSetOperationTree(pstate, stmt, true, NULL));
+										transformSetOperationTree(pstate, stmt, true, NULL));
+
 	Assert(sostmt);
 	qry->setOperations = (Node *) sostmt;
 
@@ -1659,11 +1671,13 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * Re-find leftmost SELECT (now it's a sub-query in rangetable)
 	 */
 	Node	   *node = sostmt->larg;
+
 	while (node && IsA(node, SetOperationStmt))
 		node = ((SetOperationStmt *) node)->larg;
 	Assert(node && IsA(node, RangeTblRef));
 	int			leftmostRTI = ((RangeTblRef *) node)->rtindex;
 	Query	   *leftmostQuery = rt_fetch(leftmostRTI, pstate->p_rtable)->subquery;
+
 	Assert(leftmostQuery != NULL);
 
 	/*
@@ -1681,7 +1695,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	targetvars = NIL;
 	targetnames = NIL;
 	ParseNamespaceColumn *sortnscolumns = (ParseNamespaceColumn *)
-		palloc0(list_length(sostmt->colTypes) * sizeof(ParseNamespaceColumn));
+	palloc0(list_length(sostmt->colTypes) * sizeof(ParseNamespaceColumn));
 	int			sortcolindex = 0;
 
 	forfour(lct, sostmt->colTypes,
@@ -1697,16 +1711,18 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		Assert(!lefttle->resjunk);
 		char	   *colName = pstrdup(lefttle->resname);
 		Var		   *var = makeVar(leftmostRTI,
-					  lefttle->resno,
-					  colType,
-					  colTypmod,
-					  colCollation,
-					  0);
+								  lefttle->resno,
+								  colType,
+								  colTypmod,
+								  colCollation,
+								  0);
+
 		var->location = exprLocation((Node *) lefttle->expr);
 		TargetEntry *tle = makeTargetEntry((Expr *) var,
-							  (AttrNumber) pstate->p_next_resno++,
-							  colName,
-							  false);
+										   (AttrNumber) pstate->p_next_resno++,
+										   colName,
+										   false);
+
 		qry->targetList = lappend(qry->targetList, tle);
 		targetvars = lappend(targetvars, var);
 		targetnames = lappend(targetnames, makeString(colName));
@@ -1733,16 +1749,16 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			sv_rtable_length = list_length(pstate->p_rtable);
 
 	ParseNamespaceItem *jnsitem = addRangeTableEntryForJoin(pstate,
-										targetnames,
-										sortnscolumns,
-										JOIN_INNER,
-										0,
-										targetvars,
-										NIL,
-										NIL,
-										NULL,
-										NULL,
-										false);
+															targetnames,
+															sortnscolumns,
+															JOIN_INNER,
+															0,
+															targetvars,
+															NIL,
+															NIL,
+															NULL,
+															NULL,
+															false);
 
 	sv_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
@@ -1922,7 +1938,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 * namespace list.
 		 */
 		Query	   *selectQuery = parse_sub_analyze((Node *) stmt, pstate,
-										NULL, false, false);
+													NULL, false, false);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but
@@ -1961,15 +1977,16 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
 				 list_length(pstate->p_rtable) + 1);
 		ParseNamespaceItem *nsitem = addRangeTableEntryForSubquery(pstate,
-											   selectQuery,
-											   makeAlias(selectName, NIL),
-											   false,
-											   false);
+																   selectQuery,
+																   makeAlias(selectName, NIL),
+																   false,
+																   false);
 
 		/*
 		 * Return a RangeTblRef to replace the SelectStmt in the set-op tree.
 		 */
 		RangeTblRef *rtr = makeNode(RangeTblRef);
+
 		rtr->rtindex = nsitem->p_rtindex;
 		return (Node *) rtr;
 	}
@@ -1983,8 +2000,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		ListCell   *rtl;
 
 		const char *context = (stmt->op == SETOP_UNION ? "UNION" :
-				   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
-					"EXCEPT"));
+							   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
+								"EXCEPT"));
 
 		op->op = stmt->op;
 		op->all = stmt->all;
@@ -2044,9 +2061,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 
 			/* select common type, same as CASE et al */
 			Oid			rescoltype = select_common_type(pstate,
-											list_make2(lcolnode, rcolnode),
-											context,
-											&bestexpr);
+														list_make2(lcolnode, rcolnode),
+														context,
+														&bestexpr);
 			int			bestlocation = exprLocation(bestexpr);
 
 			/*
@@ -2099,8 +2116,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			}
 
 			int32		rescoltypmod = select_common_typmod(pstate,
-												list_make2(lcolnode, rcolnode),
-												rescoltype);
+															list_make2(lcolnode, rcolnode),
+															rescoltype);
 
 			/*
 			 * Select common collation.  A common collation is required for
@@ -2112,8 +2129,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * collation.)
 			 */
 			Oid			rescolcoll = select_common_collation(pstate,
-												 list_make2(lcolnode, rcolnode),
-												 (op->op == SETOP_UNION && op->all));
+															 list_make2(lcolnode, rcolnode),
+															 (op->op == SETOP_UNION && op->all));
 
 			/* emit results */
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
@@ -2152,9 +2169,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescolnode->collation = rescolcoll;
 				rescolnode->location = bestlocation;
 				TargetEntry *restle = makeTargetEntry((Expr *) rescolnode,
-										 0, /* no need to set resno */
-										 NULL,
-										 false);
+													  0,	/* no need to set resno */
+													  NULL,
+													  false);
+
 				*targetlist = lappend(*targetlist, restle);
 			}
 		}
@@ -2177,11 +2195,13 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 	 * Find leftmost leaf SELECT
 	 */
 	Node	   *node = larg;
+
 	while (node && IsA(node, SetOperationStmt))
 		node = ((SetOperationStmt *) node)->larg;
 	Assert(node && IsA(node, RangeTblRef));
 	int			leftmostRTI = ((RangeTblRef *) node)->rtindex;
 	Query	   *leftmostQuery = rt_fetch(leftmostRTI, pstate->p_rtable)->subquery;
+
 	Assert(leftmostQuery != NULL);
 
 	/*
@@ -2199,9 +2219,10 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 		Assert(!lefttle->resjunk);
 		char	   *colName = pstrdup(lefttle->resname);
 		TargetEntry *tle = makeTargetEntry(nrtle->expr,
-							  next_resno++,
-							  colName,
-							  false);
+										   next_resno++,
+										   colName,
+										   false);
+
 		targetList = lappend(targetList, tle);
 	}
 
@@ -2281,7 +2302,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	nsitem->p_lateral_ok = true;
 
 	Node	   *qual = transformWhereClause(pstate, stmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
+											EXPR_KIND_WHERE, "WHERE");
 
 	qry->returningList = transformReturningList(pstate, stmt->returningList);
 
@@ -2312,7 +2333,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 	ListCell   *tl;
 
 	List	   *tlist = transformTargetList(pstate, origTlist,
-								EXPR_KIND_UPDATE_SOURCE);
+											EXPR_KIND_UPDATE_SOURCE);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
 	if (pstate->p_next_resno <= RelationGetNumberOfAttributes(pstate->p_target_relation))
@@ -2343,7 +2364,8 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 		ResTarget  *origTarget = lfirst_node(ResTarget, orig_tl);
 
 		int			attrno = attnameAttNum(pstate->p_target_relation,
-							   origTarget->name, true);
+										   origTarget->name, true);
+
 		if (attrno == InvalidAttrNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -2386,6 +2408,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 	 * someone looks at it later (probably won't happen).
 	 */
 	int			save_next_resno = pstate->p_next_resno;
+
 	pstate->p_next_resno = 1;
 
 	/* transform RETURNING identically to a SELECT targetlist */
@@ -2466,7 +2489,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 	 * node, but there's no reason to be too picky about its type.
 	 */
 	Node	   *target = transformExpr(pstate, (Node *) cref,
-						   EXPR_KIND_UPDATE_TARGET);
+									   EXPR_KIND_UPDATE_TARGET);
 	Oid			targettype = exprType(target);
 	int32		targettypmod = exprTypmod(target);
 	Oid			targetcollation = exprCollation(target);
@@ -2489,7 +2512,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 
 	/* initially transform the targetlist as if in SELECT */
 	List	   *tlist = transformTargetList(pstate, sstmt->targetList,
-								EXPR_KIND_SELECT_TARGET);
+											EXPR_KIND_SELECT_TARGET);
 
 	/* we should have exactly one targetlist item */
 	if (list_length(tlist) != 1)
@@ -2571,7 +2594,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 
 	/* transform WHERE */
 	Node	   *qual = transformWhereClause(pstate, sstmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
+											EXPR_KIND_WHERE, "WHERE");
 
 	/* initial processing of HAVING clause is much like WHERE clause */
 	qry->havingQual = transformWhereClause(pstate, sstmt->havingClause,
@@ -2691,6 +2714,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 
 	/* Transform contained query, not allowing SELECT INTO */
 	Query	   *query = transformStmt(pstate, stmt->query);
+
 	stmt->query = (Node *) query;
 
 	/* Grammar should not have allowed anything but SELECT */
@@ -2743,6 +2767,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 
 	/* represent the command as a utility Query */
 	Query	   *result = makeNode(Query);
+
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
@@ -2769,6 +2794,7 @@ transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 
 	/* represent the command as a utility Query */
 	Query	   *result = makeNode(Query);
+
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
@@ -2789,6 +2815,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 	/* transform contained query, not allowing SELECT INTO */
 	Query	   *query = transformStmt(pstate, stmt->query);
+
 	stmt->query = (Node *) query;
 
 	/* additional work needed for CREATE MATERIALIZED VIEW */
@@ -2847,6 +2874,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 	/* represent the command as a utility Query */
 	Query	   *result = makeNode(Query);
+
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
@@ -2868,6 +2896,7 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 	 * arguments, allowing us to identify the called procedure.
 	 */
 	List	   *targs = NIL;
+
 	foreach(lc, stmt->funccall->args)
 	{
 		targs = lappend(targs, transformExpr(pstate,
@@ -2876,18 +2905,19 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 	}
 
 	Node	   *node = ParseFuncOrColumn(pstate,
-							 stmt->funccall->funcname,
-							 targs,
-							 pstate->p_last_srf,
-							 stmt->funccall,
-							 true,
-							 stmt->funccall->location);
+										 stmt->funccall->funcname,
+										 targs,
+										 pstate->p_last_srf,
+										 stmt->funccall,
+										 true,
+										 stmt->funccall->location);
 
 	assign_expr_collations(pstate, node);
 
 	FuncExpr   *fexpr = castNode(FuncExpr, node);
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
 
@@ -2904,8 +2934,9 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 
 	/* Fetch proargmodes; if it's null, there are no output args */
 	Datum		proargmodes = SysCacheGetAttr(PROCOID, proctup,
-								  Anum_pg_proc_proargmodes,
-								  &isNull);
+											  Anum_pg_proc_proargmodes,
+											  &isNull);
+
 	if (!isNull)
 	{
 		/*
@@ -2915,6 +2946,7 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 
 		ArrayType  *arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 		int			numargs = list_length(fexpr->args);
+
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_DIMS(arr)[0] != numargs ||
 			ARR_HASNULL(arr) ||
@@ -2925,6 +2957,7 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 
 		List	   *inargs = NIL;
 		int			i = 0;
+
 		foreach(lc, fexpr->args)
 		{
 			Node	   *n = lfirst(lc);
@@ -2960,6 +2993,7 @@ transformCallStmt(ParseState *pstate, CallStmt *stmt)
 
 	/* represent the command as a utility Query */
 	Query	   *result = makeNode(Query);
+
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
@@ -3072,6 +3106,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 
 	/* make a clause we can pass down to subqueries to select all rels */
 	LockingClause *allrels = makeNode(LockingClause);
+
 	allrels->lockedRels = NIL;	/* indicates all rels */
 	allrels->strength = lc->strength;
 	allrels->waitPolicy = lc->waitPolicy;

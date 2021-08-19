@@ -246,6 +246,7 @@ outBitmapset(StringInfo str, const Bitmapset *bms)
 	appendStringInfoChar(str, '(');
 	appendStringInfoChar(str, 'b');
 	int			x = -1;
+
 	while ((x = bms_next_member(bms, x)) >= 0)
 		appendStringInfo(str, " %d", x);
 	appendStringInfoChar(str, ')');

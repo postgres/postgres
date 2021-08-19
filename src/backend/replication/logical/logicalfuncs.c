@@ -167,6 +167,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 
 	/* Deconstruct options array */
 	Size		ndim = ARR_NDIM(arr);
+
 	if (ndim > 1)
 	{
 		ereport(ERROR,
@@ -277,6 +278,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			char	   *errm = NULL;
 
 			XLogRecord *record = XLogReadRecord(ctx->reader, &errm);
+
 			if (errm)
 				elog(ERROR, "%s", errm);
 
@@ -396,7 +398,8 @@ pg_logical_emit_message_bytea(PG_FUNCTION_ARGS)
 	bytea	   *data = PG_GETARG_BYTEA_PP(2);
 
 	XLogRecPtr	lsn = LogLogicalMessage(prefix, VARDATA_ANY(data), VARSIZE_ANY_EXHDR(data),
-							transactional);
+										transactional);
+
 	PG_RETURN_LSN(lsn);
 }
 

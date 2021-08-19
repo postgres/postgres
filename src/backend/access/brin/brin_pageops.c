@@ -245,7 +245,8 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 		PageIndexTupleDeleteNoCompact(oldpage, oldoff);
 		OffsetNumber newoff = PageAddItem(newpage, (Item) unconstify(BrinTuple *, newtup), newsz,
-							 InvalidOffsetNumber, false, false);
+										  InvalidOffsetNumber, false, false);
+
 		if (newoff == InvalidOffsetNumber)
 			elog(ERROR, "failed to add BRIN tuple to new page");
 		MarkBufferDirty(oldbuf);
@@ -397,7 +398,8 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	if (extended)
 		brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	OffsetNumber off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
-					  false, false);
+								   false, false);
+
 	if (off == InvalidOffsetNumber)
 		elog(ERROR, "failed to add BRIN tuple to new page");
 	MarkBufferDirty(*buffer);
@@ -416,6 +418,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		xl_brin_insert xlrec;
 
 		uint8		info = XLOG_BRIN_INSERT | (extended ? XLOG_BRIN_INIT_PAGE : 0);
+
 		xlrec.heapBlk = heapBlk;
 		xlrec.pagesPerRange = pagesPerRange;
 		xlrec.offnum = off;
@@ -516,10 +519,12 @@ brin_start_evacuating_page(Relation idxRel, Buffer buf)
 		return false;
 
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
 
 		ItemId		lp = PageGetItemId(page, off);
+
 		if (ItemIdIsUsed(lp))
 		{
 			/* prevent other backends from adding more stuff to this page */
@@ -550,6 +555,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 	Assert(BrinPageFlags(page) & BRIN_EVACUATE_PAGE);
 
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
 		BrinTuple  *tup;
@@ -558,6 +564,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 		CHECK_FOR_INTERRUPTS();
 
 		ItemId		lp = PageGetItemId(page, off);
+
 		if (ItemIdIsUsed(lp))
 		{
 			sz = ItemIdGetLength(lp);
@@ -678,6 +685,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 
 	/* Choose initial target page, re-using existing target if known */
 	BlockNumber newblk = RelationGetTargetBlock(irel);
+
 	if (newblk == InvalidBlockNumber)
 		newblk = GetPageWithFreeSpace(irel, itemsz);
 
@@ -859,6 +867,7 @@ brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 
 	START_CRIT_SECTION();
 	Page		page = BufferGetPage(buffer);
+
 	brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	MarkBufferDirty(buffer);
 	log_newpage_buffer(buffer, true);

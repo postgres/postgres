@@ -271,6 +271,7 @@ collectTSQueryValues(TSQuery a, int *nvalues_p)
 			int			len = ptr->qoperand.length;
 
 			char	   *val = palloc(len + 1);
+
 			memcpy(val, operand + ptr->qoperand.distance, len);
 			val[len] = '\0';
 

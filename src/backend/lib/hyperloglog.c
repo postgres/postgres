@@ -172,7 +172,7 @@ addHyperLogLog(hyperLogLogState *cState, uint32 hash)
 
 	/* Compute the rank of the remaining 32 - "k" (registerWidth) bits */
 	uint8		count = rho(hash << cState->registerWidth,
-				BITS_PER_BYTE * sizeof(uint32) - cState->registerWidth);
+							BITS_PER_BYTE * sizeof(uint32) - cState->registerWidth);
 
 	cState->hashesArr[index] = Max(count, cState->hashesArr[index]);
 }

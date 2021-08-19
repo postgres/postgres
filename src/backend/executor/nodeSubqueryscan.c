@@ -107,6 +107,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	SubqueryScanState *subquerystate = makeNode(SubqueryScanState);
+
 	subquerystate->ss.ps.plan = (Plan *) node;
 	subquerystate->ss.ps.state = estate;
 	subquerystate->ss.ps.ExecProcNode = ExecSubqueryScan;

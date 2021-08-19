@@ -625,6 +625,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 		}
 
 		TransactionId xmax = HeapTupleGetUpdateXid(tuple);
+
 		if (!TransactionIdIsValid(xmax))
 		{
 			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
@@ -1599,8 +1600,8 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 		 * actual values externally.
 		 */
 		bool		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
-												 htup, buffer,
-												 &cmin, &cmax);
+															 htup, buffer,
+															 &cmin, &cmax);
 
 		/*
 		 * If we haven't resolved the combo CID to cmin/cmax, that means we
@@ -1686,8 +1687,8 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 
 		/* Lookup actual cmin/cmax values */
 		bool		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
-												 htup, buffer,
-												 &cmin, &cmax);
+															 htup, buffer,
+															 &cmin, &cmax);
 
 		/*
 		 * If we haven't resolved the combo CID to cmin/cmax, that means we

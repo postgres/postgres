@@ -43,6 +43,7 @@ pairingheap_allocate(pairingheap_comparator compare, void *arg)
 {
 
 	pairingheap *heap = (pairingheap *) palloc(sizeof(pairingheap));
+
 	heap->ph_compare = compare;
 	heap->ph_arg = arg;
 
@@ -87,6 +88,7 @@ merge(pairingheap *heap, pairingheap_node *a, pairingheap_node *b)
 	{
 
 		pairingheap_node *tmp = a;
+
 		a = b;
 		b = tmp;
 	}
@@ -236,6 +238,7 @@ merge_children(pairingheap *heap, pairingheap_node *children)
 	/* Walk the subheaps from left to right, merging in pairs */
 	next = children;
 	pairingheap_node *pairs = NULL;
+
 	for (;;)
 	{
 		curr = next;
@@ -264,6 +267,7 @@ merge_children(pairingheap *heap, pairingheap_node *children)
 	 * Merge all the pairs together to form a single heap.
 	 */
 	pairingheap_node *newroot = pairs;
+
 	next = pairs->next_sibling;
 	while (next)
 	{

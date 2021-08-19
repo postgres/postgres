@@ -340,6 +340,7 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	h = context->state[7];
 
 	int			j = 0;
+
 	do
 	{
 		/* Rounds 0 to 15 (unrolled): */
@@ -411,6 +412,7 @@ SHA256_Transform(pg_sha256_ctx *context, const uint8 *data)
 	h = context->state[7];
 
 	int			j = 0;
+
 	do
 	{
 		W256[j] = (uint32) data[3] | ((uint32) data[2] << 8) |
@@ -664,6 +666,7 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	h = context->state[7];
 
 	int			j = 0;
+
 	do
 	{
 		ROUND512_0_TO_15(a, b, c, d, e, f, g, h);
@@ -732,6 +735,7 @@ SHA512_Transform(pg_sha512_ctx *context, const uint8 *data)
 	h = context->state[7];
 
 	int			j = 0;
+
 	do
 	{
 		W512[j] = (uint64) data[7] | ((uint64) data[6] << 8) |

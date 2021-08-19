@@ -138,6 +138,7 @@ CopyFromErrorCallback(void *arg)
 			/* error is relevant to a particular column */
 
 			char	   *attval = limit_printout_length(cstate->cur_attval);
+
 			errcontext("COPY %s, line %s, column %s: \"%s\"",
 					   cstate->cur_relname, curlineno_str,
 					   cstate->cur_attname, attval);
@@ -161,6 +162,7 @@ CopyFromErrorCallback(void *arg)
 			{
 
 				char	   *lineval = limit_printout_length(cstate->line_buf.data);
+
 				errcontext("COPY %s, line %s: \"%s\"",
 						   cstate->cur_relname, curlineno_str, lineval);
 				pfree(lineval);
@@ -197,6 +199,7 @@ limit_printout_length(const char *str)
 	 * Truncate, and add "..." to show we truncated the input.
 	 */
 	char	   *res = (char *) palloc(len + 4);
+
 	memcpy(res, str, len);
 	strcpy(res + len, "...");
 
@@ -212,6 +215,7 @@ CopyMultiInsertBufferInit(ResultRelInfo *rri)
 {
 
 	CopyMultiInsertBuffer *buffer = (CopyMultiInsertBuffer *) palloc(sizeof(CopyMultiInsertBuffer));
+
 	memset(buffer->slots, 0, sizeof(TupleTableSlot *) * MAX_BUFFERED_TUPLES);
 	buffer->resultRelInfo = rri;
 	buffer->bistate = GetBulkInsertState();
@@ -314,6 +318,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 * context before calling it.
 	 */
 	MemoryContext oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
 	table_multi_insert(resultRelInfo->ri_RelationDesc,
 					   slots,
 					   nused,
@@ -333,9 +338,10 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 
 			cstate->cur_lineno = buffer->linenos[i];
 			List	   *recheckIndexes =
-				ExecInsertIndexTuples(resultRelInfo,
-									  buffer->slots[i], estate, false, false,
-									  NULL, NIL);
+			ExecInsertIndexTuples(resultRelInfo,
+								  buffer->slots[i], estate, false, false,
+								  NULL, NIL);
+
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 slots[i], recheckIndexes,
 								 cstate->transition_capture);
@@ -637,6 +643,7 @@ CopyFrom(CopyFromState cstate)
 	 */
 	ExecInitRangeTable(estate, cstate->range_table);
 	ResultRelInfo *resultRelInfo = target_resultRelInfo = makeNode(ResultRelInfo);
+
 	ExecInitResultRelation(estate, resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT */
@@ -649,6 +656,7 @@ CopyFrom(CopyFromState cstate)
 	 * foreign-table result relation(s).
 	 */
 	ModifyTableState *mtstate = makeNode(ModifyTableState);
+
 	mtstate->ps.plan = NULL;
 	mtstate->ps.state = estate;
 	mtstate->operation = CMD_INSERT;
@@ -780,10 +788,10 @@ CopyFrom(CopyFromState cstate)
 	}
 
 	bool		has_before_insert_row_trig = (resultRelInfo->ri_TrigDesc &&
-								  resultRelInfo->ri_TrigDesc->trig_insert_before_row);
+											  resultRelInfo->ri_TrigDesc->trig_insert_before_row);
 
 	bool		has_instead_insert_row_trig = (resultRelInfo->ri_TrigDesc &&
-								   resultRelInfo->ri_TrigDesc->trig_insert_instead_row);
+											   resultRelInfo->ri_TrigDesc->trig_insert_instead_row);
 
 	/*
 	 * Check BEFORE STATEMENT insertion triggers. It's debatable whether we
@@ -935,6 +943,7 @@ CopyFrom(CopyFromState cstate)
 			 * rowtype.
 			 */
 			TupleConversionMap *map = resultRelInfo->ri_RootToPartitionMap;
+
 			if (insertMethod == CIM_SINGLE || !leafpart_use_multi_insert)
 			{
 				/* non batch insert */
@@ -942,6 +951,7 @@ CopyFrom(CopyFromState cstate)
 				{
 
 					TupleTableSlot *new_slot = resultRelInfo->ri_PartitionTupleSlot;
+
 					myslot = execute_attr_map_slot(map->attrMap, myslot, new_slot);
 				}
 			}
@@ -956,7 +966,7 @@ CopyFrom(CopyFromState cstate)
 				Assert(insertMethod == CIM_MULTI_CONDITIONAL);
 
 				TupleTableSlot *batchslot = CopyMultiInsertInfoNextFreeSlot(&multiInsertInfo,
-															resultRelInfo);
+																			resultRelInfo);
 
 				if (map != NULL)
 					myslot = execute_attr_map_slot(map->attrMap, myslot,
@@ -1563,6 +1573,7 @@ ClosePipeFromProgram(CopyFromState cstate)
 	Assert(cstate->is_program);
 
 	int			pclose_rc = ClosePipeStream(cstate->copy_file);
+
 	if (pclose_rc == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),

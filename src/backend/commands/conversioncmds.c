@@ -45,16 +45,18 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 
 	/* Convert list of names to a name and namespace */
 	Oid			namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
-													&conversion_name);
+																&conversion_name);
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceId));
 
 	/* Check the encoding names */
 	int			from_encoding = pg_char_to_encoding(from_encoding_name);
+
 	if (from_encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -62,6 +64,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 						from_encoding_name)));
 
 	int			to_encoding = pg_char_to_encoding(to_encoding_name);
+
 	if (to_encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -85,7 +88,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * a qualified name.
 	 */
 	Oid			funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
-							 funcargs, false);
+										 funcargs, false);
 
 	/* Check it returns int4, else it's probably the wrong function */
 	if (get_func_rettype(funcoid) != INT4OID)
@@ -107,12 +110,12 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * perform the requested conversion.
 	 */
 	Datum		funcresult = OidFunctionCall6(funcoid,
-								  Int32GetDatum(from_encoding),
-								  Int32GetDatum(to_encoding),
-								  CStringGetDatum(""),
-								  CStringGetDatum(result),
-								  Int32GetDatum(0),
-								  BoolGetDatum(false));
+											  Int32GetDatum(from_encoding),
+											  Int32GetDatum(to_encoding),
+											  CStringGetDatum(""),
+											  CStringGetDatum(result),
+											  Int32GetDatum(0),
+											  BoolGetDatum(false));
 
 	/*
 	 * The function should return 0 for empty input. Might as well check that,

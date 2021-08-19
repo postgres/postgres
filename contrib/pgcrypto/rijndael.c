@@ -505,6 +505,7 @@ aes_set_key(rijndael_ctx *ctx, const uint8 *key, unsigned keybits, int enc)
 {
 
 	uint32	   *k = (uint32 *) key;
+
 	rijndael_set_key(ctx, k, keybits, enc);
 }
 

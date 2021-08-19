@@ -333,6 +333,7 @@ reap_child(bool wait_for_child)
 		 * struct pointers within the array.
 		 */
 		void	   *tmp_args = cur_thread_args[thread_num];
+
 		cur_thread_args[thread_num] = cur_thread_args[parallel_jobs - 1];
 		cur_thread_args[parallel_jobs - 1] = tmp_args;
 	}

@@ -150,6 +150,7 @@ process_equivalence(PlannerInfo *root,
 	collation = ((OpExpr *) clause)->inputcollid;
 	Expr	   *item1 = (Expr *) get_leftop(clause);
 	Expr	   *item2 = (Expr *) get_rightop(clause);
+
 	item1_relids = restrictinfo->left_relids;
 	item2_relids = restrictinfo->right_relids;
 
@@ -258,6 +259,7 @@ process_equivalence(PlannerInfo *root,
 	ec1 = ec2 = NULL;
 	em1 = em2 = NULL;
 	int			ec2_idx = -1;
+
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
@@ -689,6 +691,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	MemoryContext oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
 	EquivalenceClass *newec = makeNode(EquivalenceClass);
+
 	newec->ec_opfamilies = list_copy(opfamilies);
 	newec->ec_collation = collation;
 	newec->ec_members = NIL;
@@ -711,10 +714,11 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	 * Get the precise set of nullable relids appearing in the expression.
 	 */
 	Relids		expr_relids = pull_varnos(root, (Node *) expr);
+
 	nullable_relids = bms_intersect(nullable_relids, expr_relids);
 
 	EquivalenceMember *newem = add_eq_member(newec, copyObject(expr), expr_relids,
-						  nullable_relids, false, opcintype);
+											 nullable_relids, false, opcintype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
@@ -807,6 +811,7 @@ find_ec_member_matching_expr(EquivalenceClass *ec,
 		 * Match if same expression (after stripping relabel).
 		 */
 		Expr	   *emexpr = em->em_expr;
+
 		while (emexpr && IsA(emexpr, RelabelType))
 			emexpr = ((RelabelType *) emexpr)->arg;
 
@@ -870,9 +875,10 @@ find_computable_ec_member(PlannerInfo *root,
 		 * Match if all Vars and quasi-Vars are available in "exprs".
 		 */
 		List	   *exprvars = pull_var_clause((Node *) em->em_expr,
-								   PVC_INCLUDE_AGGREGATES |
-								   PVC_INCLUDE_WINDOWFUNCS |
-								   PVC_INCLUDE_PLACEHOLDERS);
+											   PVC_INCLUDE_AGGREGATES |
+											   PVC_INCLUDE_WINDOWFUNCS |
+											   PVC_INCLUDE_PLACEHOLDERS);
+
 		foreach(lc2, exprvars)
 		{
 			if (!is_exprlist_member(lfirst(lc2), exprs))
@@ -1089,6 +1095,7 @@ generate_base_implied_equalities(PlannerInfo *root)
 	root->ec_merging_done = true;
 
 	int			ec_index = 0;
+
 	foreach(lc, root->eq_classes)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc);
@@ -1126,6 +1133,7 @@ generate_base_implied_equalities(PlannerInfo *root)
 		 * this is a cheap version of has_relevant_eclass_joinclause().
 		 */
 		int			i = -1;
+
 		while ((i = bms_next_member(ec->ec_relids, i)) > 0)
 		{
 			RelOptInfo *rel = root->simple_rel_array[i];
@@ -1200,8 +1208,9 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		if (cur_em == const_em)
 			continue;
 		Oid			eq_op = select_equality_operator(ec,
-										 cur_em->em_datatype,
-										 const_em->em_datatype);
+													 cur_em->em_datatype,
+													 const_em->em_datatype);
+
 		if (!OidIsValid(eq_op))
 		{
 			/* failed... */
@@ -1209,13 +1218,13 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 			break;
 		}
 		RestrictInfo *rinfo = process_implied_equality(root, eq_op, ec->ec_collation,
-										 cur_em->em_expr, const_em->em_expr,
-										 bms_copy(ec->ec_relids),
-										 bms_union(cur_em->em_nullable_relids,
-												   const_em->em_nullable_relids),
-										 ec->ec_min_security,
-										 ec->ec_below_outer_join,
-										 cur_em->em_is_const);
+													   cur_em->em_expr, const_em->em_expr,
+													   bms_copy(ec->ec_relids),
+													   bms_union(cur_em->em_nullable_relids,
+																 const_em->em_nullable_relids),
+													   ec->ec_min_security,
+													   ec->ec_below_outer_join,
+													   cur_em->em_is_const);
 
 		/*
 		 * If the clause didn't degenerate to a constant, fill in the correct
@@ -1254,7 +1263,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 	 * to the way we build merged ECs.  (Use a list-of-lists for each rel.)
 	 */
 	EquivalenceMember **prev_ems = (EquivalenceMember **)
-		palloc0(root->simple_rel_array_size * sizeof(EquivalenceMember *));
+	palloc0(root->simple_rel_array_size * sizeof(EquivalenceMember *));
 
 	foreach(lc, ec->ec_members)
 	{
@@ -1271,8 +1280,9 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 			EquivalenceMember *prev_em = prev_ems[relid];
 
 			Oid			eq_op = select_equality_operator(ec,
-											 prev_em->em_datatype,
-											 cur_em->em_datatype);
+														 prev_em->em_datatype,
+														 cur_em->em_datatype);
+
 			if (!OidIsValid(eq_op))
 			{
 				/* failed... */
@@ -1280,13 +1290,13 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 				break;
 			}
 			RestrictInfo *rinfo = process_implied_equality(root, eq_op, ec->ec_collation,
-											 prev_em->em_expr, cur_em->em_expr,
-											 bms_copy(ec->ec_relids),
-											 bms_union(prev_em->em_nullable_relids,
-													   cur_em->em_nullable_relids),
-											 ec->ec_min_security,
-											 ec->ec_below_outer_join,
-											 false);
+														   prev_em->em_expr, cur_em->em_expr,
+														   bms_copy(ec->ec_relids),
+														   bms_union(prev_em->em_nullable_relids,
+																	 cur_em->em_nullable_relids),
+														   ec->ec_min_security,
+														   ec->ec_below_outer_join,
+														   false);
 
 			/*
 			 * If the clause didn't degenerate to a constant, fill in the
@@ -1431,9 +1441,10 @@ generate_join_implied_equalities(PlannerInfo *root,
 	 * Get all eclasses that mention both inner and outer sides of the join
 	 */
 	Bitmapset  *matching_ecs = get_common_eclass_indexes(root, nominal_inner_relids,
-											 outer_relids);
+														 outer_relids);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
@@ -1615,11 +1626,13 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 				EquivalenceMember *inner_em = (EquivalenceMember *) lfirst(lc2);
 
 				Oid			eq_op = select_equality_operator(ec,
-												 outer_em->em_datatype,
-												 inner_em->em_datatype);
+															 outer_em->em_datatype,
+															 inner_em->em_datatype);
+
 				if (!OidIsValid(eq_op))
 					continue;
 				int			score = 0;
+
 				if (IsA(outer_em->em_expr, Var) ||
 					(IsA(outer_em->em_expr, RelabelType) &&
 					 IsA(((RelabelType *) outer_em->em_expr)->arg, Var)))
@@ -1656,8 +1669,8 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 		 * joinclauses
 		 */
 		RestrictInfo *rinfo = create_join_clause(root, ec, best_eq_op,
-								   best_outer_em, best_inner_em,
-								   ec);
+												 best_outer_em, best_inner_em,
+												 ec);
 
 		result = lappend(result, rinfo);
 	}
@@ -1689,8 +1702,9 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 			{
 
 				Oid			eq_op = select_equality_operator(ec,
-												 prev_em->em_datatype,
-												 cur_em->em_datatype);
+															 prev_em->em_datatype,
+															 cur_em->em_datatype);
+
 				if (!OidIsValid(eq_op))
 				{
 					/* failed... */
@@ -1778,7 +1792,8 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 		Oid			opfamily = lfirst_oid(lc);
 
 		Oid			opno = get_opfamily_member(opfamily, lefttype, righttype,
-								   BTEqualStrategyNumber);
+											   BTEqualStrategyNumber);
+
 		if (!OidIsValid(opno))
 			continue;
 		/* If no barrier quals in query, don't worry about leaky operators */
@@ -2111,6 +2126,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 			continue;
 		/* Does it contain a match to outervar? */
 		bool		match = false;
+
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
@@ -2138,18 +2154,20 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 			if (!cur_em->em_is_const)
 				continue;		/* ignore non-const members */
 			Oid			eq_op = select_equality_operator(cur_ec,
-											 inner_datatype,
-											 cur_em->em_datatype);
+														 inner_datatype,
+														 cur_em->em_datatype);
+
 			if (!OidIsValid(eq_op))
 				continue;		/* can't generate equality */
 			RestrictInfo *newrinfo = build_implied_join_equality(root,
-												   eq_op,
-												   cur_ec->ec_collation,
-												   innervar,
-												   cur_em->em_expr,
-												   bms_copy(inner_relids),
-												   bms_copy(inner_nullable_relids),
-												   cur_ec->ec_min_security);
+																 eq_op,
+																 cur_ec->ec_collation,
+																 innervar,
+																 cur_em->em_expr,
+																 bms_copy(inner_relids),
+																 bms_copy(inner_nullable_relids),
+																 cur_ec->ec_min_security);
+
 			if (process_equivalence(root, &newrinfo, true))
 				match = true;
 		}
@@ -2197,6 +2215,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 	op_input_types(opno, &left_type, &right_type);
 	Expr	   *leftvar = (Expr *) get_leftop(rinfo->clause);
 	Expr	   *rightvar = (Expr *) get_rightop(rinfo->clause);
+
 	left_relids = rinfo->left_relids;
 	right_relids = rinfo->right_relids;
 	left_nullable_relids = bms_intersect(left_relids,
@@ -2238,6 +2257,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		 * the COALESCE arguments?
 		 */
 		bool		match = false;
+
 		foreach(lc2, cur_ec->ec_members)
 		{
 			coal_em = (EquivalenceMember *) lfirst(lc2);
@@ -2269,6 +2289,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		 * decide to throw away the outer-join clause.
 		 */
 		bool		matchleft = matchright = false;
+
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
@@ -2277,8 +2298,9 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 			if (!cur_em->em_is_const)
 				continue;		/* ignore non-const members */
 			Oid			eq_op = select_equality_operator(cur_ec,
-											 left_type,
-											 cur_em->em_datatype);
+														 left_type,
+														 cur_em->em_datatype);
+
 			if (OidIsValid(eq_op))
 			{
 				newrinfo = build_implied_join_equality(root,
@@ -2417,9 +2439,10 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 	Assert(IS_SIMPLE_REL(rel1));
 	Assert(IS_SIMPLE_REL(rel2));
 	Bitmapset  *matching_ecs = bms_intersect(rel1->eclass_indexes,
-								 rel2->eclass_indexes);
+											 rel2->eclass_indexes);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) list_nth(root->eq_classes,
@@ -2442,6 +2465,7 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 
 			/* EM must be a Var, possibly with RelabelType */
 			Var		   *var = (Var *) em->em_expr;
+
 			while (var && IsA(var, RelabelType))
 				var = (Var *) ((RelabelType *) var)->arg;
 			if (!(var && IsA(var, Var)))
@@ -2543,6 +2567,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 	Assert(IS_SIMPLE_REL(parent_rel));
 
 	int			i = -1;
+
 	while ((i = bms_next_member(parent_rel->eclass_indexes, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
@@ -2564,6 +2589,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 		 * pre-existing EC member.
 		 */
 		int			num_members = list_length(cur_ec->ec_members);
+
 		for (int pos = 0; pos < num_members; pos++)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) list_nth(cur_ec->ec_members, pos);
@@ -2613,7 +2639,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 				 * don't want the child member to be marked as constant.
 				 */
 				Relids		new_relids = bms_difference(cur_em->em_relids,
-											top_parent_relids);
+														top_parent_relids);
+
 				new_relids = bms_add_members(new_relids, child_relids);
 
 				/*
@@ -2621,6 +2648,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 				 * parent and child relids are singletons.
 				 */
 				Relids		new_nullable_relids = cur_em->em_nullable_relids;
+
 				if (bms_overlap(new_nullable_relids, top_parent_relids))
 				{
 					new_nullable_relids = bms_difference(new_nullable_relids,
@@ -2675,6 +2703,7 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 	MemoryContext oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
@@ -2696,6 +2725,7 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 		 * pre-existing EC member.
 		 */
 		int			num_members = list_length(cur_ec->ec_members);
+
 		for (int pos = 0; pos < num_members; pos++)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) list_nth(cur_ec->ec_members, pos);
@@ -2749,7 +2779,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 				 * don't want the child member to be marked as constant.
 				 */
 				Relids		new_relids = bms_difference(cur_em->em_relids,
-											top_parent_relids);
+														top_parent_relids);
+
 				new_relids = bms_add_members(new_relids, child_relids);
 
 				/*
@@ -2757,6 +2788,7 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 				 * nullable relids with child ones.
 				 */
 				Relids		new_nullable_relids = cur_em->em_nullable_relids;
+
 				if (bms_overlap(new_nullable_relids, top_parent_relids))
 					new_nullable_relids =
 						adjust_child_relids_multilevel(root,
@@ -2822,6 +2854,7 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 		parent_relids = NULL;	/* not used, but keep compiler quiet */
 
 	int			i = -1;
+
 	while ((i = bms_next_member(rel->eclass_indexes, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
@@ -2848,6 +2881,7 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 		 * match.  See also get_eclass_for_sort_expr.)
 		 */
 		EquivalenceMember *cur_em = NULL;
+
 		foreach(lc2, cur_ec->ec_members)
 		{
 			cur_em = (EquivalenceMember *) lfirst(lc2);
@@ -2889,15 +2923,16 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 				continue;
 
 			Oid			eq_op = select_equality_operator(cur_ec,
-											 cur_em->em_datatype,
-											 other_em->em_datatype);
+														 cur_em->em_datatype,
+														 other_em->em_datatype);
+
 			if (!OidIsValid(eq_op))
 				continue;
 
 			/* set parent_ec to mark as redundant with other joinclauses */
 			RestrictInfo *rinfo = create_join_clause(root, cur_ec, eq_op,
-									   cur_em, other_em,
-									   cur_ec);
+													 cur_em, other_em,
+													 cur_ec);
 
 			result = lappend(result, rinfo);
 		}
@@ -2931,9 +2966,10 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 
 	/* Examine only eclasses mentioning both rel1 and rel2 */
 	Bitmapset  *matching_ecs = get_common_eclass_indexes(root, rel1->relids,
-											 rel2->relids);
+														 rel2->relids);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) list_nth(root->eq_classes,
@@ -2997,6 +3033,7 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
 	Bitmapset  *matched_ecs = get_eclass_indexes_for_relids(root, rel1->relids);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(matched_ecs, i)) >= 0)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) list_nth(root->eq_classes,

@@ -205,6 +205,7 @@ pg_snprintf(char *str, size_t count, const char *fmt,...)
 
 	va_start(args, fmt);
 	int			len = pg_vsnprintf(str, count, fmt, args);
+
 	va_end(args);
 	return len;
 }
@@ -232,6 +233,7 @@ pg_sprintf(char *str, const char *fmt,...)
 
 	va_start(args, fmt);
 	int			len = pg_vsprintf(str, fmt, args);
+
 	va_end(args);
 	return len;
 }
@@ -265,6 +267,7 @@ pg_fprintf(FILE *stream, const char *fmt,...)
 
 	va_start(args, fmt);
 	int			len = pg_vfprintf(stream, fmt, args);
+
 	va_end(args);
 	return len;
 }
@@ -282,6 +285,7 @@ pg_printf(const char *fmt,...)
 
 	va_start(args, fmt);
 	int			len = pg_vfprintf(stdout, fmt, args);
+
 	va_end(args);
 	return len;
 }
@@ -303,6 +307,7 @@ flushbuffer(PrintfTarget *target)
 	{
 
 		size_t		written = fwrite(target->bufstart, 1, nc, target->stream);
+
 		target->nchars += written;
 		if (written != nc)
 			target->failed = true;
@@ -754,6 +759,7 @@ find_arguments(const char *format, va_list args,
 
 	/* Initialize to "no dollar arguments known" */
 	int			last_dollar = 0;
+
 	MemSet(argtypes, 0, sizeof(argtypes));
 
 	/*
@@ -996,6 +1002,7 @@ fmtptr(const void *value, PrintfTarget *target)
 
 	/* we rely on regular C library's sprintf to do the basic conversion */
 	int			vallen = sprintf(convert, "%p", value);
+
 	if (vallen < 0)
 		target->failed = true;
 	else
@@ -1453,6 +1460,7 @@ compute_padlen(int minlen, int vallen, int leftjust)
 {
 
 	int			padlen = minlen - vallen;
+
 	if (padlen < 0)
 		padlen = 0;
 	if (leftjust)
@@ -1480,6 +1488,7 @@ leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
 		}
 	}
 	int			maxpad = (signvalue != 0);
+
 	if (*padlen > maxpad)
 	{
 		dopr_outchmulti(' ', *padlen - maxpad, target);

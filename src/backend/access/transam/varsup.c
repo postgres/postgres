@@ -77,6 +77,7 @@ GetNewTransactionId(bool isSubXact)
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
 	FullTransactionId full_xid = ShmemVariableCache->nextXid;
+
 	xid = XidFromFullTransactionId(full_xid);
 
 	/*----------
@@ -262,6 +263,7 @@ ReadNextFullTransactionId(void)
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
 	FullTransactionId fullXid = ShmemVariableCache->nextXid;
+
 	LWLockRelease(XidGenLock);
 
 	return fullXid;
@@ -284,6 +286,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 
 	/* Fast return if this isn't an xid high enough to move the needle. */
 	TransactionId next_xid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+
 	if (!TransactionIdFollowsOrEquals(xid, next_xid))
 		return;
 
@@ -297,6 +300,7 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 	 */
 	TransactionIdAdvance(xid);
 	uint32		epoch = EpochFromFullTransactionId(ShmemVariableCache->nextXid);
+
 	if (unlikely(xid < next_xid))
 		++epoch;
 	FullTransactionId newNextFullXid = FullTransactionIdFromEpochAndXid(epoch, xid);
@@ -350,6 +354,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * so it doesn't matter.)
 	 */
 	TransactionId xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1);
+
 	if (xidWrapLimit < FirstNormalTransactionId)
 		xidWrapLimit += FirstNormalTransactionId;
 
@@ -366,6 +371,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * outside of single-user mode.
 	 */
 	TransactionId xidStopLimit = xidWrapLimit - 3000000;
+
 	if (xidStopLimit < FirstNormalTransactionId)
 		xidStopLimit -= FirstNormalTransactionId;
 
@@ -380,6 +386,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * not get in this kind of trouble in the first place.)
 	 */
 	TransactionId xidWarnLimit = xidWrapLimit - 40000000;
+
 	if (xidWarnLimit < FirstNormalTransactionId)
 		xidWarnLimit -= FirstNormalTransactionId;
 
@@ -399,6 +406,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * SetMultiXactIdLimit.
 	 */
 	TransactionId xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
+
 	if (xidVacLimit < FirstNormalTransactionId)
 		xidVacLimit += FirstNormalTransactionId;
 
@@ -411,6 +419,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	ShmemVariableCache->xidWrapLimit = xidWrapLimit;
 	ShmemVariableCache->oldestXidDB = oldest_datoid;
 	TransactionId curXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+
 	LWLockRelease(XidGenLock);
 
 	/* Log the info */
@@ -486,6 +495,7 @@ ForceTransactionIdLimitUpdate(void)
 	TransactionId xidVacLimit = ShmemVariableCache->xidVacLimit;
 	TransactionId oldestXid = ShmemVariableCache->oldestXid;
 	Oid			oldestXidDB = ShmemVariableCache->oldestXidDB;
+
 	LWLockRelease(XidGenLock);
 
 	if (!TransactionIdIsNormal(oldestXid))

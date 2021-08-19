@@ -92,7 +92,8 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 
 	/* Fetch the source text of the function. */
 	HeapTuple	pl_tuple = SearchSysCache(PROCOID,
-							  ObjectIdGetDatum(fcinfo->flinfo->fn_oid), 0, 0, 0);
+										  ObjectIdGetDatum(fcinfo->flinfo->fn_oid), 0, 0, 0);
+
 	if (!HeapTupleIsValid(pl_tuple))
 		elog(ERROR, "cache lookup failed for function %u",
 			 fcinfo->flinfo->fn_oid);
@@ -104,10 +105,12 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	Form_pg_proc pl_struct = (Form_pg_proc) GETSTRUCT(pl_tuple);
 	char	   *proname = pstrdup(NameStr(pl_struct->proname));
 	Datum		ret = SysCacheGetAttr(PROCOID, pl_tuple, Anum_pg_proc_prosrc, &isnull);
+
 	if (isnull)
 		elog(ERROR, "could not find source text of function \"%s\"",
 			 proname);
 	char	   *source = DatumGetCString(DirectFunctionCall1(textout, ret));
+
 	ereport(NOTICE,
 			(errmsg("source text of function \"%s\": %s",
 					proname, source)));
@@ -117,8 +120,8 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	 * procedure.
 	 */
 	volatile MemoryContext proc_cxt = AllocSetContextCreate(TopMemoryContext,
-									 "PL/Sample function",
-									 ALLOCSET_SMALL_SIZES);
+															"PL/Sample function",
+															ALLOCSET_SMALL_SIZES);
 
 	FmgrInfo   *arg_out_func = (FmgrInfo *) palloc0(fcinfo->nargs * sizeof(FmgrInfo));
 	int			numargs = get_func_arg_info(pl_tuple, &argtypes, &argnames, &argmodes);
@@ -148,6 +151,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 
 	/* Type of the result */
 	Oid			prorettype = pl_struct->prorettype;
+
 	ReleaseSysCache(pl_tuple);
 
 	/*

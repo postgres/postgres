@@ -59,6 +59,7 @@ open_target_file(const char *path, bool trunc)
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 
 	int			mode = O_WRONLY | O_CREAT | PG_BINARY;
+
 	if (trunc)
 		mode |= O_TRUNC;
 	dstfd = open(dstpath, mode, pg_file_create_mode);
@@ -100,11 +101,13 @@ write_target_range(char *buf, off_t begin, size_t size)
 
 	size_t		writeleft = size;
 	char	   *p = buf;
+
 	while (writeleft > 0)
 	{
 
 		errno = 0;
 		ssize_t		writelen = write(dstfd, p, writeleft);
+
 		if (writelen < 0)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
@@ -209,6 +212,7 @@ truncate_target_file(const char *path, off_t newsize)
 	snprintf(dstpath, sizeof(dstpath), "%s/%s", datadir_target, path);
 
 	int			fd = open(dstpath, O_WRONLY, pg_file_create_mode);
+
 	if (fd < 0)
 		pg_fatal("could not open file \"%s\" for truncation: %m",
 				 dstpath);
@@ -327,6 +331,7 @@ slurpFile(const char *datadir, const char *path, size_t *filesize)
 	char	   *buffer = pg_malloc(len + 1);
 
 	int			r = read(fd, buffer, len);
+
 	if (r != len)
 	{
 		if (r < 0)
@@ -375,6 +380,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 		snprintf(fullparentpath, MAXPGPATH, "%s", datadir);
 
 	DIR		   *xldir = opendir(fullparentpath);
+
 	if (xldir == NULL)
 		pg_fatal("could not open directory \"%s\": %m",
 				 fullparentpath);
@@ -432,6 +438,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 			char		link_target[MAXPGPATH];
 
 			int			len = readlink(fullpath, link_target, sizeof(link_target));
+
 			if (len < 0)
 				pg_fatal("could not read symbolic link \"%s\": %m",
 						 fullpath);

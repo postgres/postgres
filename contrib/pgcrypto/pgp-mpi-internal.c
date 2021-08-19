@@ -60,6 +60,7 @@ mp_px_rand(uint32 bits, mpz_t *res)
 	int			last_bits = bits & 7;
 
 	uint8	   *buf = palloc(bytes);
+
 	if (!pg_strong_random(buf, bytes))
 	{
 		pfree(buf);
@@ -117,10 +118,12 @@ bn_to_mpi(mpz_t *bn)
 	PGP_MPI    *n;
 
 	int			res = pgp_mpi_alloc(mp_int_count_bits(bn), &n);
+
 	if (res < 0)
 		return NULL;
 
 	int			bytes = (mp_int_count_bits(bn) + 7) / 8;
+
 	if (bytes != n->bytes)
 	{
 		px_debug("bn_to_mpi: bignum conversion failed: bn=%d, mpi=%d",

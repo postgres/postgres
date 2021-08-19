@@ -594,6 +594,7 @@ date2j(int y, int m, int d)
 
 	int			century = y / 100;
 	int			julian = y * 365 - 32167;
+
 	julian += y / 4 - century + century / 4;
 	julian += 7834 * m / 256 + d;
 
@@ -605,13 +606,16 @@ j2date(int jd, int *year, int *month, int *day)
 {
 
 	unsigned int julian = jd;
+
 	julian += 32044;
 	unsigned int quad = julian / 146097;
 	unsigned int extra = (julian - quad * 146097) * 4 + 3;
+
 	julian += 60 + quad * 3 + extra / 146097;
 	quad = julian / 1461;
 	julian -= quad * 1461;
 	int			y = julian * 4 / 1461;
+
 	julian = ((y != 0) ? (julian + 305) % 365 : (julian + 306) % 366) + 123;
 	y += quad * 4;
 	*year = y - 4800;
@@ -1060,6 +1064,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 
 	int64		time = jd;
+
 	*hour = time / USECS_PER_HOUR;
 	time -= (*hour) * USECS_PER_HOUR;
 	*min = time / USECS_PER_MINUTE;
@@ -1194,6 +1199,7 @@ DecodeNumber(int flen, char *str, int fmask,
 	*tmask = 0;
 
 	int			val = strtoint(str, &cp, 10);
+
 	if (cp == str)
 		return -1;
 
@@ -1517,6 +1523,7 @@ DecodeTimezone(char *str, int *tzp)
 		min = 0;
 
 	int			tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE;
+
 	if (*str == '-')
 		tz = -tz;
 
@@ -1538,6 +1545,7 @@ DecodePosixTimezone(char *str, int *tzp)
 				tz;
 
 	char	   *cp = str;
+
 	while (*cp != '\0' && isalpha((unsigned char) *cp))
 		cp++;
 
@@ -1545,8 +1553,10 @@ DecodePosixTimezone(char *str, int *tzp)
 		return -1;
 
 	char		delim = *cp;
+
 	*cp = '\0';
 	int			type = DecodeSpecial(MAXDATEFIELDS - 1, str, &val);
+
 	*cp = delim;
 
 	switch (type)
@@ -1813,6 +1823,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						return -1;
 
 					int			val = strtoint(field[i], &cp, 10);
+
 					if (*cp != '-')
 						return -1;
 
@@ -2451,12 +2462,14 @@ pgtypes_defmt_scan(union un_fmt_comb *scan_val, int scan_type, char **pstr, char
 	while (**pstr == ' ')
 		pstr++;
 	char	   *pstr_end = find_end_token(*pstr, pfmt);
+
 	if (!pstr_end)
 	{
 		/* there was an error, no match */
 		return 1;
 	}
 	char		last_char = *pstr_end;
+
 	*pstr_end = '\0';
 
 	switch (scan_type)

@@ -81,8 +81,9 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 		 */
 
 		TypeCacheEntry *typentry = lookup_type_cache(type_id,
-									 TYPECACHE_TUPDESC |
-									 TYPECACHE_DOMAIN_BASE_INFO);
+													 TYPECACHE_TUPDESC |
+													 TYPECACHE_DOMAIN_BASE_INFO);
+
 		if (typentry->typtype == TYPTYPE_DOMAIN)
 		{
 			flags |= ER_FLAG_IS_DOMAIN;
@@ -114,8 +115,8 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 	 * consistent with the other ways of making an expanded record.)
 	 */
 	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
-								   "expanded record",
-								   ALLOCSET_DEFAULT_SIZES);
+												 "expanded record",
+												 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Since we already know the number of fields in the tupdesc, we can
@@ -124,8 +125,8 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 	 * and it will save a palloc cycle if we do need them.
 	 */
 	ExpandedRecordHeader *erh = (ExpandedRecordHeader *)
-		MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
-						   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
+	MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
+					   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
 
 	/* Ensure all header fields are initialized to 0/null */
 	memset(erh, 0, sizeof(ExpandedRecordHeader));
@@ -135,6 +136,7 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 
 	/* Set up dvalues/dnulls, with no valid contents as yet */
 	char	   *chunk = (char *) erh + MAXALIGN(sizeof(ExpandedRecordHeader));
+
 	erh->dvalues = (Datum *) chunk;
 	erh->dnulls = (bool *) (chunk + tupdesc->natts * sizeof(Datum));
 	erh->nfields = tupdesc->natts;
@@ -217,6 +219,7 @@ make_expanded_record_from_tupdesc(TupleDesc tupdesc,
 		 */
 
 		TypeCacheEntry *typentry = lookup_type_cache(tupdesc->tdtypeid, TYPECACHE_TUPDESC);
+
 		if (typentry->tupDesc == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -241,8 +244,8 @@ make_expanded_record_from_tupdesc(TupleDesc tupdesc,
 	 * into it without needing an extra malloc block.
 	 */
 	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
-								   "expanded record",
-								   ALLOCSET_DEFAULT_SIZES);
+												 "expanded record",
+												 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Since we already know the number of fields in the tupdesc, we can
@@ -251,8 +254,8 @@ make_expanded_record_from_tupdesc(TupleDesc tupdesc,
 	 * and it will save a palloc cycle if we do need them.
 	 */
 	ExpandedRecordHeader *erh = (ExpandedRecordHeader *)
-		MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
-						   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
+	MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
+					   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
 
 	/* Ensure all header fields are initialized to 0/null */
 	memset(erh, 0, sizeof(ExpandedRecordHeader));
@@ -262,6 +265,7 @@ make_expanded_record_from_tupdesc(TupleDesc tupdesc,
 
 	/* Set up dvalues/dnulls, with no valid contents as yet */
 	char	   *chunk = (char *) erh + MAXALIGN(sizeof(ExpandedRecordHeader));
+
 	erh->dvalues = (Datum *) chunk;
 	erh->dnulls = (bool *) (chunk + tupdesc->natts * sizeof(Datum));
 	erh->nfields = tupdesc->natts;
@@ -330,8 +334,8 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 	 * into it without needing an extra malloc block.
 	 */
 	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
-								   "expanded record",
-								   ALLOCSET_DEFAULT_SIZES);
+												 "expanded record",
+												 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Since we already know the number of fields in the tupdesc, we can
@@ -340,8 +344,8 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 	 * and it will save a palloc cycle if we do need them.
 	 */
 	ExpandedRecordHeader *erh = (ExpandedRecordHeader *)
-		MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
-						   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
+	MemoryContextAlloc(objcxt, MAXALIGN(sizeof(ExpandedRecordHeader))
+					   + tupdesc->natts * (sizeof(Datum) + sizeof(bool)));
 
 	/* Ensure all header fields are initialized to 0/null */
 	memset(erh, 0, sizeof(ExpandedRecordHeader));
@@ -351,6 +355,7 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 
 	/* Set up dvalues/dnulls, with no valid contents as yet */
 	char	   *chunk = (char *) erh + MAXALIGN(sizeof(ExpandedRecordHeader));
+
 	erh->dvalues = (Datum *) chunk;
 	erh->dnulls = (bool *) (chunk + tupdesc->natts * sizeof(Datum));
 	erh->nfields = tupdesc->natts;
@@ -571,12 +576,12 @@ make_expanded_record_from_datum(Datum recorddatum, MemoryContext parentcontext)
 	 * into it without needing an extra malloc block.
 	 */
 	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
-								   "expanded record",
-								   ALLOCSET_DEFAULT_SIZES);
+												 "expanded record",
+												 ALLOCSET_DEFAULT_SIZES);
 
 	/* Set up expanded record header, initializing fields to 0/null */
 	ExpandedRecordHeader *erh = (ExpandedRecordHeader *)
-		MemoryContextAllocZero(objcxt, sizeof(ExpandedRecordHeader));
+	MemoryContextAllocZero(objcxt, sizeof(ExpandedRecordHeader));
 
 	EOH_init_header(&erh->hdr, &ER_methods, objcxt);
 	erh->er_magic = ER_MAGIC;
@@ -595,6 +600,7 @@ make_expanded_record_from_datum(Datum recorddatum, MemoryContext parentcontext)
 
 	MemoryContext oldcxt = MemoryContextSwitchTo(objcxt);
 	HeapTuple	newtuple = heap_copytuple(&tmptup);
+
 	erh->flags |= ER_FLAG_FVALUE_ALLOCED;
 	MemoryContextSwitchTo(oldcxt);
 
@@ -702,6 +708,7 @@ ER_get_flat_size(ExpandedObjectHeader *eohptr)
 
 	/* Test if we currently have any null values */
 	bool		hasnull = false;
+
 	for (i = 0; i < erh->nfields; i++)
 	{
 		if (erh->dnulls[i])
@@ -940,6 +947,7 @@ deconstruct_expanded_record(ExpandedRecordHeader *erh)
 	 * not be separately palloc'd, anyway).
 	 */
 	int			nfields = tupdesc->natts;
+
 	if (erh->dvalues == NULL || erh->nfields != nfields)
 	{
 
@@ -948,7 +956,8 @@ deconstruct_expanded_record(ExpandedRecordHeader *erh)
 		 * arrays in one palloc chunk.
 		 */
 		char	   *chunk = MemoryContextAlloc(erh->hdr.eoh_context,
-								   nfields * (sizeof(Datum) + sizeof(bool)));
+											   nfields * (sizeof(Datum) + sizeof(bool)));
+
 		dvalues = (Datum *) chunk;
 		dnulls = (bool *) (chunk + nfields * sizeof(Datum));
 		erh->dvalues = dvalues;
@@ -1009,6 +1018,7 @@ expanded_record_lookup_field(ExpandedRecordHeader *erh, const char *fieldname,
 
 	/* How about system attributes? */
 	const FormData_pg_attribute *sysattr = SystemAttributeByName(fieldname);
+
 	if (sysattr != NULL)
 	{
 		finfo->fnumber = sysattr->attnum;
@@ -1100,6 +1110,7 @@ expanded_record_set_field_internal(ExpandedRecordHeader *erh, int fnumber,
 
 	/* Tuple descriptor must be valid by now */
 	TupleDesc	tupdesc = erh->er_tupdesc;
+
 	Assert(erh->nfields == tupdesc->natts);
 
 	/* Caller error if fnumber is system column or nonexistent column */
@@ -1111,6 +1122,7 @@ expanded_record_set_field_internal(ExpandedRecordHeader *erh, int fnumber,
 	 * if needed.
 	 */
 	Form_pg_attribute attr = TupleDescAttr(tupdesc, fnumber - 1);
+
 	if (!isnull && !attr->attbyval)
 	{
 		MemoryContext oldcxt;
@@ -1225,6 +1237,7 @@ expanded_record_set_fields(ExpandedRecordHeader *erh,
 
 	/* Tuple descriptor must be valid by now */
 	TupleDesc	tupdesc = erh->er_tupdesc;
+
 	Assert(erh->nfields == tupdesc->natts);
 
 	/* Flattened value will no longer represent record accurately */
@@ -1292,6 +1305,7 @@ expanded_record_set_fields(ExpandedRecordHeader *erh,
 			{
 
 				char	   *oldValue = (char *) DatumGetPointer(dvalues[fnumber]);
+
 				/* Don't try to pfree a part of the original flat record */
 				if (oldValue < erh->fstartptr || oldValue >= erh->fendptr)
 					pfree(oldValue);
@@ -1369,6 +1383,7 @@ build_dummy_expanded_header(ExpandedRecordHeader *main_erh)
 	 * one).  Include space for its field values in the request.
 	 */
 	ExpandedRecordHeader *erh = main_erh->er_dummy_header;
+
 	if (erh == NULL || erh->nfields != tupdesc->natts)
 	{
 
@@ -1396,6 +1411,7 @@ build_dummy_expanded_header(ExpandedRecordHeader *main_erh)
 
 		/* Set up dvalues/dnulls, with no valid contents as yet */
 		char	   *chunk = (char *) erh + MAXALIGN(sizeof(ExpandedRecordHeader));
+
 		erh->dvalues = (Datum *) chunk;
 		erh->dnulls = (bool *) (chunk + tupdesc->natts * sizeof(Datum));
 		erh->nfields = tupdesc->natts;

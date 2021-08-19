@@ -121,10 +121,10 @@ create_ctas_internal(List *attrList, IntoClause *into)
 
 	/* parse and validate reloptions for the toast table */
 	Datum		toast_options = transformRelOptions((Datum) 0,
-										create->options,
-										"toast",
-										validnsps,
-										true, false);
+													create->options,
+													"toast",
+													validnsps,
+													true, false);
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
@@ -162,6 +162,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 	 * names in the query.  (Too few column names are OK, too many are not.)
 	 */
 	List	   *attrList = NIL;
+
 	lc = list_head(into->colNames);
 	foreach(t, tlist)
 	{
@@ -180,9 +181,9 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 				colname = tle->resname;
 
 			ColumnDef  *col = makeColumnDef(colname,
-								exprType((Node *) tle->expr),
-								exprTypmod((Node *) tle->expr),
-								exprCollation((Node *) tle->expr));
+											exprType((Node *) tle->expr),
+											exprTypmod((Node *) tle->expr),
+											exprCollation((Node *) tle->expr));
 
 			/*
 			 * It's possible that the column is of a collatable type but the
@@ -455,6 +456,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	List	   *attrList = NIL;
 	ListCell   *lc = list_head(into->colNames);
+
 	for (attnum = 0; attnum < typeinfo->natts; attnum++)
 	{
 		Form_pg_attribute attribute = TupleDescAttr(typeinfo, attnum);
@@ -469,9 +471,9 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 			colname = NameStr(attribute->attname);
 
 		ColumnDef  *col = makeColumnDef(colname,
-							attribute->atttypid,
-							attribute->atttypmod,
-							attribute->attcollation);
+										attribute->atttypid,
+										attribute->atttypmod,
+										attribute->attcollation);
 
 		/*
 		 * It's possible that the column is of a collatable type but the

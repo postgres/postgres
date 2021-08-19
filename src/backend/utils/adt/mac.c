@@ -67,7 +67,8 @@ macaddr_in(PG_FUNCTION_ARGS)
 	/* %1s matches iff there is trailing non-whitespace garbage */
 
 	int			count = sscanf(str, "%x:%x:%x:%x:%x:%x%1s",
-				   &a, &b, &c, &d, &e, &f, junk);
+							   &a, &b, &c, &d, &e, &f, junk);
+
 	if (count != 6)
 		count = sscanf(str, "%x-%x-%x-%x-%x-%x%1s",
 					   &a, &b, &c, &d, &e, &f, junk);
@@ -285,6 +286,7 @@ macaddr_not(PG_FUNCTION_ARGS)
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 
 	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
+
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -301,6 +303,7 @@ macaddr_and(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 
 	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
+
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -317,6 +320,7 @@ macaddr_or(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 
 	macaddr    *result = (macaddr *) palloc(sizeof(macaddr));
+
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;
@@ -365,6 +369,7 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 		macaddr_sortsupport_state *uss = palloc(sizeof(macaddr_sortsupport_state));
+
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);

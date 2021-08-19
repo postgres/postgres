@@ -103,7 +103,8 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 			break;
 	}
 
-	size_t		len = strlen(msg) + 1;		/* space needed, including NUL */
+	size_t		len = strlen(msg) + 1;	/* space needed, including NUL */
+
 	if (errbuf_size > 0)
 	{
 		if (errbuf_size > len)

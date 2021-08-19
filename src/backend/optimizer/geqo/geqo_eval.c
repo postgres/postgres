@@ -68,8 +68,8 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 * be freed even if we abort via ereport(ERROR).
 	 */
 	MemoryContext mycontext = AllocSetContextCreate(CurrentMemoryContext,
-									  "GEQO",
-									  ALLOCSET_DEFAULT_SIZES);
+													"GEQO",
+													ALLOCSET_DEFAULT_SIZES);
 	MemoryContext oldcxt = MemoryContextSwitchTo(mycontext);
 
 	/*
@@ -89,6 +89,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 */
 	int			savelength = list_length(root->join_rel_list);
 	struct HTAB *savehash = root->join_rel_hash;
+
 	Assert(root->join_rel_level == NULL);
 
 	root->join_rel_hash = NULL;
@@ -179,10 +180,11 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 		/* Get the next input relation */
 		int			cur_rel_index = (int) tour[rel_count];
 		RelOptInfo *cur_rel = (RelOptInfo *) list_nth(private->initial_rels,
-										  cur_rel_index - 1);
+													  cur_rel_index - 1);
 
 		/* Make it into a single-rel clump */
 		Clump	   *cur_clump = (Clump *) palloc(sizeof(Clump));
+
 		cur_clump->joinrel = cur_rel;
 		cur_clump->size = 1;
 
@@ -196,6 +198,7 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 		ListCell   *lc;
 
 		List	   *fclumps = NIL;
+
 		foreach(lc, clumps)
 		{
 			Clump	   *clump = (Clump *) lfirst(lc);
@@ -247,8 +250,8 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 			 * will only include the ones we want.
 			 */
 			RelOptInfo *joinrel = make_join_rel(root,
-									old_clump->joinrel,
-									new_clump->joinrel);
+												old_clump->joinrel,
+												new_clump->joinrel);
 
 			/* Keep searching if join order is not valid */
 			if (joinrel)

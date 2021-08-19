@@ -499,6 +499,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -586,6 +587,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -607,6 +609,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		/* Get the next one in the list */
 		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
+
 		if (!local_beentry)
 		{
 			int			i;
@@ -690,6 +693,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 
 			char	   *clipped_activity = pgstat_clip_activity(beentry->st_activity_raw);
+
 			values[5] = CStringGetTextDatum(clipped_activity);
 			pfree(clipped_activity);
 
@@ -717,6 +721,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			{
 
 				uint32		raw_wait_event = UINT32_ACCESS_ONCE(proc->wait_event_info);
+
 				wait_event_type = pgstat_get_wait_event_type(raw_wait_event);
 				wait_event = pgstat_get_wait_event(raw_wait_event);
 
@@ -793,10 +798,11 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					remote_host[0] = '\0';
 					remote_port[0] = '\0';
 					int			ret = pg_getnameinfo_all(&beentry->st_clientaddr.addr,
-											 beentry->st_clientaddr.salen,
-											 remote_host, sizeof(remote_host),
-											 remote_port, sizeof(remote_port),
-											 NI_NUMERICHOST | NI_NUMERICSERV);
+														 beentry->st_clientaddr.salen,
+														 remote_host, sizeof(remote_host),
+														 remote_port, sizeof(remote_port),
+														 NI_NUMERICHOST | NI_NUMERICSERV);
+
 					if (ret == 0)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
@@ -841,6 +847,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			{
 
 				const char *bgw_type = GetBackgroundWorkerTypeByPid(beentry->st_procpid);
+
 				if (bgw_type)
 					values[17] = CStringGetTextDatum(bgw_type);
 				else
@@ -1008,6 +1015,7 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 
 	char	   *clipped_activity = pgstat_clip_activity(activity);
 	text	   *ret = cstring_to_text(activity);
+
 	pfree(clipped_activity);
 
 	PG_RETURN_TEXT_P(ret);
@@ -1226,6 +1234,7 @@ pg_stat_get_db_numbackends(PG_FUNCTION_ARGS)
 	int			beid;
 
 	int32		result = 0;
+
 	for (beid = 1; beid <= tot_backends; beid++)
 	{
 		PgBackendStatus *beentry = pgstat_fetch_stat_beentry(beid);
@@ -1791,6 +1800,7 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 
 	/* Initialise attributes information in the tuple descriptor */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "wal_records",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "wal_fpi",
@@ -1869,6 +1879,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -2221,6 +2232,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 
 	/* Initialise attributes information in the tuple descriptor */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(7);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "archived_count",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "last_archived_wal",
@@ -2293,6 +2305,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 
 	/* Initialise attributes information in the tuple descriptor */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_REPLICATION_SLOT_COLS);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "slot_name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "spill_txns",
@@ -2317,6 +2330,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 
 	namestrcpy(&slotname, text_to_cstring(slotname_text));
 	PgStat_StatReplSlotEntry *slotent = pgstat_fetch_replslot(slotname);
+
 	if (!slotent)
 	{
 		/*

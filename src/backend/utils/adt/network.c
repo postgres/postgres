@@ -90,7 +90,8 @@ network_in(char *src, bool is_cidr)
 		ip_family(dst) = PGSQL_AF_INET;
 
 	int			bits = pg_inet_net_pton(ip_family(dst), src, ip_addr(dst),
-							is_cidr ? ip_addrsize(dst) : -1);
+										is_cidr ? ip_addrsize(dst) : -1);
+
 	if ((bits < 0) || (bits > ip_maxbits(dst)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -143,7 +144,8 @@ network_out(inet *src, bool is_cidr)
 	int			len;
 
 	char	   *dst = pg_inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
-						   tmp, sizeof(tmp));
+									   tmp, sizeof(tmp));
+
 	if (dst == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -204,6 +206,7 @@ network_recv(StringInfo buf, bool is_cidr)
 				 errmsg("invalid address family in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
 	int			bits = pq_getmsgbyte(buf);
+
 	if (bits < 0 || bits > ip_maxbits(addr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -221,6 +224,7 @@ network_recv(StringInfo buf, bool is_cidr)
 						is_cidr ? "cidr" : "inet")));
 
 	char	   *addrptr = (char *) ip_addr(addr);
+
 	for (i = 0; i < nb; i++)
 		addrptr[i] = pq_getmsgbyte(buf);
 
@@ -277,6 +281,7 @@ network_send(inet *addr, bool is_cidr)
 		nb = 0;
 	pq_sendbyte(&buf, nb);
 	char	   *addrptr = (char *) ip_addr(addr);
+
 	for (i = 0; i < nb; i++)
 		pq_sendbyte(&buf, addrptr[i]);
 	return pq_endtypsend(&buf);
@@ -329,6 +334,7 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 
 	/* clone the original data */
 	inet	   *dst = (inet *) palloc(VARSIZE_ANY(src));
+
 	memcpy(dst, src, VARSIZE_ANY(src));
 
 	ip_bits(dst) = bits;
@@ -400,7 +406,8 @@ network_cmp_internal(inet *a1, inet *a2)
 	{
 
 		int			order = bitncmp(ip_addr(a1), ip_addr(a2),
-						Min(ip_bits(a1), ip_bits(a2)));
+									Min(ip_bits(a1), ip_bits(a2)));
+
 		if (order != 0)
 			return order;
 		order = ((int) ip_bits(a1)) - ((int) ip_bits(a2));
@@ -438,6 +445,7 @@ network_sortsupport(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 		network_sortsupport_state *uss = palloc(sizeof(network_sortsupport_state));
+
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);
@@ -1131,18 +1139,19 @@ match_network_subset(Node *leftop,
 	Datum		opr1right = network_scan_first(rightopval);
 
 	Expr	   *expr = make_opclause(opr1oid, BOOLOID, false,
-						 (Expr *) leftop,
-						 (Expr *) makeConst(datatype, -1,
-											InvalidOid, /* not collatable */
-											-1, opr1right,
-											false, false),
-						 InvalidOid, InvalidOid);
+									 (Expr *) leftop,
+									 (Expr *) makeConst(datatype, -1,
+														InvalidOid, /* not collatable */
+														-1, opr1right,
+														false, false),
+									 InvalidOid, InvalidOid);
 	List	   *result = list_make1(expr);
 
 	/* create clause "key <= network_scan_last( rightopval )" */
 
 	Oid			opr2oid = get_opfamily_member(opfamily, datatype, datatype,
-								  BTLessEqualStrategyNumber);
+											  BTLessEqualStrategyNumber);
+
 	if (opr2oid == InvalidOid)
 		elog(ERROR, "no <= operator for opfamily %u", opfamily);
 
@@ -1220,7 +1229,7 @@ inet_abbrev(PG_FUNCTION_ARGS)
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
 	char	   *dst = pg_inet_net_ntop(ip_family(ip), ip_addr(ip),
-						   ip_bits(ip), tmp, sizeof(tmp));
+									   ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,
@@ -1237,7 +1246,7 @@ cidr_abbrev(PG_FUNCTION_ARGS)
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
 	char	   *dst = pg_inet_cidr_ntop(ip_family(ip), ip_addr(ip),
-							ip_bits(ip), tmp, sizeof(tmp));
+										ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,
@@ -1288,6 +1297,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	int			maxbytes = ip_addrsize(ip);
 	int			bits = ip_bits(ip);
+
 	a = ip_addr(ip);
 	b = ip_addr(dst);
 
@@ -1328,6 +1338,7 @@ network_network(PG_FUNCTION_ARGS)
 	inet	   *dst = (inet *) palloc0(sizeof(inet));
 
 	int			bits = ip_bits(ip);
+
 	a = ip_addr(ip);
 	b = ip_addr(dst);
 
@@ -1462,7 +1473,7 @@ inet_merge(PG_FUNCTION_ARGS)
 				 errmsg("cannot merge addresses from different families")));
 
 	int			commonbits = bitncommon(ip_addr(a1), ip_addr(a2),
-							Min(ip_bits(a1), ip_bits(a2)));
+										Min(ip_bits(a1), ip_bits(a2)));
 
 	PG_RETURN_INET_P(cidr_set_masklen_internal(a1, commonbits));
 }
@@ -1496,6 +1507,7 @@ convert_network_to_scalar(Datum value, Oid typid, bool *failure)
 					len = 5;
 
 				double		res = ip_family(ip);
+
 				for (i = 0; i < len; i++)
 				{
 					res *= 256;
@@ -1508,6 +1520,7 @@ convert_network_to_scalar(Datum value, Oid typid, bool *failure)
 				macaddr    *mac = DatumGetMacaddrP(value);
 
 				double		res = (mac->a << 16) | (mac->b << 8) | (mac->c);
+
 				res *= 256 * 256 * 256;
 				res += (mac->d << 16) | (mac->e << 8) | (mac->f);
 				return res;
@@ -1517,6 +1530,7 @@ convert_network_to_scalar(Datum value, Oid typid, bool *failure)
 				macaddr8   *mac = DatumGetMacaddr8P(value);
 
 				double		res = (mac->a << 24) | (mac->b << 16) | (mac->c << 8) | (mac->d);
+
 				res *= ((double) 256) * 256 * 256 * 256;
 				res += (mac->e << 24) | (mac->f << 16) | (mac->g << 8) | (mac->h);
 				return res;
@@ -1636,6 +1650,7 @@ addressOK(unsigned char *a, int bits, int family)
 
 	int			nbits = bits % 8;
 	unsigned char mask = 0xff;
+
 	if (bits != 0)
 		mask >>= nbits;
 
@@ -2019,6 +2034,7 @@ inetmi(PG_FUNCTION_ARGS)
 
 			carry = pip[nb] + (~pip2[nb] & 0xFF) + carry;
 			int			lobyte = carry & 0xFF;
+
 			if (byte < sizeof(int64))
 			{
 				res |= ((int64) lobyte) << (byte * 8);

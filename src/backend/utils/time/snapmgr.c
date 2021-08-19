@@ -198,6 +198,7 @@ SnapMgrShmemSize(void)
 {
 
 	Size		size = offsetof(OldSnapshotControlData, xid_by_minute);
+
 	if (old_snapshot_threshold > 0)
 		size = add_size(size, mul_size(sizeof(TransactionId),
 									   OLD_SNAPSHOT_TIME_MAP_ENTRIES));
@@ -610,11 +611,13 @@ CopySnapshot(Snapshot snapshot)
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	Size		size = subxipoff = sizeof(SnapshotData) +
-		snapshot->xcnt * sizeof(TransactionId);
+	snapshot->xcnt * sizeof(TransactionId);
+
 	if (snapshot->subxcnt > 0)
 		size += snapshot->subxcnt * sizeof(TransactionId);
 
 	Snapshot	newsnap = (Snapshot) MemoryContextAlloc(TopTransactionContext, size);
+
 	memcpy(newsnap, snapshot, sizeof(SnapshotData));
 
 	newsnap->regd_count = 0;
@@ -929,7 +932,7 @@ SnapshotResetXmin(void)
 	}
 
 	Snapshot	minSnapshot = pairingheap_container(SnapshotData, ph_node,
-										pairingheap_first(&RegisteredSnapshots));
+													pairingheap_first(&RegisteredSnapshots));
 
 	if (TransactionIdPrecedes(MyProc->xmin, minSnapshot->xmin))
 		MyProc->xmin = minSnapshot->xmin;
@@ -1157,6 +1160,7 @@ ExportSnapshot(Snapshot snapshot)
 
 	MemoryContext oldcxt = MemoryContextSwitchTo(TopTransactionContext);
 	ExportedSnapshot *esnap = (ExportedSnapshot *) palloc(sizeof(ExportedSnapshot));
+
 	esnap->snapfile = pstrdup(path);
 	esnap->snapshot = snapshot;
 	exportedSnapshots = lappend(exportedSnapshots, esnap);
@@ -1193,7 +1197,8 @@ ExportSnapshot(Snapshot snapshot)
 	 * snapshot.h.)
 	 */
 	int			addTopXid = (TransactionIdIsValid(topXid) &&
-				 TransactionIdPrecedes(topXid, snapshot->xmax)) ? 1 : 0;
+							 TransactionIdPrecedes(topXid, snapshot->xmax)) ? 1 : 0;
+
 	appendStringInfo(&buf, "xcnt:%d\n", snapshot->xcnt + addTopXid);
 	for (i = 0; i < snapshot->xcnt; i++)
 		appendStringInfo(&buf, "xip:%u\n", snapshot->xip[i]);
@@ -1270,6 +1275,7 @@ pg_export_snapshot(PG_FUNCTION_ARGS)
 {
 
 	char	   *snapshotName = ExportSnapshot(GetActiveSnapshot());
+
 	PG_RETURN_TEXT_P(cstring_to_text(snapshotName));
 }
 
@@ -1404,6 +1410,7 @@ ImportSnapshot(const char *idstr)
 	snprintf(path, MAXPGPATH, SNAPSHOT_EXPORT_DIR "/%s", idstr);
 
 	FILE	   *f = AllocateFile(path, PG_BINARY_R);
+
 	if (!f)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1415,6 +1422,7 @@ ImportSnapshot(const char *idstr)
 
 	/* and read the file into a palloc'd string */
 	char	   *filebuf = (char *) palloc(stat_buf.st_size + 1);
+
 	if (fread(filebuf, stat_buf.st_size, 1, f) != 1)
 		elog(ERROR, "could not read file \"%s\": %m", path);
 
@@ -1429,6 +1437,7 @@ ImportSnapshot(const char *idstr)
 
 	parseVxidFromText("vxid:", &filebuf, path, &src_vxid);
 	int			src_pid = parseIntFromText("pid:", &filebuf, path);
+
 	/* we abuse parseXidFromText a bit here ... */
 	Oid			src_dbid = parseXidFromText("dbid:", &filebuf, path);
 	int			src_isolevel = parseIntFromText("iso:", &filebuf, path);
@@ -1641,6 +1650,7 @@ GetOldSnapshotThresholdTimestamp(void)
 
 	SpinLockAcquire(&oldSnapshotControl->mutex_threshold);
 	TimestampTz threshold_timestamp = oldSnapshotControl->threshold_timestamp;
+
 	SpinLockRelease(&oldSnapshotControl->mutex_threshold);
 
 	return threshold_timestamp;
@@ -1695,7 +1705,8 @@ GetOldSnapshotFromTimeMapping(TimestampTz ts, TransactionId *xlimitp)
 	{
 
 		int			offset = ((ts - oldSnapshotControl->head_timestamp)
-				  / USECS_PER_MINUTE);
+							  / USECS_PER_MINUTE);
+
 		if (offset > oldSnapshotControl->count_used - 1)
 			offset = oldSnapshotControl->count_used - 1;
 		offset = (oldSnapshotControl->head_offset + offset)
@@ -1750,6 +1761,7 @@ TransactionIdLimitedForOldSnapshots(TransactionId recentXmin,
 	SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
 	TransactionId latest_xmin = oldSnapshotControl->latest_xmin;
 	TimestampTz next_map_update_ts = oldSnapshotControl->next_map_update;
+
 	SpinLockRelease(&oldSnapshotControl->mutex_latest_xmin);
 
 	/*
@@ -1845,6 +1857,7 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 	SpinLockAcquire(&oldSnapshotControl->mutex_latest_xmin);
 	TransactionId latest_xmin = oldSnapshotControl->latest_xmin;
 	TimestampTz update_ts = oldSnapshotControl->next_map_update;
+
 	if (ts > update_ts)
 	{
 		oldSnapshotControl->next_map_update = ts;
@@ -1942,10 +1955,11 @@ MaintainOldSnapshotTimeMapping(TimestampTz whenTaken, TransactionId xmin)
 		 * rotating old ones out.
 		 */
 		int			distance_to_new_tail =
-			(ts - oldSnapshotControl->head_timestamp) / USECS_PER_MINUTE;
+		(ts - oldSnapshotControl->head_timestamp) / USECS_PER_MINUTE;
 		int			distance_to_current_tail =
-			oldSnapshotControl->count_used - 1;
+		oldSnapshotControl->count_used - 1;
 		int			advance = distance_to_new_tail - distance_to_current_tail;
+
 		Assert(advance > 0);
 
 		if (advance >= OLD_SNAPSHOT_TIME_MAP_ENTRIES)
@@ -2051,7 +2065,8 @@ EstimateSnapshotSpace(Snapshot snap)
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	Size		size = add_size(sizeof(SerializedSnapshotData),
-					mul_size(snap->xcnt, sizeof(TransactionId)));
+								mul_size(snap->xcnt, sizeof(TransactionId)));
+
 	if (snap->subxcnt > 0 &&
 		(!snap->suboverflowed || snap->takenDuringRecovery))
 		size = add_size(size,
@@ -2132,15 +2147,16 @@ RestoreSnapshot(char *start_address)
 	memcpy(&serialized_snapshot, start_address,
 		   sizeof(SerializedSnapshotData));
 	TransactionId *serialized_xids = (TransactionId *)
-		(start_address + sizeof(SerializedSnapshotData));
+	(start_address + sizeof(SerializedSnapshotData));
 
 	/* We allocate any XID arrays needed in the same palloc block. */
 	Size		size = sizeof(SnapshotData)
-		+ serialized_snapshot.xcnt * sizeof(TransactionId)
-		+ serialized_snapshot.subxcnt * sizeof(TransactionId);
+	+ serialized_snapshot.xcnt * sizeof(TransactionId)
+	+ serialized_snapshot.subxcnt * sizeof(TransactionId);
 
 	/* Copy all required fields */
 	Snapshot	snapshot = (Snapshot) MemoryContextAlloc(TopTransactionContext, size);
+
 	snapshot->snapshot_type = SNAPSHOT_MVCC;
 	snapshot->xmin = serialized_snapshot.xmin;
 	snapshot->xmax = serialized_snapshot.xmax;

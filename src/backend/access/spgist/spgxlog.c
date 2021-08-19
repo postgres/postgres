@@ -85,6 +85,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 
 	ptr += sizeof(spgxlogAddLeaf);
 	char	   *leafTuple = ptr;
+
 	/* the leaf tuple is unaligned, so make a copy to access its header */
 	memcpy(&leafTupleHdr, leafTuple, sizeof(SpGistLeafTupleData));
 
@@ -119,7 +120,8 @@ spgRedoAddLeaf(XLogReaderState *record)
 			{
 
 				SpGistLeafTuple head = (SpGistLeafTuple) PageGetItem(page,
-													 PageGetItemId(page, xldata->offnumHeadLeaf));
+																	 PageGetItemId(page, xldata->offnumHeadLeaf));
+
 				Assert(SGLT_GET_NEXTOFFSET(head) == SGLT_GET_NEXTOFFSET(&leafTupleHdr));
 				SGLT_SET_NEXTOFFSET(head, xldata->offnumLeaf);
 			}
@@ -153,7 +155,7 @@ spgRedoAddLeaf(XLogReaderState *record)
 			page = BufferGetPage(buffer);
 
 			SpGistInnerTuple tuple = (SpGistInnerTuple) PageGetItem(page,
-												   PageGetItemId(page, xldata->offnumParent));
+																	PageGetItemId(page, xldata->offnumParent));
 
 			spgUpdateNodeLink(tuple, xldata->nodeI,
 							  blknoLeaf, xldata->offnumLeaf);
@@ -186,8 +188,10 @@ spgRedoMoveLeafs(XLogReaderState *record)
 
 	ptr += SizeOfSpgxlogMoveLeafs;
 	OffsetNumber *toDelete = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nMoves;
 	OffsetNumber *toInsert = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * nInsert;
 
 	/* now ptr points to the list of leaf tuples */
@@ -224,6 +228,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 			 * field.
 			 */
 			char	   *leafTuple = ptr;
+
 			memcpy(&leafTupleHdr, leafTuple,
 				   sizeof(SpGistLeafTupleData));
 
@@ -262,7 +267,7 @@ spgRedoMoveLeafs(XLogReaderState *record)
 		page = BufferGetPage(buffer);
 
 		SpGistInnerTuple tuple = (SpGistInnerTuple) PageGetItem(page,
-											   PageGetItemId(page, xldata->offnumParent));
+																PageGetItemId(page, xldata->offnumParent));
 
 		spgUpdateNodeLink(tuple, xldata->nodeI,
 						  blknoDst, toInsert[nInsert - 1]);
@@ -288,6 +293,7 @@ spgRedoAddNode(XLogReaderState *record)
 
 	ptr += sizeof(spgxlogAddNode);
 	char	   *innerTuple = ptr;
+
 	/* the tuple is unaligned, so make a copy to access its header */
 	memcpy(&innerTupleHdr, innerTuple, sizeof(SpGistInnerTupleData));
 
@@ -354,7 +360,7 @@ spgRedoAddNode(XLogReaderState *record)
 			{
 
 				SpGistInnerTuple parentTuple = (SpGistInnerTuple) PageGetItem(page,
-															 PageGetItemId(page, xldata->offnumParent));
+																			  PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -400,7 +406,7 @@ spgRedoAddNode(XLogReaderState *record)
 			{
 
 				SpGistInnerTuple parentTuple = (SpGistInnerTuple) PageGetItem(page,
-															 PageGetItemId(page, xldata->offnumParent));
+																			  PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -423,7 +429,7 @@ spgRedoAddNode(XLogReaderState *record)
 				page = BufferGetPage(buffer);
 
 				SpGistInnerTuple parentTuple = (SpGistInnerTuple) PageGetItem(page,
-															 PageGetItemId(page, xldata->offnumParent));
+																			  PageGetItemId(page, xldata->offnumParent));
 
 				spgUpdateNodeLink(parentTuple, xldata->nodeI,
 								  blknoNew, xldata->offnumNew);
@@ -451,10 +457,12 @@ spgRedoSplitTuple(XLogReaderState *record)
 
 	ptr += sizeof(spgxlogSplitTuple);
 	char	   *prefixTuple = ptr;
+
 	/* the prefix tuple is unaligned, so make a copy to access its header */
 	memcpy(&prefixTupleHdr, prefixTuple, sizeof(SpGistInnerTupleData));
 	ptr += prefixTupleHdr.size;
 	char	   *postfixTuple = ptr;
+
 	/* postfix tuple is also unaligned */
 	memcpy(&postfixTupleHdr, postfixTuple, sizeof(SpGistInnerTupleData));
 
@@ -537,13 +545,17 @@ spgRedoPickSplit(XLogReaderState *record)
 
 	ptr += SizeOfSpgxlogPickSplit;
 	OffsetNumber *toDelete = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nDelete;
 	OffsetNumber *toInsert = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nInsert;
 	uint8	   *leafPageSelect = (uint8 *) ptr;
+
 	ptr += sizeof(uint8) * xldata->nInsert;
 
 	char	   *innerTuple = ptr;
+
 	/* the inner tuple is unaligned, so make a copy to access its header */
 	memcpy(&innerTupleHdr, innerTuple, sizeof(SpGistInnerTupleData));
 	ptr += innerTupleHdr.size;
@@ -638,6 +650,7 @@ spgRedoPickSplit(XLogReaderState *record)
 
 		/* the tuples are not aligned, so must copy to access the size field. */
 		char	   *leafTuple = ptr;
+
 		memcpy(&leafTupleHdr, leafTuple, sizeof(SpGistLeafTupleData));
 		ptr += leafTupleHdr.size;
 
@@ -683,7 +696,8 @@ spgRedoPickSplit(XLogReaderState *record)
 		{
 
 			SpGistInnerTuple parent = (SpGistInnerTuple) PageGetItem(page,
-													PageGetItemId(page, xldata->offnumParent));
+																	 PageGetItemId(page, xldata->offnumParent));
+
 			spgUpdateNodeLink(parent, xldata->nodeI,
 							  blknoInner, xldata->offnumInner);
 		}
@@ -714,7 +728,8 @@ spgRedoPickSplit(XLogReaderState *record)
 			page = BufferGetPage(parentBuffer);
 
 			SpGistInnerTuple parent = (SpGistInnerTuple) PageGetItem(page,
-													PageGetItemId(page, xldata->offnumParent));
+																	 PageGetItemId(page, xldata->offnumParent));
+
 			spgUpdateNodeLink(parent, xldata->nodeI,
 							  blknoInner, xldata->offnumInner);
 
@@ -743,14 +758,19 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 
 	ptr += SizeOfSpgxlogVacuumLeaf;
 	OffsetNumber *toDead = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nDead;
 	OffsetNumber *toPlaceholder = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nPlaceholder;
 	OffsetNumber *moveSrc = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nMove;
 	OffsetNumber *moveDest = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nMove;
 	OffsetNumber *chainSrc = (OffsetNumber *) ptr;
+
 	ptr += sizeof(OffsetNumber) * xldata->nChain;
 	OffsetNumber *chainDest = (OffsetNumber *) ptr;
 
@@ -777,6 +797,7 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 			ItemId		idDest = PageGetItemId(page, moveDest[i]);
 
 			ItemIdData	tmp = *idSrc;
+
 			*idSrc = *idDest;
 			*idDest = tmp;
 		}
@@ -791,7 +812,8 @@ spgRedoVacuumLeaf(XLogReaderState *record)
 		{
 
 			SpGistLeafTuple lt = (SpGistLeafTuple) PageGetItem(page,
-											   PageGetItemId(page, chainSrc[i]));
+															   PageGetItemId(page, chainSrc[i]));
+
 			Assert(lt->tupstate == SPGIST_LIVE);
 			SGLT_SET_NEXTOFFSET(lt, chainDest[i]);
 		}
@@ -865,7 +887,8 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 		{
 
 			SpGistDeadTuple dt = (SpGistDeadTuple) PageGetItem(page,
-											   PageGetItemId(page, itemToPlaceholder[i]));
+															   PageGetItemId(page, itemToPlaceholder[i]));
+
 			Assert(dt->tupstate == SPGIST_REDIRECT);
 			dt->tupstate = SPGIST_PLACEHOLDER;
 			ItemPointerSetInvalid(&dt->pointer);
@@ -908,6 +931,7 @@ spg_redo(XLogReaderState *record)
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	MemoryContext oldCxt = MemoryContextSwitchTo(opCtx);
+
 	switch (info)
 	{
 		case XLOG_SPGIST_ADD_LEAF:

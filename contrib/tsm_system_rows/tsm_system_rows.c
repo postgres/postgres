@@ -111,6 +111,7 @@ system_rows_samplescangetsamplesize(PlannerInfo *root,
 
 	/* Try to extract an estimate for the limit rowcount */
 	Node	   *limitnode = (Node *) linitial(paramexprs);
+
 	limitnode = estimate_expression_value(root, limitnode);
 
 	if (IsA(limitnode, Const) &&

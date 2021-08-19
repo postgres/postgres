@@ -123,6 +123,7 @@ hmac_free(PX_HMAC *h)
 {
 
 	unsigned	bs = px_md_block_size(h->md);
+
 	px_md_free(h->md);
 
 	px_memset(h->p.ipad, 0, bs);
@@ -142,10 +143,12 @@ px_find_hmac(const char *name, PX_HMAC **res)
 	PX_HMAC    *h;
 
 	int			err = px_find_digest(name, &md);
+
 	if (err)
 		return err;
 
 	unsigned	bs = px_md_block_size(md);
+
 	if (bs < 2)
 	{
 		px_md_free(md);

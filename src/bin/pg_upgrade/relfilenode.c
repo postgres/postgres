@@ -115,7 +115,8 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 					 old_db->db_name);
 
 		FileNameMap *mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
-									new_pgdata);
+												 new_pgdata);
+
 		if (n_maps)
 		{
 			print_maps(mappings, n_maps, new_db->db_name);

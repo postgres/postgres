@@ -59,6 +59,7 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules)
 	 */
 	Relation	relationRelation = table_open(RelationRelationId, RowExclusiveLock);
 	HeapTuple	tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relationId));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relationId);
 	Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
@@ -92,8 +93,9 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
 
 	/* Find the rule's pg_rewrite tuple, get its OID */
 	HeapTuple	tuple = SearchSysCache2(RULERELNAME,
-							ObjectIdGetDatum(relid),
-							PointerGetDatum(rulename));
+										ObjectIdGetDatum(relid),
+										PointerGetDatum(rulename));
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (missing_ok)
@@ -104,8 +106,10 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
 						rulename, get_rel_name(relid))));
 	}
 	Form_pg_rewrite ruleform = (Form_pg_rewrite) GETSTRUCT(tuple);
+
 	Assert(relid == ruleform->ev_class);
 	Oid			ruleoid = ruleform->oid;
+
 	ReleaseSysCache(tuple);
 	return ruleoid;
 }

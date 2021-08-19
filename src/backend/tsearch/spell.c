@@ -147,6 +147,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 	}
 
 	void	   *result = (void *) Conf->firstfree;
+
 	Conf->firstfree += size;
 	Conf->avail -= size;
 
@@ -175,6 +176,7 @@ lowerstr_ctx(IspellDict *Conf, const char *src)
 
 	MemoryContext saveCtx = MemoryContextSwitchTo(Conf->buildCxt);
 	char	   *dst = lowerstr(src);
+
 	MemoryContextSwitchTo(saveCtx);
 
 	return dst;
@@ -528,6 +530,7 @@ NIImportDictionary(IspellDict *Conf, const char *filename)
 
 		/* Extract flag from the line */
 		const char *flag = NULL;
+
 		if ((s = findchar(line, '/')))
 		{
 			*s++ = '\0';
@@ -721,6 +724,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		Affix->issimple = 0;
 		Affix->isregis = 0;
 		char	   *tmask = (char *) tmpalloc(strlen(mask) + 3);
+
 		if (type == FF_SUFFIX)
 			sprintf(tmask, "%s$", mask);
 		else
@@ -740,8 +744,9 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		Affix->reg.pregex = pregex = palloc(sizeof(aff_regex_struct));
 
 		int			err = pg_regcomp(&(pregex->regex), wmask, wmasklen,
-						 REG_ADVANCED | REG_NOSUB,
-						 DEFAULT_COLLATION_OID);
+									 REG_ADVANCED | REG_NOSUB,
+									 DEFAULT_COLLATION_OID);
+
 		if (err)
 		{
 			char		errstr[100];
@@ -1044,6 +1049,7 @@ setCompoundAffixFlagValue(IspellDict *Conf, CompoundAffixFlag *entry,
 		char	   *next;
 
 		int			i = strtol(s, &next, 10);
+
 		if (s == next || errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1085,6 +1091,7 @@ addCompoundAffixFlagValue(IspellDict *Conf, char *s, uint32 val)
 
 	/* Get flag without \n */
 	char	   *sflag = sbuf;
+
 	while (*s && !t_isspace(s) && *s != '\n')
 	{
 		clen = pg_mblen(s);
@@ -1136,6 +1143,7 @@ getCompoundAffixFlagValue(IspellDict *Conf, char *s)
 		return 0;
 
 	char	   *flagcur = s;
+
 	while (*flagcur)
 	{
 		getNextFlagFromString(Conf, &flagcur, sflag);
@@ -1167,6 +1175,7 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 		char	   *end;
 
 		int			curaffix = strtol(s, &end, 10);
+
 		if (s == end || errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1592,6 +1601,7 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	}
 
 	char	  **ptr = Conf->AffixData + Conf->nAffixData;
+
 	if (Conf->flagMode == FM_NUM)
 	{
 		*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
@@ -1653,6 +1663,7 @@ mkSPNode(IspellDict *Conf, int low, int high, int level)
 		return NULL;
 
 	SPNode	   *rs = (SPNode *) cpalloc0(SPNHDRSZ + nchar * sizeof(SPNodeData));
+
 	rs->length = nchar;
 	SPNodeData *data = rs->data;
 
@@ -1844,6 +1855,7 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type)
 	int			naff = 0;
 
 	AffixNode  *rs = (AffixNode *) cpalloc0(ANHRDSZ + nchar * sizeof(AffixNodeData));
+
 	rs->length = nchar;
 	AffixNodeData *data = rs->data;
 
@@ -2181,6 +2193,7 @@ NormalizeSubWord(IspellDict *Conf, char *word, int flag)
 	if (wrdlen > MAXNORMLEN)
 		return NULL;
 	char	  **cur = forms = (char **) palloc(MAX_NORM * sizeof(char *));
+
 	*cur = NULL;
 
 
@@ -2372,6 +2385,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 	int			compoundflag = 0;
 
 	char	   *notprobed = (char *) palloc(wordlen);
+
 	memset(notprobed, 1, wordlen);
 	SplitVar   *var = CopyVar(orig, 1);
 
@@ -2407,6 +2421,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 			else
 				compoundflag = FF_COMPOUNDMIDDLE;
 			char	  **subres = NormalizeSubWord(Conf, buf, compoundflag);
+
 			if (subres)
 			{
 				/* Yes, it was a word from dictionary */

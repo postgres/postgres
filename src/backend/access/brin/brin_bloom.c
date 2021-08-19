@@ -430,7 +430,8 @@ brin_bloom_opcinfo(PG_FUNCTION_ARGS)
 	 */
 
 	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(1)) +
-					 sizeof(BloomOpaque));
+								  sizeof(BloomOpaque));
+
 	result->oi_nstored = 1;
 	result->oi_regular_nulls = true;
 	result->oi_opaque = (BloomOpaque *)

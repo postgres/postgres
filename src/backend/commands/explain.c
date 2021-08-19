@@ -242,6 +242,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	es->summary = (summary_set) ? es->summary : es->analyze;
 
 	Query	   *query = castNode(Query, stmt->query);
+
 	if (IsQueryIdEnabled())
 		jstate = JumbleQuery(query, pstate->p_sourcetext);
 
@@ -291,7 +292,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 
 	/* output tuples */
 	TupOutputState *tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt),
-									  &TTSOpsVirtual);
+													  &TTSOpsVirtual);
+
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 		do_text_output_multiline(tstate, es->str->data);
 	else
@@ -348,6 +350,7 @@ ExplainResultDesc(ExplainStmt *stmt)
 
 	/* Need a tuple descriptor representing a single TEXT or XML column */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN",
 					   result_type, -1, 0);
 	return tupdesc;
@@ -452,6 +455,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		}
 
 		List	   *rewritten = QueryRewrite(castNode(Query, copyObject(ctas->query)));
+
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
 						CURSOR_OPT_PARALLEL_OK, ctas->into, es,
@@ -470,6 +474,7 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		DeclareCursorStmt *dcs = (DeclareCursorStmt *) utilityStmt;
 
 		List	   *rewritten = QueryRewrite(castNode(Query, copyObject(dcs->query)));
+
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
 						dcs->options, NULL, es,
@@ -556,8 +561,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/* Create a QueryDesc for the query */
 	QueryDesc  *queryDesc = CreateQueryDesc(plannedstmt, queryString,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, queryEnv, instrument_option);
+											GetActiveSnapshot(), InvalidSnapshot,
+											dest, params, queryEnv, instrument_option);
 
 	/* Select execution options */
 	if (es->analyze)
@@ -761,6 +766,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	 * further down in the plan tree.
 	 */
 	PlanState  *ps = queryDesc->planstate;
+
 	if (IsA(ps, GatherState) && ((Gather *) ps->plan)->invisible)
 	{
 		ps = outerPlanState(ps);
@@ -797,7 +803,8 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	ExplainOpenGroup("Triggers", "Triggers", false, es);
 
 	bool		show_relname = (list_length(resultrels) > 1 ||
-					routerels != NIL || targrels != NIL);
+								routerels != NIL || targrels != NIL);
+
 	foreach(l, resultrels)
 	{
 		rInfo = (ResultRelInfo *) lfirst(l);
@@ -980,6 +987,7 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 		ExplainOpenGroup("Trigger", NULL, true, es);
 
 		char	   *relname = RelationGetRelationName(rInfo->ri_RelationDesc);
+
 		if (OidIsValid(trig->tgconstraint))
 			conname = get_constraint_name(trig->tgconstraint);
 
@@ -1790,6 +1798,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				{
 
 					int			nworkers = ((GatherState *) planstate)->nworkers_launched;
+
 					ExplainPropertyInteger("Workers Launched", NULL,
 										   nworkers, es);
 				}
@@ -1817,6 +1826,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				{
 
 					int			nworkers = ((GatherMergeState *) planstate)->nworkers_launched;
+
 					ExplainPropertyInteger("Workers Launched", NULL,
 										   nworkers, es);
 				}
@@ -2079,16 +2089,17 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	/* Get ready to display the child plans */
 	bool		haschildren = planstate->initPlan ||
-		outerPlanState(planstate) ||
-		innerPlanState(planstate) ||
-		IsA(plan, Append) ||
-		IsA(plan, MergeAppend) ||
-		IsA(plan, BitmapAnd) ||
-		IsA(plan, BitmapOr) ||
-		IsA(plan, SubqueryScan) ||
-		(IsA(planstate, CustomScanState) &&
-		 ((CustomScanState *) planstate)->custom_ps != NIL) ||
-		planstate->subPlan;
+	outerPlanState(planstate) ||
+	innerPlanState(planstate) ||
+	IsA(plan, Append) ||
+	IsA(plan, MergeAppend) ||
+	IsA(plan, BitmapAnd) ||
+	IsA(plan, BitmapOr) ||
+	IsA(plan, SubqueryScan) ||
+	(IsA(planstate, CustomScanState) &&
+	 ((CustomScanState *) planstate)->custom_ps != NIL) ||
+	planstate->subPlan;
+
 	if (haschildren)
 	{
 		ExplainOpenGroup("Plans", "Plans", false, es);
@@ -2203,8 +2214,8 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   plan,
-									   ancestors);
+												   plan,
+												   ancestors);
 	bool		useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
@@ -2232,8 +2243,8 @@ show_expression(Node *node, const char *qlabel,
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   planstate->plan,
-									   ancestors);
+												   planstate->plan,
+												   ancestors);
 
 	/* Deparse the expression */
 	char	   *exprstr = deparse_expression(node, context, useprefix, false);
@@ -2272,6 +2283,7 @@ show_scan_qual(List *qual, const char *qlabel,
 {
 
 	bool		useprefix = (IsA(planstate->plan, SubqueryScan) || es->verbose);
+
 	show_qual(qual, qlabel, planstate, ancestors, useprefix, es);
 }
 
@@ -2285,6 +2297,7 @@ show_upper_qual(List *qual, const char *qlabel,
 {
 
 	bool		useprefix = (list_length(es->rtable) > 1 || es->verbose);
+
 	show_qual(qual, qlabel, planstate, ancestors, useprefix, es);
 }
 
@@ -2370,8 +2383,8 @@ show_grouping_sets(PlanState *planstate, Agg *agg,
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   planstate->plan,
-									   ancestors);
+												   planstate->plan,
+												   ancestors);
 	bool		useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	ExplainOpenGroup("Grouping Sets", "Grouping Sets", false, es);
@@ -2508,8 +2521,8 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   plan,
-									   ancestors);
+												   plan,
+												   ancestors);
 	bool		useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
@@ -2523,7 +2536,8 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 			elog(ERROR, "no tlist entry for key %d", keyresno);
 		/* Deparse the expression, showing any top-level cast */
 		char	   *exprstr = deparse_expression((Node *) target->expr, context,
-									 useprefix, true);
+												 useprefix, true);
+
 		resetStringInfo(&sortkeybuf);
 		appendStringInfoString(&sortkeybuf, exprstr);
 		/* Append sort order information, if relevant */
@@ -2556,7 +2570,7 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
 	bool		reverse = false;
 
 	TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
-								 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+												 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 
 	/*
 	 * Print COLLATE if it's not default for the column's type.  There are
@@ -2615,8 +2629,8 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   planstate->plan,
-									   ancestors);
+												   planstate->plan,
+												   ancestors);
 	bool		useprefix = list_length(es->rtable) > 1;
 
 	/* Get the tablesample method name */
@@ -2719,6 +2733,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			const char *sortMethod;
 
 			TuplesortInstrumentation *sinstrument = &sortstate->shared_info->sinstrument[n];
+
 			if (sinstrument->sortMethod == SORT_TYPE_STILL_IN_PROGRESS)
 				continue;		/* ignore any unfilled slots */
 			sortMethod = tuplesort_method_name(sinstrument->sortMethod);
@@ -2799,6 +2814,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			int64		avgSpace = groupInfo->totalMemorySpaceUsed / groupInfo->groupCount;
 
 			const char *spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_MEMORY);
+
 			appendStringInfo(es->str, "  Average %s: " INT64_FORMAT "kB  Peak %s: " INT64_FORMAT "kB",
 							 spaceTypeName, avgSpace,
 							 spaceTypeName, groupInfo->maxMemorySpaceUsed);
@@ -2810,6 +2826,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 
 
 			const char *spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_DISK);
+
 			appendStringInfo(es->str, "  Average %s: " INT64_FORMAT "kB  Peak %s: " INT64_FORMAT "kB",
 							 spaceTypeName, avgSpace,
 							 spaceTypeName, groupInfo->maxDiskSpaceUsed);
@@ -2832,6 +2849,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			StringInfoData memoryName;
 
 			const char *spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_MEMORY);
+
 			initStringInfo(&memoryName);
 			appendStringInfo(&memoryName, "Sort Space %s", spaceTypeName);
 			ExplainOpenGroup("Sort Space", memoryName.data, true, es);
@@ -2848,6 +2866,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			StringInfoData diskName;
 
 			const char *spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_DISK);
+
 			initStringInfo(&diskName);
 			appendStringInfo(&diskName, "Sort Space %s", spaceTypeName);
 			ExplainOpenGroup("Sort Space", diskName.data, true, es);
@@ -3062,8 +3081,8 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 
 	/* Set up deparsing context */
 	List	   *context = set_deparse_context_plan(es->deparse_cxt,
-									   plan,
-									   ancestors);
+												   plan,
+												   ancestors);
 
 	foreach(lc, ((Memoize *) plan)->param_exprs)
 	{
@@ -3259,11 +3278,13 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 		{
 
 			AggregateInstrumentation *sinstrument = &aggstate->shared_info->sinstrument[n];
+
 			/* Skip workers that didn't do anything */
 			if (sinstrument->hash_mem_peak == 0)
 				continue;
 			uint64		hash_disk_used = sinstrument->hash_disk_used;
 			int			hash_batches_used = sinstrument->hash_batches_used;
+
 			memPeakKb = (sinstrument->hash_mem_peak + 1023) / 1024;
 
 			if (es->workers_state)
@@ -3675,6 +3696,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 	RangeTblEntry *rte = rt_fetch(rti, es->rtable);
 	char	   *refname = (char *) list_nth(es->rtable_names, rti - 1);
+
 	if (refname == NULL)
 		refname = rte->eref->aliasname;
 
@@ -3820,8 +3842,8 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 
 	/* Should we explicitly label target relations? */
 	bool		labeltargets = (mtstate->mt_nrels > 1 ||
-					(mtstate->mt_nrels == 1 &&
-					 mtstate->resultRelInfo[0].ri_RangeTableIndex != node->nominalRelation));
+								(mtstate->mt_nrels == 1 &&
+								 mtstate->resultRelInfo[0].ri_RangeTableIndex != node->nominalRelation));
 
 	if (labeltargets)
 		ExplainOpenGroup("Target Tables", "Target Tables", false, es);
@@ -4045,6 +4067,7 @@ ExplainCreateWorkersState(int num_workers)
 {
 
 	ExplainWorkersState *wstate = (ExplainWorkersState *) palloc(sizeof(ExplainWorkersState));
+
 	wstate->num_workers = num_workers;
 	wstate->worker_inited = (bool *) palloc0(num_workers * sizeof(bool));
 	wstate->worker_str = (StringInfoData *)
@@ -4402,6 +4425,7 @@ ExplainPropertyFloat(const char *qlabel, const char *unit, double value,
 {
 
 	char	   *buf = psprintf("%.*f", ndigits, value);
+
 	ExplainProperty(qlabel, unit, buf, true, es);
 	pfree(buf);
 }

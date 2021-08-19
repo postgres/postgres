@@ -207,7 +207,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 			   *upperBounds;
 
 	TypeCacheEntry *typcache = range_get_typcache(fcinfo,
-								  RangeTypeGetOid(DatumGetRangeTypeP(in->datums[0])));
+												  RangeTypeGetOid(DatumGetRangeTypeP(in->datums[0])));
 
 	/* Allocate memory for bounds */
 	lowerBounds = palloc(sizeof(RangeBound) * in->nTuples);
@@ -259,7 +259,8 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 
 	/* Construct "centroid" range from medians of lower and upper bounds */
 	RangeType  *centroid = range_serialize(typcache, &lowerBounds[nonEmptyCount / 2],
-							   &upperBounds[nonEmptyCount / 2], false);
+										   &upperBounds[nonEmptyCount / 2], false);
+
 	out->hasPrefix = true;
 	out->prefixDatum = RangeTypePGetDatum(centroid);
 
@@ -407,7 +408,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 		/* This node has a centroid. Fetch it. */
 		RangeType  *centroid = DatumGetRangeTypeP(in->prefixDatum);
 		TypeCacheEntry *typcache = range_get_typcache(fcinfo,
-									  RangeTypeGetOid(DatumGetRangeTypeP(centroid)));
+													  RangeTypeGetOid(DatumGetRangeTypeP(centroid)));
+
 		range_deserialize(typcache, centroid, &centroidLower, &centroidUpper,
 						  &centroidEmpty);
 
@@ -598,8 +600,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					/*
 					 * Non-empty range A contains non-empty range B if lower
 					 * bound of A is lower or equal to lower bound of range B
-					 * and upper bound of range A is greater than or equal to upper
-					 * bound of range A.
+					 * and upper bound of range A is greater than or equal to
+					 * upper bound of range A.
 					 *
 					 * All non-empty ranges contain an empty range.
 					 */
@@ -685,6 +687,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 */
 
 				int			cmp = range_cmp_bounds(typcache, &centroidLower, maxLower);
+
 				if (cmp > 0 || (!inclusive && cmp == 0))
 					which &= (1 << 3) | (1 << 4) | (1 << 5);
 			}
@@ -712,6 +715,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 */
 
 				int			cmp = range_cmp_bounds(typcache, &centroidUpper, maxUpper);
+
 				if (cmp > 0 || (!inclusive && cmp == 0))
 					which &= (1 << 2) | (1 << 3) | (1 << 5);
 			}
@@ -746,6 +750,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * because it's range
 				 */
 				Datum		previousCentroid = datumCopy(in->prefixDatum, false, -1);
+
 				out->traversalValues[out->nNodes] = (void *) previousCentroid;
 			}
 			out->nodeNumbers[out->nNodes] = i - 1;
@@ -917,6 +922,7 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 
 	/* Perform the required comparison(s) */
 	bool		res = true;
+
 	for (i = 0; i < in->nkeys; i++)
 	{
 		Datum		keyDatum = in->scankeys[i].sk_argument;

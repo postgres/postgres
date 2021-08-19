@@ -63,8 +63,9 @@ _crypt_gensalt_extended_rn(unsigned long count,
 	output[3] = _crypt_itoa64[(count >> 12) & 0x3f];
 	output[4] = _crypt_itoa64[(count >> 18) & 0x3f];
 	unsigned long value = (unsigned long) (unsigned char) input[0] |
-		((unsigned long) (unsigned char) input[1] << 8) |
-		((unsigned long) (unsigned char) input[2] << 16);
+	((unsigned long) (unsigned char) input[1] << 8) |
+	((unsigned long) (unsigned char) input[2] << 16);
+
 	output[5] = _crypt_itoa64[value & 0x3f];
 	output[6] = _crypt_itoa64[(value >> 6) & 0x3f];
 	output[7] = _crypt_itoa64[(value >> 12) & 0x3f];
@@ -90,8 +91,9 @@ _crypt_gensalt_md5_rn(unsigned long count,
 	output[1] = '1';
 	output[2] = '$';
 	unsigned long value = (unsigned long) (unsigned char) input[0] |
-		((unsigned long) (unsigned char) input[1] << 8) |
-		((unsigned long) (unsigned char) input[2] << 16);
+	((unsigned long) (unsigned char) input[1] << 8) |
+	((unsigned long) (unsigned char) input[2] << 16);
+
 	output[3] = _crypt_itoa64[value & 0x3f];
 	output[4] = _crypt_itoa64[(value >> 6) & 0x3f];
 	output[5] = _crypt_itoa64[(value >> 12) & 0x3f];

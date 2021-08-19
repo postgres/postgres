@@ -154,6 +154,7 @@ extendBufFile(BufFile *file)
 
 	/* Be sure to associate the file with the BufFile's resource owner */
 	ResourceOwner oldowner = CurrentResourceOwner;
+
 	CurrentResourceOwner = file->resowner;
 
 	if (file->fileset == NULL)
@@ -199,9 +200,11 @@ BufFileCreateTemp(bool interXact)
 	PrepareTempTablespaces();
 
 	File		pfile = OpenTemporaryFile(interXact);
+
 	Assert(pfile >= 0);
 
 	BufFile    *file = makeBufFile(pfile);
+
 	file->isInterXact = interXact;
 
 	return file;
@@ -259,6 +262,7 @@ BufFileCreateShared(SharedFileSet *fileset, const char *name)
 {
 
 	BufFile    *file = makeBufFileCommon(1);
+
 	file->fileset = fileset;
 	file->name = pstrdup(name);
 	file->files = (File *) palloc(sizeof(File));
@@ -317,6 +321,7 @@ BufFileOpenShared(SharedFileSet *fileset, const char *name, int mode)
 						segment_name, name)));
 
 	BufFile    *file = makeBufFileCommon(nfiles);
+
 	file->files = files;
 	file->readOnly = (mode == O_RDONLY) ? true : false;
 	file->fileset = fileset;
@@ -424,6 +429,7 @@ BufFileLoadBuffer(BufFile *file)
 	 * Read whatever we can get, up to a full bufferload.
 	 */
 	File		thisfile = file->files[file->curFile];
+
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
 							sizeof(file->buffer),
@@ -768,6 +774,7 @@ BufFileTellBlock(BufFile *file)
 {
 
 	long		blknum = (file->curOffset + file->pos) / BLCKSZ;
+
 	blknum += file->curFile * BUFFILE_SEG_SIZE;
 	return blknum;
 }
@@ -788,6 +795,7 @@ BufFileSize(BufFile *file)
 
 	/* Get the size of the last physical file. */
 	int64		lastFileSize = FileSize(file->files[file->numFiles - 1]);
+
 	if (lastFileSize < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

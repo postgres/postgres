@@ -132,6 +132,7 @@ ValuesNext(ValuesScanState *node)
 		bool	   *isnull = slot->tts_isnull;
 
 		int			resind = 0;
+
 		foreach(lc, exprstatelist)
 		{
 			ExprState  *estate = (ExprState *) lfirst(lc);
@@ -214,6 +215,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	 * create new ScanState for node
 	 */
 	ValuesScanState *scanstate = makeNode(ValuesScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecValuesScan;
@@ -236,6 +238,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	 * Get info about values list, initialize scan slot with it.
 	 */
 	TupleDesc	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
+
 	ExecInitScanTupleSlot(estate, &scanstate->ss, tupdesc, &TTSOpsVirtual);
 
 	/*
@@ -271,6 +274,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	scanstate->exprstatelists = (List **)
 		palloc0(scanstate->array_len * sizeof(List *));
 	int			i = 0;
+
 	foreach(vtl, node->values_lists)
 	{
 		List	   *exprs = lfirst_node(List, vtl);
@@ -293,6 +297,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 			 * separately; this just affects the upper-level subexpressions.
 			 */
 			int			saved_jit_flags = estate->es_jit_flags;
+
 			estate->es_jit_flags = PGJIT_NONE;
 
 			scanstate->exprstatelists[i] = ExecInitExprList(exprs,

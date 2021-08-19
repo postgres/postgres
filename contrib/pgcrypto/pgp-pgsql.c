@@ -71,10 +71,12 @@ convert_charset(text *src, int cset_from, int cset_to)
 	unsigned char *csrc = (unsigned char *) VARDATA_ANY(src);
 
 	unsigned char *dst = pg_do_encoding_conversion(csrc, src_len, cset_from, cset_to);
+
 	if (dst == csrc)
 		return src;
 
 	text	   *res = cstring_to_text((char *) dst);
+
 	pfree(dst);
 	return res;
 }
@@ -437,6 +439,7 @@ encrypt_internal(int is_pubenc, int is_text,
 	/* res_len includes VARHDRSZ */
 	int			res_len = mbuf_steal_data(dst, &restmp);
 	bytea	   *res = (bytea *) restmp;
+
 	SET_VARSIZE(res, res_len);
 
 	if (tmp_data)
@@ -489,6 +492,7 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 			psw_len = VARSIZE_ANY_EXHDR(keypsw);
 		}
 		MBuf	   *kbuf = create_mbuf_from_vardata(key);
+
 		err = pgp_set_pubkey(ctx, kbuf, psw, psw_len, 1);
 		mbuf_free(kbuf);
 	}
@@ -519,10 +523,12 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 	}
 
 	int			res_len = mbuf_steal_data(dst, &restmp);
+
 	mbuf_free(dst);
 
 	/* res_len includes VARHDRSZ */
 	bytea	   *res = (bytea *) restmp;
+
 	SET_VARSIZE(res, res_len);
 
 	if (need_text && got_unicode)
@@ -835,6 +841,7 @@ pg_armor(PG_FUNCTION_ARGS)
 
 	bytea	   *data = PG_GETARG_BYTEA_PP(0);
 	int			data_len = VARSIZE_ANY_EXHDR(data);
+
 	if (PG_NARGS() == 3)
 	{
 		num_headers = parse_key_value_arrays(PG_GETARG_ARRAYTYPE_P(1),
@@ -852,6 +859,7 @@ pg_armor(PG_FUNCTION_ARGS)
 					 num_headers, keys, values);
 
 	text	   *res = palloc(VARHDRSZ + buf.len);
+
 	SET_VARSIZE(res, VARHDRSZ + buf.len);
 	memcpy(VARDATA(res), buf.data, buf.len);
 	pfree(buf.data);
@@ -871,9 +879,11 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	initStringInfo(&buf);
 
 	int			ret = pgp_armor_decode((uint8 *) VARDATA_ANY(data), data_len, &buf);
+
 	if (ret < 0)
 		px_THROW_ERROR(ret);
 	bytea	   *res = palloc(VARHDRSZ + buf.len);
+
 	SET_VARSIZE(res, VARHDRSZ + buf.len);
 	memcpy(VARDATA(res), buf.data, buf.len);
 	pfree(buf.data);
@@ -920,9 +930,10 @@ pgp_armor_headers(PG_FUNCTION_ARGS)
 		state = (pgp_armor_headers_state *) palloc(sizeof(pgp_armor_headers_state));
 
 		int			res = pgp_extract_armor_headers((uint8 *) VARDATA_ANY(data),
-										VARSIZE_ANY_EXHDR(data),
-										&state->nheaders, &state->keys,
-										&state->values);
+													VARSIZE_ANY_EXHDR(data),
+													&state->nheaders, &state->keys,
+													&state->values);
+
 		if (res < 0)
 			px_THROW_ERROR(res);
 
@@ -967,6 +978,7 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	text	   *res = palloc(VARHDRSZ + 17);
 
 	int			res_len = pgp_get_keyid(buf, VARDATA(res));
+
 	mbuf_free(buf);
 	if (res_len < 0)
 		px_THROW_ERROR(res_len);

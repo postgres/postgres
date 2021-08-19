@@ -378,6 +378,7 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 
 	/* find the registered buffer struct */
 	registered_buffer *regbuf = &registered_buffers[block_id];
+
 	if (!regbuf->in_use)
 		elog(ERROR, "no block with id %d registered with WAL insertion",
 			 block_id);
@@ -468,7 +469,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 
 		XLogRecData *rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
-								 &fpw_lsn, &num_fpi);
+											  &fpw_lsn, &num_fpi);
 
 		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpi);
 	} while (EndPos == InvalidXLogRecPtr);
@@ -509,10 +510,12 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 
 	/* The record begins with the fixed-size header */
 	XLogRecord *rechdr = (XLogRecord *) scratch;
+
 	scratch += SizeOfXLogRecord;
 
 	hdr_rdt.next = NULL;
 	XLogRecData *rdt_datas_last = &hdr_rdt;
+
 	hdr_rdt.data = hdr_scratch;
 
 	/*
@@ -1037,6 +1040,7 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 {
 
 	int			flags = REGBUF_FORCE_IMAGE;
+
 	if (page_std)
 		flags |= REGBUF_STANDARD;
 
@@ -1069,6 +1073,7 @@ log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
 	int			j;
 
 	int			flags = REGBUF_FORCE_IMAGE;
+
 	if (page_std)
 		flags |= REGBUF_STANDARD;
 
@@ -1080,6 +1085,7 @@ log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
 	XLogEnsureRecordSpace(XLR_MAX_BLOCK_ID - 1, 0);
 
 	int			i = 0;
+
 	while (i < num_pages)
 	{
 		int			batch_start = i;
@@ -1087,6 +1093,7 @@ log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
 		XLogBeginInsert();
 
 		int			nbatch = 0;
+
 		while (nbatch < XLR_MAX_BLOCK_ID && i < num_pages)
 		{
 			XLogRegisterBlock(nbatch, rnode, forkNum, blknos[i], pages[i], flags);
@@ -1160,6 +1167,7 @@ log_newpage_range(Relation rel, ForkNumber forkNum,
 {
 
 	int			flags = REGBUF_FORCE_IMAGE;
+
 	if (page_std)
 		flags |= REGBUF_STANDARD;
 
@@ -1171,6 +1179,7 @@ log_newpage_range(Relation rel, ForkNumber forkNum,
 	XLogEnsureRecordSpace(XLR_MAX_BLOCK_ID - 1, 0);
 
 	BlockNumber blkno = startblk;
+
 	while (blkno < endblk)
 	{
 		Buffer		bufpack[XLR_MAX_BLOCK_ID];
@@ -1180,6 +1189,7 @@ log_newpage_range(Relation rel, ForkNumber forkNum,
 
 		/* Collect a batch of blocks. */
 		int			nbufs = 0;
+
 		while (nbufs < XLR_MAX_BLOCK_ID && blkno < endblk)
 		{
 			Buffer		buf = ReadBufferExtended(rel, forkNum, blkno,

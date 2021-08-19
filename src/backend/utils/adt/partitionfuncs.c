@@ -87,6 +87,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 		partitions = find_all_inheritors(rootrelid, AccessShareLock, NULL);
 
 		TupleDesc	tupdesc = CreateTemplateTupleDesc(PG_PARTITION_TREE_COLS);
+
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relid",
 						   REGCLASSOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "parentid",
@@ -154,6 +155,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 
 		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		Datum		result = HeapTupleGetDatum(tuple);
+
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -187,6 +189,7 @@ pg_partition_root(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(relid);
 
 	Oid			rootrelid = llast_oid(ancestors);
+
 	list_free(ancestors);
 
 	/*

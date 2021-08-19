@@ -89,6 +89,7 @@ makeDefaultBloomOptions(void)
 	int			i;
 
 	BloomOptions *opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+
 	/* Convert DEFAULT_BLOOM_LENGTH from # of bits to # of words */
 	opts->bloomLength = (DEFAULT_BLOOM_LENGTH + SIGNWORDBITS - 1) / SIGNWORDBITS;
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -179,6 +180,7 @@ initBloomState(BloomState *state, Relation index)
 		BloomOptions *opts = MemoryContextAlloc(index->rd_indexcxt, sizeof(BloomOptions));
 
 		Buffer		buffer = ReadBuffer(index, BLOOM_METAPAGE_BLKNO);
+
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		Page		page = BufferGetPage(buffer);
@@ -270,6 +272,7 @@ signValue(BloomState *state, BloomSignatureWord *sign, Datum value, int attno)
 	 * above
 	 */
 	uint32		hashVal = DatumGetInt32(FunctionCall1Coll(&state->hashFn[attno], state->collations[attno], value));
+
 	mySrand(hashVal ^ myRand());
 
 	for (j = 0; j < state->opts.bitSize[attno]; j++)
@@ -322,11 +325,13 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 	/* Copy new tuple to the end of page */
 	BloomPageOpaque opaque = BloomPageGetOpaque(page);
 	BloomTuple *itup = BloomPageGetTuple(state, page, opaque->maxoff + 1);
+
 	memcpy((Pointer) itup, (Pointer) tuple, state->sizeOfBloomTuple);
 
 	/* Adjust maxoff and pd_lower */
 	opaque->maxoff++;
 	Pointer		ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
+
 	((PageHeader) page)->pd_lower = ptr - page;
 
 	/* Assert we didn't overrun available space */
@@ -378,6 +383,7 @@ BloomNewBuffer(Relation index)
 
 	/* Must extend the file */
 	bool		needLock = !RELATION_IS_LOCAL(index);
+
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
 
@@ -400,6 +406,7 @@ BloomInitPage(Page page, uint16 flags)
 	PageInit(page, BLCKSZ, sizeof(BloomPageOpaqueData));
 
 	BloomPageOpaque opaque = BloomPageGetOpaque(page);
+
 	opaque->flags = flags;
 	opaque->bloom_page_id = BLOOM_PAGE_ID;
 }
@@ -416,6 +423,7 @@ BloomFillMetapage(Relation index, Page metaPage)
 	 * those, otherwise create default options.
 	 */
 	BloomOptions *opts = (BloomOptions *) index->rd_options;
+
 	if (!opts)
 		opts = makeDefaultBloomOptions();
 
@@ -425,6 +433,7 @@ BloomFillMetapage(Relation index, Page metaPage)
 	 */
 	BloomInitPage(metaPage, BLOOM_META);
 	BloomMetaPageData *metadata = BloomPageGetMeta(metaPage);
+
 	memset(metadata, 0, sizeof(BloomMetaPageData));
 	metadata->magickNumber = BLOOM_MAGICK_NUMBER;
 	metadata->opts = *opts;
@@ -446,12 +455,14 @@ BloomInitMetapage(Relation index)
 	 * block number 0 (BLOOM_METAPAGE_BLKNO).
 	 */
 	Buffer		metaBuffer = BloomNewBuffer(index);
+
 	Assert(BufferGetBlockNumber(metaBuffer) == BLOOM_METAPAGE_BLKNO);
 
 	/* Initialize contents of meta page */
 	GenericXLogState *state = GenericXLogStart(index);
 	Page		metaPage = GenericXLogRegisterBuffer(state, metaBuffer,
-										 GENERIC_XLOG_FULL_IMAGE);
+													 GENERIC_XLOG_FULL_IMAGE);
+
 	BloomFillMetapage(index, metaPage);
 	GenericXLogFinish(state);
 
@@ -467,10 +478,10 @@ bloptions(Datum reloptions, bool validate)
 
 	/* Parse the user-given reloptions */
 	BloomOptions *rdopts = (BloomOptions *) build_reloptions(reloptions, validate,
-											   bl_relopt_kind,
-											   sizeof(BloomOptions),
-											   bl_relopt_tab,
-											   lengthof(bl_relopt_tab));
+															 bl_relopt_kind,
+															 sizeof(BloomOptions),
+															 bl_relopt_tab,
+															 lengthof(bl_relopt_tab));
 
 	/* Convert signature length from # of bits to # to words, rounding up */
 	if (rdopts)

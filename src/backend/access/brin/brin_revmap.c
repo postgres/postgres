@@ -73,12 +73,15 @@ brinRevmapInitialize(Relation idxrel, BlockNumber *pagesPerRange,
 {
 
 	Buffer		meta = ReadBuffer(idxrel, BRIN_METAPAGE_BLKNO);
+
 	LockBuffer(meta, BUFFER_LOCK_SHARE);
 	Page		page = BufferGetPage(meta);
+
 	TestForOldSnapshot(snapshot, idxrel, page);
 	BrinMetaPageData *metadata = (BrinMetaPageData *) PageGetContents(page);
 
 	BrinRevmap *revmap = palloc(sizeof(BrinRevmap));
+
 	revmap->rm_irel = idxrel;
 	revmap->rm_pagesPerRange = metadata->pagesPerRange;
 	revmap->rm_lastRevmapPage = metadata->lastRevmapPage;
@@ -134,6 +137,7 @@ brinLockRevmapPageForUpdate(BrinRevmap *revmap, BlockNumber heapBlk)
 {
 
 	Buffer		rmBuf = revmap_get_buffer(revmap, heapBlk);
+
 	LockBuffer(rmBuf, BUFFER_LOCK_EXCLUSIVE);
 
 	return rmBuf;
@@ -158,6 +162,7 @@ brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
 	Page		page = BufferGetPage(buf);
 	RevmapContents *contents = (RevmapContents *) PageGetContents(page);
 	ItemPointerData *iptr = (ItemPointerData *) contents->rm_tids;
+
 	iptr += HEAPBLK_TO_REVMAP_INDEX(pagesPerRange, heapBlk);
 
 	if (ItemPointerIsValid(&tid))
@@ -208,6 +213,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 	 * not summarized.
 	 */
 	BlockNumber mapBlk = revmap_get_blkno(revmap, heapBlk);
+
 	if (mapBlk == InvalidBlockNumber)
 	{
 		*off = InvalidOffsetNumber;
@@ -324,6 +330,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	BrinRevmap *revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
 
 	BlockNumber revmapBlk = revmap_get_blkno(revmap, heapBlk);
+
 	if (!BlockNumberIsValid(revmapBlk))
 	{
 		/* revmap page doesn't exist: range not summarized, we're done */
@@ -338,6 +345,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 
 	RevmapContents *contents = (RevmapContents *) PageGetContents(revmapPg);
 	ItemPointerData *iptr = contents->rm_tids;
+
 	iptr += revmapOffset;
 
 	if (!ItemPointerIsValid(iptr))
@@ -349,6 +357,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	}
 
 	Buffer		regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
+
 	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
 	Page		regPg = BufferGetPage(regBuf);
 
@@ -367,12 +376,14 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	}
 
 	OffsetNumber regOffset = ItemPointerGetOffsetNumber(iptr);
+
 	if (regOffset > PageGetMaxOffsetNumber(regPg))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("corrupted BRIN index: inconsistent range map")));
 
 	ItemId		lp = PageGetItemId(regPg, regOffset);
+
 	if (!ItemIdIsUsed(lp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -409,6 +420,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		XLogRegisterBuffer(0, revmapBuf, 0);
 		XLogRegisterBuffer(1, regBuf, REGBUF_STANDARD);
 		XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_DESUMMARIZE);
+
 		PageSetLSN(revmapPg, recptr);
 		PageSetLSN(regPg, recptr);
 	}
@@ -534,6 +546,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 	BlockNumber mapBlk = metadata->lastRevmapPage + 1;
 
 	BlockNumber nblocks = RelationGetNumberOfBlocks(irel);
+
 	if (mapBlk < nblocks)
 	{
 		buf = ReadBuffer(irel, mapBlk);
@@ -623,6 +636,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 		XLogRegisterBuffer(1, buf, REGBUF_WILL_INIT);
 
 		XLogRecPtr	recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_REVMAP_EXTEND);
+
 		PageSetLSN(metapage, recptr);
 		PageSetLSN(page, recptr);
 	}

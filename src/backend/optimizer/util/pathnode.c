@@ -448,7 +448,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 * Do a fuzzy cost comparison with standard fuzziness limit.
 		 */
 		PathCostComparison costcmp = compare_path_costs_fuzzily(new_path, old_path,
-											 STD_FUZZ_FACTOR);
+																STD_FUZZ_FACTOR);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -466,6 +466,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 			/* Similarly check to see if either dominates on pathkeys */
 
 			List	   *old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
+
 			keyscmp = compare_pathkeys(new_path_pathkeys,
 									   old_path_pathkeys);
 			if (keyscmp != PATHKEYS_DIFFERENT)
@@ -670,6 +671,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 				/* new path loses on cost, so check pathkeys... */
 
 				List	   *old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
+
 				keyscmp = compare_pathkeys(new_path_pathkeys,
 										   old_path_pathkeys);
 				if (keyscmp == PATHKEYS_EQUAL ||
@@ -876,6 +878,7 @@ add_partial_path_precheck(RelOptInfo *parent_rel, Cost total_cost,
 		Path	   *old_path = (Path *) lfirst(p1);
 
 		PathKeysComparison keyscmp = compare_pathkeys(pathkeys, old_path->pathkeys);
+
 		if (keyscmp != PATHKEYS_DIFFERENT)
 		{
 			if (total_cost > old_path->total_cost * STD_FUZZ_FACTOR &&
@@ -1357,6 +1360,7 @@ append_total_cost_compare(const ListCell *a, const ListCell *b)
 	Path	   *path2 = (Path *) lfirst(b);
 
 	int			cmp = compare_path_costs(path1, path2, TOTAL_COST);
+
 	if (cmp != 0)
 		return -cmp;
 	return bms_compare(path1->parent->relids, path2->parent->relids);
@@ -1378,6 +1382,7 @@ append_startup_cost_compare(const ListCell *a, const ListCell *b)
 	Path	   *path2 = (Path *) lfirst(b);
 
 	int			cmp = compare_path_costs(path1, path2, STARTUP_COST);
+
 	if (cmp != 0)
 		return -cmp;
 	return bms_compare(path1->parent->relids, path2->parent->relids);
@@ -1424,6 +1429,7 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.rows = 0;
 	Cost		input_startup_cost = 0;
 	Cost		input_total_cost = 0;
+
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
@@ -1717,7 +1723,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		{
 
 			List	   *sub_tlist_colnos = translate_sub_tlist(sjinfo->semi_rhs_exprs,
-												   rel->relid);
+															   rel->relid);
 
 			if (sub_tlist_colnos &&
 				query_is_distinct_for(rte->subquery,
@@ -2332,6 +2338,7 @@ calc_nestloop_required_outer(Relids outerrelids,
 		return bms_copy(outer_paramrels);
 	/* else, form the union ... */
 	Relids		required_outer = bms_union(outer_paramrels, inner_paramrels);
+
 	/* ... and remove any mention of now-satisfied outer rels */
 	required_outer = bms_del_members(required_outer,
 									 outerrelids);
@@ -2361,6 +2368,7 @@ calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path)
 	Assert(!bms_overlap(inner_paramrels, outer_path->parent->relids));
 	/* form the union ... */
 	Relids		required_outer = bms_union(outer_paramrels, inner_paramrels);
+
 	/* we do not need an explicit test for empty; bms_union gets it right */
 	return required_outer;
 }
@@ -2651,6 +2659,7 @@ create_projection_path(PlannerInfo *root,
 	 * conclusion; see comments therein.
 	 */
 	PathTarget *oldtarget = subpath->pathtarget;
+
 	if (is_projection_capable_path(subpath) ||
 		equal(oldtarget->exprs, target->exprs))
 	{
@@ -2728,6 +2737,7 @@ apply_projection_to_path(PlannerInfo *root,
 	 * update its cost estimates appropriately.
 	 */
 	QualCost	oldcost = path->pathtarget->cost;
+
 	path->pathtarget = target;
 
 	path->startup_cost += target->cost.startup - oldcost.startup;
@@ -2826,11 +2836,13 @@ create_set_projection_path(PlannerInfo *root,
 	 * there's more than one in this node, use the maximum.
 	 */
 	double		tlist_rows = 1;
+
 	foreach(lc, target->exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
 
 		double		itemrows = expression_returns_set_rows(root, node);
+
 		if (tlist_rows < itemrows)
 			tlist_rows = itemrows;
 	}
@@ -3325,6 +3337,7 @@ create_minmaxagg_path(PlannerInfo *root,
 
 	/* Calculate cost of all the initplans ... */
 	Cost		initplan_cost = 0;
+
 	foreach(lc, mmaggregates)
 	{
 		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
@@ -3884,6 +3897,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 
 				/* Reparameterize the children */
 				int			i = 0;
+
 				foreach(lc, apath->subpaths)
 				{
 					Path	   *spath = (Path *) lfirst(lc);
@@ -4053,7 +4067,8 @@ do { \
 
 				/* Hand over to FDW if needed. */
 				ReparameterizeForeignPathByChild_function rfpc_func =
-					path->parent->fdwroutine->ReparameterizeForeignPathByChild;
+				path->parent->fdwroutine->ReparameterizeForeignPathByChild;
+
 				if (rfpc_func)
 					fpath->fdw_private = rfpc_func(root, fpath->fdw_private,
 												   child_rel);
@@ -4084,6 +4099,7 @@ do { \
 				FLAT_COPY_PATH(npath, path, NestPath);
 
 				JoinPath   *jpath = (JoinPath *) npath;
+
 				REPARAMETERIZE_CHILD_PATH(jpath->outerjoinpath);
 				REPARAMETERIZE_CHILD_PATH(jpath->innerjoinpath);
 				ADJUST_CHILD_ATTRS(jpath->joinrestrictinfo);
@@ -4098,6 +4114,7 @@ do { \
 				FLAT_COPY_PATH(mpath, path, MergePath);
 
 				JoinPath   *jpath = (JoinPath *) mpath;
+
 				REPARAMETERIZE_CHILD_PATH(jpath->outerjoinpath);
 				REPARAMETERIZE_CHILD_PATH(jpath->innerjoinpath);
 				ADJUST_CHILD_ATTRS(jpath->joinrestrictinfo);
@@ -4113,6 +4130,7 @@ do { \
 				FLAT_COPY_PATH(hpath, path, HashPath);
 
 				JoinPath   *jpath = (JoinPath *) hpath;
+
 				REPARAMETERIZE_CHILD_PATH(jpath->outerjoinpath);
 				REPARAMETERIZE_CHILD_PATH(jpath->innerjoinpath);
 				ADJUST_CHILD_ATTRS(jpath->joinrestrictinfo);
@@ -4164,9 +4182,9 @@ do { \
 	 */
 	ParamPathInfo *old_ppi = new_path->param_info;
 	Relids		required_outer =
-		adjust_child_relids_multilevel(root, old_ppi->ppi_req_outer,
-									   child_rel->relids,
-									   child_rel->top_parent_relids);
+	adjust_child_relids_multilevel(root, old_ppi->ppi_req_outer,
+								   child_rel->relids,
+								   child_rel->top_parent_relids);
 
 	/* If we already have a PPI for this parameterization, just return it */
 	ParamPathInfo *new_ppi = find_param_path_info(new_path->parent, required_outer);

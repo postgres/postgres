@@ -63,6 +63,7 @@ pg_regprefix(regex_t *re,
 
 	/* setup */
 	struct guts *g = (struct guts *) re->re_guts;
+
 	if (g->info & REG_UIMPOSSIBLE)
 		return REG_NOMATCH;
 
@@ -126,6 +127,7 @@ findprefix(struct cnfa *cnfa,
 	 */
 	int			st = cnfa->pre;
 	int			nextst = -1;
+
 	for (ca = cnfa->states[st]; ca->co != COLORLESS; ca++)
 	{
 		if (ca->co == cnfa->bos[0] || ca->co == cnfa->bos[1])

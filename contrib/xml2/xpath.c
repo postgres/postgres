@@ -218,6 +218,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 		xmlBufferWriteChar(buf, ">");
 	}
 	xmlChar    *result = xmlStrdup(buf->content);
+
 	xmlBufferFree(buf);
 	return result;
 }
@@ -312,6 +313,7 @@ xpath_string(PG_FUNCTION_ARGS)
 	/* We could try casting to string using the libxml function? */
 
 	xmlChar    *xpath = (xmlChar *) palloc(pathsize + 9);
+
 	memcpy((char *) xpath, "string(", 7);
 	memcpy((char *) (xpath + 7), VARDATA_ANY(xpathsupp), pathsize);
 	xpath[pathsize + 7] = ')';
@@ -558,8 +560,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * file is created on disk to hold it.
 	 */
 	Tuplestorestate *tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
+	tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+						  false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -596,6 +598,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	 */
 	int			numpaths = 0;
 	char	   *pos = xpathset;
+
 	while (numpaths < (ret_tupdesc->natts - 1))
 	{
 		xpaths[numpaths++] = (xmlChar *) pos;

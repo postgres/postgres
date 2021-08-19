@@ -261,6 +261,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 	 * In hot standby mode this will raise an error when parentcheck is true.
 	 */
 	Oid			heapid = IndexGetRelation(indrelid, true);
+
 	if (OidIsValid(heapid))
 		heaprel = table_open(heapid, lockmode);
 	else
@@ -436,6 +437,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	 * Initialize state for entire verification operation
 	 */
 	BtreeCheckState *state = palloc0(sizeof(BtreeCheckState));
+
 	state->rel = rel;
 	state->heaprel = heaprel;
 	state->heapkeyspace = heapkeyspace;
@@ -455,9 +457,11 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		 */
 		int64		total_pages = RelationGetNumberOfBlocks(rel);
 		int64		total_elems = Max(total_pages * (MaxTIDsPerBTreePage / 3),
-						  (int64) state->rel->rd_rel->reltuples);
+									  (int64) state->rel->rd_rel->reltuples);
+
 		/* Random seed relies on backend srandom() call to avoid repetition */
 		uint64		seed = random();
+
 		/* Create Bloom filter to fingerprint index */
 		state->filter = bloom_create(total_elems, maintenance_work_mem, seed);
 		state->heaptuplespresent = 0;
@@ -537,6 +541,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	 * page can indicate that root is P_NONE when the index is totally empty).
 	 */
 	uint32		previouslevel = InvalidBtreeLevel;
+
 	current.level = metad->btm_level;
 	current.leftmost = metad->btm_root;
 	current.istruerootlevel = true;
@@ -752,9 +757,10 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 
 				/* Internal page -- downlink gets leftmost on next level */
 				ItemId		itemid = PageGetItemIdCareful(state, state->targetblock,
-											  state->target,
-											  P_FIRSTDATAKEY(opaque));
+														  state->target,
+														  P_FIRSTDATAKEY(opaque));
 				IndexTuple	itup = (IndexTuple) PageGetItem(state->target, itemid);
+
 				nextleveldown.leftmost = BTreeTupleGetDownLink(itup);
 				nextleveldown.level = opaque->btpo_level - 1;
 			}
@@ -832,7 +838,7 @@ nextpage:
 		{
 
 			ItemId		itemid = PageGetItemIdCareful(state, state->targetblock,
-										  state->target, P_HIKEY);
+													  state->target, P_HIKEY);
 			IndexTuple	itup = (IndexTuple) PageGetItem(state->target, itemid);
 
 			state->lowkey = MemoryContextAlloc(oldcontext, IndexTupleSize(itup));
@@ -903,11 +909,13 @@ bt_recheck_sibling_links(BtreeCheckState *state,
 
 		/* Couple locks in the usual order for nbtree:  Left to right */
 		Buffer		lbuf = ReadBufferExtended(state->rel, MAIN_FORKNUM, leftcurrent,
-								  RBM_NORMAL, state->checkstrategy);
+											  RBM_NORMAL, state->checkstrategy);
+
 		LockBuffer(lbuf, BT_READ);
 		_bt_checkpage(state->rel, lbuf);
 		Page		page = BufferGetPage(lbuf);
 		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		if (P_ISDELETED(opaque))
 		{
 			/*
@@ -922,6 +930,7 @@ bt_recheck_sibling_links(BtreeCheckState *state,
 		}
 
 		BlockNumber newtargetblock = opaque->btpo_next;
+
 		/* Avoid self-deadlock when newtargetblock == leftcurrent */
 		if (newtargetblock != leftcurrent)
 		{
@@ -1043,7 +1052,8 @@ bt_target_page_check(BtreeCheckState *state)
 
 		/* Verify line pointer before checking tuple */
 		ItemId		itemid = PageGetItemIdCareful(state, state->targetblock,
-									  state->target, P_HIKEY);
+												  state->target, P_HIKEY);
+
 		if (!_bt_check_natts(state->rel, state->heapkeyspace, state->target,
 							 P_HIKEY))
 		{
@@ -1073,7 +1083,7 @@ bt_target_page_check(BtreeCheckState *state)
 		CHECK_FOR_INTERRUPTS();
 
 		ItemId		itemid = PageGetItemIdCareful(state, state->targetblock,
-									  state->target, offset);
+												  state->target, offset);
 		IndexTuple	itup = (IndexTuple) PageGetItem(state->target, itemid);
 		size_t		tupsize = IndexTupleSize(itup);
 
@@ -1103,6 +1113,7 @@ bt_target_page_check(BtreeCheckState *state)
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
+
 			htid = psprintf("(%u,%u)",
 							ItemPointerGetBlockNumberNoCheck(tid),
 							ItemPointerGetOffsetNumberNoCheck(tid));
@@ -1227,7 +1238,8 @@ bt_target_page_check(BtreeCheckState *state)
 		 * larger than the firstright tuple provided to it by its caller.)
 		 */
 		bool		lowersizelimit = skey->heapkeyspace &&
-			(P_ISLEAF(topaque) || BTreeTupleGetHeapTID(itup) == NULL);
+		(P_ISLEAF(topaque) || BTreeTupleGetHeapTID(itup) == NULL);
+
 		if (tupsize > (lowersizelimit ? BTMaxItemSize(state->target) :
 					   BTMaxItemSizeNoHeapTid(state->target)))
 		{
@@ -1263,6 +1275,7 @@ bt_target_page_check(BtreeCheckState *state)
 				{
 
 					IndexTuple	logtuple = bt_posting_plain_tuple(itup, i);
+
 					norm = bt_normalize_tuple(state, logtuple);
 					bloom_add_element(state->filter, (unsigned char *) norm,
 									  IndexTupleSize(norm));
@@ -1330,6 +1343,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 * README.)
 		 */
 		ItemPointer scantid = skey->scantid;
+
 		if (state->heapkeyspace && BTreeTupleIsPosting(itup))
 			skey->scantid = BTreeTupleGetMaxHeapTID(itup);
 
@@ -1375,6 +1389,7 @@ bt_target_page_check(BtreeCheckState *state)
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
+
 			htid = psprintf("(%u,%u)",
 							ItemPointerGetBlockNumberNoCheck(tid),
 							ItemPointerGetOffsetNumberNoCheck(tid));
@@ -1546,6 +1561,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * rightmost on its level).
 	 */
 	BlockNumber targetnext = opaque->btpo_next;
+
 	for (;;)
 	{
 		CHECK_FOR_INTERRUPTS();
@@ -1703,6 +1719,7 @@ bt_right_page_check_scankey(BtreeCheckState *state)
 	 * memory remaining allocated.
 	 */
 	IndexTuple	firstitup = (IndexTuple) PageGetItem(rightpage, rightitem);
+
 	return bt_mkscankey_pivotsearch(state->rel, firstitup);
 }
 
@@ -2034,7 +2051,7 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 	OffsetNumber offset;
 
 	ItemId		itemid = PageGetItemIdCareful(state, state->targetblock,
-								  state->target, downlinkoffnum);
+											  state->target, downlinkoffnum);
 	IndexTuple	itup = (IndexTuple) PageGetItem(state->target, itemid);
 	BlockNumber childblock = BTreeTupleGetDownLink(itup);
 
@@ -2263,6 +2280,7 @@ bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
 	ItemId		itemid = PageGetItemIdCareful(state, blkno, page, P_FIRSTDATAKEY(opaque));
 	IndexTuple	itup = (IndexTuple) PageGetItem(page, itemid);
 	BlockNumber childblk = BTreeTupleGetDownLink(itup);
+
 	for (;;)
 	{
 		CHECK_FOR_INTERRUPTS();
@@ -2535,6 +2553,7 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 	 * of normalized input.
 	 */
 	IndexTuple	reformed = index_form_tuple(tupleDescriptor, normalized, isnull);
+
 	reformed->t_tid = itup->t_tid;
 
 	/* Cannot leak memory here */
@@ -2598,6 +2617,7 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 	Buffer		lbuf;
 
 	BTScanInsert key = _bt_mkscankey(state->rel, itup);
+
 	Assert(key->heapkeyspace && key->scantid != NULL);
 
 	/*
@@ -2625,8 +2645,10 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 
 		/* Get matching tuple on leaf page */
 		OffsetNumber offnum = _bt_binsrch_insert(state->rel, &insertstate);
+
 		/* Compare first >= matching item on leaf page, if any */
 		Page		page = BufferGetPage(lbuf);
+
 		/* Should match on first heap TID when tuple has a posting list */
 		if (offnum <= PageGetMaxOffsetNumber(page) &&
 			insertstate.postingoff <= 0 &&
@@ -2695,7 +2717,8 @@ invariant_l_offset(BtreeCheckState *state, BTScanInsert key,
 
 	/* Verify line pointer before checking tuple */
 	ItemId		itemid = PageGetItemIdCareful(state, state->targetblock, state->target,
-								  upperbound);
+											  upperbound);
+
 	/* pg_upgrade'd indexes may legally have equal sibling tuples */
 	if (!key->heapkeyspace)
 		return invariant_leq_offset(state, key, upperbound);
@@ -2809,7 +2832,7 @@ invariant_l_nontarget_offset(BtreeCheckState *state, BTScanInsert key,
 
 	/* Verify line pointer before checking tuple */
 	ItemId		itemid = PageGetItemIdCareful(state, nontargetblock, nontarget,
-								  upperbound);
+											  upperbound);
 	int32		cmp = _bt_compare(state->rel, key, nontarget, upperbound);
 
 	/* pg_upgrade'd indexes may legally have equal sibling tuples */
@@ -2863,7 +2886,8 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	 * longer than we must.
 	 */
 	Buffer		buffer = ReadBufferExtended(state->rel, MAIN_FORKNUM, blocknum, RBM_NORMAL,
-								state->checkstrategy);
+											state->checkstrategy);
+
 	LockBuffer(buffer, BT_READ);
 
 	/*
@@ -2954,6 +2978,7 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	 * to move left, in the case of backward index scans).
 	 */
 	OffsetNumber maxoffset = PageGetMaxOffsetNumber(page);
+
 	if (maxoffset > MaxIndexTuplesPerPage)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -3031,6 +3056,7 @@ bt_mkscankey_pivotsearch(Relation rel, IndexTuple itup)
 {
 
 	BTScanInsert skey = _bt_mkscankey(rel, itup);
+
 	skey->pivotsearch = true;
 
 	return skey;
@@ -3115,6 +3141,7 @@ BTreeTupleGetHeapTIDCareful(BtreeCheckState *state, IndexTuple itup,
 								 RelationGetRelationName(state->rel))));
 
 	ItemPointer htid = BTreeTupleGetHeapTID(itup);
+
 	if (!ItemPointerIsValid(htid) && nonpivot)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),

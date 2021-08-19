@@ -88,6 +88,7 @@ DefineOperator(List *names, List *parameters)
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(oprNamespace));
@@ -228,6 +229,7 @@ DefineOperator(List *names, List *parameters)
 					   NameListToString(functionName));
 
 	Oid			rettype = get_func_rettype(functionOid);
+
 	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error_type(aclresult, rettype);
@@ -287,6 +289,7 @@ ValidateRestrictionEstimator(List *restrictionName)
 
 	/* Require EXECUTE rights for the estimator */
 	AclResult	aclresult = pg_proc_aclcheck(restrictionOid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION,
 					   NameListToString(restrictionName));
@@ -317,6 +320,7 @@ ValidateJoinEstimator(List *joinName)
 	 */
 	Oid			joinOid = LookupFuncName(joinName, 5, typeId, true);
 	Oid			joinOid2 = LookupFuncName(joinName, 4, typeId, true);
+
 	if (OidIsValid(joinOid))
 	{
 		if (OidIsValid(joinOid2))
@@ -342,6 +346,7 @@ ValidateJoinEstimator(List *joinName)
 
 	/* Require EXECUTE rights for the estimator */
 	AclResult	aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION,
 					   NameListToString(joinName));
@@ -359,6 +364,7 @@ RemoveOperatorById(Oid operOid)
 	Relation	relation = table_open(OperatorRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
+
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for operator %u", operOid);
 	Form_pg_operator op = (Form_pg_operator) GETSTRUCT(tup);
@@ -413,6 +419,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	Oid			oprId = LookupOperWithArgs(stmt->opername, false);
 	Relation	catalog = table_open(OperatorRelationId, RowExclusiveLock);
 	HeapTuple	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(oprId));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for operator %u", oprId);
 	Form_pg_operator oprForm = (Form_pg_operator) GETSTRUCT(tup);

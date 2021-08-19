@@ -52,6 +52,7 @@ binary_encode(PG_FUNCTION_ARGS)
 	char	   *namebuf = TextDatumGetCString(name);
 
 	const struct pg_encoding *enc = pg_find_encoding(namebuf);
+
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -93,6 +94,7 @@ binary_decode(PG_FUNCTION_ARGS)
 	char	   *namebuf = TextDatumGetCString(name);
 
 	const struct pg_encoding *enc = pg_find_encoding(namebuf);
+
 	if (enc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -444,6 +446,7 @@ esc_decode(const char *src, size_t srclen, char *dst)
 		{
 
 			int			val = VAL(src[1]);
+
 			val <<= 3;
 			val += VAL(src[2]);
 			val <<= 3;

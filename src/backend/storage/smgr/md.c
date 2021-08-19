@@ -220,6 +220,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	_fdvec_resize(reln, forkNum, 1);
 	MdfdVec    *mdfd = &reln->md_seg_fds[forkNum][0];
+
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
 }
@@ -498,6 +499,7 @@ mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior)
 
 	_fdvec_resize(reln, forknum, 1);
 	MdfdVec    *mdfd = &reln->md_seg_fds[forknum][0];
+
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
 
@@ -549,7 +551,8 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
 #ifdef USE_PREFETCH
 
 	MdfdVec    *v = _mdfd_getseg(reln, forknum, blocknum, false,
-					 InRecovery ? EXTENSION_RETURN_NULL : EXTENSION_FAIL);
+								 InRecovery ? EXTENSION_RETURN_NULL : EXTENSION_FAIL);
+
 	if (v == NULL)
 		return false;
 
@@ -584,7 +587,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 					segnum_end;
 
 		MdfdVec    *v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ ,
-						 EXTENSION_RETURN_NULL);
+									 EXTENSION_RETURN_NULL);
 
 		/*
 		 * We might be flushing buffers of already removed relations, that's
@@ -628,7 +631,7 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 										reln->smgr_rnode.backend);
 
 	MdfdVec    *v = _mdfd_getseg(reln, forknum, blocknum, false,
-					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
+								 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
 	off_t		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
@@ -808,6 +811,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	 * truncation loop will get them all!
 	 */
 	BlockNumber curnblk = mdnblocks(reln, forknum);
+
 	if (nblocks > curnblk)
 	{
 		/* Bogus request ... but no complaint if InRecovery */
@@ -826,6 +830,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	 * managing the memory for the fd array easier, should there be errors.
 	 */
 	int			curopensegs = reln->md_num_open_segs[forknum];
+
 	while (curopensegs > 0)
 	{
 
@@ -1030,6 +1035,7 @@ DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
 	int			i;
 
 	SMgrRelation *srels = palloc(sizeof(SMgrRelation) * ndelrels);
+
 	for (i = 0; i < ndelrels; i++)
 	{
 		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
@@ -1141,6 +1147,7 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 
 	/* fill the entry */
 	MdfdVec    *v = &reln->md_seg_fds[forknum][segno];
+
 	v->mdfd_vfd = fd;
 	v->mdfd_segno = segno;
 
@@ -1287,6 +1294,7 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
 
 	off_t		len = FileSize(seg->mdfd_vfd);
+
 	if (len < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1322,6 +1330,7 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 	{
 
 		char	   *p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
+
 		strlcpy(path, p, MAXPGPATH);
 		pfree(p);
 
@@ -1354,6 +1363,7 @@ mdunlinkfiletag(const FileTag *ftag, char *path)
 
 	/* Compute the path. */
 	char	   *p = relpathperm(ftag->rnode, MAIN_FORKNUM);
+
 	strlcpy(path, p, MAXPGPATH);
 	pfree(p);
 

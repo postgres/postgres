@@ -288,6 +288,7 @@ pgwin32_socket(int af, int type, int protocol)
 	unsigned long on = 1;
 
 	SOCKET		s = WSASocket(af, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
+
 	if (s == INVALID_SOCKET)
 	{
 		TranslateSocketError();
@@ -309,6 +310,7 @@ pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen)
 {
 
 	int			res = bind(s, addr, addrlen);
+
 	if (res < 0)
 		TranslateSocketError();
 	return res;
@@ -319,6 +321,7 @@ pgwin32_listen(SOCKET s, int backlog)
 {
 
 	int			res = listen(s, backlog);
+
 	if (res < 0)
 		TranslateSocketError();
 	return res;
@@ -335,6 +338,7 @@ pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 	pgwin32_poll_signals();
 
 	SOCKET		rs = WSAAccept(s, addr, addrlen, NULL, 0);
+
 	if (rs == INVALID_SOCKET)
 	{
 		TranslateSocketError();
@@ -350,6 +354,7 @@ pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen)
 {
 
 	int			r = WSAConnect(s, addr, addrlen, NULL, NULL, NULL, NULL);
+
 	if (r == 0)
 		return 0;
 
@@ -382,6 +387,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	wbuf.buf = buf;
 
 	int			r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
+
 	if (r != SOCKET_ERROR)
 		return b;				/* success */
 

@@ -199,6 +199,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
 		char	   *sv = PyString_AsString(so);
+
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -230,6 +231,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			PLyObToDatum *arg = &plan->args[j];
 
 			PyObject   *elem = PySequence_GetItem(list, j);
+
 			PG_TRY();
 			{
 				bool		isnull;
@@ -343,6 +345,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 	volatile MemoryContext oldcontext;
 
 	PLyResultObject *result = (PLyResultObject *) PLy_result_new();
+
 	if (!result)
 	{
 		SPI_freetuptable(tuptable);
@@ -364,8 +367,8 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 		result->nrows = PyLong_FromUnsignedLongLong(rows);
 
 		MemoryContext cxt = AllocSetContextCreate(CurrentMemoryContext,
-									"PL/Python temp context",
-									ALLOCSET_DEFAULT_SIZES);
+												  "PL/Python temp context",
+												  ALLOCSET_DEFAULT_SIZES);
 
 		/* Initialize for converting result tuples to Python */
 		PLy_input_setup_func(&ininfo, cxt, RECORDOID, -1,
@@ -417,6 +420,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 			 * leaked due to errors.)
 			 */
 			MemoryContext oldcontext2 = MemoryContextSwitchTo(TopMemoryContext);
+
 			result->tupdesc = CreateTupleDescCopy(tuptable->tupdesc);
 			MemoryContextSwitchTo(oldcontext2);
 		}
@@ -492,6 +496,7 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 	/* Save error info */
 	MemoryContextSwitchTo(oldcontext);
 	ErrorData  *edata = CopyErrorData();
+
 	FlushErrorState();
 
 	/* Abort the inner transaction */
@@ -501,13 +506,14 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 
 	/* Look up the correct exception */
 	PLyExceptionEntry *entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
-						HASH_FIND, NULL);
+										   HASH_FIND, NULL);
 
 	/*
 	 * This could be a custom error code, if that's the case fallback to
 	 * SPIError
 	 */
 	PyObject   *exc = entry ? entry->exc : PLy_exc_spi_error;
+
 	/* Make Python raise the exception */
 	PLy_spi_exception_set(exc, edata);
 	FreeErrorData(edata);
@@ -524,6 +530,7 @@ PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 	PyObject   *spidata = NULL;
 
 	PyObject   *args = Py_BuildValue("(s)", edata->message);
+
 	if (!args)
 		goto failure;
 

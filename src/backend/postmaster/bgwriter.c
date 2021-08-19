@@ -123,8 +123,9 @@ BackgroundWriterMain(void)
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
 	MemoryContext bgwriter_context = AllocSetContextCreate(TopMemoryContext,
-											 "Background Writer",
-											 ALLOCSET_DEFAULT_SIZES);
+														   "Background Writer",
+														   ALLOCSET_DEFAULT_SIZES);
+
 	MemoryContextSwitchTo(bgwriter_context);
 
 	WritebackContextInit(&wb_context, &bgwriter_flush_after);
@@ -276,7 +277,7 @@ BackgroundWriterMain(void)
 			TimestampTz now = GetCurrentTimestamp();
 
 			TimestampTz timeout = TimestampTzPlusMilliseconds(last_snapshot_ts,
-												  LOG_SNAPSHOT_INTERVAL_MS);
+															  LOG_SNAPSHOT_INTERVAL_MS);
 
 			/*
 			 * Only log if enough time has passed and interesting records have
@@ -304,8 +305,8 @@ BackgroundWriterMain(void)
 		 * normal operation.
 		 */
 		int			rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   BgWriterDelay /* ms */ , WAIT_EVENT_BGWRITER_MAIN);
+								   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   BgWriterDelay /* ms */ , WAIT_EVENT_BGWRITER_MAIN);
 
 		/*
 		 * If no latch event and BgBufferSync says nothing's happening, extend

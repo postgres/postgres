@@ -84,7 +84,7 @@ prepare_room(MBuf *mbuf, int block_len)
 		return;
 
 	unsigned	newlen = (mbuf->buf_end - mbuf->data)
-		+ ((block_len + STEP + STEP - 1) & -STEP);
+	+ ((block_len + STEP + STEP - 1) & -STEP);
 
 	uint8	   *newbuf = repalloc(mbuf->data, newlen);
 
@@ -314,6 +314,7 @@ pullf_read_fixed(PullFilter *src, int len, uint8 *dst)
 	uint8	   *p;
 
 	int			res = pullf_read_max(src, len, &p, dst);
+
 	if (res < 0)
 		return res;
 	if (res != len)

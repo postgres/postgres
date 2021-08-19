@@ -256,6 +256,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	ReserveExternalFD();
 
 	int			flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
+
 	if ((fd = shm_open(name, flags, PG_FILE_MODE_OWNER)) == -1)
 	{
 		ReleaseExternalFD();
@@ -280,6 +281,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 			/* Back out what's already been done. */
 			int			save_errno = errno;
+
 			close(fd);
 			ReleaseExternalFD();
 			errno = save_errno;
@@ -297,6 +299,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		close(fd);
 		ReleaseExternalFD();
 		shm_unlink(name);
@@ -319,12 +322,14 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Map it. */
 	char	   *address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+							   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+
 	if (address == MAP_FAILED)
 	{
 
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		close(fd);
 		ReleaseExternalFD();
 		if (op == DSM_OP_CREATE)
@@ -438,6 +443,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 	 * portable.
 	 */
 	key_t		key = (key_t) handle;
+
 	if (key < 1)				/* avoid compiler warning if type is unsigned */
 		key = -key;
 
@@ -552,11 +558,13 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Map it. */
 	char	   *address = shmat(ident, NULL, PG_SHMAT_FLAGS);
+
 	if (address == (void *) -1)
 	{
 
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		if (op == DSM_OP_CREATE)
 			shmctl(ident, IPC_RMID, NULL);
 		errno = save_errno;
@@ -716,6 +724,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 		_dosmaperr(GetLastError());
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		CloseHandle(hmap);
 		errno = save_errno;
 
@@ -738,6 +747,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 		_dosmaperr(GetLastError());
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		UnmapViewOfFile(address);
 		CloseHandle(hmap);
 		errno = save_errno;
@@ -806,6 +816,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Create new segment or open an existing one for attach. */
 	int			flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
+
 	if ((fd = OpenTransientFile(name, flags)) == -1)
 	{
 		if (errno != EEXIST)
@@ -829,6 +840,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 			/* Back out what's already been done. */
 			int			save_errno = errno;
+
 			CloseTransientFile(fd);
 			errno = save_errno;
 
@@ -878,6 +890,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 			/* Back out what's already been done. */
 			int			save_errno = errno;
+
 			CloseTransientFile(fd);
 			unlink(name);
 			errno = save_errno ? save_errno : ENOSPC;
@@ -892,12 +905,14 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 
 	/* Map it. */
 	char	   *address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+							   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+
 	if (address == MAP_FAILED)
 	{
 
 		/* Back out what's already been done. */
 		int			save_errno = errno;
+
 		CloseTransientFile(fd);
 		if (op == DSM_OP_CREATE)
 			unlink(name);

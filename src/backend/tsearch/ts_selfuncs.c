@@ -223,6 +223,7 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	 * Transpose the data into a single array so we can use bsearch().
 	 */
 	TextFreq   *lookup = (TextFreq *) palloc(sizeof(TextFreq) * nmcelem);
+
 	for (i = 0; i < nmcelem; i++)
 	{
 		/*
@@ -241,7 +242,7 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	float4		minfreq = numbers[nnumbers - 2];
 
 	Selectivity selec = tsquery_opr_selec(GETQUERY(query), GETOPERAND(query), lookup,
-							  nmcelem, minfreq);
+										  nmcelem, minfreq);
 
 	pfree(lookup);
 
@@ -355,8 +356,8 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 				return (Selectivity) DEFAULT_TS_MATCH_SEL;
 
 			TextFreq   *searchres = (TextFreq *) bsearch(&key, lookup, length,
-											 sizeof(TextFreq),
-											 compare_lexeme_textfreq);
+														 sizeof(TextFreq),
+														 compare_lexeme_textfreq);
 
 			if (searchres)
 			{

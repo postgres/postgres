@@ -136,6 +136,7 @@ g_int_union(PG_FUNCTION_ARGS)
 	}
 
 	ArrayType  *res = new_intArrayType(totlen);
+
 	ptr = ARRPTR(res);
 
 	for (i = 0; i < entryvec->n; i++)
@@ -143,6 +144,7 @@ g_int_union(PG_FUNCTION_ARGS)
 		ArrayType  *ent = GETENTRY(entryvec, i);
 
 		int			nel = ARRNELEMS(ent);
+
 		memcpy(ptr, ARRPTR(ent), nel * sizeof(int32));
 		ptr += nel;
 	}
@@ -322,12 +324,14 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	}
 
 	int		   *din = ARRPTR(in);
+
 	lenr = internal_size(din, lenin);
 	if (lenr < 0 || lenr > MAXNUMELTS)
 		ereport(ERROR,
 				(errmsg("compressed array is too big, recreate index using gist__intbig_ops opclass instead")));
 
 	ArrayType  *r = new_intArrayType(lenr);
+
 	dr = ARRPTR(r);
 
 	for (i = 0; i < lenin; i += 2)
@@ -357,7 +361,8 @@ g_int_penalty(PG_FUNCTION_ARGS)
 				tmp2;
 
 	ArrayType  *ud = inner_int_union((ArrayType *) DatumGetPointer(origentry->key),
-						 (ArrayType *) DatumGetPointer(newentry->key));
+									 (ArrayType *) DatumGetPointer(newentry->key));
+
 	rt__int_size(ud, &tmp1);
 	rt__int_size((ArrayType *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;

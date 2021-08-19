@@ -51,6 +51,7 @@ usage(unsigned short int pager)
 
 	/* Find default user, in case we need it. */
 	const char *user = getenv("PGUSER");
+
 	if (!user)
 	{
 		user = get_user_name(&errstr);
@@ -74,6 +75,7 @@ usage(unsigned short int pager)
 	fprintf(output, _("General options:\n"));
 	/* Display default database */
 	const char *env = getenv("PGDATABASE");
+
 	if (!env)
 		env = user;
 	fprintf(output, _("  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"));
@@ -643,8 +645,9 @@ helpSQL(const char *topic, unsigned short int pager)
 					initPQExpBuffer(&buffer);
 					QL_HELP[i].syntaxfunc(&buffer);
 					char	   *url = psprintf("https://www.postgresql.org/docs/%s/%s.html",
-								   strstr(PG_VERSION, "devel") ? "devel" : PG_MAJORVERSION,
-								   QL_HELP[i].docbook_id);
+											   strstr(PG_VERSION, "devel") ? "devel" : PG_MAJORVERSION,
+											   QL_HELP[i].docbook_id);
+
 					/* # of newlines in format must match constant above! */
 					fprintf(output, _("Command:     %s\n"
 									  "Description: %s\n"

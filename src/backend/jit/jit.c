@@ -108,7 +108,8 @@ provider_init(void)
 
 	/* and initialize */
 	JitProviderInit init = (JitProviderInit)
-		load_external_function(path, "_PG_jit_provider_init", true, NULL);
+	load_external_function(path, "_PG_jit_provider_init", true, NULL);
+
 	init(&provider);
 
 	provider_successfully_loaded = true;

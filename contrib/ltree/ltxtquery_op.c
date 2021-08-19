@@ -91,9 +91,9 @@ ltxtq_exec(PG_FUNCTION_ARGS)
 	chkval.operand = GETOPERAND(query);
 
 	bool		result = ltree_execute(GETQUERY(query),
-						   &chkval,
-						   true,
-						   checkcondition_str);
+									   &chkval,
+									   true,
+									   checkcondition_str);
 
 	PG_FREE_IF_COPY(val, 0);
 	PG_FREE_IF_COPY(query, 1);

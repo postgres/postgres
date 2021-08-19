@@ -37,6 +37,7 @@ get_user_name(char **errstr)
 
 	errno = 0;					/* clear errno before call */
 	struct passwd *pw = getpwuid(user_id);
+
 	if (!pw)
 	{
 		*errstr = psprintf(_("could not look up effective user ID %ld: %s"),

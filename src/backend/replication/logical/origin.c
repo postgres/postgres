@@ -214,6 +214,7 @@ replorigin_by_name(const char *roname, bool missing_ok)
 	Datum		roname_d = CStringGetTextDatum(roname);
 
 	HeapTuple	tuple = SearchSysCache1(REPLORIGNAME, roname_d);
+
 	if (HeapTupleIsValid(tuple))
 	{
 		ident = (Form_pg_replication_origin) GETSTRUCT(tuple);
@@ -447,7 +448,7 @@ replorigin_by_oid(RepOriginId roident, bool missing_ok, char **roname)
 	Assert(roident != DoNotReplicateId);
 
 	HeapTuple	tuple = SearchSysCache1(REPLORIGIDENT,
-							ObjectIdGetDatum((Oid) roident));
+										ObjectIdGetDatum((Oid) roident));
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -570,7 +571,8 @@ CheckPointReplicationOrigin(void)
 	 * can happen at a time.
 	 */
 	int			tmpfd = OpenTransientFile(tmppath,
-							  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
+										  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
+
 	if (tmpfd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
@@ -1157,6 +1159,7 @@ replorigin_session_reset(void)
 
 	session_replication_state->acquired_by = 0;
 	ConditionVariable *cv = &session_replication_state->origin_cv;
+
 	session_replication_state = NULL;
 
 	LWLockRelease(ReplicationOriginLock);
@@ -1197,6 +1200,7 @@ replorigin_session_get_progress(bool flush)
 	LWLockAcquire(&session_replication_state->lock, LW_SHARED);
 	XLogRecPtr	remote_lsn = session_replication_state->remote_lsn;
 	XLogRecPtr	local_lsn = session_replication_state->local_lsn;
+
 	LWLockRelease(&session_replication_state->lock);
 
 	if (flush && local_lsn != InvalidXLogRecPtr)
@@ -1299,6 +1303,7 @@ pg_replication_origin_session_setup(PG_FUNCTION_ARGS)
 
 	char	   *name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 	RepOriginId origin = replorigin_by_name(name, false);
+
 	replorigin_session_setup(origin);
 
 	replorigin_session_origin = origin;
@@ -1438,6 +1443,7 @@ pg_replication_origin_progress(PG_FUNCTION_ARGS)
 	bool		flush = PG_GETARG_BOOL(1);
 
 	RepOriginId roident = replorigin_by_name(name, false);
+
 	Assert(OidIsValid(roident));
 
 	XLogRecPtr	remote_lsn = replorigin_get_progress(roident, flush);

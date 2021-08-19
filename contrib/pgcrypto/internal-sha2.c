@@ -138,6 +138,7 @@ init_sha224(PX_MD *md)
 {
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA224);
+
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha224_len;
@@ -155,6 +156,7 @@ init_sha256(PX_MD *md)
 {
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA256);
+
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha256_len;
@@ -172,6 +174,7 @@ init_sha384(PX_MD *md)
 {
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA384);
+
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha384_len;
@@ -189,6 +192,7 @@ init_sha512(PX_MD *md)
 {
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA512);
+
 	md->p.ptr = ctx;
 
 	md->result_size = int_sha512_len;

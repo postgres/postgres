@@ -75,8 +75,8 @@ execTuplesMatchPrepare(TupleDesc desc,
 
 	/* build actual expression */
 	ExprState  *expr = ExecBuildGroupingEqual(desc, desc, NULL, NULL,
-								  numCols, keyColIdx, eqFunctions, collations,
-								  parent);
+											  numCols, keyColIdx, eqFunctions, collations,
+											  parent);
 
 	return expr;
 }
@@ -109,6 +109,7 @@ execTuplesHashPrepare(int numCols,
 		Oid			right_hash_function;
 
 		Oid			eq_function = get_opcode(eq_opr);
+
 		if (!get_op_hash_functions(eq_opr,
 								   &left_hash_function, &right_hash_function))
 			elog(ERROR, "could not find hash function for hash operator %u",
@@ -167,6 +168,7 @@ BuildTupleHashTableExt(PlanState *parent,
 
 	/* Limit initial table size request to not more than hash_mem */
 	Size		hash_mem_limit = get_hash_memory_limit() / entrysize;
+
 	if (nbuckets > hash_mem_limit)
 		nbuckets = hash_mem_limit;
 
@@ -360,6 +362,7 @@ LookupTupleHashEntryHash(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->cur_eq_func = hashtable->tab_eq_func;
 
 	TupleHashEntry entry = LookupTupleHashEntry_internal(hashtable, slot, isnew, hash);
+
 	Assert(entry == NULL || entry->hash == hash);
 
 	MemoryContextSwitchTo(oldContext);
@@ -391,8 +394,9 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->cur_eq_func = eqcomp;
 
 	/* Search the hash table */
-	MinimalTuple key = NULL;					/* flag to reference inputslot */
+	MinimalTuple key = NULL;	/* flag to reference inputslot */
 	TupleHashEntry entry = tuplehash_lookup(hashtable->hashtab, key);
+
 	MemoryContextSwitchTo(oldContext);
 
 	return entry;
@@ -451,8 +455,9 @@ TupleHashTableHash_internal(struct tuplehash_hash *tb,
 		{
 
 			uint32		hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i],
-													hashtable->tab_collations[i],
-													attr));
+																hashtable->tab_collations[i],
+																attr));
+
 			hashkey ^= hkey;
 		}
 	}
@@ -481,7 +486,7 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 	TupleHashEntryData *entry;
 	bool		found;
 
-	MinimalTuple key = NULL;					/* flag to reference inputslot */
+	MinimalTuple key = NULL;	/* flag to reference inputslot */
 
 	if (isnew)
 	{
@@ -528,6 +533,7 @@ TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const 
 	 */
 	Assert(tuple1 != NULL);
 	TupleTableSlot *slot1 = hashtable->tableslot;
+
 	ExecStoreMinimalTuple(tuple1, slot1, false);
 	Assert(tuple2 == NULL);
 	TupleTableSlot *slot2 = hashtable->inputslot;

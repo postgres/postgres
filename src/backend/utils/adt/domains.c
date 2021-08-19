@@ -83,6 +83,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 	 * it can cache the underlying base type info.
 	 */
 	TypeCacheEntry *typentry = lookup_type_cache(domainType, TYPECACHE_DOMAIN_BASE_INFO);
+
 	if (typentry->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -91,6 +92,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 
 	/* Find out the base type */
 	Oid			baseType = typentry->domainBaseType;
+
 	my_extra->typtypmod = typentry->domainBaseTypmod;
 
 	/* Look up underlying I/O function */
@@ -154,6 +156,7 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					{
 
 						MemoryContext oldcontext = MemoryContextSwitchTo(my_extra->mcxt);
+
 						econtext = CreateStandaloneExprContext();
 						MemoryContextSwitchTo(oldcontext);
 						my_extra->econtext = econtext;
@@ -228,6 +231,7 @@ domain_in(PG_FUNCTION_ARGS)
 	 * shouldn't happen, but cope if it does).
 	 */
 	DomainIOData *my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
 		my_extra = domain_state_setup(domainType, false,
@@ -239,9 +243,9 @@ domain_in(PG_FUNCTION_ARGS)
 	 * Invoke the base type's typinput procedure to convert the data.
 	 */
 	Datum		value = InputFunctionCall(&my_extra->proc,
-							  string,
-							  my_extra->typioparam,
-							  my_extra->typtypmod);
+										  string,
+										  my_extra->typioparam,
+										  my_extra->typtypmod);
 
 	/*
 	 * Do the necessary checks to ensure it's a valid domain value.
@@ -281,6 +285,7 @@ domain_recv(PG_FUNCTION_ARGS)
 	 * shouldn't happen, but cope if it does).
 	 */
 	DomainIOData *my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL || my_extra->domain_type != domainType)
 	{
 		my_extra = domain_state_setup(domainType, true,
@@ -292,9 +297,9 @@ domain_recv(PG_FUNCTION_ARGS)
 	 * Invoke the base type's typreceive procedure to convert the data.
 	 */
 	Datum		value = ReceiveFunctionCall(&my_extra->proc,
-								buf,
-								my_extra->typioparam,
-								my_extra->typtypmod);
+											buf,
+											my_extra->typioparam,
+											my_extra->typtypmod);
 
 	/*
 	 * Do the necessary checks to ensure it's a valid domain value.
@@ -351,6 +356,7 @@ errdatatype(Oid datatypeOid)
 {
 
 	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(datatypeOid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", datatypeOid);
 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tup);

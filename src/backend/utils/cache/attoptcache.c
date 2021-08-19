@@ -112,10 +112,10 @@ get_attribute_options(Oid attrelid, int attnum)
 	key.attrelid = attrelid;
 	key.attnum = attnum;
 	AttoptCacheEntry *attopt =
-		(AttoptCacheEntry *) hash_search(AttoptCacheHash,
-										 (void *) &key,
-										 HASH_FIND,
-										 NULL);
+	(AttoptCacheEntry *) hash_search(AttoptCacheHash,
+									 (void *) &key,
+									 HASH_FIND,
+									 NULL);
 
 	/* Not found in Attopt cache.  Construct new cache entry. */
 	if (!attopt)
@@ -138,9 +138,10 @@ get_attribute_options(Oid attrelid, int attnum)
 			bool		isNull;
 
 			Datum		datum = SysCacheGetAttr(ATTNUM,
-									tp,
-									Anum_pg_attribute_attoptions,
-									&isNull);
+												tp,
+												Anum_pg_attribute_attoptions,
+												&isNull);
+
 			if (isNull)
 				opts = NULL;
 			else
@@ -169,6 +170,7 @@ get_attribute_options(Oid attrelid, int attnum)
 	if (attopt->opts == NULL)
 		return NULL;
 	AttributeOpts *result = palloc(VARSIZE(attopt->opts));
+
 	memcpy(result, attopt->opts, VARSIZE(attopt->opts));
 	return result;
 }

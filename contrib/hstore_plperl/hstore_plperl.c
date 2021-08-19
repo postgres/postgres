@@ -78,10 +78,10 @@ hstore_to_plperl(PG_FUNCTION_ARGS)
 	{
 
 		const char *key = pnstrdup(HSTORE_KEY(entries, base, i),
-					   HSTORE_KEYLEN(entries, i));
+								   HSTORE_KEYLEN(entries, i));
 		SV		   *value = HSTORE_VALISNULL(entries, i) ? newSV(0) :
-			cstr2sv(pnstrdup(HSTORE_VAL(entries, base, i),
-							 HSTORE_VALLEN(entries, i)));
+		cstr2sv(pnstrdup(HSTORE_VAL(entries, base, i),
+						 HSTORE_VALLEN(entries, i)));
 
 		(void) hv_store(hv, key, strlen(key), value, 0);
 	}
@@ -116,6 +116,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 	Pairs	   *pairs = palloc(pcount * sizeof(Pairs));
 
 	int32		i = 0;
+
 	while ((he = hv_iternext(hv)))
 	{
 		char	   *key = sv2cstr(HeSVKEY_force(he));
@@ -143,5 +144,6 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 
 	pcount = hstoreUniquePairs(pairs, pcount, &buflen);
 	HStore	   *out = hstorePairs(pairs, pcount, buflen);
+
 	PG_RETURN_POINTER(out);
 }

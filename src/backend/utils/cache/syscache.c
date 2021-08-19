@@ -1218,6 +1218,7 @@ SearchSysCacheExists(int cacheId,
 {
 
 	HeapTuple	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
+
 	if (!HeapTupleIsValid(tuple))
 		return false;
 	ReleaseSysCache(tuple);
@@ -1242,11 +1243,13 @@ GetSysCacheOid(int cacheId,
 	bool		isNull;
 
 	HeapTuple	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
+
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
 	Oid			result = heap_getattr(tuple, oidcol,
-						  SysCache[cacheId]->cc_tupdesc,
-						  &isNull);
+									  SysCache[cacheId]->cc_tupdesc,
+									  &isNull);
+
 	Assert(!isNull);			/* columns used as oids should never be NULL */
 	ReleaseSysCache(tuple);
 	return result;
@@ -1266,8 +1269,9 @@ SearchSysCacheAttName(Oid relid, const char *attname)
 {
 
 	HeapTuple	tuple = SearchSysCache2(ATTNAME,
-							ObjectIdGetDatum(relid),
-							CStringGetDatum(attname));
+										ObjectIdGetDatum(relid),
+										CStringGetDatum(attname));
+
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 	if (((Form_pg_attribute) GETSTRUCT(tuple))->attisdropped)
@@ -1307,6 +1311,7 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
 {
 
 	HeapTuple	tuple = SearchSysCacheAttName(relid, attname);
+
 	if (!HeapTupleIsValid(tuple))
 		return false;
 	ReleaseSysCache(tuple);
@@ -1327,8 +1332,9 @@ SearchSysCacheAttNum(Oid relid, int16 attnum)
 {
 
 	HeapTuple	tuple = SearchSysCache2(ATTNUM,
-							ObjectIdGetDatum(relid),
-							Int16GetDatum(attnum));
+										ObjectIdGetDatum(relid),
+										Int16GetDatum(attnum));
+
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 	if (((Form_pg_attribute) GETSTRUCT(tuple))->attisdropped)

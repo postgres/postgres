@@ -80,6 +80,7 @@ local_fetch_file_range(rewind_source *source, const char *path, off_t off,
 	snprintf(srcpath, sizeof(srcpath), "%s/%s", datadir, path);
 
 	int			srcfd = open(srcpath, O_RDONLY | PG_BINARY, 0);
+
 	if (srcfd < 0)
 		pg_fatal("could not open source file \"%s\": %m",
 				 srcpath);

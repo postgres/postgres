@@ -136,10 +136,11 @@ OperatorGet(const char *operatorName,
 	Oid			operatorObjectId;
 
 	HeapTuple	tup = SearchSysCache4(OPERNAMENSP,
-						  PointerGetDatum(operatorName),
-						  ObjectIdGetDatum(leftObjectId),
-						  ObjectIdGetDatum(rightObjectId),
-						  ObjectIdGetDatum(operatorNamespace));
+									  PointerGetDatum(operatorName),
+									  ObjectIdGetDatum(leftObjectId),
+									  ObjectIdGetDatum(rightObjectId),
+									  ObjectIdGetDatum(operatorNamespace));
+
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_operator oprform = (Form_pg_operator) GETSTRUCT(tup);
@@ -173,8 +174,9 @@ OperatorLookup(List *operatorName,
 {
 
 	Oid			operatorObjectId = LookupOperName(NULL, operatorName,
-									  leftObjectId, rightObjectId,
-									  true, -1);
+												  leftObjectId, rightObjectId,
+												  true, -1);
+
 	if (!OidIsValid(operatorObjectId))
 	{
 		*defined = false;
@@ -182,6 +184,7 @@ OperatorLookup(List *operatorName,
 	}
 
 	RegProcedure oprcode = get_opcode(operatorObjectId);
+
 	*defined = RegProcedureIsValid(oprcode);
 
 	return operatorObjectId;
@@ -232,7 +235,8 @@ OperatorShellMake(const char *operatorName,
 	 * that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
 	Oid			operatorObjectId = GetNewOidWithIndex(pg_operator_desc, OperatorOidIndexId,
-										  Anum_pg_operator_oid);
+													  Anum_pg_operator_oid);
+
 	values[Anum_pg_operator_oid - 1] = ObjectIdGetDatum(operatorObjectId);
 	namestrcpy(&oname, operatorName);
 	values[Anum_pg_operator_oprname - 1] = NameGetDatum(&oname);
@@ -399,10 +403,10 @@ OperatorCreate(const char *operatorName,
 	}
 
 	Oid			operatorObjectId = OperatorGet(operatorName,
-								   operatorNamespace,
-								   leftTypeId,
-								   rightTypeId,
-								   &operatorAlreadyDefined);
+											   operatorNamespace,
+											   leftTypeId,
+											   rightTypeId,
+											   &operatorAlreadyDefined);
 
 	if (operatorAlreadyDefined)
 		ereport(ERROR,
@@ -579,9 +583,9 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	char	   *otherName;
 
 	Oid			other_oid = OperatorLookup(otherOp,
-							   otherLeftTypeId,
-							   otherRightTypeId,
-							   &otherDefined);
+										   otherLeftTypeId,
+										   otherRightTypeId,
+										   &otherDefined);
 
 	if (OidIsValid(other_oid))
 	{
@@ -590,7 +594,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	}
 
 	Oid			otherNamespace = QualifiedNameGetCreationNamespace(otherOp,
-													   &otherName);
+																   &otherName);
 
 	if (strcmp(otherName, operatorName) == 0 &&
 		otherNamespace == operatorNamespace &&
@@ -611,7 +615,8 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	/* not in catalogs, different from operator, so make shell */
 
 	AclResult	aclresult = pg_namespace_aclcheck(otherNamespace, GetUserId(),
-									  ACL_CREATE);
+												  ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(otherNamespace));

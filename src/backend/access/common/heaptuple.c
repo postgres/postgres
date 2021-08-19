@@ -476,6 +476,7 @@ nocachegetattr(HeapTuple tuple,
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
 		Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
+
 		if (att->attcacheoff >= 0)
 			return fetchatt(att, tp + att->attcacheoff);
 
@@ -679,6 +680,7 @@ heap_copytuple(HeapTuple tuple)
 		return NULL;
 
 	HeapTuple	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
+
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
@@ -990,6 +992,7 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	 * the given tuple came from disk, rather than from heap_form_tuple).
 	 */
 	HeapTupleHeader td = (HeapTupleHeader) palloc(tuple->t_len);
+
 	memcpy((char *) td, (char *) tuple->t_data, tuple->t_len);
 
 	HeapTupleHeaderSetDatumLength(td, tuple->t_len);
@@ -1422,6 +1425,7 @@ heap_copy_minimal_tuple(MinimalTuple mtup)
 {
 
 	MinimalTuple result = (MinimalTuple) palloc(mtup->t_len);
+
 	memcpy(result, mtup, mtup->t_len);
 	return result;
 }
@@ -1441,6 +1445,7 @@ heap_tuple_from_minimal_tuple(MinimalTuple mtup)
 	uint32		len = mtup->t_len + MINIMAL_TUPLE_OFFSET;
 
 	HeapTuple	result = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+
 	result->t_len = len;
 	ItemPointerSetInvalid(&(result->t_self));
 	result->t_tableOid = InvalidOid;
@@ -1463,6 +1468,7 @@ minimal_tuple_from_heap_tuple(HeapTuple htup)
 	Assert(htup->t_len > MINIMAL_TUPLE_OFFSET);
 	uint32		len = htup->t_len - MINIMAL_TUPLE_OFFSET;
 	MinimalTuple result = (MinimalTuple) palloc(len);
+
 	memcpy(result, (char *) htup->t_data + MINIMAL_TUPLE_OFFSET, len);
 	result->t_len = len;
 	return result;

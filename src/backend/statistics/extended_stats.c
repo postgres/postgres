@@ -121,8 +121,8 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		return;
 
 	MemoryContext cxt = AllocSetContextCreate(CurrentMemoryContext,
-								"BuildRelationExtStatistics",
-								ALLOCSET_DEFAULT_SIZES);
+											  "BuildRelationExtStatistics",
+											  ALLOCSET_DEFAULT_SIZES);
 	MemoryContext oldcxt = MemoryContextSwitchTo(cxt);
 
 	Relation	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
@@ -144,6 +144,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	}
 
 	int64		ext_cnt = 0;
+
 	foreach(lc, statslist)
 	{
 		StatExtEntry *stat = (StatExtEntry *) lfirst(lc);
@@ -158,7 +159,8 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		 * not, report this fact (except in autovacuum) and move on.
 		 */
 		VacAttrStats **stats = lookup_var_attr_stats(onerel, stat->columns, stat->exprs,
-									  natts, vacattrstats);
+													 natts, vacattrstats);
+
 		if (!stats)
 		{
 			if (!IsAutoVacuumWorkerProcess())
@@ -174,8 +176,8 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 		/* compute statistics target for this statistics */
 		int			stattarget = statext_compute_stattarget(stat->stattarget,
-												bms_num_members(stat->columns),
-												stats);
+															bms_num_members(stat->columns),
+															stats);
 
 		/*
 		 * Don't rebuild statistics objects with statistics target set to 0
@@ -259,8 +261,8 @@ ComputeExtStatisticsRows(Relation onerel,
 		return 0;
 
 	MemoryContext cxt = AllocSetContextCreate(CurrentMemoryContext,
-								"ComputeExtStatisticsRows",
-								ALLOCSET_DEFAULT_SIZES);
+											  "ComputeExtStatisticsRows",
+											  ALLOCSET_DEFAULT_SIZES);
 	MemoryContext oldcxt = MemoryContextSwitchTo(cxt);
 
 	Relation	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
@@ -277,7 +279,7 @@ ComputeExtStatisticsRows(Relation onerel,
 		 * during the actual build BuildRelationExtStatistics).
 		 */
 		VacAttrStats **stats = lookup_var_attr_stats(onerel, stat->columns, stat->exprs,
-									  natts, vacattrstats);
+													 natts, vacattrstats);
 
 		if (!stats)
 			continue;
@@ -287,7 +289,7 @@ ComputeExtStatisticsRows(Relation onerel,
 		 * object itself, and for its attributes.
 		 */
 		int			stattarget = statext_compute_stattarget(stat->stattarget,
-												nattrs, stats);
+															nattrs, stats);
 
 		/* Use the largest value for all statistics objects. */
 		if (stattarget > result)
@@ -415,7 +417,7 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 				ObjectIdGetDatum(relid));
 
 	SysScanDesc scan = systable_beginscan(pg_statext, StatisticExtRelidIndexId, true,
-							  NULL, 1, &skey);
+										  NULL, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(scan)))
 	{
@@ -425,6 +427,7 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 
 		StatExtEntry *entry = palloc0(sizeof(StatExtEntry));
 		Form_pg_statistic_ext staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
+
 		entry->statOid = staForm->oid;
 		entry->schema = get_namespace_name(staForm->stxnamespace);
 		entry->name = pstrdup(NameStr(staForm->stxname));
@@ -437,14 +440,17 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 
 		/* decode the stxkind char array into a list of chars */
 		Datum		datum = SysCacheGetAttr(STATEXTOID, htup,
-								Anum_pg_statistic_ext_stxkind, &isnull);
+											Anum_pg_statistic_ext_stxkind, &isnull);
+
 		Assert(!isnull);
 		ArrayType  *arr = DatumGetArrayTypeP(datum);
+
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
 			elog(ERROR, "stxkind is not a 1-D char array");
 		char	   *enabled = (char *) ARR_DATA_PTR(arr);
+
 		for (i = 0; i < ARR_DIMS(arr)[0]; i++)
 		{
 			Assert((enabled[i] == STATS_EXT_NDISTINCT) ||
@@ -462,6 +468,7 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		{
 
 			char	   *exprsString = TextDatumGetCString(datum);
+
 			exprs = (List *) stringToNode(exprsString);
 
 			pfree(exprsString);
@@ -526,7 +533,8 @@ examine_attribute(Node *expr)
 	stats->attrcollid = exprCollation(expr);
 
 	HeapTuple	typtuple = SearchSysCacheCopy1(TYPEOID,
-								   ObjectIdGetDatum(stats->attrtypid));
+											   ObjectIdGetDatum(stats->attrtypid));
+
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
@@ -625,7 +633,8 @@ examine_expression(Node *expr, int stattarget)
 	stats->attr->atttypid = stats->attrtypid;
 
 	HeapTuple	typtuple = SearchSysCacheCopy1(TYPEOID,
-								   ObjectIdGetDatum(stats->attrtypid));
+											   ObjectIdGetDatum(stats->attrtypid));
+
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
 
@@ -829,7 +838,7 @@ multi_sort_init(int ndims)
 	Assert(ndims >= 2);
 
 	MultiSortSupport mss = (MultiSortSupport) palloc0(offsetof(MultiSortSupportData, ssup)
-									 + sizeof(SortSupportData) * ndims);
+													  + sizeof(SortSupportData) * ndims);
 
 	mss->ndims = ndims;
 
@@ -866,8 +875,8 @@ multi_sort_compare(const void *a, const void *b, void *arg)
 	{
 
 		int			compare = ApplySortComparator(ia->values[i], ia->isnull[i],
-									  ib->values[i], ib->isnull[i],
-									  &mss->ssup[i]);
+												  ib->values[i], ib->isnull[i],
+												  &mss->ssup[i]);
 
 		if (compare != 0)
 			return compare;
@@ -941,6 +950,7 @@ build_attnums_array(Bitmapset *attrs, int nexprs, int *numattrs)
 
 	/* build attnums from the bitmapset */
 	AttrNumber *attnums = (AttrNumber *) palloc(sizeof(AttrNumber) * num);
+
 	i = 0;
 	j = -1;
 	while ((j = bms_next_member(attrs, j)) >= 0)
@@ -993,13 +1003,16 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 
 	/* items to sort */
 	SortItem   *items = (SortItem *) ptr;
+
 	ptr += data->numrows * sizeof(SortItem);
 
 	/* values and null flags */
 	Datum	   *values = (Datum *) ptr;
+
 	ptr += nvalues * sizeof(Datum);
 
 	bool	   *isnull = (bool *) ptr;
+
 	ptr += nvalues * sizeof(bool);
 
 	/* make sure we consumed the whole buffer exactly */
@@ -1017,6 +1030,7 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 
 	/* build a local cache of typlen for all attributes */
 	int		   *typlen = (int *) palloc(sizeof(int) * data->nattnums);
+
 	for (i = 0; i < data->nattnums; i++)
 		typlen[i] = get_typlen(data->stats[i]->attrtypid);
 
@@ -1126,6 +1140,7 @@ stat_find_expression(StatisticExtInfo *stat, Node *expr)
 	ListCell   *lc;
 
 	int			idx = 0;
+
 	foreach(lc, stat->exprs)
 	{
 		Node	   *stat_expr = (Node *) lfirst(lc);
@@ -1157,6 +1172,7 @@ stat_covers_expressions(StatisticExtInfo *stat, List *exprs,
 		Node	   *expr = (Node *) lfirst(lc);
 
 		int			expr_idx = stat_find_expression(stat, expr);
+
 		if (expr_idx == -1)
 			return false;
 
@@ -1666,6 +1682,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	 * statistics (we treat them as incompatible).
 	 */
 	int			listidx = 0;
+
 	foreach(l, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
@@ -1693,8 +1710,8 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 
 		/* find the best suited statistics object for these attnums */
 		StatisticExtInfo *stat = choose_best_statistics(rel->statlist, STATS_EXT_MCV,
-									  list_attnums, list_exprs,
-									  list_length(clauses));
+														list_attnums, list_exprs,
+														list_length(clauses));
 
 		/*
 		 * if no (additional) matching stats could be found then we've nothing
@@ -1924,7 +1941,7 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 
 	/* First, try estimating clauses using a multivariate MCV list. */
 	Selectivity sel = statext_mcv_clauselist_selectivity(root, clauses, varRelid, jointype,
-											 sjinfo, rel, estimatedclauses, is_or);
+														 sjinfo, rel, estimatedclauses, is_or);
 
 	/*
 	 * Functional dependencies only work for clauses connected by AND, so for
@@ -2057,7 +2074,7 @@ compute_expr_stats(Relation onerel, double totalrows,
 
 		/* Need a slot to hold the current heap tuple, too */
 		TupleTableSlot *slot = MakeSingleTupleTableSlot(RelationGetDescr(onerel),
-										&TTSOpsHeapTuple);
+														&TTSOpsHeapTuple);
 
 		/* Arrange for econtext's scan tuple to be the tuple under test */
 		econtext->ecxt_scantuple = slot;
@@ -2067,6 +2084,7 @@ compute_expr_stats(Relation onerel, double totalrows,
 		bool	   *exprnulls = (bool *) palloc(numrows * sizeof(bool));
 
 		int			tcnt = 0;
+
 		for (i = 0; i < numrows; i++)
 		{
 			bool		isnull;
@@ -2086,8 +2104,9 @@ compute_expr_stats(Relation onerel, double totalrows,
 			 * context created at the beginning of this function.
 			 */
 			Datum		datum = ExecEvalExprSwitchContext(exprstate,
-											  GetPerTupleExprContext(estate),
-											  &isnull);
+														  GetPerTupleExprContext(estate),
+														  &isnull);
+
 			if (isnull)
 			{
 				exprvals[tcnt] = (Datum) 0;
@@ -2163,6 +2182,7 @@ expr_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 
 	/* exprvals and exprnulls are already offset for proper column */
 	int			i = rownum * stats->rowstride;
+
 	*isNull = stats->exprnulls[i];
 	return stats->exprvals[i];
 }
@@ -2181,6 +2201,7 @@ build_expr_data(List *exprs, int stattarget)
 	AnlExprData *exprdata = (AnlExprData *) palloc0(nexprs * sizeof(AnlExprData));
 
 	int			idx = 0;
+
 	foreach(lc, exprs)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
@@ -2206,6 +2227,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 
 	/* lookup OID of composite type for pg_statistic */
 	Oid			typOid = get_rel_type_id(StatisticRelationId);
+
 	if (!OidIsValid(typOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2274,8 +2296,9 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
 				/* XXX knows more than it should about type float4: */
 				ArrayType  *arry = construct_array(numdatums, nnum,
-									   FLOAT4OID,
-									   sizeof(float4), true, TYPALIGN_INT);
+												   FLOAT4OID,
+												   sizeof(float4), true, TYPALIGN_INT);
+
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else
@@ -2291,11 +2314,12 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 			{
 
 				ArrayType  *arry = construct_array(stats->stavalues[k],
-									   stats->numvalues[k],
-									   stats->statypid[k],
-									   stats->statyplen[k],
-									   stats->statypbyval[k],
-									   stats->statypalign[k]);
+												   stats->numvalues[k],
+												   stats->statypid[k],
+												   stats->statyplen[k],
+												   stats->statypbyval[k],
+												   stats->statypalign[k]);
+
 				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
 			}
 			else
@@ -2330,11 +2354,13 @@ statext_expressions_load(Oid stxoid, int idx)
 	HeapTupleData tmptup;
 
 	HeapTuple	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(stxoid));
+
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", stxoid);
 
 	Datum		value = SysCacheGetAttr(STATEXTDATASTXOID, htup,
-							Anum_pg_statistic_ext_data_stxdexpr, &isnull);
+										Anum_pg_statistic_ext_data_stxdexpr, &isnull);
+
 	if (isnull)
 		elog(ERROR,
 			 "requested statistics kind \"%c\" is not yet built for statistics object %u",
@@ -2376,6 +2402,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 
 	/* allocate everything as a single chunk, so we can free it easily */
 	Size		len = MAXALIGN(sizeof(StatsBuildData));
+
 	len += MAXALIGN(sizeof(AttrNumber) * nkeys);	/* attnums */
 	len += MAXALIGN(sizeof(VacAttrStats *) * nkeys);	/* stats */
 
@@ -2391,6 +2418,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 
 	/* set the pointers */
 	StatsBuildData *result = (StatsBuildData *) ptr;
+
 	ptr += MAXALIGN(sizeof(StatsBuildData));
 
 	/* attnums */
@@ -2427,6 +2455,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 	/* fill the attribute info - first attributes, then expressions */
 	int			idx = 0;
 	int			k = -1;
+
 	while ((k = bms_next_member(stat->columns, k)) >= 0)
 	{
 		result->attnums[idx] = k;
@@ -2468,7 +2497,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 
 	/* Need a slot to hold the current heap tuple, too */
 	TupleTableSlot *slot = MakeSingleTupleTableSlot(RelationGetDescr(rel),
-									&TTSOpsHeapTuple);
+													&TTSOpsHeapTuple);
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
@@ -2499,8 +2528,9 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 			 * somewhere else.
 			 */
 			Datum		datum = ExecEvalExpr(exprstate,
-								 GetPerTupleExprContext(estate),
-								 &isnull);
+											 GetPerTupleExprContext(estate),
+											 &isnull);
+
 			if (isnull)
 			{
 				result->values[idx][i] = (Datum) 0;

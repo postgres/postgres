@@ -88,6 +88,7 @@ pgwin32_signal_initialize(void)
 
 	/* Create thread for handling signals */
 	HANDLE		signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
+
 	if (signal_thread_handle == NULL)
 		ereport(FATAL,
 				(errmsg_internal("could not create signal handler thread")));
@@ -147,6 +148,7 @@ pqsigsetmask(int mask)
 {
 
 	int			prevmask = pg_signal_mask;
+
 	pg_signal_mask = mask;
 
 	/*
@@ -171,6 +173,7 @@ pqsignal(int signum, pqsigfunc handler)
 	if (signum >= PG_SIGNAL_COUNT || signum < 0)
 		return SIG_ERR;
 	pqsigfunc	prevfunc = pg_signal_array[signum];
+
 	pg_signal_array[signum] = handler;
 	return prevfunc;
 }
@@ -184,8 +187,8 @@ pgwin32_create_signal_listener(pid_t pid)
 	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", (int) pid);
 
 	HANDLE		pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-						   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+									   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+									   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
 	if (pipe == INVALID_HANDLE_VALUE)
 		ereport(ERROR,
@@ -255,6 +258,7 @@ pg_signal_thread(LPVOID param)
 		 * which is actually a success (way to go, Microsoft).
 		 */
 		BOOL		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+
 		if (fConnected)
 		{
 			/*

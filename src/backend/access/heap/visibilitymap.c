@@ -394,6 +394,7 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 		 * them from the count.
 		 */
 		Buffer		mapBuffer = vm_readbuf(rel, mapBlock, false);
+
 		if (!BufferIsValid(mapBuffer))
 			break;
 
@@ -473,6 +474,7 @@ visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 		newnblocks = truncBlock + 1;
 
 		Buffer		mapBuffer = vm_readbuf(rel, truncBlock, false);
+
 		if (!BufferIsValid(mapBuffer))
 		{
 			/* nothing to do, the file was already smaller */
@@ -588,7 +590,8 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	 * Current usage is safe because PageGetContents() does not require that.
 	 */
 	Buffer		buf = ReadBufferExtended(rel, VISIBILITYMAP_FORKNUM, blkno,
-							 RBM_ZERO_ON_ERROR, NULL);
+										 RBM_ZERO_ON_ERROR, NULL);
+
 	if (PageIsNew(BufferGetPage(buf)))
 	{
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);

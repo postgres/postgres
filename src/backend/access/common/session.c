@@ -81,6 +81,7 @@ GetSessionDsmHandle(void)
 
 	/* Otherwise, prepare to set one up. */
 	MemoryContext old_context = MemoryContextSwitchTo(TopMemoryContext);
+
 	shm_toc_initialize_estimator(&estimator);
 
 	/* Estimate space for the per-session DSA area. */
@@ -89,12 +90,14 @@ GetSessionDsmHandle(void)
 
 	/* Estimate space for the per-session record typmod registry. */
 	size_t		typmod_registry_size = SharedRecordTypmodRegistryEstimate();
+
 	shm_toc_estimate_keys(&estimator, 1);
 	shm_toc_estimate_chunk(&estimator, typmod_registry_size);
 
 	/* Set up segment and TOC. */
 	size_t		size = shm_toc_estimate(&estimator);
 	dsm_segment *seg = dsm_create(size, DSM_CREATE_NULL_IF_MAXSEGMENTS);
+
 	if (seg == NULL)
 	{
 		MemoryContextSwitchTo(old_context);
@@ -102,20 +105,22 @@ GetSessionDsmHandle(void)
 		return DSM_HANDLE_INVALID;
 	}
 	shm_toc    *toc = shm_toc_create(SESSION_MAGIC,
-						 dsm_segment_address(seg),
-						 size);
+									 dsm_segment_address(seg),
+									 size);
 
 	/* Create per-session DSA area. */
 	void	   *dsa_space = shm_toc_allocate(toc, SESSION_DSA_SIZE);
 	dsa_area   *dsa = dsa_create_in_place(dsa_space,
-							  SESSION_DSA_SIZE,
-							  LWTRANCHE_PER_SESSION_DSA,
-							  seg);
+										  SESSION_DSA_SIZE,
+										  LWTRANCHE_PER_SESSION_DSA,
+										  seg);
+
 	shm_toc_insert(toc, SESSION_KEY_DSA, dsa_space);
 
 
 	/* Create session-scoped shared record typmod registry. */
 	void	   *typmod_registry_space = shm_toc_allocate(toc, typmod_registry_size);
+
 	SharedRecordTypmodRegistryInit((SharedRecordTypmodRegistry *)
 								   typmod_registry_space, seg, dsa);
 	shm_toc_insert(toc, SESSION_KEY_RECORD_TYPMOD_REGISTRY,
@@ -151,6 +156,7 @@ AttachSession(dsm_handle handle)
 
 	/* Attach to the DSM segment. */
 	dsm_segment *seg = dsm_attach(handle);
+
 	if (seg == NULL)
 		elog(ERROR, "could not attach to per-session DSM segment");
 	shm_toc    *toc = shm_toc_attach(SESSION_MAGIC, dsm_segment_address(seg));
@@ -165,7 +171,8 @@ AttachSession(dsm_handle handle)
 
 	/* Attach to the shared record typmod registry. */
 	void	   *typmod_registry_space =
-		shm_toc_lookup(toc, SESSION_KEY_RECORD_TYPMOD_REGISTRY, false);
+	shm_toc_lookup(toc, SESSION_KEY_RECORD_TYPMOD_REGISTRY, false);
+
 	SharedRecordTypmodRegistryAttach((SharedRecordTypmodRegistry *)
 									 typmod_registry_space);
 

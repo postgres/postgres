@@ -162,7 +162,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	Relation	rel = table_open(rte->relid, NoLock);
 
 	CmdType		commandType = rt_index == root->resultRelation ?
-		root->commandType : CMD_SELECT;
+	root->commandType : CMD_SELECT;
 
 	/*
 	 * In some cases, we need to apply USING policies (which control the
@@ -699,6 +699,7 @@ add_with_check_options(Relation rel,
 		 */
 
 		WithCheckOption *wco = makeNode(WithCheckOption);
+
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;
@@ -750,6 +751,7 @@ add_with_check_options(Relation rel,
 		 */
 
 		WithCheckOption *wco = makeNode(WithCheckOption);
+
 		wco->kind = kind;
 		wco->relname = pstrdup(RelationGetRelationName(rel));
 		wco->polname = NULL;

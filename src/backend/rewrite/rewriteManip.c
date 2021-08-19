@@ -104,8 +104,9 @@ contain_aggs_of_level_walker(Node *node,
 
 		context->sublevels_up++;
 		bool		result = query_tree_walker((Query *) node,
-								   contain_aggs_of_level_walker,
-								   (void *) context, 0);
+											   contain_aggs_of_level_walker,
+											   (void *) context, 0);
+
 		context->sublevels_up--;
 		return result;
 	}
@@ -177,8 +178,9 @@ locate_agg_of_level_walker(Node *node,
 
 		context->sublevels_up++;
 		bool		result = query_tree_walker((Query *) node,
-								   locate_agg_of_level_walker,
-								   (void *) context, 0);
+											   locate_agg_of_level_walker,
+											   (void *) context, 0);
+
 		context->sublevels_up--;
 		return result;
 	}
@@ -410,7 +412,8 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		context->sublevels_up++;
 		bool		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
-								   (void *) context, 0);
+											   (void *) context, 0);
+
 		context->sublevels_up--;
 		return result;
 	}
@@ -472,6 +475,7 @@ offset_relid_set(Relids relids, int offset)
 	Relids		result = NULL;
 
 	int			rtindex = -1;
+
 	while ((rtindex = bms_next_member(relids, rtindex)) >= 0)
 		result = bms_add_member(result, rtindex + offset);
 	return result;
@@ -593,7 +597,8 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		context->sublevels_up++;
 		bool		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
-								   (void *) context, 0);
+											   (void *) context, 0);
+
 		context->sublevels_up--;
 		return result;
 	}
@@ -756,9 +761,10 @@ IncrementVarSublevelsUp_walker(Node *node,
 
 		context->min_sublevels_up++;
 		bool		result = query_tree_walker((Query *) node,
-								   IncrementVarSublevelsUp_walker,
-								   (void *) context,
-								   QTW_EXAMINE_RTES_BEFORE);
+											   IncrementVarSublevelsUp_walker,
+											   (void *) context,
+											   QTW_EXAMINE_RTES_BEFORE);
+
 		context->min_sublevels_up--;
 		return result;
 	}
@@ -873,7 +879,8 @@ rangeTableEntry_used_walker(Node *node,
 
 		context->sublevels_up++;
 		bool		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								   (void *) context, 0);
+											   (void *) context, 0);
+
 		context->sublevels_up--;
 		return result;
 	}
@@ -941,9 +948,11 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	if (list_length(parsetree->jointree->fromlist) != 1)
 		elog(ERROR, "expected to find SELECT subquery");
 	RangeTblRef *rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
+
 	Assert(IsA(rtr, RangeTblRef));
 	RangeTblEntry *selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
 	Query	   *selectquery = selectrte->subquery;
+
 	if (!(selectquery && IsA(selectquery, Query) &&
 		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "expected to find SELECT subquery");
@@ -1041,6 +1050,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
 
 	/* Need not copy input qual, because AddQual will... */
 	BooleanTest *invqual = makeNode(BooleanTest);
+
 	invqual->arg = (Expr *) qual;
 	invqual->booltesttype = IS_NOT_TRUE;
 	invqual->location = -1;
@@ -1100,9 +1110,9 @@ replace_rte_variables(Node *node, int target_varno, int sublevels_up,
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	Node	   *result = query_or_expression_tree_mutator(node,
-											  replace_rte_variables_mutator,
-											  (void *) &context,
-											  0);
+														  replace_rte_variables_mutator,
+														  (void *) &context,
+														  0);
 
 	if (context.inserted_sublink)
 	{
@@ -1133,6 +1143,7 @@ replace_rte_variables_mutator(Node *node,
 			/* Found a matching variable, make the substitution */
 
 			Node	   *newnode = context->callback(var, context);
+
 			/* Detect if we are adding a sublink to query */
 			if (!context->inserted_sublink)
 				context->inserted_sublink = checkExprHasSubLink(newnode);
@@ -1165,11 +1176,13 @@ replace_rte_variables_mutator(Node *node,
 
 		context->sublevels_up++;
 		bool		save_inserted_sublink = context->inserted_sublink;
+
 		context->inserted_sublink = ((Query *) node)->hasSubLinks;
 		Query	   *newnode = query_tree_mutator((Query *) node,
-									 replace_rte_variables_mutator,
-									 (void *) context,
-									 0);
+												 replace_rte_variables_mutator,
+												 (void *) context,
+												 0);
+
 		newnode->hasSubLinks |= context->inserted_sublink;
 		context->inserted_sublink = save_inserted_sublink;
 		context->sublevels_up--;
@@ -1265,6 +1278,7 @@ map_variable_attnos_mutator(Node *node,
 					 * original type expected by the expression.
 					 */
 					ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
+
 					r->arg = (Expr *) newvar;
 					r->resulttype = var->vartype;
 					r->convertformat = COERCE_IMPLICIT_CAST;
@@ -1310,6 +1324,7 @@ map_variable_attnos_mutator(Node *node,
 			newvar->vartype = context->to_rowtype;
 
 			ConvertRowtypeExpr *newnode = (ConvertRowtypeExpr *) palloc(sizeof(ConvertRowtypeExpr));
+
 			*newnode = *r;		/* initially copy all fields of the CRE */
 			newnode->arg = (Expr *) newvar;
 
@@ -1323,9 +1338,10 @@ map_variable_attnos_mutator(Node *node,
 
 		context->sublevels_up++;
 		Query	   *newnode = query_tree_mutator((Query *) node,
-									 map_variable_attnos_mutator,
-									 (void *) context,
-									 0);
+												 map_variable_attnos_mutator,
+												 (void *) context,
+												 0);
+
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -1414,6 +1430,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
 		RowExpr    *rowexpr = makeNode(RowExpr);
+
 		rowexpr->args = fields;
 		rowexpr->row_typeid = var->vartype;
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;

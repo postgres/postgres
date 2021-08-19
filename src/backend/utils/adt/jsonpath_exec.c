@@ -424,6 +424,7 @@ jsonb_path_query_internal(FunctionCallInfo fcinfo, bool tz)
 		SRF_RETURN_DONE(funcctx);
 
 	JsonbValue *v = lfirst(c);
+
 	funcctx->user_fctx = list_delete_first(found);
 
 	SRF_RETURN_NEXT(funcctx, JsonbPGetDatum(JsonbValueToJsonb(v)));
@@ -642,7 +643,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				key.val.string.val = jspGetString(jsp, &key.val.string.len);
 
 				JsonbValue *v = findJsonbValueFromContainer(jb->val.binary.data,
-												JB_FOBJECT, &key);
+															JB_FOBJECT, &key);
 
 				if (v != NULL)
 				{
@@ -899,6 +900,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 				jspGetArg(jsp, &elem);
 				JsonPathBool st = executeNestedBoolItem(cxt, &elem, jb);
+
 				if (st != jpbTrue)
 					res = jperNotFound;
 				else
@@ -916,6 +918,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				{
 
 					bool		savedIgnoreStructuralErrors = cxt->ignoreStructuralErrors;
+
 					cxt->ignoreStructuralErrors = true;
 					res = executeNextItem(cxt, jsp, &elem,
 										  jb, found, true);
@@ -1031,10 +1034,10 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					bool		have_error = false;
 
 					double		val = float8in_internal_opt_error(tmp,
-													  NULL,
-													  "double precision",
-													  tmp,
-													  &have_error);
+																  NULL,
+																  "double precision",
+																  tmp,
+																  &have_error);
 
 					if (have_error || isinf(val) || isnan(val))
 						RETURN_ERROR(ereport(ERROR,
@@ -1198,6 +1201,7 @@ executeItemOptUnwrapResultNoThrow(JsonPathExecContext *cxt,
 
 	cxt->throwErrors = false;
 	JsonPathExecResult res = executeItemOptUnwrapResult(cxt, jsp, jb, unwrap, found);
+
 	cxt->throwErrors = throwErrors;
 
 	return res;
@@ -1343,8 +1347,10 @@ executeNestedBoolItem(JsonPathExecContext *cxt, JsonPathItem *jsp,
 {
 
 	JsonbValue *prev = cxt->current;
+
 	cxt->current = jb;
 	JsonPathBool res = executeBoolItem(cxt, jsp, jb, false);
+
 	cxt->current = prev;
 
 	return res;
@@ -1397,6 +1403,7 @@ executeAnyItem(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbContainer *jbc,
 					{
 
 						bool		savedIgnoreStructuralErrors = cxt->ignoreStructuralErrors;
+
 						cxt->ignoreStructuralErrors = true;
 						res = executeItemOptUnwrapTarget(cxt, jsp, &v, found, unwrapNext);
 						cxt->ignoreStructuralErrors = savedIgnoreStructuralErrors;
@@ -1460,6 +1467,7 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 
 	/* Left argument is always auto-unwrapped. */
 	JsonPathExecResult res = executeItemOptUnwrapResultNoThrow(cxt, larg, jb, true, &lseq);
+
 	if (jperIsError(res))
 		return jpbUnknown;
 
@@ -1543,6 +1551,7 @@ executeBinaryArithmExpr(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	 * unwrapped.  We extend it to other binary arithmetic expressions too.
 	 */
 	JsonPathExecResult jper = executeItemOptUnwrapResult(cxt, &elem, jb, true, &lseq);
+
 	if (jperIsError(jper))
 		return jper;
 
@@ -1767,7 +1776,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 									 jspOperationName(jsp->type)))));
 
 	text	   *datetime = cstring_to_text_with_len(jb->val.string.val,
-										jb->val.string.len);
+													jb->val.string.len);
 
 	/*
 	 * At some point we might wish to have callers supply the collation to
@@ -1789,7 +1798,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		char	   *template_str = jspGetString(&elem, &template_len);
 
 		text	   *template = cstring_to_text_with_len(template_str,
-											template_len);
+														template_len);
 
 		value = parse_datetime(datetime, template, collid, true,
 							   &typid, &typmod, &tz,
@@ -1945,7 +1954,8 @@ executeKeyValueMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 	/* construct object id from its base object and offset inside that */
 	int64		id = jb->type != jbvBinary ? 0 :
-		(int64) ((char *) jbc - (char *) cxt->baseObject.jbc);
+	(int64) ((char *) jbc - (char *) cxt->baseObject.jbc);
+
 	id += (int64) cxt->baseObject.id * INT64CONST(10000000000);
 
 	idval.type = jbvNumeric;
@@ -1969,6 +1979,7 @@ executeKeyValueMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		Assert(tok == WJB_VALUE);
 
 		JsonbParseState *ps = NULL;
+
 		pushJsonbValue(&ps, WJB_BEGIN_OBJECT, NULL);
 
 		pushJsonbValue(&ps, WJB_KEY, &keystr);
@@ -2082,6 +2093,7 @@ getJsonPathVariable(JsonPathExecContext *cxt, JsonPathItem *variable,
 
 	Assert(variable->type == jpiVariable);
 	char	   *varName = jspGetString(variable, &varNameLength);
+
 	tmp.type = jbvString;
 	tmp.val.string.val = varName;
 	tmp.val.string.len = varNameLength;
@@ -2362,8 +2374,8 @@ getArrayIndex(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 							  errmsg("jsonpath array subscript is not a single numeric value"))));
 
 	Datum		numeric_index = DirectFunctionCall2(numeric_trunc,
-										NumericGetDatum(jbv->val.numeric),
-										Int32GetDatum(0));
+													NumericGetDatum(jbv->val.numeric),
+													Int32GetDatum(0));
 
 	*index = numeric_int4_opt_error(DatumGetNumeric(numeric_index),
 									&have_error);

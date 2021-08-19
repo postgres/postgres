@@ -50,6 +50,7 @@ gistRedoClearFollowRight(XLogReaderState *record, uint8 block_id)
 	 * page image, because the updated NSN is not included in the image.
 	 */
 	XLogRedoAction action = XLogReadBufferForRedo(record, block_id, &buffer);
+
 	if (action == BLK_NEEDS_REDO || action == BLK_RESTORED)
 	{
 		page = BufferGetPage(buffer);
@@ -96,6 +97,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 			data += sizeof(OffsetNumber);
 			IndexTuple	itup = (IndexTuple) data;
 			Size		itupsize = IndexTupleSize(itup);
+
 			if (!PageIndexTupleOverwrite(page, offnum, (Item) itup, itupsize))
 				elog(ERROR, "failed to add item to GiST index page, size %d bytes",
 					 (int) itupsize);
@@ -131,6 +133,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 				data += sz;
 
 				OffsetNumber l = PageAddItem(page, (Item) itup, sz, off, false, false);
+
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to GiST index page, size %d bytes",
 						 (int) sz);
@@ -400,6 +403,7 @@ gist_redo(XLogReaderState *record)
 	 */
 
 	MemoryContext oldCxt = MemoryContextSwitchTo(opCtx);
+
 	switch (info)
 	{
 		case XLOG_GIST_PAGE_UPDATE:
@@ -523,6 +527,7 @@ gistXLogSplit(bool page_is_leaf,
 	XLogRegisterData((char *) &xlrec, sizeof(gistxlogPageSplit));
 
 	int			i = 1;
+
 	for (ptr = dist; ptr; ptr = ptr->next)
 	{
 		XLogRegisterBuffer(i, ptr->buffer, REGBUF_WILL_INIT);

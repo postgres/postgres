@@ -59,9 +59,11 @@ pgwin32_putenv(const char *envval)
 	 * Need a copy of the string so we can modify it.
 	 */
 	char	   *envcpy = strdup(envval);
+
 	if (!envcpy)
 		return -1;
 	char	   *cp = strchr(envcpy, '=');
+
 	if (cp == NULL)
 	{
 		free(envcpy);
@@ -100,6 +102,7 @@ pgwin32_putenv(const char *envval)
 		{
 
 			PUTENVPROC	putenvFunc = (PUTENVPROC) (pg_funcptr_t) GetProcAddress(hmodule, "_putenv");
+
 			if (putenvFunc)
 				putenvFunc(envval);
 			FreeLibrary(hmodule);
@@ -131,12 +134,14 @@ pgwin32_setenv(const char *name, const char *value, int overwrite)
 		return 0;
 
 	char	   *envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
+
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 
 	sprintf(envstr, "%s=%s", name, value);
 
 	int			res = pgwin32_putenv(envstr);
+
 	free(envstr);
 	return res;
 }
@@ -146,11 +151,13 @@ pgwin32_unsetenv(const char *name)
 {
 
 	char	   *envbuf = (char *) malloc(strlen(name) + 2);
+
 	if (!envbuf)
 		return -1;
 
 	sprintf(envbuf, "%s=", name);
 	int			res = pgwin32_putenv(envbuf);
+
 	free(envbuf);
 	return res;
 }

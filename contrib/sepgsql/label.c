@@ -145,6 +145,7 @@ sepgsql_set_client_label(const char *new_label)
 	MemoryContext oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
 	pending_label *plabel = palloc0(sizeof(pending_label));
+
 	plabel->subid = GetCurrentSubTransactionId();
 	if (new_label)
 		plabel->label = pstrdup(new_label);
@@ -324,6 +325,7 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			{
 
 				MemoryContext oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+
 				stack = palloc(sizeof(*stack));
 				stack->old_label = NULL;
 				stack->new_label = sepgsql_avc_trusted_proc(flinfo->fn_oid);
@@ -448,6 +450,7 @@ sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 	object.objectSubId = subId;
 
 	char	   *label = GetSecurityLabel(&object, SEPGSQL_LABEL_TAG);
+
 	if (!label || security_check_context_raw(label))
 	{
 		char	   *unlabeled;
@@ -706,7 +709,8 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 	Relation	rel = table_open(catalogId, AccessShareLock);
 
 	SysScanDesc sscan = systable_beginscan(rel, InvalidOid, false,
-							   NULL, 0, NULL);
+										   NULL, 0, NULL);
+
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
 		Form_pg_database datForm;
@@ -907,6 +911,7 @@ sepgsql_restorecon(PG_FUNCTION_ARGS)
 		seopts.value = TextDatumGetCString(PG_GETARG_DATUM(0));
 	}
 	struct selabel_handle *sehnd = selabel_open(SELABEL_CTX_DB, &seopts, 1);
+
 	if (!sehnd)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),

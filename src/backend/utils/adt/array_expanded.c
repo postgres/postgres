@@ -58,12 +58,12 @@ expand_array(Datum arraydatum, MemoryContext parentcontext,
 	 * constrain aset.c's large-context behavior.
 	 */
 	MemoryContext objcxt = AllocSetContextCreate(parentcontext,
-								   "expanded array",
-								   ALLOCSET_START_SMALL_SIZES);
+												 "expanded array",
+												 ALLOCSET_START_SMALL_SIZES);
 
 	/* Set up expanded array header */
 	ExpandedArrayHeader *eah = (ExpandedArrayHeader *)
-		MemoryContextAlloc(objcxt, sizeof(ExpandedArrayHeader));
+	MemoryContextAlloc(objcxt, sizeof(ExpandedArrayHeader));
 
 	EOH_init_header(&eah->hdr, &EA_methods, objcxt);
 	eah->ea_magic = EA_MAGIC;
@@ -125,6 +125,7 @@ expand_array(Datum arraydatum, MemoryContext parentcontext,
 	 */
 	MemoryContext oldcxt = MemoryContextSwitchTo(objcxt);
 	ArrayType  *array = DatumGetArrayTypePCopy(arraydatum);
+
 	MemoryContextSwitchTo(oldcxt);
 
 	eah->ndims = ARR_NDIM(array);
@@ -248,10 +249,12 @@ EA_get_flat_size(ExpandedObjectHeader *eohptr)
 	 */
 	int			nelems = eah->nelems;
 	int			ndims = eah->ndims;
+
 	Assert(nelems == ArrayGetNItems(ndims, eah->dims));
 	Datum	   *dvalues = eah->dvalues;
 	bool	   *dnulls = eah->dnulls;
 	Size		nbytes = 0;
+
 	for (i = 0; i < nelems; i++)
 	{
 		if (dnulls && dnulls[i])
@@ -419,6 +422,7 @@ deconstruct_expanded_array(ExpandedArrayHeader *eah)
 		int			nelems;
 
 		bool	   *dnulls = NULL;
+
 		deconstruct_array(eah->fvalue,
 						  eah->element_type,
 						  eah->typlen, eah->typbyval, eah->typalign,

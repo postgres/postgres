@@ -62,6 +62,7 @@ psprintf(const char *fmt,...)
 		errno = save_errno;
 		va_start(args, fmt);
 		size_t		newlen = pvsnprintf(result, len, fmt, args);
+
 		va_end(args);
 
 		if (newlen < len)

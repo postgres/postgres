@@ -62,6 +62,7 @@ wchareq(const char *p1, const char *p2)
 		return 0;
 
 	int			p1_len = pg_mblen(p1);
+
 	if (pg_mblen(p2) != p1_len)
 		return 0;
 
@@ -368,7 +369,7 @@ nameiclike(PG_FUNCTION_ARGS)
 	text	   *pat = PG_GETARG_TEXT_PP(1);
 
 	text	   *strtext = DatumGetTextPP(DirectFunctionCall1(name_text,
-												 NameGetDatum(str)));
+															 NameGetDatum(str)));
 	bool		result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) == LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
@@ -381,7 +382,7 @@ nameicnlike(PG_FUNCTION_ARGS)
 	text	   *pat = PG_GETARG_TEXT_PP(1);
 
 	text	   *strtext = DatumGetTextPP(DirectFunctionCall1(name_text,
-												 NameGetDatum(str)));
+															 NameGetDatum(str)));
 	bool		result = (Generic_Text_IC_like(strtext, pat, PG_GET_COLLATION()) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);

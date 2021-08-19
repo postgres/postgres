@@ -257,6 +257,7 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				bool		two_phase = false;
 
 				xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(r);
+
 				ParseCommitRecord(XLogRecGetInfo(buf->record), xlrec, &parsed);
 
 				if (!TransactionIdIsValid(parsed.twophase_xid))
@@ -284,6 +285,7 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				bool		two_phase = false;
 
 				xl_xact_abort *xlrec = (xl_xact_abort *) XLogRecGetData(r);
+
 				ParseAbortRecord(XLogRecGetInfo(buf->record), xlrec, &parsed);
 
 				if (!TransactionIdIsValid(parsed.twophase_xid))
@@ -344,6 +346,7 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 				/* ok, parse it */
 				xl_xact_prepare *xlrec = (xl_xact_prepare *) XLogRecGetData(r);
+
 				ParsePrepareRecord(XLogRecGetInfo(buf->record),
 								   xlrec, &parsed);
 
@@ -458,6 +461,7 @@ DecodeHeap2Op(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			{
 
 				xl_heap_new_cid *xlrec = (xl_heap_new_cid *) XLogRecGetData(buf->record);
+
 				SnapBuildProcessNewCid(builder, xid, buf->origptr, xlrec);
 
 				break;
@@ -648,6 +652,7 @@ DecodeLogicalMsgOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	Snapshot	snapshot = SnapBuildGetOrBuildSnapshot(builder, xid);
+
 	ReorderBufferQueueMessage(ctx->reorder, xid, snapshot, buf->endptr,
 							  message->transactional,
 							  message->message, /* first part of message is
@@ -914,6 +919,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	ReorderBufferChange *change = ReorderBufferGetChange(ctx->reorder);
+
 	if (!(xlrec->flags & XLH_INSERT_IS_SPECULATIVE))
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
 	else
@@ -962,6 +968,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	ReorderBufferChange *change = ReorderBufferGetChange(ctx->reorder);
+
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
 	change->origin_id = XLogRecGetOrigin(r);
 	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
@@ -1073,6 +1080,7 @@ DecodeTruncate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	ReorderBufferChange *change = ReorderBufferGetChange(ctx->reorder);
+
 	change->action = REORDER_BUFFER_CHANGE_TRUNCATE;
 	change->origin_id = XLogRecGetOrigin(r);
 	if (xlrec->flags & XLH_TRUNCATE_CASCADE)
@@ -1125,6 +1133,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	 * always have data even if a full-page write of it is taken.
 	 */
 	char	   *tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
+
 	Assert(tupledata != NULL);
 
 	data = tupledata;
@@ -1132,12 +1141,14 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	{
 
 		ReorderBufferChange *change = ReorderBufferGetChange(ctx->reorder);
+
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
 		change->origin_id = XLogRecGetOrigin(r);
 
 		memcpy(&change->data.tp.relnode, &rnode, sizeof(RelFileNode));
 
 		xl_multi_insert_tuple *xlhdr = (xl_multi_insert_tuple *) SHORTALIGN(data);
+
 		data = ((char *) xlhdr) + SizeOfMultiInsertTuple;
 		int			datalen = xlhdr->datalen;
 
@@ -1208,6 +1219,7 @@ DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	ReorderBufferChange *change = ReorderBufferGetChange(ctx->reorder);
+
 	change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM;
 	change->origin_id = XLogRecGetOrigin(r);
 

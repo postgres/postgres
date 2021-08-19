@@ -128,8 +128,9 @@ AggregateCreate(const char *aggName,
 	 * we will have no way to deduce the actual transtype.
 	 */
 	char	   *detailmsg = check_valid_polymorphic_signature(aggTransType,
-												  aggArgTypes,
-												  numArgs);
+															  aggArgTypes,
+															  numArgs);
+
 	if (detailmsg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -219,8 +220,8 @@ AggregateCreate(const char *aggName,
 		memcpy(fnArgs + 1, aggArgTypes, numArgs * sizeof(Oid));
 	}
 	Oid			transfn = lookup_agg_function(aggtransfnName, nargs_transfn,
-								  fnArgs, variadicArgType,
-								  &rettype);
+											  fnArgs, variadicArgType,
+											  &rettype);
 
 	/*
 	 * Return type of transfn (possibly after refinement by
@@ -240,6 +241,7 @@ AggregateCreate(const char *aggName,
 						format_type_be(aggTransType))));
 
 	HeapTuple	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(transfn));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for function %u", transfn);
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
@@ -836,10 +838,10 @@ lookup_agg_function(List *fnName,
 	 * the function.
 	 */
 	FuncDetailCode fdresult = func_get_detail(fnName, NIL, NIL,
-							   nargs, input_types, false, false, false,
-							   &fnOid, rettype, &retset,
-							   &nvargs, &vatype,
-							   &true_oid_array, NULL);
+											  nargs, input_types, false, false, false,
+											  &fnOid, rettype, &retset,
+											  &nvargs, &vatype,
+											  &true_oid_array, NULL);
 
 	/* only valid case is a normal function not returning a set */
 	if (fdresult != FUNCDETAIL_NORMAL || !OidIsValid(fnOid))
@@ -897,6 +899,7 @@ lookup_agg_function(List *fnName,
 
 	/* Check aggregate creator has permission to call the function */
 	AclResult	aclresult = pg_proc_aclcheck(fnOid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(fnOid));
 

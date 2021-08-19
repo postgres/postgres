@@ -36,8 +36,8 @@ jsonb_exists(PG_FUNCTION_ARGS)
 	kval.val.string.len = VARSIZE_ANY_EXHDR(key);
 
 	JsonbValue *v = findJsonbValueFromContainer(&jb->root,
-									JB_FOBJECT | JB_FARRAY,
-									&kval);
+												JB_FOBJECT | JB_FARRAY,
+												&kval);
 
 	PG_RETURN_BOOL(v != NULL);
 }

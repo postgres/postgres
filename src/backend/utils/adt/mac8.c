@@ -422,6 +422,7 @@ macaddr8_not(PG_FUNCTION_ARGS)
 	macaddr8   *addr = PG_GETARG_MACADDR8_P(0);
 
 	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
+
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -441,6 +442,7 @@ macaddr8_and(PG_FUNCTION_ARGS)
 	macaddr8   *addr2 = PG_GETARG_MACADDR8_P(1);
 
 	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
+
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -460,6 +462,7 @@ macaddr8_or(PG_FUNCTION_ARGS)
 	macaddr8   *addr2 = PG_GETARG_MACADDR8_P(1);
 
 	macaddr8   *result = (macaddr8 *) palloc0(sizeof(macaddr8));
+
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;

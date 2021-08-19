@@ -78,6 +78,7 @@ pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
 	uint32		oldval = ptr->value;
+
 	ptr->value = true;
 	SpinLockRelease((slock_t *) &ptr->sema);
 
@@ -149,6 +150,7 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 
 	/* perform compare/exchange logic */
 	bool		ret = ptr->value == *expected;
+
 	*expected = ptr->value;
 	if (ret)
 		ptr->value = newval;
@@ -165,6 +167,7 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
 	uint32		oldval = ptr->value;
+
 	ptr->value += add_;
 	SpinLockRelease((slock_t *) &ptr->sema);
 	return oldval;
@@ -210,6 +213,7 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 
 	/* perform compare/exchange logic */
 	bool		ret = ptr->value == *expected;
+
 	*expected = ptr->value;
 	if (ret)
 		ptr->value = newval;
@@ -226,6 +230,7 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 
 	SpinLockAcquire((slock_t *) &ptr->sema);
 	uint64		oldval = ptr->value;
+
 	ptr->value += add_;
 	SpinLockRelease((slock_t *) &ptr->sema);
 	return oldval;

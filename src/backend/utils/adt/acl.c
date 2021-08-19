@@ -366,6 +366,7 @@ allocacl(int n)
 		elog(ERROR, "invalid size: %d", n);
 	Size		size = ACL_N_SIZE(n);
 	Acl		   *new_acl = (Acl *) palloc0(size);
+
 	SET_VARSIZE(new_acl, size);
 	new_acl->ndim = 1;
 	new_acl->dataoffset = 0;	/* we never put in any nulls */
@@ -453,13 +454,15 @@ aclmerge(const Acl *left_acl, const Acl *right_acl, Oid ownerId)
 	Acl		   *result_acl = aclcopy(left_acl);
 
 	AclItem    *aip = ACL_DAT(right_acl);
+
 	num = ACL_NUM(right_acl);
 
 	for (i = 0; i < num; i++, aip++)
 	{
 
 		Acl		   *tmp_acl = aclupdate(result_acl, aip, ACL_MODECHG_ADD,
-							ownerId, DROP_RESTRICT);
+										ownerId, DROP_RESTRICT);
+
 		pfree(result_acl);
 		result_acl = tmp_acl;
 	}
@@ -546,6 +549,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	const char *s = PG_GETARG_CSTRING(0);
 
 	AclItem    *aip = (AclItem *) palloc(sizeof(AclItem));
+
 	s = aclparse(s, aip);
 	while (isspace((unsigned char) *s))
 		++s;
@@ -573,11 +577,12 @@ aclitemout(PG_FUNCTION_ARGS)
 	unsigned	i;
 
 	char	   *out = palloc(strlen("=/") +
-				 2 * N_ACL_RIGHTS +
-				 2 * (2 * NAMEDATALEN + 2) +
-				 1);
+							 2 * N_ACL_RIGHTS +
+							 2 * (2 * NAMEDATALEN + 2) +
+							 1);
 
 	char	   *p = out;
+
 	*p = '\0';
 
 	if (aip->ai_grantee != ACL_ID_PUBLIC)
@@ -672,8 +677,9 @@ aclitem_eq(PG_FUNCTION_ARGS)
 	AclItem    *a2 = PG_GETARG_ACLITEM_P(1);
 
 	bool		result = a1->ai_privs == a2->ai_privs &&
-		a1->ai_grantee == a2->ai_grantee &&
-		a1->ai_grantor == a2->ai_grantor;
+	a1->ai_grantee == a2->ai_grantee &&
+	a1->ai_grantor == a2->ai_grantor;
+
 	PG_RETURN_BOOL(result);
 }
 
@@ -788,6 +794,7 @@ acldefault(ObjectType objtype, Oid ownerId)
 	}
 
 	int			nacl = 0;
+
 	if (world_default != ACL_NO_RIGHTS)
 		nacl++;
 	if (owner_default != ACL_NO_RIGHTS)
@@ -1042,6 +1049,7 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 	AclItem    *old_aip = ACL_DAT(old_acl);
 	Acl		   *new_acl = allocacl(num);
 	AclItem    *new_aip = ACL_DAT(new_acl);
+
 	memcpy(new_aip, old_aip, num * sizeof(AclItem));
 	for (dst = 0, dst_aip = new_aip; dst < num; dst++, dst_aip++)
 	{
@@ -1141,12 +1149,14 @@ check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 
 	/* Make a working copy */
 	Acl		   *acl = allocacl(ACL_NUM(old_acl));
+
 	memcpy(acl, old_acl, ACL_SIZE(old_acl));
 
 	/* Zap all grant options of target grantee, plus what depends on 'em */
 cc_restart:
 	num = ACL_NUM(acl);
 	AclItem    *aip = ACL_DAT(acl);
+
 	for (i = 0; i < num; i++)
 	{
 		if (aip[i].ai_grantee == mod_aip->ai_grantee &&
@@ -1155,7 +1165,7 @@ cc_restart:
 
 			/* We'll actually zap ordinary privs too, but no matter */
 			Acl		   *new_acl = aclupdate(acl, &aip[i], ACL_MODECHG_DEL,
-								ownerId, DROP_CASCADE);
+											ownerId, DROP_CASCADE);
 
 			pfree(acl);
 			acl = new_acl;
@@ -1214,8 +1224,9 @@ recursive_revoke(Acl *acl,
 
 	/* The grantee might still have some grant options via another grantor */
 	AclMode		still_has = aclmask(acl, grantee, ownerId,
-						ACL_GRANT_OPTION_FOR(revoke_privs),
-						ACLMASK_ALL);
+									ACL_GRANT_OPTION_FOR(revoke_privs),
+									ACLMASK_ALL);
+
 	revoke_privs &= ~ACL_OPTION_TO_PRIVS(still_has);
 	if (revoke_privs == ACL_NO_RIGHTS)
 		return acl;
@@ -1223,6 +1234,7 @@ recursive_revoke(Acl *acl,
 restart:
 	num = ACL_NUM(acl);
 	AclItem    *aip = ACL_DAT(acl);
+
 	for (i = 0; i < num; i++)
 	{
 		if (aip[i].ai_grantor == grantee
@@ -1243,7 +1255,7 @@ restart:
 									   revoke_privs);
 
 			Acl		   *new_acl = aclupdate(acl, &mod_acl, ACL_MODECHG_DEL,
-								ownerId, behavior);
+											ownerId, behavior);
 
 			pfree(acl);
 			acl = new_acl;
@@ -1337,6 +1349,7 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	 * test.
 	 */
 	AclMode		remaining = mask & ~result;
+
 	for (i = 0; i < num; i++)
 	{
 		AclItem    *aidata = &aidat[i];
@@ -1507,6 +1520,7 @@ aclcontains(PG_FUNCTION_ARGS)
 	check_acl(acl);
 	num = ACL_NUM(acl);
 	AclItem    *aidat = ACL_DAT(acl);
+
 	for (i = 0; i < num; ++i)
 	{
 		if (aip->ai_grantee == aidat[i].ai_grantee &&
@@ -1611,6 +1625,7 @@ convert_any_priv_string(text *priv_type_text,
 		while (*chunk && isspace((unsigned char) *chunk))
 			chunk++;
 		int			chunk_len = strlen(chunk);
+
 		while (chunk_len > 0 && isspace((unsigned char) chunk[chunk_len - 1]))
 			chunk_len--;
 		chunk[chunk_len] = '\0';
@@ -1705,6 +1720,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		 * entry)
 		 */
 		TupleDesc	tupdesc = CreateTemplateTupleDesc(4);
+
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "grantor",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "grantee",
@@ -1982,6 +1998,7 @@ has_sequence_privilege_name_name(PG_FUNCTION_ARGS)
 	Oid			roleid = get_role_oid_or_public(NameStr(*rolename));
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	Oid			sequenceoid = convert_table_name(sequencename);
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2008,6 +2025,7 @@ has_sequence_privilege_name(PG_FUNCTION_ARGS)
 	Oid			roleid = GetUserId();
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	Oid			sequenceoid = convert_table_name(sequencename);
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2034,6 +2052,7 @@ has_sequence_privilege_name_id(PG_FUNCTION_ARGS)
 	Oid			roleid = get_role_oid_or_public(NameStr(*username));
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	char		relkind = get_rel_relkind(sequenceoid);
+
 	if (relkind == '\0')
 		PG_RETURN_NULL();
 	else if (relkind != RELKIND_SEQUENCE)
@@ -2062,6 +2081,7 @@ has_sequence_privilege_id(PG_FUNCTION_ARGS)
 	Oid			roleid = GetUserId();
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	char		relkind = get_rel_relkind(sequenceoid);
+
 	if (relkind == '\0')
 		PG_RETURN_NULL();
 	else if (relkind != RELKIND_SEQUENCE)
@@ -2089,6 +2109,7 @@ has_sequence_privilege_id_name(PG_FUNCTION_ARGS)
 
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	Oid			sequenceoid = convert_table_name(sequencename);
+
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2114,6 +2135,7 @@ has_sequence_privilege_id_id(PG_FUNCTION_ARGS)
 
 	AclMode		mode = convert_sequence_priv_string(priv_type_text);
 	char		relkind = get_rel_relkind(sequenceoid);
+
 	if (relkind == '\0')
 		PG_RETURN_NULL();
 	else if (relkind != RELKIND_SEQUENCE)
@@ -2177,6 +2199,7 @@ has_any_column_privilege_name_name(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2202,6 +2225,7 @@ has_any_column_privilege_name(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2229,6 +2253,7 @@ has_any_column_privilege_name_id(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2256,6 +2281,7 @@ has_any_column_privilege_id(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2280,6 +2306,7 @@ has_any_column_privilege_id_name(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2306,6 +2333,7 @@ has_any_column_privilege_id_id(PG_FUNCTION_ARGS)
 
 	/* First check at table level, then examine each column if needed */
 	AclResult	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
+
 	if (aclresult != ACLCHECK_OK)
 		aclresult = pg_attribute_aclcheck_all(tableoid, roleid, mode,
 											  ACLMASK_ANY);
@@ -2355,7 +2383,8 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 	 * table-level privilege.
 	 */
 	AclResult	aclresult = pg_attribute_aclcheck_ext(tableoid, attnum, roleid,
-										  mode, &is_missing);
+													  mode, &is_missing);
+
 	if (aclresult == ACLCHECK_OK)
 		return 1;
 	else if (is_missing)
@@ -2390,6 +2419,7 @@ has_column_privilege_name_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2413,6 +2443,7 @@ has_column_privilege_name_name_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2436,6 +2467,7 @@ has_column_privilege_name_id_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2458,6 +2490,7 @@ has_column_privilege_name_id_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2481,6 +2514,7 @@ has_column_privilege_id_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2503,6 +2537,7 @@ has_column_privilege_id_name_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2525,6 +2560,7 @@ has_column_privilege_id_id_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2546,6 +2582,7 @@ has_column_privilege_id_id_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2570,6 +2607,7 @@ has_column_privilege_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2593,6 +2631,7 @@ has_column_privilege_name_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2616,6 +2655,7 @@ has_column_privilege_id_name(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2638,6 +2678,7 @@ has_column_privilege_id_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode = convert_column_priv_string(priv_type_text);
 
 	int			privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
+
 	if (privresult < 0)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(privresult);
@@ -2665,12 +2706,14 @@ convert_column_name(Oid tableoid, text *column)
 	 * nonexistent columns.
 	 */
 	HeapTuple	attTuple = SearchSysCache2(ATTNAME,
-							   ObjectIdGetDatum(tableoid),
-							   CStringGetDatum(colname));
+										   ObjectIdGetDatum(tableoid),
+										   CStringGetDatum(colname));
+
 	if (HeapTupleIsValid(attTuple))
 	{
 
 		Form_pg_attribute attributeForm = (Form_pg_attribute) GETSTRUCT(attTuple);
+
 		/* We want to return NULL for dropped columns */
 		if (attributeForm->attisdropped)
 			attnum = InvalidAttrNumber;
@@ -3230,7 +3273,7 @@ convert_function_name(text *functionname)
 	char	   *funcname = text_to_cstring(functionname);
 
 	Oid			oid = DatumGetObjectId(DirectFunctionCall1(regprocedurein,
-											   CStringGetDatum(funcname)));
+														   CStringGetDatum(funcname)));
 
 	if (!OidIsValid(oid))
 		ereport(ERROR,
@@ -4099,7 +4142,7 @@ convert_type_name(text *typename)
 	char	   *typname = text_to_cstring(typename);
 
 	Oid			oid = DatumGetObjectId(DirectFunctionCall1(regtypein,
-											   CStringGetDatum(typname)));
+														   CStringGetDatum(typname)));
 
 	if (!OidIsValid(oid))
 		ereport(ERROR,
@@ -4374,6 +4417,7 @@ has_rolinherit(Oid roleid)
 	bool		result = false;
 
 	HeapTuple	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+
 	if (HeapTupleIsValid(utup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolinherit;
@@ -4423,6 +4467,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	{
 
 		HeapTuple	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+
 		if (!HeapTupleIsValid(dbtup))
 			elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
 		dba = ((Form_pg_database) GETSTRUCT(dbtup))->datdba;
@@ -4452,7 +4497,8 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 
 		/* Find roles that memberid is directly a member of */
 		CatCList   *memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
-									  ObjectIdGetDatum(memberid));
+												  ObjectIdGetDatum(memberid));
+
 		for (i = 0; i < memlist->n_members; i++)
 		{
 			HeapTuple	tup = &memlist->members[i]->tuple;
@@ -4487,6 +4533,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	 */
 	MemoryContext oldctx = MemoryContextSwitchTo(TopMemoryContext);
 	List	   *new_cached_roles = list_copy(roles_list);
+
 	MemoryContextSwitchTo(oldctx);
 	list_free(roles_list);
 
@@ -4713,7 +4760,7 @@ select_best_grantor(Oid roleId, AclMode privileges,
 	 * doesn't query any role memberships.
 	 */
 	List	   *roles_list = roles_is_member_of(roleId, ROLERECURSE_PRIVS,
-									InvalidOid, NULL);
+												InvalidOid, NULL);
 
 	/* initialize candidate result as default */
 	*grantorId = roleId;
@@ -4725,7 +4772,8 @@ select_best_grantor(Oid roleId, AclMode privileges,
 		Oid			otherrole = lfirst_oid(l);
 
 		AclMode		otherprivs = aclmask_direct(acl, otherrole, ownerId,
-									needed_goptions, ACLMASK_ALL);
+												needed_goptions, ACLMASK_ALL);
+
 		if (otherprivs == needed_goptions)
 		{
 			/* Found a suitable grantor */
@@ -4763,7 +4811,8 @@ get_role_oid(const char *rolname, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid1(AUTHNAME, Anum_pg_authid_oid,
-						  CStringGetDatum(rolname));
+									  CStringGetDatum(rolname));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4883,6 +4932,7 @@ get_rolespec_name(const RoleSpec *role)
 	HeapTuple	tp = get_rolespec_tuple(role);
 	Form_pg_authid authForm = (Form_pg_authid) GETSTRUCT(tp);
 	char	   *rolename = pstrdup(NameStr(authForm->rolname));
+
 	ReleaseSysCache(tp);
 
 	return rolename;

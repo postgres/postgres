@@ -56,8 +56,9 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 	 * conditions).
 	 */
 	HeapTuple	tuple = SearchSysCache2(CASTSOURCETARGET,
-							ObjectIdGetDatum(sourcetypeid),
-							ObjectIdGetDatum(targettypeid));
+										ObjectIdGetDatum(sourcetypeid),
+										ObjectIdGetDatum(targettypeid));
+
 	if (HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -67,6 +68,7 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 
 	/* ready to go */
 	Oid			castid = GetNewOidWithIndex(relation, CastOidIndexId, Anum_pg_cast_oid);
+
 	values[Anum_pg_cast_oid - 1] = ObjectIdGetDatum(castid);
 	values[Anum_pg_cast_castsource - 1] = ObjectIdGetDatum(sourcetypeid);
 	values[Anum_pg_cast_casttarget - 1] = ObjectIdGetDatum(targettypeid);

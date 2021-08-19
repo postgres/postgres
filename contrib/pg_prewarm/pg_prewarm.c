@@ -65,12 +65,14 @@ pg_prewarm(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("relation cannot be null")));
 	Oid			relOid = PG_GETARG_OID(0);
+
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("prewarm type cannot be null")));
 	text	   *type = PG_GETARG_TEXT_PP(1);
 	char	   *ttype = text_to_cstring(type);
+
 	if (strcmp(ttype, "prefetch") == 0)
 		ptype = PREWARM_PREFETCH;
 	else if (strcmp(ttype, "read") == 0)
@@ -96,6 +98,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 	/* Open relation and check privileges. */
 	Relation	rel = relation_open(relOid, AccessShareLock);
 	AclResult	aclresult = pg_class_aclcheck(relOid, GetUserId(), ACL_SELECT);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind), get_rel_name(relOid));
 
@@ -108,6 +111,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 
 	/* Validate block numbers, or handle nulls. */
 	int64		nblocks = RelationGetNumberOfBlocksInFork(rel, forkNumber);
+
 	if (PG_ARGISNULL(3))
 		first_block = 0;
 	else
@@ -182,6 +186,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 
 			CHECK_FOR_INTERRUPTS();
 			Buffer		buf = ReadBufferExtended(rel, forkNumber, block, RBM_NORMAL, NULL);
+
 			ReleaseBuffer(buf);
 			++blocks_done;
 		}

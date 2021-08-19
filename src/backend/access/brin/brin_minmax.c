@@ -43,7 +43,8 @@ brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 	 */
 
 	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
-					 sizeof(MinmaxOpaque));
+								  sizeof(MinmaxOpaque));
+
 	result->oi_nstored = 2;
 	result->oi_regular_nulls = true;
 	result->oi_opaque = (MinmaxOpaque *)
@@ -94,8 +95,9 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	 * existing minimum.
 	 */
 	FmgrInfo   *cmpFn = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
-										 BTLessStrategyNumber);
+													 BTLessStrategyNumber);
 	Datum		compar = FunctionCall2Coll(cmpFn, colloid, newval, column->bv_values[0]);
+
 	if (DatumGetBool(compar))
 	{
 		if (!attr->attbyval)
@@ -148,8 +150,10 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 	Assert(!column->bv_allnulls);
 
 	AttrNumber	attno = key->sk_attno;
+
 	subtype = key->sk_subtype;
 	Datum		value = key->sk_argument;
+
 	switch (key->sk_strategy)
 	{
 		case BTLessStrategyNumber:
@@ -215,9 +219,10 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 
 	/* Adjust minimum, if B's min is less than A's min */
 	FmgrInfo   *finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
-										 BTLessStrategyNumber);
+													 BTLessStrategyNumber);
 	bool		needsadj = FunctionCall2Coll(finfo, colloid, col_b->bv_values[0],
-								 col_a->bv_values[0]);
+											 col_a->bv_values[0]);
+
 	if (needsadj)
 	{
 		if (!attr->attbyval)
@@ -281,9 +286,9 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
 		Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 		HeapTuple	tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
-								ObjectIdGetDatum(attr->atttypid),
-								ObjectIdGetDatum(subtype),
-								Int16GetDatum(strategynum));
+											ObjectIdGetDatum(attr->atttypid),
+											ObjectIdGetDatum(subtype),
+											Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",

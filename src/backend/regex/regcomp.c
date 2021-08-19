@@ -610,6 +610,7 @@ makesearch(struct vars *v,
 
 	/* first, make a list of the states reachable from pre and elsewhere */
 	struct state *slist = NULL;
+
 	for (a = pre->outs; a != NULL; a = a->outchain)
 	{
 		s = a->to;
@@ -681,11 +682,13 @@ parse(struct vars *v,
 
 		left = newstate(v->nfa);
 		struct state *right = newstate(v->nfa);
+
 		NOERRN();
 		EMPTYARC(init, left);
 		EMPTYARC(right, final);
 		NOERRN();
 		struct subre *branch = parsebranch(v, stopper, type, left, right, 0);
+
 		NOERRN();
 		if (lastbranch)
 			lastbranch->sibling = branch;
@@ -740,6 +743,7 @@ parsebranch(struct vars *v,
 	lp = left;
 	seencontent = 0;
 	struct subre *t = subre(v, '=', 0, left, right);	/* op '=' is tentative */
+
 	NOERRN();
 	while (!SEE('|') && !SEE(stopper) && !SEE(EOS))
 	{
@@ -808,6 +812,7 @@ parseqatom(struct vars *v,
 
 	/* an atom or constraint... */
 	int			atomtype = v->nexttype;
+
 	switch (atomtype)
 	{
 			/* first, constraints, which end by returning */
@@ -1094,6 +1099,7 @@ parseqatom(struct vars *v,
 	/* if not a messy case, avoid hard part */
 	assert(!MESSY(top->flags));
 	int			f = top->flags | qprefer | ((atom != NULL) ? atom->flags : 0);
+
 	if (atomtype != '(' && atomtype != BACKREF && !MESSY(UP(f)))
 	{
 		if (!(m == 1 && n == 1))
@@ -1430,6 +1436,7 @@ charclass(struct vars *v,
 	/* obtain possibly-cached cvec for char class */
 	NOTE(REG_ULOCALE);
 	struct cvec *cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+
 	NOERR();
 
 	/* build the arcs; this may cause color splitting */
@@ -1452,11 +1459,13 @@ charclasscomplement(struct vars *v,
 
 	/* make dummy state to hang temporary arcs on */
 	struct state *cstate = newstate(v->nfa);
+
 	NOERR();
 
 	/* obtain possibly-cached cvec for char class */
 	NOTE(REG_ULOCALE);
 	struct cvec *cv = cclasscvec(v, cls, (v->cflags & REG_ICASE));
+
 	NOERR();
 
 	/* build arcs for char class; this may cause color splitting */
@@ -1624,6 +1633,7 @@ bracket(struct vars *v,
 
 	/* now handle any complemented elements */
 	bool		any_cclassc = false;
+
 	for (i = 0; i < NUM_CCLASSES; i++)
 	{
 		if (have_cclassc[i])
@@ -1816,6 +1826,7 @@ scanplain(struct vars *v)
 	NEXT();
 
 	const chr  *endp = v->now;
+
 	while (SEE(PLAIN))
 	{
 		endp = v->now;
@@ -1884,6 +1895,7 @@ optimizebracket(struct vars *v,
 
 	/* Scan colors, clear transient marks, check for unmarked live colors */
 	bool		israinbow = true;
+
 	for (cd = v->cm->cd; cd < end; cd++)
 	{
 		if (cd->flags & COLMARK)
@@ -1922,11 +1934,13 @@ wordchrs(struct vars *v)
 
 	/* make dummy state to hang the cache arcs on */
 	struct state *cstate = newstate(v->nfa);
+
 	NOERR();
 
 	/* obtain possibly-cached cvec for \w characters */
 	NOTE(REG_ULOCALE);
 	struct cvec *cv = cclasscvec(v, CC_WORD, (v->cflags & REG_ICASE));
+
 	NOERR();
 
 	/* build the arcs; this may cause color splitting */
@@ -1961,6 +1975,7 @@ processlacon(struct vars *v,
 	 * of arcs); this would typically be a simple chr or a bracket expression.
 	 */
 	struct state *s1 = single_color_transition(begin, end);
+
 	switch (latype)
 	{
 		case LATYPE_AHEAD_POS:
@@ -2005,6 +2020,7 @@ processlacon(struct vars *v,
 
 	/* General case: we need a LACON subre and arc */
 	int			n = newlacon(v, begin, end, latype);
+
 	newarc(v->nfa, LACON, n, lp, rp);
 }
 
@@ -2189,6 +2205,7 @@ numst(struct subre *t,
 	assert(t != NULL);
 
 	int			i = start;
+
 	t->id = i++;
 	for (t2 = t->child; t2 != NULL; t2 = t2->sibling)
 		i = numst(t2, i);
@@ -2333,6 +2350,7 @@ newlacon(struct vars *v,
 	v->lacons = newlacons;
 	v->nlacons = n + 1;
 	struct subre *sub = &v->lacons[n];
+
 	sub->begin = begin;
 	sub->end = end;
 	sub->latype = latype;
@@ -2369,6 +2387,7 @@ rfree(regex_t *re)
 
 	re->re_magic = 0;			/* invalidate RE */
 	struct guts *g = (struct guts *) re->re_guts;
+
 	re->re_guts = NULL;
 	re->re_fns = NULL;
 	if (g != NULL)
@@ -2437,6 +2456,7 @@ dump(regex_t *re,
 		return;
 	}
 	struct guts *g = (struct guts *) re->re_guts;
+
 	if (g->magic != GUTSMAGIC)
 		fprintf(f, "bad guts magic number (0x%x not 0x%x)\n", g->magic,
 				GUTSMAGIC);

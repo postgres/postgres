@@ -95,6 +95,7 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 			errno = save_errno;
 			va_start(ap, fmt);
 			int			needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+
 			va_end(ap);
 			if (needed == 0)
 				break;
@@ -189,6 +190,7 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 
 	PyObject   *e_type_o = PyObject_GetAttrString(e, "__name__");
 	PyObject   *e_module_o = PyObject_GetAttrString(e, "__module__");
+
 	if (e_type_o)
 		e_type_s = PyString_AsString(e_type_o);
 	if (e_type_s)
@@ -359,6 +361,7 @@ PLy_get_sqlerrcode(PyObject *exc, int *sqlerrcode)
 		return;
 
 	char	   *buffer = PyString_AsString(sqlstate);
+
 	if (strlen(buffer) == 5 &&
 		strspn(buffer, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") == 5)
 	{
@@ -506,6 +509,7 @@ PLy_exception_set_with_details(PyObject *excclass, ErrorData *edata)
 	PyObject   *error = NULL;
 
 	PyObject   *args = Py_BuildValue("(s)", edata->message);
+
 	if (!args)
 		goto failure;
 
@@ -562,6 +566,7 @@ get_string_attr(PyObject *obj, char *attrname, char **str)
 {
 
 	PyObject   *val = PyObject_GetAttrString(obj, attrname);
+
 	if (val != NULL && val != Py_None)
 	{
 		*str = pstrdup(PyString_AsString(val));
@@ -590,6 +595,7 @@ set_string_attr(PyObject *obj, char *attrname, char *str)
 	}
 
 	int			result = PyObject_SetAttrString(obj, attrname, val);
+
 	Py_DECREF(val);
 
 	return result != -1;

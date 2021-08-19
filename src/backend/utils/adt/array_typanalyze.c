@@ -110,6 +110,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 	 * Check attribute data type is a varlena array (or a domain over one).
 	 */
 	Oid			element_typeid = get_base_element_type(stats->attrtypid);
+
 	if (!OidIsValid(element_typeid))
 		elog(ERROR, "array_typanalyze was invoked for non-array type %u",
 			 stats->attrtypid);
@@ -119,9 +120,9 @@ array_typanalyze(PG_FUNCTION_ARGS)
 	 * something, return leaving the state from std_typanalyze() in place.
 	 */
 	TypeCacheEntry *typentry = lookup_type_cache(element_typeid,
-								 TYPECACHE_EQ_OPR |
-								 TYPECACHE_CMP_PROC_FINFO |
-								 TYPECACHE_HASH_PROC_FINFO);
+												 TYPECACHE_EQ_OPR |
+												 TYPECACHE_CMP_PROC_FINFO |
+												 TYPECACHE_HASH_PROC_FINFO);
 
 	if (!OidIsValid(typentry->eq_opr) ||
 		!OidIsValid(typentry->cmp_proc_finfo.fn_oid) ||
@@ -130,6 +131,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 
 	/* Store our findings for use by compute_array_stats() */
 	ArrayAnalyzeExtraData *extra_data = (ArrayAnalyzeExtraData *) palloc(sizeof(ArrayAnalyzeExtraData));
+
 	extra_data->type_id = typentry->type_id;
 	extra_data->eq_opr = typentry->eq_opr;
 	extra_data->coll_id = stats->attrcollid;	/* collation we should use */
@@ -272,18 +274,18 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	elem_hash_ctl.match = element_match;
 	elem_hash_ctl.hcxt = CurrentMemoryContext;
 	HTAB	   *elements_tab = hash_create("Analyzed elements table",
-							   num_mcelem,
-							   &elem_hash_ctl,
-							   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+										   num_mcelem,
+										   &elem_hash_ctl,
+										   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* hashtable for array distinct elements counts */
 	count_hash_ctl.keysize = sizeof(int);
 	count_hash_ctl.entrysize = sizeof(DECountItem);
 	count_hash_ctl.hcxt = CurrentMemoryContext;
 	HTAB	   *count_tab = hash_create("Array distinct element count table",
-							64,
-							&count_hash_ctl,
-							HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										64,
+										&count_hash_ctl,
+										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	int			b_current = 1;
@@ -303,6 +305,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		vacuum_delay_point();
 
 		Datum		value = fetchfunc(stats, array_no, &isnull);
+
 		if (isnull)
 		{
 			/* array is null, just count that */
@@ -334,6 +337,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		 * tracking hashtable.
 		 */
 		bool		null_present = false;
+
 		for (j = 0; j < num_elems; j++)
 		{
 			bool		found;
@@ -347,6 +351,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 			/* Lookup current element in hashtable, adding it if new */
 			Datum		elem_value = elem_values[j];
+
 			item = (TrackItem *) hash_search(elements_tab,
 											 (const void *) &elem_value,
 											 HASH_ENTER, &found);
@@ -402,6 +407,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 		/* Update frequency of the particular array distinct element count. */
 		int			distinct_count = (int) (element_no - prev_element_no);
+
 		count_item = (DECountItem *) hash_search(count_tab, &distinct_count,
 												 HASH_ENTER,
 												 &count_item_found);
@@ -420,6 +426,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 	/* Skip pg_statistic slots occupied by standard statistics */
 	int			slot_idx = 0;
+
 	while (slot_idx < STATISTIC_NUM_SLOTS && stats->stakind[slot_idx] != 0)
 		slot_idx++;
 	if (slot_idx > STATISTIC_NUM_SLOTS - 2)
@@ -454,6 +461,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 		hash_seq_init(&scan_status, elements_tab);
 		int			track_len = 0;
+
 		minfreq = element_no;
 		maxfreq = 0;
 		while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)
@@ -551,6 +559,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 		/* Generate DECHIST slot entry */
 		int			count_items_count = hash_get_num_entries(count_tab);
+
 		if (count_items_count > 0)
 		{
 			int			num_hist = stats->attr->attstattarget;
@@ -563,9 +572,11 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * increasing count order.
 			 */
 			DECountItem **sorted_count_items = (DECountItem **)
-				palloc(sizeof(DECountItem *) * count_items_count);
+			palloc(sizeof(DECountItem *) * count_items_count);
+
 			hash_seq_init(&scan_status, count_tab);
 			int			j = 0;
+
 			while ((count_item = (DECountItem *) hash_seq_search(&scan_status)) != NULL)
 			{
 				sorted_count_items[j++] = count_item;
@@ -578,8 +589,9 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * average count.  This array must be stored in anl_context.
 			 */
 			float4	   *hist = (float4 *)
-				MemoryContextAlloc(stats->anl_context,
-								   sizeof(float4) * (num_hist + 1));
+			MemoryContextAlloc(stats->anl_context,
+							   sizeof(float4) * (num_hist + 1));
+
 			hist[num_hist] = (double) element_no / (double) nonnull_cnt;
 
 			/*----------
@@ -614,9 +626,11 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 *----------
 			 */
 			int			delta = analyzed_rows - 1;
+
 			j = 0;				/* current index in sorted_count_items */
 			/* Initialize frac for sorted_count_items[0]; y is initially 0 */
 			int64		frac = (int64) sorted_count_items[0]->frequency * (num_hist - 1);
+
 			for (i = 0; i < num_hist; i++)
 			{
 				while (frac <= 0)
@@ -684,8 +698,9 @@ element_hash(const void *key, Size keysize)
 	Datum		d = *((const Datum *) key);
 
 	Datum		h = FunctionCall1Coll(array_extra_data->hash,
-						  array_extra_data->coll_id,
-						  d);
+									  array_extra_data->coll_id,
+									  d);
+
 	return DatumGetUInt32(h);
 }
 
@@ -714,8 +729,9 @@ element_compare(const void *key1, const void *key2)
 	Datum		d2 = *((const Datum *) key2);
 
 	Datum		c = FunctionCall2Coll(array_extra_data->cmp,
-						  array_extra_data->coll_id,
-						  d1, d2);
+									  array_extra_data->coll_id,
+									  d1, d2);
+
 	return DatumGetInt32(c);
 }
 

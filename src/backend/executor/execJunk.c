@@ -85,12 +85,14 @@ ExecInitJunkFilter(List *targetList, TupleTableSlot *slot)
 	 * not use that feature in this routine.)
 	 */
 	int			cleanLength = cleanTupType->natts;
+
 	if (cleanLength > 0)
 	{
 		ListCell   *t;
 
 		cleanMap = (AttrNumber *) palloc(cleanLength * sizeof(AttrNumber));
 		AttrNumber	cleanResno = 0;
+
 		foreach(t, targetList)
 		{
 			TargetEntry *tle = lfirst(t);
@@ -157,6 +159,7 @@ ExecInitJunkFilterConversion(List *targetList,
 	 * that a NULL is needed in the output tuple.
 	 */
 	int			cleanLength = cleanTupType->natts;
+
 	if (cleanLength > 0)
 	{
 		cleanMap = (AttrNumber *) palloc0(cleanLength * sizeof(AttrNumber));

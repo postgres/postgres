@@ -88,6 +88,7 @@ restart:
 
 		/* We verify that exactly one reference gets removed from joinlist */
 		int			nremoved = 0;
+
 		joinlist = remove_rel_from_joinlist(joinlist, innerrelid, &nremoved);
 		if (nremoved != 1)
 			elog(ERROR, "failed to find relation %d in joinlist", innerrelid);
@@ -408,6 +409,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * list while we're scanning it.
 	 */
 	List	   *joininfos = list_copy(rel->joininfo);
+
 	foreach(l, joininfos)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
@@ -469,7 +471,8 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 			/* Recurse to handle subproblem */
 
 			List	   *sublist = remove_rel_from_joinlist((List *) jlnode,
-											   relid, nremoved);
+														   relid, nremoved);
+
 			/* Avoid including empty sub-lists in the result */
 			if (sublist)
 				result = lappend(result, sublist);
@@ -543,11 +546,11 @@ reduce_unique_semijoins(PlannerInfo *root)
 		 * can also consider EC-derived join clauses.
 		 */
 		List	   *restrictlist =
-			list_concat(generate_join_implied_equalities(root,
-														 joinrelids,
-														 sjinfo->min_lefthand,
-														 innerrel),
-						innerrel->joininfo);
+		list_concat(generate_join_implied_equalities(root,
+													 joinrelids,
+													 sjinfo->min_lefthand,
+													 innerrel),
+					innerrel->joininfo);
 
 		/* Test whether the innerrel is unique for those clauses. */
 		if (!innerrel_is_unique(root,
@@ -868,6 +871,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 			/* We're good if all the nonjunk output columns are in colnos */
 			ListCell   *lg = list_head(topop->groupClauses);
+
 			foreach(l, query->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -878,6 +882,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 				/* non-resjunk columns should have grouping clauses */
 				Assert(lg != NULL);
 				SortGroupClause *sgc = (SortGroupClause *) lfirst(lg);
+
 				lg = lnext(topop->groupClauses, lg);
 
 				opid = distinct_col_search(tle->resno, colnos, opids);

@@ -108,6 +108,7 @@ uniqueentry(WordEntryIN *a, int l, char *buf, int *outbuflen)
 				  (void *) buf);
 
 	int			buflen = 0;
+
 	res = a;
 	ptr = a + 1;
 	while (ptr - a < l)
@@ -264,11 +265,13 @@ tsvectorin(PG_FUNCTION_ARGS)
 
 	int			totallen = CALCDATASIZE(len, buflen);
 	TSVector	in = (TSVector) palloc0(totallen);
+
 	SET_VARSIZE(in, totallen);
 	in->size = len;
 	WordEntry  *inarr = ARRPTR(in);
 	char	   *strbuf = STRPTR(in);
 	int			stroff = 0;
+
 	for (i = 0; i < len; i++)
 	{
 		memcpy(strbuf + stroff, &tmpbuf[arr[i].entry.pos], arr[i].entry.len);
@@ -345,6 +348,7 @@ tsvectorout(PG_FUNCTION_ARGS)
 
 			*curout++ = ':';
 			WordEntryPos *wptr = POSDATAPTR(out, ptr);
+
 			while (pp)
 			{
 				curout += sprintf(curout, "%d", WEP_GETPOS(*wptr));
@@ -413,6 +417,7 @@ tsvectorsend(PG_FUNCTION_ARGS)
 		pq_sendbyte(&buf, '\0');
 
 		uint16		npos = POSDATALEN(vec, weptr);
+
 		pq_sendint16(&buf, npos);
 
 		if (npos > 0)
@@ -440,6 +445,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	bool		needSort = false;
 
 	int32		nentries = pq_getmsgint(buf, sizeof(int32));
+
 	if (nentries < 0 || nentries > (MaxAllocSize / sizeof(WordEntry)))
 		elog(ERROR, "invalid size of tsvector");
 
@@ -447,6 +453,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 	len = hdrlen * 2;			/* times two to make room for lexemes */
 	TSVector	vec = (TSVector) palloc0(len);
+
 	vec->size = nentries;
 
 	datalen = 0;
@@ -459,6 +466,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		/* sanity checks */
 
 		size_t		lex_len = strlen(lexeme);
+
 		if (lex_len > MAXSTRLEN)
 			elog(ERROR, "invalid tsvector: lexeme too long");
 
@@ -512,6 +520,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 			memcpy(STRPTR(vec) + datalen, &npos, sizeof(uint16));
 
 			WordEntryPos *wepptr = POSDATAPTR(vec, &vec->entries[i]);
+
 			for (j = 0; j < npos; j++)
 			{
 				wepptr[j] = (WordEntryPos) pq_getmsgint(buf, sizeof(WordEntryPos));

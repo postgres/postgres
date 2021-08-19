@@ -147,6 +147,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 
 	SetCancelConn(NULL);
 	int			status = lo_export(pset.db, atooid(loid_arg), filename_arg);
+
 	ResetCancelConn();
 
 	/* of course this status is documented nowhere :( */
@@ -182,6 +183,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 
 	SetCancelConn(NULL);
 	Oid			loid = lo_import(pset.db, filename_arg);
+
 	ResetCancelConn();
 
 	if (loid == InvalidOid)
@@ -196,10 +198,12 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		size_t		slen = strlen(comment_arg);
 
 		char	   *cmdbuf = pg_malloc_extended(slen * 2 + 256, MCXT_ALLOC_NO_OOM);
+
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);
 		char	   *bufptr = cmdbuf + strlen(cmdbuf);
+
 		bufptr += PQescapeStringConn(pset.db, bufptr, comment_arg, slen, NULL);
 		strcpy(bufptr, "'");
 
@@ -241,6 +245,7 @@ do_lo_unlink(const char *loid_arg)
 
 	SetCancelConn(NULL);
 	int			status = lo_unlink(pset.db, loid);
+
 	ResetCancelConn();
 
 	if (status == -1)
@@ -294,6 +299,7 @@ do_lo_list(void)
 	}
 
 	PGresult   *res = PSQLexec(buf);
+
 	if (!res)
 		return false;
 

@@ -117,6 +117,7 @@ oidin(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 
 	Oid			result = oidin_subr(s, NULL);
+
 	PG_RETURN_OID(result);
 }
 
@@ -232,6 +233,7 @@ oidvectorout(PG_FUNCTION_ARGS)
 
 	/* assumes sign, 10 digits, ' ' */
 	char	   *rp = result = (char *) palloc(nnums * 12 + 1);
+
 	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)

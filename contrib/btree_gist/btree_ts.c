@@ -103,6 +103,7 @@ gbt_tskey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 	tsKEY	   *ib = (tsKEY *) (((const Nsrt *) b)->t);
 
 	int			res = DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatumFast(ia->lower), TimestampGetDatumFast(ib->lower)));
+
 	if (res == 0)
 		return DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatumFast(ia->upper), TimestampGetDatumFast(ib->upper)));
 
@@ -119,8 +120,9 @@ gbt_ts_dist(const void *a, const void *b, FmgrInfo *flinfo)
 		return get_float8_infinity();
 
 	Interval   *i = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
-											  TimestampGetDatumFast(*aa),
-											  TimestampGetDatumFast(*bb)));
+														  TimestampGetDatumFast(*aa),
+														  TimestampGetDatumFast(*bb)));
+
 	return (float8) Abs(INTERVAL_TO_SEC(i));
 }
 
@@ -182,8 +184,9 @@ tstz_dist(PG_FUNCTION_ARGS)
 	}
 
 	Interval   *r = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
-											  PG_GETARG_DATUM(0),
-											  PG_GETARG_DATUM(1)));
+														  PG_GETARG_DATUM(0),
+														  PG_GETARG_DATUM(1)));
+
 	PG_RETURN_INTERVAL_P(abs_interval(r));
 }
 

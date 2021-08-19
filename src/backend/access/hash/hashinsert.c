@@ -47,6 +47,7 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 
 	/* compute item size too */
 	Size		itemsz = IndexTupleSize(itup);
+
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -56,6 +57,7 @@ _hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
 	 * without a lock.
 	 */
 	Buffer		metabuf;
+
 restart_insert:
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_NOLOCK, LH_META_PAGE);
 
@@ -77,7 +79,8 @@ restart_insert:
 
 	/* Lock the primary bucket page for the target bucket. */
 	Buffer		buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_WRITE,
-										  &usedmetap);
+													  &usedmetap);
+
 	Assert(usedmetap != NULL);
 
 	CheckForSerializableConflictIn(rel, NULL, BufferGetBlockNumber(buf));
@@ -297,6 +300,7 @@ _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
 	{
 
 		Size		itemsize = IndexTupleSize(itups[i]);
+
 		itemsize = MAXALIGN(itemsize);
 
 		/* Find where to insert the tuple (preserving page's hashkey ordering) */
@@ -346,8 +350,8 @@ _hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 	{
 
 		TransactionId latestRemovedXid =
-			index_compute_xid_horizon_for_tuples(rel, hrel, buf,
-												 deletable, ndeletable);
+		index_compute_xid_horizon_for_tuples(rel, hrel, buf,
+											 deletable, ndeletable);
 
 		/*
 		 * Write-lock the meta page so that we can decrement tuple count.

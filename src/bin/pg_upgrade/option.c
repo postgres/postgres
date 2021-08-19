@@ -74,6 +74,7 @@ parseCommandLine(int argc, char *argv[])
 	new_cluster.port = getenv("PGPORTNEW") ? atoi(getenv("PGPORTNEW")) : DEF_PGUPORT;
 
 	int			os_user_effective_id = get_user_info(&os_info.user);
+
 	/* we override just the database user name;  we got the OS id above */
 	if (getenv("PGUSER"))
 	{

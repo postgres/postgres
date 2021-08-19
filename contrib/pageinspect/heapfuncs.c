@@ -218,6 +218,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 			/* Copy raw tuple data into bytea attribute */
 			int			tuple_data_len = lp_len - tuphdr->t_hoff;
 			bytea	   *tuple_data_bytea = (bytea *) palloc(tuple_data_len + VARHDRSZ);
+
 			SET_VARSIZE(tuple_data_bytea, tuple_data_len + VARHDRSZ);
 			memcpy(VARDATA(tuple_data_bytea), (char *) tuphdr + tuphdr->t_hoff,
 				   tuple_data_len);
@@ -237,7 +238,8 @@ heap_page_items(PG_FUNCTION_ARGS)
 				{
 
 					int			bits_len =
-						BITMAPLEN(HeapTupleHeaderGetNatts(tuphdr)) * BITS_PER_BYTE;
+					BITMAPLEN(HeapTupleHeaderGetNatts(tuphdr)) * BITS_PER_BYTE;
+
 					values[11] = CStringGetTextDatum(bits_to_text(tuphdr->t_bits, bits_len));
 				}
 				else
@@ -411,7 +413,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	uint16		t_infomask = PG_GETARG_INT16(2);
 	uint16		t_infomask2 = PG_GETARG_INT16(3);
 	char	   *t_bits_str = PG_ARGISNULL(4) ? NULL :
-		text_to_cstring(PG_GETARG_TEXT_PP(4));
+	text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	if (PG_NARGS() >= 6)
 		do_detoast = PG_GETARG_BOOL(5);
@@ -432,12 +434,14 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	{
 
 		int			bits_len = BITMAPLEN(t_infomask2 & HEAP_NATTS_MASK) * BITS_PER_BYTE;
+
 		if (!t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("t_bits string must not be NULL")));
 
 		int			bits_str_len = strlen(t_bits_str);
+
 		if (bits_len != bits_str_len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -458,9 +462,9 @@ tuple_data_split(PG_FUNCTION_ARGS)
 
 	/* Split tuple data */
 	Datum		res = tuple_data_split_internal(relid, (char *) raw_data + VARHDRSZ,
-									VARSIZE(raw_data) - VARHDRSZ,
-									t_infomask, t_infomask2, t_bits,
-									do_detoast);
+												VARSIZE(raw_data) - VARHDRSZ,
+												t_infomask, t_infomask2, t_bits,
+												do_detoast);
 
 	if (t_bits)
 		pfree(t_bits);
@@ -498,7 +502,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 
 	int			bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
-		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
+	pg_popcount((const char *) &t_infomask2, sizeof(uint16));
 
 	/* Initialize values and NULL flags arrays */
 	MemSet(values, 0, sizeof(values));
@@ -561,6 +565,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	/* build value */
 	Assert(cnt <= bitcnt);
 	ArrayType  *a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
+
 	values[0] = PointerGetDatum(a);
 
 	/*

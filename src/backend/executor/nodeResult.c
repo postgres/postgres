@@ -188,6 +188,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	ResultState *resstate = makeNode(ResultState);
+
 	resstate->ps.plan = (Plan *) node;
 	resstate->ps.state = estate;
 	resstate->ps.ExecProcNode = ExecResult;

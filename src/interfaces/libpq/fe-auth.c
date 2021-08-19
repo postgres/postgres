@@ -167,6 +167,7 @@ pg_GSS_startup(PGconn *conn, int payloadlen)
 	}
 
 	int			ret = pg_GSS_load_servicename(conn);
+
 	if (ret != STATUS_OK)
 		return ret;
 
@@ -256,17 +257,17 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 	outbuf.ulVersion = SECBUFFER_VERSION;
 
 	SECURITY_STATUS r = InitializeSecurityContext(conn->sspicred,
-								  conn->sspictx,
-								  conn->sspitarget,
-								  ISC_REQ_ALLOCATE_MEMORY,
-								  0,
-								  SECURITY_NETWORK_DREP,
-								  (conn->sspictx == NULL) ? NULL : &inbuf,
-								  0,
-								  &newContext,
-								  &outbuf,
-								  &contextAttr,
-								  NULL);
+												  conn->sspictx,
+												  conn->sspitarget,
+												  ISC_REQ_ALLOCATE_MEMORY,
+												  0,
+												  SECURITY_NETWORK_DREP,
+												  (conn->sspictx == NULL) ? NULL : &inbuf,
+												  0,
+												  &newContext,
+												  &outbuf,
+												  &contextAttr,
+												  NULL);
 
 	/* we don't need the input anymore */
 	if (inputbuf)
@@ -362,14 +363,15 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate, int payloadlen)
 	}
 
 	SECURITY_STATUS r = AcquireCredentialsHandle(NULL,
-								 use_negotiate ? "negotiate" : "kerberos",
-								 SECPKG_CRED_OUTBOUND,
-								 NULL,
-								 NULL,
-								 NULL,
-								 NULL,
-								 conn->sspicred,
-								 &expire);
+												 use_negotiate ? "negotiate" : "kerberos",
+												 SECPKG_CRED_OUTBOUND,
+												 NULL,
+												 NULL,
+												 NULL,
+												 NULL,
+												 conn->sspicred,
+												 &expire);
+
 	if (r != SEC_E_OK)
 	{
 		pg_SSPI_error(conn, libpq_gettext("could not acquire SSPI credentials"), r);
@@ -638,6 +640,7 @@ pg_SASL_continue(PGconn *conn, int payloadlen, bool final)
 
 	/* Read the SASL challenge from the AuthenticationSASLContinue message. */
 	char	   *challenge = malloc(payloadlen + 1);
+
 	if (!challenge)
 	{
 		appendPQExpBuffer(&conn->errorMessage,
@@ -742,6 +745,7 @@ pg_local_sendauth(PGconn *conn)
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct cmsgcred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDS;
@@ -794,6 +798,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				}
 
 				char	   *crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
+
 				if (!pg_md5_encrypt(password, conn->pguser,
 									strlen(conn->pguser), crypt_pwd2))
 				{
@@ -817,6 +822,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 			return STATUS_ERROR;
 	}
 	int			ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
+
 	if (crypt_pwd)
 		free(crypt_pwd);
 	return ret;
@@ -1169,6 +1175,7 @@ PQencryptPassword(const char *passwd, const char *user)
 {
 
 	char	   *crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
+
 	if (!crypt_pwd)
 		return NULL;
 
@@ -1223,6 +1230,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	{
 
 		PGresult   *res = PQexec(conn, "show password_encryption");
+
 		if (res == NULL)
 		{
 			/* PQexec() should've set conn->errorMessage already */

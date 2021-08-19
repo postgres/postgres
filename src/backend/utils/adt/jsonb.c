@@ -692,7 +692,8 @@ jsonb_categorize_type(Oid typoid,
 					Oid			castfunc;
 
 					CoercionPathType ctype = find_coercion_pathway(JSONOID, typoid,
-												  COERCION_EXPLICIT, &castfunc);
+																   COERCION_EXPLICIT, &castfunc);
+
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
 					{
 						*tcategory = JSONBTYPE_JSONCAST;
@@ -802,9 +803,10 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 						jb.type = jbvNumeric;
 						Datum		numd = DirectFunctionCall3(numeric_in,
-												   CStringGetDatum(outputstr),
-												   ObjectIdGetDatum(InvalidOid),
-												   Int32GetDatum(-1));
+															   CStringGetDatum(outputstr),
+															   ObjectIdGetDatum(InvalidOid),
+															   Int32GetDatum(-1));
+
 						jb.val.numeric = DatumGetNumeric(numd);
 						pfree(outputstr);
 					}
@@ -1972,7 +1974,7 @@ jsonb_int2(PG_FUNCTION_ARGS)
 		cannotCastJsonbValue(v.type, "smallint");
 
 	Datum		retValue = DirectFunctionCall1(numeric_int2,
-								   NumericGetDatum(v.val.numeric));
+											   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -1989,7 +1991,7 @@ jsonb_int4(PG_FUNCTION_ARGS)
 		cannotCastJsonbValue(v.type, "integer");
 
 	Datum		retValue = DirectFunctionCall1(numeric_int4,
-								   NumericGetDatum(v.val.numeric));
+											   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -2006,7 +2008,7 @@ jsonb_int8(PG_FUNCTION_ARGS)
 		cannotCastJsonbValue(v.type, "bigint");
 
 	Datum		retValue = DirectFunctionCall1(numeric_int8,
-								   NumericGetDatum(v.val.numeric));
+											   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -2023,7 +2025,7 @@ jsonb_float4(PG_FUNCTION_ARGS)
 		cannotCastJsonbValue(v.type, "real");
 
 	Datum		retValue = DirectFunctionCall1(numeric_float4,
-								   NumericGetDatum(v.val.numeric));
+											   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 
@@ -2040,7 +2042,7 @@ jsonb_float8(PG_FUNCTION_ARGS)
 		cannotCastJsonbValue(v.type, "double precision");
 
 	Datum		retValue = DirectFunctionCall1(numeric_float8,
-								   NumericGetDatum(v.val.numeric));
+											   NumericGetDatum(v.val.numeric));
 
 	PG_FREE_IF_COPY(in, 0);
 

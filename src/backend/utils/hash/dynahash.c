@@ -387,6 +387,7 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 
 	/* Initialize the hash header, plus a copy of the table name */
 	HTAB	   *hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) + 1);
+
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	hashp->tabname = (char *) (hashp + 1);
@@ -665,7 +666,8 @@ choose_nelem_alloc(Size entrysize)
 	 * a power of 2 anyway.  If we fail to take this into account, we'll waste
 	 * as much as half the allocated space.
 	 */
-	Size		allocSize = 32 * 4;			/* assume elementSize at least 8 */
+	Size		allocSize = 32 * 4; /* assume elementSize at least 8 */
+
 	do
 	{
 		allocSize <<= 1;
@@ -715,6 +717,7 @@ init_htab(HTAB *hashp, long nelem)
 	 * Figure number of directory segments needed, round up to a power of 2
 	 */
 	int			nsegs = (nbuckets - 1) / hctl->ssize + 1;
+
 	nsegs = next_pow2_int(nsegs);
 
 	/*
@@ -792,6 +795,7 @@ hash_estimate_size(long num_entries, Size entrysize)
 
 	/* fixed control info */
 	Size		size = MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
+
 	/* directory */
 	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
@@ -910,6 +914,7 @@ calc_bucket(HASHHDR *hctl, uint32 hash_val)
 {
 
 	uint32		bucket = hash_val & hctl->high_mask;
+
 	if (bucket > hctl->max_bucket)
 		bucket = bucket & hctl->low_mask;
 
@@ -1327,6 +1332,7 @@ get_hash_entry(HTAB *hashp, int freelist_idx)
 
 			/* try to borrow element from another freelist */
 			int			borrow_from_idx = freelist_idx;
+
 			for (;;)
 			{
 				borrow_from_idx = (borrow_from_idx + 1) % NUM_FREELISTS;
@@ -1640,6 +1646,7 @@ dir_realloc(HTAB *hashp)
 	long		new_dirsize = new_dsize * sizeof(HASHSEGMENT);
 
 	HASHSEGMENT *old_p = hashp->dir;
+
 	CurrentDynaHashCxt = hashp->hcxt;
 	HASHSEGMENT *p = (HASHSEGMENT *) hashp->alloc((Size) new_dirsize);
 
@@ -1700,6 +1707,7 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 	/* prepare to link all the new entries into the freelist */
 	HASHELEMENT *prevElement = NULL;
 	HASHELEMENT *tmpElement = firstElement;
+
 	for (i = 0; i < nelem; i++)
 	{
 		tmpElement->link = prevElement;

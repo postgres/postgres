@@ -134,7 +134,8 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * here is aggregates not window functions.
 	 */
 	HeapTuple	aggTuple = SearchSysCache1(AGGFNOID,
-							   ObjectIdGetDatum(aggref->aggfnoid));
+										   ObjectIdGetDatum(aggref->aggfnoid));
+
 	if (!HeapTupleIsValid(aggTuple))
 		elog(ERROR, "cache lookup failed for aggregate %u",
 			 aggref->aggfnoid);
@@ -167,6 +168,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * MAX/MIN and is probably somewhat reasonable otherwise.
 	 */
 	int32		aggtranstypmod = -1;
+
 	if (aggref->args)
 	{
 		TargetEntry *tle = (TargetEntry *) linitial(aggref->args);
@@ -193,8 +195,9 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 
 	/* get initial value */
 	Datum		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
-								  Anum_pg_aggregate_agginitval,
-								  &initValueIsNull);
+											  Anum_pg_aggregate_agginitval,
+											  &initValueIsNull);
+
 	if (initValueIsNull)
 		initValue = (Datum) 0;
 	else
@@ -207,6 +210,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	 * we've seen already.
 	 */
 	int			aggno = find_compatible_agg(root, aggref, &same_input_transnos);
+
 	if (aggno != -1)
 	{
 		AggInfo    *agginfo = list_nth(root->agginfos, aggno);
@@ -364,6 +368,7 @@ find_compatible_agg(PlannerInfo *root, Aggref *newagg,
 	 * same transition function will be checked later.)
 	 */
 	int			aggno = -1;
+
 	foreach(lc, root->agginfos)
 	{
 		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
@@ -489,7 +494,8 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 	getTypeInputInfo(transtype, &typinput, &typioparam);
 	char	   *strInitVal = TextDatumGetCString(textInitVal);
 	Datum		initVal = OidInputFunctionCall(typinput, strInitVal,
-								   typioparam, -1);
+											   typioparam, -1);
+
 	pfree(strInitVal);
 	return initVal;
 }

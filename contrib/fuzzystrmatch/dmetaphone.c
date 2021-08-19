@@ -296,6 +296,7 @@ IsVowel(metastring *s, int pos)
 		return 0;
 
 	char		c = *(s->str + pos);
+
 	if ((c == 'A') || (c == 'E') || (c == 'I') || (c == 'O') ||
 		(c == 'U') || (c == 'Y'))
 		return 1;
@@ -353,6 +354,7 @@ StringAt(metastring *s, int start, int length,...)
 		return 0;
 
 	char	   *pos = (s->str + start);
+
 	va_start(ap, length);
 
 	do
@@ -380,6 +382,7 @@ MetaphAdd(metastring *s, const char *new_str)
 		return;
 
 	int			add_length = strlen(new_str);
+
 	if ((s->length + add_length) > (s->bufsize - 1))
 		IncreaseBuffer(s, add_length);
 
@@ -393,15 +396,18 @@ DoubleMetaphone(char *str, char **codes)
 {
 
 	int			current = 0;
+
 	/* we need the real length and last prior to padding */
 	int			length = strlen(str);
 	int			last = length - 1;
 	metastring *original = NewMetaString(str);
+
 	/* Pad original so we can index beyond end */
 	MetaphAdd(original, "     ");
 
 	metastring *primary = NewMetaString("");
 	metastring *secondary = NewMetaString("");
+
 	primary->free_string_on_destroy = 0;
 	secondary->free_string_on_destroy = 0;
 

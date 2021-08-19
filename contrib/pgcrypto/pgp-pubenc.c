@@ -97,6 +97,7 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 	 * create "secret message"
 	 */
 	uint8	   *secmsg = palloc(klen + 3);
+
 	secmsg[0] = ctx->cipher_algo;
 	memcpy(secmsg + 1, ctx->sess_key, klen);
 	secmsg[klen + 1] = (cksum >> 8) & 0xFF;
@@ -137,6 +138,7 @@ encrypt_and_write_elgamal(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
 
 	/* create padded msg */
 	int			res = create_secmsg(ctx, &m, pk->pub.elg.p->bytes - 1);
+
 	if (res < 0)
 		goto err;
 
@@ -166,6 +168,7 @@ encrypt_and_write_rsa(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
 
 	/* create padded msg */
 	int			res = create_secmsg(ctx, &m, pk->pub.rsa.n->bytes - 1);
+
 	if (res < 0)
 		goto err;
 
@@ -202,6 +205,7 @@ pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 	 * now write packet
 	 */
 	int			res = pgp_create_pkt_writer(dst, PGP_PKT_PUBENCRYPTED_SESSKEY, &pkt);
+
 	if (res < 0)
 		goto err;
 	res = pushf_write(pkt, &ver, 1);

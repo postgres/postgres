@@ -133,7 +133,8 @@ InitShmemAllocation(void)
 	 * first allocation begins on a cache line boundary.
 	 */
 	char	   *aligned = (char *)
-		(CACHELINEALIGN((((char *) shmhdr) + shmhdr->freeoffset)));
+	(CACHELINEALIGN((((char *) shmhdr) + shmhdr->freeoffset)));
+
 	shmhdr->freeoffset = aligned - (char *) shmhdr;
 
 	/* ShmemIndex can't be set up yet (need LWLocks first) */
@@ -162,6 +163,7 @@ ShmemAlloc(Size size)
 	Size		allocated_size;
 
 	void	   *newSpace = ShmemAllocRaw(size, &allocated_size);
+
 	if (!newSpace)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -215,6 +217,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	Size		newStart = ShmemSegHdr->freeoffset;
 
 	Size		newFree = newStart + size;
+
 	if (newFree <= ShmemSegHdr->totalsize)
 	{
 		newSpace = (void *) ((char *) ShmemBase + newStart);
@@ -253,6 +256,7 @@ ShmemAllocUnlocked(Size size)
 	Size		newStart = ShmemSegHdr->freeoffset;
 
 	Size		newFree = newStart + size;
+
 	if (newFree > ShmemSegHdr->totalsize)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -352,8 +356,8 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	void	   *location = ShmemInitStruct(name,
-							   hash_get_shared_size(infoP, hash_flags),
-							   &found);
+										   hash_get_shared_size(infoP, hash_flags),
+										   &found);
 
 	/*
 	 * if it already exists, attach to it rather than allocate and initialize
@@ -426,7 +430,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	/* look it up in the shmem index */
 	ShmemIndexEnt *result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, name, HASH_ENTER_NULL, foundPtr);
+	hash_search(ShmemIndex, name, HASH_ENTER_NULL, foundPtr);
 
 	if (!result)
 	{
@@ -494,6 +498,7 @@ add_size(Size s1, Size s2)
 {
 
 	Size		result = s1 + s2;
+
 	/* We are assuming Size is an unsigned type here... */
 	if (result < s1 || result < s2)
 		ereport(ERROR,
@@ -512,6 +517,7 @@ mul_size(Size s1, Size s2)
 	if (s1 == 0 || s2 == 0)
 		return 0;
 	Size		result = s1 * s2;
+
 	/* We are assuming Size is an unsigned type here... */
 	if (result / s2 != s1)
 		ereport(ERROR,
@@ -551,6 +557,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;

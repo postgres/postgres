@@ -1916,6 +1916,7 @@ mp_int_to_string(mp_int z, mp_size radix, char *str, int limit)
 				break;
 
 			mp_digit	d = s_ddiv(&tmp, (mp_digit) radix);
+
 			*str++ = s_val2ch(d, 1);
 		}
 		t = str - 1;
@@ -2708,6 +2709,7 @@ s_dadd(mp_int a, mp_digit b)
 	mp_size		ua = MP_USED(a);
 
 	mp_word		w = (mp_word) *da + b;
+
 	*da++ = LOWER_HALF(w);
 	w = UPPER_HALF(w);
 
@@ -3044,6 +3046,7 @@ s_2expt(mp_int z, mp_small k)
 		return 0;
 
 	mp_digit   *dz = MP_DIGITS(z);
+
 	ZERO(dz, ndig);
 	*(dz + ndig - 1) = (1u << rest);
 	z->used = ndig;

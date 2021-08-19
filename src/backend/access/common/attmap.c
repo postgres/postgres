@@ -42,6 +42,7 @@ make_attrmap(int maplen)
 {
 
 	AttrMap    *res = (AttrMap *) palloc0(sizeof(AttrMap));
+
 	res->maplen = maplen;
 	res->attnums = (AttrNumber *) palloc0(sizeof(AttrNumber) * maplen);
 	return res;
@@ -86,9 +87,10 @@ build_attrmap_by_position(TupleDesc indesc,
 	int			n = outdesc->natts;
 	AttrMap    *attrMap = make_attrmap(n);
 
-	int			j = 0;						/* j is next physical input attribute */
-	int			nincols = noutcols = 0;		/* these count non-dropped attributes */
+	int			j = 0;			/* j is next physical input attribute */
+	int			nincols = noutcols = 0; /* these count non-dropped attributes */
 	bool		same = true;
+
 	for (i = 0; i < n; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(outdesc, i);
@@ -98,6 +100,7 @@ build_attrmap_by_position(TupleDesc indesc,
 		noutcols++;
 		Oid			atttypid = att->atttypid;
 		int32		atttypmod = att->atttypmod;
+
 		for (; j < indesc->natts; j++)
 		{
 			att = TupleDescAttr(indesc, j);
@@ -173,6 +176,7 @@ build_attrmap_by_name(TupleDesc indesc,
 	int			innatts = indesc->natts;
 
 	AttrMap    *attrMap = make_attrmap(outnatts);
+
 	for (i = 0; i < outnatts; i++)
 	{
 		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
@@ -203,6 +207,7 @@ build_attrmap_by_name(TupleDesc indesc,
 				nextindesc = 0;
 
 			Form_pg_attribute inatt = TupleDescAttr(indesc, nextindesc);
+
 			if (inatt->attisdropped)
 				continue;
 			if (strcmp(attname, NameStr(inatt->attname)) == 0)

@@ -118,6 +118,7 @@ parser_errposition(ParseState *pstate, int location)
 		return 0;
 	/* Convert offset to character number */
 	int			pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
+
 	/* And pass it to the ereport mechanism */
 	return errposition(pos);
 }
@@ -267,6 +268,7 @@ transformContainerSubscripts(ParseState *pstate,
 	 * functions and typelem.
 	 */
 	const SubscriptRoutines *sbsroutines = getSubscriptingRoutines(containerType, &elementType);
+
 	if (!sbsroutines)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),

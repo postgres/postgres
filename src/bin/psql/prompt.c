@@ -290,6 +290,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						char	   *name = pnstrdup(p + 1, nameend);
 
 						const char *val = GetVariable(pset.vars, name);
+
 						if (val)
 							strlcpy(buf, val, sizeof(buf));
 						free(name);

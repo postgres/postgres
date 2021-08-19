@@ -267,6 +267,7 @@ InitPgFdwOptions(void)
 
 	/* Count how many libpq options are available. */
 	int			num_libpq_opts = 0;
+
 	for (lopt = libpq_options; lopt->keyword; lopt++)
 		num_libpq_opts++;
 
@@ -288,6 +289,7 @@ InitPgFdwOptions(void)
 				 errmsg("out of memory")));
 
 	PgFdwOption *popt = postgres_fdw_options;
+
 	for (lopt = libpq_options; lopt->keyword; lopt++)
 	{
 		/* Hide debug options, as well as settings we override internally. */
@@ -370,6 +372,7 @@ ExtractConnectionOptions(List *defelems, const char **keywords,
 	InitPgFdwOptions();
 
 	int			i = 0;
+
 	foreach(lc, defelems)
 	{
 		DefElem    *d = (DefElem *) lfirst(lc);

@@ -35,6 +35,7 @@ opendir(const char *dirname)
 
 	/* Make sure it is a directory */
 	DWORD		attr = GetFileAttributes(dirname);
+
 	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		errno = ENOENT;
@@ -47,6 +48,7 @@ opendir(const char *dirname)
 	}
 
 	DIR		   *d = malloc(sizeof(DIR));
+
 	if (!d)
 	{
 		errno = ENOMEM;

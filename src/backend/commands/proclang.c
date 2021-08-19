@@ -70,6 +70,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	Assert(stmt->plhandler);
 	handlerOid = LookupFuncName(stmt->plhandler, 0, NULL, false);
 	Oid			funcrettype = get_func_rettype(handlerOid);
+
 	if (funcrettype != LANGUAGE_HANDLEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -225,7 +226,8 @@ get_language_oid(const char *langname, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid1(LANGNAME, Anum_pg_language_oid,
-						  CStringGetDatum(langname));
+									  CStringGetDatum(langname));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

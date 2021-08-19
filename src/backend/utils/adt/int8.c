@@ -156,6 +156,7 @@ int8out(PG_FUNCTION_ARGS)
 	 * to avoid the strlen() call that would otherwise be done in pstrdup().
 	 */
 	char	   *result = palloc(len);
+
 	memcpy(result, buf, len);
 	PG_RETURN_CSTRING(result);
 }
@@ -530,6 +531,7 @@ int8um(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 	int64		result = -arg;
+
 	PG_RETURN_INT64(result);
 }
 
@@ -635,6 +637,7 @@ int8abs(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
 	int64		result = (arg1 < 0) ? -arg1 : arg1;
+
 	PG_RETURN_INT64(result);
 }
 
@@ -776,6 +779,7 @@ int8lcm(PG_FUNCTION_ARGS)
 
 	/* lcm(x, y) = abs(x / gcd(x, y) * y) */
 	int64		gcd = int8gcd_internal(arg1, arg2);
+
 	arg1 = arg1 / gcd;
 
 	if (unlikely(pg_mul_s64_overflow(arg1, arg2, &result)))

@@ -234,7 +234,7 @@ shdepChangeDep(Relation sdepRel,
 				Int32GetDatum(objsubid));
 
 	SysScanDesc scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  NULL, 4, key);
+										  NULL, 4, key);
 
 	while ((scantup = systable_getnext(scan)) != NULL)
 	{
@@ -868,7 +868,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 				ObjectIdGetDatum(templateDbId));
 
 	SysScanDesc scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  NULL, 1, key);
+										  NULL, 1, key);
 
 	/* number of slots currently storing tuples */
 	slot_stored_count = 0;
@@ -954,7 +954,7 @@ dropDatabaseDependencies(Oid databaseId)
 	/* We leave the other index fields unspecified */
 
 	SysScanDesc scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  NULL, 1, key);
+										  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -1092,7 +1092,7 @@ shdepDropDependency(Relation sdepRel,
 	}
 
 	SysScanDesc scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  NULL, nkeys, key);
+										  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -1315,7 +1315,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					ObjectIdGetDatum(roleid));
 
 		SysScanDesc scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-								  NULL, 2, key);
+											  NULL, 2, key);
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
@@ -1463,7 +1463,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					ObjectIdGetDatum(roleid));
 
 		SysScanDesc scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-								  NULL, 2, key);
+											  NULL, 2, key);
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{

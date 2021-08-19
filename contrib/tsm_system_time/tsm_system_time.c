@@ -113,6 +113,7 @@ system_time_samplescangetsamplesize(PlannerInfo *root,
 
 	/* Try to extract an estimate for the limit time spec */
 	Node	   *limitnode = (Node *) linitial(paramexprs);
+
 	limitnode = estimate_expression_value(root, limitnode);
 
 	if (IsA(limitnode, Const) &&

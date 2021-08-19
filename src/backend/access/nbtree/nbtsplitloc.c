@@ -152,6 +152,7 @@ _bt_findsplitloc(Relation rel,
 				rightpage;
 
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
+
 	maxoff = PageGetMaxOffsetNumber(origpage);
 
 	/* Total free space available on a btree page, after fixed overhead */
@@ -458,7 +459,7 @@ _bt_recsplitloc(FindSplitData *state,
 
 	/* Is the new item going to be split point's firstright tuple? */
 	bool		newitemisfirstright = (firstrightoff == state->newitemoff &&
-						   !newitemonleft);
+									   !newitemonleft);
 
 	if (newitemisfirstright)
 		firstrightsz = state->newitemsz;
@@ -893,6 +894,7 @@ _bt_defaultinterval(FindSplitData *state)
 
 	/* First candidate split point is the most evenly balanced */
 	SplitPoint *spaceoptimal = state->splits;
+
 	lowleftfree = spaceoptimal->leftfree - tolerance;
 	lowrightfree = spaceoptimal->rightfree - tolerance;
 	highleftfree = spaceoptimal->leftfree + tolerance;
@@ -964,6 +966,7 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 	 * with default strategy and initial split interval.
 	 */
 	int			perfectpenalty = _bt_keep_natts_fast(state->rel, leftmost, rightmost);
+
 	if (perfectpenalty <= indnkeyatts)
 		return perfectpenalty;
 
@@ -1020,6 +1023,7 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 
 		ItemId		itemid = PageGetItemId(state->origpage, P_HIKEY);
 		IndexTuple	hikey = (IndexTuple) PageGetItem(state->origpage, itemid);
+
 		perfectpenalty = _bt_keep_natts_fast(state->rel, hikey,
 											 state->newitem);
 		if (perfectpenalty <= indnkeyatts)
@@ -1049,6 +1053,7 @@ _bt_interval_edges(FindSplitData *state, SplitPoint **leftinterval,
 	int			highsplit = Min(state->interval, state->nsplits);
 
 	SplitPoint *deltaoptimal = state->splits;
+
 	*leftinterval = NULL;
 	*rightinterval = NULL;
 
@@ -1153,7 +1158,8 @@ _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
 		return state->newitem;
 
 	ItemId		itemid = PageGetItemId(state->origpage,
-						   OffsetNumberPrev(split->firstrightoff));
+									   OffsetNumberPrev(split->firstrightoff));
+
 	return (IndexTuple) PageGetItem(state->origpage, itemid);
 }
 
@@ -1168,5 +1174,6 @@ _bt_split_firstright(FindSplitData *state, SplitPoint *split)
 		return state->newitem;
 
 	ItemId		itemid = PageGetItemId(state->origpage, split->firstrightoff);
+
 	return (IndexTuple) PageGetItem(state->origpage, itemid);
 }

@@ -511,6 +511,7 @@ main(int argc, char *argv[])
 	 */
 	int			encoding = PQclientEncoding(conn);
 	const char *std_strings = PQparameterStatus(conn, "standard_conforming_strings");
+
 	if (!std_strings)
 		std_strings = "off";
 
@@ -1055,7 +1056,7 @@ dumpGroups(PGconn *conn)
 	int			i;
 
 	PGresult   *res = executeQuery(conn,
-					   "SELECT groname, grolist FROM pg_group ORDER BY 1");
+								   "SELECT groname, grolist FROM pg_group ORDER BY 1");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
@@ -1121,9 +1122,9 @@ dropTablespaces(PGconn *conn)
 	 * pg_xxx)
 	 */
 	PGresult   *res = executeQuery(conn, "SELECT spcname "
-					   "FROM pg_catalog.pg_tablespace "
-					   "WHERE spcname !~ '^pg_' "
-					   "ORDER BY 1");
+								   "FROM pg_catalog.pg_tablespace "
+								   "WHERE spcname !~ '^pg_' "
+								   "ORDER BY 1");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Drop tablespaces\n--\n\n");
@@ -1310,10 +1311,10 @@ dropDBs(PGconn *conn)
 	 * to them anyway.  This must agree with dumpDatabases().
 	 */
 	PGresult   *res = executeQuery(conn,
-					   "SELECT datname "
-					   "FROM pg_database d "
-					   "WHERE datallowconn "
-					   "ORDER BY datname");
+								   "SELECT datname "
+								   "FROM pg_database d "
+								   "WHERE datallowconn "
+								   "ORDER BY datname");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Drop databases (except postgres and template1)\n--\n\n");
@@ -1369,6 +1370,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 			appendPQExpBufferChar(buf, ')');
 
 		PGresult   *res = executeQuery(conn, buf->data);
+
 		if (PQntuples(res) == 1 &&
 			!PQgetisnull(res, 0, 0))
 		{
@@ -1460,10 +1462,10 @@ dumpDatabases(PGconn *conn)
 	 * doesn't have some failure mode with --clean.
 	 */
 	PGresult   *res = executeQuery(conn,
-					   "SELECT datname "
-					   "FROM pg_database d "
-					   "WHERE datallowconn "
-					   "ORDER BY (datname <> 'template1'), datname");
+								   "SELECT datname "
+								   "FROM pg_database d "
+								   "WHERE datallowconn "
+								   "ORDER BY (datname <> 'template1'), datname");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Databases\n--\n\n");
@@ -1514,6 +1516,7 @@ dumpDatabases(PGconn *conn)
 			fclose(OPF);
 
 		int			ret = runPgDump(dbname, create_opts);
+
 		if (ret != 0)
 		{
 			pg_log_error("pg_dump failed on database \"%s\", exiting", dbname);
@@ -1601,6 +1604,7 @@ buildShSecLabels(PGconn *conn, const char *catalog_name, Oid objectId,
 
 	buildShSecLabelQuery(catalog_name, objectId, sql);
 	PGresult   *res = executeQuery(conn, sql->data);
+
 	emitShSecLabels(conn, res, buffer, objtype, objname);
 
 	PQclear(res);
@@ -1778,6 +1782,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 
 	/* Check version */
 	const char *remoteversion_str = PQparameterStatus(conn, "server_version");
+
 	if (!remoteversion_str)
 	{
 		pg_log_error("could not get server version");
@@ -1845,6 +1850,7 @@ constructConnStr(const char **keywords, const char **values)
 	}
 
 	char	   *connstr = pg_strdup(buf->data);
+
 	destroyPQExpBuffer(buf);
 	return connstr;
 }
@@ -1859,6 +1865,7 @@ executeQuery(PGconn *conn, const char *query)
 	pg_log_info("executing %s", query);
 
 	PGresult   *res = PQexec(conn, query);
+
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -1881,6 +1888,7 @@ executeCommand(PGconn *conn, const char *query)
 	pg_log_info("executing %s", query);
 
 	PGresult   *res = PQexec(conn, query);
+
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{

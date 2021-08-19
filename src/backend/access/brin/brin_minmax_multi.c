@@ -429,10 +429,10 @@ AssertCheckExpandedRanges(BrinDesc *bdesc, Oid colloid, AttrNumber attno,
 	int			i;
 
 	FmgrInfo   *eq = minmax_multi_get_strategy_procinfo(bdesc, attno, attr->atttypid,
-											BTEqualStrategyNumber);
+														BTEqualStrategyNumber);
 
 	FmgrInfo   *lt = minmax_multi_get_strategy_procinfo(bdesc, attno, attr->atttypid,
-											BTLessStrategyNumber);
+														BTLessStrategyNumber);
 
 	/*
 	 * Each range independently should be valid, i.e. that for the boundary
@@ -484,6 +484,7 @@ minmax_multi_init(int maxvalues)
 	Assert(maxvalues > 0);
 
 	Size		len = offsetof(Ranges, values); /* fixed header */
+
 	len += maxvalues * sizeof(Datum);	/* Datum values */
 
 	Ranges	   *ranges = (Ranges *) palloc0(len);
@@ -635,6 +636,7 @@ range_serialize(Ranges *range)
 	 * serialized object is a varlena, so update the header.
 	 */
 	SerializedRanges *serialized = (SerializedRanges *) palloc0(len);
+
 	SET_VARSIZE(serialized, len);
 
 	serialized->typid = typid;
@@ -646,7 +648,7 @@ range_serialize(Ranges *range)
 	 * And now copy also the boundary values (like the length calculation this
 	 * depends on the particular data type).
 	 */
-	char	   *ptr = serialized->data;		/* start of the serialized data */
+	char	   *ptr = serialized->data; /* start of the serialized data */
 
 	for (i = 0; i < nvalues; i++)
 	{
@@ -750,6 +752,7 @@ range_deserialize(int maxvalues, SerializedRanges *serialized)
 	 * XXX We don't need to copy simple by-value data types.
 	 */
 	Size		datalen = 0;
+
 	dataptr = NULL;
 	for (i = 0; (i < nvalues) && (!typbyval); i++)
 	{
@@ -920,7 +923,7 @@ has_matching_range(BrinDesc *bdesc, Oid colloid, Ranges *ranges,
 	 * the first value in the array.
 	 */
 	FmgrInfo   *cmpLessFn = minmax_multi_get_strategy_procinfo(bdesc, attno, typid,
-												   BTLessStrategyNumber);
+															   BTLessStrategyNumber);
 	Datum		compar = FunctionCall2Coll(cmpLessFn, colloid, newval, minvalue);
 
 	/* smaller than the smallest value in the range list */
@@ -933,7 +936,8 @@ has_matching_range(BrinDesc *bdesc, Oid colloid, Ranges *ranges,
 	 * the minvalue check.
 	 */
 	FmgrInfo   *cmpGreaterFn = minmax_multi_get_strategy_procinfo(bdesc, attno, typid,
-													  BTGreaterStrategyNumber);
+																  BTGreaterStrategyNumber);
+
 	compar = FunctionCall2Coll(cmpGreaterFn, colloid, newval, maxvalue);
 
 	if (DatumGetBool(compar))
@@ -1033,7 +1037,7 @@ range_contains_value(BrinDesc *bdesc, Oid colloid,
 		return true;
 
 	FmgrInfo   *cmpEqualFn = minmax_multi_get_strategy_procinfo(bdesc, attno, typid,
-													BTEqualStrategyNumber);
+																BTEqualStrategyNumber);
 
 	/*
 	 * There is no matching range, so let's inspect the sorted values.
@@ -1111,6 +1115,7 @@ fill_expanded_ranges(ExpandedRange *eranges, int neranges, Ranges *ranges)
 	Assert(neranges == (ranges->nranges + ranges->nvalues));
 
 	int			idx = 0;
+
 	for (i = 0; i < ranges->nranges; i++)
 	{
 		eranges[idx].minval = ranges->values[2 * i];
@@ -1172,6 +1177,7 @@ sort_expanded_ranges(FmgrInfo *cmp, Oid colloid,
 	 * one, and skip the duplicate ones.
 	 */
 	int			n = 1;
+
 	for (i = 1; i < neranges; i++)
 	{
 		/* if the current range is equal to the preceding one, do nothing */
@@ -1204,6 +1210,7 @@ merge_overlapping_ranges(FmgrInfo *cmp, Oid colloid,
 
 	/* Merge ranges (idx) and (idx+1) if they overlap. */
 	int			idx = 0;
+
 	while (idx < (neranges - 1))
 	{
 
@@ -1212,8 +1219,8 @@ merge_overlapping_ranges(FmgrInfo *cmp, Oid colloid,
 		 * < maxval)
 		 */
 		Datum		r = FunctionCall2Coll(cmp, colloid,
-							  eranges[idx].maxval,
-							  eranges[idx + 1].minval);
+										  eranges[idx].maxval,
+										  eranges[idx + 1].minval);
 
 		/*
 		 * Nope, maxval < minval, so no overlap. And we know the ranges are
@@ -1377,6 +1384,7 @@ count_values(ExpandedRange *cranges, int ncranges)
 	int			i;
 
 	int			count = 0;
+
 	for (i = 0; i < ncranges; i++)
 	{
 		if (cranges[i].collapsed)
@@ -1603,8 +1611,8 @@ ensure_free_space_in_buffer(BrinDesc *bdesc, Oid colloid,
 	 * distance function many times, it might be an issue, but meh).
 	 */
 	MemoryContext ctx = AllocSetContextCreate(CurrentMemoryContext,
-								"minmax-multi context",
-								ALLOCSET_DEFAULT_SIZES);
+											  "minmax-multi context",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldctx = MemoryContextSwitchTo(ctx);
 
@@ -1653,7 +1661,7 @@ range_add_value(BrinDesc *bdesc, Oid colloid,
 
 	/* we'll certainly need the comparator, so just look it up now */
 	FmgrInfo   *cmpFn = minmax_multi_get_strategy_procinfo(bdesc, attno, attr->atttypid,
-											   BTLessStrategyNumber);
+														   BTLessStrategyNumber);
 
 	/* comprehensive checks of the input ranges */
 	AssertCheckRanges(ranges, cmpFn, colloid);
@@ -1674,7 +1682,7 @@ range_add_value(BrinDesc *bdesc, Oid colloid,
 	 * do it now.
 	 */
 	bool		modified = ensure_free_space_in_buffer(bdesc, colloid,
-										   attno, attr, ranges);
+													   attno, attr, ranges);
 
 	/*
 	 * Bail out if the value already is covered by the range.
@@ -1764,8 +1772,8 @@ compactify_ranges(BrinDesc *bdesc, Ranges *ranges, int max_values)
 	 * function (not after every call).
 	 */
 	MemoryContext ctx = AllocSetContextCreate(CurrentMemoryContext,
-								"minmax-multi context",
-								ALLOCSET_DEFAULT_SIZES);
+											  "minmax-multi context",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldctx = MemoryContextSwitchTo(ctx);
 
@@ -1774,7 +1782,7 @@ compactify_ranges(BrinDesc *bdesc, Ranges *ranges, int max_values)
 
 	/* build array of gap distances and sort them in ascending order */
 	DistanceValue *distances = build_distances(distanceFn, ranges->colloid,
-								eranges, neranges);
+											   eranges, neranges);
 
 	/*
 	 * Combine ranges until we get below max_values. We don't use any scale
@@ -1806,7 +1814,8 @@ brin_minmax_multi_opcinfo(PG_FUNCTION_ARGS)
 	 */
 
 	BrinOpcInfo *result = palloc0(MAXALIGN(SizeofBrinOpcInfo(1)) +
-					 sizeof(MinmaxMultiOpaque));
+								  sizeof(MinmaxMultiOpaque));
+
 	result->oi_nstored = 1;
 	result->oi_regular_nulls = true;
 	result->oi_opaque = (MinmaxMultiOpaque *)
@@ -2112,6 +2121,7 @@ brin_minmax_multi_distance_interval(PG_FUNCTION_ARGS)
 	 */
 	int64		dayfraction = result->time % USECS_PER_DAY;
 	int64		days = result->time / USECS_PER_DAY;
+
 	days += result->month * INT64CONST(30);
 	days += result->day;
 
@@ -2157,6 +2167,7 @@ brin_minmax_multi_distance_macaddr(PG_FUNCTION_ARGS)
 	macaddr    *b = PG_GETARG_MACADDR_P(1);
 
 	float8		delta = ((float8) b->f - (float8) a->f);
+
 	delta /= 256;
 
 	delta += ((float8) b->e - (float8) a->e);
@@ -2193,6 +2204,7 @@ brin_minmax_multi_distance_macaddr8(PG_FUNCTION_ARGS)
 	macaddr8   *b = PG_GETARG_MACADDR8_P(1);
 
 	float8		delta = ((float8) b->h - (float8) a->h);
+
 	delta /= 256;
 
 	delta += ((float8) b->g - (float8) a->g);
@@ -2279,6 +2291,7 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 		unsigned char mask;
 
 		int			nbits = lena - (i * 8);
+
 		if (nbits < 8)
 		{
 			mask = (0xFF << (8 - nbits));
@@ -2295,6 +2308,7 @@ brin_minmax_multi_distance_inet(PG_FUNCTION_ARGS)
 
 	/* Calculate the difference between the addresses. */
 	float8		delta = 0;
+
 	for (i = len - 1; i >= 0; i--)
 	{
 		unsigned char a = addra[i];
@@ -2327,6 +2341,7 @@ brin_minmax_multi_serialize(BrinDesc *bdesc, Datum src, Datum *dst)
 	Assert(ranges->nsorted == ranges->nvalues);
 
 	SerializedRanges *s = range_serialize(ranges);
+
 	dst[0] = PointerGetDatum(s);
 }
 
@@ -2388,7 +2403,7 @@ brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
 		 * much lower, but meh.
 		 */
 		int			maxvalues = Min(target_maxvalues * MINMAX_BUFFER_FACTOR,
-						MaxHeapTuplesPerPage * pagesPerRange);
+									MaxHeapTuplesPerPage * pagesPerRange);
 
 		/* but always at least the original value */
 		maxvalues = Max(maxvalues, target_maxvalues);
@@ -2398,6 +2413,7 @@ brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
 		maxvalues = Min(maxvalues, MINMAX_BUFFER_MAX);
 
 		MemoryContext oldctx = MemoryContextSwitchTo(column->bv_context);
+
 		ranges = minmax_multi_init(maxvalues);
 		ranges->attno = attno;
 		ranges->colloid = colloid;
@@ -2432,7 +2448,7 @@ brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
 		 * much lower, but meh.
 		 */
 		int			maxvalues = Min(serialized->maxvalues * MINMAX_BUFFER_FACTOR,
-						MaxHeapTuplesPerPage * pagesPerRange);
+									MaxHeapTuplesPerPage * pagesPerRange);
 
 		/* but always at least the original value */
 		maxvalues = Max(maxvalues, serialized->maxvalues);
@@ -2536,7 +2552,7 @@ brin_minmax_multi_consistent(PG_FUNCTION_ARGS)
 						 * value in the array.
 						 */
 						FmgrInfo   *cmpFn = minmax_multi_get_strategy_procinfo(bdesc, attno, subtype,
-																   BTGreaterStrategyNumber);
+																			   BTGreaterStrategyNumber);
 						Datum		compar = FunctionCall2Coll(cmpFn, colloid, minval, value);
 
 						/* smaller than the smallest value in this range */
@@ -2680,7 +2696,7 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 	Assert(ranges_a && ranges_b);
 
 	int			neranges = (ranges_a->nranges + ranges_a->nvalues) +
-		(ranges_b->nranges + ranges_b->nvalues);
+	(ranges_b->nranges + ranges_b->nvalues);
 
 	/*
 	 * The distanceFn calls (which may internally call e.g. numeric_le) may
@@ -2690,8 +2706,8 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 	 * function (not after every call).
 	 */
 	MemoryContext ctx = AllocSetContextCreate(CurrentMemoryContext,
-								"minmax-multi context",
-								ALLOCSET_DEFAULT_SIZES);
+											  "minmax-multi context",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldctx = MemoryContextSwitchTo(ctx);
 
@@ -2843,9 +2859,10 @@ minmax_multi_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 		opfamily = bdesc->bd_index->rd_opfamily[attno - 1];
 		Form_pg_attribute attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
 		HeapTuple	tuple = SearchSysCache4(AMOPSTRATEGY, ObjectIdGetDatum(opfamily),
-								ObjectIdGetDatum(attr->atttypid),
-								ObjectIdGetDatum(subtype),
-								Int16GetDatum(strategynum));
+											ObjectIdGetDatum(attr->atttypid),
+											ObjectIdGetDatum(subtype),
+											Int16GetDatum(strategynum));
+
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
@@ -2940,6 +2957,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 
 	/* serialize ranges */
 	int			idx = 0;
+
 	for (i = 0; i < ranges_deserialized->nranges; i++)
 	{
 		char	   *a,

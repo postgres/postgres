@@ -73,6 +73,7 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 	}
 
 	FILE	   *fh = OpenPipeStream(command.data, "r");
+
 	if (fh == NULL)
 	{
 		ereport(loglevel,

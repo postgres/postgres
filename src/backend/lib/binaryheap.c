@@ -35,6 +35,7 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 
 	int			sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
 	binaryheap *heap = (binaryheap *) palloc(sz);
+
 	heap->bh_space = capacity;
 	heap->bh_compare = compare;
 	heap->bh_arg = arg;
@@ -217,6 +218,7 @@ swap_nodes(binaryheap *heap, int a, int b)
 {
 
 	Datum		swap = heap->bh_nodes[a];
+
 	heap->bh_nodes[a] = heap->bh_nodes[b];
 	heap->bh_nodes[b] = swap;
 }
@@ -237,8 +239,9 @@ sift_up(binaryheap *heap, int node_off)
 		 */
 		int			parent_off = parent_offset(node_off);
 		int			cmp = heap->bh_compare(heap->bh_nodes[node_off],
-							   heap->bh_nodes[parent_off],
-							   heap->bh_arg);
+										   heap->bh_nodes[parent_off],
+										   heap->bh_arg);
+
 		if (cmp <= 0)
 			break;
 

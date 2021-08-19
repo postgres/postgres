@@ -309,6 +309,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		 * the syntax is different.
 		 */
 		char	   *envname = getenv("PG_DBPATH");
+
 		if (envname)
 		{
 			ecpg_free(dbname);
@@ -709,6 +710,7 @@ ECPGget_PGconn(const char *connection_name)
 {
 
 	struct connection *con = ecpg_get_connection(connection_name);
+
 	if (con == NULL)
 		return NULL;
 

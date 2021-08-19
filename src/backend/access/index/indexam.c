@@ -269,7 +269,8 @@ index_beginscan_internal(Relation indexRelation,
 	 * Tell the AM to open a scan.
 	 */
 	IndexScanDesc scan = indexRelation->rd_indam->ambeginscan(indexRelation, nkeys,
-												norderbys);
+															  norderbys);
+
 	/* Initialize information for parallel scan. */
 	scan->parallel_scan = pscan;
 	scan->xs_temp_snap = temp_snap;
@@ -401,6 +402,7 @@ index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
 	RELATION_CHECKS;
 
 	Size		nbytes = offsetof(ParallelIndexScanDescData, ps_snapshot_data);
+
 	nbytes = add_size(nbytes, EstimateSnapshotSpace(snapshot));
 	nbytes = MAXALIGN(nbytes);
 
@@ -434,7 +436,8 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 	RELATION_CHECKS;
 
 	Size		offset = add_size(offsetof(ParallelIndexScanDescData, ps_snapshot_data),
-					  EstimateSnapshotSpace(snapshot));
+								  EstimateSnapshotSpace(snapshot));
+
 	offset = MAXALIGN(offset);
 
 	target->ps_relid = RelationGetRelid(heapRelation);
@@ -447,6 +450,7 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 	{
 
 		void	   *amtarget = OffsetToPointer(target, offset);
+
 		indexRelation->rd_indam->aminitparallelscan(amtarget);
 	}
 }
@@ -480,9 +484,10 @@ index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
 
 	Assert(RelationGetRelid(heaprel) == pscan->ps_relid);
 	Snapshot	snapshot = RestoreSnapshot(pscan->ps_snapshot_data);
+
 	RegisterSnapshot(snapshot);
 	IndexScanDesc scan = index_beginscan_internal(indexrel, nkeys, norderbys, snapshot,
-									pscan, true);
+												  pscan, true);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -567,8 +572,8 @@ index_fetch_heap(IndexScanDesc scan, TupleTableSlot *slot)
 	bool		all_dead = false;
 
 	bool		found = table_index_fetch_tuple(scan->xs_heapfetch, &scan->xs_heaptid,
-									scan->xs_snapshot, slot,
-									&scan->xs_heap_continue, &all_dead);
+												scan->xs_snapshot, slot,
+												&scan->xs_heap_continue, &all_dead);
 
 	if (found)
 		pgstat_count_heap_fetch(scan->indexRelation);
@@ -938,7 +943,8 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 		 * exist but the opclass options are specified.
 		 */
 		Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, indrel->rd_indextuple,
-										Anum_pg_index_indclass, &isnull);
+													Anum_pg_index_indclass, &isnull);
+
 		Assert(!isnull);
 		oidvector  *indclass = (oidvector *) DatumGetPointer(indclassDatum);
 		Oid			opclass = indclass->values[attnum - 1];

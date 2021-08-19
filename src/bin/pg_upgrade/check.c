@@ -644,10 +644,10 @@ check_is_install_user(ClusterInfo *cluster)
 
 	/* Can't use pg_authid because only superusers can view it. */
 	PGresult   *res = executeQueryOrDie(conn,
-							"SELECT rolsuper, oid "
-							"FROM pg_catalog.pg_roles "
-							"WHERE rolname = current_user "
-							"AND rolname !~ '^pg_'");
+										"SELECT rolsuper, oid "
+										"FROM pg_catalog.pg_roles "
+										"WHERE rolname = current_user "
+										"AND rolname !~ '^pg_'");
 
 	/*
 	 * We only allow the install user in the new cluster (see comment below)
@@ -696,13 +696,14 @@ check_proper_datallowconn(ClusterInfo *cluster)
 
 	/* get database names */
 	PGresult   *dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn "
-							  "FROM	pg_catalog.pg_database");
+										  "SELECT	datname, datallowconn "
+										  "FROM	pg_catalog.pg_database");
 
 	int			i_datname = PQfnumber(dbres, "datname");
 	int			i_datallowconn = PQfnumber(dbres, "datallowconn");
 
 	int			ntups = PQntuples(dbres);
+
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
@@ -749,8 +750,8 @@ check_for_prepared_transactions(ClusterInfo *cluster)
 	prep_status("Checking for prepared transactions");
 
 	PGresult   *res = executeQueryOrDie(conn,
-							"SELECT * "
-							"FROM pg_catalog.pg_prepared_xacts");
+										"SELECT * "
+										"FROM pg_catalog.pg_prepared_xacts");
 
 	if (PQntuples(res) != 0)
 	{
@@ -807,13 +808,14 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 
 		/* Find any functions coming from contrib/isn */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT n.nspname, p.proname "
-								"FROM	pg_catalog.pg_proc p, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	p.pronamespace = n.oid AND "
-								"		p.probin = '$libdir/isn'");
+											"SELECT n.nspname, p.proname "
+											"FROM	pg_catalog.pg_proc p, "
+											"		pg_catalog.pg_namespace n "
+											"WHERE	p.pronamespace = n.oid AND "
+											"		p.probin = '$libdir/isn'");
 
 		int			ntups = PQntuples(res);
+
 		i_nspname = PQfnumber(res, "nspname");
 		i_proname = PQfnumber(res, "proname");
 		for (rowno = 0; rowno < ntups; rowno++)
@@ -891,21 +893,22 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 		 * used by pre-version 14 servers, not that of some future version.
 		 */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT o.oid AS oproid, "
-								"       n.nspname AS oprnsp, "
-								"       o.oprname, "
-								"       tn.nspname AS typnsp, "
-								"       t.typname "
-								"FROM pg_catalog.pg_operator o, "
-								"     pg_catalog.pg_namespace n, "
-								"     pg_catalog.pg_type t, "
-								"     pg_catalog.pg_namespace tn "
-								"WHERE o.oprnamespace = n.oid AND "
-								"      o.oprleft = t.oid AND "
-								"      t.typnamespace = tn.oid AND "
-								"      o.oprright = 0 AND "
-								"      o.oid >= 16384");
+											"SELECT o.oid AS oproid, "
+											"       n.nspname AS oprnsp, "
+											"       o.oprname, "
+											"       tn.nspname AS typnsp, "
+											"       t.typname "
+											"FROM pg_catalog.pg_operator o, "
+											"     pg_catalog.pg_namespace n, "
+											"     pg_catalog.pg_type t, "
+											"     pg_catalog.pg_namespace tn "
+											"WHERE o.oprnamespace = n.oid AND "
+											"      o.oprleft = t.oid AND "
+											"      t.typnamespace = tn.oid AND "
+											"      o.oprright = 0 AND "
+											"      o.oid >= 16384");
 		int			ntups = PQntuples(res);
+
 		i_oproid = PQfnumber(res, "oproid");
 		i_oprnsp = PQfnumber(res, "oprnsp");
 		i_oprname = PQfnumber(res, "oprname");
@@ -979,14 +982,15 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT n.nspname, c.relname "
-								"FROM	pg_catalog.pg_class c, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	c.relnamespace = n.oid AND "
-								"		c.relhasoids AND"
-								"       n.nspname NOT IN ('pg_catalog')");
+											"SELECT n.nspname, c.relname "
+											"FROM	pg_catalog.pg_class c, "
+											"		pg_catalog.pg_namespace n "
+											"WHERE	c.relnamespace = n.oid AND "
+											"		c.relhasoids AND"
+											"       n.nspname NOT IN ('pg_catalog')");
 
 		int			ntups = PQntuples(res);
+
 		i_nspname = PQfnumber(res, "nspname");
 		i_relname = PQfnumber(res, "relname");
 		for (rowno = 0; rowno < ntups; rowno++)
@@ -1059,9 +1063,9 @@ check_for_composite_data_type_usage(ClusterInfo *cluster)
 	Oid			firstUserOid = 16384;
 
 	char	   *base_query = psprintf("SELECT t.oid FROM pg_catalog.pg_type t "
-						  "LEFT JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid "
-						  " WHERE typtype = 'c' AND (t.oid < %u OR nspname = 'information_schema')",
-						  firstUserOid);
+									  "LEFT JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid "
+									  " WHERE typtype = 'c' AND (t.oid < %u OR nspname = 'information_schema')",
+									  firstUserOid);
 
 	bool		found = check_for_data_types_usage(cluster, base_query, output_path);
 
@@ -1106,24 +1110,24 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 	 * to write the query like this rather than depending on casts to regtype.
 	 */
 	bool		found = check_for_data_types_usage(cluster,
-									   "SELECT oid FROM pg_catalog.pg_type t "
-									   "WHERE t.typnamespace = "
-									   "        (SELECT oid FROM pg_catalog.pg_namespace "
-									   "         WHERE nspname = 'pg_catalog') "
-									   "  AND t.typname IN ( "
+												   "SELECT oid FROM pg_catalog.pg_type t "
+												   "WHERE t.typnamespace = "
+												   "        (SELECT oid FROM pg_catalog.pg_namespace "
+												   "         WHERE nspname = 'pg_catalog') "
+												   "  AND t.typname IN ( "
 	/* pg_class.oid is preserved, so 'regclass' is OK */
-									   "           'regcollation', "
-									   "           'regconfig', "
-									   "           'regdictionary', "
-									   "           'regnamespace', "
-									   "           'regoper', "
-									   "           'regoperator', "
-									   "           'regproc', "
-									   "           'regprocedure' "
+												   "           'regcollation', "
+												   "           'regconfig', "
+												   "           'regdictionary', "
+												   "           'regnamespace', "
+												   "           'regoper', "
+												   "           'regoperator', "
+												   "           'regproc', "
+												   "           'regprocedure' "
 	/* pg_authid.oid is preserved, so 'regrole' is OK */
 	/* pg_type.oid is (mostly) preserved, so 'regtype' is OK */
-									   "         )",
-									   output_path);
+												   "         )",
+												   output_path);
 
 	if (found)
 	{
@@ -1181,9 +1185,9 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 	prep_status("Checking for roles starting with \"pg_\"");
 
 	PGresult   *res = executeQueryOrDie(conn,
-							"SELECT * "
-							"FROM pg_catalog.pg_roles "
-							"WHERE rolname ~ '^pg_'");
+										"SELECT * "
+										"FROM pg_catalog.pg_roles "
+										"WHERE rolname ~ '^pg_'");
 
 	if (PQntuples(res) != 0)
 	{
@@ -1234,12 +1238,13 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 		 * used by pre-version 14 servers, not that of some future version.
 		 */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT c.oid as conoid, c.conname, n.nspname "
-								"FROM pg_catalog.pg_conversion c, "
-								"     pg_catalog.pg_namespace n "
-								"WHERE c.connamespace = n.oid AND "
-								"      c.oid >= 16384");
+											"SELECT c.oid as conoid, c.conname, n.nspname "
+											"FROM pg_catalog.pg_conversion c, "
+											"     pg_catalog.pg_namespace n "
+											"WHERE c.connamespace = n.oid AND "
+											"      c.oid >= 16384");
 		int			ntups = PQntuples(res);
+
 		i_conoid = PQfnumber(res, "conoid");
 		i_conname = PQfnumber(res, "conname");
 		i_nspname = PQfnumber(res, "nspname");
@@ -1296,6 +1301,7 @@ get_canonical_locale_name(int category, const char *locale)
 
 	/* get the current setting, so we can restore it. */
 	char	   *save = setlocale(category, NULL);
+
 	if (!save)
 		pg_fatal("failed to get the current locale\n");
 

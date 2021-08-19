@@ -70,6 +70,7 @@ get_random_uint64(void)
 {
 
 	uint64		x = (uint64) (random() & 0xFFFF) << 48;
+
 	x |= (uint64) (random() & 0xFFFF) << 32;
 	x |= (uint64) (random() & 0xFFFF) << 16;
 	x |= (uint64) (random() & 0xFFFF);
@@ -105,6 +106,7 @@ main(int argc, char **argv)
 		t1.hl.hi = x;
 		t1.hl.lo = y;
 		test128		t2 = t1;
+
 		t1.i128 += (int128) (uint64) z;
 		int128_add_uint64(&t2.I128, (uint64) z);
 

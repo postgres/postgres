@@ -116,6 +116,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 		text	   *val = DatumGetTextPP(entry->key);
 
 		TRGM	   *res = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
+
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -134,6 +135,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 		}
 
 		TRGM	   *res = gtrgm_alloc(true, siglen, sign);
+
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -214,6 +216,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	 * that's worth fixing.)
 	 */
 	gtrgm_consistent_cache *cache = (gtrgm_consistent_cache *) fcinfo->flinfo->fn_extra;
+
 	if (cache == NULL ||
 		cache->strategy != strategy ||
 		VARSIZE(cache->query) != querysize ||
@@ -387,6 +390,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 				{				/* all leafs contains orig trgm */
 
 					bool	   *check = trgm_presence_map(qtrg, key);
+
 					res = trigramsMatchGraph(cache->graph, check);
 					pfree(check);
 				}
@@ -411,6 +415,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 					 * and that usefully improves the quality of the search.
 					 */
 					bool	   *check = (bool *) palloc(len * sizeof(bool));
+
 					for (k = 0; k < len; k++)
 					{
 						CPTRGM(((char *) &tmp), ptr + k);
@@ -462,8 +467,8 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 		qtrg = generate_trgm(VARDATA(query), querysize - VARHDRSZ);
 
 		char	   *newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-									  MAXALIGN(querysize) +
-									  VARSIZE(qtrg));
+												  MAXALIGN(querysize) +
+												  VARSIZE(qtrg));
 
 		memcpy(newcache, query, querysize);
 		memcpy(newcache + MAXALIGN(querysize), qtrg, VARSIZE(qtrg));
@@ -697,8 +702,8 @@ gtrgm_penalty(PG_FUNCTION_ARGS)
 		{
 
 			char	   *newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-										  MAXALIGN(siglen) +
-										  newvalsize);
+													  MAXALIGN(siglen) +
+													  newvalsize);
 
 			makesign((BITVECP) newcache, newval, siglen);
 
@@ -831,6 +836,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 
 	/* initialize the result vectors */
 	int32		nbytes = maxoff * sizeof(OffsetNumber);
+
 	v->spl_left = left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;
@@ -845,6 +851,7 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 
 	/* sort before ... */
 	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

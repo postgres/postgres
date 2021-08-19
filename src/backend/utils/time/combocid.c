@@ -252,9 +252,9 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	key.cmin = cmin;
 	key.cmax = cmax;
 	ComboCidEntry entry = (ComboCidEntry) hash_search(comboHash,
-										(void *) &key,
-										HASH_ENTER,
-										&found);
+													  (void *) &key,
+													  HASH_ENTER,
+													  &found);
 
 	if (found)
 	{
@@ -319,7 +319,8 @@ SerializeComboCIDState(Size maxsize, char *start_address)
 
 	/* If maxsize is too small, throw an error. */
 	char	   *endptr = start_address + sizeof(int) +
-		(sizeof(ComboCidKeyData) * usedComboCids);
+	(sizeof(ComboCidKeyData) * usedComboCids);
+
 	if (endptr < start_address || endptr > start_address + maxsize)
 		elog(ERROR, "not enough space to serialize ComboCID state");
 

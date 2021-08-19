@@ -872,6 +872,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 
 			ArrayType  *arrayval = DatumGetArrayTypeP(((Const *) arraynode)->constvalue);
 			int			nelems = ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
+
 			if (nelems <= MAX_SAOP_ARRAY_SIZE)
 			{
 				info->startup_fn = arrayconst_startup_fn;
@@ -914,6 +915,7 @@ list_next_fn(PredIterInfo info)
 	if (l == NULL)
 		return NULL;
 	Node	   *n = lfirst(l);
+
 	info->state = (void *) lnext(info->state_list, l);
 	return n;
 }
@@ -959,11 +961,13 @@ arrayconst_startup_fn(Node *clause, PredIterInfo info)
 
 	/* Create working state struct */
 	ArrayConstIterState *state = (ArrayConstIterState *) palloc(sizeof(ArrayConstIterState));
+
 	info->state = (void *) state;
 
 	/* Deconstruct the array literal */
 	Const	   *arrayconst = (Const *) lsecond(saop->args);
 	ArrayType  *arrayval = DatumGetArrayTypeP(arrayconst->constvalue);
+
 	get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 						 &elmlen, &elmbyval, &elmalign);
 	deconstruct_array(arrayval,
@@ -1036,6 +1040,7 @@ arrayexpr_startup_fn(Node *clause, PredIterInfo info)
 
 	/* Create working state struct */
 	ArrayExprIterState *state = (ArrayExprIterState *) palloc(sizeof(ArrayExprIterState));
+
 	info->state = (void *) state;
 
 	/* Set up a dummy OpExpr to return as the per-item node */
@@ -1050,6 +1055,7 @@ arrayexpr_startup_fn(Node *clause, PredIterInfo info)
 
 	/* Initialize iteration variable to first member of ArrayExpr */
 	ArrayExpr  *arrayexpr = (ArrayExpr *) lsecond(saop->args);
+
 	info->state_list = arrayexpr->elements;
 	state->next = list_head(arrayexpr->elements);
 }
@@ -1420,6 +1426,7 @@ clause_is_strict_for(Node *clause, Node *subexpr, bool allow_false)
 
 				/* Otherwise, we can compute the number of elements. */
 				ArrayType  *arrval = DatumGetArrayTypeP(arrayconst->constvalue);
+
 				nelems = ArrayGetNItems(ARR_NDIM(arrval), ARR_DIMS(arrval));
 			}
 			else if (arraynode && IsA(arraynode, ArrayExpr) &&
@@ -1834,12 +1841,12 @@ operator_predicate_proof(Expr *predicate, Node *clause,
 
 	/* Build expression tree */
 	Expr	   *test_expr = make_opclause(test_op,
-							  BOOLOID,
-							  false,
-							  (Expr *) pred_const,
-							  (Expr *) clause_const,
-							  InvalidOid,
-							  pred_collation);
+										  BOOLOID,
+										  false,
+										  (Expr *) pred_const,
+										  (Expr *) clause_const,
+										  InvalidOid,
+										  pred_collation);
 
 	/* Fill in opfuncids */
 	fix_opfuncids((Node *) test_expr);
@@ -1849,8 +1856,8 @@ operator_predicate_proof(Expr *predicate, Node *clause,
 
 	/* And execute it. */
 	Datum		test_result = ExecEvalExprSwitchContext(test_exprstate,
-											GetPerTupleExprContext(estate),
-											&isNull);
+														GetPerTupleExprContext(estate),
+														&isNull);
 
 	/* Get back to outer memory context */
 	MemoryContextSwitchTo(oldcontext);
@@ -1979,8 +1986,9 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 	key.pred_op = pred_op;
 	key.clause_op = clause_op;
 	OprProofCacheEntry *cache_entry = (OprProofCacheEntry *) hash_search(OprProofCacheHash,
-													 (void *) &key,
-													 HASH_ENTER, &cfound);
+																		 (void *) &key,
+																		 HASH_ENTER, &cfound);
+
 	if (!cfound)
 	{
 		/* new cache entry, set it invalid */
@@ -2152,6 +2160,7 @@ operator_same_subexprs_lookup(Oid pred_op, Oid clause_op, bool refute_it)
 {
 
 	OprProofCacheEntry *cache_entry = lookup_proof_cache(pred_op, clause_op, refute_it);
+
 	if (refute_it)
 		return cache_entry->same_subexprs_refutes;
 	else
@@ -2176,6 +2185,7 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 {
 
 	OprProofCacheEntry *cache_entry = lookup_proof_cache(pred_op, clause_op, refute_it);
+
 	if (refute_it)
 		return cache_entry->refute_test_op;
 	else

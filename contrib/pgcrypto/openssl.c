@@ -95,6 +95,7 @@ digest_free_callback(ResourceReleasePhase phase,
 		return;
 
 	OSSLDigest *next = open_digests;
+
 	while (next)
 	{
 		curr = next;
@@ -192,6 +193,7 @@ px_find_digest(const char *name, PX_MD **res)
 	}
 
 	const EVP_MD *md = EVP_get_digestbyname(name);
+
 	if (md == NULL)
 		return PXE_NO_HASH;
 
@@ -203,6 +205,7 @@ px_find_digest(const char *name, PX_MD **res)
 	digest = MemoryContextAlloc(TopMemoryContext, sizeof(*digest));
 
 	EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+
 	if (!ctx)
 	{
 		pfree(digest);
@@ -313,6 +316,7 @@ cipher_free_callback(ResourceReleasePhase phase,
 		return;
 
 	OSSLCipher *next = open_ciphers;
+
 	while (next)
 	{
 		curr = next;
@@ -351,6 +355,7 @@ gen_ossl_iv_size(PX_Cipher *c)
 	OSSLCipher *od = (OSSLCipher *) c->ptr;
 
 	unsigned	ivlen = od->ciph->block_size;
+
 	return ivlen;
 }
 
@@ -442,6 +447,7 @@ bf_check_supported_key_len(void)
 
 	/* encrypt with 448bits key and verify output */
 	EVP_CIPHER_CTX *evp_ctx = EVP_CIPHER_CTX_new();
+
 	if (!evp_ctx)
 		return 0;
 	if (!EVP_EncryptInit_ex(evp_ctx, EVP_bf_ecb(), NULL, NULL, NULL))
@@ -583,6 +589,7 @@ ossl_aes_ecb_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv
 	OSSLCipher *od = c->ptr;
 
 	int			err = ossl_aes_init(c, key, klen, iv);
+
 	if (err)
 		return err;
 
@@ -612,6 +619,7 @@ ossl_aes_cbc_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv
 	OSSLCipher *od = c->ptr;
 
 	int			err = ossl_aes_init(c, key, klen, iv);
+
 	if (err)
 		return err;
 
@@ -781,6 +789,7 @@ px_find_cipher(const char *name, PX_Cipher **res)
 
 	/* Allocate an EVP_CIPHER_CTX object. */
 	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
 	if (!ctx)
 	{
 		pfree(od);

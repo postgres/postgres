@@ -566,6 +566,7 @@ pgss_shmem_startup(void)
 
 	/* Allocate new query text temp file */
 	FILE	   *qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+
 	if (qfile == NULL)
 		goto write_error;
 
@@ -736,6 +737,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 		return;
 
 	FILE	   *file = AllocateFile(PGSS_DUMP_FILE ".tmp", PG_BINARY_W);
+
 	if (file == NULL)
 		goto error;
 
@@ -978,6 +980,7 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		{
 
 			MemoryContext oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+
 			queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
 			MemoryContextSwitchTo(oldcxt);
 		}
@@ -1147,10 +1150,10 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		 * VIEW, REFRESH MATERIALIZED VIEW and SELECT INTO.
 		 */
 		uint64		rows = (qc && (qc->commandTag == CMDTAG_COPY ||
-					   qc->commandTag == CMDTAG_FETCH ||
-					   qc->commandTag == CMDTAG_SELECT ||
-					   qc->commandTag == CMDTAG_REFRESH_MATERIALIZED_VIEW)) ?
-			qc->nprocessed : 0;
+								   qc->commandTag == CMDTAG_FETCH ||
+								   qc->commandTag == CMDTAG_SELECT ||
+								   qc->commandTag == CMDTAG_REFRESH_MATERIALIZED_VIEW)) ?
+		qc->nprocessed : 0;
 
 		/* calc differences of buffer counters. */
 		memset(&bufusage, 0, sizeof(BufferUsage));
@@ -1271,7 +1274,7 @@ pgss_store(const char *query, uint64 queryId,
 
 		/* Append new query text to file with only shared lock held */
 		bool		stored = qtext_store(norm_query ? norm_query : query, query_len,
-							 &query_offset, &gc_count);
+										 &query_offset, &gc_count);
 
 		/*
 		 * Determine whether we need to garbage collect external query texts
@@ -1562,6 +1565,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	}
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1667,8 +1671,8 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				{
 
 					char	   *enc = pg_any_to_server(qstr,
-										   entry->query_len,
-										   entry->encoding);
+													   entry->query_len,
+													   entry->encoding);
 
 					values[i++] = CStringGetTextDatum(enc);
 
@@ -1850,6 +1854,7 @@ pgss_memsize(void)
 {
 
 	Size		size = MAXALIGN(sizeof(pgssSharedState));
+
 	size = add_size(size, hash_estimate_size(pgss_max, sizeof(pgssEntry)));
 
 	return size;
@@ -1982,6 +1987,7 @@ entry_dealloc(void)
 
 	/* Now zap an appropriate fraction of lowest-usage entries */
 	int			nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
+
 	nvictims = Min(nvictims, i);
 
 	for (i = 0; i < nvictims; i++)
@@ -2043,6 +2049,7 @@ qtext_store(const char *query, int query_len,
 
 	/* Now write the data into the successfully-reserved part of the file */
 	int			fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY);
+
 	if (fd < 0)
 		goto error;
 
@@ -2103,6 +2110,7 @@ qtext_load_file(Size *buffer_size)
 	struct stat stat;
 
 	int			fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY);
+
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
@@ -2271,6 +2279,7 @@ gc_qtexts(void)
 	 * risky and can easily lead to complete denial of service.
 	 */
 	char	   *qbuffer = qtext_load_file(&qbuffer_size);
+
 	if (qbuffer == NULL)
 		goto gc_fail;
 
@@ -2689,9 +2698,9 @@ fill_in_constant_lengths(JumbleState *jstate, const char *query,
 
 	/* initialize the flex scanner --- should match raw_parser() */
 	core_yyscan_t yyscanner = scanner_init(query,
-							 &yyextra,
-							 &ScanKeywords,
-							 ScanKeywordTokens);
+										   &yyextra,
+										   &ScanKeywords,
+										   ScanKeywordTokens);
 
 	/* we don't want to re-emit any escape string warnings */
 	yyextra.escape_string_warning = false;

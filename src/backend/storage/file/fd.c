@@ -496,7 +496,8 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 		 * clean data (like FADV_DONTNEED).
 		 */
 		int			rc = sync_file_range(fd, offset, nbytes,
-							 SYNC_FILE_RANGE_WRITE);
+										 SYNC_FILE_RANGE_WRITE);
+
 		if (rc != 0)
 		{
 			int			elevel;
@@ -583,6 +584,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 		{
 
 			int			rc = msync(p, (size_t) nbytes, MS_ASYNC);
+
 			if (rc != 0)
 			{
 				ereport(data_sync_elevel(WARNING),
@@ -641,6 +643,7 @@ pg_truncate(const char *path, off_t length)
 	int			ret;
 
 	int			fd = OpenTransientFile(path, O_RDWR | PG_BINARY);
+
 	if (fd >= 0)
 	{
 		ret = ftruncate(fd, 0);
@@ -704,6 +707,7 @@ durable_rename(const char *oldfile, const char *newfile, int elevel)
 		return -1;
 
 	int			fd = OpenTransientFile(newfile, PG_BINARY | O_RDWR);
+
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
@@ -721,6 +725,7 @@ durable_rename(const char *oldfile, const char *newfile, int elevel)
 
 			/* close file upon error, might not be in transaction context */
 			int			save_errno = errno;
+
 			CloseTransientFile(fd);
 			errno = save_errno;
 
@@ -904,7 +909,7 @@ InitFileAccess(void)
 void
 InitTemporaryFileAccess(void)
 {
-	Assert(SizeVfdCache != 0);	/* InitFileAccess() needs to have run*/
+	Assert(SizeVfdCache != 0);	/* InitFileAccess() needs to have run */
 	Assert(!temporary_files_allowed);	/* call me only once */
 
 	/*
@@ -1412,6 +1417,7 @@ AllocateVfd(void)
 		 * Be careful not to clobber VfdCache ptr if realloc fails.
 		 */
 		Vfd		   *newVfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
+
 		if (newVfdCache == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1570,6 +1576,7 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 	 * We need a malloc'd copy of the file name; fail cleanly if no room.
 	 */
 	char	   *fnamecopy = strdup(fileName);
+
 	if (fnamecopy == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1784,7 +1791,8 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 	 * temp file that can be reused.
 	 */
 	File		file = PathNameOpenFile(tempfilepath,
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
+										O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
+
 	if (file <= 0)
 	{
 		/*
@@ -1833,6 +1841,7 @@ PathNameCreateTemporaryFile(const char *path, bool error_on_failure)
 	 * temp file that can be reused.
 	 */
 	File		file = PathNameOpenFile(path, O_RDWR | O_CREAT | O_TRUNC | PG_BINARY);
+
 	if (file <= 0)
 	{
 		if (error_on_failure)
@@ -2046,6 +2055,7 @@ FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info)
 			   (int64) offset, amount));
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return returnCode;
 
@@ -2075,6 +2085,7 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 		return;
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return;
 
@@ -2096,6 +2107,7 @@ FileRead(File file, char *buffer, int amount, off_t offset,
 			   amount, buffer));
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return returnCode;
 
@@ -2150,6 +2162,7 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 			   amount, buffer));
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return returnCode;
 
@@ -2243,6 +2256,7 @@ FileSync(File file, uint32 wait_event_info)
 			   file, VfdCache[file].fileName));
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return returnCode;
 
@@ -2280,6 +2294,7 @@ FileTruncate(File file, off_t offset, uint32 wait_event_info)
 			   file, VfdCache[file].fileName));
 
 	int			returnCode = FileAccess(file);
+
 	if (returnCode < 0)
 		return returnCode;
 
@@ -2552,6 +2567,7 @@ TryAgain:
 	errno = 0;
 	FILE	   *file = popen(command, mode);
 	int			save_errno = errno;
+
 	pqsignal(SIGPIPE, SIG_IGN);
 	errno = save_errno;
 	if (file != NULL)
@@ -3345,6 +3361,7 @@ do_syncfs(const char *path)
 {
 
 	int			fd = OpenTransientFile(path, O_RDONLY);
+
 	if (fd < 0)
 	{
 		ereport(LOG,
@@ -3430,6 +3447,7 @@ SyncDataDirectory(void)
 		do_syncfs(".");
 		/* If any tablespaces are configured, sync each of those. */
 		DIR		   *dir = AllocateDir("pg_tblspc");
+
 		while ((de = ReadDirExtended(dir, "pg_tblspc", LOG)))
 		{
 			char		path[MAXPGPATH];
@@ -3632,6 +3650,7 @@ fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel)
 	 * not writable by our userid, but we assume that's OK.
 	 */
 	int			flags = PG_BINARY;
+
 	if (!isdir)
 		flags |= O_RDWR;
 	else
@@ -3667,6 +3686,7 @@ fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel)
 
 		/* close file upon error, might not be in transaction context */
 		int			save_errno = errno;
+
 		(void) CloseTransientFile(fd);
 		errno = save_errno;
 

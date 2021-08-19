@@ -172,7 +172,8 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 		{
 
 			uint32		hkey = DatumGetUInt32(FunctionCall1Coll(&hashfunctions[i],
-													collations[i], pslot->tts_values[i]));
+																collations[i], pslot->tts_values[i]));
+
 			hashkey ^= hkey;
 		}
 	}
@@ -510,6 +511,7 @@ cache_store_tuple(MemoizeState *mstate, TupleTableSlot *slot)
 	MemoryContext oldcontext = MemoryContextSwitchTo(mstate->tableContext);
 
 	MemoizeTuple *tuple = (MemoizeTuple *) palloc(sizeof(MemoizeTuple));
+
 	tuple->mintuple = ExecCopySlotMinimalTuple(slot);
 	tuple->next = NULL;
 
@@ -649,6 +651,7 @@ ExecMemoize(PlanState *pstate)
 				/* Scan the outer node for a tuple to cache */
 				outerNode = outerPlanState(node);
 				TupleTableSlot *outerslot = ExecProcNode(outerNode);
+
 				if (TupIsNull(outerslot))
 				{
 					/*
@@ -737,6 +740,7 @@ ExecMemoize(PlanState *pstate)
 				 */
 				outerNode = outerPlanState(node);
 				TupleTableSlot *outerslot = ExecProcNode(outerNode);
+
 				if (TupIsNull(outerslot))
 				{
 					/* No more tuples.  Mark it as complete */
@@ -782,6 +786,7 @@ ExecMemoize(PlanState *pstate)
 				 */
 				outerNode = outerPlanState(node);
 				TupleTableSlot *outerslot = ExecProcNode(outerNode);
+
 				if (TupIsNull(outerslot))
 				{
 					node->mstatus = MEMO_END_OF_SCAN;
@@ -830,6 +835,7 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &mstate->ss.ps);
 
 	Plan	   *outerNode = outerPlan(node);
+
 	outerPlanState(mstate) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
@@ -937,6 +943,7 @@ ExecEndMemoize(MemoizeState *node)
 		memoize_start_iterate(node->hashtable, &i);
 
 		int			count = 0;
+
 		while ((entry = memoize_iterate(node->hashtable, &i)) != NULL)
 		{
 			MemoizeTuple *tuple = entry->tuplehead;
@@ -969,6 +976,7 @@ ExecEndMemoize(MemoizeState *node)
 
 		Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
 		MemoizeInstrumentation *si = &node->shared_info->sinstrument[ParallelWorkerNumber];
+
 		memcpy(si, &node->stats, sizeof(MemoizeInstrumentation));
 	}
 
@@ -1043,6 +1051,7 @@ ExecMemoizeEstimate(MemoizeState *node, ParallelContext *pcxt)
 		return;
 
 	Size		size = mul_size(pcxt->nworkers, sizeof(MemoizeInstrumentation));
+
 	size = add_size(size, offsetof(SharedMemoizeInfo, sinstrument));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -1063,7 +1072,8 @@ ExecMemoizeInitializeDSM(MemoizeState *node, ParallelContext *pcxt)
 		return;
 
 	Size		size = offsetof(SharedMemoizeInfo, sinstrument)
-		+ pcxt->nworkers * sizeof(MemoizeInstrumentation);
+	+ pcxt->nworkers * sizeof(MemoizeInstrumentation);
+
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
 	memset(node->shared_info, 0, size);
@@ -1099,8 +1109,9 @@ ExecMemoizeRetrieveInstrumentation(MemoizeState *node)
 		return;
 
 	Size		size = offsetof(SharedMemoizeInfo, sinstrument)
-		+ node->shared_info->num_workers * sizeof(MemoizeInstrumentation);
+	+ node->shared_info->num_workers * sizeof(MemoizeInstrumentation);
 	SharedMemoizeInfo *si = palloc(size);
+
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

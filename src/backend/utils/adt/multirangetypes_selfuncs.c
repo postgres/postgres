@@ -306,6 +306,7 @@ calc_multirangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		AttStatsSlot sslot;
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+
 		null_frac = stats->stanullfrac;
 
 		/* Try to get fraction of empty multiranges */
@@ -495,6 +496,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	int			nhist = hslot.nvalues;
 	RangeBound *hist_lower = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
 	RangeBound *hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
+
 	for (i = 0; i < nhist; i++)
 	{
 		bool		empty;
@@ -773,6 +775,7 @@ length_hist_bsearch(Datum *length_hist_values, int length_hist_nvalues,
 		middle = (lower + upper + 1) / 2;
 
 		double		middleval = DatumGetFloat8(length_hist_values[middle]);
+
 		if (middleval < value || (equal && middleval <= value))
 			lower = middle;
 		else
@@ -809,9 +812,10 @@ get_position(TypeCacheEntry *typcache, const RangeBound *value, const RangeBound
 
 		/* Calculate relative position using subdiff function. */
 		float8		bin_width = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
-													 typcache->rng_collation,
-													 hist2->val,
-													 hist1->val));
+																 typcache->rng_collation,
+																 hist2->val,
+																 hist1->val));
+
 		if (isnan(bin_width) || bin_width <= 0.0)
 			return 0.5;			/* punt for NaN or zero-width bin */
 
@@ -922,9 +926,10 @@ get_distance(TypeCacheEntry *typcache, const RangeBound *bound1, const RangeBoun
 		{
 
 			float8		res = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
-												   typcache->rng_collation,
-												   bound2->val,
-												   bound1->val));
+															   typcache->rng_collation,
+															   bound2->val,
+															   bound1->val));
+
 			/* Reject possible NaN result, also negative result */
 			if (isnan(res) || res < 0.0)
 				return 1.0;
@@ -1014,6 +1019,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 
 	/* First bin, the one that contains lower bound */
 	int			i = length_hist_bsearch(length_hist_values, length_hist_nvalues, length1, equal);
+
 	if (i >= length_hist_nvalues - 1)
 		return 1.0;
 
@@ -1046,6 +1052,7 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
 	 * bin, this falls out immediately)
 	 */
 	double		area = 0.0;
+
 	for (; i < length_hist_nvalues - 1; i++)
 	{
 		double		bin_upper = DatumGetFloat8(length_hist_values[i + 1]);
@@ -1159,8 +1166,8 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 	 * using linear interpolation of subdiff function.
 	 */
 	double		upper_bin_width = get_position(typcache, upper,
-								   &hist_lower[upper_index],
-								   &hist_lower[upper_index + 1]);
+											   &hist_lower[upper_index],
+											   &hist_lower[upper_index + 1]);
 
 	/*
 	 * In the loop, dist and prev_dist are the distance of the "current" bin's
@@ -1175,6 +1182,7 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 	double		bin_width = upper_bin_width;
 
 	double		sum_frac = 0.0;
+
 	for (i = upper_index; i >= 0; i--)
 	{
 		double		dist;
@@ -1208,8 +1216,8 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
 		 * to not exceed the distance to the upper bound of the query range.
 		 */
 		double		length_hist_frac = calc_length_hist_frac(length_hist_values,
-												 length_hist_nvalues,
-												 prev_dist, dist, true);
+															 length_hist_nvalues,
+															 prev_dist, dist, true);
 
 		/*
 		 * Add the fraction of tuples in this bin, with a suitable length, to
@@ -1287,6 +1295,7 @@ calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 	 */
 	float8		prev_dist = get_distance(typcache, lower, upper);
 	double		sum_frac = 0.0;
+
 	bin_width = lower_bin_width;
 	for (i = lower_index; i >= 0; i--)
 	{
@@ -1303,9 +1312,9 @@ calc_hist_selectivity_contains(TypeCacheEntry *typcache,
 		 * longer than (or equal to) distance to upper bound of query range.
 		 */
 		double		length_hist_frac =
-			1.0 - calc_length_hist_frac(length_hist_values,
-										length_hist_nvalues,
-										prev_dist, dist, false);
+		1.0 - calc_length_hist_frac(length_hist_values,
+									length_hist_nvalues,
+									prev_dist, dist, false);
 
 		sum_frac += length_hist_frac * bin_width / (double) (hist_nvalues - 1);
 

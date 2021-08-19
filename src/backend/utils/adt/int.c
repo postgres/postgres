@@ -184,6 +184,7 @@ int2vectorout(PG_FUNCTION_ARGS)
 
 	/* assumes sign, 5 digits, ' ' */
 	char	   *rp = result = (char *) palloc(nnums * 7 + 1);
+
 	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)
@@ -1172,6 +1173,7 @@ int4abs(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 	int32		result = (arg1 < 0) ? -arg1 : arg1;
+
 	PG_RETURN_INT32(result);
 }
 
@@ -1185,6 +1187,7 @@ int2abs(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
 	int16		result = (arg1 < 0) ? -arg1 : arg1;
+
 	PG_RETURN_INT16(result);
 }
 
@@ -1294,6 +1297,7 @@ int4lcm(PG_FUNCTION_ARGS)
 
 	/* lcm(x, y) = abs(x / gcd(x, y) * y) */
 	int32		gcd = int4gcd_internal(arg1, arg2);
+
 	arg1 = arg1 / gcd;
 
 	if (unlikely(pg_mul_s32_overflow(arg1, arg2, &result)))

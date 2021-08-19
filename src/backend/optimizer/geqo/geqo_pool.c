@@ -45,6 +45,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 
 	/* pool */
 	Pool	   *new_pool = (Pool *) palloc(sizeof(Pool));
+
 	new_pool->size = (int) pool_size;
 	new_pool->string_length = (int) string_length;
 
@@ -53,6 +54,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 
 	/* all gene */
 	Chromosome *chromo = (Chromosome *) new_pool->data; /* vector of all chromos */
+
 	for (i = 0; i < pool_size; i++)
 		chromo[i].string = palloc((string_length + 1) * sizeof(Gene));
 
@@ -70,6 +72,7 @@ free_pool(PlannerInfo *root, Pool *pool)
 
 	/* all gene */
 	Chromosome *chromo = (Chromosome *) pool->data; /* vector of all chromos */
+
 	for (i = 0; i < pool->size; i++)
 		pfree(chromo[i].string);
 
@@ -99,6 +102,7 @@ random_init_pool(PlannerInfo *root, Pool *pool)
 	 * ourselves get stuck in an infinite loop.
 	 */
 	int			i = 0;
+
 	while (i < pool->size)
 	{
 		init_tour(root, chromo[i].string, pool->string_length);
@@ -159,6 +163,7 @@ alloc_chromo(PlannerInfo *root, int string_length)
 {
 
 	Chromosome *chromo = (Chromosome *) palloc(sizeof(Chromosome));
+
 	chromo->string = (Gene *) palloc((string_length + 1) * sizeof(Gene));
 
 	return chromo;

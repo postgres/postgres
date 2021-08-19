@@ -27,6 +27,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 	Assert(pgconn != NULL);
 
 	PQExpBuffer contents = createPQExpBuffer();
+
 	if (!contents)
 	{
 		pg_log_error("out of memory");
@@ -41,6 +42,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 		appendPQExpBufferStr(contents, "standby_mode = 'on'\n");
 
 	PQconninfoOption *connOptions = PQconninfo(pgconn);
+
 	if (connOptions == NULL)
 	{
 		pg_log_error("out of memory");
@@ -81,6 +83,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 	 * options above!
 	 */
 	char	   *escaped = escape_quotes(conninfo_buf.data);
+
 	termPQExpBuffer(&conninfo_buf);
 	appendPQExpBuffer(contents, "primary_conninfo = '%s'\n", escaped);
 	free(escaped);
@@ -118,12 +121,13 @@ WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
 	Assert(pgconn != NULL);
 
 	bool		use_recovery_conf =
-		PQserverVersion(pgconn) < MINIMUM_VERSION_FOR_RECOVERY_GUC;
+	PQserverVersion(pgconn) < MINIMUM_VERSION_FOR_RECOVERY_GUC;
 
 	snprintf(filename, MAXPGPATH, "%s/%s", target_dir,
 			 use_recovery_conf ? "recovery.conf" : "postgresql.auto.conf");
 
 	FILE	   *cf = fopen(filename, use_recovery_conf ? "w" : "a");
+
 	if (cf == NULL)
 	{
 		pg_log_error("could not open file \"%s\": %m", filename);

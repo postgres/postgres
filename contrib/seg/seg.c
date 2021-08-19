@@ -274,8 +274,9 @@ gseg_penalty(PG_FUNCTION_ARGS)
 				tmp2;
 
 	SEG		   *ud = DatumGetSegP(DirectFunctionCall2(seg_union,
-										  origentry->key,
-										  newentry->key));
+													  origentry->key,
+													  newentry->key));
+
 	rt_seg_size(ud, &tmp1);
 	rt_seg_size(DatumGetSegP(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
@@ -523,6 +524,7 @@ gseg_binary_union(Datum r1, Datum r2, int *sizep)
 {
 
 	Datum		retval = DirectFunctionCall2(seg_union, r1, r2);
+
 	*sizep = sizeof(SEG);
 
 	return retval;
@@ -940,6 +942,7 @@ restore(char *result, float val, int n)
 		return strlen(result);
 
 	int			exp = atoi(p + 1);
+
 	if (exp == 0)
 	{
 		/* just truncate off the 'e+00' */

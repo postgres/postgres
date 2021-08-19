@@ -310,6 +310,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	 */
 	char	   *dp = xlogRecoveryCmd;
 	char	   *endp = xlogRecoveryCmd + MAXPGPATH - 1;
+
 	*endp = '\0';
 
 	for (sp = command; *sp; sp++)
@@ -352,6 +353,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	 * execute the constructed command
 	 */
 	int			rc = system(xlogRecoveryCmd);
+
 	if (rc != 0)
 	{
 		/*
@@ -468,6 +470,7 @@ XLogArchiveNotify(const char *xlog)
 	/* insert an otherwise empty file called <XLOG>.ready */
 	StatusFilePath(archiveStatusPath, xlog, ".ready");
 	FILE	   *fd = AllocateFile(archiveStatusPath, "w");
+
 	if (fd == NULL)
 	{
 		ereport(LOG,
@@ -531,6 +534,7 @@ XLogArchiveForceDone(const char *xlog)
 
 	/* insert an otherwise empty file called <XLOG>.done */
 	FILE	   *fd = AllocateFile(archiveDone, "w");
+
 	if (fd == NULL)
 	{
 		ereport(LOG,

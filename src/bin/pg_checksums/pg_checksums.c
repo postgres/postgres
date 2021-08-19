@@ -137,6 +137,7 @@ progress_report(bool finished)
 	Assert(showprogress);
 
 	pg_time_t	now = time(NULL);
+
 	if (now == last_progress_report && !finished)
 		return;					/* Max once per second */
 
@@ -242,6 +243,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 			continue;
 
 		uint16		csum = pg_checksum_page(buf.data, blockno + segmentno * RELSEG_SIZE);
+
 		if (mode == PG_MODE_CHECK)
 		{
 			if (csum != header->pd_checksum)
@@ -276,6 +278,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 
 			/* Write block with checksum */
 			int			w = write(f, buf.data, BLCKSZ);
+
 			if (w != BLCKSZ)
 			{
 				if (w < 0)
@@ -326,6 +329,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 
 	snprintf(path, sizeof(path), "%s/%s", basedir, subdir);
 	DIR		   *dir = opendir(path);
+
 	if (!dir)
 	{
 		pg_log_error("could not open directory \"%s\": %m", path);

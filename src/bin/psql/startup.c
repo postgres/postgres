@@ -332,6 +332,7 @@ main(int argc, char *argv[])
 			process_psqlrc(argv[0]);
 
 		int			success = listAllDbs(NULL, false);
+
 		PQfinish(pset.db);
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -396,10 +397,12 @@ main(int argc, char *argv[])
 					puts(cell->val);
 
 				PsqlScanState scan_state = psql_scan_create(&psqlscan_callbacks);
+
 				psql_scan_setup(scan_state,
 								cell->val, strlen(cell->val),
 								pset.encoding, standard_strings());
 				ConditionalStack cond_stack = conditional_stack_create();
+
 				psql_scan_set_passthrough(scan_state, (void *) cond_stack);
 
 				successResult = HandleSlashCmds(scan_state,
@@ -592,6 +595,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 
 					char	   *value = pg_strdup(optarg);
 					char	   *equal_loc = strchr(value, '=');
+
 					if (!equal_loc)
 						result = do_pset(value, NULL, &pset.popt, true);
 					else
@@ -636,6 +640,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 
 					char	   *value = pg_strdup(optarg);
 					char	   *equal_loc = strchr(value, '=');
+
 					if (!equal_loc)
 					{
 						if (!DeleteVariable(pset.vars, value))

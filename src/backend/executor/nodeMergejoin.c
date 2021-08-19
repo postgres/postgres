@@ -186,6 +186,7 @@ MJExamineQuals(List *mergeclauses,
 	MergeJoinClause clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
 
 	int			iClause = 0;
+
 	foreach(cl, mergeclauses)
 	{
 		OpExpr	   *qual = (OpExpr *) lfirst(cl);
@@ -238,9 +239,10 @@ MJExamineQuals(List *mergeclauses,
 		/* And get the matching support or comparison function */
 		Assert(clause->ssup.comparator == NULL);
 		Oid			sortfunc = get_opfamily_proc(opfamily,
-									 op_lefttype,
-									 op_righttype,
-									 BTSORTSUPPORT_PROC);
+												 op_lefttype,
+												 op_righttype,
+												 BTSORTSUPPORT_PROC);
+
 		if (OidIsValid(sortfunc))
 		{
 			/* The sort support function can provide a comparator */
@@ -608,6 +610,7 @@ ExecMergeJoin(PlanState *pstate)
 	PlanState  *innerPlan = innerPlanState(node);
 	PlanState  *outerPlan = outerPlanState(node);
 	ExprContext *econtext = node->js.ps.ps_ExprContext;
+
 	joinqual = node->js.joinqual;
 	ExprState  *otherqual = node->js.ps.qual;
 	bool		doFillOuter = node->mj_FillOuter;
@@ -843,6 +846,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedInner = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillInner(node);
+
 					if (result)
 						return result;
 				}
@@ -944,6 +948,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedOuter = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillOuter(node);
+
 					if (result)
 						return result;
 				}
@@ -1204,6 +1209,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedOuter = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillOuter(node);
+
 					if (result)
 						return result;
 				}
@@ -1265,6 +1271,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedInner = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillInner(node);
+
 					if (result)
 						return result;
 				}
@@ -1334,6 +1341,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedInner = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillInner(node);
+
 					if (result)
 						return result;
 				}
@@ -1379,6 +1387,7 @@ ExecMergeJoin(PlanState *pstate)
 					node->mj_MatchedOuter = true;	/* do it only once */
 
 					TupleTableSlot *result = MJFillOuter(node);
+
 					if (result)
 						return result;
 				}
@@ -1430,6 +1439,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	MergeJoinState *mergestate = makeNode(MergeJoinState);
+
 	mergestate->js.ps.plan = (Plan *) node;
 	mergestate->js.ps.state = estate;
 	mergestate->js.ps.ExecProcNode = ExecMergeJoin;
@@ -1500,6 +1510,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	 * tuple table initialization
 	 */
 	const TupleTableSlotOps *innerOps = ExecGetResultSlotOps(innerPlanState(mergestate), NULL);
+
 	mergestate->mj_MarkedTupleSlot = ExecInitExtraTupleSlot(estate, innerDesc,
 															innerOps);
 

@@ -40,6 +40,7 @@ pg_control_system(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(4);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_control_version",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catalog_version_no",
@@ -52,6 +53,7 @@ pg_control_system(PG_FUNCTION_ARGS)
 
 	/* read the control file */
 	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
+
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -87,6 +89,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(18);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "checkpoint_lsn",
 					   PG_LSNOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "redo_lsn",
@@ -127,6 +130,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 
 	/* Read the control file. */
 	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
+
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -213,6 +217,7 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(5);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "min_recovery_end_lsn",
 					   PG_LSNOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "min_recovery_end_timeline",
@@ -227,6 +232,7 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 
 	/* read the control file */
 	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
+
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));
@@ -263,6 +269,7 @@ pg_control_init(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(11);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "max_data_alignment",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database_block_size",
@@ -289,6 +296,7 @@ pg_control_init(PG_FUNCTION_ARGS)
 
 	/* read the control file */
 	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
+
 	if (!crc_ok)
 		ereport(ERROR,
 				(errmsg("calculated CRC checksum does not match value stored in file")));

@@ -764,8 +764,8 @@ extract_jsp_query(JsonPath *jp, StrategyNumber strat, bool pathOps,
 	jspInit(&root, jp);
 
 	JsonPathGinNode *node = strat == JsonbJsonpathExistsStrategyNumber
-		? extract_jsp_path_expr(&cxt, path, &root, NULL)
-		: extract_jsp_bool_expr(&cxt, path, &root, false);
+	? extract_jsp_path_expr(&cxt, path, &root, NULL)
+	: extract_jsp_bool_expr(&cxt, path, &root, false);
 
 	if (!node)
 	{
@@ -1324,6 +1324,7 @@ make_text_key(char flag, const char *str, int len)
 	{
 
 		uint32		hashval = DatumGetUInt32(hash_any((const unsigned char *) str, len));
+
 		snprintf(hashbuf, sizeof(hashbuf), "%08x", hashval);
 		str = hashbuf;
 		len = 8;
@@ -1336,6 +1337,7 @@ make_text_key(char flag, const char *str, int len)
 	 * header format when stored in the index.
 	 */
 	text	   *item = (text *) palloc(VARHDRSZ + len + 1);
+
 	SET_VARSIZE(item, VARHDRSZ + len + 1);
 
 	*VARDATA(item) = flag;

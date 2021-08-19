@@ -487,7 +487,7 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		 * eliminate some cases.
 		 */
 		int			order = bitncmp(ip_addr(prefix), ip_addr(argument),
-						Min(commonbits, ip_bits(argument)));
+									Min(commonbits, ip_bits(argument)));
 
 		if (order != 0)
 		{
@@ -537,7 +537,7 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		{
 
 			int			nextbit = ip_addr(argument)[commonbits / 8] &
-				(1 << (7 - commonbits % 8));
+			(1 << (7 - commonbits % 8));
 
 			switch (strategy)
 			{
@@ -622,7 +622,7 @@ inet_spg_consistent_bitmap(const inet *prefix, int nkeys, ScanKey scankeys,
 		{
 
 			int			nextbit = ip_addr(argument)[commonbits / 8] &
-				(1 << (7 - commonbits % 8));
+			(1 << (7 - commonbits % 8));
 
 			switch (strategy)
 			{

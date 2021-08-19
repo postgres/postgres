@@ -165,7 +165,7 @@ EnumValuesDelete(Oid enumTypeOid)
 				ObjectIdGetDatum(enumTypeOid));
 
 	SysScanDesc scan = systable_beginscan(pg_enum, EnumTypIdLabelIndexId, true,
-							  NULL, 1, key);
+										  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -238,8 +238,9 @@ AddEnumLabel(Oid enumTypeOid,
 	 * besides we need a check to support IF NOT EXISTS.
 	 */
 	HeapTuple	enum_tup = SearchSysCache2(ENUMTYPOIDNAME,
-							   ObjectIdGetDatum(enumTypeOid),
-							   CStringGetDatum(newVal));
+										   ObjectIdGetDatum(enumTypeOid),
+										   CStringGetDatum(newVal));
+
 	if (HeapTupleIsValid(enum_tup))
 	{
 		ReleaseSysCache(enum_tup);
@@ -261,9 +262,10 @@ AddEnumLabel(Oid enumTypeOid,
 	Relation	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	CatCList   *list;
+
 	/*
-	 * If we have to renumber the existing members, we restart from here:
-	 * Get the list of existing members of the enum
+	 * If we have to renumber the existing members, we restart from here: Get
+	 * the list of existing members of the enum
 	 */
 restart:
 	list = SearchSysCacheList1(ENUMTYPOIDNAME,
@@ -272,6 +274,7 @@ restart:
 
 	/* Sort the existing members by enumsortorder */
 	HeapTuple  *existing = (HeapTuple *) palloc(nelems * sizeof(HeapTuple));
+
 	for (i = 0; i < nelems; i++)
 		existing[i] = &(list->members[i]->tuple);
 
@@ -345,7 +348,7 @@ restart:
 
 			other_nbr_en = (Form_pg_enum) GETSTRUCT(existing[other_nbr_index]);
 			volatile float4 midpoint = (nbr_en->enumsortorder +
-						other_nbr_en->enumsortorder) / 2;
+										other_nbr_en->enumsortorder) / 2;
 
 			if (midpoint == nbr_en->enumsortorder ||
 				midpoint == other_nbr_en->enumsortorder)
@@ -405,6 +408,7 @@ restart:
 			 * will not take the fast path anyway.
 			 */
 			bool		sorts_ok = true;
+
 			for (i = 0; i < nelems; i++)
 			{
 				HeapTuple	exists_tup = existing[i];
@@ -524,7 +528,7 @@ RenameEnumLabel(Oid enumTypeOid,
 
 	/* Get the list of existing members of the enum */
 	CatCList   *list = SearchSysCacheList1(ENUMTYPOIDNAME,
-							   ObjectIdGetDatum(enumTypeOid));
+										   ObjectIdGetDatum(enumTypeOid));
 	int			nelems = list->n_members;
 
 	/*
@@ -534,6 +538,7 @@ RenameEnumLabel(Oid enumTypeOid,
 	 */
 	HeapTuple	old_tup = NULL;
 	bool		found_new = false;
+
 	for (i = 0; i < nelems; i++)
 	{
 		enum_tup = &(list->members[i]->tuple);
@@ -641,6 +646,7 @@ RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems)
 		Form_pg_enum en = (Form_pg_enum) GETSTRUCT(newtup);
 
 		float4		newsortorder = i + 1;
+
 		if (en->enumsortorder != newsortorder)
 		{
 			en->enumsortorder = newsortorder;

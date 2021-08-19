@@ -166,8 +166,8 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	CreateDirectory(newpath, 0);
 	HANDLE		dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE,
-						   0, 0, OPEN_EXISTING,
-						   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+									   0, 0, OPEN_EXISTING,
+									   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
 
 	if (dirhandle == INVALID_HANDLE_VALUE)
 		return -1;
@@ -244,6 +244,7 @@ pgreadlink(const char *path, char *buf, size_t size)
 	int			r;
 
 	DWORD		attr = GetFileAttributes(path);
+
 	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		_dosmaperr(GetLastError());
@@ -256,12 +257,13 @@ pgreadlink(const char *path, char *buf, size_t size)
 	}
 
 	HANDLE		h = CreateFile(path,
-				   GENERIC_READ,
-				   FILE_SHARE_READ | FILE_SHARE_WRITE,
-				   NULL,
-				   OPEN_EXISTING,
-				   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-				   0);
+							   GENERIC_READ,
+							   FILE_SHARE_READ | FILE_SHARE_WRITE,
+							   NULL,
+							   OPEN_EXISTING,
+							   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+							   0);
+
 	if (h == INVALID_HANDLE_VALUE)
 	{
 		_dosmaperr(GetLastError());

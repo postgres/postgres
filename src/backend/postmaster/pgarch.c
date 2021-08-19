@@ -293,13 +293,15 @@ pgarch_MainLoop(void)
 			pg_time_t	curtime = (pg_time_t) time(NULL);
 
 			int			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
+
 			if (timeout > 0)
 			{
 
 				int			rc = WaitLatch(MyLatch,
-							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   timeout * 1000L,
-							   WAIT_EVENT_ARCHIVER_MAIN);
+										   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+										   timeout * 1000L,
+										   WAIT_EVENT_ARCHIVER_MAIN);
+
 				if (rc & WL_POSTMASTER_DEATH)
 					time_to_stop = true;
 			}
@@ -460,6 +462,7 @@ pgarch_archiveXlog(char *xlog)
 	 */
 	char	   *dp = xlogarchcmd;
 	char	   *endp = xlogarchcmd + MAXPGPATH - 1;
+
 	*endp = '\0';
 
 	for (sp = XLogArchiveCommand; *sp; sp++)
@@ -511,6 +514,7 @@ pgarch_archiveXlog(char *xlog)
 	set_ps_display(activitymsg);
 
 	int			rc = system(xlogarchcmd);
+
 	if (rc != 0)
 	{
 		/*

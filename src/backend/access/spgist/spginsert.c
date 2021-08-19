@@ -121,8 +121,8 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 											  ALLOCSET_DEFAULT_SIZES);
 
 	double		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
-									   spgistBuildCallback, (void *) &buildstate,
-									   NULL);
+												   spgistBuildCallback, (void *) &buildstate,
+												   NULL);
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
@@ -140,6 +140,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	}
 
 	IndexBuildResult *result = (IndexBuildResult *) palloc0(sizeof(IndexBuildResult));
+
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 
@@ -155,6 +156,7 @@ spgbuildempty(Relation index)
 
 	/* Construct metapage. */
 	Page		page = (Page) palloc(BLCKSZ);
+
 	SpGistInitMetapage(page);
 
 	/*
@@ -209,8 +211,8 @@ spginsert(Relation index, Datum *values, bool *isnull,
 	SpGistState spgstate;
 
 	MemoryContext insertCtx = AllocSetContextCreate(CurrentMemoryContext,
-									  "SP-GiST insert temporary context",
-									  ALLOCSET_DEFAULT_SIZES);
+													"SP-GiST insert temporary context",
+													ALLOCSET_DEFAULT_SIZES);
 	MemoryContext oldCtx = MemoryContextSwitchTo(insertCtx);
 
 	initSpGistState(&spgstate, index);

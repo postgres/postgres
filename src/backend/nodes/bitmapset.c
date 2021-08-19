@@ -78,6 +78,7 @@ bms_copy(const Bitmapset *a)
 		return NULL;
 	size_t		size = BITMAPSET_SIZE(a->nwords);
 	Bitmapset  *result = (Bitmapset *) palloc(size);
+
 	memcpy(result, a, size);
 	return result;
 }
@@ -117,12 +118,14 @@ bms_equal(const Bitmapset *a, const Bitmapset *b)
 	}
 	/* And process */
 	int			shortlen = shorter->nwords;
+
 	for (i = 0; i < shortlen; i++)
 	{
 		if (shorter->words[i] != longer->words[i])
 			return false;
 	}
 	int			longlen = longer->nwords;
+
 	for (; i < longlen; i++)
 	{
 		if (longer->words[i] != 0)
@@ -151,6 +154,7 @@ bms_compare(const Bitmapset *a, const Bitmapset *b)
 		return bms_is_empty(a) ? 0 : +1;
 	/* Handle cases where one input is longer than the other */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = shortlen; i < a->nwords; i++)
 	{
 		if (a->words[i] != 0)
@@ -188,6 +192,7 @@ bms_make_singleton(int x)
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 	Bitmapset  *result = (Bitmapset *) palloc0(BITMAPSET_SIZE(wordnum + 1));
+
 	result->nwords = wordnum + 1;
 	result->words[wordnum] = ((bitmapword) 1 << bitnum);
 	return result;
@@ -240,6 +245,7 @@ bms_union(const Bitmapset *a, const Bitmapset *b)
 	}
 	/* And union the shorter input into the result */
 	int			otherlen = other->nwords;
+
 	for (i = 0; i < otherlen; i++)
 		result->words[i] |= other->words[i];
 	return result;
@@ -271,6 +277,7 @@ bms_intersect(const Bitmapset *a, const Bitmapset *b)
 	}
 	/* And intersect the longer input with the result */
 	int			resultlen = result->nwords;
+
 	for (i = 0; i < resultlen; i++)
 		result->words[i] &= other->words[i];
 	return result;
@@ -291,8 +298,10 @@ bms_difference(const Bitmapset *a, const Bitmapset *b)
 		return bms_copy(a);
 	/* Copy the left input */
 	Bitmapset  *result = bms_copy(a);
+
 	/* And remove b's bits from result */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 		result->words[i] &= ~b->words[i];
 	return result;
@@ -314,6 +323,7 @@ bms_is_subset(const Bitmapset *a, const Bitmapset *b)
 		return bms_is_empty(a);
 	/* Check common words */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 	{
 		if ((a->words[i] & ~b->words[i]) != 0)
@@ -353,8 +363,9 @@ bms_subset_compare(const Bitmapset *a, const Bitmapset *b)
 	if (b == NULL)
 		return bms_is_empty(a) ? BMS_EQUAL : BMS_SUBSET2;
 	/* Check common words */
-	BMS_Comparison result = BMS_EQUAL;			/* status so far */
+	BMS_Comparison result = BMS_EQUAL;	/* status so far */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 	{
 		bitmapword	aword = a->words[i];
@@ -466,6 +477,7 @@ bms_member_index(Bitmapset *a, int x)
 	 * itself, so we subtract 1.
 	 */
 	bitmapword	mask = ((bitmapword) 1 << bitnum) - 1;
+
 	result += bmw_popcount(a->words[wordnum] & mask);
 
 	return result;
@@ -484,6 +496,7 @@ bms_overlap(const Bitmapset *a, const Bitmapset *b)
 		return false;
 	/* Check words in common */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 	{
 		if ((a->words[i] & b->words[i]) != 0)
@@ -536,6 +549,7 @@ bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
 		return !bms_is_empty(a);
 	/* Check words in common */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 	{
 		if ((a->words[i] & ~b->words[i]) != 0)
@@ -564,6 +578,7 @@ bms_singleton_member(const Bitmapset *a)
 	if (a == NULL)
 		elog(ERROR, "bitmapset is empty");
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -601,6 +616,7 @@ bms_get_singleton_member(const Bitmapset *a, int *member)
 	if (a == NULL)
 		return false;
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -631,6 +647,7 @@ bms_num_members(const Bitmapset *a)
 	if (a == NULL)
 		return 0;
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -656,6 +673,7 @@ bms_membership(const Bitmapset *a)
 	if (a == NULL)
 		return BMS_EMPTY_SET;
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -683,6 +701,7 @@ bms_is_empty(const Bitmapset *a)
 	if (a == NULL)
 		return true;
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -791,6 +810,7 @@ bms_add_members(Bitmapset *a, const Bitmapset *b)
 	}
 	/* And union the shorter input into the result */
 	int			otherlen = other->nwords;
+
 	for (i = 0; i < otherlen; i++)
 		result->words[i] |= other->words[i];
 	if (result != a)
@@ -889,6 +909,7 @@ bms_int_members(Bitmapset *a, const Bitmapset *b)
 	}
 	/* Intersect b into a; we need never copy */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 		a->words[i] &= b->words[i];
 	for (; i < a->nwords; i++)
@@ -911,6 +932,7 @@ bms_del_members(Bitmapset *a, const Bitmapset *b)
 		return a;
 	/* Remove b's bits from a; we need never copy */
 	int			shortlen = Min(a->nwords, b->nwords);
+
 	for (i = 0; i < shortlen; i++)
 		a->words[i] &= ~b->words[i];
 	return a;
@@ -944,6 +966,7 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	}
 	/* And union the shorter input into the result */
 	int			otherlen = other->nwords;
+
 	for (i = 0; i < otherlen; i++)
 		result->words[i] |= other->words[i];
 	if (other != result)		/* pure paranoia */
@@ -973,6 +996,7 @@ bms_first_member(Bitmapset *a)
 	if (a == NULL)
 		return -1;
 	int			nwords = a->nwords;
+
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -984,6 +1008,7 @@ bms_first_member(Bitmapset *a)
 			a->words[wordnum] &= ~w;
 
 			int			result = wordnum * BITS_PER_BITMAPWORD;
+
 			result += bmw_rightmost_one_pos(w);
 			return result;
 		}
@@ -1018,8 +1043,10 @@ bms_next_member(const Bitmapset *a, int prevbit)
 	if (a == NULL)
 		return -2;
 	int			nwords = a->nwords;
+
 	prevbit++;
 	bitmapword	mask = (~(bitmapword) 0) << BITNUM(prevbit);
+
 	for (wordnum = WORDNUM(prevbit); wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -1031,6 +1058,7 @@ bms_next_member(const Bitmapset *a, int prevbit)
 		{
 
 			int			result = wordnum * BITS_PER_BITMAPWORD;
+
 			result += bmw_rightmost_one_pos(w);
 			return result;
 		}
@@ -1086,6 +1114,7 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 
 	int			ushiftbits = BITS_PER_BITMAPWORD - (BITNUM(prevbit) + 1);
 	bitmapword	mask = (~(bitmapword) 0) >> ushiftbits;
+
 	for (wordnum = WORDNUM(prevbit); wordnum >= 0; wordnum--)
 	{
 		bitmapword	w = a->words[wordnum];
@@ -1097,6 +1126,7 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 		{
 
 			int			result = wordnum * BITS_PER_BITMAPWORD;
+
 			result += bmw_leftmost_one_pos(w);
 			return result;
 		}

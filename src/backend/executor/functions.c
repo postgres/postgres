@@ -198,6 +198,7 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 		int			argnum;
 
 		Oid		   *argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
+
 		memcpy(argOidVect,
 			   procedureStruct->proargtypes.values,
 			   nargs * sizeof(Oid));
@@ -229,19 +230,21 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 		bool		isNull;
 
 		Datum		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, procedureTuple,
-									  Anum_pg_proc_proargnames,
-									  &isNull);
+												  Anum_pg_proc_proargnames,
+												  &isNull);
+
 		if (isNull)
 			proargnames = PointerGetDatum(NULL);	/* just to be sure */
 
 		Datum		proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, procedureTuple,
-									  Anum_pg_proc_proargmodes,
-									  &isNull);
+												  Anum_pg_proc_proargmodes,
+												  &isNull);
+
 		if (isNull)
 			proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
 		int			n_arg_names = get_func_input_arg_names(proargnames, proargmodes,
-											   &pinfo->argnames);
+														   &pinfo->argnames);
 
 		/* Paranoia: ignore the result if too few array entries */
 		if (n_arg_names < nargs)
@@ -310,8 +313,10 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 		nnames--;
 
 	Node	   *field1 = (Node *) linitial(cref->fields);
+
 	Assert(IsA(field1, String));
 	const char *name1 = strVal(field1);
+
 	if (nnames > 1)
 	{
 		subfield = (Node *) lsecond(cref->fields);
@@ -406,6 +411,7 @@ sql_fn_make_param(SQLFunctionParseInfoPtr pinfo,
 {
 
 	Param	   *param = makeNode(Param);
+
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = pinfo->argtypes[paramno - 1];
@@ -520,6 +526,7 @@ init_execution_state(List *queryTree_list,
 
 			/* OK, build the execution_state for this query */
 			execution_state *newes = (execution_state *) palloc(sizeof(execution_state));
+
 			if (preves)
 				preves->next = newes;
 			else
@@ -586,8 +593,8 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * must be a child of whatever context holds the FmgrInfo.
 	 */
 	MemoryContext fcontext = AllocSetContextCreate(finfo->fn_mcxt,
-									 "SQL function",
-									 ALLOCSET_DEFAULT_SIZES);
+												   "SQL function",
+												   ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldcontext = MemoryContextSwitchTo(fcontext);
 
@@ -597,6 +604,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * FmgrInfo is long-lived.
 	 */
 	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
+
 	fcache->fcontext = fcontext;
 	finfo->fn_extra = (void *) fcache;
 
@@ -604,6 +612,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * get the procedure tuple corresponding to the given function Oid
 	 */
 	HeapTuple	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(foid));
+
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", foid);
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -646,9 +655,10 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * And of course we need the function body text.
 	 */
 	Datum		tmp = SysCacheGetAttr(PROCOID,
-						  procedureTuple,
-						  Anum_pg_proc_prosrc,
-						  &isNull);
+									  procedureTuple,
+									  Anum_pg_proc_prosrc,
+									  &isNull);
+
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", foid);
 	fcache->src = TextDatumGetCString(tmp);
@@ -669,11 +679,13 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 * plancache.c.
 	 */
 	List	   *queryTree_list = NIL;
+
 	if (!isNull)
 	{
 		List	   *stored_query_list;
 
 		Node	   *n = stringToNode(TextDatumGetCString(tmp));
+
 		if (IsA(n, List))
 			stored_query_list = linitial_node(List, castNode(List, n));
 		else
@@ -685,6 +697,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 
 			AcquireRewriteLocks(parsetree, true, false);
 			List	   *queryTree_sublist = pg_rewrite_query(parsetree);
+
 			queryTree_list = lappend(queryTree_list, queryTree_sublist);
 		}
 	}
@@ -698,10 +711,11 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 			RawStmt    *parsetree = lfirst_node(RawStmt, lc);
 
 			List	   *queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
-															  fcache->src,
-															  (ParserSetupHook) sql_fn_parser_setup,
-															  fcache->pinfo,
-															  NULL);
+																		  fcache->src,
+																		  (ParserSetupHook) sql_fn_parser_setup,
+																		  fcache->pinfo,
+																		  NULL);
+
 			queryTree_list = lappend(queryTree_list, queryTree_sublist);
 		}
 	}
@@ -814,6 +828,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		dest = CreateDestReceiver(DestSQLFunction);
 		/* pass down the needed info to the dest receiver routines */
 		DR_sqlfunction *myState = (DR_sqlfunction *) dest;
+
 		Assert(myState->pub.mydest == DestSQLFunction);
 		myState->tstore = fcache->tstore;
 		myState->cxt = CurrentMemoryContext;
@@ -1076,6 +1091,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	List	   *eslist = fcache->func_state;
 	execution_state *es = NULL;
 	bool		is_first = true;
+
 	foreach(eslc, eslist)
 	{
 		es = (execution_state *) lfirst(eslc);
@@ -1123,6 +1139,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * snapshot is on the active stack and we can just bump its command ID.
 	 */
 	bool		pushed_snapshot = false;
+
 	while (es)
 	{
 
@@ -1379,6 +1396,7 @@ sql_exec_error_callback(void *arg)
 	 * If there is a syntax error position, convert to internal syntax error
 	 */
 	int			syntaxerrposition = geterrposition();
+
 	if (syntaxerrposition > 0 && fcache->src != NULL)
 	{
 		errposition(0);
@@ -1399,6 +1417,7 @@ sql_exec_error_callback(void *arg)
 
 		execution_state *es = NULL;
 		int			query_num = 1;
+
 		foreach(lc, fcache->func_state)
 		{
 			es = (execution_state *) lfirst(lc);
@@ -1596,6 +1615,7 @@ check_sql_fn_retval(List *queryTreeLists,
 	 */
 	Query	   *parse = NULL;
 	ListCell   *parse_cell = NULL;
+
 	foreach(lc, queryTreeLists)
 	{
 		List	   *sublist = lfirst_node(List, lc);
@@ -1689,6 +1709,7 @@ check_sql_fn_retval(List *queryTreeLists,
 
 		/* We assume here that non-junk TLEs must come first in tlists */
 		TargetEntry *tle = (TargetEntry *) linitial(tlist);
+
 		Assert(!tle->resjunk);
 
 		if (!coerce_fn_result_column(tle, rettype, -1,
@@ -1796,12 +1817,13 @@ check_sql_fn_retval(List *queryTreeLists,
 
 					/* The type of the null we insert isn't important */
 					Expr	   *null_expr = (Expr *) makeConst(INT4OID,
-												   -1,
-												   InvalidOid,
-												   sizeof(int32),
-												   (Datum) 0,
-												   true,	/* isnull */
-												   true /* byval */ );
+															   -1,
+															   InvalidOid,
+															   sizeof(int32),
+															   (Datum) 0,
+															   true,	/* isnull */
+															   true /* byval */ );
+
 					upper_tlist = lappend(upper_tlist,
 										  makeTargetEntry(null_expr,
 														  list_length(upper_tlist) + 1,
@@ -1841,12 +1863,13 @@ check_sql_fn_retval(List *queryTreeLists,
 
 				/* The type of the null we insert isn't important */
 				Expr	   *null_expr = (Expr *) makeConst(INT4OID,
-											   -1,
-											   InvalidOid,
-											   sizeof(int32),
-											   (Datum) 0,
-											   true,	/* isnull */
-											   true /* byval */ );
+														   -1,
+														   InvalidOid,
+														   sizeof(int32),
+														   (Datum) 0,
+														   true,	/* isnull */
+														   true /* byval */ );
+
 				upper_tlist = lappend(upper_tlist,
 									  makeTargetEntry(null_expr,
 													  list_length(upper_tlist) + 1,
@@ -1880,6 +1903,7 @@ tlist_coercion_finished:
 
 		/* Most of the upper Query struct can be left as zeroes/nulls */
 		Query	   *newquery = makeNode(Query);
+
 		newquery->commandType = CMD_SELECT;
 		newquery->querySource = parse->querySource;
 		newquery->canSetTag = true;
@@ -1887,6 +1911,7 @@ tlist_coercion_finished:
 
 		/* We need a moderately realistic colnames list for the subquery RTE */
 		List	   *colnames = NIL;
+
 		foreach(lc, parse->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
@@ -1899,6 +1924,7 @@ tlist_coercion_finished:
 
 		/* Build a suitable RTE for the subquery */
 		RangeTblEntry *rte = makeNode(RangeTblEntry);
+
 		rte->rtekind = RTE_SUBQUERY;
 		rte->subquery = parse;
 		rte->eref = rte->alias = makeAlias("*SELECT*", colnames);
@@ -1908,6 +1934,7 @@ tlist_coercion_finished:
 		newquery->rtable = list_make1(rte);
 
 		RangeTblRef *rtr = makeNode(RangeTblRef);
+
 		rtr->rtindex = 1;
 		newquery->jointree = makeFromExpr(list_make1(rtr), NULL);
 
@@ -1987,8 +2014,9 @@ coerce_fn_result_column(TargetEntry *src_tle,
 		new_tle_expr = (Expr *) cast_result;
 	}
 	TargetEntry *new_tle = makeTargetEntry(new_tle_expr,
-							  list_length(*upper_tlist) + 1,
-							  src_tle->resname, false);
+										   list_length(*upper_tlist) + 1,
+										   src_tle->resname, false);
+
 	*upper_tlist = lappend(*upper_tlist, new_tle);
 	return true;
 }

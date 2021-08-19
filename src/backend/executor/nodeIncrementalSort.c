@@ -177,6 +177,7 @@ preparePresortedCols(IncrementalSortState *node)
 					equalityFunc;
 
 		PresortedKeyData *key = &node->presorted_keys[i];
+
 		key->attno = plannode->sort.sortColIdx[i];
 
 		equalityOp = get_equality_op_for_ordering_op(plannode->sort.sortOperators[i],
@@ -301,14 +302,15 @@ switchToPresortedPrefixMode(PlanState *pstate)
 		 * thus we only need to sort by any remaining columns.
 		 */
 		Tuplesortstate *prefixsort_state = tuplesort_begin_heap(tupDesc,
-												plannode->sort.numCols - nPresortedCols,
-												&(plannode->sort.sortColIdx[nPresortedCols]),
-												&(plannode->sort.sortOperators[nPresortedCols]),
-												&(plannode->sort.collations[nPresortedCols]),
-												&(plannode->sort.nullsFirst[nPresortedCols]),
-												work_mem,
-												NULL,
-												false);
+																plannode->sort.numCols - nPresortedCols,
+																&(plannode->sort.sortColIdx[nPresortedCols]),
+																&(plannode->sort.sortOperators[nPresortedCols]),
+																&(plannode->sort.collations[nPresortedCols]),
+																&(plannode->sort.nullsFirst[nPresortedCols]),
+																work_mem,
+																NULL,
+																false);
+
 		node->prefixsort_state = prefixsort_state;
 	}
 	else
@@ -974,6 +976,7 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 
 	/* Initialize state structure. */
 	IncrementalSortState *incrsortstate = makeNode(IncrementalSortState);
+
 	incrsortstate->ss.ps.plan = (Plan *) node;
 	incrsortstate->ss.ps.state = estate;
 	incrsortstate->ss.ps.ExecProcNode = ExecIncrementalSort;
@@ -1176,6 +1179,7 @@ ExecIncrementalSortEstimate(IncrementalSortState *node, ParallelContext *pcxt)
 		return;
 
 	Size		size = mul_size(pcxt->nworkers, sizeof(IncrementalSortInfo));
+
 	size = add_size(size, offsetof(SharedIncrementalSortInfo, sinfo));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -1196,7 +1200,8 @@ ExecIncrementalSortInitializeDSM(IncrementalSortState *node, ParallelContext *pc
 		return;
 
 	Size		size = offsetof(SharedIncrementalSortInfo, sinfo)
-		+ pcxt->nworkers * sizeof(IncrementalSortInfo);
+	+ pcxt->nworkers * sizeof(IncrementalSortInfo);
+
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
 	memset(node->shared_info, 0, size);
@@ -1233,8 +1238,9 @@ ExecIncrementalSortRetrieveInstrumentation(IncrementalSortState *node)
 		return;
 
 	Size		size = offsetof(SharedIncrementalSortInfo, sinfo)
-		+ node->shared_info->num_workers * sizeof(IncrementalSortInfo);
+	+ node->shared_info->num_workers * sizeof(IncrementalSortInfo);
 	SharedIncrementalSortInfo *si = palloc(size);
+
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

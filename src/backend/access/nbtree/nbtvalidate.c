@@ -48,6 +48,7 @@ btvalidate(Oid opclassoid)
 
 	/* Fetch opclass information */
 	HeapTuple	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
+
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup failed for operator class %u", opclassoid);
 	Form_pg_opclass classform = (Form_pg_opclass) GETSTRUCT(classtup);
@@ -58,6 +59,7 @@ btvalidate(Oid opclassoid)
 
 	/* Fetch opfamily information */
 	HeapTuple	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
+
 	if (!HeapTupleIsValid(familytup))
 		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
 	Form_pg_opfamily familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
@@ -175,6 +177,7 @@ btvalidate(Oid opclassoid)
 	int			usefulgroups = 0;
 	OpFamilyOpFuncGroup *opclassgroup = NULL;
 	List	   *familytypes = NIL;
+
 	foreach(lc, grouplist)
 	{
 		OpFamilyOpFuncGroup *thisgroup = (OpFamilyOpFuncGroup *) lfirst(lc);

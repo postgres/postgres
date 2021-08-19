@@ -120,7 +120,8 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 	*recheck = false;
 
 	bool		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+											GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+
 	PG_RETURN_BOOL(retval);
 }
 
@@ -168,6 +169,7 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 
 	rk = gbt_var_key_readable(org);
 	Datum		uni = PointerGetDatum(gbt_var_key_copy(&rk));
+
 	gbt_var_bin_union(&uni, newe, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	ok = gbt_var_key_readable(org);
 	uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(uni));

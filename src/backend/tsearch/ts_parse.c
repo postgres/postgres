@@ -363,8 +363,8 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 	TSParserCacheEntry *prsobj = lookup_ts_parser_cache(cfg->prsId);
 
 	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&prsobj->prsstart,
-													 PointerGetDatum(buf),
-													 Int32GetDatum(buflen)));
+																 PointerGetDatum(buf),
+																 Int32GetDatum(buflen)));
 
 	LexizeInit(&ldata, cfg);
 
@@ -459,6 +459,7 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, int32 pos, char *buf, int buf
 	}
 
 	HeadlineWordEntry *word = &(prs->words[prs->curwords - 1]);
+
 	word->pos = LIMITPOS(pos);
 	for (i = 0; i < query->size; i++)
 	{
@@ -535,8 +536,8 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 	TSParserCacheEntry *prsobj = lookup_ts_parser_cache(cfg->prsId);
 
 	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&(prsobj->prsstart),
-													 PointerGetDatum(buf),
-													 Int32GetDatum(buflen)));
+																 PointerGetDatum(buf),
+																 Int32GetDatum(buflen)));
 
 	LexizeInit(&ldata, cfg);
 

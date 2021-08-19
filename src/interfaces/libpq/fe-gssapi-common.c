@@ -90,6 +90,7 @@ pg_GSS_load_servicename(PGconn *conn)
 		return STATUS_OK;
 
 	char	   *host = PQhost(conn);
+
 	if (!(host && host[0] != '\0'))
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
@@ -102,6 +103,7 @@ pg_GSS_load_servicename(PGconn *conn)
 	 * the GSSAPI system.
 	 */
 	int			maxlen = strlen(conn->krbsrvname) + strlen(host) + 2;
+
 	temp_gbuf.value = (char *) malloc(maxlen);
 	if (!temp_gbuf.value)
 	{

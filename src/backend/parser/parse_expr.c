@@ -97,6 +97,7 @@ transformExpr(ParseState *pstate, Node *expr, ParseExprKind exprKind)
 	/* Save and restore identity of expression type we're parsing */
 	Assert(exprKind != EXPR_KIND_NONE);
 	ParseExprKind sv_expr_kind = pstate->p_expr_kind;
+
 	pstate->p_expr_kind = exprKind;
 
 	Node	   *result = transformExprRecurse(pstate, expr);
@@ -409,12 +410,13 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 			subscripts = NIL;
 
 			Node	   *newresult = ParseFuncOrColumn(pstate,
-										  list_make1(n),
-										  list_make1(result),
-										  last_srf,
-										  NULL,
-										  false,
-										  location);
+													  list_make1(n),
+													  list_make1(result),
+													  last_srf,
+													  NULL,
+													  false,
+													  location);
+
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
 			result = newresult;
@@ -460,6 +462,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	 * expressions and partition bound expressions.
 	 */
 	const char *err = NULL;
+
 	switch (pstate->p_expr_kind)
 	{
 		case EXPR_KIND_NONE:
@@ -703,6 +706,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 
 				Assert(IsA(field1, String));
 				char	   *catname = strVal(field1);
+
 				Assert(IsA(field2, String));
 				nspname = strVal(field2);
 				Assert(IsA(field3, String));
@@ -774,6 +778,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	{
 
 		Node	   *hookresult = pstate->p_post_columnref_hook(pstate, cref, node);
+
 		if (node == NULL)
 			node = hookresult;
 		else if (hookresult != NULL)
@@ -1022,11 +1027,11 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
 
 	OpExpr	   *result = (OpExpr *) make_op(pstate,
-								a->name,
-								lexpr,
-								rexpr,
-								pstate->p_last_srf,
-								a->location);
+											a->name,
+											lexpr,
+											rexpr,
+											pstate->p_last_srf,
+											a->location);
 
 	/*
 	 * The comparison operator itself should yield boolean ...
@@ -1086,6 +1091,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 */
 	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
 	List	   *rexprs = rvars = rnonvars = NIL;
+
 	foreach(l, (List *) a->rexpr)
 	{
 		Node	   *rexpr = transformExprRecurse(pstate, lfirst(l));
@@ -1133,6 +1139,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			 */
 
 			List	   *aexprs = NIL;
+
 			foreach(l, rnonvars)
 			{
 				Node	   *rexpr = (Node *) lfirst(l);
@@ -1143,6 +1150,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 				aexprs = lappend(aexprs, rexpr);
 			}
 			ArrayExpr  *newa = makeNode(ArrayExpr);
+
 			newa->array_typeid = array_type;
 			/* array_collid will be set by parse_collate.c */
 			newa->element_typeid = scalar_type;
@@ -1213,6 +1221,7 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 	/* Deconstruct A_Expr into three subexprs */
 	Node	   *aexpr = a->lexpr;
 	List	   *args = castNode(List, a->rexpr);
+
 	Assert(list_length(args) == 2);
 	Node	   *bexpr = (Node *) linitial(args);
 	Node	   *cexpr = (Node *) lsecond(args);
@@ -1337,6 +1346,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 
 	/* Transform the list of arguments ... */
 	List	   *targs = NIL;
+
 	foreach(args, fn->args)
 	{
 		targs = lappend(targs, transformExprRecurse(pstate,
@@ -1484,6 +1494,7 @@ transformMultiAssignRef(ParseState *pstate, MultiAssignRef *maref)
 		Assert(!tle->resjunk);
 
 		Param	   *param = makeNode(Param);
+
 		param->paramkind = PARAM_MULTIEXPR;
 		param->paramid = (sublink->subLinkId << 16) | maref->colno;
 		param->paramtype = exprType((Node *) tle->expr);
@@ -1564,12 +1575,14 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	/* transform the list of arguments */
 	List	   *newargs = NIL;
 	List	   *resultexprs = NIL;
+
 	foreach(l, c->args)
 	{
 		CaseWhen   *w = lfirst_node(CaseWhen, l);
 		CaseWhen   *neww = makeNode(CaseWhen);
 
 		Node	   *warg = (Node *) w->expr;
+
 		if (placeholder)
 		{
 			/* shorthand form was specified, so expand... */
@@ -1596,6 +1609,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 	/* transform the default clause */
 	Node	   *defresult = (Node *) c->defresult;
+
 	if (defresult == NULL)
 	{
 		A_Const    *n = makeNode(A_Const);
@@ -1614,6 +1628,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	resultexprs = lcons(newc->defresult, resultexprs);
 
 	Oid			ptype = select_common_type(pstate, resultexprs, "CASE", NULL);
+
 	Assert(OidIsValid(ptype));
 	newc->casetype = ptype;
 	/* casecollid will be set by parse_collate.c */
@@ -1664,6 +1679,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	 * not in utility statements.
 	 */
 	const char *err = NULL;
+
 	switch (pstate->p_expr_kind)
 	{
 		case EXPR_KIND_NONE:
@@ -1824,6 +1840,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		 * Transform lefthand expression, and convert to a list
 		 */
 		Node	   *lefthand = transformExprRecurse(pstate, sublink->testexpr);
+
 		if (lefthand && IsA(lefthand, RowExpr))
 			left_list = ((RowExpr *) lefthand)->args;
 		else
@@ -1834,6 +1851,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		 * of the subquery.
 		 */
 		List	   *right_list = NIL;
+
 		foreach(l, qtree->targetList)
 		{
 			TargetEntry *tent = (TargetEntry *) lfirst(l);
@@ -1842,6 +1860,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 				continue;
 
 			Param	   *param = makeNode(Param);
+
 			param->paramkind = PARAM_SUBLINK;
 			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
@@ -2085,6 +2104,7 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 		Node	   *e = (Node *) lfirst(args);
 
 		Node	   *newe = transformExprRecurse(pstate, e);
+
 		newargs = lappend(newargs, newe);
 	}
 
@@ -2097,8 +2117,9 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 		Node	   *e = (Node *) lfirst(args);
 
 		Node	   *newe = coerce_to_common_type(pstate, e,
-									 newc->coalescetype,
-									 "COALESCE");
+												 newc->coalescetype,
+												 "COALESCE");
+
 		newcoercedargs = lappend(newcoercedargs, newe);
 	}
 
@@ -2133,6 +2154,7 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 		Node	   *e = (Node *) lfirst(args);
 
 		Node	   *newe = transformExprRecurse(pstate, e);
+
 		newargs = lappend(newargs, newe);
 	}
 
@@ -2145,8 +2167,9 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 		Node	   *e = (Node *) lfirst(args);
 
 		Node	   *newe = coerce_to_common_type(pstate, e,
-									 newm->minmaxtype,
-									 funcname);
+												 newm->minmaxtype,
+												 funcname);
+
 		newcoercedargs = lappend(newcoercedargs, newe);
 	}
 
@@ -2214,6 +2237,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	ListCell   *lc;
 
 	XmlExpr    *newx = makeNode(XmlExpr);
+
 	newx->op = x->op;
 	if (x->name)
 		newx->name = map_sql_identifier_to_xml_name(x->name, false, false);
@@ -2277,11 +2301,13 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	/* The other arguments are of varying types depending on the function */
 	newx->args = NIL;
 	int			i = 0;
+
 	foreach(lc, x->args)
 	{
 		Node	   *e = (Node *) lfirst(lc);
 
 		Node	   *newe = transformExprRecurse(pstate, e);
+
 		switch (x->op)
 		{
 			case IS_XMLCONCAT:
@@ -2340,6 +2366,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	int32		targetTypmod;
 
 	XmlExpr    *xexpr = makeNode(XmlExpr);
+
 	xexpr->op = IS_XMLSERIALIZE;
 	xexpr->args = list_make1(coerce_to_specific_type(pstate,
 													 transformExprRecurse(pstate, xs->expr),
@@ -2361,10 +2388,11 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	 * fit in.
 	 */
 	Node	   *result = coerce_to_target_type(pstate, (Node *) xexpr,
-								   TEXTOID, targetType, targetTypmod,
-								   COERCION_IMPLICIT,
-								   COERCE_IMPLICIT_CAST,
-								   -1);
+											   TEXTOID, targetType, targetTypmod,
+											   COERCION_IMPLICIT,
+											   COERCE_IMPLICIT_CAST,
+											   -1);
+
 	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -2490,7 +2518,7 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 	{
 
 		Var		   *result = makeWholeRowVar(nsitem->p_rte, nsitem->p_rtindex,
-								 sublevels_up, true);
+											 sublevels_up, true);
 
 		/* location is not filled in by makeWholeRowVar */
 		result->location = location;
@@ -2514,6 +2542,7 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 				  sublevels_up, location, false,
 				  NULL, &fields);
 		RowExpr    *rowexpr = makeNode(RowExpr);
+
 		rowexpr->args = list_truncate(fields,
 									  list_length(nsitem->p_names->colnames));
 		rowexpr->row_typeid = RECORDOID;
@@ -2561,6 +2590,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 		int32		targetBaseTypmod = targetTypmod;
 		Oid			targetBaseType = getBaseTypeAndTypmod(targetType, &targetBaseTypmod);
 		Oid			elementType = get_element_type(targetBaseType);
+
 		if (OidIsValid(elementType))
 		{
 			expr = transformArrayExpr(pstate,
@@ -2576,6 +2606,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 		expr = transformExprRecurse(pstate, arg);
 
 	Oid			inputType = exprType(expr);
+
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
@@ -2585,14 +2616,16 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 	 * name (this can happen in TypeName 'string' syntax, for instance).
 	 */
 	int			location = tc->location;
+
 	if (location < 0)
 		location = tc->typeName->location;
 
 	Node	   *result = coerce_to_target_type(pstate, expr, inputType,
-								   targetType, targetTypmod,
-								   COERCION_EXPLICIT,
-								   COERCE_EXPLICIT_CAST,
-								   location);
+											   targetType, targetTypmod,
+											   COERCION_EXPLICIT,
+											   COERCE_EXPLICIT_CAST,
+											   location);
+
 	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
@@ -2614,6 +2647,7 @@ transformCollateClause(ParseState *pstate, CollateClause *c)
 {
 
 	CollateExpr *newc = makeNode(CollateExpr);
+
 	newc->arg = (Expr *) transformExprRecurse(pstate, c->arg);
 
 	Oid			argtype = exprType((Node *) newc->arg);
@@ -2655,6 +2689,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 			   *r;
 
 	int			nopers = list_length(largs);
+
 	if (nopers != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2676,13 +2711,14 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * the same as in the simple scalar case.
 	 */
 	List	   *opexprs = NIL;
+
 	forboth(l, largs, r, rargs)
 	{
 		Node	   *larg = (Node *) lfirst(l);
 		Node	   *rarg = (Node *) lfirst(r);
 
 		OpExpr	   *cmp = castNode(OpExpr, make_op(pstate, opname, larg, rarg,
-									   pstate->p_last_srf, location));
+												   pstate->p_last_srf, location));
 
 		/*
 		 * We don't use coerce_to_boolean here because we insist on the
@@ -2721,6 +2757,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	List	  **opinfo_lists = (List **) palloc(nopers * sizeof(List *));
 	Bitmapset  *strats = NULL;
 	int			i = 0;
+
 	foreach(l, opexprs)
 	{
 		Oid			opno = ((OpExpr *) lfirst(l))->opno;
@@ -2733,6 +2770,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		 * calculation easy.
 		 */
 		Bitmapset  *this_strats = NULL;
+
 		foreach(j, opinfo_lists[i])
 		{
 			OpBtreeInterpretation *opinfo = lfirst(j);
@@ -2778,6 +2816,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * each operator.
 	 */
 	List	   *opfamilies = NIL;
+
 	for (i = 0; i < nopers; i++)
 	{
 		Oid			opfamily = InvalidOid;
@@ -2811,6 +2850,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * possibility that make_op inserted coercion operations.
 	 */
 	List	   *opnos = NIL;
+
 	largs = NIL;
 	rargs = NIL;
 	foreach(l, opexprs)
@@ -2823,6 +2863,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	}
 
 	RowCompareExpr *rcexpr = makeNode(RowCompareExpr);
+
 	rcexpr->rctype = rctype;
 	rcexpr->opnos = opnos;
 	rcexpr->opfamilies = opfamilies;
@@ -2861,6 +2902,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 		Node	   *rarg = (Node *) lfirst(r);
 
 		Node	   *cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg, location);
+
 		if (result == NULL)
 			result = cmp;
 		else
@@ -2887,7 +2929,8 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 {
 
 	Expr	   *result = make_op(pstate, opname, ltree, rtree,
-					 pstate->p_last_srf, location);
+								 pstate->p_last_srf, location);
+
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),

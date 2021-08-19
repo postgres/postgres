@@ -165,6 +165,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	 * already exists.
 	 */
 	HeapTuple	tuple = SearchSysCache1(EVENTTRIGGERNAME, CStringGetDatum(stmt->trigname));
+
 	if (HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -174,6 +175,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	/* Find and validate the trigger function. */
 	Oid			funcoid = LookupFuncName(stmt->funcname, 0, NULL, false);
 	Oid			funcrettype = get_func_rettype(funcoid);
+
 	if (funcrettype != EVENT_TRIGGEROID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -265,7 +267,8 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 
 	/* Build the new pg_trigger tuple. */
 	Oid			trigoid = GetNewOidWithIndex(tgrel, EventTriggerOidIndexId,
-								 Anum_pg_event_trigger_oid);
+											 Anum_pg_event_trigger_oid);
+
 	values[Anum_pg_event_trigger_oid - 1] = ObjectIdGetDatum(trigoid);
 	memset(nulls, false, sizeof(nulls));
 	namestrcpy(&evtnamedata, trigname);
@@ -284,6 +287,7 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 
 	/* Insert heap tuple. */
 	HeapTuple	tuple = heap_form_tuple(tgrel->rd_att, values, nulls);
+
 	CatalogTupleInsert(tgrel, tuple);
 	heap_freetuple(tuple);
 
@@ -359,7 +363,8 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 	Relation	tgrel = table_open(EventTriggerRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCacheCopy1(EVENTTRIGGERNAME,
-							  CStringGetDatum(stmt->trigname));
+										  CStringGetDatum(stmt->trigname));
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -489,7 +494,8 @@ get_event_trigger_oid(const char *trigname, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid1(EVENTTRIGGERNAME, Anum_pg_event_trigger_oid,
-						  CStringGetDatum(trigname));
+									  CStringGetDatum(trigname));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -561,6 +567,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	{
 
 		CommandTag	dbgtag = CreateCommandTag(parsetree);
+
 		if (event == EVT_DDLCommandStart ||
 			event == EVT_DDLCommandEnd ||
 			event == EVT_SQLDrop)
@@ -642,9 +649,10 @@ EventTriggerDDLCommandStart(Node *parsetree)
 		return;
 
 	List	   *runlist = EventTriggerCommonSetup(parsetree,
-									  EVT_DDLCommandStart,
-									  "ddl_command_start",
-									  &trigdata);
+												  EVT_DDLCommandStart,
+												  "ddl_command_start",
+												  &trigdata);
+
 	if (runlist == NIL)
 		return;
 
@@ -690,8 +698,9 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 		return;
 
 	List	   *runlist = EventTriggerCommonSetup(parsetree,
-									  EVT_DDLCommandEnd, "ddl_command_end",
-									  &trigdata);
+												  EVT_DDLCommandEnd, "ddl_command_end",
+												  &trigdata);
+
 	if (runlist == NIL)
 		return;
 
@@ -735,8 +744,8 @@ EventTriggerSQLDrop(Node *parsetree)
 		return;
 
 	List	   *runlist = EventTriggerCommonSetup(parsetree,
-									  EVT_SQLDrop, "sql_drop",
-									  &trigdata);
+												  EVT_SQLDrop, "sql_drop",
+												  &trigdata);
 
 	/*
 	 * Nothing to do if run list is empty.  Note this typically can't happen,
@@ -804,9 +813,10 @@ EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason)
 		return;
 
 	List	   *runlist = EventTriggerCommonSetup(parsetree,
-									  EVT_TableRewrite,
-									  "table_rewrite",
-									  &trigdata);
+												  EVT_TableRewrite,
+												  "table_rewrite",
+												  &trigdata);
+
 	if (runlist == NIL)
 		return;
 
@@ -1059,9 +1069,10 @@ EventTriggerBeginCompleteQuery(void)
 		return false;
 
 	MemoryContext cxt = AllocSetContextCreate(TopMemoryContext,
-								"event trigger state",
-								ALLOCSET_DEFAULT_SIZES);
+											  "event trigger state",
+											  ALLOCSET_DEFAULT_SIZES);
 	EventTriggerQueryState *state = MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState));
+
 	state->cxt = cxt;
 	slist_init(&(state->SQLDropList));
 	state->in_sql_drop = false;
@@ -1155,6 +1166,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	SQLDropObject *obj = palloc0(sizeof(SQLDropObject));
+
 	obj->address = *object;
 	obj->original = original;
 	obj->normal = normal;
@@ -1170,8 +1182,8 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 
 		Relation	catalog = table_open(obj->address.classId, AccessShareLock);
 		HeapTuple	tuple = get_catalog_object_by_oid(catalog,
-										  get_object_attnum_oid(object->classId),
-										  obj->address.objectId);
+													  get_object_attnum_oid(object->classId),
+													  obj->address.objectId);
 
 		if (tuple)
 		{
@@ -1179,6 +1191,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 			bool		isnull;
 
 			AttrNumber	attnum = get_object_attnum_namespace(obj->address.classId);
+
 			if (attnum != InvalidAttrNumber)
 			{
 				datum = heap_getattr(tuple, attnum,
@@ -1187,6 +1200,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 				{
 
 					Oid			namespaceId = DatumGetObjectId(datum);
+
 					/* temp objects are only reported if they are my own */
 					if (isTempNamespace(namespaceId))
 					{
@@ -1286,6 +1300,7 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1570,6 +1585,7 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	CollectedATSubcmd *newsub = palloc(sizeof(CollectedATSubcmd));
+
 	newsub->address = address;
 	newsub->parsetree = copyObject(subcmd);
 
@@ -1639,6 +1655,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 	 * This is tedious, but necessary.
 	 */
 	InternalGrant *icopy = palloc(sizeof(InternalGrant));
+
 	memcpy(icopy, istmt, sizeof(InternalGrant));
 	icopy->objects = list_copy(istmt->objects);
 	icopy->grantees = list_copy(istmt->grantees);
@@ -1648,6 +1665,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 
 	/* Now collect it, using the copied InternalGrant */
 	CollectedCommand *command = palloc(sizeof(CollectedCommand));
+
 	command->type = SCT_Grant;
 	command->in_extension = creating_extension;
 	command->d.grant.istmt = icopy;
@@ -1677,6 +1695,7 @@ EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	CollectedCommand *command = palloc(sizeof(CollectedCommand));
+
 	command->type = SCT_AlterOpFamily;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.opfam.address,
@@ -1708,6 +1727,7 @@ EventTriggerCollectCreateOpClass(CreateOpClassStmt *stmt, Oid opcoid,
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	CollectedCommand *command = palloc0(sizeof(CollectedCommand));
+
 	command->type = SCT_CreateOpClass;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.createopc.address,
@@ -1740,6 +1760,7 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	CollectedCommand *command = palloc0(sizeof(CollectedCommand));
+
 	command->type = SCT_AlterTSConfig;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.atscfg.address,
@@ -1772,6 +1793,7 @@ EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt)
 	MemoryContext oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	CollectedCommand *command = palloc0(sizeof(CollectedCommand));
+
 	command->type = SCT_AlterDefaultPrivileges;
 	command->d.defprivs.objtype = stmt->action->objtype;
 	command->in_extension = creating_extension;
@@ -1821,6 +1843,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1883,6 +1906,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 					 * some subcommand combinations of ALTER TABLE.
 					 */
 					char	   *identity = getObjectIdentity(&addr, true);
+
 					if (identity == NULL)
 						continue;
 
@@ -1899,6 +1923,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 					{
 
 						AttrNumber	nspAttnum = get_object_attnum_namespace(addr.classId);
+
 						if (nspAttnum != InvalidAttrNumber)
 						{
 							Relation	catalog;

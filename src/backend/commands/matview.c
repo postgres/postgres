@@ -93,7 +93,8 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
 	 */
 	Relation	pgrel = table_open(RelationRelationId, RowExclusiveLock);
 	HeapTuple	tuple = SearchSysCacheCopy1(RELOID,
-								ObjectIdGetDatum(RelationGetRelid(relation)));
+											ObjectIdGetDatum(RelationGetRelid(relation)));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u",
 			 RelationGetRelid(relation));
@@ -151,8 +152,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * Get a lock until end of transaction.
 	 */
 	Oid			matviewOid = RangeVarGetRelidExtended(stmt->relation,
-										  lockmode, 0,
-										  RangeVarCallbackOwnsTable, NULL);
+													  lockmode, 0,
+													  RangeVarCallbackOwnsTable, NULL);
 	Relation	matviewRel = table_open(matviewOid, NoLock);
 
 	/* Make sure it is a materialized view. */
@@ -190,12 +191,14 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 			 RelationGetRelationName(matviewRel));
 
 	RewriteRule *rule = matviewRel->rd_rules->rules[0];
+
 	if (rule->event != CMD_SELECT || !(rule->isInstead))
 		elog(ERROR,
 			 "the rule for materialized view \"%s\" is not a SELECT INSTEAD OF rule",
 			 RelationGetRelationName(matviewRel));
 
 	List	   *actions = rule->actions;
+
 	if (list_length(actions) != 1)
 		elog(ERROR,
 			 "the rule for materialized view \"%s\" is not a single action",
@@ -216,6 +219,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 			Oid			indexoid = lfirst_oid(indexoidscan);
 
 			Relation	indexRel = index_open(indexoid, AccessShareLock);
+
 			hasUniqueIndex = is_usable_unique_index(indexRel);
 			index_close(indexRel, AccessShareLock);
 			if (hasUniqueIndex)
@@ -285,8 +289,9 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * will be gone).
 	 */
 	Oid			OIDNewHeap = make_new_heap(matviewOid, tableSpace,
-							   matviewRel->rd_rel->relam,
-							   relpersistence, ExclusiveLock);
+										   matviewRel->rd_rel->relam,
+										   relpersistence, ExclusiveLock);
+
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
 	DestReceiver *dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
@@ -372,6 +377,7 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 
 	/* Lock and rewrite, using a copy to preserve the original query. */
 	Query	   *copied_query = copyObject(query);
+
 	AcquireRewriteLocks(copied_query, true, false);
 	List	   *rewritten = QueryRewrite(copied_query);
 
@@ -397,8 +403,8 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 
 	/* Create a QueryDesc, redirecting output to our tuple receiver */
 	QueryDesc  *queryDesc = CreateQueryDesc(plan, queryString,
-								GetActiveSnapshot(), InvalidSnapshot,
-								dest, NULL, NULL, 0);
+											GetActiveSnapshot(), InvalidSnapshot,
+											dest, NULL, NULL, 0);
 
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, 0);
@@ -578,10 +584,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	initStringInfo(&querybuf);
 	Relation	matviewRel = table_open(matviewOid, NoLock);
 	char	   *matviewname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
-											 RelationGetRelationName(matviewRel));
+														 RelationGetRelationName(matviewRel));
 	Relation	tempRel = table_open(tempOid, NoLock);
 	char	   *tempname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(tempRel)),
-										  RelationGetRelationName(tempRel));
+													  RelationGetRelationName(tempRel));
 	char	   *diffname = make_temptable_name_n(tempname, 2);
 
 	int16		relnatts = RelationGetNumberOfAttributes(matviewRel);
@@ -662,6 +668,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 		Oid			indexoid = lfirst_oid(indexoidscan);
 
 		Relation	indexRel = index_open(indexoid, RowExclusiveLock);
+
 		if (is_usable_unique_index(indexRel))
 		{
 			Form_pg_index indexStruct = indexRel->rd_index;
@@ -671,9 +678,10 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 
 			/* Must get indclass the hard way. */
 			Datum		indclassDatum = SysCacheGetAttr(INDEXRELID,
-											indexRel->rd_indextuple,
-											Anum_pg_index_indclass,
-											&isnull);
+														indexRel->rd_indextuple,
+														Anum_pg_index_indclass,
+														&isnull);
+
 			Assert(!isnull);
 			oidvector  *indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
@@ -690,16 +698,20 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 				 * column.  First we need to look up the column's opclass.
 				 */
 				HeapTuple	cla_ht = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
+
 				if (!HeapTupleIsValid(cla_ht))
 					elog(ERROR, "cache lookup failed for opclass %u", opclass);
 				Form_pg_opclass cla_tup = (Form_pg_opclass) GETSTRUCT(cla_ht);
+
 				Assert(cla_tup->opcmethod == BTREE_AM_OID);
 				Oid			opfamily = cla_tup->opcfamily;
 				Oid			opcintype = cla_tup->opcintype;
+
 				ReleaseSysCache(cla_ht);
 
 				Oid			op = get_opfamily_member(opfamily, opcintype, opcintype,
-										 BTEqualStrategyNumber);
+													 BTEqualStrategyNumber);
+
 				if (!OidIsValid(op))
 					elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 						 BTEqualStrategyNumber, opcintype, opcintype, opfamily);
@@ -726,9 +738,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 					appendStringInfoString(&querybuf, " AND ");
 
 				const char *leftop = quote_qualified_identifier("newdata",
-													NameStr(attr->attname));
+																NameStr(attr->attname));
 				const char *rightop = quote_qualified_identifier("mv",
-													 NameStr(attr->attname));
+																 NameStr(attr->attname));
 
 				generate_operator_clause(&querybuf,
 										 leftop, attrtype,

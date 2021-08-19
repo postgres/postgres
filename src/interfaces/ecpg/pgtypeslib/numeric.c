@@ -175,6 +175,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 
 		(*ptr)++;
 		long		exponent = strtol(*ptr, &endptr, 10);
+
 		if (endptr == (*ptr))
 		{
 			errno = PGTYPES_NUM_BAD_NUMERIC;
@@ -243,6 +244,7 @@ get_str_from_var(numeric *var, int dscale)
 	 * Check if we must round up before printing the value and do so.
 	 */
 	int			i = dscale + var->weight + 1;
+
 	if (i >= 0 && var->ndigits > i)
 	{
 		int			carry = (var->digits[i] > 4) ? 1 : 0;
@@ -329,6 +331,7 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 		return NULL;
 
 	int			ret = set_var_from_str(str, ptr, value);
+
 	if (ret)
 	{
 		PGTYPESnumeric_free(value);
@@ -357,6 +360,7 @@ PGTYPESnumeric_to_asc(numeric *num, int dscale)
 
 	/* get_str_from_var may change its argument */
 	char	   *s = get_str_from_var(numcopy, dscale);
+
 	PGTYPESnumeric_free(numcopy);
 	return s;
 }
@@ -478,6 +482,7 @@ add_abs(numeric *var1, numeric *var2, numeric *result)
 	int			res_rscale = Max(var1->rscale, var2->rscale);
 	int			res_dscale = Max(var1->dscale, var2->dscale);
 	int			res_ndigits = res_rscale + res_weight + 1;
+
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
@@ -561,6 +566,7 @@ sub_abs(numeric *var1, numeric *var2, numeric *result)
 	int			res_rscale = Max(var1->rscale, var2->rscale);
 	int			res_dscale = Max(var1->dscale, var2->dscale);
 	int			res_ndigits = res_rscale + res_weight + 1;
+
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
@@ -894,6 +900,7 @@ PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
 
 	int			res_weight = var1->weight + var2->weight + 2;
 	int			res_ndigits = var1->ndigits + var2->ndigits + 1;
+
 	if (var1->sign == var2->sign)
 		res_sign = NUMERIC_POS;
 	else
@@ -902,6 +909,7 @@ PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
 	if ((res_buf = digitbuf_alloc(res_ndigits)) == NULL)
 		return -1;
 	NumericDigit *res_digits = res_buf;
+
 	memset(res_digits, 0, res_ndigits);
 
 	ri = res_ndigits;
@@ -1022,6 +1030,7 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 
 	/* Select display scale */
 	int			res_dscale = NUMERIC_MIN_SIG_DIGITS - qweight;
+
 	res_dscale = Max(res_dscale, var1->dscale);
 	res_dscale = Max(res_dscale, var2->dscale);
 	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
@@ -1058,6 +1067,7 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	 * First of all division by zero check
 	 */
 	int			ndigits_tmp = var2->ndigits + 1;
+
 	if (ndigits_tmp == 1)
 	{
 		errno = PGTYPES_NUM_DIVIDE_ZERO;
@@ -1073,6 +1083,7 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 		res_sign = NUMERIC_NEG;
 	int			res_weight = var1->weight - var2->weight + 1;
 	int			res_ndigits = rscale + res_weight;
+
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
 
@@ -1321,6 +1332,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 		var->sign = NUMERIC_POS;
 
 	signed long int reach_limit = 1;
+
 	do
 	{
 		size++;
@@ -1347,6 +1359,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	var->weight = size - 2;
 
 	int			i = 0;
+
 	do
 	{
 		extract = abs_long_val - (abs_long_val % reach_limit);
@@ -1400,6 +1413,7 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 	if ((tmp = PGTYPESnumeric_from_asc(buffer, NULL)) == NULL)
 		return -1;
 	int			i = PGTYPESnumeric_copy(tmp, dst);
+
 	PGTYPESnumeric_free(tmp);
 	if (i != 0)
 		return -1;
@@ -1424,6 +1438,7 @@ numericvar_to_double(numeric *var, double *dp)
 	}
 
 	char	   *tmp = get_str_from_var(varcopy, varcopy->dscale);
+
 	PGTYPESnumeric_free(varcopy);
 
 	if (tmp == NULL)
@@ -1434,6 +1449,7 @@ numericvar_to_double(numeric *var, double *dp)
 	 */
 	errno = 0;
 	double		val = strtod(tmp, &endptr);
+
 	if (errno == ERANGE)
 	{
 		free(tmp);

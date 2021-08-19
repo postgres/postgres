@@ -123,6 +123,7 @@ map_locale(const struct locale_map *map, const char *locale)
 		char	   *match_end = NULL;
 
 		char	   *match = strstr(locale, needle_start);
+
 		if (match)
 		{
 			/*

@@ -218,6 +218,7 @@ inner_subltree(ltree *t, int32 startpos, int32 endpos)
 	}
 
 	ltree	   *res = (ltree *) palloc0(LTREE_HDRSIZE + (end - start));
+
 	SET_VARSIZE(res, LTREE_HDRSIZE + (end - start));
 	res->numlevel = endpos - startpos;
 
@@ -279,6 +280,7 @@ ltree_concat(ltree *a, ltree *b)
 						numlevel, LTREE_MAX_LEVELS)));
 
 	ltree	   *r = (ltree *) palloc0(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
+
 	SET_VARSIZE(r, VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	r->numlevel = (uint16) numlevel;
 
@@ -296,6 +298,7 @@ ltree_addltree(PG_FUNCTION_ARGS)
 	ltree	   *b = PG_GETARG_LTREE_P(1);
 
 	ltree	   *r = ltree_concat(a, b);
+
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 	PG_RETURN_POINTER(r);
@@ -435,6 +438,7 @@ lca_inner(ltree **a, int len)
 
 	/* Compare each additional input to *a */
 	ltree	  **ptr = a + 1;
+
 	while (ptr - a < len)
 	{
 		if ((*ptr)->numlevel == 0)
@@ -472,6 +476,7 @@ lca_inner(ltree **a, int len)
 
 	/* ... and construct it by copying from *a */
 	ltree	   *res = (ltree *) palloc0(reslen);
+
 	SET_VARSIZE(res, reslen);
 	res->numlevel = num;
 
@@ -517,7 +522,8 @@ text2ltree(PG_FUNCTION_ARGS)
 	char	   *s = text_to_cstring(in);
 
 	ltree	   *out = (ltree *) DatumGetPointer(DirectFunctionCall1(ltree_in,
-														PointerGetDatum(s)));
+																	PointerGetDatum(s)));
+
 	pfree(s);
 	PG_FREE_IF_COPY(in, 0);
 	PG_RETURN_POINTER(out);
@@ -533,6 +539,7 @@ ltree2text(PG_FUNCTION_ARGS)
 	text	   *out = (text *) palloc(VARSIZE(in) + VARHDRSZ);
 	char	   *ptr = VARDATA(out);
 	ltree_level *curlevel = LTREE_FIRST(in);
+
 	for (i = 0; i < in->numlevel; i++)
 	{
 		if (i != 0)
@@ -568,8 +575,8 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 
 	/* Use generic restriction selectivity logic, with default 0.001. */
 	double		selec = generic_restriction_selectivity(root, operator, InvalidOid,
-											args, varRelid,
-											0.001);
+														args, varRelid,
+														0.001);
 
 	PG_RETURN_FLOAT8((float8) selec);
 }

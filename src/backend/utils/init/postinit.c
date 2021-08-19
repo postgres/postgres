@@ -112,9 +112,9 @@ GetDatabaseTuple(const char *dbname)
 	 */
 	Relation	relation = table_open(DatabaseRelationId, AccessShareLock);
 	SysScanDesc scan = systable_beginscan(relation, DatabaseNameIndexId,
-							  criticalSharedRelcachesBuilt,
-							  NULL,
-							  1, key);
+										  criticalSharedRelcachesBuilt,
+										  NULL,
+										  1, key);
 
 	HeapTuple	tuple = systable_getnext(scan);
 
@@ -152,9 +152,9 @@ GetDatabaseTupleByOid(Oid dboid)
 	 */
 	Relation	relation = table_open(DatabaseRelationId, AccessShareLock);
 	SysScanDesc scan = systable_beginscan(relation, DatabaseOidIndexId,
-							  criticalSharedRelcachesBuilt,
-							  NULL,
-							  1, key);
+										  criticalSharedRelcachesBuilt,
+										  NULL,
+										  1, key);
 
 	HeapTuple	tuple = systable_getnext(scan);
 
@@ -301,6 +301,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 	/* Fetch our pg_database row normally, via syscache */
 	HeapTuple	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
 	Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tup);
@@ -857,11 +858,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 
 		HeapTuple	tuple = GetDatabaseTuple(in_dbname);
+
 		if (!HeapTupleIsValid(tuple))
 			ereport(FATAL,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", in_dbname)));
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
+
 		MyDatabaseId = dbform->oid;
 		MyDatabaseTableSpace = dbform->dattablespace;
 		/* take database name from the caller, just for paranoia */
@@ -872,11 +875,13 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		/* caller specified database by OID */
 
 		HeapTuple	tuple = GetDatabaseTupleByOid(dboid);
+
 		if (!HeapTupleIsValid(tuple))
 			ereport(FATAL,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database %u does not exist", dboid)));
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
+
 		MyDatabaseId = dbform->oid;
 		MyDatabaseTableSpace = dbform->dattablespace;
 		Assert(MyDatabaseId == dboid);
@@ -957,6 +962,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 
 		HeapTuple	tuple = GetDatabaseTuple(dbname);
+
 		if (!HeapTupleIsValid(tuple) ||
 			MyDatabaseId != ((Form_pg_database) GETSTRUCT(tuple))->oid ||
 			MyDatabaseTableSpace != ((Form_pg_database) GETSTRUCT(tuple))->dattablespace)
@@ -1096,13 +1102,16 @@ process_startup_options(Port *port, bool am_superuser)
 	 * These are handled exactly like command-line variables.
 	 */
 	ListCell   *gucopts = list_head(port->guc_options);
+
 	while (gucopts)
 	{
 
 		char	   *name = lfirst(gucopts);
+
 		gucopts = lnext(port->guc_options, gucopts);
 
 		char	   *value = lfirst(gucopts);
+
 		gucopts = lnext(port->guc_options, gucopts);
 
 		SetConfigOption(name, value, gucctx, PGC_S_CLIENT);

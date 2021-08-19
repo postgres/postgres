@@ -145,6 +145,7 @@ initTrie(const char *filename)
 				int			trglen = 0;
 
 				int			state = 0;
+
 				for (ptr = line; *ptr; ptr += ptrlen)
 				{
 					ptrlen = pg_mblen(ptr);
@@ -211,6 +212,7 @@ initTrie(const char *filename)
 
 			MemoryContext ecxt = MemoryContextSwitchTo(ccxt);
 			ErrorData  *errdata = CopyErrorData();
+
 			if (errdata->sqlerrcode == ERRCODE_UNTRANSLATABLE_CHARACTER)
 			{
 				FlushErrorState();
@@ -322,7 +324,8 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 		int			matchlen;
 
 		TrieChar   *node = findReplaceTo(rootTrie, (unsigned char *) srcchar, len,
-							 &matchlen);
+										 &matchlen);
+
 		if (node && node->replaceTo)
 		{
 			if (buf.data == NULL)
@@ -398,10 +401,10 @@ unaccent_dict(PG_FUNCTION_ARGS)
 	TSDictionaryCacheEntry *dict = lookup_ts_dictionary_cache(dictOid);
 
 	TSLexeme   *res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
-													 PointerGetDatum(dict->dictData),
-													 PointerGetDatum(VARDATA_ANY(str)),
-													 Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
-													 PointerGetDatum(NULL)));
+																 PointerGetDatum(dict->dictData),
+																 PointerGetDatum(VARDATA_ANY(str)),
+																 Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
+																 PointerGetDatum(NULL)));
 
 	PG_FREE_IF_COPY(str, strArg);
 

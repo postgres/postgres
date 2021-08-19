@@ -41,18 +41,22 @@ fixup_whole_row_references(Oid relOid, Bitmapset *columns)
 
 	/* if no whole-row references, nothing to do */
 	int			index = InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber;
+
 	if (!bms_is_member(index, columns))
 		return columns;
 
 	/* obtain number of attributes */
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
 	AttrNumber	natts = ((Form_pg_class) GETSTRUCT(tuple))->relnatts;
+
 	ReleaseSysCache(tuple);
 
 	/* remove bit 0 from column set, add in all the non-dropped columns */
 	Bitmapset  *result = bms_copy(columns);
+
 	result = bms_del_member(result, index);
 
 	for (attno = 1; attno <= natts; attno++)
@@ -96,6 +100,7 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 		return columns;
 
 	int			index = -1;
+
 	while ((index = bms_next_member(columns, index)) >= 0)
 	{
 		/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
@@ -111,6 +116,7 @@ fixup_inherited_columns(Oid parentId, Oid childId, Bitmapset *columns)
 		}
 
 		char	   *attname = get_attname(parentId, attno, false);
+
 		attno = get_attnum(childId, attname);
 		if (attno == InvalidAttrNumber)
 			elog(ERROR, "cache lookup failed for attribute %s of relation %u",
@@ -172,6 +178,7 @@ check_relation_privileges(Oid relOid,
 	object.objectId = relOid;
 	object.objectSubId = 0;
 	char	   *audit_name = getObjectIdentity(&object, false);
+
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
@@ -328,11 +335,11 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation)
 			 * up them.
 			 */
 			Bitmapset  *selectedCols = fixup_inherited_columns(rte->relid, tableOid,
-												   rte->selectedCols);
+															   rte->selectedCols);
 			Bitmapset  *insertedCols = fixup_inherited_columns(rte->relid, tableOid,
-												   rte->insertedCols);
+															   rte->insertedCols);
 			Bitmapset  *updatedCols = fixup_inherited_columns(rte->relid, tableOid,
-												  rte->updatedCols);
+															  rte->updatedCols);
 
 			/*
 			 * check permissions on individual tables

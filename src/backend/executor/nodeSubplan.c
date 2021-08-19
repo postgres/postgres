@@ -315,6 +315,7 @@ ExecScanSubPlan(SubPlanState *node,
 	 * a change from pre-8.3 behavior of returning NULL).
 	 */
 	Datum		result = BoolGetDatum(subLinkType == ALL_SUBLINK);
+
 	*isNull = false;
 
 	for (slot = ExecProcNode(planstate);
@@ -366,6 +367,7 @@ ExecScanSubPlan(SubPlanState *node,
 			/* stash away current value */
 			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			Datum		dvalue = slot_getattr(slot, 1, &disnull);
+
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
@@ -386,18 +388,20 @@ ExecScanSubPlan(SubPlanState *node,
 		 * combining expression.
 		 */
 		int			col = 1;
+
 		foreach(plst, subplan->paramIds)
 		{
 			int			paramid = lfirst_int(plst);
 
 			ParamExecData *prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
+
 			Assert(prmdata->execPlan == NULL);
 			prmdata->value = slot_getattr(slot, col, &(prmdata->isnull));
 			col++;
 		}
 
 		Datum		rowresult = ExecEvalExprSwitchContext(node->testexpr, econtext,
-											  &rownull);
+														  &rownull);
 
 		if (subLinkType == ANY_SUBLINK)
 		{
@@ -490,6 +494,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	node->havenullrows = false;
 
 	long		nbuckets = (long) Min(planstate->plan->plan_rows, (double) LONG_MAX);
+
 	if (nbuckets < 1)
 		nbuckets = 1;
 
@@ -573,6 +578,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 			int			paramid = lfirst_int(plst);
 
 			ParamExecData *prmdata = &(innerecontext->ecxt_param_exec_vals[paramid]);
+
 			Assert(prmdata->execPlan == NULL);
 			prmdata->value = slot_getattr(slot, col,
 										  &(prmdata->isnull));
@@ -929,9 +935,10 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			/* Process lefthand argument */
 			Expr	   *expr = (Expr *) linitial(opexpr->args);
 			TargetEntry *tle = makeTargetEntry(expr,
-								  i,
-								  NULL,
-								  false);
+											   i,
+											   NULL,
+											   false);
+
 			lefttlist = lappend(lefttlist, tle);
 
 			/* Process righthand argument */
@@ -983,6 +990,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		 */
 		TupleDesc	tupDescLeft = ExecTypeFromTL(lefttlist);
 		TupleTableSlot *slot = ExecInitExtraTupleSlot(estate, tupDescLeft, &TTSOpsVirtual);
+
 		sstate->projLeft = ExecBuildProjectionInfo(lefttlist,
 												   NULL,
 												   slot,
@@ -1125,6 +1133,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 			/* stash away current value */
 			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			Datum		dvalue = slot_getattr(slot, 1, &disnull);
+
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
@@ -1235,6 +1244,7 @@ ExecSetParamPlanMulti(const Bitmapset *params, ExprContext *econtext)
 {
 
 	int			paramid = -1;
+
 	while ((paramid = bms_next_member(params, paramid)) >= 0)
 	{
 		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);

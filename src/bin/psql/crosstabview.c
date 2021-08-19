@@ -212,7 +212,7 @@ PrintResultsInCrosstab(const PGresult *res)
 
 		/* horizontal */
 		char	   *val = PQgetisnull(res, rn, field_for_columns) ? NULL :
-			PQgetvalue(res, rn, field_for_columns);
+		PQgetvalue(res, rn, field_for_columns);
 		char	   *val1 = NULL;
 
 		if (sort_field_for_columns >= 0 &&
@@ -308,6 +308,7 @@ printCrosstab(const PGresult *results,
 	 * This avoids an O(N^2) loop later.
 	 */
 	int		   *horiz_map = (int *) pg_malloc(sizeof(int) * num_columns);
+
 	for (i = 0; i < num_columns; i++)
 		horiz_map[piv_columns[i].rank] = i;
 
@@ -320,8 +321,8 @@ printCrosstab(const PGresult *results,
 	{
 
 		char	   *colname = piv_columns[horiz_map[i]].name ?
-			piv_columns[horiz_map[i]].name :
-			(popt.nullPrint ? popt.nullPrint : "");
+		piv_columns[horiz_map[i]].name :
+		(popt.nullPrint ? popt.nullPrint : "");
 
 		printTableAddHeader(&cont, colname, false, col_align);
 	}

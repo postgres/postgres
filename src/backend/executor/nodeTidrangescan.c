@@ -68,6 +68,7 @@ MakeTidOpExpr(OpExpr *expr, TidRangeScanState *tidstate)
 		elog(ERROR, "could not identify CTID variable");
 
 	TidOpExpr  *tidopexpr = (TidOpExpr *) palloc(sizeof(TidOpExpr));
+
 	tidopexpr->inclusive = false;	/* for now */
 
 	switch (expr->opno)
@@ -112,6 +113,7 @@ TidExprListCreate(TidRangeScanState *tidrangestate)
 			elog(ERROR, "could not identify CTID expression");
 
 		TidOpExpr  *tidopexpr = MakeTidOpExpr(opexpr, tidrangestate);
+
 		tidexprs = lappend(tidexprs, tidopexpr);
 	}
 
@@ -150,9 +152,9 @@ TidRangeEval(TidRangeScanState *node)
 
 		/* Evaluate this bound. */
 		ItemPointer itemptr = (ItemPointer)
-			DatumGetPointer(ExecEvalExprSwitchContext(tidopexpr->exprstate,
-													  econtext,
-													  &isNull));
+		DatumGetPointer(ExecEvalExprSwitchContext(tidopexpr->exprstate,
+												  econtext,
+												  &isNull));
 
 		/* If the bound is NULL, *nothing* matches the qual. */
 		if (isNull)
@@ -352,6 +354,7 @@ ExecInitTidRangeScan(TidRangeScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	TidRangeScanState *tidrangestate = makeNode(TidRangeScanState);
+
 	tidrangestate->ss.ps.plan = (Plan *) node;
 	tidrangestate->ss.ps.state = estate;
 	tidrangestate->ss.ps.ExecProcNode = ExecTidRangeScan;

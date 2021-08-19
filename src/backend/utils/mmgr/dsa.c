@@ -436,9 +436,9 @@ dsa_create(int tranche_id)
 
 	/* Create a new DSA area with the control object in this segment. */
 	dsa_area   *area = create_internal(dsm_segment_address(segment),
-						   DSA_INITIAL_SEGMENT_SIZE,
-						   tranche_id,
-						   dsm_segment_handle(segment), segment);
+									   DSA_INITIAL_SEGMENT_SIZE,
+									   tranche_id,
+									   dsm_segment_handle(segment), segment);
 
 	/* Clean up when the control segment detaches. */
 	on_dsm_detach(segment, &dsa_on_dsm_detach_release_in_place,
@@ -469,7 +469,7 @@ dsa_create_in_place(void *place, size_t size,
 {
 
 	dsa_area   *area = create_internal(place, size, tranche_id,
-						   DSM_HANDLE_INVALID, NULL);
+									   DSM_HANDLE_INVALID, NULL);
 
 	/*
 	 * Clean up when the control segment detaches, if a containing DSM segment
@@ -508,6 +508,7 @@ dsa_attach(dsa_handle handle)
 	 * we go ahead and attach to that.
 	 */
 	dsm_segment *segment = dsm_attach(handle);
+
 	if (segment == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -607,6 +608,7 @@ dsa_release_in_place(void *place)
 		{
 
 			dsm_handle	handle = control->segment_handles[i];
+
 			if (handle != DSM_HANDLE_INVALID)
 				dsm_unpin_segment(handle);
 		}
@@ -683,6 +685,7 @@ dsa_allocate_extended(dsa_area *area, size_t size, int flags)
 
 		/* Obtain a span object. */
 		dsa_pointer span_pointer = alloc_object(area, DSA_SCLASS_BLOCK_OF_SPANS);
+
 		if (!DsaPointerIsValid(span_pointer))
 		{
 			/* Raise error unless asked not to. */
@@ -753,7 +756,8 @@ dsa_allocate_extended(dsa_area *area, size_t size, int flags)
 
 		/* For smaller sizes we have a lookup table... */
 		int			mapidx = ((size + DSA_SIZE_CLASS_MAP_QUANTUM - 1) /
-				  DSA_SIZE_CLASS_MAP_QUANTUM) - 1;
+							  DSA_SIZE_CLASS_MAP_QUANTUM) - 1;
+
 		size_class = dsa_size_class_map[mapidx];
 	}
 	else
@@ -922,6 +926,7 @@ dsa_get_address(dsa_area *area, dsa_pointer dp)
 	/* Break the dsa_pointer into its components. */
 	dsa_segment_index index = DSA_EXTRACT_SEGMENT_NUMBER(dp);
 	size_t		offset = DSA_EXTRACT_OFFSET(dp);
+
 	Assert(index < DSA_MAX_SEGMENTS);
 
 	/* Check if we need to cause this segment to be mapped in. */
@@ -1020,6 +1025,7 @@ dsa_trim(dsa_area *area)
 		 */
 		LWLockAcquire(DSA_SCLASS_LOCK(area, size_class), LW_EXCLUSIVE);
 		dsa_pointer span_pointer = pool->spans[1];
+
 		while (DsaPointerIsValid(span_pointer))
 		{
 			dsa_area_span *span = dsa_get_address(area, span_pointer);
@@ -1068,11 +1074,12 @@ dsa_dump(dsa_area *area)
 					"    segment bin %zu (at least %d contiguous pages free):\n",
 					i, 1 << (i - 1));
 			dsa_segment_index segment_index = area->control->segment_bins[i];
+
 			while (segment_index != DSA_SEGMENT_INDEX_NONE)
 			{
 
 				dsa_segment_map *segment_map =
-					get_segment_by_index(area, segment_index);
+				get_segment_by_index(area, segment_index);
 
 				fprintf(stderr,
 						"      segment index %zu, usable_pages = %zu, "
@@ -1119,6 +1126,7 @@ dsa_dump(dsa_area *area)
 					{
 
 						dsa_area_span *span = dsa_get_address(area, span_pointer);
+
 						fprintf(stderr,
 								"        span descriptor at "
 								DSA_POINTER_FORMAT ", superblock at "
@@ -1145,7 +1153,7 @@ dsa_minimum_size(void)
 	int			pages = 0;
 
 	size_t		size = MAXALIGN(sizeof(dsa_area_control)) +
-		MAXALIGN(sizeof(FreePageManager));
+	MAXALIGN(sizeof(FreePageManager));
 
 	/* Figure out how many pages we need, including the page map... */
 	while (((size + FPM_PAGE_SIZE - 1) / FPM_PAGE_SIZE) > pages)
@@ -1176,9 +1184,10 @@ create_internal(void *place, size_t size,
 	/* Now figure out how much space is usable */
 	size_t		total_pages = size / FPM_PAGE_SIZE;
 	size_t		metadata_bytes =
-		MAXALIGN(sizeof(dsa_area_control)) +
-		MAXALIGN(sizeof(FreePageManager)) +
-		total_pages * sizeof(dsa_pointer);
+	MAXALIGN(sizeof(dsa_area_control)) +
+	MAXALIGN(sizeof(FreePageManager)) +
+	total_pages * sizeof(dsa_pointer);
+
 	/* Add padding up to next page boundary. */
 	if (metadata_bytes % FPM_PAGE_SIZE != 0)
 		metadata_bytes += FPM_PAGE_SIZE - (metadata_bytes % FPM_PAGE_SIZE);
@@ -1190,6 +1199,7 @@ create_internal(void *place, size_t size,
 	 * space.
 	 */
 	dsa_area_control *control = (dsa_area_control *) place;
+
 	memset(place, 0, sizeof(*control));
 	control->segment_header.magic =
 		DSA_SEGMENT_HEADER_MAGIC ^ control_handle ^ 0;
@@ -1213,6 +1223,7 @@ create_internal(void *place, size_t size,
 	 * attaching.
 	 */
 	dsa_area   *area = palloc(sizeof(dsa_area));
+
 	area->control = control;
 	area->mapping_pinned = false;
 	memset(area->segment_maps, 0, sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
@@ -1225,6 +1236,7 @@ create_internal(void *place, size_t size,
 
 	/* Set up the segment map for this process's mapping. */
 	dsa_segment_map *segment_map = &area->segment_maps[0];
+
 	segment_map->segment = control_segment;
 	segment_map->mapped_address = place;
 	segment_map->header = (dsa_segment_header *) place;
@@ -1259,6 +1271,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 {
 
 	dsa_area_control *control = (dsa_area_control *) place;
+
 	Assert(control->handle == handle);
 	Assert(control->segment_handles[0] == handle);
 	Assert(control->segment_header.magic ==
@@ -1266,6 +1279,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 
 	/* Build the backend-local area object. */
 	dsa_area   *area = palloc(sizeof(dsa_area));
+
 	area->control = control;
 	area->mapping_pinned = false;
 	memset(&area->segment_maps[0], 0,
@@ -1274,6 +1288,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 
 	/* Set up the segment map for this process's mapping. */
 	dsa_segment_map *segment_map = &area->segment_maps[0];
+
 	segment_map->segment = segment; /* NULL for in-place */
 	segment_map->mapped_address = place;
 	segment_map->header = (dsa_segment_header *) segment_map->mapped_address;
@@ -1365,11 +1380,13 @@ transfer_first_span(dsa_area *area,
 
 	/* Can't do it if source list is empty. */
 	dsa_pointer span_pointer = pool->spans[fromclass];
+
 	if (!DsaPointerIsValid(span_pointer))
 		return false;
 
 	/* Remove span from head of source list. */
 	dsa_area_span *span = dsa_get_address(area, span_pointer);
+
 	pool->spans[fromclass] = span->nextspan;
 	if (DsaPointerIsValid(span->nextspan))
 	{
@@ -1523,12 +1540,12 @@ ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
 			dsa_area_span *prevspan;
 
 			dsa_area_span *span = (dsa_area_span *)
-				dsa_get_address(area, span_pointer);
+			dsa_get_address(area, span_pointer);
 			dsa_pointer next_span_pointer = span->nextspan;
 
 			/* Figure out what fullness class should contain this span. */
 			int			tfclass = (nmax - span->nallocatable)
-				* (DSA_FULLNESS_CLASSES - 1) / nmax;
+			* (DSA_FULLNESS_CLASSES - 1) / nmax;
 
 			/* Look up next span. */
 			if (DsaPointerIsValid(span->nextspan))
@@ -1621,6 +1638,7 @@ ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
 	/* Find or create a segment and allocate the superblock. */
 	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
 	dsa_segment_map *segment_map = get_best_segment(area, npages);
+
 	if (segment_map == NULL)
 	{
 		segment_map = make_new_segment(area, npages);
@@ -1643,8 +1661,8 @@ ensure_active_superblock(dsa_area *area, dsa_area_pool *pool,
 
 	/* Compute the start of the superblock. */
 	dsa_pointer start_pointer =
-		DSA_MAKE_POINTER(get_segment_index(area, segment_map),
-						 first_page * FPM_PAGE_SIZE);
+	DSA_MAKE_POINTER(get_segment_index(area, segment_map),
+					 first_page * FPM_PAGE_SIZE);
 
 	/*
 	 * If this is a block-of-spans, carve the descriptor right out of the
@@ -1699,11 +1717,13 @@ get_segment_by_index(dsa_area *area, dsa_segment_index index)
 				 "dsa_area could not attach to a segment that has been freed");
 
 		dsm_segment *segment = dsm_attach(handle);
+
 		if (segment == NULL)
 			elog(ERROR, "dsa_area could not attach to segment");
 		if (area->mapping_pinned)
 			dsm_pin_mapping(segment);
 		dsa_segment_map *segment_map = &area->segment_maps[index];
+
 		segment_map->segment = segment;
 		segment_map->mapped_address = dsm_segment_address(segment);
 		segment_map->header =
@@ -1768,7 +1788,8 @@ destroy_superblock(dsa_area *area, dsa_pointer span_pointer)
 	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
 	check_for_freed_segments_locked(area);
 	dsa_segment_map *segment_map =
-		get_segment_by_index(area, DSA_EXTRACT_SEGMENT_NUMBER(span->start));
+	get_segment_by_index(area, DSA_EXTRACT_SEGMENT_NUMBER(span->start));
+
 	FreePageManagerPut(segment_map->fpm,
 					   DSA_EXTRACT_OFFSET(span->start) / FPM_PAGE_SIZE,
 					   span->npages);
@@ -1892,6 +1913,7 @@ unlink_segment(dsa_area *area, dsa_segment_map *segment_map)
 	{
 
 		dsa_segment_map *prev = get_segment_by_index(area, segment_map->header->prev);
+
 		prev->header->next = segment_map->header->next;
 	}
 	else
@@ -1905,6 +1927,7 @@ unlink_segment(dsa_area *area, dsa_segment_map *segment_map)
 	{
 
 		dsa_segment_map *next = get_segment_by_index(area, segment_map->header->next);
+
 		next->header->prev = segment_map->header->prev;
 	}
 }
@@ -1939,6 +1962,7 @@ get_best_segment(dsa_area *area, size_t npages)
 
 		/* Search this bin for a segment with enough contiguous space. */
 		dsa_segment_index segment_index = area->control->segment_bins[bin];
+
 		while (segment_index != DSA_SEGMENT_INDEX_NONE)
 		{
 
@@ -1972,7 +1996,8 @@ get_best_segment(dsa_area *area, size_t npages)
 				{
 
 					dsa_segment_map *next = get_segment_by_index(area,
-												segment_map->header->next);
+																 segment_map->header->next);
+
 					Assert(next->header->bin == new_bin);
 					next->header->prev = segment_index;
 				}
@@ -2040,7 +2065,8 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	 * pages we can fit.
 	 */
 	size_t		total_size = DSA_INITIAL_SEGMENT_SIZE *
-		((size_t) 1 << (new_index / DSA_NUM_SEGMENTS_AT_EACH_SIZE));
+	((size_t) 1 << (new_index / DSA_NUM_SEGMENTS_AT_EACH_SIZE));
+
 	total_size = Min(total_size, DSA_MAX_SEGMENT_SIZE);
 	total_size = Min(total_size,
 					 area->control->max_total_segment_size -
@@ -2048,9 +2074,9 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 
 	size_t		total_pages = total_size / FPM_PAGE_SIZE;
 	size_t		metadata_bytes =
-		MAXALIGN(sizeof(dsa_segment_header)) +
-		MAXALIGN(sizeof(FreePageManager)) +
-		sizeof(dsa_pointer) * total_pages;
+	MAXALIGN(sizeof(dsa_segment_header)) +
+	MAXALIGN(sizeof(FreePageManager)) +
+	sizeof(dsa_pointer) * total_pages;
 
 	/* Add padding up to next page boundary. */
 	if (metadata_bytes % FPM_PAGE_SIZE != 0)
@@ -2058,6 +2084,7 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	if (total_size <= metadata_bytes)
 		return NULL;
 	size_t		usable_pages = (total_size - metadata_bytes) / FPM_PAGE_SIZE;
+
 	Assert(metadata_bytes + usable_pages * FPM_PAGE_SIZE <= total_size);
 
 	/* See if that is enough... */
@@ -2090,6 +2117,7 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 
 	/* Create the segment. */
 	dsm_segment *segment = dsm_create(total_size, 0);
+
 	if (segment == NULL)
 		return NULL;
 	dsm_pin_segment(segment);
@@ -2112,6 +2140,7 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 
 	/* Build a segment map for this segment in this backend. */
 	dsa_segment_map *segment_map = &area->segment_maps[new_index];
+
 	segment_map->segment = segment;
 	segment_map->mapped_address = dsm_segment_address(segment);
 	segment_map->header = (dsa_segment_header *) segment_map->mapped_address;
@@ -2183,6 +2212,7 @@ check_for_freed_segments(dsa_area *area)
 	 */
 	pg_read_barrier();
 	size_t		freed_segment_counter = area->control->freed_segment_counter;
+
 	if (unlikely(area->freed_segment_counter != freed_segment_counter))
 	{
 		/* Check all currently mapped segments to find what's been freed. */
@@ -2206,6 +2236,7 @@ check_for_freed_segments_locked(dsa_area *area)
 
 	Assert(LWLockHeldByMe(DSA_AREA_LOCK(area)));
 	size_t		freed_segment_counter = area->control->freed_segment_counter;
+
 	if (unlikely(area->freed_segment_counter != freed_segment_counter))
 	{
 		for (i = 0; i <= area->high_segment_index; ++i)

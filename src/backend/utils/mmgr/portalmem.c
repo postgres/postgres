@@ -178,6 +178,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	AssertArg(PointerIsValid(name));
 
 	Portal		portal = GetPortalByName(name);
+
 	if (PortalIsValid(portal))
 	{
 		if (!allowDup)
@@ -578,6 +579,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	{
 
 		MemoryContext oldcontext = MemoryContextSwitchTo(portal->holdContext);
+
 		tuplestore_end(portal->holdStore);
 		MemoryContextSwitchTo(oldcontext);
 		portal->holdStore = NULL;
@@ -1146,6 +1148,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 	 * pg_cursors view in system_views.sql
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
@@ -1164,8 +1167,8 @@ pg_cursor(PG_FUNCTION_ARGS)
 	 * This avoids any issue of the hashtable possibly changing between calls.
 	 */
 	Tuplestorestate *tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
+	tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+						  false, work_mem);
 
 	/* generate junk in short-term context */
 	MemoryContextSwitchTo(oldcontext);

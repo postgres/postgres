@@ -64,6 +64,7 @@ pg_config(PG_FUNCTION_ARGS)
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
 
 	ConfigData *configdata = get_configdata(my_exec_path, &configdata_len);
+
 	for (i = 0; i < configdata_len; i++)
 	{
 		values[0] = configdata[i].name;

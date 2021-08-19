@@ -95,11 +95,12 @@ win_to_utf8(PG_FUNCTION_ARGS)
 		{
 
 			int			converted = LocalToUtf(src, len, dest,
-								   maps[i].map1,
-								   NULL, 0,
-								   NULL,
-								   encoding,
-								   noError);
+											   maps[i].map1,
+											   NULL, 0,
+											   NULL,
+											   encoding,
+											   noError);
+
 			PG_RETURN_INT32(converted);
 		}
 	}
@@ -130,11 +131,12 @@ utf8_to_win(PG_FUNCTION_ARGS)
 		{
 
 			int			converted = UtfToLocal(src, len, dest,
-								   maps[i].map2,
-								   NULL, 0,
-								   NULL,
-								   encoding,
-								   noError);
+											   maps[i].map2,
+											   NULL, 0,
+											   NULL,
+											   encoding,
+											   noError);
+
 			PG_RETURN_INT32(converted);
 		}
 	}

@@ -237,6 +237,7 @@ sha1_pad(pg_sha1_ctx *ctx)
 	PUTPAD(0x80);
 
 	size_t		padstart = COUNT % 64;
+
 	padlen = 64 - padstart;
 	if (padlen < 8)
 	{

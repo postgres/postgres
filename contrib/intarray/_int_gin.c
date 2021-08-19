@@ -67,6 +67,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 			res = (Datum *) palloc(sizeof(Datum) * (*nentries));
 
 			int32	   *arr = ARRPTR(query);
+
 			for (i = 0; i < *nentries; i++)
 				res[i] = Int32GetDatum(arr[i]);
 		}

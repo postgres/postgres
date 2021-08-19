@@ -137,7 +137,8 @@ initGinState(GinState *state, Relation index)
 		{
 
 			TypeCacheEntry *typentry = lookup_type_cache(attr->atttypid,
-										 TYPECACHE_CMP_PROC_FINFO);
+														 TYPECACHE_CMP_PROC_FINFO);
+
 			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -238,7 +239,8 @@ gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 		 * descriptor to obtain first attribute of tuple
 		 */
 		Datum		res = index_getattr(tuple, FirstOffsetNumber, ginstate->tupdesc[0],
-							&isnull);
+										&isnull);
+
 		Assert(!isnull);
 
 		colN = DatumGetUInt16(res);
@@ -325,6 +327,7 @@ GinNewBuffer(Relation index)
 
 	/* Must extend the file */
 	bool		needLock = !RELATION_IS_LOCAL(index);
+
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
 
@@ -344,6 +347,7 @@ GinInitPage(Page page, uint32 f, Size pageSize)
 	PageInit(page, pageSize, sizeof(GinPageOpaqueData));
 
 	GinPageOpaque opaque = GinPageGetOpaque(page);
+
 	opaque->flags = f;
 	opaque->rightlink = InvalidBlockNumber;
 }
@@ -503,7 +507,8 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	}
 
 	/* OK, call the opclass's extractValueFn */
-	bool	   *nullFlags = NULL;			/* in case extractValue doesn't set it */
+	bool	   *nullFlags = NULL;	/* in case extractValue doesn't set it */
+
 	entries = (Datum *)
 		DatumGetPointer(FunctionCall3Coll(&ginstate->extractValueFn[attnum - 1],
 										  ginstate->supportCollation[attnum - 1],
@@ -543,6 +548,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 		cmpEntriesArg arg;
 
 		keyEntryData *keydata = (keyEntryData *) palloc(*nentries * sizeof(keyEntryData));
+
 		for (i = 0; i < *nentries; i++)
 		{
 			keydata[i].datum = entries[i];
@@ -562,6 +568,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 			entries[0] = keydata[0].datum;
 			nullFlags[0] = keydata[0].isnull;
 			int32		j = 1;
+
 			for (i = 1; i < *nentries; i++)
 			{
 				if (cmpEntries(&keydata[i - 1], &keydata[i], &arg) != 0)
@@ -622,6 +629,7 @@ ginGetStats(Relation index, GinStatsData *stats)
 {
 
 	Buffer		metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
+
 	LockBuffer(metabuffer, GIN_SHARE);
 	Page		metapage = BufferGetPage(metabuffer);
 	GinMetaPageData *metadata = GinPageGetMeta(metapage);
@@ -646,6 +654,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 {
 
 	Buffer		metabuffer = ReadBuffer(index, GIN_METAPAGE_BLKNO);
+
 	LockBuffer(metabuffer, GIN_EXCLUSIVE);
 	Page		metapage = BufferGetPage(metabuffer);
 	GinMetaPageData *metadata = GinPageGetMeta(metapage);
@@ -683,6 +692,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
+
 		PageSetLSN(metapage, recptr);
 	}
 

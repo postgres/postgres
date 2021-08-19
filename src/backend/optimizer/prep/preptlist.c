@@ -100,6 +100,7 @@ preprocess_targetlist(PlannerInfo *root)
 	 * renumber the processed_tlist entries to be consecutive.
 	 */
 	List	   *tlist = parse->targetList;
+
 	if (command_type == CMD_INSERT)
 		tlist = expand_insert_targetlist(tlist, target_relation);
 	else if (command_type == CMD_UPDATE)
@@ -210,9 +211,10 @@ preprocess_targetlist(PlannerInfo *root)
 		ListCell   *l;
 
 		List	   *vars = pull_var_clause((Node *) parse->returningList,
-							   PVC_RECURSE_AGGREGATES |
-							   PVC_RECURSE_WINDOWFUNCS |
-							   PVC_INCLUDE_PLACEHOLDERS);
+										   PVC_RECURSE_AGGREGATES |
+										   PVC_RECURSE_WINDOWFUNCS |
+										   PVC_INCLUDE_PLACEHOLDERS);
+
 		foreach(l, vars)
 		{
 			Var		   *var = (Var *) lfirst(l);
@@ -225,9 +227,9 @@ preprocess_targetlist(PlannerInfo *root)
 				continue;		/* already got it */
 
 			TargetEntry *tle = makeTargetEntry((Expr *) var,
-								  list_length(tlist) + 1,
-								  NULL,
-								  true);
+											   list_length(tlist) + 1,
+											   NULL,
+											   true);
 
 			tlist = lappend(tlist, tle);
 		}

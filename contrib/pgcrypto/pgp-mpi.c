@@ -58,6 +58,7 @@ pgp_mpi_create(uint8 *data, int bits, PGP_MPI **mpi)
 	PGP_MPI    *n;
 
 	int			res = pgp_mpi_alloc(bits, &n);
+
 	if (res < 0)
 		return res;
 	memcpy(n->data, data, n->bytes);
@@ -82,6 +83,7 @@ pgp_mpi_read(PullFilter *src, PGP_MPI **mpi)
 	PGP_MPI    *n;
 
 	int			res = pullf_read_fixed(src, 2, hdr);
+
 	if (res < 0)
 		return res;
 	int			bits = ((unsigned) hdr[0] << 8) + hdr[1];
@@ -106,6 +108,7 @@ pgp_mpi_write(PushFilter *dst, PGP_MPI *n)
 	buf[0] = n->bits >> 8;
 	buf[1] = n->bits & 0xFF;
 	int			res = pushf_write(dst, buf, 2);
+
 	if (res >= 0)
 		res = pushf_write(dst, n->data, n->bytes);
 	return res;

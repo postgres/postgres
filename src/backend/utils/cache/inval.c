@@ -152,7 +152,7 @@ typedef struct InvalMessageArray
 {
 	SharedInvalidationMessage *msgs;	/* palloc'd array (can be expanded) */
 	int			maxmsgs;		/* current allocated size of array */
-} InvalMessageArray;
+}			InvalMessageArray;
 
 static InvalMessageArray InvalMessageArrays[2];
 
@@ -161,7 +161,7 @@ typedef struct InvalidationMsgsGroup
 {
 	int			firstmsg[2];	/* first index in relevant array */
 	int			nextmsg[2];		/* last+1 index */
-} InvalidationMsgsGroup;
+}			InvalidationMsgsGroup;
 
 /* Macros to help preserve InvalidationMsgsGroup abstraction */
 #define SetSubGroupToFollow(targetgroup, priorgroup, subgroup) \
@@ -273,7 +273,7 @@ static int	relcache_callback_count = 0;
  * subgroup must be CatCacheMsgs or RelCacheMsgs.
  */
 static void
-AddInvalidationMessage(InvalidationMsgsGroup *group, int subgroup,
+AddInvalidationMessage(InvalidationMsgsGroup * group, int subgroup,
 					   const SharedInvalidationMessage *msg)
 {
 	InvalMessageArray *ima = &InvalMessageArrays[subgroup];
@@ -313,8 +313,8 @@ AddInvalidationMessage(InvalidationMsgsGroup *group, int subgroup,
  * the source subgroup to empty.
  */
 static void
-AppendInvalidationMessageSubGroup(InvalidationMsgsGroup *dest,
-								  InvalidationMsgsGroup *src,
+AppendInvalidationMessageSubGroup(InvalidationMsgsGroup * dest,
+								  InvalidationMsgsGroup * src,
 								  int subgroup)
 {
 	/* Messages must be adjacent in main array */
@@ -378,7 +378,7 @@ AppendInvalidationMessageSubGroup(InvalidationMsgsGroup *dest,
  * Add a catcache inval entry
  */
 static void
-AddCatcacheInvalidationMessage(InvalidationMsgsGroup *group,
+AddCatcacheInvalidationMessage(InvalidationMsgsGroup * group,
 							   int id, uint32 hashValue, Oid dbId)
 {
 	SharedInvalidationMessage msg;
@@ -406,7 +406,7 @@ AddCatcacheInvalidationMessage(InvalidationMsgsGroup *group,
  * Add a whole-catalog inval entry
  */
 static void
-AddCatalogInvalidationMessage(InvalidationMsgsGroup *group,
+AddCatalogInvalidationMessage(InvalidationMsgsGroup * group,
 							  Oid dbId, Oid catId)
 {
 	SharedInvalidationMessage msg;
@@ -424,7 +424,7 @@ AddCatalogInvalidationMessage(InvalidationMsgsGroup *group,
  * Add a relcache inval entry
  */
 static void
-AddRelcacheInvalidationMessage(InvalidationMsgsGroup *group,
+AddRelcacheInvalidationMessage(InvalidationMsgsGroup * group,
 							   Oid dbId, Oid relId)
 {
 	SharedInvalidationMessage msg;
@@ -456,7 +456,7 @@ AddRelcacheInvalidationMessage(InvalidationMsgsGroup *group,
  * We put these into the relcache subgroup for simplicity.
  */
 static void
-AddSnapshotInvalidationMessage(InvalidationMsgsGroup *group,
+AddSnapshotInvalidationMessage(InvalidationMsgsGroup * group,
 							   Oid dbId, Oid relId)
 {
 	SharedInvalidationMessage msg;
@@ -483,8 +483,8 @@ AddSnapshotInvalidationMessage(InvalidationMsgsGroup *group,
  * the source group to empty.
  */
 static void
-AppendInvalidationMessages(InvalidationMsgsGroup *dest,
-						   InvalidationMsgsGroup *src)
+AppendInvalidationMessages(InvalidationMsgsGroup * dest,
+						   InvalidationMsgsGroup * src)
 {
 	AppendInvalidationMessageSubGroup(dest, src, CatCacheMsgs);
 	AppendInvalidationMessageSubGroup(dest, src, RelCacheMsgs);
@@ -497,7 +497,7 @@ AppendInvalidationMessages(InvalidationMsgsGroup *dest,
  * catcache entries are processed first, for reasons mentioned above.
  */
 static void
-ProcessInvalidationMessages(InvalidationMsgsGroup *group,
+ProcessInvalidationMessages(InvalidationMsgsGroup * group,
 							void (*func) (SharedInvalidationMessage *msg))
 {
 	ProcessMessageSubGroup(group, CatCacheMsgs, func(msg));
@@ -509,7 +509,7 @@ ProcessInvalidationMessages(InvalidationMsgsGroup *group,
  * rather than just one at a time.
  */
 static void
-ProcessInvalidationMessagesMulti(InvalidationMsgsGroup *group,
+ProcessInvalidationMessagesMulti(InvalidationMsgsGroup * group,
 								 void (*func) (const SharedInvalidationMessage *msgs, int n))
 {
 	ProcessMessageSubGroupMulti(group, CatCacheMsgs, func(msgs, n));
@@ -779,8 +779,9 @@ PrepareInvalidationState(void)
 		return;
 
 	TransInvalidationInfo *myInfo = (TransInvalidationInfo *)
-		MemoryContextAllocZero(TopTransactionContext,
-							   sizeof(TransInvalidationInfo));
+	MemoryContextAllocZero(TopTransactionContext,
+						   sizeof(TransInvalidationInfo));
+
 	myInfo->parent = transInvalInfo;
 	myInfo->my_level = GetCurrentTransactionNestLevel();
 
@@ -891,13 +892,14 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	 * not new ones.
 	 */
 	int			nummsgs = NumMessagesInGroup(&transInvalInfo->PriorCmdInvalidMsgs) +
-		NumMessagesInGroup(&transInvalInfo->CurrentCmdInvalidMsgs);
+	NumMessagesInGroup(&transInvalInfo->CurrentCmdInvalidMsgs);
 
 	*msgs = msgarray = (SharedInvalidationMessage *)
 		MemoryContextAlloc(CurTransactionContext,
 						   nummsgs * sizeof(SharedInvalidationMessage));
 
 	int			nmsgs = 0;
+
 	ProcessMessageSubGroupMulti(&transInvalInfo->PriorCmdInvalidMsgs,
 								CatCacheMsgs,
 								(memcpy(msgarray + nmsgs,
@@ -1068,6 +1070,7 @@ AtEOSubXact_Inval(bool isCommit)
 
 	/* Also bail out quickly if messages are not for this level. */
 	int			my_level = GetCurrentTransactionNestLevel();
+
 	if (myInfo->my_level != my_level)
 	{
 		Assert(myInfo->my_level < my_level);
@@ -1215,6 +1218,7 @@ CacheInvalidateHeapTuple(Relation relation,
 	 * First let the catcache do its thing
 	 */
 	Oid			tupleRelId = RelationGetRelid(relation);
+
 	if (RelationInvalidatesSnapshotsOnly(tupleRelId))
 	{
 		databaseId = IsSharedRelation(tupleRelId) ? InvalidOid : MyDatabaseId;
@@ -1341,6 +1345,7 @@ CacheInvalidateRelcache(Relation relation)
 	PrepareInvalidationState();
 
 	Oid			relationId = RelationGetRelid(relation);
+
 	if (relation->rd_rel->relisshared)
 		databaseId = InvalidOid;
 	else
@@ -1377,6 +1382,7 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 	PrepareInvalidationState();
 
 	Oid			relationId = classtup->oid;
+
 	if (classtup->relisshared)
 		databaseId = InvalidOid;
 	else
@@ -1397,6 +1403,7 @@ CacheInvalidateRelcacheByRelid(Oid relid)
 	PrepareInvalidationState();
 
 	HeapTuple	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	CacheInvalidateRelcacheByTuple(tup);
@@ -1555,6 +1562,7 @@ CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
 		elog(ERROR, "invalid cache ID: %d", cacheid);
 
 	int			i = syscache_callback_links[cacheid] - 1;
+
 	while (i >= 0)
 	{
 		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;

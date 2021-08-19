@@ -165,7 +165,7 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	 * HASH_ENTER returns the existing entry if present or creates a new one.
 	 */
 	LogicalRepRelMapEntry *entry = hash_search(LogicalRepRelMap, (void *) &remoterel->remoteid,
-						HASH_ENTER, &found);
+											   HASH_ENTER, &found);
 
 	if (found)
 		logicalrep_relmap_free_entry(entry);
@@ -174,6 +174,7 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 
 	/* Make cached copy of the data */
 	MemoryContext oldctx = MemoryContextSwitchTo(LogicalRepRelMapContext);
+
 	entry->remoterel.remoteid = remoterel->remoteid;
 	entry->remoterel.nspname = pstrdup(remoterel->nspname);
 	entry->remoterel.relname = pstrdup(remoterel->relname);
@@ -261,7 +262,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 	/* Search for existing entry. */
 	LogicalRepRelMapEntry *entry = hash_search(LogicalRepRelMap, (void *) &remoteid,
-						HASH_FIND, &found);
+											   HASH_FIND, &found);
 
 	if (!found)
 		elog(ERROR, "no relation map entry for remote relation ID %u",
@@ -305,8 +306,9 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 		/* Try to find and lock the relation by name. */
 		Oid			relid = RangeVarGetRelid(makeRangeVar(remoterel->nspname,
-											  remoterel->relname, -1),
-								 lockmode, true);
+														  remoterel->relname, -1),
+											 lockmode, true);
+
 		if (!OidIsValid(relid))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -326,11 +328,13 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		TupleDesc	desc = RelationGetDescr(entry->localrel);
 		MemoryContext oldctx = MemoryContextSwitchTo(LogicalRepRelMapContext);
+
 		entry->attrmap = make_attrmap(desc->natts);
 		MemoryContextSwitchTo(oldctx);
 
 		/* check and report missing attrs, if any */
 		Bitmapset  *missingatts = bms_add_range(NULL, 0, remoterel->natts - 1);
+
 		for (i = 0; i < desc->natts; i++)
 		{
 			Form_pg_attribute attr = TupleDescAttr(desc, i);
@@ -342,7 +346,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 			}
 
 			int			attnum = logicalrep_rel_att_by_name(remoterel,
-												NameStr(attr->attname));
+															NameStr(attr->attname));
 
 			entry->attrmap->attnums[i] = attnum;
 			if (attnum >= 0)
@@ -367,7 +371,8 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		entry->updatable = true;
 		Bitmapset  *idkey = RelationGetIndexAttrBitmap(entry->localrel,
-										   INDEX_ATTR_BITMAP_IDENTITY_KEY);
+													   INDEX_ATTR_BITMAP_IDENTITY_KEY);
+
 		/* fallback to PK if no replica identity */
 		if (idkey == NULL)
 		{
@@ -528,8 +533,8 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 
 	/* Search for existing entry. */
 	LogicalRepPartMapEntry *part_entry = (LogicalRepPartMapEntry *) hash_search(LogicalRepPartMap,
-														(void *) &partOid,
-														HASH_ENTER, &found);
+																				(void *) &partOid,
+																				HASH_ENTER, &found);
 
 	if (found)
 		return &part_entry->relmapentry;
@@ -543,6 +548,7 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 
 	/* Remote relation is copied as-is from the root entry. */
 	LogicalRepRelMapEntry *entry = &part_entry->relmapentry;
+
 	entry->remoterel.remoteid = remoterel->remoteid;
 	entry->remoterel.nspname = pstrdup(remoterel->nspname);
 	entry->remoterel.relname = pstrdup(remoterel->relname);

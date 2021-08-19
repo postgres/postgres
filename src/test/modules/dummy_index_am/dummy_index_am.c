@@ -249,6 +249,7 @@ dibeginscan(Relation r, int nkeys, int norderbys)
 
 	/* Let's pretend we are doing something */
 	IndexScanDesc scan = RelationGetIndexScan(r, nkeys, norderbys);
+
 	return scan;
 }
 

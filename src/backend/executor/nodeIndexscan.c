@@ -86,6 +86,7 @@ IndexNext(IndexScanState *node)
 	 */
 	EState	   *estate = node->ss.ps.state;
 	ScanDirection direction = estate->es_direction;
+
 	/* flip direction if this is an overall backward scan */
 	if (ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indexorderdir))
 	{
@@ -357,6 +358,7 @@ EvalOrderByExpressions(IndexScanState *node, ExprContext *econtext)
 	MemoryContext oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	int			i = 0;
+
 	foreach(l, node->indexorderbyorig)
 	{
 		ExprState  *orderby = (ExprState *) lfirst(l);
@@ -454,6 +456,7 @@ reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 	int			i;
 
 	ReorderTuple *rt = (ReorderTuple *) palloc(sizeof(ReorderTuple));
+
 	rt->htup = ExecCopySlotHeapTuple(slot);
 	rt->orderbyvals =
 		(Datum *) palloc(sizeof(Datum) * scandesc->numberOfOrderBys);
@@ -485,6 +488,7 @@ reorderqueue_pop(IndexScanState *node)
 	ReorderTuple *topmost = (ReorderTuple *) pairingheap_remove_first(node->iss_ReorderQueue);
 
 	HeapTuple	result = topmost->htup;
+
 	for (i = 0; i < node->iss_NumOrderByKeys; i++)
 	{
 		if (!node->iss_OrderByTypByVals[i] && !topmost->orderbynulls[i])
@@ -610,8 +614,9 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 		 * index support function.
 		 */
 		Datum		scanvalue = ExecEvalExpr(key_expr,
-								 econtext,
-								 &isNull);
+											 econtext,
+											 &isNull);
+
 		if (isNull)
 		{
 			scan_key->sk_argument = scanvalue;
@@ -664,14 +669,16 @@ ExecIndexEvalArrayKeys(ExprContext *econtext,
 		 * ExecIndexEvalRuntimeKeys() apply here too.)
 		 */
 		Datum		arraydatum = ExecEvalExpr(array_expr,
-								  econtext,
-								  &isNull);
+											  econtext,
+											  &isNull);
+
 		if (isNull)
 		{
 			result = false;
 			break;				/* no point in evaluating more */
 		}
 		ArrayType  *arrayval = DatumGetArrayTypeP(arraydatum);
+
 		/* We could cache this data, but not clear it's worth it */
 		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 							 &elmlen, &elmbyval, &elmalign);
@@ -881,6 +888,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	IndexScanState *indexstate = makeNode(IndexScanState);
+
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
 	indexstate->ss.ps.ExecProcNode = ExecIndexScan;
@@ -940,6 +948,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 
 	/* Open the index relation. */
 	LOCKMODE	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
+
 	indexstate->iss_RelationDesc = index_open(node->indexid, lockmode);
 
 	/*
@@ -997,6 +1006,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 		indexstate->iss_OrderByTypLens = (int16 *)
 			palloc(numOrderByKeys * sizeof(int16));
 		int			i = 0;
+
 		forboth(lco, node->indexorderbyops, lcx, node->indexorderbyorig)
 		{
 			Oid			orderbyop = lfirst_oid(lco);
@@ -1144,7 +1154,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 
 	/* Allocate array_keys as large as it could possibly need to be */
 	IndexArrayKeyInfo *array_keys = (IndexArrayKeyInfo *)
-		palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
+	palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
 	int			n_array_keys = 0;
 
 	/*
@@ -1152,6 +1162,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 	 * scan key
 	 */
 	int			j = 0;
+
 	foreach(qual_cell, quals)
 	{
 		Expr	   *clause = (Expr *) lfirst(qual_cell);
@@ -1167,6 +1178,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 		AttrNumber	varattno;	/* att number used in scan */
 
 		int			indnkeyatts = IndexRelationGetNumberOfKeyAttributes(index);
+
 		if (IsA(clause, OpExpr))
 		{
 			/* indexkey op const or indexkey op expression */
@@ -1276,7 +1288,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			Assert(!isorderby);
 
 			ScanKey		first_sub_key = (ScanKey)
-				palloc(list_length(rc->opnos) * sizeof(ScanKeyData));
+			palloc(list_length(rc->opnos) * sizeof(ScanKeyData));
 			int			n_sub_key = 0;
 
 			/* Scan RowCompare columns and generate subsidiary ScanKey items */
@@ -1638,6 +1650,7 @@ ExecIndexScanInitializeDSM(IndexScanState *node,
 	EState	   *estate = node->ss.ps.state;
 
 	ParallelIndexScanDesc piscan = shm_toc_allocate(pcxt->toc, node->iss_PscanLen);
+
 	index_parallelscan_initialize(node->ss.ss_currentRelation,
 								  node->iss_RelationDesc,
 								  estate->es_snapshot,
@@ -1685,6 +1698,7 @@ ExecIndexScanInitializeWorker(IndexScanState *node,
 {
 
 	ParallelIndexScanDesc piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+
 	node->iss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->iss_RelationDesc,

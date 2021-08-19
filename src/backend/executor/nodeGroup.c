@@ -167,6 +167,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	GroupState *grpstate = makeNode(GroupState);
+
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
 	grpstate->ss.ps.ExecProcNode = ExecGroup;
@@ -186,6 +187,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	 * Initialize scan slot and type.
 	 */
 	const TupleTableSlotOps *tts_ops = ExecGetResultSlotOps(outerPlanState(&grpstate->ss), NULL);
+
 	ExecCreateScanSlotFromOuterPlan(estate, &grpstate->ss, tts_ops);
 
 	/*
@@ -229,6 +231,7 @@ ExecEndGroup(GroupState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	PlanState  *outerPlan = outerPlanState(node);
+
 	ExecEndNode(outerPlan);
 }
 

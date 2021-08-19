@@ -625,6 +625,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 
 	OffsetNumber maxoff = entryvec->n - 1;
 	int			nbytes = (maxoff + 1) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -643,6 +644,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	 * Count non-empty classes and find biggest class.
 	 */
 	int			total_count = maxoff;
+
 	for (j = 0; j < CLS_COUNT; j++)
 	{
 		if (count_in_classes[j] > 0)
@@ -1224,7 +1226,7 @@ range_gist_single_sorting_split(TypeCacheEntry *typcache,
 	maxoff = entryvec->n - 1;
 
 	SingleBoundSortItem *sortItems = (SingleBoundSortItem *)
-		palloc(maxoff * sizeof(SingleBoundSortItem));
+	palloc(maxoff * sizeof(SingleBoundSortItem));
 
 	/*
 	 * Prepare auxiliary array and sort the values.
@@ -1686,6 +1688,7 @@ get_gist_range_class(RangeType *range)
 	int			classNumber;
 
 	char		flags = range_get_flags(range);
+
 	if (flags & RANGE_EMPTY)
 	{
 		classNumber = CLS_EMPTY;
@@ -1768,8 +1771,9 @@ call_subtype_diff(TypeCacheEntry *typcache, Datum val1, Datum val2)
 {
 
 	float8		value = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
-											 typcache->rng_collation,
-											 val1, val2));
+														 typcache->rng_collation,
+														 val1, val2));
+
 	/* Cope with buggy subtype_diff function by returning zero */
 	if (value >= 0.0)
 		return value;

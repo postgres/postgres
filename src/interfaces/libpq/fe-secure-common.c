@@ -103,6 +103,7 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 	 * NULL-terminated, so make a copy that is.
 	 */
 	char	   *name = malloc(namelen + 1);
+
 	if (name == NULL)
 	{
 		appendPQExpBufferStr(&conn->errorMessage,

@@ -100,6 +100,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		TLHistoryFilePath(path, targetTLI);
 
 	FILE	   *fd = AllocateFile(path, "r");
+
 	if (fd == NULL)
 	{
 		if (errno != ENOENT)
@@ -119,6 +120,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	 * Parse the file...
 	 */
 	XLogRecPtr	prevend = InvalidXLogRecPtr;
+
 	for (;;)
 	{
 		char		fline[MAXPGPATH];
@@ -130,6 +132,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 
 		pgstat_report_wait_start(WAIT_EVENT_TIMELINE_HISTORY_READ);
 		char	   *res = fgets(fline, sizeof(fline), fd);
+
 		pgstat_report_wait_end();
 		if (res == NULL)
 		{
@@ -233,6 +236,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
 		TLHistoryFilePath(path, probeTLI);
 
 	FILE	   *fd = AllocateFile(path, "r");
+
 	if (fd != NULL)
 	{
 		FreeFile(fd);
@@ -315,6 +319,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	int			fd = OpenTransientFile(tmppath, O_RDWR | O_CREAT | O_EXCL);
+
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -332,6 +337,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 		TLHistoryFilePath(path, parentTLI);
 
 	int			srcfd = OpenTransientFile(path, O_RDONLY);
+
 	if (srcfd < 0)
 	{
 		if (errno != ENOENT)
@@ -470,6 +476,7 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	int			fd = OpenTransientFile(tmppath, O_RDWR | O_CREAT | O_EXCL);
+
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

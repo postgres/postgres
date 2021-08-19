@@ -45,9 +45,10 @@ makeParamList(int numParams)
 {
 
 	Size		size = offsetof(ParamListInfoData, params) +
-		numParams * sizeof(ParamExternData);
+	numParams * sizeof(ParamExternData);
 
 	ParamListInfo retval = (ParamListInfo) palloc(size);
+
 	retval->paramFetch = NULL;
 	retval->paramFetchArg = NULL;
 	retval->paramCompile = NULL;
@@ -146,6 +147,7 @@ paramlist_param_ref(ParseState *pstate, ParamRef *pref)
 		return NULL;
 
 	Param	   *param = makeNode(Param);
+
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = prm->ptype;
@@ -378,6 +380,7 @@ BuildParamLogString(ParamListInfo params, char **knownTextValues, int maxlen)
 
 				getTypeOutputInfo(param->ptype, &typoutput, &typisvarlena);
 				char	   *pstring = OidOutputFunctionCall(typoutput, param->value);
+
 				appendStringInfoStringQuoted(&buf, pstring, maxlen);
 			}
 		}

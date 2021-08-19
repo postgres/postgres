@@ -47,7 +47,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 	/* There will certainly not be more mappings than there are old rels */
 	FileNameMap *maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
-									 old_db->rel_arr.nrels);
+												  old_db->rel_arr.nrels);
 
 	/*
 	 * Each of the RelInfo arrays should be sorted by OID.  Scan through them

@@ -276,6 +276,7 @@ get_pgpid(bool is_status_request)
 	}
 
 	FILE	   *pidf = fopen(pid_file, "r");
+
 	if (pidf == NULL)
 	{
 		/* No pid file, not an error on startup */
@@ -331,6 +332,7 @@ readfile(const char *path, int *numlines)
 	 * current use.
 	 */
 	int			fd = open(path, O_RDONLY | PG_BINARY, 0);
+
 	if (fd < 0)
 		return NULL;
 	if (fstat(fd, &statbuf) < 0)
@@ -349,6 +351,7 @@ readfile(const char *path, int *numlines)
 	char	   *buffer = pg_malloc(statbuf.st_size + 1);
 
 	int			len = read(fd, buffer, statbuf.st_size + 1);
+
 	close(fd);
 	if (len != statbuf.st_size)
 	{
@@ -363,6 +366,7 @@ readfile(const char *path, int *numlines)
 	 * any characters after the last newline will be ignored.
 	 */
 	int			nlines = 0;
+
 	for (i = 0; i < len; i++)
 	{
 		if (buffer[i] == '\n')
@@ -375,6 +379,7 @@ readfile(const char *path, int *numlines)
 
 	/* now split the buffer into lines */
 	char	   *linebegin = buffer;
+
 	n = 0;
 	for (i = 0; i < len; i++)
 	{
@@ -445,6 +450,7 @@ start_postmaster(void)
 	fflush(stderr);
 
 	pgpid_t		pm_pid = fork();
+
 	if (pm_pid < 0)
 	{
 		/* fork failed */
@@ -507,6 +513,7 @@ start_postmaster(void)
 
 	/* Find CMD.EXE location using COMSPEC, if it's set */
 	const char *comspec = getenv("COMSPEC");
+
 	if (comspec == NULL)
 		comspec = "CMD";
 
@@ -609,6 +616,7 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			 */
 			pgpid_t		pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
 			time_t		pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
+
 			if (pmstart >= start_time - 2 &&
 #ifndef WIN32
 				pmpid == pm_pid
@@ -722,6 +730,7 @@ read_post_opts(void)
 			int			numlines;
 
 			char	  **optlines = readfile(postopts_file, &numlines);
+
 			if (optlines == NULL)
 			{
 				write_stderr(_("%s: could not read file \"%s\"\n"), progname, postopts_file);
@@ -1116,6 +1125,7 @@ do_reload(void)
 {
 
 	pgpid_t		pid = get_pgpid(false);
+
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
@@ -1325,6 +1335,7 @@ do_status(void)
 {
 
 	pgpid_t		pid = get_pgpid(true);
+
 	/* Is there a pid file? */
 	if (pid != 0)
 	{
@@ -1351,6 +1362,7 @@ do_status(void)
 					   progname, pid);
 
 				char	  **optlines = readfile(postopts_file, &numlines);
+
 				if (optlines != NULL)
 				{
 					for (curr_line = optlines; *curr_line != NULL; curr_line++)
@@ -1749,6 +1761,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	si.cb = sizeof(si);
 
 	HANDLE		Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+
 	if (Advapi32Handle != NULL)
 	{
 		_CreateRestrictedToken = (__CreateRestrictedToken) (pg_funcptr_t) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
@@ -1794,17 +1807,18 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 	/* Get list of privileges to remove */
 	PTOKEN_PRIVILEGES delPrivs = GetPrivilegesToDelete(origToken);
+
 	if (delPrivs == NULL)
 		/* Error message already printed */
 		return 0;
 
 	BOOL		b = _CreateRestrictedToken(origToken,
-							   0,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   delPrivs->PrivilegeCount, delPrivs->Privileges,
-							   0, NULL,
-							   &restrictedToken);
+										   0,
+										   sizeof(dropSids) / sizeof(dropSids[0]),
+										   dropSids,
+										   delPrivs->PrivilegeCount, delPrivs->Privileges,
+										   0, NULL,
+										   &restrictedToken);
 
 	free(delPrivs);
 	FreeSid(dropSids[1].Sid);
@@ -1823,6 +1837,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	int			r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
 
 	HANDLE		Kernel32Handle = LoadLibrary("KERNEL32.DLL");
+
 	if (Kernel32Handle != NULL)
 	{
 		_IsProcessInJob = (__IsProcessInJob) (pg_funcptr_t) GetProcAddress(Kernel32Handle, "IsProcessInJob");
@@ -1866,6 +1881,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 						(unsigned long) processInfo->dwProcessId);
 
 				HANDLE		job = _CreateJobObject(NULL, jobname);
+
 				if (job)
 				{
 					JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
@@ -1954,7 +1970,8 @@ GetPrivilegesToDelete(HANDLE hToken)
 	}
 
 	PTOKEN_PRIVILEGES tokenPrivs = (PTOKEN_PRIVILEGES) pg_malloc_extended(length,
-														MCXT_ALLOC_NO_OOM);
+																		  MCXT_ALLOC_NO_OOM);
+
 	if (tokenPrivs == NULL)
 	{
 		write_stderr(_("%s: out of memory\n"), progname);
@@ -2215,6 +2232,7 @@ get_control_dbstate(void)
 	}
 
 	DBState		ret = control_file_data->state;
+
 	pfree(control_file_data);
 	return ret;
 }
@@ -2311,6 +2329,7 @@ main(int argc, char **argv)
 					{
 
 						char	   *pgdata_D = pg_strdup(optarg);
+
 						canonicalize_path(pgdata_D);
 						setenv("PGDATA", pgdata_D, 1);
 

@@ -129,6 +129,7 @@ cstring_recv(PG_FUNCTION_ARGS)
 	int			nbytes;
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+
 	PG_RETURN_CSTRING(str);
 }
 

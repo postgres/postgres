@@ -110,6 +110,7 @@ fixed_paramref_hook(ParseState *pstate, ParamRef *pref)
 				 parser_errposition(pstate, pref->location)));
 
 	Param	   *param = makeNode(Param);
+
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = parstate->paramTypes[paramno - 1];
@@ -170,6 +171,7 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 		*pptype = UNKNOWNOID;
 
 	Param	   *param = makeNode(Param);
+
 	param->paramkind = PARAM_EXTERN;
 	param->paramid = paramno;
 	param->paramtype = *pptype;

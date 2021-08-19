@@ -175,6 +175,7 @@ save_ps_display_args(int argc, char **argv)
 		 * move the environment out of the way
 		 */
 		char	  **new_environ = (char **) malloc((i + 1) * sizeof(char *));
+
 		if (!new_environ)
 		{
 			write_stderr("out of memory\n");
@@ -212,6 +213,7 @@ save_ps_display_args(int argc, char **argv)
 		int			i;
 
 		char	  **new_argv = (char **) malloc((argc + 1) * sizeof(char *));
+
 		if (!new_argv)
 		{
 			write_stderr("out of memory\n");

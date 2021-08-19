@@ -49,8 +49,8 @@ citextcmp(text *left, text *right, Oid collid)
 	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
 
 	int32		result = varstr_cmp(lcstr, strlen(lcstr),
-						rcstr, strlen(rcstr),
-						collid);
+									rcstr, strlen(rcstr),
+									collid);
 
 	pfree(lcstr);
 	pfree(rcstr);
@@ -78,6 +78,7 @@ internal_citext_pattern_cmp(text *left, text *right, Oid collid)
 	rlen = strlen(rcstr);
 
 	int32		result = memcmp((void *) lcstr, (void *) rcstr, Min(llen, rlen));
+
 	if (result == 0)
 	{
 		if (llen < rlen)
@@ -139,6 +140,7 @@ citext_hash(PG_FUNCTION_ARGS)
 
 	char	   *str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
 	Datum		result = hash_any((unsigned char *) str, strlen(str));
+
 	pfree(str);
 
 	/* Avoid leaking memory for toasted inputs */
@@ -157,6 +159,7 @@ citext_hash_extended(PG_FUNCTION_ARGS)
 
 	char	   *str = str_tolower(VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt), DEFAULT_COLLATION_OID);
 	Datum		result = hash_any_extended((unsigned char *) str, strlen(str), seed);
+
 	pfree(str);
 
 	/* Avoid leaking memory for toasted inputs */
@@ -372,6 +375,7 @@ citext_smaller(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 
 	text	   *result = citextcmp(left, right, PG_GET_COLLATION()) < 0 ? left : right;
+
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -384,5 +388,6 @@ citext_larger(PG_FUNCTION_ARGS)
 	text	   *right = PG_GETARG_TEXT_PP(1);
 
 	text	   *result = citextcmp(left, right, PG_GET_COLLATION()) > 0 ? left : right;
+
 	PG_RETURN_TEXT_P(result);
 }

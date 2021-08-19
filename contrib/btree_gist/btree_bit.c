@@ -79,6 +79,7 @@ gbt_bit_xfrm(bytea *leaf)
 	int			padded_sz = INTALIGN(sz);
 
 	bytea	   *out = (bytea *) palloc(padded_sz);
+
 	/* initialize the padding bytes to zero */
 	while (sz < padded_sz)
 		((char *) out)[sz++] = 0;
@@ -96,8 +97,10 @@ gbt_bit_l2n(GBT_VARKEY *leaf, FmgrInfo *flinfo)
 	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
 
 	bytea	   *o = gbt_bit_xfrm(r.lower);
+
 	r.upper = r.lower = o;
 	GBT_VARKEY *out = gbt_var_key_copy(&r);
+
 	pfree(o);
 
 	return out;

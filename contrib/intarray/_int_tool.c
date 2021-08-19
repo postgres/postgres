@@ -151,6 +151,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 	da = ARRPTR(a);
 	db = ARRPTR(b);
 	ArrayType  *r = new_intArrayType(Min(na, nb));
+
 	dr = ARRPTR(r);
 
 	i = j = k = 0;
@@ -279,6 +280,7 @@ copy_intArrayType(ArrayType *a)
 	int			n = ARRNELEMS(a);
 
 	ArrayType  *r = new_intArrayType(n);
+
 	memcpy(ARRPTR(r), ARRPTR(a), n * sizeof(int32));
 	return r;
 }
@@ -351,6 +353,7 @@ intarray_add_elem(ArrayType *a, int32 elem)
 	int32		c = ARRNELEMS(a);
 	ArrayType  *result = new_intArrayType(c + 1);
 	int32	   *r = ARRPTR(result);
+
 	if (c > 0)
 		memcpy(r, ARRPTR(a), c * sizeof(int32));
 	r[c] = elem;
@@ -366,6 +369,7 @@ intarray_concat_arrays(ArrayType *a, ArrayType *b)
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
 	ArrayType  *result = new_intArrayType(ac + bc);
+
 	if (ac)
 		memcpy(ARRPTR(result), ARRPTR(a), ac * sizeof(int32));
 	if (bc)
@@ -379,6 +383,7 @@ int_to_intset(int32 n)
 
 	ArrayType  *result = new_intArrayType(1);
 	int32	   *aa = ARRPTR(result);
+
 	aa[0] = n;
 	return result;
 }

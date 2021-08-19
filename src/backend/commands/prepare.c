@@ -76,6 +76,7 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 	 * parse analysis.
 	 */
 	RawStmt    *rawstmt = makeNode(RawStmt);
+
 	rawstmt->stmt = stmt->query;
 	rawstmt->stmt_location = stmt_location;
 	rawstmt->stmt_len = stmt_len;
@@ -85,7 +86,7 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 	 * to see the unmodified raw parse tree.
 	 */
 	CachedPlanSource *plansource = CreateCachedPlan(rawstmt, pstate->p_sourcetext,
-								  CreateCommandTag(stmt->query));
+													CreateCommandTag(stmt->query));
 
 	/* Transform list of TypeNames to array of type OIDs */
 	int			nargs = list_length(stmt->argtypes);
@@ -210,12 +211,13 @@ ExecuteQuery(ParseState *pstate,
 
 	/* Create a new portal to run the query in */
 	Portal		portal = CreateNewPortal();
+
 	/* Don't display the portal in pg_cursors, it is for internal use only */
 	portal->visible = false;
 
 	/* Copy the plan's saved query string into the portal's memory */
 	char	   *query_string = MemoryContextStrdup(portal->portalContext,
-									   entry->plansource->query_string);
+												   entry->plansource->query_string);
 
 	/* Replan if needed, and increment plan refcount for portal */
 	CachedPlan *cplan = GetCachedPlan(entry->plansource, paramLI, NULL, NULL);
@@ -253,6 +255,7 @@ ExecuteQuery(ParseState *pstate,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
 		PlannedStmt *pstmt = linitial_node(PlannedStmt, plan_list);
+
 		if (pstmt->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -329,6 +332,7 @@ EvaluateParams(ParseState *pstate, PreparedStatement *pstmt, List *params,
 	params = copyObject(params);
 
 	int			i = 0;
+
 	foreach(l, params)
 	{
 		Node	   *expr = lfirst(l);
@@ -422,9 +426,9 @@ StorePreparedStatement(const char *stmt_name,
 
 	/* Add entry to hash table */
 	PreparedStatement *entry = (PreparedStatement *) hash_search(prepared_queries,
-											  stmt_name,
-											  HASH_ENTER,
-											  &found);
+																 stmt_name,
+																 HASH_ENTER,
+																 &found);
 
 	/* Shouldn't get a duplicate entry */
 	if (found)
@@ -615,6 +619,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	{
 
 		ParseState *pstate = make_parsestate(NULL);
+
 		pstate->p_sourcetext = queryString;
 
 		/*
@@ -631,7 +636,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 
 	/* Replan if needed, and acquire a transient refcount */
 	CachedPlan *cplan = GetCachedPlan(entry->plansource, paramLI,
-						  CurrentResourceOwner, queryEnv);
+									  CurrentResourceOwner, queryEnv);
 
 	INSTR_TIME_SET_CURRENT(planduration);
 	INSTR_TIME_SUBTRACT(planduration, planstart);
@@ -699,6 +704,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	 * pg_prepared_statements view in system_views.sql
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(7);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
@@ -719,8 +725,8 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	 * This avoids any issue of the hashtable possibly changing between calls.
 	 */
 	Tuplestorestate *tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
+	tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+						  false, work_mem);
 
 	/* generate junk in short-term context */
 	MemoryContextSwitchTo(oldcontext);
@@ -779,6 +785,7 @@ build_regtype_array(Oid *param_types, int num_params)
 
 	/* XXX: this hardcodes assumptions about the regtype type */
 	ArrayType  *result = construct_array(tmp_ary, num_params, REGTYPEOID,
-							 4, true, TYPALIGN_INT);
+										 4, true, TYPALIGN_INT);
+
 	return PointerGetDatum(result);
 }

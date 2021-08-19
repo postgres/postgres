@@ -581,9 +581,10 @@ CreatePredXact(void)
 {
 
 	PredXactListElement ptle = (PredXactListElement)
-		SHMQueueNext(&PredXact->availableList,
-					 &PredXact->availableList,
-					 offsetof(PredXactListElementData, link));
+	SHMQueueNext(&PredXact->availableList,
+				 &PredXact->availableList,
+				 offsetof(PredXactListElementData, link));
+
 	if (!ptle)
 		return NULL;
 
@@ -599,9 +600,10 @@ ReleasePredXact(SERIALIZABLEXACT *sxact)
 	Assert(ShmemAddrIsValid(sxact));
 
 	PredXactListElement ptle = (PredXactListElement)
-		(((char *) sxact)
-		 - offsetof(PredXactListElementData, sxact)
-		 + offsetof(PredXactListElementData, link));
+	(((char *) sxact)
+	 - offsetof(PredXactListElementData, sxact)
+	 + offsetof(PredXactListElementData, link));
+
 	SHMQueueDelete(&ptle->link);
 	SHMQueueInsertBefore(&PredXact->availableList, &ptle->link);
 }
@@ -611,9 +613,10 @@ FirstPredXact(void)
 {
 
 	PredXactListElement ptle = (PredXactListElement)
-		SHMQueueNext(&PredXact->activeList,
-					 &PredXact->activeList,
-					 offsetof(PredXactListElementData, link));
+	SHMQueueNext(&PredXact->activeList,
+				 &PredXact->activeList,
+				 offsetof(PredXactListElementData, link));
+
 	if (!ptle)
 		return NULL;
 
@@ -627,9 +630,10 @@ NextPredXact(SERIALIZABLEXACT *sxact)
 	Assert(ShmemAddrIsValid(sxact));
 
 	PredXactListElement ptle = (PredXactListElement)
-		(((char *) sxact)
-		 - offsetof(PredXactListElementData, sxact)
-		 + offsetof(PredXactListElementData, link));
+	(((char *) sxact)
+	 - offsetof(PredXactListElementData, sxact)
+	 + offsetof(PredXactListElementData, link));
+
 	ptle = (PredXactListElement)
 		SHMQueueNext(&PredXact->activeList,
 					 &ptle->link,
@@ -660,9 +664,10 @@ RWConflictExists(const SERIALIZABLEXACT *reader, const SERIALIZABLEXACT *writer)
 
 	/* A conflict is possible; walk the list to find out. */
 	RWConflict	conflict = (RWConflict)
-		SHMQueueNext(&reader->outConflicts,
-					 &reader->outConflicts,
-					 offsetof(RWConflictData, outLink));
+	SHMQueueNext(&reader->outConflicts,
+				 &reader->outConflicts,
+				 offsetof(RWConflictData, outLink));
+
 	while (conflict)
 	{
 		if (conflict->sxactIn == writer)
@@ -685,9 +690,10 @@ SetRWConflict(SERIALIZABLEXACT *reader, SERIALIZABLEXACT *writer)
 	Assert(!RWConflictExists(reader, writer));
 
 	RWConflict	conflict = (RWConflict)
-		SHMQueueNext(&RWConflictPool->availableList,
-					 &RWConflictPool->availableList,
-					 offsetof(RWConflictData, outLink));
+	SHMQueueNext(&RWConflictPool->availableList,
+				 &RWConflictPool->availableList,
+				 offsetof(RWConflictData, outLink));
+
 	if (!conflict)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -712,9 +718,10 @@ SetPossibleUnsafeConflict(SERIALIZABLEXACT *roXact,
 	Assert(!SxactIsReadOnly(activeXact));
 
 	RWConflict	conflict = (RWConflict)
-		SHMQueueNext(&RWConflictPool->availableList,
-					 &RWConflictPool->availableList,
-					 offsetof(RWConflictData, outLink));
+	SHMQueueNext(&RWConflictPool->availableList,
+				 &RWConflictPool->availableList,
+				 offsetof(RWConflictData, outLink));
+
 	if (!conflict)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -785,8 +792,10 @@ SerialPagePrecedesLogically(int page1, int page2)
 {
 
 	TransactionId xid1 = ((TransactionId) page1) * SERIAL_ENTRIESPERPAGE;
+
 	xid1 += FirstNormalTransactionId + 1;
 	TransactionId xid2 = ((TransactionId) page2) * SERIAL_ENTRIESPERPAGE;
+
 	xid2 += FirstNormalTransactionId + 1;
 
 	return (TransactionIdPrecedes(xid1, xid2) &&
@@ -912,6 +921,7 @@ SerialAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 	 * something wrong with the earlier cleanup logic.
 	 */
 	TransactionId tailXid = serialControl->tailXid;
+
 	Assert(TransactionIdIsValid(tailXid));
 
 	/*
@@ -971,6 +981,7 @@ SerialGetMinConflictCommitSeqNo(TransactionId xid)
 	LWLockAcquire(SerialSLRULock, LW_SHARED);
 	TransactionId headXid = serialControl->headXid;
 	TransactionId tailXid = serialControl->tailXid;
+
 	LWLockRelease(SerialSLRULock);
 
 	if (!TransactionIdIsValid(headXid))
@@ -987,8 +998,9 @@ SerialGetMinConflictCommitSeqNo(TransactionId xid)
 	 * but will return with that lock held, which must then be released.
 	 */
 	int			slotno = SimpleLruReadPage_ReadOnly(SerialSlruCtl,
-										SerialPage(xid), xid);
+													SerialPage(xid), xid);
 	SerCommitSeqNo val = SerialValue(slotno, xid);
+
 	LWLockRelease(SerialSLRULock);
 	return val;
 }
@@ -1343,6 +1355,7 @@ PredicateLockShmemSize(void)
 
 	/* predicate lock target hash table */
 	long		max_table_size = NPREDICATELOCKTARGETENTS();
+
 	size = add_size(size, hash_estimate_size(max_table_size,
 											 sizeof(PREDICATELOCKTARGET)));
 
@@ -1506,9 +1519,10 @@ SummarizeOldestCommittedSxact(void)
 	 * commit.  Remove it from the list.
 	 */
 	SERIALIZABLEXACT *sxact = (SERIALIZABLEXACT *)
-		SHMQueueNext(FinishedSerializableTransactions,
-					 FinishedSerializableTransactions,
-					 offsetof(SERIALIZABLEXACT, finishedLink));
+	SHMQueueNext(FinishedSerializableTransactions,
+				 FinishedSerializableTransactions,
+				 offsetof(SERIALIZABLEXACT, finishedLink));
+
 	SHMQueueDelete(&(sxact->finishedLink));
 
 	/* Add to SLRU summary information. */
@@ -1626,9 +1640,9 @@ GetSafeSnapshotBlockingPids(int blocked_pid, int *output, int output_size)
 
 		/* Traverse the list of possible unsafe conflicts collecting PIDs. */
 		RWConflict	possibleUnsafeConflict = (RWConflict)
-			SHMQueueNext(&sxact->possibleUnsafeConflicts,
-						 &sxact->possibleUnsafeConflicts,
-						 offsetof(RWConflictData, inLink));
+		SHMQueueNext(&sxact->possibleUnsafeConflicts,
+					 &sxact->possibleUnsafeConflicts,
+					 offsetof(RWConflictData, inLink));
 
 		while (possibleUnsafeConflict != NULL && num_written < output_size)
 		{
@@ -1761,6 +1775,7 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 		elog(ERROR, "cannot establish serializable snapshot during a parallel operation");
 
 	PGPROC	   *proc = MyProc;
+
 	Assert(proc != NULL);
 	GET_VXID_FROM_PGPROC(vxid, *proc);
 
@@ -1941,8 +1956,9 @@ RegisterPredicateLockingXid(TransactionId xid)
 
 	sxidtag.xid = xid;
 	SERIALIZABLEXID *sxid = (SERIALIZABLEXID *) hash_search(SerializableXidHash,
-										   &sxidtag,
-										   HASH_ENTER, &found);
+															&sxidtag,
+															HASH_ENTER, &found);
+
 	Assert(!found);
 
 	/* Initialize the structure. */
@@ -1976,11 +1992,13 @@ PageIsPredicateLocked(Relation relation, BlockNumber blkno)
 
 	uint32		targettaghash = PredicateLockTargetTagHashCode(&targettag);
 	LWLock	   *partitionLock = PredicateLockHashPartitionLock(targettaghash);
+
 	LWLockAcquire(partitionLock, LW_SHARED);
 	PREDICATELOCKTARGET *target = (PREDICATELOCKTARGET *)
-		hash_search_with_hash_value(PredicateLockTargetHash,
-									&targettag, targettaghash,
-									HASH_FIND, NULL);
+	hash_search_with_hash_value(PredicateLockTargetHash,
+								&targettag, targettaghash,
+								HASH_FIND, NULL);
+
 	LWLockRelease(partitionLock);
 
 	return (target != NULL);
@@ -2004,8 +2022,8 @@ PredicateLockExists(const PREDICATELOCKTARGETTAG *targettag)
 
 	/* check local hash table */
 	LOCALPREDICATELOCK *lock = (LOCALPREDICATELOCK *) hash_search(LocalPredicateLockHash,
-											  targettag,
-											  HASH_FIND, NULL);
+																  targettag,
+																  HASH_FIND, NULL);
 
 	if (!lock)
 		return false;
@@ -2172,22 +2190,25 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 
 	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	SERIALIZABLEXACT *sxact = MySerializableXact;
+
 	if (IsInParallelMode())
 		LWLockAcquire(&sxact->perXactPredicateListLock, LW_EXCLUSIVE);
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&(sxact->predicateLocks),
-					 &(sxact->predicateLocks),
-					 offsetof(PREDICATELOCK, xactLink));
+	SHMQueueNext(&(sxact->predicateLocks),
+				 &(sxact->predicateLocks),
+				 offsetof(PREDICATELOCK, xactLink));
+
 	while (predlock)
 	{
 
 		SHM_QUEUE  *predlocksxactlink = &(predlock->xactLink);
 		PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-			SHMQueueNext(&(sxact->predicateLocks),
-						 predlocksxactlink,
-						 offsetof(PREDICATELOCK, xactLink));
+		SHMQueueNext(&(sxact->predicateLocks),
+					 predlocksxactlink,
+					 offsetof(PREDICATELOCK, xactLink));
 
 		PREDICATELOCKTAG oldlocktag = predlock->tag;
+
 		Assert(oldlocktag.myXact == sxact);
 		PREDICATELOCKTARGET *oldtarget = oldlocktag.myTarget;
 		PREDICATELOCKTARGETTAG oldtargettag = oldtarget->tag;
@@ -2359,6 +2380,7 @@ DecrementParentLocks(const PREDICATELOCKTARGETTAG *targettag)
 
 		parenttag = nexttag;
 		uint32		targettaghash = PredicateLockTargetTagHashCode(&parenttag);
+
 		parentlock = (LOCALPREDICATELOCK *)
 			hash_search_with_hash_value(LocalPredicateLockHash,
 										&parenttag, targettaghash,
@@ -2422,9 +2444,10 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 
 	/* Make sure that the target is represented. */
 	PREDICATELOCKTARGET *target = (PREDICATELOCKTARGET *)
-		hash_search_with_hash_value(PredicateLockTargetHash,
-									targettag, targettaghash,
-									HASH_ENTER_NULL, &found);
+	hash_search_with_hash_value(PredicateLockTargetHash,
+								targettag, targettaghash,
+								HASH_ENTER_NULL, &found);
+
 	if (!target)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -2437,9 +2460,10 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 	locktag.myTarget = target;
 	locktag.myXact = sxact;
 	PREDICATELOCK *lock = (PREDICATELOCK *)
-		hash_search_with_hash_value(PredicateLockHash, &locktag,
-									PredicateLockHashCodeFromTargetHashCode(&locktag, targettaghash),
-									HASH_ENTER_NULL, &found);
+	hash_search_with_hash_value(PredicateLockHash, &locktag,
+								PredicateLockHashCodeFromTargetHashCode(&locktag, targettaghash),
+								HASH_ENTER_NULL, &found);
+
 	if (!lock)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -2484,9 +2508,10 @@ PredicateLockAcquire(const PREDICATELOCKTARGETTAG *targettag)
 
 	/* Acquire lock in local table */
 	LOCALPREDICATELOCK *locallock = (LOCALPREDICATELOCK *)
-		hash_search_with_hash_value(LocalPredicateLockHash,
-									targettag, targettaghash,
-									HASH_ENTER, &found);
+	hash_search_with_hash_value(LocalPredicateLockHash,
+								targettag, targettaghash,
+								HASH_ENTER, &found);
+
 	locallock->held = true;
 	if (!found)
 		locallock->childLocks = 0;
@@ -2629,9 +2654,10 @@ DeleteLockTarget(PREDICATELOCKTARGET *target, uint32 targettaghash)
 	Assert(LWLockHeldByMe(PredicateLockHashPartitionLock(targettaghash)));
 
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&(target->predicateLocks),
-					 &(target->predicateLocks),
-					 offsetof(PREDICATELOCK, targetLink));
+	SHMQueueNext(&(target->predicateLocks),
+				 &(target->predicateLocks),
+				 offsetof(PREDICATELOCK, targetLink));
+
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 	while (predlock)
 	{
@@ -2739,9 +2765,9 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 	 * target.
 	 */
 	PREDICATELOCKTARGET *oldtarget = hash_search_with_hash_value(PredicateLockTargetHash,
-											&oldtargettag,
-											oldtargettaghash,
-											HASH_FIND, NULL);
+																 &oldtargettag,
+																 oldtargettaghash,
+																 HASH_FIND, NULL);
 
 	if (oldtarget)
 	{
@@ -2749,9 +2775,9 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 		PREDICATELOCKTAG newpredlocktag;
 
 		PREDICATELOCKTARGET *newtarget = hash_search_with_hash_value(PredicateLockTargetHash,
-												&newtargettag,
-												newtargettaghash,
-												HASH_ENTER_NULL, &found);
+																	 &newtargettag,
+																	 newtargettaghash,
+																	 HASH_ENTER_NULL, &found);
 
 		if (!newtarget)
 		{
@@ -2781,9 +2807,10 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 
 			SHM_QUEUE  *predlocktargetlink = &(oldpredlock->targetLink);
 			PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-				SHMQueueNext(&(oldtarget->predicateLocks),
-							 predlocktargetlink,
-							 offsetof(PREDICATELOCK, targetLink));
+			SHMQueueNext(&(oldtarget->predicateLocks),
+						 predlocktargetlink,
+						 offsetof(PREDICATELOCK, targetLink));
+
 			newpredlocktag.myXact = oldpredlock->tag.myXact;
 
 			if (removeOld)
@@ -2801,12 +2828,13 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 			}
 
 			PREDICATELOCK *newpredlock = (PREDICATELOCK *)
-				hash_search_with_hash_value(PredicateLockHash,
-											&newpredlocktag,
-											PredicateLockHashCodeFromTargetHashCode(&newpredlocktag,
-																					newtargettaghash),
-											HASH_ENTER_NULL,
-											&found);
+			hash_search_with_hash_value(PredicateLockHash,
+										&newpredlocktag,
+										PredicateLockHashCodeFromTargetHashCode(&newpredlocktag,
+																				newtargettaghash),
+										HASH_ENTER_NULL,
+										&found);
+
 			if (!newpredlock)
 			{
 				/* Out of shared memory. Undo what we've done so far. */
@@ -2919,6 +2947,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 
 	Oid			dbId = relation->rd_node.dbNode;
 	Oid			relId = relation->rd_id;
+
 	if (relation->rd_index == NULL)
 	{
 		isIndex = false;
@@ -2997,17 +3026,18 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 		 * locks on the new target.
 		 */
 		PREDICATELOCK *oldpredlock = (PREDICATELOCK *)
-			SHMQueueNext(&(oldtarget->predicateLocks),
-						 &(oldtarget->predicateLocks),
-						 offsetof(PREDICATELOCK, targetLink));
+		SHMQueueNext(&(oldtarget->predicateLocks),
+					 &(oldtarget->predicateLocks),
+					 offsetof(PREDICATELOCK, targetLink));
+
 		while (oldpredlock)
 		{
 			PREDICATELOCK *newpredlock;
 
 			PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-				SHMQueueNext(&(oldtarget->predicateLocks),
-							 &(oldpredlock->targetLink),
-							 offsetof(PREDICATELOCK, targetLink));
+			SHMQueueNext(&(oldtarget->predicateLocks),
+						 &(oldpredlock->targetLink),
+						 offsetof(PREDICATELOCK, targetLink));
 
 			/*
 			 * Remove the old lock first. This avoids the chance of running
@@ -3147,8 +3177,8 @@ PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
 	 * necessary.
 	 */
 	bool		success = TransferPredicateLocksToNewTarget(oldtargettag,
-												newtargettag,
-												false);
+															newtargettag,
+															false);
 
 	if (!success)
 	{
@@ -3621,6 +3651,7 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 	 * was launched.
 	 */
 	bool		needToClear = false;
+
 	if (TransactionIdEquals(MySerializableXact->xmin, PredXact->SxactGlobalXmin))
 	{
 		Assert(PredXact->SxactGlobalXminCount > 0);
@@ -3687,17 +3718,19 @@ ClearOldPredicateLocks(void)
 	 */
 	LWLockAcquire(SerializableFinishedListLock, LW_EXCLUSIVE);
 	SERIALIZABLEXACT *finishedSxact = (SERIALIZABLEXACT *)
-		SHMQueueNext(FinishedSerializableTransactions,
-					 FinishedSerializableTransactions,
-					 offsetof(SERIALIZABLEXACT, finishedLink));
+	SHMQueueNext(FinishedSerializableTransactions,
+				 FinishedSerializableTransactions,
+				 offsetof(SERIALIZABLEXACT, finishedLink));
+
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 	while (finishedSxact)
 	{
 
 		SERIALIZABLEXACT *nextSxact = (SERIALIZABLEXACT *)
-			SHMQueueNext(FinishedSerializableTransactions,
-						 &(finishedSxact->finishedLink),
-						 offsetof(SERIALIZABLEXACT, finishedLink));
+		SHMQueueNext(FinishedSerializableTransactions,
+					 &(finishedSxact->finishedLink),
+					 offsetof(SERIALIZABLEXACT, finishedLink));
+
 		if (!TransactionIdIsValid(PredXact->SxactGlobalXmin)
 			|| TransactionIdPrecedesOrEquals(finishedSxact->finishedBefore,
 											 PredXact->SxactGlobalXmin))
@@ -3754,21 +3787,23 @@ ClearOldPredicateLocks(void)
 	 */
 	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&OldCommittedSxact->predicateLocks,
-					 &OldCommittedSxact->predicateLocks,
-					 offsetof(PREDICATELOCK, xactLink));
+	SHMQueueNext(&OldCommittedSxact->predicateLocks,
+				 &OldCommittedSxact->predicateLocks,
+				 offsetof(PREDICATELOCK, xactLink));
+
 	while (predlock)
 	{
 
 		PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-			SHMQueueNext(&OldCommittedSxact->predicateLocks,
-						 &predlock->xactLink,
-						 offsetof(PREDICATELOCK, xactLink));
+		SHMQueueNext(&OldCommittedSxact->predicateLocks,
+					 &predlock->xactLink,
+					 offsetof(PREDICATELOCK, xactLink));
 
 		LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 		Assert(predlock->commitSeqNo != 0);
 		Assert(predlock->commitSeqNo != InvalidSerCommitSeqNo);
 		bool		canDoPartialCleanup = (predlock->commitSeqNo <= PredXact->CanPartialClearThrough);
+
 		LWLockRelease(SerializableXactHashLock);
 
 		/*
@@ -3845,16 +3880,17 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	if (IsInParallelMode())
 		LWLockAcquire(&sxact->perXactPredicateListLock, LW_EXCLUSIVE);
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&(sxact->predicateLocks),
-					 &(sxact->predicateLocks),
-					 offsetof(PREDICATELOCK, xactLink));
+	SHMQueueNext(&(sxact->predicateLocks),
+				 &(sxact->predicateLocks),
+				 offsetof(PREDICATELOCK, xactLink));
+
 	while (predlock)
 	{
 
 		PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-			SHMQueueNext(&(sxact->predicateLocks),
-						 &(predlock->xactLink),
-						 offsetof(PREDICATELOCK, xactLink));
+		SHMQueueNext(&(sxact->predicateLocks),
+					 &(predlock->xactLink),
+					 offsetof(PREDICATELOCK, xactLink));
 
 		PREDICATELOCKTAG tag = predlock->tag;
 		SHM_QUEUE  *targetLink = &(predlock->targetLink);
@@ -4064,7 +4100,8 @@ CheckForSerializableConflictOut(Relation relation, TransactionId xid, Snapshot s
 	sxidtag.xid = xid;
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 	SERIALIZABLEXID *sxid = (SERIALIZABLEXID *)
-		hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+	hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+
 	if (!sxid)
 	{
 		/*
@@ -4073,6 +4110,7 @@ CheckForSerializableConflictOut(Relation relation, TransactionId xid, Snapshot s
 		 */
 
 		SerCommitSeqNo conflictCommitSeqNo = SerialGetMinConflictCommitSeqNo(xid);
+
 		if (conflictCommitSeqNo != 0)
 		{
 			if (conflictCommitSeqNo != InvalidSerCommitSeqNo
@@ -4101,6 +4139,7 @@ CheckForSerializableConflictOut(Relation relation, TransactionId xid, Snapshot s
 		return;
 	}
 	SERIALIZABLEXACT *sxact = sxid->myXact;
+
 	Assert(TransactionIdEquals(sxact->topXid, xid));
 	if (sxact == MySerializableXact || SxactIsDoomed(sxact))
 	{
@@ -4189,11 +4228,13 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 	 */
 	uint32		targettaghash = PredicateLockTargetTagHashCode(targettag);
 	LWLock	   *partitionLock = PredicateLockHashPartitionLock(targettaghash);
+
 	LWLockAcquire(partitionLock, LW_SHARED);
 	PREDICATELOCKTARGET *target = (PREDICATELOCKTARGET *)
-		hash_search_with_hash_value(PredicateLockTargetHash,
-									targettag, targettaghash,
-									HASH_FIND, NULL);
+	hash_search_with_hash_value(PredicateLockTargetHash,
+								targettag, targettaghash,
+								HASH_FIND, NULL);
+
 	if (!target)
 	{
 		/* Nothing has this target locked; we're done here. */
@@ -4206,20 +4247,22 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 	 * rw-dependency in to this transaction.
 	 */
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&(target->predicateLocks),
-					 &(target->predicateLocks),
-					 offsetof(PREDICATELOCK, targetLink));
+	SHMQueueNext(&(target->predicateLocks),
+				 &(target->predicateLocks),
+				 offsetof(PREDICATELOCK, targetLink));
+
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 	while (predlock)
 	{
 
 		SHM_QUEUE  *predlocktargetlink = &(predlock->targetLink);
 		PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-			SHMQueueNext(&(target->predicateLocks),
-						 predlocktargetlink,
-						 offsetof(PREDICATELOCK, targetLink));
+		SHMQueueNext(&(target->predicateLocks),
+					 predlocktargetlink,
+					 offsetof(PREDICATELOCK, targetLink));
 
 		SERIALIZABLEXACT *sxact = predlock->tag.myXact;
+
 		if (sxact == MySerializableXact)
 		{
 			/*
@@ -4293,12 +4336,13 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 		 * autovacuum cleaning up an index.
 		 */
 		uint32		predlockhashcode = PredicateLockHashCodeFromTargetHashCode
-			(&mypredlocktag, targettaghash);
+		(&mypredlocktag, targettaghash);
 		PREDICATELOCK *rmpredlock = (PREDICATELOCK *)
-			hash_search_with_hash_value(PredicateLockHash,
-										&mypredlocktag,
-										predlockhashcode,
-										HASH_FIND, NULL);
+		hash_search_with_hash_value(PredicateLockHash,
+									&mypredlocktag,
+									predlockhashcode,
+									HASH_FIND, NULL);
+
 		if (rmpredlock != NULL)
 		{
 			Assert(rmpredlock == mypredlock);
@@ -4485,16 +4529,17 @@ CheckTableForSerializableConflictIn(Relation relation)
 		 * Loop through locks for this target and flag conflicts.
 		 */
 		PREDICATELOCK *predlock = (PREDICATELOCK *)
-			SHMQueueNext(&(target->predicateLocks),
-						 &(target->predicateLocks),
-						 offsetof(PREDICATELOCK, targetLink));
+		SHMQueueNext(&(target->predicateLocks),
+					 &(target->predicateLocks),
+					 offsetof(PREDICATELOCK, targetLink));
+
 		while (predlock)
 		{
 
 			PREDICATELOCK *nextpredlock = (PREDICATELOCK *)
-				SHMQueueNext(&(target->predicateLocks),
-							 &(predlock->targetLink),
-							 offsetof(PREDICATELOCK, targetLink));
+			SHMQueueNext(&(target->predicateLocks),
+						 &(predlock->targetLink),
+						 offsetof(PREDICATELOCK, targetLink));
 
 			if (predlock->tag.myXact != MySerializableXact
 				&& !RWConflictExists(predlock->tag.myXact, MySerializableXact))
@@ -4753,9 +4798,10 @@ PreCommit_CheckForSerializationFailure(void)
 	}
 
 	RWConflict	nearConflict = (RWConflict)
-		SHMQueueNext(&MySerializableXact->inConflicts,
-					 &MySerializableXact->inConflicts,
-					 offsetof(RWConflictData, inLink));
+	SHMQueueNext(&MySerializableXact->inConflicts,
+				 &MySerializableXact->inConflicts,
+				 offsetof(RWConflictData, inLink));
+
 	while (nearConflict)
 	{
 		if (!SxactIsCommitted(nearConflict->sxactOut)
@@ -4763,9 +4809,10 @@ PreCommit_CheckForSerializationFailure(void)
 		{
 
 			RWConflict	farConflict = (RWConflict)
-				SHMQueueNext(&nearConflict->sxactOut->inConflicts,
-							 &nearConflict->sxactOut->inConflicts,
-							 offsetof(RWConflictData, inLink));
+			SHMQueueNext(&nearConflict->sxactOut->inConflicts,
+						 &nearConflict->sxactOut->inConflicts,
+						 offsetof(RWConflictData, inLink));
+
 			while (farConflict)
 			{
 				if (farConflict->sxactOut == MySerializableXact
@@ -4829,6 +4876,7 @@ AtPrepare_PredicateLocks(void)
 	TwoPhasePredicateLockRecord *lockRecord;
 
 	SERIALIZABLEXACT *sxact = MySerializableXact;
+
 	xactRecord = &(record.data.xactRecord);
 	lockRecord = &(record.data.lockRecord);
 
@@ -4867,9 +4915,9 @@ AtPrepare_PredicateLocks(void)
 	Assert(!IsParallelWorker() && !ParallelContextActive());
 
 	PREDICATELOCK *predlock = (PREDICATELOCK *)
-		SHMQueueNext(&(sxact->predicateLocks),
-					 &(sxact->predicateLocks),
-					 offsetof(PREDICATELOCK, xactLink));
+	SHMQueueNext(&(sxact->predicateLocks),
+				 &(sxact->predicateLocks),
+				 offsetof(PREDICATELOCK, xactLink));
 
 	while (predlock != NULL)
 	{
@@ -4926,7 +4974,8 @@ PredicateLockTwoPhaseFinish(TransactionId xid, bool isCommit)
 
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 	SERIALIZABLEXID *sxid = (SERIALIZABLEXID *)
-		hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+	hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+
 	LWLockRelease(SerializableXactHashLock);
 
 	/* xid will not be found if it wasn't a serializable transaction */
@@ -4966,6 +5015,7 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 
 		LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 		SERIALIZABLEXACT *sxact = CreatePredXact();
+
 		if (!sxact)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -5017,8 +5067,9 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 		/* Register the transaction's xid */
 		sxidtag.xid = xid;
 		SERIALIZABLEXID *sxid = (SERIALIZABLEXID *) hash_search(SerializableXidHash,
-											   &sxidtag,
-											   HASH_ENTER, &found);
+																&sxidtag,
+																HASH_ENTER, &found);
+
 		Assert(sxid != NULL);
 		Assert(!found);
 		sxid->myXact = (SERIALIZABLEXACT *) sxact;
@@ -5057,11 +5108,13 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 		LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 		sxidtag.xid = xid;
 		SERIALIZABLEXID *sxid = (SERIALIZABLEXID *)
-			hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+		hash_search(SerializableXidHash, &sxidtag, HASH_FIND, NULL);
+
 		LWLockRelease(SerializableXactHashLock);
 
 		Assert(sxid != NULL);
 		SERIALIZABLEXACT *sxact = sxid->myXact;
+
 		Assert(sxact != InvalidSerializableXact);
 
 		CreatePredicateLock(&lockRecord->target, targettaghash, sxact);

@@ -75,6 +75,7 @@ PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 	bool		found = false;
 
 	HeapTuple	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
+
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
@@ -137,9 +138,10 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	int			rv = snprintf(procName, sizeof(procName),
-				  "__plpython_procedure_%s_%u",
-				  NameStr(procStruct->proname),
-				  fn_oid);
+							  "__plpython_procedure_%s_%u",
+							  NameStr(procStruct->proname),
+							  fn_oid);
+
 	if (rv >= sizeof(procName) || rv < 0)
 		elog(ERROR, "procedure name would overrun buffer");
 
@@ -154,8 +156,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 	/* Create long-lived context that all procedure info will live in */
 	MemoryContext cxt = AllocSetContextCreate(TopMemoryContext,
-								"PL/Python function",
-								ALLOCSET_DEFAULT_SIZES);
+											  "PL/Python function",
+											  ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldcxt = MemoryContextSwitchTo(cxt);
 
@@ -181,8 +183,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		proc->nargs = 0;
 		proc->langid = procStruct->prolang;
 		Datum		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
-											Anum_pg_proc_protrftypes,
-											&isnull);
+														Anum_pg_proc_protrftypes,
+														&isnull);
+
 		proc->trftypes = isnull ? NIL : oid_array_to_list(protrftypes_datum);
 		proc->code = NULL;
 		proc->statics = NULL;
@@ -199,6 +202,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 			Oid			rettype = procStruct->prorettype;
 
 			HeapTuple	rvTypeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
+
 			if (!HeapTupleIsValid(rvTypeTup))
 				elog(ERROR, "cache lookup failed for type %u", rettype);
 			Form_pg_type rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
@@ -283,7 +287,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				Assert(types[i] == procStruct->proargtypes.values[pos]);
 
 				HeapTuple	argTypeTup = SearchSysCache1(TYPEOID,
-											 ObjectIdGetDatum(types[i]));
+														 ObjectIdGetDatum(types[i]));
+
 				if (!HeapTupleIsValid(argTypeTup))
 					elog(ERROR, "cache lookup failed for type %u", types[i]);
 				Form_pg_type argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
@@ -313,7 +318,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		 * get the text of the function.
 		 */
 		Datum		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
-									  Anum_pg_proc_prosrc, &isnull);
+												  Anum_pg_proc_prosrc, &isnull);
+
 		if (isnull)
 			elog(ERROR, "null prosrc");
 		char	   *procSource = TextDatumGetCString(prosrcdatum);
@@ -356,9 +362,11 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	 * insert the function code into the interpreter
 	 */
 	char	   *msrc = PLy_procedure_munge_source(proc->pyname, src);
+
 	/* Save the mangled source for later inclusion in tracebacks */
 	proc->src = MemoryContextStrdup(proc->mcxt, msrc);
 	PyObject   *crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
+
 	pfree(msrc);
 
 	if (crv != NULL)
@@ -371,6 +379,7 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 		 * compile a call to the function
 		 */
 		int			clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
+
 		if (clen < 0 || clen >= sizeof(call))
 			elog(ERROR, "string would overflow buffer");
 		proc->code = Py_CompileString(call, "<string>", Py_eval_input);
@@ -424,9 +433,11 @@ PLy_procedure_munge_source(const char *name, const char *src)
 
 	mrc = palloc(mlen);
 	int			plen = snprintf(mrc, mlen, "def %s():\n\t", name);
+
 	Assert(plen >= 0 && plen < mlen);
 
 	const char *sp = src;
+
 	mp = mrc + plen;
 
 	while (*sp != '\0')

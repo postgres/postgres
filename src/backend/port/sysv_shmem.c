@@ -322,6 +322,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	PGShmemHeader *memAddress;
 
 	IpcMemoryState state = PGSharedMemoryAttach((IpcMemoryId) id2, NULL, &memAddress);
+
 	if (memAddress && shmdt(memAddress) < 0)
 		elog(LOG, "shmdt(%p) failed: %m", memAddress);
 	switch (state)
@@ -728,6 +729,7 @@ PGSharedMemoryCreate(Size size,
 		 * safely treat SHMSTATE_ENOENT like SHMSTATE_FOREIGN.
 		 */
 		IpcMemoryId shmid = shmget(NextShmemSegID, sizeof(PGShmemHeader), 0);
+
 		if (shmid < 0)
 		{
 			oldhdr = NULL;

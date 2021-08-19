@@ -72,11 +72,13 @@ convert_tuples_by_position(TupleDesc indesc,
 
 	/* Prepare the map structure */
 	TupleConversionMap *map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;
 	/* preallocate workspace for Datum arrays */
-	int			n = outdesc->natts + 1;		/* +1 for NULL */
+	int			n = outdesc->natts + 1; /* +1 for NULL */
+
 	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
 	map->outisnull = (bool *) palloc(n * sizeof(bool));
 	n = indesc->natts + 1;		/* +1 for NULL */
@@ -112,6 +114,7 @@ convert_tuples_by_name(TupleDesc indesc,
 
 	/* Prepare the map structure */
 	TupleConversionMap *map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;

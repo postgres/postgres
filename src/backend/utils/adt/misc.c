@@ -93,6 +93,7 @@ count_nulls(FunctionCallInfo fcinfo,
 
 		/* Count those that are NULL */
 		bits8	   *bitmap = ARR_NULLBITMAP(arr);
+
 		if (bitmap)
 		{
 			int			bitmask = 1;
@@ -217,6 +218,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_tablespace_databases",
 					   OIDOID, -1, 0);
 
@@ -273,6 +275,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		char	   *subdir = psprintf("%s/%s", location, de->d_name);
 		bool		isempty = directory_is_empty(subdir);
+
 		pfree(subdir);
 
 		if (isempty)
@@ -377,6 +380,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 		CHECK_FOR_INTERRUPTS();
 
 		float8		delay = endtime - GetNowFloat();
+
 		if (delay >= 600.0)
 			delay_ms = 600000;
 		else if (delay > 0.0)
@@ -407,6 +411,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		TupleDesc	tupdesc = CreateTemplateTupleDesc(5);
+
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
@@ -492,6 +497,7 @@ pg_get_catalog_foreign_keys(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
+
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "fktable",
 						   REGCLASSOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "fkcols",
@@ -572,6 +578,7 @@ pg_collation_for(PG_FUNCTION_ARGS)
 {
 
 	Oid			typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+
 	if (!typeid)
 		PG_RETURN_NULL();
 	if (!type_is_collatable(typeid) && typeid != UNKNOWNOID)
@@ -581,6 +588,7 @@ pg_collation_for(PG_FUNCTION_ARGS)
 						format_type_be(typeid))));
 
 	Oid			collid = PG_GET_COLLATION();
+
 	if (!collid)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(cstring_to_text(generate_collation_name(collid)));
@@ -624,7 +632,7 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	int			events = relation_is_updatable(reloid, NIL, include_triggers,
-								   bms_make_singleton(col));
+											   bms_make_singleton(col));
 
 	/* We require both updatability and deletability of the relation */
 #define REQ_EVENTS ((1 << CMD_UPDATE) | (1 << CMD_DELETE))
@@ -745,6 +753,7 @@ parse_ident(PG_FUNCTION_ARGS)
 			 */
 			char	   *downname = downcase_identifier(curname, len, false, false);
 			text	   *part = cstring_to_text_with_len(downname, len);
+
 			astate = accumArrayResult(astate, PointerGetDatum(part), false,
 									  TEXTOID, CurrentMemoryContext);
 			missing_ident = false;
@@ -826,6 +835,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 	}
 
 	FILE	   *fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");
+
 	if (fd == NULL)
 	{
 		if (errno != ENOENT)
@@ -851,6 +861,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 		/* Extract log format and log file path from the line. */
 		char	   *log_format = lbuffer;
 		char	   *log_filepath = strchr(lbuffer, ' ');
+
 		if (log_filepath == NULL)
 		{
 			/* Uh oh.  No space found, so file content is corrupted. */
@@ -862,6 +873,7 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 		*log_filepath = '\0';
 		log_filepath++;
 		char	   *nlpos = strchr(log_filepath, '\n');
+
 		if (nlpos == NULL)
 		{
 			/* Uh oh.  No newline found, so file content is corrupted. */
@@ -907,6 +919,7 @@ pg_get_replica_identity_index(PG_FUNCTION_ARGS)
 
 	Relation	rel = table_open(reloid, AccessShareLock);
 	Oid			idxoid = RelationGetReplicaIndex(rel);
+
 	table_close(rel, AccessShareLock);
 
 	if (OidIsValid(idxoid))

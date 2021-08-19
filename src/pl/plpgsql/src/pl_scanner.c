@@ -149,26 +149,31 @@ plpgsql_yylex(void)
 	int			kwnum;
 
 	int			tok1 = internal_yylex(&aux1);
+
 	if (tok1 == IDENT || tok1 == PARAM)
 	{
 		TokenAuxData aux2;
 
 		int			tok2 = internal_yylex(&aux2);
+
 		if (tok2 == '.')
 		{
 			TokenAuxData aux3;
 
 			int			tok3 = internal_yylex(&aux3);
+
 			if (tok3 == IDENT)
 			{
 				TokenAuxData aux4;
 
 				int			tok4 = internal_yylex(&aux4);
+
 				if (tok4 == '.')
 				{
 					TokenAuxData aux5;
 
 					int			tok5 = internal_yylex(&aux5);
+
 					if (tok5 == IDENT)
 					{
 						if (plpgsql_parse_tripword(aux1.lval.str,
@@ -417,6 +422,7 @@ plpgsql_peek(void)
 	TokenAuxData aux1;
 
 	int			tok1 = internal_yylex(&aux1);
+
 	push_back_token(tok1, &aux1);
 	return tok1;
 }
@@ -471,6 +477,7 @@ plpgsql_scanner_errposition(int location)
 
 	/* Convert byte offset to character number */
 	int			pos = pg_mbstrlen_with_len(scanorig, location) + 1;
+
 	/* And pass it to the ereport mechanism */
 	(void) internalerrposition(pos);
 	/* Also pass the function body string */

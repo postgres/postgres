@@ -64,9 +64,11 @@ pg_digest(PG_FUNCTION_ARGS)
 	hlen = px_md_result_size(md);
 
 	bytea	   *res = (text *) palloc(hlen + VARHDRSZ);
+
 	SET_VARSIZE(res, hlen + VARHDRSZ);
 
 	bytea	   *arg = PG_GETARG_BYTEA_PP(0);
+
 	len = VARSIZE_ANY_EXHDR(arg);
 
 	px_md_update(md, (uint8 *) VARDATA_ANY(arg), len);
@@ -97,10 +99,12 @@ pg_hmac(PG_FUNCTION_ARGS)
 	hlen = px_hmac_result_size(h);
 
 	bytea	   *res = (text *) palloc(hlen + VARHDRSZ);
+
 	SET_VARSIZE(res, hlen + VARHDRSZ);
 
 	bytea	   *arg = PG_GETARG_BYTEA_PP(0);
 	bytea	   *key = PG_GETARG_BYTEA_PP(1);
+
 	len = VARSIZE_ANY_EXHDR(arg);
 	klen = VARSIZE_ANY_EXHDR(key);
 
@@ -128,6 +132,7 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 
 	text_to_cstring_buffer(arg0, buf, sizeof(buf));
 	int			len = px_gen_salt(buf, buf, 0);
+
 	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -150,6 +155,7 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 
 	text_to_cstring_buffer(arg0, buf, sizeof(buf));
 	int			len = px_gen_salt(buf, buf, rounds);
+
 	if (len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -223,6 +229,7 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	res = palloc(VARHDRSZ + rlen);
 
 	int			err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen, NULL, 0);
+
 	if (!err)
 		err = px_combo_encrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
@@ -269,6 +276,7 @@ pg_decrypt(PG_FUNCTION_ARGS)
 	res = palloc(VARHDRSZ + rlen);
 
 	int			err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen, NULL, 0);
+
 	if (!err)
 		err = px_combo_decrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
@@ -318,7 +326,8 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	res = palloc(VARHDRSZ + rlen);
 
 	int			err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen,
-						(uint8 *) VARDATA_ANY(iv), ivlen);
+									(uint8 *) VARDATA_ANY(iv), ivlen);
+
 	if (!err)
 		err = px_combo_encrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
@@ -369,7 +378,8 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	res = palloc(VARHDRSZ + rlen);
 
 	int			err = px_combo_init(c, (uint8 *) VARDATA_ANY(key), klen,
-						(uint8 *) VARDATA_ANY(iv), ivlen);
+									(uint8 *) VARDATA_ANY(iv), ivlen);
+
 	if (!err)
 		err = px_combo_decrypt(c, (uint8 *) VARDATA_ANY(data), dlen,
 							   (uint8 *) VARDATA(res), &rlen);
@@ -405,6 +415,7 @@ pg_random_bytes(PG_FUNCTION_ARGS)
 				 errmsg("Length not in range")));
 
 	bytea	   *res = palloc(VARHDRSZ + len);
+
 	SET_VARSIZE(res, VARHDRSZ + len);
 
 	/* generate result */
@@ -432,8 +443,8 @@ find_provider(text *name,
 	void	   *res;
 
 	char	   *buf = downcase_truncate_identifier(VARDATA_ANY(name),
-									   VARSIZE_ANY_EXHDR(name),
-									   false);
+												   VARSIZE_ANY_EXHDR(name),
+												   false);
 
 	int			err = provider_lookup(buf, &res);
 

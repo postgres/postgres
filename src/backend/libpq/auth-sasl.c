@@ -82,6 +82,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 	 * packets (type 'p').
 	 */
 	bool		initial = true;
+
 	do
 	{
 		pq_startmsgread();

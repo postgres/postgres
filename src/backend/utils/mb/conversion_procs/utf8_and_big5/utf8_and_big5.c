@@ -46,11 +46,11 @@ big5_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_UTF8);
 
 	int			converted = LocalToUtf(src, len, dest,
-						   &big5_to_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_BIG5,
-						   noError);
+									   &big5_to_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_BIG5,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -66,11 +66,11 @@ utf8_to_big5(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_BIG5);
 
 	int			converted = UtfToLocal(src, len, dest,
-						   &big5_from_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_BIG5,
-						   noError);
+									   &big5_from_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_BIG5,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }

@@ -84,6 +84,7 @@ fmgr_isbuiltin(Oid id)
 	 * nonexistent function, returning NULL here will trigger an ERROR later.
 	 */
 	uint16		index = fmgr_builtin_oid_index[id];
+
 	if (index == InvalidOidBuiltinMapping)
 		return NULL;
 
@@ -176,6 +177,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 
 	/* Otherwise we need the pg_proc entry */
 	HeapTuple	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", functionId);
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -284,6 +286,7 @@ fmgr_symbol(Oid functionId, char **mod, char **fn)
 	Datum		probinattr;
 
 	HeapTuple	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", functionId);
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -360,6 +363,7 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	 * See if we have the function address cached already
 	 */
 	CFuncHashTabEntry *hashentry = lookup_C_func(procedureTuple);
+
 	if (hashentry)
 	{
 		user_fn = hashentry->user_fn;
@@ -430,6 +434,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	FmgrInfo	plfinfo;
 
 	HeapTuple	languageTuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(language));
+
 	if (!HeapTupleIsValid(languageTuple))
 		elog(ERROR, "cache lookup failed for language %u", language);
 	Form_pg_language languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
@@ -465,7 +470,8 @@ fetch_finfo_record(void *filehandle, const char *funcname)
 
 	/* Try to look up the info function */
 	PGFInfoFunction infofunc = (PGFInfoFunction) lookup_external_function(filehandle,
-														  infofuncname);
+																		  infofuncname);
+
 	if (infofunc == NULL)
 	{
 		ereport(ERROR,
@@ -522,10 +528,11 @@ lookup_C_func(HeapTuple procedureTuple)
 	if (CFuncHash == NULL)
 		return NULL;			/* no table yet */
 	CFuncHashTabEntry *entry = (CFuncHashTabEntry *)
-		hash_search(CFuncHash,
-					&fn_oid,
-					HASH_FIND,
-					NULL);
+	hash_search(CFuncHash,
+				&fn_oid,
+				HASH_FIND,
+				NULL);
+
 	if (entry == NULL)
 		return NULL;			/* no such entry */
 	if (entry->fn_xmin == HeapTupleHeaderGetRawXmin(procedureTuple->t_data) &&
@@ -558,10 +565,11 @@ record_C_func(HeapTuple procedureTuple,
 	}
 
 	CFuncHashTabEntry *entry = (CFuncHashTabEntry *)
-		hash_search(CFuncHash,
-					&fn_oid,
-					HASH_ENTER,
-					&found);
+	hash_search(CFuncHash,
+				&fn_oid,
+				HASH_ENTER,
+				&found);
+
 	/* OID is already filled in */
 	entry->fn_xmin = HeapTupleHeaderGetRawXmin(procedureTuple->t_data);
 	entry->fn_tid = procedureTuple->t_self;
@@ -664,7 +672,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		fcache->flinfo.fn_expr = fcinfo->flinfo->fn_expr;
 
 		HeapTuple	tuple = SearchSysCache1(PROCOID,
-								ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+											ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for function %u",
 				 fcinfo->flinfo->fn_oid);
@@ -674,7 +683,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 			fcache->userid = procedureStruct->proowner;
 
 		Datum		datum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proconfig,
-								&isnull);
+											&isnull);
+
 		if (!isnull)
 		{
 			oldcxt = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
@@ -1996,6 +2006,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	 * OID, because validators can be called with user-specified OIDs.
 	 */
 	HeapTuple	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionOid));
+
 	if (!HeapTupleIsValid(procTup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -2007,6 +2018,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	 * function for that pg_proc entry.
 	 */
 	HeapTuple	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(procStruct->prolang));
+
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "cache lookup failed for language %u", procStruct->prolang);
 	Form_pg_language langStruct = (Form_pg_language) GETSTRUCT(langTup);
@@ -2020,7 +2032,8 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 
 	/* first validate that we have permissions to use the language */
 	AclResult	aclresult = pg_language_aclcheck(procStruct->prolang, GetUserId(),
-									 ACL_USAGE);
+												 ACL_USAGE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_LANGUAGE,
 					   NameStr(langStruct->lanname));

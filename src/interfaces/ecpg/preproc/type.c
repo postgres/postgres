@@ -252,6 +252,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype *type, const int brac
 	{
 
 		char	   *str = mm_strdup(name);
+
 		var = find_variable(str);
 		free(str);
 

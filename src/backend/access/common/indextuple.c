@@ -105,7 +105,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		{
 
 			Datum		cvalue = toast_compress_datum(untoasted_values[i],
-										  att->attcompression);
+													  att->attcompression);
 
 			if (DatumGetPointer(cvalue) != NULL)
 			{
@@ -289,6 +289,7 @@ nocache_index_getattr(IndexTuple tup,
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
 		Form_pg_attribute att = TupleDescAttr(tupleDesc, attnum);
+
 		if (att->attcacheoff >= 0)
 			return fetchatt(att, tp + att->attcacheoff);
 
@@ -528,6 +529,7 @@ CopyIndexTuple(IndexTuple source)
 
 	Size		size = IndexTupleSize(source);
 	IndexTuple	result = (IndexTuple) palloc(size);
+
 	memcpy(result, source, size);
 	return result;
 }
@@ -564,12 +566,14 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 
 	/* Create temporary descriptor to scribble on */
 	TupleDesc	truncdesc = palloc(TupleDescSize(sourceDescriptor));
+
 	TupleDescCopy(truncdesc, sourceDescriptor);
 	truncdesc->natts = leavenatts;
 
 	/* Deform, form copy of tuple with fewer attributes */
 	index_deform_tuple(source, truncdesc, values, isnull);
 	IndexTuple	truncated = index_form_tuple(truncdesc, values, isnull);
+
 	truncated->t_tid = source->t_tid;
 	Assert(IndexTupleSize(truncated) <= IndexTupleSize(source));
 

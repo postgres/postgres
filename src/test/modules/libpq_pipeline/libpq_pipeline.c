@@ -103,6 +103,7 @@ test_disallowed_in_pipeline(PGconn *conn)
 
 	/* PQexec should fail in pipeline mode */
 	PGresult   *res = PQexec(conn, "SELECT 1");
+
 	if (PQresultStatus(res) != PGRES_FATAL_ERROR)
 		pg_fatal("PQexec should fail in pipeline mode but succeeded");
 
@@ -164,6 +165,7 @@ test_multi_pipelines(PGconn *conn)
 
 	/* OK, start processing the results */
 	PGresult   *res = PQgetResult(conn);
+
 	if (res == NULL)
 		pg_fatal("PQgetResult returned null when there's a pipeline item: %s",
 				 PQerrorMessage(conn));
@@ -295,6 +297,7 @@ test_nosync(PGconn *conn)
 
 			/* and one NULL result should follow each */
 			PGresult   *res2 = PQgetResult(conn);
+
 			if (res2 != NULL)
 				pg_fatal("expected NULL, got %s",
 						 PQresStatus(PQresultStatus(res2)));
@@ -334,6 +337,7 @@ test_pipeline_abort(PGconn *conn)
 	fprintf(stderr, "aborted pipeline... ");
 
 	PGresult   *res = PQexec(conn, drop_table_sql);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("dispatching DROP TABLE failed: %s", PQerrorMessage(conn));
 
@@ -495,6 +499,7 @@ test_pipeline_abort(PGconn *conn)
 	if (PQpipelineSync(conn) != 1)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 	bool		goterror = false;
+
 	while ((res = PQgetResult(conn)) != NULL)
 	{
 		switch (PQresultStatus(res))
@@ -529,6 +534,7 @@ test_pipeline_abort(PGconn *conn)
 	PQsetSingleRowMode(conn);
 	goterror = false;
 	int			gotrows = 0;
+
 	while ((res = PQgetResult(conn)) != NULL)
 	{
 		switch (PQresultStatus(res))
@@ -734,10 +740,12 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 				 * advance to the next query
 				 */
 				PGresult   *res = PQgetResult(conn);
+
 				if (res == NULL)
 					continue;
 
 				int			status = PGRES_COMMAND_OK;
+
 				switch (recv_step)
 				{
 					case BI_BEGIN_TX:
@@ -890,6 +898,7 @@ test_prepared(PGconn *conn)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 
 	PGresult   *res = PQgetResult(conn);
+
 	if (res == NULL)
 		pg_fatal("PQgetResult returned null");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -991,6 +1000,7 @@ test_simple_pipeline(PGconn *conn)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
 
 	PGresult   *res = PQgetResult(conn);
+
 	if (res == NULL)
 		pg_fatal("PQgetResult returned null when there's a pipeline item: %s",
 				 PQerrorMessage(conn));
@@ -1090,6 +1100,7 @@ test_singlerowmode(PGconn *conn)
 
 		/* Consume rows for this query */
 		bool		saw_ending_tuplesok = false;
+
 		while ((res = PQgetResult(conn)) != NULL)
 		{
 			ExecStatusType est = PQresultStatus(res);
@@ -1159,7 +1170,8 @@ test_transaction(PGconn *conn)
 	int			num_syncs = 0;
 
 	PGresult   *res = PQexec(conn, "DROP TABLE IF EXISTS pq_pipeline_tst;"
-				 "CREATE TABLE pq_pipeline_tst (id int)");
+							 "CREATE TABLE pq_pipeline_tst (id int)");
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("failed to create test table: %s",
 				 PQerrorMessage(conn));
@@ -1240,6 +1252,7 @@ test_transaction(PGconn *conn)
 	num_syncs++;
 
 	bool		expect_null = false;
+
 	for (int i = 0;; i++)
 	{
 
@@ -1253,6 +1266,7 @@ test_transaction(PGconn *conn)
 			continue;
 		}
 		ExecStatusType restype = PQresultStatus(res);
+
 		printf("%d: got status %s", i, PQresStatus(restype));
 		if (expect_null)
 			pg_fatal("expected NULL");
@@ -1327,7 +1341,8 @@ test_uniqviol(PGconn *conn)
 	sprintf(paramValue1, "42");
 
 	PGresult   *res = PQexec(conn, "drop table if exists ppln_uniqviol;"
-				 "create table ppln_uniqviol(id bigint primary key, idata bigint)");
+							 "create table ppln_uniqviol(id bigint primary key, idata bigint)");
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("failed to create table: %s", PQerrorMessage(conn));
 
@@ -1365,6 +1380,7 @@ test_uniqviol(PGconn *conn)
 
 			res = PQgetResult(conn);
 			bool		new_error = process_result(conn, res, results, numsent);
+
 			if (new_error && got_error)
 				pg_fatal("got two errors");
 			got_error |= new_error;
@@ -1437,6 +1453,7 @@ test_uniqviol(PGconn *conn)
 
 				/* is the outgoing socket full? */
 				int			flush = PQflush(conn);
+
 				if (flush == -1)
 					pg_fatal("failed to flush: %s", PQerrorMessage(conn));
 				if (flush == 1)
@@ -1592,6 +1609,7 @@ main(int argc, char **argv)
 
 	/* Make a connection to the database */
 	PGconn	   *conn = PQconnectdb(conninfo);
+
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
 		fprintf(stderr, "Connection to database failed: %s\n",
@@ -1600,6 +1618,7 @@ main(int argc, char **argv)
 	}
 
 	PGresult   *res = PQexec(conn, "SET lc_messages TO \"C\"");
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("failed to set lc_messages: %s", PQerrorMessage(conn));
 	res = PQexec(conn, "SET force_parallel_mode = off");

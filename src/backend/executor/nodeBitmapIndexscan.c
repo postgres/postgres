@@ -215,6 +215,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	BitmapIndexScanState *indexstate = makeNode(BitmapIndexScanState);
+
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
 	indexstate->ss.ps.ExecProcNode = ExecBitmapIndexScan;
@@ -257,6 +258,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 
 	/* Open the index relation. */
 	LOCKMODE	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
+
 	indexstate->biss_RelationDesc = index_open(node->indexid, lockmode);
 
 	/*

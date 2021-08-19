@@ -566,6 +566,7 @@ process_duplicate_ors(List *orlist)
 	 * clauses.  Build a new list of winning clauses.
 	 */
 	List	   *winners = NIL;
+
 	foreach(temp, reference)
 	{
 		Expr	   *refclause = (Expr *) lfirst(temp);
@@ -615,6 +616,7 @@ process_duplicate_ors(List *orlist)
 	 * winning clause in an AND sub-clause will be removed automatically.
 	 */
 	List	   *neworlist = NIL;
+
 	foreach(temp, orlist)
 	{
 		Expr	   *clause = (Expr *) lfirst(temp);

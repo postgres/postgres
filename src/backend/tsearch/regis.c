@@ -75,6 +75,7 @@ newRegisNode(RegisNode *prev, int len)
 {
 
 	RegisNode  *ptr = (RegisNode *) palloc0(RNHDRSZ + len + 1);
+
 	if (prev)
 		prev->next = ptr;
 	return ptr;

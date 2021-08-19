@@ -72,6 +72,7 @@ get_ts_parser_func(DefElem *defel, int attnum)
 	int			nargs;
 
 	Oid			retTypeId = INTERNALOID;	/* correct for most */
+
 	typeId[0] = INTERNALOID;
 	switch (attnum)
 	{
@@ -110,6 +111,7 @@ get_ts_parser_func(DefElem *defel, int attnum)
 	}
 
 	Oid			procOid = LookupFuncName(funcName, nargs, typeId, false);
+
 	if (get_func_rettype(procOid) != retTypeId)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -195,7 +197,8 @@ DefineTSParser(List *names, List *parameters)
 	memset(nulls, false, sizeof(nulls));
 
 	Oid			prsOid = GetNewOidWithIndex(prsRel, TSParserOidIndexId,
-								Anum_pg_ts_parser_oid);
+											Anum_pg_ts_parser_oid);
+
 	values[Anum_pg_ts_parser_oid - 1] = ObjectIdGetDatum(prsOid);
 	namestrcpy(&pname, prsname);
 	values[Anum_pg_ts_parser_prsname - 1] = NameGetDatum(&pname);
@@ -338,6 +341,7 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 		return;
 
 	HeapTuple	tup = SearchSysCache1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
+
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for text search template %u",
 			 tmplId);
@@ -391,6 +395,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceoid));
@@ -433,7 +438,8 @@ DefineTSDictionary(List *names, List *parameters)
 	memset(nulls, false, sizeof(nulls));
 
 	Oid			dictOid = GetNewOidWithIndex(dictRel, TSDictionaryOidIndexId,
-								 Anum_pg_ts_dict_oid);
+											 Anum_pg_ts_dict_oid);
+
 	values[Anum_pg_ts_dict_oid - 1] = ObjectIdGetDatum(dictOid);
 	namestrcpy(&dname, dictname);
 	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
@@ -495,8 +501,9 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 
 	/* deserialize the existing set of options */
 	Datum		opt = SysCacheGetAttr(TSDICTOID, tup,
-						  Anum_pg_ts_dict_dictinitoption,
-						  &isnull);
+									  Anum_pg_ts_dict_dictinitoption,
+									  &isnull);
+
 	if (isnull)
 		dictoptions = NIL;
 	else
@@ -586,6 +593,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 	int			nargs;
 
 	Oid			retTypeId = INTERNALOID;
+
 	typeId[0] = INTERNALOID;
 	typeId[1] = INTERNALOID;
 	typeId[2] = INTERNALOID;
@@ -606,6 +614,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 	}
 
 	Oid			procOid = LookupFuncName(funcName, nargs, typeId, false);
+
 	if (get_func_rettype(procOid) != retTypeId)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -683,7 +692,8 @@ DefineTSTemplate(List *names, List *parameters)
 	}
 
 	Oid			tmplOid = GetNewOidWithIndex(tmplRel, TSTemplateOidIndexId,
-								 Anum_pg_ts_dict_oid);
+											 Anum_pg_ts_dict_oid);
+
 	values[Anum_pg_ts_template_oid - 1] = ObjectIdGetDatum(tmplOid);
 	namestrcpy(&dname, tmplname);
 	values[Anum_pg_ts_template_tmplname - 1] = NameGetDatum(&dname);
@@ -753,6 +763,7 @@ GetTSConfigTuple(List *names)
 {
 
 	Oid			cfgId = get_ts_config_oid(names, true);
+
 	if (!OidIsValid(cfgId))
 		return NULL;
 
@@ -830,7 +841,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 					ObjectIdGetDatum(myself.objectId));
 
 		SysScanDesc scan = systable_beginscan(mapRel, TSConfigMapIndexId, true,
-								  NULL, 1, &skey);
+											  NULL, 1, &skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{
@@ -874,6 +885,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceoid));
@@ -945,7 +957,8 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 	memset(nulls, false, sizeof(nulls));
 
 	Oid			cfgOid = GetNewOidWithIndex(cfgRel, TSConfigOidIndexId,
-								Anum_pg_ts_config_oid);
+											Anum_pg_ts_config_oid);
+
 	values[Anum_pg_ts_config_oid - 1] = ObjectIdGetDatum(cfgOid);
 	namestrcpy(&cname, cfgname);
 	values[Anum_pg_ts_config_cfgname - 1] = NameGetDatum(&cname);
@@ -973,7 +986,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 					ObjectIdGetDatum(sourceOid));
 
 		SysScanDesc scan = systable_beginscan(mapRel, TSConfigMapIndexId, true,
-								  NULL, 1, &skey);
+											  NULL, 1, &skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{
@@ -1047,7 +1060,7 @@ RemoveTSConfigurationById(Oid cfgId)
 				ObjectIdGetDatum(cfgId));
 
 	SysScanDesc scan = systable_beginscan(relMap, TSConfigMapIndexId, true,
-							  NULL, 1, &skey);
+										  NULL, 1, &skey);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
@@ -1069,6 +1082,7 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 
 	/* Find the configuration */
 	HeapTuple	tup = GetTSConfigTuple(stmt->cfgname);
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1127,7 +1141,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 
 	/* lextype takes one dummy argument */
 	LexDescr   *list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
-														 (Datum) 0));
+																	 (Datum) 0));
 
 	i = 0;
 	foreach(tn, tokennames)
@@ -1136,6 +1150,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 		bool		found = false;
 
 		int			j = 0;
+
 		while (list && list[j].lexid)
 		{
 			if (strcmp(strVal(val), list[j].alias) == 0)
@@ -1213,6 +1228,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	 */
 	int			ndict = list_length(stmt->dicts);
 	Oid		   *dictIds = (Oid *) palloc(sizeof(Oid) * ndict);
+
 	i = 0;
 	foreach(c, stmt->dicts)
 	{
@@ -1278,8 +1294,9 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 				repl_repl[Anum_pg_ts_config_map_mapdict - 1] = true;
 
 				HeapTuple	newtup = heap_modify_tuple(maptup,
-										   RelationGetDescr(relMap),
-										   repl_val, repl_null, repl_repl);
+													   RelationGetDescr(relMap),
+													   repl_val, repl_null, repl_repl);
+
 				CatalogTupleUpdate(relMap, &newtup->t_self, newtup);
 			}
 		}
@@ -1334,6 +1351,7 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	int		   *tokens = getTokenTypes(prsId, stmt->tokentype);
 
 	int			i = 0;
+
 	foreach(c, stmt->tokentype)
 	{
 		Value	   *val = (Value *) lfirst(c);
@@ -1435,6 +1453,7 @@ serialize_deflist(List *deflist)
 	}
 
 	text	   *result = cstring_to_text_with_len(buf.data, buf.len);
+
 	pfree(buf.data);
 	return result;
 }
@@ -1670,6 +1689,7 @@ buildDefItem(const char *name, const char *val, bool was_quoted)
 		/* Try to parse as an integer */
 		errno = 0;
 		int			v = strtoint(val, &endptr, 10);
+
 		if (errno == 0 && *endptr == '\0')
 			return makeDefElem(pstrdup(name),
 							   (Node *) makeInteger(v),

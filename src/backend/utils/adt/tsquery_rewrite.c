@@ -92,6 +92,7 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 			/* matched[] will record which children of node matched */
 			bool	   *matched = (bool *) palloc0(node->nchild * sizeof(bool));
 			int			nmatched = 0;
+
 			i = j = 0;
 			while (i < node->nchild && j < ex->nchild)
 			{
@@ -293,6 +294,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 	}
 
 	QTNode	   *tree = QT2QTN(GETQUERY(query), GETOPERAND(query));
+
 	QTNTernary(tree);
 	QTNSort(tree);
 

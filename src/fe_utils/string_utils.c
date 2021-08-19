@@ -221,6 +221,7 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 		return;
 
 	char	   *target = buf->data + buf->len;
+
 	*target++ = '\'';
 
 	while (*source != '\0')
@@ -385,6 +386,7 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 		return;
 
 	char	   *target = buf->data + buf->len;
+
 	*target++ = '\'';
 	if (!std_strings)
 		*target++ = '\\';
@@ -547,6 +549,7 @@ appendConnStrVal(PQExpBuffer buf, const char *str)
 	 * it. This is quite conservative, but better safe than sorry.
 	 */
 	bool		needquotes = true;
+
 	for (s = str; *s; s++)
 	{
 		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
@@ -664,9 +667,11 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 	*itemarray = NULL;
 	*nitems = 0;
 	int			inputlen = strlen(atext);
+
 	if (inputlen < 2 || atext[0] != '{' || atext[inputlen - 1] != '}')
 		return false;			/* bad input */
 	char	  **items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
+
 	if (items == NULL)
 		return false;			/* out of memory */
 	*itemarray = items;
@@ -674,6 +679,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 
 	atext++;					/* advance over initial '{' */
 	int			curitem = 0;
+
 	while (*atext != '}')
 	{
 		if (*atext == '\0')
@@ -753,6 +759,7 @@ appendReloptionsArray(PQExpBuffer buffer, const char *reloptions,
 		 */
 		char	   *name = option;
 		char	   *separator = strchr(option, '=');
+
 		if (separator)
 		{
 			*separator = '\0';
@@ -976,6 +983,7 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 		maxbuf = &buf[0];
 
 	PQExpBuffer curbuf = &buf[0];
+
 	initPQExpBuffer(curbuf);
 	appendPQExpBufferStr(curbuf, "^(");
 	while (*cp)

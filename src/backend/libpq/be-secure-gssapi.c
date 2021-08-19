@@ -141,6 +141,7 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 			ssize_t		amount = PqGSSSendLength - PqGSSSendNext;
 
 			ssize_t		ret = secure_raw_write(port, PqGSSSendBuffer + PqGSSSendNext, amount);
+
 			if (ret <= 0)
 			{
 				/*
@@ -224,6 +225,7 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 
 		/* 4 network-order bytes of length, then payload */
 		uint32		netlen = pg_hton32(output.length);
+
 		memcpy(PqGSSSendBuffer + PqGSSSendLength, &netlen, sizeof(uint32));
 		PqGSSSendLength += sizeof(uint32);
 
@@ -542,6 +544,7 @@ secure_open_gssapi(Port *port)
 		 * length and wait on the socket to be readable again if that fails.
 		 */
 		ssize_t		ret = read_or_wait(port, sizeof(uint32));
+
 		if (ret < 0)
 			return ret;
 

@@ -46,11 +46,11 @@ shift_jis_2004_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_SHIFT_JIS_2004, PG_UTF8);
 
 	int			converted = LocalToUtf(src, len, dest,
-						   &shift_jis_2004_to_unicode_tree,
-						   LUmapSHIFT_JIS_2004_combined, lengthof(LUmapSHIFT_JIS_2004_combined),
-						   NULL,
-						   PG_SHIFT_JIS_2004,
-						   noError);
+									   &shift_jis_2004_to_unicode_tree,
+									   LUmapSHIFT_JIS_2004_combined, lengthof(LUmapSHIFT_JIS_2004_combined),
+									   NULL,
+									   PG_SHIFT_JIS_2004,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -66,11 +66,11 @@ utf8_to_shift_jis_2004(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_SHIFT_JIS_2004);
 
 	int			converted = UtfToLocal(src, len, dest,
-						   &shift_jis_2004_from_unicode_tree,
-						   ULmapSHIFT_JIS_2004_combined, lengthof(ULmapSHIFT_JIS_2004_combined),
-						   NULL,
-						   PG_SHIFT_JIS_2004,
-						   noError);
+									   &shift_jis_2004_from_unicode_tree,
+									   ULmapSHIFT_JIS_2004_combined, lengthof(ULmapSHIFT_JIS_2004_combined),
+									   NULL,
+									   PG_SHIFT_JIS_2004,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }

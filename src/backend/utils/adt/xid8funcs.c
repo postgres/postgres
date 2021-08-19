@@ -215,7 +215,8 @@ is_visible_fxid(FullTransactionId value, const pg_snapshot *snap)
 	{
 
 		void	   *res = bsearch(&value, snap->xip, snap->nxip, sizeof(FullTransactionId),
-					  cmp_fxid);
+								  cmp_fxid);
+
 		/* if found, transaction is still in progress */
 		return (res) ? false : true;
 	}
@@ -247,6 +248,7 @@ buf_init(FullTransactionId xmin, FullTransactionId xmax)
 	snap.nxip = 0;
 
 	StringInfo	buf = makeStringInfo();
+
 	appendBinaryStringInfo(buf, (char *) &snap, PG_SNAPSHOT_SIZE(0));
 	return buf;
 }
@@ -290,6 +292,7 @@ parse_snapshot(const char *str)
 	StringInfo	buf;
 
 	FullTransactionId xmin = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
+
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
@@ -392,6 +395,7 @@ pg_current_snapshot(PG_FUNCTION_ARGS)
 	FullTransactionId next_fxid = ReadNextFullTransactionId();
 
 	Snapshot	cur = GetActiveSnapshot();
+
 	if (cur == NULL)
 		elog(ERROR, "no active snapshot set");
 
@@ -492,6 +496,7 @@ pg_snapshot_recv(PG_FUNCTION_ARGS)
 
 	/* load and validate nxip */
 	int			nxip = pq_getmsgint(buf, 4);
+
 	if (nxip < 0 || nxip > PG_SNAPSHOT_MAX_NXIP)
 		goto bad_format;
 

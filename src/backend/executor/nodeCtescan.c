@@ -38,6 +38,7 @@ CteScanNext(CteScanState *node)
 	ScanDirection dir = estate->es_direction;
 	bool		forward = ScanDirectionIsForward(dir);
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
+
 	tuplestore_select_read_pointer(tuplestorestate, node->readptr);
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 
@@ -94,6 +95,7 @@ CteScanNext(CteScanState *node)
 		 * which direction the subplan will go.
 		 */
 		TupleTableSlot *cteslot = ExecProcNode(node->cteplanstate);
+
 		if (TupIsNull(cteslot))
 		{
 			node->leader->eof_cte = true;
@@ -195,6 +197,7 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	 * create new CteScanState for node
 	 */
 	CteScanState *scanstate = makeNode(CteScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecCteScan;
@@ -215,6 +218,7 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	 * CTEs, particularly the shared tuplestore.
 	 */
 	ParamExecData *prmdata = &(estate->es_param_exec_vals[node->cteParam]);
+
 	Assert(prmdata->execPlan == NULL);
 	Assert(!prmdata->isnull);
 	scanstate->leader = castNode(CteScanState, DatumGetPointer(prmdata->value));

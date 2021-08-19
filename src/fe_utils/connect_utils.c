@@ -147,6 +147,7 @@ connectMaintenanceDatabase(ConnParams *cparams,
 	/* Otherwise, try postgres first and then template1. */
 	cparams->dbname = "postgres";
 	PGconn	   *conn = connectDatabase(cparams, progname, echo, true, false);
+
 	if (!conn)
 	{
 		cparams->dbname = "template1";

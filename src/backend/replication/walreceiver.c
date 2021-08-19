@@ -287,6 +287,7 @@ WalReceiverMain(void)
 	 * this walreceiver is connected to.
 	 */
 	char	   *tmp_conninfo = walrcv_get_conninfo(wrconn);
+
 	walrcv_get_senderinfo(wrconn, &sender_host, &sender_port);
 	SpinLockAcquire(&walrcv->mutex);
 	memset(walrcv->conninfo, 0, MAXCONNINFO);
@@ -308,6 +309,7 @@ WalReceiverMain(void)
 		pfree(sender_host);
 
 	bool		first_stream = true;
+
 	for (;;)
 	{
 		char		standby_sysid[32];
@@ -436,6 +438,7 @@ WalReceiverMain(void)
 
 				/* See if we can read data immediately */
 				int			len = walrcv_receive(wrconn, &buf, &wait_fd);
+
 				if (len != 0)
 				{
 					/*
@@ -497,11 +500,12 @@ WalReceiverMain(void)
 				 */
 				Assert(wait_fd != PGINVALID_SOCKET);
 				int			rc = WaitLatchOrSocket(MyLatch,
-									   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
-									   WL_TIMEOUT | WL_LATCH_SET,
-									   wait_fd,
-									   NAPTIME_PER_CYCLE,
-									   WAIT_EVENT_WAL_RECEIVER_MAIN);
+												   WL_EXIT_ON_PM_DEATH | WL_SOCKET_READABLE |
+												   WL_TIMEOUT | WL_LATCH_SET,
+												   wait_fd,
+												   NAPTIME_PER_CYCLE,
+												   WAIT_EVENT_WAL_RECEIVER_MAIN);
+
 				if (rc & WL_LATCH_SET)
 				{
 					ResetLatch(MyLatch);
@@ -542,8 +546,8 @@ WalReceiverMain(void)
 						TimestampTz now = GetCurrentTimestamp();
 
 						TimestampTz timeout =
-							TimestampTzPlusMilliseconds(last_recv_timestamp,
-														wal_receiver_timeout);
+						TimestampTzPlusMilliseconds(last_recv_timestamp,
+													wal_receiver_timeout);
 
 						if (now >= timeout)
 							ereport(ERROR,
@@ -632,6 +636,7 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 
 	SpinLockAcquire(&walrcv->mutex);
 	int			state = walrcv->walRcvState;
+
 	if (state != WALRCV_STREAMING)
 	{
 		SpinLockRelease(&walrcv->mutex);
@@ -935,6 +940,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				errno = ENOSPC;
 
 			int			save_errno = errno;
+
 			XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
 			errno = save_errno;
 			ereport(PANIC,
@@ -1155,6 +1161,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 	 */
 	FullTransactionId nextFullXid = ReadNextFullTransactionId();
 	TransactionId nextXid = XidFromFullTransactionId(nextFullXid);
+
 	xmin_epoch = EpochFromFullTransactionId(nextFullXid);
 	catalog_xmin_epoch = xmin_epoch;
 	if (nextXid < xmin)
@@ -1244,6 +1251,7 @@ WalRcvForceReply(void)
 	/* fetching the latch pointer might not be atomic, so use spinlock */
 	SpinLockAcquire(&WalRcv->mutex);
 	Latch	   *latch = WalRcv->latch;
+
 	SpinLockRelease(&WalRcv->mutex);
 	if (latch)
 		SetLatch(latch);
@@ -1299,9 +1307,11 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	TimestampTz last_receipt_time = WalRcv->lastMsgReceiptTime;
 	XLogRecPtr	latest_end_lsn = WalRcv->latestWalEnd;
 	TimestampTz latest_end_time = WalRcv->latestWalEndTime;
+
 	strlcpy(slotname, (char *) WalRcv->slotname, sizeof(slotname));
 	strlcpy(sender_host, (char *) WalRcv->sender_host, sizeof(sender_host));
 	int			sender_port = WalRcv->sender_port;
+
 	strlcpy(conninfo, (char *) WalRcv->conninfo, sizeof(conninfo));
 	SpinLockRelease(&WalRcv->mutex);
 

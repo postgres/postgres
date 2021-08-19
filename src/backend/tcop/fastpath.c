@@ -83,6 +83,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 
 			getTypeOutputInfo(rettype, &typoutput, &typisvarlena);
 			char	   *outputstr = OidOutputFunctionCall(typoutput, retval);
+
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -93,6 +94,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 
 			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
 			bytea	   *outputbytes = OidSendFunctionCall(typsend, retval);
+
 			pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
@@ -131,6 +133,7 @@ fetch_fp_info(Oid func_id, struct fp_info *fip)
 	fip->funcid = InvalidOid;
 
 	HeapTuple	func_htp = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_id));
+
 	if (!HeapTupleIsValid(func_htp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -215,6 +218,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * just do the lookups on every call.
 	 */
 	struct fp_info *fip = &my_fp;
+
 	fetch_fp_info(fid, fip);
 
 	/* Log as soon as we have the function OID and name */
@@ -231,6 +235,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * through a normal name lookup, we need to check schema usage too.
 	 */
 	AclResult	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(fip->namespace));
@@ -260,6 +265,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * If func is strict, must not call it for null args.
 	 */
 	bool		callit = true;
+
 	if (fip->flinfo.fn_strict)
 	{
 		int			i;
@@ -326,6 +332,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 
 	/* Get the argument format codes */
 	int			numAFormats = pq_getmsgint(msgBuf, 2);
+
 	if (numAFormats > 0)
 	{
 		aformats = (int16 *) palloc(numAFormats * sizeof(int16));
@@ -359,6 +366,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 		int16		aformat;
 
 		int			argsize = pq_getmsgint(msgBuf, 4);
+
 		if (argsize == -1)
 		{
 			fcinfo->args[i].isnull = true;

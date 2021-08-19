@@ -151,12 +151,14 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	insertstate.bounds_valid = false;
 	insertstate.buf = InvalidBuffer;
 	insertstate.postingoff = 0;
+
 	/*
 	 * Find and lock the leaf page that the tuple should be added to by
 	 * searching from the root page.  insertstate.buf will hold a buffer that
 	 * is locked in exclusive mode afterwards.
 	 */
 	BTStack		stack;
+
 search:
 	stack = _bt_search_insert(rel, &insertstate);
 
@@ -201,7 +203,7 @@ search:
 		uint32		speculativeToken;
 
 		TransactionId xwait = _bt_check_unique(rel, &insertstate, heapRel, checkUnique,
-								 &is_unique, &speculativeToken);
+											   &is_unique, &speculativeToken);
 
 		if (unlikely(TransactionIdIsValid(xwait)))
 		{
@@ -248,7 +250,8 @@ search:
 		 * checkingunique.
 		 */
 		OffsetNumber newitemoff = _bt_findinsertloc(rel, &insertstate, checkingunique,
-									   indexUnchanged, stack, heapRel);
+													indexUnchanged, stack, heapRel);
+
 		_bt_insertonpg(rel, itup_key, insertstate.buf, InvalidBuffer, stack,
 					   itup, insertstate.itemsz, newitemoff,
 					   insertstate.postingoff, false);
@@ -569,7 +572,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 					 * then we have to wait for its commit/abort.
 					 */
 					TransactionId xwait = (TransactionIdIsValid(SnapshotDirty.xmin)) ?
-						SnapshotDirty.xmin : SnapshotDirty.xmax;
+					SnapshotDirty.xmin : SnapshotDirty.xmax;
 
 					if (TransactionIdIsValid(xwait))
 					{
@@ -645,7 +648,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 										   values, isnull);
 
 						char	   *key_desc = BuildIndexValueDescription(rel, values,
-															  isnull);
+																		  isnull);
 
 						ereport(ERROR,
 								(errcode(ERRCODE_UNIQUE_VIOLATION),
@@ -708,6 +711,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			if (P_RIGHTMOST(opaque))
 				break;
 			int			highkeycmp = _bt_compare(rel, itup_key, page, P_HIKEY);
+
 			Assert(highkeycmp <= 0);
 			if (highkeycmp != 0)
 				break;
@@ -1016,6 +1020,7 @@ _bt_stepright(Relation rel, BTInsertState insertstate, BTStack stack)
 
 	Buffer		rbuf = InvalidBuffer;
 	BlockNumber rblkno = opaque->btpo_next;
+
 	for (;;)
 	{
 		rbuf = _bt_relandgetbuf(rel, rbuf, rblkno, BT_WRITE);
@@ -1101,6 +1106,7 @@ _bt_insertonpg(Relation rel,
 
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 	isleaf = P_ISLEAF(opaque);
 	isroot = P_ISROOT(opaque);
 	isrightmost = P_RIGHTMOST(opaque);
@@ -1170,7 +1176,8 @@ _bt_insertonpg(Relation rel,
 
 		/* split the buffer into left and right halves */
 		Buffer		rbuf = _bt_split(rel, itup_key, buf, cbuf, newitemoff, itemsz, itup,
-						 origitup, nposting, postingoff);
+									 origitup, nposting, postingoff);
+
 		PredicateLockPageSplit(rel,
 							   BufferGetBlockNumber(buf),
 							   BufferGetBlockNumber(rbuf));
@@ -1362,6 +1369,7 @@ _bt_insertonpg(Relation rel,
 		 * may be used by a future inserter within _bt_search_insert().
 		 */
 		BlockNumber blockcache = InvalidBlockNumber;
+
 		if (isrightmost && isleaf && !isroot)
 			blockcache = BufferGetBlockNumber(buf);
 
@@ -1457,10 +1465,12 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * only workspace.
 	 */
 	Page		origpage = BufferGetPage(buf);
+
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	isleaf = P_ISLEAF(oopaque);
 	isrightmost = P_RIGHTMOST(oopaque);
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(origpage);
+
 	origpagenumber = BufferGetBlockNumber(buf);
 
 	/*
@@ -1488,7 +1498,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * case.
 	 */
 	OffsetNumber firstrightoff = _bt_findsplitloc(rel, origpage, newitemoff, newitemsz,
-									 newitem, &newitemonleft);
+												  newitem, &newitemonleft);
 
 	/* Allocate temp buffer for leftpage */
 	leftpage = PageGetTempPage(origpage);
@@ -1534,6 +1544,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * split point.
 	 */
 	OffsetNumber origpagepostingoff = InvalidOffsetNumber;
+
 	if (postingoff != 0)
 	{
 		Assert(isleaf);
@@ -1594,6 +1605,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 
 			/* existing item before firstrightoff becomes lastleft */
 			OffsetNumber lastleftoff = OffsetNumberPrev(firstrightoff);
+
 			Assert(lastleftoff >= P_FIRSTDATAKEY(oopaque));
 			itemid = PageGetItemId(origpage, lastleftoff);
 			lastleft = (IndexTuple) PageGetItem(origpage, itemid);
@@ -1665,6 +1677,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * existing sibling page are corrupt.
 	 */
 	Buffer		rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
+
 	rightpage = BufferGetPage(rbuf);
 	rightpagenumber = BufferGetBlockNumber(rbuf);
 	/* rightpage was initialized by _bt_getbuf */
@@ -1707,6 +1720,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 		itemid = PageGetItemId(origpage, P_HIKEY);
 		itemsz = ItemIdGetLength(itemid);
 		IndexTuple	righthighkey = (IndexTuple) PageGetItem(origpage, itemid);
+
 		Assert(BTreeTupleGetNAtts(righthighkey, rel) > 0);
 		Assert(BTreeTupleGetNAtts(righthighkey, rel) <=
 			   IndexRelationGetNumberOfKeyAttributes(rel));
@@ -2066,6 +2080,7 @@ _bt_insert_parent(Relation rel,
 		Assert(isonly);
 		/* create a new root node and update the metapage */
 		Buffer		rootbuf = _bt_newroot(rel, buf, rbuf);
+
 		/* release the split buffers */
 		_bt_relbuf(rel, rootbuf);
 		_bt_relbuf(rel, rbuf);
@@ -2112,10 +2127,11 @@ _bt_insert_parent(Relation rel,
 
 		/* get high key from left, a strict lower bound for new right page */
 		IndexTuple	ritem = (IndexTuple) PageGetItem(page,
-										 PageGetItemId(page, P_HIKEY));
+													 PageGetItemId(page, P_HIKEY));
 
 		/* form an index tuple that points at the new right page */
 		IndexTuple	new_item = CopyIndexTuple(ritem);
+
 		BTreeTupleSetDownLink(new_item, rbknum);
 
 		/*
@@ -2374,6 +2390,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 	/* get a new root page */
 	Buffer		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
+
 	rootpage = BufferGetPage(rootbuf);
 	BlockNumber rootblknum = BufferGetBlockNumber(rootbuf);
 
@@ -2389,6 +2406,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	Size		left_item_sz = sizeof(IndexTupleData);
 	IndexTuple	left_item = (IndexTuple) palloc(left_item_sz);
+
 	left_item->t_info = left_item_sz;
 	BTreeTupleSetDownLink(left_item, lbkno);
 	BTreeTupleSetNAtts(left_item, 0, false);
@@ -2401,6 +2419,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	Size		right_item_sz = ItemIdGetLength(itemid);
 	IndexTuple	item = (IndexTuple) PageGetItem(lpage, itemid);
 	IndexTuple	right_item = CopyIndexTuple(item);
+
 	BTreeTupleSetDownLink(right_item, rbkno);
 
 	/* NO EREPORT(ERROR) from here till newroot op is logged */
@@ -2412,6 +2431,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 	/* set btree special data */
 	BTPageOpaque rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+
 	rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
 	rootopaque->btpo_flags = BTP_ROOT;
 	rootopaque->btpo_level =
@@ -2725,7 +2745,7 @@ _bt_simpledel_pass(Relation rel, Buffer buffer, Relation heapRel,
 
 	/* Get array of table blocks pointed to by LP_DEAD-set tuples */
 	BlockNumber *deadblocks = _bt_deadblocks(page, deletable, ndeletable, newitem,
-								&ndeadblocks);
+											 &ndeadblocks);
 
 	/* Initialize tableam state that describes index deletion operation */
 	delstate.bottomup = false;

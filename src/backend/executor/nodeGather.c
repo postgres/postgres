@@ -65,6 +65,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	GatherState *gatherstate = makeNode(GatherState);
+
 	gatherstate->ps.plan = (Plan *) node;
 	gatherstate->ps.state = estate;
 	gatherstate->ps.ExecProcNode = ExecGather;
@@ -85,6 +86,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	 * now initialize outer plan
 	 */
 	Plan	   *outerNode = outerPlan(node);
+
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
 	TupleDesc	tupDesc = ExecGetResultType(outerPlanState(gatherstate));
 
@@ -177,6 +179,7 @@ ExecGather(PlanState *pstate)
 			 * requested, or indeed any at all.
 			 */
 			ParallelContext *pcxt = node->pei->pcxt;
+
 			LaunchParallelWorkers(pcxt);
 			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
@@ -212,6 +215,7 @@ ExecGather(PlanState *pstate)
 	 * storage allocated in the previous tuple cycle.
 	 */
 	ExprContext *econtext = node->ps.ps_ExprContext;
+
 	ResetExprContext(econtext);
 
 	/*
@@ -219,6 +223,7 @@ ExecGather(PlanState *pstate)
 	 * ourselves.
 	 */
 	TupleTableSlot *slot = gather_getnext(node);
+
 	if (TupIsNull(slot))
 		return NULL;
 

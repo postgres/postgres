@@ -481,6 +481,7 @@ ean2ISSN(char *isn)
 	/* Strip the first part, crop, and calculate the new check digit */
 	hyphenate(isn, isn + 4, NULL, NULL);
 	unsigned	check = weight_checkdig(isn, 8);
+
 	if (check == 10)
 		isn[8] = 'X';
 	else
@@ -955,6 +956,7 @@ isn_out(PG_FUNCTION_ARGS)
 	(void) ean2string(val, false, buf, true);
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -970,6 +972,7 @@ ean13_out(PG_FUNCTION_ARGS)
 	(void) ean2string(val, false, buf, false);
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 

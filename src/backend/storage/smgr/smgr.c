@@ -164,8 +164,8 @@ smgropen(RelFileNode rnode, BackendId backend)
 	brnode.node = rnode;
 	brnode.backend = backend;
 	SMgrRelation reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &brnode,
-									  HASH_ENTER, &found);
+												   (void *) &brnode,
+												   HASH_ENTER, &found);
 
 	/* Initialize it if not present before */
 	if (!found)
@@ -313,8 +313,9 @@ smgrclosenode(RelFileNodeBackend rnode)
 		return;
 
 	SMgrRelation reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &rnode,
-									  HASH_FIND, NULL);
+												   (void *) &rnode,
+												   HASH_FIND, NULL);
+
 	if (reln != NULL)
 		smgrclose(reln);
 }
@@ -397,6 +398,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * each relation's forks at the smgr level while at it
 	 */
 	RelFileNodeBackend *rnodes = palloc(sizeof(RelFileNodeBackend) * nrels);
+
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
@@ -546,6 +548,7 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 
 	/* Check and return if we get the cached value for the number of blocks. */
 	BlockNumber result = smgrnblocks_cached(reln, forknum);
+
 	if (result != InvalidBlockNumber)
 		return result;
 

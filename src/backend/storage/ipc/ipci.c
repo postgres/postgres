@@ -102,6 +102,7 @@ CreateSharedMemoryAndSemaphores(void)
 
 		/* Compute number of semaphores we'll need */
 		int			numSemas = ProcGlobalSemas();
+
 		numSemas += SpinlockSemas();
 
 		/*
@@ -114,6 +115,7 @@ CreateSharedMemoryAndSemaphores(void)
 		 * need to be so careful during the actual allocation phase.
 		 */
 		Size		size = 100000;
+
 		size = add_size(size, PGSemaphoreShmemSize(numSemas));
 		size = add_size(size, SpinlockSemaSize());
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,

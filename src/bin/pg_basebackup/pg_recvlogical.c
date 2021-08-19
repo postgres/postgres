@@ -259,6 +259,7 @@ StreamLogicalLog(void)
 		appendPQExpBufferChar(query, ')');
 
 	PGresult   *res = PQexec(conn, query->data);
+
 	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -451,8 +452,9 @@ StreamLogicalLog(void)
 			 * We just check if the server requested a reply, and ignore the
 			 * rest.
 			 */
-			int			pos = 1;			/* skip msgtype 'k' */
+			int			pos = 1;	/* skip msgtype 'k' */
 			XLogRecPtr	walEnd = fe_recvint64(&copybuf[pos]);
+
 			output_written_lsn = Max(walEnd, output_written_lsn);
 
 			pos += 8;			/* read walEnd */
@@ -544,8 +546,8 @@ StreamLogicalLog(void)
 		{
 
 			int			ret = write(outfd,
-						copybuf + hdr_len + bytes_written,
-						bytes_left);
+									copybuf + hdr_len + bytes_written,
+									bytes_left);
 
 			if (ret < 0)
 			{
@@ -599,6 +601,7 @@ StreamLogicalLog(void)
 				copybuf = NULL;
 			}
 			int			r = PQgetCopyData(conn, &copybuf, 0);
+
 			if (r == -1)
 				break;
 			if (r == -2)

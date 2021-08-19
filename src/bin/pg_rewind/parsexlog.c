@@ -70,8 +70,9 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
 	XLogReaderState *xlogreader = XLogReaderAllocate(WalSegSz, datadir,
-									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
-									&private);
+													 XL_ROUTINE(.page_read = &SimpleXLogPageRead),
+													 &private);
+
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
 
@@ -125,13 +126,15 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex,
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
 	XLogReaderState *xlogreader = XLogReaderAllocate(WalSegSz, datadir,
-									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
-									&private);
+													 XL_ROUTINE(.page_read = &SimpleXLogPageRead),
+													 &private);
+
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
 
 	XLogBeginRead(xlogreader, ptr);
 	XLogRecord *record = XLogReadRecord(xlogreader, &errormsg);
+
 	if (record == NULL)
 	{
 		if (errormsg)
@@ -183,12 +186,14 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
 	XLogReaderState *xlogreader = XLogReaderAllocate(WalSegSz, datadir,
-									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
-									&private);
+													 XL_ROUTINE(.page_read = &SimpleXLogPageRead),
+													 &private);
+
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
 
 	XLogRecPtr	searchptr = forkptr;
+
 	for (;;)
 	{
 
@@ -212,6 +217,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 		 * where the primary has been stopped to be rewound.
 		 */
 		uint8		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
+
 		if (searchptr < forkptr &&
 			XLogRecGetRmid(xlogreader) == RM_XLOG_ID &&
 			(info == XLOG_CHECKPOINT_SHUTDOWN ||
@@ -331,6 +337,7 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 
 
 	int			r = read(xlogreadfd, readBuf, XLOG_BLCKSZ);
+
 	if (r != XLOG_BLCKSZ)
 	{
 		if (r < 0)

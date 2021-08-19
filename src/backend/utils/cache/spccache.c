@@ -118,9 +118,10 @@ get_tablespace(Oid spcid)
 	if (!TableSpaceCacheHash)
 		InitializeTableSpaceCache();
 	TableSpaceCacheEntry *spc = (TableSpaceCacheEntry *) hash_search(TableSpaceCacheHash,
-											   (void *) &spcid,
-											   HASH_FIND,
-											   NULL);
+																	 (void *) &spcid,
+																	 HASH_FIND,
+																	 NULL);
+
 	if (spc)
 		return spc;
 
@@ -131,6 +132,7 @@ get_tablespace(Oid spcid)
 	 * if no options were specified.
 	 */
 	HeapTuple	tp = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spcid));
+
 	if (!HeapTupleIsValid(tp))
 		opts = NULL;
 	else
@@ -138,9 +140,10 @@ get_tablespace(Oid spcid)
 		bool		isNull;
 
 		Datum		datum = SysCacheGetAttr(TABLESPACEOID,
-								tp,
-								Anum_pg_tablespace_spcoptions,
-								&isNull);
+											tp,
+											Anum_pg_tablespace_spcoptions,
+											&isNull);
+
 		if (isNull)
 			opts = NULL;
 		else

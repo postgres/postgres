@@ -136,7 +136,7 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 		elog(ERROR, "hash AM does not use P_NEW");
 
 	Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO_AND_LOCK,
-							 NULL);
+										 NULL);
 
 	/* ref count and lock type are correct */
 
@@ -342,8 +342,9 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	 */
 	int32		data_width = sizeof(uint32);
 	int32		item_width = MAXALIGN(sizeof(IndexTupleData)) + MAXALIGN(data_width) +
-		sizeof(ItemIdData);		/* include the line pointer */
+	sizeof(ItemIdData);			/* include the line pointer */
 	int32		ffactor = HashGetTargetPageUsage(rel) / item_width;
+
 	/* keep to a sane range */
 	if (ffactor < 10)
 		ffactor = 10;
@@ -360,6 +361,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	 * whole relation will be rolled back.
 	 */
 	Buffer		metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, forkNum);
+
 	_hash_init_metabuffer(metabuf, num_tuples, procid, ffactor, false);
 	MarkBufferDirty(metabuf);
 
@@ -404,6 +406,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 		CHECK_FOR_INTERRUPTS();
 
 		BlockNumber blkno = BUCKET_TO_BLKNO(metap, i);
+
 		buf = _hash_getnewbuf(rel, blkno, forkNum);
 		_hash_initbuf(buf, metap->hashm_maxbucket, i, LH_BUCKET_PAGE, false);
 		MarkBufferDirty(buf);
@@ -424,6 +427,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	 * Initialize bitmap page
 	 */
 	Buffer		bitmapbuf = _hash_getnewbuf(rel, num_buckets + 1, forkNum);
+
 	_hash_initbitmapbuffer(bitmapbuf, metap->hashm_bmsize, false);
 	MarkBufferDirty(bitmapbuf);
 
@@ -489,6 +493,7 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	 * _hash_expandtable().
 	 */
 	double		dnumbuckets = num_tuples / ffactor;
+
 	if (dnumbuckets <= 2.0)
 		num_buckets = 2;
 	else if (dnumbuckets >= (double) 0x40000000)
@@ -497,13 +502,16 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 		num_buckets = _hash_get_totalbuckets(_hash_spareindex(dnumbuckets));
 
 	uint32		spare_index = _hash_spareindex(num_buckets);
+
 	Assert(spare_index < HASH_MAX_SPLITPOINTS);
 
 	Page		page = BufferGetPage(buf);
+
 	if (initpage)
 		_hash_pageinit(page, BufferGetPageSize(buf));
 
 	HashPageOpaque pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
 	pageopaque->hasho_bucket = InvalidBucket;
@@ -521,6 +529,7 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 
 	/* find largest bitmap array size that will fit in page size */
 	uint32		lshift = pg_leftmost_one_pos32(metap->hashm_bsize);
+
 	Assert(lshift > 0);
 	metap->hashm_bmsize = 1 << lshift;
 	metap->hashm_bmshift = lshift + BYTE_TO_BIT;
@@ -766,6 +775,7 @@ restart_expand:
 		 * without failure we don't use all the space in one split operation.
 		 */
 		uint32		buckets_to_add = _hash_get_totalbuckets(spare_ndx) - new_bucket;
+
 		if (!_hash_alloc_buckets(rel, start_nblkno, buckets_to_add))
 		{
 			/* can't split due to BlockNumber overflow */
@@ -1076,6 +1086,7 @@ _hash_splitbucket(Relation rel,
 
 		/* Scan each tuple in old page */
 		OffsetNumber omaxoffnum = PageGetMaxOffsetNumber(opage);
+
 		for (ooffnum = FirstOffsetNumber;
 			 ooffnum <= omaxoffnum;
 			 ooffnum = OffsetNumberNext(ooffnum))
@@ -1095,7 +1106,7 @@ _hash_splitbucket(Relation rel,
 			 * in.
 			 */
 			IndexTuple	itup = (IndexTuple) PageGetItem(opage,
-											PageGetItemId(opage, ooffnum));
+														PageGetItemId(opage, ooffnum));
 
 			if (htab)
 				(void) hash_search(htab, &itup->t_tid, HASH_FIND, &found);
@@ -1104,7 +1115,7 @@ _hash_splitbucket(Relation rel,
 				continue;
 
 			Bucket		bucket = _hash_hashkey2bucket(_hash_get_indextuple_hashkey(itup),
-										  maxbucket, highmask, lowmask);
+													  maxbucket, highmask, lowmask);
 
 			if (bucket == nbucket)
 			{
@@ -1322,10 +1333,10 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	hash_ctl.hcxt = CurrentMemoryContext;
 
 	HTAB	   *tidhtab =
-		hash_create("bucket ctids",
-					256,		/* arbitrary initial size */
-					&hash_ctl,
-					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	hash_create("bucket ctids",
+				256,			/* arbitrary initial size */
+				&hash_ctl,
+				HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	BlockNumber bucket_nblkno = nblkno = _hash_get_newblock_from_oldbucket(rel, obucket);
 
@@ -1348,6 +1359,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 
 		/* Scan each tuple in new page */
 		OffsetNumber nmaxoffnum = PageGetMaxOffsetNumber(npage);
+
 		for (noffnum = FirstOffsetNumber;
 			 noffnum <= nmaxoffnum;
 			 noffnum = OffsetNumberNext(noffnum))
@@ -1355,7 +1367,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 
 			/* Fetch the item's TID and insert it in hash table. */
 			IndexTuple	itup = (IndexTuple) PageGetItem(npage,
-											PageGetItemId(npage, noffnum));
+														PageGetItemId(npage, noffnum));
 
 			(void) hash_search(tidhtab, &itup->t_tid, HASH_ENTER, &found);
 
@@ -1516,6 +1528,7 @@ _hash_getbucketbuf_from_hashkey(Relation rel, uint32 hashkey, int access,
 	Assert(access == HASH_READ || access == HASH_WRITE);
 
 	HashMetaPage metap = _hash_getcachedmetap(rel, &metabuf, false);
+
 	Assert(metap != NULL);
 
 	/*

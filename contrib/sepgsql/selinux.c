@@ -789,6 +789,7 @@ sepgsql_compute_avd(const char *scontext,
 		uint32		av_code = selinux_catalog[tclass].av[i].av_code;
 
 		access_vector_t av_code_ex = string_to_av_perm(tclass_ex, av_name);
+
 		if (av_code_ex == 0)
 		{
 			/* fill up undefined permissions */

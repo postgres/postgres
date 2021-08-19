@@ -120,7 +120,7 @@ win1250_to_mic(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_MULE_INTERNAL);
 
 	int			converted = latin2mic_with_table(src, dest, len, LC_ISO8859_2, PG_WIN1250,
-									 win1250_2_iso88592, noError);
+												 win1250_2_iso88592, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -136,7 +136,7 @@ mic_to_win1250(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_WIN1250);
 
 	int			converted = mic2latin_with_table(src, dest, len, LC_ISO8859_2, PG_WIN1250,
-									 iso88592_2_win1250, noError);
+												 iso88592_2_win1250, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -152,7 +152,7 @@ latin2_to_win1250(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN2, PG_WIN1250);
 
 	int			converted = local2local(src, dest, len, PG_LATIN2, PG_WIN1250,
-							iso88592_2_win1250, noError);
+										iso88592_2_win1250, noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -168,7 +168,7 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_LATIN2);
 
 	int			converted = local2local(src, dest, len, PG_WIN1250, PG_LATIN2,
-							win1250_2_iso88592, noError);
+										win1250_2_iso88592, noError);
 
 	PG_RETURN_INT32(converted);
 }

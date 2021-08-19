@@ -67,10 +67,10 @@ RemoveObjects(DropStmt *stmt)
 
 		/* Get an ObjectAddress for the object. */
 		ObjectAddress address = get_object_address(stmt->removeType,
-									 object,
-									 &relation,
-									 AccessExclusiveLock,
-									 stmt->missing_ok);
+												   object,
+												   &relation,
+												   AccessExclusiveLock,
+												   stmt->missing_ok);
 
 		/*
 		 * Issue NOTICE if supplied object was not found.  Note this is only
@@ -101,6 +101,7 @@ RemoveObjects(DropStmt *stmt)
 
 		/* Check permissions. */
 		Oid			namespaceId = get_object_namespace(&address);
+
 		if (!OidIsValid(namespaceId) ||
 			!pg_namespace_ownercheck(namespaceId, GetUserId()))
 			check_object_ownership(GetUserId(), stmt->removeType, address,
@@ -141,7 +142,7 @@ owningrel_does_not_exist_skipping(List *object, const char **msg, char **name)
 {
 
 	List	   *parent_object = list_truncate(list_copy(object),
-								  list_length(object) - 1);
+											  list_length(object) - 1);
 
 	if (schema_does_not_exist_skipping(parent_object, msg, name))
 		return true;

@@ -743,6 +743,7 @@ SlabCheck(MemoryContext context)
 
 				/* read index of the next free chunk */
 				SlabChunk  *chunk = SlabBlockGetChunk(slab, block, idx);
+
 				VALGRIND_MAKE_MEM_DEFINED(SlabChunkGetPointer(chunk), sizeof(int32));
 				idx = *(int32 *) SlabChunkGetPointer(chunk);
 			}

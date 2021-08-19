@@ -293,6 +293,7 @@ tablespace_list_append(const char *arg)
 	const char *arg_ptr;
 
 	char	   *dst_ptr = dst = cell->old_dir;
+
 	for (arg_ptr = arg; *arg_ptr; arg_ptr++)
 	{
 		if (dst_ptr - dst >= MAXPGPATH)
@@ -366,6 +367,7 @@ get_gz_error(gzFile gzf)
 	int			errnum;
 
 	const char *errmsg = gzerror(gzf, &errnum);
+
 	if (errnum == Z_ERRNO)
 		return strerror(errno);
 	else
@@ -457,6 +459,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 		MemSet(&tv, 0, sizeof(tv));
 
 		int			r = select(bgpipe[0] + 1, &fds, NULL, NULL, &tv);
+
 		if (r == 1)
 		{
 			char		xlogend[64];
@@ -597,6 +600,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	char		statusdir[MAXPGPATH];
 
 	logstreamer_param *param = pg_malloc0(sizeof(logstreamer_param));
+
 	param->timeline = timeline;
 	param->sysidentifier = sysidentifier;
 
@@ -781,6 +785,7 @@ progress_report(int tablespacenum, const char *filename,
 		return;
 
 	pg_time_t	now = time(NULL);
+
 	if (now == last_progress_report && !force && !finished)
 		return;					/* Max once per second */
 
@@ -867,6 +872,7 @@ parse_max_rate(char *src)
 
 	errno = 0;
 	double		result = strtod(src, &after_num);
+
 	if (src == after_num)
 	{
 		pg_log_error("transfer rate \"%s\" is not a valid value", src);
@@ -950,6 +956,7 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 
 	/* Get the COPY data stream. */
 	PGresult   *res = PQgetResult(conn);
+
 	if (PQresultStatus(res) != PGRES_COPY_OUT)
 	{
 		pg_log_error("could not get COPY data stream: %s",
@@ -964,6 +971,7 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 		char	   *copybuf;
 
 		int			r = PQgetCopyData(conn, &copybuf, 0);
+
 		if (r == -1)
 		{
 			/* End of chunk. */
@@ -1507,6 +1515,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	state.tablespacenum = rownum;
 
 	bool		basetablespace = PQgetisnull(res, rownum, 0);
+
 	if (basetablespace)
 		strlcpy(state.current_path, basedir, sizeof(state.current_path));
 	else
@@ -1880,17 +1889,17 @@ BaseBackup(void)
 	}
 
 	char	   *basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s %s %s",
-				 escaped_label,
-				 estimatesize ? "PROGRESS" : "",
-				 includewal == FETCH_WAL ? "WAL" : "",
-				 fastcheckpoint ? "FAST" : "",
-				 includewal == NO_WAL ? "" : "NOWAIT",
-				 maxrate_clause ? maxrate_clause : "",
-				 format == 't' ? "TABLESPACE_MAP" : "",
-				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
-				 manifest_clause ? manifest_clause : "",
-				 manifest_checksums_clause);
+	psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s %s %s",
+			 escaped_label,
+			 estimatesize ? "PROGRESS" : "",
+			 includewal == FETCH_WAL ? "WAL" : "",
+			 fastcheckpoint ? "FAST" : "",
+			 includewal == NO_WAL ? "" : "NOWAIT",
+			 maxrate_clause ? maxrate_clause : "",
+			 format == 't' ? "TABLESPACE_MAP" : "",
+			 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
+			 manifest_clause ? manifest_clause : "",
+			 manifest_checksums_clause);
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
@@ -1903,6 +1912,7 @@ BaseBackup(void)
 	 * Get the starting WAL location
 	 */
 	PGresult   *res = PQgetResult(conn);
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not initiate base backup: %s",
@@ -1979,6 +1989,7 @@ BaseBackup(void)
 	 * When writing to stdout, require a single tablespace
 	 */
 	int			writing_to_stdout = format == 't' && strcmp(basedir, "-") == 0;
+
 	if (writing_to_stdout && PQntuples(res) > 1)
 	{
 		pg_log_error("can only write single tablespace to stdout, database has %d",
@@ -2618,8 +2629,8 @@ main(int argc, char **argv)
 		 * renamed to pg_wal in post-10 clusters.
 		 */
 		char	   *linkloc = psprintf("%s/%s", basedir,
-						   PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
-						   "pg_xlog" : "pg_wal");
+									   PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
+									   "pg_xlog" : "pg_wal");
 
 #ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, linkloc) != 0)

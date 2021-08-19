@@ -27,6 +27,7 @@ quote_ident(PG_FUNCTION_ARGS)
 
 	char	   *str = text_to_cstring(t);
 	const char *qstr = quote_identifier(str);
+
 	PG_RETURN_TEXT_P(cstring_to_text(qstr));
 }
 
@@ -77,6 +78,7 @@ quote_literal(PG_FUNCTION_ARGS)
 	text	   *t = PG_GETARG_TEXT_PP(0);
 
 	int			len = VARSIZE_ANY_EXHDR(t);
+
 	/* We make a worst-case result area; wasting a little space is OK */
 	text	   *result = (text *) palloc(len * 2 + 3 + VARHDRSZ);
 
@@ -97,10 +99,12 @@ quote_literal_cstr(const char *rawstr)
 {
 
 	int			len = strlen(rawstr);
+
 	/* We make a worst-case result area; wasting a little space is OK */
 	char	   *result = palloc(len * 2 + 3 + 1);
 
 	int			newlen = quote_literal_internal(result, rawstr, len);
+
 	result[newlen] = '\0';
 
 	return result;

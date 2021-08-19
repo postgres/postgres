@@ -151,7 +151,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 
 	namestrcpy(&name_name, collname);
 	Oid			oid = GetNewOidWithIndex(rel, CollationOidIndexId,
-							 Anum_pg_collation_oid);
+										 Anum_pg_collation_oid);
+
 	values[Anum_pg_collation_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
 	values[Anum_pg_collation_collnamespace - 1] = ObjectIdGetDatum(collnamespace);

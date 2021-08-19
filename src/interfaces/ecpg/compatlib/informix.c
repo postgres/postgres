@@ -183,8 +183,9 @@ deccvasc(const char *cp, int len, decimal *np)
 	if (risnull(CSTRINGTYPE, cp))
 		return 0;
 
-	char	   *str = pnstrdup(cp, len);	/* decimal_in always converts the complete
-								 * string */
+	char	   *str = pnstrdup(cp, len);	/* decimal_in always converts the
+											 * complete string */
+
 	if (!str)
 		ret = ECPG_INFORMIX_NUM_UNDERFLOW;
 	else
@@ -229,10 +230,12 @@ deccvdbl(double dbl, decimal *np)
 		return 0;
 
 	numeric    *nres = PGTYPESnumeric_new();
+
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	int			result = PGTYPESnumeric_from_double(dbl, nres);
+
 	if (result == 0)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
@@ -249,10 +252,12 @@ deccvint(int in, decimal *np)
 		return 0;
 
 	numeric    *nres = PGTYPESnumeric_new();
+
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	int			result = PGTYPESnumeric_from_int(in, nres);
+
 	if (result == 0)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
@@ -269,10 +274,12 @@ deccvlong(long lng, decimal *np)
 		return 0;
 
 	numeric    *nres = PGTYPESnumeric_new();
+
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	int			result = PGTYPESnumeric_from_long(lng, nres);
+
 	if (result == 0)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
@@ -356,6 +363,7 @@ dectoasc(decimal *np, char *cp, int len, int right)
 		return 0;
 
 	numeric    *nres = PGTYPESnumeric_new();
+
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
@@ -411,6 +419,7 @@ dectodbl(decimal *np, double *dblp)
 	}
 
 	int			i = PGTYPESnumeric_to_double(nres, dblp);
+
 	PGTYPESnumeric_free(nres);
 
 	return i;
@@ -431,6 +440,7 @@ dectoint(decimal *np, int *ip)
 	}
 
 	int			ret = PGTYPESnumeric_to_int(nres, ip);
+
 	PGTYPESnumeric_free(nres);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
@@ -454,6 +464,7 @@ dectolong(decimal *np, long *lngp)
 	}
 
 	int			ret = PGTYPESnumeric_to_long(nres, lngp);
+
 	PGTYPESnumeric_free(nres);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
@@ -581,6 +592,7 @@ dtcvasc(char *str, timestamp * ts)
 	errno = 0;
 	timestamp	ts_tmp = PGTYPEStimestamp_from_asc(str, endptr);
 	int			i = errno;
+
 	if (i)
 		/* TODO: rewrite to Informix error codes */
 		return i;
@@ -740,6 +752,7 @@ rfmtlong(long lng_val, const char *fmt, char *outbuf)
 				fmtchar = ' ';
 
 	char	   *temp = (char *) malloc(fmt_len + 1);
+
 	if (!temp)
 	{
 		errno = ENOMEM;

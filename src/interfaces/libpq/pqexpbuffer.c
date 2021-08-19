@@ -75,6 +75,7 @@ createPQExpBuffer(void)
 {
 
 	PQExpBuffer res = (PQExpBuffer) malloc(sizeof(PQExpBufferData));
+
 	if (res != NULL)
 		initPQExpBuffer(res);
 
@@ -200,6 +201,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	 * Actually, we might need to more than double it if 'needed' is big...
 	 */
 	size_t		newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
+
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
@@ -212,6 +214,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 		newlen = (size_t) INT_MAX;
 
 	char	   *newdata = (char *) realloc(str->data, newlen);
+
 	if (newdata != NULL)
 	{
 		str->data = newdata;

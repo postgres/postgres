@@ -51,6 +51,7 @@ strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
 {
 
 	long		val = strtol(str, endptr, base);
+
 	if (val != (int) val)
 		errno = ERANGE;
 	return (int) val;

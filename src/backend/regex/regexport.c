@@ -137,6 +137,7 @@ pg_reg_getnumoutarcs(const regex_t *regex, int st)
 	if (st < 0 || st >= cnfa->nstates)
 		return 0;
 	int			arcs_count = 0;
+
 	traverse_lacons(cnfa, st, &arcs_count, NULL, 0);
 	return arcs_count;
 }
@@ -157,6 +158,7 @@ pg_reg_getoutarcs(const regex_t *regex, int st,
 	if (st < 0 || st >= cnfa->nstates || arcs_len <= 0)
 		return;
 	int			arcs_count = 0;
+
 	traverse_lacons(cnfa, st, &arcs_count, arcs, arcs_len);
 }
 

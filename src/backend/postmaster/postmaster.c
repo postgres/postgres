@@ -1216,17 +1216,18 @@ PostmasterMain(int argc, char *argv[])
 		 * just a subset of the available network interfaces.
 		 */
 		DNSServiceErrorType err = DNSServiceRegister(&bonjour_sdref,
-								 0,
-								 0,
-								 bonjour_name,
-								 "_postgresql._tcp.",
-								 NULL,
-								 NULL,
-								 pg_hton16(PostPortNumber),
-								 0,
-								 NULL,
-								 NULL,
-								 NULL);
+													 0,
+													 0,
+													 bonjour_name,
+													 "_postgresql._tcp.",
+													 NULL,
+													 NULL,
+													 pg_hton16(PostPortNumber),
+													 0,
+													 NULL,
+													 NULL,
+													 NULL);
+
 		if (err != kDNSServiceErr_NoError)
 			ereport(LOG,
 					(errmsg("DNSServiceRegister() failed: error code %ld",
@@ -1548,6 +1549,7 @@ checkControlFile(void)
 	snprintf(path, sizeof(path), "%s/global/pg_control", DataDir);
 
 	FILE	   *fp = AllocateFile(path, PG_BINARY_R);
+
 	if (fp == NULL)
 	{
 		write_stderr("%s: could not find the database system\n"
@@ -1629,7 +1631,8 @@ DetermineSleepTime(struct timeval *timeout)
 			}
 
 			TimestampTz this_wakeup = TimestampTzPlusMilliseconds(rw->rw_crashed_at,
-													  1000L * rw->rw_worker.bgw_restart_time);
+																  1000L * rw->rw_worker.bgw_restart_time);
+
 			if (next_wakeup == 0 || this_wakeup < next_wakeup)
 				next_wakeup = this_wakeup;
 		}
@@ -1745,6 +1748,7 @@ ServerLoop(void)
 				{
 
 					Port	   *port = ConnCreate(ListenSocket[i]);
+
 					if (port)
 					{
 						BackendStartup(port);
@@ -2004,6 +2008,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	 * all strings inside the packet.
 	 */
 	char	   *buf = palloc(len + 1);
+
 	buf[len] = '\0';
 
 	if (pq_getbytes(buf, len) == EOF)
@@ -2146,6 +2151,7 @@ retry1:
 			if (*nameptr == '\0')
 				break;			/* found packet terminator */
 			int32		valoffset = offset + strlen(nameptr) + 1;
+
 			if (valoffset >= len)
 				break;			/* missing value, will complain below */
 			char	   *valptr = buf + valoffset;
@@ -3459,6 +3465,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	{
 
 		RegisteredBgWorker *rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+
 		if (rw->rw_pid == 0)
 			continue;			/* not running */
 		if (rw->rw_pid == pid)
@@ -4575,6 +4582,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 
 	/* Open file */
 	FILE	   *fp = AllocateFile(tmpfilename, PG_BINARY_W);
+
 	if (!fp)
 	{
 		/*
@@ -4675,11 +4683,12 @@ retry:
 	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
 	HANDLE		paramHandle = CreateFileMapping(INVALID_HANDLE_VALUE,
-									&sa,
-									PAGE_READWRITE,
-									0,
-									sizeof(BackendParameters),
-									NULL);
+												&sa,
+												PAGE_READWRITE,
+												0,
+												sizeof(BackendParameters),
+												NULL);
+
 	if (paramHandle == INVALID_HANDLE_VALUE)
 	{
 		ereport(LOG,
@@ -4689,6 +4698,7 @@ retry:
 	}
 
 	BackendParameters *param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(BackendParameters));
+
 	if (!param)
 	{
 		ereport(LOG,
@@ -5014,6 +5024,7 @@ SubPostmasterMain(int argc, char *argv[])
 		CreateSharedMemoryAndSemaphores();
 
 		AuxProcType auxtype = atoi(argv[3]);
+
 		AuxiliaryProcessMain(auxtype);	/* does not return */
 	}
 	if (strcmp(argv[1], "--forkavlauncher") == 0)
@@ -5059,6 +5070,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* Fetch MyBgworkerEntry from shared memory */
 		int			shmem_slot = atoi(argv[1] + 15);
+
 		MyBgworkerEntry = BackgroundWorkerEntry(shmem_slot);
 
 		StartBackgroundWorker();
@@ -5914,6 +5926,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 	}
 
 	Backend    *bn = malloc(sizeof(Backend));
+
 	if (bn == NULL)
 	{
 		ereport(LOG,
@@ -6285,6 +6298,7 @@ read_backend_variables(char *id, Port *port)
 
 	/* Open file */
 	FILE	   *fp = AllocateFile(id, PG_BINARY_R);
+
 	if (!fp)
 	{
 		write_stderr("could not open backend variables file \"%s\": %s\n",

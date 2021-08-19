@@ -40,6 +40,7 @@ strlcat(char *dst, const char *src, size_t siz)
 	while (n-- != 0 && *d != '\0')
 		d++;
 	size_t		dlen = d - dst;
+
 	n = siz - dlen;
 
 	if (n == 0)

@@ -58,6 +58,7 @@ identify_opfamily_groups(CatCList *oprlist, CatCList *proclist)
 	 * consecutively.
 	 */
 	OpFamilyOpFuncGroup *thisgroup = NULL;
+
 	io = ip = 0;
 	if (io < oprlist->n_members)
 	{
@@ -156,6 +157,7 @@ check_amproc_signature(Oid funcid, Oid restype, bool exact,
 	int			i;
 
 	HeapTuple	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tp);
@@ -205,6 +207,7 @@ check_amop_signature(Oid opno, Oid restype, Oid lefttype, Oid righttype)
 	bool		result = true;
 
 	HeapTuple	tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
+
 	if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for operator %u", opno);
 	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(tp);

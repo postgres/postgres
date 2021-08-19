@@ -56,6 +56,7 @@ GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
 
 	/* Get handler function OID for the access method */
 	HeapTuple	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(amoid));
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (noerror)
@@ -111,6 +112,7 @@ amvalidate(PG_FUNCTION_ARGS)
 	Oid			opclassoid = PG_GETARG_OID(0);
 
 	HeapTuple	classtup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclassoid));
+
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "cache lookup failed for operator class %u", opclassoid);
 	Form_pg_opclass classform = (Form_pg_opclass) GETSTRUCT(classtup);

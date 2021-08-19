@@ -161,7 +161,8 @@ timestamp_in(PG_FUNCTION_ARGS)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						  field, ftype, MAXDATEFIELDS, &nf);
+									  field, ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -221,6 +222,7 @@ timestamp_out(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -415,7 +417,8 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						  field, ftype, MAXDATEFIELDS, &nf);
+									  field, ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -491,6 +494,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 				 errhint("Numeric time zones must have \"-\" or \"+\" as first character.")));
 
 	int			rt = DecodeTimezone(tzname, &tz);
+
 	if (rt != 0)
 	{
 		int			type,
@@ -508,8 +512,9 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 
 		/* DecodeTimezoneAbbrev requires lowercase input */
 		char	   *lowzone = downcase_truncate_identifier(tzname,
-											   strlen(tzname),
-											   false);
+														   strlen(tzname),
+														   false);
+
 		type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
 
 		if (type == TZ || type == DTZ)
@@ -585,9 +590,10 @@ make_timestamp_internal(int year, int month, int day,
 
 	/* This should match tm2time */
 	TimeOffset	time = (((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
-			* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
+						* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
 
 	Timestamp	result = date * USECS_PER_DAY + time;
+
 	/* check for major overflow */
 	if ((result - time) / USECS_PER_DAY != date)
 		ereport(ERROR,
@@ -631,7 +637,7 @@ make_timestamp(PG_FUNCTION_ARGS)
 	float8		sec = PG_GETARG_FLOAT8(5);
 
 	Timestamp	result = make_timestamp_internal(year, month, mday,
-									 hour, min, sec);
+												 hour, min, sec);
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -650,7 +656,7 @@ make_timestamptz(PG_FUNCTION_ARGS)
 	float8		sec = PG_GETARG_FLOAT8(5);
 
 	Timestamp	result = make_timestamp_internal(year, month, mday,
-									 hour, min, sec);
+												 hour, min, sec);
 
 	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(result));
 }
@@ -673,7 +679,7 @@ make_timestamptz_at_timezone(PG_FUNCTION_ARGS)
 	fsec_t		fsec;
 
 	Timestamp	timestamp = make_timestamp_internal(year, month, mday,
-										hour, min, sec);
+													hour, min, sec);
 
 	if (timestamp2tm(timestamp, NULL, &tt, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
@@ -767,6 +773,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -890,7 +897,8 @@ interval_in(PG_FUNCTION_ARGS)
 		range = INTERVAL_FULL_RANGE;
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf), field,
-						  ftype, MAXDATEFIELDS, &nf);
+									  ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeInterval(field, ftype, nf, range,
 							   &dtype, tm, &fsec);
@@ -946,6 +954,7 @@ interval_out(PG_FUNCTION_ARGS)
 	EncodeInterval(tm, fsec, IntervalStyle, buf);
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -1246,6 +1255,7 @@ interval_support(PG_FUNCTION_ARGS)
 
 				int			old_least_field = intervaltypmodleastfield(old_typmod);
 				int			new_least_field = intervaltypmodleastfield(new_typmod);
+
 				if (old_typmod < 0)
 					old_precis = INTERVAL_FULL_PRECISION;
 				else
@@ -1282,6 +1292,7 @@ interval_scale(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 
 	Interval   *result = palloc(sizeof(Interval));
+
 	*result = *interval;
 
 	AdjustIntervalForTypmod(result, typmod);
@@ -1481,6 +1492,7 @@ make_interval(PG_FUNCTION_ARGS)
 				 errmsg("interval out of range")));
 
 	Interval   *result = (Interval *) palloc(sizeof(Interval));
+
 	result->month = years * MONTHS_PER_YEAR + months;
 	result->day = weeks * 7 + days;
 
@@ -1550,7 +1562,8 @@ GetCurrentTimestamp(void)
 	gettimeofday(&tp, NULL);
 
 	TimestampTz result = (TimestampTz) tp.tv_sec -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+	((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
 	result = (result * USECS_PER_SEC) + tp.tv_usec;
 
 	return result;
@@ -1564,6 +1577,7 @@ GetSQLCurrentTimestamp(int32 typmod)
 {
 
 	TimestampTz ts = GetCurrentTransactionStartTimestamp();
+
 	if (typmod >= 0)
 		AdjustTimestampForTypmod(&ts, typmod);
 	return ts;
@@ -1577,6 +1591,7 @@ GetSQLLocalTimestamp(int32 typmod)
 {
 
 	Timestamp	ts = timestamptz2timestamp(GetCurrentTransactionStartTimestamp());
+
 	if (typmod >= 0)
 		AdjustTimestampForTypmod(&ts, typmod);
 	return ts;
@@ -1594,6 +1609,7 @@ timeofday(PG_FUNCTION_ARGS)
 
 	gettimeofday(&tp, NULL);
 	pg_time_t	tt = (pg_time_t) tp.tv_sec;
+
 	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
 				pg_localtime(&tt, session_timezone));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
@@ -1695,7 +1711,8 @@ time_t_to_timestamptz(pg_time_t tm)
 {
 
 	TimestampTz result = (TimestampTz) tm -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+	((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
 	result *= USECS_PER_SEC;
 
 	return result;
@@ -1716,7 +1733,7 @@ timestamptz_to_time_t(TimestampTz t)
 {
 
 	pg_time_t	result = (pg_time_t) (t / USECS_PER_SEC +
-						  ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
+									  ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 
 	return result;
 }
@@ -1787,6 +1804,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, const char 
 		attimezone = session_timezone;
 
 	Timestamp	time = dt;
+
 	TMODULO(time, date, USECS_PER_DAY);
 
 	if (time < INT64CONST(0))
@@ -1829,6 +1847,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, const char 
 	dt = (dt - *fsec) / USECS_PER_SEC +
 		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
 	pg_time_t	utime = (pg_time_t) dt;
+
 	if ((Timestamp) utime == dt)
 	{
 		struct pg_tm *tx = pg_localtime(&utime, attimezone);
@@ -1928,6 +1947,7 @@ interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 	time = span.time;
 
 	TimeOffset	tfrac = time / USECS_PER_HOUR;
+
 	time -= tfrac * USECS_PER_HOUR;
 	tm->tm_hour = tfrac;
 	if (!SAMESIGN(tm->tm_hour, tfrac))
@@ -2149,6 +2169,7 @@ timestamp_cmp_timestamptz_internal(Timestamp timestampVal, TimestampTz dt2)
 	int			overflow;
 
 	TimestampTz dt1 = timestamp2timestamptz_opt_overflow(timestampVal, &overflow);
+
 	if (overflow > 0)
 	{
 		/* dt1 is larger than any finite timestamp, but less than infinity */
@@ -2310,6 +2331,7 @@ interval_cmp_value(const Interval *interval)
 	 */
 	int64		dayfraction = interval->time % USECS_PER_DAY;
 	int64		days = interval->time / USECS_PER_DAY;
+
 	days += interval->month * INT64CONST(30);
 	days += interval->day;
 
@@ -2660,6 +2682,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 	TimeOffset	wholeday;
 
 	Interval   *result = (Interval *) palloc(sizeof(Interval));
+
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
@@ -2668,6 +2691,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 	result->day += wholeday;	/* could overflow... */
 
 	int32		wholemonth = result->day / DAYS_PER_MONTH;
+
 	result->day -= wholemonth * DAYS_PER_MONTH;
 	result->month += wholemonth;
 
@@ -2713,6 +2737,7 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 	TimeOffset	wholeday;
 
 	Interval   *result = (Interval *) palloc(sizeof(Interval));
+
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
@@ -2746,11 +2771,13 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 
 	Interval   *result = (Interval *) palloc(sizeof(Interval));
+
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
 
 	int32		wholemonth = result->day / DAYS_PER_MONTH;
+
 	result->day -= wholemonth * DAYS_PER_MONTH;
 	result->month += wholemonth;
 
@@ -2835,6 +2862,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 
 			/* Add days by converting to and from Julian */
 			int			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
+
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
 			if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
@@ -2942,6 +2970,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 
 			/* Add days by converting to and from Julian */
 			int			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
+
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
 			tz = DetermineTimeZoneOffset(tm, session_timezone);
@@ -3372,15 +3401,16 @@ interval_accum(PG_FUNCTION_ARGS)
 	N = *(DatumGetIntervalP(transdatums[1]));
 
 	Interval   *newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												   IntervalPGetDatum(&sumX),
-												   IntervalPGetDatum(newval)));
+															   IntervalPGetDatum(&sumX),
+															   IntervalPGetDatum(newval)));
+
 	N.time += 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	ArrayType  *result = construct_array(transdatums, 2,
-							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
+										 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3419,15 +3449,16 @@ interval_combine(PG_FUNCTION_ARGS)
 	N2 = *(DatumGetIntervalP(transdatums2[1]));
 
 	Interval   *newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												   IntervalPGetDatum(&sum1),
-												   IntervalPGetDatum(&sum2)));
+															   IntervalPGetDatum(&sum1),
+															   IntervalPGetDatum(&sum2)));
+
 	N1.time += N2.time;
 
 	transdatums1[0] = IntervalPGetDatum(newsum);
 	transdatums1[1] = IntervalPGetDatum(&N1);
 
 	ArrayType  *result = construct_array(transdatums1, 2,
-							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
+										 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3452,15 +3483,16 @@ interval_accum_inv(PG_FUNCTION_ARGS)
 	N = *(DatumGetIntervalP(transdatums[1]));
 
 	Interval   *newsum = DatumGetIntervalP(DirectFunctionCall2(interval_mi,
-												   IntervalPGetDatum(&sumX),
-												   IntervalPGetDatum(newval)));
+															   IntervalPGetDatum(&sumX),
+															   IntervalPGetDatum(newval)));
+
 	N.time -= 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	ArrayType  *result = construct_array(transdatums, 2,
-							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
+										 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3808,8 +3840,8 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 
@@ -3989,8 +4021,8 @@ timestamptz_trunc_internal(text *units, TimestampTz timestamp, pg_tz *tzp)
 			   *tm = &tt;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 
@@ -4160,8 +4192,8 @@ timestamptz_trunc_zone(PG_FUNCTION_ARGS)
 
 	/* DecodeTimezoneAbbrev requires lowercase input */
 	char	   *lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+													   strlen(tzname),
+													   false);
 
 	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
 
@@ -4206,8 +4238,8 @@ interval_trunc(PG_FUNCTION_ARGS)
 	Interval   *result = (Interval *) palloc(sizeof(Interval));
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 
@@ -4332,6 +4364,7 @@ isoweekdate2date(int isoweek, int wday, int *year, int *mon, int *mday)
 {
 
 	int			jday = isoweek2j(*year, isoweek);
+
 	/* convert Gregorian week start (Sunday=1) to ISO week start (Monday=1) */
 	if (wday > 1)
 		jday += wday - 2;
@@ -4554,8 +4587,8 @@ timestamp_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			   *tm = &tt;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -4827,8 +4860,8 @@ timestamptz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			   *tm = &tt;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -5098,8 +5131,8 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			   *tm = &tt;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -5199,8 +5232,8 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 
 			/* this always fits into int64 */
 			int64		secs_from_day_month = ((int64) DAYS_PER_YEAR * (interval->month / MONTHS_PER_YEAR) +
-								   (int64) DAYS_PER_MONTH * (interval->month % MONTHS_PER_YEAR) +
-								   interval->day) * SECS_PER_DAY;
+											   (int64) DAYS_PER_MONTH * (interval->month % MONTHS_PER_YEAR) +
+											   interval->day) * SECS_PER_DAY;
 
 			/*---
 			 * result = secs_from_day_month + interval->time / 1'000'000
@@ -5227,6 +5260,7 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 		{
 
 			float8		result = interval->time / 1000000.0;
+
 			result += ((double) DAYS_PER_YEAR * SECS_PER_DAY) * (interval->month / MONTHS_PER_YEAR);
 			result += ((double) DAYS_PER_MONTH * SECS_PER_DAY) * (interval->month % MONTHS_PER_YEAR);
 			result += ((double) SECS_PER_DAY) * interval->day;
@@ -5299,8 +5333,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	/* DecodeTimezoneAbbrev requires lowercase input */
 	char	   *lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+													   strlen(tzname),
+													   false);
 
 	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
 
@@ -5548,8 +5582,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 
 	/* DecodeTimezoneAbbrev requires lowercase input */
 	char	   *lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+													   strlen(tzname),
+													   false);
 
 	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
 

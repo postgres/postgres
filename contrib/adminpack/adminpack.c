@@ -198,6 +198,7 @@ pg_file_write_internal(text *file, text *data, bool replace)
 						filename)));
 
 	int64		count = fwrite(VARDATA_ANY(data), 1, VARSIZE_ANY_EXHDR(data), f);
+
 	if (count != VARSIZE_ANY_EXHDR(data) || FreeFile(f))
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -328,6 +329,7 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 	}
 
 	int			rc = access(fn3 ? fn3 : fn2, W_OK);
+
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
@@ -510,6 +512,7 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 					   TIMESTAMPOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "filename",
@@ -517,6 +520,7 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -526,6 +530,7 @@ pg_logdir_ls_internal(FunctionCallInfo fcinfo)
 	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	DIR		   *dirdesc = AllocateDir(Log_directory);
+
 	while ((de = ReadDir(dirdesc, Log_directory)) != NULL)
 	{
 		char	   *values[2];

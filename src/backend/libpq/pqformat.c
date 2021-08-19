@@ -145,6 +145,7 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 	int			extra = countincludesself ? 4 : 0;
 
 	char	   *p = pg_server_to_client(str, slen);
+
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -174,6 +175,7 @@ pq_sendtext(StringInfo buf, const char *str, int slen)
 {
 
 	char	   *p = pg_server_to_client(str, slen);
+
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -197,6 +199,7 @@ pq_sendstring(StringInfo buf, const char *str)
 	int			slen = strlen(str);
 
 	char	   *p = pg_server_to_client(str, slen);
+
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -368,6 +371,7 @@ pq_puttextmessage(char msgtype, const char *str)
 	int			slen = strlen(str);
 
 	char	   *p = pg_server_to_client(str, slen);
+
 	if (p != str)				/* actual conversion has been done? */
 	{
 		(void) pq_putmessage(msgtype, p, strlen(p) + 1);
@@ -511,6 +515,7 @@ pq_getmsgbytes(StringInfo msg, int datalen)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
 	const char *result = &msg->data[msg->cursor];
+
 	msg->cursor += datalen;
 	return result;
 }
@@ -548,9 +553,11 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
 	char	   *str = &msg->data[msg->cursor];
+
 	msg->cursor += rawbytes;
 
 	char	   *p = pg_client_to_server(str, rawbytes);
+
 	if (p != str)				/* actual conversion has been done? */
 		*nbytes = strlen(p);
 	else
@@ -582,6 +589,7 @@ pq_getmsgstring(StringInfo msg)
 	 * message.
 	 */
 	int			slen = strlen(str);
+
 	if (msg->cursor + slen >= msg->len)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -609,6 +617,7 @@ pq_getmsgrawstring(StringInfo msg)
 	 * message.
 	 */
 	int			slen = strlen(str);
+
 	if (msg->cursor + slen >= msg->len)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),

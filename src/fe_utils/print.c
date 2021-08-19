@@ -258,6 +258,7 @@ format_numeric_locale(const char *my_str)
 
 	new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
 	char	   *new_str = pg_malloc(new_len + 1);
+
 	new_str_pos = 0;
 	int_len = integer_digits(my_str);
 
@@ -330,6 +331,7 @@ footers_with_default(const printTableContent *cont)
 	{
 
 		unsigned long total_records = cont->opt->prior_records + cont->nrows;
+
 		snprintf(default_footer, sizeof(default_footer),
 				 ngettext("(%lu row)", "(%lu rows)", total_records),
 				 total_records);
@@ -774,7 +776,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 						/* Penalize wide columns by 1% of their width */
 
 						double		ratio = (double) width_wrap[i] / width_average[i] +
-							max_width[i] * 0.01;
+						max_width[i] * 0.01;
+
 						if (ratio > max_ratio)
 						{
 							max_ratio = ratio;
@@ -837,6 +840,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 				/* don't count the first line of nl_lines - it's not "extra" */
 				unsigned int extra_lines = ((width - 1) / width_wrap[i]) + nl_lines - 1;
+
 				if (extra_lines > extra_row_output_lines)
 					extra_row_output_lines = extra_lines;
 			}
@@ -889,6 +893,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 			int			more_col_wrapping = col_count;
 			int			curr_nl_line = 0;
+
 			memset(header_done, false, col_count * sizeof(bool));
 			while (more_col_wrapping)
 			{
@@ -1407,6 +1412,7 @@ print_aligned_vertical(const printTableContent *cont,
 
 			/* Total width required to not wrap data */
 			unsigned int width = hwidth + swidth + dwidth;
+
 			/* ... and not the header lines, either */
 			if (width < rwidth)
 				width = rwidth;
@@ -1416,6 +1422,7 @@ print_aligned_vertical(const printTableContent *cont,
 
 				/* Minimum acceptable width: room for just 3 columns of data */
 				unsigned int min_width = hwidth + swidth + 3;
+
 				/* ... but not less than what the record header lines need */
 				if (min_width < rwidth)
 					min_width = rwidth;
@@ -2983,6 +2990,7 @@ PageOutput(int lines, const printTableOpt *topt)
 		{
 
 			const char *pagerprog = getenv("PSQL_PAGER");
+
 			if (!pagerprog)
 				pagerprog = getenv("PAGER");
 			if (!pagerprog)
@@ -2995,6 +3003,7 @@ PageOutput(int lines, const printTableOpt *topt)
 			}
 			disable_sigpipe_trap();
 			FILE	   *pagerpipe = popen(pagerprog, "w");
+
 			if (pagerpipe)
 				return pagerpipe;
 			/* if popen fails, silently proceed without pager */
@@ -3243,6 +3252,7 @@ printTableCleanup(printTableContent *const content)
 		{
 
 			printTableFooter *f = content->footer;
+
 			content->footer = f->next;
 			free(f->data);
 			free(f);
@@ -3450,6 +3460,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 			}
 
 			bool		translate = (opt->translate_columns && opt->translate_columns[c]);
+
 			printTableAddCell(&cont, cell, translate, mustfree);
 		}
 	}

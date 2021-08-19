@@ -57,6 +57,7 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 		PGEvent    *e;
 
 		int			newSize = conn->eventArraySize ? conn->eventArraySize * 2 : 8;
+
 		if (conn->events)
 			e = (PGEvent *) realloc(conn->events, newSize * sizeof(PGEvent));
 		else

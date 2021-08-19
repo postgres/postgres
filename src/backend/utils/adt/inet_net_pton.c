@@ -353,10 +353,12 @@ getbits(const char *src, int *bitsp)
 
 	int			val = 0;
 	int			n = 0;
+
 	while ((ch = *src++) != '\0')
 	{
 
 		const char *pch = strchr(digits, ch);
+
 		if (pch != NULL)
 		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */
@@ -384,10 +386,12 @@ getv4(const char *src, u_char *dst, int *bitsp)
 
 	u_int		val = 0;
 	int			n = 0;
+
 	while ((ch = *src++) != '\0')
 	{
 
 		const char *pch = strchr(digits, ch);
+
 		if (pch != NULL)
 		{
 			if (n++ != 0 && val == 0)	/* no leading zeros */

@@ -184,6 +184,7 @@ jsonPathFromCstring(char *in, int len)
 	flattenJsonPathParseItem(&buf, jsonpath->expr, 0, false);
 
 	JsonPath   *res = (JsonPath *) buf.data;
+
 	SET_VARSIZE(res, buf.len);
 	res->header = JSONPATH_VERSION;
 	if (jsonpath->lax)
@@ -313,6 +314,7 @@ flattenJsonPathParseItem(StringInfo buf, JsonPathParseItem *item,
 									   (char *) &item->value.like_regex.flags,
 									   sizeof(item->value.like_regex.flags));
 				int32		offs = reserveSpaceForItemPointer(buf);
+
 				appendBinaryStringInfo(buf,
 									   (char *) &item->value.like_regex.patternlen,
 									   sizeof(item->value.like_regex.patternlen));

@@ -70,6 +70,7 @@ gbt_uuidkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 	uuidKEY    *ib = (uuidKEY *) (((const Nsrt *) b)->t);
 
 	int			res = uuid_internal_cmp(&ia->lower, &ib->lower);
+
 	if (res == 0)
 		res = uuid_internal_cmp(&ia->upper, &ib->upper);
 	return res;

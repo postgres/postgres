@@ -165,6 +165,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	/* compute header overhead --- this should match heap_form_tuple() */
 	Size		hoff = SizeofHeapTupleHeader;
+
 	if ((ttc.ttc_flags & TOAST_HAS_NULLS) != 0)
 		hoff += BITMAPLEN(numAttrs);
 	hoff = MAXALIGN(hoff);
@@ -181,6 +182,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	{
 
 		int			biggest_attno = toast_tuple_find_biggest_attribute(&ttc, true, false);
+
 		if (biggest_attno < 0)
 			break;
 
@@ -222,6 +224,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	{
 
 		int			biggest_attno = toast_tuple_find_biggest_attribute(&ttc, false, false);
+
 		if (biggest_attno < 0)
 			break;
 		toast_tuple_externalize(&ttc, biggest_attno, options);
@@ -236,6 +239,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	{
 
 		int			biggest_attno = toast_tuple_find_biggest_attribute(&ttc, true, true);
+
 		if (biggest_attno < 0)
 			break;
 
@@ -255,6 +259,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	{
 
 		int			biggest_attno = toast_tuple_find_biggest_attribute(&ttc, false, true);
+
 		if (biggest_attno < 0)
 			break;
 
@@ -280,11 +285,12 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		 * whether there needs to be one at all.
 		 */
 		int32		new_header_len = SizeofHeapTupleHeader;
+
 		if ((ttc.ttc_flags & TOAST_HAS_NULLS) != 0)
 			new_header_len += BITMAPLEN(numAttrs);
 		new_header_len = MAXALIGN(new_header_len);
 		int32		new_data_len = heap_compute_data_size(tupleDesc,
-											  toast_values, toast_isnull);
+														  toast_values, toast_isnull);
 		int32		new_tuple_len = new_header_len + new_data_len;
 
 		/*
@@ -295,6 +301,7 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		result_tuple->t_self = newtup->t_self;
 		result_tuple->t_tableOid = newtup->t_tableOid;
 		HeapTupleHeader new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
+
 		result_tuple->t_data = new_data;
 
 		/*
@@ -359,6 +366,7 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 		{
 
 			struct varlena *new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
 				new_value = detoast_external_attr(new_value);
@@ -468,6 +476,7 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 		{
 
 			struct varlena *new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+
 			if (VARATT_IS_EXTERNAL(new_value) ||
 				VARATT_IS_COMPRESSED(new_value))
 			{
@@ -485,11 +494,12 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	 * heap_toast_insert_or_update.
 	 */
 	int32		new_header_len = SizeofHeapTupleHeader;
+
 	if (has_nulls)
 		new_header_len += BITMAPLEN(numAttrs);
 	new_header_len = MAXALIGN(new_header_len);
 	int32		new_data_len = heap_compute_data_size(tupleDesc,
-										  toast_values, toast_isnull);
+													  toast_values, toast_isnull);
 	int32		new_tuple_len = new_header_len + new_data_len;
 
 	HeapTupleHeader new_data = (HeapTupleHeader) palloc0(new_tuple_len);
@@ -557,6 +567,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 	memcpy(new_values, values, numAttrs * sizeof(Datum));
 
 	int			num_to_free = 0;
+
 	for (i = 0; i < numAttrs; i++)
 	{
 		/*
@@ -566,6 +577,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 		{
 
 			struct varlena *new_value = (struct varlena *) DatumGetPointer(new_values[i]);
+
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
 				new_value = detoast_external_attr(new_value);
@@ -615,12 +627,13 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 
 	/* Look for the valid index of toast relation */
 	int			validIndex = toast_open_indexes(toastrel,
-									AccessShareLock,
-									&toastidxs,
-									&num_indexes);
+												AccessShareLock,
+												&toastidxs,
+												&num_indexes);
 
 	int			startchunk = sliceoffset / TOAST_MAX_CHUNK_SIZE;
 	int			endchunk = (sliceoffset + slicelength - 1) / TOAST_MAX_CHUNK_SIZE;
+
 	Assert(endchunk <= totalchunks);
 
 	/* Set up a scan key to fetch from the index. */
@@ -659,7 +672,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	/* Prepare for scan */
 	init_toast_snapshot(&SnapshotToast);
 	SysScanDesc toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   &SnapshotToast, nscankeys, toastkey);
+													   &SnapshotToast, nscankeys, toastkey);
 
 	/*
 	 * Read the chunks by index
@@ -667,6 +680,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	 * The index is on (valueid, chunkidx) so they will come in order
 	 */
 	int32		expectedchunk = startchunk;
+
 	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		bool		isnull;
@@ -677,8 +691,10 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		 * Have a chunk, extract the sequence number and the data
 		 */
 		int32		curchunk = DatumGetInt32(fastgetattr(ttup, 2, toasttupDesc, &isnull));
+
 		Assert(!isnull);
 		Pointer		chunk = DatumGetPointer(fastgetattr(ttup, 3, toasttupDesc, &isnull));
+
 		Assert(!isnull);
 		if (!VARATT_IS_EXTENDED(chunk))
 		{
@@ -717,7 +733,8 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 									 startchunk, endchunk, valueid,
 									 RelationGetRelationName(toastrel))));
 		int32		expected_size = curchunk < totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
-			: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
+		: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
+
 		if (chunksize != expected_size)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -731,6 +748,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		 */
 		int32		chcpystrt = 0;
 		int32		chcpyend = chunksize - 1;
+
 		if (curchunk == startchunk)
 			chcpystrt = sliceoffset % TOAST_MAX_CHUNK_SIZE;
 		if (curchunk == endchunk)

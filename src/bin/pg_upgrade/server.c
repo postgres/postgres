@@ -71,6 +71,7 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 	}
 
 	PGconn	   *conn = PQconnectdb(conn_opts.data);
+
 	termPQExpBuffer(&conn_opts);
 	return conn;
 }

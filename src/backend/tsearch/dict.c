@@ -58,6 +58,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 	while (ptr->lexeme)
 		ptr++;
 	Datum	   *da = (Datum *) palloc(sizeof(Datum) * (ptr - res));
+
 	ptr = res;
 	while (ptr->lexeme)
 	{
@@ -66,11 +67,11 @@ ts_lexize(PG_FUNCTION_ARGS)
 	}
 
 	ArrayType  *a = construct_array(da,
-						ptr - res,
-						TEXTOID,
-						-1,
-						false,
-						TYPALIGN_INT);
+									ptr - res,
+									TEXTOID,
+									-1,
+									false,
+									TYPALIGN_INT);
 
 	ptr = res;
 	while (ptr->lexeme)

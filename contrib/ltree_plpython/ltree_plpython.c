@@ -44,12 +44,14 @@ ltree_to_plpython(PG_FUNCTION_ARGS)
 	int			i;
 
 	PyObject   *list = PyList_New(in->numlevel);
+
 	if (!list)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
 	ltree_level *curlevel = LTREE_FIRST(in);
+
 	for (i = 0; i < in->numlevel; i++)
 	{
 		PyList_SetItem(list, i, PyString_FromStringAndSize(curlevel->name, curlevel->len));

@@ -104,6 +104,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	tzentry->filename = filename;
 
 	char	   *abbrev = strtok(line, WHITESPACE);
+
 	if (!abbrev)
 	{
 		GUC_check_errmsg("missing time zone abbreviation in time zone file \"%s\", line %d",
@@ -113,6 +114,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	tzentry->abbrev = pstrdup(abbrev);
 
 	char	   *offset = strtok(NULL, WHITESPACE);
+
 	if (!offset)
 	{
 		GUC_check_errmsg("missing time zone offset in time zone file \"%s\", line %d",
@@ -194,12 +196,14 @@ addToArray(tzEntry **base, int *arraysize, int n,
 	tzEntry    *arrayptr = *base;
 	int			low = 0;
 	int			high = n - 1;
+
 	while (low <= high)
 	{
 		int			mid = (low + high) >> 1;
 		tzEntry    *midptr = arrayptr + mid;
 
 		int			cmp = strcmp(entry->abbrev, midptr->abbrev);
+
 		if (cmp < 0)
 			high = mid - 1;
 		else if (cmp > 0)
@@ -312,6 +316,7 @@ ParseTzFile(const char *filename, int depth,
 	snprintf(file_path, sizeof(file_path), "%s/timezonesets/%s",
 			 share_path, filename);
 	FILE	   *tzFile = AllocateFile(file_path, "r");
+
 	if (!tzFile)
 	{
 		/*
@@ -325,6 +330,7 @@ ParseTzFile(const char *filename, int depth,
 		snprintf(file_path, sizeof(file_path), "%s/timezonesets",
 				 share_path);
 		DIR		   *tzdir = AllocateDir(file_path);
+
 		if (tzdir == NULL)
 		{
 			GUC_check_errmsg("could not open directory \"%s\": %m",
@@ -435,8 +441,8 @@ load_tzoffsets(const char *filename)
 	 * up afterwards.
 	 */
 	MemoryContext tmpContext = AllocSetContextCreate(CurrentMemoryContext,
-									   "TZParserMemory",
-									   ALLOCSET_SMALL_SIZES);
+													 "TZParserMemory",
+													 ALLOCSET_SMALL_SIZES);
 	MemoryContext oldContext = MemoryContextSwitchTo(tmpContext);
 
 	/* Initialize array at a reasonable size */

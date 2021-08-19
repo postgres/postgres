@@ -88,10 +88,12 @@ calc_key_id(PGP_PubKey *pk)
 	uint8		hash[20];
 
 	int			res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
+
 	if (res < 0)
 		return res;
 
 	int			len = 1 + 4 + 1;
+
 	switch (pk->algo)
 	{
 		case PGP_PUB_ELG_ENCRYPT:
@@ -158,6 +160,7 @@ _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 	PGP_PubKey *pk;
 
 	int			res = pgp_key_alloc(&pk);
+
 	if (res < 0)
 		return res;
 
@@ -254,6 +257,7 @@ check_key_sha1(PullFilter *src, PGP_PubKey *pk)
 	PX_MD	   *md;
 
 	int			res = pullf_read_fixed(src, 20, got_sha1);
+
 	if (res < 0)
 		return res;
 
@@ -299,6 +303,7 @@ check_key_cksum(PullFilter *src, PGP_PubKey *pk)
 	uint8		buf[2];
 
 	int			res = pullf_read_fixed(src, 2, buf);
+
 	if (res < 0)
 		return res;
 
@@ -344,6 +349,7 @@ process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 
 	/* first read public key part */
 	int			res = _pgp_read_public_key(pkt, &pk);
+
 	if (res < 0)
 		return res;
 
@@ -563,6 +569,7 @@ pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
 	PGP_PubKey *pk = NULL;
 
 	int			res = pullf_create_mbuf_reader(&src, keypkt);
+
 	if (res < 0)
 		return res;
 

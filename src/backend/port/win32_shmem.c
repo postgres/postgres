@@ -65,16 +65,19 @@ GetSharedMemName(void)
 	char	   *cp;
 
 	DWORD		bufsize = GetFullPathName(DataDir, 0, NULL, NULL);
+
 	if (bufsize == 0)
 		elog(FATAL, "could not get size for full pathname of datadir %s: error code %lu",
 			 DataDir, GetLastError());
 
 	char	   *retptr = malloc(bufsize + 18);	/* 18 for Global\PostgreSQL: */
+
 	if (retptr == NULL)
 		elog(FATAL, "could not allocate memory for shared memory name");
 
 	strcpy(retptr, "Global\\PostgreSQL:");
 	DWORD		r = GetFullPathName(DataDir, bufsize, retptr + 18, NULL);
+
 	if (r == 0 || r > bufsize)
 		elog(FATAL, "could not generate full pathname for datadir %s: error code %lu",
 			 DataDir, GetLastError());
@@ -419,6 +422,7 @@ PGSharedMemoryReAttach(void)
 			 UsedShmemSegAddr, GetLastError());
 
 	PGShmemHeader *hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
+
 	if (!hdr)
 		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): error code %lu",
 			 UsedShmemSegID, UsedShmemSegAddr, GetLastError());
@@ -557,8 +561,9 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 
 	/* ShmemProtectiveRegion */
 	void	   *address = VirtualAllocEx(hChild, ShmemProtectiveRegion,
-							 PROTECTIVE_REGION_SIZE,
-							 MEM_RESERVE, PAGE_NOACCESS);
+										 PROTECTIVE_REGION_SIZE,
+										 MEM_RESERVE, PAGE_NOACCESS);
+
 	if (address == NULL)
 	{
 		/* Don't use FATAL since we're running in the postmaster */

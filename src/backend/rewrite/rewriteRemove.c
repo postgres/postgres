@@ -54,7 +54,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 				ObjectIdGetDatum(ruleOid));
 
 	SysScanDesc rcscan = systable_beginscan(RewriteRelation, RewriteOidIndexId, true,
-								NULL, 1, skey);
+											NULL, 1, skey);
 
 	HeapTuple	tuple = systable_getnext(rcscan);
 

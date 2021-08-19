@@ -74,6 +74,7 @@ pg_hmac_create(pg_cryptohash_type type)
 {
 
 	pg_hmac_ctx *ctx = ALLOC(sizeof(pg_hmac_ctx));
+
 	if (ctx == NULL)
 		return NULL;
 	memset(ctx, 0, sizeof(pg_hmac_ctx));

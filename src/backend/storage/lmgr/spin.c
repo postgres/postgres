@@ -84,6 +84,7 @@ SpinlockSemaInit(void)
 	 * ShmemAlloc() obviously can't be ready yet.
 	 */
 	PGSemaphore *spinsemas = (PGSemaphore *) ShmemAllocUnlocked(SpinlockSemaSize());
+
 	for (i = 0; i < nsemas; ++i)
 		spinsemas[i] = PGSemaphoreCreate();
 	SpinlockSemaArray = spinsemas;

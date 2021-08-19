@@ -126,6 +126,7 @@ networksel(PG_FUNCTION_ARGS)
 	}
 
 	Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+
 	nullfrac = stats->stanullfrac;
 
 	/*
@@ -452,6 +453,7 @@ networkjoinsel_semi(Oid operator,
 	}
 
 	int			opr_codenum = inet_opr_codenum(operator);
+
 	fmgr_info(get_opcode(operator), &proc);
 
 	/* Estimate number of input rows represented by RHS histogram. */
@@ -810,7 +812,7 @@ inet_semi_join_sel(Datum lhs_value,
 
 		/* Commute operator, since we're passing lhs_value on the right */
 		Selectivity hist_selec = inet_hist_value_sel(hist_values, hist_nvalues,
-										 lhs_value, -opr_codenum);
+													 lhs_value, -opr_codenum);
 
 		if (hist_selec > 0)
 			return Min(1.0, hist_weight * hist_selec);
@@ -877,7 +879,8 @@ inet_inclusion_cmp(inet *left, inet *right, int opr_codenum)
 	{
 
 		int			order = bitncmp(ip_addr(left), ip_addr(right),
-						Min(ip_bits(left), ip_bits(right)));
+									Min(ip_bits(left), ip_bits(right)));
+
 		if (order != 0)
 			return order;
 

@@ -717,6 +717,7 @@ bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 	Assert(!boundA.lower && boundB.lower);
 
 	int			cmp = range_cmp_bound_values(typcache, &boundA, &boundB);
+
 	if (cmp < 0)
 	{
 
@@ -740,6 +741,7 @@ bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 		boundA.lower = true;
 		boundB.lower = false;
 		RangeType  *r = make_range(typcache, &boundA, &boundB, false);
+
 		return RangeIsEmpty(r);
 	}
 	else if (cmp == 0)
@@ -932,6 +934,7 @@ range_minus(PG_FUNCTION_ARGS)
 	TypeCacheEntry *typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
 
 	RangeType  *ret = range_minus_internal(typcache, r1, r2);
+
 	if (ret)
 		PG_RETURN_RANGE_P(ret);
 	else
@@ -1170,6 +1173,7 @@ range_intersect_agg_transfn(PG_FUNCTION_ARGS)
 		elog(ERROR, "range_intersect_agg_transfn called in non-aggregate context");
 
 	Oid			rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+
 	if (!type_is_range(rngtypoid))
 		ereport(ERROR, (errmsg("range_intersect_agg must be called with a range")));
 
@@ -1289,6 +1293,7 @@ hash_range(PG_FUNCTION_ARGS)
 	 * Look up the element type's hash function, if not done already.
 	 */
 	TypeCacheEntry *scache = typcache->rngelemtype;
+
 	if (!OidIsValid(scache->hash_proc_finfo.fn_oid))
 	{
 		scache = lookup_type_cache(scache->type_id, TYPECACHE_HASH_PROC_FINFO);
@@ -1318,6 +1323,7 @@ hash_range(PG_FUNCTION_ARGS)
 
 	/* Merge hashes of flags and bounds */
 	uint32		result = hash_uint32((uint32) flags);
+
 	result ^= lower_hash;
 	result = (result << 1) | (result >> 31);
 	result ^= upper_hash;
@@ -1348,6 +1354,7 @@ hash_range_extended(PG_FUNCTION_ARGS)
 	char		flags = range_get_flags(r);
 
 	TypeCacheEntry *scache = typcache->rngelemtype;
+
 	if (!OidIsValid(scache->hash_extended_proc_finfo.fn_oid))
 	{
 		scache = lookup_type_cache(scache->type_id,
@@ -1377,7 +1384,8 @@ hash_range_extended(PG_FUNCTION_ARGS)
 
 	/* Merge hashes of flags and bounds */
 	uint64		result = DatumGetUInt64(hash_uint32_extended((uint32) flags,
-												 DatumGetInt64(seed)));
+															 DatumGetInt64(seed)));
+
 	result ^= lower_hash;
 	result = ROTATE_HIGH_AND_LOW_32BITS(result);
 	result ^= upper_hash;
@@ -1524,7 +1532,7 @@ numrange_subdiff(PG_FUNCTION_ARGS)
 	Datum		numresult = DirectFunctionCall2(numeric_sub, v1, v2);
 
 	float8		floatresult = DatumGetFloat8(DirectFunctionCall1(numeric_float8,
-													 numresult));
+																 numresult));
 
 	PG_RETURN_FLOAT8(floatresult);
 }
@@ -1545,6 +1553,7 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
 
 	float8		result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
+
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1555,6 +1564,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
 
 	float8		result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
+
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1650,6 +1660,7 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 
 	/* Count space for varlena header and range type's OID */
 	Size		msize = sizeof(RangeType);
+
 	Assert(msize == MAXALIGN(msize));
 
 	/* Count space for bounds */
@@ -1686,6 +1697,7 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 
 	/* Note: zero-fill is required here, just as in heap tuples */
 	RangeType  *range = (RangeType *) palloc0(msize);
+
 	SET_VARSIZE(range, msize);
 
 	/* Now fill in the datum */
@@ -1878,8 +1890,8 @@ range_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *b1, const RangeBoun
 	 * Both boundaries are finite, so compare the held values.
 	 */
 	int32		result = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
-											 typcache->rng_collation,
-											 b1->val, b2->val));
+														 typcache->rng_collation,
+														 b1->val, b2->val));
 
 	/*
 	 * If the comparison is anything other than equal, we're done. If they
@@ -2318,6 +2330,7 @@ range_bound_escape(const char *value)
 
 	/* Detect whether we need double quotes for this value */
 	bool		nq = (value[0] == '\0');	/* force quotes for empty string */
+
 	for (ptr = value; *ptr; ptr++)
 	{
 		char		ch = *ptr;

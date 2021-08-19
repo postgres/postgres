@@ -191,7 +191,8 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 		/* Check if the sync worker is still running and bail if not. */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 		LogicalRepWorker *worker = logicalrep_worker_find(MyLogicalRepWorker->subid, relid,
-										false);
+														  false);
+
 		LWLockRelease(LogicalRepWorkerLock);
 		if (!worker)
 			break;
@@ -237,7 +238,8 @@ wait_for_worker_state_change(char expected_state)
 		 */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 		LogicalRepWorker *worker = logicalrep_worker_find(MyLogicalRepWorker->subid,
-										InvalidOid, false);
+														  InvalidOid, false);
+
 		if (worker && worker->proc)
 			logicalrep_worker_wakeup_ptr(worker);
 		LWLockRelease(LogicalRepWorkerLock);
@@ -482,7 +484,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 			LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 
 			LogicalRepWorker *syncworker = logicalrep_worker_find(MyLogicalRepWorker->subid,
-												rstate->relid, false);
+																  rstate->relid, false);
 
 			if (syncworker)
 			{
@@ -551,7 +553,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 					bool		found;
 
 					struct tablesync_start_time_mapping *hentry = hash_search(last_start_times, &rstate->relid,
-										 HASH_ENTER, &found);
+																			  HASH_ENTER, &found);
 
 					if (!found ||
 						TimestampDifferenceExceeds(hentry->last_start_time, now,
@@ -618,6 +620,7 @@ copy_read_data(void *outbuf, int minread, int maxread)
 
 	/* If there are some leftover data from previous read, use it. */
 	int			avail = copybuf->len - copybuf->cursor;
+
 	if (avail)
 	{
 		if (avail > maxread)
@@ -708,7 +711,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 					 quote_literal_cstr(nspname),
 					 quote_literal_cstr(relname));
 	WalRcvExecResult *res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data,
-					  lengthof(tableRow), tableRow);
+										lengthof(tableRow), tableRow);
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
@@ -717,6 +720,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 						nspname, relname, res->err)));
 
 	TupleTableSlot *slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
+
 	if (!tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -765,6 +769,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 	lrel->attkeys = NULL;
 
 	int			natt = 0;
+
 	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
 	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 	{
@@ -811,6 +816,7 @@ copy_table(Relation rel)
 
 	/* Map the publisher relation to local one. */
 	LogicalRepRelMapEntry *relmapentry = logicalrep_rel_open(lrel.remoteid, NoLock);
+
 	Assert(rel == relmapentry->localrel);
 
 	/* Start copy on the publisher. */
@@ -835,6 +841,7 @@ copy_table(Relation rel)
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
 	}
 	WalRcvExecResult *res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data, 0, NULL);
+
 	pfree(cmd.data);
 	if (res->status != WALRCV_OK_COPY_OUT)
 		ereport(ERROR,
@@ -846,6 +853,7 @@ copy_table(Relation rel)
 	copybuf = makeStringInfo();
 
 	ParseState *pstate = make_parsestate(NULL);
+
 	(void) addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
 										 NULL, false, false);
 
@@ -916,8 +924,9 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	/* Check the state of the table synchronization. */
 	StartTransactionCommand();
 	char		relstate = GetSubscriptionRelState(MyLogicalRepWorker->subid,
-									   MyLogicalRepWorker->relid,
-									   &relstate_lsn);
+												   MyLogicalRepWorker->relid,
+												   &relstate_lsn);
+
 	CommitTransactionCommand();
 
 	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
@@ -939,6 +948,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 
 	/* Calculate the name of the tablesync slot. */
 	char	   *slotname = (char *) palloc(NAMEDATALEN);
+
 	ReplicationSlotNameForTablesync(MySubscription->oid,
 									MyLogicalRepWorker->relid,
 									slotname,
@@ -1177,6 +1187,7 @@ FetchTableStates(bool *started_tx)
 
 		/* Allocate the tracking info in a permanent memory context. */
 		MemoryContext oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+
 		foreach(lc, rstates)
 		{
 			rstate = palloc(sizeof(SubscriptionRelState));
@@ -1246,6 +1257,7 @@ UpdateTwoPhaseState(Oid suboid, char new_state)
 
 	Relation	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 	HeapTuple	tup = SearchSysCacheCopy1(SUBSCRIPTIONOID, ObjectIdGetDatum(suboid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR,
 			 "cache lookup failed for subscription oid %u",

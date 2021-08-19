@@ -85,6 +85,7 @@ create_and_test_bloom(int power, int64 nelements, int callerseed)
 
 	/* Create Bloom filter, populate it, and report on false positive rate */
 	bloom_filter *filter = bloom_create(nelements, bloom_work_mem, seed);
+
 	populate_with_dummy_strings(filter, nelements);
 	int64		nfalsepos = nfalsepos_for_missing_strings(filter, nelements);
 

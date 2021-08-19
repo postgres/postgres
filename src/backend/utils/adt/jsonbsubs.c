@@ -247,6 +247,7 @@ jsonb_subscript_fetch(ExprState *state,
 	Assert(!(*op->resnull));
 
 	Jsonb	   *jsonbSource = DatumGetJsonbP(*op->resvalue);
+
 	*op->resvalue = jsonb_get_element(jsonbSource,
 									  workspace->index,
 									  sbsrefstate->numupper,
@@ -362,7 +363,8 @@ jsonb_exec_setup(const SubscriptingRef *sbsref,
 
 	/* Allocate type-specific workspace with space for per-subscript data */
 	JsonbSubWorkspace *workspace = palloc0(MAXALIGN(sizeof(JsonbSubWorkspace)) +
-						nupper * (sizeof(Datum) + sizeof(Oid)));
+										   nupper * (sizeof(Datum) + sizeof(Oid)));
+
 	workspace->expectArray = false;
 	char	   *ptr = ((char *) workspace) + MAXALIGN(sizeof(JsonbSubWorkspace));
 

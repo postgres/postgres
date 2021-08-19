@@ -269,6 +269,7 @@ CopySendInt32(CopyToState cstate, int32 val)
 {
 
 	uint32		buf = pg_hton32((uint32) val);
+
 	CopySendData(cstate, &buf, sizeof(buf));
 }
 
@@ -280,6 +281,7 @@ CopySendInt16(CopyToState cstate, int16 val)
 {
 
 	uint16		buf = pg_hton16((uint16) val);
+
 	CopySendData(cstate, &buf, sizeof(buf));
 }
 
@@ -293,6 +295,7 @@ ClosePipeToProgram(CopyToState cstate)
 	Assert(cstate->is_program);
 
 	int			pclose_rc = ClosePipeStream(cstate->copy_file);
+
 	if (pclose_rc == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -430,8 +433,8 @@ BeginCopyTo(ParseState *pstate,
 		 * locks on the source table(s).
 		 */
 		List	   *rewritten = pg_analyze_and_rewrite(raw_query,
-										   pstate->p_sourcetext, NULL, 0,
-										   NULL);
+													   pstate->p_sourcetext, NULL, 0,
+													   NULL);
 
 		/* check that we got back something we can work with */
 		if (rewritten == NIL)
@@ -493,7 +496,7 @@ BeginCopyTo(ParseState *pstate,
 
 		/* plan the query */
 		PlannedStmt *plan = pg_plan_query(query, pstate->p_sourcetext,
-							 CURSOR_OPT_PARALLEL_OK, NULL);
+										  CURSOR_OPT_PARALLEL_OK, NULL);
 
 		/*
 		 * With row-level security and a user using "COPY relation TO", we
@@ -529,6 +532,7 @@ BeginCopyTo(ParseState *pstate,
 
 		/* Create dest receiver for COPY OUT */
 		DestReceiver *dest = CreateDestReceiver(DestCopyOut);
+
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
@@ -773,6 +777,7 @@ DoCopyTo(CopyToState cstate)
 	else
 		tupDesc = cstate->queryDesc->tupDesc;
 	int			num_phys_attrs = tupDesc->natts;
+
 	cstate->opts.null_print_client = cstate->opts.null_print;	/* default */
 
 	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
@@ -816,6 +821,7 @@ DoCopyTo(CopyToState cstate)
 		CopySendData(cstate, BinarySignature, 11);
 		/* Flags field */
 		int32		tmp = 0;
+
 		CopySendInt32(cstate, tmp);
 		/* No header extension */
 		tmp = 0;
@@ -966,7 +972,8 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 			{
 
 				bytea	   *outputbytes = SendFunctionCall(&out_functions[attnum - 1],
-											   value);
+														   value);
+
 				CopySendInt32(cstate, VARSIZE(outputbytes) - VARHDRSZ);
 				CopySendData(cstate, VARDATA(outputbytes),
 							 VARSIZE(outputbytes) - VARHDRSZ);

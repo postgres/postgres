@@ -136,6 +136,7 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 			ssize_t		amount = PqGSSSendLength - PqGSSSendNext;
 
 			ssize_t		ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
+
 			if (ret <= 0)
 			{
 				/*

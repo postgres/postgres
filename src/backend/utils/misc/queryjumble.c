@@ -167,7 +167,7 @@ compute_utility_query_id(const char *query_text, int query_location, int query_l
 	const char *sql = CleanQuerytext(query_text, &query_location, &query_len);
 
 	uint64		queryId = DatumGetUInt64(hash_any_extended((const unsigned char *) sql,
-											   query_len, 0));
+														   query_len, 0));
 
 	/*
 	 * If we are unlucky enough to get a hash of zero(invalid), use queryID as
@@ -201,11 +201,13 @@ AppendJumble(JumbleState *jstate, const unsigned char *item, Size size)
 		{
 
 			uint64		start_hash = DatumGetUInt64(hash_any_extended(jumble,
-														  JUMBLE_SIZE, 0));
+																	  JUMBLE_SIZE, 0));
+
 			memcpy(jumble, &start_hash, sizeof(start_hash));
 			jumble_len = sizeof(start_hash);
 		}
 		Size		part_size = Min(size, JUMBLE_SIZE - jumble_len);
+
 		memcpy(jumble + jumble_len, item, part_size);
 		jumble_len += part_size;
 		item += part_size;

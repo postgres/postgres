@@ -81,6 +81,7 @@ GetConnection(void)
 	 * itself a connection string.
 	 */
 	int			i = 0;
+
 	if (connection_string)
 	{
 		conn_opts = PQconninfoParse(connection_string, &err_msg);
@@ -222,6 +223,7 @@ GetConnection(void)
 	{
 
 		PGresult   *res = PQexec(tmpconn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
 			pg_log_error("could not clear search_path: %s",
@@ -238,6 +240,7 @@ GetConnection(void)
 	 * the server we are connecting to.
 	 */
 	const char *tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
+
 	if (!tmpparam)
 	{
 		pg_log_error("could not determine server setting for integer_datetimes");
@@ -287,6 +290,7 @@ RetrieveWalSegSize(PGconn *conn)
 	}
 
 	PGresult   *res = PQexec(conn, "SHOW wal_segment_size");
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -359,6 +363,7 @@ RetrieveDataDirCreatePerm(PGconn *conn)
 		return true;
 
 	PGresult   *res = PQexec(conn, "SHOW data_directory_mode");
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -410,6 +415,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	Assert(conn != NULL);
 
 	PGresult   *res = PQexec(conn, "IDENTIFY_SYSTEM");
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -511,6 +517,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	}
 
 	PGresult   *res = PQexec(conn, query->data);
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -566,6 +573,7 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	appendPQExpBuffer(query, "DROP_REPLICATION_SLOT \"%s\"",
 					  slot_name);
 	PGresult   *res = PQexec(conn, query->data);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		pg_log_error("could not send replication command \"%s\": %s",
@@ -605,7 +613,8 @@ feGetCurrentTimestamp(void)
 	gettimeofday(&tp, NULL);
 
 	TimestampTz result = (TimestampTz) tp.tv_sec -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+	((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
 	result = (result * USECS_PER_SEC) + tp.tv_usec;
 
 	return result;

@@ -181,10 +181,10 @@ is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo)
 
 	/* See if we already cached the result. */
 	ShippableCacheEntry *entry = (ShippableCacheEntry *)
-		hash_search(ShippableCacheHash,
-					(void *) &key,
-					HASH_FIND,
-					NULL);
+	hash_search(ShippableCacheHash,
+				(void *) &key,
+				HASH_FIND,
+				NULL);
 
 	if (!entry)
 	{

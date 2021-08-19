@@ -41,6 +41,7 @@ get_role_password(const char *role, char **logdetail)
 
 	/* Get role info from pg_authid */
 	HeapTuple	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
+
 	if (!HeapTupleIsValid(roleTup))
 	{
 		*logdetail = psprintf(_("Role \"%s\" does not exist."),
@@ -49,7 +50,8 @@ get_role_password(const char *role, char **logdetail)
 	}
 
 	Datum		datum = SysCacheGetAttr(AUTHNAME, roleTup,
-							Anum_pg_authid_rolpassword, &isnull);
+										Anum_pg_authid_rolpassword, &isnull);
+
 	if (isnull)
 	{
 		ReleaseSysCache(roleTup);

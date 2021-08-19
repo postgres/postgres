@@ -508,6 +508,7 @@ p_isurlchar(TParser *prs)
 	if (prs->state->charlen != 1)
 		return 0;
 	char		ch = *(prs->str + prs->state->posbyte);
+
 	/* no spaces or control characters */
 	if (ch <= 0x20 || ch >= 0x7F)
 		return 0;
@@ -1801,6 +1802,7 @@ TParserGet(TParser *prs)
 
 			Assert(prs->state->prev);
 			TParserPosition *ptr = prs->state->prev->prev;
+
 			pfree(prs->state->prev);
 			prs->state->prev = ptr;
 		}
@@ -2581,6 +2583,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 	 * max_fragments.
 	 */
 	int			max_cover = Max(max_words * 10, 100);
+
 	if (max_fragments > 0)
 		max_cover *= max_fragments;
 

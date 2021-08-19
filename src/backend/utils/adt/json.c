@@ -80,6 +80,7 @@ json_in(PG_FUNCTION_ARGS)
 
 	/* validate it */
 	JsonLexContext *lex = makeJsonLexContext(result, false);
+
 	pg_parse_json_or_ereport(lex, &nullSemAction);
 
 	/* Internal representation is the same as text, for now */
@@ -125,6 +126,7 @@ json_recv(PG_FUNCTION_ARGS)
 
 	/* Validate it. */
 	JsonLexContext *lex = makeJsonLexContextCstringLen(str, nbytes, GetDatabaseEncoding(), false);
+
 	pg_parse_json_or_ereport(lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));
@@ -206,8 +208,9 @@ json_categorize_type(Oid typoid,
 					Oid			castfunc;
 
 					CoercionPathType ctype = find_coercion_pathway(JSONOID, typoid,
-												  COERCION_EXPLICIT,
-												  &castfunc);
+																   COERCION_EXPLICIT,
+																   &castfunc);
+
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
 					{
 						*tcategory = JSONTYPE_CAST;
@@ -401,6 +404,7 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 				fsec_t		fsec;
 
 				Timestamp	timestamp = DatumGetTimestamp(value);
+
 				/* Same as timestamp_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
@@ -587,6 +591,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 		needsep = true;
 
 		char	   *attname = NameStr(att->attname);
+
 		escape_json(result, attname);
 		appendStringInfoChar(result, ':');
 
@@ -814,8 +819,8 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 	Assert(AggCheckCallContext(fcinfo, NULL));
 
 	JsonAggState *state = PG_ARGISNULL(0) ?
-		NULL :
-		(JsonAggState *) PG_GETARG_POINTER(0);
+	NULL :
+	(JsonAggState *) PG_GETARG_POINTER(0);
 
 	/* NULL result for no rows in, as is standard with aggregates */
 	if (state == NULL)
@@ -1147,6 +1152,7 @@ json_object(PG_FUNCTION_ARGS)
 	pfree(in_nulls);
 
 	text	   *rval = cstring_to_text_with_len(result.data, result.len);
+
 	pfree(result.data);
 
 	PG_RETURN_TEXT_P(rval);
@@ -1232,6 +1238,7 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 	pfree(val_nulls);
 
 	text	   *rval = cstring_to_text_with_len(result.data, result.len);
+
 	pfree(result.data);
 
 	PG_RETURN_TEXT_P(rval);
@@ -1306,9 +1313,11 @@ json_typeof(PG_FUNCTION_ARGS)
 
 	/* Lex exactly one token from the input and check its type. */
 	JsonParseErrorType result = json_lex(lex);
+
 	if (result != JSON_SUCCESS)
 		json_ereport_error(result, lex);
 	JsonTokenType tok = lex->token_type;
+
 	switch (tok)
 	{
 		case JSON_TOKEN_OBJECT_START:

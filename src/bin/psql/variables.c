@@ -162,6 +162,7 @@ ParseVariableNum(const char *value, const char *name, int *result)
 
 	errno = 0;
 	long		numval = strtol(value, &end, 0);
+
 	if (errno == 0 && *end == '\0' && end != value && numval == (int) numval)
 	{
 		*result = (int) numval;

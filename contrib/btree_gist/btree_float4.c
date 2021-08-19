@@ -98,6 +98,7 @@ float4_dist(PG_FUNCTION_ARGS)
 	float4		b = PG_GETARG_FLOAT4(1);
 
 	float4		r = a - b;
+
 	if (unlikely(isinf(r)) && !isinf(a) && !isinf(b))
 		float_overflow_error();
 

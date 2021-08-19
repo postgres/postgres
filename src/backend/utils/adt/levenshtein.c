@@ -284,6 +284,7 @@ varstr_levenshtein(const char *source, int slen,
 				 */
 				int			ins = prev[i] + ins_c;
 				int			del = curr[i - 1] + del_c;
+
 				if (x[x_char_len - 1] == y[y_char_len - 1]
 					&& x_char_len == y_char_len &&
 					(x_char_len == 1 || rest_of_char_same(x, y, x_char_len)))

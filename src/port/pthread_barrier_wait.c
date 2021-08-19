@@ -57,6 +57,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 
 	/* Wait for someone else to flip the sense. */
 	bool		initial_sense = barrier->sense;
+
 	do
 	{
 		pthread_cond_wait(&barrier->cond, &barrier->mutex);

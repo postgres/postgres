@@ -74,6 +74,7 @@ tidin(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	BlockNumber blockNumber = strtoul(coord[0], &badp, 10);
+
 	if (errno || *badp != DELIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -81,6 +82,7 @@ tidin(PG_FUNCTION_ARGS)
 						"tid", str)));
 
 	int			hold_offset = strtol(coord[1], &badp, 10);
+
 	if (errno || *badp != RDELIM ||
 		hold_offset > USHRT_MAX || hold_offset < 0)
 		ereport(ERROR,
@@ -282,7 +284,8 @@ currtid_internal(Relation rel, ItemPointer tid)
 	ItemPointer result = (ItemPointer) palloc(sizeof(ItemPointerData));
 
 	AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  ACL_SELECT);
+											  ACL_SELECT);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
 					   RelationGetRelationName(rel));
@@ -299,6 +302,7 @@ currtid_internal(Relation rel, ItemPointer tid)
 
 	Snapshot	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	TableScanDesc scan = table_beginscan_tid(rel, snapshot);
+
 	table_tuple_get_latest_tid(scan, result);
 	table_endscan(scan);
 	UnregisterSnapshot(snapshot);
@@ -335,6 +339,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 	if (tididx < 0)
 		elog(ERROR, "currtid cannot handle views with no CTID");
 	RuleLock   *rulelock = viewrel->rd_rules;
+
 	if (!rulelock)
 		elog(ERROR, "the view has no rules");
 	for (i = 0; i < rulelock->numLocks; i++)
@@ -347,6 +352,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 				elog(ERROR, "only one select rule is allowed in views");
 			Query	   *query = (Query *) linitial(rewrite->actions);
 			TargetEntry *tle = get_tle_by_resno(query->targetList, tididx + 1);
+
 			if (tle && tle->expr && IsA(tle->expr, Var))
 			{
 				Var		   *var = (Var *) tle->expr;
@@ -361,6 +367,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 
 						Relation	rel = table_open(rte->relid, AccessShareLock);
 						ItemPointer result = currtid_internal(rel, tid);
+
 						table_close(rel, AccessShareLock);
 						return result;
 					}

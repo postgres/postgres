@@ -121,6 +121,7 @@ init_libpq_conn(PGconn *conn)
 
 	/* secure search_path */
 	PGresult   *res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not clear search_path: %s",
 				 PQresultErrorMessage(res));
@@ -132,6 +133,7 @@ init_libpq_conn(PGconn *conn)
 	 * rely on full page images to fix them.
 	 */
 	char	   *str = run_simple_query(conn, "SHOW full_page_writes");
+
 	if (strcmp(str, "on") != 0)
 		pg_fatal("full_page_writes must be enabled in the source server");
 	pg_free(str);
@@ -235,23 +237,23 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 	 * directory, they won't be copied correctly.
 	 */
 	const char *sql =
-		"WITH RECURSIVE files (path, filename, size, isdir) AS (\n"
-		"  SELECT '' AS path, filename, size, isdir FROM\n"
-		"  (SELECT pg_ls_dir('.', true, false) AS filename) AS fn,\n"
-		"        pg_stat_file(fn.filename, true) AS this\n"
-		"  UNION ALL\n"
-		"  SELECT parent.path || parent.filename || '/' AS path,\n"
-		"         fn, this.size, this.isdir\n"
-		"  FROM files AS parent,\n"
-		"       pg_ls_dir(parent.path || parent.filename, true, false) AS fn,\n"
-		"       pg_stat_file(parent.path || parent.filename || '/' || fn, true) AS this\n"
-		"       WHERE parent.isdir = 't'\n"
-		")\n"
-		"SELECT path || filename, size, isdir,\n"
-		"       pg_tablespace_location(pg_tablespace.oid) AS link_target\n"
-		"FROM files\n"
-		"LEFT OUTER JOIN pg_tablespace ON files.path = 'pg_tblspc/'\n"
-		"                             AND oid::text = files.filename\n";
+	"WITH RECURSIVE files (path, filename, size, isdir) AS (\n"
+	"  SELECT '' AS path, filename, size, isdir FROM\n"
+	"  (SELECT pg_ls_dir('.', true, false) AS filename) AS fn,\n"
+	"        pg_stat_file(fn.filename, true) AS this\n"
+	"  UNION ALL\n"
+	"  SELECT parent.path || parent.filename || '/' AS path,\n"
+	"         fn, this.size, this.isdir\n"
+	"  FROM files AS parent,\n"
+	"       pg_ls_dir(parent.path || parent.filename, true, false) AS fn,\n"
+	"       pg_stat_file(parent.path || parent.filename || '/' || fn, true) AS this\n"
+	"       WHERE parent.isdir = 't'\n"
+	")\n"
+	"SELECT path || filename, size, isdir,\n"
+	"       pg_tablespace_location(pg_tablespace.oid) AS link_target\n"
+	"FROM files\n"
+	"LEFT OUTER JOIN pg_tablespace ON files.path = 'pg_tblspc/'\n"
+	"                             AND oid::text = files.filename\n";
 	PGresult   *res = PQexec(conn, sql);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -325,6 +327,7 @@ libpq_queue_fetch_range(rewind_source *source, const char *path, off_t off,
 			 */
 
 			size_t		thislen = Min(len, MAX_CHUNK_SIZE - prev->length);
+
 			prev->length += thislen;
 
 			off += thislen;
@@ -346,6 +349,7 @@ libpq_queue_fetch_range(rewind_source *source, const char *path, off_t off,
 			process_queued_fetch_requests(src);
 
 		int32		thislen = Min(len, MAX_CHUNK_SIZE);
+
 		src->request_queue[src->num_requests].path = path;
 		src->request_queue[src->num_requests].offset = off;
 		src->request_queue[src->num_requests].length = thislen;
@@ -429,6 +433,7 @@ process_queued_fetch_requests(libpq_source *src)
 	 *----
 	 */
 	int			chunkno = 0;
+
 	while ((res = PQgetResult(src->conn)) != NULL)
 	{
 		fetch_range_request *rq = &src->request_queue[chunkno];
@@ -486,6 +491,7 @@ process_queued_fetch_requests(libpq_source *src)
 
 		int			filenamelen = PQgetlength(res, 0, 0);
 		char	   *filename = pg_malloc(filenamelen + 1);
+
 		memcpy(filename, PQgetvalue(res, 0, 0), filenamelen);
 		filename[filenamelen] = '\0';
 
@@ -576,7 +582,7 @@ libpq_fetch_file(rewind_source *source, const char *path, size_t *filesize)
 
 	paramValues[0] = path;
 	PGresult   *res = PQexecParams(conn, "SELECT pg_read_binary_file($1)",
-					   1, NULL, paramValues, NULL, NULL, 1);
+								   1, NULL, paramValues, NULL, NULL, 1);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not fetch remote file \"%s\": %s",
@@ -590,6 +596,7 @@ libpq_fetch_file(rewind_source *source, const char *path, size_t *filesize)
 	/* Read result to local variables */
 	int			len = PQgetlength(res, 0, 0);
 	char	   *result = pg_malloc(len + 1);
+
 	memcpy(result, PQgetvalue(res, 0, 0), len);
 	result[len] = '\0';
 

@@ -51,6 +51,7 @@ ecpg_strdup(const char *string, int lineno)
 		return NULL;
 
 	char	   *new = strdup(string);
+
 	if (!new)
 	{
 		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);

@@ -531,8 +531,8 @@ createTrgmNFA(text *text_re, Oid collation,
 	 * that cleanup is easy.
 	 */
 	MemoryContext tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
-									   "createTrgmNFA temporary context",
-									   ALLOCSET_DEFAULT_SIZES);
+													 "createTrgmNFA temporary context",
+													 ALLOCSET_DEFAULT_SIZES);
 	MemoryContext oldcontext = MemoryContextSwitchTo(tmpcontext);
 
 	/*
@@ -735,15 +735,15 @@ RE_compile(regex_t *regex, text *text_re, int cflags, Oid collation)
 	/* Convert pattern string to wide characters */
 	pg_wchar   *pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
 	int			pattern_len = pg_mb2wchar_with_len(text_re_val,
-									   pattern,
-									   text_re_len);
+												   pattern,
+												   text_re_len);
 
 	/* Compile regex */
 	int			regcomp_result = pg_regcomp(regex,
-								pattern,
-								pattern_len,
-								cflags,
-								collation);
+											pattern,
+											pattern_len,
+											cflags,
+											collation);
 
 	pfree(pattern);
 
@@ -801,6 +801,7 @@ getColorInfo(regex_t *regex, TrgmNFA *trgmNFA)
 
 		/* Extract all the chars in this color */
 		pg_wchar   *chars = (pg_wchar *) palloc(sizeof(pg_wchar) * charsCount);
+
 		pg_reg_getcharacters(regex, i, chars, charsCount);
 
 		/*
@@ -924,6 +925,7 @@ transformGraph(TrgmNFA *trgmNFA)
 	initkey.nstate = pg_reg_getinitialstate(trgmNFA->regex);
 
 	TrgmState  *initstate = getState(trgmNFA, &initkey);
+
 	initstate->flags |= TSTATE_INIT;
 	trgmNFA->initState = initstate;
 
@@ -1057,6 +1059,7 @@ addKey(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key)
 	 */
 	arcsCount = pg_reg_getnumoutarcs(trgmNFA->regex, key->nstate);
 	regex_arc_t *arcs = (regex_arc_t *) palloc(sizeof(regex_arc_t) * arcsCount);
+
 	pg_reg_getoutarcs(trgmNFA->regex, key->nstate, arcs, arcsCount);
 
 	for (i = 0; i < arcsCount; i++)
@@ -1229,6 +1232,7 @@ addArcs(TrgmNFA *trgmNFA, TrgmState *state)
 			Assert(arc->co < trgmNFA->ncolors);
 
 			TrgmColorInfo *colorInfo = &trgmNFA->colorInfo[arc->co];
+
 			if (!colorInfo->expandable)
 				continue;
 
@@ -1303,6 +1307,7 @@ addArc(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key,
 
 	/* Checks were successful, add new arc */
 	TrgmArc    *arc = (TrgmArc *) palloc(sizeof(TrgmArc));
+
 	arc->target = getState(trgmNFA, destKey);
 	arc->ctrgm.colors[0] = key->prefix.colors[0];
 	arc->ctrgm.colors[1] = key->prefix.colors[1];
@@ -1378,7 +1383,8 @@ getState(TrgmNFA *trgmNFA, TrgmStateKey *key)
 	bool		found;
 
 	TrgmState  *state = (TrgmState *) hash_search(trgmNFA->states, key, HASH_ENTER,
-									  &found);
+												  &found);
+
 	if (!found)
 	{
 		/* New state: initialize and queue it */
@@ -1455,6 +1461,7 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 
 	/* Collect color trigrams from all arcs */
 	ColorTrgmInfo *colorTrgms = (ColorTrgmInfo *) palloc0(sizeof(ColorTrgmInfo) * arcsCount);
+
 	trgmNFA->colorTrgms = colorTrgms;
 
 	i = 0;
@@ -1525,6 +1532,7 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 	 */
 	int64		totalTrgmCount = 0;
 	float4		totalTrgmPenalty = 0.0f;
+
 	for (i = 0; i < trgmNFA->colorTrgmsCount; i++)
 	{
 		ColorTrgmInfo *trgmInfo = &colorTrgms[i];
@@ -1774,12 +1782,14 @@ expandColorTrigrams(TrgmNFA *trgmNFA, MemoryContext rcontext)
 
 	/* Construct the trgm array */
 	TRGM	   *trg = (TRGM *)
-		MemoryContextAllocZero(rcontext,
-							   TRGMHDRSIZE +
-							   trgmNFA->totalTrgmCount * sizeof(trgm));
+	MemoryContextAllocZero(rcontext,
+						   TRGMHDRSIZE +
+						   trgmNFA->totalTrgmCount * sizeof(trgm));
+
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, trgmNFA->totalTrgmCount));
 	trgm	   *p = GETARR(trg);
+
 	for (i = 0; i < trgmNFA->colorTrgmsCount; i++)
 	{
 		ColorTrgmInfo *colorTrgm = &trgmNFA->colorTrgms[i];
@@ -1973,10 +1983,11 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 			{
 
 				ColorTrgmInfo *ctrgm = (ColorTrgmInfo *) bsearch(&arc->ctrgm,
-												  trgmNFA->colorTrgms,
-												  trgmNFA->colorTrgmsCount,
-												  sizeof(ColorTrgmInfo),
-												  colorTrgmInfoCmp);
+																 trgmNFA->colorTrgms,
+																 trgmNFA->colorTrgmsCount,
+																 sizeof(ColorTrgmInfo),
+																 colorTrgmInfoCmp);
+
 				Assert(ctrgm != NULL);
 				Assert(ctrgm->expanded);
 
@@ -2006,7 +2017,7 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 
 	/* Create packed representation */
 	TrgmPackedGraph *result = (TrgmPackedGraph *)
-		MemoryContextAlloc(rcontext, sizeof(TrgmPackedGraph));
+	MemoryContextAlloc(rcontext, sizeof(TrgmPackedGraph));
 
 	/* Pack color trigrams information */
 	result->colorTrigramsCount = 0;
@@ -2032,7 +2043,8 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 	result->states = (TrgmPackedState *)
 		MemoryContextAlloc(rcontext, snumber * sizeof(TrgmPackedState));
 	TrgmPackedArc *packedArcs = (TrgmPackedArc *)
-		MemoryContextAlloc(rcontext, arcsCount * sizeof(TrgmPackedArc));
+	MemoryContextAlloc(rcontext, arcsCount * sizeof(TrgmPackedArc));
+
 	j = 0;
 	for (i = 0; i < snumber; i++)
 	{
@@ -2123,6 +2135,7 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 
 		arcsCount = pg_reg_getnumoutarcs(regex, state);
 		regex_arc_t *arcs = (regex_arc_t *) palloc(sizeof(regex_arc_t) * arcsCount);
+
 		pg_reg_getoutarcs(regex, state, arcs, arcsCount);
 
 		for (i = 0; i < arcsCount; i++)
@@ -2296,6 +2309,7 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 	appendStringInfoString(&buf, "  Trigrams [shape = none, margin=0, label=<\n");
 
 	trgm	   *p = GETARR(trigrams);
+
 	for (i = 0; i < packedGraph->colorTrigramsCount; i++)
 	{
 		int			count = packedGraph->colorTrigramGroups[i];

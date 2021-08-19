@@ -113,6 +113,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * (i.e. no updates/deletes left potentially dead tuples around).
 	 */
 	TransactionId prune_xid = ((PageHeader) page)->pd_prune_xid;
+
 	if (!TransactionIdIsValid(prune_xid))
 		return;
 
@@ -162,7 +163,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 	 * just a heuristic estimate.
 	 */
 	Size		minfree = RelationGetTargetPageFreeSpace(relation,
-											 HEAP_DEFAULT_FILLFACTOR);
+														 HEAP_DEFAULT_FILLFACTOR);
+
 	minfree = Max(minfree, BLCKSZ / 10);
 
 	if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
@@ -267,6 +269,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 
 		/* Nothing to do if slot is empty or already dead */
 		ItemId		itemid = PageGetItemId(page, offnum);
+
 		if (!ItemIdIsUsed(itemid) || ItemIdIsDead(itemid))
 			continue;
 
@@ -835,6 +838,7 @@ heap_page_prune_execute(Buffer buffer,
 
 	/* Update all redirected line pointers */
 	OffsetNumber *offnum = redirected;
+
 	for (i = 0; i < nredirected; i++)
 	{
 		OffsetNumber fromoff = *offnum++;

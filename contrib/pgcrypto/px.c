@@ -205,6 +205,7 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 	if (klen > ks)
 		klen = ks;
 	uint8	   *keybuf = palloc0(ks);
+
 	memset(keybuf, 0, ks);
 	memcpy(keybuf, key, klen);
 
@@ -230,6 +231,7 @@ combo_encrypt(PX_Combo *cx, const uint8 *data, unsigned dlen,
 	PX_Cipher  *c = cx->cipher;
 
 	uint8	   *bbuf = NULL;
+
 	bs = px_cipher_block_size(c);
 
 	/* encrypt */
@@ -411,6 +413,7 @@ px_find_combo(const char *name, PX_Combo **res)
 	buf = pstrdup(name);
 
 	int			err = parse_cipher_name(buf, &s_cipher, &s_pad);
+
 	if (err)
 	{
 		pfree(buf);

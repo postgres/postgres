@@ -32,6 +32,7 @@ ginbeginscan(Relation rel, int nkeys, int norderbys)
 
 	/* allocate private workspace */
 	GinScanOpaque so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
+
 	so->keys = NULL;
 	so->nkeys = 0;
 	so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
@@ -91,6 +92,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 
 	/* Nope, create a new entry */
 	GinScanEntry scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
+
 	scanEntry->queryKey = queryKey;
 	scanEntry->queryCategory = queryCategory;
 	scanEntry->isPartialMatch = isPartialMatch;
@@ -198,8 +200,8 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 		Datum		queryKey = queryValues[i];
 		GinNullCategory queryCategory = queryCategories[i];
 		bool		isPartialMatch =
-			(ginstate->canPartialMatch[attnum - 1] && partial_matches)
-			? partial_matches[i] : false;
+		(ginstate->canPartialMatch[attnum - 1] && partial_matches)
+		? partial_matches[i] : false;
 		Pointer		this_extra = (extra_data) ? extra_data[i] : NULL;
 
 		key->scanEntry[i] = ginFillScanEntry(so, attnum,
@@ -302,15 +304,15 @@ ginNewScanKey(IndexScanDesc scan)
 
 		/* OK to call the extractQueryFn */
 		Datum	   *queryValues = (Datum *)
-			DatumGetPointer(FunctionCall7Coll(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
-											  so->ginstate.supportCollation[skey->sk_attno - 1],
-											  skey->sk_argument,
-											  PointerGetDatum(&nQueryValues),
-											  UInt16GetDatum(skey->sk_strategy),
-											  PointerGetDatum(&partial_matches),
-											  PointerGetDatum(&extra_data),
-											  PointerGetDatum(&nullFlags),
-											  PointerGetDatum(&searchMode)));
+		DatumGetPointer(FunctionCall7Coll(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
+										  so->ginstate.supportCollation[skey->sk_attno - 1],
+										  skey->sk_argument,
+										  PointerGetDatum(&nQueryValues),
+										  UInt16GetDatum(skey->sk_strategy),
+										  PointerGetDatum(&partial_matches),
+										  PointerGetDatum(&extra_data),
+										  PointerGetDatum(&nullFlags),
+										  PointerGetDatum(&searchMode)));
 
 		/*
 		 * If bogus searchMode is returned, treat as GIN_SEARCH_MODE_ALL; note
@@ -344,6 +346,7 @@ ginNewScanKey(IndexScanDesc scan)
 		 * While at it, detect whether any null keys are present.
 		 */
 		GinNullCategory *categories = (GinNullCategory *) palloc0(nQueryValues * sizeof(GinNullCategory));
+
 		if (nullFlags)
 		{
 			int32		j;

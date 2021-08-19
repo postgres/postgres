@@ -279,7 +279,7 @@ match_pattern_prefix(Node *leftop,
 	 * Try to extract a fixed prefix from the pattern.
 	 */
 	Pattern_Prefix_Status pstatus = pattern_fixed_prefix(patt, ptype, expr_coll,
-								   &prefix, NULL);
+														 &prefix, NULL);
 
 	/* fail if no fixed prefix */
 	if (pstatus == Pattern_Prefix_None)
@@ -295,6 +295,7 @@ match_pattern_prefix(Node *leftop,
 	 * constant.
 	 */
 	Oid			ldatatype = exprType(leftop);
+
 	switch (ldatatype)
 	{
 		case TEXTOID:
@@ -428,6 +429,7 @@ match_pattern_prefix(Node *leftop,
 		return result;
 	fmgr_info(get_opcode(ltopr), &ltproc);
 	Const	   *greaterstr = make_greater_string(prefix, &ltproc, indexcollation);
+
 	if (greaterstr)
 	{
 		expr = make_opclause(ltopr, BOOLOID, false,
@@ -574,6 +576,7 @@ patternsel_common(PlannerInfo *root,
 	{
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+
 		nullfrac = stats->stanullfrac;
 	}
 
@@ -588,7 +591,7 @@ patternsel_common(PlannerInfo *root,
 	 */
 	Const	   *patt = (Const *) other;
 	Pattern_Prefix_Status pstatus = pattern_fixed_prefix(patt, ptype, collation,
-								   &prefix, &rest_selec);
+														 &prefix, &rest_selec);
 
 	/*
 	 * If necessary, coerce the prefix constant to the right type.  The only
@@ -640,8 +643,8 @@ patternsel_common(PlannerInfo *root,
 		fmgr_info(opfuncid, &opproc);
 
 		Selectivity selec = histogram_selectivity(&vardata, &opproc, collation,
-									  constval, true,
-									  10, 1, &hist_size);
+												  constval, true,
+												  10, 1, &hist_size);
 
 		/* If not at least 100 entries, use the heuristic method */
 		if (hist_size < 100)
@@ -1010,6 +1013,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	}
 
 	char	   *match = palloc(pattlen + 1);
+
 	match_pos = 0;
 	for (pos = 0; pos < pattlen; pos++)
 	{
@@ -1077,8 +1081,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 	/* Use the regexp machinery to extract the prefix, if any */
 	char	   *prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
-								 case_insensitive, collation,
-								 &exact);
+											 case_insensitive, collation,
+											 &exact);
 
 	if (prefix == NULL)
 	{
@@ -1201,10 +1205,10 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	fmgr_info(get_opcode(geopr), &opproc);
 
 	Selectivity prefixsel = ineq_histogram_selectivity(root, vardata,
-										   geopr, &opproc, true, true,
-										   collation,
-										   prefixcon->constvalue,
-										   prefixcon->consttype);
+													   geopr, &opproc, true, true,
+													   collation,
+													   prefixcon->constvalue,
+													   prefixcon->consttype);
 
 	if (prefixsel < 0.0)
 	{
@@ -1217,14 +1221,15 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 */
 	fmgr_info(get_opcode(ltopr), &opproc);
 	Const	   *greaterstrcon = make_greater_string(prefixcon, &opproc, collation);
+
 	if (greaterstrcon)
 	{
 
 		Selectivity topsel = ineq_histogram_selectivity(root, vardata,
-											ltopr, &opproc, false, false,
-											collation,
-											greaterstrcon->constvalue,
-											greaterstrcon->consttype);
+														ltopr, &opproc, false, false,
+														collation,
+														greaterstrcon->constvalue,
+														greaterstrcon->consttype);
 
 		/* ineq_histogram_selectivity worked before, it shouldn't fail now */
 		Assert(topsel >= 0.0);
@@ -1252,7 +1257,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 * small estimate from the >= condition; so we still need to clamp.
 	 */
 	Selectivity eq_sel = var_eq_const(vardata, eqopr, collation, prefixcon->constvalue,
-						  false, true, false);
+									  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);
 
@@ -1571,6 +1576,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 			{
 
 				char	   *best = "Z";
+
 				if (varstr_cmp(best, 1, "z", 1, collation) < 0)
 					best = "z";
 				if (varstr_cmp(best, 1, "y", 1, collation) < 0)

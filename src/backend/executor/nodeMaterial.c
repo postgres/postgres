@@ -77,7 +77,7 @@ ExecMaterial(PlanState *pstate)
 	 * to fetch a tuple from tuplestore.
 	 */
 	bool		eof_tuplestore = (tuplestorestate == NULL) ||
-		tuplestore_ateof(tuplestorestate);
+	tuplestore_ateof(tuplestorestate);
 
 	if (!forward && eof_tuplestore)
 	{
@@ -99,6 +99,7 @@ ExecMaterial(PlanState *pstate)
 	 * If we can fetch another tuple from the tuplestore, return it.
 	 */
 	TupleTableSlot *slot = node->ss.ps.ps_ResultTupleSlot;
+
 	if (!eof_tuplestore)
 	{
 		if (tuplestore_gettupleslot(tuplestorestate, forward, false, slot))
@@ -124,6 +125,7 @@ ExecMaterial(PlanState *pstate)
 		 */
 		PlanState  *outerNode = outerPlanState(node);
 		TupleTableSlot *outerslot = ExecProcNode(outerNode);
+
 		if (TupIsNull(outerslot))
 		{
 			node->eof_underlying = true;
@@ -161,6 +163,7 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	MaterialState *matstate = makeNode(MaterialState);
+
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
 	matstate->ss.ps.ExecProcNode = ExecMaterial;

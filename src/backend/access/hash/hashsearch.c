@@ -118,6 +118,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 
 	/* OK, itemIndex says what to return */
 	HashScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
+
 	scan->xs_heaptid = currItem->heapTid;
 
 	return true;
@@ -340,8 +341,10 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	so->hashso_sk_hash = hashkey;
 
 	Buffer		buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_READ, NULL);
+
 	PredicateLockPage(rel, BufferGetBlockNumber(buf), scan->xs_snapshot);
 	Page		page = BufferGetPage(buf);
+
 	TestForOldSnapshot(scan->xs_snapshot, rel, page);
 	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	Bucket		bucket = opaque->hasho_bucket;
@@ -376,6 +379,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 		Buffer		old_buf = _hash_getbuf(rel, old_blkno, HASH_READ, LH_BUCKET_PAGE);
+
 		TestForOldSnapshot(scan->xs_snapshot, rel, BufferGetPage(old_buf));
 
 		/*
@@ -421,6 +425,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* OK, itemIndex says what to return */
 	HashScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
+
 	scan->xs_heaptid = currItem->heapTid;
 
 	/* if we're here, _hash_readpage found a valid tuples */
@@ -446,6 +451,7 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	uint16		itemIndex;
 
 	Buffer		buf = *bufP;
+
 	Assert(BufferIsValid(buf));
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	Page		page = BufferGetPage(buf);

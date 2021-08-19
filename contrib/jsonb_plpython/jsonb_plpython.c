@@ -268,6 +268,7 @@ PLyMapping_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 	JsonbValue *volatile out;
 
 	Py_ssize_t	pcount = PyMapping_Size(obj);
+
 	items = PyMapping_Items(obj);
 
 	PG_TRY();
@@ -364,9 +365,10 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 	{
 
 		Datum		numd = DirectFunctionCall3(numeric_in,
-								   CStringGetDatum(str),
-								   ObjectIdGetDatum(InvalidOid),
-								   Int32GetDatum(-1));
+											   CStringGetDatum(str),
+											   ObjectIdGetDatum(InvalidOid),
+											   Int32GetDatum(-1));
+
 		num = DatumGetNumeric(numd);
 	}
 	PG_CATCH();
@@ -458,6 +460,7 @@ plpython_to_jsonb(PG_FUNCTION_ARGS)
 
 	PyObject   *obj = (PyObject *) PG_GETARG_POINTER(0);
 	JsonbValue *out = PLyObject_ToJsonbValue(obj, &jsonb_state, true);
+
 	PG_RETURN_POINTER(JsonbValueToJsonb(out));
 }
 
@@ -491,6 +494,7 @@ jsonb_to_plpython(PG_FUNCTION_ARGS)
 	}
 
 	PyObject   *result = PLyObject_FromJsonbContainer(&in->root);
+
 	if (!result)
 		PLy_elog(ERROR, "transformation from jsonb to Python failed");
 

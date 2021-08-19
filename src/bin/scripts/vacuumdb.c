@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	const char *progname = get_progname(argv[0]);
+
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
@@ -653,6 +654,7 @@ vacuum_one_database(ConnParams *cparams,
 	appendPQExpBufferStr(&catalog_query, " ORDER BY c.relpages DESC;");
 	executeCommand(conn, "RESET search_path;", echo);
 	PGresult   *res = executeQuery(conn, catalog_query.data, echo);
+
 	termPQExpBuffer(&catalog_query);
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
 
@@ -660,6 +662,7 @@ vacuum_one_database(ConnParams *cparams,
 	 * If no rows are returned, there are no matching tables, so we are done.
 	 */
 	int			ntups = PQntuples(res);
+
 	if (ntups == 0)
 	{
 		PQclear(res);
@@ -715,6 +718,7 @@ vacuum_one_database(ConnParams *cparams,
 	 * array contains the connection.
 	 */
 	ParallelSlotArray *sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
+
 	ParallelSlotsAdoptConn(sa, conn);
 
 	initPQExpBuffer(&sql);
@@ -784,8 +788,9 @@ vacuum_all_databases(ConnParams *cparams,
 
 	PGconn	   *conn = connectMaintenanceDatabase(cparams, progname, echo);
 	PGresult   *result = executeQuery(conn,
-						  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
-						  echo);
+									  "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;",
+									  echo);
+
 	PQfinish(conn);
 
 	if (analyze_in_stages)

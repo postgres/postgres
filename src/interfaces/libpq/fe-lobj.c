@@ -72,6 +72,7 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	argv[1].u.integer = mode;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_open, &fd, &result_len, 1, argv, 2);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -105,7 +106,8 @@ lo_close(PGconn *conn, int fd)
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_close,
-			   &retval, &result_len, 1, argv, 1);
+						   &retval, &result_len, 1, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -169,7 +171,7 @@ lo_truncate(PGconn *conn, int fd, size_t len)
 	argv[1].u.integer = (int) len;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_truncate,
-			   &retval, &result_len, 1, argv, 2);
+						   &retval, &result_len, 1, argv, 2);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -218,7 +220,7 @@ lo_truncate64(PGconn *conn, int fd, pg_int64 len)
 	argv[1].u.ptr = (int *) &len;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_truncate64,
-			   &retval, &result_len, 1, argv, 2);
+						   &retval, &result_len, 1, argv, 2);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -271,7 +273,8 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
 	argv[1].u.integer = (int) len;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_read,
-			   (void *) buf, &result_len, 0, argv, 2);
+						   (void *) buf, &result_len, 0, argv, 2);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -322,7 +325,8 @@ lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 	argv[1].u.ptr = (int *) unconstify(char *, buf);
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_write,
-			   &retval, &result_len, 1, argv, 2);
+						   &retval, &result_len, 1, argv, 2);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -362,7 +366,8 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 	argv[2].u.integer = whence;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek,
-			   &retval, &result_len, 1, argv, 3);
+						   &retval, &result_len, 1, argv, 3);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -411,7 +416,8 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 	argv[2].u.integer = whence;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek64,
-			   (void *) &retval, &result_len, 0, argv, 3);
+						   (void *) &retval, &result_len, 0, argv, 3);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
@@ -446,7 +452,8 @@ lo_creat(PGconn *conn, int mode)
 	argv[0].len = 4;
 	argv[0].u.integer = mode;
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_creat,
-			   &retval, &result_len, 1, argv, 1);
+						   &retval, &result_len, 1, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -490,7 +497,8 @@ lo_create(PGconn *conn, Oid lobjId)
 	argv[0].len = 4;
 	argv[0].u.integer = lobjId;
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_create,
-			   &retval, &result_len, 1, argv, 1);
+						   &retval, &result_len, 1, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -523,7 +531,8 @@ lo_tell(PGconn *conn, int fd)
 	argv[0].u.integer = fd;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_tell,
-			   &retval, &result_len, 1, argv, 1);
+						   &retval, &result_len, 1, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -563,7 +572,8 @@ lo_tell64(PGconn *conn, int fd)
 	argv[0].u.integer = fd;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_tell64,
-			   (void *) &retval, &result_len, 0, argv, 1);
+						   (void *) &retval, &result_len, 0, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
@@ -596,7 +606,8 @@ lo_unlink(PGconn *conn, Oid lobjId)
 	argv[0].u.integer = lobjId;
 
 	PGresult   *res = PQfn(conn, conn->lobjfuncs->fn_lo_unlink,
-			   &retval, &result_len, 1, argv, 1);
+						   &retval, &result_len, 1, argv, 1);
+
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -657,6 +668,7 @@ lo_import_internal(PGconn *conn, const char *filename, Oid oid)
 	 * open the file to be read in
 	 */
 	int			fd = open(filename, O_RDONLY | PG_BINARY, 0666);
+
 	if (fd < 0)
 	{							/* error */
 		appendPQExpBuffer(&conn->errorMessage,
@@ -681,6 +693,7 @@ lo_import_internal(PGconn *conn, const char *filename, Oid oid)
 	}
 
 	int			lobj = lo_open(conn, lobjOid, INV_WRITE);
+
 	if (lobj == -1)
 	{
 		/* we assume lo_open() already set a suitable error message */
@@ -751,6 +764,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	 * open the large object.
 	 */
 	int			lobj = lo_open(conn, lobjId, INV_READ);
+
 	if (lobj == -1)
 	{
 		/* we assume lo_open() already set a suitable error message */
@@ -761,6 +775,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	 * create the file to be written to
 	 */
 	int			fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
+
 	if (fd < 0)
 	{
 		/* We must do lo_close before setting the errorMessage */
@@ -869,24 +884,25 @@ lo_initialize(PGconn *conn)
 	 * may exist in older server versions.)
 	 */
 	const char *query = "select proname, oid from pg_catalog.pg_proc "
-		"where proname in ("
-		"'lo_open', "
-		"'lo_close', "
-		"'lo_creat', "
-		"'lo_create', "
-		"'lo_unlink', "
-		"'lo_lseek', "
-		"'lo_lseek64', "
-		"'lo_tell', "
-		"'lo_tell64', "
-		"'lo_truncate', "
-		"'lo_truncate64', "
-		"'loread', "
-		"'lowrite') "
-		"and pronamespace = (select oid from pg_catalog.pg_namespace "
-		"where nspname = 'pg_catalog')";
+	"where proname in ("
+	"'lo_open', "
+	"'lo_close', "
+	"'lo_creat', "
+	"'lo_create', "
+	"'lo_unlink', "
+	"'lo_lseek', "
+	"'lo_lseek64', "
+	"'lo_tell', "
+	"'lo_tell64', "
+	"'lo_truncate', "
+	"'lo_truncate64', "
+	"'loread', "
+	"'lowrite') "
+	"and pronamespace = (select oid from pg_catalog.pg_namespace "
+	"where nspname = 'pg_catalog')";
 
 	PGresult   *res = PQexec(conn, query);
+
 	if (res == NULL)
 	{
 		free(lobjfuncs);
@@ -1031,6 +1047,7 @@ lo_hton64(pg_int64 host64)
 
 	/* High order half first, since we're doing MSB-first */
 	uint32		t = (uint32) (host64 >> 32);
+
 	swap.i32[0] = pg_hton32(t);
 
 	/* Now the low order half */
@@ -1056,6 +1073,7 @@ lo_ntoh64(pg_int64 net64)
 	swap.i64 = net64;
 
 	pg_int64	result = (uint32) pg_ntoh32(swap.i32[0]);
+
 	result <<= 32;
 	result |= (uint32) pg_ntoh32(swap.i32[1]);
 

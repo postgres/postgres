@@ -331,6 +331,7 @@ commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op)
 
 	/* flat-copy all the fields of clause ... */
 	OpExpr	   *newclause = makeNode(OpExpr);
+
 	memcpy(newclause, clause, sizeof(OpExpr));
 
 	/* ... and adjust those we need to change to commute it */
@@ -341,6 +342,7 @@ commute_restrictinfo(RestrictInfo *rinfo, Oid comm_op)
 
 	/* likewise, flat-copy all the fields of rinfo ... */
 	RestrictInfo *result = makeNode(RestrictInfo);
+
 	memcpy(result, rinfo, sizeof(RestrictInfo));
 
 	/*

@@ -16,6 +16,7 @@ PGTYPESdate_new(void)
 {
 
 	date	   *result = (date *) pgtypes_alloc(sizeof(date));
+
 	/* result can be NULL if we run out of memory */
 	return result;
 }
@@ -30,7 +31,7 @@ date
 PGTYPESdate_from_timestamp(timestamp dt)
 {
 
-	date		dDate = 0;					/* suppress compiler warning */
+	date		dDate = 0;		/* suppress compiler warning */
 
 	if (!TIMESTAMP_NOT_FINITE(dt))
 	{
@@ -410,6 +411,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 
 	/* check if we have only digits */
 	int			reading_digit = 1;
+
 	for (i = 0; str[i]; i++)
 	{
 		if (!isdigit((unsigned char) str[i]))
@@ -507,6 +509,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 	/* look for numerical tokens */
 	reading_digit = 0;
 	int			token_count = 0;
+
 	for (i = 0; i < strlen(str_copy); i++)
 	{
 		if (!isdigit((unsigned char) str_copy[i]) && reading_digit)
@@ -565,6 +568,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str)
 			return -1;
 		}
 		char	  **list = pgtypes_date_months;
+
 		for (i = 0; list[i]; i++)
 		{
 			for (j = 0; j < PGTYPES_DATE_MONTH_MAXLENGTH; j++)

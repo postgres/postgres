@@ -104,6 +104,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	SampleScanState *scanstate = makeNode(SampleScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecSampleScan;
@@ -158,6 +159,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 * Finally, initialize the TABLESAMPLE method handler.
 	 */
 	TsmRoutine *tsm = GetTsmRoutine(tsc->tsmhandler);
+
 	scanstate->tsmroutine = tsm;
 	scanstate->tsm_state = NULL;
 
@@ -241,6 +243,7 @@ tablesample_init(SampleScanState *scanstate)
 	Datum	   *params = (Datum *) palloc(list_length(scanstate->args) * sizeof(Datum));
 
 	int			i = 0;
+
 	foreach(arg, scanstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);

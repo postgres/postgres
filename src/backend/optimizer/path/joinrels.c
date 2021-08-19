@@ -578,6 +578,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		 */
 		bool		lateral_fwd = bms_overlap(rel1->relids, rel2->lateral_relids);
 		bool		lateral_rev = bms_overlap(rel2->relids, rel1->lateral_relids);
+
 		if (lateral_fwd && lateral_rev)
 			return false;		/* have lateral refs in both directions */
 		if (lateral_fwd)
@@ -625,7 +626,8 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		 * ones that are indirectly so, so search to find all such rels.
 		 */
 		Relids		join_lateral_rels = min_join_parameterization(root, joinrelids,
-													  rel1, rel2);
+																  rel1, rel2);
+
 		if (join_lateral_rels)
 		{
 			Relids		join_plus_rhs = bms_copy(joinrelids);
@@ -735,7 +737,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 * goes with this particular joining.
 	 */
 	RelOptInfo *joinrel = build_join_rel(root, joinrelids, rel1, rel2, sjinfo,
-							 &restrictlist);
+										 &restrictlist);
 
 	/*
 	 * If we've already proven this join is empty, we needn't consider any
@@ -1499,20 +1501,22 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		 * SpecialJoinInfo.
 		 */
 		SpecialJoinInfo *child_sjinfo = build_child_join_sjinfo(root, parent_sjinfo,
-											   child_rel1->relids,
-											   child_rel2->relids);
+																child_rel1->relids,
+																child_rel2->relids);
 
 		/*
 		 * Construct restrictions applicable to the child join from those
 		 * applicable to the parent join.
 		 */
 		List	   *child_restrictlist =
-			(List *) adjust_appendrel_attrs(root,
-											(Node *) parent_restrictlist,
-											nappinfos, appinfos);
+		(List *) adjust_appendrel_attrs(root,
+										(Node *) parent_restrictlist,
+										nappinfos, appinfos);
+
 		pfree(appinfos);
 
 		RelOptInfo *child_joinrel = joinrel->part_rels[cnt_parts];
+
 		if (!child_joinrel)
 		{
 			child_joinrel = build_child_join_rel(root, child_rel1, child_rel2,
@@ -1548,9 +1552,9 @@ build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
 
 	memcpy(sjinfo, parent_sjinfo, sizeof(SpecialJoinInfo));
 	AppendRelInfo **left_appinfos = find_appinfos_by_relids(root, left_relids,
-											&left_nappinfos);
+															&left_nappinfos);
 	AppendRelInfo **right_appinfos = find_appinfos_by_relids(root, right_relids,
-											 &right_nappinfos);
+															 &right_nappinfos);
 
 	sjinfo->min_lefthand = adjust_child_relids(sjinfo->min_lefthand,
 											   left_nappinfos, left_appinfos);
@@ -1706,7 +1710,8 @@ get_matching_part_pairs(PlannerInfo *root, RelOptInfo *joinrel,
 		 * are from the rel1 side.
 		 */
 		Relids		child_relids1 = bms_intersect(child_joinrel->relids,
-									  rel1->all_partrels);
+												  rel1->all_partrels);
+
 		Assert(bms_num_members(child_relids1) == bms_num_members(rel1->relids));
 
 		/*
@@ -1733,7 +1738,8 @@ get_matching_part_pairs(PlannerInfo *root, RelOptInfo *joinrel,
 		 * are from the rel2 side.
 		 */
 		Relids		child_relids2 = bms_intersect(child_joinrel->relids,
-									  rel2->all_partrels);
+												  rel2->all_partrels);
+
 		Assert(bms_num_members(child_relids2) == bms_num_members(rel2->relids));
 
 		/*

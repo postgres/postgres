@@ -88,7 +88,8 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		ExecAssignExprContext(estate, &mergestate->ps);
 
 		PartitionPruneState *prunestate = ExecCreatePartitionPruneState(&mergestate->ps,
-												   node->part_prune_info);
+																		node->part_prune_info);
+
 		mergestate->ms_prune_state = prunestate;
 
 		/* Perform an initial partition prune, if required. */
@@ -131,6 +132,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	}
 
 	PlanState **mergeplanstates = (PlanState **) palloc(nplans * sizeof(PlanState *));
+
 	mergestate->mergeplans = mergeplanstates;
 	mergestate->ms_nplans = nplans;
 
@@ -306,8 +308,9 @@ heap_compare_slots(Datum a, Datum b, void *arg)
 		datum2 = slot_getattr(s2, attno, &isNull2);
 
 		int			compare = ApplySortComparator(datum1, isNull1,
-									  datum2, isNull2,
-									  sortKey);
+												  datum2, isNull2,
+												  sortKey);
+
 		if (compare != 0)
 		{
 			INVERT_COMPARE_RESULT(compare);

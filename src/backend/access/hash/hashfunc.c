@@ -271,8 +271,9 @@ hashtext(PG_FUNCTION_ARGS)
 			int32_t		ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 			Size		bsize = ucol_getSortKey(mylocale->info.icu.ucol,
-									uchar, ulen, NULL, 0);
+												uchar, ulen, NULL, 0);
 			uint8_t    *buf = palloc(bsize);
+
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
 
@@ -325,8 +326,9 @@ hashtextextended(PG_FUNCTION_ARGS)
 			int32_t		ulen = icu_to_uchar(&uchar, VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 			Size		bsize = ucol_getSortKey(mylocale->info.icu.ucol,
-									uchar, ulen, NULL, 0);
+												uchar, ulen, NULL, 0);
 			uint8_t    *buf = palloc(bsize);
+
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
 
@@ -355,7 +357,7 @@ hashvarlena(PG_FUNCTION_ARGS)
 	struct varlena *key = PG_GETARG_VARLENA_PP(0);
 
 	Datum		result = hash_any((unsigned char *) VARDATA_ANY(key),
-					  VARSIZE_ANY_EXHDR(key));
+								  VARSIZE_ANY_EXHDR(key));
 
 	/* Avoid leaking memory for toasted inputs */
 	PG_FREE_IF_COPY(key, 0);
@@ -369,8 +371,8 @@ hashvarlenaextended(PG_FUNCTION_ARGS)
 	struct varlena *key = PG_GETARG_VARLENA_PP(0);
 
 	Datum		result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
-							   VARSIZE_ANY_EXHDR(key),
-							   PG_GETARG_INT64(1));
+										   VARSIZE_ANY_EXHDR(key),
+										   PG_GETARG_INT64(1));
 
 	PG_FREE_IF_COPY(key, 0);
 

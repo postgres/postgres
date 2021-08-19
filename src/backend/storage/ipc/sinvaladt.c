@@ -204,6 +204,7 @@ SInvalShmemSize(void)
 {
 
 	Size		size = offsetof(SISeg, procState);
+
 	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
 
 	return size;
@@ -472,6 +473,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		 * Insert new message(s) into proper slot of circular buffer
 		 */
 		int			max = segP->maxMsgNum;
+
 		while (nthistime-- > 0)
 		{
 			segP->buffer[max % MAXNUMMESSAGES] = *data++;
@@ -566,6 +568,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	/* Fetch current value of maxMsgNum using spinlock */
 	SpinLockAcquire(&segP->msgnumLock);
 	int			max = segP->maxMsgNum;
+
 	SpinLockRelease(&segP->msgnumLock);
 
 	if (stateP->resetState)
@@ -591,6 +594,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 * from the queue.
 	 */
 	int			n = 0;
+
 	while (n < datasize && stateP->nextMsgNum < max)
 	{
 		data[n++] = segP->buffer[stateP->nextMsgNum % MAXNUMMESSAGES];

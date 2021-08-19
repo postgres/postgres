@@ -83,6 +83,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	 * results into the array "bitmapplanstates".
 	 */
 	int			i = 0;
+
 	foreach(l, node->bitmapplans)
 	{
 		initNode = (Plan *) lfirst(l);

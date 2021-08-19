@@ -218,6 +218,7 @@ dataLeafPageGetUncompressed(Page page, int *nitems)
 	 * uncompressed items, and the number of items is stored in 'maxoff'
 	 */
 	ItemPointer items = (ItemPointer) GinDataPageGetData(page);
+
 	*nitems = GinPageGetOpaque(page)->maxoff;
 
 	return items;
@@ -368,6 +369,7 @@ dataGetLeftMostPage(GinBtree btree, Page page)
 	Assert(GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber);
 
 	PostingItem *pitem = GinDataPageGetPostingItem(page, FirstOffsetNumber);
+
 	return PostingItemGetBlockNumber(pitem);
 }
 
@@ -544,6 +546,7 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		 */
 
 		int			nnewsegments = freespace / GinPostingListSegmentMaxSize;
+
 		nnewsegments += GinDataPageMaxDataSize / GinPostingListSegmentMaxSize;
 		maxitems = Min(maxitems, nnewsegments * MinTuplesPerSegment);
 	}
@@ -750,9 +753,10 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 			oldsegsize = GinDataPageMaxDataSize;
 
 		ItemPointer cleaned = ginVacuumItemPointers(gvs,
-										seginfo->items,
-										seginfo->nitems,
-										&ncleaned);
+													seginfo->items,
+													seginfo->nitems,
+													&ncleaned);
+
 		pfree(seginfo->items);
 		seginfo->items = NULL;
 		seginfo->nitems = 0;
@@ -809,6 +813,7 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		 * this).
 		 */
 		bool		modified = false;
+
 		dlist_foreach(iter, &leaf->segments)
 		{
 			leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node,
@@ -843,6 +848,7 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 			XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 			XLogRegisterBufData(0, leaf->walinfo, leaf->walinfolen);
 			XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_VACUUM_DATA_LEAF_PAGE);
+
 			PageSetLSN(page, recptr);
 		}
 
@@ -872,18 +878,20 @@ computeLeafRecompressWALData(disassembledLeaf *leaf)
 	}
 
 	char	   *walbufbegin =
-		palloc(sizeof(ginxlogRecompressDataLeaf) +
-			   BLCKSZ +			/* max size needed to hold the segment data */
-			   nmodified * 2	/* (segno + action) per action */
-		);
+	palloc(sizeof(ginxlogRecompressDataLeaf) +
+		   BLCKSZ +				/* max size needed to hold the segment data */
+		   nmodified * 2		/* (segno + action) per action */
+	);
 	char	   *walbufend = walbufbegin;
 
 	ginxlogRecompressDataLeaf *recompress_xlog = (ginxlogRecompressDataLeaf *) walbufend;
+
 	walbufend += sizeof(ginxlogRecompressDataLeaf);
 
 	recompress_xlog->nactions = nmodified;
 
 	int			segno = 0;
+
 	dlist_foreach(iter, &leaf->segments)
 	{
 		leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node,
@@ -980,6 +988,7 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf)
 
 	char	   *ptr = (char *) GinDataLeafPageGetPostingList(page);
 	int			newsize = 0;
+
 	dlist_foreach(iter, &leaf->segments)
 	{
 		leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node, iter.cur);
@@ -1033,6 +1042,7 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 	int			lsize = 0;
 	char	   *ptr = (char *) GinDataLeafPageGetPostingList(lpage);
 	dlist_node *firstright = dlist_next_node(&leaf->segments, leaf->lastleft);
+
 	for (node = dlist_head_node(&leaf->segments);
 		 node != firstright;
 		 node = dlist_next_node(&leaf->segments, node))
@@ -1054,6 +1064,7 @@ dataPlaceToPageLeafSplit(disassembledLeaf *leaf,
 	/* Copy the segments that go to the right page */
 	ptr = (char *) GinDataLeafPageGetPostingList(rpage);
 	int			rsize = 0;
+
 	for (node = firstright;
 		 ;
 		 node = dlist_next_node(&leaf->segments, node))
@@ -1128,6 +1139,7 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 	/* Update existing downlink to point to next page (on internal page) */
 	PostingItem *pitem = GinDataPageGetPostingItem(page, off);
+
 	PostingItemSetBlockNumber(pitem, updateblkno);
 
 	/* Add new item */
@@ -1237,6 +1249,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 
 	Page		lpage = PageGetTempPage(oldpage);
 	Page		rpage = PageGetTempPage(oldpage);
+
 	GinInitPage(lpage, GinPageGetOpaque(oldpage)->flags, pageSize);
 	GinInitPage(rpage, GinPageGetOpaque(oldpage)->flags, pageSize);
 
@@ -1284,6 +1297,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 
 	/* set up right bound for left page */
 	ItemPointer bound = GinDataPageGetRightBound(lpage);
+
 	*bound = GinDataPageGetPostingItem(lpage, nleftitems)->key;
 
 	/* set up right bound for right page */
@@ -1342,6 +1356,7 @@ disassembleLeaf(Page page)
 	Pointer		segend;
 
 	disassembledLeaf *leaf = palloc0(sizeof(disassembledLeaf));
+
 	dlist_init(&leaf->segments);
 
 	if (GinPageIsCompressed(page))
@@ -1446,7 +1461,8 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 			ItemPointerData next_first;
 
 			leafSegmentInfo *next = (leafSegmentInfo *) dlist_container(leafSegmentInfo, node,
-													   dlist_next_node(&leaf->segments, iter.cur));
+																		dlist_next_node(&leaf->segments, iter.cur));
+
 			if (next->items)
 				next_first = next->items[0];
 			else
@@ -1487,8 +1503,9 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 		}
 
 		ItemPointer tmpitems = ginMergeItemPointers(cur->items, cur->nitems,
-										nextnew, nthis,
-										&ntmpitems);
+													nextnew, nthis,
+													&ntmpitems);
+
 		if (ntmpitems != cur->nitems)
 		{
 			/*
@@ -1702,6 +1719,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 	 * overwrite an existing segment.
 	 */
 	bool		modified = false;
+
 	dlist_foreach(iter, &leaf->segments)
 	{
 		leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node,
@@ -1716,6 +1734,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 
 			segsize = SizeOfGinPostingList(seginfo->seg);
 			GinPostingList *tmp = palloc(segsize);
+
 			memcpy(tmp, seginfo->seg, segsize);
 			seginfo->seg = tmp;
 		}
@@ -1741,6 +1760,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 
 	/* Construct the new root page in memory first. */
 	Page		tmppage = (Page) palloc(BLCKSZ);
+
 	GinInitPage(tmppage, GIN_DATA | GIN_LEAF | GIN_COMPRESSED, BLCKSZ);
 	GinPageGetOpaque(tmppage)->rightlink = InvalidBlockNumber;
 
@@ -1751,15 +1771,17 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	int			nrootitems = 0;
 	int			rootsize = 0;
 	Pointer		ptr = (Pointer) GinDataLeafPageGetPostingList(tmppage);
+
 	while (nrootitems < nitems)
 	{
 		int			npacked;
 
 		GinPostingList *segment = ginCompressPostingList(&items[nrootitems],
-										 nitems - nrootitems,
-										 GinPostingListSegmentMaxSize,
-										 &npacked);
+														 nitems - nrootitems,
+														 GinPostingListSegmentMaxSize,
+														 &npacked);
 		int			segsize = SizeOfGinPostingList(segment);
+
 		if (rootsize + segsize > GinDataPageMaxDataSize)
 			break;
 
@@ -1803,6 +1825,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
 
 		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE);
+
 		PageSetLSN(page, recptr);
 	}
 

@@ -152,7 +152,8 @@ PrepareClientEncoding(int encoding)
 		 * Load the fmgr info into TopMemoryContext (could still fail here)
 		 */
 		ConvProcInfo *convinfo = (ConvProcInfo *) MemoryContextAlloc(TopMemoryContext,
-													   sizeof(ConvProcInfo));
+																	 sizeof(ConvProcInfo));
+
 		convinfo->s_encoding = current_server_encoding;
 		convinfo->c_encoding = encoding;
 		fmgr_info_cxt(to_server_proc, &convinfo->to_server_info,
@@ -162,6 +163,7 @@ PrepareClientEncoding(int encoding)
 
 		/* Attach new info to head of list */
 		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
 		ConvProcList = lcons(convinfo, ConvProcList);
 		MemoryContextSwitchTo(oldcontext);
 
@@ -238,6 +240,7 @@ SetClientEncoding(int encoding)
 	 * leak memory.
 	 */
 	bool		found = false;
+
 	foreach(lc, ConvProcList)
 	{
 		ConvProcInfo *convinfo = (ConvProcInfo *) lfirst(lc);
@@ -299,20 +302,23 @@ InitializeClientEncoding(void)
 	 * have to do this more than once.
 	 */
 	int			current_server_encoding = GetDatabaseEncoding();
+
 	if (current_server_encoding != PG_UTF8 &&
 		current_server_encoding != PG_SQL_ASCII)
 	{
 
 		Assert(IsTransactionState());
 		Oid			utf8_to_server_proc =
-			FindDefaultConversionProc(PG_UTF8,
-									  current_server_encoding);
+		FindDefaultConversionProc(PG_UTF8,
+								  current_server_encoding);
+
 		/* If there's no such conversion, just leave the pointer as NULL */
 		if (OidIsValid(utf8_to_server_proc))
 		{
 
 			FmgrInfo   *finfo = (FmgrInfo *) MemoryContextAlloc(TopMemoryContext,
-													sizeof(FmgrInfo));
+																sizeof(FmgrInfo));
+
 			fmgr_info_cxt(utf8_to_server_proc, finfo,
 						  TopMemoryContext);
 			/* Set Utf8ToServerConvProc only after data is fully valid */
@@ -369,6 +375,7 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		elog(ERROR, "cannot perform encoding conversion outside a transaction");
 
 	Oid			proc = FindDefaultConversionProc(src_encoding, dest_encoding);
+
 	if (!OidIsValid(proc))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -393,8 +400,8 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 						   len)));
 
 	unsigned char *result = (unsigned char *)
-		MemoryContextAllocHuge(CurrentMemoryContext,
-							   (Size) len * MAX_CONVERSION_GROWTH + 1);
+	MemoryContextAllocHuge(CurrentMemoryContext,
+						   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
 	(void) OidFunctionCall6(proc,
 							Int32GetDatum(src_encoding),
@@ -472,12 +479,13 @@ pg_do_encoding_conversion_buf(Oid proc,
 		srclen = ((destlen - 1) / (Size) MAX_CONVERSION_GROWTH);
 
 	Datum		result = OidFunctionCall6(proc,
-							  Int32GetDatum(src_encoding),
-							  Int32GetDatum(dest_encoding),
-							  CStringGetDatum(src),
-							  CStringGetDatum(dest),
-							  Int32GetDatum(srclen),
-							  BoolGetDatum(noError));
+										  Int32GetDatum(src_encoding),
+										  Int32GetDatum(dest_encoding),
+										  CStringGetDatum(src),
+										  CStringGetDatum(dest),
+										  Int32GetDatum(srclen),
+										  BoolGetDatum(noError));
+
 	return DatumGetInt32(result);
 }
 
@@ -500,7 +508,7 @@ pg_convert_to(PG_FUNCTION_ARGS)
 	 * varlena types, and thus structurally identical.
 	 */
 	Datum		result = DirectFunctionCall3(pg_convert, string,
-								 src_encoding_name, dest_encoding_name);
+											 src_encoding_name, dest_encoding_name);
 
 	PG_RETURN_DATUM(result);
 }
@@ -519,7 +527,7 @@ pg_convert_from(PG_FUNCTION_ARGS)
 														 CStringGetDatum(DatabaseEncoding->name));
 
 	Datum		result = DirectFunctionCall3(pg_convert, string,
-								 src_encoding_name, dest_encoding_name);
+											 src_encoding_name, dest_encoding_name);
 
 	/*
 	 * pg_convert returns a bytea, which we in turn return as text, relying on
@@ -559,13 +567,14 @@ pg_convert(PG_FUNCTION_ARGS)
 	/* make sure that source string is valid */
 	int			len = VARSIZE_ANY_EXHDR(string);
 	const char *src_str = VARDATA_ANY(string);
+
 	(void) pg_verify_mbstr(src_encoding, src_str, len, false);
 
 	/* perform conversion */
 	char	   *dest_str = (char *) pg_do_encoding_conversion((unsigned char *) unconstify(char *, src_str),
-												  len,
-												  src_encoding,
-												  dest_encoding);
+															  len,
+															  src_encoding,
+															  dest_encoding);
 
 	/* update len if conversion actually happened */
 	if (dest_str != src_str)
@@ -575,6 +584,7 @@ pg_convert(PG_FUNCTION_ARGS)
 	 * build bytea data type structure.
 	 */
 	bytea	   *retval = (bytea *) palloc(len + VARHDRSZ);
+
 	SET_VARSIZE(retval, len + VARHDRSZ);
 	memcpy(VARDATA(retval), dest_str, len);
 
@@ -795,8 +805,8 @@ perform_default_encoding_conversion(const char *src, int len,
 						   len)));
 
 	char	   *result = (char *)
-		MemoryContextAllocHuge(CurrentMemoryContext,
-							   (Size) len * MAX_CONVERSION_GROWTH + 1);
+	MemoryContextAllocHuge(CurrentMemoryContext,
+						   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
 	FunctionCall6(flinfo,
 				  Int32GetDatum(src_encoding),
@@ -863,6 +873,7 @@ pg_unicode_to_server(pg_wchar c, unsigned char *s)
 
 	/* If the server encoding is UTF-8, we just need to reformat the code */
 	int			server_encoding = GetDatabaseEncoding();
+
 	if (server_encoding == PG_UTF8)
 	{
 		unicode_to_utf8(c, s);
@@ -881,6 +892,7 @@ pg_unicode_to_server(pg_wchar c, unsigned char *s)
 	/* Construct UTF-8 source string */
 	unicode_to_utf8(c, c_as_utf8);
 	int			c_as_utf8_len = pg_utf_mblen(c_as_utf8);
+
 	c_as_utf8[c_as_utf8_len] = '\0';
 
 	/* Convert, or throw error if we can't */
@@ -1493,6 +1505,7 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 	Assert(PG_VALID_ENCODING(encoding));
 
 	int			oklen = pg_wchar_table[encoding].mbverifystr((const unsigned char *) mbstr, len);
+
 	if (oklen != len)
 	{
 		if (noError)

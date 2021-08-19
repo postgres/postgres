@@ -27,6 +27,7 @@ pg_malloc_internal(size_t size, int flags)
 	if (size == 0)
 		size = 1;
 	void	   *tmp = malloc(size);
+
 	if (tmp == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -68,6 +69,7 @@ pg_realloc(void *ptr, size_t size)
 	if (ptr == NULL && size == 0)
 		size = 1;
 	void	   *tmp = realloc(ptr, size);
+
 	if (!tmp)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -90,6 +92,7 @@ pg_strdup(const char *in)
 		exit(EXIT_FAILURE);
 	}
 	char	   *tmp = strdup(in);
+
 	if (!tmp)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -152,6 +155,7 @@ pnstrdup(const char *in, Size size)
 
 	int			len = strnlen(in, size);
 	char	   *tmp = malloc(len + 1);
+
 	if (tmp == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));

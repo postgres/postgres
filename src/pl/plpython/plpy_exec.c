@@ -320,6 +320,7 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	 * PLy_output_setup_tuple are responsible for not doing repetitive work.
 	 */
 	TupleDesc	rel_descr = RelationGetDescr(tdata->tg_relation);
+
 	if (proc->result.typoid != rel_descr->tdtypeid)
 		PLy_output_setup_func(&proc->result, proc->mcxt,
 							  rel_descr->tdtypeid,
@@ -488,9 +489,10 @@ PLy_function_save_args(PLyProcedure *proc)
 
 	/* saved args are always allocated in procedure's context */
 	PLySavedArgs *result = (PLySavedArgs *)
-		MemoryContextAllocZero(proc->mcxt,
-							   offsetof(PLySavedArgs, namedargs) +
-							   proc->nargs * sizeof(PyObject *));
+	MemoryContextAllocZero(proc->mcxt,
+						   offsetof(PLySavedArgs, namedargs) +
+						   proc->nargs * sizeof(PyObject *));
+
 	result->nargs = proc->nargs;
 
 	/* Fetch the "args" list */
@@ -923,6 +925,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			char	   *plattstr;
 
 			PyObject   *platt = PyList_GetItem(plkeys, i);
+
 			if (PyString_Check(platt))
 				plattstr = PyString_AsString(platt);
 			else if (PyUnicode_Check(platt))
@@ -935,6 +938,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 				plattstr = NULL;	/* keep compiler quiet */
 			}
 			int			attn = SPI_fnumber(tupdesc, plattstr);
+
 			if (attn == SPI_ERROR_NOATTRIBUTE)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -1068,6 +1072,7 @@ PLy_abort_open_subtransactions(int save_subxact_level)
 		RollbackAndReleaseCurrentSubTransaction();
 
 		PLySubtransactionData *subtransactiondata = (PLySubtransactionData *) linitial(explicit_subtransactions);
+
 		explicit_subtransactions = list_delete_first(explicit_subtransactions);
 
 		MemoryContextSwitchTo(subtransactiondata->oldcontext);

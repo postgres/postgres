@@ -222,6 +222,7 @@ _readBitmapset(void)
 		if (length == 1 && token[0] == ')')
 			break;
 		int			val = (int) strtol(token, &endptr, 10);
+
 		if (endptr != token + length)
 			elog(ERROR, "unrecognized integer: \"%.*s\"", length, token);
 		result = bms_add_member(result, val);
@@ -2107,6 +2108,7 @@ _readCustomScan(void)
 	token = pg_strtok(&length); /* CustomName */
 	char	   *custom_name = nullable_string(token, length);
 	const CustomScanMethods *methods = GetCustomScanMethods(custom_name, false);
+
 	local_node->methods = methods;
 
 	READ_DONE();
@@ -2646,12 +2648,14 @@ _readExtensibleNode(void)
 	token = pg_strtok(&length); /* get extnodename */
 
 	const char *extnodename = nullable_string(token, length);
+
 	if (!extnodename)
 		elog(ERROR, "extnodename has to be supplied");
 	const ExtensibleNodeMethods *methods = GetExtensibleNodeMethods(extnodename, false);
 
 	ExtensibleNode *local_node = (ExtensibleNode *) newNode(methods->node_size,
-											T_ExtensibleNode);
+															T_ExtensibleNode);
+
 	local_node->extnodename = extnodename;
 
 	/* deserialize the private fields */
@@ -2996,6 +3000,7 @@ readDatum(bool typbyval)
 	 * read the actual length of the value
 	 */
 	const char *token = pg_strtok(&tokenLength);
+
 	length = atoui(token);
 
 	token = pg_strtok(&tokenLength);	/* read the '[' */
@@ -3050,6 +3055,7 @@ readAttrNumberCols(int numCols)
 		return NULL;
 
 	AttrNumber *attr_vals = (AttrNumber *) palloc(numCols * sizeof(AttrNumber));
+
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3073,6 +3079,7 @@ readOidCols(int numCols)
 		return NULL;
 
 	Oid		   *oid_vals = (Oid *) palloc(numCols * sizeof(Oid));
+
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3096,6 +3103,7 @@ readIntCols(int numCols)
 		return NULL;
 
 	int		   *int_vals = (int *) palloc(numCols * sizeof(int));
+
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);
@@ -3119,6 +3127,7 @@ readBoolCols(int numCols)
 		return NULL;
 
 	bool	   *bool_vals = (bool *) palloc(numCols * sizeof(bool));
+
 	for (i = 0; i < numCols; i++)
 	{
 		token = pg_strtok(&tokenLength);

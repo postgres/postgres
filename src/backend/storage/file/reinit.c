@@ -173,7 +173,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		ctl.entrysize = sizeof(unlogged_relation_entry);
 		ctl.hcxt = CurrentMemoryContext;
 		HTAB	   *hash = hash_create("unlogged relation OIDs", 32, &ctl,
-						   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+									   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 		/* Scan the directory. */
 		dbspace_dir = AllocateDir(dbspacedirname);
@@ -382,6 +382,7 @@ parse_filename_for_nontemp_relation(const char *name, int *oidchars,
 	{
 
 		int			forkchar = forkname_chars(&name[pos + 1], fork);
+
 		if (forkchar <= 0)
 			return false;
 		pos += forkchar + 1;

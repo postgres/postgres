@@ -90,6 +90,7 @@ pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 	 * type.
 	 */
 	time_t		now = tval.tv_sec;
+
 	strftime(timestr, ts_len,
 			 "%Y-%m-%d %H:%M:%S",
 			 localtime(&now));
@@ -128,6 +129,7 @@ pqTraceOutputInt16(FILE *pfdebug, const char *data, int *cursor)
 	memcpy(&tmp, data + *cursor, 2);
 	*cursor += 2;
 	int			result = (int) pg_ntoh16(tmp);
+
 	fprintf(pfdebug, " %d", result);
 
 	return result;
@@ -242,6 +244,7 @@ pqTraceOutputB(FILE *f, const char *message, int *cursor)
 	{
 
 		int			nbytes = pqTraceOutputInt32(f, message, cursor, false);
+
 		if (nbytes == -1)
 			continue;
 		pqTraceOutputNchar(f, nbytes, message, cursor);
@@ -286,6 +289,7 @@ pqTraceOutputD(FILE *f, bool toServer, const char *message, int *cursor)
 
 		fprintf(f, "DataRow\t");
 		int			nfields = pqTraceOutputInt16(f, message, cursor);
+
 		for (i = 0; i < nfields; i++)
 		{
 			len = pqTraceOutputInt32(f, message, cursor, false);
@@ -307,10 +311,12 @@ pqTraceOutputNR(FILE *f, const char *type, const char *message, int *cursor,
 
 		pqTraceOutputByte1(f, message, cursor);
 		char		field = message[*cursor - 1];
+
 		if (field == '\0')
 			break;
 
 		bool		suppress = regress && (field == 'L' || field == 'F' || field == 'R');
+
 		pqTraceOutputString(f, message, cursor, suppress);
 	}
 }
@@ -485,6 +491,7 @@ pqTraceOutputV(FILE *f, const char *message, int *cursor)
 
 	fprintf(f, "FunctionCallResponse\t");
 	int			len = pqTraceOutputInt32(f, message, cursor, false);
+
 	if (len != -1)
 		pqTraceOutputNchar(f, len, message, cursor);
 }

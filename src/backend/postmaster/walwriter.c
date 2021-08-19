@@ -119,8 +119,9 @@ WalWriterMain(void)
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
 	MemoryContext walwriter_context = AllocSetContextCreate(TopMemoryContext,
-											  "Wal Writer",
-											  ALLOCSET_DEFAULT_SIZES);
+															"Wal Writer",
+															ALLOCSET_DEFAULT_SIZES);
+
 	MemoryContextSwitchTo(walwriter_context);
 
 	/*
@@ -209,6 +210,7 @@ WalWriterMain(void)
 	 */
 	int			left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
 	bool		hibernating = false;
+
 	SetWalWriterSleeping(false);
 
 	/*

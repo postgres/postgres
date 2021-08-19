@@ -75,7 +75,7 @@ PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 
 	/* See if the desired buffer already exists */
 	LocalBufferLookupEnt *hresult = (LocalBufferLookupEnt *)
-		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
+	hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
 
 	if (hresult)
 	{
@@ -123,7 +123,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 	/* See if the desired buffer already exists */
 	LocalBufferLookupEnt *hresult = (LocalBufferLookupEnt *)
-		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
+	hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
 
 	if (hresult)
 	{
@@ -513,6 +513,7 @@ GetLocalBufferStorage(void)
 
 		/* Start with a 16-buffer request; subsequent ones double each time */
 		int			num_bufs = Max(num_bufs_in_block * 2, 16);
+
 		/* But not more than what we need for all remaining local bufs */
 		num_bufs = Min(num_bufs, NLocBuffer - total_bufs_allocated);
 		/* And don't overflow MaxAllocSize, either */
@@ -526,6 +527,7 @@ GetLocalBufferStorage(void)
 
 	/* Allocate next buffer in current memory block */
 	char	   *this_buf = cur_block + next_buf_in_block * BLCKSZ;
+
 	next_buf_in_block++;
 	total_bufs_allocated++;
 

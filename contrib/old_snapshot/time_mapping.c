@@ -56,6 +56,7 @@ pg_old_snapshot_time_mapping(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
 		mapping = GetOldSnapshotTimeMapping();
 		funcctx->user_fctx = mapping;
 		funcctx->tuple_desc = MakeOldSnapshotTimeMappingTupleDesc();
@@ -69,6 +70,7 @@ pg_old_snapshot_time_mapping(PG_FUNCTION_ARGS)
 	{
 
 		HeapTuple	tuple = MakeOldSnapshotTimeMappingTuple(funcctx->tuple_desc, mapping);
+
 		++mapping->current_index;
 		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
 	}
@@ -84,7 +86,8 @@ GetOldSnapshotTimeMapping(void)
 {
 
 	OldSnapshotTimeMapping *mapping = palloc(offsetof(OldSnapshotTimeMapping, xid_by_minute)
-					 + sizeof(TransactionId) * OLD_SNAPSHOT_TIME_MAP_ENTRIES);
+											 + sizeof(TransactionId) * OLD_SNAPSHOT_TIME_MAP_ENTRIES);
+
 	mapping->current_index = 0;
 
 	LWLockAcquire(OldSnapshotTimeMapLock, LW_SHARED);
@@ -135,14 +138,14 @@ MakeOldSnapshotTimeMappingTuple(TupleDesc tupdesc, OldSnapshotTimeMapping *mappi
 	 * the array.
 	 */
 	int			array_position = (mapping->head_offset + mapping->current_index)
-		% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
+	% OLD_SNAPSHOT_TIME_MAP_ENTRIES;
 
 	/*
 	 * No explicit timestamp is stored for any entry other than the oldest
 	 * one, but each entry corresponds to 1-minute period, so we can just add.
 	 */
 	TimestampTz timestamp = TimestampTzPlusMilliseconds(mapping->head_timestamp,
-											mapping->current_index * 60000);
+														mapping->current_index * 60000);
 
 	/* Initialize nulls and values arrays. */
 	memset(nulls, 0, sizeof(nulls));

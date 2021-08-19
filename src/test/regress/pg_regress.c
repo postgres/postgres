@@ -274,6 +274,7 @@ stop_postmaster(void)
 				 bindir ? "/" : "",
 				 temp_instance);
 		int			r = system(buf);
+
 		if (r != 0)
 		{
 			fprintf(stderr, _("\n%s: could not stop postmaster: exit code was %d\n"),
@@ -493,6 +494,7 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 	}
 
 	char	  **names = pgfnames(indir);
+
 	if (!names)
 		/* Error logged in pgfnames */
 		exit(2);
@@ -630,6 +632,7 @@ load_resultmap(void)
 	/* scan the file ... */
 	snprintf(buf, sizeof(buf), "%s/resultmap", inputdir);
 	FILE	   *f = fopen(buf, "r");
+
 	if (!f)
 	{
 		/* OK if it doesn't exist, else complain */
@@ -645,11 +648,13 @@ load_resultmap(void)
 
 		/* strip trailing whitespace, especially the newline */
 		int			i = strlen(buf);
+
 		while (i > 0 && isspace((unsigned char) buf[i - 1]))
 			buf[--i] = '\0';
 
 		/* parse out the line fields */
 		char	   *file_type = strchr(buf, ':');
+
 		if (!file_type)
 		{
 			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
@@ -659,6 +664,7 @@ load_resultmap(void)
 		*file_type++ = '\0';
 
 		char	   *platform = strchr(file_type, ':');
+
 		if (!platform)
 		{
 			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
@@ -667,6 +673,7 @@ load_resultmap(void)
 		}
 		*platform++ = '\0';
 		char	   *expected = strchr(platform, '=');
+
 		if (!expected)
 		{
 			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
@@ -798,7 +805,8 @@ initialize_environment(void)
 		if (!old_pgoptions)
 			old_pgoptions = "";
 		char	   *new_pgoptions = psprintf("%s %s",
-								 old_pgoptions, my_pgoptions);
+											 old_pgoptions, my_pgoptions);
+
 		setenv("PGOPTIONS", new_pgoptions, 1);
 		free(new_pgoptions);
 	}
@@ -975,6 +983,7 @@ current_windows_user(const char **acct, const char **dom)
 		exit(2);
 	}
 	TOKEN_USER *tokenuser = pg_malloc(retlen);
+
 	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
 	{
 		fprintf(stderr,
@@ -1144,6 +1153,7 @@ psql_command(const char *database, const char *query,...)
 
 	/* Now escape any shell double-quote metacharacters */
 	char	   *d = query_escaped;
+
 	for (s = query_formatted; *s; s++)
 	{
 		if (strchr("\\\"$`", *s))
@@ -1188,6 +1198,7 @@ spawn_process(const char *cmdline)
 		fflush(logfile);
 
 	pid_t		pid = fork();
+
 	if (pid == -1)
 	{
 		fprintf(stderr, _("%s: could not fork: %s\n"),
@@ -1205,6 +1216,7 @@ spawn_process(const char *cmdline)
 		 */
 
 		char	   *cmdline2 = psprintf("exec %s", cmdline);
+
 		execl(shellprog, shellprog, "-c", cmdline2, (char *) NULL);
 		fprintf(stderr, _("%s: could not exec \"%s\": %s\n"),
 				progname, shellprog, strerror(errno));
@@ -1218,6 +1230,7 @@ spawn_process(const char *cmdline)
 
 	/* Find CMD.EXE location using COMSPEC, if it's set */
 	const char *comspec = getenv("COMSPEC");
+
 	if (comspec == NULL)
 		comspec = "CMD";
 
@@ -1249,6 +1262,7 @@ file_size(const char *file)
 	}
 	fseek(f, 0, SEEK_END);
 	long		r = ftell(f);
+
 	fclose(f);
 	return r;
 }
@@ -1334,6 +1348,7 @@ get_alternative_expectfile(const char *expectfile, int i)
 
 	strcpy(tmp, expectfile);
 	char	   *last_dot = strrchr(tmp, '.');
+
 	if (!last_dot)
 	{
 		free(tmp);
@@ -1354,6 +1369,7 @@ run_diff(const char *cmd, const char *filename)
 {
 
 	int			r = system(cmd);
+
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 	{
 		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
@@ -1427,12 +1443,14 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 	/* There may be secondary comparison files that match better */
 	int			best_line_count = file_line_count(diff);
+
 	strcpy(best_expect_file, expectfile);
 
 	for (i = 0; i <= 9; i++)
 	{
 
 		char	   *alt_expectfile = get_alternative_expectfile(expectfile, i);
+
 		if (!alt_expectfile)
 		{
 			fprintf(stderr, _("Unable to check secondary comparison files: %s\n"),
@@ -1501,6 +1519,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 	/* Write diff header */
 	FILE	   *difffile = fopen(difffilename, "a");
+
 	if (difffile)
 	{
 		fprintf(difffile,
@@ -1560,6 +1579,7 @@ wait_for_tests(PID_TYPE * pids, int *statuses, instr_time *stoptimes,
 		DWORD		exit_status;
 
 		int			r = WaitForMultipleObjects(tests_left, active_pids, FALSE, INFINITE);
+
 		if (r < WAIT_OBJECT_0 || r >= WAIT_OBJECT_0 + tests_left)
 		{
 			fprintf(stderr, _("failed to wait for subprocesses: error code %lu\n"),
@@ -1645,6 +1665,7 @@ run_schedule(const char *schedule, test_start_function startfunc,
 	memset(tags, 0, sizeof(tags));
 
 	FILE	   *scf = fopen(schedule, "r");
+
 	if (!scf)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
@@ -1663,6 +1684,7 @@ run_schedule(const char *schedule, test_start_function startfunc,
 
 		/* strip trailing whitespace, especially the newline */
 		int			i = strlen(scbuf);
+
 		while (i > 0 && isspace((unsigned char) scbuf[i - 1]))
 			scbuf[--i] = '\0';
 
@@ -1708,6 +1730,7 @@ run_schedule(const char *schedule, test_start_function startfunc,
 						exit(2);
 					}
 					char		sav = *c;
+
 					*c = '\0';
 					tests[num_tests] = pg_strdup(test);
 					num_tests++;
@@ -1808,6 +1831,7 @@ run_schedule(const char *schedule, test_start_function startfunc,
 				if (postfunc)
 					(*postfunc) (rl->str);
 				bool		newdiff = results_differ(tests[i], rl->str, el->str);
+
 				if (newdiff && tl)
 				{
 					printf("%s ", tl->str);
@@ -1889,6 +1913,7 @@ run_single_test(const char *test, test_start_function startfunc,
 
 	status(_("test %-28s ... "), test);
 	PID_TYPE	pid = (startfunc) (test, &resultfiles, &expectfiles, &tags);
+
 	INSTR_TIME_SET_CURRENT(starttime);
 	wait_for_tests(&pid, &exit_status, &stoptime, NULL, 1);
 
@@ -1908,6 +1933,7 @@ run_single_test(const char *test, test_start_function startfunc,
 		if (postfunc)
 			(*postfunc) (rl->str);
 		bool		newdiff = results_differ(test, rl->str, el->str);
+
 		if (newdiff && tl)
 		{
 			printf("%s ", tl->str);
@@ -1962,6 +1988,7 @@ open_result_files(void)
 	snprintf(file, sizeof(file), "%s/regression.diffs", outputdir);
 	difffilename = pg_strdup(file);
 	FILE	   *difffile = fopen(difffilename, "w");
+
 	if (!difffile)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
@@ -2364,6 +2391,7 @@ regression_main(int argc, char *argv[],
 		 */
 		snprintf(buf, sizeof(buf), "%s/data/postgresql.conf", temp_instance);
 		FILE	   *pg_conf = fopen(buf, "a");
+
 		if (pg_conf == NULL)
 		{
 			fprintf(stderr, _("\n%s: could not open \"%s\" for adding extra config: %s\n"), progname, buf, strerror(errno));
@@ -2383,6 +2411,7 @@ regression_main(int argc, char *argv[],
 			char		line_buf[1024];
 
 			FILE	   *extra_conf = fopen(temp_config, "r");
+
 			if (extra_conf == NULL)
 			{
 				fprintf(stderr, _("\n%s: could not open \"%s\" to read extra config: %s\n"), progname, temp_config, strerror(errno));

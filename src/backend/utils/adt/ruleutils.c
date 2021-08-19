@@ -560,6 +560,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 
 		argtypes[0] = OIDOID;
 		SPIPlanPtr	plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
+
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getrulebyoid);
 		SPI_keepplan(plan);
@@ -572,6 +573,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	args[0] = ObjectIdGetDatum(ruleoid);
 	nulls[0] = ' ';
 	int			spirc = SPI_execute_plan(plan_getrulebyoid, args, nulls, true, 0);
+
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for rule %u", ruleoid);
 	if (SPI_processed != 1)
@@ -738,6 +740,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 		argtypes[0] = OIDOID;
 		argtypes[1] = NAMEOID;
 		SPIPlanPtr	plan = SPI_prepare(query_getviewrule, 2, argtypes);
+
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getviewrule);
 		SPI_keepplan(plan);
@@ -752,6 +755,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 	nulls[0] = ' ';
 	nulls[1] = ' ';
 	int			spirc = SPI_execute_plan(plan_getviewrule, args, nulls, true, 0);
+
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %u", viewoid);
 	if (SPI_processed != 1)
@@ -835,7 +839,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 				ObjectIdGetDatum(trigid));
 
 	SysScanDesc tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
-								NULL, 1, skey);
+											NULL, 1, skey);
 
 	HeapTuple	ht_trig = systable_getnext(tgscan);
 
@@ -855,6 +859,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	initStringInfo(&buf);
 
 	char	   *tgname = NameStr(trigrec->tgname);
+
 	appendStringInfo(&buf, "CREATE %sTRIGGER %s ",
 					 OidIsValid(trigrec->tgconstraint) ? "CONSTRAINT " : "",
 					 quote_identifier(tgname));
@@ -900,7 +905,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 				if (i > 0)
 					appendStringInfoString(&buf, ", ");
 				char	   *attname = get_attname(trigrec->tgrelid,
-									  trigrec->tgattr.values[i], false);
+												  trigrec->tgattr.values[i], false);
+
 				appendStringInfoString(&buf, quote_identifier(attname));
 			}
 		}
@@ -938,7 +944,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	}
 
 	Datum		value = fastgetattr(ht_trig, Anum_pg_trigger_tgoldtable,
-						tgrel->rd_att, &isnull);
+									tgrel->rd_att, &isnull);
+
 	if (!isnull)
 		tgoldtable = NameStr(*DatumGetName(value));
 	else
@@ -981,6 +988,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 		/* Build minimal OLD and NEW RTEs for the rel */
 		RangeTblEntry *oldrte = makeNode(RangeTblEntry);
+
 		oldrte->rtekind = RTE_RELATION;
 		oldrte->relid = trigrec->tgrelid;
 		oldrte->relkind = relkind;
@@ -992,6 +1000,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		oldrte->inFromCl = true;
 
 		RangeTblEntry *newrte = makeNode(RangeTblEntry);
+
 		newrte->rtekind = RTE_RELATION;
 		newrte->relid = trigrec->tgrelid;
 		newrte->relkind = relkind;
@@ -1042,6 +1051,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		if (isnull)
 			elog(ERROR, "tgargs is null for trigger %u", trigid);
 		char	   *p = (char *) VARDATA_ANY(DatumGetByteaPP(value));
+
 		for (i = 0; i < trigrec->tgnargs; i++)
 		{
 			if (i > 0)
@@ -1085,9 +1095,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	int			prettyFlags = PRETTYFLAG_INDENT;
 
 	char	   *res = pg_get_indexdef_worker(indexrelid, 0, NULL,
-								 false, false,
-								 false, false,
-								 prettyFlags, true);
+											 false, false,
+											 false, false,
+											 prettyFlags, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1105,9 +1115,9 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 	int			prettyFlags = pretty ? (PRETTYFLAG_PAREN | PRETTYFLAG_INDENT | PRETTYFLAG_SCHEMA) : PRETTYFLAG_INDENT;
 
 	char	   *res = pg_get_indexdef_worker(indexrelid, colno, NULL,
-								 colno != 0, false,
-								 false, false,
-								 prettyFlags, true);
+											 colno != 0, false,
+											 false, false,
+											 prettyFlags, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -1167,6 +1177,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	 * Fetch the pg_index tuple by the Oid of the index
 	 */
 	HeapTuple	ht_idx = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexrelid));
+
 	if (!HeapTupleIsValid(ht_idx))
 	{
 		if (missing_ok)
@@ -1176,21 +1187,25 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	Form_pg_index idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
 	Oid			indrelid = idxrec->indrelid;
+
 	Assert(indexrelid == idxrec->indexrelid);
 
 	/* Must get indcollation, indclass, and indoption the hard way */
 	Datum		indcollDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-								   Anum_pg_index_indcollation, &isnull);
+											   Anum_pg_index_indcollation, &isnull);
+
 	Assert(!isnull);
 	oidvector  *indcollation = (oidvector *) DatumGetPointer(indcollDatum);
 
 	Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									Anum_pg_index_indclass, &isnull);
+												Anum_pg_index_indclass, &isnull);
+
 	Assert(!isnull);
 	oidvector  *indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	Datum		indoptionDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									 Anum_pg_index_indoption, &isnull);
+												 Anum_pg_index_indoption, &isnull);
+
 	Assert(!isnull);
 	int2vector *indoption = (int2vector *) DatumGetPointer(indoptionDatum);
 
@@ -1198,6 +1213,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	 * Fetch the pg_class tuple of the index relation
 	 */
 	HeapTuple	ht_idxrel = SearchSysCache1(RELOID, ObjectIdGetDatum(indexrelid));
+
 	if (!HeapTupleIsValid(ht_idxrel))
 		elog(ERROR, "cache lookup failed for relation %u", indexrelid);
 	Form_pg_class idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
@@ -1206,6 +1222,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	 * Fetch the pg_am tuple of the index' access method
 	 */
 	HeapTuple	ht_am = SearchSysCache1(AMOID, ObjectIdGetDatum(idxrelrec->relam));
+
 	if (!HeapTupleIsValid(ht_am))
 		elog(ERROR, "cache lookup failed for access method %u",
 			 idxrelrec->relam);
@@ -1224,9 +1241,11 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		bool		isnull;
 
 		Datum		exprsDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									 Anum_pg_index_indexprs, &isnull);
+												 Anum_pg_index_indexprs, &isnull);
+
 		Assert(!isnull);
 		char	   *exprsString = TextDatumGetCString(exprsDatum);
+
 		indexprs = (List *) stringToNode(exprsString);
 		pfree(exprsString);
 	}
@@ -1264,6 +1283,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	 * Report the indexed attributes
 	 */
 	char	   *sep = "";
+
 	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
@@ -1293,6 +1313,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			int32		keycoltypmod;
 
 			char	   *attname = get_attname(indrelid, attnum, false);
+
 			if (!colno || colno == keyno + 1)
 				appendStringInfoString(&buf, quote_identifier(attname));
 			get_atttypetypmodcoll(indrelid, attnum,
@@ -1306,6 +1327,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
 			Node	   *indexkey = (Node *) lfirst(indexpr_item);
+
 			indexpr_item = lnext(indexprs, indexpr_item);
 			/* Deparse */
 			str = deparse_expression_pretty(indexkey, context, false, false,
@@ -1395,6 +1417,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		{
 
 			Oid			tblspc = get_rel_tablespace(indexrelid);
+
 			if (OidIsValid(tblspc))
 			{
 				if (isConstraint)
@@ -1413,10 +1436,12 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 
 			/* Convert text string to node tree */
 			Datum		predDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-										Anum_pg_index_indpred, &isnull);
+													Anum_pg_index_indpred, &isnull);
+
 			Assert(!isnull);
 			char	   *predString = TextDatumGetCString(predDatum);
 			Node	   *node = (Node *) stringToNode(predString);
+
 			pfree(predString);
 
 			/* Deparse */
@@ -1527,9 +1552,11 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 		bool		isnull;
 
 		Datum		exprsDatum = SysCacheGetAttr(STATEXTOID, statexttup,
-									 Anum_pg_statistic_ext_stxexprs, &isnull);
+												 Anum_pg_statistic_ext_stxexprs, &isnull);
+
 		Assert(!isnull);
 		char	   *exprsString = TextDatumGetCString(exprsDatum);
+
 		exprs = (List *) stringToNode(exprsString);
 		pfree(exprsString);
 	}
@@ -1639,7 +1666,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 		int			prettyFlags = PRETTYFLAG_INDENT;
 
 		char	   *str = deparse_expression_pretty(expr, context, false, false,
-										prettyFlags, 0);
+													prettyFlags, 0);
 
 		if (colno > 0)
 			appendStringInfoString(&buf, ", ");
@@ -1694,15 +1721,16 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 	 * Get the statistics expressions, and deparse them into text values.
 	 */
 	Datum		datum = SysCacheGetAttr(STATEXTOID, statexttup,
-							Anum_pg_statistic_ext_stxexprs, &isnull);
+										Anum_pg_statistic_ext_stxexprs, &isnull);
 
 	Assert(!isnull);
 	char	   *tmp = TextDatumGetCString(datum);
 	List	   *exprs = (List *) stringToNode(tmp);
+
 	pfree(tmp);
 
 	List	   *context = deparse_context_for(get_relation_name(statextrec->stxrelid),
-								  statextrec->stxrelid);
+											  statextrec->stxrelid);
 
 	foreach(lc, exprs)
 	{
@@ -1710,7 +1738,7 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 		int			prettyFlags = PRETTYFLAG_INDENT;
 
 		char	   *str = deparse_expression_pretty(expr, context, false, false,
-										prettyFlags, 0);
+													prettyFlags, 0);
 
 		astate = accumArrayResult(astate,
 								  PointerGetDatum(cstring_to_text(str)),
@@ -1768,6 +1796,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	char	   *str;
 
 	HeapTuple	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (missing_ok)
@@ -1781,7 +1810,8 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 
 	/* Must get partclass and partcollation the hard way */
 	Datum		datum = SysCacheGetAttr(PARTRELID, tuple,
-							Anum_pg_partitioned_table_partclass, &isnull);
+										Anum_pg_partitioned_table_partclass, &isnull);
+
 	Assert(!isnull);
 	oidvector  *partclass = (oidvector *) DatumGetPointer(datum);
 
@@ -1801,9 +1831,11 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 		bool		isnull;
 
 		Datum		exprsDatum = SysCacheGetAttr(PARTRELID, tuple,
-									 Anum_pg_partitioned_table_partexprs, &isnull);
+												 Anum_pg_partitioned_table_partexprs, &isnull);
+
 		Assert(!isnull);
 		char	   *exprsString = TextDatumGetCString(exprsDatum);
+
 		partexprs = (List *) stringToNode(exprsString);
 
 		if (!IsA(partexprs, List))
@@ -1842,6 +1874,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	if (!attrsOnly)
 		appendStringInfoString(&buf, " (");
 	char	   *sep = "";
+
 	for (keyno = 0; keyno < form->partnatts; keyno++)
 	{
 		AttrNumber	attnum = form->partattrs.values[keyno];
@@ -1856,6 +1889,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 			int32		keycoltypmod;
 
 			char	   *attname = get_attname(relid, attnum, false);
+
 			appendStringInfoString(&buf, quote_identifier(attname));
 			get_atttypetypmodcoll(relid, attnum,
 								  &keycoltype, &keycoltypmod,
@@ -1868,6 +1902,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 			if (partexpr_item == NULL)
 				elog(ERROR, "too few entries in partexprs list");
 			Node	   *partkey = (Node *) lfirst(partexpr_item);
+
 			partexpr_item = lnext(partexprs, partexpr_item);
 
 			/* Deparse */
@@ -1885,6 +1920,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 
 		/* Add collation, if not default for column */
 		Oid			partcoll = partcollation->values[keyno];
+
 		if (!attrsOnly && OidIsValid(partcoll) && partcoll != keycolcollation)
 			appendStringInfo(&buf, " COLLATE %s",
 							 generate_collation_name((partcoll)));
@@ -1925,7 +1961,7 @@ pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
 	int			prettyFlags = PRETTYFLAG_INDENT;
 	List	   *context = deparse_context_for(get_relation_name(relationId), relationId);
 	char	   *consrc = deparse_expression_pretty((Node *) constr_expr, context, false,
-									   false, prettyFlags, 0);
+												   false, prettyFlags, 0);
 
 	PG_RETURN_TEXT_P(string_to_text(consrc));
 }
@@ -2010,11 +2046,11 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				ObjectIdGetDatum(constraintId));
 
 	SysScanDesc scandesc = systable_beginscan(relation,
-								  ConstraintOidIndexId,
-								  true,
-								  snapshot,
-								  1,
-								  scankey);
+											  ConstraintOidIndexId,
+											  true,
+											  snapshot,
+											  1,
+											  scankey);
 
 	/*
 	 * We later use the tuple with SysCacheGetAttr() as if we had obtained it
@@ -2076,7 +2112,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Fetch and build referencing-column list */
 				Datum		val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conkey, &isnull);
+												  Anum_pg_constraint_conkey, &isnull);
+
 				if (isnull)
 					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
@@ -2187,7 +2224,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Fetch and build target column list */
 				Datum		val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conkey, &isnull);
+												  Anum_pg_constraint_conkey, &isnull);
+
 				if (isnull)
 					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
@@ -2200,6 +2238,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Build including column list (from pg_index.indkeys) */
 				HeapTuple	indtup = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
+
 				if (!HeapTupleIsValid(indtup))
 					elog(ERROR, "cache lookup failed for index %u", indexId);
 				val = SysCacheGetAttr(INDEXRELID, indtup,
@@ -2215,7 +2254,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					appendStringInfoString(&buf, " INCLUDE (");
 
 					Datum		cols = SysCacheGetAttr(INDEXRELID, indtup,
-										   Anum_pg_index_indkey, &isnull);
+													   Anum_pg_index_indkey, &isnull);
+
 					if (isnull)
 						elog(ERROR, "null indkey for index %u", indexId);
 
@@ -2227,7 +2267,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					{
 
 						char	   *colName = get_attname(conForm->conrelid,
-											  DatumGetInt16(keys[j]), false);
+														  DatumGetInt16(keys[j]), false);
+
 						if (j > keyatts)
 							appendStringInfoString(&buf, ", ");
 						appendStringInfoString(&buf, quote_identifier(colName));
@@ -2255,6 +2296,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					 * state.
 					 */
 					Oid			tblspc = get_rel_tablespace(indexId);
+
 					if (OidIsValid(tblspc))
 						appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
 										 quote_identifier(get_tablespace_name(tblspc)));
@@ -2269,7 +2311,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Fetch constraint expression in parsetree form */
 				Datum		val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conbin, &isnull);
+												  Anum_pg_constraint_conbin, &isnull);
+
 				if (isnull)
 					elog(ERROR, "null conbin for constraint %u",
 						 constraintId);
@@ -2291,7 +2334,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				}
 
 				char	   *consrc = deparse_expression_pretty(expr, context, false, false,
-												   prettyFlags, 0);
+															   prettyFlags, 0);
 
 				/*
 				 * Now emit the constraint definition, adding NO INHERIT if
@@ -2330,8 +2373,9 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Extract operator OIDs from the pg_constraint tuple */
 				Datum		val = SysCacheGetAttr(CONSTROID, tup,
-									  Anum_pg_constraint_conexclop,
-									  &isnull);
+												  Anum_pg_constraint_conexclop,
+												  &isnull);
+
 				if (isnull)
 					elog(ERROR, "null conexclop for constraint %u",
 						 constraintId);
@@ -2341,6 +2385,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 								  &elems, NULL, &nElems);
 
 				Oid		   *operators = (Oid *) palloc(nElems * sizeof(Oid));
+
 				for (i = 0; i < nElems; i++)
 					operators[i] = DatumGetObjectId(elems[i]);
 
@@ -2498,7 +2543,7 @@ pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 
 	/* Deparse */
 	char	   *str = deparse_expression_pretty(node, context, false, false,
-									prettyFlags, 0);
+												prettyFlags, 0);
 
 	return string_to_text(str);
 }
@@ -2519,12 +2564,14 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 	 * Allocate space for the result
 	 */
 	Name		result = (Name) palloc(NAMEDATALEN);
+
 	memset(NameStr(*result), 0, NAMEDATALEN);
 
 	/*
 	 * Get the pg_authid entry and print the result
 	 */
 	HeapTuple	roletup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+
 	if (HeapTupleIsValid(roletup))
 	{
 		role_rec = (Form_pg_authid) GETSTRUCT(roletup);
@@ -2562,6 +2609,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	char	   *column = text_to_cstring(columnname);
 
 	AttrNumber	attnum = get_attnum(tableOid, column);
+
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -2585,7 +2633,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 				Int32GetDatum(attnum));
 
 	SysScanDesc scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  NULL, 3, key);
+										  NULL, 3, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -2646,6 +2694,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 
 	/* Look up the function */
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
@@ -2664,6 +2713,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	 * replaced.
 	 */
 	const char *nsp = get_namespace_name_or_temp(proc->pronamespace);
+
 	appendStringInfo(&buf, "CREATE OR REPLACE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 quote_qualified_identifier(nsp, name));
@@ -2749,6 +2799,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 
 	/* Emit any proconfig options, one per line */
 	Datum		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
+
 	if (!isnull)
 	{
 		ArrayType  *a = DatumGetArrayTypeP(tmp);
@@ -2762,16 +2813,18 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 		{
 
 			Datum		d = array_ref(a, 1, &i,
-						  -1 /* varlenarray */ ,
-						  -1 /* TEXT's typlen */ ,
-						  false /* TEXT's typbyval */ ,
-						  TYPALIGN_INT /* TEXT's typalign */ ,
-						  &isnull);
+									  -1 /* varlenarray */ ,
+									  -1 /* TEXT's typlen */ ,
+									  false /* TEXT's typbyval */ ,
+									  TYPALIGN_INT /* TEXT's typalign */ ,
+									  &isnull);
+
 			if (!isnull)
 			{
 				char	   *configitem = TextDatumGetCString(d);
 
 				char	   *pos = strchr(configitem, '=');
+
 				if (pos == NULL)
 					continue;
 				*pos++ = '\0';
@@ -2884,6 +2937,7 @@ pg_get_function_arguments(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
@@ -2909,6 +2963,7 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
@@ -2933,6 +2988,7 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
@@ -3007,20 +3063,23 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	int			i;
 
 	int			numargs = get_func_arg_info(proctup,
-								&argtypes, &argnames, &argmodes);
+											&argtypes, &argnames, &argmodes);
 
 	int			nlackdefaults = numargs;
+
 	if (print_defaults && proc->pronargdefaults > 0)
 	{
 		bool		isnull;
 
 		Datum		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-										 Anum_pg_proc_proargdefaults,
-										 &isnull);
+													 Anum_pg_proc_proargdefaults,
+													 &isnull);
+
 		if (!isnull)
 		{
 
 			char	   *str = TextDatumGetCString(proargdefaults);
+
 			argdefaults = castNode(List, stringToNode(str));
 			pfree(str);
 			nextargdefault = list_head(argdefaults);
@@ -3034,10 +3093,12 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	{
 
 		HeapTuple	aggtup = SearchSysCache1(AGGFNOID, proc->oid);
+
 		if (!HeapTupleIsValid(aggtup))
 			elog(ERROR, "cache lookup failed for aggregate %u",
 				 proc->oid);
 		Form_pg_aggregate agg = (Form_pg_aggregate) GETSTRUCT(aggtup);
+
 		if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
 			insertorderbyat = agg->aggnumdirectargs;
 		ReleaseSysCache(aggtup);
@@ -3045,6 +3106,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 
 	int			argsprinted = 0;
 	int			inputargno = 0;
+
 	for (i = 0; i < numargs; i++)
 	{
 		Oid			argtype = argtypes[i];
@@ -3113,6 +3175,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 
 			Assert(nextargdefault != NULL);
 			Node	   *expr = (Node *) lfirst(nextargdefault);
+
 			nextargdefault = lnext(argdefaults, nextargdefault);
 
 			appendStringInfo(buf, " DEFAULT %s",
@@ -3150,6 +3213,7 @@ print_function_trftypes(StringInfo buf, HeapTuple proctup)
 	Oid		   *trftypes;
 
 	int			ntypes = get_func_trftypes(proctup, &trftypes);
+
 	if (ntypes > 0)
 	{
 		int			i;
@@ -3183,10 +3247,12 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 	bool		isnull;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
 	int			numargs = get_func_arg_info(proctup, &argtypes, &argnames, &argmodes);
+
 	if (nth_arg < 1 || nth_arg > numargs || !is_input_argument(nth_arg - 1, argmodes))
 	{
 		ReleaseSysCache(proctup);
@@ -3194,13 +3260,15 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 	}
 
 	int			nth_inputarg = 0;
+
 	for (i = 0; i < nth_arg; i++)
 		if (is_input_argument(i, argmodes))
 			nth_inputarg++;
 
 	Datum		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-									 Anum_pg_proc_proargdefaults,
-									 &isnull);
+												 Anum_pg_proc_proargdefaults,
+												 &isnull);
+
 	if (isnull)
 	{
 		ReleaseSysCache(proctup);
@@ -3209,6 +3277,7 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 
 	char	   *str = TextDatumGetCString(proargdefaults);
 	List	   *argdefaults = castNode(List, stringToNode(str));
+
 	pfree(str);
 
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
@@ -3225,6 +3294,7 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 	Node	   *node = list_nth(argdefaults, nth_default);
+
 	str = deparse_expression(node, NIL, false, false);
 
 	ReleaseSysCache(proctup);
@@ -3243,11 +3313,13 @@ print_function_sqlbody(StringInfo buf, HeapTuple proctup)
 
 	dpns.funcname = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
 	int			numargs = get_func_arg_info(proctup,
-								&argtypes, &argnames, &argmodes);
+											&argtypes, &argnames, &argmodes);
+
 	dpns.numargs = numargs;
 	dpns.argnames = argnames;
 
 	Datum		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
+
 	Assert(!isnull);
 	Node	   *n = stringToNode(TextDatumGetCString(tmp));
 
@@ -3287,6 +3359,7 @@ pg_get_function_sqlbody(PG_FUNCTION_ARGS)
 
 	/* Look up the function */
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
 
@@ -3378,6 +3451,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 
 	/* Build a minimal RTE for the rel */
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
+
 	rte->rtekind = RTE_RELATION;
 	rte->relid = relid;
 	rte->relkind = RELKIND_RELATION;	/* no need for exactness here */
@@ -3554,9 +3628,9 @@ set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 	hash_ctl.entrysize = sizeof(NameHashEntry);
 	hash_ctl.hcxt = CurrentMemoryContext;
 	HTAB	   *names_hash = hash_create("set_rtable_names names",
-							 list_length(dpns->rtable),
-							 &hash_ctl,
-							 HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+										 list_length(dpns->rtable),
+										 &hash_ctl,
+										 HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	/* Preload the hash table with names appearing in parent_namespaces */
 	foreach(lc, parent_namespaces)
@@ -3581,6 +3655,7 @@ set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
 
 	/* Now we can scan the rtable */
 	int			rtindex = 1;
+
 	foreach(lc, dpns->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
@@ -4098,6 +4173,7 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	int			noldcolumns = list_length(rte->eref->colnames);
 	bool		changed_any = false;
 	int			j = 0;
+
 	for (i = 0; i < ncolumns; i++)
 	{
 		char	   *real_colname = real_colnames[i];
@@ -4197,6 +4273,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * only need entries in colnames for pre-existing columns.
 	 */
 	int			noldcolumns = list_length(rte->eref->colnames);
+
 	expand_colnames_array_to(colinfo, noldcolumns);
 	Assert(colinfo->num_cols == noldcolumns);
 
@@ -4207,6 +4284,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * non-merged column.
 	 */
 	bool		changed_any = false;
+
 	for (i = list_length(colinfo->usingNames); i < noldcolumns; i++)
 	{
 		char	   *colname = colinfo->colnames[i];
@@ -4268,7 +4346,8 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * loops below, so its not-yet-filled entries must be zeroes.
 	 */
 	int			nnewcolumns = leftcolinfo->num_new_cols + rightcolinfo->num_new_cols -
-		list_length(colinfo->usingNames);
+	list_length(colinfo->usingNames);
+
 	colinfo->num_new_cols = nnewcolumns;
 	colinfo->new_colnames = (char **) palloc0(nnewcolumns * sizeof(char *));
 	colinfo->is_new_col = (bool *) palloc0(nnewcolumns * sizeof(bool));
@@ -4310,6 +4389,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 
 	/* Handle non-merged left-child columns */
 	int			ic = 0;
+
 	for (jc = 0; jc < leftcolinfo->num_new_cols; jc++)
 	{
 		char	   *child_colname = leftcolinfo->new_colnames[jc];
@@ -4574,6 +4654,7 @@ identify_join_columns(JoinExpr *j, RangeTblEntry *jrte,
 
 	/* Initialize result arrays with zeroes */
 	int			numjoincols = list_length(jrte->joinaliasvars);
+
 	Assert(numjoincols == list_length(jrte->eref->colnames));
 	colinfo->leftattnos = (int *) palloc0(numjoincols * sizeof(int));
 	colinfo->rightattnos = (int *) palloc0(numjoincols * sizeof(int));
@@ -4586,6 +4667,7 @@ identify_join_columns(JoinExpr *j, RangeTblEntry *jrte,
 	 * merged from unmerged columns.
 	 */
 	int			jcolno = 0;
+
 	foreach(lc, jrte->joinleftcols)
 	{
 		int			leftattno = lfirst_int(lc);
@@ -4593,6 +4675,7 @@ identify_join_columns(JoinExpr *j, RangeTblEntry *jrte,
 		colinfo->leftattnos[jcolno++] = leftattno;
 	}
 	int			rcolno = 0;
+
 	foreach(lc, jrte->joinrightcols)
 	{
 		int			rightattno = lfirst_int(lc);
@@ -4797,6 +4880,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	 */
 	int			fno = SPI_fnumber(rulettc, "rulename");
 	Datum		dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+
 	Assert(!isnull);
 	char	   *rulename = NameStr(*(DatumGetName(dat)));
 
@@ -4817,12 +4901,15 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	char	   *ev_qual = SPI_getvalue(ruletup, rulettc, fno);
+
 	Assert(ev_qual != NULL);
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	char	   *ev_action = SPI_getvalue(ruletup, rulettc, fno);
+
 	Assert(ev_action != NULL);
 	List	   *actions = (List *) stringToNode(ev_action);
+
 	if (actions == NIL)
 		elog(ERROR, "invalid empty ev_action list");
 
@@ -4947,6 +5034,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	{
 
 		Query	   *query = (Query *) linitial(actions);
+
 		get_query_def(query, buf, NIL, viewResultDesc,
 					  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 		appendStringInfoChar(buf, ';');
@@ -4972,6 +5060,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	 */
 	int			fno = SPI_fnumber(rulettc, "ev_type");
 	Datum		dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+
 	Assert(!isnull);
 	char		ev_type = DatumGetChar(dat);
 
@@ -4987,10 +5076,12 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	char	   *ev_qual = SPI_getvalue(ruletup, rulettc, fno);
+
 	Assert(ev_qual != NULL);
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	char	   *ev_action = SPI_getvalue(ruletup, rulettc, fno);
+
 	Assert(ev_action != NULL);
 	List	   *actions = (List *) stringToNode(ev_action);
 
@@ -5294,8 +5385,10 @@ get_select_query_def(Query *query, deparse_context *context,
 
 	/* Set up context for possible window functions */
 	List	   *save_windowclause = context->windowClause;
+
 	context->windowClause = query->windowClause;
 	List	   *save_windowtlist = context->windowTList;
+
 	context->windowTList = query->targetList;
 
 	/*
@@ -5453,6 +5546,7 @@ get_simple_values_rte(Query *query, TupleDesc resultDesc)
 		if (list_length(query->targetList) != list_length(result->eref->colnames))
 			return NULL;		/* this probably cannot happen */
 		int			colno = 0;
+
 		forboth(lc, query->targetList, lcn, result->eref->colnames)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
@@ -5498,6 +5592,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	 * time.
 	 */
 	RangeTblEntry *values_rte = get_simple_values_rte(query, resultDesc);
+
 	if (values_rte)
 	{
 		get_values_def(values_rte->values_lists, context);
@@ -5558,6 +5653,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 			appendStringInfoString(buf, "DISTINCT ");
 
 		ParseExprKind save_exprkind = context->special_exprkind;
+
 		context->special_exprkind = EXPR_KIND_GROUP_BY;
 
 		if (query->groupingSets == NIL)
@@ -5622,6 +5718,7 @@ get_target_list(List *targetList, deparse_context *context,
 
 	char	   *sep = " ";
 	int			colno = 0;
+
 	foreach(l, targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -5706,6 +5803,7 @@ get_target_list(List *targetList, deparse_context *context,
 
 				/* Locate the start of the current line in the output buffer */
 				char	   *trailing_nl = strrchr(buf->data, '\n');
+
 				if (trailing_nl == NULL)
 					trailing_nl = buf->data;
 				else
@@ -5991,17 +6089,20 @@ get_rule_orderby(List *orderList, List *targetList,
 	ListCell   *l;
 
 	const char *sep = "";
+
 	foreach(l, orderList)
 	{
 		SortGroupClause *srt = (SortGroupClause *) lfirst(l);
 
 		appendStringInfoString(buf, sep);
 		Node	   *sortexpr = get_rule_sortgroupclause(srt->tleSortGroupRef, targetList,
-											force_colno, context);
+														force_colno, context);
 		Oid			sortcoltype = exprType(sortexpr);
+
 		/* See whether operator is default < or > for datatype */
 		TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
-									 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+													 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+
 		if (srt->sortop == typentry->lt_opr)
 		{
 			/* ASC is default, so emit nothing for it */
@@ -6044,6 +6145,7 @@ get_rule_windowclause(Query *query, deparse_context *context)
 	ListCell   *l;
 
 	const char *sep = NULL;
+
 	foreach(l, query->windowClause)
 	{
 		WindowClause *wc = (WindowClause *) lfirst(l);
@@ -6238,6 +6340,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 */
 	List	   *strippedexprs = NIL;
 	char	   *sep = "";
+
 	if (query->targetList)
 		appendStringInfoChar(buf, '(');
 	foreach(l, query->targetList)
@@ -6332,6 +6435,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 				 * InferenceElem, so this is separately required.
 				 */
 				bool		save_varprefix = context->varprefix;
+
 				context->varprefix = false;
 
 				appendContextKeyword(context, " WHERE ",
@@ -6399,6 +6503,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	 * Start the query with UPDATE relname SET
 	 */
 	RangeTblEntry *rte = rt_fetch(query->resultRelation, query->rtable);
+
 	Assert(rte->rtekind == RTE_RELATION);
 	if (PRETTY_INDENT(context))
 	{
@@ -6454,6 +6559,7 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 	 * entries.
 	 */
 	List	   *ma_sublinks = NIL;
+
 	if (query->hasSubLinks)		/* else there can't be any */
 	{
 		foreach(l, targetList)
@@ -6478,6 +6584,7 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 
 	/* Add the comma separated list of 'attname = value' */
 	const char *sep = "";
+
 	foreach(l, targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -6600,6 +6707,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 * Start the query with DELETE FROM relname
 	 */
 	RangeTblEntry *rte = rt_fetch(query->resultRelation, query->rtable);
+
 	Assert(rte->rtekind == RTE_RELATION);
 	if (PRETTY_INDENT(context))
 	{
@@ -6697,11 +6805,12 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 	/* Find appropriate nesting depth */
 	int			netlevelsup = var->varlevelsup + levelsup;
+
 	if (netlevelsup >= list_length(context->namespaces))
 		elog(ERROR, "bogus varlevelsup: %d offset %d",
 			 var->varlevelsup, levelsup);
 	deparse_namespace *dpns = (deparse_namespace *) list_nth(context->namespaces,
-										  netlevelsup);
+															 netlevelsup);
 
 	/*
 	 * If we have a syntactic referent for the Var, and we're working from a
@@ -6804,6 +6913,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		deparse_namespace save_dpns;
 
 		TargetEntry *tle = get_tle_by_resno(dpns->inner_tlist, attnum);
+
 		if (!tle)
 			elog(ERROR, "invalid attnum %d for relation \"%s\"",
 				 attnum, rte->eref->aliasname);
@@ -6845,6 +6955,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		{
 
 			Var		   *aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
+
 			/* we intentionally don't strip implicit coercions here */
 			if (aliasvar && IsA(aliasvar, Var))
 			{
@@ -6945,7 +7056,7 @@ resolve_special_varno(Node *node, deparse_context *context,
 	/* Find appropriate nesting depth */
 	Var		   *var = (Var *) node;
 	deparse_namespace *dpns = (deparse_namespace *) list_nth(context->namespaces,
-										  var->varlevelsup);
+															 var->varlevelsup);
 
 	/*
 	 * If varno is special, recurse.  (Don't worry about varnosyn; if we're
@@ -6956,6 +7067,7 @@ resolve_special_varno(Node *node, deparse_context *context,
 		deparse_namespace save_dpns;
 
 		TargetEntry *tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
 
@@ -6985,6 +7097,7 @@ resolve_special_varno(Node *node, deparse_context *context,
 		deparse_namespace save_dpns;
 
 		TargetEntry *tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
 
@@ -6998,6 +7111,7 @@ resolve_special_varno(Node *node, deparse_context *context,
 	{
 
 		TargetEntry *tle = get_tle_by_resno(dpns->index_tlist, var->varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for INDEX_VAR var: %d", var->varattno);
 
@@ -7069,7 +7183,8 @@ get_name_for_var_field(Var *var, int fieldno,
 
 			push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
 			const char *result = get_name_for_var_field((Var *) expr, fieldno,
-											0, context);
+														0, context);
+
 			pop_ancestor_plan(dpns, &save_dpns);
 			return result;
 		}
@@ -7090,6 +7205,7 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/* Find appropriate nesting depth */
 	int			netlevelsup = var->varlevelsup + levelsup;
+
 	if (netlevelsup >= list_length(context->namespaces))
 		elog(ERROR, "bogus varlevelsup: %d offset %d",
 			 var->varlevelsup, levelsup);
@@ -7131,6 +7247,7 @@ get_name_for_var_field(Var *var, int fieldno,
 		deparse_namespace save_dpns;
 
 		TargetEntry *tle = get_tle_by_resno(dpns->outer_tlist, varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", varattno);
 
@@ -7138,7 +7255,7 @@ get_name_for_var_field(Var *var, int fieldno,
 		push_child_plan(dpns, dpns->outer_plan, &save_dpns);
 
 		const char *result = get_name_for_var_field((Var *) tle->expr, fieldno,
-										levelsup, context);
+													levelsup, context);
 
 		pop_child_plan(dpns, &save_dpns);
 		return result;
@@ -7148,6 +7265,7 @@ get_name_for_var_field(Var *var, int fieldno,
 		deparse_namespace save_dpns;
 
 		TargetEntry *tle = get_tle_by_resno(dpns->inner_tlist, varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for INNER_VAR var: %d", varattno);
 
@@ -7155,7 +7273,7 @@ get_name_for_var_field(Var *var, int fieldno,
 		push_child_plan(dpns, dpns->inner_plan, &save_dpns);
 
 		const char *result = get_name_for_var_field((Var *) tle->expr, fieldno,
-										levelsup, context);
+													levelsup, context);
 
 		pop_child_plan(dpns, &save_dpns);
 		return result;
@@ -7164,13 +7282,14 @@ get_name_for_var_field(Var *var, int fieldno,
 	{
 
 		TargetEntry *tle = get_tle_by_resno(dpns->index_tlist, varattno);
+
 		if (!tle)
 			elog(ERROR, "bogus varattno for INDEX_VAR var: %d", varattno);
 
 		Assert(netlevelsup == 0);
 
 		const char *result = get_name_for_var_field((Var *) tle->expr, fieldno,
-										levelsup, context);
+													levelsup, context);
 
 		return result;
 	}
@@ -7237,7 +7356,7 @@ get_name_for_var_field(Var *var, int fieldno,
 													context->namespaces);
 
 						const char *result = get_name_for_var_field((Var *) expr, fieldno,
-														0, context);
+																	0, context);
 
 						context->namespaces =
 							list_delete_first(context->namespaces);
@@ -7261,6 +7380,7 @@ get_name_for_var_field(Var *var, int fieldno,
 						elog(ERROR, "failed to find plan for subquery %s",
 							 rte->eref->aliasname);
 					TargetEntry *tle = get_tle_by_resno(dpns->inner_tlist, attnum);
+
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
@@ -7268,7 +7388,7 @@ get_name_for_var_field(Var *var, int fieldno,
 					push_child_plan(dpns, dpns->inner_plan, &save_dpns);
 
 					const char *result = get_name_for_var_field((Var *) tle->expr, fieldno,
-													levelsup, context);
+																levelsup, context);
 
 					pop_child_plan(dpns, &save_dpns);
 					return result;
@@ -7307,13 +7427,15 @@ get_name_for_var_field(Var *var, int fieldno,
 				 * Try to find the referenced CTE using the namespace stack.
 				 */
 				Index		ctelevelsup = rte->ctelevelsup + netlevelsup;
+
 				if (ctelevelsup >= list_length(context->namespaces))
 					lc = NULL;
 				else
 				{
 
 					deparse_namespace *ctedpns = (deparse_namespace *)
-						list_nth(context->namespaces, ctelevelsup);
+					list_nth(context->namespaces, ctelevelsup);
+
 					foreach(lc, ctedpns->ctes)
 					{
 						cte = (CommonTableExpr *) lfirst(lc);
@@ -7347,11 +7469,12 @@ get_name_for_var_field(Var *var, int fieldno,
 											  context->namespaces);
 
 						List	   *new_nslist = list_copy_tail(context->namespaces,
-													ctelevelsup);
+																ctelevelsup);
+
 						context->namespaces = lcons(&mydpns, new_nslist);
 
 						const char *result = get_name_for_var_field((Var *) expr, fieldno,
-														0, context);
+																	0, context);
 
 						context->namespaces = save_nslist;
 
@@ -7373,6 +7496,7 @@ get_name_for_var_field(Var *var, int fieldno,
 						elog(ERROR, "failed to find plan for CTE %s",
 							 rte->eref->aliasname);
 					TargetEntry *tle = get_tle_by_resno(dpns->inner_tlist, attnum);
+
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
@@ -7380,7 +7504,7 @@ get_name_for_var_field(Var *var, int fieldno,
 					push_child_plan(dpns, dpns->inner_plan, &save_dpns);
 
 					const char *result = get_name_for_var_field((Var *) tle->expr, fieldno,
-													levelsup, context);
+																levelsup, context);
 
 					pop_child_plan(dpns, &save_dpns);
 					return result;
@@ -7552,6 +7676,7 @@ get_parameter(Param *param, deparse_context *context)
 	 * input.
 	 */
 	Node	   *expr = find_param_referent(param, context, &dpns, &ancestor_cell);
+
 	if (expr)
 	{
 		/* Found a match, so print it */
@@ -7565,6 +7690,7 @@ get_parameter(Param *param, deparse_context *context)
 		 * being scanned in the original plan node.
 		 */
 		bool		save_varprefix = context->varprefix;
+
 		context->varprefix = true;
 
 		/*
@@ -7573,8 +7699,9 @@ get_parameter(Param *param, deparse_context *context)
 		 * parens to ensure the expression looks atomic.
 		 */
 		bool		need_paren = !(IsA(expr, Var) ||
-					   IsA(expr, Aggref) ||
-					   IsA(expr, Param));
+								   IsA(expr, Aggref) ||
+								   IsA(expr, Param));
+
 		if (need_paren)
 			appendStringInfoChar(context->buf, '(');
 
@@ -7658,6 +7785,7 @@ get_simple_binary_op_name(OpExpr *expr)
 		Node	   *arg2 = (Node *) lsecond(args);
 
 		const char *op = generate_operator_name(expr->opno, exprType(arg1), exprType(arg2));
+
 		if (strlen(op) == 1)
 			return op;
 	}
@@ -7746,21 +7874,25 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				{
 
 					const char *op = get_simple_binary_op_name((OpExpr *) node);
+
 					if (!op)
 						return false;
 
 					/* We know only the basic operators + - and * / % */
 					bool		is_lopriop = (strchr("+-", *op) != NULL);
 					bool		is_hipriop = (strchr("*/%", *op) != NULL);
+
 					if (!(is_lopriop || is_hipriop))
 						return false;
 
 					const char *parentOp = get_simple_binary_op_name((OpExpr *) parentNode);
+
 					if (!parentOp)
 						return false;
 
 					bool		is_lopriparent = (strchr("+-", *parentOp) != NULL);
 					bool		is_hipriparent = (strchr("*/%", *parentOp) != NULL);
+
 					if (!(is_lopriparent || is_hipriparent))
 						return false;
 
@@ -7824,6 +7956,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 
 						BoolExprType type = ((BoolExpr *) node)->boolop;
 						BoolExprType parentType = ((BoolExpr *) parentNode)->boolop;
+
 						switch (type)
 						{
 							case NOT_EXPR:
@@ -7956,7 +8089,7 @@ get_rule_expr_paren(Node *node, deparse_context *context,
 {
 
 	bool		need_paren = PRETTY_PAREN(context) &&
-		!isSimpleNode(node, parentNode, context->prettyFlags);
+	!isSimpleNode(node, parentNode, context->prettyFlags);
 
 	if (need_paren)
 		appendStringInfoChar(context->buf, '(');
@@ -8060,7 +8193,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * confusion.)
 				 */
 				bool		need_parens = !IsA(sbsref->refexpr, Var) &&
-					!IsA(sbsref->refexpr, FieldSelect);
+				!IsA(sbsref->refexpr, FieldSelect);
+
 				if (need_parens)
 					appendStringInfoChar(buf, '(');
 				get_rule_expr((Node *) sbsref->refexpr, context, showimplicit);
@@ -8086,6 +8220,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					 * RHS expr that is actually being "assigned".
 					 */
 					Node	   *refassgnexpr = processIndirection(node, context);
+
 					appendStringInfoString(buf, " := ");
 					get_rule_expr(refassgnexpr, context, showimplicit);
 				}
@@ -8297,7 +8432,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * the issue here, having the right number of names is.
 				 */
 				bool		need_parens = !IsA(arg, SubscriptingRef) &&
-					!IsA(arg, FieldSelect);
+				!IsA(arg, FieldSelect);
+
 				if (need_parens)
 					appendStringInfoChar(buf, '(');
 				get_rule_expr(arg, context, true);
@@ -8308,7 +8444,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * Get and print the field name.
 				 */
 				const char *fieldname = get_name_for_var_field((Var *) arg, fno,
-												   0, context);
+															   0, context);
+
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
 			break;
@@ -8337,6 +8474,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * representation of what the plan is actually doing.
 				 */
 				bool		need_parens = (list_length(fstore->newvals) != 1);
+
 				if (need_parens)
 					appendStringInfoString(buf, "ROW(");
 				get_rule_expr((Node *) fstore->newvals, context, showimplicit);
@@ -8561,6 +8699,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfoString(buf, "ROW(");
 				char	   *sep = "";
 				int			i = 0;
+
 				foreach(arg, rowexpr->args)
 				{
 					Node	   *e = (Node *) lfirst(arg);
@@ -8608,6 +8747,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				appendStringInfoString(buf, "(ROW(");
 				char	   *sep = "";
+
 				foreach(arg, rcexpr->largs)
 				{
 					Node	   *e = (Node *) lfirst(arg);
@@ -9038,6 +9178,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * prefix is not useful, and indeed would cause parse errors.
 				 */
 				bool		save_varprefix = context->varprefix;
+
 				context->varprefix = false;
 
 				/*
@@ -9045,6 +9186,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * function call.  Follows pg_get_indexdef_worker().
 				 */
 				bool		need_parens = !IsA(iexpr->expr, Var);
+
 				if (IsA(iexpr->expr, FuncExpr) &&
 					((FuncExpr *) iexpr->expr)->funcformat ==
 					COERCE_EXPLICIT_CALL)
@@ -9138,6 +9280,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				ListCell   *l;
 
 				char	   *sep = "";
+
 				foreach(l, (List *) node)
 				{
 					appendStringInfoString(buf, sep);
@@ -9344,6 +9487,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 				 errmsg("too many arguments")));
 	int			nargs = 0;
 	List	   *argnames = NIL;
+
 	foreach(l, expr->args)
 	{
 		Node	   *arg = (Node *) lfirst(l);
@@ -9395,6 +9539,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 
 		Assert(list_length(aggref->args) == 1);
 		TargetEntry *tle = linitial_node(TargetEntry, aggref->args);
+
 		resolve_special_varno((Node *) tle->expr, context,
 							  get_agg_combine_expr, original_aggref);
 		return;
@@ -9442,6 +9587,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context,
 			ListCell   *l;
 
 			int			i = 0;
+
 			foreach(l, aggref->args)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -9488,6 +9634,7 @@ get_agg_combine_expr(Node *node, deparse_context *context, void *callback_arg)
 		elog(ERROR, "combining Aggref does not point to an Aggref");
 
 	Aggref	   *aggref = (Aggref *) node;
+
 	get_agg_expr(aggref, context, original_aggref);
 }
 
@@ -9507,6 +9654,7 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 				 errmsg("too many arguments")));
 	int			nargs = 0;
 	List	   *argnames = NIL;
+
 	foreach(l, wfunc->args)
 	{
 		Node	   *arg = (Node *) lfirst(l);
@@ -10087,6 +10235,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 			appendStringInfoChar(buf, '(');
 			char	   *sep = "";
+
 			foreach(l, ((BoolExpr *) sublink->testexpr)->args)
 			{
 				OpExpr	   *opexpr = lfirst_node(OpExpr, l);
@@ -10345,6 +10494,7 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 
 					/* Locate the start of the current line in the buffer */
 					char	   *trailing_nl = strrchr(buf->data, '\n');
+
 					if (trailing_nl == NULL)
 						trailing_nl = buf->data;
 					else
@@ -10440,6 +10590,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					 * UNNEST().
 					 */
 					bool		all_unnest = true;
+
 					foreach(lc, rte->functions)
 					{
 						RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
@@ -10518,6 +10669,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 
 		/* Print the relation alias, if needed */
 		bool		printalias = false;
+
 		if (rte->alias != NULL)
 		{
 			/* Always print alias if user provided one */
@@ -10588,8 +10740,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		deparse_columns *colinfo = deparse_columns_fetch(j->rtindex, dpns);
 
 		bool		need_paren_on_right = PRETTY_PAREN(context) &&
-			!IsA(j->rarg, RangeTblRef) &&
-			!(IsA(j->rarg, JoinExpr) && ((JoinExpr *) j->rarg)->alias != NULL);
+		!IsA(j->rarg, RangeTblRef) &&
+		!(IsA(j->rarg, JoinExpr) && ((JoinExpr *) j->rarg)->alias != NULL);
 
 		if (!PRETTY_PAREN(context) || j->alias != NULL)
 			appendStringInfoChar(buf, '(');
@@ -10760,6 +10912,7 @@ get_from_clause_coldeflist(RangeTblFunction *rtfunc,
 	appendStringInfoChar(buf, '(');
 
 	int			i = 0;
+
 	forfour(l1, rtfunc->funccoltypes,
 			l2, rtfunc->funccoltypmods,
 			l3, rtfunc->funccolcollations,
@@ -10814,6 +10967,7 @@ get_tablesample_def(TableSampleClause *tablesample, deparse_context *context)
 											false, NULL, EXPR_KIND_NONE));
 
 	int			nargs = 0;
+
 	foreach(l, tablesample->args)
 	{
 		if (nargs++ > 0)
@@ -10847,6 +11001,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	char	   *nspname;
 
 	HeapTuple	ht_opc = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
+
 	if (!HeapTupleIsValid(ht_opc))
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	Form_pg_opclass opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
@@ -10913,6 +11068,7 @@ processIndirection(Node *node, deparse_context *context)
 
 			/* lookup tuple type */
 			Oid			typrelid = get_typ_typrelid(fstore->resulttype);
+
 			if (!OidIsValid(typrelid))
 				elog(ERROR, "argument type %s of FieldStore is not a tuple type",
 					 format_type_be(fstore->resulttype));
@@ -10924,7 +11080,8 @@ processIndirection(Node *node, deparse_context *context)
 			 */
 			Assert(list_length(fstore->fieldnums) == 1);
 			char	   *fieldname = get_attname(typrelid,
-									linitial_int(fstore->fieldnums), false);
+												linitial_int(fstore->fieldnums), false);
+
 			appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 
 			/*
@@ -10980,6 +11137,7 @@ printSubscripts(SubscriptingRef *sbsref, deparse_context *context)
 	ListCell   *uplist_item;
 
 	ListCell   *lowlist_item = list_head(sbsref->reflowerindexpr);	/* could be NULL */
+
 	foreach(uplist_item, sbsref->refupperindexpr)
 	{
 		appendStringInfoChar(buf, '[');
@@ -11132,6 +11290,7 @@ generate_relation_name(Oid relid, List *namespaces)
 	char	   *nspname;
 
 	HeapTuple	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
@@ -11139,6 +11298,7 @@ generate_relation_name(Oid relid, List *namespaces)
 
 	/* Check for conflicting CTE name */
 	bool		need_qual = false;
+
 	foreach(nslist, namespaces)
 	{
 		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
@@ -11185,12 +11345,14 @@ generate_qualified_relation_name(Oid relid)
 {
 
 	HeapTuple	tp = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
 	char	   *relname = NameStr(reltup->relname);
 
 	char	   *nspname = get_namespace_name_or_temp(reltup->relnamespace);
+
 	if (!nspname)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 reltup->relnamespace);
@@ -11234,6 +11396,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	bool		force_qualify = false;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
@@ -11328,6 +11491,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	initStringInfo(&buf);
 
 	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operid));
+
 	if (!HeapTupleIsValid(opertup))
 		elog(ERROR, "cache lookup failed for operator %u", operid);
 	Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
@@ -11400,9 +11564,11 @@ generate_operator_clause(StringInfo buf,
 {
 
 	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opoid));
+
 	if (!HeapTupleIsValid(opertup))
 		elog(ERROR, "cache lookup failed for operator %u", opoid);
 	Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
+
 	Assert(operform->oprkind == 'b');
 	char	   *oprname = NameStr(operform->oprname);
 
@@ -11433,6 +11599,7 @@ add_cast_to(StringInfo buf, Oid typid)
 {
 
 	HeapTuple	typetup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup failed for type %u", typid);
 	Form_pg_type typform = (Form_pg_type) GETSTRUCT(typetup);
@@ -11460,12 +11627,14 @@ generate_qualified_type_name(Oid typid)
 {
 
 	HeapTuple	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for type %u", typid);
 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
 	char	   *typname = NameStr(typtup->typname);
 
 	char	   *nspname = get_namespace_name_or_temp(typtup->typnamespace);
+
 	if (!nspname)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 typtup->typnamespace);
@@ -11489,6 +11658,7 @@ generate_collation_name(Oid collid)
 	char	   *nspname;
 
 	HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for collation %u", collid);
 	Form_pg_collation colltup = (Form_pg_collation) GETSTRUCT(tp);
@@ -11516,6 +11686,7 @@ string_to_text(char *str)
 {
 
 	text	   *result = cstring_to_text(str);
+
 	pfree(str);
 	return result;
 }
@@ -11545,6 +11716,7 @@ get_reloptions(StringInfo buf, Datum reloptions)
 		 */
 		char	   *name = option;
 		char	   *separator = strchr(option, '=');
+
 		if (separator)
 		{
 			*separator = '\0';
@@ -11584,11 +11756,13 @@ flatten_reloptions(Oid relid)
 	bool		isnull;
 
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 
 	Datum		reloptions = SysCacheGetAttr(RELOID, tuple,
-								 Anum_pg_class_reloptions, &isnull);
+											 Anum_pg_class_reloptions, &isnull);
+
 	if (!isnull)
 	{
 		StringInfoData buf;
@@ -11620,6 +11794,7 @@ get_range_partbound_string(List *bound_datums)
 
 	appendStringInfoChar(buf, '(');
 	char	   *sep = "";
+
 	foreach(cell, bound_datums)
 	{
 		PartitionRangeDatum *datum =

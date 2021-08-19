@@ -268,6 +268,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 
 		/* Read and lock buffer */
 		Buffer		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		Page		page = BufferGetPage(buffer);
@@ -287,6 +288,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		{
 
 			int			max_avail = BLCKSZ - (BLCKSZ - ((PageHeader) page)->pd_special + SizeOfPageHeaderData);
+
 			indexStat.max_avail += max_avail;
 			indexStat.free_space += PageGetFreeSpace(page);
 
@@ -322,6 +324,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 			elog(ERROR, "return type must be a row type");
 
 		int			j = 0;
+
 		values[j++] = psprintf("%d", indexStat.version);
 		values[j++] = psprintf("%d", indexStat.level);
 		values[j++] = psprintf(INT64_FORMAT,
@@ -347,7 +350,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 			values[j++] = pstrdup("NaN");
 
 		HeapTuple	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
-									   values);
+												   values);
 
 		result = HeapTupleGetDatum(tuple);
 	}
@@ -501,6 +504,7 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	 * Read metapage
 	 */
 	Buffer		buffer = ReadBuffer(rel, GIN_METAPAGE_BLKNO);
+
 	LockBuffer(buffer, GIN_SHARE);
 	Page		page = BufferGetPage(buffer);
 	GinMetaPageData *metadata = GinPageGetMeta(page);
@@ -571,6 +575,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	memset(&stats, 0, sizeof(stats));
 	Buffer		metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
+
 	stats.version = metap->hashm_version;
 	stats.space_per_page = metap->hashm_bsize;
 	_hash_relbuf(rel, metabuf);
@@ -588,7 +593,8 @@ pgstathashindex(PG_FUNCTION_ARGS)
 		CHECK_FOR_INTERRUPTS();
 
 		Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-								 bstrategy);
+											 bstrategy);
+
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 		Page		page = (Page) BufferGetPage(buf);
 
@@ -642,7 +648,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	 * pages.
 	 */
 	uint64		total_space = (uint64) (nblocks - (stats.bitmap_pages + 1)) *
-		stats.space_per_page;
+	stats.space_per_page;
 
 	if (total_space == 0)
 		free_percent = 0.0;

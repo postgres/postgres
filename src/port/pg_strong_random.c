@@ -156,6 +156,7 @@ pg_strong_random(void *buf, size_t len)
 	ssize_t		res;
 
 	int			f = open("/dev/urandom", O_RDONLY, 0);
+
 	if (f == -1)
 		return false;
 

@@ -407,6 +407,7 @@ ltxtq_recv(PG_FUNCTION_ARGS)
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	ltxtquery  *res = queryin(str);
+
 	pfree(str);
 
 	PG_RETURN_POINTER(res);

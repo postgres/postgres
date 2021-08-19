@@ -119,7 +119,7 @@ ClockSweepTick(void)
 	 * apparent order.
 	 */
 	uint32		victim =
-		pg_atomic_fetch_add_u32(&StrategyControl->nextVictimBuffer, 1);
+	pg_atomic_fetch_add_u32(&StrategyControl->nextVictimBuffer, 1);
 
 	if (victim >= NBuffers)
 	{
@@ -225,6 +225,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * some arbitrary process.
 	 */
 	int			bgwprocno = INT_ACCESS_ONCE(StrategyControl->bgwprocno);
+
 	if (bgwprocno != -1)
 	{
 		/* reset bgwprocno first, before setting the latch */
@@ -310,6 +311,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 
 	/* Nothing on the freelist, so run the "clock sweep" algorithm */
 	int			trycounter = NBuffers;
+
 	for (;;)
 	{
 		buf = GetBufferDescriptor(ClockSweepTick());
@@ -570,8 +572,8 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 
 	/* Allocate the object and initialize all elements to zeroes */
 	BufferAccessStrategy strategy = (BufferAccessStrategy)
-		palloc0(offsetof(BufferAccessStrategyData, buffers) +
-				ring_size * sizeof(Buffer));
+	palloc0(offsetof(BufferAccessStrategyData, buffers) +
+			ring_size * sizeof(Buffer));
 
 	/* Set fields that don't start out zero */
 	strategy->btype = btype;
@@ -616,6 +618,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * slot by calling AddBufferToRing with the new buffer.
 	 */
 	Buffer		bufnum = strategy->buffers[strategy->current];
+
 	if (bufnum == InvalidBuffer)
 	{
 		strategy->current_was_in_ring = false;
@@ -632,6 +635,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 * shouldn't re-use it.
 	 */
 	BufferDesc *buf = GetBufferDescriptor(bufnum - 1);
+
 	local_buf_state = LockBufHdr(buf);
 	if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
 		&& BUF_STATE_GET_USAGECOUNT(local_buf_state) <= 1)

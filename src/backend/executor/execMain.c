@@ -189,6 +189,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	{
 
 		int			nParamExec = list_length(queryDesc->plannedstmt->paramExecTypes);
+
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(nParamExec * sizeof(ParamExecData));
 	}
@@ -337,7 +338,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	estate->es_processed = 0;
 
 	bool		sendTuples = (operation == CMD_SELECT ||
-				  queryDesc->plannedstmt->hasReturning);
+							  queryDesc->plannedstmt->hasReturning);
 
 	if (sendTuples)
 		dest->rStartup(dest, operation, queryDesc->tupDesc);
@@ -598,6 +599,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * No work if requiredPerms is empty.
 	 */
 	AclMode		requiredPerms = rte->requiredPerms;
+
 	if (requiredPerms == 0)
 		return true;
 
@@ -620,6 +622,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 */
 	AclMode		relPerms = pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL);
 	AclMode		remainingPerms = requiredPerms & ~relPerms;
+
 	if (remainingPerms != 0)
 	{
 		int			col = -1;
@@ -847,6 +850,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				CheckValidRowMarkRel(relation, rc->markType);
 
 			ExecRowMark *erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
+
 			erm->relation = relation;
 			erm->relid = relid;
 			erm->rti = rc->rti;
@@ -880,7 +884,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * ExecInitSubPlan expects to be able to find these entries.
 	 */
 	Assert(estate->es_subplanstates == NIL);
-	int			i = 1;						/* subplan indices count from 1 */
+	int			i = 1;			/* subplan indices count from 1 */
+
 	foreach(l, plannedstmt->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(l);
@@ -891,7 +896,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * prepared to handle REWIND efficiently; otherwise there is no need.
 		 */
 		int			sp_eflags = eflags
-			& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
+		& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
+
 		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
 			sp_eflags |= EXEC_FLAG_REWIND;
 
@@ -940,7 +946,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			TupleTableSlot *slot = ExecInitExtraTupleSlot(estate, NULL, &TTSOpsVirtual);
 			JunkFilter *j = ExecInitJunkFilter(planstate->plan->targetlist,
-								   slot);
+											   slot);
+
 			estate->es_junkFilter = j;
 
 			/* Want to return the cleaned tuple type */
@@ -1297,6 +1304,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	 * Make the new entry in the right context.
 	 */
 	MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
 	rInfo = makeNode(ResultRelInfo);
 	InitResultRelInfo(rInfo,
 					  rel,
@@ -1620,6 +1628,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		{
 
 			Expr	   *checkconstr = stringToNode(check[i].ccbin);
+
 			resultRelInfo->ri_ConstraintExprs[i] =
 				ExecPrepareExpr(checkconstr, estate);
 		}
@@ -1734,6 +1743,7 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 		tupdesc = RelationGetDescr(rootrel->ri_RelationDesc);
 
 		TupleDesc	old_tupdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+
 		/* a reverse map */
 		AttrMap    *map = build_attrmap_by_name_if_req(old_tupdesc, tupdesc);
 
@@ -1756,10 +1766,11 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 	}
 
 	char	   *val_desc = ExecBuildSlotValueDescription(root_relid,
-											 slot,
-											 tupdesc,
-											 modifiedCols,
-											 64);
+														 slot,
+														 tupdesc,
+														 modifiedCols,
+														 64);
+
 	ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 			 errmsg("new row for relation \"%s\" violates partition constraint",
@@ -1818,7 +1829,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					tupdesc = RelationGetDescr(rootrel->ri_RelationDesc);
 					/* a reverse map */
 					AttrMap    *map = build_attrmap_by_name_if_req(orig_tupdesc,
-													   tupdesc);
+																   tupdesc);
 
 					/*
 					 * Partition-specific slot's tupdesc can't be changed, so
@@ -1835,10 +1846,10 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					modifiedCols = bms_union(ExecGetInsertedCols(resultRelInfo, estate),
 											 ExecGetUpdatedCols(resultRelInfo, estate));
 				char	   *val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-														 slot,
-														 tupdesc,
-														 modifiedCols,
-														 64);
+																	 slot,
+																	 tupdesc,
+																	 modifiedCols,
+																	 64);
 
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
@@ -1868,7 +1879,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				tupdesc = RelationGetDescr(rootrel->ri_RelationDesc);
 				/* a reverse map */
 				AttrMap    *map = build_attrmap_by_name_if_req(old_tupdesc,
-												   tupdesc);
+															   tupdesc);
 
 				/*
 				 * Partition-specific slot's tupdesc can't be changed, so
@@ -1885,10 +1896,11 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				modifiedCols = bms_union(ExecGetInsertedCols(resultRelInfo, estate),
 										 ExecGetUpdatedCols(resultRelInfo, estate));
 			char	   *val_desc = ExecBuildSlotValueDescription(RelationGetRelid(rel),
-													 slot,
-													 tupdesc,
-													 modifiedCols,
-													 64);
+																 slot,
+																 tupdesc,
+																 modifiedCols,
+																 64);
+
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
@@ -1973,7 +1985,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 						tupdesc = RelationGetDescr(rootrel->ri_RelationDesc);
 						/* a reverse map */
 						AttrMap    *map = build_attrmap_by_name_if_req(old_tupdesc,
-														   tupdesc);
+																	   tupdesc);
 
 						/*
 						 * Partition-specific slot's tupdesc can't be changed,
@@ -2090,6 +2102,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 	 * data for.
 	 */
 	AclResult	aclresult = pg_class_aclcheck(reloid, GetUserId(), ACL_SELECT);
+
 	if (aclresult != ACLCHECK_OK)
 	{
 		/* Set up the buffer for the column list */
@@ -2202,7 +2215,7 @@ ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo)
 	 */
 	Bitmapset  *updatedCols = ExecGetAllUpdatedCols(relinfo, estate);
 	Bitmapset  *keyCols = RelationGetIndexAttrBitmap(relinfo->ri_RelationDesc,
-										 INDEX_ATTR_BITMAP_KEY);
+													 INDEX_ATTR_BITMAP_KEY);
 
 	if (bms_overlap(keyCols, updatedCols))
 		return LockTupleExclusive;
@@ -2325,6 +2338,7 @@ EvalPlanQual(EPQState *epqstate, Relation relation,
 	 * an unnecessary copy.
 	 */
 	TupleTableSlot *testslot = EvalPlanQualSlot(epqstate, relation, rti);
+
 	if (testslot != inputslot)
 		ExecCopySlot(testslot, inputslot);
 
@@ -2429,6 +2443,7 @@ EvalPlanQualSlot(EPQState *epqstate,
 	{
 
 		MemoryContext oldcontext = MemoryContextSwitchTo(epqstate->parentestate->es_query_cxt);
+
 		*slot = table_slot_create(relation, &epqstate->tuple_table);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -2495,6 +2510,7 @@ EvalPlanQualFetchRowMark(EPQState *epqstate, Index rti, TupleTableSlot *slot)
 			bool		updated = false;
 
 			FdwRoutine *fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
+
 			/* this should have been checked already, but let's be safe */
 			if (fdwroutine->RefetchForeignRow == NULL)
 				ereport(ERROR,
@@ -2555,6 +2571,7 @@ EvalPlanQualNext(EPQState *epqstate)
 
 	MemoryContext oldcontext = MemoryContextSwitchTo(epqstate->recheckestate->es_query_cxt);
 	TupleTableSlot *slot = ExecProcNode(epqstate->recheckplanstate);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return slot;
@@ -2699,6 +2716,7 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 
 		/* now make the internal param workspace ... */
 		int			i = list_length(parentestate->es_plannedstmt->paramExecTypes);
+
 		rcestate->es_param_exec_vals = (ParamExecData *)
 			palloc0(i * sizeof(ParamExecData));
 		/* ... and copy down all values, whether really needed or not */
@@ -2726,6 +2744,7 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 		Plan	   *subplan = (Plan *) lfirst(l);
 
 		PlanState  *subplanstate = ExecInitNode(subplan, rcestate, 0);
+
 		rcestate->es_subplanstates = lappend(rcestate->es_subplanstates,
 											 subplanstate);
 	}

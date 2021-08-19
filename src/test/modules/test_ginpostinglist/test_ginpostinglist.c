@@ -51,6 +51,7 @@ test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 
 	/* Encode, and decode it back */
 	GinPostingList *pl = ginCompressPostingList(orig_itemptrs, 2, maxsize, &nwritten);
+
 	elog(NOTICE, "encoded %d item pointers to %zu bytes",
 		 nwritten, SizeOfGinPostingList(pl));
 
@@ -59,6 +60,7 @@ test_itemptr_pair(BlockNumber blk, OffsetNumber off, int maxsize)
 			 SizeOfGinPostingList(pl), maxsize);
 
 	ItemPointer decoded_itemptrs = ginPostingListDecode(pl, &ndecoded);
+
 	if (nwritten != ndecoded)
 		elog(NOTICE, "encoded %d itemptrs, %d came back", nwritten, ndecoded);
 

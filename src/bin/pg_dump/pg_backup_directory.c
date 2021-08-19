@@ -138,6 +138,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 
 	/* Set up our private context */
 	lclContext *ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+
 	AH->formatData = (void *) ctx;
 
 	ctx->dataFH = NULL;
@@ -201,6 +202,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 		setFilePath(AH, fname, "toc.dat");
 
 		cfp		   *tocFH = cfopen_read(fname, PG_BINARY_R);
+
 		if (tocFH == NULL)
 			fatal("could not open input file \"%s\": %m", fname);
 
@@ -233,6 +235,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	char		fn[MAXPGPATH];
 
 	lclTocEntry *tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+
 	if (strcmp(te->desc, "BLOBS") == 0)
 		tctx->filename = pg_strdup("blobs.toc");
 	else if (te->dataDumper)
@@ -574,6 +577,7 @@ _CloseArchive(ArchiveHandle *AH)
 
 		/* The TOC is always created uncompressed */
 		cfp		   *tocFH = cfopen_write(fname, PG_BINARY_W, 0);
+
 		if (tocFH == NULL)
 			fatal("could not open output file \"%s\": %m", fname);
 		ctx->dataFH = tocFH;
@@ -677,6 +681,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	/* register the blob in blobs.toc */
 	int			len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
+
 	if (cfwrite(buf, len, ctx->blobsTocFH) != len)
 		fatal("could not write to blobs TOC file");
 }

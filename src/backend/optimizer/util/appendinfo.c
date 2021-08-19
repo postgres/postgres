@@ -99,6 +99,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	{
 
 		Form_pg_attribute att = TupleDescAttr(old_tupdesc, old_attno);
+
 		if (att->attisdropped)
 		{
 			/* Just put NULL into this list entry */
@@ -141,6 +142,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 		{
 
 			HeapTuple	newtup = SearchSysCacheAttName(new_relid, attname);
+
 			if (!HeapTupleIsValid(newtup))
 				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
 					 attname, RelationGetRelationName(newrelation));
@@ -244,7 +246,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
 				Node	   *newnode = copyObject(list_nth(appinfo->translated_vars,
-											  var->varattno - 1));
+														  var->varattno - 1));
+
 				if (newnode == NULL)
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
@@ -289,9 +292,10 @@ adjust_appendrel_attrs_mutator(Node *node,
 					 */
 
 					RangeTblEntry *rte = rt_fetch(appinfo->parent_relid,
-								   context->root->parse->rtable);
+												  context->root->parse->rtable);
 					List	   *fields = copyObject(appinfo->translated_vars);
 					RowExpr    *rowexpr = makeNode(RowExpr);
+
 					rowexpr->args = fields;
 					rowexpr->row_typeid = var->vartype;
 					rowexpr->row_format = COERCE_IMPLICIT_CAST;
@@ -377,8 +381,9 @@ adjust_appendrel_attrs_mutator(Node *node,
 		/* Copy the PlaceHolderVar node with correct mutation of subnodes */
 
 		PlaceHolderVar *phv = (PlaceHolderVar *) expression_tree_mutator(node,
-														 adjust_appendrel_attrs_mutator,
-														 (void *) context);
+																		 adjust_appendrel_attrs_mutator,
+																		 (void *) context);
+
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
 			phv->phrels = adjust_child_relids(phv->phrels, context->nappinfos,
@@ -616,6 +621,7 @@ adjust_inherited_attnums(List *attnums, AppendRelInfo *context)
 			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 				 parentattno, get_rel_name(context->parent_reloid));
 		Var		   *childvar = (Var *) list_nth(context->translated_vars, parentattno - 1);
+
 		if (childvar == NULL || !IsA(childvar, Var))
 			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 				 parentattno, get_rel_name(context->parent_reloid));
@@ -705,6 +711,7 @@ find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
 	AppendRelInfo **appinfos = (AppendRelInfo **) palloc(sizeof(AppendRelInfo *) * *nappinfos);
 
 	int			i = -1;
+
 	while ((i = bms_next_member(relids, i)) >= 0)
 	{
 		AppendRelInfo *appinfo = root->append_rel_array[i];
@@ -783,6 +790,7 @@ add_row_identity_var(PlannerInfo *root, Var *orig_var,
 	 * ROWID_VAR, leaving all else alone.
 	 */
 	Var		   *rowid_var = copyObject(orig_var);
+
 	/* This could eventually become ChangeVarNodes() */
 	rowid_var->varno = ROWID_VAR;
 
@@ -928,6 +936,7 @@ distribute_row_identity_vars(PlannerInfo *root)
 		return;
 	}
 	RangeTblEntry *target_rte = rt_fetch(result_relation, parse->rtable);
+
 	if (!target_rte->inh)
 	{
 		Assert(root->row_identity_vars == NIL);
@@ -950,6 +959,7 @@ distribute_row_identity_vars(PlannerInfo *root)
 	{
 
 		Relation	target_relation = table_open(target_rte->relid, NoLock);
+
 		add_row_identity_columns(root, result_relation,
 								 target_rte, target_relation);
 		table_close(target_relation, NoLock);

@@ -182,12 +182,14 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 	NameData	nameattrdata;
 
 	HeapTuple	oldtup = SearchSysCache1(oidCacheId, ObjectIdGetDatum(objectId));
+
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
 			 objectId, RelationGetRelationName(rel));
 
 	Datum		datum = heap_getattr(oldtup, Anum_name,
-						 RelationGetDescr(rel), &isnull);
+									 RelationGetDescr(rel), &isnull);
+
 	Assert(!isnull);
 	char	   *old_name = NameStr(*(DatumGetName(datum)));
 
@@ -394,12 +396,14 @@ ExecRenameStmt(RenameStmt *stmt)
 				Relation	relation;
 
 				ObjectAddress address = get_object_address(stmt->renameType,
-											 stmt->object,
-											 &relation,
-											 AccessExclusiveLock, false);
+														   stmt->object,
+														   &relation,
+														   AccessExclusiveLock, false);
+
 				Assert(relation == NULL);
 
 				Relation	catalog = table_open(address.classId, RowExclusiveLock);
+
 				AlterObjectRename_internal(catalog,
 										   address.objectId,
 										   stmt->newname);
@@ -428,8 +432,8 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 	Relation	rel;
 
 	ObjectAddress address =
-		get_object_address_rv(stmt->objectType, stmt->relation, (List *) stmt->object,
-							  &rel, AccessExclusiveLock, false);
+	get_object_address_rv(stmt->objectType, stmt->relation, (List *) stmt->object,
+						  &rel, AccessExclusiveLock, false);
 
 	/*
 	 * Verify that the user is entitled to run the command.
@@ -450,7 +454,8 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 		table_close(rel, NoLock);
 
 	ObjectAddress refAddr = get_object_address(OBJECT_EXTENSION, (Node *) stmt->extname,
-								 &rel, AccessExclusiveLock, false);
+											   &rel, AccessExclusiveLock, false);
+
 	Assert(rel == NULL);
 	if (refAddress)
 		*refAddress = refAddr;
@@ -466,7 +471,8 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 
 		/* Avoid duplicates */
 		List	   *currexts = getAutoExtensionsOfObject(address.classId,
-											 address.objectId);
+														 address.objectId);
+
 		if (!list_member_oid(currexts, refAddr.objectId))
 			recordDependencyOn(&address, &refAddr, DEPENDENCY_AUTO_EXTENSION);
 	}
@@ -592,6 +598,7 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 			{
 
 				Relation	rel = relation_open(objid, AccessExclusiveLock);
+
 				oldNspOid = RelationGetNamespace(rel);
 
 				AlterTableNamespaceInternal(rel, oldNspOid, nspOid, objsMoved);
@@ -727,6 +734,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 
 		/* Otherwise, must be owner of the existing object */
 		Datum		owner = heap_getattr(tup, Anum_owner, RelationGetDescr(rel), &isnull);
+
 		Assert(!isnull);
 		Oid			ownerId = DatumGetObjectId(owner);
 
@@ -736,6 +744,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 
 		/* User must have CREATE privilege on new namespace */
 		AclResult	aclresult = pg_namespace_aclcheck(nspOid, GetUserId(), ACL_CREATE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
 						   get_namespace_name(nspOid));
@@ -784,6 +793,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	Datum	   *values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
 	bool	   *nulls = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
 	bool	   *replaces = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
+
 	values[Anum_namespace - 1] = ObjectIdGetDatum(nspOid);
 	replaces[Anum_namespace - 1] = true;
 	newtup = heap_modify_tuple(tup, RelationGetDescr(rel),
@@ -869,10 +879,11 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 				Oid			classId;
 
 				ObjectAddress address = get_object_address(stmt->objectType,
-											 stmt->object,
-											 &relation,
-											 AccessExclusiveLock,
-											 false);
+														   stmt->object,
+														   &relation,
+														   AccessExclusiveLock,
+														   false);
+
 				Assert(relation == NULL);
 				classId = address.classId;
 
@@ -922,12 +933,14 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 	Oid			namespaceId = InvalidOid;
 
 	HeapTuple	oldtup = get_catalog_object_by_oid(rel, Anum_oid, objectId);
+
 	if (oldtup == NULL)
 		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
 			 objectId, RelationGetRelationName(rel));
 
 	Datum		datum = heap_getattr(oldtup, Anum_owner,
-						 RelationGetDescr(rel), &isnull);
+									 RelationGetDescr(rel), &isnull);
+
 	Assert(!isnull);
 	Oid			old_ownerId = DatumGetObjectId(datum);
 
@@ -974,7 +987,8 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 			{
 
 				AclResult	aclresult = pg_namespace_aclcheck(namespaceId, new_ownerId,
-												  ACL_CREATE);
+															  ACL_CREATE);
+
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_SCHEMA,
 								   get_namespace_name(namespaceId));
@@ -986,6 +1000,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		Datum	   *values = palloc0(nattrs * sizeof(Datum));
 		bool	   *nulls = palloc0(nattrs * sizeof(bool));
 		bool	   *replaces = palloc0(nattrs * sizeof(bool));
+
 		values[Anum_owner - 1] = ObjectIdGetDatum(new_ownerId);
 		replaces[Anum_owner - 1] = true;
 
@@ -1001,14 +1016,15 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 			{
 
 				Acl		   *newAcl = aclnewowner(DatumGetAclP(datum),
-									 old_ownerId, new_ownerId);
+												 old_ownerId, new_ownerId);
+
 				values[Anum_acl - 1] = PointerGetDatum(newAcl);
 				replaces[Anum_acl - 1] = true;
 			}
 		}
 
 		HeapTuple	newtup = heap_modify_tuple(oldtup, RelationGetDescr(rel),
-								   values, nulls, replaces);
+											   values, nulls, replaces);
 
 		/* Perform actual update */
 		CatalogTupleUpdate(rel, &newtup->t_self, newtup);

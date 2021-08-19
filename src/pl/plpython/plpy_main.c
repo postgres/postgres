@@ -83,6 +83,7 @@ _PG_init(void)
 	 * anything much with the language.
 	 */
 	int		  **bitmask_ptr = (int **) find_rendezvous_variable("plpython_version_bitmask");
+
 	if (!(*bitmask_ptr))		/* am I the first? */
 		*bitmask_ptr = &plpython_version_bitmask;
 	/* Retain pointer to the agreed-on shared variable ... */
@@ -155,6 +156,7 @@ PLy_init_interp(void)
 	static PyObject *PLy_interp_safe_globals = NULL;
 
 	PyObject   *mainmod = PyImport_AddModule("__main__");
+
 	if (mainmod == NULL || PyErr_Occurred())
 		PLy_elog(ERROR, "could not import \"__main__\" module");
 	Py_INCREF(mainmod);
@@ -184,6 +186,7 @@ plpython_validator(PG_FUNCTION_ARGS)
 
 	/* Get the new function's pg_proc entry */
 	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(tuple);
@@ -216,8 +219,8 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	PLy_initialize();
 
 	bool		nonatomic = fcinfo->context &&
-		IsA(fcinfo->context, CallContext) &&
-		!castNode(CallContext, fcinfo->context)->atomic;
+	IsA(fcinfo->context, CallContext) &&
+	!castNode(CallContext, fcinfo->context)->atomic;
 
 	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	if (SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0) != SPI_OK_CONNECT)
@@ -253,6 +256,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), true);
 			exec_ctx->curr_proc = proc;
 			HeapTuple	trv = PLy_exec_trigger(fcinfo, proc);
+
 			retval = PointerGetDatum(trv);
 		}
 		else
@@ -425,8 +429,9 @@ PLy_push_execution_context(bool atomic_context)
 
 	/* Pick a memory context similar to what SPI uses. */
 	PLyExecutionContext *context = (PLyExecutionContext *)
-		MemoryContextAlloc(atomic_context ? TopTransactionContext : PortalContext,
-						   sizeof(PLyExecutionContext));
+	MemoryContextAlloc(atomic_context ? TopTransactionContext : PortalContext,
+					   sizeof(PLyExecutionContext));
+
 	context->curr_proc = NULL;
 	context->scratch_ctx = NULL;
 	context->next = PLy_execution_contexts;

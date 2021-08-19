@@ -104,6 +104,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 					char		str[12];	/* sign, 10 digits and '\0' */
 
 					int			len = pg_ltoa(num, str);
+
 					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;
@@ -114,6 +115,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 					char		str[MAXINT8LEN + 1];
 
 					int			len = pg_lltoa(num, str);
+
 					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;

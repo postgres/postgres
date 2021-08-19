@@ -49,8 +49,8 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	object.objectSubId = 0;
 
 	char	   *tcontext = sepgsql_get_label(object.classId,
-								 object.objectId,
-								 object.objectSubId);
+											 object.objectId,
+											 object.objectSubId);
 
 	/*
 	 * check db_database:{getattr} permission
@@ -78,17 +78,18 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 				ObjectIdGetDatum(databaseId));
 
 	SysScanDesc sscan = systable_beginscan(rel, DatabaseOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for database %u", databaseId);
 
 	Form_pg_database datForm = (Form_pg_database) GETSTRUCT(tuple);
 
 	char	   *ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
-									  tcontext,
-									  SEPG_CLASS_DB_DATABASE,
-									  NameStr(datForm->datname));
+												  tcontext,
+												  SEPG_CLASS_DB_DATABASE,
+												  NameStr(datForm->datname));
 
 	/*
 	 * check db_database:{create} permission

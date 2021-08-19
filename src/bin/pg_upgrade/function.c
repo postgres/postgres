@@ -92,17 +92,18 @@ get_loadable_libraries(void)
 		{
 
 			PGresult   *res = executeQueryOrDie(conn,
-									"SELECT 1 "
-									"FROM pg_catalog.pg_proc p "
-									"    JOIN pg_catalog.pg_namespace n "
-									"    ON pronamespace = n.oid "
-									"WHERE proname = 'plpython_call_handler' AND "
-									"nspname = 'public' AND "
-									"prolang = %u AND "
-									"probin = '$libdir/plpython' AND "
-									"p.oid >= %u;",
-									ClanguageId,
-									FirstNormalObjectId);
+												"SELECT 1 "
+												"FROM pg_catalog.pg_proc p "
+												"    JOIN pg_catalog.pg_namespace n "
+												"    ON pronamespace = n.oid "
+												"WHERE proname = 'plpython_call_handler' AND "
+												"nspname = 'public' AND "
+												"prolang = %u AND "
+												"probin = '$libdir/plpython' AND "
+												"p.oid >= %u;",
+												ClanguageId,
+												FirstNormalObjectId);
+
 			if (PQntuples(res) > 0)
 			{
 				if (!found_public_plpython_handler)
@@ -147,6 +148,7 @@ get_loadable_libraries(void)
 		int			rowno;
 
 		int			ntups = PQntuples(res);
+
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			char	   *lib = PQgetvalue(res, rowno, 0);

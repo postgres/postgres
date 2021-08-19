@@ -29,6 +29,7 @@ main(int argc, char *argv[])
 		return 1;
 
 	PQconninfoOption *opts = PQconninfoParse(argv[1], &errmsg);
+
 	if (opts == NULL)
 	{
 		fprintf(stderr, "uri-regress: %s", errmsg);
@@ -36,6 +37,7 @@ main(int argc, char *argv[])
 	}
 
 	PQconninfoOption *defs = PQconndefaults();
+
 	if (defs == NULL)
 	{
 		fprintf(stderr, "uri-regress: cannot fetch default options\n");

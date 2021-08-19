@@ -45,6 +45,7 @@ unsetenv(const char *name)
 	 */
 
 	char	   *envstr = (char *) malloc(strlen(name) + 2);
+
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 

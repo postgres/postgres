@@ -454,7 +454,8 @@ AllocSetContextCreateInternal(MemoryContext parent,
 
 	/* Determine size of initial block */
 	Size		firstBlockSize = MAXALIGN(sizeof(AllocSetContext)) +
-		ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+	ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+
 	if (minContextSize != 0)
 		firstBlockSize = Max(firstBlockSize, minContextSize);
 	else
@@ -483,6 +484,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 
 	/* Fill in the initial block's block header */
 	AllocBlock	block = (AllocBlock) (((char *) set) + MAXALIGN(sizeof(AllocSetContext)));
+
 	block->aset = set;
 	block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 	block->endptr = ((char *) set) + firstBlockSize;
@@ -910,6 +912,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		 * space... but try to keep it a power of 2.
 		 */
 		Size		required_size = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
+
 		while (blksize < required_size)
 			blksize <<= 1;
 
@@ -1114,6 +1117,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		 * confused about the chunk's status in future calls.
 		 */
 		Size		chksize = Max(size, set->allocChunkLimit + 1);
+
 		chksize = MAXALIGN(chksize);
 
 		/* Do the realloc */
@@ -1299,6 +1303,7 @@ AllocSetGetChunkSpace(MemoryContext context, void *pointer)
 
 	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOCCHUNK_PRIVATE_LEN);
 	Size		result = chunk->size + ALLOC_CHUNKHDRSZ;
+
 	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
 	return result;
 }

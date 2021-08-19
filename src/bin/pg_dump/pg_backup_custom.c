@@ -137,6 +137,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 
 	/* Set up a private area. */
 	lclContext *ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+
 	AH->formatData = (void *) ctx;
 
 	/* Initialize LO buffering */
@@ -203,6 +204,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
 
 	lclTocEntry *ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+
 	if (te->dataDumper)
 		ctx->dataState = K_OFFSET_POS_NOT_SET;
 	else
@@ -574,6 +576,7 @@ _LoadBlobs(ArchiveHandle *AH, bool drop)
 	StartRestoreBlobs(AH);
 
 	Oid			oid = ReadInt(AH);
+
 	while (oid != 0)
 	{
 		StartRestoreBlob(AH, oid, drop);
@@ -596,6 +599,7 @@ _skipBlobs(ArchiveHandle *AH)
 {
 
 	Oid			oid = ReadInt(AH);
+
 	while (oid != 0)
 	{
 		_skipData(AH);
@@ -616,6 +620,7 @@ _skipData(ArchiveHandle *AH)
 	int			buflen = 0;
 
 	size_t		blkLen = ReadInt(AH);
+
 	while (blkLen != 0)
 	{
 		if (ctx->hasSeek)
@@ -677,6 +682,7 @@ _ReadByte(ArchiveHandle *AH)
 {
 
 	int			res = getc(AH->FH);
+
 	if (res == EOF)
 		READ_ERROR_EXIT(AH->FH);
 	return res;
@@ -787,6 +793,7 @@ _ReopenArchive(ArchiveHandle *AH)
 		fatal("parallel restore from non-seekable file is not supported");
 
 	pgoff_t		tpos = ftello(AH->FH);
+
 	if (tpos < 0)
 		fatal("could not determine seek position in archive file: %m");
 
@@ -856,6 +863,7 @@ _PrepParallelRestore(ArchiveHandle *AH)
 		if (fseeko(AH->FH, 0, SEEK_END) != 0)
 			fatal("error during file seek: %m");
 		pgoff_t		endpos = ftello(AH->FH);
+
 		if (endpos > prev_tctx->dataPos)
 			prev_te->dataLength = endpos - prev_tctx->dataPos;
 	}
@@ -927,6 +935,7 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 {
 
 	pgoff_t		pos = ftello(AH->FH);
+
 	if (pos < 0)
 	{
 		/* Not expected if we found we can seek. */
@@ -994,6 +1003,7 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 
 	/* Read length */
 	size_t		blkLen = ReadInt(AH);
+
 	if (blkLen == 0)
 		return 0;
 

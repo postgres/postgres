@@ -818,6 +818,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 						appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
 				}
 				BlockNumber orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
+
 				appendStringInfo(&buf, msgfmt,
 								 vacrel->lpdead_item_pages,
 								 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
@@ -1033,8 +1034,9 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		{
 
 			uint8		vmstatus = visibilitymap_get_status(vacrel->rel,
-												next_unskippable_block,
-												&vmbuffer);
+															next_unskippable_block,
+															&vmbuffer);
+
 			if (aggressive)
 			{
 				if ((vmstatus & VISIBILITYMAP_ALL_FROZEN) == 0)
@@ -1084,8 +1086,9 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 				{
 
 					uint8		vmskipflags = visibilitymap_get_status(vacrel->rel,
-														   next_unskippable_block,
-														   &vmbuffer);
+																	   next_unskippable_block,
+																	   &vmbuffer);
+
 					if (aggressive)
 					{
 						if ((vmskipflags & VISIBILITYMAP_ALL_FROZEN) == 0)
@@ -1867,6 +1870,7 @@ retry:
 					 * that everyone sees it as committed?
 					 */
 					TransactionId xmin = HeapTupleHeaderGetXmin(tuple.t_data);
+
 					if (!TransactionIdPrecedes(xmin, vacrel->OldestXmin))
 					{
 						prunestate->all_visible = false;
@@ -1986,7 +1990,8 @@ retry:
 		{
 
 			XLogRecPtr	recptr = log_heap_freeze(vacrel->rel, buf, vacrel->FreezeLimit,
-									 frozen, nfrozen);
+												 frozen, nfrozen);
+
 			PageSetLSN(page, recptr);
 		}
 
@@ -2114,6 +2119,7 @@ lazy_vacuum(LVRelState *vacrel)
 	 * HOT through careful tuning.
 	 */
 	bool		bypass = false;
+
 	if (vacrel->consider_bypass_optimization && vacrel->rel_pages > 0)
 	{
 
@@ -2145,6 +2151,7 @@ lazy_vacuum(LVRelState *vacrel)
 		 * expanded to cover more cases then this may need to be reconsidered.
 		 */
 		BlockNumber threshold = (double) vacrel->rel_pages * BYPASS_THRESHOLD_PAGES;
+
 		bypass = (vacrel->lpdead_item_pages < threshold &&
 				  vacrel->lpdead_items < MAXDEADTUPLES(32L * 1024L * 1024L));
 	}
@@ -2328,15 +2335,18 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 	BlockNumber vacuumed_pages = 0;
 
 	int			tupindex = 0;
+
 	while (tupindex < vacrel->dead_tuples->num_tuples)
 	{
 
 		vacuum_delay_point();
 
 		BlockNumber tblk = ItemPointerGetBlockNumber(&vacrel->dead_tuples->itemptrs[tupindex]);
+
 		vacrel->blkno = tblk;
 		Buffer		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, tblk, RBM_NORMAL,
-								 vacrel->bstrategy);
+											 vacrel->bstrategy);
+
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		tupindex = lazy_vacuum_heap_page(vacrel, tblk, buf, tupindex,
 										 &vmbuffer);
@@ -2369,7 +2379,7 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 
 	ereport(elevel,
 			(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
-					vacrel->relname, (long long ) tupindex, vacuumed_pages),
+					vacrel->relname, (long long) tupindex, vacuumed_pages),
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
 	/* Revert to the previous phase information for error traceback */
@@ -2421,6 +2431,7 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	{
 
 		BlockNumber tblk = ItemPointerGetBlockNumber(&dead_tuples->itemptrs[tupindex]);
+
 		if (tblk != blkno)
 			break;				/* past end of tuples for this block */
 		OffsetNumber toff = ItemPointerGetOffsetNumber(&dead_tuples->itemptrs[tupindex]);
@@ -2828,6 +2839,7 @@ do_parallel_processing(LVRelState *vacrel, LVShared *lvshared)
 
 		/* Do vacuum or cleanup of the index */
 		IndexBulkDeleteResult *istat = (vacrel->indstats[idx]);
+
 		vacrel->indstats[idx] = parallel_process_one_index(indrel, istat,
 														   lvshared,
 														   shared_istat,
@@ -2876,6 +2888,7 @@ do_serial_processing_for_unsafe_indexes(LVRelState *vacrel, LVShared *lvshared)
 
 		/* Do vacuum or cleanup of the index */
 		IndexBulkDeleteResult *istat = (vacrel->indstats[idx]);
+
 		vacrel->indstats[idx] = parallel_process_one_index(indrel, istat,
 														   lvshared,
 														   shared_istat,
@@ -3137,6 +3150,7 @@ should_attempt_truncation(LVRelState *vacrel)
 		return false;
 
 	BlockNumber possibly_freeable = vacrel->rel_pages - vacrel->nonempty_pages;
+
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
 		 possibly_freeable >= vacrel->rel_pages / REL_TRUNCATE_FRACTION) &&
@@ -3297,9 +3311,11 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 	 * in forward direction, so that OS-level readahead can kick in.
 	 */
 	BlockNumber blkno = vacrel->rel_pages;
+
 	StaticAssertStmt((PREFETCH_SIZE & (PREFETCH_SIZE - 1)) == 0,
 					 "prefetch size must be power of 2");
 	BlockNumber prefetchedUntil = InvalidBlockNumber;
+
 	while (blkno > vacrel->nonempty_pages)
 	{
 		OffsetNumber offnum,
@@ -3319,6 +3335,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 
 			INSTR_TIME_SET_CURRENT(currenttime);
 			instr_time	elapsed = currenttime;
+
 			INSTR_TIME_SUBTRACT(elapsed, starttime);
 			if ((INSTR_TIME_GET_MICROSEC(elapsed) / 1000)
 				>= VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL)
@@ -3351,6 +3368,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 			BlockNumber pblkno;
 
 			BlockNumber prefetchStart = blkno & ~(PREFETCH_SIZE - 1);
+
 			for (pblkno = prefetchStart; pblkno <= blkno; pblkno++)
 			{
 				PrefetchBuffer(vacrel->rel, MAIN_FORKNUM, pblkno);
@@ -3360,7 +3378,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 		}
 
 		Buffer		buf = ReadBufferExtended(vacrel->rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-								 vacrel->bstrategy);
+											 vacrel->bstrategy);
 
 		/* In this phase we only need shared access to the buffer */
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
@@ -3374,6 +3392,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 		}
 
 		bool		hastup = false;
+
 		maxoff = PageGetMaxOffsetNumber(page);
 		for (offnum = FirstOffsetNumber;
 			 offnum <= maxoff;
@@ -3481,6 +3500,7 @@ lazy_space_alloc(LVRelState *vacrel, int nworkers, BlockNumber nblocks)
 	long		maxtuples = compute_max_dead_tuples(nblocks, vacrel->nindexes > 0);
 
 	LVDeadTuples *dead_tuples = (LVDeadTuples *) palloc(SizeOfDeadTuples(maxtuples));
+
 	dead_tuples->num_tuples = 0;
 	dead_tuples->max_tuples = (int) maxtuples;
 
@@ -3532,10 +3552,10 @@ lazy_tid_reaped(ItemPointer itemptr, void *state)
 		return false;
 
 	ItemPointer res = (ItemPointer) bsearch((void *) itemptr,
-								(void *) dead_tuples->itemptrs,
-								dead_tuples->num_tuples,
-								sizeof(ItemPointerData),
-								vac_cmp_itemptr);
+											(void *) dead_tuples->itemptrs,
+											dead_tuples->num_tuples,
+											sizeof(ItemPointerData),
+											vac_cmp_itemptr);
 
 	return (res != NULL);
 }
@@ -3649,6 +3669,7 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 					 * that everyone sees it as committed?
 					 */
 					TransactionId xmin = HeapTupleHeaderGetXmin(tuple.t_data);
+
 					if (!TransactionIdPrecedes(xmin, vacrel->OldestXmin))
 					{
 						all_visible = false;
@@ -3737,7 +3758,7 @@ compute_parallel_vacuum_workers(LVRelState *vacrel, int nrequested,
 	}
 
 	int			nindexes_parallel = Max(nindexes_parallel_bulkdel,
-							nindexes_parallel_cleanup);
+										nindexes_parallel_cleanup);
 
 	/* The leader process takes one index */
 	nindexes_parallel--;
@@ -3748,7 +3769,7 @@ compute_parallel_vacuum_workers(LVRelState *vacrel, int nrequested,
 
 	/* Compute the parallel degree */
 	int			parallel_workers = (nrequested > 0) ?
-		Min(nrequested, nindexes_parallel) : nindexes_parallel;
+	Min(nrequested, nindexes_parallel) : nindexes_parallel;
 
 	/* Cap by max_parallel_maintenance_workers */
 	parallel_workers = Min(parallel_workers, max_parallel_maintenance_workers);
@@ -3815,8 +3836,8 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	 */
 	bool	   *can_parallel_vacuum = (bool *) palloc0(sizeof(bool) * nindexes);
 	int			parallel_workers = compute_parallel_vacuum_workers(vacrel,
-													   nrequested,
-													   can_parallel_vacuum);
+																   nrequested,
+																   can_parallel_vacuum);
 
 	/* Can't perform vacuum in parallel */
 	if (parallel_workers <= 0)
@@ -3829,12 +3850,14 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 
 	EnterParallelMode();
 	ParallelContext *pcxt = CreateParallelContext("postgres", "parallel_vacuum_main",
-								 parallel_workers);
+												  parallel_workers);
+
 	Assert(pcxt->nworkers > 0);
 	lps->pcxt = pcxt;
 
 	/* Estimate size for shared information -- PARALLEL_VACUUM_KEY_SHARED */
 	Size		est_shared = MAXALIGN(add_size(SizeOfLVShared, BITMAPLEN(nindexes)));
+
 	for (int idx = 0; idx < nindexes; idx++)
 	{
 		Relation	indrel = indrels[idx];
@@ -3874,6 +3897,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	/* Estimate size for dead tuples -- PARALLEL_VACUUM_KEY_DEAD_TUPLES */
 	long		maxtuples = compute_max_dead_tuples(nblocks, true);
 	Size		est_deadtuples = MAXALIGN(SizeOfDeadTuples(maxtuples));
+
 	shm_toc_estimate_chunk(&pcxt->estimator, est_deadtuples);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
@@ -3906,6 +3930,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 
 	/* Prepare shared information */
 	LVShared   *shared = (LVShared *) shm_toc_allocate(pcxt->toc, est_shared);
+
 	MemSet(shared, 0, est_shared);
 	shared->relid = RelationGetRelid(vacrel->rel);
 	shared->elevel = elevel;
@@ -3938,6 +3963,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 
 	/* Prepare the dead tuple space */
 	LVDeadTuples *dead_tuples = (LVDeadTuples *) shm_toc_allocate(pcxt->toc, est_deadtuples);
+
 	dead_tuples->max_tuples = maxtuples;
 	dead_tuples->num_tuples = 0;
 	MemSet(dead_tuples->itemptrs, 0, sizeof(ItemPointerData) * maxtuples);
@@ -3949,11 +3975,13 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	 * initialize
 	 */
 	BufferUsage *buffer_usage = shm_toc_allocate(pcxt->toc,
-									mul_size(sizeof(BufferUsage), pcxt->nworkers));
+												 mul_size(sizeof(BufferUsage), pcxt->nworkers));
+
 	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_BUFFER_USAGE, buffer_usage);
 	lps->buffer_usage = buffer_usage;
 	WalUsage   *wal_usage = shm_toc_allocate(pcxt->toc,
-								 mul_size(sizeof(WalUsage), pcxt->nworkers));
+											 mul_size(sizeof(WalUsage), pcxt->nworkers));
+
 	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_WAL_USAGE, wal_usage);
 	lps->wal_usage = wal_usage;
 
@@ -3962,6 +3990,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	{
 
 		char	   *sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
+
 		memcpy(sharedquery, debug_query_string, querylen + 1);
 		sharedquery[querylen] = '\0';
 		shm_toc_insert(pcxt->toc,
@@ -4031,6 +4060,7 @@ parallel_stats_for_idx(LVShared *lvshared, int getidx)
 		return NULL;
 
 	char	   *p = (char *) GetSharedIndStats(lvshared);
+
 	for (int idx = 0; idx < getidx; idx++)
 	{
 		if (IndStatsIsNull(lvshared, idx))
@@ -4095,7 +4125,8 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	ErrorContextCallback errcallback;
 
 	LVShared   *lvshared = (LVShared *) shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_SHARED,
-										   false);
+													   false);
+
 	elevel = lvshared->elevel;
 
 	if (lvshared->for_cleanup)
@@ -4105,6 +4136,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 
 	/* Set debug_query_string for individual workers */
 	char	   *sharedquery = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_QUERY_TEXT, true);
+
 	debug_query_string = sharedquery;
 	pgstat_report_activity(STATE_RUNNING, debug_query_string);
 
@@ -4124,8 +4156,8 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 
 	/* Set dead tuple space */
 	LVDeadTuples *dead_tuples = (LVDeadTuples *) shm_toc_lookup(toc,
-												  PARALLEL_VACUUM_KEY_DEAD_TUPLES,
-												  false);
+																PARALLEL_VACUUM_KEY_DEAD_TUPLES,
+																false);
 
 	/* Set cost-based vacuum delay */
 	VacuumCostActive = (VacuumCostDelay > 0);
@@ -4172,6 +4204,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	/* Report buffer/WAL usage during parallel execution */
 	BufferUsage *buffer_usage = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_BUFFER_USAGE, false);
 	WalUsage   *wal_usage = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_WAL_USAGE, false);
+
 	InstrEndParallelQuery(&buffer_usage[ParallelWorkerNumber],
 						  &wal_usage[ParallelWorkerNumber]);
 

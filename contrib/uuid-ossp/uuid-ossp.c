@@ -158,6 +158,7 @@ get_cached_uuid_t(int which)
 	{
 
 		uuid_rc_t	rc = uuid_create(&cached_uuid[which]);
+
 		if (rc != UUID_RC_OK)
 		{
 			cached_uuid[which] = NULL;
@@ -175,6 +176,7 @@ uuid_to_string(const uuid_t *uuid)
 	size_t		len = UUID_LEN_STR + 1;
 
 	uuid_rc_t	rc = uuid_export(uuid, UUID_FMT_STR, &ptr, &len);
+
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 
@@ -187,6 +189,7 @@ string_to_uuid(const char *str, uuid_t *uuid)
 {
 
 	uuid_rc_t	rc = uuid_import(uuid, UUID_FMT_STR, str, UUID_LEN_STR + 1);
+
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 }
@@ -198,6 +201,7 @@ special_uuid_value(const char *name)
 	uuid_t	   *uuid = get_cached_uuid_t(0);
 
 	uuid_rc_t	rc = uuid_load(uuid, name);
+
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 	char	   *str = uuid_to_string(uuid);
@@ -212,6 +216,7 @@ uuid_generate_internal(int mode, const uuid_t *ns, const char *name, int len)
 	uuid_t	   *uuid = get_cached_uuid_t(0);
 
 	uuid_rc_t	rc = uuid_make(uuid, mode, ns, name);
+
 	if (rc != UUID_RC_OK)
 		pguuid_complain(rc);
 	char	   *str = uuid_to_string(uuid);

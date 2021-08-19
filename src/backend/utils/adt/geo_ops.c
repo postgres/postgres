@@ -961,6 +961,7 @@ line_in(PG_FUNCTION_ARGS)
 	bool		isopen;
 
 	char	   *s = str;
+
 	while (isspace((unsigned char) *s))
 		s++;
 	if (*s == LDELIM_L)
@@ -1382,6 +1383,7 @@ path_in(PG_FUNCTION_ARGS)
 						"path", str)));
 
 	char	   *s = str;
+
 	while (isspace((unsigned char) *s))
 		s++;
 
@@ -1455,12 +1457,14 @@ path_recv(PG_FUNCTION_ARGS)
 
 	int			closed = pq_getmsgbyte(buf);
 	int32		npts = pq_getmsgint(buf, sizeof(int32));
+
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid number of points in external \"path\" value")));
 
 	int			size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
+
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -1813,6 +1817,7 @@ point_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
 	Point	   *point = (Point *) palloc(sizeof(Point));
+
 	point->x = pq_getmsgfloat8(buf);
 	point->y = pq_getmsgfloat8(buf);
 	PG_RETURN_POINT_P(point);
@@ -2561,7 +2566,8 @@ dist_cpoly_internal(CIRCLE *circle, POLYGON *poly)
 
 	/* calculate distance to center, and subtract radius */
 	float8		result = float8_mi(dist_ppoly_internal(&circle->center, poly),
-					   circle->radius);
+								   circle->radius);
+
 	if (result < 0.0)
 		result = 0.0;
 
@@ -3511,12 +3517,14 @@ poly_recv(PG_FUNCTION_ARGS)
 	int32		i;
 
 	int32		npts = pq_getmsgint(buf, sizeof(int32));
+
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid number of points in external \"polygon\" value")));
 
 	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
+
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
 	SET_VARSIZE(poly, size);
@@ -4426,6 +4434,7 @@ path_poly(PG_FUNCTION_ARGS)
 	 * just a small constant larger.
 	 */
 	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * path->npts;
+
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4479,6 +4488,7 @@ poly_box(PG_FUNCTION_ARGS)
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 
 	BOX		   *box = (BOX *) palloc(sizeof(BOX));
+
 	*box = poly->boundbox;
 
 	PG_RETURN_BOX_P(box);
@@ -4496,6 +4506,7 @@ box_poly(PG_FUNCTION_ARGS)
 
 	/* map four corners of the box to a polygon */
 	int			size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * 4;
+
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4528,6 +4539,7 @@ poly_path(PG_FUNCTION_ARGS)
 	 * smaller by a small constant.
 	 */
 	int			size = offsetof(PATH, p) + sizeof(path->p[0]) * poly->npts;
+
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -5014,7 +5026,8 @@ circle_distance(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
 	float8		result = float8_mi(point_dt(&circle1->center, &circle2->center),
-					   float8_pl(circle1->radius, circle2->radius));
+								   float8_pl(circle1->radius, circle2->radius));
+
 	if (result < 0.0)
 		result = 0.0;
 
@@ -5029,6 +5042,7 @@ circle_contain_pt(PG_FUNCTION_ARGS)
 	Point	   *point = PG_GETARG_POINT_P(1);
 
 	float8		d = point_dt(&circle->center, point);
+
 	PG_RETURN_BOOL(d <= circle->radius);
 }
 
@@ -5040,6 +5054,7 @@ pt_contained_circle(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 
 	float8		d = point_dt(&circle->center, point);
+
 	PG_RETURN_BOOL(d <= circle->radius);
 }
 
@@ -5054,7 +5069,8 @@ dist_pc(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 
 	float8		result = float8_mi(point_dt(point, &circle->center),
-					   circle->radius);
+								   circle->radius);
+
 	if (result < 0.0)
 		result = 0.0;
 
@@ -5071,6 +5087,7 @@ dist_cpoint(PG_FUNCTION_ARGS)
 	Point	   *point = PG_GETARG_POINT_P(1);
 
 	float8		result = float8_mi(point_dt(point, &circle->center), circle->radius);
+
 	if (result < 0.0)
 		result = 0.0;
 
@@ -5085,6 +5102,7 @@ circle_center(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
 
 	Point	   *result = (Point *) palloc(sizeof(Point));
+
 	result->x = circle->center.x;
 	result->y = circle->center.y;
 

@@ -731,16 +731,16 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate,
 	 * data which is useful to keep while sorting multiple similar batches.
 	 */
 	MemoryContext maincontext = AllocSetContextCreate(CurrentMemoryContext,
-										"TupleSort main",
-										ALLOCSET_DEFAULT_SIZES);
+													  "TupleSort main",
+													  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Create a working memory context for one sort operation.  The content of
 	 * this context is deleted by tuplesort_reset.
 	 */
 	MemoryContext sortcontext = AllocSetContextCreate(maincontext,
-										"TupleSort sort",
-										ALLOCSET_DEFAULT_SIZES);
+													  "TupleSort sort",
+													  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Additionally a working memory context for tuples is setup in
@@ -1017,6 +1017,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 		state->estate = CreateExecutorState();
 		TupleTableSlot *slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsHeapTuple);
 		ExprContext *econtext = GetPerTupleExprContext(state->estate);
+
 		econtext->ecxt_scantuple = slot;
 	}
 
@@ -1040,7 +1041,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 		AssertState(sortKey->ssup_attno != 0);
 
 		int16		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
+		BTGreaterStrategyNumber : BTLessStrategyNumber;
 
 		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
 	}
@@ -1116,7 +1117,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 		AssertState(sortKey->ssup_attno != 0);
 
 		int16		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
+		BTGreaterStrategyNumber : BTLessStrategyNumber;
 
 		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
 	}
@@ -1602,6 +1603,7 @@ grow_memtuples(Tuplesortstate *state)
 		 */
 
 		double		grow_ratio = (double) state->allowedMem / (double) memNowUsed;
+
 		if (memtupsize * grow_ratio < INT_MAX)
 			newmemtupsize = (int) (memtupsize * grow_ratio);
 		else
@@ -1722,9 +1724,9 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 	USEMEM(state, GetMemoryChunkSpace(stup.tuple));
 	/* set up first-column key value */
 	Datum		original = index_getattr(tuple,
-							 1,
-							 RelationGetDescr(state->indexRel),
-							 &stup.isnull1);
+										 1,
+										 RelationGetDescr(state->indexRel),
+										 &stup.isnull1);
 
 	MemoryContextSwitchTo(state->sortcontext);
 
@@ -2596,7 +2598,7 @@ tuplesort_merge_order(int64 allowedMem)
 	 * MERGE_BUFFER_SIZE workspace.
 	 */
 	int			mOrder = (allowedMem - TAPE_BUFFER_OVERHEAD) /
-		(MERGE_BUFFER_SIZE + TAPE_BUFFER_OVERHEAD);
+	(MERGE_BUFFER_SIZE + TAPE_BUFFER_OVERHEAD);
 
 	/*
 	 * Even in minimum memory, use at least a MINORDER merge.  On the other
@@ -2740,6 +2742,7 @@ selectnewtape(Tuplesortstate *state)
 	/* Step D4: increase level */
 	state->Level++;
 	int			a = state->tp_fib[0];
+
 	for (j = 0; j < state->tapeRange; j++)
 	{
 		state->tp_dummy[j] = a + state->tp_fib[j + 1] - state->tp_fib[j];
@@ -2765,6 +2768,7 @@ init_slab_allocator(Tuplesortstate *state, int numSlots)
 		USEMEM(state, numSlots * SLAB_SLOT_SIZE);
 
 		char	   *p = state->slabMemoryBegin;
+
 		for (i = 0; i < numSlots - 1; i++)
 		{
 			((SlabSlot *) p)->nextfree = (SlabSlot *) (p + SLAB_SLOT_SIZE);
@@ -3089,6 +3093,7 @@ beginmerge(Tuplesortstate *state)
 	memset(state->mergeactive, 0,
 		   state->maxTapes * sizeof(*state->mergeactive));
 	int			activeTapes = 0;
+
 	for (tapenum = 0; tapenum < state->tapeRange; tapenum++)
 	{
 		if (state->tp_dummy[tapenum] > 0)
@@ -3562,6 +3567,7 @@ tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple)
 {
 
 	SortTuple  *memtuples = state->memtuples;
+
 	Assert(state->memtupcount < state->memtupsize);
 
 	CHECK_FOR_INTERRUPTS();
@@ -3571,6 +3577,7 @@ tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple)
 	 * using 1-based array indexes, not 0-based.
 	 */
 	int			j = state->memtupcount++;
+
 	while (j > 0)
 	{
 		int			i = (j - 1) >> 1;
@@ -3603,6 +3610,7 @@ tuplesort_heap_delete_top(Tuplesortstate *state)
 	 * current top node with it.
 	 */
 	SortTuple  *tuple = &memtuples[state->memtupcount];
+
 	tuplesort_heap_replace_top(state, tuple);
 }
 
@@ -3742,8 +3750,9 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 
 	/* Compare the leading sort key */
 	int32		compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  sortKey);
+											  b->datum1, b->isnull1,
+											  sortKey);
+
 	if (compare != 0)
 		return compare;
 
@@ -3799,15 +3808,16 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 
 	/* copy the tuple into sort storage */
 	MinimalTuple tuple = ExecCopySlotMinimalTuple(slot);
+
 	stup->tuple = (void *) tuple;
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* set up first-column key value */
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
 	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
 	Datum		original = heap_getattr(&htup,
-							state->sortKeys[0].ssup_attno,
-							state->tupDesc,
-							&stup->isnull1);
+										state->sortKeys[0].ssup_attno,
+										state->tupDesc,
+										&stup->isnull1);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -4049,9 +4059,9 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 		return;
 
 	Datum		original = heap_getattr(tuple,
-							state->indexInfo->ii_IndexAttrNumbers[0],
-							state->tupDesc,
-							&stup->isnull1);
+										state->indexInfo->ii_IndexAttrNumbers[0],
+										state->tupDesc,
+										&stup->isnull1);
 
 	if (!state->sortKeys->abbrev_converter || stup->isnull1)
 	{
@@ -4182,8 +4192,9 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 
 	/* Compare the leading sort key */
 	int32		compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  sortKey);
+											  b->datum1, b->isnull1,
+											  sortKey);
+
 	if (compare != 0)
 		return compare;
 
@@ -4300,12 +4311,14 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 	 */
 	Assert(!a->isnull1);
 	Bucket		bucket1 = _hash_hashkey2bucket(DatumGetUInt32(a->datum1),
-								   state->max_buckets, state->high_mask,
-								   state->low_mask);
+											   state->max_buckets, state->high_mask,
+											   state->low_mask);
+
 	Assert(!b->isnull1);
 	Bucket		bucket2 = _hash_hashkey2bucket(DatumGetUInt32(b->datum1),
-								   state->max_buckets, state->high_mask,
-								   state->low_mask);
+											   state->max_buckets, state->high_mask,
+											   state->low_mask);
+
 	if (bucket1 > bucket2)
 		return 1;
 	else if (bucket1 < bucket2)
@@ -4398,8 +4411,9 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
 
 	int			compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  state->sortKeys);
+											  b->datum1, b->isnull1,
+											  state->sortKeys);
+
 	if (compare != 0)
 		return compare;
 
@@ -4515,6 +4529,7 @@ tuplesort_estimate_shared(int nWorkers)
 
 	/* Make sure that BufFile shared state is MAXALIGN'd */
 	Size		tapesSize = mul_size(sizeof(TapeShare), nWorkers);
+
 	tapesSize = MAXALIGN(add_size(tapesSize, offsetof(Sharedsort, tapes)));
 
 	return tapesSize;
@@ -4579,6 +4594,7 @@ worker_get_identifier(Tuplesortstate *state)
 
 	SpinLockAcquire(&shared->mutex);
 	int			worker = shared->currentWorker++;
+
 	SpinLockRelease(&shared->mutex);
 
 	return worker;
@@ -4668,6 +4684,7 @@ leader_takeover_tapes(Tuplesortstate *state)
 
 	SpinLockAcquire(&shared->mutex);
 	int			workersFinished = shared->workersFinished;
+
 	SpinLockRelease(&shared->mutex);
 
 	if (nParticipants != workersFinished)

@@ -245,6 +245,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * Calculate target amount of free space to leave on pages.
 	 */
 	int			fillfactor = options ? options->fillfactor : GIST_DEFAULT_FILLFACTOR;
+
 	buildstate.freespace = BLCKSZ * (100 - fillfactor) / 100;
 
 	/*
@@ -287,6 +288,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 		/* initialize the root page */
 		Buffer		buffer = gistNewBuffer(index);
+
 		Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
 		Page		page = BufferGetPage(buffer);
 
@@ -401,6 +403,7 @@ gist_indexsortbuild(GISTBuildState *state)
 	 * replaced with the real root page at the end.
 	 */
 	Page		page = palloc0(BLCKSZ);
+
 	smgrextend(RelationGetSmgr(state->indexrel), MAIN_FORKNUM, GIST_ROOT_BLKNO,
 			   page, true);
 	state->pages_allocated++;
@@ -408,6 +411,7 @@ gist_indexsortbuild(GISTBuildState *state)
 
 	/* Allocate a temporary buffer for the first leaf page. */
 	GistSortedBuildPageState *leafstate = palloc(sizeof(GistSortedBuildPageState));
+
 	leafstate->page = page;
 	leafstate->parent = NULL;
 	gistinitpage(page, F_LEAF);
@@ -427,11 +431,13 @@ gist_indexsortbuild(GISTBuildState *state)
 	 * Keep in mind that flush can build a new root.
 	 */
 	GistSortedBuildPageState *pagestate = leafstate;
+
 	while (pagestate->parent != NULL)
 	{
 
 		gist_indexsortbuild_pagestate_flush(state, pagestate);
 		GistSortedBuildPageState *parent = pagestate->parent;
+
 		pfree(pagestate->page);
 		pfree(pagestate);
 		pagestate = parent;
@@ -464,6 +470,7 @@ gist_indexsortbuild_pagestate_add(GISTBuildState *state,
 
 	/* Does the tuple fit? If not, flush */
 	Size		sizeNeeded = IndexTupleSize(itup) + sizeof(ItemIdData) + state->freespace;
+
 	if (PageGetFreeSpace(pagestate->page) < sizeNeeded)
 		gist_indexsortbuild_pagestate_flush(state, pagestate);
 
@@ -488,6 +495,7 @@ gist_indexsortbuild_pagestate_flush(GISTBuildState *state,
 	 * we want to WAL-log the pages in batches.)
 	 */
 	BlockNumber blkno = state->pages_allocated++;
+
 	state->ready_blknos[state->ready_num_pages] = blkno;
 	state->ready_pages[state->ready_num_pages] = pagestate->page;
 	state->ready_num_pages++;
@@ -500,7 +508,8 @@ gist_indexsortbuild_pagestate_flush(GISTBuildState *state,
 	MemoryContext oldCtx = MemoryContextSwitchTo(state->giststate->tempCxt);
 	IndexTuple *itvec = gistextractpage(pagestate->page, &vect_len);
 	IndexTuple	union_tuple = gistunion(state->indexrel, itvec, vect_len,
-							state->giststate);
+										state->giststate);
+
 	ItemPointerSetBlockNumber(&(union_tuple->t_tid), blkno);
 	MemoryContextSwitchTo(oldCtx);
 
@@ -509,6 +518,7 @@ gist_indexsortbuild_pagestate_flush(GISTBuildState *state,
 	 * new page as the parent, which becomes the new root.
 	 */
 	GistSortedBuildPageState *parent = pagestate->parent;
+
 	if (parent == NULL)
 	{
 		parent = palloc(sizeof(GistSortedBuildPageState));
@@ -597,8 +607,8 @@ gistInitBuffering(GISTBuildState *buildstate)
 
 	/* Calc space of index page which is available for index tuples */
 	Size		pageFreeSpace = BLCKSZ - SizeOfPageHeaderData - sizeof(GISTPageOpaqueData)
-		- sizeof(ItemIdData)
-		- buildstate->freespace;
+	- sizeof(ItemIdData)
+	- buildstate->freespace;
 
 	/*
 	 * Calculate average size of already inserted index tuples using gathered
@@ -675,13 +685,14 @@ gistInitBuffering(GISTBuildState *buildstate)
 	 * the hash table.
 	 */
 	int			levelStep = 1;
+
 	for (;;)
 	{
 
 		/* size of an average subtree at this levelStep (in pages). */
 		double		subtreesize =
-			(1 - pow(avgIndexTuplesPerPage, (double) (levelStep + 1))) /
-			(1 - avgIndexTuplesPerPage);
+		(1 - pow(avgIndexTuplesPerPage, (double) (levelStep + 1))) /
+		(1 - avgIndexTuplesPerPage);
 
 		/* max number of pages at the lowest level of a subtree */
 		double		maxlowestlevelpages = pow(maxIndexTuplesPerPage, (double) levelStep);
@@ -747,15 +758,15 @@ calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep)
 
 	/* Calc space of index page which is available for index tuples */
 	Size		pageFreeSpace = BLCKSZ - SizeOfPageHeaderData - sizeof(GISTPageOpaqueData)
-		- sizeof(ItemIdData)
-		- buildstate->freespace;
+	- sizeof(ItemIdData)
+	- buildstate->freespace;
 
 	/*
 	 * Calculate average size of already inserted index tuples using gathered
 	 * statistics.
 	 */
 	double		itupAvgSize = (double) buildstate->indtuplesSize /
-		(double) buildstate->indtuples;
+	(double) buildstate->indtuples;
 
 	double		avgIndexTuplesPerPage = pageFreeSpace / itupAvgSize;
 
@@ -784,8 +795,9 @@ gistBuildCallback(Relation index,
 
 	/* form an index tuple and point it at the heap tuple */
 	IndexTuple	itup = gistFormTuple(buildstate->giststate, index,
-						 values, isnull,
-						 true);
+									 values, isnull,
+									 true);
+
 	itup->t_tid = *tid;
 
 	if (buildstate->buildMode == GIST_BUFFERING_ACTIVE)
@@ -884,6 +896,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 	 */
 	BlockNumber blkno = startblkno;
 	int			level = startlevel;
+
 	for (;;)
 	{
 		IndexTuple	idxtuple,
@@ -908,6 +921,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		Page		page = (Page) BufferGetPage(buffer);
 		OffsetNumber childoffnum = gistchoose(indexrel, page, itup, giststate);
 		ItemId		iid = PageGetItemId(page, childoffnum);
+
 		idxtuple = (IndexTuple) PageGetItem(page, iid);
 		childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
 
@@ -997,14 +1011,14 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 	BlockNumber placed_to_blk = InvalidBlockNumber;
 
 	bool		is_split = gistplacetopage(buildstate->indexrel,
-							   buildstate->freespace,
-							   buildstate->giststate,
-							   buffer,
-							   itup, ntup, oldoffnum, &placed_to_blk,
-							   InvalidBuffer,
-							   &splitinfo,
-							   false,
-							   buildstate->heaprel, true);
+										   buildstate->freespace,
+										   buildstate->giststate,
+										   buffer,
+										   itup, ntup, oldoffnum, &placed_to_blk,
+										   InvalidBuffer,
+										   &splitinfo,
+										   false,
+										   buildstate->heaprel, true);
 
 	/*
 	 * If this is a root split, update the root path item kept in memory. This
@@ -1065,11 +1079,11 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 
 		/* Parent may have changed since we memorized this path. */
 		Buffer		parentBuffer =
-			gistBufferingFindCorrectParent(buildstate,
-										   BufferGetBlockNumber(buffer),
-										   level,
-										   &parentblk,
-										   &downlinkoffnum);
+		gistBufferingFindCorrectParent(buildstate,
+									   BufferGetBlockNumber(buffer),
+									   level,
+									   &parentblk,
+									   &downlinkoffnum);
 
 		/*
 		 * If there's a buffer associated with this page, that needs to be
@@ -1087,6 +1101,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 		/* Create an array of all the downlink tuples */
 		ndownlinks = list_length(splitinfo);
 		IndexTuple *downlinks = (IndexTuple *) palloc(sizeof(IndexTuple) * ndownlinks);
+
 		i = 0;
 		foreach(lc, splitinfo)
 		{
@@ -1177,6 +1192,7 @@ gistBufferingFindCorrectParent(GISTBuildState *buildstate,
 
 	Buffer		buffer = ReadBuffer(buildstate->indexrel, parent);
 	Page		page = BufferGetPage(buffer);
+
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(buildstate->indexrel, buffer);
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
@@ -1235,6 +1251,7 @@ gistProcessEmptyingQueue(GISTBuildState *buildstate)
 
 		/* Get node buffer from emptying stack. */
 		GISTNodeBuffer *emptyingNodeBuffer = (GISTNodeBuffer *) linitial(gfbb->bufferEmptyingQueue);
+
 		gfbb->bufferEmptyingQueue = list_delete_first(gfbb->bufferEmptyingQueue);
 		emptyingNodeBuffer->queuedForEmptying = false;
 
@@ -1359,6 +1376,7 @@ gistGetMaxLevel(Relation index)
 	 */
 	int			maxLevel = 0;
 	BlockNumber blkno = GIST_ROOT_BLKNO;
+
 	while (true)
 	{
 
@@ -1384,7 +1402,8 @@ gistGetMaxLevel(Relation index)
 		 * everywhere, so we just pick the first one.
 		 */
 		IndexTuple	itup = (IndexTuple) PageGetItem(page,
-										PageGetItemId(page, FirstOffsetNumber));
+													PageGetItemId(page, FirstOffsetNumber));
+
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 		UnlockReleaseBuffer(buffer);
 
@@ -1453,9 +1472,10 @@ gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child, BlockNumber pa
 	bool		found;
 
 	ParentMapEntry *entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										   (const void *) &child,
-										   HASH_ENTER,
-										   &found);
+														   (const void *) &child,
+														   HASH_ENTER,
+														   &found);
+
 	entry->parentblkno = parent;
 }
 
@@ -1472,6 +1492,7 @@ gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parentbuf)
 	Assert(!GistPageIsLeaf(page));
 
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
 		ItemId		iid = PageGetItemId(page, off);
@@ -1489,9 +1510,10 @@ gistGetParent(GISTBuildState *buildstate, BlockNumber child)
 
 	/* Find node buffer in hash table */
 	ParentMapEntry *entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										   (const void *) &child,
-										   HASH_FIND,
-										   &found);
+														   (const void *) &child,
+														   HASH_FIND,
+														   &found);
+
 	if (!found)
 		elog(ERROR, "could not find parent of block %u in lookup table", child);
 

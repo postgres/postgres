@@ -158,6 +158,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 		extCondition = PG_GETARG_DATUM(5);
 
 	List	   *requiredExtensions = NIL;
+
 	if (!PG_ARGISNULL(6))
 	{
 		ArrayType  *textArray = PG_GETARG_ARRAYTYPE_P(6);

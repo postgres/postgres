@@ -158,6 +158,7 @@ levenshtein_with_costs(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	const char *s_data = VARDATA_ANY(src);
 	const char *t_data = VARDATA_ANY(dst);
+
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -179,6 +180,7 @@ levenshtein(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	const char *s_data = VARDATA_ANY(src);
 	const char *t_data = VARDATA_ANY(dst);
+
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -204,6 +206,7 @@ levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	const char *s_data = VARDATA_ANY(src);
 	const char *t_data = VARDATA_ANY(dst);
+
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -228,6 +231,7 @@ levenshtein_less_equal(PG_FUNCTION_ARGS)
 	/* Extract a pointer to the actual character data */
 	const char *s_data = VARDATA_ANY(src);
 	const char *t_data = VARDATA_ANY(dst);
+
 	/* Determine length of each string in bytes */
 	s_bytes = VARSIZE_ANY_EXHDR(src);
 	t_bytes = VARSIZE_ANY_EXHDR(dst);
@@ -263,6 +267,7 @@ metaphone(PG_FUNCTION_ARGS)
 						MAX_METAPHONE_STRLEN)));
 
 	int			reqlen = PG_GETARG_INT32(1);
+
 	if (reqlen > MAX_METAPHONE_STRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -733,6 +738,7 @@ _soundex(const char *instr, char *outstr)
 	*outstr++ = (char) toupper((unsigned char) *instr++);
 
 	int			count = 1;
+
 	while (*instr && count < SOUNDEX_LEN)
 	{
 		if (isalpha((unsigned char) *instr) &&

@@ -271,6 +271,7 @@ spg_text_choose(PG_FUNCTION_ARGS)
 		out->resultType = spgMatchNode;
 		out->result.matchNode.nodeN = i;
 		int			levelAdd = commonLen;
+
 		if (nodeChar >= 0)
 			levelAdd++;
 		out->result.matchNode.levelAdd = levelAdd;
@@ -439,10 +440,12 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	 * long-format reconstructed values.
 	 */
 	text	   *reconstructedValue = (text *) DatumGetPointer(in->reconstructedValue);
+
 	Assert(reconstructedValue == NULL ? in->level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstructedValue) == in->level);
 
 	int			maxReconstrLen = in->level + 1;
+
 	if (in->hasPrefix)
 	{
 		prefixText = DatumGetTextPP(in->prefixDatum);
@@ -451,6 +454,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	text	   *reconstrText = palloc(VARHDRSZ + maxReconstrLen);
+
 	SET_VARSIZE(reconstrText, VARHDRSZ + maxReconstrLen);
 
 	if (in->level)
@@ -513,7 +517,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 			int			inSize = VARSIZE_ANY_EXHDR(inText);
 
 			int			r = memcmp(VARDATA(reconstrText), VARDATA_ANY(inText),
-					   Min(inSize, thisLen));
+								   Min(inSize, thisLen));
 
 			switch (strategy)
 			{
@@ -584,6 +588,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 
 	/* Reconstruct the full string represented by this leaf tuple */
 	int			fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
+
 	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
 	{
 		fullValue = VARDATA(reconstrValue);
@@ -605,6 +610,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 
 	/* Perform the required comparison(s) */
 	bool		res = true;
+
 	for (j = 0; j < in->nkeys; j++)
 	{
 		StrategyNumber strategy = in->scankeys[j].sk_strategy;

@@ -100,8 +100,8 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused)
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	PLySubtransactionData *subxactdata = (PLySubtransactionData *)
-		MemoryContextAlloc(TopTransactionContext,
-						   sizeof(PLySubtransactionData));
+	MemoryContextAlloc(TopTransactionContext,
+					   sizeof(PLySubtransactionData));
 
 	subxactdata->oldcontext = oldcontext;
 	subxactdata->oldowner = CurrentResourceOwner;
@@ -172,6 +172,7 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 	}
 
 	PLySubtransactionData *subxactdata = (PLySubtransactionData *) linitial(explicit_subtransactions);
+
 	explicit_subtransactions = list_delete_first(explicit_subtransactions);
 
 	MemoryContextSwitchTo(subxactdata->oldcontext);

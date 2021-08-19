@@ -55,13 +55,15 @@ sepgsql_schema_post_create(Oid namespaceId)
 				ObjectIdGetDatum(namespaceId));
 
 	SysScanDesc sscan = systable_beginscan(rel, NamespaceOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for namespace %u", namespaceId);
 
 	Form_pg_namespace nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
 	const char *nsp_name = NameStr(nspForm->nspname);
+
 	if (strncmp(nsp_name, "pg_temp_", 8) == 0)
 		nsp_name = "pg_temp";
 	else if (strncmp(nsp_name, "pg_toast_temp_", 14) == 0)
@@ -69,9 +71,9 @@ sepgsql_schema_post_create(Oid namespaceId)
 
 	char	   *tcontext = sepgsql_get_label(DatabaseRelationId, MyDatabaseId, 0);
 	char	   *ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
-									  tcontext,
-									  SEPG_CLASS_DB_SCHEMA,
-									  nsp_name);
+												  tcontext,
+												  SEPG_CLASS_DB_SCHEMA,
+												  nsp_name);
 
 	/*
 	 * check db_schema:{create}
@@ -177,10 +179,11 @@ check_schema_perms(Oid namespaceId, uint32 required, bool abort_on_violation)
 	char	   *audit_name = getObjectIdentity(&object, false);
 
 	bool		result = sepgsql_avc_check_perms(&object,
-									 SEPG_CLASS_DB_SCHEMA,
-									 required,
-									 audit_name,
-									 abort_on_violation);
+												 SEPG_CLASS_DB_SCHEMA,
+												 required,
+												 audit_name,
+												 abort_on_violation);
+
 	pfree(audit_name);
 
 	return result;

@@ -145,13 +145,15 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 				 errmsg("type \"%s\" is not yet defined", typnam),
 				 errdetail("Creating a shell type definition.")));
 		Oid			namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
-														&typname);
+																	&typname);
 		AclResult	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-										  ACL_CREATE);
+													  ACL_CREATE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
 						   get_namespace_name(namespaceId));
 		ObjectAddress address = TypeShellMake(typname, namespaceId, GetUserId());
+
 		rettype = address.objectId;
 		Assert(OidIsValid(rettype));
 	}
@@ -210,10 +212,12 @@ interpret_function_parameter_list(ParseState *pstate,
 	Datum	   *allTypes = (Datum *) palloc(parameterCount * sizeof(Datum));
 	Datum	   *paramModes = (Datum *) palloc(parameterCount * sizeof(Datum));
 	Datum	   *paramNames = (Datum *) palloc0(parameterCount * sizeof(Datum));
+
 	*parameterDefaults = NIL;
 
 	/* Scan the list and extract data into work arrays */
 	int			i = 0;
+
 	foreach(x, parameters)
 	{
 		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
@@ -227,6 +231,7 @@ interpret_function_parameter_list(ParseState *pstate,
 			fpmode = FUNC_PARAM_IN;
 
 		Type		typtup = LookupTypeName(NULL, t, NULL, false);
+
 		if (typtup)
 		{
 			if (!((Form_pg_type) GETSTRUCT(typtup))->typisdefined)
@@ -262,6 +267,7 @@ interpret_function_parameter_list(ParseState *pstate,
 		}
 
 		AclResult	aclresult = pg_type_aclcheck(toid, GetUserId(), ACL_USAGE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error_type(aclresult, toid);
 
@@ -360,6 +366,7 @@ interpret_function_parameter_list(ParseState *pstate,
 					break;
 				/* as above, default mode is IN */
 				FunctionParameterMode prevfpmode = prevfp->mode;
+
 				if (prevfpmode == FUNC_PARAM_DEFAULT)
 					prevfpmode = FUNC_PARAM_IN;
 				/* pure in doesn't conflict with pure out */
@@ -397,7 +404,8 @@ interpret_function_parameter_list(ParseState *pstate,
 						 errmsg("only input parameters can have default values")));
 
 			Node	   *def = transformExpr(pstate, fp->defexpr,
-								EXPR_KIND_FUNCTION_DEFAULT);
+											EXPR_KIND_FUNCTION_DEFAULT);
+
 			def = coerce_to_specific_type(pstate, def, toid, "DEFAULT");
 			assign_expr_collations(pstate, def);
 
@@ -674,6 +682,7 @@ interpret_func_support(DefElem *defel)
 	argList[0] = INTERNALOID;
 
 	Oid			procOid = LookupFuncName(procName, 1, argList, true);
+
 	if (!OidIsValid(procOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -925,6 +934,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 				pstate->p_sourcetext = queryString;
 				sql_fn_parser_setup(pstate, pinfo);
 				Query	   *q = transformStmt(pstate, stmt);
+
 				if (q->commandType == CMD_UTILITY)
 					ereport(ERROR,
 							errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -943,6 +953,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 			pstate->p_sourcetext = queryString;
 			sql_fn_parser_setup(pstate, pinfo);
 			Query	   *q = transformStmt(pstate, sql_body_in);
+
 			if (q->commandType == CMD_UTILITY)
 				ereport(ERROR,
 						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1026,10 +1037,11 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 	/* Convert list of names to a name and namespace */
 	Oid			namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
-													&funcname);
+																&funcname);
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceId));
@@ -1037,14 +1049,15 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 	/* Set default attributes */
 	List	   *as_clause = NIL;
 	char	   *language = NULL;
+
 	isWindowFunc = false;
 	isStrict = false;
 	security = false;
 	isLeakProof = false;
 	char		volatility = PROVOLATILE_VOLATILE;
 	ArrayType  *proconfig = NULL;
-	float4		procost = -1;				/* indicates not set */
-	float4		prorows = -1;				/* indicates not set */
+	float4		procost = -1;	/* indicates not set */
+	float4		prorows = -1;	/* indicates not set */
 	Oid			prosupport = InvalidOid;
 	char		parallel = PROPARALLEL_UNSAFE;
 
@@ -1070,6 +1083,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 	/* Look up the language and validate permissions */
 	HeapTuple	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
+
 	if (!HeapTupleIsValid(languageTuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1085,6 +1099,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		/* if trusted language, need USAGE privilege */
 
 		AclResult	aclresult = pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
@@ -1185,6 +1200,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 
 		Datum	   *arr = palloc(list_length(trftypes_list) * sizeof(Datum));
 		int			i = 0;
+
 		foreach(lc, trftypes_list)
 			arr[i++] = ObjectIdGetDatum(lfirst_oid(lc));
 		trftypes = construct_array(arr, list_length(trftypes_list),
@@ -1276,6 +1292,7 @@ RemoveFunctionById(Oid funcOid)
 	Relation	relation = table_open(ProcedureRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
+
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 
@@ -1333,6 +1350,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 	ObjectAddressSet(address, ProcedureRelationId, funcOid);
 
 	HeapTuple	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcOid));
+
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 
@@ -1515,6 +1533,7 @@ CreateCast(CreateCastStmt *stmt)
 						format_type_be(targettypeid))));
 
 	AclResult	aclresult = pg_type_aclcheck(sourcetypeid, GetUserId(), ACL_USAGE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error_type(aclresult, sourcetypeid);
 
@@ -1551,6 +1570,7 @@ CreateCast(CreateCastStmt *stmt)
 			elog(ERROR, "cache lookup failed for function %u", funcid);
 
 		Form_pg_proc procstruct = (Form_pg_proc) GETSTRUCT(tuple);
+
 		nargs = procstruct->pronargs;
 		if (nargs < 1 || nargs > 3)
 			ereport(ERROR,
@@ -1783,6 +1803,7 @@ CreateTransform(CreateTransformStmt *stmt)
 		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeid);
 
 	AclResult	aclresult = pg_type_aclcheck(typeid, GetUserId(), ACL_USAGE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error_type(aclresult, typeid);
 
@@ -1952,8 +1973,9 @@ get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid2(TRFTYPELANG, Anum_pg_transform_oid,
-						  ObjectIdGetDatum(type_id),
-						  ObjectIdGetDatum(lang_id));
+									  ObjectIdGetDatum(type_id),
+									  ObjectIdGetDatum(lang_id));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -2039,6 +2061,7 @@ ExecuteDoStmt(ParseState *pstate, DoStmt *stmt, bool atomic)
 
 	/* Look up the language and validate permissions */
 	HeapTuple	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
+
 	if (!HeapTupleIsValid(languageTuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -2047,6 +2070,7 @@ ExecuteDoStmt(ParseState *pstate, DoStmt *stmt, bool atomic)
 				  errhint("Use CREATE EXTENSION to load the language into the database.") : 0)));
 
 	Form_pg_language languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+
 	codeblock->langOid = languageStruct->oid;
 	codeblock->langIsTrusted = languageStruct->lanpltrusted;
 	codeblock->atomic = atomic;
@@ -2056,7 +2080,8 @@ ExecuteDoStmt(ParseState *pstate, DoStmt *stmt, bool atomic)
 		/* if trusted language, need USAGE privilege */
 
 		AclResult	aclresult = pg_language_aclcheck(codeblock->langOid, GetUserId(),
-										 ACL_USAGE);
+													 ACL_USAGE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_LANGUAGE,
 						   NameStr(languageStruct->lanname));
@@ -2071,6 +2096,7 @@ ExecuteDoStmt(ParseState *pstate, DoStmt *stmt, bool atomic)
 
 	/* get the handler function's OID */
 	Oid			laninline = languageStruct->laninline;
+
 	if (!OidIsValid(laninline))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2120,18 +2146,22 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	PgStat_FunctionCallUsage fcusage;
 
 	FuncExpr   *fexpr = stmt->funcexpr;
+
 	Assert(fexpr);
 	Assert(IsA(fexpr, FuncExpr));
 
 	AclResult	aclresult = pg_proc_aclcheck(fexpr->funcid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_PROCEDURE, get_func_name(fexpr->funcid));
 
 	/* Prep the context object we'll pass to the procedure */
 	CallContext *callcontext = makeNode(CallContext);
+
 	callcontext->atomic = atomic;
 
 	HeapTuple	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", fexpr->funcid);
 
@@ -2157,6 +2187,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 
 	/* safety check; see ExecInitFunc() */
 	int			nargs = list_length(fexpr->args);
+
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -2177,10 +2208,12 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 	 * we can't free this context till the procedure returns.
 	 */
 	EState	   *estate = CreateExecutorState();
+
 	estate->es_param_list_info = params;
 	ExprContext *econtext = CreateExprContext(estate);
 
 	int			i = 0;
+
 	foreach(lc, fexpr->args)
 	{
 		bool		isnull;
@@ -2197,6 +2230,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 
 	pgstat_init_function_usage(fcinfo, &fcusage);
 	Datum		retval = FunctionCallInvoke(fcinfo);
+
 	pgstat_end_function_usage(&fcusage, true);
 
 	if (fexpr->funcresulttype == VOIDOID)
@@ -2234,7 +2268,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 		TupleDesc	retdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
 		TupOutputState *tstate = begin_tup_output_tupdesc(dest, retdesc,
-										  &TTSOpsHeapTuple);
+														  &TTSOpsHeapTuple);
 
 		rettupdata.t_len = HeapTupleHeaderGetDatumLength(td);
 		ItemPointerSetInvalid(&(rettupdata.t_self));
@@ -2242,6 +2276,7 @@ ExecuteCallStmt(CallStmt *stmt, ParamListInfo params, bool atomic, DestReceiver 
 		rettupdata.t_data = td;
 
 		TupleTableSlot *slot = ExecStoreHeapTuple(&rettupdata, tstate->slot, false);
+
 		tstate->dest->receiveSlot(slot, tstate->dest);
 
 		end_tup_output(tstate);
@@ -2265,6 +2300,7 @@ CallStmtResultDesc(CallStmt *stmt)
 	FuncExpr   *fexpr = stmt->funcexpr;
 
 	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fexpr->funcid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for procedure %u", fexpr->funcid);
 

@@ -53,6 +53,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
+
 	(void) tuplestore_gettupleslot(tuplestorestate, true, false, slot);
 	return slot;
 }
@@ -92,6 +93,7 @@ ExecWorkTableScan(PlanState *pstate)
 		EState	   *estate = node->ss.ps.state;
 
 		ParamExecData *param = &(estate->es_param_exec_vals[plan->wtParam]);
+
 		Assert(param->execPlan == NULL);
 		Assert(!param->isnull);
 		node->rustate = castNode(RecursiveUnionState, DatumGetPointer(param->value));
@@ -140,6 +142,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	 * create new WorkTableScanState for node
 	 */
 	WorkTableScanState *scanstate = makeNode(WorkTableScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecWorkTableScan;

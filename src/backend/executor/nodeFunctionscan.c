@@ -117,6 +117,7 @@ FunctionNext(FunctionScanState *node)
 	 * assume that we won't be called repeatedly in the end-of-data state.
 	 */
 	int64		oldpos = node->ordinal;
+
 	if (ScanDirectionIsForward(direction))
 		node->ordinal++;
 	else
@@ -132,6 +133,7 @@ FunctionNext(FunctionScanState *node)
 	ExecClearTuple(scanslot);
 	int			att = 0;
 	bool		alldone = true;
+
 	for (funcno = 0; funcno < node->nfuncs; funcno++)
 	{
 		FunctionScanPerFuncState *fs = &node->funcstates[funcno];
@@ -292,6 +294,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 * create new ScanState for node
 	 */
 	FunctionScanState *scanstate = makeNode(FunctionScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecFunctionScan;
@@ -360,8 +363,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		 * was made; we have to ignore any columns beyond "colcount".
 		 */
 		TypeFuncClass functypclass = get_expr_result_type(funcexpr,
-											&funcrettype,
-											&tupdesc);
+														  &funcrettype,
+														  &tupdesc);
 
 		if (functypclass == TYPEFUNC_COMPOSITE ||
 			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)

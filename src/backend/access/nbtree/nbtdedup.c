@@ -76,6 +76,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 * duplicates can be split several times.
 	 */
 	BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = Min(BTMaxItemSize(page) / 2, INDEX_SIZE_MASK);
@@ -107,6 +108,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 * examine the LSN and possibly dump it in a page image.
 	 */
 	Page		newpage = PageGetTempPageCopySpecial(page);
+
 	PageSetLSN(newpage, PageGetLSN(page));
 
 	/* Copy high key, if any */
@@ -309,6 +311,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 
 	/* Initialize deduplication state */
 	BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = BLCKSZ; /* We're not really deduplicating */
@@ -385,6 +388,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 	 * zero promising tuples, though.
 	 */
 	bool		neverdedup = false;
+
 	if (state->nintervals == 0)
 		neverdedup = true;
 
@@ -436,6 +440,7 @@ _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
 	{
 
 		int			nposting = BTreeTupleGetNPosting(base);
+
 		memcpy(state->htids, BTreeTupleGetPosting(base),
 			   sizeof(ItemPointerData) * nposting);
 		state->nhtids = nposting;
@@ -491,7 +496,7 @@ _bt_dedup_save_htid(BTDedupState state, IndexTuple itup)
 	 * for new posting list tuples.
 	 */
 	Size		mergedtupsz = MAXALIGN(state->basetupsize +
-						   (state->nhtids + nhtids) * sizeof(ItemPointerData));
+									   (state->nhtids + nhtids) * sizeof(ItemPointerData));
 
 	if (mergedtupsz > state->maxpostingsize)
 	{
@@ -545,6 +550,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 	Assert(state->intervals[state->nintervals].baseoff == state->baseoff);
 
 	OffsetNumber tupoff = OffsetNumberNext(PageGetMaxOffsetNumber(newpage));
+
 	if (state->nitems == 1)
 	{
 		/* Use original, unchanged base tuple */
@@ -560,6 +566,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 
 		/* Form a tuple with a posting list */
 		IndexTuple	final = _bt_form_posting(state->base, state->htids, state->nhtids);
+
 		tuplesz = IndexTupleSize(final);
 		Assert(tuplesz <= state->maxpostingsize);
 
@@ -808,7 +815,8 @@ _bt_singleval_fillfactor(Page page, BTDedupState state, Size newitemsz)
 
 	/* This calculation needs to match nbtsplitloc.c */
 	Size		leftfree = PageGetPageSize(page) - SizeOfPageHeaderData -
-		MAXALIGN(sizeof(BTPageOpaqueData));
+	MAXALIGN(sizeof(BTPageOpaqueData));
+
 	/* Subtract size of new high key (includes pivot heap TID space) */
 	leftfree -= newitemsz + MAXALIGN(sizeof(ItemPointerData));
 
@@ -817,6 +825,7 @@ _bt_singleval_fillfactor(Page page, BTDedupState state, Size newitemsz)
 	 * half of page
 	 */
 	int			reduction = leftfree * ((100 - BTREE_SINGLEVAL_FILLFACTOR) / 100.0);
+
 	if (state->maxpostingsize > reduction)
 		state->maxpostingsize -= reduction;
 	else
@@ -869,6 +878,7 @@ _bt_form_posting(IndexTuple base, ItemPointer htids, int nhtids)
 
 	/* Allocate memory using palloc0() (matches index_form_tuple()) */
 	IndexTuple	itup = palloc0(newsize);
+
 	memcpy(itup, base, keysize);
 	itup->t_info &= ~INDEX_SIZE_MASK;
 	itup->t_info |= newsize;
@@ -935,6 +945,7 @@ _bt_update_posting(BTVacuumPosting vacposting)
 
 	/* Allocate memory using palloc0() (matches index_form_tuple()) */
 	IndexTuple	itup = palloc0(newsize);
+
 	memcpy(itup, origtuple, keysize);
 	itup->t_info &= ~INDEX_SIZE_MASK;
 	itup->t_info |= newsize;
@@ -1002,6 +1013,7 @@ _bt_swap_posting(IndexTuple newitem, IndexTuple oposting, int postingoff)
 {
 
 	int			nhtids = BTreeTupleGetNPosting(oposting);
+
 	Assert(_bt_posting_valid(oposting));
 
 	/*
@@ -1027,6 +1039,7 @@ _bt_swap_posting(IndexTuple newitem, IndexTuple oposting, int postingoff)
 	char	   *replacepos = (char *) BTreeTupleGetPostingN(nposting, postingoff);
 	char	   *replaceposright = (char *) BTreeTupleGetPostingN(nposting, postingoff + 1);
 	Size		nmovebytes = (nhtids - postingoff - 1) * sizeof(ItemPointerData);
+
 	memmove(replaceposright, replacepos, nmovebytes);
 
 	/* Fill the gap at postingoff with TID of new item (original new TID) */

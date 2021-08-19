@@ -115,6 +115,7 @@ scalararraysel_containment(PlannerInfo *root,
 
 	/* Get element type's default comparison function */
 	TypeCacheEntry *typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
+
 	if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 	{
 		ReleaseVariableStats(vardata);
@@ -292,6 +293,7 @@ arraycontsel(PG_FUNCTION_ARGS)
 	 * we'd rather just return a default estimate.)
 	 */
 	Oid			element_typeid = get_base_element_type(((Const *) other)->consttype);
+
 	if (element_typeid != InvalidOid &&
 		element_typeid == get_base_element_type(vardata.vartype))
 	{
@@ -337,6 +339,7 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 
 	/* Get element type's default comparison function */
 	TypeCacheEntry *typentry = lookup_type_cache(elemtype, TYPECACHE_CMP_PROC_FINFO);
+
 	if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 		return DEFAULT_SEL(operator);
 	FmgrInfo   *cmpfunc = &typentry->cmp_proc_finfo;
@@ -443,6 +446,7 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 	/* Collapse out any null elements */
 	int			nonnull_nitems = 0;
 	bool		null_present = false;
+
 	for (i = 0; i < num_elems; i++)
 	{
 		if (elem_nulls[i])
@@ -954,6 +958,7 @@ calc_hist(const float4 *hist, int nhist, int n)
 			 * factor in the partial histogram boxes on either side.
 			 */
 			float		val = (float) (count - 1);
+
 			if (next_interval > 0)
 				val += 0.5f / next_interval;
 			if (prev_interval > 0)
@@ -1154,6 +1159,7 @@ element_compare(const void *key1, const void *key2, void *arg)
 	FmgrInfo   *cmpfunc = &typentry->cmp_proc_finfo;
 
 	Datum		c = FunctionCall2Coll(cmpfunc, typentry->typcollation, d1, d2);
+
 	return DatumGetInt32(c);
 }
 

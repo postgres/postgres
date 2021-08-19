@@ -145,6 +145,7 @@ ECPGget_sqlca(void)
 	pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
 
 	struct sqlca_t *sqlca = pthread_getspecific(sqlca_key);
+
 	if (sqlca == NULL)
 	{
 		sqlca = malloc(sizeof(struct sqlca_t));
@@ -182,6 +183,7 @@ ECPGtransactionStatus(const char *connection_name)
 {
 
 	const struct connection *con = ecpg_get_connection(connection_name);
+
 	if (con == NULL)
 	{
 		/* transaction status is unknown */
@@ -278,6 +280,7 @@ ecpg_log(const char *format,...)
 	 */
 	int			bufsize = strlen(intl_format) + 100;
 	char	   *fmt = (char *) malloc(bufsize);
+
 	if (fmt == NULL)
 		return;
 
@@ -500,6 +503,7 @@ ecpg_gettext(const char *msgid)
 		already_bound = true;
 		/* No relocatable lookup here because the binary could be anywhere */
 		const char *ldir = getenv("PGLOCALEDIR");
+
 		if (!ldir)
 			ldir = LOCALEDIR;
 		bindtextdomain(PG_TEXTDOMAIN("ecpglib"), ldir);

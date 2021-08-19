@@ -73,6 +73,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	Oid			collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
 	AclResult	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(collNamespace));
@@ -127,6 +128,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 		Oid			collid = get_collation_oid(defGetQualifiedName(fromEl), false);
 		HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 
@@ -222,16 +224,16 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 		collversion = get_collation_actual_version(collprovider, collcollate);
 
 	Oid			newoid = CollationCreate(collName,
-							 collNamespace,
-							 GetUserId(),
-							 collprovider,
-							 collisdeterministic,
-							 collencoding,
-							 collcollate,
-							 collctype,
-							 collversion,
-							 if_not_exists,
-							 false);	/* not quiet */
+										 collNamespace,
+										 GetUserId(),
+										 collprovider,
+										 collisdeterministic,
+										 collencoding,
+										 collcollate,
+										 collctype,
+										 collversion,
+										 if_not_exists,
+										 false);	/* not quiet */
 
 	if (!OidIsValid(newoid))
 		return InvalidObjectAddress;
@@ -297,12 +299,13 @@ AlterCollation(AlterCollationStmt *stmt)
 					   NameListToString(stmt->collname));
 
 	HeapTuple	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collOid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for collation %u", collOid);
 
 	Form_pg_collation collForm = (Form_pg_collation) GETSTRUCT(tup);
 	Datum		collversion = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion,
-								  &isnull);
+											  &isnull);
 	char	   *oldversion = isnull ? NULL : TextDatumGetCString(collversion);
 
 	char	   *newversion = get_collation_actual_version(collForm->collprovider, NameStr(collForm->collcollate));
@@ -353,6 +356,7 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 	Oid			collid = PG_GETARG_OID(0);
 
 	HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -438,6 +442,7 @@ get_icu_language_tag(const char *localename)
 	char		buf[ULOC_FULLNAME_CAPACITY];
 
 	UErrorCode	status = U_ZERO_ERROR;
+
 	uloc_toLanguageTag(localename, buf, sizeof(buf), true, &status);
 	if (U_FAILURE(status))
 		ereport(ERROR,
@@ -461,8 +466,9 @@ get_icu_locale_comment(const char *localename)
 
 	UErrorCode	status = U_ZERO_ERROR;
 	int32		len_uchar = uloc_getDisplayName(localename, "en",
-									displayname, lengthof(displayname),
-									&status);
+												displayname, lengthof(displayname),
+												&status);
+
 	if (U_FAILURE(status))
 		return NULL;			/* no good reason to raise an error */
 
@@ -475,6 +481,7 @@ get_icu_locale_comment(const char *localename)
 
 	/* OK, transcribe */
 	char	   *result = palloc(len_uchar + 1);
+
 	for (i = 0; i < len_uchar; i++)
 		result[i] = displayname[i];
 	result[len_uchar] = '\0';
@@ -516,9 +523,11 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		/* expansible array of aliases */
 		maxaliases = 100;
 		CollAliasData *aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
+
 		naliases = 0;
 
 		FILE	   *locale_a_handle = OpenPipeStream("locale -a", "r");
+
 		if (locale_a_handle == NULL)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -552,6 +561,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			}
 
 			int			enc = pg_get_encoding_from_locale(localebuf, false);
+
 			if (enc < 0)
 			{
 				/* error message printed by pg_get_encoding_from_locale() */
@@ -694,11 +704,12 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				continue;
 
 			Oid			collid = CollationCreate(psprintf("%s-x-icu", langtag),
-									 nspid, GetUserId(),
-									 COLLPROVIDER_ICU, true, -1,
-									 collcollate, collcollate,
-									 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
-									 true, true);
+												 nspid, GetUserId(),
+												 COLLPROVIDER_ICU, true, -1,
+												 collcollate, collcollate,
+												 get_collation_actual_version(COLLPROVIDER_ICU, collcollate),
+												 true, true);
+
 			if (OidIsValid(collid))
 			{
 				ncreated++;

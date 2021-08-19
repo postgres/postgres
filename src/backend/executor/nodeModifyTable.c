@@ -116,6 +116,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 					 errmsg("table row type and query-specified row type do not match"),
 					 errdetail("Query has too many columns.")));
 		Form_pg_attribute attr = TupleDescAttr(resultDesc, attno);
+
 		attno++;
 
 		if (!attr->attisdropped)
@@ -210,6 +211,7 @@ ExecCheckTupleVisible(EState *estate,
 		bool		isnull;
 
 		Datum		xminDatum = slot_getsysattr(slot, MinTransactionIdAttributeNumber, &isnull);
+
 		Assert(!isnull);
 		TransactionId xmin = DatumGetTransactionId(xminDatum);
 
@@ -298,6 +300,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 				}
 
 				Expr	   *expr = (Expr *) build_column_default(rel, i + 1);
+
 				if (expr == NULL)
 					elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
 						 i + 1, RelationGetRelationName(rel));
@@ -335,6 +338,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 			bool		isnull;
 
 			ExprContext *econtext = GetPerTupleExprContext(estate);
+
 			econtext->ecxt_scantuple = slot;
 
 			Datum		val = ExecEvalExpr(resultRelInfo->ri_GeneratedExprs[i], econtext, &isnull);
@@ -458,6 +462,7 @@ ExecInitUpdateProjection(ModifyTableState *mtstate,
 	 * to, we can get the index the hard way with an integer division.
 	 */
 	int			whichrel = mtstate->mt_lastResultIndex;
+
 	if (resultRelInfo != mtstate->resultRelInfo + whichrel)
 	{
 		whichrel = resultRelInfo - mtstate->resultRelInfo;
@@ -530,6 +535,7 @@ ExecGetInsertNewTuple(ResultRelInfo *relinfo,
 	 * any junk columns so there's never a projection to be done.
 	 */
 	ExprContext *econtext = newProj->pi_exprContext;
+
 	econtext->ecxt_outertuple = planSlot;
 	return ExecProject(newProj);
 }
@@ -556,6 +562,7 @@ ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
 	Assert(oldSlot != NULL && !TTS_EMPTY(oldSlot));
 
 	ExprContext *econtext = newProj->pi_exprContext;
+
 	econtext->ecxt_outertuple = planSlot;
 	econtext->ecxt_scantuple = oldSlot;
 	return ExecProject(newProj);
@@ -704,7 +711,7 @@ ExecInsert(ModifyTableState *mtstate,
 			{
 				TupleDesc	tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
 				TupleDesc	plan_tdesc =
-					CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
+				CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);
@@ -774,7 +781,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 * defined on the child partitions.
 		 */
 		WCOKind		wco_kind = (mtstate->operation == CMD_UPDATE) ?
-			WCO_RLS_UPDATE_CHECK : WCO_RLS_INSERT_CHECK;
+		WCO_RLS_UPDATE_CHECK : WCO_RLS_INSERT_CHECK;
 
 		/*
 		 * ExecWithCheckOptions() will skip any WCOs which are not of the kind
@@ -1009,10 +1016,10 @@ ExecBatchInsert(ModifyTableState *mtstate,
 	 * insert into foreign table: let the FDW do it
 	 */
 	TupleTableSlot **rslots = resultRelInfo->ri_FdwRoutine->ExecForeignBatchInsert(estate,
-																  resultRelInfo,
-																  slots,
-																  planSlots,
-																  &numInserted);
+																				   resultRelInfo,
+																				   slots,
+																				   planSlots,
+																				   &numInserted);
 
 	for (i = 0; i < numInserted; i++)
 	{
@@ -1092,7 +1099,7 @@ ExecDelete(ModifyTableState *mtstate,
 	{
 
 		bool		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										tupleid, oldtuple, epqreturnslot);
+													tupleid, oldtuple, epqreturnslot);
 
 		if (!dodelete)			/* "do nothing" */
 			return NULL;
@@ -1210,7 +1217,7 @@ ldelete:;
 					 */
 					EvalPlanQualBegin(epqstate);
 					TupleTableSlot *inputslot = EvalPlanQualSlot(epqstate, resultRelationDesc,
-												 resultRelInfo->ri_RangeTableIndex);
+																 resultRelInfo->ri_RangeTableIndex);
 
 					result = table_tuple_lock(resultRelationDesc, tupleid,
 											  estate->es_snapshot,
@@ -1512,6 +1519,7 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 			if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
 				ExecInitUpdateProjection(mtstate, resultRelInfo);
 			TupleTableSlot *oldSlot = resultRelInfo->ri_oldTupleSlot;
+
 			if (!table_tuple_fetch_row_version(resultRelInfo->ri_RelationDesc,
 											   tupleid,
 											   SnapshotAny,
@@ -1529,6 +1537,7 @@ ExecCrossPartitionUpdate(ModifyTableState *mtstate,
 	 * ExecInsert() starts the search from root.
 	 */
 	TupleConversionMap *tupconv_map = ExecGetChildToRootMap(resultRelInfo);
+
 	if (tupconv_map != NULL)
 		slot = execute_attr_map_slot(tupconv_map->attrMap,
 									 slot,
@@ -1700,8 +1709,8 @@ lreplace:;
 		 * row.  So skip the WCO checks if the partition constraint fails.
 		 */
 		bool		partition_constraint_failed =
-			resultRelationDesc->rd_rel->relispartition &&
-			!ExecPartitionCheck(resultRelInfo, slot, estate, false);
+		resultRelationDesc->rd_rel->relispartition &&
+		!ExecPartitionCheck(resultRelInfo, slot, estate, false);
 
 		if (!partition_constraint_failed &&
 			resultRelInfo->ri_WithCheckOptions != NIL)
@@ -1731,9 +1740,10 @@ lreplace:;
 			 * the tuple we're trying to move has been concurrently updated.
 			 */
 			bool		retry = !ExecCrossPartitionUpdate(mtstate, resultRelInfo, tupleid,
-											  oldtuple, slot, planSlot,
-											  epqstate, canSetTag,
-											  &retry_slot, &inserted_tuple);
+														  oldtuple, slot, planSlot,
+														  epqstate, canSetTag,
+														  &retry_slot, &inserted_tuple);
+
 			if (retry)
 			{
 				slot = retry_slot;
@@ -1822,7 +1832,7 @@ lreplace:;
 					 * fetch tuple directly into the right slot.
 					 */
 					TupleTableSlot *inputslot = EvalPlanQualSlot(epqstate, resultRelationDesc,
-												 resultRelInfo->ri_RangeTableIndex);
+																 resultRelInfo->ri_RangeTableIndex);
 
 					result = table_tuple_lock(resultRelationDesc, tupleid,
 											  estate->es_snapshot,
@@ -1985,10 +1995,11 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 * true anymore.
 	 */
 	TM_Result	test = table_tuple_lock(relation, conflictTid,
-							estate->es_snapshot,
-							existing, estate->es_output_cid,
-							lockmode, LockWaitBlock, 0,
-							&tmfd);
+										estate->es_snapshot,
+										existing, estate->es_output_cid,
+										lockmode, LockWaitBlock, 0,
+										&tmfd);
+
 	switch (test)
 	{
 		case TM_Ok:
@@ -2288,7 +2299,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	{
 
 		bool		has_before_insert_row_trig = (partrel->ri_TrigDesc &&
-									  partrel->ri_TrigDesc->trig_insert_before_row);
+												  partrel->ri_TrigDesc->trig_insert_before_row);
 
 		mtstate->mt_transition_capture->tcs_original_insert_tuple =
 			!has_before_insert_row_trig ? slot : NULL;
@@ -2298,6 +2309,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	 * Convert the tuple, if necessary.
 	 */
 	TupleConversionMap *map = partrel->ri_RootToPartitionMap;
+
 	if (map != NULL)
 	{
 		TupleTableSlot *new_slot = partrel->ri_PartitionTupleSlot;
@@ -2407,7 +2419,8 @@ ExecModifyTable(PlanState *pstate)
 			bool		isNull;
 
 			Datum		datum = ExecGetJunkAttribute(planSlot, node->mt_resultOidAttno,
-										 &isNull);
+													 &isNull);
+
 			if (isNull)
 				elog(ERROR, "tableoid is NULL");
 			Oid			resultoid = DatumGetObjectId(datum);
@@ -2456,6 +2469,7 @@ ExecModifyTable(PlanState *pstate)
 			bool		isNull;
 
 			char		relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
+
 			if (relkind == RELKIND_RELATION ||
 				relkind == RELKIND_MATVIEW ||
 				relkind == RELKIND_PARTITIONED_TABLE)
@@ -2630,7 +2644,8 @@ ExecLookupResultRelByOid(ModifyTableState *node, Oid resultoid,
 		/* Use the pre-built hash table to locate the rel */
 
 		MTTargetRelLookup *mtlookup = (MTTargetRelLookup *)
-			hash_search(node->mt_resultOidHash, &resultoid, HASH_FIND, NULL);
+		hash_search(node->mt_resultOidHash, &resultoid, HASH_FIND, NULL);
+
 		if (mtlookup)
 		{
 			if (update_cache)
@@ -2685,6 +2700,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	ModifyTableState *mtstate = makeNode(ModifyTableState);
+
 	mtstate->ps.plan = (Plan *) node;
 	mtstate->ps.state = estate;
 	mtstate->ps.ExecProcNode = ExecModifyTable;
@@ -2743,6 +2759,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	resultRelInfo = mtstate->resultRelInfo;
 	int			i = 0;
+
 	foreach(l, node->resultRelations)
 	{
 		Index		resultRelation = lfirst_int(l);
@@ -2809,6 +2826,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		{
 
 			char		relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
+
 			if (relkind == RELKIND_RELATION ||
 				relkind == RELKIND_MATVIEW ||
 				relkind == RELKIND_PARTITIONED_TABLE)
@@ -2998,7 +3016,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		{
 
 			ExprState  *qualexpr = ExecInitQual((List *) node->onConflictWhere,
-									&mtstate->ps);
+												&mtstate->ps);
+
 			onconfl->oc_WhereClause = qualexpr;
 		}
 	}
@@ -3010,6 +3029,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * relevant ExecRowMarks.
 	 */
 	List	   *arowmarks = NIL;
+
 	foreach(l, node->rowMarks)
 	{
 		PlanRowMark *rc = lfirst_node(PlanRowMark, l);
@@ -3021,6 +3041,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/* Find ExecRowMark and build ExecAuxRowMark */
 		ExecRowMark *erm = ExecFindRowMark(estate, rc->rti, false);
 		ExecAuxRowMark *aerm = ExecBuildAuxRowMark(erm, subplan->targetlist);
+
 		arowmarks = lappend(arowmarks, aerm);
 	}
 
@@ -3057,8 +3078,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			resultRelInfo = &mtstate->resultRelInfo[i];
 			Oid			hashkey = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 			MTTargetRelLookup *mtlookup = (MTTargetRelLookup *)
-				hash_search(mtstate->mt_resultOidHash, &hashkey,
-							HASH_ENTER, &found);
+			hash_search(mtstate->mt_resultOidHash, &hashkey,
+						HASH_ENTER, &found);
+
 			Assert(!found);
 			mtlookup->relationIndex = i;
 		}

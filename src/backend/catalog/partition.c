@@ -58,7 +58,7 @@ get_partition_parent(Oid relid, bool even_if_detached)
 	Relation	catalogRelation = table_open(InheritsRelationId, AccessShareLock);
 
 	Oid			result = get_partition_parent_worker(catalogRelation, relid,
-										 &detach_pending);
+													 &detach_pending);
 
 	if (!OidIsValid(result))
 		elog(ERROR, "could not find tuple for parent of relation %u", relid);
@@ -98,8 +98,9 @@ get_partition_parent_worker(Relation inhRel, Oid relid, bool *detach_pending)
 				Int32GetDatum(1));
 
 	SysScanDesc scan = systable_beginscan(inhRel, InheritsRelidSeqnoIndexId, true,
-							  NULL, 2, key);
+										  NULL, 2, key);
 	HeapTuple	tuple = systable_getnext(scan);
+
 	if (HeapTupleIsValid(tuple))
 	{
 		Form_pg_inherits form = (Form_pg_inherits) GETSTRUCT(tuple);
@@ -153,6 +154,7 @@ get_partition_ancestors_worker(Relation inhRel, Oid relid, List **ancestors)
 	 * when the partition is being detached.
 	 */
 	Oid			parentOid = get_partition_parent_worker(inhRel, relid, &detach_pending);
+
 	if (parentOid == InvalidOid || detach_pending)
 		return;
 
@@ -176,10 +178,12 @@ index_get_partition(Relation partition, Oid indexId)
 		Oid			partIdx = lfirst_oid(l);
 
 		HeapTuple	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(partIdx));
+
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for relation %u", partIdx);
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tup);
 		bool		ispartition = classForm->relispartition;
+
 		ReleaseSysCache(tup);
 		if (!ispartition)
 			continue;
@@ -217,7 +221,8 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 		bool		found_whole_row;
 
 		AttrMap    *part_attmap = build_attrmap_by_name(RelationGetDescr(to_rel),
-											RelationGetDescr(from_rel));
+														RelationGetDescr(from_rel));
+
 		expr = (List *) map_variable_attnos((Node *) expr,
 											fromrel_varno, 0,
 											part_attmap,
@@ -252,6 +257,7 @@ has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 	List	   *partexprs = get_partition_exprs(key);
 
 	ListCell   *partexprs_item = list_head(partexprs);
+
 	for (i = 0; i < partnatts; i++)
 	{
 		AttrNumber	partattno = get_partition_col_attnum(key, i);
@@ -306,6 +312,7 @@ get_default_partition_oid(Oid parentId)
 	{
 
 		Form_pg_partitioned_table part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+
 		defaultPartId = part_table_form->partdefid;
 		ReleaseSysCache(tuple);
 	}
@@ -331,6 +338,7 @@ update_default_partition_oid(Oid parentId, Oid defaultPartId)
 			 parentId);
 
 	Form_pg_partitioned_table part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+
 	part_table_form->partdefid = defaultPartId;
 	CatalogTupleUpdate(pg_partitioned_table, &tuple->t_self, tuple);
 

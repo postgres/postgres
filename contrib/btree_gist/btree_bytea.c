@@ -117,7 +117,8 @@ gbt_bytea_consistent(PG_FUNCTION_ARGS)
 	*recheck = false;
 
 	bool		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+											GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+
 	PG_RETURN_BOOL(retval);
 }
 

@@ -92,6 +92,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 		/* Look in specific schema only */
 
 		Oid			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+
 		if (!OidIsValid(namespaceId))
 			htup = NULL;
 		else
@@ -115,6 +116,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 	{
 
 		HeapTuple	amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
+
 		if (!HeapTupleIsValid(amtup))
 			elog(ERROR, "cache lookup failed for access method %u", amID);
 		ereport(ERROR,
@@ -138,10 +140,12 @@ get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok)
 {
 
 	HeapTuple	htup = OpFamilyCacheLookup(amID, opfamilyname, missing_ok);
+
 	if (!HeapTupleIsValid(htup))
 		return InvalidOid;
 	Form_pg_opfamily opfamform = (Form_pg_opfamily) GETSTRUCT(htup);
 	Oid			opfID = opfamform->oid;
+
 	ReleaseSysCache(htup);
 
 	return opfID;
@@ -168,6 +172,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 		/* Look in specific schema only */
 
 		Oid			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+
 		if (!OidIsValid(namespaceId))
 			htup = NULL;
 		else
@@ -191,6 +196,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 	{
 
 		HeapTuple	amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
+
 		if (!HeapTupleIsValid(amtup))
 			elog(ERROR, "cache lookup failed for access method %u", amID);
 		ereport(ERROR,
@@ -214,10 +220,12 @@ get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
 {
 
 	HeapTuple	htup = OpClassCacheLookup(amID, opclassname, missing_ok);
+
 	if (!HeapTupleIsValid(htup))
 		return InvalidOid;
 	Form_pg_opclass opcform = (Form_pg_opclass) GETSTRUCT(htup);
 	Oid			opcID = opcform->oid;
+
 	ReleaseSysCache(htup);
 
 	return opcID;
@@ -260,7 +268,8 @@ CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid am
 	memset(nulls, false, sizeof(nulls));
 
 	Oid			opfamilyoid = GetNewOidWithIndex(rel, OpfamilyOidIndexId,
-									 Anum_pg_opfamily_oid);
+												 Anum_pg_opfamily_oid);
+
 	values[Anum_pg_opfamily_oid - 1] = ObjectIdGetDatum(opfamilyoid);
 	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
 	namestrcpy(&opfName, opfname);
@@ -341,12 +350,14 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceoid));
 
 	/* Get necessary info about access method */
 	HeapTuple	tup = SearchSysCache1(AMNAME, CStringGetDatum(stmt->amname));
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -354,8 +365,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						stmt->amname)));
 
 	Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);
+
 	amoid = amform->oid;
 	IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid, false);
+
 	ReleaseSysCache(tup);
 
 	maxOpNumber = amroutine->amstrategies;
@@ -435,7 +448,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			 * Create it ... again no need for more permissions ...
 			 */
 			ObjectAddress tmpAddr = CreateOpFamily(stmt->amname, opcname,
-									 namespaceoid, amoid);
+												   namespaceoid, amoid);
+
 			opfamilyoid = tmpAddr.objectId;
 		}
 	}
@@ -598,7 +612,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					ObjectIdGetDatum(amoid));
 
 		SysScanDesc scan = systable_beginscan(rel, OpclassAmNameNspIndexId, true,
-								  NULL, 1, skey);
+											  NULL, 1, skey);
 
 		while (HeapTupleIsValid(tup = systable_getnext(scan)))
 		{
@@ -753,6 +767,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 
 	/* Check we have creation rights in target namespace */
 	AclResult	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(namespaceoid));
@@ -795,6 +810,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 
 	/* Get necessary info about access method */
 	HeapTuple	tup = SearchSysCache1(AMNAME, CStringGetDatum(stmt->amname));
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -802,8 +818,10 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 						stmt->amname)));
 
 	Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);
+
 	amoid = amform->oid;
 	IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(amoid, false);
+
 	ReleaseSysCache(tup);
 
 	maxOpNumber = amroutine->amstrategies;
@@ -1079,6 +1097,7 @@ processTypesSpec(List *args, Oid *lefttype, Oid *righttype)
 	Assert(args != NIL);
 
 	TypeName   *typeName = (TypeName *) linitial(args);
+
 	*lefttype = typenameTypeId(NULL, typeName);
 
 	if (list_length(args) > 1)
@@ -1106,6 +1125,7 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 
 	/* Fetch the operator definition */
 	Operator	optup = SearchSysCache1(OPEROID, ObjectIdGetDatum(member->object));
+
 	if (!HeapTupleIsValid(optup))
 		elog(ERROR, "cache lookup failed for operator %u", member->object);
 	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(optup);
@@ -1171,6 +1191,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 
 	/* Fetch the procedure definition */
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(member->object));
+
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", member->object);
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
@@ -1596,10 +1617,11 @@ dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		ObjectAddress object;
 
 		Oid			amopid = GetSysCacheOid4(AMOPSTRATEGY, Anum_pg_amop_oid,
-								 ObjectIdGetDatum(opfamilyoid),
-								 ObjectIdGetDatum(op->lefttype),
-								 ObjectIdGetDatum(op->righttype),
-								 Int16GetDatum(op->number));
+											 ObjectIdGetDatum(opfamilyoid),
+											 ObjectIdGetDatum(op->lefttype),
+											 ObjectIdGetDatum(op->righttype),
+											 Int16GetDatum(op->number));
+
 		if (!OidIsValid(amopid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1635,10 +1657,11 @@ dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		ObjectAddress object;
 
 		Oid			amprocid = GetSysCacheOid4(AMPROCNUM, Anum_pg_amproc_oid,
-								   ObjectIdGetDatum(opfamilyoid),
-								   ObjectIdGetDatum(op->lefttype),
-								   ObjectIdGetDatum(op->righttype),
-								   Int16GetDatum(op->number));
+											   ObjectIdGetDatum(opfamilyoid),
+											   ObjectIdGetDatum(op->lefttype),
+											   ObjectIdGetDatum(op->righttype),
+											   Int16GetDatum(op->number));
+
 		if (!OidIsValid(amprocid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),

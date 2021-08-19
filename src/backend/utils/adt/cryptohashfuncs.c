@@ -58,6 +58,7 @@ md5_bytea(PG_FUNCTION_ARGS)
 	char		hexsum[MD5_HASH_LEN + 1];
 
 	size_t		len = VARSIZE_ANY_EXHDR(in);
+
 	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum) == false)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -104,6 +105,7 @@ cryptohash_internal(pg_cryptohash_type type, bytea *input)
 	const uint8 *data = (unsigned char *) VARDATA_ANY(input);
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(type);
+
 	if (pg_cryptohash_init(ctx) < 0)
 		elog(ERROR, "could not initialize %s context", typestr);
 	if (pg_cryptohash_update(ctx, data, len) < 0)

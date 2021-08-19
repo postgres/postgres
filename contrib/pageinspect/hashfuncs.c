@@ -69,6 +69,7 @@ verify_hash_page(bytea *raw_page, int flags)
 					 errmsg("index table contains corrupted page")));
 
 		HashPageOpaque pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 		if (pageopaque->hasho_page_id != HASHO_PAGE_ID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -256,6 +257,7 @@ hash_page_stats(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	int			j = 0;
+
 	values[j++] = Int32GetDatum(stat.live_items);
 	values[j++] = Int32GetDatum(stat.dead_items);
 	values[j++] = Int32GetDatum(stat.page_size);
@@ -353,6 +355,7 @@ hash_page_items(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		int			j = 0;
+
 		values[j++] = Int32GetDatum((int32) uargs->offset);
 		values[j++] = PointerGetDatum(&itup->t_tid);
 

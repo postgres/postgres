@@ -213,6 +213,7 @@ WaitExceedsMaxStandbyDelay(uint32 wait_event_info)
 
 	/* Are we past the limit time? */
 	TimestampTz ltime = GetStandbyLimitTime();
+
 	if (ltime && GetCurrentTimestamp() >= ltime)
 		return true;
 
@@ -262,6 +263,7 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 
 	TimestampDifference(wait_start, now, &secs, &usecs);
 	long		msecs = secs * 1000 + usecs / 1000;
+
 	usecs = usecs % 1000;
 
 	if (wait_list)
@@ -269,6 +271,7 @@ LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
 
 		/* Construct a string of list of the conflicting processes */
 		VirtualTransactionId *vxids = wait_list;
+
 		while (VirtualTransactionIdIsValid(*vxids))
 		{
 			PGPROC	   *proc = BackendIdGetProc(vxids->backendId);
@@ -392,6 +395,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 					int			len;
 
 					const char *old_status = get_ps_display(&len);
+
 					new_status = (char *) palloc(len + 8 + 1);
 					memcpy(new_status, old_status, len);
 					strcpy(new_status + len, " waiting");
@@ -451,7 +455,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 		return;
 
 	VirtualTransactionId *backends = GetConflictingVirtualXIDs(latestRemovedXid,
-										 node.dbNode);
+															   node.dbNode);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
 										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
@@ -476,11 +480,13 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 	FullTransactionId nextXid = ReadNextFullTransactionId();
 
 	uint64		diff = U64FromFullTransactionId(nextXid) -
-		U64FromFullTransactionId(latestRemovedFullXid);
+	U64FromFullTransactionId(latestRemovedFullXid);
+
 	if (diff < MaxTransactionId / 2)
 	{
 
 		TransactionId latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
+
 		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, node);
 	}
 }
@@ -507,7 +513,8 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	 * We don't wait for commit because drop tablespace is non-transactional.
 	 */
 	VirtualTransactionId *temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
-												InvalidOid);
+																	  InvalidOid);
+
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
 										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE,
 										   WAIT_EVENT_RECOVERY_CONFLICT_TABLESPACE,
@@ -948,6 +955,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 
 	/* Create a new list for this xid, if we don't have one already. */
 	RecoveryLockListsEntry *entry = hash_search(RecoveryLockLists, &xid, HASH_ENTER, &found);
+
 	if (!found)
 	{
 		entry->xid = xid;
@@ -955,6 +963,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 	}
 
 	xl_standby_lock *newlock = palloc(sizeof(xl_standby_lock));
+
 	newlock->xid = xid;
 	newlock->dbOid = dbOid;
 	newlock->relOid = relOid;
@@ -1209,6 +1218,7 @@ LogStandbySnapshot(void)
 	 * Get details of any AccessExclusiveLocks being held at the moment.
 	 */
 	xl_standby_lock *locks = GetRunningTransactionLocks(&nlocks);
+
 	if (nlocks > 0)
 		LogAccessExclusiveLocks(nlocks, locks);
 	pfree(locks);

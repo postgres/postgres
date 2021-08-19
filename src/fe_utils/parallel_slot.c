@@ -289,6 +289,7 @@ connect_slot(ParallelSlotArray *sa, int slotno, const char *dbname)
 	ParallelSlot *slot = &sa->slots[slotno];
 
 	const char *old_override = sa->cparams->override_dbname;
+
 	if (dbname)
 		sa->cparams->override_dbname = dbname;
 	slot->connection = connectDatabase(sa->cparams, sa->progname, sa->echo, false, true);
@@ -403,7 +404,7 @@ ParallelSlotsSetup(int numslots, ConnParams *cparams, const char *progname,
 	Assert(progname != NULL);
 
 	ParallelSlotArray *sa = (ParallelSlotArray *) palloc0(offsetof(ParallelSlotArray, slots) +
-									   numslots * sizeof(ParallelSlot));
+														  numslots * sizeof(ParallelSlot));
 
 	sa->numslots = numslots;
 	sa->cparams = cparams;
@@ -429,6 +430,7 @@ ParallelSlotsAdoptConn(ParallelSlotArray *sa, PGconn *conn)
 {
 
 	int			offset = find_unconnected_slot(sa);
+
 	if (offset >= 0)
 		sa->slots[offset].connection = conn;
 	else

@@ -219,6 +219,7 @@ InitCompressorZlib(CompressorState *cs, int level)
 {
 
 	z_streamp	zp = cs->zp = (z_streamp) pg_malloc(sizeof(z_stream));
+
 	zp->zalloc = Z_NULL;
 	zp->zfree = Z_NULL;
 	zp->opaque = Z_NULL;
@@ -315,6 +316,7 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 	size_t		cnt;
 
 	z_streamp	zp = (z_streamp) pg_malloc(sizeof(z_stream));
+
 	zp->zalloc = Z_NULL;
 	zp->zfree = Z_NULL;
 	zp->opaque = Z_NULL;
@@ -458,6 +460,7 @@ cfopen_read(const char *path, const char *mode)
 		{
 
 			char	   *fname = psprintf("%s.gz", path);
+
 			fp = cfopen(fname, mode, 1);
 			free_keep_errno(fname);
 		}
@@ -489,6 +492,7 @@ cfopen_write(const char *path, const char *mode, int compression)
 #ifdef HAVE_LIBZ
 
 		char	   *fname = psprintf("%s.gz", path);
+
 		fp = cfopen(fname, mode, compression);
 		free_keep_errno(fname);
 #else

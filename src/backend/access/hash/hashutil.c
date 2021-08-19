@@ -47,9 +47,9 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 		bool		isNull;
 
 		Datum		datum = index_getattr(itup,
-							  key->sk_attno,
-							  tupdesc,
-							  &isNull);
+										  key->sk_attno,
+										  tupdesc,
+										  &isNull);
 
 		/* assume sk_func is strict */
 		if (isNull)
@@ -58,7 +58,7 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 			return false;
 
 		Datum		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
-								 datum, key->sk_argument);
+											 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
 			return false;
@@ -101,9 +101,10 @@ _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype)
 
 	/* XXX assumes index has only one attribute */
 	RegProcedure hash_proc = get_opfamily_proc(rel->rd_opfamily[0],
-								  keytype,
-								  keytype,
-								  HASHSTANDARD_PROC);
+											   keytype,
+											   keytype,
+											   HASHSTANDARD_PROC);
+
 	if (!RegProcedureIsValid(hash_proc))
 		elog(ERROR, "missing support function %d(%u,%u) for index \"%s\"",
 			 HASHSTANDARD_PROC, keytype, keytype,
@@ -122,6 +123,7 @@ _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 {
 
 	Bucket		bucket = hashkey & highmask;
+
 	if (bucket > maxbucket)
 		bucket = bucket & lowmask;
 
@@ -171,6 +173,7 @@ _hash_get_totalbuckets(uint32 splitpoint_phase)
 
 	/* get splitpoint's group */
 	uint32		splitpoint_group = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+
 	splitpoint_group +=
 		((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) >>
 		 HASH_SPLITPOINT_PHASE_BITS);
@@ -180,8 +183,9 @@ _hash_get_totalbuckets(uint32 splitpoint_phase)
 
 	/* account for buckets within splitpoint_group */
 	uint32		phases_within_splitpoint_group =
-		(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
-		  HASH_SPLITPOINT_PHASE_MASK) + 1); /* from 0-based to 1-based */
+	(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
+	  HASH_SPLITPOINT_PHASE_MASK) + 1); /* from 0-based to 1-based */
+
 	total_buckets +=
 		(((1 << (splitpoint_group - 1)) >> HASH_SPLITPOINT_PHASE_BITS) *
 		 phases_within_splitpoint_group);
@@ -285,6 +289,7 @@ _hash_get_indextuple_hashkey(IndexTuple itup)
 	 * this can be done crudely but very very cheaply ...
 	 */
 	char	   *attp = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
+
 	return *((uint32 *) attp);
 }
 
@@ -316,6 +321,7 @@ _hash_convert_tuple(Relation index,
 		return false;
 
 	uint32		hashkey = _hash_datum2hashkey(index, user_values[0]);
+
 	index_values[0] = UInt32GetDatum(hashkey);
 	index_isnull[0] = false;
 	return true;
@@ -345,10 +351,12 @@ _hash_binsearch(Page page, uint32 hash_value)
 	{
 
 		OffsetNumber off = (upper + lower) / 2;
+
 		Assert(OffsetNumberIsValid(off));
 
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
 		uint32		hashkey = _hash_get_indextuple_hashkey(itup);
+
 		if (hashkey < hash_value)
 			lower = off + 1;
 		else
@@ -378,10 +386,12 @@ _hash_binsearch_last(Page page, uint32 hash_value)
 	{
 
 		OffsetNumber off = (upper + lower + 1) / 2;
+
 		Assert(OffsetNumberIsValid(off));
 
 		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, off));
 		uint32		hashkey = _hash_get_indextuple_hashkey(itup);
+
 		if (hashkey > hash_value)
 			upper = off - 1;
 		else
@@ -437,8 +447,8 @@ _hash_get_newblock_from_oldbucket(Relation rel, Bucket old_bucket)
 	HashMetaPage metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	Bucket		new_bucket = _hash_get_newbucket_from_oldbucket(rel, old_bucket,
-													metap->hashm_lowmask,
-													metap->hashm_maxbucket);
+																metap->hashm_lowmask,
+																metap->hashm_maxbucket);
 	BlockNumber blkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
 	_hash_relbuf(rel, metabuf);
@@ -464,6 +474,7 @@ _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
 {
 
 	Bucket		new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+
 	if (new_bucket > maxbucket)
 	{
 		lowmask = lowmask >> 1;
@@ -523,6 +534,7 @@ _hash_kill_items(IndexScanDesc scan)
 	so->numKilled = 0;
 
 	BlockNumber blkno = so->currPos.currPage;
+
 	if (HashScanPosIsPinned(so->currPos))
 	{
 		/*
@@ -538,6 +550,7 @@ _hash_kill_items(IndexScanDesc scan)
 
 	Page		page = BufferGetPage(buf);
 	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)

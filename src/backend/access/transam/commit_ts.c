@@ -304,6 +304,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 
 	TransactionId oldestCommitTsXid = ShmemVariableCache->oldestCommitTsXid;
 	TransactionId newestCommitTsXid = ShmemVariableCache->newestCommitTsXid;
+
 	/* neither is invalid, or both are */
 	Assert(TransactionIdIsValid(oldestCommitTsXid) == TransactionIdIsValid(newestCommitTsXid));
 	LWLockRelease(CommitTsLock);
@@ -323,6 +324,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
 
 	/* lock is acquired by SimpleLruReadPage_ReadOnly */
 	int			slotno = SimpleLruReadPage_ReadOnly(CommitTsCtl, pageno, xid);
+
 	memcpy(&entry,
 		   CommitTsCtl->shared->page_buffer[slotno] +
 		   SizeOfCommitTimestampEntry * entryno,
@@ -355,6 +357,7 @@ GetLatestCommitTsData(TimestampTz *ts, RepOriginId *nodeid)
 		error_commit_ts_disabled();
 
 	TransactionId xid = commitTsShared->xidLastCommit;
+
 	if (ts)
 		*ts = commitTsShared->dataLastCommit.time;
 	if (nodeid)
@@ -418,6 +421,7 @@ pg_last_committed_xact(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "xid",
 					   XIDOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "timestamp",
@@ -469,6 +473,7 @@ pg_xact_commit_timestamp_origin(PG_FUNCTION_ARGS)
 	 * function's pg_proc entry!
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "timestamp",
 					   TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "roident",
@@ -712,6 +717,7 @@ ActivateCommitTs(void)
 
 		LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
 		int			slotno = ZeroCommitTsPage(pageno, false);
+
 		SimpleLruWritePage(CommitTsCtl, slotno);
 		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
 		LWLockRelease(CommitTsSLRULock);
@@ -921,8 +927,10 @@ CommitTsPagePrecedes(int page1, int page2)
 {
 
 	TransactionId xid1 = ((TransactionId) page1) * COMMIT_TS_XACTS_PER_PAGE;
+
 	xid1 += FirstNormalTransactionId + 1;
 	TransactionId xid2 = ((TransactionId) page2) * COMMIT_TS_XACTS_PER_PAGE;
+
 	xid2 += FirstNormalTransactionId + 1;
 
 	return (TransactionIdPrecedes(xid1, xid2) &&
@@ -977,6 +985,7 @@ commit_ts_redo(XLogReaderState *record)
 		LWLockAcquire(CommitTsSLRULock, LW_EXCLUSIVE);
 
 		int			slotno = ZeroCommitTsPage(pageno, false);
+
 		SimpleLruWritePage(CommitTsCtl, slotno);
 		Assert(!CommitTsCtl->shared->page_dirty[slotno]);
 

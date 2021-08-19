@@ -45,7 +45,7 @@ raw_parser(const char *str, RawParseMode mode)
 
 	/* initialize the flex scanner */
 	core_yyscan_t yyscanner = scanner_init(str, &yyextra.core_yy_extra,
-							 &ScanKeywords, ScanKeywordTokens);
+										   &ScanKeywords, ScanKeywordTokens);
 
 	/* base_yylex() only needs us to initialize the lookahead token, if any */
 	if (mode == RAW_PARSE_DEFAULT)
@@ -170,6 +170,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 
 	/* Get next token, saving outputs into lookahead variables */
 	int			next_token = core_yylex(&(yyextra->lookahead_yylval), llocp, yyscanner);
+
 	yyextra->lookahead_token = next_token;
 	yyextra->lookahead_yylloc = *llocp;
 
@@ -243,6 +244,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 									yyscanner);
 
 				const char *escstr = yyextra->lookahead_yylval.str;
+
 				if (strlen(escstr) != 1 || !check_uescapechar(escstr[0]))
 					scanner_yyerror("invalid Unicode escape character",
 									yyscanner);
@@ -351,9 +353,11 @@ str_udeescape(const char *str, char escape,
 	 * padding for Unicode conversion.
 	 */
 	size_t		new_len = strlen(str) + MAX_UNICODE_EQUIVALENT_STRING + 1;
+
 	new = palloc(new_len);
 
 	const char *in = str;
+
 	out = new;
 	while (*in)
 	{
@@ -389,9 +393,10 @@ str_udeescape(const char *str, char escape,
 			{
 
 				pg_wchar	unicode = (hexval(in[1]) << 12) +
-					(hexval(in[2]) << 8) +
-					(hexval(in[3]) << 4) +
-					hexval(in[4]);
+				(hexval(in[2]) << 8) +
+				(hexval(in[3]) << 4) +
+				hexval(in[4]);
+
 				check_unicode_value(unicode);
 				if (pair_first)
 				{
@@ -425,11 +430,12 @@ str_udeescape(const char *str, char escape,
 			{
 
 				pg_wchar	unicode = (hexval(in[2]) << 20) +
-					(hexval(in[3]) << 16) +
-					(hexval(in[4]) << 12) +
-					(hexval(in[5]) << 8) +
-					(hexval(in[6]) << 4) +
-					hexval(in[7]);
+				(hexval(in[3]) << 16) +
+				(hexval(in[4]) << 12) +
+				(hexval(in[5]) << 8) +
+				(hexval(in[6]) << 4) +
+				hexval(in[7]);
+
 				check_unicode_value(unicode);
 				if (pair_first)
 				{

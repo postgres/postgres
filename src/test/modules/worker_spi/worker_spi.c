@@ -84,6 +84,7 @@ initialize_worker_spi(worktable *table)
 
 	debug_query_string = buf.data;
 	int			ret = SPI_execute(buf.data, true, 0);
+
 	if (ret != SPI_OK_SELECT)
 		elog(FATAL, "SPI_execute failed: error code %d", ret);
 
@@ -91,8 +92,9 @@ initialize_worker_spi(worktable *table)
 		elog(FATAL, "not a singleton result");
 
 	int			ntup = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
-									   SPI_tuptable->tupdesc,
-									   1, &isnull));
+												   SPI_tuptable->tupdesc,
+												   1, &isnull));
+
 	if (isnull)
 		elog(FATAL, "null result");
 
@@ -136,6 +138,7 @@ worker_spi_main(Datum main_arg)
 	char		name[20];
 
 	worktable  *table = palloc(sizeof(worktable));
+
 	sprintf(name, "schema%d", index);
 	table->schema = pstrdup(name);
 	table->name = pstrdup("counted");
@@ -245,8 +248,9 @@ worker_spi_main(Datum main_arg)
 			bool		isnull;
 
 			int32		val = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											  SPI_tuptable->tupdesc,
-											  1, &isnull));
+														  SPI_tuptable->tupdesc,
+														  1, &isnull));
+
 			if (!isnull)
 				elog(LOG, "%s: count in %s.%s is now %d",
 					 MyBgworkerEntry->bgw_name,

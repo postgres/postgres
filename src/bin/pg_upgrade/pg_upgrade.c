@@ -608,13 +608,14 @@ set_frozenxids(bool minmxid_only)
 
 	/* get database names */
 	PGresult   *dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn "
-							  "FROM	pg_catalog.pg_database");
+										  "SELECT	datname, datallowconn "
+										  "FROM	pg_catalog.pg_database");
 
 	int			i_datname = PQfnumber(dbres, "datname");
 	int			i_datallowconn = PQfnumber(dbres, "datallowconn");
 
 	int			ntups = PQntuples(dbres);
+
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);

@@ -140,12 +140,13 @@ heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
 	/* Obtain share-lock on the buffer so we can examine visibility */
 	LockBuffer(hscan->xs_cbuf, BUFFER_LOCK_SHARE);
 	bool		got_heap_tuple = heap_hot_search_buffer(tid,
-											hscan->xs_base.rel,
-											hscan->xs_cbuf,
-											snapshot,
-											&bslot->base.tupdata,
-											all_dead,
-											!*call_again);
+														hscan->xs_base.rel,
+														hscan->xs_cbuf,
+														snapshot,
+														&bslot->base.tupdata,
+														all_dead,
+														!*call_again);
+
 	bslot->base.tupdata.t_self = *tid;
 	LockBuffer(hscan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 
@@ -223,7 +224,8 @@ heapam_tuple_satisfies_snapshot(Relation rel, TupleTableSlot *slot,
 	 */
 	LockBuffer(bslot->buffer, BUFFER_LOCK_SHARE);
 	bool		res = HeapTupleSatisfiesVisibility(bslot->base.tuple, snapshot,
-									   bslot->buffer);
+												   bslot->buffer);
+
 	LockBuffer(bslot->buffer, BUFFER_LOCK_UNLOCK);
 
 	return res;
@@ -322,7 +324,8 @@ heapam_tuple_update(Relation relation, ItemPointer otid, TupleTableSlot *slot,
 	tuple->t_tableOid = slot->tts_tableOid;
 
 	TM_Result	result = heap_update(relation, otid, tuple, cid, crosscheck, wait,
-						 tmfd, lockmode);
+									 tmfd, lockmode);
+
 	ItemPointerCopy(&tuple->t_self, &slot->tts_tid);
 
 	/*
@@ -352,6 +355,7 @@ heapam_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 	HeapTuple	tuple = &bslot->base.tupdata;
 
 	bool		follow_updates = (flags & TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS) != 0;
+
 	tmfd->traversed = false;
 
 	Assert(TTS_IS_BUFFERTUPLE(slot));
@@ -359,7 +363,7 @@ heapam_tuple_lock(Relation relation, ItemPointer tid, Snapshot snapshot,
 tuple_lock_retry:
 	tuple->t_self = *tid;
 	TM_Result	result = heap_lock_tuple(relation, tuple, cid, mode, wait_policy,
-							 follow_updates, &buffer, tmfd);
+										 follow_updates, &buffer, tmfd);
 
 	if (result == TM_Updated &&
 		(flags & TUPLE_LOCK_FLAG_FIND_LAST_VERSION))
@@ -700,7 +704,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Initialize the rewrite operation */
 	RewriteState rwstate = begin_heap_rewrite(OldHeap, NewHeap, OldestXmin, *xid_cutoff,
-								 *multi_cutoff);
+											  *multi_cutoff);
 
 
 	/* Set up sorting if wanted */
@@ -943,6 +947,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 			CHECK_FOR_INTERRUPTS();
 
 			HeapTuple	tuple = tuplesort_getheaptuple(tuplesort, true);
+
 			if (tuple == NULL)
 				break;
 
@@ -1163,7 +1168,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 
 	/* See whether we're verifying uniqueness/exclusion properties */
 	bool		checking_uniqueness = (indexInfo->ii_Unique ||
-						   indexInfo->ii_ExclusionOps != NULL);
+									   indexInfo->ii_ExclusionOps != NULL);
 
 	/*
 	 * "Any visible" mode is not compatible with uniqueness checks; make sure
@@ -1257,6 +1262,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 		{
 
 			ParallelBlockTableScanDesc pbscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
+
 			nblocks = pbscan->phs_nblocks;
 		}
 		else
@@ -1668,6 +1674,7 @@ heapam_index_build_range_scan(Relation heapRelation,
 		{
 
 			ParallelBlockTableScanDesc pbscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
+
 			blks_done = pbscan->phs_nblocks;
 		}
 		else
@@ -1727,7 +1734,7 @@ heapam_index_validate_scan(Relation heapRelation,
 	EState	   *estate = CreateExecutorState();
 	ExprContext *econtext = GetPerTupleExprContext(estate);
 	TupleTableSlot *slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation),
-									&TTSOpsHeapTuple);
+													&TTSOpsHeapTuple);
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;
@@ -1963,6 +1970,7 @@ heapam_scan_get_blocks_done(HeapScanDesc hscan)
 	{
 
 		BlockNumber nblocks = bpscan != NULL ? bpscan->phs_nblocks : hscan->rs_nblocks;
+
 		blocks_done = nblocks - startblock +
 			hscan->rs_cblock;
 	}
@@ -2021,8 +2029,9 @@ heapam_relation_needs_toast_table(Relation rel)
 	if (maxlength_unknown)
 		return true;			/* any unlimited-length attrs? */
 	int32		tuple_length = MAXALIGN(SizeofHeapTupleHeader +
-							BITMAPLEN(tupdesc->natts)) +
-		MAXALIGN(data_length);
+										BITMAPLEN(tupdesc->natts)) +
+	MAXALIGN(data_length);
+
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
 
@@ -2145,6 +2154,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			HeapTupleData loctup;
 
 			ItemId		lp = PageGetItemId(dp, offnum);
+
 			if (!ItemIdIsNormal(lp))
 				continue;
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
@@ -2152,6 +2162,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			loctup.t_tableOid = scan->rs_rd->rd_id;
 			ItemPointerSet(&loctup.t_self, page, offnum);
 			bool		valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+
 			if (valid)
 			{
 				hscan->rs_vistuples[ntup++] = offnum;
@@ -2187,6 +2198,7 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 	OffsetNumber targoffset = hscan->rs_vistuples[hscan->rs_cindex];
 	Page		dp = (Page) BufferGetPage(hscan->rs_cbuf);
 	ItemId		lp = PageGetItemId(dp, targoffset);
+
 	Assert(ItemIdIsNormal(lp));
 
 	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
@@ -2302,7 +2314,7 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 
 	Page		page = (Page) BufferGetPage(hscan->rs_cbuf);
 	bool		all_visible = PageIsAllVisible(page) &&
-		!scan->rs_snapshot->takenDuringRecovery;
+	!scan->rs_snapshot->takenDuringRecovery;
 	OffsetNumber maxoffset = PageGetMaxOffsetNumber(page);
 
 	for (;;)
@@ -2312,8 +2324,8 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 
 		/* Ask the tablesample method which tuples to check on this page. */
 		OffsetNumber tupoffset = tsm->NextSampleTuple(scanstate,
-										 blockno,
-										 maxoffset);
+													  blockno,
+													  maxoffset);
 
 		if (OffsetNumberIsValid(tupoffset))
 		{
@@ -2322,6 +2334,7 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 
 			/* Skip invalid tuple pointers. */
 			ItemId		itemid = PageGetItemId(page, tupoffset);
+
 			if (!ItemIdIsNormal(itemid))
 				continue;
 

@@ -56,6 +56,7 @@ decimalLength32(const uint32 v)
 	 * good-enough approximation of the base-2 logarithm of 10
 	 */
 	int			t = (pg_leftmost_one_pos32(v) + 1) * 1233 / 4096;
+
 	return t + (v >= PowersOfTen[t]);
 }
 
@@ -80,6 +81,7 @@ decimalLength64(const uint64 v)
 	 * good-enough approximation of the base-2 logarithm of 10
 	 */
 	int			t = (pg_leftmost_one_pos64(v) + 1) * 1233 / 4096;
+
 	return t + (v >= PowersOfTen[t]);
 }
 
@@ -569,6 +571,7 @@ pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
 	}
 
 	int			len = pg_ultoa_n(value, str);
+
 	if (len >= minwidth)
 		return str + len;
 

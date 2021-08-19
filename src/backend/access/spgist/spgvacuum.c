@@ -67,6 +67,7 @@ spgAddPendingTID(spgBulkDeleteState *bds, ItemPointer tid)
 
 	/* search the list for pre-existing entry */
 	spgVacPendingItem **listLink = &bds->pendingList;
+
 	while (*listLink != NULL)
 	{
 		pitem = *listLink;
@@ -147,7 +148,8 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 	{
 
 		SpGistLeafTuple lt = (SpGistLeafTuple) PageGetItem(page,
-										   PageGetItemId(page, i));
+														   PageGetItemId(page, i));
+
 		if (lt->tupstate == SPGIST_LIVE)
 		{
 			Assert(ItemPointerIsValid(&lt->heapPtr));
@@ -232,7 +234,8 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 	{
 
 		SpGistLeafTuple head = (SpGistLeafTuple) PageGetItem(page,
-											 PageGetItemId(page, i));
+															 PageGetItemId(page, i));
+
 		if (head->tupstate != SPGIST_LIVE)
 			continue;			/* can't be a chain member */
 		if (predecessor[i] != 0)
@@ -244,11 +247,13 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 
 		/* scan down the chain ... */
 		OffsetNumber j = SGLT_GET_NEXTOFFSET(head);
+
 		while (j != InvalidOffsetNumber)
 		{
 
 			SpGistLeafTuple lt = (SpGistLeafTuple) PageGetItem(page,
-											   PageGetItemId(page, j));
+															   PageGetItemId(page, j));
+
 			if (lt->tupstate != SPGIST_LIVE)
 			{
 				/* all tuples in chain should be live */
@@ -341,6 +346,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 		ItemId		idDest = PageGetItemId(page, moveDest[i]);
 
 		ItemIdData	tmp = *idSrc;
+
 		*idSrc = *idDest;
 		*idDest = tmp;
 	}
@@ -354,7 +360,8 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 	{
 
 		SpGistLeafTuple lt = (SpGistLeafTuple) PageGetItem(page,
-										   PageGetItemId(page, chainSrc[i]));
+														   PageGetItemId(page, chainSrc[i]));
+
 		Assert(lt->tupstate == SPGIST_LIVE);
 		SGLT_SET_NEXTOFFSET(lt, chainDest[i]);
 	}
@@ -408,7 +415,8 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 	{
 
 		SpGistLeafTuple lt = (SpGistLeafTuple) PageGetItem(page,
-										   PageGetItemId(page, i));
+														   PageGetItemId(page, i));
+
 		if (lt->tupstate == SPGIST_LIVE)
 		{
 			Assert(ItemPointerIsValid(&lt->heapPtr));
@@ -600,7 +608,8 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	vacuum_delay_point();
 
 	Buffer		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
-								RBM_NORMAL, bds->info->strategy);
+											RBM_NORMAL, bds->info->strategy);
+
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	Page		page = (Page) BufferGetPage(buffer);
 
@@ -734,7 +743,8 @@ spgprocesspending(spgBulkDeleteState *bds)
 
 					OffsetNumber offset = ItemPointerGetOffsetNumber(&nitem->tid);
 					SpGistInnerTuple innerTuple = (SpGistInnerTuple) PageGetItem(page,
-																PageGetItemId(page, offset));
+																				 PageGetItemId(page, offset));
+
 					if (innerTuple->tupstate == SPGIST_LIVE)
 					{
 						SpGistNodeTuple node;

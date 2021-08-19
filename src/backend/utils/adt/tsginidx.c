@@ -28,8 +28,8 @@ gin_cmp_tslexeme(PG_FUNCTION_ARGS)
 	text	   *b = PG_GETARG_TEXT_PP(1);
 
 	int			cmp = tsCompareString(VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
-						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
-						  false);
+									  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
+									  false);
 
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
@@ -48,8 +48,8 @@ gin_cmp_prefix(PG_FUNCTION_ARGS)
 #endif
 
 	int			cmp = tsCompareString(VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
-						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
-						  true);
+									  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
+									  true);
 
 	if (cmp < 0)
 		cmp = 1;				/* prevent continue scan */
@@ -78,6 +78,7 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 		{
 
 			text	   *txt = cstring_to_text_with_len(STRPTR(vector) + we->pos, we->len);
+
 			entries[i] = PointerGetDatum(txt);
 
 			we++;
@@ -149,7 +150,8 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 				QueryOperand *val = &item[i].qoperand;
 
 				text	   *txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
-											   val->length);
+														   val->length);
+
 				entries[j] = PointerGetDatum(txt);
 				partialmatch[j] = val->prefix;
 				(*extra_data)[j] = (Pointer) map_item_operand;

@@ -63,11 +63,13 @@ geo_distance_internal(Point *pt1, Point *pt2)
 
 	/* compute difference in longitudes - want < 180 degrees */
 	double		longdiff = fabs(long1 - long2);
+
 	if (longdiff > M_PI)
 		longdiff = TWO_PI - longdiff;
 
 	double		sino = sqrt(sin(fabs(lat1 - lat2) / 2.) * sin(fabs(lat1 - lat2) / 2.) +
-				cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
+							cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
+
 	if (sino > 1.)
 		sino = 1.;
 
@@ -97,5 +99,6 @@ geo_distance(PG_FUNCTION_ARGS)
 	Point	   *pt2 = PG_GETARG_POINT_P(1);
 
 	float8		result = geo_distance_internal(pt1, pt2);
+
 	PG_RETURN_FLOAT8(result);
 }

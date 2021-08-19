@@ -56,11 +56,13 @@ execCurrentOf(CurrentOfExpr *cexpr,
 
 	/* Fetch table name for possible use in error messages */
 	char	   *table_name = get_rel_name(table_oid);
+
 	if (table_name == NULL)
 		elog(ERROR, "cache lookup failed for relation %u", table_oid);
 
 	/* Find the cursor's portal */
 	Portal		portal = GetPortalByName(cursor_name);
+
 	if (!PortalIsValid(portal))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
@@ -76,6 +78,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 				 errmsg("cursor \"%s\" is not a SELECT query",
 						cursor_name)));
 	QueryDesc  *queryDesc = portal->queryDesc;
+
 	if (queryDesc == NULL || queryDesc->estate == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -98,6 +101,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		 * the target table, and we dig the ctid info out of that.
 		 */
 		ExecRowMark *erm = NULL;
+
 		for (i = 0; i < queryDesc->estate->es_range_table_size; i++)
 		{
 			ExecRowMark *thiserm = queryDesc->estate->es_rowmarks[i];
@@ -157,7 +161,8 @@ execCurrentOf(CurrentOfExpr *cexpr,
 		bool		pending_rescan = false;
 
 		ScanState  *scanstate = search_plan_tree(queryDesc->planstate, table_oid,
-									 &pending_rescan);
+												 &pending_rescan);
+
 		if (!scanstate)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_CURSOR_STATE),

@@ -350,6 +350,7 @@ be_loread(PG_FUNCTION_ARGS)
 
 	bytea	   *retval = (bytea *) palloc(VARHDRSZ + len);
 	int			totalread = lo_read(fd, VARDATA(retval), len);
+
 	SET_VARSIZE(retval, totalread + VARHDRSZ);
 
 	PG_RETURN_BYTEA_P(retval);
@@ -363,6 +364,7 @@ be_lowrite(PG_FUNCTION_ARGS)
 
 	int			bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
 	int			totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
+
 	PG_RETURN_INT32(totalwritten);
 }
 
@@ -410,6 +412,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	int			fd = OpenTransientFile(fnamebuf, O_RDONLY | PG_BINARY);
+
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -480,6 +483,7 @@ be_lo_export(PG_FUNCTION_ARGS)
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	mode_t		oumask = umask(S_IWGRP | S_IWOTH);
+
 	PG_TRY();
 	{
 		fd = OpenTransientFilePerm(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
@@ -718,6 +722,7 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 	 * and reads beyond the end of the LO.
 	 */
 	int64		loSize = inv_seek(loDesc, 0, SEEK_END);
+
 	if (loSize > offset)
 	{
 		if (nbytes >= 0 && nbytes <= loSize - offset)
@@ -796,6 +801,7 @@ be_lo_from_bytea(PG_FUNCTION_ARGS)
 
 	loOid = inv_create(loOid);
 	LargeObjectDesc *loDesc = inv_open(loOid, INV_WRITE, fscxt);
+
 	written = inv_write(loDesc, VARDATA_ANY(str), VARSIZE_ANY_EXHDR(str));
 	Assert(written == VARSIZE_ANY_EXHDR(str));
 	inv_close(loDesc);

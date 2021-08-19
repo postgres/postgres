@@ -155,6 +155,7 @@ main(int argc, char **argv)
 	}
 
 	ConfigData *configdata = get_configdata(my_exec_path, &configdata_len);
+
 	/* no arguments -> print everything */
 	if (argc < 2)
 	{

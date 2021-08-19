@@ -80,6 +80,7 @@ open_lo_relation(void)
 
 	/* Arrange for the top xact to own these relation references */
 	ResourceOwner currentOwner = CurrentResourceOwner;
+
 	CurrentResourceOwner = TopTransactionResourceOwner;
 
 	/* Use RowExclusiveLock since we might either read or write */
@@ -107,6 +108,7 @@ close_lo_relation(bool isCommit)
 		{
 
 			ResourceOwner currentOwner = CurrentResourceOwner;
+
 			CurrentResourceOwner = TopTransactionResourceOwner;
 
 			if (lo_index_r)
@@ -138,13 +140,14 @@ myLargeObjectExists(Oid loid, Snapshot snapshot)
 				ObjectIdGetDatum(loid));
 
 	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
-							AccessShareLock);
+										AccessShareLock);
 
 	SysScanDesc sd = systable_beginscan(pg_lo_meta,
-							LargeObjectMetadataOidIndexId, true,
-							snapshot, 1, skey);
+										LargeObjectMetadataOidIndexId, true,
+										snapshot, 1, skey);
 
 	HeapTuple	tuple = systable_getnext(sd);
+
 	if (HeapTupleIsValid(tuple))
 		retval = true;
 
@@ -170,6 +173,7 @@ getdatafield(Form_pg_largeobject tuple,
 
 	bytea	   *datafield = &(tuple->data); /* see note at top of file */
 	bool		freeit = false;
+
 	if (VARATT_IS_EXTENDED(datafield))
 	{
 		datafield = (bytea *)
@@ -177,6 +181,7 @@ getdatafield(Form_pg_largeobject tuple,
 		freeit = true;
 	}
 	int			len = VARSIZE(datafield) - VARHDRSZ;
+
 	if (len < 0 || len > LOBLKSIZE)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -302,7 +307,8 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 
 	/* OK to create a descriptor */
 	LargeObjectDesc *retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
-													sizeof(LargeObjectDesc));
+																	 sizeof(LargeObjectDesc));
+
 	retval->id = lobjId;
 	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
@@ -387,7 +393,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				ObjectIdGetDatum(obj_desc->id));
 
 	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
-									obj_desc->snapshot, 1, skey);
+												obj_desc->snapshot, 1, skey);
 
 	/*
 	 * Because the pg_largeobject index is on both loid and pageno, but we
@@ -396,6 +402,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	 * the first valid tuple (== last valid page).
 	 */
 	HeapTuple	tuple = systable_getnext_ordered(sd, BackwardScanDirection);
+
 	if (HeapTupleIsValid(tuple))
 	{
 		bytea	   *datafield;
@@ -405,6 +412,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		Form_pg_largeobject data = (Form_pg_largeobject) GETSTRUCT(tuple);
+
 		getdatafield(data, &datafield, &len, &pfreeit);
 		lastbyte = (uint64) data->pageno * LOBLKSIZE + len;
 		if (pfreeit)
@@ -515,7 +523,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				Int32GetDatum(pageno));
 
 	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
-									obj_desc->snapshot, 2, skey);
+												obj_desc->snapshot, 2, skey);
 
 	while ((tuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 	{
@@ -629,7 +637,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 				Int32GetDatum(pageno));
 
 	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
-									obj_desc->snapshot, 2, skey);
+												obj_desc->snapshot, 2, skey);
 
 	HeapTuple	oldtuple = NULL;
 	Form_pg_largeobject olddata = NULL;
@@ -819,13 +827,14 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 				Int32GetDatum(pageno));
 
 	SysScanDesc sd = systable_beginscan_ordered(lo_heap_r, lo_index_r,
-									obj_desc->snapshot, 2, skey);
+												obj_desc->snapshot, 2, skey);
 
 	/*
 	 * If possible, get the page the truncation point is in. The truncation
 	 * point may be beyond the end of the LO or in a hole.
 	 */
 	Form_pg_largeobject olddata = NULL;
+
 	if ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
 	{
 		if (HeapTupleHasNulls(oldtuple))	/* paranoia */

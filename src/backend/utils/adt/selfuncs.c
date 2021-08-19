@@ -313,6 +313,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 	{
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+
 		nullfrac = stats->stanullfrac;
 	}
 
@@ -376,6 +377,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 					fcinfo->args[1].value = sslot.values[i];
 				fcinfo->isnull = false;
 				Datum		fresult = FunctionCallInvoke(fcinfo);
+
 				if (!fcinfo->isnull && DatumGetBool(fresult))
 				{
 					match = true;
@@ -417,7 +419,8 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 			 * equally, so we divide by the number of other distinct values.
 			 */
 			double		otherdistinct = get_variable_numdistinct(vardata, &isdefault) -
-				sslot.nnumbers;
+			sslot.nnumbers;
+
 			if (otherdistinct > 1)
 				selec /= otherdistinct;
 
@@ -472,6 +475,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator, Oid collation,
 	{
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+
 		nullfrac = stats->stanullfrac;
 	}
 
@@ -502,6 +506,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator, Oid collation,
 		 */
 		selec = 1.0 - nullfrac;
 		double		ndistinct = get_variable_numdistinct(vardata, &isdefault);
+
 		if (ndistinct > 1)
 			selec /= ndistinct;
 
@@ -763,6 +768,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Oid collation,
 				fcinfo->args[1].value = sslot.values[i];
 			fcinfo->isnull = false;
 			Datum		fresult = FunctionCallInvoke(fcinfo);
+
 			if (!fcinfo->isnull && DatumGetBool(fresult))
 				mcv_selec += sslot.numbers[i];
 			sumcommon += sslot.numbers[i];
@@ -860,6 +866,7 @@ histogram_selectivity(VariableStatData *vardata,
 					fcinfo->args[1].value = sslot.values[i];
 				fcinfo->isnull = false;
 				Datum		fresult = FunctionCallInvoke(fcinfo);
+
 				if (!fcinfo->isnull && DatumGetBool(fresult))
 					nmatch++;
 			}
@@ -940,8 +947,8 @@ generic_restriction_selectivity(PlannerInfo *root, Oid oproid, Oid collation,
 		 * Calculate the selectivity for the column's most common values.
 		 */
 		double		mcvsel = mcv_selectivity(&vardata, &opproc, collation,
-								 constval, varonleft,
-								 &mcvsum);
+											 constval, varonleft,
+											 &mcvsum);
 
 		/*
 		 * If the histogram is large enough, see what fraction of it matches
@@ -1117,9 +1124,10 @@ ineq_histogram_selectivity(PlannerInfo *root,
 														 &sslot.values[probe]);
 
 				bool		ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
-													   collation,
-													   sslot.values[probe],
-													   constval));
+																   collation,
+																   sslot.values[probe],
+																   constval));
+
 				if (isgt)
 					ltcmp = !ltcmp;
 				if (ltcmp)
@@ -1180,7 +1188,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 
 					/* Get estimated number of distinct values */
 					double		otherdistinct = get_variable_numdistinct(vardata,
-															 &isdefault);
+																		 &isdefault);
 
 					/* Subtract off the number of known MCVs */
 					if (get_attstatsslot(&mcvslot, vardata->statsTuple,
@@ -1346,6 +1354,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				fcinfo->args[0].value = sslot.values[i];
 				fcinfo->isnull = false;
 				Datum		fresult = FunctionCallInvoke(fcinfo);
+
 				if (!fcinfo->isnull && DatumGetBool(fresult))
 					nmatch++;
 			}
@@ -1435,7 +1444,7 @@ scalarineqsel_wrapper(PG_FUNCTION_ARGS, bool isgt, bool iseq)
 
 	/* The rest of the work is done by scalarineqsel(). */
 	double		selec = scalarineqsel(root, operator, isgt, iseq, collation,
-						  &vardata, constval, consttype);
+									  &vardata, constval, consttype);
 
 	ReleaseVariableStats(vardata);
 
@@ -1813,6 +1822,7 @@ scalararraysel(PlannerInfo *root,
 
 	/* get nominal (after relabeling) element type of rightop */
 	Oid			nominal_element_type = get_base_element_type(exprType(rightop));
+
 	if (!OidIsValid(nominal_element_type))
 		return (Selectivity) 0.5;	/* probably shouldn't happen */
 	/* get nominal collation, too, for generating constants */
@@ -1826,6 +1836,7 @@ scalararraysel(PlannerInfo *root,
 	 * operator of the array element type.
 	 */
 	TypeCacheEntry *typentry = lookup_type_cache(nominal_element_type, TYPECACHE_EQ_OPR);
+
 	if (OidIsValid(typentry->eq_opr))
 	{
 		if (operator == typentry->eq_opr)
@@ -1901,6 +1912,7 @@ scalararraysel(PlannerInfo *root,
 		if (arrayisnull)		/* qual can't succeed if null array */
 			return (Selectivity) 0.0;
 		ArrayType  *arrayval = DatumGetArrayTypeP(arraydatum);
+
 		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 							 &elmlen, &elmbyval, &elmalign);
 		deconstruct_array(arrayval,
@@ -1929,13 +1941,14 @@ scalararraysel(PlannerInfo *root,
 			Selectivity s2;
 
 			List	   *args = list_make2(leftop,
-							  makeConst(nominal_element_type,
-										-1,
-										nominal_element_collation,
-										elmlen,
-										elem_values[i],
-										elem_nulls[i],
-										elmbyval));
+										  makeConst(nominal_element_type,
+													-1,
+													nominal_element_collation,
+													elmlen,
+													elem_values[i],
+													elem_nulls[i],
+													elmbyval));
+
 			if (is_join_clause)
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
@@ -2002,6 +2015,7 @@ scalararraysel(PlannerInfo *root,
 			 * estimation function would really care ...
 			 */
 			List	   *args = list_make2(leftop, elem);
+
 			if (is_join_clause)
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
@@ -2048,10 +2062,12 @@ scalararraysel(PlannerInfo *root,
 		 * constant; CaseTestExpr is a convenient choice.
 		 */
 		CaseTestExpr *dummyexpr = makeNode(CaseTestExpr);
+
 		dummyexpr->typeId = nominal_element_type;
 		dummyexpr->typeMod = -1;
 		dummyexpr->collation = clause->inputcollid;
 		List	   *args = list_make2(leftop, dummyexpr);
+
 		if (is_join_clause)
 			s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 												  clause->inputcollid,
@@ -2108,6 +2124,7 @@ estimate_array_length(Node *arrayexpr)
 		if (arrayisnull)
 			return 0;
 		ArrayType  *arrayval = DatumGetArrayTypeP(arraydatum);
+
 		return ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
 	}
 	else if (arrayexpr && IsA(arrayexpr, ArrayExpr) &&
@@ -2256,12 +2273,12 @@ eqjoinsel(PG_FUNCTION_ARGS)
 
 	/* We need to compute the inner-join selectivity in all cases */
 	double		selec_inner = eqjoinsel_inner(opfuncoid, collation,
-								  &vardata1, &vardata2,
-								  nd1, nd2,
-								  isdefault1, isdefault2,
-								  &sslot1, &sslot2,
-								  stats1, stats2,
-								  have_mcvs1, have_mcvs2);
+											  &vardata1, &vardata2,
+											  nd1, nd2,
+											  isdefault1, isdefault2,
+											  &sslot1, &sslot2,
+											  stats1, stats2,
+											  have_mcvs1, have_mcvs2);
 
 	switch (sjinfo->jointype)
 	{
@@ -2421,6 +2438,7 @@ eqjoinsel_inner(Oid opfuncoid, Oid collation,
 				fcinfo->args[1].value = sslot2->values[j];
 				fcinfo->isnull = false;
 				Datum		fresult = FunctionCallInvoke(fcinfo);
+
 				if (!fcinfo->isnull && DatumGetBool(fresult))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
@@ -2647,6 +2665,7 @@ eqjoinsel_semi(Oid opfuncoid, Oid collation,
 				fcinfo->args[1].value = sslot2->values[j];
 				fcinfo->isnull = false;
 				Datum		fresult = FunctionCallInvoke(fcinfo);
+
 				if (!fcinfo->isnull && DatumGetBool(fresult))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
@@ -3170,8 +3189,8 @@ matchingsel(PG_FUNCTION_ARGS)
 
 	/* Use generic restriction selectivity logic. */
 	double		selec = generic_restriction_selectivity(root, operator, collation,
-											args, varRelid,
-											DEFAULT_MATCHING_SEL);
+														args, varRelid,
+														DEFAULT_MATCHING_SEL);
 
 	PG_RETURN_FLOAT8((float8) selec);
 }
@@ -3354,6 +3373,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 	double		numdistinct = 1.0;
 
 	int			i = 0;
+
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
@@ -3376,6 +3396,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * estimates for SRF output rowcounts than we have today.)
 		 */
 		double		this_srf_multiplier = expression_returns_set_rows(root, groupexpr);
+
 		if (srf_multiplier < this_srf_multiplier)
 			srf_multiplier = this_srf_multiplier;
 
@@ -3416,9 +3437,9 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * down to ignoring the possible addition of nulls to the result set).
 		 */
 		List	   *varshere = pull_var_clause(groupexpr,
-								   PVC_RECURSE_AGGREGATES |
-								   PVC_RECURSE_WINDOWFUNCS |
-								   PVC_RECURSE_PLACEHOLDERS);
+											   PVC_RECURSE_AGGREGATES |
+											   PVC_RECURSE_WINDOWFUNCS |
+											   PVC_RECURSE_PLACEHOLDERS);
 
 		/*
 		 * If we find any variable-free GROUP BY item, then either it is a
@@ -3747,6 +3768,7 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
 	{
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+
 		stanullfrac = stats->stanullfrac;
 	}
 	else
@@ -3819,8 +3841,8 @@ estimate_hashagg_tablesize(PlannerInfo *root, Path *path,
 {
 
 	Size		hashentrysize = hash_agg_entry_size(list_length(root->aggtransinfos),
-										path->pathtarget->width,
-										agg_costs->transitionSpace);
+													path->pathtarget->width,
+													agg_costs->transitionSpace);
 
 	/*
 	 * Note that this disregards the effect of fill-factor and growth policy
@@ -3862,8 +3884,9 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 		return false;
 
 	/* look for the ndistinct statistics matching the most vars */
-	int			nmatches_vars = 0;			/* we require at least two matches */
+	int			nmatches_vars = 0;	/* we require at least two matches */
 	int			nmatches_exprs = 0;
+
 	foreach(lc, rel->statlist)
 	{
 		ListCell   *lc2;
@@ -4019,6 +4042,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 			/* expression - see if it's in the statistics */
 			int			idx = 0;
+
 			foreach(lc3, matched_info->exprs)
 			{
 				Node	   *expr = (Node *) lfirst(lc3);
@@ -5002,6 +5026,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			int			pos;
 
 			ListCell   *indexpr_item = list_head(index->indexprs);
+
 			if (indexpr_item == NULL)
 				continue;		/* no expressions here... */
 
@@ -5013,6 +5038,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					if (indexpr_item == NULL)
 						elog(ERROR, "too few entries in indexprs list");
 					Node	   *indexkey = (Node *) lfirst(indexpr_item);
+
 					if (indexkey && IsA(indexkey, RelabelType))
 						indexkey = (Node *) ((RelabelType *) indexkey)->arg;
 					if (equal(node, indexkey))
@@ -5173,6 +5199,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				continue;
 
 			int			pos = 0;
+
 			foreach(expr_item, info->exprs)
 			{
 				Node	   *expr = (Node *) lfirst(expr_item);
@@ -5199,6 +5226,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					vardata->freefunc = ReleaseDummy;
 
 					RangeTblEntry *rte = planner_rt_fetch(onerel->relid, root);
+
 					Assert(rte->rtekind == RTE_RELATION);
 
 					/*
@@ -5239,6 +5267,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						Index		varno = onerel->relid;
 
 						AppendRelInfo *appinfo = root->append_rel_array[varno];
+
 						while (appinfo &&
 							   planner_rt_fetch(appinfo->parent_relid,
 												root)->rtekind == RTE_RELATION)
@@ -5364,6 +5393,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 					if (varattno <= 0 || varattno > appinfo->num_child_cols)
 						break;	/* safety check */
 					int			parent_varattno = appinfo->parent_colnos[varattno - 1];
+
 					if (parent_varattno == 0)
 						break;	/* Var is local to child */
 
@@ -5456,6 +5486,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		/* Get the subquery output expression referenced by the upper Var */
 		TargetEntry *ste = get_tle_by_resno(subquery->targetList, var->varattno);
+
 		if (ste == NULL || ste->resjunk)
 			elog(ERROR, "subquery %s does not have attribute %d",
 				 rte->eref->aliasname, var->varattno);
@@ -5571,6 +5602,7 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 		/* Use the pg_statistic entry */
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
+
 		stadistinct = stats->stadistinct;
 		stanullfrac = stats->stanullfrac;
 	}
@@ -5649,6 +5681,7 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 		return DEFAULT_NUM_DISTINCT;
 	}
 	double		ntuples = vardata->rel->tuples;
+
 	if (ntuples <= 0.0)
 	{
 		*isdefault = true;
@@ -5867,6 +5900,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 		return false;
 	/* If it has indexes it must be a plain relation */
 	RangeTblEntry *rte = root->simple_rte_array[rel->relid];
+
 	Assert(rte->rtekind == RTE_RELATION);
 
 	/* Search through the indexes to see if any match our problem */
@@ -5931,8 +5965,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 
 			/* Make sure any cruft gets recycled when we're done */
 			MemoryContext tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
-											   "get_actual_variable_range workspace",
-											   ALLOCSET_DEFAULT_SIZES);
+															 "get_actual_variable_range workspace",
+															 ALLOCSET_DEFAULT_SIZES);
 			MemoryContext oldcontext = MemoryContextSwitchTo(tmpcontext);
 
 			/*
@@ -5944,6 +5978,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 
 			/* build some stuff needed for indexscan execution */
 			TupleTableSlot *slot = table_slot_create(heapRel, NULL);
+
 			get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
 			/* set up an IS NOT NULL scan key so that we ignore nulls */
@@ -6081,8 +6116,9 @@ get_actual_variable_endpoint(Relation heapRel,
 							  GlobalVisTestFor(heapRel));
 
 	IndexScanDesc index_scan = index_beginscan(heapRel, indexRel,
-								 &SnapshotNonVacuumable,
-								 1, 0);
+											   &SnapshotNonVacuumable,
+											   1, 0);
+
 	/* Set it up for index-only scan */
 	index_scan->xs_want_itup = true;
 	index_rescan(index_scan, scankeys, 1, NULL, 0);
@@ -6293,6 +6329,7 @@ genericcostestimate(PlannerInfo *root,
 	 * index scans that will be performed.
 	 */
 	double		num_sa_scans = 1;
+
 	foreach(l, indexQuals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
@@ -6309,9 +6346,9 @@ genericcostestimate(PlannerInfo *root,
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	Selectivity indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											  index->rel->relid,
-											  JOIN_INNER,
-											  NULL);
+														  index->rel->relid,
+														  JOIN_INNER,
+														  NULL);
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
@@ -6319,6 +6356,7 @@ genericcostestimate(PlannerInfo *root,
 	 * way in order to get the right answer for partial indexes.
 	 */
 	double		numIndexTuples = costs->numIndexTuples;
+
 	if (numIndexTuples <= 0.0)
 	{
 		numIndexTuples = indexSelectivity * index->rel->tuples;
@@ -6429,11 +6467,12 @@ genericcostestimate(PlannerInfo *root,
 	 * worth, though, considering all the other inaccuracies here ...
 	 */
 	double		qual_arg_cost = index_other_operands_eval_cost(root, indexQuals) +
-		index_other_operands_eval_cost(root, indexOrderBys);
+	index_other_operands_eval_cost(root, indexOrderBys);
 	double		qual_op_cost = cpu_operator_cost *
-		(list_length(indexQuals) + list_length(indexOrderBys));
+	(list_length(indexQuals) + list_length(indexOrderBys));
 
 	Cost		indexStartupCost = qual_arg_cost;
+
 	indexTotalCost += qual_arg_cost;
 	indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
 
@@ -6533,6 +6572,7 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	bool		found_saop = false;
 	bool		found_is_null_op = false;
 	double		num_sa_scans = 1;
+
 	foreach(lc, path->indexclauses)
 	{
 		IndexClause *iclause = lfirst_node(IndexClause, lc);
@@ -6633,9 +6673,10 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		List	   *selectivityQuals = add_predicate_to_index_quals(index, indexBoundQuals);
 
 		Selectivity btreeSelectivity = clauselist_selectivity(root, selectivityQuals,
-												  index->rel->relid,
-												  JOIN_INNER,
-												  NULL);
+															  index->rel->relid,
+															  JOIN_INNER,
+															  NULL);
+
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 
 		/*
@@ -6758,9 +6799,10 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		AttStatsSlot sslot;
 
 		Oid			sortop = get_opfamily_member(index->opfamily[0],
-									 index->opcintype[0],
-									 index->opcintype[0],
-									 BTLessStrategyNumber);
+												 index->opcintype[0],
+												 index->opcintype[0],
+												 BTLessStrategyNumber);
+
 		if (OidIsValid(sortop) &&
 			get_attstatsslot(&sslot, vardata.statsTuple,
 							 STATISTIC_KIND_CORRELATION, sortop,
@@ -7003,9 +7045,9 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 	 * IndexSupportInitialize in relcache.c).
 	 */
 	Oid			extractProcOid = get_opfamily_proc(index->opfamily[indexcol],
-									   index->opcintype[indexcol],
-									   index->opcintype[indexcol],
-									   GIN_EXTRACTQUERY_PROC);
+												   index->opcintype[indexcol],
+												   index->opcintype[indexcol],
+												   GIN_EXTRACTQUERY_PROC);
 
 	if (!OidIsValid(extractProcOid))
 	{
@@ -7180,6 +7222,7 @@ gincost_scalararrayopexpr(PlannerInfo *root,
 
 	/* Otherwise, extract the array elements and iterate over them */
 	ArrayType  *arrayval = DatumGetArrayTypeP(((Const *) rightop)->constvalue);
+
 	get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 						 &elmlen, &elmbyval, &elmalign);
 	deconstruct_array(arrayval,
@@ -7436,6 +7479,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * must assume the whole GIN index has to be scanned in this case.
 	 */
 	bool		fullIndexScan = false;
+
 	for (i = 0; i < index->nkeycolumns; i++)
 	{
 		if (counts.attHasFullScan[i] && !counts.attHasNormalScan[i])
@@ -7482,6 +7526,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * numEntries; clamp the proportion to ensure sanity.
 	 */
 	double		partialScale = counts.partialEntries / numEntries;
+
 	partialScale = Min(partialScale, 1.0);
 
 	entryPagesFetched += ceil(numEntryPages * partialScale);
@@ -7726,8 +7771,8 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	}
 
 	double		qualSelectivity = clauselist_selectivity(root, indexQuals,
-											 baserel->relid,
-											 JOIN_INNER, NULL);
+														 baserel->relid,
+														 JOIN_INNER, NULL);
 
 	/*
 	 * Now calculate the minimum possible ranges we could match with if all of

@@ -117,6 +117,7 @@ ProcedureCreate(const char *procedureName,
 	Assert(PointerIsValid(prosrc));
 
 	int			parameterCount = parameterTypes->dim1;
+
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -174,8 +175,9 @@ ProcedureCreate(const char *procedureName,
 	 * input argument that we can use to deduce the actual return type.
 	 */
 	char	   *detailmsg = check_valid_polymorphic_signature(returnType,
-												  parameterTypes->values,
-												  parameterCount);
+															  parameterTypes->values,
+															  parameterCount);
+
 	if (detailmsg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -349,9 +351,9 @@ ProcedureCreate(const char *procedureName,
 
 	/* Check for pre-existing definition */
 	HeapTuple	oldtup = SearchSysCache3(PROCNAMEARGSNSP,
-							 PointerGetDatum(procedureName),
-							 PointerGetDatum(parameterTypes),
-							 ObjectIdGetDatum(procNamespace));
+										 PointerGetDatum(procedureName),
+										 PointerGetDatum(parameterTypes),
+										 ObjectIdGetDatum(procNamespace));
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -384,8 +386,8 @@ ProcedureCreate(const char *procedureName,
 					  0)));
 
 		const char *dropcmd = (prokind == PROKIND_PROCEDURE ? "DROP PROCEDURE" :
-				   prokind == PROKIND_AGGREGATE ? "DROP AGGREGATE" :
-				   "DROP FUNCTION");
+							   prokind == PROKIND_AGGREGATE ? "DROP AGGREGATE" :
+							   "DROP FUNCTION");
 
 		/*
 		 * Not okay to change the return type of the existing proc, since
@@ -420,9 +422,10 @@ ProcedureCreate(const char *procedureName,
 
 			TupleDesc	olddesc = build_function_result_tupdesc_t(oldtup);
 			TupleDesc	newdesc = build_function_result_tupdesc_d(prokind,
-													  allParameterTypes,
-													  parameterModes,
-													  parameterNames);
+																  allParameterTypes,
+																  parameterModes,
+																  parameterNames);
+
 			if (olddesc == NULL && newdesc == NULL)
 				 /* ok, both are runtime-defined RECORDs */ ;
 			else if (olddesc == NULL || newdesc == NULL ||
@@ -443,8 +446,9 @@ ProcedureCreate(const char *procedureName,
 		 * allow adding names to formerly unnamed parameters, though.
 		 */
 		Datum		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
-									  Anum_pg_proc_proargnames,
-									  &isnull);
+												  Anum_pg_proc_proargnames,
+												  &isnull);
+
 		if (!isnull)
 		{
 			char	  **old_arg_names;
@@ -452,17 +456,19 @@ ProcedureCreate(const char *procedureName,
 			int			j;
 
 			Datum		proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
-										  Anum_pg_proc_proargmodes,
-										  &isnull);
+													  Anum_pg_proc_proargmodes,
+													  &isnull);
+
 			if (isnull)
 				proargmodes = PointerGetDatum(NULL);	/* just to be sure */
 
 			int			n_old_arg_names = get_func_input_arg_names(proargnames,
-													   proargmodes,
-													   &old_arg_names);
+																   proargmodes,
+																   &old_arg_names);
 			int			n_new_arg_names = get_func_input_arg_names(parameterNames,
-													   parameterModes,
-													   &new_arg_names);
+																   parameterModes,
+																   &new_arg_names);
+
 			for (j = 0; j < n_old_arg_names; j++)
 			{
 				if (old_arg_names[j] == NULL)
@@ -502,16 +508,18 @@ ProcedureCreate(const char *procedureName,
 								 format_procedure(oldproc->oid))));
 
 			Datum		proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
-											 Anum_pg_proc_proargdefaults,
-											 &isnull);
+														 Anum_pg_proc_proargdefaults,
+														 &isnull);
+
 			Assert(!isnull);
 			List	   *oldDefaults = castNode(List, stringToNode(TextDatumGetCString(proargdefaults)));
+
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
 			/* new list can have more defaults than old, advance over 'em */
 			ListCell   *newlc = list_nth_cell(parameterDefaults,
-								  list_length(parameterDefaults) -
-								  oldproc->pronargdefaults);
+											  list_length(parameterDefaults) -
+											  oldproc->pronargdefaults);
 
 			foreach(oldlc, oldDefaults)
 			{
@@ -558,7 +566,8 @@ ProcedureCreate(const char *procedureName,
 			nulls[Anum_pg_proc_proacl - 1] = true;
 
 		Oid			newOid = GetNewOidWithIndex(rel, ProcedureOidIndexId,
-									Anum_pg_proc_oid);
+												Anum_pg_proc_oid);
+
 		values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(newOid);
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		CatalogTupleInsert(rel, tup);
@@ -716,10 +725,12 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	 */
 
 	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
 	Datum		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+
 	if (isnull)
 		elog(ERROR, "null prosrc");
 	char	   *prosrc = TextDatumGetCString(tmp);
@@ -761,10 +772,12 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	 */
 
 	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 
 	Datum		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+
 	if (isnull)
 		elog(ERROR, "null prosrc for C function %u", funcoid);
 	char	   *prosrc = TextDatumGetCString(tmp);
@@ -806,6 +819,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		PG_RETURN_VOID();
 
 	HeapTuple	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
@@ -824,6 +838,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	/* Disallow pseudotypes in arguments */
 	/* except for polymorphic */
 	bool		haspolyarg = false;
+
 	for (i = 0; i < proc->pronargs; i++)
 	{
 		if (get_typtype(proc->proargtypes.values[i]) == TYPTYPE_PSEUDO)
@@ -864,6 +879,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		{
 
 			Node	   *n = stringToNode(TextDatumGetCString(tmp));
+
 			if (IsA(n, List))
 				querytree_list = castNode(List, n);
 			else
@@ -898,10 +914,11 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 					RawStmt    *parsetree = lfirst_node(RawStmt, lc);
 
 					List	   *querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
-																	  prosrc,
-																	  (ParserSetupHook) sql_fn_parser_setup,
-																	  pinfo,
-																	  NULL);
+																				  prosrc,
+																				  (ParserSetupHook) sql_fn_parser_setup,
+																				  pinfo,
+																				  NULL);
+
 					querytree_list = lappend(querytree_list,
 											 querytree_sublist);
 				}
@@ -969,6 +986,7 @@ function_parse_error_transpose(const char *prosrc)
 	 * to begin with, so check that too.
 	 */
 	int			origerrposition = geterrposition();
+
 	if (origerrposition <= 0)
 	{
 		origerrposition = getinternalerrposition();

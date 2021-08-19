@@ -44,6 +44,7 @@ CatalogOpenIndexes(Relation heapRel)
 {
 
 	ResultRelInfo *resultRelInfo = makeNode(ResultRelInfo);
+
 	resultRelInfo->ri_RangeTableIndex = 0;	/* dummy */
 	resultRelInfo->ri_RelationDesc = heapRel;
 	resultRelInfo->ri_TrigDesc = NULL;	/* we don't fire triggers */
@@ -273,6 +274,7 @@ CatalogTuplesMultiInsertWithInfo(Relation heapRel, TupleTableSlot **slot,
 		bool		should_free;
 
 		HeapTuple	tuple = ExecFetchSlotHeapTuple(slot[i], true, &should_free);
+
 		tuple->t_tableOid = slot[i]->tts_tableOid;
 		CatalogIndexInsert(indstate, tuple);
 

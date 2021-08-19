@@ -56,6 +56,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	si.cb = sizeof(si);
 
 	HANDLE		Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+
 	if (Advapi32Handle == NULL)
 	{
 		pg_log_error("could not load library \"%s\": error code %lu",
@@ -99,12 +100,12 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	}
 
 	BOOL		b = _CreateRestrictedToken(origToken,
-							   DISABLE_MAX_PRIVILEGE,
-							   sizeof(dropSids) / sizeof(dropSids[0]),
-							   dropSids,
-							   0, NULL,
-							   0, NULL,
-							   &restrictedToken);
+										   DISABLE_MAX_PRIVILEGE,
+										   sizeof(dropSids) / sizeof(dropSids[0]),
+										   dropSids,
+										   0, NULL,
+										   0, NULL,
+										   &restrictedToken);
 
 	FreeSid(dropSids[1].Sid);
 	FreeSid(dropSids[0].Sid);

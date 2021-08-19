@@ -215,6 +215,7 @@ win32_langinfo(const char *ctype)
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 
 	_locale_t	loct = _create_locale(LC_CTYPE, ctype);
+
 	if (loct != NULL)
 	{
 		r = malloc(16);			/* excess */
@@ -267,6 +268,7 @@ win32_langinfo(const char *ctype)
 
 			codepage++;
 			size_t		ln = strlen(codepage);
+
 			r = malloc(ln + 3);
 			if (r != NULL)
 			{
@@ -340,6 +342,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 			return PG_SQL_ASCII;
 
 		char	   *save = setlocale(LC_CTYPE, NULL);
+
 		if (!save)
 			return -1;			/* setlocale() broken? */
 		/* must copy result, or it might change after setlocale */
@@ -348,6 +351,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 			return -1;			/* out of memory; unlikely */
 
 		char	   *name = setlocale(LC_CTYPE, ctype);
+
 		if (!name)
 		{
 			free(save);

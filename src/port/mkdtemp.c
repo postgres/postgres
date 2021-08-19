@@ -161,6 +161,7 @@ GETTEMP(char *path, int *doopen, int domkdir)
 
 			*trv = '\0';
 			int			e = stat(path, &sbuf);
+
 			*trv = '/';
 			if (e == -1)
 				return doopen == NULL && !domkdir;

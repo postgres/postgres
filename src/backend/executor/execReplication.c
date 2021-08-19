@@ -59,7 +59,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		   RelationGetPrimaryKeyIndex(rel) == RelationGetRelid(idxrel));
 
 	Datum		indclassDatum = SysCacheGetAttr(INDEXRELID, idxrel->rd_indextuple,
-									Anum_pg_index_indclass, &isnull);
+												Anum_pg_index_indclass, &isnull);
+
 	Assert(!isnull);
 	oidvector  *opclass = (oidvector *) DatumGetPointer(indclassDatum);
 
@@ -77,8 +78,9 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		Oid			opfamily = get_opclass_family(opclass->values[attoff]);
 
 		Oid			operator = get_opfamily_member(opfamily, optype,
-									   optype,
-									   BTEqualStrategyNumber);
+												   optype,
+												   BTEqualStrategyNumber);
+
 		if (!OidIsValid(operator))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 BTEqualStrategyNumber, optype, optype, opfamily);
@@ -128,8 +130,8 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 	/* Start an index scan. */
 	InitDirtySnapshot(snap);
 	IndexScanDesc scan = index_beginscan(rel, idxrel, &snap,
-						   IndexRelationGetNumberOfKeyAttributes(idxrel),
-						   0);
+										 IndexRelationGetNumberOfKeyAttributes(idxrel),
+										 0);
 
 	/* Build scan key. */
 	build_replindex_scan_key(skey, rel, idxrel, searchslot);
@@ -167,12 +169,12 @@ retry:
 		PushActiveSnapshot(GetLatestSnapshot());
 
 		TM_Result	res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
-							   outslot,
-							   GetCurrentCommandId(false),
-							   lockmode,
-							   LockWaitBlock,
-							   0 /* don't follow updates */ ,
-							   &tmfd);
+										   outslot,
+										   GetCurrentCommandId(false),
+										   lockmode,
+										   LockWaitBlock,
+										   0 /* don't follow updates */ ,
+										   &tmfd);
 
 		PopActiveSnapshot();
 
@@ -249,6 +251,7 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 		Form_pg_attribute att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
 
 		TypeCacheEntry *typentry = eq[attrnum];
+
 		if (typentry == NULL)
 		{
 			typentry = lookup_type_cache(att->atttypid,
@@ -339,12 +342,12 @@ retry:
 		PushActiveSnapshot(GetLatestSnapshot());
 
 		TM_Result	res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
-							   outslot,
-							   GetCurrentCommandId(false),
-							   lockmode,
-							   LockWaitBlock,
-							   0 /* don't follow updates */ ,
-							   &tmfd);
+										   outslot,
+										   GetCurrentCommandId(false),
+										   lockmode,
+										   LockWaitBlock,
+										   0 /* don't follow updates */ ,
+										   &tmfd);
 
 		PopActiveSnapshot();
 
@@ -570,6 +573,7 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 	 * Check if the table publishes UPDATES or DELETES.
 	 */
 	PublicationActions *pubactions = GetRelationPublicationActions(rel);
+
 	if (cmd == CMD_UPDATE && pubactions->pubupdate)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

@@ -121,6 +121,7 @@ cash_in(PG_FUNCTION_ARGS)
 	 * frac_digits values.
 	 */
 	int			fpoint = lconvert->frac_digits;
+
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;				/* best guess in this case, I think */
 
@@ -367,6 +368,7 @@ cash_out(PG_FUNCTION_ARGS)
 
 	/* we build the digits+decimal-point+sep string right-to-left in buf[] */
 	char	   *bufptr = buf + sizeof(buf) - 1;
+
 	*bufptr = '\0';
 
 	/*
@@ -376,6 +378,7 @@ cash_out(PG_FUNCTION_ARGS)
 	 * point, increasing to the right.
 	 */
 	int			digit_pos = points;
+
 	do
 	{
 		if (points && digit_pos == 0)
@@ -646,6 +649,7 @@ cash_div_cash(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	float8		quotient = (float8) dividend / (float8) divisor;
+
 	PG_RETURN_FLOAT8(quotient);
 }
 
@@ -660,6 +664,7 @@ cash_mul_flt8(PG_FUNCTION_ARGS)
 	float8		f = PG_GETARG_FLOAT8(1);
 
 	Cash		result = rint(c * f);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -674,6 +679,7 @@ flt8_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 
 	Cash		result = rint(f * c);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -693,6 +699,7 @@ cash_div_flt8(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	Cash		result = rint(c / f);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -707,6 +714,7 @@ cash_mul_flt4(PG_FUNCTION_ARGS)
 	float4		f = PG_GETARG_FLOAT4(1);
 
 	Cash		result = rint(c * (float8) f);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -721,6 +729,7 @@ flt4_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 
 	Cash		result = rint((float8) f * c);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -741,6 +750,7 @@ cash_div_flt4(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	Cash		result = rint(c / (float8) f);
+
 	PG_RETURN_CASH(result);
 }
 
@@ -755,6 +765,7 @@ cash_mul_int8(PG_FUNCTION_ARGS)
 	int64		i = PG_GETARG_INT64(1);
 
 	Cash		result = c * i;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -769,6 +780,7 @@ int8_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 
 	Cash		result = i * c;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -802,6 +814,7 @@ cash_mul_int4(PG_FUNCTION_ARGS)
 	int32		i = PG_GETARG_INT32(1);
 
 	Cash		result = c * i;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -816,6 +829,7 @@ int4_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 
 	Cash		result = i * c;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -851,6 +865,7 @@ cash_mul_int2(PG_FUNCTION_ARGS)
 	int16		s = PG_GETARG_INT16(1);
 
 	Cash		result = c * s;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -864,6 +879,7 @@ int2_mul_cash(PG_FUNCTION_ARGS)
 	Cash		c = PG_GETARG_CASH(1);
 
 	Cash		result = s * c;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -883,6 +899,7 @@ cash_div_int2(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	Cash		result = c / s;
+
 	PG_RETURN_CASH(result);
 }
 
@@ -1005,6 +1022,7 @@ cash_numeric(PG_FUNCTION_ARGS)
 
 	/* see comments about frac_digits in cash_in() */
 	int			fpoint = lconvert->frac_digits;
+
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
@@ -1018,6 +1036,7 @@ cash_numeric(PG_FUNCTION_ARGS)
 
 		/* compute required scale factor */
 		int64		scale = 1;
+
 		for (i = 0; i < fpoint; i++)
 			scale *= 10;
 		Datum		numeric_scale = NumericGetDatum(int64_to_numeric(scale));
@@ -1057,16 +1076,19 @@ numeric_cash(PG_FUNCTION_ARGS)
 
 	/* see comments about frac_digits in cash_in() */
 	int			fpoint = lconvert->frac_digits;
+
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
 	int64		scale = 1;
+
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* multiply the input amount by scale factor */
 	Datum		numeric_scale = NumericGetDatum(int64_to_numeric(scale));
+
 	amount = DirectFunctionCall2(numeric_mul, amount, numeric_scale);
 
 	/* note that numeric_int8 will round to nearest integer for us */
@@ -1087,17 +1109,19 @@ int4_cash(PG_FUNCTION_ARGS)
 
 	/* see comments about frac_digits in cash_in() */
 	int			fpoint = lconvert->frac_digits;
+
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
 	int64		scale = 1;
+
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
 	Cash		result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-											   Int64GetDatum(scale)));
+														   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
 }
@@ -1114,17 +1138,19 @@ int8_cash(PG_FUNCTION_ARGS)
 
 	/* see comments about frac_digits in cash_in() */
 	int			fpoint = lconvert->frac_digits;
+
 	if (fpoint < 0 || fpoint > 10)
 		fpoint = 2;
 
 	/* compute required scale factor */
 	int64		scale = 1;
+
 	for (i = 0; i < fpoint; i++)
 		scale *= 10;
 
 	/* compute amount * scale, checking for overflow */
 	Cash		result = DatumGetInt64(DirectFunctionCall2(int8mul, Int64GetDatum(amount),
-											   Int64GetDatum(scale)));
+														   Int64GetDatum(scale)));
 
 	PG_RETURN_CASH(result);
 }

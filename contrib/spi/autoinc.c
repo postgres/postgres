@@ -95,6 +95,7 @@ autoinc(PG_FUNCTION_ARGS)
 		i++;
 		chattrs[chnattrs] = attnum;
 		Datum		seqname = CStringGetTextDatum(args[i]);
+
 		newvals[chnattrs] = DirectFunctionCall1(nextval, seqname);
 		/* nextval now returns int64; coerce down to int32 */
 		newvals[chnattrs] = Int32GetDatum((int32) DatumGetInt64(newvals[chnattrs]));

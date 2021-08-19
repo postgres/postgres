@@ -393,6 +393,7 @@ retry:
 	 * not given. If the slot is not found, we either return -1 or error out.
 	 */
 	ReplicationSlot *s = SearchNamedReplicationSlot(name, false);
+
 	if (s == NULL || !s->in_use)
 	{
 		LWLockRelease(ReplicationSlotControlLock);
@@ -783,6 +784,7 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 		SpinLockAcquire(&s->mutex);
 		TransactionId effective_xmin = s->effective_xmin;
 		TransactionId effective_catalog_xmin = s->effective_catalog_xmin;
+
 		SpinLockRelease(&s->mutex);
 
 		/* check the data xmin */
@@ -991,6 +993,7 @@ restart:
 		/* can't change while ReplicationSlotControlLock is held */
 		char	   *slotname = NameStr(s->data.name);
 		int			active_pid = s->active_pid;
+
 		if (active_pid == 0)
 		{
 			MyReplicationSlot = s;
@@ -1377,6 +1380,7 @@ StartupReplicationSlots(void)
 
 	/* restore all slots by iterating over all on-disk entries */
 	DIR		   *replication_dir = AllocateDir("pg_replslot");
+
 	while ((replication_de = ReadDir(replication_dir, "pg_replslot")) != NULL)
 	{
 		struct stat statbuf;
@@ -1498,6 +1502,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	/* first check whether there's something to write out */
 	SpinLockAcquire(&slot->mutex);
 	bool		was_dirty = slot->dirty;
+
 	slot->just_dirtied = false;
 	SpinLockRelease(&slot->mutex);
 
@@ -1514,6 +1519,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	sprintf(path, "%s/state", dir);
 
 	int			fd = OpenTransientFile(tmppath, O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
+
 	if (fd < 0)
 	{
 		/*
@@ -1696,6 +1702,7 @@ RestoreSlotFromDisk(const char *name)
 	/* read part of statefile that's guaranteed to be version independent */
 	pgstat_report_wait_start(WAIT_EVENT_REPLICATION_SLOT_READ);
 	int			readBytes = read(fd, &cp, ReplicationSlotOnDiskConstantSize);
+
 	pgstat_report_wait_end();
 	if (readBytes != ReplicationSlotOnDiskConstantSize)
 	{

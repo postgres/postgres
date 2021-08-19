@@ -136,6 +136,7 @@ main(int argc, char **argv)
 
 	/* Set always-secure search path, so malicious users can't take control. */
 	PGresult   *res = PQexec(conn, "SET search_path = testlibpq3");
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));

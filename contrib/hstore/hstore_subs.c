@@ -56,9 +56,11 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 
 	/* Transform the subscript expression to type text */
 	A_Indices  *ai = linitial_node(A_Indices, indirection);
+
 	Assert(ai->uidx != NULL && ai->lidx == NULL && !ai->is_slice);
 
 	Node	   *subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
+
 	/* If it's not text already, try to coerce */
 	subexpr = coerce_to_target_type(pstate,
 									subexpr, exprType(subexpr),
@@ -112,7 +114,7 @@ hstore_subscript_fetch(ExprState *state,
 	/* The rest is basically the same as hstore_fetchval() */
 	HEntry	   *entries = ARRPTR(hs);
 	int			idx = hstoreFindKey(hs, NULL,
-						VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
+									VARDATA_ANY(key), VARSIZE_ANY_EXHDR(key));
 
 	if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 	{
@@ -121,7 +123,7 @@ hstore_subscript_fetch(ExprState *state,
 	}
 
 	text	   *out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
-								   HSTORE_VALLEN(entries, idx));
+											   HSTORE_VALLEN(entries, idx));
 
 	*op->resvalue = PointerGetDatum(out);
 }
@@ -193,6 +195,7 @@ hstore_subscript_assign(ExprState *state,
 
 		/* Allocate result without considering possibility of duplicate */
 		int			vsize = CALCDATASIZE(s1count + 1, VARSIZE(hs) + p.keylen + p.vallen);
+
 		out = palloc(vsize);
 		SET_VARSIZE(out, vsize);
 		HS_SETCOUNT(out, s1count + 1);

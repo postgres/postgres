@@ -610,6 +610,7 @@ lexescape(struct vars *v)
 
 	assert(!ATEOS());
 	chr			c = *v->now++;
+
 	if (!iscalnum(c))
 		RETV(PLAIN, c);
 
@@ -1015,15 +1016,18 @@ chrnamed(struct vars *v,
 {
 
 	int			errsave = v->err;
+
 	v->err = 0;
 	chr			c = element(v, startp, endp);
 	int			e = v->err;
+
 	v->err = errsave;
 
 	if (e != 0)
 		return lastresort;
 
 	struct cvec *cv = range(v, c, c, 0);
+
 	if (cv->nchrs == 0)
 		return lastresort;
 	return cv->chrs[0];

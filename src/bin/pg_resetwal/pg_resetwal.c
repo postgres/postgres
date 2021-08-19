@@ -613,6 +613,7 @@ read_controlfile(void)
 	char	   *buffer = (char *) pg_malloc(PG_CONTROL_FILE_SIZE);
 
 	int			len = read(fd, buffer, PG_CONTROL_FILE_SIZE);
+
 	if (len < 0)
 	{
 		pg_log_error("could not read file \"%s\": %m", XLOG_CONTROL_FILE);
@@ -681,6 +682,7 @@ GuessControlValues(void)
 	 */
 	gettimeofday(&tv, NULL);
 	uint64		sysidentifier = ((uint64) tv.tv_sec) << 32;
+
 	sysidentifier |= ((uint64) tv.tv_usec) << 12;
 	sysidentifier |= getpid() & 0xFFF;
 
@@ -946,6 +948,7 @@ FindEndOfXLOG(void)
 	 * numbering according to the old xlog seg size.
 	 */
 	uint64		segs_per_xlogid = (UINT64CONST(0x0000000100000000) / ControlFile.xlog_seg_size);
+
 	newXlogSegNo = ControlFile.checkPointCopy.redo / ControlFile.xlog_seg_size;
 
 	/*
@@ -954,6 +957,7 @@ FindEndOfXLOG(void)
 	 * conservative, because of xlog.c's attempts to pre-create files.
 	 */
 	DIR		   *xldir = opendir(XLOGDIR);
+
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", XLOGDIR);
@@ -1005,6 +1009,7 @@ FindEndOfXLOG(void)
 	 * are in virgin territory.
 	 */
 	uint64		xlogbytepos = newXlogSegNo * ControlFile.xlog_seg_size;
+
 	newXlogSegNo = (xlogbytepos + ControlFile.xlog_seg_size - 1) / WalSegSz;
 	newXlogSegNo++;
 }
@@ -1020,6 +1025,7 @@ KillExistingXLOG(void)
 	char		path[MAXPGPATH + sizeof(XLOGDIR)];
 
 	DIR		   *xldir = opendir(XLOGDIR);
+
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", XLOGDIR);
@@ -1066,6 +1072,7 @@ KillExistingArchiveStatus(void)
 	char		path[MAXPGPATH + sizeof(ARCHSTATDIR)];
 
 	DIR		   *xldir = opendir(ARCHSTATDIR);
+
 	if (xldir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", ARCHSTATDIR);
@@ -1119,11 +1126,13 @@ WriteEmptyXLOG(void)
 
 	/* Set up the XLOG page header */
 	XLogPageHeader page = (XLogPageHeader) buffer.data;
+
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ControlFile.checkPointCopy.ThisTimeLineID;
 	page->xlp_pageaddr = ControlFile.checkPointCopy.redo - SizeOfXLogLongPHD;
 	XLogLongPageHeader longpage = (XLogLongPageHeader) page;
+
 	longpage->xlp_sysid = ControlFile.system_identifier;
 	longpage->xlp_seg_size = WalSegSz;
 	longpage->xlp_xlog_blcksz = XLOG_BLCKSZ;
@@ -1131,6 +1140,7 @@ WriteEmptyXLOG(void)
 	/* Insert the initial checkpoint record */
 	char	   *recptr = (char *) page + SizeOfXLogLongPHD;
 	XLogRecord *record = (XLogRecord *) recptr;
+
 	record->xl_prev = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_tot_len = SizeOfXLogRecord + SizeOfXLogRecordDataHeaderShort + sizeof(CheckPoint);
@@ -1156,7 +1166,8 @@ WriteEmptyXLOG(void)
 	unlink(path);
 
 	int			fd = open(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-			  pg_file_create_mode);
+						  pg_file_create_mode);
+
 	if (fd < 0)
 	{
 		pg_log_error("could not open file \"%s\": %m", path);

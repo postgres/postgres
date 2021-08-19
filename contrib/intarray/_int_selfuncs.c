@@ -189,6 +189,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	{
 
 		Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+
 		nullfrac = stats->stanullfrac;
 
 		/*
@@ -222,7 +223,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 
 	/* Process the logical expression in the query, using the stats */
 	Selectivity selec = int_query_opr_selec(GETQUERY(query) + query->size - 1,
-								mcelems, mcefreqs, nmcelems, minfreq);
+											mcelems, mcefreqs, nmcelems, minfreq);
 
 	/* MCE stats count only non-null rows, so adjust for null rows. */
 	selec *= (1.0 - nullfrac);
@@ -254,7 +255,8 @@ int_query_opr_selec(ITEM *item, Datum *mcelems, float4 *mcefreqs,
 			return (Selectivity) DEFAULT_EQ_SEL;
 
 		Datum	   *searchres = (Datum *) bsearch(&item->val, mcelems, nmcelems,
-									  sizeof(Datum), compare_val_int4);
+												  sizeof(Datum), compare_val_int4);
+
 		if (searchres)
 		{
 			/*

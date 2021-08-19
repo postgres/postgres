@@ -96,6 +96,7 @@ bloom_create(int64 total_elems, int bloom_work_mem, uint64 seed)
 	 * false positive rate still won't exceed 2% in almost all cases.
 	 */
 	uint64		bitset_bytes = Min(bloom_work_mem * UINT64CONST(1024), total_elems * 2);
+
 	bitset_bytes = Max(1024 * 1024, bitset_bytes);
 
 	/*
@@ -104,11 +105,13 @@ bloom_create(int64 total_elems, int bloom_work_mem, uint64 seed)
 	 */
 	int			bloom_power = my_bloom_power(bitset_bytes * BITS_PER_BYTE);
 	uint64		bitset_bits = UINT64CONST(1) << bloom_power;
+
 	bitset_bytes = bitset_bits / BITS_PER_BYTE;
 
 	/* Allocate bloom filter with unset bitset */
 	bloom_filter *filter = palloc0(offsetof(bloom_filter, bitset) +
-					 sizeof(unsigned char) * bitset_bytes);
+								   sizeof(unsigned char) * bitset_bytes);
+
 	filter->k_hash_funcs = optimal_k(bitset_bits, total_elems);
 	filter->seed = seed;
 	filter->m = bitset_bits;
@@ -252,6 +255,7 @@ k_hashes(bloom_filter *filter, uint32 *hashes, unsigned char *elem, size_t len)
 
 	/* Use 64-bit hashing to get two independent 32-bit hashes */
 	uint64		hash = DatumGetUInt64(hash_any_extended(elem, len, filter->seed));
+
 	x = (uint32) hash;
 	y = (uint32) (hash >> 32);
 	uint64		m = filter->m;

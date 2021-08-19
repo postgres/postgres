@@ -123,6 +123,7 @@ get_subscription_list(void)
 		MemoryContext oldcxt = MemoryContextSwitchTo(resultcxt);
 
 		Subscription *sub = (Subscription *) palloc0(sizeof(Subscription));
+
 		sub->oid = subform->oid;
 		sub->dbid = subform->subdbid;
 		sub->owner = subform->subowner;
@@ -457,8 +458,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		/* Wait a bit --- we don't expect to have to wait long. */
 		int			rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   10L, WAIT_EVENT_BGWORKER_STARTUP);
+								   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   10L, WAIT_EVENT_BGWORKER_STARTUP);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -500,8 +501,8 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 
 		/* Wait a bit --- we don't expect to have to wait long. */
 		int			rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   10L, WAIT_EVENT_BGWORKER_SHUTDOWN);
+								   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   10L, WAIT_EVENT_BGWORKER_SHUTDOWN);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -675,6 +676,7 @@ ApplyLauncherShmemSize(void)
 	 * Need the fixed struct and the array of LogicalRepWorker.
 	 */
 	Size		size = sizeof(LogicalRepCtxStruct);
+
 	size = MAXALIGN(size);
 	size = add_size(size, mul_size(max_logical_replication_workers,
 								   sizeof(LogicalRepWorker)));
@@ -840,6 +842,7 @@ ApplyLauncherMain(Datum main_arg)
 
 				LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 				LogicalRepWorker *w = logicalrep_worker_find(sub->oid, InvalidOid, false);
+
 				LWLockRelease(LogicalRepWorkerLock);
 
 				if (w == NULL)
@@ -870,9 +873,9 @@ ApplyLauncherMain(Datum main_arg)
 
 		/* Wait for more work. */
 		int			rc = WaitLatch(MyLatch,
-					   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-					   wait_time,
-					   WAIT_EVENT_LOGICAL_LAUNCHER_MAIN);
+								   WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   wait_time,
+								   WAIT_EVENT_LOGICAL_LAUNCHER_MAIN);
 
 		if (rc & WL_LATCH_SET)
 		{
@@ -929,6 +932,7 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;

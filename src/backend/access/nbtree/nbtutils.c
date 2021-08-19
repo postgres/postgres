@@ -104,7 +104,8 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	 * scan key.
 	 */
 	BTScanInsert key = palloc(offsetof(BTScanInsertData, scankeys) +
-				 sizeof(ScanKeyData) * indnkeyatts);
+							  sizeof(ScanKeyData) * indnkeyatts);
+
 	if (itup)
 		_bt_metaversion(rel, &key->heapkeyspace, &key->allequalimage);
 	else
@@ -120,6 +121,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	key->scantid = key->heapkeyspace && itup ?
 		BTreeTupleGetHeapTID(itup) : NULL;
 	ScanKey		skey = key->scankeys;
+
 	for (i = 0; i < indnkeyatts; i++)
 	{
 		Datum		arg;
@@ -144,6 +146,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 			null = true;
 		}
 		int			flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
+
 		ScanKeyEntryInitializeWithInfo(&skey[i],
 									   flags,
 									   (AttrNumber) (i + 1),
@@ -202,6 +205,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 
 	/* Quick check to see if there are any array keys */
 	int			numArrayKeys = 0;
+
 	for (i = 0; i < numberOfKeys; i++)
 	{
 		cur = &scan->keyData[i];
@@ -271,6 +275,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		 * workspace context.
 		 */
 		ArrayType  *arrayval = DatumGetArrayTypeP(cur->sk_argument);
+
 		/* We could cache this data, but not clear it's worth it */
 		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
 							 &elmlen, &elmbyval, &elmalign);
@@ -284,6 +289,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		 * all btree operators are strict.
 		 */
 		int			num_nonnulls = 0;
+
 		for (j = 0; j < num_elems; j++)
 		{
 			if (!elem_nulls[j])
@@ -396,6 +402,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 			 strat, elemtype, elemtype,
 			 rel->rd_opfamily[skey->sk_attno - 1]);
 	RegProcedure cmp_proc = get_opcode(cmp_op);
+
 	if (!RegProcedureIsValid(cmp_proc))
 		elog(ERROR, "missing oprcode for operator %u", cmp_op);
 
@@ -403,6 +410,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 
 	Assert(nelems > 0);
 	Datum		result = elems[0];
+
 	for (i = 1; i < nelems; i++)
 	{
 		if (DatumGetBool(FunctionCall2Coll(&flinfo,
@@ -441,6 +449,7 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	 * input type; this is a hack to simplify life for ScanKeyInit().
 	 */
 	Oid			elemtype = skey->sk_subtype;
+
 	if (elemtype == InvalidOid)
 		elemtype = rel->rd_opcintype[skey->sk_attno - 1];
 
@@ -453,9 +462,10 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	 * all.
 	 */
 	RegProcedure cmp_proc = get_opfamily_proc(rel->rd_opfamily[skey->sk_attno - 1],
-								 elemtype,
-								 elemtype,
-								 BTORDER_PROC);
+											  elemtype,
+											  elemtype,
+											  BTORDER_PROC);
+
 	if (!RegProcedureIsValid(cmp_proc))
 		elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 			 BTORDER_PROC, elemtype, elemtype,
@@ -484,8 +494,9 @@ _bt_compare_array_elements(const void *a, const void *b, void *arg)
 	BTSortArrayContext *cxt = (BTSortArrayContext *) arg;
 
 	int32		compare = DatumGetInt32(FunctionCall2Coll(&cxt->flinfo,
-											  cxt->collation,
-											  da, db));
+														  cxt->collation,
+														  da, db));
+
 	if (cxt->reverse)
 		INVERT_COMPARE_RESULT(compare);
 	return compare;
@@ -750,6 +761,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 	ScanKey		outkeys = so->keyData;
 	ScanKey		cur = &inkeys[0];
+
 	/* we check that input keys are correctly ordered */
 	if (cur->sk_attno < 1)
 		elog(ERROR, "btree index keys must be ordered by attribute");
@@ -781,6 +793,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	 * is NULL if we haven't yet found such a key for this attr.
 	 */
 	AttrNumber	attno = 1;
+
 	memset(xform, 0, sizeof(xform));
 
 	/*
@@ -1370,9 +1383,9 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 		}
 
 		Datum		datum = index_getattr(tuple,
-							  key->sk_attno,
-							  tupdesc,
-							  &isNull);
+										  key->sk_attno,
+										  tupdesc,
+										  &isNull);
 
 		if (key->sk_flags & SK_ISNULL)
 		{
@@ -1449,7 +1462,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, int tupnatts,
 		}
 
 		Datum		test = FunctionCall2Coll(&key->sk_func, key->sk_collation,
-								 datum, key->sk_argument);
+											 datum, key->sk_argument);
 
 		if (!DatumGetBool(test))
 		{
@@ -1526,9 +1539,9 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 		}
 
 		Datum		datum = index_getattr(tuple,
-							  subkey->sk_attno,
-							  tupdesc,
-							  &isNull);
+										  subkey->sk_attno,
+										  tupdesc,
+										  &isNull);
 
 		if (isNull)
 		{
@@ -1945,6 +1958,7 @@ _bt_start_vacuum(Relation rel)
 	 * reserved high values.
 	 */
 	BTCycleId	result = ++(btvacinfo->cycle_ctr);
+
 	if (result == 0 || result > MAX_BT_CYCLE_ID)
 		result = btvacinfo->cycle_ctr = 1;
 
@@ -2030,6 +2044,7 @@ BTreeShmemSize(void)
 {
 
 	Size		size = offsetof(BTVacInfo, vacuums);
+
 	size = add_size(size, mul_size(MaxBackends, sizeof(BTOneVacInfo)));
 	return size;
 }
@@ -2322,6 +2337,7 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 
 	ScanKey		scankey = itup_key->scankeys;
 	int			keepnatts = 1;
+
 	for (int attnum = 1; attnum <= nkeyatts; attnum++, scankey++)
 	{
 		Datum		datum1,
@@ -2384,6 +2400,7 @@ _bt_keep_natts_fast(Relation rel, IndexTuple lastleft, IndexTuple firstright)
 	int			keysz = IndexRelationGetNumberOfKeyAttributes(rel);
 
 	int			keepnatts = 1;
+
 	for (int attnum = 1; attnum <= keysz; attnum++)
 	{
 		Datum		datum1,
@@ -2612,6 +2629,7 @@ _bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
 	 * an earlier leaf level insertion that should have failed didn't
 	 */
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 	if (!P_ISLEAF(opaque))
 		elog(ERROR, "cannot insert oversized tuple of size %zu on internal page of index \"%s\"",
 			 itemsz, RelationGetRelationName(rel));
@@ -2673,7 +2691,7 @@ _bt_allequalimage(Relation rel, bool debugmessage)
 		Oid			collation = rel->rd_indcollation[i];
 
 		Oid			equalimageproc = get_opfamily_proc(opfamily, opcintype, opcintype,
-										   BTEQUALIMAGE_PROC);
+													   BTEQUALIMAGE_PROC);
 
 		/*
 		 * If there is no BTEQUALIMAGE_PROC then deduplication is assumed to

@@ -1116,8 +1116,9 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 
 	/* Find cached relation info, creating if not found */
 	RelationSyncEntry *entry = (RelationSyncEntry *) hash_search(RelationSyncCache,
-											  (void *) &relid,
-											  HASH_ENTER, &found);
+																 (void *) &relid,
+																 HASH_ENTER, &found);
+
 	Assert(entry != NULL);
 
 	/* Not found means schema wasn't sent */
@@ -1307,7 +1308,7 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 	 * event. So we don't care if it's found or not.
 	 */
 	RelationSyncEntry *entry = (RelationSyncEntry *) hash_search(RelationSyncCache, &relid,
-											  HASH_FIND, NULL);
+																 HASH_FIND, NULL);
 
 	/*
 	 * Reset schema sent status as the relation definition may have changed.

@@ -66,6 +66,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	const char *progname = get_progname(argv[0]);
+
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "createdb", help);

@@ -250,6 +250,7 @@ check_locale(int category, const char *locale, char **canonname)
 		*canonname = NULL;		/* in case of failure */
 
 	char	   *save = setlocale(category, NULL);
+
 	if (!save)
 		return false;			/* won't happen, we hope */
 
@@ -435,11 +436,13 @@ db_encoding_convert(int encoding, char **str)
 
 	/* convert the string to the database encoding */
 	char	   *pstr = pg_any_to_server(*str, strlen(*str), encoding);
+
 	if (pstr == *str)
 		return;					/* no conversion happened */
 
 	/* need it malloc'd not palloc'd */
 	char	   *mstr = strdup(pstr);
+
 	if (mstr == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -680,7 +683,8 @@ strftime_win32(char *dst, size_t dstlen,
 	 * plain-ASCII formats in this file, so we can say that they're UTF8.
 	 */
 	size_t		len = MultiByteToWideChar(CP_UTF8, 0, format, -1,
-							  wformat, lengthof(wformat));
+										  wformat, lengthof(wformat));
+
 	if (len == 0)
 		elog(ERROR, "could not convert format string from UTF-8: error code %lu",
 			 GetLastError());
@@ -724,6 +728,7 @@ cache_single_string(char **dst, const char *src, int encoding)
 
 	/* Store the string in long-lived storage, replacing any previous value */
 	char	   *olddst = *dst;
+
 	*dst = MemoryContextStrdup(TopMemoryContext, ptr);
 	if (olddst)
 		pfree(olddst);
@@ -974,6 +979,7 @@ search_locale_enum(LPWSTR pStr, DWORD dwFlags, LPARAM lparam)
 	(void) (dwFlags);
 
 	wchar_t   **argv = (wchar_t **) lparam;
+
 	*argv[2] = (wchar_t) 0;
 
 	memset(test_locale, 0, sizeof(test_locale));
@@ -1007,6 +1013,7 @@ search_locale_enum(LPWSTR pStr, DWORD dwFlags, LPARAM lparam)
 
 			wcscat(test_locale, L"_");
 			size_t		len = wcslen(test_locale);
+
 			if (GetLocaleInfoEx(pStr, LOCALE_SENGLISHCOUNTRYNAME,
 								test_locale + len,
 								LOCALE_NAME_MAX_LENGTH - len))
@@ -1046,6 +1053,7 @@ get_iso_localename(const char *winlocname)
 	 * purpose of this API the code-page doesn't matter.
 	 */
 	char	   *period = strchr(winlocname, '.');
+
 	if (period != NULL)
 		len = period - winlocname;
 	else
@@ -1061,7 +1069,8 @@ get_iso_localename(const char *winlocname)
 	 * match with LOCALE_SNAME, e.g. en-US, en_US.
 	 */
 	int			ret_val = GetLocaleInfoEx(wc_locale_name, LOCALE_SNAME, (LPWSTR) &buffer,
-							  LOCALE_NAME_MAX_LENGTH);
+										  LOCALE_NAME_MAX_LENGTH);
+
 	if (!ret_val)
 	{
 		/*
@@ -1082,6 +1091,7 @@ get_iso_localename(const char *winlocname)
 
 		/* Locale names use only ASCII, any conversion locale suffices. */
 		size_t		rc = wchar2char(iso_lc_messages, buffer, sizeof(iso_lc_messages), NULL);
+
 		if (rc == -1 || rc == sizeof(iso_lc_messages))
 			return NULL;
 
@@ -1090,6 +1100,7 @@ get_iso_localename(const char *winlocname)
 		 * IsoLocaleName.
 		 */
 		char	   *hyphen = strchr(iso_lc_messages, '-');
+
 		if (hyphen)
 			*hyphen = '_';
 		return iso_lc_messages;
@@ -1118,12 +1129,14 @@ IsoLocaleName(const char *winlocname)
 #else
 
 		_locale_t	loct = _create_locale(LC_CTYPE, winlocname);
+
 		if (loct != NULL)
 		{
 
 			/* Locale names use only ASCII, any conversion locale suffices. */
 			size_t		rc = wchar2char(iso_lc_messages, loct->locinfo->locale_name[LC_CTYPE],
-							sizeof(iso_lc_messages), NULL);
+										sizeof(iso_lc_messages), NULL);
+
 			_free_locale(loct);
 			if (rc == -1 || rc == sizeof(iso_lc_messages))
 				return NULL;
@@ -1143,6 +1156,7 @@ IsoLocaleName(const char *winlocname)
 			 * as of this writing (pt_BR, zh_CN, zh_TW).
 			 */
 			char	   *hyphen = strchr(iso_lc_messages, '-');
+
 			if (hyphen)
 				*hyphen = '_';
 			return iso_lc_messages;
@@ -1257,6 +1271,7 @@ lookup_collation_cache(Oid collation, bool set_flags)
 	}
 
 	collation_cache_entry *cache_entry = hash_search(collation_cache, &collation, HASH_ENTER, &found);
+
 	if (!found)
 	{
 		/*
@@ -1272,6 +1287,7 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		/* Attempt to set the flags */
 
 		HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
+
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collation);
 		Form_pg_collation collform = (Form_pg_collation) GETSTRUCT(tp);
@@ -1317,6 +1333,7 @@ lc_collate_is_c(Oid collation)
 		if (result >= 0)
 			return (bool) result;
 		char	   *localeptr = setlocale(LC_COLLATE, NULL);
+
 		if (!localeptr)
 			elog(ERROR, "invalid LC_COLLATE setting");
 
@@ -1366,6 +1383,7 @@ lc_ctype_is_c(Oid collation)
 		if (result >= 0)
 			return (bool) result;
 		char	   *localeptr = setlocale(LC_CTYPE, NULL);
+
 		if (!localeptr)
 			elog(ERROR, "invalid LC_CTYPE setting");
 
@@ -1412,7 +1430,8 @@ report_newlocale_failure(const char *localename)
 	 * ENOENT means "no such locale", not "no such file", so clarify that
 	 * errno with an errdetail message.
 	 */
-	int			save_errno = errno;			/* auxiliary funcs might change errno */
+	int			save_errno = errno; /* auxiliary funcs might change errno */
+
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("could not create locale \"%s\": %m",
@@ -1463,11 +1482,13 @@ pg_newlocale_from_collation(Oid collid)
 		bool		isnull;
 
 		HeapTuple	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 		Form_pg_collation collform = (Form_pg_collation) GETSTRUCT(tp);
 
 		const char *collcollate = NameStr(collform->collcollate);
+
 		collctype = NameStr(collform->collctype);
 
 		/* We'll fill in the result struct locally before allocating memory */
@@ -1500,6 +1521,7 @@ pg_newlocale_from_collation(Oid collid)
 
 				errno = 0;
 				locale_t	loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
+
 				if (!loc1)
 					report_newlocale_failure(collcollate);
 				errno = 0;
@@ -1538,6 +1560,7 @@ pg_newlocale_from_collation(Oid collid)
 
 			UErrorCode	status = U_ZERO_ERROR;
 			UCollator  *collator = ucol_open(collcollate, &status);
+
 			if (U_FAILURE(status))
 				ereport(ERROR,
 						(errmsg("could not open collator for locale \"%s\": %s",
@@ -1565,6 +1588,7 @@ pg_newlocale_from_collation(Oid collid)
 		{
 
 			char	   *actual_versionstr = get_collation_actual_version(collform->collprovider, collcollate);
+
 			if (!actual_versionstr)
 			{
 				/*
@@ -1621,6 +1645,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 		UErrorCode	status = U_ZERO_ERROR;
 		UCollator  *collator = ucol_open(collcollate, &status);
+
 		if (U_FAILURE(status))
 			ereport(ERROR,
 					(errmsg("could not open collator for locale \"%s\": %s",
@@ -1645,6 +1670,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 		/* Look up FreeBSD collation version. */
 		locale_t	loc = newlocale(LC_COLLATE, collcollate, NULL);
+
 		if (loc)
 		{
 			collversion =
@@ -1710,6 +1736,7 @@ init_icu_converter(void)
 		return;					/* already done */
 
 	const char *icu_encoding_name = get_encoding_name_for_icu(GetDatabaseEncoding());
+
 	if (!icu_encoding_name)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1718,6 +1745,7 @@ init_icu_converter(void)
 
 	UErrorCode	status = U_ZERO_ERROR;
 	UConverter *conv = ucnv_open(icu_encoding_name, &status);
+
 	if (U_FAILURE(status))
 		ereport(ERROR,
 				(errmsg("could not open ICU converter for encoding \"%s\": %s",
@@ -1746,7 +1774,8 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 
 	UErrorCode	status = U_ZERO_ERROR;
 	int32_t		len_uchar = ucnv_toUChars(icu_converter, NULL, 0,
-							  buff, nbytes, &status);
+										  buff, nbytes, &status);
+
 	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
 		ereport(ERROR,
 				(errmsg("%s failed: %s", "ucnv_toUChars", u_errorName(status))));
@@ -1782,7 +1811,8 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 
 	UErrorCode	status = U_ZERO_ERROR;
 	int32_t		len_result = ucnv_fromUChars(icu_converter, NULL, 0,
-								 buff_uchar, len_uchar, &status);
+											 buff_uchar, len_uchar, &status);
+
 	if (U_FAILURE(status) && status != U_BUFFER_OVERFLOW_ERROR)
 		ereport(ERROR,
 				(errmsg("%s failed: %s", "ucnv_fromUChars",

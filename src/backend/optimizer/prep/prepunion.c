@@ -138,11 +138,13 @@ plan_set_operations(PlannerInfo *root)
 	 * all generated tlists (else SELECT INTO won't work right).
 	 */
 	Node	   *node = topop->larg;
+
 	while (node && IsA(node, SetOperationStmt))
 		node = ((SetOperationStmt *) node)->larg;
 	Assert(node && IsA(node, RangeTblRef));
 	RangeTblEntry *leftmostRTE = root->simple_rte_array[((RangeTblRef *) node)->rtindex];
 	Query	   *leftmostQuery = leftmostRTE->subquery;
+
 	Assert(leftmostQuery != NULL);
 
 	/*
@@ -229,9 +231,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 		/* Generate a subroot and Paths for the subquery */
 		PlannerInfo *subroot = rel->subroot = subquery_planner(root->glob, subquery,
-												  root,
-												  false,
-												  root->tuple_fraction);
+															   root,
+															   false,
+															   root->tuple_fraction);
 
 		/*
 		 * It should not be possible for the primitive query to contain any
@@ -242,11 +244,12 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 		/* Figure out the appropriate target list for this subquery. */
 		List	   *tlist = generate_setop_tlist(colTypes, colCollations,
-									 flag,
-									 rtr->rtindex,
-									 true,
-									 subroot->processed_tlist,
-									 refnames_tlist);
+												 flag,
+												 rtr->rtindex,
+												 true,
+												 subroot->processed_tlist,
+												 refnames_tlist);
+
 		rel->reltarget = create_pathtarget(root, tlist);
 
 		/* Return the fully-fledged tlist to caller, too */
@@ -264,6 +267,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * set its consider_parallel flag correctly.
 		 */
 		RelOptInfo *final_rel = fetch_upper_rel(subroot, UPPERREL_FINAL, NULL);
+
 		rel->consider_parallel = final_rel->consider_parallel;
 
 		/*
@@ -272,7 +276,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * set_subquery_pathlist).
 		 */
 		Path	   *subpath = get_cheapest_fractional_path(final_rel,
-											   root->tuple_fraction);
+														   root->tuple_fraction);
 
 		/*
 		 * Stick a SubqueryScanPath atop that.
@@ -283,7 +287,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * soon too, likely.)
 		 */
 		Path	   *path = (Path *) create_subqueryscan_path(root, rel, subpath,
-												 NIL, NULL);
+															 NIL, NULL);
 
 		add_path(rel, path);
 
@@ -298,8 +302,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 			Path	   *partial_subpath = linitial(final_rel->partial_pathlist);
 			Path	   *partial_path = (Path *)
-				create_subqueryscan_path(root, rel, partial_subpath,
-										 NIL, NULL);
+			create_subqueryscan_path(root, rel, partial_subpath,
+									 NIL, NULL);
+
 			add_partial_path(rel, partial_path);
 		}
 
@@ -382,7 +387,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 				Assert(subpath->param_info == NULL);
 				Path	   *path = apply_projection_to_path(root, subpath->parent,
-												subpath, target);
+															subpath, target);
+
 				/* If we had to add a Result, path is different from subpath */
 				if (path != subpath)
 					lfirst(lc) = path;
@@ -397,7 +403,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 				/* avoid apply_projection_to_path, in case of multiple refs */
 				Path	   *path = (Path *) create_projection_path(root, subpath->parent,
-													   subpath, target);
+																   subpath, target);
+
 				lfirst(lc) = path;
 			}
 		}
@@ -446,6 +453,7 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 								  &lpath_tlist,
 								  NULL);
 	Path	   *lpath = lrel->cheapest_total_path;
+
 	/* The right path will want to look at the left one ... */
 	root->non_recursive_path = lpath;
 	rrel = recurse_set_operations(setOp->rarg, root,
@@ -455,20 +463,22 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 								  &rpath_tlist,
 								  NULL);
 	Path	   *rpath = rrel->cheapest_total_path;
+
 	root->non_recursive_path = NULL;
 
 	/*
 	 * Generate tlist for RecursiveUnion path node --- same as in Append cases
 	 */
 	List	   *tlist = generate_append_tlist(setOp->colTypes, setOp->colCollations, false,
-								  list_make2(lpath_tlist, rpath_tlist),
-								  refnames_tlist);
+											  list_make2(lpath_tlist, rpath_tlist),
+											  refnames_tlist);
 
 	*pTargetList = tlist;
 
 	/* Build result relation. */
 	RelOptInfo *result_rel = fetch_upper_rel(root, UPPERREL_SETOP,
-								 bms_union(lrel->relids, rrel->relids));
+											 bms_union(lrel->relids, rrel->relids));
+
 	result_rel->reltarget = create_pathtarget(root, tlist);
 
 	/*
@@ -502,13 +512,13 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 	 * And make the path node.
 	 */
 	Path	   *path = (Path *) create_recursiveunion_path(root,
-											   result_rel,
-											   lpath,
-											   rpath,
-											   result_rel->reltarget,
-											   groupList,
-											   root->wt_param_id,
-											   dNumGroups);
+														   result_rel,
+														   lpath,
+														   rpath,
+														   result_rel->reltarget,
+														   groupList,
+														   root->wt_param_id,
+														   dNumGroups);
 
 	add_path(result_rel, path);
 	postprocess_setop_rel(root, result_rel);
@@ -562,7 +572,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * next plan level up.
 	 */
 	List	   *tlist = generate_append_tlist(op->colTypes, op->colCollations, false,
-								  tlist_list, refnames_tlist);
+											  tlist_list, refnames_tlist);
 
 	*pTargetList = tlist;
 
@@ -592,6 +602,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	/* Build result relation. */
 	RelOptInfo *result_rel = fetch_upper_rel(root, UPPERREL_SETOP, relids);
+
 	result_rel->reltarget = create_pathtarget(root, tlist);
 	result_rel->consider_parallel = consider_parallel;
 
@@ -599,7 +610,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * Append the child results together.
 	 */
 	Path	   *path = (Path *) create_append_path(root, result_rel, pathlist, NIL,
-									   NIL, NULL, 0, false, -1);
+												   NIL, NULL, 0, false, -1);
 
 	/*
 	 * For UNION ALL, we just need the Append path.  For UNION, need to add
@@ -652,10 +663,11 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		Assert(parallel_workers > 0);
 
 		Path	   *ppath = (Path *)
-			create_append_path(root, result_rel, NIL, partial_pathlist,
-							   NIL, NULL,
-							   parallel_workers, enable_parallel_append,
-							   -1);
+		create_append_path(root, result_rel, NIL, partial_pathlist,
+						   NIL, NULL,
+						   parallel_workers, enable_parallel_append,
+						   -1);
+
 		ppath = (Path *)
 			create_gather_path(root, result_rel, ppath,
 							   result_rel->reltarget, NULL, NULL);
@@ -756,7 +768,8 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	/* Build result relation. */
 	RelOptInfo *result_rel = fetch_upper_rel(root, UPPERREL_SETOP,
-								 bms_union(lrel->relids, rrel->relids));
+											 bms_union(lrel->relids, rrel->relids));
+
 	result_rel->reltarget = create_pathtarget(root, tlist);
 
 	/*
@@ -791,8 +804,8 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * Decide whether to hash or sort, and add a sort node if needed.
 	 */
 	bool		use_hash = choose_hashed_setop(root, groupList, path,
-								   dNumGroups, dNumOutputRows,
-								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
+											   dNumGroups, dNumOutputRows,
+											   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
 
 	if (groupList && !use_hash)
 		path = (Path *) create_sort_path(root,
@@ -999,6 +1012,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	/* Check whether the operators support sorting or hashing */
 	bool		can_sort = grouping_is_sortable(groupClauses);
 	bool		can_hash = grouping_is_hashable(groupClauses);
+
 	if (can_hash && can_sort)
 	{
 		/* we have a meaningful choice to make, continue ... */
@@ -1064,6 +1078,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 * have to convert an absolute count (LIMIT) into fractional form.
 	 */
 	double		tuple_fraction = root->tuple_fraction;
+
 	if (tuple_fraction >= 1.0)
 		tuple_fraction /= dNumOutputRows;
 
@@ -1359,6 +1374,7 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 	ListCell   *lt;
 
 	ListCell   *lg = list_head(grouplist);
+
 	foreach(lt, targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lt);
@@ -1376,6 +1392,7 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 		/* non-resjunk columns should have grouping clauses */
 		Assert(lg != NULL);
 		SortGroupClause *sgc = (SortGroupClause *) lfirst(lg);
+
 		lg = lnext(grouplist, lg);
 		Assert(sgc->tleSortGroupRef == 0);
 

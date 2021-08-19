@@ -100,6 +100,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 
 		/* Find a string representation for wal_level */
 		const char *wal_level_str = "?";
+
 		for (entry = wal_level_options; entry->name; entry++)
 		{
 			if (entry->val == xlrec.wal_level)

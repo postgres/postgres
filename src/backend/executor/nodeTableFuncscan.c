@@ -124,6 +124,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	 * create new ScanState for node
 	 */
 	TableFuncScanState *scanstate = makeNode(TableFuncScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecTableFuncScan;
@@ -139,9 +140,10 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	 * initialize source tuple type
 	 */
 	TupleDesc	tupdesc = BuildDescFromLists(tf->colnames,
-								 tf->coltypes,
-								 tf->coltypmods,
-								 tf->colcollations);
+											 tf->coltypes,
+											 tf->coltypmods,
+											 tf->colcollations);
+
 	/* and the corresponding scan slot */
 	ExecInitScanTupleSlot(estate, &scanstate->ss, tupdesc,
 						  &TTSOpsMinimalTuple);
@@ -278,6 +280,7 @@ tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 	/* build tuplestore for the result */
 	MemoryContext oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+
 	tstate->tupstore = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
@@ -389,6 +392,7 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	 */
 	int			colno = 0;
 	TupleDesc	tupdesc = tstate->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+
 	foreach(lc1, tstate->colexprs)
 	{
 		char	   *colfilter;
@@ -433,7 +437,7 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 	int			natts = tupdesc->natts;
 
 	int			ordinalitycol =
-		((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
+	((TableFuncScan *) (tstate->ss.ps.plan))->tablefunc->ordinalitycol;
 
 	/*
 	 * We need a short-lived memory context that we can clean up each time

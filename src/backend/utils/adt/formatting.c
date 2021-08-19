@@ -1578,9 +1578,11 @@ icu_convert_case(ICU_Convert_Func func, pg_locale_t mylocale,
 				 UChar **buff_dest, UChar *buff_source, int32_t len_source)
 {
 
-	int32_t		len_dest = len_source;		/* try first with same length */
+	int32_t		len_dest = len_source;	/* try first with same length */
+
 	*buff_dest = palloc(len_dest * sizeof(**buff_dest));
 	UErrorCode	status = U_ZERO_ERROR;
+
 	len_dest = func(*buff_dest, len_dest, buff_source, len_source,
 					mylocale->info.icu.locale, &status);
 	if (status == U_BUFFER_OVERFLOW_ERROR)
@@ -1674,7 +1676,8 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 
 			int32_t		len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
 			int32_t		len_conv = icu_convert_case(u_strToLower, mylocale,
-										&buff_conv, buff_uchar, len_uchar);
+													&buff_conv, buff_uchar, len_uchar);
+
 			icu_from_uchar(&result, buff_conv, len_conv);
 			pfree(buff_uchar);
 			pfree(buff_conv);
@@ -2537,6 +2540,7 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 	 */
 	char	   *upper_name = str_toupper(unconstify(char *, name), strlen(name), collid);
 	char	   *lower_name = str_tolower(upper_name, strlen(upper_name), collid);
+
 	pfree(upper_name);
 
 	for (a = array; *a != NULL; a++)
@@ -2545,7 +2549,8 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 		/* Likewise upper/lower-case array element */
 		char	   *upper_element = str_toupper(*a, strlen(*a), collid);
 		char	   *lower_element = str_tolower(upper_element, strlen(upper_element),
-									collid);
+												collid);
+
 		pfree(upper_element);
 		int			element_len = strlen(lower_element);
 
@@ -2644,6 +2649,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 	cache_locale_time();
 
 	char	   *s = out;
+
 	for (n = node; n->type != NODE_TYPE_END; n++)
 	{
 		if (n->type != NODE_TYPE_ACTION)
@@ -4087,6 +4093,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	int			thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
@@ -4117,6 +4124,7 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 
 	int			thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+
 	tm->tm_wday = (thisdate + 1) % 7;
 	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
@@ -4341,7 +4349,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 												 text_to_cstring(date_txt)))));
 
 				DateADT		result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) -
-					POSTGRES_EPOCH_JDATE;
+				POSTGRES_EPOCH_JDATE;
 
 				/* Now check for just-out-of-range dates */
 				if (!IS_VALID_DATE(result))
@@ -4458,7 +4466,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		*fprec = 0;
 	if (flags)
 		*flags = 0;
-	int			fmask = 0;					/* bit mask for ValidateDate() */
+	int			fmask = 0;		/* bit mask for ValidateDate() */
 
 	int			fmt_len = VARSIZE_ANY_EXHDR(fmt);
 
@@ -4734,7 +4742,7 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		}
 
 		char	   *tz = psprintf("%c%02d:%02d",
-					  tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
+								  tmfc.tzsign > 0 ? '+' : '-', tmfc.tzh, tmfc.tzm);
 
 		tm->tm_zone = tz;
 	}
@@ -5655,6 +5663,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 			{
 
 				char	   *last_zero = Np->number + (Np->Num->zero_end - Np->out_pre_spaces);
+
 				if (Np->last_relevant < last_zero)
 					Np->last_relevant = last_zero;
 			}
@@ -6083,9 +6092,9 @@ numeric_to_number(PG_FUNCTION_ARGS)
 		pfree(format);
 
 	Datum		result = DirectFunctionCall3(numeric_in,
-								 CStringGetDatum(numstr),
-								 ObjectIdGetDatum(InvalidOid),
-								 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
+											 CStringGetDatum(numstr),
+											 ObjectIdGetDatum(InvalidOid),
+											 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
 
 	if (IS_MULTI(&Num))
 	{
@@ -6093,8 +6102,9 @@ numeric_to_number(PG_FUNCTION_ARGS)
 		Numeric		b = int64_to_numeric(-Num.multi);
 
 		Numeric		x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
-												NumericGetDatum(a),
-												NumericGetDatum(b)));
+															NumericGetDatum(a),
+															NumericGetDatum(b)));
+
 		result = DirectFunctionCall2(numeric_mul,
 									 result,
 									 NumericGetDatum(x));

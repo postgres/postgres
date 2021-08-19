@@ -47,6 +47,7 @@ fetch_array_arg_replace_nulls(FunctionCallInfo fcinfo, int argno)
 
 	/* If first time through, create datatype cache struct */
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL)
 	{
 		my_extra = (ArrayMetaState *)
@@ -106,6 +107,7 @@ array_append(PG_FUNCTION_ARGS)
 
 	ExpandedArrayHeader *eah = fetch_array_arg_replace_nulls(fcinfo, 0);
 	bool		isNull = PG_ARGISNULL(1);
+
 	if (isNull)
 		newelem = (Datum) 0;
 	else
@@ -134,8 +136,8 @@ array_append(PG_FUNCTION_ARGS)
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
 	Datum		result = array_set_element(EOHPGetRWDatum(&eah->hdr),
-							   1, &indx, newelem, isNull,
-							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
+										   1, &indx, newelem, isNull,
+										   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
 	PG_RETURN_DATUM(result);
 }
@@ -154,6 +156,7 @@ array_prepend(PG_FUNCTION_ARGS)
 	int			lb0;
 
 	bool		isNull = PG_ARGISNULL(0);
+
 	if (isNull)
 		newelem = (Datum) 0;
 	else
@@ -185,8 +188,8 @@ array_prepend(PG_FUNCTION_ARGS)
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 
 	Datum		result = array_set_element(EOHPGetRWDatum(&eah->hdr),
-							   1, &indx, newelem, isNull,
-							   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
+										   1, &indx, newelem, isNull,
+										   -1, my_extra->typlen, my_extra->typbyval, my_extra->typalign);
 
 	/* Readjust result's LB to match the input's, as expected for prepend */
 	Assert(result == EOHPGetRWDatum(&eah->hdr));
@@ -510,8 +513,8 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	 * so.
 	 */
 	Datum		result = makeMdArrayResult(state, 1, dims, lbs,
-							   CurrentMemoryContext,
-							   false);
+										   CurrentMemoryContext,
+										   false);
 
 	PG_RETURN_DATUM(result);
 }
@@ -676,6 +679,7 @@ array_position_common(FunctionCallInfo fcinfo)
 	 * us.
 	 */
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -706,6 +710,7 @@ array_position_common(FunctionCallInfo fcinfo)
 
 	/* Examine each array element until we find a match. */
 	ArrayIterator array_iterator = array_create_iterator(array, 0, my_extra);
+
 	while (array_iterate(array_iterator, &value, &isnull))
 	{
 		position++;
@@ -809,6 +814,7 @@ array_positions(PG_FUNCTION_ARGS)
 	 * us.
 	 */
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -842,6 +848,7 @@ array_positions(PG_FUNCTION_ARGS)
 	 * element.
 	 */
 	ArrayIterator array_iterator = array_create_iterator(array, 0, my_extra);
+
 	while (array_iterate(array_iterator, &value, &isnull))
 	{
 		position += 1;

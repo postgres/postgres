@@ -42,6 +42,7 @@ appendStringInfoStringQuoted(StringInfo str, const char *s, int maxlen)
 	Assert(str != NULL);
 
 	int			slen = strlen(s);
+
 	if (maxlen >= 0 && maxlen < slen)
 	{
 		int			finallen = pg_mbcliplen(s, slen, maxlen);

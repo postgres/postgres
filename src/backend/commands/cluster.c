@@ -214,8 +214,8 @@ cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel)
 		 * of error.
 		 */
 		MemoryContext cluster_context = AllocSetContextCreate(PortalContext,
-												"Cluster",
-												ALLOCSET_DEFAULT_SIZES);
+															  "Cluster",
+															  ALLOCSET_DEFAULT_SIZES);
 
 		/*
 		 * Build the list of relations to cluster.  Note that this lives in
@@ -589,9 +589,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 
 	/* Create the transient table that will receive the re-ordered data */
 	Oid			OIDNewHeap = make_new_heap(tableOid, tableSpace,
-							   accessMethod,
-							   relpersistence,
-							   AccessExclusiveLock);
+										   accessMethod,
+										   relpersistence,
+										   AccessExclusiveLock);
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_table_data(OIDNewHeap, tableOid, indexOid, verbose,
@@ -640,10 +640,12 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
 	 * But we do want to use reloptions of the old heap for new heap.
 	 */
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(OIDOldHeap));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", OIDOldHeap);
 	Datum		reloptions = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions,
-								 &isNull);
+											 &isNull);
+
 	if (isNull)
 		reloptions = (Datum) 0;
 
@@ -667,26 +669,27 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", OIDOldHeap);
 
 	Oid			OIDNewHeap = heap_create_with_catalog(NewHeapName,
-										  namespaceid,
-										  NewTableSpace,
-										  InvalidOid,
-										  InvalidOid,
-										  InvalidOid,
-										  OldHeap->rd_rel->relowner,
-										  NewAccessMethod,
-										  OldHeapDesc,
-										  NIL,
-										  RELKIND_RELATION,
-										  relpersistence,
-										  false,
-										  RelationIsMapped(OldHeap),
-										  ONCOMMIT_NOOP,
-										  reloptions,
-										  false,
-										  true,
-										  true,
-										  OIDOldHeap,
-										  NULL);
+													  namespaceid,
+													  NewTableSpace,
+													  InvalidOid,
+													  InvalidOid,
+													  InvalidOid,
+													  OldHeap->rd_rel->relowner,
+													  NewAccessMethod,
+													  OldHeapDesc,
+													  NIL,
+													  RELKIND_RELATION,
+													  relpersistence,
+													  false,
+													  RelationIsMapped(OldHeap),
+													  ONCOMMIT_NOOP,
+													  reloptions,
+													  false,
+													  true,
+													  true,
+													  OIDOldHeap,
+													  NULL);
+
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
@@ -709,6 +712,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, Oid NewAccessMethod,
 	 * that the TOAST table will be visible for insertion.
 	 */
 	Oid			toastid = OldHeap->rd_rel->reltoastrelid;
+
 	if (OidIsValid(toastid))
 	{
 		/* keep the existing toast table's reloptions, if any */
@@ -926,6 +930,7 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	Relation	relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 	HeapTuple	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDNewHeap));
+
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup failed for relation %u", OIDNewHeap);
 	Form_pg_class relform = (Form_pg_class) GETSTRUCT(reltup);
@@ -1132,14 +1137,17 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	{
 
 		int32		swap_pages = relform1->relpages;
+
 		relform1->relpages = relform2->relpages;
 		relform2->relpages = swap_pages;
 
 		float4		swap_tuples = relform1->reltuples;
+
 		relform1->reltuples = relform2->reltuples;
 		relform2->reltuples = swap_tuples;
 
 		int32		swap_allvisible = relform1->relallvisible;
+
 		relform1->relallvisible = relform2->relallvisible;
 		relform2->relallvisible = swap_allvisible;
 	}
@@ -1157,6 +1165,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	{
 
 		CatalogIndexState indstate = CatalogOpenIndexes(relRelation);
+
 		CatalogTupleUpdateWithInfo(relRelation, &reltup1->t_self, reltup1,
 								   indstate);
 		CatalogTupleUpdateWithInfo(relRelation, &reltup2->t_self, reltup2,
@@ -1387,6 +1396,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 * broken ones, so it can't be necessary to set indcheckxmin.
 	 */
 	int			reindex_flags = REINDEX_REL_SUPPRESS_INDEX_USE;
+
 	if (check_constraints)
 		reindex_flags |= REINDEX_REL_CHECK_CONSTRAINTS;
 
@@ -1427,6 +1437,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		Relation	relRelation = table_open(RelationRelationId, RowExclusiveLock);
 
 		HeapTuple	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDOldHeap));
+
 		if (!HeapTupleIsValid(reltup))
 			elog(ERROR, "cache lookup failed for relation %u", OIDOldHeap);
 		Form_pg_class relform = (Form_pg_class) GETSTRUCT(reltup);
@@ -1475,13 +1486,14 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	{
 
 		Relation	newrel = table_open(OIDOldHeap, NoLock);
+
 		if (OidIsValid(newrel->rd_rel->reltoastrelid))
 		{
 			char		NewToastName[NAMEDATALEN];
 
 			/* Get the associated valid index to be renamed */
 			Oid			toastidx = toast_get_valid_index(newrel->rd_rel->reltoastrelid,
-											 NoLock);
+														 NoLock);
 
 			/* rename the toast table ... */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
@@ -1504,6 +1516,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	{
 
 		Relation	newrel = table_open(OIDOldHeap, NoLock);
+
 		RelationClearMissing(newrel);
 		relation_close(newrel, NoLock);
 	}
@@ -1531,11 +1544,13 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	 * appropriate user.
 	 */
 	Relation	indRelation = table_open(IndexRelationId, AccessShareLock);
+
 	ScanKeyInit(&entry,
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,
 				BoolGetDatum(true));
 	TableScanDesc scan = table_beginscan_catalog(indRelation, 1, &entry);
+
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		index = (Form_pg_index) GETSTRUCT(indexTuple);

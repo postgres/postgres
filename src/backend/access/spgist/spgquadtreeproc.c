@@ -344,6 +344,7 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 					int			r = 0;
 
 					Point		p = boxQuery->low;
+
 					r |= 1 << getQuadrant(centroid, &p);
 					p.y = boxQuery->high.y;
 					r |= 1 << getQuadrant(centroid, &p);
@@ -416,6 +417,7 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 
 	/* Perform the required comparison(s) */
 	bool		res = true;
+
 	for (i = 0; i < in->nkeys; i++)
 	{
 		Point	   *query = DatumGetPointP(in->scankeys[i].sk_argument);

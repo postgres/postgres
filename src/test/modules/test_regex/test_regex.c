@@ -167,14 +167,14 @@ test_re_compile(text *text_re, int cflags, Oid collation,
 	/* Convert pattern string to wide characters */
 	pg_wchar   *pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
 	int			pattern_len = pg_mb2wchar_with_len(text_re_val,
-									   pattern,
-									   text_re_len);
+												   pattern,
+												   text_re_len);
 
 	int			regcomp_result = pg_regcomp(result_re,
-								pattern,
-								pattern_len,
-								cflags,
-								collation);
+											pattern,
+											pattern_len,
+											cflags,
+											collation);
 
 	pfree(pattern);
 
@@ -223,13 +223,13 @@ test_re_execute(regex_t *re, pg_wchar *data, int data_len,
 
 	/* Perform RE match and return result */
 	int			regexec_result = pg_regexec(re,
-								data,
-								data_len,
-								start_search,
-								details,
-								nmatch,
-								pmatch,
-								eflags);
+											data,
+											data_len,
+											start_search,
+											details,
+											nmatch,
+											pmatch,
+											eflags);
 
 	if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
 	{
@@ -481,12 +481,14 @@ setup_test_matches(text *orig_str,
 	 * than at 2^27
 	 */
 	int			array_len = re_flags->glob ? 255 : 31;
+
 	matchctx->match_locs = (int *) palloc(sizeof(int) * array_len);
 	int			array_idx = 0;
 
 	/* search for the pattern, perhaps repeatedly */
 	int			prev_match_end = 0;
 	int			start_search = 0;
+
 	while (test_re_execute(cpattern, wide_str, wide_len,
 						   start_search,
 						   &matchctx->details,
@@ -699,6 +701,7 @@ build_test_match_result(test_regex_ctx *matchctx)
 
 	/* Extract matching substrings from the original string */
 	int			loc = matchctx->next_match * matchctx->npatterns * 2;
+
 	for (i = 0; i < matchctx->npatterns; i++)
 	{
 		int			so = matchctx->match_locs[loc++];

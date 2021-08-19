@@ -50,6 +50,7 @@ flushCachedPage(Relation index, BloomBuildState *buildstate)
 
 	GenericXLogState *state = GenericXLogStart(index);
 	Page		page = GenericXLogRegisterBuffer(state, buffer, GENERIC_XLOG_FULL_IMAGE);
+
 	memcpy(page, buildstate->data.data, BLCKSZ);
 	GenericXLogFinish(state);
 	UnlockReleaseBuffer(buffer);
@@ -135,8 +136,8 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* Do the heap scan */
 	double		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
-									   bloomBuildCallback, (void *) &buildstate,
-									   NULL);
+												   bloomBuildCallback, (void *) &buildstate,
+												   NULL);
 
 	/* Flush last page if needed (it will be, unless heap was empty) */
 	if (buildstate.count > 0)
@@ -145,6 +146,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	MemoryContextDelete(buildstate.tmpCtx);
 
 	IndexBuildResult *result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 
@@ -160,6 +162,7 @@ blbuildempty(Relation index)
 
 	/* Construct metapage. */
 	Page		metapage = (Page) palloc(BLCKSZ);
+
 	BloomFillMetapage(index, metapage);
 
 	/*
@@ -203,8 +206,8 @@ blinsert(Relation index, Datum *values, bool *isnull,
 	GenericXLogState *state;
 
 	MemoryContext insertCtx = AllocSetContextCreate(CurrentMemoryContext,
-									  "Bloom insert temporary context",
-									  ALLOCSET_DEFAULT_SIZES);
+													"Bloom insert temporary context",
+													ALLOCSET_DEFAULT_SIZES);
 
 	MemoryContext oldCtx = MemoryContextSwitchTo(insertCtx);
 

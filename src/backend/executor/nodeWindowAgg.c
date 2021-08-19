@@ -266,6 +266,7 @@ advance_windowaggregate(WindowAggState *winstate,
 
 	/* We start from 1, since the 0th arg will be the transition value */
 	int			i = 1;
+
 	foreach(arg, wfuncstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -340,6 +341,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
 	Datum		newVal = FunctionCallInvoke(fcinfo);
+
 	winstate->curaggcontext = NULL;
 
 	/*
@@ -439,6 +441,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 
 	/* We start from 1, since the 0th arg will be the transition value */
 	int			i = 1;
+
 	foreach(arg, wfuncstate->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
@@ -507,6 +510,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
 	Datum		newVal = FunctionCallInvoke(fcinfo);
+
 	winstate->curaggcontext = NULL;
 
 	/*
@@ -817,8 +821,9 @@ eval_windowaggregates(WindowAggState *winstate)
 
 			wfuncno = peraggstate->wfuncno;
 			bool		ok = advance_windowaggregate_base(winstate,
-											  &winstate->perfunc[wfuncno],
-											  peraggstate);
+														  &winstate->perfunc[wfuncno],
+														  peraggstate);
+
 			if (!ok)
 			{
 				/* Inverse transition function has failed, must restart */
@@ -897,6 +902,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * agg_row_slot, per the loop invariant below.
 	 */
 	int64		aggregatedupto_nonrestarted = winstate->aggregatedupto;
+
 	if (numaggs_restart > 0 &&
 		winstate->aggregatedupto != winstate->frameheadpos)
 	{
@@ -927,6 +933,7 @@ eval_windowaggregates(WindowAggState *winstate)
 		 * current row is not in frame but there might be more in the frame.
 		 */
 		int			ret = row_is_in_frame(winstate, winstate->aggregatedupto, agg_row_slot);
+
 		if (ret < 0)
 			break;
 		if (ret == 0)
@@ -973,6 +980,7 @@ next_tuple:
 		wfuncno = peraggstate->wfuncno;
 		Datum	   *result = &econtext->ecxt_aggvalues[wfuncno];
 		bool	   *isnull = &econtext->ecxt_aggnulls[wfuncno];
+
 		finalize_windowaggregate(winstate,
 								 &winstate->perfunc[wfuncno],
 								 peraggstate,
@@ -2165,6 +2173,7 @@ ExecWindowAgg(PlanState *pstate)
 	 * Evaluate true window functions
 	 */
 	int			numfuncs = winstate->numfuncs;
+
 	for (i = 0; i < numfuncs; i++)
 	{
 		WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
@@ -2239,6 +2248,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	WindowAggState *winstate = makeNode(WindowAggState);
+
 	winstate->ss.ps.plan = (Plan *) node;
 	winstate->ss.ps.state = estate;
 	winstate->ss.ps.ExecProcNode = ExecWindowAgg;
@@ -2250,6 +2260,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &winstate->ss.ps);
 	ExprContext *tmpcontext = winstate->ss.ps.ps_ExprContext;
+
 	winstate->tmpcontext = tmpcontext;
 	ExecAssignExprContext(estate, &winstate->ss.ps);
 
@@ -2359,6 +2370,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	numfuncs = winstate->numfuncs;
 	numaggs = winstate->numaggs;
 	ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
+
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numfuncs);
 	econtext->ecxt_aggnulls = (bool *) palloc0(sizeof(bool) * numfuncs);
 
@@ -2367,6 +2379,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	 */
 	WindowStatePerFunc perfunc = (WindowStatePerFunc) palloc0(sizeof(WindowStatePerFuncData) * numfuncs);
 	WindowStatePerAgg peragg = (WindowStatePerAgg) palloc0(sizeof(WindowStatePerAggData) * numaggs);
+
 	winstate->perfunc = perfunc;
 	winstate->peragg = peragg;
 
@@ -2404,7 +2417,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 		/* Check permission to call window function */
 		AclResult	aclresult = pg_proc_aclcheck(wfunc->winfnoid, GetUserId(),
-									 ACL_EXECUTE);
+												 ACL_EXECUTE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION,
 						   get_func_name(wfunc->winfnoid));
@@ -2430,6 +2444,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 			perfuncstate->aggno = ++aggno;
 			WindowStatePerAgg peraggstate = &winstate->peragg[aggno];
+
 			initialize_peragg(winstate, wfunc, peraggstate);
 			peraggstate->wfuncno = wfuncno;
 		}
@@ -2532,6 +2547,7 @@ ExecEndWindowAgg(WindowAggState *node)
 	pfree(node->peragg);
 
 	PlanState  *outerPlan = outerPlanState(node);
+
 	ExecEndNode(outerPlan);
 }
 
@@ -2601,12 +2617,14 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	int			numArguments = list_length(wfunc->args);
 
 	int			i = 0;
+
 	foreach(lc, wfunc->args)
 	{
 		inputTypes[i++] = exprType((Node *) lfirst(lc));
 	}
 
 	HeapTuple	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(wfunc->winfnoid));
+
 	if (!HeapTupleIsValid(aggTuple))
 		elog(ERROR, "cache lookup failed for aggregate %u",
 			 wfunc->winfnoid);
@@ -2665,11 +2683,13 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	{
 
 		HeapTuple	procTuple = SearchSysCache1(PROCOID,
-									ObjectIdGetDatum(wfunc->winfnoid));
+												ObjectIdGetDatum(wfunc->winfnoid));
+
 		if (!HeapTupleIsValid(procTuple))
 			elog(ERROR, "cache lookup failed for function %u",
 				 wfunc->winfnoid);
 		Oid			aggOwner = ((Form_pg_proc) GETSTRUCT(procTuple))->proowner;
+
 		ReleaseSysCache(procTuple);
 
 		aclresult = pg_proc_aclcheck(transfn_oid, aggOwner,
@@ -2771,7 +2791,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	 * field. Must do it the hard way with SysCacheGetAttr.
 	 */
 	Datum		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple, initvalAttNo,
-								  &peraggstate->initValueIsNull);
+											  &peraggstate->initValueIsNull);
 
 	if (peraggstate->initValueIsNull)
 		peraggstate->initValue = (Datum) 0;
@@ -2846,7 +2866,8 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 	getTypeInputInfo(transtype, &typinput, &typioparam);
 	char	   *strInitVal = TextDatumGetCString(textInitVal);
 	Datum		initVal = OidInputFunctionCall(typinput, strInitVal,
-								   typioparam, -1);
+											   typioparam, -1);
+
 	pfree(strInitVal);
 	return initVal;
 }

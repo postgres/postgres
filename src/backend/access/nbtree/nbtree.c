@@ -152,6 +152,7 @@ btbuildempty(Relation index)
 
 	/* Construct metapage. */
 	Page		metapage = (Page) palloc(BLCKSZ);
+
 	_bt_initmetapage(metapage, P_NONE, 0, _bt_allequalimage(index, false));
 
 	/*
@@ -191,6 +192,7 @@ btinsert(Relation rel, Datum *values, bool *isnull,
 
 	/* generate an index tuple */
 	IndexTuple	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
+
 	itup->t_tid = *ht_ctid;
 
 	bool		result = _bt_doinsert(rel, itup, checkUnique, indexUnchanged, heapRel);
@@ -347,6 +349,7 @@ btbeginscan(Relation rel, int nkeys, int norderbys)
 
 	/* allocate private workspace */
 	BTScanOpaque so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
+
 	BTScanPosInvalidate(so->currPos);
 	BTScanPosInvalidate(so->markPos);
 	if (scan->numberOfKeys > 0)
@@ -592,7 +595,7 @@ btparallelrescan(IndexScanDesc scan)
 	Assert(parallel_scan);
 
 	BTParallelScanDesc btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
-												  parallel_scan->ps_offset);
+																	 parallel_scan->ps_offset);
 
 	/*
 	 * In theory, we don't need to acquire the spinlock here, because there
@@ -636,7 +639,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno)
 	*pageno = P_NONE;
 
 	BTParallelScanDesc btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
-												  parallel_scan->ps_offset);
+																	 parallel_scan->ps_offset);
 
 	while (1)
 	{
@@ -687,7 +690,7 @@ _bt_parallel_release(IndexScanDesc scan, BlockNumber scan_page)
 	ParallelIndexScanDesc parallel_scan = scan->parallel_scan;
 
 	BTParallelScanDesc btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
-												  parallel_scan->ps_offset);
+																	 parallel_scan->ps_offset);
 
 	SpinLockAcquire(&btscan->btps_mutex);
 	btscan->btps_scanPage = scan_page;
@@ -715,7 +718,7 @@ _bt_parallel_done(IndexScanDesc scan)
 		return;
 
 	BTParallelScanDesc btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
-												  parallel_scan->ps_offset);
+																	 parallel_scan->ps_offset);
 
 	/*
 	 * Mark the parallel scan as done for this combination of scan keys,
@@ -750,7 +753,7 @@ _bt_parallel_advance_array_keys(IndexScanDesc scan)
 	ParallelIndexScanDesc parallel_scan = scan->parallel_scan;
 
 	BTParallelScanDesc btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
-												  parallel_scan->ps_offset);
+																	 parallel_scan->ps_offset);
 
 	so->arrayKeyCount++;
 	SpinLockAcquire(&btscan->btps_mutex);
@@ -858,6 +861,7 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	Assert(stats->pages_deleted >= stats->pages_free);
 	BlockNumber num_delpages = stats->pages_deleted - stats->pages_free;
+
 	_bt_set_cleanup_info(info->index, num_delpages);
 
 	/*
@@ -962,6 +966,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	bool		needLock = !RELATION_IS_LOCAL(rel);
 
 	BlockNumber scanblkno = BTREE_METAPAGE + 1;
+
 	for (;;)
 	{
 		/* Get the current relation length */
@@ -1031,6 +1036,7 @@ btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 	blkno = scanblkno;
 
 	bool		attempt_pagedel;
+
 backtrack:
 	attempt_pagedel = false;
 	backtrack_to = P_NONE;
@@ -1045,10 +1051,12 @@ backtrack:
 	 * buffer access strategy.
 	 */
 	Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-							 info->strategy);
+										 info->strategy);
+
 	_bt_lockbuf(rel, buf, BT_READ);
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque = NULL;
+
 	if (!PageIsNew(page))
 	{
 		_bt_checkpage(rel, buf);
@@ -1173,6 +1181,7 @@ backtrack:
 		 */
 		int			ndeletable = 0;
 		int			nupdatable = 0;
+
 		minoff = P_FIRSTDATAKEY(opaque);
 		maxoff = PageGetMaxOffsetNumber(page);
 		nhtidsdead = 0;
@@ -1185,7 +1194,7 @@ backtrack:
 			{
 
 				IndexTuple	itup = (IndexTuple) PageGetItem(page,
-												PageGetItemId(page, offnum));
+															PageGetItemId(page, offnum));
 
 				/*
 				 * Hot Standby assumes that it's okay that XLOG_BTREE_VACUUM
@@ -1225,7 +1234,8 @@ backtrack:
 
 					/* Posting list tuple */
 					BTVacuumPosting vacposting = btreevacuumposting(vstate, itup, offnum,
-													&nremaining);
+																	&nremaining);
+
 					if (vacposting == NULL)
 					{
 						/*

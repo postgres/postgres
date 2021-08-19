@@ -269,6 +269,7 @@ GenericXLogStart(Relation relation)
 	int			i;
 
 	GenericXLogState *state = (GenericXLogState *) palloc(sizeof(GenericXLogState));
+
 	state->isLogged = RelationNeedsWAL(relation);
 
 	for (i = 0; i < MAX_GENERIC_XLOG_PAGES; i++)
@@ -500,6 +501,7 @@ generic_redo(XLogReaderState *record)
 
 			Page		page = BufferGetPage(buffers[block_id]);
 			char	   *blockDelta = XLogRecGetBlockData(record, block_id, &blockDeltaSize);
+
 			applyPageRedo(page, blockDelta, blockDeltaSize);
 
 			/*
@@ -509,6 +511,7 @@ generic_redo(XLogReaderState *record)
 			 * logged action by GenericXLogFinish did.
 			 */
 			PageHeader	pageHeader = (PageHeader) page;
+
 			memset(page + pageHeader->pd_lower, 0,
 				   pageHeader->pd_upper - pageHeader->pd_lower);
 

@@ -46,6 +46,7 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 	Page		page = get_page_from_raw(raw_page);
 
 	GinPageOpaque opaq = (GinPageOpaque) PageGetSpecialPointer(page);
+
 	if (opaq->flags != GIN_META)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -107,6 +108,7 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 
 	/* Convert the flags bitmask to an array of human-readable names */
 	uint16		flagbits = opaq->flags;
+
 	if (flagbits & GIN_DATA)
 		flags[nflags++] = CStringGetTextDatum("data");
 	if (flagbits & GIN_LEAF)
@@ -182,6 +184,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 							   (int) MAXALIGN(sizeof(GinPageOpaqueData)))));
 
 		GinPageOpaque opaq = (GinPageOpaque) PageGetSpecialPointer(page);
+
 		if (opaq->flags != (GIN_DATA | GIN_LEAF | GIN_COMPRESSED))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -227,6 +230,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		/* build an array of decoded item pointers */
 		ItemPointer tids = ginPostingListDecode(cur, &ndecoded);
 		Datum	   *tids_datum = (Datum *) palloc(ndecoded * sizeof(Datum));
+
 		for (i = 0; i < ndecoded; i++)
 			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
 		values[2] = PointerGetDatum(construct_array(tids_datum,

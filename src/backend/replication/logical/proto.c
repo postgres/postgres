@@ -426,6 +426,7 @@ logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup)
 	LogicalRepRelId relid = pq_getmsgint(in, 4);
 
 	char		action = pq_getmsgbyte(in);
+
 	if (action != 'N')
 		elog(ERROR, "expected new tuple but got %d",
 			 action);
@@ -482,6 +483,7 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
 
 	/* read and verify action */
 	char		action = pq_getmsgbyte(in);
+
 	if (action != 'K' && action != 'O' && action != 'N')
 		elog(ERROR, "expected action 'N', 'O' or 'K', got %c",
 			 action);
@@ -549,6 +551,7 @@ logicalrep_read_delete(StringInfo in, LogicalRepTupleData *oldtup)
 
 	/* read and verify action */
 	char		action = pq_getmsgbyte(in);
+
 	if (action != 'K' && action != 'O')
 		elog(ERROR, "expected action 'O' or 'K', got %c", action);
 
@@ -603,6 +606,7 @@ logicalrep_read_truncate(StringInfo in,
 
 	/* read and decode truncate flags */
 	uint8		flags = pq_getmsgint(in, 1);
+
 	*cascade = (flags & TRUNCATE_CASCADE) > 0;
 	*restart_seqs = (flags & TRUNCATE_RESTART_SEQS) > 0;
 
@@ -658,6 +662,7 @@ logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel)
 	/* send qualified relation name */
 	logicalrep_write_namespace(out, RelationGetNamespace(rel));
 	char	   *relname = RelationGetRelationName(rel);
+
 	pq_sendstring(out, relname);
 
 	/* send replica identity */
@@ -707,6 +712,7 @@ logicalrep_write_typ(StringInfo out, TransactionId xid, Oid typoid)
 		pq_sendint32(out, xid);
 
 	HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(basetypoid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", basetypoid);
 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tup);
@@ -787,6 +793,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 		}
 
 		HeapTuple	typtup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(att->atttypid));
+
 		if (!HeapTupleIsValid(typtup))
 			elog(ERROR, "cache lookup failed for type %u", att->atttypid);
 		Form_pg_type typclass = (Form_pg_type) GETSTRUCT(typtup);
@@ -800,6 +807,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 			pq_sendbyte(out, LOGICALREP_COLUMN_BINARY);
 			bytea	   *outputbytes = OidSendFunctionCall(typclass->typsend, values[i]);
 			int			len = VARSIZE(outputbytes) - VARHDRSZ;
+
 			pq_sendint(out, len, 4);	/* length */
 			pq_sendbytes(out, VARDATA(outputbytes), len);	/* data */
 			pfree(outputbytes);
@@ -809,6 +817,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 
 			pq_sendbyte(out, LOGICALREP_COLUMN_TEXT);
 			char	   *outputstr = OidOutputFunctionCall(typclass->typoutput, values[i]);
+
 			pq_sendcountedtext(out, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -840,6 +849,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 		StringInfo	value = &tuple->colvalues[i];
 
 		char		kind = pq_getmsgbyte(in);
+
 		tuple->colstatus[i] = kind;
 
 		switch (kind)
@@ -904,6 +914,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 
 	/* fetch bitmap of REPLICATION IDENTITY attributes */
 	bool		replidentfull = (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL);
+
 	if (!replidentfull)
 		idattrs = RelationGetIdentityKeyBitmap(rel);
 
@@ -956,6 +967,7 @@ logicalrep_read_attrs(StringInfo in, LogicalRepRelation *rel)
 
 		/* Check for replica identity column */
 		uint8		flags = pq_getmsgbyte(in);
+
 		if (flags & LOGICALREP_IS_REPLICA_IDENTITY)
 			attkeys = bms_add_member(attkeys, i);
 
@@ -1037,6 +1049,7 @@ logicalrep_read_stream_start(StringInfo in, bool *first_segment)
 	Assert(first_segment);
 
 	TransactionId xid = pq_getmsgint(in, 4);
+
 	*first_segment = (pq_getmsgbyte(in) == 1);
 
 	return xid;

@@ -130,6 +130,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	SeqScanState *scanstate = makeNode(SeqScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecSeqScan;
@@ -264,6 +265,7 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 	EState	   *estate = node->ss.ps.state;
 
 	ParallelTableScanDesc pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
+
 	table_parallelscan_initialize(node->ss.ss_currentRelation,
 								  pscan,
 								  estate->es_snapshot);
@@ -284,6 +286,7 @@ ExecSeqScanReInitializeDSM(SeqScanState *node,
 {
 
 	ParallelTableScanDesc pscan = node->ss.ss_currentScanDesc->rs_parallel;
+
 	table_parallelscan_reinitialize(node->ss.ss_currentRelation, pscan);
 }
 
@@ -299,6 +302,7 @@ ExecSeqScanInitializeWorker(SeqScanState *node,
 {
 
 	ParallelTableScanDesc pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+
 	node->ss.ss_currentScanDesc =
 		table_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }

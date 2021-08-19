@@ -147,6 +147,7 @@ deparse_ltree(const ltree *in)
 
 	ptr = buf = (char *) palloc(VARSIZE(in));
 	ltree_level *curlevel = LTREE_FIRST(in);
+
 	for (i = 0; i < in->numlevel; i++)
 	{
 		if (i != 0)
@@ -230,6 +231,7 @@ ltree_recv(PG_FUNCTION_ARGS)
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	ltree	   *res = parse_ltree(str);
+
 	pfree(str);
 
 	PG_RETURN_POINTER(res);
@@ -617,6 +619,7 @@ deparse_lquery(const lquery *in)
 	lquery_variant *curtlevel;
 
 	lquery_level *curqlevel = LQUERY_FIRST(in);
+
 	for (i = 0; i < in->numlevel; i++)
 	{
 		totallen++;
@@ -785,6 +788,7 @@ lquery_recv(PG_FUNCTION_ARGS)
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	lquery	   *res = parse_lquery(str);
+
 	pfree(str);
 
 	PG_RETURN_POINTER(res);

@@ -92,11 +92,11 @@ BufTableLookup(BufferTag *tagPtr, uint32 hashcode)
 {
 
 	BufferLookupEnt *result = (BufferLookupEnt *)
-		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
-									hashcode,
-									HASH_FIND,
-									NULL);
+	hash_search_with_hash_value(SharedBufHash,
+								(void *) tagPtr,
+								hashcode,
+								HASH_FIND,
+								NULL);
 
 	if (!result)
 		return -1;
@@ -123,11 +123,11 @@ BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id)
 	Assert(tagPtr->blockNum != P_NEW);	/* invalid tag */
 
 	BufferLookupEnt *result = (BufferLookupEnt *)
-		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
-									hashcode,
-									HASH_ENTER,
-									&found);
+	hash_search_with_hash_value(SharedBufHash,
+								(void *) tagPtr,
+								hashcode,
+								HASH_ENTER,
+								&found);
 
 	if (found)					/* found something already in the table */
 		return result->id;
@@ -148,11 +148,11 @@ BufTableDelete(BufferTag *tagPtr, uint32 hashcode)
 {
 
 	BufferLookupEnt *result = (BufferLookupEnt *)
-		hash_search_with_hash_value(SharedBufHash,
-									(void *) tagPtr,
-									hashcode,
-									HASH_REMOVE,
-									NULL);
+	hash_search_with_hash_value(SharedBufHash,
+								(void *) tagPtr,
+								hashcode,
+								HASH_REMOVE,
+								NULL);
 
 	if (!result)				/* shouldn't happen */
 		elog(ERROR, "shared buffer hash table corrupted");

@@ -94,6 +94,7 @@ mdc_init(PushFilter *dst, void *init_arg, void **priv_p)
 	PX_MD	   *md;
 
 	int			res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
+
 	if (res < 0)
 		return res;
 
@@ -125,6 +126,7 @@ mdc_flush(PushFilter *dst, void *priv)
 	px_md_finish(md, pkt + 2);
 
 	int			res = pushf_write(dst, pkt, 2 + MDC_DIGEST_LEN);
+
 	px_memset(pkt, 0, 2 + MDC_DIGEST_LEN);
 	return res;
 }
@@ -265,6 +267,7 @@ pkt_stream_process(PushFilter *next, void *priv, const uint8 *data, int len)
 	}
 
 	int			res = pushf_write(next, hdr, h - hdr);
+
 	if (res < 0)
 		return res;
 
@@ -309,6 +312,7 @@ pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p)
 {
 
 	int			res = write_tag_only(dst, tag);
+
 	if (res < 0)
 		return res;
 
@@ -398,6 +402,7 @@ init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 	int			hdrlen = 6;
 
 	int			res = write_tag_only(dst, PGP_PKT_LITERAL_DATA);
+
 	if (res < 0)
 		return res;
 
@@ -426,6 +431,7 @@ init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 	PushFilter *pkt;
 
 	int			res = write_tag_only(dst, PGP_PKT_COMPRESSED_DATA);
+
 	if (res < 0)
 		return res;
 
@@ -457,6 +463,7 @@ init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 		tag = PGP_PKT_SYMENCRYPTED_DATA_MDC;
 
 	int			res = write_tag_only(dst, tag);
+
 	if (res < 0)
 		return res;
 
@@ -496,7 +503,8 @@ symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
 	uint8		algo = ctx->cipher_algo;
 
 	int			res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
-						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+									 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+
 	if (res < 0)
 		return res;
 
@@ -537,6 +545,7 @@ write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 	}
 
 	int			pktlen = p - pkt;
+
 	res = write_normal_header(dst, PGP_PKT_SYMENCRYPTED_SESSKEY, pktlen);
 	if (res >= 0)
 		res = pushf_write(dst, pkt, pktlen);
@@ -556,6 +565,7 @@ init_s2k_key(PGP_Context *ctx)
 		ctx->s2k_cipher_algo = ctx->cipher_algo;
 
 	int			res = pgp_s2k_fill(&ctx->s2k, ctx->s2k_mode, ctx->s2k_digest_algo, ctx->s2k_count);
+
 	if (res < 0)
 		return res;
 
@@ -600,6 +610,7 @@ pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst)
 
 	/* MBuf writer */
 	int			res = pushf_create_mbuf_writer(&pf, dst);
+
 	if (res < 0)
 		goto out;
 

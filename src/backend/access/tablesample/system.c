@@ -96,6 +96,7 @@ system_samplescangetsamplesize(PlannerInfo *root,
 
 	/* Try to extract an estimate for the sample percentage */
 	Node	   *pctnode = (Node *) linitial(paramexprs);
+
 	pctnode = estimate_expression_value(root, pctnode);
 
 	if (IsA(pctnode, Const) &&
@@ -155,6 +156,7 @@ system_beginsamplescan(SampleScanState *node,
 	 * correct behavior at the limits of zero or one probability.
 	 */
 	double		dcutoff = rint(((double) PG_UINT32_MAX + 1) * percent / 100);
+
 	sampler->cutoff = (uint64) dcutoff;
 	sampler->seed = seed;
 	sampler->nextblock = 0;
@@ -201,7 +203,8 @@ system_nextsampleblock(SampleScanState *node, BlockNumber nblocks)
 		hashinput[0] = nextblock;
 
 		uint32		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
-									   (int) sizeof(hashinput)));
+												   (int) sizeof(hashinput)));
+
 		if (hash < sampler->cutoff)
 			break;
 	}

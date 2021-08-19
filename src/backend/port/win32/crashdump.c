@@ -111,6 +111,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 
 		/* Load the dbghelp.dll library and functions */
 		HMODULE		hDll = LoadLibrary("dbghelp.dll");
+
 		if (hDll == NULL)
 		{
 			write_stderr("could not load dbghelp.dll, cannot write crash dump\n");
@@ -132,7 +133,7 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 		 * http://msdn.microsoft.com/en-us/library/ms680519(v=VS.85).aspx
 		 */
 		MINIDUMP_TYPE dumpType = MiniDumpNormal | MiniDumpWithHandleData |
-			MiniDumpWithDataSegs;
+		MiniDumpWithDataSegs;
 
 		if (GetProcAddress(hDll, "EnumDirTree") != NULL)
 		{
@@ -142,14 +143,16 @@ crashDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 		}
 
 		DWORD		systemTicks = GetTickCount();
+
 		snprintf(dumpPath, _MAX_PATH,
 				 "crashdumps\\postgres-pid%0i-%0i.mdmp",
 				 (int) selfPid, (int) systemTicks);
 		dumpPath[_MAX_PATH - 1] = '\0';
 
 		HANDLE		dumpFile = CreateFile(dumpPath, GENERIC_WRITE, FILE_SHARE_WRITE,
-							  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-							  NULL);
+										  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+										  NULL);
+
 		if (dumpFile == INVALID_HANDLE_VALUE)
 		{
 			write_stderr("could not open crash dump file \"%s\" for writing: error code %lu\n",

@@ -101,6 +101,7 @@ ECPGget_desc_header(int lineno, const char *desc_name, int *count)
 
 	ecpg_init_sqlca(sqlca);
 	PGresult   *ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
+
 	if (!ECPGresult)
 		return false;
 
@@ -255,6 +256,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	va_start(args, index);
 	ecpg_init_sqlca(sqlca);
 	PGresult   *ECPGresult = ecpg_result_by_descriptor(lineno, desc_name);
+
 	if (!ECPGresult)
 	{
 		va_end(args);
@@ -603,6 +605,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	struct variable *var;
 
 	struct descriptor *desc = ecpg_find_desc(lineno, desc_name);
+
 	if (desc == NULL)
 		return false;
 
@@ -726,6 +729,7 @@ descriptor_free(struct descriptor *desc)
 
 		ecpg_free(desc_item->data);
 		struct descriptor_item *di = desc_item;
+
 		desc_item = desc_item->next;
 		ecpg_free(di);
 	}
@@ -796,6 +800,7 @@ ECPGallocate_desc(int line, const char *name)
 
 	ecpg_init_sqlca(sqlca);
 	struct descriptor *new = (struct descriptor *) ecpg_alloc(sizeof(struct descriptor), line);
+
 	if (!new)
 		return false;
 	new->next = get_descriptors();
@@ -851,6 +856,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 	}
 
 	struct connection *con = ecpg_get_connection(connection_name);
+
 	if (!con)
 	{
 		ecpg_raise(line, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
@@ -858,6 +864,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 		return ret;
 	}
 	struct prepared_statement *prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
+
 	if (!prep)
 	{
 		ecpg_raise(line, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, stmt_name);
@@ -877,6 +884,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 		/* rest of variable parameters */
 		void	   *ptr = va_arg(args, void *);
+
 		(void) va_arg(args, long);	/* skip args */
 		(void) va_arg(args, long);
 		(void) va_arg(args, long);
@@ -920,6 +928,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 							break;
 
 						struct sqlda_compat *sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
+
 						if (sqlda)
 						{
 							struct sqlda_compat *sqlda_old = *_sqlda;
@@ -947,6 +956,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 							break;
 
 						struct sqlda_struct *sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
+
 						if (sqlda)
 						{
 							struct sqlda_struct *sqlda_old = *_sqlda;

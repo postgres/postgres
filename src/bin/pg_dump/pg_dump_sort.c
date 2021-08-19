@@ -187,7 +187,7 @@ DOTypeNameCompare(const void *p1, const void *p2)
 
 	/* Sort by type's priority */
 	int			cmpval = dbObjectTypePriority[obj1->objType] -
-		dbObjectTypePriority[obj2->objType];
+	dbObjectTypePriority[obj2->objType];
 
 	if (cmpval != 0)
 		return cmpval;
@@ -320,6 +320,7 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
 	postDataBoundId = postBoundaryId;
 
 	DumpableObject **ordering = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
+
 	while (!TopoSort(objs, numObjs, ordering, &nOrdering))
 		findDependencyLoops(ordering, nOrdering, numObjs);
 
@@ -397,6 +398,7 @@ TopoSort(DumpableObject **objs,
 	 */
 	int		   *beforeConstraints = (int *) pg_malloc0((maxDumpId + 1) * sizeof(int));
 	int		   *idMap = (int *) pg_malloc((maxDumpId + 1) * sizeof(int));
+
 	for (i = 0; i < numObjs; i++)
 	{
 		obj = objs[i];
@@ -425,6 +427,7 @@ TopoSort(DumpableObject **objs,
 	 * loop, and don't need to do any sift-up comparisons.
 	 */
 	int			heapLength = 0;
+
 	for (i = numObjs; --i >= 0;)
 	{
 		if (beforeConstraints[objs[i]->dumpId] == 0)
@@ -502,6 +505,7 @@ addHeapElement(int val, int *heap, int heapLength)
 	 * using 1-based array indexes, not 0-based.
 	 */
 	int			j = heapLength;
+
 	while (j > 0)
 	{
 		int			i = (j - 1) >> 1;
@@ -530,8 +534,9 @@ removeHeapElement(int *heap, int heapLength)
 
 	if (--heapLength <= 0)
 		return result;
-	int			val = heap[heapLength];		/* value that must be reinserted */
-	int			i = 0;						/* i is where the "hole" is */
+	int			val = heap[heapLength]; /* value that must be reinserted */
+	int			i = 0;			/* i is where the "hole" is */
+
 	for (;;)
 	{
 		int			j = 2 * i + 1;
@@ -604,11 +609,11 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 		int			j;
 
 		int			looplen = findLoop(obj,
-						   obj->dumpId,
-						   processed,
-						   searchFailed,
-						   workspace,
-						   0);
+									   obj->dumpId,
+									   processed,
+									   searchFailed,
+									   workspace,
+									   0);
 
 		if (looplen > 0)
 		{
@@ -717,11 +722,12 @@ findLoop(DumpableObject *obj,
 		if (!nextobj)
 			continue;			/* ignore dependencies on undumped objects */
 		int			newDepth = findLoop(nextobj,
-							startPoint,
-							processed,
-							searchFailed,
-							workspace,
-							depth);
+										startPoint,
+										processed,
+										searchFailed,
+										workspace,
+										depth);
+
 		if (newDepth > 0)
 			return newDepth;
 	}
@@ -1027,6 +1033,7 @@ repairDependencyLoop(DumpableObject **loop,
 					{
 
 						DumpableObject *nextobj = (j < nLoop - 1) ? loop[j + 1] : loop[0];
+
 						repairMatViewBoundaryMultiLoop(loop[j], nextobj);
 						return;
 					}

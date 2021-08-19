@@ -204,9 +204,11 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 
 	/* If the page doesn't exist already, extend */
 	Buffer		buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR);
+
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	Page		page = BufferGetPage(buf);
+
 	if (PageIsNew(page))
 		PageInit(page, BLCKSZ, 0);
 
@@ -228,9 +230,11 @@ GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 	FSMAddress	addr = fsm_get_location(heapBlk, &slot);
 
 	Buffer		buf = fsm_readbuf(rel, addr, false);
+
 	if (!BufferIsValid(buf))
 		return 0;
 	uint8		cat = fsm_get_avail(BufferGetPage(buf), slot);
+
 	ReleaseBuffer(buf);
 
 	return fsm_space_cat_to_avail(cat);
@@ -423,11 +427,13 @@ fsm_logical_to_physical(FSMAddress addr)
 	 * given page.
 	 */
 	int			leafno = addr.logpageno;
+
 	for (l = 0; l < addr.level; l++)
 		leafno *= SlotsPerFSMPage;
 
 	/* Count upper level nodes required to address the leaf page */
 	BlockNumber pages = 0;
+
 	for (l = 0; l < FSM_TREE_DEPTH; l++)
 	{
 		pages += leafno + 1;
@@ -570,6 +576,7 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 	 * Current usage is safe because PageGetContents() does not require that.
 	 */
 	Buffer		buf = ReadBufferExtended(rel, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR, NULL);
+
 	if (PageIsNew(BufferGetPage(buf)))
 	{
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -652,6 +659,7 @@ fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 	int			newslot = -1;
 
 	Buffer		buf = fsm_readbuf(rel, addr, true);
+
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	Page		page = BufferGetPage(buf);
@@ -739,6 +747,7 @@ fsm_search(Relation rel, uint8 min_cat)
 			 * rarely, and will be fixed by the next vacuum.
 			 */
 			FSMAddress	parent = fsm_get_parent(addr, &parentslot);
+
 			fsm_set_and_search(rel, parent, parentslot, max_avail, 0);
 
 			/*
@@ -779,6 +788,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr,
 
 	/* Read the page if it exists, or return EOF */
 	Buffer		buf = fsm_readbuf(rel, addr, false);
+
 	if (!BufferIsValid(buf))
 	{
 		*eof_p = true;

@@ -130,6 +130,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 
 	/* Initialize ExprState with empty step list */
 	ExprState  *state = makeNode(ExprState);
+
 	state->expr = node;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -166,6 +167,7 @@ ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 
 	/* Initialize ExprState with empty step list */
 	ExprState  *state = makeNode(ExprState);
+
 	state->expr = node;
 	state->parent = NULL;
 	state->ext_params = ext_params;
@@ -217,6 +219,7 @@ ExecInitQual(List *qual, PlanState *parent)
 	Assert(IsA(qual, List));
 
 	ExprState  *state = makeNode(ExprState);
+
 	state->expr = (Expr *) qual;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -361,6 +364,7 @@ ExecBuildProjectionInfo(List *targetList,
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
 	projInfo->pi_state.type = T_ExprState;
 	ExprState  *state = &projInfo->pi_state;
+
 	state->expr = (Expr *) targetList;
 	state->parent = parent;
 	state->ext_params = NULL;
@@ -524,6 +528,7 @@ ExecBuildUpdateProjection(List *targetList,
 	/* We embed ExprState into ProjectionInfo instead of doing extra palloc */
 	projInfo->pi_state.type = T_ExprState;
 	ExprState  *state = &projInfo->pi_state;
+
 	if (evalTargetList)
 		state->expr = (Expr *) targetList;
 	else
@@ -539,6 +544,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 */
 	int			nAssignableCols = 0;
 	bool		sawJunk = false;
+
 	foreach(lc, targetList)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -563,6 +569,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 * columns.)
 	 */
 	Bitmapset  *assignedCols = NULL;
+
 	foreach(lc, targetColnos)
 	{
 		AttrNumber	targetattnum = lfirst_int(lc);
@@ -606,6 +613,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 * will iterate over exactly the non-junk columns.
 	 */
 	int			outerattnum = 0;
+
 	forboth(lc, targetList, lc2, targetColnos)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -1069,6 +1077,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 					winstate->funcs = lappend(winstate->funcs, wfstate);
 					int			nfuncs = ++winstate->numfuncs;
+
 					if (wfunc->winagg)
 						winstate->numaggs++;
 
@@ -1202,8 +1211,9 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* Check permission to call function */
 				AclResult	aclresult = pg_proc_aclcheck(cmpfuncid,
-											 GetUserId(),
-											 ACL_EXECUTE);
+														 GetUserId(),
+														 ACL_EXECUTE);
+
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
 								   get_func_name(cmpfuncid));
@@ -1223,6 +1233,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* Set up the primary fmgr lookup information */
 				FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
 				FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
+
 				fmgr_info(cmpfuncid, finfo);
 				fmgr_info_set_expr((Node *) node, finfo);
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -1327,6 +1338,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * because AND/OR have at least two arguments.
 				 */
 				int			off = 0;
+
 				foreach(lc, boolexpr->args)
 				{
 					Expr	   *arg = (Expr *) lfirst(lc);
@@ -1433,6 +1445,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* find out the number of columns in the composite type */
 				TupleDesc	tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
 				int			ncolumns = tupDesc->natts;
+
 				DecrTupleDescRefCount(tupDesc);
 
 				/* create workspace for column values */
@@ -1441,6 +1454,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* create shared composite-type-lookup cache struct */
 				ExprEvalRowtypeCache *rowcachep = palloc(sizeof(ExprEvalRowtypeCache));
+
 				rowcachep->cacheptr = NULL;
 
 				/* emit code to evaluate the composite input value */
@@ -1491,6 +1505,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					 */
 					Datum	   *save_innermost_caseval = state->innermost_caseval;
 					bool	   *save_innermost_casenull = state->innermost_casenull;
+
 					state->innermost_caseval = &values[fieldnum - 1];
 					state->innermost_casenull = &nulls[fieldnum - 1];
 
@@ -1571,6 +1586,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * function, since they're constants.
 				 */
 				FunctionCallInfo fcinfo_in = scratch.d.iocoerce.fcinfo_data_in;
+
 				fcinfo_in->args[1].value = ObjectIdGetDatum(typioparam);
 				fcinfo_in->args[1].isnull = false;
 				fcinfo_in->args[2].value = Int32GetDatum(-1);
@@ -1588,6 +1604,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				ExecInitExprRec(acoerce->arg, state, resv, resnull);
 
 				Oid			resultelemtype = get_element_type(acoerce->resulttype);
+
 				if (!OidIsValid(resultelemtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1600,6 +1617,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * CaseTestExpr representing the source array element values.
 				 */
 				ExprState  *elemstate = makeNode(ExprState);
+
 				elemstate->expr = acoerce->elemexpr;
 				elemstate->parent = state->parent;
 				elemstate->ext_params = state->ext_params;
@@ -1651,6 +1669,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* cache structs must be out-of-line for space reasons */
 				ExprEvalRowtypeCache *rowcachep = palloc(2 * sizeof(ExprEvalRowtypeCache));
+
 				rowcachep[0].cacheptr = NULL;
 				rowcachep[1].cacheptr = NULL;
 
@@ -1734,6 +1753,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					 */
 					Datum	   *save_innermost_caseval = state->innermost_caseval;
 					bool	   *save_innermost_casenull = state->innermost_casenull;
+
 					state->innermost_caseval = caseval;
 					state->innermost_casenull = casenull;
 
@@ -1843,6 +1863,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* prepare to evaluate all arguments */
 				int			elemoff = 0;
+
 				foreach(lc, arrayexpr->elements)
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
@@ -1909,6 +1930,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* Set up evaluation, skipping any deleted columns */
 				int			i = 0;
+
 				foreach(l, rowexpr->args)
 				{
 					Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -1993,9 +2015,10 @@ ExecInitExprRec(Expr *node, ExprState *state,
 											   &lefttype,
 											   &righttype);
 					Oid			proc = get_opfamily_proc(opfamily,
-											 lefttype,
-											 righttype,
-											 BTORDER_PROC);
+														 lefttype,
+														 righttype,
+														 BTORDER_PROC);
+
 					if (!OidIsValid(proc))
 						elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 							 BTORDER_PROC, lefttype, righttype, opfamily);
@@ -2003,6 +2026,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					/* Set up the primary fmgr lookup information */
 					FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
 					FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
+
 					fmgr_info(proc, finfo);
 					fmgr_info_set_expr((Node *) node, finfo);
 					InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -2125,7 +2149,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* Look up the btree comparison function for the datatype */
 				TypeCacheEntry *typentry = lookup_type_cache(minmaxexpr->minmaxtype,
-											 TYPECACHE_CMP_PROC);
+															 TYPECACHE_CMP_PROC);
+
 				if (!OidIsValid(typentry->cmp_proc))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -2142,6 +2167,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* Perform function lookup */
 				FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
 				FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
+
 				fmgr_info(typentry->cmp_proc, finfo);
 				fmgr_info_set_expr((Node *) node, finfo);
 				InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -2161,6 +2187,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* evaluate expressions into minmax->values/nulls */
 				int			off = 0;
+
 				foreach(lc, minmaxexpr->args)
 				{
 					Expr	   *e = (Expr *) lfirst(lc);
@@ -2226,6 +2253,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				/* prepare argument execution */
 				int			off = 0;
+
 				foreach(arg, xexpr->named_args)
 				{
 					Expr	   *e = (Expr *) lfirst(arg);
@@ -2425,6 +2453,7 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 
 	/* Check permission to call function */
 	AclResult	aclresult = pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(funcid));
 	InvokeFunctionExecuteHook(funcid);
@@ -2472,6 +2501,7 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 
 	/* Build code to evaluate arguments directly into the fcinfo struct */
 	int			argno = 0;
+
 	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
@@ -2817,6 +2847,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 
 	/* Look up the subscripting support methods */
 	const SubscriptRoutines *sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
+
 	if (!sbsroutines)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -2828,8 +2859,8 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 
 	/* Allocate sbsrefstate, with enough space for per-subscript arrays too */
 	SubscriptingRefState *sbsrefstate = palloc0(MAXALIGN(sizeof(SubscriptingRefState)) +
-						  (nupper + nlower) * (sizeof(Datum) +
-											   2 * sizeof(bool)));
+												(nupper + nlower) * (sizeof(Datum) +
+																	 2 * sizeof(bool)));
 
 	/* Fill constant fields of SubscriptingRefState */
 	sbsrefstate->isassignment = isAssignment;
@@ -2837,6 +2868,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 	sbsrefstate->numlower = nlower;
 	/* Set up per-subscript arrays */
 	char	   *ptr = ((char *) sbsrefstate) + MAXALIGN(sizeof(SubscriptingRefState));
+
 	sbsrefstate->upperindex = (Datum *) ptr;
 	ptr += nupper * sizeof(Datum);
 	sbsrefstate->lowerindex = (Datum *) ptr;
@@ -2883,6 +2915,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 
 	/* Evaluate upper subscripts */
 	int			i = 0;
+
 	foreach(lc, sbsref->refupperindexpr)
 	{
 		Expr	   *e = (Expr *) lfirst(lc);
@@ -2979,6 +3012,7 @@ ExecInitSubscriptingRef(ExprEvalStep *scratch, SubscriptingRef *sbsref,
 		/* SBSREF_OLD puts extracted value into prevvalue/prevnull */
 		Datum	   *save_innermost_caseval = state->innermost_caseval;
 		bool	   *save_innermost_casenull = state->innermost_casenull;
+
 		state->innermost_caseval = &sbsrefstate->prevvalue;
 		state->innermost_casenull = &sbsrefstate->prevnull;
 
@@ -3098,7 +3132,8 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	 * provide compiled exprs.
 	 */
 	DomainConstraintRef *constraint_ref = (DomainConstraintRef *)
-		palloc(sizeof(DomainConstraintRef));
+	palloc(sizeof(DomainConstraintRef));
+
 	InitDomainConstraintRef(ctest->resulttype,
 							constraint_ref,
 							CurrentMemoryContext,
@@ -3287,6 +3322,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		 * Evaluate arguments to aggregate/combine function.
 		 */
 		int			argno = 0;
+
 		if (isCombine)
 		{
 			/*
@@ -3701,6 +3737,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 
 		/* Check permission to call function */
 		AclResult	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 
@@ -3709,6 +3746,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		/* Set up the primary fmgr lookup information */
 		FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
 		FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
+
 		fmgr_info(foid, finfo);
 		fmgr_info_set_expr(NULL, finfo);
 		InitFunctionCallInfoData(*fcinfo, finfo, 2,
@@ -3832,6 +3870,7 @@ ExecBuildParamSetEqual(TupleDesc desc,
 
 		/* Check permission to call function */
 		AclResult	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 
@@ -3840,6 +3879,7 @@ ExecBuildParamSetEqual(TupleDesc desc,
 		/* Set up the primary fmgr lookup information */
 		FmgrInfo   *finfo = palloc0(sizeof(FmgrInfo));
 		FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(2));
+
 		fmgr_info(foid, finfo);
 		fmgr_info_set_expr(NULL, finfo);
 		InitFunctionCallInfoData(*fcinfo, finfo, 2,

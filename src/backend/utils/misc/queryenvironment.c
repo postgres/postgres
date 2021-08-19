@@ -82,6 +82,7 @@ unregister_ENR(QueryEnvironment *queryEnv, const char *name)
 {
 
 	EphemeralNamedRelation match = get_ENR(queryEnv, name);
+
 	if (match)
 		queryEnv->namedRelList = list_delete(queryEnv->namedRelList, match);
 }
@@ -133,6 +134,7 @@ ENRMetadataGetTupDesc(EphemeralNamedRelationMetadata enrmd)
 	{
 
 		Relation	relation = table_open(enrmd->reliddesc, NoLock);
+
 		tupdesc = relation->rd_att;
 		table_close(relation, NoLock);
 	}

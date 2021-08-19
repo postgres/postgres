@@ -28,8 +28,10 @@ brin_xlog_createidx(XLogReaderState *record)
 
 	/* create the index' metapage */
 	Buffer		buf = XLogInitBufferForRedo(record, 0);
+
 	Assert(BufferIsValid(buf));
 	Page		page = (Page) BufferGetPage(buf);
+
 	brin_metapage_init(page, xlrec->pagesPerRange, xlrec->version);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buf);
@@ -79,6 +81,7 @@ brin_xlog_insert_update(XLogReaderState *record,
 
 		page = (Page) BufferGetPage(buffer);
 		OffsetNumber offnum = xlrec->offnum;
+
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_insert_update: invalid max offset number");
 
@@ -135,6 +138,7 @@ brin_xlog_update(XLogReaderState *record)
 
 	/* First remove the old tuple */
 	XLogRedoAction action = XLogReadBufferForRedo(record, 2, &buffer);
+
 	if (action == BLK_NEEDS_REDO)
 	{
 
@@ -166,6 +170,7 @@ brin_xlog_samepage_update(XLogReaderState *record)
 
 	xl_brin_samepage_update *xlrec = (xl_brin_samepage_update *) XLogRecGetData(record);
 	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &buffer);
+
 	if (action == BLK_NEEDS_REDO)
 	{
 		Size		tuplen;
@@ -205,6 +210,7 @@ brin_xlog_revmap_extend(XLogReaderState *record)
 
 	/* Update the metapage */
 	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &metabuf);
+
 	if (action == BLK_NEEDS_REDO)
 	{
 
@@ -236,6 +242,7 @@ brin_xlog_revmap_extend(XLogReaderState *record)
 
 	Buffer		buf = XLogInitBufferForRedo(record, 1);
 	Page		page = (Page) BufferGetPage(buf);
+
 	brin_page_init(page, BRIN_PAGETYPE_REVMAP);
 
 	PageSetLSN(page, lsn);
@@ -256,6 +263,7 @@ brin_xlog_desummarize_page(XLogReaderState *record)
 
 	/* Update the revmap */
 	XLogRedoAction action = XLogReadBufferForRedo(record, 0, &buffer);
+
 	if (action == BLK_NEEDS_REDO)
 	{
 		ItemPointerData iptr;

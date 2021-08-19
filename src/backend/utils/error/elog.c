@@ -393,6 +393,7 @@ errstart(int elevel, const char *domain)
 	 */
 	bool		output_to_server = should_output_to_server(elevel);
 	bool		output_to_client = should_output_to_client(elevel);
+
 	if (elevel < ERROR && !output_to_server && !output_to_client)
 		return false;
 
@@ -445,6 +446,7 @@ errstart(int elevel, const char *domain)
 
 	/* Initialize data for this error frame */
 	ErrorData  *edata = &errordata[errordata_stack_depth];
+
 	MemSet(edata, 0, sizeof(ErrorData));
 	edata->elevel = elevel;
 	edata->output_to_server = output_to_server;
@@ -484,6 +486,7 @@ matches_backtrace_functions(const char *funcname)
 		return false;
 
 	char	   *p = backtrace_symbol_list;
+
 	for (;;)
 	{
 		if (*p == '\0')			/* end of backtrace_symbol_list */
@@ -520,6 +523,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 
 		/* keep only base name, useful especially for vpath builds */
 		const char *slash = strrchr(filename, '/');
+
 		if (slash)
 			filename = slash + 1;
 		/* Some Windows compilers use backslashes in __FILE__ strings */
@@ -955,6 +959,7 @@ set_backtrace(ErrorData *edata, int num_skip)
 
 		int			nframes = backtrace(buf, lengthof(buf));
 		char	  **strfrms = backtrace_symbols(buf, nframes);
+
 		if (strfrms == NULL)
 			return;
 
@@ -1458,6 +1463,7 @@ format_elog_string(const char *fmt,...)
 
 	/* Initialize a mostly-dummy error frame */
 	ErrorData  *edata = &errdata;
+
 	MemSet(edata, 0, sizeof(ErrorData));
 	/* the default text domain is the backend's */
 	edata->domain = save_format_domain ? save_format_domain : PG_TEXTDOMAIN("postgres");
@@ -1547,6 +1553,7 @@ CopyErrorData(void)
 
 	/* Copy the struct itself */
 	ErrorData  *newedata = (ErrorData *) palloc(sizeof(ErrorData));
+
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/* Make copies of separately-allocated fields */
@@ -1658,6 +1665,7 @@ ThrowErrorData(ErrorData *edata)
 		return;					/* error is not to be reported at all */
 
 	ErrorData  *newedata = &errordata[errordata_stack_depth];
+
 	recursion_depth++;
 	MemoryContext oldcontext = MemoryContextSwitchTo(newedata->assoc_context);
 
@@ -1729,6 +1737,7 @@ ReThrowError(ErrorData *edata)
 	}
 
 	ErrorData  *newedata = &errordata[errordata_stack_depth];
+
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/* Make copies of separately-allocated fields */
@@ -1848,6 +1857,7 @@ GetErrorContextStack(void)
 	 * Things look good so far, so initialize our error frame
 	 */
 	ErrorData  *edata = &errordata[errordata_stack_depth];
+
 	MemSet(edata, 0, sizeof(ErrorData));
 
 	/*
@@ -2004,6 +2014,7 @@ write_syslog(int level, const char *line)
 	 */
 	int			len = strlen(line);
 	const char *nlpos = strchr(line, '\n');
+
 	if (syslog_split_messages && (len > PG_SYSLOG_LIMIT || nlpos != NULL))
 	{
 		int			chunk_nr = 0;
@@ -2218,11 +2229,13 @@ write_console(const char *line, int len)
 		int			utf16len;
 
 		WCHAR	   *utf16 = pgwin32_message_to_UTF16(line, len, &utf16len);
+
 		if (utf16 != NULL)
 		{
 			DWORD		written;
 
 			HANDLE		stdHandle = GetStdHandle(STD_ERROR_HANDLE);
+
 			if (WriteConsoleW(stdHandle, utf16, utf16len, &written, NULL))
 			{
 				pfree(utf16);
@@ -2581,6 +2594,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 					int			displen;
 
 					const char *psdisp = get_ps_display(&displen);
+
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, psdisp);
 					else
@@ -2809,6 +2823,7 @@ write_csvlog(ErrorData *edata)
 		initStringInfo(&msgbuf);
 
 		const char *psdisp = get_ps_display(&displen);
+
 		appendBinaryStringInfo(&msgbuf, psdisp, displen);
 		appendCSVLiteral(&buf, msgbuf.data);
 
@@ -3281,6 +3296,7 @@ send_message_to_frontend(ErrorData *edata)
 		pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
 
 		const char *sev = error_severity(edata->elevel);
+
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
 		err_sendstring(&msgbuf, _(sev));
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY_NONLOCALIZED);
@@ -3288,6 +3304,7 @@ send_message_to_frontend(ErrorData *edata)
 
 		/* unpack MAKE_SQLSTATE code */
 		int			ssval = edata->sqlerrcode;
+
 		for (i = 0; i < 5; i++)
 		{
 			tbuf[i] = PGUNSIXBIT(ssval);

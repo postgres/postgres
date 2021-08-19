@@ -66,6 +66,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	 */
 	EState	   *estate = node->ss.ps.state;
 	ScanDirection direction = estate->es_direction;
+
 	/* flip direction if this is an overall backward scan */
 	if (ScanDirectionIsBackward(((IndexOnlyScan *) node->ss.ps.plan)->indexorderdir))
 	{
@@ -490,6 +491,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	IndexOnlyScanState *indexstate = makeNode(IndexOnlyScanState);
+
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
 	indexstate->ss.ps.ExecProcNode = ExecIndexOnlyScan;
@@ -517,6 +519,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	 * suitable data anyway.)
 	 */
 	TupleDesc	tupDesc = ExecTypeFromTL(node->indextlist);
+
 	ExecInitScanTupleSlot(estate, &indexstate->ss, tupDesc,
 						  &TTSOpsVirtual);
 
@@ -557,6 +560,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 
 	/* Open the index relation. */
 	LOCKMODE	lockmode = exec_rt_fetch(node->scan.scanrelid, estate)->rellockmode;
+
 	indexstate->ioss_RelationDesc = index_open(node->indexid, lockmode);
 
 	/*
@@ -656,6 +660,7 @@ ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 	EState	   *estate = node->ss.ps.state;
 
 	ParallelIndexScanDesc piscan = shm_toc_allocate(pcxt->toc, node->ioss_PscanLen);
+
 	index_parallelscan_initialize(node->ss.ss_currentRelation,
 								  node->ioss_RelationDesc,
 								  estate->es_snapshot,
@@ -705,6 +710,7 @@ ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 {
 
 	ParallelIndexScanDesc piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->ioss_RelationDesc,

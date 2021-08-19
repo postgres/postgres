@@ -148,6 +148,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 	}
 
 	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
+
 	gistentryinit(*retval, datum, entry->rel, entry->page, entry->offset,
 				  false);
 	return retval;
@@ -334,6 +335,7 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 
 	Nsrt	   *arr = (Nsrt *) palloc((maxoff + 1) * sizeof(Nsrt));
 	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_ldatum = PointerGetDatum(0);

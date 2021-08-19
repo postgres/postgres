@@ -359,6 +359,7 @@ calc_inet_union_params(GISTENTRY *ent,
 
 	/* Initialize variables using the first key. */
 	GistInetKey *tmp = DatumGetInetKeyP(ent[m].key);
+
 	minfamily = maxfamily = gk_ip_family(tmp);
 	minbits = gk_ip_minbits(tmp);
 	commonbits = gk_ip_commonbits(tmp);
@@ -419,6 +420,7 @@ calc_inet_union_params_indexed(GISTENTRY *ent,
 
 	/* Initialize variables using the first key. */
 	GistInetKey *tmp = DatumGetInetKeyP(ent[offsets[0]].key);
+
 	minfamily = maxfamily = gk_ip_family(tmp);
 	minbits = gk_ip_minbits(tmp);
 	commonbits = gk_ip_commonbits(tmp);
@@ -592,6 +594,7 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 	SET_INET_VARSIZE(dst);
 
 	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
+
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
 				  entry->offset, false);
 

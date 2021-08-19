@@ -1029,6 +1029,7 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	if (remove_only)
 		return;
 	int			link_errno = staysymlink ? ENOTSUP : hardlinkerr(target, linkname);
+
 	if (link_errno == ENOENT && !linkdirs_made)
 	{
 		mkdirs(linkname, true);
@@ -1116,6 +1117,7 @@ itsdir(char const *name)
 		memcpy(nameslashdot, name, n);
 		strcpy(&nameslashdot[n], &"/."[!(n && name[n - 1] != '/')]);
 		bool		dir = stat(nameslashdot, &st) == 0 || errno == EOVERFLOW;
+
 		free(nameslashdot);
 		return dir;
 	}
@@ -1260,6 +1262,7 @@ infile(const char *name)
 		exit(EXIT_FAILURE);
 	}
 	bool		wantcont = false;
+
 	for (num = 1;; ++num)
 	{
 		eat(name, num);
@@ -1457,6 +1460,7 @@ getsave(char *field, bool *isdst)
 		}
 	}
 	zic_t		save = gethms(field, _("invalid saved time"));
+
 	*isdst = dst < 0 ? save != 0 : dst;
 	return save;
 }
@@ -1620,6 +1624,7 @@ inzsub(char **fields, int nfields, bool iscont)
 	if (max_format_len < strlen(z.z_format))
 		max_format_len = strlen(z.z_format);
 	bool		hasuntil = nfields > i_untilyear;
+
 	if (hasuntil)
 	{
 		z.z_untilrule.r_filename = filename;
@@ -1672,6 +1677,7 @@ getleapdatetime(char **fields, int nfields, bool expire_line)
 
 	dayoff = 0;
 	const char *cp = fields[LP_YEAR];
+
 	if (sscanf(cp, "%d%c", &year, &xs) != 1)
 	{
 		/*
@@ -1735,6 +1741,7 @@ getleapdatetime(char **fields, int nfields, bool expire_line)
 		return -1;
 	}
 	zic_t		t = dayoff * SECSPERDAY;
+
 	tod = gethms(fields[LP_TIME], _("invalid time of day"));
 	t = tadd(t, tod);
 	if (t < 0)
@@ -1831,6 +1838,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	rp->r_todisstd = false;
 	rp->r_todisut = false;
 	char	   *dp = ecpyalloc(timep);
+
 	if (*dp != '\0')
 	{
 		ep = dp + strlen(dp) - 1;
@@ -1862,6 +1870,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	 * Year work.
 	 */
 	const char *cp = loyearp;
+
 	lp = byword(cp, begin_years);
 	rp->r_lowasnum = lp == NULL;
 	if (!rp->r_lowasnum)
@@ -2205,6 +2214,7 @@ writezone(const char *const name, const char *const string, char version,
 		exit(EXIT_FAILURE);
 	}
 	FILE	   *fp = fopen(name, "wb");
+
 	if (!fp)
 	{
 		int			fopen_errno = errno;
@@ -2404,6 +2414,7 @@ writezone(const char *const name, const char *const string, char version,
 			if (indmap[desigidx[i]] >= 0)
 				continue;
 			char	   *thisabbr = &chars[desigidx[i]];
+
 			for (j = 0; j < thischarcnt; ++j)
 				if (strcmp(&thischars[j], thisabbr) == 0)
 					break;
@@ -2620,6 +2631,7 @@ doabbr(char *abbr, struct zone const *zp, char const *letters,
 	char const *format = zp->z_format;
 
 	char	   *slashp = strchr(format, '/');
+
 	if (slashp == NULL)
 	{
 		char		letterbuf[PERCENT_Z_LEN_BOUND + 1];
@@ -2640,6 +2652,7 @@ doabbr(char *abbr, struct zone const *zp, char const *letters,
 		abbr[slashp - format] = '\0';
 	}
 	size_t		len = strlen(abbr);
+
 	if (!doquotes)
 		return len;
 	for (cp = abbr; is_alpha(*cp); cp++)
@@ -2674,10 +2687,13 @@ stringoffset(char *result, zic_t offset)
 		result[0] = '-';
 	}
 	int			seconds = offset % SECSPERMIN;
+
 	offset /= SECSPERMIN;
 	int			minutes = offset % MINSPERHOUR;
+
 	offset /= MINSPERHOUR;
 	int			hours = offset;
+
 	if (hours >= HOURSPERDAY * DAYSPERWEEK)
 	{
 		result[0] = '\0';
@@ -2809,6 +2825,7 @@ stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 
 	const struct zone *zp = zpfirst + zonecount - 1;
 	struct rule *stdrp = dstrp = NULL;
+
 	for (i = 0; i < zp->z_nrules; ++i)
 	{
 		rp = &zp->z_rules[i];
@@ -2874,6 +2891,7 @@ stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 	const char *abbrvar = (stdrp == NULL) ? "" : stdrp->r_abbrvar;
 	size_t		len = doabbr(result, zp, abbrvar, false, 0, true);
 	int			offsetlen = stringoffset(result + len, -zp->z_stdoff);
+
 	if (!offsetlen)
 	{
 		result[0] = '\0';
@@ -2897,6 +2915,7 @@ stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 	}
 	result[len++] = ',';
 	int			c = stringrule(result + len, dstrp, dstrp->r_save, zp->z_stdoff);
+
 	if (c < 0)
 	{
 		result[0] = '\0';
@@ -2944,6 +2963,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	char	   *startbuf = emalloc(max_abbr_len + 1);
 	char	   *ab = emalloc(max_abbr_len + 1);
 	char	   *envvar = emalloc(max_envvar_len + 1);
+
 	INITIALIZE(untiltime);
 	INITIALIZE(starttime);
 
@@ -2961,6 +2981,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	 */
 	bool		startttisstd = false;
 	bool		startttisut = false;
+
 	min_year = max_year = EPOCH_YEAR;
 	if (leapseen)
 	{
@@ -2990,6 +3011,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	int			compat = stringzone(envvar, zpfirst, zonecount);
 	char		version = compat < 2013 ? ZIC_VERSION_PRE_2013 : ZIC_VERSION;
 	bool		do_extend = compat < 0;
+
 	if (noise)
 	{
 		if (!*envvar)
@@ -3046,6 +3068,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 		}
 	}
 	zic_t		max_year0 = max_year;
+
 	if (want_bloat())
 	{
 		/*
@@ -3143,6 +3166,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					 * effect earliest in the year.
 					 */
 					ptrdiff_t	k = -1;
+
 					for (j = 0; j < zp->z_nrules; ++j)
 					{
 						rp = &zp->z_rules[j];
@@ -3646,6 +3670,7 @@ byword(const char *word, const struct lookup *table)
 	 * Look for inexact match.
 	 */
 	const struct lookup *foundlp = NULL;
+
 	for (lp = table; lp->l_word != NULL; ++lp)
 		if (ciprefix(word, lp->l_word))
 		{
@@ -3685,6 +3710,7 @@ getfields(char *cp)
 		return NULL;
 	array = emalloc(size_product(strlen(cp) + 1, sizeof *array));
 	int			nsubs = 0;
+
 	for (;;)
 	{
 		while (is_space(*cp))
@@ -3876,6 +3902,7 @@ newabbr(const char *string)
 
 		const char *cp = string;
 		const char *mp = NULL;
+
 		while (is_alpha(*cp) || ('0' <= *cp && *cp <= '9')
 			   || *cp == '-' || *cp == '+')
 			++cp;
@@ -3889,6 +3916,7 @@ newabbr(const char *string)
 			warning("%s (%s)", mp, string);
 	}
 	int			i = strlen(string) + 1;
+
 	if (charcnt + i > TZ_MAX_CHARS)
 	{
 		error(_("too many, or too long, time zone abbreviations"));

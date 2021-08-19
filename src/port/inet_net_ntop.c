@@ -242,6 +242,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	 * Format the result.
 	 */
 	char	   *tp = tmp;
+
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
 	{
 		/* Are we inside the best run of 0x00's? */
@@ -262,6 +263,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		{
 
 			int			n = decoct(src + 12, 4, tp, sizeof tmp - (tp - tmp));
+
 			if (n == 0)
 			{
 				errno = EMSGSIZE;

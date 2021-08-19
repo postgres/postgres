@@ -165,6 +165,7 @@ ExecSort(PlanState *pstate)
 			Assert(IsParallelWorker());
 			Assert(ParallelWorkerNumber <= node->shared_info->num_workers);
 			TuplesortInstrumentation *si = &node->shared_info->sinstrument[ParallelWorkerNumber];
+
 			tuplesort_get_stats(tuplesortstate, si);
 		}
 		SO1_printf("ExecSort: %s\n", "sorting done");
@@ -215,6 +216,7 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	SortState  *sortstate = makeNode(SortState);
+
 	sortstate->ss.ps.plan = (Plan *) node;
 	sortstate->ss.ps.state = estate;
 	sortstate->ss.ps.ExecProcNode = ExecSort;
@@ -411,6 +413,7 @@ ExecSortEstimate(SortState *node, ParallelContext *pcxt)
 		return;
 
 	Size		size = mul_size(pcxt->nworkers, sizeof(TuplesortInstrumentation));
+
 	size = add_size(size, offsetof(SharedSortInfo, sinstrument));
 	shm_toc_estimate_chunk(&pcxt->estimator, size);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
@@ -431,7 +434,8 @@ ExecSortInitializeDSM(SortState *node, ParallelContext *pcxt)
 		return;
 
 	Size		size = offsetof(SharedSortInfo, sinstrument)
-		+ pcxt->nworkers * sizeof(TuplesortInstrumentation);
+	+ pcxt->nworkers * sizeof(TuplesortInstrumentation);
+
 	node->shared_info = shm_toc_allocate(pcxt->toc, size);
 	/* ensure any unfilled slots will contain zeroes */
 	memset(node->shared_info, 0, size);
@@ -468,8 +472,9 @@ ExecSortRetrieveInstrumentation(SortState *node)
 		return;
 
 	Size		size = offsetof(SharedSortInfo, sinstrument)
-		+ node->shared_info->num_workers * sizeof(TuplesortInstrumentation);
+	+ node->shared_info->num_workers * sizeof(TuplesortInstrumentation);
 	SharedSortInfo *si = palloc(size);
+
 	memcpy(si, node->shared_info, size);
 	node->shared_info = si;
 }

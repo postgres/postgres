@@ -224,6 +224,7 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 	maxoff = entryvec->n - 1;
 
 	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = v->spl_nright = 0;
@@ -1040,6 +1041,7 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 		POLYGON    *in = DatumGetPolygonP(entry->key);
 
 		BOX		   *r = (BOX *) palloc(sizeof(BOX));
+
 		memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -1077,7 +1079,7 @@ gist_poly_consistent(PG_FUNCTION_ARGS)
 	 * because the index entries are bounding boxes not polygons.)
 	 */
 	bool		result = rtree_internal_consistent(DatumGetBoxP(entry->key),
-									   &(query->boundbox), strategy);
+												   &(query->boundbox), strategy);
 
 	/* Avoid memory leak if supplied poly is toasted */
 	PG_FREE_IF_COPY(query, 1);
@@ -1103,6 +1105,7 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 		CIRCLE	   *in = DatumGetCircleP(entry->key);
 
 		BOX		   *r = (BOX *) palloc(sizeof(BOX));
+
 		r->high.x = float8_pl(in->center.x, in->radius);
 		r->low.x = float8_mi(in->center.x, in->radius);
 		r->high.y = float8_pl(in->center.y, in->radius);
@@ -1149,7 +1152,7 @@ gist_circle_consistent(PG_FUNCTION_ARGS)
 	bbox.low.y = float8_mi(query->center.y, query->radius);
 
 	bool		result = rtree_internal_consistent(DatumGetBoxP(entry->key),
-									   &bbox, strategy);
+												   &bbox, strategy);
 
 	PG_RETURN_BOOL(result);
 }
@@ -1195,6 +1198,7 @@ gist_point_fetch(PG_FUNCTION_ARGS)
 	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
 
 	Point	   *r = (Point *) palloc(sizeof(Point));
+
 	r->x = in->high.x;
 	r->y = in->high.y;
 	gistentryinit(*retval, PointerGetDatum(r),
@@ -1255,6 +1259,7 @@ computeDistance(bool isLeaf, BOX *box, Point *point)
 		result = point_point_distance(point, &box->low);
 
 		float8		subresult = point_point_distance(point, &box->high);
+
 		if (result > subresult)
 			result = subresult;
 
@@ -1342,6 +1347,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 		strategy = RTAboveStrategyNumber;
 
 	StrategyNumber strategyGroup = strategy / GeoStrategyNumberOffset;
+
 	switch (strategyGroup)
 	{
 		case PointStrategyNumberGroup:
@@ -1522,6 +1528,7 @@ gist_circle_distance(PG_FUNCTION_ARGS)
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 
 	float8		distance = gist_bbox_distance(entry, query, strategy);
+
 	*recheck = true;
 
 	PG_RETURN_FLOAT8(distance);
@@ -1538,6 +1545,7 @@ gist_poly_distance(PG_FUNCTION_ARGS)
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 
 	float8		distance = gist_bbox_distance(entry, query, strategy);
+
 	*recheck = true;
 
 	PG_RETURN_FLOAT8(distance);
@@ -1680,6 +1688,7 @@ gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup)
 
 	uint64		z1 = point_zorder_internal(p1->x, p1->y);
 	uint64		z2 = point_zorder_internal(p2->x, p2->y);
+
 	if (z1 > z2)
 		return 1;
 	else if (z1 < z2)

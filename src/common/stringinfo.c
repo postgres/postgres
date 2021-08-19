@@ -99,6 +99,7 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 		errno = save_errno;
 		va_start(args, fmt);
 		int			needed = appendStringInfoVA(str, fmt, args);
+
 		va_end(args);
 
 		if (needed == 0)
@@ -139,6 +140,7 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	 * enlarge, since we're skipping the formatting work.
 	 */
 	int			avail = str->maxlen - str->len;
+
 	if (avail < 16)
 		return 32;
 

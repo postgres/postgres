@@ -634,6 +634,7 @@ des_cipher(const char *in, char *out, long salt, int count)
 	rawr = pg_ntoh32(buffer[1]);
 
 	int			retval = do_des(rawl, rawr, &l_out, &r_out, count);
+
 	if (retval)
 		return retval;
 
@@ -668,6 +669,7 @@ px_crypt_des(const char *key, const char *setting)
 	 * zeros.
 	 */
 	uint8	   *q = (uint8 *) keybuf;
+
 	while (q - (uint8 *) keybuf - 8)
 	{
 		*q++ = *key << 1;

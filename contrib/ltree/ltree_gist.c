@@ -308,6 +308,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 
 	OffsetNumber maxoff = entryvec->n - 1;
 	int			nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;

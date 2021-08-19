@@ -167,6 +167,7 @@ filtered_base_yylex(void)
 				 * with quotes
 				 */
 				const char *escstr = base_yylval.str;
+
 				if (strlen(escstr) != 3 || !check_uescapechar(escstr[1]))
 					mmerror(PARSE_ERROR, ET_ERROR, "invalid Unicode escape character");
 

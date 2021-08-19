@@ -41,6 +41,7 @@ importFile(PGconn *conn, char *filename)
 	 * open the file to be read in
 	 */
 	int			fd = open(filename, O_RDONLY, 0666);
+
 	if (fd < 0)
 	{							/* error */
 		fprintf(stderr, "cannot open unix file\"%s\"\n", filename);
@@ -50,6 +51,7 @@ importFile(PGconn *conn, char *filename)
 	 * create the large object
 	 */
 	Oid			lobjId = lo_creat(conn, INV_READ | INV_WRITE);
+
 	if (lobjId == 0)
 		fprintf(stderr, "cannot create large object");
 
@@ -77,6 +79,7 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	int			nbytes;
 
 	int			lobj_fd = lo_open(conn, lobjId, INV_READ);
+
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -89,6 +92,7 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	char	   *buf = malloc(len + 1);
 
 	int			nread = 0;
+
 	while (len - nread > 0)
 	{
 		nbytes = lo_read(conn, lobj_fd, buf, len - nread);
@@ -110,6 +114,7 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	int			i;
 
 	int			lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -123,6 +128,7 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	buf[i] = '\0';
 
 	int			nwritten = 0;
+
 	while (len - nwritten > 0)
 	{
 		nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
@@ -143,6 +149,7 @@ my_truncate(PGconn *conn, Oid lobjId, pg_int64 len)
 {
 
 	int			lobj_fd = lo_open(conn, lobjId, INV_READ | INV_WRITE);
+
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -169,6 +176,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	 * open the large object
 	 */
 	int			lobj_fd = lo_open(conn, lobjId, INV_READ);
+
 	if (lobj_fd < 0)
 		fprintf(stderr, "cannot open large object %u", lobjId);
 
@@ -176,6 +184,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	 * open the file to be written to
 	 */
 	int			fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+
 	if (fd < 0)
 	{							/* error */
 		fprintf(stderr, "cannot open unix file\"%s\"",
@@ -221,6 +230,7 @@ main(int argc, char **argv)
 	}
 
 	char	   *database = argv[1];
+
 	in_filename = argv[2];
 	out_filename = argv[3];
 	out_filename2 = argv[4];
@@ -239,7 +249,8 @@ main(int argc, char **argv)
 
 	/* Set always-secure search path, so malicious users can't take control. */
 	PGresult   *res = PQexec(conn,
-				 "SELECT pg_catalog.set_config('search_path', '', false)");
+							 "SELECT pg_catalog.set_config('search_path', '', false)");
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "SET failed: %s", PQerrorMessage(conn));
@@ -253,6 +264,7 @@ main(int argc, char **argv)
 	printf("importing file \"%s\" ...\n", in_filename);
 /*	lobjOid = importFile(conn, in_filename); */
 	Oid			lobjOid = lo_import(conn, in_filename);
+
 	if (lobjOid == 0)
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
 	else

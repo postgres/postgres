@@ -53,9 +53,10 @@ sepgsql_proc_post_create(Oid functionId)
 				ObjectIdGetDatum(functionId));
 
 	SysScanDesc sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 
 	HeapTuple	tuple = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for function %u", functionId);
 
@@ -84,16 +85,17 @@ sepgsql_proc_post_create(Oid functionId)
 	 */
 	char	   *scontext = sepgsql_get_client_label();
 	char	   *tcontext = sepgsql_get_label(NamespaceRelationId,
-								 proForm->pronamespace, 0);
+											 proForm->pronamespace, 0);
 	char	   *ncontext = sepgsql_compute_create(scontext, tcontext,
-									  SEPG_CLASS_DB_PROCEDURE,
-									  NameStr(proForm->proname));
+												  SEPG_CLASS_DB_PROCEDURE,
+												  NameStr(proForm->proname));
 
 	/*
 	 * check db_procedure:{create (install)} permission
 	 */
 	initStringInfo(&audit_name);
 	char	   *nsp_name = get_namespace_name(proForm->pronamespace);
+
 	appendStringInfo(&audit_name, "%s(",
 					 quote_qualified_identifier(nsp_name, NameStr(proForm->proname)));
 	for (i = 0; i < proForm->pronargs; i++)
@@ -109,6 +111,7 @@ sepgsql_proc_post_create(Oid functionId)
 	appendStringInfoChar(&audit_name, ')');
 
 	uint32		required = SEPG_DB_PROCEDURE__CREATE;
+
 	if (proForm->proleakproof)
 		required |= SEPG_DB_PROCEDURE__INSTALL;
 
@@ -237,8 +240,9 @@ sepgsql_proc_setattr(Oid functionId)
 				ObjectIdGetDatum(functionId));
 
 	SysScanDesc sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
-							   SnapshotSelf, 1, &skey);
+										   SnapshotSelf, 1, &skey);
 	HeapTuple	newtup = systable_getnext(sscan);
+
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "could not find tuple for function %u", functionId);
 	Form_pg_proc newform = (Form_pg_proc) GETSTRUCT(newtup);
@@ -247,6 +251,7 @@ sepgsql_proc_setattr(Oid functionId)
 	 * Fetch older catalog
 	 */
 	HeapTuple	oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+
 	if (!HeapTupleIsValid(oldtup))
 		elog(ERROR, "cache lookup failed for function %u", functionId);
 	Form_pg_proc oldform = (Form_pg_proc) GETSTRUCT(oldtup);
@@ -266,6 +271,7 @@ sepgsql_proc_setattr(Oid functionId)
 	 * check db_procedure:{setattr (install)} permission
 	 */
 	uint32		required = SEPG_DB_PROCEDURE__SETATTR;
+
 	if (!oldform->proleakproof && newform->proleakproof)
 		required |= SEPG_DB_PROCEDURE__INSTALL;
 
@@ -304,6 +310,7 @@ sepgsql_proc_execute(Oid functionId)
 	object.objectId = functionId;
 	object.objectSubId = 0;
 	char	   *audit_name = getObjectIdentity(&object, false);
+
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
 							SEPG_DB_PROCEDURE__EXECUTE,

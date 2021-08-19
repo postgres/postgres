@@ -521,6 +521,7 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args,
 {
 
 	FuncExpr   *funcexpr = makeNode(FuncExpr);
+
 	funcexpr->funcid = funcid;
 	funcexpr->funcresulttype = rettype;
 	funcexpr->funcretset = false;	/* only allowed case here */

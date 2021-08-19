@@ -138,6 +138,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			void	   *subextra = NULL;
 
 			char	   *subval = strdup(GetConfigOptionResetString("datestyle"));
+
 			if (!subval)
 			{
 				ok = false;
@@ -179,6 +180,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
 	char	   *result = (char *) malloc(32);
+
 	if (!result)
 		return false;
 
@@ -268,6 +270,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 		if (*valueptr++ != '\'')
 			return false;
 		char	   *val = pstrdup(valueptr);
+
 		/* Check and remove trailing quote */
 		endptr = strchr(val, '\'');
 		if (!endptr || endptr[1] != '\0')
@@ -284,9 +287,9 @@ check_timezone(char **newval, void **extra, GucSource source)
 		 * string coming in from postgresql.conf might contain anything.
 		 */
 		Interval   *interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
-														 CStringGetDatum(val),
-														 ObjectIdGetDatum(InvalidOid),
-														 Int32GetDatum(-1)));
+																	 CStringGetDatum(val),
+																	 ObjectIdGetDatum(InvalidOid),
+																	 Int32GetDatum(-1)));
 
 		pfree(val);
 		if (interval->month != 0)
@@ -616,6 +619,7 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 
 	/* Look up the encoding by name */
 	int			encoding = pg_valid_client_encoding(*newval);
+
 	if (encoding < 0)
 		return false;
 
@@ -750,6 +754,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 
 	/* Look up the username */
 	HeapTuple	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(*newval));
+
 	if (!HeapTupleIsValid(roleTup))
 	{
 		/*
@@ -775,6 +780,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 
 	/* Set up "extra" struct for assign_session_authorization to use */
 	role_auth_extra *myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;
@@ -884,6 +890,7 @@ check_role(char **newval, void **extra, GucSource source)
 
 	/* Set up "extra" struct for assign_role to use */
 	role_auth_extra *myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;

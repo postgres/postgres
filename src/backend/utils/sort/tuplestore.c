@@ -322,8 +322,8 @@ tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
 	 * the pre-8.3 behavior of tuplestores.
 	 */
 	int			eflags = randomAccess ?
-		(EXEC_FLAG_BACKWARD | EXEC_FLAG_REWIND) :
-		(EXEC_FLAG_REWIND);
+	(EXEC_FLAG_BACKWARD | EXEC_FLAG_REWIND) :
+	(EXEC_FLAG_REWIND);
 
 	Tuplestorestate *state = tuplestore_begin_common(eflags, interXact, maxKBytes);
 
@@ -433,6 +433,7 @@ tuplestore_clear(Tuplestorestate *state)
 	state->memtupcount = 0;
 	state->tuples = 0;
 	TSReadPointer *readptr = state->readptrs;
+
 	for (i = 0; i < state->readptrcount; readptr++, i++)
 	{
 		readptr->eof_reached = false;
@@ -624,6 +625,7 @@ grow_memtuples(Tuplestorestate *state)
 		 */
 
 		double		grow_ratio = (double) state->allowedMem / (double) memNowUsed;
+
 		if (memtupsize * grow_ratio < INT_MAX)
 			newmemtupsize = (int) (memtupsize * grow_ratio);
 		else
@@ -707,6 +709,7 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 	 * Form a MinimalTuple in working memory
 	 */
 	MinimalTuple tuple = ExecCopySlotMinimalTuple(slot);
+
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, (void *) tuple);
@@ -745,6 +748,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	MinimalTuple tuple = heap_form_minimal_tuple(tdesc, values, isnull);
+
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, (void *) tuple);
@@ -1365,6 +1369,7 @@ tuplestore_trim(Tuplestorestate *state)
 
 	/* Find the oldest read pointer */
 	int			oldest = state->memtupcount;
+
 	for (i = 0; i < state->readptrcount; i++)
 	{
 		if (!state->readptrs[i].eof_reached)
@@ -1382,6 +1387,7 @@ tuplestore_trim(Tuplestorestate *state)
 	 * efficiency we allow this one case to not use "copy".)
 	 */
 	int			nremove = oldest - 1;
+
 	if (nremove <= 0)
 		return;					/* nothing to do */
 
@@ -1454,6 +1460,7 @@ getlen(Tuplestorestate *state, bool eofOK)
 	unsigned int len;
 
 	size_t		nbytes = BufFileRead(state->myfile, (void *) &len, sizeof(len));
+
 	if (nbytes == sizeof(len))
 		return len;
 	if (nbytes != 0 || !eofOK)
@@ -1480,6 +1487,7 @@ copytup_heap(Tuplestorestate *state, void *tup)
 {
 
 	MinimalTuple tuple = minimal_tuple_from_heap_tuple((HeapTuple) tup);
+
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	return (void *) tuple;
 }
@@ -1517,6 +1525,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
 	size_t		nread = BufFileRead(state->myfile, (void *) tupbody, tupbodylen);
+
 	if (nread != (size_t) tupbodylen)
 		ereport(ERROR,
 				(errcode_for_file_access(),

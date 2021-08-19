@@ -226,6 +226,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	ProjectSetState *state = makeNode(ProjectSetState);
+
 	state->ps.plan = (Plan *) node;
 	state->ps.state = estate;
 	state->ps.ExecProcNode = ExecProjectSet;
@@ -268,6 +269,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	 * ExecInitFunctionResultSet where applicable.
 	 */
 	int			off = 0;
+
 	foreach(lc, node->plan.targetlist)
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);

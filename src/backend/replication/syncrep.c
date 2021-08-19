@@ -292,7 +292,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		 * latch, so no need for timeout.
 		 */
 		int			rc = WaitLatch(MyLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1,
-					   WAIT_EVENT_SYNC_REP);
+								   WAIT_EVENT_SYNC_REP);
 
 		/*
 		 * If the postmaster dies, we'll probably never get an acknowledgment,
@@ -340,8 +340,8 @@ SyncRepQueueInsert(int mode)
 
 	Assert(mode >= 0 && mode < NUM_SYNC_REP_WAIT_MODE);
 	PGPROC	   *proc = (PGPROC *) SHMQueuePrev(&(WalSndCtl->SyncRepQueue[mode]),
-								   &(WalSndCtl->SyncRepQueue[mode]),
-								   offsetof(PGPROC, syncRepLinks));
+											   &(WalSndCtl->SyncRepQueue[mode]),
+											   offsetof(PGPROC, syncRepLinks));
 
 	while (proc)
 	{
@@ -414,6 +414,7 @@ SyncRepInitConfig(void)
 	 * for handling replies from standby.
 	 */
 	int			priority = SyncRepGetStandbyPriority();
+
 	if (MyWalSnd->sync_standby_priority != priority)
 	{
 		SpinLockAcquire(&MyWalSnd->mutex);
@@ -728,6 +729,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 
 	/* Collect raw data from shared memory */
 	int			n = 0;
+
 	for (i = 0; i < max_wal_senders; i++)
 	{
 		volatile WalSnd *walsnd;	/* Use volatile pointer to prevent code
@@ -834,6 +836,7 @@ SyncRepGetStandbyPriority(void)
 		return 0;
 
 	const char *standby_name = SyncRepConfig->member_names;
+
 	for (priority = 1; priority <= SyncRepConfig->nmembers; priority++)
 	{
 		if (pg_strcasecmp(standby_name, application_name) == 0 ||
@@ -875,8 +878,8 @@ SyncRepWakeQueue(bool all, int mode)
 	Assert(SyncRepQueueIsOrderedByLSN(mode));
 
 	PGPROC	   *proc = (PGPROC *) SHMQueueNext(&(WalSndCtl->SyncRepQueue[mode]),
-								   &(WalSndCtl->SyncRepQueue[mode]),
-								   offsetof(PGPROC, syncRepLinks));
+											   &(WalSndCtl->SyncRepQueue[mode]),
+											   offsetof(PGPROC, syncRepLinks));
 
 	while (proc)
 	{
@@ -976,8 +979,8 @@ SyncRepQueueIsOrderedByLSN(int mode)
 	XLogRecPtr	lastLSN = 0;
 
 	PGPROC	   *proc = (PGPROC *) SHMQueueNext(&(WalSndCtl->SyncRepQueue[mode]),
-								   &(WalSndCtl->SyncRepQueue[mode]),
-								   offsetof(PGPROC, syncRepLinks));
+											   &(WalSndCtl->SyncRepQueue[mode]),
+											   offsetof(PGPROC, syncRepLinks));
 
 	while (proc)
 	{
@@ -1018,6 +1021,7 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 		/* Parse the synchronous_standby_names string */
 		syncrep_scanner_init(*newval);
 		int			parse_rc = syncrep_yyparse();
+
 		syncrep_scanner_finish();
 
 		if (parse_rc != 0 || syncrep_parse_result == NULL)
@@ -1039,7 +1043,8 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 
 		/* GUC extra value must be malloc'd, not palloc'd */
 		SyncRepConfigData *pconf = (SyncRepConfigData *)
-			malloc(syncrep_parse_result->config_size);
+		malloc(syncrep_parse_result->config_size);
+
 		if (pconf == NULL)
 			return false;
 		memcpy(pconf, syncrep_parse_result, syncrep_parse_result->config_size);

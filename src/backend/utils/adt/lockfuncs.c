@@ -110,6 +110,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		/* build tupdesc for result tuples */
 		/* this had better match function's declaration in pg_proc.h */
 		TupleDesc	tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS);
+
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -180,6 +181,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 * again.
 		 */
 		bool		granted = false;
+
 		if (instance->holdMask)
 		{
 			for (mode = 0; mode < MAX_LOCKMODES; mode++)
@@ -339,6 +341,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		Datum		result = HeapTupleGetDatum(tuple);
+
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -407,6 +410,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		Datum		result = HeapTupleGetDatum(tuple);
+
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
@@ -460,6 +464,7 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 		 * There should be exactly one matching entry.
 		 */
 		LockInstanceData *blocked_instance = NULL;
+
 		for (j = 0; j < bproc->num_locks; j++)
 		{
 			LockInstanceData *instance = &(instances[j]);
@@ -549,7 +554,7 @@ pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 
 	/* Collect a snapshot of processes waited for by GetSafeSnapshot */
 	int			num_blockers =
-		GetSafeSnapshotBlockingPids(blocked_pid, blockers, MaxBackends);
+	GetSafeSnapshotBlockingPids(blocked_pid, blockers, MaxBackends);
 
 	/* Convert int array to Datum array */
 	if (num_blockers > 0)
@@ -596,20 +601,20 @@ pg_isolation_test_session_is_blocked(PG_FUNCTION_ARGS)
 		elog(ERROR, "array must not contain nulls");
 	int32	   *interesting_pids = (int32 *) ARR_DATA_PTR(interesting_pids_a);
 	int			num_interesting_pids = ArrayGetNItems(ARR_NDIM(interesting_pids_a),
-										  ARR_DIMS(interesting_pids_a));
+													  ARR_DIMS(interesting_pids_a));
 
 	/*
 	 * Get the PIDs of all sessions blocking the given session's attempt to
 	 * acquire heavyweight locks.
 	 */
 	ArrayType  *blocking_pids_a =
-		DatumGetArrayTypeP(DirectFunctionCall1(pg_blocking_pids, blocked_pid));
+	DatumGetArrayTypeP(DirectFunctionCall1(pg_blocking_pids, blocked_pid));
 
 	Assert(ARR_ELEMTYPE(blocking_pids_a) == INT4OID);
 	Assert(!array_contains_nulls(blocking_pids_a));
 	int32	   *blocking_pids = (int32 *) ARR_DATA_PTR(blocking_pids_a);
 	int			num_blocking_pids = ArrayGetNItems(ARR_NDIM(blocking_pids_a),
-									   ARR_DIMS(blocking_pids_a));
+												   ARR_DIMS(blocking_pids_a));
 
 	/*
 	 * Check if any of these are in the list of interesting PIDs, that being

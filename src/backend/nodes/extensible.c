@@ -57,8 +57,9 @@ RegisterExtensibleNodeEntry(HTAB **p_htable, const char *htable_label,
 		elog(ERROR, "extensible node name is too long");
 
 	ExtensibleNodeEntry *entry = (ExtensibleNodeEntry *) hash_search(*p_htable,
-												extnodename,
-												HASH_ENTER, &found);
+																	 extnodename,
+																	 HASH_ENTER, &found);
+
 	if (found)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),

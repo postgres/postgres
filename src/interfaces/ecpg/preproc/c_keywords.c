@@ -41,6 +41,7 @@ ScanCKeywordLookup(const char *str)
 	 * hashing work on long strings.
 	 */
 	size_t		len = strlen(str);
+
 	if (len > ScanCKeywords.max_kw_len)
 		return -1;
 

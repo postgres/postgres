@@ -148,12 +148,12 @@ create_logical_replication_slot(char *name, char *plugin,
 	 * this point that the output plugin is validated.
 	 */
 	LogicalDecodingContext *ctx = CreateInitDecodingContext(plugin, NIL,
-									false,	/* just catalogs is OK */
-									restart_lsn,
-									XL_ROUTINE(.page_read = read_local_xlog_page,
-											   .segment_open = wal_segment_open,
-											   .segment_close = wal_segment_close),
-									NULL, NULL, NULL);
+															false,	/* just catalogs is OK */
+															restart_lsn,
+															XL_ROUTINE(.page_read = read_local_xlog_page,
+																	   .segment_open = wal_segment_open,
+																	   .segment_close = wal_segment_close),
+															NULL, NULL, NULL);
 
 	/*
 	 * If caller needs us to determine the decoding start point, do so now.
@@ -263,6 +263,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -285,12 +286,14 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		/* Copy slot contents while holding spinlock, then examine at leisure */
 		SpinLockAcquire(&slot->mutex);
 		ReplicationSlot slot_contents = *slot;
+
 		SpinLockRelease(&slot->mutex);
 
 		memset(values, 0, sizeof(values));
 		memset(nulls, 0, sizeof(nulls));
 
 		int			i = 0;
+
 		values[i++] = NameGetDatum(&slot_contents.data.name);
 
 		if (slot_contents.data.database == InvalidOid)
@@ -382,6 +385,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 					SpinLockAcquire(&slot->mutex);
 					int			pid = slot->active_pid;
+
 					slot_contents.data.restart_lsn = slot->data.restart_lsn;
 					SpinLockRelease(&slot->mutex);
 					if (pid != 0)
@@ -410,11 +414,13 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 			/* determine how many segments slots can be kept by slots */
 			uint64		slotKeepSegs = XLogMBVarToSegs(max_slot_wal_keep_size_mb, wal_segment_size);
+
 			/* ditto for wal_keep_size */
 			uint64		keepSegs = XLogMBVarToSegs(wal_keep_size_mb, wal_segment_size);
 
 			/* if currpos reaches failLSN, we lose our segment */
 			XLogSegNo	failSeg = targetSeg + Max(slotKeepSegs, keepSegs) + 1;
+
 			XLogSegNoOffsetToRecPtr(failSeg, 0, wal_segment_size, failLSN);
 
 			values[i++] = Int64GetDatum(failLSN - currlsn);
@@ -521,6 +527,7 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			 * but snapbuilder/slot statuses are updated properly.
 			 */
 			XLogRecord *record = XLogReadRecord(ctx->reader, &errm);
+
 			if (errm)
 				elog(ERROR, "%s", errm);
 
@@ -742,6 +749,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 	bool		src_islogical = SlotIsLogical(&first_slot_contents);
 	XLogRecPtr	src_restart_lsn = first_slot_contents.data.restart_lsn;
 	bool		temporary = (first_slot_contents.data.persistency == RS_TEMPORARY);
+
 	plugin = logical_slot ? NameStr(first_slot_contents.data.plugin) : NULL;
 
 	/* Check type of replication slot */

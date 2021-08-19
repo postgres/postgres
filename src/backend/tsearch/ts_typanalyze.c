@@ -182,12 +182,13 @@ compute_tsvector_stats(VacAttrStats *stats,
 	hash_ctl.match = lexeme_match;
 	hash_ctl.hcxt = CurrentMemoryContext;
 	HTAB	   *lexemes_tab = hash_create("Analyzed lexemes table",
-							  num_mcelem,
-							  &hash_ctl,
-							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+										  num_mcelem,
+										  &hash_ctl,
+										  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	int			b_current = 1;
+
 	lexeme_no = 0;
 
 	/* Loop over the tsvectors. */
@@ -228,6 +229,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		 */
 		char	   *lexemesptr = STRPTR(vector);
 		WordEntry  *curentryptr = ARRPTR(vector);
+
 		for (j = 0; j < vector->size; j++)
 		{
 			bool		found;
@@ -310,6 +312,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		hash_seq_init(&scan_status, lexemes_tab);
 		int			track_len = 0;
+
 		minfreq = lexeme_no;
 		maxfreq = 0;
 		while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)

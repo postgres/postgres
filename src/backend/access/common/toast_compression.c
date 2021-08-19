@@ -59,7 +59,7 @@ pglz_compress_datum(const struct varlena *value)
 	 * that will be needed for varlena overhead, and allocate that amount.
 	 */
 	struct varlena *tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize) +
-									VARHDRSZ_COMPRESSED);
+													VARHDRSZ_COMPRESSED);
 
 	len = pglz_compress(VARDATA_ANY(value),
 						valsize,
@@ -88,9 +88,10 @@ pglz_decompress_datum(const struct varlena *value)
 
 	/* decompress the data */
 	int32		rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
-							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
-							  VARDATA(result),
-							  VARDATA_COMPRESSED_GET_EXTSIZE(value), true);
+										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
+										  VARDATA(result),
+										  VARDATA_COMPRESSED_GET_EXTSIZE(value), true);
+
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -114,9 +115,10 @@ pglz_decompress_datum_slice(const struct varlena *value,
 
 	/* decompress the data */
 	int32		rawsize = pglz_decompress((char *) value + VARHDRSZ_COMPRESSED,
-							  VARSIZE(value) - VARHDRSZ_COMPRESSED,
-							  VARDATA(result),
-							  slicelength, false);
+										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
+										  VARDATA(result),
+										  slicelength, false);
+
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -150,8 +152,9 @@ lz4_compress_datum(const struct varlena *value)
 	struct varlena *tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED);
 
 	int32		len = LZ4_compress_default(VARDATA_ANY(value),
-							   (char *) tmp + VARHDRSZ_COMPRESSED,
-							   valsize, max_size);
+										   (char *) tmp + VARHDRSZ_COMPRESSED,
+										   valsize, max_size);
+
 	if (len <= 0)
 		elog(ERROR, "lz4 compression failed");
 
@@ -184,9 +187,10 @@ lz4_decompress_datum(const struct varlena *value)
 
 	/* decompress the data */
 	int32		rawsize = LZ4_decompress_safe((char *) value + VARHDRSZ_COMPRESSED,
-								  VARDATA(result),
-								  VARSIZE(value) - VARHDRSZ_COMPRESSED,
-								  VARDATA_COMPRESSED_GET_EXTSIZE(value));
+											  VARDATA(result),
+											  VARSIZE(value) - VARHDRSZ_COMPRESSED,
+											  VARDATA_COMPRESSED_GET_EXTSIZE(value));
+
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -219,10 +223,11 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 
 	/* decompress the data */
 	int32		rawsize = LZ4_decompress_safe_partial((char *) value + VARHDRSZ_COMPRESSED,
-										  VARDATA(result),
-										  VARSIZE(value) - VARHDRSZ_COMPRESSED,
-										  slicelength,
-										  slicelength);
+													  VARDATA(result),
+													  VARSIZE(value) - VARHDRSZ_COMPRESSED,
+													  slicelength,
+													  slicelength);
+
 	if (rawsize < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),

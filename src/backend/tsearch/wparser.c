@@ -57,6 +57,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 	TSTokenTypeStorage *st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
+
 	st->cur = 0;
 	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
@@ -64,6 +65,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 	funcctx->user_fctx = (void *) st;
 
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(3);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "alias",
@@ -80,6 +82,7 @@ tt_process_call(FuncCallContext *funcctx)
 {
 
 	TSTokenTypeStorage *st = (TSTokenTypeStorage *) funcctx->user_fctx;
+
 	if (st->list && st->list[st->cur].lexid)
 	{
 		char	   *values[3];
@@ -132,6 +135,7 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		Oid			prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
+
 		tt_setup_firstcall(funcctx, prsId);
 	}
 
@@ -167,13 +171,14 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 	PrsStorage *st = (PrsStorage *) palloc(sizeof(PrsStorage));
+
 	st->cur = 0;
 	st->len = 16;
 	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
 	void	   *prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
-													 PointerGetDatum(VARDATA_ANY(txt)),
-													 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
+																 PointerGetDatum(VARDATA_ANY(txt)),
+																 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
 
 	while ((type = DatumGetInt32(FunctionCall3(&prs->prstoken,
 											   PointerGetDatum(prsdata),
@@ -199,6 +204,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 
 	funcctx->user_fctx = (void *) st;
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(2);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "tokid",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "token",
@@ -213,6 +219,7 @@ prs_process_call(FuncCallContext *funcctx)
 {
 
 	PrsStorage *st = (PrsStorage *) funcctx->user_fctx;
+
 	if (st->cur < st->len)
 	{
 		char	   *values[2];
@@ -266,6 +273,7 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		Oid			prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
+
 		prs_setup_firstcall(funcctx, prsId, txt);
 	}
 

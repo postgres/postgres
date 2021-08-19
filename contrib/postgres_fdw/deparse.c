@@ -694,6 +694,7 @@ foreign_expr_walker(Node *node,
 							return false;
 
 						List	   *opArgs = ((OpExpr *) whenExpr)->args;
+
 						if (list_length(opArgs) != 2 ||
 							!IsA(strip_implicit_coercions(linitial(opArgs)),
 								 CaseTestExpr))
@@ -872,10 +873,11 @@ foreign_expr_walker(Node *node,
 						SortGroupClause *srt = (SortGroupClause *) lfirst(lc);
 
 						TargetEntry *tle = get_sortgroupref_tle(srt->tleSortGroupRef,
-												   agg->args);
+																agg->args);
 						Oid			sortcoltype = exprType((Node *) tle->expr);
 						TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
-													 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+																	 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+
 						/* Check shippability of non-default sort operator. */
 						if (srt->sortop != typentry->lt_opr &&
 							srt->sortop != typentry->gt_opr &&
@@ -1154,6 +1156,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	{
 
 		PgFdwRelationInfo *ofpinfo = (PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
+
 		quals = ofpinfo->remote_conds;
 	}
 	else
@@ -1309,9 +1312,10 @@ deparseTargetList(StringInfo buf,
 
 	/* If there's a whole-row reference, we'll need all the columns. */
 	bool		have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
-								  attrs_used);
+											  attrs_used);
 
 	bool		first = true;
+
 	for (i = 1; i <= tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i - 1);
@@ -1573,6 +1577,7 @@ deparseSubqueryTargetList(deparse_expr_cxt *context)
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
 
 	bool		first = true;
+
 	foreach(lc, foreignrel->reltarget->exprs)
 	{
 		Node	   *node = (Node *) lfirst(lc);
@@ -1796,6 +1801,7 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		 * deparseSubqueryTargetList).
 		 */
 		int			ncols = list_length(foreignrel->reltarget->exprs);
+
 		if (ncols > 0)
 		{
 			int			i;
@@ -1921,6 +1927,7 @@ rebuildInsertSql(StringInfo buf, Relation rel,
 	 * row, so start at the right offset).
 	 */
 	int			pindex = num_params + 1;
+
 	for (i = 0; i < num_rows; i++)
 	{
 		appendStringInfoString(buf, ", (");
@@ -1972,8 +1979,9 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " SET ");
 
-	AttrNumber	pindex = 2;					/* ctid is always the first param */
+	AttrNumber	pindex = 2;		/* ctid is always the first param */
 	bool		first = true;
+
 	foreach(lc, targetAttrs)
 	{
 		int			attnum = lfirst_int(lc);
@@ -2049,6 +2057,7 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 	int			nestlevel = set_transmission_modes();
 
 	bool		first = true;
+
 	forboth(lc, targetlist, lc2, targetAttrs)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -2404,7 +2413,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * "whole row" attribute.
 		 */
 		Bitmapset  *attrs_used = bms_add_member(NULL,
-									0 - FirstLowInvalidHeapAttributeNumber);
+												0 - FirstLowInvalidHeapAttributeNumber);
 
 		/*
 		 * In case the whole-row reference is under an outer join then it has
@@ -2444,6 +2453,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 		 * option, use that value.
 		 */
 		List	   *options = GetForeignColumnOptions(rte->relid, varattno);
+
 		foreach(lc, options)
 		{
 			DefElem    *def = (DefElem *) lfirst(lc);
@@ -2843,6 +2853,7 @@ deparseSubscriptingRef(SubscriptingRef *node, deparse_expr_cxt *context)
 
 	/* Deparse subscript expressions. */
 	ListCell   *lowlist_item = list_head(node->reflowerindexpr);	/* could be NULL */
+
 	foreach(uplist_item, node->refupperindexpr)
 	{
 		appendStringInfoChar(buf, '[');
@@ -2907,6 +2918,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 
 	/* ... and all the arguments */
 	bool		first = true;
+
 	foreach(arg, node->args)
 	{
 		if (!first)
@@ -2930,6 +2942,7 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 
 	/* Retrieve information about the operator from system catalog. */
 	HeapTuple	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
 	Form_pg_operator form = (Form_pg_operator) GETSTRUCT(tuple);
@@ -2976,6 +2989,7 @@ deparseOperatorName(StringInfo buf, Form_pg_operator opform)
 	{
 
 		const char *opnspname = get_namespace_name(opform->oprnamespace);
+
 		/* Print fully qualified operator name. */
 		appendStringInfo(buf, "OPERATOR(%s.%s)",
 						 quote_identifier(opnspname), opname);
@@ -3015,6 +3029,7 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 
 	/* Retrieve information about the operator from system catalog. */
 	HeapTuple	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
 	Form_pg_operator form = (Form_pg_operator) GETSTRUCT(tuple);
@@ -3027,6 +3042,7 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 
 	/* Deparse left operand. */
 	Expr	   *arg1 = linitial(node->args);
+
 	deparseExpr(arg1, context);
 	appendStringInfoChar(buf, ' ');
 
@@ -3036,6 +3052,7 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 
 	/* Deparse right operand. */
 	Expr	   *arg2 = lsecond(node->args);
+
 	deparseExpr(arg2, context);
 
 	appendStringInfoChar(buf, ')');
@@ -3086,6 +3103,7 @@ deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)
 
 	appendStringInfoChar(buf, '(');
 	bool		first = true;
+
 	foreach(lc, node->args)
 	{
 		if (!first)
@@ -3315,11 +3333,13 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 		first = false;
 
 		Node	   *sortexpr = deparseSortGroupClause(srt->tleSortGroupRef, targetList,
-										  false, context);
+													  false, context);
 		Oid			sortcoltype = exprType(sortexpr);
+
 		/* See whether operator is default < or > for datatype */
 		TypeCacheEntry *typentry = lookup_type_cache(sortcoltype,
-									 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+													 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+
 		if (srt->sortop == typentry->lt_opr)
 			appendStringInfoString(buf, " ASC");
 		else if (srt->sortop == typentry->gt_opr)
@@ -3331,9 +3351,11 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 
 			/* Append operator name. */
 			HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(srt->sortop));
+
 			if (!HeapTupleIsValid(opertup))
 				elog(ERROR, "cache lookup failed for operator %u", srt->sortop);
 			Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
+
 			deparseOperatorName(buf, operform);
 			ReleaseSysCache(opertup);
 		}
@@ -3515,6 +3537,7 @@ appendFunctionName(Oid funcid, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 
 	HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
@@ -3524,11 +3547,13 @@ appendFunctionName(Oid funcid, deparse_expr_cxt *context)
 	{
 
 		const char *schemaname = get_namespace_name(procform->pronamespace);
+
 		appendStringInfo(buf, "%s.", quote_identifier(schemaname));
 	}
 
 	/* Always print the function name */
 	const char *proname = NameStr(procform->proname);
+
 	appendStringInfoString(buf, quote_identifier(proname));
 
 	ReleaseSysCache(proctup);
@@ -3657,6 +3682,7 @@ get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
 
 	/* Get the column alias ID */
 	int			i = 1;
+
 	foreach(lc, foreignrel->reltarget->exprs)
 	{
 		if (equal(lfirst(lc), (Node *) node))

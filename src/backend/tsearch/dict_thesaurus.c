@@ -87,6 +87,7 @@ newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 	}
 
 	TheLexeme  *ptr = d->wrds + d->nwrds;
+
 	d->nwrds++;
 
 	ptr->lexeme = palloc(e - b + 1);
@@ -749,6 +750,7 @@ copyTSLexeme(TheSubstitute *ts)
 	uint16		i;
 
 	TSLexeme   *res = (TSLexeme *) palloc(sizeof(TSLexeme) * (ts->reslen + 1));
+
 	for (i = 0; i < ts->reslen; i++)
 	{
 		res[i] = ts->res[i];
@@ -801,10 +803,10 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 		d->subdict = lookup_ts_dictionary_cache(d->subdictOid);
 
 	TSLexeme   *res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
-													 PointerGetDatum(d->subdict->dictData),
-													 PG_GETARG_DATUM(1),
-													 PG_GETARG_DATUM(2),
-													 PointerGetDatum(NULL)));
+																 PointerGetDatum(d->subdict->dictData),
+																 PG_GETARG_DATUM(1),
+																 PG_GETARG_DATUM(2),
+																 PointerGetDatum(NULL)));
 
 	if (res && res->lexeme)
 	{
@@ -825,6 +827,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 			}
 
 			LexemeInfo **infos = (LexemeInfo **) palloc(sizeof(LexemeInfo *) * nlex);
+
 			for (i = 0; i < nlex; i++)
 				if ((infos[i] = findTheLexeme(d, basevar[i].lexeme)) == NULL)
 					break;

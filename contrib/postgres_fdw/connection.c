@@ -161,6 +161,7 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 	 * Find or create cached entry for requested connection.
 	 */
 	ConnCacheEntry *entry = hash_search(ConnectionHash, &key, HASH_ENTER, &found);
+
 	if (!found)
 	{
 		/*
@@ -569,6 +570,7 @@ do_sql_command(PGconn *conn, const char *sql)
 	if (!PQsendQuery(conn, sql))
 		pgfdw_report_error(ERROR, NULL, conn, false, sql);
 	PGresult   *res = pgfdw_get_result(conn, sql);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, conn, true, sql);
 	PQclear(res);
@@ -719,10 +721,11 @@ pgfdw_get_result(PGconn *conn, const char *query)
 
 				/* Sleep until there's something to do */
 				int			wc = WaitLatchOrSocket(MyLatch,
-									   WL_LATCH_SET | WL_SOCKET_READABLE |
-									   WL_EXIT_ON_PM_DEATH,
-									   PQsocket(conn),
-									   -1L, PG_WAIT_EXTENSION);
+												   WL_LATCH_SET | WL_SOCKET_READABLE |
+												   WL_EXIT_ON_PM_DEATH,
+												   PQsocket(conn),
+												   -1L, PG_WAIT_EXTENSION);
+
 				ResetLatch(MyLatch);
 
 				CHECK_FOR_INTERRUPTS();
@@ -736,6 +739,7 @@ pgfdw_get_result(PGconn *conn, const char *query)
 			}
 
 			PGresult   *res = PQgetResult(conn);
+
 			if (res == NULL)
 				break;			/* query is complete */
 
@@ -1035,6 +1039,7 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 	 * of the current level, and close them.
 	 */
 	int			curlevel = GetCurrentTransactionNestLevel();
+
 	hash_seq_init(&scan, ConnectionHash);
 	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
 	{
@@ -1328,6 +1333,7 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 
 				/* If timeout has expired, give up, else get sleep time. */
 				long		cur_timeout = TimestampDifferenceMilliseconds(now, endtime);
+
 				if (cur_timeout <= 0)
 				{
 					timed_out = true;
@@ -1420,6 +1426,7 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -1594,7 +1601,7 @@ disconnect_cached_connections(Oid serverid)
 			{
 
 				ForeignServer *server = GetForeignServerExtended(entry->serverid,
-												  FSV_MISSING_OK);
+																 FSV_MISSING_OK);
 
 				if (!server)
 				{

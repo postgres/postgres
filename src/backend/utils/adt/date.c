@@ -122,7 +122,8 @@ date_in(PG_FUNCTION_ARGS)
 	char		workbuf[MAXDATELEN + 1];
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						  field, ftype, MAXDATEFIELDS, &nf);
+									  field, ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp);
 	if (dterr != 0)
@@ -188,6 +189,7 @@ date_out(PG_FUNCTION_ARGS)
 	}
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -335,6 +337,7 @@ GetSQLCurrentTime(int32 typmod)
 	GetCurrentTimeUsec(tm, &fsec, &tz);
 
 	TimeTzADT  *result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
 	tm2timetz(tm, fsec, tz, result);
 	AdjustTimeForTypmod(&(result->time), typmod);
 	return result;
@@ -741,6 +744,7 @@ date_cmp_timestamp_internal(DateADT dateVal, Timestamp dt2)
 	int			overflow;
 
 	Timestamp	dt1 = date2timestamp_opt_overflow(dateVal, &overflow);
+
 	if (overflow > 0)
 	{
 		/* dt1 is larger than any finite timestamp, but less than infinity */
@@ -820,6 +824,7 @@ date_cmp_timestamptz_internal(DateADT dateVal, TimestampTz dt2)
 	int			overflow;
 
 	TimestampTz dt1 = date2timestamptz_opt_overflow(dateVal, &overflow);
+
 	if (overflow > 0)
 	{
 		/* dt1 is larger than any finite timestamp, but less than infinity */
@@ -1067,8 +1072,8 @@ extract_date(PG_FUNCTION_ARGS)
 				mday;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -1377,7 +1382,8 @@ time_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						  field, ftype, MAXDATEFIELDS, &nf);
+									  field, ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -1492,6 +1498,7 @@ time_out(PG_FUNCTION_ARGS)
 	EncodeTimeOnly(tm, fsec, false, 0, DateStyle, buf);
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -1569,7 +1576,7 @@ make_time(PG_FUNCTION_ARGS)
 
 	/* This should match tm2time */
 	TimeADT		time = (((tm_hour * MINS_PER_HOUR + tm_min) * SECS_PER_MINUTE)
-			* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
+						* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
 
 	PG_RETURN_TIMEADT(time);
 }
@@ -1607,6 +1614,7 @@ time_scale(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 
 	TimeADT		result = time;
+
 	AdjustTimeForTypmod(&result, typmod);
 
 	PG_RETURN_TIMEADT(result);
@@ -1900,7 +1908,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 	 * USECS_PER_DAY) - timestamp;
 	 */
 	TimeADT		result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
-			  USECS_PER_SEC) + fsec;
+						  USECS_PER_SEC) + fsec;
 
 	PG_RETURN_TIMEADT(result);
 }
@@ -1930,7 +1938,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	 * USECS_PER_DAY) - timestamp;
 	 */
 	TimeADT		result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
-			  USECS_PER_SEC) + fsec;
+						  USECS_PER_SEC) + fsec;
 
 	PG_RETURN_TIMEADT(result);
 }
@@ -1945,6 +1953,7 @@ datetime_timestamp(PG_FUNCTION_ARGS)
 	TimeADT		time = PG_GETARG_TIMEADT(1);
 
 	Timestamp	result = date2timestamp(date);
+
 	if (!TIMESTAMP_NOT_FINITE(result))
 	{
 		result += time;
@@ -1989,6 +1998,7 @@ interval_time(PG_FUNCTION_ARGS)
 	int64		days;
 
 	TimeADT		result = span->time;
+
 	if (result >= USECS_PER_DAY)
 	{
 		days = result / USECS_PER_DAY;
@@ -2031,6 +2041,7 @@ time_pl_interval(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 
 	TimeADT		result = time + span->time;
+
 	result -= result / USECS_PER_DAY * USECS_PER_DAY;
 	if (result < INT64CONST(0))
 		result += USECS_PER_DAY;
@@ -2048,6 +2059,7 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 
 	TimeADT		result = time - span->time;
+
 	result -= result / USECS_PER_DAY * USECS_PER_DAY;
 	if (result < INT64CONST(0))
 		result += USECS_PER_DAY;
@@ -2108,8 +2120,8 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				val;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -2250,13 +2262,15 @@ timetz_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 
 	int			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						  field, ftype, MAXDATEFIELDS, &nf);
+									  field, ftype, MAXDATEFIELDS, &nf);
+
 	if (dterr == 0)
 		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
 		DateTimeParseError(dterr, str, "time with time zone");
 
 	TimeTzADT  *result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
 	tm2timetz(tm, fsec, tz, result);
 	AdjustTimeForTypmod(&(result->time), typmod);
 
@@ -2277,6 +2291,7 @@ timetz_out(PG_FUNCTION_ARGS)
 	EncodeTimeOnly(tm, fsec, true, tz, DateStyle, buf);
 
 	char	   *result = pstrdup(buf);
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -2489,7 +2504,8 @@ timetz_hash(PG_FUNCTION_ARGS)
 	 * field hashes separately and XOR them.
 	 */
 	uint32		thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
-											   Int64GetDatumFast(key->time)));
+														   Int64GetDatumFast(key->time)));
+
 	thash ^= DatumGetUInt32(hash_uint32(key->zone));
 	PG_RETURN_UINT32(thash);
 }
@@ -2502,8 +2518,9 @@ timetz_hash_extended(PG_FUNCTION_ARGS)
 
 	/* Same approach as timetz_hash */
 	uint64		thash = DatumGetUInt64(DirectFunctionCall2(hashint8extended,
-											   Int64GetDatumFast(key->time),
-											   seed));
+														   Int64GetDatumFast(key->time),
+														   seed));
+
 	thash ^= DatumGetUInt64(hash_uint32_extended(key->zone,
 												 DatumGetInt64(seed)));
 	PG_RETURN_UINT64(thash);
@@ -2863,8 +2880,8 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				val;
 
 	char	   *lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
-											VARSIZE_ANY_EXHDR(units),
-											false);
+														VARSIZE_ANY_EXHDR(units),
+														false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -3008,8 +3025,8 @@ timetz_zone(PG_FUNCTION_ARGS)
 
 	/* DecodeTimezoneAbbrev requires lowercase input */
 	char	   *lowzone = downcase_truncate_identifier(tzname,
-										   strlen(tzname),
-										   false);
+													   strlen(tzname),
+													   false);
 
 	type = DecodeTimezoneAbbrev(0, lowzone, &val, &tzp);
 
@@ -3024,6 +3041,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 		pg_time_t	now = (pg_time_t) time(NULL);
 
 		struct pg_tm *tm = pg_localtime(&now, tzp);
+
 		tz = DetermineTimeZoneAbbrevOffset(tm, tzname, tzp);
 	}
 	else
@@ -3036,6 +3054,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 			pg_time_t	now = (pg_time_t) time(NULL);
 
 			struct pg_tm *tm = pg_localtime(&now, tzp);
+
 			tz = -tm->tm_gmtoff;
 		}
 		else

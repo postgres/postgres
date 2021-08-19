@@ -178,6 +178,7 @@ insert_filehash_entry(const char *path)
 	bool		found;
 
 	file_entry_t *entry = filehash_insert(filehash, path, &found);
+
 	if (!found)
 	{
 		entry->path = pg_strdup(path);
@@ -236,6 +237,7 @@ process_source_file(const char *path, file_type_t type, size_t size,
 
 	/* Remember this source file */
 	file_entry_t *entry = insert_filehash_entry(path);
+
 	if (entry->source_exists)
 		pg_fatal("duplicate source file \"%s\"", path);
 	entry->source_exists = true;
@@ -268,6 +270,7 @@ process_target_file(const char *path, file_type_t type, size_t size,
 
 	/* Remember this target file */
 	file_entry_t *entry = insert_filehash_entry(path);
+
 	if (entry->target_exists)
 		pg_fatal("duplicate source file \"%s\"", path);
 	entry->target_exists = true;
@@ -295,6 +298,7 @@ process_target_wal_block_change(ForkNumber forknum, RelFileNode rnode,
 
 	char	   *path = datasegpath(rnode, forknum, segno);
 	file_entry_t *entry = lookup_filehash_entry(path);
+
 	pfree(path);
 
 	/*
@@ -327,6 +331,7 @@ process_target_wal_block_change(ForkNumber forknum, RelFileNode rnode,
 			{
 
 				off_t		end_offset = (blkno_inseg + 1) * BLCKSZ;
+
 				if (end_offset <= entry->source_size && end_offset <= entry->target_size)
 					datapagemap_add(&entry->target_pages_to_overwrite, blkno_inseg);
 			}
@@ -459,6 +464,7 @@ calculate_totals(filemap_t *filemap)
 			BlockNumber blk;
 
 			datapagemap_iterator_t *iter = datapagemap_iterate(&entry->target_pages_to_overwrite);
+
 			while (datapagemap_next(iter, &blk))
 				filemap->fetch_size += BLCKSZ;
 
@@ -528,6 +534,7 @@ isRelDataFile(const char *path)
 	bool		matched = false;
 
 	int			nmatch = sscanf(path, "global/%u.%u", &rnode.relNode, &segNo);
+
 	if (nmatch == 1 || nmatch == 2)
 	{
 		rnode.spcNode = GLOBALTABLESPACE_OID;
@@ -583,6 +590,7 @@ datasegpath(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	char	   *segpath;
 
 	char	   *path = relpathperm(rnode, forknum);
+
 	if (segno > 0)
 	{
 		segpath = psprintf("%s.%u", path, segno);
@@ -789,10 +797,12 @@ decide_file_actions(void)
 	 * actions should be performed.
 	 */
 	filemap_t  *filemap = pg_malloc(offsetof(filemap_t, entries) +
-						filehash->members * sizeof(file_entry_t *));
+									filehash->members * sizeof(file_entry_t *));
+
 	filemap->nentries = filehash->members;
 	filehash_start_iterate(filehash, &it);
 	int			i = 0;
+
 	while ((entry = filehash_iterate(filehash, &it)) != NULL)
 	{
 		filemap->entries[i++] = entry;

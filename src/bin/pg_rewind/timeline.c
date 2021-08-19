@@ -40,6 +40,7 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 	 */
 	XLogRecPtr	prevend = InvalidXLogRecPtr;
 	char	   *bufptr = buffer;
+
 	while (!lastline)
 	{
 		char	   *ptr;

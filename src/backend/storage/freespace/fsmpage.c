@@ -87,6 +87,7 @@ fsm_set_avail(Page page, int slot, uint8 value)
 		int			rchild = lchild + 1;
 
 		uint8		newvalue = fsmpage->fp_nodes[lchild];
+
 		if (rchild < NodesPerPage)
 			newvalue = Max(newvalue,
 						   fsmpage->fp_nodes[rchild]);
@@ -173,6 +174,7 @@ restart:
 	 * the last slot on the page.)
 	 */
 	int			target = fsmpage->fp_next_slot;
+
 	if (target < 0 || target >= LeafNodesPerPage)
 		target = 0;
 	target += NonLeafNodesPerPage;
@@ -219,6 +221,7 @@ restart:
 	 *----------
 	 */
 	int			nodeno = target;
+
 	while (nodeno > 0)
 	{
 		if (fsmpage->fp_nodes[nodeno] >= minvalue)
@@ -313,6 +316,7 @@ fsm_truncate_avail(Page page, int nslots)
 
 	/* Clear all truncated leaf nodes */
 	uint8	   *ptr = &fsmpage->fp_nodes[NonLeafNodesPerPage + nslots];
+
 	for (; ptr < &fsmpage->fp_nodes[NodesPerPage]; ptr++)
 	{
 		if (*ptr != 0)

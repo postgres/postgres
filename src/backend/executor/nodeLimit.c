@@ -454,6 +454,7 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	LimitState *limitstate = makeNode(LimitState);
+
 	limitstate->ps.plan = (Plan *) node;
 	limitstate->ps.state = estate;
 	limitstate->ps.ExecProcNode = ExecLimit;

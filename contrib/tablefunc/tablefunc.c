@@ -194,6 +194,7 @@ normal_rand(PG_FUNCTION_ARGS)
 
 		/* total number of tuples to be returned */
 		int32		num_tuples = PG_GETARG_INT32(0);
+
 		if (num_tuples < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -223,6 +224,7 @@ normal_rand(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 
 	uint64		call_cntr = funcctx->call_cntr;
+
 	max_calls = funcctx->max_calls;
 	fctx = funcctx->user_fctx;
 	mean = fctx->mean;
@@ -449,8 +451,8 @@ crosstab(PG_FUNCTION_ARGS)
 
 	/* initialize our tuplestore in long-lived context */
 	Tuplestorestate *tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
+	tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+						  false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -555,6 +557,7 @@ crosstab(PG_FUNCTION_ARGS)
 
 			/* build the tuple and store it */
 			HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
+
 			tuplestore_puttuple(tupstore, tuple);
 			heap_freetuple(tuple);
 		}
@@ -700,9 +703,9 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	 * to create, initially
 	 */
 	HTAB	   *crosstab_hash = hash_create("crosstab hash",
-								INIT_CATS,
-								&ctl,
-								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+											INIT_CATS,
+											&ctl,
+											HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -738,6 +741,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 			/* get the category from the current sql result tuple */
 			char	   *catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+
 			if (catname == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -747,6 +751,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
 			crosstab_cat_desc *catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
+
 			catdesc->catname = catname;
 			catdesc->attidx = i;
 
@@ -1473,6 +1478,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	Oid			sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
 	int32		ret_atttypmod = TupleDescAttr(ret_tupdesc, 0)->atttypmod;
 	int32		sql_atttypmod = TupleDescAttr(sql_tupdesc, 0)->atttypmod;
+
 	if (ret_atttypid != sql_atttypid ||
 		(ret_atttypmod >= 0 && ret_atttypmod != sql_atttypmod))
 		ereport(ERROR,
@@ -1516,6 +1522,7 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	/* check the rowid types match */
 	Oid			ret_atttypid = TupleDescAttr(ret_tupdesc, 0)->atttypid;
 	Oid			sql_atttypid = TupleDescAttr(sql_tupdesc, 0)->atttypid;
+
 	if (ret_atttypid != sql_atttypid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1529,6 +1536,7 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	 * of the return tuple
 	 */
 	Form_pg_attribute sql_attr = TupleDescAttr(sql_tupdesc, 2);
+
 	for (i = 1; i < ret_tupdesc->natts; i++)
 	{
 		ret_attr = TupleDescAttr(ret_tupdesc, i);

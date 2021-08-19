@@ -54,6 +54,7 @@ convert_and_check_filename(text *arg)
 {
 
 	char	   *filename = text_to_cstring(arg);
+
 	canonicalize_path(filename);	/* filename can change length here */
 
 	/*
@@ -268,6 +269,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 	char	   *filename = convert_and_check_filename(filename_t);
 
 	text	   *result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
+
 	if (result)
 		PG_RETURN_TEXT_P(result);
 	else
@@ -305,6 +307,7 @@ pg_read_file_v2(PG_FUNCTION_ARGS)
 	char	   *filename = convert_and_check_filename(filename_t);
 
 	text	   *result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
+
 	if (result)
 		PG_RETURN_TEXT_P(result);
 	else
@@ -339,7 +342,8 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 	char	   *filename = convert_and_check_filename(filename_t);
 
 	bytea	   *result = read_binary_file(filename, seek_offset,
-							  bytes_to_read, missing_ok);
+										  bytes_to_read, missing_ok);
+
 	if (result)
 		PG_RETURN_BYTEA_P(result);
 	else
@@ -413,6 +417,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	 * in pg_proc.h.
 	 */
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(6);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "size", INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
@@ -498,10 +503,12 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	TupleDesc	tupdesc = CreateTemplateTupleDesc(1);
+
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_ls_dir", TEXTOID, -1, 0);
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -509,6 +516,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	DIR		   *dirdesc = AllocateDir(location);
+
 	if (!dirdesc)
 	{
 		/* Return empty tuplestore if appropriate */
@@ -581,6 +589,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 
 	bool		randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
 	Tuplestorestate *tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -593,6 +602,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	 * can't count on the SRF being run to completion.
 	 */
 	DIR		   *dirdesc = AllocateDir(dir);
+
 	if (!dirdesc)
 	{
 		/* Return empty tuplestore if appropriate */

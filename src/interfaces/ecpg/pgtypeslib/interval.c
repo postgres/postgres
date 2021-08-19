@@ -27,6 +27,7 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale
 		return;
 	frac *= scale;
 	int			sec = (int) frac;
+
 	tm->tm_sec += sec;
 	frac -= sec;
 	*fsec += rint(frac * 1000000);
@@ -44,6 +45,7 @@ AdjustFractDays(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
 		return;
 	frac *= scale;
 	int			extra_days = (int) frac;
+
 	tm->tm_mday += extra_days;
 	frac -= extra_days;
 	AdjustFractSeconds(frac, tm, fsec, SECS_PER_DAY);
@@ -58,6 +60,7 @@ ParseISO8601Number(const char *str, char **endptr, int *ipart, double *fpart)
 		return DTERR_BAD_FORMAT;
 	errno = 0;
 	double		val = strtod(str, endptr);
+
 	/* did we not see anything that looks like a double? */
 	if (*endptr == str || errno != 0)
 		return DTERR_BAD_FORMAT;
@@ -134,6 +137,7 @@ DecodeISO8601Interval(char *str,
 
 		char	   *fieldstart = str;
 		int			dterr = ParseISO8601Number(str, &str, &val, &fval);
+
 		if (dterr)
 			return dterr;
 
@@ -435,6 +439,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 					/* SQL "years-months" syntax */
 
 					int			val2 = strtoint(cp + 1, &cp, 10);
+
 					if (errno == ERANGE || val2 < 0 || val2 >= MONTHS_PER_YEAR)
 						return DTERR_FIELD_OVERFLOW;
 					if (*cp != '\0')
@@ -594,6 +599,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 	{
 
 		int			sec = *fsec / USECS_PER_SEC;
+
 		*fsec -= sec * USECS_PER_SEC;
 		tm->tm_sec += sec;
 	}
@@ -981,6 +987,7 @@ PGTYPESinterval_new(void)
 {
 
 	interval   *result = (interval *) pgtypes_alloc(sizeof(interval));
+
 	/* result can be NULL if we run out of memory */
 	return result;
 }
@@ -1027,6 +1034,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 	}
 
 	interval   *result = (interval *) pgtypes_alloc(sizeof(interval));
+
 	if (!result)
 		return NULL;
 

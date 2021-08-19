@@ -130,6 +130,7 @@ BarrierArriveAndWait(Barrier *barrier, uint32 wait_event_info)
 	SpinLockAcquire(&barrier->mutex);
 	int			start_phase = barrier->phase;
 	int			next_phase = start_phase + 1;
+
 	++barrier->arrived;
 	if (barrier->arrived == barrier->participants)
 	{
@@ -239,6 +240,7 @@ BarrierAttach(Barrier *barrier)
 	SpinLockAcquire(&barrier->mutex);
 	++barrier->participants;
 	int			phase = barrier->phase;
+
 	SpinLockRelease(&barrier->mutex);
 
 	return phase;
@@ -280,6 +282,7 @@ BarrierParticipants(Barrier *barrier)
 
 	SpinLockAcquire(&barrier->mutex);
 	int			participants = barrier->participants;
+
 	SpinLockRelease(&barrier->mutex);
 
 	return participants;
@@ -319,6 +322,7 @@ BarrierDetachImpl(Barrier *barrier, bool arrive)
 		release = false;
 
 	bool		last = barrier->participants == 0;
+
 	SpinLockRelease(&barrier->mutex);
 
 	if (release)

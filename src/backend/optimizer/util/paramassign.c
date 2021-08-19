@@ -125,6 +125,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
 	int			i = assign_param_for_var(root, var);
 
 	Param	   *retval = makeNode(Param);
+
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = i;
 	retval->paramtype = var->vartype;
@@ -200,6 +201,7 @@ replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 	int			i = assign_param_for_placeholdervar(root, phv);
 
 	Param	   *retval = makeNode(Param);
+
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = i;
 	retval->paramtype = exprType((Node *) phv->phexpr);
@@ -235,6 +237,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 	Assert(agg->agglevelsup == 0);
 
 	PlannerParamItem *pitem = makeNode(PlannerParamItem);
+
 	pitem->item = (Node *) agg;
 	pitem->paramId = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
@@ -243,6 +246,7 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 	root->plan_params = lappend(root->plan_params, pitem);
 
 	Param	   *retval = makeNode(Param);
+
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
 	retval->paramtype = agg->aggtype;
@@ -280,6 +284,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	Assert(grp->agglevelsup == 0);
 
 	PlannerParamItem *pitem = makeNode(PlannerParamItem);
+
 	pitem->item = (Node *) grp;
 	pitem->paramId = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
@@ -288,6 +293,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	root->plan_params = lappend(root->plan_params, pitem);
 
 	Param	   *retval = makeNode(Param);
+
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
 	retval->paramtype = ptype;
@@ -502,6 +508,7 @@ identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
 	ListCell   *cell;
 
 	List	   *result = NIL;
+
 	foreach(cell, root->curOuterParams)
 	{
 		NestLoopParam *nlp = (NestLoopParam *) lfirst(cell);
@@ -550,6 +557,7 @@ generate_new_exec_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 {
 
 	Param	   *retval = makeNode(Param);
+
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = list_length(root->glob->paramExecTypes);
 	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,

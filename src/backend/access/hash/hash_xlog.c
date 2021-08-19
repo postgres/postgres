@@ -36,10 +36,12 @@ hash_xlog_init_meta_page(XLogReaderState *record)
 
 	/* create the index' metapage */
 	Buffer		metabuf = XLogInitBufferForRedo(record, 0);
+
 	Assert(BufferIsValid(metabuf));
 	_hash_init_metabuffer(metabuf, xlrec->num_tuples, xlrec->procid,
 						  xlrec->ffactor, true);
 	Page		page = (Page) BufferGetPage(metabuf);
+
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(metabuf);
 
@@ -76,6 +78,7 @@ hash_xlog_init_bitmap_page(XLogReaderState *record)
 	 * Initialize bitmap page
 	 */
 	Buffer		bitmapbuf = XLogInitBufferForRedo(record, 0);
+
 	_hash_initbitmapbuffer(bitmapbuf, xlrec->bmsize, true);
 	PageSetLSN(BufferGetPage(bitmapbuf), lsn);
 	MarkBufferDirty(bitmapbuf);
@@ -186,16 +189,19 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 	XLogRecGetBlockTag(record, 1, NULL, NULL, &leftblk);
 
 	Buffer		ovflbuf = XLogInitBufferForRedo(record, 0);
+
 	Assert(BufferIsValid(ovflbuf));
 
 	char	   *data = XLogRecGetBlockData(record, 0, &datalen);
 	uint32	   *num_bucket = (uint32 *) data;
+
 	Assert(datalen == sizeof(uint32));
 	_hash_initbuf(ovflbuf, InvalidBlockNumber, *num_bucket, LH_OVERFLOW_PAGE,
 				  true);
 	/* update backlink */
 	Page		ovflpage = BufferGetPage(ovflbuf);
 	HashPageOpaque ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+
 	ovflopaque->hasho_prevblkno = leftblk;
 
 	PageSetLSN(ovflpage, lsn);
@@ -206,6 +212,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 
 		Page		leftpage = BufferGetPage(leftbuf);
 		HashPageOpaque leftopaque = (HashPageOpaque) PageGetSpecialPointer(leftpage);
+
 		leftopaque->hasho_nextblkno = rightblk;
 
 		PageSetLSN(leftpage, lsn);
@@ -268,6 +275,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 
 		Page		page = BufferGetPage(metabuf);
 		HashMetaPage metap = HashPageGetMeta(page);
+
 		metap->hashm_firstfree = *firstfree_ovflpage;
 
 		if (!xlrec->bmpage_found)
@@ -332,6 +340,7 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 
 	/* replay the record for new bucket */
 	Buffer		newbuf = XLogInitBufferForRedo(record, 1);
+
 	_hash_initbuf(newbuf, xlrec->new_bucket, xlrec->new_bucket,
 				  xlrec->new_bucket_flag, true);
 	if (!IsBufferCleanupOK(newbuf))
@@ -361,6 +370,7 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 
 		Page		page = BufferGetPage(metabuf);
 		HashMetaPage metap = HashPageGetMeta(page);
+
 		metap->hashm_maxbucket = xlrec->new_bucket;
 
 		data = XLogRecGetBlockData(record, 2, &datalen);
@@ -524,11 +534,13 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 				IndexTuple	itup = (IndexTuple) data;
 
 				Size		itemsz = IndexTupleSize(itup);
+
 				itemsz = MAXALIGN(itemsz);
 
 				data += itemsz;
 
 				OffsetNumber l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "hash_xlog_move_page_contents: failed to add item to hash index page, size %d bytes",
 						 (int) itemsz);
@@ -644,11 +656,13 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 				IndexTuple	itup = (IndexTuple) data;
 
 				Size		itemsz = IndexTupleSize(itup);
+
 				itemsz = MAXALIGN(itemsz);
 
 				data += itemsz;
 
 				OffsetNumber l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "hash_xlog_squeeze_page: failed to add item to hash index page, size %d bytes",
 						 (int) itemsz);
@@ -778,6 +792,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 			Page		page = BufferGetPage(metabuf);
 			HashMetaPage metap = HashPageGetMeta(page);
+
 			metap->hashm_firstfree = *firstfree_ovflpage;
 
 			PageSetLSN(page, lsn);
@@ -849,6 +864,7 @@ hash_xlog_delete(XLogReaderState *record)
 		{
 
 			HashPageOpaque pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 			pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 		}
 
@@ -878,6 +894,7 @@ hash_xlog_split_cleanup(XLogReaderState *record)
 		page = (Page) BufferGetPage(buffer);
 
 		HashPageOpaque bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 		bucket_opaque->hasho_flag &= ~LH_BUCKET_NEEDS_SPLIT_CLEANUP;
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
@@ -1056,6 +1073,7 @@ hash_mask(char *pagedata, BlockNumber blkno)
 	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	int			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
+
 	if (pagetype == LH_UNUSED_PAGE)
 	{
 		/*

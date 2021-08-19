@@ -115,9 +115,11 @@ GetIndexInputType(Relation index, AttrNumber indexcol)
 	Assert(index->rd_index != NULL);
 	Assert(indexcol > 0 && indexcol <= index->rd_index->indnkeyatts);
 	Oid			opcintype = index->rd_opcintype[indexcol - 1];
+
 	if (!IsPolymorphicType(opcintype))
 		return opcintype;
 	AttrNumber	heapcol = index->rd_index->indkey.values[indexcol - 1];
+
 	if (heapcol != 0)			/* Simple index column? */
 		return getBaseType(get_atttype(index->rd_index->indrelid, heapcol));
 
@@ -132,6 +134,7 @@ GetIndexInputType(Relation index, AttrNumber indexcol)
 	else
 		indexprs = RelationGetIndexExpressions(index);
 	ListCell   *indexpr_item = list_head(indexprs);
+
 	for (int i = 1; i <= index->rd_index->indnkeyatts; i++)
 	{
 		if (index->rd_index->indkey.values[i - 1] == 0)
@@ -155,9 +158,11 @@ fillTypeDesc(SpGistTypeDesc *desc, Oid type)
 
 	desc->type = type;
 	HeapTuple	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for type %u", type);
 	Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+
 	desc->attlen = typtup->typlen;
 	desc->attbyval = typtup->typbyval;
 	desc->attalign = typtup->typalign;
@@ -196,6 +201,7 @@ spgGetCache(Relation index)
 		in.attType = atttype;
 
 		FmgrInfo   *procinfo = index_getprocinfo(index, 1, SPGIST_CONFIG_PROC);
+
 		FunctionCall2Coll(procinfo,
 						  index->rd_indcollation[spgKeyColumn],
 						  PointerGetDatum(&in),
@@ -235,6 +241,7 @@ spgGetCache(Relation index)
 
 		/* Last, get the lastUsedPages data from the metapage */
 		Buffer		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
+
 		LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
 
 		SpGistMetaPageData *metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
@@ -384,6 +391,7 @@ SpGistNewBuffer(Relation index)
 
 	/* Must extend the file */
 	bool		needLock = !RELATION_IS_LOCAL(index);
+
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
 
@@ -480,6 +488,7 @@ allocNewBuffer(Relation index, int flags)
 	{
 
 		Buffer		buffer = SpGistNewBuffer(index);
+
 		SpGistInitBuffer(buffer, pageflags);
 
 		if (pageflags & SPGIST_LEAF)
@@ -643,6 +652,7 @@ SpGistSetLastUsedPage(Relation index, Buffer buffer)
 	SpGistLastUsedPage *lup = GET_LUP(cache, flags);
 
 	int			freeSpace = PageGetExactFreeSpace(page);
+
 	if (lup->blkno == InvalidBlockNumber || lup->blkno == blkno ||
 		lup->freeSpace < freeSpace)
 	{
@@ -660,6 +670,7 @@ SpGistInitPage(Page page, uint16 f)
 
 	PageInit(page, BLCKSZ, sizeof(SpGistPageOpaqueData));
 	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
+
 	opaque->flags = f;
 	opaque->spgist_page_id = SPGIST_PAGE_ID;
 }
@@ -684,6 +695,7 @@ SpGistInitMetapage(Page page)
 
 	SpGistInitPage(page, SPGIST_META);
 	SpGistMetaPageData *metadata = SpGistPageGetMeta(page);
+
 	memset(metadata, 0, sizeof(SpGistMetaPageData));
 	metadata->magicNumber = SPGIST_MAGIC_NUMBER;
 
@@ -798,6 +810,7 @@ SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
 	 * Compute total size.
 	 */
 	Size		size = SGLTHDRSZ(needs_null_mask);
+
 	size += data_size;
 	size = MAXALIGN(size);
 
@@ -853,6 +866,7 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
 	 */
 	Size		hoff = SGLTHDRSZ(needs_null_mask);
 	Size		size = hoff + data_size;
+
 	size = MAXALIGN(size);
 
 	/*
@@ -906,6 +920,7 @@ spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 
 	/* compute space needed (note result is already maxaligned) */
 	unsigned int size = SGNTHDRSZ;
+
 	if (!isnull)
 		size += SpGistGetInnerTypeSize(&state->attLabelType, label);
 
@@ -1103,6 +1118,7 @@ spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
 
 	/* Either all the labels must be NULL, or none. */
 	SpGistNodeTuple node = SGITNODEPTR(innerTuple);
+
 	if (IndexTupleHasNulls(node))
 	{
 		SGITITERATE(innerTuple, i, node)
@@ -1277,7 +1293,7 @@ spgproperty(Oid index_oid, int attno,
 
 	/* And now we can check whether the operator is provided. */
 	CatCList   *catlist = SearchSysCacheList1(AMOPSTRATEGY,
-								  ObjectIdGetDatum(opfamily));
+											  ObjectIdGetDatum(opfamily));
 
 	*res = false;
 

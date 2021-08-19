@@ -169,12 +169,14 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 
 	/* Initialize buffer to copy to */
 	bytea	   *raw_page = (bytea *) palloc(BLCKSZ + VARHDRSZ);
+
 	SET_VARSIZE(raw_page, BLCKSZ + VARHDRSZ);
 	char	   *raw_page_data = VARDATA(raw_page);
 
 	/* Take a verbatim copy of the page */
 
 	Buffer		buf = ReadBufferExtended(rel, forknum, blkno, RBM_NORMAL, NULL);
+
 	LockBuffer(buf, BUFFER_LOCK_SHARE);
 
 	memcpy(raw_page_data, BufferGetPage(buf), BLCKSZ);

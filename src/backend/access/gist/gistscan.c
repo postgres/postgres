@@ -87,6 +87,7 @@ gistbeginscan(Relation r, int nkeys, int norderbys)
 
 	/* initialize opaque data */
 	GISTScanOpaque so = (GISTScanOpaque) palloc0(sizeof(GISTScanOpaqueData));
+
 	so->giststate = giststate;
 	giststate->tempCxt = createTempGistContext();
 	so->queue = NULL;
@@ -178,6 +179,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		 */
 		int			natts = RelationGetNumberOfAttributes(scan->indexRelation);
 		int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(scan->indexRelation);
+
 		so->giststate->fetchTupdesc = CreateTemplateTupleDesc(natts);
 		for (attno = 1; attno <= nkeyatts; attno++)
 		{
@@ -204,6 +206,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 
 	/* create new, empty pairing heap for search queue */
 	MemoryContext oldCxt = MemoryContextSwitchTo(so->queueCxt);
+
 	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
 

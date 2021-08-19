@@ -72,7 +72,8 @@ addItemPointersToLeafTuple(GinState *ginstate,
 	/* Compress the posting list, and try to a build tuple with room for it */
 	IndexTuple	res = NULL;
 	GinPostingList *compressedList = ginCompressPostingList(newItems, newNPosting, GinMaxItemSize,
-											NULL);
+															NULL);
+
 	pfree(newItems);
 	if (compressedList)
 	{
@@ -93,10 +94,10 @@ addItemPointersToLeafTuple(GinState *ginstate,
 		 * already be in order with no duplicates.
 		 */
 		BlockNumber postingRoot = createPostingTree(ginstate->index,
-										oldItems,
-										oldNPosting,
-										buildStats,
-										buffer);
+													oldItems,
+													oldNPosting,
+													buildStats,
+													buffer);
 
 		/* Now insert the TIDs-to-be-added into the posting tree */
 		ginInsertItemPointers(ginstate->index, postingRoot,
@@ -130,6 +131,7 @@ buildFreshLeafTuple(GinState *ginstate,
 
 	/* try to build a posting list tuple with all the items */
 	GinPostingList *compressedList = ginCompressPostingList(items, nitem, GinMaxItemSize, NULL);
+
 	if (compressedList)
 	{
 		res = GinFormTuple(ginstate, attnum, key, category,
@@ -152,7 +154,7 @@ buildFreshLeafTuple(GinState *ginstate,
 		 * Initialize a new posting tree with the TIDs.
 		 */
 		BlockNumber postingRoot = createPostingTree(ginstate->index, items, nitem,
-										buildStats, buffer);
+													buildStats, buffer);
 
 		/* And save the root link in the result tuple */
 		GinSetPostingTree(res, postingRoot);
@@ -253,8 +255,9 @@ ginHeapTupleBulkInsert(GinBuildState *buildstate, OffsetNumber attnum,
 
 	MemoryContext oldCtx = MemoryContextSwitchTo(buildstate->funcCtx);
 	Datum	   *entries = ginExtractEntries(buildstate->accum.ginstate, attnum,
-								value, isNull,
-								&nentries, &categories);
+											value, isNull,
+											&nentries, &categories);
+
 	MemoryContextSwitchTo(oldCtx);
 
 	ginInsertBAEntries(&buildstate->accum, heapptr, attnum,
@@ -368,11 +371,12 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * prefers to receive tuples in TID order.
 	 */
 	double		reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
-									   ginBuildCallback, (void *) &buildstate,
-									   NULL);
+												   ginBuildCallback, (void *) &buildstate,
+												   NULL);
 
 	/* dump remaining entries to the index */
 	MemoryContext oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);
+
 	ginBeginBAScan(&buildstate.accum);
 	while ((list = ginGetBAEntry(&buildstate.accum,
 								 &attnum, &key, &category, &nlist)) != NULL)
@@ -461,7 +465,7 @@ ginHeapTupleInsert(GinState *ginstate, OffsetNumber attnum,
 				nentries;
 
 	Datum	   *entries = ginExtractEntries(ginstate, attnum, value, isNull,
-								&nentries, &categories);
+											&nentries, &categories);
 
 	for (i = 0; i < nentries; i++)
 		ginEntryInsert(ginstate, attnum, entries[i], categories[i],
@@ -490,8 +494,8 @@ gininsert(Relation index, Datum *values, bool *isnull,
 	}
 
 	MemoryContext insertCtx = AllocSetContextCreate(CurrentMemoryContext,
-									  "Gin insert temporary context",
-									  ALLOCSET_DEFAULT_SIZES);
+													"Gin insert temporary context",
+													ALLOCSET_DEFAULT_SIZES);
 
 	oldCtx = MemoryContextSwitchTo(insertCtx);
 

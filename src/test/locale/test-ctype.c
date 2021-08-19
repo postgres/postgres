@@ -62,6 +62,7 @@ main()
 	short		c;
 
 	char	   *cur_locale = setlocale(LC_ALL, "");
+
 	if (cur_locale)
 		fprintf(stderr, "Successfully set locale to \"%s\"\n", cur_locale);
 	else

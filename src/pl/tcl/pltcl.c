@@ -566,8 +566,9 @@ pltcl_fetch_interp(Oid prolang, bool pltrusted)
 		user_id = InvalidOid;
 
 	pltcl_interp_desc *interp_desc = hash_search(pltcl_interp_htab, &user_id,
-							  HASH_ENTER,
-							  &found);
+												 HASH_ENTER,
+												 &found);
+
 	if (!found)
 		interp_desc->interp = NULL;
 
@@ -610,11 +611,13 @@ call_pltcl_start_proc(Oid prolang, bool pltrusted)
 
 	/* Current user must have permission to call function */
 	AclResult	aclresult = pg_proc_aclcheck(procOid, GetUserId(), ACL_EXECUTE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, start_proc);
 
 	/* Get the function's pg_proc entry */
 	HeapTuple	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procOid));
+
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", procOid);
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -726,6 +729,7 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	 * Ensure that static pointer is saved/restored properly
 	 */
 	pltcl_call_state *save_call_state = pltcl_current_call_state;
+
 	pltcl_current_call_state = &current_call_state;
 
 	PG_TRY();
@@ -787,8 +791,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	Datum		retval;
 
 	bool		nonatomic = fcinfo->context &&
-		IsA(fcinfo->context, CallContext) &&
-		!castNode(CallContext, fcinfo->context)->atomic;
+	IsA(fcinfo->context, CallContext) &&
+	!castNode(CallContext, fcinfo->context)->atomic;
 
 	/* Connect to SPI manager */
 	if (SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0) != SPI_OK_CONNECT)
@@ -796,7 +800,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 
 	/* Find or compile the function */
 	pltcl_proc_desc *prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, InvalidOid,
-									 false, pltrusted);
+													  false, pltrusted);
 
 	call_state->prodesc = prodesc;
 	prodesc->fn_refcount++;
@@ -829,6 +833,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	 * proc in the Tcl interpreter
 	 ************************************************************/
 	Tcl_Obj    *tcl_cmd = Tcl_NewObj();
+
 	Tcl_ListObjAppendElement(NULL, tcl_cmd,
 							 Tcl_NewStringObj(prodesc->internal_proname, -1));
 
@@ -854,15 +859,18 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 					HeapTupleData tmptup;
 
 					HeapTupleHeader td = DatumGetHeapTupleHeader(fcinfo->args[i].value);
+
 					/* Extract rowtype info and find a tupdesc */
 					Oid			tupType = HeapTupleHeaderGetTypeId(td);
 					int32		tupTypmod = HeapTupleHeaderGetTypMod(td);
 					TupleDesc	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
 					/* Build a temporary HeapTuple control structure */
 					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 					tmptup.t_data = td;
 
 					Tcl_Obj    *list_tmp = pltcl_build_tuple_argument(&tmptup, tupdesc, true);
+
 					Tcl_ListObjAppendElement(NULL, tcl_cmd, list_tmp);
 
 					ReleaseTupleDesc(tupdesc);
@@ -880,7 +888,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 				{
 
 					char	   *tmp = OutputFunctionCall(&prodesc->arg_out_func[i],
-											 fcinfo->args[i].value);
+														 fcinfo->args[i].value);
+
 					UTF_BEGIN;
 					Tcl_ListObjAppendElement(NULL, tcl_cmd,
 											 Tcl_NewStringObj(UTF_E2U(tmp), -1));
@@ -941,6 +950,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 			{
 
 				MemoryContext oldcxt = MemoryContextSwitchTo(call_state->tuple_store_cxt);
+
 				rsi->setDesc = CreateTupleDescCopy(call_state->ret_tupdesc);
 				MemoryContextSwitchTo(oldcxt);
 			}
@@ -997,11 +1007,13 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 
 		/* Convert function result to tuple */
 		Tcl_Obj    *resultObj = Tcl_GetObjResult(interp);
+
 		if (Tcl_ListObjGetElements(interp, resultObj, &resultObjc, &resultObjv) == TCL_ERROR)
 			throw_tcl_error(interp, prodesc->user_proname);
 
 		HeapTuple	tup = pltcl_build_tuple_result(interp, resultObjv, resultObjc,
-									   call_state);
+												   call_state);
+
 		retval = HeapTupleGetDatum(tup);
 	}
 	else
@@ -1043,9 +1055,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 
 	/* Find or compile the function */
 	pltcl_proc_desc *prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
-									 RelationGetRelid(trigdata->tg_relation),
-									 false, /* not an event trigger */
-									 pltrusted);
+													  RelationGetRelid(trigdata->tg_relation),
+													  false,	/* not an event trigger */
+													  pltrusted);
 
 	call_state->prodesc = prodesc;
 	prodesc->fn_refcount++;
@@ -1059,6 +1071,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	 * proc in the interpreter
 	 ************************************************************/
 	Tcl_Obj    *tcl_cmd = Tcl_NewObj();
+
 	Tcl_IncrRefCount(tcl_cmd);
 
 	PG_TRY();
@@ -1286,7 +1299,7 @@ pltcl_event_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 
 	/* Find or compile the function */
 	pltcl_proc_desc *prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
-									 InvalidOid, true, pltrusted);
+													  InvalidOid, true, pltrusted);
 
 	call_state->prodesc = prodesc;
 	prodesc->fn_refcount++;
@@ -1295,6 +1308,7 @@ pltcl_event_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 
 	/* Create the tcl command and call the internal proc */
 	Tcl_Obj    *tcl_cmd = Tcl_NewObj();
+
 	Tcl_IncrRefCount(tcl_cmd);
 	Tcl_ListObjAppendElement(NULL, tcl_cmd,
 							 Tcl_NewStringObj(prodesc->internal_proname, -1));
@@ -1334,6 +1348,7 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 
 	char	   *emsg = pstrdup(utf_u2e(Tcl_GetStringResult(interp)));
 	char	   *econtext = utf_u2e(Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
+
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 			 errmsg("%s", emsg),
@@ -1360,6 +1375,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 
 	/* We'll need the pg_proc tuple in any case... */
 	HeapTuple	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
+
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -1373,8 +1389,9 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 	proc_key.user_id = pltrusted ? GetUserId() : InvalidOid;
 
 	pltcl_proc_ptr *proc_ptr = hash_search(pltcl_proc_htab, &proc_key,
-						   HASH_ENTER,
-						   &found);
+										   HASH_ENTER,
+										   &found);
+
 	if (!found)
 		proc_ptr->proc_ptr = NULL;
 
@@ -1442,6 +1459,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * struct prodesc and subsidiary data must all live in proc_cxt.
 		 ************************************************************/
 		MemoryContext oldcontext = MemoryContextSwitchTo(proc_cxt);
+
 		prodesc = (pltcl_proc_desc *) palloc0(sizeof(pltcl_proc_desc));
 		prodesc->user_proname = pstrdup(NameStr(procStruct->proname));
 		MemoryContextSetIdentifier(proc_cxt, prodesc->user_proname);
@@ -1627,10 +1645,12 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Add user's function definition to proc body
 		 ************************************************************/
 		Datum		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
-									  Anum_pg_proc_prosrc, &isnull);
+												  Anum_pg_proc_prosrc, &isnull);
+
 		if (isnull)
 			elog(ERROR, "null prosrc");
 		char	   *proc_source = TextDatumGetCString(prosrcdatum);
+
 		UTF_BEGIN;
 		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
 		UTF_END;
@@ -1642,9 +1662,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		 * Create the procedure in the interpreter
 		 ************************************************************/
 		int			tcl_rc = Tcl_EvalEx(interp,
-							Tcl_DStringValue(&proc_internal_def),
-							Tcl_DStringLength(&proc_internal_def),
-							TCL_EVAL_GLOBAL);
+										Tcl_DStringValue(&proc_internal_def),
+										Tcl_DStringLength(&proc_internal_def),
+										TCL_EVAL_GLOBAL);
+
 		if (tcl_rc != TCL_OK)
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
@@ -1749,6 +1770,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	 * back to us at all.
 	 */
 	MemoryContext oldcontext = CurrentMemoryContext;
+
 	PG_TRY();
 	{
 		UTF_BEGIN;
@@ -1763,6 +1785,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		/* Must reset elog.c's state */
 		MemoryContextSwitchTo(oldcontext);
 		ErrorData  *edata = CopyErrorData();
+
 		FlushErrorState();
 
 		/* Pass the error data to Tcl */
@@ -2154,7 +2177,8 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 			{
 
 				HeapTuple	tuple = pltcl_build_tuple_result(interp, rowObjv, rowObjc,
-												 call_state);
+															 call_state);
+
 				tuplestore_puttuple(call_state->tuple_store, tuple);
 			}
 		}
@@ -2167,9 +2191,10 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 				elog(ERROR, "wrong result type supplied in return_next");
 
 			Datum		retval = InputFunctionCall(&prodesc->result_in_func,
-									   utf_u2e((char *) Tcl_GetString(objv[1])),
-									   prodesc->result_typioparam,
-									   -1);
+												   utf_u2e((char *) Tcl_GetString(objv[1])),
+												   prodesc->result_typioparam,
+												   -1);
+
 			tuplestore_putvalues(call_state->tuple_store, call_state->ret_tupdesc,
 								 &retval, &isNull);
 		}
@@ -2237,6 +2262,7 @@ pltcl_subtrans_abort(Tcl_Interp *interp,
 	/* Save error info */
 	MemoryContextSwitchTo(oldcontext);
 	ErrorData  *edata = CopyErrorData();
+
 	FlushErrorState();
 
 	/* Abort the inner transaction */
@@ -2290,6 +2316,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	int			i = 1;
+
 	while (i < objc)
 	{
 		if (Tcl_GetIndexFromObj(NULL, objv[i], options, NULL,
@@ -2317,6 +2344,7 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	int			query_idx = i;
+
 	if (query_idx >= objc || query_idx + 2 < objc)
 	{
 		Tcl_WrongNumArgs(interp, query_idx - 1, objv, "query ?loop body?");
@@ -2509,10 +2537,12 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 * occur.  FIXME someday.
 	 ************************************************************/
 	volatile MemoryContext plan_cxt = AllocSetContextCreate(TopMemoryContext,
-									 "PL/Tcl spi_prepare query",
-									 ALLOCSET_SMALL_SIZES);
+															"PL/Tcl spi_prepare query",
+															ALLOCSET_SMALL_SIZES);
+
 	MemoryContextSwitchTo(plan_cxt);
 	pltcl_query_desc *qdesc = (pltcl_query_desc *) palloc0(sizeof(pltcl_query_desc));
+
 	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
 	qdesc->nargs = nargs;
 	qdesc->argtypes = (Oid *) palloc(nargs * sizeof(Oid));
@@ -2587,6 +2617,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashTable *query_hash = &pltcl_current_call_state->prodesc->interp_desc->query_hash;
 
 	Tcl_HashEntry *hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
+
 	Tcl_SetHashValue(hashent, (ClientData) qdesc);
 
 	/* qname is ASCII, so no need for encoding conversion */
@@ -2629,6 +2660,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	 * Get the options and check syntax
 	 ************************************************************/
 	int			i = 1;
+
 	while (i < objc)
 	{
 		if (Tcl_GetIndexFromObj(NULL, objv[i], options, NULL,
@@ -2672,12 +2704,14 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashTable *query_hash = &pltcl_current_call_state->prodesc->interp_desc->query_hash;
 
 	Tcl_HashEntry *hashent = Tcl_FindHashEntry(query_hash, Tcl_GetString(objv[i]));
+
 	if (hashent == NULL)
 	{
 		Tcl_AppendResult(interp, "invalid queryid '", Tcl_GetString(objv[i]), "'", NULL);
 		return TCL_ERROR;
 	}
 	pltcl_query_desc *qdesc = (pltcl_query_desc *) Tcl_GetHashValue(hashent);
+
 	i++;
 
 	/************************************************************
@@ -2874,6 +2908,7 @@ pltcl_commit(ClientData cdata, Tcl_Interp *interp,
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
 		ErrorData  *edata = CopyErrorData();
+
 		FlushErrorState();
 
 		/* Pass the error data to Tcl */
@@ -2913,6 +2948,7 @@ pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
 		ErrorData  *edata = CopyErrorData();
+
 		FlushErrorState();
 
 		/* Pass the error data to Tcl */
@@ -3204,6 +3240,7 @@ pltcl_init_tuple_store(pltcl_call_state *call_state)
 	 */
 	MemoryContext oldcxt = MemoryContextSwitchTo(call_state->tuple_store_cxt);
 	ResourceOwner oldowner = CurrentResourceOwner;
+
 	CurrentResourceOwner = call_state->tuple_store_owner;
 
 	call_state->tuple_store =

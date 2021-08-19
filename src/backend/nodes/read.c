@@ -251,6 +251,7 @@ nodeTokenType(const char *token, int length)
 	 */
 	const char *numptr = token;
 	int			numlen = length;
+
 	if (*numptr == '+' || *numptr == '-')
 		numptr++, numlen--;
 	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
@@ -359,6 +360,7 @@ nodeRead(const char *token, int tok_len)
 						if (token[0] == ')')
 							break;
 						int			val = (int) strtol(token, &endptr, 10);
+
 						if (endptr != token + tok_len)
 							elog(ERROR, "unrecognized integer: \"%.*s\"",
 								 tok_len, token);
@@ -378,6 +380,7 @@ nodeRead(const char *token, int tok_len)
 						if (token[0] == ')')
 							break;
 						Oid			val = (Oid) strtoul(token, &endptr, 10);
+
 						if (endptr != token + tok_len)
 							elog(ERROR, "unrecognized OID: \"%.*s\"",
 								 tok_len, token);

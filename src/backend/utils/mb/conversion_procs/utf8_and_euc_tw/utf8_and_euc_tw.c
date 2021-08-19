@@ -46,11 +46,11 @@ euc_tw_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_UTF8);
 
 	int			converted = LocalToUtf(src, len, dest,
-						   &euc_tw_to_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_EUC_TW,
-						   noError);
+									   &euc_tw_to_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_EUC_TW,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -66,11 +66,11 @@ utf8_to_euc_tw(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_TW);
 
 	int			converted = UtfToLocal(src, len, dest,
-						   &euc_tw_from_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_EUC_TW,
-						   noError);
+									   &euc_tw_from_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_EUC_TW,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }

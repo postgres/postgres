@@ -147,6 +147,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 {
 
 	PGresult   *result = (PGresult *) malloc(sizeof(PGresult));
+
 	if (!result)
 		return NULL;
 
@@ -303,6 +304,7 @@ PQcopyResult(const PGresult *src, int flags)
 		return NULL;
 
 	PGresult   *dest = PQmakeEmptyPGresult(NULL, PGRES_TUPLES_OK);
+
 	if (!dest)
 		return NULL;
 
@@ -396,6 +398,7 @@ dupEvents(PGEvent *events, int count, size_t *memSize)
 
 	size_t		msize = count * sizeof(PGEvent);
 	PGEvent    *newEvents = (PGEvent *) malloc(msize);
+
 	if (!newEvents)
 		return NULL;
 
@@ -453,8 +456,8 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 		int			i;
 
 		PGresAttValue *tup = (PGresAttValue *)
-			pqResultAlloc(res, res->numAttributes * sizeof(PGresAttValue),
-						  true);
+		pqResultAlloc(res, res->numAttributes * sizeof(PGresAttValue),
+					  true);
 
 		if (!tup)
 			goto fail;
@@ -805,6 +808,7 @@ pqPrepareAsyncResult(PGconn *conn)
 	 * conn->errorMessage.
 	 */
 	PGresult   *res = conn->result;
+
 	if (!res)
 		res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 
@@ -846,6 +850,7 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 
 	/* Make a PGresult to pass to the notice receiver */
 	PGresult   *res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
+
 	if (!res)
 		return;
 	res->noticeHooks = *hooks;
@@ -955,10 +960,11 @@ pqSaveMessageField(PGresult *res, char code, const char *value)
 {
 
 	PGMessageField *pfield = (PGMessageField *)
-		pqResultAlloc(res,
-					  offsetof(PGMessageField, contents) +
-					  strlen(value) + 1,
-					  true);
+	pqResultAlloc(res,
+				  offsetof(PGMessageField, contents) +
+				  strlen(value) + 1,
+				  true);
+
 	if (!pfield)
 		return;					/* out of memory? */
 	pfield->code = code;
@@ -1003,6 +1009,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	{
 
 		char	   *ptr = ((char *) pstatus) + sizeof(pgParameterStatus);
+
 		pstatus->name = ptr;
 		strcpy(ptr, name);
 		ptr += strlen(name) + 1;
@@ -1126,7 +1133,8 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 	 * memory for gettext() to do anything.
 	 */
 	PGresAttValue *tup = (PGresAttValue *)
-		pqResultAlloc(res, nfields * sizeof(PGresAttValue), true);
+	pqResultAlloc(res, nfields * sizeof(PGresAttValue), true);
+
 	if (tup == NULL)
 		goto fail;
 
@@ -1145,6 +1153,7 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 			bool		isbinary = (res->attDescs[i].format != 0);
 
 			char	   *val = (char *) pqResultAlloc(res, clen + 1, isbinary);
+
 			if (val == NULL)
 				goto fail;
 
@@ -1338,6 +1347,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	}
 
 	PGcmdQueueEntry *entry = pqAllocCmdQueueEntry(conn);
+
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
@@ -1498,6 +1508,7 @@ PQsendPrepare(PGconn *conn,
 	}
 
 	PGcmdQueueEntry *entry = pqAllocCmdQueueEntry(conn);
+
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
@@ -1703,6 +1714,7 @@ PQsendQueryGuts(PGconn *conn,
 	int			i;
 
 	PGcmdQueueEntry *entry = pqAllocCmdQueueEntry(conn);
+
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
@@ -2338,6 +2350,7 @@ PQexecFinish(PGconn *conn)
 	 * Also stop if the connection is lost (else we'll loop infinitely).
 	 */
 	PGresult   *lastResult = NULL;
+
 	while ((result = PQgetResult(conn)) != NULL)
 	{
 		if (lastResult)
@@ -2442,6 +2455,7 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
 		return 0;
 
 	PGcmdQueueEntry *entry = pqAllocCmdQueueEntry(conn);
+
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
@@ -2506,6 +2520,7 @@ PQnotifies(PGconn *conn)
 	parseInput(conn);
 
 	PGnotify   *event = conn->notifyHead;
+
 	if (event)
 	{
 		conn->notifyHead = event->next;
@@ -2963,6 +2978,7 @@ pqCommandQueueAdvance(PGconn *conn)
 
 	/* delink from queue */
 	PGcmdQueueEntry *prevquery = conn->cmd_queue_head;
+
 	conn->cmd_queue_head = conn->cmd_queue_head->next;
 
 	/* and make it recyclable */
@@ -3086,6 +3102,7 @@ PQpipelineSync(PGconn *conn)
 	}
 
 	PGcmdQueueEntry *entry = pqAllocCmdQueueEntry(conn);
+
 	if (entry == NULL)
 		return 0;				/* error msg already set */
 
@@ -3522,6 +3539,7 @@ PQoidStatus(const PGresult *res)
 		return "";
 
 	size_t		len = strspn(res->cmdStatus + 7, "0123456789");
+
 	if (len > sizeof(buf) - 1)
 		len = sizeof(buf) - 1;
 	memcpy(buf, res->cmdStatus + 7, len);
@@ -4130,6 +4148,7 @@ PQescapeByteaInternal(PGconn *conn,
 
 	*to_length = len;
 	unsigned char *rp = result = (unsigned char *) malloc(len);
+
 	if (rp == NULL)
 	{
 		if (conn)
@@ -4254,6 +4273,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 
 		const unsigned char *s = strtext + 2;
 		unsigned char *p = buffer;
+
 		while (*s)
 		{
 			char		v1,

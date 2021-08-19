@@ -48,9 +48,10 @@ lower(PG_FUNCTION_ARGS)
 	text	   *in_string = PG_GETARG_TEXT_PP(0);
 
 	char	   *out_string = str_tolower(VARDATA_ANY(in_string),
-							 VARSIZE_ANY_EXHDR(in_string),
-							 PG_GET_COLLATION());
+										 VARSIZE_ANY_EXHDR(in_string),
+										 PG_GET_COLLATION());
 	text	   *result = cstring_to_text(out_string);
+
 	pfree(out_string);
 
 	PG_RETURN_TEXT_P(result);
@@ -77,9 +78,10 @@ upper(PG_FUNCTION_ARGS)
 	text	   *in_string = PG_GETARG_TEXT_PP(0);
 
 	char	   *out_string = str_toupper(VARDATA_ANY(in_string),
-							 VARSIZE_ANY_EXHDR(in_string),
-							 PG_GET_COLLATION());
+										 VARSIZE_ANY_EXHDR(in_string),
+										 PG_GET_COLLATION());
 	text	   *result = cstring_to_text(out_string);
+
 	pfree(out_string);
 
 	PG_RETURN_TEXT_P(result);
@@ -109,9 +111,10 @@ initcap(PG_FUNCTION_ARGS)
 	text	   *in_string = PG_GETARG_TEXT_PP(0);
 
 	char	   *out_string = str_initcap(VARDATA_ANY(in_string),
-							 VARSIZE_ANY_EXHDR(in_string),
-							 PG_GET_COLLATION());
+										 VARSIZE_ANY_EXHDR(in_string),
+										 PG_GET_COLLATION());
 	text	   *result = cstring_to_text(out_string);
+
 	pfree(out_string);
 
 	PG_RETURN_TEXT_P(result);
@@ -275,6 +278,7 @@ rpad(PG_FUNCTION_ARGS)
 				 errmsg("requested length too large")));
 
 	text	   *ret = (text *) palloc(VARHDRSZ + bytelen);
+
 	m = len - s1len;
 
 	ptr1 = VARDATA_ANY(string1);
@@ -331,8 +335,8 @@ btrim(PG_FUNCTION_ARGS)
 	text	   *set = PG_GETARG_TEXT_PP(1);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
-				 true, true);
+							 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
+							 true, true);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -349,8 +353,8 @@ btrim1(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_PP(0);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 " ", 1,
-				 true, true);
+							 " ", 1,
+							 true, true);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -384,6 +388,7 @@ dotrim(const char *string, int stringlen,
 			int			stringnchars = 0;
 			const char *p = string;
 			int			len = stringlen;
+
 			while (len > 0)
 			{
 				stringchars[stringnchars] = p;
@@ -396,6 +401,7 @@ dotrim(const char *string, int stringlen,
 			const char **setchars = (const char **) palloc(setlen * sizeof(char *));
 			int		   *setmblen = (int *) palloc(setlen * sizeof(int));
 			int			setnchars = 0;
+
 			p = set;
 			len = setlen;
 			while (len > 0)
@@ -407,7 +413,7 @@ dotrim(const char *string, int stringlen,
 				len -= mblen;
 			}
 
-			int			resultndx = 0;		/* index in stringchars[] */
+			int			resultndx = 0;	/* index in stringchars[] */
 			int			resultnchars = stringnchars;
 
 			if (doltrim)
@@ -565,6 +571,7 @@ dobyteatrim(bytea *string, bytea *set, bool doltrim, bool dortrim)
 	}
 
 	bytea	   *ret = (bytea *) palloc(VARHDRSZ + m);
+
 	SET_VARSIZE(ret, VARHDRSZ + m);
 	memcpy(VARDATA(ret), ptr, m);
 	return ret;
@@ -671,8 +678,8 @@ ltrim(PG_FUNCTION_ARGS)
 	text	   *set = PG_GETARG_TEXT_PP(1);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
-				 true, false);
+							 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
+							 true, false);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -689,8 +696,8 @@ ltrim1(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_PP(0);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 " ", 1,
-				 true, false);
+							 " ", 1,
+							 true, false);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -717,8 +724,8 @@ rtrim(PG_FUNCTION_ARGS)
 	text	   *set = PG_GETARG_TEXT_PP(1);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
-				 false, true);
+							 VARDATA_ANY(set), VARSIZE_ANY_EXHDR(set),
+							 false, true);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -735,8 +742,8 @@ rtrim1(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_PP(0);
 
 	text	   *ret = dotrim(VARDATA_ANY(string), VARSIZE_ANY_EXHDR(string),
-				 " ", 1,
-				 false, true);
+							 " ", 1,
+							 false, true);
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -801,6 +808,7 @@ translate(PG_FUNCTION_ARGS)
 				 errmsg("requested length too large")));
 
 	text	   *result = (text *) palloc(worst_len + VARHDRSZ);
+
 	target = VARDATA(result);
 	retlen = 0;
 

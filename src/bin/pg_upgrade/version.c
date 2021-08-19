@@ -37,10 +37,11 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 
 		/* find if there are any large objects */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT count(*) "
-								"FROM	pg_catalog.pg_largeobject ");
+											"SELECT count(*) "
+											"FROM	pg_catalog.pg_largeobject ");
 
 		int			i_count = PQfnumber(res, "count");
+
 		if (atoi(PQgetvalue(res, 0, i_count)) != 0)
 		{
 			found = true;
@@ -190,6 +191,7 @@ check_for_data_types_usage(ClusterInfo *cluster,
 		PGresult   *res = executeQueryOrDie(conn, "%s", querybuf.data);
 
 		int			ntups = PQntuples(res);
+
 		i_nspname = PQfnumber(res, "nspname");
 		i_relname = PQfnumber(res, "relname");
 		i_attname = PQfnumber(res, "attname");
@@ -240,7 +242,7 @@ check_for_data_type_usage(ClusterInfo *cluster,
 {
 
 	char	   *base_query = psprintf("SELECT '%s'::pg_catalog.regtype AS oid",
-						  type_name);
+									  type_name);
 
 	bool		found = check_for_data_types_usage(cluster, base_query, output_path);
 
@@ -345,18 +347,19 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 
 		/* find hash indexes */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT n.nspname, c.relname "
-								"FROM	pg_catalog.pg_class c, "
-								"		pg_catalog.pg_index i, "
-								"		pg_catalog.pg_am a, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	i.indexrelid = c.oid AND "
-								"		c.relam = a.oid AND "
-								"		c.relnamespace = n.oid AND "
-								"		a.amname = 'hash'"
-			);
+											"SELECT n.nspname, c.relname "
+											"FROM	pg_catalog.pg_class c, "
+											"		pg_catalog.pg_index i, "
+											"		pg_catalog.pg_am a, "
+											"		pg_catalog.pg_namespace n "
+											"WHERE	i.indexrelid = c.oid AND "
+											"		c.relam = a.oid AND "
+											"		c.relnamespace = n.oid AND "
+											"		a.amname = 'hash'"
+		);
 
 		int			ntups = PQntuples(res);
+
 		i_nspname = PQfnumber(res, "nspname");
 		i_relname = PQfnumber(res, "relname");
 		for (rowno = 0; rowno < ntups; rowno++)
@@ -485,13 +488,14 @@ report_extension_updates(ClusterInfo *cluster)
 
 		/* find extensions needing updates */
 		PGresult   *res = executeQueryOrDie(conn,
-								"SELECT name "
-								"FROM pg_available_extensions "
-								"WHERE installed_version != default_version"
-			);
+											"SELECT name "
+											"FROM pg_available_extensions "
+											"WHERE installed_version != default_version"
+		);
 
 		int			ntups = PQntuples(res);
 		int			i_name = PQfnumber(res, "name");
+
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			found = true;

@@ -192,6 +192,7 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 {
 
 	ss_lru_item_t *item = scan_locations->head;
+
 	for (;;)
 	{
 
@@ -253,6 +254,7 @@ ss_get_location(Relation rel, BlockNumber relnblocks)
 
 	LWLockAcquire(SyncScanLock, LW_EXCLUSIVE);
 	BlockNumber startloc = ss_search(rel->rd_node, 0, false);
+
 	LWLockRelease(SyncScanLock);
 
 	/*

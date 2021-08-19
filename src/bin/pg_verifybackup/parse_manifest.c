@@ -144,6 +144,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 
 	/* Run the actual JSON parser. */
 	JsonParseErrorType json_error = pg_parse_json(lex, &sem);
+
 	if (json_error != JSON_SUCCESS)
 		json_manifest_parse_failure(context, "parsing failed");
 	if (parse.state != JM_EXPECT_EOF)
@@ -509,7 +510,8 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 
 	/* Parse the checksum payload, if it's present. */
 	int			checksum_string_length = parse->checksum == NULL ? 0
-		: strlen(parse->checksum);
+	: strlen(parse->checksum);
+
 	if (checksum_string_length == 0)
 	{
 		checksum_length = 0;
@@ -573,6 +575,7 @@ json_manifest_finalize_wal_range(JsonManifestParseState *parse)
 
 	/* Parse timeline. */
 	TimeLineID	tli = strtoul(parse->timeline, &ep, 10);
+
 	if (*ep)
 		json_manifest_parse_failure(parse->context,
 									"timeline is not an integer");
@@ -648,6 +651,7 @@ verify_manifest_checksum(JsonManifestParseState *parse, char *buffer,
 
 	/* Checksum the rest. */
 	pg_cryptohash_ctx *manifest_ctx = pg_cryptohash_create(PG_SHA256);
+
 	if (manifest_ctx == NULL)
 		context->error_cb(context, "out of memory");
 	if (pg_cryptohash_init(manifest_ctx) < 0)

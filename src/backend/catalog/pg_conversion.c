@@ -92,7 +92,8 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* form a tuple */
 	namestrcpy(&cname, conname);
 	Oid			oid = GetNewOidWithIndex(rel, ConversionOidIndexId,
-							 Anum_pg_conversion_oid);
+										 Anum_pg_conversion_oid);
+
 	values[Anum_pg_conversion_oid - 1] = ObjectIdGetDatum(oid);
 	values[Anum_pg_conversion_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_conversion_connamespace - 1] = ObjectIdGetDatum(connamespace);
@@ -156,9 +157,9 @@ FindDefaultConversion(Oid name_space, int32 for_encoding, int32 to_encoding)
 	int			i;
 
 	CatCList   *catlist = SearchSysCacheList3(CONDEFAULT,
-								  ObjectIdGetDatum(name_space),
-								  Int32GetDatum(for_encoding),
-								  Int32GetDatum(to_encoding));
+											  ObjectIdGetDatum(name_space),
+											  Int32GetDatum(for_encoding),
+											  Int32GetDatum(to_encoding));
 
 	for (i = 0; i < catlist->n_members; i++)
 	{

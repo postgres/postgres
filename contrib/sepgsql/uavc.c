@@ -418,8 +418,9 @@ sepgsql_avc_check_perms(const ObjectAddress *tobject,
 	char	   *tcontext = GetSecurityLabel(tobject, SEPGSQL_LABEL_TAG);
 
 	bool		rc = sepgsql_avc_check_perms_label(tcontext,
-									   tclass, required,
-									   audit_name, abort_on_violation);
+												   tclass, required,
+												   audit_name, abort_on_violation);
+
 	if (tcontext)
 		pfree(tcontext);
 
@@ -498,6 +499,7 @@ sepgsql_avc_init(void)
 	 * fallback mode to know its status using netlink sockets.
 	 */
 	int			rc = selinux_status_open(1);
+
 	if (rc < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),

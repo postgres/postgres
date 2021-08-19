@@ -72,6 +72,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 	uint8		sum[MD5_DIGEST_LENGTH];
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_MD5);
+
 	if (ctx == NULL)
 		return false;
 
@@ -93,6 +94,7 @@ pg_md5_binary(const void *buff, size_t len, void *outbuf)
 {
 
 	pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_MD5);
+
 	if (ctx == NULL)
 		return false;
 

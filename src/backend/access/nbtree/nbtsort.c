@@ -618,6 +618,7 @@ _bt_blnewpage(uint32 level)
 
 	/* Initialize BT opaque state */
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 	opaque->btpo_prev = opaque->btpo_next = P_NONE;
 	opaque->btpo_level = level;
 	opaque->btpo_flags = (level > 0) ? 0 : BTP_LEAF;
@@ -730,8 +731,10 @@ _bt_slideleft(Page rightmostpage)
 	OffsetNumber off;
 
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(rightmostpage);
+
 	Assert(maxoff >= P_FIRSTKEY);
 	ItemId		previi = PageGetItemId(rightmostpage, P_HIKEY);
+
 	for (off = P_FIRSTKEY; off <= maxoff; off = OffsetNumberNext(off))
 	{
 		ItemId		thisii = PageGetItemId(rightmostpage, off);
@@ -838,10 +841,12 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 	BlockNumber nblkno = state->btps_blkno;
 	OffsetNumber last_off = state->btps_lastoff;
 	Size		last_truncextra = state->btps_lastextra;
+
 	state->btps_lastextra = truncextra;
 
 	Size		pgspc = PageGetFreeSpace(npage);
 	Size		itupsz = IndexTupleSize(itup);
+
 	itupsz = MAXALIGN(itupsz);
 	/* Leaf case has slightly different rules due to suffix truncation */
 	bool		isleaf = (state->btps_level == 0);
@@ -909,6 +914,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 		Assert(last_off > P_FIRSTKEY);
 		ItemId		ii = PageGetItemId(opage, last_off);
 		IndexTuple	oitup = (IndexTuple) PageGetItem(opage, ii);
+
 		_bt_sortaddtup(npage, ItemIdGetLength(ii), oitup, P_FIRSTKEY,
 					   !isleaf);
 
@@ -922,6 +928,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 		 * needed to append a heap TID.)
 		 */
 		ItemId		hii = PageGetItemId(opage, P_HIKEY);
+
 		*hii = *ii;
 		ItemIdSetUnused(ii);	/* redundant */
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
@@ -957,7 +964,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 
 			Assert(IndexTupleSize(oitup) > last_truncextra);
 			IndexTuple	truncated = _bt_truncate(wstate->index, lastleft, oitup,
-									 wstate->inskey);
+												 wstate->inskey);
+
 			if (!PageIndexTupleOverwrite(opage, P_HIKEY, (Item) truncated,
 										 IndexTupleSize(truncated)))
 				elog(ERROR, "failed to add high key to the index page");
@@ -1065,11 +1073,12 @@ _bt_sort_dedup_finish_pending(BTWriteState *wstate, BTPageState *state,
 
 		/* form a tuple with a posting list */
 		IndexTuple	postingtuple = _bt_form_posting(dstate->base,
-										dstate->htids,
-										dstate->nhtids);
+													dstate->htids,
+													dstate->nhtids);
+
 		/* Calculate posting list overhead */
 		Size		truncextra = IndexTupleSize(postingtuple) -
-			BTreeTupleGetPostingOffset(postingtuple);
+		BTreeTupleGetPostingOffset(postingtuple);
 
 		_bt_buildadd(wstate, state, postingtuple, truncextra);
 		pfree(postingtuple);
@@ -1144,6 +1153,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 	 * by filling in a valid magic number in the metapage.
 	 */
 	Page		metapage = (Page) palloc(BLCKSZ);
+
 	_bt_initmetapage(metapage, rootblkno, rootlevel,
 					 wstate->inskey->allequalimage);
 	_bt_blwritepage(wstate, metapage, BTREE_METAPAGE);
@@ -1168,7 +1178,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	int64		tuples_done = 0;
 
 	bool		deduplicate = wstate->inskey->allequalimage && !btspool->isunique &&
-		BTGetDeduplicateItems(wstate->index);
+	BTGetDeduplicateItems(wstate->index);
 
 	if (merge)
 	{
@@ -1200,7 +1210,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			AssertState(sortKey->ssup_attno != 0);
 
 			int16		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-				BTGreaterStrategyNumber : BTLessStrategyNumber;
+			BTGreaterStrategyNumber : BTLessStrategyNumber;
 
 			PrepareSortSupportFromIndexRel(wstate->index, strategy, sortKey);
 		}
@@ -1225,6 +1235,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 								isNull2;
 
 					SortSupport entry = sortKeys + i - 1;
+
 					attrDatum1 = index_getattr(itup, i, tupdes, &isNull1);
 					attrDatum2 = index_getattr(itup2, i, tupdes, &isNull2);
 
@@ -1283,6 +1294,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		/* merge is unnecessary, deduplicate into posting lists */
 
 		BTDedupState dstate = (BTDedupState) palloc(sizeof(BTDedupStateData));
+
 		dstate->deduplicate = true; /* unused */
 		dstate->nmaxitems = 0;	/* unused */
 		dstate->maxpostingsize = 0; /* set later */
@@ -1576,6 +1588,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	{
 
 		char	   *sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
+
 		memcpy(sharedquery, debug_query_string, querylen + 1);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, sharedquery);
 	}
@@ -1681,6 +1694,7 @@ _bt_parallel_heapscan(BTBuildState *buildstate, bool *brokenhotchain)
 	double		reltuples;
 
 	int			nparticipanttuplesorts = buildstate->btleader->nparticipanttuplesorts;
+
 	for (;;)
 	{
 		SpinLockAcquire(&btshared->mutex);
@@ -1715,6 +1729,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 
 	/* Allocate memory and initialize private spool */
 	BTSpool    *leaderworker = (BTSpool *) palloc0(sizeof(BTSpool));
+
 	leaderworker->heap = buildstate->spool->heap;
 	leaderworker->index = buildstate->spool->index;
 	leaderworker->isunique = buildstate->spool->isunique;
@@ -1880,6 +1895,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 
 	/* Initialize local tuplesort coordination state */
 	SortCoordinate coordinate = palloc0(sizeof(SortCoordinateData));
+
 	coordinate->isWorker = true;
 	coordinate->nParticipants = -1;
 	coordinate->sharedsort = sharedsort;
@@ -1905,6 +1921,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 		 * work_mem independently.
 		 */
 		SortCoordinate coordinate2 = palloc0(sizeof(SortCoordinateData));
+
 		coordinate2->isWorker = true;
 		coordinate2->nParticipants = -1;
 		coordinate2->sharedsort = sharedsort2;
@@ -1925,12 +1942,13 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 
 	/* Join parallel scan */
 	IndexInfo  *indexInfo = BuildIndexInfo(btspool->index);
+
 	indexInfo->ii_Concurrent = btshared->isconcurrent;
 	TableScanDesc scan = table_beginscan_parallel(btspool->heap,
-									ParallelTableScanFromBTShared(btshared));
+												  ParallelTableScanFromBTShared(btshared));
 	double		reltuples = table_index_build_scan(btspool->heap, btspool->index, indexInfo,
-									   true, progress, _bt_build_callback,
-									   (void *) &buildstate, scan);
+												   true, progress, _bt_build_callback,
+												   (void *) &buildstate, scan);
 
 	/* Execute this worker's part of the sort */
 	if (progress)

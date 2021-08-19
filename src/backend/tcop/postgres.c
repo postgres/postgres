@@ -650,7 +650,7 @@ pg_analyze_and_rewrite(RawStmt *parsetree, const char *query_string,
 		ResetUsage();
 
 	Query	   *query = parse_analyze(parsetree, query_string, paramTypes, numParams,
-						  queryEnv);
+									  queryEnv);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -690,6 +690,7 @@ pg_analyze_and_rewrite_params(RawStmt *parsetree,
 		ResetUsage();
 
 	ParseState *pstate = make_parsestate(NULL);
+
 	pstate->p_sourcetext = query_string;
 	pstate->p_queryEnv = queryEnv;
 	(*parserSetup) (pstate, parserSetupArg);
@@ -756,6 +757,7 @@ pg_rewrite_query(Query *query)
 	{
 
 		List	   *new_list = copyObject(querytree_list);
+
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_list, querytree_list))
 			elog(WARNING, "copyObject() failed to produce equal parse tree");
@@ -864,6 +866,7 @@ pg_plan_query(Query *querytree, const char *query_string, int cursorOptions,
 
 		char	   *str = nodeToString(plan);
 		PlannedStmt *new_plan = stringToNodeWithLocations(str);
+
 		pfree(str);
 
 		/*
@@ -1135,6 +1138,7 @@ exec_simple_query(const char *query_string)
 		 * already is one, silently drop it.
 		 */
 		Portal		portal = CreatePortal("", true, true);
+
 		/* Don't display the portal in pg_cursors */
 		portal->visible = false;
 
@@ -1161,7 +1165,8 @@ exec_simple_query(const char *query_string)
 		 * --- but it avoids grottiness in other places.  Ah, the joys of
 		 * backward compatibility...)
 		 */
-		int16		format = 0;				/* TEXT is default */
+		int16		format = 0; /* TEXT is default */
+
 		if (IsA(parsetree->stmt, FetchStmt))
 		{
 			FetchStmt  *stmt = (FetchStmt *) parsetree->stmt;
@@ -1181,6 +1186,7 @@ exec_simple_query(const char *query_string)
 		 * Now we can create the destination receiver object.
 		 */
 		DestReceiver *receiver = CreateDestReceiver(dest);
+
 		if (dest == DestRemote)
 			SetRemoteDestReceiverParams(receiver, portal);
 
@@ -1354,6 +1360,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * query_context here, and do all the parsing work therein.
 	 */
 	bool		is_named = (stmt_name[0] != '\0');
+
 	if (is_named)
 	{
 		/* Named prepared statement --- parse in MessageContext */
@@ -1434,9 +1441,9 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			ResetUsage();
 
 		Query	   *query = parse_analyze_varparams(raw_parse_tree,
-										query_string,
-										&paramTypes,
-										&numParams);
+													query_string,
+													&paramTypes,
+													&numParams);
 
 		/*
 		 * Check all parameter types got determined.
@@ -1585,6 +1592,7 @@ exec_bind_message(StringInfo input_message)
 	{
 
 		PreparedStatement *pstmt = FetchPreparedStatement(stmt_name, true);
+
 		psrc = pstmt->plansource;
 	}
 	else
@@ -1622,6 +1630,7 @@ exec_bind_message(StringInfo input_message)
 
 	/* Get the parameter format codes */
 	int			numPFormats = pq_getmsgint(input_message, 2);
+
 	if (numPFormats > 0)
 	{
 		pformats = (int16 *) palloc(numPFormats * sizeof(int16));
@@ -1917,6 +1926,7 @@ exec_bind_message(StringInfo input_message)
 
 	/* Get the result format codes */
 	int			numRFormats = pq_getmsgint(input_message, 2);
+
 	if (numRFormats > 0)
 	{
 		rformats = (int16 *) palloc(numRFormats * sizeof(int16));
@@ -2021,10 +2031,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	/* Adjust destination to tell printtup.c what to do */
 	CommandDest dest = whereToSendOutput;
+
 	if (dest == DestRemote)
 		dest = DestRemoteExecute;
 
 	Portal		portal = GetPortalByName(portal_name);
+
 	if (!PortalIsValid(portal))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
@@ -2092,6 +2104,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * context, because that may get deleted if portal contains VACUUM).
 	 */
 	DestReceiver *receiver = CreateDestReceiver(dest);
+
 	if (dest == DestRemoteExecute)
 		SetRemoteDestReceiverParams(receiver, portal);
 
@@ -2156,12 +2169,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 		max_rows = FETCH_ALL;
 
 	bool		completed = PortalRun(portal,
-						  max_rows,
-						  true, /* always top level */
-						  !execute_is_fetch && max_rows == FETCH_ALL,
-						  receiver,
-						  receiver,
-						  &qc);
+									  max_rows,
+									  true, /* always top level */
+									  !execute_is_fetch && max_rows == FETCH_ALL,
+									  receiver,
+									  receiver,
+									  &qc);
 
 	receiver->rDestroy(receiver);
 
@@ -2302,14 +2315,14 @@ check_log_duration(char *msec_str, bool was_logged)
 		 * compute secs * 1000 until we've verified it will fit in int.
 		 */
 		bool		exceeded_duration = (log_min_duration_statement == 0 ||
-							 (log_min_duration_statement > 0 &&
-							  (secs > log_min_duration_statement / 1000 ||
-							   secs * 1000 + msecs >= log_min_duration_statement)));
+										 (log_min_duration_statement > 0 &&
+										  (secs > log_min_duration_statement / 1000 ||
+										   secs * 1000 + msecs >= log_min_duration_statement)));
 
 		bool		exceeded_sample_duration = (log_min_duration_sample == 0 ||
-									(log_min_duration_sample > 0 &&
-									 (secs > log_min_duration_sample / 1000 ||
-									  secs * 1000 + msecs >= log_min_duration_sample)));
+												(log_min_duration_sample > 0 &&
+												 (secs > log_min_duration_sample / 1000 ||
+												  secs * 1000 + msecs >= log_min_duration_sample)));
 
 		/*
 		 * Do not log if log_statement_sample_rate = 0. Log a sample if
@@ -2355,6 +2368,7 @@ errdetail_execute(List *raw_parsetree_list)
 			ExecuteStmt *stmt = (ExecuteStmt *) parsetree->stmt;
 
 			PreparedStatement *pstmt = FetchPreparedStatement(stmt->name, false);
+
 			if (pstmt)
 			{
 				errdetail("prepare: %s", pstmt->plansource->query_string);
@@ -2380,6 +2394,7 @@ errdetail_params(ParamListInfo params)
 	{
 
 		char	   *str = BuildParamLogString(params, NULL, log_parameter_max_length);
+
 		if (str && str[0] != '\0')
 			errdetail("parameters: %s", str);
 	}
@@ -2510,6 +2525,7 @@ exec_describe_statement_message(const char *stmt_name)
 	{
 
 		PreparedStatement *pstmt = FetchPreparedStatement(stmt_name, true);
+
 		psrc = pstmt->plansource;
 	}
 	else
@@ -2598,6 +2614,7 @@ exec_describe_portal_message(const char *portal_name)
 	MemoryContextSwitchTo(MessageContext);
 
 	Portal		portal = GetPortalByName(portal_name);
+
 	if (!PortalIsValid(portal))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
@@ -4426,6 +4443,7 @@ PostgresMain(int argc, char *argv[],
 					SetCurrentStatementStartTimestamp();
 
 					const char *query_string = pq_getmsgstring(&input_message);
+
 					pq_getmsgend(&input_message);
 
 					if (am_walsender)
@@ -4452,6 +4470,7 @@ PostgresMain(int argc, char *argv[],
 					const char *stmt_name = pq_getmsgstring(&input_message);
 					const char *query_string = pq_getmsgstring(&input_message);
 					int			numParams = pq_getmsgint(&input_message, 2);
+
 					if (numParams > 0)
 					{
 						paramTypes = (Oid *) palloc(numParams * sizeof(Oid));
@@ -4488,6 +4507,7 @@ PostgresMain(int argc, char *argv[],
 
 					const char *portal_name = pq_getmsgstring(&input_message);
 					int			max_rows = pq_getmsgint(&input_message, 4);
+
 					pq_getmsgend(&input_message);
 
 					exec_execute_message(portal_name, max_rows);
@@ -4534,6 +4554,7 @@ PostgresMain(int argc, char *argv[],
 
 					int			close_type = pq_getmsgbyte(&input_message);
 					const char *close_target = pq_getmsgstring(&input_message);
+
 					pq_getmsgend(&input_message);
 
 					switch (close_type)
@@ -4579,6 +4600,7 @@ PostgresMain(int argc, char *argv[],
 
 					int			describe_type = pq_getmsgbyte(&input_message);
 					const char *describe_target = pq_getmsgstring(&input_message);
+
 					pq_getmsgend(&input_message);
 
 					switch (describe_type)

@@ -59,6 +59,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	 * (non-junk) targetlist items from the view's SELECT list.
 	 */
 	List	   *attrList = NIL;
+
 	foreach(t, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(t);
@@ -97,6 +98,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	 * namespace is temporary.
 	 */
 	LOCKMODE	lockmode = replace ? AccessExclusiveLock : NoLock;
+
 	(void) RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
 
 	if (OidIsValid(viewOid) && replace)
@@ -131,6 +133,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * column list.
 		 */
 		TupleDesc	descriptor = BuildDescForRelation(attrList);
+
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
@@ -230,7 +233,8 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * false).
 		 */
 		ObjectAddress address = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, NULL,
-								 NULL);
+											   NULL);
+
 		Assert(address.objectId != InvalidOid);
 
 		/* Make the new view relation visible */
@@ -362,9 +366,10 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * OLD first, then NEW....
 	 */
 	ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, viewRel,
-										   AccessShareLock,
-										   makeAlias("old", NIL),
-										   false, false);
+															   AccessShareLock,
+															   makeAlias("old", NIL),
+															   false, false);
+
 	rt_entry1 = nsitem->p_rte;
 	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
 										   AccessShareLock,
@@ -406,6 +411,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * also acquires sufficient locks on the source table(s).
 	 */
 	RawStmt    *rawstmt = makeNode(RawStmt);
+
 	rawstmt->stmt = stmt->query;
 	rawstmt->stmt_location = stmt_location;
 	rawstmt->stmt_len = stmt_len;
@@ -537,7 +543,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 	 * aborted.
 	 */
 	ObjectAddress address = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace, stmt->options, viewParse);
+												  stmt->replace, stmt->options, viewParse);
 
 	return address;
 }

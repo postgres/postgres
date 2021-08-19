@@ -42,6 +42,7 @@ get_configdata(const char *my_exec_path, size_t *configdata_len)
 	configdata[i].name = pstrdup("BINDIR");
 	strlcpy(path, my_exec_path, sizeof(path));
 	char	   *lastsep = strrchr(path, '/');
+
 	if (lastsep)
 		*lastsep = '\0';
 	cleanup_path(path);

@@ -281,6 +281,7 @@ lowerstr_with_len(const char *str, int len)
 		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len + 1));
 
 		int			wlen = char2wchar(wstr, len + 1, str, len, mylocale);
+
 		Assert(wlen <= len);
 
 		while (*wptr)
@@ -310,6 +311,7 @@ lowerstr_with_len(const char *str, int len)
 		const char *ptr = str;
 
 		char	   *outptr = out = (char *) palloc(sizeof(char) * (len + 1));
+
 		while ((ptr - str) < len && *ptr)
 		{
 			*outptr++ = tolower(TOUCHAR(ptr));

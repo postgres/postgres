@@ -56,13 +56,16 @@ test_predtest(PG_FUNCTION_ARGS)
 	 * refutation holds.
 	 */
 	SPIPlanPtr	spiplan = SPI_prepare(query_string, 0, NULL);
+
 	if (spiplan == NULL)
 		elog(ERROR, "SPI_prepare failed for \"%s\"", query_string);
 
 	int			spirc = SPI_execute_plan(spiplan, NULL, NULL, true, 0);
+
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to execute \"%s\"", query_string);
 	TupleDesc	tupdesc = SPI_tuptable->tupdesc;
+
 	if (tupdesc->natts != 2 ||
 		TupleDescAttr(tupdesc, 0)->atttypid != BOOLOID ||
 		TupleDescAttr(tupdesc, 1)->atttypid != BOOLOID)
@@ -78,6 +81,7 @@ test_predtest(PG_FUNCTION_ARGS)
 
 		/* Extract column values in a 3-way representation */
 		Datum		dat = SPI_getbinval(tup, tupdesc, 1, &isnull);
+
 		if (isnull)
 			c1 = 'n';
 		else if (DatumGetBool(dat))
@@ -118,9 +122,11 @@ test_predtest(PG_FUNCTION_ARGS)
 	if (list_length(cplan->stmt_list) != 1)
 		elog(ERROR, "failed to decipher query plan");
 	PlannedStmt *stmt = linitial_node(PlannedStmt, cplan->stmt_list);
+
 	if (stmt->commandType != CMD_SELECT)
 		elog(ERROR, "failed to decipher query plan");
 	Plan	   *plan = stmt->planTree;
+
 	Assert(list_length(plan->targetlist) >= 2);
 	Expr	   *clause1 = linitial_node(TargetEntry, plan->targetlist)->expr;
 	Expr	   *clause2 = lsecond_node(TargetEntry, plan->targetlist)->expr;

@@ -97,6 +97,7 @@ plpgsql_ns_additem(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
 	Assert(ns_top != NULL || itemtype == PLPGSQL_NSTYPE_LABEL);
 
 	PLpgSQL_nsitem *nse = palloc(offsetof(PLpgSQL_nsitem, name) + strlen(name) + 1);
+
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;
@@ -1193,6 +1194,7 @@ dump_open(PLpgSQL_stmt_open *stmt)
 			printf("    USING\n");
 			dump_indent += 2;
 			int			i = 1;
+
 			foreach(lc, stmt->params)
 			{
 				dump_ind();
@@ -1378,6 +1380,7 @@ dump_return_query(PLpgSQL_stmt_return_query *stmt)
 			printf("    USING\n");
 			dump_indent += 2;
 			int			i = 1;
+
 			foreach(lc, stmt->params)
 			{
 				dump_ind();
@@ -1521,6 +1524,7 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 		printf("    USING\n");
 		dump_indent += 2;
 		int			i = 1;
+
 		foreach(lc, stmt->params)
 		{
 			dump_ind();
@@ -1549,6 +1553,7 @@ dump_dynfors(PLpgSQL_stmt_dynfors *stmt)
 		printf("    USING\n");
 		dump_indent += 2;
 		int			i = 1;
+
 		foreach(lc, stmt->params)
 		{
 			dump_ind();

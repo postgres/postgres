@@ -209,6 +209,7 @@ ecpg_start_test(const char *testname,
 			 outfile_stderr);
 
 	char	   *appnameenv = psprintf("ecpg/%s", testname_dash.data);
+
 	setenv("PGAPPNAME", appnameenv, 1);
 	free(appnameenv);
 

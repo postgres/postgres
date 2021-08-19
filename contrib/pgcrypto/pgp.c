@@ -172,6 +172,7 @@ pgp_load_cipher(int code, PX_Cipher **res)
 		return PXE_PGP_CORRUPT_DATA;
 
 	int			err = px_find_cipher(i->int_name, res);
+
 	if (err == 0)
 		return 0;
 
@@ -187,6 +188,7 @@ pgp_load_digest(int code, PX_MD **res)
 		return PXE_PGP_CORRUPT_DATA;
 
 	int			err = px_find_digest(name, res);
+
 	if (err == 0)
 		return 0;
 

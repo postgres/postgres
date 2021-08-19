@@ -45,6 +45,7 @@ calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 
 	unsigned	remain = s2k->key_len;
 	unsigned	preload = 0;
+
 	while (remain > 0)
 	{
 		px_md_reset(md);
@@ -85,6 +86,7 @@ calc_s2k_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key, unsigned key_len)
 
 	uint8	   *dst = s2k->key;
 	unsigned	remain = s2k->key_len;
+
 	while (remain > 0)
 	{
 		px_md_reset(md);
@@ -133,6 +135,7 @@ calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 
 	remain = s2k->key_len;
 	uint8	   *dst = s2k->key;
+
 	while (remain > 0)
 	{
 		px_md_reset(md);
@@ -277,6 +280,7 @@ pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int key_len)
 		return PXE_PGP_UNSUPPORTED_CIPHER;
 
 	int			res = pgp_load_digest(s2k->digest_algo, &md);
+
 	if (res < 0)
 		return res;
 

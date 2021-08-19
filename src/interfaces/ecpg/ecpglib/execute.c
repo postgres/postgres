@@ -494,6 +494,7 @@ convert_bytea_to_string(char *from_data, int from_len, int lineno)
 																 * quote + quote */
 
 	char	   *to_data = ecpg_alloc(to_len, lineno);
+
 	if (!to_data)
 		return NULL;
 
@@ -1220,6 +1221,7 @@ ecpg_build_params(struct statement *stmt)
 
 	/* Get standard_conforming_strings setting. */
 	const char *value = PQparameterStatus(stmt->connection->connection, "standard_conforming_strings");
+
 	if (value && strcmp(value, "on") == 0)
 		std_strings = true;
 
@@ -1229,6 +1231,7 @@ ecpg_build_params(struct statement *stmt)
 	 * are any more fill in types we add more parameters.
 	 */
 	struct variable *var = stmt->inlist;
+
 	while (var)
 	{
 		int			counter = 1;
@@ -1251,6 +1254,7 @@ ecpg_build_params(struct statement *stmt)
 			struct descriptor_item *desc_item;
 
 			struct descriptor *desc = ecpg_find_desc(stmt->lineno, var->pointer);
+
 			if (desc == NULL)
 				return false;
 
@@ -1683,6 +1687,7 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 	}
 
 	struct variable *var = stmt->outlist;
+
 	switch (PQresultStatus(stmt->results))
 	{
 		case PGRES_TUPLES_OK:
@@ -2281,7 +2286,8 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 
 	va_start(args, query);
 	bool		ret = ecpg_do(lineno, compat, force_indicator, connection_name,
-				  questionmarks, st, query, args);
+							  questionmarks, st, query, args);
+
 	va_end(args);
 
 	return ret;

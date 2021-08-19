@@ -120,6 +120,7 @@ PMSignalShmemSize(void)
 {
 
 	Size		size = offsetof(PMSignalData, PMChildFlags);
+
 	size = add_size(size, mul_size(MaxLivePostmasterChildren(),
 								   sizeof(sig_atomic_t)));
 
@@ -261,6 +262,7 @@ ReleasePostmasterChildSlot(int slot)
 	 * crashes.  So we don't try to Assert anything about the state.
 	 */
 	bool		result = (PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
+
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_UNUSED;
 	return result;
 }

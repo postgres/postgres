@@ -221,12 +221,14 @@ ResourceArrayEnlarge(ResourceArray *resarr)
 		return;					/* no work needed */
 
 	Datum	   *olditemsarr = resarr->itemsarr;
+
 	oldcap = resarr->capacity;
 
 	/* Double the capacity of the array (capacity must stay a power of 2!) */
 	newcap = (oldcap > 0) ? oldcap * 2 : RESARRAY_INIT_SIZE;
 	Datum	   *newitemsarr = (Datum *) MemoryContextAlloc(TopMemoryContext,
-											   newcap * sizeof(Datum));
+														   newcap * sizeof(Datum));
+
 	for (i = 0; i < newcap; i++)
 		newitemsarr[i] = resarr->invalidval;
 
@@ -427,7 +429,8 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
 {
 
 	ResourceOwner owner = (ResourceOwner) MemoryContextAllocZero(TopMemoryContext,
-												   sizeof(ResourceOwnerData));
+																 sizeof(ResourceOwnerData));
+
 	owner->name = name;
 
 	if (parent)
@@ -508,6 +511,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	 * get confused.
 	 */
 	ResourceOwner save = CurrentResourceOwner;
+
 	CurrentResourceOwner = owner;
 
 	if (phase == RESOURCE_RELEASE_BEFORE_LOCKS)
@@ -846,8 +850,9 @@ RegisterResourceReleaseCallback(ResourceReleaseCallback callback, void *arg)
 {
 
 	ResourceReleaseCallbackItem *item = (ResourceReleaseCallbackItem *)
-		MemoryContextAlloc(TopMemoryContext,
-						   sizeof(ResourceReleaseCallbackItem));
+	MemoryContextAlloc(TopMemoryContext,
+					   sizeof(ResourceReleaseCallbackItem));
+
 	item->callback = callback;
 	item->arg = arg;
 	item->next = ResourceRelease_callbacks;
@@ -860,6 +865,7 @@ UnregisterResourceReleaseCallback(ResourceReleaseCallback callback, void *arg)
 	ResourceReleaseCallbackItem *item;
 
 	ResourceReleaseCallbackItem *prev = NULL;
+
 	for (item = ResourceRelease_callbacks; item; prev = item, item = item->next)
 	{
 		if (item->callback == callback && item->arg == arg)

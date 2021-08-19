@@ -392,6 +392,7 @@ hstorePairs(Pairs *pairs, int32 pcount, int32 buflen)
 
 	int32		len = CALCDATASIZE(pcount, buflen);
 	HStore	   *out = palloc(len);
+
 	SET_VARSIZE(out, len);
 	HS_SETCOUNT(out, pcount);
 
@@ -502,6 +503,7 @@ hstore_from_text(PG_FUNCTION_ARGS)
 
 	p.needfree = false;
 	text	   *key = PG_GETARG_TEXT_PP(0);
+
 	p.key = VARDATA_ANY(key);
 	p.keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key));
 
@@ -807,6 +809,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -990,6 +993,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	 * calls, assuming the record type doesn't change underneath us.
 	 */
 	RecordIOData *my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL ||
 		my_extra->ncolumns != ncolumns)
 	{
@@ -1047,8 +1051,8 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		}
 
 		int			idx = hstoreFindKey(hs, 0,
-							NameStr(att->attname),
-							strlen(NameStr(att->attname)));
+										NameStr(att->attname),
+										strlen(NameStr(att->attname)));
 
 		/*
 		 * we can't just skip here if the key wasn't found since we might have
@@ -1445,9 +1449,10 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 
 				val.type = jbvNumeric;
 				Datum		numd = DirectFunctionCall3(numeric_in,
-										   CStringGetDatum(tmp.data),
-										   ObjectIdGetDatum(InvalidOid),
-										   Int32GetDatum(-1));
+													   CStringGetDatum(tmp.data),
+													   ObjectIdGetDatum(InvalidOid),
+													   Int32GetDatum(-1));
+
 				val.val.numeric = DatumGetNumeric(numd);
 			}
 			else

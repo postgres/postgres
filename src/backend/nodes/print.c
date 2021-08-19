@@ -38,6 +38,7 @@ print(const void *obj)
 
 	char	   *s = nodeToString(obj);
 	char	   *f = format_node_dump(s);
+
 	pfree(s);
 	printf("%s\n", f);
 	fflush(stdout);
@@ -54,6 +55,7 @@ pprint(const void *obj)
 
 	char	   *s = nodeToString(obj);
 	char	   *f = pretty_format_node_dump(s);
+
 	pfree(s);
 	printf("%s\n", f);
 	fflush(stdout);
@@ -70,6 +72,7 @@ elog_node_display(int lev, const char *title, const void *obj, bool pretty)
 	char	   *f;
 
 	char	   *s = nodeToString(obj);
+
 	if (pretty)
 		f = pretty_format_node_dump(s);
 	else
@@ -99,6 +102,7 @@ format_node_dump(const char *dump)
 
 	initStringInfo(&str);
 	int			i = 0;
+
 	for (;;)
 	{
 		for (j = 0; j < LINELEN && dump[i] != '\0'; i++, j++)
@@ -152,9 +156,10 @@ pretty_format_node_dump(const char *dump)
 	int			j;
 
 	initStringInfo(&str);
-	int			indentLev = 0;				/* logical indent level */
-	int			indentDist = 0;				/* physical indent distance */
+	int			indentLev = 0;	/* logical indent level */
+	int			indentDist = 0; /* physical indent distance */
 	int			i = 0;
+
 	for (;;)
 	{
 		for (j = 0; j < indentDist; j++)
@@ -343,6 +348,7 @@ print_expr(const Node *expr, const List *rtable)
 					Assert(var->varno > 0 &&
 						   (int) var->varno <= list_length(rtable));
 					RangeTblEntry *rte = rt_fetch(var->varno, rtable);
+
 					relname = rte->eref->aliasname;
 					attname = get_rte_attribute_name(rte, var->varattno);
 				}
@@ -366,6 +372,7 @@ print_expr(const Node *expr, const List *rtable)
 						  &typoutput, &typIsVarlena);
 
 		char	   *outputstr = OidOutputFunctionCall(typoutput, c->constvalue);
+
 		printf("%s", outputstr);
 		pfree(outputstr);
 	}
@@ -374,6 +381,7 @@ print_expr(const Node *expr, const List *rtable)
 		const OpExpr *e = (const OpExpr *) expr;
 
 		char	   *opname = get_opname(e->opno);
+
 		if (list_length(e->args) > 1)
 		{
 			print_expr(get_leftop((const Expr *) e), rtable);
@@ -392,6 +400,7 @@ print_expr(const Node *expr, const List *rtable)
 		ListCell   *l;
 
 		char	   *funcname = get_func_name(e->funcid);
+
 		printf("%s(", ((funcname != NULL) ? funcname : "(invalid function)"));
 		foreach(l, e->args)
 		{
@@ -422,6 +431,7 @@ print_pathkeys(const List *pathkeys, const List *rtable)
 		bool		first = true;
 
 		EquivalenceClass *eclass = pathkey->pk_eclass;
+
 		/* chase up, in case pathkey is non-canonical */
 		while (eclass->ec_merged)
 			eclass = eclass->ec_merged;

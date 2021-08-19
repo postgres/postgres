@@ -140,6 +140,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 	 * not valid in that encoding.
 	 */
 	int			pathlen = strlen(pathname);
+
 	if (!manifest->force_encode &&
 		pg_verify_mbstr(PG_UTF8, pathname, pathlen, true))
 	{
@@ -176,6 +177,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 		uint8		checksumbuf[PG_CHECKSUM_MAX_LENGTH];
 
 		int			checksumlen = pg_checksum_final(checksum_ctx, checksumbuf);
+
 		if (checksumlen < 0)
 			elog(ERROR, "could not finalize checksum of file \"%s\"",
 				 pathname);
@@ -360,8 +362,9 @@ SendBackupManifest(backup_manifest_info *manifest)
 		char		manifestbuf[BLCKSZ];
 
 		size_t		bytes_to_read = Min(sizeof(manifestbuf),
-							manifest->manifest_size - manifest_bytes_done);
+										manifest->manifest_size - manifest_bytes_done);
 		size_t		rc = BufFileRead(manifest->buffile, manifestbuf, bytes_to_read);
+
 		if (rc != bytes_to_read)
 			ereport(ERROR,
 					(errcode_for_file_access(),

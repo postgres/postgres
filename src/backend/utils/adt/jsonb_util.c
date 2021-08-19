@@ -413,6 +413,7 @@ getKeyJsonValueFromContainer(JsonbContainer *container,
 	 * for *Pairs* of Jentrys
 	 */
 	char	   *baseAddr = (char *) (children + count * 2);
+
 	stopLow = 0;
 	stopHigh = count;
 	while (stopLow < stopHigh)
@@ -424,7 +425,7 @@ getKeyJsonValueFromContainer(JsonbContainer *container,
 		int			candidateLen = getJsonbLength(container, stopMiddle);
 
 		int			difference = lengthCompareJsonbString(candidateVal, candidateLen,
-											  keyVal, keyLen);
+														  keyVal, keyLen);
 
 		if (difference == 0)
 		{
@@ -985,6 +986,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 {
 
 	JsonbIterator *it = palloc0(sizeof(JsonbIterator));
+
 	it->container = container;
 	it->parent = parent;
 	it->nElems = JsonContainerSize(container);
@@ -1496,6 +1498,7 @@ appendToBuffer(StringInfo buffer, const char *data, int len)
 {
 
 	int			offset = reserveFromBuffer(buffer, len);
+
 	copyToBuffer(buffer, offset, data, len);
 }
 
@@ -1608,6 +1611,7 @@ convertJsonbArray(StringInfo buffer, JEntry *pheader, JsonbValue *val, int level
 	 * variable-length payload.
 	 */
 	uint32		header = nElems | JB_FARRAY;
+
 	if (val->val.array.rawScalar)
 	{
 		Assert(nElems == 1);
@@ -1621,6 +1625,7 @@ convertJsonbArray(StringInfo buffer, JEntry *pheader, JsonbValue *val, int level
 	int			jentry_offset = reserveFromBuffer(buffer, sizeof(JEntry) * nElems);
 
 	int			totallen = 0;
+
 	for (i = 0; i < nElems; i++)
 	{
 		JsonbValue *elem = &val->val.array.elems[i];
@@ -1633,6 +1638,7 @@ convertJsonbArray(StringInfo buffer, JEntry *pheader, JsonbValue *val, int level
 		convertJsonbValue(buffer, &meta, elem, level + 1);
 
 		int			len = JBE_OFFLENFLD(meta);
+
 		totallen += len;
 
 		/*
@@ -1687,6 +1693,7 @@ convertJsonbObject(StringInfo buffer, JEntry *pheader, JsonbValue *val, int leve
 	 * variable-length payload.
 	 */
 	uint32		header = nPairs | JB_FOBJECT;
+
 	appendToBuffer(buffer, (char *) &header, sizeof(uint32));
 
 	/* Reserve space for the JEntries of the keys and values. */
@@ -1697,6 +1704,7 @@ convertJsonbObject(StringInfo buffer, JEntry *pheader, JsonbValue *val, int leve
 	 * we want in the on-disk representation.
 	 */
 	int			totallen = 0;
+
 	for (i = 0; i < nPairs; i++)
 	{
 		JsonbPair  *pair = &val->val.object.pairs[i];
@@ -1709,6 +1717,7 @@ convertJsonbObject(StringInfo buffer, JEntry *pheader, JsonbValue *val, int leve
 		convertJsonbScalar(buffer, &meta, &pair->key);
 
 		int			len = JBE_OFFLENFLD(meta);
+
 		totallen += len;
 
 		/*
@@ -1743,6 +1752,7 @@ convertJsonbObject(StringInfo buffer, JEntry *pheader, JsonbValue *val, int leve
 		convertJsonbValue(buffer, &meta, &pair->value, level + 1);
 
 		int			len = JBE_OFFLENFLD(meta);
+
 		totallen += len;
 
 		/*
@@ -1821,6 +1831,7 @@ convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 								   scalarVal->val.datetime.typid,
 								   &scalarVal->val.datetime.tz);
 				size_t		len = strlen(buf);
+
 				appendToBuffer(buffer, buf, len);
 
 				*jentry = len;
@@ -1890,6 +1901,7 @@ lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
 	const JsonbPair *pb = (const JsonbPair *) b;
 
 	int			res = lengthCompareJsonbStringValue(&pa->key, &pb->key);
+
 	if (res == 0 && binequal)
 		*((bool *) binequal) = true;
 

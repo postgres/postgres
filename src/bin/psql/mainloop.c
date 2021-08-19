@@ -55,6 +55,7 @@ MainLoop(FILE *source)
 	FILE	   *prev_cmd_source = pset.cur_cmd_source;
 	bool		prev_cmd_interactive = pset.cur_cmd_interactive;
 	uint64		prev_lineno = pset.lineno;
+
 	/* pset.stmt_lineno does not need to be saved and restored */
 
 	/* Establish new source */
@@ -389,6 +390,7 @@ MainLoop(FILE *source)
 
 			size_t		pos_in_query = query_buf->len;
 			PsqlScanResult scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
+
 			prompt_status = prompt_tmp;
 
 			if (PQExpBufferBroken(query_buf))
@@ -404,6 +406,7 @@ MainLoop(FILE *source)
 			 * readline's history containing newlines.
 			 */
 			char	   *tmp_line = query_buf->data + pos_in_query;
+
 			while (*tmp_line != '\0')
 			{
 				if (*(tmp_line++) == '\n')

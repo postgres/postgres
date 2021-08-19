@@ -72,6 +72,7 @@ BuildRestoreCommand(const char *restoreCommand,
 						 * make_native_path().
 						 */
 						char	   *nativePath = pstrdup(xlogpath);
+
 						make_native_path(nativePath);
 						appendStringInfoString(&result,
 											   nativePath);

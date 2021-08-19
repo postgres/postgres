@@ -415,12 +415,13 @@ CreateInitDecodingContext(const char *plugin,
 	ReplicationSlotSave();
 
 	LogicalDecodingContext *ctx = StartupDecodingContext(NIL, restart_lsn, xmin_horizon,
-								 need_full_snapshot, false,
-								 xl_routine, prepare_write, do_write,
-								 update_progress);
+														 need_full_snapshot, false,
+														 xl_routine, prepare_write, do_write,
+														 update_progress);
 
 	/* call output plugin initialization callback */
 	MemoryContext old_context = MemoryContextSwitchTo(ctx->context);
+
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, true);
 	MemoryContextSwitchTo(old_context);
@@ -524,12 +525,13 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	}
 
 	LogicalDecodingContext *ctx = StartupDecodingContext(output_plugin_options,
-								 start_lsn, InvalidTransactionId, false,
-								 fast_forward, xl_routine, prepare_write,
-								 do_write, update_progress);
+														 start_lsn, InvalidTransactionId, false,
+														 fast_forward, xl_routine, prepare_write,
+														 do_write, update_progress);
 
 	/* call output plugin initialization callback */
 	MemoryContext old_context = MemoryContextSwitchTo(ctx->context);
+
 	if (ctx->callbacks.startup_cb != NULL)
 		startup_cb_wrapper(ctx, &ctx->options, false);
 	MemoryContextSwitchTo(old_context);
@@ -594,6 +596,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 
 		/* the read_page callback waits for new WAL */
 		XLogRecord *record = XLogReadRecord(ctx->reader, &err);
+
 		if (err)
 			elog(ERROR, "%s", err);
 		if (!record)
@@ -678,7 +681,7 @@ LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin)
 {
 
 	LogicalOutputPluginInit plugin_init = (LogicalOutputPluginInit)
-		load_external_function(plugin, "_PG_output_plugin_init", false, NULL);
+	load_external_function(plugin, "_PG_output_plugin_init", false, NULL);
 
 	if (plugin_init == NULL)
 		elog(ERROR, "output plugins have to declare the _PG_output_plugin_init symbol");
@@ -1655,6 +1658,7 @@ LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart
 
 		XLogRecPtr	candidate_restart_lsn = slot->candidate_restart_lsn;
 		XLogRecPtr	candidate_restart_valid = slot->candidate_restart_valid;
+
 		confirmed_flush = slot->data.confirmed_flush;
 		SpinLockRelease(&slot->mutex);
 

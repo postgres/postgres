@@ -133,6 +133,7 @@ PyInit_plpy(void)
 {
 
 	PyObject   *m = PyModule_Create(&PLy_module);
+
 	if (m == NULL)
 		return NULL;
 
@@ -230,6 +231,7 @@ PLy_create_exception(char *name, PyObject *base, PyObject *dict,
 {
 
 	PyObject   *exc = PyErr_NewException(name, base, dict);
+
 	if (exc == NULL)
 		PLy_elog(ERROR, NULL);
 
@@ -274,10 +276,11 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 		Py_DECREF(sqlstate);
 
 		PyObject   *exc = PLy_create_exception(exception_map[i].name, base, dict,
-								   exception_map[i].classname, mod);
+											   exception_map[i].classname, mod);
 
 		PLyExceptionEntry *entry = hash_search(PLy_spi_exceptions, &exception_map[i].sqlstate,
-							HASH_ENTER, &found);
+											   HASH_ENTER, &found);
+
 		Assert(!found);
 		entry->exc = exc;
 	}
@@ -343,6 +346,7 @@ PLy_quote_literal(PyObject *self, PyObject *args)
 
 	char	   *quoted = quote_literal_cstr(str);
 	PyObject   *ret = PyString_FromString(quoted);
+
 	pfree(quoted);
 
 	return ret;
@@ -361,6 +365,7 @@ PLy_quote_nullable(PyObject *self, PyObject *args)
 
 	char	   *quoted = quote_literal_cstr(str);
 	PyObject   *ret = PyString_FromString(quoted);
+
 	pfree(quoted);
 
 	return ret;
@@ -392,6 +397,7 @@ object_to_string(PyObject *obj)
 		{
 
 			char	   *str = pstrdup(PyString_AsString(so));
+
 			Py_DECREF(so);
 
 			return str;
@@ -510,6 +516,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	}
 
 	volatile MemoryContext oldcontext = CurrentMemoryContext;
+
 	PG_TRY();
 	{
 		if (message != NULL)
@@ -550,6 +557,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 
 		MemoryContextSwitchTo(oldcontext);
 		ErrorData  *edata = CopyErrorData();
+
 		FlushErrorState();
 
 		PLy_exception_set_with_details(PLy_exc_error, edata);

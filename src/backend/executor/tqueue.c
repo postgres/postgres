@@ -199,6 +199,7 @@ TupleQueueReaderNext(TupleQueueReader *reader, bool nowait, bool *done)
 	 * sufficiently aligned).
 	 */
 	MinimalTuple tuple = (MinimalTuple) data;
+
 	Assert(tuple->t_len == nbytes);
 
 	return tuple;

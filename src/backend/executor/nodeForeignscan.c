@@ -48,6 +48,7 @@ ForeignNext(ForeignScanState *node)
 
 	/* Call the Iterate function in short-lived context */
 	MemoryContext oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
 	if (plan->operation != CMD_SELECT)
 	{
 		/*
@@ -145,6 +146,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	ForeignScanState *scanstate = makeNode(ForeignScanState);
+
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
 	scanstate->ss.ps.ExecProcNode = ExecForeignScan;
@@ -180,6 +182,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	{
 
 		TupleDesc	scan_tupdesc = ExecTypeFromTL(node->fdw_scan_tlist);
+
 		ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
 							  &TTSOpsHeapTuple);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
@@ -190,6 +193,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 
 		/* don't trust FDWs to return tuples fulfilling NOT NULL constraints */
 		TupleDesc	scan_tupdesc = CreateTupleDescCopy(RelationGetDescr(currentRelation));
+
 		ExecInitScanTupleSlot(estate, &scanstate->ss, scan_tupdesc,
 							  &TTSOpsHeapTuple);
 		/* Node's targetlist will contain Vars with varno = scanrelid */
@@ -365,6 +369,7 @@ ExecForeignScanInitializeDSM(ForeignScanState *node, ParallelContext *pcxt)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_allocate(pcxt->toc, node->pscan_len);
+
 		fdwroutine->InitializeDSMForeignScan(node, pcxt, coordinate);
 		shm_toc_insert(pcxt->toc, plan_node_id, coordinate);
 	}
@@ -386,6 +391,7 @@ ExecForeignScanReInitializeDSM(ForeignScanState *node, ParallelContext *pcxt)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
+
 		fdwroutine->ReInitializeDSMForeignScan(node, pcxt, coordinate);
 	}
 }
@@ -407,6 +413,7 @@ ExecForeignScanInitializeWorker(ForeignScanState *node,
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_lookup(pwcxt->toc, plan_node_id, false);
+
 		fdwroutine->InitializeWorkerForeignScan(node, pwcxt->toc, coordinate);
 	}
 }

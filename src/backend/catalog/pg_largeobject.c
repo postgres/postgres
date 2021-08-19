@@ -44,7 +44,7 @@ LargeObjectCreate(Oid loid)
 	bool		nulls[Natts_pg_largeobject_metadata];
 
 	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
-							RowExclusiveLock);
+										RowExclusiveLock);
 
 	/*
 	 * Insert metadata of the largeobject
@@ -65,7 +65,7 @@ LargeObjectCreate(Oid loid)
 	nulls[Anum_pg_largeobject_metadata_lomacl - 1] = true;
 
 	HeapTuple	ntup = heap_form_tuple(RelationGetDescr(pg_lo_meta),
-						   values, nulls);
+									   values, nulls);
 
 	CatalogTupleInsert(pg_lo_meta, ntup);
 
@@ -86,10 +86,10 @@ LargeObjectDrop(Oid loid)
 	ScanKeyData skey[1];
 
 	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
-							RowExclusiveLock);
+										RowExclusiveLock);
 
 	Relation	pg_largeobject = table_open(LargeObjectRelationId,
-								RowExclusiveLock);
+											RowExclusiveLock);
 
 	/*
 	 * Delete an entry from pg_largeobject_metadata
@@ -100,10 +100,11 @@ LargeObjectDrop(Oid loid)
 				ObjectIdGetDatum(loid));
 
 	SysScanDesc scan = systable_beginscan(pg_lo_meta,
-							  LargeObjectMetadataOidIndexId, true,
-							  NULL, 1, skey);
+										  LargeObjectMetadataOidIndexId, true,
+										  NULL, 1, skey);
 
 	HeapTuple	tuple = systable_getnext(scan);
+
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -160,13 +161,14 @@ LargeObjectExists(Oid loid)
 				ObjectIdGetDatum(loid));
 
 	Relation	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
-							AccessShareLock);
+										AccessShareLock);
 
 	SysScanDesc sd = systable_beginscan(pg_lo_meta,
-							LargeObjectMetadataOidIndexId, true,
-							NULL, 1, skey);
+										LargeObjectMetadataOidIndexId, true,
+										NULL, 1, skey);
 
 	HeapTuple	tuple = systable_getnext(sd);
+
 	if (HeapTupleIsValid(tuple))
 		retval = true;
 

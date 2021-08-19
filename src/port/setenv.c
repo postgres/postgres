@@ -38,6 +38,7 @@ setenv(const char *name, const char *value, int overwrite)
 	 * about that when sitting atop putenv().
 	 */
 	char	   *envstr = (char *) malloc(strlen(name) + strlen(value) + 2);
+
 	if (!envstr)				/* not much we can do if no memory */
 		return -1;
 

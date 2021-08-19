@@ -35,6 +35,7 @@ dintdict_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 
 	DictInt    *d = (DictInt *) palloc0(sizeof(DictInt));
+
 	d->maxlen = 6;
 	d->rejectlong = false;
 	d->absval = false;

@@ -224,7 +224,8 @@ table_index_fetch_tuple_check(Relation rel,
 	TupleTableSlot *slot = table_slot_create(rel, NULL);
 	IndexFetchTableData *scan = table_index_fetch_begin(rel);
 	bool		found = table_index_fetch_tuple(scan, tid, snapshot, slot, &call_again,
-									all_dead);
+												all_dead);
+
 	table_index_fetch_end(scan);
 	ExecDropSingleTupleTableSlot(slot);
 
@@ -298,10 +299,10 @@ simple_table_tuple_delete(Relation rel, ItemPointer tid, Snapshot snapshot)
 	TM_FailureData tmfd;
 
 	TM_Result	result = table_tuple_delete(rel, tid,
-								GetCurrentCommandId(true),
-								snapshot, InvalidSnapshot,
-								true /* wait for commit */ ,
-								&tmfd, false /* changingPart */ );
+											GetCurrentCommandId(true),
+											snapshot, InvalidSnapshot,
+											true /* wait for commit */ ,
+											&tmfd, false /* changingPart */ );
 
 	switch (result)
 	{
@@ -346,10 +347,10 @@ simple_table_tuple_update(Relation rel, ItemPointer otid,
 	LockTupleMode lockmode;
 
 	TM_Result	result = table_tuple_update(rel, otid, slot,
-								GetCurrentCommandId(true),
-								snapshot, InvalidSnapshot,
-								true /* wait for commit */ ,
-								&tmfd, &lockmode, update_indexes);
+											GetCurrentCommandId(true),
+											snapshot, InvalidSnapshot,
+											true /* wait for commit */ ,
+											&tmfd, &lockmode, update_indexes);
 
 	switch (result)
 	{
@@ -729,6 +730,7 @@ table_block_relation_estimate_size(Relation rel, int32 *attr_widths,
 		 */
 
 		int32		tuple_width = get_rel_data_width(rel, attr_widths);
+
 		tuple_width += overhead_bytes_per_tuple;
 		/* note: integer division is intentional here */
 		density = usable_bytes_per_page / tuple_width;

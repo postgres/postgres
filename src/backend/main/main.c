@@ -230,6 +230,7 @@ startup_hacks(const char *progname)
 
 		/* Prepare Winsock */
 		int			err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+
 		if (err != 0)
 		{
 			write_stderr("%s: WSAStartup failed: %d\n",

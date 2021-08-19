@@ -180,6 +180,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 
 		/* Prepare plan for query */
 		SPIPlanPtr	pplan = SPI_prepare(sql, nkeys, argtypes);
+
 		if (pplan == NULL)
 			/* internal error */
 			elog(ERROR, "check_primary_key: SPI_prepare returned %s", SPI_result_code_string(SPI_result));
@@ -397,6 +398,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				/* internal error */
 				elog(ERROR, "check_foreign_key: SPI_getvalue returned %s", SPI_result_code_string(SPI_result));
 			char	   *newval = SPI_getvalue(newtuple, tupdesc, fnumber);
+
 			if (newval == NULL || strcmp(oldval, newval) != 0)
 				isequal = false;
 		}

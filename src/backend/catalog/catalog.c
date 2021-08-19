@@ -605,6 +605,7 @@ pg_nextoid(PG_FUNCTION_ARGS)
 						RelationGetRelationName(rel))));
 
 	HeapTuple	atttuple = SearchSysCacheAttName(reloid, NameStr(*attname));
+
 	if (!HeapTupleIsValid(atttuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),

@@ -86,6 +86,7 @@ BackendStatusShmemSize(void)
 
 	/* BackendStatusArray: */
 	Size		size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+
 	/* BackendAppnameBuffer: */
 	size = add_size(size,
 					mul_size(NAMEDATALEN, NumBackendStatSlots));
@@ -121,6 +122,7 @@ CreateSharedBackendStatus(void)
 
 	/* Create or attach to the shared array */
 	Size		size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+
 	BackendStatusArray = (PgBackendStatus *)
 		ShmemInitStruct("Backend Status Array", size, &found);
 
@@ -202,6 +204,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_sslstatus pointers. */
 		PgBackendSSLStatus *ptr = BackendSslStatusBuffer;
+
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_sslstatus = ptr;
@@ -223,6 +226,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_gssstatus pointers. */
 		PgBackendGSSStatus *ptr = BackendGssStatusBuffer;
+
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_gssstatus = ptr;
@@ -551,6 +555,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	 * errors inside the critical section, fetch all the needed data first.
 	 */
 	TimestampTz start_timestamp = GetCurrentStatementStartTimestamp();
+
 	if (cmd_str != NULL)
 	{
 		/*
@@ -884,6 +889,7 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 	int			i;
 
 	PgBackendStatus *beentry = BackendStatusArray;
+
 	for (i = 1; i <= MaxBackends; i++)
 	{
 		/*
@@ -983,7 +989,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 			 * buffer, subtract one activity length from the buffer size.
 			 */
 			const char *activity_last = BackendActivityBuffer + BackendActivityBufferSize
-				- pgstat_track_activity_query_size;
+			- pgstat_track_activity_query_size;
 
 			if (activity < BackendActivityBuffer ||
 				activity > activity_last)
@@ -1126,7 +1132,7 @@ pgstat_clip_activity(const char *raw_activity)
 	 * character.
 	 */
 	int			cliplen = pg_mbcliplen(activity, rawlen,
-						   pgstat_track_activity_query_size - 1);
+									   pgstat_track_activity_query_size - 1);
 
 	activity[cliplen] = '\0';
 

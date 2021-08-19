@@ -112,6 +112,7 @@ dlsym(void *handle, const char *symbol)
 {
 
 	void	   *ptr = GetProcAddress((HMODULE) handle, symbol);
+
 	if (!ptr)
 	{
 		set_dl_error();
@@ -128,6 +129,7 @@ dlopen(const char *file, int mode)
 	/* Disable popup error messages when loading DLLs */
 	int			prevmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 	HMODULE		h = LoadLibrary(file);
+
 	SetErrorMode(prevmode);
 
 	if (!h)

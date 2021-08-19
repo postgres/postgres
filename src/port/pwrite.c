@@ -31,6 +31,7 @@ pg_pwrite(int fd, const void *buf, size_t size, off_t offset)
 	DWORD		result;
 
 	HANDLE		handle = (HANDLE) _get_osfhandle(fd);
+
 	if (handle == INVALID_HANDLE_VALUE)
 	{
 		errno = EBADF;

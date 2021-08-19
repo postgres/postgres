@@ -147,6 +147,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		{
 
 			BufferDesc *bufHdr = GetBufferDescriptor(i);
+
 			/* Lock each buffer header before inspecting. */
 			uint32		buf_state = LockBufHdr(bufHdr);
 

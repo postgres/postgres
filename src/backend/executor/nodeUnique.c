@@ -120,6 +120,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	UniqueState *uniquestate = makeNode(UniqueState);
+
 	uniquestate->ps.plan = (Plan *) node;
 	uniquestate->ps.state = estate;
 	uniquestate->ps.ExecProcNode = ExecUnique;

@@ -57,6 +57,7 @@ namein(PG_FUNCTION_ARGS)
 
 	/* We use palloc0 here to ensure result is zero-padded */
 	Name		result = (Name) palloc0(NAMEDATALEN);
+
 	memcpy(NameStr(*result), s, len);
 
 	PG_RETURN_NAME(result);
@@ -83,6 +84,7 @@ namerecv(PG_FUNCTION_ARGS)
 	int			nbytes;
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+
 	if (nbytes >= NAMEDATALEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NAME_TOO_LONG),
@@ -90,6 +92,7 @@ namerecv(PG_FUNCTION_ARGS)
 				 errdetail("Identifier must be less than %d characters.",
 						   NAMEDATALEN)));
 	Name		result = (NameData *) palloc0(NAMEDATALEN);
+
 	memcpy(result, str, nbytes);
 	pfree(str);
 	PG_RETURN_NAME(result);
@@ -278,6 +281,7 @@ current_schema(PG_FUNCTION_ARGS)
 	if (search_path == NIL)
 		PG_RETURN_NULL();
 	char	   *nspname = get_namespace_name(linitial_oid(search_path));
+
 	list_free(search_path);
 	if (!nspname)
 		PG_RETURN_NULL();		/* recently-deleted namespace? */
@@ -292,10 +296,12 @@ current_schemas(PG_FUNCTION_ARGS)
 
 	Datum	   *names = (Datum *) palloc(list_length(search_path) * sizeof(Datum));
 	int			i = 0;
+
 	foreach(l, search_path)
 	{
 
 		char	   *nspname = get_namespace_name(lfirst_oid(l));
+
 		if (nspname)			/* watch out for deleted namespace */
 		{
 			names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
@@ -305,10 +311,10 @@ current_schemas(PG_FUNCTION_ARGS)
 	list_free(search_path);
 
 	ArrayType  *array = construct_array(names, i,
-							NAMEOID,
-							NAMEDATALEN,	/* sizeof(Name) */
-							false,	/* Name is not by-val */
-							TYPALIGN_CHAR); /* alignment of Name */
+										NAMEOID,
+										NAMEDATALEN,	/* sizeof(Name) */
+										false,	/* Name is not by-val */
+										TYPALIGN_CHAR); /* alignment of Name */
 
 	PG_RETURN_POINTER(array);
 }
@@ -339,6 +345,7 @@ nameconcatoid(PG_FUNCTION_ARGS)
 
 	/* We use palloc0 here to ensure result is zero-padded */
 	Name		result = (Name) palloc0(NAMEDATALEN);
+
 	memcpy(NameStr(*result), NameStr(*nam), namlen);
 	memcpy(NameStr(*result) + namlen, suffix, suflen);
 

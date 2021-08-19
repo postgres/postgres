@@ -115,14 +115,15 @@ shimBoolConsistentFn(GinScanKey key)
 {
 
 	GinTernaryValue result = DatumGetGinTernaryValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
-													   key->collation,
-													   PointerGetDatum(key->entryRes),
-													   UInt16GetDatum(key->strategy),
-													   key->query,
-													   UInt32GetDatum(key->nuserentries),
-													   PointerGetDatum(key->extra_data),
-													   PointerGetDatum(key->queryValues),
-													   PointerGetDatum(key->queryCategories)));
+																	   key->collation,
+																	   PointerGetDatum(key->entryRes),
+																	   UInt16GetDatum(key->strategy),
+																	   key->query,
+																	   UInt32GetDatum(key->nuserentries),
+																	   PointerGetDatum(key->extra_data),
+																	   PointerGetDatum(key->queryValues),
+																	   PointerGetDatum(key->queryCategories)));
+
 	if (result == GIN_MAYBE)
 	{
 		key->recheckCurItem = true;
@@ -161,6 +162,7 @@ shimTriConsistentFn(GinScanKey key)
 	 * test all combinations, so give up and return MAYBE.
 	 */
 	int			nmaybe = 0;
+
 	for (i = 0; i < key->nentries; i++)
 	{
 		if (key->entryRes[i] == GIN_MAYBE)

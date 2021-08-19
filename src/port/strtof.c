@@ -76,6 +76,7 @@ pg_strtof(const char *nptr, char **endptr)
 
 	errno = 0;
 	float		fresult = (strtof) (nptr, endptr);
+
 	if (errno)
 	{
 		/* On error, just return the error to the caller. */

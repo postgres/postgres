@@ -218,9 +218,11 @@ pgp_armor_encode(const uint8 *src, unsigned len, StringInfo dst,
 
 	/* make sure we have enough room to pg_base64_encode() */
 	unsigned	b64len = pg_base64_enc_len(len);
+
 	enlargeStringInfo(dst, (int) b64len);
 
 	int			res = pg_base64_encode(src, len, (uint8 *) dst->data + dst->len);
+
 	if (res > b64len)
 		elog(FATAL, "overflow - encode estimate too small");
 	dst->len += res;
@@ -323,6 +325,7 @@ pgp_armor_decode(const uint8 *src, int len, StringInfo dst)
 
 	/* armor start */
 	int			hlen = find_header(src, data_end, &p, 0);
+
 	if (hlen <= 0)
 		goto out;
 	p += hlen;
@@ -397,6 +400,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 
 	/* armor start */
 	int			hlen = find_header(src, data_end, &armor_start, 0);
+
 	if (hlen <= 0)
 		return PXE_PGP_CORRUPT_ARMOR;
 	armor_start += hlen;
@@ -409,6 +413,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 	/* Count the number of armor header lines. */
 	int			hdrlines = 0;
 	const uint8 *p = armor_start;
+
 	while (p < armor_end && *p != '\n' && *p != '\r')
 	{
 		p = memchr(p, '\n', armor_end - p);
@@ -427,6 +432,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 	 */
 	Size		armor_len = base64_start - armor_start;
 	char	   *buf = palloc(armor_len + 1);
+
 	memcpy(buf, armor_start, armor_len);
 	buf[armor_len] = '\0';
 
@@ -440,6 +446,7 @@ pgp_extract_armor_headers(const uint8 *src, unsigned len,
 	 */
 	n = 0;
 	char	   *line = buf;
+
 	for (;;)
 	{
 		/* find end of line */

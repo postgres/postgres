@@ -126,6 +126,7 @@ writeListPage(Relation index, Buffer buffer,
 		XLogRegisterBufData(0, workspace.data, size);
 
 		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE);
+
 		PageSetLSN(page, recptr);
 	}
 
@@ -417,6 +418,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		XLogRegisterData((char *) &data, sizeof(ginxlogUpdateMeta));
 
 		XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
+
 		PageSetLSN(metapage, recptr);
 
 		if (buffer != InvalidBuffer)
@@ -439,6 +441,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 * ginInsertCleanup() should not be called inside our CRIT_SECTION.
 	 */
 	int			cleanupSize = GinGetPendingListCleanupSize(index);
+
 	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * 1024L)
 		needCleanup = true;
 
@@ -476,7 +479,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	 * Extract the key values that need to be inserted in the index
 	 */
 	Datum	   *entries = ginExtractEntries(ginstate, attnum, value, isNull,
-								&nentries, &categories);
+											&nentries, &categories);
 
 	/*
 	 * Protect against integer overflow in allocation calculations
@@ -518,7 +521,8 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	{
 
 		IndexTuple	itup = GinFormTuple(ginstate, attnum, entries[i], categories[i],
-							NULL, 0, 0, true);
+										NULL, 0, 0, true);
+
 		itup->t_tid = *ht_ctid;
 		collector->tuples[collector->ntuples++] = itup;
 		collector->sumsize += IndexTupleSize(itup);
@@ -627,6 +631,7 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 							 sizeof(ginxlogDeleteListPages));
 
 			XLogRecPtr	recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_LISTPAGE);
+
 			PageSetLSN(metapage, recptr);
 
 			for (i = 0; i < data.ndeleted; i++)
@@ -731,6 +736,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
 
 		/* Add key to KeyArray */
 		Datum		curkey = gintuple_get_key(accum->ginstate, itup, &curcategory);
+
 		addDatum(ka, curkey, curcategory);
 	}
 

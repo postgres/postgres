@@ -397,7 +397,7 @@ rbt_insert(RBTree *rbt, const RBTNode *data, bool *isNew)
 	/* find where node belongs */
 	current = rbt->root;
 	parent = NULL;
-	int			cmp = 0;					/* just to prevent compiler warning */
+	int			cmp = 0;		/* just to prevent compiler warning */
 
 	while (current != RBTNIL)
 	{

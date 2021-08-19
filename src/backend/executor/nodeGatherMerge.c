@@ -79,6 +79,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	GatherMergeState *gm_state = makeNode(GatherMergeState);
+
 	gm_state->ps.plan = (Plan *) node;
 	gm_state->ps.state = estate;
 	gm_state->ps.ExecProcNode = ExecGatherMerge;
@@ -104,6 +105,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	 * now initialize outer plan
 	 */
 	Plan	   *outerNode = outerPlan(node);
+
 	outerPlanState(gm_state) = ExecInitNode(outerNode, estate, eflags);
 
 	/*
@@ -120,6 +122,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	 * while initializing the gather merge slots.
 	 */
 	TupleDesc	tupDesc = ExecGetResultType(outerPlanState(gm_state));
+
 	gm_state->tupDesc = tupDesc;
 
 	/*
@@ -218,6 +221,7 @@ ExecGatherMerge(PlanState *pstate)
 
 			/* Try to launch workers. */
 			ParallelContext *pcxt = node->pei->pcxt;
+
 			LaunchParallelWorkers(pcxt);
 			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
@@ -252,6 +256,7 @@ ExecGatherMerge(PlanState *pstate)
 	 * storage allocated in the previous tuple cycle.
 	 */
 	ExprContext *econtext = node->ps.ps_ExprContext;
+
 	ResetExprContext(econtext);
 
 	/*
@@ -259,6 +264,7 @@ ExecGatherMerge(PlanState *pstate)
 	 * ourselves.
 	 */
 	TupleTableSlot *slot = gather_merge_getnext(node);
+
 	if (TupIsNull(slot))
 		return NULL;
 
@@ -608,9 +614,10 @@ load_tuple_array(GatherMergeState *gm_state, int reader)
 	{
 
 		MinimalTuple tuple = gm_readnext_tuple(gm_state,
-								  reader,
-								  true,
-								  &tuple_buffer->done);
+											   reader,
+											   true,
+											   &tuple_buffer->done);
+
 		if (!tuple)
 			break;
 		tuple_buffer->tuple[i] = tuple;
@@ -644,6 +651,7 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 			/* Install our DSA area while executing the plan. */
 			estate->es_query_dsa = gm_state->pei ? gm_state->pei->area : NULL;
 			TupleTableSlot *outerTupleSlot = ExecProcNode(outerPlan);
+
 			estate->es_query_dsa = NULL;
 
 			if (!TupIsNull(outerTupleSlot))
@@ -764,8 +772,9 @@ heap_compare_slots(Datum a, Datum b, void *arg)
 		datum2 = slot_getattr(s2, attno, &isNull2);
 
 		int			compare = ApplySortComparator(datum1, isNull1,
-									  datum2, isNull2,
-									  sortKey);
+												  datum2, isNull2,
+												  sortKey);
+
 		if (compare != 0)
 		{
 			INVERT_COMPARE_RESULT(compare);

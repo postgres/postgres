@@ -250,6 +250,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	int			error;
 
 	SOCKET		sock = WSASocket(AF_INET, SOCK_DGRAM, 0, 0, 0, 0);
+
 	if (sock == INVALID_SOCKET)
 		return -1;
 
@@ -491,6 +492,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	size_t		n_buffer = 1024;
 
 	pgsocket	sock = socket(AF_INET, SOCK_DGRAM, 0);
+
 	if (sock == PGINVALID_SOCKET)
 		return -1;
 

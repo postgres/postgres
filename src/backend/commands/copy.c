@@ -118,8 +118,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		relid = RelationGetRelid(rel);
 
 		ParseNamespaceItem *nsitem = addRangeTableEntryForRelation(pstate, rel, lockmode,
-											   NULL, false, false);
+																   NULL, false, false);
 		RangeTblEntry *rte = nsitem->p_rte;
+
 		rte->requiredPerms = (is_from ? ACL_INSERT : ACL_SELECT);
 
 		if (stmt->whereClause)
@@ -144,6 +145,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		TupleDesc	tupDesc = RelationGetDescr(rel);
 		List	   *attnums = CopyGetAttnums(tupDesc, rel, stmt->attlist);
+
 		foreach(cur, attnums)
 		{
 			int			attno = lfirst_int(cur) -
@@ -241,11 +243,12 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			 * relation which we have opened and locked.
 			 */
 			RangeVar   *from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-								pstrdup(RelationGetRelationName(rel)),
-								-1);
+											pstrdup(RelationGetRelationName(rel)),
+											-1);
 
 			/* Build query */
 			SelectStmt *select = makeNode(SelectStmt);
+
 			select->targetList = targetList;
 			select->fromClause = list_make1(from);
 
@@ -287,8 +290,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			PreventCommandIfReadOnly("COPY FROM");
 
 		CopyFromState cstate = BeginCopyFrom(pstate, rel, whereClause,
-							   stmt->filename, stmt->is_program,
-							   NULL, stmt->attlist, stmt->options);
+											 stmt->filename, stmt->is_program,
+											 NULL, stmt->attlist, stmt->options);
+
 		*processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
@@ -296,8 +300,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 
 		CopyToState cstate = BeginCopyTo(pstate, rel, query, relid,
-							 stmt->filename, stmt->is_program,
-							 stmt->attlist, stmt->options);
+										 stmt->filename, stmt->is_program,
+										 stmt->attlist, stmt->options);
+
 		*processed = DoCopyTo(cstate);	/* copy from database to file */
 		EndCopyTo(cstate);
 	}
@@ -671,6 +676,7 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 
 			/* Lookup column name */
 			int			attnum = InvalidAttrNumber;
+
 			for (i = 0; i < tupDesc->natts; i++)
 			{
 				Form_pg_attribute att = TupleDescAttr(tupDesc, i);

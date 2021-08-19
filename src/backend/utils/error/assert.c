@@ -52,6 +52,7 @@ ExceptionalCondition(const char *conditionName,
 		void	   *buf[100];
 
 		int			nframes = backtrace(buf, lengthof(buf));
+
 		backtrace_symbols_fd(buf, nframes, fileno(stderr));
 	}
 #endif

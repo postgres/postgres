@@ -47,6 +47,7 @@ datapagemap_add(datapagemap_t *map, BlockNumber blkno)
 		 * of a relation to the end.
 		 */
 		int			newsize = offset + 1;
+
 		newsize += 10;
 
 		map->bitmap = pg_realloc(map->bitmap, newsize);
@@ -73,6 +74,7 @@ datapagemap_iterate(datapagemap_t *map)
 {
 
 	datapagemap_iterator_t *iter = pg_malloc(sizeof(datapagemap_iterator_t));
+
 	iter->map = map;
 	iter->nextblkno = 0;
 
@@ -115,6 +117,7 @@ datapagemap_print(datapagemap_t *map)
 	BlockNumber blocknum;
 
 	datapagemap_iterator_t *iter = datapagemap_iterate(map);
+
 	while (datapagemap_next(iter, &blocknum))
 		pg_log_debug("block %u", blocknum);
 

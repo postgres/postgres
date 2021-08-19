@@ -286,6 +286,7 @@ intset_create(void)
 {
 
 	IntegerSet *intset = (IntegerSet *) palloc(sizeof(IntegerSet));
+
 	intset->context = CurrentMemoryContext;
 	intset->mem_used = GetMemoryChunkSpace(intset);
 
@@ -317,7 +318,8 @@ intset_new_internal_node(IntegerSet *intset)
 {
 
 	intset_internal_node *n = (intset_internal_node *) MemoryContextAlloc(intset->context,
-													sizeof(intset_internal_node));
+																		  sizeof(intset_internal_node));
+
 	intset->mem_used += GetMemoryChunkSpace(n);
 
 	n->level = 0;				/* caller must set */
@@ -331,7 +333,8 @@ intset_new_leaf_node(IntegerSet *intset)
 {
 
 	intset_leaf_node *n = (intset_leaf_node *) MemoryContextAlloc(intset->context,
-												sizeof(intset_leaf_node));
+																  sizeof(intset_leaf_node));
+
 	intset->mem_used += GetMemoryChunkSpace(n);
 
 	n->level = 0;
@@ -560,9 +563,10 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	{
 
 		int			itemno = intset_binsrch_uint64(x,
-									   intset->buffered_values,
-									   intset->num_buffered_values,
-									   false);
+												   intset->buffered_values,
+												   intset->num_buffered_values,
+												   false);
+
 		if (itemno >= intset->num_buffered_values)
 			return false;
 		else
@@ -576,6 +580,7 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	if (!intset->root)
 		return false;
 	intset_node *node = intset->root;
+
 	for (level = intset->num_levels - 1; level > 0; level--)
 	{
 		intset_internal_node *n = (intset_internal_node *) node;
@@ -656,8 +661,9 @@ intset_iterate_next(IntegerSet *intset, uint64 *next)
 
 			intset->iter_values_buf[0] = item->first;
 			int			num_decoded = simple8b_decode(item->codeword,
-										  &intset->iter_values_buf[1],
-										  item->first);
+													  &intset->iter_values_buf[1],
+													  item->first);
+
 			intset->iter_num_values = num_decoded + 1;
 			intset->iter_valueno = 0;
 			continue;
@@ -888,7 +894,8 @@ simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 	int			bits = simple8b_modes[0].bits_per_int;
 	uint64		diff = ints[0] - base - 1;
 	uint64		last_val = ints[0];
-	int			i = 0;						/* number of deltas we have accepted */
+	int			i = 0;			/* number of deltas we have accepted */
+
 	for (;;)
 	{
 		if (diff >= (UINT64CONST(1) << bits))
@@ -934,6 +941,7 @@ simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base)
 	 * correct order in the decoder.
 	 */
 	uint64		codeword = 0;
+
 	if (bits > 0)
 	{
 		for (i = nints - 1; i > 0; i--)
@@ -969,6 +977,7 @@ simple8b_decode(uint64 codeword, uint64 *decoded, uint64 base)
 		return 0;
 
 	uint64		curr_value = base;
+
 	for (int i = 0; i < nints; i++)
 	{
 		uint64		diff = codeword & mask;
@@ -1005,6 +1014,7 @@ simple8b_contains(uint64 codeword, uint64 key, uint64 base)
 		uint64		mask = (UINT64CONST(1) << bits) - 1;
 
 		uint64		curr_value = base;
+
 		for (int i = 0; i < nints; i++)
 		{
 			uint64		diff = codeword & mask;

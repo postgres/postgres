@@ -184,6 +184,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 	uint32		orig_firstfree = metap->hashm_firstfree;
 	uint32		first_page = orig_firstfree >> BMPG_SHIFT(metap);
 	uint32		bit = orig_firstfree & BMPG_MASK(metap);
+
 	i = first_page;
 	j = bit / BITS_PER_MAP;
 	bit &= ~(BITS_PER_MAP - 1);
@@ -215,6 +216,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 
 		mapbuf = _hash_getbuf(rel, mapblkno, HASH_WRITE, LH_BITMAP_PAGE);
 		Page		mappage = BufferGetPage(mapbuf);
+
 		freep = HashPageGetBitmap(mappage);
 
 		for (; bit <= last_inpage; j++, bit += BITS_PER_MAP)
@@ -498,6 +500,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	BlockNumber nextblkno = ovflopaque->hasho_nextblkno;
 	BlockNumber prevblkno = ovflopaque->hasho_prevblkno;
 	BlockNumber writeblkno = BufferGetBlockNumber(wbuf);
+
 	bucket = ovflopaque->hasho_bucket;
 
 	/*
@@ -547,6 +550,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	Buffer		mapbuf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BITMAP_PAGE);
 	Page		mappage = BufferGetPage(mapbuf);
 	uint32	   *freep = HashPageGetBitmap(mappage);
+
 	Assert(ISSET(freep, bitmapbit));
 
 	/* Get write-lock on metapage to update firstfree */
@@ -726,6 +730,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 
 	/* initialize the page's special space */
 	HashPageOpaque op = (HashPageOpaque) PageGetSpecialPointer(pg);
+
 	op->hasho_prevblkno = InvalidBlockNumber;
 	op->hasho_nextblkno = InvalidBlockNumber;
 	op->hasho_bucket = InvalidBucket;
@@ -734,6 +739,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 
 	/* set all of the bits to 1 */
 	uint32	   *freep = HashPageGetBitmap(pg);
+
 	MemSet(freep, 0xFF, bmsize);
 
 	/*
@@ -812,6 +818,7 @@ _hash_squeezebucket(Relation rel,
 	 */
 	Buffer		rbuf = InvalidBuffer;
 	HashPageOpaque ropaque = wopaque;
+
 	do
 	{
 		rblkno = ropaque->hasho_nextblkno;
@@ -857,8 +864,9 @@ readpage:
 				continue;
 
 			IndexTuple	itup = (IndexTuple) PageGetItem(rpage,
-											PageGetItemId(rpage, roffnum));
+														PageGetItemId(rpage, roffnum));
 			Size		itemsz = IndexTupleSize(itup);
+
 			itemsz = MAXALIGN(itemsz);
 
 			/*

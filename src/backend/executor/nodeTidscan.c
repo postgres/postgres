@@ -81,6 +81,7 @@ TidExprListCreate(TidScanState *tidstate)
 
 			Node	   *arg1 = get_leftop(expr);
 			Node	   *arg2 = get_rightop(expr);
+
 			if (IsCTIDVar(arg1))
 				tidexpr->exprstate = ExecInitExpr((Expr *) arg2,
 												  &tidstate->ss.ps);
@@ -148,7 +149,7 @@ TidListEval(TidScanState *tidstate)
 	 */
 	int			numAllocTids = list_length(tidstate->tss_tidexprs);
 	ItemPointerData *tidList = (ItemPointerData *)
-		palloc(numAllocTids * sizeof(ItemPointerData));
+	palloc(numAllocTids * sizeof(ItemPointerData));
 	int			numTids = 0;
 
 	foreach(l, tidstate->tss_tidexprs)
@@ -193,11 +194,13 @@ TidListEval(TidScanState *tidstate)
 			int			i;
 
 			Datum		arraydatum = ExecEvalExprSwitchContext(tidexpr->exprstate,
-												   econtext,
-												   &isNull);
+															   econtext,
+															   &isNull);
+
 			if (isNull)
 				continue;
 			ArrayType  *itemarray = DatumGetArrayTypeP(arraydatum);
+
 			deconstruct_array(itemarray,
 							  TIDOID, sizeof(ItemPointerData), false, TYPALIGN_SHORT,
 							  &ipdatums, &ipnulls, &ndatums);
@@ -325,6 +328,7 @@ TidNext(TidScanState *node)
 	 * Initialize or advance scan position, depending on direction.
 	 */
 	bool		bBackward = ScanDirectionIsBackward(direction);
+
 	if (bBackward)
 	{
 		if (node->tss_TidPtr < 0)
@@ -485,6 +489,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	TidScanState *tidstate = makeNode(TidScanState);
+
 	tidstate->ss.ps.plan = (Plan *) node;
 	tidstate->ss.ps.state = estate;
 	tidstate->ss.ps.ExecProcNode = ExecTidScan;

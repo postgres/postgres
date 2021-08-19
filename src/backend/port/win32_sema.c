@@ -93,6 +93,7 @@ PGSemaphoreCreate(void)
 
 	/* We don't need a named semaphore */
 	HANDLE		cur_handle = CreateSemaphore(&sec_attrs, 1, 32767, NULL);
+
 	if (cur_handle)
 	{
 		/* Successfully done */
@@ -153,6 +154,7 @@ PGSemaphoreLock(PGSemaphore sema)
 		CHECK_FOR_INTERRUPTS();
 
 		DWORD		rc = WaitForMultipleObjectsEx(2, wh, FALSE, INFINITE, TRUE);
+
 		switch (rc)
 		{
 			case WAIT_OBJECT_0:

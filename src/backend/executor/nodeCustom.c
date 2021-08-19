@@ -40,7 +40,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	 * set to zero.
 	 */
 	CustomScanState *css = castNode(CustomScanState,
-				   cscan->methods->CreateCustomScanState(cscan));
+									cscan->methods->CreateCustomScanState(cscan));
 
 	/* ensure flags is filled correctly */
 	css->flags = cscan->flags;
@@ -71,6 +71,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	{
 
 		TupleDesc	scan_tupdesc = ExecTypeFromTL(cscan->custom_scan_tlist);
+
 		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc, &TTSOpsVirtual);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
@@ -179,6 +180,7 @@ ExecCustomScanInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_allocate(pcxt->toc, node->pscan_len);
+
 		methods->InitializeDSMCustomScan(node, pcxt, coordinate);
 		shm_toc_insert(pcxt->toc, plan_node_id, coordinate);
 	}
@@ -194,6 +196,7 @@ ExecCustomScanReInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
+
 		methods->ReInitializeDSMCustomScan(node, pcxt, coordinate);
 	}
 }
@@ -209,6 +212,7 @@ ExecCustomScanInitializeWorker(CustomScanState *node,
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 
 		void	   *coordinate = shm_toc_lookup(pwcxt->toc, plan_node_id, false);
+
 		methods->InitializeWorkerCustomScan(node, pwcxt->toc, coordinate);
 	}
 }

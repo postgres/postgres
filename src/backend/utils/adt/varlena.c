@@ -226,6 +226,7 @@ text_to_cstring(const text *t)
 	int			len = VARSIZE_ANY_EXHDR(tunpacked);
 
 	char	   *result = (char *) palloc(len + 1);
+
 	memcpy(result, VARDATA_ANY(tunpacked), len);
 	result[len] = '\0';
 
@@ -342,6 +343,7 @@ byteain(PG_FUNCTION_ARGS)
 
 	tp = inputText;
 	char	   *rp = VARDATA(result);
+
 	while (*tp != '\0')
 	{
 		if (tp[0] != '\\')
@@ -405,8 +407,9 @@ byteaout(PG_FUNCTION_ARGS)
 		/* Print traditional escaped format */
 		int			i;
 
-		uint64		len = 1;				/* empty string has 1 char */
+		uint64		len = 1;	/* empty string has 1 char */
 		char	   *vp = VARDATA_ANY(vlena);
+
 		for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
 		{
 			if (*vp == '\\')
@@ -473,6 +476,7 @@ bytearecv(PG_FUNCTION_ARGS)
 
 	int			nbytes = buf->len - buf->cursor;
 	bytea	   *result = (bytea *) palloc(nbytes + VARHDRSZ);
+
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	pq_copymsgbytes(buf, VARDATA(result), nbytes);
 	PG_RETURN_BYTEA_P(result);
@@ -535,6 +539,7 @@ bytea_string_agg_finalfn(PG_FUNCTION_ARGS)
 	{
 
 		bytea	   *result = (bytea *) palloc(state->len + VARHDRSZ);
+
 		SET_VARSIZE(result, state->len + VARHDRSZ);
 		memcpy(VARDATA(result), state->data, state->len);
 		PG_RETURN_BYTEA_P(result);
@@ -577,6 +582,7 @@ textrecv(PG_FUNCTION_ARGS)
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	text	   *result = cstring_to_text_with_len(str, nbytes);
+
 	pfree(str);
 	PG_RETURN_TEXT_P(result);
 }
@@ -630,6 +636,7 @@ unknownrecv(PG_FUNCTION_ARGS)
 	int			nbytes;
 
 	char	   *str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+
 	/* representation is same as cstring */
 	PG_RETURN_CSTRING(str);
 }
@@ -753,6 +760,7 @@ text_catenate(text *t1, text *t2)
 
 	/* Fill data field of result string... */
 	char	   *ptr = VARDATA(result);
+
 	if (len1 > 0)
 		memcpy(ptr, VARDATA_ANY(t1), len1);
 	if (len2 > 0)
@@ -987,7 +995,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 
 		/* Now we can get the actual length of the slice in MB characters */
 		int32		slice_strlen = pg_mbstrlen_with_len(VARDATA_ANY(slice),
-											VARSIZE_ANY_EXHDR(slice));
+														VARSIZE_ANY_EXHDR(slice));
 
 		/*
 		 * Check that the start position wasn't > slice_strlen. If so, SQL99
@@ -1013,6 +1021,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		 * Find the start position in the slice; remember S1 is not zero based
 		 */
 		char	   *p = VARDATA_ANY(slice);
+
 		for (i = 0; i < S1 - 1; i++)
 			p += pg_mblen(p);
 
@@ -1027,6 +1036,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			p += pg_mblen(p);
 
 		text	   *ret = (text *) palloc(VARHDRSZ + (p - s));
+
 		SET_VARSIZE(ret, VARHDRSZ + (p - s));
 		memcpy(VARDATA(ret), s, (p - s));
 
@@ -1067,7 +1077,9 @@ textoverlay_no_len(PG_FUNCTION_ARGS)
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
 	int			sp = PG_GETARG_INT32(2);	/* substring start position */
 
-	int			sl = text_length(PointerGetDatum(t2));	/* defaults to length(t2) */
+	int			sl = text_length(PointerGetDatum(t2));	/* defaults to
+														 * length(t2) */
+
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
 
@@ -1093,6 +1105,7 @@ text_overlay(text *t1, text *t2, int sp, int sl)
 	text	   *s1 = text_substring(PointerGetDatum(t1), 1, sp - 1, false);
 	text	   *s2 = text_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
 	text	   *result = text_catenate(s1, t2);
+
 	result = text_catenate(result, s2);
 
 	return result;
@@ -1398,6 +1411,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 
 			const char *nptr = needle_last;
 			const char *p = hptr;
+
 			while (*nptr == *p)
 			{
 				/* Matched it all?	If so, return 1-based position */
@@ -1658,6 +1672,7 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 				{
 
 					UErrorCode	status = U_ZERO_ERROR;
+
 					result = ucol_strcollUTF8(mylocale->info.icu.ucol,
 											  arg1, len1,
 											  arg2, len2,
@@ -2328,6 +2343,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 	 * when the last comparison's result cannot be reused.
 	 */
 	bool		arg1_match = true;
+
 	if (len1 != sss->last_len1 || memcmp(sss->buf1, a1p, len1) != 0)
 	{
 		arg1_match = false;
@@ -2364,6 +2380,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 			{
 
 				UErrorCode	status = U_ZERO_ERROR;
+
 				result = ucol_strcollUTF8(sss->locale->info.icu.ucol,
 										  a1p, len1,
 										  a2p, len2,
@@ -2459,6 +2476,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 	uint32		hash;
 
 	char	   *pres = (char *) &res;
+
 	/* memset(), so any non-overwritten bytes are NUL */
 	memset(pres, 0, sizeof(Datum));
 	int			len = VARSIZE_ANY_EXHDR(authoritative);
@@ -2567,6 +2585,7 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 					uiter_setUTF8(&iter, sss->buf1, len);
 					state[0] = state[1] = 0;	/* won't need that again */
 					UErrorCode	status = U_ZERO_ERROR;
+
 					bsize = ucol_nextSortKeyPart(sss->locale->info.icu.ucol,
 												 &iter,
 												 state,
@@ -2952,8 +2971,8 @@ btnametextcmp(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_PP(1);
 
 	int32		result = varstr_cmp(NameStr(*arg1), strlen(NameStr(*arg1)),
-						VARDATA_ANY(arg2), VARSIZE_ANY_EXHDR(arg2),
-						PG_GET_COLLATION());
+									VARDATA_ANY(arg2), VARSIZE_ANY_EXHDR(arg2),
+									PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg2, 1);
 
@@ -2967,8 +2986,8 @@ bttextnamecmp(PG_FUNCTION_ARGS)
 	Name		arg2 = PG_GETARG_NAME(1);
 
 	int32		result = varstr_cmp(VARDATA_ANY(arg1), VARSIZE_ANY_EXHDR(arg1),
-						NameStr(*arg2), strlen(NameStr(*arg2)),
-						PG_GET_COLLATION());
+									NameStr(*arg2), strlen(NameStr(*arg2)),
+									PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(arg1, 0);
 
@@ -3050,6 +3069,7 @@ internal_text_pattern_compare(text *arg1, text *arg2)
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
 	int			result = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
 	if (result != 0)
 		return result;
 	else if (len1 < len2)
@@ -3213,6 +3233,7 @@ bytea_catenate(bytea *t1, bytea *t2)
 
 	/* Fill data field of result string... */
 	char	   *ptr = VARDATA(result);
+
 	if (len1 > 0)
 		memcpy(ptr, VARDATA_ANY(t1), len1);
 	if (len2 > 0)
@@ -3348,6 +3369,7 @@ byteaoverlay_no_len(PG_FUNCTION_ARGS)
 	int			sp = PG_GETARG_INT32(2);	/* substring start position */
 
 	int			sl = VARSIZE_ANY_EXHDR(t2); /* defaults to length(t2) */
+
 	PG_RETURN_BYTEA_P(bytea_overlay(t1, t2, sp, sl));
 }
 
@@ -3373,6 +3395,7 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 	bytea	   *s1 = bytea_substring(PointerGetDatum(t1), 1, sp - 1, false);
 	bytea	   *s2 = bytea_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
 	bytea	   *result = bytea_catenate(s1, t2);
+
 	result = bytea_catenate(result, s2);
 
 	return result;
@@ -3417,6 +3440,7 @@ byteapos(PG_FUNCTION_ARGS)
 	p2 = VARDATA_ANY(t2);
 
 	int			pos = 0;
+
 	px = (len1 - len2);
 	for (p = 0; p <= px; p++)
 	{
@@ -3595,6 +3619,7 @@ text_name(PG_FUNCTION_ARGS)
 
 	/* We use palloc0 here to ensure result is zero-padded */
 	Name		result = (Name) palloc0(NAMEDATALEN);
+
 	memcpy(NameStr(*result), VARDATA_ANY(s), len);
 
 	PG_RETURN_NAME(result);
@@ -3739,6 +3764,7 @@ SplitIdentifierString(char *rawstring, char separator,
 			 */
 			int			len = endp - curname;
 			char	   *downname = downcase_truncate_identifier(curname, len, false);
+
 			Assert(strlen(downname) <= len);
 			strncpy(curname, downname, len);	/* strncpy is required here */
 			pfree(downname);
@@ -4164,6 +4190,7 @@ byteacmp(PG_FUNCTION_ARGS)
 	len2 = VARSIZE_ANY_EXHDR(arg2);
 
 	int			cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+
 	if ((cmp == 0) && (len1 != len2))
 		cmp = (len1 < len2) ? -1 : 1;
 
@@ -4267,6 +4294,7 @@ replace_text(PG_FUNCTION_ARGS)
 	text_position_cleanup(&state);
 
 	text	   *ret_text = cstring_to_text_with_len(str.data, str.len);
+
 	pfree(str.data);
 
 	PG_RETURN_TEXT_P(ret_text);
@@ -4390,8 +4418,10 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 
 			Assert(so >= data_pos);
 			char	   *chunk_start = start_ptr;
+
 			chunk_start += charlen_to_bytelen(chunk_start, so - data_pos);
 			int			chunk_len = charlen_to_bytelen(chunk_start, eo - so);
+
 			appendBinaryStringInfo(str, chunk_start, chunk_len);
 		}
 	}
@@ -4452,13 +4482,13 @@ replace_text_regexp(text *src_text, text *pattern_text,
 		CHECK_FOR_INTERRUPTS();
 
 		int			regexec_result = pg_regexec(re,
-									data,
-									data_len,
-									search_start,
-									NULL,	/* no details */
-									nmatch,
-									pmatch,
-									0);
+												data,
+												data_len,
+												search_start,
+												NULL,	/* no details */
+												nmatch,
+												pmatch,
+												0);
 
 		if (regexec_result == REG_NOMATCH)
 			break;
@@ -4499,7 +4529,8 @@ replace_text_regexp(text *src_text, text *pattern_text,
 		{
 
 			int			chunk_len = charlen_to_bytelen(start_ptr,
-										   pmatch[0].rm_so - data_pos);
+													   pmatch[0].rm_so - data_pos);
+
 			appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 
 			/*
@@ -4548,10 +4579,12 @@ replace_text_regexp(text *src_text, text *pattern_text,
 	{
 
 		int			chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
+
 		appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 	}
 
 	text	   *ret_text = cstring_to_text_with_len(buf.data, buf.len);
+
 	pfree(buf.data);
 	pfree(data);
 
@@ -4867,6 +4900,7 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 			CHECK_FOR_INTERRUPTS();
 
 			bool		found = text_position_next(&state);
+
 			if (!found)
 			{
 				/* fetch last field */
@@ -5039,6 +5073,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 		return cstring_to_text_with_len("", 0);
 
 	Oid			element_type = ARR_ELEMTYPE(v);
+
 	initStringInfo(&buf);
 
 	/*
@@ -5047,6 +5082,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	 * type doesn't change underneath us.
 	 */
 	ArrayMetaState *my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
@@ -5123,6 +5159,7 @@ array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 	}
 
 	text	   *result = cstring_to_text_with_len(buf.data, buf.len);
+
 	pfree(buf.data);
 
 	return result;
@@ -5141,6 +5178,7 @@ to_hex32(PG_FUNCTION_ARGS)
 	char		buf[32];		/* bigger than needed, but reasonable */
 
 	char	   *ptr = buf + sizeof(buf) - 1;
+
 	*ptr = '\0';
 
 	do
@@ -5164,6 +5202,7 @@ to_hex64(PG_FUNCTION_ARGS)
 	char		buf[32];		/* bigger than needed, but reasonable */
 
 	char	   *ptr = buf + sizeof(buf) - 1;
+
 	*ptr = '\0';
 
 	do
@@ -5255,7 +5294,8 @@ pg_column_compression(PG_FUNCTION_ARGS)
 
 	/* get the compression method id stored in the compressed varlena */
 	ToastCompressionId cmid = toast_get_compression_id((struct varlena *)
-									DatumGetPointer(PG_GETARG_DATUM(0)));
+													   DatumGetPointer(PG_GETARG_DATUM(0)));
+
 	if (cmid == TOAST_INVALID_COMPRESSION_ID)
 		PG_RETURN_NULL();
 
@@ -5303,6 +5343,7 @@ makeStringAggState(FunctionCallInfo fcinfo)
 	 */
 	MemoryContext oldcontext = MemoryContextSwitchTo(aggcontext);
 	StringInfo	state = makeStringInfo();
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return state;
@@ -5361,7 +5402,7 @@ build_concat_foutcache(FunctionCallInfo fcinfo, int argidx)
 
 	/* We keep the info in fn_mcxt so it survives across calls */
 	FmgrInfo   *foutcache = (FmgrInfo *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-												PG_NARGS() * sizeof(FmgrInfo));
+															PG_NARGS() * sizeof(FmgrInfo));
 
 	for (i = argidx; i < PG_NARGS(); i++)
 	{
@@ -5369,6 +5410,7 @@ build_concat_foutcache(FunctionCallInfo fcinfo, int argidx)
 		bool		typIsVarlena;
 
 		Oid			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+
 		if (!OidIsValid(valtype))
 			elog(ERROR, "could not determine data type of concat() input");
 
@@ -5437,6 +5479,7 @@ concat_internal(const char *sepstr, int argidx,
 
 	/* Get output function info, building it if first time through */
 	FmgrInfo   *foutcache = (FmgrInfo *) fcinfo->flinfo->fn_extra;
+
 	if (foutcache == NULL)
 		foutcache = build_concat_foutcache(fcinfo, argidx);
 
@@ -5459,6 +5502,7 @@ concat_internal(const char *sepstr, int argidx,
 	}
 
 	text	   *result = cstring_to_text_with_len(str.data, str.len);
+
 	pfree(str.data);
 
 	return result;
@@ -5472,6 +5516,7 @@ text_concat(PG_FUNCTION_ARGS)
 {
 
 	text	   *result = concat_internal("", 0, fcinfo);
+
 	if (result == NULL)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(result);
@@ -5491,6 +5536,7 @@ text_concat_ws(PG_FUNCTION_ARGS)
 	char	   *sep = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	text	   *result = concat_internal(sep, 1, fcinfo);
+
 	if (result == NULL)
 		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(result);
@@ -5513,6 +5559,7 @@ text_left(PG_FUNCTION_ARGS)
 
 		n = pg_mbstrlen_with_len(p, len) + n;
 		int			rlen = pg_mbcharcliplen(p, len, n);
+
 		PG_RETURN_TEXT_P(cstring_to_text_with_len(p, rlen));
 	}
 	else
@@ -5553,6 +5600,7 @@ text_reverse(PG_FUNCTION_ARGS)
 
 	text	   *result = palloc(len + VARHDRSZ);
 	char	   *dst = (char *) VARDATA(result) + len;
+
 	SET_VARSIZE(result, len + VARHDRSZ);
 
 	if (pg_database_encoding_max_length() > 1)
@@ -5562,6 +5610,7 @@ text_reverse(PG_FUNCTION_ARGS)
 		{
 
 			int			sz = pg_mblen(p);
+
 			dst -= sz;
 			memcpy(dst, p, sz);
 			p += sz;
@@ -5667,8 +5716,9 @@ text_format(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(0);
 	const char *start_ptr = VARDATA_ANY(fmt);
 	const char *end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
+
 	initStringInfo(&str);
-	int			arg = 1;					/* next argument position to print */
+	int			arg = 1;		/* next argument position to print */
 
 	/* Scan format string, looking for conversion specifiers. */
 	for (cp = start_ptr; cp < end_ptr; cp++)
@@ -5851,6 +5901,7 @@ text_format(PG_FUNCTION_ARGS)
 
 	/* Generate results. */
 	text	   *result = cstring_to_text_with_len(str.data, str.len);
+
 	pfree(str.data);
 
 	PG_RETURN_TEXT_P(result);
@@ -6068,6 +6119,7 @@ text_format_append_string(StringInfo buf, const char *str,
 		align_to_left = true;
 
 	int			len = pg_mbstrlen(str);
+
 	if (align_to_left)
 	{
 		/* left justify */
@@ -6165,6 +6217,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 	int			size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
 	pg_wchar   *input_chars = palloc((size + 1) * sizeof(pg_wchar));
 	unsigned char *p = (unsigned char *) VARDATA_ANY(input);
+
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
@@ -6187,6 +6240,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 	}
 
 	text	   *result = palloc(size + VARHDRSZ);
+
 	SET_VARSIZE(result, size + VARHDRSZ);
 
 	p = (unsigned char *) VARDATA_ANY(result);
@@ -6225,6 +6279,7 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 	int			size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
 	pg_wchar   *input_chars = palloc((size + 1) * sizeof(pg_wchar));
 	unsigned char *p = (unsigned char *) VARDATA_ANY(input);
+
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
@@ -6235,6 +6290,7 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 
 	/* quick check (see UAX #15) */
 	UnicodeNormalizationQC quickcheck = unicode_is_normalized_quickcheck(form, input_chars);
+
 	if (quickcheck == UNICODE_NORM_QC_YES)
 		PG_RETURN_BOOL(true);
 	else if (quickcheck == UNICODE_NORM_QC_NO)
@@ -6244,11 +6300,12 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 	pg_wchar   *output_chars = unicode_normalize(form, input_chars);
 
 	int			output_size = 0;
+
 	for (pg_wchar *wp = output_chars; *wp; wp++)
 		output_size++;
 
 	bool		result = (size == output_size) &&
-		(memcmp(input_chars, output_chars, size * sizeof(pg_wchar)) == 0);
+	(memcmp(input_chars, output_chars, size * sizeof(pg_wchar)) == 0);
 
 	PG_RETURN_BOOL(result);
 }

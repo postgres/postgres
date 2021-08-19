@@ -73,11 +73,13 @@ test_shm_mq_main(Datum main_arg)
 	 * ownership of the mapping, but we have no need for that.
 	 */
 	dsm_segment *seg = dsm_attach(DatumGetInt32(main_arg));
+
 	if (seg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("unable to map dynamic shared memory segment")));
 	shm_toc    *toc = shm_toc_attach(PG_TEST_SHM_MQ_MAGIC, dsm_segment_address(seg));
+
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -92,8 +94,10 @@ test_shm_mq_main(Datum main_arg)
 	 * worker involved in this parallel operation, or there may be many.
 	 */
 	volatile test_shm_mq_header *hdr = shm_toc_lookup(toc, 0, false);
+
 	SpinLockAcquire(&hdr->mutex);
 	int			myworkernumber = ++hdr->workers_attached;
+
 	SpinLockRelease(&hdr->mutex);
 	if (myworkernumber > hdr->workers_total)
 		ereport(ERROR,
@@ -118,6 +122,7 @@ test_shm_mq_main(Datum main_arg)
 	++hdr->workers_ready;
 	SpinLockRelease(&hdr->mutex);
 	PGPROC	   *registrant = BackendPidGetProc(MyBgworkerEntry->bgw_notify_pid);
+
 	if (registrant == NULL)
 	{
 		elog(DEBUG1, "registrant backend has exited prematurely");
@@ -151,9 +156,11 @@ attach_to_queues(dsm_segment *seg, shm_toc *toc, int myworkernumber,
 {
 
 	shm_mq	   *inq = shm_toc_lookup(toc, myworkernumber, false);
+
 	shm_mq_set_receiver(inq, MyProc);
 	*inqhp = shm_mq_attach(inq, seg, NULL);
 	shm_mq	   *outq = shm_toc_lookup(toc, myworkernumber + 1, false);
+
 	shm_mq_set_sender(outq, MyProc);
 	*outqhp = shm_mq_attach(outq, seg, NULL);
 }

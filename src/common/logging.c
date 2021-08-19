@@ -279,6 +279,7 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 
 	va_copy(ap2, ap);
 	size_t		required_len = vsnprintf(NULL, 0, fmt, ap2) + 1;
+
 	va_end(ap2);
 
 	char	   *buf = pg_malloc_extended(required_len, MCXT_ALLOC_NO_OOM);

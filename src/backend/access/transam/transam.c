@@ -152,6 +152,7 @@ TransactionIdDidCommit(TransactionId transactionId)
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return false;
 		TransactionId parentXid = SubTransGetParent(transactionId);
+
 		if (!TransactionIdIsValid(parentXid))
 		{
 			elog(WARNING, "no pg_subtrans entry for subcommitted XID %u",
@@ -198,6 +199,7 @@ TransactionIdDidAbort(TransactionId transactionId)
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return true;
 		TransactionId parentXid = SubTransGetParent(transactionId);
+
 		if (!TransactionIdIsValid(parentXid))
 		{
 			/* see notes in TransactionIdDidCommit */
@@ -303,6 +305,7 @@ TransactionIdPrecedes(TransactionId id1, TransactionId id2)
 		return (id1 < id2);
 
 	int32		diff = (int32) (id1 - id2);
+
 	return (diff < 0);
 }
 
@@ -317,6 +320,7 @@ TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2)
 		return (id1 <= id2);
 
 	int32		diff = (int32) (id1 - id2);
+
 	return (diff <= 0);
 }
 
@@ -331,6 +335,7 @@ TransactionIdFollows(TransactionId id1, TransactionId id2)
 		return (id1 > id2);
 
 	int32		diff = (int32) (id1 - id2);
+
 	return (diff > 0);
 }
 
@@ -345,6 +350,7 @@ TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2)
 		return (id1 >= id2);
 
 	int32		diff = (int32) (id1 - id2);
+
 	return (diff >= 0);
 }
 
@@ -365,6 +371,7 @@ TransactionIdLatest(TransactionId mainxid,
 	 * array back-to-front to avoid useless assignments.
 	 */
 	TransactionId result = mainxid;
+
 	while (--nxids >= 0)
 	{
 		if (TransactionIdPrecedes(result, xids[nxids]))

@@ -558,6 +558,7 @@ pqDropServerData(PGconn *conn)
 
 	/* Forget pending notifies */
 	PGnotify   *notify = conn->notifyHead;
+
 	while (notify != NULL)
 	{
 		PGnotify   *prev = notify;
@@ -575,6 +576,7 @@ pqDropServerData(PGconn *conn)
 
 	/* Reset ParameterStatus data, as well as variables deduced from it */
 	pgParameterStatus *pstatus = conn->pstatus;
+
 	while (pstatus != NULL)
 	{
 		pgParameterStatus *prev = pstatus;
@@ -678,6 +680,7 @@ PQpingParams(const char *const *keywords,
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
 
 	PGPing		ret = internal_ping(conn);
+
 	PQfinish(conn);
 
 	return ret;
@@ -728,6 +731,7 @@ PQping(const char *conninfo)
 	PGconn	   *conn = PQconnectStart(conninfo);
 
 	PGPing		ret = internal_ping(conn);
+
 	PQfinish(conn);
 
 	return ret;
@@ -764,6 +768,7 @@ PQconnectStartParams(const char *const *keywords,
 	 * connection initialization will only append to that buffer.
 	 */
 	PGconn	   *conn = makeEmptyPGconn();
+
 	if (conn == NULL)
 		return NULL;
 
@@ -771,8 +776,9 @@ PQconnectStartParams(const char *const *keywords,
 	 * Parse the conninfo arrays
 	 */
 	PQconninfoOption *connOptions = conninfo_array_parse(keywords, values,
-									   &conn->errorMessage,
-									   true, expand_dbname);
+														 &conn->errorMessage,
+														 true, expand_dbname);
+
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -841,6 +847,7 @@ PQconnectStart(const char *conninfo)
 	 * connection initialization will only append to that buffer.
 	 */
 	PGconn	   *conn = makeEmptyPGconn();
+
 	if (conn == NULL)
 		return NULL;
 
@@ -926,6 +933,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	 * Parse the conninfo string
 	 */
 	PQconninfoOption *connOptions = parse_connection_string(conninfo, &conn->errorMessage, true);
+
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -959,6 +967,7 @@ count_comma_separated_elems(const char *input)
 {
 
 	int			n = 1;
+
 	for (; *input != '\0'; input++)
 	{
 		if (*input == ',')
@@ -987,12 +996,14 @@ parse_comma_separated_list(char **startptr, bool *more)
 	 * acts as a terminator.
 	 */
 	char	   *e = s;
+
 	while (*e != '\0' && *e != ',')
 		++e;
 	*more = (*e == ',');
 
 	int			len = e - s;
 	char	   *p = (char *) malloc(sizeof(char) * (len + 1));
+
 	if (p)
 	{
 		memcpy(p, s, len);
@@ -1467,6 +1478,7 @@ PQconndefaults(void)
 		return NULL;			/* out of memory already :-( */
 
 	PQconninfoOption *connOptions = conninfo_init(&errorBuf);
+
 	if (connOptions != NULL)
 	{
 		/* pass NULL errorBuf to ignore errors */
@@ -1505,6 +1517,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	 * connection initialization will only append to that buffer.
 	 */
 	PGconn	   *conn = makeEmptyPGconn();
+
 	if (conn == NULL)
 		return NULL;
 
@@ -1703,6 +1716,7 @@ emitHostIdentityInfo(PGconn *conn, const char *host_addr)
 		else
 			displayed_host = conn->connhost[conn->whichhost].host;
 		const char *displayed_port = conn->connhost[conn->whichhost].port;
+
 		if (displayed_port == NULL || displayed_port[0] == '\0')
 			displayed_port = DEF_PGPORT_STR;
 
@@ -1765,6 +1779,7 @@ useKeepalives(PGconn *conn)
 	if (conn->keepalives == NULL)
 		return 1;
 	int			val = strtol(conn->keepalives, &ep, 10);
+
 	if (*ep)
 		return -1;
 	return val != 0 ? 1 : 0;
@@ -2930,6 +2945,7 @@ keep_going:						/* We will come back to here until there is
 					 * write-ready.
 					 */
 					ProtocolVersion pv = pg_hton32(NEGOTIATE_SSL_CODE);
+
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
@@ -2999,6 +3015,7 @@ keep_going:						/* We will come back to here until there is
 					char		SSLok;
 
 					int			rdresult = pqReadData(conn);
+
 					if (rdresult < 0)
 					{
 						/* errorMessage is already filled in */
@@ -3481,6 +3498,7 @@ keep_going:						/* We will come back to here until there is
 						 */
 
 						const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+
 						if (sqlstate &&
 							strcmp(sqlstate, ERRCODE_APPNAME_UNKNOWN) == 0)
 						{
@@ -4332,6 +4350,7 @@ PQgetCancel(PGconn *conn)
 		return NULL;
 
 	PGcancel   *cancel = malloc(sizeof(PGcancel));
+
 	if (cancel == NULL)
 		return NULL;
 
@@ -4519,7 +4538,7 @@ PQrequestCancel(PGconn *conn)
 	}
 
 	int			r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
-						conn->errorMessage.data, conn->errorMessage.maxlen);
+									conn->errorMessage.data, conn->errorMessage.maxlen);
 
 	if (!r)
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
@@ -4710,6 +4729,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		portstr = p1 + 1;
 		errno = 0;
 		long		lport = strtol(portstr, &endptr, 10);
+
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
 			appendPQExpBuffer(errorMessage,
@@ -5139,6 +5159,7 @@ parseServiceFile(const char *serviceFile,
 	*group_found = false;
 
 	FILE	   *f = fopen(serviceFile, "r");
+
 	if (f == NULL)
 	{
 		appendPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
@@ -5313,6 +5334,7 @@ PQconninfoParse(const char *conninfo, char **errmsg)
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
 	PQconninfoOption *connOptions = parse_connection_string(conninfo, &errorBuf, false);
+
 	if (connOptions == NULL && errmsg)
 		*errmsg = errorBuf.data;
 	else
@@ -5333,6 +5355,7 @@ conninfo_init(PQExpBuffer errorMessage)
 	 * end up being filtered out.
 	 */
 	PQconninfoOption *options = (PQconninfoOption *) malloc(sizeof(PQconninfoOption) * sizeof(PQconninfoOptions) / sizeof(PQconninfoOptions[0]));
+
 	if (options == NULL)
 	{
 		appendPQExpBufferStr(errorMessage,
@@ -5426,6 +5449,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 
 	/* Make a working copy of PQconninfoOptions */
 	PQconninfoOption *options = conninfo_init(errorMessage);
+
 	if (options == NULL)
 		return NULL;
 
@@ -5630,6 +5654,7 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
 
 	/* Make a working copy of PQconninfoOptions */
 	PQconninfoOption *options = conninfo_init(errorMessage);
+
 	if (options == NULL)
 	{
 		PQconninfoFree(dbname_options);
@@ -5866,6 +5891,7 @@ conninfo_uri_parse(const char *uri, PQExpBuffer errorMessage,
 
 	/* Make a working copy of PQconninfoOptions */
 	PQconninfoOption *options = conninfo_init(errorMessage);
+
 	if (options == NULL)
 		return NULL;
 
@@ -6244,6 +6270,7 @@ conninfo_uri_parse_params(char *params,
 		 * URI-encoded.
 		 */
 		int			oldmsglen = errorMessage->len;
+
 		if (!conninfo_storeval(connOptions, keyword, value,
 							   errorMessage, true, false))
 		{
@@ -6292,6 +6319,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 	const char *q = str;
 
 	char	   *buf = malloc(strlen(str) + 1);
+
 	if (buf == NULL)
 	{
 		appendPQExpBufferStr(errorMessage, libpq_gettext("out of memory\n"));
@@ -6328,6 +6356,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			}
 
 			int			c = (hi << 4) | lo;
+
 			if (c == 0)
 			{
 				appendPQExpBuffer(errorMessage,
@@ -6420,6 +6449,7 @@ conninfo_storeval(PQconninfoOption *connOptions,
 	}
 
 	PQconninfoOption *option = conninfo_find(connOptions, keyword);
+
 	if (option == NULL)
 	{
 		if (!ignoreMissing)
@@ -6751,6 +6781,7 @@ PQconnectionNeedsPassword(const PGconn *conn)
 	if (!conn)
 		return false;
 	char	   *password = PQpass(conn);
+
 	if (conn->password_needed &&
 		(password == NULL || password[0] == '\0'))
 		return true;
@@ -6825,6 +6856,7 @@ PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity)
 	if (!conn)
 		return PQERRORS_DEFAULT;
 	PGVerbosity old = conn->verbosity;
+
 	conn->verbosity = verbosity;
 	return old;
 }
@@ -6836,6 +6868,7 @@ PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context)
 	if (!conn)
 		return PQSHOW_CONTEXT_ERRORS;
 	PGContextVisibility old = conn->show_context;
+
 	conn->show_context = show_context;
 	return old;
 }
@@ -6848,6 +6881,7 @@ PQsetNoticeReceiver(PGconn *conn, PQnoticeReceiver proc, void *arg)
 		return NULL;
 
 	PQnoticeReceiver old = conn->noticeHooks.noticeRec;
+
 	if (proc)
 	{
 		conn->noticeHooks.noticeRec = proc;
@@ -6864,6 +6898,7 @@ PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 		return NULL;
 
 	PQnoticeProcessor old = conn->noticeHooks.noticeProc;
+
 	if (proc)
 	{
 		conn->noticeHooks.noticeProc = proc;
@@ -6914,6 +6949,7 @@ pwdfMatchesString(char *buf, const char *token)
 		return NULL;
 	char	   *tbuf = buf;
 	const char *ttok = token;
+
 	if (tbuf[0] == '*' && tbuf[1] == ':')
 		return tbuf + 2;
 	while (*tbuf != 0)

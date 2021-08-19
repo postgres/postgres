@@ -287,6 +287,7 @@ perform_base_backup(basebackup_options *opt)
 
 	StringInfo	labelfile = makeStringInfo();
 	StringInfo	tblspc_map_file = makeStringInfo();
+
 	InitializeBackupManifest(&manifest, opt->manifest,
 							 opt->manifest_checksum_type);
 
@@ -324,6 +325,7 @@ perform_base_backup(basebackup_options *opt)
 
 		/* Add a node for the base directory at the end */
 		tablespaceinfo *ti = palloc0(sizeof(tablespaceinfo));
+
 		ti->size = -1;
 		tablespaces = lappend(tablespaces, ti);
 
@@ -502,6 +504,7 @@ perform_base_backup(basebackup_options *opt)
 		XLogFileName(lastoff, ThisTimeLineID, endsegno, wal_segment_size);
 
 		DIR		   *dir = AllocateDir("pg_wal");
+
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
 		{
 			/* Does it look like a WAL segment, and is it in the range? */
@@ -593,6 +596,7 @@ perform_base_backup(basebackup_options *opt)
 			XLogFromFileName(walFileName, &tli, &segno, wal_segment_size);
 
 			int			fd = OpenTransientFile(pathbuf, O_RDONLY | PG_BINARY);
+
 			if (fd < 0)
 			{
 				int			save_errno = errno;
@@ -829,6 +833,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 
 			long		maxrate = intVal(defel->arg);
+
 			if (maxrate < MAX_RATE_LOWER || maxrate > MAX_RATE_UPPER)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -1006,6 +1011,7 @@ SendBackupHeader(List *tablespaces)
 		{
 
 			Size		len = strlen(ti->oid);
+
 			pq_sendint32(&buf, len);
 			pq_sendbytes(&buf, ti->oid, len);
 
@@ -1066,7 +1072,8 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	pq_sendint16(&buf, 2);		/* number of columns */
 
 	Size		len = snprintf(str, sizeof(str),
-				   "%X/%X", LSN_FORMAT_ARGS(ptr));
+							   "%X/%X", LSN_FORMAT_ARGS(ptr));
+
 	pq_sendint32(&buf, len);
 	pq_sendbytes(&buf, str, len);
 
@@ -1176,7 +1183,7 @@ sendTablespace(char *path, char *spcoid, bool sizeonly,
 	}
 
 	int64		size = _tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf,
-						   sizeonly);
+									   sizeonly);
 
 	/* Send all the files in the tablespace version directory */
 	size += sendDir(pathbuf, strlen(path), sizeonly, NIL, true, manifest,
@@ -1238,6 +1245,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 	}
 
 	DIR		   *dir = AllocateDir(path);
+
 	while ((de = ReadDir(dir, path)) != NULL)
 	{
 		int			excludeIdx;
@@ -1273,6 +1281,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 		/* Scan for files that should be excluded */
 		bool		excludeFound = false;
+
 		for (excludeIdx = 0; excludeFiles[excludeIdx].name != NULL; excludeIdx++)
 		{
 			int			cmplen = strlen(excludeFiles[excludeIdx].name);
@@ -1409,6 +1418,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			char		linkpath[MAXPGPATH];
 
 			int			rllen = readlink(pathbuf, linkpath, sizeof(linkpath));
+
 			if (rllen < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
@@ -1586,6 +1596,7 @@ sendFile(const char *readfilename, const char *tarfilename,
 			 readfilename);
 
 	int			fd = OpenTransientFile(readfilename, O_RDONLY | PG_BINARY);
+
 	if (fd < 0)
 	{
 		if (errno == ENOENT && missing_ok)
@@ -1785,6 +1796,7 @@ sendFile(const char *readfilename, const char *tarfilename,
 	 * because it's not actually part of the file.)
 	 */
 	size_t		pad = tarPaddingBytesRequired(len);
+
 	if (pad > 0)
 	{
 		MemSet(buf, 0, pad);
@@ -1890,7 +1902,7 @@ throttle(size_t increment)
 
 	/* How much time should have elapsed at minimum? */
 	TimeOffset	elapsed_min = elapsed_min_unit *
-		(throttling_counter / throttling_sample);
+	(throttling_counter / throttling_sample);
 
 	/*
 	 * Since the latch could be set repeatedly because of concurrently WAL
@@ -1919,9 +1931,9 @@ throttle(size_t increment)
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
 		int			wait_result = WaitLatch(MyLatch,
-								WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-								(long) (sleep / 1000),
-								WAIT_EVENT_BASE_BACKUP_THROTTLE);
+											WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+											(long) (sleep / 1000),
+											WAIT_EVENT_BASE_BACKUP_THROTTLE);
 
 		if (wait_result & WL_LATCH_SET)
 			CHECK_FOR_INTERRUPTS();
@@ -1993,6 +2005,7 @@ basebackup_read_file(int fd, char *buf, size_t nbytes, off_t offset,
 
 	pgstat_report_wait_start(WAIT_EVENT_BASEBACKUP_READ);
 	int			rc = pg_pread(fd, buf, nbytes, offset);
+
 	pgstat_report_wait_end();
 
 	if (rc < 0)

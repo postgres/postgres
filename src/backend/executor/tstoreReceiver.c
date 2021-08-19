@@ -149,6 +149,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 * remember the fetched values to free afterwards.
 	 */
 	int			nfree = 0;
+
 	for (i = 0; i < natts; i++)
 	{
 		Datum		val = slot->tts_values[i];
@@ -171,6 +172,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 * Push the modified tuple into the tuplestore.
 	 */
 	MemoryContext oldcxt = MemoryContextSwitchTo(myState->cxt);
+
 	tuplestore_putvalues(myState->tstore, typeinfo,
 						 myState->outvalues, slot->tts_isnull);
 	MemoryContextSwitchTo(oldcxt);

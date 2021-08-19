@@ -130,11 +130,13 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 	 * create it, and do the per-query setup we need.
 	 */
 	OSAPerQueryState *qstate = (OSAPerQueryState *) fcinfo->flinfo->fn_extra;
+
 	if (qstate == NULL)
 	{
 
 		/* Get the Aggref so we can examine aggregate's arguments */
 		Aggref	   *aggref = AggGetAggref(fcinfo);
+
 		if (!aggref)
 			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
 		if (!AGGKIND_IS_ORDERED_SET(aggref->aggkind))
@@ -146,6 +148,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		 * keep anything found via fn_extra.
 		 */
 		MemoryContext qcontext = fcinfo->flinfo->fn_mcxt;
+
 		oldcontext = MemoryContextSwitchTo(qcontext);
 
 		qstate = (OSAPerQueryState *) palloc0(sizeof(OSAPerQueryState));
@@ -174,6 +177,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 			qstate->sortNullsFirsts = (bool *) palloc(numSortCols * sizeof(bool));
 
 			int			i = 0;
+
 			foreach(lc, sortlist)
 			{
 				SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
@@ -216,6 +220,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 				int			natts = qstate->tupdesc->natts;
 
 				TupleDesc	newdesc = CreateTemplateTupleDesc(natts + 1);
+
 				for (i = 1; i <= natts; i++)
 					TupleDescCopyEntry(newdesc, i, qstate->tupdesc, i);
 
@@ -270,6 +275,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 	oldcontext = MemoryContextSwitchTo(gcontext);
 
 	OSAPerGroupState *osastate = (OSAPerGroupState *) palloc(sizeof(OSAPerGroupState));
+
 	osastate->qstate = qstate;
 	osastate->gcontext = gcontext;
 
@@ -379,8 +385,10 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 
 	/* Form a tuple from all the other inputs besides the transition value */
 	TupleTableSlot *slot = osastate->qstate->tupslot;
+
 	ExecClearTuple(slot);
 	int			nargs = PG_NARGS() - 1;
+
 	for (i = 0; i < nargs; i++)
 	{
 		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
@@ -453,6 +461,7 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 	 *----------
 	 */
 	int64		rownum = (int64) ceil(percentile * osastate->number_of_rows);
+
 	Assert(rownum <= osastate->number_of_rows);
 
 	if (rownum > 1)
@@ -740,10 +749,10 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));
 
 	struct pct_info *pct_info = setup_pct_info(num_percentiles,
-							  percentiles_datum,
-							  percentiles_null,
-							  osastate->number_of_rows,
-							  false);
+											   percentiles_datum,
+											   percentiles_null,
+											   osastate->number_of_rows,
+											   false);
 
 	Datum	   *result_datum = (Datum *) palloc(num_percentiles * sizeof(Datum));
 	bool	   *result_isnull = (bool *) palloc(num_percentiles * sizeof(bool));
@@ -859,10 +868,10 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));
 
 	struct pct_info *pct_info = setup_pct_info(num_percentiles,
-							  percentiles_datum,
-							  percentiles_null,
-							  osastate->number_of_rows,
-							  true);
+											   percentiles_datum,
+											   percentiles_null,
+											   osastate->number_of_rows,
+											   true);
 
 	Datum	   *result_datum = (Datum *) palloc(num_percentiles * sizeof(Datum));
 	bool	   *result_isnull = (bool *) palloc(num_percentiles * sizeof(bool));
@@ -1023,6 +1032,7 @@ mode_final(PG_FUNCTION_ARGS)
 
 	/* Look up the equality function for the datatype, if we didn't already */
 	FmgrInfo   *equalfn = &(osastate->qstate->equalfn);
+
 	if (!OidIsValid(equalfn->fn_oid))
 		fmgr_info_cxt(get_opcode(osastate->qstate->eqOperator), equalfn,
 					  osastate->qstate->qcontext);
@@ -1148,6 +1158,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	}
 
 	OSAPerGroupState *osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+
 	*number_of_rows = osastate->number_of_rows;
 
 	/* Adjust nargs to be the number of direct (or aggregated) args */
@@ -1162,6 +1173,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 
 	/* insert the hypothetical row into the sort */
 	TupleTableSlot *slot = osastate->qstate->tupslot;
+
 	ExecClearTuple(slot);
 	for (i = 0; i < nargs; i++)
 	{
@@ -1265,11 +1277,13 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 
 	OSAPerGroupState *osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
 	ExprContext *econtext = osastate->qstate->econtext;
+
 	if (!econtext)
 	{
 
 		/* Make sure to we create econtext under correct parent context. */
 		MemoryContext oldcontext = MemoryContextSwitchTo(osastate->qstate->qcontext);
+
 		osastate->qstate->econtext = CreateStandaloneExprContext();
 		econtext = osastate->qstate->econtext;
 		MemoryContextSwitchTo(oldcontext);
@@ -1290,11 +1304,13 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 
 	/* Build tuple comparator, if we didn't already */
 	ExprState  *compareTuple = osastate->qstate->compareTuple;
+
 	if (compareTuple == NULL)
 	{
 		AttrNumber *sortColIdx = osastate->qstate->sortColIdx;
 
 		MemoryContext oldContext = MemoryContextSwitchTo(osastate->qstate->qcontext);
+
 		compareTuple = execTuplesMatchPrepare(osastate->qstate->tupdesc,
 											  numDistinctCols,
 											  sortColIdx,
@@ -1310,6 +1326,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 
 	/* insert the hypothetical row into the sort */
 	TupleTableSlot *slot = osastate->qstate->tupslot;
+
 	ExecClearTuple(slot);
 	for (i = 0; i < nargs; i++)
 	{
@@ -1332,7 +1349,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	 * swapping the slot pointer variables after each row.
 	 */
 	TupleTableSlot *extraslot = MakeSingleTupleTableSlot(osastate->qstate->tupdesc,
-										 &TTSOpsMinimalTuple);
+														 &TTSOpsMinimalTuple);
 	TupleTableSlot *slot2 = extraslot;
 
 	/* iterate till we find the hypothetical row */
@@ -1355,6 +1372,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 			duplicate_count++;
 
 		TupleTableSlot *tmpslot = slot2;
+
 		slot2 = slot;
 		slot = tmpslot;
 		/* avoid ExecQual() calls by reusing abbreviated keys */

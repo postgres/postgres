@@ -348,6 +348,7 @@ escape_quotes_bki(const char *src)
 
 	char	   *result = (char *) pg_malloc(strlen(data) + 3);
 	char	   *resultp = result;
+
 	*resultp++ = '\'';
 	for (datap = data; *datap; datap++)
 		*resultp++ = *datap;
@@ -462,6 +463,7 @@ readfile(const char *path)
 	char	  **result = (char **) pg_malloc(maxlines * sizeof(char *));
 
 	int			n = 0;
+
 	while (pg_get_line_buf(infile, &line))
 	{
 		/* make sure there will be room for a trailing NULL pointer */
@@ -526,6 +528,7 @@ popen_check(const char *command, const char *mode)
 	fflush(stderr);
 	errno = 0;
 	FILE	   *cmdfd = popen(command, mode);
+
 	if (cmdfd == NULL)
 		pg_log_error("could not execute command \"%s\": %m", command);
 	return cmdfd;
@@ -839,6 +842,7 @@ set_null_conf(void)
 
 	char	   *path = psprintf("%s/postgresql.conf", pg_data);
 	FILE	   *conf_file = fopen(path, PG_BINARY_W);
+
 	if (conf_file == NULL)
 	{
 		pg_log_error("could not open file \"%s\" for writing: %m", path);
@@ -878,6 +882,7 @@ choose_dsm_implementation(void)
 		int			fd;
 
 		uint32		handle = random();
+
 		snprintf(name, 64, "/PostgreSQL.%u", handle);
 		if ((fd = shm_open(name, O_CREAT | O_RDWR | O_EXCL, 0600)) != -1)
 		{
@@ -1456,6 +1461,7 @@ get_su_pwd(void)
 		fflush(stdout);
 		pwd1 = simple_prompt("Enter new superuser password: ", false);
 		char	   *pwd2 = simple_prompt("Enter it again: ", false);
+
 		if (strcmp(pwd1, pwd2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
@@ -1740,7 +1746,8 @@ setup_privileges(FILE *cmdfd)
 	};
 
 	char	  **priv_lines = replace_token(privileges_setup, "$POSTGRES_SUPERUSERNAME",
-							   escape_quotes(username));
+										   escape_quotes(username));
+
 	for (line = priv_lines; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 }
@@ -1759,9 +1766,11 @@ set_info_version(void)
 	char	   *vstr = pg_strdup(PG_VERSION);
 
 	char	   *ptr = vstr + (strlen(vstr) - 1);
+
 	while (ptr != vstr && (*ptr < '0' || *ptr > '9'))
 		ptr--;
 	char	   *letterversion = ptr + 1;
+
 	major = strtol(vstr, &endptr, 10);
 	if (*endptr)
 		minor = strtol(endptr + 1, &endptr, 10);
@@ -1937,9 +1946,10 @@ locale_date_order(const char *locale)
 	struct tm	testtime;
 	char		buf[128];
 
-	int			result = DATEORDER_MDY;		/* default */
+	int			result = DATEORDER_MDY; /* default */
 
 	char	   *save = setlocale(LC_TIME, NULL);
+
 	if (!save)
 		return result;
 	save = pg_strdup(save);
@@ -1996,6 +2006,7 @@ check_locale_name(int category, const char *locale, char **canonname)
 		*canonname = NULL;		/* in case of failure */
 
 	char	   *save = setlocale(category, NULL);
+
 	if (!save)
 	{
 		pg_log_error("setlocale() failed");
@@ -3081,6 +3092,7 @@ main(int argc, char *argv[])
 	setup_bin_paths(argv[0]);
 
 	char	   *effective_user = get_id();
+
 	if (!username)
 		username = effective_user;
 

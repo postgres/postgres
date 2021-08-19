@@ -195,7 +195,7 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 
 	/* sort the rows */
 	SortItem   *items = build_sorted_items(data, &nitems, mss,
-							   data->nattnums, data->attnums);
+										   data->nattnums, data->attnums);
 
 	if (!items)
 		return NULL;
@@ -264,7 +264,7 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 
 		/* used to search values */
 		MultiSortSupport tmp = (MultiSortSupport) palloc(offsetof(MultiSortSupportData, ssup)
-										+ sizeof(SortSupportData));
+														 + sizeof(SortSupportData));
 
 		/* compute frequencies for values in each column */
 		int		   *nfreqs = (int *) palloc0(sizeof(int) * numattrs);
@@ -318,8 +318,8 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 				key.isnull = &groups[i].isnull[j];
 
 				SortItem   *freq = (SortItem *) bsearch_arg(&key, freqs[j], nfreqs[j],
-												sizeof(SortItem),
-												multi_sort_compare, tmp);
+															sizeof(SortItem),
+															multi_sort_compare, tmp);
 
 				item->base_frequency *= ((double) freq->count) / numrows;
 			}
@@ -354,6 +354,7 @@ build_mss(StatsBuildData *data)
 		VacAttrStats *colstat = data->stats[i];
 
 		TypeCacheEntry *type = lookup_type_cache(colstat->attrtypid, TYPECACHE_LT_OPR);
+
 		if (type->lt_opr == InvalidOid) /* shouldn't happen */
 			elog(ERROR, "cache lookup failed for ordering operator for type %u",
 				 colstat->attrtypid);
@@ -376,6 +377,7 @@ count_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss)
 	int			i;
 
 	int			ndistinct = 1;
+
 	for (i = 1; i < numrows; i++)
 	{
 		/* make sure the array really is sorted */
@@ -492,10 +494,11 @@ build_column_frequencies(SortItem *groups, int ngroups,
 
 	/* allocate arrays for all columns as a single chunk */
 	char	   *ptr = palloc(MAXALIGN(sizeof(SortItem *) * mss->ndims) +
-				 mss->ndims * MAXALIGN(sizeof(SortItem) * ngroups));
+							 mss->ndims * MAXALIGN(sizeof(SortItem) * ngroups));
 
 	/* initial array of pointers */
 	SortItem  **result = (SortItem **) ptr;
+
 	ptr += MAXALIGN(sizeof(SortItem *) * mss->ndims);
 
 	for (dim = 0; dim < mss->ndims; dim++)
@@ -556,7 +559,7 @@ statext_mcv_load(Oid mvoid)
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 
 	Datum		mcvlist = SysCacheGetAttr(STATEXTDATASTXOID, htup,
-							  Anum_pg_statistic_ext_data_stxdmcv, &isnull);
+										  Anum_pg_statistic_ext_data_stxdmcv, &isnull);
 
 	if (isnull)
 		elog(ERROR,
@@ -683,7 +686,8 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 		 * at least one item as (counts[dim] != 0), so we can skip the first
 		 * element.
 		 */
-		int			ndistinct = 1;			/* number of distinct values */
+		int			ndistinct = 1;	/* number of distinct values */
+
 		for (i = 1; i < counts[dim]; i++)
 		{
 			/* expect sorted array */
@@ -749,6 +753,7 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 
 				/* serialized length (uint32 length + data) */
 				Size		len = VARSIZE_ANY_EXHDR(values[dim][i]);
+
 				info[dim].nbytes += sizeof(uint32); /* length */
 				info[dim].nbytes += len;	/* value (no header) */
 
@@ -775,6 +780,7 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 
 				/* c-strings include terminator, so +1 byte */
 				Size		len = strlen(DatumGetCString(values[dim][i])) + 1;
+
 				info[dim].nbytes += sizeof(uint32); /* length */
 				info[dim].nbytes += len;	/* value */
 
@@ -793,8 +799,8 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 	 * for each attribute, deduplicated values and items).
 	 */
 	Size		total_length = (3 * sizeof(uint32)) /* magic + type + nitems */
-		+ sizeof(AttrNumber)	/* ndimensions */
-		+ (ndims * sizeof(Oid));	/* attribute types */
+	+ sizeof(AttrNumber)		/* ndimensions */
+	+ (ndims * sizeof(Oid));	/* attribute types */
 
 	/* dimension info */
 	total_length += ndims * sizeof(DimensionInfo);
@@ -814,9 +820,11 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 	 * we set them to zero to make the result more compressible).
 	 */
 	bytea	   *raw = (bytea *) palloc0(VARHDRSZ + total_length);
+
 	SET_VARSIZE(raw, VARHDRSZ + total_length);
 
 	char	   *ptr = VARDATA(raw);
+
 	endptr = ptr + total_length;
 
 	/* copy the MCV list header fields, one by one */
@@ -1006,6 +1014,7 @@ statext_mcv_deserialize(bytea *data)
 	/* pointer to the data part (skip the varlena header) */
 	char	   *raw = (char *) data;
 	char	   *ptr = VARDATA_ANY(raw);
+
 	endptr = (char *) raw + VARSIZE_ANY(data);
 
 	/* get the header and perform further sanity checks */
@@ -1102,7 +1111,7 @@ statext_mcv_deserialize(bytea *data)
 	 * need for a copy of the by-ref data, as we can't simply point to the
 	 * original values (it might go away).
 	 */
-	Size		datalen = 0;				/* space for by-ref data */
+	Size		datalen = 0;	/* space for by-ref data */
 	Datum	  **map = (Datum **) palloc(ndims * sizeof(Datum *));
 
 	for (dim = 0; dim < ndims; dim++)
@@ -1137,7 +1146,7 @@ statext_mcv_deserialize(bytea *data)
 
 	/* pointer to the beginning of values/isnull arrays */
 	char	   *valuesptr = (char *) mcvlist
-		+ MAXALIGN(offsetof(MCVList, items) + (sizeof(MCVItem) * nitems));
+	+ MAXALIGN(offsetof(MCVList, items) + (sizeof(MCVItem) * nitems));
 
 	char	   *isnullptr = valuesptr + (nitems * MAXALIGN(sizeof(Datum) * ndims));
 
@@ -1576,6 +1585,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 	Assert(mcvlist->nitems <= STATS_MCVLIST_MAX_ITEMS);
 
 	bool	   *matches = palloc(sizeof(bool) * mcvlist->nitems);
+
 	memset(matches, (is_or) ? false : true,
 		   sizeof(bool) * mcvlist->nitems);
 
@@ -1770,9 +1780,9 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 						break;
 
 					bool		elem_match = DatumGetBool(FunctionCall2Coll(&opproc,
-																collid,
-																item->values[idx],
-																elem_value));
+																			collid,
+																			item->values[idx],
+																			elem_value));
 
 					match = RESULT_MERGE(match, expr->useOr, elem_match);
 				}
@@ -1830,7 +1840,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 			/* build the match bitmap for the OR-clauses */
 			bool	   *bool_matches = mcv_get_match_bitmap(root, bool_clauses, keys, exprs,
-												mcvlist, is_orclause(clause));
+															mcvlist, is_orclause(clause));
 
 			/*
 			 * Merge the bitmap produced by mcv_get_match_bitmap into the
@@ -1857,7 +1867,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 			/* build the match bitmap for the NOT-clause */
 			bool	   *not_matches = mcv_get_match_bitmap(root, not_args, keys, exprs,
-											   mcvlist, false);
+														   mcvlist, false);
 
 			/*
 			 * Merge the bitmap produced by mcv_get_match_bitmap into the
@@ -1948,6 +1958,7 @@ mcv_combine_selectivities(Selectivity simple_sel,
 
 	/* estimated selectivity of values not covered by MCV matches */
 	Selectivity other_sel = simple_sel - mcv_basesel;
+
 	CLAMP_PROBABILITY(other_sel);
 
 	/* this non-MCV selectivity cannot exceed 1 - mcv_totalsel */
@@ -1956,6 +1967,7 @@ mcv_combine_selectivities(Selectivity simple_sel,
 
 	/* overall selectivity is the sum of the MCV and non-MCV parts */
 	Selectivity sel = mcv_sel + other_sel;
+
 	CLAMP_PROBABILITY(sel);
 
 	return sel;
@@ -1996,7 +2008,7 @@ mcv_clauselist_selectivity(PlannerInfo *root, StatisticExtInfo *stat,
 
 	/* build a match bitmap for the clauses */
 	bool	   *matches = mcv_get_match_bitmap(root, clauses, stat->keys, stat->exprs,
-								   mcv, false);
+											   mcv, false);
 
 	/* sum frequencies for all the matching MCV items */
 	*basesel = 0.0;
@@ -2069,7 +2081,7 @@ mcv_clause_selectivity_or(PlannerInfo *root, StatisticExtInfo *stat,
 
 	/* build the match bitmap for the new clause */
 	bool	   *new_matches = mcv_get_match_bitmap(root, list_make1(clause), stat->keys,
-									   stat->exprs, mcv, false);
+												   stat->exprs, mcv, false);
 
 	/*
 	 * Sum the frequencies for all the MCV items matching this clause and also

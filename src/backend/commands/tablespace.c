@@ -168,6 +168,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 
 					/* create two parents up if not exist */
 					char	   *parentdir = pstrdup(dir);
+
 					get_parent_directory(parentdir);
 					get_parent_directory(parentdir);
 					/* Can't create parent and it doesn't already exist? */
@@ -255,6 +256,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* Unix-ify the offered path, and strip any trailing slashes */
 	char	   *location = pstrdup(stmt->location);
+
 	canonicalize_path(location);
 
 	/* disallow quotes, else CREATE DATABASE would be at risk */
@@ -583,7 +585,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 
 	char	   *linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
 	char	   *location_with_version_dir = psprintf("%s/%s", location,
-										 TABLESPACE_VERSION_DIRECTORY);
+													 TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.  If this fails,
@@ -681,7 +683,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	struct stat st;
 
 	char	   *linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
-										TABLESPACE_VERSION_DIRECTORY);
+													TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir each
@@ -706,6 +708,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * should not give a hard error here.
 	 */
 	DIR		   *dirdesc = AllocateDir(linkloc_with_version_dir);
+
 	if (dirdesc == NULL)
 	{
 		if (errno == ENOENT)
@@ -933,6 +936,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 				CStringGetDatum(oldname));
 	TableScanDesc scan = table_beginscan_catalog(rel, 1, entry);
 	HeapTuple	tup = heap_getnext(scan, ForwardScanDirection);
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1015,6 +1019,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 				CStringGetDatum(stmt->tablespacename));
 	TableScanDesc scandesc = table_beginscan_catalog(rel, 1, entry);
 	HeapTuple	tup = heap_getnext(scandesc, ForwardScanDirection);
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1030,10 +1035,11 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 
 	/* Generate new proposed spcoptions (text array) */
 	Datum		datum = heap_getattr(tup, Anum_pg_tablespace_spcoptions,
-						 RelationGetDescr(rel), &isnull);
+									 RelationGetDescr(rel), &isnull);
 	Datum		newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
-									 stmt->options, NULL, NULL, false,
-									 stmt->isReset);
+												 stmt->options, NULL, NULL, false,
+												 stmt->isReset);
+
 	(void) tablespace_reloptions(newOptions, true);
 
 	/* Build new tuple. */
@@ -1045,7 +1051,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 		repl_null[Anum_pg_tablespace_spcoptions - 1] = true;
 	repl_repl[Anum_pg_tablespace_spcoptions - 1] = true;
 	HeapTuple	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val,
-								 repl_null, repl_repl);
+											 repl_null, repl_repl);
 
 	/* Update system catalog. */
 	CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
@@ -1203,6 +1209,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 		/* temporary workspace until we are done verifying the list */
 		Oid		   *tblSpcs = (Oid *) palloc(list_length(namelist) * sizeof(Oid));
 		int			numSpcs = 0;
+
 		foreach(l, namelist)
 		{
 			char	   *curname = (char *) lfirst(l);
@@ -1221,6 +1228,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			 * nonexistent tablespace, only a NOTICE.  See comments in guc.h.
 			 */
 			Oid			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
+
 			if (curoid == InvalidOid)
 			{
 				if (source == PGC_S_TEST)
@@ -1244,7 +1252,8 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 
 			/* Check permissions, similarly complaining only if interactive */
 			AclResult	aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
-											   ACL_CREATE);
+														   ACL_CREATE);
+
 			if (aclresult != ACLCHECK_OK)
 			{
 				if (source >= PGC_S_INTERACTIVE)
@@ -1257,7 +1266,8 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 
 		/* Now prepare an "extra" struct for assign_temp_tablespaces */
 		temp_tablespaces_extra *myextra = malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
-						 numSpcs * sizeof(Oid));
+												 numSpcs * sizeof(Oid));
+
 		if (!myextra)
 			return false;
 		myextra->numSpcs = numSpcs;
@@ -1334,8 +1344,9 @@ PrepareTempTablespaces(void)
 
 	/* Store tablespace OIDs in an array in TopTransactionContext */
 	Oid		   *tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
-										 list_length(namelist) * sizeof(Oid));
+													 list_length(namelist) * sizeof(Oid));
 	int			numSpcs = 0;
+
 	foreach(l, namelist)
 	{
 		char	   *curname = (char *) lfirst(l);
@@ -1350,6 +1361,7 @@ PrepareTempTablespaces(void)
 
 		/* Else verify that name is a valid tablespace name */
 		Oid			curoid = get_tablespace_oid(curname, true);
+
 		if (curoid == InvalidOid)
 		{
 			/* Skip any bad list elements */
@@ -1369,7 +1381,8 @@ PrepareTempTablespaces(void)
 
 		/* Check permissions similarly */
 		AclResult	aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
-										   ACL_CREATE);
+													   ACL_CREATE);
+
 		if (aclresult != ACLCHECK_OK)
 			continue;
 

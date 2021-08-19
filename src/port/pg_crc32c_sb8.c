@@ -50,6 +50,7 @@ pg_comp_crc32c_sb8(pg_crc32c crc, const void *data, size_t len)
 	 * Process eight bytes of data at a time.
 	 */
 	const uint32 *p4 = (const uint32 *) p;
+
 	while (len >= 8)
 	{
 		uint32		a = *p4++ ^ crc;

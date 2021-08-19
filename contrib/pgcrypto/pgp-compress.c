@@ -274,6 +274,7 @@ restart:
 	 * follow the API.
 	 */
 	int			flush = dec->stream.avail_in ? Z_SYNC_FLUSH : Z_FINISH;
+
 	res = inflate(&dec->stream, flush);
 	if (res != Z_OK && res != Z_STREAM_END)
 	{

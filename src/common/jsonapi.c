@@ -170,6 +170,7 @@ pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
 
 	/* get the initial token */
 	JsonParseErrorType result = json_lex(lex);
+
 	if (result != JSON_SUCCESS)
 		return result;
 
@@ -218,7 +219,8 @@ json_count_array_elements(JsonLexContext *lex, int *elements)
 
 	int			count = 0;
 	JsonParseErrorType result = lex_expect(JSON_PARSE_ARRAY_START, &copylex,
-						JSON_TOKEN_ARRAY_START);
+										   JSON_TOKEN_ARRAY_START);
+
 	if (result != JSON_SUCCESS)
 		return result;
 	if (lex_peek(&copylex) != JSON_TOKEN_ARRAY_END)
@@ -288,6 +290,7 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 
 	/* consume the token */
 	JsonParseErrorType result = json_lex(lex);
+
 	if (result != JSON_SUCCESS)
 		return result;
 
@@ -315,6 +318,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	if ((ostart != NULL || oend != NULL) && lex->strval != NULL)
 		fname = pstrdup(lex->strval->data);
 	JsonParseErrorType result = json_lex(lex);
+
 	if (result != JSON_SUCCESS)
 		return result;
 
@@ -514,6 +518,7 @@ json_lex(JsonLexContext *lex)
 	/* Skip leading whitespace. */
 	char	   *s = lex->token_terminator;
 	int			len = s - lex->input;
+
 	while (len < lex->input_length &&
 		   (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
 	{
@@ -669,6 +674,7 @@ json_lex_string(JsonLexContext *lex)
 	Assert(lex->input_length > 0);
 	char	   *s = lex->token_start;
 	int			len = lex->token_start - lex->input;
+
 	for (;;)
 	{
 		s++;
@@ -783,6 +789,7 @@ json_lex_string(JsonLexContext *lex)
 
 						unicode_to_utf8(ch, (unsigned char *) utf8str);
 						int			utf8len = pg_utf_mblen((unsigned char *) utf8str);
+
 						appendBinaryStringInfo(lex->strval, utf8str, utf8len);
 					}
 					else if (ch <= 0x007f)

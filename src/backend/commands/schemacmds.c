@@ -72,6 +72,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	{
 
 		HeapTuple	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(owner_uid));
+
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for role %u", owner_uid);
 		schemaName =
@@ -87,6 +88,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * superuser will always have both of these privileges a fortiori.
 	 */
 	AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -141,6 +143,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * the end of this routine, or upon error.
 	 */
 	OverrideSearchPath *overridePath = GetOverrideSearchPath(CurrentMemoryContext);
+
 	overridePath->schemas = lcons_oid(namespaceId, overridePath->schemas);
 	/* XXX should we clear overridePath->useTemp? */
 	PushOverrideSearchPath(overridePath);
@@ -176,6 +179,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 
 		/* need to make a wrapper PlannedStmt */
 		PlannedStmt *wrapper = makeNode(PlannedStmt);
+
 		wrapper->commandType = CMD_UTILITY;
 		wrapper->canSetTag = false;
 		wrapper->utilityStmt = stmt;
@@ -217,6 +221,7 @@ RenameSchema(const char *oldname, const char *newname)
 	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -238,6 +243,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	/* must have CREATE privilege on database */
 	AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -269,6 +275,7 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(oid));
+
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for schema %u", oid);
 
@@ -291,6 +298,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 	Relation	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
 	HeapTuple	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
+
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -349,7 +357,8 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		 * no special case for them.
 		 */
 		AclResult	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
-										 ACL_CREATE);
+													 ACL_CREATE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_DATABASE,
 						   get_database_name(MyDatabaseId));
@@ -365,8 +374,9 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		 * necessary when the ACL is non-null.
 		 */
 		Datum		aclDatum = SysCacheGetAttr(NAMESPACENAME, tup,
-								   Anum_pg_namespace_nspacl,
-								   &isNull);
+											   Anum_pg_namespace_nspacl,
+											   &isNull);
+
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),

@@ -171,6 +171,7 @@ removeDontCares(OffsetNumber *a, int *len, const bool *dontcare)
 
 	origlen = newlen = *len;
 	OffsetNumber *curwpos = a;
+
 	for (i = 0; i < origlen; i++)
 	{
 		OffsetNumber ai = a[i];
@@ -624,6 +625,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 	/* generate the item array, and identify tuples with null keys */
 	/* note that entryvec->vector[0] goes unused in this code */
 	GistEntryVector *entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
+
 	entryvec->n = len + 1;
 	OffsetNumber *offNullTuples = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
 
@@ -632,7 +634,8 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 		bool		IsNull;
 
 		Datum		datum = index_getattr(itup[i - 1], attno + 1, giststate->leafTupdesc,
-							  &IsNull);
+										  &IsNull);
+
 		gistdentryinit(giststate, attno, &(entryvec->vector[i]),
 					   datum, r, page, i,
 					   false, IsNull);
@@ -729,6 +732,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				 * call will overwrite that with its own result.
 				 */
 				GIST_SPLITVEC backupSplit = v->splitVector;
+
 				backupSplit.spl_left = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);
 				memcpy(backupSplit.spl_left, v->splitVector.spl_left, sizeof(OffsetNumber) * v->splitVector.spl_nleft);
 				backupSplit.spl_right = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);

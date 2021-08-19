@@ -65,6 +65,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 
 	/* we need two PX_MD objects */
 	int			err = px_find_digest("md5", &ctx);
+
 	if (err)
 		return NULL;
 	err = px_find_digest("md5", &ctx1);
@@ -138,6 +139,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	p = passwd + strlen(passwd);
 
 	unsigned long l = (final[0] << 16) | (final[6] << 8) | final[12];
+
 	_crypt_to64(p, l, 4);
 	p += 4;
 	l = (final[1] << 16) | (final[7] << 8) | final[13];

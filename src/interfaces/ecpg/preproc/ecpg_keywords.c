@@ -41,6 +41,7 @@ ScanECPGKeywordLookup(const char *text)
 
 	/* First check SQL symbols defined by the backend. */
 	int			kwnum = ScanKeywordLookup(text, &ScanKeywords);
+
 	if (kwnum >= 0)
 		return SQLScanKeywordTokens[kwnum];
 

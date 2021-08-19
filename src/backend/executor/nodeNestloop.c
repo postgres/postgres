@@ -74,6 +74,7 @@ ExecNestLoop(PlanState *pstate)
 	ENL1_printf("getting info from node");
 
 	NestLoop   *nl = (NestLoop *) node->js.ps.plan;
+
 	joinqual = node->js.joinqual;
 	ExprState  *otherqual = node->js.ps.qual;
 	PlanState  *outerPlan = outerPlanState(node);
@@ -127,6 +128,7 @@ ExecNestLoop(PlanState *pstate)
 				int			paramno = nlp->paramno;
 
 				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramno]);
+
 				/* Param value should be an OUTER_VAR var */
 				Assert(IsA(nlp->paramval, Var));
 				Assert(nlp->paramval->varno == OUTER_VAR);
@@ -267,6 +269,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	NestLoopState *nlstate = makeNode(NestLoopState);
+
 	nlstate->js.ps.plan = (Plan *) node;
 	nlstate->js.ps.state = estate;
 	nlstate->js.ps.ExecProcNode = ExecNestLoop;

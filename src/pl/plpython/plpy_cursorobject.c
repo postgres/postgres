@@ -104,12 +104,14 @@ PLy_cursor_query(const char *query)
 		pg_verifymbstr(query, strlen(query), false);
 
 		SPIPlanPtr	plan = SPI_prepare(query, 0, NULL);
+
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed: %s",
 				 SPI_result_code_string(SPI_result));
 
 		Portal		portal = SPI_cursor_open(NULL, plan, NULL, NULL,
-								 exec_ctx->curr_proc->fn_readonly);
+											 exec_ctx->curr_proc->fn_readonly);
+
 		SPI_freeplan(plan);
 
 		if (portal == NULL)
@@ -162,6 +164,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
 		char	   *sv = PyString_AsString(so);
+
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -205,6 +208,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PLyObToDatum *arg = &plan->args[j];
 
 			PyObject   *elem = PySequence_GetItem(args, j);
+
 			PG_TRY();
 			{
 				bool		isnull;
@@ -220,7 +224,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		}
 
 		Portal		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
-								 exec_ctx->curr_proc->fn_readonly);
+											 exec_ctx->curr_proc->fn_readonly);
+
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));
@@ -308,6 +313,7 @@ PLy_cursor_iternext(PyObject *self)
 	}
 
 	Portal		portal = GetPortalByName(cursor->portalname);
+
 	if (!PortalIsValid(portal))
 	{
 		PLy_exception_set(PyExc_ValueError,
@@ -369,6 +375,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 	}
 
 	Portal		portal = GetPortalByName(cursor->portalname);
+
 	if (!PortalIsValid(portal))
 	{
 		PLy_exception_set(PyExc_ValueError,
@@ -377,6 +384,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 	}
 
 	PLyResultObject *ret = (PLyResultObject *) PLy_result_new();
+
 	if (ret == NULL)
 		return NULL;
 

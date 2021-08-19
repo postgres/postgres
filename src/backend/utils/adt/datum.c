@@ -146,6 +146,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
 
 			Size		resultsize = EOH_get_flat_size(eoh);
 			char	   *resultptr = (char *) palloc(resultsize);
+
 			EOH_flatten_into(eoh, (void *) resultptr, resultsize);
 			res = PointerGetDatum(resultptr);
 		}
@@ -155,6 +156,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
 
 			Size		realSize = (Size) VARSIZE_ANY(vl);
 			char	   *resultptr = (char *) palloc(realSize);
+
 			memcpy(resultptr, vl, realSize);
 			res = PointerGetDatum(resultptr);
 		}
@@ -166,6 +168,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
 		Size		realSize = datumGetSize(value, typByVal, typLen);
 
 		char	   *resultptr = (char *) palloc(realSize);
+
 		memcpy(resultptr, DatumGetPointer(value), realSize);
 		res = PointerGetDatum(resultptr);
 	}
@@ -434,6 +437,7 @@ datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
 			 * so we can't store directly to *start_address.
 			 */
 			char	   *tmp = (char *) palloc(header);
+
 			EOH_flatten_into(eoh, (void *) tmp, header);
 			memcpy(*start_address, tmp, header);
 			*start_address += header;
@@ -488,6 +492,7 @@ datumRestore(char **start_address, bool *isnull)
 	/* Pass-by-reference case; copy indicated number of bytes. */
 	Assert(header > 0);
 	void	   *d = palloc(header);
+
 	memcpy(d, *start_address, header);
 	*start_address += header;
 	return PointerGetDatum(d);

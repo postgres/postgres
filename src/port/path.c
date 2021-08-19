@@ -453,6 +453,7 @@ get_progname(const char *argv0)
 {
 
 	const char *nodir_name = last_dir_separator(argv0);
+
 	if (nodir_name)
 		nodir_name++;
 	else
@@ -463,6 +464,7 @@ get_progname(const char *argv0)
 	 * called only once.
 	 */
 	char	   *progname = strdup(nodir_name);
+
 	if (progname == NULL)
 	{
 		fprintf(stderr, "%s: out of memory\n", nodir_name);
@@ -545,6 +547,7 @@ make_relative_path(char *ret_path, const char *target_path,
 	 * directory separator, consider eg '/usr/lib' and '/usr/libexec'.
 	 */
 	int			prefix_len = 0;
+
 	for (i = 0; target_path[i] && bin_path[i]; i++)
 	{
 		if (IS_DIR_SEP(target_path[i]) && IS_DIR_SEP(bin_path[i]))
@@ -614,6 +617,7 @@ make_absolute_path(const char *path)
 		char	   *buf;
 
 		size_t		buflen = MAXPGPATH;
+
 		for (;;)
 		{
 			buf = malloc(buflen);
@@ -821,6 +825,7 @@ get_home_path(char *ret_path)
 	 * would keep it out of the backend, freeing it from this concern.
 	 */
 	char	   *tmppath = getenv("APPDATA");
+
 	if (!tmppath)
 		return false;
 	snprintf(ret_path, MAXPGPATH, "%s/postgresql", tmppath);
@@ -895,6 +900,7 @@ trim_trailing_separator(char *path)
 
 	path = skip_drive(path);
 	char	   *p = path + strlen(path);
+
 	if (p > path)
 		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';

@@ -37,6 +37,7 @@ pg_check_dir(const char *dir)
 	int			readdir_errno;
 
 	DIR		   *chkdir = opendir(dir);
+
 	if (chkdir == NULL)
 		return (errno == ENOENT) ? 0 : -1;
 

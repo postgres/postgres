@@ -152,9 +152,9 @@ toast_save_datum(Relation rel, Datum value,
 
 	/* Open all the toast indexes and look for the valid one */
 	int			validIndex = toast_open_indexes(toastrel,
-									RowExclusiveLock,
-									&toastidxs,
-									&num_indexes);
+												RowExclusiveLock,
+												&toastidxs,
+												&num_indexes);
 
 	/*
 	 * Get the data pointer and length, and compute va_rawsize and va_extinfo.
@@ -363,6 +363,7 @@ toast_save_datum(Relation rel, Datum value,
 	 * Create the TOAST pointer value that we'll return
 	 */
 	struct varlena *result = (struct varlena *) palloc(TOAST_POINTER_SIZE);
+
 	SET_VARTAG_EXTERNAL(result, VARTAG_ONDISK);
 	memcpy(VARDATA_EXTERNAL(result), &toast_pointer, sizeof(toast_pointer));
 
@@ -399,9 +400,9 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 
 	/* Fetch valid relation used for process */
 	int			validIndex = toast_open_indexes(toastrel,
-									RowExclusiveLock,
-									&toastidxs,
-									&num_indexes);
+												RowExclusiveLock,
+												&toastidxs,
+												&num_indexes);
 
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
@@ -418,7 +419,8 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	 */
 	init_toast_snapshot(&SnapshotToast);
 	SysScanDesc toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   &SnapshotToast, 1, &toastkey);
+													   &SnapshotToast, 1, &toastkey);
+
 	while ((toasttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
@@ -456,9 +458,9 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 
 	/* Fetch a valid index relation */
 	int			validIndex = toast_open_indexes(toastrel,
-									RowExclusiveLock,
-									&toastidxs,
-									&num_indexes);
+												RowExclusiveLock,
+												&toastidxs,
+												&num_indexes);
 
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
@@ -472,8 +474,8 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	 * Is there any such chunk?
 	 */
 	SysScanDesc toastscan = systable_beginscan(toastrel,
-								   RelationGetRelid(toastidxs[validIndex]),
-								   true, SnapshotAny, 1, &toastkey);
+											   RelationGetRelid(toastidxs[validIndex]),
+											   true, SnapshotAny, 1, &toastkey);
 
 	if (systable_getnext(toastscan) != NULL)
 		result = true;
@@ -522,9 +524,9 @@ toast_get_valid_index(Oid toastoid, LOCKMODE lock)
 
 	/* Look for the valid index of the toast relation */
 	int			validIndex = toast_open_indexes(toastrel,
-									lock,
-									&toastidxs,
-									&num_indexes);
+												lock,
+												&toastidxs,
+												&num_indexes);
 	Oid			validIndexOid = RelationGetRelid(toastidxs[validIndex]);
 
 	/* Close the toast relation and all its indexes */
@@ -555,6 +557,7 @@ toast_open_indexes(Relation toastrel,
 
 	/* Get index list of the toast relation */
 	List	   *indexlist = RelationGetIndexList(toastrel);
+
 	Assert(indexlist != NIL);
 
 	*num_indexes = list_length(indexlist);

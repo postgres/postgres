@@ -174,6 +174,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * create state structure
 	 */
 	RecursiveUnionState *rustate = makeNode(RecursiveUnionState);
+
 	rustate->ps.plan = (Plan *) node;
 	rustate->ps.state = estate;
 	rustate->ps.ExecProcNode = ExecRecursiveUnion;
@@ -213,6 +214,7 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 * via the Param slot reserved for it.
 	 */
 	ParamExecData *prmdata = &(estate->es_param_exec_vals[node->wtParam]);
+
 	Assert(prmdata->execPlan == NULL);
 	prmdata->value = PointerGetDatum(rustate);
 	prmdata->isnull = false;

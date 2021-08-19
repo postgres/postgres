@@ -264,6 +264,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 
 	OffsetNumber maxoff = entryvec->n - 2;
 	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -305,6 +306,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
 	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

@@ -58,7 +58,7 @@ RelationPutHeapTuple(Relation relation,
 	Page		pageHeader = BufferGetPage(buffer);
 
 	OffsetNumber offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, false, true);
+									  tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "failed to add tuple to page");
@@ -115,7 +115,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
 
 	/* Perform a read using the buffer strategy */
 	Buffer		buffer = ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
-								mode, bistate->strategy);
+											mode, bistate->strategy);
 
 	/* Save the selected block as target for future inserts */
 	IncrBufferRefCount(buffer);
@@ -196,6 +196,7 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
 
 	/* Use the length of the lock wait queue to judge how much to extend. */
 	int			lockWaiters = RelationExtensionLockWaiterCount(relation);
+
 	if (lockWaiters <= 0)
 		return;
 

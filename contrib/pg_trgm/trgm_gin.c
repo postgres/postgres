@@ -50,6 +50,7 @@ gin_extract_value_trgm(PG_FUNCTION_ARGS)
 		entries = (Datum *) palloc(sizeof(Datum) * trglen);
 
 		trgm	   *ptr = GETARR(trg);
+
 		for (i = 0; i < trglen; i++)
 		{
 			int32		item = trgm2int(ptr);

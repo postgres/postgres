@@ -176,6 +176,7 @@ CreateParallelContext(const char *library_name, const char *function_name,
 
 	/* Initialize a new ParallelContext. */
 	ParallelContext *pcxt = palloc0(sizeof(ParallelContext));
+
 	pcxt->subid = GetCurrentSubTransactionId();
 	pcxt->nworkers = nworkers;
 	pcxt->nworkers_to_launch = nworkers;
@@ -294,6 +295,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	 * parallelism than to fail outright.
 	 */
 	Size		segsize = shm_toc_estimate(&pcxt->estimator);
+
 	if (pcxt->nworkers > 0)
 		pcxt->seg = dsm_create(segsize, DSM_CREATE_NULL_IF_MAXSEGMENTS);
 	if (pcxt->seg != NULL)
@@ -310,7 +312,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 
 	/* Initialize fixed-size state in shared memory. */
 	FixedParallelState *fps = (FixedParallelState *)
-		shm_toc_allocate(pcxt->toc, sizeof(FixedParallelState));
+	shm_toc_allocate(pcxt->toc, sizeof(FixedParallelState));
+
 	fps->database_id = MyDatabaseId;
 	fps->authenticated_user_id = GetAuthenticatedUserId();
 	fps->outer_user_id = GetCurrentRoleId();
@@ -334,60 +337,71 @@ InitializeParallelDSM(ParallelContext *pcxt)
 
 		/* Serialize shared libraries we have loaded. */
 		char	   *libraryspace = shm_toc_allocate(pcxt->toc, library_len);
+
 		SerializeLibraryState(library_len, libraryspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_LIBRARY, libraryspace);
 
 		/* Serialize GUC settings. */
 		char	   *gucspace = shm_toc_allocate(pcxt->toc, guc_len);
+
 		SerializeGUCState(guc_len, gucspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_GUC, gucspace);
 
 		/* Serialize combo CID state. */
 		char	   *combocidspace = shm_toc_allocate(pcxt->toc, combocidlen);
+
 		SerializeComboCIDState(combocidlen, combocidspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_COMBO_CID, combocidspace);
 
 		/* Serialize transaction snapshot and active snapshot. */
 		char	   *tsnapspace = shm_toc_allocate(pcxt->toc, tsnaplen);
+
 		SerializeSnapshot(transaction_snapshot, tsnapspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT,
 					   tsnapspace);
 		char	   *asnapspace = shm_toc_allocate(pcxt->toc, asnaplen);
+
 		SerializeSnapshot(active_snapshot, asnapspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_ACTIVE_SNAPSHOT, asnapspace);
 
 		/* Provide the handle for per-session segment. */
 		char	   *session_dsm_handle_space = shm_toc_allocate(pcxt->toc,
-													sizeof(dsm_handle));
+																sizeof(dsm_handle));
+
 		*(dsm_handle *) session_dsm_handle_space = session_dsm_handle;
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_SESSION_DSM,
 					   session_dsm_handle_space);
 
 		/* Serialize transaction state. */
 		char	   *tstatespace = shm_toc_allocate(pcxt->toc, tstatelen);
+
 		SerializeTransactionState(tstatelen, tstatespace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TRANSACTION_STATE, tstatespace);
 
 		/* Serialize pending syncs. */
 		char	   *pendingsyncsspace = shm_toc_allocate(pcxt->toc, pendingsyncslen);
+
 		SerializePendingSyncs(pendingsyncslen, pendingsyncsspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_PENDING_SYNCS,
 					   pendingsyncsspace);
 
 		/* Serialize reindex state. */
 		char	   *reindexspace = shm_toc_allocate(pcxt->toc, reindexlen);
+
 		SerializeReindexState(reindexlen, reindexspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_REINDEX_STATE, reindexspace);
 
 		/* Serialize relmapper state. */
 		char	   *relmapperspace = shm_toc_allocate(pcxt->toc, relmapperlen);
+
 		SerializeRelationMap(relmapperlen, relmapperspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_RELMAPPER_STATE,
 					   relmapperspace);
 
 		/* Serialize uncommitted enum state. */
 		char	   *uncommittedenumsspace = shm_toc_allocate(pcxt->toc,
-												 uncommittedenumslen);
+															 uncommittedenumslen);
+
 		SerializeUncommittedEnums(uncommittedenumsspace, uncommittedenumslen);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_UNCOMMITTEDENUMS,
 					   uncommittedenumsspace);
@@ -403,14 +417,16 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		 * should be transmitted via separate (possibly larger?) queues.
 		 */
 		char	   *error_queue_space =
-			shm_toc_allocate(pcxt->toc,
-							 mul_size(PARALLEL_ERROR_QUEUE_SIZE,
-									  pcxt->nworkers));
+		shm_toc_allocate(pcxt->toc,
+						 mul_size(PARALLEL_ERROR_QUEUE_SIZE,
+								  pcxt->nworkers));
+
 		for (i = 0; i < pcxt->nworkers; ++i)
 		{
 
 			char	   *start = error_queue_space + i * PARALLEL_ERROR_QUEUE_SIZE;
 			shm_mq	   *mq = shm_mq_create(start, PARALLEL_ERROR_QUEUE_SIZE);
+
 			shm_mq_set_receiver(mq, MyProc);
 			pcxt->worker[i].error_mqh = shm_mq_attach(mq, pcxt->seg, NULL);
 		}
@@ -425,7 +441,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		 */
 		Size		lnamelen = strlen(pcxt->library_name);
 		char	   *entrypointstate = shm_toc_allocate(pcxt->toc, lnamelen +
-										   strlen(pcxt->function_name) + 2);
+													   strlen(pcxt->function_name) + 2);
+
 		strcpy(entrypointstate, pcxt->library_name);
 		strcpy(entrypointstate + lnamelen + 1, pcxt->function_name);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_ENTRYPOINT, entrypointstate);
@@ -459,6 +476,7 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 
 	/* Reset a few bits of fixed parallel state to a clean state. */
 	FixedParallelState *fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
+
 	fps->last_xlog_end = 0;
 
 	/* Recreate error queues (if they exist). */
@@ -467,12 +485,14 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 		int			i;
 
 		char	   *error_queue_space =
-			shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, false);
+		shm_toc_lookup(pcxt->toc, PARALLEL_KEY_ERROR_QUEUE, false);
+
 		for (i = 0; i < pcxt->nworkers; ++i)
 		{
 
 			char	   *start = error_queue_space + i * PARALLEL_ERROR_QUEUE_SIZE;
 			shm_mq	   *mq = shm_mq_create(start, PARALLEL_ERROR_QUEUE_SIZE);
+
 			shm_mq_set_receiver(mq, MyProc);
 			pcxt->worker[i].error_mqh = shm_mq_attach(mq, pcxt->seg, NULL);
 		}
@@ -656,6 +676,7 @@ WaitForParallelWorkersToAttach(ParallelContext *pcxt)
 			}
 
 			BgwHandleStatus status = GetBackgroundWorkerPid(pcxt->worker[i].bgwhandle, &pid);
+
 			if (status == BGWH_STARTED)
 			{
 				/* Has the worker attached to the error queue? */
@@ -792,6 +813,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 				 * exiting.
 				 */
 				shm_mq	   *mq = shm_mq_get_queue(pcxt->worker[i].error_mqh);
+
 				if (shm_mq_get_sender(mq) == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -819,6 +841,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 	{
 
 		FixedParallelState *fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED, false);
+
 		if (fps->last_xlog_end > XactLastRecEnd)
 			XactLastRecEnd = fps->last_xlog_end;
 	}
@@ -1007,6 +1030,7 @@ HandleParallelMessages(void)
 		int			i;
 
 		ParallelContext *pcxt = dlist_container(ParallelContext, node, iter.cur);
+
 		if (pcxt->worker == NULL)
 			continue;
 
@@ -1024,7 +1048,8 @@ HandleParallelMessages(void)
 				void	   *data;
 
 				shm_mq_result res = shm_mq_receive(pcxt->worker[i].error_mqh, &nbytes,
-									 &data, true);
+												   &data, true);
+
 				if (res == SHM_MQ_WOULD_BLOCK)
 					break;
 				else if (res == SHM_MQ_SUCCESS)
@@ -1114,6 +1139,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				 * not the current ones.
 				 */
 				ErrorContextCallback *save_error_context_stack = error_context_stack;
+
 				error_context_stack = pcxt->error_context_stack;
 
 				/* Rethrow error or print notice. */
@@ -1132,6 +1158,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				int32		pid = pq_getmsgint(msg, 4);
 				const char *channel = pq_getmsgrawstring(msg);
 				const char *payload = pq_getmsgrawstring(msg);
+
 				pq_endmessage(msg);
 
 				NotifyMyFrontEnd(channel, payload, pid);
@@ -1169,6 +1196,7 @@ AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId)
 	{
 
 		ParallelContext *pcxt = dlist_head_element(ParallelContext, node, &pcxt_list);
+
 		if (pcxt->subid != mySubId)
 			break;
 		if (isCommit)
@@ -1187,6 +1215,7 @@ AtEOXact_Parallel(bool isCommit)
 	{
 
 		ParallelContext *pcxt = dlist_head_element(ParallelContext, node, &pcxt_list);
+
 		if (isCommit)
 			elog(WARNING, "leaked parallel context");
 		DestroyParallelContext(pcxt);
@@ -1227,11 +1256,13 @@ ParallelWorkerMain(Datum main_arg)
 	 * ownership of the mapping, but we have no need for that.
 	 */
 	dsm_segment *seg = dsm_attach(DatumGetUInt32(main_arg));
+
 	if (seg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not map dynamic shared memory segment")));
 	shm_toc    *toc = shm_toc_attach(PARALLEL_MAGIC, dsm_segment_address(seg));
+
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1239,6 +1270,7 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Look up fixed parallel state. */
 	FixedParallelState *fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED, false);
+
 	MyFixedParallelState = fps;
 
 	/* Arrange to signal the leader if we exit. */
@@ -1254,9 +1286,11 @@ ParallelWorkerMain(Datum main_arg)
 	 */
 	char	   *error_queue_space = shm_toc_lookup(toc, PARALLEL_KEY_ERROR_QUEUE, false);
 	shm_mq	   *mq = (shm_mq *) (error_queue_space +
-					 ParallelWorkerNumber * PARALLEL_ERROR_QUEUE_SIZE);
+								 ParallelWorkerNumber * PARALLEL_ERROR_QUEUE_SIZE);
+
 	shm_mq_set_sender(mq, MyProc);
 	shm_mq_handle *mqh = shm_mq_attach(mq, seg, NULL);
+
 	pq_redirect_to_shm_mq(seg, mqh);
 	pq_set_parallel_leader(fps->parallel_leader_pid,
 						   fps->parallel_leader_backend_id);
@@ -1326,34 +1360,41 @@ ParallelWorkerMain(Datum main_arg)
 	 * variables.
 	 */
 	char	   *libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY, false);
+
 	StartTransactionCommand();
 	RestoreLibraryState(libraryspace);
 
 	/* Restore GUC values from launching backend. */
 	char	   *gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
+
 	RestoreGUCState(gucspace);
 	CommitTransactionCommand();
 
 	/* Crank up a transaction state appropriate to a parallel worker. */
 	char	   *tstatespace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_STATE, false);
+
 	StartParallelWorkerTransaction(tstatespace);
 
 	/* Restore combo CID state. */
 	char	   *combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID, false);
+
 	RestoreComboCIDState(combocidspace);
 
 	/* Attach to the per-session DSM segment and contained objects. */
 	char	   *session_dsm_handle_space =
-		shm_toc_lookup(toc, PARALLEL_KEY_SESSION_DSM, false);
+	shm_toc_lookup(toc, PARALLEL_KEY_SESSION_DSM, false);
+
 	AttachSession(*(dsm_handle *) session_dsm_handle_space);
 
 	/* Restore transaction snapshot. */
 	char	   *tsnapspace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT, false);
+
 	RestoreTransactionSnapshot(RestoreSnapshot(tsnapspace),
 							   fps->parallel_leader_pgproc);
 
 	/* Restore active snapshot. */
 	char	   *asnapspace = shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT, false);
+
 	PushActiveSnapshot(RestoreSnapshot(asnapspace));
 
 	/*
@@ -1378,20 +1419,24 @@ ParallelWorkerMain(Datum main_arg)
 
 	/* Restore pending syncs. */
 	char	   *pendingsyncsspace = shm_toc_lookup(toc, PARALLEL_KEY_PENDING_SYNCS,
-									   false);
+												   false);
+
 	RestorePendingSyncs(pendingsyncsspace);
 
 	/* Restore reindex state. */
 	char	   *reindexspace = shm_toc_lookup(toc, PARALLEL_KEY_REINDEX_STATE, false);
+
 	RestoreReindexState(reindexspace);
 
 	/* Restore relmapper state. */
 	char	   *relmapperspace = shm_toc_lookup(toc, PARALLEL_KEY_RELMAPPER_STATE, false);
+
 	RestoreRelationMap(relmapperspace);
 
 	/* Restore uncommitted enums. */
 	char	   *uncommittedenumsspace = shm_toc_lookup(toc, PARALLEL_KEY_UNCOMMITTEDENUMS,
-										   false);
+													   false);
+
 	RestoreUncommittedEnums(uncommittedenumsspace);
 
 	/* Attach to the leader's serializable transaction, if SERIALIZABLE. */

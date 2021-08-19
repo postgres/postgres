@@ -159,6 +159,7 @@ walkdir(const char *path,
 	struct dirent *de;
 
 	DIR		   *dir = opendir(path);
+
 	if (dir == NULL)
 	{
 		pg_log_error("could not open directory \"%s\": %m", path);
@@ -267,6 +268,7 @@ fsync_fname(const char *fname, bool isdir)
 	 * not writable by our userid, but we assume that's OK.
 	 */
 	int			flags = PG_BINARY;
+
 	if (!isdir)
 		flags |= O_RDWR;
 	else
@@ -278,6 +280,7 @@ fsync_fname(const char *fname, bool isdir)
 	 * logging others.
 	 */
 	int			fd = open(fname, flags, 0);
+
 	if (fd < 0)
 	{
 		if (errno == EACCES || (isdir && errno == EISDIR))
@@ -351,6 +354,7 @@ durable_rename(const char *oldfile, const char *newfile)
 		return -1;
 
 	int			fd = open(newfile, PG_BINARY | O_RDWR, 0);
+
 	if (fd < 0)
 	{
 		if (errno != ENOENT)

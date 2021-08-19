@@ -94,6 +94,7 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 
 	Trigger    *trigger = trigdata->tg_trigger;
 	int			nargs = trigger->tgnargs;
+
 	if (nargs > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
@@ -123,9 +124,11 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		Oid			indexoid = lfirst_oid(indexoidscan);
 
 		HeapTuple	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
+
 		if (!HeapTupleIsValid(indexTuple))	/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
+
 		/* we're only interested if it is the primary key and valid */
 		if (index->indisprimary && index->indisvalid)
 		{

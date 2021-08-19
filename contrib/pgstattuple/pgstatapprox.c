@@ -96,7 +96,7 @@ statapprox_heap(Relation rel, output_type *stat)
 		}
 
 		Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno,
-								 RBM_NORMAL, bstrategy);
+											 RBM_NORMAL, bstrategy);
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
@@ -308,5 +308,6 @@ pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 	values[i++] = Float8GetDatum(stat.free_percent);
 
 	HeapTuple	ret = heap_form_tuple(tupdesc, values, nulls);
+
 	return HeapTupleGetDatum(ret);
 }

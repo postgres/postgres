@@ -313,9 +313,11 @@ pseudocolor(struct colormap *cm)
 {
 
 	color		co = newcolor(cm);
+
 	if (CISERR())
 		return COLORLESS;
 	struct colordesc *cd = &cm->cd[co];
+
 	cd->nschrs = 0;
 	cd->nuchrs = 1;				/* pretend it is in the upper map */
 	cd->sub = NOSUB;
@@ -431,8 +433,9 @@ newhicolorrow(struct colormap *cm,
 			return 0;
 		}
 		color	   *newarray = (color *) REALLOC(cm->hicolormap,
-									 cm->maxarrayrows * 2 *
-									 cm->hiarraycols * sizeof(color));
+												 cm->maxarrayrows * 2 *
+												 cm->hiarraycols * sizeof(color));
+
 		if (newarray == NULL)
 		{
 			CERR(REG_ESPACE);
@@ -445,6 +448,7 @@ newhicolorrow(struct colormap *cm,
 
 	/* Copy old row data */
 	color	   *newrowptr = &cm->hicolormap[newrow * cm->hiarraycols];
+
 	memcpy(newrowptr,
 		   &cm->hicolormap[oldrow * cm->hiarraycols],
 		   cm->hiarraycols * sizeof(color));
@@ -473,8 +477,9 @@ newhicolorcols(struct colormap *cm)
 		return;
 	}
 	color	   *newarray = (color *) REALLOC(cm->hicolormap,
-								 cm->maxarrayrows *
-								 cm->hiarraycols * 2 * sizeof(color));
+											 cm->maxarrayrows *
+											 cm->hiarraycols * 2 * sizeof(color));
+
 	if (newarray == NULL)
 	{
 		CERR(REG_ESPACE);
@@ -583,6 +588,7 @@ subcolorcvec(struct vars *v,
 		/* Apply subcolorhi() and make arc for each entry in relevant cols */
 		int			classbit = cm->classbits[cv->cclasscode];
 		color	   *pco = cm->hicolormap;
+
 		for (r = 0; r < cm->hiarrayrows; r++)
 		{
 			for (c = 0; c < cm->hiarraycols; c++)
@@ -644,7 +650,8 @@ subcoloronechr(struct vars *v,
 	 * the given chr is in the middle of some existing range.
 	 */
 	colormaprange *newranges = (colormaprange *)
-		MALLOC((cm->numcmranges + 2) * sizeof(colormaprange));
+	MALLOC((cm->numcmranges + 2) * sizeof(colormaprange));
+
 	if (newranges == NULL)
 	{
 		CERR(REG_ESPACE);
@@ -756,7 +763,8 @@ subcoloronerange(struct vars *v,
 	 * 2N+1 result ranges (consider case where new range spans 'em all).
 	 */
 	colormaprange *newranges = (colormaprange *)
-		MALLOC((cm->numcmranges * 2 + 1) * sizeof(colormaprange));
+	MALLOC((cm->numcmranges * 2 + 1) * sizeof(colormaprange));
+
 	if (newranges == NULL)
 	{
 		CERR(REG_ESPACE);
@@ -882,6 +890,7 @@ subcoloronerow(struct vars *v,
 
 	/* Apply subcolorhi() and make arc for each entry in row */
 	color	   *pco = &cm->hicolormap[rownum * cm->hiarraycols];
+
 	for (i = 0; i < cm->hiarraycols; pco++, i++)
 	{
 		color		sco = subcolorhi(cm, pco);
@@ -1105,6 +1114,7 @@ dumpcolors(struct colormap *cm,
 
 	fprintf(f, "max %ld\n", (long) cm->max);
 	struct colordesc *end = CDEND(cm);
+
 	for (cd = cm->cd + 1, co = 1; cd < end; cd++, co++) /* skip 0 */
 	{
 		if (!UNUSEDCOLOR(cd))

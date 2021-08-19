@@ -871,6 +871,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -913,6 +914,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -950,6 +952,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -985,6 +988,7 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -1068,6 +1072,7 @@ palloc(Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1098,6 +1103,7 @@ palloc0(Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1131,6 +1137,7 @@ palloc_extended(Size size, int flags)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -1184,6 +1191,7 @@ repalloc(void *pointer, Size size)
 	Assert(!context->isReset);
 
 	void	   *ret = context->methods->realloc(context, pointer, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1218,6 +1226,7 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	context->isReset = false;
 
 	void	   *ret = context->methods->alloc(context, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1252,6 +1261,7 @@ repalloc_huge(void *pointer, Size size)
 	Assert(!context->isReset);
 
 	void	   *ret = context->methods->realloc(context, pointer, size);
+
 	if (unlikely(ret == NULL))
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1301,6 +1311,7 @@ pnstrdup(const char *in, Size len)
 	len = strnlen(in, len);
 
 	char	   *out = palloc(len + 1);
+
 	memcpy(out, in, len);
 	out[len] = '\0';
 
@@ -1315,6 +1326,7 @@ pchomp(const char *in)
 {
 
 	size_t		n = strlen(in);
+
 	while (n > 0 && in[n - 1] == '\n')
 		n--;
 	return pnstrdup(in, n);

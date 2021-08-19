@@ -169,7 +169,8 @@ regprocout(PG_FUNCTION_ARGS)
 			 * qualify it.
 			 */
 			FuncCandidateList clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-										  -1, NIL, false, false, false, false);
+															-1, NIL, false, false, false, false);
+
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == proid)
 				nspname = NULL;
@@ -256,7 +257,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
 	FuncCandidateList clist = FuncnameGetCandidates(names, nargs, NIL, false, false,
-								  false, false);
+													false, false);
 
 	for (; clist; clist = clist->next)
 	{
@@ -594,7 +595,8 @@ regoperout(PG_FUNCTION_ARGS)
 			 * qualify it.
 			 */
 			FuncCandidateList clist = OpernameGetCandidates(list_make1(makeString(oprname)),
-										  '\0', false);
+															'\0', false);
+
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == oprid)
 				result = pstrdup(oprname);
@@ -602,6 +604,7 @@ regoperout(PG_FUNCTION_ARGS)
 			{
 
 				const char *nspname = get_namespace_name(operform->oprnamespace);
+
 				nspname = quote_identifier(nspname);
 				result = (char *) palloc(strlen(nspname) + strlen(oprname) + 2);
 				sprintf(result, "%s.%s", nspname, oprname);
@@ -846,6 +849,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs,
 {
 
 	HeapTuple	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
+
 	if (!HeapTupleIsValid(opertup))
 	{
 		if (!missing_ok)
@@ -855,6 +859,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs,
 	}
 
 	Form_pg_operator oprForm = (Form_pg_operator) GETSTRUCT(opertup);
+
 	*objnames = list_make2(get_namespace_name_or_temp(oprForm->oprnamespace),
 						   pstrdup(NameStr(oprForm->oprname)));
 	*objargs = NIL;
@@ -1893,6 +1898,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 
 	/* Scan to find the expected left paren; mustn't be quoted */
 	bool		in_quote = false;
+
 	for (ptr = rawname; *ptr; ptr++)
 	{
 		if (*ptr == '"')

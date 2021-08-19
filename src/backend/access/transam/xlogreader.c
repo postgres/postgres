@@ -80,8 +80,9 @@ XLogReaderAllocate(int wal_segment_size, const char *waldir,
 {
 
 	XLogReaderState *state = (XLogReaderState *)
-		palloc_extended(sizeof(XLogReaderState),
-						MCXT_ALLOC_NO_OOM | MCXT_ALLOC_ZERO);
+	palloc_extended(sizeof(XLogReaderState),
+					MCXT_ALLOC_NO_OOM | MCXT_ALLOC_ZERO);
+
 	if (!state)
 		return NULL;
 
@@ -324,7 +325,8 @@ XLogReadRecord(XLogReaderState *state, char **errormsg)
 	 * fits on the same page.
 	 */
 	int			readOff = ReadPageInternal(state, targetPagePtr,
-							   Min(targetRecOff + SizeOfXLogRecord, XLOG_BLCKSZ));
+										   Min(targetRecOff + SizeOfXLogRecord, XLOG_BLCKSZ));
+
 	if (readOff < 0)
 		goto err;
 
@@ -942,6 +944,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	 * multiple pages
 	 */
 	XLogRecPtr	tmpRecPtr = RecPtr;
+
 	while (true)
 	{
 		uint32		pageHeaderSize;
@@ -962,6 +965,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 
 		/* Read the page containing the record */
 		int			readLen = ReadPageInternal(state, targetPagePtr, targetRecOff);
+
 		if (readLen < 0)
 			goto err;
 
@@ -1181,11 +1185,13 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 	state->toplevel_xid = InvalidTransactionId;
 
 	char	   *ptr = (char *) record;
+
 	ptr += SizeOfXLogRecord;
 	uint32		remaining = record->xl_tot_len - SizeOfXLogRecord;
 
 	/* Decode the headers */
 	uint32		datatotal = 0;
+
 	while (remaining > datatotal)
 	{
 		COPY_HEADER_FIELD(&block_id, sizeof(uint8));
@@ -1479,6 +1485,7 @@ XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 		return false;
 
 	DecodedBkpBlock *bkpb = &record->blocks[block_id];
+
 	if (rnode)
 		*rnode = bkpb->rnode;
 	if (forknum)

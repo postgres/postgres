@@ -46,11 +46,11 @@ uhc_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UHC, PG_UTF8);
 
 	int			converted = LocalToUtf(src, len, dest,
-						   &uhc_to_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_UHC,
-						   noError);
+									   &uhc_to_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_UHC,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }
@@ -66,11 +66,11 @@ utf8_to_uhc(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_UHC);
 
 	int			converted = UtfToLocal(src, len, dest,
-						   &uhc_from_unicode_tree,
-						   NULL, 0,
-						   NULL,
-						   PG_UHC,
-						   noError);
+									   &uhc_from_unicode_tree,
+									   NULL, 0,
+									   NULL,
+									   PG_UHC,
+									   noError);
 
 	PG_RETURN_INT32(converted);
 }

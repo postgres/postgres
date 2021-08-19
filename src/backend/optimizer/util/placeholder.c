@@ -98,6 +98,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	 * force evaluation at the syntactic location.
 	 */
 	Relids		rels_used = pull_varnos(root, (Node *) phv->phexpr);
+
 	phinfo->ph_lateral = bms_difference(rels_used, phv->phrels);
 	if (bms_is_empty(phinfo->ph_lateral))
 		phinfo->ph_lateral = NULL;	/* make it exactly NULL if empty */
@@ -218,9 +219,10 @@ find_placeholders_in_expr(PlannerInfo *root, Node *expr)
 	 * convenient to use.
 	 */
 	List	   *vars = pull_var_clause(expr,
-						   PVC_RECURSE_AGGREGATES |
-						   PVC_RECURSE_WINDOWFUNCS |
-						   PVC_INCLUDE_PLACEHOLDERS);
+									   PVC_RECURSE_AGGREGATES |
+									   PVC_RECURSE_WINDOWFUNCS |
+									   PVC_INCLUDE_PLACEHOLDERS);
+
 	foreach(vl, vars)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) lfirst(vl);

@@ -586,6 +586,7 @@ find_in_dynamic_libpath(const char *basename)
 	AssertState(Dynamic_library_path != NULL);
 
 	const char *p = Dynamic_library_path;
+
 	if (strlen(p) == 0)
 		return NULL;
 
@@ -596,6 +597,7 @@ find_in_dynamic_libpath(const char *basename)
 		size_t		len;
 
 		char	   *piece = first_path_var_separator(p);
+
 		if (piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
@@ -610,6 +612,7 @@ find_in_dynamic_libpath(const char *basename)
 		strlcpy(piece, p, len + 1);
 
 		char	   *mangled = substitute_libpath_macro(piece);
+
 		pfree(piece);
 
 		canonicalize_path(mangled);
@@ -621,6 +624,7 @@ find_in_dynamic_libpath(const char *basename)
 					 errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
 		char	   *full = palloc(strlen(mangled) + 1 + baselen + 1);
+
 		sprintf(full, "%s/%s", mangled, basename);
 		pfree(mangled);
 
@@ -678,9 +682,9 @@ find_rendezvous_variable(const char *varName)
 
 	/* Find or create the hashtable entry for this varName */
 	rendezvousHashEntry *hentry = (rendezvousHashEntry *) hash_search(rendezvousHash,
-												 varName,
-												 HASH_ENTER,
-												 &found);
+																	  varName,
+																	  HASH_ENTER,
+																	  &found);
 
 	/* Initialize to NULL if first time */
 	if (!found)
@@ -721,6 +725,7 @@ SerializeLibraryState(Size maxsize, char *start_address)
 	{
 
 		Size		len = strlcpy(start_address, file_scanner->filename, maxsize) + 1;
+
 		Assert(len < maxsize);
 		maxsize -= len;
 		start_address += len;

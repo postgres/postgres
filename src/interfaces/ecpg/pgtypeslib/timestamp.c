@@ -46,6 +46,7 @@ tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp * result)
 
 	int			dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	int64		time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
+
 	*result = (dDate * USECS_PER_DAY) + time;
 	/* check for major overflow */
 	if ((*result - time) / USECS_PER_DAY != dDate)
@@ -784,6 +785,7 @@ PGTYPEStimestamp_fmt_asc(timestamp * ts, char *output, int str_len, const char *
 
 	date		dDate = PGTYPESdate_from_timestamp(*ts);
 	int			dow = PGTYPESdate_dayofweek(dDate);
+
 	timestamp2tm(*ts, NULL, &tm, &fsec, NULL);
 
 	return dttofmtasc_replace(ts, dDate, dow, &tm, output, &str_len, fmtstr);
@@ -835,6 +837,7 @@ PGTYPEStimestamp_defmt_asc(const char *str, const char *fmt, timestamp * d)
 	int			tz = 0;
 
 	int			i = PGTYPEStimestamp_defmt_scan(&mstr, mfmt, d, &year, &month, &day, &hour, &minute, &second, &tz);
+
 	free(mstr);
 	free(mfmt);
 	return i;

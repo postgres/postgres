@@ -194,6 +194,7 @@ get_decomposed_size(pg_wchar code, bool compat)
 	 * get its decomposition in the list of tables available.
 	 */
 	const uint32 *decomp = get_code_decomposition(entry, &dec_size);
+
 	for (i = 0; i < dec_size; i++)
 	{
 		uint32		lcode = decomp[i];
@@ -262,6 +263,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 		 * src/common/unicode/generate-unicode_norm_table.pl.
 		 */
 		uint64		hashkey = pg_hton64(((uint64) start << 32) | (uint64) code);
+
 		h = recompinfo.hash(&hashkey);
 
 		/* An out-of-range result implies no match */
@@ -373,6 +375,7 @@ decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 	 * If this entry has other decomposition codes look at them as well.
 	 */
 	const uint32 *decomp = get_code_decomposition(entry, &dec_size);
+
 	for (i = 0; i < dec_size; i++)
 	{
 		pg_wchar	lcode = (pg_wchar) decomp[i];
@@ -413,6 +416,7 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 		decomp_size += get_decomposed_size(*p, compat);
 
 	pg_wchar   *decomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
+
 	if (decomp_chars == NULL)
 		return NULL;
 
@@ -452,6 +456,7 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 
 		/* exchange can happen */
 		pg_wchar	tmp = decomp_chars[count - 1];
+
 		decomp_chars[count - 1] = decomp_chars[count];
 		decomp_chars[count] = tmp;
 
@@ -470,13 +475,14 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 	 * string based on that assumption.
 	 */
 	pg_wchar   *recomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
+
 	if (!recomp_chars)
 	{
 		FREE(decomp_chars);
 		return NULL;
 	}
 
-	int			last_class = -1;			/* this eliminates a special check */
+	int			last_class = -1;	/* this eliminates a special check */
 	int			starter_pos = 0;
 	int			target_pos = 1;
 	uint32		starter_ch = recomp_chars[0] = decomp_chars[0];
@@ -595,10 +601,12 @@ unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const pg_wchar *
 		pg_wchar	ch = *p;
 
 		uint8		canonicalClass = get_canonical_class(ch);
+
 		if (lastCanonicalClass > canonicalClass && canonicalClass != 0)
 			return UNICODE_NORM_QC_NO;
 
 		UnicodeNormalizationQC check = qc_is_allowed(form, ch);
+
 		if (check == UNICODE_NORM_QC_NO)
 			return UNICODE_NORM_QC_NO;
 		else if (check == UNICODE_NORM_QC_MAYBE)

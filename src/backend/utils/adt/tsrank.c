@@ -216,6 +216,7 @@ calc_rank_and(const float *w, TSVector t, TSQuery q)
 	int			size = q->size;
 
 	QueryOperand **item = SortAndUniqItems(q, &size);
+
 	if (size < 2)
 	{
 		pfree(item);
@@ -417,6 +418,7 @@ getWeights(ArrayType *win)
 				 errmsg("array of weight must not contain nulls")));
 
 	float4	   *arrdata = (float4 *) ARR_DATA_PTR(win);
+
 	for (i = 0; i < lengthof(weights); i++)
 	{
 		ws[i] = (arrdata[i] >= 0) ? arrdata[i] : weights[i];
@@ -864,6 +866,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		palloc0(sizeof(QueryRepresentationOperand) * query->size);
 
 	DocRepresentation *doc = get_docrep(txt, &qr, &doclen);
+
 	if (!doc)
 	{
 		pfree(qr.operandData);
@@ -891,11 +894,13 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 		 * noise word as half cover's length
 		 */
 		int			nNoise = (ext.q - ext.p) - (ext.end - ext.begin);
+
 		if (nNoise < 0)
 			nNoise = (ext.end - ext.begin) / 2;
 		Wdoc += Cpos / ((double) (1 + nNoise));
 
 		double		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
+
 		if (NExtent > 0 && CurExtPos > PrevExtPos	/* prevent division by
 													 * zero in a case of
 			  * multiple lexize */ )

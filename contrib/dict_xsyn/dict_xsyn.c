@@ -92,9 +92,11 @@ read_dictionary(DictSyn *d, const char *filename)
 			continue;
 
 		char	   *value = lowerstr(line);
+
 		pfree(line);
 
 		char	   *pos = value;
+
 		while ((key = find_word(pos, &end)) != NULL)
 		{
 			/* Enlarge syn structure if full */
@@ -143,6 +145,7 @@ dxsyn_init(PG_FUNCTION_ARGS)
 	char	   *filename = NULL;
 
 	DictSyn    *d = (DictSyn *) palloc0(sizeof(DictSyn));
+
 	d->len = 0;
 	d->syn = NULL;
 	d->matchorig = true;
@@ -213,6 +216,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 
 	/* Look for matching syn */
 	Syn		   *found = (Syn *) bsearch(&word, d->syn, d->len, sizeof(Syn), compare_syn);
+
 	pfree(word.key);
 
 	if (!found)
@@ -228,6 +232,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 		res = palloc(sizeof(TSLexeme));
 
 		char	   *pos = value;
+
 		while ((syn = find_word(pos, &end)) != NULL)
 		{
 			res = repalloc(res, sizeof(TSLexeme) * (nsyns + 2));

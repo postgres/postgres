@@ -60,6 +60,7 @@ GetForeignDataWrapperExtended(Oid fdwid, bits16 flags)
 	Form_pg_foreign_data_wrapper fdwform = (Form_pg_foreign_data_wrapper) GETSTRUCT(tp);
 
 	ForeignDataWrapper *fdw = (ForeignDataWrapper *) palloc(sizeof(ForeignDataWrapper));
+
 	fdw->fdwid = fdwid;
 	fdw->owner = fdwform->fdwowner;
 	fdw->fdwname = pstrdup(NameStr(fdwform->fdwname));
@@ -68,9 +69,10 @@ GetForeignDataWrapperExtended(Oid fdwid, bits16 flags)
 
 	/* Extract the fdwoptions */
 	Datum		datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
-							tp,
-							Anum_pg_foreign_data_wrapper_fdwoptions,
-							&isnull);
+										tp,
+										Anum_pg_foreign_data_wrapper_fdwoptions,
+										&isnull);
+
 	if (isnull)
 		fdw->options = NIL;
 	else
@@ -130,6 +132,7 @@ GetForeignServerExtended(Oid serverid, bits16 flags)
 	Form_pg_foreign_server serverform = (Form_pg_foreign_server) GETSTRUCT(tp);
 
 	ForeignServer *server = (ForeignServer *) palloc(sizeof(ForeignServer));
+
 	server->serverid = serverid;
 	server->servername = pstrdup(NameStr(serverform->srvname));
 	server->owner = serverform->srvowner;
@@ -137,9 +140,10 @@ GetForeignServerExtended(Oid serverid, bits16 flags)
 
 	/* Extract server type */
 	Datum		datum = SysCacheGetAttr(FOREIGNSERVEROID,
-							tp,
-							Anum_pg_foreign_server_srvtype,
-							&isnull);
+										tp,
+										Anum_pg_foreign_server_srvtype,
+										&isnull);
+
 	server->servertype = isnull ? NULL : TextDatumGetCString(datum);
 
 	/* Extract server version */
@@ -192,8 +196,8 @@ GetUserMapping(Oid userid, Oid serverid)
 	bool		isnull;
 
 	HeapTuple	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
-						 ObjectIdGetDatum(userid),
-						 ObjectIdGetDatum(serverid));
+									 ObjectIdGetDatum(userid),
+									 ObjectIdGetDatum(serverid));
 
 	if (!HeapTupleIsValid(tp))
 	{
@@ -210,15 +214,17 @@ GetUserMapping(Oid userid, Oid serverid)
 						MappingUserName(userid))));
 
 	UserMapping *um = (UserMapping *) palloc(sizeof(UserMapping));
+
 	um->umid = ((Form_pg_user_mapping) GETSTRUCT(tp))->oid;
 	um->userid = userid;
 	um->serverid = serverid;
 
 	/* Extract the umoptions */
 	Datum		datum = SysCacheGetAttr(USERMAPPINGUSERSERVER,
-							tp,
-							Anum_pg_user_mapping_umoptions,
-							&isnull);
+										tp,
+										Anum_pg_user_mapping_umoptions,
+										&isnull);
+
 	if (isnull)
 		um->options = NIL;
 	else
@@ -239,19 +245,22 @@ GetForeignTable(Oid relid)
 	bool		isnull;
 
 	HeapTuple	tp = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign table %u", relid);
 	Form_pg_foreign_table tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
 
 	ForeignTable *ft = (ForeignTable *) palloc(sizeof(ForeignTable));
+
 	ft->relid = relid;
 	ft->serverid = tableform->ftserver;
 
 	/* Extract the ftoptions */
 	Datum		datum = SysCacheGetAttr(FOREIGNTABLEREL,
-							tp,
-							Anum_pg_foreign_table_ftoptions,
-							&isnull);
+										tp,
+										Anum_pg_foreign_table_ftoptions,
+										&isnull);
+
 	if (isnull)
 		ft->options = NIL;
 	else
@@ -274,15 +283,17 @@ GetForeignColumnOptions(Oid relid, AttrNumber attnum)
 	bool		isnull;
 
 	HeapTuple	tp = SearchSysCache2(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum));
+									 ObjectIdGetDatum(relid),
+									 Int16GetDatum(attnum));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
 	Datum		datum = SysCacheGetAttr(ATTNUM,
-							tp,
-							Anum_pg_attribute_attfdwoptions,
-							&isnull);
+										tp,
+										Anum_pg_attribute_attfdwoptions,
+										&isnull);
+
 	if (isnull)
 		options = NIL;
 	else
@@ -322,10 +333,12 @@ GetForeignServerIdByRelId(Oid relid)
 {
 
 	HeapTuple	tp = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign table %u", relid);
 	Form_pg_foreign_table tableform = (Form_pg_foreign_table) GETSTRUCT(tp);
 	Oid			serverid = tableform->ftserver;
+
 	ReleaseSysCache(tp);
 
 	return serverid;
@@ -342,10 +355,12 @@ GetFdwRoutineByServerId(Oid serverid)
 
 	/* Get foreign-data wrapper OID for the server. */
 	HeapTuple	tp = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid));
+
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign server %u", serverid);
 	Form_pg_foreign_server serverform = (Form_pg_foreign_server) GETSTRUCT(tp);
 	Oid			fdwid = serverform->srvfdw;
+
 	ReleaseSysCache(tp);
 
 	/* Get handler function OID for the FDW. */
@@ -500,6 +515,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	 */
 	TupleDesc	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -660,8 +676,9 @@ get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid1(FOREIGNDATAWRAPPERNAME,
-						  Anum_pg_foreign_data_wrapper_oid,
-						  CStringGetDatum(fdwname));
+									  Anum_pg_foreign_data_wrapper_oid,
+									  CStringGetDatum(fdwname));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -682,7 +699,8 @@ get_foreign_server_oid(const char *servername, bool missing_ok)
 {
 
 	Oid			oid = GetSysCacheOid1(FOREIGNSERVERNAME, Anum_pg_foreign_server_oid,
-						  CStringGetDatum(servername));
+									  CStringGetDatum(servername));
+
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -782,6 +800,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 		{
 
 			ForeignPath *foreign_path = (ForeignPath *) joinpath->outerjoinpath;
+
 			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->outerjoinpath = foreign_path->fdw_outerpath;
 		}
@@ -790,6 +809,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 		{
 
 			ForeignPath *foreign_path = (ForeignPath *) joinpath->innerjoinpath;
+
 			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->innerjoinpath = foreign_path->fdw_outerpath;
 		}

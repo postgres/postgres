@@ -63,7 +63,7 @@ CreateTemplateTupleDesc(int natts)
 	 * definition of pg_attribute there probably isn't any padding.
 	 */
 	TupleDesc	desc = (TupleDesc) palloc(offsetof(struct TupleDescData, attrs) +
-							  natts * sizeof(FormData_pg_attribute));
+										  natts * sizeof(FormData_pg_attribute));
 
 	/*
 	 * Initialize other fields of the tupdesc.
@@ -552,6 +552,7 @@ hashTupleDesc(TupleDesc desc)
 	int			i;
 
 	uint32		s = hash_combine(0, hash_uint32(desc->natts));
+
 	s = hash_combine(s, hash_uint32(desc->tdtypeid));
 	for (i = 0; i < desc->natts; ++i)
 		s = hash_combine(s, hash_uint32(TupleDescAttr(desc, i)->atttypid));
@@ -625,6 +626,7 @@ TupleDescInitEntry(TupleDesc desc,
 	/* attacl, attoptions and attfdwoptions are not present in tupledescs */
 
 	HeapTuple	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(oidtypeid));
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for type %u", oidtypeid);
 	Form_pg_type typeForm = (Form_pg_type) GETSTRUCT(tuple);
@@ -661,6 +663,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 
 	/* initialize the attribute fields */
 	Form_pg_attribute att = TupleDescAttr(desc, attributeNumber - 1);
+
 	att->attrelid = 0;			/* dummy value */
 
 	/* unlike TupleDescInitEntry, we require an attribute name */
@@ -798,6 +801,7 @@ BuildDescForRelation(List *schema)
 		typenameTypeIdAndMod(NULL, entry->typeName, &atttypid, &atttypmod);
 
 		AclResult	aclresult = pg_type_aclcheck(atttypid, GetUserId(), ACL_USAGE);
+
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error_type(aclresult, atttypid);
 
@@ -867,6 +871,7 @@ BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
 	ListCell   *l4;
 
 	int			natts = list_length(names);
+
 	Assert(natts == list_length(types));
 	Assert(natts == list_length(typmods));
 	Assert(natts == list_length(collations));
@@ -877,6 +882,7 @@ BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
 	TupleDesc	desc = CreateTemplateTupleDesc(natts);
 
 	AttrNumber	attnum = 0;
+
 	forfour(l1, names, l2, types, l3, typmods, l4, collations)
 	{
 		char	   *attname = strVal(lfirst(l1));

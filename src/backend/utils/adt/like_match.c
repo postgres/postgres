@@ -265,6 +265,7 @@ do_like_escape(text *pat, text *esc)
 	 * trying to calculate the size more accurately than that.
 	 */
 	text	   *result = (text *) palloc(plen * 2 + VARHDRSZ);
+
 	r = VARDATA(result);
 
 	if (elen == 0)

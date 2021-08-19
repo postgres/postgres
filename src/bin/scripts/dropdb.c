@@ -58,6 +58,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	const char *progname = get_progname(argv[0]);
+
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "dropdb", help);
@@ -148,6 +149,7 @@ main(int argc, char *argv[])
 	if (echo)
 		printf("%s\n", sql.data);
 	PGresult   *result = PQexec(conn, sql.data);
+
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
 		pg_log_error("database removal failed: %s", PQerrorMessage(conn));

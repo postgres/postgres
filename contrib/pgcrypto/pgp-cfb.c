@@ -56,6 +56,7 @@ pgp_cfb_create(PGP_CFB **ctx_p, int algo, const uint8 *key, int key_len,
 	PGP_CFB    *ctx;
 
 	int			res = pgp_load_cipher(algo, &ciph);
+
 	if (res < 0)
 		return res;
 

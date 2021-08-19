@@ -127,7 +127,8 @@ test_indoption(HeapTuple tuple, int attno, bool guard,
 	}
 
 	Datum		datum = SysCacheGetAttr(INDEXRELID, tuple,
-							Anum_pg_index_indoption, &isnull);
+										Anum_pg_index_indoption, &isnull);
+
 	Assert(!isnull);
 
 	int2vector *indoption = ((int2vector *) DatumGetPointer(datum));
@@ -165,9 +166,11 @@ indexam_property(FunctionCallInfo fcinfo,
 
 		Assert(!OidIsValid(amoid));
 		HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(index_oid));
+
 		if (!HeapTupleIsValid(tuple))
 			PG_RETURN_NULL();
 		Form_pg_class rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+
 		if (rd_rel->relkind != RELKIND_INDEX &&
 			rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
 		{
@@ -192,6 +195,7 @@ indexam_property(FunctionCallInfo fcinfo,
 	 * Get AM information.  If we don't have a valid AM OID, return NULL.
 	 */
 	IndexAmRoutine *routine = GetIndexAmRoutineByAmId(amoid, true);
+
 	if (routine == NULL)
 		PG_RETURN_NULL();
 
@@ -218,6 +222,7 @@ indexam_property(FunctionCallInfo fcinfo,
 		 * that first.
 		 */
 		HeapTuple	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(index_oid));
+
 		if (!HeapTupleIsValid(tuple))
 			PG_RETURN_NULL();
 		Form_pg_index rd_index = (Form_pg_index) GETSTRUCT(tuple);
@@ -448,10 +453,12 @@ pg_indexam_progress_phasename(PG_FUNCTION_ARGS)
 	int32		phasenum = PG_GETARG_INT32(1);
 
 	IndexAmRoutine *routine = GetIndexAmRoutineByAmId(amoid, true);
+
 	if (routine == NULL || !routine->ambuildphasename)
 		PG_RETURN_NULL();
 
 	char	   *name = routine->ambuildphasename(phasenum);
+
 	if (!name)
 		PG_RETURN_NULL();
 

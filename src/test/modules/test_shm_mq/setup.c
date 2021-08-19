@@ -122,10 +122,11 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	/* Create the shared memory segment and establish a table of contents. */
 	dsm_segment *seg = dsm_create(shm_toc_estimate(&e), 0);
 	shm_toc    *toc = shm_toc_create(PG_TEST_SHM_MQ_MAGIC, dsm_segment_address(seg),
-						 segsize);
+									 segsize);
 
 	/* Set up the header region. */
 	test_shm_mq_header *hdr = shm_toc_allocate(toc, sizeof(test_shm_mq_header));
+
 	SpinLockInit(&hdr->mutex);
 	hdr->workers_total = nworkers;
 	hdr->workers_attached = 0;
@@ -137,7 +138,8 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	{
 
 		shm_mq	   *mq = shm_mq_create(shm_toc_allocate(toc, (Size) queue_size),
-						   (Size) queue_size);
+									   (Size) queue_size);
+
 		shm_toc_insert(toc, i + 1, mq);
 
 		if (i == 0)
@@ -178,8 +180,9 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 
 	/* Create worker state object. */
 	worker_state *wstate = MemoryContextAlloc(TopTransactionContext,
-								offsetof(worker_state, handle) +
-								sizeof(BackgroundWorkerHandle *) * nworkers);
+											  offsetof(worker_state, handle) +
+											  sizeof(BackgroundWorkerHandle *) * nworkers);
+
 	wstate->nworkers = 0;
 
 	/*
@@ -255,6 +258,7 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 		/* If all the workers are ready, we have succeeded. */
 		SpinLockAcquire(&hdr->mutex);
 		int			workers_ready = hdr->workers_ready;
+
 		SpinLockRelease(&hdr->mutex);
 		if (workers_ready >= wstate->nworkers)
 		{
@@ -297,6 +301,7 @@ check_worker_status(worker_state *wstate)
 		pid_t		pid;
 
 		BgwHandleStatus status = GetBackgroundWorkerPid(wstate->handle[n], &pid);
+
 		if (status == BGWH_STOPPED || status == BGWH_POSTMASTER_DIED)
 			return false;
 	}

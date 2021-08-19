@@ -58,6 +58,7 @@ ssl_version(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	const char *version = be_tls_get_version(MyProcPort);
+
 	if (version == NULL)
 		PG_RETURN_NULL();
 
@@ -77,6 +78,7 @@ ssl_cipher(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	const char *cipher = be_tls_get_cipher(MyProcPort);
+
 	if (cipher == NULL)
 		PG_RETURN_NULL();
 
@@ -121,9 +123,10 @@ ssl_client_serial(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	Datum		result = DirectFunctionCall3(numeric_in,
-								 CStringGetDatum(decimal),
-								 ObjectIdGetDatum(0),
-								 Int32GetDatum(-1));
+											 CStringGetDatum(decimal),
+											 ObjectIdGetDatum(0),
+											 Int32GetDatum(-1));
+
 	return result;
 }
 
@@ -147,6 +150,7 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 	char	   *sp;
 
 	BIO		   *membuf = BIO_new(BIO_s_mem());
+
 	if (membuf == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -157,10 +161,12 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 						  | ASN1_STRFLGS_UTF8_CONVERT));
 	/* ensure null termination of the BIO's content */
 	char		nullterm = '\0';
+
 	BIO_write(membuf, &nullterm, 1);
 	size_t		size = BIO_get_mem_data(membuf, &sp);
 	char	   *dp = pg_any_to_server(sp, size - 1, PG_UTF8);
 	text	   *result = cstring_to_text(dp);
+
 	if (dp != sp)
 		pfree(dp);
 	if (BIO_free(membuf) != 1)
@@ -189,6 +195,7 @@ X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 				index;
 
 	char	   *string_fieldname = text_to_cstring(fieldName);
+
 	nid = OBJ_txt2nid(string_fieldname);
 	if (nid == NID_undef)
 		ereport(ERROR,
@@ -200,6 +207,7 @@ X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 	if (index < 0)
 		return (Datum) 0;
 	ASN1_STRING *data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
+
 	return ASN1_STRING_to_text(data);
 }
 
@@ -393,6 +401,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 	 * Initialize per-call variables.
 	 */
 	int			call_cntr = funcctx->call_cntr;
+
 	max_calls = funcctx->max_calls;
 	fctx = funcctx->user_fctx;
 
@@ -405,6 +414,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 
 		/* need a BIO for this */
 		BIO		   *membuf = BIO_new(BIO_s_mem());
+
 		if (membuf == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -416,6 +426,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 
 		/* Get the extension name */
 		int			nid = OBJ_obj2nid(obj);
+
 		if (nid == NID_undef)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -431,6 +442,7 @@ ssl_extension_info(PG_FUNCTION_ARGS)
 					 errmsg("could not print extension value in certificate at position %d",
 							call_cntr)));
 		int			len = BIO_get_mem_data(membuf, &buf);
+
 		values[1] = PointerGetDatum(cstring_to_text_with_len(buf, len));
 		nulls[1] = false;
 

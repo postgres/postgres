@@ -90,6 +90,7 @@ psql_start_test(const char *testname,
 	}
 
 	char	   *appnameenv = psprintf("pg_regress/%s", testname);
+
 	setenv("PGAPPNAME", appnameenv, 1);
 	free(appnameenv);
 

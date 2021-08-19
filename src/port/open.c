@@ -207,6 +207,7 @@ pgwin32_fopen(const char *fileName, const char *mode)
 		openmode |= O_TEXT;
 
 	int			fd = pgwin32_open(fileName, openmode);
+
 	if (fd == -1)
 		return NULL;
 	return _fdopen(fd, mode);

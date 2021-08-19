@@ -189,6 +189,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * might be duplicates and so on, but we'll deal with those later.
 	 */
 	int			numcols = list_length(stmt->exprs);
+
 	if (numcols > STATS_MAX_DIMENSIONS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_COLUMNS),
@@ -216,6 +217,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 			char	   *attname = selem->name;
 
 			HeapTuple	atttuple = SearchSysCacheAttName(relid, attname);
+
 			if (!HeapTupleIsValid(atttuple))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -231,6 +233,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 			/* Disallow data types without a less-than operator */
 			TypeCacheEntry *type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
+
 			if (type->lt_opr == InvalidOid)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -291,6 +294,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	bool		build_ndistinct = false;
 	bool		build_dependencies = false;
 	bool		build_mcv = false;
+
 	foreach(cell, stmt->stat_types)
 	{
 		char	   *type = strVal((Value *) lfirst(cell));
@@ -403,6 +407,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/* construct the char array of enabled statistic types */
 	int			ntypes = 0;
+
 	if (build_ndistinct)
 		types[ntypes++] = CharGetDatum(STATS_EXT_NDISTINCT);
 	if (build_dependencies)
@@ -419,6 +424,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	{
 
 		char	   *exprsString = nodeToString(stxexprs);
+
 		exprsDatum = CStringGetTextDatum(exprsString);
 		pfree(exprsString);
 	}
@@ -434,7 +440,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 	memset(nulls, false, sizeof(nulls));
 
 	Oid			statoid = GetNewOidWithIndex(statrel, StatisticExtOidIndexId,
-								 Anum_pg_statistic_ext_oid);
+											 Anum_pg_statistic_ext_oid);
+
 	values[Anum_pg_statistic_ext_oid - 1] = ObjectIdGetDatum(statoid);
 	values[Anum_pg_statistic_ext_stxrelid - 1] = ObjectIdGetDatum(relid);
 	values[Anum_pg_statistic_ext_stxname - 1] = NameGetDatum(&stxname);
@@ -450,6 +457,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/* insert it into pg_statistic_ext */
 	HeapTuple	htup = heap_form_tuple(statrel->rd_att, values, nulls);
+
 	CatalogTupleInsert(statrel, htup);
 	heap_freetuple(htup);
 
@@ -632,7 +640,7 @@ AlterStatistics(AlterStatsStmt *stmt)
 	repl_val[Anum_pg_statistic_ext_stxstattarget - 1] = Int32GetDatum(newtarget);
 
 	HeapTuple	newtup = heap_modify_tuple(oldtup, RelationGetDescr(rel),
-							   repl_val, repl_null, repl_repl);
+										   repl_val, repl_null, repl_repl);
 
 	/* Update system catalog. */
 	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
@@ -734,8 +742,9 @@ ChooseExtendedStatisticName(const char *name1, const char *name2,
 		stxname = makeObjectName(name1, name2, modlabel);
 
 		Oid			existingstats = GetSysCacheOid2(STATEXTNAMENSP, Anum_pg_statistic_ext_oid,
-										PointerGetDatum(stxname),
-										ObjectIdGetDatum(namespaceid));
+													PointerGetDatum(stxname),
+													ObjectIdGetDatum(namespaceid));
+
 		if (!OidIsValid(existingstats))
 			break;
 
@@ -809,6 +818,7 @@ StatisticsGetRelation(Oid statId, bool missing_ok)
 {
 
 	HeapTuple	tuple = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(statId));
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (missing_ok)
@@ -816,9 +826,11 @@ StatisticsGetRelation(Oid statId, bool missing_ok)
 		elog(ERROR, "cache lookup failed for statistics object %u", statId);
 	}
 	Form_pg_statistic_ext stx = (Form_pg_statistic_ext) GETSTRUCT(tuple);
+
 	Assert(stx->oid == statId);
 
 	Oid			result = stx->stxrelid;
+
 	ReleaseSysCache(tuple);
 	return result;
 }

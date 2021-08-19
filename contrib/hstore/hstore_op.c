@@ -138,7 +138,7 @@ hstore_fetchval(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	text	   *out = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), idx),
-								   HSTORE_VALLEN(entries, idx));
+											   HSTORE_VALLEN(entries, idx));
 
 	PG_RETURN_TEXT_P(out);
 }
@@ -848,6 +848,7 @@ setup_firstcall(FuncCallContext *funcctx, HStore *hs,
 	MemoryContext oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 	HStore	   *st = (HStore *) palloc(VARSIZE(hs));
+
 	memcpy(st, hs, VARSIZE(hs));
 
 	funcctx->user_fctx = (void *) st;
@@ -890,7 +891,7 @@ hstore_skeys(PG_FUNCTION_ARGS)
 		HEntry	   *entries = ARRPTR(hs);
 
 		text	   *item = cstring_to_text_with_len(HSTORE_KEY(entries, STRPTR(hs), i),
-										HSTORE_KEYLEN(entries, i));
+													HSTORE_KEYLEN(entries, i));
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
 	}
@@ -927,6 +928,7 @@ hstore_svals(PG_FUNCTION_ARGS)
 			/* ugly ugly ugly. why no macro for this? */
 			(funcctx)->call_cntr++;
 			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+
 			rsi->isDone = ExprMultipleResult;
 			PG_RETURN_NULL();
 		}
@@ -934,7 +936,7 @@ hstore_svals(PG_FUNCTION_ARGS)
 		{
 
 			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, STRPTR(hs), i),
-											HSTORE_VALLEN(entries, i));
+														HSTORE_VALLEN(entries, i));
 
 			SRF_RETURN_NEXT(funcctx, PointerGetDatum(item));
 		}
@@ -1030,7 +1032,8 @@ hstore_each(PG_FUNCTION_ARGS)
 		bool		nulls[2] = {false, false};
 
 		text	   *item = cstring_to_text_with_len(HSTORE_KEY(entries, ptr, i),
-										HSTORE_KEYLEN(entries, i));
+													HSTORE_KEYLEN(entries, i));
+
 		dvalues[0] = PointerGetDatum(item);
 
 		if (HSTORE_VALISNULL(entries, i))
@@ -1046,6 +1049,7 @@ hstore_each(PG_FUNCTION_ARGS)
 		}
 
 		HeapTuple	tuple = heap_form_tuple(funcctx->tuple_desc, dvalues, nulls);
+
 		res = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(res));
@@ -1241,8 +1245,8 @@ hstore_hash_extended(PG_FUNCTION_ARGS)
 	uint64		seed = PG_GETARG_INT64(1);
 
 	Datum		hval = hash_any_extended((unsigned char *) VARDATA(hs),
-							 VARSIZE(hs) - VARHDRSZ,
-							 seed);
+										 VARSIZE(hs) - VARHDRSZ,
+										 seed);
 
 	/* See comment in hstore_hash */
 	Assert(VARSIZE(hs) ==

@@ -76,6 +76,7 @@ gbt_var_key_from_datum(const struct varlena *u)
 	int32		lowersize = VARSIZE(u);
 
 	GBT_VARKEY *r = (GBT_VARKEY *) palloc(lowersize + VARHDRSZ);
+
 	memcpy(VARDATA(r), u, lowersize);
 	SET_VARSIZE(r, lowersize + VARHDRSZ);
 
@@ -92,6 +93,7 @@ gbt_var_key_copy(const GBT_VARKEY_R *u)
 	int32		uppersize = VARSIZE(u->upper);
 
 	GBT_VARKEY *r = (GBT_VARKEY *) palloc0(INTALIGN(lowersize) + uppersize + VARHDRSZ);
+
 	memcpy(VARDATA(r), u->lower, lowersize);
 	memcpy(VARDATA(r) + INTALIGN(lowersize), u->upper, uppersize);
 	SET_VARSIZE(r, INTALIGN(lowersize) + uppersize + VARHDRSZ);
@@ -210,12 +212,14 @@ gbt_var_node_truncate(const GBT_VARKEY *node, int32 cpf_length, const gbtree_vin
 
 	int32		si = 2 * VARHDRSZ + INTALIGN(len1 + VARHDRSZ) + len2;
 	GBT_VARKEY *out = (GBT_VARKEY *) palloc0(si);
+
 	SET_VARSIZE(out, si);
 
 	memcpy(VARDATA(out), r.lower, len1 + VARHDRSZ);
 	SET_VARSIZE(VARDATA(out), len1 + VARHDRSZ);
 
 	char	   *out2 = VARDATA(out) + INTALIGN(len1 + VARHDRSZ);
+
 	memcpy(out2, r.upper, len2 + VARHDRSZ);
 	SET_VARSIZE(out2, len2 + VARHDRSZ);
 
@@ -235,6 +239,7 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 	{
 
 		GBT_VARKEY *tmp = gbt_var_leaf2node(e, tinfo, flinfo);
+
 		if (tmp != e)
 			eo = gbt_var_key_readable(tmp);
 	}
@@ -302,6 +307,7 @@ gbt_var_fetch(PG_FUNCTION_ARGS)
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
 	GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
+
 	gistentryinit(*retval, PointerGetDatum(r.lower),
 				  entry->rel, entry->page,
 				  entry->offset, true);
@@ -377,6 +383,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 	{
 
 		GBT_VARKEY *tmp = gbt_var_leaf2node(newe, tinfo, flinfo);
+
 		if (tmp != newe)
 			nk = gbt_var_key_readable(tmp);
 	}
@@ -433,6 +440,7 @@ gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 	const gbt_vsrt_arg *varg = (const gbt_vsrt_arg *) arg;
 
 	int			res = varg->tinfo->f_cmp(ar.lower, br.lower, varg->collation, varg->flinfo);
+
 	if (res == 0)
 		return varg->tinfo->f_cmp(ar.upper, br.upper, varg->collation, varg->flinfo);
 
@@ -451,6 +459,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	gbt_vsrt_arg varg;
 
 	Vsrt	   *arr = (Vsrt *) palloc((maxoff + 1) * sizeof(Vsrt));
+
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -468,6 +477,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 
 		cur = (char *) DatumGetPointer(entryvec->vector[i].key);
 		GBT_VARKEY_R ro = gbt_var_key_readable((GBT_VARKEY *) cur);
+
 		if (ro.lower == ro.upper)	/* leaf */
 		{
 			sv[svcntr] = gbt_var_leaf2node((GBT_VARKEY *) cur, tinfo, flinfo);
@@ -519,6 +529,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 
 		GBT_VARKEY *dl = gbt_var_node_truncate((GBT_VARKEY *) DatumGetPointer(v->spl_ldatum), ll, tinfo);
 		GBT_VARKEY *dr = gbt_var_node_truncate((GBT_VARKEY *) DatumGetPointer(v->spl_rdatum), ll, tinfo);
+
 		v->spl_ldatum = PointerGetDatum(dl);
 		v->spl_rdatum = PointerGetDatum(dr);
 	}

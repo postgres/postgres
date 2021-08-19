@@ -313,6 +313,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		{
 
 			MemoryContext oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+
 			queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
 			MemoryContextSwitchTo(oldcxt);
 		}
@@ -385,6 +386,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 
 		/* Log plan if duration is exceeded. */
 		double		msec = queryDesc->totaltime->total * 1000.0;
+
 		if (msec >= auto_explain_log_min_duration)
 		{
 			ExplainState *es = NewExplainState();

@@ -365,6 +365,7 @@ initializeInput(int flags)
 		{
 
 			char	   *envhist = getenv("PSQL_HISTORY");
+
 			if (envhist != NULL && strlen(envhist) > 0)
 				histfile = envhist;
 		}
@@ -441,6 +442,7 @@ saveHistory(char *fname, int max_lines)
 			}
 			/* append_history fails if file doesn't already exist :-( */
 			int			fd = open(fname, O_CREAT | O_WRONLY | PG_BINARY, 0600);
+
 			if (fd >= 0)
 				close(fd);
 			/* append the appropriate number of lines */

@@ -49,6 +49,7 @@ _bt_restore_page(Page page, char *from, int len)
 	 * have to scan them in forward order first.
 	 */
 	int			i = 0;
+
 	while (from < end)
 	{
 		/*
@@ -95,6 +96,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	_bt_pageinit(metapg, BufferGetPageSize(metabuf));
 
 	BTMetaPageData *md = BTPageGetMeta(metapg);
+
 	md->btm_magic = BTREE_MAGIC;
 	md->btm_version = xlrec->version;
 	md->btm_root = xlrec->root;
@@ -108,6 +110,7 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	md->btm_allequalimage = xlrec->allequalimage;
 
 	BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
+
 	pageop->btpo_flags = BTP_META;
 
 	/*
@@ -201,10 +204,12 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 			 * page.
 			 */
 			uint16		postingoff = *((uint16 *) datapos);
+
 			datapos += sizeof(uint16);
 			datalen -= sizeof(uint16);
 
 			ItemId		itemid = PageGetItemId(page, OffsetNumberPrev(xlrec->offnum));
+
 			oposting = (IndexTuple) PageGetItem(page, itemid);
 
 			/* Use mutable, aligned newitem copy in _bt_swap_posting() */
@@ -332,6 +337,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 				newitem = CopyIndexTuple(newitem);
 				ItemId		itemid = PageGetItemId(origpage, replacepostingoff);
 				IndexTuple	oposting = (IndexTuple) PageGetItem(origpage, itemid);
+
 				nposting = _bt_swap_posting(newitem, oposting,
 											xlrec->postingoff);
 			}
@@ -386,6 +392,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			ItemId		itemid = PageGetItemId(origpage, off);
 			Size		itemsz = ItemIdGetLength(itemid);
 			IndexTuple	item = (IndexTuple) PageGetItem(origpage, itemid);
+
 			if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add old item to left page after split");
@@ -459,6 +466,7 @@ btree_xlog_dedup(XLogReaderState *record)
 					maxoff;
 
 		BTDedupState state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+
 		state->deduplicate = true;	/* unused */
 		state->nmaxitems = 0;	/* unused */
 		/* Conservatively use larger maxpostingsize than primary */
@@ -488,6 +496,7 @@ btree_xlog_dedup(XLogReaderState *record)
 		}
 
 		BTDedupInterval *intervals = (BTDedupInterval *) ptr;
+
 		for (offnum = minoff;
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
@@ -599,10 +608,10 @@ btree_xlog_vacuum(XLogReaderState *record)
 		{
 
 			OffsetNumber *updatedoffsets = (OffsetNumber *)
-				(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
+			(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
 			xl_btree_update *updates = (xl_btree_update *) ((char *) updatedoffsets +
-										   xlrec->nupdated *
-										   sizeof(OffsetNumber));
+															xlrec->nupdated *
+															sizeof(OffsetNumber));
 
 			btree_xlog_updates(page, updatedoffsets, updates, xlrec->nupdated);
 		}
@@ -660,10 +669,10 @@ btree_xlog_delete(XLogReaderState *record)
 		{
 
 			OffsetNumber *updatedoffsets = (OffsetNumber *)
-				(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
+			(ptr + xlrec->ndeleted * sizeof(OffsetNumber));
 			xl_btree_update *updates = (xl_btree_update *) ((char *) updatedoffsets +
-										   xlrec->nupdated *
-										   sizeof(OffsetNumber));
+															xlrec->nupdated *
+															sizeof(OffsetNumber));
 
 			btree_xlog_updates(page, updatedoffsets, updates, xlrec->nupdated);
 		}
@@ -807,6 +816,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 
 	/* Rewrite target page as empty deleted page */
 	Buffer		target = XLogInitBufferForRedo(record, 0);
+
 	page = (Page) BufferGetPage(target);
 
 	_bt_pageinit(page, BufferGetPageSize(target));
@@ -864,6 +874,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		Assert(!isleaf);
 
 		Buffer		leafbuf = XLogInitBufferForRedo(record, 3);
+
 		page = (Page) BufferGetPage(leafbuf);
 
 		_bt_pageinit(page, BufferGetPageSize(leafbuf));
@@ -973,6 +984,7 @@ btree_redo(XLogReaderState *record)
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	MemoryContext oldCtx = MemoryContextSwitchTo(opCtx);
+
 	switch (info)
 	{
 		case XLOG_BTREE_INSERT_LEAF:

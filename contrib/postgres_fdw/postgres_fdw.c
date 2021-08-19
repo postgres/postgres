@@ -628,6 +628,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	 * functions.
 	 */
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) palloc0(sizeof(PgFdwRelationInfo));
+
 	baserel->fdw_private = (void *) fpinfo;
 
 	/* Base foreign tables need to be pushed down always. */
@@ -984,14 +985,16 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 
 		/* If no pushable expression for this rel, skip it. */
 		Expr	   *em_expr = find_em_expr_for_rel(cur_ec, rel);
+
 		if (em_expr == NULL || !is_foreign_expr(root, rel, em_expr))
 			continue;
 
 		/* Looks like we can generate a pathkey, so let's do it. */
 		PathKey    *pathkey = make_canonical_pathkey(root, cur_ec,
-										 linitial_oid(cur_ec->ec_opfamilies),
-										 BTLessStrategyNumber,
-										 false);
+													 linitial_oid(cur_ec->ec_opfamilies),
+													 BTLessStrategyNumber,
+													 false);
+
 		useful_pathkeys_list = lappend(useful_pathkeys_list,
 									   list_make1(pathkey));
 	}
@@ -1022,14 +1025,15 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * parameterization due to LATERAL refs in its tlist.
 	 */
 	ForeignPath *path = create_foreignscan_path(root, baserel,
-								   NULL,	/* default pathtarget */
-								   fpinfo->rows,
-								   fpinfo->startup_cost,
-								   fpinfo->total_cost,
-								   NIL, /* no pathkeys */
-								   baserel->lateral_relids,
-								   NULL,	/* no extra plan */
-								   NIL);	/* no fdw_private list */
+												NULL,	/* default pathtarget */
+												fpinfo->rows,
+												fpinfo->startup_cost,
+												fpinfo->total_cost,
+												NIL,	/* no pathkeys */
+												baserel->lateral_relids,
+												NULL,	/* no extra plan */
+												NIL);	/* no fdw_private list */
+
 	add_path(baserel, (Path *) path);
 
 	/* Add paths with pathkeys */
@@ -1058,6 +1062,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * insists that we handle all movable clauses).
 	 */
 	List	   *ppi_list = NIL;
+
 	foreach(lc, baserel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
@@ -1072,7 +1077,8 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 		/* Calculate required outer rels for the resulting path */
 		Relids		required_outer = bms_union(rinfo->clause_relids,
-								   baserel->lateral_relids);
+											   baserel->lateral_relids);
+
 		/* We do not want the foreign rel itself listed in required_outer */
 		required_outer = bms_del_member(required_outer, baserel->relid);
 
@@ -1085,7 +1091,8 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 		/* Get the ParamPathInfo */
 		ParamPathInfo *param_info = get_baserel_parampathinfo(root, baserel,
-											   required_outer);
+															  required_outer);
+
 		Assert(param_info != NULL);
 
 		/*
@@ -1118,10 +1125,10 @@ postgresGetForeignPaths(PlannerInfo *root,
 			/* Make clauses, skipping any that join to lateral_referencers */
 			arg.current = NULL;
 			List	   *clauses = generate_implied_equalities_for_column(root,
-															 baserel,
-															 ec_member_matches_foreign,
-															 (void *) &arg,
-															 baserel->lateral_referencers);
+																		 baserel,
+																		 ec_member_matches_foreign,
+																		 (void *) &arg,
+																		 baserel->lateral_referencers);
 
 			/* Done if there are no more expressions in the foreign rel */
 			if (arg.current == NULL)
@@ -1145,14 +1152,16 @@ postgresGetForeignPaths(PlannerInfo *root,
 
 				/* Calculate required outer rels for the resulting path */
 				Relids		required_outer = bms_union(rinfo->clause_relids,
-										   baserel->lateral_relids);
+													   baserel->lateral_relids);
+
 				required_outer = bms_del_member(required_outer, baserel->relid);
 				if (bms_is_empty(required_outer))
 					continue;
 
 				/* Get the ParamPathInfo */
 				ParamPathInfo *param_info = get_baserel_parampathinfo(root, baserel,
-													   required_outer);
+																	  required_outer);
+
 				Assert(param_info != NULL);
 
 				/* Add it to list unless we already have it */
@@ -1440,6 +1449,7 @@ get_tupdesc_for_join_scan_tuples(ForeignScanState *node)
 	 * we can convert them to a composite type the local server knows.
 	 */
 	TupleDesc	tupdesc = CreateTupleDescCopy(node->ss.ss_ScanTupleSlot->tts_tupleDescriptor);
+
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
@@ -1453,13 +1463,16 @@ get_tupdesc_for_join_scan_tuples(ForeignScanState *node)
 		 * likely lead to failure later, but perhaps we can muddle through.
 		 */
 		Var		   *var = (Var *) list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
-									i)->expr;
+												i)->expr;
+
 		if (!IsA(var, Var) || var->varattno != 0)
 			continue;
 		RangeTblEntry *rte = list_nth(estate->es_range_table, var->varno - 1);
+
 		if (rte->rtekind != RTE_RELATION)
 			continue;
 		Oid			reltype = get_rel_type_id(rte->relid);
+
 		if (!OidIsValid(reltype))
 			continue;
 		att->atttypid = reltype;
@@ -1489,6 +1502,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	 * We'll save private state in node->fdw_state.
 	 */
 	PgFdwScanState *fsstate = (PgFdwScanState *) palloc0(sizeof(PgFdwScanState));
+
 	node->fdw_state = (void *) fsstate;
 
 	/*
@@ -1555,6 +1569,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	 * Prepare for processing of parameters used in remote query, if any.
 	 */
 	int			numParams = list_length(fsplan->fdw_exprs);
+
 	fsstate->numParams = numParams;
 	if (numParams > 0)
 		prepare_query_params((PlanState *) node,
@@ -1657,6 +1672,7 @@ postgresReScanForeignScan(ForeignScanState *node)
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_exec_query(fsstate->conn, sql, fsstate->conn_state);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, fsstate->conn, true, sql);
 	PQclear(res);
@@ -1711,11 +1727,11 @@ postgresAddForeignUpdateTargets(PlannerInfo *root,
 
 	/* Make a Var representing the desired value */
 	Var		   *var = makeVar(rtindex,
-				  SelfItemPointerAttributeNumber,
-				  TIDOID,
-				  -1,
-				  InvalidOid,
-				  0);
+							  SelfItemPointerAttributeNumber,
+							  TIDOID,
+							  -1,
+							  InvalidOid,
+							  0);
 
 	/* Register it as a row-identity column needed by this target rel */
 	add_row_identity_var(root, var, rtindex, "ctid");
@@ -1781,6 +1797,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 		Bitmapset  *allUpdatedCols = bms_union(rte->updatedCols, rte->extraUpdatedCols);
 
 		int			col = -1;
+
 		while ((col = bms_next_member(allUpdatedCols, col)) >= 0)
 		{
 			/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
@@ -1878,31 +1895,31 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 
 	/* Deconstruct fdw_private data. */
 	char	   *query = strVal(list_nth(fdw_private,
-							FdwModifyPrivateUpdateSql));
+										FdwModifyPrivateUpdateSql));
 	List	   *target_attrs = (List *) list_nth(fdw_private,
-									 FdwModifyPrivateTargetAttnums);
+												 FdwModifyPrivateTargetAttnums);
 	int			values_end_len = intVal(list_nth(fdw_private,
-									 FdwModifyPrivateLen));
+												 FdwModifyPrivateLen));
 	bool		has_returning = intVal(list_nth(fdw_private,
-									FdwModifyPrivateHasReturning));
+												FdwModifyPrivateHasReturning));
 	List	   *retrieved_attrs = (List *) list_nth(fdw_private,
-										FdwModifyPrivateRetrievedAttrs);
+													FdwModifyPrivateRetrievedAttrs);
 
 	/* Find RTE. */
 	RangeTblEntry *rte = exec_rt_fetch(resultRelInfo->ri_RangeTableIndex,
-						mtstate->ps.state);
+									   mtstate->ps.state);
 
 	/* Construct an execution state. */
 	PgFdwModifyState *fmstate = create_foreign_modify(mtstate->ps.state,
-									rte,
-									resultRelInfo,
-									mtstate->operation,
-									outerPlanState(mtstate)->plan,
-									query,
-									target_attrs,
-									values_end_len,
-									has_returning,
-									retrieved_attrs);
+													  rte,
+													  resultRelInfo,
+													  mtstate->operation,
+													  outerPlanState(mtstate)->plan,
+													  query,
+													  target_attrs,
+													  values_end_len,
+													  has_returning,
+													  retrieved_attrs);
 
 	resultRelInfo->ri_FdwState = fmstate;
 }
@@ -1927,7 +1944,8 @@ postgresExecForeignInsert(EState *estate,
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate->aux_fmstate;
 	TupleTableSlot **rslot = execute_foreign_modify(estate, resultRelInfo, CMD_INSERT,
-								   &slot, &planSlot, &numSlots);
+													&slot, &planSlot, &numSlots);
+
 	/* Revert that change */
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate;
@@ -1955,7 +1973,8 @@ postgresExecForeignBatchInsert(EState *estate,
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate->aux_fmstate;
 	TupleTableSlot **rslot = execute_foreign_modify(estate, resultRelInfo, CMD_INSERT,
-								   slots, planSlots, numSlots);
+													slots, planSlots, numSlots);
+
 	/* Revert that change */
 	if (fmstate->aux_fmstate)
 		resultRelInfo->ri_FdwState = fmstate;
@@ -2028,7 +2047,7 @@ postgresExecForeignUpdate(EState *estate,
 	int			numSlots = 1;
 
 	TupleTableSlot **rslot = execute_foreign_modify(estate, resultRelInfo, CMD_UPDATE,
-								   &slot, &planSlot, &numSlots);
+													&slot, &planSlot, &numSlots);
 
 	return rslot ? rslot[0] : NULL;
 }
@@ -2046,7 +2065,7 @@ postgresExecForeignDelete(EState *estate,
 	int			numSlots = 1;
 
 	TupleTableSlot **rslot = execute_foreign_modify(estate, resultRelInfo, CMD_DELETE,
-								   &slot, &planSlot, &numSlots);
+													&slot, &planSlot, &numSlots);
 
 	return rslot ? rslot[0] : NULL;
 }
@@ -2174,15 +2193,15 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 
 	/* Construct an execution state. */
 	PgFdwModifyState *fmstate = create_foreign_modify(mtstate->ps.state,
-									rte,
-									resultRelInfo,
-									CMD_INSERT,
-									NULL,
-									sql.data,
-									targetAttrs,
-									values_end_len,
-									retrieved_attrs != NIL,
-									retrieved_attrs);
+													  rte,
+													  resultRelInfo,
+													  CMD_INSERT,
+													  NULL,
+													  sql.data,
+													  targetAttrs,
+													  values_end_len,
+													  retrieved_attrs != NIL,
+													  retrieved_attrs);
 
 	/*
 	 * If the given resultRelInfo already has PgFdwModifyState set, it means
@@ -2282,6 +2301,7 @@ postgresRecheckForeignScan(ForeignScanState *node, TupleTableSlot *slot)
 
 	/* Execute a local join execution plan */
 	TupleTableSlot *result = ExecProcNode(outerPlan);
+
 	if (TupIsNull(result))
 		return false;
 
@@ -2388,6 +2408,7 @@ postgresPlanDirectModify(PlannerInfo *root,
 	 * Try to locate the ForeignScan subplan that's scanning resultRelation.
 	 */
 	ForeignScan *fscan = find_modifytable_subplan(root, plan, resultRelation, subplan_index);
+
 	if (!fscan)
 		return false;
 
@@ -2568,6 +2589,7 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	 * We'll save private state in node->fdw_state.
 	 */
 	PgFdwDirectModifyState *dmstate = (PgFdwDirectModifyState *) palloc0(sizeof(PgFdwDirectModifyState));
+
 	node->fdw_state = (void *) dmstate;
 
 	/*
@@ -2650,6 +2672,7 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	 * Prepare for processing of parameters used in remote query, if any.
 	 */
 	int			numParams = list_length(fsplan->fdw_exprs);
+
 	dmstate->numParams = numParams;
 	if (numParams > 0)
 		prepare_query_params((PlanState *) node,
@@ -2763,6 +2786,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 		 */
 		minrti = INT_MAX;
 		char	   *ptr = rawrelations;
+
 		while (*ptr)
 		{
 			if (isdigit((unsigned char) *ptr))
@@ -2779,6 +2803,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 
 		/* Now we can translate the string */
 		StringInfo	relations = makeStringInfo();
+
 		ptr = rawrelations;
 		while (*ptr)
 		{
@@ -2789,13 +2814,16 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 				rti += rtoffset;
 				Assert(bms_is_member(rti, plan->fs_relids));
 				RangeTblEntry *rte = rt_fetch(rti, es->rtable);
+
 				Assert(rte->rtekind == RTE_RELATION);
 				/* This logic should agree with explain.c's ExplainTargetRel */
 				char	   *relname = get_rel_name(rte->relid);
+
 				if (es->verbose)
 				{
 
 					char	   *namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
+
 					appendStringInfo(relations, "%s.%s",
 									 quote_identifier(namespace),
 									 quote_identifier(relname));
@@ -2804,6 +2832,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 					appendStringInfoString(relations,
 										   quote_identifier(relname));
 				char	   *refname = (char *) list_nth(es->rtable_names, rti - 1);
+
 				if (refname == NULL)
 					refname = rte->eref->aliasname;
 				if (strcmp(refname, relname) != 0)
@@ -2823,6 +2852,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	{
 
 		char	   *sql = strVal(list_nth(fdw_private, FdwScanPrivateSelectSql));
+
 		ExplainPropertyText("Remote SQL", sql, es);
 	}
 }
@@ -2930,6 +2960,7 @@ postgresExecForeignTruncate(List *rels,
 
 		/* Determine whether this foreign table allows truncations */
 		bool		truncatable = server_truncatable;
+
 		foreach(cell, table->options)
 		{
 			DefElem    *defel = (DefElem *) lfirst(cell);
@@ -3036,7 +3067,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		 * particular path.
 		 */
 		List	   *remote_conds = list_concat(remote_param_join_conds,
-								   fpinfo->remote_conds);
+											   fpinfo->remote_conds);
 
 		/*
 		 * Construct EXPLAIN query including the desired SELECT, FROM, and
@@ -3053,6 +3084,7 @@ estimate_path_cost_size(PlannerInfo *root,
 
 		/* Get the remote estimate */
 		PGconn	   *conn = GetConnection(fpinfo->user, false, NULL);
+
 		get_remote_estimate(sql.data, conn, &rows, &width,
 							&startup_cost, &total_cost);
 		ReleaseConnection(conn);
@@ -3061,10 +3093,11 @@ estimate_path_cost_size(PlannerInfo *root,
 
 		/* Factor in the selectivity of the locally-checked quals */
 		Selectivity local_sel = clauselist_selectivity(root,
-										   local_param_join_conds,
-										   foreignrel->relid,
-										   JOIN_INNER,
-										   NULL);
+													   local_param_join_conds,
+													   foreignrel->relid,
+													   JOIN_INNER,
+													   NULL);
+
 		local_sel *= fpinfo->local_conds_sel;
 
 		rows = clamp_row_est(rows * local_sel);
@@ -3248,9 +3281,9 @@ estimate_path_cost_size(PlannerInfo *root,
 			/* Get number of grouping columns and possible number of groups */
 			int			numGroupCols = list_length(root->parse->groupClause);
 			double		numGroups = estimate_num_groups(root,
-											get_sortgrouplist_exprs(root->parse->groupClause,
-																	fpinfo->grouped_tlist),
-											input_rows, NULL, NULL);
+														get_sortgrouplist_exprs(root->parse->groupClause,
+																				fpinfo->grouped_tlist),
+														input_rows, NULL, NULL);
 
 			/*
 			 * Get the retrieved_rows and rows estimates.  If there are HAVING
@@ -3346,6 +3379,7 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			startup_cost += foreignrel->baserestrictcost.startup;
 			Cost		cpu_per_tuple = cpu_tuple_cost + foreignrel->baserestrictcost.per_tuple;
+
 			run_cost += cpu_per_tuple * foreignrel->tuples;
 
 			/* Add in tlist eval cost for each output row */
@@ -3498,10 +3532,12 @@ get_remote_estimate(const char *sql, PGconn *conn,
 		 */
 		char	   *line = PQgetvalue(res, 0, 0);
 		char	   *p = strrchr(line, '(');
+
 		if (p == NULL)
 			elog(ERROR, "could not interpret EXPLAIN output: \"%s\"", line);
 		int			n = sscanf(p, "(cost=%lf..%lf rows=%lf width=%d)",
-				   startup_cost, total_cost, rows, width);
+							   startup_cost, total_cost, rows, width);
+
 		if (n != 4)
 			elog(ERROR, "could not interpret EXPLAIN output: \"%s\"", line);
 	}
@@ -3655,6 +3691,7 @@ create_cursor(ForeignScanState *node)
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_get_result(conn, buf.data);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, conn, true, fsstate->query);
 	PQclear(res);
@@ -3726,6 +3763,7 @@ fetch_more_data(ForeignScanState *node)
 
 		/* Convert the data into HeapTuples */
 		int			numrows = PQntuples(res);
+
 		fsstate->tuples = (HeapTuple *) palloc0(numrows * sizeof(HeapTuple));
 		fsstate->num_tuples = numrows;
 		fsstate->next_tuple = 0;
@@ -3826,6 +3864,7 @@ close_cursor(PGconn *conn, unsigned int cursor_number,
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_exec_query(conn, sql, conn_state);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, conn, true, sql);
 	PQclear(res);
@@ -3856,6 +3895,7 @@ create_foreign_modify(EState *estate,
 
 	/* Begin constructing PgFdwModifyState. */
 	PgFdwModifyState *fmstate = (PgFdwModifyState *) palloc0(sizeof(PgFdwModifyState));
+
 	fmstate->rel = rel;
 
 	/*
@@ -3895,6 +3935,7 @@ create_foreign_modify(EState *estate,
 
 	/* Prepare for output conversion of parameters used in prepared stmt. */
 	AttrNumber	n_params = list_length(fmstate->target_attrs) + 1;
+
 	fmstate->p_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * n_params);
 	fmstate->p_nums = 0;
 
@@ -4009,8 +4050,9 @@ execute_foreign_modify(EState *estate,
 		bool		isNull;
 
 		Datum		datum = ExecGetJunkAttribute(planSlots[0],
-									 fmstate->ctidAttno,
-									 &isNull);
+												 fmstate->ctidAttno,
+												 &isNull);
+
 		/* shouldn't ever get a null result... */
 		if (isNull)
 			elog(ERROR, "ctid is NULL");
@@ -4039,6 +4081,7 @@ execute_foreign_modify(EState *estate,
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_get_result(fmstate->conn, fmstate->query);
+
 	if (PQresultStatus(res) !=
 		(fmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
 		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
@@ -4107,6 +4150,7 @@ prepare_foreign_modify(PgFdwModifyState *fmstate)
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_get_result(fmstate->conn, fmstate->query);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
 	PQclear(res);
@@ -4172,6 +4216,7 @@ convert_prep_stmt_params(PgFdwModifyState *fmstate,
 				if (attr->attgenerated)
 					continue;
 				Datum		value = slot_getattr(slots[i], attnum, &isnull);
+
 				if (isnull)
 					p_values[pindex] = NULL;
 				else
@@ -4207,11 +4252,11 @@ store_returning_result(PgFdwModifyState *fmstate,
 	{
 
 		HeapTuple	newtup = make_tuple_from_result_row(res, 0,
-											fmstate->rel,
-											fmstate->attinmeta,
-											fmstate->retrieved_attrs,
-											NULL,
-											fmstate->temp_cxt);
+														fmstate->rel,
+														fmstate->attinmeta,
+														fmstate->retrieved_attrs,
+														NULL,
+														fmstate->temp_cxt);
 
 		/*
 		 * The returning slot will not necessarily be suitable to store
@@ -4266,6 +4311,7 @@ deallocate_query(PgFdwModifyState *fmstate)
 	 * without releasing the PGresult.
 	 */
 	PGresult   *res = pgfdw_exec_query(fmstate->conn, sql, fmstate->conn_state);
+
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pgfdw_report_error(ERROR, res, fmstate->conn, true, sql);
 	PQclear(res);
@@ -4320,11 +4366,11 @@ build_remote_returning(Index rtindex, Relation rel, List *returningList)
 				continue;
 
 			Var		   *var = makeVar(rtindex,
-						  i,
-						  attr->atttypid,
-						  attr->atttypmod,
-						  attr->attcollation,
-						  0);
+									  i,
+									  attr->atttypid,
+									  attr->atttypmod,
+									  attr->attcollation,
+									  0);
 
 			tlist = lappend(tlist,
 							makeTargetEntry((Expr *) var,
@@ -4496,12 +4542,13 @@ get_returning_data(ForeignScanState *node)
 		{
 
 			HeapTuple	newtup = make_tuple_from_result_row(dmstate->result,
-												dmstate->next_tuple,
-												dmstate->rel,
-												dmstate->attinmeta,
-												dmstate->retrieved_attrs,
-												node,
-												dmstate->temp_cxt);
+															dmstate->next_tuple,
+															dmstate->rel,
+															dmstate->attinmeta,
+															dmstate->retrieved_attrs,
+															node,
+															dmstate->temp_cxt);
+
 			ExecStoreHeapTuple(newtup, slot, false);
 		}
 		PG_CATCH();
@@ -4556,6 +4603,7 @@ init_returning_filter(PgFdwDirectModifyState *dmstate,
 	dmstate->ctidAttno = dmstate->oidAttno = 0;
 
 	int			i = 1;
+
 	dmstate->hasSystemCols = false;
 	foreach(lc, fdw_scan_tlist)
 	{
@@ -4668,6 +4716,7 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 		{
 
 			ItemPointer ctid = (ItemPointer) DatumGetPointer(old_values[dmstate->ctidAttno - 1]);
+
 			resultTup->t_self = *ctid;
 		}
 
@@ -4711,6 +4760,7 @@ prepare_query_params(PlanState *node,
 	*param_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * numParams);
 
 	int			i = 0;
+
 	foreach(lc, fdw_exprs)
 	{
 		Node	   *param_expr = (Node *) lfirst(lc);
@@ -4750,6 +4800,7 @@ process_query_params(ExprContext *econtext,
 	int			nestlevel = set_transmission_modes();
 
 	int			i = 0;
+
 	foreach(lc, param_exprs)
 	{
 		ExprState  *expr_state = (ExprState *) lfirst(lc);
@@ -4888,6 +4939,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	 * Construct cursor that retrieves whole rows from remote.
 	 */
 	unsigned int cursor_number = GetCursorNumber(conn);
+
 	initStringInfo(&sql);
 	appendStringInfo(&sql, "DECLARE c%u CURSOR FOR ", cursor_number);
 	deparseAnalyzeSql(&sql, relation, &astate.retrieved_attrs);
@@ -4909,6 +4961,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 		 * be enormous.
 		 */
 		int			fetch_size = 100;
+
 		foreach(lc, server->options)
 		{
 			DefElem    *def = (DefElem *) lfirst(lc);
@@ -4956,6 +5009,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 
 			/* Process whatever we got. */
 			int			numrows = PQntuples(res);
+
 			for (i = 0; i < numrows; i++)
 				analyze_row_processor(res, i, &astate);
 
@@ -5273,13 +5327,13 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 				char	   *typename = PQgetvalue(res, i, 2);
 				char	   *attnotnull = PQgetvalue(res, i, 3);
 				char	   *attgenerated = PQgetisnull(res, i, 4) ? (char *) NULL :
-					PQgetvalue(res, i, 4);
+				PQgetvalue(res, i, 4);
 				char	   *attdefault = PQgetisnull(res, i, 5) ? (char *) NULL :
-					PQgetvalue(res, i, 5);
+				PQgetvalue(res, i, 5);
 				char	   *collname = PQgetisnull(res, i, 6) ? (char *) NULL :
-					PQgetvalue(res, i, 6);
+				PQgetvalue(res, i, 6);
 				char	   *collnamespace = PQgetisnull(res, i, 7) ? (char *) NULL :
-					PQgetvalue(res, i, 7);
+				PQgetvalue(res, i, 7);
 
 				if (first_item)
 					first_item = false;
@@ -5386,6 +5440,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) joinrel->fdw_private;
 	PgFdwRelationInfo *fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private;
 	PgFdwRelationInfo *fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private;
+
 	if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
 		!fpinfo_i || !fpinfo_i->pushdown_safe)
 		return false;
@@ -5423,6 +5478,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * won't consult those lists again if we deem the join unshippable.
 	 */
 	List	   *joinclauses = NIL;
+
 	foreach(lc, extra->restrictlist)
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
@@ -5461,7 +5517,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 
 		/* PlaceHolderInfo refers to parent relids, not child relids. */
 		Relids		relids = IS_OTHER_REL(joinrel) ?
-			joinrel->top_parent_relids : joinrel->relids;
+		joinrel->top_parent_relids : joinrel->relids;
 
 		if (bms_is_subset(phinfo->ph_eval_at, relids) &&
 			bms_nonempty_difference(relids, phinfo->ph_eval_at))
@@ -5646,6 +5702,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * case it gets used as input to a mergejoin.
 		 */
 		Path	   *sorted_epq_path = epq_path;
+
 		if (sorted_epq_path != NULL &&
 			!pathkeys_contained_in(useful_pathkeys,
 								   sorted_epq_path->pathkeys))
@@ -5842,6 +5899,7 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	 * the entry.
 	 */
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) palloc0(sizeof(PgFdwRelationInfo));
+
 	fpinfo->pushdown_safe = false;
 	joinrel->fdw_private = fpinfo;
 	/* attrs_used is only for base relations. */
@@ -5919,15 +5977,15 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	 * join between foreign tables.
 	 */
 	ForeignPath *joinpath = create_foreign_join_path(root,
-										joinrel,
-										NULL,	/* default pathtarget */
-										rows,
-										startup_cost,
-										total_cost,
-										NIL,	/* no pathkeys */
-										joinrel->lateral_relids,
-										epq_path,
-										NIL);	/* no fdw_private */
+													 joinrel,
+													 NULL,	/* default pathtarget */
+													 rows,
+													 startup_cost,
+													 total_cost,
+													 NIL,	/* no pathkeys */
+													 joinrel->lateral_relids,
+													 epq_path,
+													 NIL);	/* no fdw_private */
 
 	/* Add generated path into joinrel by add_path(). */
 	add_path(joinrel, (Path *) joinpath);
@@ -5985,6 +6043,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	 * a node, as long as it's not at top level; then no match is possible.
 	 */
 	int			i = 0;
+
 	foreach(lc, grouping_target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc);
@@ -6018,6 +6077,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * the output tlist.
 			 */
 			TargetEntry *tle = makeTargetEntry(expr, list_length(tlist) + 1, NULL, false);
+
 			tle->ressortgroupref = sgref;
 			tlist = lappend(tlist, tle);
 		}
@@ -6038,7 +6098,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 				/* Not pushable as a whole; extract its Vars and aggregates */
 
 				List	   *aggvars = pull_var_clause((Node *) expr,
-										  PVC_INCLUDE_AGGREGATES);
+													  PVC_INCLUDE_AGGREGATES);
 
 				/*
 				 * If any aggregate expression is not shippable, then we
@@ -6090,14 +6150,15 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 */
 			Assert(!IsA(expr, RestrictInfo));
 			RestrictInfo *rinfo = make_restrictinfo(root,
-									  expr,
-									  true,
-									  false,
-									  false,
-									  root->qual_security_level,
-									  grouped_rel->relids,
-									  NULL,
-									  NULL);
+													expr,
+													true,
+													false,
+													false,
+													root->qual_security_level,
+													grouped_rel->relids,
+													NULL,
+													NULL);
+
 			if (is_foreign_expr(root, grouped_rel, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
 			else
@@ -6198,6 +6259,7 @@ postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 		return;
 
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) palloc0(sizeof(PgFdwRelationInfo));
+
 	fpinfo->pushdown_safe = false;
 	fpinfo->stage = stage;
 	output_rel->fdw_private = fpinfo;
@@ -6298,14 +6360,14 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Create and add foreign path to the grouping relation. */
 	ForeignPath *grouppath = create_foreign_upper_path(root,
-										  grouped_rel,
-										  grouped_rel->reltarget,
-										  rows,
-										  startup_cost,
-										  total_cost,
-										  NIL,	/* no pathkeys */
-										  NULL,
-										  NIL); /* no fdw_private */
+													   grouped_rel,
+													   grouped_rel->reltarget,
+													   rows,
+													   startup_cost,
+													   total_cost,
+													   NIL, /* no pathkeys */
+													   NULL,
+													   NIL);	/* no fdw_private */
 
 	/* Add generated path into grouped_rel by add_path(). */
 	add_path(grouped_rel, (Path *) grouppath);
@@ -6393,8 +6455,8 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 		/* Get the sort expression for the pathkey_ec */
 		Expr	   *sort_expr = find_em_expr_for_input_target(root,
-												  pathkey_ec,
-												  input_rel->reltarget);
+															  pathkey_ec,
+															  input_rel->reltarget);
 
 		/* If it's unsafe to remote, we cannot push down the final sort */
 		if (!is_foreign_expr(root, input_rel, sort_expr))
@@ -6406,6 +6468,7 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Construct PgFdwPathExtraData */
 	PgFdwPathExtraData *fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
+
 	fpextra->target = root->upper_targets[UPPERREL_ORDERED];
 	fpextra->has_final_sort = true;
 
@@ -6421,14 +6484,14 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Create foreign ordering path */
 	ForeignPath *ordered_path = create_foreign_upper_path(root,
-											 input_rel,
-											 root->upper_targets[UPPERREL_ORDERED],
-											 rows,
-											 startup_cost,
-											 total_cost,
-											 root->sort_pathkeys,
-											 NULL,	/* no extra plan */
-											 fdw_private);
+														  input_rel,
+														  root->upper_targets[UPPERREL_ORDERED],
+														  rows,
+														  startup_cost,
+														  total_cost,
+														  root->sort_pathkeys,
+														  NULL, /* no extra plan */
+														  fdw_private);
 
 	/* and add it to the ordered_rel */
 	add_path(ordered_rel, (Path *) ordered_path);
@@ -6617,6 +6680,7 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/* Construct PgFdwPathExtraData */
 	PgFdwPathExtraData *fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
+
 	fpextra->target = root->upper_targets[UPPERREL_FINAL];
 	fpextra->has_final_sort = has_final_sort;
 	fpextra->has_limit = extra->limit_needed;
@@ -7000,6 +7064,7 @@ make_tuple_from_result_row(PGresult *res,
 
 	Datum	   *values = (Datum *) palloc0(tupdesc->natts * sizeof(Datum));
 	bool	   *nulls = (bool *) palloc(tupdesc->natts * sizeof(bool));
+
 	/* Initialize to nulls for any columns not present in result */
 	memset(nulls, true, tupdesc->natts * sizeof(bool));
 
@@ -7017,6 +7082,7 @@ make_tuple_from_result_row(PGresult *res,
 	 * i indexes columns in the relation, j indexes columns in the PGresult.
 	 */
 	int			j = 0;
+
 	foreach(lc, retrieved_attrs)
 	{
 		int			i = lfirst_int(lc);
@@ -7052,6 +7118,7 @@ make_tuple_from_result_row(PGresult *res,
 			{
 
 				Datum		datum = DirectFunctionCall1(tidin, CStringGetDatum(valstr));
+
 				ctid = (ItemPointer) DatumGetPointer(datum);
 			}
 		}
@@ -7135,7 +7202,7 @@ conversion_error_callback(void *arg)
 		/* error occurred in a scan against a foreign join */
 
 		TargetEntry *tle = list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
-							errpos->cur_attno - 1);
+										 errpos->cur_attno - 1);
 
 		/*
 		 * Target list can have Vars and expressions.  For Vars, we can get
@@ -7187,6 +7254,7 @@ find_em_expr_for_input_target(PlannerInfo *root,
 	ListCell   *lc1;
 
 	int			i = 0;
+
 	foreach(lc1, target->exprs)
 	{
 		Expr	   *expr = (Expr *) lfirst(lc1);
@@ -7221,6 +7289,7 @@ find_em_expr_for_input_target(PlannerInfo *root,
 
 			/* Match if same expression (after stripping relabel) */
 			Expr	   *em_expr = em->em_expr;
+
 			while (em_expr && IsA(em_expr, RelabelType))
 				em_expr = ((RelabelType *) em_expr)->arg;
 
@@ -7256,6 +7325,7 @@ get_batch_size_option(Relation rel)
 	ForeignServer *server = GetForeignServer(table->serverid);
 
 	List	   *options = NIL;
+
 	options = list_concat(options, table->options);
 	options = list_concat(options, server->options);
 

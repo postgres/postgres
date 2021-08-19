@@ -52,9 +52,9 @@ LockTableCommand(LockStmt *lockstmt)
 		bool		recurse = rv->inh;
 
 		Oid			reloid = RangeVarGetRelidExtended(rv, lockstmt->mode,
-										  lockstmt->nowait ? RVR_NOWAIT : 0,
-										  RangeVarCallbackForLockTable,
-										  (void *) &lockstmt->mode);
+													  lockstmt->nowait ? RVR_NOWAIT : 0,
+													  RangeVarCallbackForLockTable,
+													  (void *) &lockstmt->mode);
 
 		if (get_rel_relkind(reloid) == RELKIND_VIEW)
 			LockViewRecurse(reloid, lockstmt->mode, lockstmt->nowait, NIL);
@@ -76,6 +76,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	if (!OidIsValid(relid))
 		return;					/* doesn't exist, so no permissions check */
 	char		relkind = get_rel_relkind(relid);
+
 	if (!relkind)
 		return;					/* woops, concurrently dropped; no permissions
 								 * check */
@@ -94,11 +95,13 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 	 * transaction.
 	 */
 	char		relpersistence = get_rel_persistence(relid);
+
 	if (relpersistence == RELPERSISTENCE_TEMP)
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
 
 	/* Check permissions. */
 	AclResult	aclresult = LockTableAclCheck(relid, lockmode, GetUserId());
+
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 }
@@ -211,6 +214,7 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 
 			/* Check permissions with the view owner's privilege. */
 			AclResult	aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
+
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, get_relkind_objtype(relkind), relname);
 

@@ -594,6 +594,7 @@ AssignTransactionId(TransactionState s)
 		size_t		parentOffset = 0;
 
 		TransactionState *parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+
 		while (p != NULL && !FullTransactionIdIsValid(p->fullTransactionId))
 		{
 			parents[parentOffset++] = p;
@@ -654,6 +655,7 @@ AssignTransactionId(TransactionState s)
 	 * ResourceOwner.
 	 */
 	ResourceOwner currentOwner = CurrentResourceOwner;
+
 	CurrentResourceOwner = s->curTransactionOwner;
 
 	XactLockTableInsert(XidFromFullTransactionId(s->fullTransactionId));
@@ -905,6 +907,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 			int			middle = low + (high - low) / 2;
 			TransactionId probe = ParallelCurrentXids[middle];
+
 			if (probe == xid)
 				return true;
 			else if (probe < xid)
@@ -941,6 +944,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 			int			middle = low + (high - low) / 2;
 			TransactionId probe = s->childXids[middle];
+
 			if (TransactionIdEquals(probe, xid))
 				return true;
 			else if (TransactionIdPrecedes(probe, xid))
@@ -1241,6 +1245,7 @@ RecordTransactionCommit(void)
 	/* Get data needed for commit record */
 	int			nrels = smgrGetPendingDeletes(true, &rels);
 	int			nchildren = xactGetCommittedChildren(&children);
+
 	if (XLogStandbyInfoActive())
 		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
 													 &RelcacheInitFileInval);
@@ -1299,7 +1304,7 @@ RecordTransactionCommit(void)
 		 * are we replaying remote actions?
 		 */
 		bool		replorigin = (replorigin_session_origin != InvalidRepOriginId &&
-					  replorigin_session_origin != DoNotReplicateId);
+								  replorigin_session_origin != DoNotReplicateId);
 
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
@@ -1562,7 +1567,7 @@ AtSubCommit_childXids(void)
 		 * here or in the calculation of new_nChildXids.)
 		 */
 		int			new_maxChildXids = Min(new_nChildXids * 2,
-							   (int) (MaxAllocSize / sizeof(TransactionId)));
+										   (int) (MaxAllocSize / sizeof(TransactionId)));
 
 		if (new_maxChildXids < new_nChildXids)
 			ereport(ERROR,
@@ -1904,6 +1909,7 @@ StartTransaction(void)
 	 * Let's just make sure the state stack is empty
 	 */
 	TransactionState s = &TopTransactionStateData;
+
 	CurrentTransactionState = s;
 
 	Assert(!FullTransactionIdIsValid(XactTopFullTransactionId));
@@ -2432,7 +2438,8 @@ PrepareTransaction(void)
 	 * GID is invalid or already in use.
 	 */
 	GlobalTransaction gxact = MarkAsPreparing(xid, prepareGID, prepared_at,
-							GetUserId(), MyDatabaseId);
+											  GetUserId(), MyDatabaseId);
+
 	prepareGID = NULL;
 
 	/*
@@ -2639,6 +2646,7 @@ AbortTransaction(void)
 	 * check the current transaction state
 	 */
 	bool		is_parallel_worker = (s->blockState == TBLOCK_PARALLEL_INPROGRESS);
+
 	if (s->state != TRANS_INPROGRESS && s->state != TRANS_PREPARE)
 		elog(WARNING, "AbortTransaction while in %s state",
 			 TransStateAsString(s->state));
@@ -3133,6 +3141,7 @@ CommitTransactionCommand(void)
 
 				/* save name and keep Cleanup from freeing it */
 				char	   *name = s->name;
+
 				s->name = NULL;
 				int			savepointLevel = s->savepointLevel;
 
@@ -3160,6 +3169,7 @@ CommitTransactionCommand(void)
 
 				/* save name and keep Cleanup from freeing it */
 				char	   *name = s->name;
+
 				s->name = NULL;
 				int			savepointLevel = s->savepointLevel;
 
@@ -3504,7 +3514,8 @@ RegisterXactCallback(XactCallback callback, void *arg)
 {
 
 	XactCallbackItem *item = (XactCallbackItem *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(XactCallbackItem));
+	MemoryContextAlloc(TopMemoryContext, sizeof(XactCallbackItem));
+
 	item->callback = callback;
 	item->arg = arg;
 	item->next = Xact_callbacks;
@@ -3517,6 +3528,7 @@ UnregisterXactCallback(XactCallback callback, void *arg)
 	XactCallbackItem *item;
 
 	XactCallbackItem *prev = NULL;
+
 	for (item = Xact_callbacks; item; prev = item, item = item->next)
 	{
 		if (item->callback == callback && item->arg == arg)
@@ -3557,7 +3569,8 @@ RegisterSubXactCallback(SubXactCallback callback, void *arg)
 {
 
 	SubXactCallbackItem *item = (SubXactCallbackItem *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(SubXactCallbackItem));
+	MemoryContextAlloc(TopMemoryContext, sizeof(SubXactCallbackItem));
+
 	item->callback = callback;
 	item->arg = arg;
 	item->next = SubXact_callbacks;
@@ -3570,6 +3583,7 @@ UnregisterSubXactCallback(SubXactCallback callback, void *arg)
 	SubXactCallbackItem *item;
 
 	SubXactCallbackItem *prev = NULL;
+
 	for (item = SubXact_callbacks; item; prev = item, item = item->next)
 	{
 		if (item->callback == callback && item->arg == arg)
@@ -5087,8 +5101,8 @@ PushTransaction(void)
 	 * We keep subtransaction state nodes in TopTransactionContext.
 	 */
 	TransactionState s = (TransactionState)
-		MemoryContextAllocZero(TopTransactionContext,
-							   sizeof(TransactionStateData));
+	MemoryContextAllocZero(TopTransactionContext,
+						   sizeof(TransactionStateData));
 
 	/*
 	 * Assign a subtransaction ID, watching out for counter wraparound.
@@ -5243,6 +5257,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 
 	/* Copy them to our scratch space. */
 	TransactionId *workspace = palloc(nxids * sizeof(TransactionId));
+
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
 		if (FullTransactionIdIsValid(s->fullTransactionId))
@@ -5275,6 +5290,7 @@ StartParallelWorkerTransaction(char *tstatespace)
 	StartTransaction();
 
 	SerializedTransactionState *tstate = (SerializedTransactionState *) tstatespace;
+
 	XactIsoLevel = tstate->xactIsoLevel;
 	XactDeferrable = tstate->xactDeferrable;
 	XactTopFullTransactionId = tstate->topFullTransactionId;
@@ -5899,8 +5915,9 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid,
 
 	/* Make sure nextXid is beyond any XID mentioned in the record. */
 	TransactionId max_xid = TransactionIdLatest(xid,
-								  parsed->nsubxacts,
-								  parsed->subxacts);
+												parsed->nsubxacts,
+												parsed->subxacts);
+
 	AdvanceNextFullTransactionIdPastXid(max_xid);
 
 	if (standbyState == STANDBY_DISABLED)

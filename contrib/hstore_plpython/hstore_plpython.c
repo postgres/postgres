@@ -92,6 +92,7 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 	HEntry	   *entries = ARRPTR(in);
 
 	PyObject   *dict = PyDict_New();
+
 	if (!dict)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -101,14 +102,16 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 	{
 
 		PyObject   *key = PyString_FromStringAndSize(HSTORE_KEY(entries, base, i),
-										 HSTORE_KEYLEN(entries, i));
+													 HSTORE_KEYLEN(entries, i));
+
 		if (HSTORE_VALISNULL(entries, i))
 			PyDict_SetItem(dict, key, Py_None);
 		else
 		{
 
 			PyObject   *value = PyString_FromStringAndSize(HSTORE_VAL(entries, base, i),
-											   HSTORE_VALLEN(entries, i));
+														   HSTORE_VALLEN(entries, i));
+
 			PyDict_SetItem(dict, key, value);
 			Py_XDECREF(value);
 		}
@@ -128,12 +131,14 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 	HStore	   *volatile out;
 
 	PyObject   *dict = (PyObject *) PG_GETARG_POINTER(0);
+
 	if (!PyMapping_Check(dict))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("not a Python mapping")));
 
 	Py_ssize_t	pcount = PyMapping_Size(dict);
+
 	items = PyMapping_Items(dict);
 
 	PG_TRY();

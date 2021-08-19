@@ -99,6 +99,7 @@ fork_process(void)
 					oomvalue = "0";
 
 				int			rc = write(fd, oomvalue, strlen(oomvalue));
+
 				(void) rc;
 				close(fd);
 			}

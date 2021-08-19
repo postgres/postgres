@@ -59,7 +59,8 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	/* Check if name is used */
 	Oid			amoid = GetSysCacheOid1(AMNAME, Anum_pg_am_oid,
-							CStringGetDatum(stmt->amname));
+										CStringGetDatum(stmt->amname));
+
 	if (OidIsValid(amoid))
 	{
 		ereport(ERROR,
@@ -127,6 +128,7 @@ get_am_type_oid(const char *amname, char amtype, bool missing_ok)
 	Oid			oid = InvalidOid;
 
 	HeapTuple	tup = SearchSysCache1(AMNAME, CStringGetDatum(amname));
+
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);
@@ -189,6 +191,7 @@ get_am_name(Oid amOid)
 	char	   *result = NULL;
 
 	HeapTuple	tup = SearchSysCache1(AMOID, ObjectIdGetDatum(amOid));
+
 	if (HeapTupleIsValid(tup))
 	{
 		Form_pg_am	amform = (Form_pg_am) GETSTRUCT(tup);

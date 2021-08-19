@@ -58,6 +58,7 @@ bn_to_mpi(BIGNUM *bn)
 	PGP_MPI    *n;
 
 	int			res = pgp_mpi_alloc(BN_num_bits(bn), &n);
+
 	if (res < 0)
 		return NULL;
 

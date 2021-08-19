@@ -157,7 +157,8 @@ ghstore_compress(PG_FUNCTION_ARGS)
 		{
 
 			int			h = crc32_sz((char *) HSTORE_KEY(hsent, ptr, i),
-						 HSTORE_KEYLEN(hsent, i));
+									 HSTORE_KEYLEN(hsent, i));
+
 			HASH(GETSIGN(res), h, siglen);
 			if (!HSTORE_VALISNULL(hsent, i))
 			{
@@ -380,6 +381,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			   *_j;
 
 	int32		nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -418,6 +420,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 	maxoff = OffsetNumberNext(maxoff);
 	/* sort before ... */
 	SPLITCOST  *costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;
@@ -565,6 +568,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 			if (key_nulls[i])
 				continue;
 			int			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+
 			if (!(GETBIT(sign, HASHVAL(crc, siglen))))
 				res = false;
 		}
@@ -589,6 +593,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 			if (key_nulls[i])
 				continue;
 			int			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+
 			if (GETBIT(sign, HASHVAL(crc, siglen)))
 				res = true;
 		}

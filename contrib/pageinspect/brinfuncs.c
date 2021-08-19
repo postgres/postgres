@@ -150,6 +150,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
 	Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
@@ -167,6 +168,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	 * calling them later.
 	 */
 	brin_column_state **columns = palloc(sizeof(brin_column_state *) * RelationGetDescr(indexRel)->natts);
+
 	for (attno = 1; attno <= bdesc->bd_tupdesc->natts; attno++)
 	{
 		Oid			output;
@@ -175,7 +177,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 
 		BrinOpcInfo *opcinfo = bdesc->bd_info[attno - 1];
 		brin_column_state *column = palloc(offsetof(brin_column_state, outputFn) +
-						sizeof(FmgrInfo) * opcinfo->oi_nstored);
+										   sizeof(FmgrInfo) * opcinfo->oi_nstored);
 
 		column->nstored = opcinfo->oi_nstored;
 		for (i = 0; i < opcinfo->oi_nstored; i++)
@@ -190,6 +192,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	OffsetNumber offset = FirstOffsetNumber;
 	bool		unusedItem = false;
 	BrinMemTuple *dtup = NULL;
+
 	for (;;)
 	{
 		Datum		values[7];
@@ -206,6 +209,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 
 			/* verify item status: if there's no data, we can't decode */
 			ItemId		itemId = PageGetItemId(page, offset);
+
 			if (ItemIdIsUsed(itemId))
 			{
 				dtup = brin_deform_tuple(bdesc,
@@ -263,6 +267,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 				appendStringInfoChar(&s, '{');
 
 				bool		first = true;
+
 				for (i = 0; i < columns[att]->nstored; i++)
 				{
 
@@ -270,7 +275,8 @@ brin_page_items(PG_FUNCTION_ARGS)
 						appendStringInfoString(&s, " .. ");
 					first = false;
 					char	   *val = OutputFunctionCall(&columns[att]->outputFn[i],
-											 bvalues->bv_values[i]);
+														 bvalues->bv_values[i]);
+
 					appendStringInfoString(&s, val);
 					pfree(val);
 				}
@@ -338,6 +344,7 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 
 	/* Extract values from the metapage */
 	BrinMetaPageData *meta = (BrinMetaPageData *) PageGetContents(page);
+
 	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = CStringGetTextDatum(psprintf("0x%08X", meta->brinMagic));
 	values[1] = Int32GetDatum(meta->brinVersion);

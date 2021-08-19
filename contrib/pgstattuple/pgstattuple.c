@@ -390,6 +390,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 {
 
 	Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+
 	LockBuffer(buf, BT_READ);
 	Page		page = BufferGetPage(buf);
 
@@ -403,6 +404,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	{
 
 		BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		if (P_IGNORE(opaque))
 		{
 			/* deleted or half-dead page */
@@ -437,6 +439,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	{
 
 		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
 		switch (opaque->hasho_flag & LH_PAGE_TYPE)
 		{
 			case LH_UNUSED_PAGE:
@@ -470,6 +473,7 @@ pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 {
 
 	Buffer		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+
 	LockBuffer(buf, GIST_SHARE);
 	gistcheckpage(rel, buf);
 	Page		page = BufferGetPage(buf);
@@ -501,6 +505,7 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	BlockNumber blkno = start;
+
 	for (;;)
 	{
 		/* Get the current relation length */

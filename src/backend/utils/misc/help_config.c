@@ -52,6 +52,7 @@ GucInfoMain(void)
 	build_guc_variables();
 
 	struct config_generic **guc_vars = get_guc_variables();
+
 	numOpts = GetNumConfigOptions();
 
 	for (i = 0; i < numOpts; i++)

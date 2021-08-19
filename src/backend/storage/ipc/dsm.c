@@ -163,7 +163,8 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 
 	/* Determine size for new control segment. */
 	uint32		maxitems = PG_DYNSHMEM_FIXED_SLOTS
-		+ PG_DYNSHMEM_SLOTS_PER_BACKEND * MaxBackends;
+	+ PG_DYNSHMEM_SLOTS_PER_BACKEND * MaxBackends;
+
 	elog(DEBUG2, "dynamic shared memory system will support %u segments",
 		 maxitems);
 	Size		segsize = dsm_control_bytes_needed(maxitems);
@@ -230,6 +231,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	 * they aren't, we disregard the segment after all.
 	 */
 	dsm_control_header *old_control = (dsm_control_header *) mapped_address;
+
 	if (!dsm_control_segment_sane(old_control, mapped_size))
 	{
 		dsm_impl_op(DSM_OP_DETACH, old_control_handle, 0, &impl_private,
@@ -242,6 +244,7 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 	 * a list of segments that need to be removed.
 	 */
 	uint32		nitems = old_control->nitems;
+
 	for (i = 0; i < nitems; ++i)
 	{
 		dsm_handle	handle;
@@ -338,6 +341,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	 * if the metadata is gone.
 	 */
 	uint32		nitems = dsm_control->nitems;
+
 	if (!dsm_control_segment_sane(dsm_control, dsm_control_mapped_size))
 	{
 		ereport(LOG,
@@ -372,6 +376,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 		 "cleaning up dynamic shared memory control segment with ID %u",
 		 dsm_control_handle);
 	void	   *dsm_control_address = dsm_control;
+
 	dsm_impl_op(DSM_OP_DESTROY, dsm_control_handle, 0,
 				&dsm_control_impl_private, &dsm_control_address,
 				&dsm_control_mapped_size, LOG);
@@ -461,6 +466,7 @@ dsm_shmem_init(void)
 		/* Initialize it and give it all the rest of the space. */
 		FreePageManagerInitialize(fpm, dsm_main_space_begin);
 		size_t		pages = (size / FPM_PAGE_SIZE) - first_page;
+
 		FreePageManagerPut(fpm, first_page, pages);
 	}
 }
@@ -538,6 +544,7 @@ dsm_create(Size size, int flags)
 
 	/* Search the control segment for an unused slot. */
 	uint32		nitems = dsm_control->nitems;
+
 	for (i = 0; i < nitems; ++i)
 	{
 		if (dsm_control->item[i].refcnt == 0)
@@ -654,6 +661,7 @@ dsm_attach(dsm_handle h)
 	/* Bump reference count for this segment in shared memory. */
 	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
 	uint32		nitems = dsm_control->nitems;
+
 	for (i = 0; i < nitems; ++i)
 	{
 		/*
@@ -715,6 +723,7 @@ dsm_backend_shutdown(void)
 	{
 
 		dsm_segment *seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
+
 		dsm_detach(seg);
 	}
 }
@@ -734,6 +743,7 @@ dsm_detach_all(void)
 	{
 
 		dsm_segment *seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
+
 		dsm_detach(seg);
 	}
 
@@ -771,6 +781,7 @@ dsm_detach(dsm_segment *seg)
 		dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, node);
 		on_dsm_detach_callback function = cb->function;
 		Datum		arg = cb->arg;
+
 		pfree(cb);
 
 		function(seg, arg);
@@ -1080,7 +1091,8 @@ on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function, Datum arg)
 {
 
 	dsm_segment_detach_callback *cb = MemoryContextAlloc(TopMemoryContext,
-							sizeof(dsm_segment_detach_callback));
+														 sizeof(dsm_segment_detach_callback));
+
 	cb->function = function;
 	cb->arg = arg;
 	slist_push_head(&seg->on_detach, &cb->node);
@@ -1099,6 +1111,7 @@ cancel_on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function,
 	{
 
 		dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, iter.cur);
+
 		if (cb->function == function && cb->arg == arg)
 		{
 			slist_delete_current(&iter);
@@ -1126,6 +1139,7 @@ reset_on_dsm_detach(void)
 
 			slist_node *node = slist_pop_head_node(&seg->on_detach);
 			dsm_segment_detach_callback *cb = slist_container(dsm_segment_detach_callback, node, node);
+
 			pfree(cb);
 		}
 
@@ -1148,6 +1162,7 @@ dsm_create_descriptor(void)
 		ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
 
 	dsm_segment *seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
+
 	dlist_push_head(&dsm_segment_list, &seg->node);
 
 	/* seg->handle must be initialized by the caller */
@@ -1213,6 +1228,7 @@ make_main_region_dsm_handle(int slot)
 	 * confused, so we'll make the rest of the bits random.
 	 */
 	dsm_handle	handle = 1;
+
 	handle |= slot << 1;
 	handle |= random() << (pg_leftmost_one_pos32(dsm_control->maxitems) + 1);
 	return handle;

@@ -176,8 +176,8 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	 * cleaned up on error.
 	 */
 	MemoryContext source_context = AllocSetContextCreate(CurrentMemoryContext,
-										   "CachedPlanSource",
-										   ALLOCSET_START_SMALL_SIZES);
+														 "CachedPlanSource",
+														 ALLOCSET_START_SMALL_SIZES);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the new context.
@@ -186,6 +186,7 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	MemoryContext oldcxt = MemoryContextSwitchTo(source_context);
 
 	CachedPlanSource *plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
 	plansource->query_string = pstrdup(query_string);
@@ -254,6 +255,7 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 	 * context.  Most fields are just left empty for the moment.
 	 */
 	CachedPlanSource *plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = raw_parse_tree;
 	plansource->query_string = query_string;
@@ -659,6 +661,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 	 * command.
 	 */
 	bool		snapshot_set = false;
+
 	if (!ActiveSnapshotSet())
 	{
 		PushActiveSnapshot(GetTransactionSnapshot());
@@ -671,6 +674,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 	 * the cache.
 	 */
 	RawStmt    *rawtree = copyObject(plansource->raw_parse_tree);
+
 	if (rawtree == NULL)
 		tlist = NIL;
 	else if (plansource->parserSetup != NULL)
@@ -698,6 +702,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 	 * need to update that.
 	 */
 	TupleDesc	resultDesc = PlanCacheComputeResultDesc(tlist);
+
 	if (resultDesc == NULL && plansource->resultDesc == NULL)
 	{
 		/* OK, doesn't return tuples */
@@ -724,8 +729,9 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 	 * It's transient until we complete the copying and dependency extraction.
 	 */
 	MemoryContext querytree_context = AllocSetContextCreate(CurrentMemoryContext,
-											  "CachedPlanQuery",
-											  ALLOCSET_START_SMALL_SIZES);
+															"CachedPlanQuery",
+															ALLOCSET_START_SMALL_SIZES);
+
 	oldcxt = MemoryContextSwitchTo(querytree_context);
 
 	qlist = copyObject(tlist);
@@ -909,6 +915,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * for planning.  But if it isn't, and we need one, install one.
 	 */
 	bool		snapshot_set = false;
+
 	if (!ActiveSnapshotSet() &&
 		plansource->raw_parse_tree &&
 		analyze_requires_snapshot(plansource->raw_parse_tree))
@@ -921,7 +928,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * Generate the plan.
 	 */
 	List	   *plist = pg_plan_queries(qlist, plansource->query_string,
-							plansource->cursor_options, boundParams);
+										plansource->cursor_options, boundParams);
 
 	/* Release snapshot if we got one */
 	if (snapshot_set)
@@ -954,6 +961,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * Create and fill the CachedPlan struct within the new context.
 	 */
 	CachedPlan *plan = (CachedPlan *) palloc(sizeof(CachedPlan));
+
 	plan->magic = CACHEDPLAN_MAGIC;
 	plan->stmt_list = plist;
 
@@ -965,6 +973,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	plan->planRoleId = GetUserId();
 	plan->dependsOnRole = plansource->dependsOnRLS;
 	bool		is_transient = false;
+
 	foreach(lc, plist)
 	{
 		PlannedStmt *plannedstmt = lfirst_node(PlannedStmt, lc);
@@ -1503,12 +1512,13 @@ CopyCachedPlan(CachedPlanSource *plansource)
 		elog(ERROR, "cannot copy a one-shot cached plan");
 
 	MemoryContext source_context = AllocSetContextCreate(CurrentMemoryContext,
-										   "CachedPlanSource",
-										   ALLOCSET_START_SMALL_SIZES);
+														 "CachedPlanSource",
+														 ALLOCSET_START_SMALL_SIZES);
 
 	MemoryContext oldcxt = MemoryContextSwitchTo(source_context);
 
 	CachedPlanSource *newsource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+
 	newsource->magic = CACHEDPLANSOURCE_MAGIC;
 	newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
 	newsource->query_string = pstrdup(plansource->query_string);
@@ -1535,8 +1545,9 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	newsource->context = source_context;
 
 	MemoryContext querytree_context = AllocSetContextCreate(source_context,
-											  "CachedPlanQuery",
-											  ALLOCSET_START_SMALL_SIZES);
+															"CachedPlanQuery",
+															ALLOCSET_START_SMALL_SIZES);
+
 	MemoryContextSwitchTo(querytree_context);
 	newsource->query_list = copyObject(plansource->query_list);
 	newsource->relationOids = copyObject(plansource->relationOids);
@@ -1645,12 +1656,13 @@ GetCachedExpression(Node *expr)
 	 * initially make the context under the caller's context.
 	 */
 	MemoryContext cexpr_context = AllocSetContextCreate(CurrentMemoryContext,
-										  "CachedExpression",
-										  ALLOCSET_SMALL_SIZES);
+														"CachedExpression",
+														ALLOCSET_SMALL_SIZES);
 
 	MemoryContext oldcxt = MemoryContextSwitchTo(cexpr_context);
 
 	CachedExpression *cexpr = (CachedExpression *) palloc(sizeof(CachedExpression));
+
 	cexpr->magic = CACHEDEXPR_MAGIC;
 	cexpr->expr = copyObject(expr);
 	cexpr->is_valid = true;

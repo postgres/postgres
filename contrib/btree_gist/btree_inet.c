@@ -130,6 +130,7 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	bool		failure = false;
 
 	double		query = convert_network_to_scalar(dquery, INETOID, &failure);
+
 	Assert(!failure);
 
 	/* All cases served by this function are inexact */

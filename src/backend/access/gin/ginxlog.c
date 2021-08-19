@@ -137,7 +137,8 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		{
 
 			GinPostingList *plist = ginCompressPostingList(uncompressed, nuncompressed,
-										   BLCKSZ, &npacked);
+														   BLCKSZ, &npacked);
+
 			totalsize = SizeOfGinPostingList(plist);
 
 			Assert(npacked == nuncompressed);
@@ -160,6 +161,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 	int			segno = 0;
 
 	char	   *walbuf = ((char *) data) + sizeof(ginxlogRecompressDataLeaf);
+
 	for (actionno = 0; actionno < data->nactions; actionno++)
 	{
 		uint8		a_segno = *((uint8 *) (walbuf++));
@@ -327,6 +329,7 @@ ginRedoInsertData(Buffer buffer, bool isLeaf, BlockNumber rightblkno, void *rdat
 
 		/* update link to right page after split */
 		PostingItem *oldpitem = GinDataPageGetPostingItem(page, data->offset);
+
 		PostingItemSetBlockNumber(oldpitem, rightblkno);
 
 		GinDataPageAddPostingItem(page, &data->newitem, data->offset);
@@ -526,6 +529,7 @@ ginRedoUpdateMetapage(XLogReaderState *record)
 	 * LSN, to avoid torn page hazards.
 	 */
 	Buffer		metabuffer = XLogInitBufferForRedo(record, 0);
+
 	Assert(BufferGetBlockNumber(metabuffer) == GIN_METAPAGE_BLKNO);
 	Page		metapage = BufferGetPage(metabuffer);
 
@@ -632,6 +636,7 @@ ginRedoInsertListPage(XLogReaderState *record)
 	char	   *payload = XLogRecGetBlockData(record, 0, &totaltupsize);
 
 	IndexTuple	tuples = (IndexTuple) payload;
+
 	for (i = 0; i < data->ntuples; i++)
 	{
 		tupsize = IndexTupleSize(tuples);
@@ -660,6 +665,7 @@ ginRedoDeleteListPages(XLogReaderState *record)
 	int			i;
 
 	Buffer		metabuffer = XLogInitBufferForRedo(record, 0);
+
 	Assert(BufferGetBlockNumber(metabuffer) == GIN_METAPAGE_BLKNO);
 	Page		metapage = BufferGetPage(metabuffer);
 
@@ -689,6 +695,7 @@ ginRedoDeleteListPages(XLogReaderState *record)
 
 		Buffer		buffer = XLogInitBufferForRedo(record, i + 1);
 		Page		page = BufferGetPage(buffer);
+
 		GinInitBuffer(buffer, GIN_DELETED);
 
 		PageSetLSN(page, lsn);
@@ -711,6 +718,7 @@ gin_redo(XLogReaderState *record)
 	 */
 
 	MemoryContext oldCtx = MemoryContextSwitchTo(opCtx);
+
 	switch (info)
 	{
 		case XLOG_GIN_CREATE_PTREE:

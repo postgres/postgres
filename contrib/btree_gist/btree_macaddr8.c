@@ -64,6 +64,7 @@ gbt_macad8key_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 	mac8KEY    *ib = (mac8KEY *) (((const Nsrt *) b)->t);
 
 	int			res = DatumGetInt32(DirectFunctionCall2(macaddr8_cmp, Macaddr8PGetDatum(&ia->lower), Macaddr8PGetDatum(&ib->lower)));
+
 	if (res == 0)
 		return DatumGetInt32(DirectFunctionCall2(macaddr8_cmp, Macaddr8PGetDatum(&ia->upper), Macaddr8PGetDatum(&ib->upper)));
 

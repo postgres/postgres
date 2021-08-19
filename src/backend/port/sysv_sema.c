@@ -235,6 +235,7 @@ IpcSemaphoreCreate(int numSems)
 		 * process, it's safe to zap it.
 		 */
 		pid_t		creatorPID = IpcSemaphoreGetLastPID(semId, numSems);
+
 		if (creatorPID <= 0)
 			continue;			/* oops, GETPID failed */
 		if (creatorPID != getpid())
@@ -387,6 +388,7 @@ PGSemaphoreCreate(void)
 	if (numSharedSemas >= maxSharedSemas)
 		elog(PANIC, "too many semaphores created");
 	PGSemaphore sema = &sharedSemas[numSharedSemas++];
+
 	/* Assign the next free semaphore in the current set */
 	sema->semId = mySemaSets[numSemaSets - 1];
 	sema->semNum = nextSemaNumber++;

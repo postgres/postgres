@@ -76,7 +76,8 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	}
 
 	Oid			nspoid = GetNewOidWithIndex(nspdesc, NamespaceOidIndexId,
-								Anum_pg_namespace_oid);
+											Anum_pg_namespace_oid);
+
 	values[Anum_pg_namespace_oid - 1] = ObjectIdGetDatum(nspoid);
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);

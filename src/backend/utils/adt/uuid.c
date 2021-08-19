@@ -141,6 +141,7 @@ uuid_recv(PG_FUNCTION_ARGS)
 	StringInfo	buffer = (StringInfo) PG_GETARG_POINTER(0);
 
 	pg_uuid_t  *uuid = (pg_uuid_t *) palloc(UUID_LEN);
+
 	memcpy(uuid->data, pq_getmsgbytes(buffer, UUID_LEN), UUID_LEN);
 	PG_RETURN_POINTER(uuid);
 }
@@ -244,6 +245,7 @@ uuid_sortsupport(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
 		uuid_sortsupport_state *uss = palloc(sizeof(uuid_sortsupport_state));
+
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);

@@ -290,6 +290,7 @@ anl_get_next_S(double t, int n, double *stateptr)
 
 	oldrs.W = *stateptr;
 	double		result = reservoir_get_next_S(&oldrs, t, n);
+
 	*stateptr = oldrs.W;
 	return result;
 }

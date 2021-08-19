@@ -103,6 +103,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * removed.
 	 */
 	ItemPointerData tmptid = checktid;
+
 	{
 		IndexFetchTableData *scan = table_index_fetch_begin(trigdata->tg_relation);
 		bool		call_again = false;
@@ -127,7 +128,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * schema, not against concurrent updates.)
 	 */
 	Relation	indexRel = index_open(trigdata->tg_trigger->tgconstrindid,
-						  RowExclusiveLock);
+									  RowExclusiveLock);
 	IndexInfo  *indexInfo = BuildIndexInfo(indexRel);
 
 	/*

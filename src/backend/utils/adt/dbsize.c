@@ -112,6 +112,7 @@ calculate_database_size(Oid dbOid)
 	 * pg_read_all_stats
 	 */
 	AclResult	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
+
 	if (aclresult != ACLCHECK_OK &&
 		!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
@@ -338,7 +339,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	int64		size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
-								   forkname_to_number(text_to_cstring(forkName)));
+											   forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
 
@@ -371,7 +372,8 @@ calculate_toast_table_size(Oid toastrelid)
 	{
 
 		Relation	toastIdxRel = relation_open(lfirst_oid(lc),
-									AccessShareLock);
+												AccessShareLock);
+
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 			size += calculate_relation_size(&(toastIdxRel->rd_node),
 											toastIdxRel->rd_backend, forkNum);
@@ -559,7 +561,8 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 		 * in the same way.
 		 */
 		uint8		bits = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
-				+ (unit->round == true));
+							+ (unit->round == true));
+
 		size /= ((int64) 1) << bits;
 	}
 
@@ -589,6 +592,7 @@ numeric_absolute(Numeric n)
 	Datum		d = NumericGetDatum(n);
 
 	Datum		result = DirectFunctionCall1(numeric_abs, d);
+
 	return DatumGetNumeric(result);
 }
 
@@ -607,6 +611,7 @@ numeric_half_rounded(Numeric n)
 		d = DirectFunctionCall2(numeric_sub, d, one);
 
 	Datum		result = DirectFunctionCall2(numeric_div_trunc, d, two);
+
 	return DatumGetNumeric(result);
 }
 
@@ -617,6 +622,7 @@ numeric_truncated_divide(Numeric n, int64 divisor)
 
 	Datum		divisor_numeric = NumericGetDatum(int64_to_numeric(divisor));
 	Datum		result = DirectFunctionCall2(numeric_div_trunc, d, divisor_numeric);
+
 	return DatumGetNumeric(result);
 }
 
@@ -650,7 +656,8 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		 * does not.
 		 */
 		unsigned int shiftby = (unit[1].unitbits - unit->unitbits - (unit[1].round == true)
-				   + (unit->round == true));
+								+ (unit->round == true));
+
 		size = numeric_truncated_divide(size, ((int64) 1) << shiftby);
 	}
 
@@ -721,6 +728,7 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 		 * isn't a number, just treat it all as a unit to be parsed.
 		 */
 		long		exponent = strtol(endptr + 1, &cp, 10);
+
 		(void) exponent;		/* Silence -Wunused-result warnings */
 		if (cp > endptr + 1)
 			endptr = cp;
@@ -731,12 +739,13 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	 * character of the unit string.
 	 */
 	char		saved_char = *endptr;
+
 	*endptr = '\0';
 
 	Numeric		num = DatumGetNumeric(DirectFunctionCall3(numeric_in,
-											  CStringGetDatum(strptr),
-											  ObjectIdGetDatum(InvalidOid),
-											  Int32GetDatum(-1)));
+														  CStringGetDatum(strptr),
+														  ObjectIdGetDatum(InvalidOid),
+														  Int32GetDatum(-1)));
 
 	*endptr = saved_char;
 
@@ -790,7 +799,7 @@ pg_size_bytes(PG_FUNCTION_ARGS)
 	}
 
 	int64		result = DatumGetInt64(DirectFunctionCall1(numeric_int8,
-											   NumericGetDatum(num)));
+														   NumericGetDatum(num)));
 
 	PG_RETURN_INT64(result);
 }
@@ -816,6 +825,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 	Oid			result;
 
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
 	Form_pg_class relform = (Form_pg_class) GETSTRUCT(tuple);
@@ -886,6 +896,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	BackendId	backend;
 
 	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
 	Form_pg_class relform = (Form_pg_class) GETSTRUCT(tuple);

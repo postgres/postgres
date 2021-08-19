@@ -193,6 +193,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 	}
 
 	struct addrinfo *aip = calloc(1, sizeof(struct addrinfo));
+
 	if (aip == NULL)
 		return EAI_MEMORY;
 

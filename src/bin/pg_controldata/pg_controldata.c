@@ -162,6 +162,7 @@ main(int argc, char *argv[])
 
 	/* get a copy of the control file */
 	ControlFileData *ControlFile = get_controlfile(DataDir, &crc_ok);
+
 	if (!crc_ok)
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -193,6 +194,7 @@ main(int argc, char *argv[])
 	 * about %c
 	 */
 	time_t		time_tmp = (time_t) ControlFile->time;
+
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
 			 localtime(&time_tmp));
 	time_tmp = (time_t) ControlFile->checkPointCopy.time;

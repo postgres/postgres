@@ -29,6 +29,7 @@ getlexeme(char *start, char *end, int *len)
 		start += charlen;
 
 	char	   *ptr = start;
+
 	if (ptr >= end)
 		return NULL;
 
@@ -171,6 +172,7 @@ checkCond(lquery_level *curq, int qlen,
 		 * start point following some of this item's match(es).
 		 */
 		lquery_level *nextq = LQL_NEXT(curq);
+
 		qlen--;
 
 		for (int matchcnt = 0; matchcnt < high; matchcnt++)
@@ -214,7 +216,7 @@ ltq_regex(PG_FUNCTION_ARGS)
 	lquery	   *query = PG_GETARG_LQUERY_P(1);
 
 	bool		res = checkCond(LQUERY_FIRST(query), query->numlevel,
-					LTREE_FIRST(tree), tree->numlevel);
+								LTREE_FIRST(tree), tree->numlevel);
 
 	PG_FREE_IF_COPY(tree, 0);
 	PG_FREE_IF_COPY(query, 1);
