@@ -2718,13 +2718,22 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 
 	if (lockedRels == NIL)
 	{
-		/* all regular tables used in query */
+		/*
+		 * Lock all regular tables used in query and its subqueries.  We
+		 * examine inFromCl to exclude auto-added RTEs, particularly NEW/OLD
+		 * in rules.  This is a bit of an abuse of a mostly-obsolete flag, but
+		 * it's convenient.  We can't rely on the namespace mechanism that has
+		 * largely replaced inFromCl, since for example we need to lock
+		 * base-relation RTEs even if they are masked by upper joins.
+		 */
 		i = 0;
 		foreach(rt, qry->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 			++i;
+			if (!rte->inFromCl)
+				continue;
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
@@ -2754,7 +2763,11 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 	}
 	else
 	{
-		/* just the named tables */
+		/*
+		 * Lock just the named tables.  As above, we allow locking any base
+		 * relation regardless of alias-visibility rules, so we need to
+		 * examine inFromCl to exclude OLD/NEW.
+		 */
 		foreach(l, lockedRels)
 		{
 			RangeVar   *thisrel = (RangeVar *) lfirst(l);
@@ -2775,6 +2788,8 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 				++i;
+				if (!rte->inFromCl)
+					continue;
 				if (strcmp(rte->eref->aliasname, thisrel->relname) == 0)
 				{
 					switch (rte->rtekind)
