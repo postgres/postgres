@@ -46,7 +46,7 @@ bool		pgstat_track_activities = false;
 int			pgstat_track_activity_query_size = 1024;
 
 
-/* exposed so that progress.c can access it */
+/* exposed so that backend_progress.c can access it */
 PgBackendStatus *MyBEEntry = NULL;
 
 
@@ -469,6 +469,9 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	beentry->st_procpid = 0;	/* mark invalid */
 
 	PGSTAT_END_WRITE_ACTIVITY(beentry);
+
+	/* so that functions can check if backend_status.c is up via MyBEEntry */
+	MyBEEntry = NULL;
 }
 
 /*
