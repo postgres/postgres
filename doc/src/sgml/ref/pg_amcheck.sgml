@@ -289,8 +289,6 @@ PostgreSQL documentation
        <literal>--table</literal>, <literal>--index</literal>,
        or <literal>--relation</literal> matches no objects, it is a fatal
        error. This option downgrades that error to a warning.
-       If this option is used with <literal>--quiet</literal>, the warning
-       will be suppressed as well.
       </para>
      </listitem>
     </varlistentry>
@@ -549,16 +547,6 @@ PostgreSQL documentation
       </para>
       <para>
        The default is to use a single connection.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><option>-q</option></term>
-     <term><option>--quiet</option></term>
-     <listitem>
-      <para>
-       Print fewer messages, and less detail regarding any server errors.
       </para>
      </listitem>
     </varlistentry>

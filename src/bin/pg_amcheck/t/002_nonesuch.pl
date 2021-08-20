@@ -6,7 +6,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 72;
+use Test::More tests => 76;
 
 # Test set-up
 my ($node, $port);
@@ -191,6 +191,10 @@ $node->command_checks_all(
 		qr/pg_amcheck: warning: no relations to check matching "postgres\.long\.dotted\.string"/,
 		qr/pg_amcheck: warning: no relations to check matching "postgres\.pg_catalog\.none"/,
 		qr/pg_amcheck: warning: no relations to check matching "postgres\.none\.pg_class"/,
+		qr/pg_amcheck: warning: no connectable databases to check matching "no_such_database"/,
+		qr/pg_amcheck: warning: no connectable databases to check matching "no\*such\*database"/,
+		qr/pg_amcheck: warning: no connectable databases to check matching "none\.none\.none"/,
+		qr/pg_amcheck: warning: no connectable databases to check matching "this\.is\.a\.really\.long\.dotted\.string"/,
 	],
 	'many unmatched patterns and one matched pattern under --no-strict-names'
 );

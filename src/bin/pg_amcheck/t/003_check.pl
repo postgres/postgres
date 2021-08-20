@@ -317,7 +317,7 @@ plan_to_remove_relation_file('db2', 's1.t1_btree');
 #
 
 # Standard first arguments to TestLib functions
-my @cmd = ('pg_amcheck', '--quiet', '-p', $port);
+my @cmd = ('pg_amcheck', '-p', $port);
 
 # Regular expressions to match various expected output
 my $no_output_re               = qr/^$/;
