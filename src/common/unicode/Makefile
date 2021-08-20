@@ -18,7 +18,7 @@ LIBS += $(PTHREAD_LIBS)
 # By default, do nothing.
 all:
 
-update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
+update-unicode: unicode_norm_table.h unicode_width_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
 	mv $^ ../../../src/include/common/
 	$(MAKE) normalization-check
 
@@ -35,7 +35,7 @@ unicode_norm_hashfunc.h: unicode_norm_table.h
 unicode_norm_table.h: generate-unicode_norm_table.pl UnicodeData.txt CompositionExclusions.txt
 	$(PERL) generate-unicode_norm_table.pl
 
-unicode_combining_table.h: generate-unicode_combining_table.pl UnicodeData.txt
+unicode_width_table.h: generate-unicode_width_table.pl UnicodeData.txt
 	$(PERL) $^ >$@
 
 unicode_normprops_table.h: generate-unicode_normprops_table.pl DerivedNormalizationProps.txt

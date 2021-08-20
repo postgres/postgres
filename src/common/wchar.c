@@ -644,7 +644,7 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 static int
 ucs_wcwidth(pg_wchar ucs)
 {
-#include "common/unicode_combining_table.h"
+#include "common/unicode_width_table.h"
 
 	/* test for 8-bit control characters */
 	if (ucs == 0)
