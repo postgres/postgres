@@ -154,8 +154,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'e':
+				errno = 0;
 				set_xid_epoch = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					/*------
 					  translator: the second %s is a command line argument (-e, etc) */
@@ -171,8 +172,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'u':
+				errno = 0;
 				set_oldest_xid = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-u");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -186,8 +188,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'x':
+				errno = 0;
 				set_xid = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-x");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -201,15 +204,16 @@ main(int argc, char *argv[])
 				break;
 
 			case 'c':
+				errno = 0;
 				set_oldest_commit_ts_xid = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != ',')
+				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-c");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				set_newest_commit_ts_xid = strtoul(endptr + 1, &endptr2, 0);
-				if (endptr2 == endptr + 1 || *endptr2 != '\0')
+				if (endptr2 == endptr + 1 || *endptr2 != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-c");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -232,8 +236,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'o':
+				errno = 0;
 				set_oid = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-o");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -247,8 +252,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'm':
+				errno = 0;
 				set_mxid = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != ',')
+				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -256,7 +262,7 @@ main(int argc, char *argv[])
 				}
 
 				set_oldestmxid = strtoul(endptr + 1, &endptr2, 0);
-				if (endptr2 == endptr + 1 || *endptr2 != '\0')
+				if (endptr2 == endptr + 1 || *endptr2 != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -280,8 +286,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 'O':
+				errno = 0;
 				set_mxoff = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-O");
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -310,8 +317,9 @@ main(int argc, char *argv[])
 				break;
 
 			case 1:
+				errno = 0;
 				set_wal_segsize = strtol(optarg, &endptr, 10) * 1024 * 1024;
-				if (endptr == optarg || *endptr != '\0')
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("argument of --wal-segsize must be a number");
 					exit(1);
