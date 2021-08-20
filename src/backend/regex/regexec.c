@@ -1147,8 +1147,8 @@ citerdissect(struct vars *v,
 	 * Our strategy is to first find a set of sub-match endpoints that are
 	 * valid according to the child node's DFA, and then recursively dissect
 	 * each sub-match to confirm validity.  If any validity check fails,
-	 * backtrack the last sub-match and try again.  And, when we next try for
-	 * a validity check, we need not recheck any successfully verified
+	 * backtrack that sub-match and try again.  And, when we next try for a
+	 * validity check, we need not recheck any successfully verified
 	 * sub-matches that we didn't move the endpoints of.  nverified remembers
 	 * how many sub-matches are currently known okay.
 	 */
@@ -1236,12 +1236,13 @@ citerdissect(struct vars *v,
 			return REG_OKAY;
 		}
 
-		/* match failed to verify, so backtrack */
+		/* i'th match failed to verify, so backtrack it */
+		k = i;
 
 backtrack:
 
 		/*
-		 * Must consider shorter versions of the current sub-match.  However,
+		 * Must consider shorter versions of the k'th sub-match.  However,
 		 * we'll only ask for a zero-length match if necessary.
 		 */
 		while (k > 0)
@@ -1352,8 +1353,8 @@ creviterdissect(struct vars *v,
 	 * Our strategy is to first find a set of sub-match endpoints that are
 	 * valid according to the child node's DFA, and then recursively dissect
 	 * each sub-match to confirm validity.  If any validity check fails,
-	 * backtrack the last sub-match and try again.  And, when we next try for
-	 * a validity check, we need not recheck any successfully verified
+	 * backtrack that sub-match and try again.  And, when we next try for a
+	 * validity check, we need not recheck any successfully verified
 	 * sub-matches that we didn't move the endpoints of.  nverified remembers
 	 * how many sub-matches are currently known okay.
 	 */
@@ -1447,12 +1448,13 @@ creviterdissect(struct vars *v,
 			return REG_OKAY;
 		}
 
-		/* match failed to verify, so backtrack */
+		/* i'th match failed to verify, so backtrack it */
+		k = i;
 
 backtrack:
 
 		/*
-		 * Must consider longer versions of the current sub-match.
+		 * Must consider longer versions of the k'th sub-match.
 		 */
 		while (k > 0)
 		{
