@@ -298,6 +298,7 @@ main(int argc, char *argv[])
 							long_options, &optindex)) != -1)
 	{
 		char	   *endptr;
+		unsigned long optval;
 
 		switch (c)
 		{
@@ -407,30 +408,34 @@ main(int argc, char *argv[])
 				}
 				break;
 			case 7:
-				opts.startblock = strtol(optarg, &endptr, 10);
-				if (*endptr != '\0')
+				errno = 0;
+				optval = strtoul(optarg, &endptr, 10);
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid start block");
 					exit(1);
 				}
-				if (opts.startblock > MaxBlockNumber || opts.startblock < 0)
+				if (optval > MaxBlockNumber)
 				{
 					pg_log_error("start block out of bounds");
 					exit(1);
 				}
+				opts.startblock = optval;
 				break;
 			case 8:
-				opts.endblock = strtol(optarg, &endptr, 10);
-				if (*endptr != '\0')
+				errno = 0;
+				optval = strtoul(optarg, &endptr, 10);
+				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid end block");
 					exit(1);
 				}
-				if (opts.endblock > MaxBlockNumber || opts.endblock < 0)
+				if (optval > MaxBlockNumber)
 				{
 					pg_log_error("end block out of bounds");
 					exit(1);
 				}
+				opts.endblock = optval;
 				break;
 			case 9:
 				opts.rootdescend = true;
