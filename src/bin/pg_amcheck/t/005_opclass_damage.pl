@@ -34,7 +34,7 @@ $node->safe_psql(
 
 # We have not yet broken the index, so we should get no corruption
 $node->command_like(
-	[ 'pg_amcheck', '--quiet', '-p', $node->port, 'postgres' ],
+	[ 'pg_amcheck', '-p', $node->port, 'postgres' ],
 	qr/^$/,
 	'pg_amcheck all schemas, tables and indexes reports no corruption');
 
