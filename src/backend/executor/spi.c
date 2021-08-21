@@ -1489,16 +1489,22 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	if (!SPI_is_cursor_plan(plan))
 	{
 		/* try to give a good error message */
+		const char *cmdtag;
+
 		if (list_length(plan->plancache_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 					 errmsg("cannot open multi-query plan as cursor")));
 		plansource = (CachedPlanSource *) linitial(plan->plancache_list);
+		/* A SELECT that fails SPI_is_cursor_plan() must be SELECT INTO */
+		if (plansource->commandTag == CMDTAG_SELECT)
+			cmdtag = "SELECT INTO";
+		else
+			cmdtag = GetCommandTagName(plansource->commandTag);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 		/* translator: %s is name of a SQL command, eg INSERT */
-				 errmsg("cannot open %s query as cursor",
-						GetCommandTagName(plansource->commandTag))));
+				 errmsg("cannot open %s query as cursor", cmdtag)));
 	}
 
 	Assert(list_length(plan->plancache_list) == 1);
