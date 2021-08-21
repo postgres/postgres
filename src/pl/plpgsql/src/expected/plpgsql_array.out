@@ -73,8 +73,9 @@ PL/pgSQL function inline_code_block line 2 at assignment
 insert into onecol values(array[11]);
 do $$ declare a int[];
 begin a := f1 from onecol; raise notice 'a = %', a; end$$;
-ERROR:  query "a := f1 from onecol" returned more than one row
-CONTEXT:  PL/pgSQL function inline_code_block line 2 at assignment
+ERROR:  query returned more than one row
+CONTEXT:  query: a := f1 from onecol
+PL/pgSQL function inline_code_block line 2 at assignment
 do $$ declare a int[];
 begin a := f1 from onecol limit 1; raise notice 'a = %', a; end$$;
 NOTICE:  a = {1,2}
