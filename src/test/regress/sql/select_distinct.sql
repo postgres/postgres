@@ -111,6 +111,7 @@ DROP TABLE distinct_group_2;
 SET parallel_tuple_cost=0;
 SET parallel_setup_cost=0;
 SET min_parallel_table_scan_size=0;
+SET max_parallel_workers_per_gather=2;
 
 -- Ensure we get a parallel plan
 EXPLAIN (costs off)
@@ -140,6 +141,7 @@ $$ LANGUAGE plpgsql PARALLEL SAFE;
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT distinct_func(1) FROM tenk1;
 
+RESET max_parallel_workers_per_gather;
 RESET min_parallel_table_scan_size;
 RESET parallel_setup_cost;
 RESET parallel_tuple_cost;
