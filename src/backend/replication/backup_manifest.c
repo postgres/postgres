@@ -236,11 +236,18 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 					errmsg("expected end timeline %u but found timeline %u",
 						   starttli, entry->tli));
 
-		if (!XLogRecPtrIsInvalid(entry->begin))
-			tl_beginptr = entry->begin;
+		/*
+		 * If this timeline entry matches with the timeline on which the
+		 * backup started, WAL needs to be checked from the start LSN of the
+		 * backup.  If this entry refers to a newer timeline, WAL needs to be
+		 * checked since the beginning of this timeline, so use the LSN where
+		 * the timeline began.
+		 */
+		if (starttli == entry->tli)
+			tl_beginptr = startptr;
 		else
 		{
-			tl_beginptr = startptr;
+			tl_beginptr = entry->begin;
 
 			/*
 			 * If we reach a TLI that has no valid beginning LSN, there can't
@@ -248,7 +255,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 			 * better have arrived at the expected starting TLI. If not,
 			 * something's gone horribly wrong.
 			 */
-			if (starttli != entry->tli)
+			if (XLogRecPtrIsInvalid(entry->begin))
 				ereport(ERROR,
 						errmsg("expected start timeline %u but found timeline %u",
 							   starttli, entry->tli));
