@@ -10,7 +10,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 # Start up the server and take a backup.
 my $primary = PostgresNode->new('primary');
@@ -59,3 +59,20 @@ command_fails_like(
 	[ 'pg_verifybackup', $backup_path ],
 	qr/WAL parsing failed for timeline 1/,
 	'corrupt WAL file causes failure');
+
+# Check that WAL-Ranges has correct values with a history file and
+# a timeline > 1.  Rather than plugging in a new standby, do a
+# self-promotion of this node.
+$primary->stop;
+$primary->append_conf('standby.signal');
+$primary->start;
+$primary->promote;
+$primary->safe_psql('postgres', 'SELECT pg_switch_wal()');
+my $backup_path2 = $primary->backup_dir . '/test_tli';
+# The base backup run below does a checkpoint, that removes the first segment
+# of the current timeline.
+$primary->command_ok([ 'pg_basebackup', '-D', $backup_path2, '--no-sync' ],
+	"base backup 2 ok");
+command_ok(
+	[ 'pg_verifybackup', $backup_path2 ],
+	'valid base backup with timeline > 1');
