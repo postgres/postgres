@@ -775,6 +775,10 @@ select * from test_regex('^(.+)( \1)+$', 'abc abc abc', 'RP');
 select * from test_regex('^(.+)( \1)+$', 'abc abd abc', 'RP');
 -- expectNomatch	14.29 RP	{^(.+)( \1)+$}	{abc abc abd}
 select * from test_regex('^(.+)( \1)+$', 'abc abc abd', 'RP');
+-- expectNomatch	14.30 RP	{^(.)\1|\1.}	{abcdef}
+select * from test_regex('^(.)\1|\1.', 'abcdef', 'RP');
+-- expectNomatch	14.31 RP	{^((.)\2|..)\2}	{abadef}
+select * from test_regex('^((.)\2|..)\2', 'abadef', 'RP');
 
 -- back reference only matches the string, not any constraints
 select * from test_regex('(^\w+).*\1', 'abc abc abc', 'LRP');

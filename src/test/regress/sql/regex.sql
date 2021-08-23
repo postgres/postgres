@@ -135,6 +135,10 @@ select 'a' ~ '.. ()|\1';
 select 'a' ~ '()*\1';
 select 'a' ~ '()+\1';
 
+-- Test ancient oversight in when to apply zaptreesubs
+select 'abcdef' ~ '^(.)\1|\1.' as f;
+select 'abadef' ~ '^((.)\2|..)\2' as f;
+
 -- Add coverage for some cases in checkmatchall
 select regexp_match('xy', '.|...');
 select regexp_match('xyz', '.|...');
