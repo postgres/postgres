@@ -135,6 +135,10 @@ select 'a' ~ '.. ()|\1';
 select 'a' ~ '()*\1';
 select 'a' ~ '()+\1';
 
+-- Test ancient oversight in when to apply zaptreesubs
+select 'abcdef' ~ '^(.)\1|\1.' as f;
+select 'abadef' ~ '^((.)\2|..)\2' as f;
+
 -- Error conditions
 select 'xyz' ~ 'x(\w)(?=\1)';  -- no backrefs in LACONs
 select 'xyz' ~ 'x(\w)(?=(\1))';
