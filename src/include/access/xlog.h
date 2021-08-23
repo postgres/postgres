@@ -339,6 +339,7 @@ extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);
 extern XLogRecPtr GetLastImportantRecPtr(void);
 extern void RemovePromoteSignalFiles(void);
+extern void NotifySegmentsReadyForArchive(XLogRecPtr flushRecPtr);
 
 extern bool PromoteIsTriggered(void);
 extern bool CheckPromoteSignal(void);
