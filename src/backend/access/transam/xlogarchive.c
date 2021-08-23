@@ -433,7 +433,7 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 	if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 		XLogArchiveForceDone(xlogfname);
 	else
-		XLogArchiveNotify(xlogfname);
+		XLogArchiveNotify(xlogfname, true);
 
 	/*
 	 * If the existing file was replaced, since walsenders might have it open,
@@ -462,9 +462,12 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
  * by the archiver, e.g. we write 0000000100000001000000C6.ready
  * and the archiver then knows to archive XLOGDIR/0000000100000001000000C6,
  * then when complete, rename it to 0000000100000001000000C6.done
+ *
+ * Optionally, nudge the archiver process so that it'll notice the file we
+ * create.
  */
 void
-XLogArchiveNotify(const char *xlog)
+XLogArchiveNotify(const char *xlog, bool nudge)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	FILE	   *fd;
@@ -489,8 +492,8 @@ XLogArchiveNotify(const char *xlog)
 		return;
 	}
 
-	/* Notify archiver that it's got something to do */
-	if (IsUnderPostmaster)
+	/* If caller requested, let archiver know it's got work to do */
+	if (nudge)
 		PgArchWakeup();
 }
 
@@ -498,12 +501,12 @@ XLogArchiveNotify(const char *xlog)
  * Convenience routine to notify using segment number representation of filename
  */
 void
-XLogArchiveNotifySeg(XLogSegNo segno)
+XLogArchiveNotifySeg(XLogSegNo segno, bool nudge)
 {
 	char		xlog[MAXFNAMELEN];
 
 	XLogFileName(xlog, ThisTimeLineID, segno, wal_segment_size);
-	XLogArchiveNotify(xlog);
+	XLogArchiveNotify(xlog, nudge);
 }
 
 /*
@@ -608,7 +611,7 @@ XLogArchiveCheckDone(const char *xlog)
 		return true;
 
 	/* Retry creation of the .ready file */
-	XLogArchiveNotify(xlog);
+	XLogArchiveNotify(xlog, true);
 	return false;
 }
 
