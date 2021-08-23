@@ -1071,7 +1071,7 @@ setup_config(void)
 	else
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
 				 n_buffers * (BLCKSZ / 1024));
-	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
+	conflines = replace_token(conflines, "#shared_buffers = 128MB", repltok);
 
 #ifdef HAVE_UNIX_SOCKETS
 	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
