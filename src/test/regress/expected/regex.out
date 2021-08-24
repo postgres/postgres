@@ -567,6 +567,25 @@ select 'a' ~ '()+\1';
  t
 (1 row)
 
+-- Test incorrect removal of capture groups within {0}
+select 'xxx' ~ '(.){0}(\1)' as f;
+ f 
+---
+ f
+(1 row)
+
+select 'xxx' ~ '((.)){0}(\2)' as f;
+ f 
+---
+ f
+(1 row)
+
+select 'xyz' ~ '((.)){0}(\2){0}' as t;
+ t 
+---
+ t
+(1 row)
+
 -- Test ancient oversight in when to apply zaptreesubs
 select 'abcdef' ~ '^(.)\1|\1.' as f;
  f 

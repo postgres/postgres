@@ -3576,6 +3576,28 @@ select * from test_regex('((.))(\2)', 'xyy', 'oRP');
  {yy,NULL,NULL,NULL}
 (2 rows)
 
+-- expectNomatch	21.39 PQR	{(.){0}(\1)}	xxx
+select * from test_regex('(.){0}(\1)', 'xxx', 'PQR');
+                 test_regex                 
+--------------------------------------------
+ {2,REG_UBACKREF,REG_UBOUNDS,REG_UNONPOSIX}
+(1 row)
+
+-- expectNomatch	21.40 PQR	{((.)){0}(\2)}	xxx
+select * from test_regex('((.)){0}(\2)', 'xxx', 'PQR');
+                 test_regex                 
+--------------------------------------------
+ {3,REG_UBACKREF,REG_UBOUNDS,REG_UNONPOSIX}
+(1 row)
+
+-- expectMatch	21.41 NPQR	{((.)){0}(\2){0}}	xyz	{}	{}	{}	{}
+select * from test_regex('((.)){0}(\2){0}', 'xyz', 'NPQR');
+                         test_regex                         
+------------------------------------------------------------
+ {3,REG_UBACKREF,REG_UBOUNDS,REG_UNONPOSIX,REG_UEMPTYMATCH}
+ {"",NULL,NULL,NULL}
+(2 rows)
+
 -- doing 22 "multicharacter collating elements"
 -- # again ugh
 -- MCCEs are not implemented in Postgres, so we skip all these tests
