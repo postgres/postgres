@@ -111,9 +111,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       publications, and <literal>DROP</literal> removes the publications from
       the list of publications.  See <xref linkend="sql-createsubscription"/>
       for more information.  By default, this command will also act like
-      <literal>REFRESH PUBLICATION</literal>, except that in case of
-      <literal>ADD</literal> or <literal>DROP</literal>, only the added or
-      dropped publications are refreshed.
+      <literal>REFRESH PUBLICATION</literal>.
      </para>
 
      <para>
@@ -134,8 +132,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       </variablelist>
 
       Additionally, refresh options as described
-      under <literal>REFRESH PUBLICATION</literal> may be specified,
-      except in the case of <literal>DROP PUBLICATION</literal>.
+      under <literal>REFRESH PUBLICATION</literal> may be specified.
      </para>
     </listitem>
    </varlistentry>

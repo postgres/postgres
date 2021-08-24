@@ -1006,10 +1006,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				List	   *publist;
 				bool		isadd = stmt->kind == ALTER_SUBSCRIPTION_ADD_PUBLICATION;
 
-				supported_opts = SUBOPT_REFRESH;
-				if (isadd)
-					supported_opts |= SUBOPT_COPY_DATA;
-
+				supported_opts = SUBOPT_REFRESH | SUBOPT_COPY_DATA;
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);
 
@@ -1042,8 +1039,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
-					/* Only refresh the added/dropped list of publications. */
-					sub->publications = stmt->publication;
+					/* Refresh the new list of publications. */
+					sub->publications = publist;
 
 					AlterSubscription_refresh(sub, opts.copy_data);
 				}
