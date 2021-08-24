@@ -960,8 +960,7 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 										   NULL, NULL,	/* no "enabled" */
 										   NULL,	/* no "create_slot" */
 										   NULL, NULL,	/* no "slot_name" */
-										   isadd ? &copy_data : NULL,	/* for drop, no
-																		 * "copy_data" */
+										   &copy_data,
 										   NULL,	/* no "synchronous_commit" */
 										   &refresh,
 										   NULL, NULL,	/* no "binary" */
@@ -986,8 +985,8 @@ AlterSubscription(AlterSubscriptionStmt *stmt, bool isTopLevel)
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
-					/* Only refresh the added/dropped list of publications. */
-					sub->publications = stmt->publication;
+					/* Refresh the new list of publications. */
+					sub->publications = publist;
 
 					AlterSubscription_refresh(sub, copy_data);
 				}
