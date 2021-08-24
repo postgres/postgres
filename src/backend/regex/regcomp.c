@@ -959,7 +959,7 @@ parseqatom(struct vars *v,
 			if (cap)
 			{
 				v->subs[subno] = atom;
-				t = subre(v, '(', atom->flags | CAP, lp, rp);
+				t = subre(v, '(', atom->flags | CAP, s, s2);
 				NOERR();
 				t->subno = subno;
 				t->left = atom;
@@ -1042,11 +1042,23 @@ parseqatom(struct vars *v,
 	/* annoying special case:  {0} or {0,0} cancels everything */
 	if (m == 0 && n == 0)
 	{
-		if (atom != NULL)
-			freesubre(v, atom);
-		if (atomtype == '(')
-			v->subs[subno] = NULL;
-		delsub(v->nfa, lp, rp);
+		/*
+		 * If we had capturing subexpression(s) within the atom, we don't want
+		 * to destroy them, because it's legal (if useless) to back-ref them
+		 * later.  Hence, just unlink the atom from lp/rp and then ignore it.
+		 */
+		if (atom != NULL && (atom->flags & CAP))
+		{
+			delsub(v->nfa, lp, atom->begin);
+			delsub(v->nfa, atom->end, rp);
+		}
+		else
+		{
+			/* Otherwise, we can clean up any subre infrastructure we made */
+			if (atom != NULL)
+				freesubre(v, atom);
+			delsub(v->nfa, lp, rp);
+		}
 		EMPTYARC(lp, rp);
 		return;
 	}
