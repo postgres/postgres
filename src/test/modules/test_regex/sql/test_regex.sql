@@ -1015,6 +1015,12 @@ select * from test_regex('(a*)*', 'bc', 'N');
 select * from test_regex(' TO (([a-z0-9._]+|"([^"]+|"")+")+)', 'asd TO foo', 'M');
 -- expectMatch	21.36 RPQ	((.))(\2){0}	xy	x	x	x	{}
 select * from test_regex('((.))(\2){0}', 'xy', 'RPQ');
+-- expectNomatch	21.39 PQR	{(.){0}(\1)}	xxx
+select * from test_regex('(.){0}(\1)', 'xxx', 'PQR');
+-- expectNomatch	21.40 PQR	{((.)){0}(\2)}	xxx
+select * from test_regex('((.)){0}(\2)', 'xxx', 'PQR');
+-- expectMatch	21.41 NPQR	{((.)){0}(\2){0}}	xyz	{}	{}	{}	{}
+select * from test_regex('((.)){0}(\2){0}', 'xyz', 'NPQR');
 
 -- doing 22 "multicharacter collating elements"
 -- # again ugh
