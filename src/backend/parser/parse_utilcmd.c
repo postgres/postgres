@@ -3897,7 +3897,7 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 		if (spec->modulus <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("modulus for hash partition must be a positive integer")));
+					 errmsg("modulus for hash partition must be an integer value greater than zero")));
 
 		Assert(spec->remainder >= 0);
 
