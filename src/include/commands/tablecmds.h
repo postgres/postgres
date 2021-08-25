@@ -78,6 +78,8 @@ extern void RenameRelationInternal(Oid myrelid,
 								   const char *newrelname, bool is_internal,
 								   bool is_index);
 
+extern void ResetRelRewrite(Oid myrelid);
+
 extern void find_composite_type_dependencies(Oid typeOid,
 											 Relation origRelation,
 											 const char *origTypeName);
