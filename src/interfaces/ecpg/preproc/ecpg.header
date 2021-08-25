@@ -596,7 +596,7 @@ check_declared_list(const char *name)
 		{
 			if (connection)
 			if (connection && strcmp(ptr->connection, connection) != 0)
-				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten with %s by declare statement %s.", connection, ptr->connection, name);
+				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten with %s by DECLARE statement %s", connection, ptr->connection, name);
 			connection = mm_strdup(ptr -> connection);
 			return true;
 		}
