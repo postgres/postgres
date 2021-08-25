@@ -102,7 +102,7 @@ typedef struct TypeCacheEntry
 	FmgrInfo	rng_subdiff_finfo;	/* difference function, if any */
 
 	/*
-	 * Fields computed when TYPCACHE_MULTIRANGE_INFO is required.
+	 * Fields computed when TYPECACHE_MULTIRANGE_INFO is required.
 	 */
 	struct TypeCacheEntry *rngtype; /* multirange's range underlying type */
 
