@@ -163,7 +163,7 @@ parse_phrase_operator(char *buf, int16 *distance)
 				else if (errno == ERANGE || l < 0 || l > MAXENTRYPOS)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("distance in phrase operator should not be greater than %d",
+							 errmsg("distance in phrase operator must be an integer value between zero and %d inclusive",
 									MAXENTRYPOS)));
 				else
 				{
