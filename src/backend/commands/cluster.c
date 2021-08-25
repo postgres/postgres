@@ -733,7 +733,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 		if (isNull)
 			reloptions = (Datum) 0;
 
-		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode);
+		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode, toastid);
 
 		ReleaseSysCache(tuple);
 	}
@@ -1512,6 +1512,14 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 			RenameRelationInternal(toastidx,
 								   NewToastName, true, true);
+
+			/*
+			 * Reset the relrewrite for the toast. The command-counter
+			 * increment is required here as we are about to update
+			 * the tuple that is updated as part of RenameRelationInternal.
+			 */
+			CommandCounterIncrement();
+			ResetRelRewrite(newrel->rd_rel->reltoastrelid);
 		}
 		relation_close(newrel, NoLock);
 	}
