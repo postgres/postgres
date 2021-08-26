@@ -2929,7 +2929,6 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	{
 		case RELKIND_SEQUENCE:
 		case RELKIND_INDEX:
-		case RELKIND_PARTITIONED_INDEX:
 			return smgrnblocks(RelationGetSmgr(relation), forkNum);
 
 		case RELKIND_RELATION:
@@ -2951,6 +2950,7 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 		case RELKIND_VIEW:
 		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_FOREIGN_TABLE:
+		case RELKIND_PARTITIONED_INDEX:
 		case RELKIND_PARTITIONED_TABLE:
 		default:
 			Assert(false);
