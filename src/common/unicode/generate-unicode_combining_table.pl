@@ -25,8 +25,6 @@ foreach my $line (<ARGV>)
 	my @fields = split ';', $line;
 	$codepoint = hex $fields[0];
 
-	next if $codepoint > 0xFFFF;
-
 	if ($fields[2] eq 'Me' || $fields[2] eq 'Mn')
 	{
 		# combining character, save for start of range
