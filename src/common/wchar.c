@@ -585,18 +585,17 @@ struct mbinterval
 {
 	unsigned short first;
 	unsigned short last;
-	signed int	width;
 };
 
 /* auxiliary function for binary search in interval table */
-static const struct mbinterval *
+static int
 mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 {
 	int			min = 0;
 	int			mid;
 
 	if (ucs < table[0].first || ucs > table[max].last)
-		return NULL;
+		return 0;
 	while (max >= min)
 	{
 		mid = (min + max) / 2;
@@ -605,10 +604,10 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 		else if (ucs < table[mid].first)
 			max = mid - 1;
 		else
-			return &table[mid];
+			return 1;
 	}
 
-	return NULL;
+	return 0;
 }
 
 
@@ -647,8 +646,6 @@ ucs_wcwidth(pg_wchar ucs)
 {
 #include "common/unicode_width_table.h"
 
-	const struct mbinterval *range;
-
 	/* test for 8-bit control characters */
 	if (ucs == 0)
 		return 0;
@@ -656,12 +653,10 @@ ucs_wcwidth(pg_wchar ucs)
 	if (ucs < 0x20 || (ucs >= 0x7f && ucs < 0xa0) || ucs > 0x0010ffff)
 		return -1;
 
-	/* binary search in table of character widths */
-	range = mbbisearch(ucs, wcwidth,
-					   sizeof(wcwidth) / sizeof(struct mbinterval) - 1);
-
-	if (range != NULL)
-		return range->width;
+	/* binary search in table of non-spacing characters */
+	if (mbbisearch(ucs, combining,
+				   sizeof(combining) / sizeof(struct mbinterval) - 1))
+		return 0;
 
 	/*
 	 * if we arrive here, ucs is not a combining or C0/C1 control character
