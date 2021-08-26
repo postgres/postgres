@@ -4,5 +4,6 @@
 # Downloaded files
 /CompositionExclusions.txt
 /DerivedNormalizationProps.txt
+/EastAsianWidth.txt
 /NormalizationTest.txt
 /UnicodeData.txt

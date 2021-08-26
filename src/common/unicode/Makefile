@@ -18,14 +18,14 @@ LIBS += $(PTHREAD_LIBS)
 # By default, do nothing.
 all:
 
-update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
+update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_east_asian_fw_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
 	mv $^ ../../../src/include/common/
 	$(MAKE) normalization-check
 
 # These files are part of the Unicode Character Database. Download
 # them on demand.  The dependency on Makefile.global is for
 # UNICODE_VERSION.
-UnicodeData.txt DerivedNormalizationProps.txt CompositionExclusions.txt NormalizationTest.txt: $(top_builddir)/src/Makefile.global
+UnicodeData.txt EastAsianWidth.txt DerivedNormalizationProps.txt CompositionExclusions.txt NormalizationTest.txt: $(top_builddir)/src/Makefile.global
 	$(DOWNLOAD) https://www.unicode.org/Public/$(UNICODE_VERSION)/ucd/$(@F)
 
 # Generation of conversion tables used for string normalization with
@@ -36,6 +36,9 @@ unicode_norm_table.h: generate-unicode_norm_table.pl UnicodeData.txt Composition
 	$(PERL) generate-unicode_norm_table.pl
 
 unicode_combining_table.h: generate-unicode_combining_table.pl UnicodeData.txt
+	$(PERL) $^ >$@
+
+unicode_east_asian_fw_table.h: generate-unicode_east_asian_fw_table.pl EastAsianWidth.txt
 	$(PERL) $^ >$@
 
 unicode_normprops_table.h: generate-unicode_normprops_table.pl DerivedNormalizationProps.txt
@@ -64,6 +67,6 @@ clean:
 	rm -f $(OBJS) norm_test norm_test.o
 
 distclean: clean
-	rm -f UnicodeData.txt CompositionExclusions.txt NormalizationTest.txt norm_test_table.h unicode_norm_table.h
+	rm -f UnicodeData.txt EastAsianWidth.txt CompositionExclusions.txt NormalizationTest.txt norm_test_table.h unicode_norm_table.h
 
 maintainer-clean: distclean
