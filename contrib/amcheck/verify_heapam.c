@@ -380,6 +380,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 	{
 		OffsetNumber maxoff;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/* Optionally skip over all-frozen or all-visible blocks */
 		if (skip_option != SKIP_PAGES_NONE)
 		{
