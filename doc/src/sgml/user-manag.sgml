@@ -520,21 +520,22 @@ DROP ROLE doomed_role;
      <tbody>
       <row>
        <entry>pg_read_all_data</entry>
-       <entry>Read all data (tables, views, sequences), as if having SELECT
-       rights on those objects, and USAGE rights on all schemas, even without
-       having it explicitly.  This role does not have the role attribute
-       <literal>BYPASSRLS</literal> set.  If RLS is being used, an administrator
-       may wish to set <literal>BYPASSRLS</literal> on roles which this role is
-       GRANTed to.</entry>
+       <entry>Read all data (tables, views, sequences), as if having
+       <command>SELECT</command> rights on those objects, and USAGE rights on
+       all schemas, even without having it explicitly.  This role does not have
+       the role attribute <literal>BYPASSRLS</literal> set.  If RLS is being
+       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
+       roles which this role is GRANTed to.</entry>
       </row>
       <row>
        <entry>pg_write_all_data</entry>
-       <entry>Write all data (tables, views, sequences), as if having INSERT,
-       UPDATE, and DELETE rights on those objects, and USAGE rights on all
-       schemas, even without having it explicitly.  This role does not have the
-       role attribute <literal>BYPASSRLS</literal> set.  If RLS is being used,
-       an administrator may wish to set <literal>BYPASSRLS</literal> on roles
-       which this role is GRANTed to.</entry>
+       <entry>Write all data (tables, views, sequences), as if having
+       <command>INSERT</command>, <command>UPDATE</command>, and
+       <command>DELETE</command> rights on those objects, and USAGE rights on
+       all schemas, even without having it explicitly.  This role does not have
+       the role attribute <literal>BYPASSRLS</literal> set.  If RLS is being
+       used, an administrator may wish to set <literal>BYPASSRLS</literal> on
+       roles which this role is GRANTed to.</entry>
       </row>
       <row>
        <entry>pg_read_all_settings</entry>
