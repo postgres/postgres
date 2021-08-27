@@ -2859,7 +2859,7 @@ do_parallel_processing(LVRelState *vacrel, LVShared *lvshared)
 			continue;
 
 		/* Do vacuum or cleanup of the index */
-		istat = (vacrel->indstats[idx]);
+		istat = vacrel->indstats[idx];
 		vacrel->indstats[idx] = parallel_process_one_index(indrel, istat,
 														   lvshared,
 														   shared_istat,
@@ -2910,7 +2910,7 @@ do_serial_processing_for_unsafe_indexes(LVRelState *vacrel, LVShared *lvshared)
 			continue;
 
 		/* Do vacuum or cleanup of the index */
-		istat = (vacrel->indstats[idx]);
+		istat = vacrel->indstats[idx];
 		vacrel->indstats[idx] = parallel_process_one_index(indrel, istat,
 														   lvshared,
 														   shared_istat,
@@ -3123,15 +3123,15 @@ lazy_cleanup_one_index(Relation indrel, IndexBulkDeleteResult *istat,
 		ereport(elevel,
 				(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 						RelationGetRelationName(indrel),
-						(istat)->num_index_tuples,
-						(istat)->num_pages),
+						istat->num_index_tuples,
+						istat->num_pages),
 				 errdetail("%.0f index row versions were removed.\n"
 						   "%u index pages were newly deleted.\n"
 						   "%u index pages are currently deleted, of which %u are currently reusable.\n"
 						   "%s.",
-						   (istat)->tuples_removed,
-						   (istat)->pages_newly_deleted,
-						   (istat)->pages_deleted, (istat)->pages_free,
+						   istat->tuples_removed,
+						   istat->pages_newly_deleted,
+						   istat->pages_deleted, istat->pages_free,
 						   pg_rusage_show(&ru0))));
 	}
 
@@ -4069,7 +4069,7 @@ end_parallel_vacuum(LVRelState *vacrel)
 		if (shared_istat->updated)
 		{
 			indstats[idx] = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-			memcpy(indstats[idx], &(shared_istat->istat), sizeof(IndexBulkDeleteResult));
+			memcpy(indstats[idx], &shared_istat->istat, sizeof(IndexBulkDeleteResult));
 		}
 		else
 			indstats[idx] = NULL;
