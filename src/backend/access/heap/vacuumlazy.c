@@ -840,16 +840,11 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			}
 			if (track_io_timing)
 			{
-				appendStringInfoString(&buf, _("I/O timings:"));
-				if (pgStatBlockReadTime - startreadtime > 0)
-					appendStringInfo(&buf, _(" read: %.3f ms"),
-									 (double) (pgStatBlockReadTime - startreadtime) / 1000);
-				if ((pgStatBlockReadTime - startreadtime > 0) && (pgStatBlockWriteTime - startwritetime > 0))
-					appendStringInfoString(&buf, _(","));
-				if (pgStatBlockWriteTime - startwritetime > 0)
-					appendStringInfo(&buf, _(" write: %.3f ms"),
-									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
-				appendStringInfoChar(&buf, '\n');
+				double		read_ms = (double) (pgStatBlockReadTime - startreadtime) / 1000;
+				double		write_ms = (double) (pgStatBlockWriteTime - startwritetime) / 1000;
+
+				appendStringInfo(&buf, _("I/O timings: read: %.3f ms, write: %.3f ms\n"),
+								 read_ms, write_ms);
 			}
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
