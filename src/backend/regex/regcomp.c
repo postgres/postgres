@@ -599,6 +599,13 @@ makesearch(struct vars *v,
 		/* and ^* and \A* too -- not always necessary, but harmless */
 		newarc(nfa, PLAIN, nfa->bos[0], pre, pre);
 		newarc(nfa, PLAIN, nfa->bos[1], pre, pre);
+
+		/*
+		 * The pattern is still MATCHALL if it was before, but the max match
+		 * length is now infinity.
+		 */
+		if (nfa->flags & MATCHALL)
+			nfa->maxmatchall = DUPINF;
 	}
 
 	/*

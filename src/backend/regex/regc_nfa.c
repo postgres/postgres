@@ -3660,8 +3660,13 @@ dumpnfa(struct nfa *nfa,
 	if (nfa->flags & HASLACONS)
 		fprintf(f, ", haslacons");
 	if (nfa->flags & MATCHALL)
-		fprintf(f, ", minmatchall %d, maxmatchall %d",
-				nfa->minmatchall, nfa->maxmatchall);
+	{
+		fprintf(f, ", minmatchall %d", nfa->minmatchall);
+		if (nfa->maxmatchall == DUPINF)
+			fprintf(f, ", maxmatchall inf");
+		else
+			fprintf(f, ", maxmatchall %d", nfa->maxmatchall);
+	}
 	fprintf(f, "\n");
 	for (s = nfa->states; s != NULL; s = s->next)
 	{
@@ -3824,8 +3829,13 @@ dumpcnfa(struct cnfa *cnfa,
 	if (cnfa->flags & HASLACONS)
 		fprintf(f, ", haslacons");
 	if (cnfa->flags & MATCHALL)
-		fprintf(f, ", minmatchall %d, maxmatchall %d",
-				cnfa->minmatchall, cnfa->maxmatchall);
+	{
+		fprintf(f, ", minmatchall %d", cnfa->minmatchall);
+		if (cnfa->maxmatchall == DUPINF)
+			fprintf(f, ", maxmatchall inf");
+		else
+			fprintf(f, ", maxmatchall %d", cnfa->maxmatchall);
+	}
 	fprintf(f, "\n");
 	for (st = 0; st < cnfa->nstates; st++)
 		dumpcstate(st, cnfa, f);
