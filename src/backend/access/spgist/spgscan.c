@@ -18,6 +18,7 @@
 #include "access/relscan.h"
 #include "access/spgist_private.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
@@ -231,6 +232,9 @@ spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 
 	/* set up starting stack entries */
 	resetSpGistScanOpaque(so);
+
+	/* count an indexscan for stats */
+	pgstat_count_index_scan(scan->indexRelation);
 }
 
 void
