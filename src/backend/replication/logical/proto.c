@@ -1156,3 +1156,56 @@ logicalrep_read_stream_abort(StringInfo in, TransactionId *xid,
 	*xid = pq_getmsgint(in, 4);
 	*subxid = pq_getmsgint(in, 4);
 }
+
+/*
+ * Get string representing LogicalRepMsgType.
+ */
+char *
+logicalrep_message_type(LogicalRepMsgType action)
+{
+	switch (action)
+	{
+		case LOGICAL_REP_MSG_BEGIN:
+			return "BEGIN";
+		case LOGICAL_REP_MSG_COMMIT:
+			return "COMMIT";
+		case LOGICAL_REP_MSG_ORIGIN:
+			return "ORIGIN";
+		case LOGICAL_REP_MSG_INSERT:
+			return "INSERT";
+		case LOGICAL_REP_MSG_UPDATE:
+			return "UPDATE";
+		case LOGICAL_REP_MSG_DELETE:
+			return "DELETE";
+		case LOGICAL_REP_MSG_TRUNCATE:
+			return "TRUNCATE";
+		case LOGICAL_REP_MSG_RELATION:
+			return "RELATION";
+		case LOGICAL_REP_MSG_TYPE:
+			return "TYPE";
+		case LOGICAL_REP_MSG_MESSAGE:
+			return "MESSAGE";
+		case LOGICAL_REP_MSG_BEGIN_PREPARE:
+			return "BEGIN PREPARE";
+		case LOGICAL_REP_MSG_PREPARE:
+			return "PREPARE";
+		case LOGICAL_REP_MSG_COMMIT_PREPARED:
+			return "COMMIT PREPARED";
+		case LOGICAL_REP_MSG_ROLLBACK_PREPARED:
+			return "ROLLBACK PREPARED";
+		case LOGICAL_REP_MSG_STREAM_START:
+			return "STREAM START";
+		case LOGICAL_REP_MSG_STREAM_STOP:
+			return "STREAM STOP";
+		case LOGICAL_REP_MSG_STREAM_COMMIT:
+			return "STREAM COMMIT";
+		case LOGICAL_REP_MSG_STREAM_ABORT:
+			return "STREAM ABORT";
+		case LOGICAL_REP_MSG_STREAM_PREPARE:
+			return "STREAM PREPARE";
+	}
+
+	elog(ERROR, "invalid logical replication message type \"%c\"", action);
+
+	return NULL;				/* keep compiler quiet */
+}

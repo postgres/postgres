@@ -113,6 +113,7 @@ Append
 AppendPath
 AppendRelInfo
 AppendState
+ApplyErrorCallbackArg
 ApplyExecutionData
 ApplySubXactData
 Archive
@@ -2423,7 +2424,6 @@ SlabBlock
 SlabChunk
 SlabContext
 SlabSlot
-SlotErrCallbackArg
 SlotNumber
 SlruCtl
 SlruCtlData
