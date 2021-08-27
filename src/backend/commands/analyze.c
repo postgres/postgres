@@ -1164,7 +1164,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	nblocks = BlockSampler_Init(&bs, totalblocks, targrows, randseed);
 
 #ifdef USE_PREFETCH
-	prefetch_maximum = get_tablespace_io_concurrency(onerel->rd_rel->reltablespace);
+	prefetch_maximum = get_tablespace_maintenance_io_concurrency(onerel->rd_rel->reltablespace);
 	/* Create another BlockSampler, using the same seed, for prefetching */
 	if (prefetch_maximum)
 		(void) BlockSampler_Init(&prefetch_bs, totalblocks, targrows, randseed);
