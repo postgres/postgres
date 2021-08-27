@@ -130,8 +130,8 @@ typedef struct BackgroundWorker
 
   <para>
    <structfield>bgw_restart_time</structfield> is the interval, in seconds, that
-   <command>postgres</command> should wait before restarting the process, in
-   case it crashes.  It can be any positive value,
+   <command>postgres</command> should wait before restarting the process in
+   the event that it crashes.  It can be any positive value,
    or <literal>BGW_NEVER_RESTART</literal>, indicating not to restart the
    process in case of a crash.
   </para>
