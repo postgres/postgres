@@ -777,12 +777,6 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							 get_database_name(MyDatabaseId),
 							 get_namespace_name(RelationGetNamespace(onerel)),
 							 RelationGetRelationName(onerel));
-			appendStringInfo(&buf, _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
-							 (long long) AnalyzePageHit,
-							 (long long) AnalyzePageMiss,
-							 (long long) AnalyzePageDirty);
-			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
-							 read_rate, write_rate);
 			if (track_io_timing)
 			{
 				appendStringInfoString(&buf, _("I/O timings:"));
@@ -796,6 +790,12 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
 				appendStringInfoChar(&buf, '\n');
 			}
+			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
+							 read_rate, write_rate);
+			appendStringInfo(&buf, _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
+							 (long long) AnalyzePageHit,
+							 (long long) AnalyzePageMiss,
+							 (long long) AnalyzePageDirty);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(LOG,

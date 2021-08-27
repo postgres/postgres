@@ -739,6 +739,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		{
 			StringInfoData buf;
 			char	   *msgfmt;
+			BlockNumber orig_rel_pages;
 
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 
@@ -796,34 +797,27 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 (long long) vacrel->new_rel_tuples,
 							 (long long) vacrel->new_dead_tuples,
 							 OldestXmin);
-			appendStringInfo(&buf,
-							 _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
-							 (long long) VacuumPageHit,
-							 (long long) VacuumPageMiss,
-							 (long long) VacuumPageDirty);
-			if (vacrel->rel_pages > 0)
+			orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
+			if (orig_rel_pages > 0)
 			{
-				BlockNumber orig_rel_pages;
-
 				if (vacrel->do_index_vacuuming)
 				{
-					msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
-
 					if (vacrel->nindexes == 0 || vacrel->num_index_scans == 0)
 						appendStringInfoString(&buf, _("index scan not needed: "));
 					else
 						appendStringInfoString(&buf, _("index scan needed: "));
+
+					msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
 				}
 				else
 				{
-					msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
-
 					if (!vacrel->failsafe_active)
 						appendStringInfoString(&buf, _("index scan bypassed: "));
 					else
 						appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
+
+					msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
 				}
-				orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
 				appendStringInfo(&buf, msgfmt,
 								 vacrel->lpdead_item_pages,
 								 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
@@ -844,8 +838,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 								 istat->pages_deleted,
 								 istat->pages_free);
 			}
-			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
-							 read_rate, write_rate);
 			if (track_io_timing)
 			{
 				appendStringInfoString(&buf, _("I/O timings:"));
@@ -859,12 +851,19 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 									 (double) (pgStatBlockWriteTime - startwritetime) / 1000);
 				appendStringInfoChar(&buf, '\n');
 			}
-			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
+			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
+							 read_rate, write_rate);
 			appendStringInfo(&buf,
-							 _("WAL usage: %lld records, %lld full page images, %llu bytes"),
+							 _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
+							 (long long) VacuumPageHit,
+							 (long long) VacuumPageMiss,
+							 (long long) VacuumPageDirty);
+			appendStringInfo(&buf,
+							 _("WAL usage: %lld records, %lld full page images, %llu bytes\n"),
 							 (long long) walusage.wal_records,
 							 (long long) walusage.wal_fpi,
 							 (unsigned long long) walusage.wal_bytes);
+			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(LOG,
 					(errmsg_internal("%s", buf.data)));
