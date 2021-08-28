@@ -3867,12 +3867,12 @@ listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
 
 	if (showNested || pattern)
 		appendPQExpBuffer(&buf,
-						  ",\n  inh.inhparent::regclass as \"%s\"",
+						  ",\n  inh.inhparent::pg_catalog.regclass as \"%s\"",
 						  gettext_noop("Parent name"));
 
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
-						  ",\n c2.oid::regclass as \"%s\"",
+						  ",\n c2.oid::pg_catalog.regclass as \"%s\"",
 						  gettext_noop("Table"));
 
 	if (verbose)
