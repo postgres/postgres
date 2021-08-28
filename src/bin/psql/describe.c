@@ -4735,7 +4735,7 @@ listExtendedStats(const char *pattern)
 		appendPQExpBuffer(&buf,
 						  "pg_catalog.format('%%s FROM %%s', \n"
 						  "  pg_get_statisticsobjdef_columns(es.oid), \n"
-						  "  es.stxrelid::regclass) AS \"%s\"",
+						  "  es.stxrelid::pg_catalog.regclass) AS \"%s\"",
 						  gettext_noop("Definition"));
 	else
 		appendPQExpBuffer(&buf,
@@ -4746,7 +4746,7 @@ listExtendedStats(const char *pattern)
 						  "   ON (es.stxrelid = a.attrelid \n"
 						  "   AND a.attnum = s.attnum \n"
 						  "   AND NOT a.attisdropped)), \n"
-						  "es.stxrelid::regclass) AS \"%s\"",
+						  "es.stxrelid::pg_catalog.regclass) AS \"%s\"",
 						  gettext_noop("Definition"));
 
 	appendPQExpBuffer(&buf,
