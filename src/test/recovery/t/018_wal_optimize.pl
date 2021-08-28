@@ -11,7 +11,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 34;
+use Test::More tests => 38;
 
 sub check_orphan_relfilenodes
 {
@@ -56,8 +56,31 @@ wal_skip_threshold = 0
 	my $tablespace_dir = $node->basedir . '/tablespace_other';
 	mkdir($tablespace_dir);
 	$tablespace_dir = TestLib::perl2host($tablespace_dir);
-	$node->safe_psql('postgres',
-		"CREATE TABLESPACE other LOCATION '$tablespace_dir';");
+	my $result;
+
+	# Test redo of CREATE TABLESPACE.
+	$node->safe_psql(
+		'postgres', "
+		CREATE TABLE moved (id int);
+		INSERT INTO moved VALUES (1);
+		CREATE TABLESPACE other LOCATION '$tablespace_dir';
+		BEGIN;
+		ALTER TABLE moved SET TABLESPACE other;
+		CREATE TABLE originated (id int);
+		INSERT INTO originated VALUES (1);
+		CREATE UNIQUE INDEX ON originated(id) TABLESPACE other;
+		COMMIT;");
+	$node->stop('immediate');
+	$node->start;
+	$result = $node->safe_psql('postgres', "SELECT count(*) FROM moved;");
+	is($result, qq(1), "wal_level = $wal_level, CREATE+SET TABLESPACE");
+	$result = $node->safe_psql(
+		'postgres', "
+		INSERT INTO originated VALUES (1) ON CONFLICT (id)
+		  DO UPDATE set id = originated.id + 1
+		  RETURNING id;");
+	is($result, qq(2),
+		"wal_level = $wal_level, CREATE TABLESPACE, CREATE INDEX");
 
 	# Test direct truncation optimization.  No tuples.
 	$node->safe_psql(
@@ -68,7 +91,7 @@ wal_skip_threshold = 0
 		COMMIT;");
 	$node->stop('immediate');
 	$node->start;
-	my $result = $node->safe_psql('postgres', "SELECT count(*) FROM trunc;");
+	$result = $node->safe_psql('postgres', "SELECT count(*) FROM trunc;");
 	is($result, qq(0), "wal_level = $wal_level, TRUNCATE with empty table");
 
 	# Test truncation with inserted tuples within the same transaction.
