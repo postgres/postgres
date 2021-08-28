@@ -1632,8 +1632,11 @@ pgstat_report_analyze(Relation rel,
 	 * be double-counted after commit.  (This approach also ensures that the
 	 * collector ends up with the right numbers if we abort instead of
 	 * committing.)
+	 *
+	 * Waste no time on partitioned tables, though.
 	 */
-	if (rel->pgstat_info != NULL)
+	if (rel->pgstat_info != NULL &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		PgStat_TableXactStatus *trans;
 
@@ -1997,8 +2000,10 @@ pgstat_initstats(Relation rel)
 	Oid			rel_id = rel->rd_id;
 	char		relkind = rel->rd_rel->relkind;
 
-	/* We only count stats for things that have storage */
-	if (!RELKIND_HAS_STORAGE(relkind))
+	/*
+	 * We only count stats for relations with storage and partitioned tables
+	 */
+	if (!RELKIND_HAS_STORAGE(relkind) && relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		rel->pgstat_info = NULL;
 		return;
