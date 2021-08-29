@@ -438,3 +438,36 @@ BOS/BOL/EOS/EOL adjacent to the pre-state and post-state.  So a finished
 NFA for a pattern without anchors or adjacent-character constraints will
 have pre-state outarcs for RAINBOW (all possible character colors) as well
 as BOS and BOL, and likewise post-state inarcs for RAINBOW, EOS, and EOL.
+Also note that LACON arcs will never connect to the pre-state
+or post-state.
+
+
+Look-around constraints (LACONs)
+--------------------------------
+
+The regex compiler doesn't have much intelligence about LACONs; it just
+constructs a sub-NFA representing the pattern that the constraint says to
+match or not match, and puts a LACON arc referencing that sub-NFA into the
+main NFA.  At runtime, the executor applies the sub-NFA at each point in
+the string where the constraint is relevant, and then traverses or doesn't
+traverse the arc.  ("Traversal" means including the arc's to-state in the
+set of NFA states that are considered active at the next character.)
+
+The actual basic matching cycle of the executor is
+1.  Identify the color of the next input character, then advance over it.
+2.  Apply the DFA to follow all the matching "plain" arcs of the NFA.
+    (Notionally, the previous DFA state represents the set of states the
+    NFA could have been in before the character, and the new DFA state
+    represents the set of states the NFA could be in after the character.)
+3.  If there are any LACON arcs leading out of any of the new NFA states,
+    apply each LACON constraint starting from the new next input character
+    (while not actually consuming any input).  For each successful LACON,
+    add its to-state to the current set of NFA states.  If any such
+    to-state has outgoing LACON arcs, process those in the same way.
+    (Mathematically speaking, we compute the transitive closure of the
+    set of states reachable by successful LACONs.)
+
+Thus, LACONs are always checked immediately after consuming a character
+via a plain arc.  This is okay because the NFA's "pre" state only has
+plain out-arcs, so we can always consume a character (possibly a BOS
+pseudo-character as described above) before we need to worry about LACONs.
