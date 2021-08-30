@@ -776,6 +776,10 @@ static const SchemaQuery Query_for_list_of_collations = {
 "       and pg_catalog.quote_ident(c1.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
+#define Query_for_unique_index_of_table \
+Query_for_index_of_table \
+"       and i.indisunique"
+
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_constraint_of_table \
 "SELECT pg_catalog.quote_ident(conname) "\
@@ -2019,6 +2023,45 @@ psql_completion(const char *text, int start, int end)
 					  "OWNER TO", "SET", "VALIDATE CONSTRAINT",
 					  "REPLICA IDENTITY", "ATTACH PARTITION",
 					  "DETACH PARTITION", "FORCE ROW LEVEL SECURITY");
+	/* ALTER TABLE xxx ADD */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD"))
+		COMPLETE_WITH("COLUMN", "CONSTRAINT", "CHECK", "UNIQUE", "PRIMARY KEY",
+					  "EXCLUDE", "FOREIGN KEY");
+	/* ALTER TABLE xxx ADD CONSTRAINT yyy */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny))
+		COMPLETE_WITH("CHECK", "UNIQUE", "PRIMARY KEY", "EXCLUDE", "FOREIGN KEY");
+	/* ALTER TABLE xxx ADD [CONSTRAINT yyy] (PRIMARY KEY|UNIQUE) */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "PRIMARY", "KEY") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ADD", "UNIQUE") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny, "PRIMARY", "KEY") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny, "UNIQUE"))
+		COMPLETE_WITH("(", "USING INDEX");
+	/* ALTER TABLE xxx ADD PRIMARY KEY USING INDEX */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "PRIMARY", "KEY", "USING", "INDEX"))
+	{
+		completion_info_charp = prev6_wd;
+		COMPLETE_WITH_QUERY(Query_for_unique_index_of_table);
+	}
+	/* ALTER TABLE xxx ADD UNIQUE USING INDEX */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "UNIQUE", "USING", "INDEX"))
+	{
+		completion_info_charp = prev5_wd;
+		COMPLETE_WITH_QUERY(Query_for_unique_index_of_table);
+	}
+	/* ALTER TABLE xxx ADD CONSTRAINT yyy PRIMARY KEY USING INDEX */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny,
+					 "PRIMARY", "KEY", "USING", "INDEX"))
+	{
+		completion_info_charp = prev8_wd;
+		COMPLETE_WITH_QUERY(Query_for_unique_index_of_table);
+	}
+	/* ALTER TABLE xxx ADD CONSTRAINT yyy UNIQUE USING INDEX */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny,
+					 "UNIQUE", "USING", "INDEX"))
+	{
+		completion_info_charp = prev7_wd;
+		COMPLETE_WITH_QUERY(Query_for_unique_index_of_table);
+	}
 	/* ALTER TABLE xxx ENABLE */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ENABLE"))
 		COMPLETE_WITH("ALWAYS", "REPLICA", "ROW LEVEL SECURITY", "RULE",
