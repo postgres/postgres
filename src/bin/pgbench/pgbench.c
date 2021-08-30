@@ -6603,6 +6603,7 @@ threadRun(void *arg)
 
 	thread_start = pg_time_now();
 	thread->started_time = thread_start;
+	thread->conn_duration = 0;
 	last_report = thread_start;
 	next_report = last_report + (int64) 1000000 * progress;
 
@@ -6626,14 +6627,6 @@ threadRun(void *arg)
 				goto done;
 			}
 		}
-
-		/* compute connection delay */
-		thread->conn_duration = pg_time_now() - thread->started_time;
-	}
-	else
-	{
-		/* no connection delay to record */
-		thread->conn_duration = 0;
 	}
 
 	/* GO */
