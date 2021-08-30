@@ -261,7 +261,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	struct GroupClause  *groupclause;
 }
 
-%type <node>	stmt toplevel_stmt schema_stmt routine_body_stmt
+%type <node>	stmt toplevel_stmt schema_stmt routine_body_stmt module_stmt
 		AlterEventTrigStmt AlterCollationStmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
@@ -300,6 +300,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateMatViewStmt RefreshMatViewStmt CreateAmStmt
 		CreatePublicationStmt AlterPublicationStmt
 		CreateSubscriptionStmt AlterSubscriptionStmt DropSubscriptionStmt
+		CreateModuleStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
@@ -343,7 +344,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		opt_in_database
 
 %type <str>		OptSchemaName
-%type <list>	OptSchemaEltList
+%type <list>	OptSchemaEltList OptModuleEltList
 
 %type <chr>		am_type
 
@@ -367,7 +368,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
-				opt_collate
+				opt_collate module_name
 
 %type <range>	qualified_name insert_target OptConstrFromTable
 
@@ -680,7 +681,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOCKED LOGGED
 
-	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
+	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MODULE
+	MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO NONE
 	NORMALIZE NORMALIZED
@@ -953,6 +955,7 @@ stmt:
 			| CreateFunctionStmt
 			| CreateGroupStmt
 			| CreateMatViewStmt
+			| CreateModuleStmt
 			| CreateOpClassStmt
 			| CreateOpFamilyStmt
 			| CreatePublicationStmt
@@ -1464,6 +1467,84 @@ schema_stmt:
 			| GrantStmt
 			| ViewStmt
 		;
+
+/*****************************************************************************
+ *
+ * Manipulate a module
+ *
+ *****************************************************************************/
+
+CreateModuleStmt:
+			CREATE MODULE module_name OptModuleEltList
+				{
+					CreateModuleStmt *n = makeNode(CreateModuleStmt);
+					n->modulename = $3;
+					n->authrole = NULL;
+					n->moduleElts = $4;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+			| CREATE MODULE module_name OWNER RoleSpec OptModuleEltList
+				{
+					CreateModuleStmt *n = makeNode(CreateModuleStmt);
+					n->modulename = $3;
+					n->authrole = $5;
+					n->moduleElts = $6;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+			| CREATE MODULE IF_P NOT EXISTS module_name OptModuleEltList
+				{
+					CreateModuleStmt *n = makeNode(CreateModuleStmt);
+					n->modulename = $6;
+					n->authrole = NULL;
+					if ($7 != NIL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE MODULE IF NOT EXISTS cannot include module elements"),
+								 parser_errposition(@7)));
+					n->moduleElts = $7;
+					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
+			| CREATE MODULE IF_P NOT EXISTS module_name OWNER RoleSpec OptModuleEltList
+				{
+					CreateModuleStmt *n = makeNode(CreateModuleStmt);
+					n->modulename = $6;
+					n->authrole = $8;
+					if ($9 != NIL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE MODULE IF NOT EXISTS cannot include module elements"),
+								 parser_errposition(@9)));
+					n->moduleElts = $9;
+					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
+		;
+
+module_name:
+			name						{ $$ = list_make1(makeString($1)); }
+			| name attrs				{ $$ = lcons(makeString($1), $2); }
+		;
+
+OptModuleEltList:
+			OptModuleEltList module_stmt
+				{
+					if (@$ < 0)			/* see comments for YYLLOC_DEFAULT */
+						@$ = @2;
+					$$ = lappend($1, $2);
+				}
+			| /* EMPTY */
+				{ $$ = NIL; }
+		;
+
+/*
+ *	module_stmt are the ones that can show up inside a CREATE MODULE statement.
+ */
+module_stmt:
+			CreateFunctionStmt
+			;
 
 
 /*****************************************************************************
@@ -6318,6 +6399,26 @@ DropStmt:	DROP object_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = true;
 					$$ = (Node *)n;
 				}
+			| DROP MODULE any_name_list opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = OBJECT_MODULE;
+					n->objects = $3;
+					n->behavior = $4;
+					n->missing_ok = false;
+					n->concurrent = false;
+					$$ = (Node *)n;
+				}
+			| DROP MODULE IF_P EXISTS any_name_list opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = OBJECT_MODULE;
+					n->objects = $5;
+					n->behavior = $6;
+					n->missing_ok = true;
+					n->concurrent = false;
+					$$ = (Node *)n;
+				}
 		;
 
 /* object types taking any_name/any_name_list */
@@ -8551,6 +8652,15 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
 					n->subname = $3;
+					n->newname = $6;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			| ALTER MODULE module_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_MODULE;
+					n->object = (Node *) $3;
 					n->newname = $6;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -15639,6 +15749,7 @@ unreserved_keyword:
 			| MINUTE_P
 			| MINVALUE
 			| MODE
+			| MODULE
 			| MONTH_P
 			| MOVE
 			| NAME_P
@@ -16205,6 +16316,7 @@ bare_label_keyword:
 			| METHOD
 			| MINVALUE
 			| MODE
+			| MODULE
 			| MOVE
 			| NAME_P
 			| NAMES

@@ -707,7 +707,7 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				char	   *nspname = strVal(lfirst(cell));
 				Oid			oid;
 
-				oid = get_namespace_oid(nspname, false);
+				oid = get_namespace_oid(nspname, InvalidOid, false);
 				objects = lappend_oid(objects, oid);
 			}
 			break;
@@ -1108,7 +1108,7 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 		{
 			char	   *nspname = strVal(lfirst(nspcell));
 
-			iacls->nspid = get_namespace_oid(nspname, false);
+			iacls->nspid = get_namespace_oid(nspname, InvalidOid, false);
 
 			/*
 			 * We used to insist that the target role have CREATE privileges
@@ -3367,6 +3367,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_MATVIEW:
 						msg = gettext_noop("permission denied for materialized view %s");
 						break;
+					case OBJECT_MODULE:
+						msg = gettext_noop("permission denied for module %s");
+						break;
 					case OBJECT_OPCLASS:
 						msg = gettext_noop("permission denied for operator class %s");
 						break;
@@ -3494,6 +3497,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 						break;
 					case OBJECT_MATVIEW:
 						msg = gettext_noop("must be owner of materialized view %s");
+						break;
+					case OBJECT_MODULE:
+						msg = gettext_noop("must be owner of module %s");
 						break;
 					case OBJECT_OPCLASS:
 						msg = gettext_noop("must be owner of operator class %s");

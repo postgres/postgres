@@ -113,7 +113,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * creation-permission check first, we do likewise.
 	 */
 	if (stmt->if_not_exists &&
-		SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(schemaName)))
+		SearchSysCacheExists2(NAMESPACENAME, PointerGetDatum(schemaName), InvalidOid))
 	{
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
@@ -135,7 +135,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
+	namespaceId = NamespaceCreate(schemaName, InvalidOid, NSPKIND_SCHEMA,
+								  owner_uid, false);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -227,7 +228,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
+	tup = SearchSysCacheCopy2(NAMESPACENAME, CStringGetDatum(oldname), InvalidOid);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -237,7 +238,7 @@ RenameSchema(const char *oldname, const char *newname)
 	nspOid = nspform->oid;
 
 	/* make sure the new name doesn't exist */
-	if (OidIsValid(get_namespace_oid(newname, true)))
+	if (OidIsValid(get_namespace_oid(newname, InvalidOid, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", newname)));
@@ -307,7 +308,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 
 	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
+	tup = SearchSysCache2(NAMESPACENAME, CStringGetDatum(name), InvalidOid);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),

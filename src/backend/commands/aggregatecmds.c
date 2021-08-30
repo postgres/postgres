@@ -101,7 +101,7 @@ DefineAggregate(ParseState *pstate,
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
-	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
+	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);

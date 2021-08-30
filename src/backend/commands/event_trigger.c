@@ -967,6 +967,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_LANGUAGE:
 		case OBJECT_LARGEOBJECT:
 		case OBJECT_MATVIEW:
+		case OBJECT_MODULE:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
@@ -2094,6 +2095,8 @@ stringify_grant_objtype(ObjectType objtype)
 			return "LANGUAGE";
 		case OBJECT_LARGEOBJECT:
 			return "LARGE OBJECT";
+		case OBJECT_MODULE:
+			return "MODULE";
 		case OBJECT_SCHEMA:
 			return "SCHEMA";
 		case OBJECT_PROCEDURE:
@@ -2176,6 +2179,8 @@ stringify_adefprivs_objtype(ObjectType objtype)
 			return "LANGUAGES";
 		case OBJECT_LARGEOBJECT:
 			return "LARGE OBJECTS";
+		case OBJECT_MODULE:
+			return "MODULES";
 		case OBJECT_SCHEMA:
 			return "SCHEMAS";
 		case OBJECT_PROCEDURE:

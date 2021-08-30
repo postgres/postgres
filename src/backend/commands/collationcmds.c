@@ -73,7 +73,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	Oid			newoid;
 	ObjectAddress address;
 
-	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
+	collNamespace = QualifiedNameGetCreationNamespace(names, &collName, false);
 
 	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)

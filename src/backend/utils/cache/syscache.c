@@ -509,10 +509,10 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{NamespaceRelationId,		/* NAMESPACENAME */
 		NamespaceNameIndexId,
-		1,
+		2,
 		{
 			Anum_pg_namespace_nspname,
-			0,
+			Anum_pg_namespace_nspnamespace,
 			0,
 			0
 		},

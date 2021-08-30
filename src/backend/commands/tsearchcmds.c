@@ -196,7 +196,7 @@ DefineTSParser(List *names, List *parameters)
 	prsRel = table_open(TSParserRelationId, RowExclusiveLock);
 
 	/* Convert list of names to a name and namespace */
-	namespaceoid = QualifiedNameGetCreationNamespace(names, &prsname);
+	namespaceoid = QualifiedNameGetCreationNamespace(names, &prsname, false);
 
 	/* initialize tuple fields with name/namespace */
 	memset(values, 0, sizeof(values));
@@ -405,7 +405,7 @@ DefineTSDictionary(List *names, List *parameters)
 	ObjectAddress address;
 
 	/* Convert list of names to a name and namespace */
-	namespaceoid = QualifiedNameGetCreationNamespace(names, &dictname);
+	namespaceoid = QualifiedNameGetCreationNamespace(names, &dictname, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
@@ -701,7 +701,7 @@ DefineTSTemplate(List *names, List *parameters)
 				 errmsg("must be superuser to create text search templates")));
 
 	/* Convert list of names to a name and namespace */
-	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname);
+	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname, false);
 
 	tmplRel = table_open(TSTemplateRelationId, RowExclusiveLock);
 
@@ -908,7 +908,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 	ObjectAddress address;
 
 	/* Convert list of names to a name and namespace */
-	namespaceoid = QualifiedNameGetCreationNamespace(names, &cfgname);
+	namespaceoid = QualifiedNameGetCreationNamespace(names, &cfgname, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);

@@ -40,7 +40,8 @@
  * ---------------
  */
 Oid
-NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
+NamespaceCreate(const char *nspName, Oid nspnamespace, char nspkind,
+				Oid ownerId, bool isTemp)
 {
 	Relation	nspdesc;
 	HeapTuple	tup;
@@ -58,7 +59,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 		elog(ERROR, "no namespace name supplied");
 
 	/* make sure there is no existing namespace of same name */
-	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(nspName)))
+	if (SearchSysCacheExists2(NAMESPACENAME, PointerGetDatum(nspName), nspnamespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", nspName)));
@@ -85,6 +86,8 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_namespace_nspowner - 1] = ObjectIdGetDatum(ownerId);
+	values[Anum_pg_namespace_nspnamespace - 1] = ObjectIdGetDatum(nspnamespace);
+	values[Anum_pg_namespace_nspkind - 1] = CharGetDatum(nspkind);
 	if (nspacl != NULL)
 		values[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(nspacl);
 	else

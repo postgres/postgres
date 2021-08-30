@@ -109,6 +109,14 @@ typedef struct
 	List	   *grants;			/* GRANT items */
 } CreateSchemaStmtContext;
 
+/* State shared by transformCreateModuleStmt and its subroutines */
+typedef struct
+{
+	const char *stmtType;		/* "CREATE MODULE" or "ALTER MODULE" */
+	List	   *modulename;		/* name of module */
+	RoleSpec   *authrole;		/* owner of module */
+	List	   *functions;		/* CREATE FUNCTION items */
+} CreateModuleStmtContext;
 
 static void transformColumnDefinition(CreateStmtContext *cxt,
 									  ColumnDef *column);
@@ -3907,6 +3915,70 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 	result = list_concat(result, cxt.indexes);
 	result = list_concat(result, cxt.triggers);
 	result = list_concat(result, cxt.grants);
+
+	return result;
+}
+
+/*
+ * transformCreateModuleStmt -
+ *	  analyzes the CREATE MODULE statement
+ *
+ * Split the module element list into individual commands and place
+ * them in the result list in an order such that there are no forward
+ * references. Currently there are only functions allowed in modules
+ * but the spec allows variables and temp tables so this provides a
+ * way to have them created before the functions that could use them.
+ *
+ * The functions are also checked to make sure there is not an explicit
+ * namespace attempted to be used.
+ */
+List *
+transformCreateModuleStmt(CreateModuleStmt *stmt)
+{
+	CreateModuleStmtContext cxt;
+	List	   *result;
+	ListCell   *elements;
+
+
+	cxt.stmtType = "CREATE MODULE";
+	cxt.modulename = stmt->modulename;
+	cxt.authrole = (RoleSpec *) stmt->authrole;
+	cxt.functions = NIL;
+
+	/*
+	 * Run through each module element in the module element list. Separate
+	 * statements by type, and do preliminary analysis.
+	 */
+	foreach(elements, stmt->moduleElts)
+	{
+		Node	   *element = lfirst(elements);
+
+		switch (nodeTag(element))
+		{
+			case T_CreateFunctionStmt:
+				{
+					CreateFunctionStmt *elp = (CreateFunctionStmt *) element;
+
+					if (list_length(elp->funcname) > 1)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+								 errmsg("CREATE FUNCTION (%s) specifies a "
+										"namespace inside of CREATE MODULE (%s)",
+										NameListToString(elp->funcname),
+										NameListToString(cxt.modulename))));
+
+					cxt.functions = lappend(cxt.functions, element);
+				}
+				break;
+
+			default:
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(element));
+		}
+	}
+
+	result = NIL;
+	result = list_concat(result, cxt.functions);
 
 	return result;
 }

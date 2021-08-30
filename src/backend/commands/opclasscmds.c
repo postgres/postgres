@@ -85,7 +85,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 	HeapTuple	htup;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opfamilyname, &schemaname, &opfname);
+	DeconstructQualifiedName(opfamilyname, &schemaname, NULL, &opfname, false);
 
 	if (schemaname)
 	{
@@ -166,7 +166,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 	HeapTuple	htup;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opclassname, &schemaname, &opcname);
+	DeconstructQualifiedName(opclassname, &schemaname, NULL, &opcname, false);
 
 	if (schemaname)
 	{
@@ -354,7 +354,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opclassname,
-													 &opcname);
+													 &opcname, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
@@ -769,7 +769,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opfamilyname,
-													 &opfname);
+													 &opfname, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);

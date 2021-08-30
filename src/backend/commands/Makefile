@@ -40,6 +40,7 @@ OBJS = \
 	indexcmds.o \
 	lockcmds.o \
 	matview.o \
+	modulecmds.o \
 	opclasscmds.o \
 	operatorcmds.o \
 	policy.o \

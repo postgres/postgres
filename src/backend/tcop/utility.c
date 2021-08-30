@@ -42,6 +42,7 @@
 #include "commands/extension.h"
 #include "commands/lockcmds.h"
 #include "commands/matview.h"
+#include "commands/modulecmds.h"
 #include "commands/policy.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -178,6 +179,7 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_CreateForeignServerStmt:
 		case T_CreateForeignTableStmt:
 		case T_CreateFunctionStmt:
+		case T_CreateModuleStmt:
 		case T_CreateOpClassStmt:
 		case T_CreateOpFamilyStmt:
 		case T_CreatePLangStmt:
@@ -1128,6 +1130,19 @@ ProcessUtilitySlow(ParseState *pstate,
 				 */
 				commandCollected = true;
 				break;
+
+			case T_CreateModuleStmt:	/* CREATE Module */
+				CreateModuleCommand(pstate, (CreateModuleStmt *) parsetree,
+									queryString,
+									pstmt->stmt_location,
+									pstmt->stmt_len);
+				/*
+				 * EventTriggerCollectSimpleCommand called by
+				 * CreateModuleCommand
+				 */
+				commandCollected = true;
+				break;
+
 
 			case T_CreateStmt:
 			case T_CreateForeignTableStmt:
@@ -2316,6 +2331,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_STATISTIC_EXT:
 			tag = CMDTAG_ALTER_STATISTICS;
 			break;
+		case OBJECT_MODULE:
+			tag = CMDTAG_ALTER_MODULE;
+			break;
 		default:
 			tag = CMDTAG_UNKNOWN;
 			break;
@@ -2620,6 +2638,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_STATISTIC_EXT:
 					tag = CMDTAG_DROP_STATISTICS;
 					break;
+				case OBJECT_MODULE:
+					tag = CMDTAG_DROP_MODULE;
+					break;
 				default:
 					tag = CMDTAG_UNKNOWN;
 			}
@@ -2773,6 +2794,10 @@ CreateCommandTag(Node *parsetree)
 				tag = CMDTAG_CREATE_PROCEDURE;
 			else
 				tag = CMDTAG_CREATE_FUNCTION;
+			break;
+
+		case T_CreateModuleStmt:
+			tag = CMDTAG_CREATE_MODULE;
 			break;
 
 		case T_IndexStmt:
@@ -3415,6 +3440,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterFunctionStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateModuleStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

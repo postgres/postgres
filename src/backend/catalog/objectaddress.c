@@ -406,10 +406,24 @@ static const ObjectPropertyType ObjectProperty[] =
 		NAMESPACENAME,
 		Anum_pg_namespace_oid,
 		Anum_pg_namespace_nspname,
-		InvalidAttrNumber,
+		Anum_pg_namespace_nspnamespace,
 		Anum_pg_namespace_nspowner,
 		Anum_pg_namespace_nspacl,
 		OBJECT_SCHEMA,
+		true
+	},
+	{
+		"module",
+		NamespaceRelationId,
+		NamespaceOidIndexId,
+		NAMESPACEOID,
+		NAMESPACENAME,
+		Anum_pg_namespace_oid,
+		Anum_pg_namespace_nspname,
+		Anum_pg_namespace_nspnamespace,
+		Anum_pg_namespace_nspowner,
+		Anum_pg_namespace_nspacl,
+		OBJECT_MODULE,
 		true
 	},
 	{
@@ -764,6 +778,10 @@ static const struct object_type_map
 	/* OCLASS_SCHEMA */
 	{
 		"schema", OBJECT_SCHEMA
+	},
+	/* OCLASS_MODULE */
+	{
+		"module", OBJECT_MODULE
 	},
 	/* OCLASS_TSPARSER */
 	{
@@ -1128,6 +1146,12 @@ get_object_address(ObjectType objtype, Node *object,
 															 missing_ok);
 				address.objectSubId = 0;
 				break;
+			case OBJECT_MODULE:
+				address.classId = NamespaceRelationId;
+				address.objectId = get_module_oid(castNode(List, object),
+														   missing_ok);
+				address.objectSubId = 0;
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				/* placate compiler, in case it thinks elog might return */
@@ -1281,7 +1305,7 @@ get_object_address_unqualified(ObjectType objtype,
 			break;
 		case OBJECT_SCHEMA:
 			address.classId = NamespaceRelationId;
-			address.objectId = get_namespace_oid(name, missing_ok);
+			address.objectId = get_namespace_oid(name, InvalidOid, missing_ok);
 			address.objectSubId = 0;
 			break;
 		case OBJECT_LANGUAGE:
@@ -2013,7 +2037,7 @@ get_object_address_defacl(List *object, bool missing_ok)
 	 */
 	if (schema)
 	{
-		schemaid = get_namespace_oid(schema, true);
+		schemaid = get_namespace_oid(schema, InvalidOid, true);
 		if (schemaid == InvalidOid)
 			goto not_found;
 	}
@@ -2267,6 +2291,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_TABCONSTRAINT:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
+		case OBJECT_MODULE:
 			objnode = (Node *) name;
 			break;
 		case OBJECT_ACCESS_METHOD:
@@ -2431,6 +2456,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 							   NameListToString((castNode(ObjectWithArgs, object))->objname));
 			break;
 		case OBJECT_SCHEMA:
+		case OBJECT_MODULE:
 			if (!pg_namespace_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, objtype,
 							   strVal(object));

@@ -166,7 +166,7 @@ LookupTypeNameExtended(ParseState *pstate,
 		char	   *typname;
 
 		/* deconstruct the name list */
-		DeconstructQualifiedName(typeName->names, &schemaname, &typname);
+		DeconstructQualifiedName(typeName->names, &schemaname, NULL, &typname, false);
 
 		if (schemaname)
 		{

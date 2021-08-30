@@ -18,8 +18,10 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_agg.h"
@@ -1422,8 +1424,8 @@ func_get_detail(List *funcname,
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
-										   include_out_arguments, false);
 
+										   include_out_arguments, false);
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
 	 * can be only one)
@@ -1551,7 +1553,6 @@ func_get_detail(List *funcname,
 			/* one match only? then run with it... */
 			if (ncandidates == 1)
 				best_candidate = current_candidates;
-
 			/*
 			 * multiple candidates? then better decide or throw an error...
 			 */
@@ -1883,6 +1884,16 @@ FuncNameAsType(List *funcname)
 {
 	Oid			result;
 	Type		typtup;
+
+	/*
+	 * check if this may be in a module. If it could be, don't check if it
+	 * may be a type since they can not be in a module
+	 */
+	if (list_length(funcname) == 3)
+	{
+		if (strcmp(strVal(linitial(funcname)), get_database_name(MyDatabaseId)) != 0)
+			return InvalidOid;
+	}
 
 	/*
 	 * temp_ok=false protects the <refsect1 id="sql-createfunction-security">
