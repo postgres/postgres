@@ -2917,7 +2917,7 @@ describeOneTableDetails(const char *schemaname,
 					printfPQExpBuffer(&buf, "    ");
 
 					/* statistics object name (qualified with namespace) */
-					appendPQExpBuffer(&buf, "\"%s\".\"%s\"",
+					appendPQExpBuffer(&buf, "\"%s.%s\"",
 									  PQgetvalue(result, i, 2),
 									  PQgetvalue(result, i, 3));
 
@@ -3012,7 +3012,7 @@ describeOneTableDetails(const char *schemaname,
 					printfPQExpBuffer(&buf, "    ");
 
 					/* statistics object name (qualified with namespace) */
-					appendPQExpBuffer(&buf, "\"%s\".\"%s\" (",
+					appendPQExpBuffer(&buf, "\"%s.%s\" (",
 									  PQgetvalue(result, i, 2),
 									  PQgetvalue(result, i, 3));
 
