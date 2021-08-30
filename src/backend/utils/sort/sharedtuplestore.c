@@ -310,7 +310,8 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 
 		/* Create one.  Only this backend will write into it. */
 		sts_filename(name, accessor, accessor->participant);
-		accessor->write_file = BufFileCreateShared(accessor->fileset, name);
+		accessor->write_file =
+			BufFileCreateFileSet(&accessor->fileset->fs, name);
 
 		/* Set up the shared state for this backend's file. */
 		participant = &accessor->sts->participants[accessor->participant];
@@ -559,7 +560,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 
 				sts_filename(name, accessor, accessor->read_participant);
 				accessor->read_file =
-					BufFileOpenShared(accessor->fileset, name, O_RDONLY);
+					BufFileOpenFileSet(&accessor->fileset->fs, name, O_RDONLY);
 			}
 
 			/* Seek and load the chunk header. */

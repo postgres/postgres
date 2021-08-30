@@ -648,6 +648,9 @@ logicalrep_worker_onexit(int code, Datum arg)
 
 	logicalrep_worker_detach();
 
+	/* Cleanup filesets used for streaming transactions. */
+	logicalrep_worker_cleanupfileset();
+
 	ApplyLauncherWakeup();
 }
 

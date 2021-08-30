@@ -1921,7 +1921,7 @@ PathNameDeleteTemporaryFile(const char *path, bool error_on_failure)
 
 	/*
 	 * Unlike FileClose's automatic file deletion code, we tolerate
-	 * non-existence to support BufFileDeleteShared which doesn't know how
+	 * non-existence to support BufFileDeleteFileSet which doesn't know how
 	 * many segments it has to delete until it runs out.
 	 */
 	if (stat_errno == ENOENT)

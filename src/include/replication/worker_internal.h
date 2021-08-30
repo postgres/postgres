@@ -79,6 +79,7 @@ extern void logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname,
 extern void logicalrep_worker_stop(Oid subid, Oid relid);
 extern void logicalrep_worker_wakeup(Oid subid, Oid relid);
 extern void logicalrep_worker_wakeup_ptr(LogicalRepWorker *worker);
+extern void logicalrep_worker_cleanupfileset(void);
 
 extern int	logicalrep_sync_worker_count(Oid subid);
 

@@ -709,6 +709,7 @@ File
 FileFdwExecutionState
 FileFdwPlanState
 FileNameMap
+FileSet
 FileTag
 FinalPathExtraData
 FindColsContext
