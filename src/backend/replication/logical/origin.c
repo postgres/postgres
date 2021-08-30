@@ -791,7 +791,7 @@ StartupReplicationOrigin(void)
 	FIN_CRC32C(crc);
 	if (file_crc != crc)
 		ereport(PANIC,
-				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("replication slot checkpoint has wrong checksum %u, expected %u",
 						crc, file_crc)));
 
