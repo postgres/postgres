@@ -1712,7 +1712,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool columns_only, bool missing_ok)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
 		char	   *str;
-		int			prettyFlags = PRETTYFLAG_INDENT;
+		int			prettyFlags = PRETTYFLAG_PAREN;
 
 		str = deparse_expression_pretty(expr, context, false, false,
 										prettyFlags, 0);

@@ -3004,21 +3004,21 @@ insert into stts_t1 select i,i from generate_series(1,100) i;
 analyze stts_t1;
 set search_path to public, stts_s1, stts_s2, tststats;
 \dX
-                                                           List of extended statistics
-  Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
-----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
- public   | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
- public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
- public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
- public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
- stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
- stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                |           | defined      | defined
- tststats | priv_test_stats        | a, b FROM priv_test_tbl                                                |           |              | defined
+                                                        List of extended statistics
+  Schema  |          Name          |                            Definition                            | Ndistinct | Dependencies |   MCV   
+----------+------------------------+------------------------------------------------------------------+-----------+--------------+---------
+ public   | func_deps_stat         | (a * 2), upper(b), (c + 1::numeric) FROM functional_dependencies |           | defined      | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
+ public   | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
+ public   | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
+ public   | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public   | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                          |           | defined      | defined
+ tststats | priv_test_stats        | a, b FROM priv_test_tbl                                          |           |              | defined
 (12 rows)
 
 \dX stts_?
@@ -3039,21 +3039,21 @@ set search_path to public, stts_s1, stts_s2, tststats;
 (1 row)
 
 \dX+
-                                                           List of extended statistics
-  Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
-----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
- public   | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
- public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
- public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
- public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
- stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
- stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                                |           | defined      | defined
- tststats | priv_test_stats        | a, b FROM priv_test_tbl                                                |           |              | defined
+                                                        List of extended statistics
+  Schema  |          Name          |                            Definition                            | Ndistinct | Dependencies |   MCV   
+----------+------------------------+------------------------------------------------------------------+-----------+--------------+---------
+ public   | func_deps_stat         | (a * 2), upper(b), (c + 1::numeric) FROM functional_dependencies |           | defined      | 
+ public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
+ public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
+ public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
+ public   | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
+ public   | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
+ public   | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public   | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
+ public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
+ stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                          |           | defined      | defined
+ tststats | priv_test_stats        | a, b FROM priv_test_tbl                                          |           |              | defined
 (12 rows)
 
 \dX+ stts_?
@@ -3082,36 +3082,36 @@ set search_path to public, stts_s1, stts_s2, tststats;
 
 set search_path to public, stts_s1;
 \dX
-                                                          List of extended statistics
- Schema  |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
----------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
- public  | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public  | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
- public  | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
- public  | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
- public  | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
- public  | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
- public  | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
- public  | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
- public  | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
- stts_s1 | stts_foo               | col1, col2 FROM stts_t3                                                | defined   | defined      | defined
+                                                       List of extended statistics
+ Schema  |          Name          |                            Definition                            | Ndistinct | Dependencies |   MCV   
+---------+------------------------+------------------------------------------------------------------+-----------+--------------+---------
+ public  | func_deps_stat         | (a * 2), upper(b), (c + 1::numeric) FROM functional_dependencies |           | defined      | 
+ public  | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
+ public  | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
+ public  | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
+ public  | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
+ public  | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
+ public  | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public  | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
+ public  | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ stts_s1 | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
 (10 rows)
 
 create role regress_stats_ext nosuperuser;
 set role regress_stats_ext;
 \dX
-                                                          List of extended statistics
- Schema |          Name          |                               Definition                               | Ndistinct | Dependencies |   MCV   
---------+------------------------+------------------------------------------------------------------------+-----------+--------------+---------
- public | func_deps_stat         | ((a * 2)), upper(b), ((c + (1)::numeric)) FROM functional_dependencies |           | defined      | 
- public | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                          |           |              | defined
- public | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                            |           |              | defined
- public | mcv_lists_stats        | a, b, d FROM mcv_lists                                                 |           |              | defined
- public | stts_1                 | a, b FROM stts_t1                                                      | defined   |              | 
- public | stts_2                 | a, b FROM stts_t1                                                      | defined   | defined      | 
- public | stts_3                 | a, b FROM stts_t1                                                      | defined   | defined      | defined
- public | stts_4                 | b, c FROM stts_t2                                                      | defined   | defined      | defined
- public | stts_hoge              | col1, col2, col3 FROM stts_t3                                          | defined   | defined      | defined
+                                                       List of extended statistics
+ Schema |          Name          |                            Definition                            | Ndistinct | Dependencies |   MCV   
+--------+------------------------+------------------------------------------------------------------+-----------+--------------+---------
+ public | func_deps_stat         | (a * 2), upper(b), (c + 1::numeric) FROM functional_dependencies |           | defined      | 
+ public | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
+ public | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
+ public | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
+ public | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
+ public | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
+ public | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
+ public | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
 (9 rows)
 
 reset role;
