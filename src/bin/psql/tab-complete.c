@@ -2025,8 +2025,16 @@ psql_completion(const char *text, int start, int end)
 					  "DETACH PARTITION", "FORCE ROW LEVEL SECURITY");
 	/* ALTER TABLE xxx ADD */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD"))
+	{
+		/* make sure to keep this list and the !Matches() below in sync */
 		COMPLETE_WITH("COLUMN", "CONSTRAINT", "CHECK", "UNIQUE", "PRIMARY KEY",
 					  "EXCLUDE", "FOREIGN KEY");
+	}
+	/* ATER TABLE xxx ADD [COLUMN] yyy */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN", MatchAny) ||
+			 (Matches("ALTER", "TABLE", MatchAny, "ADD", MatchAny) &&
+			  !Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN|CONSTRAINT|CHECK|UNIQUE|PRIMARY|EXCLUDE|FOREIGN")))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 	/* ALTER TABLE xxx ADD CONSTRAINT yyy */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny))
 		COMPLETE_WITH("CHECK", "UNIQUE", "PRIMARY KEY", "EXCLUDE", "FOREIGN KEY");
