@@ -482,36 +482,32 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 
 	if (stream->sysidentifier != NULL)
 	{
-		/* Validate system identifier hasn't changed */
-		res = PQexec(conn, "IDENTIFY_SYSTEM");
-		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		char	   *sysidentifier = NULL;
+		TimeLineID	servertli;
+
+		/*
+		 * Get the server system identifier and timeline, and validate them.
+		 */
+		if (!RunIdentifySystem(conn, &sysidentifier, &servertli, NULL, NULL))
 		{
-			pg_log_error("could not send replication command \"%s\": %s",
-						 "IDENTIFY_SYSTEM", PQerrorMessage(conn));
-			PQclear(res);
+			pg_free(sysidentifier);
 			return false;
 		}
-		if (PQntuples(res) != 1 || PQnfields(res) < 3)
-		{
-			pg_log_error("could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields",
-						 PQntuples(res), PQnfields(res), 1, 3);
-			PQclear(res);
-			return false;
-		}
-		if (strcmp(stream->sysidentifier, PQgetvalue(res, 0, 0)) != 0)
+
+		if (strcmp(stream->sysidentifier, sysidentifier) != 0)
 		{
 			pg_log_error("system identifier does not match between base backup and streaming connection");
-			PQclear(res);
+			pg_free(sysidentifier);
 			return false;
 		}
-		if (stream->timeline > atoi(PQgetvalue(res, 0, 1)))
+		pg_free(sysidentifier);
+
+		if (stream->timeline > servertli)
 		{
 			pg_log_error("starting timeline %u is not present in the server",
 						 stream->timeline);
-			PQclear(res);
 			return false;
 		}
-		PQclear(res);
 	}
 
 	/*
