@@ -2756,7 +2756,7 @@ my %tests = (
 		create_sql   => 'CREATE STATISTICS dump_test.test_ext_stats_expr
 							ON (2 * col1) FROM dump_test.test_fifth_table',
 		regexp => qr/^
-			\QCREATE STATISTICS dump_test.test_ext_stats_expr ON ((2 * col1)) FROM dump_test.test_fifth_table;\E
+			\QCREATE STATISTICS dump_test.test_ext_stats_expr ON (2 * col1) FROM dump_test.test_fifth_table;\E
 		    /xms,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
