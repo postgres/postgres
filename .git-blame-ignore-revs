@@ -104,6 +104,9 @@ b5bce6c1ec6061c8a4f730d927e162db7e2ce365 # 2016-08-15 13:42:51 -0400
 de94e2af184e25576b13cbda8cf825118835d1cd # 2016-04-06 11:34:02 -0400
 # Run pgindent on a batch of (mostly-planner-related) source files.
 
+be060cbcd42737693f6fd425db4c139121181cce # 2016-03-09 13:51:11 -0500
+# Re-pgindent vacuumlazy.c.
+
 d0cd7bda97a626049aa7d247374909c52399c413 # 2016-02-04 22:30:08 -0500
 # postgres_fdw: pgindent run.
 
