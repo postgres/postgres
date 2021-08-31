@@ -35,6 +35,7 @@
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
+#include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -891,12 +892,30 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		if (!isnull)
 		{
 			Node	   *n;
+			List	   *stored_query_list;
 
 			n = stringToNode(TextDatumGetCString(tmp));
 			if (IsA(n, List))
-				querytree_list = castNode(List, n);
+				stored_query_list = linitial(castNode(List, n));
 			else
-				querytree_list = list_make1(list_make1(n));
+				stored_query_list = list_make1(n);
+
+			querytree_list = NIL;
+			foreach(lc, stored_query_list)
+			{
+				Query	   *parsetree = lfirst_node(Query, lc);
+				List	   *querytree_sublist;
+
+				/*
+				 * Typically, we'd have acquired locks already while parsing
+				 * the body of the CREATE FUNCTION command.  However, a
+				 * validator function cannot assume that it's only called in
+				 * that context.
+				 */
+				AcquireRewriteLocks(parsetree, true, false);
+				querytree_sublist = pg_rewrite_query(parsetree);
+				querytree_list = lappend(querytree_list, querytree_sublist);
+			}
 		}
 		else
 		{

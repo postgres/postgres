@@ -543,11 +543,13 @@ ERROR:  cannot change routine kind
 DETAIL:  "functest1" is a function.
 DROP FUNCTION functest1(a int);
 -- inlining of set-returning functions
+CREATE TABLE functest3 (a int);
+INSERT INTO functest3 VALUES (1), (2), (3);
 CREATE FUNCTION functest_sri1() RETURNS SETOF int
 LANGUAGE SQL
 STABLE
 AS '
-    VALUES (1), (2), (3);
+    SELECT * FROM functest3;
 ';
 SELECT * FROM functest_sri1();
  functest_sri1 
@@ -558,17 +560,17 @@ SELECT * FROM functest_sri1();
 (3 rows)
 
 EXPLAIN (verbose, costs off) SELECT * FROM functest_sri1();
-          QUERY PLAN          
-------------------------------
- Values Scan on "*VALUES*"
-   Output: "*VALUES*".column1
+              QUERY PLAN              
+--------------------------------------
+ Seq Scan on temp_func_test.functest3
+   Output: functest3.a
 (2 rows)
 
 CREATE FUNCTION functest_sri2() RETURNS SETOF int
 LANGUAGE SQL
 STABLE
 BEGIN ATOMIC
-    VALUES (1), (2), (3);
+    SELECT * FROM functest3;
 END;
 SELECT * FROM functest_sri2();
  functest_sri2 
@@ -579,12 +581,14 @@ SELECT * FROM functest_sri2();
 (3 rows)
 
 EXPLAIN (verbose, costs off) SELECT * FROM functest_sri2();
-          QUERY PLAN          
-------------------------------
- Values Scan on "*VALUES*"
-   Output: "*VALUES*".column1
+              QUERY PLAN              
+--------------------------------------
+ Seq Scan on temp_func_test.functest3
+   Output: functest3.a
 (2 rows)
 
+DROP TABLE functest3 CASCADE;
+NOTICE:  drop cascades to function functest_sri2()
 -- Check behavior of VOID-returning SQL functions
 CREATE FUNCTION voidtest1(a int) RETURNS VOID LANGUAGE SQL AS
 $$ SELECT a + 1 $$;
@@ -643,7 +647,7 @@ SELECT * FROM voidtest5(3);
 
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 30 other objects
+NOTICE:  drop cascades to 29 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -668,7 +672,6 @@ drop cascades to function functest_s_13()
 drop cascades to function functest_s_15(integer)
 drop cascades to function functest_b_2(bigint)
 drop cascades to function functest_sri1()
-drop cascades to function functest_sri2()
 drop cascades to function voidtest1(integer)
 drop cascades to function voidtest2(integer,integer)
 drop cascades to function voidtest3(integer)

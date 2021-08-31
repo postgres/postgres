@@ -319,11 +319,14 @@ DROP FUNCTION functest1(a int);
 
 -- inlining of set-returning functions
 
+CREATE TABLE functest3 (a int);
+INSERT INTO functest3 VALUES (1), (2), (3);
+
 CREATE FUNCTION functest_sri1() RETURNS SETOF int
 LANGUAGE SQL
 STABLE
 AS '
-    VALUES (1), (2), (3);
+    SELECT * FROM functest3;
 ';
 
 SELECT * FROM functest_sri1();
@@ -333,11 +336,13 @@ CREATE FUNCTION functest_sri2() RETURNS SETOF int
 LANGUAGE SQL
 STABLE
 BEGIN ATOMIC
-    VALUES (1), (2), (3);
+    SELECT * FROM functest3;
 END;
 
 SELECT * FROM functest_sri2();
 EXPLAIN (verbose, costs off) SELECT * FROM functest_sri2();
+
+DROP TABLE functest3 CASCADE;
 
 
 -- Check behavior of VOID-returning SQL functions
