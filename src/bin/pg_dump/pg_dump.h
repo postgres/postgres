@@ -164,9 +164,11 @@ typedef struct _typeInfo
 	DumpableObject dobj;
 
 	/*
-	 * Note: dobj.name is the pg_type.typname entry.  format_type() might
-	 * produce something different than typname
+	 * Note: dobj.name is the raw pg_type.typname entry.  ftypname is the
+	 * result of format_type(), which will be quoted if needed, and might be
+	 * schema-qualified too.
 	 */
+	char	   *ftypname;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *typacl;
 	char	   *rtypacl;
