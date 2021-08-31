@@ -323,12 +323,10 @@ typedef struct LVRelState
 	BufferAccessStrategy bstrategy;
 	LVParallelState *lps;
 
-	/* Statistics from pg_class when we start out */
-	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
-	double		old_live_tuples;	/* previous value of pg_class.reltuples */
 	/* rel's initial relfrozenxid and relminmxid */
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
+	double		old_live_tuples;	/* previous value of pg_class.reltuples */
 
 	/* VACUUM operation's cutoff for pruning */
 	TransactionId OldestXmin;
@@ -593,10 +591,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	}
 
 	vacrel->bstrategy = bstrategy;
-	vacrel->old_rel_pages = rel->rd_rel->relpages;
-	vacrel->old_live_tuples = rel->rd_rel->reltuples;
 	vacrel->relfrozenxid = rel->rd_rel->relfrozenxid;
 	vacrel->relminmxid = rel->rd_rel->relminmxid;
+	vacrel->old_live_tuples = rel->rd_rel->reltuples;
 
 	/* Set cutoffs for entire VACUUM */
 	vacrel->OldestXmin = OldestXmin;
@@ -3182,7 +3179,7 @@ should_attempt_truncation(LVRelState *vacrel)
 static void
 lazy_truncate_heap(LVRelState *vacrel)
 {
-	BlockNumber old_rel_pages = vacrel->rel_pages;
+	BlockNumber orig_rel_pages = vacrel->rel_pages;
 	BlockNumber new_rel_pages;
 	bool		lock_waiter_detected;
 	int			lock_retry;
@@ -3246,7 +3243,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		 * the newly added pages presumably contain non-deletable tuples.
 		 */
 		new_rel_pages = RelationGetNumberOfBlocks(vacrel->rel);
-		if (new_rel_pages != old_rel_pages)
+		if (new_rel_pages != orig_rel_pages)
 		{
 			/*
 			 * Note: we intentionally don't update vacrel->rel_pages with the
@@ -3268,7 +3265,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		new_rel_pages = count_nondeletable_pages(vacrel, &lock_waiter_detected);
 		vacrel->blkno = new_rel_pages;
 
-		if (new_rel_pages >= old_rel_pages)
+		if (new_rel_pages >= orig_rel_pages)
 		{
 			/* can't do anything after all */
 			UnlockRelation(vacrel->rel, AccessExclusiveLock);
@@ -3294,16 +3291,16 @@ lazy_truncate_heap(LVRelState *vacrel)
 		 * without also touching reltuples, since the tuple count wasn't
 		 * changed by the truncation.
 		 */
-		vacrel->pages_removed += old_rel_pages - new_rel_pages;
+		vacrel->pages_removed += orig_rel_pages - new_rel_pages;
 		vacrel->rel_pages = new_rel_pages;
 
 		ereport(elevel,
 				(errmsg("\"%s\": truncated %u to %u pages",
 						vacrel->relname,
-						old_rel_pages, new_rel_pages),
+						orig_rel_pages, new_rel_pages),
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
-		old_rel_pages = new_rel_pages;
+		orig_rel_pages = new_rel_pages;
 	} while (new_rel_pages > vacrel->nonempty_pages && lock_waiter_detected);
 }
 
