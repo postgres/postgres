@@ -2038,7 +2038,7 @@ retry:
 
 	/*
 	 * Now save details of the LP_DEAD items from the page in the dead_tuples
-	 * array.  Also record that page has dead items in per-page prunestate.
+	 * array
 	 */
 	if (lpdead_items > 0)
 	{
