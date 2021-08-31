@@ -22,3 +22,10 @@ verbose = %f: %m at line %l, column %c.  %e.  ([%p] Severity: %s)\n
 # insist on use of the warnings pragma
 [TestingAndDebugging::RequireUseWarnings]
 severity = 5
+
+# forbid grep and map in void context
+[BuiltinFunctions::ProhibitVoidGrep]
+severity = 5
+
+[BuiltinFunctions::ProhibitVoidMap]
+severity = 5

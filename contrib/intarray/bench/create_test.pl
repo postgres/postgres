@@ -51,7 +51,7 @@ foreach my $i (1 .. 200000)
 	else
 	{
 		print $msg "$i\t{" . join(',', @sect) . "}\n";
-		map { print $map "$i\t$_\n" } @sect;
+		print $map "$i\t$_\n" foreach @sect;
 	}
 }
 close $map;
