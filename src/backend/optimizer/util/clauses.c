@@ -43,6 +43,7 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -4470,6 +4471,12 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 		if (list_length(querytree_list) != 1)
 			goto fail;
 		querytree = linitial(querytree_list);
+
+		/*
+		 * Because we'll insist below that the querytree have an empty rtable
+		 * and no sublinks, it cannot have any relation references that need
+		 * to be locked or rewritten.  So we can omit those steps.
+		 */
 	}
 	else
 	{
@@ -5022,6 +5029,8 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 			goto fail;
 		querytree = linitial(querytree_list);
 
+		/* Acquire necessary locks, then apply rewriter. */
+		AcquireRewriteLocks(querytree, true, false);
 		querytree_list = pg_rewrite_query(querytree);
 		if (list_length(querytree_list) != 1)
 			goto fail;
