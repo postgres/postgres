@@ -42,13 +42,13 @@ DROP TABLE ext_stats_test;
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
 COMMENT ON STATISTICS ab1_a_b_stats IS 'new comment';
-CREATE ROLE temp_role;
-SET SESSION AUTHORIZATION temp_role;
+CREATE ROLE regress_stats_ext;
+SET SESSION AUTHORIZATION regress_stats_ext;
 COMMENT ON STATISTICS ab1_a_b_stats IS 'changed comment';
 DROP STATISTICS ab1_a_b_stats;
 ALTER STATISTICS ab1_a_b_stats RENAME TO ab1_a_b_stats_new;
 RESET SESSION AUTHORIZATION;
-DROP ROLE temp_role;
+DROP ROLE regress_stats_ext;
 
 CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;
 DROP STATISTICS ab1_a_b_stats;
