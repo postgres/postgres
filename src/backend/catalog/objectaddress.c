@@ -2475,7 +2475,8 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_STATISTIC_EXT:
 			if (!pg_statistics_object_ownercheck(address.objectId, roleid))
-				aclcheck_error_type(ACLCHECK_NOT_OWNER, address.objectId);
+				aclcheck_error(ACLCHECK_NOT_OWNER, objtype,
+							   NameListToString(castNode(List, object)));
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
