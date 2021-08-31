@@ -3200,7 +3200,7 @@ dumpBlobs(Archive *fout, void *arg)
 
 /*
  * getPolicies
- *	  get information about policies on a dumpable table.
+ *	  get information about all RLS policies on dumpable tables.
  */
 void
 getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
@@ -3210,6 +3210,7 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 	PolicyInfo *polinfo;
 	int			i_oid;
 	int			i_tableoid;
+	int			i_polrelid;
 	int			i_polname;
 	int			i_polcmd;
 	int			i_polroles;
@@ -3224,6 +3225,10 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 
 	query = createPQExpBuffer();
 
+	/*
+	 * First, check which tables have RLS enabled.  We represent RLS being
+	 * enabled on a table by creating a PolicyInfo object with null polname.
+	 */
 	for (i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
@@ -3232,16 +3237,6 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 		if (!(tbinfo->dobj.dump & DUMP_COMPONENT_POLICY))
 			continue;
 
-		if (g_verbose)
-			write_msg(NULL, "reading row security enabled for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
-
-		/*
-		 * Get row security enabled information for the table. We represent
-		 * RLS being enabled on a table by creating a PolicyInfo object with
-		 * null polname.
-		 */
 		if (tbinfo->rowsec)
 		{
 			/*
@@ -3262,41 +3257,31 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 			polinfo->polqual = NULL;
 			polinfo->polwithcheck = NULL;
 		}
+	}
 
-		if (g_verbose)
-			write_msg(NULL, "reading policies for table \"%s.%s\"\n",
-					  tbinfo->dobj.namespace->dobj.name,
-					  tbinfo->dobj.name);
+	/*
+	 * Now, read all RLS policies, and create PolicyInfo objects for all those
+	 * that are of interest.
+	 */
+	if (g_verbose)
+		write_msg(NULL, "reading row-level security policies\n");
 
-		resetPQExpBuffer(query);
+	printfPQExpBuffer(query,
+					  "SELECT oid, tableoid, pol.polrelid, pol.polname, pol.polcmd, "
+					  "CASE WHEN pol.polroles = '{0}' THEN 'PUBLIC' ELSE "
+					  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
+					  "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
+					  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
+					  "FROM pg_catalog.pg_policy pol");
 
-		/* Get the policies for the table. */
-		appendPQExpBuffer(query,
-						  "SELECT oid, tableoid, pol.polname, pol.polcmd, "
-						  "CASE WHEN pol.polroles = '{0}' THEN 'PUBLIC' ELSE "
-						  "   pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(rolname) from pg_catalog.pg_roles WHERE oid = ANY(pol.polroles)), ', ') END AS polroles, "
-			 "pg_catalog.pg_get_expr(pol.polqual, pol.polrelid) AS polqual, "
-						  "pg_catalog.pg_get_expr(pol.polwithcheck, pol.polrelid) AS polwithcheck "
-						  "FROM pg_catalog.pg_policy pol "
-						  "WHERE polrelid = '%u'",
-						  tbinfo->dobj.catId.oid);
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
-		ntups = PQntuples(res);
-
-		if (ntups == 0)
-		{
-			/*
-			 * No explicit policies to handle (only the default-deny policy,
-			 * which is handled as part of the table definition).  Clean up
-			 * and return.
-			 */
-			PQclear(res);
-			continue;
-		}
-
+	ntups = PQntuples(res);
+	if (ntups > 0)
+	{
 		i_oid = PQfnumber(res, "oid");
 		i_tableoid = PQfnumber(res, "tableoid");
+		i_polrelid = PQfnumber(res, "polrelid");
 		i_polname = PQfnumber(res, "polname");
 		i_polcmd = PQfnumber(res, "polcmd");
 		i_polroles = PQfnumber(res, "polroles");
@@ -3307,6 +3292,16 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		for (j = 0; j < ntups; j++)
 		{
+			Oid			polrelid = atooid(PQgetvalue(res, j, i_polrelid));
+			TableInfo  *tbinfo = findTableByOid(polrelid);
+
+			/*
+			 * Ignore row security on tables not to be dumped.  (This will
+			 * result in some harmless wasted slots in polinfo[].)
+			 */
+			if (!(tbinfo->dobj.dump & DUMP_COMPONENT_POLICY))
+				continue;
+
 			polinfo[j].dobj.objType = DO_POLICY;
 			polinfo[j].dobj.catId.tableoid =
 				atooid(PQgetvalue(res, j, i_tableoid));
@@ -3331,8 +3326,10 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 				polinfo[j].polwithcheck
 					= pg_strdup(PQgetvalue(res, j, i_polwithcheck));
 		}
-		PQclear(res);
 	}
+
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
 }
 
