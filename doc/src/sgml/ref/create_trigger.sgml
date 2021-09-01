@@ -175,6 +175,10 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name
   </para>
 
   <para>
+   <indexterm>
+    <primary>trigger</primary>
+    <secondary>constraint trigger</secondary>
+   </indexterm>
    When the <literal>CONSTRAINT</literal> option is specified, this command creates a
    <firstterm>constraint trigger</firstterm>.  This is the same as a regular trigger
    except that the timing of the trigger firing can be adjusted using
