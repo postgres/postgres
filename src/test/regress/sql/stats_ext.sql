@@ -41,6 +41,7 @@ CREATE STATISTICS tst ON (x || 'x'), (x || 'x'), (y + 1), (x || 'x'), (x || 'x')
 CREATE STATISTICS tst ON (x || 'x'), (x || 'x'), y FROM ext_stats_test;
 CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
 -- incorrect expressions
+CREATE STATISTICS tst ON (y) FROM ext_stats_test; -- single column reference
 CREATE STATISTICS tst ON y + z FROM ext_stats_test; -- missing parentheses
 CREATE STATISTICS tst ON (x, y) FROM ext_stats_test; -- tuple expression
 DROP TABLE ext_stats_test;
