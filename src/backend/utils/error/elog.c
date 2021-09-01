@@ -3312,8 +3312,6 @@ send_message_to_frontend(ErrorData *edata)
 		/* New style with separate fields */
 		const char *sev;
 		char		tbuf[12];
-		int			ssval;
-		int			i;
 
 		/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
 		pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
@@ -3324,17 +3322,8 @@ send_message_to_frontend(ErrorData *edata)
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY_NONLOCALIZED);
 		err_sendstring(&msgbuf, sev);
 
-		/* unpack MAKE_SQLSTATE code */
-		ssval = edata->sqlerrcode;
-		for (i = 0; i < 5; i++)
-		{
-			tbuf[i] = PGUNSIXBIT(ssval);
-			ssval >>= 6;
-		}
-		tbuf[i] = '\0';
-
 		pq_sendbyte(&msgbuf, PG_DIAG_SQLSTATE);
-		err_sendstring(&msgbuf, tbuf);
+		err_sendstring(&msgbuf, unpack_sql_state(edata->sqlerrcode));
 
 		/* M field is required per protocol, so always send something */
 		pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_PRIMARY);
