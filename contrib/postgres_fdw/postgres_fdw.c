@@ -5287,45 +5287,41 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 							   "SELECT relname, "
 							   "  attname, "
 							   "  format_type(atttypid, atttypmod), "
-							   "  attnotnull, ");
+							   "  attnotnull, "
+							   "  pg_get_expr(adbin, adrelid), ");
 
 		/* Generated columns are supported since Postgres 12 */
 		if (PQserverVersion(conn) >= 120000)
 			appendStringInfoString(&buf,
-								   "  attgenerated, "
-								   "  pg_get_expr(adbin, adrelid), ");
+								   "  attgenerated, ");
 		else
 			appendStringInfoString(&buf,
-								   "  NULL, "
-								   "  pg_get_expr(adbin, adrelid), ");
+								   "  NULL, ");
 
 		if (import_collate)
 			appendStringInfoString(&buf,
 								   "  collname, "
-								   "  collnsp.nspname "
-								   "FROM pg_class c "
-								   "  JOIN pg_namespace n ON "
-								   "    relnamespace = n.oid "
-								   "  LEFT JOIN pg_attribute a ON "
-								   "    attrelid = c.oid AND attnum > 0 "
-								   "      AND NOT attisdropped "
-								   "  LEFT JOIN pg_attrdef ad ON "
-								   "    adrelid = c.oid AND adnum = attnum "
+								   "  collnsp.nspname ");
+		else
+			appendStringInfoString(&buf,
+								   "  NULL, NULL ");
+
+		appendStringInfoString(&buf,
+							   "FROM pg_class c "
+							   "  JOIN pg_namespace n ON "
+							   "    relnamespace = n.oid "
+							   "  LEFT JOIN pg_attribute a ON "
+							   "    attrelid = c.oid AND attnum > 0 "
+							   "      AND NOT attisdropped "
+							   "  LEFT JOIN pg_attrdef ad ON "
+							   "    adrelid = c.oid AND adnum = attnum ");
+
+		if (import_collate)
+			appendStringInfoString(&buf,
 								   "  LEFT JOIN pg_collation coll ON "
 								   "    coll.oid = attcollation "
 								   "  LEFT JOIN pg_namespace collnsp ON "
 								   "    collnsp.oid = collnamespace ");
-		else
-			appendStringInfoString(&buf,
-								   "  NULL, NULL "
-								   "FROM pg_class c "
-								   "  JOIN pg_namespace n ON "
-								   "    relnamespace = n.oid "
-								   "  LEFT JOIN pg_attribute a ON "
-								   "    attrelid = c.oid AND attnum > 0 "
-								   "      AND NOT attisdropped "
-								   "  LEFT JOIN pg_attrdef ad ON "
-								   "    adrelid = c.oid AND adnum = attnum ");
 
 		appendStringInfoString(&buf,
 							   "WHERE c.relkind IN ("
@@ -5405,9 +5401,9 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 				attname = PQgetvalue(res, i, 1);
 				typename = PQgetvalue(res, i, 2);
 				attnotnull = PQgetvalue(res, i, 3);
-				attgenerated = PQgetisnull(res, i, 4) ? (char *) NULL :
+				attdefault = PQgetisnull(res, i, 4) ? (char *) NULL :
 					PQgetvalue(res, i, 4);
-				attdefault = PQgetisnull(res, i, 5) ? (char *) NULL :
+				attgenerated = PQgetisnull(res, i, 5) ? (char *) NULL :
 					PQgetvalue(res, i, 5);
 				collname = PQgetisnull(res, i, 6) ? (char *) NULL :
 					PQgetvalue(res, i, 6);
