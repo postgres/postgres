@@ -2267,6 +2267,26 @@ sub command_like
 
 =pod
 
+=item $node->command_fails_like(...)
+
+TestLib::command_fails_like with our connection parameters. See command_ok(...)
+
+=cut
+
+sub command_fails_like
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my $self = shift;
+
+	local %ENV = $self->_get_env();
+
+	TestLib::command_fails_like(@_);
+	return;
+}
+
+=pod
+
 =item $node->command_checks_all(...)
 
 TestLib::command_checks_all with our connection parameters. See
