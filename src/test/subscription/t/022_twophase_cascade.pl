@@ -235,10 +235,10 @@ is($result, qq(21), 'Rows committed are present on subscriber C');
 
 my $oldpid_B = $node_A->safe_psql('postgres', "
 	SELECT pid FROM pg_stat_replication
-	WHERE application_name = '$appname_B';");
+	WHERE application_name = '$appname_B' AND state = 'streaming';");
 my $oldpid_C = $node_B->safe_psql('postgres', "
 	SELECT pid FROM pg_stat_replication
-	WHERE application_name = '$appname_C';");
+	WHERE application_name = '$appname_C' AND state = 'streaming';");
 
 # Setup logical replication (streaming = on)
 
@@ -253,11 +253,11 @@ $node_C->safe_psql('postgres', "
 
 $node_A->poll_query_until('postgres', "
 	SELECT pid != $oldpid_B FROM pg_stat_replication
-	WHERE application_name = '$appname_B';"
+	WHERE application_name = '$appname_B' AND state = 'streaming';"
 ) or die "Timed out while waiting for apply to restart";
 $node_B->poll_query_until('postgres', "
 	SELECT pid != $oldpid_C FROM pg_stat_replication
-	WHERE application_name = '$appname_C';"
+	WHERE application_name = '$appname_C' AND state = 'streaming';"
 ) or die "Timed out while waiting for apply to restart";
 
 ###############################
