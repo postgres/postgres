@@ -123,6 +123,15 @@
    </para>
 
    <para>
+    The execution of an <literal>AFTER</literal> trigger can be deferred
+    to the end of the transaction, rather than the end of the statement,
+    if it was defined as a <firstterm>constraint trigger</firstterm>.
+    In all cases, a trigger is executed as part of the same transaction as
+    the statement that triggered it, so if either the statement or the
+    trigger causes an error, the effects of both will be rolled back.
+   </para>
+
+   <para>
     A statement that targets a parent table in an inheritance or partitioning
     hierarchy does not cause the statement-level triggers of affected child
     tables to be fired; only the parent table's statement-level triggers are
