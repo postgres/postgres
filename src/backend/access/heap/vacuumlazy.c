@@ -1627,19 +1627,10 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		update_index_statistics(vacrel);
 
 	/*
-	 * If table has no indexes and at least one heap pages was vacuumed, make
-	 * log report that lazy_vacuum_heap_rel would've made had there been
-	 * indexes (having indexes implies using the two pass strategy).
-	 *
-	 * We deliberately don't do this in the case where there are indexes but
-	 * index vacuuming was bypassed.  We make a similar report at the point
-	 * that index vacuuming is bypassed, but that's actually quite different
-	 * in one important sense: it shows information about work we _haven't_
-	 * done.
-	 *
-	 * log_autovacuum output does things differently; it consistently presents
-	 * information about LP_DEAD items for the VACUUM as a whole.  We always
-	 * report on each round of index and heap vacuuming separately, though.
+	 * When the table has no indexes (i.e. in the one-pass strategy case),
+	 * make log report that lazy_vacuum_heap_rel would've made had there been
+	 * indexes.  (As in the two-pass strategy case, only make this report when
+	 * there were LP_DEAD line pointers vacuumed in lazy_vacuum_heap_page.)
 	 */
 	if (vacrel->nindexes == 0 && vacrel->lpdead_item_pages > 0)
 		ereport(elevel,
@@ -1647,14 +1638,20 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 						vacrel->relname, (long long) vacrel->lpdead_items,
 						vacrel->lpdead_item_pages)));
 
+	/*
+	 * Make a log report summarizing pruning and freezing.
+	 *
+	 * The autovacuum specific logging in heap_vacuum_rel summarizes an entire
+	 * VACUUM operation, whereas each VACUUM VERBOSE log report generally
+	 * summarizes a single round of index/heap vacuuming (or rel truncation).
+	 * It wouldn't make sense to report on pruning or freezing while following
+	 * that convention, though.  You can think of this log report as a summary
+	 * of our first pass over the heap.
+	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf,
 					 _("%lld dead row versions cannot be removed yet, oldest xmin: %u\n"),
 					 (long long) vacrel->new_dead_tuples, vacrel->OldestXmin);
-	appendStringInfo(&buf, ngettext("%u page removed.\n",
-									"%u pages removed.\n",
-									vacrel->pages_removed),
-					 vacrel->pages_removed);
 	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins, ",
 									"Skipped %u pages due to buffer pins, ",
 									vacrel->pinskipped_pages),
@@ -2377,6 +2374,7 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 	 * We set all LP_DEAD items from the first heap pass to LP_UNUSED during
 	 * the second heap pass.  No more, no less.
 	 */
+	Assert(tupindex > 0);
 	Assert(vacrel->num_index_scans > 1 ||
 		   (tupindex == vacrel->lpdead_items &&
 			vacuumed_pages == vacrel->lpdead_item_pages));
@@ -3295,7 +3293,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		vacrel->rel_pages = new_rel_pages;
 
 		ereport(elevel,
-				(errmsg("\"%s\": truncated %u to %u pages",
+				(errmsg("table \"%s\": truncated %u to %u pages",
 						vacrel->relname,
 						orig_rel_pages, new_rel_pages),
 				 errdetail_internal("%s",
@@ -3359,7 +3357,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 				if (LockHasWaitersRelation(vacrel->rel, AccessExclusiveLock))
 				{
 					ereport(elevel,
-							(errmsg("\"%s\": suspending truncate due to conflicting lock request",
+							(errmsg("table \"%s\": suspending truncate due to conflicting lock request",
 									vacrel->relname)));
 
 					*lock_waiter_detected = true;
