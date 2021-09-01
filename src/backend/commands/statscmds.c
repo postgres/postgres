@@ -33,6 +33,7 @@
 #include "optimizer/optimizer.h"
 #include "statistics/statistics.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -211,13 +212,15 @@ CreateStatistics(CreateStatsStmt *stmt)
 	/*
 	 * Convert the expression list to a simple array of attnums, but also keep
 	 * a list of more complex expressions.  While at it, enforce some
-	 * constraints.
+	 * constraints - we don't allow extended statistics on system attributes,
+	 * and we require the data type to have less-than operator.
 	 *
-	 * XXX We do only the bare minimum to separate simple attribute and
-	 * complex expressions - for example "(a)" will be treated as a complex
-	 * expression. No matter how elaborate the check is, there'll always be a
-	 * way around it, if the user is determined (consider e.g. "(a+0)"), so
-	 * it's not worth protecting against it.
+	 * There are many ways how to "mask" a simple attribute refenrece as an
+	 * expression, for example "(a+0)" etc. We can't possibly detect all of
+	 * them, but we handle at least the simple case with attribute in parens.
+	 * There'll always be a way around this, if the user is determined (like
+	 * the "(a+0)" example), but this makes it somewhat consistent with how
+	 * indexes treat attributes/expressions.
 	 */
 	foreach(cell, stmt->exprs)
 	{
@@ -257,6 +260,28 @@ CreateStatistics(CreateStatsStmt *stmt)
 			attnums[nattnums] = attForm->attnum;
 			nattnums++;
 			ReleaseSysCache(atttuple);
+		}
+		else if (IsA(selem->expr, Var))	/* column reference in parens */
+		{
+			Var *var = (Var *) selem->expr;
+			TypeCacheEntry *type;
+
+			/* Disallow use of system attributes in extended stats */
+			if (var->varattno <= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("statistics creation on system columns is not supported")));
+
+			/* Disallow data types without a less-than operator */
+			type = lookup_type_cache(var->vartype, TYPECACHE_LT_OPR);
+			if (type->lt_opr == InvalidOid)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("column \"%s\" cannot be used in statistics because its type %s has no default btree operator class",
+								get_attname(relid, var->varattno, false), format_type_be(var->vartype))));
+
+			attnums[nattnums] = var->varattno;
+			nattnums++;
 		}
 		else					/* expression */
 		{

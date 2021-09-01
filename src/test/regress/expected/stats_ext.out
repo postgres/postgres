@@ -55,6 +55,8 @@ ERROR:  duplicate expression in statistics definition
 CREATE STATISTICS tst (unrecognized) ON x, y FROM ext_stats_test;
 ERROR:  unrecognized statistics kind "unrecognized"
 -- incorrect expressions
+CREATE STATISTICS tst ON (y) FROM ext_stats_test; -- single column reference
+ERROR:  extended statistics require at least 2 columns
 CREATE STATISTICS tst ON y + z FROM ext_stats_test; -- missing parentheses
 ERROR:  syntax error at or near "+"
 LINE 1: CREATE STATISTICS tst ON y + z FROM ext_stats_test;
