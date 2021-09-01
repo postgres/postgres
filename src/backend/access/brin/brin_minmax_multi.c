@@ -3026,7 +3026,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 	/* deserialize the range info easy-to-process pieces */
 	ranges_deserialized = range_deserialize(ranges->maxvalues, ranges);
 
-	appendStringInfo(&str, "nranges: %u  nvalues: %u  maxvalues: %u",
+	appendStringInfo(&str, "nranges: %d  nvalues: %d  maxvalues: %d",
 					 ranges_deserialized->nranges,
 					 ranges_deserialized->nvalues,
 					 ranges_deserialized->maxvalues);
