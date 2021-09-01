@@ -2691,8 +2691,13 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("FOR TABLE", "FOR ALL TABLES", "WITH (");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR"))
 		COMPLETE_WITH("TABLE", "ALL TABLES");
-	/* Complete "CREATE PUBLICATION <name> FOR TABLE <table>, ..." */
-	else if (HeadMatches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE"))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL"))
+		COMPLETE_WITH("TABLES");
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES")
+			 || Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE", MatchAny))
+		COMPLETE_WITH("WITH (");
+	/* Complete "CREATE PUBLICATION <name> FOR TABLE" with "<table>, ..." */
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
 	else if (HeadMatches("CREATE", "PUBLICATION") && TailMatches("WITH", "("))
