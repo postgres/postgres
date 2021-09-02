@@ -220,3 +220,12 @@ FROM   (VALUES (int4range(10, 20)), (int4range(23, 43)),
 		 (int4range(550274, 1550274)), (int4range(1550275, 208112489))) x(v)
 WHERE  hash_range(v)::bit(32) != hash_range_extended(v, 0)::bit(32)
        OR hash_range(v)::bit(32) = hash_range_extended(v, 1)::bit(32);
+
+--
+-- Check special cases for specific data types
+--
+SELECT hashfloat4('0'::float4) = hashfloat4('-0'::float4) AS t;
+SELECT hashfloat4('NaN'::float4) = hashfloat4('-NaN'::float4) AS t;
+SELECT hashfloat8('0'::float8) = hashfloat8('-0'::float8) AS t;
+SELECT hashfloat8('NaN'::float8) = hashfloat8('-NaN'::float8) AS t;
+SELECT hashfloat4('NaN'::float4) = hashfloat8('NaN'::float8) AS t;
