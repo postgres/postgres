@@ -900,7 +900,9 @@ InitFileAccess(void)
  * of already_open will give the right answer.  In practice, max_to_probe
  * of a couple of dozen should be enough to ensure good results.
  *
- * We assume stdin (FD 0) is available for dup'ing
+ * We assume stderr (FD 2) is available for dup'ing.  While the calling
+ * script could theoretically close that, it would be a really bad idea,
+ * since then one risks loss of error messages from, e.g., libc.
  */
 static void
 count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
@@ -944,12 +946,12 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 			break;
 #endif
 
-		thisfd = dup(0);
+		thisfd = dup(2);
 		if (thisfd < 0)
 		{
 			/* Expect EMFILE or ENFILE, else it's fishy */
 			if (errno != EMFILE && errno != ENFILE)
-				elog(WARNING, "dup(0) failed after %d successes: %m", used);
+				elog(WARNING, "duplicating stderr file descriptor failed after %d successes: %m", used);
 			break;
 		}
 
