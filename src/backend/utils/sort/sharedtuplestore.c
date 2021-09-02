@@ -560,7 +560,8 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 
 				sts_filename(name, accessor, accessor->read_participant);
 				accessor->read_file =
-					BufFileOpenFileSet(&accessor->fileset->fs, name, O_RDONLY);
+					BufFileOpenFileSet(&accessor->fileset->fs, name, O_RDONLY,
+									   false);
 			}
 
 			/* Seek and load the chunk header. */

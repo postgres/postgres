@@ -278,10 +278,13 @@ BufFileCreateFileSet(FileSet *fileset, const char *name)
  * with BufFileCreateFileSet in the same FileSet using the same name.
  * The backend that created the file must have called BufFileClose() or
  * BufFileExportFileSet() to make sure that it is ready to be opened by other
- * backends and render it read-only.
+ * backends and render it read-only.  If missing_ok is true, which indicates
+ * that missing files can be safely ignored, then return NULL if the BufFile
+ * with the given name is not found, otherwise, throw an error.
  */
 BufFile *
-BufFileOpenFileSet(FileSet *fileset, const char *name, int mode)
+BufFileOpenFileSet(FileSet *fileset, const char *name, int mode,
+				   bool missing_ok)
 {
 	BufFile    *file;
 	char		segment_name[MAXPGPATH];
@@ -318,10 +321,18 @@ BufFileOpenFileSet(FileSet *fileset, const char *name, int mode)
 	 * name.
 	 */
 	if (nfiles == 0)
+	{
+		/* free the memory */
+		pfree(files);
+
+		if (missing_ok)
+			return NULL;
+
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open temporary file \"%s\" from BufFile \"%s\": %m",
 						segment_name, name)));
+	}
 
 	file = makeBufFileCommon(nfiles);
 	file->files = files;
@@ -341,10 +352,11 @@ BufFileOpenFileSet(FileSet *fileset, const char *name, int mode)
  * the FileSet to be cleaned up.
  *
  * Only one backend should attempt to delete a given name, and should know
- * that it exists and has been exported or closed.
+ * that it exists and has been exported or closed otherwise missing_ok should
+ * be passed true.
  */
 void
-BufFileDeleteFileSet(FileSet *fileset, const char *name)
+BufFileDeleteFileSet(FileSet *fileset, const char *name, bool missing_ok)
 {
 	char		segment_name[MAXPGPATH];
 	int			segment = 0;
@@ -366,7 +378,7 @@ BufFileDeleteFileSet(FileSet *fileset, const char *name)
 		CHECK_FOR_INTERRUPTS();
 	}
 
-	if (!found)
+	if (!found && !missing_ok)
 		elog(ERROR, "could not delete unknown BufFile \"%s\"", name);
 }
 

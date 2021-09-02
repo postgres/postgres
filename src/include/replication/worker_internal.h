@@ -50,6 +50,15 @@ typedef struct LogicalRepWorker
 	XLogRecPtr	relstate_lsn;
 	slock_t		relmutex;
 
+	/*
+	 * Used to create the changes and subxact files for the streaming
+	 * transactions.  Upon the arrival of the first streaming transaction, the
+	 * fileset will be initialized, and it will be deleted when the worker
+	 * exits.  Under this, separate buffiles would be created for each
+	 * transaction which will be deleted after the transaction is finished.
+	 */
+	FileSet    *stream_fileset;
+
 	/* Stats. */
 	XLogRecPtr	last_lsn;
 	TimestampTz last_send_time;
@@ -79,7 +88,6 @@ extern void logicalrep_worker_launch(Oid dbid, Oid subid, const char *subname,
 extern void logicalrep_worker_stop(Oid subid, Oid relid);
 extern void logicalrep_worker_wakeup(Oid subid, Oid relid);
 extern void logicalrep_worker_wakeup_ptr(LogicalRepWorker *worker);
-extern void logicalrep_worker_cleanupfileset(void);
 
 extern int	logicalrep_sync_worker_count(Oid subid);
 

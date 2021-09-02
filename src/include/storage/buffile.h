@@ -49,8 +49,9 @@ extern long BufFileAppend(BufFile *target, BufFile *source);
 extern BufFile *BufFileCreateFileSet(FileSet *fileset, const char *name);
 extern void BufFileExportFileSet(BufFile *file);
 extern BufFile *BufFileOpenFileSet(FileSet *fileset, const char *name,
-								   int mode);
-extern void BufFileDeleteFileSet(FileSet *fileset, const char *name);
+								   int mode, bool missing_ok);
+extern void BufFileDeleteFileSet(FileSet *fileset, const char *name,
+								 bool missing_ok);
 extern void BufFileTruncateFileSet(BufFile *file, int fileno, off_t offset);
 
 #endif							/* BUFFILE_H */
