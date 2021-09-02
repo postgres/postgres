@@ -298,3 +298,36 @@ WHERE  hash_range(v)::bit(32) != hash_range_extended(v, 0)::bit(32)
 -------+----------+-----------+-----------
 (0 rows)
 
+--
+-- Check special cases for specific data types
+--
+SELECT hashfloat4('0'::float4) = hashfloat4('-0'::float4) AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT hashfloat4('NaN'::float4) = hashfloat4('-NaN'::float4) AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT hashfloat8('0'::float8) = hashfloat8('-0'::float8) AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT hashfloat8('NaN'::float8) = hashfloat8('-NaN'::float8) AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT hashfloat4('NaN'::float4) = hashfloat8('NaN'::float8) AS t;
+ t 
+---
+ t
+(1 row)
+
