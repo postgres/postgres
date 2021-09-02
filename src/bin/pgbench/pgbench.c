@@ -4153,6 +4153,7 @@ initGenerateDataClientSide(PGconn *con)
 	PGresult   *res;
 	int			i;
 	int64		k;
+	char		*copy_statement;
 
 	/* used to track elapsed time and estimate of the remaining time */
 	pg_time_usec_t start;
@@ -4199,7 +4200,15 @@ initGenerateDataClientSide(PGconn *con)
 	/*
 	 * accounts is big enough to be worth using COPY and tracking runtime
 	 */
-	res = PQexec(con, "copy pgbench_accounts from stdin");
+
+	/* use COPY with FREEZE on v14 and later without partioning */
+	if (partitions == 0 && PQserverVersion(con) >= 140000)
+		copy_statement = "copy pgbench_accounts from stdin with (freeze on)";
+	else
+		copy_statement = "copy pgbench_accounts from stdin";
+
+	res = PQexec(con, copy_statement);
+
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
 		pg_log_fatal("unexpected copy in result: %s", PQerrorMessage(con));
