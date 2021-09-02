@@ -5097,7 +5097,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Resets statistics for a single table or index in the current database
-        to zero.
+        or shared across all databases in the cluster to zero.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

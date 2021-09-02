@@ -38,6 +38,7 @@
 #include "access/transam.h"
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
 #include "common/ip.h"
@@ -5140,7 +5141,8 @@ pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 /* ----------
  * pgstat_recv_resetsinglecounter() -
  *
- *	Reset a statistics for a single object
+ *	Reset a statistics for a single object, which may be of current
+ *	database or shared across all databases in the cluster.
  * ----------
  */
 static void
@@ -5148,7 +5150,10 @@ pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
 {
 	PgStat_StatDBEntry *dbentry;
 
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
+	if (IsSharedRelation(msg->m_objectid))
+		dbentry = pgstat_get_db_entry(InvalidOid, false);
+	else
+		dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
 
 	if (!dbentry)
 		return;
