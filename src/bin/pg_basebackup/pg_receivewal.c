@@ -449,8 +449,6 @@ StreamLog(void)
 
 	FreeWalDirectoryMethod();
 	pg_free(stream.walmethod);
-
-	conn = NULL;
 }
 
 /*
