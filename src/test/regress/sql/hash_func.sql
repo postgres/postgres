@@ -258,7 +258,7 @@ DROP TYPE hash_test_t2;
 -- Check special cases for specific data types
 --
 SELECT hashfloat4('0'::float4) = hashfloat4('-0'::float4) AS t;
-SELECT hashfloat4('NaN'::float4) = hashfloat4('-NaN'::float4) AS t;
+SELECT hashfloat4('NaN'::float4) = hashfloat4(-'NaN'::float4) AS t;
 SELECT hashfloat8('0'::float8) = hashfloat8('-0'::float8) AS t;
-SELECT hashfloat8('NaN'::float8) = hashfloat8('-NaN'::float8) AS t;
+SELECT hashfloat8('NaN'::float8) = hashfloat8(-'NaN'::float8) AS t;
 SELECT hashfloat4('NaN'::float4) = hashfloat8('NaN'::float8) AS t;
