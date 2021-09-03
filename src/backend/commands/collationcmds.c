@@ -206,7 +206,26 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	if (!fromEl)
 	{
 		if (collprovider == COLLPROVIDER_ICU)
+		{
+#ifdef USE_ICU
+			/*
+			 * We could create ICU collations with collencoding == database
+			 * encoding, but it seems better to use -1 so that it matches the
+			 * way initdb would create ICU collations.  However, only allow
+			 * one to be created when the current database's encoding is
+			 * supported.  Otherwise the collation is useless, plus we get
+			 * surprising behaviors like not being able to drop the collation.
+			 *
+			 * Skip this test when !USE_ICU, because the error we want to
+			 * throw for that isn't thrown till later.
+			 */
+			if (!is_encoding_supported_by_icu(GetDatabaseEncoding()))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("current database's encoding is not supported with this provider")));
+#endif
 			collencoding = -1;
+		}
 		else
 		{
 			collencoding = GetDatabaseEncoding();
