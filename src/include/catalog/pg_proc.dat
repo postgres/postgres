@@ -5912,7 +5912,7 @@
   proargtypes => 'interval timestamp timestamp', prosrc => 'timestamp_bin' },
 { oid => '6178',
   descr => 'bin timestamp with time zone into specified interval',
-  proname => 'date_bin', provolatile => 's', prorettype => 'timestamptz',
+  proname => 'date_bin', prorettype => 'timestamptz',
   proargtypes => 'interval timestamptz timestamptz',
   prosrc => 'timestamptz_bin' },
 
