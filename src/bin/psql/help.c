@@ -166,7 +166,7 @@ slashUsage(unsigned short int pager)
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(135, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(136, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -236,8 +236,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dD[S+] [PATTERN]      list domains\n"));
 	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
 	fprintf(output, _("  \\dE[S+] [PATTERN]      list foreign tables\n"));
-	fprintf(output, _("  \\det[+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
+	fprintf(output, _("  \\det[+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
 	fprintf(output, _("  \\dew[+] [PATTERN]      list foreign-data wrappers\n"));
 	fprintf(output, _("  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
@@ -257,7 +257,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dO[S+] [PATTERN]      list collations\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
 	fprintf(output, _("  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"));
-	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
+	fprintf(output, _("  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"));
 	fprintf(output, _("  \\dRp[+] [PATTERN]      list replication publications\n"));
 	fprintf(output, _("  \\dRs[+] [PATTERN]      list replication subscriptions\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
@@ -344,10 +344,10 @@ helpVariables(unsigned short int pager)
 	/*
 	 * Keep this line count in sync with the number of lines printed below!
 	 * Use "psql --help=variables | wc" to count correctly; but notice that
-	 * Windows builds currently print one more line than non-Windows builds.
+	 * Windows builds currently print one fewer line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(160, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(161, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
