@@ -46,7 +46,6 @@ typedef uint64 XLogRecPtr;
  * XLogSegNo - physical log file sequence number.
  */
 typedef uint64 XLogSegNo;
-#define MaxXLogSegNo	((XLogSegNo) 0xFFFFFFFFFFFFFFFF)
 
 /*
  * TimeLineID (TLI) - identifies different database histories to prevent
