@@ -622,7 +622,7 @@ WalReceiverMain(void)
 			if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 				XLogArchiveForceDone(xlogfname);
 			else
-				XLogArchiveNotify(xlogfname, true);
+				XLogArchiveNotify(xlogfname);
 		}
 		recvFile = -1;
 
@@ -760,7 +760,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 			if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 				XLogArchiveForceDone(fname);
 			else
-				XLogArchiveNotify(fname, true);
+				XLogArchiveNotify(fname);
 
 			pfree(fname);
 			pfree(content);
@@ -915,7 +915,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 					XLogArchiveForceDone(xlogfname);
 				else
-					XLogArchiveNotify(xlogfname, true);
+					XLogArchiveNotify(xlogfname);
 			}
 			recvFile = -1;
 

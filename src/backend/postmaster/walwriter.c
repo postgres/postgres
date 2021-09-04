@@ -249,13 +249,6 @@ WalWriterMain(void)
 		HandleWalWriterInterrupts();
 
 		/*
-		 * Notify the archiver of any WAL segments that are ready.  We do this
-		 * here to handle a race condition where WAL is flushed to disk prior
-		 * to registering the segment boundary.
-		 */
-		NotifySegmentsReadyForArchive(GetFlushRecPtr());
-
-		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
 		 * work to do, reset hibernation counter.
 		 */

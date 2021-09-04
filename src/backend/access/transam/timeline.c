@@ -452,7 +452,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	if (XLogArchivingActive())
 	{
 		TLHistoryFileName(histfname, newTLI);
-		XLogArchiveNotify(histfname, true);
+		XLogArchiveNotify(histfname);
 	}
 }
 
