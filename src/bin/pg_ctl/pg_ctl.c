@@ -442,7 +442,7 @@ free_readfile(char **optlines)
 static pgpid_t
 start_postmaster(void)
 {
-	char		cmd[MAXPGPATH];
+	char	   *cmd;
 
 #ifndef WIN32
 	pgpid_t		pm_pid;
@@ -487,12 +487,12 @@ start_postmaster(void)
 	 * has the same PID as the current child process.
 	 */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
-				 exec_path, pgdata_opt, post_opts,
-				 DEVNULL, log_file);
+		cmd = psprintf("exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
+					   exec_path, pgdata_opt, post_opts,
+					   DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" 2>&1",
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
+		cmd = psprintf("exec \"%s\" %s%s < \"%s\" 2>&1",
+					   exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 
@@ -553,12 +553,12 @@ start_postmaster(void)
 		else
 			close(fd);
 
-		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
-				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
+		cmd = psprintf("\"%s\" /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
+					   comspec, exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
 	}
 	else
-		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
-				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL);
+		cmd = psprintf("\"%s\" /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
+					   comspec, exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
 	{
@@ -828,7 +828,7 @@ find_other_exec_or_die(const char *argv0, const char *target, const char *versio
 static void
 do_init(void)
 {
-	char		cmd[MAXPGPATH];
+	char	   *cmd;
 
 	if (exec_path == NULL)
 		exec_path = find_other_exec_or_die(argv0, "initdb", "initdb (PostgreSQL) " PG_VERSION "\n");
@@ -840,11 +840,11 @@ do_init(void)
 		post_opts = "";
 
 	if (!silent_mode)
-		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s",
-				 exec_path, pgdata_opt, post_opts);
+		cmd = psprintf("\"%s\" %s%s",
+					   exec_path, pgdata_opt, post_opts);
 	else
-		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s > \"%s\"",
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
+		cmd = psprintf("\"%s\" %s%s > \"%s\"",
+					   exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (system(cmd) != 0)
 	{
@@ -2175,9 +2175,9 @@ set_starttype(char *starttypeopt)
 static void
 adjust_data_dir(void)
 {
-	char		cmd[MAXPGPATH],
-				filename[MAXPGPATH],
-			   *my_exec_path;
+	char		filename[MAXPGPATH];
+	char	   *my_exec_path,
+			   *cmd;
 	FILE	   *fd;
 
 	/* do nothing if we're working without knowledge of data dir */
@@ -2207,10 +2207,10 @@ adjust_data_dir(void)
 		my_exec_path = pg_strdup(exec_path);
 
 	/* it's important for -C to be the first option, see main.c */
-	snprintf(cmd, MAXPGPATH, "\"%s\" -C data_directory %s%s",
-			 my_exec_path,
-			 pgdata_opt ? pgdata_opt : "",
-			 post_opts ? post_opts : "");
+	cmd = psprintf("\"%s\" -C data_directory %s%s",
+				   my_exec_path,
+				   pgdata_opt ? pgdata_opt : "",
+				   post_opts ? post_opts : "");
 
 	fd = popen(cmd, "r");
 	if (fd == NULL || fgets(filename, sizeof(filename), fd) == NULL)
