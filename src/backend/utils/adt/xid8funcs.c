@@ -369,7 +369,7 @@ pg_current_xact_id(PG_FUNCTION_ARGS)
 }
 
 /*
- * Same as pg_current_xact_if_assigned() but doesn't assign a new xid if there
+ * Same as pg_current_xact_id() but doesn't assign a new xid if there
  * isn't one yet.
  */
 Datum
