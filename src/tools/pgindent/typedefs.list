@@ -2047,6 +2047,7 @@ PublicationActions
 PublicationInfo
 PublicationPartOpt
 PublicationRelInfo
+PublicationTable
 PullFilter
 PullFilterOps
 PushFilter

@@ -3624,6 +3624,11 @@ typedef struct AlterTSConfigurationStmt
 	bool		missing_ok;		/* for DROP - skip error if missing? */
 } AlterTSConfigurationStmt;
 
+typedef struct PublicationTable
+{
+	NodeTag		type;
+	RangeVar   *relation;		/* relation to be published */
+} PublicationTable;
 
 typedef struct CreatePublicationStmt
 {

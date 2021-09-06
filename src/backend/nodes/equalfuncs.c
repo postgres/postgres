@@ -3114,6 +3114,14 @@ _equalValue(const Value *a, const Value *b)
 	return true;
 }
 
+static bool
+_equalPublicationTable(const PublicationTable *a, const PublicationTable *b)
+{
+	COMPARE_NODE_FIELD(relation);
+
+	return true;
+}
+
 /*
  * equal
  *	  returns whether two nodes are equal
@@ -3861,6 +3869,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_PartitionCmd:
 			retval = _equalPartitionCmd(a, b);
+			break;
+		case T_PublicationTable:
+			retval = _equalPublicationTable(a, b);
 			break;
 
 		default:
