@@ -53,7 +53,7 @@ SKIP: {
 	# Send sleep command and wait until the server has registered it
 	$stdin = "select pg_sleep(180);\n";
 	pump $h while length $stdin;
-	$node->poll_query_until('postgres', q{SELECT (SELECT count(*) FROM pg_stat_activity WHERE query ~ 'pg_sleep') > 0;})
+	$node->poll_query_until('postgres', q{SELECT (SELECT count(*) FROM pg_stat_activity WHERE query ~ '^select pg_sleep') > 0;})
 	  or die "timed out";
 
 	# Send cancel request
