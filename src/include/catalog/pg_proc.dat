@@ -5953,7 +5953,7 @@
   proname => 'timestamp_larger', prorettype => 'timestamp',
   proargtypes => 'timestamp timestamp', prosrc => 'timestamp_larger' },
 { oid => '2037', descr => 'adjust time with time zone to new zone',
-  proname => 'timezone', provolatile => 'v', prorettype => 'timetz',
+  proname => 'timezone', provolatile => 's', prorettype => 'timetz',
   proargtypes => 'text timetz', prosrc => 'timetz_zone' },
 { oid => '2038', descr => 'adjust time with time zone to new zone',
   proname => 'timezone', prorettype => 'timetz',
