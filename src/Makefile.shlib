@@ -409,7 +409,7 @@ endif # PORTNAME == cygwin || PORTNAME == win32
 # those that point inside the build or source tree.  Use sort to
 # remove duplicates.  Also record the -l flags necessary for static
 # linking, but not those already covered by Requires.private.
-	echo 'Libs.private: $(sort $(filter-out -L.% -L$(top_srcdir)/%,$(filter -L%,$(LDFLAGS) $(SHLIB_LINK)))) $(filter-out $(PKG_CONFIG_REQUIRES_PRIVATE:lib%=-l%),$(filter -l%,$(SHLIB_LINK)))' >>$@
+	echo 'Libs.private: $(sort $(filter-out -L.% -L$(top_srcdir)/%,$(filter -L%,$(LDFLAGS) $(SHLIB_LINK)))) $(filter-out $(PKG_CONFIG_REQUIRES_PRIVATE:lib%=-l%),$(filter -l%,$(SHLIB_LINK_INTERNAL:%_shlib=%) $(SHLIB_LINK)))' >>$@
 
 
 # We need several not-quite-identical variants of .DEF files to build
