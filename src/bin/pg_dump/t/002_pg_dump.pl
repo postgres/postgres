@@ -10,7 +10,6 @@ use TestLib;
 use Test::More;
 
 my $tempdir       = TestLib::tempdir;
-my $tempdir_short = TestLib::tempdir_short;
 
 ###############################################################
 # Definition of the pg_dump runs to make.

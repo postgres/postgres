@@ -9,7 +9,6 @@ use TestLib;
 use Test::More tests => 3;
 
 my $tempdir       = TestLib::tempdir;
-my $tempdir_short = TestLib::tempdir_short;
 
 my $node = PostgresNode->new('main');
 my $port = $node->port;

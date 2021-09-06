@@ -10,7 +10,6 @@ use TestLib;
 use Test::More tests => 82;
 
 my $tempdir       = TestLib::tempdir;
-my $tempdir_short = TestLib::tempdir_short;
 
 #########################################
 # Basic checks
