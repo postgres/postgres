@@ -75,6 +75,87 @@ RequestAddinShmemSpace(Size size)
 	total_addin_request = add_size(total_addin_request, size);
 }
 
+/*
+ * CalculateShmemSize
+ *		Calculates the amount of shared memory and number of semaphores needed.
+ *
+ * If num_semaphores is not NULL, it will be set to the number of semaphores
+ * required.
+ *
+ * Note that this function freezes the additional shared memory request size
+ * from loadable modules.
+ */
+Size
+CalculateShmemSize(int *num_semaphores)
+{
+	Size		size;
+	int			numSemas;
+
+	/* Compute number of semaphores we'll need */
+	numSemas = ProcGlobalSemas();
+	numSemas += SpinlockSemas();
+
+	/* Return the number of semaphores if requested by the caller */
+	if (num_semaphores)
+		*num_semaphores = numSemas;
+
+	/*
+	 * Size of the Postgres shared-memory block is estimated via moderately-
+	 * accurate estimates for the big hogs, plus 100K for the stuff that's too
+	 * small to bother with estimating.
+	 *
+	 * We take some care to ensure that the total size request doesn't
+	 * overflow size_t.  If this gets through, we don't need to be so careful
+	 * during the actual allocation phase.
+	 */
+	size = 100000;
+	size = add_size(size, PGSemaphoreShmemSize(numSemas));
+	size = add_size(size, SpinlockSemaSize());
+	size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
+											 sizeof(ShmemIndexEnt)));
+	size = add_size(size, dsm_estimate_size());
+	size = add_size(size, BufferShmemSize());
+	size = add_size(size, LockShmemSize());
+	size = add_size(size, PredicateLockShmemSize());
+	size = add_size(size, ProcGlobalShmemSize());
+	size = add_size(size, XLOGShmemSize());
+	size = add_size(size, CLOGShmemSize());
+	size = add_size(size, CommitTsShmemSize());
+	size = add_size(size, SUBTRANSShmemSize());
+	size = add_size(size, TwoPhaseShmemSize());
+	size = add_size(size, BackgroundWorkerShmemSize());
+	size = add_size(size, MultiXactShmemSize());
+	size = add_size(size, LWLockShmemSize());
+	size = add_size(size, ProcArrayShmemSize());
+	size = add_size(size, BackendStatusShmemSize());
+	size = add_size(size, SInvalShmemSize());
+	size = add_size(size, PMSignalShmemSize());
+	size = add_size(size, ProcSignalShmemSize());
+	size = add_size(size, CheckpointerShmemSize());
+	size = add_size(size, AutoVacuumShmemSize());
+	size = add_size(size, ReplicationSlotsShmemSize());
+	size = add_size(size, ReplicationOriginShmemSize());
+	size = add_size(size, WalSndShmemSize());
+	size = add_size(size, WalRcvShmemSize());
+	size = add_size(size, PgArchShmemSize());
+	size = add_size(size, ApplyLauncherShmemSize());
+	size = add_size(size, SnapMgrShmemSize());
+	size = add_size(size, BTreeShmemSize());
+	size = add_size(size, SyncScanShmemSize());
+	size = add_size(size, AsyncShmemSize());
+#ifdef EXEC_BACKEND
+	size = add_size(size, ShmemBackendArraySize());
+#endif
+
+	/* freeze the addin request size and include it */
+	addin_request_allowed = false;
+	size = add_size(size, total_addin_request);
+
+	/* might as well round it off to a multiple of a typical page size */
+	size = add_size(size, 8192 - (size % 8192));
+
+	return size;
+}
 
 /*
  * CreateSharedMemoryAndSemaphores
@@ -102,65 +183,8 @@ CreateSharedMemoryAndSemaphores(void)
 		Size		size;
 		int			numSemas;
 
-		/* Compute number of semaphores we'll need */
-		numSemas = ProcGlobalSemas();
-		numSemas += SpinlockSemas();
-
-		/*
-		 * Size of the Postgres shared-memory block is estimated via
-		 * moderately-accurate estimates for the big hogs, plus 100K for the
-		 * stuff that's too small to bother with estimating.
-		 *
-		 * We take some care during this phase to ensure that the total size
-		 * request doesn't overflow size_t.  If this gets through, we don't
-		 * need to be so careful during the actual allocation phase.
-		 */
-		size = 100000;
-		size = add_size(size, PGSemaphoreShmemSize(numSemas));
-		size = add_size(size, SpinlockSemaSize());
-		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
-												 sizeof(ShmemIndexEnt)));
-		size = add_size(size, dsm_estimate_size());
-		size = add_size(size, BufferShmemSize());
-		size = add_size(size, LockShmemSize());
-		size = add_size(size, PredicateLockShmemSize());
-		size = add_size(size, ProcGlobalShmemSize());
-		size = add_size(size, XLOGShmemSize());
-		size = add_size(size, CLOGShmemSize());
-		size = add_size(size, CommitTsShmemSize());
-		size = add_size(size, SUBTRANSShmemSize());
-		size = add_size(size, TwoPhaseShmemSize());
-		size = add_size(size, BackgroundWorkerShmemSize());
-		size = add_size(size, MultiXactShmemSize());
-		size = add_size(size, LWLockShmemSize());
-		size = add_size(size, ProcArrayShmemSize());
-		size = add_size(size, BackendStatusShmemSize());
-		size = add_size(size, SInvalShmemSize());
-		size = add_size(size, PMSignalShmemSize());
-		size = add_size(size, ProcSignalShmemSize());
-		size = add_size(size, CheckpointerShmemSize());
-		size = add_size(size, AutoVacuumShmemSize());
-		size = add_size(size, ReplicationSlotsShmemSize());
-		size = add_size(size, ReplicationOriginShmemSize());
-		size = add_size(size, WalSndShmemSize());
-		size = add_size(size, WalRcvShmemSize());
-		size = add_size(size, PgArchShmemSize());
-		size = add_size(size, ApplyLauncherShmemSize());
-		size = add_size(size, SnapMgrShmemSize());
-		size = add_size(size, BTreeShmemSize());
-		size = add_size(size, SyncScanShmemSize());
-		size = add_size(size, AsyncShmemSize());
-#ifdef EXEC_BACKEND
-		size = add_size(size, ShmemBackendArraySize());
-#endif
-
-		/* freeze the addin request size and include it */
-		addin_request_allowed = false;
-		size = add_size(size, total_addin_request);
-
-		/* might as well round it off to a multiple of a typical page size */
-		size = add_size(size, 8192 - (size % 8192));
-
+		/* Compute the size of the shared-memory block */
+		size = CalculateShmemSize(&numSemas);
 		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
 
 		/*
