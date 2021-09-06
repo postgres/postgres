@@ -3073,6 +3073,8 @@ timetz_zone(PG_FUNCTION_ARGS)
 		struct pg_tm *tm;
 
 		tm = pg_localtime(&now, tzp);
+		tm->tm_year += 1900;	/* adjust to PG conventions */
+		tm->tm_mon += 1;
 		tz = DetermineTimeZoneAbbrevOffset(tm, tzname, tzp);
 	}
 	else
