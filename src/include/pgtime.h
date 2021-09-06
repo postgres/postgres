@@ -22,14 +22,21 @@
 
 typedef int64 pg_time_t;
 
+/*
+ * CAUTION: the IANA timezone library (src/timezone/) follows the POSIX
+ * convention that tm_mon counts from 0 and tm_year is relative to 1900.
+ * However, Postgres' datetime functions generally treat tm_mon as counting
+ * from 1 and tm_year as relative to 1 BC.  Be sure to make the appropriate
+ * adjustments when moving from one code domain to the other.
+ */
 struct pg_tm
 {
 	int			tm_sec;
 	int			tm_min;
 	int			tm_hour;
 	int			tm_mday;
-	int			tm_mon;			/* origin 1, not 0! */
-	int			tm_year;		/* relative to 1900 */
+	int			tm_mon;			/* see above */
+	int			tm_year;		/* see above */
 	int			tm_wday;
 	int			tm_yday;
 	int			tm_isdst;
