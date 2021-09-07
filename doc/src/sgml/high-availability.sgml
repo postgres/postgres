@@ -1093,7 +1093,7 @@ primary_slot_name = 'node_a_slot'
    </para>
 
    <para>
-    Read only transactions and transaction rollbacks need not wait for
+    Read-only transactions and transaction rollbacks need not wait for
     replies from standby servers. Subtransaction commits do not wait for
     responses from standby servers, only top-level commits. Long
     running actions such as data loading or index building do not wait
@@ -1962,7 +1962,7 @@ LOG:  entering standby mode
 ... then some time later ...
 
 LOG:  consistent recovery state reached
-LOG:  database system is ready to accept read only connections
+LOG:  database system is ready to accept read-only connections
 </programlisting>
 
     Consistency information is recorded once per checkpoint on the primary.
@@ -2191,7 +2191,7 @@ HINT:  You can then restart the server after making the necessary configuration 
    </para>
 
    <para>
-    Currently, temporary table creation is not allowed during read only
+    Currently, temporary table creation is not allowed during read-only
     transactions, so in some cases existing scripts will not run correctly.
     This restriction might be relaxed in a later release. This is
     both an SQL Standard compliance issue and a technical issue.
@@ -2290,7 +2290,7 @@ HINT:  You can then restart the server after making the necessary configuration 
     <para>
      Full knowledge of running transactions is required before snapshots
      can be taken. Transactions that use large numbers of subtransactions
-     (currently greater than 64) will delay the start of read only
+     (currently greater than 64) will delay the start of read-only
      connections until the completion of the longest running write transaction.
      If this situation occurs, explanatory messages will be sent to the server log.
     </para>
