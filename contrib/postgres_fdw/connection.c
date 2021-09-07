@@ -353,10 +353,11 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		/*
 		 * Construct connection params from generic options of ForeignServer
 		 * and UserMapping.  (Some of them might not be libpq options, in
-		 * which case we'll just waste a few array slots.)  Add 3 extra slots
-		 * for fallback_application_name, client_encoding, end marker.
+		 * which case we'll just waste a few array slots.)  Add 4 extra slots
+		 * for application_name, fallback_application_name, client_encoding,
+		 * end marker.
 		 */
-		n = list_length(server->options) + list_length(user->options) + 3;
+		n = list_length(server->options) + list_length(user->options) + 4;
 		keywords = (const char **) palloc(n * sizeof(char *));
 		values = (const char **) palloc(n * sizeof(char *));
 
@@ -366,7 +367,23 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		n += ExtractConnectionOptions(user->options,
 									  keywords + n, values + n);
 
-		/* Use "postgres_fdw" as fallback_application_name. */
+		/*
+		 * Use pgfdw_application_name as application_name if set.
+		 *
+		 * PQconnectdbParams() processes the parameter arrays from start to
+		 * end. If any key word is repeated, the last value is used. Therefore
+		 * note that pgfdw_application_name must be added to the arrays after
+		 * options of ForeignServer are, so that it can override
+		 * application_name set in ForeignServer.
+		 */
+		if (pgfdw_application_name && *pgfdw_application_name != '\0')
+		{
+			keywords[n] = "application_name";
+			values[n] = pgfdw_application_name;
+			n++;
+		}
+
+		/* Use "postgres_fdw" as fallback_application_name */
 		keywords[n] = "fallback_application_name";
 		values[n] = "postgres_fdw";
 		n++;

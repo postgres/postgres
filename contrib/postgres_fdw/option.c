@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * option.c
- *		  FDW option handling for postgres_fdw
+ *		  FDW and GUC option handling for postgres_fdw
  *
  * Portions Copyright (c) 2012-2021, PostgreSQL Global Development Group
  *
@@ -44,6 +44,13 @@ static PgFdwOption *postgres_fdw_options;
  * Allocated and filled in InitPgFdwOptions.
  */
 static PQconninfoOption *libpq_options;
+
+/*
+ * GUC parameters
+ */
+char	   *pgfdw_application_name = NULL;
+
+void		_PG_init(void);
 
 /*
  * Helper functions
@@ -434,4 +441,30 @@ ExtractExtensionList(const char *extensionsString, bool warnOnMissing)
 
 	list_free(extlist);
 	return extensionOids;
+}
+
+/*
+ * Module load callback
+ */
+void
+_PG_init(void)
+{
+	/*
+	 * Unlike application_name GUC, don't set GUC_IS_NAME flag nor check_hook
+	 * to allow postgres_fdw.application_name to be any string more than
+	 * NAMEDATALEN characters and to include non-ASCII characters. Instead,
+	 * remote server truncates application_name of remote connection to less
+	 * than NAMEDATALEN and replaces any non-ASCII characters in it with a '?'
+	 * character.
+	 */
+	DefineCustomStringVariable("postgres_fdw.application_name",
+							   "Sets the application name to be used on the remote server.",
+							   NULL,
+							   &pgfdw_application_name,
+							   NULL,
+							   PGC_USERSET,
+							   0,
+							   NULL,
+							   NULL,
+							   NULL);
 }

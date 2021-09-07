@@ -906,6 +906,31 @@ postgres=# SELECT postgres_fdw_disconnect_all();
  </sect2>
 
  <sect2>
+  <title>Configuration Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <varname>postgres_fdw.application_name</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>postgres_fdw.application_name</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a value for <xref linkend="guc-application-name"/>
+      configuration parameter used when <filename>postgres_fdw</filename>
+      establishes a connection to a foreign server.  This overrides
+      <varname>application_name</varname> option of the server object.
+      Note that change of this parameter doesn't affect any existing
+      connections until they are re-established.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2>
   <title>Examples</title>
 
   <para>
