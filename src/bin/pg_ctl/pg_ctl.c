@@ -1738,6 +1738,31 @@ typedef BOOL (WINAPI * __AssignProcessToJobObject) (HANDLE, HANDLE);
 typedef BOOL (WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
 
 /*
+ * Set up STARTUPINFO for the new process to inherit this process' handles.
+ *
+ * Process started as services appear to have "empty" handles (GetStdHandle()
+ * returns NULL) rather than invalid ones. But passing down NULL ourselves
+ * doesn't work, it's interpreted as STARTUPINFO->hStd* not being set. But we
+ * can pass down INVALID_HANDLE_VALUE - which makes GetStdHandle() in the new
+ * process (and its child processes!) return INVALID_HANDLE_VALUE. Which
+ * achieves the goal of postmaster running in a similar environment as pg_ctl.
+ */
+static void
+InheritStdHandles(STARTUPINFO* si)
+{
+	si->dwFlags |= STARTF_USESTDHANDLES;
+	si->hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+	if (si->hStdInput == NULL)
+		si->hStdInput = INVALID_HANDLE_VALUE;
+	si->hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (si->hStdOutput == NULL)
+		si->hStdOutput = INVALID_HANDLE_VALUE;
+	si->hStdError = GetStdHandle(STD_ERROR_HANDLE);
+	if (si->hStdError == NULL)
+		si->hStdError = INVALID_HANDLE_VALUE;
+}
+
+/*
  * Create a restricted token, a job object sandbox, and execute the specified
  * process with it.
  *
@@ -1773,6 +1798,14 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
+
+	/*
+	 * Set stdin/stdout/stderr handles to be inherited in the child
+	 * process. That allows postmaster and the processes it starts to perform
+	 * additional checks to see if running in a service (otherwise they get
+	 * the default console handles - which point to "somewhere").
+	 */
+	InheritStdHandles(&si);
 
 	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
 	if (Advapi32Handle != NULL)

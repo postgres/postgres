@@ -95,8 +95,11 @@ pgwin32_is_admin(void)
  * We consider ourselves running as a service if one of the following is
  * true:
  *
- * 1) We are running as LocalSystem (only used by services)
- * 2) Our token contains SECURITY_SERVICE_RID (automatically added to the
+ * 1) Standard error is not valid (always the case for services, and pg_ctl
+ *	  running as a service "passes" that down to postgres,
+ *	  c.f. CreateRestrictedProcess())
+ * 2) We are running as LocalSystem (only used by services)
+ * 3) Our token contains SECURITY_SERVICE_RID (automatically added to the
  *	  process token by the SCM when starting a service)
  *
  * The check for LocalSystem is needed, because surprisingly, if a service
@@ -121,12 +124,21 @@ pgwin32_is_service(void)
 	PSID		ServiceSid;
 	PSID		LocalSystemSid;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+	HANDLE		stderr_handle;
 
 	/* Only check the first time */
 	if (_is_service != -1)
 		return _is_service;
 
-	/* First check for LocalSystem */
+	/* Check if standard error is not valid */
+	stderr_handle = GetStdHandle(STD_ERROR_HANDLE);
+	if (stderr_handle != INVALID_HANDLE_VALUE && stderr_handle != NULL)
+	{
+		_is_service = 0;
+		return _is_service;
+	}
+
+	/* Check if running as LocalSystem */
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
 								  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &LocalSystemSid))
