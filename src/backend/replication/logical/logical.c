@@ -1565,6 +1565,7 @@ LogicalIncreaseXminForSlot(XLogRecPtr current_lsn, TransactionId xmin)
 {
 	bool		updated_xmin = false;
 	ReplicationSlot *slot;
+	bool		got_new_xmin = false;
 
 	slot = MyReplicationSlot;
 
@@ -1602,8 +1603,18 @@ LogicalIncreaseXminForSlot(XLogRecPtr current_lsn, TransactionId xmin)
 	{
 		slot->candidate_catalog_xmin = xmin;
 		slot->candidate_xmin_lsn = current_lsn;
+
+		/*
+		 * Log new xmin at an appropriate log level after releasing the
+		 * spinlock.
+		 */
+		got_new_xmin = true;
 	}
 	SpinLockRelease(&slot->mutex);
+
+	if (got_new_xmin)
+		elog(DEBUG1, "got new catalog xmin %u at %X/%X", xmin,
+			 LSN_FORMAT_ARGS(current_lsn));
 
 	/* candidate already valid with the current flush position, apply */
 	if (updated_xmin)
