@@ -265,8 +265,9 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	{
 		/*
 		 * Direct modifications cannot be re-evaluated by EvalPlanQual, so
-		 * don't bother preparing the FDW.  There can ForeignScan nodes in the
-		 * EvalPlanQual subtree, but ExecForeignScan should never be called.
+		 * don't bother preparing the FDW.  There can be ForeignScan nodes in
+		 * the EvalPlanQual subtree, but ExecForeignScan should never be
+		 * called on them when EvalPlanQual is active.
 		 */
 		if (estate->es_epq_active == NULL)
 			fdwroutine->BeginDirectModify(scanstate, eflags);
