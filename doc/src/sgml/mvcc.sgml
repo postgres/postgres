@@ -526,7 +526,7 @@ ERROR:  could not serialize access due to concurrent update
     transaction sees a completely stable view of the database.  However,
     this view will not necessarily always be consistent with some serial
     (one at a time) execution of concurrent transactions of the same level.
-    For example, even a read only transaction at this level may see a
+    For example, even a read-only transaction at this level may see a
     control record updated to show that a batch has been completed but
     <emphasis>not</emphasis> see one of the detail records which is logically
     part of the batch because it read an earlier revision of the control

@@ -9600,7 +9600,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   The <structname>pg_available_extensions</structname> view is read only.
+   The <structname>pg_available_extensions</structname> view is read-only.
   </para>
  </sect1>
 
@@ -9724,8 +9724,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   The <structname>pg_available_extension_versions</structname> view is read
-   only.
+   The <structname>pg_available_extension_versions</structname> view is
+   read-only.
   </para>
  </sect1>
 
@@ -10040,7 +10040,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   The <structname>pg_cursors</structname> view is read only.
+   The <structname>pg_cursors</structname> view is read-only.
   </para>
 
  </sect1>
@@ -11162,7 +11162,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </table>
 
   <para>
-   The <structname>pg_prepared_statements</structname> view is read only.
+   The <structname>pg_prepared_statements</structname> view is read-only.
   </para>
  </sect1>
 
