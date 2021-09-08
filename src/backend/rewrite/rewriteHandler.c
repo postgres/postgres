@@ -535,6 +535,9 @@ rewriteRuleAction(Query *parsetree,
 		 *
 		 * This could possibly be fixed by using some sort of internally
 		 * generated ID, instead of names, to link CTE RTEs to their CTEs.
+		 * However, decompiling the results would be quite confusing; note the
+		 * merge of hasRecursive flags below, which could change the apparent
+		 * semantics of such redundantly-named CTEs.
 		 */
 		foreach(lc, parsetree->cteList)
 		{
@@ -556,6 +559,26 @@ rewriteRuleAction(Query *parsetree,
 		/* OK, it's safe to combine the CTE lists */
 		sub_action->cteList = list_concat(sub_action->cteList,
 										  copyObject(parsetree->cteList));
+		/* ... and don't forget about the associated flags */
+		sub_action->hasRecursive |= parsetree->hasRecursive;
+		sub_action->hasModifyingCTE |= parsetree->hasModifyingCTE;
+
+		/*
+		 * If rule_action is different from sub_action (i.e., the rule action
+		 * is an INSERT...SELECT), then we might have just added some
+		 * data-modifying CTEs that are not at the top query level.  This is
+		 * disallowed by the parser and we mustn't generate such trees here
+		 * either, so throw an error.
+		 *
+		 * Conceivably such cases could be supported by attaching the original
+		 * query's CTEs to rule_action not sub_action.  But to do that, we'd
+		 * have to increment ctelevelsup in RTEs and SubLinks copied from the
+		 * original query.  For now, it doesn't seem worth the trouble.
+		 */
+		if (sub_action->hasModifyingCTE && rule_action != sub_action)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("INSERT...SELECT rule actions are not supported for queries having data-modifying statements in WITH")));
 	}
 
 	/*
