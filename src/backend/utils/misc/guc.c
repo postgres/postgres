@@ -664,6 +664,7 @@ static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
 static int	segment_size;
+static int	shared_memory_size_mb;
 static int	wal_block_size;
 static bool data_checksums;
 static bool integer_datetimes;
@@ -2334,6 +2335,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&NBuffers,
 		16384, 16, INT_MAX / 2,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"shared_memory_size", PGC_INTERNAL, RESOURCES_MEM,
+			gettext_noop("Shows the size of the server's main shared memory area (rounded up to the nearest MB)."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_UNIT_MB
+		},
+		&shared_memory_size_mb,
+		0, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 

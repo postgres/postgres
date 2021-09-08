@@ -313,3 +313,25 @@ CreateSharedMemoryAndSemaphores(void)
 	if (shmem_startup_hook)
 		shmem_startup_hook();
 }
+
+/*
+ * InitializeShmemGUCs
+ *
+ * This function initializes runtime-computed GUCs related to the amount of
+ * shared memory required for the current configuration.
+ */
+void
+InitializeShmemGUCs(void)
+{
+	char		buf[64];
+	Size		size_b;
+	Size		size_mb;
+
+	/*
+	 * Calculate the shared memory size and round up to the nearest megabyte.
+	 */
+	size_b = CalculateShmemSize(NULL);
+	size_mb = add_size(size_b, (1024 * 1024) - 1) / (1024 * 1024);
+	sprintf(buf, "%lu", size_mb);
+	SetConfigOption("shared_memory_size", buf, PGC_INTERNAL, PGC_S_OVERRIDE);
+}

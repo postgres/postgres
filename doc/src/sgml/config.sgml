@@ -10275,6 +10275,20 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-shared-memory-size" xreflabel="shared_memory_size">
+      <term><varname>shared_memory_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>shared_memory_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the size of the main shared memory area, rounded up to the
+        nearest megabyte.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ssl-library" xreflabel="ssl_library">
       <term><varname>ssl_library</varname> (<type>string</type>)
       <indexterm>

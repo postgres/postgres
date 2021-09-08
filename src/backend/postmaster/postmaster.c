@@ -1027,6 +1027,13 @@ PostmasterMain(int argc, char *argv[])
 	InitializeMaxBackends();
 
 	/*
+	 * Now that loadable modules have had their chance to request additional
+	 * shared memory, determine the value of any runtime-computed GUCs that
+	 * depend on the amount of shared memory required.
+	 */
+	InitializeShmemGUCs();
+
+	/*
 	 * Set up shared memory and semaphores.
 	 */
 	reset_shared();
