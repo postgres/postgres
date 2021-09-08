@@ -176,7 +176,7 @@ restart_insert:
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 			/* chain to a new overflow page */
-			buf = _hash_addovflpage(rel, metabuf, buf, (buf == bucket_buf) ? true : false);
+			buf = _hash_addovflpage(rel, metabuf, buf, (buf == bucket_buf));
 			page = BufferGetPage(buf);
 
 			/* should fit now, given test above */

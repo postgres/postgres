@@ -137,7 +137,7 @@ ltree_same(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(result);
 
 	if (LTG_ISONENODE(a))
-		*result = (ISEQ(LTG_NODE(a), LTG_NODE(b))) ? true : false;
+		*result = ISEQ(LTG_NODE(a), LTG_NODE(b));
 	else
 	{
 		int32		i;

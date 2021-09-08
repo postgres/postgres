@@ -100,7 +100,7 @@ initGinState(GinState *state, Relation index)
 	MemSet(state, 0, sizeof(GinState));
 
 	state->index = index;
-	state->oneCol = (origTupdesc->natts == 1) ? true : false;
+	state->oneCol = (origTupdesc->natts == 1);
 	state->origTupdesc = origTupdesc;
 
 	for (i = 0; i < origTupdesc->natts; i++)

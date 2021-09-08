@@ -186,7 +186,7 @@ QTNEq(QTNode *a, QTNode *b)
 	if (!(sign == a->sign && sign == b->sign))
 		return false;
 
-	return (QTNodeCompare(a, b) == 0) ? true : false;
+	return (QTNodeCompare(a, b) == 0);
 }
 
 /*

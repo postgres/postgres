@@ -336,7 +336,7 @@ BufFileOpenFileSet(FileSet *fileset, const char *name, int mode,
 
 	file = makeBufFileCommon(nfiles);
 	file->files = files;
-	file->readOnly = (mode == O_RDONLY) ? true : false;
+	file->readOnly = (mode == O_RDONLY);
 	file->fileset = fileset;
 	file->name = pstrdup(name);
 

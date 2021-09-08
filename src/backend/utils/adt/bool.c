@@ -184,7 +184,7 @@ boolrecv(PG_FUNCTION_ARGS)
 	int			ext;
 
 	ext = pq_getmsgbyte(buf);
-	PG_RETURN_BOOL((ext != 0) ? true : false);
+	PG_RETURN_BOOL(ext != 0);
 }
 
 /*

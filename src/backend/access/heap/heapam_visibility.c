@@ -1475,7 +1475,7 @@ HeapTupleIsSurelyDead(HeapTuple htup, GlobalVisState *vistest)
 	 * all relevant hint bits were just set moments ago).
 	 */
 	if (!HeapTupleHeaderXminCommitted(tuple))
-		return HeapTupleHeaderXminInvalid(tuple) ? true : false;
+		return HeapTupleHeaderXminInvalid(tuple);
 
 	/*
 	 * If the inserting transaction committed, but any deleting transaction

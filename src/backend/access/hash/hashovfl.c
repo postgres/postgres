@@ -953,7 +953,7 @@ readpage:
 						xl_hash_move_page_contents xlrec;
 
 						xlrec.ntups = nitups;
-						xlrec.is_prim_bucket_same_wrt = (wbuf == bucket_buf) ? true : false;
+						xlrec.is_prim_bucket_same_wrt = (wbuf == bucket_buf);
 
 						XLogBeginInsert();
 						XLogRegisterData((char *) &xlrec, SizeOfHashMovePageContents);

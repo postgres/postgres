@@ -1772,7 +1772,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			for (i = 0; i < mcvlist->nitems; i++)
 			{
 				int			j;
-				bool		match = (expr->useOr ? false : true);
+				bool		match = !expr->useOr;
 				MCVItem    *item = &mcvlist->items[i];
 
 				/*

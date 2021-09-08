@@ -303,9 +303,9 @@ supportSecondarySplit(Relation r, GISTSTATE *giststate, int attno,
 		penalty2 = gistpenalty(giststate, attno, entry1, false, &entrySR, false);
 
 		if (penalty1 < penalty2)
-			leaveOnLeft = (sv->spl_ldatum_exists) ? true : false;
+			leaveOnLeft = sv->spl_ldatum_exists;
 		else
-			leaveOnLeft = (sv->spl_rdatum_exists) ? true : false;
+			leaveOnLeft = sv->spl_rdatum_exists;
 	}
 
 	if (leaveOnLeft == false)

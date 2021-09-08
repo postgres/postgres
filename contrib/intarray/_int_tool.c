@@ -41,7 +41,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 			break;				/* db[j] is not in da */
 	}
 
-	return (n == nb) ? true : false;
+	return (n == nb);
 }
 
 /* arguments are assumed sorted */

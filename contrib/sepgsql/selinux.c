@@ -615,7 +615,7 @@ static int	sepgsql_mode = SEPGSQL_MODE_INTERNAL;
 bool
 sepgsql_is_enabled(void)
 {
-	return (sepgsql_mode != SEPGSQL_MODE_DISABLED ? true : false);
+	return (sepgsql_mode != SEPGSQL_MODE_DISABLED);
 }
 
 /*

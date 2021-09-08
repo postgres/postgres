@@ -458,7 +458,7 @@ file_exists(const char *name)
 	AssertArg(name != NULL);
 
 	if (stat(name, &st) == 0)
-		return S_ISDIR(st.st_mode) ? false : true;
+		return !S_ISDIR(st.st_mode);
 	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
 		ereport(ERROR,
 				(errcode_for_file_access(),

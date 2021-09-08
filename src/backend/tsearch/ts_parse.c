@@ -288,7 +288,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 				}
 			}
 
-			ld->dictState.isend = (curVal->type == 0) ? true : false;
+			ld->dictState.isend = (curVal->type == 0);
 			ld->dictState.getnext = false;
 
 			res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),

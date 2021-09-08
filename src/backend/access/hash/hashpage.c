@@ -1195,7 +1195,7 @@ _hash_splitbucket(Relation rel,
 					all_tups_size = 0;
 
 					/* chain to a new overflow page */
-					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf) ? true : false);
+					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf));
 					npage = BufferGetPage(nbuf);
 					nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 				}
