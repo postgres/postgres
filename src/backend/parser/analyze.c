@@ -1852,9 +1852,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 /*
  * Make a SortGroupClause node for a SetOperationStmt's groupClauses
+ *
+ * If require_hash is true, the caller is indicating that they need hash
+ * support or they will fail.  So look extra hard for hash support.
  */
 SortGroupClause *
-makeSortGroupClauseForSetOp(Oid rescoltype)
+makeSortGroupClauseForSetOp(Oid rescoltype, bool require_hash)
 {
 	SortGroupClause *grpcl = makeNode(SortGroupClause);
 	Oid			sortop;
@@ -1866,6 +1869,15 @@ makeSortGroupClauseForSetOp(Oid rescoltype)
 							 false, true, false,
 							 &sortop, &eqop, NULL,
 							 &hashable);
+
+	/*
+	 * The type cache doesn't believe that record is hashable (see
+	 * cache_record_field_properties()), but if the caller really needs hash
+	 * support, we can assume it does.  Worst case, if any components of the
+	 * record don't support hashing, we will fail at execution.
+	 */
+	if (require_hash && (rescoltype == RECORDOID || rescoltype == RECORDARRAYOID))
+		hashable = true;
 
 	/* we don't have a tlist yet, so can't assign sortgrouprefs */
 	grpcl->tleSortGroupRef = 0;
@@ -2027,6 +2039,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		ListCell   *ltl;
 		ListCell   *rtl;
 		const char *context;
+		bool recursive = (pstate->p_parent_cte &&
+						  pstate->p_parent_cte->cterecursive);
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
 				   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
@@ -2048,9 +2062,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 * containing CTE as having those result columns.  We should do this
 		 * only at the topmost setop of the CTE, of course.
 		 */
-		if (isTopLevel &&
-			pstate->p_parent_cte &&
-			pstate->p_parent_cte->cterecursive)
+		if (isTopLevel && recursive)
 			determineRecursiveColTypes(pstate, op->larg, ltargetlist);
 
 		/*
@@ -2182,8 +2194,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				setup_parser_errposition_callback(&pcbstate, pstate,
 												  bestlocation);
 
+				/* If it's a recursive union, we need to require hashing support. */
 				op->groupClauses = lappend(op->groupClauses,
-										   makeSortGroupClauseForSetOp(rescoltype));
+										   makeSortGroupClauseForSetOp(rescoltype, recursive));
 
 				cancel_parser_errposition_callback(&pcbstate);
 			}

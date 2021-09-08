@@ -218,8 +218,8 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (value
 
 -- non-hashable type
 
--- With an anonymous row type, the typcache reports that the type is
--- hashable, but then it will fail at run time.
+-- With an anonymous row type, the typcache does not report that the
+-- type is hashable.  (Otherwise, this would fail at execution time.)
 explain (costs off)
 select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);
 select x from (values (row(100::money)), (row(200::money))) _(x) union select x from (values (row(100::money)), (row(300::money))) _(x);

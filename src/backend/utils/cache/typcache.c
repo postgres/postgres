@@ -1515,14 +1515,17 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 	/*
 	 * For type RECORD, we can't really tell what will work, since we don't
 	 * have access here to the specific anonymous type.  Just assume that
-	 * everything will (we may get a failure at runtime ...)
+	 * equality and comparison will (we may get a failure at runtime).  We
+	 * could also claim that hashing works, but then if code that has the
+	 * option between a comparison-based (sort-based) and a hash-based plan
+	 * chooses hashing, stuff could fail that would otherwise work if it chose
+	 * a comparison-based plan.  In practice more types support comparison
+	 * than hashing.
 	 */
 	if (typentry->type_id == RECORDOID)
 	{
 		typentry->flags |= (TCFLAGS_HAVE_FIELD_EQUALITY |
-							TCFLAGS_HAVE_FIELD_COMPARE |
-							TCFLAGS_HAVE_FIELD_HASHING |
-							TCFLAGS_HAVE_FIELD_EXTENDED_HASHING);
+							TCFLAGS_HAVE_FIELD_COMPARE);
 	}
 	else if (typentry->typtype == TYPTYPE_COMPOSITE)
 	{
