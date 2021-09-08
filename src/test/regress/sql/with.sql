@@ -765,13 +765,38 @@ CREATE TEMP TABLE bug6051_2 (i int);
 
 CREATE RULE bug6051_ins AS ON INSERT TO bug6051 DO INSTEAD
  INSERT INTO bug6051_2
- SELECT NEW.i;
+ VALUES(NEW.i);
 
 WITH t1 AS ( DELETE FROM bug6051 RETURNING * )
 INSERT INTO bug6051 SELECT * FROM t1;
 
 SELECT * FROM bug6051;
 SELECT * FROM bug6051_2;
+
+-- check INSERT...SELECT rule actions are disallowed on commands
+-- that have modifyingCTEs
+CREATE OR REPLACE RULE bug6051_ins AS ON INSERT TO bug6051 DO INSTEAD
+ INSERT INTO bug6051_2
+ SELECT NEW.i;
+
+WITH t1 AS ( DELETE FROM bug6051 RETURNING * )
+INSERT INTO bug6051 SELECT * FROM t1;
+
+-- silly example to verify that hasModifyingCTE flag is propagated
+CREATE TEMP TABLE bug6051_3 AS
+  SELECT a FROM generate_series(11,13) AS a;
+
+CREATE RULE bug6051_3_ins AS ON INSERT TO bug6051_3 DO INSTEAD
+  SELECT i FROM bug6051_2;
+
+BEGIN; SET LOCAL force_parallel_mode = on;
+
+WITH t1 AS ( DELETE FROM bug6051_3 RETURNING * )
+  INSERT INTO bug6051_3 SELECT * FROM t1;
+
+COMMIT;
+
+SELECT * FROM bug6051_3;
 
 -- a truly recursive CTE in the same list
 WITH RECURSIVE t(a) AS (
