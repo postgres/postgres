@@ -4922,7 +4922,7 @@ setPath(JsonbIterator **it, Datum *path_elems,
 		case WJB_BEGIN_ARRAY:
 
 			/*
-			 * If instructed complain about attempts to replace whithin a raw
+			 * If instructed complain about attempts to replace within a raw
 			 * scalar value. This happens even when current level is equal to
 			 * path_len, because the last path key should also correspond to
 			 * an object or an array, not raw scalar.
@@ -4954,7 +4954,7 @@ setPath(JsonbIterator **it, Datum *path_elems,
 		case WJB_VALUE:
 
 			/*
-			 * If instructed complain about attempts to replace whithin a
+			 * If instructed complain about attempts to replace within a
 			 * scalar value. This happens even when current level is equal to
 			 * path_len, because the last path key should also correspond to
 			 * an object or an array, not an element or value.
