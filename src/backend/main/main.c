@@ -192,9 +192,8 @@ main(int argc, char *argv[])
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
-		PostgresMain(argc, argv,
-					 NULL,		/* no dbname */
-					 strdup(get_user_name_or_exit(progname)));
+		PostgresSingleUserMain(argc, argv,
+							   strdup(get_user_name_or_exit(progname)));
 	else
 		PostmasterMain(argc, argv);
 	/* the functions above should not return */

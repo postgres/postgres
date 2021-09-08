@@ -4551,19 +4551,13 @@ BackendInitialize(Port *port)
 static void
 BackendRun(Port *port)
 {
-	char	   *av[2];
-	const int	ac = 1;
-
-	av[0] = "postgres";
-	av[1] = NULL;
-
 	/*
 	 * Make sure we aren't in PostmasterContext anymore.  (We can't delete it
 	 * just yet, though, because InitPostgres will need the HBA data.)
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	PostgresMain(ac, av, port->database_name, port->user_name);
+	PostgresMain(port->database_name, port->user_name);
 }
 
 
