@@ -332,6 +332,6 @@ InitializeShmemGUCs(void)
 	 */
 	size_b = CalculateShmemSize(NULL);
 	size_mb = add_size(size_b, (1024 * 1024) - 1) / (1024 * 1024);
-	sprintf(buf, "%lu", size_mb);
+	sprintf(buf, "%zu", size_mb);
 	SetConfigOption("shared_memory_size", buf, PGC_INTERNAL, PGC_S_OVERRIDE);
 }
