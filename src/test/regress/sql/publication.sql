@@ -60,6 +60,20 @@ CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
 DROP TABLE testpub_tbl3, testpub_tbl3a;
 DROP PUBLICATION testpub3, testpub4;
 
+-- Test cache invalidation FOR ALL TABLES publication
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_tbl4(a int);
+INSERT INTO testpub_tbl4 values(1);
+UPDATE testpub_tbl4 set a = 2;
+CREATE PUBLICATION testpub_foralltables FOR ALL TABLES;
+RESET client_min_messages;
+-- fail missing REPLICA IDENTITY
+UPDATE testpub_tbl4 set a = 3;
+DROP PUBLICATION testpub_foralltables;
+-- should pass after dropping the publication
+UPDATE testpub_tbl4 set a = 3;
+DROP TABLE testpub_tbl4;
+
 -- fail - view
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;

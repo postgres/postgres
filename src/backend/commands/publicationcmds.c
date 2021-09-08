@@ -227,6 +227,11 @@ CreatePublication(CreatePublicationStmt *stmt)
 		PublicationAddTables(puboid, rels, true, NULL);
 		CloseTableList(rels);
 	}
+	else if (stmt->for_all_tables)
+	{
+		/* Invalidate relcache so that publication info is rebuilt. */
+		CacheInvalidateRelcacheAll();
+	}
 
 	table_close(rel, RowExclusiveLock);
 
@@ -440,13 +445,14 @@ AlterPublication(AlterPublicationStmt *stmt)
 }
 
 /*
- * Drop publication by OID
+ * Remove the publication by mapping OID.
  */
 void
 RemovePublicationById(Oid pubid)
 {
 	Relation	rel;
 	HeapTuple	tup;
+	Form_pg_publication pubform;
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
@@ -454,6 +460,12 @@ RemovePublicationById(Oid pubid)
 
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for publication %u", pubid);
+
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
+	/* Invalidate relcache so that publication info is rebuilt. */
+	if (pubform->puballtables)
+		CacheInvalidateRelcacheAll();
 
 	CatalogTupleDelete(rel, &tup->t_self);
 
