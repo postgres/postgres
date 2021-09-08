@@ -361,13 +361,13 @@ typedef struct
 #define VARDATA_ANY(PTR) \
 	 (VARATT_IS_1B(PTR) ? VARDATA_1B(PTR) : VARDATA_4B(PTR))
 
-/* Decompressed size and compression method of an external compressed Datum */
+/* Decompressed size and compression method of a compressed-in-line Datum */
 #define VARDATA_COMPRESSED_GET_EXTSIZE(PTR) \
 	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo & VARLENA_EXTSIZE_MASK)
 #define VARDATA_COMPRESSED_GET_COMPRESS_METHOD(PTR) \
 	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS)
 
-/* Same, when working directly with a struct varatt_external */
+/* Same for external Datums; but note argument is a struct varatt_external */
 #define VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) \
 	((toast_pointer).va_extinfo & VARLENA_EXTSIZE_MASK)
 #define VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer) \
