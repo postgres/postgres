@@ -242,7 +242,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	Oid			ownerId;
 	Datum		newOptions;
 
-	/* Must be super user */
+	/* Must be superuser */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

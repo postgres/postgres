@@ -33,7 +33,7 @@ DROP CONVERSION mydef;
 -- so there's no need to do that here.
 --
 --
--- return to the super user
+-- return to the superuser
 --
 RESET SESSION AUTHORIZATION;
 DROP USER regress_conversion_user;

@@ -53,7 +53,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	rel = table_open(AccessMethodRelationId, RowExclusiveLock);
 
-	/* Must be super user */
+	/* Must be superuser */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

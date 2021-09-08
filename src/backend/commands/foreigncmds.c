@@ -573,7 +573,7 @@ CreateForeignDataWrapper(ParseState *pstate, CreateFdwStmt *stmt)
 
 	rel = table_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	/* Must be super user */
+	/* Must be superuser */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -690,7 +690,7 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 
 	rel = table_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	/* Must be super user */
+	/* Must be superuser */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
