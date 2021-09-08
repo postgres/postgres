@@ -181,7 +181,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			elog(DEBUG4, "sending SASL challenge of length %u", outputlen);
+			elog(DEBUG4, "sending SASL challenge of length %d", outputlen);
 
 			if (result == PG_SASL_EXCHANGE_SUCCESS)
 				sendAuthRequest(port, AUTH_REQ_SASL_FIN, output, outputlen);

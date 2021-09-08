@@ -1208,7 +1208,7 @@ build_server_first_message(scram_state *state)
 	state->server_nonce[encoded_len] = '\0';
 
 	state->server_first_message =
-		psprintf("r=%s%s,s=%s,i=%u",
+		psprintf("r=%s%s,s=%s,i=%d",
 				 state->client_nonce, state->server_nonce,
 				 state->salt, state->iterations);
 

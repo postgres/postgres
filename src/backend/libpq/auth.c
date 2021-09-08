@@ -1002,8 +1002,8 @@ pg_GSS_recvauth(Port *port)
 		/* gbuf no longer used */
 		pfree(buf.data);
 
-		elog(DEBUG5, "gss_accept_sec_context major: %d, "
-			 "minor: %d, outlen: %u, outflags: %x",
+		elog(DEBUG5, "gss_accept_sec_context major: %u, "
+			 "minor: %u, outlen: %u, outflags: %x",
 			 maj_stat, min_stat,
 			 (unsigned int) port->gss->outbuf.length, gflags);
 
