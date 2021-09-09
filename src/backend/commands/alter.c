@@ -501,7 +501,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 	switch (stmt->objectType)
 	{
 		case OBJECT_EXTENSION:
-			address = AlterExtensionNamespace(strVal((Value *) stmt->object), stmt->newschema,
+			address = AlterExtensionNamespace(strVal(stmt->object), stmt->newschema,
 											  oldSchemaAddr ? &oldNspOid : NULL);
 			break;
 
@@ -837,10 +837,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 	switch (stmt->objectType)
 	{
 		case OBJECT_DATABASE:
-			return AlterDatabaseOwner(strVal((Value *) stmt->object), newowner);
+			return AlterDatabaseOwner(strVal(stmt->object), newowner);
 
 		case OBJECT_SCHEMA:
-			return AlterSchemaOwner(strVal((Value *) stmt->object), newowner);
+			return AlterSchemaOwner(strVal(stmt->object), newowner);
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
@@ -848,23 +848,23 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_FDW:
-			return AlterForeignDataWrapperOwner(strVal((Value *) stmt->object),
+			return AlterForeignDataWrapperOwner(strVal(stmt->object),
 												newowner);
 
 		case OBJECT_FOREIGN_SERVER:
-			return AlterForeignServerOwner(strVal((Value *) stmt->object),
+			return AlterForeignServerOwner(strVal(stmt->object),
 										   newowner);
 
 		case OBJECT_EVENT_TRIGGER:
-			return AlterEventTriggerOwner(strVal((Value *) stmt->object),
+			return AlterEventTriggerOwner(strVal(stmt->object),
 										  newowner);
 
 		case OBJECT_PUBLICATION:
-			return AlterPublicationOwner(strVal((Value *) stmt->object),
+			return AlterPublicationOwner(strVal(stmt->object),
 										 newowner);
 
 		case OBJECT_SUBSCRIPTION:
-			return AlterSubscriptionOwner(strVal((Value *) stmt->object),
+			return AlterSubscriptionOwner(strVal(stmt->object),
 										  newowner);
 
 			/* Generic cases */

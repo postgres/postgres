@@ -52,7 +52,7 @@ CommentObject(CommentStmt *stmt)
 	 */
 	if (stmt->objtype == OBJECT_DATABASE)
 	{
-		char	   *database = strVal((Value *) stmt->object);
+		char	   *database = strVal(stmt->object);
 
 		if (!OidIsValid(get_database_oid(database, true)))
 		{

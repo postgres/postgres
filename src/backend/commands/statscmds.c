@@ -335,7 +335,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	build_mcv = false;
 	foreach(cell, stmt->stat_types)
 	{
-		char	   *type = strVal((Value *) lfirst(cell));
+		char	   *type = strVal(lfirst(cell));
 
 		if (strcmp(type, "ndistinct") == 0)
 		{
