@@ -2029,7 +2029,7 @@ ResolveOpClass(List *opclass, Oid attrType,
 	 */
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opclass, &schemaname, NULL, &opcname, false);
+	DeconstructQualifiedName(opclass, &schemaname, &opcname);
 
 	if (schemaname)
 	{

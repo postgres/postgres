@@ -138,9 +138,11 @@ extern bool TSConfigIsVisible(Oid cfgid);
 
 extern void DeconstructQualifiedName(List *names,
 											char **nspname_p,
+											char **objname_p);
+extern void DeconstructQualifiedNameWithModule(List *names,
+											char **nspname_p,
 											char **modname_p,
-											char **objname_p,
-											bool check_module);
+											char **objname_p);
 extern Oid	LookupNamespaceNoError(const char *nspname);
 extern Oid	LookupExplicitNamespace(const char *nspname, bool missing_ok);
 extern Oid	get_namespace_oid(const char *nspname, Oid nspnamespace, bool missing_ok);

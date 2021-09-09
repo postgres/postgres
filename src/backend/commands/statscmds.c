@@ -645,7 +645,7 @@ AlterStatistics(AlterStatsStmt *stmt)
 
 		Assert(stmt->missing_ok);
 
-		DeconstructQualifiedName(stmt->defnames, &schemaname, NULL, &statname, false);
+		DeconstructQualifiedName(stmt->defnames, &schemaname, &statname);
 
 		if (schemaname)
 			ereport(NOTICE,

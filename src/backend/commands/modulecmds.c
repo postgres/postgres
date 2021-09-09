@@ -171,6 +171,7 @@ CreateModuleCommand(ParseState *pstate, CreateModuleStmt *stmt, const char *quer
 
 		ProcessUtility(wrapper,
 					   queryString,
+					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
 					   NULL,

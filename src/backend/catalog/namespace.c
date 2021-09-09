@@ -965,7 +965,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	Assert(nargs >= 0 || !(expand_variadic | expand_defaults));
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &nspname, &modulename, &funcname, true);
+	DeconstructQualifiedNameWithModule(names, &nspname, &modulename, &funcname);
 
 	if (nspname && modulename)
 	{
@@ -983,7 +983,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		moduleId = InvalidOid;
 		namespaceId = LookupExplicitNamespace(nspname, true);
 		if (!OidIsValid(namespaceId))
-			recomputeNamespacePath();
+			recomputeNamespacePath();		
 	}
 	else
 	{
@@ -1018,7 +1018,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		}
 		else if (OidIsValid(namespaceId))
 		{
-			/* Consider only procs in specified schema */
+			/* Consider only procs in specified schema */			
 			if (procform->pronamespace != namespaceId)
 				continue;
 		}
@@ -1042,6 +1042,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 							break;
 				}
 				else if (procform->pronamespace == lfirst_oid(nsp) &&
+
 					procform->pronamespace != myTempNamespace)
 					break;
 				pathpos++;
@@ -1561,7 +1562,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &opername, false);
+	DeconstructQualifiedName(names, &schemaname, &opername);
 
 	if (schemaname)
 	{
@@ -1668,7 +1669,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 	int			i;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &opername, false);
+	DeconstructQualifiedName(names, &schemaname, &opername);
 
 	if (schemaname)
 	{
@@ -2257,7 +2258,7 @@ get_statistics_object_oid(List *names, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &stats_name, false);
+	DeconstructQualifiedName(names, &schemaname, &stats_name);
 
 	if (schemaname)
 	{
@@ -2312,8 +2313,8 @@ get_module_oid(List *names, bool missing_ok)
 	Oid			moduleId = InvalidOid;
 	ListCell   *l;
 
-	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &modulename, false);
+	/* deconstruct the name list. Treat the module as an object */
+	DeconstructQualifiedName(names, &schemaname, &modulename);
 
 	if (schemaname)
 	{
@@ -2433,7 +2434,7 @@ get_ts_parser_oid(List *names, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &parser_name, false);
+	DeconstructQualifiedName(names, &schemaname, &parser_name);
 
 	if (schemaname)
 	{
@@ -2559,7 +2560,7 @@ get_ts_dict_oid(List *names, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &dict_name, false);
+	DeconstructQualifiedName(names, &schemaname, &dict_name);
 
 	if (schemaname)
 	{
@@ -2686,7 +2687,7 @@ get_ts_template_oid(List *names, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &template_name, false);
+	DeconstructQualifiedName(names, &schemaname, &template_name);
 
 	if (schemaname)
 	{
@@ -2812,7 +2813,7 @@ get_ts_config_oid(List *names, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, NULL, &config_name, false);
+	DeconstructQualifiedName(names, &schemaname, &config_name);
 
 	if (schemaname)
 	{
@@ -2928,17 +2929,66 @@ TSConfigIsVisible(Oid cfgid)
 /*
  * DeconstructQualifiedName
  *		Given a possibly-qualified name expressed as a list of String nodes,
+ *		extract the schema name and object name.
+ *
+ * *nspname_p is set to NULL if there is no explicit schema name.
+ */
+void
+DeconstructQualifiedName(List *names,
+						 char **nspname_p,
+						 char **objname_p)
+{
+	char	   *catalogname;
+	char	   *schemaname = NULL;
+	char	   *objname = NULL;
+
+	switch (list_length(names))
+	{
+		case 1:
+			objname = strVal(linitial(names));
+			break;
+		case 2:
+			schemaname = strVal(linitial(names));
+			objname = strVal(lsecond(names));
+			break;
+		case 3:
+			catalogname = strVal(linitial(names));
+			schemaname = strVal(lsecond(names));
+			objname = strVal(lthird(names));
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cross-database references are not implemented: %s",
+								NameListToString(names))));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("improper qualified name (too many dotted names): %s",
+							NameListToString(names))));
+			break;
+	}
+
+	*nspname_p = schemaname;
+	*objname_p = objname;
+}
+
+/*
+ * DeconstructQualifiedNameWithModule
+ *		Given a possibly-qualified name expressed as a list of String nodes,
  *		extract the schema name, module name and object name.
  *
  * *nspname_p is set to NULL if there is no explicit schema name.
  * *modname_p is set to NULL if there is no explicit module name.
  */
 void
-DeconstructQualifiedName(List *names,
+DeconstructQualifiedNameWithModule(List *names,
 						 char **nspname_p,
 						 char **modname_p,
-						 char **objname_p,
-						 bool check_module)
+						 char **objname_p)
 {
 	char	   *catalogname;
 	char	   *nspname = NULL;
@@ -2955,8 +3005,6 @@ DeconstructQualifiedName(List *names,
 			objname = strVal(lsecond(names));
 			break;
 		case 3:
-			if (check_module)
-			{
 				/*
 				 * Since we don't allow cross-database references, check if the
 				 * first element is the current catalog and if is different assume
@@ -2974,26 +3022,8 @@ DeconstructQualifiedName(List *names,
 				}
 
 				objname = strVal(lthird(names));
-			}
-			else
-			{
-				catalogname = strVal(linitial(names));
-				nspname = strVal(lsecond(names));
-				objname = strVal(lthird(names));
-
-				/*
-				 * We check the catalog name and then ignore it.
-				 */
-				if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cross-database references are not implemented: %s",
-									NameListToString(names))));
-				}
 			break;
 		case 4:
-			if (check_module)
-			{
 				catalogname = strVal(linitial(names));
 				nspname = strVal(lsecond(names));
 				modulename = strVal(lthird(names));
@@ -3007,14 +3037,6 @@ DeconstructQualifiedName(List *names,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cross-database references are not implemented: %s",
 									NameListToString(names))));
-			}
-			else
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("improper qualified name (too many dotted names): %s",
-								NameListToString(names))));
-			}
 			break;
 		default:
 			ereport(ERROR,
@@ -3029,7 +3051,6 @@ DeconstructQualifiedName(List *names,
 		*modname_p = modulename;
 	*objname_p = objname;
 }
-
 /*
  * LookupNamespaceNoError
  *		Look up a schema name.
@@ -3181,7 +3202,10 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p, bool check_modu
 	Oid			namespaceId;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &nspname, &modulename, objname_p, check_module);
+	if (check_module)
+		DeconstructQualifiedName(names, &nspname, objname_p);
+	else
+		DeconstructQualifiedNameWithModule(names, &nspname, &modulename, objname_p);
 
 	if (nspname && modulename)
 	{
@@ -3798,7 +3822,7 @@ get_collation_oid(List *name, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(name, &schemaname, NULL, &collation_name, false);
+	DeconstructQualifiedName(name, &schemaname, &collation_name);
 
 	if (schemaname)
 	{
@@ -3851,7 +3875,7 @@ get_conversion_oid(List *name, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(name, &schemaname, NULL, &conversion_name, false);
+	DeconstructQualifiedName(name, &schemaname, &conversion_name);
 
 	if (schemaname)
 	{

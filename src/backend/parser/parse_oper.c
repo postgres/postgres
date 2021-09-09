@@ -955,7 +955,7 @@ make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
 	char	   *opername;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opname, &schemaname, NULL, &opername, false);
+	DeconstructQualifiedName(opname, &schemaname, &opername);
 
 	/* ensure zero-fill for stable hashing */
 	MemSet(key, 0, sizeof(OprCacheKey));

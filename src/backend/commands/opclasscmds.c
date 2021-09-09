@@ -85,7 +85,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 	HeapTuple	htup;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opfamilyname, &schemaname, NULL, &opfname, false);
+	DeconstructQualifiedName(opfamilyname, &schemaname, &opfname);
 
 	if (schemaname)
 	{
@@ -166,7 +166,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 	HeapTuple	htup;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(opclassname, &schemaname, NULL, &opcname, false);
+	DeconstructQualifiedName(opclassname, &schemaname, &opcname);
 
 	if (schemaname)
 	{
