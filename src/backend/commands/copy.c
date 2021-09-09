@@ -222,9 +222,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				{
 					/*
 					 * Build the ColumnRef for each column.  The ColumnRef
-					 * 'fields' property is a String 'Value' node (see
-					 * nodes/value.h) that corresponds to the column name
-					 * respectively.
+					 * 'fields' property is a String node that corresponds to
+					 * the column name respectively.
 					 */
 					cr = makeNode(ColumnRef);
 					cr->fields = list_make1(lfirst(lc));

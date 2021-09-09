@@ -364,7 +364,7 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 	forboth(lc1, tstate->ns_uris, lc2, tstate->ns_names)
 	{
 		ExprState  *expr = (ExprState *) lfirst(lc1);
-		Value	   *ns_node = (Value *) lfirst(lc2);
+		String	   *ns_node = lfirst_node(String, lc2);
 		char	   *ns_uri;
 		char	   *ns_name;
 

@@ -393,7 +393,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 
 		foreach(lc, cte->search_clause->search_col_list)
 		{
-			Value	   *colname = lfirst(lc);
+			String	   *colname = lfirst_node(String, lc);
 
 			if (!list_member(cte->ctecolnames, colname))
 				ereport(ERROR,
@@ -428,7 +428,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 
 		foreach(lc, cte->cycle_clause->cycle_col_list)
 		{
-			Value	   *colname = lfirst(lc);
+			String	   *colname = lfirst_node(String, lc);
 
 			if (!list_member(cte->ctecolnames, colname))
 				ereport(ERROR,

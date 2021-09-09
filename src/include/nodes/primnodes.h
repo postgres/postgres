@@ -32,7 +32,7 @@
  *	  specifies an alias for a range variable; the alias might also
  *	  specify renaming of columns within the table.
  *
- * Note: colnames is a list of Value nodes (always strings).  In Alias structs
+ * Note: colnames is a list of String nodes.  In Alias structs
  * associated with RTEs, there may be entries corresponding to dropped
  * columns; these are normally empty strings ("").  See parsenodes.h for info.
  */
@@ -76,7 +76,7 @@ typedef struct RangeVar
 /*
  * TableFunc - node for a table function, such as XMLTABLE.
  *
- * Entries in the ns_names list are either string Value nodes containing
+ * Entries in the ns_names list are either String nodes containing
  * literal namespace names, or NULL pointers to represent DEFAULT.
  */
 typedef struct TableFunc
@@ -1227,7 +1227,7 @@ typedef struct XmlExpr
 	XmlExprOp	op;				/* xml function ID */
 	char	   *name;			/* name in xml(NAME foo ...) syntaxes */
 	List	   *named_args;		/* non-XML expressions for xml_attributes */
-	List	   *arg_names;		/* parallel list of Value strings */
+	List	   *arg_names;		/* parallel list of String values */
 	List	   *args;			/* list of expressions */
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Oid			type;			/* target type/typmod for XMLSERIALIZE */

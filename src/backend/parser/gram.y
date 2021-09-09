@@ -166,7 +166,7 @@ static Node *makeIntConst(int val, int location);
 static Node *makeFloatConst(char *str, int location);
 static Node *makeBitStringConst(char *str, int location);
 static Node *makeNullAConst(int location);
-static Node *makeAConst(Value *v, int location);
+static Node *makeAConst(Node *v, int location);
 static Node *makeBoolAConst(bool state, int location);
 static RoleSpec *makeRoleSpec(RoleSpecType type, int location);
 static void check_qualified_name(List *names, core_yyscan_t yyscanner);
@@ -183,7 +183,7 @@ static void insertSelectOptions(SelectStmt *stmt,
 								core_yyscan_t yyscanner);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
-static void doNegateFloat(Value *v);
+static void doNegateFloat(Float *v);
 static Node *makeAndExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeOrExpr(Node *lexpr, Node *rexpr, int location);
 static Node *makeNotExpr(Node *expr, int location);
@@ -228,7 +228,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	OnCommitAction		oncommit;
 	List				*list;
 	Node				*node;
-	Value				*value;
 	ObjectType			objtype;
 	TypeName			*typnam;
 	FunctionParameter   *fun_param;
@@ -351,7 +350,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean> TriggerForSpec TriggerForType
 %type <ival>	TriggerActionTime
 %type <list>	TriggerEvents TriggerOneEvent
-%type <value>	TriggerFuncArg
+%type <node>	TriggerFuncArg
 %type <node>	TriggerWhen
 %type <str>		TransitionRelName
 %type <boolean>	TransitionRowOrTable TransitionOldOrNew
@@ -508,7 +507,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	when_clause_list
 %type <node>	opt_search_clause opt_cycle_clause
 %type <ival>	sub_type opt_materialized
-%type <value>	NumericOnly
+%type <node>	NumericOnly
 %type <list>	NumericOnly_list
 %type <alias>	alias_clause opt_alias_clause opt_alias_clause_for_join_using
 %type <list>	func_alias_clause
@@ -1696,7 +1695,7 @@ zone_value:
 					if ($3 != NIL)
 					{
 						A_Const *n = (A_Const *) linitial($3);
-						if ((n->val.val.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+						if ((n->val.ival.val & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
@@ -4459,14 +4458,15 @@ opt_by:		BY
 	  ;
 
 NumericOnly:
-			FCONST								{ $$ = makeFloat($1); }
-			| '+' FCONST						{ $$ = makeFloat($2); }
+			FCONST								{ $$ = (Node *) makeFloat($1); }
+			| '+' FCONST						{ $$ = (Node *) makeFloat($2); }
 			| '-' FCONST
 				{
-					$$ = makeFloat($2);
-					doNegateFloat($$);
+					Float *f = makeFloat($2);
+					doNegateFloat(f);
+					$$ = (Node *) f;
 				}
-			| SignedIconst						{ $$ = makeInteger($1); }
+			| SignedIconst						{ $$ = (Node *) makeInteger($1); }
 		;
 
 NumericOnly_list:	NumericOnly						{ $$ = list_make1($1); }
@@ -5535,11 +5535,11 @@ TriggerFuncArgs:
 TriggerFuncArg:
 			Iconst
 				{
-					$$ = makeString(psprintf("%d", $1));
+					$$ = (Node *) makeString(psprintf("%d", $1));
 				}
-			| FCONST								{ $$ = makeString($1); }
-			| Sconst								{ $$ = makeString($1); }
-			| ColLabel								{ $$ = makeString($1); }
+			| FCONST								{ $$ = (Node *) makeString($1); }
+			| Sconst								{ $$ = (Node *) makeString($1); }
+			| ColLabel								{ $$ = (Node *) makeString($1); }
 		;
 
 OptConstrFromTable:
@@ -7773,8 +7773,8 @@ aggr_arg:	func_arg
  *
  * The return value of this production is a two-element list, in which the
  * first item is a sublist of FunctionParameter nodes (with any duplicate
- * VARIADIC item already dropped, as per above) and the second is an integer
- * Value node, containing -1 if there was no ORDER BY and otherwise the number
+ * VARIADIC item already dropped, as per above) and the second is an Integer
+ * node, containing -1 if there was no ORDER BY and otherwise the number
  * of argument declarations before the ORDER BY.  (If this number is equal
  * to the first sublist's length, then we dropped a duplicate VARIADIC item.)
  * This representation is passed as-is to CREATE AGGREGATE; for operations
@@ -16520,11 +16520,11 @@ makeStringConst(char *str, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_String;
-	n->val.val.str = str;
+	n->val.sval.type = T_String;
+	n->val.sval.val = str;
 	n->location = location;
 
-	return (Node *)n;
+   return (Node *)n;
 }
 
 static Node *
@@ -16540,11 +16540,11 @@ makeIntConst(int val, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_Integer;
-	n->val.val.ival = val;
+	n->val.ival.type = T_Integer;
+	n->val.ival.val = val;
 	n->location = location;
 
-	return (Node *)n;
+   return (Node *)n;
 }
 
 static Node *
@@ -16552,11 +16552,11 @@ makeFloatConst(char *str, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_Float;
-	n->val.val.str = str;
+	n->val.fval.type = T_Float;
+	n->val.fval.val = str;
 	n->location = location;
 
-	return (Node *)n;
+   return (Node *)n;
 }
 
 static Node *
@@ -16564,11 +16564,11 @@ makeBitStringConst(char *str, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_BitString;
-	n->val.val.str = str;
+	n->val.bsval.type = T_BitString;
+	n->val.bsval.val = str;
 	n->location = location;
 
-	return (Node *)n;
+   return (Node *)n;
 }
 
 static Node *
@@ -16576,30 +16576,30 @@ makeNullAConst(int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_Null;
+	n->isnull = true;
 	n->location = location;
 
 	return (Node *)n;
 }
 
 static Node *
-makeAConst(Value *v, int location)
+makeAConst(Node *v, int location)
 {
 	Node *n;
 
 	switch (v->type)
 	{
 		case T_Float:
-			n = makeFloatConst(v->val.str, location);
+			n = makeFloatConst(castNode(Float, v)->val, location);
 			break;
 
 		case T_Integer:
-			n = makeIntConst(v->val.ival, location);
+			n = makeIntConst(castNode(Integer, v)->val, location);
 			break;
 
 		case T_String:
 		default:
-			n = makeStringConst(v->val.str, location);
+			n = makeStringConst(castNode(String, v)->val, location);
 			break;
 	}
 
@@ -16612,13 +16612,9 @@ makeAConst(Value *v, int location)
 static Node *
 makeBoolAConst(bool state, int location)
 {
-	A_Const *n = makeNode(A_Const);
-
-	n->val.type = T_String;
-	n->val.val.str = (state ? "t" : "f");
-	n->location = location;
-
-	return makeTypeCast((Node *)n, SystemTypeName("bool"), -1);
+	return makeStringConstCast((state ? "t" : "f"),
+							   location,
+							   SystemTypeName("bool"));
 }
 
 /* makeRoleSpec
@@ -16733,7 +16729,7 @@ makeOrderedSetArgs(List *directargs, List *orderedargs,
 				   core_yyscan_t yyscanner)
 {
 	FunctionParameter *lastd = (FunctionParameter *) llast(directargs);
-	Value	   *ndirectargs;
+	Integer	   *ndirectargs;
 
 	/* No restriction unless last direct arg is VARIADIC */
 	if (lastd->mode == FUNC_PARAM_VARIADIC)
@@ -16890,14 +16886,14 @@ doNegate(Node *n, int location)
 		/* report the constant's location as that of the '-' sign */
 		con->location = location;
 
-		if (con->val.type == T_Integer)
+		if (IsA(&con->val, Integer))
 		{
-			con->val.val.ival = -con->val.val.ival;
+			con->val.ival.val = -con->val.ival.val;
 			return n;
 		}
-		if (con->val.type == T_Float)
+		if (IsA(&con->val, Float))
 		{
-			doNegateFloat(&con->val);
+			doNegateFloat(&con->val.fval);
 			return n;
 		}
 	}
@@ -16906,17 +16902,16 @@ doNegate(Node *n, int location)
 }
 
 static void
-doNegateFloat(Value *v)
+doNegateFloat(Float *v)
 {
-	char   *oldval = v->val.str;
+	char   *oldval = v->val;
 
-	Assert(IsA(v, Float));
 	if (*oldval == '+')
 		oldval++;
 	if (*oldval == '-')
-		v->val.str = oldval+1;	/* just strip the '-' */
+		v->val = oldval+1;	/* just strip the '-' */
 	else
-		v->val.str = psprintf("-%s", oldval);
+		v->val = psprintf("-%s", oldval);
 }
 
 static Node *

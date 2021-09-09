@@ -333,7 +333,7 @@ transformContainerSubscripts(ParseState *pstate,
 /*
  * make_const
  *
- *	Convert a Value node (as returned by the grammar) to a Const node
+ *	Convert an A_Const node (as returned by the grammar) to a Const node
  *	of the "natural" type for the constant.  Note that this routine is
  *	only used when there is no explicit cast for the constant, so we
  *	have to guess what type is wanted.
@@ -349,7 +349,7 @@ transformContainerSubscripts(ParseState *pstate,
  *	too many examples that fail if we try.
  */
 Const *
-make_const(ParseState *pstate, Value *value, int location)
+make_const(ParseState *pstate, A_Const *aconst)
 {
 	Const	   *con;
 	Datum		val;
@@ -359,10 +359,24 @@ make_const(ParseState *pstate, Value *value, int location)
 	bool		typebyval;
 	ParseCallbackState pcbstate;
 
-	switch (nodeTag(value))
+	if (aconst->isnull)
+	{
+		/* return a null const */
+		con = makeConst(UNKNOWNOID,
+						-1,
+						InvalidOid,
+						-2,
+						(Datum) 0,
+						true,
+						false);
+		con->location = aconst->location;
+		return con;
+	}
+
+	switch (nodeTag(&aconst->val))
 	{
 		case T_Integer:
-			val = Int32GetDatum(intVal(value));
+			val = Int32GetDatum(aconst->val.ival.val);
 
 			typeid = INT4OID;
 			typelen = sizeof(int32);
@@ -371,7 +385,7 @@ make_const(ParseState *pstate, Value *value, int location)
 
 		case T_Float:
 			/* could be an oversize integer as well as a float ... */
-			if (scanint8(strVal(value), true, &val64))
+			if (scanint8(aconst->val.fval.val, true, &val64))
 			{
 				/*
 				 * It might actually fit in int32. Probably only INT_MIN can
@@ -399,9 +413,9 @@ make_const(ParseState *pstate, Value *value, int location)
 			else
 			{
 				/* arrange to report location if numeric_in() fails */
-				setup_parser_errposition_callback(&pcbstate, pstate, location);
+				setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
 				val = DirectFunctionCall3(numeric_in,
-										  CStringGetDatum(strVal(value)),
+										  CStringGetDatum(aconst->val.fval.val),
 										  ObjectIdGetDatum(InvalidOid),
 										  Int32GetDatum(-1));
 				cancel_parser_errposition_callback(&pcbstate);
@@ -418,7 +432,7 @@ make_const(ParseState *pstate, Value *value, int location)
 			 * We assume here that UNKNOWN's internal representation is the
 			 * same as CSTRING
 			 */
-			val = CStringGetDatum(strVal(value));
+			val = CStringGetDatum(aconst->val.sval.val);
 
 			typeid = UNKNOWNOID;	/* will be coerced later */
 			typelen = -2;		/* cstring-style varwidth type */
@@ -427,9 +441,9 @@ make_const(ParseState *pstate, Value *value, int location)
 
 		case T_BitString:
 			/* arrange to report location if bit_in() fails */
-			setup_parser_errposition_callback(&pcbstate, pstate, location);
+			setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
 			val = DirectFunctionCall3(bit_in,
-									  CStringGetDatum(strVal(value)),
+									  CStringGetDatum(aconst->val.bsval.val),
 									  ObjectIdGetDatum(InvalidOid),
 									  Int32GetDatum(-1));
 			cancel_parser_errposition_callback(&pcbstate);
@@ -438,20 +452,8 @@ make_const(ParseState *pstate, Value *value, int location)
 			typebyval = false;
 			break;
 
-		case T_Null:
-			/* return a null const */
-			con = makeConst(UNKNOWNOID,
-							-1,
-							InvalidOid,
-							-2,
-							(Datum) 0,
-							true,
-							false);
-			con->location = location;
-			return con;
-
 		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(value));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(&aconst->val));
 			return NULL;		/* keep compiler quiet */
 	}
 
@@ -462,7 +464,7 @@ make_const(ParseState *pstate, Value *value, int location)
 					val,
 					false,
 					typebyval);
-	con->location = location;
+	con->location = aconst->location;
 
 	return con;
 }

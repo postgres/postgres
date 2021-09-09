@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * value.h
- *	  interface for Value nodes
+ *	  interface for value nodes
  *
  *
  * Copyright (c) 2003-2021, PostgreSQL Global Development Group
@@ -16,46 +16,57 @@
 
 #include "nodes/nodes.h"
 
-/*----------------------
- *		Value node
+/*
+ * The node types Integer, Float, String, and BitString are used to represent
+ * literals in the lexer and are also used to pass constants around in the
+ * parser.  One difference between these node types and, say, a plain int or
+ * char * is that the nodes can be put into a List.
  *
- * The same Value struct is used for five node types: T_Integer,
- * T_Float, T_String, T_BitString, T_Null.
- *
- * Integral values are actually represented by a machine integer,
- * but both floats and strings are represented as strings.
- * Using T_Float as the node type simply indicates that
- * the contents of the string look like a valid numeric literal.
- *
- * (Before Postgres 7.0, we used a double to represent T_Float,
- * but that creates loss-of-precision problems when the value is
- * ultimately destined to be converted to NUMERIC.  Since Value nodes
- * are only used in the parsing process, not for runtime data, it's
- * better to use the more general representation.)
- *
- * Note that an integer-looking string will get lexed as T_Float if
- * the value is too large to fit in an 'int'.
- *
- * Nulls, of course, don't need the value part at all.
- *----------------------
+ * (There used to be a Value node, which encompassed all these different node types.  Hence the name of this file.)
  */
-typedef struct Value
+
+typedef struct Integer
 {
-	NodeTag		type;			/* tag appropriately (eg. T_String) */
-	union ValUnion
-	{
-		int			ival;		/* machine integer */
-		char	   *str;		/* string */
-	}			val;
-} Value;
+	NodeTag		type;
+	int			val;
+} Integer;
 
-#define intVal(v)		(((Value *)(v))->val.ival)
-#define floatVal(v)		atof(((Value *)(v))->val.str)
-#define strVal(v)		(((Value *)(v))->val.str)
+/*
+ * Float is internally represented as string.  Using T_Float as the node type
+ * simply indicates that the contents of the string look like a valid numeric
+ * literal.  The value might end up being converted to NUMERIC, so we can't
+ * store it internally as a C double, since that could lose precision.  Since
+ * these nodes are generally only used in the parsing process, not for runtime
+ * data, it's better to use the more general representation.
+ *
+ * Note that an integer-looking string will get lexed as T_Float if the value
+ * is too large to fit in an 'int'.
+ */
+typedef struct Float
+{
+	NodeTag		type;
+	char	   *val;
+} Float;
 
-extern Value *makeInteger(int i);
-extern Value *makeFloat(char *numericStr);
-extern Value *makeString(char *str);
-extern Value *makeBitString(char *str);
+typedef struct String
+{
+	NodeTag		type;
+	char	   *val;
+} String;
+
+typedef struct BitString
+{
+	NodeTag		type;
+	char	   *val;
+} BitString;
+
+#define intVal(v)		(castNode(Integer, v)->val)
+#define floatVal(v)		atof(castNode(Float, v)->val)
+#define strVal(v)		(castNode(String, v)->val)
+
+extern Integer *makeInteger(int i);
+extern Float *makeFloat(char *numericStr);
+extern String *makeString(char *str);
+extern BitString *makeBitString(char *str);
 
 #endif							/* VALUE_H */

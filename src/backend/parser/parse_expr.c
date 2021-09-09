@@ -130,13 +130,8 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			break;
 
 		case T_A_Const:
-			{
-				A_Const    *con = (A_Const *) expr;
-				Value	   *val = &con->val;
-
-				result = (Node *) make_const(pstate, val, con->location);
-				break;
-			}
+			result = (Node *) make_const(pstate, (A_Const *) expr);
+			break;
 
 		case T_A_Indirection:
 			result = transformIndirection(pstate, (A_Indirection *) expr);
@@ -855,7 +850,7 @@ exprIsNullConstant(Node *arg)
 	{
 		A_Const    *con = (A_Const *) arg;
 
-		if (con->val.type == T_Null)
+		if (con->isnull)
 			return true;
 	}
 	return false;
@@ -1626,7 +1621,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	{
 		A_Const    *n = makeNode(A_Const);
 
-		n->val.type = T_Null;
+		n->isnull = true;
 		n->location = -1;
 		defresult = (Node *) n;
 	}

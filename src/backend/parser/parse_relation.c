@@ -1140,7 +1140,7 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, varattno);
-		Value	   *attrname;
+		String	   *attrname;
 
 		if (attr->attisdropped)
 		{
@@ -1153,7 +1153,7 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 		else if (aliaslc)
 		{
 			/* Use the next user-supplied alias */
-			attrname = (Value *) lfirst(aliaslc);
+			attrname = lfirst_node(String, aliaslc);
 			aliaslc = lnext(aliaslist, aliaslc);
 			alias->colnames = lappend(alias->colnames, attrname);
 		}
@@ -3052,7 +3052,7 @@ expandNSItemVars(ParseNamespaceItem *nsitem,
 	colindex = 0;
 	foreach(lc, nsitem->p_names->colnames)
 	{
-		Value	   *colnameval = (Value *) lfirst(lc);
+		String	   *colnameval = lfirst(lc);
 		const char *colname = strVal(colnameval);
 		ParseNamespaceColumn *nscol = nsitem->p_nscolumns + colindex;
 

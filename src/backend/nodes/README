@@ -28,7 +28,7 @@ FILES IN THIS DIRECTORY (src/backend/nodes/)
 	list.c		- generic list support
 	params.c	- Param support
 	tidbitmap.c	- TIDBitmap support
-	value.c		- support for Value nodes
+	value.c		- support for value nodes
 
 FILES IN src/include/nodes/
 

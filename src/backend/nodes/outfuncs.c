@@ -3414,44 +3414,39 @@ _outA_Expr(StringInfo str, const A_Expr *node)
 }
 
 static void
-_outValue(StringInfo str, const Value *node)
+_outInteger(StringInfo str, const Integer *node)
 {
-	switch (node->type)
-	{
-		case T_Integer:
-			appendStringInfo(str, "%d", node->val.ival);
-			break;
-		case T_Float:
+	appendStringInfo(str, "%d", node->val);
+}
 
-			/*
-			 * We assume the value is a valid numeric literal and so does not
-			 * need quoting.
-			 */
-			appendStringInfoString(str, node->val.str);
-			break;
-		case T_String:
+static void
+_outFloat(StringInfo str, const Float *node)
+{
+	/*
+	 * We assume the value is a valid numeric literal and so does not
+	 * need quoting.
+	 */
+	appendStringInfoString(str, node->val);
+}
 
-			/*
-			 * We use outToken to provide escaping of the string's content,
-			 * but we don't want it to do anything with an empty string.
-			 */
-			appendStringInfoChar(str, '"');
-			if (node->val.str[0] != '\0')
-				outToken(str, node->val.str);
-			appendStringInfoChar(str, '"');
-			break;
-		case T_BitString:
-			/* internal representation already has leading 'b' */
-			appendStringInfoString(str, node->val.str);
-			break;
-		case T_Null:
-			/* this is seen only within A_Const, not in transformed trees */
-			appendStringInfoString(str, "NULL");
-			break;
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) node->type);
-			break;
-	}
+static void
+_outString(StringInfo str, const String *node)
+{
+	/*
+	 * We use outToken to provide escaping of the string's content,
+	 * but we don't want it to do anything with an empty string.
+	 */
+	appendStringInfoChar(str, '"');
+	if (node->val[0] != '\0')
+		outToken(str, node->val);
+	appendStringInfoChar(str, '"');
+}
+
+static void
+_outBitString(StringInfo str, const BitString *node)
+{
+	/* internal representation already has leading 'b' */
+	appendStringInfoString(str, node->val);
 }
 
 static void
@@ -3491,8 +3486,13 @@ _outA_Const(StringInfo str, const A_Const *node)
 {
 	WRITE_NODE_TYPE("A_CONST");
 
-	appendStringInfoString(str, " :val ");
-	_outValue(str, &(node->val));
+	if (node->isnull)
+		appendStringInfoString(str, "NULL");
+	else
+	{
+		appendStringInfoString(str, " :val ");
+		outNode(str, &node->val);
+	}
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -3835,14 +3835,15 @@ outNode(StringInfo str, const void *obj)
 		appendStringInfoString(str, "<>");
 	else if (IsA(obj, List) || IsA(obj, IntList) || IsA(obj, OidList))
 		_outList(str, obj);
-	else if (IsA(obj, Integer) ||
-			 IsA(obj, Float) ||
-			 IsA(obj, String) ||
-			 IsA(obj, BitString))
-	{
-		/* nodeRead does not want to see { } around these! */
-		_outValue(str, obj);
-	}
+	/* nodeRead does not want to see { } around these! */
+	else if (IsA(obj, Integer))
+		_outInteger(str, (Integer *) obj);
+	else if (IsA(obj, Float))
+		_outFloat(str, (Float *) obj);
+	else if (IsA(obj, String))
+		_outString(str, (String *) obj);
+	else if (IsA(obj, BitString))
+		_outBitString(str, (BitString *) obj);
 	else
 	{
 		appendStringInfoChar(str, '{');

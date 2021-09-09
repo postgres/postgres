@@ -2409,7 +2409,7 @@ _equalParamRef(const ParamRef *a, const ParamRef *b)
 static bool
 _equalA_Const(const A_Const *a, const A_Const *b)
 {
-	if (!equal(&a->val, &b->val))	/* hack for in-line Value field */
+	if (!equal(&a->val, &b->val))	/* hack for in-line val field */
 		return false;
 	COMPARE_LOCATION_FIELD(location);
 
@@ -3089,27 +3089,33 @@ _equalList(const List *a, const List *b)
  */
 
 static bool
-_equalValue(const Value *a, const Value *b)
+_equalInteger(const Integer *a, const Integer *b)
 {
-	COMPARE_SCALAR_FIELD(type);
+	COMPARE_SCALAR_FIELD(val);
 
-	switch (a->type)
-	{
-		case T_Integer:
-			COMPARE_SCALAR_FIELD(val.ival);
-			break;
-		case T_Float:
-		case T_String:
-		case T_BitString:
-			COMPARE_STRING_FIELD(val.str);
-			break;
-		case T_Null:
-			/* nothing to do */
-			break;
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) a->type);
-			break;
-	}
+	return true;
+}
+
+static bool
+_equalFloat(const Float *a, const Float *b)
+{
+	COMPARE_STRING_FIELD(val);
+
+	return true;
+}
+
+static bool
+_equalString(const String *a, const String *b)
+{
+	COMPARE_STRING_FIELD(val);
+
+	return true;
+}
+
+static bool
+_equalBitString(const BitString *a, const BitString *b)
+{
+	COMPARE_STRING_FIELD(val);
 
 	return true;
 }
@@ -3337,11 +3343,16 @@ equal(const void *a, const void *b)
 			break;
 
 		case T_Integer:
+			retval = _equalInteger(a, b);
+			break;
 		case T_Float:
+			retval = _equalFloat(a, b);
+			break;
 		case T_String:
+			retval = _equalString(a, b);
+			break;
 		case T_BitString:
-		case T_Null:
-			retval = _equalValue(a, b);
+			retval = _equalBitString(a, b);
 			break;
 
 			/*

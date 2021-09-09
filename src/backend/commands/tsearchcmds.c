@@ -1179,7 +1179,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 	i = 0;
 	foreach(tn, tokennames)
 	{
-		Value	   *val = (Value *) lfirst(tn);
+		String	   *val = lfirst_node(String, tn);
 		bool		found = false;
 		int			j;
 
@@ -1395,7 +1395,7 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	i = 0;
 	foreach(c, stmt->tokentype)
 	{
-		Value	   *val = (Value *) lfirst(c);
+		String	   *val = lfirst_node(String, c);
 		bool		found = false;
 
 		ScanKeyInit(&skey[0],

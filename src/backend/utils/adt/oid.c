@@ -324,7 +324,7 @@ oidparse(Node *node)
 			 * constants by the lexer.  Accept these if they are valid OID
 			 * strings.
 			 */
-			return oidin_subr(strVal(node), NULL);
+			return oidin_subr(castNode(Float, node)->val, NULL);
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 	}

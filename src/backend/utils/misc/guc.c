@@ -8301,7 +8301,7 @@ flatten_set_variable_args(const char *name, List *args)
 				break;
 			case T_Float:
 				/* represented as a string, so just copy it */
-				appendStringInfoString(&buf, strVal(&con->val));
+				appendStringInfoString(&buf, castNode(Float, &con->val)->val);
 				break;
 			case T_String:
 				val = strVal(&con->val);
@@ -8797,7 +8797,6 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 							 errmsg("SET LOCAL TRANSACTION SNAPSHOT is not implemented")));
 
 				WarnNoTransactionBlock(isTopLevel, "SET TRANSACTION");
-				Assert(nodeTag(&con->val) == T_String);
 				ImportSnapshot(strVal(&con->val));
 			}
 			else

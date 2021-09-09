@@ -218,7 +218,7 @@ typedef struct Query
 typedef struct TypeName
 {
 	NodeTag		type;
-	List	   *names;			/* qualified name (list of Value strings) */
+	List	   *names;			/* qualified name (list of String nodes) */
 	Oid			typeOid;		/* type identified by OID */
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
@@ -231,7 +231,7 @@ typedef struct TypeName
 /*
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
- * The "fields" list must be nonempty.  It can contain string Value nodes
+ * The "fields" list must be nonempty.  It can contain String nodes
  * (representing names) and A_Star nodes (representing occurrence of a '*').
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
@@ -244,7 +244,7 @@ typedef struct TypeName
 typedef struct ColumnRef
 {
 	NodeTag		type;
-	List	   *fields;			/* field names (Value strings) or A_Star */
+	List	   *fields;			/* field names (String nodes) or A_Star */
 	int			location;		/* token location, or -1 if unknown */
 } ColumnRef;
 
@@ -295,7 +295,19 @@ typedef struct A_Expr
 typedef struct A_Const
 {
 	NodeTag		type;
-	Value		val;			/* value (includes type info, see value.h) */
+	/*
+	 * Value nodes are inline for performance.  You can treat 'val' as a node,
+	 * as in IsA(&val, Integer).  'val' is not valid if isnull is true.
+	 */
+	union ValUnion
+	{
+		Node		node;
+		Integer		ival;
+		Float		fval;
+		String		sval;
+		BitString	bsval;
+	}			val;
+	bool		isnull;			/* SQL NULL constant */
 	int			location;		/* token location, or -1 if unknown */
 } A_Const;
 
@@ -400,7 +412,7 @@ typedef struct A_Indices
  * A_Indirection - select a field and/or array element from an expression
  *
  * The indirection list can contain A_Indices nodes (representing
- * subscripting), string Value nodes (representing field selection --- the
+ * subscripting), String nodes (representing field selection --- the
  * string value is the name of the field to select), and A_Star nodes
  * (representing selection of all fields of a composite type).
  * For example, a complex selection operation like
@@ -744,7 +756,7 @@ typedef struct DefElem
 	NodeTag		type;
 	char	   *defnamespace;	/* NULL if unqualified name */
 	char	   *defname;
-	Node	   *arg;			/* a (Value *) or a (TypeName *) */
+	Node	   *arg;			/* typically Integer, Float, String, or TypeName */
 	DefElemAction defaction;	/* unspecified action, or SET/ADD/DROP */
 	int			location;		/* token location, or -1 if unknown */
 } DefElem;
@@ -2015,7 +2027,7 @@ typedef struct GrantStmt
 	GrantTargetType targtype;	/* type of the grant target */
 	ObjectType	objtype;		/* kind of object being operated on */
 	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs
-								 * nodes, or plain names (as Value strings) */
+								 * nodes, or plain names (as String values) */
 	List	   *privileges;		/* list of AccessPriv nodes */
 	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of RoleSpec nodes */
@@ -2061,7 +2073,7 @@ typedef struct AccessPriv
 {
 	NodeTag		type;
 	char	   *priv_name;		/* string name of privilege */
-	List	   *cols;			/* list of Value strings */
+	List	   *cols;			/* list of String */
 } AccessPriv;
 
 /* ----------------------
@@ -2070,7 +2082,7 @@ typedef struct AccessPriv
  * Note: because of the parsing ambiguity with the GRANT <privileges>
  * statement, granted_roles is a list of AccessPriv; the execution code
  * should complain if any column lists appear.  grantee_roles is a list
- * of role names, as Value strings.
+ * of role names, as String values.
  * ----------------------
  */
 typedef struct GrantRoleStmt
@@ -2531,7 +2543,7 @@ typedef struct CreateTrigStmt
 	char	   *trigname;		/* TRIGGER's name */
 	RangeVar   *relation;		/* relation trigger is on */
 	List	   *funcname;		/* qual. name of function to call */
-	List	   *args;			/* list of (T_String) Values or NIL */
+	List	   *args;			/* list of String or NIL */
 	bool		row;			/* ROW/STATEMENT */
 	/* timing uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
 	int16		timing;			/* BEFORE, AFTER, or INSTEAD */
@@ -2667,7 +2679,7 @@ typedef struct DefineStmt
 	NodeTag		type;
 	ObjectType	kind;			/* aggregate, operator, type */
 	bool		oldstyle;		/* hack to signal old CREATE AGG syntax */
-	List	   *defnames;		/* qualified name (list of Value strings) */
+	List	   *defnames;		/* qualified name (list of String) */
 	List	   *args;			/* a list of TypeName (if needed) */
 	List	   *definition;		/* a list of DefElem */
 	bool		if_not_exists;	/* just do nothing if it already exists? */
@@ -2681,7 +2693,7 @@ typedef struct DefineStmt
 typedef struct CreateDomainStmt
 {
 	NodeTag		type;
-	List	   *domainname;		/* qualified name (list of Value strings) */
+	List	   *domainname;		/* qualified name (list of String) */
 	TypeName   *typeName;		/* the base type */
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
@@ -2694,7 +2706,7 @@ typedef struct CreateDomainStmt
 typedef struct CreateOpClassStmt
 {
 	NodeTag		type;
-	List	   *opclassname;	/* qualified name (list of Value strings) */
+	List	   *opclassname;	/* qualified name (list of String) */
 	List	   *opfamilyname;	/* qualified name (ditto); NIL if omitted */
 	char	   *amname;			/* name of index AM opclass is for */
 	TypeName   *datatype;		/* datatype of indexed column */
@@ -2726,7 +2738,7 @@ typedef struct CreateOpClassItem
 typedef struct CreateOpFamilyStmt
 {
 	NodeTag		type;
-	List	   *opfamilyname;	/* qualified name (list of Value strings) */
+	List	   *opfamilyname;	/* qualified name (list of String) */
 	char	   *amname;			/* name of index AM opfamily is for */
 } CreateOpFamilyStmt;
 
@@ -2737,7 +2749,7 @@ typedef struct CreateOpFamilyStmt
 typedef struct AlterOpFamilyStmt
 {
 	NodeTag		type;
-	List	   *opfamilyname;	/* qualified name (list of Value strings) */
+	List	   *opfamilyname;	/* qualified name (list of String) */
 	char	   *amname;			/* name of index AM opfamily is for */
 	bool		isDrop;			/* ADD or DROP the items? */
 	List	   *items;			/* List of CreateOpClassItem nodes */
@@ -2908,8 +2920,8 @@ typedef struct IndexStmt
 typedef struct CreateStatsStmt
 {
 	NodeTag		type;
-	List	   *defnames;		/* qualified name (list of Value strings) */
-	List	   *stat_types;		/* stat types (list of Value strings) */
+	List	   *defnames;		/* qualified name (list of String) */
+	List	   *stat_types;		/* stat types (list of String) */
 	List	   *exprs;			/* expressions to build statistics on */
 	List	   *relations;		/* rels to build stats on (list of RangeVar) */
 	char	   *stxcomment;		/* comment to apply to stats, or NULL */
@@ -2939,7 +2951,7 @@ typedef struct StatsElem
 typedef struct AlterStatsStmt
 {
 	NodeTag		type;
-	List	   *defnames;		/* qualified name (list of Value strings) */
+	List	   *defnames;		/* qualified name (list of String) */
 	int			stxstattarget;	/* statistics target */
 	bool		missing_ok;		/* skip error if statistics object is missing */
 } AlterStatsStmt;
@@ -3061,7 +3073,7 @@ typedef struct AlterObjectDependsStmt
 	ObjectType	objectType;		/* OBJECT_FUNCTION, OBJECT_TRIGGER, etc */
 	RangeVar   *relation;		/* in case a table is involved */
 	Node	   *object;			/* name of the object */
-	Value	   *extname;		/* extension name */
+	String	   *extname;		/* extension name */
 	bool		remove;			/* set true to remove dep rather than add */
 } AlterObjectDependsStmt;
 
@@ -3207,8 +3219,8 @@ typedef struct CompositeTypeStmt
 typedef struct CreateEnumStmt
 {
 	NodeTag		type;
-	List	   *typeName;		/* qualified name (list of Value strings) */
-	List	   *vals;			/* enum values (list of Value strings) */
+	List	   *typeName;		/* qualified name (list of String) */
+	List	   *vals;			/* enum values (list of String) */
 } CreateEnumStmt;
 
 /* ----------------------
@@ -3218,7 +3230,7 @@ typedef struct CreateEnumStmt
 typedef struct CreateRangeStmt
 {
 	NodeTag		type;
-	List	   *typeName;		/* qualified name (list of Value strings) */
+	List	   *typeName;		/* qualified name (list of String) */
 	List	   *params;			/* range parameters (list of DefElem) */
 } CreateRangeStmt;
 
@@ -3229,7 +3241,7 @@ typedef struct CreateRangeStmt
 typedef struct AlterEnumStmt
 {
 	NodeTag		type;
-	List	   *typeName;		/* qualified name (list of Value strings) */
+	List	   *typeName;		/* qualified name (list of String) */
 	char	   *oldVal;			/* old enum value's name, if renaming */
 	char	   *newVal;			/* new enum value's name */
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
@@ -3591,7 +3603,7 @@ typedef struct ReassignOwnedStmt
 typedef struct AlterTSDictionaryStmt
 {
 	NodeTag		type;
-	List	   *dictname;		/* qualified name (list of Value strings) */
+	List	   *dictname;		/* qualified name (list of String) */
 	List	   *options;		/* List of DefElem nodes */
 } AlterTSDictionaryStmt;
 
@@ -3611,14 +3623,14 @@ typedef struct AlterTSConfigurationStmt
 {
 	NodeTag		type;
 	AlterTSConfigType kind;		/* ALTER_TSCONFIG_ADD_MAPPING, etc */
-	List	   *cfgname;		/* qualified name (list of Value strings) */
+	List	   *cfgname;		/* qualified name (list of String) */
 
 	/*
 	 * dicts will be non-NIL if ADD/ALTER MAPPING was specified. If dicts is
 	 * NIL, but tokentype isn't, DROP MAPPING was specified.
 	 */
-	List	   *tokentype;		/* list of Value strings */
-	List	   *dicts;			/* list of list of Value strings */
+	List	   *tokentype;		/* list of String */
+	List	   *dicts;			/* list of list of String */
 	bool		override;		/* if true - remove old variant */
 	bool		replace;		/* if true - replace dictionary by another */
 	bool		missing_ok;		/* for DROP - skip error if missing? */
