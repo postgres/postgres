@@ -2409,8 +2409,14 @@ _equalParamRef(const ParamRef *a, const ParamRef *b)
 static bool
 _equalA_Const(const A_Const *a, const A_Const *b)
 {
-	if (!equal(&a->val, &b->val))	/* hack for in-line val field */
+	/*
+	 * Hack for in-line val field.  Also val is not valid is isnull is
+	 * true.
+	 */
+	if (!a->isnull && !b->isnull &&
+		!equal(&a->val, &b->val))
 		return false;
+	COMPARE_SCALAR_FIELD(isnull);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
