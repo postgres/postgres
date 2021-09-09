@@ -365,6 +365,8 @@ PersistHoldablePortal(Portal portal)
 	savePortalContext = PortalContext;
 	PG_TRY();
 	{
+		ScanDirection direction = ForwardScanDirection;
+
 		ActivePortal = portal;
 		if (portal->resowner)
 			CurrentResourceOwner = portal->resowner;
@@ -387,10 +389,20 @@ PersistHoldablePortal(Portal portal)
 		}
 		else
 		{
-			/* We must reset the cursor state as though at start of query */
+			/* Disallow moving backwards from here */
 			portal->atStart = true;
-			portal->atEnd = false;
 			portal->portalPos = 0;
+
+			/*
+			 * If we already reached end-of-query, set the direction to
+			 * NoMovement to avoid trying to fetch any tuples.  (This check
+			 * exists because not all plan node types are robust about being
+			 * called again if they've already returned NULL once.)  We'll
+			 * still set up an empty tuplestore, though, to keep this from
+			 * being a special case later.
+			 */
+			if (portal->atEnd)
+				direction = NoMovementScanDirection;
 		}
 
 		/*
@@ -405,7 +417,7 @@ PersistHoldablePortal(Portal portal)
 										true);
 
 		/* Fetch the result set into the tuplestore */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L, false);
+		ExecutorRun(queryDesc, direction, 0L, false);
 
 		queryDesc->dest->rDestroy(queryDesc->dest);
 		queryDesc->dest = NULL;
