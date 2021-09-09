@@ -2339,7 +2339,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"shared_memory_size", PGC_INTERNAL, RESOURCES_MEM,
+		{"shared_memory_size", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the size of the server's main shared memory area (rounded up to the nearest MB)."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_UNIT_MB
