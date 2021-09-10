@@ -1633,8 +1633,7 @@ setup_privileges(FILE *cmdfd)
 		CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
 		CppAsString2(RELKIND_SEQUENCE) ")"
 		"  AND relacl IS NULL;\n\n",
-		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n\n",
-		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n\n",
+		"GRANT USAGE ON SCHEMA pg_catalog, public TO PUBLIC;\n\n",
 		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n\n",
 		"INSERT INTO pg_init_privs "
 		"  (objoid, classoid, objsubid, initprivs, privtype)"

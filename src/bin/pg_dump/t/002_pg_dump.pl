@@ -628,7 +628,9 @@ my %tests = (
 	},
 
 	'ALTER SCHEMA public OWNER TO' => {
-		# see test "REVOKE CREATE ON SCHEMA public" for causative create_sql
+		create_order => 15,
+		create_sql =>
+		  'ALTER SCHEMA public OWNER TO "regress_quoted  \"" role";',
 		regexp => qr/^ALTER SCHEMA public OWNER TO .+;/m,
 		like   => {
 			%full_runs, section_pre_data => 1,
@@ -3472,17 +3474,12 @@ my %tests = (
 		unlike => { no_privs => 1, },
 	},
 
-	'REVOKE CREATE ON SCHEMA public FROM public' => {
+	'REVOKE ALL ON SCHEMA public' => {
 		create_order => 16,
-		create_sql   => '
-			REVOKE CREATE ON SCHEMA public FROM public;
-			ALTER SCHEMA public OWNER TO "regress_quoted  \"" role";
-			REVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";',
-		regexp => qr/^
-			\QREVOKE ALL ON SCHEMA public FROM "regress_quoted  \E\\""\ role";
-			\n\QREVOKE ALL ON SCHEMA public FROM PUBLIC;\E
-			\n\QGRANT USAGE ON SCHEMA public TO PUBLIC;\E
-			/xm,
+		create_sql =>
+		  'REVOKE ALL ON SCHEMA public FROM "regress_quoted  \"" role";',
+		regexp =>
+		  qr/^REVOKE ALL ON SCHEMA public FROM "regress_quoted  \\"" role";/m,
 		like => { %full_runs, section_pre_data => 1, },
 		unlike => { no_privs => 1, },
 	},

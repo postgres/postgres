@@ -21,6 +21,6 @@
 # update dumpNamespace() if changing this descr
 { oid => '2200', oid_symbol => 'PG_PUBLIC_NAMESPACE',
   descr => 'standard public schema',
-  nspname => 'public', nspacl => '_null_' },
+  nspname => 'public', nspowner => 'pg_database_owner', nspacl => '_null_' },
 
 ]

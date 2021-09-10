@@ -27,12 +27,16 @@ SET ROLE regress_user1;
 
 CREATE EXTENSION plperl;
 CREATE EXTENSION plperlu;  -- fail
+CREATE SCHEMA plperl_setup_scratch;
+SET search_path = plperl_setup_scratch;
+GRANT ALL ON SCHEMA plperl_setup_scratch TO regress_user2;
 
 CREATE FUNCTION foo1() returns int language plperl as '1;';
 SELECT foo1();
 
 -- Must reconnect to avoid failure with non-MULTIPLICITY Perl interpreters
 \c -
+SET search_path = plperl_setup_scratch;
 
 SET ROLE regress_user1;
 

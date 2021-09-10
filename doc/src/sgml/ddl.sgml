@@ -3001,20 +3001,18 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    <para>
     By default, users cannot access any objects in schemas they do not
     own.  To allow that, the owner of the schema must grant the
-    <literal>USAGE</literal> privilege on the schema.  To allow users
-    to make use of the objects in the schema, additional privileges
-    might need to be granted, as appropriate for the object.
+    <literal>USAGE</literal> privilege on the schema.  By default, everyone
+    has that privilege on the schema <literal>public</literal>.  To allow
+    users to make use of the objects in a schema, additional privileges might
+    need to be granted, as appropriate for the object.
    </para>
 
    <para>
-    A user can also be allowed to create objects in someone else's
-    schema.  To allow that, the <literal>CREATE</literal> privilege on
-    the schema needs to be granted.  Note that by default, everyone
-    has <literal>CREATE</literal> and <literal>USAGE</literal> privileges on
-    the schema
-    <literal>public</literal>.  This allows all users that are able to
-    connect to a given database to create objects in its
-    <literal>public</literal> schema.
+    A user can also be allowed to create objects in someone else's schema.  To
+    allow that, the <literal>CREATE</literal> privilege on the schema needs to
+    be granted.  In databases upgraded from
+    <productname>PostgreSQL</productname> 14 or earlier, everyone has that
+    privilege on the schema <literal>public</literal>.
     Some <link linkend="ddl-schemas-patterns">usage patterns</link> call for
     revoking that privilege:
 <programlisting>
@@ -3087,20 +3085,25 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
            database owner attack. -->
       <para>
        Constrain ordinary users to user-private schemas.  To implement this,
-       issue <literal>REVOKE CREATE ON SCHEMA public FROM PUBLIC</literal>,
-       and create a schema for each user with the same name as that user.
-       Recall that the default search path starts
-       with <literal>$user</literal>, which resolves to the user name.
-       Therefore, if each user has a separate schema, they access their own
-       schemas by default.  After adopting this pattern in a database where
-       untrusted users had already logged in, consider auditing the public
-       schema for objects named like objects in
+       first issue <literal>REVOKE CREATE ON SCHEMA public FROM
+       PUBLIC</literal>.  Then, for every user needing to create non-temporary
+       objects, create a schema with the same name as that user.  Recall that
+       the default search path starts with <literal>$user</literal>, which
+       resolves to the user name.  Therefore, if each user has a separate
+       schema, they access their own schemas by default.  After adopting this
+       pattern in a database where untrusted users had already logged in,
+       consider auditing the public schema for objects named like objects in
        schema <literal>pg_catalog</literal>.  This pattern is a secure schema
        usage pattern unless an untrusted user is the database owner or holds
        the <literal>CREATEROLE</literal> privilege, in which case no secure
        schema usage pattern exists.
       </para>
       <para>
+       If the database originated in an upgrade
+       from <productname>PostgreSQL</productname> 14 or earlier,
+       the <literal>REVOKE</literal> is essential.  Otherwise, the default
+       configuration follows this pattern; ordinary users can create only
+       temporary objects until a privileged user furnishes a schema.
       </para>
      </listitem>
 
@@ -3109,10 +3112,10 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        Remove the public schema from the default search path, by modifying
        <link linkend="config-setting-configuration-file"><filename>postgresql.conf</filename></link>
        or by issuing <literal>ALTER ROLE ALL SET search_path =
-       "$user"</literal>.  Everyone retains the ability to create objects in
-       the public schema, but only qualified names will choose those objects.
-       While qualified table references are fine, calls to functions in the
-       public schema <link linkend="typeconv-func">will be unsafe or
+       "$user"</literal>.  Then, grant privileges to create in the public
+       schema.  Only qualified names will choose public schema objects.  While
+       qualified table references are fine, calls to functions in the public
+       schema <link linkend="typeconv-func">will be unsafe or
        unreliable</link>.  If you create functions or extensions in the public
        schema, use the first pattern instead.  Otherwise, like the first
        pattern, this is secure unless an untrusted user is the database owner
@@ -3122,11 +3125,14 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
      <listitem>
       <para>
-       Keep the default.  All users access the public schema implicitly.  This
+       Keep the default search path, and grant privileges to create in the
+       public schema.  All users access the public schema implicitly.  This
        simulates the situation where schemas are not available at all, giving
        a smooth transition from the non-schema-aware world.  However, this is
        never a secure pattern.  It is acceptable only when the database has a
-       single user or a few mutually-trusting users.
+       single user or a few mutually-trusting users.  In databases upgraded
+       from <productname>PostgreSQL</productname> 14 or earlier, this is the
+       default.
       </para>
      </listitem>
     </itemizedlist>

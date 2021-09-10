@@ -25,6 +25,9 @@ CREATE EXTENSION plperl;
 CREATE EXTENSION plperlu;  -- fail
 ERROR:  permission denied to create extension "plperlu"
 HINT:  Must be superuser to create this extension.
+CREATE SCHEMA plperl_setup_scratch;
+SET search_path = plperl_setup_scratch;
+GRANT ALL ON SCHEMA plperl_setup_scratch TO regress_user2;
 CREATE FUNCTION foo1() returns int language plperl as '1;';
 SELECT foo1();
  foo1 
@@ -34,6 +37,7 @@ SELECT foo1();
 
 -- Must reconnect to avoid failure with non-MULTIPLICITY Perl interpreters
 \c -
+SET search_path = plperl_setup_scratch;
 SET ROLE regress_user1;
 -- Should be able to change privileges on the language
 revoke all on language plperl from public;

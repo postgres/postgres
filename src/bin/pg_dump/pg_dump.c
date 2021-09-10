@@ -1623,11 +1623,12 @@ selectDumpableNamespace(NamespaceInfo *nsinfo, Archive *fout)
 		 * no-mans-land between being a system object and a user object.
 		 * CREATE SCHEMA would fail, so its DUMP_COMPONENT_DEFINITION is just
 		 * a comment and an indication of ownership.  If the owner is the
-		 * default, that DUMP_COMPONENT_DEFINITION is superfluous.
+		 * default, omit that superfluous DUMP_COMPONENT_DEFINITION.  Before
+		 * v15, the default owner was BOOTSTRAP_SUPERUSERID.
 		 */
 		nsinfo->create = false;
 		nsinfo->dobj.dump = DUMP_COMPONENT_ALL;
-		if (nsinfo->nspowner == BOOTSTRAP_SUPERUSERID)
+		if (nsinfo->nspowner == ROLE_PG_DATABASE_OWNER)
 			nsinfo->dobj.dump &= ~DUMP_COMPONENT_DEFINITION;
 		nsinfo->dobj.dump_contains = DUMP_COMPONENT_ALL;
 	}
@@ -4850,21 +4851,26 @@ getNamespaces(Archive *fout, int *numNamespaces)
 		PQExpBuffer init_racl_subquery = createPQExpBuffer();
 
 		/*
-		 * Bypass pg_init_privs.initprivs for the public schema.  Dropping and
-		 * recreating the schema detaches it from its pg_init_privs row, but
-		 * an empty destination database starts with this ACL nonetheless.
-		 * Also, we support dump/reload of public schema ownership changes.
-		 * ALTER SCHEMA OWNER filters nspacl through aclnewowner(), but
-		 * initprivs continues to reflect the initial owner (the bootstrap
-		 * superuser).  Hence, synthesize the value that nspacl will have
-		 * after the restore's ALTER SCHEMA OWNER.
+		 * Bypass pg_init_privs.initprivs for the public schema, for several
+		 * reasons.  First, dropping and recreating the schema detaches it
+		 * from its pg_init_privs row, but an empty destination database
+		 * starts with this ACL nonetheless.  Second, we support dump/reload
+		 * of public schema ownership changes.  ALTER SCHEMA OWNER filters
+		 * nspacl through aclnewowner(), but initprivs continues to reflect
+		 * the initial owner.  Hence, synthesize the value that nspacl will
+		 * have after the restore's ALTER SCHEMA OWNER.  Third, this makes the
+		 * destination database match the source's ACL, even if the latter was
+		 * an initdb-default ACL, which changed in v15.  An upgrade pulls in
+		 * changes to most system object ACLs that the DBA had not customized.
+		 * We've made the public schema depart from that, because changing its
+		 * ACL so easily breaks applications.
 		 */
 		buildACLQueries(acl_subquery, racl_subquery, init_acl_subquery,
 						init_racl_subquery, "n.nspacl", "n.nspowner",
 						"CASE WHEN n.nspname = 'public' THEN array["
 						"  format('%s=UC/%s', "
 						"         n.nspowner::regrole, n.nspowner::regrole),"
-						"  format('=UC/%s', n.nspowner::regrole)]::aclitem[] "
+						"  format('=U/%s', n.nspowner::regrole)]::aclitem[] "
 						"ELSE pip.initprivs END",
 						"'n'", dopt->binary_upgrade);
 
