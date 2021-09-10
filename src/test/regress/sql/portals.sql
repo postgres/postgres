@@ -190,6 +190,18 @@ FETCH BACKWARD 1 FROM foo24; -- should fail
 
 END;
 
+BEGIN;
+
+DECLARE foo24 NO SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2;
+
+FETCH 1 FROM foo24;
+
+FETCH ABSOLUTE 2 FROM foo24; -- allowed
+
+FETCH ABSOLUTE 1 FROM foo24; -- should fail
+
+END;
+
 --
 -- Cursors outside transaction blocks
 --
@@ -216,6 +228,26 @@ FETCH ABSOLUTE -1 FROM foo25;
 SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
 
 CLOSE foo25;
+
+BEGIN;
+
+DECLARE foo25ns NO SCROLL CURSOR WITH HOLD FOR SELECT * FROM tenk2;
+
+FETCH FROM foo25ns;
+
+FETCH FROM foo25ns;
+
+COMMIT;
+
+FETCH FROM foo25ns;
+
+FETCH ABSOLUTE 4 FROM foo25ns;
+
+FETCH ABSOLUTE 4 FROM foo25ns; -- fail
+
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
+
+CLOSE foo25ns;
 
 --
 -- ROLLBACK should close holdable cursors
