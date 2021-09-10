@@ -763,6 +763,43 @@ SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
 (1 row)
 
 CLOSE foo25;
+BEGIN;
+DECLARE foo25ns NO SCROLL CURSOR WITH HOLD FOR SELECT * FROM tenk2;
+FETCH FROM foo25ns;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+(1 row)
+
+FETCH FROM foo25ns;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+(1 row)
+
+COMMIT;
+FETCH FROM foo25ns;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+(1 row)
+
+FETCH ABSOLUTE 4 FROM foo25ns;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+(1 row)
+
+FETCH ABSOLUTE 4 FROM foo25ns; -- fail
+ERROR:  cursor can only scan forward
+HINT:  Declare it with SCROLL option to enable backward scan.
+SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
+  name   |                              statement                              | is_holdable | is_binary | is_scrollable 
+---------+---------------------------------------------------------------------+-------------+-----------+---------------
+ foo25ns | DECLARE foo25ns NO SCROLL CURSOR WITH HOLD FOR SELECT * FROM tenk2; | t           | f         | f
+(1 row)
+
+CLOSE foo25ns;
 --
 -- ROLLBACK should close holdable cursors
 --

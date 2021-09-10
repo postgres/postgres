@@ -382,6 +382,15 @@ PersistHoldablePortal(Portal portal)
 		 * can be processed.  Otherwise, store only the not-yet-fetched rows.
 		 * (The latter is not only more efficient, but avoids semantic
 		 * problems if the query's output isn't stable.)
+		 *
+		 * In the no-scroll case, tuple indexes in the tuplestore will not
+		 * match the cursor's nominal position (portalPos).  Currently this
+		 * causes no difficulty because we only navigate in the tuplestore by
+		 * relative position, except for the tuplestore_skiptuples call below
+		 * and the tuplestore_rescan call in DoPortalRewind, both of which are
+		 * disabled for no-scroll cursors.  But someday we might need to track
+		 * the offset between the holdStore and the cursor's nominal position
+		 * explicitly.
 		 */
 		if (portal->cursorOptions & CURSOR_OPT_SCROLL)
 		{
@@ -389,10 +398,6 @@ PersistHoldablePortal(Portal portal)
 		}
 		else
 		{
-			/* Disallow moving backwards from here */
-			portal->atStart = true;
-			portal->portalPos = 0;
-
 			/*
 			 * If we already reached end-of-query, set the direction to
 			 * NoMovement to avoid trying to fetch any tuples.  (This check
@@ -448,10 +453,17 @@ PersistHoldablePortal(Portal portal)
 		{
 			tuplestore_rescan(portal->holdStore);
 
-			if (!tuplestore_skiptuples(portal->holdStore,
-									   portal->portalPos,
-									   true))
-				elog(ERROR, "unexpected end of tuple stream");
+			/*
+			 * In the no-scroll case, the start of the tuplestore is exactly
+			 * where we want to be, so no repositioning is wanted.
+			 */
+			if (portal->cursorOptions & CURSOR_OPT_SCROLL)
+			{
+				if (!tuplestore_skiptuples(portal->holdStore,
+										   portal->portalPos,
+										   true))
+					elog(ERROR, "unexpected end of tuple stream");
+			}
 		}
 	}
 	PG_CATCH();

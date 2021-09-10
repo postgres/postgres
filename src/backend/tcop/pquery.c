@@ -1493,9 +1493,8 @@ PortalRunFetch(Portal portal,
  * DoPortalRunFetch
  *		Guts of PortalRunFetch --- the portal context is already set up
  *
- * count <= 0 is interpreted as a no-op: the destination gets started up
- * and shut down, but nothing else happens.  Also, count == FETCH_ALL is
- * interpreted as "all rows".  (cf FetchStmt.howMany)
+ * Here, count < 0 typically reverses the direction.  Also, count == FETCH_ALL
+ * is interpreted as "all rows".  (cf FetchStmt.howMany)
  *
  * Returns number of rows processed (suitable for use in result tag)
  */
@@ -1512,6 +1511,15 @@ DoPortalRunFetch(Portal portal,
 		   portal->strategy == PORTAL_ONE_MOD_WITH ||
 		   portal->strategy == PORTAL_UTIL_SELECT);
 
+	/*
+	 * Note: we disallow backwards fetch (including re-fetch of current row)
+	 * for NO SCROLL cursors, but we interpret that very loosely: you can use
+	 * any of the FetchDirection options, so long as the end result is to move
+	 * forwards by at least one row.  Currently it's sufficient to check for
+	 * NO SCROLL in DoPortalRewind() and in the forward == false path in
+	 * PortalRunSelect(); but someday we might prefer to account for that
+	 * restriction explicitly here.
+	 */
 	switch (fdirection)
 	{
 		case FETCH_FORWARD:
@@ -1688,6 +1696,25 @@ static void
 DoPortalRewind(Portal portal)
 {
 	QueryDesc  *queryDesc;
+
+	/*
+	 * No work is needed if we've not advanced nor attempted to advance the
+	 * cursor (and we don't want to throw a NO SCROLL error in this case).
+	 */
+	if (portal->atStart && !portal->atEnd)
+		return;
+
+	/*
+	 * Otherwise, cursor should allow scrolling.  However, we're only going to
+	 * enforce that policy fully beginning in v15.  In older branches, insist
+	 * on this only if the portal has a holdStore.  That prevents users from
+	 * seeing that the holdStore may not have all the rows of the query.
+	 */
+	if ((portal->cursorOptions & CURSOR_OPT_NO_SCROLL) && portal->holdStore)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cursor can only scan forward"),
+				 errhint("Declare it with SCROLL option to enable backward scan.")));
 
 	/* Rewind holdStore, if we have one */
 	if (portal->holdStore)
