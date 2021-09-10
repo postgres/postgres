@@ -298,7 +298,7 @@ test_query(
 test_query(
 	$node,
 	'test1',
-	"CREATE TABLE mytab (f1 int primary key);\n"
+	"CREATE TEMP TABLE mytab (f1 int primary key);\n"
 	  . "COPY mytab FROM STDIN;\n"
 	  . join("\n", (1 .. 100000))
 	  . "\n\\.\n"
