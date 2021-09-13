@@ -1100,7 +1100,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
         linkend="view-pg-stats-ext-exprs"><structname>pg_stats_ext_exprs</structname></link>
         reports such statistics. <link
         linkend="sql-altertable"><literal>ALTER TABLE ... ALTER COLUMN
-        ... TYPE RESETS STASTISTICS</literal></link>?
+        ... TYPE RESETS STATISTICS</literal></link>?
        </para>
       </listitem>
 
