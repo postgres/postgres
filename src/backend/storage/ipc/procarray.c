@@ -4027,7 +4027,7 @@ DisplayXidCache(void)
 GlobalVisState *
 GlobalVisTestFor(Relation rel)
 {
-	GlobalVisState *state;
+	GlobalVisState *state = NULL;
 
 	/* XXX: we should assert that a snapshot is pushed or registered */
 	Assert(RecentXmin);
