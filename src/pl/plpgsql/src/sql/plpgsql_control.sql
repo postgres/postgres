@@ -311,6 +311,18 @@ begin
   raise notice 'should get here';
 end$$;
 
+-- check exit out of outermost block
+do $$
+<<outerblock>>
+begin
+  <<innerblock>>
+  begin
+    exit outerblock;
+    raise notice 'should not get here';
+  end;
+  raise notice 'should not get here, either';
+end$$;
+
 -- unlabeled exit does match a while loop
 do $$
 begin

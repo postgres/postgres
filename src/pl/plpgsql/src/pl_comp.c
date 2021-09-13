@@ -1038,9 +1038,11 @@ add_dummy_return(PLpgSQL_function *function)
 	/*
 	 * If the outer block has an EXCEPTION clause, we need to make a new outer
 	 * block, since the added RETURN shouldn't act like it is inside the
-	 * EXCEPTION clause.
+	 * EXCEPTION clause.  Likewise, if it has a label, wrap it in a new outer
+	 * block so that EXIT doesn't skip the RETURN.
 	 */
-	if (function->action->exceptions != NULL)
+	if (function->action->exceptions != NULL ||
+		function->action->label != NULL)
 	{
 		PLpgSQL_stmt_block *new;
 
