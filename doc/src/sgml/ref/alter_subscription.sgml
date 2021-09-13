@@ -50,14 +50,14 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    (Currently, all subscription owners must be superusers, so the owner checks
    will be bypassed in practice.  But this might change in the future.)
   </para>
-  
+
   <para>
    When refreshing a publication we remove the relations that are no longer
    part of the publication and we also remove the table synchronization slots
    if there are any. It is necessary to remove these slots so that the resources
    allocated for the subscription on the remote host are released. If due to
    network breakdown or some other error, <productname>PostgreSQL</productname>
-   is unable to remove the slots, an ERROR will be reported. To proceed in this
+   is unable to remove the slots, an error will be reported. To proceed in this
    situation, the user either needs to retry the operation or disassociate the
    slot from the subscription and drop the subscription as explained in
    <xref linkend="sql-dropsubscription"/>.
@@ -69,9 +69,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
    option as true cannot be executed inside a transaction block.
 
    These commands also cannot be executed when the subscription has
-   <literal>two_phase</literal> commit enabled, unless <literal>copy_data = false</literal>.
-   See column <literal>subtwophasestate</literal> of
-   <xref linkend="catalog-pg-subscription"/> to know the actual two-phase state.
+   <literal>two_phase</literal> commit enabled,
+   unless <literal>copy_data</literal> is <literal>false</literal>.
+   See column <structfield>subtwophasestate</structfield> of
+   <link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>
+   to know the actual two-phase state.
   </para>
  </refsect1>
 
@@ -92,7 +94,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
     <listitem>
      <para>
-      This clause alters the connection property originally set by
+      This clause replaces the connection string originally set by
       <xref linkend="sql-createsubscription"/>.  See there for more
       information.
      </para>
@@ -105,7 +107,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <term><literal>DROP PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
     <listitem>
      <para>
-      Changes the list of subscribed publications.  <literal>SET</literal>
+      These forms change the list of subscribed publications.
+      <literal>SET</literal>
       replaces the entire list of publications with a new list,
       <literal>ADD</literal> adds additional publications to the list of
       publications, and <literal>DROP</literal> removes the publications from
@@ -143,8 +146,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      <para>
       Fetch missing table information from publisher.  This will start
       replication of tables that were added to the subscribed-to publications
-      since the last invocation of <command>REFRESH PUBLICATION</command> or
-      since <command>CREATE SUBSCRIPTION</command>.
+      since <command>CREATE SUBSCRIPTION</command> or
+      the last invocation of <command>REFRESH PUBLICATION</command>.
      </para>
 
      <para>
@@ -156,9 +159,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
         <term><literal>copy_data</literal> (<type>boolean</type>)</term>
         <listitem>
          <para>
-          Specifies whether the existing data in the publications that are
-          being subscribed to should be copied once the replication starts.
-          The default is <literal>true</literal>.  (Previously subscribed
+          Specifies whether to copy pre-existing data in the publications
+          that are being subscribed to when the replication starts.
+          The default is <literal>true</literal>.  (Previously-subscribed
           tables are not copied.)
          </para>
         </listitem>
@@ -171,8 +174,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <term><literal>ENABLE</literal></term>
     <listitem>
      <para>
-      Enables the previously disabled subscription, starting the logical
-      replication worker at the end of transaction.
+      Enables a previously disabled subscription, starting the logical
+      replication worker at the end of the transaction.
      </para>
     </listitem>
    </varlistentry>
@@ -181,8 +184,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <term><literal>DISABLE</literal></term>
     <listitem>
      <para>
-      Disables the running subscription, stopping the logical replication
-      worker at the end of transaction.
+      Disables a running subscription, stopping the logical replication
+      worker at the end of the transaction.
      </para>
     </listitem>
    </varlistentry>
