@@ -3654,6 +3654,13 @@ keep_going:						/* We will come back to here until there is
 				/* We can release the address list now. */
 				release_conn_addrinfo(conn);
 
+				/*
+				 * Contents of conn->errorMessage are no longer interesting
+				 * (and it seems some clients expect it to be empty after a
+				 * successful connection).
+				 */
+				resetPQExpBuffer(&conn->errorMessage);
+
 				/* We are open for business! */
 				conn->status = CONNECTION_OK;
 				return PGRES_POLLING_OK;
