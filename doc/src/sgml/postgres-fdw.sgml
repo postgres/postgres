@@ -406,7 +406,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><literal>import_generated</literal> (<type>boolean</type>)</term>
+     <term><literal>import_generated</literal></term>
      <listitem>
       <para>
        This option controls whether column <literal>GENERATED</literal> expressions
