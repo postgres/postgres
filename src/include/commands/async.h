@@ -43,12 +43,11 @@ extern void AtAbort_Notify(void);
 extern void AtSubCommit_Notify(void);
 extern void AtSubAbort_Notify(void);
 extern void AtPrepare_Notify(void);
-extern void ProcessCompletedNotifies(void);
 
 /* signal handler for inbound notifies (PROCSIG_NOTIFY_INTERRUPT) */
 extern void HandleNotifyInterrupt(void);
 
 /* process interrupts */
-extern void ProcessNotifyInterrupt(void);
+extern void ProcessNotifyInterrupt(bool flush);
 
 #endif							/* ASYNC_H */
