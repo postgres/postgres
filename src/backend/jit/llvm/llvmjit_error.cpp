@@ -84,6 +84,16 @@ llvm_leave_fatal_on_oom(void)
 }
 
 /*
+ * Are we currently in an fatal-on-oom section? Useful to skip cleanup in case
+ * of errors.
+ */
+bool
+llvm_in_fatal_on_oom(void)
+{
+	return fatal_new_handler_depth > 0;
+}
+
+/*
  * Reset fatal error handling. This should only be called in error recovery
  * loops like PostgresMain()'s.
  */
