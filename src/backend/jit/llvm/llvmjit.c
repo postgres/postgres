@@ -172,8 +172,6 @@ llvm_release_context(JitContext *context)
 {
 	LLVMJitContext *llvm_context = (LLVMJitContext *) context;
 
-	llvm_enter_fatal_on_oom();
-
 	/*
 	 * When this backend is exiting, don't clean up LLVM. As an error might
 	 * have occurred from within LLVM, we do not want to risk reentering. All
@@ -181,6 +179,8 @@ llvm_release_context(JitContext *context)
 	 */
 	if (proc_exit_inprogress)
 		return;
+
+	llvm_enter_fatal_on_oom();
 
 	if (llvm_context->module)
 	{
@@ -885,6 +885,20 @@ llvm_session_initialize(void)
 static void
 llvm_shutdown(int code, Datum arg)
 {
+	/*
+	 * If llvm_shutdown() is reached while in a fatal-on-oom section an error
+	 * has occurred in the middle of LLVM code. It is not safe to call back
+	 * into LLVM (which is why a FATAL error was thrown).
+	 *
+	 * We do need to shutdown LLVM in other shutdown cases, otherwise
+	 * e.g. profiling data won't be written out.
+	 */
+	if (llvm_in_fatal_on_oom())
+	{
+		Assert(proc_exit_inprogress);
+		return;
+	}
+
 #if LLVM_VERSION_MAJOR > 11
 	{
 		if (llvm_opt3_orc)
