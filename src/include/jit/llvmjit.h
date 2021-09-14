@@ -93,6 +93,7 @@ extern LLVMValueRef FuncExecAggInitGroup;
 
 extern void llvm_enter_fatal_on_oom(void);
 extern void llvm_leave_fatal_on_oom(void);
+extern bool llvm_in_fatal_on_oom(void);
 extern void llvm_reset_after_error(void);
 extern void llvm_assert_in_fatal_section(void);
 
