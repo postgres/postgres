@@ -526,6 +526,18 @@ select count(*) from tenk1 t
 where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0)
   and thousand = 1;
 
+-- It's possible for the same EXISTS to get resolved both ways
+create temp table exists_tbl (c1 int, c2 int, c3 int) partition by list (c1);
+create temp table exists_tbl_null partition of exists_tbl for values in (null);
+create temp table exists_tbl_def partition of exists_tbl default;
+insert into exists_tbl select x, x/2, x+1 from generate_series(0,10) x;
+analyze exists_tbl;
+explain (costs off)
+select * from exists_tbl t1
+  where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
+select * from exists_tbl t1
+  where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
+
 --
 -- Test case for planner bug with nested EXISTS handling
 --

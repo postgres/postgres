@@ -921,6 +921,46 @@ where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0)
     10
 (1 row)
 
+-- It's possible for the same EXISTS to get resolved both ways
+create temp table exists_tbl (c1 int, c2 int, c3 int) partition by list (c1);
+create temp table exists_tbl_null partition of exists_tbl for values in (null);
+create temp table exists_tbl_def partition of exists_tbl default;
+insert into exists_tbl select x, x/2, x+1 from generate_series(0,10) x;
+analyze exists_tbl;
+explain (costs off)
+select * from exists_tbl t1
+  where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Append
+   ->  Seq Scan on exists_tbl_null t1_1
+         Filter: ((SubPlan 1) OR (c3 < 0))
+         SubPlan 1
+           ->  Append
+                 ->  Seq Scan on exists_tbl_null t2_1
+                       Filter: (t1_1.c1 = c2)
+                 ->  Seq Scan on exists_tbl_def t2_2
+                       Filter: (t1_1.c1 = c2)
+   ->  Seq Scan on exists_tbl_def t1_2
+         Filter: ((hashed SubPlan 2) OR (c3 < 0))
+         SubPlan 2
+           ->  Append
+                 ->  Seq Scan on exists_tbl_null t2_4
+                 ->  Seq Scan on exists_tbl_def t2_5
+(15 rows)
+
+select * from exists_tbl t1
+  where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
+ c1 | c2 | c3 
+----+----+----
+  0 |  0 |  1
+  1 |  0 |  2
+  2 |  1 |  3
+  3 |  1 |  4
+  4 |  2 |  5
+  5 |  2 |  6
+(6 rows)
+
 --
 -- Test case for planner bug with nested EXISTS handling
 --
