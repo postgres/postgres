@@ -249,6 +249,7 @@ static List *set_returning_clause_references(PlannerInfo *root,
 Plan *
 set_plan_references(PlannerInfo *root, Plan *plan)
 {
+	Plan	   *result;
 	PlannerGlobal *glob = root->glob;
 	int			rtoffset = list_length(glob->finalrtable);
 	ListCell   *lc;
@@ -301,8 +302,44 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 		glob->appendRelations = lappend(glob->appendRelations, appinfo);
 	}
 
+	/* If needed, create workspace for processing AlternativeSubPlans */
+	if (root->hasAlternativeSubPlans)
+	{
+		root->isAltSubplan = (bool *)
+			palloc0(list_length(glob->subplans) * sizeof(bool));
+		root->isUsedSubplan = (bool *)
+			palloc0(list_length(glob->subplans) * sizeof(bool));
+	}
+
 	/* Now fix the Plan tree */
-	return set_plan_refs(root, plan, rtoffset);
+	result = set_plan_refs(root, plan, rtoffset);
+
+	/*
+	 * If we have AlternativeSubPlans, it is likely that we now have some
+	 * unreferenced subplans in glob->subplans.  To avoid expending cycles on
+	 * those subplans later, get rid of them by setting those list entries to
+	 * NULL.  (Note: we can't do this immediately upon processing an
+	 * AlternativeSubPlan, because there may be multiple copies of the
+	 * AlternativeSubPlan, and they can get resolved differently.)
+	 */
+	if (root->hasAlternativeSubPlans)
+	{
+		foreach(lc, glob->subplans)
+		{
+			int			ndx = foreach_current_index(lc);
+
+			/*
+			 * If it was used by some AlternativeSubPlan in this query level,
+			 * but wasn't selected as best by any AlternativeSubPlan, then we
+			 * don't need it.  Do not touch subplans that aren't parts of
+			 * AlternativeSubPlans.
+			 */
+			if (root->isAltSubplan[ndx] && !root->isUsedSubplan[ndx])
+				lfirst(lc) = NULL;
+		}
+	}
+
+	return result;
 }
 
 /*
@@ -1762,8 +1799,7 @@ fix_param_node(PlannerInfo *root, Param *p)
  * Note: caller must still recurse into the result!
  *
  * We don't make any attempt to fix up cost estimates in the parent plan
- * node or higher-level nodes.  However, we do remove the rejected subplan(s)
- * from root->glob->subplans, to minimize cycles expended on them later.
+ * node or higher-level nodes.
  */
 static Node *
 fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
@@ -1775,9 +1811,8 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
 
 	/*
 	 * Compute the estimated cost of each subplan assuming num_exec
-	 * executions, and keep the cheapest one.  Replace discarded subplans with
-	 * NULL pointers in the global subplans list.  In event of exact equality
-	 * of estimates, we prefer the later plan; this is a bit arbitrary, but in
+	 * executions, and keep the cheapest one.  In event of exact equality of
+	 * estimates, we prefer the later plan; this is a bit arbitrary, but in
 	 * current usage it biases us to break ties against fast-start subplans.
 	 */
 	Assert(asplan->subplans != NIL);
@@ -1788,30 +1823,18 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
 		Cost		curcost;
 
 		curcost = curplan->startup_cost + num_exec * curplan->per_call_cost;
-		if (bestplan == NULL)
+		if (bestplan == NULL || curcost <= bestcost)
 		{
 			bestplan = curplan;
 			bestcost = curcost;
 		}
-		else if (curcost <= bestcost)
-		{
-			/* drop old bestplan */
-			ListCell   *lc2 = list_nth_cell(root->glob->subplans,
-											bestplan->plan_id - 1);
 
-			lfirst(lc2) = NULL;
-			bestplan = curplan;
-			bestcost = curcost;
-		}
-		else
-		{
-			/* drop curplan */
-			ListCell   *lc2 = list_nth_cell(root->glob->subplans,
-											curplan->plan_id - 1);
-
-			lfirst(lc2) = NULL;
-		}
+		/* Also mark all subplans that are in AlternativeSubPlans */
+		root->isAltSubplan[curplan->plan_id - 1] = true;
 	}
+
+	/* Mark the subplan we selected */
+	root->isUsedSubplan[bestplan->plan_id - 1] = true;
 
 	return (Node *) bestplan;
 }
