@@ -222,5 +222,6 @@ extern void StartupReplicationSlots(void);
 extern void CheckPointReplicationSlots(void);
 
 extern void CheckSlotRequirements(void);
+extern void CheckSlotPermissions(void);
 
 #endif							/* SLOT_H */

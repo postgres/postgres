@@ -95,15 +95,6 @@ LogicalOutputWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 	p->returned_rows++;
 }
 
-static void
-check_permissions(void)
-{
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or replication role to use replication slots")));
-}
-
 /*
  * Helper function for the various SQL callable logical decoding functions.
  */
@@ -124,7 +115,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	List	   *options = NIL;
 	DecodingOutputState *p;
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	CheckLogicalDecodingRequirements();
 

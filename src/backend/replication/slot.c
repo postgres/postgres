@@ -1060,6 +1060,18 @@ CheckSlotRequirements(void)
 }
 
 /*
+ * Check whether the user has privilege to use replication slots.
+ */
+void
+CheckSlotPermissions(void)
+{
+	if (!superuser() && !has_rolreplication(GetUserId()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser or replication role to use replication slots")));
+}
+
+/*
  * Reserve WAL for the currently active slot.
  *
  * Compute and set restart_lsn in a manner that's appropriate for the type of

@@ -25,15 +25,6 @@
 #include "utils/pg_lsn.h"
 #include "utils/resowner.h"
 
-static void
-check_permissions(void)
-{
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser or replication role to use replication slots")));
-}
-
 /*
  * Helper function for creating a new physical replication slot with
  * given arguments. Note that this function doesn't release the created
@@ -85,7 +76,7 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	CheckSlotRequirements();
 
@@ -188,7 +179,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	CheckLogicalDecodingRequirements();
 
@@ -224,7 +215,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 {
 	Name		name = PG_GETARG_NAME(0);
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	CheckSlotRequirements();
 
@@ -619,7 +610,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 
 	Assert(!MyReplicationSlot);
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	if (XLogRecPtrIsInvalid(moveto))
 		ereport(ERROR,
@@ -718,7 +709,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	check_permissions();
+	CheckSlotPermissions();
 
 	if (logical_slot)
 		CheckLogicalDecodingRequirements();
