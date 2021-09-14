@@ -49,6 +49,6 @@ extern void ProcessCompletedNotifies(void);
 extern void HandleNotifyInterrupt(void);
 
 /* process interrupts */
-extern void ProcessNotifyInterrupt(void);
+extern void ProcessNotifyInterrupt(bool flush);
 
 #endif							/* ASYNC_H */
