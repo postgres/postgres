@@ -284,15 +284,13 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   If a background worker sends asynchronous notifications with the
-   <command>NOTIFY</command> command via the Server Programming Interface
-   (<acronym>SPI</acronym>), it should call
-   <function>ProcessCompletedNotifies</function> explicitly after committing
-   the enclosing transaction so that any notifications can be delivered.  If a
-   background worker registers to receive asynchronous notifications with
-   the <command>LISTEN</command> through <acronym>SPI</acronym>, the worker
-   will log those notifications, but there is no programmatic way for the
-   worker to intercept and respond to those notifications.
+   Background workers can send asynchronous notification messages, either by
+   using the <command>NOTIFY</command> command via <acronym>SPI</acronym>,
+   or directly via <function>Async_Notify()</function>.  Such notifications
+   will be sent at transaction commit.
+   Background workers should not register to receive asynchronous
+   notifications with the <command>LISTEN</command> command, as there is no
+   infrastructure for a worker to consume such notifications.
   </para>
 
   <para>

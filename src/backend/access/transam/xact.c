@@ -2269,7 +2269,17 @@ CommitTransaction(void)
 	 */
 	smgrDoPendingDeletes(true);
 
+	/*
+	 * Send out notification signals to other backends (and do other
+	 * post-commit NOTIFY cleanup).  This must not happen until after our
+	 * transaction is fully done from the viewpoint of other backends.
+	 */
 	AtCommit_Notify();
+
+	/*
+	 * Everything after this should be purely internal-to-this-backend
+	 * cleanup.
+	 */
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
 	AtEOXact_Enum();
