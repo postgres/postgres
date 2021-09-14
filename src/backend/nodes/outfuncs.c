@@ -124,6 +124,13 @@ static void outChar(StringInfo str, char c);
 			appendStringInfo(str, " %u", node->fldname[i]); \
 	} while(0)
 
+#define WRITE_INDEX_ARRAY(fldname, len) \
+	do { \
+		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
+		for (int i = 0; i < len; i++) \
+			appendStringInfo(str, " %u", node->fldname[i]); \
+	} while(0)
+
 #define WRITE_INT_ARRAY(fldname, len) \
 	do { \
 		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
@@ -2510,14 +2517,7 @@ _outPathTarget(StringInfo str, const PathTarget *node)
 	WRITE_NODE_TYPE("PATHTARGET");
 
 	WRITE_NODE_FIELD(exprs);
-	if (node->sortgrouprefs)
-	{
-		int			i;
-
-		appendStringInfoString(str, " :sortgrouprefs");
-		for (i = 0; i < list_length(node->exprs); i++)
-			appendStringInfo(str, " %u", node->sortgrouprefs[i]);
-	}
+	WRITE_INDEX_ARRAY(sortgrouprefs, list_length(node->exprs));
 	WRITE_FLOAT_FIELD(cost.startup, "%.2f");
 	WRITE_FLOAT_FIELD(cost.per_tuple, "%.2f");
 	WRITE_INT_FIELD(width);
