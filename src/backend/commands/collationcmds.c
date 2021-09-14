@@ -576,7 +576,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 			if (len == 0 || localebuf[len - 1] != '\n')
 			{
-				elog(DEBUG1, "locale name too long, skipped: \"%s\"", localebuf);
+				elog(DEBUG1, "skipping locale with too-long name: \"%s\"", localebuf);
 				continue;
 			}
 			localebuf[len - 1] = '\0';
@@ -590,18 +590,22 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			 */
 			if (!pg_is_ascii(localebuf))
 			{
-				elog(DEBUG1, "locale name has non-ASCII characters, skipped: \"%s\"", localebuf);
+				elog(DEBUG1, "skipping locale with non-ASCII name: \"%s\"", localebuf);
 				continue;
 			}
 
 			enc = pg_get_encoding_from_locale(localebuf, false);
 			if (enc < 0)
 			{
-				/* error message printed by pg_get_encoding_from_locale() */
+				elog(DEBUG1, "skipping locale with unrecognized encoding: \"%s\"",
+					 localebuf);
 				continue;
 			}
 			if (!PG_VALID_BE_ENCODING(enc))
-				continue;		/* ignore locales for client-only encodings */
+			{
+				elog(DEBUG1, "skipping locale with client-only encoding: \"%s\"", localebuf);
+				continue;
+			}
 			if (enc == PG_SQL_ASCII)
 				continue;		/* C/POSIX are already in the catalog */
 
