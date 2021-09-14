@@ -153,7 +153,6 @@ typedef enum NodeTag
 	T_Alias,
 	T_RangeVar,
 	T_TableFunc,
-	T_Expr,
 	T_Var,
 	T_Const,
 	T_Param,
