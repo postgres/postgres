@@ -1226,15 +1226,10 @@ progress_report(uint64 relations_total, uint64 relations_checked,
 	if (relpages_total)
 		percent_pages = (int) (relpages_checked * 100 / relpages_total);
 
-	/*
-	 * Separate step to keep platform-dependent format code out of fprintf
-	 * calls.  We only test for INT64_FORMAT availability in snprintf, not
-	 * fprintf.
-	 */
-	snprintf(checked_rel, sizeof(checked_rel), INT64_FORMAT, relations_checked);
-	snprintf(total_rel, sizeof(total_rel), INT64_FORMAT, relations_total);
-	snprintf(checked_pages, sizeof(checked_pages), INT64_FORMAT, relpages_checked);
-	snprintf(total_pages, sizeof(total_pages), INT64_FORMAT, relpages_total);
+	snprintf(checked_rel, sizeof(checked_rel), UINT64_FORMAT, relations_checked);
+	snprintf(total_rel, sizeof(total_rel), UINT64_FORMAT, relations_total);
+	snprintf(checked_pages, sizeof(checked_pages), UINT64_FORMAT, relpages_checked);
+	snprintf(total_pages, sizeof(total_pages), UINT64_FORMAT, relpages_total);
 
 #define VERBOSE_DATNAME_LENGTH 35
 	if (opts.verbose)
