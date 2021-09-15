@@ -134,8 +134,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
        </varlistentry>
       </variablelist>
 
-      Additionally, refresh options as described
-      under <literal>REFRESH PUBLICATION</literal> may be specified.
+      Additionally, the options described under
+      <literal>REFRESH PUBLICATION</literal> may be specified, to control the
+      implicit refresh operation.
      </para>
     </listitem>
    </varlistentry>
