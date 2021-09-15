@@ -1144,7 +1144,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for ENR RTEs (else NULL/zero):
 	 */
 	char	   *enrname;		/* name of ephemeral named relation */
-	double		enrtuples;		/* estimated or actual from caller */
+	Cardinality	enrtuples;		/* estimated or actual from caller */
 
 	/*
 	 * Fields valid in all RTEs:

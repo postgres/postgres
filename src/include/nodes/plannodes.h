@@ -120,7 +120,7 @@ typedef struct Plan
 	/*
 	 * planner's estimate of result size of this plan step
 	 */
-	double		plan_rows;		/* number of rows plan is expected to emit */
+	Cardinality	plan_rows;		/* number of rows plan is expected to emit */
 	int			plan_width;		/* average row width in bytes */
 
 	/*
@@ -976,7 +976,7 @@ typedef struct Hash
 	AttrNumber	skewColumn;		/* outer join key's column #, or zero */
 	bool		skewInherit;	/* is outer join rel an inheritance tree? */
 	/* all other info is in the parent HashJoin node */
-	double		rows_total;		/* estimate total rows if parallel_aware */
+	Cardinality	rows_total;		/* estimate total rows if parallel_aware */
 } Hash;
 
 /* ----------------
