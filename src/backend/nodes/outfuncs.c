@@ -1123,7 +1123,7 @@ _outVar(StringInfo str, const Var *node)
 {
 	WRITE_NODE_TYPE("VAR");
 
-	WRITE_UINT_FIELD(varno);
+	WRITE_INT_FIELD(varno);
 	WRITE_INT_FIELD(varattno);
 	WRITE_OID_FIELD(vartype);
 	WRITE_INT_FIELD(vartypmod);

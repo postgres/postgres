@@ -31,7 +31,7 @@
 
 typedef struct
 {
-	Index		varno;			/* RT index of Var */
+	int			varno;			/* RT index of Var */
 	AttrNumber	varattno;		/* attr number of Var */
 	AttrNumber	resno;			/* TLE position of Var */
 } tlist_vinfo;
@@ -66,7 +66,7 @@ typedef struct
 {
 	PlannerInfo *root;
 	indexed_tlist *subplan_itlist;
-	Index		newvarno;
+	int			newvarno;
 	int			rtoffset;
 	double		num_exec;
 } fix_upper_expr_context;
@@ -143,15 +143,15 @@ static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
 										 indexed_tlist *itlist,
-										 Index newvarno,
+										 int newvarno,
 										 int rtoffset);
 static Var *search_indexed_tlist_for_non_var(Expr *node,
 											 indexed_tlist *itlist,
-											 Index newvarno);
+											 int newvarno);
 static Var *search_indexed_tlist_for_sortgroupref(Expr *node,
 												  Index sortgroupref,
 												  indexed_tlist *itlist,
-												  Index newvarno);
+												  int newvarno);
 static List *fix_join_expr(PlannerInfo *root,
 						   List *clauses,
 						   indexed_tlist *outer_itlist,
@@ -163,7 +163,7 @@ static Node *fix_join_expr_mutator(Node *node,
 static Node *fix_upper_expr(PlannerInfo *root,
 							Node *node,
 							indexed_tlist *subplan_itlist,
-							Index newvarno,
+							int newvarno,
 							int rtoffset, double num_exec);
 static Node *fix_upper_expr_mutator(Node *node,
 									fix_upper_expr_context *context);
@@ -504,16 +504,6 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->securityQuals = NIL;
 
 	glob->finalrtable = lappend(glob->finalrtable, newrte);
-
-	/*
-	 * Check for RT index overflow; it's very unlikely, but if it did happen,
-	 * the executor would get confused by varnos that match the special varno
-	 * values.
-	 */
-	if (IS_SPECIAL_VARNO(list_length(glob->finalrtable)))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("too many range table entries")));
 
 	/*
 	 * If it's a plain relation RTE, add the table to relationOids.
@@ -1947,10 +1937,8 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-		Assert(cexpr->cvarno != INNER_VAR);
-		Assert(cexpr->cvarno != OUTER_VAR);
-		if (!IS_SPECIAL_VARNO(cexpr->cvarno))
-			cexpr->cvarno += context->rtoffset;
+		Assert(!IS_SPECIAL_VARNO(cexpr->cvarno));
+		cexpr->cvarno += context->rtoffset;
 		return (Node *) cexpr;
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -2447,7 +2435,7 @@ build_tlist_index(List *tlist)
  * (so nothing other than Vars and PlaceHolderVars can be matched).
  */
 static indexed_tlist *
-build_tlist_index_other_vars(List *tlist, Index ignore_rel)
+build_tlist_index_other_vars(List *tlist, int ignore_rel)
 {
 	indexed_tlist *itlist;
 	tlist_vinfo *vinfo;
@@ -2499,9 +2487,9 @@ build_tlist_index_other_vars(List *tlist, Index ignore_rel)
  */
 static Var *
 search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
-							 Index newvarno, int rtoffset)
+							 int newvarno, int rtoffset)
 {
-	Index		varno = var->varno;
+	int			varno = var->varno;
 	AttrNumber	varattno = var->varattno;
 	tlist_vinfo *vinfo;
 	int			i;
@@ -2539,7 +2527,7 @@ search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
  */
 static Var *
 search_indexed_tlist_for_non_var(Expr *node,
-								 indexed_tlist *itlist, Index newvarno)
+								 indexed_tlist *itlist, int newvarno)
 {
 	TargetEntry *tle;
 
@@ -2581,7 +2569,7 @@ static Var *
 search_indexed_tlist_for_sortgroupref(Expr *node,
 									  Index sortgroupref,
 									  indexed_tlist *itlist,
-									  Index newvarno)
+									  int newvarno)
 {
 	ListCell   *lc;
 
@@ -2799,7 +2787,7 @@ static Node *
 fix_upper_expr(PlannerInfo *root,
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
-			   Index newvarno,
+			   int newvarno,
 			   int rtoffset,
 			   double num_exec)
 {

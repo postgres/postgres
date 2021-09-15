@@ -80,7 +80,7 @@ static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 									   int parentRTindex, Query *setOpQuery,
 									   int childRToffset);
-static void make_setop_translation_list(Query *query, Index newvarno,
+static void make_setop_translation_list(Query *query, int newvarno,
 										AppendRelInfo *appinfo);
 static bool is_simple_subquery(PlannerInfo *root, Query *subquery,
 							   RangeTblEntry *rte,
@@ -1372,7 +1372,7 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
  *	  Also create the rather trivial reverse-translation array.
  */
 static void
-make_setop_translation_list(Query *query, Index newvarno,
+make_setop_translation_list(Query *query, int newvarno,
 							AppendRelInfo *appinfo)
 {
 	List	   *vars = NIL;

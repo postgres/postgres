@@ -31,7 +31,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	CustomScanState *css;
 	Relation	scan_rel = NULL;
 	Index		scanrelid = cscan->scan.scanrelid;
-	Index		tlistvarno;
+	int			tlistvarno;
 
 	/*
 	 * Allocate the CustomScanState object.  We let the custom scan provider

@@ -138,7 +138,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	ForeignScanState *scanstate;
 	Relation	currentRelation = NULL;
 	Index		scanrelid = node->scan.scanrelid;
-	Index		tlistvarno;
+	int			tlistvarno;
 	FdwRoutine *fdwroutine;
 
 	/* check for unsupported flags */

@@ -5961,7 +5961,8 @@ set_pathtarget_cost_width(PlannerInfo *root, PathTarget *target)
 			Assert(var->varlevelsup == 0);
 
 			/* Try to get data from RelOptInfo cache */
-			if (var->varno < root->simple_rel_array_size)
+			if (!IS_SPECIAL_VARNO(var->varno) &&
+				var->varno < root->simple_rel_array_size)
 			{
 				RelOptInfo *rel = root->simple_rel_array[var->varno];
 

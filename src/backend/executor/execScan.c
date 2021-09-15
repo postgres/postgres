@@ -282,7 +282,7 @@ ExecAssignScanProjectionInfo(ScanState *node)
  *		As above, but caller can specify varno expected in Vars in the tlist.
  */
 void
-ExecAssignScanProjectionInfoWithVarno(ScanState *node, Index varno)
+ExecAssignScanProjectionInfoWithVarno(ScanState *node, int varno)
 {
 	TupleDesc	tupdesc = node->ss_ScanTupleSlot->tts_tupleDescriptor;
 
