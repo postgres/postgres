@@ -4052,6 +4052,12 @@ PostgresMain(int argc, char *argv[],
 		InitializeMaxBackends();
 
 		CreateSharedMemoryAndSemaphores();
+
+		/*
+		 * Remember stand-alone backend startup time, roughly at the same
+		 * point during startup that postmaster does so.
+		 */
+		PgStartTime = GetCurrentTimestamp();
 	}
 
 	/*
@@ -4160,12 +4166,6 @@ PostgresMain(int argc, char *argv[],
 	MemoryContextSwitchTo(row_description_context);
 	initStringInfo(&row_description_buf);
 	MemoryContextSwitchTo(TopMemoryContext);
-
-	/*
-	 * Remember stand-alone backend startup time
-	 */
-	if (!IsUnderPostmaster)
-		PgStartTime = GetCurrentTimestamp();
 
 	/*
 	 * POSTGRES main processing loop begins here
