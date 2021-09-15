@@ -54,19 +54,18 @@ The basic operations on a ResourceOwner are:
 * delete a ResourceOwner (including child owner objects); all resources
   must have been released beforehand
 
+This API directly supports the resource types listed in the definition of
+ResourceOwnerData struct in src/backend/utils/resowner/resowner.c.
+Other objects can be associated with a ResourceOwner by recording the address
+of the owning ResourceOwner in such an object.  There is an API for other
+modules to get control during ResourceOwner release, so that they can scan
+their own data structures to find the objects that need to be deleted.
+
 Locks are handled specially because in non-error situations a lock should
 be held until end of transaction, even if it was originally taken by a
 subtransaction or portal.  Therefore, the "release" operation on a child
 ResourceOwner transfers lock ownership to the parent instead of actually
 releasing the lock, if isCommit is true.
-
-Currently, ResourceOwners contain direct support for recording ownership of
-buffer pins, lmgr locks, and catcache, relcache, plancache, tupdesc, and
-snapshot references.  Other objects can be associated with a ResourceOwner by
-recording the address of the owning ResourceOwner in such an object.  There is
-an API for other modules to get control during ResourceOwner release, so that
-they can scan their own data structures to find the objects that need to be
-deleted.
 
 Whenever we are inside a transaction, the global variable
 CurrentResourceOwner shows which resource owner should be assigned
