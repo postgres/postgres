@@ -1472,7 +1472,7 @@ _outConvertRowtypeExpr(StringInfo str, const ConvertRowtypeExpr *node)
 static void
 _outCollateExpr(StringInfo str, const CollateExpr *node)
 {
-	WRITE_NODE_TYPE("COLLATE");
+	WRITE_NODE_TYPE("COLLATEEXPR");
 
 	WRITE_NODE_FIELD(arg);
 	WRITE_OID_FIELD(collOid);
@@ -1482,7 +1482,7 @@ _outCollateExpr(StringInfo str, const CollateExpr *node)
 static void
 _outCaseExpr(StringInfo str, const CaseExpr *node)
 {
-	WRITE_NODE_TYPE("CASE");
+	WRITE_NODE_TYPE("CASEEXPR");
 
 	WRITE_OID_FIELD(casetype);
 	WRITE_OID_FIELD(casecollid);
@@ -1495,7 +1495,7 @@ _outCaseExpr(StringInfo str, const CaseExpr *node)
 static void
 _outCaseWhen(StringInfo str, const CaseWhen *node)
 {
-	WRITE_NODE_TYPE("WHEN");
+	WRITE_NODE_TYPE("CASEWHEN");
 
 	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(result);
@@ -1515,7 +1515,7 @@ _outCaseTestExpr(StringInfo str, const CaseTestExpr *node)
 static void
 _outArrayExpr(StringInfo str, const ArrayExpr *node)
 {
-	WRITE_NODE_TYPE("ARRAY");
+	WRITE_NODE_TYPE("ARRAYEXPR");
 
 	WRITE_OID_FIELD(array_typeid);
 	WRITE_OID_FIELD(array_collid);
@@ -1528,7 +1528,7 @@ _outArrayExpr(StringInfo str, const ArrayExpr *node)
 static void
 _outRowExpr(StringInfo str, const RowExpr *node)
 {
-	WRITE_NODE_TYPE("ROW");
+	WRITE_NODE_TYPE("ROWEXPR");
 
 	WRITE_NODE_FIELD(args);
 	WRITE_OID_FIELD(row_typeid);
@@ -1540,7 +1540,7 @@ _outRowExpr(StringInfo str, const RowExpr *node)
 static void
 _outRowCompareExpr(StringInfo str, const RowCompareExpr *node)
 {
-	WRITE_NODE_TYPE("ROWCOMPARE");
+	WRITE_NODE_TYPE("ROWCOMPAREEXPR");
 
 	WRITE_ENUM_FIELD(rctype, RowCompareType);
 	WRITE_NODE_FIELD(opnos);
@@ -1553,7 +1553,7 @@ _outRowCompareExpr(StringInfo str, const RowCompareExpr *node)
 static void
 _outCoalesceExpr(StringInfo str, const CoalesceExpr *node)
 {
-	WRITE_NODE_TYPE("COALESCE");
+	WRITE_NODE_TYPE("COALESCEEXPR");
 
 	WRITE_OID_FIELD(coalescetype);
 	WRITE_OID_FIELD(coalescecollid);
@@ -1564,7 +1564,7 @@ _outCoalesceExpr(StringInfo str, const CoalesceExpr *node)
 static void
 _outMinMaxExpr(StringInfo str, const MinMaxExpr *node)
 {
-	WRITE_NODE_TYPE("MINMAX");
+	WRITE_NODE_TYPE("MINMAXEXPR");
 
 	WRITE_OID_FIELD(minmaxtype);
 	WRITE_OID_FIELD(minmaxcollid);
@@ -2807,7 +2807,7 @@ _outAlterStatsStmt(StringInfo str, const AlterStatsStmt *node)
 static void
 _outNotifyStmt(StringInfo str, const NotifyStmt *node)
 {
-	WRITE_NODE_TYPE("NOTIFY");
+	WRITE_NODE_TYPE("NOTIFYSTMT");
 
 	WRITE_STRING_FIELD(conditionname);
 	WRITE_STRING_FIELD(payload);
@@ -2816,7 +2816,7 @@ _outNotifyStmt(StringInfo str, const NotifyStmt *node)
 static void
 _outDeclareCursorStmt(StringInfo str, const DeclareCursorStmt *node)
 {
-	WRITE_NODE_TYPE("DECLARECURSOR");
+	WRITE_NODE_TYPE("DECLARECURSORSTMT");
 
 	WRITE_STRING_FIELD(portalname);
 	WRITE_INT_FIELD(options);
@@ -3238,7 +3238,7 @@ _outSetOperationStmt(StringInfo str, const SetOperationStmt *node)
 static void
 _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 {
-	WRITE_NODE_TYPE("RTE");
+	WRITE_NODE_TYPE("RANGETBLENTRY");
 
 	/* put alias + eref first to make dump more legible */
 	WRITE_NODE_FIELD(alias);
