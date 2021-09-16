@@ -707,7 +707,7 @@ objectNamesToOids(ObjectType objtype, List *objnames)
 				char	   *nspname = strVal(lfirst(cell));
 				Oid			oid;
 
-				oid = get_namespace_oid(nspname, InvalidOid, false);
+				oid = get_namespace_oid(nspname, false);
 				objects = lappend_oid(objects, oid);
 			}
 			break;
@@ -1108,7 +1108,7 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 		{
 			char	   *nspname = strVal(lfirst(nspcell));
 
-			iacls->nspid = get_namespace_oid(nspname, InvalidOid, false);
+			iacls->nspid = get_namespace_oid(nspname, false);
 
 			/*
 			 * We used to insist that the target role have CREATE privileges

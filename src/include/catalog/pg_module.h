@@ -19,7 +19,7 @@
 #define PG_MODULE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_module_d.h"
+//#include "catalog/pg_module_d.h"
 #include "utils/acl.h"
 
 /* ----------------------------------------------------------------
@@ -50,8 +50,6 @@ CATALOG(pg_module,2635,ModuleRelationId)
  * ----------------
  */
 typedef FormData_pg_module *Form_pg_module;
-
-DECLARE_TOAST(pg_module, 4183, 4184);
 
 DECLARE_UNIQUE_INDEX(pg_module_modname_index, 2714, ModuleNameIndexId, on pg_module using btree(modname name_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_module_oid_index, 2715, ModuleOidIndexId, on pg_module using btree(oid oid_ops));

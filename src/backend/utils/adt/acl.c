@@ -3827,7 +3827,7 @@ convert_schema_name(text *schemaname)
 {
 	char	   *nspname = text_to_cstring(schemaname);
 
-	return get_namespace_oid(nspname, InvalidOid, false);
+	return get_namespace_oid(nspname, false);
 }
 
 /*

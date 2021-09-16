@@ -41,6 +41,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
+#include "catalog/pg_module.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -406,7 +407,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		NAMESPACENAME,
 		Anum_pg_namespace_oid,
 		Anum_pg_namespace_nspname,
-		Anum_pg_namespace_nspnamespace,
+		InvalidAttrNumber,
 		Anum_pg_namespace_nspowner,
 		Anum_pg_namespace_nspacl,
 		OBJECT_SCHEMA,
@@ -414,15 +415,14 @@ static const ObjectPropertyType ObjectProperty[] =
 	},
 	{
 		"module",
-		NamespaceRelationId,
-		NamespaceOidIndexId,
-		NAMESPACEOID,
-		NAMESPACENAME,
-		Anum_pg_namespace_oid,
-		Anum_pg_namespace_nspname,
-		Anum_pg_namespace_nspnamespace,
-		Anum_pg_namespace_nspowner,
-		Anum_pg_namespace_nspacl,
+		ModuleRelationId,
+		ModuleOidIndexId,
+		MODULEOID,
+		MODULENAME,
+		Anum_pg_module_oid,
+		Anum_pg_module_modname,
+		Anum_pg_module_modowner,
+		Anum_pg_module_modacl,
 		OBJECT_MODULE,
 		true
 	},
@@ -1305,7 +1305,7 @@ get_object_address_unqualified(ObjectType objtype,
 			break;
 		case OBJECT_SCHEMA:
 			address.classId = NamespaceRelationId;
-			address.objectId = get_namespace_oid(name, InvalidOid, missing_ok);
+			address.objectId = get_namespace_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		case OBJECT_LANGUAGE:
@@ -2037,7 +2037,7 @@ get_object_address_defacl(List *object, bool missing_ok)
 	 */
 	if (schema)
 	{
-		schemaid = get_namespace_oid(schema, InvalidOid, true);
+		schemaid = get_namespace_oid(schema, true);
 		if (schemaid == InvalidOid)
 			goto not_found;
 	}

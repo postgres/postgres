@@ -113,7 +113,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	 * creation-permission check first, we do likewise.
 	 */
 	if (stmt->if_not_exists &&
-		SearchSysCacheExists2(NAMESPACENAME, PointerGetDatum(schemaName), InvalidOid))
+		SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(schemaName)))
 	{
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
@@ -135,8 +135,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, InvalidOid, NSPKIND_SCHEMA,
-								  owner_uid, false);
+	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -238,7 +237,7 @@ RenameSchema(const char *oldname, const char *newname)
 	nspOid = nspform->oid;
 
 	/* make sure the new name doesn't exist */
-	if (OidIsValid(get_namespace_oid(newname, InvalidOid, true)))
+	if (OidIsValid(get_namespace_oid(newname, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", newname)));

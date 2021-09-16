@@ -34,8 +34,7 @@
  * ---------------
  */
 Oid
-ModuleCreate(const char *modName, Oid modnamespace, char modkind,
-				Oid ownerId)
+ModuleCreate(const char *modName, Oid ownerId)
 {
 	Relation	moddesc;
 	HeapTuple	tup;
@@ -53,7 +52,7 @@ ModuleCreate(const char *modName, Oid modnamespace, char modkind,
 		elog(ERROR, "no module name supplied");
 
 	/* make sure there is no existing module of same name */
-	if (SearchSysCacheExists2(MODULENAME, PointerGetDatum(modName), modnamespace))
+	if (SearchSysCacheExists1(MODULENAME, PointerGetDatum(modName)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_MODULE),
 				 errmsg("module \"%s\" already exists", modName)));
@@ -75,10 +74,8 @@ ModuleCreate(const char *modName, Oid modnamespace, char modkind,
 								Anum_pg_module_oid);
 	values[Anum_pg_module_oid - 1] = ObjectIdGetDatum(modoid);
 	namestrcpy(&nname, modName);
-	values[Anum_pg_module_nspname - 1] = NameGetDatum(&nname);
+	values[Anum_pg_module_modname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_module_modowner - 1] = ObjectIdGetDatum(ownerId);
-	values[Anum_pg_module_modnamespace - 1] = ObjectIdGetDatum(modnamespace);
-	values[Anum_pg_namespace_nspkind - 1] = CharGetDatum(nspkind);
 	if (modacl != NULL)
 		values[Anum_pg_module_modacl - 1] = PointerGetDatum(modacl);
 	else

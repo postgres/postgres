@@ -23,7 +23,7 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
-#include "catalog/pg_namespace.h"
+#include "catalog/pg_module.h"
 #include "commands/dbcommands.h"
 #include "commands/event_trigger.h"
 #include "commands/modulecmds.h"
@@ -86,14 +86,13 @@ CreateModuleCommand(ParseState *pstate, CreateModuleStmt *stmt, const char *quer
 	/*
 	 * If if_not_exists was given and the module already exists, bail out.
 	 * (Note: we needn't check this when not if_not_exists, because
-	 * NamespaceCreate will complain anyway.)  We could do this before making
+	 * ModuleCreate will complain anyway.)  We could do this before making
 	 * the permissions checks, but since CREATE TABLE IF NOT EXISTS makes its
 	 * creation-permission check first, we do likewise.
 	 */
 
 	if (stmt->if_not_exists &&
-		SearchSysCacheExists2(NAMESPACENAME, PointerGetDatum(modulename),
-							  ObjectIdGetDatum(namespaceId)))
+		SearchSysCacheExists1(MODULENAME, PointerGetDatum(modulename)))
 	{
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
@@ -115,9 +114,8 @@ CreateModuleCommand(ParseState *pstate, CreateModuleStmt *stmt, const char *quer
 		SetUserIdAndSecContext(owner_uid,
 							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	/* Create the module's namespace */
-	moduleId = NamespaceCreate(modulename, namespaceId, NSPKIND_MODULE,
-							   owner_uid, false);
+	/* Create the module's entry in catalog in pg_module */
+	moduleId = ModuleCreate(modulename, owner_uid);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -138,7 +136,7 @@ CreateModuleCommand(ParseState *pstate, CreateModuleStmt *stmt, const char *quer
 	 * objects created below are reported before the module, which would be
 	 * wrong.
 	 */
-	ObjectAddressSet(myself, NamespaceRelationId, moduleId);
+	ObjectAddressSet(myself, ModuleRelationId, moduleId);
 	EventTriggerCollectSimpleCommand(myself, InvalidObjectAddress,
 									 (Node *) stmt);
 
