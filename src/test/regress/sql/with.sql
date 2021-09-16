@@ -349,7 +349,7 @@ SELECT t1.id, t2.path, t2 FROM t AS t1 JOIN t AS t2 ON
 
 -- SEARCH clause
 
-create temp table graph0( f int, t int, label text );
+create table graph0( f int, t int, label text );
 
 insert into graph0 values
 	(1, 2, 'arc 1 -> 2'),
@@ -357,6 +357,16 @@ insert into graph0 values
 	(2, 3, 'arc 2 -> 3'),
 	(1, 4, 'arc 1 -> 4'),
 	(4, 5, 'arc 4 -> 5');
+
+explain (verbose, costs off)
+with recursive search_graph(f, t, label) as (
+	select * from graph0 g
+	union all
+	select g.*
+	from graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select * from search_graph order by seq;
 
 with recursive search_graph(f, t, label) as (
 	select * from graph0 g
@@ -374,6 +384,16 @@ with recursive search_graph(f, t, label) as (
 	from graph0 g, search_graph sg
 	where g.f = sg.t
 ) search depth first by f, t set seq
+select * from search_graph order by seq;
+
+explain (verbose, costs off)
+with recursive search_graph(f, t, label) as (
+	select * from graph0 g
+	union all
+	select g.*
+	from graph0 g, search_graph sg
+	where g.f = sg.t
+) search breadth first by f, t set seq
 select * from search_graph order by seq;
 
 with recursive search_graph(f, t, label) as (
@@ -458,6 +478,8 @@ select f, t, label from search_graph;
 select pg_get_viewdef('v_search');
 
 select * from v_search;
+
+drop table graph0 cascade;
 
 --
 -- test cycle detection
