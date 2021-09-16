@@ -229,6 +229,12 @@ typedef enum
 
 #define GUC_EXPLAIN			  0x100000	/* include in explain */
 
+/*
+ * GUC_RUNTIME_COMPUTED is intended for runtime-computed GUCs that are only
+ * available via 'postgres -C' if the server is not running.
+ */
+#define GUC_RUNTIME_COMPUTED  0x200000
+
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
 

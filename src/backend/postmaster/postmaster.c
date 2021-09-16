@@ -896,15 +896,31 @@ PostmasterMain(int argc, char *argv[])
 	if (output_config_variable != NULL)
 	{
 		/*
-		 * "-C guc" was specified, so print GUC's value and exit.  No extra
-		 * permission check is needed because the user is reading inside the
-		 * data dir.
+		 * If this is a runtime-computed GUC, it hasn't yet been initialized,
+		 * and the present value is not useful.  However, this is a convenient
+		 * place to print the value for most GUCs because it is safe to run
+		 * postmaster startup to this point even if the server is already
+		 * running.  For the handful of runtime-computed GUCs that we cannot
+		 * provide meaningful values for yet, we wait until later in
+		 * postmaster startup to print the value.  We won't be able to use -C
+		 * on running servers for those GUCs, but using this option now would
+		 * lead to incorrect results for them.
 		 */
-		const char *config_val = GetConfigOption(output_config_variable,
-												 false, false);
+		int			flags = GetConfigOptionFlags(output_config_variable, true);
 
-		puts(config_val ? config_val : "");
-		ExitPostmaster(0);
+		if ((flags & GUC_RUNTIME_COMPUTED) == 0)
+		{
+			/*
+			 * "-C guc" was specified, so print GUC's value and exit.  No
+			 * extra permission check is needed because the user is reading
+			 * inside the data dir.
+			 */
+			const char *config_val = GetConfigOption(output_config_variable,
+													 false, false);
+
+			puts(config_val ? config_val : "");
+			ExitPostmaster(0);
+		}
 	}
 
 	/* Verify that DataDir looks reasonable */
@@ -1032,6 +1048,26 @@ PostmasterMain(int argc, char *argv[])
 	 * depend on the amount of shared memory required.
 	 */
 	InitializeShmemGUCs();
+
+	/*
+	 * If -C was specified with a runtime-computed GUC, we held off printing
+	 * the value earlier, as the GUC was not yet initialized.  We handle -C
+	 * for most GUCs before we lock the data directory so that the option may
+	 * be used on a running server.  However, a handful of GUCs are runtime-
+	 * computed and do not have meaningful values until after locking the data
+	 * directory, and we cannot safely calculate their values earlier on a
+	 * running server.  At this point, such GUCs should be properly
+	 * initialized, and we haven't yet set up shared memory, so this is a good
+	 * time to handle the -C option for these special GUCs.
+	 */
+	if (output_config_variable != NULL)
+	{
+		const char *config_val = GetConfigOption(output_config_variable,
+												 false, false);
+
+		puts(config_val ? config_val : "");
+		ExitPostmaster(0);
+	}
 
 	/*
 	 * Set up shared memory and semaphores.

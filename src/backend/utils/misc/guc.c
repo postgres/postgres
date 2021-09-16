@@ -1983,7 +1983,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows whether data checksums are turned on for this cluster."),
 			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
 		},
 		&data_checksums,
 		false,
@@ -2342,7 +2342,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"shared_memory_size", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the size of the server's main shared memory area (rounded up to the nearest MB)."),
 			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_UNIT_MB
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_UNIT_MB | GUC_RUNTIME_COMPUTED
 		},
 		&shared_memory_size_mb,
 		0, 0, INT_MAX,
@@ -2407,7 +2407,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "in the form accepted by the chmod and umask system "
 						 "calls. (To use the customary octal format the number "
 						 "must start with a 0 (zero).)"),
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
 		},
 		&data_directory_mode,
 		0700, 0000, 0777,
@@ -3231,7 +3231,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"wal_segment_size", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the size of write ahead log segments."),
 			NULL,
-			GUC_UNIT_BYTE | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_UNIT_BYTE | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
 		},
 		&wal_segment_size,
 		DEFAULT_XLOG_SEG_SIZE,

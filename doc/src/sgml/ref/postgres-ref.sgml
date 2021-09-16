@@ -133,11 +133,18 @@ PostgreSQL documentation
       <listitem>
        <para>
         Prints the value of the named run-time parameter, and exits.
-        (See the <option>-c</option> option above for details.)  This can
-        be used on a running server, and returns values from
+        (See the <option>-c</option> option above for details.)  This
+        returns values from
         <filename>postgresql.conf</filename>, modified by any parameters
         supplied in this invocation.  It does not reflect parameters
         supplied when the cluster was started.
+       </para>
+
+       <para>
+        This can be used on a running server for most parameters.  However,
+        the server must be shut down for some runtime-computed parameters
+        (e.g., <xref linkend="guc-shared-memory-size"/> and
+        <xref linkend="guc-wal-segment-size"/>).
        </para>
 
        <para>
