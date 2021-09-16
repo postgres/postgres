@@ -714,7 +714,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 static inline void
 ProcArrayEndTransactionInternal(PGPROC *proc, TransactionId latestXid)
 {
-	size_t		pgxactoff = proc->pgxactoff;
+	int			pgxactoff = proc->pgxactoff;
 
 	/*
 	 * Note: we need exclusive lock here because we're going to change other
@@ -886,7 +886,7 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 void
 ProcArrayClearTransaction(PGPROC *proc)
 {
-	size_t		pgxactoff;
+	int			pgxactoff;
 
 	/*
 	 * Currently we need to lock ProcArrayLock exclusively here, as we
@@ -1366,7 +1366,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	TransactionId topxid;
 	TransactionId latestCompletedXid;
 	int			mypgxactoff;
-	size_t		numProcs;
+	int			numProcs;
 	int			j;
 
 	/*
@@ -1443,7 +1443,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	/* No shortcuts, gotta grovel through the array */
 	mypgxactoff = MyProc->pgxactoff;
 	numProcs = arrayP->numProcs;
-	for (size_t pgxactoff = 0; pgxactoff < numProcs; pgxactoff++)
+	for (int pgxactoff = 0; pgxactoff < numProcs; pgxactoff++)
 	{
 		int			pgprocno;
 		PGPROC	   *proc;
@@ -2209,7 +2209,7 @@ GetSnapshotData(Snapshot snapshot)
 	TransactionId *other_xids = ProcGlobal->xids;
 	TransactionId xmin;
 	TransactionId xmax;
-	size_t		count = 0;
+	int			count = 0;
 	int			subcount = 0;
 	bool		suboverflowed = false;
 	FullTransactionId latest_completed;
@@ -2291,7 +2291,7 @@ GetSnapshotData(Snapshot snapshot)
 
 	if (!snapshot->takenDuringRecovery)
 	{
-		size_t		numProcs = arrayP->numProcs;
+		int			numProcs = arrayP->numProcs;
 		TransactionId *xip = snapshot->xip;
 		int		   *pgprocnos = arrayP->pgprocnos;
 		XidCacheStatus *subxidStates = ProcGlobal->subxidStates;
@@ -2301,7 +2301,7 @@ GetSnapshotData(Snapshot snapshot)
 		 * First collect set of pgxactoff/xids that need to be included in the
 		 * snapshot.
 		 */
-		for (size_t pgxactoff = 0; pgxactoff < numProcs; pgxactoff++)
+		for (int pgxactoff = 0; pgxactoff < numProcs; pgxactoff++)
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = UINT32_ACCESS_ONCE(other_xids[pgxactoff]);
