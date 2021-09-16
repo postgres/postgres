@@ -4116,6 +4116,8 @@ PostgresMain(int argc, char *argv[],
 	if (IsUnderPostmaster && Log_disconnections)
 		on_proc_exit(log_disconnections, 0);
 
+	pgstat_report_connect(MyDatabaseId);
+
 	/* Perform initialization specific to a WAL sender process. */
 	if (am_walsender)
 		InitWalSender();
