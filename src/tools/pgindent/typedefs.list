@@ -1918,8 +1918,9 @@ PgStat_MsgArchiver
 PgStat_MsgAutovacStart
 PgStat_MsgBgWriter
 PgStat_MsgChecksumFailure
-PgStat_MsgConn
+PgStat_MsgConnect
 PgStat_MsgDeadlock
+PgStat_MsgDisconnect
 PgStat_MsgDropdb
 PgStat_MsgDummy
 PgStat_MsgFuncpurge
