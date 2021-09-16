@@ -368,8 +368,8 @@ set_authn_id(Port *port, const char *id)
 		 * connection continue, either.
 		 */
 		ereport(FATAL,
-				(errmsg("connection was re-authenticated"),
-				 errdetail_log("previous ID: \"%s\"; new ID: \"%s\"",
+				(errmsg("authentication identifier set more than once"),
+				 errdetail_log("previous identifier: \"%s\"; new identifier: \"%s\"",
 							   port->authn_id, id)));
 	}
 

@@ -961,7 +961,7 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 		elog(ERROR,
-			 "multirange values cannot contain NULL members");
+			 "multirange values cannot contain null members");
 
 	rangeArray = PG_GETARG_ARRAYTYPE_P(0);
 
@@ -973,9 +973,7 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 
 	rngtypid = ARR_ELEMTYPE(rangeArray);
 	if (rngtypid != rangetyp->type_id)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("type %u does not match constructor type", rngtypid)));
+		elog(ERROR, "type %u does not match constructor type", rngtypid);
 
 	/*
 	 * Be careful: we can still be called with zero ranges, like this:
@@ -997,7 +995,7 @@ multirange_constructor2(PG_FUNCTION_ARGS)
 			if (nulls[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("multirange values cannot contain NULL members")));
+						 errmsg("multirange values cannot contain null members")));
 
 			/* make_multirange will do its own copy */
 			ranges[i] = DatumGetRangeTypeP(elements[i]);
@@ -1031,16 +1029,14 @@ multirange_constructor1(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 		elog(ERROR,
-			 "multirange values cannot contain NULL members");
+			 "multirange values cannot contain null members");
 
 	range = PG_GETARG_RANGE_P(0);
 
 	/* Make sure the range type matches. */
 	rngtypid = RangeTypeGetOid(range);
 	if (rngtypid != rangetyp->type_id)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("type %u does not match constructor type", rngtypid)));
+		elog(ERROR, "type %u does not match constructor type", rngtypid);
 
 	PG_RETURN_MULTIRANGE_P(make_multirange(mltrngtypid, rangetyp, 1, &range));
 }
