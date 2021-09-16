@@ -644,6 +644,41 @@ insert into graph0 values
 	(2, 3, 'arc 2 -> 3'),
 	(1, 4, 'arc 1 -> 4'),
 	(4, 5, 'arc 4 -> 5');
+explain (verbose, costs off)
+with recursive search_graph(f, t, label) as (
+	select * from graph0 g
+	union all
+	select g.*
+	from graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select * from search_graph order by seq;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Sort
+   Output: search_graph.f, search_graph.t, search_graph.label, search_graph.seq
+   Sort Key: search_graph.seq
+   CTE search_graph
+     ->  Recursive Union
+           ->  Seq Scan on pg_temp.graph0 g
+                 Output: g.f, g.t, g.label, ARRAY[ROW(g.f, g.t)]
+           ->  Merge Join
+                 Output: g_1.f, g_1.t, g_1.label, array_cat(sg.seq, ARRAY[ROW(g_1.f, g_1.t)])
+                 Merge Cond: (g_1.f = sg.t)
+                 ->  Sort
+                       Output: g_1.f, g_1.t, g_1.label
+                       Sort Key: g_1.f
+                       ->  Seq Scan on pg_temp.graph0 g_1
+                             Output: g_1.f, g_1.t, g_1.label
+                 ->  Sort
+                       Output: sg.seq, sg.t
+                       Sort Key: sg.t
+                       ->  WorkTable Scan on search_graph sg
+                             Output: sg.seq, sg.t
+   ->  CTE Scan on search_graph
+         Output: search_graph.f, search_graph.t, search_graph.label, search_graph.seq
+(22 rows)
+
 with recursive search_graph(f, t, label) as (
 	select * from graph0 g
 	union all
@@ -681,6 +716,41 @@ select * from search_graph order by seq;
  2 | 3 | arc 2 -> 3 | {"(2,3)"}
  4 | 5 | arc 4 -> 5 | {"(4,5)"}
 (7 rows)
+
+explain (verbose, costs off)
+with recursive search_graph(f, t, label) as (
+	select * from graph0 g
+	union all
+	select g.*
+	from graph0 g, search_graph sg
+	where g.f = sg.t
+) search breadth first by f, t set seq
+select * from search_graph order by seq;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Sort
+   Output: search_graph.f, search_graph.t, search_graph.label, search_graph.seq
+   Sort Key: search_graph.seq
+   CTE search_graph
+     ->  Recursive Union
+           ->  Seq Scan on pg_temp.graph0 g
+                 Output: g.f, g.t, g.label, ROW('0'::bigint, g.f, g.t)
+           ->  Merge Join
+                 Output: g_1.f, g_1.t, g_1.label, ROW(int8inc((sg.seq)."*DEPTH*"), g_1.f, g_1.t)
+                 Merge Cond: (g_1.f = sg.t)
+                 ->  Sort
+                       Output: g_1.f, g_1.t, g_1.label
+                       Sort Key: g_1.f
+                       ->  Seq Scan on pg_temp.graph0 g_1
+                             Output: g_1.f, g_1.t, g_1.label
+                 ->  Sort
+                       Output: sg.seq, sg.t
+                       Sort Key: sg.t
+                       ->  WorkTable Scan on search_graph sg
+                             Output: sg.seq, sg.t
+   ->  CTE Scan on search_graph
+         Output: search_graph.f, search_graph.t, search_graph.label, search_graph.seq
+(22 rows)
 
 with recursive search_graph(f, t, label) as (
 	select * from graph0 g
@@ -945,6 +1015,39 @@ select * from search_graph order by path;
 (25 rows)
 
 -- CYCLE clause
+explain (verbose, costs off)
+with recursive search_graph(f, t, label) as (
+	select * from graph g
+	union all
+	select g.*
+	from graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle using path
+select * from search_graph;
+                                                                              QUERY PLAN                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CTE Scan on search_graph
+   Output: search_graph.f, search_graph.t, search_graph.label, search_graph.is_cycle, search_graph.path
+   CTE search_graph
+     ->  Recursive Union
+           ->  Seq Scan on pg_temp.graph g
+                 Output: g.f, g.t, g.label, false, ARRAY[ROW(g.f, g.t)]
+           ->  Merge Join
+                 Output: g_1.f, g_1.t, g_1.label, CASE WHEN (ROW(g_1.f, g_1.t) = ANY (sg.path)) THEN true ELSE false END, array_cat(sg.path, ARRAY[ROW(g_1.f, g_1.t)])
+                 Merge Cond: (g_1.f = sg.t)
+                 ->  Sort
+                       Output: g_1.f, g_1.t, g_1.label
+                       Sort Key: g_1.f
+                       ->  Seq Scan on pg_temp.graph g_1
+                             Output: g_1.f, g_1.t, g_1.label
+                 ->  Sort
+                       Output: sg.path, sg.t
+                       Sort Key: sg.t
+                       ->  WorkTable Scan on search_graph sg
+                             Output: sg.path, sg.t
+                             Filter: (NOT sg.is_cycle)
+(20 rows)
+
 with recursive search_graph(f, t, label) as (
 	select * from graph g
 	union all
