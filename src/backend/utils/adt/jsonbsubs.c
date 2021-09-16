@@ -100,9 +100,8 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 						if (targetType != UNKNOWNOID)
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("subscript type is not supported"),
-									 errhint("Jsonb subscript must be coerced "
-											 "only to one type, integer or text."),
+									 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
+									 errhint("jsonb subscript must be coercible to only one type, integer or text."),
 									 parser_errposition(pstate, exprLocation(subExpr))));
 
 						targetType = targets[i];
@@ -115,8 +114,8 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 				if (targetType == UNKNOWNOID)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("subscript type is not supported"),
-							 errhint("Jsonb subscript must be coerced to either integer or text"),
+							 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
+							 errhint("jsonb subscript must be coercible to either integer or text."),
 							 parser_errposition(pstate, exprLocation(subExpr))));
 			}
 			else

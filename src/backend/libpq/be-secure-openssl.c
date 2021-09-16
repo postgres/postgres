@@ -1392,7 +1392,7 @@ X509_NAME_to_cstring(X509_NAME *name)
 	if (membuf == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("failed to create BIO")));
+				 errmsg("could not create BIO")));
 
 	(void) BIO_set_close(membuf, BIO_CLOSE);
 	for (i = 0; i < count; i++)
