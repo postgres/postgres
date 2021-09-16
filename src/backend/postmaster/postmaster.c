@@ -4275,6 +4275,15 @@ BackendStartup(Port *port)
 		/* Perform additional initialization and collect startup packet */
 		BackendInitialize(port);
 
+		/*
+		 * Create a per-backend PGPROC struct in shared memory. We must do
+		 * this before we can use LWLocks. In the !EXEC_BACKEND case (here)
+		 * this could be delayed a bit further, but EXEC_BACKEND needs to do
+		 * stuff with LWLocks before PostgresMain(), so we do it here as well
+		 * for symmetry.
+		 */
+		InitProcess();
+
 		/* And run the backend */
 		BackendRun(port);
 	}

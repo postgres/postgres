@@ -4058,20 +4058,13 @@ PostgresMain(int argc, char *argv[],
 		 * point during startup that postmaster does so.
 		 */
 		PgStartTime = GetCurrentTimestamp();
-	}
 
-	/*
-	 * Create a per-backend PGPROC struct in shared memory, except in the
-	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
-	 * this before we can use LWLocks (and in the EXEC_BACKEND case we already
-	 * had to do some stuff with LWLocks).
-	 */
-#ifdef EXEC_BACKEND
-	if (!IsUnderPostmaster)
+		/*
+		 * Create a per-backend PGPROC struct in shared memory. We must do
+		 * this before we can use LWLocks.
+		 */
 		InitProcess();
-#else
-	InitProcess();
-#endif
+	}
 
 	/* Early initialization */
 	BaseInit();
