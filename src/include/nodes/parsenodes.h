@@ -1810,6 +1810,7 @@ typedef enum ObjectType
 	OBJECT_LANGUAGE,
 	OBJECT_LARGEOBJECT,
 	OBJECT_MATVIEW,
+	OBJECT_MODULE,
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
@@ -3000,6 +3001,24 @@ typedef struct AlterFunctionStmt
 	ObjectWithArgs *func;		/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
+
+/* ----------------------
+ *		Create Module Statement
+ *
+ * NOTE: the moduleElts list contains raw parsetrees for component statements
+ * of the schema, such as CREATE FUNCTION, CREATE PROCEDURE, etc.  These are
+ * analyzed and executed after the module itself is created.
+ * ----------------------
+ */
+typedef struct CreateModuleStmt
+{
+	NodeTag		type;
+	List	   *modulename;		/* the name of the schema to create */
+	RoleSpec   *authrole;		/* the owner of the created schema */
+	List	   *moduleElts;		/* module components (list of parsenodes) */
+	bool		if_not_exists;	/* just do nothing if module already exists? */
+} CreateModuleStmt;
+
 
 /* ----------------------
  *		DO Statement

@@ -165,7 +165,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 */
 	if (stmt->defnames)
 		namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames,
-														&namestr);
+														&namestr, false);
 	else
 	{
 		namespaceId = RelationGetNamespace(rel);

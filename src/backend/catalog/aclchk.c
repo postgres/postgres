@@ -3367,6 +3367,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_MATVIEW:
 						msg = gettext_noop("permission denied for materialized view %s");
 						break;
+					case OBJECT_MODULE:
+						msg = gettext_noop("permission denied for module %s");
+						break;
 					case OBJECT_OPCLASS:
 						msg = gettext_noop("permission denied for operator class %s");
 						break;
@@ -3494,6 +3497,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 						break;
 					case OBJECT_MATVIEW:
 						msg = gettext_noop("must be owner of materialized view %s");
+						break;
+					case OBJECT_MODULE:
+						msg = gettext_noop("must be owner of module %s");
 						break;
 					case OBJECT_OPCLASS:
 						msg = gettext_noop("must be owner of operator class %s");

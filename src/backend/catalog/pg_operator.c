@@ -604,7 +604,8 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 	}
 
 	otherNamespace = QualifiedNameGetCreationNamespace(otherOp,
-													   &otherName);
+													   &otherName,
+													   false);
 
 	if (strcmp(otherName, operatorName) == 0 &&
 		otherNamespace == operatorNamespace &&

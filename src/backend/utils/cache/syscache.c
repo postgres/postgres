@@ -43,6 +43,7 @@
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_module.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -506,6 +507,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		4
+	},
+	{ModuleRelationId,		/* MODULENAME */
+		ModuleNameIndexId,
+		1,
+		{
+			Anum_pg_module_modname,
+			0,
+			0,
+			0
+		},
+		4
+	},
+	{ModuleRelationId,		/* MODULEOID */
+		ModuleOidIndexId,
+		1,
+		{
+			Anum_pg_module_oid,
+			0,
+			0,
+			0
+		},
+		16
 	},
 	{NamespaceRelationId,		/* NAMESPACENAME */
 		NamespaceNameIndexId,

@@ -51,7 +51,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
-													&conversion_name);
+													&conversion_name, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);

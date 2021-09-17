@@ -17,10 +17,9 @@
   nspname => 'pg_catalog', nspacl => '_null_' },
 { oid => '99', oid_symbol => 'PG_TOAST_NAMESPACE',
   descr => 'reserved schema for TOAST tables',
+  # update dumpNamespace() if changing this descr
   nspname => 'pg_toast', nspacl => '_null_' },
-# update dumpNamespace() if changing this descr
 { oid => '2200', oid_symbol => 'PG_PUBLIC_NAMESPACE',
   descr => 'standard public schema',
   nspname => 'public', nspowner => 'pg_database_owner', nspacl => '_null_' },
-
 ]

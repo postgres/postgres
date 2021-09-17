@@ -384,6 +384,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
 		case OBJECT_LANGUAGE:
+		case OBJECT_MODULE:
 		case OBJECT_PROCEDURE:
 		case OBJECT_ROUTINE:
 		case OBJECT_STATISTIC_EXT:

@@ -87,7 +87,7 @@ DefineOperator(List *names, List *parameters)
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
-	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
+	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName, false);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);

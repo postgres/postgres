@@ -227,7 +227,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
+	tup = SearchSysCacheCopy2(NAMESPACENAME, CStringGetDatum(oldname), InvalidOid);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -307,7 +307,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 
 	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
+	tup = SearchSysCache2(NAMESPACENAME, CStringGetDatum(name), InvalidOid);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),

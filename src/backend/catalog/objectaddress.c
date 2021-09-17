@@ -41,6 +41,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
+#include "catalog/pg_module.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -413,6 +414,19 @@ static const ObjectPropertyType ObjectProperty[] =
 		true
 	},
 	{
+		"module",
+		ModuleRelationId,
+		ModuleOidIndexId,
+		MODULEOID,
+		MODULENAME,
+		Anum_pg_module_oid,
+		Anum_pg_module_modname,
+		Anum_pg_module_modowner,
+		Anum_pg_module_modacl,
+		OBJECT_MODULE,
+		true
+	},
+	{
 		"relation",
 		RelationRelationId,
 		ClassOidIndexId,
@@ -764,6 +778,10 @@ static const struct object_type_map
 	/* OCLASS_SCHEMA */
 	{
 		"schema", OBJECT_SCHEMA
+	},
+	/* OCLASS_MODULE */
+	{
+		"module", OBJECT_MODULE
 	},
 	/* OCLASS_TSPARSER */
 	{
@@ -1126,6 +1144,12 @@ get_object_address(ObjectType objtype, Node *object,
 				address.classId = StatisticExtRelationId;
 				address.objectId = get_statistics_object_oid(castNode(List, object),
 															 missing_ok);
+				address.objectSubId = 0;
+				break;
+			case OBJECT_MODULE:
+				address.classId = NamespaceRelationId;
+				address.objectId = get_module_oid(castNode(List, object),
+														   missing_ok);
 				address.objectSubId = 0;
 				break;
 			default:
@@ -2267,6 +2291,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_TABCONSTRAINT:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
+		case OBJECT_MODULE:
 			objnode = (Node *) name;
 			break;
 		case OBJECT_ACCESS_METHOD:
@@ -2431,6 +2456,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 							   NameListToString((castNode(ObjectWithArgs, object))->objname));
 			break;
 		case OBJECT_SCHEMA:
+		case OBJECT_MODULE:
 			if (!pg_namespace_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, objtype,
 							   strVal(object));
