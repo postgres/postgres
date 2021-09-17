@@ -4870,6 +4870,34 @@ where q2 = 456;
  123 | 456 |   |        
 (1 row)
 
+-- and check a related issue where we miscompute required relids for
+-- a PHV that's been translated to a child rel
+create temp table parttbl (a integer primary key) partition by range (a);
+create temp table parttbl1 partition of parttbl for values from (1) to (100);
+insert into parttbl values (11), (12);
+explain (costs off)
+select * from
+  (select *, 12 as phv from parttbl) as ss
+  right join int4_tbl on true
+where ss.a = ss.phv and f1 = 0;
+             QUERY PLAN             
+------------------------------------
+ Nested Loop
+   ->  Seq Scan on int4_tbl
+         Filter: (f1 = 0)
+   ->  Seq Scan on parttbl1 parttbl
+         Filter: (a = 12)
+(5 rows)
+
+select * from
+  (select *, 12 as phv from parttbl) as ss
+  right join int4_tbl on true
+where ss.a = ss.phv and f1 = 0;
+ a  | phv | f1 
+----+-----+----
+ 12 |  12 |  0
+(1 row)
+
 -- bug #8444: we've historically allowed duplicate aliases within aliased JOINs
 select * from
   int8_tbl x join (int4_tbl x cross join int4_tbl y) j on q1 = f1; -- error
