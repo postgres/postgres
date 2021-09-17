@@ -185,20 +185,27 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 static bool
 close_walfile(StreamCtl *stream, XLogRecPtr pos)
 {
+	char	   *fn;
 	off_t		currpos;
 	int			r;
 
 	if (walfile == NULL)
 		return true;
 
+	/* Note that this considers the compression used if necessary */
+	fn = stream->walmethod->get_file_name(current_walfile_name,
+										  stream->partial_suffix);
+
 	currpos = stream->walmethod->get_current_pos(walfile);
+
 	if (currpos == -1)
 	{
 		pg_log_error("could not determine seek position in file \"%s\": %s",
-					 current_walfile_name, stream->walmethod->getlasterror());
+					 fn, stream->walmethod->getlasterror());
 		stream->walmethod->close(walfile, CLOSE_UNLINK);
 		walfile = NULL;
 
+		pg_free(fn);
 		return false;
 	}
 
@@ -208,8 +215,7 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 			r = stream->walmethod->close(walfile, CLOSE_NORMAL);
 		else
 		{
-			pg_log_info("not renaming \"%s%s\", segment is not complete",
-						current_walfile_name, stream->partial_suffix);
+			pg_log_info("not renaming \"%s\", segment is not complete", fn);
 			r = stream->walmethod->close(walfile, CLOSE_NO_RENAME);
 		}
 	}
@@ -221,9 +227,13 @@ close_walfile(StreamCtl *stream, XLogRecPtr pos)
 	if (r != 0)
 	{
 		pg_log_error("could not close file \"%s\": %s",
-					 current_walfile_name, stream->walmethod->getlasterror());
+					 fn, stream->walmethod->getlasterror());
+
+		pg_free(fn);
 		return false;
 	}
+
+	pg_free(fn);
 
 	/*
 	 * Mark file as archived if requested by the caller - pg_basebackup needs
