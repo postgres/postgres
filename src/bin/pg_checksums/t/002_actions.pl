@@ -6,6 +6,7 @@
 
 use strict;
 use warnings;
+use Config;
 use PostgresNode;
 use TestLib;
 
@@ -181,13 +182,18 @@ command_fails(
 # Test postgres -C for an offline cluster.
 # Run-time GUCs are safe to query here.  Note that a lock file is created,
 # then unlinked, leading to an extra LOG entry showing in stderr.
-command_checks_all(
-	[ 'postgres', '-D', $pgdata, '-C', 'data_checksums' ],
-	0,
-	[qr/^on$/],
-	# LOG entry when unlinking lock file.
-	[qr/database system is shut down/],
-	'data_checksums=on is reported on an offline cluster');
+SKIP:
+{
+	skip "unstable output generated with Msys", 3
+	  if ($Config{osname} eq 'msys');
+	command_checks_all(
+		[ 'postgres', '-D', $pgdata, '-C', 'data_checksums' ],
+		0,
+		[qr/^on$/],
+		# LOG entry when unlinking lock file.
+		[qr/database system is shut down/],
+		'data_checksums=on is reported on an offline cluster');
+}
 
 # Checks cannot happen with an online cluster
 $node->start;
