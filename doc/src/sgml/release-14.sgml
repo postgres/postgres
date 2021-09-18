@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2021-??-?? (AS OF 2021-06-20)</para>
+   <para>2021-??-?? (AS OF 2021-09-18)</para>
   </formalpara>
 
   <sect2>
@@ -411,7 +411,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex 
+2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex
 -->
 
      <para>
@@ -767,7 +767,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
       <listitem>
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
-2020-12-08 [e2ac3fed3] Speed up rechecking if relation needs to be vacuumed or 
+2020-12-08 [e2ac3fed3] Speed up rechecking if relation needs to be vacuumed or
 -->
 
        <para>
@@ -853,24 +853,6 @@ Author: Noah Misch <noah@leadboat.com>
        <para>
         This should reduce the possibility of failures that occur without
         having issued warnings about wraparound.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2021-04-08 [0827e8af7] autovacuum: handle analyze for partitioned tables
--->
-
-       <para>
-        <link linkend="autovacuum">Autovacuum</link> now analyzes
-        partitioned tables (Yuzuko Hosoya, Álvaro Herrera)
-       </para>
-
-       <para>
-        Insert, update, and delete tuple counts from partitions are now
-        propagated to their parent tables so autovacuum knows when to
-        process them.
        </para>
       </listitem>
 
@@ -1184,13 +1166,13 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
        <para>
-        Add executor method to cache results from the inner-side of nested
-        loop joins (David Rowley)
+        Add executor method to memoize results from the inner side of a
+        nested-loop join (David Rowley)
        </para>
 
        <para>
         This is useful if only a small percentage of rows is checked on
-        the inner side and is controlled by <xref
+        the inner side.  It can be disabled via <xref
         linkend="guc-enable-memoize"/>.
        </para>
       </listitem>
@@ -1281,7 +1263,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-03-02 [0c3405cf1] Improve performance of regular expression back-reference
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-03-02 [4604f83fd] Suppress unnecessary regex subre nodes in a couple more 
+2021-03-02 [4604f83fd] Suppress unnecessary regex subre nodes in a couple more
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-03-08 [6c20bdb2a] Further tweak memory management for regex DFAs.
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -1298,7 +1280,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
-2020-10-11 [80f8eb79e] Use perfect hash for NFC and NFKC Unicode Normalization 
+2020-10-11 [80f8eb79e] Use perfect hash for NFC and NFKC Unicode Normalization
 Author: Michael Paquier <michael@paquier.xyz>
 2020-10-23 [783f0cc64] Improve performance of Unicode {de,re}composition in the
 -->
@@ -1613,7 +1595,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-09-03 [8f8154a50] Allow records to span multiple lines in pg_hba.conf and 
+2020-09-03 [8f8154a50] Allow records to span multiple lines in pg_hba.conf and
 -->
 
        <para>
@@ -1899,7 +1881,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
      <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
-2020-07-12 [b1e48bbe6] Include replication origins in SQL functions for commit 
+2020-07-12 [b1e48bbe6] Include replication origins in SQL functions for commit
 -->
 
       <para>
@@ -1913,7 +1895,7 @@ Author: Michael Paquier <michael@paquier.xyz>
      <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
-2020-07-12 [b1e48bbe6] Include replication origins in SQL functions for commit 
+2020-07-12 [b1e48bbe6] Include replication origins in SQL functions for commit
 -->
 
       <para>
@@ -2131,7 +2113,7 @@ Author: Amit Kapila <akapila@postgresql.org>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-09-18 [06a7c3154] Allow most keywords to be used as column labels without 
+2020-09-18 [06a7c3154] Allow most keywords to be used as column labels without
 -->
 
       <para>
@@ -2220,7 +2202,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-04-13 [6c0373ab7] Allow table-qualified variable names in ON CONFLICT ... 
+2021-04-13 [6c0373ab7] Allow table-qualified variable names in ON CONFLICT ...
 -->
 
       <para>
@@ -2414,7 +2396,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-01-30 [dfb75e478] Add primary keys and unique constraints to system catalo
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-02-02 [62f34097c] Build in some knowledge about foreign-key relationships 
+2021-02-02 [62f34097c] Build in some knowledge about foreign-key relationships
 -->
 
       <para>
@@ -2500,6 +2482,8 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 2020-12-29 [db6335b5b] Add support of multirange matching to the existing range
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2020-12-30 [62097a4cc] Fix selectivity estimation @&gt; (anymultirange, anyrange)
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+2021-07-18 [244ad5415] Support for unnest(multirange)
 -->
 
       <para>
@@ -2908,7 +2892,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex 
+2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex
 -->
 
       <para>
@@ -2921,7 +2905,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex 
+2021-02-25 [2a0af7fe4] Allow complemented character class escapes within regex
 -->
 
       <para>
@@ -2986,7 +2970,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-03-08 [fed10d4ee] Properly mark pg_stat_get_subscription() as returning a 
+2021-03-08 [fed10d4ee] Properly mark pg_stat_get_subscription() as returning a
 -->
 
       <para>
@@ -3223,6 +3207,19 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 
      <listitem>
 <!--
+Author: Fujii Masao <fujii@postgresql.org>
+2021-09-01 [d760d942c] pgbench: Fix bug in measurement of disconnection delays.
+-->
+
+      <para>
+       Include disconnection times in the reconnection overhead measured
+       by <application>pgbench</application> with <option>-C</option>
+       (Yugo Nagata)
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-09-17 [99175141c] Improve common/logging.c's support for multiple verbosit
 -->
@@ -3281,7 +3278,7 @@ Author: Michael Paquier <michael@paquier.xyz>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-01-05 [7d80441d2] Allow psql's \dt and \di to show TOAST tables and their 
+2021-01-05 [7d80441d2] Allow psql's \dt and \di to show TOAST tables and their
 -->
 
        <para>
@@ -3357,7 +3354,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 Author: Michael Paquier <michael@paquier.xyz>
 2020-07-21 [c273d9d8c] Rework tab completion of COPY and \copy in psql
 Author: Michael Paquier <michael@paquier.xyz>
-2020-07-30 [f1af75c5f] Include partitioned tables for tab completion of VACUUM 
+2020-07-30 [f1af75c5f] Include partitioned tables for tab completion of VACUUM
 Author: Michael Paquier <michael@paquier.xyz>
 2020-08-11 [1f75b4541] Improve tab completion of REINDEX in psql
 Author: Michael Paquier <michael@paquier.xyz>
@@ -3379,13 +3376,13 @@ Author: Thomas Munro <tmunro@postgresql.org>
 Author: Fujii Masao <fujii@postgresql.org>
 2021-02-25 [6b40d9bdb] Improve tab-completion for TRUNCATE.
 Author: Michael Paquier <michael@paquier.xyz>
-2021-03-19 [5b2266e33] Improve tab completion of IMPORT FOREIGN SCHEMA with \h 
+2021-03-19 [5b2266e33] Improve tab completion of IMPORT FOREIGN SCHEMA with \h
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-04-08 [d1fcbde57] Add support for tab-completion of type arguments in \df,
 Author: Fujii Masao <fujii@postgresql.org>
 2021-04-12 [81e094bdf] Support tab-complete for TRUNCATE on foreign tables.
 Author: Michael Paquier <michael@paquier.xyz>
-2021-04-21 [22b2dec31] Add CURRENT_ROLE to list of roles for tab completion of 
+2021-04-21 [22b2dec31] Add CURRENT_ROLE to list of roles for tab completion of
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2021-04-26 [6dd1042ed] psql: tab-complete ALTER ... DETACH CONCURRENTLY / FINAL
 Author: Michael Paquier <michael@paquier.xyz>
@@ -3587,15 +3584,21 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2021-01-06 [4656e3d66] Replace CLOBBER_CACHE_ALWAYS with run-time GUC
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-07-01 [d04770801] Add - -clobber-cache option to initdb, for CCA testing.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-07-13 [6201fa3c1] Rename debug_invalidate_system_caches_always to debug_di
 -->
 
        <para>
-        Add <xref linkend="guc-debug-discard-caches"/>
+        Add <xref linkend="guc-debug-discard-caches"/> parameter
         to control cache flushing for test purposes (Craig Ringer)
        </para>
 
        <para>
         Previously this behavior could only be set at compile time.
+        To invoke it during <application>initdb</application>, use the new
+        option <option>--discard-caches</option>.
        </para>
       </listitem>
 
@@ -3711,6 +3714,30 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         REMOVE?
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-06-19 [6991e774e] Provide feature-test macros for libpq features added in
+-->
+
+       <para>
+        Provide feature-test macros in <filename>libpq-fe.h</filename>
+        for recently-added <application>libpq</application> features
+        (Tom Lane, Álvaro Herrera)
+       </para>
+
+       <para>
+        Historically, applications have usually used compile-time checks
+        of <literal>PG_VERSION_NUM</literal> to test whether a feature is
+        available.  But that's normally the server version, which might
+        not be a good guide to <application>libpq</application>'s
+        version.  <filename>libpq-fe.h</filename> now
+        offers <literal>#define</literal> symbols denoting
+        application-visible features added in v14; the intent is to keep
+        adding symbols for such features in future versions.
        </para>
       </listitem>
 
@@ -3969,7 +3996,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
       <listitem>
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
-2021-04-07 [a3740c48e] postgres_fdw: Allow partitions specified in LIMIT TO to 
+2021-04-07 [a3740c48e] postgres_fdw: Allow partitions specified in LIMIT TO to
 -->
 
        <para>
