@@ -288,8 +288,23 @@ CreateStatistics(CreateStatsStmt *stmt)
 			Node	   *expr = selem->expr;
 			Oid			atttype;
 			TypeCacheEntry *type;
+			Bitmapset  *attnums = NULL;
+			int			k;
 
 			Assert(expr != NULL);
+
+			/* Disallow expressions referencing system attributes. */
+			pull_varattnos(expr, 1, &attnums);
+
+			k = -1;
+			while ((k = bms_next_member(attnums, k)) >= 0)
+			{
+				AttrNumber	attnum = k + FirstLowInvalidHeapAttributeNumber;
+				if (attnum <= 0)
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("statistics creation on system columns is not supported")));
+			}
 
 			/*
 			 * Disallow data types without a less-than operator.
