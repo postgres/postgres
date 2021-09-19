@@ -901,12 +901,12 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
        <para>
         Improve the performance of updates and deletes on partitioned tables
-        when only a few partitions are affected (Amit Langote, Tom Lane)
+        with many partitions (Amit Langote, Tom Lane)
        </para>
 
        <para>
-        This change reduces the planner's overhead for such cases, and
-        also allows updates/deletes on partitioned tables to use
+        This change greatly reduces the planner's overhead for such cases,
+        and also allows updates/deletes on partitioned tables to use
         execution-time partition pruning.
        </para>
       </listitem>
