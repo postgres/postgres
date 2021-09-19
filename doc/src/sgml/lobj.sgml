@@ -449,7 +449,7 @@ pg_int64 lo_tell64(PGconn *conn, int fd);
      <indexterm><primary>lo_truncate</primary></indexterm>
      To truncate a large object to a given length, call
 <synopsis>
-int lo_truncate(PGcon *conn, int fd, size_t len);
+int lo_truncate(PGconn *conn, int fd, size_t len);
 </synopsis>
      This function truncates the large object
      descriptor <parameter>fd</parameter> to length <parameter>len</parameter>.  The
@@ -477,7 +477,7 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
      When dealing with large objects that might exceed 2GB in size,
      instead use
 <synopsis>
-int lo_truncate64(PGcon *conn, int fd, pg_int64 len);
+int lo_truncate64(PGconn *conn, int fd, pg_int64 len);
 </synopsis>
      This function has the same
      behavior as <function>lo_truncate</function>, but it can accept a
