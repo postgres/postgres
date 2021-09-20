@@ -125,13 +125,15 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	if (!natts)
 		return;
 
+	/* the list of stats has to be allocated outside the memory context */
+	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
+	statslist = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
+
+	/* memory context for building each statistics object */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"BuildRelationExtStatistics",
 								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
-
-	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
-	statslist = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
 
 	/* report this phase */
 	if (statslist != NIL)
@@ -234,14 +236,16 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		pgstat_progress_update_param(PROGRESS_ANALYZE_EXT_STATS_COMPUTED,
 									 ++ext_cnt);
 
-		/* free the build data (allocated as a single chunk) */
-		pfree(data);
+		/* free the data used for building this statistics object */
+		MemoryContextReset(cxt);
 	}
-
-	table_close(pg_stext, RowExclusiveLock);
 
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(cxt);
+
+	list_free(statslist);
+
+	table_close(pg_stext, RowExclusiveLock);
 }
 
 /*
