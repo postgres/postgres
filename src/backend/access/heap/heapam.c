@@ -7134,10 +7134,7 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 
 			/* Some sanity checks */
 			if (offnum < FirstOffsetNumber || offnum > maxoff)
-			{
-				Assert(false);
 				break;
-			}
 
 			lp = PageGetItemId(page, offnum);
 			if (ItemIdIsRedirected(lp))
