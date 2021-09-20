@@ -62,11 +62,17 @@
    </para>
 
    <para>
-    The <filename>src/tools</filename> directory contains sample settings
+    The <filename>src/tools/editors</filename> directory contains sample settings
     files that can be used with the <productname>emacs</productname>,
     <productname>xemacs</productname> or <productname>vim</productname>
     editors to help ensure that they format code according to these
     conventions.
+   </para>
+
+   <para>
+    If you'd like to run <application>pgindent</application> locally
+    to help make your code match project style, see
+    the <filename>src/tools/pgindent</filename> directory.
    </para>
 
    <para>
