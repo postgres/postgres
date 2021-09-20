@@ -30,6 +30,7 @@
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -325,12 +326,6 @@ dependency_degree(StatsBuildData *data, int k, AttrNumber *dependency)
 		group_size++;
 	}
 
-	if (items)
-		pfree(items);
-
-	pfree(mss);
-	pfree(attnums_dep);
-
 	/* Compute the 'degree of validity' as (supporting/total). */
 	return (n_supporting_rows * 1.0 / data->numrows);
 }
@@ -359,8 +354,14 @@ statext_dependencies_build(StatsBuildData *data)
 
 	/* result */
 	MVDependencies *dependencies = NULL;
+	MemoryContext	cxt;
 
 	Assert(data->nattnums >= 2);
+
+	/* tracks memory allocated by dependency_degree calls */
+	cxt = AllocSetContextCreate(CurrentMemoryContext,
+								"dependency_degree cxt",
+								ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * We'll try build functional dependencies starting from the smallest ones
@@ -380,9 +381,16 @@ statext_dependencies_build(StatsBuildData *data)
 		{
 			double		degree;
 			MVDependency *d;
+			MemoryContext oldcxt;
+
+			/* release memory used by dependency degree calculation */
+			oldcxt = MemoryContextSwitchTo(cxt);
 
 			/* compute how valid the dependency seems */
 			degree = dependency_degree(data, k, dependency);
+
+			MemoryContextSwitchTo(oldcxt);
+			MemoryContextReset(cxt);
 
 			/*
 			 * if the dependency seems entirely invalid, don't store it
@@ -424,6 +432,8 @@ statext_dependencies_build(StatsBuildData *data)
 		 */
 		DependencyGenerator_free(DependencyGenerator);
 	}
+
+	MemoryContextDelete(cxt);
 
 	return dependencies;
 }
