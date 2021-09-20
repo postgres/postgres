@@ -74,13 +74,14 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	MemoryContext cxt;
 	MemoryContext oldcxt;
 
+	pg_stext = heap_open(StatisticExtRelationId, RowExclusiveLock);
+	stats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
+
+	/* memory context for building each statistics object */
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"BuildRelationExtStatistics",
 								ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(cxt);
-
-	pg_stext = heap_open(StatisticExtRelationId, RowExclusiveLock);
-	stats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
 
 	foreach(lc, stats)
 	{
@@ -128,12 +129,17 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 		/* store the statistics in the catalog */
 		statext_store(pg_stext, stat->statOid, ndistinct, dependencies, stats);
-	}
 
-	heap_close(pg_stext, RowExclusiveLock);
+		/* free the data used for building this statistics object */
+		MemoryContextReset(cxt);
+	}
 
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(cxt);
+
+	list_free(stats);
+
+	heap_close(pg_stext, RowExclusiveLock);
 }
 
 /*
