@@ -48,7 +48,7 @@
    <glossterm>Analyze (operation)</glossterm>
    <glossdef>
     <para>
-     The process of collecting statistics from data in
+     The act of collecting statistics from data in
      <glossterm linkend="glossary-table">tables</glossterm>
      and other <glossterm linkend="glossary-relation">relations</glossterm>
      to help the <glossterm linkend="glossary-planner">query planner</glossterm>
@@ -113,12 +113,44 @@
     <para>
      A set of background processes that routinely perform
      <glossterm linkend="glossary-vacuum">vacuum</glossterm>
-     and <glossterm linkend="glossary-analyze">analyze</glossterm>
-     operations.
+     and <glossterm linkend="glossary-analyze">analyze</glossterm> operations.
+     The <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that coordinates the work and is always present (unless autovacuum
+     is disabled) is known as the <firstterm>autovacuum launcher</firstterm>,
+     and the processes that carry out the tasks are known as the
+     <firstterm>autovacuum workers</firstterm>.
     </para>
     <para>
      For more information, see
      <xref linkend="autovacuum"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-auxiliary-proc">
+   <glossterm>Auxiliary process</glossterm>
+   <glossdef>
+    <para>
+     A process within an <glossterm linkend="glossary-instance">instance</glossterm>
+     that is in charge of some specific background task for the instance.
+     The auxiliary processes consist of <!-- in alphabetical order -->
+     <!-- NB: In the code, the autovac launcher doesn't use the auxiliary
+          process scaffolding; however it does behave as one so we list it
+          here anyway. In addition, logger and stats collector aren't
+          connected to shared memory so most code outside postmaster.c
+          doesn't even consider them "procs" in the first place.
+          -->
+     the <glossterm linkend="glossary-autovacuum">autovacuum launcher</glossterm>
+     (but not the autovacuum workers),
+     the <glossterm linkend="glossary-background-writer">background writer</glossterm>,
+     the <glossterm linkend="glossary-checkpointer">checkpointer</glossterm>,
+     the <glossterm linkend="glossary-logger">logger</glossterm>,
+     the <glossterm linkend="glossary-startup-process">startup process</glossterm>,
+     the <glossterm linkend="glossary-stats-collector">statistics collector</glossterm>,
+     the <glossterm linkend="glossary-wal-archiver">WAL archiver</glossterm>,
+     the <glossterm linkend="glossary-wal-receiver">WAL receiver</glossterm>
+     (but not the <glossterm linkend="glossary-wal-sender">WAL senders</glossterm>),
+     and the <glossterm linkend="glossary-wal-writer">WAL writer</glossterm>.
     </para>
    </glossdef>
   </glossentry>
@@ -163,7 +195,8 @@
    <glossterm>Background writer (process)</glossterm>
    <glossdef>
     <para>
-     A process that writes dirty
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that writes dirty
      <glossterm linkend="glossary-data-page">data pages</glossterm> from
      <glossterm linkend="glossary-shared-memory">shared memory</glossterm> to
      the file system.  It wakes up periodically, but works only for a short
@@ -285,7 +318,9 @@
    <glossterm>Checkpointer (process)</glossterm>
    <glossdef>
     <para>
-     A specialized process responsible for executing checkpoints.
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that is responsible for executing
+     <glossterm linkend="glossary-checkpoint">checkpoints</glossterm>.
     </para>
    </glossdef>
   </glossentry>
@@ -778,8 +813,9 @@
    <glossterm>Instance</glossterm>
    <glossdef>
     <para>
-     A group of backend and auxiliary processes that communicate using
-     a common shared memory area.  One
+     A group of <glossterm linkend="glossary-backend">backend</glossterm> and
+     <glossterm linkend="glossary-auxiliary-proc">auxiliary processes</glossterm>
+     that communicate using a common shared memory area.  One
      <glossterm linkend="glossary-postmaster">postmaster process</glossterm>
      manages the instance; one instance manages exactly one
      <glossterm linkend="glossary-db-cluster">database cluster</glossterm>
@@ -881,8 +917,8 @@
    <glossterm>Logger (process)</glossterm>
    <glossdef>
     <para>
-     If activated, the process
-     writes information about database events into the current
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     which, if enabled, writes information about database events into the current
      <glossterm linkend="glossary-log-file">log file</glossterm>.
      When reaching certain time- or
      volume-dependent criteria, a new log file is created.
@@ -1040,8 +1076,9 @@
    <glossdef>
     <para>
       The very first process of an <glossterm linkend="glossary-instance">instance</glossterm>.
-      It starts and manages the other auxiliary processes and creates
-      <glossterm linkend="glossary-backend">backend processes</glossterm>
+      It starts and manages the
+      <glossterm linkend="glossary-auxiliary-proc">auxiliary processes</glossterm>
+      and creates <glossterm linkend="glossary-backend">backend processes</glossterm>
       on demand.
     </para>
     <para>
@@ -1452,6 +1489,22 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-startup-process">
+   <glossterm>Startup process</glossterm>
+   <glossdef>
+    <para>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that replays WAL during crash recovery and in a
+     <glossterm linkend="glossary-replication">physical replica</glossterm>.
+    </para>
+    <para>
+     (The name is historical: the startup process was named before
+     replication was implemented; the name refers to its task as it
+     relates to the server startup following a crash.)
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-sql-object">
    <glossterm>SQL object</glossterm>
     <glossdef>
@@ -1514,8 +1567,10 @@
    <glossterm>Stats collector (process)</glossterm>
    <glossdef>
     <para>
-     This process collects statistical information about the
-     <glossterm linkend="glossary-instance">instance</glossterm>'s activities.
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     which, if enabled, receives statistical information
+     about the <glossterm linkend="glossary-instance">instance</glossterm>'s
+     activities.
     </para>
     <para>
       For more information, see
@@ -1856,7 +1911,9 @@
    <glossterm>WAL archiver (process)</glossterm>
    <glossdef>
     <para>
-     A process that saves copies of <glossterm linkend="glossary-wal-file">WAL files</glossterm>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     which, if enabled, saves copies of
+     <glossterm linkend="glossary-wal-file">WAL files</glossterm>
      for the purpose of creating backups or keeping
      <glossterm linkend="glossary-replica">replicas</glossterm> current.
     </para>
@@ -1914,9 +1971,42 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-wal-receiver">
+   <glossterm>WAL receiver</glossterm>
+   <glossdef>
+    <para>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that runs on a <glossterm linkend="glossary-replica">replica</glossterm>
+     to receive WAL from the
+     <glossterm linkend="glossary-primary-server">primary server</glossterm>
+     for replay by the
+     <glossterm linkend="glossary-startup-process">startup process</glossterm>.
+    </para>
+
+    <para>
+     For more information, see
+     <xref linkend="warm-standby"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry>
    <glossterm>WAL segment</glossterm>
    <glosssee otherterm="glossary-wal-file" />
+  </glossentry>
+
+  <glossentry id="glossary-wal-sender">
+   <glossterm>WAL sender (process)</glossterm>
+   <glossdef>
+    <para>
+     A special <glossterm linkend="glossary-backend">backend process</glossterm>
+     that streams WAL over a network.  The receiving end can be a
+     <glossterm linkend="glossary-wal-receiver">WAL receiver</glossterm>
+     in a <glossterm linkend="glossary-replica">replica</glossterm>,
+     <xref linkend="app-pgreceivewal"/>, or any other client program
+     that speaks the replication protocol.
+    </para>
+   </glossdef>
   </glossentry>
 
   <glossentry id="glossary-wal-writer">
