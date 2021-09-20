@@ -4155,6 +4155,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Charlie Hornsby</member>
     <member>Chen Jiaoqian</member>
     <member>Chris Wilson</member>
+    <member>Christian Quest</member>
     <member>Christoph Berg</member>
     <member>Christophe Courtois</member>
     <member>Corey Huinker</member>
@@ -4193,6 +4194,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Duncan Sands</member>
     <member>Edmund Horner</member>
     <member>Edson Richter</member>
+    <member>Egor Rogov</member>
     <member>Ekaterina Kiryanova</member>
     <member>Elena Indrupskaya</member>
     <member>Emil Iggland</member>
@@ -4208,6 +4210,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Fabrízio de Royes Mello</member>
     <member>Federico Caselli</member>
     <member>Felix Lechner</member>
+    <member>Filip Gospodinov</member>
     <member>Floris Van Nee</member>
     <member>Frank Gagnepain</member>
     <member>Frits Jalvingh</member>
@@ -4230,6 +4233,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Heath Lord</member>
     <member>Heikki Linnakangas</member>
     <member>Henry Hinze</member>
+    <member>Herwig Goemans</member>
     <member>Himanshu Upadhyaya</member>
     <member>Hironobu Suzuki</member>
     <member>Hiroshi Inoue</member>
@@ -4307,6 +4311,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Ludovic Kuty</member>
     <member>Luis Roberto</member>
     <member>Lukas Eder</member>
+    <member>Ma Liangzhu</member>
     <member>Maciek Sakrejda</member>
     <member>Madan Kumar</member>
     <member>Magnus Hagander</member>
@@ -4317,6 +4322,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Marco Atzeri</member>
     <member>Marek Szuba</member>
     <member>Marina Polyakova</member>
+    <member>Mario Emmenlauer</member>
     <member>Mark Dilger</member>
     <member>Mark Wong</member>
     <member>Mark Zhao</member>
@@ -4338,6 +4344,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Michael Meskes</member>
     <member>Michael Paquier</member>
     <member>Michael Paul Killian</member>
+    <member>Michael Powers</member>
     <member>Michael Vastola</member>
     <member>Michail Nikolaev</member>
     <member>Michał Albrycht</member>
@@ -4347,6 +4354,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Nagaraj Raj</member>
     <member>Naoki Nakamichi</member>
     <member>Nathan Bossart</member>
+    <member>Nathan Long</member>
     <member>Nazli Ugur Koyluoglu</member>
     <member>Neha Sharma</member>
     <member>Neil Chen</member>
@@ -4383,10 +4391,12 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Peter Vandivier</member>
     <member>Petr Fedorov</member>
     <member>Petr Jelínek</member>
+    <member>Phil Krylov</member>
     <member>Philipp Gramzow</member>
     <member>Philippe Beaudoin</member>
     <member>Phillip Menke</member>
     <member>Pierre Giraud</member>
+    <member>Prabhat Sahu</member>
     <member>Quan Zongliang</member>
     <member>Rafi Shamim</member>
     <member>Rahila Syed</member>
@@ -4455,8 +4465,10 @@ Author: Fujii Masao <fujii@postgresql.org>
     <member>Tom Gottfried</member>
     <member>Tom Lane</member>
     <member>Tom Vijlbrief</member>
+    <member>Tomas Barton</member>
     <member>Tomas Vondra</member>
     <member>Tomohiro Hiramitsu</member>
+    <member>Tony Reix</member>
     <member>Vaishnavi Prabakaran</member>
     <member>Valentin Gatien-Baron</member>
     <member>Victor Wagner</member>
