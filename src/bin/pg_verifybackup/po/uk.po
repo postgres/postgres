@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-10 08:45+0000\n"
-"PO-Revision-Date: 2021-07-17 14:15\n"
-"Last-Translator: Pavlo Golub\n"
+"POT-Creation-Date: 2021-08-17 08:45+0000\n"
+"PO-Revision-Date: 2021-08-17 10:54\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -279,7 +279,7 @@ msgstr "не вдалося проаналізувати маніфест рез
 #: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: pg_verifybackup.c:264
 #, c-format
@@ -307,181 +307,181 @@ msgid "The program \"%s\" was found by \"%s\"\n"
 msgstr "Програма \"%s\" була знайдена \"%s\", але не була тієї ж версії, що %s.\n"
 "Перевірте вашу установку."
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:362
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "резервну копію успішно перевірено\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:388 pg_verifybackup.c:724
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:392
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:752
+#: pg_verifybackup.c:412 pg_verifybackup.c:753
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:415
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %lld"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:475
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дубльований шлях у маніфесті резервного копіювання: \"%s\""
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:538 pg_verifybackup.c:545
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:577
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не вдалося закрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:597
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "не вдалося отримати інформацію про файл або каталог \"%s\": %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:620
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" не є файлом або каталогом"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:630
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" присутній на диску, але не у маніфесті"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:642
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\" має розмір %lld на диску, але розмір %zu у маніфесті"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:669
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" присутній у маніфесті, але не на диску"
 
-#: pg_verifybackup.c:731
+#: pg_verifybackup.c:732
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "не вдалося ініціалізувати контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:743
+#: pg_verifybackup.c:744
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не вдалося оновити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:758
+#: pg_verifybackup.c:759
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "неможливо закрити файл \"%s\": %m"
 
-#: pg_verifybackup.c:777
+#: pg_verifybackup.c:778
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "файл \"%s\" мусить містити %zu байтів, але прочитано %zu байтів"
 
-#: pg_verifybackup.c:787
+#: pg_verifybackup.c:788
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "не вдалося остаточно завершити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:795
+#: pg_verifybackup.c:796
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "файл \"%s\" має контрольну суму довжини %d, але очікувалось %d"
 
-#: pg_verifybackup.c:799
+#: pg_verifybackup.c:800
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "невідповідність контрольної суми для файлу \"%s\""
 
-#: pg_verifybackup.c:823
+#: pg_verifybackup.c:824
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "не вдалося проаналізувати WAL для часової шкали %u"
 
-#: pg_verifybackup.c:909
+#: pg_verifybackup.c:910
 #, c-format
 msgid "%s verifies a backup against the backup manifest.\n\n"
 msgstr "%s перевіряє резервну копію відповідно до маніфесту резервного копіювання.\n\n"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:911
 #, c-format
 msgid "Usage:\n"
 "  %s [OPTION]... BACKUPDIR\n\n"
 msgstr "Використання:\n"
 "  %s [OPTION]... КАТАЛОГ_КОПІЮВАННЯ\n\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:912
 #, c-format
 msgid "Options:\n"
 msgstr "Параметри:\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error вийти при помилці\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:914
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH ігнорувати вказаний шлях\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:915
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH використовувати вказаний шлях для маніфесту\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:916
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal не намагатися аналізувати файли WAL\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:917
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet            не друкувати жодного виводу, окрім помилок\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:918
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums не перевіряти контрольні суми\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:919
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH використовувати вказаний шлях для файлів WAL\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:920
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:921
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:922
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:923
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"

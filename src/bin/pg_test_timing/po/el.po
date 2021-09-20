@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -33,7 +33,7 @@ msgstr "%s: μη έγκυρη παράμετρος για την επιλογή 
 #: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_test_timing.c:90
 #, c-format
@@ -43,7 +43,7 @@ msgstr "%s: %s πρέπει να βρίσκεται εντός εύρους %u..
 #: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: πάρα πολλοί παράμετροι εισόδου από την γραμμή εντολών (πρώτη είναι η “%s”)\n"
+msgstr "%s: πάρα πολλοί παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)\n"
 
 #: pg_test_timing.c:115
 #, c-format

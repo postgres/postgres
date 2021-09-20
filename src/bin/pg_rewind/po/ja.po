@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
-"PO-Revision-Date: 2021-05-18 19:49+0900\n"
+"POT-Creation-Date: 2021-08-25 17:22+0900\n"
+"PO-Revision-Date: 2021-08-25 11:21+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -36,12 +36,12 @@ msgstr "警告: "
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "null ポインタを複製できません（内部エラー）\n"
+msgstr "nullポインタは複製できません (内部エラー)\n"
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -66,12 +66,12 @@ msgstr "SIDを割り当てられませんでした: エラーコード %lu"
 #: ../../common/restricted_token.c:119
 #, c-format
 msgid "could not create restricted token: error code %lu"
-msgstr "制限付きトークンを作成できませんでした: エラーコード %lu"
+msgstr "制限付きトークンを生成できませんでした: エラーコード %lu"
 
 #: ../../common/restricted_token.c:140
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
-msgstr "\"%s\"コマンドのプロセスを起動できませんでした: エラーコード %lu"
+msgstr "コマンド\"%s\"のプロセスを起動できませんでした: エラーコード %lu"
 
 #: ../../common/restricted_token.c:178
 #, c-format
@@ -81,7 +81,7 @@ msgstr "制限付きトークンで再実行できませんでした: %lu"
 #: ../../common/restricted_token.c:194
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
-msgstr "サブプロセスの終了コードを取得できませんでした。: エラーコード %lu"
+msgstr "サブプロセスの終了コードを取得できませんでした: エラーコード %lu"
 
 #: ../../fe_utils/archive.c:53
 #, c-format
@@ -119,7 +119,7 @@ msgstr "ファイル\"%s\"をアーカイブからリストアできませんで
 #: parsexlog.c:195
 #, c-format
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: ../../fe_utils/recovery_gen.c:134 parsexlog.c:308
 #, c-format
@@ -129,7 +129,7 @@ msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 #: ../../fe_utils/recovery_gen.c:140
 #, c-format
 msgid "could not write to file \"%s\": %m"
-msgstr "ファイル\"%s\"を書き出せませんでした: %m"
+msgstr "ファイル\"%s\"に書き込めませんでした: %m"
 
 #: ../../fe_utils/recovery_gen.c:152
 #, c-format
@@ -463,7 +463,7 @@ msgid ""
 "\n"
 msgstr ""
 "使用方法:\n"
-" %s [オプション]...\n"
+"  %s [オプション]...\n"
 "\n"
 
 #: pg_rewind.c:86
@@ -559,7 +559,7 @@ msgstr "%s ホームページ: <%s>\n"
 #: pg_rewind.c:234 pg_rewind.c:242
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細は\"%s --help\"を実行してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_rewind.c:212
 #, c-format
@@ -584,7 +584,7 @@ msgstr "--write-recovery-confにソースサーバー情報(--source-server)が�
 #: pg_rewind.c:240
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr " コマンドライン引数が多すぎます(先頭は\"%s\")"
+msgstr "コマンドライン引数が多すぎます (先頭は\"%s\")"
 
 #: pg_rewind.c:255
 #, c-format
@@ -750,9 +750,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation."
 msgstr ""
-"%2$sには\"%1$s\"プログラムが必要ですが、\"%3$s\"と同じディレクトリ\n"
-"にありませんでした。\n"
-"インストール状況を確認してください。"
+"%2$sにはプログラム\"%1$s\"が必要ですが、\"%3$s\"と同じディレクトリ\n"
+"にはありませんでした。\n"
+"インストールの状態を確認してください。"
 
 #: pg_rewind.c:1048 pg_rewind.c:1106
 #, c-format
@@ -763,7 +763,7 @@ msgid ""
 msgstr ""
 "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じ\n"
 "バージョンではありませんでした。\n"
-"インストール状況を確認してください。"
+"インストールの状態を確認してください。"
 
 #: pg_rewind.c:1069
 #, c-format
@@ -828,12 +828,12 @@ msgstr "%X/%Xのレコードオフセットが不正です"
 #: xlogreader.c:357
 #, c-format
 msgid "contrecord is requested by %X/%X"
-msgstr "%X/%Xではcontrecordが必要です"
+msgstr "%X/%Xで継続レコードが要求されました"
 
 #: xlogreader.c:398 xlogreader.c:695
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
-msgstr "%X/%Xのレコード長が不正です:長さは%uである必要がありますが、実際には%uでした"
+msgstr "%X/%Xのレコード長が不正です: 長さは%uである必要がありますが、実際は%uでした"
 
 #: xlogreader.c:422
 #, c-format
@@ -843,7 +843,7 @@ msgstr "%2$X/%3$Xのレコード長%1$uが大きすぎます"
 #: xlogreader.c:453
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
-msgstr "%X/%Xで contrecord フラグがありません"
+msgstr "%X/%Xで継続レコードフラグが設定されていません"
 
 #: xlogreader.c:466
 #, c-format
@@ -858,7 +858,7 @@ msgstr "%2$X/%3$XのリソースマネージャID %1$uが不正です"
 #: xlogreader.c:716 xlogreader.c:732
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "直前のリンク%1$X/%2$Xが不正なレコードが%3$X/%4$Xにあります"
+msgstr "%3$X/%4$Xのレコードの後方リンク%1$X/%2$Xが不正です"
 
 #: xlogreader.c:768
 #, c-format
@@ -873,7 +873,7 @@ msgstr "ログセグメント%2$s、オフセット%3$uのマジックナンバ�
 #: xlogreader.c:819 xlogreader.c:860
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
-msgstr "ログセグメント %2$s、オフセット %3$u の情報ビット %1$04X は不正です"
+msgstr "ログセグメント %2$s、オフセット%3$uの情報ビット%1$04Xは不正です"
 
 #: xlogreader.c:834
 #, c-format
@@ -893,7 +893,7 @@ msgstr "WAL ファイルは異なるデータベースシステム由来のも�
 #: xlogreader.c:879
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
-msgstr "ログセグメント%3$s、オフセット%4$uのページアドレス%1$X/%2$Xは想定外です"
+msgstr "ログセグメント%3$s、オフセット%4$uに想定外のページアドレス%1$X/%2$X"
 
 #: xlogreader.c:904
 #, c-format
@@ -913,27 +913,27 @@ msgstr "BKPBLOCK_HAS_DATAが設定されていますが、%X/%Xにデータが�
 #: xlogreader.c:1278
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATAが設定されていませんが、%2$X/%3$Xのデータ長は%1$u"
+msgstr "BKPBLOCK_HAS_DATAが設定されていませんが、%2$X/%3$Xのデータ長は%1$uです"
 
 #: xlogreader.c:1314
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLEが設定されていますが、%4$X/%5$Xでホールオフセット%1$u、長さ%2$u、ブロックイメージ長%3$u"
+msgstr "BKPIMAGE_HAS_HOLEが設定されていますが、%4$X/%5$Xにおいてホールオフセットが%1$u、長さが%2$u、ブロックイメージ長が%3$uです"
 
 #: xlogreader.c:1330
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLEが設定されていませんが、%3$X/%4$Xにホールオフセット%1$u、長さ%2$u"
+msgstr "BKPIMAGE_HAS_HOLEが設定されていませんが、%3$X/%4$Xにおいてホールオフセットが%1$u、長さが%2$uです"
 
 #: xlogreader.c:1345
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_IS_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
+msgstr "BKPIMAGE_IS_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
 #: xlogreader.c:1360
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_IS_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
+msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_IS_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
 #: xlogreader.c:1376
 #, c-format

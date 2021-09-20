@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:21+0900\n"
 "PO-Revision-Date: 2021-05-17 14:15+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -36,12 +36,12 @@ msgstr "警告: "
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "null ポインタを複製できません (内部エラー)\n"
+msgstr "nullポインタは複製できません (内部エラー)\n"
 
 #: ../../common/file_utils.c:87 ../../common/file_utils.c:451
 #: pg_receivewal.c:266 pg_recvlogical.c:340
@@ -81,13 +81,13 @@ msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %
 #: ../../fe_utils/recovery_gen.c:171 pg_basebackup.c:1248
 #, c-format
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: ../../fe_utils/recovery_gen.c:140 pg_basebackup.c:1021 pg_basebackup.c:1714
 #: pg_basebackup.c:1770
 #, c-format
 msgid "could not write to file \"%s\": %m"
-msgstr "ファイル\"%s\"を書き込めませんでした: %m"
+msgstr "ファイル\"%s\"に書き込めませんでした: %m"
 
 #: ../../fe_utils/recovery_gen.c:152 pg_basebackup.c:1166 pg_basebackup.c:1671
 #: pg_basebackup.c:1747
@@ -113,27 +113,27 @@ msgstr "データディレクトリ\"%s\"の内容を削除しています"
 #: pg_basebackup.c:232
 #, c-format
 msgid "failed to remove contents of data directory"
-msgstr "データディレクトリの中身の削除に失敗しました"
+msgstr "データディレクトリの内容の削除に失敗しました"
 
 #: pg_basebackup.c:237
 #, c-format
 msgid "removing WAL directory \"%s\""
-msgstr "WAL ディレクトリ\"%s\"を削除しています"
+msgstr "WALディレクトリ\"%s\"を削除しています"
 
 #: pg_basebackup.c:239
 #, c-format
 msgid "failed to remove WAL directory"
-msgstr "WAL ディレクトリの削除に失敗しました"
+msgstr "WALディレクトリの削除に失敗しました"
 
 #: pg_basebackup.c:243
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
-msgstr "WAL ディレクトリ\"%s\"の中身を削除しています"
+msgstr "WALディレクトリ\"%s\"の中身を削除しています"
 
 #: pg_basebackup.c:245
 #, c-format
 msgid "failed to remove contents of WAL directory"
-msgstr "WAL ディレクトリの中身の削除に失敗しました"
+msgstr "WALディレクトリの中身の削除に失敗しました"
 
 #: pg_basebackup.c:251
 #, c-format
@@ -143,7 +143,7 @@ msgstr "ユーザーの要求により、データディレクトリ\"%s\"を削
 #: pg_basebackup.c:254
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
-msgstr "ユーザーの要求により、WAL ディレクトリ\"%s\"を削除しませんでした"
+msgstr "ユーザーの要求により、WALディレクトリ\"%s\"を削除しませんでした"
 
 #: pg_basebackup.c:258
 #, c-format
@@ -272,7 +272,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"汎用オプション:\n"
+"一般的なオプション:\n"
 
 #: pg_basebackup.c:398
 #, c-format
@@ -481,7 +481,7 @@ msgstr "バックグラウンドスレッドを生成できませんでした: %
 #: pg_basebackup.c:752
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
-msgstr "ディレクトリ\"%s\"は存在しますが空ではありません"
+msgstr "ディレクトリ\"%s\"は存在しますが、空ではありません"
 
 #: pg_basebackup.c:759
 #, c-format
@@ -542,7 +542,7 @@ msgid "could not get COPY data stream: %s"
 msgstr "COPYデータストリームを取得できませんでした: %s"
 
 #: pg_basebackup.c:981 pg_recvlogical.c:435 pg_recvlogical.c:607
-#: receivelog.c:964
+#: receivelog.c:973
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "COPYデータを読み取ることができませんでした: %s"
@@ -627,8 +627,8 @@ msgstr "ヒント: -X none または -X fetch でログストリーミングを�
 msgid "initiating base backup, waiting for checkpoint to complete"
 msgstr "ベースバックアップを開始しています - チェックポイントの完了を待機中"
 
-#: pg_basebackup.c:1908 pg_recvlogical.c:262 receivelog.c:480 receivelog.c:529
-#: receivelog.c:568 streamutil.c:297 streamutil.c:370 streamutil.c:422
+#: pg_basebackup.c:1908 pg_recvlogical.c:262 receivelog.c:489 receivelog.c:538
+#: receivelog.c:577 streamutil.c:297 streamutil.c:370 streamutil.c:422
 #: streamutil.c:533 streamutil.c:578
 #, c-format
 msgid "could not send replication command \"%s\": %s"
@@ -796,7 +796,7 @@ msgstr "詳細は\"%s --help\"で確認してください。\n"
 #: pg_basebackup.c:2456 pg_receivewal.c:616 pg_recvlogical.c:857
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "コマンドライン引数が多過ぎます(先頭は\"%s\"です)"
+msgstr "コマンドライン引数が多すぎます (先頭は\"%s\")"
 
 #: pg_basebackup.c:2468 pg_receivewal.c:654
 #, c-format
@@ -1127,7 +1127,7 @@ msgstr "  -d, --dbname=DBNAME    接続先データベース\n"
 msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
 msgstr "PrecPpg%X/%Xまでの書き込みと、%X/%X (スロット %s）までのフラッシュを確認しています"
 
-#: pg_recvlogical.c:157 receivelog.c:342
+#: pg_recvlogical.c:157 receivelog.c:351
 #, c-format
 msgid "could not send feedback packet: %s"
 msgstr "フィードバックパケットを送信できませんでした: %s"
@@ -1145,29 +1145,30 @@ msgstr "ストリーミングを開始しました"
 #: pg_recvlogical.c:335
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "ロックファイル\"%s\"をオープンできませんでした: %m"
+msgstr "ログファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_recvlogical.c:361 receivelog.c:872
+#: pg_recvlogical.c:361 receivelog.c:881
 #, c-format
 msgid "invalid socket: %s"
 msgstr "無効なソケット: %s"
 
-#: pg_recvlogical.c:414 receivelog.c:900
+#: pg_recvlogical.c:414 receivelog.c:909
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() が失敗しました: %m"
 
-#: pg_recvlogical.c:421 receivelog.c:950
+#: pg_recvlogical.c:421 receivelog.c:959
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "WAL ストリームからデータを受信できませんでした: %s"
 
-#: pg_recvlogical.c:463 pg_recvlogical.c:514 receivelog.c:994 receivelog.c:1060
+#: pg_recvlogical.c:463 pg_recvlogical.c:514 receivelog.c:1003
+#: receivelog.c:1069
 #, c-format
 msgid "streaming header too small: %d"
 msgstr "ストリーミングヘッダが小さ過ぎます: %d"
 
-#: pg_recvlogical.c:498 receivelog.c:832
+#: pg_recvlogical.c:498 receivelog.c:841
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
 msgstr "ストリーミングヘッダを認識できませんでした: \"%c\""
@@ -1177,7 +1178,7 @@ msgstr "ストリーミングヘッダを認識できませんでした: \"%c\""
 msgid "could not write %u bytes to log file \"%s\": %m"
 msgstr "%u バイトをログファイル\"%s\"に書き込めませんでした: %m"
 
-#: pg_recvlogical.c:618 receivelog.c:628 receivelog.c:665
+#: pg_recvlogical.c:618 receivelog.c:637 receivelog.c:674
 #, c-format
 msgid "unexpected termination of replication stream: %s"
 msgstr "レプリケーションストリームが突然終了しました: %s"
@@ -1247,138 +1248,138 @@ msgstr "%X/%X のWALレコードで終了位置 %X/%X に到達しました"
 msgid "could not create archive status file \"%s\": %s"
 msgstr "アーカイブステータスファイル\"%s\"を作成できませんでした: %s"
 
-#: receivelog.c:115
+#: receivelog.c:118
 #, c-format
 msgid "could not get size of write-ahead log file \"%s\": %s"
 msgstr "先行書き込みログファイル\"%s\"のサイズを取得できませんでした: %s"
 
-#: receivelog.c:125
+#: receivelog.c:129
 #, c-format
 msgid "could not open existing write-ahead log file \"%s\": %s"
 msgstr "既存の先行書き込みログファイル\"%s\"をオープンできませんでした: %s"
 
-#: receivelog.c:133
+#: receivelog.c:138
 #, c-format
 msgid "could not fsync existing write-ahead log file \"%s\": %s"
 msgstr "既存の先行書き込みログファイル\"%s\"をfsyncできませんでした: %s"
 
-#: receivelog.c:147
+#: receivelog.c:153
 #, c-format
 msgid "write-ahead log file \"%s\" has %d byte, should be 0 or %d"
 msgid_plural "write-ahead log file \"%s\" has %d bytes, should be 0 or %d"
 msgstr[0] "先行書き込みログファイル\"%s\"は%dバイトですが、0または%dであるはずです"
 
-#: receivelog.c:162
+#: receivelog.c:169
 #, c-format
 msgid "could not open write-ahead log file \"%s\": %s"
 msgstr "先行書き込みログファイル\"%s\"をオープンできませんでした: %s"
 
-#: receivelog.c:188
+#: receivelog.c:197
 #, c-format
 msgid "could not determine seek position in file \"%s\": %s"
 msgstr "ファイル\"%s\"のシーク位置を取得できませんでした: %s"
 
-#: receivelog.c:202
+#: receivelog.c:211
 #, c-format
 msgid "not renaming \"%s%s\", segment is not complete"
 msgstr "\"%s%s\"の名前を変更しません、セグメントが完全ではありません"
 
-#: receivelog.c:214 receivelog.c:299 receivelog.c:674
+#: receivelog.c:223 receivelog.c:308 receivelog.c:683
 #, c-format
 msgid "could not close file \"%s\": %s"
 msgstr "ファイル\"%s\"をクローズできませんでした: %s"
 
-#: receivelog.c:271
+#: receivelog.c:280
 #, c-format
 msgid "server reported unexpected history file name for timeline %u: %s"
 msgstr "サーバーがタイムライン%uに対する想定外の履歴ファイル名を通知してきました: %s"
 
-#: receivelog.c:279
+#: receivelog.c:288
 #, c-format
 msgid "could not create timeline history file \"%s\": %s"
 msgstr "タイムライン履歴ファイル\"%s\"を作成できませんでした: %s"
 
-#: receivelog.c:286
+#: receivelog.c:295
 #, c-format
 msgid "could not write timeline history file \"%s\": %s"
 msgstr "タイムライン履歴ファイル\"%s\"に書き込めませんでした: %s"
 
-#: receivelog.c:376
+#: receivelog.c:385
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions older than %s"
 msgstr "非互換のサーバーバージョン%s、クライアントは%sより古いサーバーバージョンからのストリーミングをサポートしていません"
 
-#: receivelog.c:385
+#: receivelog.c:394
 #, c-format
 msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
 msgstr "非互換のサーバーバージョン%s、クライアントは%sより新しいサーバーバージョンからのストリーミングをサポートしていません"
 
-#: receivelog.c:487 streamutil.c:430 streamutil.c:467
+#: receivelog.c:496 streamutil.c:430 streamutil.c:467
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "システムを識別できませんでした: 受信したのは%d行%d列、想定は%d行%d列以上"
 
-#: receivelog.c:494
+#: receivelog.c:503
 #, c-format
 msgid "system identifier does not match between base backup and streaming connection"
 msgstr "システム識別子がベースバックアップとストリーミング接続の間で一致しません"
 
-#: receivelog.c:500
+#: receivelog.c:509
 #, c-format
 msgid "starting timeline %u is not present in the server"
 msgstr "開始タイムライン%uがサーバーに存在しません"
 
-#: receivelog.c:541
+#: receivelog.c:550
 #, c-format
 msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "TIMELINE_HISTORYコマンドへの想定外の応答: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: receivelog.c:612
+#: receivelog.c:621
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
 msgstr "サーバーがタイムライン%2$uに続いて想定外のタイムライン%1$uを通知してきました"
 
-#: receivelog.c:618
+#: receivelog.c:627
 #, c-format
 msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
 msgstr "サーバーはタイムライン%uのストリーミングを%X/%Xで停止しました、しかし次のタイムライン%uが%X/%Xから開始すると通知してきています"
 
-#: receivelog.c:658
+#: receivelog.c:667
 #, c-format
 msgid "replication stream was terminated before stop point"
 msgstr "レプリケーションストリームが停止ポイントより前で終了しました"
 
-#: receivelog.c:704
+#: receivelog.c:713
 #, c-format
 msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "タイムライン終了後に想定外の結果セット: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: receivelog.c:713
+#: receivelog.c:722
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "次のタイムラインの開始ポイント\"%s\"をパースできませんでした"
 
-#: receivelog.c:762 receivelog.c:1014
+#: receivelog.c:771 receivelog.c:1023
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %s"
 
-#: receivelog.c:1077
+#: receivelog.c:1086
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
 msgstr "ファイルがオープンされていない状態で、オフセット%uに対する先行書き込みログレコードを受信しました"
 
-#: receivelog.c:1087
+#: receivelog.c:1096
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
 msgstr "WALデータオフセット%08xを受信、想定は%08x"
 
-#: receivelog.c:1121
+#: receivelog.c:1130
 #, c-format
 msgid "could not write %u bytes to WAL file \"%s\": %s"
 msgstr "WALファイル\"%2$s\"に%1$uバイト書き込めませんでした: %3$s"
 
-#: receivelog.c:1146 receivelog.c:1186 receivelog.c:1216
+#: receivelog.c:1155 receivelog.c:1195 receivelog.c:1225
 #, c-format
 msgid "could not send copy-end packet: %s"
 msgstr "コピー終端パケットを送信できませんでした: %s"
@@ -1443,34 +1444,34 @@ msgstr "レプリケーションスロット\"%s\"を作成できませんでし
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "レプリケーションスロット\"%s\"を削除できませんでした: 受信したのは%d行%d列、想定は%d行%d列"
 
-#: walmethods.c:438 walmethods.c:932
+#: walmethods.c:467 walmethods.c:980
 msgid "could not compress data"
 msgstr "データを圧縮できませんでした"
 
-#: walmethods.c:470
+#: walmethods.c:499
 msgid "could not reset compression stream"
 msgstr "圧縮ストリームをリセットできませんでした"
 
-#: walmethods.c:568
+#: walmethods.c:608
 msgid "could not initialize compression library"
 msgstr "圧縮ライブラリを初期化できませんでした"
 
-#: walmethods.c:580
+#: walmethods.c:620
 msgid "implementation error: tar files can't have more than one open file"
 msgstr "実装エラー：tar ファイルが複数のオープンされたファイルを保持できません"
 
-#: walmethods.c:594
+#: walmethods.c:634
 msgid "could not create tar header"
 msgstr "tar ヘッダを作成できませんでした"
 
-#: walmethods.c:608 walmethods.c:650 walmethods.c:847 walmethods.c:859
+#: walmethods.c:650 walmethods.c:692 walmethods.c:895 walmethods.c:907
 msgid "could not change compression parameters"
 msgstr "圧縮用パラメーターを変更できませんでした"
 
-#: walmethods.c:734
+#: walmethods.c:782
 msgid "unlink not supported with compression"
 msgstr "圧縮モードにおける unlink はサポートしていません"
 
-#: walmethods.c:957
+#: walmethods.c:1005
 msgid "could not close compression stream"
 msgstr "圧縮ストリームをクローズできませんでした"

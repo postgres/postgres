@@ -3,14 +3,14 @@
 # This file is distributed under the same license as the pg_dump (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-07-07 22:47+0000\n"
-"PO-Revision-Date: 2021-08-07 10:21+0200\n"
+"PO-Revision-Date: 2021-09-20 11:56+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -43,32 +43,32 @@ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχον
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου “%s”"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
 
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "δεν βρέθηκε το αρχείο “%s”  για να εκτελεστεί"
+msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
 #: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: ../../common/exec.c:409 parallel.c:1614
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s () απέτυχε: %m"
+msgstr "%s() απέτυχε: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
@@ -313,22 +313,22 @@ msgstr "ανάγνωση συνδρομών"
 #: common.c:338
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
-msgstr "μη έγκυρος αριθμός γονέων %d για τον πίνακα “%s”"
+msgstr "μη έγκυρος αριθμός γονέων %d για τον πίνακα «%s»"
 
 #: common.c:1100
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
-msgstr "απέτυχε ο έλεγχος ακεραιότητας, το γονικό OID %u του πίνακα “%s” (OID %u) δεν βρέθηκε"
+msgstr "απέτυχε ο έλεγχος ακεραιότητας, το γονικό OID %u του πίνακα «%s» (OID %u) δεν βρέθηκε"
 
 #: common.c:1142
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
-msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας “%s”: πάρα πολλοί αριθμοί"
+msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας «%s»: πάρα πολλοί αριθμοί"
 
 #: common.c:1157
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
-msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας “%s”: μη έγκυρος χαρακτήρας σε αριθμό"
+msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας «%s»: μη έγκυρος χαρακτήρας σε αριθμό"
 
 #: compress_io.c:111
 #, c-format
@@ -395,12 +395,12 @@ msgstr "δεν ήταν δυνατή η δημιουργία διεργασία�
 #: parallel.c:1151
 #, c-format
 msgid "unrecognized command received from leader: \"%s\""
-msgstr "μη αναγνωρίσιμη εντολή που ελήφθη από τον αρχηγό: “%s”"
+msgstr "μη αναγνωρίσιμη εντολή που ελήφθη από τον αρχηγό: «%s»"
 
 #: parallel.c:1194 parallel.c:1432
 #, c-format
 msgid "invalid message received from worker: \"%s\""
-msgstr "άκυρο μήνυμα που ελήφθη από εργάτη: “%s”"
+msgstr "άκυρο μήνυμα που ελήφθη από εργάτη: «%s»"
 
 #: parallel.c:1326
 #, c-format
@@ -509,7 +509,7 @@ msgstr "εγκαταλείπει %s: %s"
 #: pg_backup_archiver.c:613
 #, c-format
 msgid "could not find where to insert IF EXISTS in statement \"%s\""
-msgstr "δεν ήταν δυνατή η εύρεση του σημείου εισαγωγής IF EXISTS στη δήλωση “%s”"
+msgstr "δεν ήταν δυνατή η εύρεση του σημείου εισαγωγής IF EXISTS στη δήλωση «%s»"
 
 #: pg_backup_archiver.c:769 pg_backup_archiver.c:771
 #, c-format
@@ -519,17 +519,17 @@ msgstr "προειδοποίηση από το αρχικό αρχείο από�
 #: pg_backup_archiver.c:786
 #, c-format
 msgid "creating %s \"%s.%s\""
-msgstr "δημιουργία %s “%s.%s”"
+msgstr "δημιουργία %s «%s.%s»"
 
 #: pg_backup_archiver.c:789
 #, c-format
 msgid "creating %s \"%s\""
-msgstr "δημιουργία %s “%s”"
+msgstr "δημιουργία %s «%s»"
 
 #: pg_backup_archiver.c:839
 #, c-format
 msgid "connecting to new database \"%s\""
-msgstr "σύνδεση με νέα βάση δεδομένων “%s”"
+msgstr "σύνδεση με νέα βάση δεδομένων «%s»"
 
 #: pg_backup_archiver.c:866
 #, c-format
@@ -539,7 +539,7 @@ msgstr "επεξεργασία %s"
 #: pg_backup_archiver.c:886
 #, c-format
 msgid "processing data for table \"%s.%s\""
-msgstr "επεξεργασία δεδομένων για τον πίνακα “%s.%s”"
+msgstr "επεξεργασία δεδομένων για τον πίνακα «%s.%s»"
 
 #: pg_backup_archiver.c:948
 #, c-format
@@ -591,7 +591,7 @@ msgstr "δεν ήταν δυνατό το άνοιγμα μεγάλου αντι
 #: pg_backup_archiver.c:1376
 #, c-format
 msgid "could not open TOC file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s»: %m"
 
 #: pg_backup_archiver.c:1404
 #, c-format
@@ -614,7 +614,7 @@ msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου
 #: pg_backup_directory.c:667 pg_dumpall.c:489
 #, c-format
 msgid "could not open output file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εξόδου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εξόδου «%s»: %m"
 
 #: pg_backup_archiver.c:1550 pg_backup_custom.c:162
 #, c-format
@@ -676,18 +676,18 @@ msgstr "το όφσετ αρχείου στο αρχείο απόθεσης εί
 #: pg_backup_archiver.c:2094 pg_backup_archiver.c:2104
 #, c-format
 msgid "directory name too long: \"%s\""
-msgstr "πολύ μακρύ όνομα καταλόγου: “%s”"
+msgstr "πολύ μακρύ όνομα καταλόγου: «%s»"
 
 #: pg_backup_archiver.c:2112
 #, c-format
 msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)"
-msgstr "ο κατάλογος “%s” δεν φαίνεται να είναι έγκυρη αρχειοθήκη (το “toc.dat” δεν υπάρχει)"
+msgstr "ο κατάλογος «%s» δεν φαίνεται να είναι έγκυρη αρχειοθήκη (το «toc.dat» δεν υπάρχει)"
 
 #: pg_backup_archiver.c:2120 pg_backup_custom.c:173 pg_backup_custom.c:807
 #: pg_backup_directory.c:207 pg_backup_directory.c:394
 #, c-format
 msgid "could not open input file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εισόδου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εισόδου «%s»: %m"
 
 #: pg_backup_archiver.c:2127 pg_backup_custom.c:179
 #, c-format
@@ -727,7 +727,7 @@ msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου εισ
 #: pg_backup_archiver.c:2305
 #, c-format
 msgid "unrecognized file format \"%d\""
-msgstr "μη αναγνωρίσιμη μορφή αρχείου “%d”"
+msgstr "μη αναγνωρίσιμη μορφή αρχείου «%d»"
 
 #: pg_backup_archiver.c:2387 pg_backup_archiver.c:4411
 #, c-format
@@ -752,7 +752,7 @@ msgstr "η επαναφορά πινάκων WITH OIDS δεν υποστηρίζ
 #: pg_backup_archiver.c:2660
 #, c-format
 msgid "unrecognized encoding \"%s\""
-msgstr "μη αναγνωρίσιμη κωδικοποίηση “%s”"
+msgstr "μη αναγνωρίσιμη κωδικοποίηση «%s»"
 
 #: pg_backup_archiver.c:2665
 #, c-format
@@ -767,42 +767,42 @@ msgstr "μη έγκυρο στοιχείο STDSTRINGS: %s"
 #: pg_backup_archiver.c:2708
 #, c-format
 msgid "schema \"%s\" not found"
-msgstr "το σχήμα “%s” δεν βρέθηκε"
+msgstr "το σχήμα «%s» δεν βρέθηκε"
 
 #: pg_backup_archiver.c:2715
 #, c-format
 msgid "table \"%s\" not found"
-msgstr "ο πίνακας “%s” δεν βρέθηκε"
+msgstr "ο πίνακας «%s» δεν βρέθηκε"
 
 #: pg_backup_archiver.c:2722
 #, c-format
 msgid "index \"%s\" not found"
-msgstr "το ευρετήριο “%s” δεν βρέθηκε"
+msgstr "το ευρετήριο «%s» δεν βρέθηκε"
 
 #: pg_backup_archiver.c:2729
 #, c-format
 msgid "function \"%s\" not found"
-msgstr "η συνάρτηση “%s” δεν βρέθηκε"
+msgstr "η συνάρτηση «%s» δεν βρέθηκε"
 
 #: pg_backup_archiver.c:2736
 #, c-format
 msgid "trigger \"%s\" not found"
-msgstr "η ενεργοποίηση “%s” δεν βρέθηκε"
+msgstr "η ενεργοποίηση «%s» δεν βρέθηκε"
 
 #: pg_backup_archiver.c:3128
 #, c-format
 msgid "could not set session user to \"%s\": %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του χρήστη συνεδρίας σε “%s”: %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του χρήστη συνεδρίας σε «%s»: %s"
 
 #: pg_backup_archiver.c:3260
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του search_path σε “%s”: %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του search_path σε «%s»: %s"
 
 #: pg_backup_archiver.c:3322
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του default_tablespace σε “%s”: %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του default_tablespace σε «%s»: %s"
 
 #: pg_backup_archiver.c:3367
 #, c-format
@@ -812,7 +812,7 @@ msgstr "δεν ήταν δυνατός ο ορισμός του default_table_ac
 #: pg_backup_archiver.c:3459 pg_backup_archiver.c:3617
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
-msgstr "δεν γνωρίζω πώς να οριστεί κάτοχος για τύπο αντικειμένου “%s”"
+msgstr "δεν γνωρίζω πώς να οριστεί κάτοχος για τύπο αντικειμένου «%s»"
 
 #: pg_backup_archiver.c:3720
 #, c-format
@@ -882,7 +882,7 @@ msgstr "επεξεργασία παραβλεπόμενου στοιχείου %
 #: pg_backup_archiver.c:4730
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
-msgstr "δεν ήταν δυνατή η δημιουργία του πίνακα “%s”, δεν θα επαναφερθούν τα δεδομένα του"
+msgstr "δεν ήταν δυνατή η δημιουργία του πίνακα «%s», δεν θα επαναφερθούν τα δεδομένα του"
 
 #: pg_backup_custom.c:376 pg_backup_null.c:147
 #, c-format
@@ -1044,12 +1044,12 @@ msgstr "επιστράφηκε σφάλμα από PQputCopyEnd: %s"
 #: pg_backup_db.c:519
 #, c-format
 msgid "COPY failed for table \"%s\": %s"
-msgstr "COPY απέτυχε για πίνακα “%s”: %s"
+msgstr "COPY απέτυχε για πίνακα «%s»: %s"
 
 #: pg_backup_db.c:525 pg_dump.c:2074
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
-msgstr "μη αναμενόμενα αποτελέσματα κατά τη διάρκεια COPY του πίνακα “%s”"
+msgstr "μη αναμενόμενα αποτελέσματα κατά τη διάρκεια COPY του πίνακα «%s»"
 
 #: pg_backup_db.c:537
 msgid "could not start database transaction"
@@ -1067,17 +1067,17 @@ msgstr "δεν ορίστηκε κατάλογος δεδομένων εξόδο
 #: pg_backup_directory.c:185
 #, c-format
 msgid "could not read directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:189
 #, c-format
 msgid "could not close directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:195
 #, c-format
 msgid "could not create directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:355 pg_backup_directory.c:496
 #: pg_backup_directory.c:532
@@ -1088,27 +1088,27 @@ msgstr "δεν ήταν δυνατή η εγγραφή εξόδου στο αρ�
 #: pg_backup_directory.c:406
 #, c-format
 msgid "could not close data file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου δεδομένων “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου δεδομένων «%s»: %m"
 
 #: pg_backup_directory.c:446
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC μεγάλου αντικειμένου “%s” για είσοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC μεγάλου αντικειμένου «%s» για είσοδο: %m"
 
 #: pg_backup_directory.c:457
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
-msgstr "μη έγκυρη γραμμή σε αρχείο TOC μεγάλου αντικειμένου “%s”: “%s”"
+msgstr "μη έγκυρη γραμμή σε αρχείο TOC μεγάλου αντικειμένου «%s»: «%s»"
 
 #: pg_backup_directory.c:466
 #, c-format
 msgid "error reading large object TOC file \"%s\""
-msgstr "σφάλμα κατά την ανάγνωση αρχείου TOC μεγάλου αντικειμένου “%s”"
+msgstr "σφάλμα κατά την ανάγνωση αρχείου TOC μεγάλου αντικειμένου «%s»"
 
 #: pg_backup_directory.c:470
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου TOC μεγάλου αντικειμένου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου TOC μεγάλου αντικειμένου «%s»: %m"
 
 #: pg_backup_directory.c:689
 #, c-format
@@ -1118,7 +1118,7 @@ msgstr "δεν ήταν δυνατή η εγγραφή σε αρχείο TOC blo
 #: pg_backup_directory.c:721
 #, c-format
 msgid "file name too long: \"%s\""
-msgstr "πολύ μακρύ όνομα αρχείου: “%s”"
+msgstr "πολύ μακρύ όνομα αρχείου: «%s»"
 
 #: pg_backup_null.c:74
 #, c-format
@@ -1128,7 +1128,7 @@ msgstr "δεν είναι δυνατή η ανάγνωση αυτής της μ�
 #: pg_backup_tar.c:177
 #, c-format
 msgid "could not open TOC file \"%s\" for output: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s” για έξοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s» για έξοδο: %m"
 
 #: pg_backup_tar.c:184
 #, c-format
@@ -1143,7 +1143,7 @@ msgstr "δεν υποστηρίζεται συμπίεση από τη μορφ�
 #: pg_backup_tar.c:211
 #, c-format
 msgid "could not open TOC file \"%s\" for input: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s” για είσοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s» για είσοδο: %m"
 
 #: pg_backup_tar.c:218
 #, c-format
@@ -1153,7 +1153,7 @@ msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC γι
 #: pg_backup_tar.c:338
 #, c-format
 msgid "could not find file \"%s\" in archive"
-msgstr "δεν ήταν δυνατή η εύρεση του αρχείου “%s” στην αρχειοθήκη"
+msgstr "δεν ήταν δυνατή η εύρεση του αρχείου «%s» στην αρχειοθήκη"
 
 #: pg_backup_tar.c:404
 #, c-format
@@ -1173,7 +1173,7 @@ msgstr "δεν ήταν δυνατό το κλείσιμο μέλους tar"
 #: pg_backup_tar.c:685
 #, c-format
 msgid "unexpected COPY statement syntax: \"%s\""
-msgstr "μη αναμενόμενη σύνταξη πρότασης COPY: “%s”"
+msgstr "μη αναμενόμενη σύνταξη πρότασης COPY: «%s»"
 
 #: pg_backup_tar.c:952
 #, c-format
@@ -1193,12 +1193,12 @@ msgstr "πραγματικό μήκος αρχείου (%s) δεν συμφων�
 #: pg_backup_tar.c:1165 pg_backup_tar.c:1196
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive"
-msgstr "δεν ήταν δυνατή η εύρεση κεφαλίδας για το αρχείο “%s” στο αρχείο tar"
+msgstr "δεν ήταν δυνατή η εύρεση κεφαλίδας για το αρχείο «%s» στο αρχείο tar"
 
 #: pg_backup_tar.c:1183
 #, c-format
 msgid "restoring data out of order is not supported in this archive format: \"%s\" is required, but comes before \"%s\" in the archive file."
-msgstr "η επαναφορά δεδομένων εκτός σειράς δεν υποστηρίζεται σε αυτήν τη μορφή αρχειοθέτησης: απαιτείται “%s”, αλλά προηγείται της “%s” στο αρχείο αρχειοθέτησης."
+msgstr "η επαναφορά δεδομένων εκτός σειράς δεν υποστηρίζεται σε αυτήν τη μορφή αρχειοθέτησης: απαιτείται «%s», αλλά προηγείται της «%s» στο αρχείο αρχειοθέτησης."
 
 #: pg_backup_tar.c:1230
 #, c-format
@@ -1215,7 +1215,7 @@ msgstr "αλλοιωμένη κεφαλίδα tar βρέθηκε σε %s (ανα
 #: pg_backup_utils.c:54
 #, c-format
 msgid "unrecognized section name: \"%s\""
-msgstr "μη αναγνωρισμένο όνομα τμήματος: “%s”"
+msgstr "μη αναγνωρισμένο όνομα τμήματος: «%s»"
 
 #: pg_backup_utils.c:55 pg_dump.c:622 pg_dump.c:639 pg_dumpall.c:341
 #: pg_dumpall.c:351 pg_dumpall.c:360 pg_dumpall.c:369 pg_dumpall.c:377
@@ -1223,7 +1223,7 @@ msgstr "μη αναγνωρισμένο όνομα τμήματος: “%s”"
 #: pg_restore.c:318
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_backup_utils.c:68
 #, c-format
@@ -1248,7 +1248,7 @@ msgstr "rows-per-insert πρέπει να βρίσκονται στο εύρος
 #: pg_dump.c:637 pg_dumpall.c:349 pg_restore.c:298
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (η πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
 #: pg_dump.c:658 pg_restore.c:327
 #, c-format
@@ -1721,7 +1721,7 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 #: pg_dump.c:1115 pg_dumpall.c:504
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
-msgstr "καθορίστηκε μη έγκυρη κωδικοποίηση προγράμματος-πελάτη “%s”"
+msgstr "καθορίστηκε μη έγκυρη κωδικοποίηση προγράμματος-πελάτη «%s»"
 
 #: pg_dump.c:1261
 #, c-format
@@ -1737,37 +1737,37 @@ msgstr ""
 #: pg_dump.c:1330
 #, c-format
 msgid "invalid output format \"%s\" specified"
-msgstr "ορίστηκε μη έγκυρη μορφή εξόδου “%s”"
+msgstr "ορίστηκε μη έγκυρη μορφή εξόδου «%s»"
 
 #: pg_dump.c:1368
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν σχήματα που να ταιριάζουν με το μοτίβο “%s”"
+msgstr "δεν βρέθηκαν σχήματα που να ταιριάζουν με το μοτίβο «%s»"
 
 #: pg_dump.c:1415
 #, c-format
 msgid "no matching extensions were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν επεκτάσεις που ταιριάζουν με το μοτίβο “%s”"
+msgstr "δεν βρέθηκαν επεκτάσεις που ταιριάζουν με το μοτίβο «%s»"
 
 #: pg_dump.c:1462
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν ξένοι διακομιστές που να ταιριάζουν με το μοτίβο “%s”"
+msgstr "δεν βρέθηκαν ξένοι διακομιστές που να ταιριάζουν με το μοτίβο «%s»"
 
 #: pg_dump.c:1525
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν για το μοτίβο “%s”"
+msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν για το μοτίβο «%s»"
 
 #: pg_dump.c:1948
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
-msgstr "αποθέτει τα δεδομένα του πίνακα “%s.%s”"
+msgstr "αποθέτει τα δεδομένα του πίνακα «%s.%s»"
 
 #: pg_dump.c:2055
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
-msgstr "Η απόθεση των περιεχομένων του πίνακα “%s” απέτυχε: PQgetCopyData() απέτυχε."
+msgstr "Η απόθεση των περιεχομένων του πίνακα «%s» απέτυχε: PQgetCopyData() απέτυχε."
 
 #: pg_dump.c:2056 pg_dump.c:2066
 #, c-format
@@ -1782,7 +1782,7 @@ msgstr "Η εντολή ήταν: %s"
 #: pg_dump.c:2065
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
-msgstr "Η απόθεση των περιεχομένων του πίνακα “%s” απέτυχε: PQgetResult() απέτυχε."
+msgstr "Η απόθεση των περιεχομένων του πίνακα «%s» απέτυχε: PQgetResult() απέτυχε."
 
 #: pg_dump.c:2825
 #, c-format
@@ -1827,12 +1827,12 @@ msgstr "σφάλμα κατά την ανάγνωση %u μεγάλου αντι
 #: pg_dump.c:3700
 #, c-format
 msgid "reading row security enabled for table \"%s.%s\""
-msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:3731
 #, c-format
 msgid "reading policies for table \"%s.%s\""
-msgstr "ανάγνωση πολιτικών για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση πολιτικών για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:3883
 #, c-format
@@ -1842,7 +1842,7 @@ msgstr "μη αναμενόμενος τύπος εντολής πολιτική
 #: pg_dump.c:4037
 #, c-format
 msgid "owner of publication \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της δημοσίευσης “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της δημοσίευσης «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:4329
 #, c-format
@@ -1852,7 +1852,7 @@ msgstr "οι συνδρομές δεν απορρίπτονται, επειδή 
 #: pg_dump.c:4400
 #, c-format
 msgid "owner of subscription \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνδρομής “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνδρομής «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:4443
 #, c-format
@@ -1867,7 +1867,7 @@ msgstr "δεν ήταν δυνατή η εύρεση γονικής επέκτα
 #: pg_dump.c:4933
 #, c-format
 msgid "owner of schema \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του σχήματος “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του σχήματος «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:4956
 #, c-format
@@ -1877,37 +1877,37 @@ msgstr "το σχήμα με %u OID δεν υπάρχει"
 #: pg_dump.c:5285
 #, c-format
 msgid "owner of data type \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του τύπου δεδομένων “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:5369
 #, c-format
 msgid "owner of operator \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του χειριστή “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:5668
 #, c-format
 msgid "owner of operator class \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της κλάσης χειριστή “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της κλάσης χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:5751
 #, c-format
 msgid "owner of operator family \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της οικογένειας χειριστών “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της οικογένειας χειριστών «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:5919
 #, c-format
 msgid "owner of aggregate function \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνάρτησης συγκεντρωτικών αποτελεσμάτων “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνάρτησης συγκεντρωτικών αποτελεσμάτων «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:6178
 #, c-format
 msgid "owner of function \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνάρτησης “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνάρτησης «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:7005
 #, c-format
 msgid "owner of table \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του πίνακα “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του πίνακα «%s» φαίνεται να μην είναι έγκυρος"
 
 #: pg_dump.c:7047 pg_dump.c:17436
 #, c-format
@@ -1917,12 +1917,12 @@ msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικ
 #: pg_dump.c:7186
 #, c-format
 msgid "reading indexes for table \"%s.%s\""
-msgstr "ανάγνωση ευρετηρίων για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση ευρετηρίων για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:7600
 #, c-format
 msgid "reading foreign key constraints for table \"%s.%s\""
-msgstr "ανάγνωση περιορισμών ξένου κλειδιού για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση περιορισμών ξένου κλειδιού για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:7879
 #, c-format
@@ -1932,44 +1932,44 @@ msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικ
 #: pg_dump.c:7962
 #, c-format
 msgid "reading triggers for table \"%s.%s\""
-msgstr "ανάγνωση εναυσμάτων για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση εναυσμάτων για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:8095
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
-msgstr "το ερώτημα παρήγαγε null πίνακα αναφοράς για το έναυσμα ξένου κλειδιού “%s” στον πίνακα “%s” (OID του πίνακα: %u)"
+msgstr "το ερώτημα παρήγαγε null πίνακα αναφοράς για το έναυσμα ξένου κλειδιού «%s» στον πίνακα «%s» (OID του πίνακα: %u)"
 
 #: pg_dump.c:8645
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\""
-msgstr "εύρεση των στηλών και των τύπων του πίνακα “%s.%s”"
+msgstr "εύρεση των στηλών και των τύπων του πίνακα «%s.%s»"
 
 #: pg_dump.c:8769
 #, c-format
 msgid "invalid column numbering in table \"%s\""
-msgstr "μη έγκυρη αρίθμηση στηλών στον πίνακα “%s”"
+msgstr "μη έγκυρη αρίθμηση στηλών στον πίνακα «%s»"
 
 #: pg_dump.c:8808
 #, c-format
 msgid "finding default expressions of table \"%s.%s\""
-msgstr "εύρεση προεπιλεγμένων εκφράσεων για τον πίνακα “%s.%s”"
+msgstr "εύρεση προεπιλεγμένων εκφράσεων για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:8830
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
-msgstr "μη έγκυρη τιμή adnum %d για τον πίνακα “%s”"
+msgstr "μη έγκυρη τιμή adnum %d για τον πίνακα «%s»"
 
 #: pg_dump.c:8923
 #, c-format
 msgid "finding check constraints for table \"%s.%s\""
-msgstr "εύρεση περιορισμών ελέγχου για τον πίνακα “%s.%s”"
+msgstr "εύρεση περιορισμών ελέγχου για τον πίνακα «%s.%s»"
 
 #: pg_dump.c:8972
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
-msgstr[0] "αναμενόμενος %d περιορισμός ελέγχου στον πίνακα “%s”, αλλά βρήκε %d"
-msgstr[1] "αναμενόμενοι %d περιορισμοί ελέγχου στον πίνακα “%s”, αλλά βρήκε %d"
+msgstr[0] "αναμενόμενος %d περιορισμός ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
+msgstr[1] "αναμενόμενοι %d περιορισμοί ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
 
 #: pg_dump.c:8976
 #, c-format
@@ -1979,7 +1979,7 @@ msgstr "(Οι κατάλογοι συστήματος ενδέχεται να ε
 #: pg_dump.c:10561
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
-msgstr "typtype του τύπου δεδομένων “%s” φαίνεται να μην είναι έγκυρο"
+msgstr "typtype του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρο"
 
 #: pg_dump.c:11913
 #, c-format
@@ -2009,12 +2009,12 @@ msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proc
 #: pg_dump.c:12340
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή provolatile για τη συνάρτηση “%s”"
+msgstr "μη αναγνωρίσιμη τιμή provolatile για τη συνάρτηση «%s»"
 
 #: pg_dump.c:12390 pg_dump.c:14341
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή proparallel για τη συνάρτηση “%s”"
+msgstr "μη αναγνωρίσιμη τιμή proparallel για τη συνάρτηση «%s»"
 
 #: pg_dump.c:12529 pg_dump.c:12638 pg_dump.c:12645
 #, c-format
@@ -2049,7 +2049,7 @@ msgstr "πλαστή τιμή στο πεδίοpg_transform.trftosql"
 #: pg_dump.c:12854
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
-msgstr "χειριστές postfix δεν υποστηρίζεται πλέον (χειριστής “%s”)"
+msgstr "χειριστές postfix δεν υποστηρίζεται πλέον (χειριστής «%s»)"
 
 #: pg_dump.c:13024
 #, c-format
@@ -2059,7 +2059,7 @@ msgstr "δεν ήταν δυνατή η εύρεση χειριστή με OID %
 #: pg_dump.c:13092
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
-msgstr "μη έγκυρος τύπος “%c” για την μεθόδο πρόσβασης “%s”"
+msgstr "μη έγκυρος τύπος «%c» για την μεθόδο πρόσβασης «%s»"
 
 #: pg_dump.c:13846
 #, c-format
@@ -2069,12 +2069,12 @@ msgstr "μη αναγνωρίσιμος πάροχος συρραφής: %s"
 #: pg_dump.c:14260
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή aggfinalmodify για το συγκεντρωτικό “%s”"
+msgstr "μη αναγνωρίσιμη τιμή aggfinalmodify για το συγκεντρωτικό «%s»"
 
 #: pg_dump.c:14316
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή aggmfinalmodify για το συγκεντρωτικό “%s”"
+msgstr "μη αναγνωρίσιμη τιμή aggmfinalmodify για το συγκεντρωτικό «%s»"
 
 #: pg_dump.c:15038
 #, c-format
@@ -2089,37 +2089,37 @@ msgstr "δεν ήταν δυνατή η ανάλυση της προεπιλεγ
 #: pg_dump.c:15141
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)"
-msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής λίστας ACL GRANT (%s) ή της αρχικής λίστας REVOKE ACL (%s) για το αντικείμενο “%s” (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής λίστας ACL GRANT (%s) ή της αρχικής λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
 #: pg_dump.c:15149
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)"
-msgstr "δεν ήταν δυνατή η ανάλυση της λίστας GRANT ACL (%s) ή της λίστας REVOKE ACL (%s) για το αντικείμενο “%s” (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση της λίστας GRANT ACL (%s) ή της λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
 #: pg_dump.c:15664
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
-msgstr "το ερώτημα για τη λήψη ορισμού της όψης “%s” δεν επέστρεψε δεδομένα"
+msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» δεν επέστρεψε δεδομένα"
 
 #: pg_dump.c:15667
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
-msgstr "το ερώτημα για τη λήψη ορισμού της όψης “%s” επέστρεψε περισσότερους από έναν ορισμούς"
+msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» επέστρεψε περισσότερους από έναν ορισμούς"
 
 #: pg_dump.c:15674
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
-msgstr "ο ορισμός της όψης “%s” φαίνεται να είναι κενός (μηδενικό μήκος)"
+msgstr "ο ορισμός της όψης «%s» φαίνεται να είναι κενός (μηδενικό μήκος)"
 
 #: pg_dump.c:15758
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
-msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας “%s”)"
+msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας «%s»)"
 
 #: pg_dump.c:16623
 #, c-format
 msgid "invalid column number %d for table \"%s\""
-msgstr "μη έγκυρος αριθμός στήλης %d για τον πίνακα “%s”"
+msgstr "μη έγκυρος αριθμός στήλης %d για τον πίνακα «%s»"
 
 #: pg_dump.c:16700
 #, c-format
@@ -2139,7 +2139,7 @@ msgstr "ασυμφωνία αριθμού στηλών και τιμών για 
 #: pg_dump.c:16921
 #, c-format
 msgid "missing index for constraint \"%s\""
-msgstr "λείπει ευρετήριο για τον περιορισμό “%s”"
+msgstr "λείπει ευρετήριο για τον περιορισμό «%s»"
 
 #: pg_dump.c:17146
 #, c-format
@@ -2150,8 +2150,8 @@ msgstr "μη αναγνωρίσιμος τύπος περιορισμού: %c"
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
-msgstr[0] "ερώτημα για τη λήψη δεδομένων ακολουθίας “%s” επέστρεψε %d γραμμή (αναμένεται 1)"
-msgstr[1] "ερώτημα για τη λήψη δεδομένων ακολουθίας “%s” επέστρεψε %d γραμμές (αναμένεται 1)"
+msgstr[0] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμή (αναμένεται 1)"
+msgstr[1] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμές (αναμένεται 1)"
 
 #: pg_dump.c:17312
 #, c-format
@@ -2166,12 +2166,12 @@ msgstr "μη αναγνωρίσιμος τύπος tgtype: %d"
 #: pg_dump.c:17673
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
-msgstr "μη έγκυρη συμβολοσειρά παραμέτρου (%s) για το έναυσμα “%s” στον πίνακα “%s”"
+msgstr "μη έγκυρη συμβολοσειρά παραμέτρου (%s) για το έναυσμα «%s» στον πίνακα «%s»"
 
 #: pg_dump.c:17909
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
-msgstr "ερώτημα για τη λήψη κανόνα “%s” για τον πίνακα “%s” απέτυχε: επιστράφηκε εσφαλμένος αριθμός γραμμών"
+msgstr "ερώτημα για τη λήψη κανόνα «%s» για τον πίνακα «%s» απέτυχε: επιστράφηκε εσφαλμένος αριθμός γραμμών"
 
 #: pg_dump.c:18071
 #, c-format
@@ -2262,8 +2262,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" απαιτείται από %s αλλά δεν βρέθηκε στο\n"
-"ίδιος κατάλογος με το \"%s\".\n"
+"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
+"ίδιο κατάλογο με το «%s».\n"
 "Ελέγξτε την εγκατάστασή σας."
 
 #: pg_dumpall.c:207
@@ -2273,7 +2273,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" βρέθηκε από το \"%s\"\n"
+"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
 "αλλά δεν ήταν η ίδια εκδοχή με %s.\n"
 "Ελέγξτε την εγκατάστασή σας."
 
@@ -2300,7 +2300,7 @@ msgstr "οι επιλογές -r/--roles-only και -t/--tablespaces-only δε�
 #: pg_dumpall.c:453 pg_dumpall.c:1756
 #, c-format
 msgid "could not connect to database \"%s\""
-msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων “%s”"
+msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:467
 #, c-format
@@ -2398,37 +2398,37 @@ msgstr ""
 #: pg_dumpall.c:883
 #, c-format
 msgid "role name starting with \"pg_\" skipped (%s)"
-msgstr "όνομα ρόλου που αρχίζει “pg_” παραλείπεται (%s)"
+msgstr "όνομα ρόλου που αρχίζει «pg_» παραλείπεται (%s)"
 
 #: pg_dumpall.c:1284
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση της λίστας ACL (%s) για τον πινακοχώρο “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση της λίστας ACL (%s) για τον πινακοχώρο «%s»"
 
 #: pg_dumpall.c:1501
 #, c-format
 msgid "excluding database \"%s\""
-msgstr "εξαιρεί τη βάση δεδομένων “%s”"
+msgstr "εξαιρεί τη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:1505
 #, c-format
 msgid "dumping database \"%s\""
-msgstr "αποθέτει τη βάση δεδομένων “%s”"
+msgstr "αποθέτει τη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:1537
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
-msgstr "pg_dump απέτυχε στη βάση δεδομένων “%s”, εξέρχεται"
+msgstr "pg_dump απέτυχε στη βάση δεδομένων «%s», εξέρχεται"
 
 #: pg_dumpall.c:1546
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το εκ νέου άνοιγμα του αρχείου εξόδου “%s”: %m"
+msgstr "δεν ήταν δυνατό το εκ νέου άνοιγμα του αρχείου εξόδου «%s»: %m"
 
 #: pg_dumpall.c:1590
 #, c-format
 msgid "running \"%s\""
-msgstr "εκτελείται “%s”"
+msgstr "εκτελείται «%s»"
 
 #: pg_dumpall.c:1805
 #, c-format
@@ -2438,7 +2438,7 @@ msgstr "δεν ήταν δυνατή η απόκτηση έκδοσης διακ
 #: pg_dumpall.c:1811
 #, c-format
 msgid "could not parse server version \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση έκδοσης διακομιστή “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση έκδοσης διακομιστή «%s»"
 
 #: pg_dumpall.c:1883 pg_dumpall.c:1906
 #, c-format
@@ -2473,7 +2473,7 @@ msgstr "δεν είναι δυνατό να οριστούν μαζί --single-t
 #: pg_restore.c:408
 #, c-format
 msgid "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\""
-msgstr "μη αναγνωρισμένη μορφή αρχειοθέτησης “%s”· παρακαλώ καθορίστε “c”, “d” ή “t”"
+msgstr "μη αναγνωρισμένη μορφή αρχειοθέτησης «%s»· παρακαλώ καθορίστε «c», «d» ή «t»"
 
 #: pg_restore.c:448
 #, c-format
@@ -2703,10 +2703,10 @@ msgstr ""
 #~ msgstr "δεν ήταν δυνατή η εγγραφή σε μεγάλο αντικείμενο (αποτέλεσμα: %lu, αναμένεται: %lu)"
 
 #~ msgid "connection to database \"%s\" failed: %s"
-#~ msgstr "σύνδεση στη βάση δεδομένων “%s” απέτυχε: %s"
+#~ msgstr "σύνδεση στη βάση δεδομένων «%s» απέτυχε: %s"
 
 #~ msgid "aggregate function %s could not be dumped correctly for this database version; ignored"
 #~ msgstr "δεν ήταν δυνατή η σωστή απόθεση της συνάρτησης συγκεντρωτικών αποτελεσμάτων %s για αυτήν την έκδοση της βάσης δεδομένων· παραβλέπεται"
 
 #~ msgid "could not connect to database \"%s\": %s"
-#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων “%s”: %s"
+#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»: %s"

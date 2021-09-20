@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021.
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -49,7 +49,7 @@ msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (ε
 #: ../../common/restricted_token.c:64
 #, c-format
 msgid "could not load library \"%s\": error code %lu"
-msgstr "δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης “%s”: κωδικός σφάλματος %lu"
+msgstr "δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης «%s»: κωδικός σφάλματος %lu"
 
 #: ../../common/restricted_token.c:73
 #, c-format
@@ -74,7 +74,7 @@ msgstr "δεν ήταν δυνατή η δημιουργία διακριτικ�
 #: ../../common/restricted_token.c:140
 #, c-format
 msgid "could not start process for command \"%s\": error code %lu"
-msgstr "δεν ήταν δυνατή η εκκίνηση διεργασίας για την εντολή “%s”: κωδικός σφάλματος %lu"
+msgstr "δεν ήταν δυνατή η εκκίνηση διεργασίας για την εντολή «%s»: κωδικός σφάλματος %lu"
 
 #: ../../common/restricted_token.c:178
 #, c-format
@@ -94,17 +94,17 @@ msgstr "δεν είναι δυνατή η χρήση restore_command μαζί μ
 #: ../../fe_utils/archive.c:74
 #, c-format
 msgid "unexpected file size for \"%s\": %lld instead of %lld"
-msgstr "μη αναμενόμενο μέγεθος αρχείου για “%s”: %lld αντί για %lld"
+msgstr "μη αναμενόμενο μέγεθος αρχείου για «%s»: %lld αντί για %lld"
 
 #: ../../fe_utils/archive.c:85
 #, c-format
 msgid "could not open file \"%s\" restored from archive: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s” που έχει επαναφερθεί από την αρχειοθήκη: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s» που έχει επαναφερθεί από την αρχειοθήκη: %m"
 
 #: ../../fe_utils/archive.c:97 file_ops.c:417
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
 
 #: ../../fe_utils/archive.c:112
 #, c-format
@@ -114,7 +114,7 @@ msgstr "restore_command απέτυχε: %s"
 #: ../../fe_utils/archive.c:121
 #, c-format
 msgid "could not restore file \"%s\" from archive"
-msgstr "δεν ήταν δυνατή η επαναφορά του αρχείου “%s” από την αρχειοθήκη"
+msgstr "δεν ήταν δυνατή η επαναφορά του αρχείου «%s» από την αρχειοθήκη"
 
 #: ../../fe_utils/recovery_gen.c:35 ../../fe_utils/recovery_gen.c:49
 #: ../../fe_utils/recovery_gen.c:77 ../../fe_utils/recovery_gen.c:100
@@ -127,42 +127,42 @@ msgstr "έλλειψη μνήμης"
 #: ../../fe_utils/recovery_gen.c:134 parsexlog.c:308
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
 #: ../../fe_utils/recovery_gen.c:140
 #, c-format
 msgid "could not write to file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο «%s»: %m"
 
 #: ../../fe_utils/recovery_gen.c:152
 #, c-format
 msgid "could not create file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η δημιουργία αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία αρχείου «%s»: %m"
 
 #: file_ops.c:67
 #, c-format
 msgid "could not open target file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προορισμού “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προορισμού «%s»: %m"
 
 #: file_ops.c:81
 #, c-format
 msgid "could not close target file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου προορισμού “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου προορισμού «%s»: %m"
 
 #: file_ops.c:101
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο προορισμού “%s”: %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο προορισμού «%s»: %m"
 
 #: file_ops.c:117
 #, c-format
 msgid "could not write file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εγγραφή αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
 
 #: file_ops.c:150 file_ops.c:177
 #, c-format
 msgid "undefined file type for \"%s\""
-msgstr "απροσδιόριστος τύπος αρχείου για το “%s”"
+msgstr "απροσδιόριστος τύπος αρχείου για το «%s»"
 
 #: file_ops.c:173
 #, c-format
@@ -172,112 +172,112 @@ msgstr "μη έγκυρη ενέργεια (CREATE) για κανονικό αρ
 #: file_ops.c:200
 #, c-format
 msgid "could not remove file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου «%s»: %m"
 
 #: file_ops.c:218
 #, c-format
 msgid "could not open file \"%s\" for truncation: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s” για περικοπή: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s» για περικοπή: %m"
 
 #: file_ops.c:222
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
-msgstr "δεν ήταν δυνατή η περικοπή του αρχείου “%s” σε %u: %m"
+msgstr "δεν ήταν δυνατή η περικοπή του αρχείου «%s» σε %u: %m"
 
 #: file_ops.c:238
 #, c-format
 msgid "could not create directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
 
 #: file_ops.c:252
 #, c-format
 msgid "could not remove directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του καταλόγου «%s»: %m"
 
 #: file_ops.c:266
 #, c-format
 msgid "could not create symbolic link at \"%s\": %m"
-msgstr "δεν ήταν δυνατή η δημιουργία του συμβολικού συνδέσμου “%s”: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του συμβολικού συνδέσμου «%s»: %m"
 
 #: file_ops.c:280
 #, c-format
 msgid "could not remove symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση της συμβολικής σύνδεσης “%s”: %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση της συμβολικής σύνδεσης «%s»: %m"
 
 #: file_ops.c:326 file_ops.c:330
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου “%s” για ανάγνωση: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
 
 #: file_ops.c:341 local_source.c:107 parsexlog.c:346
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
 #: file_ops.c:344 parsexlog.c:348
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: ανέγνωσε %d από %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
 
 #: file_ops.c:388
 #, c-format
 msgid "could not open directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
 #: file_ops.c:446
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: file_ops.c:449
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
-msgstr "ο συμβολικός σύνδεσμος “%s” είναι πολύ μακρύς"
+msgstr "ο συμβολικός σύνδεσμος «%s» είναι πολύ μακρύς"
 
 #: file_ops.c:464
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
-msgstr "“%s” είναι ένας συμβολικός σύνδεσμος, αλλά οι συμβολικοί σύνδεσμοι δεν υποστηρίζονται σε αυτήν την πλατφόρμα"
+msgstr "«%s» είναι ένας συμβολικός σύνδεσμος, αλλά οι συμβολικοί σύνδεσμοι δεν υποστηρίζονται σε αυτήν την πλατφόρμα"
 
 #: file_ops.c:471
 #, c-format
 msgid "could not read directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
 
 #: file_ops.c:475
 #, c-format
 msgid "could not close directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
 #: filemap.c:237
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
-msgstr "το αρχείο “%s” δεν είναι ένα κανονικό αρχείο"
+msgstr "το αρχείο «%s» δεν είναι ένα κανονικό αρχείο"
 
 #: filemap.c:242 filemap.c:275
 #, c-format
 msgid "duplicate source file \"%s\""
-msgstr "διπλότυπο αρχείο προέλευσης “%s”"
+msgstr "διπλότυπο αρχείο προέλευσης «%s»"
 
 #: filemap.c:330
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
-msgstr "μη αναμενόμενη τροποποίηση σελίδας για μη κανονικό αρχείο “%s”"
+msgstr "μη αναμενόμενη τροποποίηση σελίδας για μη κανονικό αρχείο «%s»"
 
 #: filemap.c:680 filemap.c:774
 #, c-format
 msgid "unknown file type for \"%s\""
-msgstr "άγνωστος τύπος αρχείου για το “%s”"
+msgstr "άγνωστος τύπος αρχείου για το «%s»"
 
 #: filemap.c:707
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
-msgstr "το αρχείο “%s” είναι διαφορετικού τύπου στην προέλευση και τον προορισμό"
+msgstr "το αρχείο «%s» είναι διαφορετικού τύπου στην προέλευση και τον προορισμό"
 
 #: filemap.c:779
 #, c-format
 msgid "could not decide what to do with file \"%s\""
-msgstr "δεν ήταν δυνατή η λήψη του αρχείου “%s”"
+msgstr "δεν ήταν δυνατή η λήψη του αρχείου «%s»"
 
 #: libpq_source.c:128
 #, c-format
@@ -312,7 +312,7 @@ msgstr "σφάλμα κατά την εκτέλεση ερωτήματος (%s) 
 #: libpq_source.c:217
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
-msgstr "μη αναγνωρίσιμο αποτέλεσμα “%s” για την τρέχουσα θέση εισαγωγής WAL"
+msgstr "μη αναγνωρίσιμο αποτέλεσμα «%s» για την τρέχουσα θέση εισαγωγής WAL"
 
 #: libpq_source.c:268
 #, c-format
@@ -372,17 +372,17 @@ msgstr "μη αναμενόμενο μήκος αποτελέσματος κατ
 #: libpq_source.c:534
 #, c-format
 msgid "received data for file \"%s\", when requested for \"%s\""
-msgstr "έλαβε δεδομένα για το αρχείο “%s”, όταν ζητήθηκε το “%s”"
+msgstr "έλαβε δεδομένα για το αρχείο «%s», όταν ζητήθηκε το «%s»"
 
 #: libpq_source.c:538
 #, c-format
 msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
-msgstr "έλαβε δεδομένα σε μετατόπιση %lld του αρχείου “%s”, όταν ζητήθηκε μετατόπιση %lld"
+msgstr "έλαβε δεδομένα σε μετατόπιση %lld του αρχείου «%s», όταν ζητήθηκε μετατόπιση %lld"
 
 #: libpq_source.c:550
 #, c-format
 msgid "received more than requested for file \"%s\""
-msgstr "έλαβε περισσότερα από όσα ζήτησε για το αρχείο “%s”"
+msgstr "έλαβε περισσότερα από όσα ζήτησε για το αρχείο «%s»"
 
 #: libpq_source.c:563
 #, c-format
@@ -392,17 +392,17 @@ msgstr "έλαβε μη αναμενόμενο αριθμό τμημάτων δ�
 #: libpq_source.c:606
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
-msgstr "δεν ήταν δυνατή η λήψη απομακρυσμένου αρχείου “%s”: %s"
+msgstr "δεν ήταν δυνατή η λήψη απομακρυσμένου αρχείου «%s»: %s"
 
 #: libpq_source.c:611
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
-msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων κατά τη λήψη απομακρυσμένου αρχείου “%s”"
+msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων κατά τη λήψη απομακρυσμένου αρχείου «%s»"
 
 #: local_source.c:86
 #, c-format
 msgid "could not open source file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προέλευσης “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προέλευσης «%s»: %m"
 
 #: local_source.c:90
 #, c-format
@@ -412,12 +412,12 @@ msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο �
 #: local_source.c:109
 #, c-format
 msgid "unexpected EOF while reading file \"%s\""
-msgstr "μη αναμενόμενο EOF κατά την ανάγνωση αρχείου “%s”"
+msgstr "μη αναμενόμενο EOF κατά την ανάγνωση αρχείου «%s»"
 
 #: local_source.c:116
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
 
 #: parsexlog.c:89 parsexlog.c:142
 #, c-format
@@ -442,7 +442,7 @@ msgstr "δεν ήταν δυνατή η εύρεση προηγούμενης WA
 #: parsexlog.c:337
 #, c-format
 msgid "could not seek in file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο «%s»: %m"
 
 #: parsexlog.c:429
 #, c-format
@@ -562,7 +562,7 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 #: pg_rewind.c:234 pg_rewind.c:242
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_rewind.c:212
 #, c-format
@@ -587,12 +587,12 @@ msgstr "δεν καθορίστηκαν πληροφορίες διακομισ�
 #: pg_rewind.c:240
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (η πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
 #: pg_rewind.c:255
 #, c-format
 msgid "cannot be executed by \"root\""
-msgstr "δεν είναι δυνατή η εκτέλεση από “root”"
+msgstr "δεν είναι δυνατή η εκτέλεση από «root»"
 
 #: pg_rewind.c:256
 #, c-format
@@ -602,7 +602,7 @@ msgstr "Πρέπει να εκτελέσετε %s ως υπερχρήστης Po
 #: pg_rewind.c:267
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση δικαιωμάτων του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση δικαιωμάτων του καταλόγου «%s»: %m"
 
 #: pg_rewind.c:287
 #, c-format
@@ -667,7 +667,7 @@ msgstr "Ολοκληρώθηκε!"
 #: pg_rewind.c:564
 #, c-format
 msgid "no action decided for file \"%s\""
-msgstr "καμία ενέργεια δεν αποφασίστηκε για το αρχείο “%s”"
+msgstr "καμία ενέργεια δεν αποφασίστηκε για το αρχείο «%s»"
 
 #: pg_rewind.c:596
 #, c-format
@@ -697,7 +697,7 @@ msgstr "η συστάδα δεν είναι συμβατή με αυτήν τη�
 #: pg_rewind.c:699
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
-msgstr "ο διακομιστής προορισμού πρέπει να χρησιμοποιεί είτε άθροισμα ελέγχου δεδομένων είτε “wal_log_hints = on”"
+msgstr "ο διακομιστής προορισμού πρέπει να χρησιμοποιεί είτε άθροισμα ελέγχου δεδομένων είτε «wal_log_hints = on»"
 
 #: pg_rewind.c:710
 #, c-format
@@ -753,8 +753,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" απαιτείται από %s αλλά δεν βρέθηκε στο\n"
-"ίδιος κατάλογος με το \"%s\".\n"
+"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
+"ίδιο κατάλογο με το «%s».\n"
 "Ελέγξτε την εγκατάστασή σας."
 
 #: pg_rewind.c:1048 pg_rewind.c:1106
@@ -764,7 +764,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" βρέθηκε από το \"%s\"\n"
+"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
 "αλλά δεν ήταν η ίδια εκδοχή με %s.\n"
 "Ελέγξτε την εγκατάστασή σας."
 
@@ -776,7 +776,7 @@ msgstr "η εντολή restore_command δεν έχει οριστεί στη σ
 #: pg_rewind.c:1112
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
-msgstr "εκτέλεση “%s” για την ολοκλήρωση της αποκατάστασης σφαλμάτων του διακομιστή προορισμού"
+msgstr "εκτέλεση «%s» για την ολοκλήρωση της αποκατάστασης σφαλμάτων του διακομιστή προορισμού"
 
 #: pg_rewind.c:1132
 #, c-format

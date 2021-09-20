@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:22+0900\n"
 "PO-Revision-Date: 2021-05-17 14:56+0900\n"
 "Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
 "Language-Team: \n"
@@ -32,7 +32,7 @@ msgstr "使用法: %s [-f ファイル名] [-s テストあたりの秒数]\n"
 #: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "\"%s --help\"で詳細を確認してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_test_fsync.c:216
 #, c-format

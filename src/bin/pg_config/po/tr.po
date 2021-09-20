@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_config-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-11-27 07:44+0000\n"
-"PO-Revision-Date: 2018-11-27 16:29+0300\n"
+"PO-Revision-Date: 2021-09-16 09:40+0200\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -111,7 +111,7 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir         İstemci arabirimlerinin C başlık dosyalarının yerlerini\n"
+"  --includedir          İstemci arabirimlerinin C başlık dosyalarının yerlerini\n"
 "                        göster\n"
 
 #: pg_config.c:83
@@ -196,7 +196,7 @@ msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan LDFLA
 #: pg_config.c:99
 #, c-format
 msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
-msgstr "  --ldflags_ex             PostgreSQL derlemesi sırasında kullanılan LDFLAGS_EX değerini göster\n"
+msgstr "  --ldflags_ex          PostgreSQL derlemesi sırasında kullanılan LDFLAGS_EX değerini göster\n"
 
 #: pg_config.c:100
 #, c-format

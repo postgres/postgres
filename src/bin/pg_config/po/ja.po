@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
-"PO-Revision-Date: 2021-05-18 17:12+0900\n"
+"POT-Creation-Date: 2021-08-20 15:39+0900\n"
+"PO-Revision-Date: 2021-08-19 17:24+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -28,12 +28,12 @@ msgstr "記録されていません"
 #: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
-msgstr "カレントディレクトリを識別できませんでした: %m"
+msgstr "カレントディレクトリを確認できませんでした: %m"
 
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "バイナリ\"%s\"は無効です"
+msgstr "不正なバイナリ\"%s\""
 
 #: ../../common/exec.c:205
 #, c-format
@@ -43,7 +43,7 @@ msgstr "バイナリ\"%s\"を読み取れませんでした"
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "実行する\"%s\"がありませんでした"
+msgstr "実行対象の\"%s\"が見つかりませんでした"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
@@ -62,7 +62,7 @@ msgstr "%s() が失敗しました: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: pg_config.c:74
 #, c-format
@@ -244,12 +244,12 @@ msgstr "%s ホームページ: <%s>\n"
 #: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細は\"%s --help\"を行ってください\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: 実行ファイル自体がありませんでした\n"
+msgstr "%s: 自身の実行ファイルが見つかりませんでした\n"
 
 #: pg_config.c:181
 #, c-format

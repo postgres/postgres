@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
-"PO-Revision-Date: 2021-06-30 16:14+0900\n"
+"POT-Creation-Date: 2021-08-25 17:22+0900\n"
+"PO-Revision-Date: 2021-08-20 16:43+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -36,17 +36,17 @@ msgstr "警告: "
 #: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
-msgstr "カレントディレクトリを識別できませんでした: %m"
+msgstr "カレントディレクトリを確認できませんでした: %m"
 
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "無効なバイナリ\"%s\""
+msgstr "不正なバイナリ\"%s\""
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "バイナリ\"%s\"を読み取ることができませんでした"
+msgstr "バイナリ\"%s\"を読み取れませんでした"
 
 #: ../../common/exec.c:213
 #, c-format
@@ -73,18 +73,18 @@ msgstr "%s() が失敗しました: %m"
 #: mainloop.c:81 mainloop.c:402
 #, c-format
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "null ポインターを複製することはできません(内部エラー) \n"
+msgstr "nullポインタは複製できません (内部エラー)\n"
 
 #: ../../common/username.c:43
 #, c-format
@@ -98,27 +98,28 @@ msgstr "ユーザーが存在しません"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "ユーザー名の検索に失敗: エラー コード %lu"
+msgstr "ユーザー名の参照に失敗: エラーコード %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format
 msgid "command not executable"
-msgstr "コマンドが実行形式ではありません"
+msgstr "コマンドは実行可能形式ではありません"
 
 #: ../../common/wait_error.c:49
 #, c-format
 msgid "command not found"
 msgstr "コマンドが見つかりません"
 
+# msgstr "コマンドが見つかりません"
 #: ../../common/wait_error.c:54
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "子プロセスが終了コード %d で終了しました"
+msgstr "子プロセスが終了コード%dで終了しました"
 
 #: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "子プロセスが例外 0x%X で強制終了しました"
+msgstr "子プロセスが例外0x%Xで終了しました"
 
 #: ../../common/wait_error.c:66
 #, c-format
@@ -128,7 +129,7 @@ msgstr "子プロセスはシグナル%dにより終了しました: %s"
 #: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "子プロセスは認識できないステータス %d で終了しました"
+msgstr "子プロセスは認識できないステータス%dで終了しました"
 
 #: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
 msgid "Cancel request sent\n"
@@ -147,22 +148,22 @@ msgstr[0] "(%lu 行)"
 #: ../../fe_utils/print.c:3039
 #, c-format
 msgid "Interrupted\n"
-msgstr "割り込み\n"
+msgstr "中断されました\n"
 
 #: ../../fe_utils/print.c:3103
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr "テーブルの内容にヘッダーを追加できません: 列数 %d が制限値を超えています。\n"
+msgstr "テーブルの内容に見出しを追加できませんでした: 列数%dが制限を超えています。\n"
 
 #: ../../fe_utils/print.c:3143
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
-msgstr "テーブルの内容にセルを追加できません: セルの合計数 %d が制限値を超えています。\n"
+msgstr "テーブルの内容にセルを追加できませんでした: 全セル数%dが制限を超えています。\n"
 
 #: ../../fe_utils/print.c:3401
 #, c-format
 msgid "invalid output format (internal error): %d"
-msgstr "出力フォーマットが無効(内部エラー)：%d"
+msgstr "出力フォーマットが無効(内部エラー): %d"
 
 #: ../../fe_utils/psqlscan.l:696
 #, c-format
@@ -375,7 +376,7 @@ msgstr "%s: %m"
 
 #: command.c:3047 startup.c:237 startup.c:287
 msgid "Password: "
-msgstr "パスワード： "
+msgstr "パスワード: "
 
 #: command.c:3052 startup.c:284
 #, c-format
@@ -438,7 +439,7 @@ msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
 "         Some psql features might not work.\n"
 msgstr ""
-"警告： %s のメジャーバージョンは %s ですが、サーバーのメジャーバージョンは %s です。\n"
+"警告: %s のメジャーバージョンは %s ですが、サーバーのメジャーバージョンは %s です。\n"
 "         psql の機能の中で、動作しないものがあるかもしれません。\n"
 
 #: command.c:3606
@@ -470,7 +471,7 @@ msgid ""
 "         8-bit characters might not work correctly. See psql reference\n"
 "         page \"Notes for Windows users\" for details.\n"
 msgstr ""
-"警告：コンソールのコードページ(%u)がWindowsのコードページ(%u)と異なるため、\n"
+"警告: コンソールのコードページ(%u)がWindowsのコードページ(%u)と異なるため、\n"
 "      8ビット文字が正しく表示されない可能性があります。詳細はpsqlリファレンスマニュアルの\n"
 "      \"Windowsユーザー向けの注意\" (Notes for Windows users)を参照してください。\n"
 
@@ -542,7 +543,7 @@ msgstr "\\pset: csv_fieldsepはダブルクォート、改行(LF)または復帰
 #: command.c:4462 command.c:4650
 #, c-format
 msgid "\\pset: unknown option: %s"
-msgstr "\\pset: 未定義のオプション：%s"
+msgstr "\\pset: 未定義のオプション: %s"
 
 #: command.c:4482
 #, c-format
@@ -2411,7 +2412,7 @@ msgstr ""
 #: help.c:74 help.c:355 help.c:433 help.c:476
 #, c-format
 msgid "Usage:\n"
-msgstr "使い方:\n"
+msgstr "使用方法:\n"
 
 #: help.c:75
 #, c-format
@@ -2558,7 +2559,7 @@ msgid ""
 "Output format options:\n"
 msgstr ""
 "\n"
-"出力フォーマットのオプション\n"
+"出力フォーマットのオプション:\n"
 
 #: help.c:110
 #, c-format
@@ -2658,7 +2659,7 @@ msgstr "ローカルソケット"
 #: help.c:134
 #, c-format
 msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
-msgstr "  -p, --port=PORT          データベースサーバーのポート番号(デフォルト： \"%s\")\n"
+msgstr "  -p, --port=PORT          データベースサーバーのポート番号(デフォルト: \"%s\")\n"
 
 #: help.c:137
 #, c-format
@@ -2673,7 +2674,7 @@ msgstr "  -w, --no-password        パスワード入力を要求しない\n"
 #: help.c:139
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
-msgstr "  -W, --password           パスワードプロンプトの強制表示(本来は自動的に表示)\n"
+msgstr "  -W, --password           パスワードプロンプトの強制表示 (本来は自動的に表示)\n"
 
 #: help.c:141
 #, c-format
@@ -2905,7 +2906,7 @@ msgstr "情報表示\n"
 #: help.c:223
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
-msgstr "  (オプション：S = システムオブジェクトを表示, + = 詳細表示)\n"
+msgstr "  (オプション: S = システムオブジェクトを表示, + = 詳細表示)\n"
 
 #: help.c:224
 #, c-format
@@ -3067,7 +3068,7 @@ msgid ""
 "  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
 "                         list operators\n"
 msgstr ""
-"  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
+"  \\do[S+] [演算子パターン [型パターン [型パターン]]]\n"
 "                         演算子の一覧を表示\n"
 
 #: help.c:257
@@ -3140,7 +3141,7 @@ msgstr "  \\dX     [パターン]      拡張統計情報の一覧を表示\n"
 #: help.c:270
 #, c-format
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
-msgstr " \\dy[+]  [PATTERN]    イベントトリガーの一覧を表示\n"
+msgstr "  \\dy[+]  [パターン]     イベントトリガーの一覧を表示\n"
 
 #: help.c:271
 #, c-format
@@ -4157,7 +4158,7 @@ msgstr "文字列の引用符が閉じていません"
 #: psqlscanslash.l:811
 #, c-format
 msgid "%s: out of memory"
-msgstr "%s: メモリ不足です"
+msgstr "%s: メモリ不足"
 
 #: sql_help.c:35 sql_help.c:38 sql_help.c:41 sql_help.c:65 sql_help.c:66
 #: sql_help.c:68 sql_help.c:70 sql_help.c:81 sql_help.c:83 sql_help.c:85
@@ -4681,7 +4682,7 @@ msgstr "インデックス名"
 #: sql_help.c:2829 sql_help.c:2842 sql_help.c:2856 sql_help.c:2897
 #: sql_help.c:2921
 msgid "storage_parameter"
-msgstr "ストレージパラメータ"
+msgstr "ストレージ・パラメータ"
 
 #: sql_help.c:604
 msgid "column_number"
@@ -4753,7 +4754,7 @@ msgstr "CHECK表現"
 
 #: sql_help.c:891 sql_help.c:2562
 msgid "publication_parameter"
-msgstr "パブリケーションパラメータ"
+msgstr "パブリケーション・パラメータ"
 
 #: sql_help.c:935 sql_help.c:1605 sql_help.c:2378 sql_help.c:2594
 #: sql_help.c:3153
@@ -4810,15 +4811,15 @@ msgstr "パブリケーション名"
 
 #: sql_help.c:1125 sql_help.c:1129 sql_help.c:1133
 msgid "publication_option"
-msgstr "パブリケーション_オプション"
+msgstr "パブリケーション・オプション"
 
 #: sql_help.c:1136
 msgid "refresh_option"
-msgstr "リフレッシュ_オプション"
+msgstr "{REFRESH PUBLICATION の追加オプション}"
 
 #: sql_help.c:1141 sql_help.c:2723
 msgid "subscription_parameter"
-msgstr "サブスクリプション_パラメータ"
+msgstr "{SUBSCRIPTION パラメータ名}"
 
 #: sql_help.c:1296 sql_help.c:1299
 msgid "partition_name"
@@ -4830,11 +4831,11 @@ msgstr "パーティション境界指定"
 
 #: sql_help.c:1316 sql_help.c:1365 sql_help.c:2864
 msgid "sequence_options"
-msgstr "シーケンスオプション"
+msgstr "シーケンス・オプション"
 
 #: sql_help.c:1318
 msgid "sequence_option"
-msgstr "シーケンスオプション"
+msgstr "シーケンス・オプション"
 
 #: sql_help.c:1332
 msgid "table_constraint_using_index"
@@ -4874,7 +4875,7 @@ msgstr "生成式"
 #: sql_help.c:1382 sql_help.c:2865 sql_help.c:2866 sql_help.c:2875
 #: sql_help.c:2877 sql_help.c:2881
 msgid "index_parameters"
-msgstr "インデックスパラメータ"
+msgstr "インデックス・パラメータ"
 
 #: sql_help.c:1368 sql_help.c:1385 sql_help.c:2867 sql_help.c:2884
 msgid "reftable"
@@ -6459,7 +6460,7 @@ msgstr "-1 は非対話モード時でのみ使用可能です"
 #: startup.c:326
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "ロックファイル\"%s\"をオープンできませんでした: %m"
+msgstr "ログファイル\"%s\"をオープンできませんでした: %m"
 
 #: startup.c:438
 #, c-format
@@ -6478,7 +6479,7 @@ msgstr "表示パラメータ\"%s\"を設定できませんでした"
 #: startup.c:699
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細は\"%s --help\"をごらんください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: startup.c:716
 #, c-format
@@ -6490,7 +6491,7 @@ msgstr "余分なコマンドライン引数\"%s\"は無視されました"
 msgid "could not find own program executable"
 msgstr "実行可能ファイルが見つかりませんでした"
 
-#: tab-complete.c:4904
+#: tab-complete.c:4900
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

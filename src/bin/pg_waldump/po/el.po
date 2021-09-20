@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021.
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -38,29 +38,29 @@ msgstr "προειδοποίηση: "
 #: pg_waldump.c:146
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
 #: pg_waldump.c:202
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα “%s” του αρχείου WAL καθορίζει %d byte"
-msgstr[1] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα “%s” του αρχείου WAL καθορίζει %d bytes"
+msgstr[0] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα «%s» του αρχείου WAL καθορίζει %d byte"
+msgstr[1] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά η κεφαλίδα «%s» του αρχείου WAL καθορίζει %d bytes"
 
 #: pg_waldump.c:210
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
 #: pg_waldump.c:213
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: ανέγνωσε %d από %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
 
 #: pg_waldump.c:275
 #, c-format
 msgid "could not locate WAL file \"%s\""
-msgstr "δεν ήταν δυνατός ο εντοπισμός του αρχείου WAL “%s”"
+msgstr "δεν ήταν δυνατός ο εντοπισμός του αρχείου WAL «%s»"
 
 #: pg_waldump.c:277
 #, c-format
@@ -70,7 +70,7 @@ msgstr "δεν ήταν δυνατή η εύρεση οποιουδήποτε α
 #: pg_waldump.c:318
 #, c-format
 msgid "could not find file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εύρεση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η εύρεση του αρχείου «%s»: %m"
 
 #: pg_waldump.c:367
 #, c-format
@@ -215,32 +215,32 @@ msgstr "δεν καθορίστηκαν παράμετροι"
 #: pg_waldump.c:840
 #, c-format
 msgid "could not parse end WAL location \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση της τελικής τοποθεσίας WAL “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση της τελικής τοποθεσίας WAL «%s»"
 
 #: pg_waldump.c:852
 #, c-format
 msgid "could not parse limit \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση του ορίου “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση του ορίου «%s»"
 
 #: pg_waldump.c:883
 #, c-format
 msgid "resource manager \"%s\" does not exist"
-msgstr "ο διαχειριστής πόρων “%s” δεν υπάρχει"
+msgstr "ο διαχειριστής πόρων «%s» δεν υπάρχει"
 
 #: pg_waldump.c:892
 #, c-format
 msgid "could not parse start WAL location \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής τοποθεσίας WAL “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής τοποθεσίας WAL «%s»"
 
 #: pg_waldump.c:902
 #, c-format
 msgid "could not parse timeline \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση της χρονογραμμής “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση της χρονογραμμής «%s»"
 
 #: pg_waldump.c:909
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
-msgstr "δεν ήταν δυνατή η ανάλυση του “%s” ως ID συναλλαγής"
+msgstr "δεν ήταν δυνατή η ανάλυση του «%s» ως ID συναλλαγής"
 
 #: pg_waldump.c:924
 #, c-format
@@ -250,22 +250,22 @@ msgstr "μη αναγνωρισμένη παράμετρος για --stats: %s"
 #: pg_waldump.c:937
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (ο πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
 #: pg_waldump.c:947 pg_waldump.c:967
 #, c-format
 msgid "could not open directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
 #: pg_waldump.c:973 pg_waldump.c:1003
 #, c-format
 msgid "could not open file \"%s\""
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»"
 
 #: pg_waldump.c:983
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr "τοποθεσία εκκίνησης WAL %X/%X δεν βρίσκεται μέσα στο αρχείο “%s”"
+msgstr "τοποθεσία εκκίνησης WAL %X/%X δεν βρίσκεται μέσα στο αρχείο «%s»"
 
 #: pg_waldump.c:1010
 #, c-format
@@ -275,7 +275,7 @@ msgstr "ENDSEG %s βρίσκεται πριν από STARTSEG %s"
 #: pg_waldump.c:1025
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr "η τελική τοποθεσία WAL %X/%X δεν βρίσκεται μέσα στο αρχείο “%s”"
+msgstr "η τελική τοποθεσία WAL %X/%X δεν βρίσκεται μέσα στο αρχείο «%s»"
 
 #: pg_waldump.c:1037
 #, c-format
@@ -307,4 +307,4 @@ msgstr "σφάλμα στην εγγραφή WAL στο %X/%X: %s"
 #: pg_waldump.c:1127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"

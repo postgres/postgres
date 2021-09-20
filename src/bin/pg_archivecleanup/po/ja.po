@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:21+0900\n"
 "PO-Revision-Date: 2021-05-18 17:08+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -65,7 +65,7 @@ msgstr "ファイル名引数が無効です"
 #: pg_archivecleanup.c:348 pg_archivecleanup.c:355
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "\"%s --help\"で詳細が参照できます。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_archivecleanup.c:254
 #, c-format
@@ -79,7 +79,7 @@ msgstr ""
 #: pg_archivecleanup.c:255
 #, c-format
 msgid "Usage:\n"
-msgstr "使用法:\n"
+msgstr "使用方法:\n"
 
 #: pg_archivecleanup.c:256
 #, c-format

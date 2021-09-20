@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 12 beta 1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-06-11 11:34+0900\n"
-"PO-Revision-Date: 2019-06-11 13:46+0900\n"
+"PO-Revision-Date: 2021-08-25 17:42+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.13\n"
 
 #: plpy_cursorobject.c:78
 #, c-format
@@ -58,7 +58,7 @@ msgstr "クローズされたカーソルからのフェッチ"
 #: plpy_cursorobject.c:438 plpy_spi.c:409
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
-msgstr "問い合わせの結果に含まれる行数が、Python のリストに対して多すぎます"
+msgstr "問い合わせの結果に含まれる行数が、Pythonのリストに対して多すぎます"
 
 #: plpy_cursorobject.c:490
 #, c-format
@@ -81,8 +81,8 @@ msgstr "非サポートの集合関数リターンモードです。"
 msgid ""
 "PL/Python set-returning functions only support returning one value per call."
 msgstr ""
-"PL/Python の集合を返す関数では、１回の呼び出しに対して１つの値を返すことのみ"
-"がサポートされています。"
+"集合を返却するPL/Python関数では、1回の呼び出しに対して1つの値を返すことのみが"
+"サポートされています。"
 
 #: plpy_exec.c:157
 #, c-format
@@ -93,13 +93,13 @@ msgstr "返されたオブジェクトは反復利用できません"
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
 msgstr ""
-"PL/Python の集合を返す関数は、イテレータ（反復利用可能）オブジェクトを返さな"
-"ければなりません。"
+"PL/Pythonの集合を返す関数は、反復処理可能なオブジェクトを返さなければなりませ"
+"ん。"
 
 #: plpy_exec.c:172
 #, c-format
 msgid "error fetching next item from iterator"
-msgstr "イテレータ（反復子）から次の項目をフェッチ（取り出し）できません"
+msgstr "反復子から次の項目を取り出せませんでした"
 
 #: plpy_exec.c:215
 #, c-format
@@ -109,7 +109,7 @@ msgstr "PL/Python プロシージャが None を返しませんでした"
 #: plpy_exec.c:219
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
-msgstr "戻り値が \"void\" 型である PL/Python 関数が None を返しませんでした"
+msgstr "戻り値が\"void\"型である PL/Python関数がNoneを返しませんでした"
 
 #: plpy_exec.c:375 plpy_exec.c:401
 #, c-format
@@ -126,8 +126,7 @@ msgstr "None もしくは文字列を期待していました。"
 msgid ""
 "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr ""
-"PL/Python トリガ関数が、DELETE トリガで \"MODIFY\" を返しました-- 無視されま"
-"した"
+"PL/Python トリガ関数が、DELETE トリガで \"MODIFY\" を返しました-- 無視します"
 
 #: plpy_exec.c:402
 #, c-format
@@ -184,13 +183,13 @@ msgstr ""
 #: plpy_exec.c:963
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "システム属性 \"%s\" を設定できません"
+msgstr "システム属性\"%s\"は設定できません"
 
 #: plpy_exec.c:968
 #, c-format
 #| msgid "cannot alter inherited column \"%s\""
 msgid "cannot set generated column \"%s\""
-msgstr "生成列\"%s\"は変更できません"
+msgstr "生成列\"%s\"は設定できません"
 
 #: plpy_exec.c:1026
 #, c-format
@@ -210,8 +209,7 @@ msgstr "セッションに複数の Python ライブラリが存在します"
 #: plpy_main.c:126
 #, c-format
 msgid "Only one Python major version can be used in one session."
-msgstr ""
-"１個のセッション中で使える Python のメジャーバージョンは１種類だけです。"
+msgstr "1個のセッション中で使えるPythonのメジャーバージョンは1種類だけです。"
 
 #: plpy_main.c:142
 #, c-format
@@ -231,46 +229,46 @@ msgstr "グローバル変数(globals)を初期化できませんでした"
 #: plpy_main.c:399
 #, c-format
 msgid "PL/Python procedure \"%s\""
-msgstr "PL/Python プロシージャ \"%s\""
+msgstr "PL/Pythonプロシージャ\"%s\""
 
 #: plpy_main.c:402
 #, c-format
 msgid "PL/Python function \"%s\""
-msgstr "PL/Python 関数 \"%s\""
+msgstr "PL/Python関数\"%s\""
 
 #: plpy_main.c:410
 #, c-format
 msgid "PL/Python anonymous code block"
-msgstr "PL/Python の無名コードブロック"
+msgstr "PL/Pythonの無名コードブロック"
 
 #: plpy_plpymodule.c:186 plpy_plpymodule.c:189
 #, c-format
 msgid "could not import \"plpy\" module"
-msgstr "\"plpy\" モジュールをインポートできませんでした"
+msgstr "\"plpy\"モジュールをインポートできませんでした"
 
 #: plpy_plpymodule.c:204
 #, c-format
 msgid "could not create the spiexceptions module"
-msgstr "spiexceptions モジュールを生成できませんでした"
+msgstr "spiexceptionsモジュールを生成できませんでした"
 
 #: plpy_plpymodule.c:212
 #, c-format
 msgid "could not add the spiexceptions module"
-msgstr "spiexceptions モジュールを追加できませんでした"
+msgstr "spiexceptionsモジュールを追加できませんでした"
 
 #: plpy_plpymodule.c:280
 #, c-format
 msgid "could not generate SPI exceptions"
-msgstr "SPI 例外を生成できませんでした"
+msgstr "SPI例外を生成できませんでした"
 
 #: plpy_plpymodule.c:448
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
-msgstr "plpy.elog で引数を展開できませんでした"
+msgstr "plpy.elogで引数を展開できませんでした"
 
 #: plpy_plpymodule.c:457
 msgid "could not parse error message in plpy.elog"
-msgstr "plpy.elog でエラーメッセージをパースできませんでした"
+msgstr "plpy.elogでエラーメッセージをパースできませんでした"
 
 #: plpy_plpymodule.c:474
 #, c-format
@@ -280,37 +278,37 @@ msgstr "名前と位置で 'message' 引数が渡されました"
 #: plpy_plpymodule.c:501
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
-msgstr "この関数に対して '%s' は無効なキーワード引数です"
+msgstr "この関数に対して'%s'は無効なキーワード引数です"
 
 #: plpy_plpymodule.c:512 plpy_plpymodule.c:518
 #, c-format
 msgid "invalid SQLSTATE code"
-msgstr "無効な SQLSTATE コードです"
+msgstr "無効なSQLSTATEコードです"
 
 #: plpy_procedure.c:230
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "トリガ関数はトリガとしてのみコールできます"
+msgstr "トリガー関数はトリガーとしてのみ呼び出せます"
 
 #: plpy_procedure.c:234
 #, c-format
 msgid "PL/Python functions cannot return type %s"
-msgstr "PL/Python 関数は %s 型を返せません"
+msgstr "PL/Python関数は%s型を返せません"
 
 #: plpy_procedure.c:312
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
-msgstr "PL/Python 関数は %s 型を受け付けられません"
+msgstr "PL/Python関数は%s型を受け付けられません"
 
 #: plpy_procedure.c:402
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
-msgstr "PL/Python 関数 \"%s\" をコンパイルできませんでした"
+msgstr "PL/Python関数\"%s\"をコンパイルできませんでした"
 
 #: plpy_procedure.c:405
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
-msgstr "匿名の PL/Python コードブロックをコンパイルできませんでした"
+msgstr "PL/Python無名コードブロックをコンパイルできませんでした"
 
 #: plpy_resultobject.c:121 plpy_resultobject.c:147 plpy_resultobject.c:173
 #, c-format
@@ -320,7 +318,7 @@ msgstr "コマンドは結果セットを生成しませんでした"
 #: plpy_spi.c:60
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
-msgstr "plpy.prepare の第二引数はシーケンスでなければなりません"
+msgstr "plpy.prepareの第二引数はシーケンスでなければなりません"
 
 #: plpy_spi.c:104
 #, c-format
@@ -340,12 +338,12 @@ msgstr "plpy.execute は第二引数としてシーケンスを取ります"
 #: plpy_spi.c:305
 #, c-format
 msgid "SPI_execute_plan failed: %s"
-msgstr "SPI_execute_plan が失敗しました：%s"
+msgstr "SPI_execute_plan が失敗しました: %s"
 
 #: plpy_spi.c:347
 #, c-format
 msgid "SPI_execute failed: %s"
-msgstr "SPI_execute が失敗しました：%s"
+msgstr "SPI_execute が失敗しました: %s"
 
 #: plpy_subxactobject.c:97
 #, c-format
@@ -370,27 +368,27 @@ msgstr "抜けるべきサブトランザクションがありません"
 #: plpy_typeio.c:591
 #, c-format
 msgid "could not import a module for Decimal constructor"
-msgstr "Decimal コンストラクタのためのモジュールをインポートできませんでした"
+msgstr "Decimalコンストラクタのためのモジュールをインポートできませんでした"
 
 #: plpy_typeio.c:595
 #, c-format
 msgid "no Decimal attribute in module"
-msgstr "モジュールの中に Decimal 属性が含まれていません"
+msgstr "モジュールの中にDecimal属性が含まれていません"
 
 #: plpy_typeio.c:601
 #, c-format
 msgid "conversion from numeric to Decimal failed"
-msgstr "numeric から Decimal への変換に失敗しました"
+msgstr "numericからDecimalへの変換に失敗しました"
 
 #: plpy_typeio.c:915
 #, c-format
 msgid "could not create bytes representation of Python object"
-msgstr "バイト表現の Python オブジェクトを生成できませんでした"
+msgstr "Pythonオブジェクトのバイト表現を生成できませんでした"
 
 #: plpy_typeio.c:1063
 #, c-format
 msgid "could not create string representation of Python object"
-msgstr "文字列表現の Python オブジェクトを生成できませんでした"
+msgstr "Pythonオブジェクトの文字列表現を生成できませんでした"
 
 #: plpy_typeio.c:1074
 #, c-format
@@ -398,8 +396,8 @@ msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
 msgstr ""
-"Python オブジェクトを cstring に変換できませんでした：Python の文字列表現に "
-"null バイトが含まれているようです"
+"Pythonオブジェクトをcstringに変換できませんでした: Pythonの文字列表現にnullバ"
+"イトが含まれているようです"
 
 #: plpy_typeio.c:1183
 #, c-format
@@ -420,13 +418,12 @@ msgstr "配列のサイズが制限値を超えています"
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
-msgstr "配列型を返す関数の戻り値が Python のシーケンスではありません"
+msgstr "配列型を返す関数の戻り値がPythonのシーケンスではありません"
 
 #: plpy_typeio.c:1266
 #, c-format
 msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr ""
-"内部シーケンスで長さが異常です：長さは %d ですが、期待する値は %d でした"
+msgstr "内部シーケンスで長さが異常です: 長さは%dですが、期待する値は%dでした"
 
 #: plpy_typeio.c:1268
 #, c-format
@@ -440,7 +437,7 @@ msgstr ""
 #: plpy_typeio.c:1347
 #, c-format
 msgid "malformed record literal: \"%s\""
-msgstr "不正な形式のレコードリテラルです: \"%s\""
+msgstr "不正な形式のレコードリテラル: \"%s\""
 
 #: plpy_typeio.c:1348
 #, c-format
@@ -459,7 +456,7 @@ msgstr ""
 #: plpy_typeio.c:1396
 #, c-format
 msgid "key \"%s\" not found in mapping"
-msgstr "マッピング上にキー \"%s\" が見つかりません"
+msgstr "マッピング上にキー\"%s\"が見つかりません"
 
 #: plpy_typeio.c:1397
 #, c-format
@@ -467,8 +464,8 @@ msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
-"カラムに null を入れて返す場合、カラム名をキーとして値が None のエントリを"
-"マッピングに追加してください"
+"カラムにnullを入れて返す場合、カラム名をキーとして値がNoneのエントリをマッピ"
+"ングに追加してください。"
 
 #: plpy_typeio.c:1450
 #, c-format
@@ -478,7 +475,7 @@ msgstr "返されたシーケンスの長さが行のカラム数とマッチし
 #: plpy_typeio.c:1548
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
-msgstr "属性 \"%s\" が Python オブジェクト中に存在しません"
+msgstr "属性\"%s\"がPythonオブジェクト中に存在しません"
 
 #: plpy_typeio.c:1551
 #, c-format
@@ -486,27 +483,15 @@ msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
 msgstr ""
-"カラムに null を入れて返す場合、カラム名をキーとして値が None である属性を持"
-"つオブジェクトを返すようにしてください。"
+"カラムにnullを入れて返す場合、カラム名をキーとして値がNoneである属性を持つオ"
+"ブジェクトを返すようにしてください。"
 
 #: plpy_util.c:35
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
-msgstr "Python の Unicode オブジェクトをバイト列に変換できませんでした"
+msgstr "PythonのUnicodeオブジェクトをバイト列に変換できませんでした"
 
 #: plpy_util.c:41
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "エンコードされた文字列からバイト列を抽出できませんでした"
-
-#~ msgid "could not create new dictionary while building trigger arguments"
-#~ msgstr "トリガの引数を構成中、新しい辞書を生成できませんでした"
-
-#~ msgid "could not create globals"
-#~ msgstr "グローバル変数(globals)を作成できませんでした"
-
-#~ msgid "could not create exception \"%s\""
-#~ msgstr "例外 \"%s \"を作成できませんでした"
-
-#~ msgid "could not create new dictionary"
-#~ msgstr "新しい辞書を作れませんでした"

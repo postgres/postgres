@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-04-26 13:39+0000\n"
-"PO-Revision-Date: 2019-06-13 17:15+0300\n"
+"PO-Revision-Date: 2021-09-16 09:37+0200\n"
 "Last-Translator: Abdullah GÜLNER <agulner@gmail.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -105,7 +105,7 @@ msgstr "  -d            ayrıştırıcı hata ayıklama çıktısını oluştur\
 #: ecpg.c:49
 #, c-format
 msgid "  -D SYMBOL      define SYMBOL\n"
-msgstr "  -D SEMBOL       SEMBOLü tanımla\n"
+msgstr "  -D SEMBOL      SEMBOLü tanımla\n"
 
 #: ecpg.c:50
 #, c-format
@@ -133,7 +133,7 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r SEÇENEK      çalışma zamanı davranışını belirt; SEÇENEK şunlardan birisi olabilir:\n"
+"  -r SEÇENEK     çalışma zamanı davranışını belirt; SEÇENEK şunlardan birisi olabilir:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 
 #: ecpg.c:56
@@ -144,7 +144,7 @@ msgstr "  --regression   regression testi modunda çalış\n"
 #: ecpg.c:57
 #, c-format
 msgid "  -t             turn on autocommit of transactions\n"
-msgstr "  -t            transactionların otomatik commit olması özelliğini aç\n"
+msgstr "  -t             transactionların otomatik commit olması özelliğini aç\n"
 
 #: ecpg.c:58
 #, c-format

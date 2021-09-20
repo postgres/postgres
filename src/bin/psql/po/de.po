@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-25 08:15+0000\n"
-"PO-Revision-Date: 2021-06-25 10:46+0200\n"
+"POT-Creation-Date: 2021-09-16 11:45+0000\n"
+"PO-Revision-Date: 2021-09-16 14:05+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -3000,13 +3000,13 @@ msgstr "  \\dE[S+] [MUSTER]       Fremdtabellen auflisten\n"
 
 #: help.c:239
 #, c-format
-msgid "  \\det[+] [PATTERN]      list foreign tables\n"
-msgstr "  \\det[+] [MUSTER]       Fremdtabellen auflisten\n"
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [MUSTER]       Fremdserver auflisten\n"
 
 #: help.c:240
 #, c-format
-msgid "  \\des[+] [PATTERN]      list foreign servers\n"
-msgstr "  \\des[+] [MUSTER]       Fremdserver auflisten\n"
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\det[+] [MUSTER]       Fremdtabellen auflisten\n"
 
 #: help.c:241
 #, c-format
@@ -3107,8 +3107,8 @@ msgstr ""
 
 #: help.c:260
 #, c-format
-msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
-msgstr "  \\drds [MUSTER1 [MUSTER2]] datenbankspezifische Rolleneinstellungen auflisten\n"
+msgid "  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"
+msgstr "  \\drds [ROLLMUST [DBMUST]] datenbankspezifische Rolleneinstellungen auflisten\n"
 
 #: help.c:261
 #, c-format
@@ -6511,7 +6511,7 @@ msgstr "überflüssiges Kommandozeilenargument »%s« ignoriert"
 msgid "could not find own program executable"
 msgstr "konnte eigene Programmdatei nicht finden"
 
-#: tab-complete.c:4904
+#: tab-complete.c:4900
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

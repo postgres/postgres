@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:46+0000\n"
-"PO-Revision-Date: 2021-05-20 21:24-0500\n"
+"PO-Revision-Date: 2021-09-16 09:24+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -353,7 +353,7 @@ msgstr "      --no-estimate-size no estimar el tamaño del la copia de seguridad
 #: pg_basebackup.c:413
 #, c-format
 msgid "      --no-manifest      suppress generation of backup manifest\n"
-msgstr "      --no-manifest          suprimir la generación del manifiesto de la copia de seguridad\n"
+msgstr "      --no-manifest      suprimir la generación del manifiesto de la copia de seguridad\n"
 
 #: pg_basebackup.c:414
 #, c-format

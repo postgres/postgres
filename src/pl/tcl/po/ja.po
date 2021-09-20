@@ -1,5 +1,5 @@
 # Japanese message translation file for pltcl
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2021 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>, 2015.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 12 beta 1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-11 11:34+0900\n"
-"PO-Revision-Date: 2019-06-11 17:26+0900\n"
+"POT-Creation-Date: 2021-08-25 17:23+0900\n"
+"PO-Revision-Date: 2021-08-25 11:48+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -16,101 +16,97 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.13\n"
 
-#: pltcl.c:464
+#: pltcl.c:463
 msgid "PL/Tcl function to call once when pltcl is first used."
-msgstr "pltcl が最初に使用される際に一度だけ呼び出される PL/Tcl 関数。"
+msgstr "pltclが最初に使用される際に一度だけ呼び出されるPL/Tcl関数。"
 
-#: pltcl.c:471
+#: pltcl.c:470
 msgid "PL/TclU function to call once when pltclu is first used."
-msgstr "pltclu が最初に使用される際に一度だけ呼び出される PL/TclU 関数。"
+msgstr "pltcluが最初に使用される際に一度だけ呼び出されるPL/TclU関数。"
 
-#: pltcl.c:636
+#: pltcl.c:634
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "関数\"%s\"は言語が異なります"
 
-#: pltcl.c:647
+#: pltcl.c:645
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "関数\"%s\"はSECURITY DEFINERであってはなりません"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:679
 #, c-format
 msgid "processing %s parameter"
-msgstr "%sパラメーターを処理しています"
+msgstr "パラメーター%sを処理しています"
 
-#: pltcl.c:842
+#: pltcl.c:833
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "このコンテキストでは、集合値の関数は集合を受け付けられません"
+msgstr "集合を受け付けないコンテキストで集合値関数が呼び出されました"
 
-#: pltcl.c:1015
+#: pltcl.c:1006
 #, c-format
-msgid ""
-"function returning record called in context that cannot accept type record"
-msgstr ""
-"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されまし"
-"た"
+msgid "function returning record called in context that cannot accept type record"
+msgstr "レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されました"
 
-#: pltcl.c:1299
+#: pltcl.c:1290
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "トリガーからの戻り値を分割できませんでした: %s"
 
-#: pltcl.c:1379 pltcl.c:1809
+#: pltcl.c:1371 pltcl.c:1801
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1380
+#: pltcl.c:1372
 #, c-format
 msgid ""
 "%s\n"
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"PL/Tcl 関数 \"%s\""
+"PL/Tcl関数\"%s\"内"
 
-#: pltcl.c:1544
+#: pltcl.c:1536
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "トリガー関数はトリガーとしてのみコールできます"
+msgstr "トリガー関数はトリガーとしてのみ呼び出せます"
 
-#: pltcl.c:1548
+#: pltcl.c:1540
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "PL/Tcl 関数は%s型の戻り値を返せません"
+msgstr "PL/Tcl関数は%s型の戻り値を返せません"
 
-#: pltcl.c:1587
+#: pltcl.c:1579
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "PL/Tcl 関数は%s型を受け付けません"
+msgstr "PL/Tcl関数は%s型を受け付けません"
 
-#: pltcl.c:1701
+#: pltcl.c:1693
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "内部プロシージャ\"%s\"を作成できませんでした: %s"
 
-#: pltcl.c:3208
+#: pltcl.c:3197
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "列名/値のリストの要素は偶数個でなければなりません"
 
-#: pltcl.c:3226
+#: pltcl.c:3215
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "列名/値のリストの中に、存在しない列名\"%s\"が含まれています"
 
-#: pltcl.c:3233
+#: pltcl.c:3222
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "システム属性\"%s\"は設定できません"
 
-#: pltcl.c:3239
+#: pltcl.c:3228
 #, c-format
-#| msgid "cannot alter inherited column \"%s\""
 msgid "cannot set generated column \"%s\""
-msgstr "生成列\"%s\"を変更できません"
+msgstr "生成列\"%s\"は設定できません"

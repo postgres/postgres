@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-20 15:40+0900\n"
 "PO-Revision-Date: 2021-05-17 14:59+0900\n"
 "Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
 "Language-Team: \n"
@@ -31,7 +31,7 @@ msgstr "%s: オプション%sの引数が不正です\n"
 #: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "\"%s --help\" で詳細を確認してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_test_timing.c:90
 #, c-format
@@ -41,7 +41,7 @@ msgstr "%s: %sは%u..%uの範囲になければなりません\n"
 #: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: コマンドライン引数が多すぎます（先頭は \"%s\"）\n"
+msgstr "%s: コマンドライン引数が多すぎます (先頭は\"%s\")\n"
 
 #: pg_test_timing.c:115
 #, c-format
@@ -71,11 +71,11 @@ msgstr "< us"
 #: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
-msgstr "全体の％"
+msgstr "割合(%)"
 
 #: pg_test_timing.c:188
 msgid "count"
-msgstr "個数"
+msgstr "回数"
 
 #: pg_test_timing.c:197
 #, c-format

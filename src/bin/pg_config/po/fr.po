@@ -272,7 +272,7 @@ msgstr "Rapporter les bogues à <%s>.\n"
 #: pg_config.c:106
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : %s\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: pg_config.c:112
 #, c-format
@@ -282,7 +282,7 @@ msgstr "Essayer « %s --help » pour plus d'informations.\n"
 #: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s : n'a pas pu trouver son propre exécutable\n"
+msgstr "%s : n'a pas pu trouver l'exécutable du programme\n"
 
 #: pg_config.c:181
 #, c-format

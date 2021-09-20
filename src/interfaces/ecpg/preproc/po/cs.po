@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ecpg-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:09+0000\n"
-"PO-Revision-Date: 2020-10-31 21:47+0100\n"
+"PO-Revision-Date: 2021-09-16 09:06+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -124,7 +124,7 @@ msgstr "  -I ADRESÁŘ     vyhledá include soubory v ADRESÁŘi\n"
 #: ecpg.c:52
 #, c-format
 msgid "  -o OUTFILE     write result to OUTFILE\n"
-msgstr "  -o SOUBOR     zapíše výsledek do SOUBORu\n"
+msgstr "  -o SOUBOR      zapíše výsledek do SOUBORu\n"
 
 #: ecpg.c:53
 #, c-format
@@ -132,7 +132,7 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r VOLBA      určuje run-time chování; VOLBA může být:\n"
+"  -r VOLBA       určuje run-time chování; VOLBA může být:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 
 #: ecpg.c:55
@@ -148,7 +148,7 @@ msgstr "  -t             zapne autocommit transakcí\n"
 #: ecpg.c:57
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version      vypíše informaci o verzi, poté skončí\n"
+msgstr "  -V, --version  vypíše informaci o verzi, poté skončí\n"
 
 #: ecpg.c:58
 #, c-format

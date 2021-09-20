@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-06-25 08:17+0000\n"
-"PO-Revision-Date: 2021-06-25 11:03+0200\n"
+"PO-Revision-Date: 2021-09-16 08:57+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -664,7 +664,7 @@ msgstr "  -i, --interactive         frage nach, bevor irgendetwas gelöscht wird
 #: dropdb.c:178
 #, c-format
 msgid "  --if-exists               don't report error if database doesn't exist\n"
-msgstr "  --if-exists              keinen Fehler ausgeben, wenn Datenbank nicht existiert\n"
+msgstr "  --if-exists               keinen Fehler ausgeben, wenn Datenbank nicht existiert\n"
 
 #: dropuser.c:117
 msgid "Enter name of role to drop: "
@@ -706,7 +706,7 @@ msgstr ""
 #: dropuser.c:176
 #, c-format
 msgid "  --if-exists               don't report error if user doesn't exist\n"
-msgstr "  --if-exists              keinen Fehler ausgeben, wenn Benutzer nicht existiert\n"
+msgstr "  --if-exists               keinen Fehler ausgeben, wenn Benutzer nicht existiert\n"
 
 #: dropuser.c:181
 #, c-format

@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-28 07:09+0000\n"
-"PO-Revision-Date: 2021-07-17 14:11\n"
-"Last-Translator: Pavlo Golub\n"
+"POT-Creation-Date: 2021-08-17 08:39+0000\n"
+"PO-Revision-Date: 2021-08-17 11:18\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -22,32 +22,37 @@ msgstr ""
 msgid "variable \"%s\" must have a numeric type"
 msgstr "змінна \"%s\" повинна мати числовий тип"
 
-#: descriptor.c:124 descriptor.c:146
+#: descriptor.c:125 descriptor.c:156
 #, c-format
-msgid "descriptor \"%s\" does not exist"
-msgstr "дескриптор \"%s\" не існує"
+msgid "descriptor %s bound to connection %s does not exist"
+msgstr "дескриптор %s, прив'язаний до підключення %s, не існує"
 
-#: descriptor.c:161 descriptor.c:213
+#: descriptor.c:127 descriptor.c:158
+#, c-format
+msgid "descriptor %s bound to the default connection does not exist"
+msgstr "дескриптор %s, прив'язаний до підключення за замовчуванням, не існує"
+
+#: descriptor.c:173 descriptor.c:225
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "елемент заголовка дескриптору \"%d\" не існує"
 
-#: descriptor.c:183
+#: descriptor.c:195
 #, c-format
 msgid "nullable is always 1"
 msgstr "nullable завжди 1"
 
-#: descriptor.c:186
+#: descriptor.c:198
 #, c-format
 msgid "key_member is always 0"
 msgstr "key_member завжди 0"
 
-#: descriptor.c:280
+#: descriptor.c:292
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "елемент дескриптору \"%s\" не реалізовано"
 
-#: descriptor.c:290
+#: descriptor.c:302
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "елемент дескриптору \"%s\" не можна встановити"
@@ -173,7 +178,7 @@ msgstr "%s: не вдалося відкрити файл \"%s\": %s\n"
 #: ecpg.c:219 ecpg.c:232 ecpg.c:248 ecpg.c:274
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: ecpg.c:243
 #, c-format
@@ -233,7 +238,7 @@ msgstr "неприпустимий літерал бітового рядка"
 #: pgc.l:607
 #, c-format
 msgid "invalid hex string literal"
-msgstr ""
+msgstr "неприпустимий шістнадцятковий рядок"
 
 #: pgc.l:625
 #, c-format
@@ -354,195 +359,195 @@ msgstr "ініціалізація заборонена у визначенні 
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "ім’я типу \"string\" зарезервовано у режимі Informix"
 
-#: preproc.y:552 preproc.y:17660
+#: preproc.y:552 preproc.y:17675
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "тип \"%s\" вже визначений"
 
-#: preproc.y:577 preproc.y:18303 preproc.y:18628 variable.c:621
+#: preproc.y:577 preproc.y:18310 preproc.y:18635 variable.c:621
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "багатовимірні масиви для простих типів даних не підтримуються"
 
-#: preproc.y:1750
+#: preproc.y:599
+#, c-format
+msgid "connection %s is overwritten to %s."
+msgstr "підключення %s перезаписано на %s."
+
+#: preproc.y:1753
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "Параметр AT не дозволений в інструкції CLOSE DATABASE"
 
-#: preproc.y:1998
+#: preproc.y:2001
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "Параметр AT не дозволений в інструкції CONNECT"
 
-#: preproc.y:2036
+#: preproc.y:2041
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "Параметр AT не дозволений в інструкції DISCONNECT"
 
-#: preproc.y:2091
+#: preproc.y:2096
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "Параметр AT не дозволений в інструкції SET CONNECTION"
 
-#: preproc.y:2113
+#: preproc.y:2118
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "Параметр AT не дозволений в інструкції TYPE"
 
-#: preproc.y:2122
+#: preproc.y:2127
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "Параметр AT не дозволений в інструкції VAR"
 
-#: preproc.y:2129
+#: preproc.y:2134
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "Параметр AT не дозволений в інструкції WHENEVER"
 
-#: preproc.y:2206 preproc.y:2378 preproc.y:2383 preproc.y:2506 preproc.y:4138
-#: preproc.y:4802 preproc.y:5335 preproc.y:5673 preproc.y:5973 preproc.y:7509
-#: preproc.y:9077 preproc.y:9082 preproc.y:11910
+#: preproc.y:2211 preproc.y:2383 preproc.y:2388 preproc.y:2511 preproc.y:4143
+#: preproc.y:4807 preproc.y:5340 preproc.y:5678 preproc.y:5978 preproc.y:7514
+#: preproc.y:9082 preproc.y:9087 preproc.y:11915
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "непідтримувана функція буде передана до сервера"
 
-#: preproc.y:2764
+#: preproc.y:2769
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL не реалізовано"
 
-#: preproc.y:3459
+#: preproc.y:3464
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN не реалізовано"
 
-#: preproc.y:10009 preproc.y:17235
+#: preproc.y:10014 preproc.y:17250
 #, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
 msgstr "\"database\" не може використовуватись як назва курсора в режимі INFORMIX"
 
-#: preproc.y:10016 preproc.y:17245
+#: preproc.y:10021 preproc.y:17260
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "використання змінної \"%s\" у різних інструкціях declare не підтримується"
 
-#: preproc.y:10018 preproc.y:17247
+#: preproc.y:10023 preproc.y:17262
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "курсор \"%s\" вже визначено"
 
-#: preproc.y:10492
+#: preproc.y:10497
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "непідтримуваний синтаксис LIMIT #,# передано до сервера"
 
-#: preproc.y:10825 preproc.y:10832
+#: preproc.y:10830 preproc.y:10837
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "підзапит в FROM повинен мати псевдонім"
 
-#: preproc.y:16927 preproc.y:16934
+#: preproc.y:16942 preproc.y:16949
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS не може містити INTO"
 
-#: preproc.y:16970
+#: preproc.y:16985
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "очікувалося \"@\", знайдено \"%s\""
 
-#: preproc.y:16982
+#: preproc.y:16997
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "підтримуються лише протоколи \"tcp\" та \"unix\" і тип бази даних \"postgresql\""
 
-#: preproc.y:16985
+#: preproc.y:17000
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "очікувалося \"://\", знайдено \"%s\""
 
-#: preproc.y:16990
+#: preproc.y:17005
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "Unix-сокети працюють лише з \"localhost\", але не з \"%s\""
 
-#: preproc.y:17016
+#: preproc.y:17031
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "очікувалось \"postgresql\", знайдено \"%s\""
 
-#: preproc.y:17019
+#: preproc.y:17034
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "неприпустимий тип підключення: %s"
 
-#: preproc.y:17028
+#: preproc.y:17043
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "очікувалось \"@\" або \"://\", знайдено \"%s\""
 
-#: preproc.y:17103 preproc.y:17121
+#: preproc.y:17118 preproc.y:17136
 #, c-format
 msgid "invalid data type"
 msgstr "неприпустимий тип даних"
 
-#: preproc.y:17132 preproc.y:17149
+#: preproc.y:17147 preproc.y:17164
 #, c-format
 msgid "incomplete statement"
 msgstr "неповний оператор"
 
-#: preproc.y:17135 preproc.y:17152
+#: preproc.y:17150 preproc.y:17167
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "нерозпізнаний токен \"%s\""
 
-#: preproc.y:17197
+#: preproc.y:17212
 #, c-format
 msgid "name \"%s\" is already declared"
 msgstr "ім'я \"%s\" вже оголошена"
 
-#: preproc.y:17463
+#: preproc.y:17478
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "точність/масштаб можна вказати лише для типів даних numeric і decimal"
 
-#: preproc.y:17475
+#: preproc.y:17490
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "специфікація інтервалу тут не допускається"
 
-#: preproc.y:17635 preproc.y:17687
+#: preproc.y:17650 preproc.y:17702
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "занадто багато рівнів у визначенні вкладеної структури/об'єднання"
 
-#: preproc.y:17810
+#: preproc.y:17825
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "вказівників на varchar не реалізовано"
 
-#: preproc.y:17997 preproc.y:18022
-#, c-format
-msgid "using unsupported DESCRIBE statement"
-msgstr "використовується непідтримуваний оператор DESCRIBE"
-
-#: preproc.y:18269
+#: preproc.y:18276
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "команда EXEC SQL VAR не допускає ініціалізатор"
 
-#: preproc.y:18586
+#: preproc.y:18593
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "вхідні масиви індикаторів не допускаються"
 
-#: preproc.y:18773
+#: preproc.y:18780
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "у визначенні змінної оператор не допускається"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:18814
+#: preproc.y:18821
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s в або поблизу \"%s\""

@@ -438,7 +438,7 @@ msgstr ""
 #: pg_basebackup.c:428 pg_receivewal.c:106 pg_recvlogical.c:107
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : <%s>\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: pg_basebackup.c:471
 #, c-format
@@ -1166,7 +1166,7 @@ msgstr "flux lancé"
 #: pg_recvlogical.c:335
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier applicatif « %s » : %m"
+msgstr "n'a pas pu ouvrir le journal applicatif « %s » : %m"
 
 #: pg_recvlogical.c:361 receivelog.c:872
 #, c-format

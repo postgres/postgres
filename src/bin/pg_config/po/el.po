@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_config (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -34,32 +34,32 @@ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχον
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου “%s”"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
 
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "δεν βρέθηκε το αρχείο “%s” για να εκτελεστεί"
+msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
 #: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: ../../common/exec.c:409
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s () απέτυχε: %m"
+msgstr "%s() απέτυχε: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
@@ -170,7 +170,7 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           εμφάνισε τις παραμέτρους που δόθηκαν ώστε να “ρυθμιστεί” το σενάριο\n"
+"  --configure           εμφάνισε τις παραμέτρους που δόθηκαν ώστε να «ρυθμιστεί» το σενάριο\n"
 "                        κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:94
@@ -248,7 +248,7 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 #: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_config.c:154
 #, c-format

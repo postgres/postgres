@@ -186,7 +186,7 @@ msgstr "l'utilisateur n'existe pas"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "échec de la recherche du nom d'utilisateur : code erreur %lu"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -387,11 +387,11 @@ msgstr "Vérifiez votre installation ou indiquez le bon chemin avec l'option -L.
 
 #: initdb.c:1473
 msgid "Enter new superuser password: "
-msgstr "Saisissez le nouveau mot de passe du super-utilisateur : "
+msgstr "Saisir le nouveau mot de passe du super-utilisateur : "
 
 #: initdb.c:1474
 msgid "Enter it again: "
-msgstr "Saisissez-le à nouveau : "
+msgstr "Saisir le mot de passe à nouveau : "
 
 #: initdb.c:1477
 #, c-format
@@ -748,7 +748,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Le programme « %s » a été trouvé par « %s »,\n"
+"Le programme « %s » a été trouvé par « %s »\n"
 "mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation."
 

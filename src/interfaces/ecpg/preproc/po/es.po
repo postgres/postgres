@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-05-14 19:39+0000\n"
-"PO-Revision-Date: 2021-05-19 22:22-0500\n"
+"PO-Revision-Date: 2021-09-16 09:22+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -124,7 +124,7 @@ msgstr "  -i             analiza además los archivos de inclusión de sistema\n
 #: ecpg.c:52
 #, c-format
 msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
-msgstr "  -I DIRECTORIO   busca los archivos de inclusión en DIRECTORIO\n"
+msgstr "  -I DIRECTORIO  busca los archivos de inclusión en DIRECTORIO\n"
 
 #: ecpg.c:53
 #, c-format

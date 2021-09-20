@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pltcl (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -30,12 +30,12 @@ msgstr "Συνάρτηση PL/Tcl για να καλέσει μία μόνο φ�
 #: pltcl.c:634
 #, c-format
 msgid "function \"%s\" is in the wrong language"
-msgstr "η συνάρτηση “%s” βρίσκεται σε λάθος γλώσσα"
+msgstr "η συνάρτηση «%s» βρίσκεται σε λάθος γλώσσα"
 
 #: pltcl.c:645
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
-msgstr "η συνάρτηση “%s” δεν πρέπει να είναι SECURITY DEFINER"
+msgstr "η συνάρτηση «%s» δεν πρέπει να είναι SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
 #: pltcl.c:679
@@ -70,7 +70,7 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"στη συνάρτηση PL/Tcl “%s”"
+"στη συνάρτηση PL/Tcl «%s»"
 
 #: pltcl.c:1536
 #, c-format
@@ -90,7 +90,7 @@ msgstr "συναρτήσεις PL/Tcl δεν είναι δυνατό να δεχ
 #: pltcl.c:1693
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "δεν ήταν δυνατή η δημιουργία εσωτερικής διαδικασίας “%s”: %s"
+msgstr "δεν ήταν δυνατή η δημιουργία εσωτερικής διαδικασίας «%s»: %s"
 
 #: pltcl.c:3197
 #, c-format
@@ -100,14 +100,14 @@ msgstr "λίστα ονόματος/τιμής στήλης πρέπει να έ
 #: pltcl.c:3215
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
-msgstr "λίστα ονόματος/τιμής στήλης περιέχει ανύπαρκτο όνομα στήλης “%s”"
+msgstr "λίστα ονόματος/τιμής στήλης περιέχει ανύπαρκτο όνομα στήλης «%s»"
 
 #: pltcl.c:3222
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος «%s»"
 
 #: pltcl.c:3228
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης «%s»"

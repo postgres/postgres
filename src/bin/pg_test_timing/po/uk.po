@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-06-10 08:47+0000\n"
-"PO-Revision-Date: 2021-07-17 14:15\n"
-"Last-Translator: Pavlo Golub\n"
+"PO-Revision-Date: 2021-08-17 10:54\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -30,7 +30,7 @@ msgstr "%s: неприпустимий аргумент для параметр�
 #: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: pg_test_timing.c:90
 #, c-format

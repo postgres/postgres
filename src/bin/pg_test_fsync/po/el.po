@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -34,7 +34,7 @@ msgstr "Χρήση: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 #: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_test_fsync.c:216
 #, c-format

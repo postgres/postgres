@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-03 16:46+0000\n"
-"PO-Revision-Date: 2021-05-24 16:35-0500\n"
+"PO-Revision-Date: 2021-09-16 09:25+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -1159,7 +1159,7 @@ msgstr ""
 msgid ""
 "pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
 "\n"
-msgstr "pg_upgrado actualiza un clúster PostgreSQL a una versión «mayor» diferente.\n"
+msgstr "pg_upgrade actualiza un clúster PostgreSQL a una versión «mayor» diferente.\n"
 
 #: option.c:289
 #, c-format
@@ -1191,8 +1191,8 @@ msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
 "                                same directory as pg_upgrade)\n"
 msgstr ""
-"  -B, --new-bindir=BINDIR    directorio de ejecutables del clúster nuevo\n"
-"                             (por omisión el mismo directorio que pg_upgrade)\n"
+"  -B, --new-bindir=BINDIR       directorio de ejecutables del clúster nuevo\n"
+"                                (por omisión el mismo directorio que pg_upgrade)\n"
 
 #: option.c:295
 #, c-format
@@ -1212,7 +1212,7 @@ msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n
 #: option.c:298
 #, c-format
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs=NUM               máximo de procesos paralelos para restaurar\n"
+msgstr "  -j, --jobs=NUM                máximo de procesos paralelos para restaurar\n"
 
 #: option.c:299
 #, c-format

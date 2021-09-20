@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -143,62 +143,62 @@ msgstr "%*s/%s MB (%d%%) Υπολογίζεται"
 #: pg_checksums.c:207
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
 #: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο «%s»: %m"
 
 #: pg_checksums.c:226
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
-msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο “%s”: ανάγνωσε %d από %d"
+msgstr "δεν ήταν δυνατή η ανάγνωση του μπλοκ %u στο αρχείο «%s»: ανάγνωσε %d από %d"
 
 #: pg_checksums.c:250
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
-msgstr "επαλήθευση του αθροίσματος ελέγχου απέτυχε στο αρχείο “%s”, μπλοκ %u: υπολογισμένο άθροισμα ελέγχου %X αλλά το μπλοκ περιέχει %X"
+msgstr "επαλήθευση του αθροίσματος ελέγχου απέτυχε στο αρχείο «%s», μπλοκ %u: υπολογισμένο άθροισμα ελέγχου %X αλλά το μπλοκ περιέχει %X"
 
 #: pg_checksums.c:265
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
-msgstr "αναζήτηση απέτυχε για μπλοκ %u στο αρχείο “%s”: %m"
+msgstr "αναζήτηση απέτυχε για μπλοκ %u στο αρχείο «%s»: %m"
 
 #: pg_checksums.c:274
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο «%s»: %m"
 
 #: pg_checksums.c:277
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
-msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο “%s”: έγραψε %d από %d"
+msgstr "δεν ήταν δυνατή η εγγραφή μπλοκ %u στο αρχείο «%s»: έγραψε %d από %d"
 
 #: pg_checksums.c:290
 #, c-format
 msgid "checksums verified in file \"%s\""
-msgstr "επαληθευμένα αθροίσματα ελέγχου στο αρχείο “%s”"
+msgstr "επαληθευμένα αθροίσματα ελέγχου στο αρχείο «%s»"
 
 #: pg_checksums.c:292
 #, c-format
 msgid "checksums enabled in file \"%s\""
-msgstr "ενεργοποιημένα αθροίσματα ελέγχου στο αρχείο “%s”"
+msgstr "ενεργοποιημένα αθροίσματα ελέγχου στο αρχείο «%s»"
 
 #: pg_checksums.c:317
 #, c-format
 msgid "could not open directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
 
 #: pg_checksums.c:344 pg_checksums.c:423
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
 
 #: pg_checksums.c:371
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
-msgstr "μη έγκυρος αριθμός τμήματος %d στο αρχείο με όνομα “%s”"
+msgstr "μη έγκυρος αριθμός τμήματος %d στο αρχείο με όνομα «%s»"
 
 #: pg_checksums.c:504
 #, c-format
@@ -208,7 +208,7 @@ msgstr "μη έγκυρη προδιαγραφή filenode, πρέπει να ε�
 #: pg_checksums.c:522 pg_checksums.c:538 pg_checksums.c:548 pg_checksums.c:557
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_checksums.c:537
 #, c-format
@@ -218,7 +218,7 @@ msgstr "δεν ορίστηκε κατάλογος δεδομένων"
 #: pg_checksums.c:546
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
 #: pg_checksums.c:556
 #, c-format

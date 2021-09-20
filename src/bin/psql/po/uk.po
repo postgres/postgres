@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-06-28 07:14+0000\n"
-"PO-Revision-Date: 2021-07-17 14:15\n"
-"Last-Translator: Pavlo Golub\n"
+"PO-Revision-Date: 2021-08-17 11:21\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -135,7 +135,7 @@ msgstr "Запит на скасування відправлений\n"
 
 #: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
 msgid "Could not send cancel request: "
-msgstr "не вдалося надіслати запит на скасування:  "
+msgstr "Не вдалося надіслати запит на скасування: "
 
 #: ../../fe_utils/print.c:336
 #, c-format
@@ -2891,7 +2891,7 @@ msgstr "  \\dAo[+] [AMPTRN [OPFPTRN]]   список операторів сім
 #: help.c:231
 #, c-format
 msgid "  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
-msgstr ""
+msgstr "  \\dAp[+] [AMPTRN [OPFPTRN]]   список функцій підтримки сімейств операторів\n"
 
 #: help.c:232
 #, c-format
@@ -3080,7 +3080,7 @@ msgstr "  \\dX     [PATTERN]      список розширеної статис
 #: help.c:270
 #, c-format
 msgid "  \\dy[+]  [PATTERN]      list event triggers\n"
-msgstr ""
+msgstr "  \\dy[+]     [PATTERN]      вивести тригери подій\n"
 
 #: help.c:271
 #, c-format
@@ -6207,7 +6207,7 @@ msgstr "-1 можна використовувати лише в неінтер�
 #: startup.c:326
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "не вдалося відкрити файл протоколу \"%s\": %m"
+msgstr "не вдалося відкрити файл журналу \"%s\": %m"
 
 #: startup.c:438
 #, c-format
@@ -6222,7 +6222,7 @@ msgstr "не вдалося встановити параметр друку \"%
 #: startup.c:699
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: startup.c:716
 #, c-format

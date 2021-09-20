@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
-"PO-Revision-Date: 2021-05-18 17:14+0900\n"
+"POT-Creation-Date: 2021-08-25 17:21+0900\n"
+"PO-Revision-Date: 2021-08-19 17:35+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -21,12 +21,12 @@ msgstr ""
 #: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
-msgstr "カレントディレクトリを識別できませんでした: %m"
+msgstr "カレントディレクトリを確認できませんでした: %m"
 
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "バイナリ\"%s\"は無効です"
+msgstr "不正なバイナリ\"%s\""
 
 #: ../../common/exec.c:205
 #, c-format
@@ -36,7 +36,7 @@ msgstr "バイナリ\"%s\"を読み取れませんでした"
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "実行する\"%s\"がありませんでした"
+msgstr "実行対象の\"%s\"が見つかりませんでした"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
@@ -55,24 +55,24 @@ msgstr "%s() が失敗しました: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #: ../../port/path.c:632 ../../port/path.c:670 ../../port/path.c:687
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "null ポインタを複製できません（内部エラー）。\n"
+msgstr "nullポインタは複製できません (内部エラー)\n"
 
 #: ../../common/wait_error.c:45
 #, c-format
 msgid "command not executable"
-msgstr "コマンドは実行形式ではありません"
+msgstr "コマンドは実行可能形式ではありません"
 
 #: ../../common/wait_error.c:49
 #, c-format
@@ -97,7 +97,7 @@ msgstr "子プロセスはシグナル%dにより終了しました: %s"
 #: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "子プロセスが未知のステータス%dで終了しました"
+msgstr "子プロセスは認識できないステータス%dで終了しました"
 
 #: ../../port/path.c:654
 #, c-format
@@ -107,7 +107,7 @@ msgstr "現在の作業ディレクトリを取得できませんでした: %s\n
 #: pg_ctl.c:258
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
-msgstr "%s: ディレクトリ \"%s\" は存在しません\n"
+msgstr "%s: ディレクトリ\"%s\"は存在しません\n"
 
 #: pg_ctl.c:261
 #, c-format
@@ -147,7 +147,7 @@ msgstr "%s: setsid()に失敗したためサーバーに接続できませんで
 #: pg_ctl.c:548
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s: ログファイル \"%s\" をオープンできませんでした: %s\n"
+msgstr "%s: ログファイル\"%s\"をオープンできませんでした: %s\n"
 
 #: pg_ctl.c:565
 #, c-format
@@ -181,9 +181,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"%2$sには\"%1$s\"プログラムが必要ですが、\"%3$s\"と同じディレクトリ\n"
-"にありませんでした。\n"
-"インストール状況を確認してください。\n"
+"%2$sにはプログラム\"%1$s\"が必要ですが、\"%3$s\"と同じディレクトリ\n"
+"にはありませんでした。\n"
+"インストールの状態を確認してください。\n"
 
 #: pg_ctl.c:818
 #, c-format
@@ -194,7 +194,7 @@ msgid ""
 msgstr ""
 "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じ\n"
 "バージョンではありませんでした。\n"
-"インストレーションを検査してください。\n"
+"インストールの状態を確認してください。\n"
 
 #: pg_ctl.c:851
 #, c-format
@@ -428,7 +428,7 @@ msgstr "%s: シグナル%dを送信できませんでした(PID: %ld): %s\n"
 #: pg_ctl.c:1434
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: 本プログラムの実行ファイルの検索に失敗しました\n"
+msgstr "%s: 自身の実行ファイルが見つかりませんでした\n"
 
 #: pg_ctl.c:1444
 #, c-format
@@ -520,12 +520,12 @@ msgstr "%s: トークン情報を取得できませんでした: エラーコー
 #: pg_ctl.c:1988
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: メモリ不足です\n"
+msgstr "%s: メモリ不足\n"
 
 #: pg_ctl.c:2018
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細は\"%s --help\"を実行してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_ctl.c:2026
 #, c-format
@@ -851,7 +851,7 @@ msgstr "%s: -Sオプションはこのプラットフォームでサポートさ
 #: pg_ctl.c:2430
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: コマンドライン引数が多すぎます(先頭は\"%s\")\n"
+msgstr "%s: コマンドライン引数が多すぎます (先頭は\"%s\")\n"
 
 #: pg_ctl.c:2456
 #, c-format

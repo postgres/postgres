@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-06-17 21:44+0000\n"
-"PO-Revision-Date: 2019-06-18 09:56+0300\n"
+"PO-Revision-Date: 2021-09-16 09:38+0200\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -496,12 +496,12 @@ msgstr "      --auth-host=METHOD    yerel TCP/IP bağlantıları için ön tanı
 #: initdb.c:2359
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "      --auth-local=METHOD    yerel soket bağlantıları için ön tanımlı kimlik doğrulama yöntemi\n"
+msgstr "      --auth-local=METHOD   yerel soket bağlantıları için ön tanımlı kimlik doğrulama yöntemi\n"
 
 #: initdb.c:2360
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr "[-D, --pgdata=]DATADIR     bu veritabanı kümesi için yer\n"
+msgstr "[-D, --pgdata=]DATADIR      bu veritabanı kümesi için yer\n"
 
 #: initdb.c:2361
 #, c-format
@@ -539,7 +539,7 @@ msgstr "      --no-locale           --locale=C'ye eşdeğer\n"
 #: initdb.c:2369
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr "      --pwfile=DOSYA         yeni superuser için parolayı dosyadan oku\n"
+msgstr "      --pwfile=DOSYA        yeni superuser için parolayı dosyadan oku\n"
 
 #: initdb.c:2370
 #, c-format
@@ -597,7 +597,7 @@ msgstr "  -L DIRECTORY              girdi dosyalarının nerede bulunacağını 
 #: initdb.c:2380
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
-msgstr "  -n, --no-clean             hatalardan sonra temizlik yapma\n"
+msgstr "  -n, --no-clean            hatalardan sonra temizlik yapma\n"
 
 #: initdb.c:2381
 #, c-format

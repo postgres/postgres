@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:22+0900\n"
 "PO-Revision-Date: 2021-05-17 16:03+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -248,7 +248,7 @@ msgstr "--statsの引数が認識できません: %s"
 #: pg_waldump.c:937
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "コマンドライン引数が多すぎます(先頭は\"%s\")"
+msgstr "コマンドライン引数が多すぎます (先頭は\"%s\")"
 
 #: pg_waldump.c:947 pg_waldump.c:967
 #, c-format
@@ -283,7 +283,7 @@ msgstr "WALの開始位置が指定されていません"
 #: pg_waldump.c:1051
 #, c-format
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: pg_waldump.c:1057
 #, c-format
@@ -305,4 +305,4 @@ msgstr "WALレコードの%X/%Xでエラー: %s"
 #: pg_waldump.c:1127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "\"%s --help\"で詳細を確認してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"

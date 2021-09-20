@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-04-02 07:45+0000\n"
-"PO-Revision-Date: 2019-04-03 14:47+0300\n"
+"PO-Revision-Date: 2021-09-16 09:42+0200\n"
 "Last-Translator: Abdullah Gülner\n"
 "Language-Team: \n"
 "Language: tr\n"
@@ -1035,7 +1035,7 @@ msgstr "  -c, --check                   sadece kümeleri (cluster) kontrol et, v
 #: option.c:284
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
-msgstr "  -d, --old-datadir=DATADIR      eski küme (cluster) veri dizini\n"
+msgstr "  -d, --old-datadir=DATADIR     eski küme (cluster) veri dizini\n"
 
 #: option.c:285
 #, c-format
@@ -1050,27 +1050,27 @@ msgstr "  -j, --jobs                    kullanılacak eşzamanlı süreç veya i
 #: option.c:287
 #, c-format
 msgid "  -k, --link                    link instead of copying files to new cluster\n"
-msgstr "  -k, --link                   dosyaları yeni kümeye (cluster) kopyalama yerine bağlantılandır\n"
+msgstr "  -k, --link                    dosyaları yeni kümeye (cluster) kopyalama yerine bağlantılandır\n"
 
 #: option.c:288
 #, c-format
 msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
-msgstr "  -o, --old-options=OPTIONS      sunucuya geçirilecek eski küme (cluster) seçenekleri\n"
+msgstr "  -o, --old-options=OPTIONS     sunucuya geçirilecek eski küme (cluster) seçenekleri\n"
 
 #: option.c:289
 #, c-format
 msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
-msgstr "  -O, --ne-options=OPTIONS       sunucuya geçirilecek yeni küme (cluster) seçenekleri\n"
+msgstr "  -O, --new-options=OPTIONS     sunucuya geçirilecek yeni küme (cluster) seçenekleri\n"
 
 #: option.c:290
 #, c-format
 msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
-msgstr "  -p, --old-port=PORT         eski küme port numarası (varsayılan %d)\n"
+msgstr "  -p, --old-port=PORT           eski küme port numarası (varsayılan %d)\n"
 
 #: option.c:291
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
-msgstr "  -P, --new-port=PORT          yeni küme port numarası (varsayılan %d)\n"
+msgstr "  -P, --new-port=PORT           yeni küme port numarası (varsayılan %d)\n"
 
 #: option.c:292
 #, c-format
@@ -1080,9 +1080,7 @@ msgstr "  -r, --retain                  başarılı işlem sonrası SQL ve log d
 #: option.c:293
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
-msgstr ""
-"  -U, --username=NAME          küme (cluster) superuser'ı (varsayılan \"%s\")\n"
-" \n"
+msgstr "  -U, --username=NAME           küme (cluster) superuser'ı (varsayılan \"%s\") \n"
 
 #: option.c:294
 #, c-format
@@ -1092,7 +1090,7 @@ msgstr "  -v, --verbose                 açıklamalı (verbose) dahili loglamay�
 #: option.c:295
 #, c-format
 msgid "  -V, --version                 display version information, then exit\n"
-msgstr "  -V, --version                sürüm bilgisini görüntüle, sonrasında çık\n"
+msgstr "  -V, --version                 sürüm bilgisini görüntüle, sonrasında çık\n"
 
 #: option.c:296
 #, c-format

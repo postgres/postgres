@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:14+0000\n"
-"PO-Revision-Date: 2020-10-31 21:30+0100\n"
+"PO-Revision-Date: 2021-09-16 09:07+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -570,7 +570,7 @@ msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s restart   [-D ADRESÁŘ] [-m MÓD-UKONČENÍ] [-W] [-t SECS] [-s]\n"
+"  %s restart    [-D ADRESÁŘ] [-m MÓD-UKONČENÍ] [-W] [-t SECS] [-s]\n"
 "                    [-o VOLBY] [-c]\n"
 
 #: pg_ctl.c:2040
@@ -591,7 +591,7 @@ msgstr "  %s promote    [-D ADRESÁŘ] [-W] [-t SECS] [-s]\n"
 #: pg_ctl.c:2043
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D ADRESÁŘ] [-s]\n"
+msgstr "  %s logrotate  [-D ADRESÁŘ] [-s]\n"
 
 #: pg_ctl.c:2044
 #, c-format

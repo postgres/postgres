@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-28 07:17+0000\n"
-"PO-Revision-Date: 2021-07-17 14:15\n"
-"Last-Translator: Pavlo Golub\n"
+"POT-Creation-Date: 2021-08-17 08:47+0000\n"
+"PO-Revision-Date: 2021-08-17 11:21\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -63,7 +63,7 @@ msgstr "Запит на скасування відправлений\n"
 
 #: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
 msgid "Could not send cancel request: "
-msgstr "не вдалося надіслати запит на скасування:  "
+msgstr "Не вдалося надіслати запит на скасування: "
 
 #: ../../fe_utils/connect_utils.c:49 ../../fe_utils/connect_utils.c:107
 msgid "Password: "
@@ -134,7 +134,7 @@ msgstr "запит був: %s"
 #: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:251 vacuumdb.c:270
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: clusterdb.c:129 createdb.c:140 createuser.c:185 dropdb.c:118 dropuser.c:107
 #: pg_isready.c:108 reindexdb.c:191 vacuumdb.c:268
@@ -173,18 +173,18 @@ msgid "%s clusters all previously clustered tables in a database.\n\n"
 msgstr "%s кластеризація усіх попередньо кластеризованих таблиць в базі даних.\n\n"
 
 #: clusterdb.c:268 createdb.c:267 createuser.c:351 dropdb.c:171 dropuser.c:169
-#: pg_isready.c:225 reindexdb.c:792 vacuumdb.c:1032
+#: pg_isready.c:225 reindexdb.c:792 vacuumdb.c:1025
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: clusterdb.c:269 reindexdb.c:793 vacuumdb.c:1033
+#: clusterdb.c:269 reindexdb.c:793 vacuumdb.c:1026
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
 #: clusterdb.c:270 createdb.c:269 createuser.c:353 dropdb.c:173 dropuser.c:171
-#: pg_isready.c:228 reindexdb.c:794 vacuumdb.c:1034
+#: pg_isready.c:228 reindexdb.c:794 vacuumdb.c:1027
 #, c-format
 msgid "\n"
 "Options:\n"
@@ -232,39 +232,39 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help               показати цю довідку, потім вийти\n"
 
 #: clusterdb.c:279 createdb.c:280 createuser.c:375 dropdb.c:180 dropuser.c:178
-#: pg_isready.c:234 reindexdb.c:809 vacuumdb.c:1059
+#: pg_isready.c:234 reindexdb.c:809 vacuumdb.c:1052
 #, c-format
 msgid "\n"
 "Connection options:\n"
 msgstr "\n"
 "Налаштування з'єднання:\n"
 
-#: clusterdb.c:280 createuser.c:376 dropdb.c:181 dropuser.c:179 vacuumdb.c:1060
+#: clusterdb.c:280 createuser.c:376 dropdb.c:181 dropuser.c:179 vacuumdb.c:1053
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME     хост сервера бази даних або каталог сокетів\n"
 
-#: clusterdb.c:281 createuser.c:377 dropdb.c:182 dropuser.c:180 vacuumdb.c:1061
+#: clusterdb.c:281 createuser.c:377 dropdb.c:182 dropuser.c:180 vacuumdb.c:1054
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT         порт сервера бази даних\n"
 
-#: clusterdb.c:282 dropdb.c:183 vacuumdb.c:1062
+#: clusterdb.c:282 dropdb.c:183 vacuumdb.c:1055
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ІМ'Я_КОРИСТУВАЧА   ім'я користувача для з'єднання з сервером\n"
 
-#: clusterdb.c:283 createuser.c:379 dropdb.c:184 dropuser.c:182 vacuumdb.c:1063
+#: clusterdb.c:283 createuser.c:379 dropdb.c:184 dropuser.c:182 vacuumdb.c:1056
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         ніколи не запитувати пароль\n"
 
-#: clusterdb.c:284 createuser.c:380 dropdb.c:185 dropuser.c:183 vacuumdb.c:1064
+#: clusterdb.c:284 createuser.c:380 dropdb.c:185 dropuser.c:183 vacuumdb.c:1057
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password           запросити пароль\n"
 
-#: clusterdb.c:285 dropdb.c:186 vacuumdb.c:1065
+#: clusterdb.c:285 dropdb.c:186 vacuumdb.c:1058
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME    альтернативна бази даних для обслуговування\n"
@@ -277,7 +277,7 @@ msgstr "\n"
 "Для деталей читайте опис команди SQL CLUSTER.\n"
 
 #: clusterdb.c:287 createdb.c:288 createuser.c:381 dropdb.c:187 dropuser.c:184
-#: pg_isready.c:239 reindexdb.c:817 vacuumdb.c:1067
+#: pg_isready.c:239 reindexdb.c:817 vacuumdb.c:1060
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
@@ -285,7 +285,7 @@ msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
 #: clusterdb.c:288 createdb.c:289 createuser.c:382 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:818 vacuumdb.c:1068
+#: pg_isready.c:240 reindexdb.c:818 vacuumdb.c:1061
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
@@ -917,7 +917,7 @@ msgstr "\n"
 #: vacuumdb.c:206
 #, c-format
 msgid "parallel workers for vacuum must be greater than or equal to zero"
-msgstr ""
+msgstr "паралельні робітники для вакууму повинні бути більшими або дорівнювати нулю"
 
 #: vacuumdb.c:226
 #, c-format
@@ -977,138 +977,138 @@ msgstr "%s: обробка бази даних \"%s\": %s\n"
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: очищення бази даних \"%s\"\n"
 
-#: vacuumdb.c:1020
+#: vacuumdb.c:1013
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "очистити таблиці \"%s\" в базі даних \"%s\" не вдалося: %s"
 
-#: vacuumdb.c:1023
+#: vacuumdb.c:1016
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "очистити базу даних \"%s\" не вдалося: %s"
 
-#: vacuumdb.c:1031
+#: vacuumdb.c:1024
 #, c-format
 msgid "%s cleans and analyzes a PostgreSQL database.\n\n"
 msgstr "%s очищує й аналізує базу даних PostgreSQL.\n\n"
 
-#: vacuumdb.c:1035
+#: vacuumdb.c:1028
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       очистити усі бази даних\n"
 
-#: vacuumdb.c:1036
+#: vacuumdb.c:1029
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=ІМ'Я_БД             база даних для очищення\n"
 
-#: vacuumdb.c:1037
+#: vacuumdb.c:1030
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     відключити пропуск сторінок\n"
 
-#: vacuumdb.c:1038
+#: vacuumdb.c:1031
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo              показати команди, надіслані серверу\n"
 
-#: vacuumdb.c:1039
+#: vacuumdb.c:1032
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                     зробити повне очищення\n"
 
-#: vacuumdb.c:1040
+#: vacuumdb.c:1033
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                   заморозити інформацію щодо транзакцій в рядках\n"
 
-#: vacuumdb.c:1041
+#: vacuumdb.c:1034
 #, c-format
 msgid "      --force-index-cleanup       always remove index entries that point to dead tuples\n"
 msgstr "      --force-index-cleanup       завжди видаляти записи індексів, які вказують на мертві кортежі\n"
 
-#: vacuumdb.c:1042
+#: vacuumdb.c:1035
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr "  -j, --jobs=ЧИСЛО                   використати ці паралельні підключення для очищення\n"
 
-#: vacuumdb.c:1043
+#: vacuumdb.c:1036
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
 msgstr "      --min-mxid-age=MXID_AGE     мінімальний ID ери мультитранзакції таблиць для вакууму\n"
 
-#: vacuumdb.c:1044
+#: vacuumdb.c:1037
 #, c-format
 msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
 msgstr "      --min-mxid-age=MXID_AGE     мінімальний ID ери транзакції таблиць для вакууму\n"
 
-#: vacuumdb.c:1045
+#: vacuumdb.c:1038
 #, c-format
 msgid "      --no-index-cleanup          don't remove index entries that point to dead tuples\n"
 msgstr "      --no-index-cleanup          не видаляти записи індексів, які вказують на мертві кортежі\n"
 
-#: vacuumdb.c:1046
+#: vacuumdb.c:1039
 #, c-format
 msgid "      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"
 msgstr "      --no-process-toast          пропускати таблицю TOAST, пов'язану з таблицею для очищення\n"
 
-#: vacuumdb.c:1047
+#: vacuumdb.c:1040
 #, c-format
 msgid "      --no-truncate               don't truncate empty pages at the end of the table\n"
 msgstr "      --no-truncate               не скорочувати пусті сторінки наприкінці таблиці\n"
 
-#: vacuumdb.c:1048
+#: vacuumdb.c:1041
 #, c-format
 msgid "  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"
-msgstr ""
+msgstr "  -P, --parallel=PARALLEL_WORKERS  використати таку кількість фонових робітників для очищення, якщо вони доступні\n"
 
-#: vacuumdb.c:1049
+#: vacuumdb.c:1042
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet             не писати жодних повідомлень\n"
 
-#: vacuumdb.c:1050
+#: vacuumdb.c:1043
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
 msgstr "      --skip-locked               пропустити відношення, що не можуть бути заблоковані негайно\n"
 
-#: vacuumdb.c:1051
+#: vacuumdb.c:1044
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='ТАБЛИЦЯ[(СТОВПЦІ)]'  очистити тільки вказані таблиці\n"
 
-#: vacuumdb.c:1052
+#: vacuumdb.c:1045
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose              виводити багато інформації\n"
 
-#: vacuumdb.c:1053
+#: vacuumdb.c:1046
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                  вивести інформацію про версію і вийти\n"
 
-#: vacuumdb.c:1054
+#: vacuumdb.c:1047
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                 оновити статистику для оптимізатора\n"
 
-#: vacuumdb.c:1055
+#: vacuumdb.c:1048
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
 msgstr "  -Z, --analyze-only             оновити лише статистику для оптимізатора, не очищати\n"
 
-#: vacuumdb.c:1056
+#: vacuumdb.c:1049
 #, c-format
 msgid "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
 "                                  stages for faster results; no vacuum\n"
 msgstr "      --analyze-in-stages         оновити лише статистику для оптимізатора, у декілька стадій для швидших результатів, не очищати\n"
 
-#: vacuumdb.c:1058
+#: vacuumdb.c:1051
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показати цю справку, потім вийти\n"
 
-#: vacuumdb.c:1066
+#: vacuumdb.c:1059
 #, c-format
 msgid "\n"
 "Read the description of the SQL command VACUUM for details.\n"

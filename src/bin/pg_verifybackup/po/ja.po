@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:22+0900\n"
 "PO-Revision-Date: 2021-05-17 16:02+0900\n"
 "Last-Translator: Haiying Tang <tanghy.fnst@cn.fujitsu.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -36,12 +36,12 @@ msgstr "警告: "
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "null ポインタを複製できません (内部エラー)\n"
+msgstr "nullポインタは複製できません (内部エラー)\n"
 
 #: ../../common/jsonapi.c:1066
 #, c-format
@@ -239,7 +239,7 @@ msgstr "最後の行が改行で終わっていません"
 #: parse_manifest.c:657
 #, c-format
 msgid "out of memory"
-msgstr "メモリ不足です"
+msgstr "メモリ不足"
 
 #: parse_manifest.c:659
 #, c-format
@@ -289,7 +289,7 @@ msgstr "バックアップディレクトリが指定されていません"
 #: pg_verifybackup.c:275
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
+msgstr "コマンドライン引数が多すぎます (先頭は\"%s\")"
 
 #: pg_verifybackup.c:298
 #, c-format
@@ -299,8 +299,8 @@ msgid ""
 "Check your installation."
 msgstr ""
 "%2$sにはプログラム\"%1$s\"が必要ですが、\"%3$s\"と同じディレクトリ\n"
-"にありませんでした。\n"
-"インストール状況を確認してください。"
+"にはありませんでした。\n"
+"インストールの状態を確認してください。"
 
 #: pg_verifybackup.c:303
 #, c-format
@@ -311,114 +311,114 @@ msgid ""
 msgstr ""
 "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じ\n"
 "バージョンではありませんでした。\n"
-"インストール状況を確認してください。"
+"インストールの状態を確認してください。"
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:362
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "バックアップが正常に検証されました\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:388 pg_verifybackup.c:724
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:392
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:752
+#: pg_verifybackup.c:412 pg_verifybackup.c:753
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み取りに失敗しました: %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:415
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$lldバイトのうち%2$dバイトを読み込みました"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:475
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "バックアップ目録内にパス名の重複: \"%s\""
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:538 pg_verifybackup.c:545
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:577
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:597
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "\"%s\"というファイルまたはディレクトリの情報を取得できませんでした: %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:620
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\"はファイルまたはディレクトリではありません"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:630
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\"はディスクに存在しますが、目録には存在しません"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:642
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\"はディスク上ではサイズが%lldバイトですが、目録では%zuバイトです"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:669
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\"目録には存在しますが、ディスクには存在しません"
 
-#: pg_verifybackup.c:731
+#: pg_verifybackup.c:732
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの初期化に失敗しました"
 
-#: pg_verifybackup.c:743
+#: pg_verifybackup.c:744
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの更新に失敗しました"
 
-#: pg_verifybackup.c:758
+#: pg_verifybackup.c:759
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 
-#: pg_verifybackup.c:777
+#: pg_verifybackup.c:778
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "file\"%s\"は%zuバイトを含む必要がありますが、%zuバイトが読み込まれました"
 
-#: pg_verifybackup.c:787
+#: pg_verifybackup.c:788
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの完了に失敗しました"
 
-#: pg_verifybackup.c:795
+#: pg_verifybackup.c:796
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "ファイル\"%s\"のチェックサムの長さは%dですが、予期されるのは%dです"
 
-#: pg_verifybackup.c:799
+#: pg_verifybackup.c:800
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムが一致しません"
 
-#: pg_verifybackup.c:823
+#: pg_verifybackup.c:824
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "タイムライン%uのWAL解析に失敗しました"
 
-#: pg_verifybackup.c:909
+#: pg_verifybackup.c:910
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -427,7 +427,7 @@ msgstr ""
 "%sはバックアップ目録に対してバックアップを検証します。\n"
 "\n"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:911
 #, c-format
 msgid ""
 "Usage:\n"
@@ -438,57 +438,57 @@ msgstr ""
 "  %s [オプション]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:912
 #, c-format
 msgid "Options:\n"
 msgstr "オプション:\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         エラー時に直ちに終了する\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:914
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  指示されたパスを無視\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:915
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    目録に指定されたパスを使用する\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:916
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          WALファイルをパースしようとしない\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:917
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 エラー以外何も出力しない\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:918
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        スキップチェックサム検証\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:919
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH    指定したWALファイルのパスを使用する\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:920
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               バージョン情報を表示して終了\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:921
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  このヘルプを表示して終了\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:922
 #, c-format
 msgid ""
 "\n"
@@ -497,7 +497,7 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:923
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"

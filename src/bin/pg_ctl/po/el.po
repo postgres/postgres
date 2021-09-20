@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_ctl (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -28,27 +28,27 @@ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχον
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου  “%s”"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου  «%s»"
 
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "δεν βρέθηκε το αρχείο “%s”  για να εκτελεστεί"
+msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
 #: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: ../../common/exec.c:409
 #, c-format
@@ -109,32 +109,32 @@ msgstr "δεν ήταν δυνατή η επεξεργασία του τρέχο
 #: pg_ctl.c:258
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
-msgstr "%s: ο κατάλογος “%s” δεν υπάρχει\n"
+msgstr "%s: ο κατάλογος «%s» δεν υπάρχει\n"
 
 #: pg_ctl.c:261
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η πρόσβαση στον κατάλογο “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η πρόσβαση στον κατάλογο «%s»: %s\n"
 
 #: pg_ctl.c:274
 #, c-format
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
-msgstr "%s: ο κατάλογος “%s” δεν είναι κατάλογος συστάδας βάσης δεδομένων\n"
+msgstr "%s: ο κατάλογος «%s» δεν είναι κατάλογος συστάδας βάσης δεδομένων\n"
 
 #: pg_ctl.c:287
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατό το άνοιγμα αρχείου PID “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατό το άνοιγμα αρχείου PID «%s»: %s\n"
 
 #: pg_ctl.c:296
 #, c-format
 msgid "%s: the PID file \"%s\" is empty\n"
-msgstr "%s: το αρχείο PID “%s” είναι άδειο\n"
+msgstr "%s: το αρχείο PID «%s» είναι άδειο\n"
 
 #: pg_ctl.c:299
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: μη έγκυρα δεδομένα στο αρχείο PID “%s”\n"
+msgstr "%s: μη έγκυρα δεδομένα στο αρχείο PID «%s»\n"
 
 #: pg_ctl.c:458 pg_ctl.c:500
 #, c-format
@@ -149,7 +149,7 @@ msgstr "%s: δεν ήταν δυνατή η εκκίνηση του διακομ
 #: pg_ctl.c:548
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατό το άνοιγμα του αρχείου καταγραφής “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατό το άνοιγμα του αρχείου καταγραφής «%s»: %s\n"
 
 #: pg_ctl.c:565
 #, c-format
@@ -164,12 +164,12 @@ msgstr "%s: δεν είναι δυνατός ο ορισμός ορίου μεγ
 #: pg_ctl.c:738
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s: δεν ήταν δυνατή η ανάγνωση αρχείου “%s”\n"
+msgstr "%s: δεν ήταν δυνατή η ανάγνωση αρχείου «%s»\n"
 
 #: pg_ctl.c:743
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: το αρχείο επιλογής “%s” πρέπει να έχει ακριβώς μία γραμμή\n"
+msgstr "%s: το αρχείο επιλογής «%s» πρέπει να έχει ακριβώς μία γραμμή\n"
 
 #: pg_ctl.c:785 pg_ctl.c:974 pg_ctl.c:1070
 #, c-format
@@ -183,8 +183,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Το πρόγραμμα \"%s\" απαιτείται από %s αλλά δεν βρέθηκε στον\n"
-"ίδιο κατάλογο με το \"%s\".\n"
+"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
+"ίδιο κατάλογο με το «%s».\n"
 "Ελέγξτε την εγκατάστασή σας.\n"
 
 #: pg_ctl.c:818
@@ -194,7 +194,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Το πρόγραμμα \"%s\" βρέθηκε από το \"%s\"\n"
+"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
 "αλλά δεν ήταν στην ίδια έκδοση με %s.\n"
 "Ελέγξτε την εγκατάστασή σας.\n"
 
@@ -245,7 +245,7 @@ msgstr "εκκίνηση διακομιστή\n"
 #: pg_ctl.c:959 pg_ctl.c:1046 pg_ctl.c:1137 pg_ctl.c:1176 pg_ctl.c:1270
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s: το αρχείο PID “%s” δεν υπάρχει\n"
+msgstr "%s: το αρχείο PID «%s» δεν υπάρχει\n"
 
 #: pg_ctl.c:960 pg_ctl.c:1048 pg_ctl.c:1138 pg_ctl.c:1177 pg_ctl.c:1271
 msgid "Is server running?\n"
@@ -344,12 +344,12 @@ msgstr "%s: δεν είναι δυνατή η προβίβαση του διακ
 #: pg_ctl.c:1201
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η δημιουργία του αρχείου σήματος προβιβασμού “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η δημιουργία του αρχείου σήματος προβιβασμού «%s»: %s\n"
 
 #: pg_ctl.c:1207
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η εγγραφή του αρχείου σήματος προβιβασμού “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η εγγραφή του αρχείου σήματος προβιβασμού «%s»: %s\n"
 
 #: pg_ctl.c:1215
 #, c-format
@@ -359,7 +359,7 @@ msgstr "%s: δεν ήταν δυνατή η αποστολή σήματος πρ
 #: pg_ctl.c:1218
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η κατάργηση του αρχείου σήματος προβιβασμού “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η κατάργηση του αρχείου σήματος προβιβασμού «%s»: %s\n"
 
 #: pg_ctl.c:1228
 msgid "waiting for server to promote..."
@@ -386,12 +386,12 @@ msgstr "%s: δεν είναι δυνατή η περιστροφή του αρχ
 #: pg_ctl.c:1287
 #, c-format
 msgid "%s: could not create log rotation signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η δημιουργία αρχείου σήματος περιστροφής αρχείου καταγραφής “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η δημιουργία αρχείου σήματος περιστροφής αρχείου καταγραφής «%s»: %s\n"
 
 #: pg_ctl.c:1293
 #, c-format
 msgid "%s: could not write log rotation signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η εγγραφή του αρχείου σήματος περιστροφής αρχείου καταγραφής “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η εγγραφή του αρχείου σήματος περιστροφής αρχείου καταγραφής «%s»: %s\n"
 
 #: pg_ctl.c:1301
 #, c-format
@@ -401,7 +401,7 @@ msgstr "%s: δεν ήταν δυνατή η αποστολή σήματος πε
 #: pg_ctl.c:1304
 #, c-format
 msgid "%s: could not remove log rotation signal file \"%s\": %s\n"
-msgstr "%s: δεν ήταν δυνατή η κατάργηση του αρχείου σήματος περιστροφής αρχείου καταγραφής “%s”: %s\n"
+msgstr "%s: δεν ήταν δυνατή η κατάργηση του αρχείου σήματος περιστροφής αρχείου καταγραφής «%s»: %s\n"
 
 #: pg_ctl.c:1309
 msgid "server signaled to rotate log file\n"
@@ -445,27 +445,27 @@ msgstr "%s: δεν ήταν δυνατό το άνοιγμα του διαχει
 #: pg_ctl.c:1520
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: η υπηρεσία “%s” έχει ήδη καταχωρηθεί\n"
+msgstr "%s: η υπηρεσία «%s» έχει ήδη καταχωρηθεί\n"
 
 #: pg_ctl.c:1531
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
-msgstr "%s: δεν ήταν δυνατή η καταχώρηση της υπηρεσίας “%s”: κωδικός σφάλματος %lu\n"
+msgstr "%s: δεν ήταν δυνατή η καταχώρηση της υπηρεσίας «%s»: κωδικός σφάλματος %lu\n"
 
 #: pg_ctl.c:1554
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: η υπηρεσία “%s” δεν έχει καταχωρηθεί\n"
+msgstr "%s: η υπηρεσία «%s» δεν έχει καταχωρηθεί\n"
 
 #: pg_ctl.c:1561
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
-msgstr "%s: δεν ήταν δυνατό το άνοιγμα της υπηρεσίας “%s”: κωδικός σφάλματος %lu\n"
+msgstr "%s: δεν ήταν δυνατό το άνοιγμα της υπηρεσίας «%s»: κωδικός σφάλματος %lu\n"
 
 #: pg_ctl.c:1570
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
-msgstr "%s: δεν ήταν δυνατή η διαγραφή καταχώρησης της υπηρεσίας “%s”: κωδικός σφάλματος %lu\n"
+msgstr "%s: δεν ήταν δυνατή η διαγραφή καταχώρησης της υπηρεσίας «%s»: κωδικός σφάλματος %lu\n"
 
 #: pg_ctl.c:1657
 msgid "Waiting for server startup...\n"
@@ -482,7 +482,7 @@ msgstr "Ο διακομιστής ξεκίνησε και αποδέχτηκε �
 #: pg_ctl.c:1719
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
-msgstr "%s: δεν ήταν δυνατή η εκκίνηση της υπηρεσίας “%s”: κωδικός σφάλματος %lu\n"
+msgstr "%s: δεν ήταν δυνατή η εκκίνηση της υπηρεσίας «%s»: κωδικός σφάλματος %lu\n"
 
 #: pg_ctl.c:1789
 #, c-format
@@ -527,7 +527,7 @@ msgstr "%s: έλλειψη μνήμης\n"
 #: pg_ctl.c:2018
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_ctl.c:2026
 #, c-format
@@ -645,7 +645,7 @@ msgstr "  -t, --timeout=SECS     δευτερόλεπτα αναμονής κα�
 #: pg_ctl.c:2052
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
+msgstr "  -V, --version          εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
 #: pg_ctl.c:2053
 #, c-format
@@ -717,7 +717,7 @@ msgstr ""
 #: pg_ctl.c:2069
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m, --mode=MODE        MODE μπορεί να είνα “smart”, “fast”, ή “immediate”\n"
+msgstr "  -m, --mode=MODE        MODE μπορεί να είνα «smart», «fast», ή «immediate»\n"
 
 #: pg_ctl.c:2071
 #, c-format
@@ -817,22 +817,22 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 #: pg_ctl.c:2117
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: μη αναγνωρισμένη λειτουργία τερματισμού λειτουργίας “%s”\n"
+msgstr "%s: μη αναγνωρισμένη λειτουργία τερματισμού λειτουργίας «%s»\n"
 
 #: pg_ctl.c:2146
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: μη αναγνωρισμένο όνομα σήματος “%s”\n"
+msgstr "%s: μη αναγνωρισμένο όνομα σήματος «%s»\n"
 
 #: pg_ctl.c:2163
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
-msgstr "%s: μη αναγνωρίσιμος τύπος έναρξης “%s”\n"
+msgstr "%s: μη αναγνωρίσιμος τύπος έναρξης «%s»\n"
 
 #: pg_ctl.c:2218
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
-msgstr "%s: δεν ήταν δυνατός ο προσδιορισμός του καταλόγου δεδομένων με χρήση της εντολής “%s”\n"
+msgstr "%s: δεν ήταν δυνατός ο προσδιορισμός του καταλόγου δεδομένων με χρήση της εντολής «%s»\n"
 
 #: pg_ctl.c:2242
 #, c-format
@@ -858,7 +858,7 @@ msgstr "%s: επιλογή -S δεν υποστηρίζεται σε αυτήν 
 #: pg_ctl.c:2430
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (πρώτη είναι η “%s”)\n"
+msgstr "%s: πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)\n"
 
 #: pg_ctl.c:2456
 #, c-format
@@ -868,7 +868,7 @@ msgstr "%s: λείπουν παράμετροι για τη λειτουργία
 #: pg_ctl.c:2474
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: μη αναγνωρισμένη λειτουργία “%s”\n"
+msgstr "%s: μη αναγνωρισμένη λειτουργία «%s»\n"
 
 #: pg_ctl.c:2484
 #, c-format

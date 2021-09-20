@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-30 13:09+0900\n"
+"POT-Creation-Date: 2021-08-25 17:21+0900\n"
 "PO-Revision-Date: 2021-05-18 17:11+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -204,7 +204,7 @@ msgstr "不正なファイルノード指定、数値である必要がありま
 #: pg_checksums.c:522 pg_checksums.c:538 pg_checksums.c:548 pg_checksums.c:557
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細については\"%s --help\"を実行してください。\n"
+msgstr "詳細は\"%s --help\"で確認してください。\n"
 
 #: pg_checksums.c:537
 #, c-format
@@ -214,7 +214,7 @@ msgstr "データディレクトリが指定されていません"
 #: pg_checksums.c:546
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "コマンドライン引数が多すぎます (最初は\"%s\")"
+msgstr "コマンドライン引数が多すぎます (先頭は\"%s\")"
 
 #: pg_checksums.c:556
 #, c-format

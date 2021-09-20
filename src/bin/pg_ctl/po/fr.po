@@ -195,8 +195,8 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme « %s », trouvé par « %s », n'est pas de la même version\n"
-"que %s.\n"
+"Le programme « %s » a été trouvé par « %s »\n"
+"mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:851
@@ -846,7 +846,7 @@ msgstr ""
 #: pg_ctl.c:2092
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : %s\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: pg_ctl.c:2117
 #, c-format

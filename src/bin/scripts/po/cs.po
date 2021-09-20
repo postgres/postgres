@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pgscripts-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:16+0000\n"
-"PO-Revision-Date: 2020-10-31 21:04+0100\n"
+"PO-Revision-Date: 2021-09-16 09:15+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -230,7 +230,7 @@ msgstr "  -h, --host=HOSTNAME       jméno databázového serveru nebo adresář
 #: vacuumdb.c:936
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
-msgstr "  -p, --port=PORT          port databázového serveru\n"
+msgstr "  -p, --port=PORT           port databázového serveru\n"
 
 #: clusterdb.c:280 dropdb.c:182 reindexdb.c:769 vacuumdb.c:937
 #, c-format
@@ -655,7 +655,7 @@ msgstr "  %s [PŘEPÍNAČ]... DATABÁZE\n"
 #: dropdb.c:174
 #, c-format
 msgid "  -f, --force               try to terminate other connections before dropping\n"
-msgstr "  -f, --force                    pokus se přerušit ostatní spojení před smazáním\n"
+msgstr "  -f, --force               pokus se přerušit ostatní spojení před smazáním\n"
 
 #: dropdb.c:175
 #, c-format
@@ -791,12 +791,12 @@ msgstr "  -h, --host=HOSTNAME       jméno databázového serveru nebo adresář
 #: pg_isready.c:235
 #, c-format
 msgid "  -p, --port=PORT          database server port\n"
-msgstr "  -p, --port=PORT          port databázového serveru\n"
+msgstr "  -p, --port=PORT           port databázového serveru\n"
 
 #: pg_isready.c:236
 #, c-format
 msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
-msgstr "  -t, --timeout=SECS       počet vteřin čekání při pokusu o spojení, 0 toto omezení vypne (výchozí: %s)\n"
+msgstr "  -t, --timeout=SECS        počet vteřin čekání při pokusu o spojení, 0 toto omezení vypne (výchozí: %s)\n"
 
 #: pg_isready.c:237
 #, c-format
@@ -931,7 +931,7 @@ msgstr "  -i, --index=JMÉNO         obnovit pouze vybraný index\n"
 #: reindexdb.c:758
 #, c-format
 msgid "  -j, --jobs=NUM            use this many concurrent connections to reindex\n"
-msgstr "  -j, --jobs=NUM               použij tento počet paralelních jobů pro reindexování\n"
+msgstr "  -j, --jobs=NUM            použij tento počet paralelních jobů pro reindexování\n"
 
 #: reindexdb.c:760
 #, c-format

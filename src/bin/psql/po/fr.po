@@ -100,7 +100,7 @@ msgstr "l'utilisateur n'existe pas"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "échec de la recherche du nom d'utilisateur : code erreur %lu"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -314,11 +314,11 @@ msgstr "Le tampon de requête est vide."
 
 #: command.c:2030
 msgid "Enter new password: "
-msgstr "Saisissez le nouveau mot de passe : "
+msgstr "Saisir le nouveau mot de passe : "
 
 #: command.c:2031
 msgid "Enter it again: "
-msgstr "Saisissez-le à nouveau : "
+msgstr "Saisir le mot de passe à nouveau : "
 
 #: command.c:2035
 #, c-format
@@ -6576,7 +6576,7 @@ msgstr "-1 peut seulement être utilisé dans un mode non interactif"
 #: startup.c:326
 #, c-format
 msgid "could not open log file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier applicatif « %s » : %m"
+msgstr "n'a pas pu ouvrir le journal applicatif « %s » : %m"
 
 #: startup.c:438
 #, c-format

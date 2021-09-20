@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_controldata (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021.
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -23,22 +23,22 @@ msgstr ""
 #: ../../common/controldata_utils.c:73
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου “%s” για ανάγνωση: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
 
 #: ../../common/controldata_utils.c:89
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
 
 #: ../../common/controldata_utils.c:101
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
-msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου “%s”: ανέγνωσε %d από %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
 
 #: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
 
 #: ../../common/controldata_utils.c:135
 msgid "byte ordering mismatch"
@@ -60,17 +60,17 @@ msgstr ""
 #: ../../common/controldata_utils.c:203
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
 
 #: ../../common/controldata_utils.c:224
 #, c-format
 msgid "could not write file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εγγραφή αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
 
 #: ../../common/controldata_utils.c:245
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο “%s”: %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση της εντολής fsync στο αρχείο «%s»: %m"
 
 #: pg_controldata.c:35
 #, c-format
@@ -177,12 +177,12 @@ msgstr "μη αναγνωρίσιμο wal_level"
 #: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_controldata.c:153
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (ο πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
 #: pg_controldata.c:162
 #, c-format

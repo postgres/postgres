@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -37,27 +37,27 @@ msgstr "προειδοποίηση: "
 #: pg_archivecleanup.c:66
 #, c-format
 msgid "archive location \"%s\" does not exist"
-msgstr "η τοποθεσία της αρχειοθήκης “%s” δεν υπάρχει"
+msgstr "η τοποθεσία της αρχειοθήκης «%s» δεν υπάρχει"
 
 #: pg_archivecleanup.c:152
 #, c-format
 msgid "could not remove file \"%s\": %m"
-msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου “%s”: %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου «%s»: %m"
 
 #: pg_archivecleanup.c:160
 #, c-format
 msgid "could not read archive location \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση της τοποθεσίας αρχειοθήκης “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση της τοποθεσίας αρχειοθήκης «%s»: %m"
 
 #: pg_archivecleanup.c:163
 #, c-format
 msgid "could not close archive location \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο της τοποθεσίας αρχειοθήκης “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο της τοποθεσίας αρχειοθήκης «%s»: %m"
 
 #: pg_archivecleanup.c:167
 #, c-format
 msgid "could not open archive location \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα της τοποθεσίας αρχειοθήκης “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα της τοποθεσίας αρχειοθήκης «%s»: %m"
 
 #: pg_archivecleanup.c:240
 #, c-format
@@ -68,7 +68,7 @@ msgstr "μη έγκυρη παράμετρος ονόματος αρχείου"
 #: pg_archivecleanup.c:348 pg_archivecleanup.c:355
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s --help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_archivecleanup.c:254
 #, c-format
@@ -178,4 +178,4 @@ msgstr "πρέπει να καθορίσετε το παλαιότερο κρα�
 #: pg_archivecleanup.c:354
 #, c-format
 msgid "too many command-line arguments"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών"

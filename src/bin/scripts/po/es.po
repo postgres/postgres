@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-07-06 16:47+0000\n"
-"PO-Revision-Date: 2021-07-07 15:23-0500\n"
+"PO-Revision-Date: 2021-09-16 09:22+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -656,7 +656,7 @@ msgstr "  %s [OPCIÓN]... BASE-DE-DATOS\n"
 #: dropdb.c:175
 #, c-format
 msgid "  -f, --force               try to terminate other connections before dropping\n"
-msgstr "  -f, --force              intentar cancelar otras conexiones antes de borrar\n"
+msgstr "  -f, --force               intentar cancelar otras conexiones antes de borrar\n"
 
 #: dropdb.c:176
 #, c-format

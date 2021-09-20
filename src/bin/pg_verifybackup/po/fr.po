@@ -309,7 +309,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Le programme « %s » a été trouvé par « %s »,\n"
+"Le programme « %s » a été trouvé par « %s »\n"
 "mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation."
 

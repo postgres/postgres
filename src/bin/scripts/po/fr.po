@@ -58,7 +58,7 @@ msgstr "l'utilisateur n'existe pas"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "échec lors de la recherche du nom d'utilisateur : code erreur %lu"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu"
 
 #: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
 msgid "Cancel request sent\n"
@@ -308,7 +308,7 @@ msgstr ""
 #: pg_isready.c:240 reindexdb.c:818 vacuumdb.c:1068
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : <%s>\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: common.c:107
 #, c-format
@@ -488,7 +488,7 @@ msgstr "Saisir le mot de passe pour le nouveau rôle : "
 
 #: createuser.c:211
 msgid "Enter it again: "
-msgstr "Le saisir de nouveau : "
+msgstr "Saisir le mot de passe à nouveau : "
 
 #: createuser.c:214
 #, c-format

@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the plpython (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021.
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -105,7 +105,7 @@ msgstr "διεργασία PL/Python δεν επέστρεψε None"
 #: plpy_exec.c:215
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
-msgstr "συνάρτηση PL/Python με τύπο επιστροφής “void” δεν επέστρεψε None"
+msgstr "συνάρτηση PL/Python με τύπο επιστροφής «void» δεν επέστρεψε None"
 
 #: plpy_exec.c:371 plpy_exec.c:397
 #, c-format
@@ -120,12 +120,12 @@ msgstr "Αναμενόταν None ή μία συμβολοσειρά."
 #: plpy_exec.c:387
 #, c-format
 msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "συνάρτηση εναύσματος PL/Python επέστρεψε “MODIFY” σε ένα έναυσμα DELETE -- παραβλέφθηκε"
+msgstr "συνάρτηση εναύσματος PL/Python επέστρεψε «MODIFY» σε ένα έναυσμα DELETE -- παραβλέφθηκε"
 
 #: plpy_exec.c:398
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
-msgstr "Αναμενόταν None, “OK”, “SKIP”, ή “MODIFY”."
+msgstr "Αναμενόταν None, «OK», «SKIP», ή «MODIFY»."
 
 #: plpy_exec.c:443
 #, c-format
@@ -150,32 +150,32 @@ msgstr "κατά τη δημιουργία τιμής επιστροφής"
 #: plpy_exec.c:910
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
-msgstr "TD[“new”] διαγράφηκε, δεν είναι δυνατή η μετατροπή σειράς"
+msgstr "TD[«new»] διαγράφηκε, δεν είναι δυνατή η μετατροπή σειράς"
 
 #: plpy_exec.c:915
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
-msgstr "TD[“new”] δεν είναι ένα λεξικό"
+msgstr "TD[«new»] δεν είναι ένα λεξικό"
 
 #: plpy_exec.c:942
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
-msgstr "TD[“new”] κλειδί λεξικού στη τακτή θέση %d δεν είναι μία συμβολοσειρά"
+msgstr "TD[«new»] κλειδί λεξικού στη τακτή θέση %d δεν είναι μία συμβολοσειρά"
 
 #: plpy_exec.c:949
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "κλειδί “%s” που βρίσκεται στο TD[\"New\"] δεν υπάρχει ως στήλη στη γραμμή εναύσματος"
+msgstr "κλειδί «%s» που βρίσκεται στο TD[\"New\"] δεν υπάρχει ως στήλη στη γραμμή εναύσματος"
 
 #: plpy_exec.c:954
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος «%s»"
 
 #: plpy_exec.c:959
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης «%s»"
 
 #: plpy_exec.c:1017
 #, c-format
@@ -205,7 +205,7 @@ msgstr "μη παγιδευμένο σφάλμα κατά την προετοι�
 #: plpy_main.c:161
 #, c-format
 msgid "could not import \"__main__\" module"
-msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος “__main__”"
+msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος «__main__»"
 
 #: plpy_main.c:170
 #, c-format
@@ -215,12 +215,12 @@ msgstr "δεν ήταν δυνατή η αρχικοποίηση καθολικ�
 #: plpy_main.c:393
 #, c-format
 msgid "PL/Python procedure \"%s\""
-msgstr "διεργασία PL/Python “%s”"
+msgstr "διεργασία PL/Python «%s»"
 
 #: plpy_main.c:396
 #, c-format
 msgid "PL/Python function \"%s\""
-msgstr "συνάρτηση PL/Python “%s”"
+msgstr "συνάρτηση PL/Python «%s»"
 
 #: plpy_main.c:404
 #, c-format
@@ -230,7 +230,7 @@ msgstr "ονώνυμο μπλοκ κώδικα PL/Python"
 #: plpy_plpymodule.c:182 plpy_plpymodule.c:185
 #, c-format
 msgid "could not import \"plpy\" module"
-msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος “plpy”"
+msgstr "δεν ήταν δυνατή η εισαγωγή του αρθρώματος «plpy»"
 
 #: plpy_plpymodule.c:200
 #, c-format
@@ -289,7 +289,7 @@ msgstr "οι συναρτήσεις PL/Python δεν μπορούν να δεχ�
 #: plpy_procedure.c:397
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
-msgstr "δεν ήταν δυνατή η μεταγλώττιση της συνάρτησης PL/Python “%s”"
+msgstr "δεν ήταν δυνατή η μεταγλώττιση της συνάρτησης PL/Python «%s»"
 
 #: plpy_procedure.c:400
 #, c-format
@@ -414,7 +414,7 @@ msgstr "Για να κατασκευαστεί μια πολυδιάστατη �
 #: plpy_typeio.c:1350
 #, c-format
 msgid "malformed record literal: \"%s\""
-msgstr "κακοσχηματισμένο εγγραφή: “%s”"
+msgstr "κακοσχηματισμένο εγγραφή: «%s»"
 
 #: plpy_typeio.c:1351
 #, c-format
@@ -424,12 +424,12 @@ msgstr "Λείπει δεξιά παρένθεση."
 #: plpy_typeio.c:1352 plpy_typeio.c:1553
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
-msgstr "Για να επιστρέψετε έναν σύνθετο τύπο σε μία συστυχία, επιστρέψτε τον σύνθετο τύπο ως πλειάδα Python, π.χ. “[(‘foo’,)”."
+msgstr "Για να επιστρέψετε έναν σύνθετο τύπο σε μία συστυχία, επιστρέψτε τον σύνθετο τύπο ως πλειάδα Python, π.χ. «[(‘foo’,)»."
 
 #: plpy_typeio.c:1399
 #, c-format
 msgid "key \"%s\" not found in mapping"
-msgstr "κλειδί “%s” δεν βρέθηκε σε αντιστοίχιση"
+msgstr "κλειδί «%s» δεν βρέθηκε σε αντιστοίχιση"
 
 #: plpy_typeio.c:1400
 #, c-format
@@ -444,7 +444,7 @@ msgstr "το μήκος της ακολουθίας που επιστράφηκ�
 #: plpy_typeio.c:1551
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
-msgstr "η ιδιότητα “%s” δεν υπάρχει στο αντικείμενο Python"
+msgstr "η ιδιότητα «%s» δεν υπάρχει στο αντικείμενο Python"
 
 #: plpy_typeio.c:1554
 #, c-format

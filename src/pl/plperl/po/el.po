@@ -3,7 +3,7 @@
 # This file is distributed under the same license as the plperl (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021.
 #
-# Use these quotes: “%s”
+#
 #
 msgid ""
 msgstr ""
@@ -87,12 +87,12 @@ msgstr "κατά την εκτέλεση plperl.on_plperlu_init"
 #: plperl.c:1098 plperl.c:1786
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Κατατεμαχιστής Perl περιέχει ανύπαρκτη στήλη “%s”"
+msgstr "Κατατεμαχιστής Perl περιέχει ανύπαρκτη στήλη «%s»"
 
 #: plperl.c:1103 plperl.c:1791
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος «%s»"
 
 #: plperl.c:1191
 #, c-format
@@ -137,7 +137,7 @@ msgstr "Το >{new} $_TD δεν είναι αναφορά κατατμητή"
 #: plperl.c:1796
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης “%s”"
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης «%s»"
 
 #: plperl.c:2008 plperl.c:2846
 #, c-format
@@ -152,7 +152,7 @@ msgstr "PL/Tcl συναρτήσεις δεν είναι δυνατό να δεχ
 #: plperl.c:2138
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
-msgstr "δεν έλαβε μία αναφορά CODE από τη μεταγλώττιση της συνάρτησης “%s”"
+msgstr "δεν έλαβε μία αναφορά CODE από τη μεταγλώττιση της συνάρτησης «%s»"
 
 #: plperl.c:2229
 #, c-format
@@ -187,7 +187,7 @@ msgstr "παράβλεψη τροποποιημένης σειράς σε ενα
 #: plperl.c:2593
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
-msgstr "το αποτέλεσμα της συνάρτησης ενεργοποίησης PL/Perl πρέπει να είναι undef, “SKIP” ή “MODIFY”"
+msgstr "το αποτέλεσμα της συνάρτησης ενεργοποίησης PL/Perl πρέπει να είναι undef, «SKIP» ή «MODIFY»"
 
 #: plperl.c:2841
 #, c-format
@@ -212,12 +212,12 @@ msgstr "συνάρτηση SETOF-composite-returning PL/Perl πρέπει να �
 #: plperl.c:4105
 #, c-format
 msgid "PL/Perl function \"%s\""
-msgstr "PL/Perl συνάρτηση “%s”"
+msgstr "PL/Perl συνάρτηση «%s»"
 
 #: plperl.c:4117
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
-msgstr "μεταγλώτιση της συνάρτησης PL/Perl “%s”"
+msgstr "μεταγλώτιση της συνάρτησης PL/Perl «%s»"
 
 #: plperl.c:4126
 #, c-format

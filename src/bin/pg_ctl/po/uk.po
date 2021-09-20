@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-06-10 08:46+0000\n"
-"PO-Revision-Date: 2021-07-17 14:14\n"
-"Last-Translator: Pavlo Golub\n"
+"PO-Revision-Date: 2021-08-17 10:54\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -509,7 +509,7 @@ msgstr "%s: бракує пам'яті\n"
 #: pg_ctl.c:2018
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: pg_ctl.c:2026
 #, c-format

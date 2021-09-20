@@ -230,7 +230,7 @@ msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
 #: file_ops.c:449
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
-msgstr "la cible du lien symbolique « %s » est trop long"
+msgstr "la cible du lien symbolique « %s » est trop longue"
 
 #: file_ops.c:464
 #, c-format
@@ -555,7 +555,7 @@ msgstr ""
 #: pg_rewind.c:103
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : <%s>\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: pg_rewind.c:164 pg_rewind.c:213 pg_rewind.c:220 pg_rewind.c:227
 #: pg_rewind.c:234 pg_rewind.c:242
@@ -884,17 +884,17 @@ msgstr "bits d'information %04X invalides dans le segment %s, décalage %u"
 #: xlogreader.c:834
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-msgstr "le fichier WAL provient d'un système différent : l'identifiant système de la base dans le fichier WAL est %llu, alors que l'identifiant système de la base dans pg_control est %llu"
+msgstr "Le fichier WAL provient d'une instance différente : l'identifiant système de la base dans le fichier WAL est %llu, alors que l'identifiant système de la base dans pg_control est %llu"
 
 #: xlogreader.c:842
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "Le fichier WAL provient d'un système différent : taille invalide du segment dans l'en-tête de page"
+msgstr "Le fichier WAL provient d'une instance différente : taille invalide du segment dans l'en-tête de page"
 
 #: xlogreader.c:848
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "Le fichier WAL provient d'un système différent : XLOG_BLCKSZ invalide dans l'en-tête de page"
+msgstr "Le fichier WAL provient d'une instance différente : XLOG_BLCKSZ incorrect dans l'en-tête de page"
 
 #: xlogreader.c:879
 #, c-format
