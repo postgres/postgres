@@ -7485,10 +7485,7 @@ heap_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
 
 			/* Some sanity checks */
 			if (offnum < FirstOffsetNumber || offnum > maxoff)
-			{
-				Assert(false);
 				break;
-			}
 
 			lp = PageGetItemId(page, offnum);
 			if (ItemIdIsRedirected(lp))
