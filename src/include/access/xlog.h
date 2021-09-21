@@ -246,7 +246,7 @@ extern bool XLOG_DEBUG;
  */
 #define XLOG_INCLUDE_ORIGIN		0x01	/* include the replication origin */
 #define XLOG_MARK_UNIMPORTANT	0x02	/* record not important for durability */
-#define XLOG_INCLUDE_XID		0x04	/* include XID of top-level xact */
+#define XLOG_INCLUDE_XID		0x04	/* WAL-internal message-passing hack */
 
 
 /* Checkpoint statistics */
