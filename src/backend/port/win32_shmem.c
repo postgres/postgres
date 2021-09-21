@@ -605,3 +605,17 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 
 	return true;
 }
+
+/*
+ * This function is provided for consistency with sysv_shmem.c and does not
+ * provide any useful information for Windows.  To obtain the large page size,
+ * use GetLargePageMinimum() instead.
+ */
+void
+GetHugePageSize(Size *hugepagesize, int *mmap_flags)
+{
+	if (hugepagesize)
+		*hugepagesize = 0;
+	if (mmap_flags)
+		*mmap_flags = 0;
+}

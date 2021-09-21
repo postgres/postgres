@@ -10289,6 +10289,27 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-shared-memory-size-in-huge-pages" xreflabel="shared_memory_size_in_huge_pages">
+      <term><varname>shared_memory_size_in_huge_pages</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>shared_memory_size_in_huge_pages</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the number of huge pages that are needed for the main shared
+        memory area based on the specified <xref linkend="guc-huge-page-size"/>.
+        If huge pages are not supported, this will be <literal>-1</literal>.
+       </para>
+       <para>
+        This setting is supported only on <productname>Linux</productname>.  It
+        is always set to <literal>-1</literal> on other platforms.  For more
+        details about using huge pages on <productname>Linux</productname>, see
+        <xref linkend="linux-huge-pages"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ssl-library" xreflabel="ssl_library">
       <term><varname>ssl_library</varname> (<type>string</type>)
       <indexterm>

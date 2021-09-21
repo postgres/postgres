@@ -665,6 +665,7 @@ static int	max_identifier_length;
 static int	block_size;
 static int	segment_size;
 static int	shared_memory_size_mb;
+static int	shared_memory_size_in_huge_pages;
 static int	wal_block_size;
 static bool data_checksums;
 static bool integer_datetimes;
@@ -2346,6 +2347,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&shared_memory_size_mb,
 		0, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"shared_memory_size_in_huge_pages", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows the number of huge pages needed for the main shared memory area."),
+			gettext_noop("-1 indicates that the value could not be determined."),
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
+		},
+		&shared_memory_size_in_huge_pages,
+		-1, -1, INT_MAX,
 		NULL, NULL, NULL
 	},
 

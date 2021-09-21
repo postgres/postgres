@@ -1442,17 +1442,14 @@ export PG_OOM_ADJUST_VALUE=0
     with <varname>CONFIG_HUGETLBFS=y</varname> and
     <varname>CONFIG_HUGETLB_PAGE=y</varname>. You will also have to configure
     the operating system to provide enough huge pages of the desired size.
-    To estimate the number of huge pages needed, start
-    <productname>PostgreSQL</productname> without huge pages enabled and check
-    the postmaster's anonymous shared memory segment size, as well as the
-    system's default and supported huge page sizes, using the
-    <filename>/proc</filename> and <filename>/sys</filename> file systems.
+    To determine the number of huge pages needed, use the
+    <command>postgres</command> command to see the value of
+    <xref linkend="guc-shared-memory-size-in-huge-pages"/>.  Note that the
+    server must be shut down to view this runtime-computed parameter.
     This might look like:
 <programlisting>
-$ <userinput>head -1 $PGDATA/postmaster.pid</userinput>
-4170
-$ <userinput>pmap 4170 | awk '/rw-s/ &amp;&amp; /zero/ {print $2}'</userinput>
-6490428K
+$ <userinput>postgres -D $PGDATA -C shared_memory_size_in_huge_pages</userinput>
+3170
 $ <userinput>grep ^Hugepagesize /proc/meminfo</userinput>
 Hugepagesize:       2048 kB
 $ <userinput>ls /sys/kernel/mm/hugepages</userinput>
@@ -1460,13 +1457,13 @@ hugepages-1048576kB  hugepages-2048kB
 </programlisting>
 
      In this example the default is 2MB, but you can also explicitly request
-     either 2MB or 1GB with <xref linkend="guc-huge-page-size"/>.
+     either 2MB or 1GB with <xref linkend="guc-huge-page-size"/> to adapt
+     the number of pages calculated by
+     <varname>shared_memory_size_in_huge_pages</varname>.
 
-     Assuming <literal>2MB</literal> huge pages,
-     <literal>6490428</literal> / <literal>2048</literal> gives approximately
-     <literal>3169.154</literal>, so in this example we need at
-     least <literal>3170</literal> huge pages.  A larger setting would be
-     appropriate if other programs on the machine also need huge pages.
+     While we need at least <literal>3170</literal> huge pages in this example,
+     a larger setting would be appropriate if other programs on the machine
+     also need huge pages.
      We can set this with:
 <programlisting>
 # <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
