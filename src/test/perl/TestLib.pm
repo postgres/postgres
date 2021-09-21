@@ -356,6 +356,7 @@ sub command_like
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "@$cmd exit code 0");
 	is($stderr, '', "@$cmd no stderr");
+	$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 	like($stdout, $expected_stdout, "$test_name: matches");
 }
 
