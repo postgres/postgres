@@ -215,8 +215,9 @@ typedef struct XLogRecordDataHeaderLong
  * Block IDs used to distinguish different kinds of record fragments. Block
  * references are numbered from 0 to XLR_MAX_BLOCK_ID. A rmgr is free to use
  * any ID number in that range (although you should stick to small numbers,
- * because the WAL machinery is optimized for that case). A couple of ID
- * numbers are reserved to denote the "main" data portion of the record.
+ * because the WAL machinery is optimized for that case). A few ID
+ * numbers are reserved to denote the "main" data portion of the record,
+ * as well as replication-supporting transaction metadata.
  *
  * The maximum is currently set at 32, quite arbitrarily. Most records only
  * need a handful of block references, but there are a few exceptions that

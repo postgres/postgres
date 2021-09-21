@@ -409,6 +409,8 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
  * - XLOG_MARK_UNIMPORTANT, to signal that the record is not important for
  *	 durability, which allows to avoid triggering WAL archiving and other
  *	 background activity.
+ * - XLOG_INCLUDE_XID, a message-passing hack between XLogRecordAssemble
+ *	 and XLogResetInsertion.
  */
 void
 XLogSetRecordFlags(uint8 flags)
