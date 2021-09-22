@@ -3637,8 +3637,8 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 								 "    <xsd:maxInclusive value=\"" INT64_FORMAT "\"/>\n"
 								 "    <xsd:minInclusive value=\"" INT64_FORMAT "\"/>\n"
 								 "  </xsd:restriction>\n",
-								 (((uint64) 1) << (sizeof(int64) * 8 - 1)) - 1,
-								 (((uint64) 1) << (sizeof(int64) * 8 - 1)));
+								 PG_INT64_MAX,
+								 PG_INT64_MIN);
 				break;
 
 			case FLOAT4OID:
