@@ -1155,7 +1155,7 @@ extern void _bt_parallel_advance_array_keys(IndexScanDesc scan);
  */
 extern void _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel,
 						   IndexTuple newitem, Size newitemsz,
-						   bool checkingunique);
+						   bool bottomupdedup);
 extern bool _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 								 Size newitemsz);
 extern void _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
