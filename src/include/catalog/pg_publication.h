@@ -112,6 +112,9 @@ extern List *GetAllTablesPublicationRelations(bool pubviaroot);
 extern bool is_publishable_relation(Relation rel);
 extern ObjectAddress publication_add_relation(Oid pubid, Relation targetrel,
 											  bool if_not_exists);
+extern List *GetPubPartitionOptionRelations(List *result,
+											PublicationPartOpt pub_partopt,
+											Oid relid);
 
 extern Oid	get_publication_oid(const char *pubname, bool missing_ok);
 extern char *get_publication_name(Oid pubid, bool missing_ok);

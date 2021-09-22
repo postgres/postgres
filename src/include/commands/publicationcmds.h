@@ -17,6 +17,10 @@
 
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
+#include "utils/inval.h"
+
+/* Same as MAXNUMMESSAGES in sinvaladt.c */
+#define MAX_RELCACHE_INVAL_MSGS 4096
 
 extern ObjectAddress CreatePublication(CreatePublicationStmt *stmt);
 extern void AlterPublication(AlterPublicationStmt *stmt);
@@ -25,5 +29,6 @@ extern void RemovePublicationRelById(Oid proid);
 
 extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);
 extern void AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId);
+extern void InvalidatePublicationRels(List *relids);
 
 #endif							/* PUBLICATIONCMDS_H */

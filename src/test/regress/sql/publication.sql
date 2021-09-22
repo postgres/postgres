@@ -76,10 +76,12 @@ CREATE PUBLICATION testpub_forparted;
 CREATE PUBLICATION testpub_forparted1;
 RESET client_min_messages;
 CREATE TABLE testpub_parted1 (LIKE testpub_parted);
+CREATE TABLE testpub_parted2 (LIKE testpub_parted);
 ALTER PUBLICATION testpub_forparted1 SET (publish='insert');
+ALTER TABLE testpub_parted ATTACH PARTITION testpub_parted1 FOR VALUES IN (1);
+ALTER TABLE testpub_parted ATTACH PARTITION testpub_parted2 FOR VALUES IN (2);
 -- works despite missing REPLICA IDENTITY, because updates are not replicated
 UPDATE testpub_parted1 SET a = 1;
-ALTER TABLE testpub_parted ATTACH PARTITION testpub_parted1 FOR VALUES IN (1);
 -- only parent is listed as being in publication, not the partition
 ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted;
 \dRp+ testpub_forparted
@@ -90,7 +92,12 @@ ALTER TABLE testpub_parted DETACH PARTITION testpub_parted1;
 UPDATE testpub_parted1 SET a = 1;
 ALTER PUBLICATION testpub_forparted SET (publish_via_partition_root = true);
 \dRp+ testpub_forparted
-DROP TABLE testpub_parted1;
+-- still fail, because parent's publication replicates updates
+UPDATE testpub_parted2 SET a = 2;
+ALTER PUBLICATION testpub_forparted DROP TABLE testpub_parted;
+-- works again, because update is no longer replicated
+UPDATE testpub_parted2 SET a = 2;
+DROP TABLE testpub_parted1, testpub_parted2;
 DROP PUBLICATION testpub_forparted, testpub_forparted1;
 
 -- Test cache invalidation FOR ALL TABLES publication
