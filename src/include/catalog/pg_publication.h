@@ -111,6 +111,9 @@ typedef enum PublicationPartOpt
 extern List *GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt);
 extern List *GetAllTablesPublications(void);
 extern List *GetAllTablesPublicationRelations(bool pubviaroot);
+extern List *GetPubPartitionOptionRelations(List *result,
+											PublicationPartOpt pub_partopt,
+											Oid relid);
 
 extern bool is_publishable_relation(Relation rel);
 extern ObjectAddress publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
