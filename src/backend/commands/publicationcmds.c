@@ -45,9 +45,6 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
-/* Same as MAXNUMMESSAGES in sinvaladt.c */
-#define MAX_RELCACHE_INVAL_MSGS 4096
-
 static List *OpenTableList(List *tables);
 static void CloseTableList(List *rels);
 static void PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
@@ -330,23 +327,7 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 		List	   *relids = GetPublicationRelations(pubform->oid,
 													 PUBLICATION_PART_ALL);
 
-		/*
-		 * We don't want to send too many individual messages, at some point
-		 * it's cheaper to just reset whole relcache.
-		 */
-		if (list_length(relids) < MAX_RELCACHE_INVAL_MSGS)
-		{
-			ListCell   *lc;
-
-			foreach(lc, relids)
-			{
-				Oid			relid = lfirst_oid(lc);
-
-				CacheInvalidateRelcacheByRelid(relid);
-			}
-		}
-		else
-			CacheInvalidateRelcacheAll();
+		InvalidatePublicationRels(relids);
 	}
 
 	ObjectAddressSet(obj, PublicationRelationId, pubform->oid);
@@ -354,6 +335,27 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 									 (Node *) stmt);
 
 	InvokeObjectPostAlterHook(PublicationRelationId, pubform->oid, 0);
+}
+
+/*
+ * Invalidate the relations.
+ */
+void
+InvalidatePublicationRels(List *relids)
+{
+	/*
+	 * We don't want to send too many individual messages, at some point it's
+	 * cheaper to just reset whole relcache.
+	 */
+	if (list_length(relids) < MAX_RELCACHE_INVAL_MSGS)
+	{
+		ListCell   *lc;
+
+		foreach(lc, relids)
+			CacheInvalidateRelcacheByRelid(lfirst_oid(lc));
+	}
+	else
+		CacheInvalidateRelcacheAll();
 }
 
 /*
@@ -512,6 +514,7 @@ RemovePublicationRelById(Oid proid)
 	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_publication_rel pubrel;
+	List	   *relids = NIL;
 
 	rel = table_open(PublicationRelRelationId, RowExclusiveLock);
 
@@ -523,8 +526,18 @@ RemovePublicationRelById(Oid proid)
 
 	pubrel = (Form_pg_publication_rel) GETSTRUCT(tup);
 
-	/* Invalidate relcache so that publication info is rebuilt. */
-	CacheInvalidateRelcacheByRelid(pubrel->prrelid);
+	/*
+	 * Invalidate relcache so that publication info is rebuilt.
+	 *
+	 * For the partitioned tables, we must invalidate all partitions contained
+	 * in the respective partition hierarchies, not just the one explicitly
+	 * mentioned in the publication. This is required because we implicitly
+	 * publish the child tables when the parent table is published.
+	 */
+	relids = GetPubPartitionOptionRelations(relids, PUBLICATION_PART_ALL,
+											pubrel->prrelid);
+
+	InvalidatePublicationRels(relids);
 
 	CatalogTupleDelete(rel, &tup->t_self);
 
