@@ -7483,8 +7483,15 @@ heap_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
 			ItemId		lp;
 			HeapTupleHeader htup;
 
-			/* Some sanity checks */
-			if (offnum < FirstOffsetNumber || offnum > maxoff)
+			/* Sanity check (pure paranoia) */
+			if (offnum < FirstOffsetNumber)
+				break;
+
+			/*
+			 * An offset past the end of page's line pointer array is possible
+			 * when the array was truncated
+			 */
+			if (offnum > maxoff)
 				break;
 
 			lp = PageGetItemId(page, offnum);

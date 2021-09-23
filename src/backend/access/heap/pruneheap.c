@@ -581,8 +581,15 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		bool		tupdead,
 					recent_dead;
 
-		/* Some sanity checks */
-		if (offnum < FirstOffsetNumber || offnum > maxoff)
+		/* Sanity check (pure paranoia) */
+		if (offnum < FirstOffsetNumber)
+			break;
+
+		/*
+		 * An offset past the end of page's line pointer array is possible
+		 * when the array was truncated (original item must have been unused)
+		 */
+		if (offnum > maxoff)
 			break;
 
 		/* If item is already processed, stop --- it must not be same chain */
@@ -962,8 +969,15 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 		 */
 		for (;;)
 		{
-			/* Sanity check */
-			if (nextoffnum < FirstOffsetNumber || nextoffnum > maxoff)
+			/* Sanity check (pure paranoia) */
+			if (offnum < FirstOffsetNumber)
+				break;
+
+			/*
+			 * An offset past the end of page's line pointer array is possible
+			 * when the array was truncated
+			 */
+			if (offnum > maxoff)
 				break;
 
 			lp = PageGetItemId(page, nextoffnum);
