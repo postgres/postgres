@@ -36,6 +36,8 @@ sub reset_pg_hba
 # Test access for a single role, useful to wrap all tests into one.
 sub test_login
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my $node          = shift;
 	my $role          = shift;
 	my $password      = shift;

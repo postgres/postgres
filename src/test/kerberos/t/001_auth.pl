@@ -185,6 +185,8 @@ note "running tests";
 # Test connection success or failure, and if success, that query returns true.
 sub test_access
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $role, $query, $expected_res, $gssencmode, $test_name,
 		@expect_log_msgs)
 	  = @_;
