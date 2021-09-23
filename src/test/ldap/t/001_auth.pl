@@ -166,6 +166,8 @@ note "running tests";
 
 sub test_access
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $role, $expected_res, $test_name, %params) = @_;
 	my $connstr = "user=$role";
 

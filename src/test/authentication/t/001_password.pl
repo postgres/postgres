@@ -42,6 +42,8 @@ sub reset_pg_hba
 # named parameters are passed to connect_ok/fails as-is.
 sub test_role
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $role, $method, $expected_res, %params) = @_;
 	my $status_string = 'failed';
 	$status_string = 'success' if ($expected_res eq 0);
