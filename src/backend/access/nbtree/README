@@ -490,24 +490,33 @@ lock on the leaf page).
 Once an index tuple has been marked LP_DEAD it can actually be deleted
 from the index immediately; since index scans only stop "between" pages,
 no scan can lose its place from such a deletion.  We separate the steps
-because we allow LP_DEAD to be set with only a share lock (it's exactly
-like a hint bit for a heap tuple), but physically removing tuples requires
-exclusive lock.  Also, delaying the deletion often allows us to pick up
-extra index tuples that weren't initially safe for index scans to mark
-LP_DEAD.  We do this with index tuples whose TIDs point to the same table
-blocks as an LP_DEAD-marked tuple.  They're practically free to check in
-passing, and have a pretty good chance of being safe to delete due to
-various locality effects.
+because we allow LP_DEAD to be set with only a share lock (it's like a
+hint bit for a heap tuple), but physically deleting tuples requires an
+exclusive lock.  We also need to generate a latestRemovedXid value for
+each deletion operation's WAL record, which requires additional
+coordinating with the tableam when the deletion actually takes place.
+(This latestRemovedXid value may be used to generate a recovery conflict
+during subsequent REDO of the record by a standby.)
 
-We only try to delete LP_DEAD tuples (and nearby tuples) when we are
-otherwise faced with having to split a page to do an insertion (and hence
-have exclusive lock on it already).  Deduplication and bottom-up index
-deletion can also prevent a page split, but simple deletion is always our
-preferred approach.  (Note that posting list tuples can only have their
-LP_DEAD bit set when every table TID within the posting list is known
-dead.  This isn't much of a problem in practice because LP_DEAD bits are
-just a starting point for simple deletion -- we still manage to perform
-granular deletes of posting list TIDs quite often.)
+Delaying and batching index tuple deletion like this enables a further
+optimization: opportunistic checking of "extra" nearby index tuples
+(tuples that are not LP_DEAD-set) when they happen to be very cheap to
+check in passing (because we already know that the tableam will be
+visiting their table block to generate a latestRemovedXid value).  Any
+index tuples that turn out to be safe to delete will also be deleted.
+Simple deletion will behave as if the extra tuples that actually turn
+out to be delete-safe had their LP_DEAD bits set right from the start.
+
+Deduplication can also prevent a page split, but index tuple deletion is
+our preferred approach.  Note that posting list tuples can only have
+their LP_DEAD bit set when every table TID within the posting list is
+known dead.  This isn't much of a problem in practice because LP_DEAD
+bits are just a starting point for deletion.  What really matters is
+that _some_ deletion operation that targets related nearby-in-table TIDs
+takes place at some point before the page finally splits.  That's all
+that's required for the deletion process to perform granular removal of
+groups of dead TIDs from posting list tuples (without the situation ever
+being allowed to get out of hand).
 
 It's sufficient to have an exclusive lock on the index page, not a
 super-exclusive lock, to do deletion of LP_DEAD items.  It might seem
