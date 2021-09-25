@@ -1226,6 +1226,13 @@ gen_random_uuid() returns uuid
    </table>
 
    <para>
+    When compiled against <productname>OpenSSL</productname> 3.0.0 and later
+    versions, the legacy provider must be activated in the
+    <filename>openssl.cnf</filename> configuration file in order to use older
+    ciphers like DES or Blowfish.
+   </para>
+
+   <para>
     Notes:
    </para>
 
