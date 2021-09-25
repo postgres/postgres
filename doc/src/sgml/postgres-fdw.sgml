@@ -87,8 +87,8 @@
   referenced columns of the remote table.  Although <filename>postgres_fdw</filename>
   is currently rather forgiving about performing data type conversions at
   need, surprising semantic anomalies may arise when types or collations do
-  not match, due to the remote server interpreting <literal>WHERE</literal> clauses
-  slightly differently from the local server.
+  not match, due to the remote server interpreting query conditions
+  differently from the local server.
  </para>
 
  <para>
@@ -387,6 +387,17 @@
        need to turn this off if the remote server has a different set of
        collation names than the local server does, which is likely to be the
        case if it's running on a different operating system.
+       If you do so, however, there is a very severe risk that the imported
+       table columns' collations will not match the underlying data, resulting
+       in anomalous query behavior.
+      </para>
+
+      <para>
+       Even when this parameter is set to <literal>true</literal>, importing
+       columns whose collation is the remote server's default can be risky.
+       They will be imported with <literal>COLLATE "default"</literal>, which
+       will select the local server's default collation, which could be
+       different.
       </para>
      </listitem>
     </varlistentry>
