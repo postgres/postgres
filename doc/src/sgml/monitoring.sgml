@@ -3909,8 +3909,9 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        <command>VACUUM</command> is currently vacuuming the indexes.  If a table has
        any indexes, this will happen at least once per vacuum, after the heap
        has been completely scanned.  It may happen multiple times per vacuum
-       if <xref linkend="guc-maintenance-work-mem"/> is insufficient to
-       store the number of dead tuples found.
+       if <xref linkend="guc-maintenance-work-mem"/> (or, in the case of autovacuum,
+       <xref linkend="guc-autovacuum-work-mem"/> if set) is insufficient to store
+       the number of dead tuples found.
      </entry>
     </row>
     <row>
