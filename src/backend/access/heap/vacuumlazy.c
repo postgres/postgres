@@ -2073,13 +2073,7 @@ retry:
  *
  * We may choose to bypass index vacuuming at this point, though only when the
  * ongoing VACUUM operation will definitely only have one index scan/round of
- * index vacuuming.  Caller indicates whether or not this is such a VACUUM
- * operation using 'onecall' argument.
- *
- * In rare emergencies, the ongoing VACUUM operation can be made to skip both
- * index vacuuming and index cleanup at the point we're called.  This avoids
- * having the whole system refuse to allocate further XIDs/MultiXactIds due to
- * wraparound.
+ * index vacuuming.
  */
 static void
 lazy_vacuum(LVRelState *vacrel)
