@@ -1197,7 +1197,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 *
 	 * PageIndexTupleOverwrite() won't unset each item's LP_DEAD bit when it
 	 * happens to already be set.  It's important that we not interfere with
-	 * _bt_delitems_delete().
+	 * any future simple index tuple deletion operations.
 	 */
 	for (int i = 0; i < nupdatable; i++)
 	{
@@ -1230,7 +1230,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 * This flag indicates the presence of LP_DEAD items on the page (though
 	 * not reliably).  Note that we only rely on it with pg_upgrade'd
 	 * !heapkeyspace indexes.  That's why clearing it here won't usually
-	 * interfere with _bt_delitems_delete().
+	 * interfere with simple index tuple deletion.
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
