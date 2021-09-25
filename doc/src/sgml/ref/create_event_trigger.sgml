@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
     ON <replaceable class="parameter">event</replaceable>
-    [ WHEN <replaceable class="parameter">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
+    [ WHEN <replaceable class="parameter">filter_variable</replaceable> IN (<replaceable class="parameter">filter_value</replaceable> [, ... ]) [ AND ... ] ]
     EXECUTE { FUNCTION | PROCEDURE } <replaceable class="parameter">function_name</replaceable>()
 </synopsis>
  </refsynopsisdiv>
