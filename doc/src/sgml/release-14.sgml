@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2021-??-?? (AS OF 2021-09-18)</para>
+   <para>2021-09-30</para>
   </formalpara>
 
   <sect2>
@@ -20,7 +20,70 @@
    <itemizedlist>
     <listitem>
      <para>
-      TO BE ADDED
+      Stored procedures can now return data via <literal>OUT</literal>
+      parameters.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The SQL-standard <literal>SEARCH</literal>
+      and <literal>CYCLE</literal> options for common table expressions
+      have been implemented.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Subscripting can now be applied to any data type for which
+      it is a useful notation, not only arrays.  In this release,
+      the <type>jsonb</type> and <type>hstore</type> types have gained
+      subscripting operators.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Range types have been extended by adding multiranges, allowing
+      representation of noncontiguous data ranges.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Numerous performance improvements have been made for parallel
+      queries, heavily-concurrent workloads, partitioned tables, logical
+      replication, and vacuuming.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      B-tree index updates are managed more efficiently, reducing index
+      bloat.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>VACUUM</command> automatically becomes more aggressive, and
+      skips inessential cleanup, if the database starts to approach a
+      transaction ID wraparound condition.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Extended statistics can now be collected on expressions, allowing
+      better planning results for complex queries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>libpq</application> now has the ability to pipeline
+      multiple queries, which can boost throughput over high-latency
+      connections.
      </para>
     </listitem>
    </itemizedlist>
