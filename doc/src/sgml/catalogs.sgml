@@ -4489,7 +4489,7 @@
   </table>
 
   <para>
-   Unused column contain zeroes. For example, <structfield>oprleft</structfield>
+   Unused columns contain zeroes. For example, <structfield>oprleft</structfield>
    is zero for a prefix operator.
   </para>
 
