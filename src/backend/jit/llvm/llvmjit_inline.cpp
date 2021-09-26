@@ -594,7 +594,11 @@ function_inlinable(llvm::Function &F,
 	if (F.materialize())
 		elog(FATAL, "failed to materialize metadata");
 
-	if (F.getAttributes().hasFnAttribute(llvm::Attribute::NoInline))
+#if LLVM_VERSION_MAJOR < 14
+#define hasFnAttr hasFnAttribute
+#endif
+
+	if (F.getAttributes().hasFnAttr(llvm::Attribute::NoInline))
 	{
 		ilog(DEBUG1, "ineligibile to import %s due to noinline",
 			 F.getName().data());
@@ -871,7 +875,9 @@ create_redirection_function(std::unique_ptr<llvm::Module> &importMod,
 	llvm::Function *AF;
 	llvm::BasicBlock *BB;
 	llvm::CallInst *fwdcall;
+#if LLVM_VERSION_MAJOR < 14
 	llvm::Attribute inlineAttribute;
+#endif
 
 	AF = llvm::Function::Create(F->getFunctionType(),
 								LinkageTypes::AvailableExternallyLinkage,
@@ -880,9 +886,13 @@ create_redirection_function(std::unique_ptr<llvm::Module> &importMod,
 
 	Builder.SetInsertPoint(BB);
 	fwdcall = Builder.CreateCall(F, &*AF->arg_begin());
+#if LLVM_VERSION_MAJOR < 14
 	inlineAttribute = llvm::Attribute::get(Context,
 										   llvm::Attribute::AlwaysInline);
 	fwdcall->addAttribute(~0U, inlineAttribute);
+#else
+	fwdcall->addFnAttr(llvm::Attribute::AlwaysInline);
+#endif
 	Builder.CreateRet(fwdcall);
 
 	return AF;
