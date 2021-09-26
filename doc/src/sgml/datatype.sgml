@@ -2844,7 +2844,7 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
      weeks'</literal> or <literal>'01:02:03.45'</literal>.  However,
      because interval internally stores only three integer units (months,
      days, microseconds), fractional units must be spilled to smaller
-     units.  Fractional parts of units greater than months is rounded to
+     units.  Fractional parts of units greater than months are rounded to
      be an integer number of months, e.g. <literal>'1.5 years'</literal>
      becomes <literal>'1 year 6 mons'</literal>.  Fractional parts of
      weeks and days are computed to be an integer number of days and
