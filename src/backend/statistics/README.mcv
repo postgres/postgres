@@ -2,7 +2,7 @@ MCV lists
 =========
 
 Multivariate MCV (most-common values) lists are a straightforward extension of
-regular MCV list, tracking most frequent combinations of values for a group of
+regular MCV lists, tracking most frequent combinations of values for a group of
 attributes.
 
 This works particularly well for columns with a small number of distinct values,
@@ -18,7 +18,7 @@ Estimates of some clauses (e.g. equality) based on MCV lists are more accurate
 than when using histograms.
 
 Also, MCV lists don't necessarily require sorting of the values (the fact that
-we use sorting when building them is implementation detail), but even more
+we use sorting when building them is an implementation detail), but even more
 importantly the ordering is not built into the approximation (while histograms
 are built on ordering). So MCV lists work well even for attributes where the
 ordering of the data type is disconnected from the meaning of the data. For
@@ -53,7 +53,7 @@ Hashed MCV (not yet implemented)
 Regular MCV lists have to include actual values for each item, so if those items
 are large the list may be quite large. This is especially true for multivariate
 MCV lists, although the current implementation partially mitigates this by
-performing de-duplicating the values before storing them on disk.
+de-duplicating the values before storing them on disk.
 
 It's possible to only store hashes (32-bit values) instead of the actual values,
 significantly reducing the space requirements. Obviously, this would only make
@@ -77,7 +77,7 @@ to select the columns from pg_stats. The data is encoded as anyarrays, and
 all the items have the same data type, so anyarray provides a simple way to
 get a text representation.
 
-With multivariate MCV lists the columns may use different data types, making
+With multivariate MCV lists, the columns may use different data types, making
 it impossible to use anyarrays. It might be possible to produce a similar
 array-like representation, but that would complicate further processing and
 analysis of the MCV list.

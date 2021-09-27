@@ -12,7 +12,7 @@ hopefully improving the estimates and producing better plans.
 Types of statistics
 -------------------
 
-There are currently two kinds of extended statistics:
+There are currently several kinds of extended statistics:
 
     (a) ndistinct coefficients
 
@@ -73,8 +73,8 @@ it will do if:
 
 When the above conditions are met, clauselist_selectivity() first attempts to
 pass the clause list off to the extended statistics selectivity estimation
-function. This functions may not find any clauses which is can perform any
-estimations on. In such cases these clauses are simply ignored. When actual
+function. This function may not find any clauses which it can perform any
+estimations on. In such cases, these clauses are simply ignored. When actual
 estimation work is performed in these functions they're expected to mark which
 clauses they've performed estimations for so that any other function
 performing estimations knows which clauses are to be skipped.

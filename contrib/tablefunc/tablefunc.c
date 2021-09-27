@@ -1480,7 +1480,7 @@ validateConnectbyTupleDesc(TupleDesc td, bool show_branch, bool show_serial)
 						"fifth column must be type %s",
 						format_type_be(INT4OID))));
 
-	/* check that the type of the fifth column is INT4 */
+	/* check that the type of the fourth column is INT4 */
 	if (!show_branch && show_serial &&
 		TupleDescAttr(td, 3)->atttypid != INT4OID)
 		ereport(ERROR,

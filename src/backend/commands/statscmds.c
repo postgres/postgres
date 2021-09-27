@@ -213,14 +213,14 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * Convert the expression list to a simple array of attnums, but also keep
 	 * a list of more complex expressions.  While at it, enforce some
 	 * constraints - we don't allow extended statistics on system attributes,
-	 * and we require the data type to have less-than operator.
+	 * and we require the data type to have a less-than operator.
 	 *
-	 * There are many ways how to "mask" a simple attribute refenrece as an
+	 * There are many ways to "mask" a simple attribute reference as an
 	 * expression, for example "(a+0)" etc. We can't possibly detect all of
-	 * them, but we handle at least the simple case with attribute in parens.
-	 * There'll always be a way around this, if the user is determined (like
-	 * the "(a+0)" example), but this makes it somewhat consistent with how
-	 * indexes treat attributes/expressions.
+	 * them, but we handle at least the simple case with the attribute in
+	 * parens. There'll always be a way around this, if the user is determined
+	 * (like the "(a+0)" example), but this makes it somewhat consistent with
+	 * how indexes treat attributes/expressions.
 	 */
 	foreach(cell, stmt->exprs)
 	{

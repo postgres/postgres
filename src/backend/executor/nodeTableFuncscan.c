@@ -14,11 +14,11 @@
  */
 /*
  * INTERFACE ROUTINES
- *		ExecTableFuncscan		scans a function.
+ *		ExecTableFuncScan		scans a function.
  *		ExecFunctionNext		retrieve next tuple in sequential order.
- *		ExecInitTableFuncscan	creates and initializes a TableFuncscan node.
- *		ExecEndTableFuncscan		releases any storage allocated.
- *		ExecReScanTableFuncscan rescans the function
+ *		ExecInitTableFuncScan	creates and initializes a TableFuncscan node.
+ *		ExecEndTableFuncScan		releases any storage allocated.
+ *		ExecReScanTableFuncScan rescans the function
  */
 #include "postgres.h"
 
@@ -46,7 +46,7 @@ static void tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext);
 /* ----------------------------------------------------------------
  *		TableFuncNext
  *
- *		This is a workhorse for ExecTableFuncscan
+ *		This is a workhorse for ExecTableFuncScan
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -84,7 +84,7 @@ TableFuncRecheck(TableFuncScanState *node, TupleTableSlot *slot)
 }
 
 /* ----------------------------------------------------------------
- *		ExecTableFuncscan(node)
+ *		ExecTableFuncScan(node)
  *
  *		Scans the function sequentially and returns the next qualifying
  *		tuple.
@@ -103,7 +103,7 @@ ExecTableFuncScan(PlanState *pstate)
 }
 
 /* ----------------------------------------------------------------
- *		ExecInitTableFuncscan
+ *		ExecInitTableFuncScan
  * ----------------------------------------------------------------
  */
 TableFuncScanState *
@@ -205,7 +205,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 }
 
 /* ----------------------------------------------------------------
- *		ExecEndTableFuncscan
+ *		ExecEndTableFuncScan
  *
  *		frees any storage allocated through C routines.
  * ----------------------------------------------------------------
@@ -234,7 +234,7 @@ ExecEndTableFuncScan(TableFuncScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecReScanTableFuncscan
+ *		ExecReScanTableFuncScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
