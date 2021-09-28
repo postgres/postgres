@@ -9,9 +9,7 @@ PGFILEDESC = "bloom access method - signature file based index"
 
 REGRESS = bloom
 
-# Disable TAP tests for this module for now, as these are unstable on several
-# buildfarm environments.
-# TAP_TESTS = 1
+TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
