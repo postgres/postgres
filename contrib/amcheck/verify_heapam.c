@@ -305,14 +305,20 @@ verify_heapam(PG_FUNCTION_ARGS)
 	 */
 	if (ctx.rel->rd_rel->relkind != RELKIND_RELATION &&
 		ctx.rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		ctx.rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ctx.rel->rd_rel->relkind != RELKIND_TOASTVALUE &&
+		ctx.rel->rd_rel->relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot check relation \"%s\"",
 						RelationGetRelationName(ctx.rel)),
 				 errdetail_relkind_not_supported(ctx.rel->rd_rel->relkind)));
 
-	if (ctx.rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+	/*
+	 * Sequences always use heap AM, but they don't show that in the catalogs.
+	 * Other relkinds might be using a different AM, so check.
+	 */
+	if (ctx.rel->rd_rel->relkind != RELKIND_SEQUENCE &&
+		ctx.rel->rd_rel->relam != HEAP_TABLE_AM_OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("only heap AM is supported")));

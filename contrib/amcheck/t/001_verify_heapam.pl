@@ -8,7 +8,7 @@ use PostgresNode;
 use TestLib;
 
 use Fcntl qw(:seek);
-use Test::More tests => 80;
+use Test::More tests => 272;
 
 my ($node, $result);
 
@@ -60,6 +60,22 @@ detects_no_corruption(
 	"verify_heapam('test', skip := 'all-frozen')",
 	"all-frozen corrupted table skipping all-frozen");
 
+#
+# Check a sequence with no corruption.  The current implementation of sequences
+# doesn't require its own test setup, since sequences are really just heap
+# tables under-the-hood.  To guard against future implementation changes made
+# without remembering to update verify_heapam, we create and exercise a
+# sequence, checking along the way that it passes corruption checks.
+#
+fresh_test_sequence('test_seq');
+check_all_options_uncorrupted('test_seq', 'plain');
+advance_test_sequence('test_seq');
+check_all_options_uncorrupted('test_seq', 'plain');
+set_test_sequence('test_seq');
+check_all_options_uncorrupted('test_seq', 'plain');
+reset_test_sequence('test_seq');
+check_all_options_uncorrupted('test_seq', 'plain');
+
 # Returns the filesystem path for the named relation.
 sub relation_filepath
 {
@@ -107,6 +123,56 @@ sub fresh_test_table
 		SELECT 1 FROM $relname WHERE a = 42 FOR UPDATE;
 		UPDATE $relname SET b = b WHERE a = 42;
 		COMMIT;
+	));
+}
+
+# Create a test sequence of the given name.
+sub fresh_test_sequence
+{
+	my ($seqname) = @_;
+
+	return $node->safe_psql(
+		'postgres', qq(
+		DROP SEQUENCE IF EXISTS $seqname CASCADE;
+		CREATE SEQUENCE $seqname
+			INCREMENT BY 13
+			MINVALUE 17
+			START WITH 23;
+		SELECT nextval('$seqname');
+		SELECT setval('$seqname', currval('$seqname') + nextval('$seqname'));
+	));
+}
+
+# Call SQL functions to increment the sequence
+sub advance_test_sequence
+{
+	my ($seqname) = @_;
+
+	return $node->safe_psql(
+		'postgres', qq(
+		SELECT nextval('$seqname');
+	));
+}
+
+# Call SQL functions to set the sequence
+sub set_test_sequence
+{
+	my ($seqname) = @_;
+
+	return $node->safe_psql(
+		'postgres', qq(
+		SELECT setval('$seqname', 102);
+	));
+}
+
+# Call SQL functions to reset the sequence
+sub reset_test_sequence
+{
+	my ($seqname) = @_;
+
+	return $node->safe_psql(
+		'postgres', qq(
+		ALTER SEQUENCE $seqname RESTART WITH 51
 	));
 }
 

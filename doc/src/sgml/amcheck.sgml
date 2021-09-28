@@ -220,10 +220,10 @@ SET client_min_messages = DEBUG1;
     </term>
     <listitem>
      <para>
-      Checks a table for structural corruption, where pages in the relation
-      contain data that is invalidly formatted, and for logical corruption,
-      where pages are structurally valid but inconsistent with the rest of the
-      database cluster.
+      Checks a table, sequence, or materialized view for structural corruption,
+      where pages in the relation contain data that is invalidly formatted, and
+      for logical corruption, where pages are structurally valid but
+      inconsistent with the rest of the database cluster.
      </para>
      <para>
       The following optional arguments are recognized:

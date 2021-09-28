@@ -180,8 +180,10 @@ CREATE SEQUENCE test_sequence;
 SELECT * FROM verify_heapam('test_sequence',
 							startblock := NULL,
 							endblock := NULL);
-ERROR:  cannot check relation "test_sequence"
-DETAIL:  This operation is not supported for sequences.
+ blkno | offnum | attnum | msg 
+-------+--------+--------+-----
+(0 rows)
+
 -- Check that foreign tables are rejected
 CREATE FOREIGN DATA WRAPPER dummy;
 CREATE SERVER dummy_server FOREIGN DATA WRAPPER dummy;

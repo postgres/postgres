@@ -1910,14 +1910,14 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	if (opts.allrel)
 		appendPQExpBuffer(&sql,
 						  " AND c.relam = %u "
-						  "AND c.relkind IN ('r', 'm', 't') "
+						  "AND c.relkind IN ('r', 'S', 'm', 't') "
 						  "AND c.relnamespace != %u",
 						  HEAP_TABLE_AM_OID, PG_TOAST_NAMESPACE);
 	else
 		appendPQExpBuffer(&sql,
 						  " AND c.relam IN (%u, %u)"
-						  "AND c.relkind IN ('r', 'm', 't', 'i') "
-						  "AND ((c.relam = %u AND c.relkind IN ('r', 'm', 't')) OR "
+						  "AND c.relkind IN ('r', 'S', 'm', 't', 'i') "
+						  "AND ((c.relam = %u AND c.relkind IN ('r', 'S', 'm', 't')) OR "
 						  "(c.relam = %u AND c.relkind = 'i'))",
 						  HEAP_TABLE_AM_OID, BTREE_AM_OID,
 						  HEAP_TABLE_AM_OID, BTREE_AM_OID);
