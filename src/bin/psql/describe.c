@@ -2881,7 +2881,7 @@ describeOneTableDetails(const char *schemaname,
 							  "stxrelid::pg_catalog.regclass, "
 							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
 							  "stxname,\n"
-							  "pg_get_statisticsobjdef_columns(oid) AS columns,\n"
+							  "pg_catalog.pg_get_statisticsobjdef_columns(oid) AS columns,\n"
 							  "  'd' = any(stxkind) AS ndist_enabled,\n"
 							  "  'f' = any(stxkind) AS deps_enabled,\n"
 							  "  'm' = any(stxkind) AS mcv_enabled,\n"
@@ -4734,7 +4734,7 @@ listExtendedStats(const char *pattern)
 	if (pset.sversion >= 140000)
 		appendPQExpBuffer(&buf,
 						  "pg_catalog.format('%%s FROM %%s', \n"
-						  "  pg_get_statisticsobjdef_columns(es.oid), \n"
+						  "  pg_catalog.pg_get_statisticsobjdef_columns(es.oid), \n"
 						  "  es.stxrelid::pg_catalog.regclass) AS \"%s\"",
 						  gettext_noop("Definition"));
 	else
