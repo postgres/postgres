@@ -723,6 +723,7 @@ Author: Magnus Hagander <magnus@hagander.net>
       <para>
        Add an optional timeout parameter to <link
        linkend="functions-admin-signal"><function>pg_terminate_backend()</function></link>
+       (Magnus Hagander)
       </para>
      </listitem>
 
@@ -1363,7 +1364,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
        <para>
-        Dramatically improve Unicode normalization (John Naylor)
+        Dramatically improve Unicode normalization performance (John Naylor)
        </para>
 
        <para>
@@ -1519,7 +1520,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        <para>
         Add system view <link
         linkend="monitoring-pg-stat-replication-slots-view"><structname>pg_stat_replication_slots</structname></link>
-        to report replication slot activity (Sawada Masahiko, Amit Kapila,
+        to report replication slot activity (Masahiko Sawada, Amit Kapila,
         Vignesh C)
        </para>
 
@@ -2066,7 +2067,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
        <para>
         Allow multiple transactions during table sync in logical
-        replication (Peter Smith, Amit Kapila, and Takamichi Osumi)
+        replication (Peter Smith, Amit Kapila, Takamichi Osumi)
        </para>
       </listitem>
 
