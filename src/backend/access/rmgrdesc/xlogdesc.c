@@ -139,6 +139,15 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec.ThisTimeLineID, xlrec.PrevTimeLineID,
 						 timestamptz_to_str(xlrec.end_time));
 	}
+	else if (info == XLOG_OVERWRITE_CONTRECORD)
+	{
+		xl_overwrite_contrecord xlrec;
+
+		memcpy(&xlrec, rec, sizeof(xl_overwrite_contrecord));
+		appendStringInfo(buf, "lsn %X/%X; time %s",
+						 LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
+						 timestamptz_to_str(xlrec.overwrite_time));
+	}
 }
 
 const char *
@@ -177,6 +186,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_END_OF_RECOVERY:
 			id = "END_OF_RECOVERY";
+			break;
+		case XLOG_OVERWRITE_CONTRECORD:
+			id = "OVERWRITE_CONTRECORD";
 			break;
 		case XLOG_FPI:
 			id = "FPI";
