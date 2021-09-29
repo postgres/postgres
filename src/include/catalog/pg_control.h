@@ -77,6 +77,7 @@ typedef struct CheckPoint
 #define XLOG_FPI_FOR_HINT				0xA0
 #define XLOG_FPI						0xB0
 #define XLOG_FPI_MULTI					0xC0
+#define XLOG_OVERWRITE_CONTRECORD		0xD0
 
 
 /*
