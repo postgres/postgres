@@ -65,8 +65,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
 
   <para>
    Commands <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command> and
-   <command>ALTER SUBSCRIPTION ... {SET|ADD|DROP} PUBLICATION ...</command> with refresh
-   option as true cannot be executed inside a transaction block.
+   <command>ALTER SUBSCRIPTION ... {SET|ADD|DROP} PUBLICATION ...</command>
+   with <literal>refresh</literal> option as <literal>true</literal> cannot be
+   executed inside a transaction block.
   </para>
  </refsect1>
 

@@ -13114,7 +13114,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <structname>pg_stats_ext_exprs</structname> is also designed to present
    the information in a more readable format than the underlying catalogs
    &mdash; at the cost that its schema must be extended whenever the structure
-   of statistics in <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link> changes.
+   of statistics in <structname>pg_statistic_ext</structname> changes.
   </para>
 
   <table>

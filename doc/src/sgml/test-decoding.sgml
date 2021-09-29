@@ -40,8 +40,8 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'i
  </para>
 
 <para>
-  We can also get the changes of the in-progress transaction and the typical
-  output, might be:
+  We can also get the changes of the in-progress transaction, and the typical
+  output might be:
 
 <programlisting>
 postgres[33712]=#* SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'stream-changes', '1');

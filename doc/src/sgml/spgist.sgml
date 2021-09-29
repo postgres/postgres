@@ -875,8 +875,9 @@ typedef struct spgLeafConsistentOut
 
       <para>
        Note: the <function>compress</function> method is only applied to
-       values to be stored.  The consistent methods receive query scankeys
-       unchanged, without transformation using <function>compress</function>.
+       values to be stored.  The consistent methods receive query
+       <structfield>scankeys</structfield> unchanged, without transformation
+       using <function>compress</function>.
       </para>
      </listitem>
     </varlistentry>

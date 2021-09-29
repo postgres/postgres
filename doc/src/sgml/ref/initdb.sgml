@@ -283,7 +283,7 @@ PostgreSQL documentation
         By default, <command>initdb</command> will write instructions for how
         to start the cluster at the end of its output. This option causes
         those instructions to be left out. This is primarily intended for use
-        by tools that wrap <command>initdb</command> in platform specific
+        by tools that wrap <command>initdb</command> in platform-specific
         behavior, where those instructions are likely to be incorrect.
        </para>
       </listitem>
