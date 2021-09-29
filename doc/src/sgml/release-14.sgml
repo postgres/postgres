@@ -2116,15 +2116,15 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
        <para>
-        Generate <acronym>WAL</acronym> invalidation messages during
-        command completion when using logical replication (Dilip Kumar,
-        Tomas Vondra, Amit Kapila)
+        Add cache invalidation messages to the <acronym>WAL</acronym>
+        during command completion when using logical replication (Dilip
+        Kumar, Tomas Vondra, Amit Kapila)
        </para>
 
        <para>
-        When logical replication is disabled, <acronym>WAL</acronym>
-        invalidation messages are generated at transaction completion.
         This allows logical streaming of in-progress transactions.
+        When logical replication is disabled, invalidation messages are
+        generated only at transaction completion.
        </para>
       </listitem>
 
