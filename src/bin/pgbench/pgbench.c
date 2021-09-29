@@ -5863,7 +5863,7 @@ main(int argc, char **argv)
 #endif							/* ENABLE_THREAD_SAFETY */
 
 		for (int j = 0; j < thread->nstate; j++)
-			if (thread->state[j].state == CSTATE_ABORTED)
+			if (thread->state[j].state != CSTATE_FINISHED)
 				exit_code = 2;
 
 		/* aggregate thread level stats */
