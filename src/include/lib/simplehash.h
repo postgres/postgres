@@ -1111,7 +1111,7 @@ SH_STAT(SH_TYPE * tb)
 		avg_collisions = 0;
 	}
 
-	sh_log("size: " UINT64_FORMAT ", members: %u, filled: %f, total chain: %u, max chain: %u, avg chain: %f, total_collisions: %u, max_collisions: %i, avg_collisions: %f",
+	sh_log("size: " UINT64_FORMAT ", members: %u, filled: %f, total chain: %u, max chain: %u, avg chain: %f, total_collisions: %u, max_collisions: %u, avg_collisions: %f",
 		   tb->size, tb->members, fillfactor, total_chain_length, max_chain_length, avg_chain_length,
 		   total_collisions, max_collisions, avg_collisions);
 }
