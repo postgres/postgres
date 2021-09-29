@@ -6784,7 +6784,7 @@ threadRun(void *arg)
 					continue;
 				}
 				/* must be something wrong */
-				pg_log_fatal("%s() failed: %m", SOCKET_WAIT_METHOD);
+				pg_log_error("%s() failed: %m", SOCKET_WAIT_METHOD);
 				goto done;
 			}
 		}
