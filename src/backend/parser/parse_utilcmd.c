@@ -2893,7 +2893,7 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 /*
  * transformStatsStmt - parse analysis for CREATE STATISTICS
  *
- * To avoid race conditions, it's important that this function rely only on
+ * To avoid race conditions, it's important that this function relies only on
  * the passed-in relid (and not on stmt->relation) to determine the target
  * relation.
  */
@@ -2949,7 +2949,7 @@ transformStatsStmt(Oid relid, CreateStatsStmt *stmt, const char *queryString)
 	if (list_length(pstate->p_rtable) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("statistics expressions can refer only to the table being indexed")));
+				 errmsg("statistics expressions can refer only to the table being referenced")));
 
 	free_parsestate(pstate);
 
@@ -3616,7 +3616,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		newcmds = lappend(newcmds, newcmd);
 	}
 
-	/* Append extended statistic objects */
+	/* Append extended statistics objects */
 	transformExtendedStatistics(&cxt);
 
 	/* Close rel */
