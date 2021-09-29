@@ -664,7 +664,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    certain implementation-level heuristics will fail to identify and
    delete even one garbage index tuple (in which case a page split or
    deduplication pass resolves the issue of an incoming new tuple not
-   fitting on a leaf page).  The worst case number of versions that
+   fitting on a leaf page).  The worst-case number of versions that
    any index scan must traverse (for any single logical row) is an
    important contributor to overall system responsiveness and
    throughput.  A bottom-up index deletion pass targets suspected
@@ -706,7 +706,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    This is expected with any B-Tree index that is subject to
    significant version churn from <command>UPDATE</command>s that
    rarely or never logically modify the columns that the index covers.
-   The average and worst case number of versions per logical row can
+   The average and worst-case number of versions per logical row can
    be kept low purely through targeted incremental deletion passes.
    It's quite possible that the on-disk size of certain indexes will
    never increase by even one single page/block despite
@@ -811,7 +811,7 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    constraints) to use deduplication.  This allows leaf pages to
    temporarily <quote>absorb</quote> extra version churn duplicates.
    Deduplication in unique indexes augments bottom-up index deletion,
-   especially in cases where a long-running transactions holds a
+   especially in cases where a long-running transaction holds a
    snapshot that blocks garbage collection.  The goal is to buy time
    for the bottom-up index deletion strategy to become effective
    again.  Delaying page splits until a single long-running
