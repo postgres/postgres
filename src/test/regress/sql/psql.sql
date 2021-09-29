@@ -1241,3 +1241,66 @@ drop role regress_partitioning_role;
 \dfa bit* small*
 \do - pg_catalog.int4
 \do && anyarray *
+
+-- AUTOCOMMIT
+
+CREATE TABLE ac_test (a int);
+\set AUTOCOMMIT off
+
+INSERT INTO ac_test VALUES (1);
+COMMIT;
+SELECT * FROM ac_test;
+COMMIT;
+
+INSERT INTO ac_test VALUES (2);
+ROLLBACK;
+SELECT * FROM ac_test;
+COMMIT;
+
+BEGIN;
+INSERT INTO ac_test VALUES (3);
+COMMIT;
+SELECT * FROM ac_test;
+COMMIT;
+
+BEGIN;
+INSERT INTO ac_test VALUES (4);
+ROLLBACK;
+SELECT * FROM ac_test;
+COMMIT;
+
+\set AUTOCOMMIT on
+DROP TABLE ac_test;
+SELECT * FROM ac_test;  -- should be gone now
+
+-- ON_ERROR_ROLLBACK
+
+\set ON_ERROR_ROLLBACK on
+CREATE TABLE oer_test (a int);
+
+BEGIN;
+INSERT INTO oer_test VALUES (1);
+INSERT INTO oer_test VALUES ('foo');
+INSERT INTO oer_test VALUES (3);
+COMMIT;
+SELECT * FROM oer_test;
+
+BEGIN;
+INSERT INTO oer_test VALUES (4);
+ROLLBACK;
+SELECT * FROM oer_test;
+
+BEGIN;
+INSERT INTO oer_test VALUES (5);
+COMMIT AND CHAIN;
+INSERT INTO oer_test VALUES (6);
+COMMIT;
+SELECT * FROM oer_test;
+
+DROP TABLE oer_test;
+\set ON_ERROR_ROLLBACK off
+
+-- ECHO errors
+\set ECHO errors
+SELECT * FROM notexists;
+\set ECHO none
