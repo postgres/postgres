@@ -48,14 +48,15 @@ typedef void (*timeout_handler_proc) (void);
 typedef enum TimeoutType
 {
 	TMPARAM_AFTER,
-	TMPARAM_AT
+	TMPARAM_AT,
+	TMPARAM_EVERY
 } TimeoutType;
 
 typedef struct
 {
 	TimeoutId	id;				/* timeout to set */
 	TimeoutType type;			/* TMPARAM_AFTER or TMPARAM_AT */
-	int			delay_ms;		/* only used for TMPARAM_AFTER */
+	int			delay_ms;		/* only used for TMPARAM_AFTER/EVERY */
 	TimestampTz fin_time;		/* only used for TMPARAM_AT */
 } EnableTimeoutParams;
 
@@ -75,6 +76,8 @@ extern void reschedule_timeouts(void);
 
 /* timeout operation */
 extern void enable_timeout_after(TimeoutId id, int delay_ms);
+extern void enable_timeout_every(TimeoutId id, TimestampTz fin_time,
+								 int delay_ms);
 extern void enable_timeout_at(TimeoutId id, TimestampTz fin_time);
 extern void enable_timeouts(const EnableTimeoutParams *timeouts, int count);
 extern void disable_timeout(TimeoutId id, bool keep_indicator);

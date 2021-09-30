@@ -36,6 +36,7 @@ typedef struct timeout_params
 
 	TimestampTz start_time;		/* time that timeout was last activated */
 	TimestampTz fin_time;		/* time it is, or was last, due to fire */
+	int			interval_in_ms; /* time between firings, or 0 if just once */
 } timeout_params;
 
 /*
@@ -153,7 +154,8 @@ remove_timeout_index(int index)
  * Enable the specified timeout reason
  */
 static void
-enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
+enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time,
+			   int interval_in_ms)
 {
 	int			i;
 
@@ -188,6 +190,7 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
 	all_timeouts[id].indicator = false;
 	all_timeouts[id].start_time = now;
 	all_timeouts[id].fin_time = fin_time;
+	all_timeouts[id].interval_in_ms = interval_in_ms;
 
 	insert_timeout(id, i);
 }
@@ -399,6 +402,29 @@ handle_sig_alarm(SIGNAL_ARGS)
 				/* And call its handler function */
 				this_timeout->timeout_handler();
 
+				/* If it should fire repeatedly, re-enable it. */
+				if (this_timeout->interval_in_ms > 0)
+				{
+					TimestampTz new_fin_time;
+
+					/*
+					 * To guard against drift, schedule the next instance of
+					 * the timeout based on the intended firing time rather
+					 * than the actual firing time. But if the timeout was so
+					 * late that we missed an entire cycle, fall back to
+					 * scheduling based on the actual firing time.
+					 */
+					new_fin_time =
+						TimestampTzPlusMilliseconds(this_timeout->fin_time,
+													this_timeout->interval_in_ms);
+					if (new_fin_time < now)
+						new_fin_time =
+							TimestampTzPlusMilliseconds(now,
+														this_timeout->interval_in_ms);
+					enable_timeout(this_timeout->index, now, new_fin_time,
+								   this_timeout->interval_in_ms);
+				}
+
 				/*
 				 * The handler might not take negligible time (CheckDeadLock
 				 * for instance isn't too cheap), so let's update our idea of
@@ -449,6 +475,7 @@ InitializeTimeouts(void)
 		all_timeouts[i].timeout_handler = NULL;
 		all_timeouts[i].start_time = 0;
 		all_timeouts[i].fin_time = 0;
+		all_timeouts[i].interval_in_ms = 0;
 	}
 
 	all_timeouts_initialized = true;
@@ -532,7 +559,29 @@ enable_timeout_after(TimeoutId id, int delay_ms)
 	/* Queue the timeout at the appropriate time. */
 	now = GetCurrentTimestamp();
 	fin_time = TimestampTzPlusMilliseconds(now, delay_ms);
-	enable_timeout(id, now, fin_time);
+	enable_timeout(id, now, fin_time, 0);
+
+	/* Set the timer interrupt. */
+	schedule_alarm(now);
+}
+
+/*
+ * Enable the specified timeout to fire periodically, with the specified
+ * delay as the time between firings.
+ *
+ * Delay is given in milliseconds.
+ */
+void
+enable_timeout_every(TimeoutId id, TimestampTz fin_time, int delay_ms)
+{
+	TimestampTz now;
+
+	/* Disable timeout interrupts for safety. */
+	disable_alarm();
+
+	/* Queue the timeout at the appropriate time. */
+	now = GetCurrentTimestamp();
+	enable_timeout(id, now, fin_time, delay_ms);
 
 	/* Set the timer interrupt. */
 	schedule_alarm(now);
@@ -555,7 +604,7 @@ enable_timeout_at(TimeoutId id, TimestampTz fin_time)
 
 	/* Queue the timeout at the appropriate time. */
 	now = GetCurrentTimestamp();
-	enable_timeout(id, now, fin_time);
+	enable_timeout(id, now, fin_time, 0);
 
 	/* Set the timer interrupt. */
 	schedule_alarm(now);
@@ -590,11 +639,17 @@ enable_timeouts(const EnableTimeoutParams *timeouts, int count)
 			case TMPARAM_AFTER:
 				fin_time = TimestampTzPlusMilliseconds(now,
 													   timeouts[i].delay_ms);
-				enable_timeout(id, now, fin_time);
+				enable_timeout(id, now, fin_time, 0);
 				break;
 
 			case TMPARAM_AT:
-				enable_timeout(id, now, timeouts[i].fin_time);
+				enable_timeout(id, now, timeouts[i].fin_time, 0);
+				break;
+
+			case TMPARAM_EVERY:
+				fin_time = TimestampTzPlusMilliseconds(now,
+													   timeouts[i].delay_ms);
+				enable_timeout(id, now, fin_time, timeouts[i].delay_ms);
 				break;
 
 			default:
