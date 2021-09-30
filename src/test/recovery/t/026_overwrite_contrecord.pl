@@ -101,6 +101,7 @@ $node = PostgresNode->new('primary2');
 $node->init(
 	has_archiving => 1,
 	extra         => ['--wal-segsize=1']);
+$node->set_replication_conf;
 
 # Note: consistent use of forward slashes here avoids any escaping problems
 # that arise from use of backslashes. That means we need to double-quote all
@@ -181,7 +182,7 @@ $node->poll_query_until(
 
 # Now crash the node with the transaction open
 $node->stop('immediate');
-#$h->finish();
+$h->finish();
 $node->start;
 $node->safe_psql('postgres', 'create table witness (a int);');
 $node->safe_psql('postgres', 'insert into witness values (42)');
