@@ -47,8 +47,8 @@ int			pgwin32_noblock = 0;
  *
  * Note: where there is a direct correspondence between a WSAxxx error code
  * and a Berkeley error symbol, this mapping is actually a no-op, because
- * in win32.h we redefine the network-related Berkeley error symbols to have
- * the values of their WSAxxx counterparts.  The point of the switch is
+ * in win32_port.h we redefine the network-related Berkeley error symbols to
+ * have the values of their WSAxxx counterparts.  The point of the switch is
  * mostly to translate near-miss error codes into something that's sensible
  * in the Berkeley universe.
  */
@@ -141,10 +141,15 @@ TranslateSocketError(void)
 		case WSAEDISCON:
 			errno = ENOTCONN;
 			break;
+		case WSAETIMEDOUT:
+			errno = ETIMEDOUT;
+			break;
 		default:
 			ereport(NOTICE,
-					(errmsg_internal("unrecognized win32 socket error code: %d", WSAGetLastError())));
+					(errmsg_internal("unrecognized win32 socket error code: %d",
+									 WSAGetLastError())));
 			errno = EINVAL;
+			break;
 	}
 }
 

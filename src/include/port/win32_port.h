@@ -381,6 +381,8 @@ extern int	_pgstat64(const char *name, struct stat *buf);
 #define ENETUNREACH WSAENETUNREACH
 #undef ENOTCONN
 #define ENOTCONN WSAENOTCONN
+#undef ETIMEDOUT
+#define ETIMEDOUT WSAETIMEDOUT
 
 /*
  * Locale stuff.

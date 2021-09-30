@@ -119,7 +119,8 @@ extern void pgfnames_cleanup(char **filenames);
 	case EHOSTUNREACH: \
 	case ENETDOWN: \
 	case ENETRESET: \
-	case ENETUNREACH
+	case ENETUNREACH: \
+	case ETIMEDOUT
 
 /* Portable locale initialization (in exec.c) */
 extern void set_pglocale_pgservice(const char *argv0, const char *app);
