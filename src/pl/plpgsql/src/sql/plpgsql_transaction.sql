@@ -354,6 +354,27 @@ $$;
 SELECT * FROM test1;
 
 
+-- test commit/rollback inside exception handler, too
+TRUNCATE test1;
+
+DO LANGUAGE plpgsql $$
+BEGIN
+    FOR i IN 1..10 LOOP
+      BEGIN
+        INSERT INTO test1 VALUES (i, 'good');
+        INSERT INTO test1 VALUES (i/0, 'bad');
+      EXCEPTION
+        WHEN division_by_zero THEN
+            INSERT INTO test1 VALUES (i, 'exception');
+            IF (i % 3) > 0 THEN COMMIT; ELSE ROLLBACK; END IF;
+      END;
+    END LOOP;
+END;
+$$;
+
+SELECT * FROM test1;
+
+
 -- detoast result of simple expression after commit
 CREATE TEMP TABLE test4(f1 text);
 ALTER TABLE test4 ALTER COLUMN f1 SET STORAGE EXTERNAL; -- disable compression
