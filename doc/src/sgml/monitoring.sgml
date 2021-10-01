@@ -320,15 +320,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
-      <entry>One row per replication slot, showing statistics about
-       the replication slot's usage.
-       See <link linkend="monitoring-pg-stat-replication-slots-view">
-       <structname>pg_stat_replication_slots</structname></link> for details.
-      </entry>
-     </row>
-
-     <row>
       <entry><structname>pg_stat_wal_receiver</structname><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
       <entry>Only one row, showing statistics about the WAL receiver from
        that receiver's connected server.
@@ -624,6 +615,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>One row per SLRU, showing statistics of operations. See
        <link linkend="monitoring-pg-stat-slru-view">
        <structname>pg_stat_slru</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_replication_slots</structname><indexterm><primary>pg_stat_replication_slots</primary></indexterm></entry>
+      <entry>One row per replication slot, showing statistics about the
+       replication slot's usage. See
+       <link linkend="monitoring-pg-stat-replication-slots-view">
+       <structname>pg_stat_replication_slots</structname></link> for details.
       </entry>
      </row>
 
