@@ -232,7 +232,10 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 	memset(h, 0, ctx->digest_size);
 
 	if (pg_cryptohash_final(ctx->hash, h, ctx->digest_size) < 0)
+	{
+		FREE(h);
 		return -1;
+	}
 
 	/* H(K XOR opad, tmp) */
 	if (pg_cryptohash_init(ctx->hash) < 0 ||
@@ -240,9 +243,11 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 		pg_cryptohash_update(ctx->hash, h, ctx->digest_size) < 0 ||
 		pg_cryptohash_final(ctx->hash, dest, len) < 0)
 	{
+		FREE(h);
 		return -1;
 	}
 
+	FREE(h);
 	return 0;
 }
 
