@@ -16798,6 +16798,21 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("WITH TIES cannot be specified without ORDER BY clause")));
+		if (limitClause->limitOption == LIMIT_OPTION_WITH_TIES && stmt->lockingClause)
+		{
+			ListCell   *lc;
+
+			foreach(lc, stmt->lockingClause)
+			{
+				LockingClause *lock = lfirst_node(LockingClause, lc);
+
+				if (lock->waitPolicy == LockWaitSkip)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("%s and %s options cannot be used together",
+									"SKIP LOCKED", "WITH TIES")));
+			}
+		}
 		stmt->limitOption = limitClause->limitOption;
 	}
 	if (withClause)

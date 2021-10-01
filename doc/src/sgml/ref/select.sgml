@@ -1515,7 +1515,8 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
     The <literal>WITH TIES</literal> option is used to return any additional
     rows that tie for the last place in the result set according to
     the <literal>ORDER BY</literal> clause; <literal>ORDER BY</literal>
-    is mandatory in this case.
+    is mandatory in this case, and <literal>SKIP LOCKED</literal> is
+    not allowed.
     <literal>ROW</literal> and <literal>ROWS</literal> as well as
     <literal>FIRST</literal> and <literal>NEXT</literal> are noise
     words that don't influence the effects of these clauses.

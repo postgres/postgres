@@ -185,7 +185,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	if (concurrent && stmt->skipData)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("CONCURRENTLY and WITH NO DATA options cannot be used together")));
+				 errmsg("%s and %s options cannot be used together",
+						"CONCURRENTLY", "WITH NO DATA")));
 
 	/*
 	 * Check that everything is correct for a refresh. Problems at this point
