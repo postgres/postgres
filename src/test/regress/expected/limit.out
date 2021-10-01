@@ -619,6 +619,11 @@ SELECT  thousand
         0
 (2 rows)
 
+-- SKIP LOCKED and WITH TIES are incompatible
+SELECT  thousand
+		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST 1 ROW WITH TIES FOR UPDATE SKIP LOCKED;
+ERROR:  SKIP LOCKED and WITH TIES options cannot be used together
 -- should fail
 SELECT ''::text AS two, unique1, unique2, stringu1
 		FROM onek WHERE unique1 > 50
