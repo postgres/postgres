@@ -10598,7 +10598,7 @@ VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec, XLogReaderState *state
 			 LSN_FORMAT_ARGS(state->overwrittenRecPtr));
 
 	ereport(LOG,
-			(errmsg("sucessfully skipped missing contrecord at %X/%X, overwritten at %s",
+			(errmsg("successfully skipped missing contrecord at %X/%X, overwritten at %s",
 					LSN_FORMAT_ARGS(xlrec->overwritten_lsn),
 					timestamptz_to_str(xlrec->overwrite_time))));
 
