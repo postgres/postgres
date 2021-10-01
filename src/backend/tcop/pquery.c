@@ -493,7 +493,9 @@ PortalStart(Portal portal, ParamListInfo params,
 				 * We could remember the snapshot in portal->portalSnapshot,
 				 * but presently there seems no need to, as this code path
 				 * cannot be used for non-atomic execution.  Hence there can't
-				 * be any commit/abort that might destroy the snapshot.
+				 * be any commit/abort that might destroy the snapshot.  Since
+				 * we don't do that, there's also no need to force a
+				 * non-default nesting level for the snapshot.
 				 */
 
 				/*
@@ -1152,9 +1154,15 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 			snapshot = RegisterSnapshot(snapshot);
 			portal->holdSnapshot = snapshot;
 		}
-		/* In any case, make the snapshot active and remember it in portal */
-		PushActiveSnapshot(snapshot);
-		/* PushActiveSnapshot might have copied the snapshot */
+
+		/*
+		 * In any case, make the snapshot active and remember it in portal.
+		 * Because the portal now references the snapshot, we must tell
+		 * snapmgr.c that the snapshot belongs to the portal's transaction
+		 * level, else we risk portalSnapshot becoming a dangling pointer.
+		 */
+		PushActiveSnapshotWithLevel(snapshot, portal->createLevel);
+		/* PushActiveSnapshotWithLevel might have copied the snapshot */
 		portal->portalSnapshot = GetActiveSnapshot();
 	}
 	else
@@ -1810,8 +1818,13 @@ EnsurePortalSnapshotExists(void)
 		elog(ERROR, "cannot execute SQL without an outer snapshot or portal");
 	Assert(portal->portalSnapshot == NULL);
 
-	/* Create a new snapshot and make it active */
-	PushActiveSnapshot(GetTransactionSnapshot());
-	/* PushActiveSnapshot might have copied the snapshot */
+	/*
+	 * Create a new snapshot, make it active, and remember it in portal.
+	 * Because the portal now references the snapshot, we must tell snapmgr.c
+	 * that the snapshot belongs to the portal's transaction level, else we
+	 * risk portalSnapshot becoming a dangling pointer.
+	 */
+	PushActiveSnapshotWithLevel(GetTransactionSnapshot(), portal->createLevel);
+	/* PushActiveSnapshotWithLevel might have copied the snapshot */
 	portal->portalSnapshot = GetActiveSnapshot();
 }

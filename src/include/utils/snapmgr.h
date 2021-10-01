@@ -111,6 +111,7 @@ extern void InvalidateCatalogSnapshot(void);
 extern void InvalidateCatalogSnapshotConditionally(void);
 
 extern void PushActiveSnapshot(Snapshot snapshot);
+extern void PushActiveSnapshotWithLevel(Snapshot snapshot, int snap_level);
 extern void PushCopiedSnapshot(Snapshot snapshot);
 extern void UpdateActiveSnapshotCommandId(void);
 extern void PopActiveSnapshot(void);
