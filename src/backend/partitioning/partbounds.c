@@ -2564,6 +2564,9 @@ build_merged_partition_bounds(char strategy, List *merged_datums,
 		merged_bounds->kind = NULL;
 	}
 
+	/* interleaved_parts is always NULL for join relations. */
+	merged_bounds->interleaved_parts = NULL;
+
 	Assert(list_length(merged_indexes) == ndatums);
 	merged_bounds->nindexes = ndatums;
 	merged_bounds->indexes = (int *) palloc(sizeof(int) * ndatums);
