@@ -130,6 +130,7 @@ typedef struct PortalData
 	 */
 	SubTransactionId createSubid;	/* the creating subxact */
 	SubTransactionId activeSubid;	/* the last subxact with activity */
+	int			createLevel;	/* creating subxact's nesting level */
 
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query (as of 8.4, never NULL) */
@@ -219,6 +220,7 @@ extern void AtCleanup_Portals(void);
 extern void PortalErrorCleanup(void);
 extern void AtSubCommit_Portals(SubTransactionId mySubid,
 								SubTransactionId parentSubid,
+								int parentLevel,
 								ResourceOwner parentXactOwner);
 extern void AtSubAbort_Portals(SubTransactionId mySubid,
 							   SubTransactionId parentSubid,
