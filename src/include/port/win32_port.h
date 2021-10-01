@@ -43,6 +43,14 @@
 #define _WINSOCKAPI_
 #endif
 
+/*
+ * windows.h includes a lot of other headers, slowing down compilation
+ * significantly.  WIN32_LEAN_AND_MEAN reduces that a bit. It'd be better to
+ * remove the include of windows.h (as well as indirect inclusions of it) from
+ * such a central place, but until then...
+ */
+#define WIN32_LEAN_AND_MEAN
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
