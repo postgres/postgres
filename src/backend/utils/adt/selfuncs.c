@@ -5264,46 +5264,72 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	/*
 	 * If we have most-common-values info, look for extreme MCVs.  This is
 	 * needed even if we also have a histogram, since the histogram excludes
-	 * the MCVs.  However, usually the MCVs will not be the extreme values, so
-	 * avoid unnecessary data copying.
+	 * the MCVs.  However, if we *only* have MCVs and no histogram, we should
+	 * be pretty wary of deciding that that is a full representation of the
+	 * data.  Proceed only if the MCVs represent the whole table (to within
+	 * roundoff error).
 	 */
 	if (get_attstatsslot(&sslot, vardata->statsTuple,
 						 STATISTIC_KIND_MCV, InvalidOid,
-						 ATTSTATSSLOT_VALUES))
+						 have_data ? ATTSTATSSLOT_VALUES :
+						 (ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS)))
 	{
-		bool		tmin_is_mcv = false;
-		bool		tmax_is_mcv = false;
-		FmgrInfo	opproc;
+		bool		use_mcvs = have_data;
 
-		fmgr_info(opfuncoid, &opproc);
-
-		for (i = 0; i < sslot.nvalues; i++)
+		if (!have_data)
 		{
-			if (!have_data)
-			{
-				tmin = tmax = sslot.values[i];
-				tmin_is_mcv = tmax_is_mcv = have_data = true;
-				continue;
-			}
-			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   collation,
-											   sslot.values[i], tmin)))
-			{
-				tmin = sslot.values[i];
-				tmin_is_mcv = true;
-			}
-			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   collation,
-											   tmax, sslot.values[i])))
-			{
-				tmax = sslot.values[i];
-				tmax_is_mcv = true;
-			}
+			double		sumcommon = 0.0;
+			double		nullfrac;
+			int			i;
+
+			for (i = 0; i < sslot.nnumbers; i++)
+				sumcommon += sslot.numbers[i];
+			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata->statsTuple))->stanullfrac;
+			if (sumcommon + nullfrac > 0.99999)
+				use_mcvs = true;
 		}
-		if (tmin_is_mcv)
-			tmin = datumCopy(tmin, typByVal, typLen);
-		if (tmax_is_mcv)
-			tmax = datumCopy(tmax, typByVal, typLen);
+
+		if (use_mcvs)
+		{
+			/*
+			 * Usually the MCVs will not be the extreme values, so avoid
+			 * unnecessary data copying.
+			 */
+			bool		tmin_is_mcv = false;
+			bool		tmax_is_mcv = false;
+			FmgrInfo	opproc;
+
+			fmgr_info(opfuncoid, &opproc);
+
+			for (i = 0; i < sslot.nvalues; i++)
+			{
+				if (!have_data)
+				{
+					tmin = tmax = sslot.values[i];
+					tmin_is_mcv = tmax_is_mcv = have_data = true;
+					continue;
+				}
+				if (DatumGetBool(FunctionCall2Coll(&opproc,
+												   collation,
+												   sslot.values[i], tmin)))
+				{
+					tmin = sslot.values[i];
+					tmin_is_mcv = true;
+				}
+				if (DatumGetBool(FunctionCall2Coll(&opproc,
+												   collation,
+												   tmax, sslot.values[i])))
+				{
+					tmax = sslot.values[i];
+					tmax_is_mcv = true;
+				}
+			}
+			if (tmin_is_mcv)
+				tmin = datumCopy(tmin, typByVal, typLen);
+			if (tmax_is_mcv)
+				tmax = datumCopy(tmax, typByVal, typLen);
+		}
+
 		free_attstatsslot(&sslot);
 	}
 
