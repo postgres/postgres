@@ -833,24 +833,19 @@ static const struct
 		"Asia/Dhaka"
 	},
 	{
-		/* (UTC+11:00) Bougainville Island */
-		"Bougainville Standard Time", "Bougainville Daylight Time",
-		"Pacific/Bougainville"
-	},
-	{
 		/* (UTC+03:00) Minsk */
 		"Belarus Standard Time", "Belarus Daylight Time",
 		"Europe/Minsk"
 	},
 	{
+		/* (UTC+11:00) Bougainville Island */
+		"Bougainville Standard Time", "Bougainville Daylight Time",
+		"Pacific/Bougainville"
+	},
+	{
 		/* (UTC-01:00) Cabo Verde Is. */
 		"Cabo Verde Standard Time", "Cabo Verde Daylight Time",
 		"Atlantic/Cape_Verde"
-	},
-	{
-		/* (UTC+12:45) Chatham Islands */
-		"Chatham Islands Standard Time", "Chatham Islands Daylight Time",
-		"Pacific/Chatham"
 	},
 	{
 		/* (UTC-06:00) Saskatchewan */
@@ -914,9 +909,19 @@ static const struct
 		"America/Mexico_City"
 	},
 	{
+		/* (UTC+12:45) Chatham Islands */
+		"Chatham Islands Standard Time", "Chatham Islands Daylight Time",
+		"Pacific/Chatham"
+	},
+	{
 		/* (UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi */
 		"China Standard Time", "China Daylight Time",
 		"Asia/Hong_Kong"
+	},
+	{
+		/* (UTC) Coordinated Universal Time */
+		"Coordinated Universal Time", "Coordinated Universal Time",
+		"UTC"
 	},
 	{
 		/* (UTC-05:00) Havana */
@@ -949,6 +954,11 @@ static const struct
 		"America/Araguaina"
 	},
 	{
+		/* (UTC-06:00) Easter Island */
+		"Easter Island Standard Time", "Easter Island Daylight Time",
+		"Pacific/Easter"
+	},
+	{
 		/* (UTC-05:00) Eastern Time (US & Canada) */
 		"Eastern Standard Time", "Eastern Daylight Time",
 		"US/Eastern"
@@ -957,11 +967,6 @@ static const struct
 		/* (UTC-05:00) Chetumal */
 		"Eastern Standard Time (Mexico)", "Eastern Daylight Time (Mexico)",
 		"America/Mexico_City"
-	},
-	{
-		/* (UTC-06:00) Easter Island */
-		"Easter Island Standard Time", "Easter Island Daylight Time",
-		"Pacific/Easter"
 	},
 	{
 		/* (UTC+02:00) Cairo */
@@ -1072,6 +1077,11 @@ static const struct
 		/* (UTC-03:00) Punta Arenas */
 		"Magallanes Standard Time", "Magallanes Daylight Time",
 		"America/Punta_Arenas"
+	},
+	{
+		/* (UTC+08:00) Kuala Lumpur, Singapore */
+		"Malay Peninsula Standard Time", "Malay Peninsula Daylight Time",
+		"Asia/Kuala_Lumpur"
 	},
 	{
 		/* (UTC-09:30) Marquesas Islands */
@@ -1299,6 +1309,11 @@ static const struct
 		"America/Miquelon"
 	},
 	{
+		/* (UTC+11:00) Sakhalin */
+		"Sakhalin Standard Time", "Sakhalin Daylight Time",
+		"Asia/Sakhalin"
+	},
+	{
 		/* (UTC+13:00) Samoa */
 		"Samoa Standard Time", "Samoa Daylight Time",
 		"Pacific/Samoa"
@@ -1317,16 +1332,6 @@ static const struct
 		/* (UTC+07:00) Bangkok, Hanoi, Jakarta */
 		"SE Asia Standard Time", "SE Asia Daylight Time",
 		"Asia/Bangkok"
-	},
-	{
-		/* (UTC+08:00) Kuala Lumpur, Singapore */
-		"Malay Peninsula Standard Time", "Malay Peninsula Daylight Time",
-		"Asia/Kuala_Lumpur"
-	},
-	{
-		/* (UTC+11:00) Sakhalin */
-		"Sakhalin Standard Time", "Sakhalin Daylight Time",
-		"Asia/Sakhalin"
 	},
 	{
 		/* (UTC+02:00) Harare, Pretoria */
@@ -1369,14 +1374,14 @@ static const struct
 		"Asia/Tokyo"
 	},
 	{
-		/* (UTC+13:00) Nuku'alofa */
-		"Tonga Standard Time", "Tonga Daylight Time",
-		"Pacific/Tongatapu"
-	},
-	{
 		/* (UTC+07:00) Tomsk */
 		"Tomsk Standard Time", "Tomsk Daylight Time",
 		"Asia/Tomsk"
+	},
+	{
+		/* (UTC+13:00) Nuku'alofa */
+		"Tonga Standard Time", "Tonga Daylight Time",
+		"Pacific/Tongatapu"
 	},
 	{
 		/* (UTC+09:00) Chita */
@@ -1407,11 +1412,6 @@ static const struct
 		/* (UTC-07:00) Arizona */
 		"US Mountain Standard Time", "US Mountain Daylight Time",
 		"US/Arizona"
-	},
-	{
-		/* (UTC) Coordinated Universal Time */
-		"Coordinated Universal Time", "Coordinated Universal Time",
-		"UTC"
 	},
 	{
 		/* (UTC+12:00) Coordinated Universal Time+12 */
