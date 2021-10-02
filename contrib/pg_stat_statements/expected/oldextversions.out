@@ -1,0 +1,139 @@
+-- test old extension version entry points
+CREATE EXTENSION pg_stat_statements WITH VERSION '1.4';
+-- Execution of pg_stat_statements_reset() is granted only to
+-- superusers in 1.4, so this fails.
+SET SESSION AUTHORIZATION pg_read_all_stats;
+SELECT pg_stat_statements_reset();
+ERROR:  permission denied for function pg_stat_statements_reset
+RESET SESSION AUTHORIZATION;
+AlTER EXTENSION pg_stat_statements UPDATE TO '1.5';
+-- Execution of pg_stat_statements_reset() should be granted to
+-- pg_read_all_stats now, so this works.
+SET SESSION AUTHORIZATION pg_read_all_stats;
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+RESET SESSION AUTHORIZATION;
+-- In 1.6, it got restricted back to superusers.
+AlTER EXTENSION pg_stat_statements UPDATE TO '1.6';
+SET SESSION AUTHORIZATION pg_read_all_stats;
+SELECT pg_stat_statements_reset();
+ERROR:  permission denied for function pg_stat_statements_reset
+RESET SESSION AUTHORIZATION;
+SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
+                              pg_get_functiondef                               
+-------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.pg_stat_statements_reset()                 +
+  RETURNS void                                                                +
+  LANGUAGE c                                                                  +
+  PARALLEL SAFE                                                               +
+ AS '$libdir/pg_stat_statements', $function$pg_stat_statements_reset$function$+
+ 
+(1 row)
+
+-- New function for pg_stat_statements_reset introduced, still
+-- restricted for non-superusers.
+AlTER EXTENSION pg_stat_statements UPDATE TO '1.7';
+SET SESSION AUTHORIZATION pg_read_all_stats;
+SELECT pg_stat_statements_reset();
+ERROR:  permission denied for function pg_stat_statements_reset
+RESET SESSION AUTHORIZATION;
+SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
+                                                       pg_get_functiondef                                                       
+--------------------------------------------------------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.pg_stat_statements_reset(userid oid DEFAULT 0, dbid oid DEFAULT 0, queryid bigint DEFAULT 0)+
+  RETURNS void                                                                                                                 +
+  LANGUAGE c                                                                                                                   +
+  PARALLEL SAFE STRICT                                                                                                         +
+ AS '$libdir/pg_stat_statements', $function$pg_stat_statements_reset_1_7$function$                                             +
+ 
+(1 row)
+
+\d pg_stat_statements
+                    View "public.pg_stat_statements"
+       Column        |       Type       | Collation | Nullable | Default 
+---------------------+------------------+-----------+----------+---------
+ userid              | oid              |           |          | 
+ dbid                | oid              |           |          | 
+ queryid             | bigint           |           |          | 
+ query               | text             |           |          | 
+ calls               | bigint           |           |          | 
+ total_time          | double precision |           |          | 
+ min_time            | double precision |           |          | 
+ max_time            | double precision |           |          | 
+ mean_time           | double precision |           |          | 
+ stddev_time         | double precision |           |          | 
+ rows                | bigint           |           |          | 
+ shared_blks_hit     | bigint           |           |          | 
+ shared_blks_read    | bigint           |           |          | 
+ shared_blks_dirtied | bigint           |           |          | 
+ shared_blks_written | bigint           |           |          | 
+ local_blks_hit      | bigint           |           |          | 
+ local_blks_read     | bigint           |           |          | 
+ local_blks_dirtied  | bigint           |           |          | 
+ local_blks_written  | bigint           |           |          | 
+ temp_blks_read      | bigint           |           |          | 
+ temp_blks_written   | bigint           |           |          | 
+ blk_read_time       | double precision |           |          | 
+ blk_write_time      | double precision |           |          | 
+
+SELECT count(*) > 0 AS has_data FROM pg_stat_statements;
+ has_data 
+----------
+ t
+(1 row)
+
+-- New functions and views for pg_stat_statements in 1.8
+AlTER EXTENSION pg_stat_statements UPDATE TO '1.8';
+\d pg_stat_statements
+                    View "public.pg_stat_statements"
+       Column        |       Type       | Collation | Nullable | Default 
+---------------------+------------------+-----------+----------+---------
+ userid              | oid              |           |          | 
+ dbid                | oid              |           |          | 
+ queryid             | bigint           |           |          | 
+ query               | text             |           |          | 
+ plans               | bigint           |           |          | 
+ total_plan_time     | double precision |           |          | 
+ min_plan_time       | double precision |           |          | 
+ max_plan_time       | double precision |           |          | 
+ mean_plan_time      | double precision |           |          | 
+ stddev_plan_time    | double precision |           |          | 
+ calls               | bigint           |           |          | 
+ total_exec_time     | double precision |           |          | 
+ min_exec_time       | double precision |           |          | 
+ max_exec_time       | double precision |           |          | 
+ mean_exec_time      | double precision |           |          | 
+ stddev_exec_time    | double precision |           |          | 
+ rows                | bigint           |           |          | 
+ shared_blks_hit     | bigint           |           |          | 
+ shared_blks_read    | bigint           |           |          | 
+ shared_blks_dirtied | bigint           |           |          | 
+ shared_blks_written | bigint           |           |          | 
+ local_blks_hit      | bigint           |           |          | 
+ local_blks_read     | bigint           |           |          | 
+ local_blks_dirtied  | bigint           |           |          | 
+ local_blks_written  | bigint           |           |          | 
+ temp_blks_read      | bigint           |           |          | 
+ temp_blks_written   | bigint           |           |          | 
+ blk_read_time       | double precision |           |          | 
+ blk_write_time      | double precision |           |          | 
+ wal_records         | bigint           |           |          | 
+ wal_fpi             | bigint           |           |          | 
+ wal_bytes           | numeric          |           |          | 
+
+SELECT pg_get_functiondef('pg_stat_statements_reset'::regproc);
+                                                       pg_get_functiondef                                                       
+--------------------------------------------------------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION public.pg_stat_statements_reset(userid oid DEFAULT 0, dbid oid DEFAULT 0, queryid bigint DEFAULT 0)+
+  RETURNS void                                                                                                                 +
+  LANGUAGE c                                                                                                                   +
+  PARALLEL SAFE STRICT                                                                                                         +
+ AS '$libdir/pg_stat_statements', $function$pg_stat_statements_reset_1_7$function$                                             +
+ 
+(1 row)
+
+DROP EXTENSION pg_stat_statements;
