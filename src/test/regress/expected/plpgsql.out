@@ -4227,7 +4227,7 @@ select * from tftest(10);
 (2 rows)
 
 drop function tftest(int);
-create or replace function rttest()
+create function rttest()
 returns setof int as $$
 declare rc int;
 begin
@@ -4258,6 +4258,31 @@ NOTICE:  f 0
      20
 (4 rows)
 
+-- check some error cases, too
+create or replace function rttest()
+returns setof int as $$
+begin
+  return query select 10 into no_such_table;
+end;
+$$ language plpgsql;
+select * from rttest();
+ERROR:  SELECT INTO query does not return tuples
+CONTEXT:  SQL statement "select 10 into no_such_table"
+PL/pgSQL function rttest() line 3 at RETURN QUERY
+create or replace function rttest()
+returns setof int as $$
+begin
+  return query execute 'select 10 into no_such_table';
+end;
+$$ language plpgsql;
+select * from rttest();
+ERROR:  SELECT INTO query does not return tuples
+CONTEXT:  SQL statement "select 10 into no_such_table"
+PL/pgSQL function rttest() line 3 at RETURN QUERY
+select * from no_such_table;
+ERROR:  relation "no_such_table" does not exist
+LINE 1: select * from no_such_table;
+                      ^
 drop function rttest();
 -- Test for proper cleanup at subtransaction exit.  This example
 -- exposed a bug in PG 8.2.

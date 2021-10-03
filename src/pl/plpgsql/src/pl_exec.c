@@ -3553,26 +3553,13 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		memset(&options, 0, sizeof(options));
 		options.params = paramLI;
 		options.read_only = estate->readonly_func;
+		options.must_return_tuples = true;
 		options.dest = treceiver;
 
 		rc = SPI_execute_plan_extended(expr->plan, &options);
-		if (rc != SPI_OK_SELECT)
-		{
-			/*
-			 * SELECT INTO deserves a special error message, because "query is
-			 * not a SELECT" is not very helpful in that case.
-			 */
-			if (rc == SPI_OK_SELINTO)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("query is SELECT INTO, but it should be plain SELECT"),
-						 errcontext("query: %s", expr->query)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("query is not a SELECT"),
-						 errcontext("query: %s", expr->query)));
-		}
+		if (rc < 0)
+			elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
+				 expr->query, SPI_result_code_string(rc));
 	}
 	else
 	{
@@ -3609,6 +3596,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		options.params = exec_eval_using_params(estate,
 												stmt->params);
 		options.read_only = estate->readonly_func;
+		options.must_return_tuples = true;
 		options.dest = treceiver;
 
 		rc = SPI_execute_extended(querystr, &options);

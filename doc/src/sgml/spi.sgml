@@ -740,6 +740,17 @@ int SPI_execute_extended(const char *<parameter>command</parameter>,
    </varlistentry>
 
    <varlistentry>
+    <term><literal>bool <parameter>must_return_tuples</parameter></literal></term>
+    <listitem>
+     <para>
+      if <literal>true</literal>, raise error if the query is not of a kind
+      that returns tuples (this does not forbid the case where it happens to
+      return zero tuples)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>uint64 <parameter>tcount</parameter></literal></term>
     <listitem>
      <para>
@@ -1865,6 +1876,17 @@ int SPI_execute_plan_extended(SPIPlanPtr <parameter>plan</parameter>,
      <para>
       <literal>true</literal> allows non-atomic execution of CALL and DO
       statements
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>bool <parameter>must_return_tuples</parameter></literal></term>
+    <listitem>
+     <para>
+      if <literal>true</literal>, raise error if the query is not of a kind
+      that returns tuples (this does not forbid the case where it happens to
+      return zero tuples)
      </para>
     </listitem>
    </varlistentry>

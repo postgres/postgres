@@ -48,6 +48,7 @@ typedef struct SPIExecuteOptions
 	ParamListInfo params;
 	bool		read_only;
 	bool		allow_nonatomic;
+	bool		must_return_tuples;
 	uint64		tcount;
 	DestReceiver *dest;
 	ResourceOwner owner;
