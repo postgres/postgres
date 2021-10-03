@@ -3494,7 +3494,7 @@ select * from tftest(10);
 
 drop function tftest(int);
 
-create or replace function rttest()
+create function rttest()
 returns setof int as $$
 declare rc int;
 begin
@@ -3514,6 +3514,28 @@ end;
 $$ language plpgsql;
 
 select * from rttest();
+
+-- check some error cases, too
+
+create or replace function rttest()
+returns setof int as $$
+begin
+  return query select 10 into no_such_table;
+end;
+$$ language plpgsql;
+
+select * from rttest();
+
+create or replace function rttest()
+returns setof int as $$
+begin
+  return query execute 'select 10 into no_such_table';
+end;
+$$ language plpgsql;
+
+select * from rttest();
+
+select * from no_such_table;
 
 drop function rttest();
 
