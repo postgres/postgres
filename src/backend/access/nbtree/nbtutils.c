@@ -2698,18 +2698,6 @@ _bt_allequalimage(Relation rel, bool debugmessage)
 		IndexRelationGetNumberOfKeyAttributes(rel))
 		return false;
 
-	/*
-	 * There is no special reason why deduplication cannot work with system
-	 * relations (i.e. with system catalog indexes and TOAST indexes).  We
-	 * deem deduplication unsafe for these indexes all the same, since the
-	 * alternative is to force users to always use deduplication, without
-	 * being able to opt out.  (ALTER INDEX is not supported with system
-	 * indexes, so users would have no way to set the deduplicate_items
-	 * storage parameter to 'off'.)
-	 */
-	if (IsSystemRelation(rel))
-		return false;
-
 	for (int i = 0; i < IndexRelationGetNumberOfKeyAttributes(rel); i++)
 	{
 		Oid			opfamily = rel->rd_opfamily[i];
