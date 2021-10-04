@@ -459,7 +459,7 @@
       </row>
       <row>
        <entry>
-        Defines a set of options that are specific to this operator class
+        Define options that are specific to this operator class
         (optional)
        </entry>
        <entry>5</entry>
@@ -501,7 +501,7 @@
       </row>
       <row>
        <entry>
-        Defines a set of options that are specific to this operator class
+        Define options that are specific to this operator class
         (optional)
        </entry>
        <entry>3</entry>
@@ -511,7 +511,7 @@
    </table>
 
   <para>
-   GiST indexes have ten support functions, three of which are optional,
+   GiST indexes have eleven support functions, six of which are optional,
    as shown in <xref linkend="xindex-gist-support-table"/>.
    (For more information see <xref linkend="gist"/>.)
   </para>
@@ -544,13 +544,13 @@
       <row>
        <entry><function>compress</function></entry>
        <entry>compute a compressed representation of a key or value
-        to be indexed</entry>
+        to be indexed (optional)</entry>
        <entry>3</entry>
       </row>
       <row>
        <entry><function>decompress</function></entry>
        <entry>compute a decompressed representation of a
-        compressed key</entry>
+        compressed key (optional)</entry>
        <entry>4</entry>
       </row>
       <row>
@@ -566,7 +566,7 @@
        <entry>6</entry>
       </row>
       <row>
-       <entry><function>equal</function></entry>
+       <entry><function>same</function></entry>
        <entry>compare two keys and return true if they are equal</entry>
        <entry>7</entry>
       </row>
@@ -583,11 +583,15 @@
       </row>
       <row>
        <entry><function>options</function></entry>
-       <entry>
-        Defines a set of options that are specific to this operator class
-        (optional)
-       </entry>
+       <entry>define options that are specific to this operator class
+        (optional)</entry>
        <entry>10</entry>
+      </row>
+      <row>
+       <entry><function>sortsupport</function></entry>
+       <entry>provide a sort comparator to be used in fast index builds
+        (optional)</entry>
+       <entry>11</entry>
       </row>
      </tbody>
     </tgroup>
@@ -642,10 +646,8 @@
       </row>
       <row>
        <entry><function>options</function></entry>
-       <entry>
-        Defines a set of options that are specific to this operator class
-        (optional)
-       </entry>
+       <entry>define options that are specific to this operator class
+        (optional)</entry>
        <entry>6</entry>
       </row>
      </tbody>
@@ -720,7 +722,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines a set of options that are specific to this operator class
+        define options that are specific to this operator class
         (optional)
        </entry>
        <entry>7</entry>
@@ -778,7 +780,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines a set of options that are specific to this operator class
+        define options that are specific to this operator class
         (optional)
        </entry>
        <entry>5</entry>

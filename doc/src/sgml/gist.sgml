@@ -272,7 +272,7 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
 
  <para>
    There are five methods that an index operator class for
-   <acronym>GiST</acronym> must provide, and five that are optional.
+   <acronym>GiST</acronym> must provide, and six that are optional.
    Correctness of the index is ensured
    by proper implementation of the <function>same</function>, <function>consistent</function>
    and <function>union</function> methods, while efficiency (size and speed) of the
@@ -291,9 +291,9 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    searches). The optional ninth method <function>fetch</function> is needed if the
    operator class wishes to support index-only scans, except when the
    <function>compress</function> method is omitted. The optional tenth method
-   <function>options</function> is needed if the operator class provides
-   the user-specified parameters.
-   The <function>sortsupport</function> method is also optional and is used to
+   <function>options</function> is needed if the operator class has
+   user-specified parameters.
+   The optional eleventh method <function>sortsupport</function> is used to
    speed up building a <acronym>GiST</acronym> index.
  </para>
 
