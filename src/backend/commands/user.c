@@ -963,7 +963,6 @@ DropRole(DropRoleStmt *stmt)
 		char	   *detail_log;
 		SysScanDesc sscan;
 		Oid			roleid;
-		Oid			dbid = InvalidOid;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
@@ -1260,9 +1259,9 @@ GrantRole(GrantRoleStmt *stmt)
 	ListCell   *item;
 	Oid dbid = InvalidOid;
 
-	// TODO: check the status of stmt->database
-	if (stmt->database == "") {
-		dbid = get_database_oid("", false);
+	/* Determine if this grant/revoke is database-specific */
+	if (strcmp(stmt->database, "") == 0) {
+		dbid = MyDatabaseId;
 	}
 	else if (stmt->database != NULL) {
 		dbid = get_database_oid(stmt->database, false);
