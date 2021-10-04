@@ -3589,9 +3589,9 @@ l2:
 	/*
 	 * And also prepare an Xmax value for the new copy of the tuple.  If there
 	 * was no xmax previously, or there was one but all lockers are now gone,
-	 * then use InvalidXid; otherwise, get the xmax from the old tuple.  (In
-	 * rare cases that might also be InvalidXid and yet not have the
-	 * HEAP_XMAX_INVALID bit set; that's fine.)
+	 * then use InvalidTransactionId; otherwise, get the xmax from the old
+	 * tuple.  (In rare cases that might also be InvalidTransactionId and yet
+	 * not have the HEAP_XMAX_INVALID bit set; that's fine.)
 	 */
 	if ((oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) ||
 		HEAP_LOCKED_UPGRADED(oldtup.t_data->t_infomask) ||
