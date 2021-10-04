@@ -258,8 +258,9 @@ IsSharedRelation(Oid relationId)
 	/* These are their indexes */
 	if (relationId == AuthIdRolnameIndexId ||
 		relationId == AuthIdOidIndexId ||
-		relationId == AuthMemRoleMemIndexId ||
-		relationId == AuthMemMemRoleIndexId ||
+		relationId == AuthMemDbMemRoleIndexId ||
+		relationId == AuthMemRoleMemDbIndexId ||
+		relationId == AuthMemMemRoleDbIndexId ||
 		relationId == DatabaseNameIndexId ||
 		relationId == DatabaseOidIndexId ||
 		relationId == SharedDescriptionObjIndexId ||

@@ -963,6 +963,7 @@ DropRole(DropRoleStmt *stmt)
 		char	   *detail_log;
 		SysScanDesc sscan;
 		Oid			roleid;
+		Oid			dbid = InvalidOid;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
@@ -1052,7 +1053,7 @@ DropRole(DropRoleStmt *stmt)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(roleid));
 
-		sscan = systable_beginscan(pg_auth_members_rel, AuthMemRoleMemIndexId,
+		sscan = systable_beginscan(pg_auth_members_rel, AuthMemRoleMemDbIndexId,
 								   true, NULL, 1, &scankey);
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
@@ -1067,7 +1068,7 @@ DropRole(DropRoleStmt *stmt)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(roleid));
 
-		sscan = systable_beginscan(pg_auth_members_rel, AuthMemMemRoleIndexId,
+		sscan = systable_beginscan(pg_auth_members_rel, AuthMemMemRoleDbIndexId,
 								   true, NULL, 1, &scankey);
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
@@ -1518,9 +1519,10 @@ AddRoleMems(const char *rolename, Oid roleid,
 		 * Check if entry for this role/member already exists; if so, give
 		 * warning unless we are adding admin option.
 		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
+		authmem_tuple = SearchSysCache3(AUTHMEMROLEMEMDB,
 										ObjectIdGetDatum(roleid),
-										ObjectIdGetDatum(memberid));
+										ObjectIdGetDatum(memberid),
+										ObjectIdGetDatum(dbid));
 		if (HeapTupleIsValid(authmem_tuple) &&
 			(!admin_opt ||
 			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
@@ -1588,6 +1590,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
+	Oid dbid = InvalidOid;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
@@ -1628,9 +1631,10 @@ DelRoleMems(const char *rolename, Oid roleid,
 		/*
 		 * Find entry for this role/member
 		 */
-		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
+		authmem_tuple = SearchSysCache3(AUTHMEMROLEMEMDB,
 										ObjectIdGetDatum(roleid),
-										ObjectIdGetDatum(memberid));
+										ObjectIdGetDatum(memberid),
+										ObjectIdGetDatum(dbid));
 		if (!HeapTupleIsValid(authmem_tuple))
 		{
 			ereport(WARNING,

@@ -4658,7 +4658,7 @@ initialize_acl(void)
 		 * of pg_auth_members (for roles_is_member_of()), pg_authid (for
 		 * has_rolinherit()), or pg_database (for roles_is_member_of())
 		 */
-		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
+		CacheRegisterSyscacheCallback(AUTHMEMROLEMEMDB,
 									  RoleMembershipCacheCallback,
 									  (Datum) 0);
 		CacheRegisterSyscacheCallback(AUTHOID,
@@ -4780,7 +4780,7 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 			continue;			/* ignore non-inheriting roles */
 
 		/* Find roles that memberid is directly a member of */
-		memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
+		memlist = SearchSysCacheList1(AUTHMEMMEMROLEDB,
 									  ObjectIdGetDatum(memberid));
 		for (i = 0; i < memlist->n_members; i++)
 		{
