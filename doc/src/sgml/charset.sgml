@@ -747,8 +747,8 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
     set that is preloaded by <command>initdb</command>.  Users are encouraged
     to define their own collation objects that make use of these facilities to
     suit the sorting behavior to their requirements.
-    See <ulink url="http://userguide.icu-project.org/locale"></ulink>
-    and <ulink url="http://userguide.icu-project.org/collation/api"></ulink> for
+    See <ulink url="https://unicode-org.github.io/icu/userguide/locale/"></ulink>
+    and <ulink url="https://unicode-org.github.io/icu/userguide/collation/api.html"></ulink> for
     information on ICU locale naming.  The set of acceptable names and
     attributes depends on the particular ICU version.
    </para>
@@ -842,10 +842,6 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
     subtag) can be found in
     the <ulink url="https://github.com/unicode-org/cldr/blob/master/common/bcp47/collation.xml">CLDR
     repository</ulink>.
-    The <ulink url="https://ssl.icu-project.org/icu-bin/locexp">ICU Locale
-    Explorer</ulink> can be used to check the details of a particular locale
-    definition.  The examples using the <literal>k*</literal> subtags require
-    at least ICU version 54.
    </para>
 
    <para>
