@@ -1,10 +1,10 @@
 ## Shift_JIS-2004 (JIS X 0213:2004 Appendix 1) vs Unicode mapping table
 ## 
-## Date: 13 May 2006
+## Date: 3 May 2009
 ## License:
 ## 	Copyright (C) 2001 earthian@tama.or.jp, All Rights Reserved.
 ## 	Copyright (C) 2001 I'O, All Rights Reserved.
-## 	Copyright (C) 2006 Project X0213, All Rights Reserved.
+## 	Copyright (C) 2006, 2009 Project X0213, All Rights Reserved.
 ## 	You can use, modify, distribute this table freely.
 ## Note:
 ## 	[1983]	JIS codepoint defined by JIS X 0208-1983
@@ -383,7 +383,7 @@
 0x81AA	U+2191	# UPWARDS ARROW
 0x81AB	U+2193	# DOWNWARDS ARROW
 0x81AC	U+3013	# GETA MARK
-0x81AD	U+FF07	# FULLWIDTH APOSTROPHE
+0x81AD	U+FF07	# FULLWIDTH APOSTROPHE	[2000]
 0x81AE	U+FF02	# FULLWIDTH QUOTATION MARK	[2000]
 0x81AF	U+FF0D	# FULLWIDTH HYPHEN-MINUS	[2000]
 0x81B0	U+007E	# TILDE	[2000]	Fullwidth: U+FF5E
