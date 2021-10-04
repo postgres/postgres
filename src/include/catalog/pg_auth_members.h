@@ -33,6 +33,7 @@ CATALOG(pg_auth_members,1261,AuthMemRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_
 	Oid			member BKI_LOOKUP(pg_authid);	/* ID of a member of that role */
 	Oid			grantor BKI_LOOKUP(pg_authid);	/* who granted the membership */
 	bool		admin_option;	/* granted with admin option? */
+	Oid			database BKI_LOOKUP(pg_database); /* ID of a database this mapping is effective in */
 } FormData_pg_auth_members;
 
 /* ----------------

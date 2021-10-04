@@ -1408,6 +1408,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
+	Oid database = InvalidOid;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
@@ -1540,6 +1541,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		new_record[Anum_pg_auth_members_member - 1] = ObjectIdGetDatum(memberid);
 		new_record[Anum_pg_auth_members_grantor - 1] = ObjectIdGetDatum(grantorId);
 		new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(admin_opt);
+		new_record[Anum_pg_auth_members_database - 1] = BoolGetDatum(database);
 
 		if (HeapTupleIsValid(authmem_tuple))
 		{
