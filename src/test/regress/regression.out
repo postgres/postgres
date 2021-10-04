@@ -1,0 +1,227 @@
+test tablespace                   ... FAILED (test process was terminated by signal 6: Abort trap: 6)       95 ms
+parallel group (20 tests):  char varchar oid name int2 pg_lsn uuid txid text int4 boolean regproc money float4 bit int8 float8 enum numeric rangetypes
+     boolean                      ... ok          178 ms
+     char                         ... ok           98 ms
+     name                         ... ok          121 ms
+     varchar                      ... ok          102 ms
+     text                         ... ok          167 ms
+     int2                         ... ok          129 ms
+     int4                         ... ok          169 ms
+     int8                         ... ok          199 ms
+     oid                          ... ok          113 ms
+     float4                       ... ok          185 ms
+     float8                       ... ok          209 ms
+     bit                          ... FAILED (test process was terminated by signal 6: Abort trap: 6)      191 ms
+     numeric                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)      344 ms
+     txid                         ... ok          147 ms
+     uuid                         ... ok          141 ms
+     enum                         ... ok          211 ms
+     money                        ... ok          166 ms
+     rangetypes                   ... ok          509 ms
+     pg_lsn                       ... ok          112 ms
+     regproc                      ... ok          145 ms
+parallel group (20 tests):  lseg line path numerology circle time macaddr timetz point macaddr8 inet interval date create_function_0 strings polygon box multirangetypes timestamp timestamptz
+     strings                      ... ok          284 ms
+     numerology                   ... ok          117 ms
+     point                        ... ok          149 ms
+     lseg                         ... ok           97 ms
+     line                         ... ok          110 ms
+     box                          ... ok          376 ms
+     path                         ... ok          112 ms
+     polygon                      ... ok          309 ms
+     circle                       ... ok          113 ms
+     date                         ... ok          191 ms
+     time                         ... ok          134 ms
+     timetz                       ... ok          138 ms
+     timestamp                    ... ok          448 ms
+     timestamptz                  ... ok          492 ms
+     interval                     ... ok          167 ms
+     inet                         ... ok          161 ms
+     macaddr                      ... ok          120 ms
+     macaddr8                     ... ok          139 ms
+     multirangetypes              ... ok          390 ms
+     create_function_0            ... ok          214 ms
+parallel group (12 tests):  comments misc_sanity unicode expressions xid tstypes type_sanity geometry mvcc horology regex opr_sanity
+     geometry                     ... ok          139 ms
+     horology                     ... ok          148 ms
+     tstypes                      ... ok          105 ms
+     regex                        ... ok          455 ms
+     type_sanity                  ... ok          130 ms
+     opr_sanity                   ... ok         3937 ms
+     misc_sanity                  ... ok           54 ms
+     comments                     ... ok           47 ms
+     expressions                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)       61 ms
+     unicode                      ... ok           51 ms
+     xid                          ... ok           78 ms
+     mvcc                         ... ok          125 ms
+test create_function_1            ... ok           19 ms
+test create_type                  ... ok           39 ms
+test create_table                 ... FAILED (test process was terminated by signal 6: Abort trap: 6)      121 ms
+test create_function_2            ... ok           29 ms
+parallel group (5 tests):  copydml copyselect insert insert_conflict copy
+     copy                         ... ok          617 ms
+     copyselect                   ... FAILED (test process was terminated by signal 6: Abort trap: 6)       39 ms
+     copydml                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)       30 ms
+     insert                       ... FAILED (test process was terminated by signal 6: Abort trap: 6)       49 ms
+     insert_conflict              ... ok          203 ms
+parallel group (3 tests):  create_procedure create_operator create_misc
+     create_misc                  ... ok          100 ms
+     create_operator              ... FAILED       41 ms
+     create_procedure             ... FAILED (test process was terminated by signal 6: Abort trap: 6)       23 ms
+parallel group (5 tests):  index_including create_view index_including_gist create_index create_index_spgist
+     create_index                 ... FAILED (test process was terminated by signal 6: Abort trap: 6)      481 ms
+     create_index_spgist          ... ok          556 ms
+     create_view                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)       99 ms
+     index_including              ... FAILED (test process was terminated by signal 6: Abort trap: 6)       29 ms
+     index_including_gist         ... FAILED (test process was terminated by signal 6: Abort trap: 6)      339 ms
+parallel group (16 tests):  typed_table create_cast create_aggregate roleattributes select hash_func errors drop_if_exists create_function_3 create_am inherit constraints triggers infinite_recurse updatable_views vacuum
+     create_aggregate             ... FAILED (test process was terminated by signal 6: Abort trap: 6)       83 ms
+     create_function_3            ... ok          224 ms
+     create_cast                  ... ok           69 ms
+     constraints                  ... FAILED      379 ms
+     triggers                     ... FAILED (test process was terminated by signal 6: Abort trap: 6)      449 ms
+     select                       ... ok          130 ms
+     inherit                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)      320 ms
+     typed_table                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)       66 ms
+     vacuum                       ... ok          603 ms
+     drop_if_exists               ... ok          177 ms
+     updatable_views              ... FAILED (test process was terminated by signal 6: Abort trap: 6)      524 ms
+     roleattributes               ... ok          106 ms
+     create_am                    ... ok          215 ms
+     hash_func                    ... ok          125 ms
+     errors                       ... ok          134 ms
+     infinite_recurse             ... ok          503 ms
+test sanity_check                 ... FAILED      249 ms
+parallel group (20 tests):  select_distinct_on random select_having delete namespace select_implicit case prepared_xacts select_into transactions portals union subselect arrays select_distinct update hash_index aggregates join btree_index
+     select_into                  ... ok          233 ms
+     select_distinct              ... ok          515 ms
+     select_distinct_on           ... ok           70 ms
+     select_implicit              ... ok          127 ms
+     select_having                ... ok           98 ms
+     subselect                    ... ok          432 ms
+     union                        ... ok          371 ms
+     case                         ... ok          148 ms
+     join                         ... ok          925 ms
+     aggregates                   ... ok          870 ms
+     transactions                 ... ok          224 ms
+     random                       ... ok           85 ms
+     portals                      ... ok          248 ms
+     arrays                       ... ok          428 ms
+     btree_index                  ... ok         1518 ms
+     hash_index                   ... ok          625 ms
+     update                       ... FAILED (test process was terminated by signal 6: Abort trap: 6)      570 ms
+     delete                       ... ok           89 ms
+     namespace                    ... ok           93 ms
+     prepared_xacts               ... FAILED (test process was terminated by signal 6: Abort trap: 6)      119 ms
+parallel group (20 tests):  init_privs collate drop_operator tablesample replica_identity security_label identity generated rowsecurity lock matview privileges object_address password groupingsets gist spgist gin join_hash brin
+     brin                         ... ok         1741 ms
+     gin                          ... ok         1043 ms
+     gist                         ... ok          846 ms
+     spgist                       ... ok          856 ms
+     privileges                   ... FAILED (test process was terminated by signal 6: Abort trap: 6)      192 ms
+     init_privs                   ... ok           67 ms
+     security_label               ... ok          143 ms
+     collate                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)       87 ms
+     matview                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)      184 ms
+     lock                         ... ok          181 ms
+     replica_identity             ... FAILED (test process was terminated by signal 6: Abort trap: 6)      135 ms
+     rowsecurity                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)      157 ms
+     object_address               ... ok          332 ms
+     tablesample                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)      103 ms
+     groupingsets                 ... ok          553 ms
+     drop_operator                ... ok           97 ms
+     password                     ... ok          334 ms
+     identity                     ... FAILED (test process was terminated by signal 6: Abort trap: 6)      125 ms
+     generated                    ... FAILED (test process was terminated by signal 6: Abort trap: 6)      125 ms
+     join_hash                    ... ok         1694 ms
+parallel group (2 tests):  brin_bloom brin_multi
+     brin_bloom                   ... ok           93 ms
+     brin_multi                   ... ok          421 ms
+parallel group (14 tests):  async collate.icu.utf8 dbsize alter_operator create_table_like tidrangescan tid tsrf tidscan alter_generic misc incremental_sort misc_functions sysviews
+     create_table_like            ... FAILED (test process was terminated by signal 6: Abort trap: 6)       95 ms
+     alter_generic                ... ok          183 ms
+     alter_operator               ... ok           85 ms
+     misc                         ... ok          192 ms
+     async                        ... ok           62 ms
+     dbsize                       ... ok           73 ms
+     misc_functions               ... ok          236 ms
+     sysviews                     ... ok          241 ms
+     tsrf                         ... ok          104 ms
+     tid                          ... ok           88 ms
+     tidscan                      ... ok          103 ms
+     tidrangescan                 ... ok           84 ms
+     collate.icu.utf8             ... ok           53 ms
+     incremental_sort             ... ok          179 ms
+parallel group (6 tests):  psql collate.linux.utf8 amutils psql_crosstab stats_ext rules
+     rules                        ... FAILED (test process was terminated by signal 6: Abort trap: 6)      336 ms
+     psql                         ... FAILED (test process was terminated by signal 6: Abort trap: 6)       27 ms
+     psql_crosstab                ... FAILED (test process was terminated by signal 6: Abort trap: 6)       41 ms
+     amutils                      ... FAILED       37 ms
+     stats_ext                    ... FAILED (test process was terminated by signal 6: Abort trap: 6)       41 ms
+     collate.linux.utf8           ... ok           26 ms
+test select_parallel              ... ok          864 ms
+test write_parallel               ... ok          115 ms
+parallel group (2 tests):  publication subscription
+     publication                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)       40 ms
+     subscription                 ... ok           69 ms
+parallel group (17 tests):  portals_p2 dependency advisory_lock xmlmap functional_deps combocid equivclass tsdicts tsearch guc select_views foreign_data indirect_toast window cluster bitmapops foreign_key
+     select_views                 ... ok          266 ms
+     portals_p2                   ... ok          141 ms
+     foreign_key                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)      641 ms
+     cluster                      ... FAILED      472 ms
+     dependency                   ... FAILED (test process was terminated by signal 6: Abort trap: 6)      154 ms
+     guc                          ... ok          222 ms
+     bitmapops                    ... ok          510 ms
+     combocid                     ... ok          175 ms
+     tsearch                      ... FAILED (test process was terminated by signal 6: Abort trap: 6)      208 ms
+     tsdicts                      ... ok          203 ms
+     foreign_data                 ... FAILED (test process was terminated by signal 6: Abort trap: 6)      263 ms
+     window                       ... ok          425 ms
+     xmlmap                       ... ok          144 ms
+     functional_deps              ... ok          160 ms
+     advisory_lock                ... ok          137 ms
+     indirect_toast               ... FAILED      322 ms
+     equivclass                   ... ok          180 ms
+parallel group (6 tests):  jsonpath_encoding json_encoding jsonpath jsonb_jsonpath json jsonb
+     json                         ... ok          148 ms
+     jsonb                        ... ok          323 ms
+     json_encoding                ... ok           31 ms
+     jsonpath                     ... ok           52 ms
+     jsonpath_encoding            ... ok           28 ms
+     jsonb_jsonpath               ... ok          114 ms
+parallel group (18 tests):  prepare with alter_table limit domain returning copy2 xml temp sequence conversion plancache polymorphism rowtypes largeobject truncate rangefuncs plpgsql
+     plancache                    ... ok          273 ms
+     limit                        ... FAILED (test process was terminated by signal 6: Abort trap: 6)      193 ms
+     plpgsql                      ... FAILED     1119 ms
+     copy2                        ... FAILED (test process was terminated by signal 6: Abort trap: 6)      246 ms
+     temp                         ... FAILED (test process was terminated by signal 6: Abort trap: 6)      258 ms
+     domain                       ... FAILED (test process was terminated by signal 6: Abort trap: 6)      197 ms
+     rangefuncs                   ... ok          474 ms
+     prepare                      ... ok          129 ms
+     conversion                   ... FAILED      267 ms
+     truncate                     ... ok          466 ms
+     alter_table                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)      181 ms
+     sequence                     ... FAILED (test process was terminated by signal 6: Abort trap: 6)      261 ms
+     polymorphism                 ... FAILED (test process was terminated by signal 6: Abort trap: 6)      347 ms
+     rowtypes                     ... ok          367 ms
+     returning                    ... ok          185 ms
+     largeobject                  ... FAILED      436 ms
+     with                         ... FAILED (test process was terminated by signal 6: Abort trap: 6)      145 ms
+     xml                          ... ok          233 ms
+parallel group (11 tests):  compression hash_part indexing memoize reloptions explain partition_info partition_prune partition_aggregate partition_join tuplesort
+     partition_join               ... ok          995 ms
+     partition_prune              ... FAILED      878 ms
+     reloptions                   ... ok          126 ms
+     hash_part                    ... FAILED       81 ms
+     indexing                     ... FAILED (test process was terminated by signal 6: Abort trap: 6)      114 ms
+     partition_aggregate          ... ok          880 ms
+     partition_info               ... ok          127 ms
+     tuplesort                    ... ok         1764 ms
+     explain                      ... ok          124 ms
+     compression                  ... FAILED (test process was terminated by signal 6: Abort trap: 6)       54 ms
+     memoize                      ... ok          106 ms
+parallel group (2 tests):  event_trigger oidjoins
+     event_trigger                ... ok          139 ms
+     oidjoins                     ... ok          199 ms
+test fast_default                 ... FAILED      182 ms
+test stats                        ... FAILED (test process was terminated by signal 6: Abort trap: 6)       68 ms
