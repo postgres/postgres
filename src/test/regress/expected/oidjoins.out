@@ -197,6 +197,7 @@ NOTICE:  checking pg_tablespace {spcowner} => pg_authid {oid}
 NOTICE:  checking pg_auth_members {roleid} => pg_authid {oid}
 NOTICE:  checking pg_auth_members {member} => pg_authid {oid}
 NOTICE:  checking pg_auth_members {grantor} => pg_authid {oid}
+NOTICE:  checking pg_auth_members {dbid} => pg_database {oid}
 NOTICE:  checking pg_shdepend {dbid} => pg_database {oid}
 NOTICE:  checking pg_shdepend {classid} => pg_class {oid}
 NOTICE:  checking pg_shdepend {refclassid} => pg_class {oid}

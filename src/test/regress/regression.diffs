@@ -1,6 +1,6 @@
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablespace.out /Users/kenaniah/workspace/postgres/src/test/regress/results/tablespace.out
---- /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablespace.out	2021-10-03 20:08:03.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tablespace.out	2021-10-03 20:08:07.000000000 -0700
+--- /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablespace.out	2021-10-03 20:24:52.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tablespace.out	2021-10-03 20:24:55.000000000 -0700
 @@ -242,697 +242,11 @@
  
  -- check \d output
@@ -708,7 +708,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablespace
 -GRANT ALL ON SCHEMA public TO public;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/bit.out /Users/kenaniah/workspace/postgres/src/test/regress/results/bit.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/bit.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/bit.out	2021-10-03 20:08:07.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/bit.out	2021-10-03 20:24:55.000000000 -0700
 @@ -731,18 +731,11 @@
    b4 bit varying(5) DEFAULT B'0101'
  );
@@ -736,7 +736,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/bit.out /U
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/numeric.out /Users/kenaniah/workspace/postgres/src/test/regress/results/numeric.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/numeric.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/numeric.out	2021-10-03 20:08:07.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/numeric.out	2021-10-03 20:24:55.000000000 -0700
 @@ -2210,1124 +2210,11 @@
    millionths numeric(3, 6)
  );
@@ -1871,7 +1871,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/numeric.ou
 -ERROR:  cannot convert NaN to pg_lsn
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/expressions.out /Users/kenaniah/workspace/postgres/src/test/regress/results/expressions.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/expressions.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/expressions.out	2021-10-03 20:08:08.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/expressions.out	2021-10-03 20:24:57.000000000 -0700
 @@ -169,231 +169,11 @@
      f2, f2::numeric(16,4) as f2164, f2::numeric as f2n
    from numeric_tbl;
@@ -2113,7 +2113,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/expression
 -rollback;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_table.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_table.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table.out	2021-10-03 20:08:12.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table.out	2021-10-03 20:24:59.000000000 -0700
 @@ -487,835 +487,11 @@
  ERROR:  cannot inherit from partitioned table "partitioned2"
  -- Partition key in describe output
@@ -2959,7 +2959,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_tab
 -drop table part_column_drop;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copyselect.out /Users/kenaniah/workspace/postgres/src/test/regress/results/copyselect.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/copyselect.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copyselect.out	2021-10-03 20:08:12.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copyselect.out	2021-10-03 20:24:59.000000000 -0700
 @@ -113,39 +113,11 @@
  -- Test \copy (select ...)
  --
@@ -3008,7 +3008,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copyselect
 -drop table test3;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copydml.out /Users/kenaniah/workspace/postgres/src/test/regress/results/copydml.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/copydml.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copydml.out	2021-10-03 20:08:12.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copydml.out	2021-10-03 20:24:59.000000000 -0700
 @@ -20,93 +20,11 @@
  -- Test \copy (insert/update/delete ...)
  --
@@ -3113,7 +3113,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copydml.ou
 +
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/insert.out /Users/kenaniah/workspace/postgres/src/test/regress/results/insert.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/insert.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/insert.out	2021-10-03 20:08:12.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/insert.out	2021-10-03 20:24:59.000000000 -0700
 @@ -163,842 +163,11 @@
    insert into inserttest (f4[1].if1, f4[1].if2[2])
    select new.f1, new.f2;
@@ -3966,7 +3966,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/insert.out
 -drop table returningwrtest;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_operator.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_operator.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_operator.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_operator.out	2021-10-03 20:08:13.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_operator.out	2021-10-03 20:24:59.000000000 -0700
 @@ -212,7 +212,7 @@
     rightarg = int8,
     procedure = fn_op3
@@ -4005,7 +4005,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_ope
  CREATE OPERATOR ===
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_procedure.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_procedure.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_procedure.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_procedure.out	2021-10-03 20:08:13.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_procedure.out	2021-10-03 20:24:59.000000000 -0700
 @@ -16,368 +16,11 @@
  INSERT INTO cp_test VALUES (1, x);
  $$;
@@ -4384,7 +4384,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_pro
 -DROP USER regress_cp_user1;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_index.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_index.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_index.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_index.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_index.out	2021-10-03 20:25:00.000000000 -0700
 @@ -1230,1570 +1230,11 @@
  CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
    WITH (FASTUPDATE=on, GIN_PENDING_LIST_LIMIT=128);
@@ -5965,7 +5965,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_ind
 -drop cascades to table reindex_after
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_view.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_view.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_view.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_view.out	2021-10-03 20:08:13.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_view.out	2021-10-03 20:25:00.000000000 -0700
 @@ -304,1767 +304,11 @@
  CREATE VIEW unspecified_types AS
    SELECT 42 as i, 42.5 as num, 'foo' as u, 'foo'::unknown as u2, null as n;
@@ -7743,7 +7743,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_vie
 -drop cascades to view tt26v
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_including.out /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_including.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including.out	2021-10-03 20:08:13.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including.out	2021-10-03 20:25:00.000000000 -0700
 @@ -20,381 +20,11 @@
  (2 rows)
  
@@ -8135,7 +8135,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_incl
 -DROP TABLE tbl;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_including_gist.out /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including_gist.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_including_gist.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including_gist.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/index_including_gist.out	2021-10-03 20:25:00.000000000 -0700
 @@ -126,41 +126,11 @@
  ALTER TABLE tbl_gist ALTER c1 TYPE bigint;
  ALTER TABLE tbl_gist ALTER c3 TYPE bigint;
@@ -8186,7 +8186,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/index_incl
 -DROP TABLE tbl_gist;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_aggregate.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_aggregate.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_aggregate.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_aggregate.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_aggregate.out	2021-10-03 20:25:00.000000000 -0700
 @@ -112,213 +112,11 @@
  alter aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any")
    rename to test_rank;
@@ -8408,8 +8408,8 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_agg
 -WARNING:  aggregate attribute "Parallel" not recognized
 -ERROR:  aggregate stype must be specified
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/constraints.out /Users/kenaniah/workspace/postgres/src/test/regress/results/constraints.out
---- /Users/kenaniah/workspace/postgres/src/test/regress/expected/constraints.out	2021-10-03 20:08:03.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/constraints.out	2021-10-03 20:08:14.000000000 -0700
+--- /Users/kenaniah/workspace/postgres/src/test/regress/expected/constraints.out	2021-10-03 20:24:52.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/constraints.out	2021-10-03 20:25:01.000000000 -0700
 @@ -708,31 +708,41 @@
  CREATE ROLE regress_constraint_comments;
  SET SESSION AUTHORIZATION regress_constraint_comments;
@@ -8458,7 +8458,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/constraint
  DROP ROLE regress_constraint_comments_noaccess;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/triggers.out /Users/kenaniah/workspace/postgres/src/test/regress/results/triggers.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/triggers.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/triggers.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/triggers.out	2021-10-03 20:25:01.000000000 -0700
 @@ -1225,2264 +1225,11 @@
  \set QUIET true
  -- Describe view should list triggers
@@ -10733,7 +10733,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/triggers.o
 -drop function f();
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/inherit.out /Users/kenaniah/workspace/postgres/src/test/regress/results/inherit.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/inherit.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/inherit.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/inherit.out	2021-10-03 20:25:00.000000000 -0700
 @@ -746,1895 +746,11 @@
  -- Test that child does not inherit NO INHERIT constraints
  create table c1 () inherits (p1);
@@ -12639,7 +12639,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/inherit.ou
 -DROP TABLE errtst_parent;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/typed_table.out /Users/kenaniah/workspace/postgres/src/test/regress/results/typed_table.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/typed_table.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/typed_table.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/typed_table.out	2021-10-03 20:25:00.000000000 -0700
 @@ -10,124 +10,11 @@
  (0 rows)
  
@@ -12774,7 +12774,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/typed_tabl
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/updatable_views.out /Users/kenaniah/workspace/postgres/src/test/regress/results/updatable_views.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/updatable_views.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/updatable_views.out	2021-10-03 20:08:14.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/updatable_views.out	2021-10-03 20:25:01.000000000 -0700
 @@ -981,230 +981,321 @@
  CREATE USER regress_view_user2;
  SET SESSION AUTHORIZATION regress_view_user1;
@@ -14621,7 +14621,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/updatable_
 -drop table base_tab;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/sanity_check.out /Users/kenaniah/workspace/postgres/src/test/regress/results/sanity_check.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/sanity_check.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/sanity_check.out	2021-10-03 20:08:15.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/sanity_check.out	2021-10-03 20:25:01.000000000 -0700
 @@ -16,8 +16,13 @@
  aggtest|f
  array_index_op_test|t
@@ -14766,7 +14766,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/sanity_che
  -- restore normal output mode
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/update.out /Users/kenaniah/workspace/postgres/src/test/regress/results/update.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/update.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/update.out	2021-10-03 20:08:16.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/update.out	2021-10-03 20:25:02.000000000 -0700
 @@ -743,286 +743,11 @@
  :init_range_parted;
  create table part_def partition of range_parted default;
@@ -15063,7 +15063,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/update.out
 -drop function dummy_hashint4(a int4, seed int8);
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/prepared_xacts.out /Users/kenaniah/workspace/postgres/src/test/regress/results/prepared_xacts.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/prepared_xacts.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/prepared_xacts.out	2021-10-03 20:08:15.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/prepared_xacts.out	2021-10-03 20:25:02.000000000 -0700
 @@ -216,55 +216,11 @@
  rollback;
  -- Disconnect, we will continue testing in a different backend
@@ -15128,7 +15128,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/prepared_x
 -DROP TABLE pxtest4;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/privileges.out /Users/kenaniah/workspace/postgres/src/test/regress/results/privileges.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/privileges.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/privileges.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/privileges.out	2021-10-03 20:25:03.000000000 -0700
 @@ -52,36 +52,57 @@
  (1 row)
  
@@ -18112,7 +18112,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/privileges
 -DROP USER regress_locktable_user;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/collate.out /Users/kenaniah/workspace/postgres/src/test/regress/results/collate.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/collate.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/collate.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/collate.out	2021-10-03 20:25:03.000000000 -0700
 @@ -16,761 +16,11 @@
      b text COLLATE "C" NOT NULL
  );
@@ -18884,7 +18884,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/collate.ou
 -drop cascades to view collate_on_int
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/matview.out /Users/kenaniah/workspace/postgres/src/test/regress/results/matview.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/matview.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/matview.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/matview.out	2021-10-03 20:25:03.000000000 -0700
 @@ -94,585 +94,11 @@
  CREATE INDEX mvtest_aa ON mvtest_bb (grandtot);
  -- check that plans seem reasonable
@@ -19480,7 +19480,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/matview.ou
 -DROP MATERIALIZED VIEW matview_ine_tab;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/replica_identity.out /Users/kenaniah/workspace/postgres/src/test/regress/results/replica_identity.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/replica_identity.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/replica_identity.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/replica_identity.out	2021-10-03 20:25:03.000000000 -0700
 @@ -75,155 +75,11 @@
  (1 row)
  
@@ -19646,7 +19646,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/replica_id
 -DROP TABLE test_replica_identity_othertable;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/rowsecurity.out /Users/kenaniah/workspace/postgres/src/test/regress/results/rowsecurity.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/rowsecurity.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/rowsecurity.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/rowsecurity.out	2021-10-03 20:25:03.000000000 -0700
 @@ -113,3930 +113,11 @@
  (3 rows)
  
@@ -23587,7 +23587,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/rowsecurit
 -CREATE POLICY p4 ON rls_tbl_force FOR DELETE USING (c1 = 8);
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablesample.out /Users/kenaniah/workspace/postgres/src/test/regress/results/tablesample.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablesample.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tablesample.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tablesample.out	2021-10-03 20:25:03.000000000 -0700
 @@ -69,263 +69,11 @@
  CREATE VIEW test_tablesample_v2 AS
    SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
@@ -23861,7 +23861,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tablesampl
 -drop table parted_sample, parted_sample_1, parted_sample_2;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/identity.out /Users/kenaniah/workspace/postgres/src/test/regress/results/identity.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/identity.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/identity.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/identity.out	2021-10-03 20:25:03.000000000 -0700
 @@ -33,530 +33,11 @@
  (1 row)
  
@@ -24402,7 +24402,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/identity.o
 -DROP TABLE itest15;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/generated.out /Users/kenaniah/workspace/postgres/src/test/regress/results/generated.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/generated.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/generated.out	2021-10-03 20:08:17.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/generated.out	2021-10-03 20:25:03.000000000 -0700
 @@ -22,1044 +22,11 @@
  (1 row)
  
@@ -25457,7 +25457,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/generated.
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_table_like.out /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table_like.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_table_like.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table_like.out	2021-10-03 20:08:19.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/create_table_like.out	2021-10-03 20:25:06.000000000 -0700
 @@ -68,453 +68,11 @@
  DROP TABLE inhg;
  CREATE TABLE test_like_id_1 (a bigint GENERATED ALWAYS AS IDENTITY, b text);
@@ -25921,7 +25921,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/create_tab
 -NOTICE:  table "ctlt10" does not exist, skipping
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/rules.out /Users/kenaniah/workspace/postgres/src/test/regress/results/rules.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/rules.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/rules.out	2021-10-03 20:08:20.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/rules.out	2021-10-03 20:25:06.000000000 -0700
 @@ -1299,6 +1299,9 @@
     FROM view_base_table
    GROUP BY view_base_table.key
@@ -26508,7 +26508,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/rules.out 
 -DROP TABLE ruletest2;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql.out /Users/kenaniah/workspace/postgres/src/test/regress/results/psql.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/psql.out	2021-10-03 20:08:20.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/psql.out	2021-10-03 20:25:06.000000000 -0700
 @@ -54,5227 +54,11 @@
  -- \gx should work in FETCH_COUNT mode too
  \set FETCH_COUNT 1
@@ -31746,7 +31746,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql.out /
 -STATEMENT:  SELECT * FROM notexists;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql_crosstab.out /Users/kenaniah/workspace/postgres/src/test/regress/results/psql_crosstab.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql_crosstab.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/psql_crosstab.out	2021-10-03 20:08:20.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/psql_crosstab.out	2021-10-03 20:25:06.000000000 -0700
 @@ -38,179 +38,11 @@
  SELECT v, to_char(d, 'Mon') AS "month name", EXTRACT(month FROM d) AS num,
   count(*) FROM ctv_data  GROUP BY 1,2,3 ORDER BY 1
@@ -31936,7 +31936,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/psql_cross
 -DROP TABLE ctv_data;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/amutils.out /Users/kenaniah/workspace/postgres/src/test/regress/results/amutils.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/amutils.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/amutils.out	2021-10-03 20:08:20.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/amutils.out	2021-10-03 20:25:06.000000000 -0700
 @@ -93,20 +93,9 @@
                      'bogus']::text[])
           with ordinality as u(prop,ord)
@@ -31982,7 +31982,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/amutils.ou
         unnest(array['can_order', 'can_unique', 'can_multi_col',
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/stats_ext.out /Users/kenaniah/workspace/postgres/src/test/regress/results/stats_ext.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/stats_ext.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/stats_ext.out	2021-10-03 20:08:20.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/stats_ext.out	2021-10-03 20:25:06.000000000 -0700
 @@ -99,3075 +99,11 @@
  CREATE STATISTICS ab1_b_a_stats ON b, a FROM ab1;
  ALTER TABLE ab1 DROP COLUMN a;
@@ -35068,7 +35068,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/stats_ext.
 -DROP USER regress_stats_user1;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/publication.out /Users/kenaniah/workspace/postgres/src/test/regress/results/publication.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/publication.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/publication.out	2021-10-03 20:08:21.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/publication.out	2021-10-03 20:25:08.000000000 -0700
 @@ -76,248 +76,11 @@
  (1 row)
  
@@ -35327,7 +35327,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/publicatio
 -DROP ROLE regress_publication_user_dummy;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_key.out /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_key.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_key.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_key.out	2021-10-03 20:08:22.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_key.out	2021-10-03 20:25:08.000000000 -0700
 @@ -45,13 +45,16 @@
  
  -- Update a row from PK TABLE
@@ -36828,7 +36828,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_ke
 -drop cascades to table fkpart10.tbl2
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/cluster.out /Users/kenaniah/workspace/postgres/src/test/regress/results/cluster.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/cluster.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/cluster.out	2021-10-03 20:08:22.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/cluster.out	2021-10-03 20:25:08.000000000 -0700
 @@ -379,53 +379,57 @@
  -- Test MVCC-safety of cluster. There isn't much we can do to verify the
  -- results with a single backend...
@@ -36924,7 +36924,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/cluster.ou
  CLUSTER clustertest;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/dependency.out /Users/kenaniah/workspace/postgres/src/test/regress/results/dependency.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/dependency.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/dependency.out	2021-10-03 20:08:21.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/dependency.out	2021-10-03 20:25:08.000000000 -0700
 @@ -57,94 +57,25 @@
  -- this one is allowed
  DROP OWNED BY regress_dep_user0;
@@ -37036,7 +37036,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/dependency
 -DROP USER regress_dep_user0;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tsearch.out /Users/kenaniah/workspace/postgres/src/test/regress/results/tsearch.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/tsearch.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tsearch.out	2021-10-03 20:08:21.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/tsearch.out	2021-10-03 20:25:08.000000000 -0700
 @@ -527,2327 +527,11 @@
  ERROR:  parameter "siglen" specified more than once
  CREATE INDEX wowidx2 ON test_tsvector USING gist (a tsvector_ops(siglen=1));
@@ -39374,7 +39374,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/tsearch.ou
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_data.out /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_data.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_data.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_data.out	2021-10-03 20:08:21.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/foreign_data.out	2021-10-03 20:25:08.000000000 -0700
 @@ -724,1383 +724,11 @@
  COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
  COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
@@ -40768,7 +40768,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/foreign_da
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/indirect_toast.out /Users/kenaniah/workspace/postgres/src/test/regress/results/indirect_toast.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/indirect_toast.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/indirect_toast.out	2021-10-03 20:08:22.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/indirect_toast.out	2021-10-03 20:25:08.000000000 -0700
 @@ -21,50 +21,26 @@
  
  -- modification without changing varlenas
@@ -40928,7 +40928,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/indirect_t
  
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/limit.out /Users/kenaniah/workspace/postgres/src/test/regress/results/limit.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/limit.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/limit.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/limit.out	2021-10-03 20:25:09.000000000 -0700
 @@ -633,62 +633,11 @@
  CREATE VIEW limit_thousand_v_1 AS SELECT thousand FROM onek WHERE thousand < 995
  		ORDER BY thousand FETCH FIRST 5 ROWS WITH TIES OFFSET 10;
@@ -41000,7 +41000,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/limit.out 
 --- leave these views
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/plpgsql.out /Users/kenaniah/workspace/postgres/src/test/regress/results/plpgsql.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/plpgsql.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/plpgsql.out	2021-10-03 20:08:24.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/plpgsql.out	2021-10-03 20:25:10.000000000 -0700
 @@ -1083,17 +1083,77 @@
  -- These are already wired to the wall connectors
  --
@@ -41957,7 +41957,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/plpgsql.ou
  --
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copy2.out /Users/kenaniah/workspace/postgres/src/test/regress/results/copy2.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/copy2.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copy2.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/copy2.out	2021-10-03 20:25:09.000000000 -0700
 @@ -513,153 +513,11 @@
  end $$ language plpgsql immutable;
  alter table check_con_tbl add check (check_con_function(check_con_tbl.*));
@@ -42120,7 +42120,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/copy2.out 
 -DROP FUNCTION fun_instead_of_insert_tbl();
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/temp.out /Users/kenaniah/workspace/postgres/src/test/regress/results/temp.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/temp.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/temp.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/temp.out	2021-10-03 20:25:09.000000000 -0700
 @@ -380,13 +380,11 @@
  -- creation is pending, so check after that.  First reset the connection
  -- to remove the temporary namespace.
@@ -42144,7 +42144,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/temp.out /
 -ERROR:  cannot PREPARE a transaction that has operated on temporary objects
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/domain.out /Users/kenaniah/workspace/postgres/src/test/regress/results/domain.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/domain.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/domain.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/domain.out	2021-10-03 20:25:09.000000000 -0700
 @@ -156,11 +156,13 @@
    testint4arr[1] = testint4arr[1] + 1,
    testint4arr[3] = testint4arr[3] - 1
@@ -43073,7 +43073,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/domain.out
 -drop domain testdomain1;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/conversion.out /Users/kenaniah/workspace/postgres/src/test/regress/results/conversion.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/conversion.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/conversion.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/conversion.out	2021-10-03 20:25:09.000000000 -0700
 @@ -4,30 +4,36 @@
  CREATE USER regress_conversion_user WITH NOCREATEDB NOCREATEROLE;
  SET SESSION AUTHORIZATION regress_conversion_user;
@@ -43115,7 +43115,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/conversion
  -- so there's no need to do that here.
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/alter_table.out /Users/kenaniah/workspace/postgres/src/test/regress/results/alter_table.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/alter_table.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/alter_table.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/alter_table.out	2021-10-03 20:25:09.000000000 -0700
 @@ -105,4387 +105,11 @@
  HINT:  Alter statistics on table column instead.
  ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS 1000;
@@ -47513,7 +47513,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/alter_tabl
 -drop table alttype_cluster;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/sequence.out /Users/kenaniah/workspace/postgres/src/test/regress/results/sequence.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/sequence.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/sequence.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/sequence.out	2021-10-03 20:25:09.000000000 -0700
 @@ -537,289 +537,11 @@
  (1 row)
  
@@ -47813,7 +47813,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/sequence.o
 -DROP SEQUENCE test_seq1;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/polymorphism.out /Users/kenaniah/workspace/postgres/src/test/regress/results/polymorphism.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/polymorphism.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/polymorphism.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/polymorphism.out	2021-10-03 20:25:09.000000000 -0700
 @@ -1177,922 +1177,11 @@
  
  -- verify it lists properly
@@ -48745,8 +48745,8 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/polymorphi
 -
 -drop function anyctest(variadic anycompatiblearray);
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/largeobject.out /Users/kenaniah/workspace/postgres/src/test/regress/results/largeobject.out
---- /Users/kenaniah/workspace/postgres/src/test/regress/expected/largeobject.out	2021-10-03 20:08:03.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/largeobject.out	2021-10-03 20:08:23.000000000 -0700
+--- /Users/kenaniah/workspace/postgres/src/test/regress/expected/largeobject.out	2021-10-03 20:24:52.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/largeobject.out	2021-10-03 20:25:09.000000000 -0700
 @@ -37,6 +37,8 @@
  -- The return value is a file descriptor-like value which remains valid for the
  -- transaction.
@@ -49106,7 +49106,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/largeobjec
   lo_export 
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/with.out /Users/kenaniah/workspace/postgres/src/test/regress/results/with.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/with.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/with.out	2021-10-03 20:08:23.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/with.out	2021-10-03 20:25:09.000000000 -0700
 @@ -434,2734 +434,11 @@
  )
  SELECT sum(n) FROM t;
@@ -51851,7 +51851,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/with.out /
 -drop table test;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/partition_prune.out /Users/kenaniah/workspace/postgres/src/test/regress/results/partition_prune.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/partition_prune.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/partition_prune.out	2021-10-03 20:08:25.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/partition_prune.out	2021-10-03 20:25:11.000000000 -0700
 @@ -1540,210 +1540,125 @@
  --
  create table hp (a int, b text, c int)
@@ -52447,7 +52447,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/partition_
  drop operator ===(int4, int4);
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/hash_part.out /Users/kenaniah/workspace/postgres/src/test/regress/results/hash_part.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/hash_part.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/hash_part.out	2021-10-03 20:08:24.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/hash_part.out	2021-10-03 20:25:10.000000000 -0700
 @@ -6,8 +6,10 @@
  -- part_part_test_int4_ops and part_test_text_ops in insert.sql.
  CREATE TABLE mchash (a int, b text, c jsonb)
@@ -52604,7 +52604,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/hash_part.
  DROP TABLE text_hashp;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/indexing.out /Users/kenaniah/workspace/postgres/src/test/regress/results/indexing.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/indexing.out	2021-10-03 18:09:17.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/indexing.out	2021-10-03 20:08:24.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/indexing.out	2021-10-03 20:25:10.000000000 -0700
 @@ -82,1278 +82,11 @@
  create index idxparti2 on idxpart (b, c);
  create table idxpart1 (like idxpart);
@@ -53893,7 +53893,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/indexing.o
 -drop table parted_index_col_drop;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/compression_1.out /Users/kenaniah/workspace/postgres/src/test/regress/results/compression.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/compression_1.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/compression.out	2021-10-03 20:08:24.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/compression.out	2021-10-03 20:25:10.000000000 -0700
 @@ -6,356 +6,11 @@
  CREATE INDEX idx ON cmdata(f1);
  INSERT INTO cmdata VALUES(repeat('1234567890', 1000));
@@ -54260,7 +54260,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/compressio
 -\set HIDE_TOAST_COMPRESSION true
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/fast_default.out /Users/kenaniah/workspace/postgres/src/test/regress/results/fast_default.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/fast_default.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/fast_default.out	2021-10-03 20:08:26.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/fast_default.out	2021-10-03 20:25:13.000000000 -0700
 @@ -61,11 +61,15 @@
  -- Test a large sample of different datatypes
  CREATE TABLE T(pk INT NOT NULL PRIMARY KEY, c_int INT DEFAULT 1);
@@ -54460,7 +54460,7 @@ diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/fast_defau
  DROP TABLE follower;
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/regress/expected/stats.out /Users/kenaniah/workspace/postgres/src/test/regress/results/stats.out
 --- /Users/kenaniah/workspace/postgres/src/test/regress/expected/stats.out	2021-10-03 17:41:49.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/regress/results/stats.out	2021-10-03 20:08:26.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/regress/results/stats.out	2021-10-03 20:25:13.000000000 -0700
 @@ -93,11 +93,17 @@
  INSERT INTO trunc_stats_test1 DEFAULT VALUES;
  INSERT INTO trunc_stats_test1 DEFAULT VALUES;
