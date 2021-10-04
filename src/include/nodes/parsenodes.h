@@ -2090,6 +2090,8 @@ typedef struct GrantRoleStmt
 	NodeTag		type;
 	List	   *granted_roles;	/* list of roles to be granted/revoked */
 	List	   *grantee_roles;	/* list of member roles to add/delete */
+	char		*database;		/* name of DB this grant applies to
+		NULL = global, "" = current database, otherwise a named database */
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	bool		admin_opt;		/* with admin option */
 	RoleSpec   *grantor;		/* set grantor to other than current role */

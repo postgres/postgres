@@ -340,7 +340,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <str>		opt_type
 %type <str>		foreign_server_version opt_foreign_server_version
-%type <str>		opt_in_database
+%type <str>		opt_in_database opt_grant_in_database
 
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
@@ -7157,6 +7157,11 @@ grantee:
 		;
 
 
+opt_grant_in_database:
+			IN_P CURRENT_P DATABASE { $$ = ""; }
+			| opt_in_database { $$ = $1; }
+		;
+
 opt_grant_grant_option:
 			WITH GRANT OPTION { $$ = true; }
 			| /*EMPTY*/ { $$ = false; }
@@ -7169,37 +7174,40 @@ opt_grant_grant_option:
  *****************************************************************************/
 
 GrantRoleStmt:
-			GRANT privilege_list TO role_list opt_grant_admin_option opt_granted_by
+			GRANT privilege_list TO role_list opt_grant_in_database opt_grant_admin_option opt_granted_by
 				{
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = true;
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
-					n->admin_opt = $5;
-					n->grantor = $6;
+					n->database = $5;
+					n->admin_opt = $6;
+					n->grantor = $7;
 					$$ = (Node*)n;
 				}
 		;
 
 RevokeRoleStmt:
-			REVOKE privilege_list FROM role_list opt_granted_by opt_drop_behavior
+			REVOKE privilege_list FROM role_list opt_grant_in_database opt_granted_by opt_drop_behavior
 				{
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
 					n->admin_opt = false;
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
-					n->behavior = $6;
+					n->database = $5;
+					n->behavior = $7;
 					$$ = (Node*)n;
 				}
-			| REVOKE ADMIN OPTION FOR privilege_list FROM role_list opt_granted_by opt_drop_behavior
+			| REVOKE ADMIN OPTION FOR privilege_list FROM role_list opt_grant_in_database opt_granted_by opt_drop_behavior
 				{
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
 					n->admin_opt = true;
 					n->granted_roles = $5;
 					n->grantee_roles = $7;
-					n->behavior = $9;
+					n->database = $8;
+					n->behavior = $10;
 					$$ = (Node*)n;
 				}
 		;

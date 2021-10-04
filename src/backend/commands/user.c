@@ -51,10 +51,10 @@ check_password_hook_type check_password_hook = NULL;
 
 static void AddRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						Oid grantorId, bool admin_opt);
+						Oid grantorId, bool admin_opt, Oid dbid);
 static void DelRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						bool admin_opt);
+						bool admin_opt, Oid dbid);
 
 
 /* Check if current user has createrole privileges */
@@ -453,7 +453,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			AddRoleMems(oldrolename, oldroleid,
 						thisrole_list,
 						thisrole_oidlist,
-						GetUserId(), false);
+						GetUserId(), false, InvalidOid);
 
 			ReleaseSysCache(oldroletup);
 		}
@@ -465,10 +465,10 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 */
 	AddRoleMems(stmt->role, roleid,
 				adminmembers, roleSpecsToIds(adminmembers),
-				GetUserId(), true);
+				GetUserId(), true, InvalidOid);
 	AddRoleMems(stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
-				GetUserId(), false);
+				GetUserId(), false, InvalidOid);
 
 	/* Post creation hook for new role */
 	InvokeObjectPostCreateHook(AuthIdRelationId, roleid, 0);
@@ -833,11 +833,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	if (stmt->action == +1)		/* add members to role */
 		AddRoleMems(rolename, roleid,
 					rolemembers, roleSpecsToIds(rolemembers),
-					GetUserId(), false);
+					GetUserId(), false, InvalidOid);
 	else if (stmt->action == -1)	/* drop members from role */
 		DelRoleMems(rolename, roleid,
 					rolemembers, roleSpecsToIds(rolemembers),
-					false);
+					false, InvalidOid);
 
 	/*
 	 * Close pg_authid, but keep lock till commit.
@@ -1258,6 +1258,16 @@ GrantRole(GrantRoleStmt *stmt)
 	Oid			grantor;
 	List	   *grantee_ids;
 	ListCell   *item;
+	Oid dbid = InvalidOid;
+
+	// TODO: check the status of stmt->database
+	if (stmt->database == "") {
+		dbid = get_database_oid("", false);
+	}
+	else if (stmt->database != NULL) {
+		dbid = get_database_oid(stmt->database, false);
+	}
+
 
 	if (stmt->grantor)
 		grantor = get_rolespec_oid(stmt->grantor, false);
@@ -1292,11 +1302,11 @@ GrantRole(GrantRoleStmt *stmt)
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						grantor, stmt->admin_opt);
+						grantor, stmt->admin_opt, dbid);
 		else
 			DelRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						stmt->admin_opt);
+						stmt->admin_opt, dbid);
 	}
 
 	/*
@@ -1403,13 +1413,12 @@ roleSpecsToIds(List *memberNames)
 static void
 AddRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			Oid grantorId, bool admin_opt)
+			Oid grantorId, bool admin_opt, Oid dbid)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
-	Oid dbid = InvalidOid;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 
@@ -1527,6 +1536,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 			(!admin_opt ||
 			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
 		{
+			/* TODO: update this message to be database-aware */
 			ereport(NOTICE,
 					(errmsg("role \"%s\" is already a member of role \"%s\"",
 							get_rolespec_name(memberRole), rolename)));
@@ -1584,13 +1594,12 @@ AddRoleMems(const char *rolename, Oid roleid,
 static void
 DelRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			bool admin_opt)
+			bool admin_opt, Oid dbid)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
 	ListCell   *specitem;
 	ListCell   *iditem;
-	Oid dbid = InvalidOid;
 
 	Assert(list_length(memberSpecs) == list_length(memberIds));
 

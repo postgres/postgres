@@ -3429,6 +3429,7 @@ _copyGrantRoleStmt(const GrantRoleStmt *from)
 
 	COPY_NODE_FIELD(granted_roles);
 	COPY_NODE_FIELD(grantee_roles);
+	COPY_SCALAR_FIELD(database);
 	COPY_SCALAR_FIELD(is_grant);
 	COPY_SCALAR_FIELD(admin_opt);
 	COPY_NODE_FIELD(grantor);

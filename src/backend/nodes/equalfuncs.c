@@ -1215,6 +1215,7 @@ _equalGrantRoleStmt(const GrantRoleStmt *a, const GrantRoleStmt *b)
 {
 	COMPARE_NODE_FIELD(granted_roles);
 	COMPARE_NODE_FIELD(grantee_roles);
+	COMPARE_SCALAR_FIELD(database);
 	COMPARE_SCALAR_FIELD(is_grant);
 	COMPARE_SCALAR_FIELD(admin_opt);
 	COMPARE_NODE_FIELD(grantor);
