@@ -7860,13 +7860,6 @@ StartupXLOG(void)
 	/* Reload shared-memory state for prepared transactions */
 	RecoverPreparedTransactions();
 
-	/*
-	 * Shutdown the recovery environment. This must occur after
-	 * RecoverPreparedTransactions(), see notes for lock_twophase_recover()
-	 */
-	if (standbyState != STANDBY_DISABLED)
-		ShutdownRecoveryTransactionEnvironment();
-
 	/* Shut down xlogreader */
 	if (readFile >= 0)
 	{
@@ -7914,6 +7907,18 @@ StartupXLOG(void)
 
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
+
+	/*
+	 * Shutdown the recovery environment.  This must occur after
+	 * RecoverPreparedTransactions() (see notes in lock_twophase_recover())
+	 * and after switching SharedRecoveryState to RECOVERY_STATE_DONE so as
+	 * any session building a snapshot will not rely on KnownAssignedXids as
+	 * RecoveryInProgress() would return false at this stage.  This is
+	 * particularly critical for prepared 2PC transactions, that would still
+	 * need to be included in snapshots once recovery has ended.
+	 */
+	if (standbyState != STANDBY_DISABLED)
+		ShutdownRecoveryTransactionEnvironment();
 
 	/*
 	 * If there were cascading standby servers connected to us, nudge any wal
