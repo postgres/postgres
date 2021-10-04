@@ -3547,7 +3547,7 @@ restart:
 		/*
 		 * If this constraint has a parent constraint which we have not seen
 		 * yet, keep track of it for the second loop, below.  Tracking parent
-		 * constraints allows us to climb up to the top-level level constraint
+		 * constraints allows us to climb up to the top-level constraint
 		 * and look for all possible relations referencing the partitioned
 		 * table.
 		 */
