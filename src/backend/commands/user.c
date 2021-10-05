@@ -1257,13 +1257,14 @@ GrantRole(GrantRoleStmt *stmt)
 	Oid			grantor;
 	List	   *grantee_ids;
 	ListCell   *item;
-	Oid dbid = InvalidOid;
+	Oid dbid;
 
 	/* Determine if this grant/revoke is database-specific */
-	if (strcmp(stmt->database, "") == 0) {
+	if (stmt->database == NULL) {
+		dbid = InvalidOid;
+	} else if (strcmp(stmt->database, "") == 0) {
 		dbid = MyDatabaseId;
-	}
-	else if (stmt->database != NULL) {
+	} else {
 		dbid = get_database_oid(stmt->database, false);
 	}
 

@@ -1012,7 +1012,8 @@ dumpRoleMembership(PGconn *conn)
 					  "LEFT JOIN %s ur on ur.oid = a.roleid "
 					  "LEFT JOIN %s um on um.oid = a.member "
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
-					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
+					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_') "
+						"AND a.dbid = 0"
 					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
 	res = executeQuery(conn, buf->data);
 
