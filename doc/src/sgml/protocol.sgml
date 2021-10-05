@@ -1914,7 +1914,7 @@ The commands accepted in replication mode are:
   </varlistentry>
 
   <varlistentry id="protocol-replication-create-slot" xreflabel="CREATE_REPLICATION_SLOT">
-   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> | <literal>TWO_PHASE</literal> ] }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1954,46 +1954,50 @@ The commands accepted in replication mode are:
         </para>
        </listitem>
       </varlistentry>
+     </variablelist>
 
+     <para>The following options are supported:</para>
+
+     <variablelist>
       <varlistentry>
-       <term><literal>TWO_PHASE</literal></term>
+       <term><literal>TWO_PHASE [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
        <listitem>
         <para>
-         Specify that this logical replication slot supports decoding of two-phase
+         If true, this logical replication slot supports decoding of two-phase
          transactions. With this option, two-phase commands like
          <literal>PREPARE TRANSACTION</literal>, <literal>COMMIT PREPARED</literal>
          and <literal>ROLLBACK PREPARED</literal> are decoded and transmitted.
          The transaction will be decoded and transmitted at
          <literal>PREPARE TRANSACTION</literal> time.
+         The default is false.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>RESERVE_WAL</literal></term>
+       <term><literal>RESERVE_WAL [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
        <listitem>
         <para>
-         Specify that this physical replication slot reserves <acronym>WAL</acronym>
+         If true, this physical replication slot reserves <acronym>WAL</acronym>
          immediately.  Otherwise, <acronym>WAL</acronym> is only reserved upon
          connection from a streaming replication client.
+         The default is false.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>EXPORT_SNAPSHOT</literal></term>
-       <term><literal>NOEXPORT_SNAPSHOT</literal></term>
-       <term><literal>USE_SNAPSHOT</literal></term>
+       <term><literal>SNAPSHOT { 'export' | 'use' | 'nothing' }</literal></term>
        <listitem>
         <para>
          Decides what to do with the snapshot created during logical slot
-         initialization. <literal>EXPORT_SNAPSHOT</literal>, which is the default,
+         initialization. <literal>'export'</literal>, which is the default,
          will export the snapshot for use in other sessions. This option can't
-         be used inside a transaction.  <literal>USE_SNAPSHOT</literal> will use the
+         be used inside a transaction.  <literal>'use'</literal> will use the
          snapshot for the current transaction executing the command. This
          option must be used in a transaction, and
          <literal>CREATE_REPLICATION_SLOT</literal> must be the first command
-         run in that transaction.  Finally, <literal>NOEXPORT_SNAPSHOT</literal> will
+         run in that transaction.  Finally, <literal>'nothing'</literal> will
          just use the snapshot for logical decoding as normal but won't do
          anything else with it.
         </para>
@@ -2048,6 +2052,17 @@ The commands accepted in replication mode are:
         </listitem>
        </varlistentry>
       </variablelist>
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> | <literal>TWO_PHASE</literal> ] }
+    </term>
+    <listitem>
+     <para>
+      For compatibility with older releases, this alternative syntax for
+      the <literal>CREATE_REPLICATION_SLOT</literal> command is still supported.
      </para>
     </listitem>
   </varlistentry>

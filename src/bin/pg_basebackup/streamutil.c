@@ -490,6 +490,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 {
 	PQExpBuffer query;
 	PGresult   *res;
+	bool		use_new_option_syntax = (PQserverVersion(conn) >= 150000);
 
 	query = createPQExpBuffer();
 
@@ -498,27 +499,54 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert(!(two_phase && is_physical));
 	Assert(slot_name != NULL);
 
-	/* Build query */
+	/* Build base portion of query */
 	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
 	if (is_temporary)
 		appendPQExpBufferStr(query, " TEMPORARY");
 	if (is_physical)
-	{
 		appendPQExpBufferStr(query, " PHYSICAL");
+	else
+		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
+
+	/* Add any requested options */
+	if (use_new_option_syntax)
+		appendPQExpBufferStr(query, " (");
+	if (is_physical)
+	{
 		if (reserve_wal)
-			appendPQExpBufferStr(query, " RESERVE_WAL");
+			AppendPlainCommandOption(query, use_new_option_syntax,
+									 "RESERVE_WAL");
 	}
 	else
 	{
-		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
 		if (two_phase && PQserverVersion(conn) >= 150000)
-			appendPQExpBufferStr(query, " TWO_PHASE");
+			AppendPlainCommandOption(query, use_new_option_syntax,
+									 "TWO_PHASE");
 
 		if (PQserverVersion(conn) >= 100000)
+		{
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
-			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");
+			if (use_new_option_syntax)
+				AppendStringCommandOption(query, use_new_option_syntax,
+										   "SNAPSHOT", "nothing");
+			else
+				AppendPlainCommandOption(query, use_new_option_syntax,
+										 "NOEXPORT_SNAPSHOT");
+		}
+	}
+	if (use_new_option_syntax)
+	{
+		/* Suppress option list if it would be empty, otherwise terminate */
+		if (query->data[query->len - 1] == '(')
+		{
+			query->len -= 2;
+			query->data[query->len] = '\0';
+		}
+		else
+			appendPQExpBufferChar(query, ')');
 	}
 
+	/* Now run the query */
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{

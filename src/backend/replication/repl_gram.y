@@ -103,8 +103,8 @@ static SQLCmd *make_sqlcmd(void);
 %type <node>	plugin_opt_arg
 %type <str>		opt_slot var_name ident_or_keyword
 %type <boolval>	opt_temporary
-%type <list>	create_slot_opt_list
-%type <defelt>	create_slot_opt
+%type <list>	create_slot_options create_slot_legacy_opt_list
+%type <defelt>	create_slot_legacy_opt
 
 %%
 
@@ -243,8 +243,8 @@ base_backup_legacy_opt:
 			;
 
 create_replication_slot:
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL RESERVE_WAL */
-			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_opt_list
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL [options] */
+			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
@@ -254,8 +254,8 @@ create_replication_slot:
 					cmd->options = $5;
 					$$ = (Node *) cmd;
 				}
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin */
-			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_opt_list
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin [options] */
+			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
@@ -268,28 +268,33 @@ create_replication_slot:
 				}
 			;
 
-create_slot_opt_list:
-			create_slot_opt_list create_slot_opt
+create_slot_options:
+			'(' generic_option_list ')'			{ $$ = $2; }
+			| create_slot_legacy_opt_list		{ $$ = $1; }
+			;
+
+create_slot_legacy_opt_list:
+			create_slot_legacy_opt_list create_slot_legacy_opt
 				{ $$ = lappend($1, $2); }
 			| /* EMPTY */
 				{ $$ = NIL; }
 			;
 
-create_slot_opt:
+create_slot_legacy_opt:
 			K_EXPORT_SNAPSHOT
 				{
-				  $$ = makeDefElem("export_snapshot",
-								   (Node *)makeInteger(true), -1);
+				  $$ = makeDefElem("snapshot",
+								   (Node *)makeString("export"), -1);
 				}
 			| K_NOEXPORT_SNAPSHOT
 				{
-				  $$ = makeDefElem("export_snapshot",
-								   (Node *)makeInteger(false), -1);
+				  $$ = makeDefElem("snapshot",
+								   (Node *)makeString("nothing"), -1);
 				}
 			| K_USE_SNAPSHOT
 				{
-				  $$ = makeDefElem("use_snapshot",
-								   (Node *)makeInteger(true), -1);
+				  $$ = makeDefElem("snapshot",
+								   (Node *)makeString("use"), -1);
 				}
 			| K_RESERVE_WAL
 				{
