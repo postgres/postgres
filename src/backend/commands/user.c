@@ -1537,9 +1537,15 @@ AddRoleMems(const char *rolename, Oid roleid,
 			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
 		{
 			/* TODO: update this message to be database-aware */
-			ereport(NOTICE,
-					(errmsg("role \"%s\" is already a member of role \"%s\"",
-							get_rolespec_name(memberRole), rolename)));
+			if (dbid == InvalidOid) {
+				ereport(NOTICE,
+						(errmsg("role \"%s\" is already a member of role \"%s\"",
+								get_rolespec_name(memberRole), rolename)));
+			} else {
+				ereport(NOTICE,
+						(errmsg("role \"%s\" is already a member of role \"%s\" in database \"%s\"",
+								get_rolespec_name(memberRole), rolename, get_database_name(dbid))));
+			}
 			ReleaseSysCache(authmem_tuple);
 			continue;
 		}
@@ -1646,9 +1652,15 @@ DelRoleMems(const char *rolename, Oid roleid,
 										ObjectIdGetDatum(dbid));
 		if (!HeapTupleIsValid(authmem_tuple))
 		{
-			ereport(WARNING,
-					(errmsg("role \"%s\" is not a member of role \"%s\"",
-							get_rolespec_name(memberRole), rolename)));
+			if (dbid == InvalidOid){
+				ereport(WARNING,
+						(errmsg("role \"%s\" is not a member of role \"%s\"",
+								get_rolespec_name(memberRole), rolename)));
+			} else {
+				ereport(WARNING,
+						(errmsg("role \"%s\" is not a member of role \"%s\" in database \"%s\"",
+								get_rolespec_name(memberRole), rolename, get_database_name(dbid))));
+			}
 			continue;
 		}
 
