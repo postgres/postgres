@@ -33,5 +33,6 @@ extern ObjectAddress RenameRole(const char *oldname, const char *newname);
 extern void DropOwnedObjects(DropOwnedStmt *stmt);
 extern void ReassignOwnedObjects(ReassignOwnedStmt *stmt);
 extern List *roleSpecsToIds(List *memberNames);
+extern void DropDatabaseSpecificRoles(Oid databaseId);
 
 #endif							/* USER_H */

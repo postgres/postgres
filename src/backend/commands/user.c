@@ -1536,7 +1536,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 			(!admin_opt ||
 			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
 		{
-			/* TODO: update this message to be database-aware */
 			if (dbid == InvalidOid) {
 				ereport(NOTICE,
 						(errmsg("role \"%s\" is already a member of role \"%s\"",
@@ -1701,4 +1700,43 @@ DelRoleMems(const char *rolename, Oid roleid,
 	 * Close pg_authmem, but keep lock till commit.
 	 */
 	table_close(pg_authmem_rel, NoLock);
+}
+
+/*
+ * DropDatabaseSpecificRoles
+ *
+ * Delete pg_auth_members entries corresponding to a database that's being
+ * dropped.
+ */
+void
+DropDatabaseSpecificRoles(Oid databaseId)
+{
+	Relation	pg_authmem_rel;
+	ScanKeyData key[1];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	pg_authmem_rel = table_open(AuthMemRelationId, RowExclusiveLock);
+
+	/*
+	 * First, delete all the entries that have the database Oid in the dbid
+	 * field.
+	 */
+	ScanKeyInit(&key[0],
+				Anum_pg_auth_members_dbid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(databaseId));
+	/* We leave the other index fields unspecified */
+
+	scan = systable_beginscan(pg_authmem_rel, AuthMemDbMemRoleIndexId, true,
+							  NULL, 1, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		CatalogTupleDelete(pg_authmem_rel, &tup->t_self);
+	}
+
+	systable_endscan(scan);
+
+	table_close(pg_authmem_rel, RowExclusiveLock);
 }

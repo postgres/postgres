@@ -46,6 +46,7 @@
 #include "commands/defrem.h"
 #include "commands/seclabel.h"
 #include "commands/tablespace.h"
+#include "commands/user.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -917,6 +918,11 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	 */
 	DeleteSharedComments(db_id, DatabaseRelationId);
 	DeleteSharedSecurityLabel(db_id, DatabaseRelationId);
+
+	/*
+	 * Delete any roles memberships directly associated with this database.
+	 */
+	DropDatabaseSpecificRoles(db_id);
 
 	/*
 	 * Remove settings associated with this database
