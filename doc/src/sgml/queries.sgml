@@ -1707,17 +1707,9 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 <replaceable>query1</replaceable> INTERSECT <optional>ALL</optional> <replaceable>query2</replaceable>
 <replaceable>query1</replaceable> EXCEPT <optional>ALL</optional> <replaceable>query2</replaceable>
 </synopsis>
-   <replaceable>query1</replaceable> and
+   where <replaceable>query1</replaceable> and
    <replaceable>query2</replaceable> are queries that can use any of
-   the features discussed up to this point.  Set operations can also
-   be nested and chained, for example
-<synopsis>
-<replaceable>query1</replaceable> UNION <replaceable>query2</replaceable> UNION <replaceable>query3</replaceable>
-</synopsis>
-   which is executed as:
-<synopsis>
-(<replaceable>query1</replaceable> UNION <replaceable>query2</replaceable>) UNION <replaceable>query3</replaceable>
-</synopsis>
+   the features discussed up to this point.
   </para>
 
   <para>
@@ -1750,6 +1742,47 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
    which means that they return the same number of columns and
    the corresponding columns have compatible data types, as
    described in <xref linkend="typeconv-union-case"/>.
+  </para>
+
+  <para>
+   Set operations can be combined, for example
+<synopsis>
+<replaceable>query1</replaceable> UNION <replaceable>query2</replaceable> EXCEPT <replaceable>query3</replaceable>
+</synopsis>
+   which is equivalent to
+<synopsis>
+(<replaceable>query1</replaceable> UNION <replaceable>query2</replaceable>) EXCEPT <replaceable>query3</replaceable>
+</synopsis>
+   As shown here, you can use parentheses to control the order of
+   evaluation.  Without parentheses, <literal>UNION</literal>
+   and <literal>EXCEPT</literal> associate left-to-right,
+   but <literal>INTERSECT</literal> binds more tightly than those two
+   operators.  Thus
+<synopsis>
+<replaceable>query1</replaceable> UNION <replaceable>query2</replaceable> INTERSECT <replaceable>query3</replaceable>
+</synopsis>
+   means
+<synopsis>
+<replaceable>query1</replaceable> UNION (<replaceable>query2</replaceable> INTERSECT <replaceable>query3</replaceable>)
+</synopsis>
+   You can also surround an individual <replaceable>query</replaceable>
+   with parentheses.  This is important if
+   the <replaceable>query</replaceable> needs to use any of the clauses
+   discussed in following sections, such as <literal>LIMIT</literal>.
+   Without parentheses, you'll get a syntax error, or else the clause will
+   be understood as applying to the output of the set operation rather
+   than one of its inputs.  For example,
+<synopsis>
+SELECT a FROM b UNION SELECT x FROM y LIMIT 10
+</synopsis>
+   is accepted, but it means
+<synopsis>
+(SELECT a FROM b UNION SELECT x FROM y) LIMIT 10
+</synopsis>
+   not
+<synopsis>
+SELECT a FROM b UNION (SELECT x FROM y LIMIT 10)
+</synopsis>
   </para>
  </sect1>
 
