@@ -1422,7 +1422,6 @@ SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff)
  * We store current state of struct SnapBuild on disk in the following manner:
  *
  * struct SnapBuildOnDisk;
- * TransactionId * running.xcnt_space;
  * TransactionId * committed.xcnt; (*not xcnt_space*)
  *
  */
