@@ -35,7 +35,7 @@ static void help(void);
 
 static void dropRoles(PGconn *conn);
 static void dumpRoles(PGconn *conn);
-static void dumpRoleMembership(PGconn *conn);
+static void dumpRoleMembership(PGconn *conn, const char *databaseId);
 static void dumpGroups(PGconn *conn);
 static void dropTablespaces(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
@@ -583,7 +583,7 @@ main(int argc, char *argv[])
 
 			/* Dump role memberships --- need different method for pre-8.1 */
 			if (server_version >= 80100)
-				dumpRoleMembership(conn);
+				dumpRoleMembership(conn, "0");
 			else
 				dumpGroups(conn);
 		}
@@ -998,7 +998,7 @@ dumpRoles(PGconn *conn)
  * no membership yet.
  */
 static void
-dumpRoleMembership(PGconn *conn)
+dumpRoleMembership(PGconn *conn, const char *databaseId)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
@@ -1013,8 +1013,8 @@ dumpRoleMembership(PGconn *conn)
 					  "LEFT JOIN %s um on um.oid = a.member "
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
 					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_') "
-						"AND a.dbid = 0"
-					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
+						"AND a.dbid = %s"
+					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog, databaseId);
 	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
@@ -1028,6 +1028,8 @@ dumpRoleMembership(PGconn *conn)
 
 		fprintf(OPF, "GRANT %s", fmtId(roleid));
 		fprintf(OPF, " TO %s", fmtId(member));
+		if (strcmp(databaseId, "0") != 0)
+			fprintf(OPF, " IN CURRENT DATABASE");
 		if (*option == 't')
 			fprintf(OPF, " WITH ADMIN OPTION");
 
@@ -1478,7 +1480,7 @@ dumpDatabases(PGconn *conn)
 	 * doesn't have some failure mode with --clean.
 	 */
 	res = executeQuery(conn,
-					   "SELECT datname "
+					   "SELECT datname, oid "
 					   "FROM pg_database d "
 					   "WHERE datallowconn "
 					   "ORDER BY (datname <> 'template1'), datname");
@@ -1489,6 +1491,7 @@ dumpDatabases(PGconn *conn)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *dbname = PQgetvalue(res, i, 0);
+		char	   *dbid = PQgetvalue(res, i, 1);
 		const char *create_opts;
 		int			ret;
 
@@ -1537,6 +1540,11 @@ dumpDatabases(PGconn *conn)
 		{
 			pg_log_error("pg_dump failed on database \"%s\", exiting", dbname);
 			exit_nicely(1);
+		}
+
+		/* Dump database-specific roles if server is running 15.0 or later */
+		if (server_version >= 150000 ){
+			dumpRoleMembership(conn, dbid);
 		}
 
 		if (filename)
