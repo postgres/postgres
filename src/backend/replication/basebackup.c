@@ -19,6 +19,7 @@
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
 #include "catalog/pg_type.h"
 #include "common/file_perm.h"
+#include "commands/defrem.h"
 #include "commands/progress.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
@@ -764,7 +765,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	ListCell   *lopt;
 	bool		o_label = false;
 	bool		o_progress = false;
-	bool		o_fast = false;
+	bool		o_checkpoint = false;
 	bool		o_nowait = false;
 	bool		o_wal = false;
 	bool		o_maxrate = false;
@@ -787,7 +788,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->label = strVal(defel->arg);
+			opt->label = defGetString(defel);
 			o_label = true;
 		}
 		else if (strcmp(defel->defname, "progress") == 0)
@@ -796,25 +797,35 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->progress = true;
+			opt->progress = defGetBoolean(defel);
 			o_progress = true;
 		}
-		else if (strcmp(defel->defname, "fast") == 0)
+		else if (strcmp(defel->defname, "checkpoint") == 0)
 		{
-			if (o_fast)
+			char	   *optval = defGetString(defel);
+
+			if (o_checkpoint)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->fastcheckpoint = true;
-			o_fast = true;
+			if (pg_strcasecmp(optval, "fast") == 0)
+				opt->fastcheckpoint = true;
+			else if (pg_strcasecmp(optval, "spread") == 0)
+				opt->fastcheckpoint = false;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("unrecognized checkpoint type: \"%s\"",
+								optval)));
+			o_checkpoint = true;
 		}
-		else if (strcmp(defel->defname, "nowait") == 0)
+		else if (strcmp(defel->defname, "wait") == 0)
 		{
 			if (o_nowait)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->nowait = true;
+			opt->nowait = !defGetBoolean(defel);
 			o_nowait = true;
 		}
 		else if (strcmp(defel->defname, "wal") == 0)
@@ -823,19 +834,19 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->includewal = true;
+			opt->includewal = defGetBoolean(defel);
 			o_wal = true;
 		}
 		else if (strcmp(defel->defname, "max_rate") == 0)
 		{
-			long		maxrate;
+			int64		maxrate;
 
 			if (o_maxrate)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
 
-			maxrate = intVal(defel->arg);
+			maxrate = defGetInt64(defel);
 			if (maxrate < MAX_RATE_LOWER || maxrate > MAX_RATE_UPPER)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -851,21 +862,21 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->sendtblspcmapfile = true;
+			opt->sendtblspcmapfile = defGetBoolean(defel);
 			o_tablespace_map = true;
 		}
-		else if (strcmp(defel->defname, "noverify_checksums") == 0)
+		else if (strcmp(defel->defname, "verify_checksums") == 0)
 		{
 			if (o_noverify_checksums)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			noverify_checksums = true;
+			noverify_checksums = !defGetBoolean(defel);
 			o_noverify_checksums = true;
 		}
 		else if (strcmp(defel->defname, "manifest") == 0)
 		{
-			char	   *optval = strVal(defel->arg);
+			char	   *optval = defGetString(defel);
 			bool		manifest_bool;
 
 			if (o_manifest)
@@ -890,7 +901,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		}
 		else if (strcmp(defel->defname, "manifest_checksums") == 0)
 		{
-			char	   *optval = strVal(defel->arg);
+			char	   *optval = defGetString(defel);
 
 			if (o_manifest_checksums)
 				ereport(ERROR,
@@ -905,8 +916,10 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 			o_manifest_checksums = true;
 		}
 		else
-			elog(ERROR, "option \"%s\" not recognized",
-				 defel->defname);
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("option \"%s\" not recognized",
+						   defel->defname));
 	}
 	if (opt->label == NULL)
 		opt->label = "base backup";

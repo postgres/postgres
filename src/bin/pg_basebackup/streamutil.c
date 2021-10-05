@@ -603,6 +603,67 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	return true;
 }
 
+/*
+ * Append a "plain" option - one with no value - to a server command that
+ * is being constructed.
+ *
+ * In the old syntax, all options were parser keywords, so you could just
+ * write things like SOME_COMMAND OPTION1 OPTION2 'opt2value' OPTION3 42. The
+ * new syntax uses a comma-separated list surrounded by parentheses, so the
+ * equivalent is SOME_COMMAND (OPTION1, OPTION2 'optvalue', OPTION3 42).
+ */
+void
+AppendPlainCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						 char *option_name)
+{
+	if (buf->len > 0 && buf->data[buf->len - 1] != '(')
+	{
+		if (use_new_option_syntax)
+			appendPQExpBufferStr(buf, ", ");
+		else
+			appendPQExpBufferChar(buf, ' ');
+	}
+
+	appendPQExpBuffer(buf, " %s", option_name);
+}
+
+/*
+ * Append an option with an associated string value to a server command that
+ * is being constructed.
+ *
+ * See comments for AppendPlainCommandOption, above.
+ */
+void
+AppendStringCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						  char *option_name, char *option_value)
+{
+	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
+
+	if (option_value != NULL)
+	{
+		size_t		length = strlen(option_value);
+		char	   *escaped_value = palloc(1 + 2 * length);
+
+		PQescapeStringConn(conn, escaped_value, option_value, length, NULL);
+		appendPQExpBuffer(buf, " '%s'", escaped_value);
+		pfree(escaped_value);
+	}
+}
+
+/*
+ * Append an option with an associated integer value to a server command
+ * is being constructed.
+ *
+ * See comments for AppendPlainCommandOption, above.
+ */
+void
+AppendIntegerCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						   char *option_name, int32 option_value)
+{
+	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
+
+	appendPQExpBuffer(buf, " %d", option_value);
+}
 
 /*
  * Frontend version of GetCurrentTimestamp(), since we are not linked with
