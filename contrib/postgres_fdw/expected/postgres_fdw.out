@@ -2880,6 +2880,9 @@ SELECT ftx.x1, ft2.c2, ftx FROM ft1 ftx(x1,x2,x3,x4,x5,x6,x7,x8), ft2
   WHERE ftx.x1 = ft2.c1 AND ftx.x1 = 1; -- ERROR
 ERROR:  invalid input syntax for integer: "foo"
 CONTEXT:  whole-row reference to foreign table "ftx"
+ANALYZE ft1; -- ERROR
+ERROR:  invalid input syntax for integer: "foo"
+CONTEXT:  column "c8" of foreign table "ft1"
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE user_enum;
 -- ===================================================================
 -- subtransaction
