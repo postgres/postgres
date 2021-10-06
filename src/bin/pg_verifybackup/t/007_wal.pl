@@ -64,7 +64,7 @@ command_fails_like(
 # a timeline > 1.  Rather than plugging in a new standby, do a
 # self-promotion of this node.
 $primary->stop;
-$primary->append_conf('standby.signal');
+$primary->append_conf('standby.signal', '');
 $primary->start;
 $primary->promote;
 $primary->safe_psql('postgres', 'SELECT pg_switch_wal()');
