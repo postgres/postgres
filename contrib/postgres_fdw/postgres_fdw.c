@@ -303,7 +303,8 @@ typedef struct
 typedef struct ConversionLocation
 {
 	AttrNumber	cur_attno;		/* attribute number being processed, or 0 */
-	ForeignScanState *fsstate;	/* plan node being processed */
+	Relation	rel;			/* foreign table being processed, or NULL */
+	ForeignScanState *fsstate;	/* plan node being processed, or NULL */
 } ConversionLocation;
 
 /* Callback argument for ec_member_matches_foreign */
@@ -7117,7 +7118,12 @@ complete_pending_request(AsyncRequest *areq)
  * rel is the local representation of the foreign table, attinmeta is
  * conversion data for the rel's tupdesc, and retrieved_attrs is an
  * integer list of the table column numbers present in the PGresult.
+ * fsstate is the ForeignScan plan node's execution state.
  * temp_context is a working context that can be reset after each tuple.
+ *
+ * Note: either rel or fsstate, but not both, can be NULL.  rel is NULL
+ * if we're processing a remote join, while fsstate is NULL in a non-query
+ * context such as ANALYZE, or if we're processing a non-scan query node.
  */
 static HeapTuple
 make_tuple_from_result_row(PGresult *res,
@@ -7148,6 +7154,10 @@ make_tuple_from_result_row(PGresult *res,
 	 */
 	oldcontext = MemoryContextSwitchTo(temp_context);
 
+	/*
+	 * Get the tuple descriptor for the row.  Use the rel's tupdesc if rel is
+	 * provided, otherwise look to the scan node's ScanTupleSlot.
+	 */
 	if (rel)
 		tupdesc = RelationGetDescr(rel);
 	else
@@ -7165,6 +7175,7 @@ make_tuple_from_result_row(PGresult *res,
 	 * Set up and install callback to report where conversion error occurs.
 	 */
 	errpos.cur_attno = 0;
+	errpos.rel = rel;
 	errpos.fsstate = fsstate;
 	errcallback.callback = conversion_error_callback;
 	errcallback.arg = (void *) &errpos;
@@ -7269,60 +7280,87 @@ make_tuple_from_result_row(PGresult *res,
  *
  * Note that this function mustn't do any catalog lookups, since we are in
  * an already-failed transaction.  Fortunately, we can get the needed info
- * from the query's rangetable instead.
+ * from the relation or the query's rangetable instead.
  */
 static void
 conversion_error_callback(void *arg)
 {
 	ConversionLocation *errpos = (ConversionLocation *) arg;
+	Relation	rel = errpos->rel;
 	ForeignScanState *fsstate = errpos->fsstate;
-	ForeignScan *fsplan = castNode(ForeignScan, fsstate->ss.ps.plan);
-	int			varno = 0;
-	AttrNumber	colno = 0;
 	const char *attname = NULL;
 	const char *relname = NULL;
 	bool		is_wholerow = false;
 
-	if (fsplan->scan.scanrelid > 0)
+	/*
+	 * If we're in a scan node, always use aliases from the rangetable, for
+	 * consistency between the simple-relation and remote-join cases.  Look at
+	 * the relation's tupdesc only if we're not in a scan node.
+	 */
+	if (fsstate)
 	{
-		/* error occurred in a scan against a foreign table */
-		varno = fsplan->scan.scanrelid;
-		colno = errpos->cur_attno;
-	}
-	else
-	{
-		/* error occurred in a scan against a foreign join */
-		TargetEntry *tle;
+		/* ForeignScan case */
+		ForeignScan *fsplan = castNode(ForeignScan, fsstate->ss.ps.plan);
+		int			varno = 0;
+		AttrNumber	colno = 0;
 
-		tle = list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
-							errpos->cur_attno - 1);
-
-		/*
-		 * Target list can have Vars and expressions.  For Vars, we can get
-		 * some information, however for expressions we can't.  Thus for
-		 * expressions, just show generic context message.
-		 */
-		if (IsA(tle->expr, Var))
+		if (fsplan->scan.scanrelid > 0)
 		{
-			Var		   *var = (Var *) tle->expr;
+			/* error occurred in a scan against a foreign table */
+			varno = fsplan->scan.scanrelid;
+			colno = errpos->cur_attno;
+		}
+		else
+		{
+			/* error occurred in a scan against a foreign join */
+			TargetEntry *tle;
 
-			varno = var->varno;
-			colno = var->varattno;
+			tle = list_nth_node(TargetEntry, fsplan->fdw_scan_tlist,
+								errpos->cur_attno - 1);
+
+			/*
+			 * Target list can have Vars and expressions.  For Vars, we can
+			 * get some information, however for expressions we can't.  Thus
+			 * for expressions, just show generic context message.
+			 */
+			if (IsA(tle->expr, Var))
+			{
+				Var		   *var = (Var *) tle->expr;
+
+				varno = var->varno;
+				colno = var->varattno;
+			}
+		}
+
+		if (varno > 0)
+		{
+			EState	   *estate = fsstate->ss.ps.state;
+			RangeTblEntry *rte = exec_rt_fetch(varno, estate);
+
+			relname = rte->eref->aliasname;
+
+			if (colno == 0)
+				is_wholerow = true;
+			else if (colno > 0 && colno <= list_length(rte->eref->colnames))
+				attname = strVal(list_nth(rte->eref->colnames, colno - 1));
+			else if (colno == SelfItemPointerAttributeNumber)
+				attname = "ctid";
 		}
 	}
-
-	if (varno > 0)
+	else if (rel)
 	{
-		EState	   *estate = fsstate->ss.ps.state;
-		RangeTblEntry *rte = exec_rt_fetch(varno, estate);
+		/* Non-ForeignScan case (we should always have a rel here) */
+		TupleDesc	tupdesc = RelationGetDescr(rel);
 
-		relname = rte->eref->aliasname;
+		relname = RelationGetRelationName(rel);
+		if (errpos->cur_attno > 0 && errpos->cur_attno <= tupdesc->natts)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc,
+												   errpos->cur_attno - 1);
 
-		if (colno == 0)
-			is_wholerow = true;
-		else if (colno > 0 && colno <= list_length(rte->eref->colnames))
-			attname = strVal(list_nth(rte->eref->colnames, colno - 1));
-		else if (colno == SelfItemPointerAttributeNumber)
+			attname = NameStr(attr->attname);
+		}
+		else if (errpos->cur_attno == SelfItemPointerAttributeNumber)
 			attname = "ctid";
 	}
 
