@@ -195,9 +195,9 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 		make_new_connection(entry, user);
 
 	/*
-	 * We check the health of the cached connection here when starting a new
-	 * remote transaction. If a broken connection is detected, we try to
-	 * reestablish a new connection later.
+	 * We check the health of the cached connection here when using it.  In
+	 * cases where we're out of all transactions, if a broken connection is
+	 * detected, we try to reestablish a new connection later.
 	 */
 	PG_TRY();
 	{
@@ -213,9 +213,7 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 		ErrorData  *errdata = CopyErrorData();
 
 		/*
-		 * If connection failure is reported when starting a new remote
-		 * transaction (not subtransaction), new connection will be
-		 * reestablished later.
+		 * Determine whether to try to reestablish the connection.
 		 *
 		 * After a broken connection is detected in libpq, any error other
 		 * than connection failure (e.g., out-of-memory) can be thrown
