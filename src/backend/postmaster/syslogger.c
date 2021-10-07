@@ -1258,7 +1258,7 @@ logfile_rotate_dest(bool time_based_rotation, int size_rotation_for,
 					pg_time_t fntime, int target_dest,
 					char **last_file_name, FILE **logFile)
 {
-	char	   *logFileExt;
+	char	   *logFileExt = NULL;
 	char	   *filename;
 	FILE	   *fh;
 
