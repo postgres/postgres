@@ -4810,6 +4810,16 @@ _copyPartitionCmd(const PartitionCmd *from)
 	return newnode;
 }
 
+static PublicationTable *
+_copyPublicationTable(const PublicationTable *from)
+{
+	PublicationTable *newnode = makeNode(PublicationTable);
+
+	COPY_NODE_FIELD(relation);
+
+	return newnode;
+}
+
 static CreatePublicationStmt *
 _copyCreatePublicationStmt(const CreatePublicationStmt *from)
 {
@@ -4954,16 +4964,6 @@ _copyForeignKeyCacheInfo(const ForeignKeyCacheInfo *from)
 	COPY_ARRAY_FIELD(conkey);
 	COPY_ARRAY_FIELD(confkey);
 	COPY_ARRAY_FIELD(conpfeqop);
-
-	return newnode;
-}
-
-static PublicationTable *
-_copyPublicationTable(const PublicationTable *from)
-{
-	PublicationTable *newnode = makeNode(PublicationTable);
-
-	COPY_NODE_FIELD(relation);
 
 	return newnode;
 }

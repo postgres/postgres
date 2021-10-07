@@ -2297,6 +2297,14 @@ _equalAlterTSConfigurationStmt(const AlterTSConfigurationStmt *a,
 }
 
 static bool
+_equalPublicationTable(const PublicationTable *a, const PublicationTable *b)
+{
+	COMPARE_NODE_FIELD(relation);
+
+	return true;
+}
+
+static bool
 _equalCreatePublicationStmt(const CreatePublicationStmt *a,
 							const CreatePublicationStmt *b)
 {
@@ -3129,14 +3137,6 @@ static bool
 _equalBitString(const BitString *a, const BitString *b)
 {
 	COMPARE_STRING_FIELD(val);
-
-	return true;
-}
-
-static bool
-_equalPublicationTable(const PublicationTable *a, const PublicationTable *b)
-{
-	COMPARE_NODE_FIELD(relation);
 
 	return true;
 }
