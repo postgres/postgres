@@ -957,7 +957,7 @@ sub AddProject
 		# changed their library names from:
 		# - libeay to libcrypto
 		# - ssleay to libssl
-		if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
+		if ($digit1 > '1' || ($digit1 == '1' && $digit2 >= '1'))
 		{
 			my $dbgsuffix;
 			my $libsslpath;
