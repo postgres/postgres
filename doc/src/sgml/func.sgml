@@ -2708,18 +2708,23 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
    </table>
 
    <para>
-    Additional string manipulation functions are available and are
-    listed in <xref linkend="functions-string-other"/>.  Some of them are used internally to implement the
-    <acronym>SQL</acronym>-standard string functions listed in <xref linkend="functions-string-sql"/>.
+    Additional string manipulation functions and operators are available
+    and are listed in <xref linkend="functions-string-other"/>.  (Some of
+    these are used internally to implement
+    the <acronym>SQL</acronym>-standard string functions listed in
+    <xref linkend="functions-string-sql"/>.)
+    There are also pattern-matching operators, which are described in
+    <xref linkend="functions-matching"/>, and operators for full-text
+    search, which are described in <xref linkend="textsearch"/>.
    </para>
 
    <table id="functions-string-other">
-    <title>Other String Functions</title>
+    <title>Other String Functions and Operators</title>
     <tgroup cols="1">
      <thead>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        Function
+        Function/Operator
        </para>
        <para>
         Description
@@ -2731,6 +2736,25 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
      </thead>
 
      <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>character string</primary>
+         <secondary>prefix test</secondary>
+        </indexterm>
+        <type>text</type> <literal>^@</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if the first string starts with the second string
+        (equivalent to the <function>starts_with()</function> function).
+       </para>
+       <para>
+        <literal>'alphabet' ^@ 'alph'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
@@ -5285,9 +5309,10 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    Also see the prefix operator <literal>^@</literal> and corresponding
-    <function>starts_with</function> function, which are useful in cases
-    where simply matching the beginning of a string is needed.
+    Also see the starts-with operator <literal>^@</literal> and the
+    corresponding <function>starts_with()</function> function, which are
+    useful in cases where simply matching the beginning of a string is
+    needed.
    </para>
   </sect2>
 
