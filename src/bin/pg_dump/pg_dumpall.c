@@ -1543,9 +1543,8 @@ dumpDatabases(PGconn *conn)
 		}
 
 		/* Dump database-specific roles if server is running 15.0 or later */
-		if (server_version >= 150000 ){
+		if (server_version >= 150000)
 			dumpRoleMembership(conn, dbid);
-		}
 
 		if (filename)
 		{
