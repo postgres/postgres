@@ -1440,7 +1440,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	else
 	{
 		if (!have_createrole_privilege() &&
-			!is_admin_of_role(grantorId, roleid))
+			!is_admin_of_role(grantorId, roleid, dbid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have admin option on role \"%s\"",
@@ -1626,7 +1626,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 	else
 	{
 		if (!have_createrole_privilege() &&
-			!is_admin_of_role(GetUserId(), roleid))
+			!is_admin_of_role(GetUserId(), roleid, dbid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must have admin option on role \"%s\"",

@@ -4624,7 +4624,7 @@ pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode)
 		 * session and call stack.  That suits two-argument pg_has_role(), but
 		 * it gives the three-argument version a lamentable whimsy.
 		 */
-		if (is_admin_of_role(roleid, role_oid))
+		if (is_admin_of_role(roleid, role_oid, MyDatabaseId))
 			return ACLCHECK_OK;
 	}
 	if (mode & ACL_CREATE)
@@ -4724,7 +4724,7 @@ has_rolinherit(Oid roleid)
  */
 static List *
 roles_is_member_of(Oid roleid, enum RoleRecurseType type,
-				   Oid admin_of, bool *is_admin)
+				   Oid admin_of, bool *is_admin, Oid databaseId)
 {
 	Oid			dba;
 	List	   *roles_list;
@@ -4779,8 +4779,9 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 		if (type == ROLERECURSE_PRIVS && !has_rolinherit(memberid))
 			continue;			/* ignore non-inheriting roles */
 
-		/* Find roles that memberid is directly a member of */
-		memlist = SearchSysCacheList1(AUTHMEMMEMROLEDB,
+		/* Find roles that memberid is directly a member of globally */
+		memlist = SearchSysCacheList2(AUTHMEMDBMEMROLE,
+										ObjectIdGetDatum(InvalidOid),
 									  ObjectIdGetDatum(memberid));
 		for (i = 0; i < memlist->n_members; i++)
 		{
@@ -4789,10 +4790,40 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 
 			/*
 			 * While otherid==InvalidOid shouldn't appear in the catalog, the
-			 * OidIsValid() avoids crashing if that arises.
+			 * OidIsValid() avoids crashing if that arises. This reports if
+			 * the admin option has been granted globally.
 			 */
 			if (otherid == admin_of &&
 				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
+				OidIsValid(admin_of))
+				*is_admin = true;
+
+			/*
+			 * Even though there shouldn't be any loops in the membership
+			 * graph, we must test for having already seen this role. It is
+			 * legal for instance to have both A->B and A->C->B.
+			 */
+			roles_list = list_append_unique_oid(roles_list, otherid);
+		}
+		ReleaseSysCacheList(memlist);
+
+		/* Find roles that memberid is directly a member of for the current database */
+		memlist = SearchSysCacheList2(AUTHMEMDBMEMROLE,
+										ObjectIdGetDatum(MyDatabaseId),
+									  ObjectIdGetDatum(memberid));
+		for (i = 0; i < memlist->n_members; i++)
+		{
+			HeapTuple	tup = &memlist->members[i]->tuple;
+			Oid			otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+
+			/*
+			 * While otherid==InvalidOid shouldn't appear in the catalog, the
+			 * OidIsValid() avoids crashing if that arises. This reports if
+			 * the admin option has been granted for a specific database.
+			 */
+			if (otherid == admin_of &&
+				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
+				((Form_pg_auth_members) GETSTRUCT(tup))->dbid == databaseId &&
 				OidIsValid(admin_of))
 				*is_admin = true;
 
@@ -4855,7 +4886,7 @@ has_privs_of_role(Oid member, Oid role)
 	 * multi-level recursion, then see if target role is any one of them.
 	 */
 	return list_member_oid(roles_is_member_of(member, ROLERECURSE_PRIVS,
-											  InvalidOid, NULL),
+											  InvalidOid, NULL, InvalidOid),
 						   role);
 }
 
@@ -4881,7 +4912,7 @@ is_member_of_role(Oid member, Oid role)
 	 * recursion, then see if target role is any one of them.
 	 */
 	return list_member_oid(roles_is_member_of(member, ROLERECURSE_MEMBERS,
-											  InvalidOid, NULL),
+											  InvalidOid, NULL, InvalidOid),
 						   role);
 }
 
@@ -4917,7 +4948,7 @@ is_member_of_role_nosuper(Oid member, Oid role)
 	 * recursion, then see if target role is any one of them.
 	 */
 	return list_member_oid(roles_is_member_of(member, ROLERECURSE_MEMBERS,
-											  InvalidOid, NULL),
+											  InvalidOid, NULL, InvalidOid),
 						   role);
 }
 
@@ -4928,7 +4959,7 @@ is_member_of_role_nosuper(Oid member, Oid role)
  * or a superuser?
  */
 bool
-is_admin_of_role(Oid member, Oid role)
+is_admin_of_role(Oid member, Oid role, Oid databaseId)
 {
 	bool		result = false;
 
@@ -4968,7 +4999,8 @@ is_admin_of_role(Oid member, Oid role)
 		return member == GetSessionUserId() &&
 			!InLocalUserIdChange() && !InSecurityRestrictedOperation();
 
-	(void) roles_is_member_of(member, ROLERECURSE_MEMBERS, role, &result);
+	/* Check for WITH ADMIN OPTION either globally or for the given database */
+	(void) roles_is_member_of(member, ROLERECURSE_MEMBERS, role, &result, databaseId);
 	return result;
 }
 
@@ -5044,7 +5076,7 @@ select_best_grantor(Oid roleId, AclMode privileges,
 	 * doesn't query any role memberships.
 	 */
 	roles_list = roles_is_member_of(roleId, ROLERECURSE_PRIVS,
-									InvalidOid, NULL);
+									InvalidOid, NULL, InvalidOid);
 
 	/* initialize candidate result as default */
 	*grantorId = roleId;

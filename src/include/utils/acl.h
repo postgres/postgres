@@ -208,7 +208,7 @@ extern int	aclmembers(const Acl *acl, Oid **roleids);
 extern bool has_privs_of_role(Oid member, Oid role);
 extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
-extern bool is_admin_of_role(Oid member, Oid role);
+extern bool is_admin_of_role(Oid member, Oid role, Oid databaseId);
 extern void check_is_member_of_role(Oid member, Oid role);
 extern Oid	get_role_oid(const char *rolename, bool missing_ok);
 extern Oid	get_role_oid_or_public(const char *rolename);
