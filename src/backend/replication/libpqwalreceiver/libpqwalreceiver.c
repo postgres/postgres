@@ -862,6 +862,9 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	PGresult   *res;
 	StringInfoData cmd;
 	char	   *snapshot;
+	int			use_new_options_syntax;
+
+	use_new_options_syntax = (PQserverVersion(conn->streamConn) >= 150000);
 
 	initStringInfo(&cmd);
 
@@ -872,26 +875,58 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 
 	if (conn->logical)
 	{
-		appendStringInfoString(&cmd, " LOGICAL pgoutput");
+		appendStringInfoString(&cmd, " LOGICAL pgoutput ");
+		if (use_new_options_syntax)
+			appendStringInfoChar(&cmd, '(');
 		if (two_phase)
-			appendStringInfoString(&cmd, " TWO_PHASE");
-
-		switch (snapshot_action)
 		{
-			case CRS_EXPORT_SNAPSHOT:
-				appendStringInfoString(&cmd, " EXPORT_SNAPSHOT");
-				break;
-			case CRS_NOEXPORT_SNAPSHOT:
-				appendStringInfoString(&cmd, " NOEXPORT_SNAPSHOT");
-				break;
-			case CRS_USE_SNAPSHOT:
-				appendStringInfoString(&cmd, " USE_SNAPSHOT");
-				break;
+			appendStringInfoString(&cmd, "TWO_PHASE");
+			if (use_new_options_syntax)
+				appendStringInfoString(&cmd, ", ");
+			else
+				appendStringInfoChar(&cmd, ' ');
 		}
+
+		if (use_new_options_syntax)
+		{
+			switch (snapshot_action)
+			{
+				case CRS_EXPORT_SNAPSHOT:
+					appendStringInfoString(&cmd, "SNAPSHOT 'export'");
+					break;
+				case CRS_NOEXPORT_SNAPSHOT:
+					appendStringInfoString(&cmd, "SNAPSHOT 'nothing'");
+					break;
+				case CRS_USE_SNAPSHOT:
+					appendStringInfoString(&cmd, "SNAPSHOT 'use'");
+					break;
+			}
+		}
+		else
+		{
+			switch (snapshot_action)
+			{
+				case CRS_EXPORT_SNAPSHOT:
+					appendStringInfoString(&cmd, "EXPORT_SNAPSHOT");
+					break;
+				case CRS_NOEXPORT_SNAPSHOT:
+					appendStringInfoString(&cmd, "NOEXPORT_SNAPSHOT");
+					break;
+				case CRS_USE_SNAPSHOT:
+					appendStringInfoString(&cmd, "USE_SNAPSHOT");
+					break;
+			}
+		}
+
+		if (use_new_options_syntax)
+			appendStringInfoChar(&cmd, ')');
 	}
 	else
 	{
-		appendStringInfoString(&cmd, " PHYSICAL RESERVE_WAL");
+		if (use_new_options_syntax)
+			appendStringInfoString(&cmd, " PHYSICAL (RESERVE_WAL)");
+		else
+			appendStringInfoString(&cmd, " PHYSICAL RESERVE_WAL");
 	}
 
 	res = libpqrcv_PQexec(conn->streamConn, cmd.data);

@@ -23329,6 +23329,36 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       </row>
 
       <row>
+       <entry id="pg-char-to-encoding" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_char_to_encoding</primary>
+        </indexterm>
+        <function>pg_char_to_encoding</function> ( <parameter>encoding</parameter> <type>name</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Converts the supplied encoding name into an integer representing the
+        internal identifier used in some system catalog tables.
+        Returns <literal>-1</literal> if an unknown encoding name is provided.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-encoding-to-char" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_encoding_to_char</primary>
+        </indexterm>
+        <function>pg_encoding_to_char</function> ( <parameter>encoding</parameter> <type>integer</type> )
+        <returnvalue>name</returnvalue>
+       </para>
+       <para>
+        Converts the integer used as the internal identifier of an encoding in some
+        system catalog tables into a human-readable string.
+        Returns an empty string if an invalid encoding number is provided.
+       </para></entry>
+      </row>
+
+      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>pg_get_catalog_foreign_keys</primary>

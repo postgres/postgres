@@ -282,7 +282,6 @@ void
 _PG_init(void)
 {
 	BackgroundWorker worker;
-	unsigned int i;
 
 	/* get the configuration */
 	DefineCustomIntVariable("worker_spi.naptime",
@@ -336,7 +335,7 @@ _PG_init(void)
 	/*
 	 * Now fill in worker-specific data, and do the actual registrations.
 	 */
-	for (i = 1; i <= worker_spi_total_workers; i++)
+	for (int i = 1; i <= worker_spi_total_workers; i++)
 	{
 		snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi worker %d", i);
 		snprintf(worker.bgw_type, BGW_MAXLEN, "worker_spi");

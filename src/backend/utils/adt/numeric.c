@@ -10266,9 +10266,13 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 	 */
 	ln_dweight = estimate_ln_dweight(base);
 
+	/*
+	 * Set the scale for the low-precision calculation, computing ln(base) to
+	 * around 8 significant digits.  Note that ln_dweight may be as small as
+	 * -SHRT_MAX, so the scale may exceed NUMERIC_MAX_DISPLAY_SCALE here.
+	 */
 	local_rscale = 8 - ln_dweight;
 	local_rscale = Max(local_rscale, NUMERIC_MIN_DISPLAY_SCALE);
-	local_rscale = Min(local_rscale, NUMERIC_MAX_DISPLAY_SCALE);
 
 	ln_var(base, &ln_base, local_rscale);
 

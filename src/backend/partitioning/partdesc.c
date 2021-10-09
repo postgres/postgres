@@ -91,7 +91,7 @@ RelationGetPartitionDesc(Relation rel, bool omit_detached)
 	 * cached descriptor too.  We determine that based on the pg_inherits.xmin
 	 * that was saved alongside that descriptor: if the xmin that was not in
 	 * progress for that active snapshot is also not in progress for the
-	 * current active snapshot, then we can use use it.  Otherwise build one
+	 * current active snapshot, then we can use it.  Otherwise build one
 	 * from scratch.
 	 */
 	if (omit_detached &&

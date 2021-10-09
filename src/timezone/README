@@ -45,11 +45,17 @@ and pg_timezone_abbrevs views don't throw errors).  It's worth running it
 as a cross-check on proposed updates.
 
 When there has been a new release of Windows (probably including Service
-Packs), the list of matching timezones need to be updated. Run the
-script in src/tools/win32tzlist.pl on a Windows machine running this new
-release and apply any new timezones that it detects. Never remove any
-mappings in case they are removed in Windows, since we still need to
-match properly on the old version.
+Packs), findtimezone.c's mapping from Windows zones to IANA zones may
+need to be updated.  We have two approaches to doing this:
+1. Consult the CLDR project's windowsZones.xml file, and add any zones
+   listed there that we don't have.  Use their "territory=001" mapping
+   if there's more than one IANA zone listed.
+2. Run the script in src/tools/win32tzlist.pl on a Windows machine
+   running the new release, and add any new timezones that it detects.
+   (This is not a full substitute for #1, though, as win32tzlist.pl
+   can't tell you which IANA zone to map to.)
+In either case, never remove any zone names that have disappeared from
+Windows, since we still need to match properly on older versions.
 
 
 Time Zone code

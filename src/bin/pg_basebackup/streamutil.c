@@ -490,6 +490,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 {
 	PQExpBuffer query;
 	PGresult   *res;
+	bool		use_new_option_syntax = (PQserverVersion(conn) >= 150000);
 
 	query = createPQExpBuffer();
 
@@ -498,27 +499,54 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert(!(two_phase && is_physical));
 	Assert(slot_name != NULL);
 
-	/* Build query */
+	/* Build base portion of query */
 	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
 	if (is_temporary)
 		appendPQExpBufferStr(query, " TEMPORARY");
 	if (is_physical)
-	{
 		appendPQExpBufferStr(query, " PHYSICAL");
+	else
+		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
+
+	/* Add any requested options */
+	if (use_new_option_syntax)
+		appendPQExpBufferStr(query, " (");
+	if (is_physical)
+	{
 		if (reserve_wal)
-			appendPQExpBufferStr(query, " RESERVE_WAL");
+			AppendPlainCommandOption(query, use_new_option_syntax,
+									 "RESERVE_WAL");
 	}
 	else
 	{
-		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
 		if (two_phase && PQserverVersion(conn) >= 150000)
-			appendPQExpBufferStr(query, " TWO_PHASE");
+			AppendPlainCommandOption(query, use_new_option_syntax,
+									 "TWO_PHASE");
 
 		if (PQserverVersion(conn) >= 100000)
+		{
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
-			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");
+			if (use_new_option_syntax)
+				AppendStringCommandOption(query, use_new_option_syntax,
+										   "SNAPSHOT", "nothing");
+			else
+				AppendPlainCommandOption(query, use_new_option_syntax,
+										 "NOEXPORT_SNAPSHOT");
+		}
+	}
+	if (use_new_option_syntax)
+	{
+		/* Suppress option list if it would be empty, otherwise terminate */
+		if (query->data[query->len - 1] == '(')
+		{
+			query->len -= 2;
+			query->data[query->len] = '\0';
+		}
+		else
+			appendPQExpBufferChar(query, ')');
 	}
 
+	/* Now run the query */
 	res = PQexec(conn, query->data);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -603,6 +631,67 @@ DropReplicationSlot(PGconn *conn, const char *slot_name)
 	return true;
 }
 
+/*
+ * Append a "plain" option - one with no value - to a server command that
+ * is being constructed.
+ *
+ * In the old syntax, all options were parser keywords, so you could just
+ * write things like SOME_COMMAND OPTION1 OPTION2 'opt2value' OPTION3 42. The
+ * new syntax uses a comma-separated list surrounded by parentheses, so the
+ * equivalent is SOME_COMMAND (OPTION1, OPTION2 'optvalue', OPTION3 42).
+ */
+void
+AppendPlainCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						 char *option_name)
+{
+	if (buf->len > 0 && buf->data[buf->len - 1] != '(')
+	{
+		if (use_new_option_syntax)
+			appendPQExpBufferStr(buf, ", ");
+		else
+			appendPQExpBufferChar(buf, ' ');
+	}
+
+	appendPQExpBuffer(buf, " %s", option_name);
+}
+
+/*
+ * Append an option with an associated string value to a server command that
+ * is being constructed.
+ *
+ * See comments for AppendPlainCommandOption, above.
+ */
+void
+AppendStringCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						  char *option_name, char *option_value)
+{
+	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
+
+	if (option_value != NULL)
+	{
+		size_t		length = strlen(option_value);
+		char	   *escaped_value = palloc(1 + 2 * length);
+
+		PQescapeStringConn(conn, escaped_value, option_value, length, NULL);
+		appendPQExpBuffer(buf, " '%s'", escaped_value);
+		pfree(escaped_value);
+	}
+}
+
+/*
+ * Append an option with an associated integer value to a server command
+ * is being constructed.
+ *
+ * See comments for AppendPlainCommandOption, above.
+ */
+void
+AppendIntegerCommandOption(PQExpBuffer buf, bool use_new_option_syntax,
+						   char *option_name, int32 option_value)
+{
+	AppendPlainCommandOption(buf, use_new_option_syntax, option_name);
+
+	appendPQExpBuffer(buf, " %d", option_value);
+}
 
 /*
  * Frontend version of GetCurrentTimestamp(), since we are not linked with

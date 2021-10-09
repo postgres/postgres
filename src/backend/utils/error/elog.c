@@ -3008,6 +3008,7 @@ static void
 send_message_to_server_log(ErrorData *edata)
 {
 	StringInfoData buf;
+	bool		fallback_to_stderr = false;
 
 	initStringInfo(&buf);
 
@@ -3159,8 +3160,27 @@ send_message_to_server_log(ErrorData *edata)
 	}
 #endif							/* WIN32 */
 
-	/* Write to stderr, if enabled */
-	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
+	/* Write to csvlog, if enabled */
+	if (Log_destination & LOG_DESTINATION_CSVLOG)
+	{
+		/*
+		 * Send CSV data if it's safe to do so (syslogger doesn't need the
+		 * pipe).  If this is not possible, fallback to an entry written to
+		 * stderr.
+		 */
+		if (redirection_done || MyBackendType == B_LOGGER)
+			write_csvlog(edata);
+		else
+			fallback_to_stderr = true;
+	}
+
+	/*
+	 * Write to stderr, if enabled or if required because of a previous
+	 * limitation.
+	 */
+	if ((Log_destination & LOG_DESTINATION_STDERR) ||
+		whereToSendOutput == DestDebug ||
+		fallback_to_stderr)
 	{
 		/*
 		 * Use the chunking protocol if we know the syslogger should be
@@ -3189,34 +3209,8 @@ send_message_to_server_log(ErrorData *edata)
 	if (MyBackendType == B_LOGGER)
 		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
 
-	/* Write to CSV log if enabled */
-	if (Log_destination & LOG_DESTINATION_CSVLOG)
-	{
-		if (redirection_done || MyBackendType == B_LOGGER)
-		{
-			/*
-			 * send CSV data if it's safe to do so (syslogger doesn't need the
-			 * pipe). First get back the space in the message buffer.
-			 */
-			pfree(buf.data);
-			write_csvlog(edata);
-		}
-		else
-		{
-			/*
-			 * syslogger not up (yet), so just dump the message to stderr,
-			 * unless we already did so above.
-			 */
-			if (!(Log_destination & LOG_DESTINATION_STDERR) &&
-				whereToSendOutput != DestDebug)
-				write_console(buf.data, buf.len);
-			pfree(buf.data);
-		}
-	}
-	else
-	{
-		pfree(buf.data);
-	}
+	/* No more need of the message formatted for stderr */
+	pfree(buf.data);
 }
 
 /*

@@ -741,8 +741,8 @@ static const struct
 	 * additions have been made by comparing to the CLDR project's
 	 * windowsZones.xml file.
 	 *
-	 * The zones have been matched to IANA timezones based on CLDR's mapping,
-	 * with a few manual exceptions.
+	 * The zones have been matched to IANA timezones based on CLDR's mapping
+	 * for "territory 001".
 	 */
 	{
 		/* (UTC+04:30) Kabul */
@@ -869,11 +869,10 @@ static const struct
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
 		"Australia/Adelaide"
 	},
-	/* Central America (other than Mexico) generally does not observe DST */
 	{
 		/* (UTC-06:00) Central America */
 		"Central America Standard Time", "Central America Daylight Time",
-		"CST6"
+		"America/Guatemala"
 	},
 	{
 		/* (UTC+06:00) Astana */
@@ -888,7 +887,7 @@ static const struct
 	{
 		/* (UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague */
 		"Central Europe Standard Time", "Central Europe Daylight Time",
-		"Europe/Belgrade"
+		"Europe/Budapest"
 	},
 	{
 		/* (UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb */
@@ -898,7 +897,7 @@ static const struct
 	{
 		/* (UTC+11:00) Solomon Is., New Caledonia */
 		"Central Pacific Standard Time", "Central Pacific Daylight Time",
-		"Pacific/Noumea"
+		"Pacific/Guadalcanal"
 	},
 	{
 		/* (UTC-06:00) Central Time (US & Canada) */
@@ -988,7 +987,7 @@ static const struct
 	{
 		/* (UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius */
 		"FLE Standard Time", "FLE Daylight Time",
-		"Europe/Helsinki"
+		"Europe/Kiev"
 	},
 	{
 		/* (UTC+04:00) Tbilisi */
@@ -1010,16 +1009,17 @@ static const struct
 		 * Windows uses this zone name in various places that lie near the
 		 * prime meridian, but are not in the UK.  However, most people
 		 * probably think that "Greenwich" means UK civil time, or maybe even
-		 * straight-up UTC.  Hence, map to Europe/London.
+		 * straight-up UTC.  Atlantic/Reykjavik is a decent match for that
+		 * interpretation because Iceland hasn't observed DST since 1968.
 		 */
 		/* (UTC+00:00) Monrovia, Reykjavik */
 		"Greenwich Standard Time", "Greenwich Daylight Time",
-		"Europe/London"
+		"Atlantic/Reykjavik"
 	},
 	{
 		/* (UTC+02:00) Athens, Bucharest */
 		"GTB Standard Time", "GTB Daylight Time",
-		"Europe/Athens"
+		"Europe/Bucharest"
 	},
 	{
 		/* (UTC-05:00) Haiti */
@@ -1244,7 +1244,7 @@ static const struct
 	{
 		/* (UTC+01:00) Brussels, Copenhagen, Madrid, Paris */
 		"Romance Standard Time", "Romance Daylight Time",
-		"Europe/Brussels"
+		"Europe/Paris"
 	},
 	{
 		/* (UTC+04:00) Izhevsk, Samara */
@@ -1349,7 +1349,7 @@ static const struct
 	{
 		/* (UTC+13:00) Samoa */
 		"Samoa Standard Time", "Samoa Daylight Time",
-		"Pacific/Samoa"
+		"Pacific/Apia"
 	},
 	{
 		/* (UTC+00:00) Sao Tome */
@@ -1519,7 +1519,7 @@ static const struct
 	{
 		/* (UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna */
 		"W. Europe Standard Time", "W. Europe Daylight Time",
-		"CET"
+		"Europe/Berlin"
 	},
 	{
 		/* (UTC+07:00) Hovd */
@@ -1544,7 +1544,7 @@ static const struct
 	{
 		/* (UTC+10:00) Guam, Port Moresby */
 		"West Pacific Standard Time", "West Pacific Daylight Time",
-		"Pacific/Guam"
+		"Pacific/Port_Moresby"
 	},
 	{
 		/* (UTC+09:00) Yakutsk */

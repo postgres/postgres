@@ -164,9 +164,6 @@
 #endif
 
 /* perl version and platform portability */
-#define NEED_eval_pv
-#define NEED_newRV_noinc
-#define NEED_sv_2pv_flags
 #include "ppport.h"
 
 /*

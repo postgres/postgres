@@ -1914,7 +1914,7 @@ The commands accepted in replication mode are:
   </varlistentry>
 
   <varlistentry id="protocol-replication-create-slot" xreflabel="CREATE_REPLICATION_SLOT">
-   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> | <literal>TWO_PHASE</literal> ] }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1954,46 +1954,50 @@ The commands accepted in replication mode are:
         </para>
        </listitem>
       </varlistentry>
+     </variablelist>
 
+     <para>The following options are supported:</para>
+
+     <variablelist>
       <varlistentry>
-       <term><literal>TWO_PHASE</literal></term>
+       <term><literal>TWO_PHASE [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
        <listitem>
         <para>
-         Specify that this logical replication slot supports decoding of two-phase
+         If true, this logical replication slot supports decoding of two-phase
          transactions. With this option, two-phase commands like
          <literal>PREPARE TRANSACTION</literal>, <literal>COMMIT PREPARED</literal>
          and <literal>ROLLBACK PREPARED</literal> are decoded and transmitted.
          The transaction will be decoded and transmitted at
          <literal>PREPARE TRANSACTION</literal> time.
+         The default is false.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>RESERVE_WAL</literal></term>
+       <term><literal>RESERVE_WAL [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
        <listitem>
         <para>
-         Specify that this physical replication slot reserves <acronym>WAL</acronym>
+         If true, this physical replication slot reserves <acronym>WAL</acronym>
          immediately.  Otherwise, <acronym>WAL</acronym> is only reserved upon
          connection from a streaming replication client.
+         The default is false.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>EXPORT_SNAPSHOT</literal></term>
-       <term><literal>NOEXPORT_SNAPSHOT</literal></term>
-       <term><literal>USE_SNAPSHOT</literal></term>
+       <term><literal>SNAPSHOT { 'export' | 'use' | 'nothing' }</literal></term>
        <listitem>
         <para>
          Decides what to do with the snapshot created during logical slot
-         initialization. <literal>EXPORT_SNAPSHOT</literal>, which is the default,
+         initialization. <literal>'export'</literal>, which is the default,
          will export the snapshot for use in other sessions. This option can't
-         be used inside a transaction.  <literal>USE_SNAPSHOT</literal> will use the
+         be used inside a transaction.  <literal>'use'</literal> will use the
          snapshot for the current transaction executing the command. This
          option must be used in a transaction, and
          <literal>CREATE_REPLICATION_SLOT</literal> must be the first command
-         run in that transaction.  Finally, <literal>NOEXPORT_SNAPSHOT</literal> will
+         run in that transaction.  Finally, <literal>'nothing'</literal> will
          just use the snapshot for logical decoding as normal but won't do
          anything else with it.
         </para>
@@ -2048,6 +2052,17 @@ The commands accepted in replication mode are:
         </listitem>
        </varlistentry>
       </variablelist>
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> | <literal>TWO_PHASE</literal> ] }
+    </term>
+    <listitem>
+     <para>
+      For compatibility with older releases, this alternative syntax for
+      the <literal>CREATE_REPLICATION_SLOT</literal> command is still supported.
      </para>
     </listitem>
   </varlistentry>
@@ -2517,7 +2532,7 @@ The commands accepted in replication mode are:
   </varlistentry>
 
   <varlistentry id="protocol-replication-base-backup" xreflabel="BASE_BACKUP">
-    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ] [ <literal>MANIFEST</literal> <replaceable>manifest_option</replaceable> ] [ <literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable> ]
+    <term><literal>BASE_BACKUP</literal> [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
     <listitem>
@@ -2540,52 +2555,55 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>PROGRESS</literal></term>
+        <term><literal>PROGRESS [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          Request information required to generate a progress report. This will
-          send back an approximate size in the header of each tablespace, which
-          can be used to calculate how far along the stream is done. This is
-          calculated by enumerating all the file sizes once before the transfer
-          is even started, and might as such have a negative impact on the
-          performance.  In particular, it might take longer before the first data
+          If set to true, request information required to generate a progress
+          report. This will send back an approximate size in the header of each
+          tablespace, which can be used to calculate how far along the stream
+          is done. This is calculated by enumerating all the file sizes once
+          before the transfer is even started, and might as such have a
+          negative impact on the performance.  In particular, it might take
+          longer before the first data
           is streamed. Since the database files can change during the backup,
           the size is only approximate and might both grow and shrink between
           the time of approximation and the sending of the actual files.
+          The default is false.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>FAST</literal></term>
+        <term><literal>CHECKPOINT { 'fast' | 'spread' }</literal></term>
         <listitem>
          <para>
-          Request a fast checkpoint.
+          Sets the type of checkpoint to be performed at the beginning of the
+          base backup. The default is <literal>spread</literal>.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>WAL</literal></term>
+        <term><literal>WAL [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          Include the necessary WAL segments in the backup. This will include
-          all the files between start and stop backup in the
+          If set to true, include the necessary WAL segments in the backup.
+          This will include all the files between start and stop backup in the
           <filename>pg_wal</filename> directory of the base directory tar
-          file.
+          file. The default is false.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>NOWAIT</literal></term>
+        <term><literal>WAIT [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          By default, the backup will wait until the last required WAL
+          If set to true, the backup will wait until the last required WAL
           segment has been archived, or emit a warning if log archiving is
-          not enabled. Specifying <literal>NOWAIT</literal> disables both
-          the waiting and the warning, leaving the client responsible for
-          ensuring the required log is available.
+          not enabled. If false, the backup will neither wait nor warn,
+          leaving the client responsible for ensuring the required log is
+          available. The default is true.
          </para>
         </listitem>
        </varlistentry>
@@ -2605,25 +2623,25 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>TABLESPACE_MAP</literal></term>
+        <term><literal>TABLESPACE_MAP [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          Include information about symbolic links present in the directory
-          <filename>pg_tblspc</filename> in a file named
+          If true, include information about symbolic links present in the
+          directory <filename>pg_tblspc</filename> in a file named
           <filename>tablespace_map</filename>. The tablespace map file includes
           each symbolic link name as it exists in the directory
           <filename>pg_tblspc/</filename> and the full path of that symbolic link.
+          The default is false.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>NOVERIFY_CHECKSUMS</literal></term>
+        <term><literal>VERIFY_CHECKSUMS [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
-          By default, checksums are verified during a base backup if they are
-          enabled. Specifying <literal>NOVERIFY_CHECKSUMS</literal> disables
-          this verification.
+          If true, checksums are verified during a base backup if they are
+          enabled. If false, this is skipped. The default is true.
          </para>
         </listitem>
        </varlistentry>
@@ -2708,6 +2726,7 @@ The commands accepted in replication mode are:
        </varlistentry>
       </variablelist>
      </para>
+
      <para>
       After the second regular result set, one or more CopyOutResponse results
       will be sent, one for the main data directory and one for each additional tablespace other
@@ -2785,6 +2804,17 @@ The commands accepted in replication mode are:
       </itemizedlist>
       Owner, group, and file mode are set if the underlying file system on
       the server supports it.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ] [ <literal>MANIFEST</literal> <replaceable>manifest_option</replaceable> ] [ <literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable> ]
+    </term>
+    <listitem>
+     <para>
+      For compatibility with older releases, this alternative syntax for
+      the <literal>BASE_BACKUP</literal> command is still supported.
      </para>
     </listitem>
   </varlistentry>

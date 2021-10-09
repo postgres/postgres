@@ -1148,6 +1148,7 @@ select 1.2 ^ 345;
 select 0.12 ^ (-20);
 select 1.000000000123 ^ (-2147483648);
 select coalesce(nullif(0.9999999999 ^ 23300000000000, 0), 0) as rounds_to_zero;
+select round(((1 - 1.500012345678e-1000) ^ 1.45e1003) * 1e1000);
 
 -- cases that used to error out
 select 0.12 ^ (-25);

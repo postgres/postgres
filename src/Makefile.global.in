@@ -476,7 +476,7 @@ cd $(srcdir) && \
 endef
 
 else
-prove_installcheck = @echo "TAP tests not enabled"
+prove_installcheck = @echo "TAP tests not enabled. Try configuring with --enable-tap-tests"
 prove_check = $(prove_installcheck)
 endif
 

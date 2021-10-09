@@ -1804,10 +1804,6 @@ BaseBackup(void)
 	TimeLineID	latesttli;
 	TimeLineID	starttli;
 	char	   *basebkp;
-	char		escaped_label[MAXPGPATH];
-	char	   *maxrate_clause = NULL;
-	char	   *manifest_clause = NULL;
-	char	   *manifest_checksums_clause = "";
 	int			i;
 	char		xlogstart[64];
 	char		xlogend[64];
@@ -1816,8 +1812,11 @@ BaseBackup(void)
 	int			serverVersion,
 				serverMajor;
 	int			writing_to_stdout;
+	bool		use_new_option_syntax = false;
+	PQExpBufferData buf;
 
 	Assert(conn != NULL);
+	initPQExpBuffer(&buf);
 
 	/*
 	 * Check server version. BASE_BACKUP command was introduced in 9.1, so we
@@ -1835,6 +1834,8 @@ BaseBackup(void)
 					 serverver ? serverver : "'unknown'");
 		exit(1);
 	}
+	if (serverMajor >= 1500)
+		use_new_option_syntax = true;
 
 	/*
 	 * If WAL streaming was requested, also check that the server is new
@@ -1865,20 +1866,48 @@ BaseBackup(void)
 	/*
 	 * Start the actual backup
 	 */
-	PQescapeStringConn(conn, escaped_label, label, sizeof(escaped_label), &i);
-
+	AppendStringCommandOption(&buf, use_new_option_syntax, "LABEL", label);
+	if (estimatesize)
+		AppendPlainCommandOption(&buf, use_new_option_syntax, "PROGRESS");
+	if (includewal == FETCH_WAL)
+		AppendPlainCommandOption(&buf, use_new_option_syntax, "WAL");
+	if (fastcheckpoint)
+	{
+		if (use_new_option_syntax)
+			AppendStringCommandOption(&buf, use_new_option_syntax,
+									  "CHECKPOINT", "fast");
+		else
+			AppendPlainCommandOption(&buf, use_new_option_syntax, "FAST");
+	}
+	if (includewal != NO_WAL)
+	{
+		if (use_new_option_syntax)
+			AppendIntegerCommandOption(&buf, use_new_option_syntax, "WAIT", 0);
+		else
+			AppendPlainCommandOption(&buf, use_new_option_syntax, "NOWAIT");
+	}
 	if (maxrate > 0)
-		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
+		AppendIntegerCommandOption(&buf, use_new_option_syntax, "MAX_RATE",
+									  maxrate);
+	if (format == 't')
+		AppendPlainCommandOption(&buf, use_new_option_syntax, "TABLESPACE_MAP");
+	if (!verify_checksums)
+	{
+		if (use_new_option_syntax)
+			AppendIntegerCommandOption(&buf, use_new_option_syntax,
+										  "VERIFY_CHECKSUMS", 0);
+		else
+			AppendPlainCommandOption(&buf, use_new_option_syntax,
+										"NOVERIFY_CHECKSUMS");
+	}
 
 	if (manifest)
 	{
-		if (manifest_force_encode)
-			manifest_clause = "MANIFEST 'force-encode'";
-		else
-			manifest_clause = "MANIFEST 'yes'";
+		AppendStringCommandOption(&buf, use_new_option_syntax, "MANIFEST",
+									 manifest_force_encode ? "force-encode" : "yes");
 		if (manifest_checksums != NULL)
-			manifest_checksums_clause = psprintf("MANIFEST_CHECKSUMS '%s'",
-												 manifest_checksums);
+			AppendStringCommandOption(&buf, use_new_option_syntax,
+										 "MANIFEST_CHECKSUMS", manifest_checksums);
 	}
 
 	if (verbose)
@@ -1893,18 +1922,10 @@ BaseBackup(void)
 			fprintf(stderr, "\n");
 	}
 
-	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s %s %s",
-				 escaped_label,
-				 estimatesize ? "PROGRESS" : "",
-				 includewal == FETCH_WAL ? "WAL" : "",
-				 fastcheckpoint ? "FAST" : "",
-				 includewal == NO_WAL ? "" : "NOWAIT",
-				 maxrate_clause ? maxrate_clause : "",
-				 format == 't' ? "TABLESPACE_MAP" : "",
-				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
-				 manifest_clause ? manifest_clause : "",
-				 manifest_checksums_clause);
+	if (use_new_option_syntax && buf.len > 0)
+		basebkp = psprintf("BASE_BACKUP (%s)", buf.data);
+	else
+		basebkp = psprintf("BASE_BACKUP %s", buf.data);
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{

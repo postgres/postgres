@@ -872,26 +872,30 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 	{
 		DefElem    *defel = (DefElem *) lfirst(lc);
 
-		if (strcmp(defel->defname, "export_snapshot") == 0)
+		if (strcmp(defel->defname, "snapshot") == 0)
 		{
+			char	   *action;
+
 			if (snapshot_action_given || cmd->kind != REPLICATION_KIND_LOGICAL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 
+			action = defGetString(defel);
 			snapshot_action_given = true;
-			*snapshot_action = defGetBoolean(defel) ? CRS_EXPORT_SNAPSHOT :
-				CRS_NOEXPORT_SNAPSHOT;
-		}
-		else if (strcmp(defel->defname, "use_snapshot") == 0)
-		{
-			if (snapshot_action_given || cmd->kind != REPLICATION_KIND_LOGICAL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
 
-			snapshot_action_given = true;
-			*snapshot_action = CRS_USE_SNAPSHOT;
+			if (strcmp(action, "export") == 0)
+				*snapshot_action = CRS_EXPORT_SNAPSHOT;
+			else if (strcmp(action, "nothing") == 0)
+				*snapshot_action = CRS_NOEXPORT_SNAPSHOT;
+			else if (strcmp(action, "use") == 0)
+				*snapshot_action = CRS_USE_SNAPSHOT;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized value for CREATE_REPLICATION_SLOT option \"%s\": \"%s\"",
+								defel->defname, action)));
+
 		}
 		else if (strcmp(defel->defname, "reserve_wal") == 0)
 		{
@@ -901,7 +905,7 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 						 errmsg("conflicting or redundant options")));
 
 			reserve_wal_given = true;
-			*reserve_wal = true;
+			*reserve_wal = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "two_phase") == 0)
 		{
@@ -910,7 +914,7 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			two_phase_given = true;
-			*two_phase = true;
+			*two_phase = defGetBoolean(defel);
 		}
 		else
 			elog(ERROR, "unrecognized option: %s", defel->defname);
@@ -980,7 +984,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must not be called inside a transaction",
-								"CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT")));
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'export')")));
 
 			need_full_snapshot = true;
 		}
@@ -990,25 +994,25 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must be called inside a transaction",
-								"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT")));
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			if (XactIsoLevel != XACT_REPEATABLE_READ)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must be called in REPEATABLE READ isolation mode transaction",
-								"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT")));
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			if (FirstSnapshotSet)
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must be called before any query",
-								"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT")));
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			if (IsSubTransaction())
 				ereport(ERROR,
 				/*- translator: %s is a CREATE_REPLICATION_SLOT statement */
 						(errmsg("%s must not be called in a subtransaction",
-								"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT")));
+								"CREATE_REPLICATION_SLOT ... (SNAPSHOT 'use')")));
 
 			need_full_snapshot = true;
 		}

@@ -3599,39 +3599,48 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("(");
 
 /* LOCK */
-	/* Complete LOCK [TABLE] with a list of tables */
+	/* Complete LOCK [TABLE] [ONLY] with a list of tables */
 	else if (Matches("LOCK"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
-								   " UNION SELECT 'TABLE'");
+								   " UNION SELECT 'TABLE'"
+								   " UNION SELECT 'ONLY'");
 	else if (Matches("LOCK", "TABLE"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
-
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'ONLY'");
+	else if (Matches("LOCK", "TABLE", "ONLY") || Matches("LOCK", "ONLY"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 	/* For the following, handle the case of a single table only for now */
 
-	/* Complete LOCK [TABLE] <table> with "IN" */
-	else if (Matches("LOCK", MatchAnyExcept("TABLE")) ||
-			 Matches("LOCK", "TABLE", MatchAny))
-		COMPLETE_WITH("IN");
+	/* Complete LOCK [TABLE] [ONLY] <table> with IN or NOWAIT */
+	else if (Matches("LOCK", MatchAnyExcept("TABLE|ONLY")) ||
+			 Matches("LOCK", "TABLE", MatchAnyExcept("ONLY")) ||
+			 Matches("LOCK", "ONLY", MatchAny) ||
+			 Matches("LOCK", "TABLE", "ONLY", MatchAny))
+		COMPLETE_WITH("IN", "NOWAIT");
 
-	/* Complete LOCK [TABLE] <table> IN with a lock mode */
-	else if (Matches("LOCK", MatchAny, "IN") ||
-			 Matches("LOCK", "TABLE", MatchAny, "IN"))
+	/* Complete LOCK [TABLE] [ONLY] <table> IN with a lock mode */
+	else if (HeadMatches("LOCK") && TailMatches("IN"))
 		COMPLETE_WITH("ACCESS SHARE MODE",
 					  "ROW SHARE MODE", "ROW EXCLUSIVE MODE",
 					  "SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE",
 					  "SHARE ROW EXCLUSIVE MODE",
 					  "EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE");
 
-	/* Complete LOCK [TABLE] <table> IN ACCESS|ROW with rest of lock mode */
-	else if (Matches("LOCK", MatchAny, "IN", "ACCESS|ROW") ||
-			 Matches("LOCK", "TABLE", MatchAny, "IN", "ACCESS|ROW"))
+	/*
+	 * Complete LOCK [TABLE][ONLY] <table> IN ACCESS|ROW with rest of lock
+	 * mode
+	 */
+	else if (HeadMatches("LOCK") && TailMatches("IN", "ACCESS|ROW"))
 		COMPLETE_WITH("EXCLUSIVE MODE", "SHARE MODE");
 
-	/* Complete LOCK [TABLE] <table> IN SHARE with rest of lock mode */
-	else if (Matches("LOCK", MatchAny, "IN", "SHARE") ||
-			 Matches("LOCK", "TABLE", MatchAny, "IN", "SHARE"))
+	/* Complete LOCK [TABLE] [ONLY] <table> IN SHARE with rest of lock mode */
+	else if (HeadMatches("LOCK") && TailMatches("IN", "SHARE"))
 		COMPLETE_WITH("MODE", "ROW EXCLUSIVE MODE",
 					  "UPDATE EXCLUSIVE MODE");
+
+	/* Complete LOCK [TABLE] [ONLY] <table> [IN lockmode MODE] with "NOWAIT" */
+	else if (HeadMatches("LOCK") && TailMatches("MODE"))
+		COMPLETE_WITH("NOWAIT");
 
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */
 	else if (TailMatches("NOTIFY"))

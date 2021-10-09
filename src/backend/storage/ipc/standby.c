@@ -130,7 +130,7 @@ InitRecoveryTransactionEnvironment(void)
  *
  * This must be called even in shutdown of startup process if transaction
  * tracking has been initialized. Otherwise some locks the tracked
- * transactions were holding will not be released and and may interfere with
+ * transactions were holding will not be released and may interfere with
  * the processes still running (but will exit soon later) at the exit of
  * startup process.
  */

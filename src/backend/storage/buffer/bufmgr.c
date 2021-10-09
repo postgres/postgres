@@ -666,7 +666,7 @@ ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
 		{
 			/*
 			 * It's now safe to pin the buffer.  We can't pin first and ask
-			 * questions later, because because it might confuse code paths
+			 * questions later, because it might confuse code paths
 			 * like InvalidateBuffer() if we pinned a random non-matching
 			 * buffer.
 			 */

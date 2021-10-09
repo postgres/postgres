@@ -1534,7 +1534,7 @@ ParallelWorkerReportLastRecEnd(XLogRecPtr last_xlog_end)
  *
  * Also explicitly detach from dsm segment so that subsystems using
  * on_dsm_detach() have a chance to send stats before the stats subsystem is
- * shut down as as part of a before_shmem_exit() hook.
+ * shut down as part of a before_shmem_exit() hook.
  *
  * One might think this could instead be solved by carefully ordering the
  * attaching to dsm segments, so that the pgstats segments get detached from

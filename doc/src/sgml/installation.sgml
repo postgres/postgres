@@ -2174,9 +2174,15 @@ export MANPATH
    </indexterm>
 
    <para>
-    PostgreSQL works on AIX, but AIX versions before about 6.1 have
-    various issues and are not recommended.
-    You can use GCC or the native IBM compiler <command>xlc</command>.
+    You can use GCC or the native IBM compiler <command>xlc</command>
+    to build <productname>PostgreSQL</productname>
+    on <productname>AIX</productname>.
+   </para>
+
+   <para>
+    <productname>AIX</productname> versions before 7.1 are no longer
+    tested nor supported by the <productname>PostgreSQL</productname>
+    community.
    </para>
 
    <sect3>
