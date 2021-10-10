@@ -70,20 +70,36 @@ perldoc for the test modules, e.g.:
 
     perldoc src/test/perl/PostgresNode.pm
 
-Required Perl
--------------
+Portability
+-----------
 
-Tests must run on perl 5.8.3 and newer. perlbrew is a good way to obtain such
-a Perl; see http://perlbrew.pl .
+Avoid using any bleeding-edge Perl features.  We have buildfarm animals
+running Perl versions as old as 5.8.3, so your tests will be expected
+to pass on that.
 
-Just install and
+Also, do not use any non-core Perl modules except IPC::Run.  Or, if you
+must do so for a particular test, arrange to skip the test when the needed
+module isn't present.  If unsure, you can consult Module::CoreList to find
+out whether a given module is part of the Perl core, and which module
+versions shipped with which Perl releases.
 
+One way to test for compatibility with old Perl versions is to use
+perlbrew; see http://perlbrew.pl .  After installing that, do
+
+    export PERLBREW_CONFIGURE_FLAGS='-de -Duseshrplib'
     perlbrew --force install 5.8.3
     perlbrew use 5.8.3
     perlbrew install-cpanm
-    cpanm install IPC::Run
+    cpanm install Test::Simple@0.87_01
+    cpanm install IPC::Run@0.79
+    cpanm install ExtUtils::MakeMaker@6.50  # downgrade
 
-then re-run configure to ensure the correct Perl is used when running
-tests. To verify that the right Perl was found:
+Then re-run Postgres' configure to ensure the correct Perl is used when
+running tests.  To verify that the right Perl was found:
 
     grep ^PERL= config.log
+
+Due to limitations of cpanm, this recipe doesn't exactly duplicate the
+module list of older buildfarm animals.  The discrepancies should seldom
+matter, but if you want to be sure, bypass cpanm and instead manually
+install the desired versions of Test::Simple and IPC::Run.
