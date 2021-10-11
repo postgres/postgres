@@ -421,8 +421,8 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	 * Prepare spl_ldatum/spl_rdatum/spl_ldatum_exists/spl_rdatum_exists in
 	 * case we are doing a secondary split (see comments in gist.h).
 	 */
-	sv->spl_ldatum_exists = (v->spl_lisnull[attno]) ? false : true;
-	sv->spl_rdatum_exists = (v->spl_risnull[attno]) ? false : true;
+	sv->spl_ldatum_exists = !(v->spl_lisnull[attno]);
+	sv->spl_rdatum_exists = !(v->spl_risnull[attno]);
 	sv->spl_ldatum = v->spl_lattr[attno];
 	sv->spl_rdatum = v->spl_rattr[attno];
 
@@ -451,8 +451,8 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 		 * Reinit GIST_SPLITVEC. Although these fields are not used by
 		 * genericPickSplit(), set them up for further processing
 		 */
-		sv->spl_ldatum_exists = (v->spl_lisnull[attno]) ? false : true;
-		sv->spl_rdatum_exists = (v->spl_risnull[attno]) ? false : true;
+		sv->spl_ldatum_exists = !(v->spl_lisnull[attno]);
+		sv->spl_rdatum_exists = !(v->spl_risnull[attno]);
 		sv->spl_ldatum = v->spl_lattr[attno];
 		sv->spl_rdatum = v->spl_rattr[attno];
 

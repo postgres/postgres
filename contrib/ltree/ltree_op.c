@@ -91,42 +91,42 @@ Datum
 ltree_lt(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res < 0) ? true : false);
+	PG_RETURN_BOOL(res < 0);
 }
 
 Datum
 ltree_le(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res <= 0) ? true : false);
+	PG_RETURN_BOOL(res <= 0);
 }
 
 Datum
 ltree_eq(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res == 0) ? true : false);
+	PG_RETURN_BOOL(res == 0);
 }
 
 Datum
 ltree_ge(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res >= 0) ? true : false);
+	PG_RETURN_BOOL(res >= 0);
 }
 
 Datum
 ltree_gt(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res > 0) ? true : false);
+	PG_RETURN_BOOL(res > 0);
 }
 
 Datum
 ltree_ne(PG_FUNCTION_ARGS)
 {
 	RUNCMP;
-	PG_RETURN_BOOL((res != 0) ? true : false);
+	PG_RETURN_BOOL(res != 0);
 }
 
 Datum
