@@ -19255,6 +19255,8 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PROVE"; then
     # Test::More and Time::HiRes are supposed to be part of core Perl,
     # but some distros omit them in a minimal installation.
+    # The required minimum versions are all quite ancient now, but specify
+    # them anyway for documentation's sake.
 
 
 
@@ -19308,7 +19310,7 @@ fi
 
 if test "x$PERL" != x; then
   ax_perl_modules_failed=0
-  for ax_perl_module in 'IPC::Run' 'Test::More 0.87' 'Time::HiRes' ; do
+  for ax_perl_module in 'IPC::Run 0.79' 'Test::More 0.87' 'Time::HiRes 1.52' ; do
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl module $ax_perl_module" >&5
 $as_echo_n "checking for perl module $ax_perl_module... " >&6; }
 
