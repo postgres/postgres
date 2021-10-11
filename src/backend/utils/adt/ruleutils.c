@@ -3681,8 +3681,8 @@ set_deparse_context_plan(List *dpcontext, Plan *plan, List *ancestors)
 	dpns = (deparse_namespace *) linitial(dpcontext);
 
 	/* Set our attention on the specific plan node passed in */
-	set_deparse_plan(dpns, plan);
 	dpns->ancestors = ancestors;
+	set_deparse_plan(dpns, plan);
 
 	return dpcontext;
 }
@@ -4836,7 +4836,7 @@ get_rtable_name(int rtindex, deparse_context *context)
  * of a given Plan node
  *
  * This sets the plan, outer_plan, inner_plan, outer_tlist, inner_tlist,
- * and index_tlist fields.  Caller is responsible for adjusting the ancestors
+ * and index_tlist fields.  Caller must already have adjusted the ancestors
  * list if necessary.  Note that the rtable, subplans, and ctes fields do
  * not need to change when shifting attention to different plan nodes in a
  * single plan tree.
