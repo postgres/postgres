@@ -40,5 +40,5 @@ $node->command_like([ 'psql', '-c', '\help SELECT' ], qr/SELECT/, '\help');
 
 
 # Test clean handling of unsupported replication command responses
-$node->command_fails_like([ 'psql', 'replication=database', '-c', 'START_REPLICATION 0/0' ],
+$node->command_fails_like([ 'psql', '-d', 'replication=database', '-c', 'START_REPLICATION 0/0' ],
 	qr/^unexpected PQresultStatus: 8$/, 'handling of unexpected PQresultStatus');
