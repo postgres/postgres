@@ -14,6 +14,8 @@ use Time::HiRes qw(usleep);
 # count to reach $num_rows, yet not later than the recovery target.
 sub test_recovery_standby
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my $test_name       = shift;
 	my $node_name       = shift;
 	my $node_primary    = shift;

@@ -31,6 +31,8 @@ sub fetch_file_name
 # Check for a pattern in the logs associated to one format.
 sub check_log_pattern
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my $format   = shift;
 	my $logfiles = shift;
 	my $pattern  = shift;

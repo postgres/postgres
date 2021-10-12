@@ -75,6 +75,8 @@ note "testing connection parameter \"target_session_attrs\"";
 # Expect to connect to $target_node (undef for failure) with given $status.
 sub test_target_session_attrs
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my $node1       = shift;
 	my $node2       = shift;
 	my $target_node = shift;
