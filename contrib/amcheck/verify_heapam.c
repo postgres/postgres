@@ -302,6 +302,22 @@ verify_heapam(PG_FUNCTION_ARGS)
 	ctx.rel = relation_open(relid, AccessShareLock);
 	sanity_check_relation(ctx.rel);
 
+	/*
+	 * Early exit for unlogged relations during recovery.  These will have no
+	 * relation fork, so there won't be anything to check.  We behave as if
+	 * the relation is empty.
+	 */
+	if (ctx.rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+		RecoveryInProgress())
+	{
+		ereport(DEBUG1,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 errmsg("cannot verify unlogged relation \"%s\" during recovery, skipping",
+						RelationGetRelationName(ctx.rel))));
+		relation_close(ctx.rel, AccessShareLock);
+		PG_RETURN_NULL();
+	}
+
 	/* Early exit if the relation is empty */
 	nblocks = RelationGetNumberOfBlocks(ctx.rel);
 	if (!nblocks)
