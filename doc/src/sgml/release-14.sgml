@@ -911,7 +911,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
        <para>
         This is controlled by <xref linkend="guc-vacuum-failsafe-age"/>
-        and <xref linkend="guc-multixact-failsafe-age"/>.
+        and <xref linkend="guc-vacuum-multixact-failsafe-age"/>.
        </para>
       </listitem>
 
