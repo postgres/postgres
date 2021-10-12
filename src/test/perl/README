@@ -61,9 +61,17 @@ Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
 #39185 by not using the "$" regular expression metacharacter in qr// when also
 using the "/m" modifier.  Instead of "$", use "\n" or "(?=\n|\z)".
 
-Read the Test::More documentation for more on how to write tests:
+Test::Builder::Level controls how far up in the call stack a test will look
+at when reporting a failure.  This should be incremented by any subroutine
+which directly or indirectly calls test routines from Test::More, such as
+ok() or is():
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+Read the documentation for more on how to write tests:
 
     perldoc Test::More
+    perldoc Test::Builder
 
 For available PostgreSQL-specific test methods and some example tests read the
 perldoc for the test modules, e.g.:

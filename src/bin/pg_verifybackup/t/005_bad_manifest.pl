@@ -173,6 +173,8 @@ EOM
 
 sub test_parse_error
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($test_name, $manifest_contents) = @_;
 
 	test_bad_manifest($test_name,
@@ -183,6 +185,8 @@ sub test_parse_error
 
 sub test_fatal_error
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($test_name, $manifest_contents) = @_;
 
 	test_bad_manifest($test_name, qr/fatal: $test_name/, $manifest_contents);
@@ -191,6 +195,8 @@ sub test_fatal_error
 
 sub test_bad_manifest
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($test_name, $regexp, $manifest_contents) = @_;
 
 	open(my $fh, '>', "$tempdir/backup_manifest") || die "open: $!";

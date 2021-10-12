@@ -15,6 +15,8 @@ use Test::More tests => 38;
 
 sub check_orphan_relfilenodes
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $test_name) = @_;
 
 	my $db_oid = $node->safe_psql('postgres',
