@@ -660,7 +660,6 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 				if (PQputCopyData(conn, buf, buflen) <= 0)
 				{
 					OK = false;
-					copydone = true;
 					break;
 				}
 
