@@ -6,7 +6,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 23;
+use Test::More tests => 25;
 
 program_help_ok('psql');
 program_version_ok('psql');
@@ -26,8 +26,19 @@ foreach my $arg (qw(commands variables))
 
 my $node = PostgresNode->new('main');
 $node->init;
+$node->append_conf(
+	'postgresql.conf', q{
+wal_level = 'logical'
+max_replication_slots = 4
+max_wal_senders = 4
+});
 $node->start;
 
 $node->command_like([ 'psql', '-c', '\copyright' ], qr/Copyright/, '\copyright');
 $node->command_like([ 'psql', '-c', '\help' ], qr/ALTER/, '\help without arguments');
 $node->command_like([ 'psql', '-c', '\help SELECT' ], qr/SELECT/, '\help');
+
+
+# Test clean handling of unsupported replication command responses
+$node->command_fails_like([ 'psql', 'replication=database', '-c', 'START_REPLICATION 0/0' ],
+	qr/^unexpected PQresultStatus: 8$/, 'handling of unexpected PQresultStatus');
