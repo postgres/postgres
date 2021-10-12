@@ -17,6 +17,8 @@ my $check_sql =
 # the configuration file is reloaded before the test.
 sub test_sync_state
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($self, $expected, $msg, $setting) = @_;
 
 	if (defined($setting))

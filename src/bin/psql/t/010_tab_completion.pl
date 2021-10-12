@@ -127,6 +127,8 @@ sub check_completion
 # (won't work if we are inside a string literal!)
 sub clear_query
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	check_completion("\\r\n", qr/postgres=# /, "\\r works");
 	return;
 }
@@ -136,6 +138,8 @@ sub clear_query
 # than clear_query because we lose evidence in the history file)
 sub clear_line
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	check_completion("\025\n", qr/postgres=# /, "control-U works");
 	return;
 }

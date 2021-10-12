@@ -14,6 +14,8 @@ my $psql_rc  = '';
 
 sub configure_and_reload
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $parameter) = @_;
 	my $name = $node->name;
 

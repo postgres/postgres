@@ -143,6 +143,8 @@ sub corrupt_first_page
 
 sub detects_heap_corruption
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($function, $testname) = @_;
 
 	detects_corruption(
@@ -158,6 +160,8 @@ sub detects_heap_corruption
 
 sub detects_corruption
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($function, $testname, @re) = @_;
 
 	my $result = $node->safe_psql('postgres', qq(SELECT * FROM $function));
@@ -166,6 +170,8 @@ sub detects_corruption
 
 sub detects_no_corruption
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($function, $testname) = @_;
 
 	my $result = $node->safe_psql('postgres', qq(SELECT * FROM $function));
@@ -181,6 +187,8 @@ sub detects_no_corruption
 # and should be unique.
 sub check_all_options_uncorrupted
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($relname, $prefix) = @_;
 
 	for my $stop (qw(true false))
