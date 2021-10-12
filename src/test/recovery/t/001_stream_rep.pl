@@ -72,6 +72,8 @@ note "testing connection parameter \"target_session_attrs\"";
 # target_session_attrs with multiple nodes.
 sub test_target_session_attrs
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my $node1       = shift;
 	my $node2       = shift;
 	my $target_node = shift;

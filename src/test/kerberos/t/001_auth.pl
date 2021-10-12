@@ -203,6 +203,8 @@ sub test_access
 # As above, but test for an arbitrary query result.
 sub test_query
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $role, $query, $expected, $gssencmode, $test_name) = @_;
 
 	# need to connect over TCP/IP for Kerberos
