@@ -71,8 +71,7 @@ static void sendFileWithContent(const char *filename, const char *content,
 								backup_manifest_info *manifest);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
 							 struct stat *statbuf, bool sizeonly);
-static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
-						  bool sizeonly);
+static void convert_link_to_directory(const char *pathbuf, struct stat *statbuf);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 static void SendBackupHeader(List *tablespaces);
 static void perform_base_backup(basebackup_options *opt);
@@ -1381,7 +1380,9 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			if (strcmp(de->d_name, excludeDirContents[excludeIdx]) == 0)
 			{
 				elog(DEBUG1, "contents of directory \"%s\" excluded from backup", de->d_name);
-				size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
+				convert_link_to_directory(pathbuf, &statbuf);
+				size += _tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf,
+										sizeonly);
 				excludeFound = true;
 				break;
 			}
@@ -1397,7 +1398,9 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		if (statrelpath != NULL && strcmp(pathbuf, statrelpath) == 0)
 		{
 			elog(DEBUG1, "contents of directory \"%s\" excluded from backup", statrelpath);
-			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
+			convert_link_to_directory(pathbuf, &statbuf);
+			size += _tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf,
+									sizeonly);
 			continue;
 		}
 
@@ -1409,7 +1412,9 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		if (strcmp(pathbuf, "./pg_wal") == 0)
 		{
 			/* If pg_wal is a symlink, write it as a directory anyway */
-			size += _tarWriteDir(pathbuf, basepathlen, &statbuf, sizeonly);
+			convert_link_to_directory(pathbuf, &statbuf);
+			size += _tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf,
+									sizeonly);
 
 			/*
 			 * Also send archive_status directory (by hackishly reusing
@@ -1883,12 +1888,11 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 }
 
 /*
- * Write tar header for a directory.  If the entry in statbuf is a link then
- * write it as a directory anyway.
+ * If the entry in statbuf is a link, then adjust statbuf to make it look like a
+ * directory, so that it will be written that way.
  */
-static int64
-_tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
-			 bool sizeonly)
+static void
+convert_link_to_directory(const char *pathbuf, struct stat *statbuf)
 {
 	/* If symlink, write it as a directory anyway */
 #ifndef WIN32
@@ -1897,8 +1901,6 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 	if (pgwin32_is_junction(pathbuf))
 #endif
 		statbuf->st_mode = S_IFDIR | pg_dir_create_mode;
-
-	return _tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf, sizeonly);
 }
 
 /*
