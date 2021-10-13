@@ -432,6 +432,18 @@ PostgreSQL documentation
    </variablelist>
   </para>
 
+  <warning>
+   <para>
+    The extra checks performed against B-tree indexes when the
+    <option>--parent-check</option> option or the
+    <option>--rootdescend</option> option is specified require
+    relatively strong relation-level locks.  These checks are the only
+    checks that will block concurrent data modification from
+    <command>INSERT</command>, <command>UPDATE</command>, and
+    <command>DELETE</command> commands.
+   </para>
+  </warning>
+
   <para>
    The following command-line options control the connection to the server:
 

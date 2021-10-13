@@ -818,6 +818,9 @@ main(int argc, char *argv[])
  * names matching the expectations of verify_heap_slot_handler, which will
  * receive and handle each row returned from the verify_heapam() function.
  *
+ * The constructed SQL command will silently skip temporary tables, as checking
+ * them would needlessly draw errors from the underlying amcheck function.
+ *
  * sql: buffer into which the heap table checking command will be written
  * rel: relation information for the heap table to be checked
  * conn: the connection to be used, for string escaping purposes
@@ -827,10 +830,10 @@ prepare_heap_command(PQExpBuffer sql, RelationInfo *rel, PGconn *conn)
 {
 	resetPQExpBuffer(sql);
 	appendPQExpBuffer(sql,
-					  "SELECT blkno, offnum, attnum, msg FROM %s.verify_heapam("
-					  "\nrelation := %u, on_error_stop := %s, check_toast := %s, skip := '%s'",
+					  "SELECT v.blkno, v.offnum, v.attnum, v.msg "
+					  "FROM pg_catalog.pg_class c, %s.verify_heapam("
+					  "\nrelation := c.oid, on_error_stop := %s, check_toast := %s, skip := '%s'",
 					  rel->datinfo->amcheck_schema,
-					  rel->reloid,
 					  opts.on_error_stop ? "true" : "false",
 					  opts.reconcile_toast ? "true" : "false",
 					  opts.skip);
@@ -840,7 +843,10 @@ prepare_heap_command(PQExpBuffer sql, RelationInfo *rel, PGconn *conn)
 	if (opts.endblock >= 0)
 		appendPQExpBuffer(sql, ", endblock := " INT64_FORMAT, opts.endblock);
 
-	appendPQExpBufferChar(sql, ')');
+	appendPQExpBuffer(sql,
+					  "\n) v WHERE c.oid = %u "
+					  "AND c.relpersistence != 't'",
+					  rel->reloid);
 }
 
 /*
@@ -851,6 +857,10 @@ prepare_heap_command(PQExpBuffer sql, RelationInfo *rel, PGconn *conn)
  * functions do not return any, but rather return corruption information by
  * raising errors, which verify_btree_slot_handler expects.
  *
+ * The constructed SQL command will silently skip temporary indexes, and
+ * indexes being reindexed concurrently, as checking them would needlessly draw
+ * errors from the underlying amcheck functions.
+ *
  * sql: buffer into which the heap table checking command will be written
  * rel: relation information for the index to be checked
  * conn: the connection to be used, for string escaping purposes
@@ -860,27 +870,31 @@ prepare_btree_command(PQExpBuffer sql, RelationInfo *rel, PGconn *conn)
 {
 	resetPQExpBuffer(sql);
 
-	/*
-	 * Embed the database, schema, and relation name in the query, so if the
-	 * check throws an error, the user knows which relation the error came
-	 * from.
-	 */
 	if (opts.parent_check)
 		appendPQExpBuffer(sql,
-						  "SELECT * FROM %s.bt_index_parent_check("
-						  "index := '%u'::regclass, heapallindexed := %s, "
-						  "rootdescend := %s)",
+						  "SELECT %s.bt_index_parent_check("
+						  "index := c.oid, heapallindexed := %s, rootdescend := %s)"
+						  "\nFROM pg_catalog.pg_class c, pg_catalog.pg_index i "
+						  "WHERE c.oid = %u "
+						  "AND c.oid = i.indexrelid "
+						  "AND c.relpersistence != 't' "
+						  "AND i.indisready AND i.indisvalid AND i.indislive",
 						  rel->datinfo->amcheck_schema,
-						  rel->reloid,
 						  (opts.heapallindexed ? "true" : "false"),
-						  (opts.rootdescend ? "true" : "false"));
+						  (opts.rootdescend ? "true" : "false"),
+						  rel->reloid);
 	else
 		appendPQExpBuffer(sql,
-						  "SELECT * FROM %s.bt_index_check("
-						  "index := '%u'::regclass, heapallindexed := %s)",
+						  "SELECT %s.bt_index_check("
+						  "index := c.oid, heapallindexed := %s)"
+						  "\nFROM pg_catalog.pg_class c, pg_catalog.pg_index i "
+						  "WHERE c.oid = %u "
+						  "AND c.oid = i.indexrelid "
+						  "AND c.relpersistence != 't' "
+						  "AND i.indisready AND i.indisvalid AND i.indislive",
 						  rel->datinfo->amcheck_schema,
-						  rel->reloid,
-						  (opts.heapallindexed ? "true" : "false"));
+						  (opts.heapallindexed ? "true" : "false"),
+						  rel->reloid);
 }
 
 /*
@@ -1088,15 +1102,17 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
-		int			ntups = PQntuples(res);
+		int                     ntups = PQntuples(res);
 
-		if (ntups != 1)
+		if (ntups > 1)
 		{
 			/*
 			 * We expect the btree checking functions to return one void row
-			 * each, so we should output some sort of warning if we get
-			 * anything else, not because it indicates corruption, but because
-			 * it suggests a mismatch between amcheck and pg_amcheck versions.
+			 * each, or zero rows if the check was skipped due to the object
+			 * being in the wrong state to be checked, so we should output some
+			 * sort of warning if we get anything more, not because it
+			 * indicates corruption, but because it suggests a mismatch between
+			 * amcheck and pg_amcheck versions.
 			 *
 			 * In conjunction with --progress, anything written to stderr at
 			 * this time would present strangely to the user without an extra
@@ -1896,10 +1912,16 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 						  "\nAND (c.relam = %u OR NOT ep.btree_only OR ep.rel_regex IS NULL)",
 						  HEAP_TABLE_AM_OID, BTREE_AM_OID);
 
+	/*
+	 * Exclude temporary tables and indexes, which must necessarily belong to
+	 * other sessions.  (We don't create any ourselves.)  We must ultimately
+	 * exclude indexes marked invalid or not ready, but we delay that decision
+	 * until firing off the amcheck command, as the state of an index may
+	 * change by then.
+	 */
+	appendPQExpBufferStr(&sql, "\nWHERE c.relpersistence != 't'");
 	if (opts.excludetbl || opts.excludeidx || opts.excludensp)
-		appendPQExpBufferStr(&sql, "\nWHERE ep.pattern_id IS NULL");
-	else
-		appendPQExpBufferStr(&sql, "\nWHERE true");
+		appendPQExpBufferStr(&sql, "\nAND ep.pattern_id IS NULL");
 
 	/*
 	 * We need to be careful not to break the --no-dependent-toast and
@@ -1951,7 +1973,8 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 								 "\nON ('pg_toast' ~ ep.nsp_regex OR ep.nsp_regex IS NULL)"
 								 "\nAND (t.relname ~ ep.rel_regex OR ep.rel_regex IS NULL)"
 								 "\nAND ep.heap_only"
-								 "\nWHERE ep.pattern_id IS NULL");
+								 "\nWHERE ep.pattern_id IS NULL"
+								 "\nAND t.relpersistence != 't'");
 		appendPQExpBufferStr(&sql,
 							 "\n)");
 	}
@@ -1969,7 +1992,8 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 						  "\nINNER JOIN pg_catalog.pg_index i "
 						  "ON r.oid = i.indrelid "
 						  "INNER JOIN pg_catalog.pg_class c "
-						  "ON i.indexrelid = c.oid");
+						  "ON i.indexrelid = c.oid "
+						  "AND c.relpersistence != 't'");
 		if (opts.excludeidx || opts.excludensp)
 			appendPQExpBufferStr(&sql,
 								 "\nINNER JOIN pg_catalog.pg_namespace n "
@@ -2007,7 +2031,8 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 						  "INNER JOIN pg_catalog.pg_index i "
 						  "ON t.oid = i.indrelid"
 						  "\nINNER JOIN pg_catalog.pg_class c "
-						  "ON i.indexrelid = c.oid");
+						  "ON i.indexrelid = c.oid "
+						  "AND c.relpersistence != 't'");
 		if (opts.excludeidx)
 			appendPQExpBufferStr(&sql,
 								 "\nLEFT OUTER JOIN exclude_pat ep "
