@@ -22,27 +22,32 @@ $node->init(allows_streaming => 1);
 $node->append_conf('postgresql.conf', 'wal_keep_segments=16');
 $node->start;
 
-$node->safe_psql('postgres', 'create table filler (a int)');
-# First, measure how many bytes does the insertion of 1000 rows produce
-my $start_lsn =
-  $node->safe_psql('postgres', q{select pg_current_wal_insert_lsn() - '0/0'});
-$node->safe_psql('postgres',
-	'insert into filler select * from generate_series(1, 1000)');
-my $end_lsn =
-  $node->safe_psql('postgres', q{select pg_current_wal_insert_lsn() - '0/0'});
-my $rows_walsize = $end_lsn - $start_lsn;
+$node->safe_psql('postgres', 'create table filler (a int, b text)');
 
 # Now consume all remaining room in the current WAL segment, leaving
 # space enough only for the start of a largish record.
 $node->safe_psql(
-	'postgres', qq{
-WITH setting AS (
-  SELECT setting::int AS wal_segsize
-    FROM pg_settings WHERE name = 'wal_segment_size'
-)
-INSERT INTO filler
-SELECT g FROM setting,
-  generate_series(1, 1000 * (wal_segsize - ((pg_current_wal_insert_lsn() - '0/0') % wal_segsize)) / $rows_walsize) g
+	'postgres', q{
+DO $$
+DECLARE
+    wal_segsize int := setting::int FROM pg_settings WHERE name = 'wal_segment_size';
+    remain int;
+    iters  int := 0;
+BEGIN
+    LOOP
+        INSERT into filler
+        select g, repeat(md5(g::text), (random() * 60 + 1)::int)
+        from generate_series(1, 10) g;
+
+        remain := wal_segsize - (pg_current_wal_insert_lsn() - '0/0') % wal_segsize;
+        IF remain < 2 * setting::int from pg_settings where name = 'block_size' THEN
+            RAISE log 'exiting after % iterations, % bytes to end of WAL segment', iters, remain;
+            EXIT;
+        END IF;
+        iters := iters + 1;
+    END LOOP;
+END
+$$;
 });
 
 my $initfile = $node->safe_psql('postgres',
