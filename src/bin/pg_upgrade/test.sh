@@ -23,7 +23,8 @@ standard_initdb() {
 	# To increase coverage of non-standard segment size and group access
 	# without increasing test runtime, run these tests with a custom setting.
 	# Also, specify "-A trust" explicitly to suppress initdb's warning.
-	"$1" -N --wal-segsize 1 -g -A trust
+	# --allow-group-access and --wal-segsize have been added in v11.
+	"$1" -N --wal-segsize 1 --allow-group-access -A trust
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
@@ -107,6 +108,14 @@ EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --outputdir=$outputdir"
 export EXTRA_REGRESS_OPTS
 mkdir "$outputdir"
 
+# pg_regress --make-tablespacedir would take care of that in 14~, but this is
+# still required for older versions where this option is not supported.
+if [ "$newsrc" != "$oldsrc" ]; then
+	mkdir "$outputdir"/testtablespace
+	mkdir "$outputdir"/sql
+	mkdir "$outputdir"/expected
+fi
+
 logdir=`pwd`/log
 rm -rf "$logdir"
 mkdir "$logdir"
@@ -163,20 +172,32 @@ createdb "regression$dbname1" || createdb_status=$?
 createdb "regression$dbname2" || createdb_status=$?
 createdb "regression$dbname3" || createdb_status=$?
 
+# Extra options to apply to the dump.  This may be changed later.
+extra_dump_options=""
+
 if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`
 
-	# before dumping, get rid of objects not feasible in later versions
+	# Before dumping, tweak the database of the old instance depending
+	# on its version.
 	if [ "$newsrc" != "$oldsrc" ]; then
 		fix_sql=""
+		# Get rid of objects not feasible in later versions
 		case $oldpgversion in
 			804??)
 				fix_sql="DROP FUNCTION public.myfunc(integer);"
 				;;
 		esac
-		fix_sql="$fix_sql
-				 DROP FUNCTION IF EXISTS
-					public.oldstyle_length(integer, text);	-- last in 9.6
+
+		# Last appeared in v9.6
+		if [ $oldpgversion -lt 100000 ]; then
+			fix_sql="$fix_sql
+					 DROP FUNCTION IF EXISTS
+						public.oldstyle_length(integer, text);"
+		fi
+		# Last appeared in v13
+		if [ $oldpgversion -lt 140000 ]; then
+			fix_sql="$fix_sql
 				 DROP FUNCTION IF EXISTS
 					public.putenv(text);	-- last in v13
 				 DROP OPERATOR IF EXISTS	-- last in v13
@@ -184,10 +205,40 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 					public.#%# (pg_catalog.int8, NONE),
 					public.!=- (pg_catalog.int8, NONE),
 					public.#@%# (pg_catalog.int8, NONE);"
+		fi
 		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
+
+		# WITH OIDS is not supported anymore in v12, so remove support
+		# for any relations marked as such.
+		if [ $oldpgversion -lt 120000 ]; then
+			fix_sql="DO \$stmt\$
+				DECLARE
+					rec text;
+				BEGIN
+				FOR rec in
+					SELECT oid::regclass::text
+					FROM pg_class
+					WHERE relname !~ '^pg_'
+						AND relhasoids
+						AND relkind in ('r','m')
+					ORDER BY 1
+				LOOP
+					execute 'ALTER TABLE ' || rec || ' SET WITHOUT OIDS';
+				END LOOP;
+				END; \$stmt\$;"
+			psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
+		fi
+
+		# Handling of --extra-float-digits gets messy after v12.
+		# Note that this changes the dumps from the old and new
+		# instances if involving an old cluster of v11 or older.
+		if [ $oldpgversion -lt 120000 ]; then
+			extra_dump_options="--extra-float-digits=0"
+		fi
 	fi
 
-	pg_dumpall --no-sync -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
+	pg_dumpall $extra_dump_options --no-sync \
+		-f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 
 	if [ "$newsrc" != "$oldsrc" ]; then
 		# update references to old source tree's regress.so etc
@@ -249,7 +300,8 @@ esac
 
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
-pg_dumpall --no-sync -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
+pg_dumpall $extra_dump_options --no-sync \
+	-f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
 
 if [ -n "$pg_dumpall2_status" ]; then
