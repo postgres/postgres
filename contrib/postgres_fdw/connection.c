@@ -1040,6 +1040,11 @@ pgfdw_reject_incomplete_xact_state_change(ConnCacheEntry *entry)
  * Cancel the currently-in-progress query (whose query text we do not have)
  * and ignore the result.  Returns true if we successfully cancel the query
  * and discard any pending result, and false if not.
+ *
+ * It's not a huge problem if we throw an ERROR here, but if we get into error
+ * recursion trouble, we'll end up slamming the connection shut, which will
+ * necessitate failing the entire toplevel transaction even if subtransactions
+ * were used.  Try to use WARNING where we can.
  */
 static bool
 pgfdw_cancel_query(PGconn *conn)
@@ -1087,6 +1092,11 @@ pgfdw_cancel_query(PGconn *conn)
  * If the query is executed successfully but returns an error, the return
  * value is true if and only if ignore_errors is set.  If the query can't be
  * sent or times out, the return value is false.
+ *
+ * It's not a huge problem if we throw an ERROR here, but if we get into error
+ * recursion trouble, we'll end up slamming the connection shut, which will
+ * necessitate failing the entire toplevel transaction even if subtransactions
+ * were used.  Try to use WARNING where we can.
  */
 static bool
 pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
@@ -1132,11 +1142,6 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
  * might be a query that is being interrupted by transaction abort, or it might
  * be a query that was initiated as part of transaction abort to get the remote
  * side back to the appropriate state.
- *
- * It's not a huge problem if we throw an ERROR here, but if we get into error
- * recursion trouble, we'll end up slamming the connection shut, which will
- * necessitate failing the entire toplevel transaction even if subtransactions
- * were used.  Try to use WARNING where we can.
  *
  * endtime is the time at which we should give up and assume the remote
  * side is dead.  Returns true if the timeout expired, otherwise false.
