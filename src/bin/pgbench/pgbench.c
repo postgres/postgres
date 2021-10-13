@@ -5410,7 +5410,7 @@ parseScriptWeight(const char *option, char **script)
 		}
 		if (wtmp > INT_MAX || wtmp < 0)
 		{
-			pg_log_fatal("weight specification out of range (0 .. %u): %lld",
+			pg_log_fatal("weight specification out of range (0 .. %d): %lld",
 						 INT_MAX, (long long) wtmp);
 			exit(1);
 		}
