@@ -8018,34 +8018,6 @@ StartupXLOG(void)
 	XLogCtl->LogwrtRqst.Write = EndOfLog;
 	XLogCtl->LogwrtRqst.Flush = EndOfLog;
 
-	LocalSetXLogInsertAllowed();
-
-	/* If necessary, write overwrite-contrecord before doing anything else */
-	if (!XLogRecPtrIsInvalid(abortedRecPtr))
-	{
-		Assert(!XLogRecPtrIsInvalid(missingContrecPtr));
-		CreateOverwriteContrecordRecord(abortedRecPtr);
-		abortedRecPtr = InvalidXLogRecPtr;
-		missingContrecPtr = InvalidXLogRecPtr;
-	}
-
-	/*
-	 * Update full_page_writes in shared memory and write an XLOG_FPW_CHANGE
-	 * record before resource manager writes cleanup WAL records or checkpoint
-	 * record is written.
-	 */
-	Insert->fullPageWrites = lastFullPageWrites;
-	UpdateFullPageWrites();
-	LocalXLogInsertAllowed = -1;
-
-	/* Emit checkpoint or end-of-recovery record in XLOG, if required. */
-	if (InRecovery)
-		promoted = PerformRecoveryXLogAction();
-
-	/* If this is archive recovery, perform post-recovery cleanup actions. */
-	if (ArchiveRecoveryRequested)
-		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
-
 	/*
 	 * Preallocate additional log files, if wanted.
 	 */
@@ -8089,6 +8061,42 @@ StartupXLOG(void)
 		readFile = -1;
 	}
 	XLogReaderFree(xlogreader);
+
+	LocalSetXLogInsertAllowed();
+
+	/* If necessary, write overwrite-contrecord before doing anything else */
+	if (!XLogRecPtrIsInvalid(abortedRecPtr))
+	{
+		Assert(!XLogRecPtrIsInvalid(missingContrecPtr));
+		CreateOverwriteContrecordRecord(abortedRecPtr);
+		abortedRecPtr = InvalidXLogRecPtr;
+		missingContrecPtr = InvalidXLogRecPtr;
+	}
+
+	/*
+	 * Update full_page_writes in shared memory and write an XLOG_FPW_CHANGE
+	 * record before resource manager writes cleanup WAL records or checkpoint
+	 * record is written.
+	 */
+	Insert->fullPageWrites = lastFullPageWrites;
+	UpdateFullPageWrites();
+	LocalXLogInsertAllowed = -1;
+
+	/*
+	 * Emit checkpoint or end-of-recovery record in XLOG, if required.
+	 *
+	 * XLogCtl->lastReplayedEndRecPtr will be a valid LSN if and only if we
+	 * entered recovery. Even if we ultimately replayed no WAL records, it will
+	 * have been initialized based on where replay was due to start.  We don't
+	 * need a lock to access this, since this can't change any more by the time
+	 * we reach this code.
+	 */
+	if (!XLogRecPtrIsInvalid(XLogCtl->lastReplayedEndRecPtr))
+		promoted = PerformRecoveryXLogAction();
+
+	/* If this is archive recovery, perform post-recovery cleanup actions. */
+	if (ArchiveRecoveryRequested)
+		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
 
 	/*
 	 * If any of the critical GUCs have changed, log them before we allow
