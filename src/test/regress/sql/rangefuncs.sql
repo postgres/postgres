@@ -767,3 +767,18 @@ select *, row_to_json(u) from unnest(array[null::rngfunc2, (1,'foo')::rngfunc2, 
 select *, row_to_json(u) from unnest(array[]::rngfunc2[]) u;
 
 drop type rngfunc2;
+
+-- check handling of functions pulled up into function RTEs (bug #17227)
+
+explain (verbose, costs off)
+select * from
+  (select jsonb_path_query_array(module->'lectures', '$[*]') as lecture
+   from unnest(array['{"lectures": [{"id": "1"}]}'::jsonb])
+        as unnested_modules(module)) as ss,
+  jsonb_to_recordset(ss.lecture) as j (id text);
+
+select * from
+  (select jsonb_path_query_array(module->'lectures', '$[*]') as lecture
+   from unnest(array['{"lectures": [{"id": "1"}]}'::jsonb])
+        as unnested_modules(module)) as ss,
+  jsonb_to_recordset(ss.lecture) as j (id text);
