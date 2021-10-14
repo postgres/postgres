@@ -169,8 +169,8 @@ GetSharedSecurityLabel(const ObjectAddress *object, const char *provider)
 
 	pg_shseclabel = table_open(SharedSecLabelRelationId, AccessShareLock);
 
-	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
-							  NULL, 3, keys);
+	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId,
+							  criticalSharedRelcachesBuilt, NULL, 3, keys);
 
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
