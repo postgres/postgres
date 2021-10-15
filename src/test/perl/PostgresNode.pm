@@ -1271,9 +1271,10 @@ sub _set_pg_version
 		# complain about that, too.
 		$pg_config = "$inst/bin/pg_config";
 		BAIL_OUT("pg_config not found: $pg_config")
-		  unless -e $pg_config;
+		  unless -e $pg_config
+		  or ($TestLib::windows_os and -e "$pg_config.exe");
 		BAIL_OUT("pg_config not executable: $pg_config")
-		  unless -x $pg_config;
+		  unless $TestLib::windows_os or -x $pg_config;
 
 		# Leave $pg_config install_path qualified, to be sure we get the right
 		# version information, below, or die trying
