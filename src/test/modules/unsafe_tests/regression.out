@@ -1,0 +1,3 @@
+test rolenames                    ... ok          161 ms
+test alter_system_table           ... ok           53 ms
+test role_membership              ... FAILED      348 ms
