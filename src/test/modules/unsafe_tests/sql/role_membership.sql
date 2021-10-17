@@ -134,6 +134,45 @@ GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
 REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
 GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
 
+\connect postgres role_admin
+SELECT * FROM check_memberships();
+
+-- Test cluster-wide role membership
+GRANT role_a TO role_g IN DATABASE db_1;
+GRANT role_a TO role_g IN DATABASE db_2;
+GRANT role_d TO role_a IN DATABASE db_2;
+GRANT role_c TO role_b;
+GRANT role_e TO role_a; -- error (directly cyclical)
+SET SESSION AUTHORIZATION role_g;
+SET ROLE role_a; -- error
+SET ROLE role_b; -- success (cluster-wide direct member)
+SET ROLE role_c; -- success (inherited through role_b)
+SET ROLE role_d; -- error
+SET ROLE role_e; -- error
+SET ROLE role_g; -- success (self)
+SET ROLE pg_read_all_data; -- error
+
+-- Test database-specific role membership
+\connect db_1
+SET SESSION AUTHORIZATION role_g;
+SET ROLE role_a; -- success (database-specific direct member)
+SET ROLE role_b; -- success (cluster-wide direct member)
+SET ROLE role_c; -- success (inherited through role_b)
+SET ROLE role_d; -- error
+SET ROLE role_e; -- error (database-specific through role_a)
+SET ROLE role_f; -- error
+SET ROLE pg_read_all_data; -- success (inherted through role_b)
+
+\connect db_2
+SET SESSION AUTHORIZATION role_g;
+SET ROLE role_a; -- success (database-specific direct member)
+SET ROLE role_b; -- success
+SET ROLE role_c; -- success
+SET ROLE role_d; -- success (inherited through role_a)
+SET ROLE role_e; -- error
+SET ROLE role_f; -- error
+SET ROLE pg_read_all_data; -- success (inherited through role_b)
+
 -- test REVOKE works
 -- test grant error (pre-existing)
 -- test revoke error (non-existing)
