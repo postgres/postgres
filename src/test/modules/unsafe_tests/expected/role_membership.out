@@ -189,11 +189,8 @@ GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- success (
 SET SESSION AUTHORIZATION role_g;
 GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
 ERROR:  must have admin option on role "pg_read_all_data"
-REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: -- success (database-specific admin option was inherited from role_b)
+REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
 GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
-ERROR:  syntax error at or near ":"
-LINE 1: REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: 
-                                                               ^
 -- test REVOKE works
 -- test grant error (pre-existing)
 -- test revoke error (non-existing)
@@ -217,7 +214,7 @@ SELECT * FROM check_memberships();
  pg_read_all_data | role_c | role_a     | f            | role_membership_test4
  pg_read_all_data | role_d | role_admin | t            | role_membership_test4
  pg_read_all_data | role_f | role_e     | f            | role_membership_test2
- pg_read_all_data | role_f | role_b     | f            | role_membership_test4
+ pg_read_all_data | role_f | role_g     | f            | role_membership_test4
  pg_read_all_data | role_f | role_e     | f            | 
  role_a           | role_d | role_admin | f            | role_membership_test1
  role_a           | role_e | role_admin | f            | role_membership_test1

@@ -131,7 +131,7 @@ GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- success (
 \connect role_membership_test4
 SET SESSION AUTHORIZATION role_g;
 GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
-REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: -- success (database-specific admin option was inherited from role_b)
+REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
 GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
 
 -- test REVOKE works
