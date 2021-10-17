@@ -149,9 +149,5 @@ GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-speci
 -- Ensure that DROP DATABASE cleans up the relevant memberships
 
 \connect postgres role_admin
-
 DROP DATABASE db_3;
-
 SELECT * FROM check_memberships();
-
--- should deny database-specific grants for superuser roles?
