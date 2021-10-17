@@ -56,12 +56,13 @@ GRANT pg_read_all_data TO role_c IN DATABASE role_membership_test4 GRANTED BY ro
 SELECT * FROM check_memberships();
 
 -- Ensure GRANT warning messages for duplicate grants
-GRANT pg_read_all_data TO role_a; -- warn
-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test2; -- warn
+GRANT pg_read_all_data TO role_a; -- notice
+GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test2; -- notice
 
--- Ensure with admin option can still be granted without warning
+-- Ensure with admin option can still be granted without warning (unless already granted)
 GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test3 WITH ADMIN OPTION; -- silent
-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test3 WITH ADMIN OPTION; -- warn
+GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test3 WITH ADMIN OPTION; -- notice
+GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test4 WITH ADMIN OPTION; -- silent
 GRANT pg_read_all_data TO role_d IN DATABASE role_membership_test4 WITH ADMIN OPTION; -- silent
 
 SELECT * FROM check_memberships();
@@ -79,7 +80,7 @@ SELECT * FROM data; -- success (inherited from role_a)
 SET ROLE role_e;
 SELECT * FROM data; -- error (no inherit)
 
-\connect role_membership_test2;
+\connect role_membership_test2
 SET ROLE role_a;
 SELECT * FROM data; -- success (read-all cluster-wide)
 SET ROLE role_b;
@@ -92,10 +93,47 @@ SET ROLE role_e;
 SELECT * FROM data; -- error (no inherit)
 
 -- Ensure ADMIN OPTION can grant cluster-wide and within any DB if cluster-wide
--- Ensure ADMIN OPTION can grant only within same db if database-specific
+\connect template1
+CREATE ROLE role_f;
+CREATE ROLE role_g;
+GRANT role_b TO role_g;
 
+-- Test cluster-wide membership
+SET ROLE role_a;
+GRANT pg_write_all_data TO role_f; -- error (no admin option)
+GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
+REVOKE pg_read_all_data FROM role_f;
+GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test4; -- success (cluster-wide admin option)
+REVOKE pg_read_all_data FROM role_f IN DATABASE role_membership_test4;
 
--- test GRANT works
+-- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
+SET ROLE role_b;
+GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
+
+-- Ensure ADMIN OPTION can grant only within same database if database-specific
+\connect role_membership_test3
+SET SESSION AUTHORIZATION role_b;
+GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- error (no admin option for the target database)
+GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
+
+\connect role_membership_test4
+SET SESSION AUTHORIZATION role_b;
+GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test4; -- success (database-specific admin option within the same database)
+
+-- Ensure grant privileges inherit
+\connect role_membership_test3
+SET SESSION AUTHORIZATION role_e;
+GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option through role_a membership)
+GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- success (cluster-wide admin option through role_a membership)
+
+\connect role_membership_test4
+SET SESSION AUTHORIZATION role_g;
+GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: -- success (database-specific admin option was inherited from role_b)
+GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
+
 -- test REVOKE works
 -- test grant error (pre-existing)
 -- test revoke error (non-existing)
