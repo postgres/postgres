@@ -53,6 +53,9 @@ GRANT pg_read_all_data TO role_c IN DATABASE db_4 GRANTED BY role_a;
 
 \connect postgres role_admin
 
+-- Grant should fail if target database does not exist
+GRANT pg_read_all_data TO role_e IN DATABASE non_existent;
+
 SELECT * FROM check_memberships();
 
 -- Ensure GRANT warning messages for duplicate grants
@@ -143,6 +146,7 @@ GRANT role_a TO role_g IN DATABASE db_2;
 GRANT role_d TO role_a IN DATABASE db_2;
 GRANT role_c TO role_b;
 GRANT role_e TO role_a; -- error (directly cyclical)
+GRANT role_e TO role_a IN DATABASE db_2; -- error (directly cyclical)
 SET SESSION AUTHORIZATION role_g;
 SET ROLE role_a; -- error
 SET ROLE role_b; -- success (cluster-wide direct member)
@@ -159,7 +163,7 @@ SET ROLE role_a; -- success (database-specific direct member)
 SET ROLE role_b; -- success (cluster-wide direct member)
 SET ROLE role_c; -- success (inherited through role_b)
 SET ROLE role_d; -- error
-SET ROLE role_e; -- error (database-specific through role_a)
+SET ROLE role_e; -- error
 SET ROLE role_f; -- error
 SET ROLE pg_read_all_data; -- success (inherted through role_b)
 
@@ -174,17 +178,8 @@ SET ROLE role_f; -- error
 SET ROLE pg_read_all_data; -- success (inherited through role_b)
 
 -- test REVOKE works
--- test grant error (pre-existing)
 -- test revoke error (non-existing)
--- test adding admin option
 -- test removing admin option
-
--- test using admin option
--- test set session authorization
--- test set session role
-
--- test membership privileges
-
 -- Ensure that DROP DATABASE cleans up the relevant memberships
 
 \connect postgres role_admin
