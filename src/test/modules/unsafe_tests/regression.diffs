@@ -1,25 +1,190 @@
 diff -U3 /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/expected/role_membership.out /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/results/role_membership.out
---- /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/expected/role_membership.out	2021-10-17 12:34:10.000000000 -0700
-+++ /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/results/role_membership.out	2021-10-17 12:46:31.000000000 -0700
-@@ -189,11 +189,8 @@
+--- /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/expected/role_membership.out	2021-10-17 12:46:35.000000000 -0700
++++ /Users/kenaniah/workspace/postgres/src/test/modules/unsafe_tests/results/role_membership.out	2021-10-17 12:50:04.000000000 -0700
+@@ -26,63 +26,63 @@
+ CREATE ROLE role_e NOINHERIT;
+ \connect template1
+ CREATE TABLE data AS SELECT generate_series(1, 3);
+-CREATE DATABASE role_membership_test1;
+-CREATE DATABASE role_membership_test2;
+-CREATE DATABASE role_membership_test3;
+-CREATE DATABASE role_membership_test4;
++CREATE DATABASE db_1;
++CREATE DATABASE db_2;
++CREATE DATABASE db_3;
++CREATE DATABASE db_4;
+ -- Initial GRANT statements
+ GRANT pg_read_all_data TO role_a WITH ADMIN OPTION;
+-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test1;
+-GRANT role_a TO role_d IN DATABASE role_membership_test1;
++GRANT pg_read_all_data TO role_b IN DATABASE db_1;
++GRANT role_a TO role_d IN DATABASE db_1;
+ GRANT role_a TO role_e;
+-GRANT role_a TO role_e IN DATABASE role_membership_test1;
+-\connect role_membership_test2 role_admin
++GRANT role_a TO role_e IN DATABASE db_1;
++\connect db_2 role_admin
+ GRANT pg_read_all_data TO role_b IN CURRENT DATABASE;
+ GRANT pg_read_all_data TO role_c IN CURRENT DATABASE WITH ADMIN OPTION;
+-GRANT pg_read_all_data TO role_c IN DATABASE role_membership_test4 GRANTED BY role_a;
++GRANT pg_read_all_data TO role_c IN DATABASE db_4 GRANTED BY role_a;
+ \connect postgres role_admin
+ SELECT * FROM check_memberships();
+-       role       | member |  grantor   | admin_option |        datname        
+-------------------+--------+------------+--------------+-----------------------
++       role       | member |  grantor   | admin_option | datname 
++------------------+--------+------------+--------------+---------
+  pg_read_all_data | role_a | role_admin | t            | 
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test1
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test2
+- pg_read_all_data | role_c | role_admin | t            | role_membership_test2
+- pg_read_all_data | role_c | role_a     | f            | role_membership_test4
+- role_a           | role_d | role_admin | f            | role_membership_test1
+- role_a           | role_e | role_admin | f            | role_membership_test1
++ pg_read_all_data | role_b | role_admin | f            | db_1
++ pg_read_all_data | role_b | role_admin | f            | db_2
++ pg_read_all_data | role_c | role_admin | t            | db_2
++ pg_read_all_data | role_c | role_a     | f            | db_4
++ role_a           | role_d | role_admin | f            | db_1
++ role_a           | role_e | role_admin | f            | db_1
+  role_a           | role_e | role_admin | f            | 
+ (8 rows)
+ 
+ -- Ensure GRANT warning messages for duplicate grants
+ GRANT pg_read_all_data TO role_a; -- notice
+ NOTICE:  role "role_a" is already a member of role "pg_read_all_data"
+-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test2; -- notice
+-NOTICE:  role "role_b" is already a member of role "pg_read_all_data" in database "role_membership_test2"
++GRANT pg_read_all_data TO role_b IN DATABASE db_2; -- notice
++NOTICE:  role "role_b" is already a member of role "pg_read_all_data" in database "db_2"
+ -- Ensure with admin option can still be granted without warning (unless already granted)
+-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test3 WITH ADMIN OPTION; -- silent
+-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test3 WITH ADMIN OPTION; -- notice
+-NOTICE:  role "role_b" is already a member of role "pg_read_all_data" in database "role_membership_test3"
+-GRANT pg_read_all_data TO role_b IN DATABASE role_membership_test4 WITH ADMIN OPTION; -- silent
+-GRANT pg_read_all_data TO role_d IN DATABASE role_membership_test4 WITH ADMIN OPTION; -- silent
++GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- silent
++GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- notice
++NOTICE:  role "role_b" is already a member of role "pg_read_all_data" in database "db_3"
++GRANT pg_read_all_data TO role_b IN DATABASE db_4 WITH ADMIN OPTION; -- silent
++GRANT pg_read_all_data TO role_d IN DATABASE db_4 WITH ADMIN OPTION; -- silent
+ SELECT * FROM check_memberships();
+-       role       | member |  grantor   | admin_option |        datname        
+-------------------+--------+------------+--------------+-----------------------
++       role       | member |  grantor   | admin_option | datname 
++------------------+--------+------------+--------------+---------
+  pg_read_all_data | role_a | role_admin | t            | 
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test1
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test2
+- pg_read_all_data | role_b | role_admin | t            | role_membership_test3
+- pg_read_all_data | role_b | role_admin | t            | role_membership_test4
+- pg_read_all_data | role_c | role_admin | t            | role_membership_test2
+- pg_read_all_data | role_c | role_a     | f            | role_membership_test4
+- pg_read_all_data | role_d | role_admin | t            | role_membership_test4
+- role_a           | role_d | role_admin | f            | role_membership_test1
+- role_a           | role_e | role_admin | f            | role_membership_test1
++ pg_read_all_data | role_b | role_admin | f            | db_1
++ pg_read_all_data | role_b | role_admin | f            | db_2
++ pg_read_all_data | role_b | role_admin | t            | db_3
++ pg_read_all_data | role_b | role_admin | t            | db_4
++ pg_read_all_data | role_c | role_admin | t            | db_2
++ pg_read_all_data | role_c | role_a     | f            | db_4
++ pg_read_all_data | role_d | role_admin | t            | db_4
++ role_a           | role_d | role_admin | f            | db_1
++ role_a           | role_e | role_admin | f            | db_1
+  role_a           | role_e | role_admin | f            | 
+ (11 rows)
+ 
+ -- Test membership privileges
+-\connect role_membership_test1
++\connect db_1
+ SET ROLE role_a;
+ SELECT * FROM data; -- success (read-all cluster-wide)
+  generate_series 
+@@ -116,7 +116,7 @@
+ SET ROLE role_e;
+ SELECT * FROM data; -- error (no inherit)
+ ERROR:  permission denied for table data
+-\connect role_membership_test2
++\connect db_2
+ SET ROLE role_a;
+ SELECT * FROM data; -- success (read-all cluster-wide)
+  generate_series 
+@@ -161,31 +161,31 @@
+ ERROR:  must have admin option on role "pg_write_all_data"
+ GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
+ REVOKE pg_read_all_data FROM role_f;
+-GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test4; -- success (cluster-wide admin option)
+-REVOKE pg_read_all_data FROM role_f IN DATABASE role_membership_test4;
++GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (cluster-wide admin option)
++REVOKE pg_read_all_data FROM role_f IN DATABASE db_4;
+ -- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
+ SET ROLE role_b;
+ GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+ ERROR:  must have admin option on role "pg_read_all_data"
+-GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
++GRANT pg_read_all_data TO role_f IN DATABASE db_3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
+ ERROR:  must have admin option on role "pg_read_all_data"
+ -- Ensure ADMIN OPTION can grant only within same database if database-specific
+-\connect role_membership_test3
++\connect db_3
+ SET SESSION AUTHORIZATION role_b;
+ GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+ ERROR:  must have admin option on role "pg_read_all_data"
+-GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- error (no admin option for the target database)
++GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- error (no admin option for the target database)
+ ERROR:  must have admin option on role "pg_read_all_data"
+ GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
+-\connect role_membership_test4
++\connect db_4
+ SET SESSION AUTHORIZATION role_b;
+-GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test4; -- success (database-specific admin option within the same database)
++GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (database-specific admin option within the same database)
+ -- Ensure grant privileges inherit
+-\connect role_membership_test3
++\connect db_3
+ SET SESSION AUTHORIZATION role_e;
+ GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option through role_a membership)
+-GRANT pg_read_all_data TO role_f IN DATABASE role_membership_test2; -- success (cluster-wide admin option through role_a membership)
+-\connect role_membership_test4
++GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- success (cluster-wide admin option through role_a membership)
++\connect db_4
  SET SESSION AUTHORIZATION role_g;
  GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
  ERROR:  must have admin option on role "pg_read_all_data"
--REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: -- success (database-specific admin option was inherited from role_b)
-+REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
- GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
--ERROR:  syntax error at or near ":"
--LINE 1: REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE: 
--                                                               ^
- -- test REVOKE works
- -- test grant error (pre-existing)
- -- test revoke error (non-existing)
-@@ -217,7 +214,7 @@
-  pg_read_all_data | role_c | role_a     | f            | role_membership_test4
-  pg_read_all_data | role_d | role_admin | t            | role_membership_test4
-  pg_read_all_data | role_f | role_e     | f            | role_membership_test2
-- pg_read_all_data | role_f | role_b     | f            | role_membership_test4
-+ pg_read_all_data | role_f | role_g     | f            | role_membership_test4
+@@ -202,22 +202,22 @@
+ -- test membership privileges
+ -- Ensure that DROP DATABASE cleans up the relevant memberships
+ \connect postgres role_admin
+-DROP DATABASE role_membership_test3;
++DROP DATABASE db_3;
+ SELECT * FROM check_memberships();
+-       role       | member |  grantor   | admin_option |        datname        
+-------------------+--------+------------+--------------+-----------------------
++       role       | member |  grantor   | admin_option | datname 
++------------------+--------+------------+--------------+---------
+  pg_read_all_data | role_a | role_admin | t            | 
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test1
+- pg_read_all_data | role_b | role_admin | f            | role_membership_test2
+- pg_read_all_data | role_b | role_admin | t            | role_membership_test4
+- pg_read_all_data | role_c | role_admin | t            | role_membership_test2
+- pg_read_all_data | role_c | role_a     | f            | role_membership_test4
+- pg_read_all_data | role_d | role_admin | t            | role_membership_test4
+- pg_read_all_data | role_f | role_e     | f            | role_membership_test2
+- pg_read_all_data | role_f | role_g     | f            | role_membership_test4
++ pg_read_all_data | role_b | role_admin | f            | db_1
++ pg_read_all_data | role_b | role_admin | f            | db_2
++ pg_read_all_data | role_b | role_admin | t            | db_4
++ pg_read_all_data | role_c | role_admin | t            | db_2
++ pg_read_all_data | role_c | role_a     | f            | db_4
++ pg_read_all_data | role_d | role_admin | t            | db_4
++ pg_read_all_data | role_f | role_e     | f            | db_2
++ pg_read_all_data | role_f | role_g     | f            | db_4
   pg_read_all_data | role_f | role_e     | f            | 
-  role_a           | role_d | role_admin | f            | role_membership_test1
-  role_a           | role_e | role_admin | f            | role_membership_test1
+- role_a           | role_d | role_admin | f            | role_membership_test1
+- role_a           | role_e | role_admin | f            | role_membership_test1
++ role_a           | role_d | role_admin | f            | db_1
++ role_a           | role_e | role_admin | f            | db_1
+  role_a           | role_e | role_admin | f            | 
+  role_b           | role_g | role_admin | f            | 
+ (14 rows)
