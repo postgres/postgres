@@ -2872,3 +2872,22 @@ select indexrelid::regclass, indisclustered from pg_index
   where indrelid = 'alttype_cluster'::regclass
   order by indexrelid::regclass::text;
 drop table alttype_cluster;
+
+--
+-- Check that attaching or detaching a partitioned partition correctly leads
+-- to its partitions' constraint being updated to reflect the parent's
+-- newly added/removed constraint
+create table target_parted (a int, b int) partition by list (a);
+create table attach_parted (a int, b int) partition by list (b);
+create table attach_parted_part1 partition of attach_parted for values in (1);
+-- insert a row directly into the leaf partition so that its partition
+-- constraint is built and stored in the relcache
+insert into attach_parted_part1 values (1, 1);
+-- the following better invalidate the partition constraint of the leaf
+-- partition too...
+alter table target_parted attach partition attach_parted for values in (1);
+-- ...such that the following insert fails
+insert into attach_parted_part1 values (2, 1);
+-- ...and doesn't when the partition is detached along with its own partition
+alter table target_parted detach partition attach_parted;
+insert into attach_parted_part1 values (2, 1);
