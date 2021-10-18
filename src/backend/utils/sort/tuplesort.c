@@ -2923,7 +2923,7 @@ mergeruns(Tuplesortstate *state)
 		 * Rewind all the output tapes, and make them inputs for the next
 		 * pass.
 		 */
-		if (state->nInputRuns == 0 && !WORKER(state))
+		if (state->nInputRuns == 0)
 		{
 			int64		input_buffer_size;
 
@@ -2975,7 +2975,8 @@ mergeruns(Tuplesortstate *state)
 			 * sorted tape, we can stop at this point and do the final merge
 			 * on-the-fly.
 			 */
-			if (!state->randomAccess && state->nInputRuns <= state->nInputTapes)
+			if (!state->randomAccess && state->nInputRuns <= state->nInputTapes
+				&& !WORKER(state))
 			{
 				/* Tell logtape.c we won't be writing anymore */
 				LogicalTapeSetForgetFreeSpace(state->tapeset);
