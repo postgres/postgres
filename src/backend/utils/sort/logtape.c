@@ -134,7 +134,7 @@ typedef struct TapeBlockTrailer
  * buffer.  The buffer therefore contains one large contiguous chunk of data
  * from the tape.
  */
-typedef struct LogicalTape
+struct LogicalTape
 {
 	LogicalTapeSet *tapeSet;	/* tape set this tape is part of */
 
@@ -175,7 +175,7 @@ typedef struct LogicalTape
 	long	   *prealloc;
 	int			nprealloc;		/* number of elements in list */
 	int			prealloc_size;	/* number of elements list can hold */
-} LogicalTape;
+};
 
 /*
  * This data structure represents a set of related "logical tapes" sharing
