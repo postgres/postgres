@@ -44,6 +44,7 @@
 #include "replication/logical.h"
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
+#include "replication/snapbuild.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
@@ -2581,6 +2582,9 @@ AbortTransaction(void)
 	/* Forget about any active REINDEX. */
 	ResetReindexState(s->nestingLevel);
 
+	/* Reset snapshot export state. */
+	SnapBuildResetExportedSnapshotState();
+
 	/* If in parallel mode, clean up workers and exit parallel mode. */
 	if (IsInParallelMode())
 	{
@@ -4793,6 +4797,11 @@ AbortSubTransaction(void)
 
 	/* Forget about any active REINDEX. */
 	ResetReindexState(s->nestingLevel);
+
+	/*
+	 * No need for SnapBuildResetExportedSnapshotState() here, snapshot
+	 * exports are not supported in subtransactions.
+	 */
 
 	/* Exit from parallel mode, if necessary. */
 	if (IsInParallelMode())
