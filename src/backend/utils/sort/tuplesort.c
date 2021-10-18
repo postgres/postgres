@@ -2911,7 +2911,7 @@ mergeruns(Tuplesortstate *state)
 	USEMEM(state, state->availMem);
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "worker %d using " INT64_FORMAT " KB of memory for tape buffers",
+		elog(LOG, "worker %d using %zu KB of memory for tape buffers",
 			 state->worker, state->tape_buffer_mem / 1024);
 #endif
 
