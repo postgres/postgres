@@ -68,6 +68,10 @@ GRANT pg_read_all_data TO role_read_template1, role_read_all_noinherit IN CURREN
 -- Failure due to missing database
 GRANT pg_read_all_data TO role_read_template1 IN DATABASE non_existent; -- error
 
+-- Should warn on duplicate grants
+GRANT pg_read_all_data TO role_read_all_with_admin; -- notice
+GRANT pg_read_all_data TO role_read_template1 IN DATABASE template1; -- notice
+
 -- Check membership table
 \connect postgres role_admin
 SELECT * FROM check_memberships();
