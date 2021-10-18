@@ -697,6 +697,8 @@ SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
 void
 SnapBuildClearExportedSnapshot(void)
 {
+	ResourceOwner tmpResOwner;
+
 	/* nothing exported, that is the usual case */
 	if (!ExportInProgress)
 		return;
@@ -704,10 +706,24 @@ SnapBuildClearExportedSnapshot(void)
 	if (!IsTransactionState())
 		elog(ERROR, "clearing exported snapshot in wrong transaction state");
 
-	/* make sure nothing  could have ever happened */
+	/*
+	 * AbortCurrentTransaction() takes care of resetting the snapshot state,
+	 * so remember SavedResourceOwnerDuringExport.
+	 */
+	tmpResOwner = SavedResourceOwnerDuringExport;
+
+	/* make sure nothing could have ever happened */
 	AbortCurrentTransaction();
 
-	CurrentResourceOwner = SavedResourceOwnerDuringExport;
+	CurrentResourceOwner = tmpResOwner;
+}
+
+/*
+ * Clear snapshot export state during transaction abort.
+ */
+void
+SnapBuildResetExportedSnapshotState(void)
+{
 	SavedResourceOwnerDuringExport = NULL;
 	ExportInProgress = false;
 }
