@@ -17,19 +17,13 @@ LEFT JOIN pg_roles m ON m.oid = a.member
 LEFT JOIN pg_roles g ON g.oid = a.grantor
 LEFT JOIN pg_database d ON d.oid = a.dbid
 WHERE
-  m.rolname LIKE 'role__'
+  m.rolname LIKE 'role_%'
 ORDER BY
   1, 2, 5
 $$ LANGUAGE SQL;
 
-CREATE ROLE role_a;
-CREATE ROLE role_b;
-CREATE ROLE role_c;
-CREATE ROLE role_d;
-CREATE ROLE role_e NOINHERIT;
-
+-- Populate test databases
 \connect template1
-
 CREATE TABLE data AS SELECT generate_series(1, 3);
 
 CREATE DATABASE db_1;
@@ -37,151 +31,349 @@ CREATE DATABASE db_2;
 CREATE DATABASE db_3;
 CREATE DATABASE db_4;
 
--- Initial GRANT statements
+-- Read all cluster-wide with admin option
+CREATE ROLE role_read_all_with_admin;
+GRANT pg_read_all_data TO role_read_all_with_admin WITH ADMIN OPTION;
 
-GRANT pg_read_all_data TO role_a WITH ADMIN OPTION;
-GRANT pg_read_all_data TO role_b IN DATABASE db_1;
-GRANT role_a TO role_d IN DATABASE db_1;
-GRANT role_a TO role_e;
-GRANT role_a TO role_e IN DATABASE db_1;
+-- Read all in databases 1 and 2
+CREATE ROLE role_read_12;
+GRANT pg_read_all_data TO role_read_12 IN DATABASE db_1;
+GRANT pg_read_all_data TO role_read_12 IN DATABASE db_2;
 
-\connect db_2 role_admin
+-- Read all in databases 3 and 4 with admin option
+CREATE ROLE role_read_34;
+GRANT pg_read_all_data TO role_read_34 IN DATABASE db_3 WITH ADMIN OPTION;
+GRANT pg_read_all_data TO role_read_34 IN DATABASE db_4 WITH ADMIN OPTION;
 
-GRANT pg_read_all_data TO role_b IN CURRENT DATABASE;
-GRANT pg_read_all_data TO role_c IN CURRENT DATABASE WITH ADMIN OPTION;
-GRANT pg_read_all_data TO role_c IN DATABASE db_4 GRANTED BY role_a;
+-- Inherits read all in databases 3 and 4
+CREATE ROLE role_inherited_34;
+GRANT role_read_34 TO role_inherited_34;
 
+-- Inherits read all in database 3
+CREATE ROLE role_inherited_3;
+GRANT role_read_34 TO role_inherited_3 IN DATABASE db_3;
+
+-- No inherit
+CREATE ROLE role_read_all_noinherit NOINHERIT;
+GRANT role_read_all_with_admin TO role_read_all_noinherit;
+
+-- No inherit in databases 1 and 2
+CREATE ROLE role_read_12_noinherit NOINHERIT;
+GRANT role_read_12 TO role_read_12_noinherit;
+
+-- Alternate syntax
+CREATE ROLE role_read_template1;
+GRANT pg_read_all_data TO role_read_template1, role_read_all_noinherit IN CURRENT DATABASE;
+
+-- Failure due to missing database
+GRANT pg_read_all_data TO role_read_template1 IN DATABASE non_existent; -- error
+
+-- Check membership table
 \connect postgres role_admin
-
--- Grant should fail if target database does not exist
-GRANT pg_read_all_data TO role_e IN DATABASE non_existent;
-
-SELECT * FROM check_memberships();
-
--- Ensure GRANT warning messages for duplicate grants
-GRANT pg_read_all_data TO role_a; -- notice
-GRANT pg_read_all_data TO role_b IN DATABASE db_2; -- notice
-
--- Ensure with admin option can still be granted without warning (unless already granted)
-GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- silent
-GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- notice
-GRANT pg_read_all_data TO role_b IN DATABASE db_4 WITH ADMIN OPTION; -- silent
-GRANT pg_read_all_data TO role_d IN DATABASE db_4 WITH ADMIN OPTION; -- silent
-
 SELECT * FROM check_memberships();
 
 -- Test membership privileges
 \connect db_1
-SET ROLE role_a;
-SELECT * FROM data; -- success (read-all cluster-wide)
-SET ROLE role_b;
-SELECT * FROM data; -- success (read-all in database)
-SET ROLE role_c;
-SELECT * FROM data; -- error (not granted)
-SET ROLE role_d;
-SELECT * FROM data; -- success (inherited from role_a)
-SET ROLE role_e;
-SELECT * FROM data; -- error (no inherit)
+SET ROLE role_read_all_with_admin;
+SELECT * FROM data; -- success
+SET ROLE role_read_12;
+SELECT * FROM data; -- success
+SET ROLE role_read_34;
+SELECT * FROM data; -- error
+SET ROLE role_inherited_34;
+SELECT * FROM data; -- error
+SET ROLE role_inherited_3;
+SELECT * FROM data; -- error
+SET ROLE role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12_noinherit;
+SELECT * FROM data; -- error
+
+SET SESSION AUTHORIZATION role_read_12;
+SET ROLE pg_read_all_data; -- success
+
+SET SESSION AUTHORIZATION role_inherited_34;
+SET ROLE pg_read_all_data; -- error
+SET ROLE role_read_34; -- success
+
+SET SESSION AUTHORIZATION role_inherited_3;
+SET ROLE pg_read_all_data; -- error
+SET ROLE role_read_34; -- error
+
+SET SESSION AUTHORIZATION role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE pg_read_all_data; -- success
+SELECT * FROM data; -- success
+
+SET SESSION AUTHORIZATION role_read_12_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12; -- success
+SELECT * FROM data; -- success
+
 
 \connect db_2
-SET ROLE role_a;
-SELECT * FROM data; -- success (read-all cluster-wide)
-SET ROLE role_b;
-SELECT * FROM data; -- success (read-all in database)
-SET ROLE role_c;
-SELECT * FROM data; -- success (read-all in database)
-SET ROLE role_d;
-SELECT * FROM data; -- error (not granted)
-SET ROLE role_e;
-SELECT * FROM data; -- error (no inherit)
+SET ROLE role_read_all_with_admin;
+SELECT * FROM data; -- success
+SET ROLE role_read_12;
+SELECT * FROM data; -- success
+SET ROLE role_read_34;
+SELECT * FROM data; -- error
+SET ROLE role_inherited_34;
+SELECT * FROM data; -- error
+SET ROLE role_inherited_3;
+SELECT * FROM data; -- error
+SET ROLE role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12_noinherit;
+SELECT * FROM data; -- error
 
--- Ensure ADMIN OPTION can grant cluster-wide and within any DB if cluster-wide
-\connect template1
-CREATE ROLE role_f;
-CREATE ROLE role_g;
-GRANT role_b TO role_g;
+SET SESSION AUTHORIZATION role_read_12;
+SET ROLE pg_read_all_data; -- success
 
--- Test cluster-wide membership
-SET ROLE role_a;
-GRANT pg_write_all_data TO role_f; -- error (no admin option)
-GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
-REVOKE pg_read_all_data FROM role_f;
-GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (cluster-wide admin option)
-REVOKE pg_read_all_data FROM role_f IN DATABASE db_4;
+SET SESSION AUTHORIZATION role_inherited_34;
+SET ROLE pg_read_all_data; -- error
+SET ROLE role_read_34; -- success
 
--- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
-SET ROLE role_b;
-GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
-GRANT pg_read_all_data TO role_f IN DATABASE db_3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
+SET SESSION AUTHORIZATION role_inherited_3;
+SET ROLE pg_read_all_data; -- error
+SET ROLE role_read_34; -- error
 
--- Ensure ADMIN OPTION can grant only within same database if database-specific
+SET SESSION AUTHORIZATION role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE pg_read_all_data; -- success
+SELECT * FROM data; -- success
+
+SET SESSION AUTHORIZATION role_read_12_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12; -- success
+SELECT * FROM data; -- success
+
 \connect db_3
-SET SESSION AUTHORIZATION role_b;
-GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
-GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- error (no admin option for the target database)
-GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
+SET ROLE role_read_all_with_admin;
+SELECT * FROM data; -- success
+SET ROLE role_read_12;
+SELECT * FROM data; -- error
+SET ROLE role_read_34;
+SELECT * FROM data; -- success
+SET ROLE role_inherited_34;
+SELECT * FROM data; -- success
+SET ROLE role_inherited_3;
+SELECT * FROM data; -- success
+SET ROLE role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12_noinherit;
+SELECT * FROM data; -- error
 
-\connect db_4
-SET SESSION AUTHORIZATION role_b;
-GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (database-specific admin option within the same database)
-
--- Ensure grant privileges inherit
-\connect db_3
-SET SESSION AUTHORIZATION role_e;
-GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option through role_a membership)
-GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- success (cluster-wide admin option through role_a membership)
-
-\connect db_4
-SET SESSION AUTHORIZATION role_g;
-GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
-REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
-GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
-
-\connect postgres role_admin
-SELECT * FROM check_memberships();
-
--- Test cluster-wide role membership
-GRANT role_a TO role_g IN DATABASE db_1;
-GRANT role_a TO role_g IN DATABASE db_2;
-GRANT role_d TO role_a IN DATABASE db_2;
-GRANT role_c TO role_b;
-GRANT role_e TO role_a; -- error (directly cyclical)
-GRANT role_e TO role_a IN DATABASE db_2; -- error (directly cyclical)
-SET SESSION AUTHORIZATION role_g;
-SET ROLE role_a; -- error
-SET ROLE role_b; -- success (cluster-wide direct member)
-SET ROLE role_c; -- success (inherited through role_b)
-SET ROLE role_d; -- error
-SET ROLE role_e; -- error
-SET ROLE role_g; -- success (self)
+SET SESSION AUTHORIZATION role_read_12;
 SET ROLE pg_read_all_data; -- error
 
--- Test database-specific role membership
-\connect db_1
-SET SESSION AUTHORIZATION role_g;
-SET ROLE role_a; -- success (database-specific direct member)
-SET ROLE role_b; -- success (cluster-wide direct member)
-SET ROLE role_c; -- success (inherited through role_b)
-SET ROLE role_d; -- error
-SET ROLE role_e; -- error
-SET ROLE role_f; -- error
-SET ROLE pg_read_all_data; -- success (inherted through role_b)
+SET SESSION AUTHORIZATION role_inherited_34;
+SET ROLE pg_read_all_data; -- success
+SET ROLE role_read_34; -- success
 
-\connect db_2
-SET SESSION AUTHORIZATION role_g;
-SET ROLE role_a; -- success (database-specific direct member)
-SET ROLE role_b; -- success
-SET ROLE role_c; -- success
-SET ROLE role_d; -- success (inherited through role_a)
-SET ROLE role_e; -- error
-SET ROLE role_f; -- error
-SET ROLE pg_read_all_data; -- success (inherited through role_b)
+SET SESSION AUTHORIZATION role_inherited_3;
+SET ROLE pg_read_all_data; -- success
+SET ROLE role_read_34; -- success
 
--- test REVOKE works
--- test revoke error (non-existing)
--- test removing admin option
--- Ensure that DROP DATABASE cleans up the relevant memberships
+SET SESSION AUTHORIZATION role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE pg_read_all_data; -- success
+SELECT * FROM data; -- success
 
-\connect postgres role_admin
-DROP DATABASE db_3;
-SELECT * FROM check_memberships();
+SET SESSION AUTHORIZATION role_read_12_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12; -- error
+SELECT * FROM data; -- error
+
+\connect db_4
+SET ROLE role_read_all_with_admin;
+SELECT * FROM data; -- success
+SET ROLE role_read_12;
+SELECT * FROM data; -- error
+SET ROLE role_read_34;
+SELECT * FROM data; -- success
+SET ROLE role_inherited_34;
+SELECT * FROM data; -- success
+SET ROLE role_inherited_3;
+SELECT * FROM data; -- error
+SET ROLE role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12_noinherit;
+SELECT * FROM data; -- error
+
+SET SESSION AUTHORIZATION role_read_12;
+SET ROLE pg_read_all_data; -- error
+
+SET SESSION AUTHORIZATION role_inherited_34;
+SET ROLE pg_read_all_data; -- success
+SET ROLE role_read_34; -- success
+
+SET SESSION AUTHORIZATION role_inherited_3;
+SET ROLE pg_read_all_data; -- error
+SET ROLE role_read_34; -- error
+
+SET SESSION AUTHORIZATION role_read_all_noinherit;
+SELECT * FROM data; -- error
+SET ROLE pg_read_all_data; -- success
+SELECT * FROM data; -- success
+
+SET SESSION AUTHORIZATION role_read_12_noinherit;
+SELECT * FROM data; -- error
+SET ROLE role_read_12; -- error
+SELECT * FROM data; -- error
+
+
+-- CREATE ROLE role_a;
+-- CREATE ROLE role_b;
+-- CREATE ROLE role_c;
+-- CREATE ROLE role_d;
+-- CREATE ROLE role_e NOINHERIT;
+
+-- -- Initial GRANT statements
+
+-- GRANT pg_read_all_data TO role_a WITH ADMIN OPTION;
+-- GRANT pg_read_all_data TO role_b IN DATABASE db_1;
+-- GRANT role_a TO role_d IN DATABASE db_1;
+-- GRANT role_a TO role_e;
+-- GRANT role_a TO role_e IN DATABASE db_1;
+
+-- \connect db_2 role_admin
+
+-- GRANT pg_read_all_data TO role_b IN CURRENT DATABASE;
+-- GRANT pg_read_all_data TO role_c IN CURRENT DATABASE WITH ADMIN OPTION;
+-- GRANT pg_read_all_data TO role_c IN DATABASE db_4 GRANTED BY role_a;
+
+-- \connect postgres role_admin
+
+-- -- Grant should fail if target database does not exist
+-- GRANT pg_read_all_data TO role_e IN DATABASE non_existent;
+
+-- SELECT * FROM check_memberships();
+
+-- -- Ensure GRANT warning messages for duplicate grants
+-- GRANT pg_read_all_data TO role_a; -- notice
+-- GRANT pg_read_all_data TO role_b IN DATABASE db_2; -- notice
+
+-- -- Ensure with admin option can still be granted without warning (unless already granted)
+-- GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- silent
+-- GRANT pg_read_all_data TO role_b IN DATABASE db_3 WITH ADMIN OPTION; -- notice
+-- GRANT pg_read_all_data TO role_b IN DATABASE db_4 WITH ADMIN OPTION; -- silent
+-- GRANT pg_read_all_data TO role_d IN DATABASE db_4 WITH ADMIN OPTION; -- silent
+
+-- SELECT * FROM check_memberships();
+
+-- -- Test membership privileges
+-- \connect db_1
+-- SET ROLE role_a;
+-- SELECT * FROM data; -- success (read-all cluster-wide)
+-- SET ROLE role_b;
+-- SELECT * FROM data; -- success (read-all in database)
+-- SET ROLE role_c;
+-- SELECT * FROM data; -- error (not granted)
+-- SET ROLE role_d;
+-- SELECT * FROM data; -- success (inherited from role_a)
+-- SET ROLE role_e;
+-- SELECT * FROM data; -- error (no inherit)
+
+-- \connect db_2
+-- SET ROLE role_a;
+-- SELECT * FROM data; -- success (read-all cluster-wide)
+-- SET ROLE role_b;
+-- SELECT * FROM data; -- success (read-all in database)
+-- SET ROLE role_c;
+-- SELECT * FROM data; -- success (read-all in database)
+-- SET ROLE role_d;
+-- SELECT * FROM data; -- error (not granted)
+-- SET ROLE role_e;
+-- SELECT * FROM data; -- error (no inherit)
+
+-- -- Ensure ADMIN OPTION can grant cluster-wide and within any DB if cluster-wide
+-- \connect template1
+-- CREATE ROLE role_f;
+-- CREATE ROLE role_g;
+-- GRANT role_b TO role_g;
+
+-- -- Test cluster-wide membership
+-- SET ROLE role_a;
+-- GRANT pg_write_all_data TO role_f; -- error (no admin option)
+-- GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
+-- REVOKE pg_read_all_data FROM role_f;
+-- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (cluster-wide admin option)
+-- REVOKE pg_read_all_data FROM role_f IN DATABASE db_4;
+
+-- -- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
+-- SET ROLE role_b;
+-- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+-- GRANT pg_read_all_data TO role_f IN DATABASE db_3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
+
+-- -- Ensure ADMIN OPTION can grant only within same database if database-specific
+-- \connect db_3
+-- SET SESSION AUTHORIZATION role_b;
+-- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+-- GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- error (no admin option for the target database)
+-- GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
+
+-- \connect db_4
+-- SET SESSION AUTHORIZATION role_b;
+-- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (database-specific admin option within the same database)
+
+-- -- Ensure grant privileges inherit
+-- \connect db_3
+-- SET SESSION AUTHORIZATION role_e;
+-- GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option through role_a membership)
+-- GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- success (cluster-wide admin option through role_a membership)
+
+-- \connect db_4
+-- SET SESSION AUTHORIZATION role_g;
+-- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
+-- REVOKE pg_read_all_data FROM role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
+-- GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option was inherited from role_b)
+
+-- \connect postgres role_admin
+-- SELECT * FROM check_memberships();
+
+-- -- Test cluster-wide role membership
+-- GRANT role_a TO role_g IN DATABASE db_1;
+-- GRANT role_a TO role_g IN DATABASE db_2;
+-- GRANT role_d TO role_a IN DATABASE db_2;
+-- GRANT role_c TO role_b;
+-- GRANT role_e TO role_a; -- error (directly cyclical)
+-- GRANT role_e TO role_a IN DATABASE db_2; -- error (directly cyclical)
+-- SET SESSION AUTHORIZATION role_g;
+-- SET ROLE role_a; -- error
+-- SET ROLE role_b; -- success (cluster-wide direct member)
+-- SET ROLE role_c; -- success (inherited through role_b)
+-- SET ROLE role_d; -- error
+-- SET ROLE role_e; -- error
+-- SET ROLE role_g; -- success (self)
+-- SET ROLE pg_read_all_data; -- error
+
+-- -- Test database-specific role membership
+-- \connect db_1
+-- SET SESSION AUTHORIZATION role_g;
+-- SET ROLE role_a; -- success (database-specific direct member)
+-- SET ROLE role_b; -- success (cluster-wide direct member)
+-- SET ROLE role_c; -- success (inherited through role_b)
+-- SET ROLE role_d; -- error
+-- SET ROLE role_e; -- error
+-- SET ROLE role_f; -- error
+-- SET ROLE pg_read_all_data; -- success (inherted through role_b)
+
+-- \connect db_2
+-- SET SESSION AUTHORIZATION role_g;
+-- SET ROLE role_a; -- success (database-specific direct member)
+-- SET ROLE role_b; -- success
+-- SET ROLE role_c; -- success
+-- SET ROLE role_d; -- success (inherited through role_a)
+-- SET ROLE role_e; -- error
+-- SET ROLE role_f; -- error
+-- SET ROLE pg_read_all_data; -- success (inherited through role_b)
+
+-- -- test REVOKE works
+-- -- test revoke error (non-existing)
+-- -- test removing admin option
+-- -- Ensure that DROP DATABASE cleans up the relevant memberships
+
+-- \connect postgres role_admin
+-- DROP DATABASE db_3;
+-- SELECT * FROM check_memberships();
