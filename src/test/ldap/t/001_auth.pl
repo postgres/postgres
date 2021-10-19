@@ -127,10 +127,12 @@ while (1)
 	last
 	  if (
 		system_log(
-			"ldapsearch", "-h", $ldap_server, "-p",
-			$ldap_port,   "-s", "base",       "-b",
-			$ldap_basedn, "-D", $ldap_rootdn, "-y",
-			$ldap_pwfile, "-n", "'objectclass=*'") == 0);
+			"ldapsearch", "-sbase",
+			"-H",         $ldap_url,
+			"-b",         $ldap_basedn,
+			"-D",         $ldap_rootdn,
+			"-y",         $ldap_pwfile,
+			"-n",         "'objectclass=*'") == 0);
 	die "cannot connect to slapd" if ++$retries >= 300;
 	note "waiting for slapd to accept requests...";
 	Time::HiRes::usleep(1000000);
