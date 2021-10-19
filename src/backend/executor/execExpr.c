@@ -2673,11 +2673,14 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref,
  * (We could use this in FieldStore too, but in that case passing the old
  * value is so cheap there's no need.)
  *
- * Note: it might seem that this needs to recurse, but it does not; the
- * CaseTestExpr, if any, will be directly the arg or refexpr of the top-level
- * node.  Nested-assignment situations give rise to expression trees in which
- * each level of assignment has its own CaseTestExpr, and the recursive
- * structure appears within the newvals or refassgnexpr field.
+ * Note: it might seem that this needs to recurse, but in most cases it does
+ * not; the CaseTestExpr, if any, will be directly the arg or refexpr of the
+ * top-level node.  Nested-assignment situations give rise to expression
+ * trees in which each level of assignment has its own CaseTestExpr, and the
+ * recursive structure appears within the newvals or refassgnexpr field.
+ * There is an exception, though: if the array is an array-of-domain, we will
+ * have a CoerceToDomain as the refassgnexpr, and we need to be able to look
+ * through that.
  */
 static bool
 isAssignmentIndirectionExpr(Expr *expr)
@@ -2697,6 +2700,12 @@ isAssignmentIndirectionExpr(Expr *expr)
 
 		if (arrayRef->refexpr && IsA(arrayRef->refexpr, CaseTestExpr))
 			return true;
+	}
+	else if (IsA(expr, CoerceToDomain))
+	{
+		CoerceToDomain *cd = (CoerceToDomain *) expr;
+
+		return isAssignmentIndirectionExpr(cd->arg);
 	}
 	return false;
 }
