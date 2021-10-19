@@ -512,6 +512,30 @@ LINE 1: update dposintatable set (f1[2])[1] = array[98];
 drop table dposintatable;
 drop domain posint cascade;
 NOTICE:  drop cascades to type dposinta
+-- Test arrays over domains of composite
+create type comptype as (cf1 int, cf2 int);
+create domain dcomptype as comptype check ((value).cf1 > 0);
+create table dcomptable (f1 dcomptype[]);
+insert into dcomptable values (null);
+update dcomptable set f1[1].cf2 = 5;
+table dcomptable;
+    f1    
+----------
+ {"(,5)"}
+(1 row)
+
+update dcomptable set f1[1].cf1 = -1;  -- fail
+ERROR:  value for domain dcomptype violates check constraint "dcomptype_check"
+update dcomptable set f1[1].cf1 = 1;
+table dcomptable;
+    f1     
+-----------
+ {"(1,5)"}
+(1 row)
+
+drop table dcomptable;
+drop type comptype cascade;
+NOTICE:  drop cascades to type dcomptype
 -- Test not-null restrictions
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
