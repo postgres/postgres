@@ -3406,7 +3406,7 @@ RenameConstraint(RenameStmt *stmt)
 ObjectAddress
 RenameRelation(RenameStmt *stmt)
 {
-	bool		is_index = stmt->renameType == OBJECT_INDEX;
+	bool		is_index_stmt = stmt->renameType == OBJECT_INDEX;
 	Oid			relid;
 	ObjectAddress address;
 
@@ -3416,24 +3416,48 @@ RenameRelation(RenameStmt *stmt)
 	 * end of transaction.
 	 *
 	 * Lock level used here should match RenameRelationInternal, to avoid lock
-	 * escalation.
+	 * escalation.  However, because ALTER INDEX can be used with any relation
+	 * type, we mustn't believe without verification.
 	 */
-	relid = RangeVarGetRelidExtended(stmt->relation,
-									 is_index ? ShareUpdateExclusiveLock : AccessExclusiveLock,
-									 stmt->missing_ok ? RVR_MISSING_OK : 0,
-									 RangeVarCallbackForAlterRelation,
-									 (void *) stmt);
-
-	if (!OidIsValid(relid))
+	for (;;)
 	{
-		ereport(NOTICE,
-				(errmsg("relation \"%s\" does not exist, skipping",
-						stmt->relation->relname)));
-		return InvalidObjectAddress;
+		LOCKMODE	lockmode;
+		char		relkind;
+		bool		obj_is_index;
+
+		lockmode = is_index_stmt ? ShareUpdateExclusiveLock : AccessExclusiveLock;
+
+		relid = RangeVarGetRelidExtended(stmt->relation, lockmode,
+										 stmt->missing_ok ? RVR_MISSING_OK : 0,
+										 RangeVarCallbackForAlterRelation,
+										 (void *) stmt);
+
+		if (!OidIsValid(relid))
+		{
+			ereport(NOTICE,
+					(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+			return InvalidObjectAddress;
+		}
+
+		/*
+		 * We allow mismatched statement and object types (e.g., ALTER INDEX
+		 * to rename a table), but we might've used the wrong lock level.  If
+		 * that happens, retry with the correct lock level.  We don't bother
+		 * if we already acquired AccessExclusiveLock with an index, however.
+		 */
+		relkind = get_rel_relkind(relid);
+		obj_is_index = (relkind == RELKIND_INDEX ||
+						relkind == RELKIND_PARTITIONED_INDEX);
+		if (obj_is_index || is_index_stmt == obj_is_index)
+			break;
+
+		UnlockRelationOid(relid, lockmode);
+		is_index_stmt = obj_is_index;
 	}
 
 	/* Do the work */
-	RenameRelationInternal(relid, stmt->newname, false, is_index);
+	RenameRelationInternal(relid, stmt->newname, false, is_index_stmt);
 
 	ObjectAddressSet(address, RelationRelationId, relid);
 
@@ -3480,6 +3504,16 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists",
 						newrelname)));
+
+	/*
+	 * RenameRelation is careful not to believe the caller's idea of the
+	 * relation kind being handled.  We don't have to worry about this, but
+	 * let's not be totally oblivious to it.  We can process an index as
+	 * not-an-index, but not the other way around.
+	 */
+	Assert(!is_index ||
+		   is_index == (targetrelation->rd_rel->relkind == RELKIND_INDEX ||
+						targetrelation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX));
 
 	/*
 	 * Update pg_class tuple with new relname.  (Scribbling on reltup is OK
