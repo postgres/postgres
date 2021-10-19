@@ -6213,10 +6213,10 @@ getFuncs(Archive *fout, int *numFuncs)
 
 /*
  * getTables
- *	  read all the tables (no indexes)
- * in the system catalogs return them in the TableInfo* structure
+ *	  read all the tables (no indexes) in the system catalogs,
+ *	  and return them as an array of TableInfo structures
  *
- * numTables is set to the number of tables read in
+ * *numTables is set to the number of tables read in
  */
 TableInfo *
 getTables(Archive *fout, int *numTables)
@@ -6232,41 +6232,41 @@ getTables(Archive *fout, int *numTables)
 	int			i_relname;
 	int			i_relnamespace;
 	int			i_relkind;
-	int			i_relacl;
-	int			i_rrelacl;
-	int			i_initrelacl;
-	int			i_initrrelacl;
 	int			i_rolname;
 	int			i_relchecks;
-	int			i_relhastriggers;
 	int			i_relhasindex;
 	int			i_relhasrules;
-	int			i_relrowsec;
-	int			i_relforcerowsec;
-	int			i_relhasoids;
-	int			i_relfrozenxid;
-	int			i_relminmxid;
-	int			i_toastoid;
-	int			i_toastfrozenxid;
-	int			i_toastminmxid;
-	int			i_relpersistence;
-	int			i_relispopulated;
-	int			i_relreplident;
+	int			i_relpages;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
+	int			i_relhasoids;
+	int			i_relhastriggers;
+	int			i_relpersistence;
+	int			i_relispopulated;
+	int			i_relreplident;
+	int			i_relrowsec;
+	int			i_relforcerowsec;
+	int			i_relfrozenxid;
+	int			i_toastfrozenxid;
+	int			i_toastoid;
+	int			i_relminmxid;
+	int			i_toastminmxid;
 	int			i_reloptions;
 	int			i_checkoption;
 	int			i_toastreloptions;
 	int			i_reloftype;
-	int			i_relpages;
 	int			i_foreignserver;
+	int			i_amname;
 	int			i_is_identity_sequence;
+	int			i_relacl;
+	int			i_rrelacl;
+	int			i_initrelacl;
+	int			i_initrrelacl;
 	int			i_changed_acl;
 	int			i_partkeydef;
 	int			i_ispartition;
 	int			i_partbound;
-	int			i_amname;
 
 	/*
 	 * Find all the tables and table-like objects.
@@ -6274,64 +6274,146 @@ getTables(Archive *fout, int *numTables)
 	 * We include system catalogs, so that we can work if a user table is
 	 * defined to inherit from a system catalog (pretty weird, but...)
 	 *
-	 * We ignore relations that are not ordinary tables, sequences, views,
-	 * materialized views, composite types, or foreign tables.
-	 *
-	 * Composite-type table entries won't be dumped as such, but we have to
-	 * make a DumpableObject for them so that we can track dependencies of the
-	 * composite type (pg_depend entries for columns of the composite type
-	 * link to the pg_class entry not the pg_type entry).
-	 *
 	 * Note: in this phase we should collect only a minimal amount of
 	 * information about each table, basically just enough to decide if it is
 	 * interesting. We must fetch all tables in this phase because otherwise
 	 * we cannot correctly identify inherited columns, owned sequences, etc.
-	 *
-	 * We purposefully ignore toast OIDs for partitioned tables; the reason is
-	 * that versions 10 and 11 have them, but 12 does not, so emitting them
-	 * causes the upgrade to fail.
 	 */
+
+	appendPQExpBuffer(query,
+					  "SELECT c.tableoid, c.oid, c.relname, "
+					  "c.relnamespace, c.relkind, "
+					  "(%s c.relowner) AS rolname, "
+					  "c.relchecks, "
+					  "c.relhasindex, c.relhasrules, c.relpages, "
+					  "d.refobjid AS owning_tab, "
+					  "d.refobjsubid AS owning_col, "
+					  "tsp.spcname AS reltablespace, ",
+					  username_subquery);
+
+	if (fout->remoteVersion >= 120000)
+		appendPQExpBufferStr(query,
+							 "false AS relhasoids, ");
+	else
+		appendPQExpBufferStr(query,
+							 "c.relhasoids, ");
+
+	if (fout->remoteVersion >= 80400)
+		appendPQExpBufferStr(query,
+							 "c.relhastriggers, ");
+	else
+		appendPQExpBufferStr(query,
+							 "(c.reltriggers <> 0) AS relhastriggers, ");
+
+	if (fout->remoteVersion >= 90100)
+		appendPQExpBufferStr(query,
+							 "c.relpersistence, ");
+	else
+		appendPQExpBufferStr(query,
+							 "'p' AS relpersistence, ");
+
+	if (fout->remoteVersion >= 90300)
+		appendPQExpBufferStr(query,
+							 "c.relispopulated, ");
+	else
+		appendPQExpBufferStr(query,
+							 "'t' as relispopulated, ");
+
+	if (fout->remoteVersion >= 90400)
+		appendPQExpBufferStr(query,
+							 "c.relreplident, ");
+	else
+		appendPQExpBufferStr(query,
+							 "'d' AS relreplident, ");
+
+	if (fout->remoteVersion >= 90500)
+		appendPQExpBufferStr(query,
+							 "c.relrowsecurity, c.relforcerowsecurity, ");
+	else
+		appendPQExpBufferStr(query,
+							 "false AS relrowsecurity, "
+							 "false AS relforcerowsecurity, ");
+
+	if (fout->remoteVersion >= 80200)
+		appendPQExpBufferStr(query,
+							 "c.relfrozenxid, tc.relfrozenxid AS tfrozenxid, "
+							 "tc.oid AS toid, ");
+	else
+		appendPQExpBufferStr(query,
+							 "0 AS relfrozenxid, 0 AS tfrozenxid, "
+							 "0 AS toid, ");
+
+	if (fout->remoteVersion >= 90300)
+		appendPQExpBufferStr(query,
+							 "c.relminmxid, tc.relminmxid AS tminmxid, ");
+	else
+		appendPQExpBufferStr(query,
+							 "0 AS relminmxid, 0 AS tminmxid, ");
+
+	if (fout->remoteVersion >= 90300)
+		appendPQExpBufferStr(query,
+							 "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
+							 "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
+							 "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, ");
+	else if (fout->remoteVersion >= 80200)
+		appendPQExpBufferStr(query,
+							 "c.reloptions, NULL AS checkoption, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS reloptions, NULL AS checkoption, ");
+
+	if (fout->remoteVersion >= 80400)
+		appendPQExpBufferStr(query,
+							 "tc.reloptions AS toast_reloptions, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS toast_reloptions, ");
+
+	if (fout->remoteVersion >= 90000)
+		appendPQExpBufferStr(query,
+							 "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS reloftype, ");
+
+	if (fout->remoteVersion >= 90100)
+		appendPQExpBufferStr(query,
+							 "CASE WHEN c.relkind = " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN "
+							 "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+							 "ELSE 0 END AS foreignserver, ");
+	else
+		appendPQExpBufferStr(query,
+							 "0 AS foreignserver, ");
+
+	if (fout->remoteVersion >= 90600)
+		appendPQExpBufferStr(query,
+							 "am.amname, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS amname, ");
+
+	if (fout->remoteVersion >= 90600)
+		appendPQExpBufferStr(query,
+							 "c.relkind = " CppAsString2(RELKIND_SEQUENCE)
+							 " AND EXISTS (SELECT 1 FROM pg_depend "
+							 "WHERE classid = 'pg_class'::regclass AND "
+							 "objid = c.oid AND objsubid = 0 AND "
+							 "refclassid = 'pg_class'::regclass AND "
+							 "deptype = 'i') AS is_identity_sequence, ");
+	else
+		appendPQExpBufferStr(query,
+							 "false AS is_identity_sequence, ");
 
 	if (fout->remoteVersion >= 90600)
 	{
-		char	   *partkeydef = "NULL";
-		char	   *ispartition = "false";
-		char	   *partbound = "NULL";
-		char	   *relhasoids = "c.relhasoids";
-
 		PQExpBuffer acl_subquery = createPQExpBuffer();
 		PQExpBuffer racl_subquery = createPQExpBuffer();
 		PQExpBuffer initacl_subquery = createPQExpBuffer();
 		PQExpBuffer initracl_subquery = createPQExpBuffer();
-
 		PQExpBuffer attacl_subquery = createPQExpBuffer();
 		PQExpBuffer attracl_subquery = createPQExpBuffer();
 		PQExpBuffer attinitacl_subquery = createPQExpBuffer();
 		PQExpBuffer attinitracl_subquery = createPQExpBuffer();
-
-		/*
-		 * Collect the information about any partitioned tables, which were
-		 * added in PG10.
-		 */
-
-		if (fout->remoteVersion >= 100000)
-		{
-			partkeydef = "pg_get_partkeydef(c.oid)";
-			ispartition = "c.relispartition";
-			partbound = "pg_get_expr(c.relpartbound, c.oid)";
-		}
-
-		/* In PG12 upwards WITH OIDS does not exist anymore. */
-		if (fout->remoteVersion >= 120000)
-			relhasoids = "'f'::bool";
-
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 *
-		 * Left join to detect if any privileges are still as-set-at-init, in
-		 * which case we won't dump out ACL commands for those.
-		 */
 
 		buildACLQueries(acl_subquery, racl_subquery, initacl_subquery,
 						initracl_subquery, "c.relacl", "c.relowner",
@@ -6345,31 +6427,14 @@ getTables(Archive *fout, int *numTables)
 						"pip.initprivs", "'c'", dopt->binary_upgrade);
 
 		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
 						  "%s AS relacl, %s as rrelacl, "
-						  "%s AS initrelacl, %s as initrrelacl, "
-						  "c.relkind, c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, %s AS relhasoids, "
-						  "c.relrowsecurity, c.relforcerowsecurity, "
-						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "tc.relminmxid AS tminmxid, "
-						  "c.relpersistence, c.relispopulated, "
-						  "c.relreplident, c.relpages, am.amname, "
-						  "CASE WHEN c.relkind = 'f' THEN "
-						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
-						  "ELSE 0 END AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
-						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
-						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "c.relkind = '%c' AND EXISTS (SELECT 1 FROM pg_depend WHERE classid = 'pg_class'::regclass AND objid = c.oid AND objsubid = 0 AND refclassid = 'pg_class'::regclass AND deptype = 'i') AS is_identity_sequence, "
+						  "%s AS initrelacl, %s as initrrelacl, ",
+						  acl_subquery->data,
+						  racl_subquery->data,
+						  initacl_subquery->data,
+						  initracl_subquery->data);
+
+		appendPQExpBuffer(query,
 						  "EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON "
 						  "(c.oid = pip.objoid "
 						  "AND pip.classoid = 'pg_class'::regclass "
@@ -6380,454 +6445,96 @@ getTables(Archive *fout, int *numTables)
 						  "OR %s IS NOT NULL "
 						  "OR %s IS NOT NULL"
 						  "))"
-						  "AS changed_acl, "
-						  "%s AS partkeydef, "
-						  "%s AS ispartition, "
-						  "%s AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype IN ('a', 'i')) "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid AND c.relkind <> '%c') "
-						  "LEFT JOIN pg_am am ON (c.relam = am.oid) "
-						  "LEFT JOIN pg_init_privs pip ON "
-						  "(c.oid = pip.objoid "
-						  "AND pip.classoid = 'pg_class'::regclass "
-						  "AND pip.objsubid = 0) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  acl_subquery->data,
-						  racl_subquery->data,
-						  initacl_subquery->data,
-						  initracl_subquery->data,
-						  username_subquery,
-						  relhasoids,
-						  RELKIND_SEQUENCE,
+						  "AS changed_acl, ",
 						  attacl_subquery->data,
 						  attracl_subquery->data,
 						  attinitacl_subquery->data,
-						  attinitracl_subquery->data,
-						  partkeydef,
-						  ispartition,
-						  partbound,
-						  RELKIND_SEQUENCE,
-						  RELKIND_PARTITIONED_TABLE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE,
-						  RELKIND_PARTITIONED_TABLE);
+						  attinitracl_subquery->data);
 
 		destroyPQExpBuffer(acl_subquery);
 		destroyPQExpBuffer(racl_subquery);
 		destroyPQExpBuffer(initacl_subquery);
 		destroyPQExpBuffer(initracl_subquery);
-
 		destroyPQExpBuffer(attacl_subquery);
 		destroyPQExpBuffer(attracl_subquery);
 		destroyPQExpBuffer(attinitacl_subquery);
 		destroyPQExpBuffer(attinitracl_subquery);
 	}
-	else if (fout->remoteVersion >= 90500)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "c.relrowsecurity, c.relforcerowsecurity, "
-						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "tc.relminmxid AS tminmxid, "
-						  "c.relpersistence, c.relispopulated, "
-						  "c.relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "CASE WHEN c.relkind = 'f' THEN "
-						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
-						  "ELSE 0 END AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
-						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
-						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
-	}
-	else if (fout->remoteVersion >= 90400)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "tc.relminmxid AS tminmxid, "
-						  "c.relpersistence, c.relispopulated, "
-						  "c.relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "CASE WHEN c.relkind = 'f' THEN "
-						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
-						  "ELSE 0 END AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
-						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
-						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
-	}
-	else if (fout->remoteVersion >= 90300)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, c.relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "tc.relminmxid AS tminmxid, "
-						  "c.relpersistence, c.relispopulated, "
-						  "'d' AS relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "CASE WHEN c.relkind = 'f' THEN "
-						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
-						  "ELSE 0 END AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, "
-						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
-						  "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
-	}
-	else if (fout->remoteVersion >= 90100)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "0 AS tminmxid, "
-						  "c.relpersistence, 't' as relispopulated, "
-						  "'d' AS relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "CASE WHEN c.relkind = 'f' THEN "
-						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
-						  "ELSE 0 END AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
-	}
-	else if (fout->remoteVersion >= 90000)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "0 AS tminmxid, "
-						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "'d' AS relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "NULL AS foreignserver, "
-						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else if (fout->remoteVersion >= 80400)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, c.relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "0 AS tminmxid, "
-						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "'d' AS relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "NULL AS foreignserver, "
-						  "NULL AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "c.reloptions AS reloptions, "
-						  "tc.reloptions AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
-	else if (fout->remoteVersion >= 80200)
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any (note this dependency is AUTO as of 8.2)
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, c.relname, "
-						  "c.relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "c.relkind, "
-						  "c.relnamespace, "
-						  "(%s c.relowner) AS rolname, "
-						  "c.relchecks, (c.reltriggers <> 0) AS relhastriggers, "
-						  "c.relhasindex, c.relhasrules, c.relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "c.relfrozenxid, 0 AS relminmxid, tc.oid AS toid, "
-						  "tc.relfrozenxid AS tfrozenxid, "
-						  "0 AS tminmxid, "
-						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "'d' AS relreplident, c.relpages, "
-						  "NULL AS amname, "
-						  "NULL AS foreignserver, "
-						  "NULL AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "c.reloptions AS reloptions, "
-						  "NULL AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
-						  "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
 	else
-	{
-		/*
-		 * Left join to pick up dependency info linking sequences to their
-		 * owning column, if any
-		 */
-		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, relname, "
-						  "relacl, NULL as rrelacl, "
-						  "NULL AS initrelacl, NULL AS initrrelacl, "
-						  "relkind, relnamespace, "
-						  "(%s relowner) AS rolname, "
-						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
-						  "relhasindex, relhasrules, relhasoids, "
-						  "'f'::bool AS relrowsecurity, "
-						  "'f'::bool AS relforcerowsecurity, "
-						  "0 AS relfrozenxid, 0 AS relminmxid,"
-						  "0 AS toid, "
-						  "0 AS tfrozenxid, 0 AS tminmxid,"
-						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "'d' AS relreplident, relpages, "
-						  "NULL AS amname, "
-						  "NULL AS foreignserver, "
-						  "NULL AS reloftype, "
-						  "d.refobjid AS owning_tab, "
-						  "d.refobjsubid AS owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "NULL AS reloptions, "
-						  "NULL AS toast_reloptions, "
-						  "NULL AS changed_acl, "
-						  "NULL AS partkeydef, "
-						  "false AS ispartition, "
-						  "NULL AS partbound "
-						  "FROM pg_class c "
-						  "LEFT JOIN pg_depend d ON "
-						  "(c.relkind = '%c' AND "
-						  "d.classid = c.tableoid AND d.objid = c.oid AND "
-						  "d.objsubid = 0 AND "
-						  "d.refclassid = c.tableoid AND d.deptype = 'i') "
-						  "WHERE relkind in ('%c', '%c', '%c', '%c') "
-						  "ORDER BY c.oid",
-						  username_subquery,
-						  RELKIND_SEQUENCE,
-						  RELKIND_RELATION, RELKIND_SEQUENCE,
-						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
-	}
+		appendPQExpBufferStr(query,
+							 "c.relacl, NULL as rrelacl, "
+							 "NULL AS initrelacl, NULL AS initrrelacl, "
+							 "false AS changed_acl, ");
+
+	if (fout->remoteVersion >= 100000)
+		appendPQExpBufferStr(query,
+							 "pg_get_partkeydef(c.oid) AS partkeydef, "
+							 "c.relispartition AS ispartition, "
+							 "pg_get_expr(c.relpartbound, c.oid) AS partbound ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS partkeydef, "
+							 "false AS ispartition, "
+							 "NULL AS partbound ");
+
+	/*
+	 * Left join to pg_depend to pick up dependency info linking sequences to
+	 * their owning column, if any (note this dependency is AUTO as of 8.2).
+	 * Also join to pg_tablespace to collect the spcname.
+	 */
+	appendPQExpBufferStr(query,
+						 "\nFROM pg_class c\n"
+						 "LEFT JOIN pg_depend d ON "
+						 "(c.relkind = " CppAsString2(RELKIND_SEQUENCE) " AND "
+						 "d.classid = c.tableoid AND d.objid = c.oid AND "
+						 "d.objsubid = 0 AND "
+						 "d.refclassid = c.tableoid AND d.deptype IN ('a', 'i'))\n"
+						 "LEFT JOIN pg_tablespace tsp ON (tsp.oid = c.reltablespace)\n");
+
+	/*
+	 * In 9.6 and up, left join to pg_init_privs to detect if any privileges
+	 * are still as-set-at-init, in which case we won't dump out ACL commands
+	 * for those.  We also are interested in the amname as of 9.6.
+	 */
+	if (fout->remoteVersion >= 90600)
+		appendPQExpBufferStr(query,
+							 "LEFT JOIN pg_init_privs pip ON "
+							 "(c.oid = pip.objoid "
+							 "AND pip.classoid = 'pg_class'::regclass "
+							 "AND pip.objsubid = 0)\n"
+							 "LEFT JOIN pg_am am ON (c.relam = am.oid)\n");
+
+	/*
+	 * We don't need any data from the TOAST table before 8.2.
+	 *
+	 * We purposefully ignore toast OIDs for partitioned tables; the reason is
+	 * that versions 10 and 11 have them, but later versions do not, so
+	 * emitting them causes the upgrade to fail.
+	 */
+	if (fout->remoteVersion >= 80200)
+		appendPQExpBufferStr(query,
+							 "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid AND c.relkind <> " CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n");
+
+	/*
+	 * Restrict to interesting relkinds (in particular, not indexes).  Not all
+	 * relkinds are possible in older servers, but it's not worth the trouble
+	 * to emit a version-dependent list.
+	 *
+	 * Composite-type table entries won't be dumped as such, but we have to
+	 * make a DumpableObject for them so that we can track dependencies of the
+	 * composite type (pg_depend entries for columns of the composite type
+	 * link to the pg_class entry not the pg_type entry).
+	 */
+	appendPQExpBufferStr(query,
+						 "WHERE c.relkind IN ("
+						 CppAsString2(RELKIND_RELATION) ", "
+						 CppAsString2(RELKIND_SEQUENCE) ", "
+						 CppAsString2(RELKIND_VIEW) ", "
+						 CppAsString2(RELKIND_COMPOSITE_TYPE) ", "
+						 CppAsString2(RELKIND_MATVIEW) ", "
+						 CppAsString2(RELKIND_FOREIGN_TABLE) ", "
+						 CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n"
+						 "ORDER BY c.oid");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -6850,42 +6557,42 @@ getTables(Archive *fout, int *numTables)
 	i_reloid = PQfnumber(res, "oid");
 	i_relname = PQfnumber(res, "relname");
 	i_relnamespace = PQfnumber(res, "relnamespace");
-	i_relacl = PQfnumber(res, "relacl");
-	i_rrelacl = PQfnumber(res, "rrelacl");
-	i_initrelacl = PQfnumber(res, "initrelacl");
-	i_initrrelacl = PQfnumber(res, "initrrelacl");
 	i_relkind = PQfnumber(res, "relkind");
 	i_rolname = PQfnumber(res, "rolname");
 	i_relchecks = PQfnumber(res, "relchecks");
-	i_relhastriggers = PQfnumber(res, "relhastriggers");
 	i_relhasindex = PQfnumber(res, "relhasindex");
 	i_relhasrules = PQfnumber(res, "relhasrules");
-	i_relrowsec = PQfnumber(res, "relrowsecurity");
-	i_relforcerowsec = PQfnumber(res, "relforcerowsecurity");
-	i_relhasoids = PQfnumber(res, "relhasoids");
-	i_relfrozenxid = PQfnumber(res, "relfrozenxid");
-	i_relminmxid = PQfnumber(res, "relminmxid");
-	i_toastoid = PQfnumber(res, "toid");
-	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
-	i_toastminmxid = PQfnumber(res, "tminmxid");
-	i_relpersistence = PQfnumber(res, "relpersistence");
-	i_relispopulated = PQfnumber(res, "relispopulated");
-	i_relreplident = PQfnumber(res, "relreplident");
 	i_relpages = PQfnumber(res, "relpages");
-	i_foreignserver = PQfnumber(res, "foreignserver");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
+	i_relhasoids = PQfnumber(res, "relhasoids");
+	i_relhastriggers = PQfnumber(res, "relhastriggers");
+	i_relpersistence = PQfnumber(res, "relpersistence");
+	i_relispopulated = PQfnumber(res, "relispopulated");
+	i_relreplident = PQfnumber(res, "relreplident");
+	i_relrowsec = PQfnumber(res, "relrowsecurity");
+	i_relforcerowsec = PQfnumber(res, "relforcerowsecurity");
+	i_relfrozenxid = PQfnumber(res, "relfrozenxid");
+	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
+	i_toastoid = PQfnumber(res, "toid");
+	i_relminmxid = PQfnumber(res, "relminmxid");
+	i_toastminmxid = PQfnumber(res, "tminmxid");
 	i_reloptions = PQfnumber(res, "reloptions");
 	i_checkoption = PQfnumber(res, "checkoption");
 	i_toastreloptions = PQfnumber(res, "toast_reloptions");
 	i_reloftype = PQfnumber(res, "reloftype");
+	i_foreignserver = PQfnumber(res, "foreignserver");
+	i_amname = PQfnumber(res, "amname");
 	i_is_identity_sequence = PQfnumber(res, "is_identity_sequence");
+	i_relacl = PQfnumber(res, "relacl");
+	i_rrelacl = PQfnumber(res, "rrelacl");
+	i_initrelacl = PQfnumber(res, "initrelacl");
+	i_initrrelacl = PQfnumber(res, "initrrelacl");
 	i_changed_acl = PQfnumber(res, "changed_acl");
 	i_partkeydef = PQfnumber(res, "partkeydef");
 	i_ispartition = PQfnumber(res, "ispartition");
 	i_partbound = PQfnumber(res, "partbound");
-	i_amname = PQfnumber(res, "amname");
 
 	if (dopt->lockWaitTimeout)
 	{
@@ -6911,32 +6618,12 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_relname));
 		tblinfo[i].dobj.namespace =
 			findNamespace(atooid(PQgetvalue(res, i, i_relnamespace)));
-		tblinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
-		tblinfo[i].relacl = pg_strdup(PQgetvalue(res, i, i_relacl));
-		tblinfo[i].rrelacl = pg_strdup(PQgetvalue(res, i, i_rrelacl));
-		tblinfo[i].initrelacl = pg_strdup(PQgetvalue(res, i, i_initrelacl));
-		tblinfo[i].initrrelacl = pg_strdup(PQgetvalue(res, i, i_initrrelacl));
 		tblinfo[i].relkind = *(PQgetvalue(res, i, i_relkind));
-		tblinfo[i].relpersistence = *(PQgetvalue(res, i, i_relpersistence));
+		tblinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
-		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
-		tblinfo[i].rowsec = (strcmp(PQgetvalue(res, i, i_relrowsec), "t") == 0);
-		tblinfo[i].forcerowsec = (strcmp(PQgetvalue(res, i, i_relforcerowsec), "t") == 0);
-		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
-		tblinfo[i].relispopulated = (strcmp(PQgetvalue(res, i, i_relispopulated), "t") == 0);
-		tblinfo[i].relreplident = *(PQgetvalue(res, i, i_relreplident));
 		tblinfo[i].relpages = atoi(PQgetvalue(res, i, i_relpages));
-		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
-		tblinfo[i].minmxid = atooid(PQgetvalue(res, i, i_relminmxid));
-		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
-		tblinfo[i].toast_frozenxid = atooid(PQgetvalue(res, i, i_toastfrozenxid));
-		tblinfo[i].toast_minmxid = atooid(PQgetvalue(res, i, i_toastminmxid));
-		if (PQgetisnull(res, i, i_reloftype))
-			tblinfo[i].reloftype = NULL;
-		else
-			tblinfo[i].reloftype = pg_strdup(PQgetvalue(res, i, i_reloftype));
-		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		if (PQgetisnull(res, i, i_owning_tab))
 		{
 			tblinfo[i].owning_tab = InvalidOid;
@@ -6948,16 +6635,41 @@ getTables(Archive *fout, int *numTables)
 			tblinfo[i].owning_col = atoi(PQgetvalue(res, i, i_owning_col));
 		}
 		tblinfo[i].reltablespace = pg_strdup(PQgetvalue(res, i, i_reltablespace));
+		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
+		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
+		tblinfo[i].relpersistence = *(PQgetvalue(res, i, i_relpersistence));
+		tblinfo[i].relispopulated = (strcmp(PQgetvalue(res, i, i_relispopulated), "t") == 0);
+		tblinfo[i].relreplident = *(PQgetvalue(res, i, i_relreplident));
+		tblinfo[i].rowsec = (strcmp(PQgetvalue(res, i, i_relrowsec), "t") == 0);
+		tblinfo[i].forcerowsec = (strcmp(PQgetvalue(res, i, i_relforcerowsec), "t") == 0);
+		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
+		tblinfo[i].toast_frozenxid = atooid(PQgetvalue(res, i, i_toastfrozenxid));
+		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
+		tblinfo[i].minmxid = atooid(PQgetvalue(res, i, i_relminmxid));
+		tblinfo[i].toast_minmxid = atooid(PQgetvalue(res, i, i_toastminmxid));
 		tblinfo[i].reloptions = pg_strdup(PQgetvalue(res, i, i_reloptions));
-		if (i_checkoption == -1 || PQgetisnull(res, i, i_checkoption))
+		if (PQgetisnull(res, i, i_checkoption))
 			tblinfo[i].checkoption = NULL;
 		else
 			tblinfo[i].checkoption = pg_strdup(PQgetvalue(res, i, i_checkoption));
 		tblinfo[i].toast_reloptions = pg_strdup(PQgetvalue(res, i, i_toastreloptions));
+		if (PQgetisnull(res, i, i_reloftype))
+			tblinfo[i].reloftype = NULL;
+		else
+			tblinfo[i].reloftype = pg_strdup(PQgetvalue(res, i, i_reloftype));
+		tblinfo[i].foreign_server = atooid(PQgetvalue(res, i, i_foreignserver));
 		if (PQgetisnull(res, i, i_amname))
 			tblinfo[i].amname = NULL;
 		else
 			tblinfo[i].amname = pg_strdup(PQgetvalue(res, i, i_amname));
+		tblinfo[i].is_identity_sequence = (strcmp(PQgetvalue(res, i, i_is_identity_sequence), "t") == 0);
+		tblinfo[i].relacl = pg_strdup(PQgetvalue(res, i, i_relacl));
+		tblinfo[i].rrelacl = pg_strdup(PQgetvalue(res, i, i_rrelacl));
+		tblinfo[i].initrelacl = pg_strdup(PQgetvalue(res, i, i_initrelacl));
+		tblinfo[i].initrrelacl = pg_strdup(PQgetvalue(res, i, i_initrrelacl));
+		tblinfo[i].partkeydef = pg_strdup(PQgetvalue(res, i, i_partkeydef));
+		tblinfo[i].ispartition = (strcmp(PQgetvalue(res, i, i_ispartition), "t") == 0);
+		tblinfo[i].partbound = pg_strdup(PQgetvalue(res, i, i_partbound));
 
 		/* other fields were zeroed above */
 
@@ -6968,6 +6680,10 @@ getTables(Archive *fout, int *numTables)
 			tblinfo[i].dobj.dump = DUMP_COMPONENT_NONE;
 		else
 			selectDumpableTable(&tblinfo[i], fout);
+
+		tblinfo[i].interesting = tblinfo[i].dobj.dump ? true : false;
+		tblinfo[i].dummy_view = false;	/* might get set during sort */
+		tblinfo[i].postponed_def = false;	/* might get set during sort */
 
 		/*
 		 * If the table-level and all column-level ACLs for this table are
@@ -6983,21 +6699,6 @@ getTables(Archive *fout, int *numTables)
 			PQgetisnull(res, i, i_initrrelacl) &&
 			strcmp(PQgetvalue(res, i, i_changed_acl), "f") == 0)
 			tblinfo[i].dobj.dump &= ~DUMP_COMPONENT_ACL;
-
-		tblinfo[i].interesting = tblinfo[i].dobj.dump ? true : false;
-		tblinfo[i].dummy_view = false;	/* might get set during sort */
-		tblinfo[i].postponed_def = false;	/* might get set during sort */
-
-		tblinfo[i].is_identity_sequence = (i_is_identity_sequence >= 0 &&
-										   strcmp(PQgetvalue(res, i, i_is_identity_sequence), "t") == 0);
-
-		/* Partition key string or NULL */
-		tblinfo[i].partkeydef = pg_strdup(PQgetvalue(res, i, i_partkeydef));
-		tblinfo[i].ispartition = (strcmp(PQgetvalue(res, i, i_ispartition), "t") == 0);
-		tblinfo[i].partbound = pg_strdup(PQgetvalue(res, i, i_partbound));
-
-		/* foreign server */
-		tblinfo[i].foreign_server = atooid(PQgetvalue(res, i, i_foreignserver));
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
