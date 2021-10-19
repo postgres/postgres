@@ -172,3 +172,14 @@ INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
 
 -- Test unsupported btree opclass parameters
 create index on btree_tall_tbl (id int4_ops(foo=1));
+
+-- Test case of ALTER INDEX with abuse of column names for indexes.
+-- This grammar is not officially supported, but the parser allows it.
+CREATE INDEX btree_tall_idx2 ON btree_tall_tbl (id);
+ALTER INDEX btree_tall_idx2 ALTER COLUMN id SET (n_distinct=100);
+DROP INDEX btree_tall_idx2;
+-- Partitioned index
+CREATE TABLE btree_part (id int4) PARTITION BY RANGE (id);
+CREATE INDEX btree_part_idx ON btree_part(id);
+ALTER INDEX btree_part_idx ALTER COLUMN id SET (n_distinct=100);
+DROP TABLE btree_part;

@@ -866,9 +866,6 @@ compute_index_stats(Relation onerel, double totalrows,
 			for (i = 0; i < attr_cnt; i++)
 			{
 				VacAttrStats *stats = thisdata->vacattrstats[i];
-				AttributeOpts *aopt =
-				get_attribute_options(stats->attr->attrelid,
-									  stats->attr->attnum);
 
 				stats->exprvals = exprvals + i;
 				stats->exprnulls = exprnulls + i;
@@ -877,14 +874,6 @@ compute_index_stats(Relation onerel, double totalrows,
 									 ind_fetch_func,
 									 numindexrows,
 									 totalindexrows);
-
-				/*
-				 * If the n_distinct option is specified, it overrides the
-				 * above computation.  For indices, we always use just
-				 * n_distinct, not n_distinct_inherited.
-				 */
-				if (aopt != NULL && aopt->n_distinct != 0.0)
-					stats->stadistinct = aopt->n_distinct;
 
 				MemoryContextResetAndDeleteChildren(col_context);
 			}
