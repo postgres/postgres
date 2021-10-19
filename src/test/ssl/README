@@ -85,7 +85,9 @@ There are also CRLs for each of the CAs: root.crl, server.crl and client.crl.
 
 For convenience, all of these keypairs and certificates are included in the
 ssl/ subdirectory. The Makefile also contains a rule, "make sslfiles", to
-recreate them if you need to make changes.
+recreate them if you need to make changes. "make sslfiles-clean" is required
+in order to recreate the full set of keypairs and certificates. To rebuild
+separate files, touch (or remove) the files in question and run "make sslfiles".
 
 TODO
 ====
