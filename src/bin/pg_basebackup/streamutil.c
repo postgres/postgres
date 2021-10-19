@@ -316,7 +316,7 @@ RetrieveWalSegSize(PGconn *conn)
 	}
 
 	/* fetch xlog value and unit from the result */
-	if (sscanf(PQgetvalue(res, 0, 0), "%d%s", &xlog_val, xlog_unit) != 2)
+	if (sscanf(PQgetvalue(res, 0, 0), "%d%2s", &xlog_val, xlog_unit) != 2)
 	{
 		fprintf(stderr, _("%s: WAL segment size could not be parsed\n"),
 				progname);
