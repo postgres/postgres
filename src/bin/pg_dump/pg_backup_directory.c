@@ -451,11 +451,11 @@ _LoadBlobs(ArchiveHandle *AH)
 	/* Read the blobs TOC file line-by-line, and process each blob */
 	while ((cfgets(ctx->blobsTocFH, line, MAXPGPATH)) != NULL)
 	{
-		char		fname[MAXPGPATH];
+		char		fname[MAXPGPATH + 1];
 		char		path[MAXPGPATH];
 
 		/* Can't overflow because line and fname are the same length. */
-		if (sscanf(line, "%u %s\n", &oid, fname) != 2)
+		if (sscanf(line, "%u %" CppAsString2(MAXPGPATH) "s\n", &oid, fname) != 2)
 			fatal("invalid line in large object TOC file \"%s\": \"%s\"",
 				  fname, line);
 
