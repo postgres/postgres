@@ -263,7 +263,8 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 			my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
 
 			# More symbols are needed with OpenSSL 1.1.0 and above.
-			if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
+			if (   ($digit1 >= '3' && $digit2 >= '0' && $digit3 >= '0')
+				|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0'))
 			{
 				print O "#define HAVE_ASN1_STRING_GET0_DATA 1\n";
 				print O "#define HAVE_BIO_GET_DATA 1\n";
@@ -575,7 +576,8 @@ sub AddProject
 		# changed their library names from:
 		# - libeay to libcrypto
 		# - ssleay to libssl
-		if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
+		if (   ($digit1 >= '3' && $digit2 >= '0' && $digit3 >= '0')
+			|| ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0'))
 		{
 			my $dbgsuffix;
 			my $libsslpath;
