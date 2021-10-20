@@ -238,7 +238,7 @@ ALTER INDEX alter_idx_rename_test_parted RENAME TO alter_idx_rename_test_parted_
 SELECT relation::regclass, mode FROM pg_locks
 WHERE pid = pg_backend_pid() AND locktype = 'relation'
   AND relation::regclass::text LIKE 'alter\_idx%'
-ORDER BY relation::regclass::text;
+ORDER BY relation::regclass::text COLLATE "C";
 COMMIT;
 BEGIN;
 ALTER INDEX alter_idx_rename_test_idx RENAME TO alter_idx_rename_test_idx_2;
@@ -246,7 +246,7 @@ ALTER INDEX alter_idx_rename_test_parted_idx RENAME TO alter_idx_rename_test_par
 SELECT relation::regclass, mode FROM pg_locks
 WHERE pid = pg_backend_pid() AND locktype = 'relation'
   AND relation::regclass::text LIKE 'alter\_idx%'
-ORDER BY relation::regclass::text;
+ORDER BY relation::regclass::text COLLATE "C";
 COMMIT;
 BEGIN;
 ALTER TABLE alter_idx_rename_test_idx_2 RENAME TO alter_idx_rename_test_idx_3;
@@ -254,7 +254,7 @@ ALTER TABLE alter_idx_rename_test_parted_idx_2 RENAME TO alter_idx_rename_test_p
 SELECT relation::regclass, mode FROM pg_locks
 WHERE pid = pg_backend_pid() AND locktype = 'relation'
   AND relation::regclass::text LIKE 'alter\_idx%'
-ORDER BY relation::regclass::text;
+ORDER BY relation::regclass::text COLLATE "C";
 COMMIT;
 DROP TABLE alter_idx_rename_test_2;
 
