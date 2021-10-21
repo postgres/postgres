@@ -3,6 +3,7 @@
 
 use strict;
 use warnings;
+use Config qw ( %Config );
 use PostgresNode;
 use TestLib;
 use Test::More;
@@ -489,8 +490,19 @@ TODO:
 my $serialno = `openssl x509 -serial -noout -in ssl/client.crt`;
 if ($? == 0)
 {
-	$serialno =~ s/^serial=//;
-	$serialno = hex($serialno); # OpenSSL prints serial numbers in hexadecimal
+	# OpenSSL prints serial numbers in hexadecimal and converting the serial
+	# from hex requires a 64-bit capable Perl as the serialnumber is based on
+	# the current timestamp. On 32-bit fall back to checking for it being an
+	# integer like how we do when grabbing the serial fails.
+	if ($Config{ivsize} == 8)
+	{
+		$serialno =~ s/^serial=//;
+		$serialno = hex($serialno);
+	}
+	else
+	{
+		$serialno = '\d+';
+	}
 }
 else
 {
