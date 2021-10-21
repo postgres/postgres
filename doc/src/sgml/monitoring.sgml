@@ -1549,22 +1549,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>WALWrite</literal></entry>
       <entry>Waiting for a write to a WAL file.</entry>
      </row>
-     <row>
-      <entry><literal>LogicalChangesRead</literal></entry>
-      <entry>Waiting for a read from a logical changes file.</entry>
-     </row>
-     <row>
-      <entry><literal>LogicalChangesWrite</literal></entry>
-      <entry>Waiting for a write to a logical changes file.</entry>
-     </row>
-     <row>
-      <entry><literal>LogicalSubxactRead</literal></entry>
-      <entry>Waiting for a read from a logical subxact file.</entry>
-     </row>
-     <row>
-      <entry><literal>LogicalSubxactWrite</literal></entry>
-      <entry>Waiting for a write to a logical subxact file.</entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
