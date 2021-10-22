@@ -55,6 +55,11 @@
  *	  presence is relevant to determine whether a lookup needs to continue
  *	  looking or is done - buckets following a deleted element are shifted
  *	  backwards, unless they're empty or already at their optimal position.
+ *
+ * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/lib/simplehash.h
  */
 
 #include "port/pg_bitutils.h"
@@ -218,7 +223,8 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 #define SIMPLEHASH_H
 
 #ifdef FRONTEND
-#define sh_error(...) pg_log_error(__VA_ARGS__)
+#define sh_error(...) \
+	do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
 #define sh_log(...) pg_log_info(__VA_ARGS__)
 #else
 #define sh_error(...) elog(ERROR, __VA_ARGS__)
@@ -247,7 +253,7 @@ SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint64 newsize)
 	 * Verify that allocation of ->data is possible on this platform, without
 	 * overflowing Size.
 	 */
-	if ((((uint64) sizeof(SH_ELEMENT_TYPE)) * size) >= SIZE_MAX / 2)
+	if (unlikely((((uint64) sizeof(SH_ELEMENT_TYPE)) * size) >= SIZE_MAX / 2))
 		sh_error("hash table too large");
 
 	/* now set size */
@@ -532,10 +538,8 @@ restart:
 	 */
 	if (unlikely(tb->members >= tb->grow_threshold))
 	{
-		if (tb->size == SH_MAX_SIZE)
-		{
+		if (unlikely(tb->size == SH_MAX_SIZE))
 			sh_error("hash table size exceeded");
-		}
 
 		/*
 		 * When optimizing, it can be very useful to print these out.
