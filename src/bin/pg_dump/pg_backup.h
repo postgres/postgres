@@ -236,6 +236,7 @@ typedef struct Archive
 
 typedef struct
 {
+	/* Note: this struct must not contain any unused bytes */
 	Oid			tableoid;
 	Oid			oid;
 } CatalogId;

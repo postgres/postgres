@@ -17918,12 +17918,10 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	PQExpBuffer query;
 	PGresult   *res;
 	int			ntups,
-				nextmembers,
 				i;
 	int			i_classid,
 				i_objid,
 				i_refobjid;
-	ExtensionMemberId *extmembers;
 	ExtensionInfo *ext;
 
 	/* Nothing to do if no extensions */
@@ -17948,12 +17946,7 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	i_objid = PQfnumber(res, "objid");
 	i_refobjid = PQfnumber(res, "refobjid");
 
-	extmembers = (ExtensionMemberId *) pg_malloc(ntups * sizeof(ExtensionMemberId));
-	nextmembers = 0;
-
 	/*
-	 * Accumulate data into extmembers[].
-	 *
 	 * Since we ordered the SELECT by referenced ID, we can expect that
 	 * multiple entries for the same extension will appear together; this
 	 * saves on searches.
@@ -17980,15 +17973,10 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 			continue;
 		}
 
-		extmembers[nextmembers].catId = objId;
-		extmembers[nextmembers].ext = ext;
-		nextmembers++;
+		recordExtensionMembership(objId, ext);
 	}
 
 	PQclear(res);
-
-	/* Remember the data for use later */
-	setExtensionMembership(extmembers, nextmembers);
 
 	destroyPQExpBuffer(query);
 }
