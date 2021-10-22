@@ -421,6 +421,25 @@ my %tests = (
 		},
 	},
 
+	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role GRANT EXECUTE ON FUNCTIONS'
+	  => {
+		create_order => 15,
+		create_sql   => 'ALTER DEFAULT PRIVILEGES
+					   FOR ROLE regress_dump_test_role IN SCHEMA dump_test
+					   GRANT EXECUTE ON FUNCTIONS TO regress_dump_test_role;',
+		regexp => qr/^
+			\QALTER DEFAULT PRIVILEGES \E
+			\QFOR ROLE regress_dump_test_role IN SCHEMA dump_test \E
+			\QGRANT ALL ON FUNCTIONS  TO regress_dump_test_role;\E
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			no_privs                 => 1,
+		},
+	  },
+
 	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role REVOKE' => {
 		create_order => 55,
 		create_sql   => 'ALTER DEFAULT PRIVILEGES
