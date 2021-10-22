@@ -438,7 +438,7 @@ ld_library_path_var = LD_LIBRARY_PATH
 # need something more here. If not defined then the expansion does
 # nothing.
 with_temp_install = \
-	PATH="$(abs_top_builddir)/tmp_install$(bindir):$$PATH" \
+	PATH="$(abs_top_builddir)/tmp_install$(bindir):$(CURDIR):$$PATH" \
 	$(call add_to_path,$(strip $(ld_library_path_var)),$(abs_top_builddir)/tmp_install$(libdir)) \
 	$(with_temp_install_extra)
 
@@ -449,8 +449,8 @@ define prove_installcheck
 rm -rf '$(CURDIR)'/tmp_check
 $(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && \
-   TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' \
-   top_builddir='$(CURDIR)/$(top_builddir)' \
+   TESTDIR='$(CURDIR)' PATH="$(bindir):$(CURDIR):$$PATH" \
+   PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' \
    PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' \
    $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
@@ -459,8 +459,8 @@ define prove_installcheck
 rm -rf '$(CURDIR)'/tmp_check
 $(MKDIR_P) '$(CURDIR)'/tmp_check
 cd $(srcdir) && \
-   TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' \
-   top_builddir='$(top_builddir)' \
+   TESTDIR='$(CURDIR)' PATH="$(bindir):$(CURDIR):$$PATH" \
+   PGPORT='6$(DEF_PGPORT)' top_builddir='$(top_builddir)' \
    PG_REGRESS='$(top_builddir)/src/test/regress/pg_regress' \
    $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
