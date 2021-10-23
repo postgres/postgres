@@ -76,6 +76,29 @@ PostgreSQL documentation
   </para>
 
   <para>
+   The starting point of the write-ahead log streaming is calculated when
+   <application>pg_receivewal</application> starts:
+   <orderedlist>
+    <listitem>
+     <para>
+      First, scan the directory where the WAL segment files are written and
+      find the newest completed segment file, using as starting point the
+      beginning of the next WAL segment file. This is calculated independently
+      on the compression method used to compress each segment.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If a starting point cannot be calculated with the previous method,
+      the latest WAL flush location is used as reported by the server from
+      a <literal>IDENTIFY_SYSTEM</literal> command.
+     </para>
+    </listitem>
+   </orderedlist>
+  </para>
+
+  <para>
    If the connection is lost, or if it cannot be initially established,
    with a non-fatal error, <application>pg_receivewal</application> will
    retry the connection indefinitely, and reestablish streaming as soon
