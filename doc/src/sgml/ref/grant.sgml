@@ -244,7 +244,21 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    This variant of the <command>GRANT</command> command grants membership
    in a role to one or more other roles.  Membership in a role is significant
    because it conveys the privileges granted to a role to each of its
-   members.
+   members.  Membership is effective cluster-wide unless otherwise constrained
+   through the use of a database-specific clause when the grant is issued.
+  </para>
+
+  <para>
+   If <literal>IN DATABASE <replaceable class="parameter">database_name</replaceable></literal>
+   is specified, membership in <replaceable class="parameter">role_name</replaceable> will only
+   be effective when the recipient is connected to the database specified by
+   <replaceable class="parameter">database_name</replaceable>.
+  </para>
+
+  <para>
+   If <literal>IN CURRENT DATABASE</literal> is specified, the membership in
+   <replaceable class="parameter">role_name</replaceable> will only be effective when the
+   recipient is connected to the same database that the grant was issued in.
   </para>
 
   <para>
