@@ -12,7 +12,3 @@ theme = core
 
 # allow octal constants with leading zeros
 [-ValuesAndExpressions::ProhibitLeadingZeros]
-
-# for now raise severity of this to level 5
-[Subroutines::RequireFinalReturn]
-severity = 5
