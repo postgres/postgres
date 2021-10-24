@@ -632,11 +632,17 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 void
 InvalidateSystemCaches(void)
 {
+	InvalidateSystemCachesExtended(false);
+}
+
+void
+InvalidateSystemCachesExtended(bool debug_discard)
+{
 	int			i;
 
 	InvalidateCatalogSnapshot();
 	ResetCatalogCaches();
-	RelationCacheInvalidate();	/* gets smgr and relmap too */
+	RelationCacheInvalidate(debug_discard); /* gets smgr and relmap too */
 
 	for (i = 0; i < syscache_callback_count; i++)
 	{
@@ -707,7 +713,7 @@ AcceptInvalidationMessages(void)
 		if (recursion_depth < 3)
 		{
 			recursion_depth++;
-			InvalidateSystemCaches();
+			InvalidateSystemCachesExtended(true);
 			recursion_depth--;
 		}
 	}
