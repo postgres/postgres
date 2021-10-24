@@ -642,8 +642,8 @@ GRANT pg_signal_backend TO admin_user;
   </para>
 
   <para>
-   Access to roles can also be granted within the context of a specific database,
-   such as the following:
+   Access can also be granted within the context of a specific database,
+   for example:
 
 <programlisting>
 GRANT pg_read_all_data TO reporting_user IN DATABASE sales;
