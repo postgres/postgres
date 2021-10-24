@@ -232,10 +232,7 @@ SELECT * FROM data; -- error
 SET ROLE role_read_12; -- error
 SELECT * FROM data; -- error
 
--- Should clean up the membership table when dropping a database
 \connect postgres role_admin
-DROP DATABASE db_3;
-SELECT * FROM check_memberships();
 
 -- Should not warn if revoking admin option
 REVOKE ADMIN OPTION FOR pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- silent
@@ -251,5 +248,40 @@ SELECT * FROM check_memberships();
 REVOKE pg_read_all_data FROM role_read_12; -- warning
 SELECT * FROM check_memberships();
 
--- Ensure cluster-wide admin option can grant cluster-wide and in a specific database
+-- Ensure cluster-wide admin option can grant cluster-wide and in specific databases
+CREATE ROLE role_granted;
+SET SESSION AUTHORIZATION role_read_all_with_admin;
+GRANT pg_read_all_data TO role_granted; -- success
+GRANT pg_read_all_data TO role_granted IN CURRENT DATABASE; -- success
+GRANT pg_read_all_data TO role_granted IN DATABASE db_1; -- success
+GRANT role_read_34 TO role_granted; -- error
+SELECT * FROM check_memberships();
+
 -- Ensure database-specific admin option can only grant within that database
+SET SESSION AUTHORIZATION role_read_34;
+GRANT pg_read_all_data TO role_granted; -- error
+GRANT pg_read_all_data TO role_granted IN CURRENT DATABASE; -- error
+GRANT pg_read_all_data TO role_granted IN DATABASE db_3; -- error
+GRANT pg_read_all_data TO role_granted IN DATABASE db_4; -- error
+
+\connect db_3
+SET SESSION AUTHORIZATION role_read_34;
+GRANT pg_read_all_data TO role_granted; -- error
+GRANT pg_read_all_data TO role_granted IN CURRENT DATABASE; -- success
+GRANT pg_read_all_data TO role_granted IN DATABASE db_3; -- notice
+GRANT pg_read_all_data TO role_granted IN DATABASE db_4; -- error
+
+\connect db_4
+SET SESSION AUTHORIZATION role_read_34;
+GRANT pg_read_all_data TO role_granted; -- error
+GRANT pg_read_all_data TO role_granted IN CURRENT DATABASE; -- success
+GRANT pg_read_all_data TO role_granted IN DATABASE db_3; -- error
+GRANT pg_read_all_data TO role_granted IN DATABASE db_4; -- notice
+
+\connect postgres role_admin
+SELECT * FROM check_memberships();
+
+-- Should clean up the membership table when dropping a database
+\connect postgres role_admin
+DROP DATABASE db_3;
+SELECT * FROM check_memberships();
