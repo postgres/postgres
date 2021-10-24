@@ -518,3 +518,20 @@ SELECT * FROM check_memberships();
  role_read_all_with_admin | role_read_all_noinherit  | role_admin               | f            | 
 (12 rows)
 
+-- Should clean up the membership table when dropping a role
+DROP ROLE role_read_34;
+SELECT * FROM check_memberships();
+           role           |          member          |         grantor          | admin_option |  datname  
+--------------------------+--------------------------+--------------------------+--------------+-----------
+ pg_read_all_data         | role_granted             | role_read_all_with_admin | f            | db_1
+ pg_read_all_data         | role_granted             |                          | f            | db_4
+ pg_read_all_data         | role_granted             | role_read_all_with_admin | f            | postgres
+ pg_read_all_data         | role_granted             | role_read_all_with_admin | f            | 
+ pg_read_all_data         | role_read_12             | role_admin               | f            | db_1
+ pg_read_all_data         | role_read_12             | role_admin               | f            | db_2
+ pg_read_all_data         | role_read_all_noinherit  | role_admin               | f            | template1
+ pg_read_all_data         | role_read_all_with_admin | role_admin               | t            | 
+ role_read_12             | role_read_12_noinherit   | role_admin               | f            | 
+ role_read_all_with_admin | role_read_all_noinherit  | role_admin               | f            | 
+(10 rows)
+
