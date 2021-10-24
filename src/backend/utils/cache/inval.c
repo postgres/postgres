@@ -590,7 +590,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 			int			i;
 
 			if (msg->rc.relId == InvalidOid)
-				RelationCacheInvalidate();
+				RelationCacheInvalidate(false);
 			else
 				RelationCacheInvalidateEntry(msg->rc.relId);
 
@@ -648,11 +648,17 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 void
 InvalidateSystemCaches(void)
 {
+	InvalidateSystemCachesExtended(false);
+}
+
+void
+InvalidateSystemCachesExtended(bool debug_discard)
+{
 	int			i;
 
 	InvalidateCatalogSnapshot();
 	ResetCatalogCaches();
-	RelationCacheInvalidate();	/* gets smgr and relmap too */
+	RelationCacheInvalidate(debug_discard); /* gets smgr and relmap too */
 
 	for (i = 0; i < syscache_callback_count; i++)
 	{
@@ -721,7 +727,7 @@ AcceptInvalidationMessages(void)
 		if (recursion_depth < debug_discard_caches)
 		{
 			recursion_depth++;
-			InvalidateSystemCaches();
+			InvalidateSystemCachesExtended(true);
 			recursion_depth--;
 		}
 	}
