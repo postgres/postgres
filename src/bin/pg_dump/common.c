@@ -260,6 +260,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	pg_log_info("reading subscriptions");
 	getSubscriptions(fout);
 
+	free(inhinfo);				/* not needed any longer */
+
 	*numTablesPtr = numTables;
 	return tblinfo;
 }
@@ -373,24 +375,20 @@ static void
 flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 {
 	int			i,
-				j,
-				k;
+				j;
 
 	for (i = 0; i < numTables; i++)
 	{
-		IndexAttachInfo *attachinfo;
-
 		if (!tblinfo[i].ispartition || tblinfo[i].numParents == 0)
 			continue;
 
 		Assert(tblinfo[i].numParents == 1);
 
-		attachinfo = (IndexAttachInfo *)
-			pg_malloc0(tblinfo[i].numIndexes * sizeof(IndexAttachInfo));
-		for (j = 0, k = 0; j < tblinfo[i].numIndexes; j++)
+		for (j = 0; j < tblinfo[i].numIndexes; j++)
 		{
 			IndxInfo   *index = &(tblinfo[i].indexes[j]);
 			IndxInfo   *parentidx;
+			IndexAttachInfo *attachinfo;
 
 			if (index->parentidx == 0)
 				continue;
@@ -399,14 +397,16 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			if (parentidx == NULL)
 				continue;
 
-			attachinfo[k].dobj.objType = DO_INDEX_ATTACH;
-			attachinfo[k].dobj.catId.tableoid = 0;
-			attachinfo[k].dobj.catId.oid = 0;
-			AssignDumpId(&attachinfo[k].dobj);
-			attachinfo[k].dobj.name = pg_strdup(index->dobj.name);
-			attachinfo[k].dobj.namespace = index->indextable->dobj.namespace;
-			attachinfo[k].parentIdx = parentidx;
-			attachinfo[k].partitionIdx = index;
+			attachinfo = (IndexAttachInfo *) pg_malloc(sizeof(IndexAttachInfo));
+
+			attachinfo->dobj.objType = DO_INDEX_ATTACH;
+			attachinfo->dobj.catId.tableoid = 0;
+			attachinfo->dobj.catId.oid = 0;
+			AssignDumpId(&attachinfo->dobj);
+			attachinfo->dobj.name = pg_strdup(index->dobj.name);
+			attachinfo->dobj.namespace = index->indextable->dobj.namespace;
+			attachinfo->parentIdx = parentidx;
+			attachinfo->partitionIdx = index;
 
 			/*
 			 * We must state the DO_INDEX_ATTACH object's dependencies
@@ -423,17 +423,15 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			 * will not try to run the ATTACH concurrently with other
 			 * operations on those tables.
 			 */
-			addObjectDependency(&attachinfo[k].dobj, index->dobj.dumpId);
-			addObjectDependency(&attachinfo[k].dobj, parentidx->dobj.dumpId);
-			addObjectDependency(&attachinfo[k].dobj,
+			addObjectDependency(&attachinfo->dobj, index->dobj.dumpId);
+			addObjectDependency(&attachinfo->dobj, parentidx->dobj.dumpId);
+			addObjectDependency(&attachinfo->dobj,
 								index->indextable->dobj.dumpId);
-			addObjectDependency(&attachinfo[k].dobj,
+			addObjectDependency(&attachinfo->dobj,
 								parentidx->indextable->dobj.dumpId);
 
 			/* keep track of the list of partitions in the parent index */
-			simple_ptr_list_append(&parentidx->partattaches, &attachinfo[k].dobj);
-
-			k++;
+			simple_ptr_list_append(&parentidx->partattaches, &attachinfo->dobj);
 		}
 	}
 }
