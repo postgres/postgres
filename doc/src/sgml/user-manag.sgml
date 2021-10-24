@@ -405,7 +405,7 @@ RESET ROLE;
 
   <warning>
    <para>
-    There is a considerable privilege escalation security risk in granting database-specific
+    There is a privilege escalation security risk in granting database-specific
     role membership in roles that have any of the <literal>SUPERUSER</literal>, <literal>CREATEDB</literal>,
     or <literal>CREATEROLE</literal> attributes.  When connected to the specified database,
     the <literal>SET ROLE</literal> command would allow for these special privileges to be
