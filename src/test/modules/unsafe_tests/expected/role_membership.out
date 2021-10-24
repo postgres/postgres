@@ -383,33 +383,55 @@ SELECT * FROM check_memberships();
  role_read_all_with_admin | role_read_all_noinherit  | role_admin | f            | 
 (9 rows)
 
--- -- Ensure ADMIN OPTION can grant cluster-wide and within any DB if cluster-wide
--- \connect template1
--- CREATE ROLE role_f;
--- CREATE ROLE role_g;
--- GRANT role_b TO role_g;
--- -- Test cluster-wide membership
--- SET ROLE role_a;
--- GRANT pg_write_all_data TO role_f; -- error (no admin option)
--- GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
--- REVOKE pg_read_all_data FROM role_f;
--- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (cluster-wide admin option)
--- REVOKE pg_read_all_data FROM role_f IN DATABASE db_4;
--- -- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
--- SET ROLE role_b;
--- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
--- GRANT pg_read_all_data TO role_f IN DATABASE db_3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
--- -- Ensure ADMIN OPTION can grant only within same database if database-specific
--- \connect db_3
--- SET SESSION AUTHORIZATION role_b;
--- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
--- GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- error (no admin option for the target database)
--- GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
--- \connect db_4
--- SET SESSION AUTHORIZATION role_b;
--- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (database-specific admin option within the same database)
--- \connect postgres role_admin
--- SELECT * FROM check_memberships();
--- -- test REVOKE works
--- -- test revoke error (non-existing)
--- -- test removing admin option
+-- Should not warn if revoking admin option
+REVOKE ADMIN OPTION FOR pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- silent
+REVOKE ADMIN OPTION FOR pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- silent
+SELECT * FROM check_memberships();
+           role           |          member          |  grantor   | admin_option |  datname  
+--------------------------+--------------------------+------------+--------------+-----------
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_1
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_2
+ pg_read_all_data         | role_read_34             | role_admin | t            | db_4
+ pg_read_all_data         | role_read_all_noinherit  | role_admin | f            | template1
+ pg_read_all_data         | role_read_all_with_admin | role_admin | t            | 
+ pg_read_all_data         | role_read_template1      | role_admin | f            | template1
+ role_read_12             | role_read_12_noinherit   | role_admin | f            | 
+ role_read_34             | role_inherited_34        | role_admin | f            | 
+ role_read_all_with_admin | role_read_all_noinherit  | role_admin | f            | 
+(9 rows)
+
+-- Should warn if revoking a non-existent membership
+REVOKE pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- success
+REVOKE pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- warning
+WARNING:  role "role_read_template1" is not a member of role "pg_read_all_data" in database "template1"
+SELECT * FROM check_memberships();
+           role           |          member          |  grantor   | admin_option |  datname  
+--------------------------+--------------------------+------------+--------------+-----------
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_1
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_2
+ pg_read_all_data         | role_read_34             | role_admin | t            | db_4
+ pg_read_all_data         | role_read_all_noinherit  | role_admin | f            | template1
+ pg_read_all_data         | role_read_all_with_admin | role_admin | t            | 
+ role_read_12             | role_read_12_noinherit   | role_admin | f            | 
+ role_read_34             | role_inherited_34        | role_admin | f            | 
+ role_read_all_with_admin | role_read_all_noinherit  | role_admin | f            | 
+(8 rows)
+
+-- Revoke should only apply to the specified level
+REVOKE pg_read_all_data FROM role_read_12; -- warning
+WARNING:  role "role_read_12" is not a member of role "pg_read_all_data"
+SELECT * FROM check_memberships();
+           role           |          member          |  grantor   | admin_option |  datname  
+--------------------------+--------------------------+------------+--------------+-----------
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_1
+ pg_read_all_data         | role_read_12             | role_admin | f            | db_2
+ pg_read_all_data         | role_read_34             | role_admin | t            | db_4
+ pg_read_all_data         | role_read_all_noinherit  | role_admin | f            | template1
+ pg_read_all_data         | role_read_all_with_admin | role_admin | t            | 
+ role_read_12             | role_read_12_noinherit   | role_admin | f            | 
+ role_read_34             | role_inherited_34        | role_admin | f            | 
+ role_read_all_with_admin | role_read_all_noinherit  | role_admin | f            | 
+(8 rows)
+
+-- Ensure cluster-wide admin option can grant cluster-wide and in a specific database
+-- Ensure database-specific admin option can only grant within that database

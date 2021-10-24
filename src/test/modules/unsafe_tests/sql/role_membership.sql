@@ -237,40 +237,19 @@ SELECT * FROM data; -- error
 DROP DATABASE db_3;
 SELECT * FROM check_memberships();
 
--- -- Ensure ADMIN OPTION can grant cluster-wide and within any DB if cluster-wide
--- \connect template1
--- CREATE ROLE role_f;
--- CREATE ROLE role_g;
--- GRANT role_b TO role_g;
+-- Should not warn if revoking admin option
+REVOKE ADMIN OPTION FOR pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- silent
+REVOKE ADMIN OPTION FOR pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- silent
+SELECT * FROM check_memberships();
 
--- -- Test cluster-wide membership
--- SET ROLE role_a;
--- GRANT pg_write_all_data TO role_f; -- error (no admin option)
--- GRANT pg_read_all_data TO role_f; -- success (cluster-wide admin option)
--- REVOKE pg_read_all_data FROM role_f;
--- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (cluster-wide admin option)
--- REVOKE pg_read_all_data FROM role_f IN DATABASE db_4;
+-- Should warn if revoking a non-existent membership
+REVOKE pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- success
+REVOKE pg_read_all_data FROM role_read_template1 IN DATABASE template1; -- warning
+SELECT * FROM check_memberships();
 
--- -- Ensure ADMIN OPTION grnats are denied if not cluster-wide or if not in the same database when database-specific
--- SET ROLE role_b;
--- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
--- GRANT pg_read_all_data TO role_f IN DATABASE db_3; -- error (if admin option is not cluster-wide, database-specific grants are not allowed across databases)
+-- Revoke should only apply to the specified level
+REVOKE pg_read_all_data FROM role_read_12; -- warning
+SELECT * FROM check_memberships();
 
--- -- Ensure ADMIN OPTION can grant only within same database if database-specific
--- \connect db_3
--- SET SESSION AUTHORIZATION role_b;
--- GRANT pg_read_all_data TO role_f; -- error (no cluster-wide admin option)
--- GRANT pg_read_all_data TO role_f IN DATABASE db_2; -- error (no admin option for the target database)
--- GRANT pg_read_all_data TO role_f IN CURRENT DATABASE; -- success (database-specific admin option within the same database)
-
--- \connect db_4
--- SET SESSION AUTHORIZATION role_b;
--- GRANT pg_read_all_data TO role_f IN DATABASE db_4; -- success (database-specific admin option within the same database)
-
--- \connect postgres role_admin
--- SELECT * FROM check_memberships();
-
-
--- -- test REVOKE works
--- -- test revoke error (non-existing)
--- -- test removing admin option
+-- Ensure cluster-wide admin option can grant cluster-wide and in a specific database
+-- Ensure database-specific admin option can only grant within that database
