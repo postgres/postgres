@@ -403,8 +403,16 @@ RESET ROLE;
    <command>SET ROLE admin</command>.
   </para>
 
-  <para>
-  </para>
+  <warning>
+   <para>
+    There is a considerable privilege escalation security risk in granting database-specific
+    role membership in roles that have any of the <literal>SUPERUSER</literal>, <literal>CREATEDB</literal>,
+    or <literal>CREATEROLE</literal> attributes.  When connected to the specified database,
+    the <literal>SET ROLE</literal> command would allow for these special privileges to be
+    assumed by the grantee.  It is highly recommended that granting database-specific role
+    membership in roles with any of these special privileges be avoided.
+   </para>
+  </warning>
 
   <para>
    To destroy a group role, use <link
