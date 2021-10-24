@@ -633,7 +633,7 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
-   Administrators can grant access to these roles to users using the
+   Administrators can grant cluster-wide access to these roles to users using the
    <link linkend="sql-grant"><command>GRANT</command></link> command, for example:
 
 <programlisting>
@@ -641,6 +641,14 @@ GRANT pg_signal_backend TO admin_user;
 </programlisting>
   </para>
 
+  <para>
+   Access to roles can also be granted within the context of a specific database,
+   such as the following:
+
+<programlisting>
+GRANT pg_read_all_data TO reporting_user IN DATABASE sales;
+</programlisting>
+  </para>
  </sect1>
 
  <sect1 id="perm-functions">
