@@ -2463,6 +2463,13 @@ PrepareTransaction(void)
 	XactLastRecEnd = 0;
 
 	/*
+	 * Transfer our locks to a dummy PGPROC.  This has to be done before
+	 * ProcArrayClearTransaction().  Otherwise, a GetLockConflicts() would
+	 * conclude "xact already committed or aborted" for our locks.
+	 */
+	PostPrepare_Locks(xid);
+
+	/*
 	 * Let others know about no transaction in progress by me.  This has to be
 	 * done *after* the prepared transaction has been marked valid, else
 	 * someone may think it is unlocked and recyclable.
@@ -2501,7 +2508,6 @@ PrepareTransaction(void)
 
 	PostPrepare_MultiXact(xid);
 
-	PostPrepare_Locks(xid);
 	PostPrepare_PredicateLocks(xid);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,

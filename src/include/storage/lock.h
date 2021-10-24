@@ -47,10 +47,11 @@ extern bool Debug_deadlocks;
 
 /*
  * Top-level transactions are identified by VirtualTransactionIDs comprising
- * PGPROC fields backendId and lxid.  For prepared transactions, the
- * LocalTransactionId is an ordinary XID.  These are guaranteed unique over
- * the short term, but will be reused after a database restart or XID
- * wraparound; hence they should never be stored on disk.
+ * PGPROC fields backendId and lxid.  For recovered prepared transactions, the
+ * LocalTransactionId is an ordinary XID; LOCKTAG_VIRTUALTRANSACTION never
+ * refers to that kind.  These are guaranteed unique over the short term, but
+ * will be reused after a database restart or XID wraparound; hence they
+ * should never be stored on disk.
  *
  * Note that struct VirtualTransactionId can not be assumed to be atomically
  * assignable as a whole.  However, type LocalTransactionId is assumed to
@@ -70,7 +71,7 @@ typedef struct
 #define LocalTransactionIdIsValid(lxid) ((lxid) != InvalidLocalTransactionId)
 #define VirtualTransactionIdIsValid(vxid) \
 	(LocalTransactionIdIsValid((vxid).localTransactionId))
-#define VirtualTransactionIdIsPreparedXact(vxid) \
+#define VirtualTransactionIdIsRecoveredPreparedXact(vxid) \
 	((vxid).backendId == InvalidBackendId)
 #define VirtualTransactionIdEquals(vxid1, vxid2) \
 	((vxid1).backendId == (vxid2).backendId && \
