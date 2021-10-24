@@ -19,6 +19,8 @@ $node->start;
 # Check that replication slot stats are expected.
 sub test_slot_stats
 {
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	my ($node, $expected, $msg) = @_;
 
 	my $result = $node->safe_psql(

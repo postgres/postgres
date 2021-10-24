@@ -635,7 +635,6 @@ describeFunctions(const char *functypes, const char *func_pattern,
 				appendPQExpBufferStr(&buf, "p.prokind = 'w'\n");
 			else
 				appendPQExpBufferStr(&buf, "p.proiswindow\n");
-			needs_or = true;
 		}
 		appendPQExpBufferStr(&buf, "      )\n");
 	}

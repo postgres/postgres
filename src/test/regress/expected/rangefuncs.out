@@ -2416,3 +2416,32 @@ select *, row_to_json(u) from unnest(array[]::rngfunc2[]) u;
 (0 rows)
 
 drop type rngfunc2;
+-- check handling of functions pulled up into function RTEs (bug #17227)
+explain (verbose, costs off)
+select * from
+  (select jsonb_path_query_array(module->'lectures', '$[*]') as lecture
+   from unnest(array['{"lectures": [{"id": "1"}]}'::jsonb])
+        as unnested_modules(module)) as ss,
+  jsonb_to_recordset(ss.lecture) as j (id text);
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: jsonb_path_query_array((unnested_modules.module -> 'lectures'::text), '$[*]'::jsonpath, '{}'::jsonb, false), j.id
+   ->  Function Scan on pg_catalog.unnest unnested_modules
+         Output: unnested_modules.module
+         Function Call: unnest('{"{\"lectures\": [{\"id\": \"1\"}]}"}'::jsonb[])
+   ->  Function Scan on pg_catalog.jsonb_to_recordset j
+         Output: j.id
+         Function Call: jsonb_to_recordset(jsonb_path_query_array((unnested_modules.module -> 'lectures'::text), '$[*]'::jsonpath, '{}'::jsonb, false))
+(8 rows)
+
+select * from
+  (select jsonb_path_query_array(module->'lectures', '$[*]') as lecture
+   from unnest(array['{"lectures": [{"id": "1"}]}'::jsonb])
+        as unnested_modules(module)) as ss,
+  jsonb_to_recordset(ss.lecture) as j (id text);
+    lecture    | id 
+---------------+----
+ [{"id": "1"}] | 1
+(1 row)
+

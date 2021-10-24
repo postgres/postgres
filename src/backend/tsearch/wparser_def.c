@@ -1856,7 +1856,7 @@ TParserGet(TParser *prs)
 		}
 	}
 
-	return (item && (item->flags & A_BINGO)) ? true : false;
+	return (item && (item->flags & A_BINGO));
 }
 
 Datum

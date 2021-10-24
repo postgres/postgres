@@ -8799,7 +8799,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-multixact-failsafe-age" xreflabel="vacuum_multixact_failsafe_age">
+     <varlistentry id="guc-vacuum-multixact-failsafe-age" xreflabel="vacuum_multixact_failsafe_age">
       <term><varname>vacuum_multixact_failsafe_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_multixact_failsafe_age</varname> configuration parameter</primary>

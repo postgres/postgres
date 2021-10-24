@@ -329,3 +329,17 @@ INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
 -- Test unsupported btree opclass parameters
 create index on btree_tall_tbl (id int4_ops(foo=1));
 ERROR:  operator class int4_ops has no options
+-- Test case of ALTER INDEX with abuse of column names for indexes.
+-- This grammar is not officially supported, but the parser allows it.
+CREATE INDEX btree_tall_idx2 ON btree_tall_tbl (id);
+ALTER INDEX btree_tall_idx2 ALTER COLUMN id SET (n_distinct=100);
+ERROR:  ALTER action ALTER COLUMN ... SET cannot be performed on relation "btree_tall_idx2"
+DETAIL:  This operation is not supported for indexes.
+DROP INDEX btree_tall_idx2;
+-- Partitioned index
+CREATE TABLE btree_part (id int4) PARTITION BY RANGE (id);
+CREATE INDEX btree_part_idx ON btree_part(id);
+ALTER INDEX btree_part_idx ALTER COLUMN id SET (n_distinct=100);
+ERROR:  ALTER action ALTER COLUMN ... SET cannot be performed on relation "btree_part_idx"
+DETAIL:  This operation is not supported for partitioned indexes.
+DROP TABLE btree_part;

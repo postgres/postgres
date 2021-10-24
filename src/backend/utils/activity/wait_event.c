@@ -717,18 +717,6 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_WAL_WRITE:
 			event_name = "WALWrite";
 			break;
-		case WAIT_EVENT_LOGICAL_CHANGES_READ:
-			event_name = "LogicalChangesRead";
-			break;
-		case WAIT_EVENT_LOGICAL_CHANGES_WRITE:
-			event_name = "LogicalChangesWrite";
-			break;
-		case WAIT_EVENT_LOGICAL_SUBXACT_READ:
-			event_name = "LogicalSubxactRead";
-			break;
-		case WAIT_EVENT_LOGICAL_SUBXACT_WRITE:
-			event_name = "LogicalSubxactWrite";
-			break;
 
 			/* no default case, so that compiler will warn */
 	}

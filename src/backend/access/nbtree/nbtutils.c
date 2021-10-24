@@ -2693,7 +2693,7 @@ _bt_allequalimage(Relation rel, bool debugmessage)
 {
 	bool		allequalimage = true;
 
-	/* INCLUDE indexes don't support deduplication */
+	/* INCLUDE indexes can never support deduplication */
 	if (IndexRelationGetNumberOfAttributes(rel) !=
 		IndexRelationGetNumberOfKeyAttributes(rel))
 		return false;
@@ -2721,10 +2721,6 @@ _bt_allequalimage(Relation rel, bool debugmessage)
 		}
 	}
 
-	/*
-	 * Don't elog() until here to avoid reporting on a system relation index
-	 * or an INCLUDE index
-	 */
 	if (debugmessage)
 	{
 		if (allequalimage)

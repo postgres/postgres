@@ -142,5 +142,5 @@ searchstoplist(StopList *s, char *key)
 {
 	return (s->stop && s->len > 0 &&
 			bsearch(&key, s->stop, s->len,
-					sizeof(char *), pg_qsort_strcmp)) ? true : false;
+					sizeof(char *), pg_qsort_strcmp));
 }

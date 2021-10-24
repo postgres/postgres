@@ -195,7 +195,7 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	resstate->ps.ExecProcNode = ExecResult;
 
 	resstate->rs_done = false;
-	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
+	resstate->rs_checkqual = (node->resconstantqual != NULL);
 
 	/*
 	 * Miscellaneous initialization
@@ -260,7 +260,7 @@ void
 ExecReScanResult(ResultState *node)
 {
 	node->rs_done = false;
-	node->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
+	node->rs_checkqual = (node->resconstantqual != NULL);
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by

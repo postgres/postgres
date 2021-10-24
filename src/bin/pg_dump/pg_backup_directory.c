@@ -433,42 +433,42 @@ _LoadBlobs(ArchiveHandle *AH)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
-	char		fname[MAXPGPATH];
+	char		tocfname[MAXPGPATH];
 	char		line[MAXPGPATH];
 
 	StartRestoreBlobs(AH);
 
-	setFilePath(AH, fname, "blobs.toc");
+	setFilePath(AH, tocfname, "blobs.toc");
 
-	ctx->blobsTocFH = cfopen_read(fname, PG_BINARY_R);
+	ctx->blobsTocFH = cfopen_read(tocfname, PG_BINARY_R);
 
 	if (ctx->blobsTocFH == NULL)
 		fatal("could not open large object TOC file \"%s\" for input: %m",
-			  fname);
+			  tocfname);
 
 	/* Read the blobs TOC file line-by-line, and process each blob */
 	while ((cfgets(ctx->blobsTocFH, line, MAXPGPATH)) != NULL)
 	{
-		char		fname[MAXPGPATH];
+		char		blobfname[MAXPGPATH + 1];
 		char		path[MAXPGPATH];
 
-		/* Can't overflow because line and fname are the same length. */
-		if (sscanf(line, "%u %s\n", &oid, fname) != 2)
+		/* Can't overflow because line and blobfname are the same length */
+		if (sscanf(line, "%u %" CppAsString2(MAXPGPATH) "s\n", &oid, blobfname) != 2)
 			fatal("invalid line in large object TOC file \"%s\": \"%s\"",
-				  fname, line);
+				  tocfname, line);
 
 		StartRestoreBlob(AH, oid, AH->public.ropt->dropSchema);
-		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, fname);
+		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, blobfname);
 		_PrintFileData(AH, path);
 		EndRestoreBlob(AH, oid);
 	}
 	if (!cfeof(ctx->blobsTocFH))
 		fatal("error reading large object TOC file \"%s\"",
-			  fname);
+			  tocfname);
 
 	if (cfclose(ctx->blobsTocFH) != 0)
 		fatal("could not close large object TOC file \"%s\": %m",
-			  fname);
+			  tocfname);
 
 	ctx->blobsTocFH = NULL;
 

@@ -248,6 +248,9 @@ sub tap_check
 	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
 
 	$ENV{TESTDIR} = "$dir";
+	my $module = basename $dir;
+	# add the module build dir as the second element in the PATH
+	$ENV{PATH} =~ s!;!;$topdir/$Config/$module;!;
 
 	rmtree('tmp_check');
 	system(@args);

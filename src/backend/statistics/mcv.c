@@ -1619,8 +1619,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 	Assert(mcvlist->nitems <= STATS_MCVLIST_MAX_ITEMS);
 
 	matches = palloc(sizeof(bool) * mcvlist->nitems);
-	memset(matches, (is_or) ? false : true,
-		   sizeof(bool) * mcvlist->nitems);
+	memset(matches, !is_or,  sizeof(bool) * mcvlist->nitems);
 
 	/*
 	 * Loop through the list of clauses, and for each of them evaluate all the
