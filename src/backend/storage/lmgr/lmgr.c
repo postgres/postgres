@@ -871,9 +871,10 @@ XactLockTableWaitErrorCb(void *arg)
  * To do this, obtain the current list of lockers, and wait on their VXIDs
  * until they are finished.
  *
- * Note we don't try to acquire the locks on the given locktags, only the VXIDs
- * of its lock holders; if somebody grabs a conflicting lock on the objects
- * after we obtained our initial list of lockers, we will not wait for them.
+ * Note we don't try to acquire the locks on the given locktags, only the
+ * VXIDs and XIDs of their lock holders; if somebody grabs a conflicting lock
+ * on the objects after we obtained our initial list of lockers, we will not
+ * wait for them.
  */
 void
 WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
