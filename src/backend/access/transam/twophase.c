@@ -410,14 +410,24 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	proc->pgprocno = gxact->pgprocno;
 	SHMQueueElemInit(&(proc->links));
 	proc->waitStatus = STATUS_OK;
-	/* We set up the gxact's VXID as InvalidBackendId/XID */
-	proc->lxid = (LocalTransactionId) xid;
+	if (LocalTransactionIdIsValid(MyProc->lxid))
+	{
+		/* clone VXID, for TwoPhaseGetXidByVirtualXID() to find */
+		proc->lxid = MyProc->lxid;
+		proc->backendId = MyBackendId;
+	}
+	else
+	{
+		Assert(AmStartupProcess() || !IsPostmasterEnvironment);
+		/* GetLockConflicts() uses this to specify a wait on the XID */
+		proc->lxid = xid;
+		proc->backendId = InvalidBackendId;
+	}
 	pgxact->xid = xid;
 	pgxact->xmin = InvalidTransactionId;
 	pgxact->delayChkpt = false;
 	pgxact->vacuumFlags = 0;
 	proc->pid = 0;
-	proc->backendId = InvalidBackendId;
 	proc->databaseId = databaseid;
 	proc->roleId = owner;
 	proc->isBackgroundWorker = false;
@@ -797,6 +807,50 @@ TwoPhaseGetGXact(TransactionId xid)
 
 	cached_xid = xid;
 	cached_gxact = result;
+
+	return result;
+}
+
+/*
+ * TwoPhaseGetXidByVirtualXID
+ *		Lookup VXID among xacts prepared since last startup.
+ *
+ * (This won't find recovered xacts.)  If more than one matches, return any
+ * and set "have_more" to true.  To witness multiple matches, a single
+ * BackendId must consume 2^32 LXIDs, with no intervening database restart.
+ */
+TransactionId
+TwoPhaseGetXidByVirtualXID(VirtualTransactionId vxid,
+						   bool *have_more)
+{
+	int			i;
+	TransactionId result = InvalidTransactionId;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
+
+	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
+	{
+		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
+		PGPROC	   *proc;
+		VirtualTransactionId proc_vxid;
+
+		if (!gxact->valid)
+			continue;
+		proc = &ProcGlobal->allProcs[gxact->pgprocno];
+		GET_VXID_FROM_PGPROC(proc_vxid, *proc);
+		if (VirtualTransactionIdEquals(vxid, proc_vxid))
+		{
+			if (result != InvalidTransactionId)
+			{
+				*have_more = true;
+				break;
+			}
+			result = ProcGlobal->allPgXact[gxact->pgprocno].xid;
+		}
+	}
+
+	LWLockRelease(TwoPhaseStateLock);
 
 	return result;
 }

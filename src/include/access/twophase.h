@@ -33,6 +33,8 @@ extern void TwoPhaseShmemInit(void);
 extern void AtAbort_Twophase(void);
 extern void PostPrepare_Twophase(void);
 
+extern TransactionId TwoPhaseGetXidByVirtualXID(VirtualTransactionId vxid,
+												bool *have_more);
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
 extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
 
