@@ -309,6 +309,11 @@ CREATE ROLE <replaceable>name</replaceable>;
 GRANT <replaceable>group_role</replaceable> TO <replaceable>role1</replaceable>, ... ;
 REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceable>, ... ;
 </synopsis>
+   Role membership can also be granted and revoked within the context of a specific database:
+<synopsis>
+GRANT <replaceable>group_role</replaceable> TO <replaceable>role1</replaceable>, ... IN CURRENT DATABASE;
+REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceable>, ... IN DATABASE <replaceable>database_name</replaceable>;
+</synopsis>
    You can grant membership to other group roles, too (since there isn't
    really any distinction between group roles and non-group roles).  The
    database will not let you set up circular membership loops.  Also,

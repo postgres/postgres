@@ -115,12 +115,12 @@ REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON TYPE <replaceable>type_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
-    [ IN DATABASE <replaceable class="parameter">database_name</replaceable> | IN CURRENT DATABASE ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ ADMIN OPTION FOR ]
     <replaceable class="parameter">role_name</replaceable> [, ...] FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ IN DATABASE <replaceable class="parameter">database_name</replaceable> | IN CURRENT DATABASE ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
@@ -299,6 +299,14 @@ REVOKE ALL PRIVILEGES ON kinds FROM manuel;
 
 <programlisting>
 REVOKE admins FROM joe;
+</programlisting></para>
+
+  <para>
+   Revoke write access for user <literal>bob</literal> from the <literal>sales</literal>
+   database:
+
+<programlisting>
+REVOKE pg_write_all_data FROM bob IN DATABASE sales;
 </programlisting></para>
  </refsect1>
 

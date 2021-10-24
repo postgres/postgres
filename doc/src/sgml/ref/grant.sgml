@@ -420,7 +420,7 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
   </para>
 
   <para>
-   Grant membership in role <literal>admins</literal> to user <literal>joe</literal>:
+   Grant cluster-wide membership in role <literal>admins</literal> to user <literal>joe</literal>:
 
 <programlisting>
 GRANT admins TO joe;
@@ -428,7 +428,7 @@ GRANT admins TO joe;
 
   <para>
    Grant read and write access to user <literal>alice</literal> in the database
-   <literal>sales</literal>:
+   named <literal>sales</literal>:
 
 <programlisting>
 GRANT pg_read_all_data, pg_write_all_data TO alice IN DATABASE sales;
