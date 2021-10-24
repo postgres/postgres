@@ -155,6 +155,24 @@ bool		criticalSharedRelcachesBuilt = false;
 static long relcacheInvalsReceived = 0L;
 
 /*
+ * in_progress_list is a stack of ongoing RelationBuildDesc() calls.  CREATE
+ * INDEX CONCURRENTLY makes catalog changes under ShareUpdateExclusiveLock.
+ * It critically relies on each backend absorbing those changes no later than
+ * next transaction start.  Hence, RelationBuildDesc() loops until it finishes
+ * without accepting a relevant invalidation.  (Most invalidation consumers
+ * don't do this.)
+ */
+typedef struct inprogressent
+{
+	Oid			reloid;			/* OID of relation being built */
+	bool		invalidated;	/* whether an invalidation arrived for it */
+} InProgressEnt;
+
+static InProgressEnt *in_progress_list;
+static int	in_progress_list_len;
+static int	in_progress_list_maxlen;
+
+/*
  * eoxact_list[] stores the OIDs of relations that (might) need AtEOXact
  * cleanup work.  This list intentionally has limited size; if it overflows,
  * we fall back to scanning the whole hashtable.  There is no value in a very
@@ -1042,6 +1060,7 @@ equalRSDesc(RowSecurityDesc *rsdesc1, RowSecurityDesc *rsdesc2)
 static Relation
 RelationBuildDesc(Oid targetRelId, bool insertIt)
 {
+	int			in_progress_offset;
 	Relation	relation;
 	Oid			relid;
 	HeapTuple	pg_class_tuple;
@@ -1069,6 +1088,21 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	oldcxt = MemoryContextSwitchTo(tmpcxt);
 #endif
 
+	/* Register to catch invalidation messages */
+	if (in_progress_list_len >= in_progress_list_maxlen)
+	{
+		int			allocsize;
+
+		allocsize = in_progress_list_maxlen * 2;
+		in_progress_list = repalloc(in_progress_list,
+									allocsize * sizeof(*in_progress_list));
+		in_progress_list_maxlen = allocsize;
+	}
+	in_progress_offset = in_progress_list_len++;
+	in_progress_list[in_progress_offset].reloid = targetRelId;
+retry:
+	in_progress_list[in_progress_offset].invalidated = false;
+
 	/*
 	 * find the tuple in pg_class corresponding to the given relation id
 	 */
@@ -1084,6 +1118,8 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		MemoryContextSwitchTo(oldcxt);
 		MemoryContextDelete(tmpcxt);
 #endif
+		Assert(in_progress_offset + 1 == in_progress_list_len);
+		in_progress_list_len--;
 		return NULL;
 	}
 
@@ -1250,6 +1286,21 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	 * now we can free the memory allocated for pg_class_tuple
 	 */
 	heap_freetuple(pg_class_tuple);
+
+	/*
+	 * If an invalidation arrived mid-build, start over.  Between here and the
+	 * end of this function, don't add code that does or reasonably could read
+	 * system catalogs.  That range must be free from invalidation processing
+	 * for the !insertIt case.  For the insertIt case, RelationCacheInsert()
+	 * will enroll this relation in ordinary relcache invalidation processing,
+	 */
+	if (in_progress_list[in_progress_offset].invalidated)
+	{
+		RelationDestroyRelation(relation, false);
+		goto retry;
+	}
+	Assert(in_progress_offset + 1 == in_progress_list_len);
+	in_progress_list_len--;
 
 	/*
 	 * Insert newly created relation into relcache hash table, if requested.
@@ -2554,6 +2605,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		/* Build temporary entry, but don't link it into hashtable */
 		newrel = RelationBuildDesc(save_relid, false);
+
+		/*
+		 * Between here and the end of the swap, don't add code that does or
+		 * reasonably could read system catalogs.  That range must be free
+		 * from invalidation processing.  See RelationBuildDesc() manipulation
+		 * of in_progress_list.
+		 */
+
 		if (newrel == NULL)
 		{
 			/*
@@ -2765,6 +2824,14 @@ RelationCacheInvalidateEntry(Oid relationId)
 		relcacheInvalsReceived++;
 		RelationFlushRelation(relation);
 	}
+	else
+	{
+		int			i;
+
+		for (i = 0; i < in_progress_list_len; i++)
+			if (in_progress_list[i].reloid == relationId)
+				in_progress_list[i].invalidated = true;
+	}
 }
 
 /*
@@ -2796,9 +2863,14 @@ RelationCacheInvalidateEntry(Oid relationId)
  *	 second pass processes nailed-in-cache items before other nondeletable
  *	 items.  This should ensure that system catalogs are up to date before
  *	 we attempt to use them to reload information about other open relations.
+ *
+ *	 After those two phases of work having immediate effects, we normally
+ *	 signal any RelationBuildDesc() on the stack to start over.  However, we
+ *	 don't do this if called as part of debug_discard_caches.  Otherwise,
+ *	 RelationBuildDesc() would become an infinite loop.
  */
 void
-RelationCacheInvalidate(void)
+RelationCacheInvalidate(bool debug_discard)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
@@ -2806,6 +2878,7 @@ RelationCacheInvalidate(void)
 	List	   *rebuildFirstList = NIL;
 	List	   *rebuildList = NIL;
 	ListCell   *l;
+	int			i;
 
 	/*
 	 * Reload relation mapping data before starting to reconstruct cache.
@@ -2892,6 +2965,11 @@ RelationCacheInvalidate(void)
 		RelationClearRelation(relation, true);
 	}
 	list_free(rebuildList);
+
+	if (!debug_discard)
+		/* Any RelationBuildDesc() on the stack must start over. */
+		for (i = 0; i < in_progress_list_len; i++)
+			in_progress_list[i].invalidated = true;
 }
 
 /*
@@ -2963,6 +3041,13 @@ AtEOXact_RelationCache(bool isCommit)
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	int			i;
+
+	/*
+	 * Forget in_progress_list.  This is relevant when we're aborting due to
+	 * an error during RelationBuildDesc().
+	 */
+	Assert(in_progress_list_len == 0 || !isCommit);
+	in_progress_list_len = 0;
 
 	/*
 	 * Unless the eoxact_list[] overflowed, we only need to examine the rels
@@ -3099,6 +3184,14 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	int			i;
+
+	/*
+	 * Forget in_progress_list.  This is relevant when we're aborting due to
+	 * an error during RelationBuildDesc().  We don't commit subtransactions
+	 * during RelationBuildDesc().
+	 */
+	Assert(in_progress_list_len == 0 || !isCommit);
+	in_progress_list_len = 0;
 
 	/*
 	 * Unless the eoxact_list[] overflowed, we only need to examine the rels
@@ -3601,6 +3694,7 @@ void
 RelationCacheInitialize(void)
 {
 	HASHCTL		ctl;
+	int			allocsize;
 
 	/*
 	 * make sure cache memory context exists
@@ -3616,6 +3710,15 @@ RelationCacheInitialize(void)
 	ctl.entrysize = sizeof(RelIdCacheEnt);
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_BLOBS);
+
+	/*
+	 * reserve enough in_progress_list slots for many cases
+	 */
+	allocsize = 4;
+	in_progress_list =
+		MemoryContextAlloc(CacheMemoryContext,
+						   allocsize * sizeof(*in_progress_list));
+	in_progress_list_maxlen = allocsize;
 
 	/*
 	 * relation mapper needs to be initialized too

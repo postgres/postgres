@@ -1530,6 +1530,141 @@ sub psql
 	}
 }
 
+# Common sub of pgbench-invoking interfaces.  Makes any requested script files
+# and returns pgbench command-line options causing use of those files.
+sub _pgbench_make_files
+{
+	my ($self, $files) = @_;
+	my @file_opts;
+
+	if (defined $files)
+	{
+
+		# note: files are ordered for determinism
+		for my $fn (sort keys %$files)
+		{
+			my $filename = $self->basedir . '/' . $fn;
+			push @file_opts, '-f', $filename;
+
+			# cleanup file weight
+			$filename =~ s/\@\d+$//;
+
+			#push @filenames, $filename;
+			# filenames are expected to be unique on a test
+			if (-e $filename)
+			{
+				ok(0, "$filename must not already exist");
+				unlink $filename or die "cannot unlink $filename: $!";
+			}
+			TestLib::append_to_file($filename, $$files{$fn});
+		}
+	}
+
+	return @file_opts;
+}
+
+=pod
+
+=item $node->pgbench($opts, $stat, $out, $err, $name, $files, @args)
+
+Invoke B<pgbench>, with parameters and files.
+
+=over
+
+=item $opts
+
+Options as a string to be split on spaces.
+
+=item $stat
+
+Expected exit status.
+
+=item $out
+
+Reference to a regexp list that must match stdout.
+
+=item $err
+
+Reference to a regexp list that must match stderr.
+
+=item $name
+
+Name of test for error messages.
+
+=item $files
+
+Reference to filename/contents dictionary.
+
+=item @args
+
+Further raw options or arguments.
+
+=back
+
+=cut
+
+sub pgbench
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my ($self, $opts, $stat, $out, $err, $name, $files, @args) = @_;
+	my @cmd = (
+		'pgbench',
+		split(/\s+/, $opts),
+		$self->_pgbench_make_files($files), @args);
+
+	$self->command_checks_all(\@cmd, $stat, $out, $err, $name);
+}
+
+=pod
+
+=item $node->background_pgbench($opts, $files, \$stdout, $timer) => harness
+
+Invoke B<pgbench> and return an IPC::Run harness object.  The process's stdin
+is empty, and its stdout and stderr go to the $stdout scalar reference.  This
+allows the caller to act on other parts of the system while B<pgbench> is
+running.  Errors from B<pgbench> are the caller's problem.
+
+The specified timer object is attached to the harness, as well.  It's caller's
+responsibility to select the timeout length, and to restart the timer after
+each command if the timeout is per-command.
+
+Be sure to "finish" the harness when done with it.
+
+=over
+
+=item $opts
+
+Options as a string to be split on spaces.
+
+=item $files
+
+Reference to filename/contents dictionary.
+
+=back
+
+=cut
+
+sub background_pgbench
+{
+	my ($self, $opts, $files, $stdout, $timer) = @_;
+
+	my @cmd =
+	  ('pgbench', split(/\s+/, $opts), $self->_pgbench_make_files($files));
+
+	local $ENV{PGHOST} = $self->host;
+	local $ENV{PGPORT} = $self->port;
+
+	my $stdin = "";
+	# IPC::Run would otherwise append to existing contents:
+	$$stdout = "" if ref($stdout);
+
+	my $harness = IPC::Run::start \@cmd, '<', \$stdin, '>', $stdout, '2>&1',
+	  $timer;
+
+	return $harness;
+}
+
 =pod
 
 =item $node->poll_query_until($dbname, $query [, $expected ])

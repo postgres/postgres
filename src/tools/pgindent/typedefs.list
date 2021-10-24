@@ -1020,6 +1020,7 @@ ImportForeignSchemaStmt
 ImportForeignSchemaType
 ImportForeignSchema_function
 ImportQual
+InProgressEnt
 IncludeWal
 InclusionOpaque
 IncrementVarSublevelsUp_context
