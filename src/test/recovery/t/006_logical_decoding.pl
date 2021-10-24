@@ -8,13 +8,13 @@
 # are required.
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 14;
 use Config;
 
 # Initialize primary node
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
 $node_primary->append_conf(
 	'postgresql.conf', qq(

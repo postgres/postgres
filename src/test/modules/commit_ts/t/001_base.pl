@@ -6,11 +6,11 @@
 use strict;
 use warnings;
 
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 2;
-use PostgresNode;
+use PostgreSQL::Test::Cluster;
 
-my $node = PostgresNode->new('foxtrot');
+my $node = PostgreSQL::Test::Cluster->new('foxtrot');
 $node->init;
 $node->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 $node->start;

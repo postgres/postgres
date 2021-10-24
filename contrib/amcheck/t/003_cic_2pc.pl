@@ -6,8 +6,8 @@ use strict;
 use warnings;
 
 use Config;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 
 use Test::More tests => 6;
 
@@ -16,7 +16,7 @@ my ($node, $result);
 #
 # Test set-up
 #
-$node = PostgresNode->new('CIC_2PC_test');
+$node = PostgreSQL::Test::Cluster->new('CIC_2PC_test');
 $node->init;
 $node->append_conf('postgresql.conf', 'max_prepared_transactions = 10');
 $node->append_conf('postgresql.conf', 'lock_timeout = 180000');

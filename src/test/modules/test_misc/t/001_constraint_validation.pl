@@ -5,12 +5,12 @@
 
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 42;
 
 # Initialize a test cluster
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init();
 # Turn message level up to DEBUG1 so that we get the messages we want to see
 $node->append_conf('postgresql.conf', 'client_min_messages = DEBUG1');

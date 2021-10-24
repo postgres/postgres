@@ -4,14 +4,14 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 2;
 use Time::HiRes qw(usleep);
 
-my $tempdir = TestLib::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
 
@@ -44,7 +44,7 @@ SKIP: {
 	pump $h while length $stdin;
 	my $count;
 	my $psql_pid;
-	until (-s "$tempdir/psql.pid" and ($psql_pid = TestLib::slurp_file("$tempdir/psql.pid")) =~ /^\d+\n/s)
+	until (-s "$tempdir/psql.pid" and ($psql_pid = PostgreSQL::Test::Utils::slurp_file("$tempdir/psql.pid")) =~ /^\d+\n/s)
 	{
 		($count++ < 180 * 100) or die "pid file did not appear";
 		usleep(10_000)

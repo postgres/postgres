@@ -6,12 +6,12 @@
 use strict;
 use warnings;
 use File::Path qw(rmtree);
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 2;
 
 # Test set-up
-my $node = PostgresNode->new('test');
+my $node = PostgreSQL::Test::Cluster->new('test');
 $node->init(allows_streaming => 'logical');
 $node->append_conf('postgresql.conf', 'synchronous_commit = on');
 $node->start;

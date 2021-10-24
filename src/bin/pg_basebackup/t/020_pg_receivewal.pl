@@ -3,8 +3,8 @@
 
 use strict;
 use warnings;
-use TestLib;
-use PostgresNode;
+use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::Cluster;
 use Test::More tests => 27;
 
 program_help_ok('pg_receivewal');
@@ -14,7 +14,7 @@ program_options_handling_ok('pg_receivewal');
 # Set umask so test directories and files are created with default permissions
 umask(0077);
 
-my $primary = PostgresNode->new('primary');
+my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 

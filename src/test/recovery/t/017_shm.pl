@@ -9,9 +9,9 @@ use warnings;
 use Config;
 use File::stat qw(stat);
 use IPC::Run 'run';
-use PostgresNode;
+use PostgreSQL::Test::Cluster;
 use Test::More;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Time::HiRes qw(usleep);
 
 # If we don't have shmem support, skip the whole thing
@@ -30,7 +30,7 @@ else
 	plan tests => 4;
 }
 
-my $tempdir = TestLib::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 # Log "ipcs" diffs on a best-effort basis, swallowing any error.
 my $ipcs_before = "$tempdir/ipcs_before";
@@ -43,7 +43,7 @@ sub log_ipcs
 }
 
 # Node setup.
-my $gnat = PostgresNode->new('gnat');
+my $gnat = PostgreSQL::Test::Cluster->new('gnat');
 $gnat->init;
 
 # Create a shmem segment that will conflict with gnat's first choice
@@ -116,7 +116,7 @@ log_ipcs();
 $gnat->start;
 log_ipcs();
 
-my $regress_shlib = TestLib::perl2host($ENV{REGRESS_SHLIB});
+my $regress_shlib = PostgreSQL::Test::Utils::perl2host($ENV{REGRESS_SHLIB});
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void
@@ -175,7 +175,7 @@ like($single_stderr, $pre_existing_msg,
 log_ipcs();
 
 # cleanup slow backend
-TestLib::system_log('pg_ctl', 'kill', 'QUIT', $slow_pid);
+PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'QUIT', $slow_pid);
 $slow_client->finish;    # client has detected backend termination
 log_ipcs();
 

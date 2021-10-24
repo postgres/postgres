@@ -4,12 +4,12 @@
 # Minimal test testing streaming replication
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 49;
 
 # Initialize primary node
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 # A specific role is created to perform some tests related to replication,
 # and it needs proper authentication configuration.
 $node_primary->init(
@@ -22,7 +22,7 @@ my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
 # Create streaming standby linking to primary
-my $node_standby_1 = PostgresNode->new('standby_1');
+my $node_standby_1 = PostgreSQL::Test::Cluster->new('standby_1');
 $node_standby_1->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_1->start;
@@ -37,7 +37,7 @@ $node_standby_1->backup('my_backup_2');
 $node_primary->start;
 
 # Create second standby node linking to standby 1
-my $node_standby_2 = PostgresNode->new('standby_2');
+my $node_standby_2 = PostgreSQL::Test::Cluster->new('standby_2');
 $node_standby_2->init_from_backup($node_standby_1, $backup_name,
 	has_streaming => 1);
 $node_standby_2->start;

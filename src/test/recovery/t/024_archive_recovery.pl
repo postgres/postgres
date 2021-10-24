@@ -4,14 +4,14 @@
 # Test for archive recovery of WAL generated with wal_level=minimal
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 2;
 use Time::HiRes qw(usleep);
 
 # Initialize and start node with wal_level = replica and WAL archiving
 # enabled.
-my $node = PostgresNode->new('orig');
+my $node = PostgreSQL::Test::Cluster->new('orig');
 $node->init(has_archiving => 1, allows_streaming => 1);
 my $replica_config = q[
 wal_level = replica
@@ -66,7 +66,7 @@ sub test_recovery_wal_level_minimal
 {
 	my ($node_name, $node_text, $standby_setting) = @_;
 
-	my $recovery_node = PostgresNode->new($node_name);
+	my $recovery_node = PostgreSQL::Test::Cluster->new($node_name);
 	$recovery_node->init_from_backup(
 		$node, $backup_name,
 		has_restoring => 1,

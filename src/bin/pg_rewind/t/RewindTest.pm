@@ -40,9 +40,9 @@ use Exporter 'import';
 use File::Copy;
 use File::Path qw(rmtree);
 use IPC::Run qw(run);
-use PostgresNode;
-use RecursiveCopy;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::RecursiveCopy;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 our @EXPORT = qw(
@@ -128,7 +128,7 @@ sub setup_cluster
 
 	# Initialize primary, data checksums are mandatory
 	$node_primary =
-	  PostgresNode->new('primary' . ($extra_name ? "_${extra_name}" : ''));
+	  PostgreSQL::Test::Cluster->new('primary' . ($extra_name ? "_${extra_name}" : ''));
 
 	# Set up pg_hba.conf and pg_ident.conf for the role running
 	# pg_rewind.  This role is used for all the tests, and has
@@ -176,7 +176,7 @@ sub create_standby
 	my $extra_name = shift;
 
 	$node_standby =
-	  PostgresNode->new('standby' . ($extra_name ? "_${extra_name}" : ''));
+	  PostgreSQL::Test::Cluster->new('standby' . ($extra_name ? "_${extra_name}" : ''));
 	$node_primary->backup('my_backup');
 	$node_standby->init_from_backup($node_primary, 'my_backup');
 	my $connstr_primary = $node_primary->connstr();
@@ -226,7 +226,7 @@ sub run_pg_rewind
 	my $primary_pgdata  = $node_primary->data_dir;
 	my $standby_pgdata  = $node_standby->data_dir;
 	my $standby_connstr = $node_standby->connstr('postgres');
-	my $tmp_folder      = TestLib::tempdir;
+	my $tmp_folder      = PostgreSQL::Test::Utils::tempdir;
 
 	# Append the rewind-specific role to the connection string.
 	$standby_connstr = "$standby_connstr user=rewind_user";
@@ -315,7 +315,7 @@ sub run_pg_rewind
 		# segments from the old primary to the archives.  These
 		# will be used by pg_rewind.
 		rmtree($node_primary->archive_dir);
-		RecursiveCopy::copypath($node_primary->data_dir . "/pg_wal",
+		PostgreSQL::Test::RecursiveCopy::copypath($node_primary->data_dir . "/pg_wal",
 			$node_primary->archive_dir);
 
 		# Fast way to remove entire directory content

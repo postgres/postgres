@@ -6,13 +6,13 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 10;
 use Config;
 
 # Initialize primary node
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
 $node_primary->append_conf('postgresql.conf', 'max_prepared_transactions=10');
 $node_primary->start;
@@ -26,7 +26,7 @@ my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
 # Create streaming standby from backup
-my $node_standby = PostgresNode->new('standby');
+my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', 'max_prepared_transactions=10');
@@ -187,7 +187,7 @@ sub send_query_and_wait
 	$$psql{run}->pump_nb();
 	while (1)
 	{
-		# See PostgresNode.pm's psql()
+		# See PostgreSQL::Test::Cluster.pm's psql()
 		$$psql{stdout} =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 
 		last if $$psql{stdout} =~ /$untl/;

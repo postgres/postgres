@@ -6,11 +6,11 @@
 #
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 5;
 
-my $node = PostgresNode->new('test');
+my $node = PostgreSQL::Test::Cluster->new('test');
 $node->init;
 $node->start;
 

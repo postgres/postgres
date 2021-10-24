@@ -8,7 +8,7 @@
 use strict;
 use warnings;
 
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 # create a directory for scripts
@@ -16,7 +16,7 @@ my $testname = $0;
 $testname =~ s,.*/,,;
 $testname =~ s/\.pl$//;
 
-my $testdir = "$TestLib::tmp_check/t_${testname}_stuff";
+my $testdir = "$PostgreSQL::Test::Utils::tmp_check/t_${testname}_stuff";
 mkdir $testdir
   or BAIL_OUT("could not create test directory \"${testdir}\": $!");
 

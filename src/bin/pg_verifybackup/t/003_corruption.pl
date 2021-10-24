@@ -8,17 +8,17 @@ use warnings;
 use Cwd;
 use Config;
 use File::Path qw(rmtree);
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 44;
 
-my $primary = PostgresNode->new('primary');
+my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
 # Include a user-defined tablespace in the hopes of detecting problems in that
 # area.
-my $source_ts_path   = TestLib::perl2host(TestLib::tempdir_short());
+my $source_ts_path   = PostgreSQL::Test::Utils::perl2host(PostgreSQL::Test::Utils::tempdir_short());
 my $source_ts_prefix = $source_ts_path;
 $source_ts_prefix =~ s!(^[A-Z]:/[^/]*)/.*!$1!;
 
@@ -107,7 +107,7 @@ for my $scenario (@scenario)
 
 		# Take a backup and check that it verifies OK.
 		my $backup_path    = $primary->backup_dir . '/' . $name;
-		my $backup_ts_path = TestLib::perl2host(TestLib::tempdir_short());
+		my $backup_ts_path = PostgreSQL::Test::Utils::perl2host(PostgreSQL::Test::Utils::tempdir_short());
 		# The tablespace map parameter confuses Msys2, which tries to mangle
 		# it. Tell it not to.
 		# See https://www.msys2.org/wiki/Porting/#filesystem-namespaces

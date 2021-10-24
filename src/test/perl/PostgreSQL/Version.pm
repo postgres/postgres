@@ -1,6 +1,6 @@
 ############################################################################
 #
-# PostgresVersion.pm
+# PostgreSQL/Version.pm
 #
 # Module encapsulating Postgres Version numbers
 #
@@ -12,13 +12,13 @@
 
 =head1 NAME
 
-PostgresVersion - class representing PostgreSQL version numbers
+PostgreSQL::Version - class representing PostgreSQL version numbers
 
 =head1 SYNOPSIS
 
-  use PostgresVersion;
+  use PostgreSQL::Version;
 
-  my $version = PostgresVersion->new($version_arg);
+  my $version = PostgreSQL::Version->new($version_arg);
 
   # compare two versions
   my $bool = $version1 <= $version2;
@@ -37,12 +37,12 @@ PostgresVersion - class representing PostgreSQL version numbers
 
 =head1 DESCRIPTION
 
-PostgresVersion encapsulates Postgres version numbers, providing parsing
+PostgreSQL::Version encapsulates Postgres version numbers, providing parsing
 of common version formats and comparison operations.
 
 =cut
 
-package PostgresVersion;
+package PostgreSQL::Version;
 
 use strict;
 use warnings;
@@ -60,9 +60,9 @@ use overload
 
 =over
 
-=item PostgresVersion->new($version)
+=item PostgreSQL::Version->new($version)
 
-Create a new PostgresVersion instance.
+Create a new PostgreSQL::Version instance.
 
 The argument can be a number like 12, or a string like '12.2' or the output
 of a Postgres command like `psql --version` or `pg_config --version`;
@@ -103,7 +103,7 @@ sub new
 
 # Routine which compares the _pg_version_array obtained for the two
 # arguments and returns -1, 0, or 1, allowing comparison between two
-# PostgresVersion objects or a PostgresVersion and a version string or number.
+# PostgreSQL::Version objects or a PostgreSQL::Version and a version string or number.
 #
 # If the second argument is not a blessed object we call the constructor
 # to make one.

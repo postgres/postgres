@@ -4,11 +4,11 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($TestLib::is_msys2)
+if ($PostgreSQL::Test::Utils::is_msys2)
 {
 	plan skip_all => 'High bit name tests fail on Msys2';
 }
@@ -34,7 +34,7 @@ my $dbname1 =
   . generate_ascii_string(1,  9)
   . generate_ascii_string(11, 12)
   . generate_ascii_string(14, 33)
-  . ($TestLib::windows_os ? '' : '"x"')   # IPC::Run mishandles '"' on Windows
+  . ($PostgreSQL::Test::Utils::windows_os ? '' : '"x"')   # IPC::Run mishandles '"' on Windows
   . generate_ascii_string(35, 43)         # skip ','
   . generate_ascii_string(45, 54);
 my $dbname2 = 'regression' . generate_ascii_string(55, 65)    # skip 'B'-'W'
@@ -51,7 +51,7 @@ my $dbname4 = 'regression' . generate_ascii_string(203, 255);
 my $src_bootstrap_super = 'regress_postgres';
 my $dst_bootstrap_super = 'boot';
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init(extra =>
 	  [ '-U', $src_bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
 
@@ -175,13 +175,13 @@ system_log('cat', $plain);
 my ($stderr, $result);
 my $restore_super = qq{regress_a'b\\c=d\\ne"f};
 $restore_super =~ s/"//g
-  if $TestLib::windows_os;    # IPC::Run mishandles '"' on Windows
+  if $PostgreSQL::Test::Utils::windows_os;    # IPC::Run mishandles '"' on Windows
 
 
 # Restore full dump through psql using environment variables for
 # dbname/user connection parameters
 
-my $envar_node = PostgresNode->new('destination_envar');
+my $envar_node = PostgreSQL::Test::Cluster->new('destination_envar');
 $envar_node->init(
 	extra =>
 	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],
@@ -208,7 +208,7 @@ is($stderr, '', 'no dump errors');
 # dbname/user connection parameters.  "\connect dbname=" forgets
 # user/port from command line.
 
-my $cmdline_node = PostgresNode->new('destination_cmdline');
+my $cmdline_node = PostgreSQL::Test::Cluster->new('destination_cmdline');
 $cmdline_node->init(
 	extra =>
 	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],

@@ -4,17 +4,17 @@
 # Tests for logical replication table syncing
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 8;
 
 # Initialize publisher node
-my $node_publisher = PostgresNode->new('publisher');
+my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
 # Create subscriber node
-my $node_subscriber = PostgresNode->new('subscriber');
+my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->append_conf('postgresql.conf',
 	"wal_retrieve_retry_interval = 1ms");

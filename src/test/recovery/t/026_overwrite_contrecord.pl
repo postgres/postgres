@@ -6,8 +6,8 @@ use strict;
 use warnings;
 
 use FindBin;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 plan tests => 3;
@@ -17,7 +17,7 @@ plan tests => 3;
 # that the replica replays the "overwrite contrecord" from that new
 # file.
 
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(allows_streaming => 1);
 $node->append_conf('postgresql.conf', 'wal_keep_size=1GB');
 $node->start;
@@ -70,7 +70,7 @@ unlink $node->basedir . "/pgdata/pg_wal/$endfile"
 
 # OK, create a standby at this spot.
 $node->backup_fs_cold('backup');
-my $node_standby = PostgresNode->new('standby');
+my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup($node, 'backup', has_streaming => 1);
 
 $node_standby->start;

@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 25;
 
 program_help_ok('psql');
@@ -60,7 +60,7 @@ foreach my $arg (qw(commands variables))
 	is($stderr, '', "psql --help=$arg nothing to stderr");
 }
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf(
 	'postgresql.conf', q{

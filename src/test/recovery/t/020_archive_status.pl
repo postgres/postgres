@@ -6,12 +6,12 @@
 #
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 16;
 use Config;
 
-my $primary = PostgresNode->new('primary');
+my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(
 	has_archiving    => 1,
 	allows_streaming => 1);
@@ -27,7 +27,7 @@ my $primary_data = $primary->data_dir;
 # a portable solution, use an archive command based on a command known to
 # work but will fail: copy with an incorrect original path.
 my $incorrect_command =
-  $TestLib::windows_os
+  $PostgreSQL::Test::Utils::windows_os
   ? qq{copy "%p_does_not_exist" "%f_does_not_exist"}
   : qq{cp "%p_does_not_exist" "%f_does_not_exist"};
 $primary->safe_psql(
@@ -138,7 +138,7 @@ $primary->poll_query_until('postgres',
   or die "Timed out while waiting for archiving to finish";
 
 # Test standby with archive_mode = on.
-my $standby1 = PostgresNode->new('standby');
+my $standby1 = PostgreSQL::Test::Cluster->new('standby');
 $standby1->init_from_backup($primary, 'backup', has_restoring => 1);
 $standby1->append_conf('postgresql.conf', "archive_mode = on");
 my $standby1_data = $standby1->data_dir;
@@ -174,7 +174,7 @@ ok( -f "$standby1_data/$segment_path_2_done",
 # command to fail to persist the .ready files.  Note that this node
 # has inherited the archive command of the previous cold backup that
 # will cause archiving failures.
-my $standby2 = PostgresNode->new('standby2');
+my $standby2 = PostgreSQL::Test::Cluster->new('standby2');
 $standby2->init_from_backup($primary, 'backup', has_restoring => 1);
 $standby2->append_conf('postgresql.conf', 'archive_mode = always');
 my $standby2_data = $standby2->data_dir;

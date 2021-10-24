@@ -4,13 +4,13 @@
 # test for archiving with hot standby
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 3;
 use File::Copy;
 
 # Initialize primary node, doing archives
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(
 	has_archiving    => 1,
 	allows_streaming => 1);
@@ -23,7 +23,7 @@ $node_primary->start;
 $node_primary->backup($backup_name);
 
 # Initialize standby node from backup, fetching WAL from archives
-my $node_standby = PostgresNode->new('standby');
+my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_standby->append_conf('postgresql.conf',
@@ -62,7 +62,7 @@ is($result, qq(1000), 'check content from archives');
 # promoted.
 $node_standby->promote;
 
-my $node_standby2 = PostgresNode->new('standby2');
+my $node_standby2 = PostgreSQL::Test::Cluster->new('standby2');
 $node_standby2->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_standby2->start;

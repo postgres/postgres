@@ -7,12 +7,12 @@ use warnings;
 use Config;
 use Fcntl ':mode';
 use File::stat qw{lstat};
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 24;
 
-my $tempdir       = TestLib::tempdir;
-my $tempdir_short = TestLib::tempdir_short;
+my $tempdir       = PostgreSQL::Test::Utils::tempdir;
+my $tempdir_short = PostgreSQL::Test::Utils::tempdir_short;
 
 program_help_ok('pg_ctl');
 program_version_ok('pg_ctl');
@@ -25,11 +25,11 @@ command_ok([ 'pg_ctl', 'initdb', '-D', "$tempdir/data", '-o', '-N' ],
 	'pg_ctl initdb');
 command_ok([ $ENV{PG_REGRESS}, '--config-auth', "$tempdir/data" ],
 	'configure authentication');
-my $node_port = PostgresNode::get_free_port();
+my $node_port = PostgreSQL::Test::Cluster::get_free_port();
 open my $conf, '>>', "$tempdir/data/postgresql.conf";
 print $conf "fsync = off\n";
 print $conf "port = $node_port\n";
-print $conf TestLib::slurp_file($ENV{TEMP_CONFIG})
+print $conf PostgreSQL::Test::Utils::slurp_file($ENV{TEMP_CONFIG})
   if defined $ENV{TEMP_CONFIG};
 
 if ($use_unix_sockets)
@@ -44,7 +44,7 @@ else
 close $conf;
 my $ctlcmd = [
 	'pg_ctl', 'start', '-D', "$tempdir/data", '-l',
-	"$TestLib::log_path/001_start_stop_server.log"
+	"$PostgreSQL::Test::Utils::log_path/001_start_stop_server.log"
 ];
 if ($Config{osname} ne 'msys')
 {

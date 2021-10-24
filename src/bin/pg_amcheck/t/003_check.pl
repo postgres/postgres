@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
 use Test::More tests => 63;
@@ -120,7 +120,7 @@ sub perform_all_corruptions()
 }
 
 # Test set-up
-$node = PostgresNode->new('test');
+$node = PostgreSQL::Test::Cluster->new('test');
 $node->init;
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->start;
@@ -316,7 +316,7 @@ plan_to_remove_relation_file('db2', 's1.t1_btree');
 # Leave 'db3' uncorrupted
 #
 
-# Standard first arguments to TestLib functions
+# Standard first arguments to PostgreSQL::Test::Utils functions
 my @cmd = ('pg_amcheck', '-p', $port);
 
 # Regular expressions to match various expected output

@@ -6,11 +6,11 @@
 use strict;
 use warnings;
 
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 2;
-use PostgresNode;
+use PostgreSQL::Test::Cluster;
 
-my $node = PostgresNode->new('tango');
+my $node = PostgreSQL::Test::Cluster->new('tango');
 $node->init;
 $node->append_conf('postgresql.conf', 'autovacuum_naptime=1s');
 $node->start;

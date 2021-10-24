@@ -8,11 +8,11 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 1;
 
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
 
 $node_primary->append_conf(
@@ -28,7 +28,7 @@ autovacuum = off
 $node_primary->start;
 
 $node_primary->backup('primary_backup');
-my $node_standby = PostgresNode->new('standby');
+my $node_standby = PostgreSQL::Test::Cluster->new('standby');
 $node_standby->init_from_backup($node_primary, 'primary_backup',
 	has_streaming => 1);
 $node_standby->start;

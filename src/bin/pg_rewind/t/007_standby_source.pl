@@ -26,16 +26,16 @@
 
 use strict;
 use warnings;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 3;
 
 use FindBin;
 use lib $FindBin::RealBin;
 use File::Copy;
-use PostgresNode;
+use PostgreSQL::Test::Cluster;
 use RewindTest;
 
-my $tmp_folder = TestLib::tempdir;
+my $tmp_folder = PostgreSQL::Test::Utils::tempdir;
 
 my $node_a;
 my $node_b;
@@ -58,13 +58,13 @@ primary_psql("CHECKPOINT");
 #
 # A (primary) <--- B (standby) <--- C (standby)
 $node_a->backup('my_backup');
-$node_b = PostgresNode->new('node_b');
+$node_b = PostgreSQL::Test::Cluster->new('node_b');
 $node_b->init_from_backup($node_a, 'my_backup', has_streaming => 1);
 $node_b->set_standby_mode();
 $node_b->start;
 
 $node_b->backup('my_backup');
-$node_c = PostgresNode->new('node_c');
+$node_c = PostgreSQL::Test::Cluster->new('node_c');
 $node_c->init_from_backup($node_b, 'my_backup', has_streaming => 1);
 $node_c->set_standby_mode();
 $node_c->start;

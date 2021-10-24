@@ -4,8 +4,8 @@
 # Test logical replication of 2PC with streaming.
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 18;
 
 ###############################
@@ -13,7 +13,7 @@ use Test::More tests => 18;
 ###############################
 
 # Initialize publisher node
-my $node_publisher = PostgresNode->new('publisher');
+my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->append_conf('postgresql.conf', qq(
 max_prepared_transactions = 10
@@ -22,7 +22,7 @@ logical_decoding_work_mem = 64kB
 $node_publisher->start;
 
 # Create subscriber node
-my $node_subscriber = PostgresNode->new('subscriber');
+my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->append_conf('postgresql.conf', qq(
 max_prepared_transactions = 10

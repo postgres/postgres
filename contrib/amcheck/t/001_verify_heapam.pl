@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
 use Test::More tests => 272;
@@ -15,7 +15,7 @@ my ($node, $result);
 #
 # Test set-up
 #
-$node = PostgresNode->new('test');
+$node = PostgreSQL::Test::Cluster->new('test');
 $node->init;
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->start;

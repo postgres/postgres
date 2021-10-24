@@ -8,17 +8,17 @@ use Config;
 use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use Fcntl qw(:seek);
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 110;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
 program_options_handling_ok('pg_basebackup');
 
-my $tempdir = TestLib::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 
 # Set umask so test directories and files are created with default permissions
 umask(0077);
@@ -238,14 +238,14 @@ $node->start;
 # to our physical temp location.  That way we can use shorter names
 # for the tablespace directories, which hopefully won't run afoul of
 # the 99 character length limit.
-my $sys_tempdir = TestLib::tempdir_short;
-my $real_sys_tempdir = TestLib::perl2host($sys_tempdir) . "/tempdir";
+my $sys_tempdir = PostgreSQL::Test::Utils::tempdir_short;
+my $real_sys_tempdir = PostgreSQL::Test::Utils::perl2host($sys_tempdir) . "/tempdir";
 my $shorter_tempdir =  $sys_tempdir . "/tempdir";
 dir_symlink "$tempdir", $shorter_tempdir;
 
 mkdir "$tempdir/tblspc1";
 my $realTsDir    = "$real_sys_tempdir/tblspc1";
-my $real_tempdir = TestLib::perl2host($tempdir);
+my $real_tempdir = PostgreSQL::Test::Utils::perl2host($tempdir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc1 LOCATION '$realTsDir';");
 $node->safe_psql('postgres',
@@ -270,7 +270,7 @@ SKIP:
 	skip "no tar program available", 1
 	  if (!defined $tar || $tar eq '');
 
-	my $node2 = PostgresNode->new('replica');
+	my $node2 = PostgreSQL::Test::Cluster->new('replica');
 
 	# Recover main data directory
 	$node2->init_from_backup($node, 'tarbackup2', tar_program => $tar);
@@ -279,7 +279,7 @@ SKIP:
 	my $repTsDir     = "$tempdir/tblspc1replica";
 	my $realRepTsDir = "$real_sys_tempdir/tblspc1replica";
 	mkdir $repTsDir;
-	TestLib::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $repTsDir);
+	PostgreSQL::Test::Utils::system_or_bail($tar, 'xf', $tblspc_tars[0], '-C', $repTsDir);
 
 	# Update tablespace map to point to new directory.
 	# XXX Ideally pg_basebackup would handle this.

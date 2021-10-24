@@ -5,13 +5,13 @@
 
 =head1 NAME
 
-PostgresNode - class representing PostgreSQL server instance
+PostgreSQL::Test::Cluster - class representing PostgreSQL server instance
 
 =head1 SYNOPSIS
 
-  use PostgresNode;
+  use PostgreSQL::Test::Cluster;
 
-  my $node = PostgresNode->new('mynode');
+  my $node = PostgreSQL::Test::Cluster->new('mynode');
 
   # Create a data directory with initdb
   $node->init();
@@ -61,7 +61,7 @@ PostgresNode - class representing PostgreSQL server instance
   my $ret = $node->backup_fs_cold('testbackup3')
 
   # Restore it to create a new independent node (not a replica)
-  my $other_node = PostgresNode->new('mycopy');
+  my $other_node = PostgreSQL::Test::Cluster->new('mycopy');
   $other_node->init_from_backup($node, 'testbackup');
   $other_node->start;
 
@@ -69,15 +69,15 @@ PostgresNode - class representing PostgreSQL server instance
   $node->stop('fast');
 
   # Find a free, unprivileged TCP port to bind some other service to
-  my $port = PostgresNode::get_free_port();
+  my $port = PostgreSQL::Test::Cluster::get_free_port();
 
 =head1 DESCRIPTION
 
-PostgresNode contains a set of routines able to work on a PostgreSQL node,
+PostgreSQL::Test::Cluster contains a set of routines able to work on a PostgreSQL node,
 allowing to start, stop, backup and initialize it with various options.
 The set of nodes managed by a given test is also managed by this module.
 
-In addition to node management, PostgresNode instances have some wrappers
+In addition to node management, PostgreSQL::Test::Cluster instances have some wrappers
 around Test::More functions to run commands with an environment set up to
 point to the instance.
 
@@ -85,7 +85,7 @@ The IPC::Run module is required.
 
 =cut
 
-package PostgresNode;
+package PostgreSQL::Test::Cluster;
 
 use strict;
 use warnings;
@@ -100,11 +100,11 @@ use File::Spec;
 use File::stat qw(stat);
 use File::Temp ();
 use IPC::Run;
-use PostgresVersion;
-use RecursiveCopy;
+use PostgreSQL::Version;
+use PostgreSQL::Test::RecursiveCopy;
 use Socket;
 use Test::More;
-use TestLib ();
+use PostgreSQL::Test::Utils ();
 use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
 
@@ -116,10 +116,10 @@ INIT
 
 	# Set PGHOST for backward compatibility.  This doesn't work for own_host
 	# nodes, so prefer to not rely on this when writing new tests.
-	$use_tcp            = !$TestLib::use_unix_sockets;
+	$use_tcp            = !$PostgreSQL::Test::Utils::use_unix_sockets;
 	$test_localhost     = "127.0.0.1";
 	$last_host_assigned = 1;
-	$test_pghost        = $use_tcp ? $test_localhost : TestLib::tempdir_short;
+	$test_pghost        = $use_tcp ? $test_localhost : PostgreSQL::Test::Utils::tempdir_short;
 	$ENV{PGHOST}        = $test_pghost;
 	$ENV{PGDATABASE}    = 'postgres';
 
@@ -369,8 +369,8 @@ sub set_replication_conf
 	  or croak "set_replication_conf only works with the default host";
 
 	open my $hba, '>>', "$pgdata/pg_hba.conf";
-	print $hba "\n# Allow replication (set up by PostgresNode.pm)\n";
-	if ($TestLib::windows_os && !$TestLib::use_unix_sockets)
+	print $hba "\n# Allow replication (set up by PostgreSQL::Test::Cluster.pm)\n";
+	if ($PostgreSQL::Test::Utils::windows_os && !$PostgreSQL::Test::Utils::use_unix_sockets)
 	{
 		print $hba
 		  "host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
@@ -419,13 +419,13 @@ sub init
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
 
-	TestLib::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N',
+	PostgreSQL::Test::Utils::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N',
 		@{ $params{extra} });
-	TestLib::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata,
+	PostgreSQL::Test::Utils::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata,
 		@{ $params{auth_extra} });
 
 	open my $conf, '>>', "$pgdata/postgresql.conf";
-	print $conf "\n# Added by PostgresNode.pm\n";
+	print $conf "\n# Added by PostgreSQL::Test::Cluster.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "restart_after_crash = off\n";
 	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
@@ -437,7 +437,7 @@ sub init
 	# TEMP_CONFIG.  Otherwise, print it before TEMP_CONFIG, thereby permitting
 	# overrides.  Settings that merely improve performance or ease debugging
 	# belong before TEMP_CONFIG.
-	print $conf TestLib::slurp_file($ENV{TEMP_CONFIG})
+	print $conf PostgreSQL::Test::Utils::slurp_file($ENV{TEMP_CONFIG})
 	  if defined $ENV{TEMP_CONFIG};
 
 	# XXX Neutralize any stats_temp_directory in TEMP_CONFIG.  Nodes running
@@ -510,7 +510,7 @@ sub append_conf
 
 	my $conffile = $self->data_dir . '/' . $filename;
 
-	TestLib::append_to_file($conffile, $str . "\n");
+	PostgreSQL::Test::Utils::append_to_file($conffile, $str . "\n");
 
 	chmod($self->group_access() ? 0640 : 0600, $conffile)
 	  or die("unable to set permissions for $conffile");
@@ -538,7 +538,7 @@ sub adjust_conf
 
 	my $conffile = $self->data_dir . '/' . $filename;
 
-	my $contents = TestLib::slurp_file($conffile);
+	my $contents = PostgreSQL::Test::Utils::slurp_file($conffile);
 	my @lines    = split(/\n/, $contents);
 	my @result;
 	my $eq = $skip_equals ? '' : '= ';
@@ -587,7 +587,7 @@ sub backup
 	local %ENV = $self->_get_env();
 
 	print "# Taking pg_basebackup $backup_name from node \"$name\"\n";
-	TestLib::system_or_bail(
+	PostgreSQL::Test::Utils::system_or_bail(
 		'pg_basebackup', '-D',
 		$backup_path,    '-h',
 		$self->host,     '-p',
@@ -652,7 +652,7 @@ sub _backup_fs
 		print "# pg_start_backup: $stdout\n";
 	}
 
-	RecursiveCopy::copypath(
+	PostgreSQL::Test::RecursiveCopy::copypath(
 		$self->data_dir,
 		$backup_path,
 		filterfn => sub {
@@ -682,7 +682,7 @@ sub _backup_fs
 =item $node->init_from_backup(root_node, backup_name)
 
 Initialize a node from a backup, which may come from this node or a different
-node. root_node must be a PostgresNode reference, backup_name the string name
+node. root_node must be a PostgreSQL::Test::Cluster reference, backup_name the string name
 of a backup previously created on that node with $node->backup.
 
 Does not start the node after initializing it.
@@ -732,10 +732,10 @@ sub init_from_backup
 	if (defined $params{tar_program})
 	{
 		mkdir($data_path);
-		TestLib::system_or_bail($params{tar_program}, 'xf',
+		PostgreSQL::Test::Utils::system_or_bail($params{tar_program}, 'xf',
 			$backup_path . '/base.tar',
 			'-C', $data_path);
-		TestLib::system_or_bail(
+		PostgreSQL::Test::Utils::system_or_bail(
 			$params{tar_program},         'xf',
 			$backup_path . '/pg_wal.tar', '-C',
 			$data_path . '/pg_wal');
@@ -743,7 +743,7 @@ sub init_from_backup
 	else
 	{
 		rmdir($data_path);
-		RecursiveCopy::copypath($backup_path, $data_path);
+		PostgreSQL::Test::RecursiveCopy::copypath($backup_path, $data_path);
 	}
 	chmod(0700, $data_path);
 
@@ -827,13 +827,13 @@ sub start
 	# sub init) so that it does not get copied to standbys.
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	$ret = TestLib::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
+	$ret = PostgreSQL::Test::Utils::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
 		$self->logfile, '-o', "--cluster-name=$name", 'start');
 
 	if ($ret != 0)
 	{
 		print "# pg_ctl start failed; logfile:\n";
-		print TestLib::slurp_file($self->logfile);
+		print PostgreSQL::Test::Utils::slurp_file($self->logfile);
 		BAIL_OUT("pg_ctl start failed") unless $params{fail_ok};
 		return 0;
 	}
@@ -865,7 +865,7 @@ sub kill9
 	print "### Killing node \"$name\" using signal 9\n";
 	# kill(9, ...) fails under msys Perl 5.8.8, so fall back on pg_ctl.
 	kill(9, $self->{_pid})
-	  or TestLib::system_or_bail('pg_ctl', 'kill', 'KILL', $self->{_pid});
+	  or PostgreSQL::Test::Utils::system_or_bail('pg_ctl', 'kill', 'KILL', $self->{_pid});
 	$self->{_pid} = undef;
 	return;
 }
@@ -894,7 +894,7 @@ sub stop
 	$mode = 'fast' unless defined $mode;
 	return unless defined $self->{_pid};
 	print "### Stopping node \"$name\" using mode $mode\n";
-	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
 	$self->_update_pid(0);
 	return;
 }
@@ -917,7 +917,7 @@ sub reload
 	local %ENV = $self->_get_env();
 
 	print "### Reloading node \"$name\"\n";
-	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
 	return;
 }
 
@@ -943,7 +943,7 @@ sub restart
 
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	TestLib::system_or_bail('pg_ctl', '-w', '-D', $pgdata, '-l', $logfile,
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-w', '-D', $pgdata, '-l', $logfile,
 		'restart');
 
 	$self->_update_pid(1);
@@ -969,7 +969,7 @@ sub promote
 	local %ENV = $self->_get_env();
 
 	print "### Promoting node \"$name\"\n";
-	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'promote');
 	return;
 }
@@ -993,7 +993,7 @@ sub logrotate
 	local %ENV = $self->_get_env();
 
 	print "### Rotating log in node \"$name\"\n";
-	TestLib::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
 		'logrotate');
 	return;
 }
@@ -1018,7 +1018,7 @@ primary_conninfo='$root_connstr'
 sub enable_restoring
 {
 	my ($self, $root_node, $standby) = @_;
-	my $path = TestLib::perl2host($root_node->archive_dir);
+	my $path = PostgreSQL::Test::Utils::perl2host($root_node->archive_dir);
 	my $name = $self->name;
 
 	print "### Enabling WAL restore for node \"$name\"\n";
@@ -1029,9 +1029,9 @@ sub enable_restoring
 	# in this routine, using only one back-slash, need to be properly changed
 	# first. Paths also need to be double-quoted to prevent failures where
 	# the path contains spaces.
-	$path =~ s{\\}{\\\\}g if ($TestLib::windows_os);
+	$path =~ s{\\}{\\\\}g if ($PostgreSQL::Test::Utils::windows_os);
 	my $copy_command =
-	  $TestLib::windows_os
+	  $PostgreSQL::Test::Utils::windows_os
 	  ? qq{copy "$path\\\\%f" "%p"}
 	  : qq{cp "$path/%f" "%p"};
 
@@ -1086,7 +1086,7 @@ sub set_standby_mode
 sub enable_archiving
 {
 	my ($self) = @_;
-	my $path   = TestLib::perl2host($self->archive_dir);
+	my $path   = PostgreSQL::Test::Utils::perl2host($self->archive_dir);
 	my $name   = $self->name;
 
 	print "### Enabling WAL archiving for node \"$name\"\n";
@@ -1097,9 +1097,9 @@ sub enable_archiving
 	# in this routine, using only one back-slash, need to be properly changed
 	# first. Paths also need to be double-quoted to prevent failures where
 	# the path contains spaces.
-	$path =~ s{\\}{\\\\}g if ($TestLib::windows_os);
+	$path =~ s{\\}{\\\\}g if ($PostgreSQL::Test::Utils::windows_os);
 	my $copy_command =
-	  $TestLib::windows_os
+	  $PostgreSQL::Test::Utils::windows_os
 	  ? qq{copy "%p" "$path\\\\%f"}
 	  : qq{cp "%p" "$path/%f"};
 
@@ -1141,9 +1141,9 @@ sub _update_pid
 
 =pod
 
-=item PostgresNode->new(node_name, %params)
+=item PostgreSQL::Test::Cluster->new(node_name, %params)
 
-Build a new object of class C<PostgresNode> (or of a subclass, if you have
+Build a new object of class C<PostgreSQL::Test::Cluster> (or of a subclass, if you have
 one), assigning a free port number.  Remembers the node, to prevent its port
 number from being reused for another node, and to ensure that it gets
 shut down when the test script exits.
@@ -1216,11 +1216,11 @@ sub new
 	my $node = {
 		_port    => $port,
 		_host    => $host,
-		_basedir => "$TestLib::tmp_check/t_${testname}_${name}_data",
+		_basedir => "$PostgreSQL::Test::Utils::tmp_check/t_${testname}_${name}_data",
 		_name    => $name,
 		_logfile_generation => 0,
-		_logfile_base       => "$TestLib::log_path/${testname}_${name}",
-		_logfile            => "$TestLib::log_path/${testname}_${name}.log"
+		_logfile_base       => "$PostgreSQL::Test::Utils::log_path/${testname}_${name}",
+		_logfile            => "$PostgreSQL::Test::Utils::log_path/${testname}_${name}.log"
 	};
 
 	if ($params{install_path})
@@ -1242,7 +1242,7 @@ sub new
 
 	my $v = $node->{_pg_version};
 
-	carp("PostgresNode isn't fully compatible with version " . $v)
+	carp("PostgreSQL::Test::Cluster isn't fully compatible with version " . $v)
 	  if $v < 12;
 
 	return $node;
@@ -1272,9 +1272,9 @@ sub _set_pg_version
 		$pg_config = "$inst/bin/pg_config";
 		BAIL_OUT("pg_config not found: $pg_config")
 		  unless -e $pg_config
-		  or ($TestLib::windows_os and -e "$pg_config.exe");
+		  or ($PostgreSQL::Test::Utils::windows_os and -e "$pg_config.exe");
 		BAIL_OUT("pg_config not executable: $pg_config")
-		  unless $TestLib::windows_os or -x $pg_config;
+		  unless $PostgreSQL::Test::Utils::windows_os or -x $pg_config;
 
 		# Leave $pg_config install_path qualified, to be sure we get the right
 		# version information, below, or die trying
@@ -1286,7 +1286,7 @@ sub _set_pg_version
 	my $version_line = qx{$pg_config --version};
 	BAIL_OUT("$pg_config failed: $!") if $?;
 
-	$self->{_pg_version} = PostgresVersion->new($version_line);
+	$self->{_pg_version} = PostgreSQL::Version->new($version_line);
 
 	BAIL_OUT("could not parse pg_config --version output: $version_line")
 	  unless defined $self->{_pg_version};
@@ -1331,7 +1331,7 @@ sub _get_env
 	my $inst = $self->{_install_path};
 	if ($inst)
 	{
-		if ($TestLib::windows_os)
+		if ($PostgreSQL::Test::Utils::windows_os)
 		{
 			# Windows picks up DLLs from the PATH rather than *LD_LIBRARY_PATH
 			# choose the right path separator
@@ -1394,14 +1394,14 @@ Locate an unprivileged (high) TCP port that's not currently bound to
 anything.  This is used by C<new()>, and also by some test cases that need to
 start other, non-Postgres servers.
 
-Ports assigned to existing PostgresNode objects are automatically
+Ports assigned to existing PostgreSQL::Test::Cluster objects are automatically
 excluded, even if those servers are not currently running.
 
 XXX A port available now may become unavailable by the time we start
 the desired service.
 
 Note: this is not an instance method. As it's not exported it should be
-called from outside the module as C<PostgresNode::get_free_port()>.
+called from outside the module as C<PostgreSQL::Test::Cluster::get_free_port()>.
 
 =cut
 
@@ -1440,7 +1440,7 @@ sub get_free_port
 		if ($found == 1)
 		{
 			foreach my $addr (qw(127.0.0.1),
-				($use_tcp && $TestLib::windows_os)
+				($use_tcp && $PostgreSQL::Test::Utils::windows_os)
 				  ? qw(127.0.0.2 127.0.0.3 0.0.0.0)
 				  : ())
 			{
@@ -1474,7 +1474,7 @@ sub can_bind
 
 	# As in postmaster, don't use SO_REUSEADDR on Windows
 	setsockopt(SOCK, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
-	  unless $TestLib::windows_os;
+	  unless $PostgreSQL::Test::Utils::windows_os;
 	my $ret = bind(SOCK, $paddr) && listen(SOCK, SOMAXCONN);
 	close(SOCK);
 	return $ret;
@@ -1496,7 +1496,7 @@ END
 		next if defined $ENV{'PG_TEST_NOCLEAN'};
 
 		# clean basedir on clean test invocation
-		$node->clean_node if $exit_code == 0 && TestLib::all_tests_passing();
+		$node->clean_node if $exit_code == 0 && PostgreSQL::Test::Utils::all_tests_passing();
 	}
 
 	$? = $exit_code;
@@ -2008,7 +2008,7 @@ sub _pgbench_make_files
 				ok(0, "$filename must not already exist");
 				unlink $filename or die "cannot unlink $filename: $!";
 			}
-			TestLib::append_to_file($filename, $$files{$fn});
+			PostgreSQL::Test::Utils::append_to_file($filename, $$files{$fn});
 		}
 	}
 
@@ -2194,7 +2194,7 @@ sub connect_ok
 	}
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile, $log_location);
+		my $log_contents = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2264,7 +2264,7 @@ sub connect_fails
 
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = TestLib::slurp_file($self->logfile, $log_location);
+		my $log_contents = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2343,8 +2343,8 @@ $stderr);
 
 =item $node->command_ok(...)
 
-Runs a shell command like TestLib::command_ok, but with PGHOST and PGPORT set
-so that the command will default to connecting to this PostgresNode.
+Runs a shell command like PostgreSQL::Test::Utils::command_ok, but with PGHOST and PGPORT set
+so that the command will default to connecting to this PostgreSQL::Test::Cluster.
 
 =cut
 
@@ -2356,7 +2356,7 @@ sub command_ok
 
 	local %ENV = $self->_get_env();
 
-	TestLib::command_ok(@_);
+	PostgreSQL::Test::Utils::command_ok(@_);
 	return;
 }
 
@@ -2364,7 +2364,7 @@ sub command_ok
 
 =item $node->command_fails(...)
 
-TestLib::command_fails with our connection parameters. See command_ok(...)
+PostgreSQL::Test::Utils::command_fails with our connection parameters. See command_ok(...)
 
 =cut
 
@@ -2376,7 +2376,7 @@ sub command_fails
 
 	local %ENV = $self->_get_env();
 
-	TestLib::command_fails(@_);
+	PostgreSQL::Test::Utils::command_fails(@_);
 	return;
 }
 
@@ -2384,7 +2384,7 @@ sub command_fails
 
 =item $node->command_like(...)
 
-TestLib::command_like with our connection parameters. See command_ok(...)
+PostgreSQL::Test::Utils::command_like with our connection parameters. See command_ok(...)
 
 =cut
 
@@ -2396,7 +2396,7 @@ sub command_like
 
 	local %ENV = $self->_get_env();
 
-	TestLib::command_like(@_);
+	PostgreSQL::Test::Utils::command_like(@_);
 	return;
 }
 
@@ -2404,7 +2404,7 @@ sub command_like
 
 =item $node->command_fails_like(...)
 
-TestLib::command_fails_like with our connection parameters. See command_ok(...)
+PostgreSQL::Test::Utils::command_fails_like with our connection parameters. See command_ok(...)
 
 =cut
 
@@ -2416,7 +2416,7 @@ sub command_fails_like
 
 	local %ENV = $self->_get_env();
 
-	TestLib::command_fails_like(@_);
+	PostgreSQL::Test::Utils::command_fails_like(@_);
 	return;
 }
 
@@ -2424,7 +2424,7 @@ sub command_fails_like
 
 =item $node->command_checks_all(...)
 
-TestLib::command_checks_all with our connection parameters. See
+PostgreSQL::Test::Utils::command_checks_all with our connection parameters. See
 command_ok(...)
 
 =cut
@@ -2437,7 +2437,7 @@ sub command_checks_all
 
 	local %ENV = $self->_get_env();
 
-	TestLib::command_checks_all(@_);
+	PostgreSQL::Test::Utils::command_checks_all(@_);
 	return;
 }
 
@@ -2460,9 +2460,9 @@ sub issues_sql_like
 
 	my $log_location = -s $self->logfile;
 
-	my $result = TestLib::run_log($cmd);
+	my $result = PostgreSQL::Test::Utils::run_log($cmd);
 	ok($result, "@$cmd exit code 0");
-	my $log = TestLib::slurp_file($self->logfile, $log_location);
+	my $log = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 	return;
 }
@@ -2471,8 +2471,8 @@ sub issues_sql_like
 
 =item $node->run_log(...)
 
-Runs a shell command like TestLib::run_log, but with connection parameters set
-so that the command will default to connecting to this PostgresNode.
+Runs a shell command like PostgreSQL::Test::Utils::run_log, but with connection parameters set
+so that the command will default to connecting to this PostgreSQL::Test::Cluster.
 
 =cut
 
@@ -2482,7 +2482,7 @@ sub run_log
 
 	local %ENV = $self->_get_env();
 
-	TestLib::run_log(@_);
+	PostgreSQL::Test::Utils::run_log(@_);
 	return;
 }
 
@@ -2563,8 +2563,8 @@ sub wait_for_catchup
 	  . join(', ', keys(%valid_modes))
 	  unless exists($valid_modes{$mode});
 
-	# Allow passing of a PostgresNode instance as shorthand
-	if (blessed($standby_name) && $standby_name->isa("PostgresNode"))
+	# Allow passing of a PostgreSQL::Test::Cluster instance as shorthand
+	if (blessed($standby_name) && $standby_name->isa("PostgreSQL::Test::Cluster"))
 	{
 		$standby_name = $standby_name->name;
 	}

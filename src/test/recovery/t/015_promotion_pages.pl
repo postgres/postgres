@@ -7,12 +7,12 @@
 # recovery point defined.
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 1;
 
 # Initialize primary node
-my $alpha = PostgresNode->new('alpha');
+my $alpha = PostgreSQL::Test::Cluster->new('alpha');
 $alpha->init(allows_streaming => 1);
 # Setting wal_log_hints to off is important to get invalid page
 # references.
@@ -25,7 +25,7 @@ $alpha->start;
 
 # setup/start a standby
 $alpha->backup('bkp');
-my $bravo = PostgresNode->new('bravo');
+my $bravo = PostgreSQL::Test::Cluster->new('bravo');
 $bravo->init_from_backup($alpha, 'bkp', has_streaming => 1);
 $bravo->append_conf('postgresql.conf', <<EOF);
 checkpoint_timeout=1h

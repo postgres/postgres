@@ -7,11 +7,11 @@ use strict;
 use warnings;
 use Cwd;
 use Config;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 5;
 
-my $primary = PostgresNode->new('primary');
+my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 my $backup_path = $primary->backup_dir . '/test_encoding';
