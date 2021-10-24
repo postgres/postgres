@@ -115,6 +115,7 @@ REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON TYPE <replaceable>type_name</replaceable> [, ...]
     FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ IN DATABASE <replaceable class="parameter">database_name</replaceable> | IN CURRENT DATABASE ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 

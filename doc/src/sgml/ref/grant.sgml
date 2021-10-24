@@ -93,6 +93,7 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ IN DATABASE <replaceable class="parameter">database_name</replaceable> | IN CURRENT DATABASE ]
     [ WITH ADMIN OPTION ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
@@ -269,6 +270,10 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    to <literal>PUBLIC</literal>.  Note also that this form of the command
    does not allow the noise word <literal>GROUP</literal>
    in <replaceable class="parameter">role_specification</replaceable>.
+  </para>
+
+  <para>
+   See <xref linkend="role-membership"/> for more information about role memberships.
   </para>
  </refsect2>
  </refsect1>
