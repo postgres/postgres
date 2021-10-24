@@ -261,13 +261,13 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <para>
    If <literal>IN DATABASE <replaceable class="parameter">database_name</replaceable></literal>
    is specified, membership in <replaceable class="parameter">role_name</replaceable>
-   will only be effective when the recipient is connected to the database specified by
+   will be effective when the recipient is connected to the database specified by
    <replaceable class="parameter">database_name</replaceable>.
   </para>
 
   <para>
    If <literal>IN CURRENT DATABASE</literal> is specified, the membership in
-   <replaceable class="parameter">role_name</replaceable> will only be effective when the
+   <replaceable class="parameter">role_name</replaceable> will be effective when the
    recipient is connected to the same database that the grant was issued in.
   </para>
 
