@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 14;
+use Test::More tests => 15;
 use Config;
 
 # Initialize primary node
@@ -38,6 +38,15 @@ my ($result, $stdout, $stderr) = $node_primary->psql(
 ok( $stderr =~
 	  m/replication slot "test_slot" was not created in this database/,
 	"Logical decoding correctly fails to start");
+
+($result, $stdout, $stderr) = $node_primary->psql(
+	'template1',
+	qq[READ_REPLICATION_SLOT test_slot;],
+	replication => 'database');
+like(
+	$stderr,
+	qr/cannot use "READ_REPLICATION_SLOT" with logical replication slot "test_slot"/,
+	'READ_REPLICATION_SLOT not supported for logical slots');
 
 # Check case of walsender not using a database connection.  Logical
 # decoding should not be allowed.
