@@ -2773,13 +2773,19 @@ inittapestate(Tuplesortstate *state, int maxTapes)
 static void
 selectnewtape(Tuplesortstate *state)
 {
-	if (state->nOutputRuns < state->maxTapes)
+	/*
+	 * At the beginning of each merge pass, nOutputTapes and nOutputRuns are
+	 * both zero.  On each call, we create a new output tape to hold the next
+	 * run, until maxTapes is reached.  After that, we assign new runs to the
+	 * existing tapes in a round robin fashion.
+	 */
+	if (state->nOutputTapes < state->maxTapes)
 	{
 		/* Create a new tape to hold the next run */
 		Assert(state->outputTapes[state->nOutputRuns] == NULL);
 		Assert(state->nOutputRuns == state->nOutputTapes);
 		state->destTape = LogicalTapeCreate(state->tapeset);
-		state->outputTapes[state->nOutputRuns] = state->destTape;
+		state->outputTapes[state->nOutputTapes] = state->destTape;
 		state->nOutputTapes++;
 		state->nOutputRuns++;
 	}
@@ -2908,7 +2914,7 @@ mergeruns(Tuplesortstate *state)
 	 * divide this memory between the input and output tapes in the pass.
 	 */
 	state->tape_buffer_mem = state->availMem;
-	USEMEM(state, state->availMem);
+	USEMEM(state, state->tape_buffer_mem);
 #ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG, "worker %d using %zu KB of memory for tape buffers",
