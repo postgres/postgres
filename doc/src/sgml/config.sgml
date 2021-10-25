@@ -6549,6 +6549,30 @@ local0.*    /var/log/postgresql
        </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-startup-progress-interval" xreflabel="log_startup_progress_interval">
+      <term><varname>log_startup_progress_interval</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_startup_progress_interval</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+       <listitem>
+        <para>
+         Sets the amount of time after which the startup process will log
+         a message about a long-running operation that is still in progress,
+         as well as the interval between further progress messages for that
+         operation. This setting is applied separately to each operation.
+         For example, if syncing the data directory takes 25 seconds and
+         thereafter resetting unlogged relations takes 8 seconds, and if this
+         setting has the default value of 10 seconds, then a messages will be
+         logged for syncing the data directory after it has been in progress
+         for 10 seconds and again after it has been in progress for 20 seconds,
+         but nothing will be logged for resetting unlogged operations.
+         A setting of <literal>0</literal> disables the feature. If this value
+         is specified without units, it is taken as milliseconds.
+        </para>
+       </listitem>
+     </varlistentry>
+
      </variablelist>
 
     <para>

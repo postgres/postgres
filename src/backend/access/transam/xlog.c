@@ -79,6 +79,7 @@
 #include "utils/relmapper.h"
 #include "utils/pg_rusage.h"
 #include "utils/snapmgr.h"
+#include "utils/timeout.h"
 #include "utils/timestamp.h"
 
 extern uint32 bootstrap_data_checksum_version;
@@ -6718,6 +6719,11 @@ StartupXLOG(void)
 	 */
 	ValidateXLOGDirectoryStructure();
 
+	/* Set up timeout handler needed to report startup progress. */
+	if (!IsBootstrapProcessingMode())
+		RegisterTimeout(STARTUP_PROGRESS_TIMEOUT,
+						startup_progress_timeout_handler);
+
 	/*----------
 	 * If we previously crashed, perform a couple of actions:
 	 *
@@ -7491,12 +7497,20 @@ StartupXLOG(void)
 					(errmsg("redo starts at %X/%X",
 							LSN_FORMAT_ARGS(ReadRecPtr))));
 
+			/* Prepare to report progress of the redo phase. */
+			if (!StandbyMode)
+				begin_startup_progress_phase();
+
 			/*
 			 * main redo apply loop
 			 */
 			do
 			{
 				bool		switchedTLI = false;
+
+				if (!StandbyMode)
+					ereport_startup_progress("redo in progress, elapsed time: %ld.%02d s, current LSN: %X/%X",
+											 LSN_FORMAT_ARGS(ReadRecPtr));
 
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG ||

@@ -71,6 +71,7 @@
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/startup.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
 #include "replication/logicallauncher.h"
@@ -3568,6 +3569,18 @@ static struct config_int ConfigureNamesInt[] =
 		&client_connection_check_interval,
 		0, 0, INT_MAX,
 		check_client_connection_check_interval, NULL, NULL
+	},
+
+	{
+		{"log_startup_progress_interval", PGC_SIGHUP, LOGGING_WHEN,
+			gettext_noop("Time between progress updates for "
+						 "long-running startup operations."),
+			gettext_noop("0 turns this feature off."),
+			GUC_UNIT_MS,
+		},
+		&log_startup_progress_interval,
+		10000, 0, INT_MAX,
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
