@@ -8094,16 +8094,16 @@ StartupXLOG(void)
 	if (!XLogRecPtrIsInvalid(XLogCtl->lastReplayedEndRecPtr))
 		promoted = PerformRecoveryXLogAction();
 
-	/* If this is archive recovery, perform post-recovery cleanup actions. */
-	if (ArchiveRecoveryRequested)
-		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
-
 	/*
 	 * If any of the critical GUCs have changed, log them before we allow
 	 * backends to write WAL.
 	 */
 	LocalSetXLogInsertAllowed();
 	XLogReportParameters();
+
+	/* If this is archive recovery, perform post-recovery cleanup actions. */
+	if (ArchiveRecoveryRequested)
+		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
 
 	/*
 	 * Local WAL inserts enabled, so it's time to finish initialization of
