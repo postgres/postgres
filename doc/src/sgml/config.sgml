@@ -1573,7 +1573,9 @@ include_dir 'conf.d'
        <para>
         At present, this setting is supported only on Linux and Windows. The
         setting is ignored on other systems when set to
-        <literal>try</literal>.
+        <literal>try</literal>.  On Linux, it is only supported when
+        <varname>shared_memory_type</varname> is set to <literal>mmap</literal>
+        (the default).
        </para>
 
        <para>

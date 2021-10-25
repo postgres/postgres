@@ -649,6 +649,12 @@ PGSharedMemoryCreate(Size size, int port,
 				 errmsg("huge pages not supported on this platform")));
 #endif
 
+	/* For now, we don't support huge pages in SysV memory */
+	if (huge_pages == HUGE_PAGES_ON && shared_memory_type != SHMEM_TYPE_MMAP)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("huge pages not supported with the current shared_memory_type setting")));
+
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
