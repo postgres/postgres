@@ -1042,10 +1042,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 	parseCreateReplSlotOptions(cmd, &reserve_wal, &snapshot_action, &two_phase);
 
-	/* setup state for WalSndSegmentOpen */
-	sendTimeLineIsHistoric = false;
-	sendTimeLine = ThisTimeLineID;
-
 	if (cmd->kind == REPLICATION_KIND_PHYSICAL)
 	{
 		ReplicationSlotCreate(cmd->slotname, false,
