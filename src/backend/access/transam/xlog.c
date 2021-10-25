@@ -905,7 +905,7 @@ static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI,
 								TimeLineID prevTLI);
 static void VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec,
 									  XLogReaderState *state);
-static void LocalSetXLogInsertAllowed(void);
+static int LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
 static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
@@ -8062,6 +8062,7 @@ StartupXLOG(void)
 	}
 	XLogReaderFree(xlogreader);
 
+	/* Enable WAL writes for this backend only. */
 	LocalSetXLogInsertAllowed();
 
 	/* If necessary, write overwrite-contrecord before doing anything else */
@@ -8080,7 +8081,6 @@ StartupXLOG(void)
 	 */
 	Insert->fullPageWrites = lastFullPageWrites;
 	UpdateFullPageWrites();
-	LocalXLogInsertAllowed = -1;
 
 	/*
 	 * Emit checkpoint or end-of-recovery record in XLOG, if required.
@@ -8098,7 +8098,6 @@ StartupXLOG(void)
 	 * If any of the critical GUCs have changed, log them before we allow
 	 * backends to write WAL.
 	 */
-	LocalSetXLogInsertAllowed();
 	XLogReportParameters();
 
 	/* If this is archive recovery, perform post-recovery cleanup actions. */
@@ -8467,15 +8466,20 @@ XLogInsertAllowed(void)
  *
  * Note: it is allowed to switch LocalXLogInsertAllowed back to -1 later,
  * and even call LocalSetXLogInsertAllowed() again after that.
+ *
+ * Returns the previous value of LocalXLogInsertAllowed.
  */
-static void
+static int
 LocalSetXLogInsertAllowed(void)
 {
-	Assert(LocalXLogInsertAllowed == -1);
+	int		oldXLogAllowed = LocalXLogInsertAllowed;
+
 	LocalXLogInsertAllowed = 1;
 
 	/* Initialize as RecoveryInProgress() would do when switching state */
 	InitXLOGAccess();
+
+	return oldXLogAllowed;
 }
 
 /*
@@ -9020,6 +9024,7 @@ CreateCheckPoint(int flags)
 	XLogRecPtr	last_important_lsn;
 	VirtualTransactionId *vxids;
 	int			nvxids;
+	int			oldXLogAllowed;
 
 	/*
 	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
@@ -9127,7 +9132,7 @@ CreateCheckPoint(int flags)
 	 * initialized, which we need here and in AdvanceXLInsertBuffer.)
 	 */
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
-		LocalSetXLogInsertAllowed();
+		oldXLogAllowed = LocalSetXLogInsertAllowed();
 
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
@@ -9307,7 +9312,7 @@ CreateCheckPoint(int flags)
 	if (shutdown)
 	{
 		if (flags & CHECKPOINT_END_OF_RECOVERY)
-			LocalXLogInsertAllowed = -1;	/* return to "check" state */
+			LocalXLogInsertAllowed = oldXLogAllowed;
 		else
 			LocalXLogInsertAllowed = 0; /* never again write WAL */
 	}
@@ -9447,8 +9452,6 @@ CreateEndOfRecoveryRecord(void)
 	xlrec.PrevTimeLineID = XLogCtl->PrevTimeLineID;
 	WALInsertLockRelease();
 
-	LocalSetXLogInsertAllowed();
-
 	START_CRIT_SECTION();
 
 	XLogBeginInsert();
@@ -9469,8 +9472,6 @@ CreateEndOfRecoveryRecord(void)
 	LWLockRelease(ControlFileLock);
 
 	END_CRIT_SECTION();
-
-	LocalXLogInsertAllowed = -1;	/* return to "check" state */
 }
 
 /*
