@@ -9038,7 +9038,7 @@ CreateCheckPoint(int flags)
 	XLogRecPtr	last_important_lsn;
 	VirtualTransactionId *vxids;
 	int			nvxids;
-	int			oldXLogAllowed;
+	int			oldXLogAllowed = 0;
 
 	/*
 	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
