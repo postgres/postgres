@@ -766,6 +766,9 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 
 		ExecClearTuple(slot[slotCount]);
 
+		memset(slot[slotCount]->tts_isnull, false,
+			   slot[slotCount]->tts_tupleDescriptor->natts * sizeof(bool));
+
 		if (new_rel_oid != InvalidOid)
 			slot[slotCount]->tts_values[Anum_pg_attribute_attrelid - 1] = ObjectIdGetDatum(new_rel_oid);
 		else
