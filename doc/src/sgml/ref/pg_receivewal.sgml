@@ -90,6 +90,17 @@ PostgreSQL documentation
 
     <listitem>
      <para>
+      If a starting point cannot not be calculated with the previous method,
+      and if a replication slot is used, an extra
+      <command>READ_REPLICATION_SLOT</command> command is issued to retrieve
+      the slot's <literal>restart_lsn</literal> to use as starting point.
+      This option is only available when streaming write-ahead logs from
+      <productname>PostgreSQL</productname> 15 and up.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       If a starting point cannot be calculated with the previous method,
       the latest WAL flush location is used as reported by the server from
       a <literal>IDENTIFY_SYSTEM</literal> command.

@@ -52,6 +52,9 @@ extern void AppendIntegerCommandOption(PQExpBuffer buf,
 									   bool use_new_option_syntax,
 									   char *option_name, int32 option_value);
 
+extern bool GetSlotInformation(PGconn *conn, const char *slot_name,
+							   XLogRecPtr *restart_lsn,
+							   TimeLineID *restart_tli);
 extern bool RetrieveWalSegSize(PGconn *conn);
 extern TimestampTz feGetCurrentTimestamp(void);
 extern void feTimestampDifference(TimestampTz start_time, TimestampTz stop_time,

@@ -404,14 +404,39 @@ StreamLog(void)
 		exit(1);
 
 	/*
-	 * Figure out where to start streaming.
+	 * Figure out where to start streaming.  First scan the local directory.
 	 */
 	stream.startpos = FindStreamingStart(&stream.timeline);
 	if (stream.startpos == InvalidXLogRecPtr)
 	{
-		stream.startpos = serverpos;
-		stream.timeline = servertli;
+		/*
+		 * Try to get the starting point from the slot if any.  This is
+		 * supported in PostgreSQL 15 and newer.
+		 */
+		if (replication_slot != NULL &&
+			PQserverVersion(conn) >= 150000)
+		{
+			if (!GetSlotInformation(conn, replication_slot, &stream.startpos,
+									&stream.timeline))
+			{
+				/* Error is logged by GetSlotInformation() */
+				return;
+			}
+		}
+
+		/*
+		 * If it the starting point is still not known, use the current WAL
+		 * flush value as last resort.
+		 */
+		if (stream.startpos == InvalidXLogRecPtr)
+		{
+			stream.startpos = serverpos;
+			stream.timeline = servertli;
+		}
 	}
+
+	Assert(stream.startpos != InvalidXLogRecPtr &&
+		   stream.timeline != 0);
 
 	/*
 	 * Always start streaming at the beginning of a segment

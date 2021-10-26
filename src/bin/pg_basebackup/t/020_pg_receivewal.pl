@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 27;
+use Test::More tests => 31;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -71,6 +71,8 @@ $primary->command_ok(
 # Verify that one partial file was generated and keep track of it
 my @partial_wals = glob "$stream_dir/*\.partial";
 is(scalar(@partial_wals), 1, "one partial WAL segment was created");
+
+note "Testing pg_receivewal with compression methods";
 
 # Check ZLIB compression if available.
 SKIP:
@@ -155,3 +157,52 @@ SKIP:
 	ok(check_mode_recursive($stream_dir, 0700, 0600),
 		"check stream dir permissions");
 }
+
+note "Testing pg_receivewal with slot as starting streaming point";
+
+# When using a replication slot, archiving should be resumed from the slot's
+# restart LSN.  Use a new archive location and new slot for this test.
+my $slot_dir = $primary->basedir . '/slot_wal';
+mkdir($slot_dir);
+$slot_name = 'archive_slot';
+
+# Setup the slot, reserving WAL at creation (corresponding to the
+# last redo LSN here, actually).
+$primary->psql('postgres',
+	"SELECT pg_create_physical_replication_slot('$slot_name', true);");
+
+# Get the segment name associated with the slot's restart LSN, that should
+# be archived.
+my $walfile_streamed = $primary->safe_psql(
+	'postgres',
+	"SELECT pg_walfile_name(restart_lsn)
+  FROM pg_replication_slots
+  WHERE slot_name = '$slot_name';");
+
+# Switch to a new segment, to make sure that the segment retained by the
+# slot is still streamed.  This may not be necessary, but play it safe.
+$primary->psql('postgres',
+	'INSERT INTO test_table VALUES (generate_series(1,100));');
+$primary->psql('postgres', 'SELECT pg_switch_wal();');
+$nextlsn =
+  $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
+chomp($nextlsn);
+
+# Check case where the slot does not exist.
+$primary->command_fails_like(
+	[
+		'pg_receivewal',   '-D', $slot_dir,   '--slot',
+		'nonexistentslot', '-n', '--no-sync', '--verbose',
+		'--endpos',        $nextlsn
+	],
+	qr/pg_receivewal: error: could not find replication slot "nonexistentslot"/,
+	'pg_receivewal fails with non-existing slot');
+$primary->command_ok(
+	[
+		'pg_receivewal', '-D', $slot_dir,   '--slot',
+		$slot_name,      '-n', '--no-sync', '--verbose',
+		'--endpos',      $nextlsn
+	],
+	"WAL streamed from the slot's restart_lsn");
+ok(-e "$slot_dir/$walfile_streamed",
+	"WAL from the slot's restart_lsn has been archived");
