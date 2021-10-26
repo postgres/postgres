@@ -263,7 +263,7 @@ my $slotname = 'test_read_replication_slot_physical';
 	'READ_REPLICATION_SLOT non_existent_slot;',
 	extra_params => [ '-d', $connstr_rep ]);
 ok($ret == 0, "READ_REPLICATION_SLOT exit code 0 on success");
-like($stdout, qr/^||$/,
+like($stdout, qr/^\|\|$/,
 	"READ_REPLICATION_SLOT returns NULL values if slot does not exist");
 
 $node_primary->psql(
