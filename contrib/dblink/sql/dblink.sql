@@ -463,6 +463,9 @@ DROP USER regress_dblink_user;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 
+-- should fail
+ALTER FOREIGN DATA WRAPPER dblink_fdw OPTIONS (nonexistent 'fdw');
+
 -- test asynchronous notifications
 SELECT dblink_connect(connection_parameters());
 
