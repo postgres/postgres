@@ -903,6 +903,9 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 
 		ExecClearTuple(slot[slot_stored_count]);
 
+		memset(slot[slot_stored_count]->tts_isnull, false,
+			   slot[slot_stored_count]->tts_tupleDescriptor->natts * sizeof(bool));
+
 		shdep = (Form_pg_shdepend) GETSTRUCT(tup);
 
 		slot[slot_stored_count]->tts_values[Anum_pg_shdepend_dbid - 1] = ObjectIdGetDatum(newDbId);
