@@ -185,7 +185,7 @@ PostgreSQL documentation
       <term><option>--system</option></term>
       <listitem>
        <para>
-        Reindex database's system catalogs.
+        Reindex database's system catalogs only.
        </para>
       </listitem>
      </varlistentry>
