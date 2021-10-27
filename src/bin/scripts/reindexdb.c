@@ -798,7 +798,7 @@ help(const char *progname)
 	printf(_("  -i, --index=INDEX            recreate specific index(es) only\n"));
 	printf(_("  -j, --jobs=NUM               use this many concurrent connections to reindex\n"));
 	printf(_("  -q, --quiet                  don't write any messages\n"));
-	printf(_("  -s, --system                 reindex system catalogs\n"));
+	printf(_("  -s, --system                 reindex system catalogs only\n"));
 	printf(_("  -S, --schema=SCHEMA          reindex specific schema(s) only\n"));
 	printf(_("  -t, --table=TABLE            reindex specific table(s) only\n"));
 	printf(_("      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"));
