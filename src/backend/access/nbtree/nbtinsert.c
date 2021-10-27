@@ -807,9 +807,6 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
  *		If insertstate contains cached binary search bounds, we will take
  *		advantage of them.  This avoids repeating comparisons that we made in
  *		_bt_check_unique() already.
- *
- *		If there is not enough room on the page for the new tuple, we try to
- *		make room by removing any LP_DEAD tuples.
  */
 static OffsetNumber
 _bt_findinsertloc(Relation rel,
