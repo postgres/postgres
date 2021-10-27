@@ -1237,7 +1237,7 @@ BeginCopyFrom(ParseState *pstate,
 
 	tupDesc = RelationGetDescr(cstate->rel);
 
-	/* process commmon options or initialization */
+	/* process common options or initialization */
 
 	/* Generate or convert list of attributes to process */
 	cstate->attnumlist = CopyGetAttnums(tupDesc, cstate->rel, attnamelist);

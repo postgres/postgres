@@ -231,7 +231,7 @@ WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
 /*
  * Begin reading WAL at 'RecPtr'.
  *
- * 'RecPtr' should point to the beginnning of a valid WAL record.  Pointing at
+ * 'RecPtr' should point to the beginning of a valid WAL record.  Pointing at
  * the beginning of a page is also OK, if there is a new record right after
  * the page header, i.e. not a continuation.
  *
