@@ -1178,7 +1178,7 @@ _bt_insertonpg(Relation rel,
 					 errmsg_internal("table tid from new index tuple (%u,%u) overlaps with invalid duplicate tuple at offset %u of block %u in index \"%s\"",
 									 ItemPointerGetBlockNumber(&itup->t_tid),
 									 ItemPointerGetOffsetNumber(&itup->t_tid),
-									 BufferGetBlockNumber(buf), newitemoff,
+									 newitemoff, BufferGetBlockNumber(buf),
 									 RelationGetRelationName(rel))));
 
 		/* use a mutable copy of itup as our itup from here on */
