@@ -530,7 +530,24 @@ _bt_binsrch_insert(Relation rel, BTInsertState insertstate)
 		 * infrequently.
 		 */
 		if (unlikely(result == 0 && key->scantid != NULL))
+		{
+			/*
+			 * postingoff should never be set more than once per leaf page
+			 * binary search.  That would mean that there are duplicate table
+			 * TIDs in the index, which is never okay.  Check for that here.
+			 */
+			if (insertstate->postingoff != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INDEX_CORRUPTED),
+						 errmsg_internal("table tid from new index tuple (%u,%u) cannot find insert offset between offsets %u and %u of block %u in index \"%s\"",
+										 ItemPointerGetBlockNumber(key->scantid),
+										 ItemPointerGetOffsetNumber(key->scantid),
+										 low, stricthigh,
+										 BufferGetBlockNumber(insertstate->buf),
+										 RelationGetRelationName(rel))));
+
 			insertstate->postingoff = _bt_binsrch_posting(key, page, mid);
+		}
 	}
 
 	/*

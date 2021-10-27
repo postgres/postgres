@@ -1157,9 +1157,29 @@ _bt_insertonpg(Relation rel,
 		 * its post-split version is treated as an extra step in either the
 		 * insert or page split critical section.
 		 */
-		Assert(P_ISLEAF(lpageop) && !ItemIdIsDead(itemid));
-		Assert(itup_key->heapkeyspace && itup_key->allequalimage);
+		Assert(P_ISLEAF(lpageop) &&
+			   itup_key->heapkeyspace && itup_key->allequalimage);
 		oposting = (IndexTuple) PageGetItem(page, itemid);
+
+		/*
+		 * postingoff value comes from earlier call to _bt_binsrch_posting().
+		 * Its binary search might think that a plain tuple must be a posting
+		 * list tuple that needs to be split.  This can happen with corruption
+		 * involving an existing plain tuple that is a duplicate of the new
+		 * item, up to and including its table TID.  Check for that here in
+		 * passing.
+		 *
+		 * Also verify that our caller has made sure that the existing posting
+		 * list tuple does not have its LP_DEAD bit set.
+		 */
+		if (!BTreeTupleIsPosting(oposting) || ItemIdIsDead(itemid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("table tid from new index tuple (%u,%u) overlaps with invalid duplicate tuple at offset %u of block %u in index \"%s\"",
+									 ItemPointerGetBlockNumber(&itup->t_tid),
+									 ItemPointerGetOffsetNumber(&itup->t_tid),
+									 BufferGetBlockNumber(buf), newitemoff,
+									 RelationGetRelationName(rel))));
 
 		/* use a mutable copy of itup as our itup from here on */
 		origitup = itup;
