@@ -49,6 +49,7 @@
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
+#include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic_ext.h"
@@ -178,6 +179,7 @@ static const Oid object_classes[] = {
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
 	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
 	PolicyRelationId,			/* OCLASS_POLICY */
+	PublicationNamespaceRelationId, /* OCLASS_PUBLICATION_NAMESPACE */
 	PublicationRelationId,		/* OCLASS_PUBLICATION */
 	PublicationRelRelationId,	/* OCLASS_PUBLICATION_REL */
 	SubscriptionRelationId,		/* OCLASS_SUBSCRIPTION */
@@ -1454,6 +1456,10 @@ doDeletion(const ObjectAddress *object, int flags)
 
 		case OCLASS_POLICY:
 			RemovePolicyById(object->objectId);
+			break;
+
+		case OCLASS_PUBLICATION_NAMESPACE:
+			RemovePublicationSchemaById(object->objectId);
 			break;
 
 		case OCLASS_PUBLICATION_REL:
@@ -2849,6 +2855,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case PolicyRelationId:
 			return OCLASS_POLICY;
+
+		case PublicationNamespaceRelationId:
+			return OCLASS_PUBLICATION_NAMESPACE;
 
 		case PublicationRelationId:
 			return OCLASS_PUBLICATION;

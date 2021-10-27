@@ -3146,17 +3146,40 @@ describeOneTableDetails(const char *schemaname,
 		/* print any publications */
 		if (pset.sversion >= 100000)
 		{
-			printfPQExpBuffer(&buf,
-							  "SELECT pubname\n"
-							  "FROM pg_catalog.pg_publication p\n"
-							  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
-							  "WHERE pr.prrelid = '%s'\n"
-							  "UNION ALL\n"
-							  "SELECT pubname\n"
-							  "FROM pg_catalog.pg_publication p\n"
-							  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
-							  "ORDER BY 1;",
-							  oid, oid);
+			if (pset.sversion >= 150000)
+			{
+				printfPQExpBuffer(&buf,
+								  "SELECT pubname\n"
+								  "FROM pg_catalog.pg_publication p\n"
+								  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
+								  "		JOIN pg_catalog.pg_class pc ON pc.relnamespace = pn.pnnspid\n"
+								  "WHERE pc.oid ='%s' and pg_catalog.pg_relation_is_publishable('%s')\n"
+								  "UNION\n"
+								  "SELECT pubname\n"
+								  "FROM pg_catalog.pg_publication p\n"
+								  "		JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+								  "WHERE pr.prrelid = '%s'\n"
+								  "UNION\n"
+								  "SELECT pubname\n"
+								  "FROM pg_catalog.pg_publication p\n"
+								  "WHERE puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
+								  "ORDER BY 1;",
+								  oid, oid, oid, oid);
+			}
+			else
+			{
+				printfPQExpBuffer(&buf,
+								  "SELECT pubname\n"
+								  "FROM pg_catalog.pg_publication p\n"
+								  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+								  "WHERE pr.prrelid = '%s'\n"
+								  "UNION ALL\n"
+								  "SELECT pubname\n"
+								  "FROM pg_catalog.pg_publication p\n"
+								  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
+								  "ORDER BY 1;",
+								  oid, oid);
+			}
 
 			result = PSQLexec(buf.data);
 			if (!result)
@@ -5020,6 +5043,8 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+	int			pub_schema_tuples = 0;
+	char	  **footers = NULL;
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
@@ -5052,17 +5077,80 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
 	res = PSQLexec(buf.data);
-	termPQExpBuffer(&buf);
 	if (!res)
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of schemas");
 	myopt.translate_header = true;
 
+	if (pattern && pset.sversion >= 150000)
+	{
+		PGresult   *result;
+		int			i;
+
+		printfPQExpBuffer(&buf,
+						  "SELECT pubname \n"
+						  "FROM pg_catalog.pg_publication p\n"
+						  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
+						  "		JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid \n"
+						  "WHERE n.nspname = '%s'\n"
+						  "ORDER BY 1",
+						  pattern);
+		result = PSQLexec(buf.data);
+		if (!result)
+		{
+			termPQExpBuffer(&buf);
+			return false;
+		}
+		else
+			pub_schema_tuples = PQntuples(result);
+
+		if (pub_schema_tuples > 0)
+		{
+			/*
+			 * Allocate memory for footers. Size of footers will be 1 (for
+			 * storing "Publications:" string) + publication schema mapping
+			 * count +  1 (for storing NULL).
+			 */
+			footers = (char **) pg_malloc((1 + pub_schema_tuples + 1) * sizeof(char *));
+			footers[0] = pg_strdup(_("Publications:"));
+
+			/* Might be an empty set - that's ok */
+			for (i = 0; i < pub_schema_tuples; i++)
+			{
+				printfPQExpBuffer(&buf, "    \"%s\"",
+								  PQgetvalue(result, i, 0));
+
+				footers[i + 1] = pg_strdup(buf.data);
+			}
+
+			footers[i + 1] = NULL;
+			myopt.footers = footers;
+		}
+
+		PQclear(result);
+	}
+
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
+	termPQExpBuffer(&buf);
 	PQclear(res);
+
+	/* Free the memory allocated for the footer */
+	if (footers)
+	{
+		char	  **footer = NULL;
+
+		for (footer = footers; *footer; footer++)
+			pg_free(*footer);
+
+		pg_free(footers);
+	}
+
 	return true;
 }
 
@@ -6210,6 +6298,41 @@ listPublications(const char *pattern)
 }
 
 /*
+ * Add footer to publication description.
+ */
+static bool
+addFooterToPublicationDesc(PQExpBuffer buf, char *footermsg,
+						   bool singlecol, printTableContent *cont)
+{
+	PGresult   *res;
+	int			count = 0;
+	int			i = 0;
+
+	res = PSQLexec(buf->data);
+	if (!res)
+		return false;
+	else
+		count = PQntuples(res);
+
+	if (count > 0)
+		printTableAddFooter(cont, _(footermsg));
+
+	for (i = 0; i < count; i++)
+	{
+		if (!singlecol)
+			printfPQExpBuffer(buf, "    \"%s.%s\"", PQgetvalue(res, i, 0),
+							  PQgetvalue(res, i, 1));
+		else
+			printfPQExpBuffer(buf, "    \"%s\"", PQgetvalue(res, i, 0));
+
+		printTableAddFooter(cont, buf->data);
+	}
+
+	PQclear(res);
+	return true;
+}
+
+/*
  * \dRp+
  * Describes publications including the contents.
  *
@@ -6223,6 +6346,9 @@ describePublications(const char *pattern)
 	PGresult   *res;
 	bool		has_pubtruncate;
 	bool		has_pubviaroot;
+
+	PQExpBufferData title;
+	printTableContent cont;
 
 	if (pset.sversion < 100000)
 	{
@@ -6286,15 +6412,10 @@ describePublications(const char *pattern)
 		const char	align = 'l';
 		int			ncols = 5;
 		int			nrows = 1;
-		int			tables = 0;
-		PGresult   *tabres;
 		char	   *pubid = PQgetvalue(res, i, 0);
 		char	   *pubname = PQgetvalue(res, i, 1);
 		bool		puballtables = strcmp(PQgetvalue(res, i, 3), "t") == 0;
-		int			j;
-		PQExpBufferData title;
 		printTableOpt myopt = pset.popt.topt;
-		printTableContent cont;
 
 		if (has_pubtruncate)
 			ncols++;
@@ -6327,6 +6448,7 @@ describePublications(const char *pattern)
 
 		if (!puballtables)
 		{
+			/* Get the tables for the specified publication */
 			printfPQExpBuffer(&buf,
 							  "SELECT n.nspname, c.relname\n"
 							  "FROM pg_catalog.pg_class c,\n"
@@ -6336,31 +6458,22 @@ describePublications(const char *pattern)
 							  "  AND c.oid = pr.prrelid\n"
 							  "  AND pr.prpubid = '%s'\n"
 							  "ORDER BY 1,2", pubid);
+			if (!addFooterToPublicationDesc(&buf, "Tables:", false, &cont))
+				goto error_return;
 
-			tabres = PSQLexec(buf.data);
-			if (!tabres)
+			if (pset.sversion >= 150000)
 			{
-				printTableCleanup(&cont);
-				PQclear(res);
-				termPQExpBuffer(&buf);
-				termPQExpBuffer(&title);
-				return false;
+				/* Get the schemas for the specified publication */
+				printfPQExpBuffer(&buf,
+								  "SELECT n.nspname\n"
+								  "FROM pg_catalog.pg_namespace n\n"
+								  "     JOIN pg_catalog.pg_publication_namespace pn ON n.oid = pn.pnnspid\n"
+								  "WHERE pn.pnpubid = '%s'\n"
+								  "ORDER BY 1", pubid);
+				if (!addFooterToPublicationDesc(&buf, "Tables from schemas:",
+												true, &cont))
+					goto error_return;
 			}
-			else
-				tables = PQntuples(tabres);
-
-			if (tables > 0)
-				printTableAddFooter(&cont, _("Tables:"));
-
-			for (j = 0; j < tables; j++)
-			{
-				printfPQExpBuffer(&buf, "    \"%s.%s\"",
-								  PQgetvalue(tabres, j, 0),
-								  PQgetvalue(tabres, j, 1));
-
-				printTableAddFooter(&cont, buf.data);
-			}
-			PQclear(tabres);
 		}
 
 		printTable(&cont, pset.queryFout, false, pset.logfile);
@@ -6373,6 +6486,13 @@ describePublications(const char *pattern)
 	PQclear(res);
 
 	return true;
+
+error_return:
+	printTableCleanup(&cont);
+	PQclear(res);
+	termPQExpBuffer(&buf);
+	termPQExpBuffer(&title);
+	return false;
 }
 
 /*

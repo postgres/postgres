@@ -254,8 +254,11 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	pg_log_info("reading publications");
 	(void) getPublications(fout, &numPublications);
 
-	pg_log_info("reading publication membership");
+	pg_log_info("reading publication membership of tables");
 	getPublicationTables(fout, tblinfo, numTables);
+
+	pg_log_info("reading publication membership of schemas");
+	getPublicationNamespaces(fout);
 
 	pg_log_info("reading subscriptions");
 	getSubscriptions(fout);

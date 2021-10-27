@@ -1068,6 +1068,9 @@ init_rel_sync_cache(MemoryContext cachectx)
 	CacheRegisterSyscacheCallback(PUBLICATIONRELMAP,
 								  rel_sync_cache_publication_cb,
 								  (Datum) 0);
+	CacheRegisterSyscacheCallback(PUBLICATIONNAMESPACEMAP,
+								  rel_sync_cache_publication_cb,
+								  (Datum) 0);
 }
 
 /*
@@ -1146,7 +1149,15 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 	/* Validate the entry */
 	if (!entry->replicate_valid)
 	{
+		Oid			schemaId = get_rel_namespace(relid);
 		List	   *pubids = GetRelationPublications(relid);
+
+		/*
+		 * We don't acquire a lock on the namespace system table as we build
+		 * the cache entry using a historic snapshot and all the later changes
+		 * are absorbed while decoding WAL.
+		 */
+		List	   *schemaPubids = GetSchemaPublications(schemaId);
 		ListCell   *lc;
 		Oid			publish_as_relid = relid;
 
@@ -1203,6 +1214,8 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 						Oid			ancestor = lfirst_oid(lc2);
 
 						if (list_member_oid(GetRelationPublications(ancestor),
+											pub->oid) ||
+							list_member_oid(GetSchemaPublications(get_rel_namespace(ancestor)),
 											pub->oid))
 						{
 							ancestor_published = true;
@@ -1212,7 +1225,9 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 					}
 				}
 
-				if (list_member_oid(pubids, pub->oid) || ancestor_published)
+				if (list_member_oid(pubids, pub->oid) ||
+					list_member_oid(schemaPubids, pub->oid) ||
+					ancestor_published)
 					publish = true;
 			}
 
@@ -1343,7 +1358,7 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 }
 
 /*
- * Publication relation map syscache invalidation callback
+ * Publication relation/schema map syscache invalidation callback
  */
 static void
 rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)

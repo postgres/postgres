@@ -241,6 +241,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-publication-namespace"><structname>pg_publication_namespace</structname></link></entry>
+      <entry>schema to publication mapping</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link></entry>
       <entry>relation to publication mapping</entry>
      </row>
@@ -6176,6 +6181,67 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
  </sect1>
 
+ <sect1 id="catalog-pg-publication-namespace">
+  <title><structname>pg_publication_namespace</structname></title>
+
+  <indexterm zone="catalog-pg-publication-namespace">
+   <primary>pg_publication_namespace</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_publication_namespace</structname> contains the
+   mapping between schemas and publications in the database.  This is a
+   many-to-many mapping.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_namespace</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pnpubid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to publication
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pnnspid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       Reference to schema
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="catalog-pg-publication-rel">
   <title><structname>pg_publication_rel</structname></title>
 
@@ -11278,9 +11344,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    information about the mapping between publications and the tables they
    contain.  Unlike the underlying catalog
    <link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link>,
-   this view expands
-   publications defined as <literal>FOR ALL TABLES</literal>, so for such
-   publications there will be a row for each eligible table.
+   this view expands publications defined as <literal>FOR ALL TABLES</literal>
+   and <literal>FOR ALL TABLES IN SCHEMA</literal>, so for such publications
+   there will be a row for each eligible table.
   </para>
 
   <table>

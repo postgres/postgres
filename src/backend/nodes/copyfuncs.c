@@ -4810,6 +4810,19 @@ _copyPartitionCmd(const PartitionCmd *from)
 	return newnode;
 }
 
+static PublicationObjSpec *
+_copyPublicationObject(const PublicationObjSpec *from)
+{
+	PublicationObjSpec *newnode = makeNode(PublicationObjSpec);
+
+	COPY_SCALAR_FIELD(pubobjtype);
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(pubtable);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
 static PublicationTable *
 _copyPublicationTable(const PublicationTable *from)
 {
@@ -4827,7 +4840,7 @@ _copyCreatePublicationStmt(const CreatePublicationStmt *from)
 
 	COPY_STRING_FIELD(pubname);
 	COPY_NODE_FIELD(options);
-	COPY_NODE_FIELD(tables);
+	COPY_NODE_FIELD(pubobjects);
 	COPY_SCALAR_FIELD(for_all_tables);
 
 	return newnode;
@@ -4840,9 +4853,9 @@ _copyAlterPublicationStmt(const AlterPublicationStmt *from)
 
 	COPY_STRING_FIELD(pubname);
 	COPY_NODE_FIELD(options);
-	COPY_NODE_FIELD(tables);
+	COPY_NODE_FIELD(pubobjects);
 	COPY_SCALAR_FIELD(for_all_tables);
-	COPY_SCALAR_FIELD(tableAction);
+	COPY_SCALAR_FIELD(action);
 
 	return newnode;
 }
@@ -5886,6 +5899,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PartitionCmd:
 			retval = _copyPartitionCmd(from);
+			break;
+		case T_PublicationObjSpec:
+			retval = _copyPublicationObject(from);
 			break;
 		case T_PublicationTable:
 			retval = _copyPublicationTable(from);

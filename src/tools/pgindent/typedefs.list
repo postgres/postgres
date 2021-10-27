@@ -778,6 +778,7 @@ FormData_pg_partitioned_table
 FormData_pg_policy
 FormData_pg_proc
 FormData_pg_publication
+FormData_pg_publication_namespace
 FormData_pg_publication_rel
 FormData_pg_range
 FormData_pg_replication_origin
@@ -834,6 +835,7 @@ Form_pg_partitioned_table
 Form_pg_policy
 Form_pg_proc
 Form_pg_publication
+Form_pg_publication_namespace
 Form_pg_publication_rel
 Form_pg_range
 Form_pg_replication_origin
@@ -2047,8 +2049,11 @@ PsqlSettings
 Publication
 PublicationActions
 PublicationInfo
+PublicationObjSpec
+PublicationObjSpecType
 PublicationPartOpt
 PublicationRelInfo
+PublicationSchemaInfo
 PublicationTable
 PullFilter
 PullFilterOps

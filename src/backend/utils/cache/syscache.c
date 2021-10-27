@@ -50,6 +50,7 @@
 #include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
+#include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_publication_rel.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_replication_origin.h"
@@ -616,6 +617,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		8
+	},
+	{PublicationNamespaceRelationId,	/* PUBLICATIONNAMESPACE */
+		PublicationNamespaceObjectIndexId,
+		1,
+		{
+			Anum_pg_publication_namespace_oid,
+			0,
+			0,
+			0
+		},
+		64
+	},
+	{PublicationNamespaceRelationId,	/* PUBLICATIONNAMESPACEMAP */
+		PublicationNamespacePnnspidPnpubidIndexId,
+		2,
+		{
+			Anum_pg_publication_namespace_pnnspid,
+			Anum_pg_publication_namespace_pnpubid,
+			0,
+			0
+		},
+		64
 	},
 	{PublicationRelationId,		/* PUBLICATIONOID */
 		PublicationObjectIndexId,

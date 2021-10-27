@@ -1853,8 +1853,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those publications whose names match the pattern are
         listed.
-        If <literal>+</literal> is appended to the command name, the tables
-        associated with each publication are shown as well.
+        If <literal>+</literal> is appended to the command name, the tables and
+        schemas associated with each publication are shown as well.
         </para>
         </listitem>
       </varlistentry>

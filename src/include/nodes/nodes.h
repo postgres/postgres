@@ -487,6 +487,7 @@ typedef enum NodeTag
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
 	T_VacuumRelation,
+	T_PublicationObjSpec,
 	T_PublicationTable,
 
 	/*
