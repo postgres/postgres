@@ -762,7 +762,7 @@ ERROR:  SELinux: security policy violation
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><ulink url="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/SELinux_Users_and_Administrators_Guide/">SELinux User's and Administrator's Guide</ulink></term>
+    <term><ulink url="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/selinux_users_and_administrators_guide/index">SELinux User's and Administrator's Guide</ulink></term>
     <listitem>
      <para>
       This document provides a wide spectrum of knowledge to administer
