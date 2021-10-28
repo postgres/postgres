@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More tests => 7;
 use File::Copy;
 
 # Initialize primary node, doing archives
@@ -28,6 +28,17 @@ $node_standby->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_standby->append_conf('postgresql.conf',
 	"wal_retrieve_retry_interval = '100ms'");
+
+# Set archive_cleanup_command and recovery_end_command, checking their
+# execution by the backend with dummy commands.
+my $data_dir                     = $node_standby->data_dir;
+my $archive_cleanup_command_file = "archive_cleanup_command.done";
+my $recovery_end_command_file    = "recovery_end_command.done";
+$node_standby->append_conf(
+	'postgresql.conf', qq(
+archive_cleanup_command = 'echo archive_cleanup_done > $archive_cleanup_command_file'
+recovery_end_command = 'echo recovery_ended_done > $recovery_end_command_file'
+));
 $node_standby->start;
 
 # Create some content on primary
@@ -35,6 +46,10 @@ $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 my $current_lsn =
   $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
+
+# Note the presence of this checkpoint for the archive_cleanup_command
+# check done below, before switching to a new segment.
+$node_primary->safe_psql('postgres', "CHECKPOINT");
 
 # Force archiving of WAL file to make it present on primary
 $node_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
@@ -53,6 +68,14 @@ my $result =
   $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 is($result, qq(1000), 'check content from archives');
 
+# archive_cleanup_command is executed after generating a restart point,
+# with a checkpoint.
+$node_standby->safe_psql('postgres', q{CHECKPOINT});
+ok( -f "$data_dir/$archive_cleanup_command_file",
+	'archive_cleanup_command executed on checkpoint');
+ok( !-f "$data_dir/$recovery_end_command_file",
+	'recovery_end_command not executed yet');
+
 # Check the presence of temporary files specifically generated during
 # archive recovery.  To ensure the presence of the temporary history
 # file, switch to a timeline large enough to allow a standby to recover
@@ -62,10 +85,25 @@ is($result, qq(1000), 'check content from archives');
 # promoted.
 $node_standby->promote;
 
+# recovery_end_command should have been triggered on promotion.
+ok( -f "$data_dir/$recovery_end_command_file",
+	'recovery_end_command executed after promotion');
+
 my $node_standby2 = PostgreSQL::Test::Cluster->new('standby2');
 $node_standby2->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
+
+# Make execution of recovery_end_command fail.  This should not affect
+# promotion, and its failure should be logged.
+$node_standby2->append_conf(
+	'postgresql.conf', qq(
+recovery_end_command = 'echo recovery_end_failed > missing_dir/xyz.file'
+));
+
 $node_standby2->start;
+
+# Save the log location, to see the failure of recovery_end_command.
+my $log_location = -s $node_standby2->logfile;
 
 # Now promote standby2, and check that temporary files specifically
 # generated during archive recovery are removed by the end of recovery.
@@ -75,3 +113,10 @@ ok( !-f "$node_standby2_data/pg_wal/RECOVERYHISTORY",
 	"RECOVERYHISTORY removed after promotion");
 ok( !-f "$node_standby2_data/pg_wal/RECOVERYXLOG",
 	"RECOVERYXLOG removed after promotion");
+
+# Check the logs of the standby to see that the commands have failed.
+my $log_contents = slurp_file($node_standby2->logfile, $log_location);
+like(
+	$log_contents,
+	qr/WARNING:.*recovery_end_command/s,
+	"recovery_end_command failure detected in logs after promotion");
