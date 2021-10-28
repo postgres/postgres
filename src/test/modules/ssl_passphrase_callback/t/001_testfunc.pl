@@ -6,9 +6,9 @@ use warnings;
 
 use File::Copy;
 
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More;
-use PostgresNode;
+use PostgreSQL::Test::Cluster;
 
 unless (($ENV{with_ssl} || "") eq 'openssl')
 {
@@ -20,7 +20,7 @@ my $rot13pass = "SbbOnE1";
 
 # see the Makefile for how the certificate and key have been generated
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf',
 	"ssl_passphrase.passphrase = '$rot13pass'");
@@ -63,7 +63,7 @@ like(
 $node->append_conf('postgresql.conf', "ssl_passphrase.passphrase = 'blurfl'");
 
 # try to start the server again
-my $ret = TestLib::system_log('pg_ctl', '-D', $node->data_dir, '-l',
+my $ret = PostgreSQL::Test::Utils::system_log('pg_ctl', '-D', $node->data_dir, '-l',
 	$node->logfile, 'start');
 
 

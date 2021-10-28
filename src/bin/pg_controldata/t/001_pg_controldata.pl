@@ -3,8 +3,8 @@
 
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 17;
 
 program_help_ok('pg_controldata');
@@ -14,7 +14,7 @@ command_fails(['pg_controldata'], 'pg_controldata without arguments fails');
 command_fails([ 'pg_controldata', 'nonexistent' ],
 	'pg_controldata with nonexistent directory fails');
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 
 command_like([ 'pg_controldata', $node->data_dir ],

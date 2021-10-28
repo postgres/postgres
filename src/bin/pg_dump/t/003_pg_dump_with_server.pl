@@ -4,13 +4,13 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 3;
 
-my $tempdir       = TestLib::tempdir;
+my $tempdir       = PostgreSQL::Test::Utils::tempdir;
 
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 my $port = $node->port;
 
 $node->init;

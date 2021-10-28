@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Config;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 12;
 
 #########################################

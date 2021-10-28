@@ -26,6 +26,7 @@ extern ObjectAddress CreatePublication(ParseState *pstate, CreatePublicationStmt
 extern void AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt);
 extern void RemovePublicationById(Oid pubid);
 extern void RemovePublicationRelById(Oid proid);
+extern void RemovePublicationSchemaById(Oid psoid);
 
 extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);
 extern void AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId);

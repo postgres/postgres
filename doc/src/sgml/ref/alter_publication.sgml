@@ -21,12 +21,17 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER PUBLICATION <replaceable class="parameter">name</replaceable> ADD TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
-ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
-ALTER PUBLICATION <replaceable class="parameter">name</replaceable> DROP TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
+ALTER PUBLICATION <replaceable class="parameter">name</replaceable> ADD <replaceable class="parameter">publication_object</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET <replaceable class="parameter">publication_object</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="parameter">name</replaceable> DROP <replaceable class="parameter">publication_object</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+
+<phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
+
+    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ... ]
+    ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,14 +44,15 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   </para>
 
   <para>
-   The first three variants change which tables are part of the publication.
-   The <literal>SET TABLE</literal> clause will replace the list of tables in
-   the publication with the specified one.  The <literal>ADD TABLE</literal>
-   and <literal>DROP TABLE</literal> clauses will add and remove one or more
-   tables from the publication.  Note that adding tables to a publication that
-   is already subscribed to will require a <literal>ALTER SUBSCRIPTION
-   ... REFRESH PUBLICATION</literal> action on the subscribing side in order
-   to become effective.
+   The first three variants change which tables/schemas are part of the
+   publication.  The <literal>SET</literal> clause will replace the list of
+   tables/schemas in the publication with the specified list; the existing
+   tables/schemas that were present in the publication will be removed.  The
+   <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
+   remove one or more tables/schemas from the publication.  Note that adding
+   tables/schemas to a publication that is already subscribed to will require a
+   <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
+   subscribing side in order to become effective.
   </para>
 
   <para>
@@ -63,11 +69,22 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   <para>
    You must own the publication to use <command>ALTER PUBLICATION</command>.
    Adding a table to a publication additionally requires owning that table.
-   To alter the owner, you must also be a direct or indirect member of the new
-   owning role. The new owner must have <literal>CREATE</literal> privilege on
-   the database.  Also, the new owner of a <literal>FOR ALL TABLES</literal>
-   publication must be a superuser.  However, a superuser can change the
-   ownership of a publication regardless of these restrictions.
+   The <literal>ADD ALL TABLES IN SCHEMA</literal> and
+   <literal>SET ALL TABLES IN SCHEMA</literal> to a publication requires the
+   invoking user to be a superuser.  To alter the owner, you must also be a
+   direct or indirect member of the new owning role. The new owner must have
+   <literal>CREATE</literal> privilege on the database.  Also, the new owner
+   of a <literal>FOR ALL TABLES</literal> or <literal>FOR ALL TABLES IN
+   SCHEMA</literal> publication must be a superuser. However, a superuser can
+   change the ownership of a publication regardless of these restrictions.
+  </para>
+
+  <para>
+   Adding/Setting a table that is part of schema specified in
+   <literal>ALL TABLES IN SCHEMA</literal>, adding/setting a schema to a
+   publication that already has a table that is part of specified schema or
+   adding/setting a table to a publication that already has a table's schema as
+   part of the specified schema is not supported.
   </para>
  </refsect1>
 
@@ -93,6 +110,15 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
       specified, the table and all its descendant tables (if any) are
       affected.  Optionally, <literal>*</literal> can be specified after the table
       name to explicitly indicate that descendant tables are included.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">schema_name</replaceable></term>
+    <listitem>
+     <para>
+      Name of an existing schema.
      </para>
     </listitem>
    </varlistentry>
@@ -142,6 +168,25 @@ ALTER PUBLICATION noinsert SET (publish = 'update, delete');
 <programlisting>
 ALTER PUBLICATION mypublication ADD TABLE users, departments;
 </programlisting></para>
+
+  <para>
+   Add schemas <structname>marketing</structname> and
+   <structname>sales</structname> to the publication
+   <structname>sales_publication</structname>:
+<programlisting>
+ALTER PUBLICATION sales_publication ADD ALL TABLES IN SCHEMA marketing, sales;
+</programlisting>
+  </para>
+
+  <para>
+   Add tables <structname>users</structname>,
+   <structname>departments</structname> and schema
+   <structname>production</structname> to the publication
+   <structname>production_publication</structname>:
+<programlisting>
+ALTER PUBLICATION production_publication ADD TABLE users, departments, ALL TABLES IN SCHEMA production;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

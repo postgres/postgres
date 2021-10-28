@@ -1875,14 +1875,15 @@ selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
 }
 
 /*
- * selectDumpablePublicationTable: policy-setting subroutine
- *		Mark a publication table as to be dumped or not
+ * selectDumpablePublicationObject: policy-setting subroutine
+ *		Mark a publication object as to be dumped or not
  *
- * Publication tables have schemas, but those are ignored in decision making,
- * because publications are only dumped when we are dumping everything.
+ * A publication can have schemas and tables which have schemas, but those are
+ * ignored in decision making, because publications are only dumped when we are
+ * dumping everything.
  */
 static void
-selectDumpablePublicationTable(DumpableObject *dobj, Archive *fout)
+selectDumpablePublicationObject(DumpableObject *dobj, Archive *fout)
 {
 	if (checkExtensionMembership(dobj, fout))
 		return;					/* extension membership overrides all else */
@@ -4127,6 +4128,93 @@ dumpPublication(Archive *fout, const PublicationInfo *pubinfo)
 }
 
 /*
+ * getPublicationNamespaces
+ *	  get information about publication membership for dumpable schemas.
+ */
+void
+getPublicationNamespaces(Archive *fout)
+{
+	PQExpBuffer query;
+	PGresult   *res;
+	PublicationSchemaInfo *pubsinfo;
+	DumpOptions *dopt = fout->dopt;
+	int			i_tableoid;
+	int			i_oid;
+	int			i_pnpubid;
+	int			i_pnnspid;
+	int			i,
+				j,
+				ntups;
+
+	if (dopt->no_publications || fout->remoteVersion < 150000)
+		return;
+
+	query = createPQExpBuffer();
+
+	/* Collect all publication membership info. */
+	appendPQExpBufferStr(query,
+						 "SELECT tableoid, oid, pnpubid, pnnspid "
+						 "FROM pg_catalog.pg_publication_namespace");
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_pnpubid = PQfnumber(res, "pnpubid");
+	i_pnnspid = PQfnumber(res, "pnnspid");
+
+	/* this allocation may be more than we need */
+	pubsinfo = pg_malloc(ntups * sizeof(PublicationSchemaInfo));
+	j = 0;
+
+	for (i = 0; i < ntups; i++)
+	{
+		Oid			pnpubid = atooid(PQgetvalue(res, i, i_pnpubid));
+		Oid			pnnspid = atooid(PQgetvalue(res, i, i_pnnspid));
+		PublicationInfo *pubinfo;
+		NamespaceInfo *nspinfo;
+
+		/*
+		 * Ignore any entries for which we aren't interested in either the
+		 * publication or the rel.
+		 */
+		pubinfo = findPublicationByOid(pnpubid);
+		if (pubinfo == NULL)
+			continue;
+		nspinfo = findNamespaceByOid(pnnspid);
+		if (nspinfo == NULL)
+			continue;
+
+		/*
+		 * We always dump publication namespaces unless the corresponding
+		 * namespace is excluded from the dump.
+		 */
+		if (nspinfo->dobj.dump == DUMP_COMPONENT_NONE)
+			continue;
+
+		/* OK, make a DumpableObject for this relationship */
+		pubsinfo[j].dobj.objType = DO_PUBLICATION_REL_IN_SCHEMA;
+		pubsinfo[j].dobj.catId.tableoid =
+			atooid(PQgetvalue(res, i, i_tableoid));
+		pubsinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&pubsinfo[j].dobj);
+		pubsinfo[j].dobj.namespace = nspinfo->dobj.namespace;
+		pubsinfo[j].dobj.name = nspinfo->dobj.name;
+		pubsinfo[j].publication = pubinfo;
+		pubsinfo[j].pubschema = nspinfo;
+
+		/* Decide whether we want to dump it */
+		selectDumpablePublicationObject(&(pubsinfo[j].dobj), fout);
+
+		j++;
+	}
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+}
+
+/*
  * getPublicationTables
  *	  get information about publication membership for dumpable tables.
  */
@@ -4204,12 +4292,50 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 		pubrinfo[j].pubtable = tbinfo;
 
 		/* Decide whether we want to dump it */
-		selectDumpablePublicationTable(&(pubrinfo[j].dobj), fout);
+		selectDumpablePublicationObject(&(pubrinfo[j].dobj), fout);
 
 		j++;
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * dumpPublicationNamespace
+ *	  dump the definition of the given publication schema mapping.
+ */
+static void
+dumpPublicationNamespace(Archive *fout, const PublicationSchemaInfo *pubsinfo)
+{
+	NamespaceInfo *schemainfo = pubsinfo->pubschema;
+	PublicationInfo *pubinfo = pubsinfo->publication;
+	PQExpBuffer query;
+	char	   *tag;
+
+	if (!(pubsinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
+		return;
+
+	tag = psprintf("%s %s", pubinfo->dobj.name, schemainfo->dobj.name);
+
+	query = createPQExpBuffer();
+
+	appendPQExpBuffer(query, "ALTER PUBLICATION %s ", fmtId(pubinfo->dobj.name));
+	appendPQExpBuffer(query, "ADD ALL TABLES IN SCHEMA %s;\n", fmtId(schemainfo->dobj.name));
+
+	/*
+	 * There is no point in creating drop query as the drop is done by schema
+	 * drop.
+	 */
+	ArchiveEntry(fout, pubsinfo->dobj.catId, pubsinfo->dobj.dumpId,
+				 ARCHIVE_OPTS(.tag = tag,
+							  .namespace = schemainfo->dobj.name,
+							  .owner = pubinfo->rolname,
+							  .description = "PUBLICATION TABLES IN SCHEMA",
+							  .section = SECTION_POST_DATA,
+							  .createStmt = query->data));
+
+	free(tag);
 	destroyPQExpBuffer(query);
 }
 
@@ -6869,7 +6995,6 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 	IndxInfo   *indxinfo;
-	ConstraintInfo *constrinfo;
 	int			i_tableoid,
 				i_oid,
 				i_indexname,
@@ -7133,7 +7258,6 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 
 		tbinfo->indexes = indxinfo =
 			(IndxInfo *) pg_malloc(ntups * sizeof(IndxInfo));
-		constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
 		tbinfo->numIndexes = ntups;
 
 		for (j = 0; j < ntups; j++)
@@ -7173,28 +7297,31 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				 * If we found a constraint matching the index, create an
 				 * entry for it.
 				 */
-				constrinfo[j].dobj.objType = DO_CONSTRAINT;
-				constrinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
-				constrinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
-				AssignDumpId(&constrinfo[j].dobj);
-				constrinfo[j].dobj.dump = tbinfo->dobj.dump;
-				constrinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
-				constrinfo[j].dobj.namespace = tbinfo->dobj.namespace;
-				constrinfo[j].contable = tbinfo;
-				constrinfo[j].condomain = NULL;
-				constrinfo[j].contype = contype;
-				if (contype == 'x')
-					constrinfo[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
-				else
-					constrinfo[j].condef = NULL;
-				constrinfo[j].confrelid = InvalidOid;
-				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
-				constrinfo[j].condeferrable = *(PQgetvalue(res, j, i_condeferrable)) == 't';
-				constrinfo[j].condeferred = *(PQgetvalue(res, j, i_condeferred)) == 't';
-				constrinfo[j].conislocal = true;
-				constrinfo[j].separate = true;
+				ConstraintInfo *constrinfo;
 
-				indxinfo[j].indexconstraint = constrinfo[j].dobj.dumpId;
+				constrinfo = (ConstraintInfo *) pg_malloc(sizeof(ConstraintInfo));
+				constrinfo->dobj.objType = DO_CONSTRAINT;
+				constrinfo->dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
+				constrinfo->dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
+				AssignDumpId(&constrinfo->dobj);
+				constrinfo->dobj.dump = tbinfo->dobj.dump;
+				constrinfo->dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
+				constrinfo->dobj.namespace = tbinfo->dobj.namespace;
+				constrinfo->contable = tbinfo;
+				constrinfo->condomain = NULL;
+				constrinfo->contype = contype;
+				if (contype == 'x')
+					constrinfo->condef = pg_strdup(PQgetvalue(res, j, i_condef));
+				else
+					constrinfo->condef = NULL;
+				constrinfo->confrelid = InvalidOid;
+				constrinfo->conindex = indxinfo[j].dobj.dumpId;
+				constrinfo->condeferrable = *(PQgetvalue(res, j, i_condeferrable)) == 't';
+				constrinfo->condeferred = *(PQgetvalue(res, j, i_condeferred)) == 't';
+				constrinfo->conislocal = true;
+				constrinfo->separate = true;
+
+				indxinfo[j].indexconstraint = constrinfo->dobj.dumpId;
 			}
 			else
 			{
@@ -10204,6 +10331,10 @@ dumpDumpableObject(Archive *fout, const DumpableObject *dobj)
 		case DO_PUBLICATION_REL:
 			dumpPublicationTable(fout, (const PublicationRelInfo *) dobj);
 			break;
+		case DO_PUBLICATION_REL_IN_SCHEMA:
+			dumpPublicationNamespace(fout,
+									 (const PublicationSchemaInfo *) dobj);
+			break;
 		case DO_SUBSCRIPTION:
 			dumpSubscription(fout, (const SubscriptionInfo *) dobj);
 			break;
@@ -11878,6 +12009,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	char	   *funcsig;		/* identity signature */
 	char	   *funcfullsig = NULL; /* full signature */
 	char	   *funcsig_tag;
+	char	   *qual_funcsig;
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
@@ -12168,15 +12300,17 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 
 	funcsig_tag = format_function_signature(fout, finfo, false);
 
+	qual_funcsig = psprintf("%s.%s",
+							fmtId(finfo->dobj.namespace->dobj.name),
+							funcsig);
+
 	if (prokind[0] == PROKIND_PROCEDURE)
 		keyword = "PROCEDURE";
 	else
 		keyword = "FUNCTION";	/* works for window functions too */
 
-	appendPQExpBuffer(delqry, "DROP %s %s.%s;\n",
-					  keyword,
-					  fmtId(finfo->dobj.namespace->dobj.name),
-					  funcsig);
+	appendPQExpBuffer(delqry, "DROP %s %s;\n",
+					  keyword, qual_funcsig);
 
 	appendPQExpBuffer(q, "CREATE %s %s.%s",
 					  keyword,
@@ -12329,9 +12463,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 
 	append_depends_on_extension(fout, q, &finfo->dobj,
 								"pg_catalog.pg_proc", keyword,
-								psprintf("%s.%s",
-										 fmtId(finfo->dobj.namespace->dobj.name),
-										 funcsig));
+								qual_funcsig);
 
 	if (dopt->binary_upgrade)
 		binary_upgrade_extension_member(q, &finfo->dobj,
@@ -12376,6 +12508,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	if (funcfullsig)
 		free(funcfullsig);
 	free(funcsig_tag);
+	free(qual_funcsig);
 	if (allargtypes)
 		free(allargtypes);
 	if (argmodes)
@@ -14767,6 +14900,8 @@ dumpForeignServer(Archive *fout, const ForeignServerInfo *srvinfo)
 						 srvinfo->dobj.name, NULL,
 						 srvinfo->rolname,
 						 srvinfo->dobj.catId, srvinfo->dobj.dumpId);
+
+	PQclear(res);
 
 	free(qsrvname);
 
@@ -18424,6 +18559,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_POLICY:
 			case DO_PUBLICATION:
 			case DO_PUBLICATION_REL:
+			case DO_PUBLICATION_REL_IN_SCHEMA:
 			case DO_SUBSCRIPTION:
 				/* Post-data objects: must come after the post-data boundary */
 				addObjectDependency(dobj, postDataBound->dumpId);

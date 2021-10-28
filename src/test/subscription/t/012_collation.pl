@@ -5,8 +5,8 @@
 # (only works with ICU)
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 if ($ENV{with_icu} eq 'yes')
@@ -18,13 +18,13 @@ else
 	plan skip_all => 'ICU not supported by this build';
 }
 
-my $node_publisher = PostgresNode->new('publisher');
+my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(
 	allows_streaming => 'logical',
 	extra            => [ '--locale=C', '--encoding=UTF8' ]);
 $node_publisher->start;
 
-my $node_subscriber = PostgresNode->new('subscriber');
+my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(
 	allows_streaming => 'logical',
 	extra            => [ '--locale=C', '--encoding=UTF8' ]);

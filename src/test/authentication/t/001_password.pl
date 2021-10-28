@@ -10,8 +10,8 @@
 
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 if (!$use_unix_sockets)
 {
@@ -64,7 +64,7 @@ sub test_role
 }
 
 # Initialize primary node
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;
@@ -136,7 +136,7 @@ $ENV{"PGCHANNELBINDING"} = 'require';
 test_role($node, 'scram_role', 'scram-sha-256', 2);
 
 # Test .pgpass processing; but use a temp file, don't overwrite the real one!
-my $pgpassfile = "${TestLib::tmp_check}/pgpass";
+my $pgpassfile = "${PostgreSQL::Test::Utils::tmp_check}/pgpass";
 
 delete $ENV{"PGPASSWORD"};
 delete $ENV{"PGCHANNELBINDING"};

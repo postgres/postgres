@@ -7,8 +7,8 @@
 #
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 41;
 
 ###############################
@@ -18,7 +18,7 @@ use Test::More tests => 41;
 
 # Initialize nodes
 # node_A
-my $node_A = PostgresNode->new('node_A');
+my $node_A = PostgreSQL::Test::Cluster->new('node_A');
 $node_A->init(allows_streaming => 'logical');
 $node_A->append_conf('postgresql.conf', qq(
 max_prepared_transactions = 10
@@ -26,7 +26,7 @@ logical_decoding_work_mem = 64kB
 ));
 $node_A->start;
 # node_B
-my $node_B = PostgresNode->new('node_B');
+my $node_B = PostgreSQL::Test::Cluster->new('node_B');
 $node_B->init(allows_streaming => 'logical');
 $node_B->append_conf('postgresql.conf', qq(
 max_prepared_transactions = 10
@@ -34,7 +34,7 @@ logical_decoding_work_mem = 64kB
 ));
 $node_B->start;
 # node_C
-my $node_C = PostgresNode->new('node_C');
+my $node_C = PostgreSQL::Test::Cluster->new('node_C');
 $node_C->init(allows_streaming => 'logical');
 $node_C->append_conf('postgresql.conf', qq(
 max_prepared_transactions = 10

@@ -59,6 +59,22 @@ static volatile sig_atomic_t promote_signaled = false;
  */
 static volatile sig_atomic_t in_restore_command = false;
 
+/*
+ * Time at which the most recent startup operation started.
+ */
+static TimestampTz startup_progress_phase_start_time;
+
+/*
+ * Indicates whether the startup progress interval mentioned by the user is
+ * elapsed or not. TRUE if timeout occurred, FALSE otherwise.
+ */
+static volatile sig_atomic_t startup_progress_timer_expired = false;
+
+/*
+ * Time between progress updates for long-running startup operations.
+ */
+int log_startup_progress_interval = 10000;	/* 10 sec */
+
 /* Signal handlers */
 static void StartupProcTriggerHandler(SIGNAL_ARGS);
 static void StartupProcSigHupHandler(SIGNAL_ARGS);
@@ -281,4 +297,59 @@ void
 ResetPromoteSignaled(void)
 {
 	promote_signaled = false;
+}
+
+/*
+ * Set a flag indicating that it's time to log a progress report.
+ */
+void
+startup_progress_timeout_handler(void)
+{
+	startup_progress_timer_expired = true;
+}
+
+/*
+ * Set the start timestamp of the current operation and enable the timeout.
+ */
+void
+begin_startup_progress_phase(void)
+{
+	TimestampTz fin_time;
+
+	/* Feature is disabled. */
+	if (log_startup_progress_interval == 0)
+		return;
+
+	startup_progress_phase_start_time = GetCurrentTimestamp();
+	fin_time = TimestampTzPlusMilliseconds(startup_progress_phase_start_time,
+										   log_startup_progress_interval);
+	enable_timeout_every(STARTUP_PROGRESS_TIMEOUT, fin_time,
+						 log_startup_progress_interval);
+}
+
+/*
+ * Report whether startup progress timeout has occurred. Reset the timer flag
+ * if it did, set the elapsed time to the out parameters and return true,
+ * otherwise return false.
+ */
+bool
+has_startup_progress_timeout_expired(long *secs, int *usecs)
+{
+	long		seconds;
+	int			useconds;
+	TimestampTz now;
+
+	/* No timeout has occurred. */
+	if (!startup_progress_timer_expired)
+		return false;
+
+	/* Calculate the elapsed time. */
+	now = GetCurrentTimestamp();
+	TimestampDifference(startup_progress_phase_start_time, now, &seconds, &useconds);
+
+	*secs = seconds;
+	*usecs = useconds;
+	startup_progress_timer_expired = false;
+
+	return true;
 }

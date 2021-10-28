@@ -45,6 +45,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 -- suppress warning that depends on wal_level
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
+CREATE PUBLICATION addr_pub_schema FOR ALL TABLES IN SCHEMA addr_nsp;
 RESET client_min_messages;
 CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
@@ -427,6 +428,7 @@ WITH objects (type, name, args) AS (VALUES
 				('transform', '{int}', '{sql}'),
 				('access method', '{btree}', '{}'),
 				('publication', '{addr_pub}', '{}'),
+				('publication namespace', '{addr_nsp}', '{addr_pub_schema}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
 				('subscription', '{regress_addr_sub}', '{}'),
 				('statistics object', '{addr_nsp, gentable_stat}', '{}')
@@ -490,7 +492,8 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
  subscription              |            | regress_addr_sub  | regress_addr_sub                                                     | t
  publication               |            | addr_pub          | addr_pub                                                             | t
  publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
-(49 rows)
+ publication namespace     |            |                   | addr_nsp in publication addr_pub_schema                              | t
+(50 rows)
 
 ---
 --- Cleanup resources
@@ -502,6 +505,7 @@ drop cascades to foreign table genftable
 drop cascades to server integer
 drop cascades to user mapping for regress_addr_user on server integer
 DROP PUBLICATION addr_pub;
+DROP PUBLICATION addr_pub_schema;
 DROP SUBSCRIPTION regress_addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
 NOTICE:  drop cascades to 14 other objects

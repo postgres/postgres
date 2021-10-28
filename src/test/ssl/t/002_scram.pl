@@ -5,8 +5,8 @@
 
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 use File::Copy;
@@ -38,7 +38,7 @@ my $common_connstr;
 # Set up the server.
 
 note "setting up data directory";
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 
 # PGHOST is enforced here to set up the node, subsequent connections

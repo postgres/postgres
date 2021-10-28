@@ -5,11 +5,11 @@ use strict;
 use warnings;
 
 use Config;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 82;
 
-my $tempdir       = TestLib::tempdir;
+my $tempdir       = PostgreSQL::Test::Utils::tempdir;
 
 #########################################
 # Basic checks

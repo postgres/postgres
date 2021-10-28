@@ -2990,3 +2990,15 @@ insert into attach_parted_part1 values (2, 1);
 -- ...and doesn't when the partition is detached along with its own partition
 alter table target_parted detach partition attach_parted;
 insert into attach_parted_part1 values (2, 1);
+
+-- Test altering table having publication
+create schema alter1;
+create schema alter2;
+create table alter1.t1 (a int);
+set client_min_messages = 'ERROR';
+create publication pub1 for table alter1.t1, all tables in schema alter2;
+reset client_min_messages;
+alter table alter1.t1 set schema alter2; -- should fail
+drop publication pub1;
+drop schema alter1 cascade;
+drop schema alter2 cascade;

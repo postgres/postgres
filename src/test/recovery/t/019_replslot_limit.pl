@@ -7,17 +7,17 @@
 use strict;
 use warnings;
 
-use TestLib;
-use PostgresNode;
+use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::Cluster;
 
 use File::Path qw(rmtree);
-use Test::More tests => $TestLib::windows_os ? 16 : 20;
+use Test::More tests => $PostgreSQL::Test::Utils::windows_os ? 16 : 20;
 use Time::HiRes qw(usleep);
 
 $ENV{PGDATABASE} = 'postgres';
 
 # Initialize primary node, setting wal-segsize to 1MB
-my $node_primary = PostgresNode->new('primary');
+my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $node_primary->append_conf(
 	'postgresql.conf', qq(
@@ -41,7 +41,7 @@ my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
 # Create a standby linking to it using the replication slot
-my $node_standby = PostgresNode->new('standby_1');
+my $node_standby = PostgreSQL::Test::Cluster->new('standby_1');
 $node_standby->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
@@ -260,7 +260,7 @@ ok($failed, 'check that replication has been broken');
 $node_primary->stop;
 $node_standby->stop;
 
-my $node_primary2 = PostgresNode->new('primary2');
+my $node_primary2 = PostgreSQL::Test::Cluster->new('primary2');
 $node_primary2->init(allows_streaming => 1);
 $node_primary2->append_conf(
 	'postgresql.conf', qq(
@@ -281,7 +281,7 @@ max_slot_wal_keep_size = 0
 ));
 $node_primary2->start;
 
-$node_standby = PostgresNode->new('standby_2');
+$node_standby = PostgreSQL::Test::Cluster->new('standby_2');
 $node_standby->init_from_backup($node_primary2, $backup_name,
 	has_streaming => 1);
 $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
@@ -305,7 +305,7 @@ $node_standby->stop;
 # The next test depends on Perl's `kill`, which apparently is not
 # portable to Windows.  (It would be nice to use Test::More's `subtest`,
 # but that's not in the ancient version we require.)
-if ($TestLib::windows_os)
+if ($PostgreSQL::Test::Utils::windows_os)
 {
 	done_testing();
 	exit;
@@ -313,7 +313,7 @@ if ($TestLib::windows_os)
 
 # Get a slot terminated while the walsender is active
 # We do this by sending SIGSTOP to the walsender.  Skip this on Windows.
-my $node_primary3 = PostgresNode->new('primary3');
+my $node_primary3 = PostgreSQL::Test::Cluster->new('primary3');
 $node_primary3->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $node_primary3->append_conf(
 	'postgresql.conf', qq(
@@ -329,7 +329,7 @@ $node_primary3->safe_psql('postgres',
 $backup_name = 'my_backup';
 $node_primary3->backup($backup_name);
 # Create standby
-my $node_standby3 = PostgresNode->new('standby_3');
+my $node_standby3 = PostgreSQL::Test::Cluster->new('standby_3');
 $node_standby3->init_from_backup($node_primary3, $backup_name,
 	has_streaming => 1);
 $node_standby3->append_conf('postgresql.conf', "primary_slot_name = 'rep3'");
@@ -419,7 +419,7 @@ sub find_in_log
 	my ($node, $pat, $off) = @_;
 
 	$off = 0 unless defined $off;
-	my $log = TestLib::slurp_file($node->logfile);
+	my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile);
 	return 0 if (length($log) <= $off);
 
 	$log = substr($log, $off);

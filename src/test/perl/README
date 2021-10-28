@@ -40,15 +40,15 @@ Each test script should begin with:
 
     use strict;
     use warnings;
-    use PostgresNode;
-    use TestLib;
+    use PostgreSQL::Test::Cluster;
+    use PostgreSQL::Test::Utils;
     # Replace with the number of tests to execute:
     use Test::More tests => 1;
 
 then it will generally need to set up one or more nodes, run commands
 against them and evaluate the results. For example:
 
-    my $node = PostgresNode->new('primary');
+    my $node = PostgreSQL::Test::Cluster->new('primary');
     $node->init;
     $node->start;
 
@@ -76,7 +76,7 @@ Read the documentation for more on how to write tests:
 For available PostgreSQL-specific test methods and some example tests read the
 perldoc for the test modules, e.g.:
 
-    perldoc src/test/perl/PostgresNode.pm
+    perldoc src/test/perl/PostgreSQL/Test/Cluster.pm
 
 Portability
 -----------

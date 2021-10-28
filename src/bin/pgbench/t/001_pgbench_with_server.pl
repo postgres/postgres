@@ -4,13 +4,13 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 use Config;
 
 # start a pgbench specific server
-my $node = PostgresNode->new('main');
+my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
 
@@ -20,7 +20,7 @@ $node->start;
 my $ts = $node->basedir . '/regress_pgbench_tap_1_ts_dir';
 mkdir $ts or die "cannot create directory $ts";
 # this takes care of WIN-specific path issues
-my $ets = TestLib::perl2host($ts);
+my $ets = PostgreSQL::Test::Utils::perl2host($ts);
 
 # the next commands will issue a syntax error if the path contains a "'"
 $node->safe_psql('postgres',
@@ -252,7 +252,7 @@ select $$'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase 
 select column1::jsonb from (values (:value), (:long)) as q;
 ]
 	});
-my $log = TestLib::slurp_file($node->logfile);
+my $log = PostgreSQL::Test::Utils::slurp_file($node->logfile);
 unlike(
 	$log,
 	qr[DETAIL:  parameters: \$1 = '\{ invalid ',],
@@ -293,7 +293,7 @@ select $$'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase 
 select column1::jsonb from (values (:value), (:long)) as q;
 ]
 	});
-$log = TestLib::slurp_file($node->logfile);
+$log = PostgreSQL::Test::Utils::slurp_file($node->logfile);
 like(
 	$log,
 	qr[DETAIL:  parameters: \$1 = '\{ invalid ', \$2 = '''Valame Dios!'' dijo Sancho; ''no le dije yo a vuestra merced que mirase bien lo que hacia\?'''],
@@ -338,7 +338,7 @@ select $$'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase 
 select column1::jsonb from (values (:value), (:long)) as q;
 ]
 	});
-$log = TestLib::slurp_file($node->logfile);
+$log = PostgreSQL::Test::Utils::slurp_file($node->logfile);
 like(
 	$log,
 	qr[DETAIL:  parameters: \$1 = '\{ inval\.\.\.', \$2 = '''Valame\.\.\.'],

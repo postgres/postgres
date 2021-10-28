@@ -3,10 +3,10 @@
 
 use strict;
 use warnings;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 16;
 
-my $tempdir = TestLib::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 program_help_ok('pg_verifybackup');
 program_version_ok('pg_verifybackup');

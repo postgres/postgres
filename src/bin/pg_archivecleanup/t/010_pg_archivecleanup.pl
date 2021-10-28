@@ -3,14 +3,14 @@
 
 use strict;
 use warnings;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 42;
 
 program_help_ok('pg_archivecleanup');
 program_version_ok('pg_archivecleanup');
 program_options_handling_ok('pg_archivecleanup');
 
-my $tempdir = TestLib::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 my @walfiles = (
 	'00000001000000370000000C.gz', '00000001000000370000000D',

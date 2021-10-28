@@ -79,6 +79,7 @@
 #include "utils/relmapper.h"
 #include "utils/pg_rusage.h"
 #include "utils/snapmgr.h"
+#include "utils/timeout.h"
 #include "utils/timestamp.h"
 
 extern uint32 bootstrap_data_checksum_version;
@@ -905,7 +906,7 @@ static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI,
 								TimeLineID prevTLI);
 static void VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec,
 									  XLogReaderState *state);
-static void LocalSetXLogInsertAllowed(void);
+static int LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
 static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
@@ -6718,6 +6719,11 @@ StartupXLOG(void)
 	 */
 	ValidateXLOGDirectoryStructure();
 
+	/* Set up timeout handler needed to report startup progress. */
+	if (!IsBootstrapProcessingMode())
+		RegisterTimeout(STARTUP_PROGRESS_TIMEOUT,
+						startup_progress_timeout_handler);
+
 	/*----------
 	 * If we previously crashed, perform a couple of actions:
 	 *
@@ -7491,12 +7497,20 @@ StartupXLOG(void)
 					(errmsg("redo starts at %X/%X",
 							LSN_FORMAT_ARGS(ReadRecPtr))));
 
+			/* Prepare to report progress of the redo phase. */
+			if (!StandbyMode)
+				begin_startup_progress_phase();
+
 			/*
 			 * main redo apply loop
 			 */
 			do
 			{
 				bool		switchedTLI = false;
+
+				if (!StandbyMode)
+					ereport_startup_progress("redo in progress, elapsed time: %ld.%02d s, current LSN: %X/%X",
+											 LSN_FORMAT_ARGS(ReadRecPtr));
 
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG ||
@@ -8062,6 +8076,7 @@ StartupXLOG(void)
 	}
 	XLogReaderFree(xlogreader);
 
+	/* Enable WAL writes for this backend only. */
 	LocalSetXLogInsertAllowed();
 
 	/* If necessary, write overwrite-contrecord before doing anything else */
@@ -8080,7 +8095,6 @@ StartupXLOG(void)
 	 */
 	Insert->fullPageWrites = lastFullPageWrites;
 	UpdateFullPageWrites();
-	LocalXLogInsertAllowed = -1;
 
 	/*
 	 * Emit checkpoint or end-of-recovery record in XLOG, if required.
@@ -8094,16 +8108,15 @@ StartupXLOG(void)
 	if (!XLogRecPtrIsInvalid(XLogCtl->lastReplayedEndRecPtr))
 		promoted = PerformRecoveryXLogAction();
 
-	/* If this is archive recovery, perform post-recovery cleanup actions. */
-	if (ArchiveRecoveryRequested)
-		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
-
 	/*
 	 * If any of the critical GUCs have changed, log them before we allow
 	 * backends to write WAL.
 	 */
-	LocalSetXLogInsertAllowed();
 	XLogReportParameters();
+
+	/* If this is archive recovery, perform post-recovery cleanup actions. */
+	if (ArchiveRecoveryRequested)
+		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog);
 
 	/*
 	 * Local WAL inserts enabled, so it's time to finish initialization of
@@ -8467,15 +8480,20 @@ XLogInsertAllowed(void)
  *
  * Note: it is allowed to switch LocalXLogInsertAllowed back to -1 later,
  * and even call LocalSetXLogInsertAllowed() again after that.
+ *
+ * Returns the previous value of LocalXLogInsertAllowed.
  */
-static void
+static int
 LocalSetXLogInsertAllowed(void)
 {
-	Assert(LocalXLogInsertAllowed == -1);
+	int		oldXLogAllowed = LocalXLogInsertAllowed;
+
 	LocalXLogInsertAllowed = 1;
 
 	/* Initialize as RecoveryInProgress() would do when switching state */
 	InitXLOGAccess();
+
+	return oldXLogAllowed;
 }
 
 /*
@@ -9020,6 +9038,7 @@ CreateCheckPoint(int flags)
 	XLogRecPtr	last_important_lsn;
 	VirtualTransactionId *vxids;
 	int			nvxids;
+	int			oldXLogAllowed = 0;
 
 	/*
 	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
@@ -9127,7 +9146,7 @@ CreateCheckPoint(int flags)
 	 * initialized, which we need here and in AdvanceXLInsertBuffer.)
 	 */
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
-		LocalSetXLogInsertAllowed();
+		oldXLogAllowed = LocalSetXLogInsertAllowed();
 
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
@@ -9307,7 +9326,7 @@ CreateCheckPoint(int flags)
 	if (shutdown)
 	{
 		if (flags & CHECKPOINT_END_OF_RECOVERY)
-			LocalXLogInsertAllowed = -1;	/* return to "check" state */
+			LocalXLogInsertAllowed = oldXLogAllowed;
 		else
 			LocalXLogInsertAllowed = 0; /* never again write WAL */
 	}
@@ -9447,8 +9466,6 @@ CreateEndOfRecoveryRecord(void)
 	xlrec.PrevTimeLineID = XLogCtl->PrevTimeLineID;
 	WALInsertLockRelease();
 
-	LocalSetXLogInsertAllowed();
-
 	START_CRIT_SECTION();
 
 	XLogBeginInsert();
@@ -9469,8 +9486,6 @@ CreateEndOfRecoveryRecord(void)
 	LWLockRelease(ControlFileLock);
 
 	END_CRIT_SECTION();
-
-	LocalXLogInsertAllowed = -1;	/* return to "check" state */
 }
 
 /*

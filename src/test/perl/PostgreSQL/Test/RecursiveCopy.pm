@@ -5,18 +5,18 @@
 
 =head1 NAME
 
-RecursiveCopy - simple recursive copy implementation
+PostgreSQL::Test::RecursiveCopy - simple recursive copy implementation
 
 =head1 SYNOPSIS
 
-use RecursiveCopy;
+use PostgreSQL::Test::RecursiveCopy;
 
-RecursiveCopy::copypath($from, $to, filterfn => sub { return 1; });
-RecursiveCopy::copypath($from, $to);
+PostgreSQL::Test::RecursiveCopy::copypath($from, $to, filterfn => sub { return 1; });
+PostgreSQL::Test::RecursiveCopy::copypath($from, $to);
 
 =cut
 
-package RecursiveCopy;
+package PostgreSQL::Test::RecursiveCopy;
 
 use strict;
 use warnings;
@@ -54,7 +54,7 @@ attempted.
 
 =head1 EXAMPLES
 
- RecursiveCopy::copypath('/some/path', '/empty/dir',
+ PostgreSQL::Test::RecursiveCopy::copypath('/some/path', '/empty/dir',
     filterfn => sub {
 		# omit log/ and contents
 		my $src = shift;

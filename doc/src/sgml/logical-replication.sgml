@@ -108,9 +108,9 @@
   <para>
    Publications are different from schemas and do not affect how the table is
    accessed.  Each table can be added to multiple publications if needed.
-   Publications may currently only contain tables.  Objects must be added
-   explicitly, except when a publication is created for <literal>ALL
-   TABLES</literal>.
+   Publications may currently only contain tables and all tables in schema.
+   Objects must be added explicitly, except when a publication is created for
+   <literal>ALL TABLES</literal>.
   </para>
 
   <para>
@@ -534,7 +534,8 @@
    and <literal>TRIGGER</literal> privilege on such tables to roles that
    superusers trust.  Moreover, if untrusted users can create tables, use only
    publications that list tables explicitly.  That is to say, create a
-   subscription <literal>FOR ALL TABLES</literal> only when superusers trust
+   subscription <literal>FOR ALL TABLES</literal> or
+   <literal>FOR ALL TABLES IN SCHEMA</literal> only when superusers trust
    every user permitted to create a non-temp table on the publisher or the
    subscriber.
   </para>
@@ -564,8 +565,9 @@
 
   <para>
    To add tables to a publication, the user must have ownership rights on the
-   table.  To create a publication that publishes all tables automatically,
-   the user must be a superuser.
+   table. To add all tables in schema to a publication, the user must be a
+   superuser. To create a publication that publishes all tables or all tables in
+   schema automatically, the user must be a superuser.
   </para>
 
   <para>

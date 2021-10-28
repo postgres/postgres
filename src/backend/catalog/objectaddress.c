@@ -48,6 +48,7 @@
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
+#include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_publication_rel.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic_ext.h"
@@ -825,6 +826,10 @@ static const struct object_type_map
 	{
 		"publication", OBJECT_PUBLICATION
 	},
+	/* OCLASS_PUBLICATION_NAMESPACE */
+	{
+		"publication namespace", OBJECT_PUBLICATION_NAMESPACE
+	},
 	/* OCLASS_PUBLICATION_REL */
 	{
 		"publication relation", OBJECT_PUBLICATION_REL
@@ -875,6 +880,8 @@ static ObjectAddress get_object_address_usermapping(List *object,
 static ObjectAddress get_object_address_publication_rel(List *object,
 														Relation *relp,
 														bool missing_ok);
+static ObjectAddress get_object_address_publication_schema(List *object,
+														   bool missing_ok);
 static ObjectAddress get_object_address_defacl(List *object,
 											   bool missing_ok);
 static const ObjectPropertyType *get_object_property_data(Oid class_id);
@@ -1112,6 +1119,10 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_USER_MAPPING:
 				address = get_object_address_usermapping(castNode(List, object),
 														 missing_ok);
+				break;
+			case OBJECT_PUBLICATION_NAMESPACE:
+				address = get_object_address_publication_schema(castNode(List, object),
+																missing_ok);
 				break;
 			case OBJECT_PUBLICATION_REL:
 				address = get_object_address_publication_rel(castNode(List, object),
@@ -1936,6 +1947,49 @@ get_object_address_publication_rel(List *object,
 }
 
 /*
+ * Find the ObjectAddress for a publication schema. The first element of the
+ * object parameter is the schema name, the second is the publication name.
+ */
+static ObjectAddress
+get_object_address_publication_schema(List *object, bool missing_ok)
+{
+	ObjectAddress address;
+	Publication *pub;
+	char	   *pubname;
+	char	   *schemaname;
+	Oid			schemaid;
+
+	ObjectAddressSet(address, PublicationNamespaceRelationId, InvalidOid);
+
+	/* Fetch schema name and publication name from input list */
+	schemaname = strVal(linitial(object));
+	pubname = strVal(lsecond(object));
+
+	schemaid = get_namespace_oid(schemaname, missing_ok);
+	if (!OidIsValid(schemaid))
+		return address;
+
+	/* Now look up the pg_publication tuple */
+	pub = GetPublicationByName(pubname, missing_ok);
+	if (!pub)
+		return address;
+
+	/* Find the publication schema mapping in syscache */
+	address.objectId =
+		GetSysCacheOid2(PUBLICATIONNAMESPACEMAP,
+						Anum_pg_publication_namespace_oid,
+						ObjectIdGetDatum(schemaid),
+						ObjectIdGetDatum(pub->oid));
+	if (!OidIsValid(address.objectId) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("publication schema \"%s\" in publication \"%s\" does not exist",
+						schemaname, pubname)));
+
+	return address;
+}
+
+/*
  * Find the ObjectAddress for a default ACL.
  */
 static ObjectAddress
@@ -2206,6 +2260,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_DOMCONSTRAINT:
 		case OBJECT_CAST:
 		case OBJECT_USER_MAPPING:
+		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
 		case OBJECT_DEFACL:
 		case OBJECT_TRANSFORM:
@@ -2299,6 +2354,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_PUBLICATION_REL:
 			objnode = (Node *) list_make2(name, linitial(args));
 			break;
+		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_USER_MAPPING:
 			objnode = (Node *) list_make2(linitial(name), linitial(args));
 			break;
@@ -2846,6 +2902,55 @@ get_catalog_object_by_oid(Relation catalog, AttrNumber oidcol, Oid objectId)
 	}
 
 	return tuple;
+}
+
+/*
+ * getPublicationSchemaInfo
+ *
+ * Get publication name and schema name from the object address into pubname and
+ * nspname. Both pubname and nspname are palloc'd strings which will be freed by
+ * the caller.
+ */
+static bool
+getPublicationSchemaInfo(const ObjectAddress *object, bool missing_ok,
+						 char **pubname, char **nspname)
+{
+	HeapTuple	tup;
+	Form_pg_publication_namespace pnform;
+
+	tup = SearchSysCache1(PUBLICATIONNAMESPACE,
+						  ObjectIdGetDatum(object->objectId));
+	if (!HeapTupleIsValid(tup))
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for publication schema %u",
+				 object->objectId);
+		return false;
+	}
+
+	pnform = (Form_pg_publication_namespace) GETSTRUCT(tup);
+	*pubname = get_publication_name(pnform->pnpubid, missing_ok);
+	if (!(*pubname))
+	{
+		ReleaseSysCache(tup);
+		return false;
+	}
+
+	*nspname = get_namespace_name(pnform->pnnspid);
+	if (!(*nspname))
+	{
+		Oid			schemaid = pnform->pnnspid;
+
+		pfree(*pubname);
+		ReleaseSysCache(tup);
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for schema %u",
+				 schemaid);
+		return false;
+	}
+
+	ReleaseSysCache(tup);
+	return true;
 }
 
 /*
@@ -3872,6 +3977,22 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				break;
 			}
 
+		case OCLASS_PUBLICATION_NAMESPACE:
+			{
+				char	   *pubname;
+				char	   *nspname;
+
+				if (!getPublicationSchemaInfo(object, missing_ok,
+											  &pubname, &nspname))
+					break;
+
+				appendStringInfo(&buffer, _("publication of schema %s in publication %s"),
+								 nspname, pubname);
+				pfree(pubname);
+				pfree(nspname);
+				break;
+			}
+
 		case OCLASS_PUBLICATION_REL:
 			{
 				HeapTuple	tup;
@@ -4471,6 +4592,10 @@ getObjectTypeDescription(const ObjectAddress *object, bool missing_ok)
 
 		case OCLASS_PUBLICATION:
 			appendStringInfoString(&buffer, "publication");
+			break;
+
+		case OCLASS_PUBLICATION_NAMESPACE:
+			appendStringInfoString(&buffer, "publication namespace");
 			break;
 
 		case OCLASS_PUBLICATION_REL:
@@ -5680,6 +5805,30 @@ getObjectIdentityParts(const ObjectAddress *object,
 					if (objname)
 						*objname = list_make1(pubname);
 				}
+				break;
+			}
+
+		case OCLASS_PUBLICATION_NAMESPACE:
+			{
+				char	   *pubname;
+				char	   *nspname;
+
+				if (!getPublicationSchemaInfo(object, missing_ok, &pubname,
+											  &nspname))
+					break;
+				appendStringInfo(&buffer, "%s in publication %s",
+								 nspname, pubname);
+
+				if (objargs)
+					*objargs = list_make1(pubname);
+				else
+					pfree(pubname);
+
+				if (objname)
+					*objname = list_make1(nspname);
+				else
+					pfree(nspname);
+
 				break;
 			}
 

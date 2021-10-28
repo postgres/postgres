@@ -523,6 +523,11 @@
 					# are logged regardless of their duration; 1.0 logs all
 					# statements from all transactions, 0.0 never logs
 
+#log_startup_progress_interval = 10s	# Time between progress updates for
+										# long-running startup operations.
+										# 0 disables the feature, > 0 indicates
+										# the interval in milliseconds.
+
 # - What to Log -
 
 #debug_print_parse = off

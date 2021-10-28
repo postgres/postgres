@@ -7,8 +7,8 @@
 use strict;
 use warnings;
 use Config;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
 use Test::More tests => 66;
@@ -93,7 +93,7 @@ sub check_relation_corruption
 }
 
 # Initialize node with checksums disabled.
-my $node = PostgresNode->new('node_checksum');
+my $node = PostgreSQL::Test::Cluster->new('node_checksum');
 $node->init();
 my $pgdata = $node->data_dir;
 
@@ -207,7 +207,7 @@ check_relation_corruption($node, 'corrupt1', 'pg_default');
 my $basedir        = $node->basedir;
 my $tablespace_dir = "$basedir/ts_corrupt_dir";
 mkdir($tablespace_dir);
-$tablespace_dir = TestLib::perl2host($tablespace_dir);
+$tablespace_dir = PostgreSQL::Test::Utils::perl2host($tablespace_dir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE ts_corrupt LOCATION '$tablespace_dir';");
 check_relation_corruption($node, 'corrupt2', 'ts_corrupt');

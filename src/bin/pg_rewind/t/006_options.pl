@@ -6,15 +6,15 @@
 #
 use strict;
 use warnings;
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 12;
 
 program_help_ok('pg_rewind');
 program_version_ok('pg_rewind');
 program_options_handling_ok('pg_rewind');
 
-my $primary_pgdata = TestLib::tempdir;
-my $standby_pgdata = TestLib::tempdir;
+my $primary_pgdata = PostgreSQL::Test::Utils::tempdir;
+my $standby_pgdata = PostgreSQL::Test::Utils::tempdir;
 command_fails(
 	[
 		'pg_rewind',       '--debug',

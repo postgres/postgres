@@ -480,6 +480,103 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 }
 
 /*
+ * Run READ_REPLICATION_SLOT through a given connection and give back to
+ * caller some result information if requested for this slot:
+ * - Start LSN position, InvalidXLogRecPtr if unknown.
+ * - Current timeline ID, 0 if unknown.
+ * Returns false on failure, and true otherwise.
+ */
+bool
+GetSlotInformation(PGconn *conn, const char *slot_name,
+				   XLogRecPtr *restart_lsn, TimeLineID *restart_tli)
+{
+	PGresult   *res;
+	PQExpBuffer query;
+	XLogRecPtr	lsn_loc = InvalidXLogRecPtr;
+	TimeLineID	tli_loc = 0;
+
+	if (restart_lsn)
+		*restart_lsn = lsn_loc;
+	if (restart_tli)
+		*restart_tli = tli_loc;
+
+	query = createPQExpBuffer();
+	appendPQExpBuffer(query, "READ_REPLICATION_SLOT %s", slot_name);
+	res = PQexec(conn, query->data);
+	destroyPQExpBuffer(query);
+
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		pg_log_error("could not send replication command \"%s\": %s",
+					 "READ_REPLICATION_SLOT", PQerrorMessage(conn));
+		PQclear(res);
+		return false;
+	}
+
+	/* The command should always return precisely one tuple and three fields */
+	if (PQntuples(res) != 1 || PQnfields(res) != 3)
+	{
+		pg_log_error("could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields",
+					 slot_name, PQntuples(res), PQnfields(res), 1, 3);
+		PQclear(res);
+		return false;
+	}
+
+	/*
+	 * When the slot doesn't exist, the command returns a tuple with NULL
+	 * values.  This checks only the slot type field.
+	 */
+	if (PQgetisnull(res, 0, 0))
+	{
+		pg_log_error("could not find replication slot \"%s\"", slot_name);
+		PQclear(res);
+		return false;
+	}
+
+	/*
+	 * Note that this cannot happen as READ_REPLICATION_SLOT supports only
+	 * physical slots, but play it safe.
+	 */
+	if (strcmp(PQgetvalue(res, 0, 0), "physical") != 0)
+	{
+		pg_log_error("expected a physical replication slot, got type \"%s\" instead",
+					 PQgetvalue(res, 0, 0));
+		PQclear(res);
+		return false;
+	}
+
+	/* restart LSN */
+	if (!PQgetisnull(res, 0, 1))
+	{
+		uint32		hi,
+					lo;
+
+		if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &hi, &lo) != 2)
+		{
+			pg_log_error("could not parse restart_lsn \"%s\" for replication slot \"%s\"",
+						 PQgetvalue(res, 0, 1), slot_name);
+			PQclear(res);
+			return false;
+		}
+		lsn_loc = ((uint64) hi) << 32 | lo;
+	}
+
+	/* current TLI */
+	if (!PQgetisnull(res, 0, 2))
+		tli_loc = (TimeLineID) atol(PQgetvalue(res, 0, 2));
+
+	PQclear(res);
+
+	/* Assign results if requested */
+	if (restart_lsn)
+		*restart_lsn = lsn_loc;
+	if (restart_tli)
+		*restart_tli = tli_loc;
+
+	return true;
+}
+
+/*
  * Create a replication slot for the given connection. This function
  * returns true in case of success.
  */

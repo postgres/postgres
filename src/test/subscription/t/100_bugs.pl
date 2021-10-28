@@ -4,8 +4,8 @@
 # Tests for various bugs found over time
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 5;
 
 # Bug #15114
@@ -19,11 +19,11 @@ use Test::More tests => 5;
 # fix was to avoid the constant expressions simplification in
 # RelationGetIndexAttrBitmap(), so it's safe to call in more contexts.
 
-my $node_publisher = PostgresNode->new('publisher');
+my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
-my $node_subscriber = PostgresNode->new('subscriber');
+my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
@@ -81,7 +81,7 @@ $node_subscriber->stop('fast');
 # identity set before accepting updates.  If it did not it would cause
 # an error when an update was attempted.
 
-$node_publisher = PostgresNode->new('publisher2');
+$node_publisher = PostgreSQL::Test::Cluster->new('publisher2');
 $node_publisher->init(allows_streaming => 'logical');
 $node_publisher->start;
 
@@ -108,7 +108,7 @@ $node_publisher->stop('fast');
 #
 # Initial sync doesn't complete; the protocol was not being followed per
 # expectations after commit 07082b08cc5d.
-my $node_twoways = PostgresNode->new('twoways');
+my $node_twoways = PostgreSQL::Test::Cluster->new('twoways');
 $node_twoways->init(allows_streaming => 'logical');
 $node_twoways->start;
 for my $db (qw(d1 d2))
@@ -158,15 +158,15 @@ is($node_twoways->safe_psql('d2', "SELECT count(f) FROM t2"),
 
 # Verify table data is synced with cascaded replication setup. This is mainly
 # to test whether the data written by tablesync worker gets replicated.
-my $node_pub = PostgresNode->new('testpublisher1');
+my $node_pub = PostgreSQL::Test::Cluster->new('testpublisher1');
 $node_pub->init(allows_streaming => 'logical');
 $node_pub->start;
 
-my $node_pub_sub = PostgresNode->new('testpublisher_subscriber');
+my $node_pub_sub = PostgreSQL::Test::Cluster->new('testpublisher_subscriber');
 $node_pub_sub->init(allows_streaming => 'logical');
 $node_pub_sub->start;
 
-my $node_sub = PostgresNode->new('testsubscriber1');
+my $node_sub = PostgreSQL::Test::Cluster->new('testsubscriber1');
 $node_sub->init(allows_streaming => 'logical');
 $node_sub->start;
 

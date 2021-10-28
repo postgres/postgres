@@ -4,8 +4,8 @@
 # Test remove of temporary files after a crash.
 use strict;
 use warnings;
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 use Config;
 
@@ -26,11 +26,11 @@ else
 # is really wrong.
 my $psql_timeout = IPC::Run::timer(60);
 
-my $node = PostgresNode->new('node_crash');
+my $node = PostgreSQL::Test::Cluster->new('node_crash');
 $node->init();
 $node->start();
 
-# By default, PostgresNode doesn't restart after crash
+# By default, PostgreSQL::Test::Cluster doesn't restart after crash
 # Reduce work_mem to generate temporary file with a few number of rows
 $node->safe_psql(
 	'postgres',
@@ -131,7 +131,7 @@ $killme_stdout2 = '';
 $killme_stderr2 = '';
 
 # Kill with SIGKILL
-my $ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
+my $ret = PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
 # Close psql session
@@ -220,7 +220,7 @@ $killme_stdout2 = '';
 $killme_stderr2 = '';
 
 # Kill with SIGKILL
-$ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
+$ret = PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
 # Close psql session

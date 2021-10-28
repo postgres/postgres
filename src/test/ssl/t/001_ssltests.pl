@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 use Config qw ( %Config );
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More;
 
 use File::Copy;
@@ -65,7 +65,7 @@ push @keys, 'client_wrongperms';
 #### Set up the server.
 
 note "setting up data directory";
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 
 # PGHOST is enforced here to set up the node, subsequent connections

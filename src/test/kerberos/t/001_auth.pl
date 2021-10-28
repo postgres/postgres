@@ -16,8 +16,8 @@
 
 use strict;
 use warnings;
-use TestLib;
-use PostgresNode;
+use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::Cluster;
 use Test::More;
 use Time::HiRes qw(usleep);
 
@@ -69,15 +69,15 @@ my $host     = 'auth-test-localhost.postgresql.example.com';
 my $hostaddr = '127.0.0.1';
 my $realm    = 'EXAMPLE.COM';
 
-my $krb5_conf   = "${TestLib::tmp_check}/krb5.conf";
-my $kdc_conf    = "${TestLib::tmp_check}/kdc.conf";
-my $krb5_cache  = "${TestLib::tmp_check}/krb5cc";
-my $krb5_log    = "${TestLib::log_path}/krb5libs.log";
-my $kdc_log     = "${TestLib::log_path}/krb5kdc.log";
-my $kdc_port    = PostgresNode::get_free_port();
-my $kdc_datadir = "${TestLib::tmp_check}/krb5kdc";
-my $kdc_pidfile = "${TestLib::tmp_check}/krb5kdc.pid";
-my $keytab      = "${TestLib::tmp_check}/krb5.keytab";
+my $krb5_conf   = "${PostgreSQL::Test::Utils::tmp_check}/krb5.conf";
+my $kdc_conf    = "${PostgreSQL::Test::Utils::tmp_check}/kdc.conf";
+my $krb5_cache  = "${PostgreSQL::Test::Utils::tmp_check}/krb5cc";
+my $krb5_log    = "${PostgreSQL::Test::Utils::log_path}/krb5libs.log";
+my $kdc_log     = "${PostgreSQL::Test::Utils::log_path}/krb5kdc.log";
+my $kdc_port    = PostgreSQL::Test::Cluster::get_free_port();
+my $kdc_datadir = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc";
+my $kdc_pidfile = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc.pid";
+my $keytab      = "${PostgreSQL::Test::Utils::tmp_check}/krb5.keytab";
 
 my $dbname      = 'postgres';
 my $username    = 'test1';
@@ -167,7 +167,7 @@ END
 
 note "setting up PostgreSQL instance";
 
-my $node = PostgresNode->new('node');
+my $node = PostgreSQL::Test::Cluster->new('node');
 $node->init;
 $node->append_conf(
 	'postgresql.conf', qq{

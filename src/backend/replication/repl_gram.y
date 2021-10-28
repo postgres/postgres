@@ -64,6 +64,7 @@ static SQLCmd *make_sqlcmd(void);
 /* Keyword tokens. */
 %token K_BASE_BACKUP
 %token K_IDENTIFY_SYSTEM
+%token K_READ_REPLICATION_SLOT
 %token K_SHOW
 %token K_START_REPLICATION
 %token K_CREATE_REPLICATION_SLOT
@@ -94,7 +95,7 @@ static SQLCmd *make_sqlcmd(void);
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
-				timeline_history show sql_cmd
+				read_replication_slot timeline_history show sql_cmd
 %type <list>	base_backup_legacy_opt_list generic_option_list
 %type <defelt>	base_backup_legacy_opt generic_option
 %type <uintval>	opt_timeline
@@ -125,6 +126,7 @@ command:
 			| start_logical_replication
 			| create_replication_slot
 			| drop_replication_slot
+			| read_replication_slot
 			| timeline_history
 			| show
 			| sql_cmd
@@ -137,6 +139,18 @@ identify_system:
 			K_IDENTIFY_SYSTEM
 				{
 					$$ = (Node *) makeNode(IdentifySystemCmd);
+				}
+			;
+
+/*
+ * READ_REPLICATION_SLOT %s
+ */
+read_replication_slot:
+			K_READ_REPLICATION_SLOT var_name
+				{
+					ReadReplicationSlotCmd *n = makeNode(ReadReplicationSlotCmd);
+					n->slotname = $2;
+					$$ = (Node *) n;
 				}
 			;
 

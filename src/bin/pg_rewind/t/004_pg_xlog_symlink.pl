@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use File::Copy;
 use File::Path qw(rmtree);
-use TestLib;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 5;
 
 use FindBin;
@@ -20,7 +20,7 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	my $primary_xlogdir = "${TestLib::tmp_check}/xlog_primary";
+	my $primary_xlogdir = "${PostgreSQL::Test::Utils::tmp_check}/xlog_primary";
 
 	rmtree($primary_xlogdir);
 	RewindTest::setup_cluster($test_mode);

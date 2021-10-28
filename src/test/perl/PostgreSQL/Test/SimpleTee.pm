@@ -10,7 +10,7 @@
 # method is currently implemented; that's all we need. We don't want to
 # depend on IO::Tee just for this.
 
-package SimpleTee;
+package PostgreSQL::Test::SimpleTee;
 use strict;
 use warnings;
 

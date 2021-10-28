@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 10;
 use Time::HiRes qw(usleep);
 
@@ -60,7 +60,7 @@ sub check_log_pattern
 }
 
 # Set up node with logging collector
-my $node = PostgresNode->new('primary');
+my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init();
 $node->append_conf(
 	'postgresql.conf', qq(

@@ -35,9 +35,31 @@ SELECT num_nulls();
 --
 -- Memory contexts are logged and they are not returned to the function.
 -- Furthermore, their contents can vary depending on the timing. However,
--- we can at least verify that the code doesn't fail.
+-- we can at least verify that the code doesn't fail, and that the
+-- permissions are set properly.
 --
-SELECT * FROM pg_log_backend_memory_contexts(pg_backend_pid());
+
+SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+
+CREATE ROLE regress_log_memory;
+
+SELECT has_function_privilege('regress_log_memory',
+  'pg_log_backend_memory_contexts(integer)', 'EXECUTE'); -- no
+
+GRANT EXECUTE ON FUNCTION pg_log_backend_memory_contexts(integer)
+  TO regress_log_memory;
+
+SELECT has_function_privilege('regress_log_memory',
+  'pg_log_backend_memory_contexts(integer)', 'EXECUTE'); -- yes
+
+SET ROLE regress_log_memory;
+SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+RESET ROLE;
+
+REVOKE EXECUTE ON FUNCTION pg_log_backend_memory_contexts(integer)
+  FROM regress_log_memory;
+
+DROP ROLE regress_log_memory;
 
 --
 -- Test some built-in SRFs

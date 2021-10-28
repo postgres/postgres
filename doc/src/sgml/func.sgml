@@ -25332,7 +25332,6 @@ SELECT collation for ('foo' COLLATE "de_DE");
         (See <xref linkend="runtime-config-logging"/> for more information),
         but will not be sent to the client regardless of
         <xref linkend="guc-client-min-messages"/>.
-        Only superusers can request to log the memory contexts.
        </para></entry>
       </row>
 

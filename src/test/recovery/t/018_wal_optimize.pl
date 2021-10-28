@@ -12,8 +12,8 @@
 use strict;
 use warnings;
 
-use PostgresNode;
-use TestLib;
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
 use Test::More tests => 38;
 
 sub check_orphan_relfilenodes
@@ -45,7 +45,7 @@ sub run_wal_optimize
 {
 	my $wal_level = shift;
 
-	my $node = PostgresNode->new("node_$wal_level");
+	my $node = PostgreSQL::Test::Cluster->new("node_$wal_level");
 	$node->init;
 	$node->append_conf(
 		'postgresql.conf', qq(
@@ -60,7 +60,7 @@ wal_skip_threshold = 0
 	# Setup
 	my $tablespace_dir = $node->basedir . '/tablespace_other';
 	mkdir($tablespace_dir);
-	$tablespace_dir = TestLib::perl2host($tablespace_dir);
+	$tablespace_dir = PostgreSQL::Test::Utils::perl2host($tablespace_dir);
 	my $result;
 
 	# Test redo of CREATE TABLESPACE.
@@ -148,11 +148,11 @@ wal_skip_threshold = 0
 	# Data file for COPY query in subsequent tests
 	my $basedir   = $node->basedir;
 	my $copy_file = "$basedir/copy_data.txt";
-	TestLib::append_to_file(
+	PostgreSQL::Test::Utils::append_to_file(
 		$copy_file, qq(20000,30000
 20001,30001
 20002,30002));
-	$copy_file = TestLib::perl2host($copy_file);
+	$copy_file = PostgreSQL::Test::Utils::perl2host($copy_file);
 
 	# Test truncation with inserted tuples using both INSERT and COPY.  Tuples
 	# inserted after the truncation should be seen.

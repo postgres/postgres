@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "common/relpath.h"
+#include "postmaster/startup.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "storage/reinit.h"
@@ -64,6 +65,9 @@ ResetUnloggedRelations(int op)
 								   "ResetUnloggedRelations",
 								   ALLOCSET_DEFAULT_SIZES);
 	oldctx = MemoryContextSwitchTo(tmpctx);
+
+	/* Prepare to report progress resetting unlogged relations. */
+	begin_startup_progress_phase();
 
 	/*
 	 * First process unlogged files in pg_default ($PGDATA/base)
@@ -136,6 +140,14 @@ ResetUnloggedRelationsInTablespaceDir(const char *tsdirname, int op)
 
 		snprintf(dbspace_path, sizeof(dbspace_path), "%s/%s",
 				 tsdirname, de->d_name);
+
+		if (op & UNLOGGED_RELATION_INIT)
+			ereport_startup_progress("resetting unlogged relations (init), elapsed time: %ld.%02d s, current path: %s",
+									 dbspace_path);
+		else if (op & UNLOGGED_RELATION_CLEANUP)
+			ereport_startup_progress("resetting unlogged relations (cleanup), elapsed time: %ld.%02d s, current path: %s",
+									 dbspace_path);
+
 		ResetUnloggedRelationsInDbspaceDir(dbspace_path, op);
 	}
 

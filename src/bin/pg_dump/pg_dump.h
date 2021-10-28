@@ -81,6 +81,7 @@ typedef enum
 	DO_POLICY,
 	DO_PUBLICATION,
 	DO_PUBLICATION_REL,
+	DO_PUBLICATION_REL_IN_SCHEMA,
 	DO_SUBSCRIPTION
 } DumpableObjectType;
 
@@ -632,6 +633,17 @@ typedef struct _PublicationRelInfo
 } PublicationRelInfo;
 
 /*
+ * The PublicationSchemaInfo struct is used to represent publication schema
+ * mapping.
+ */
+typedef struct _PublicationSchemaInfo
+{
+	DumpableObject dobj;
+	PublicationInfo *publication;
+	NamespaceInfo *pubschema;
+} PublicationSchemaInfo;
+
+/*
  * The SubscriptionInfo struct is used to represent subscription.
  */
 typedef struct _SubscriptionInfo
@@ -725,6 +737,7 @@ extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 extern void getPolicies(Archive *fout, TableInfo tblinfo[], int numTables);
 extern PublicationInfo *getPublications(Archive *fout,
 										int *numPublications);
+extern void getPublicationNamespaces(Archive *fout);
 extern void getPublicationTables(Archive *fout, TableInfo tblinfo[],
 								 int numTables);
 extern void getSubscriptions(Archive *fout);

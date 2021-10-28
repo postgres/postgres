@@ -699,6 +699,8 @@ REVOKE EXECUTE ON FUNCTION pg_ls_dir(text) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_ls_dir(text,boolean,boolean) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_log_backend_memory_contexts(integer) FROM PUBLIC;
+
 --
 -- We also set up some things as accessible to standard roles.
 --
