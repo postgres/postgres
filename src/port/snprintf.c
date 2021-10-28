@@ -1015,8 +1015,8 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 	   int minlen, int zpad, int precision, int pointflag,
 	   PrintfTarget *target)
 {
-	unsigned long long base;
 	unsigned long long uvalue;
+	int			base;
 	int			dosign;
 	const char *cvt = "0123456789abcdef";
 	int			signvalue = 0;
@@ -1075,12 +1075,36 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 		vallen = 0;
 	else
 	{
-		/* make integer string */
-		do
+		/*
+		 * Convert integer to string.  We special-case each of the possible
+		 * base values so as to avoid general-purpose divisions.  On most
+		 * machines, division by a fixed constant can be done much more
+		 * cheaply than a general divide.
+		 */
+		if (base == 10)
 		{
-			convert[sizeof(convert) - (++vallen)] = cvt[uvalue % base];
-			uvalue = uvalue / base;
-		} while (uvalue);
+			do
+			{
+				convert[sizeof(convert) - (++vallen)] = cvt[uvalue % 10];
+				uvalue = uvalue / 10;
+			} while (uvalue);
+		}
+		else if (base == 16)
+		{
+			do
+			{
+				convert[sizeof(convert) - (++vallen)] = cvt[uvalue % 16];
+				uvalue = uvalue / 16;
+			} while (uvalue);
+		}
+		else					/* base == 8 */
+		{
+			do
+			{
+				convert[sizeof(convert) - (++vallen)] = cvt[uvalue % 8];
+				uvalue = uvalue / 8;
+			} while (uvalue);
+		}
 	}
 
 	zeropad = Max(0, precision - vallen);
