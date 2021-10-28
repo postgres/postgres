@@ -1708,55 +1708,6 @@ sub pgbench
 
 =pod
 
-=item $node->background_pgbench($opts, $files, \$stdout, $timer) => harness
-
-Invoke B<pgbench> and return an IPC::Run harness object.  The process's stdin
-is empty, and its stdout and stderr go to the $stdout scalar reference.  This
-allows the caller to act on other parts of the system while B<pgbench> is
-running.  Errors from B<pgbench> are the caller's problem.
-
-The specified timer object is attached to the harness, as well.  It's caller's
-responsibility to select the timeout length, and to restart the timer after
-each command if the timeout is per-command.
-
-Be sure to "finish" the harness when done with it.
-
-=over
-
-=item $opts
-
-Options as a string to be split on spaces.
-
-=item $files
-
-Reference to filename/contents dictionary.
-
-=back
-
-=cut
-
-sub background_pgbench
-{
-	my ($self, $opts, $files, $stdout, $timer) = @_;
-
-	my @cmd =
-	  ('pgbench', split(/\s+/, $opts), $self->_pgbench_make_files($files));
-
-	local $ENV{PGHOST} = $self->host;
-	local $ENV{PGPORT} = $self->port;
-
-	my $stdin = "";
-	# IPC::Run would otherwise append to existing contents:
-	$$stdout = "" if ref($stdout);
-
-	my $harness = IPC::Run::start \@cmd, '<', \$stdin, '>', $stdout, '2>&1',
-	  $timer;
-
-	return $harness;
-}
-
-=pod
-
 =item $node->poll_query_until($dbname, $query [, $expected ])
 
 Run B<$query> repeatedly, until it returns the B<$expected> result
