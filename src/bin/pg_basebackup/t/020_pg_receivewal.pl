@@ -15,7 +15,7 @@ program_options_handling_ok('pg_receivewal');
 umask(0077);
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
-$primary->init(allows_streaming => 1);
+$primary->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $primary->start;
 
 my $stream_dir = $primary->basedir . '/archive_wal';
@@ -50,13 +50,12 @@ is($primary->slot($slot_name)->{'slot_type'},
 # Generate some WAL.  Use --synchronous at the same time to add more
 # code coverage.  Switch to the next segment first so that subsequent
 # restarts of pg_receivewal will see this segment as full..
-$primary->psql('postgres', 'CREATE TABLE test_table(x integer);');
+$primary->psql('postgres', 'CREATE TABLE test_table(x integer PRIMARY KEY);');
 $primary->psql('postgres', 'SELECT pg_switch_wal();');
 my $nextlsn =
   $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
 chomp($nextlsn);
-$primary->psql('postgres',
-	'INSERT INTO test_table VALUES (generate_series(1,100));');
+$primary->psql('postgres', 'INSERT INTO test_table VALUES (1);');
 
 # Stream up to the given position.  This is necessary to have a fixed
 # started point for the next commands done in this test, with or without
@@ -85,8 +84,7 @@ SKIP:
 	$nextlsn =
 	  $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
 	chomp($nextlsn);
-	$primary->psql('postgres',
-		'INSERT INTO test_table VALUES (generate_series(100,200));');
+	$primary->psql('postgres', 'INSERT INTO test_table VALUES (2);');
 
 	# Note the trailing whitespace after the value of --compress, that is
 	# a valid value.
@@ -136,8 +134,7 @@ $primary->psql('postgres', 'SELECT pg_switch_wal();');
 $nextlsn =
   $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
 chomp($nextlsn);
-$primary->psql('postgres',
-	'INSERT INTO test_table VALUES (generate_series(200,300));');
+$primary->psql('postgres', 'INSERT INTO test_table VALUES (3);');
 $primary->command_ok(
 	[
 		'pg_receivewal', '-D',     $stream_dir, '--verbose',
@@ -167,7 +164,9 @@ mkdir($slot_dir);
 $slot_name = 'archive_slot';
 
 # Setup the slot, reserving WAL at creation (corresponding to the
-# last redo LSN here, actually).
+# last redo LSN here, actually, so use a checkpoint to reduce the
+# number of segments archived).
+$primary->psql('postgres', 'checkpoint;');
 $primary->psql('postgres',
 	"SELECT pg_create_physical_replication_slot('$slot_name', true);");
 
@@ -181,12 +180,15 @@ my $walfile_streamed = $primary->safe_psql(
 
 # Switch to a new segment, to make sure that the segment retained by the
 # slot is still streamed.  This may not be necessary, but play it safe.
-$primary->psql('postgres',
-	'INSERT INTO test_table VALUES (generate_series(1,100));');
+$primary->psql('postgres', 'INSERT INTO test_table VALUES (4);');
 $primary->psql('postgres', 'SELECT pg_switch_wal();');
 $nextlsn =
   $primary->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
 chomp($nextlsn);
+
+# Add a bit more data to accelerate the end of the next pg_receivewal
+# commands.
+$primary->psql('postgres', 'INSERT INTO test_table VALUES (5);');
 
 # Check case where the slot does not exist.
 $primary->command_fails_like(
