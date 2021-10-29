@@ -1,4 +1,4 @@
-# version 2021a
+# version 2021e
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -43,6 +43,7 @@ Z Africa/Ndjamena 1:0:12 - LMT 1912
 1 - WAT
 Z Africa/Abidjan -0:16:8 - LMT 1912
 0 - GMT
+L Africa/Abidjan Africa/Accra
 L Africa/Abidjan Africa/Bamako
 L Africa/Abidjan Africa/Banjul
 L Africa/Abidjan Africa/Conakry
@@ -86,16 +87,6 @@ R K 2014 o - Jul 31 24 1 S
 R K 2014 o - S lastTh 24 0 -
 Z Africa/Cairo 2:5:9 - LMT 1900 O
 2 K EE%sT
-R GH 1919 o - N 24 0 0:20 +0020
-R GH 1920 1942 - Ja 1 2 0 GMT
-R GH 1920 1939 - S 1 2 0:20 +0020
-R GH 1940 1941 - May 1 2 0:20 +0020
-R GH 1950 1955 - S 1 2 0:30 +0030
-R GH 1951 1956 - Ja 1 2 0 GMT
-Z Africa/Accra -0:0:52 - LMT 1915 N 2
-0 GH %s 1942 F 8
-0:30 - +0030 1946 Ja 6
-0 GH %s
 Z Africa/Bissau -1:2:20 - LMT 1912 Ja 1 1u
 -1 - -01 1975
 0 - GMT
@@ -456,12 +447,6 @@ Z Antarctica/Mawson 0 - -00 1954 F 13
 5 - +05
 Z Indian/Kerguelen 0 - -00 1950
 5 - +05
-Z Antarctica/DumontDUrville 0 - -00 1947
-10 - +10 1952 Ja 14
-0 - -00 1956 N
-10 - +10
-Z Antarctica/Syowa 0 - -00 1957 Ja 29
-3 - +03
 R Tr 2005 ma - Mar lastSu 1u 2 +02
 R Tr 2004 ma - O lastSu 1u 0 +00
 Z Antarctica/Troll 0 - -00 2005 F 12
@@ -916,8 +901,9 @@ R J 2004 o - O 15 0s 0 -
 R J 2005 o - S lastF 0s 0 -
 R J 2006 2011 - O lastF 0s 0 -
 R J 2013 o - D 20 0 0 -
-R J 2014 ma - Mar lastTh 24 1 S
+R J 2014 2021 - Mar lastTh 24 1 S
 R J 2014 ma - O lastF 0s 0 -
+R J 2022 ma - F lastTh 24 1 S
 Z Asia/Amman 2:23:44 - LMT 1931
 2 J EE%sT
 Z Asia/Almaty 5:7:48 - LMT 1924 May 2
@@ -1126,7 +1112,8 @@ R P 2016 2018 - O Sa>=24 1 0 -
 R P 2019 o - Mar 29 0 1 S
 R P 2019 o - O Sa>=24 0 0 -
 R P 2020 ma - Mar Sa>=24 0 1 S
-R P 2020 ma - O Sa>=24 1 0 -
+R P 2020 o - O 24 1 0 -
+R P 2021 ma - O lastF 1 0 -
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
 2 K EE%sT 1967 Jun 5
@@ -1162,6 +1149,7 @@ Z Asia/Qatar 3:26:8 - LMT 1920
 L Asia/Qatar Asia/Bahrain
 Z Asia/Riyadh 3:6:52 - LMT 1947 Mar 14
 3 - +03
+L Asia/Riyadh Antarctica/Syowa
 L Asia/Riyadh Asia/Aden
 L Asia/Riyadh Asia/Kuwait
 Z Asia/Singapore 6:55:25 - LMT 1901
@@ -1431,10 +1419,11 @@ R FJ 2011 o - Mar Su>=1 3 0 -
 R FJ 2012 2013 - Ja Su>=18 3 0 -
 R FJ 2014 o - Ja Su>=18 2 0 -
 R FJ 2014 2018 - N Su>=1 2 1 -
-R FJ 2015 ma - Ja Su>=12 3 0 -
+R FJ 2015 2021 - Ja Su>=12 3 0 -
 R FJ 2019 o - N Su>=8 2 1 -
 R FJ 2020 o - D 20 2 1 -
-R FJ 2021 ma - N Su>=8 2 1 -
+R FJ 2022 ma - N Su>=8 2 1 -
+R FJ 2023 ma - Ja Su>=12 3 0 -
 Z Pacific/Fiji 11:55:44 - LMT 1915 O 26
 12 FJ +12/+13
 Z Pacific/Gambier -8:59:48 - LMT 1912 O
@@ -1466,7 +1455,7 @@ Z Pacific/Guam -14:21 - LMT 1844 D 31
 L Pacific/Guam Pacific/Saipan
 Z Pacific/Tarawa 11:32:4 - LMT 1901
 12 - +12
-Z Pacific/Enderbury -11:24:20 - LMT 1901
+Z Pacific/Kanton 0 - -00 1937 Au 31
 -12 - -12 1979 O
 -11 - -11 1994 D 31
 13 - +13
@@ -1560,12 +1549,12 @@ L Pacific/Auckland Antarctica/McMurdo
 R CK 1978 o - N 12 0 0:30 -
 R CK 1979 1991 - Mar Su>=1 0 0 -
 R CK 1979 1990 - O lastSu 0 0:30 -
-Z Pacific/Rarotonga -10:39:4 - LMT 1901
+Z Pacific/Rarotonga 13:20:56 - LMT 1899 D 26
+-10:39:4 - LMT 1952 O 16
 -10:30 - -1030 1978 N 12
 -10 CK -10/-0930
-Z Pacific/Niue -11:19:40 - LMT 1901
--11:20 - -1120 1951
--11:30 - -1130 1978 O
+Z Pacific/Niue -11:19:40 - LMT 1952 O 16
+-11:20 - -1120 1964 Jul
 -11 - -11
 Z Pacific/Norfolk 11:11:52 - LMT 1901
 11:12 - +1112 1951
@@ -1580,6 +1569,7 @@ Z Pacific/Palau -15:2:4 - LMT 1844 D 31
 Z Pacific/Port_Moresby 9:48:40 - LMT 1880
 9:48:32 - PMMT 1895
 10 - +10
+L Pacific/Port_Moresby Antarctica/DumontDUrville
 Z Pacific/Bougainville 10:22:16 - LMT 1880
 9:48:32 - PMMT 1895
 10 - +10 1942 Jul
@@ -1596,8 +1586,8 @@ L Pacific/Pago_Pago Pacific/Midway
 R WS 2010 o - S lastSu 0 1 -
 R WS 2011 o - Ap Sa>=1 4 0 -
 R WS 2011 o - S lastSa 3 1 -
-R WS 2012 ma - Ap Su>=1 4 0 -
-R WS 2012 ma - S lastSu 3 1 -
+R WS 2012 2021 - Ap Su>=1 4 0 -
+R WS 2012 2020 - S lastSu 3 1 -
 Z Pacific/Apia 12:33:4 - LMT 1892 Jul 5
 -11:26:56 - LMT 1911
 -11:30 - -1130 1950
@@ -1614,8 +1604,8 @@ R TO 2000 2001 - N Su>=1 2 1 -
 R TO 2001 2002 - Ja lastSu 2 0 -
 R TO 2016 o - N Su>=1 2 1 -
 R TO 2017 o - Ja Su>=15 3 0 -
-Z Pacific/Tongatapu 12:19:20 - LMT 1901
-12:20 - +1220 1941
+Z Pacific/Tongatapu 12:19:12 - LMT 1945 S 10
+12:20 - +1220 1961
 13 - +13 1999
 13 TO +13/+14
 Z Pacific/Funafuti 11:56:52 - LMT 1901
@@ -2354,10 +2344,8 @@ R p 1943 1945 - Au Sa>=25 22s 1 S
 R p 1944 1945 - Ap Sa>=21 22s 2 M
 R p 1946 o - Ap Sa>=1 23s 1 S
 R p 1946 o - O Sa>=1 23s 0 -
-R p 1947 1949 - Ap Su>=1 2s 1 S
-R p 1947 1949 - O Su>=1 2s 0 -
-R p 1951 1965 - Ap Su>=1 2s 1 S
-R p 1951 1965 - O Su>=1 2s 0 -
+R p 1947 1965 - Ap Su>=1 2s 1 S
+R p 1947 1965 - O Su>=1 2s 0 -
 R p 1977 o - Mar 27 0s 1 S
 R p 1977 o - S 25 0s 0 -
 R p 1978 1979 - Ap Su>=1 0s 1 S
@@ -2967,6 +2955,7 @@ Z America/Phoenix -7:28:18 - LMT 1883 N 18 11:31:42
 -7 - MST 1967
 -7 u M%sT 1968 Mar 21
 -7 - MST
+L America/Phoenix America/Creston
 Z America/Boise -7:44:49 - LMT 1883 N 18 12:15:11
 -8 u P%sT 1923 May 13 2
 -7 u M%sT 1974
@@ -3237,9 +3226,6 @@ Z America/Moncton -4:19:8 - LMT 1883 D 9
 -4 C A%sT 1993
 -4 o A%sT 2007
 -4 C A%sT
-Z America/Blanc-Sablon -3:48:28 - LMT 1884
--4 C A%sT 1970
--4 - AST
 R t 1919 o - Mar 30 23:30 1 D
 R t 1919 o - O 26 0 0 S
 R t 1920 o - May 2 2 1 D
@@ -3268,6 +3254,7 @@ Z America/Toronto -5:17:32 - LMT 1895
 -5 C E%sT 1946
 -5 t E%sT 1974
 -5 C E%sT
+L America/Toronto America/Nassau
 Z America/Thunder_Bay -5:57 - LMT 1895
 -6 - CST 1910
 -5 - EST 1942
@@ -3283,11 +3270,6 @@ Z America/Rainy_River -6:18:16 - LMT 1895
 -6 C C%sT 1940 S 29
 -6 1 CDT 1942 F 9 2s
 -6 C C%sT
-Z America/Atikokan -6:6:28 - LMT 1895
--6 C C%sT 1940 S 29
--6 1 CDT 1942 F 9 2s
--6 C C%sT 1945 S 30 2
--5 - EST
 R W 1916 o - Ap 23 0 1 D
 R W 1916 o - S 17 0 0 S
 R W 1918 o - Ap 14 2 1 D
@@ -3382,10 +3364,6 @@ Z America/Fort_Nelson -8:10:47 - LMT 1884
 -8 - PST 1947
 -8 Va P%sT 1987
 -8 C P%sT 2015 Mar 8 2
--7 - MST
-Z America/Creston -7:46:4 - LMT 1884
--7 - MST 1916 O
--8 - PST 1918 Jun 2
 -7 - MST
 R Y 1918 o - Ap 14 2 1 D
 R Y 1918 o - O 27 2 0 S
@@ -3554,23 +3532,20 @@ Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 0:11:56
 -8 u P%sT 2002 F 20
 -8 m P%sT 2010
 -8 u P%sT
-R BS 1942 o - May 1 24 1 W
-R BS 1944 o - D 31 24 0 S
-R BS 1945 o - F 1 0 1 W
-R BS 1945 o - Au 14 23u 1 P
-R BS 1945 o - O 17 24 0 S
-R BS 1964 1975 - O lastSu 2 0 S
-R BS 1964 1975 - Ap lastSu 2 1 D
-Z America/Nassau -5:9:30 - LMT 1912 Mar 2
--5 BS E%sT 1976
--5 u E%sT
+R BB 1942 o - Ap 19 5u 1 D
+R BB 1942 o - Au 31 6u 0 S
+R BB 1943 o - May 2 5u 1 D
+R BB 1943 o - S 5 6u 0 S
+R BB 1944 o - Ap 10 5u 0:30 -
+R BB 1944 o - S 10 6u 0 S
 R BB 1977 o - Jun 12 2 1 D
 R BB 1977 1978 - O Su>=1 2 0 S
 R BB 1978 1980 - Ap Su>=15 2 1 D
 R BB 1979 o - S 30 2 0 S
 R BB 1980 o - S 25 2 0 S
-Z America/Barbados -3:58:29 - LMT 1924
--3:58:29 - BMT 1932
+Z America/Barbados -3:58:29 - LMT 1911 Au 28
+-4 BB A%sT 1944
+-4 BB AST/-0330 1945
 -4 BB A%sT
 R BZ 1918 1941 - O Sa>=1 24 0:30 -0530
 R BZ 1919 1942 - F Sa>=8 24 0 CST
@@ -3730,11 +3705,31 @@ Z America/Managua -5:45:8 - LMT 1890
 Z America/Panama -5:18:8 - LMT 1890
 -5:19:36 - CMT 1908 Ap 22
 -5 - EST
+L America/Panama America/Atikokan
 L America/Panama America/Cayman
 Z America/Puerto_Rico -4:24:25 - LMT 1899 Mar 28 12
 -4 - AST 1942 May 3
 -4 u A%sT 1946
 -4 - AST
+L America/Puerto_Rico America/Anguilla
+L America/Puerto_Rico America/Antigua
+L America/Puerto_Rico America/Aruba
+L America/Puerto_Rico America/Curacao
+L America/Puerto_Rico America/Blanc-Sablon
+L America/Puerto_Rico America/Dominica
+L America/Puerto_Rico America/Grenada
+L America/Puerto_Rico America/Guadeloupe
+L America/Puerto_Rico America/Kralendijk
+L America/Puerto_Rico America/Lower_Princes
+L America/Puerto_Rico America/Marigot
+L America/Puerto_Rico America/Montserrat
+L America/Puerto_Rico America/Port_of_Spain
+L America/Puerto_Rico America/St_Barthelemy
+L America/Puerto_Rico America/St_Kitts
+L America/Puerto_Rico America/St_Lucia
+L America/Puerto_Rico America/St_Thomas
+L America/Puerto_Rico America/St_Vincent
+L America/Puerto_Rico America/Tortola
 Z America/Miquelon -3:44:40 - LMT 1911 May 15
 -4 - AST 1980 May
 -3 - -03 1987
@@ -3914,7 +3909,6 @@ Z America/Argentina/Ushuaia -4:33:12 - LMT 1894 O 31
 -4 - -04 2004 Jun 20
 -3 A -03/-02 2008 O 18
 -3 - -03
-L America/Curacao America/Aruba
 Z America/La_Paz -4:32:36 - LMT 1890
 -4:32:36 - CMT 1931 O 15
 -4:32:36 1 BST 1932 Mar 21
@@ -4135,11 +4129,6 @@ R CO 1993 o - Ap 4 0 0 -
 Z America/Bogota -4:56:16 - LMT 1884 Mar 13
 -4:56:16 - BMT 1914 N 23
 -5 CO -05/-04
-Z America/Curacao -4:35:47 - LMT 1912 F 12
--4:30 - -0430 1965
--4 - AST
-L America/Curacao America/Lower_Princes
-L America/Curacao America/Kralendijk
 R EC 1992 o - N 28 0 1 -
 R EC 1993 o - F 5 0 0 -
 Z America/Guayaquil -5:19:20 - LMT 1890
@@ -4169,9 +4158,10 @@ Z Atlantic/Stanley -3:51:24 - LMT 1890
 Z America/Cayenne -3:29:20 - LMT 1911 Jul
 -4 - -04 1967 O
 -3 - -03
-Z America/Guyana -3:52:40 - LMT 1915 Mar
--3:45 - -0345 1975 Jul 31
--3 - -03 1991
+Z America/Guyana -3:52:39 - LMT 1911 Au
+-4 - -04 1915 Mar
+-3:45 - -0345 1975 Au
+-3 - -03 1992 Mar 29 1
 -4 - -04
 R y 1975 1988 - O 1 0 1 -
 R y 1975 1978 - Mar 1 0 0 -
@@ -4220,21 +4210,6 @@ Z America/Paramaribo -3:40:40 - LMT 1911
 -3:40:36 - PMT 1945 O
 -3:30 - -0330 1984 O
 -3 - -03
-Z America/Port_of_Spain -4:6:4 - LMT 1912 Mar 2
--4 - AST
-L America/Port_of_Spain America/Anguilla
-L America/Port_of_Spain America/Antigua
-L America/Port_of_Spain America/Dominica
-L America/Port_of_Spain America/Grenada
-L America/Port_of_Spain America/Guadeloupe
-L America/Port_of_Spain America/Marigot
-L America/Port_of_Spain America/Montserrat
-L America/Port_of_Spain America/St_Barthelemy
-L America/Port_of_Spain America/St_Kitts
-L America/Port_of_Spain America/St_Lucia
-L America/Port_of_Spain America/St_Thomas
-L America/Port_of_Spain America/St_Vincent
-L America/Port_of_Spain America/Tortola
 R U 1923 1925 - O 1 0 0:30 -
 R U 1924 1926 - Ap 1 0 0 -
 R U 1933 1938 - O lastSu 0 0:30 -
@@ -4342,7 +4317,7 @@ L America/Argentina/Catamarca America/Argentina/ComodRivadavia
 L America/Adak America/Atka
 L America/Argentina/Buenos_Aires America/Buenos_Aires
 L America/Argentina/Catamarca America/Catamarca
-L America/Atikokan America/Coral_Harbour
+L America/Panama America/Coral_Harbour
 L America/Argentina/Cordoba America/Cordoba
 L America/Tijuana America/Ensenada
 L America/Indiana/Indianapolis America/Fort_Wayne
@@ -4357,7 +4332,7 @@ L America/Rio_Branco America/Porto_Acre
 L America/Argentina/Cordoba America/Rosario
 L America/Tijuana America/Santa_Isabel
 L America/Denver America/Shiprock
-L America/Port_of_Spain America/Virgin
+L America/Puerto_Rico America/Virgin
 L Pacific/Auckland Antarctica/South_Pole
 L Asia/Ashgabat Asia/Ashkhabad
 L Asia/Kolkata Asia/Calcutta
@@ -4429,6 +4404,7 @@ L Pacific/Auckland NZ
 L Pacific/Chatham NZ-CHAT
 L America/Denver Navajo
 L Asia/Shanghai PRC
+L Pacific/Kanton Pacific/Enderbury
 L Pacific/Honolulu Pacific/Johnston
 L Pacific/Pohnpei Pacific/Ponape
 L Pacific/Pago_Pago Pacific/Samoa
