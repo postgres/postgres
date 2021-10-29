@@ -762,7 +762,7 @@ ERROR:  SELinux: security policy violation
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><ulink url="http://docs.fedoraproject.org/selinux-user-guide/">Fedora SELinux User Guide</ulink></term>
+    <term><ulink url="https://docs.fedoraproject.org/en-US/Fedora/13/html/Security-Enhanced_Linux/">Fedora SELinux User Guide</ulink></term>
     <listitem>
      <para>
       This document provides a wide spectrum of knowledge to administer
@@ -772,7 +772,7 @@ ERROR:  SELinux: security policy violation
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><ulink url="http://docs.fedoraproject.org/selinux-faq">Fedora SELinux FAQ</ulink></term>
+    <term><ulink url="https://docs.fedoraproject.org/en-US/Fedora/13/html/SELinux_FAQ/">Fedora SELinux FAQ</ulink></term>
     <listitem>
      <para>
       This document answers frequently asked questions about
