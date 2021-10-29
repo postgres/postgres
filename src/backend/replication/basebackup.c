@@ -502,9 +502,9 @@ perform_base_backup(basebackup_options *opt)
 		 * including them.
 		 */
 		XLByteToSeg(startptr, startsegno, wal_segment_size);
-		XLogFileName(firstoff, ThisTimeLineID, startsegno, wal_segment_size);
+		XLogFileName(firstoff, starttli, startsegno, wal_segment_size);
 		XLByteToPrevSeg(endptr, endsegno, wal_segment_size);
-		XLogFileName(lastoff, ThisTimeLineID, endsegno, wal_segment_size);
+		XLogFileName(lastoff, endtli, endsegno, wal_segment_size);
 
 		dir = AllocateDir("pg_wal");
 		while ((de = ReadDir(dir, "pg_wal")) != NULL)
@@ -528,7 +528,7 @@ perform_base_backup(basebackup_options *opt)
 		 * Before we go any further, check that none of the WAL segments we
 		 * need were removed.
 		 */
-		CheckXLogRemoved(startsegno, ThisTimeLineID);
+		CheckXLogRemoved(startsegno, starttli);
 
 		/*
 		 * Sort the WAL filenames.  We want to send the files in order from
@@ -555,7 +555,7 @@ perform_base_backup(basebackup_options *opt)
 		{
 			char		startfname[MAXFNAMELEN];
 
-			XLogFileName(startfname, ThisTimeLineID, startsegno,
+			XLogFileName(startfname, starttli, startsegno,
 						 wal_segment_size);
 			ereport(ERROR,
 					(errmsg("could not find WAL file \"%s\"", startfname)));
@@ -571,8 +571,7 @@ perform_base_backup(basebackup_options *opt)
 			{
 				char		nextfname[MAXFNAMELEN];
 
-				XLogFileName(nextfname, ThisTimeLineID, nextsegno,
-							 wal_segment_size);
+				XLogFileName(nextfname, tli, nextsegno, wal_segment_size);
 				ereport(ERROR,
 						(errmsg("could not find WAL file \"%s\"", nextfname)));
 			}
@@ -581,7 +580,7 @@ perform_base_backup(basebackup_options *opt)
 		{
 			char		endfname[MAXFNAMELEN];
 
-			XLogFileName(endfname, ThisTimeLineID, endsegno, wal_segment_size);
+			XLogFileName(endfname, endtli, endsegno, wal_segment_size);
 			ereport(ERROR,
 					(errmsg("could not find WAL file \"%s\"", endfname)));
 		}
