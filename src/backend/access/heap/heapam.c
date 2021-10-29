@@ -7586,7 +7586,7 @@ index_delete_sort_cmp(TM_IndexDelete *deltid1, TM_IndexDelete *deltid2)
 			return (pos1 < pos2) ? -1 : 1;
 	}
 
-	pg_unreachable();
+	Assert(false);
 
 	return 0;
 }
