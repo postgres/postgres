@@ -379,7 +379,17 @@ arow RECORD;
 <programlisting>
 quantity integer DEFAULT 32;
 url varchar := 'http://mysite.com';
-user_id CONSTANT integer := 10;
+transaction_time CONSTANT timestamp with time zone := now();
+</programlisting>
+     </para>
+
+     <para>
+      Once declared, a variable's value can be used in later initialization
+      expressions in the same block, for example:
+<programlisting>
+DECLARE
+  x integer := 1;
+  y integer := x + 1;
 </programlisting>
      </para>
 
