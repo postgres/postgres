@@ -4563,7 +4563,7 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	/* Build list of quoted publications and append them to query. */
 	if (!parsePGArray(subinfo->subpublications, &pubnames, &npubnames))
-		fatal("could not parse subpublications array");
+		fatal("could not parse %s array", "subpublications");
 
 	publications = createPQExpBuffer();
 	for (i = 0; i < npubnames; i++)
@@ -12238,7 +12238,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proallargtypes, &allargtypes, &nitems) ||
 			nitems < finfo->nargs)
 		{
-			pg_log_warning("could not parse proallargtypes array");
+			pg_log_warning("could not parse %s array", "proallargtypes");
 			if (allargtypes)
 				free(allargtypes);
 			allargtypes = NULL;
@@ -12254,7 +12254,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proargmodes, &argmodes, &nitems) ||
 			nitems != nallargs)
 		{
-			pg_log_warning("could not parse proargmodes array");
+			pg_log_warning("could not parse %s array", "proargmodes");
 			if (argmodes)
 				free(argmodes);
 			argmodes = NULL;
@@ -12268,7 +12268,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proargnames, &argnames, &nitems) ||
 			nitems != nallargs)
 		{
-			pg_log_warning("could not parse proargnames array");
+			pg_log_warning("could not parse %s array", "proargnames");
 			if (argnames)
 				free(argnames);
 			argnames = NULL;
@@ -12278,7 +12278,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	if (proconfig && *proconfig)
 	{
 		if (!parsePGArray(proconfig, &configitems, &nconfigitems))
-			fatal("could not parse proconfig array");
+			fatal("could not parse %s array", "proconfig");
 	}
 	else
 	{
@@ -18190,9 +18190,9 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 			int			j;
 
 			if (!parsePGArray(extconfig, &extconfigarray, &nconfigitems))
-				fatal("could not parse extension configuration array");
+				fatal("could not parse %s array", "extconfig");
 			if (!parsePGArray(extcondition, &extconditionarray, &nconditionitems))
-				fatal("could not parse extension condition array");
+				fatal("could not parse %s array", "extcondition");
 			if (nconfigitems != nconditionitems)
 				fatal("mismatched number of configurations and conditions for extension");
 
@@ -18820,5 +18820,5 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 	res = appendReloptionsArray(buffer, reloptions, prefix, fout->encoding,
 								fout->std_strings);
 	if (!res)
-		pg_log_warning("could not parse reloptions array");
+		pg_log_warning("could not parse %s array", "reloptions");
 }
