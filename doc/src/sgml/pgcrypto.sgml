@@ -1412,16 +1412,6 @@ gen_random_uuid() returns uuid
       <entry>OpenBSD sys/crypto</entry>
      </row>
      <row>
-      <entry>MD5 hash and SHA1</entry>
-      <entry>WIDE Project</entry>
-      <entry>KAME kame/sys/crypto</entry>
-     </row>
-     <row>
-      <entry>SHA256/384/512</entry>
-      <entry>Aaron D. Gifford</entry>
-      <entry>OpenBSD sys/crypto</entry>
-     </row>
-     <row>
       <entry>BIGNUM math</entry>
       <entry>Michael J. Fromberger</entry>
       <entry>dartmouth.edu/~sting/sw/imath</entry>
