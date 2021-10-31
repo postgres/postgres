@@ -847,7 +847,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail because of implicit null assignment
 ERROR:  domain pos_int does not allow null values
-CONTEXT:  PL/pgSQL function doubledecrement(pos_int) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function doubledecrement(pos_int) line 2 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 0;
 begin
@@ -855,7 +855,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail at initialization assignment
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
-CONTEXT:  PL/pgSQL function doubledecrement(pos_int) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function doubledecrement(pos_int) line 2 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 1;
 begin

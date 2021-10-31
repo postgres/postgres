@@ -4648,7 +4648,7 @@ ERROR:  column "x" does not exist
 LINE 1: x + 1
         ^
 QUERY:  x + 1
-CONTEXT:  PL/pgSQL function inline_code_block line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function inline_code_block line 2 during statement block local variable initialization
 do $$
 declare y int := x + 1;  -- error
         x int := 42;
@@ -4660,7 +4660,7 @@ ERROR:  column "x" does not exist
 LINE 1: x + 1
         ^
 QUERY:  x + 1
-CONTEXT:  PL/pgSQL function inline_code_block line 4 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function inline_code_block line 2 during statement block local variable initialization
 do $$
 declare x int := 42;
         y int := x + 1;
