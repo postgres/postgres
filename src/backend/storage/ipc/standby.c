@@ -791,9 +791,11 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 static void
 StandbyReleaseLockList(List *locks)
 {
-	while (locks)
+	ListCell   *lc;
+
+	foreach(lc, locks)
 	{
-		xl_standby_lock *lock = (xl_standby_lock *) linitial(locks);
+		xl_standby_lock *lock = (xl_standby_lock *) lfirst(lc);
 		LOCKTAG		locktag;
 
 		elog(trace_recovery(DEBUG4),
@@ -807,9 +809,9 @@ StandbyReleaseLockList(List *locks)
 				 lock->xid, lock->dbOid, lock->relOid);
 			Assert(false);
 		}
-		pfree(lock);
-		locks = list_delete_first(locks);
 	}
+
+	list_free_deep(locks);
 }
 
 static void
