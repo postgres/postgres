@@ -29,6 +29,8 @@ sources and then tested.
 Either way, this test initializes, starts, and stops a test Postgres
 cluster that is accessible to other local users!
 
+See src/test/perl/README for more info about running these tests.
+
 Certificates
 ============
 

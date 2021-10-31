@@ -31,6 +31,8 @@ sources and then tested.
 Either way, this test initializes, starts, and stops a test Postgres
 cluster, as well as a test LDAP server.
 
+See src/test/perl/README for more info about running these tests.
+
 Requirements
 ============
 
