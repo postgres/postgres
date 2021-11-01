@@ -171,6 +171,7 @@ static void
 llvm_release_context(JitContext *context)
 {
 	LLVMJitContext *llvm_context = (LLVMJitContext *) context;
+	ListCell   *lc;
 
 	/*
 	 * When this backend is exiting, don't clean up LLVM. As an error might
@@ -188,12 +189,9 @@ llvm_release_context(JitContext *context)
 		llvm_context->module = NULL;
 	}
 
-	while (llvm_context->handles != NIL)
+	foreach(lc, llvm_context->handles)
 	{
-		LLVMJitHandle *jit_handle;
-
-		jit_handle = (LLVMJitHandle *) linitial(llvm_context->handles);
-		llvm_context->handles = list_delete_first(llvm_context->handles);
+		LLVMJitHandle *jit_handle = (LLVMJitHandle *) lfirst(lc);
 
 #if LLVM_VERSION_MAJOR > 11
 		{
@@ -221,6 +219,8 @@ llvm_release_context(JitContext *context)
 
 		pfree(jit_handle);
 	}
+	list_free(llvm_context->handles);
+	llvm_context->handles = NIL;
 }
 
 /*

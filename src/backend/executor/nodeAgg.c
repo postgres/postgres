@@ -2610,8 +2610,9 @@ agg_refill_hash_table(AggState *aggstate)
 	if (aggstate->hash_batches == NIL)
 		return false;
 
-	batch = linitial(aggstate->hash_batches);
-	aggstate->hash_batches = list_delete_first(aggstate->hash_batches);
+	/* hash_batches is a stack, with the top item at the end of the list */
+	batch = llast(aggstate->hash_batches);
+	aggstate->hash_batches = list_delete_last(aggstate->hash_batches);
 
 	hash_agg_set_limits(aggstate->hashentrysize, batch->input_card,
 						batch->used_bits, &aggstate->hash_mem_limit,
@@ -3190,7 +3191,7 @@ hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill, int setno)
 		new_batch = hashagg_batch_new(tapeset, tapenum, setno,
 									  spill->ntuples[i], cardinality,
 									  used_bits);
-		aggstate->hash_batches = lcons(new_batch, aggstate->hash_batches);
+		aggstate->hash_batches = lappend(aggstate->hash_batches, new_batch);
 		aggstate->hash_batches_used++;
 	}
 
@@ -3205,8 +3206,6 @@ hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill, int setno)
 static void
 hashagg_reset_spill_state(AggState *aggstate)
 {
-	ListCell   *lc;
-
 	/* free spills from initial pass */
 	if (aggstate->hash_spills != NULL)
 	{
@@ -3224,13 +3223,7 @@ hashagg_reset_spill_state(AggState *aggstate)
 	}
 
 	/* free batches */
-	foreach(lc, aggstate->hash_batches)
-	{
-		HashAggBatch *batch = (HashAggBatch *) lfirst(lc);
-
-		pfree(batch);
-	}
-	list_free(aggstate->hash_batches);
+	list_free_deep(aggstate->hash_batches);
 	aggstate->hash_batches = NIL;
 
 	/* close tape set */
