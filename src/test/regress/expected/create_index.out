@@ -2176,6 +2176,25 @@ SELECT indexrelid::regclass, indisreplident FROM pg_index
 (1 row)
 
 DROP TABLE concur_replident;
+-- Check that opclass parameters are preserved
+CREATE TABLE concur_appclass_tab(i tsvector, j tsvector, k tsvector);
+CREATE INDEX concur_appclass_ind on concur_appclass_tab
+  USING gist (i tsvector_ops (siglen='1000'), j tsvector_ops (siglen='500'));
+CREATE INDEX concur_appclass_ind_2 on concur_appclass_tab
+  USING gist (k tsvector_ops (siglen='300'), j tsvector_ops);
+REINDEX TABLE CONCURRENTLY concur_appclass_tab;
+\d concur_appclass_tab
+         Table "public.concur_appclass_tab"
+ Column |   Type   | Collation | Nullable | Default 
+--------+----------+-----------+----------+---------
+ i      | tsvector |           |          | 
+ j      | tsvector |           |          | 
+ k      | tsvector |           |          | 
+Indexes:
+    "concur_appclass_ind" gist (i tsvector_ops (siglen='1000'), j tsvector_ops (siglen='500'))
+    "concur_appclass_ind_2" gist (k tsvector_ops (siglen='300'), j)
+
+DROP TABLE concur_appclass_tab;
 -- Partitions
 -- Create some partitioned tables
 CREATE TABLE concur_reindex_part (c1 int, c2 int) PARTITION BY RANGE (c1);
