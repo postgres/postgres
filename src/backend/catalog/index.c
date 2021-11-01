@@ -71,6 +71,7 @@
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
@@ -1360,6 +1361,15 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId, const char
 
 		indexColNames = lappend(indexColNames, NameStr(att->attname));
 		newInfo->ii_IndexAttrNumbers[i] = oldInfo->ii_IndexAttrNumbers[i];
+	}
+
+	/* Extract opclass parameters for each attribute, if any */
+	if (oldInfo->ii_OpclassOptions != NULL)
+	{
+		newInfo->ii_OpclassOptions = palloc0(sizeof(Datum) *
+											 newInfo->ii_NumIndexAttrs);
+		for (int i = 0; i < newInfo->ii_NumIndexAttrs; i++)
+			newInfo->ii_OpclassOptions[i] = get_attoptions(oldIndexId, i + 1);
 	}
 
 	/*
