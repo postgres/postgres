@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 31;
+use Test::More tests => 35;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -208,3 +208,63 @@ $primary->command_ok(
 	"WAL streamed from the slot's restart_lsn");
 ok(-e "$slot_dir/$walfile_streamed",
 	"WAL from the slot's restart_lsn has been archived");
+
+# Test timeline switch using a replication slot, requiring a promoted
+# standby.
+my $backup_name = "basebackup";
+$primary->backup($backup_name);
+my $standby = PostgreSQL::Test::Cluster->new("standby");
+$standby->init_from_backup($primary, $backup_name, has_streaming => 1);
+$standby->start;
+
+# Create a replication slot on this new standby
+my $archive_slot = "archive_slot";
+$standby->psql(
+	'',
+	"CREATE_REPLICATION_SLOT $archive_slot PHYSICAL (RESERVE_WAL)",
+	replication => 1);
+# Wait for standby catchup
+$primary->wait_for_catchup($standby, 'replay', $primary->lsn('write'));
+# Get a walfilename from before the promotion to make sure it is archived
+# after promotion
+my $standby_slot = $standby->slot($archive_slot);
+my $replication_slot_lsn = $standby_slot->{'restart_lsn'};
+
+# pg_walfile_name() is not supported while in recovery, so use the primary
+# to build the segment name.  Both nodes are on the same timeline, so this
+# produces a segment name with the timeline we are switching from.
+my $walfile_before_promotion =
+  $primary->safe_psql('postgres',
+	"SELECT pg_walfile_name('$replication_slot_lsn');");
+# Everything is setup, promote the standby to trigger a timeline switch.
+$standby->promote;
+
+# Force a segment switch to make sure at least one full WAL is archived
+# on the new timeline.
+my $walfile_after_promotion = $standby->safe_psql('postgres',
+	"SELECT pg_walfile_name(pg_current_wal_insert_lsn());");
+$standby->psql('postgres', 'INSERT INTO test_table VALUES (6);');
+$standby->psql('postgres', 'SELECT pg_switch_wal();');
+$nextlsn =
+  $standby->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn();');
+chomp($nextlsn);
+# This speeds up the operation.
+$standby->psql('postgres', 'INSERT INTO test_table VALUES (7);');
+
+# Now try to resume from the slot after the promotion.
+my $timeline_dir = $primary->basedir . '/timeline_wal';
+mkdir($timeline_dir);
+
+$standby->command_ok(
+	[
+		'pg_receivewal', '-D',     $timeline_dir, '--verbose',
+		'--endpos',      $nextlsn, '--slot',      $archive_slot,
+		'--no-sync',     '-n'
+	],
+	"Stream some wal after promoting, resuming from the slot's position");
+ok(-e "$timeline_dir/$walfile_before_promotion",
+	"WAL segment $walfile_before_promotion archived after timeline jump");
+ok(-e "$timeline_dir/$walfile_after_promotion",
+	"WAL segment $walfile_after_promotion archived after timeline jump");
+ok(-e "$timeline_dir/00000002.history",
+	"timeline history file archived after timeline jump");
