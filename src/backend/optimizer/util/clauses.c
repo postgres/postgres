@@ -4165,7 +4165,7 @@ add_function_defaults(List *args, HeapTuple func_tuple)
 	if (ndelete < 0)
 		elog(ERROR, "not enough default arguments");
 	if (ndelete > 0)
-		defaults = list_copy_tail(defaults, ndelete);
+		defaults = list_delete_first_n(defaults, ndelete);
 
 	/* And form the combined argument list, not modifying the input list */
 	return list_concat_copy(args, defaults);

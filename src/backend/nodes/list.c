@@ -892,6 +892,72 @@ list_delete_last(List *list)
 }
 
 /*
+ * Delete the first N cells of the list.
+ *
+ * The List is pfree'd if the request causes all cells to be deleted.
+ */
+List *
+list_delete_first_n(List *list, int n)
+{
+	check_list_invariants(list);
+
+	/* No-op request? */
+	if (n <= 0)
+		return list;
+
+	/* Delete whole list? */
+	if (n >= list_length(list))
+	{
+		list_free(list);
+		return NIL;
+	}
+
+	/*
+	 * Otherwise, we normally just collapse out the removed elements.  But for
+	 * debugging purposes, move the whole list contents someplace else.
+	 *
+	 * (Note that we *must* keep the contents in the same memory context.)
+	 */
+#ifndef DEBUG_LIST_MEMORY_USAGE
+	memmove(&list->elements[0], &list->elements[n],
+			(list->length - n) * sizeof(ListCell));
+	list->length -= n;
+#else
+	{
+		ListCell   *newelems;
+		int			newmaxlen = list->length - n;
+
+		newelems = (ListCell *)
+			MemoryContextAlloc(GetMemoryChunkContext(list),
+							   newmaxlen * sizeof(ListCell));
+		memcpy(newelems, &list->elements[n], newmaxlen * sizeof(ListCell));
+		if (list->elements != list->initial_elements)
+			pfree(list->elements);
+		else
+		{
+			/*
+			 * As in enlarge_list(), clear the initial_elements[] space and/or
+			 * mark it inaccessible.
+			 */
+#ifdef CLOBBER_FREED_MEMORY
+			wipe_mem(list->initial_elements,
+					 list->max_length * sizeof(ListCell));
+#else
+			VALGRIND_MAKE_MEM_NOACCESS(list->initial_elements,
+									   list->max_length * sizeof(ListCell));
+#endif
+		}
+		list->elements = newelems;
+		list->max_length = newmaxlen;
+		list->length = newmaxlen;
+		check_list_invariants(list);
+	}
+#endif
+
+	return list;
+}
+
+/*
  * Generate the union of two lists. This is calculated by copying
  * list1 via list_copy(), then adding to it all the members of list2
  * that aren't already in list1.
