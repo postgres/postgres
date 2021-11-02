@@ -202,7 +202,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index to be created.  No schema name can be included
         here; the index is always created in the same schema as its parent
-        table.  If the name is omitted, <productname>PostgreSQL</productname> chooses a
+        table.  The name of the index must be distinct from the name of any
+        other relation (table, sequence, index, view, materialized view, or
+        foreign table) in that schema.
+        If the name is omitted, <productname>PostgreSQL</productname> chooses a
         suitable name based on the parent table's name and the indexed column
         name(s).
        </para>

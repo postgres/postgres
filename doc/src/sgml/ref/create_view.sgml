@@ -52,8 +52,8 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
    schema.  Otherwise it is created in the current schema.  Temporary
    views exist in a special schema, so a schema name cannot be given
    when creating a temporary view. The name of the view must be
-   distinct from the name of any other view, table, sequence, index or foreign table
-   in the same schema.
+   distinct from the name of any other relation (table, sequence, index, view,
+   materialized view, or foreign table) in the same schema.
   </para>
  </refsect1>
 
