@@ -69,6 +69,7 @@ typedef struct
 {
 	FileTag		tag;			/* identifies handler and file */
 	CycleCtr	cycle_ctr;		/* checkpoint_cycle_ctr when request was made */
+	bool		canceled;		/* true if request has been canceled */
 } PendingUnlinkEntry;
 
 static HTAB *pendingOps = NULL;
@@ -195,12 +196,17 @@ void
 SyncPostCheckpoint(void)
 {
 	int			absorb_counter;
+	ListCell   *lc;
 
 	absorb_counter = UNLINKS_PER_ABSORB;
-	while (pendingUnlinks != NIL)
+	foreach(lc, pendingUnlinks)
 	{
-		PendingUnlinkEntry *entry = (PendingUnlinkEntry *) linitial(pendingUnlinks);
+		PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(lc);
 		char		path[MAXPGPATH];
+
+		/* Skip over any canceled entries */
+		if (entry->canceled)
+			continue;
 
 		/*
 		 * New entries are appended to the end, so if the entry is new we've
@@ -231,21 +237,39 @@ SyncPostCheckpoint(void)
 						 errmsg("could not remove file \"%s\": %m", path)));
 		}
 
-		/* And remove the list entry */
-		pendingUnlinks = list_delete_first(pendingUnlinks);
-		pfree(entry);
+		/* Mark the list entry as canceled, just in case */
+		entry->canceled = true;
 
 		/*
 		 * As in ProcessSyncRequests, we don't want to stop absorbing fsync
 		 * requests for a long time when there are many deletions to be done.
-		 * We can safely call AbsorbSyncRequests() at this point in the loop
-		 * (note it might try to delete list entries).
+		 * We can safely call AbsorbSyncRequests() at this point in the loop.
 		 */
 		if (--absorb_counter <= 0)
 		{
 			AbsorbSyncRequests();
 			absorb_counter = UNLINKS_PER_ABSORB;
 		}
+	}
+
+	/*
+	 * If we reached the end of the list, we can just remove the whole list
+	 * (remembering to pfree all the PendingUnlinkEntry objects).  Otherwise,
+	 * we must keep the entries at or after "lc".
+	 */
+	if (lc == NULL)
+	{
+		list_free_deep(pendingUnlinks);
+		pendingUnlinks = NIL;
+	}
+	else
+	{
+		int			ntodelete = list_cell_number(pendingUnlinks, lc);
+
+		for (int i = 0; i < ntodelete; i++)
+			pfree(list_nth(pendingUnlinks, i));
+
+		pendingUnlinks = list_delete_first_n(pendingUnlinks, ntodelete);
 	}
 }
 
@@ -486,17 +510,14 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 				entry->canceled = true;
 		}
 
-		/* Remove matching unlink requests */
+		/* Cancel matching unlink requests */
 		foreach(cell, pendingUnlinks)
 		{
 			PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(cell);
 
 			if (entry->tag.handler == ftag->handler &&
 				syncsw[ftag->handler].sync_filetagmatches(ftag, &entry->tag))
-			{
-				pendingUnlinks = foreach_delete_current(pendingUnlinks, cell);
-				pfree(entry);
-			}
+				entry->canceled = true;
 		}
 	}
 	else if (type == SYNC_UNLINK_REQUEST)
@@ -508,6 +529,7 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 		entry = palloc(sizeof(PendingUnlinkEntry));
 		entry->tag = *ftag;
 		entry->cycle_ctr = checkpoint_cycle_ctr;
+		entry->canceled = false;
 
 		pendingUnlinks = lappend(pendingUnlinks, entry);
 
