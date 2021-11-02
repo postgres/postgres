@@ -1169,9 +1169,9 @@ XLogInsertRecord(XLogRecData *rdata,
 	 */
 	WALInsertLockRelease();
 
-	MarkCurrentTransactionIdLoggedIfAny();
-
 	END_CRIT_SECTION();
+
+	MarkCurrentTransactionIdLoggedIfAny();
 
 	/*
 	 * Mark top transaction id is logged (if needed) so that we should not try
