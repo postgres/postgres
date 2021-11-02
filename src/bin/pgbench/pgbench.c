@@ -509,7 +509,7 @@ typedef struct
 	pg_time_usec_t create_time; /* thread creation time */
 	pg_time_usec_t started_time;	/* thread is running */
 	pg_time_usec_t bench_start; /* thread is benchmarking */
-	pg_time_usec_t conn_duration;	/* cumulated connection and deconnection
+	pg_time_usec_t conn_duration;	/* cumulated connection and disconnection
 									 * delays */
 
 	StatsData	stats;
