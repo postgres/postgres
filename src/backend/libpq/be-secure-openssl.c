@@ -30,11 +30,12 @@
 #endif
 
 #include <openssl/ssl.h>
-#include <openssl/dh.h>
 #include <openssl/conf.h>
+#include <openssl/dh.h>
 #ifndef OPENSSL_NO_ECDH
 #include <openssl/ec.h>
 #endif
+#include <openssl/x509v3.h>
 
 #include "common/openssl.h"
 #include "libpq/libpq.h"
