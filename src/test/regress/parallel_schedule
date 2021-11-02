@@ -96,6 +96,7 @@ test: rules psql psql_crosstab amutils stats_ext collate.linux.utf8
 # run by itself so it can run parallel workers
 test: select_parallel
 test: write_parallel
+test: vacuum_parallel
 
 # no relation related tests can be put in this group
 test: publication subscription

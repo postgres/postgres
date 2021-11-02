@@ -452,7 +452,7 @@ static bool heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 									 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 static int	compute_parallel_vacuum_workers(LVRelState *vacrel,
 											int nrequested,
-											bool *can_parallel_vacuum);
+											bool *will_parallel_vacuum);
 static void update_index_statistics(LVRelState *vacrel);
 static LVParallelState *begin_parallel_vacuum(LVRelState *vacrel,
 											  BlockNumber nblocks,
@@ -2636,8 +2636,8 @@ do_parallel_lazy_vacuum_all_indexes(LVRelState *vacrel)
 	vacrel->lps->lvshared->first_time = false;
 
 	/*
-	 * We can only provide an approximate value of num_heap_tuples in vacuum
-	 * cases.
+	 * We can only provide an approximate value of num_heap_tuples, at least
+	 * for now.  Matches serial VACUUM case.
 	 */
 	vacrel->lps->lvshared->reltuples = vacrel->old_live_tuples;
 	vacrel->lps->lvshared->estimated_count = true;
@@ -2825,7 +2825,7 @@ do_parallel_processing(LVRelState *vacrel, LVShared *lvshared)
 		if (idx >= vacrel->nindexes)
 			break;
 
-		/* Get the index statistics of this index from DSM */
+		/* Get the index statistics space from DSM, if any */
 		shared_istat = parallel_stats_for_idx(lvshared, idx);
 
 		/* Skip indexes not participating in parallelism */
@@ -2858,8 +2858,15 @@ do_parallel_processing(LVRelState *vacrel, LVShared *lvshared)
 }
 
 /*
- * Vacuum or cleanup indexes that can be processed by only the leader process
- * because these indexes don't support parallel operation at that phase.
+ * Perform parallel processing of indexes in leader process.
+ *
+ * Handles index vacuuming (or index cleanup) for indexes that are not
+ * parallel safe.  It's possible that this will vary for a given index, based
+ * on details like whether we're performing for_cleanup processing right now.
+ *
+ * Also performs processing of smaller indexes that fell under the size cutoff
+ * enforced by compute_parallel_vacuum_workers().  These indexes never get a
+ * slot for statistics in DSM.
  */
 static void
 do_serial_processing_for_unsafe_indexes(LVRelState *vacrel, LVShared *lvshared)
@@ -2879,17 +2886,15 @@ do_serial_processing_for_unsafe_indexes(LVRelState *vacrel, LVShared *lvshared)
 		IndexBulkDeleteResult *istat;
 
 		shared_istat = parallel_stats_for_idx(lvshared, idx);
-
-		/* Skip already-complete indexes */
-		if (shared_istat != NULL)
-			continue;
-
 		indrel = vacrel->indrels[idx];
 
 		/*
-		 * We're only here for the unsafe indexes
+		 * We're only here for the indexes that parallel workers won't
+		 * process.  Note that the shared_istat test ensures that we process
+		 * indexes that fell under initial size cutoff.
 		 */
-		if (parallel_processing_is_safe(indrel, lvshared))
+		if (shared_istat != NULL &&
+			parallel_processing_is_safe(indrel, lvshared))
 			continue;
 
 		/* Do vacuum or cleanup of the index */
@@ -3730,12 +3735,12 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
  * nrequested is the number of parallel workers that user requested.  If
  * nrequested is 0, we compute the parallel degree based on nindexes, that is
  * the number of indexes that support parallel vacuum.  This function also
- * sets can_parallel_vacuum to remember indexes that participate in parallel
+ * sets will_parallel_vacuum to remember indexes that participate in parallel
  * vacuum.
  */
 static int
 compute_parallel_vacuum_workers(LVRelState *vacrel, int nrequested,
-								bool *can_parallel_vacuum)
+								bool *will_parallel_vacuum)
 {
 	int			nindexes_parallel = 0;
 	int			nindexes_parallel_bulkdel = 0;
@@ -3761,7 +3766,7 @@ compute_parallel_vacuum_workers(LVRelState *vacrel, int nrequested,
 			RelationGetNumberOfBlocks(indrel) < min_parallel_index_scan_size)
 			continue;
 
-		can_parallel_vacuum[idx] = true;
+		will_parallel_vacuum[idx] = true;
 
 		if ((vacoptions & VACUUM_OPTION_PARALLEL_BULKDEL) != 0)
 			nindexes_parallel_bulkdel++;
@@ -3839,7 +3844,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	LVDeadTuples *dead_tuples;
 	BufferUsage *buffer_usage;
 	WalUsage   *wal_usage;
-	bool	   *can_parallel_vacuum;
+	bool	   *will_parallel_vacuum;
 	long		maxtuples;
 	Size		est_shared;
 	Size		est_deadtuples;
@@ -3857,15 +3862,15 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	/*
 	 * Compute the number of parallel vacuum workers to launch
 	 */
-	can_parallel_vacuum = (bool *) palloc0(sizeof(bool) * nindexes);
+	will_parallel_vacuum = (bool *) palloc0(sizeof(bool) * nindexes);
 	parallel_workers = compute_parallel_vacuum_workers(vacrel,
 													   nrequested,
-													   can_parallel_vacuum);
+													   will_parallel_vacuum);
 
 	/* Can't perform vacuum in parallel */
 	if (parallel_workers <= 0)
 	{
-		pfree(can_parallel_vacuum);
+		pfree(will_parallel_vacuum);
 		return lps;
 	}
 
@@ -3893,7 +3898,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 		Assert(vacoptions <= VACUUM_OPTION_MAX_VALID_VALUE);
 
 		/* Skip indexes that don't participate in parallel vacuum */
-		if (!can_parallel_vacuum[idx])
+		if (!will_parallel_vacuum[idx])
 			continue;
 
 		if (indrel->rd_indam->amusemaintenanceworkmem)
@@ -3970,7 +3975,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 	memset(shared->bitmap, 0x00, BITMAPLEN(nindexes));
 	for (int idx = 0; idx < nindexes; idx++)
 	{
-		if (!can_parallel_vacuum[idx])
+		if (!will_parallel_vacuum[idx])
 			continue;
 
 		/* Set NOT NULL as this index does support parallelism */
@@ -4013,7 +4018,7 @@ begin_parallel_vacuum(LVRelState *vacrel, BlockNumber nblocks,
 					   PARALLEL_VACUUM_KEY_QUERY_TEXT, sharedquery);
 	}
 
-	pfree(can_parallel_vacuum);
+	pfree(will_parallel_vacuum);
 	return lps;
 }
 
@@ -4043,8 +4048,8 @@ end_parallel_vacuum(LVRelState *vacrel)
 		shared_istat = parallel_stats_for_idx(lps->lvshared, idx);
 
 		/*
-		 * Skip unused slot.  The statistics of this index are already stored
-		 * in local memory.
+		 * Skip index -- it must have been processed by the leader, from
+		 * inside do_serial_processing_for_unsafe_indexes()
 		 */
 		if (shared_istat == NULL)
 			continue;
@@ -4068,6 +4073,11 @@ end_parallel_vacuum(LVRelState *vacrel)
 
 /*
  * Return shared memory statistics for index at offset 'getidx', if any
+ *
+ * Returning NULL indicates that compute_parallel_vacuum_workers() determined
+ * that the index is a totally unsuitable target for all parallel processing
+ * up front.  For example, the index could be < min_parallel_index_scan_size
+ * cutoff.
  */
 static LVSharedIndStats *
 parallel_stats_for_idx(LVShared *lvshared, int getidx)
