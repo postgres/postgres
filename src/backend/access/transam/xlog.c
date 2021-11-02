@@ -999,6 +999,9 @@ static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
  * 'flags' gives more in-depth control on the record being inserted. See
  * XLogSetRecordFlags() for details.
  *
+ * 'topxid_included' tells whether the top-transaction id is logged along with
+ * current subtransaction. See XLogRecordAssemble().
+ *
  * The first XLogRecData in the chain must be for the record header, and its
  * data must be MAXALIGNed.  XLogInsertRecord fills in the xl_prev and
  * xl_crc fields in the header, the rest of the header must already be filled
@@ -1014,7 +1017,8 @@ XLogRecPtr
 XLogInsertRecord(XLogRecData *rdata,
 				 XLogRecPtr fpw_lsn,
 				 uint8 flags,
-				 int num_fpi)
+				 int num_fpi,
+				 bool topxid_included)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	pg_crc32c	rdata_crc;
@@ -1168,6 +1172,13 @@ XLogInsertRecord(XLogRecData *rdata,
 	MarkCurrentTransactionIdLoggedIfAny();
 
 	END_CRIT_SECTION();
+
+	/*
+	 * Mark top transaction id is logged (if needed) so that we should not try
+	 * to log it again with the next WAL record in the current subtransaction.
+	 */
+	if (topxid_included)
+		MarkSubxactTopXidLogged();
 
 	/*
 	 * Update shared LogwrtRqst.Write, if we crossed page boundary.

@@ -433,8 +433,8 @@ extern void UnregisterXactCallback(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
 extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
-extern bool IsSubTransactionAssignmentPending(void);
-extern void MarkSubTransactionAssigned(void);
+extern bool IsSubxactTopXidLogPending(void);
+extern void MarkSubxactTopXidLogged(void);
 
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 

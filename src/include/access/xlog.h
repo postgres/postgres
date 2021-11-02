@@ -212,7 +212,6 @@ extern bool XLOG_DEBUG;
  */
 #define XLOG_INCLUDE_ORIGIN		0x01	/* include the replication origin */
 #define XLOG_MARK_UNIMPORTANT	0x02	/* record not important for durability */
-#define XLOG_INCLUDE_XID		0x04	/* WAL-internal message-passing hack */
 
 
 /* Checkpoint statistics */
@@ -258,7 +257,8 @@ struct XLogRecData;
 extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
 								   XLogRecPtr fpw_lsn,
 								   uint8 flags,
-								   int num_fpi);
+								   int num_fpi,
+								   bool topxid_included);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
