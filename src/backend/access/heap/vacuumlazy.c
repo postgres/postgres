@@ -4116,7 +4116,7 @@ parallel_processing_is_safe(Relation indrel, LVShared *lvshared)
 		/* Skip, if the index does not support parallel cleanup */
 		if (((vacoptions & VACUUM_OPTION_PARALLEL_CLEANUP) == 0) &&
 			((vacoptions & VACUUM_OPTION_PARALLEL_COND_CLEANUP) == 0))
-			return true;
+			return false;
 
 		/*
 		 * Skip, if the index supports parallel cleanup conditionally, but we
