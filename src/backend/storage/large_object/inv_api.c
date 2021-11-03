@@ -242,10 +242,12 @@ inv_create(Oid lobjId)
 /*
  *	inv_open -- access an existing large object.
  *
- *		Returns:
- *		  Large object descriptor, appropriately filled in.  The descriptor
- *		  and subsidiary data are allocated in the specified memory context,
- *		  which must be suitably long-lived for the caller's purposes.
+ * Returns a large object descriptor, appropriately filled in.
+ * The descriptor and subsidiary data are allocated in the specified
+ * memory context, which must be suitably long-lived for the caller's
+ * purposes.  If the returned descriptor has a snapshot associated
+ * with it, the caller must ensure that it also lives long enough,
+ * e.g. by calling RegisterSnapshotOnOwner
  */
 LargeObjectDesc *
 inv_open(Oid lobjId, int flags, MemoryContext mcxt)
@@ -312,19 +314,16 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
 													sizeof(LargeObjectDesc));
 	retval->id = lobjId;
-	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
 	retval->flags = descflags;
 
+	/* caller sets if needed, not used by the functions in this file */
+	retval->subid = InvalidSubTransactionId;
+
 	/*
-	 * We must register the snapshot in TopTransaction's resowner, because it
-	 * must stay alive until the LO is closed rather than until the current
-	 * portal shuts down.  Do this last to avoid uselessly leaking the
-	 * snapshot if an error is thrown above.
+	 * The snapshot (if any) is just the currently active snapshot.  The
+	 * caller will replace it with a longer-lived copy if needed.
 	 */
-	if (snapshot)
-		snapshot = RegisterSnapshotOnOwner(snapshot,
-										   TopTransactionResourceOwner);
 	retval->snapshot = snapshot;
 
 	return retval;
@@ -338,10 +337,6 @@ void
 inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
-
-	UnregisterSnapshotFromOwner(obj_desc->snapshot,
-								TopTransactionResourceOwner);
-
 	pfree(obj_desc);
 }
 
