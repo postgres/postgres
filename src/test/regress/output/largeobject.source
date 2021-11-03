@@ -161,6 +161,17 @@ SELECT lo_open(loid, x'40000'::int) from lotest_stash_values;
 (1 row)
 
 ABORT;
+DO $$
+DECLARE
+  loid oid;
+BEGIN
+  SELECT tbl.loid INTO loid FROM lotest_stash_values tbl;
+  PERFORM lo_export(loid, '@abs_builddir@/results/invalid/path');
+EXCEPTION
+  WHEN UNDEFINED_FILE THEN RAISE NOTICE 'could not open file, as expected';
+END;
+$$;
+NOTICE:  could not open file, as expected
 -- Test truncation.
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
