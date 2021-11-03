@@ -256,10 +256,12 @@ inv_create(Oid lobjId)
 /*
  *	inv_open -- access an existing large object.
  *
- *		Returns:
- *		  Large object descriptor, appropriately filled in.  The descriptor
- *		  and subsidiary data are allocated in the specified memory context,
- *		  which must be suitably long-lived for the caller's purposes.
+ * Returns a large object descriptor, appropriately filled in.
+ * The descriptor and subsidiary data are allocated in the specified
+ * memory context, which must be suitably long-lived for the caller's
+ * purposes.  If the returned descriptor has a snapshot associated
+ * with it, the caller must ensure that it also lives long enough,
+ * e.g. by calling RegisterSnapshotOnOwner
  */
 LargeObjectDesc *
 inv_open(Oid lobjId, int flags, MemoryContext mcxt)
@@ -290,22 +292,20 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("large object %u does not exist", lobjId)));
 
-	/*
-	 * We must register the snapshot in TopTransaction's resowner, because it
-	 * must stay alive until the LO is closed rather than until the current
-	 * portal shuts down. Do this after checking that the LO exists, to avoid
-	 * leaking the snapshot if an error is thrown.
-	 */
-	if (snapshot)
-		snapshot = RegisterSnapshotOnOwner(snapshot,
-										   TopTransactionResourceOwner);
-
-	/* All set, create a descriptor */
+	/* OK to create a descriptor */
 	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
 													sizeof(LargeObjectDesc));
 	retval->id = lobjId;
-	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
+	retval->flags = descflags;
+
+	/* caller sets if needed, not used by the functions in this file */
+	retval->subid = InvalidSubTransactionId;
+
+	/*
+	 * The snapshot (if any) is just the currently active snapshot.  The
+	 * caller will replace it with a longer-lived copy if needed.
+	 */
 	retval->snapshot = snapshot;
 	retval->flags = descflags;
 
@@ -320,10 +320,6 @@ void
 inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
-
-	UnregisterSnapshotFromOwner(obj_desc->snapshot,
-								TopTransactionResourceOwner);
-
 	pfree(obj_desc);
 }
 
