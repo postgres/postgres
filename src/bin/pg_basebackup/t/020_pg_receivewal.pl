@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 35;
+use Test::More tests => 37;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -33,6 +33,13 @@ $primary->command_fails(
 $primary->command_fails(
 	[ 'pg_receivewal', '-D', $stream_dir, '--synchronous', '--no-sync' ],
 	'failure if --synchronous specified with --no-sync');
+$primary->command_fails_like(
+	[
+		'pg_receivewal', '-D', $stream_dir, '--compression-method', 'none',
+		'--compress',    '1'
+	],
+	qr/\Qpg_receivewal: error: cannot use --compress with --compression-method=none/,
+	'failure if --compress spwcified with --compression-method=none');
 
 # Slot creation and drop
 my $slot_name = 'test';
@@ -90,8 +97,11 @@ SKIP:
 	# a valid value.
 	$primary->command_ok(
 		[
-			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
-			'--endpos',      $nextlsn, '--compress', '1 ',
+			'pg_receivewal',        '-D',
+			$stream_dir,            '--verbose',
+			'--endpos',             $nextlsn,
+			'--compression-method', 'gzip',
+			'--compress',           '1 ',
 			'--no-loop'
 		],
 		"streaming some WAL using ZLIB compression");

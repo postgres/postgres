@@ -555,10 +555,13 @@ LogStreamerMain(logstreamer_param *param)
 	stream.replication_slot = replication_slot;
 
 	if (format == 'p')
-		stream.walmethod = CreateWalDirectoryMethod(param->xlog, 0,
+		stream.walmethod = CreateWalDirectoryMethod(param->xlog,
+													COMPRESSION_NONE, 0,
 													stream.do_sync);
 	else
-		stream.walmethod = CreateWalTarMethod(param->xlog, compresslevel,
+		stream.walmethod = CreateWalTarMethod(param->xlog,
+											  COMPRESSION_NONE, /* ignored */
+											  compresslevel,
 											  stream.do_sync);
 
 	if (!ReceiveXlogStream(param->bgconn, &stream))
