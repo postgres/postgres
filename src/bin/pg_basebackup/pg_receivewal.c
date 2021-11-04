@@ -540,7 +540,6 @@ main(int argc, char **argv)
 		{"status-interval", required_argument, NULL, 's'},
 		{"slot", required_argument, NULL, 'S'},
 		{"verbose", no_argument, NULL, 'v'},
-		{"compression-method", required_argument, NULL, 'I'},
 		{"compress", required_argument, NULL, 'Z'},
 /* action */
 		{"create-slot", no_argument, NULL, 1},
@@ -548,6 +547,7 @@ main(int argc, char **argv)
 		{"if-not-exists", no_argument, NULL, 3},
 		{"synchronous", no_argument, NULL, 4},
 		{"no-sync", no_argument, NULL, 5},
+		{"compression-method", required_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -626,18 +626,6 @@ main(int argc, char **argv)
 			case 'v':
 				verbose++;
 				break;
-			case 'I':
-				if (pg_strcasecmp(optarg, "gzip") == 0)
-					compression_method = COMPRESSION_GZIP;
-				else if (pg_strcasecmp(optarg, "none") == 0)
-					compression_method = COMPRESSION_NONE;
-				else
-				{
-					pg_log_error("invalid value \"%s\" for option %s",
-								 optarg, "--compress-method");
-					exit(1);
-				}
-				break;
 			case 'Z':
 				if (!option_parse_int(optarg, "-Z/--compress", 1, 9,
 									  &compresslevel))
@@ -658,6 +646,18 @@ main(int argc, char **argv)
 				break;
 			case 5:
 				do_sync = false;
+				break;
+			case 6:
+				if (pg_strcasecmp(optarg, "gzip") == 0)
+					compression_method = COMPRESSION_GZIP;
+				else if (pg_strcasecmp(optarg, "none") == 0)
+					compression_method = COMPRESSION_NONE;
+				else
+				{
+					pg_log_error("invalid value \"%s\" for option %s",
+								 optarg, "--compression-method");
+					exit(1);
+				}
 				break;
 			default:
 

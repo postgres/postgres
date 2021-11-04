@@ -264,7 +264,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--compression-method=<replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compression-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
         Enables compression of write-ahead logs using the specified method.
