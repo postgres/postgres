@@ -488,17 +488,25 @@ heap_prune_satisfies_vacuum(PruneState *prstate, HeapTuple tup, Buffer buffer)
  * the HOT chain is pruned by removing all DEAD tuples at the start of the HOT
  * chain.  We also prune any RECENTLY_DEAD tuples preceding a DEAD tuple.
  * This is OK because a RECENTLY_DEAD tuple preceding a DEAD tuple is really
- * DEAD, the OldestXmin test is just too coarse to detect it.
+ * DEAD, the heap_prune_satisfies_vacuum test is just too coarse to detect it.
+ *
+ * In general, pruning must never leave behind a DEAD tuple that still has
+ * tuple storage.  VACUUM isn't prepared to deal with that case.  That's why
+ * VACUUM prunes the same heap page a second time (without dropping its lock
+ * in the interim) when it sees a newly DEAD tuple that we initially saw as
+ * in-progress.  Retrying pruning like this can only happen when an inserting
+ * transaction concurrently aborts.
  *
  * The root line pointer is redirected to the tuple immediately after the
  * latest DEAD tuple.  If all tuples in the chain are DEAD, the root line
  * pointer is marked LP_DEAD.  (This includes the case of a DEAD simple
  * tuple, which we treat as a chain of length 1.)
  *
- * OldestXmin is the cutoff XID used to identify dead tuples.
+ * prstate->vistest is used to distinguish whether tuples are DEAD or
+ * RECENTLY_DEAD.
  *
  * We don't actually change the page here, except perhaps for hint-bit updates
- * caused by HeapTupleSatisfiesVacuum.  We just add entries to the arrays in
+ * caused by heap_prune_satisfies_vacuum.  We just add entries to the arrays in
  * prstate showing the changes to be made.  Items to be redirected are added
  * to the redirected[] array (two entries per redirection); items to be set to
  * LP_DEAD state are added to nowdead[]; and items to be set to LP_UNUSED
@@ -694,9 +702,9 @@ heap_prune_chain(Buffer buffer, OffsetNumber rootoffnum, PruneState *prstate)
 		/*
 		 * Remember the last DEAD tuple seen.  We will advance past
 		 * RECENTLY_DEAD tuples just in case there's a DEAD one after them;
-		 * but we can't advance past anything else.  (XXX is it really worth
-		 * continuing to scan beyond RECENTLY_DEAD?  The case where we will
-		 * find another DEAD tuple is a fairly unusual corner case.)
+		 * but we can't advance past anything else.  We have to make sure that
+		 * we don't miss any DEAD tuples, since DEAD tuples that still have
+		 * tuple storage after pruning will confuse VACUUM.
 		 */
 		if (tupdead)
 		{
