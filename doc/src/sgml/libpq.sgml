@@ -4594,6 +4594,11 @@ int PQsendQuery(PGconn *conn, const char *command);
        (on the same connection) until <xref linkend="libpq-PQgetResult"/>
        has returned a null pointer, indicating that the command is done.
       </para>
+
+      <para>
+       In pipeline mode, command strings containing more than one SQL command
+       are disallowed.
+      </para>
      </listitem>
     </varlistentry>
 
@@ -5046,7 +5051,8 @@ int PQflush(PGconn *conn);
     <xref linkend="libpq-PQpipelineStatus"/> can be used
     to test whether pipeline mode is active.
     In pipeline mode, only <link linkend="libpq-async">asynchronous operations</link>
-    are permitted, and <literal>COPY</literal> is disallowed.
+    are permitted, command strings containing multiple SQL commands are
+    disallowed, and so is <literal>COPY</literal>.
     Using synchronous command execution functions
     such as <function>PQfn</function>,
     <function>PQexec</function>,
