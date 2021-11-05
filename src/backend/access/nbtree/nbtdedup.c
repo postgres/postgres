@@ -348,6 +348,8 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 	 * concerning ourselves with avoiding work during the tableam call.  Our
 	 * role in costing the bottom-up deletion process is strictly advisory.
 	 */
+	delstate.irel = rel;
+	delstate.iblknum = BufferGetBlockNumber(buf);
 	delstate.bottomup = true;
 	delstate.bottomupfreespace = Max(BLCKSZ / 16, newitemsz);
 	delstate.ndeltids = 0;

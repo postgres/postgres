@@ -2810,6 +2810,8 @@ _bt_simpledel_pass(Relation rel, Buffer buffer, Relation heapRel,
 								&ndeadblocks);
 
 	/* Initialize tableam state that describes index deletion operation */
+	delstate.irel = rel;
+	delstate.iblknum = BufferGetBlockNumber(buffer);
 	delstate.bottomup = false;
 	delstate.bottomupfreespace = 0;
 	delstate.ndeltids = 0;

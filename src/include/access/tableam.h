@@ -220,6 +220,8 @@ typedef struct TM_IndexStatus
  */
 typedef struct TM_IndexDeleteOp
 {
+	Relation	irel;			/* Target index relation */
+	BlockNumber iblknum;		/* Index block number (for error reports) */
 	bool		bottomup;		/* Bottom-up (not simple) deletion? */
 	int			bottomupfreespace;	/* Bottom-up space target */
 
