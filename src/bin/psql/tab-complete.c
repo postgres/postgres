@@ -2411,22 +2411,19 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("COMMENT"))
 		COMPLETE_WITH("ON");
 	else if (Matches("COMMENT", "ON"))
-		COMPLETE_WITH("ACCESS METHOD", "CAST", "COLLATION", "CONVERSION",
-					  "DATABASE", "EVENT TRIGGER", "EXTENSION",
-					  "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "SERVER",
-					  "INDEX", "LANGUAGE", "POLICY", "PUBLICATION", "RULE",
-					  "SCHEMA", "SEQUENCE", "STATISTICS", "SUBSCRIPTION",
-					  "TABLE", "TYPE", "VIEW", "MATERIALIZED VIEW",
-					  "COLUMN", "AGGREGATE", "FUNCTION",
-					  "PROCEDURE", "ROUTINE",
-					  "OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN",
-					  "LARGE OBJECT", "TABLESPACE", "TEXT SEARCH", "ROLE");
+		COMPLETE_WITH("ACCESS METHOD", "AGGREGATE", "CAST", "COLLATION",
+					  "COLUMN", "CONSTRAINT", "CONVERSION", "DATABASE",
+					  "DOMAIN", "EXTENSION", "EVENT TRIGGER",
+					  "FOREIGN DATA WRAPPER", "FOREIGN TABLE",
+					  "FUNCTION", "INDEX", "LANGUAGE", "LARGE OBJECT",
+					  "MATERIALIZED VIEW", "OPERATOR", "POLICY",
+					  "PROCEDURE", "PROCEDURAL LANGUAGE", "PUBLICATION", "ROLE",
+					  "ROUTINE", "RULE", "SCHEMA", "SEQUENCE", "SERVER",
+					  "STATISTICS", "SUBSCRIPTION", "TABLE",
+					  "TABLESPACE", "TEXT SEARCH", "TRANSFORM FOR",
+					  "TRIGGER", "TYPE", "VIEW");
 	else if (Matches("COMMENT", "ON", "ACCESS", "METHOD"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
-	else if (Matches("COMMENT", "ON", "FOREIGN"))
-		COMPLETE_WITH("DATA WRAPPER", "TABLE");
-	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH"))
-		COMPLETE_WITH("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
 	else if (Matches("COMMENT", "ON", "CONSTRAINT"))
 		COMPLETE_WITH_QUERY(Query_for_all_table_constraints);
 	else if (Matches("COMMENT", "ON", "CONSTRAINT", MatchAny))
@@ -2434,15 +2431,67 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("COMMENT", "ON", "CONSTRAINT", MatchAny, "ON"))
 	{
 		completion_info_charp = prev2_wd;
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_constraint);
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_constraint
+							" UNION SELECT 'DOMAIN'");
 	}
-	else if (Matches("COMMENT", "ON", "MATERIALIZED", "VIEW"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	else if (Matches("COMMENT", "ON", "CONSTRAINT", MatchAny, "ON", "DOMAIN"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains, NULL);
 	else if (Matches("COMMENT", "ON", "EVENT", "TRIGGER"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_event_triggers);
+	else if (Matches("COMMENT", "ON", "FOREIGN"))
+		COMPLETE_WITH("DATA WRAPPER", "TABLE");
+	else if (Matches("COMMENT", "ON", "FOREIGN", "TABLE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_foreign_tables, NULL);
+	else if (Matches("COMMENT", "ON", "MATERIALIZED", "VIEW"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	else if (Matches("COMMENT", "ON", "POLICY"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_policies);
+	else if (Matches("COMMENT", "ON", "POLICY", MatchAny))
+		COMPLETE_WITH("ON");
+	else if (Matches("COMMENT", "ON", "POLICY", MatchAny, "ON"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_policy);
+	}
+	else if (Matches("COMMENT", "ON", "PROCEDURAL", "LANGUAGE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_languages);
+	else if (Matches("COMMENT", "ON", "RULE", MatchAny))
+		COMPLETE_WITH("ON");
+	else if (Matches("COMMENT", "ON", "RULE", MatchAny, "ON"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_rule);
+	}
+	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH"))
+		COMPLETE_WITH("CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE");
+	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH", "CONFIGURATION"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_ts_configurations);
+	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH", "DICTIONARY"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_ts_dictionaries);
+	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH", "PARSER"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_ts_parsers);
+	else if (Matches("COMMENT", "ON", "TEXT", "SEARCH", "TEMPLATE"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_ts_templates);
+	else if (Matches("COMMENT", "ON", "TRANSFORM", "FOR"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
+	else if (Matches("COMMENT", "ON", "TRANSFORM", "FOR", MatchAny))
+		COMPLETE_WITH("LANGUAGE");
+	else if (Matches("COMMENT", "ON", "TRANSFORM", "FOR", MatchAny, "LANGUAGE"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_languages);
+	}
+	else if (Matches("COMMENT", "ON", "TRIGGER", MatchAny))
+		COMPLETE_WITH("ON");
+	else if (Matches("COMMENT", "ON", "TRIGGER", MatchAny, "ON"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_trigger);
+	}
 	else if (Matches("COMMENT", "ON", MatchAny, MatchAnyExcept("IS")) ||
 			 Matches("COMMENT", "ON", MatchAny, MatchAny, MatchAnyExcept("IS")) ||
-			 Matches("COMMENT", "ON", MatchAny, MatchAny, MatchAny, MatchAnyExcept("IS")))
+			 Matches("COMMENT", "ON", MatchAny, MatchAny, MatchAny, MatchAnyExcept("IS")) ||
+			 Matches("COMMENT", "ON", MatchAny, MatchAny, MatchAny, MatchAny, MatchAnyExcept("IS")))
 		COMPLETE_WITH("IS");
 
 /* COPY */
