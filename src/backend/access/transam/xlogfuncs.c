@@ -382,7 +382,7 @@ pg_current_wal_flush_lsn(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	current_recptr = GetFlushRecPtr();
+	current_recptr = GetFlushRecPtr(NULL);
 
 	PG_RETURN_LSN(current_recptr);
 }
@@ -469,7 +469,8 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	 * xlogfilename
 	 */
 	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno, wal_segment_size);
+	XLogFileName(xlogfilename, GetWALInsertionTimeLine(), xlogsegno,
+				 wal_segment_size);
 
 	values[0] = CStringGetTextDatum(xlogfilename);
 	isnull[0] = false;
@@ -511,7 +512,8 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 						 "pg_walfile_name()")));
 
 	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno, wal_segment_size);
+	XLogFileName(xlogfilename, GetWALInsertionTimeLine(), xlogsegno,
+				 wal_segment_size);
 
 	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }

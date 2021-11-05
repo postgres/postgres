@@ -625,7 +625,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	 * target position accordingly.
 	 */
 	if (!RecoveryInProgress())
-		moveto = Min(moveto, GetFlushRecPtr());
+		moveto = Min(moveto, GetFlushRecPtr(NULL));
 	else
 		moveto = Min(moveto, GetXLogReplayRecPtr(NULL));
 

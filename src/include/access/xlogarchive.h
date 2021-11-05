@@ -24,7 +24,7 @@ extern void ExecuteRecoveryCommand(const char *command, const char *commandName,
 								   bool failOnSignal);
 extern void KeepFileRestoredFromArchive(const char *path, const char *xlogfname);
 extern void XLogArchiveNotify(const char *xlog);
-extern void XLogArchiveNotifySeg(XLogSegNo segno);
+extern void XLogArchiveNotifySeg(XLogSegNo segno, TimeLineID tli);
 extern void XLogArchiveForceDone(const char *xlog);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);

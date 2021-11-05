@@ -192,7 +192,7 @@ CheckpointStatsData CheckpointStats;
  * ThisTimeLineID will be same in all backends --- it identifies current
  * WAL timeline for the database system.
  */
-TimeLineID	ThisTimeLineID = 0;
+static TimeLineID	ThisTimeLineID = 0;
 
 static XLogRecPtr LastRec;
 
@@ -917,7 +917,8 @@ static void AdvanceXLInsertBuffer(XLogRecPtr upto, bool opportunistic);
 static bool XLogCheckpointNeeded(XLogSegNo new_segno);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible);
 static bool InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-								   bool find_free, XLogSegNo max_segno);
+								   bool find_free, XLogSegNo max_segno,
+								   TimeLineID tli);
 static int	XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 						 XLogSource source, bool notfoundOk);
 static int	XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source);
@@ -2518,7 +2519,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 							wal_segment_size);
 
 			/* create/use new log file */
-			openLogFile = XLogFileInit(openLogSegNo);
+			openLogFile = XLogFileInit(openLogSegNo, ThisTimeLineID);
 			ReserveExternalFD();
 		}
 
@@ -2633,7 +2634,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			 */
 			if (finishing_seg)
 			{
-				issue_xlog_fsync(openLogFile, openLogSegNo);
+				issue_xlog_fsync(openLogFile, openLogSegNo, ThisTimeLineID);
 
 				/* signal that we need to wakeup walsenders later */
 				WalSndWakeupRequest();
@@ -2641,7 +2642,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 				LogwrtResult.Flush = LogwrtResult.Write;	/* end of page */
 
 				if (XLogArchivingActive())
-					XLogArchiveNotifySeg(openLogSegNo);
+					XLogArchiveNotifySeg(openLogSegNo, ThisTimeLineID);
 
 				XLogCtl->lastSegSwitchTime = (pg_time_t) time(NULL);
 				XLogCtl->lastSegSwitchLSN = LogwrtResult.Flush;
@@ -2704,7 +2705,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 				ReserveExternalFD();
 			}
 
-			issue_xlog_fsync(openLogFile, openLogSegNo);
+			issue_xlog_fsync(openLogFile, openLogSegNo, ThisTimeLineID);
 		}
 
 		/* signal that we need to wakeup walsenders later */
@@ -3296,7 +3297,8 @@ XLogNeedsFlush(XLogRecPtr record)
  * succeed.  (This is weird, but it's efficient for the callers.)
  */
 static int
-XLogFileInitInternal(XLogSegNo logsegno, bool *added, char *path)
+XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
+					 bool *added, char *path)
 {
 	char		tmppath[MAXPGPATH];
 	PGAlignedXLogBlock zbuffer;
@@ -3305,7 +3307,9 @@ XLogFileInitInternal(XLogSegNo logsegno, bool *added, char *path)
 	int			fd;
 	int			save_errno;
 
-	XLogFilePath(path, ThisTimeLineID, logsegno, wal_segment_size);
+	Assert(logtli != 0);
+
+	XLogFilePath(path, logtli, logsegno, wal_segment_size);
 
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
@@ -3449,7 +3453,8 @@ XLogFileInitInternal(XLogSegNo logsegno, bool *added, char *path)
 	 * CheckPointSegments.
 	 */
 	max_segno = logsegno + CheckPointSegments;
-	if (InstallXLogFileSegment(&installed_segno, tmppath, true, max_segno))
+	if (InstallXLogFileSegment(&installed_segno, tmppath, true, max_segno,
+							   logtli))
 	{
 		*added = true;
 		elog(DEBUG2, "done creating and filling new WAL file");
@@ -3481,13 +3486,15 @@ XLogFileInitInternal(XLogSegNo logsegno, bool *added, char *path)
  * in a critical section.
  */
 int
-XLogFileInit(XLogSegNo logsegno)
+XLogFileInit(XLogSegNo logsegno, TimeLineID logtli)
 {
 	bool		ignore_added;
 	char		path[MAXPGPATH];
 	int			fd;
 
-	fd = XLogFileInitInternal(logsegno, &ignore_added, path);
+	Assert(logtli != 0);
+
+	fd = XLogFileInitInternal(logsegno, logtli, &ignore_added, path);
 	if (fd >= 0)
 		return fd;
 
@@ -3629,7 +3636,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 	/*
 	 * Now move the segment into place with its final name.
 	 */
-	if (!InstallXLogFileSegment(&destsegno, tmppath, false, 0))
+	if (!InstallXLogFileSegment(&destsegno, tmppath, false, 0, ThisTimeLineID))
 		elog(ERROR, "InstallXLogFileSegment should not have failed");
 }
 
@@ -3653,18 +3660,22 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
  * free slot is found between *segno and max_segno. (Ignored when find_free
  * is false.)
  *
+ * tli: The timeline on which the new segment should be installed.
+ *
  * Returns true if the file was installed successfully.  false indicates that
  * max_segno limit was exceeded, the startup process has disabled this
  * function for now, or an error occurred while renaming the file into place.
  */
 static bool
 InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
-					   bool find_free, XLogSegNo max_segno)
+					   bool find_free, XLogSegNo max_segno, TimeLineID tli)
 {
 	char		path[MAXPGPATH];
 	struct stat stat_buf;
 
-	XLogFilePath(path, ThisTimeLineID, *segno, wal_segment_size);
+	Assert(tli != 0);
+
+	XLogFilePath(path, tli, *segno, wal_segment_size);
 
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 	if (!XLogCtl->InstallXLogFileSegmentActive)
@@ -3690,7 +3701,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 				return false;
 			}
 			(*segno)++;
-			XLogFilePath(path, ThisTimeLineID, *segno, wal_segment_size);
+			XLogFilePath(path, tli, *segno, wal_segment_size);
 		}
 	}
 
@@ -3987,7 +3998,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	if (offset >= (uint32) (0.75 * wal_segment_size))
 	{
 		_logSegNo++;
-		lf = XLogFileInitInternal(_logSegNo, &added, path);
+		lf = XLogFileInitInternal(_logSegNo, ThisTimeLineID, &added, path);
 		if (lf >= 0)
 			close(lf);
 		if (added)
@@ -4266,7 +4277,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 		XLogCtl->InstallXLogFileSegmentActive &&	/* callee rechecks this */
 		lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
 		InstallXLogFileSegment(endlogSegNo, path,
-							   true, recycleSegNo))
+							   true, recycleSegNo, ThisTimeLineID))
 	{
 		ereport(DEBUG2,
 				(errmsg_internal("recycled write-ahead log file \"%s\"",
@@ -5401,7 +5412,7 @@ BootStrapXLOG(void)
 	record->xl_crc = crc;
 
 	/* Create first XLOG segment file */
-	openLogFile = XLogFileInit(1);
+	openLogFile = XLogFileInit(1, ThisTimeLineID);
 
 	/*
 	 * We needn't bother with Reserve/ReleaseExternalFD here, since we'll
@@ -5709,7 +5720,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 		 */
 		int			fd;
 
-		fd = XLogFileInit(startLogSegNo);
+		fd = XLogFileInit(startLogSegNo, ThisTimeLineID);
 
 		if (close(fd) != 0)
 		{
@@ -8706,13 +8717,33 @@ GetInsertRecPtr(void)
  * position known to be fsync'd to disk.
  */
 XLogRecPtr
-GetFlushRecPtr(void)
+GetFlushRecPtr(TimeLineID *insertTLI)
 {
 	SpinLockAcquire(&XLogCtl->info_lck);
 	LogwrtResult = XLogCtl->LogwrtResult;
 	SpinLockRelease(&XLogCtl->info_lck);
 
+	/*
+	 * If we're writing and flushing WAL, the time line can't be changing,
+	 * so no lock is required.
+	 */
+	if (insertTLI)
+		*insertTLI = XLogCtl->ThisTimeLineID;
+
 	return LogwrtResult.Flush;
+}
+
+/*
+ * GetWALInsertionTimeLine -- Returns the current timeline of a system that
+ * is not in recovery.
+ */
+TimeLineID
+GetWALInsertionTimeLine(void)
+{
+	Assert(XLogCtl->SharedRecoveryState == RECOVERY_STATE_DONE);
+
+	/* Since the value can't be changing, no lock is required. */
+	return XLogCtl->ThisTimeLineID;
 }
 
 /*
@@ -10849,10 +10880,12 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
  * 'segno' is for error reporting purposes.
  */
 void
-issue_xlog_fsync(int fd, XLogSegNo segno)
+issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 {
 	char	   *msg = NULL;
 	instr_time	start;
+
+	Assert(tli != 0);
 
 	/*
 	 * Quick exit if fsync is disabled or write() has already synced the WAL
@@ -10902,8 +10935,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 		char		xlogfname[MAXFNAMELEN];
 		int			save_errno = errno;
 
-		XLogFileName(xlogfname, ThisTimeLineID, segno,
-					 wal_segment_size);
+		XLogFileName(xlogfname, tli, segno, wal_segment_size);
 		errno = save_errno;
 		ereport(PANIC,
 				(errcode_for_file_access(),

@@ -498,11 +498,13 @@ XLogArchiveNotify(const char *xlog)
  * Convenience routine to notify using segment number representation of filename
  */
 void
-XLogArchiveNotifySeg(XLogSegNo segno)
+XLogArchiveNotifySeg(XLogSegNo segno, TimeLineID tli)
 {
 	char		xlog[MAXFNAMELEN];
 
-	XLogFileName(xlog, ThisTimeLineID, segno, wal_segment_size);
+	Assert(tli != 0);
+
+	XLogFileName(xlog, tli, segno, wal_segment_size);
 	XLogArchiveNotify(xlog);
 }
 

@@ -211,7 +211,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	 * Compute the current end-of-wal.
 	 */
 	if (!RecoveryInProgress())
-		end_of_wal = GetFlushRecPtr();
+		end_of_wal = GetFlushRecPtr(NULL);
 	else
 		end_of_wal = GetXLogReplayRecPtr(NULL);
 
