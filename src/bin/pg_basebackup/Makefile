@@ -19,6 +19,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 # make these available to TAP test scripts
+export LZ4
 export TAR
 # Note that GZIP cannot be used directly as this environment variable is
 # used by the command "gzip" to pass down options, so stick with a different

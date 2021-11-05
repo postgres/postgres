@@ -268,13 +268,15 @@ PostgreSQL documentation
       <listitem>
        <para>
         Enables compression of write-ahead logs using the specified method.
-        Supported values <literal>gzip</literal>, and
-        <literal>none</literal>.
+        Supported values <literal>gzip</literal>, <literal>lz4</literal>
+        (if <productname>PostgreSQL</productname> was compiled with
+        <option>--with-lz4</option>), and <literal>none</literal>.
        </para>
 
        <para>
         The suffix <filename>.gz</filename> will automatically be added to
-        all filenames when using <literal>gzip</literal>
+        all filenames when using <literal>gzip</literal>, and the suffix
+        <filename>.lz4</filename> is added when using <literal>lz4</literal>.
        </para>
       </listitem>
      </varlistentry>

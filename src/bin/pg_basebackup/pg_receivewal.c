@@ -32,6 +32,10 @@
 #include "receivelog.h"
 #include "streamutil.h"
 
+#ifdef HAVE_LIBLZ4
+#include "lz4frame.h"
+#endif
+
 /* Time to sleep between reconnection attempts */
 #define RECONNECT_SLEEP_TIME 5
 
@@ -136,6 +140,15 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		return true;
 	}
 
+	/* File looks like a completed LZ4-compressed WAL file */
+	if (fname_len == XLOG_FNAME_LEN + strlen(".lz4") &&
+		strcmp(filename + XLOG_FNAME_LEN, ".lz4") == 0)
+	{
+		*ispartial = false;
+		*wal_compression_method = COMPRESSION_LZ4;
+		return true;
+	}
+
 	/* File looks like a partial uncompressed WAL file */
 	if (fname_len == XLOG_FNAME_LEN + strlen(".partial") &&
 		strcmp(filename + XLOG_FNAME_LEN, ".partial") == 0)
@@ -151,6 +164,15 @@ is_xlogfilename(const char *filename, bool *ispartial,
 	{
 		*ispartial = true;
 		*wal_compression_method = COMPRESSION_GZIP;
+		return true;
+	}
+
+	/* File looks like a partial LZ4-compressed WAL file */
+	if (fname_len == XLOG_FNAME_LEN + strlen(".lz4.partial") &&
+		strcmp(filename + XLOG_FNAME_LEN, ".lz4.partial") == 0)
+	{
+		*ispartial = true;
+		*wal_compression_method = COMPRESSION_LZ4;
 		return true;
 	}
 
@@ -278,12 +300,20 @@ FindStreamingStart(uint32 *tli)
 		/*
 		 * Check that the segment has the right size, if it's supposed to be
 		 * completed.  For non-compressed segments just check the on-disk size
-		 * and see if it matches a completed segment. For gzip-compressed
+		 * and see if it matches a completed segment.  For gzip-compressed
 		 * segments, look at the last 4 bytes of the compressed file, which is
 		 * where the uncompressed size is located for files with a size lower
 		 * than 4GB, and then compare it to the size of a completed segment.
 		 * The 4 last bytes correspond to the ISIZE member according to
 		 * http://www.zlib.org/rfc-gzip.html.
+		 *
+		 * For LZ4-compressed segments, uncompress the file in a throw-away
+		 * buffer keeping track of the uncompressed size, then compare it to
+		 * the size of a completed segment.  Per its protocol, LZ4 does not
+		 * store the uncompressed size of an object by default.  contentSize
+		 * is one possible way to do that, but we need to rely on a method
+		 * where WAL segments could have been compressed by a different source
+		 * than pg_receivewal, like an archive_command with lz4.
 		 */
 		if (!ispartial && wal_compression_method == COMPRESSION_NONE)
 		{
@@ -349,6 +379,114 @@ FindStreamingStart(uint32 *tli)
 							   dirent->d_name, bytes_out);
 				continue;
 			}
+		}
+		else if (!ispartial && wal_compression_method == COMPRESSION_LZ4)
+		{
+#ifdef HAVE_LIBLZ4
+#define LZ4_CHUNK_SZ	64 * 1024	/* 64kB as maximum chunk size read */
+			int			fd;
+			ssize_t		r;
+			size_t		uncompressed_size = 0;
+			char		fullpath[MAXPGPATH * 2];
+			char	   *outbuf;
+			char	   *readbuf;
+			LZ4F_decompressionContext_t ctx = NULL;
+			LZ4F_decompressOptions_t dec_opt;
+			LZ4F_errorCode_t status;
+
+			memset(&dec_opt, 0, sizeof(dec_opt));
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
+
+			fd = open(fullpath, O_RDONLY | PG_BINARY, 0);
+			if (fd < 0)
+			{
+				pg_log_error("could not open file \"%s\": %m", fullpath);
+				exit(1);
+			}
+
+			status = LZ4F_createDecompressionContext(&ctx, LZ4F_VERSION);
+			if (LZ4F_isError(status))
+			{
+				pg_log_error("could not create LZ4 decompression context: %s",
+							 LZ4F_getErrorName(status));
+				exit(1);
+			}
+
+			outbuf = pg_malloc0(LZ4_CHUNK_SZ);
+			readbuf = pg_malloc0(LZ4_CHUNK_SZ);
+			do
+			{
+				char	   *readp;
+				char	   *readend;
+
+				r = read(fd, readbuf, LZ4_CHUNK_SZ);
+				if (r < 0)
+				{
+					pg_log_error("could not read file \"%s\": %m", fullpath);
+					exit(1);
+				}
+
+				/* Done reading the file */
+				if (r == 0)
+					break;
+
+				/* Process one chunk */
+				readp = readbuf;
+				readend = readbuf + r;
+				while (readp < readend)
+				{
+					size_t		out_size = LZ4_CHUNK_SZ;
+					size_t		read_size = readend - readp;
+
+					memset(outbuf, 0, LZ4_CHUNK_SZ);
+					status = LZ4F_decompress(ctx, outbuf, &out_size,
+											 readp, &read_size, &dec_opt);
+					if (LZ4F_isError(status))
+					{
+						pg_log_error("could not decompress file \"%s\": %s",
+									 fullpath,
+									 LZ4F_getErrorName(status));
+						exit(1);
+					}
+
+					readp += read_size;
+					uncompressed_size += out_size;
+				}
+
+				/*
+				 * No need to continue reading the file when the
+				 * uncompressed_size exceeds WalSegSz, even if there are still
+				 * data left to read. However, if uncompressed_size is equal
+				 * to WalSegSz, it should verify that there is no more data to
+				 * read.
+				 */
+			} while (uncompressed_size <= WalSegSz && r > 0);
+
+			close(fd);
+			pg_free(outbuf);
+			pg_free(readbuf);
+
+			status = LZ4F_freeDecompressionContext(ctx);
+			if (LZ4F_isError(status))
+			{
+				pg_log_error("could not free LZ4 decompression context: %s",
+							 LZ4F_getErrorName(status));
+				exit(1);
+			}
+
+			if (uncompressed_size != WalSegSz)
+			{
+				pg_log_warning("compressed segment file \"%s\" has incorrect uncompressed size %ld, skipping",
+							   dirent->d_name, uncompressed_size);
+				continue;
+			}
+#else
+			pg_log_error("could not check file \"%s\"",
+						 dirent->d_name);
+			pg_log_error("this build does not support compression with %s",
+						 "LZ4");
+			exit(1);
+#endif
 		}
 
 		/* Looks like a valid segment. Remember that we saw it. */
@@ -650,6 +788,8 @@ main(int argc, char **argv)
 			case 6:
 				if (pg_strcasecmp(optarg, "gzip") == 0)
 					compression_method = COMPRESSION_GZIP;
+				else if (pg_strcasecmp(optarg, "lz4") == 0)
+					compression_method = COMPRESSION_LZ4;
 				else if (pg_strcasecmp(optarg, "none") == 0)
 					compression_method = COMPRESSION_NONE;
 				else
@@ -745,6 +885,22 @@ main(int argc, char **argv)
 #else
 			pg_log_error("this build does not support compression with %s",
 						 "gzip");
+			exit(1);
+#endif
+			break;
+		case COMPRESSION_LZ4:
+#ifdef HAVE_LIBLZ4
+			if (compresslevel != 0)
+			{
+				pg_log_error("cannot use --compress with --compression-method=%s",
+							 "lz4");
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+						progname);
+				exit(1);
+			}
+#else
+			pg_log_error("this build does not support compression with %s",
+						 "LZ4");
 			exit(1);
 #endif
 			break;
