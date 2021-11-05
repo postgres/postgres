@@ -17,6 +17,7 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "replication/backup_manifest.h"
+#include "replication/basebackup_sink.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
 
@@ -310,9 +311,8 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
  * Finalize the backup manifest, and send it to the client.
  */
 void
-SendBackupManifest(backup_manifest_info *manifest)
+SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
 {
-	StringInfoData protobuf;
 	uint8		checksumbuf[PG_SHA256_DIGEST_LENGTH];
 	char		checksumstringbuf[PG_SHA256_DIGEST_STRING_LENGTH];
 	size_t		manifest_bytes_done = 0;
@@ -352,38 +352,28 @@ SendBackupManifest(backup_manifest_info *manifest)
 				(errcode_for_file_access(),
 				 errmsg("could not rewind temporary file")));
 
-	/* Send CopyOutResponse message */
-	pq_beginmessage(&protobuf, 'H');
-	pq_sendbyte(&protobuf, 0);	/* overall format */
-	pq_sendint16(&protobuf, 0); /* natts */
-	pq_endmessage(&protobuf);
 
 	/*
-	 * Send CopyData messages.
-	 *
-	 * We choose to read back the data from the temporary file in chunks of
-	 * size BLCKSZ; this isn't necessary, but buffile.c uses that as the I/O
-	 * size, so it seems to make sense to match that value here.
+	 * Send the backup manifest.
 	 */
+	bbsink_begin_manifest(sink);
 	while (manifest_bytes_done < manifest->manifest_size)
 	{
-		char		manifestbuf[BLCKSZ];
 		size_t		bytes_to_read;
 		size_t		rc;
 
-		bytes_to_read = Min(sizeof(manifestbuf),
+		bytes_to_read = Min(sink->bbs_buffer_length,
 							manifest->manifest_size - manifest_bytes_done);
-		rc = BufFileRead(manifest->buffile, manifestbuf, bytes_to_read);
+		rc = BufFileRead(manifest->buffile, sink->bbs_buffer,
+						 bytes_to_read);
 		if (rc != bytes_to_read)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read from temporary file: %m")));
-		pq_putmessage('d', manifestbuf, bytes_to_read);
+		bbsink_manifest_contents(sink, bytes_to_read);
 		manifest_bytes_done += bytes_to_read;
 	}
-
-	/* No more data, so send CopyDone message */
-	pq_putemptymessage('c');
+	bbsink_end_manifest(sink);
 
 	/* Release resources */
 	BufFileClose(manifest->buffile);
