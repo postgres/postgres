@@ -35,10 +35,16 @@ OBJS = \
 	streamutil.o \
 	walmethods.o
 
+BBOBJS = \
+	pg_basebackup.o \
+	bbstreamer_file.o \
+	bbstreamer_inject.o \
+	bbstreamer_tar.o
+
 all: pg_basebackup pg_receivewal pg_recvlogical
 
-pg_basebackup: pg_basebackup.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
-	$(CC) $(CFLAGS) pg_basebackup.o $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+pg_basebackup: $(BBOBJS) $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
+	$(CC) $(CFLAGS) $(BBOBJS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 pg_receivewal: pg_receivewal.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_receivewal.o $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
@@ -61,7 +67,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_basebackup$(X) pg_receivewal$(X) pg_recvlogical$(X) \
-		pg_basebackup.o pg_receivewal.o pg_recvlogical.o \
+		$(BBOBJS) pg_receivewal.o pg_recvlogical.o \
 		$(OBJS)
 	rm -rf tmp_check
 
