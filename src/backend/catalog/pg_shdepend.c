@@ -1113,6 +1113,12 @@ storeObjectDescription(StringInfo descs,
 {
 	char	   *objdesc = getObjectDescription(object);
 
+	/*
+	 * An object being dropped concurrently doesn't need to be reported.
+	 */
+	if (objdesc == NULL)
+		return;
+
 	/* separate entries with a newline */
 	if (descs->len != 0)
 		appendStringInfoChar(descs, '\n');
