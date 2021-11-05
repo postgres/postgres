@@ -844,38 +844,114 @@ heap_page_prune_execute(Buffer buffer,
 {
 	Page		page = (Page) BufferGetPage(buffer);
 	OffsetNumber *offnum;
-	int			i;
+	HeapTupleHeader htup PG_USED_FOR_ASSERTS_ONLY;
 
 	/* Shouldn't be called unless there's something to do */
 	Assert(nredirected > 0 || ndead > 0 || nunused > 0);
 
 	/* Update all redirected line pointers */
 	offnum = redirected;
-	for (i = 0; i < nredirected; i++)
+	for (int i = 0; i < nredirected; i++)
 	{
 		OffsetNumber fromoff = *offnum++;
 		OffsetNumber tooff = *offnum++;
 		ItemId		fromlp = PageGetItemId(page, fromoff);
+		ItemId		tolp PG_USED_FOR_ASSERTS_ONLY;
+
+#ifdef USE_ASSERT_CHECKING
+
+		/*
+		 * Any existing item that we set as an LP_REDIRECT (any 'from' item)
+		 * must be the first item from a HOT chain.  If the item has tuple
+		 * storage then it can't be a heap-only tuple.  Otherwise we are just
+		 * maintaining an existing LP_REDIRECT from an existing HOT chain that
+		 * has been pruned at least once before now.
+		 */
+		if (!ItemIdIsRedirected(fromlp))
+		{
+			Assert(ItemIdHasStorage(fromlp) && ItemIdIsNormal(fromlp));
+
+			htup = (HeapTupleHeader) PageGetItem(page, fromlp);
+			Assert(!HeapTupleHeaderIsHeapOnly(htup));
+		}
+		else
+		{
+			/* We shouldn't need to redundantly set the redirect */
+			Assert(ItemIdGetRedirect(fromlp) != tooff);
+		}
+
+		/*
+		 * The item that we're about to set as an LP_REDIRECT (the 'from'
+		 * item) will point to an existing item (the 'to' item) that is
+		 * already a heap-only tuple.  There can be at most one LP_REDIRECT
+		 * item per HOT chain.
+		 *
+		 * We need to keep around an LP_REDIRECT item (after original
+		 * non-heap-only root tuple gets pruned away) so that it's always
+		 * possible for VACUUM to easily figure out what TID to delete from
+		 * indexes when an entire HOT chain becomes dead.  A heap-only tuple
+		 * can never become LP_DEAD; an LP_REDIRECT item or a regular heap
+		 * tuple can.
+		 */
+		tolp = PageGetItemId(page, tooff);
+		Assert(ItemIdHasStorage(tolp) && ItemIdIsNormal(tolp));
+		htup = (HeapTupleHeader) PageGetItem(page, tolp);
+		Assert(HeapTupleHeaderIsHeapOnly(htup));
+#endif
 
 		ItemIdSetRedirect(fromlp, tooff);
 	}
 
 	/* Update all now-dead line pointers */
 	offnum = nowdead;
-	for (i = 0; i < ndead; i++)
+	for (int i = 0; i < ndead; i++)
 	{
 		OffsetNumber off = *offnum++;
 		ItemId		lp = PageGetItemId(page, off);
+
+#ifdef USE_ASSERT_CHECKING
+
+		/*
+		 * An LP_DEAD line pointer must be left behind when the original item
+		 * (which is dead to everybody) could still be referenced by a TID in
+		 * an index.  This should never be necessary with any individual
+		 * heap-only tuple item, though. (It's not clear how much of a problem
+		 * that would be, but there is no reason to allow it.)
+		 */
+		if (ItemIdHasStorage(lp))
+		{
+			Assert(ItemIdIsNormal(lp));
+			htup = (HeapTupleHeader) PageGetItem(page, lp);
+			Assert(!HeapTupleHeaderIsHeapOnly(htup));
+		}
+		else
+		{
+			/* Whole HOT chain becomes dead */
+			Assert(ItemIdIsRedirected(lp));
+		}
+#endif
 
 		ItemIdSetDead(lp);
 	}
 
 	/* Update all now-unused line pointers */
 	offnum = nowunused;
-	for (i = 0; i < nunused; i++)
+	for (int i = 0; i < nunused; i++)
 	{
 		OffsetNumber off = *offnum++;
 		ItemId		lp = PageGetItemId(page, off);
+
+#ifdef USE_ASSERT_CHECKING
+
+		/*
+		 * Only heap-only tuples can become LP_UNUSED during pruning.  They
+		 * don't need to be left in place as LP_DEAD items until VACUUM gets
+		 * around to doing index vacuuming.
+		 */
+		Assert(ItemIdHasStorage(lp) && ItemIdIsNormal(lp));
+		htup = (HeapTupleHeader) PageGetItem(page, lp);
+		Assert(HeapTupleHeaderIsHeapOnly(htup));
+#endif
 
 		ItemIdSetUnused(lp);
 	}
