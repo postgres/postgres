@@ -440,48 +440,13 @@ sub mkvcbuild
 
 	if (!$solution->{options}->{openssl})
 	{
-		push @contrib_excludes, 'sslinfo', 'ssl_passphrase_callback';
+		push @contrib_excludes, 'sslinfo', 'ssl_passphrase_callback', 'pgcrypto';
 	}
 
 	if (!$solution->{options}->{uuid})
 	{
 		push @contrib_excludes, 'uuid-ossp';
 	}
-
-	# AddProject() does not recognize the constructs used to populate OBJS in
-	# the pgcrypto Makefile, so it will discover no files.
-	my $pgcrypto =
-	  $solution->AddProject('pgcrypto', 'dll', 'crypto', 'contrib/pgcrypto');
-	$pgcrypto->AddFiles(
-		'contrib/pgcrypto', 'pgcrypto.c',
-		'px.c',             'px-hmac.c',
-		'px-crypt.c',       'crypt-gensalt.c',
-		'crypt-blowfish.c', 'crypt-des.c',
-		'crypt-md5.c',      'mbuf.c',
-		'pgp.c',            'pgp-armor.c',
-		'pgp-cfb.c',        'pgp-compress.c',
-		'pgp-decrypt.c',    'pgp-encrypt.c',
-		'pgp-info.c',       'pgp-mpi.c',
-		'pgp-pubdec.c',     'pgp-pubenc.c',
-		'pgp-pubkey.c',     'pgp-s2k.c',
-		'pgp-pgsql.c');
-	if ($solution->{options}->{openssl})
-	{
-		$pgcrypto->AddFiles('contrib/pgcrypto', 'openssl.c',
-			'pgp-mpi-openssl.c');
-	}
-	else
-	{
-		$pgcrypto->AddFiles(
-			'contrib/pgcrypto', 'internal.c',
-			'internal-sha2.c',  'blf.c',
-			'rijndael.c',       'pgp-mpi-internal.c',
-			'imath.c');
-	}
-	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddLibrary('ws2_32.lib');
-	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
-	GenerateContribSqlFiles('pgcrypto', $mf);
 
 	foreach my $subdir ('contrib', 'src/test/modules')
 	{
@@ -795,7 +760,7 @@ sub mkvcbuild
 		}
 	}
 
-	$mf =
+	my $mf =
 	  Project::read_file('src/backend/utils/mb/conversion_procs/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ m{SUBDIRS\s*=\s*(.*)$}m

@@ -36,7 +36,6 @@ SUBDIRS = \
 		pg_stat_statements \
 		pg_surgery	\
 		pg_trgm		\
-		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\
 		pg_visibility	\
@@ -52,9 +51,9 @@ SUBDIRS = \
 		vacuumlo
 
 ifeq ($(with_ssl),openssl)
-SUBDIRS += sslinfo
+SUBDIRS += pgcrypto sslinfo
 else
-ALWAYS_SUBDIRS += sslinfo
+ALWAYS_SUBDIRS += pgcrypto sslinfo
 endif
 
 ifneq ($(with_uuid),no)

@@ -1,48 +1,38 @@
 # contrib/pgcrypto/Makefile
 
-INT_SRCS = internal.c internal-sha2.c blf.c rijndael.c \
-		pgp-mpi-internal.c imath.c
-INT_TESTS = sha2
-
-OSSL_SRCS = openssl.c pgp-mpi-openssl.c
-OSSL_TESTS = sha2 des 3des cast5
-
 ZLIB_TST = pgp-compression
 ZLIB_OFF_TST = pgp-zlib-DISABLED
 
-CF_SRCS = $(if $(subst openssl,,$(with_ssl)), $(INT_SRCS), $(OSSL_SRCS))
-CF_TESTS = $(if $(subst openssl,,$(with_ssl)), $(INT_TESTS), $(OSSL_TESTS))
 CF_PGP_TESTS = $(if $(subst no,,$(with_zlib)), $(ZLIB_TST), $(ZLIB_OFF_TST))
 
-SRCS = \
-	$(CF_SRCS) \
-	crypt-blowfish.c \
-	crypt-des.c \
-	crypt-gensalt.c \
-	crypt-md5.c \
-	mbuf.c \
-	pgcrypto.c \
-	pgp-armor.c \
-	pgp-cfb.c \
-	pgp-compress.c \
-	pgp-decrypt.c \
-	pgp-encrypt.c \
-	pgp-info.c \
-	pgp-mpi.c \
-	pgp-pgsql.c \
-	pgp-pubdec.c \
-	pgp-pubenc.c \
-	pgp-pubkey.c \
-	pgp-s2k.c \
-	pgp.c \
-	px-crypt.c \
-	px-hmac.c \
-	px.c
+OBJS = \
+	$(WIN32RES) \
+	crypt-blowfish.o \
+	crypt-des.o \
+	crypt-gensalt.o \
+	crypt-md5.o \
+	mbuf.o \
+	openssl.o \
+	pgcrypto.o \
+	pgp-armor.o \
+	pgp-cfb.o \
+	pgp-compress.o \
+	pgp-decrypt.o \
+	pgp-encrypt.o \
+	pgp-info.o \
+	pgp-mpi.o \
+	pgp-mpi-openssl.o \
+	pgp-pgsql.o \
+	pgp-pubdec.o \
+	pgp-pubenc.o \
+	pgp-pubkey.o \
+	pgp-s2k.o \
+	pgp.o \
+	px-crypt.o \
+	px-hmac.o \
+	px.o
 
 MODULE_big	= pgcrypto
-OBJS = \
-	$(SRCS:.c=.o) \
-	$(WIN32RES)
 
 EXTENSION = pgcrypto
 DATA = pgcrypto--1.3.sql pgcrypto--1.2--1.3.sql pgcrypto--1.1--1.2.sql \
@@ -50,7 +40,7 @@ DATA = pgcrypto--1.3.sql pgcrypto--1.2--1.3.sql pgcrypto--1.1--1.2.sql \
 PGFILEDESC = "pgcrypto - cryptographic functions"
 
 REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
-	$(CF_TESTS) \
+	sha2 des 3des cast5 \
 	crypt-des crypt-md5 crypt-blowfish crypt-xdes \
 	pgp-armor pgp-decrypt pgp-encrypt $(CF_PGP_TESTS) \
 	pgp-pubkey-decrypt pgp-pubkey-encrypt pgp-info
@@ -77,12 +67,3 @@ SHLIB_LINK += $(filter -leay32, $(LIBS))
 # those must be at the end
 SHLIB_LINK += -lws2_32
 endif
-
-# Upstream uses a larger subset of C99.
-imath.o: CFLAGS+=$(PERMIT_DECLARATION_AFTER_STATEMENT)
-
-rijndael.o: rijndael.tbl
-
-rijndael.tbl:
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DPRINT_TABS rijndael.c -o gen-rtab
-	./gen-rtab > rijndael.tbl
