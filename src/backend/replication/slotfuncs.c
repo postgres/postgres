@@ -627,7 +627,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	if (!RecoveryInProgress())
 		moveto = Min(moveto, GetFlushRecPtr());
 	else
-		moveto = Min(moveto, GetXLogReplayRecPtr(&ThisTimeLineID));
+		moveto = Min(moveto, GetXLogReplayRecPtr(NULL));
 
 	/* Acquire the slot so we "own" it */
 	ReplicationSlotAcquire(NameStr(*slotname), true);
