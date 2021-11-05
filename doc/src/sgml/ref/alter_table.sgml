@@ -198,6 +198,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       clause must be provided if there is no implicit or assignment
       cast from old to new type.
      </para>
+
+     <para>
+      When this form is used, the column's statistics are removed,
+      so running <link linkend="sql-analyze"><command>ANALYZE</command></link>
+      on the table afterwards is recommended.
+     </para>
     </listitem>
    </varlistentry>
 
