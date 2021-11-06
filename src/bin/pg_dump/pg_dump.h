@@ -660,6 +660,7 @@ typedef struct _SubscriptionInfo
 	char	   *subtwophasestate;
 	char	   *subdisableonerr;
 	char	   *subsynccommit;
+	int64		subapplydelay;
 	char	   *subpublications;
 } SubscriptionInfo;
 

@@ -302,7 +302,36 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
         </listitem>
        </varlistentry>
-      </variablelist></para>
+
+       <varlistentry>
+        <term><literal>min_apply_delay</literal> (<type>integer</type>)</term>
+        <listitem>
+         <para>
+          By default, subscriber applies changes as soon as possible. Similar
+          to the physical replication feature
+          (<xref linkend="guc-recovery-min-apply-delay"/>), it may be useful to
+          have a time-delayed copy of data for logical replication. This
+          parameter allows you to delay the application of changes by a
+          specified amount of time. If this value is specified without units,
+          it is taken as milliseconds. The default is zero, adding no delay.
+         </para>
+         <para>
+          The delay occurs only on WAL records for transaction begins and after
+          the initial table synchronization. It is possible that the
+          replication delay between publisher and subscriber exceeds the value
+          of this parameter, in which case no delay is added. Note that the
+          delay is calculated between the WAL time stamp as written on
+          publisher and the current time on the subscriber. Delays in logical
+          decoding and in transfer the transaction may reduce the actual wait
+          time. If the system clocks on publisher and subscriber are not
+          synchronized, this may lead to apply changes earlier than expected.
+          This is not a major issue because a typical setting of this parameter
+          are much larger than typical time deviations between servers.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
 
     </listitem>
    </varlistentry>

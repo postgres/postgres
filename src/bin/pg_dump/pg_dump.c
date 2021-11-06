@@ -4417,6 +4417,7 @@ getSubscriptions(Archive *fout)
 	int			i_subsynccommit;
 	int			i_subpublications;
 	int			i_subbinary;
+	int			i_subapplydelay;
 	int			i,
 				ntups;
 
@@ -4461,12 +4462,17 @@ getSubscriptions(Archive *fout)
 	if (fout->remoteVersion >= 150000)
 		appendPQExpBufferStr(query,
 							 " s.subtwophasestate,\n"
-							 " s.subdisableonerr\n");
+							 " s.subdisableonerr,\n");
 	else
 		appendPQExpBuffer(query,
 						  " '%c' AS subtwophasestate,\n"
-						  " false AS subdisableonerr\n",
+						  " false AS subdisableonerr,\n",
 						  LOGICALREP_TWOPHASE_STATE_DISABLED);
+
+	if (fout->remoteVersion >= 160000)
+		appendPQExpBufferStr(query, " s.subapplydelay\n");
+	else
+		appendPQExpBufferStr(query, " 0 AS subapplydelay\n");
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n"
@@ -4493,6 +4499,7 @@ getSubscriptions(Archive *fout)
 	i_substream = PQfnumber(res, "substream");
 	i_subtwophasestate = PQfnumber(res, "subtwophasestate");
 	i_subdisableonerr = PQfnumber(res, "subdisableonerr");
+	i_subapplydelay = PQfnumber(res, "subapplydelay");
 
 	subinfo = pg_malloc(ntups * sizeof(SubscriptionInfo));
 
@@ -4522,6 +4529,8 @@ getSubscriptions(Archive *fout)
 			pg_strdup(PQgetvalue(res, i, i_subtwophasestate));
 		subinfo[i].subdisableonerr =
 			pg_strdup(PQgetvalue(res, i, i_subdisableonerr));
+		subinfo[i].subapplydelay =
+			strtoi64(PQgetvalue(res, i, i_subapplydelay), NULL, 10);
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(subinfo[i].dobj), fout);
@@ -4597,6 +4606,9 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
+
+	if (subinfo->subapplydelay > 0)
+		appendPQExpBuffer(query, ", min_apply_delay = '" INT64_FORMAT " ms'", subinfo->subapplydelay);
 
 	appendPQExpBufferStr(query, ");\n");
 

@@ -2411,6 +2411,38 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 	return int128_compare(span1, span2);
 }
 
+/*
+ * Given an Interval returns the number of milliseconds.
+ */
+int64
+interval_to_ms(const Interval *interval)
+{
+	int64			days;
+	int64			ms;
+	int64			result;
+
+	days = interval->month * INT64CONST(30);
+	days += interval->day;
+
+	/*
+	 * The following operations use these special functions to detect overflow.
+	 * Number of ms per informed days.
+	 */
+	if (pg_mul_s64_overflow(days, MSECS_PER_DAY, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+
+	/* adds portion time (in ms) to the previous result. */
+	ms = interval->time / INT64CONST(1000);
+	if (pg_add_s64_overflow(result, ms, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+
+	return result;
+}
+
 Datum
 interval_eq(PG_FUNCTION_ARGS)
 {

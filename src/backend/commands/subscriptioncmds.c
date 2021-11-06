@@ -47,6 +47,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/syscache.h"
+#include "utils/timestamp.h"
 
 /*
  * Options that can be specified by the user in CREATE/ALTER SUBSCRIPTION
@@ -64,6 +65,7 @@
 #define SUBOPT_TWOPHASE_COMMIT		0x00000200
 #define SUBOPT_DISABLE_ON_ERR		0x00000400
 #define SUBOPT_LSN					0x00000800
+#define SUBOPT_MIN_APPLY_DELAY		0x00001000
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -87,6 +89,7 @@ typedef struct SubOpts
 	bool		twophase;
 	bool		disableonerr;
 	XLogRecPtr	lsn;
+	int64		min_apply_delay;
 } SubOpts;
 
 static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
@@ -292,11 +295,34 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 			opts->specified_opts |= SUBOPT_LSN;
 			opts->lsn = lsn;
 		}
+		else if (IsSet(supported_opts, SUBOPT_MIN_APPLY_DELAY) &&
+				 strcmp(defel->defname, "min_apply_delay") == 0)
+		{
+			char	   *val;
+			Interval   *interval;
+
+			if (IsSet(opts->specified_opts, SUBOPT_MIN_APPLY_DELAY))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_MIN_APPLY_DELAY;
+			val = defGetString(defel);
+
+			interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
+																	CStringGetDatum(val),
+																	ObjectIdGetDatum(InvalidOid),
+																	Int32GetDatum(-1)));
+			opts->min_apply_delay = interval_to_ms(interval);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unrecognized subscription parameter: \"%s\"", defel->defname)));
 	}
+
+	if (opts->min_apply_delay < 0)
+		ereport(ERROR,
+				errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("option \"%s\" must not be negative", "min_apply_delay"));
 
 	/*
 	 * We've been explicitly asked to not connect, that requires some
@@ -530,7 +556,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 					  SUBOPT_SLOT_NAME | SUBOPT_COPY_DATA |
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
 					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
-					  SUBOPT_DISABLE_ON_ERR);
+					  SUBOPT_DISABLE_ON_ERR | SUBOPT_MIN_APPLY_DELAY);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -595,6 +621,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	values[Anum_pg_subscription_oid - 1] = ObjectIdGetDatum(subid);
 	values[Anum_pg_subscription_subdbid - 1] = ObjectIdGetDatum(MyDatabaseId);
 	values[Anum_pg_subscription_subskiplsn - 1] = LSNGetDatum(InvalidXLogRecPtr);
+	values[Anum_pg_subscription_subapplydelay - 1] = Int64GetDatum(opts.min_apply_delay);
 	values[Anum_pg_subscription_subname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->subname));
 	values[Anum_pg_subscription_subowner - 1] = ObjectIdGetDatum(owner);
@@ -1070,6 +1097,12 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					replaces[Anum_pg_subscription_subdisableonerr - 1]
 						= true;
 				}
+				if (IsSet(opts.specified_opts, SUBOPT_MIN_APPLY_DELAY))
+				{
+					values[Anum_pg_subscription_subapplydelay - 1] =
+						Int64GetDatum(opts.min_apply_delay);
+					replaces[Anum_pg_subscription_subapplydelay - 1] = true;
+				}
 
 				update_tuple = true;
 				break;
@@ -1092,6 +1125,17 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 				if (opts.enabled)
 					ApplyLauncherWakeupAtCommit();
+
+				/*
+				 * If this subscription has been disabled and it has an apply
+				 * delay set, wake up the logical replication worker to finish
+				 * it as soon as possible.
+				 */
+				if (!opts.enabled && sub->applydelay > 0)
+				{
+					elog(DEBUG1, "subscription has been disabled");
+					logicalrep_worker_wakeup(sub->oid, InvalidOid);
+				}
 
 				update_tuple = true;
 				break;

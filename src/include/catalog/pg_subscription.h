@@ -58,6 +58,8 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	XLogRecPtr	subskiplsn;		/* All changes finished at this LSN are
 								 * skipped */
 
+	int64		subapplydelay;	/* Replication apply delay */
+
 	NameData	subname;		/* Name of the subscription */
 
 	Oid			subowner BKI_LOOKUP(pg_authid); /* Owner of the subscription */
@@ -104,6 +106,7 @@ typedef struct Subscription
 								 * in */
 	XLogRecPtr	skiplsn;		/* All changes finished at this LSN are
 								 * skipped */
+	int64		applydelay;		/* Replication apply delay */
 	char	   *name;			/* Name of the subscription */
 	Oid			owner;			/* Oid of the subscription owner */
 	bool		enabled;		/* Indicates if the subscription is enabled */
