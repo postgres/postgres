@@ -19,6 +19,7 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 	{
 		union
 		{
+			bool		bo;
 			int16		i2;
 			int32		i4;
 			int64		i8;
@@ -35,6 +36,10 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 
 		switch (tinfo->t)
 		{
+			case gbt_t_bool:
+				v.bo = DatumGetBool(entry->key);
+				leaf = &v.bo;
+				break;
 			case gbt_t_int2:
 				v.i2 = DatumGetInt16(entry->key);
 				leaf = &v.i2;
@@ -113,6 +118,9 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 	 */
 	switch (tinfo->t)
 	{
+		case gbt_t_bool:
+			datum = BoolGetDatum(*(bool *) entry->key);
+			break;
 		case gbt_t_int2:
 			datum = Int16GetDatum(*(int16 *) entry->key);
 			break;
