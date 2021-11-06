@@ -409,7 +409,7 @@ Branch: REL_11_STABLE [0d08c279b] 2021-10-19 13:54:46 -0400
 
      <para>
       A command such as <literal>UPDATE tab SET fld[1].subfld =
-      value</literal> failed if the array elements were domains rather
+      val</literal> failed if the array's elements were domains rather
       than plain composites.
      </para>
     </listitem>
@@ -427,9 +427,9 @@ Branch: REL_13_STABLE [170206e45] 2021-10-01 18:29:18 -0300
      </para>
 
      <para>
-      <literal>FETCH FIRST WITH TIES</literal> necessarily fetches
-      one more row than requested, so tha it can determine whether the
-      next row is a tie or not.  In our current implementation,
+      <literal>FETCH FIRST WITH TIES</literal> necessarily fetches one
+      more row than requested, since it cannot stop until it finds a row
+      that is not a tie.  In our current implementation,
       if <literal>FOR UPDATE</literal> is used then that row will also get
       locked even though it is not returned.  That results in undesirable
       behavior if the <literal>SKIP LOCKED</literal> option is specified.
@@ -454,9 +454,9 @@ Branch: REL_10_STABLE [5d7c6b6c8] 2021-09-03 16:38:55 -0400
      </para>
 
      <para>
-      Previously this was allowed, but the collation effectively vanished
-      into the ether because of the way collation lookup works: you could
-      not use the collation, nor even drop it.
+      Previously this was allowed, but then the collation could not be
+      referenced because of the way collation lookup works; you could not
+      use the collation, nor even drop it.
      </para>
     </listitem>
 
@@ -473,7 +473,7 @@ Branch: REL_13_STABLE [85dc4292a] 2021-10-19 11:04:04 +0900
      </para>
 
      <para>
-      While the parser accepts this, it's undocumented and doesn't
+      While the parser accepted this, it's undocumented and doesn't
       actually work.
      </para>
     </listitem>
@@ -545,7 +545,7 @@ Branch: REL9_6_STABLE [d90e14414] 2021-08-23 17:41:07 -0400
      <para>
       The regexp engine was careless about clearing match data
       for capturing parentheses after rejecting a partial match.  This
-      could allow a later back-reference to succeed when by rights it
+      could allow a later back-reference to match in places where it
       should fail for lack of a defined referent.
      </para>
     </listitem>
@@ -567,10 +567,9 @@ Branch: REL9_6_STABLE [cafebd663] 2021-08-20 14:19:04 -0400
      </para>
 
      <para>
-      Unnecessarily stupid back-tracking logic could result in exponential
-      time spent looking for a match.  Fortunately the problem is masked
-      in most cases by other optimizations; but it is possible to
-      demonstrate it with fairly simple, if contrived, regexps.
+      Incorrect back-tracking logic could result in exponential time spent
+      looking for a match.  Fortunately the problem is masked in most
+      cases by other optimizations.
      </para>
     </listitem>
 
@@ -593,49 +592,6 @@ Branch: REL9_6_STABLE [5907c3818] 2021-09-06 11:29:52 -0400
       The results were incorrect if the target time zone was specified by
       a dynamic timezone abbreviation (that is, one that is defined as
       equivalent to a full time zone name, rather than a fixed UTC offset).
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [9b8d68cc6] 2021-10-02 16:05:42 -0400
-Branch: REL_14_STABLE [fa8db4879] 2021-10-02 16:06:09 -0400
-Branch: REL_13_STABLE [9c76689de] 2021-10-02 16:06:23 -0400
-Branch: REL_12_STABLE [e5b25f19b] 2021-10-02 16:06:45 -0400
-Branch: REL_11_STABLE [9cc919b51] 2021-10-02 16:06:55 -0400
-Branch: REL_10_STABLE [e323630cd] 2021-10-02 16:07:16 -0400
-Branch: REL9_6_STABLE [dbec5a2fe] 2021-10-02 16:07:37 -0400
-Branch: master [ad740067a] 2021-10-02 16:05:10 -0400
-Branch: REL_14_STABLE [81464999b] 2021-10-02 16:06:09 -0400
-Branch: REL_13_STABLE [7ba8eb81f] 2021-10-02 16:06:23 -0400
-Branch: REL_12_STABLE [4721e8aa6] 2021-10-02 16:06:45 -0400
-Branch: REL_11_STABLE [bb6d42669] 2021-10-02 16:06:55 -0400
-Branch: REL_10_STABLE [cb0799db0] 2021-10-02 16:07:16 -0400
-Branch: REL9_6_STABLE [37cbe0f79] 2021-10-02 16:07:36 -0400
-Branch: master [c1aa3b3c0] 2021-10-04 14:52:39 -0400
-Branch: REL_14_STABLE [919c08d90] 2021-10-04 14:52:17 -0400
-Branch: REL_13_STABLE [c53ff69e1] 2021-10-04 14:52:17 -0400
-Branch: REL_12_STABLE [07873a5dc] 2021-10-04 14:52:17 -0400
-Branch: REL_11_STABLE [d0b0b70dc] 2021-10-04 14:52:17 -0400
-Branch: REL_10_STABLE [cd2479142] 2021-10-04 14:52:17 -0400
-Branch: REL9_6_STABLE [b5f34ae08] 2021-10-04 14:52:17 -0400
--->
-     <para>
-      Use the CLDR project's data to map Windows time zone names to IANA
-      time zones (Tom Lane)
-     </para>
-
-     <para>
-      When running on Windows, <application>initdb</application> attempts
-      to set the new cluster's <varname>timezone</varname> parameter to
-      the IANA time zone matching the system's prevailing time zone.
-      We were using a mapping table that we'd generated years ago and
-      updated only fitfully; unsurprisingly, it contained a number of
-      errors as well as omissions of recently-added zones.  It turns out
-      that CLDR has been tracking the most appropriate mappings, so start
-      using their data.  This change will not affect any existing
-      installation, only newly-initialized clusters.
      </para>
     </listitem>
 
@@ -765,7 +721,7 @@ Branch: REL_10_STABLE [8a6a1fe07] 2021-10-04 14:06:03 +0900
 Branch: REL9_6_STABLE [e2b2a9e1c] 2021-10-04 14:06:09 +0900
 -->
      <para>
-      Ensure prepared transactions are properly accounted for during
+      Ensure that prepared transactions are properly accounted for during
       promotion of a standby server (Michael Paquier, Andres Freund)
      </para>
 
@@ -959,7 +915,8 @@ Branch: REL_10_STABLE [96f6ef9fe] 2021-08-25 08:55:52 -0400
 
      <para>
       This oversight could lead to misbehavior in parallel queries if the
-      transaction isolation level is less than REPEATABLE READ.
+      transaction isolation level is less than <literal>REPEATABLE
+      READ</literal>.
      </para>
     </listitem>
 
@@ -1011,14 +968,14 @@ Branch: REL_10_STABLE [f77489046] 2021-09-09 23:59:40 +0900
 Branch: REL9_6_STABLE [61e2aa2db] 2021-09-10 00:00:06 +0900
 -->
      <para>
-      Fix walreceiver to ensure that it creates an archive notification
-      file before exiting (Fujii Masao)
+      Ensure that walreceiver processes create all required archive
+      notification files before exiting (Fujii Masao)
      </para>
 
      <para>
-      This failed to happen if the walreceiver exited exactly at a WAL
-      segment boundary, thus delaying archiving of the new segment on the
-      standby.
+      If a walreceiver exited exactly at a WAL segment boundary, it failed
+      to make a notification file for the last-received segment, thus
+      delaying archiving of that segment on the standby.
      </para>
     </listitem>
 
@@ -1033,8 +990,8 @@ Branch: REL_14_STABLE [ae254356f] 2021-10-06 13:28:30 +0900
 Branch: REL_13_STABLE [d6d68e223] 2021-10-06 13:28:35 +0900
 -->
      <para>
-      Compute the correct WAL range to include in a backup manifest when a
-      timeline change is involved (Kyotaro Horiguchi)
+      Fix computation of the WAL range to include in a backup manifest
+      when a timeline change is involved (Kyotaro Horiguchi)
      </para>
     </listitem>
 
@@ -1095,8 +1052,8 @@ Branch: REL_13_STABLE [a73a3671d] 2021-10-20 13:05:42 -0300
 Branch: REL_12_STABLE [3c8c49945] 2021-10-20 13:05:42 -0300
 -->
      <para>
-      Ensure correct lock level is used when renaming a table (Nathan
-      Bossart, &Aacute;lvaro Herrera)
+      Ensure that the correct lock level is used when renaming a table
+      (Nathan Bossart, &Aacute;lvaro Herrera)
      </para>
 
      <para>
@@ -1267,7 +1224,7 @@ Branch: REL_10_STABLE [4874886b4] 2021-08-13 16:44:18 +1200
      </para>
 
      <para>
-      It seems unlikely that this bug has yet been hit in practice, as it
+      It seems unlikely that this bug has been hit in practice, as it
       would require <varname>work_mem</varname> settings of hundreds of
       gigabytes for existing uses of <filename>simplehash.h</filename>.
      </para>
@@ -1343,6 +1300,23 @@ Branch: REL_13_STABLE [d5a2ffbce] 2021-10-27 13:09:00 -0700
      <para>
       This change should help detect index corruption involving duplicate
       table TIDs.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+Branch: master [d91353f4b] 2021-11-06 01:50:44 +0100
+Branch: REL_14_STABLE [f7829feb7] 2021-11-06 01:53:36 +0100
+-->
+     <para>
+      Avoid assertion failure when inserting NaN into a BRIN
+      float8 or float4 minmax_multi_ops index (Tomas Vondra)
+     </para>
+
+     <para>
+      In production builds, such cases would result in a somewhat
+      inefficient, but not actually incorrect, index.
      </para>
     </listitem>
 
@@ -1541,7 +1515,7 @@ Branch: REL9_6_STABLE [b1df061f7] 2021-10-22 15:22:26 -0400
       PRIVILEGES</command> command revoked some present-by-default
       privilege, for example <literal>EXECUTE</literal> for functions, and
       then a restricted <command>ALTER DEFAULT PRIVILEGES</command>
-      command granted that privilege back for a selected role or
+      command granted that privilege again for a selected role or
       schema, <application>pg_dump</application> failed to dump the
       restricted privilege grant correctly.
      </para>
@@ -1598,7 +1572,7 @@ Branch: REL9_6_STABLE [4645997c8] 2021-08-31 13:53:33 -0400
      <para>
       These changes provide only marginal improvement when dumping from a
       local server, but a dump from a remote server can benefit
-      substantially.
+      substantially due to fewer network round-trips.
      </para>
     </listitem>
 
@@ -1914,6 +1888,49 @@ Branch: REL_14_STABLE [52c0c1136] 2021-10-22 09:50:16 -0400
      <para>
       This allows tests to find built programs that are not installed,
       such as custom test drivers.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9b8d68cc6] 2021-10-02 16:05:42 -0400
+Branch: REL_14_STABLE [fa8db4879] 2021-10-02 16:06:09 -0400
+Branch: REL_13_STABLE [9c76689de] 2021-10-02 16:06:23 -0400
+Branch: REL_12_STABLE [e5b25f19b] 2021-10-02 16:06:45 -0400
+Branch: REL_11_STABLE [9cc919b51] 2021-10-02 16:06:55 -0400
+Branch: REL_10_STABLE [e323630cd] 2021-10-02 16:07:16 -0400
+Branch: REL9_6_STABLE [dbec5a2fe] 2021-10-02 16:07:37 -0400
+Branch: master [ad740067a] 2021-10-02 16:05:10 -0400
+Branch: REL_14_STABLE [81464999b] 2021-10-02 16:06:09 -0400
+Branch: REL_13_STABLE [7ba8eb81f] 2021-10-02 16:06:23 -0400
+Branch: REL_12_STABLE [4721e8aa6] 2021-10-02 16:06:45 -0400
+Branch: REL_11_STABLE [bb6d42669] 2021-10-02 16:06:55 -0400
+Branch: REL_10_STABLE [cb0799db0] 2021-10-02 16:07:16 -0400
+Branch: REL9_6_STABLE [37cbe0f79] 2021-10-02 16:07:36 -0400
+Branch: master [c1aa3b3c0] 2021-10-04 14:52:39 -0400
+Branch: REL_14_STABLE [919c08d90] 2021-10-04 14:52:17 -0400
+Branch: REL_13_STABLE [c53ff69e1] 2021-10-04 14:52:17 -0400
+Branch: REL_12_STABLE [07873a5dc] 2021-10-04 14:52:17 -0400
+Branch: REL_11_STABLE [d0b0b70dc] 2021-10-04 14:52:17 -0400
+Branch: REL_10_STABLE [cd2479142] 2021-10-04 14:52:17 -0400
+Branch: REL9_6_STABLE [b5f34ae08] 2021-10-04 14:52:17 -0400
+-->
+     <para>
+      Use the CLDR project's data to map Windows time zone names to IANA
+      time zones (Tom Lane)
+     </para>
+
+     <para>
+      When running on Windows, <application>initdb</application> attempts
+      to set the new cluster's <varname>timezone</varname> parameter to
+      the IANA time zone matching the system's prevailing time zone.
+      We were using a mapping table that we'd generated years ago and
+      updated only fitfully; unsurprisingly, it contained a number of
+      errors as well as omissions of recently-added zones.  It turns out
+      that CLDR has been tracking the most appropriate mappings, so start
+      using their data.  This change will not affect any existing
+      installation, only newly-initialized clusters.
      </para>
     </listitem>
 
