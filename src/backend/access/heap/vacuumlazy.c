@@ -3673,7 +3673,7 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 				{
 					TransactionId xmin;
 
-					/* Check comments in lazy_scan_heap. */
+					/* Check comments in lazy_scan_prune. */
 					if (!HeapTupleHeaderXminCommitted(tuple.t_data))
 					{
 						all_visible = false;
