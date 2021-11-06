@@ -12920,8 +12920,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Converts an array of lexemes to a <type>tsvector</type>.
-        The given strings are used as-is without further processing.
+        Converts an array of text strings to a <type>tsvector</type>.
+        The given strings are used as lexemes as-is, without further
+        processing.  Array elements must not be empty strings
+        or <literal>NULL</literal>.
        </para>
        <para>
         <literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal>
@@ -13104,6 +13106,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         Assigns the specified <parameter>weight</parameter> to elements
         of the <parameter>vector</parameter> that are listed
         in <parameter>lexemes</parameter>.
+        The strings in <parameter>lexemes</parameter> are taken as lexemes
+        as-is, without further processing.  Strings that do not match any
+        lexeme in <parameter>vector</parameter> are ignored.
        </para>
        <para>
         <literal>setweight('fat:2,4 cat:3 rat:5,6B'::tsvector, 'A', '{cat,rat}')</literal>
@@ -13265,6 +13270,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        <para>
         Removes any occurrence of the given <parameter>lexeme</parameter>
         from the <parameter>vector</parameter>.
+        The <parameter>lexeme</parameter> string is treated as a lexeme as-is,
+        without further processing.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal>
@@ -13281,6 +13288,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         Removes any occurrences of the lexemes
         in <parameter>lexemes</parameter>
         from the <parameter>vector</parameter>.
+        The strings in <parameter>lexemes</parameter> are taken as lexemes
+        as-is, without further processing.  Strings that do not match any
+        lexeme in <parameter>vector</parameter> are ignored.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal>

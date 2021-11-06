@@ -322,10 +322,9 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 		int			lex_len,
 					lex_pos;
 
+		/* Ignore null array elements, they surely don't match */
 		if (nulls[i])
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("lexeme array may not contain nulls")));
+			continue;
 
 		lex = VARDATA(dlexemes[i]);
 		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
@@ -602,10 +601,9 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 		int			lex_len,
 					lex_pos;
 
+		/* Ignore null array elements, they surely don't match */
 		if (nulls[i])
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("lexeme array may not contain nulls")));
+			continue;
 
 		lex = VARDATA(dlexemes[i]);
 		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
@@ -761,13 +759,21 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 
 	deconstruct_array(v, TEXTOID, -1, false, TYPALIGN_INT, &dlexemes, &nulls, &nitems);
 
-	/* Reject nulls (maybe we should just ignore them, instead?) */
+	/*
+	 * Reject nulls and zero length strings (maybe we should just ignore them,
+	 * instead?)
+	 */
 	for (i = 0; i < nitems; i++)
 	{
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
+
+		if (VARSIZE(dlexemes[i]) - VARHDRSZ == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
+					 errmsg("lexeme array may not contain empty strings")));
 	}
 
 	/* Sort and de-dup, because this is required for a valid tsvector. */
