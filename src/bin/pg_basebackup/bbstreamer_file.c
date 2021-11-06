@@ -561,7 +561,8 @@ create_file_for_extract(const char *filename, mode_t mode)
 static void
 bbstreamer_extractor_finalize(bbstreamer *streamer)
 {
-	bbstreamer_extractor *mystreamer = (bbstreamer_extractor *) streamer;
+	bbstreamer_extractor *mystreamer PG_USED_FOR_ASSERTS_ONLY
+		= (bbstreamer_extractor *) streamer;
 
 	Assert(mystreamer->file == NULL);
 }
