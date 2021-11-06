@@ -38,8 +38,6 @@
 
 #include "postgres.h"
 
-#define WIN32_LEAN_AND_MEAN
-
 /*
  * Some versions of the MS SDK contain "typedef enum { ... } ;" which the MS
  * compiler quite sanely complains about. Well done, Microsoft.
