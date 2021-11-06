@@ -351,6 +351,10 @@ FROM tenk1 ORDER BY unique2 LIMIT 5 OFFSET 5;
 SELECT brin_desummarize_range('brinidx_multi', 0);
 VACUUM brintest_multi;  -- force a summarization cycle in brinidx
 
+-- Try inserting a values with NaN, to test distance calculation.
+insert into public.brintest_multi (float4col) values (real 'nan');
+insert into public.brintest_multi (float8col) values (real 'nan');
+
 UPDATE brintest_multi SET int8col = int8col * int4col;
 
 -- Tests for brin_summarize_new_values

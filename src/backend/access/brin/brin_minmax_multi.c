@@ -73,6 +73,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
+#include "utils/float.h"
 #include "utils/inet.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1872,6 +1873,14 @@ brin_minmax_multi_distance_float4(PG_FUNCTION_ARGS)
 	float		a1 = PG_GETARG_FLOAT4(0);
 	float		a2 = PG_GETARG_FLOAT4(1);
 
+	/* if both values are NaN, then we consider them the same */
+	if (isnan(a1) && isnan(a2))
+		PG_RETURN_FLOAT8(0.0);
+
+	/* if one value is NaN, use infinite distance */
+	if (isnan(a1) || isnan(a2))
+		PG_RETURN_FLOAT8(get_float8_infinity());
+
 	/*
 	 * We know the values are range boundaries, but the range may be collapsed
 	 * (i.e. single points), with equal values.
@@ -1889,6 +1898,14 @@ brin_minmax_multi_distance_float8(PG_FUNCTION_ARGS)
 {
 	double		a1 = PG_GETARG_FLOAT8(0);
 	double		a2 = PG_GETARG_FLOAT8(1);
+
+	/* if both values are NaN, then we consider them the same */
+	if (isnan(a1) && isnan(a2))
+		PG_RETURN_FLOAT8(0.0);
+
+	/* if one value is NaN, use infinite distance */
+	if (isnan(a1) || isnan(a2))
+		PG_RETURN_FLOAT8(get_float8_infinity());
 
 	/*
 	 * We know the values are range boundaries, but the range may be collapsed
