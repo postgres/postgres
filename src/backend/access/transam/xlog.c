@@ -12109,6 +12109,9 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 	uint32		hi,
 				lo;
 
+	/* suppress possible uninitialized-variable warnings */
+	*checkPointLoc = InvalidXLogRecPtr;
+	*backupLabelTLI = 0;
 	*backupEndRequired = false;
 	*backupFromStandby = false;
 
