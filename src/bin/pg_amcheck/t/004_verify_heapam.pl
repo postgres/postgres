@@ -218,7 +218,7 @@ my $rel = $node->safe_psql('postgres',
 my $relpath = "$pgdata/$rel";
 
 # Insert data and freeze public.test
-use constant ROWCOUNT => 18;
+use constant ROWCOUNT => 16;
 $node->safe_psql(
 	'postgres', qq(
 	INSERT INTO public.test (a, b, c)
@@ -297,7 +297,7 @@ close($file)
 $node->start;
 
 # Ok, Xids and page layout look ok.  We can run corruption tests.
-plan tests => 21;
+plan tests => 19;
 
 # Check that pg_amcheck runs against the uncorrupted table without error.
 $node->command_ok(
@@ -504,7 +504,7 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 		push @expected,
 		  qr/${header}multitransaction ID 4 equals or exceeds next valid multitransaction ID 1/;
 	}
-	elsif ($offnum == 15)
+	elsif ($offnum == 15)    # Last offnum must equal ROWCOUNT
 	{
 		# Set both HEAP_XMAX_COMMITTED and HEAP_XMAX_IS_MULTI
 		$tup->{t_infomask} |= HEAP_XMAX_COMMITTED;
@@ -513,24 +513,6 @@ for (my $tupidx = 0; $tupidx < ROWCOUNT; $tupidx++)
 
 		push @expected,
 		  qr/${header}multitransaction ID 4000000000 precedes relation minimum multitransaction ID threshold 1/;
-	}
-	elsif ($offnum == 16)
-	{
-		# Set raw size too large
-		$tup->{c_va_rawsize} = 1073741824;
-
-		$header = header(0, $offnum, 2);
-		push @expected,
-		  qr/${header}toast value \d+ rawsize 1073741824 exceeds limit 1073741823/;
-	}
-	elsif ($offnum == 17)    # Last offnum should equal ROWCOUNT-1
-	{
-		# Set raw size too small.
-		$tup->{c_va_rawsize} = 9998;
-
-		$header = header(0, $offnum, 2);
-		push @expected,
-		  qr/${header}toast value \d+ external size 10000 exceeds maximum expected for rawsize 9998/;
 	}
 	write_tuple($file, $offset, $tup);
 }
