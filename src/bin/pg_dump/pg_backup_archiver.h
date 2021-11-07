@@ -32,10 +32,6 @@
 
 #define LOBBUFSIZE 16384
 
-/*
- * Note: zlib.h must be included *after* libpq-fe.h, because the latter may
- * include ssl.h, which has a naming conflict with zlib.h.
- */
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #define GZCLOSE(fh) gzclose(fh)
