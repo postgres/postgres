@@ -25,7 +25,7 @@
    <para>
     However, note that installations using physical replication should
     update standby servers before the primary server, as explained in
-    the first changelog entry below.
+    the third changelog entry below.
    </para>
 
    <para>
@@ -45,6 +45,74 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [28e241255] 2021-11-08 11:01:43 -0500
+Branch: REL_14_STABLE [9d5a76b8d] 2021-11-08 11:01:43 -0500
+Branch: REL_13_STABLE [e92ed93e8] 2021-11-08 11:01:43 -0500
+Branch: REL_12_STABLE [d1bd26740] 2021-11-08 11:01:43 -0500
+Branch: REL_11_STABLE [9394fb828] 2021-11-08 11:01:43 -0500
+Branch: REL_10_STABLE [9ae0f1112] 2021-11-08 11:01:43 -0500
+Branch: REL9_6_STABLE [046c2c846] 2021-11-08 11:01:43 -0500
+-->
+     <para>
+      Make the server reject extraneous data after an SSL or GSS
+      encryption handshake (Tom Lane)
+     </para>
+
+     <para>
+      A man-in-the-middle with the ability to inject data into the TCP
+      connection could stuff some cleartext data into the start of a
+      supposedly encryption-protected database session.
+      This could be abused to send faked SQL commands to the server,
+      although that would only work if the server did not demand any
+      authentication data.  (However, a server relying on SSL certificate
+      authentication might well not do so.)
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jacob Champion for reporting this problem.
+      (CVE-2021-23214)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [160c02588] 2021-11-08 11:14:56 -0500
+Branch: REL_14_STABLE [30547d791] 2021-11-08 11:14:56 -0500
+Branch: REL_13_STABLE [844b31692] 2021-11-08 11:14:56 -0500
+Branch: REL_12_STABLE [36bb95ef2] 2021-11-08 11:14:56 -0500
+Branch: REL_11_STABLE [a021a1d2a] 2021-11-08 11:14:56 -0500
+Branch: REL_10_STABLE [e65d9c8cd] 2021-11-08 11:14:56 -0500
+Branch: REL9_6_STABLE [d83cdfdca] 2021-11-08 11:14:57 -0500
+-->
+     <para>
+      Make <application>libpq</application> reject extraneous data after
+      an SSL or GSS encryption handshake (Tom Lane)
+     </para>
+
+     <para>
+      A man-in-the-middle with the ability to inject data into the TCP
+      connection could stuff some cleartext data into the start of a
+      supposedly encryption-protected database session.
+      This could probably be abused to inject faked responses to the
+      client's first few queries, although other details of libpq's
+      behavior make that harder than it sounds.  A different line of
+      attack is to exfiltrate the client's password, or other sensitive
+      data that might be sent early in the session.  That has been shown
+      to be possible with a server vulnerable to CVE-2021-23214.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jacob Champion for reporting this problem.
+      (CVE-2021-23222)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
