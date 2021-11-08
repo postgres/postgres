@@ -2624,7 +2624,7 @@ msgstr ""
 
 #: access/transam/xlog.c:10386
 #, c-format
-msgid "sucessfully skipped missing contrecord at %X/%X, overwritten at %s"
+msgid "successfully skipped missing contrecord at %X/%X, overwritten at %s"
 msgstr "ignore avec succès le contrecord manquant à %X/%X, surchargé à %s"
 
 #: access/transam/xlog.c:10579
