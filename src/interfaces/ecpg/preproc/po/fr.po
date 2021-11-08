@@ -78,7 +78,7 @@ msgstr ""
 #: ecpg.c:40
 #, c-format
 msgid "Options:\n"
-msgstr "Options:\n"
+msgstr "Options :\n"
 
 #: ecpg.c:41
 #, c-format
@@ -86,8 +86,8 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             produit automatiquement le code C à partir du code SQL embarqué ;\n"
-"                 ceci affecte EXEC SQL TYPE\n"
+"  -c             produit automatiquement le code C à partir du code SQL\n"
+"                 embarqué ; ceci affecte EXEC SQL TYPE\n"
 
 #: ecpg.c:43
 #, c-format
@@ -111,7 +111,9 @@ msgstr "  -D SYMBOLE     définit SYMBOLE\n"
 #: ecpg.c:49
 #, c-format
 msgid "  -h             parse a header file, this option includes option \"-c\"\n"
-msgstr "  -h             analyse un fichier d'en-tête, cette option inclut l'option « -c »\n"
+msgstr ""
+"  -h             analyse un fichier d'en-tête, cette option inclut l'option\n"
+"                 « -c »\n"
 
 #: ecpg.c:50
 #, c-format
@@ -181,7 +183,7 @@ msgstr ""
 #: ecpg.c:139
 #, c-format
 msgid "%s: could not locate my own executable path\n"
-msgstr "%s : n'a pas pu localiser mon propre exécutable\n"
+msgstr "%s : n'a pas pu localiser le chemin de mon propre exécutable\n"
 
 #: ecpg.c:174 ecpg.c:331 ecpg.c:342
 #, c-format
@@ -246,7 +248,7 @@ msgstr "chaîne bit litéral non terminée"
 #: pgc.l:482
 #, c-format
 msgid "unterminated hexadecimal string literal"
-msgstr "chaîne hexadécimale litéralle non terminée"
+msgstr "chaîne hexadécimale litérale non terminée"
 
 #: pgc.l:560
 #, c-format

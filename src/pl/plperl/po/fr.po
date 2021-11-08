@@ -181,9 +181,7 @@ msgstr "n'a pas obtenu un élément en retour de la fonction trigger"
 #: plperl.c:2357
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr ""
-"fonction renvoyant un ensemble appelée dans un contexte qui ne peut pas\n"
-"accepter un ensemble"
+msgstr "la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas un ensemble"
 
 #: plperl.c:2401
 #, c-format

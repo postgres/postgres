@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-10 10:41+0300\n"
-"PO-Revision-Date: 2020-10-29 15:03+0300\n"
+"POT-Creation-Date: 2021-04-12 06:57+0300\n"
+"PO-Revision-Date: 2021-08-14 07:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -881,7 +881,7 @@ msgstr ""
 #: initdb.c:2827 initdb.c:2912 initdb.c:3283
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: нет доступа к каталогу \"%s\": %s\n"
+msgstr "%s: ошибка доступа к каталогу \"%s\": %s\n"
 
 #: initdb.c:2851
 #, c-format
@@ -1018,11 +1018,11 @@ msgstr ""
 "Каталог данных может повредиться при сбое операционной системы.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3413
+#: initdb.c:3416
 msgid "logfile"
 msgstr "файл_журнала"
 
-#: initdb.c:3415
+#: initdb.c:3418
 #, c-format
 msgid ""
 "\n"

@@ -176,8 +176,8 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme « %s », trouvé par « %s », n'est pas de la même version\n"
-"que %s.\n"
+"Le programme « %s » a été trouvé par « %s »\n"
+"mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:774
@@ -523,13 +523,13 @@ msgid ""
 "  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s start    [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-p CHEMIN] [-c]\n"
+"  %s start      [-D RÉP_DONNÉES] [-l FICHIER] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-p CHEMIN] [-c]\n"
 
 #: pg_ctl.c:1918
 #, c-format
 msgid "  %s stop     [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-msgstr "  %s stop     [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+msgstr "  %s stop       [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:1919
 #, c-format
@@ -537,28 +537,28 @@ msgid ""
 "  %s restart  [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s restart  [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-c]\n"
+"  %s restart    [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-c]\n"
 
 #: pg_ctl.c:1921
 #, c-format
 msgid "  %s reload   [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:1922
 #, c-format
 msgid "  %s status   [-D DATADIR]\n"
-msgstr "  %s status   [-D RÉP_DONNÉES]\n"
+msgstr "  %s status     [-D RÉP_DONNÉES]\n"
 
 #: pg_ctl.c:1923
 #, c-format
 msgid "  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"
-msgstr "  %s promote  [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote    [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:1924
 #, c-format
 msgid "  %s kill     SIGNALNAME PID\n"
-msgstr "  %s kill     NOM_SIGNAL PID\n"
+msgstr "  %s kill       SIGNAL PID\n"
 
 #: pg_ctl.c:1926
 #, c-format
@@ -606,28 +606,28 @@ msgstr ""
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr ""
-"  -t, --timeout=SECS       durée en secondes à attendre lors de\n"
-"                           l'utilisation de l'option -w\n"
+"  -t, --timeout=SECS       durée en secondes à attendre lors de l'utilisation\n"
+"                           de l'option -w\n"
 
 #: pg_ctl.c:1938
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version            affiche la version puis quitte\n"
 
 #: pg_ctl.c:1939
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
-msgstr "  -w, --wait             attend la fin de l'opération (par défaut)\n"
+msgstr "  -w, --wait               attend la fin de l'opération (par défaut)\n"
 
 #: pg_ctl.c:1940
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
-msgstr "  -W, --no-wait          n'attend pas la fin de l'opération\n"
+msgstr "  -W, --no-wait            n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:1941
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help               affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:1942
 #, c-format
@@ -657,8 +657,7 @@ msgstr "  -c, --core-files         non applicable à cette plateforme\n"
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
-"                           NOM_FICHIER\n"
+"  -l, --log=FICHIER        écrit (ou ajoute) le journal du serveur dans FICHIER\n"
 
 #: pg_ctl.c:1951
 #, c-format
@@ -666,9 +665,8 @@ msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o, --options=OPTIONS  options de la ligne de commande à passer à\n"
-"                           postgres (exécutable du serveur PostgreSQL)\n"
-"                           ou à initdb\n"
+"  -o, --options=OPTIONS    options de la ligne de commande à passer à postgres\n"
+"                           (exécutable du serveur PostgreSQL) ou à initdb\n"
 
 #: pg_ctl.c:1953
 #, c-format
@@ -708,7 +706,9 @@ msgstr "  smart                    quitte après déconnexion de tous les client
 #: pg_ctl.c:1959
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast                     quitte directement, et arrête correctement (par défaut)\n"
+msgstr ""
+"  fast                     quitte directement, et arrête correctement (par\n"
+"                           défaut)\n"
 
 #: pg_ctl.c:1960
 #, c-format

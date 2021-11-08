@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-27 22:06+0000\n"
-"PO-Revision-Date: 2020-05-09 13:56+0200\n"
+"POT-Creation-Date: 2021-11-07 09:25+0000\n"
+"PO-Revision-Date: 2021-11-07 09:53+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -482,17 +482,17 @@ msgstr ""
 #: initdb.c:2391
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla förbindelser\n"
+msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla anslutningar\n"
 
 #: initdb.c:2392
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
-msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-förbindelser\n"
+msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-anslutningar\n"
 
 #: initdb.c:2393
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "      --auth-local=METOD    autentiseringsmetod för förbindelser via unix-uttag\n"
+msgstr "      --auth-local=METOD    autentiseringsmetod för anslutningar via unix-uttag\n"
 
 #: initdb.c:2394
 #, c-format
@@ -966,11 +966,11 @@ msgstr ""
 "Datakatalogen kan komma att fördärvas om operativsystemet störtar.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3413
+#: initdb.c:3416
 msgid "logfile"
 msgstr "loggfil"
 
-#: initdb.c:3415
+#: initdb.c:3418
 #, c-format
 msgid ""
 "\n"

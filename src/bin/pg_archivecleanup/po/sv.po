@@ -1,20 +1,21 @@
 # Swedish message translation file for pg_archivecleanup
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-05 02:15+0000\n"
-"PO-Revision-Date: 2020-08-30 11:06+0200\n"
+"POT-Creation-Date: 2021-11-07 09:26+0000\n"
+"PO-Revision-Date: 2021-11-07 10:36+0100\n"
 "Last-Translator: FDennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: pg_archivecleanup.c:72
 #, c-format
@@ -171,6 +172,3 @@ msgstr "%s: för många kommandoradsargument\n"
 #, c-format
 msgid "%s: keeping WAL file \"%s\" and later\n"
 msgstr "%s: behåller WAL-fil \"%s\" och senare\n"
-
-#~ msgid "%s: too many parameters\n"
-#~ msgstr "%s: för många parametrar\n"

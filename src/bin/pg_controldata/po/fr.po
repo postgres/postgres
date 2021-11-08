@@ -60,8 +60,7 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s affiche les informations de contrôle du cluster de bases de données\n"
-"PostgreSQL.\n"
+"%s affiche les informations de contrôle de l'instance PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:35
@@ -86,7 +85,7 @@ msgstr ""
 #: pg_controldata.c:38
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
-msgstr "  [-D, --pgdata] RÉPDONNEES    répertoire de la base de données\n"
+msgstr "  [-D, --pgdata] RÉP_DONNEES répertoire de la base de données\n"
 
 #: pg_controldata.c:39
 #, c-format
@@ -252,7 +251,7 @@ msgstr "Dernier REDO (reprise) du point de contrôle :           %X/%X\n"
 #: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "Dernier fichier WAL du rejeu du point de restauration : %s\n"
+msgstr "Dernier fichier WAL du rejeu du point de contrrôle :     %s\n"
 
 #: pg_controldata.c:252
 #, c-format
@@ -262,7 +261,7 @@ msgstr "Dernier TimeLineID du point de contrôle :               %u\n"
 #: pg_controldata.c:254
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "Dernier PrevTimeLineID du point de restauration :       %u\n"
+msgstr "Dernier PrevTimeLineID du point de contrôle :           %u\n"
 
 #: pg_controldata.c:256
 #, c-format

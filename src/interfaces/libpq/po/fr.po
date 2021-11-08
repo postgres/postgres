@@ -130,7 +130,7 @@ msgstr "requête d'authentification SSPI dupliquée\n"
 
 #: fe-auth.c:447
 msgid "could not acquire SSPI credentials"
-msgstr "n'a pas pu récupérer les pièces d'identité SSPI"
+msgstr "n'a pas pu obtenir les pièces d'identité SSPI"
 
 #: fe-auth.c:501
 msgid "duplicate SASL authentication request\n"
@@ -187,7 +187,7 @@ msgstr "méthode d'authentification %u non supportée\n"
 #: fe-auth.c:1099
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
-msgstr "échec de la recherche du nom d'utilisateur : code erreur %lu\n"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu\n"
 
 #: fe-auth.c:1109 fe-connect.c:2529
 #, c-format
@@ -1144,7 +1144,7 @@ msgstr "aucune erreur SSL reportée"
 #: fe-secure-openssl.c:1360
 #, c-format
 msgid "SSL error code %lu"
-msgstr "erreur SSL %lu"
+msgstr "code d'erreur SSL %lu"
 
 #: fe-secure.c:269
 #, c-format

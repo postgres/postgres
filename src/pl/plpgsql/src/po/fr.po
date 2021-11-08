@@ -34,7 +34,7 @@ msgstr ""
 #: pl_comp.c:554
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "les fonctions triggers peuvent seulement être appelées par des triggers"
+msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
 #: pl_comp.c:558 pl_handler.c:441
 #, c-format

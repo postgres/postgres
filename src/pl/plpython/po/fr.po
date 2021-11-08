@@ -423,7 +423,7 @@ msgstr "enregistrement litéral invalide : « %s »"
 #: plpy_typeio.c:1341
 #, c-format
 msgid "Missing left parenthesis."
-msgstr "Parenthèse gauche manquante"
+msgstr "Parenthèse gauche manquante."
 
 #: plpy_typeio.c:1342 plpy_typeio.c:1543
 #, c-format

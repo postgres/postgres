@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2002-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Andrey Sudnik <sudnikand@gmail.com>, 2011.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-10-05 21:51+0300\n"
-"PO-Revision-Date: 2020-05-08 15:51+0300\n"
+"PO-Revision-Date: 2021-08-14 07:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -106,8 +106,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Если каталог данных не задан, используется значение переменной окружения "
-"PGDATA.\n"
+"Если каталог данных (КАТ_ДАННЫХ) не задан, используется значение\n"
+"переменной окружения PGDATA.\n"
 "\n"
 
 #: pg_controldata.c:43
