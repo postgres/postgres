@@ -59,6 +59,19 @@ const bbstreamer_ops bbstreamer_tar_archiver_ops = {
 	.free = bbstreamer_tar_archiver_free
 };
 
+static void bbstreamer_tar_terminator_content(bbstreamer *streamer,
+											  bbstreamer_member *member,
+											  const char *data, int len,
+											  bbstreamer_archive_context context);
+static void bbstreamer_tar_terminator_finalize(bbstreamer *streamer);
+static void bbstreamer_tar_terminator_free(bbstreamer *streamer);
+
+const bbstreamer_ops bbstreamer_tar_terminator_ops = {
+	.content = bbstreamer_tar_terminator_content,
+	.finalize = bbstreamer_tar_terminator_finalize,
+	.free = bbstreamer_tar_terminator_free
+};
+
 /*
  * Create a bbstreamer that can parse a stream of content as tar data.
  *
@@ -438,6 +451,65 @@ bbstreamer_tar_archiver_finalize(bbstreamer *streamer)
  */
 static void
 bbstreamer_tar_archiver_free(bbstreamer *streamer)
+{
+	bbstreamer_free(streamer->bbs_next);
+	pfree(streamer);
+}
+
+/*
+ * Create a bbstreamer that blindly adds two blocks of NUL bytes to the
+ * end of an incomplete tarfile that the server might send us.
+ */
+bbstreamer *
+bbstreamer_tar_terminator_new(bbstreamer *next)
+{
+	bbstreamer *streamer;
+
+	streamer = palloc0(sizeof(bbstreamer));
+	*((const bbstreamer_ops **) &streamer->bbs_ops) =
+		&bbstreamer_tar_terminator_ops;
+	streamer->bbs_next = next;
+
+	return streamer;
+}
+
+/*
+ * Pass all the content through without change.
+ */
+static void
+bbstreamer_tar_terminator_content(bbstreamer *streamer,
+								  bbstreamer_member *member,
+								  const char *data, int len,
+								  bbstreamer_archive_context context)
+{
+	/* Expect unparsed input. */
+	Assert(member == NULL);
+	Assert(context == BBSTREAMER_UNKNOWN);
+
+	/* Just forward it. */
+	bbstreamer_content(streamer->bbs_next, member, data, len, context);
+}
+
+/*
+ * At the end, blindly add the two blocks of NUL bytes which the server fails
+ * to supply.
+ */
+static void
+bbstreamer_tar_terminator_finalize(bbstreamer *streamer)
+{
+	char		buffer[2 * TAR_BLOCK_SIZE];
+
+	memset(buffer, 0, 2 * TAR_BLOCK_SIZE);
+	bbstreamer_content(streamer->bbs_next, NULL, buffer,
+					   2 * TAR_BLOCK_SIZE, BBSTREAMER_UNKNOWN);
+	bbstreamer_finalize(streamer->bbs_next);
+}
+
+/*
+ * Free memory associated with a tar terminator.
+ */
+static void
+bbstreamer_tar_terminator_free(bbstreamer *streamer)
 {
 	bbstreamer_free(streamer->bbs_next);
 	pfree(streamer);

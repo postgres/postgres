@@ -1073,10 +1073,14 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 
 	/*
 	 * If we're doing anything that involves understanding the contents of
-	 * the archive, we'll need to parse it.
+	 * the archive, we'll need to parse it. If not, we can skip parsing it,
+	 * but the tar files the server sends are not properly terminated, so
+	 * we'll need to add the terminator here.
 	 */
 	if (must_parse_archive)
 		streamer = bbstreamer_tar_parser_new(streamer);
+	else
+		streamer = bbstreamer_tar_terminator_new(streamer);
 
 	/* Return the results. */
 	*manifest_inject_streamer_p = manifest_inject_streamer;
