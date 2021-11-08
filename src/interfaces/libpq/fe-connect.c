@@ -2986,6 +2986,19 @@ keep_going:						/* We will come back to here until there is
 				pollres = pqsecure_open_client(conn);
 				if (pollres == PGRES_POLLING_OK)
 				{
+					/*
+					 * At this point we should have no data already buffered.
+					 * If we do, it was received before we performed the SSL
+					 * handshake, so it wasn't encrypted and indeed may have
+					 * been injected by a man-in-the-middle.
+					 */
+					if (conn->inCursor != conn->inEnd)
+					{
+						appendPQExpBufferStr(&conn->errorMessage,
+											 libpq_gettext("received unencrypted data after SSL response\n"));
+						goto error_return;
+					}
+
 					/* SSL handshake done, ready to send startup packet */
 					conn->status = CONNECTION_MADE;
 					return PGRES_POLLING_WRITING;
@@ -3085,6 +3098,19 @@ keep_going:						/* We will come back to here until there is
 				pollres = pqsecure_open_gss(conn);
 				if (pollres == PGRES_POLLING_OK)
 				{
+					/*
+					 * At this point we should have no data already buffered.
+					 * If we do, it was received before we performed the GSS
+					 * handshake, so it wasn't encrypted and indeed may have
+					 * been injected by a man-in-the-middle.
+					 */
+					if (conn->inCursor != conn->inEnd)
+					{
+						appendPQExpBufferStr(&conn->errorMessage,
+											 libpq_gettext("received unencrypted data after GSSAPI encryption response\n"));
+						goto error_return;
+					}
+
 					/* All set for startup packet */
 					conn->status = CONNECTION_MADE;
 					return PGRES_POLLING_WRITING;
