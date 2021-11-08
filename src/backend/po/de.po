@@ -2524,7 +2524,7 @@ msgstr "unerwartete Zeitleisten-ID %u (sollte %u sein) im Checkpoint-Datensatz"
 
 #: access/transam/xlog.c:10152
 #, c-format
-msgid "sucessfully skipped missing contrecord at %X/%X, overwritten at %s"
+msgid "successfully skipped missing contrecord at %X/%X, overwritten at %s"
 msgstr "fehlender Contrecord bei %X/%X erfolgreich übersprungen, überschrieben am %s"
 
 #: access/transam/xlog.c:10339

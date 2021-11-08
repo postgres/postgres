@@ -2541,7 +2541,7 @@ msgstr "oväntad tidslinje-ID %u (skall vara %u) i checkpoint-post"
 
 #: access/transam/xlog.c:10152
 #, c-format
-msgid "sucessfully skipped missing contrecord at %X/%X, overwritten at %s"
+msgid "successfully skipped missing contrecord at %X/%X, overwritten at %s"
 msgstr "lyckades hoppa över saknad contrecord vid %X/%X, överskriven vid %s"
 
 #: access/transam/xlog.c:10339

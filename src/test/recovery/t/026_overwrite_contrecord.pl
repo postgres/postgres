@@ -94,7 +94,7 @@ ok($node_standby->safe_psql('postgres', 'select * from foo') eq 'hello',
 my $log = slurp_file($node_standby->logfile);
 like(
 	$log,
-	qr[sucessfully skipped missing contrecord at],
+	qr[successfully skipped missing contrecord at],
 	"found log line in standby");
 
 $node->stop;
