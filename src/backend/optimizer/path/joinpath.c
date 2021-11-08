@@ -394,9 +394,15 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 			OpExpr	   *opexpr;
 			Node	   *expr;
+			Oid			hasheqoperator;
 
-			/* can't use a memoize node without a valid hash equals operator */
-			if (!OidIsValid(rinfo->hasheqoperator) ||
+			opexpr = (OpExpr *) rinfo->clause;
+
+			/*
+			 * Bail if the rinfo is not compatible.  We need a join OpExpr
+			 * with 2 args.
+			 */
+			if (!IsA(opexpr, OpExpr) || list_length(opexpr->args) != 2 ||
 				!clause_sides_match_join(rinfo, outerrel, innerrel))
 			{
 				list_free(*operators);
@@ -404,17 +410,26 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 				return false;
 			}
 
-			/*
-			 * We already checked that this is an OpExpr with 2 args when
-			 * setting hasheqoperator.
-			 */
-			opexpr = (OpExpr *) rinfo->clause;
 			if (rinfo->outer_is_left)
+			{
 				expr = (Node *) linitial(opexpr->args);
+				hasheqoperator = rinfo->left_hasheqoperator;
+			}
 			else
+			{
 				expr = (Node *) lsecond(opexpr->args);
+				hasheqoperator = rinfo->right_hasheqoperator;
+			}
 
-			*operators = lappend_oid(*operators, rinfo->hasheqoperator);
+			/* can't do memoize if we can't hash the outer type */
+			if (!OidIsValid(hasheqoperator))
+			{
+				list_free(*operators);
+				list_free(*param_exprs);
+				return false;
+			}
+
+			*operators = lappend_oid(*operators, hasheqoperator);
 			*param_exprs = lappend(*param_exprs, expr);
 		}
 	}

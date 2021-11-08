@@ -2565,7 +2565,8 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_NODE_FIELD(right_em);
 	WRITE_BOOL_FIELD(outer_is_left);
 	WRITE_OID_FIELD(hashjoinoperator);
-	WRITE_OID_FIELD(hasheqoperator);
+	WRITE_OID_FIELD(left_hasheqoperator);
+	WRITE_OID_FIELD(right_hasheqoperator);
 }
 
 static void

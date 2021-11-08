@@ -2122,8 +2122,9 @@ typedef struct RestrictInfo
 	Selectivity left_mcvfreq;	/* left side's most common val's freq */
 	Selectivity right_mcvfreq;	/* right side's most common val's freq */
 
-	/* hash equality operator used for memoize nodes, else InvalidOid */
-	Oid			hasheqoperator;
+	/* hash equality operators used for memoize nodes, else InvalidOid */
+	Oid			left_hasheqoperator;
+	Oid			right_hasheqoperator;
 } RestrictInfo;
 
 /*
