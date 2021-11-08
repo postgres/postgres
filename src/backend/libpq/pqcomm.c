@@ -1141,6 +1141,18 @@ pq_discardbytes(size_t len)
 	return 0;
 }
 
+/* --------------------------------
+ *		pq_buffer_has_data		- is any buffered data available to read?
+ *
+ * This will *not* attempt to read more data.
+ * --------------------------------
+ */
+bool
+pq_buffer_has_data(void)
+{
+	return (PqRecvPointer < PqRecvLength);
+}
+
 
 /* --------------------------------
  *		pq_startmsgread - begin reading a message from the client.
