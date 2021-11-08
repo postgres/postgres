@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Magnus Hagander <magnus@hagander.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-27 22:22+0000\n"
-"PO-Revision-Date: 2020-04-11 07:51+0200\n"
+"POT-Creation-Date: 2021-11-07 09:51+0000\n"
+"PO-Revision-Date: 2021-11-07 06:46+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"

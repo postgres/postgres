@@ -60,7 +60,8 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s prend une sauvegarde binaire d'un serveur PostgreSQL en cours d'exécution.\n"
+"%s prend une sauvegarde binaire d'un serveur PostgreSQL en cours\n"
+"d'exécution.\n"
 "\n"
 
 #: pg_basebackup.c:240 pg_receivexlog.c:66 pg_recvlogical.c:72
@@ -85,12 +86,14 @@ msgstr ""
 #: pg_basebackup.c:243
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
-msgstr "  -D, --pgdata=RÉPERTOIRE      reçoit la sauvegarde de base dans ce répertoire\n"
+msgstr ""
+"  -D, --pgdata=RÉPERTOIRE        reçoit la sauvegarde de base dans ce\n"
+"                                 répertoire\n"
 
 #: pg_basebackup.c:244
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
-msgstr "  -F, --format=p|t             format en sortie (plain (par défaut), tar)\n"
+msgstr "  -F, --format=p|t               format en sortie (plain (par défaut), tar)\n"
 
 #: pg_basebackup.c:245
 #, c-format
@@ -98,21 +101,21 @@ msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
 "                         (in kB/s, or use suffix \"k\" or \"M\")\n"
 msgstr ""
-"  -r, --max-rate=TAUX          taux maximum de transfert du répertoire de\n"
-"                               données (en Ko/s, ou utiliser le suffixe « k »\n"
-"                               ou « M »)\n"
+"  -r, --max-rate=TAUX            taux maximum de transfert du répertoire de\n"
+"                                 données (en Ko/s, ou utiliser le suffixe « k »\n"
+"                                 ou « M »)\n"
 
 #: pg_basebackup.c:247
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
 "                         write recovery.conf for replication\n"
-msgstr "  -R, --write-recovery-conf    écrit le recovery.conf pour la réplication\n"
+msgstr "  -R, --write-recovery-conf      écrit le recovery.conf pour la réplication\n"
 
 #: pg_basebackup.c:249 pg_receivexlog.c:74
 #, c-format
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
-msgstr "  -S, --slot=NOMREP            slot de réplication à utiliser\n"
+msgstr "  -S, --slot=NOMREP              slot de réplication à utiliser\n"
 
 #: pg_basebackup.c:250
 #, c-format
@@ -121,14 +124,14 @@ msgid ""
 "                         relocate tablespace in OLDDIR to NEWDIR\n"
 msgstr ""
 "  -T, --tablespace-mapping=ANCIENREP=NOUVEAUREP\n"
-"                               déplacer le répertoire ANCIENREP en NOUVEAUREP\n"
+"                                 déplacer le répertoire ANCIENREP en NOUVEAUREP\n"
 
 #: pg_basebackup.c:252
 #, c-format
 msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
 msgstr ""
-"  -x, --xlog                   inclut les journaux de transactions nécessaires\n"
-"                               dans la sauvegarde (mode fetch)\n"
+"  -x, --xlog                     inclut les journaux de transactions\n"
+"                                 nécessaires dans la sauvegarde (mode fetch)\n"
 
 #: pg_basebackup.c:253
 #, c-format
@@ -136,28 +139,27 @@ msgid ""
 "  -X, --xlog-method=fetch|stream\n"
 "                         include required WAL files with specified method\n"
 msgstr ""
-"  -X, --xlog-method=fetch|stream\n"
-"                               inclut les journaux de transactions requis avec\n"
-"                               la méthode spécifiée\n"
+"  -X, --xlog-method=fetch|stream inclut les journaux de transactions requis\n"
+"                                 avec la méthode spécifiée\n"
 
 #: pg_basebackup.c:255
 #, c-format
 msgid "      --xlogdir=XLOGDIR  location for the transaction log directory\n"
 msgstr ""
-"  -X, --xlogdir=RÉP_XLOG       emplacement du répertoire des journaux de\n"
-"                               transactions\n"
+"  -X, --xlogdir=RÉP_XLOG         emplacement du répertoire des journaux de\n"
+"                                 transactions\n"
 
 #: pg_basebackup.c:256
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
-msgstr "  -z, --gzip                   compresse la sortie tar\n"
+msgstr "  -z, --gzip                     compresse la sortie tar\n"
 
 #: pg_basebackup.c:257
 #, c-format
 msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
 msgstr ""
-"  -Z, --compress=0-9           compresse la sortie tar avec le niveau de\n"
-"                               compression indiqué\n"
+"  -Z, --compress=0-9             compresse la sortie tar avec le niveau de\n"
+"                                 compression indiqué\n"
 
 #: pg_basebackup.c:258
 #, c-format
@@ -173,32 +175,32 @@ msgstr ""
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
 "                         set fast or spread checkpointing\n"
-msgstr "  -c, --checkpoint=fast|spread exécute un CHECKPOINT rapide ou réparti\n"
+msgstr "  -c, --checkpoint=fast|spread   exécute un CHECKPOINT rapide ou réparti\n"
 
 #: pg_basebackup.c:261
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
-msgstr "  -l, --label=LABEL            configure le label de sauvegarde\n"
+msgstr "  -l, --label=LABEL              configure le label de sauvegarde\n"
 
 #: pg_basebackup.c:262
 #, c-format
 msgid "  -P, --progress         show progress information\n"
-msgstr "  -P, --progress               affiche la progression de la sauvegarde\n"
+msgstr "  -P, --progress                 affiche la progression de la sauvegarde\n"
 
 #: pg_basebackup.c:263 pg_receivexlog.c:76 pg_recvlogical.c:92
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
-msgstr "  -v, --verbose                affiche des messages verbeux\n"
+msgstr "  -v, --verbose                  affiche des messages verbeux\n"
 
 #: pg_basebackup.c:264 pg_receivexlog.c:77 pg_recvlogical.c:93
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version                  affiche la version puis quitte\n"
 
 #: pg_basebackup.c:265 pg_receivexlog.c:78 pg_recvlogical.c:94
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                     affiche cette aide puis quitte\n"
 
 #: pg_basebackup.c:266 pg_receivexlog.c:79 pg_recvlogical.c:95
 #, c-format
@@ -212,21 +214,21 @@ msgstr ""
 #: pg_basebackup.c:267 pg_receivexlog.c:80
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
-msgstr "  -d, --dbname=CONNSTR         chaîne de connexion\n"
+msgstr "  -d, --dbname=CONNSTR           chaîne de connexion\n"
 
 #: pg_basebackup.c:268 pg_receivexlog.c:81 pg_recvlogical.c:97
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
 msgstr ""
-"  -h, --host=NOMHÔTE           hôte du serveur de bases de données ou\n"
-"                               répertoire des sockets\n"
+"  -h, --host=NOMHÔTE             hôte du serveur de bases de données ou\n"
+"                                 répertoire des sockets\n"
 
 #: pg_basebackup.c:269 pg_receivexlog.c:82 pg_recvlogical.c:98
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
 msgstr ""
-"  -p, --port=PORT              numéro de port du serveur de bases de\n"
-"                               données\n"
+"  -p, --port=PORT                numéro de port du serveur de bases de\n"
+"                                 données\n"
 
 #: pg_basebackup.c:270
 #, c-format
@@ -240,19 +242,19 @@ msgstr ""
 #: pg_basebackup.c:272 pg_receivexlog.c:83 pg_recvlogical.c:99
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
-msgstr "  -U, --username=NOM           se connecte avec cet utilisateur\n"
+msgstr "  -U, --username=NOM             se connecte avec cet utilisateur\n"
 
 #: pg_basebackup.c:273 pg_receivexlog.c:84 pg_recvlogical.c:100
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
-msgstr "  -w, --no-password            ne demande jamais le mot de passe\n"
+msgstr "  -w, --no-password              ne demande jamais le mot de passe\n"
 
 #: pg_basebackup.c:274 pg_receivexlog.c:85 pg_recvlogical.c:101
 #, c-format
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
 msgstr ""
-"  -W, --password               force la demande du mot de passe (devrait arriver\n"
-"                               automatiquement)\n"
+"  -W, --password                 force la demande du mot de passe (devrait être\n"
+"                                 demandé automatiquement)\n"
 
 #: pg_basebackup.c:275 pg_receivexlog.c:89 pg_recvlogical.c:102
 #, c-format
@@ -667,20 +669,20 @@ msgstr ""
 #, c-format
 msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
 msgstr ""
-"  -D, --directory=RÉP          reçoit les journaux de transactions dans ce\n"
-"                               répertoire\n"
+"  -D, --directory=RÉP            reçoit les journaux de transactions dans ce\n"
+"                                 répertoire\n"
 
 #: pg_receivexlog.c:70 pg_recvlogical.c:82
 #, c-format
 msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
 msgstr ""
-"      --if-not-exists          ne pas renvoyer une erreur si le slot existe\\n\n"
-"                               déjà lors de sa création\n"
+"      --if-not-exists            ne pas renvoyer une erreur si le slot existe\n"
+"                                 déjà lors de sa création\n"
 
 #: pg_receivexlog.c:71 pg_recvlogical.c:84
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
-msgstr "  -n, --no-loop                ne boucle pas en cas de perte de la connexion\n"
+msgstr "  -n, --no-loop                  ne boucle pas en cas de perte de la connexion\n"
 
 #: pg_receivexlog.c:72 pg_recvlogical.c:89
 #, c-format
@@ -688,15 +690,15 @@ msgid ""
 "  -s, --status-interval=SECS\n"
 "                         time between status packets sent to server (default: %d)\n"
 msgstr ""
-"  -s, --status-interval=SECS   durée entre l'envoi de paquets de statut au\n"
-"                               (par défaut %d)\n"
+"  -s, --status-interval=SECS     durée entre l'envoi de paquets de statut au\n"
+"                                 (par défaut %d)\n"
 
 #: pg_receivexlog.c:75
 #, c-format
 msgid "      --synchronous      flush transaction log immediately after writing\n"
 msgstr ""
-"      --synchronous            vider le journal de transactions immédiatement\\n\n"
-"                               après son écriture\n"
+"      --synchronous              vider le journal de transactions immédiatement\n"
+"                                 après son écriture\n"
 
 #: pg_receivexlog.c:86
 #, c-format
@@ -711,15 +713,15 @@ msgstr ""
 #, c-format
 msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
 msgstr ""
-"      --create-slot            créer un nouveau slot de réplication (pour le\n"
-"                               nom du slot, voir --slot)\n"
+"      --create-slot              créer un nouveau slot de réplication (pour le\n"
+"                                 nom du slot, voir --slot)\n"
 
 #: pg_receivexlog.c:88 pg_recvlogical.c:76
 #, c-format
 msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
 msgstr ""
-"      --drop-slot              supprimer un nouveau slot de réplication (pour\n"
-"                               le nom du slot, voir --slot)\n"
+"      --drop-slot                supprimer un nouveau slot de réplication (pour\n"
+"                                 le nom du slot, voir --slot)\n"
 
 #: pg_receivexlog.c:100
 #, c-format
@@ -832,13 +834,15 @@ msgstr ""
 #, c-format
 msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
 msgstr ""
-"      --start                  lance le flux dans un slot de réplication (pour\n"
-"                               le nom du slot, voir --slot)\n"
+"      --start                    lance le flux dans un slot de réplication (pour\n"
+"                                 le nom du slot, voir --slot)\n"
 
 #: pg_recvlogical.c:79
 #, c-format
 msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
-msgstr "  -f, --file=NOMFICHIER        trace la réception dans ce fichier, - pour stdout\n"
+msgstr ""
+"  -f, --file=NOMFICHIER          trace la réception dans ce fichier,\n"
+"                                 - pour stdout\n"
 
 #: pg_recvlogical.c:80
 #, c-format
@@ -846,15 +850,15 @@ msgid ""
 "  -F  --fsync-interval=SECS\n"
 "                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
-"  -F  --fsync-interval=SECS    durée entre les fsyncs vers le fichier de sortie\n"
-"                               (par défaut %d)\n"
+"  -F  --fsync-interval=SECS      durée entre les fsyncs vers le fichier de\n"
+"                                 sortie (par défaut %d)\n"
 
 #: pg_recvlogical.c:83
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
 msgstr ""
-"  -I, --startpos=LSN           position de début du streaming dans le slot\n"
-"                               existant\n"
+"  -I, --startpos=LSN             position de début du streaming dans le slot\n"
+"                                 existant\n"
 
 #: pg_recvlogical.c:85
 #, c-format
@@ -863,25 +867,25 @@ msgid ""
 "                         pass option NAME with optional value VALUE to the\n"
 "                         output plugin\n"
 msgstr ""
-"  -o, --option=NOM[=VALEUR]    passe l'option NAME avec la valeur optionnelle\n"
-"                               VALEUR au plugin en sortie\n"
+"  -o, --option=NOM[=VALEUR]      passe l'option NAME avec la valeur optionnelle\n"
+"                                 VALEUR au plugin en sortie\n"
 
 #: pg_recvlogical.c:88
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
 msgstr ""
-"  -P, --plugin=PLUGIN          utilise le plugin PLUGIN en sortie\n"
-"                               (par défaut %s)\n"
+"  -P, --plugin=PLUGIN            utilise le plugin PLUGIN en sortie\n"
+"                                 (par défaut %s)\n"
 
 #: pg_recvlogical.c:91
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
-msgstr "  -S, --slot=NOMSLOT           nom du slot de réplication logique\n"
+msgstr "  -S, --slot=NOMSLOT             nom du slot de réplication logique\n"
 
 #: pg_recvlogical.c:96
 #, c-format
 msgid "  -d, --dbname=DBNAME    database to connect to\n"
-msgstr "  -d, --dbname=NOMBASE      base de données de connexion\n"
+msgstr "  -d, --dbname=BASE              base de données de connexion\n"
 
 #: pg_recvlogical.c:129
 #, c-format

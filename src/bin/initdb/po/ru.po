@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2020-08-10 10:44+0300\n"
-"PO-Revision-Date: 2020-10-29 15:03+0300\n"
+"PO-Revision-Date: 2021-08-14 07:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -886,7 +886,7 @@ msgstr ""
 #: initdb.c:3115 initdb.c:3200 initdb.c:3549
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: нет доступа к каталогу \"%s\": %s\n"
+msgstr "%s: ошибка доступа к каталогу \"%s\": %s\n"
 
 #: initdb.c:3139
 #, c-format

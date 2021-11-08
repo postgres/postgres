@@ -428,7 +428,8 @@ msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
 "\n"
 msgstr ""
-"%s resynchronise une instance PostgreSQL avec une autre copie de l'instance.\n"
+"%s resynchronise une instance PostgreSQL avec une autre copie de\n"
+"l'instance.\n"
 "\n"
 
 #: pg_rewind.c:65
@@ -455,7 +456,7 @@ msgstr "  -D, --target-pgdata=RÉPERTOIRE répertoire de données existant à mo
 #: pg_rewind.c:68
 #, c-format
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
-msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source pour la synchronisation\n"
+msgstr "      --source-pgdata=RÉPERTOIRE répertoire de données source\n"
 
 #: pg_rewind.c:69
 #, c-format

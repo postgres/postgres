@@ -1,16 +1,16 @@
 # Swedish message translation file for plpgsql
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-06-18 20:27+0000\n"
-"PO-Revision-Date: 2018-06-19 08:01+0200\n"
+"POT-Creation-Date: 2021-11-07 09:48+0000\n"
+"PO-Revision-Date: 2021-11-07 10:30+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -62,48 +62,48 @@ msgstr "kompilering av PL/pgSQL-funktion \"%s\" nära rad %d"
 msgid "parameter name \"%s\" used more than once"
 msgstr "parameternamn \"%s\" angivet mer än en gång"
 
-#: pl_comp.c:1073
+#: pl_comp.c:1075
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "kolumnreferens \"%s\" är tvetydig"
 
-#: pl_comp.c:1075
+#: pl_comp.c:1077
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Det kan referera till antingen en PL/pgSQL-variabel eller en tabellkolumn."
 
-#: pl_comp.c:1255 pl_comp.c:1283 pl_exec.c:4393 pl_exec.c:4742 pl_exec.c:4827
-#: pl_exec.c:4918
+#: pl_comp.c:1257 pl_comp.c:1285 pl_exec.c:4420 pl_exec.c:4769 pl_exec.c:4854
+#: pl_exec.c:4945
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "post \"%s\" saknar fält \"%s\""
 
-#: pl_comp.c:1814
+#: pl_comp.c:1816
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "relationen \"%s\" existerar inte"
 
-#: pl_comp.c:1923
+#: pl_comp.c:1925
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "variabel \"%s\" har pseudotyp %s"
 
-#: pl_comp.c:1990
+#: pl_comp.c:1992
 #, c-format
 msgid "relation \"%s\" is not a table"
 msgstr "relation \"%s\" är inte en tabell"
 
-#: pl_comp.c:2150
+#: pl_comp.c:2152
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "typ \"%s\" är bara ett skal"
 
-#: pl_comp.c:2244 pl_comp.c:2297
+#: pl_comp.c:2246 pl_comp.c:2299
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "okänt avbrottsvillkor \"%s\""
 
-#: pl_comp.c:2504
+#: pl_comp.c:2511
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "kunde inte bestämma argumenttyp för polymorfisk funktion function \"%s\""
@@ -239,17 +239,17 @@ msgstr "BY-värde i FOR-loop kan inte vara null"
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "BY-värde i FOR-loop måste vara större än noll"
 
-#: pl_exec.c:2153 pl_exec.c:3910
+#: pl_exec.c:2153 pl_exec.c:3929
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "markören \"%s\" används redan"
 
-#: pl_exec.c:2176 pl_exec.c:3972
+#: pl_exec.c:2176 pl_exec.c:3991
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "argument angivna till markör utan argumnet"
 
-#: pl_exec.c:2195 pl_exec.c:3991
+#: pl_exec.c:2195 pl_exec.c:4010
 #, c-format
 msgid "arguments required for cursor"
 msgstr "argument krävs för markör"
@@ -294,14 +294,14 @@ msgstr "kan inte använda RETURN NEXT i en icke-SETOF-funktion"
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "fel resultattyp given i RETURN NEXT"
 
-#: pl_exec.c:2711 pl_exec.c:4380 pl_exec.c:4709 pl_exec.c:4735 pl_exec.c:4801
-#: pl_exec.c:4820 pl_exec.c:4888 pl_exec.c:4911
+#: pl_exec.c:2711 pl_exec.c:4407 pl_exec.c:4736 pl_exec.c:4762 pl_exec.c:4828
+#: pl_exec.c:4847 pl_exec.c:4915 pl_exec.c:4938
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "posten \"%s\" är inte tilldelad än"
 
-#: pl_exec.c:2713 pl_exec.c:4382 pl_exec.c:4711 pl_exec.c:4737 pl_exec.c:4803
-#: pl_exec.c:4822 pl_exec.c:4890 pl_exec.c:4913
+#: pl_exec.c:2713 pl_exec.c:4409 pl_exec.c:4738 pl_exec.c:4764 pl_exec.c:4830
+#: pl_exec.c:4849 pl_exec.c:4917 pl_exec.c:4940
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "Tuple-strukturen av en ej-ännu-tilldelad post är obestämd."
@@ -350,124 +350,124 @@ msgstr "%s"
 msgid "assertion failed"
 msgstr "assert misslyckades"
 
-#: pl_exec.c:3416 pl_exec.c:3560 pl_exec.c:3749
+#: pl_exec.c:3432 pl_exec.c:3579 pl_exec.c:3768
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "kan inte COPY till/från klient i PL/pgSQL"
 
-#: pl_exec.c:3420 pl_exec.c:3564 pl_exec.c:3753
+#: pl_exec.c:3436 pl_exec.c:3583 pl_exec.c:3772
 #, c-format
 msgid "cannot begin/end transactions in PL/pgSQL"
 msgstr "kan inte starta/avsluta transaktioner i PL/pgSQL"
 
-#: pl_exec.c:3421 pl_exec.c:3565 pl_exec.c:3754
+#: pl_exec.c:3437 pl_exec.c:3584 pl_exec.c:3773
 #, c-format
 msgid "Use a BEGIN block with an EXCEPTION clause instead."
 msgstr "Använd ett BEGIN-block men en EXCEPTION-klausul istället."
 
-#: pl_exec.c:3588 pl_exec.c:3778
+#: pl_exec.c:3607 pl_exec.c:3797
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO använd med ett kommando som inte returnerar data"
 
-#: pl_exec.c:3616 pl_exec.c:3806
+#: pl_exec.c:3635 pl_exec.c:3825
 #, c-format
 msgid "query returned no rows"
 msgstr "frågan returnerade inga rader"
 
-#: pl_exec.c:3635 pl_exec.c:3825
+#: pl_exec.c:3654 pl_exec.c:3844
 #, c-format
 msgid "query returned more than one row"
 msgstr "frågan returnerade mer än en rad"
 
-#: pl_exec.c:3652
+#: pl_exec.c:3671
 #, c-format
 msgid "query has no destination for result data"
 msgstr "frågan har ingen destination för resultatdatan"
 
-#: pl_exec.c:3653
+#: pl_exec.c:3672
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Om du vill slänga resultatet av en SELECT, använd PERFORM istället."
 
-#: pl_exec.c:3685 pl_exec.c:7130
+#: pl_exec.c:3704 pl_exec.c:7164
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "frågesträngargumentet till EXECUTE är null"
 
-#: pl_exec.c:3741
+#: pl_exec.c:3760
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "EXECUTE för SELECT ... INTO är inte implementerad"
 
-#: pl_exec.c:3742
+#: pl_exec.c:3761
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "Du vill nog använda EXECUTE ... INTO eller EXECUTE CREATE TABLE ... AS istället."
 
-#: pl_exec.c:4054 pl_exec.c:4146
+#: pl_exec.c:4073 pl_exec.c:4165
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "markörvariabel \"%s\" är null"
 
-#: pl_exec.c:4061 pl_exec.c:4153
+#: pl_exec.c:4080 pl_exec.c:4172
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "markör \"%s\" existerar inte"
 
-#: pl_exec.c:4075
+#: pl_exec.c:4094
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "relativ eller absolut markörposition är null"
 
-#: pl_exec.c:4255
+#: pl_exec.c:4282
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "null-value kan inte tilldelas till variabel \"%s\" som deklarerats NOT NULL"
 
-#: pl_exec.c:4324
+#: pl_exec.c:4351
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "kan inte tilldela icke-composite-värde till radvariabel"
 
-#: pl_exec.c:4348
+#: pl_exec.c:4375
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "kan inte tilldela  icke-composite-värde till en post-variabel"
 
-#: pl_exec.c:4491
+#: pl_exec.c:4518
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "antalet array-dimensioner (%d) överskrider det maximalt tillåtna (%d)"
 
-#: pl_exec.c:4523
+#: pl_exec.c:4550
 #, c-format
 msgid "subscripted object is not an array"
 msgstr "arrayindexobjekt är inte en array"
 
-#: pl_exec.c:4560
+#: pl_exec.c:4587
 #, c-format
 msgid "array subscript in assignment must not be null"
 msgstr "arrayindex i tilldelning kan inte vara null"
 
-#: pl_exec.c:5027
+#: pl_exec.c:5054
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "frågan \"%s\" returnerade ingen data"
 
-#: pl_exec.c:5035
+#: pl_exec.c:5062
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
 msgstr[0] "frågan \"%s\" returnerade %d kolumn"
 msgstr[1] "frågan \"%s\" returnerade %d kolumner"
 
-#: pl_exec.c:5062
+#: pl_exec.c:5089
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "frågan \"%s\" returnerade mer än en rad"
 
-#: pl_exec.c:5126
+#: pl_exec.c:5153
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "frågan \"%s\" är inte en SELECT"

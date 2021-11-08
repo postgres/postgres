@@ -195,8 +195,8 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme « %s », trouvé par « %s », n'est pas de la même version\n"
-"que %s.\n"
+"Le programme « %s » a été trouvé par « %s »\n"
+"mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:860
@@ -512,8 +512,8 @@ msgstr "  %s init[db]   [-D RÉP_DONNÉES] [-s] [-o \"OPTIONS\"]\n"
 #, c-format
 msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
-"                [-o \"OPTIONS\"]\n"
+"  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l FICHIER]\n"
+"                    [-o \"OPTIONS\"]\n"
 
 #: pg_ctl.c:1913
 #, c-format
@@ -527,7 +527,7 @@ msgid ""
 "                 [-o \"OPTIONS\"]\n"
 msgstr ""
 "  %s restart    [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-m MODE_ARRET]\n"
-"                [-o \"OPTIONS\"]\n"
+"                    [-o \"OPTIONS\"]\n"
 
 #: pg_ctl.c:1916
 #, c-format
@@ -595,13 +595,13 @@ msgstr ""
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr ""
-"  -t, --timeout=SECS       durée en secondes à attendre lors de\n"
-"                           l'utilisation de l'option -w\n"
+"  -t, --timeout=SECS       durée en secondes à attendre lors de l'utilisation\n"
+"                           de l'option -w\n"
 
 #: pg_ctl.c:1933
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version            affiche la version puis quitte\n"
 
 #: pg_ctl.c:1934
 #, c-format
@@ -616,7 +616,7 @@ msgstr "  -W                       n'attend pas la fin de l'opération\n"
 #: pg_ctl.c:1936
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help               affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:1937
 #, c-format
@@ -624,8 +624,7 @@ msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
-"redémarrage.)\n"
+"(Le comportement par défaut attend l'arrêt, pas le démarrage ou le redémarrage.)\n"
 "\n"
 
 #: pg_ctl.c:1938
@@ -656,8 +655,7 @@ msgstr "  -c, --core-files         non applicable à cette plateforme\n"
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
-"                           NOM_FICHIER\n"
+"  -l, --log=FICHIER        écrit (ou ajoute) le journal du serveur dans FICHIER\n"
 
 #: pg_ctl.c:1947
 #, c-format
@@ -665,9 +663,8 @@ msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o OPTIONS               options de la ligne de commande à passer à\n"
-"                           postgres (exécutable du serveur PostgreSQL)\n"
-"                           ou à initdb\n"
+"  -o OPTIONS               options de la ligne de commande à passer à postgres\n"
+"                           (exécutable du serveur PostgreSQL) ou à initdb\n"
 
 #: pg_ctl.c:1949
 #, c-format
