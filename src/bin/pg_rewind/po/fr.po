@@ -455,7 +455,7 @@ msgstr "  -D, --target-pgdata=RÉPERTOIRE répertoire de données existant à mo
 #: pg_rewind.c:68
 #, c-format
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
-msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source pour la synchronisation\n"
+msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source\n"
 
 #: pg_rewind.c:69
 #, c-format

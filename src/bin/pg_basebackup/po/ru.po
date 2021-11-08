@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-11-09 07:36+0300\n"
-"PO-Revision-Date: 2020-11-09 08:27+0300\n"
+"POT-Creation-Date: 2021-08-09 23:07+0300\n"
+"PO-Revision-Date: 2021-08-14 07:50+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -50,8 +50,8 @@ msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:804
-#: receivelog.c:1061
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:814
+#: receivelog.c:1071
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
@@ -109,7 +109,7 @@ msgstr "%s: каталог данных \"%s\" не был удалён по з�
 #: pg_basebackup.c:202
 #, c-format
 msgid "%s: WAL directory \"%s\" not removed at user's request\n"
-msgstr "%s: каталог данных WAL \"%s\" не был удалён по запросу пользователя\n"
+msgstr "%s: каталог WAL \"%s\" не был удалён по запросу пользователя\n"
 
 #: pg_basebackup.c:208
 #, c-format
@@ -421,7 +421,7 @@ msgstr "%s: каталог \"%s\" существует, но он не пуст\
 #: pg_basebackup.c:700
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: нет доступа к каталогу \"%s\": %s\n"
+msgstr "%s: ошибка доступа к каталогу \"%s\": %s\n"
 
 #: pg_basebackup.c:762
 #, c-format
@@ -512,14 +512,14 @@ msgstr "%s: не удалось получить поток данных COPY: %
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть сжатый файл \"%s\": %s\n"
 
-#: pg_basebackup.c:1148 pg_recvlogical.c:657 receivelog.c:223 receivelog.c:308
-#: receivelog.c:714
+#: pg_basebackup.c:1148 pg_recvlogical.c:657 receivelog.c:233 receivelog.c:318
+#: receivelog.c:724
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть файл \"%s\": %s\n"
 
 #: pg_basebackup.c:1159 pg_basebackup.c:1381 pg_recvlogical.c:453
-#: pg_recvlogical.c:631 receivelog.c:1009
+#: pg_recvlogical.c:631 receivelog.c:1019
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: не удалось прочитать данные COPY: %s"
@@ -578,8 +578,8 @@ msgstr ""
 "%s: начинается базовое резервное копирование, ожидается завершение "
 "контрольной точки\n"
 
-#: pg_basebackup.c:1809 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
-#: receivelog.c:603 streamutil.c:278 streamutil.c:386 streamutil.c:432
+#: pg_basebackup.c:1809 pg_recvlogical.c:270 receivelog.c:502 receivelog.c:573
+#: receivelog.c:613 streamutil.c:278 streamutil.c:386 streamutil.c:432
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: не удалось передать команду репликации \"%s\": %s"
@@ -770,14 +770,12 @@ msgstr "%s: --no-slot нельзя использовать с именем сл
 #: pg_basebackup.c:2375
 #, c-format
 msgid "%s: WAL directory location can only be specified in plain mode\n"
-msgstr ""
-"%s: расположение каталога журнала WAL можно указать только в режиме plain\n"
+msgstr "%s: расположение каталога WAL можно указать только в режиме plain\n"
 
 #: pg_basebackup.c:2386
 #, c-format
 msgid "%s: WAL directory location must be an absolute path\n"
-msgstr ""
-"%s: расположение каталога журнала WAL должно определяться абсолютным путём\n"
+msgstr "%s: расположение каталога WAL должно определяться абсолютным путём\n"
 
 #: pg_basebackup.c:2398 pg_receivewal.c:631
 #, c-format
@@ -1080,7 +1078,7 @@ msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
 msgstr ""
 "%s: подтверждается запись до %X/%X, синхронизация с ФС до %X/%X (слот %s)\n"
 
-#: pg_recvlogical.c:160 receivelog.c:351
+#: pg_recvlogical.c:160 receivelog.c:361
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: не удалось отправить пакет ответа: %s"
@@ -1105,28 +1103,28 @@ msgstr "%s: передача запущена\n"
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл журнала \"%s\": %s\n"
 
-#: pg_recvlogical.c:376 receivelog.c:914
+#: pg_recvlogical.c:376 receivelog.c:924
 #, c-format
 msgid "%s: invalid socket: %s"
 msgstr "%s: неверный сокет: %s"
 
-#: pg_recvlogical.c:430 receivelog.c:943
+#: pg_recvlogical.c:430 receivelog.c:953
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: ошибка в select(): %s\n"
 
-#: pg_recvlogical.c:439 receivelog.c:995
+#: pg_recvlogical.c:439 receivelog.c:1005
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: не удалось получить данные из потока WAL: %s"
 
-#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1040
-#: receivelog.c:1107
+#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1050
+#: receivelog.c:1117
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: заголовок потока слишком мал: %d\n"
 
-#: pg_recvlogical.c:517 receivelog.c:874
+#: pg_recvlogical.c:517 receivelog.c:884
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: нераспознанный заголовок потока: \"%c\"\n"
@@ -1136,7 +1134,7 @@ msgstr "%s: нераспознанный заголовок потока: \"%c\"
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s: не удалось записать %u Б в файл журнала \"%s\": %s\n"
 
-#: pg_recvlogical.c:643 receivelog.c:667 receivelog.c:705
+#: pg_recvlogical.c:643 receivelog.c:677 receivelog.c:715
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: неожиданный конец потока репликации: %s"
@@ -1204,25 +1202,25 @@ msgstr ""
 msgid "%s: could not create archive status file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл статуса архива \"%s\": %s\n"
 
-#: receivelog.c:119
+#: receivelog.c:122
 #, c-format
 msgid "%s: could not get size of write-ahead log file \"%s\": %s\n"
 msgstr "%s: не удалось получить размер файла журнала предзаписи \"%s\": %s\n"
 
-#: receivelog.c:130
+#: receivelog.c:134
 #, c-format
 msgid "%s: could not open existing write-ahead log file \"%s\": %s\n"
 msgstr ""
 "%s: не удалось открыть существующий файл журнала предзаписи \"%s\": %s\n"
 
-#: receivelog.c:139
+#: receivelog.c:144
 #, c-format
 msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
 msgstr ""
 "%s: не удалось сбросить на диск существующий файл журнала предзаписи \"%s\": "
 "%s\n"
 
-#: receivelog.c:154
+#: receivelog.c:161
 #, c-format
 msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
 msgid_plural ""
@@ -1234,39 +1232,39 @@ msgstr[1] ""
 msgstr[2] ""
 "%s: файл журнала предзаписи \"%s\" имеет размер %d Б, а должен - 0 или %d\n"
 
-#: receivelog.c:169
+#: receivelog.c:177
 #, c-format
 msgid "%s: could not open write-ahead log file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл журнала предзаписи \"%s\": %s\n"
 
-#: receivelog.c:196
+#: receivelog.c:206
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: не удалось определить текущую позицию в файле \"%s\": %s\n"
 
-#: receivelog.c:211
+#: receivelog.c:221
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr ""
 "%s: файл \"%s%s\" не переименовывается, так как это не полный сегмент\n"
 
-#: receivelog.c:280
+#: receivelog.c:290
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr ""
 "%s: сервер сообщил неожиданное имя файла истории для линии времени %u: %s\n"
 
-#: receivelog.c:288
+#: receivelog.c:298
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:295
+#: receivelog.c:305
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:385
+#: receivelog.c:395
 #, c-format
 msgid ""
 "%s: incompatible server version %s; client does not support streaming from "
@@ -1275,7 +1273,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии ниже %s\n"
 
-#: receivelog.c:395
+#: receivelog.c:405
 #, c-format
 msgid ""
 "%s: incompatible server version %s; client does not support streaming from "
@@ -1284,7 +1282,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии выше %s\n"
 
-#: receivelog.c:500 streamutil.c:287 streamutil.c:326
+#: receivelog.c:510 streamutil.c:287 streamutil.c:326
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -1293,7 +1291,7 @@ msgstr ""
 "%s: не удалось идентифицировать систему; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))\n"
 
-#: receivelog.c:508
+#: receivelog.c:518
 #, c-format
 msgid ""
 "%s: system identifier does not match between base backup and streaming "
@@ -1302,17 +1300,17 @@ msgstr ""
 "%s: системный идентификатор базовой резервной копии отличается от "
 "идентификатора потоковой передачи\n"
 
-#: receivelog.c:516
+#: receivelog.c:526
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: на сервере нет начальной линии времени %u\n"
 
-#: receivelog.c:535
+#: receivelog.c:545
 #, c-format
 msgid "%s: could not create temporary replication slot \"%s\": %s"
 msgstr "%s: не удалось создать временный слот репликации \"%s\": %s"
 
-#: receivelog.c:576
+#: receivelog.c:586
 #, c-format
 msgid ""
 "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
@@ -1321,14 +1319,14 @@ msgstr ""
 "%s: сервер вернул неожиданный ответ на команду TIMELINE_HISTORY; получено "
 "строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: receivelog.c:648
+#: receivelog.c:658
 #, c-format
 msgid ""
 "%s: server reported unexpected next timeline %u, following timeline %u\n"
 msgstr ""
 "%s: сервер неожиданно сообщил линию времени %u после линии времени %u\n"
 
-#: receivelog.c:655
+#: receivelog.c:665
 #, c-format
 msgid ""
 "%s: server stopped streaming timeline %u at %X/%X, but reported next "
@@ -1337,12 +1335,12 @@ msgstr ""
 "%s: сервер прекратил передачу линии времени %u в %X/%X, но сообщил, что "
 "следующая линии времени %u начнётся в %X/%X\n"
 
-#: receivelog.c:696
+#: receivelog.c:706
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: поток репликации закончился до точки останова\n"
 
-#: receivelog.c:745
+#: receivelog.c:755
 #, c-format
 msgid ""
 "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
@@ -1351,29 +1349,29 @@ msgstr ""
 "%s: сервер вернул неожиданный набор данных после конца линии времени; "
 "получено строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: receivelog.c:755
+#: receivelog.c:765
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать начальную точку следующей линии времени \"%s\"\n"
 
-#: receivelog.c:1126
+#: receivelog.c:1136
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
 msgstr ""
 "%s: получена запись журнала предзаписи по смещению %u, но файл не открыт\n"
 
-#: receivelog.c:1137
+#: receivelog.c:1147
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: получено смещение данных WAL %08x, но ожидалось %08x\n"
 
-#: receivelog.c:1172
+#: receivelog.c:1182
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: не удалось записать %u Б в файл WAL \"%s\": %s\n"
 
-#: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
+#: receivelog.c:1207 receivelog.c:1248 receivelog.c:1279
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: не удалось отправить пакет \"конец COPY\": %s"
@@ -1426,36 +1424,36 @@ msgstr ""
 "%s: удалить слот репликации \"%s\" не получилось; получено строк: %d, полей: "
 "%d (ожидалось: %d и %d)\n"
 
-#: walmethods.c:438 walmethods.c:926
+#: walmethods.c:467 walmethods.c:974
 msgid "could not compress data"
 msgstr "не удалось сжать данные"
 
-#: walmethods.c:470
+#: walmethods.c:499
 msgid "could not reset compression stream"
 msgstr "не удалось сбросить поток сжатых данных"
 
-#: walmethods.c:567
+#: walmethods.c:607
 msgid "could not initialize compression library"
 msgstr "не удалось инициализировать библиотеку сжатия"
 
-#: walmethods.c:579
+#: walmethods.c:619
 msgid "implementation error: tar files can't have more than one open file"
 msgstr ""
 "ошибка реализации: в файлах tar не может быть больше одно открытого файла"
 
-#: walmethods.c:593
+#: walmethods.c:633
 msgid "could not create tar header"
 msgstr "не удалось создать заголовок tar"
 
-#: walmethods.c:607 walmethods.c:647 walmethods.c:842 walmethods.c:853
+#: walmethods.c:649 walmethods.c:689 walmethods.c:890 walmethods.c:901
 msgid "could not change compression parameters"
 msgstr "не удалось изменить параметры сжатия"
 
-#: walmethods.c:729
+#: walmethods.c:777
 msgid "unlink not supported with compression"
 msgstr "со сжатием закрытие файла с удалением не поддерживается"
 
-#: walmethods.c:951
+#: walmethods.c:999
 msgid "could not close compression stream"
 msgstr "не удалось закрыть поток сжатых данных"
 

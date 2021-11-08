@@ -176,8 +176,8 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme « %s », trouvé par « %s », n'est pas de la même version\n"
-"que %s.\n"
+"Le programme « %s » a été trouvé par « %s »\n"
+"mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:780
@@ -496,7 +496,7 @@ msgstr "Usage :\n"
 #: pg_ctl.c:1858
 #, c-format
 msgid "  %s init[db] [-D DATADIR] [-s] [-o OPTIONS]\n"
-msgstr "  %s init[db]   [-D RÉP_DONNÉES] [-s] [-o OPTIONS]\n"
+msgstr "  %s init[db] [-D RÉP_DONNÉES] [-s] [-o OPTIONS]\n"
 
 #: pg_ctl.c:1859
 #, c-format
@@ -504,7 +504,7 @@ msgid ""
 "  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s start    [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
+"  %s start    [-D RÉP_DONNÉES] [-l FICHIER] [-W] [-t SECS] [-s]\n"
 "                  [-o OPTIONS] [-p CHEMIN] [-c]\n"
 
 #: pg_ctl.c:1861
@@ -593,22 +593,22 @@ msgstr ""
 #: pg_ctl.c:1881
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version            affiche la version puis quitte\n"
 
 #: pg_ctl.c:1882
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
-msgstr "  -w, --wait             attend la fin de l'opération (par défaut)\n"
+msgstr "  -w, --wait               attend la fin de l'opération (par défaut)\n"
 
 #: pg_ctl.c:1883
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
-msgstr "  -W, --no-wait          n'attend pas la fin de l'opération\n"
+msgstr "  -W, --no-wait            n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:1884
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help               affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:1885
 #, c-format
@@ -638,8 +638,7 @@ msgstr "  -c, --core-files         non applicable à cette plateforme\n"
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
-"                           NOM_FICHIER\n"
+"  -l, --log=FICHIER        écrit (ou ajoute) le journal du serveur dans FICHIER\n"
 
 #: pg_ctl.c:1894
 #, c-format
@@ -647,7 +646,7 @@ msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o, --options=OPTIONS  options de la ligne de commande à passer à\n"
+"  -o, --options=OPTIONS    options de la ligne de commande à passer à\n"
 "                           postgres (exécutable du serveur PostgreSQL)\n"
 "                           ou à initdb\n"
 
@@ -689,7 +688,9 @@ msgstr "  smart                    quitte après déconnexion de tous les client
 #: pg_ctl.c:1902
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast                     quitte directement, et arrête correctement (par défaut)\n"
+msgstr ""
+"  fast                     quitte directement, et arrête correctement (par\n"
+"                           défaut)\n"
 
 #: pg_ctl.c:1903
 #, c-format
@@ -897,7 +898,7 @@ msgstr ""
 
 #~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 #~ msgstr ""
-#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
+#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l FICHIER]\n"
 #~ "                [-o \"OPTIONS\"]\n"
 
 #~ msgid "%s: could not wait for server because of misconfiguration\n"

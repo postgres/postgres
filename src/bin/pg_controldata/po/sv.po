@@ -1,6 +1,6 @@
 # Swedish message translation file for pg_controldata
 # This file is put in the public domain.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 # Use these quotes: "%s"
@@ -9,14 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-25 19:15+0000\n"
-"PO-Revision-Date: 2018-08-26 07:32+0200\n"
+"POT-Creation-Date: 2021-11-07 09:45+0000\n"
+"PO-Revision-Date: 2021-11-07 10:37+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/controldata_utils.c:62
 #, c-format
@@ -463,9 +464,3 @@ msgstr "Checksummaversion för datasidor:            %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Fejkat authentiseringsvärde:                %s\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "flyttal"
-
-#~ msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
-#~ msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"

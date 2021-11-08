@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -10,14 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-08-27 22:16+0000\n"
-"PO-Revision-Date: 2020-08-30 11:23+0200\n"
+"POT-Creation-Date: 2021-11-07 09:44+0000\n"
+"PO-Revision-Date: 2021-11-07 09:53+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -444,11 +445,11 @@ msgid ""
 "Rerun %s and either do not specify an encoding explicitly,\n"
 "or choose a matching combination.\n"
 msgstr ""
-"Teckenkodningen du har valt (%s) och kodningen svarande\n"
-"mot lokalnamnet (%s), de passar inte ihop. Detta kan leda\n"
-"till problem för funktioner som arbetar med strängar. Detta\n"
-"undgås genom att utföra %s igen och då låta bli bli att\n"
-"sätta kodning, eller i annat fall att välja bättre teckensats.\n"
+"Teckenkodningen du har valt (%s) och teckenkodningen som\n"
+"valda lokalen använder (%s) passar inte ihop. Detta kommer leda\n"
+"till problem för funktioner som arbetar med strängar.\n"
+"Kör %s igen och låt bli ange teckenkodning eller välj\n"
+"en kombination som passar ihop.\n"
 
 #: initdb.c:2280
 #, c-format
@@ -481,17 +482,17 @@ msgstr ""
 #: initdb.c:2284
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla förbindelser\n"
+msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla anslutningar\n"
 
 #: initdb.c:2285
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
-msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-förbindelser\n"
+msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-anslutningar\n"
 
 #: initdb.c:2286
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "      --auth-local=METOD    autentiseringsmetod för förbindelser via unix-uttag\n"
+msgstr "      --auth-local=METOD    autentiseringsmetod för anslutningar via unix-uttag\n"
 
 #: initdb.c:2287
 #, c-format
@@ -945,11 +946,11 @@ msgstr ""
 "Datakatalogen kan komma att fördärvas om operativsystemet störtar.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3267
+#: initdb.c:3270
 msgid "logfile"
 msgstr "loggfil"
 
-#: initdb.c:3269
+#: initdb.c:3272
 #, c-format
 msgid ""
 "\n"

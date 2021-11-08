@@ -1,16 +1,16 @@
 # Swedish message translation file for plpython
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-05 14:07+0000\n"
-"PO-Revision-Date: 2017-08-06 08:32+0200\n"
+"POT-Creation-Date: 2021-11-07 09:38+0000\n"
+"PO-Revision-Date: 2021-11-07 10:38+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -268,27 +268,27 @@ msgstr "'%s' är ett ogiltigt nyckelordsargument för denna funktion"
 msgid "invalid SQLSTATE code"
 msgstr "ogiltig SQLSTATE-kod"
 
-#: plpy_procedure.c:230
+#: plpy_procedure.c:228
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggningsfunktioner kan bara anropas vid triggning."
 
-#: plpy_procedure.c:235
+#: plpy_procedure.c:233
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python-funktioner kan inte returnera typ %s"
 
-#: plpy_procedure.c:316
+#: plpy_procedure.c:314
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python-funktioner kan inte ta emot typ %s"
 
-#: plpy_procedure.c:412
+#: plpy_procedure.c:410
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "kunde inte kompilera PL/Python-funktion \"%s\""
 
-#: plpy_procedure.c:415
+#: plpy_procedure.c:413
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "kunde inte kompilera anonymt PL/Python-kodblock"
