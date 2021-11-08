@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2002-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Andrey Sudnik <sudnikand@gmail.com>, 2011.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-09-09 12:21+0300\n"
-"PO-Revision-Date: 2020-05-08 15:51+0300\n"
+"PO-Revision-Date: 2021-08-14 07:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -38,7 +38,7 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 #: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr "не удалось прочитать файл \"%s\": %m"
+msgstr "не удалось закрыть файл \"%s\": %m"
 
 #: ../../common/controldata_utils.c:135
 msgid "byte ordering mismatch"
@@ -71,7 +71,7 @@ msgstr "не удалось записать файл \"%s\": %m"
 #: ../../common/controldata_utils.c:245
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "не удалось прочитать файл \"%s\": %m"
+msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
 #: pg_controldata.c:36
 #, c-format
@@ -126,8 +126,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Если каталог данных не задан, используется значение переменной окружения "
-"PGDATA.\n"
+"Если каталог данных (КАТ_ДАННЫХ) не задан, используется значение\n"
+"переменной окружения PGDATA.\n"
 "\n"
 
 #: pg_controldata.c:45

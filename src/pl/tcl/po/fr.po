@@ -50,7 +50,7 @@ msgstr "traitement du paramètre %s"
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
-"la fonction avec set-value a été appelé dans un contexte qui n'accepte pas\n"
+"la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas\n"
 "un ensemble"
 
 #: pltcl.c:1015

@@ -195,8 +195,8 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme « %s », trouvé par « %s », n'est pas de la même version\n"
-"que %s.\n"
+"Le programme « %s » a été trouvé par « %s »\n"
+"mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:852
@@ -568,13 +568,13 @@ msgid ""
 "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s start    [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-p CHEMIN] [-c]\n"
+"  %s start      [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-p CHEMIN] [-c]\n"
 
 #: pg_ctl.c:2064
 #, c-format
 msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-msgstr "  %s stop     [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+msgstr "  %s stop       [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:2065
 #, c-format
@@ -582,33 +582,33 @@ msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s restart  [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-c]\n"
+"  %s restart    [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-c]\n"
 
 #: pg_ctl.c:2067
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:2068
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
-msgstr "  %s status   [-D RÉP_DONNÉES]\n"
+msgstr "  %s status     [-D RÉP_DONNÉES]\n"
 
 #: pg_ctl.c:2069
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
-msgstr "  %s promote  [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote    [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:2070
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:2071
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
-msgstr "  %s kill     NOM_SIGNAL PID\n"
+msgstr "  %s kill       NOM_SIGNAL PID\n"
 
 #: pg_ctl.c:2073
 #, c-format
@@ -616,8 +616,8 @@ msgid ""
 "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 msgstr ""
-"  %s register [-D RÉP_DONNÉES] [-N NOM_SERVICE] [-U NOM_UTILISATEUR] [-P MOT_DE_PASSE]\n"
-"                  [-S TYPE_DÉMARRAGE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
+"  %s register   [-D RÉP_DONNÉES] [-N NOM_SERVICE] [-U NOM_UTILISATEUR] [-P MOT_DE_PASSE]\n"
+"                    [-S TYPE_DÉMARRAGE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
 
 #: pg_ctl.c:2075
 #, c-format
@@ -636,48 +636,48 @@ msgstr ""
 #: pg_ctl.c:2079
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata=RÉP_DONNÉES emplacement de stockage du cluster\n"
+msgstr "  -D, --pgdata=RÉP_DONNÉES  emplacement de stockage du répertoire des données\n"
 
 #: pg_ctl.c:2081
 #, c-format
 msgid "  -e SOURCE              event source for logging when running as a service\n"
 msgstr ""
-"  -e SOURCE                source de l'événement pour la trace lors de\n"
-"                           l'exécution en tant que service\n"
+"  -e SOURCE                 source de l'événement pour la trace lors de\n"
+"                            l'exécution en tant que service\n"
 
 #: pg_ctl.c:2083
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
-"  -s, --silent             affiche uniquement les erreurs, aucun message\n"
-"                           d'informations\n"
+"  -s, --silent              affiche uniquement les erreurs, aucun message\n"
+"                            d'informations\n"
 
 #: pg_ctl.c:2084
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr ""
-"  -t, --timeout=SECS       durée en secondes à attendre lors de\n"
-"                           l'utilisation de l'option -w\n"
+"  -t, --timeout=SECS        durée en secondes à attendre lors de l'utilisation\n"
+"                            de l'option -w\n"
 
 #: pg_ctl.c:2085
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version             affiche la version puis quitte\n"
 
 #: pg_ctl.c:2086
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
-msgstr "  -w, --wait             attend la fin de l'opération (par défaut)\n"
+msgstr "  -w, --wait                attend la fin de l'opération (par défaut)\n"
 
 #: pg_ctl.c:2087
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
-msgstr "  -W, --no-wait          n'attend pas la fin de l'opération\n"
+msgstr "  -W, --no-wait             n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:2088
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:2089
 #, c-format
@@ -696,19 +696,18 @@ msgstr ""
 #: pg_ctl.c:2093
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
-msgstr "  -c, --core-files         autorise postgres à produire des fichiers core\n"
+msgstr "  -c, --core-files          autorise postgres à produire des fichiers core\n"
 
 #: pg_ctl.c:2095
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
-msgstr "  -c, --core-files         non applicable à cette plateforme\n"
+msgstr "  -c, --core-files          non applicable à cette plateforme\n"
 
 #: pg_ctl.c:2097
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
-"                           NOM_FICHIER\n"
+"  -l, --log=FICHIER         écrit (ou ajoute) le journal du serveur dans FICHIER\n"
 
 #: pg_ctl.c:2098
 #, c-format
@@ -716,14 +715,14 @@ msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o, --options=OPTIONS  options de la ligne de commande à passer à\n"
-"                           postgres (exécutable du serveur PostgreSQL)\n"
-"                           ou à initdb\n"
+"  -o, --options=OPTIONS     options de la ligne de commande à passer à\n"
+"                            postgres (exécutable du serveur PostgreSQL)\n"
+"                            ou à initdb\n"
 
 #: pg_ctl.c:2100
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p CHEMIN_POSTGRES       normalement pas nécessaire\n"
+msgstr "  -p CHEMIN_POSTGRES        normalement pas nécessaire\n"
 
 #: pg_ctl.c:2101
 #, c-format
@@ -738,8 +737,8 @@ msgstr ""
 #, c-format
 msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr ""
-"  -m, --mode=MODE          MODE peut valoir « smart », « fast » ou\n"
-"                           « immediate »\n"
+"  -m, --mode=MODE           MODE peut valoir « smart », « fast » ou\n"
+"                            « immediate »\n"
 
 #: pg_ctl.c:2104
 #, c-format
@@ -753,19 +752,19 @@ msgstr ""
 #: pg_ctl.c:2105
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart                    quitte après déconnexion de tous les clients\n"
+msgstr "  smart       quitte après déconnexion de tous les clients\n"
 
 #: pg_ctl.c:2106
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast                     quitte directement, et arrête correctement (par défaut)\n"
+msgstr "  fast        quitte directement, et arrête correctement (par défaut)\n"
 
 #: pg_ctl.c:2107
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr ""
-"  immediate                quitte sans arrêt complet ; entraîne une\n"
-"                           restauration au démarrage suivant\n"
+"  immediate   quitte sans arrêt complet ; entraîne une restauration au démarrage\n"
+"              suivant\n"
 
 #: pg_ctl.c:2109
 #, c-format

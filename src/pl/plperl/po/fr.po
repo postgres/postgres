@@ -104,8 +104,7 @@ msgstr "ne peut pas initialiser l'attribut système « %s »"
 #: plperl.c:1198
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr ""
-"le nombre de dimensions du tableau (%d) dépasse la maximum autorisé (%d)"
+msgstr "le nombre de dimensions du tableau (%d) dépasse le maximum autorisé (%d)"
 
 #: plperl.c:1210 plperl.c:1227
 #, c-format
@@ -189,9 +188,7 @@ msgstr "n'a pas obtenu un élément en retour de la fonction trigger"
 #: plperl.c:2447
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr ""
-"fonction renvoyant un ensemble appelée dans un contexte qui ne peut pas\n"
-"accepter un ensemble"
+msgstr "la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas un ensemble"
 
 #: plperl.c:2492
 #, c-format

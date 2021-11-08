@@ -97,7 +97,7 @@ msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
 #: copy_fetch.c:120
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
-msgstr "la cible du lien symbolique « %s » est trop long"
+msgstr "la cible du lien symbolique « %s » est trop longue"
 
 #: copy_fetch.c:135
 #, c-format
@@ -405,7 +405,8 @@ msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
 "\n"
 msgstr ""
-"%s resynchronise une instance PostgreSQL avec une autre copie de l'instance.\n"
+"%s resynchronise une instance PostgreSQL avec une autre copie de\n"
+"l'instance.\n"
 "\n"
 
 #: pg_rewind.c:73
@@ -432,12 +433,12 @@ msgstr "  -D, --target-pgdata=RÉPERTOIRE répertoire de données existant à mo
 #: pg_rewind.c:76
 #, c-format
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
-msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source pour la synchronisation\n"
+msgstr "      --source-pgdata=RÉPERTOIRE répertoire de données source\n"
 
 #: pg_rewind.c:77
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
-msgstr "      --source-server=CONNSTR    serveur source pour la synchronisation\n"
+msgstr "      --source-server=CHAÎNE     serveur source pour la synchronisation\n"
 
 #: pg_rewind.c:78
 #, c-format
@@ -449,12 +450,14 @@ msgstr "  -n, --dry-run                  arrête avant de modifier quoi que ce s
 msgid ""
 "  -N, --no-sync                  do not wait for changes to be written\n"
 "                                 safely to disk\n"
-msgstr "  -N, --nosync               n'attend pas que les modifications soient proprement écrites sur disque\n"
+msgstr ""
+"  -N, --nosync                   n'attend pas que les modifications soient\n"
+"                                 proprement écrites sur disque\n"
 
 #: pg_rewind.c:81
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
-msgstr "  -P, --progress                 écrit les messages de progression\n"
+msgstr "  -P, --progress                 écrit des messages de progression\n"
 
 #: pg_rewind.c:82
 #, c-format

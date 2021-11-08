@@ -181,7 +181,7 @@ msgstr "l'utilisateur n'existe pas"
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "échec de la recherche du nom d'utilisateur : code erreur %lu"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -464,7 +464,7 @@ msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s initialise un cluster PostgreSQL.\n"
+"%s initialise une instance PostgreSQL.\n"
 "\n"
 
 #: initdb.c:2354
@@ -490,48 +490,48 @@ msgstr ""
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr ""
-"  -A, --auth=MÉTHODE         méthode d'authentification par défaut pour les\n"
-"                             connexions locales\n"
+"  -A, --auth=MÉTHODE           méthode d'authentification par défaut pour les\n"
+"                               connexions locales\n"
 
 #: initdb.c:2358
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr ""
-"      --auth-host=MÉTHODE    méthode d'authentification par défaut pour les\n"
-"                             connexions locales TCP/IP\n"
+"      --auth-host=MÉTHODE      méthode d'authentification par défaut pour les\n"
+"                               connexions locales TCP/IP\n"
 
 #: initdb.c:2359
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr ""
-"      --auth-local=MÉTHODE   méthode d'authentification par défaut pour les\n"
-"                             connexions locales socket\n"
+"      --auth-local=MÉTHODE     méthode d'authentification par défaut pour les\n"
+"                               connexions locales socket\n"
 
 #: initdb.c:2360
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr " [-D, --pgdata=]RÉP_DONNÉES  emplacement du cluster\n"
+msgstr " [-D, --pgdata=]RÉP_DONNÉES    emplacement de l'instance\n"
 
 #: initdb.c:2361
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr ""
-"  -E, --encoding=ENCODAGE    initialise l'encodage par défaut des nouvelles\n"
-"                             bases de données\n"
+"  -E, --encoding=ENCODAGE      initialise l'encodage par défaut des nouvelles\n"
+"                               bases de données\n"
 
 #: initdb.c:2362
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr ""
-"  -g, --allow-group-access   autorise la lecture/écriture pour le groupe sur\n"
-"                             le répertoire des données\n"
+"  -g, --allow-group-access     autorise la lecture/écriture pour le groupe sur\n"
+"                               le répertoire des données\n"
 
 #: initdb.c:2363
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr ""
-"      --locale=LOCALE        initialise la locale par défaut pour les\n"
-"                             nouvelles bases de données\n"
+"      --locale=LOCALE          initialise la locale par défaut pour les\n"
+"                               nouvelles bases de données\n"
 
 #: initdb.c:2364
 #, c-format
@@ -543,22 +543,22 @@ msgid ""
 msgstr ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                             initialise la locale par défaut dans la\n"
-"                             catégorie respective pour les nouvelles bases\n"
-"                             de données (les valeurs par défaut sont prises\n"
-"                             dans l'environnement)\n"
+"                               initialise la locale par défaut dans la catégorie\n"
+"                               respective pour les nouvelles bases de données\n"
+"                               (les valeurs par défaut sont prises dans\n"
+"                               l'environnement)\n"
 
 #: initdb.c:2368
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
-msgstr "      --no-locale            équivalent à --locale=C\n"
+msgstr "      --no-locale              équivalent à --locale=C\n"
 
 #: initdb.c:2369
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr ""
-"      --pwfile=NOMFICHIER    lit le mot de passe du nouveau\n"
-"                             super-utilisateur à partir de ce fichier\n"
+"      --pwfile=FICHIER         lit le mot de passe du nouveau super-utilisateur\n"
+"                               à partir de ce fichier\n"
 
 #: initdb.c:2370
 #, c-format
@@ -566,33 +566,32 @@ msgid ""
 "  -T, --text-search-config=CFG\n"
 "                            default text search configuration\n"
 msgstr ""
-"  -T, --text-search-config=CFG\n"
-"                             configuration par défaut de la recherche plein\n"
-"                             texte\n"
+"  -T, --text-search-config=CFG configuration par défaut de la recherche plein\n"
+"                               texte\n"
 
 #: initdb.c:2372
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NOM         nom du super-utilisateur de la base de données\n"
+msgstr "  -U, --username=NOM           nom du super-utilisateur de la base de données\n"
 
 #: initdb.c:2373
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
-"  -W, --pwprompt             demande un mot de passe pour le nouveau\n"
-"                             super-utilisateur\n"
+"  -W, --pwprompt               demande un mot de passe pour le nouveau\n"
+"                               super-utilisateur\n"
 
 #: initdb.c:2374
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr ""
-"  -X, --waldir=RÉP_WAL       emplacement du répertoire des journaux de\n"
-"                             transactions\n"
+"  -X, --waldir=RÉP_WAL         emplacement du répertoire des journaux de\n"
+"                               transactions\n"
 
 #: initdb.c:2375
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
-msgstr "      --wal-segsize=TAILLE   taille des segments WAL, en mégaoctets\n"
+msgstr "      --wal-segsize=TAILLE     taille des segments WAL, en Mo\n"
 
 #: initdb.c:2376
 #, c-format
@@ -606,39 +605,43 @@ msgstr ""
 #: initdb.c:2377
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug                engendre un grand nombre de traces de débogage\n"
+msgstr "  -d, --debug                  génère un grand nombre de traces de débogage\n"
 
 #: initdb.c:2378
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
-msgstr "  -k, --data-checksums       utilise les sommes de contrôle pour les pages de données\n"
+msgstr ""
+"  -k, --data-checksums         active les sommes de contrôle pour les blocs des\n"
+"                               fichiers de données\n"
 
 #: initdb.c:2379
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr ""
-"  -L RÉPERTOIRE              indique où trouver les fichiers servant à la\n"
-"                             création du cluster\n"
+"  -L RÉPERTOIRE                indique où trouver les fichiers servant à la\n"
+"                               création de l'instance\n"
 
 #: initdb.c:2380
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
-msgstr "  -n, --noclean              ne nettoie pas après des erreurs\n"
+msgstr "  -n, --noclean                ne nettoie pas après des erreurs\n"
 
 #: initdb.c:2381
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
-msgstr "  -N, --nosync               n'attend pas que les modifications soient proprement écrites sur disque\n"
+msgstr ""
+"  -N, --nosync                 n'attend pas que les modifications soient\n"
+"                               proprement écrites sur disque\n"
 
 #: initdb.c:2382
 #, c-format
 msgid "  -s, --show                show internal settings\n"
-msgstr "  -s, --show                 affiche la configuration interne\n"
+msgstr "  -s, --show                   affiche la configuration interne\n"
 
 #: initdb.c:2383
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
-msgstr "  -S, --sync-only            synchronise uniquement le répertoire des données\n"
+msgstr "  -S, --sync-only              synchronise uniquement le répertoire des données\n"
 
 #: initdb.c:2384
 #, c-format
@@ -652,12 +655,12 @@ msgstr ""
 #: initdb.c:2385
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version                affiche la version puis quitte\n"
 
 #: initdb.c:2386
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                   affiche cette aide puis quitte\n"
 
 #: initdb.c:2387
 #, c-format
@@ -750,7 +753,7 @@ msgid ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 msgstr ""
-"Le cluster sera initialisé avec les locales\n"
+"L'instance sera initialisée avec les locales\n"
 "  COLLATE:  %s\n"
 "  CTYPE:    %s\n"
 "  MESSAGES: %s\n"

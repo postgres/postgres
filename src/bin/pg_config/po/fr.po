@@ -131,9 +131,7 @@ msgstr ""
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
 msgstr ""
-"  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-"
-"tête\n"
-"                        C\n"
+"  --pkgincludedir       affiche l'emplacement des autres fichiers d'en-tête C\n"
 
 #: pg_config.c:84
 #, c-format
@@ -202,7 +200,7 @@ msgid ""
 msgstr ""
 "  --configure           affiche les options passées au script « configure "
 "»\n"
-"                        à la construction de PostgreSQL\n"
+"                        lors de la construction de PostgreSQL\n"
 
 #: pg_config.c:94
 #, c-format
@@ -312,7 +310,7 @@ msgstr "Essayer « %s --help » pour plus d'informations.\n"
 #: pg_config.c:153
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s : n'a pas pu trouver son propre exécutable\n"
+msgstr "%s : n'a pas pu trouver l'exécutable du programme\n"
 
 #: pg_config.c:180
 #, c-format

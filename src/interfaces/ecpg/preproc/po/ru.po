@@ -1,13 +1,13 @@
 # Russian message translation file for ecpg
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-08-10 10:40+0300\n"
-"PO-Revision-Date: 2019-09-09 13:30+0300\n"
+"PO-Revision-Date: 2021-09-04 10:54+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -179,7 +179,7 @@ msgstr ""
 #: ecpg.c:139
 #, c-format
 msgid "%s: could not locate my own executable path\n"
-msgstr "%s: не удалось найти свой путь к исполняемым файлам\n"
+msgstr "%s: не удалось найти путь к собственному исполняемому файлу\n"
 
 #: ecpg.c:174 ecpg.c:331 ecpg.c:342
 #, c-format
@@ -254,7 +254,7 @@ msgstr "незавершённая строка в кавычках"
 #: pgc.l:666
 #, c-format
 msgid "unterminated dollar-quoted string"
-msgstr "незавершённая строка в долларах"
+msgstr "незавершённая строка с $"
 
 #: pgc.l:685 pgc.l:698
 #, c-format

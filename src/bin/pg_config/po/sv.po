@@ -1,19 +1,20 @@
 # Swedish message translation file for pg_config.
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 07:16+0000\n"
-"PO-Revision-Date: 2019-04-29 13:31+0200\n"
+"POT-Creation-Date: 2021-11-07 09:14+0000\n"
+"PO-Revision-Date: 2021-11-07 06:44+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/config_info.c:130 ../../common/config_info.c:138
 #: ../../common/config_info.c:146 ../../common/config_info.c:154
@@ -250,18 +251,3 @@ msgstr "%s: kunde inte hitta det egna programmets körbara fil\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ogiltigt argument: %s\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-#~ msgstr "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "pclose failed: %s"
-#~ msgstr "pclose misslyckades: %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "kunde inte läsa symbolisk länk \"%s\""
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "kunde inte byta katalog till \"%s\": %s"
-
-#~ msgid "could not identify current directory: %s"
-#~ msgstr "kunde inte identifiera aktuell katalog: %s"

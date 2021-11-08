@@ -32,7 +32,7 @@ msgstr "n'a pas pu déterminer le type de retour pour la fonction polymorphique 
 #: pl_comp.c:556
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "les fonctions triggers peuvent seulement être appelées par des triggers"
+msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
 #: pl_comp.c:560 pl_handler.c:445
 #, c-format
@@ -134,7 +134,7 @@ msgstr "lors de la conversion de la valeur de retour au type de retour de la fon
 #: pl_exec.c:616 pl_exec.c:3584
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "fonction renvoyant un ensemble appelée dans un contexte qui ne peut pas accepter un ensemble"
+msgstr "la fonction renvoyant un ensemble a été appelée dans un contexte qui n'accepte pas un ensemble"
 
 #: pl_exec.c:742 pl_exec.c:1016 pl_exec.c:1177
 msgid "during function exit"
@@ -444,7 +444,7 @@ msgstr "ne peut pas affecter une valeur non composite à une variable RECORD"
 #: pl_exec.c:5143
 #, c-format
 msgid "cannot assign to system column \"%s\""
-msgstr "ne peut pas affecter « %s » à une colonne système"
+msgstr "ne peut pas affecter à une colonne système « %s »"
 
 #: pl_exec.c:5207
 #, c-format

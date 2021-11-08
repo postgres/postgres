@@ -78,7 +78,7 @@ msgstr ""
 #: ecpg.c:41
 #, c-format
 msgid "Options:\n"
-msgstr "Options:\n"
+msgstr "Options :\n"
 
 #: ecpg.c:42
 #, c-format
@@ -86,8 +86,8 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             produit automatiquement le code C à partir du code SQL embarqué ;\n"
-"                 ceci affecte EXEC SQL TYPE\n"
+"  -c             produit automatiquement le code C à partir du code SQL\n"
+"                 embarqué ; ceci affecte EXEC SQL TYPE\n"
 
 #: ecpg.c:44
 #, c-format
@@ -111,7 +111,9 @@ msgstr "  -D SYMBOLE     définit SYMBOLE\n"
 #: ecpg.c:50
 #, c-format
 msgid "  -h             parse a header file, this option includes option \"-c\"\n"
-msgstr "  -h             analyse un fichier d'en-tête, cette option inclut l'option « -c »\n"
+msgstr ""
+"  -h             analyse un fichier d'en-tête, cette option inclut l'option\n"
+"                 « -c »\n"
 
 #: ecpg.c:51
 #, c-format
@@ -165,9 +167,9 @@ msgid ""
 "input file name, after stripping off .pgc if present.\n"
 msgstr ""
 "\n"
-"Si aucun nom de fichier en sortie n'est fourni, le nom est formaté en\n"
-"ajoutant le suffixe .c au nom du fichier en entrée après avoir supprimé le\n"
-"suffixe .pgc s'il est présent\n"
+"Si aucun nom de fichier en sortie n'est fourni, le nom est formaté en ajoutant\n"
+"le suffixe .c au nom du fichier en entrée après avoir supprimé le suffixe .pgc\n"
+"s'il est présent\n"
 
 #: ecpg.c:62
 #, c-format
@@ -181,7 +183,7 @@ msgstr ""
 #: ecpg.c:182
 #, c-format
 msgid "%s: could not locate my own executable path\n"
-msgstr "%s : n'a pas pu localiser mon propre exécutable\n"
+msgstr "%s : n'a pas pu localiser le chemin de mon propre exécutable\n"
 
 #: ecpg.c:217 ecpg.c:374 ecpg.c:385
 #, c-format
@@ -246,7 +248,7 @@ msgstr "chaîne bit litéral non terminée"
 #: pgc.l:518
 #, c-format
 msgid "unterminated hexadecimal string literal"
-msgstr "chaîne hexadécimale litéralle non terminée"
+msgstr "chaîne hexadécimale litérale non terminée"
 
 #: pgc.l:614 pgc.l:718
 #, c-format

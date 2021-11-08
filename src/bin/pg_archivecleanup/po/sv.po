@@ -1,32 +1,33 @@
 # Swedish message translation file for pg_archivecleanup
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-27 01:47+0000\n"
-"PO-Revision-Date: 2019-04-27 14:52+0200\n"
+"POT-Creation-Date: 2021-11-07 09:16+0000\n"
+"PO-Revision-Date: 2021-11-07 10:36+0100\n"
 "Last-Translator: FDennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -36,38 +37,38 @@ msgstr "varning: "
 msgid "archive location \"%s\" does not exist"
 msgstr "arkivplats \"%s\" finns inte"
 
-#: pg_archivecleanup.c:153
+#: pg_archivecleanup.c:154
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "kunde inte ta bort fil \"%s\": %m"
 
-#: pg_archivecleanup.c:161
+#: pg_archivecleanup.c:162
 #, c-format
 msgid "could not read archive location \"%s\": %m"
 msgstr "kunde inte läsa arkivplats \"%s\": %m"
 
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:165
 #, c-format
 msgid "could not close archive location \"%s\": %m"
 msgstr "kunde inte stänga arkivplats \"%s\": %m"
 
-#: pg_archivecleanup.c:168
+#: pg_archivecleanup.c:169
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "kunde inte öppna arkivplats \"%s\": %m"
 
-#: pg_archivecleanup.c:241
+#: pg_archivecleanup.c:242
 #, c-format
 msgid "invalid file name argument"
 msgstr "ogiltigt filnamnsargument"
 
-#: pg_archivecleanup.c:242 pg_archivecleanup.c:315 pg_archivecleanup.c:336
-#: pg_archivecleanup.c:348 pg_archivecleanup.c:355
+#: pg_archivecleanup.c:243 pg_archivecleanup.c:316 pg_archivecleanup.c:337
+#: pg_archivecleanup.c:349 pg_archivecleanup.c:356
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:256
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -76,17 +77,17 @@ msgstr ""
 "%s tar bort gamla WAL-filer från PostgreSQLs arkiv.\n"
 "\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:257
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:258
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [FLAGGA]... ARKIVPLATS ÄLDSTASPARADEWALFIL\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:259
 #, c-format
 msgid ""
 "\n"
@@ -95,32 +96,32 @@ msgstr ""
 "\n"
 "Flaggor:\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
 msgstr "  -d             generera debugutskrift (utförligt läge)\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  -n             dry run, show the names of the files that would be removed\n"
 msgstr "  -n             gör inga ändringar visa namn på de filer som skulle ha tagits bort\n"
 
-#: pg_archivecleanup.c:261
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
 msgstr "  -V, --version  visa versionsinformation, avsluta sedan\n"
 
-#: pg_archivecleanup.c:262
+#: pg_archivecleanup.c:263
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
 msgstr "  -x SUF         städa upp filer om de har detta suffix\n"
 
-#: pg_archivecleanup.c:263
+#: pg_archivecleanup.c:264
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
 msgstr "  -?, --help     visa denna hjälp, avsluta sedan\n"
 
-#: pg_archivecleanup.c:264
+#: pg_archivecleanup.c:265
 #, c-format
 msgid ""
 "\n"
@@ -135,7 +136,7 @@ msgstr ""
 "t.ex.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:270
 #, c-format
 msgid ""
 "\n"
@@ -148,39 +149,26 @@ msgstr ""
 "t.ex.\n"
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:273
+#: pg_archivecleanup.c:274
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "\nRapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: pg_archivecleanup.c:335
+#: pg_archivecleanup.c:336
 #, c-format
 msgid "must specify archive location"
 msgstr "måste ange en arkivplats"
 
-#: pg_archivecleanup.c:347
+#: pg_archivecleanup.c:348
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "måste ange äldsta sparade WAL-filen"
 
-#: pg_archivecleanup.c:354
+#: pg_archivecleanup.c:355
 #, c-format
 msgid "too many command-line arguments"
 msgstr "för många kommandoradsargument"
-
-#~ msgid "%s: too many parameters\n"
-#~ msgstr "%s: för många parametrar\n"
-
-#~ msgid "%s: keeping WAL file \"%s\" and later\n"
-#~ msgstr "%s: behåller WAL-fil \"%s\" och senare\n"
-
-#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
-#~ msgstr "%s: FEL: kunde inte ta bort filen \"%s\": %s\n"
-
-#~ msgid "%s: removing file \"%s\"\n"
-#~ msgstr "%s: tar bort filen \"%s\"\n"
-
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s: filen \"%s\" hade tagits bort\n"

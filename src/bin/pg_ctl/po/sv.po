@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Magnus Hagander <magnus@hagander.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
@@ -9,14 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-21 03:44+0000\n"
-"PO-Revision-Date: 2020-01-23 13:57+0100\n"
+"POT-Creation-Date: 2021-11-07 09:14+0000\n"
+"PO-Revision-Date: 2021-11-07 06:46+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
 #, c-format
@@ -872,72 +873,3 @@ msgstr "%s: ingen operation angiven\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte satt\n"
-
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Standard är att vänta på nedstängning, men inte att vänta på start\n"
-#~ "eller omstart.\n"
-#~ "\n"
-
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr "  %s start   [-w] [-t SEK] [-D DATAKAT] [-s] [-l FILNAMN] [-o \"FLAGGOR\"]\n"
-
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s: kunde inte invänta server på grund av felinställning\n"
-
-#~ msgid "server is still starting up\n"
-#~ msgstr "Servern är fortfarande i startläge.\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s: kunde inte starta servern: avslutningskoden var %d\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: denna databaskatalog tycks nyttjas av en redan driftsatt postmaster\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: växeln -w kan inte nyttja uttag (socket) med relativ sökväg\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s: växeln -w stöds inte av server i version före 9.1\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "barnprocess terminerades av signal %d"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "barnprocess terminerades av signal %s"
-
-#~ msgid "pclose failed: %s"
-#~ msgstr "pclose misslyckades: %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "kunde inte läsa symbolisk länk \"%s\""
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "kunde inte byta katalog till \"%s\": %s"
-
-#~ msgid "could not identify current directory: %s"
-#~ msgstr "kunde inte identifiera aktuell katalog: %s"
-
-#~ msgid "%s: could not create log file \"%s\": %s\n"
-#~ msgstr "%s: kunde inte skapa loggfil \"%s\": %s\n"
