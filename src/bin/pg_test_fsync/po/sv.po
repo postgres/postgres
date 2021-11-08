@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_test_fsync
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 13\n"
+"Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-11 01:17+0000\n"
-"PO-Revision-Date: 2020-04-11 08:15+0200\n"
+"POT-Creation-Date: 2021-11-06 22:18+0000\n"
+"PO-Revision-Date: 2021-11-07 07:19+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -18,57 +18,57 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. translator: maintain alignment with NA_FORMAT
-#: pg_test_fsync.c:30
+#: pg_test_fsync.c:31
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f ops/sek  %6.0f useks/op\n"
 
-#: pg_test_fsync.c:156
+#: pg_test_fsync.c:159
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "Användning: %s [-f FILENAMN] [-s SEK-PER-TEST]\n"
 
-#: pg_test_fsync.c:180 pg_test_fsync.c:191
+#: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_test_fsync.c:196
+#: pg_test_fsync.c:216
 #, c-format
-msgid "%d second per test\n"
-msgid_plural "%d seconds per test\n"
-msgstr[0] "%d sekund per test\n"
-msgstr[1] "%d sekunder per test\n"
+msgid "%u second per test\n"
+msgid_plural "%u seconds per test\n"
+msgstr[0] "%u sekund per test\n"
+msgstr[1] "%u sekunder per test\n"
 
-#: pg_test_fsync.c:201
+#: pg_test_fsync.c:221
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr "O_DIRECT stöds på denna plattform för open_datasync och open_sync.\n"
 
-#: pg_test_fsync.c:203
+#: pg_test_fsync.c:223
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "Direkt I/O stöds inte på denna plattform.\n"
 
-#: pg_test_fsync.c:228 pg_test_fsync.c:293 pg_test_fsync.c:317
-#: pg_test_fsync.c:340 pg_test_fsync.c:481 pg_test_fsync.c:493
-#: pg_test_fsync.c:509 pg_test_fsync.c:515 pg_test_fsync.c:540
+#: pg_test_fsync.c:248 pg_test_fsync.c:314 pg_test_fsync.c:339
+#: pg_test_fsync.c:363 pg_test_fsync.c:507 pg_test_fsync.c:519
+#: pg_test_fsync.c:535 pg_test_fsync.c:541 pg_test_fsync.c:563
 msgid "could not open output file"
 msgstr "kunde inte öppna utdatafil"
 
-#: pg_test_fsync.c:232 pg_test_fsync.c:274 pg_test_fsync.c:299
-#: pg_test_fsync.c:323 pg_test_fsync.c:346 pg_test_fsync.c:384
-#: pg_test_fsync.c:442 pg_test_fsync.c:483 pg_test_fsync.c:511
-#: pg_test_fsync.c:542
+#: pg_test_fsync.c:252 pg_test_fsync.c:297 pg_test_fsync.c:323
+#: pg_test_fsync.c:348 pg_test_fsync.c:372 pg_test_fsync.c:411
+#: pg_test_fsync.c:470 pg_test_fsync.c:509 pg_test_fsync.c:537
+#: pg_test_fsync.c:568
 msgid "write failed"
 msgstr "skrivning misslyckades"
 
-#: pg_test_fsync.c:236 pg_test_fsync.c:325 pg_test_fsync.c:348
-#: pg_test_fsync.c:485 pg_test_fsync.c:517
+#: pg_test_fsync.c:256 pg_test_fsync.c:350 pg_test_fsync.c:374
+#: pg_test_fsync.c:511 pg_test_fsync.c:543
 msgid "fsync failed"
 msgstr "fsync misslyckades"
 
-#: pg_test_fsync.c:250
+#: pg_test_fsync.c:270
 #, c-format
 msgid ""
 "\n"
@@ -77,7 +77,7 @@ msgstr ""
 "\n"
 "Jämför filsynkningsmetoder genom att använda en %dkB-skrivning:\n"
 
-#: pg_test_fsync.c:252
+#: pg_test_fsync.c:272
 #, c-format
 msgid ""
 "\n"
@@ -86,26 +86,21 @@ msgstr ""
 "\n"
 "Jämför filsynkningsmetoder genom att använda två %dkB-skrivningar:\n"
 
-#: pg_test_fsync.c:253
+#: pg_test_fsync.c:273
 #, c-format
 msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
 msgstr "(i wal_sync_method inställningsordning, förutom att fdatasync är standard i Linux)\n"
 
-#: pg_test_fsync.c:264 pg_test_fsync.c:367 pg_test_fsync.c:433
+#: pg_test_fsync.c:284 pg_test_fsync.c:391 pg_test_fsync.c:458
 msgid "n/a*"
 msgstr "ej tillämpbar*"
 
-#: pg_test_fsync.c:276 pg_test_fsync.c:302 pg_test_fsync.c:327
-#: pg_test_fsync.c:350 pg_test_fsync.c:386 pg_test_fsync.c:444
-msgid "seek failed"
-msgstr "seek misslyckades"
-
-#: pg_test_fsync.c:282 pg_test_fsync.c:307 pg_test_fsync.c:355
-#: pg_test_fsync.c:392 pg_test_fsync.c:450
+#: pg_test_fsync.c:303 pg_test_fsync.c:329 pg_test_fsync.c:379
+#: pg_test_fsync.c:417 pg_test_fsync.c:476
 msgid "n/a"
 msgstr "ej tillämpbar"
 
-#: pg_test_fsync.c:397
+#: pg_test_fsync.c:422
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
@@ -114,7 +109,7 @@ msgstr ""
 "* Detta filsystem och dess monteringsflaffor stöder inte\n"
 "  direkt I/O, t.ex. ext4 i journalläge.\n"
 
-#: pg_test_fsync.c:405
+#: pg_test_fsync.c:430
 #, c-format
 msgid ""
 "\n"
@@ -123,7 +118,7 @@ msgstr ""
 "\n"
 "Jämför open_sync med olika skrivstorlekar:\n"
 
-#: pg_test_fsync.c:406
+#: pg_test_fsync.c:431
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
@@ -132,27 +127,27 @@ msgstr ""
 "(Detta är gjort för att jämföra kostnaden att skriva 16kB med olika\n"
 "open_sync skrivstorlekar.)\n"
 
-#: pg_test_fsync.c:409
+#: pg_test_fsync.c:434
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB open_sync skrivning"
 
-#: pg_test_fsync.c:410
+#: pg_test_fsync.c:435
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB open_sync skrivningar"
 
-#: pg_test_fsync.c:411
+#: pg_test_fsync.c:436
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB open_sync skrivningar"
 
-#: pg_test_fsync.c:412
+#: pg_test_fsync.c:437
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB open_sync skrivningar"
 
-#: pg_test_fsync.c:413
+#: pg_test_fsync.c:438
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB open_sync skrivningar"
 
-#: pg_test_fsync.c:466
+#: pg_test_fsync.c:492
 #, c-format
 msgid ""
 "\n"
@@ -161,7 +156,7 @@ msgstr ""
 "\n"
 "Testa om fsync på en icke skrivbar fildeskriptor respekteras:\n"
 
-#: pg_test_fsync.c:467
+#: pg_test_fsync.c:493
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
@@ -170,7 +165,7 @@ msgstr ""
 "(Om tiderna är liknande, så kan fsync() synka data skriven på\n"
 "olika deskriptorer.)\n"
 
-#: pg_test_fsync.c:532
+#: pg_test_fsync.c:558
 #, c-format
 msgid ""
 "\n"

@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-04-26 06:46+0000\n"
-"PO-Revision-Date: 2021-04-26 11:37+0200\n"
+"POT-Creation-Date: 2021-10-28 16:15+0000\n"
+"PO-Revision-Date: 2021-10-29 16:13+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
@@ -568,13 +568,13 @@ msgid ""
 "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s start    [-D RÉP_DONNÉES] [-l NOM_FICHIER] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-p CHEMIN] [-c]\n"
+"  %s start      [-D RÉP_DONNÉES] [-l FICHIER] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-p CHEMIN] [-c]\n"
 
 #: pg_ctl.c:2031
 #, c-format
 msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-msgstr "  %s stop     [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+msgstr "  %s stop       [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:2032
 #, c-format
@@ -582,33 +582,33 @@ msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s restart  [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
-"                  [-o OPTIONS] [-c]\n"
+"  %s restart    [-D RÉP_DONNÉES] [-m MODE_ARRÊT] [-W] [-t SECS] [-s]\n"
+"                    [-o OPTIONS] [-c]\n"
 
 #: pg_ctl.c:2034
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:2035
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
-msgstr "  %s status   [-D RÉP_DONNÉES]\n"
+msgstr "  %s status     [-D RÉP_DONNÉES]\n"
 
 #: pg_ctl.c:2036
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
-msgstr "  %s promote  [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote    [-D RÉP_DONNÉES] [-W] [-t SECS] [-s]\n"
 
 #: pg_ctl.c:2037
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
-msgstr "  %s reload   [-D RÉP_DONNÉES] [-s]\n"
+msgstr "  %s reload     [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:2038
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
-msgstr "  %s kill     NOM_SIGNAL PID\n"
+msgstr "  %s kill       NOM_SIGNAL PID\n"
 
 #: pg_ctl.c:2040
 #, c-format
@@ -636,7 +636,7 @@ msgstr ""
 #: pg_ctl.c:2046
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata=RÉP_DONNÉES emplacement de stockage du cluster\n"
+msgstr "  -D, --pgdata=RÉP_DONNÉES emplacement du répertoire des données de l'instance\n"
 
 #: pg_ctl.c:2048
 #, c-format
@@ -656,28 +656,28 @@ msgstr ""
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr ""
-"  -t, --timeout=SECS       durée en secondes à attendre lors de\n"
-"                           l'utilisation de l'option -w\n"
+"  -t, --timeout=SECS       durée en secondes à attendre lors de l'utilisation\n"
+"                           de l'option -w\n"
 
 #: pg_ctl.c:2052
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version            affiche la version puis quitte\n"
 
 #: pg_ctl.c:2053
 #, c-format
 msgid "  -w, --wait             wait until operation completes (default)\n"
-msgstr "  -w, --wait             attend la fin de l'opération (par défaut)\n"
+msgstr "  -w, --wait               attend la fin de l'opération (par défaut)\n"
 
 #: pg_ctl.c:2054
 #, c-format
 msgid "  -W, --no-wait          do not wait until operation completes\n"
-msgstr "  -W, --no-wait          n'attend pas la fin de l'opération\n"
+msgstr "  -W, --no-wait            n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:2055
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help               affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:2056
 #, c-format
@@ -706,9 +706,7 @@ msgstr "  -c, --core-files         non applicable à cette plateforme\n"
 #: pg_ctl.c:2064
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr ""
-"  -l, --log=NOM_FICHIER    écrit (ou ajoute) le journal du serveur dans\n"
-"                           NOM_FICHIER\n"
+msgstr "  -l, --log=FICHIER        écrit (ou ajoute) le journal du serveur dans FICHIER\n"
 
 #: pg_ctl.c:2065
 #, c-format
@@ -716,7 +714,7 @@ msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o, --options=OPTIONS  options de la ligne de commande à passer à\n"
+"  -o, --options=OPTIONS    options de la ligne de commande à passer à\n"
 "                           postgres (exécutable du serveur PostgreSQL)\n"
 "                           ou à initdb\n"
 
@@ -753,19 +751,19 @@ msgstr ""
 #: pg_ctl.c:2072
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart                    quitte après déconnexion de tous les clients\n"
+msgstr "  smart      quitte après déconnexion de tous les clients\n"
 
 #: pg_ctl.c:2073
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast                     quitte directement, et arrête correctement (par défaut)\n"
+msgstr "  fast       quitte directement, et arrête correctement (par défaut)\n"
 
 #: pg_ctl.c:2074
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr ""
-"  immediate                quitte sans arrêt complet ; entraîne une\n"
-"                           restauration au démarrage suivant\n"
+"  immediate  quitte sans arrêt complet ; entraîne une restauration au démarrage\n"
+"             suivant\n"
 
 #: pg_ctl.c:2076
 #, c-format
@@ -846,7 +844,7 @@ msgstr ""
 #: pg_ctl.c:2092
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_ctl.c:2117
 #, c-format
@@ -916,46 +914,49 @@ msgstr ""
 "%s : aucun répertoire de bases de données indiqué et variable\n"
 "d'environnement PGDATA non initialisée\n"
 
-#~ msgid "%s: could not create log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu créer le fichier de traces « %s » : %s\n"
+#~ msgid "pclose failed: %m"
+#~ msgstr "échec de pclose : %m"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "le processus fils a été terminé par le signal %s"
-
-#~ msgid "server is still starting up\n"
-#~ msgstr "le serveur est toujours en cours de démarrage\n"
+#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
+#~ "%s: -w option cannot use a relative socket directory specification\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
+#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
+#~ "la socket\n"
 
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
+#~ msgid "%s: could not wait for server because of misconfiguration\n"
+#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
 
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+#~ msgstr ""
+#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
+#~ "                [-o \"OPTIONS\"]\n"
 
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                   affiche cette aide et quitte\n"
+#~ msgid ""
+#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
+#~ "\n"
+#~ msgstr ""
+#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
+#~ "redémarrage.)\n"
+#~ "\n"
 
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version                affiche la version et quitte\n"
+#~ msgid ""
+#~ "\n"
+#~ "Options for stop, restart, or promote:\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #~ msgid ""
 #~ "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -967,46 +968,43 @@ msgstr ""
 #~ "ou d'envoyer un signal à un processus PostgreSQL\n"
 #~ "\n"
 
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version                affiche la version et quitte\n"
+
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                   affiche cette aide et quitte\n"
+
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
+
+#~ msgid "%s: could not start server: exit code was %d\n"
+#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
 
 #~ msgid ""
 #~ "\n"
-#~ "Options for stop, restart, or promote:\n"
+#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
+#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
 
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
-#~ "redémarrage.)\n"
-#~ "\n"
+#~ msgid "server is still starting up\n"
+#~ msgstr "le serveur est toujours en cours de démarrage\n"
 
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr ""
-#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
-#~ "                [-o \"OPTIONS\"]\n"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "le processus fils a été terminé par le signal %s"
 
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
+
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
 
 #~ msgid ""
 #~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
-#~ "la socket\n"
+#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
-
-#~ msgid "pclose failed: %m"
-#~ msgstr "échec de pclose : %m"
+#~ msgid "%s: could not create log file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu créer le fichier de traces « %s » : %s\n"

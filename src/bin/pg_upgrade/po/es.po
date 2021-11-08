@@ -10,15 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-03 16:46+0000\n"
-"PO-Revision-Date: 2021-09-16 09:25+0200\n"
+"POT-Creation-Date: 2021-10-13 22:16+0000\n"
+"PO-Revision-Date: 2021-10-14 10:14-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: BlackCAT 1.1\n"
 
 #: check.c:70
 #, c-format
@@ -550,10 +550,9 @@ msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  MultiXactId más antiguo del último checkpoint\n"
 
 #: controldata.c:591
-#, fuzzy, c-format
-#| msgid "  latest checkpoint next OID\n"
+#, c-format
 msgid "  latest checkpoint oldestXID\n"
-msgstr "  siguiente OID del último checkpoint\n"
+msgstr "  XID más antiguo del último checkpoint\n"
 
 #: controldata.c:594
 #, c-format
@@ -1518,10 +1517,9 @@ msgid "Copying old %s to new server"
 msgstr "Copiando el %s antiguo al nuevo servidor"
 
 #: pg_upgrade.c:470
-#, fuzzy, c-format
-#| msgid "Setting next OID for new cluster"
+#, c-format
 msgid "Setting oldest XID for new cluster"
-msgstr "Seteando siguiente OID para el nuevo clúster"
+msgstr "Estableciendo XID más antiguo para el nuevo clúster"
 
 #: pg_upgrade.c:478
 #, c-format
@@ -1879,27 +1877,17 @@ msgstr ""
 "\n"
 
 #: version.c:485
-#, fuzzy, c-format
-#| msgid "Checking for hash indexes"
+#, c-format
 msgid "Checking for extension updates"
-msgstr "Verificando índices hash"
+msgstr "Verificando actualizaciones para extensiones"
 
 #: version.c:537
 #, c-format
 msgid "notice"
-msgstr ""
+msgstr "aviso"
 
 #: version.c:538
-#, fuzzy, c-format
-#| msgid ""
-#| "\n"
-#| "Your installation contains hash indexes.  These indexes have different\n"
-#| "internal formats between your old and new clusters, so they must be\n"
-#| "reindexed with the REINDEX command.  The file\n"
-#| "    %s\n"
-#| "when executed by psql by the database superuser will recreate all invalid\n"
-#| "indexes; until then, none of these indexes will be used.\n"
-#| "\n"
+#, c-format
 msgid ""
 "\n"
 "Your installation contains extensions that should be updated\n"
@@ -1910,13 +1898,31 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Su instalación contiene índices hash. Estos índices tienen formato interno\n"
-"distinto entre su versión nueva y antigua, por lo que deben ser reindexados\n"
-"con la orden REINDEX.  El archivo\n"
+"Su instalación tiene extensiones que deben ser actualizadas\n"
+"con la sentencia ALTER EXTENSION.  El archivo\n"
 "    %s\n"
-"cuando se ejecute en psql con el superusuario de la base de datos recreará\n"
-"los índices no válidos; hasta entonces, ninguno de esos índices será usado.\n"
+"cuando se ejecute en psql con el superusuario de la base de datos\n"
+"actualizará estas extensiones.\n"
 "\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "connection to database failed: %s"
+#~ msgstr ""
+#~ "\n"
+#~ "falló la conexión a la base de datos: %s"
+
+#~ msgid "connection to database failed: %s"
+#~ msgstr "falló la conexión a la base de datos: %s"
+
+#~ msgid "waitpid() failed: %s\n"
+#~ msgstr "waitpid() fallida: %s\n"
+
+#~ msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
+#~ msgstr "La comprobación de «%s» falló: no se puede leer el archivo (permiso denegado)\n"
+
+#~ msgid "Creating script to analyze new cluster"
+#~ msgstr "Creando un script para analizar el clúster nuevo"
 
 #~ msgid ""
 #~ "Optimizer statistics and free space information are not transferred\n"
@@ -1929,22 +1935,3 @@ msgstr ""
 #~ "el servidor nuevo considere ejecutar:\n"
 #~ "    %s\n"
 #~ "\n"
-
-#~ msgid "Creating script to analyze new cluster"
-#~ msgstr "Creando un script para analizar el clúster nuevo"
-
-#~ msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
-#~ msgstr "La comprobación de «%s» falló: no se puede leer el archivo (permiso denegado)\n"
-
-#~ msgid "waitpid() failed: %s\n"
-#~ msgstr "waitpid() fallida: %s\n"
-
-#~ msgid "connection to database failed: %s"
-#~ msgstr "falló la conexión a la base de datos: %s"
-
-#~ msgid ""
-#~ "\n"
-#~ "connection to database failed: %s"
-#~ msgstr ""
-#~ "\n"
-#~ "falló la conexión a la base de datos: %s"

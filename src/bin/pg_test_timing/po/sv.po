@@ -1,0 +1,83 @@
+# Swedish message translation file for pg_test_timing
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-11-06 17:16+0000\n"
+"PO-Revision-Date: 2021-11-06 21:59+0100\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: pg_test_timing.c:59
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "Användning: %s [-d TID]\n"
+
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: ogiltigt argument för flaggan %s\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: %s måste vara i intervallet %u..%u\n"
+
+#: pg_test_timing.c:107
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
+
+#: pg_test_timing.c:115
+#, c-format
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "Testar timingoverhead under %u sekund.\n"
+msgstr[1] "Testar timingoverhead under %u sekunder.\n"
+
+#: pg_test_timing.c:151
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "Upptäckte att klockan gått bakåt i tiden.\n"
+
+#: pg_test_timing.c:152
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "Tidsförskjutning: %d ms\n"
+
+#: pg_test_timing.c:175
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "Tid per varv inklusive overhead: %0.2f ns\n"
+
+#: pg_test_timing.c:186
+msgid "< us"
+msgstr "< us"
+
+#: pg_test_timing.c:187
+#, no-c-format
+msgid "% of total"
+msgstr "% av totalt"
+
+#: pg_test_timing.c:188
+msgid "count"
+msgstr "antal"
+
+#: pg_test_timing.c:197
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Histogram över tider:\n"

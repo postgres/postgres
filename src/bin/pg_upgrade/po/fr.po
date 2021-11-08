@@ -1144,7 +1144,9 @@ msgstr "ne peut pas exécuter pg_upgrade depuis le répertoire de données de la
 msgid ""
 "pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
 "\n"
-msgstr "pg_upgrade met à jour une instance PostgreSQL vers une version majeure différente.\n"
+msgstr ""
+"pg_upgrade met à jour une instance PostgreSQL vers une version majeure\n"
+"différente.\n"
 
 #: option.c:289
 #, c-format
@@ -1168,7 +1170,9 @@ msgstr "Options :\n"
 #: option.c:292
 #, c-format
 msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
-msgstr "  -b, --old-bindir=DIRBIN       répertoire des exécutables de l'ancienne instance\n"
+msgstr ""
+"  -b, --old-bindir=RÉP_BIN       répertoire des exécutables de l'ancienne\n"
+"                                 instance\n"
 
 #: option.c:293
 #, c-format
@@ -1176,89 +1180,111 @@ msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
 "                                same directory as pg_upgrade)\n"
 msgstr ""
-"  -B, --new-bindir=DIRBIN       répertoire des exécutables de la nouvelle instance (par défaut,\n"
-"                                le même répertoire que pg_upgrade)\n"
-"\n"
+"  -B, --new-bindir=RÉP_BIN       répertoire des exécutables de la nouvelle\n"
+"                                 instance (par défaut, le même répertoire que\n"
+"                                 pg_upgrade)\n"
 
 #: option.c:295
 #, c-format
 msgid "  -c, --check                   check clusters only, don't change any data\n"
-msgstr "  -c, --check                   vérifie seulement les instances, pas de modifications\n"
+msgstr ""
+"  -c, --check                    vérifie seulement les instances, pas de\n"
+"                                 modifications\n"
 
 #: option.c:296
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
-msgstr "  -d, --old-datadir=DIRDONNEES  répertoire des données de l'ancienne instance\n"
+msgstr "  -d, --old-datadir=RÉP_DONNÉES  répertoire des données de l'ancienne instance\n"
 
 #: option.c:297
 #, c-format
 msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
-msgstr "  -D, --new-datadir=DIRDONNEES  répertoire des données de la nouvelle instance\n"
+msgstr "  -D, --new-datadir=RÉP_DONNÉES  répertoire des données de la nouvelle instance\n"
 
 #: option.c:298
 #, c-format
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs=NUM                nombre de processus ou threads simultanés à utiliser\n"
+msgstr ""
+"  -j, --jobs=NUM                 nombre de processus ou threads simultanés à\n"
+"                                 utiliser\n"
 
 #: option.c:299
 #, c-format
 msgid "  -k, --link                    link instead of copying files to new cluster\n"
-msgstr "  -k, --link                    lie les fichiers au lieu de les copier vers la nouvelle instance\n"
+msgstr ""
+"  -k, --link                     lie les fichiers au lieu de les copier vers la\n"
+"                                 nouvelle instance\n"
 
 #: option.c:300
 #, c-format
 msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
-msgstr "  -o, --old-options=OPTIONS     options à passer au serveur de l'ancienne instance\n"
+msgstr ""
+"  -o, --old-options=OPTIONS      options à passer au serveur de l'ancienne\n"
+"                                 instance\n"
 
 #: option.c:301
 #, c-format
 msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
-msgstr "  -O, --new-options=OPTIONS     options à passer au serveur de la nouvelle instance\n"
+msgstr ""
+"  -O, --new-options=OPTIONS      options à passer au serveur de la nouvelle\n"
+"                                 instance\n"
 
 #: option.c:302
 #, c-format
 msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
-msgstr "  -p, --old-port=PORT           numéro de port de l'ancienne instance (par défaut %d)\n"
+msgstr ""
+"  -p, --old-port=PORT            numéro de port de l'ancienne instance (par\n"
+"                                 défaut %d)\n"
 
 #: option.c:303
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
-msgstr "  -P, --new-port=PORT           numéro de port de la nouvelle instance (par défaut %d)\n"
+msgstr ""
+"  -P, --new-port=PORT            numéro de port de la nouvelle instance (par\n"
+"                                 défaut %d)\n"
 
 #: option.c:304
 #, c-format
 msgid "  -r, --retain                  retain SQL and log files after success\n"
-msgstr "  -r, --retain                  conserve les fichiers SQL et de traces en cas de succès\n"
+msgstr ""
+"  -r, --retain                   conserve les fichiers SQL et de traces en cas\n"
+"                                 de succès\n"
 
 #: option.c:305
 #, c-format
 msgid "  -s, --socketdir=DIR           socket directory to use (default current dir.)\n"
-msgstr "  -s, --socketdir=DIR           répertoire de la socket à utiliser (par défaut le répertoire courant)\n"
+msgstr ""
+"  -s, --socketdir=RÉP_SOCKET     répertoire de la socket à utiliser (par défaut\n"
+"                                 le répertoire courant)\n"
 
 #: option.c:306
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
-msgstr "  -U, --username=NOM            superutilisateur de l'instance (par défaut « %s »)\n"
+msgstr ""
+"  -U, --username=NOM             super-utilisateur de l'instance (par défaut\n"
+"                                 « %s »)\n"
 
 #: option.c:307
 #, c-format
 msgid "  -v, --verbose                 enable verbose internal logging\n"
-msgstr "  -v, --verbose                 active des traces internes verbeuses\n"
+msgstr "  -v, --verbose                  active des traces internes verbeuses\n"
 
 #: option.c:308
 #, c-format
 msgid "  -V, --version                 display version information, then exit\n"
-msgstr "  -V, --version                 affiche la version, puis quitte\n"
+msgstr "  -V, --version                  affiche la version, puis quitte\n"
 
 #: option.c:309
 #, c-format
 msgid "  --clone                       clone instead of copying files to new cluster\n"
-msgstr "  --clone                       clone au lieu de copier les fichiers vers la nouvelle instance\n"
+msgstr ""
+"  --clone                        clone au lieu de copier les fichiers vers la\n"
+"                                 nouvelle instance\n"
 
 #: option.c:310
 #, c-format
 msgid "  -?, --help                    show this help, then exit\n"
-msgstr "  -?, --help                    affiche cette aide, puis quitte\n"
+msgstr "  -?, --help                     affiche cette aide, puis quitte\n"
 
 #: option.c:311
 #, c-format
@@ -1288,10 +1314,10 @@ msgid ""
 msgstr ""
 "\n"
 "Quand vous exécutez pg_upgrade, vous devez fournir les informations suivantes :\n"
-"  le répertoire de données pour l'ancienne instance  (-d DIRDONNÉES)\n"
-"  le répertoire de données pour la nouvelle instance  (-D DIRDONNÉES)\n"
-"  le répertoire « bin » pour l'ancienne version (-b DIRBIN)\n"
-"  le répertoire « bin » pour la nouvelle version (-B DIRBIN)\n"
+"  le répertoire de données pour l'ancienne instance  (-d RÉP_DONNÉES)\n"
+"  le répertoire de données pour la nouvelle instance  (-D RÉP_DONNÉES)\n"
+"  le répertoire « bin » pour l'ancienne version (-b RÉP_BIN)\n"
+"  le répertoire « bin » pour la nouvelle version (-B RÉP_BIN)\n"
 
 #: option.c:322
 #, c-format
@@ -1348,7 +1374,7 @@ msgstr ""
 #: option.c:340
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: option.c:380
 #, c-format

@@ -228,7 +228,8 @@ msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
 "\n"
 msgstr ""
-"%s utilise le module amcheck pour vérifier les objets dans une base PostgreSQL pour corruption.\n"
+"%s utilise le module amcheck pour vérifier si les objets d' une base\n"
+"PostgreSQL sont corrompus.\n"
 "\n"
 
 #: pg_amcheck.c:1149
@@ -239,7 +240,7 @@ msgstr "Usage :\n"
 #: pg_amcheck.c:1150
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [OPTION]... [NOMBASE]\n"
+msgstr "  %s [OPTION]... [BASE]\n"
 
 #: pg_amcheck.c:1151
 #, c-format
@@ -308,17 +309,23 @@ msgstr "  -T, --exclude-table=MOTIF      ne vérifie PAS les tables correspondan
 #: pg_amcheck.c:1163
 #, c-format
 msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
-msgstr "      --no-dependent-indexes     n'étend PAS la liste des relations pour inclure les index\n"
+msgstr ""
+"      --no-dependent-indexes     n'étend PAS la liste des relations pour inclure\n"
+"                                 les index\n"
 
 #: pg_amcheck.c:1164
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
-msgstr "      --no-dependent-toast       n'étend PAS la liste des relations pour inclure les TOAST\n"
+msgstr ""
+"      --no-dependent-toast       n'étend PAS la liste des relations pour inclure\n"
+"                                 les TOAST\n"
 
 #: pg_amcheck.c:1165
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
-msgstr "      --no-strict-names          ne requiert PAS que les motifs correspondent à des objets\n"
+msgstr ""
+"      --no-strict-names          ne requiert PAS que les motifs correspondent à\n"
+"                                 des objets\n"
 
 #: pg_amcheck.c:1166
 #, c-format
@@ -337,22 +344,30 @@ msgstr "      --exclude-toast-pointers   ne suit PAS les pointeurs de TOAST\n"
 #: pg_amcheck.c:1168
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
-msgstr "      --on-error-stop            arrête la vérification à la fin du premier bloc corrompu\n"
+msgstr ""
+"      --on-error-stop            arrête la vérification à la fin du premier bloc\n"
+"                                 corrompu\n"
 
 #: pg_amcheck.c:1169
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
-msgstr "      --skip=OPTION              ne vérifie PAS les blocs « all-frozen » et « all-visible »\n"
+msgstr ""
+"      --skip=OPTION              ne vérifie PAS les blocs « all-frozen » et\n"
+"                                 « all-visible »\n"
 
 #: pg_amcheck.c:1170
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
-msgstr "      --startblock=BLOC          commence la vérification des tables au numéro de bloc indiqué\n"
+msgstr ""
+"      --startblock=BLOC          commence la vérification des tables au numéro\n"
+"                                 de bloc indiqué\n"
 
 #: pg_amcheck.c:1171
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
-msgstr "      --endblock=BLOC            vérifie les tables jusqu'au numéro de bloc indiqué\n"
+msgstr ""
+"      --endblock=BLOC            vérifie les tables jusqu'au numéro de bloc\n"
+"                                 indiqué\n"
 
 #: pg_amcheck.c:1172
 #, c-format
@@ -366,17 +381,23 @@ msgstr ""
 #: pg_amcheck.c:1173
 #, c-format
 msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
-msgstr "      --heapallindexed           vérifie que tous les enregistrements de la table sont référencés dans les index\n"
+msgstr ""
+"      --heapallindexed           vérifie que tous les enregistrements de la\n"
+"                                 table sont référencés dans les index\n"
 
 #: pg_amcheck.c:1174
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
-msgstr "      --parent-check             vérifie les relations parent/enfants dans les index\n"
+msgstr ""
+"      --parent-check             vérifie les relations parent/enfants dans les\n"
+"                                 index\n"
 
 #: pg_amcheck.c:1175
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
-msgstr "      --rootdescend              recherche à partir de la racine pour trouver les lignes\n"
+msgstr ""
+"      --rootdescend              recherche à partir de la racine pour trouver\n"
+"                                 les lignes\n"
 
 #: pg_amcheck.c:1176
 #, c-format
@@ -390,7 +411,7 @@ msgstr ""
 #: pg_amcheck.c:1177
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME            IP/alias du serveur ou répertoire du socket\n"
+msgstr "  -h, --host=HÔTE                IP/alias du serveur ou répertoire du socket\n"
 
 #: pg_amcheck.c:1178
 #, c-format
@@ -400,7 +421,7 @@ msgstr "  -p, --port=PORT                port du serveur de bases de données\n"
 #: pg_amcheck.c:1179
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, --username=NOM_UTILSATEUR  nom d'utilisateur pour la connexion\n"
+msgstr "  -U, --username=UTILISATEUR     nom d'utilisateur pour la connexion\n"
 
 #: pg_amcheck.c:1180
 #, c-format
@@ -415,7 +436,7 @@ msgstr "  -W, --password                 force la saisie d'un mot de passe\n"
 #: pg_amcheck.c:1182
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "      --maintenance-db=NOM_BASE  change la base de maintenance\n"
+msgstr "      --maintenance-db=BASE      change la base de maintenance\n"
 
 #: pg_amcheck.c:1183
 #, c-format
@@ -434,7 +455,9 @@ msgstr "  -e, --echo                      affiche les commandes envoyées au ser
 #: pg_amcheck.c:1185
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
-msgstr "  -j, --jobs=NOMBRE              utilise ce nombre de connexions simultanées au serveur\n"
+msgstr ""
+"  -j, --jobs=NOMBRE              utilise ce nombre de connexions simultanées au\n"
+"                                 serveur\n"
 
 #: pg_amcheck.c:1186
 #, c-format
@@ -449,7 +472,7 @@ msgstr "  -v, --verbose                   mode verbeux\n"
 #: pg_amcheck.c:1188
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
-msgstr "  -V, --version                affiche la version puis quitte\n"
+msgstr "  -V, --version                  affiche la version puis quitte\n"
 
 #: pg_amcheck.c:1189
 #, c-format
@@ -459,7 +482,7 @@ msgstr "      --install-missing          installe les extensions manquantes\n"
 #: pg_amcheck.c:1190
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
-msgstr "  -?, --help                   affiche cette aide puis quitte\n"
+msgstr "  -?, --help                     affiche cette aide puis quitte\n"
 
 #: pg_amcheck.c:1192
 #, c-format
@@ -473,7 +496,7 @@ msgstr ""
 #: pg_amcheck.c:1193
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_amcheck.c:1251
 #, c-format

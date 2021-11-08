@@ -437,7 +437,7 @@ msgid ""
 "\n"
 msgstr ""
 "Usage:\n"
-"  %s [OPTION]... REPSAUVEGARDE\n"
+"  %s [OPTION]... REP_SAUVEGARDE\n"
 "\n"
 
 #: pg_verifybackup.c:911
@@ -502,7 +502,7 @@ msgstr ""
 #: pg_verifybackup.c:922
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #~ msgid "could not read file \"%s\": read %d of %zu"
 #~ msgstr "n'a pas pu lire le fichier « %s » : a lu %d sur %zu"

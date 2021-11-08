@@ -581,78 +581,88 @@ msgid ""
 "                                   commit timestamp (zero means no change)\n"
 msgstr ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
-"                                 configure les transactions la plus ancienne et la plus récente\n"
-"                                 contenant les dates/heures de validation (zéro signifie aucun\n"
-"                                 changement)\n"
+"                                   configure les transactions la plus ancienne\n"
+"                                   et la plus récente contenant les dates/heures\n"
+"                                   de validation (zéro signifie aucun changement)\n"
 
 #: pg_resetwal.c:1223
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
-msgstr "  [-D, --pgdata=]RÉPDONNEES répertoire de la base de données\n"
+msgstr "  [-D, --pgdata=]RÉP_DONNEES       répertoire de la base de données\n"
 
 #: pg_resetwal.c:1224
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr ""
-"  -e, --epoch=XIDEPOCH     fixe la valeur epoch du prochain identifiant de\n"
-"                           transaction\n"
+"  -e, --epoch=XIDEPOCH             configure la valeur epoch du prochain\n"
+"                                   identifiant de transaction\n"
 
 #: pg_resetwal.c:1225
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
-msgstr "  -f, --force     force la mise à jour\n"
+msgstr "  -f, --force                      force la mise à jour\n"
 
 #: pg_resetwal.c:1226
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
 msgstr ""
-"  -l, --next-wal-file=FICHIERWAL   force l'emplacement minimal de début des WAL du nouveau\n"
-"                  journal de transactions\n"
+"  -l, --next-wal-file=FICHIERWAL   configure l'emplacement minimal de début\n"
+"                                   des WAL du nouveau journal de transactions\n"
 
 #: pg_resetwal.c:1227
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
-msgstr "  -m, --multixact-ids=MXID,MXID    fixe le prochain et le plus ancien identifiants multi-transaction\n"
+msgstr ""
+"  -m, --multixact-ids=MXID,MXID    configure le prochain et le plus ancien\n"
+"                                   identifiants multi-transactions\n"
 
 #: pg_resetwal.c:1228
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
-msgstr "  -n, --dry-run                    pas de mise à jour, affiche simplement ce qui sera fait\n"
+msgstr ""
+"  -n, --dry-run                    pas de mise à jour, affiche\n"
+"                                   simplement ce qui sera fait\n"
 
 #: pg_resetwal.c:1229
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
-msgstr "  -o, --next-oid=OID          fixe le prochain OID\n"
+msgstr "  -o, --next-oid=OID               configure le prochain OID\n"
 
 #: pg_resetwal.c:1230
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
-msgstr "  -O, --multixact-offset=DÉCALAGE  configure le prochain décalage multitransaction\n"
+msgstr ""
+"  -O, --multixact-offset=DÉCALAGE  configure le prochain décalage\n"
+"                                   multitransaction\n"
 
 #: pg_resetwal.c:1231
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr "  -u, --oldest-transaction-id=XID  configure l'identifiant de transaction le plus ancien\n"
+msgstr ""
+"  -u, --oldest-transaction-id=XID  configure l'identifiant de transaction le\n"
+"                                   plus ancien\n"
 
 #: pg_resetwal.c:1232
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
-msgstr "  -V, --version                affiche la version puis quitte\n"
+msgstr "  -V, --version                    affiche la version puis quitte\n"
 
 #: pg_resetwal.c:1233
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
-msgstr "  -x, --next-transaction-id=XID  configure le prochain identifiant de transaction\n"
+msgstr ""
+"  -x, --next-transaction-id=XID    configure le prochain identifiant de\n"
+"                                   transaction\n"
 
 #: pg_resetwal.c:1234
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
-msgstr "      --wal-segsize=TAILLE       taille des segments WAL, en megaoctets\n"
+msgstr "      --wal-segsize=TAILLE         configure la taille des segments WAL, en Mo\n"
 
 #: pg_resetwal.c:1235
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
-msgstr "  -?, --help                   affiche cette aide puis quitte\n"
+msgstr "  -?, --help                       affiche cette aide puis quitte\n"
 
 #: pg_resetwal.c:1236
 #, c-format
@@ -666,7 +676,7 @@ msgstr ""
 #: pg_resetwal.c:1237
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #~ msgid "Float4 argument passing:              %s\n"
 #~ msgstr "Passage d'argument float4 :                             %s\n"

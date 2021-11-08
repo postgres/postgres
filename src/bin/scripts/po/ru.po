@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 06:29+0300\n"
-"PO-Revision-Date: 2021-09-17 07:32+0300\n"
+"POT-Creation-Date: 2021-11-08 05:22+0300\n"
+"PO-Revision-Date: 2021-11-08 05:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -994,8 +994,9 @@ msgstr "  -q, --quiet                  не выводить сообщения\
 
 #: reindexdb.c:802
 #, c-format
-msgid "  -s, --system                 reindex system catalogs\n"
-msgstr "  -s, --system                 переиндексировать системные каталоги\n"
+msgid "  -s, --system                 reindex system catalogs only\n"
+msgstr ""
+"  -s, --system                 переиндексировать только системные каталоги\n"
 
 #: reindexdb.c:803
 #, c-format

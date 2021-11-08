@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-14 09:47+0000\n"
-"PO-Revision-Date: 2021-07-07 15:20-0500\n"
+"POT-Creation-Date: 2021-10-13 22:16+0000\n"
+"PO-Revision-Date: 2021-10-13 23:44-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -610,7 +610,7 @@ msgstr "  -d, --debug               genera mucha salida de depuración\n"
 #: initdb.c:2270
 #, c-format
 msgid "      --discard-caches      set debug_discard_caches=1\n"
-msgstr ""
+msgstr "      --discard-caches      establece debug_discard_caches=1\n"
 
 #: initdb.c:2271
 #, c-format
@@ -1037,8 +1037,8 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#~ msgid "pclose failed: %m"
-#~ msgstr "pclose falló: %m"
-
 #~ msgid "      --clobber-cache       use cache-clobbering debug option\n"
 #~ msgstr "      --clobber-cache       usar la opción de depuración para invalidación de caché\n"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "pclose falló: %m"

@@ -1353,7 +1353,7 @@ msgstr "Usage :\n"
 #: pg_dump.c:1019
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [OPTION]... [NOMBASE]\n"
+msgstr "  %s [OPTION]... [BASE]\n"
 
 #: pg_dump.c:1021 pg_dumpall.c:625 pg_restore.c:465
 #, c-format
@@ -1367,7 +1367,7 @@ msgstr ""
 #: pg_dump.c:1022
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
-msgstr "  -f, --file=NOMFICHIER        nom du fichier ou du répertoire en sortie\n"
+msgstr "  -f, --file=FICHIER           nom du fichier ou du répertoire en sortie\n"
 
 #: pg_dump.c:1023
 #, c-format
@@ -1382,8 +1382,8 @@ msgstr ""
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr ""
-"  -j, --jobs=NUMERO            utilise ce nombre de jobs en parallèle pour\n"
-"                               la sauvegarde\n"
+"  -j, --jobs=NOMBRE            utilise ce nombre de jobs en parallèle pour la\n"
+"                               sauvegarde\n"
 
 #: pg_dump.c:1026 pg_dumpall.c:627
 #, c-format
@@ -1393,7 +1393,7 @@ msgstr "  -v, --verbose                mode verbeux\n"
 #: pg_dump.c:1027 pg_dumpall.c:628
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version                affiche la version puis quitte\n"
 
 #: pg_dump.c:1028
 #, c-format
@@ -1406,18 +1406,20 @@ msgstr ""
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr ""
-"  --lock-wait-timeout=DÉLAI    échec après l'attente du DÉLAI pour un verrou\n"
-"                               de table\n"
+"  --lock-wait-timeout=DÉLAI    échec après l'attente du DÉLAI pour un verrou de\n"
+"                               table\n"
 
 #: pg_dump.c:1030 pg_dumpall.c:656
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
-msgstr "  --no-sync                    n'attend pas que les modifications soient proprement écrites sur disque\n"
+msgstr ""
+"  --no-sync                    n'attend pas que les modifications soient\n"
+"                               proprement écrites sur disque\n"
 
 #: pg_dump.c:1031 pg_dumpall.c:630
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                   affiche cette aide puis quitte\n"
 
 #: pg_dump.c:1033 pg_dumpall.c:631
 #, c-format
@@ -1432,29 +1434,26 @@ msgstr ""
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr ""
-"  -a, --data-only              sauvegarde uniquement les données, pas le\n"
-"                               schéma\n"
+"  -a, --data-only              sauvegarde uniquement les données, pas le schéma\n"
 
 #: pg_dump.c:1035
 #, c-format
 msgid "  -b, --blobs                  include large objects in dump\n"
 msgstr ""
-"  -b, --blobs                  inclut les « Large Objects » dans la\n"
-"                               sauvegarde\n"
+"  -b, --blobs                  inclut les « Large Objects » dans la sauvegarde\n"
 
 #: pg_dump.c:1036
 #, c-format
 msgid "  -B, --no-blobs               exclude large objects in dump\n"
 msgstr ""
-"  -B, --no-blobs              exclut les « Large Objects » dans la\n"
-"                               sauvegarde\n"
+"  -B, --no-blobs               exclut les « Large Objects » de la sauvegarde\n"
 
 #: pg_dump.c:1037 pg_restore.c:476
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
 msgstr ""
-"  -c, --clean                  nettoie/supprime les objets de la base de\n"
-"                               données avant de les créer\n"
+"  -c, --clean                  nettoie/supprime les objets de la base de données\n"
+"                               avant de les créer\n"
 
 #: pg_dump.c:1038
 #, c-format
@@ -1466,14 +1465,13 @@ msgstr ""
 #: pg_dump.c:1039
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
-msgstr "  -e, --extension=MOTIF      sauvegarde uniquement les extensions indiquées\n"
+msgstr "  -e, --extension=MOTIF        sauvegarde uniquement les extensions indiquées\n"
 
 #: pg_dump.c:1040 pg_dumpall.c:634
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr ""
-"  -E, --encoding=ENCODAGE      sauvegarde les données dans l'encodage\n"
-"                               ENCODAGE\n"
+"  -E, --encoding=ENCODAGE      sauvegarde les données dans l'encodage ENCODAGE\n"
 
 #: pg_dump.c:1041
 #, c-format
@@ -1491,8 +1489,8 @@ msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
 "                               plain-text format\n"
 msgstr ""
-"  -O, --no-owner               ne sauvegarde pas les propriétaires des\n"
-"                               objets lors de l'utilisation du format texte\n"
+"  -O, --no-owner               ne sauvegarde pas les propriétaires des objets\n"
+"                               lors de l'utilisation du format texte\n"
 
 #: pg_dump.c:1045 pg_dumpall.c:638
 #, c-format
@@ -1505,8 +1503,8 @@ msgstr ""
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
 msgstr ""
-"  -S, --superuser=NOM          indique le nom du super-utilisateur à\n"
-"                               utiliser avec le format texte\n"
+"  -S, --superuser=NOM          indique le nom du super-utilisateur à utiliser\n"
+"                               avec le format texte\n"
 
 #: pg_dump.c:1047
 #, c-format
@@ -1527,23 +1525,23 @@ msgstr "  -x, --no-privileges          ne sauvegarde pas les droits sur les obje
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr ""
-"  --binary-upgrade             à n'utiliser que par les outils de mise à\n"
-"                               jour seulement\n"
+"  --binary-upgrade             à n'utiliser que par les outils de mise à jour\n"
+"                               seulement\n"
 
 #: pg_dump.c:1051 pg_dumpall.c:643
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr ""
-"  --column-inserts             sauvegarde les données avec des commandes\n"
-"                               INSERT en précisant les noms des colonnes\n"
+"  --column-inserts             sauvegarde les données avec des commandes INSERT\n"
+"                               en précisant les noms des colonnes\n"
 
 #: pg_dump.c:1052 pg_dumpall.c:644
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr ""
-"  --disable-dollar-quoting     désactive l'utilisation des guillemets\n"
-"                               dollar dans le but de respecter le standard\n"
-"                               SQL en matière de guillemets\n"
+"  --disable-dollar-quoting     désactive l'utilisation des guillemets dollars\n"
+"                               dans le but de respecter le standard SQL en\n"
+"                               matière de guillemets\n"
 
 #: pg_dump.c:1053 pg_dumpall.c:645 pg_restore.c:493
 #, c-format
@@ -1558,9 +1556,9 @@ msgid ""
 "  --enable-row-security        enable row security (dump only content user has\n"
 "                               access to)\n"
 msgstr ""
-"  --enable-row-security        active la sécurité niveau ligne (et donc\\n\n"
-"                               sauvegarde uniquement le contenu visible par\\n\n"
-"                               cet utilisateur)\n"
+"  --enable-row-security        active la sécurité niveau ligne (et donc\n"
+"                               sauvegarde uniquement le contenu visible par cet\n"
+"                               utilisateur)\n"
 
 #: pg_dump.c:1056
 #, c-format
@@ -1570,12 +1568,16 @@ msgstr "  --exclude-table-data=MOTIF   ne sauvegarde pas les tables indiquées\n
 #: pg_dump.c:1057 pg_dumpall.c:647
 #, c-format
 msgid "  --extra-float-digits=NUM     override default setting for extra_float_digits\n"
-msgstr "  --extra-float-digits=NUM     surcharge la configuration par défaut de extra_float_digits\n"
+msgstr ""
+"  --extra-float-digits=NUM     surcharge la configuration par défaut de\n"
+"                               extra_float_digits\n"
 
 #: pg_dump.c:1058 pg_dumpall.c:648 pg_restore.c:495
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
-msgstr "  --if-exists                  utilise IF EXISTS lors de la suppression des objets\n"
+msgstr ""
+"  --if-exists                  utilise IF EXISTS lors de la suppression des\n"
+"                               objets\n"
 
 #: pg_dump.c:1059
 #, c-format
@@ -1584,8 +1586,7 @@ msgid ""
 "                               include data of foreign tables on foreign\n"
 "                               servers matching PATTERN\n"
 msgstr ""
-"  --include-foreign-data=MOTIF\n"
-"                               inclut les données des tables externes pour les\n"
+"  --include-foreign-data=MOTIF inclut les données des tables externes pour les\n"
 "                               serveurs distants correspondant au motif MOTIF\n"
 
 #: pg_dump.c:1062 pg_dumpall.c:649
@@ -1625,19 +1626,22 @@ msgstr "  --no-subscriptions           ne sauvegarde pas les souscriptions\n"
 #: pg_dump.c:1068
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
-msgstr "  --no-synchronized-snapshots  n'utilise pas de snapshots synchronisés pour les jobs en parallèle\n"
+msgstr ""
+"  --no-synchronized-snapshots  n'utilise pas de snapshots synchronisés pour les\n"
+"                               jobs en parallèle\n"
 
 #: pg_dump.c:1069 pg_dumpall.c:657
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr ""
-"  --no-tablespaces             ne sauvegarde pas les affectations de\n"
-"                               tablespaces\n"
+"  --no-tablespaces             ne sauvegarde pas les affectations de tablespaces\n"
 
 #: pg_dump.c:1070 pg_dumpall.c:658
 #, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
-msgstr "  --no-toast-compression       ne sauvegarde pas les méthodes de compression de TOAST\n"
+msgstr ""
+"  --no-toast-compression       ne sauvegarde pas les méthodes de compression de\n"
+"                               TOAST\n"
 
 #: pg_dump.c:1071 pg_dumpall.c:659
 #, c-format
@@ -1649,14 +1653,16 @@ msgstr ""
 #: pg_dump.c:1072 pg_dumpall.c:660
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
-msgstr "  --on-conflict-do-nothing     ajoute ON CONFLICT DO NOTHING aux commandes INSERT\n"
+msgstr ""
+"  --on-conflict-do-nothing     ajoute ON CONFLICT DO NOTHING aux commandes\n"
+"                               INSERT\n"
 
 #: pg_dump.c:1073 pg_dumpall.c:661
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr ""
-"  --quote-all-identifiers      met entre guillemets tous les identifiants\n"
-"                               même s'il ne s'agit pas de mots clés\n"
+"  --quote-all-identifiers      met entre guillemets tous les identifiants même\n"
+"                               s'il ne s'agit pas de mots clés\n"
 
 #: pg_dump.c:1074 pg_dumpall.c:662
 #, c-format
@@ -1688,8 +1694,8 @@ msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
 "                               match at least one entity each\n"
 msgstr ""
-"  --strict-names                 requiert que le motifs de table et/ou schéma\n"
-"                                 correspondent à au moins une entité de chaque\n"
+"  --strict-names               requiert que les motifs des tables et/ou schémas\n"
+"                               correspondent à au moins une entité de chaque\n"
 
 #: pg_dump.c:1080 pg_dumpall.c:663 pg_restore.c:506
 #, c-format
@@ -1700,8 +1706,8 @@ msgid ""
 msgstr ""
 "  --use-set-session-authorization\n"
 "                               utilise les commandes SET SESSION AUTHORIZATION\n"
-"                               au lieu des commandes ALTER OWNER pour\n"
-"                               modifier les propriétaires\n"
+"                               au lieu des commandes ALTER OWNER pour modifier\n"
+"                               les propriétaires\n"
 
 #: pg_dump.c:1084 pg_dumpall.c:667 pg_restore.c:510
 #, c-format
@@ -1715,21 +1721,20 @@ msgstr ""
 #: pg_dump.c:1085
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
-msgstr "  -d, --dbname=NOMBASE      base de données à sauvegarder\n"
+msgstr "  -d, --dbname=BASE            base de données à sauvegarder\n"
 
 #: pg_dump.c:1086 pg_dumpall.c:669 pg_restore.c:511
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr ""
-"  -h, --host=NOMHÔTE           hôte du serveur de bases de données ou\n"
+"  -h, --host=HÔTE              hôte du serveur de bases de données ou\n"
 "                               répertoire des sockets\n"
 
 #: pg_dump.c:1087 pg_dumpall.c:671 pg_restore.c:512
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr ""
-"  -p, --port=PORT              numéro de port du serveur de bases de\n"
-"                               données\n"
+"  -p, --port=PORT              numéro de port du serveur de bases de données\n"
 
 #: pg_dump.c:1088 pg_dumpall.c:672 pg_restore.c:513
 #, c-format
@@ -1745,8 +1750,8 @@ msgstr "  -w, --no-password            ne demande jamais un mot de passe\n"
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr ""
-"  -W, --password               force la demande du mot de passe (devrait survenir\n"
-"                               automatiquement)\n"
+"  -W, --password               force la demande du mot de passe (devrait\n"
+"                               survenir automatiquement)\n"
 
 #: pg_dump.c:1091 pg_dumpall.c:675
 #, c-format
@@ -1774,7 +1779,7 @@ msgstr "Rapporter les bogues à <%s>.\n"
 #: pg_dump.c:1096 pg_dumpall.c:680 pg_restore.c:523
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_dump.c:1115 pg_dumpall.c:504
 #, c-format
@@ -2382,7 +2387,7 @@ msgstr "  %s [OPTION]...\n"
 #: pg_dumpall.c:626
 #, c-format
 msgid "  -f, --file=FILENAME          output file name\n"
-msgstr "  -f, --file=NOMFICHIER        nom du fichier de sortie\n"
+msgstr "  -f, --file=FICHIER           nom du fichier de sortie\n"
 
 #: pg_dumpall.c:633
 #, c-format
@@ -2402,8 +2407,7 @@ msgstr ""
 #, c-format
 msgid "  -O, --no-owner               skip restoration of object ownership\n"
 msgstr ""
-"  -O, --no-owner               omet la restauration des propriétaires des\n"
-"                               objets\n"
+"  -O, --no-owner               omet la restauration des propriétaires des objets\n"
 
 #: pg_dumpall.c:637
 #, c-format
@@ -2429,7 +2433,9 @@ msgstr ""
 #: pg_dumpall.c:646
 #, c-format
 msgid "  --exclude-database=PATTERN   exclude databases whose name matches PATTERN\n"
-msgstr "  --exclude-database=MOTIF    exclut les bases de données dont le nom correspond au motif\n"
+msgstr ""
+"  --exclude-database=MOTIF     exclut les bases de données dont le nom\n"
+"                               correspond au motif\n"
 
 #: pg_dumpall.c:653
 #, c-format
@@ -2439,12 +2445,12 @@ msgstr "  --no-role-passwords          ne sauvegarde pas les mots de passe des r
 #: pg_dumpall.c:668
 #, c-format
 msgid "  -d, --dbname=CONNSTR     connect using connection string\n"
-msgstr "  -d, --dbname=CHAINE_CONN       connexion à l'aide de la chaîne de connexion\n"
+msgstr "  -d, --dbname=CHAINE_CONNEX   connexion à l'aide de la chaîne de connexion\n"
 
 #: pg_dumpall.c:670
 #, c-format
 msgid "  -l, --database=DBNAME    alternative default database\n"
-msgstr "  -l, --database=NOM_BASE      indique une autre base par défaut\n"
+msgstr "  -l, --database=BASE          indique une autre base par défaut\n"
 
 #: pg_dumpall.c:677
 #, c-format
@@ -2550,8 +2556,8 @@ msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
 "\n"
 msgstr ""
-"%s restaure une base de données PostgreSQL à partir d'une archive créée par\n"
-"pg_dump.\n"
+"%s restaure une base de données PostgreSQL à partir d'une archive créée\n"
+"par pg_dump.\n"
 "\n"
 
 #: pg_restore.c:463
@@ -2569,7 +2575,7 @@ msgstr ""
 #: pg_restore.c:467
 #, c-format
 msgid "  -f, --file=FILENAME      output file name (- for stdout)\n"
-msgstr "  -f, --file=NOMFICHIER        nom du fichier de sortie (- pour stdout)\n"
+msgstr "  -f, --file=FICHIER           nom du fichier de sortie (- pour stdout)\n"
 
 #: pg_restore.c:468
 #, c-format
@@ -2611,8 +2617,7 @@ msgstr ""
 #, c-format
 msgid "  -a, --data-only              restore only the data, no schema\n"
 msgstr ""
-"  -a, --data-only              restaure uniquement les données, pas la\n"
-"                               structure\n"
+"  -a, --data-only              restaure uniquement les données, pas la structure\n"
 
 #: pg_restore.c:477
 #, c-format
@@ -2633,8 +2638,8 @@ msgstr "  -I, --index=NOM              restaure l'index indiqué\n"
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgstr ""
-"  -j, --jobs=NUMERO            utilise ce nombre de jobs en parallèle pour\n"
-"                               la restauration\n"
+"  -j, --jobs=NOMBRE            utilise ce nombre de jobs en parallèle pour la\n"
+"                               restauration\n"
 
 #: pg_restore.c:481
 #, c-format
@@ -2642,9 +2647,8 @@ msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
 "                               selecting/ordering output\n"
 msgstr ""
-"  -L, --use-list=NOMFICHIER    utilise la table des matières à partir\n"
-"                               de ce fichier pour sélectionner/trier\n"
-"                               la sortie\n"
+"  -L, --use-list=FICHIER       utilise la table des matières à partir de ce\n"
+"                               fichier pour sélectionner/trier la sortie\n"
 
 #: pg_restore.c:483
 #, c-format
@@ -2654,7 +2658,7 @@ msgstr "  -n, --schema=NOM             restaure uniquement les objets de ce sch�
 #: pg_restore.c:484
 #, c-format
 msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
-msgstr "  -N, --exclude-schema=NOM    ne restaure pas les objets de ce schéma\n"
+msgstr "  -N, --exclude-schema=NOM     ne restaure pas les objets de ce schéma\n"
 
 #: pg_restore.c:486
 #, c-format
@@ -2665,15 +2669,14 @@ msgstr "  -P, --function=NOM(args)     restaure la fonction indiquée\n"
 #, c-format
 msgid "  -s, --schema-only            restore only the schema, no data\n"
 msgstr ""
-"  -s, --schema-only            restaure uniquement la structure, pas les\n"
-"                               données\n"
+"  -s, --schema-only            restaure uniquement la structure, pas les données\n"
 
 #: pg_restore.c:488
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
 msgstr ""
-"  -S, --superuser=NOM          indique le nom du super-utilisateur à\n"
-"                               utiliser pour désactiver les triggers\n"
+"  -S, --superuser=NOM          indique le nom du super-utilisateur à utiliser\n"
+"                               pour désactiver les triggers\n"
 
 #: pg_restore.c:489
 #, c-format
@@ -2713,8 +2716,8 @@ msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 "                               created\n"
 msgstr ""
-"  --no-data-for-failed-tables  ne restaure pas les données des tables qui\n"
-"                               n'ont pas pu être créées\n"
+"  --no-data-for-failed-tables  ne restaure pas les données des tables qui n'ont\n"
+"                               pas pu être créées\n"
 
 #: pg_restore.c:499
 #, c-format
@@ -2735,20 +2738,19 @@ msgstr "  --no-subscriptions           ne restaure pas les souscriptions\n"
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
 msgstr ""
-"  --no-tablespaces             ne restaure pas les affectations de\n"
-"                               tablespaces\n"
+"  --no-tablespaces             ne restaure pas les affectations de tablespaces\n"
 
 #: pg_restore.c:503
 #, c-format
 msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
 msgstr ""
-"  --section=SECTION            restaure la section indiquée (pre-data, data\n"
-"                               ou post-data)\n"
+"  --section=SECTION            restaure la section indiquée (pre-data, data ou\n"
+"                               post-data)\n"
 
 #: pg_restore.c:516
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before restore\n"
-msgstr "  --role=NOMROLE               exécute SET ROLE avant la restauration\n"
+msgstr "  --role=RÔLE                  exécute SET ROLE avant la restauration\n"
 
 #: pg_restore.c:518
 #, c-format
@@ -2758,8 +2760,8 @@ msgid ""
 "multiple times to select multiple objects.\n"
 msgstr ""
 "\n"
-"Les options -I, -n, -N, -P, -t, -T et --section peuvent être combinées et indiquées\n"
-"plusieurs fois pour sélectionner plusieurs objets.\n"
+"Les options -I, -n, -N, -P, -t, -T et --section peuvent être combinées et\n"
+"indiquées plusieurs fois pour sélectionner plusieurs objets.\n"
 
 #: pg_restore.c:521
 #, c-format
