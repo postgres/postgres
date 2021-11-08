@@ -1468,6 +1468,20 @@ SELCT 1/0;
    </para>
 
    <para>
+    When <acronym>SSL</acronym> encryption can be performed, the server
+    is expected to send only the single <literal>S</literal> byte and then
+    wait for the frontend to initiate an <acronym>SSL</acronym> handshake.
+    If additional bytes are available to read at this point, it likely
+    means that a man-in-the-middle is attempting to perform a
+    buffer-stuffing attack
+    (<ulink url="https://www.postgresql.org/support/security/CVE-2021-23222/">CVE-2021-23222</ulink>).
+    Frontends should be coded either to read exactly one byte from the
+    socket before turning the socket over to their SSL library, or to
+    treat it as a protocol violation if they find they have read additional
+    bytes.
+   </para>
+
+   <para>
     An initial SSLRequest can also be used in a connection that is being
     opened to send a CancelRequest message.
    </para>
