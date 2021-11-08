@@ -476,7 +476,7 @@ FindStreamingStart(uint32 *tli)
 
 			if (uncompressed_size != WalSegSz)
 			{
-				pg_log_warning("compressed segment file \"%s\" has incorrect uncompressed size %ld, skipping",
+				pg_log_warning("compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping",
 							   dirent->d_name, uncompressed_size);
 				continue;
 			}
