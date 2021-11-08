@@ -4,6 +4,21 @@
 \echo Use "ALTER EXTENSION btree_gist UPDATE TO '1.7'" to load this file. \quit
 
 -- This upgrade scripts add support for bool.
+CREATE FUNCTION gbtreekey2_in(cstring)
+RETURNS gbtreekey2
+AS 'MODULE_PATHNAME', 'gbtreekey_in'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION gbtreekey2_out(gbtreekey2)
+RETURNS cstring
+AS 'MODULE_PATHNAME', 'gbtreekey_out'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE TYPE gbtreekey2 (
+	INTERNALLENGTH = 2,
+	INPUT  = gbtreekey2_in,
+	OUTPUT = gbtreekey2_out
+);
 
 -- Define the GiST support methods
 CREATE FUNCTION gbt_bool_consistent(internal,bool,int2,oid,internal)
@@ -32,11 +47,11 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_bool_union(internal, internal)
-RETURNS gbtreekey8
+RETURNS gbtreekey2
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_bool_same(gbtreekey8, gbtreekey8, internal)
+CREATE FUNCTION gbt_bool_same(gbtreekey2, gbtreekey2, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
@@ -57,6 +72,6 @@ AS
 	FUNCTION	4	gbt_decompress (internal),
 	FUNCTION	5	gbt_bool_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bool_picksplit (internal, internal),
-	FUNCTION	7	gbt_bool_same (gbtreekey8, gbtreekey8, internal),
+	FUNCTION	7	gbt_bool_same (gbtreekey2, gbtreekey2, internal),
 	FUNCTION	9   gbt_bool_fetch (internal),
-	STORAGE		gbtreekey8;
+	STORAGE		gbtreekey2;

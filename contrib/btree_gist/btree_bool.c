@@ -72,7 +72,7 @@ static const gbtree_ninfo tinfo =
 {
 	gbt_t_bool,
 	sizeof(bool),
-	4,							/* sizeof(gbtreekey4) */
+	2,							/* sizeof(gbtreekey2) */
 	gbt_boolgt,
 	gbt_boolge,
 	gbt_booleq,
