@@ -2719,7 +2719,8 @@ check_memoizable(RestrictInfo *restrictinfo)
 {
 	TypeCacheEntry *typentry;
 	Expr	   *clause = restrictinfo->clause;
-	Node	   *leftarg;
+	Oid			lefttype;
+	Oid			righttype;
 
 	if (restrictinfo->pseudoconstant)
 		return;
@@ -2728,10 +2729,20 @@ check_memoizable(RestrictInfo *restrictinfo)
 	if (list_length(((OpExpr *) clause)->args) != 2)
 		return;
 
-	leftarg = linitial(((OpExpr *) clause)->args);
+	lefttype = exprType(linitial(((OpExpr *) clause)->args));
+	righttype = exprType(lsecond(((OpExpr *) clause)->args));
 
-	typentry = lookup_type_cache(exprType(leftarg), TYPECACHE_HASH_PROC |
-								 TYPECACHE_EQ_OPR);
+	/*
+	 * Really there should be a field for both the left and right hash
+	 * equality operator, however, in v14, there's only a single field in
+	 * RestrictInfo to record the operator in, so we must insist that the left
+	 * and right types match.
+	 */
+	if (lefttype != righttype)
+		return;
+
+	typentry = lookup_type_cache(lefttype, TYPECACHE_HASH_PROC |
+										   TYPECACHE_EQ_OPR);
 
 	if (!OidIsValid(typentry->hash_proc) || !OidIsValid(typentry->eq_opr))
 		return;
