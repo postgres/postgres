@@ -74,7 +74,7 @@ msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
 "\n"
 msgstr ""
-"%s supprime les anciens fichiers WAL des archives de PostgreSQL.\n"
+"%s supprime les journaux de transactions archivés devenus inutiles.\n"
 "\n"
 
 #: pg_archivecleanup.c:255
@@ -133,7 +133,7 @@ msgstr ""
 "\n"
 "Pour utiliser comme archive_cleanup_command dans postgresql.conf :\n"
 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... EMPLACEMENTARCHIVE %%r'\n"
-"e.g.\n"
+"Par exemple :\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/serveur/reparchives %%r'\n"
 
 #: pg_archivecleanup.c:268
@@ -146,7 +146,7 @@ msgid ""
 msgstr ""
 "\n"
 "Ou pour utiliser comme nettoyeur autonome d'archives :\n"
-"e.g.\n"
+"Par exemple :\n"
 "  pg_archivecleanup /mnt/serveur/reparchives 000000010000000000000010.00000020.backup\n"
 
 #: pg_archivecleanup.c:272
@@ -161,7 +161,7 @@ msgstr ""
 #: pg_archivecleanup.c:273
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_archivecleanup.c:335
 #, c-format

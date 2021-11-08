@@ -150,7 +150,7 @@ msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
 #: copy_fetch.c:120
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
-msgstr "la cible du lien symbolique « %s » est trop long"
+msgstr "la cible du lien symbolique « %s » est trop longue"
 
 #: copy_fetch.c:135
 #, c-format
@@ -453,7 +453,8 @@ msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
 "\n"
 msgstr ""
-"%s resynchronise une instance PostgreSQL avec une autre copie de l'instance.\n"
+"%s resynchronise une instance PostgreSQL avec une autre copie de\n"
+"l'instance.\n"
 "\n"
 
 #: pg_rewind.c:79
@@ -478,8 +479,9 @@ msgid ""
 "  -c, --restore-target-wal       use restore_command in target configuration to\n"
 "                                 retrieve WAL files from archives\n"
 msgstr ""
-"  -c, --restore-target-wal       utilise restore_command pour la configuration cible\n"
-"                                 de récupération des fichiers WAL des archives\n"
+"  -c, --restore-target-wal       utilise restore_command pour la configuration\n"
+"                                 cible de récupération des fichiers WAL des\n"
+"                                 archives\n"
 
 #: pg_rewind.c:83
 #, c-format
@@ -489,12 +491,12 @@ msgstr "  -D, --target-pgdata=RÉPERTOIRE répertoire de données existant à mo
 #: pg_rewind.c:84
 #, c-format
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
-msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source pour la synchronisation\n"
+msgstr "      --source-pgdata=RÉPERTOIRE répertoire des données source\n"
 
 #: pg_rewind.c:85
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
-msgstr "      --source-server=CONNSTR    serveur source pour la synchronisation\n"
+msgstr "      --source-server=CHAÎNE     serveur source pour la synchronisation\n"
 
 #: pg_rewind.c:86
 #, c-format
@@ -506,7 +508,9 @@ msgstr "  -n, --dry-run                  arrête avant de modifier quoi que ce s
 msgid ""
 "  -N, --no-sync                  do not wait for changes to be written\n"
 "                                 safely to disk\n"
-msgstr "  -N, --nosync               n'attend pas que les modifications soient proprement écrites sur disque\n"
+msgstr ""
+"  -N, --nosync                   n'attend pas que les modifications\n"
+"                                 soient proprement écrites sur disque\n"
 
 #: pg_rewind.c:89
 #, c-format
@@ -519,7 +523,7 @@ msgid ""
 "  -R, --write-recovery-conf      write configuration for replication\n"
 "                                 (requires --source-server)\n"
 msgstr ""
-"  -R, --write-recovery-conf    écrit la configuration pour la réplication\n"
+"  -R, --write-recovery-conf      écrit la configuration pour la réplication\n"
 "                                 (requiert --source-server)\n"
 "\n"
 
@@ -531,7 +535,9 @@ msgstr "      --debug                    écrit beaucoup de messages de débogag
 #: pg_rewind.c:93
 #, c-format
 msgid "      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"
-msgstr "      --no-ensure-shutdown       ne corrige pas automatiquement l'arrêt non propre\n"
+msgstr ""
+"      --no-ensure-shutdown       ne corrige pas automatiquement l'arrêt non\n"
+"                                 propre\n"
 
 #: pg_rewind.c:94
 #, c-format
@@ -555,7 +561,7 @@ msgstr ""
 #: pg_rewind.c:97
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_rewind.c:159 pg_rewind.c:208 pg_rewind.c:215 pg_rewind.c:222
 #: pg_rewind.c:229 pg_rewind.c:237

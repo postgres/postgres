@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-11-20 15:13+0300\n"
-"PO-Revision-Date: 2020-09-15 18:56+0300\n"
+"POT-Creation-Date: 2021-11-08 05:23+0300\n"
+"PO-Revision-Date: 2021-11-08 05:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -78,23 +78,21 @@ msgstr[2] "(%lu строк)"
 #: ../../fe_utils/print.c:3055
 #, c-format
 msgid "Interrupted\n"
-msgstr "Прерывание\n"
+msgstr "Прервано\n"
 
 #: ../../fe_utils/print.c:3119
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
-"Добавить заголовок к содержимому таблицы нельзя: число столбцов превышает "
-"%d.\n"
+"Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
 #: ../../fe_utils/print.c:3159
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
-"Добавить ячейку к содержимому таблицы нельзя: общее число ячеек превышает "
-"%d.\n"
+"Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
-#: ../../fe_utils/print.c:3414
+#: ../../fe_utils/print.c:3417
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
@@ -254,7 +252,7 @@ msgstr "  -W, --password            запросить пароль\n"
 #: clusterdb.c:283 dropdb.c:185 reindexdb.c:772 vacuumdb.c:940
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
-msgstr "  --maintenance-db=ИМЯ_БД   выбор другой обслуживаемой базы данных\n"
+msgstr "  --maintenance-db=ИМЯ_БД   сменить опорную базу данных\n"
 
 #: clusterdb.c:284
 #, c-format
@@ -281,36 +279,36 @@ msgstr ""
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
-#: common.c:80 common.c:138
+#: common.c:82 common.c:140
 msgid "Password: "
 msgstr "Пароль: "
 
-#: common.c:125
+#: common.c:127
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "не удалось подключиться к базе %s (нехватка памяти)"
 
-#: common.c:152
+#: common.c:154
 #, c-format
 msgid "could not connect to database %s: %s"
 msgstr "не удалось подключиться к базе %s: %s"
 
-#: common.c:231 common.c:256
+#: common.c:233 common.c:258
 #, c-format
 msgid "query failed: %s"
 msgstr "ошибка при выполнении запроса: %s"
 
-#: common.c:232 common.c:257
+#: common.c:234 common.c:259
 #, c-format
 msgid "query was: %s"
 msgstr "запрос: %s"
 
-#: common.c:329
+#: common.c:331
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "ошибка при обработке базы \"%s\": %s"
 
-#: common.c:423
+#: common.c:425
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -319,23 +317,23 @@ msgstr[1] "запрос вернул %d строки вместо одной: %s
 msgstr[2] "запрос вернул %d строк вместо одной: %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:447
+#: common.c:449
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:449
+#: common.c:451
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:459
+#: common.c:461
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s - да/%s - нет) "
 
-#: common.c:473
+#: common.c:475
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Пожалуйста, введите \"%s\" или \"%s\".\n"
@@ -466,8 +464,7 @@ msgstr "  -W, --password               запросить пароль\n"
 #: createdb.c:285
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
-msgstr ""
-"  --maintenance-db=ИМЯ_БД      выбор другой обслуживаемой базы данных\n"
+msgstr "  --maintenance-db=ИМЯ_БД      сменить опорную базу данных\n"
 
 #: createdb.c:286
 #, c-format
@@ -992,8 +989,9 @@ msgstr ""
 
 #: reindexdb.c:760
 #, c-format
-msgid "  -s, --system              reindex system catalogs\n"
-msgstr "  -s, --system              переиндексировать системные каталоги\n"
+msgid "  -s, --system              reindex system catalogs only\n"
+msgstr ""
+"  -s, --system              переиндексировать только системные каталоги\n"
 
 #: reindexdb.c:761
 #, c-format
@@ -1023,9 +1021,10 @@ msgstr "слишком много заданий для этой платфор�
 
 #: vacuumdb.c:192
 #, c-format
-msgid "parallel vacuum degree must be a non-negative integer"
+msgid "parallel workers for vacuum must be greater than or equal to zero"
 msgstr ""
-"степень параллельности для очистки должна задаваться неотрицательным целым"
+"число параллельных исполнителей для выполнения очистки должно быть "
+"неотрицательным"
 
 #: vacuumdb.c:212
 #, c-format
@@ -1165,10 +1164,10 @@ msgstr ""
 #: vacuumdb.c:923
 #, c-format
 msgid ""
-"  -P, --parallel=PARALLEL_DEGREE  use this many background workers for "
+"  -P, --parallel=PARALLEL_WORKERS use this many background workers for "
 "vacuum, if available\n"
 msgstr ""
-"  -P, --parallel=СТЕПЕНЬ_ПАРАЛЛЕЛЬНОСТИ\n"
+"  -P, --parallel=ПАРАЛЛЕЛЬНЫЕ_ИСПОЛНИТЕЛИ\n"
 "                                  по возможности использовать для очистки\n"
 "                                  заданное число фоновых процессов\n"
 
@@ -1242,6 +1241,10 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "parallel vacuum degree must be a non-negative integer"
+#~ msgstr ""
+#~ "степень параллельности для очистки должна задаваться неотрицательным целым"
 
 #~ msgid "Could not send cancel request: %s"
 #~ msgstr "Отправить сигнал отмены не удалось: %s"

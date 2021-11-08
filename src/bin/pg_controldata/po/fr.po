@@ -80,8 +80,7 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s affiche les informations de contrôle du cluster de bases de données\n"
-"PostgreSQL.\n"
+"%s affiche les informations de contrôle de l'instance PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:36
@@ -106,17 +105,17 @@ msgstr ""
 #: pg_controldata.c:39
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
-msgstr "  [-D, --pgdata] RÉPDONNEES    répertoire de la base de données\n"
+msgstr "  [-D, --pgdata] RÉP_DONNEES  répertoire de la base de données\n"
 
 #: pg_controldata.c:40
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version              affiche la version puis quitte\n"
+msgstr "  -V, --version               affiche la version puis quitte\n"
 
 #: pg_controldata.c:41
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                  affiche cette aide puis quitte\n"
 
 #: pg_controldata.c:42
 #, c-format
@@ -127,8 +126,8 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Si aucun répertoire (RÉP_DONNÉES) n'est indiqué, la variable\n"
-"d'environnement PGDATA est utilisée.\n"
+"Si aucun répertoire (RÉP_DONNÉES) n'est indiqué, la variable d'environnement\n"
+"PGDATA est utilisée.\n"
 "\n"
 
 #: pg_controldata.c:44
@@ -139,7 +138,7 @@ msgstr "Rapporter les bogues à <%s>.\n"
 #: pg_controldata.c:45
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil %s : %s\n"
+msgstr "Page d'accueil de %s : <%s>\n"
 
 #: pg_controldata.c:55
 msgid "starting up"
@@ -277,7 +276,7 @@ msgstr "Dernier REDO (reprise) du point de contrôle :           %X/%X\n"
 #: pg_controldata.c:244
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "Dernier fichier WAL du rejeu du point de restauration : %s\n"
+msgstr "Dernier fichier WAL du rejeu du point de contrrôle :     %s\n"
 
 #: pg_controldata.c:246
 #, c-format
@@ -287,7 +286,7 @@ msgstr "Dernier TimeLineID du point de contrôle :               %u\n"
 #: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "Dernier PrevTimeLineID du point de restauration :       %u\n"
+msgstr "Dernier PrevTimeLineID du point de contrôle :           %u\n"
 
 #: pg_controldata.c:250
 #, c-format
@@ -340,22 +339,22 @@ msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
 #: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "Dernier oldestMultiXid du point de restauration :       %u\n"
+msgstr "Dernier oldestMultiXid du point de contrôle :           %u\n"
 
 #: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "Dernier oldestMulti du point de restauration de base :  %u\n"
+msgstr "Dernier oldestMulti du point de contrôle de base :      %u\n"
 
 #: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
-msgstr "Dernier oldestCommitTsXid du point de restauration :    %u\n"
+msgstr "Dernier oldestCommitTsXid du point de contrôle :        %u\n"
 
 #: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
-msgstr "Dernier newestCommitTsXid du point de restauration :    %u\n"
+msgstr "Dernier newestCommitTsXid du point de contrôle :        %u\n"
 
 #: pg_controldata.c:275
 #, c-format

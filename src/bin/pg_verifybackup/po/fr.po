@@ -289,7 +289,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Le programme « %s » a été trouvé par « %s »,\n"
+"Le programme « %s » a été trouvé par « %s »\n"
 "mais n'est pas de la même version que %s.\n"
 "Vérifiez votre installation."
 
@@ -428,7 +428,7 @@ msgstr "  -m, --manifest-path=CHEMIN  utilise le chemin spécifié pour le manif
 #: pg_verifybackup.c:896
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
-msgstr "  -n, --no-parse-wal          n'essaie pas d'analyse les fichiers WAL\n"
+msgstr "  -n, --no-parse-wal          n'essaie pas d'analyser les fichiers WAL\n"
 
 #: pg_verifybackup.c:897
 #, c-format
@@ -467,4 +467,4 @@ msgstr ""
 #: pg_verifybackup.c:903
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "page d'accueil de %s : <%s>\n"
+msgstr "Page d'accueil de %s : <%s>\n"
