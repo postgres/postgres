@@ -105,7 +105,7 @@ static bool ProcessBarrierPlaceholder(void);
 
 /*
  * ProcSignalShmemSize
- *		Compute space needed for procsignal's shared memory
+ *		Compute space needed for ProcSignal's shared memory
  */
 Size
 ProcSignalShmemSize(void)
@@ -119,7 +119,7 @@ ProcSignalShmemSize(void)
 
 /*
  * ProcSignalShmemInit
- *		Allocate and initialize procsignal's shared memory
+ *		Allocate and initialize ProcSignal's shared memory
  */
 void
 ProcSignalShmemInit(void)
@@ -152,7 +152,7 @@ ProcSignalShmemInit(void)
 
 /*
  * ProcSignalInit
- *		Register the current process in the procsignal array
+ *		Register the current process in the ProcSignal array
  *
  * The passed index should be my BackendId if the process has one,
  * or MaxBackends + aux process type if not.
