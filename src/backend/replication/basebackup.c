@@ -374,7 +374,16 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 				Assert(lnext(state.tablespaces, lc) == NULL);
 			}
 			else
+			{
+				/* Properly terminate the tarfile. */
+				StaticAssertStmt(TAR_BLOCK_SIZE <= 2 * BLCKSZ,
+								 "BLCKSZ too small for 2 tar blocks");
+				memset(sink->bbs_buffer, 0, 2 * TAR_BLOCK_SIZE);
+				bbsink_archive_contents(sink, 2 * TAR_BLOCK_SIZE);
+
+				/* OK, that's the end of the archive. */
 				bbsink_end_archive(sink);
+			}
 		}
 
 		basebackup_progress_wait_wal_archive(&state);
@@ -611,6 +620,13 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 			sendFileWithContent(sink, pathbuf, "", &manifest);
 		}
 
+		/* Properly terminate the tar file. */
+		StaticAssertStmt(TAR_BLOCK_SIZE <= 2 * BLCKSZ,
+						 "BLCKSZ too small for 2 tar blocks");
+		memset(sink->bbs_buffer, 0, 2 * TAR_BLOCK_SIZE);
+		bbsink_archive_contents(sink, 2 * TAR_BLOCK_SIZE);
+
+		/* OK, that's the end of the archive. */
 		bbsink_end_archive(sink);
 	}
 

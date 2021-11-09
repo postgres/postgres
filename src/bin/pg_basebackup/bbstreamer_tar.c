@@ -2,6 +2,16 @@
  *
  * bbstreamer_tar.c
  *
+ * This module implements three types of tar processing. A tar parser
+ * expects unlabelled chunks of data (e.g. BBSTREAMER_UNKNOWN) and splits
+ * it into labelled chunks (any other value of bbstreamer_archive_context).
+ * A tar archiver does the reverse: it takes a bunch of labelled chunks
+ * and produces a tarfile, optionally replacing member headers and trailers
+ * so that upstream bbstreamer objects can perform surgery on the tarfile
+ * contents without knowing the details of the tar format. A tar terminator
+ * just adds two blocks of NUL bytes to the end of the file, since older
+ * server versions produce files with this terminator omitted.
+ *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  *
  * IDENTIFICATION

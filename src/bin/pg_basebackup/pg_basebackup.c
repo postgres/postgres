@@ -86,6 +86,12 @@ typedef void (*WriteDataCallback) (size_t nbytes, char *buf,
 #define MINIMUM_VERSION_FOR_MANIFESTS	130000
 
 /*
+ * Before v15, tar files received from the server will be improperly
+ * terminated.
+ */
+#define MINIMUM_VERSION_FOR_TERMINATED_TARFILE 150000
+
+/*
  * Different ways to include WAL
  */
 typedef enum
@@ -166,7 +172,8 @@ static void progress_report(int tablespacenum, bool force, bool finished);
 
 static bbstreamer *CreateBackupStreamer(char *archive_name, char *spclocation,
 										bbstreamer **manifest_inject_streamer_p,
-										bool is_recovery_guc_supported);
+										bool is_recovery_guc_supported,
+										bool expect_unterminated_tarfile);
 static void ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
 						   bool tablespacenum);
 static void ReceiveTarCopyChunk(size_t r, char *copybuf, void *callback_data);
@@ -965,7 +972,8 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 static bbstreamer *
 CreateBackupStreamer(char *archive_name, char *spclocation,
 					 bbstreamer **manifest_inject_streamer_p,
-					 bool is_recovery_guc_supported)
+					 bool is_recovery_guc_supported,
+					 bool expect_unterminated_tarfile)
 {
 	bbstreamer *streamer;
 	bbstreamer *manifest_inject_streamer = NULL;
@@ -1074,12 +1082,13 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	/*
 	 * If we're doing anything that involves understanding the contents of
 	 * the archive, we'll need to parse it. If not, we can skip parsing it,
-	 * but the tar files the server sends are not properly terminated, so
-	 * we'll need to add the terminator here.
+	 * but old versions of the server send improperly terminated tarfiles,
+	 * so if we're talking to such a server we'll need to add the terminator
+	 * here.
 	 */
 	if (must_parse_archive)
 		streamer = bbstreamer_tar_parser_new(streamer);
-	else
+	else if (expect_unterminated_tarfile)
 		streamer = bbstreamer_tar_terminator_new(streamer);
 
 	/* Return the results. */
@@ -1099,14 +1108,18 @@ ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
 	WriteTarState state;
 	bbstreamer *manifest_inject_streamer;
 	bool		is_recovery_guc_supported;
+	bool		expect_unterminated_tarfile;
 
 	/* Pass all COPY data through to the backup streamer. */
 	memset(&state, 0, sizeof(state));
 	is_recovery_guc_supported =
 		PQserverVersion(conn) >= MINIMUM_VERSION_FOR_RECOVERY_GUC;
+	expect_unterminated_tarfile =
+		PQserverVersion(conn) < MINIMUM_VERSION_FOR_TERMINATED_TARFILE;
 	state.streamer = CreateBackupStreamer(archive_name, spclocation,
 										  &manifest_inject_streamer,
-										  is_recovery_guc_supported);
+										  is_recovery_guc_supported,
+										  expect_unterminated_tarfile);
 	state.tablespacenum = tablespacenum;
 	ReceiveCopyData(conn, ReceiveTarCopyChunk, &state);
 	progress_filename = NULL;
