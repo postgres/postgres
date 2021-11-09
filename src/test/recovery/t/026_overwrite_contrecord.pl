@@ -19,7 +19,12 @@ plan tests => 3;
 
 my $node = PostgresNode->get_new_node('primary');
 $node->init(allows_streaming => 1);
-$node->append_conf('postgresql.conf', 'wal_keep_segments=16');
+# We need these settings for stability of WAL behavior.
+$node->append_conf(
+	'postgresql.conf', qq(
+autovacuum = off
+wal_keep_segments = 16
+));
 $node->start;
 
 $node->safe_psql('postgres', 'create table filler (a int, b text)');
@@ -58,7 +63,7 @@ $node->safe_psql('postgres',
 #$node->safe_psql('postgres', qq{create table foo ()});
 my $endfile = $node->safe_psql('postgres',
 	'SELECT pg_walfile_name(pg_current_wal_insert_lsn())');
-ok($initfile != $endfile, "$initfile differs from $endfile");
+ok($initfile ne $endfile, "$initfile differs from $endfile");
 
 # Now stop abruptly, to avoid a stop checkpoint.  We can remove the tail file
 # afterwards, and on startup the large message should be overwritten with new
