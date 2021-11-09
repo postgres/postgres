@@ -4194,7 +4194,7 @@ getPublicationNamespaces(Archive *fout)
 			continue;
 
 		/* OK, make a DumpableObject for this relationship */
-		pubsinfo[j].dobj.objType = DO_PUBLICATION_REL_IN_SCHEMA;
+		pubsinfo[j].dobj.objType = DO_PUBLICATION_TABLE_IN_SCHEMA;
 		pubsinfo[j].dobj.catId.tableoid =
 			atooid(PQgetvalue(res, i, i_tableoid));
 		pubsinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
@@ -10331,7 +10331,7 @@ dumpDumpableObject(Archive *fout, const DumpableObject *dobj)
 		case DO_PUBLICATION_REL:
 			dumpPublicationTable(fout, (const PublicationRelInfo *) dobj);
 			break;
-		case DO_PUBLICATION_REL_IN_SCHEMA:
+		case DO_PUBLICATION_TABLE_IN_SCHEMA:
 			dumpPublicationNamespace(fout,
 									 (const PublicationSchemaInfo *) dobj);
 			break;
@@ -18559,7 +18559,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_POLICY:
 			case DO_PUBLICATION:
 			case DO_PUBLICATION_REL:
-			case DO_PUBLICATION_REL_IN_SCHEMA:
+			case DO_PUBLICATION_TABLE_IN_SCHEMA:
 			case DO_SUBSCRIPTION:
 				/* Post-data objects: must come after the post-data boundary */
 				addObjectDependency(dobj, postDataBound->dumpId);

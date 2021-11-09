@@ -3649,8 +3649,9 @@ typedef struct PublicationTable
 typedef enum PublicationObjSpecType
 {
 	PUBLICATIONOBJ_TABLE,		/* Table type */
-	PUBLICATIONOBJ_REL_IN_SCHEMA,	/* Relations in schema type */
-	PUBLICATIONOBJ_CURRSCHEMA,	/* Get the first element from search_path */
+	PUBLICATIONOBJ_TABLE_IN_SCHEMA, /* Tables in schema type */
+	PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA, /* Get the first element from
+										 * search_path */
 	PUBLICATIONOBJ_CONTINUATION /* Continuation of previous type */
 } PublicationObjSpecType;
 

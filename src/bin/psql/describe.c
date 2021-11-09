@@ -3162,7 +3162,7 @@ describeOneTableDetails(const char *schemaname,
 								  "UNION\n"
 								  "SELECT pubname\n"
 								  "FROM pg_catalog.pg_publication p\n"
-								  "WHERE puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
+								  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "ORDER BY 1;",
 								  oid, oid, oid, oid);
 			}

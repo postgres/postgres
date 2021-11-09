@@ -478,7 +478,7 @@ RESET SEARCH_PATH;
 -- check create publication on CURRENT_SCHEMA where TABLE/ALL TABLES in SCHEMA
 -- is not specified
 CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
-ERROR:  FOR TABLE/FOR ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
 LINE 1: CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
                                                   ^
 -- check create publication on CURRENT_SCHEMA along with FOR TABLE
@@ -747,7 +747,7 @@ Tables from schemas:
 -- fail specifying table without any of 'FOR ALL TABLES IN SCHEMA' or
 --'FOR TABLE' or 'FOR ALL TABLES'
 CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
-ERROR:  FOR TABLE/FOR ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
 LINE 1: CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
                                              ^
 DROP VIEW testpub_view;

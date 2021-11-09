@@ -82,7 +82,7 @@ enum dbObjectTypePriorities
 	PRIO_POLICY,
 	PRIO_PUBLICATION,
 	PRIO_PUBLICATION_REL,
-	PRIO_PUBLICATION_REL_IN_SCHEMA,
+	PRIO_PUBLICATION_TABLE_IN_SCHEMA,
 	PRIO_SUBSCRIPTION,
 	PRIO_DEFAULT_ACL,			/* done in ACL pass */
 	PRIO_EVENT_TRIGGER,			/* must be next to last! */
@@ -136,7 +136,7 @@ static const int dbObjectTypePriority[] =
 	PRIO_POLICY,				/* DO_POLICY */
 	PRIO_PUBLICATION,			/* DO_PUBLICATION */
 	PRIO_PUBLICATION_REL,		/* DO_PUBLICATION_REL */
-	PRIO_PUBLICATION_REL_IN_SCHEMA, /* DO_PUBLICATION_REL_IN_SCHEMA */
+	PRIO_PUBLICATION_TABLE_IN_SCHEMA,	/* DO_PUBLICATION_TABLE_IN_SCHEMA */
 	PRIO_SUBSCRIPTION			/* DO_SUBSCRIPTION */
 };
 
@@ -1479,7 +1479,7 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "PUBLICATION TABLE (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
 			return;
-		case DO_PUBLICATION_REL_IN_SCHEMA:
+		case DO_PUBLICATION_TABLE_IN_SCHEMA:
 			snprintf(buf, bufsize,
 					 "PUBLICATION TABLES IN SCHEMA (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
