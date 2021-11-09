@@ -2744,7 +2744,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_STARTED:
 			{
-				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
+				socklen_t	optlen = sizeof(optval);
 
 				/*
 				 * Write ready, since we've made it here, so the connection

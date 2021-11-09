@@ -1,17 +1,5 @@
 /* src/include/pg_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to the type of arg 1 of 'accept' */
-#undef ACCEPT_TYPE_ARG1
-
-/* Define to the type of arg 2 of 'accept' */
-#undef ACCEPT_TYPE_ARG2
-
-/* Define to the type of arg 3 of 'accept' */
-#undef ACCEPT_TYPE_ARG3
-
-/* Define to the return type of 'accept' */
-#undef ACCEPT_TYPE_RETURN
-
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
@@ -517,6 +505,9 @@
 
 /* Define to 1 if you have the `shm_open' function. */
 #undef HAVE_SHM_OPEN
+
+/* Define to 1 if the system has the type `socklen_t'. */
+#undef HAVE_SOCKLEN_T
 
 /* Define to 1 if you have spinlocks. */
 #undef HAVE_SPINLOCKS

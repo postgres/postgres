@@ -205,10 +205,6 @@ sub GenerateFiles
 	# Every symbol in pg_config.h.in must be accounted for here.  Set
 	# to undef if the symbol should not be defined.
 	my %define = (
-		ACCEPT_TYPE_ARG1           => 'unsigned int',
-		ACCEPT_TYPE_ARG2           => 'struct sockaddr *',
-		ACCEPT_TYPE_ARG3           => 'int',
-		ACCEPT_TYPE_RETURN         => 'unsigned int PASCAL',
 		ALIGNOF_DOUBLE             => 8,
 		ALIGNOF_INT                => 4,
 		ALIGNOF_LONG               => 4,
@@ -365,6 +361,7 @@ sub GenerateFiles
 		HAVE_SETPROCTITLE_FAST                   => undef,
 		HAVE_SETSID                              => undef,
 		HAVE_SHM_OPEN                            => undef,
+		HAVE_SOCKLEN_T                           => 1,
 		HAVE_SPINLOCKS                           => 1,
 		HAVE_SRANDOM                             => undef,
 		HAVE_STDBOOL_H                           => 1,

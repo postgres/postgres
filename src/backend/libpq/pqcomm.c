@@ -1632,7 +1632,7 @@ pq_getkeepalivesidle(Port *port)
 	if (port->default_keepalives_idle == 0)
 	{
 #ifndef WIN32
-		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_idle);
+		socklen_t	size = sizeof(port->default_keepalives_idle);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, PG_TCP_KEEPALIVE_IDLE,
 					   (char *) &port->default_keepalives_idle,
@@ -1717,7 +1717,7 @@ pq_getkeepalivesinterval(Port *port)
 	if (port->default_keepalives_interval == 0)
 	{
 #ifndef WIN32
-		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_interval);
+		socklen_t	size = sizeof(port->default_keepalives_interval);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 					   (char *) &port->default_keepalives_interval,
@@ -1800,7 +1800,7 @@ pq_getkeepalivescount(Port *port)
 
 	if (port->default_keepalives_count == 0)
 	{
-		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_count);
+		socklen_t	size = sizeof(port->default_keepalives_count);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPCNT,
 					   (char *) &port->default_keepalives_count,
@@ -1875,7 +1875,7 @@ pq_gettcpusertimeout(Port *port)
 
 	if (port->default_tcp_user_timeout == 0)
 	{
-		ACCEPT_TYPE_ARG3 size = sizeof(port->default_tcp_user_timeout);
+		socklen_t	size = sizeof(port->default_tcp_user_timeout);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_USER_TIMEOUT,
 					   (char *) &port->default_tcp_user_timeout,

@@ -391,7 +391,7 @@ static void pgstat_recv_tempfile(PgStat_MsgTempFile *msg, int len);
 void
 pgstat_init(void)
 {
-	ACCEPT_TYPE_ARG3 alen;
+	socklen_t	alen;
 	struct addrinfo *addrs = NULL,
 			   *addr,
 				hints;
@@ -624,7 +624,7 @@ retry2:
 	{
 		int			old_rcvbuf;
 		int			new_rcvbuf;
-		ACCEPT_TYPE_ARG3 rcvbufsize = sizeof(old_rcvbuf);
+		socklen_t	rcvbufsize = sizeof(old_rcvbuf);
 
 		if (getsockopt(pgStatSock, SOL_SOCKET, SO_RCVBUF,
 					   (char *) &old_rcvbuf, &rcvbufsize) < 0)
