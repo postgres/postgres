@@ -301,13 +301,6 @@ static char recoveryStopName[MAXFNAMELEN];
 static bool recoveryStopAfter;
 
 /*
- * During normal operation, the only timeline we care about is ThisTimeLineID.
- * During recovery, however, things are more complicated.  To simplify life
- * for rmgr code, we keep ThisTimeLineID set to the "current" timeline as we
- * scan through the WAL history (that is, it is the line that was active when
- * the currently-scanned WAL record was generated).  We also need these
- * timeline values:
- *
  * recoveryTargetTimeLineGoal: what the user requested, if any
  *
  * recoveryTargetTLIRequested: numeric value of requested timeline, if constant
@@ -321,8 +314,9 @@ static bool recoveryStopAfter;
  * candidate WAL files to open at all.
  *
  * curFileTLI: the TLI appearing in the name of the current input WAL file.
- * (This is not necessarily the same as ThisTimeLineID, because we could
- * be scanning data that was copied from an ancestor timeline when the current
+ * (This is not necessarily the same as the timeline from which we are
+ * replaying WAL, which StartupXLOG calls replayTLI, because we could be
+ * scanning data that was copied from an ancestor timeline when the current
  * file was created.)  During a sequential scan we do not allow this value
  * to decrease.
  */
@@ -630,12 +624,14 @@ typedef struct XLogCtlData
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 
 	/*
-	 * Shared copy of ThisTimeLineID. Does not change after end-of-recovery.
-	 * If we created a new timeline when the system was started up,
+	 * InsertTimeLineID is the timeline into which new WAL is being inserted
+	 * and flushed. It is zero during recovery, and does not change once set.
+	 *
+	 * If we create a new timeline when the system was started up,
 	 * PrevTimeLineID is the old timeline's ID that we forked off from.
-	 * Otherwise it's equal to ThisTimeLineID.
+	 * Otherwise it's equal to InsertTimeLineID.
 	 */
-	TimeLineID	ThisTimeLineID;
+	TimeLineID	InsertTimeLineID;
 	TimeLineID	PrevTimeLineID;
 
 	/*
@@ -1051,10 +1047,10 @@ XLogInsertRecord(XLogRecData *rdata,
 		elog(ERROR, "cannot make new WAL entries during recovery");
 
 	/*
-	 * Given that we're not in recovery, ThisTimeLineID is set and can't
+	 * Given that we're not in recovery, InsertTimeLineID is set and can't
 	 * change, so we can read it without a lock.
 	 */
-	insertTLI = XLogCtl->ThisTimeLineID;
+	insertTLI = XLogCtl->InsertTimeLineID;
 
 	/*----------
 	 *
@@ -2921,7 +2917,7 @@ XLogFlush(XLogRecPtr record)
 {
 	XLogRecPtr	WriteRqstPtr;
 	XLogwrtRqst WriteRqst;
-	TimeLineID	insertTLI = XLogCtl->ThisTimeLineID;
+	TimeLineID	insertTLI = XLogCtl->InsertTimeLineID;
 
 	/*
 	 * During REDO, we are reading not writing WAL.  Therefore, instead of
@@ -3121,10 +3117,10 @@ XLogBackgroundFlush(void)
 		return false;
 
 	/*
-	 * Since we're not in recovery, ThisTimeLineID is set and can't change,
+	 * Since we're not in recovery, InsertTimeLineID is set and can't change,
 	 * so we can read it without a lock.
 	 */
-	insertTLI = XLogCtl->ThisTimeLineID;
+	insertTLI = XLogCtl->InsertTimeLineID;
 
 	/* read LogwrtResult and update local state */
 	SpinLockAcquire(&XLogCtl->info_lck);
@@ -4165,7 +4161,7 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr lastredoptr, XLogRecPtr endptr,
 	/*
 	 * Construct a filename of the last segment to be kept. The timeline ID
 	 * doesn't matter, we ignore that in the comparison. (During recovery,
-	 * ThisTimeLineID isn't set, so we can't use that.)
+	 * InsertTimeLineID isn't set, so we can't use that.)
 	 */
 	XLogFileName(lastoff, 0, segno, wal_segment_size);
 
@@ -6686,8 +6682,8 @@ StartupXLOG(void)
 				checkPointLoc,
 				EndOfLog;
 	TimeLineID	EndOfLogTLI;
-	TimeLineID	ThisTimeLineID,
-				PrevTimeLineID;
+	TimeLineID	replayTLI,
+				newTLI;
 	XLogRecord *record;
 	TransactionId oldestActiveXID;
 	bool		backupEndRequired = false;
@@ -6882,7 +6878,7 @@ StartupXLOG(void)
 	replay_image_masked = (char *) palloc(BLCKSZ);
 	primary_image_masked = (char *) palloc(BLCKSZ);
 
-	if (read_backup_label(&checkPointLoc, &ThisTimeLineID, &backupEndRequired,
+	if (read_backup_label(&checkPointLoc, &replayTLI, &backupEndRequired,
 						  &backupFromStandby))
 	{
 		List	   *tablespaces = NIL;
@@ -6901,7 +6897,7 @@ StartupXLOG(void)
 		 * the checkpoint it identifies, rather than using pg_control.
 		 */
 		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 0, true,
-									  ThisTimeLineID);
+									  replayTLI);
 		if (record != NULL)
 		{
 			memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
@@ -7037,9 +7033,9 @@ StartupXLOG(void)
 		/* Get the last valid checkpoint record. */
 		checkPointLoc = ControlFile->checkPoint;
 		RedoStartLSN = ControlFile->checkPointCopy.redo;
-		ThisTimeLineID = ControlFile->checkPointCopy.ThisTimeLineID;
+		replayTLI = ControlFile->checkPointCopy.ThisTimeLineID;
 		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, true,
-									  ThisTimeLineID);
+									  replayTLI);
 		if (record != NULL)
 		{
 			ereport(DEBUG1,
@@ -7206,7 +7202,7 @@ StartupXLOG(void)
 	 * under, so temporarily adopt the TLI indicated by the checkpoint (see
 	 * also xlog_redo()).
 	 */
-	ThisTimeLineID = checkPoint.ThisTimeLineID;
+	replayTLI = checkPoint.ThisTimeLineID;
 
 	/*
 	 * Copy any missing timeline history files between 'now' and the recovery
@@ -7220,7 +7216,7 @@ StartupXLOG(void)
 	 * are small, so it's better to copy them unnecessarily than not copy them
 	 * and regret later.
 	 */
-	restoreTimeLineHistoryFiles(ThisTimeLineID, recoveryTargetTLI);
+	restoreTimeLineHistoryFiles(replayTLI, recoveryTargetTLI);
 
 	/*
 	 * Before running in recovery, scan pg_twophase and fill in its status to
@@ -7504,7 +7500,7 @@ StartupXLOG(void)
 			XLogCtl->replayEndRecPtr = checkPoint.redo;
 		else
 			XLogCtl->replayEndRecPtr = EndRecPtr;
-		XLogCtl->replayEndTLI = ThisTimeLineID;
+		XLogCtl->replayEndTLI = replayTLI;
 		XLogCtl->lastReplayedEndRecPtr = XLogCtl->replayEndRecPtr;
 		XLogCtl->lastReplayedTLI = XLogCtl->replayEndTLI;
 		XLogCtl->recoveryLastXTime = 0;
@@ -7539,12 +7535,12 @@ StartupXLOG(void)
 		{
 			/* back up to find the record */
 			XLogBeginRead(xlogreader, checkPoint.redo);
-			record = ReadRecord(xlogreader, PANIC, false, ThisTimeLineID);
+			record = ReadRecord(xlogreader, PANIC, false, replayTLI);
 		}
 		else
 		{
 			/* just have to read next record after CheckPoint */
-			record = ReadRecord(xlogreader, LOG, false, ThisTimeLineID);
+			record = ReadRecord(xlogreader, LOG, false, replayTLI);
 		}
 
 		if (record != NULL)
@@ -7657,15 +7653,15 @@ StartupXLOG(void)
 				 * Before replaying this record, check if this record causes
 				 * the current timeline to change. The record is already
 				 * considered to be part of the new timeline, so we update
-				 * ThisTimeLineID before replaying it. That's important so
+				 * replayTLI before replaying it. That's important so
 				 * that replayEndTLI, which is recorded as the minimum
 				 * recovery point's TLI if recovery stops after this record,
 				 * is set correctly.
 				 */
 				if (record->xl_rmid == RM_XLOG_ID)
 				{
-					TimeLineID	newTLI = ThisTimeLineID;
-					TimeLineID	prevTLI = ThisTimeLineID;
+					TimeLineID	newReplayTLI = replayTLI;
+					TimeLineID	prevReplayTLI = replayTLI;
 					uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 					if (info == XLOG_CHECKPOINT_SHUTDOWN)
@@ -7673,26 +7669,26 @@ StartupXLOG(void)
 						CheckPoint	checkPoint;
 
 						memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
-						newTLI = checkPoint.ThisTimeLineID;
-						prevTLI = checkPoint.PrevTimeLineID;
+						newReplayTLI = checkPoint.ThisTimeLineID;
+						prevReplayTLI = checkPoint.PrevTimeLineID;
 					}
 					else if (info == XLOG_END_OF_RECOVERY)
 					{
 						xl_end_of_recovery xlrec;
 
 						memcpy(&xlrec, XLogRecGetData(xlogreader), sizeof(xl_end_of_recovery));
-						newTLI = xlrec.ThisTimeLineID;
-						prevTLI = xlrec.PrevTimeLineID;
+						newReplayTLI = xlrec.ThisTimeLineID;
+						prevReplayTLI = xlrec.PrevTimeLineID;
 					}
 
-					if (newTLI != ThisTimeLineID)
+					if (newReplayTLI != replayTLI)
 					{
 						/* Check that it's OK to switch to this TLI */
-						checkTimeLineSwitch(EndRecPtr, newTLI, prevTLI,
-											ThisTimeLineID);
+						checkTimeLineSwitch(EndRecPtr, newReplayTLI,
+											prevReplayTLI, replayTLI);
 
 						/* Following WAL records should be run with new TLI */
-						ThisTimeLineID = newTLI;
+						replayTLI = newReplayTLI;
 						switchedTLI = true;
 					}
 				}
@@ -7703,7 +7699,7 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&XLogCtl->info_lck);
 				XLogCtl->replayEndRecPtr = EndRecPtr;
-				XLogCtl->replayEndTLI = ThisTimeLineID;
+				XLogCtl->replayEndTLI = replayTLI;
 				SpinLockRelease(&XLogCtl->info_lck);
 
 				/*
@@ -7735,7 +7731,7 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&XLogCtl->info_lck);
 				XLogCtl->lastReplayedEndRecPtr = EndRecPtr;
-				XLogCtl->lastReplayedTLI = ThisTimeLineID;
+				XLogCtl->lastReplayedTLI = replayTLI;
 				SpinLockRelease(&XLogCtl->info_lck);
 
 				/*
@@ -7763,7 +7759,7 @@ StartupXLOG(void)
 					 * (possibly bogus) future WAL segments on the old
 					 * timeline.
 					 */
-					RemoveNonParentXlogFiles(EndRecPtr, ThisTimeLineID);
+					RemoveNonParentXlogFiles(EndRecPtr, replayTLI);
 
 					/*
 					 * Wake up any walsenders to notice that we are on a new
@@ -7781,7 +7777,7 @@ StartupXLOG(void)
 				}
 
 				/* Else, try to fetch the next WAL record */
-				record = ReadRecord(xlogreader, LOG, false, ThisTimeLineID);
+				record = ReadRecord(xlogreader, LOG, false, replayTLI);
 			} while (record != NULL);
 
 			/*
@@ -7905,7 +7901,7 @@ StartupXLOG(void)
 	 * what we consider the valid portion of WAL.
 	 */
 	XLogBeginRead(xlogreader, LastRec);
-	record = ReadRecord(xlogreader, PANIC, false, ThisTimeLineID);
+	record = ReadRecord(xlogreader, PANIC, false, replayTLI);
 	EndOfLog = EndRecPtr;
 
 	/*
@@ -7982,7 +7978,7 @@ StartupXLOG(void)
 	 *
 	 * In a normal crash recovery, we can just extend the timeline we were in.
 	 */
-	PrevTimeLineID = ThisTimeLineID;
+	newTLI = replayTLI;
 	if (ArchiveRecoveryRequested)
 	{
 		char	   *reason;
@@ -7990,9 +7986,9 @@ StartupXLOG(void)
 
 		Assert(InArchiveRecovery);
 
-		ThisTimeLineID = findNewestTimeLine(recoveryTargetTLI) + 1;
+		newTLI = findNewestTimeLine(recoveryTargetTLI) + 1;
 		ereport(LOG,
-				(errmsg("selected new timeline ID: %u", ThisTimeLineID)));
+				(errmsg("selected new timeline ID: %u", newTLI)));
 
 		reason = getRecoveryStopReason();
 
@@ -8002,7 +7998,7 @@ StartupXLOG(void)
 		 * (Note that we also have a copy of the last block of the old WAL in
 		 * readBuf; we will use that below.)
 		 */
-		exitArchiveRecovery(EndOfLogTLI, EndOfLog, ThisTimeLineID);
+		exitArchiveRecovery(EndOfLogTLI, EndOfLog, newTLI);
 
 		/*
 		 * Write the timeline history file, and have it archived. After this
@@ -8014,7 +8010,7 @@ StartupXLOG(void)
 		 * To minimize the window for that, try to do as little as possible
 		 * between here and writing the end-of-recovery record.
 		 */
-		writeTimeLineHistory(ThisTimeLineID, recoveryTargetTLI,
+		writeTimeLineHistory(newTLI, recoveryTargetTLI,
 							 EndRecPtr, reason);
 
 		/*
@@ -8030,8 +8026,8 @@ StartupXLOG(void)
 	}
 
 	/* Save the selected TimeLineID in shared memory, too */
-	XLogCtl->ThisTimeLineID = ThisTimeLineID;
-	XLogCtl->PrevTimeLineID = PrevTimeLineID;
+	XLogCtl->InsertTimeLineID = newTLI;
+	XLogCtl->PrevTimeLineID = replayTLI;
 
 	/*
 	 * Actually, if WAL ended in an incomplete record, skip the parts that
@@ -8100,7 +8096,7 @@ StartupXLOG(void)
 	/*
 	 * Preallocate additional log files, if wanted.
 	 */
-	PreallocXlogFiles(EndOfLog, ThisTimeLineID);
+	PreallocXlogFiles(EndOfLog, newTLI);
 
 	/*
 	 * Okay, we're officially UP.
@@ -8181,7 +8177,7 @@ StartupXLOG(void)
 
 	/* If this is archive recovery, perform post-recovery cleanup actions. */
 	if (ArchiveRecoveryRequested)
-		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog, ThisTimeLineID);
+		CleanupAfterArchiveRecovery(EndOfLogTLI, EndOfLog, newTLI);
 
 	/*
 	 * Local WAL inserts enabled, so it's time to finish initialization of
@@ -8749,11 +8745,14 @@ GetInsertRecPtr(void)
 
 /*
  * GetFlushRecPtr -- Returns the current flush position, ie, the last WAL
- * position known to be fsync'd to disk.
+ * position known to be fsync'd to disk. This should only be used on a
+ * system that is known not to be in recovery.
  */
 XLogRecPtr
 GetFlushRecPtr(TimeLineID *insertTLI)
 {
+	Assert(XLogCtl->SharedRecoveryState == RECOVERY_STATE_DONE);
+
 	SpinLockAcquire(&XLogCtl->info_lck);
 	LogwrtResult = XLogCtl->LogwrtResult;
 	SpinLockRelease(&XLogCtl->info_lck);
@@ -8763,7 +8762,7 @@ GetFlushRecPtr(TimeLineID *insertTLI)
 	 * so no lock is required.
 	 */
 	if (insertTLI)
-		*insertTLI = XLogCtl->ThisTimeLineID;
+		*insertTLI = XLogCtl->InsertTimeLineID;
 
 	return LogwrtResult.Flush;
 }
@@ -8778,7 +8777,7 @@ GetWALInsertionTimeLine(void)
 	Assert(XLogCtl->SharedRecoveryState == RECOVERY_STATE_DONE);
 
 	/* Since the value can't be changing, no lock is required. */
-	return XLogCtl->ThisTimeLineID;
+	return XLogCtl->InsertTimeLineID;
 }
 
 /*
@@ -9224,7 +9223,7 @@ CreateCheckPoint(int flags)
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
 		oldXLogAllowed = LocalSetXLogInsertAllowed();
 
-	checkPoint.ThisTimeLineID = XLogCtl->ThisTimeLineID;
+	checkPoint.ThisTimeLineID = XLogCtl->InsertTimeLineID;
 	if (flags & CHECKPOINT_END_OF_RECOVERY)
 		checkPoint.PrevTimeLineID = XLogCtl->PrevTimeLineID;
 	else
@@ -9539,7 +9538,7 @@ CreateEndOfRecoveryRecord(void)
 	xlrec.end_time = GetCurrentTimestamp();
 
 	WALInsertLockAcquireExclusive();
-	xlrec.ThisTimeLineID = XLogCtl->ThisTimeLineID;
+	xlrec.ThisTimeLineID = XLogCtl->InsertTimeLineID;
 	xlrec.PrevTimeLineID = XLogCtl->PrevTimeLineID;
 	WALInsertLockRelease();
 
@@ -9891,7 +9890,7 @@ CreateRestartPoint(int flags)
 	 * with that.
 	 */
 	if (!RecoveryInProgress())
-		replayTLI = XLogCtl->ThisTimeLineID;
+		replayTLI = XLogCtl->InsertTimeLineID;
 
 	RemoveOldXlogFiles(_logSegNo, RedoRecPtr, endptr, replayTLI);
 
@@ -11811,10 +11810,10 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END);
 
 		/*
-		 * Given that we're not in recovery, ThisTimeLineID is set and can't
+		 * Given that we're not in recovery, InsertTimeLineID is set and can't
 		 * change, so we can read it without a lock.
 		 */
-		stoptli = XLogCtl->ThisTimeLineID;
+		stoptli = XLogCtl->InsertTimeLineID;
 
 		/*
 		 * Force a switch to a new xlog segment file, so that the backup is
