@@ -2851,13 +2851,25 @@ The commands accepted in replication mode are:
   </para>
 
   <para>
-   Every DML message contains an arbitrary relation ID, which can be mapped to
-   an ID in the Relation messages. The Relation messages describe the schema of the
-   given relation. The Relation message is sent for a given relation either
-   because it is the first time we send a DML message for given relation in the
-   current session or because the relation definition has changed since the
-   last Relation message was sent for it. The protocol assumes that the client
-   is capable of caching the metadata for as many relations as needed.
+   Every DML message contains a relation OID, identifying the publisher's
+   relation that was acted on.  Before the first DML message for a given
+   relation OID, a Relation message will be sent, describing the schema of
+   that relation.  Subsequently, a new Relation message will be sent if
+   the relation's definition has changed since the last Relation message
+   was sent for it.  (The protocol assumes that the client is capable of
+   remembering this metadata for as many relations as needed.)
+  </para>
+
+  <para>
+   Relation messages identify column types by their OIDs.  In the case
+   of a built-in type, it is assumed that the client can look up that
+   type OID locally, so no additional data is needed.  For a non-built-in
+   type OID, a Type message will be sent before the Relation message,
+   to provide the type name associated with that OID.  Thus, a client that
+   needs to specifically identify the types of relation columns should
+   cache the contents of Type messages, and first consult that cache to
+   see if the type OID is defined there.  If not, look up the type OID
+   locally.
   </para>
  </sect2>
 </sect1>

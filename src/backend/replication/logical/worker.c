@@ -559,7 +559,10 @@ apply_handle_relation(StringInfo s)
 /*
  * Handle TYPE message.
  *
- * This is now vestigial; we read the info and discard it.
+ * This implementation pays no attention to TYPE messages; we expect the user
+ * to have set things up so that the incoming data is acceptable to the input
+ * functions for the locally subscribed tables.  Hence, we just read and
+ * discard the message.
  */
 static void
 apply_handle_type(StringInfo s)
