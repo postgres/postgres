@@ -605,9 +605,9 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		/* the read_page callback waits for new WAL */
 		record = XLogReadRecord(ctx->reader, &err);
 		if (err)
-			elog(ERROR, "%s", err);
+			elog(ERROR, "could not find logical decoding starting point: %s", err);
 		if (!record)
-			elog(ERROR, "no record found"); /* shouldn't happen */
+			elog(ERROR, "could not find logical decoding starting point");
 
 		LogicalDecodingProcessRecord(ctx, ctx->reader);
 

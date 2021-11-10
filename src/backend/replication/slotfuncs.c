@@ -529,7 +529,8 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			 */
 			record = XLogReadRecord(ctx->reader, &errm);
 			if (errm)
-				elog(ERROR, "%s", errm);
+				elog(ERROR, "could not find record while advancing replication slot: %s",
+					 errm);
 
 			/*
 			 * Process the record.  Storage-level changes are ignored in
