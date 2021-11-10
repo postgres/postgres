@@ -1420,7 +1420,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	/* Toasted attributes too large to be untoasted should never be stored */
 	if (toast_pointer.va_rawsize > VARLENA_SIZE_LIMIT)
 		report_corruption(ctx,
-						  psprintf("toast value %u rawsize %u exceeds limit %u",
+						  psprintf("toast value %u rawsize %d exceeds limit %d",
 								   toast_pointer.va_valueid,
 								   toast_pointer.va_rawsize,
 								   VARLENA_SIZE_LIMIT));
@@ -1433,7 +1433,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 		/* Compression should never expand the attribute */
 		if (VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) > toast_pointer.va_rawsize - VARHDRSZ)
 			report_corruption(ctx,
-							  psprintf("toast value %u external size %u exceeds maximum expected for rawsize %u",
+							  psprintf("toast value %u external size %u exceeds maximum expected for rawsize %d",
 									   toast_pointer.va_valueid,
 									   VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer),
 									   toast_pointer.va_rawsize));
