@@ -190,6 +190,12 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 
 		/* And release buffer lock */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
+		/*
+		 * We avoid reuse of any free space created on the page by unrelated
+		 * UPDATEs/INSERTs by opting to not update the FSM at this point.  The
+		 * free space should be reused by UPDATEs to *this* page.
+		 */
 	}
 }
 
@@ -197,7 +203,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 /*
  * Prune and repair fragmentation in the specified page.
  *
- * Caller must have pin and buffer cleanup lock on the page.
+ * Caller must have pin and buffer cleanup lock on the page.  Note that we
+ * don't update the FSM information for page on caller's behalf.
  *
  * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
  * (see heap_prune_satisfies_vacuum and
@@ -381,22 +388,6 @@ heap_page_prune(Relation relation, Buffer buffer,
 	 */
 	if (report_stats && ndeleted > prstate.ndead)
 		pgstat_update_heap_dead_tuples(relation, ndeleted - prstate.ndead);
-
-	/*
-	 * XXX Should we update the FSM information of this page ?
-	 *
-	 * There are two schools of thought here. We may not want to update FSM
-	 * information so that the page is not used for unrelated UPDATEs/INSERTs
-	 * and any free space in this page will remain available for further
-	 * UPDATEs in *this* page, thus improving chances for doing HOT updates.
-	 *
-	 * But for a large table and where a page does not receive further UPDATEs
-	 * for a long time, we might waste this space by not updating the FSM
-	 * information. The relation may get extended and fragmented further.
-	 *
-	 * One possibility is to leave "fillfactor" worth of space in this page
-	 * and update FSM with the remaining space.
-	 */
 
 	return ndeleted;
 }
