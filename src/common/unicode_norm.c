@@ -342,6 +342,10 @@ unicode_normalize_kc(const pg_wchar *input)
 	decomp_chars[decomp_size] = '\0';
 	Assert(decomp_size == current_size);
 
+	/* Leave if there is nothing to decompose */
+	if (decomp_size == 0)
+		return decomp_chars;
+
 	/*
 	 * Now apply canonical ordering.
 	 */
