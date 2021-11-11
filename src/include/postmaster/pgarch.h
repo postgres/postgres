@@ -31,5 +31,6 @@ extern void PgArchShmemInit(void);
 extern bool PgArchCanRestart(void);
 extern void PgArchiverMain(void) pg_attribute_noreturn();
 extern void PgArchWakeup(void);
+extern void PgArchForceDirScan(void);
 
 #endif							/* _PGARCH_H */
