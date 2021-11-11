@@ -511,7 +511,7 @@ ReplicationSlotRelease(void)
 	MyReplicationSlot = NULL;
 
 	/* might not have been set when we've been a plain slot */
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	MyProc->statusFlags &= ~PROC_IN_LOGICAL_DECODING;
 	ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 	LWLockRelease(ProcArrayLock);
