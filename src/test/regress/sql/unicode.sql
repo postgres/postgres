@@ -5,6 +5,7 @@ SELECT getdatabaseencoding() <> 'UTF8' AS skip_test \gset
 
 SELECT U&'\0061\0308bc' <> U&'\00E4bc' COLLATE "C" AS sanity_check;
 
+SELECT normalize('');
 SELECT normalize(U&'\0061\0308\24D1c') = U&'\00E4\24D1c' COLLATE "C" AS test_default;
 SELECT normalize(U&'\0061\0308\24D1c', NFC) = U&'\00E4\24D1c' COLLATE "C" AS test_nfc;
 SELECT normalize(U&'\00E4bc', NFC) = U&'\00E4bc' COLLATE "C" AS test_nfc_idem;
@@ -26,7 +27,8 @@ FROM
   (VALUES (1, U&'\00E4bc'),
           (2, U&'\0061\0308bc'),
           (3, U&'\00E4\24D1c'),
-          (4, U&'\0061\0308\24D1c')) vals (num, val)
+          (4, U&'\0061\0308\24D1c'),
+          (5, '')) vals (num, val)
 ORDER BY num;
 
 SELECT is_normalized('abc', 'def');  -- run-time error

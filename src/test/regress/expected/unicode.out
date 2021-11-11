@@ -8,6 +8,12 @@ SELECT U&'\0061\0308bc' <> U&'\00E4bc' COLLATE "C" AS sanity_check;
  t
 (1 row)
 
+SELECT normalize('');
+ normalize 
+-----------
+ 
+(1 row)
+
 SELECT normalize(U&'\0061\0308\24D1c') = U&'\00E4\24D1c' COLLATE "C" AS test_default;
  test_default 
 --------------
@@ -67,7 +73,8 @@ FROM
   (VALUES (1, U&'\00E4bc'),
           (2, U&'\0061\0308bc'),
           (3, U&'\00E4\24D1c'),
-          (4, U&'\0061\0308\24D1c')) vals (num, val)
+          (4, U&'\0061\0308\24D1c'),
+          (5, '')) vals (num, val)
 ORDER BY num;
  num | val | nfc | nfd | nfkc | nfkd 
 -----+-----+-----+-----+------+------
@@ -75,7 +82,8 @@ ORDER BY num;
    2 | äbc | f   | t   | f    | t
    3 | äⓑc | t   | f   | f    | f
    4 | äⓑc | f   | t   | f    | f
-(4 rows)
+   5 |     | t   | t   | t    | t
+(5 rows)
 
 SELECT is_normalized('abc', 'def');  -- run-time error
 ERROR:  invalid normalization form: def
