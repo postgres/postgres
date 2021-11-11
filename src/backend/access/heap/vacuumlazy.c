@@ -3610,6 +3610,11 @@ vac_cmp_itemptr(const void *left, const void *right)
  * transactions. Also return the visibility_cutoff_xid which is the highest
  * xmin amongst the visible tuples.  Set *all_frozen to true if every tuple
  * on this page is frozen.
+ *
+ * This is a stripped down version of lazy_scan_prune().  If you change
+ * anything here, make sure that everything stays in sync.  Note that an
+ * assertion calls us to verify that everybody still agrees.  Be sure to avoid
+ * introducing new side-effects here.
  */
 static bool
 heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
@@ -3625,10 +3630,6 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 	*visibility_cutoff_xid = InvalidTransactionId;
 	*all_frozen = true;
 
-	/*
-	 * This is a stripped down version of the line pointer scan in
-	 * lazy_scan_heap(). So if you change anything here, also check that code.
-	 */
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber;
 		 offnum <= maxoff && all_visible;
