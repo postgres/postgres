@@ -1911,7 +1911,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		/* for each row */
 		Datum		values[PG_STAT_GET_SLRU_COLS];
 		bool		nulls[PG_STAT_GET_SLRU_COLS];
-		PgStat_SLRUStats stat = stats[i];
+		PgStat_SLRUStats stat;
 		const char *name;
 
 		name = pgstat_slru_name(i);
@@ -1919,6 +1919,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		if (!name)
 			break;
 
+		stat = stats[i];
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
