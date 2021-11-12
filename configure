@@ -19301,14 +19301,14 @@ if test "x$PERL" != x; then
 $as_echo_n "checking for perl module $ax_perl_module... " >&6; }
 
     # Would be nice to log result here, but can't rely on autoconf internals
-    $PERL -e "use $ax_perl_module; exit" > /dev/null 2>&1
+    modversion=`$PERL -e "use $ax_perl_module; my \\\$x=q($ax_perl_module); \\\$x =~ s/ .*//; \\\$x .= q(::VERSION); eval qq{print \\\\$\\\$x\\n}; exit;" 2>/dev/null`
     if test $? -ne 0; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; };
       ax_perl_modules_failed=1
    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
-$as_echo "ok" >&6; };
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $modversion" >&5
+$as_echo "$modversion" >&6; };
     fi
   done
 

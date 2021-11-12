@@ -55,12 +55,12 @@ if test "x$PERL" != x; then
     AC_MSG_CHECKING(for perl module $ax_perl_module)
 
     # Would be nice to log result here, but can't rely on autoconf internals
-    $PERL -e "use $ax_perl_module; exit" > /dev/null 2>&1
+    modversion=`$PERL -e "use $ax_perl_module; my \\\$x=q($ax_perl_module); \\\$x =~ s/ .*//; \\\$x .= q(::VERSION); eval qq{print \\\\$\\\$x\\n}; exit;" 2>/dev/null`
     if test $? -ne 0; then
       AC_MSG_RESULT(no);
       ax_perl_modules_failed=1
    else
-      AC_MSG_RESULT(ok);
+      AC_MSG_RESULT($modversion);
     fi
   done
 
