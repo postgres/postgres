@@ -23,6 +23,11 @@ tmp_check/log/ to get more info.  Files named 'regress_log_XXX' are log
 output from the perl test scripts themselves, and should be examined first.
 Other files are postmaster logs, and may be helpful as additional data.
 
+Data directories will also be left behind for analysis when a test fails;
+they are named according to the test filename.  But if the environment
+variable PG_TEST_NOCLEAN is set, data directories will be retained
+regardless of test status.
+
 
 Writing tests
 -------------
