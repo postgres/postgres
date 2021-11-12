@@ -2022,12 +2022,29 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 
 	if (active_branch)
 	{
-		char	   *opt0 = psql_scan_slash_option(scan_state,
+		char	   *user = psql_scan_slash_option(scan_state,
 												  OT_SQLID, NULL, true);
 		char	   *pw1;
 		char	   *pw2;
+		PQExpBufferData buf;
 
-		pw1 = simple_prompt("Enter new password: ", false);
+		if (user == NULL)
+		{
+			/* By default, the command applies to CURRENT_USER */
+			PGresult   *res;
+
+			res = PSQLexec("SELECT CURRENT_USER");
+			if (!res)
+				return PSQL_CMD_ERROR;
+
+			user = pg_strdup(PQgetvalue(res, 0, 0));
+			PQclear(res);
+		}
+
+		initPQExpBuffer(&buf);
+		printfPQExpBuffer(&buf, _("Enter new password for user \"%s\": "), user);
+
+		pw1 = simple_prompt(buf.data, false);
 		pw2 = simple_prompt("Enter it again: ", false);
 
 		if (strcmp(pw1, pw2) != 0)
@@ -2037,13 +2054,7 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 		}
 		else
 		{
-			char	   *user;
 			char	   *encrypted_password;
-
-			if (opt0)
-				user = opt0;
-			else
-				user = PQuser(pset.db);
 
 			encrypted_password = PQencryptPasswordConn(pset.db, pw1, user, NULL);
 
@@ -2054,15 +2065,12 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			}
 			else
 			{
-				PQExpBufferData buf;
 				PGresult   *res;
 
-				initPQExpBuffer(&buf);
 				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD ",
 								  fmtId(user));
 				appendStringLiteralConn(&buf, encrypted_password, pset.db);
 				res = PSQLexec(buf.data);
-				termPQExpBuffer(&buf);
 				if (!res)
 					success = false;
 				else
@@ -2071,10 +2079,10 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			}
 		}
 
-		if (opt0)
-			free(opt0);
+		free(user);
 		free(pw1);
 		free(pw2);
+		termPQExpBuffer(&buf);
 	}
 	else
 		ignore_slash_options(scan_state);
