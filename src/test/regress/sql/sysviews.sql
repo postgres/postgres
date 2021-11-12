@@ -32,6 +32,9 @@ select count(*) = 0 as ok from pg_prepared_statements;
 -- See also prepared_xacts.sql
 select count(*) >= 0 as ok from pg_prepared_xacts;
 
+-- There will surely be at least one SLRU cache
+select count(*) > 0 as ok from pg_stat_slru;
+
 -- We expect no walreceiver running in this test
 select count(*) = 0 as ok from pg_stat_wal_receiver;
 
