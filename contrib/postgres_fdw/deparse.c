@@ -152,6 +152,7 @@ static void deparseParam(Param *node, deparse_expr_cxt *context);
 static void deparseSubscriptingRef(SubscriptingRef *node, deparse_expr_cxt *context);
 static void deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context);
 static void deparseOpExpr(OpExpr *node, deparse_expr_cxt *context);
+static bool isPlainForeignVar(Expr *node, deparse_expr_cxt *context);
 static void deparseOperatorName(StringInfo buf, Form_pg_operator opform);
 static void deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context);
 static void deparseScalarArrayOpExpr(ScalarArrayOpExpr *node,
@@ -2695,9 +2696,14 @@ deparseVar(Var *node, deparse_expr_cxt *context)
  * Deparse given constant value into context->buf.
  *
  * This function has to be kept in sync with ruleutils.c's get_const_expr.
- * As for that function, showtype can be -1 to never show "::typename" decoration,
- * or +1 to always show it, or 0 to show it only if the constant wouldn't be assumed
- * to be the right type by default.
+ *
+ * As in that function, showtype can be -1 to never show "::typename"
+ * decoration, +1 to always show it, or 0 to show it only if the constant
+ * wouldn't be assumed to be the right type by default.
+ *
+ * In addition, this code allows showtype to be -2 to indicate that we should
+ * not show "::typename" decoration if the constant is printed as an untyped
+ * literal or NULL (while in other cases, behaving as for showtype == 0).
  */
 static void
 deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
@@ -2707,6 +2713,7 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	bool		typIsVarlena;
 	char	   *extval;
 	bool		isfloat = false;
+	bool		isstring = false;
 	bool		needlabel;
 
 	if (node->constisnull)
@@ -2762,13 +2769,14 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 			break;
 		default:
 			deparseStringLiteral(buf, extval);
+			isstring = true;
 			break;
 	}
 
 	pfree(extval);
 
-	if (showtype < 0)
-		return;
+	if (showtype == -1)
+		return;					/* never print type label */
 
 	/*
 	 * For showtype == 0, append ::typename unless the constant will be
@@ -2788,7 +2796,13 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 			needlabel = !isfloat || (node->consttypmod >= 0);
 			break;
 		default:
-			needlabel = true;
+			if (showtype == -2)
+			{
+				/* label unless we printed it as an untyped string */
+				needlabel = !isstring;
+			}
+			else
+				needlabel = true;
 			break;
 	}
 	if (needlabel || showtype > 0)
@@ -2953,6 +2967,8 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	HeapTuple	tuple;
 	Form_pg_operator form;
+	Expr	   *right;
+	bool		canSuppressRightConstCast = false;
 	char		oprkind;
 
 	/* Retrieve information about the operator from system catalog. */
@@ -2966,13 +2982,58 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	Assert((oprkind == 'l' && list_length(node->args) == 1) ||
 		   (oprkind == 'b' && list_length(node->args) == 2));
 
+	right = llast(node->args);
+
 	/* Always parenthesize the expression. */
 	appendStringInfoChar(buf, '(');
 
 	/* Deparse left operand, if any. */
 	if (oprkind == 'b')
 	{
-		deparseExpr(linitial(node->args), context);
+		Expr	   *left = linitial(node->args);
+		Oid			leftType = exprType((Node *) left);
+		Oid			rightType = exprType((Node *) right);
+		bool		canSuppressLeftConstCast = false;
+
+		/*
+		 * When considering a binary operator, if one operand is a Const that
+		 * can be printed as a bare string literal or NULL (i.e., it will look
+		 * like type UNKNOWN to the remote parser), the Const normally
+		 * receives an explicit cast to the operator's input type.  However,
+		 * in Const-to-Var comparisons where both operands are of the same
+		 * type, we prefer to suppress the explicit cast, leaving the Const's
+		 * type resolution up to the remote parser.  The remote's resolution
+		 * heuristic will assume that an unknown input type being compared to
+		 * a known input type is of that known type as well.
+		 *
+		 * This hack allows some cases to succeed where a remote column is
+		 * declared with a different type in the local (foreign) table.  By
+		 * emitting "foreigncol = 'foo'" not "foreigncol = 'foo'::text" or the
+		 * like, we allow the remote parser to pick an "=" operator that's
+		 * compatible with whatever type the remote column really is, such as
+		 * an enum.
+		 *
+		 * We allow cast suppression to happen only when the other operand is
+		 * a plain foreign Var.  Although the remote's unknown-type heuristic
+		 * would apply to other cases just as well, we would be taking a
+		 * bigger risk that the inferred type is something unexpected.  With
+		 * this restriction, if anything goes wrong it's the user's fault for
+		 * not declaring the local column with the same type as the remote
+		 * column.
+		 */
+		if (leftType == rightType)
+		{
+			if (IsA(left, Const))
+				canSuppressLeftConstCast = isPlainForeignVar(right, context);
+			else if (IsA(right, Const))
+				canSuppressRightConstCast = isPlainForeignVar(left, context);
+		}
+
+		if (canSuppressLeftConstCast)
+			deparseConst((Const *) left, context, -2);
+		else
+			deparseExpr(left, context);
+
 		appendStringInfoChar(buf, ' ');
 	}
 
@@ -2981,11 +3042,50 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 
 	/* Deparse right operand. */
 	appendStringInfoChar(buf, ' ');
-	deparseExpr(llast(node->args), context);
+
+	if (canSuppressRightConstCast)
+		deparseConst((Const *) right, context, -2);
+	else
+		deparseExpr(right, context);
 
 	appendStringInfoChar(buf, ')');
 
 	ReleaseSysCache(tuple);
+}
+
+/*
+ * Will "node" deparse as a plain foreign Var?
+ */
+static bool
+isPlainForeignVar(Expr *node, deparse_expr_cxt *context)
+{
+	/*
+	 * We allow the foreign Var to have an implicit RelabelType, mainly so
+	 * that this'll work with varchar columns.  Note that deparseRelabelType
+	 * will not print such a cast, so we're not breaking the restriction that
+	 * the expression print as a plain Var.  We won't risk it for an implicit
+	 * cast that requires a function, nor for non-implicit RelabelType; such
+	 * cases seem too likely to involve semantics changes compared to what
+	 * would happen on the remote side.
+	 */
+	if (IsA(node, RelabelType) &&
+		((RelabelType *) node)->relabelformat == COERCE_IMPLICIT_CAST)
+		node = ((RelabelType *) node)->arg;
+
+	if (IsA(node, Var))
+	{
+		/*
+		 * The Var must be one that'll deparse as a foreign column reference
+		 * (cf. deparseVar).
+		 */
+		Var		   *var = (Var *) node;
+		Relids		relids = context->scanrel->relids;
+
+		if (bms_is_member(var->varno, relids) && var->varlevelsup == 0)
+			return true;
+	}
+
+	return false;
 }
 
 /*
