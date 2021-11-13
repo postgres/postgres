@@ -182,10 +182,29 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			/* OK to prune */
-			(void) heap_page_prune(relation, buffer, vistest,
-								   limited_xmin, limited_ts,
-								   true, NULL);
+			int		ndeleted,
+					nnewlpdead;
+
+			ndeleted = heap_page_prune(relation, buffer, vistest, limited_xmin,
+									   limited_ts, &nnewlpdead, NULL);
+
+			/*
+			 * Report the number of tuples reclaimed to pgstats.  This is
+			 * ndeleted minus the number of newly-LP_DEAD-set items.
+			 *
+			 * We derive the number of dead tuples like this to avoid totally
+			 * forgetting about items that were set to LP_DEAD, since they
+			 * still need to be cleaned up by VACUUM.  We only want to count
+			 * heap-only tuples that just became LP_UNUSED in our report,
+			 * which don't.
+			 *
+			 * VACUUM doesn't have to compensate in the same way when it
+			 * tracks ndeleted, since it will set the same LP_DEAD items to
+			 * LP_UNUSED separately.
+			 */
+			if (ndeleted > nnewlpdead)
+				pgstat_update_heap_dead_tuples(relation,
+											   ndeleted - nnewlpdead);
 		}
 
 		/* And release buffer lock */
@@ -212,10 +231,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  * either have been set by TransactionIdLimitedForOldSnapshots, or
  * InvalidTransactionId/0 respectively.
  *
- * If report_stats is true then we send the number of reclaimed heap-only
- * tuples to pgstats.  (This must be false during vacuum, since vacuum will
- * send its own new total to pgstats, and we don't want this delta applied
- * on top of that.)
+ * Sets *nnewlpdead for caller, indicating the number of items that were
+ * newly set LP_DEAD during prune operation.
  *
  * off_loc is the offset location required by the caller to use in error
  * callback.
@@ -227,7 +244,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
-				bool report_stats,
+				int	*nnewlpdead,
 				OffsetNumber *off_loc)
 {
 	int			ndeleted = 0;
@@ -381,13 +398,8 @@ heap_page_prune(Relation relation, Buffer buffer,
 
 	END_CRIT_SECTION();
 
-	/*
-	 * If requested, report the number of tuples reclaimed to pgstats. This is
-	 * ndeleted minus ndead, because we don't want to count a now-DEAD root
-	 * item as a deletion for this purpose.
-	 */
-	if (report_stats && ndeleted > prstate.ndead)
-		pgstat_update_heap_dead_tuples(relation, ndeleted - prstate.ndead);
+	/* Record number of newly-set-LP_DEAD items for caller */
+	*nnewlpdead = prstate.ndead;
 
 	return ndeleted;
 }

@@ -1712,6 +1712,7 @@ lazy_scan_prune(LVRelState *vacrel,
 				new_dead_tuples,
 				num_tuples,
 				live_tuples;
+	int			nnewlpdead;
 	int			nfrozen;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
 	xl_heap_freeze_tuple frozen[MaxHeapTuplesPerPage];
@@ -1737,7 +1738,7 @@ retry:
 	 * that were deleted from indexes.
 	 */
 	tuples_deleted = heap_page_prune(rel, buf, vistest,
-									 InvalidTransactionId, 0, false,
+									 InvalidTransactionId, 0, &nnewlpdead,
 									 &vacrel->offnum);
 
 	/*
