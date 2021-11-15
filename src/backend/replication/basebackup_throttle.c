@@ -122,7 +122,7 @@ bbsink_throttle_manifest_contents(bbsink *sink, size_t len)
 {
 	throttle((bbsink_throttle *) sink, len);
 
-	bbsink_forward_manifest_contents(sink->bbs_next, len);
+	bbsink_forward_manifest_contents(sink, len);
 }
 
 /*
