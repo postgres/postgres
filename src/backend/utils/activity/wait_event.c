@@ -522,6 +522,12 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_BASEBACKUP_READ:
 			event_name = "BaseBackupRead";
 			break;
+		case WAIT_EVENT_BASEBACKUP_SYNC:
+			event_name = "BaseBackupSync";
+			break;
+		case WAIT_EVENT_BASEBACKUP_WRITE:
+			event_name = "BaseBackupWrite";
+			break;
 		case WAIT_EVENT_BUFFILE_READ:
 			event_name = "BufFileRead";
 			break;

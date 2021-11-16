@@ -19,6 +19,7 @@ OBJS = \
 	basebackup.o \
 	basebackup_copy.o \
 	basebackup_progress.o \
+	basebackup_server.o \
 	basebackup_sink.o \
 	basebackup_throttle.o \
 	repl_gram.o \

@@ -44,6 +44,9 @@ typedef struct bbsink_copystream
 	/* Common information for all types of sink. */
 	bbsink		base;
 
+	/* Are we sending the archives to the client, or somewhere else? */
+	bool		send_to_client;
+
 	/*
 	 * Protocol message buffer. We assemble CopyData protocol messages by
 	 * setting the first character of this buffer to 'd' (archive or manifest
@@ -131,11 +134,12 @@ const bbsink_ops bbsink_copytblspc_ops = {
  * Create a new 'copystream' bbsink.
  */
 bbsink *
-bbsink_copystream_new(void)
+bbsink_copystream_new(bool send_to_client)
 {
 	bbsink_copystream *sink = palloc0(sizeof(bbsink_copystream));
 
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_copystream_ops;
+	sink->send_to_client = send_to_client;
 
 	/* Set up for periodic progress reporting. */
 	sink->last_progress_report_time = GetCurrentTimestamp();
@@ -212,8 +216,12 @@ bbsink_copystream_archive_contents(bbsink *sink, size_t len)
 	StringInfoData buf;
 	uint64		targetbytes;
 
-	/* Send the archive content to the client (with leading type byte). */
-	pq_putmessage('d', mysink->msgbuffer, len + 1);
+	/* Send the archive content to the client, if appropriate. */
+	if (mysink->send_to_client)
+	{
+		/* Add one because we're also sending a leading type byte. */
+		pq_putmessage('d', mysink->msgbuffer, len + 1);
+	}
 
 	/* Consider whether to send a progress report to the client. */
 	targetbytes = mysink->bytes_done_at_last_time_check
@@ -294,8 +302,11 @@ bbsink_copystream_manifest_contents(bbsink *sink, size_t len)
 {
 	bbsink_copystream *mysink = (bbsink_copystream *) sink;
 
-	/* Send the manifest content to the client (with leading type byte). */
-	pq_putmessage('d', mysink->msgbuffer, len + 1);
+	if (mysink->send_to_client)
+	{
+		/* Add one because we're also sending a leading type byte. */
+		pq_putmessage('d', mysink->msgbuffer, len + 1);
+	}
 }
 
 /*

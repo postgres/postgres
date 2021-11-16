@@ -55,8 +55,10 @@
 
 typedef enum
 {
+	BACKUP_TARGET_BLACKHOLE,
 	BACKUP_TARGET_COMPAT,
-	BACKUP_TARGET_CLIENT
+	BACKUP_TARGET_CLIENT,
+	BACKUP_TARGET_SERVER
 } backup_target_type;
 
 typedef struct
@@ -69,6 +71,7 @@ typedef struct
 	uint32		maxrate;
 	bool		sendtblspcmapfile;
 	backup_target_type target;
+	char	   *target_detail;
 	backup_manifest_option manifest;
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
@@ -702,6 +705,8 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_manifest = false;
 	bool		o_manifest_checksums = false;
 	bool		o_target = false;
+	bool		o_target_detail = false;
+	char	   *target_str = "compat";	/* placate compiler */
 
 	MemSet(opt, 0, sizeof(*opt));
 	opt->target = BACKUP_TARGET_COMPAT;
@@ -847,25 +852,35 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		}
 		else if (strcmp(defel->defname, "target") == 0)
 		{
-			char	   *optval = defGetString(defel);
+			target_str = defGetString(defel);
 
 			if (o_target)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			if (strcmp(optval, "client") == 0)
+			if (strcmp(target_str, "blackhole") == 0)
+				opt->target = BACKUP_TARGET_BLACKHOLE;
+			else if (strcmp(target_str, "client") == 0)
 				opt->target = BACKUP_TARGET_CLIENT;
+			else if (strcmp(target_str, "server") == 0)
+				opt->target = BACKUP_TARGET_SERVER;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unrecognized target: \"%s\"", optval)));
+						 errmsg("unrecognized target: \"%s\"", target_str)));
 			o_target = true;
 		}
-		else
-			ereport(ERROR,
-					errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("option \"%s\" not recognized",
-						   defel->defname));
+		else if (strcmp(defel->defname, "target_detail") == 0)
+		{
+			char	   *optval = defGetString(defel);
+
+			if (o_target_detail)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			opt->target_detail = optval;
+			o_target_detail = true;
+		}
 	}
 	if (opt->label == NULL)
 		opt->label = "base backup";
@@ -876,6 +891,22 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("manifest checksums require a backup manifest")));
 		opt->manifest_checksum_type = CHECKSUM_TYPE_NONE;
+	}
+	if (opt->target == BACKUP_TARGET_SERVER)
+	{
+		if (opt->target_detail == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("target '%s' requires a target detail",
+							target_str)));
+	}
+	else
+	{
+		if (opt->target_detail != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("target '%s' does not accept a target detail",
+							target_str)));
 	}
 }
 
@@ -908,13 +939,37 @@ SendBaseBackup(BaseBackupCmd *cmd)
 
 	/*
 	 * If the TARGET option was specified, then we can use the new copy-stream
-	 * protocol. If not, we must fall back to the old and less capable
-	 * copy-tablespace protocol.
+	 * protocol. If the target is specifically 'client' then set up to stream
+	 * the backup to the client; otherwise, it's being sent someplace else and
+	 * should not be sent to the client.
+	 *
+	 * If the TARGET option was not specified, we must fall back to the older
+	 * and less capable copy-tablespace protocol.
 	 */
-	if (opt.target != BACKUP_TARGET_COMPAT)
-		sink = bbsink_copystream_new();
+	if (opt.target == BACKUP_TARGET_CLIENT)
+		sink = bbsink_copystream_new(true);
+	else if (opt.target != BACKUP_TARGET_COMPAT)
+		sink = bbsink_copystream_new(false);
 	else
 		sink = bbsink_copytblspc_new();
+
+	/*
+	 * If a non-default backup target is in use, arrange to send the data
+	 * wherever it needs to go.
+	 */
+	switch (opt.target)
+	{
+		case BACKUP_TARGET_BLACKHOLE:
+			/* Nothing to do, just discard data. */
+			break;
+		case BACKUP_TARGET_COMPAT:
+		case BACKUP_TARGET_CLIENT:
+			/* Nothing to do, handling above is sufficient. */
+			break;
+		case BACKUP_TARGET_SERVER:
+			sink = bbsink_server_new(sink, opt.target_detail);
+			break;
+	}
 
 	/* Set up network throttling, if client requested it */
 	if (opt.maxrate > 0)

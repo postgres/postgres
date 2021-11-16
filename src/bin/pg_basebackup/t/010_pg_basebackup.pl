@@ -10,7 +10,7 @@ use File::Path qw(rmtree);
 use Fcntl qw(:seek);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 115;
+use Test::More tests => 135;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -474,6 +474,68 @@ $node->command_ok(
 	],
 	'pg_basebackup -X stream runs with --no-slot');
 rmtree("$tempdir/backupnoslot");
+$node->command_ok(
+	[ @pg_basebackup_defs, '-D', "$tempdir/backupxf", '-X', 'fetch' ],
+	'pg_basebackup -X fetch runs');
+
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'blackhole' ],
+	qr/WAL cannot be streamed when a backup target is specified/,
+	'backup target requires -X');
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'stream' ],
+	qr/WAL cannot be streamed when a backup target is specified/,
+	'backup target requires -X other than -X stream');
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'bogus', '-X', 'none' ],
+	qr/unrecognized target/,
+	'backup target unrecognized');
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'none', '-D', "$tempdir/blackhole" ],
+	qr/cannot specify both output directory and backup target/,
+	'backup target and output directory');
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'none', '-Ft' ],
+	qr/cannot specify both format and backup target/,
+	'backup target and output directory');
+$node->command_ok(
+	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'none' ],
+	'backup target blackhole');
+$node->command_ok(
+	[ @pg_basebackup_defs, '--target', "server:$tempdir/backuponserver", '-X', 'none' ],
+	'backup target server');
+ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created');
+rmtree("$tempdir/backuponserver");
+
+$node->command_fails(
+	[
+		@pg_basebackup_defs,         '-D',
+		"$tempdir/backupxs_sl_fail", '-X',
+		'stream',                    '-S',
+		'slot0'
+	],
+	'pg_basebackup fails with nonexistent replication slot');
+
+$node->command_fails(
+	[ @pg_basebackup_defs, '-D', "$tempdir/backupxs_slot", '-C' ],
+	'pg_basebackup -C fails without slot name');
+
+$node->command_fails(
+	[
+		@pg_basebackup_defs,      '-D',
+		"$tempdir/backupxs_slot", '-C',
+		'-S',                     'slot0',
+		'--no-slot'
+	],
+	'pg_basebackup fails with -C -S --no-slot');
+$node->command_fails_like(
+	[ @pg_basebackup_defs, '--target', 'blackhole', '-D', "$tempdir/blackhole" ],
+	qr/cannot specify both output directory and backup target/,
+	'backup target and output directory');
+
+$node->command_ok(
+	[ @pg_basebackup_defs, '-D', "$tempdir/backuptr/co", '-X', 'none' ],
+	'pg_basebackup -X fetch runs');
 
 $node->command_fails(
 	[

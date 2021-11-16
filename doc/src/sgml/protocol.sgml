@@ -2640,8 +2640,27 @@ The commands accepted in replication mode are:
          </para>
 
          <para>
-          At present, the only supported value for this parameter is
-          <literal>client</literal>.
+          If the target is <literal>client</literal>, the backup data is
+          sent to the client. If it is <literal>server</literal>, the backup
+          data is written to the server at the pathname specified by the
+          <literal>TARGET_DETAIL</literal> option. If it is
+          <literal>blackhole</literal>, the backup data is not sent
+          anywhere; it is simply discarded.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>TARGET_DETAIL</literal> <replaceable>'detail'</replaceable></term>
+        <listitem>
+         <para>
+          Provides additional information about the backup target.
+         </para>
+
+         <para>
+          Currently, this option can only be used when the backup target is
+          <literal>server</literal>. It specifies the server directory
+          to which the backup should be written.
          </para>
         </listitem>
        </varlistentry>
