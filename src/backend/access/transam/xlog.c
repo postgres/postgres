@@ -8677,9 +8677,6 @@ InitXLOGAccess(void)
 	(void) GetRedoRecPtr();
 	/* Also update our copy of doPageWrites. */
 	doPageWrites = (Insert->fullPageWrites || Insert->forcePageWrites);
-
-	/* Also initialize the working areas for constructing WAL records */
-	InitXLogInsert();
 }
 
 /*
@@ -9128,16 +9125,6 @@ CreateCheckPoint(int flags)
 	/* sanity check */
 	if (RecoveryInProgress() && (flags & CHECKPOINT_END_OF_RECOVERY) == 0)
 		elog(ERROR, "can't create a checkpoint during recovery");
-
-	/*
-	 * Initialize InitXLogInsert working areas before entering the critical
-	 * section.  Normally, this is done by the first call to
-	 * RecoveryInProgress() or LocalSetXLogInsertAllowed(), but when creating
-	 * an end-of-recovery checkpoint, the LocalSetXLogInsertAllowed call is
-	 * done below in a critical section, and InitXLogInsert cannot be called
-	 * in a critical section.
-	 */
-	InitXLogInsert();
 
 	/*
 	 * Prepare to accumulate statistics.

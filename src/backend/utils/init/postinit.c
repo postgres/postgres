@@ -541,6 +541,12 @@ BaseInit(void)
 	 * file shutdown hook can report temporary file statistics.
 	 */
 	InitTemporaryFileAccess();
+
+	/*
+	 * Initialize local buffers for WAL record construction, in case we
+	 * ever try to insert XLOG.
+	 */
+	InitXLogInsert();
 }
 
 
