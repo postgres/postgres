@@ -191,8 +191,6 @@ const struct config_enum_entry recovery_target_action_options[] = {
  */
 CheckpointStatsData CheckpointStats;
 
-static XLogRecPtr LastRec;
-
 /* Local copy of WalRcv->flushedUpto */
 static XLogRecPtr flushedUpto = 0;
 static TimeLineID receiveTLI = 0;
@@ -6679,6 +6677,7 @@ StartupXLOG(void)
 	bool		haveBackupLabel = false;
 	bool		haveTblspcMap = false;
 	XLogRecPtr	RecPtr,
+				LastRec,
 				checkPointLoc,
 				EndOfLog;
 	TimeLineID	EndOfLogTLI;
