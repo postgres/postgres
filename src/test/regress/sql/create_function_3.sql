@@ -180,6 +180,14 @@ CREATE FUNCTION functest_S_13() RETURNS boolean
         SELECT false;
     END;
 
+-- check display of function argments in sub-SELECT
+CREATE TABLE functest1 (i int);
+CREATE FUNCTION functest_S_16(a int, b int) RETURNS void
+    LANGUAGE SQL
+    BEGIN ATOMIC
+        INSERT INTO functest1 SELECT a + $2;
+    END;
+
 -- error: duplicate function body
 CREATE FUNCTION functest_S_xxx(x int) RETURNS int
     LANGUAGE SQL
@@ -217,6 +225,9 @@ SELECT pg_get_functiondef('functest_S_3a'::regproc);
 SELECT pg_get_functiondef('functest_S_10'::regproc);
 SELECT pg_get_functiondef('functest_S_13'::regproc);
 SELECT pg_get_functiondef('functest_S_15'::regproc);
+SELECT pg_get_functiondef('functest_S_16'::regproc);
+
+DROP TABLE functest1 CASCADE;
 
 -- test with views
 CREATE TABLE functest3 (a int);

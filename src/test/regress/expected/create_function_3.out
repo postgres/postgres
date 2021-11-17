@@ -279,6 +279,13 @@ CREATE FUNCTION functest_S_13() RETURNS boolean
         SELECT 1;
         SELECT false;
     END;
+-- check display of function argments in sub-SELECT
+CREATE TABLE functest1 (i int);
+CREATE FUNCTION functest_S_16(a int, b int) RETURNS void
+    LANGUAGE SQL
+    BEGIN ATOMIC
+        INSERT INTO functest1 SELECT a + $2;
+    END;
 -- error: duplicate function body
 CREATE FUNCTION functest_S_xxx(x int) RETURNS int
     LANGUAGE SQL
@@ -417,6 +424,20 @@ SELECT pg_get_functiondef('functest_S_15'::regproc);
  
 (1 row)
 
+SELECT pg_get_functiondef('functest_S_16'::regproc);
+                              pg_get_functiondef                               
+-------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_s_16(a integer, b integer)+
+  RETURNS void                                                                +
+  LANGUAGE sql                                                                +
+ BEGIN ATOMIC                                                                 +
+  INSERT INTO functest1 (i)  SELECT (functest_s_16.a + functest_s_16.b);      +
+ END                                                                          +
+ 
+(1 row)
+
+DROP TABLE functest1 CASCADE;
+NOTICE:  drop cascades to function functest_s_16(integer,integer)
 -- test with views
 CREATE TABLE functest3 (a int);
 INSERT INTO functest3 VALUES (1), (2);
