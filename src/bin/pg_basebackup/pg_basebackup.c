@@ -1262,10 +1262,11 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 	if (state.ztarfile != NULL)
 	{
+		errno = 0;				/* in case gzclose() doesn't set it */
 		if (gzclose(state.ztarfile) != 0)
 		{
-			pg_log_error("could not close compressed file \"%s\": %s",
-						 state.filename, get_gz_error(state.ztarfile));
+			pg_log_error("could not close compressed file \"%s\": %m",
+						 state.filename);
 			exit(1);
 		}
 	}
