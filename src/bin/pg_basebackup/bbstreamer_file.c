@@ -303,11 +303,11 @@ bbstreamer_gzip_writer_finalize(bbstreamer *streamer)
 
 	mystreamer = (bbstreamer_gzip_writer *) streamer;
 
+	errno = 0;					/* in case gzclose() doesn't set it */
 	if (gzclose(mystreamer->gzfile) != 0)
 	{
-		pg_log_error("could not close compressed file \"%s\": %s",
-					 mystreamer->pathname,
-					 get_gz_error(mystreamer->gzfile));
+		pg_log_error("could not close compressed file \"%s\": %m",
+					 mystreamer->pathname);
 		exit(1);
 	}
 
