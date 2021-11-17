@@ -102,7 +102,7 @@
   oprright => 'text', oprresult => 'bool', oprcom => '=(text,text)',
   oprnegate => '<>(text,text)', oprcode => 'texteq', oprrest => 'eqsel',
   oprjoin => 'eqjoinsel' },
-{ oid => '3877', descr => 'starts with',
+{ oid => '3877', oid_symbol => 'TextPrefixOperator', descr => 'starts with',
   oprname => '^@', oprleft => 'text', oprright => 'text', oprresult => 'bool',
   oprcode => 'starts_with', oprrest => 'prefixsel',
   oprjoin => 'prefixjoinsel' },
