@@ -302,6 +302,8 @@ CREATE PUBLICATION sales_publication FOR ALL TABLES IN SCHEMA marketing, sales;
   <simplelist type="inline">
    <member><xref linkend="sql-alterpublication"/></member>
    <member><xref linkend="sql-droppublication"/></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-altersubscription"/></member>
   </simplelist>
  </refsect1>
 </refentry>
