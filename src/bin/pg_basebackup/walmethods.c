@@ -24,7 +24,7 @@
 #include "pgtar.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
-
+#include "common/logging.h"
 #include "receivelog.h"
 #include "streamutil.h"
 
@@ -44,6 +44,8 @@ typedef struct DirectoryMethodData
 	char	   *basedir;
 	int			compression;
 	bool		sync;
+	const char *lasterrstring;	/* if set, takes precedence over lasterrno */
+	int			lasterrno;
 } DirectoryMethodData;
 static DirectoryMethodData *dir_data = NULL;
 
@@ -62,11 +64,17 @@ typedef struct DirectoryMethodFile
 #endif
 } DirectoryMethodFile;
 
+#define dir_clear_error() \
+	(dir_data->lasterrstring = NULL, dir_data->lasterrno = 0)
+#define dir_set_error(msg) \
+	(dir_data->lasterrstring = _(msg))
+
 static const char *
 dir_getlasterror(void)
 {
-	/* Directory method always sets errno, so just use strerror */
-	return strerror(errno);
+	if (dir_data->lasterrstring)
+		return dir_data->lasterrstring;
+	return strerror(dir_data->lasterrno);
 }
 
 static char *
@@ -84,13 +92,15 @@ dir_get_file_name(const char *pathname, const char *temp_suffix)
 static Walfile
 dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_size)
 {
-	static char tmppath[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
 	char	   *filename;
 	int			fd;
 	DirectoryMethodFile *f;
 #ifdef HAVE_LIBZ
 	gzFile		gzfp = NULL;
 #endif
+
+	dir_clear_error();
 
 	filename = dir_get_file_name(pathname, temp_suffix);
 	snprintf(tmppath, sizeof(tmppath), "%s/%s",
@@ -105,7 +115,10 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	 */
 	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, pg_file_create_mode);
 	if (fd < 0)
+	{
+		dir_data->lasterrno = errno;
 		return NULL;
+	}
 
 #ifdef HAVE_LIBZ
 	if (dir_data->compression > 0)
@@ -113,6 +126,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		gzfp = gzdopen(fd, "wb");
 		if (gzfp == NULL)
 		{
+			dir_data->lasterrno = errno;
 			close(fd);
 			return NULL;
 		}
@@ -120,6 +134,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		if (gzsetparams(gzfp, dir_data->compression,
 						Z_DEFAULT_STRATEGY) != Z_OK)
 		{
+			dir_data->lasterrno = errno;
 			gzclose(gzfp);
 			return NULL;
 		}
@@ -138,24 +153,17 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 			errno = 0;
 			if (write(fd, zerobuf.data, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			{
-				int			save_errno = errno;
-
+				/* If write didn't set errno, assume problem is no disk space */
+				dir_data->lasterrno = errno ? errno : ENOSPC;
 				close(fd);
-
-				/*
-				 * If write didn't set errno, assume problem is no disk space.
-				 */
-				errno = save_errno ? save_errno : ENOSPC;
 				return NULL;
 			}
 		}
 
 		if (lseek(fd, 0, SEEK_SET) != 0)
 		{
-			int			save_errno = errno;
-
+			dir_data->lasterrno = errno;
 			close(fd);
-			errno = save_errno;
 			return NULL;
 		}
 	}
@@ -171,6 +179,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		if (fsync_fname(tmppath, false) != 0 ||
 			fsync_parent_path(tmppath) != 0)
 		{
+			dir_data->lasterrno = errno;
 #ifdef HAVE_LIBZ
 			if (dir_data->compression > 0)
 				gzclose(gzfp);
@@ -203,13 +212,30 @@ dir_write(Walfile f, const void *buf, size_t count)
 	DirectoryMethodFile *df = (DirectoryMethodFile *) f;
 
 	Assert(f != NULL);
+	dir_clear_error();
 
 #ifdef HAVE_LIBZ
 	if (dir_data->compression > 0)
+	{
+		errno = 0;
 		r = (ssize_t) gzwrite(df->gzfp, buf, count);
+		if (r != count)
+		{
+			/* If write didn't set errno, assume problem is no disk space */
+			dir_data->lasterrno = errno ? errno : ENOSPC;
+		}
+	}
 	else
 #endif
+	{
+		errno = 0;
 		r = write(df->fd, buf, count);
+		if (r != count)
+		{
+			/* If write didn't set errno, assume problem is no disk space */
+			dir_data->lasterrno = errno ? errno : ENOSPC;
+		}
+	}
 	if (r > 0)
 		df->currpos += r;
 	return r;
@@ -219,6 +245,7 @@ static off_t
 dir_get_current_pos(Walfile f)
 {
 	Assert(f != NULL);
+	dir_clear_error();
 
 	/* Use a cached value to prevent lots of reseeks */
 	return ((DirectoryMethodFile *) f)->currpos;
@@ -229,10 +256,11 @@ dir_close(Walfile f, WalCloseMethod method)
 {
 	int			r;
 	DirectoryMethodFile *df = (DirectoryMethodFile *) f;
-	static char tmppath[MAXPGPATH];
-	static char tmppath2[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
+	char		tmppath2[MAXPGPATH];
 
 	Assert(f != NULL);
+	dir_clear_error();
 
 #ifdef HAVE_LIBZ
 	if (dir_data->compression > 0)
@@ -295,6 +323,9 @@ dir_close(Walfile f, WalCloseMethod method)
 		}
 	}
 
+	if (r != 0)
+		dir_data->lasterrno = errno;
+
 	pg_free(df->pathname);
 	pg_free(df->fullpath);
 	if (df->temp_suffix)
@@ -307,7 +338,10 @@ dir_close(Walfile f, WalCloseMethod method)
 static int
 dir_sync(Walfile f)
 {
+	int			r;
+
 	Assert(f != NULL);
+	dir_clear_error();
 
 	if (!dir_data->sync)
 		return 0;
@@ -316,24 +350,33 @@ dir_sync(Walfile f)
 	if (dir_data->compression > 0)
 	{
 		if (gzflush(((DirectoryMethodFile *) f)->gzfp, Z_SYNC_FLUSH) != Z_OK)
+		{
+			dir_data->lasterrno = errno;
 			return -1;
+		}
 	}
 #endif
 
-	return fsync(((DirectoryMethodFile *) f)->fd);
+	r = fsync(((DirectoryMethodFile *) f)->fd);
+	if (r < 0)
+		dir_data->lasterrno = errno;
+	return r;
 }
 
 static ssize_t
 dir_get_file_size(const char *pathname)
 {
 	struct stat statbuf;
-	static char tmppath[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
 
 	snprintf(tmppath, sizeof(tmppath), "%s/%s",
 			 dir_data->basedir, pathname);
 
 	if (stat(tmppath, &statbuf) != 0)
+	{
+		dir_data->lasterrno = errno;
 		return -1;
+	}
 
 	return statbuf.st_size;
 }
@@ -347,8 +390,10 @@ dir_compression(void)
 static bool
 dir_existsfile(const char *pathname)
 {
-	static char tmppath[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
 	int			fd;
+
+	dir_clear_error();
 
 	snprintf(tmppath, sizeof(tmppath), "%s/%s",
 			 dir_data->basedir, pathname);
@@ -363,6 +408,8 @@ dir_existsfile(const char *pathname)
 static bool
 dir_finish(void)
 {
+	dir_clear_error();
+
 	if (dir_data->sync)
 	{
 		/*
@@ -370,7 +417,10 @@ dir_finish(void)
 		 * directory entry here as well.
 		 */
 		if (fsync_fname(dir_data->basedir, true) != 0)
+		{
+			dir_data->lasterrno = errno;
 			return false;
+		}
 	}
 	return true;
 }
@@ -407,6 +457,7 @@ FreeWalDirectoryMethod(void)
 {
 	pg_free(dir_data->basedir);
 	pg_free(dir_data);
+	dir_data = NULL;
 }
 
 
@@ -431,7 +482,8 @@ typedef struct TarMethodData
 	int			compression;
 	bool		sync;
 	TarMethodFile *currentfile;
-	char		lasterror[1024];
+	const char *lasterrstring;	/* if set, takes precedence over lasterrno */
+	int			lasterrno;
 #ifdef HAVE_LIBZ
 	z_streamp	zp;
 	void	   *zlibOut;
@@ -439,19 +491,17 @@ typedef struct TarMethodData
 } TarMethodData;
 static TarMethodData *tar_data = NULL;
 
-#define tar_clear_error() tar_data->lasterror[0] = '\0'
-#define tar_set_error(msg) strlcpy(tar_data->lasterror, _(msg), sizeof(tar_data->lasterror))
+#define tar_clear_error() \
+	(tar_data->lasterrstring = NULL, tar_data->lasterrno = 0)
+#define tar_set_error(msg) \
+	(tar_data->lasterrstring = _(msg))
 
 static const char *
 tar_getlasterror(void)
 {
-	/*
-	 * If a custom error is set, return that one. Otherwise, assume errno is
-	 * set and return that one.
-	 */
-	if (tar_data->lasterror[0])
-		return tar_data->lasterror;
-	return strerror(errno);
+	if (tar_data->lasterrstring)
+		return tar_data->lasterrstring;
+	return strerror(tar_data->lasterrno);
 }
 
 #ifdef HAVE_LIBZ
@@ -479,11 +529,8 @@ tar_write_compressed_data(void *buf, size_t count, bool flush)
 			errno = 0;
 			if (write(tar_data->fd, tar_data->zlibOut, len) != len)
 			{
-				/*
-				 * If write didn't set errno, assume problem is no disk space.
-				 */
-				if (errno == 0)
-					errno = ENOSPC;
+				/* If write didn't set errno, assume problem is no disk space */
+				tar_data->lasterrno = errno ? errno : ENOSPC;
 				return false;
 			}
 
@@ -520,9 +567,15 @@ tar_write(Walfile f, const void *buf, size_t count)
 	/* Tarfile will always be positioned at the end */
 	if (!tar_data->compression)
 	{
+		errno = 0;
 		r = write(tar_data->fd, buf, count);
-		if (r > 0)
-			((TarMethodFile *) f)->currpos += r;
+		if (r != count)
+		{
+			/* If write didn't set errno, assume problem is no disk space */
+			tar_data->lasterrno = errno ? errno : ENOSPC;
+			return -1;
+		}
+		((TarMethodFile *) f)->currpos += r;
 		return r;
 	}
 #ifdef HAVE_LIBZ
@@ -535,8 +588,11 @@ tar_write(Walfile f, const void *buf, size_t count)
 	}
 #else
 	else
+	{
 		/* Can't happen - compression enabled with no libz */
+		tar_data->lasterrno = ENOSYS;
 		return -1;
+	}
 #endif
 }
 
@@ -574,7 +630,6 @@ tar_get_file_name(const char *pathname, const char *temp_suffix)
 static Walfile
 tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_size)
 {
-	int			save_errno;
 	char	   *tmppath;
 
 	tar_clear_error();
@@ -588,7 +643,10 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 							O_WRONLY | O_CREAT | PG_BINARY,
 							pg_file_create_mode);
 		if (tar_data->fd < 0)
+		{
+			tar_data->lasterrno = errno;
 			return NULL;
+		}
 
 #ifdef HAVE_LIBZ
 		if (tar_data->compression)
@@ -618,7 +676,6 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		/* There's no tar header itself, the file starts with regular files */
 	}
 
-	Assert(tar_data->currentfile == NULL);
 	if (tar_data->currentfile != NULL)
 	{
 		tar_set_error("implementation error: tar files can't have more than one open file");
@@ -660,10 +717,9 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	tar_data->currentfile->ofs_start = lseek(tar_data->fd, 0, SEEK_CUR);
 	if (tar_data->currentfile->ofs_start == -1)
 	{
-		save_errno = errno;
+		tar_data->lasterrno = errno;
 		pg_free(tar_data->currentfile);
 		tar_data->currentfile = NULL;
-		errno = save_errno;
 		return NULL;
 	}
 	tar_data->currentfile->currpos = 0;
@@ -673,11 +729,10 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		errno = 0;
 		if (write(tar_data->fd, tar_data->currentfile->header, 512) != 512)
 		{
-			save_errno = errno;
+			/* If write didn't set errno, assume problem is no disk space */
+			tar_data->lasterrno = errno ? errno : ENOSPC;
 			pg_free(tar_data->currentfile);
 			tar_data->currentfile = NULL;
-			/* if write didn't set errno, assume problem is no disk space */
-			errno = save_errno ? save_errno : ENOSPC;
 			return NULL;
 		}
 	}
@@ -709,10 +764,16 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		if (!tar_data->compression)
 		{
 			/* Uncompressed, so pad now */
-			tar_write_padding_data(tar_data->currentfile, pad_to_size);
-			/* Seek back to start */
-			if (lseek(tar_data->fd, tar_data->currentfile->ofs_start + 512, SEEK_SET) != tar_data->currentfile->ofs_start + 512)
+			if (!tar_write_padding_data(tar_data->currentfile, pad_to_size))
 				return NULL;
+			/* Seek back to start */
+			if (lseek(tar_data->fd,
+					  tar_data->currentfile->ofs_start + 512,
+					  SEEK_SET) != tar_data->currentfile->ofs_start + 512)
+			{
+				tar_data->lasterrno = errno;
+				return NULL;
+			}
 
 			tar_data->currentfile->currpos = 0;
 		}
@@ -727,7 +788,7 @@ tar_get_file_size(const char *pathname)
 	tar_clear_error();
 
 	/* Currently not used, so not supported */
-	errno = ENOSYS;
+	tar_data->lasterrno = ENOSYS;
 	return -1;
 }
 
@@ -749,6 +810,8 @@ tar_get_current_pos(Walfile f)
 static int
 tar_sync(Walfile f)
 {
+	int			r;
+
 	Assert(f != NULL);
 	tar_clear_error();
 
@@ -762,7 +825,10 @@ tar_sync(Walfile f)
 	if (tar_data->compression)
 		return 0;
 
-	return fsync(tar_data->fd);
+	r = fsync(tar_data->fd);
+	if (r < 0)
+		tar_data->lasterrno = errno;
+	return r;
 }
 
 static int
@@ -789,7 +855,10 @@ tar_close(Walfile f, WalCloseMethod method)
 		 * allow writing of the very last file.
 		 */
 		if (ftruncate(tar_data->fd, tf->ofs_start) != 0)
+		{
+			tar_data->lasterrno = errno;
 			return -1;
+		}
 
 		pg_free(tf->pathname);
 		pg_free(tf);
@@ -850,10 +919,7 @@ tar_close(Walfile f, WalCloseMethod method)
 	{
 		/* Flush the current buffer */
 		if (!tar_write_compressed_data(NULL, 0, true))
-		{
-			errno = EINVAL;
 			return -1;
-		}
 	}
 #endif
 
@@ -874,15 +940,17 @@ tar_close(Walfile f, WalCloseMethod method)
 
 	print_tar_number(&(tf->header[148]), 8, tarChecksum(((TarMethodFile *) f)->header));
 	if (lseek(tar_data->fd, tf->ofs_start, SEEK_SET) != ((TarMethodFile *) f)->ofs_start)
+	{
+		tar_data->lasterrno = errno;
 		return -1;
+	}
 	if (!tar_data->compression)
 	{
 		errno = 0;
 		if (write(tar_data->fd, tf->header, 512) != 512)
 		{
-			/* if write didn't set errno, assume problem is no disk space */
-			if (errno == 0)
-				errno = ENOSPC;
+			/* If write didn't set errno, assume problem is no disk space */
+			tar_data->lasterrno = errno ? errno : ENOSPC;
 			return -1;
 		}
 	}
@@ -911,7 +979,10 @@ tar_close(Walfile f, WalCloseMethod method)
 
 	/* Move file pointer back down to end, so we can write the next file */
 	if (lseek(tar_data->fd, 0, SEEK_END) < 0)
+	{
+		tar_data->lasterrno = errno;
 		return -1;
+	}
 
 	/* Always fsync on close, so the padding gets fsynced */
 	if (tar_sync(f) < 0)
@@ -953,9 +1024,8 @@ tar_finish(void)
 		errno = 0;
 		if (write(tar_data->fd, zerobuf, sizeof(zerobuf)) != sizeof(zerobuf))
 		{
-			/* if write didn't set errno, assume problem is no disk space */
-			if (errno == 0)
-				errno = ENOSPC;
+			/* If write didn't set errno, assume problem is no disk space */
+			tar_data->lasterrno = errno ? errno : ENOSPC;
 			return false;
 		}
 	}
@@ -990,8 +1060,7 @@ tar_finish(void)
 					 * If write didn't set errno, assume problem is no disk
 					 * space.
 					 */
-					if (errno == 0)
-						errno = ENOSPC;
+					tar_data->lasterrno = errno ? errno : ENOSPC;
 					return false;
 				}
 			}
@@ -1011,20 +1080,28 @@ tar_finish(void)
 	if (tar_data->sync)
 	{
 		if (fsync(tar_data->fd) != 0)
+		{
+			tar_data->lasterrno = errno;
 			return false;
+		}
 	}
 
 	if (close(tar_data->fd) != 0)
+	{
+		tar_data->lasterrno = errno;
 		return false;
+	}
 
 	tar_data->fd = -1;
 
 	if (tar_data->sync)
 	{
-		if (fsync_fname(tar_data->tarfilename, false) != 0)
+		if (fsync_fname(tar_data->tarfilename, false) != 0 ||
+			fsync_parent_path(tar_data->tarfilename) != 0)
+		{
+			tar_data->lasterrno = errno;
 			return false;
-		if (fsync_parent_path(tar_data->tarfilename) != 0)
-			return false;
+		}
 	}
 
 	return true;
@@ -1072,4 +1149,5 @@ FreeWalTarMethod(void)
 		pg_free(tar_data->zlibOut);
 #endif
 	pg_free(tar_data);
+	tar_data = NULL;
 }
