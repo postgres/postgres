@@ -74,7 +74,12 @@ mark_file_as_archived(StreamCtl *stream, const char *fname)
 		return false;
 	}
 
-	stream->walmethod->close(f, CLOSE_NORMAL);
+	if (stream->walmethod->close(f, CLOSE_NORMAL) != 0)
+	{
+		pg_log_error("could not close archive status file \"%s\": %s",
+					 tmppath, stream->walmethod->getlasterror());
+		return false;
+	}
 
 	return true;
 }

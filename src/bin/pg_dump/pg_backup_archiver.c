@@ -269,6 +269,7 @@ CloseArchive(Archive *AHX)
 	AH->ClosePtr(AH);
 
 	/* Close the output */
+	errno = 0;					/* in case gzclose() doesn't set it */
 	if (AH->gzOut)
 		res = GZCLOSE(AH->OF);
 	else if (AH->OF != stdout)
@@ -1582,6 +1583,7 @@ RestoreOutput(ArchiveHandle *AH, OutputContext savedContext)
 {
 	int			res;
 
+	errno = 0;					/* in case gzclose() doesn't set it */
 	if (AH->gzOut)
 		res = GZCLOSE(AH->OF);
 	else

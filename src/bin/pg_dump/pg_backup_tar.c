@@ -438,8 +438,11 @@ tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 	 * Close the GZ file since we dup'd. This will flush the buffers.
 	 */
 	if (AH->compression != 0)
+	{
+		errno = 0;				/* in case gzclose() doesn't set it */
 		if (GZCLOSE(th->zFH) != 0)
-			fatal("could not close tar member");
+			fatal("could not close tar member: %m");
+	}
 
 	if (th->mode == 'w')
 		_tarAddFile(AH, th);	/* This will close the temp file */

@@ -236,7 +236,10 @@ dir_close(Walfile f, WalCloseMethod method)
 
 #ifdef HAVE_LIBZ
 	if (dir_data->compression > 0)
+	{
+		errno = 0;				/* in case gzclose() doesn't set it */
 		r = gzclose(df->gzfp);
+	}
 	else
 #endif
 		r = close(df->fd);
