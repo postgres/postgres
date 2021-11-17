@@ -556,7 +556,7 @@ StreamLogicalLog(void)
 
 			if (ret < 0)
 			{
-				pg_log_error("could not write %u bytes to log file \"%s\": %m",
+				pg_log_error("could not write %d bytes to log file \"%s\": %m",
 							 bytes_left, outfile);
 				goto error;
 			}
@@ -568,7 +568,7 @@ StreamLogicalLog(void)
 
 		if (write(outfd, "\n", 1) != 1)
 		{
-			pg_log_error("could not write %u bytes to log file \"%s\": %m",
+			pg_log_error("could not write %d bytes to log file \"%s\": %m",
 						 1, outfile);
 			goto error;
 		}
