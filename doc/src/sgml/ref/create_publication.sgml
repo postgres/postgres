@@ -214,6 +214,8 @@ CREATE PUBLICATION insert_only FOR TABLE mydata
   <simplelist type="inline">
    <member><xref linkend="sql-alterpublication"/></member>
    <member><xref linkend="sql-droppublication"/></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-altersubscription"/></member>
   </simplelist>
  </refsect1>
 </refentry>
