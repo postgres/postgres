@@ -256,6 +256,12 @@ SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
 ANALYZE ft1;
 ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_estimate 'true');
 -- ===================================================================
+-- test error case for create publication on foreign table
+-- ===================================================================
+CREATE PUBLICATION testpub_ftbl FOR TABLE ft1;  -- should fail
+ERROR:  cannot add relation "ft1" to publication
+DETAIL:  This operation is not supported for foreign tables.
+-- ===================================================================
 -- simple queries
 -- ===================================================================
 -- single table without alias

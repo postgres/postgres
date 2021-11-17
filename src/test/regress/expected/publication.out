@@ -258,6 +258,22 @@ DROP TABLE testpub_tbl4;
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
 ERROR:  cannot add relation "testpub_view" to publication
 DETAIL:  This operation is not supported for views.
+CREATE TEMPORARY TABLE testpub_temptbl(a int);
+-- fail - temporary table
+CREATE PUBLICATION testpub_fortemptbl FOR TABLE testpub_temptbl;
+ERROR:  cannot add relation "testpub_temptbl" to publication
+DETAIL:  This operation is not supported for temporary tables.
+DROP TABLE testpub_temptbl;
+CREATE UNLOGGED TABLE testpub_unloggedtbl(a int);
+-- fail - unlogged table
+CREATE PUBLICATION testpub_forunloggedtbl FOR TABLE testpub_unloggedtbl;
+ERROR:  cannot add relation "testpub_unloggedtbl" to publication
+DETAIL:  This operation is not supported for unlogged tables.
+DROP TABLE testpub_unloggedtbl;
+-- fail - system table
+CREATE PUBLICATION testpub_forsystemtbl FOR TABLE pg_publication;
+ERROR:  cannot add relation "pg_publication" to publication
+DETAIL:  This operation is not supported for system tables.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;
 RESET client_min_messages;

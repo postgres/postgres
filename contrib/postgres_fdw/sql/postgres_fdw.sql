@@ -248,6 +248,11 @@ ANALYZE ft1;
 ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_estimate 'true');
 
 -- ===================================================================
+-- test error case for create publication on foreign table
+-- ===================================================================
+CREATE PUBLICATION testpub_ftbl FOR TABLE ft1;  -- should fail
+
+-- ===================================================================
 -- simple queries
 -- ===================================================================
 -- single table without alias
