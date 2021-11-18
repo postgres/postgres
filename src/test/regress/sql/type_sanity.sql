@@ -465,3 +465,96 @@ FROM pg_range p1 JOIN pg_proc p ON p.oid = p1.rngsubdiff
 WHERE pronargs != 2
     OR proargtypes[0] != rngsubtype OR proargtypes[1] != rngsubtype
     OR prorettype != 'pg_catalog.float8'::regtype;
+
+-- Create a table that holds all the known in-core data types and leave it
+-- around so as pg_upgrade is able to test their binary compatibility.
+CREATE TABLE tab_core_types AS SELECT
+  '(11,12)'::point,
+  '(1,1),(2,2)'::line,
+  '((11,11),(12,12))'::lseg,
+  '((11,11),(13,13))'::box,
+  '((11,12),(13,13),(14,14))'::path AS openedpath,
+  '[(11,12),(13,13),(14,14)]'::path AS closedpath,
+  '((11,12),(13,13),(14,14))'::polygon,
+  '1,1,1'::circle,
+  'today'::date,
+  'now'::time,
+  'now'::timestamp,
+  'now'::timetz,
+  'now'::timestamptz,
+  '12 seconds'::interval,
+  '{"reason":"because"}'::json,
+  '{"when":"now"}'::jsonb,
+  '$.a[*] ? (@ > 2)'::jsonpath,
+  '127.0.0.1'::inet,
+  '127.0.0.0/8'::cidr,
+  '00:01:03:86:1c:ba'::macaddr8,
+  '00:01:03:86:1c:ba'::macaddr,
+  2::int2, 4::int4, 8::int8,
+  4::float4, '8'::float8, pi()::numeric,
+  'foo'::"char",
+  'c'::bpchar,
+  'abc'::varchar,
+  'name'::name,
+  'txt'::text,
+  true::bool,
+  E'\\xDEADBEEF'::bytea,
+  B'10001'::bit,
+  B'10001'::varbit AS varbit,
+  '12.34'::money,
+  'abc'::refcursor,
+  '1 2'::int2vector,
+  '1 2'::oidvector,
+  format('%s=UC/%s', USER, USER)::aclitem,
+  'a fat cat sat on a mat and ate a fat rat'::tsvector,
+  'fat & rat'::tsquery,
+  'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid,
+  'pg_class'::regclass,
+  'regtype'::regtype,
+  'pg_monitor'::regrole,
+  'pg_class'::regclass::oid,
+  '(1,1)'::tid, '2'::xid, '3'::cid,
+  '10:20:10,14,15'::txid_snapshot,
+  '16/B374D848'::pg_lsn,
+  1::information_schema.cardinal_number,
+  'l'::information_schema.character_data,
+  'n'::information_schema.sql_identifier,
+  'now'::information_schema.time_stamp,
+  'YES'::information_schema.yes_or_no,
+  'venus'::planets,
+  'i16'::insenum,
+  '(1,2)'::int4range,
+  '(3,4)'::int8range,
+  '(1,2)'::float8range,
+  '(3,4)'::numrange,
+  '(a,b)'::textrange,
+  '(12.34, 56.78)'::cashrange,
+  '(2020-01-02, 2021-02-03)'::daterange,
+  '(2020-01-02 03:04:05, 2021-02-03 06:07:08)'::tsrange,
+  '(2020-01-02 03:04:05, 2021-02-03 06:07:08)'::tstzrange,
+  arrayrange(ARRAY[1,2], ARRAY[2,1]);
+
+-- Sanity check on the previous table, checking that all core types are
+-- included in this table.
+SELECT oid, typname, typtype, typelem, typarray, typarray
+  FROM pg_type t
+  WHERE typtype NOT IN ('p', 'c') AND
+    -- reg* types cannot be pg_upgraded, so discard them.
+    oid != ALL(ARRAY['regproc', 'regprocedure', 'regoper',
+                     'regoperator', 'regconfig', 'regdictionary',
+                     'regnamespace']::regtype[]) AND
+    -- Discard types that do not accept input values as these cannot be
+    -- tested easily.
+    -- Note: XML might be disabled at compile-time.
+    oid != ALL(ARRAY['gtsvector', 'pg_node_tree',
+                     'pg_ndistinct', 'pg_dependencies', 'pg_mcv_list',
+                     'xml']::regtype[]) AND
+    -- Discard arrays.
+    NOT EXISTS (SELECT 1 FROM pg_type u WHERE u.typarray = t.oid)
+    -- Exclude everything from the table created above.  This checks
+    -- that no in-core types are missing in tab_core_types.
+    AND NOT EXISTS (SELECT 1
+                    FROM pg_attribute a
+                    WHERE a.atttypid=t.oid AND
+                          a.attnum > 0 AND
+                          a.attrelid='tab_core_types'::regclass);

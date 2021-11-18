@@ -183,6 +183,7 @@ sql_sizing|f
 sql_sizing_profiles|f
 stud_emp|f
 student|f
+tab_core_types|f
 tableam_parted_a_heap2|f
 tableam_parted_b_heap2|f
 tableam_parted_c_heap2|f
