@@ -18,6 +18,8 @@
 #include "postgres_fe.h"
 #endif
 
+#include <setjmp.h>
+
 #include "common/string.h"
 #include "lib/stringinfo.h"
 
@@ -47,15 +49,20 @@
  * to collect lots of long-lived data.  A less memory-hungry option
  * is to use pg_get_line_buf() or pg_get_line_append() in a loop,
  * then pstrdup() each line.
+ *
+ * prompt_ctx can optionally be provided to allow this function to be
+ * canceled via an existing SIGINT signal handler that will longjmp to the
+ * specified place only when *(prompt_ctx->enabled) is true.  If canceled,
+ * this function returns NULL, and prompt_ctx->canceled is set to true.
  */
 char *
-pg_get_line(FILE *stream)
+pg_get_line(FILE *stream, PromptInterruptContext *prompt_ctx)
 {
 	StringInfoData buf;
 
 	initStringInfo(&buf);
 
-	if (!pg_get_line_append(stream, &buf))
+	if (!pg_get_line_append(stream, &buf, prompt_ctx))
 	{
 		/* ensure that free() doesn't mess up errno */
 		int			save_errno = errno;
@@ -89,7 +96,7 @@ pg_get_line_buf(FILE *stream, StringInfo buf)
 {
 	/* We just need to drop any data from the previous call */
 	resetStringInfo(buf);
-	return pg_get_line_append(stream, buf);
+	return pg_get_line_append(stream, buf, NULL);
 }
 
 /*
@@ -107,15 +114,48 @@ pg_get_line_buf(FILE *stream, StringInfo buf)
  *
  * In the false-result case, the contents of *buf are logically unmodified,
  * though it's possible that the buffer has been resized.
+ *
+ * prompt_ctx can optionally be provided to allow this function to be
+ * canceled via an existing SIGINT signal handler that will longjmp to the
+ * specified place only when *(prompt_ctx->enabled) is true.  If canceled,
+ * this function returns false, and prompt_ctx->canceled is set to true.
  */
 bool
-pg_get_line_append(FILE *stream, StringInfo buf)
+pg_get_line_append(FILE *stream, StringInfo buf,
+				   PromptInterruptContext *prompt_ctx)
 {
 	int			orig_len = buf->len;
 
-	/* Read some data, appending it to whatever we already have */
-	while (fgets(buf->data + buf->len, buf->maxlen - buf->len, stream) != NULL)
+	if (prompt_ctx && sigsetjmp(*((sigjmp_buf *) prompt_ctx->jmpbuf), 1) != 0)
 	{
+		/* Got here with longjmp */
+		prompt_ctx->canceled = true;
+		/* Discard any data we collected before detecting error */
+		buf->len = orig_len;
+		buf->data[orig_len] = '\0';
+		return false;
+	}
+
+	/* Loop until newline or EOF/error */
+	for (;;)
+	{
+		char	   *res;
+
+		/* Enable longjmp while waiting for input */
+		if (prompt_ctx)
+			*(prompt_ctx->enabled) = true;
+
+		/* Read some data, appending it to whatever we already have */
+		res = fgets(buf->data + buf->len, buf->maxlen - buf->len, stream);
+
+		/* Disable longjmp again, then break if fgets failed */
+		if (prompt_ctx)
+			*(prompt_ctx->enabled) = false;
+
+		if (res == NULL)
+			break;
+
+		/* Got data, so update buf->len */
 		buf->len += strlen(buf->data + buf->len);
 
 		/* Done if we have collected a newline */

@@ -1497,7 +1497,7 @@ get_su_pwd(void)
 						 pwfilename);
 			exit(1);
 		}
-		pwd1 = pg_get_line(pwf);
+		pwd1 = pg_get_line(pwf, NULL);
 		if (!pwd1)
 		{
 			if (ferror(pwf))

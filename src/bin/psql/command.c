@@ -2025,9 +2025,10 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 	{
 		char	   *user = psql_scan_slash_option(scan_state,
 												  OT_SQLID, NULL, true);
-		char	   *pw1;
-		char	   *pw2;
+		char	   *pw1 = NULL;
+		char	   *pw2 = NULL;
 		PQExpBufferData buf;
+		PromptInterruptContext prompt_ctx;
 
 		if (user == NULL)
 		{
@@ -2042,13 +2043,24 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 			PQclear(res);
 		}
 
+		/* Set up to let SIGINT cancel simple_prompt_extended() */
+		prompt_ctx.jmpbuf = sigint_interrupt_jmp;
+		prompt_ctx.enabled = &sigint_interrupt_enabled;
+		prompt_ctx.canceled = false;
+
 		initPQExpBuffer(&buf);
 		printfPQExpBuffer(&buf, _("Enter new password for user \"%s\": "), user);
 
-		pw1 = simple_prompt(buf.data, false);
-		pw2 = simple_prompt("Enter it again: ", false);
+		pw1 = simple_prompt_extended(buf.data, false, &prompt_ctx);
+		if (!prompt_ctx.canceled)
+			pw2 = simple_prompt_extended("Enter it again: ", false, &prompt_ctx);
 
-		if (strcmp(pw1, pw2) != 0)
+		if (prompt_ctx.canceled)
+		{
+			/* fail silently */
+			success = false;
+		}
+		else if (strcmp(pw1, pw2) != 0)
 		{
 			pg_log_error("Passwords didn't match.");
 			success = false;
@@ -2081,8 +2093,10 @@ exec_command_password(PsqlScanState scan_state, bool active_branch)
 		}
 
 		free(user);
-		free(pw1);
-		free(pw2);
+		if (pw1)
+			free(pw1);
+		if (pw2)
+			free(pw2);
 		termPQExpBuffer(&buf);
 	}
 	else
