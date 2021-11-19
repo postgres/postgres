@@ -239,7 +239,8 @@ main(int argc, char *argv[])
 		/*
 		 * We can't be sure yet of the username that will be used, so don't
 		 * offer a potentially wrong one.  Typical uses of this option are
-		 * noninteractive anyway.
+		 * noninteractive anyway.  (Note: since we've not yet set up our
+		 * cancel handler, there's no need to use simple_prompt_extended.)
 		 */
 		password = simple_prompt("Password: ", false);
 	}

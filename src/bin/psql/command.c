@@ -2132,6 +2132,12 @@ exec_command_prompt(PsqlScanState scan_state, bool active_branch,
 		else
 		{
 			char	   *result;
+			PromptInterruptContext prompt_ctx;
+
+			/* Set up to let SIGINT cancel simple_prompt_extended() */
+			prompt_ctx.jmpbuf = sigint_interrupt_jmp;
+			prompt_ctx.enabled = &sigint_interrupt_enabled;
+			prompt_ctx.canceled = false;
 
 			if (arg2)
 			{
@@ -2143,7 +2149,7 @@ exec_command_prompt(PsqlScanState scan_state, bool active_branch,
 
 			if (!pset.inputfile)
 			{
-				result = simple_prompt(prompt_text, true);
+				result = simple_prompt_extended(prompt_text, true, &prompt_ctx);
 			}
 			else
 			{
@@ -2161,8 +2167,8 @@ exec_command_prompt(PsqlScanState scan_state, bool active_branch,
 				}
 			}
 
-			if (result &&
-				!SetVariable(pset.vars, opt, result))
+			if (prompt_ctx.canceled ||
+				(result && !SetVariable(pset.vars, opt, result)))
 				success = false;
 
 			if (result)
@@ -3058,24 +3064,36 @@ copy_previous_query(PQExpBuffer query_buf, PQExpBuffer previous_buf)
 
 /*
  * Ask the user for a password; 'username' is the username the
- * password is for, if one has been explicitly specified. Returns a
- * malloc'd string.
+ * password is for, if one has been explicitly specified.
+ * Returns a malloc'd string.
+ * If 'canceled' is provided, *canceled will be set to true if the prompt
+ * is canceled via SIGINT, and to false otherwise.
  */
 static char *
-prompt_for_password(const char *username)
+prompt_for_password(const char *username, bool *canceled)
 {
 	char	   *result;
+	PromptInterruptContext prompt_ctx;
+
+	/* Set up to let SIGINT cancel simple_prompt_extended() */
+	prompt_ctx.jmpbuf = sigint_interrupt_jmp;
+	prompt_ctx.enabled = &sigint_interrupt_enabled;
+	prompt_ctx.canceled = false;
 
 	if (username == NULL || username[0] == '\0')
-		result = simple_prompt("Password: ", false);
+		result = simple_prompt_extended("Password: ", false, &prompt_ctx);
 	else
 	{
 		char	   *prompt_text;
 
 		prompt_text = psprintf(_("Password for user %s: "), username);
-		result = simple_prompt(prompt_text, false);
+		result = simple_prompt_extended(prompt_text, false, &prompt_ctx);
 		free(prompt_text);
 	}
+
+	if (canceled)
+		*canceled = prompt_ctx.canceled;
+
 	return result;
 }
 
@@ -3331,6 +3349,8 @@ do_connect(enum trivalue reuse_previous_specification,
 	 */
 	if (pset.getPassword == TRI_YES && success)
 	{
+		bool		canceled = false;
+
 		/*
 		 * If a connstring or URI is provided, we don't know which username
 		 * will be used, since we haven't dug that out of the connstring.
@@ -3338,7 +3358,9 @@ do_connect(enum trivalue reuse_previous_specification,
 		 * not seem worth working harder, since this getPassword setting is
 		 * normally only used in noninteractive cases.
 		 */
-		password = prompt_for_password(has_connection_string ? NULL : user);
+		password = prompt_for_password(has_connection_string ? NULL : user,
+									   &canceled);
+		success = !canceled;
 	}
 
 	/*
@@ -3417,13 +3439,16 @@ do_connect(enum trivalue reuse_previous_specification,
 		 */
 		if (!password && PQconnectionNeedsPassword(n_conn) && pset.getPassword != TRI_NO)
 		{
+			bool		canceled = false;
+
 			/*
 			 * Prompt for password using the username we actually connected
 			 * with --- it might've come out of "dbname" rather than "user".
 			 */
-			password = prompt_for_password(PQuser(n_conn));
+			password = prompt_for_password(PQuser(n_conn), &canceled);
 			PQfinish(n_conn);
 			n_conn = NULL;
+			success = !canceled;
 			continue;
 		}
 

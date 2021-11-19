@@ -164,6 +164,12 @@ simple_prompt_extended(const char *prompt, bool echo,
 		fflush(termout);
 #endif
 	}
+	else if (prompt_ctx && prompt_ctx->canceled)
+	{
+		/* also echo \n if prompt was canceled */
+		fputs("\n", termout);
+		fflush(termout);
+	}
 
 	if (termin != stdin)
 	{
