@@ -1864,6 +1864,10 @@ ProcArrayInstallImportedXmin(TransactionId xmin,
  * PGPROC of the transaction from which we imported the snapshot, rather than
  * an XID.
  *
+ * Note that this function also copies vacuumFlags from the source `proc` in
+ * order to avoid the case where MyPgXact's xmin needs to be skipped for
+ * computing xid horizon.
+ *
  * Returns true if successful, false if source xact is no longer running.
  */
 bool
@@ -1876,8 +1880,10 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 	Assert(TransactionIdIsNormal(xmin));
 	Assert(proc != NULL);
 
-	/* Get lock so source xact can't end while we're doing this */
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	/*
+	 * Get an exclusive lock so that we can copy vacuumFlags from source proc.
+	 */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	pgxact = &allPgXact[proc->pgprocno];
 
@@ -1892,7 +1898,13 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 		TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedesOrEquals(xid, xmin))
 	{
+		/* Install xmin */
 		MyPgXact->xmin = TransactionXmin = xmin;
+
+		/* Flags being copied must be valid copy-able flags. */
+		Assert((pgxact->vacuumFlags & (~PROC_COPYABLE_FLAGS)) == 0);
+		MyPgXact->vacuumFlags = pgxact->vacuumFlags;
+
 		result = true;
 	}
 

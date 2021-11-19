@@ -3482,6 +3482,12 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	LVRelStats	vacrelstats;
 	ErrorContextCallback errcallback;
 
+	/*
+	 * A parallel vacuum worker must have only PROC_IN_VACUUM flag since we
+	 * don't support parallel vacuum for autovacuum as of now.
+	 */
+	Assert(MyPgXact->vacuumFlags == PROC_IN_VACUUM);
+
 	lvshared = (LVShared *) shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_SHARED,
 										   false);
 	elevel = lvshared->elevel;
