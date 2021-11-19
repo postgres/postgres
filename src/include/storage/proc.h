@@ -66,6 +66,13 @@ struct XidCache
 	(PROC_IN_VACUUM | PROC_IN_SAFE_IC | PROC_VACUUM_FOR_WRAPAROUND)
 
 /*
+ * Flags that are valid to copy from another proc, the parallel leader
+ * process in practice.  Currently, flags that are set during parallel
+ * vacuum and parallel index creation are allowed.
+ */
+#define		PROC_COPYABLE_FLAGS (PROC_IN_VACUUM | PROC_IN_SAFE_IC)
+
+/*
  * We allow a small number of "weak" relation locks (AccessShareLock,
  * RowShareLock, RowExclusiveLock) to be recorded in the PGPROC structure
  * rather than the main lock table.  This eases contention on the lock
