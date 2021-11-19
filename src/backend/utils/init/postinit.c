@@ -676,8 +676,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	EnablePortalManager();
 
 	/* Initialize status reporting */
-	if (!bootstrap)
-		pgstat_beinit();
+	pgstat_beinit();
 
 	/*
 	 * Load relcache entries for the shared system catalogs.  This must create
