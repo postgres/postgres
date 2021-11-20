@@ -71,3 +71,12 @@ create index spgist_point_idx2 on spgist_point_tbl using spgist(p) with (fillfac
 -- Modify fillfactor in existing index
 alter index spgist_point_idx set (fillfactor = 90);
 reindex index spgist_point_idx;
+
+-- Test index over a domain
+create domain spgist_text as varchar;
+create table spgist_domain_tbl (f1 spgist_text);
+create index spgist_domain_idx on spgist_domain_tbl using spgist(f1);
+insert into spgist_domain_tbl values('fee'), ('fi'), ('fo'), ('fum');
+explain (costs off)
+select * from spgist_domain_tbl where f1 = 'fo';
+select * from spgist_domain_tbl where f1 = 'fo';
