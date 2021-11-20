@@ -60,7 +60,7 @@ use PostgreSQL::Test::SimpleTee;
 
 # specify a recent enough version of Test::More to support the
 # done_testing() function
-use Test::More 0.87;
+use Test::More 0.98;
 
 our @EXPORT = qw(
   generate_ascii_string

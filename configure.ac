@@ -2386,7 +2386,7 @@ if test "$enable_tap_tests" = yes; then
     # but some distros omit them in a minimal installation.
     # The required minimum versions are all quite ancient now, but specify
     # them anyway for documentation's sake.
-    AX_PROG_PERL_MODULES([IPC::Run=0.79 Test::More=0.87 Time::HiRes=1.52], ,
+    AX_PROG_PERL_MODULES([IPC::Run=0.79 Test::More=0.98 Time::HiRes=1.52], ,
       [AC_MSG_ERROR([Additional Perl modules are required to run TAP tests])])
   fi
   # Now make sure we know where prove is

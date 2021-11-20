@@ -19472,7 +19472,7 @@ fi
 
 if test "x$PERL" != x; then
   ax_perl_modules_failed=0
-  for ax_perl_module in 'IPC::Run 0.79' 'Test::More 0.87' 'Time::HiRes 1.52' ; do
+  for ax_perl_module in 'IPC::Run 0.79' 'Test::More 0.98' 'Time::HiRes 1.52' ; do
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl module $ax_perl_module" >&5
 $as_echo_n "checking for perl module $ax_perl_module... " >&6; }
 
