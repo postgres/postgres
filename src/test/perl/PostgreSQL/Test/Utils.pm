@@ -58,8 +58,7 @@ use File::Temp ();
 use IPC::Run;
 use PostgreSQL::Test::SimpleTee;
 
-# specify a recent enough version of Test::More to support the
-# done_testing() function
+# We need a version of Test::More recent enough to support subtests
 use Test::More 0.98;
 
 our @EXPORT = qw(

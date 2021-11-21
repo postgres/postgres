@@ -110,9 +110,12 @@ perlbrew; see http://perlbrew.pl .  After installing that, do
     perlbrew --force install 5.8.3
     perlbrew use 5.8.3
     perlbrew install-cpanm
-    cpanm install Test::Simple@0.87_01
+    cpanm install Test::Simple@0.98
     cpanm install IPC::Run@0.79
     cpanm install ExtUtils::MakeMaker@6.50  # downgrade
+
+TIP: if Test::Simple's utf8 regression test hangs up, try setting a
+UTF8-compatible locale, e.g. "export LANG=en_US.utf8".
 
 Then re-run Postgres' configure to ensure the correct Perl is used when
 running tests.  To verify that the right Perl was found:
