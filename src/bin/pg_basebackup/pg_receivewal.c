@@ -684,10 +684,6 @@ main(int argc, char **argv)
 		close_destination_dir(dir, basedir);
 	}
 
-#ifndef WIN32
-	pqsignal(SIGINT, sigint_handler);
-#endif
-
 	/*
 	 * Obtain a connection before doing anything.
 	 */
@@ -695,6 +691,14 @@ main(int argc, char **argv)
 	if (!conn)
 		/* error message already written in GetConnection() */
 		exit(1);
+
+	/*
+	 * Trap signals.  (Don't do this until after the initial password prompt,
+	 * if one is needed, in GetConnection.)
+	 */
+#ifndef WIN32
+	pqsignal(SIGINT, sigint_handler);
+#endif
 
 	/*
 	 * Run IDENTIFY_SYSTEM to make sure we've successfully have established a
