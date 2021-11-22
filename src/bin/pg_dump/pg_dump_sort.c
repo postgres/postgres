@@ -35,6 +35,15 @@
  * restore state).  If you think to change this, see also the RestorePass
  * mechanism in pg_backup_archiver.c.
  *
+ * On the other hand, casts are intentionally sorted earlier than you might
+ * expect; logically they should come after functions, since they usually
+ * depend on those.  This works around the backend's habit of recording
+ * views that use casts as dependent on the cast's underlying function.
+ * We initially sort casts first, and then any functions used by casts
+ * will be hoisted above the casts, and in turn views that those functions
+ * depend on will be hoisted above the functions.  But views not used that
+ * way won't be hoisted.
+ *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
@@ -46,12 +55,12 @@ static const int dbObjectTypePriority[] =
 	4,							/* DO_EXTENSION */
 	5,							/* DO_TYPE */
 	5,							/* DO_SHELL_TYPE */
-	6,							/* DO_FUNC */
-	7,							/* DO_AGG */
-	8,							/* DO_OPERATOR */
-	8,							/* DO_ACCESS_METHOD */
-	9,							/* DO_OPCLASS */
-	9,							/* DO_OPFAMILY */
+	7,							/* DO_FUNC */
+	8,							/* DO_AGG */
+	9,							/* DO_OPERATOR */
+	9,							/* DO_ACCESS_METHOD */
+	10,							/* DO_OPCLASS */
+	10,							/* DO_OPFAMILY */
 	3,							/* DO_COLLATION */
 	11,							/* DO_CONVERSION */
 	18,							/* DO_TABLE */
@@ -64,7 +73,7 @@ static const int dbObjectTypePriority[] =
 	27,							/* DO_CONSTRAINT */
 	33,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
-	10,							/* DO_CAST */
+	6,							/* DO_CAST */
 	23,							/* DO_TABLE_DATA */
 	24,							/* DO_SEQUENCE_SET */
 	19,							/* DO_DUMMY_TYPE */
