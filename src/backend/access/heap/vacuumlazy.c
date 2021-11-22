@@ -886,18 +886,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
  *		for dead-tuple TIDs, invoke lazy_vacuum to vacuum indexes and vacuum
  *		heap relation during its own second pass over the heap.
  *
- *		If the table has at least two indexes, we execute both index vacuum
- *		and index cleanup with parallel workers unless parallel vacuum is
- *		disabled.  In a parallel vacuum, we enter parallel mode and then
- *		create both the parallel context and the DSM segment before starting
- *		heap scan so that we can record dead tuples to the DSM segment.  All
- *		parallel workers are launched at beginning of index vacuuming and
- *		index cleanup and they exit once done with all indexes.  At the end of
- *		this function we exit from parallel mode.  Index bulk-deletion results
- *		are stored in the DSM segment and we update index statistics for all
- *		the indexes after exiting from parallel mode since writes are not
- *		allowed during parallel mode.
- *
  *		If there are no indexes then we can reclaim line pointers on the fly;
  *		dead line pointers need only be retained until all index pointers that
  *		reference them have been killed.
