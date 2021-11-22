@@ -4,6 +4,9 @@
 # (The required minimum versions are all quite ancient now,
 # but specify them anyway for documentation's sake.)
 #
+use strict;
+use warnings;
+
 use IPC::Run 0.79;
 
 # Test::More and Time::HiRes are supposed to be part of core Perl,
