@@ -313,6 +313,12 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_APPEND_READY:
 			event_name = "AppendReady";
 			break;
+		case WAIT_EVENT_ARCHIVE_CLEANUP_COMMAND:
+			event_name = "ArchiveCleanupCommand";
+			break;
+		case WAIT_EVENT_ARCHIVE_COMMAND:
+			event_name = "ArchiveCommand";
+			break;
 		case WAIT_EVENT_BACKEND_TERMINATION:
 			event_name = "BackendTermination";
 			break;
@@ -427,6 +433,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_RECOVERY_CONFLICT_TABLESPACE:
 			event_name = "RecoveryConflictTablespace";
 			break;
+		case WAIT_EVENT_RECOVERY_END_COMMAND:
+			event_name = "RecoveryEndCommand";
+			break;
 		case WAIT_EVENT_RECOVERY_PAUSE:
 			event_name = "RecoveryPause";
 			break;
@@ -435,6 +444,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 			break;
 		case WAIT_EVENT_REPLICATION_SLOT_DROP:
 			event_name = "ReplicationSlotDrop";
+			break;
+		case WAIT_EVENT_RESTORE_COMMAND:
+			event_name = "RestoreCommand";
 			break;
 		case WAIT_EVENT_SAFE_SNAPSHOT:
 			event_name = "SafeSnapshot";

@@ -1569,7 +1569,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for subplan nodes of an <literal>Append</literal> plan
        node to be ready.</entry>
      </row>
-    <row>
+     <row>
+      <entry><literal>ArchiveCleanupCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-archive-cleanup-command"/> to
+       complete.</entry>
+     </row>
+     <row>
+      <entry><literal>ArchiveCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-archive-command"/> to
+       complete.</entry>
+     </row>
+     <row>
       <entry><literal>BackendTermination</literal></entry>
       <entry>Waiting for the termination of another backend.</entry>
      </row>
@@ -1748,6 +1758,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        tablespace.</entry>
      </row>
      <row>
+      <entry><literal>RecoveryEndCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-recovery-end-command"/> to
+       complete.</entry>
+     </row>
+     <row>
       <entry><literal>RecoveryPause</literal></entry>
       <entry>Waiting for recovery to be resumed.</entry>
      </row>
@@ -1760,6 +1775,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>ReplicationSlotDrop</literal></entry>
       <entry>Waiting for a replication slot to become inactive so it can be
        dropped.</entry>
+     </row>
+     <row>
+      <entry><literal>RestoreCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-restore-command"/> to
+       complete.</entry>
      </row>
      <row>
       <entry><literal>SafeSnapshot</literal></entry>

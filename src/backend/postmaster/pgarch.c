@@ -555,7 +555,10 @@ pgarch_archiveXlog(char *xlog)
 	snprintf(activitymsg, sizeof(activitymsg), "archiving %s", xlog);
 	set_ps_display(activitymsg);
 
+	pgstat_report_wait_start(WAIT_EVENT_ARCHIVE_COMMAND);
 	rc = system(xlogarchcmd);
+	pgstat_report_wait_end();
+
 	if (rc != 0)
 	{
 		/*

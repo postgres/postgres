@@ -24,6 +24,7 @@
 #include "access/xlogarchive.h"
 #include "common/archive.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/startup.h"
 #include "postmaster/pgarch.h"
 #include "replication/walsender.h"
@@ -168,7 +169,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	/*
 	 * Copy xlog from archival storage to XLOGDIR
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_RESTORE_COMMAND);
 	rc = system(xlogRestoreCmd);
+	pgstat_report_wait_end();
 
 	PostRestoreCommand();
 	pfree(xlogRestoreCmd);
@@ -284,7 +287,8 @@ not_available:
  * This is currently used for recovery_end_command and archive_cleanup_command.
  */
 void
-ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOnSignal)
+ExecuteRecoveryCommand(const char *command, const char *commandName,
+					   bool failOnSignal, uint32 wait_event_info)
 {
 	char		xlogRecoveryCmd[MAXPGPATH];
 	char		lastRestartPointFname[MAXPGPATH];
@@ -354,7 +358,10 @@ ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOn
 	/*
 	 * execute the constructed command
 	 */
+	pgstat_report_wait_start(wait_event_info);
 	rc = system(xlogRecoveryCmd);
+	pgstat_report_wait_end();
+
 	if (rc != 0)
 	{
 		/*
