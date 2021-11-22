@@ -88,6 +88,7 @@ static void heap_prune_record_redirect(PruneState *prstate,
 									   OffsetNumber offnum, OffsetNumber rdoffnum);
 static void heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum);
 static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
+static void page_verify_redirects(Page page);
 
 
 /*
@@ -959,6 +960,10 @@ heap_page_prune_execute(Buffer buffer,
 		 * indexes when an entire HOT chain becomes dead.  A heap-only tuple
 		 * can never become LP_DEAD; an LP_REDIRECT item or a regular heap
 		 * tuple can.
+		 *
+		 * This check may miss problems, e.g. the target of a redirect could
+		 * be marked as unused subsequently. The page_verify_redirects() check
+		 * below will catch such problems.
 		 */
 		tolp = PageGetItemId(page, tooff);
 		Assert(ItemIdHasStorage(tolp) && ItemIdIsNormal(tolp));
@@ -1028,6 +1033,58 @@ heap_page_prune_execute(Buffer buffer,
 	 * whether it has free pointers.
 	 */
 	PageRepairFragmentation(page);
+
+	/*
+	 * Now that the page has been modified, assert that redirect items still
+	 * point to valid targets.
+	 */
+	page_verify_redirects(page);
+}
+
+
+/*
+ * If built with assertions, verify that all LP_REDIRECT items point to a
+ * valid item.
+ *
+ * One way that bugs related to HOT pruning show is redirect items pointing to
+ * removed tuples. It's not trivial to reliably check that marking an item
+ * unused will not orphan a redirect item during heap_prune_chain() /
+ * heap_page_prune_execute(), so we additionally check the whole page after
+ * pruning. Without this check such bugs would typically only cause asserts
+ * later, potentially well after the corruption has been introduced.
+ *
+ * Also check comments in heap_page_prune_execute()'s redirection loop.
+ */
+static void
+page_verify_redirects(Page page)
+{
+#ifdef USE_ASSERT_CHECKING
+	OffsetNumber offnum;
+	OffsetNumber maxoff;
+
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (offnum = FirstOffsetNumber;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		ItemId		itemid = PageGetItemId(page, offnum);
+		OffsetNumber targoff;
+		ItemId		targitem;
+		HeapTupleHeader htup;
+
+		if (!ItemIdIsRedirected(itemid))
+			continue;
+
+		targoff = ItemIdGetRedirect(itemid);
+		targitem = PageGetItemId(page, targoff);
+
+		Assert(ItemIdIsUsed(targitem));
+		Assert(ItemIdIsNormal(targitem));
+		Assert(ItemIdHasStorage(targitem));
+		htup = (HeapTupleHeader) PageGetItem(page, targitem);
+		Assert(HeapTupleHeaderIsHeapOnly(htup));
+	}
+#endif
 }
 
 
