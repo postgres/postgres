@@ -1,6 +1,5 @@
 dnl aclocal.m4
 m4_include([config/ac_func_accept_argtypes.m4])
-m4_include([config/ax_prog_perl_modules.m4])
 m4_include([config/ax_pthread.m4])
 m4_include([config/c-compiler.m4])
 m4_include([config/c-library.m4])
