@@ -458,6 +458,7 @@ typedef struct
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
 	int			float8byval;	/* FLOAT8PASSBYVAL */
+	char		abi_extra[32];	/* see pg_config_manual.h */
 } Pg_magic_struct;
 
 /* The actual data block contents */
@@ -468,8 +469,12 @@ typedef struct
 	FUNC_MAX_ARGS, \
 	INDEX_MAX_KEYS, \
 	NAMEDATALEN, \
-	FLOAT8PASSBYVAL \
+	FLOAT8PASSBYVAL, \
+	FMGR_ABI_EXTRA, \
 }
+
+StaticAssertDecl(sizeof(FMGR_ABI_EXTRA) <= sizeof(((Pg_magic_struct*)0)->abi_extra),
+				 "FMGR_ABI_EXTRA too long");
 
 /*
  * Declare the module magic function.  It needs to be a function as the dlsym

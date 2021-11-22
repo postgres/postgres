@@ -43,6 +43,23 @@
 #define FUNC_MAX_ARGS		100
 
 /*
+ * When creating a product derived from PostgreSQL with changes that cause
+ * incompatibilities for loadable modules, it is recommended to change this
+ * string so that dfmgr.c can refuse to load incompatible modules with a clean
+ * error message.  Typical examples that cause incompatibilities are any
+ * changes to node tags or node structures.  (Note that dfmgr.c already
+ * detects common sources of incompatibilities due to major version
+ * differences and due to some changed compile-time constants.  This setting
+ * is for catching anything that cannot be detected in a straightforward way.)
+ *
+ * There is no prescribed format for the string.  The suggestion is to include
+ * product or company name, and optionally any internally-relevant ABI
+ * version.  Example: "ACME Postgres/1.2".  Note that the string will appear
+ * in a user-facing error message if an ABI mismatch is detected.
+ */
+#define FMGR_ABI_EXTRA		"PostgreSQL"
+
+/*
  * Maximum number of columns in an index.  There is little point in making
  * this anything but a multiple of 32, because the main cost is associated
  * with index tuple header size (see access/itup.h).
