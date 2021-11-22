@@ -1949,13 +1949,42 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer insertStmt = NULL;
+	char	   *attgenerated;
 	PGresult   *res;
-	int			nfields;
+	int			nfields,
+				i;
 	int			rows_per_statement = dopt->dump_inserts;
 	int			rows_this_statement = 0;
 
-	appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR "
-					  "SELECT * FROM ONLY %s",
+	/*
+	 * If we're going to emit INSERTs with column names, the most efficient
+	 * way to deal with generated columns is to exclude them entirely.  For
+	 * INSERTs without column names, we have to emit DEFAULT rather than the
+	 * actual column value --- but we can save a few cycles by fetching nulls
+	 * rather than the uninteresting-to-us value.
+	 */
+	attgenerated = (char *) pg_malloc(tbinfo->numatts * sizeof(char));
+	appendPQExpBufferStr(q, "DECLARE _pg_dump_cursor CURSOR FOR SELECT ");
+	nfields = 0;
+	for (i = 0; i < tbinfo->numatts; i++)
+	{
+		if (tbinfo->attisdropped[i])
+			continue;
+		if (tbinfo->attgenerated[i] && dopt->column_inserts)
+			continue;
+		if (nfields > 0)
+			appendPQExpBufferStr(q, ", ");
+		if (tbinfo->attgenerated[i])
+			appendPQExpBufferStr(q, "NULL");
+		else
+			appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+		attgenerated[nfields] = tbinfo->attgenerated[i];
+		nfields++;
+	}
+	/* Servers before 9.4 will complain about zero-column SELECT */
+	if (nfields == 0)
+		appendPQExpBufferStr(q, "NULL");
+	appendPQExpBuffer(q, " FROM ONLY %s",
 					  fmtQualifiedDumpable(tbinfo));
 	if (tdinfo->filtercond)
 		appendPQExpBuffer(q, " %s", tdinfo->filtercond);
@@ -1966,14 +1995,19 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	{
 		res = ExecuteSqlQuery(fout, "FETCH 100 FROM _pg_dump_cursor",
 							  PGRES_TUPLES_OK);
-		nfields = PQnfields(res);
+
+		/* cross-check field count, allowing for dummy NULL if any */
+		if (nfields != PQnfields(res) &&
+			!(nfields == 0 && PQnfields(res) == 1))
+			fatal("wrong number of fields retrieved from table \"%s\"",
+				  tbinfo->dobj.name);
 
 		/*
 		 * First time through, we build as much of the INSERT statement as
 		 * possible in "insertStmt", which we can then just print for each
-		 * statement. If the table happens to have zero columns then this will
-		 * be a complete statement, otherwise it will end in "VALUES" and be
-		 * ready to have the row's column values printed.
+		 * statement. If the table happens to have zero dumpable columns then
+		 * this will be a complete statement, otherwise it will end in
+		 * "VALUES" and be ready to have the row's column values printed.
 		 */
 		if (insertStmt == NULL)
 		{
@@ -2052,7 +2086,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 			{
 				if (field > 0)
 					archputs(", ", fout);
-				if (tbinfo->attgenerated[field])
+				if (attgenerated[field])
 				{
 					archputs("DEFAULT", fout);
 					continue;
@@ -2157,6 +2191,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	destroyPQExpBuffer(q);
 	if (insertStmt != NULL)
 		destroyPQExpBuffer(insertStmt);
+	free(attgenerated);
 
 	return 1;
 }
