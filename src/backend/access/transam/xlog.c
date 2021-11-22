@@ -1265,7 +1265,7 @@ XLogInsertRecord(XLogRecData *rdata,
 
 		if (!debug_reader)
 		{
-			appendStringInfoString(&buf, "error decoding record: out of memory");
+			appendStringInfoString(&buf, "error decoding record: out of memory while allocating a WAL reading processor");
 		}
 		else if (!DecodeXLogRecord(debug_reader, (XLogRecord *) recordBuf.data,
 								   &errormsg))

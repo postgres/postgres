@@ -202,7 +202,8 @@ StartupDecodingContext(List *output_plugin_options,
 	if (!ctx->reader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of memory"),
+				 errdetail("Failed while allocating a WAL reading processor.")));
 
 	ctx->reorder = ReorderBufferAllocate();
 	ctx->snapshot_builder =
