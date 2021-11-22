@@ -19259,96 +19259,7 @@ fi
 # Check for test tools
 #
 if test "$enable_tap_tests" = yes; then
-  # Check for necessary modules, unless user has specified the "prove" to use;
-  # in that case it's her responsibility to have a working configuration.
-  # (prove might be part of a different Perl installation than perl, eg on
-  # MSys, so the result of AX_PROG_PERL_MODULES could be irrelevant anyway.)
-  if test -z "$PROVE"; then
-    # Test::More and Time::HiRes are supposed to be part of core Perl,
-    # but some distros omit them in a minimal installation.
-
-
-
-
-
-
-
-
-
-
-# Make sure we have perl
-if test -z "$PERL"; then
-# Extract the first word of "perl", so it can be a program name with args.
-set dummy perl; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PERL+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$PERL"; then
-  ac_cv_prog_PERL="$PERL" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PERL="perl"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-PERL=$ac_cv_prog_PERL
-if test -n "$PERL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
-$as_echo "$PERL" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-
-if test "x$PERL" != x; then
-  ax_perl_modules_failed=0
-  for ax_perl_module in 'IPC::Run' 'Test::More 0.87' 'Time::HiRes' ; do
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl module $ax_perl_module" >&5
-$as_echo_n "checking for perl module $ax_perl_module... " >&6; }
-
-    # Would be nice to log result here, but can't rely on autoconf internals
-    $PERL -e "use $ax_perl_module; exit" > /dev/null 2>&1
-    if test $? -ne 0; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; };
-      ax_perl_modules_failed=1
-   else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
-$as_echo "ok" >&6; };
-    fi
-  done
-
-  # Run optional shell commands
-  if test "$ax_perl_modules_failed" = 0; then
-    :
-
-  else
-    :
-    as_fn_error $? "Additional Perl modules are required to run TAP tests" "$LINENO" 5
-  fi
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: could not find perl" >&5
-$as_echo "$as_me: WARNING: could not find perl" >&2;}
-fi
-  fi
-  # Now make sure we know where prove is
+  # Make sure we know where prove is.
   if test -z "$PROVE"; then
   for ac_prog in prove
 do
@@ -19405,6 +19316,23 @@ fi
 
   if test -z "$PROVE"; then
     as_fn_error $? "prove not found" "$LINENO" 5
+  fi
+  # Check for necessary Perl modules.  You might think we should use
+  # AX_PROG_PERL_MODULES here, but prove might be part of a different Perl
+  # installation than perl, eg on MSys, so we have to check using prove.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl modules required for TAP tests" >&5
+$as_echo_n "checking for Perl modules required for TAP tests... " >&6; }
+  modulestderr=`"$PROVE" "$srcdir/config/check_modules.pl" 2>&1 >/dev/null`
+  if test $? -eq 0; then
+    # log the module version details, but don't show them interactively
+    echo "$modulestderr" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    # on failure, though, show the results to the user
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $modulestderr" >&5
+$as_echo "$modulestderr" >&6; }
+    as_fn_error $? "Additional Perl modules are required to run TAP tests" "$LINENO" 5
   fi
 fi
 

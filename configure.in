@@ -2371,20 +2371,24 @@ PGAC_PATH_PROGS(DBTOEPUB, dbtoepub)
 # Check for test tools
 #
 if test "$enable_tap_tests" = yes; then
-  # Check for necessary modules, unless user has specified the "prove" to use;
-  # in that case it's her responsibility to have a working configuration.
-  # (prove might be part of a different Perl installation than perl, eg on
-  # MSys, so the result of AX_PROG_PERL_MODULES could be irrelevant anyway.)
-  if test -z "$PROVE"; then
-    # Test::More and Time::HiRes are supposed to be part of core Perl,
-    # but some distros omit them in a minimal installation.
-    AX_PROG_PERL_MODULES([IPC::Run Test::More=0.87 Time::HiRes], ,
-      [AC_MSG_ERROR([Additional Perl modules are required to run TAP tests])])
-  fi
-  # Now make sure we know where prove is
+  # Make sure we know where prove is.
   PGAC_PATH_PROGS(PROVE, prove)
   if test -z "$PROVE"; then
     AC_MSG_ERROR([prove not found])
+  fi
+  # Check for necessary Perl modules.  You might think we should use
+  # AX_PROG_PERL_MODULES here, but prove might be part of a different Perl
+  # installation than perl, eg on MSys, so we have to check using prove.
+  AC_MSG_CHECKING(for Perl modules required for TAP tests)
+  [modulestderr=`"$PROVE" "$srcdir/config/check_modules.pl" 2>&1 >/dev/null`]
+  if test $? -eq 0; then
+    # log the module version details, but don't show them interactively
+    echo "$modulestderr" >&AS_MESSAGE_LOG_FD
+    AC_MSG_RESULT(yes)
+  else
+    # on failure, though, show the results to the user
+    AC_MSG_RESULT([$modulestderr])
+    AC_MSG_ERROR([Additional Perl modules are required to run TAP tests])
   fi
 fi
 
