@@ -17919,9 +17919,9 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * constraint would change.  And there's a definitional problem: what
 		 * should happen to the tuples that are being inserted that belong to
 		 * the partition being detached?  Putting them on the partition being
-		 * detached would be wrong, since they'd become "lost" after the but
-		 * we cannot put them in the default partition either until we alter
-		 * its partition constraint.
+		 * detached would be wrong, since they'd become "lost" after the
+		 * detaching completes but we cannot put them in the default partition
+		 * either until we alter its partition constraint.
 		 *
 		 * I think we could solve this problem if we effected the constraint
 		 * change before committing the first transaction.  But the lock would
