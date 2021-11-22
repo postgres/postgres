@@ -206,6 +206,13 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	inserts => {
+		dump_cmd => [
+			'pg_dump',                     '--no-sync',
+			"--file=$tempdir/inserts.sql", '-a',
+			'--inserts',                   'postgres',
+		],
+	},
 	pg_dumpall_globals => {
 		dump_cmd => [
 			'pg_dumpall', '-v', "--file=$tempdir/pg_dumpall_globals.sql",
@@ -584,6 +591,7 @@ my %tests = (
 			%full_runs,
 			column_inserts         => 1,
 			data_only              => 1,
+			inserts                => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -911,6 +919,7 @@ my %tests = (
 			%full_runs,
 			column_inserts         => 1,
 			data_only              => 1,
+			inserts                => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -931,6 +940,7 @@ my %tests = (
 			%full_runs,
 			column_inserts         => 1,
 			data_only              => 1,
+			inserts                => 1,
 			section_data           => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1065,6 +1075,7 @@ my %tests = (
 			%full_runs,
 			column_inserts         => 1,
 			data_only              => 1,
+			inserts                => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
 		},
@@ -1264,6 +1275,27 @@ my %tests = (
 		},
 	},
 
+	'COPY test_third_table' => {
+		create_order => 7,
+		create_sql =>
+		  'INSERT INTO dump_test.test_third_table VALUES (123, DEFAULT, 456);',
+		regexp => qr/^
+			\QCOPY dump_test.test_third_table (f1, "F3") FROM stdin;\E
+			\n123\t456\n\\\.\n
+			/xm,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			data_only    => 1,
+			section_data => 1,
+		},
+		unlike => {
+			binary_upgrade           => 1,
+			exclude_dump_test_schema => 1,
+			schema_only              => 1,
+		},
+	},
+
 	'COPY test_fourth_table' => {
 		create_order => 7,
 		create_sql =>
@@ -1355,10 +1387,22 @@ my %tests = (
 		like => { column_inserts => 1, },
 	},
 
+	'INSERT INTO test_third_table (colnames)' => {
+		regexp =>
+		  qr/^INSERT INTO dump_test\.test_third_table \(f1, "F3"\) VALUES \(123, 456\);\n/m,
+		like => { column_inserts => 1, },
+	},
+
+	'INSERT INTO test_third_table' => {
+		regexp =>
+		  qr/^INSERT INTO dump_test\.test_third_table VALUES \(123, DEFAULT, 456, DEFAULT\);\n/m,
+		like => { inserts => 1, },
+	},
+
 	'INSERT INTO test_fourth_table' => {
 		regexp =>
 		  qr/^(?:INSERT INTO dump_test\.test_fourth_table DEFAULT VALUES;\n){2}/m,
-		like => { column_inserts => 1, rows_per_insert => 1, },
+		like => { column_inserts => 1, inserts => 1, rows_per_insert => 1, },
 	},
 
 	'INSERT INTO test_fifth_table' => {
@@ -2483,6 +2527,28 @@ my %tests = (
 		like   => {}
 	},
 
+	'CREATE TABLE test_third_table_generated_cols' => {
+		create_order => 6,
+		create_sql   => 'CREATE TABLE dump_test.test_third_table (
+						f1 int, junk int,
+						g1 int generated always as (f1 * 2) stored,
+						"F3" int,
+						g2 int generated always as ("F3" * 3) stored
+					);
+					ALTER TABLE dump_test.test_third_table DROP COLUMN junk;',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_third_table (\E\n
+			\s+\Qf1 integer,\E\n
+			\s+\Qg1 integer GENERATED ALWAYS AS ((f1 * 2)) STORED,\E\n
+			\s+\Q"F3" integer,\E\n
+			\s+\Qg2 integer GENERATED ALWAYS AS (("F3" * 3)) STORED\E\n
+			\);\n
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { binary_upgrade => 1, exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE TABLE test_fourth_table_zero_col' => {
 		create_order => 6,
 		create_sql   => 'CREATE TABLE dump_test.test_fourth_table (
@@ -3152,6 +3218,7 @@ my %tests = (
 			%full_runs,
 			column_inserts         => 1,
 			data_only              => 1,
+			inserts                => 1,
 			section_pre_data       => 1,
 			test_schema_plus_blobs => 1,
 			binary_upgrade         => 1,
