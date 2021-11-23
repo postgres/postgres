@@ -371,19 +371,21 @@ allow_star_schema_join(PlannerInfo *root,
  *		Returns true the hashing is possible, otherwise return false.
  *
  * Additionally we also collect the outer exprs and the hash operators for
- * each parameter to innerrel.  These set in 'param_exprs' and 'operators'
- * when we return true.
+ * each parameter to innerrel.  These set in 'param_exprs', 'operators' and
+ * 'binary_mode' when we return true.
  */
 static bool
 paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 							RelOptInfo *outerrel, RelOptInfo *innerrel,
-							List **param_exprs, List **operators)
+							List **param_exprs, List **operators,
+							bool *binary_mode)
 
 {
 	ListCell   *lc;
 
 	*param_exprs = NIL;
 	*operators = NIL;
+	*binary_mode = false;
 
 	if (param_info != NULL)
 	{
@@ -431,6 +433,20 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 
 			*operators = lappend_oid(*operators, hasheqoperator);
 			*param_exprs = lappend(*param_exprs, expr);
+
+			/*
+			 * When the join operator is not hashable then it's possible that
+			 * the operator will be able to distinguish something that the
+			 * hash equality operator could not. For example with floating
+			 * point types -0.0 and +0.0 are classed as equal by the hash
+			 * function and equality function, but some other operator may be
+			 * able to tell those values apart.  This means that we must put
+			 * memoize into binary comparison mode so that it does bit-by-bit
+			 * comparisons rather than a "logical" comparison as it would
+			 * using the hash equality operator.
+			 */
+			if (!OidIsValid(rinfo->hashjoinoperator))
+				*binary_mode = true;
 		}
 	}
 
@@ -461,6 +477,17 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 
 		*operators = lappend_oid(*operators, typentry->eq_opr);
 		*param_exprs = lappend(*param_exprs, expr);
+
+		/*
+		 * We must go into binary mode as we don't have too much of an idea of
+		 * how these lateral Vars are being used.  See comment above when we
+		 * set *binary_mode for the non-lateral Var case. This could be
+		 * relaxed a bit if we had the RestrictInfos and knew the operators
+		 * being used, however for cases like Vars that are arguments to
+		 * functions we must operate in binary mode as we don't have
+		 * visibility into what the function is doing with the Vars.
+		 */
+		*binary_mode = true;
 	}
 
 	/* We're okay to use memoize */
@@ -481,6 +508,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	List	   *param_exprs;
 	List	   *hash_operators;
 	ListCell   *lc;
+	bool		binary_mode;
 
 	/* Obviously not if it's disabled */
 	if (!enable_memoize)
@@ -572,7 +600,8 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 									outerrel,
 									innerrel,
 									&param_exprs,
-									&hash_operators))
+									&hash_operators,
+									&binary_mode))
 	{
 		return (Path *) create_memoize_path(root,
 											innerrel,
@@ -580,6 +609,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 											param_exprs,
 											hash_operators,
 											extra->inner_unique,
+											binary_mode,
 											outer_path->parent->rows);
 	}
 

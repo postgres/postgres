@@ -971,6 +971,7 @@ _copyMemoize(const Memoize *from)
 	COPY_POINTER_FIELD(collations, sizeof(Oid) * from->numKeys);
 	COPY_NODE_FIELD(param_exprs);
 	COPY_SCALAR_FIELD(singlerow);
+	COPY_SCALAR_FIELD(binary_mode);
 	COPY_SCALAR_FIELD(est_entries);
 
 	return newnode;

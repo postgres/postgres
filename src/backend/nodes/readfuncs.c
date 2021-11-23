@@ -2230,6 +2230,7 @@ _readMemoize(void)
 	READ_OID_ARRAY(collations, local_node->numKeys);
 	READ_NODE_FIELD(param_exprs);
 	READ_BOOL_FIELD(singlerow);
+	READ_BOOL_FIELD(binary_mode);
 	READ_UINT_FIELD(est_entries);
 
 	READ_DONE();
