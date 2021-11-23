@@ -1139,13 +1139,14 @@ where o.ten = 1;
                Filter: (ten = 1)
          ->  Memoize
                Cache Key: o.four
+               Cache Mode: binary
                ->  CTE Scan on x
                      CTE x
                        ->  Recursive Union
                              ->  Result
                              ->  WorkTable Scan on x x_1
                                    Filter: (a < 10)
-(12 rows)
+(13 rows)
 
 select sum(o.four), sum(ss.a) from
   onek o cross join lateral (

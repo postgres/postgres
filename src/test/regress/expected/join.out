@@ -3686,9 +3686,10 @@ where t1.unique1 = 1;
                      Index Cond: (hundred = t1.hundred)
          ->  Memoize
                Cache Key: t2.thousand
+               Cache Mode: logical
                ->  Index Scan using tenk1_unique2 on tenk1 t3
                      Index Cond: (unique2 = t2.thousand)
-(13 rows)
+(14 rows)
 
 explain (costs off)
 select * from tenk1 t1 left join
@@ -3708,9 +3709,10 @@ where t1.unique1 = 1;
                      Index Cond: (hundred = t1.hundred)
          ->  Memoize
                Cache Key: t2.thousand
+               Cache Mode: logical
                ->  Index Scan using tenk1_unique2 on tenk1 t3
                      Index Cond: (unique2 = t2.thousand)
-(13 rows)
+(14 rows)
 
 explain (costs off)
 select count(*) from
@@ -4238,11 +4240,12 @@ where t1.f1 = ss.f1;
    ->  Memoize
          Output: (i8.q1), t2.f1
          Cache Key: i8.q1
+         Cache Mode: binary
          ->  Limit
                Output: (i8.q1), t2.f1
                ->  Seq Scan on public.text_tbl t2
                      Output: i8.q1, t2.f1
-(19 rows)
+(20 rows)
 
 select * from
   text_tbl t1
@@ -4282,6 +4285,7 @@ where t1.f1 = ss2.f1;
          ->  Memoize
                Output: (i8.q1), t2.f1
                Cache Key: i8.q1
+               Cache Mode: binary
                ->  Limit
                      Output: (i8.q1), t2.f1
                      ->  Seq Scan on public.text_tbl t2
@@ -4289,11 +4293,12 @@ where t1.f1 = ss2.f1;
    ->  Memoize
          Output: ((i8.q1)), (t2.f1)
          Cache Key: (i8.q1), t2.f1
+         Cache Mode: binary
          ->  Limit
                Output: ((i8.q1)), (t2.f1)
                ->  Seq Scan on public.text_tbl t3
                      Output: (i8.q1), t2.f1
-(28 rows)
+(30 rows)
 
 select * from
   text_tbl t1
@@ -4342,6 +4347,7 @@ where tt1.f1 = ss1.c0;
    ->  Memoize
          Output: ss1.c0
          Cache Key: tt4.f1
+         Cache Mode: binary
          ->  Subquery Scan on ss1
                Output: ss1.c0
                Filter: (ss1.c0 = 'foo'::text)
@@ -4349,7 +4355,7 @@ where tt1.f1 = ss1.c0;
                      Output: (tt4.f1)
                      ->  Seq Scan on public.text_tbl tt5
                            Output: tt4.f1
-(32 rows)
+(33 rows)
 
 select 1 from
   text_tbl as tt1
@@ -5058,8 +5064,9 @@ explain (costs off)
          ->  Seq Scan on tenk1 a
          ->  Memoize
                Cache Key: a.two
+               Cache Mode: binary
                ->  Function Scan on generate_series g
-(6 rows)
+(7 rows)
 
 explain (costs off)
   select count(*) from tenk1 a cross join lateral generate_series(1,two) g;
@@ -5070,8 +5077,9 @@ explain (costs off)
          ->  Seq Scan on tenk1 a
          ->  Memoize
                Cache Key: a.two
+               Cache Mode: binary
                ->  Function Scan on generate_series g
-(6 rows)
+(7 rows)
 
 -- don't need the explicit LATERAL keyword for functions
 explain (costs off)
@@ -5083,8 +5091,9 @@ explain (costs off)
          ->  Seq Scan on tenk1 a
          ->  Memoize
                Cache Key: a.two
+               Cache Mode: binary
                ->  Function Scan on generate_series g
-(6 rows)
+(7 rows)
 
 -- lateral with UNION ALL subselect
 explain (costs off)
@@ -5145,9 +5154,10 @@ explain (costs off)
                ->  Values Scan on "*VALUES*"
          ->  Memoize
                Cache Key: "*VALUES*".column1
+               Cache Mode: logical
                ->  Index Only Scan using tenk1_unique2 on tenk1 b
                      Index Cond: (unique2 = "*VALUES*".column1)
-(9 rows)
+(10 rows)
 
 select count(*) from tenk1 a,
   tenk1 b join lateral (values(a.unique1),(-1)) ss(x) on b.unique2 = ss.x;
