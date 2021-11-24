@@ -505,4 +505,29 @@ sub new
 	return $self;
 }
 
+package VC2022Project;
+
+#
+# Package that encapsulates a Visual C++ 2022 project file
+#
+
+use strict;
+use warnings;
+use base qw(MSBuildProject);
+
+no warnings qw(redefine);    ## no critic
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{vcver}           = '17.00';
+	$self->{PlatformToolset} = 'v143';
+	$self->{ToolsVersion}    = '17.0';
+
+	return $self;
+}
+
 1;
