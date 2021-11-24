@@ -92,7 +92,6 @@
 #include "utils/datetime.h"
 #include "utils/float.h"
 #include "utils/formatting.h"
-#include "utils/int8.h"
 #include "utils/memutils.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
