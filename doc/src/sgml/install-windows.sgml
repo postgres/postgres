@@ -19,9 +19,9 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install <productname>Visual Studio 2019</productname>
+  Microsoft tools is to install <productname>Visual Studio 2022</productname>
   and use the included compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2013 to 2019</productname>.
+  <productname>Microsoft Visual C++ 2013 to 2022</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -69,7 +69,7 @@
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
   ways are to use the compilers from
-  <productname>Visual Studio 2019</productname> or those in the
+  <productname>Visual Studio 2022</productname> or those in the
   <productname>Windows SDK 10</productname>, which are both free downloads
   from Microsoft.
  </para>
@@ -78,7 +78,7 @@
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL builds are possible with
   <productname>Visual Studio 2013</productname> to
-  <productname>Visual Studio 2019</productname>,
+  <productname>Visual Studio 2022</productname>,
   as well as standalone Windows SDK releases 8.1a to 10.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 8.1a to 10 or
@@ -86,7 +86,7 @@
   is supported down to <productname>Windows 7</productname> and
   <productname>Windows Server 2008 R2 SP1</productname> when building with
   <productname>Visual Studio 2013</productname> to
-  <productname>Visual Studio 2019</productname>.
+  <productname>Visual Studio 2022</productname>.
    <!--
        For 2013 requirements:
        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
@@ -96,6 +96,8 @@
        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2017-system-requirements-vs
        For 2019 requirements:
        https://docs.microsoft.com/en-us/visualstudio/releases/2019/system-requirements
+       For 2022 requirements:
+       https://docs.microsoft.com/en-us/visualstudio/releases/2022/system-requirements
    -->
  </para>
 

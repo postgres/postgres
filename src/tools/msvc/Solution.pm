@@ -1018,6 +1018,34 @@ sub new
 	return $self;
 }
 
+package VS2022Solution;
+
+#
+# Package that encapsulates a Visual Studio 2022 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+no warnings qw(redefine);    ## no critic
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{solutionFileVersion}        = '12.00';
+	$self->{vcver}                      = '17.00';
+	$self->{visualStudioName}           = 'Visual Studio 2022';
+	$self->{VisualStudioVersion}        = '17.0.31903.59';
+	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
+
+	return $self;
+}
+
 sub GetAdditionalHeaders
 {
 	my ($self, $f) = @_;
