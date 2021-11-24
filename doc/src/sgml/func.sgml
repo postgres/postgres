@@ -13678,24 +13678,6 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         see its command reference page for more information.
        </para>
 
-       <important>
-        <para>
-         To avoid blocking concurrent transactions that obtain numbers from
-         the same sequence, a <function>nextval</function> operation is never
-         rolled back; that is, once a value has been fetched it is considered
-         used and will not be returned again.  This is true even if the
-         surrounding transaction later aborts, or if the calling query ends
-         up not using the value.  For example an <command>INSERT</command> with
-         an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
-         tuple, including doing any required <function>nextval</function>
-         calls, before detecting any conflict that would cause it to follow
-         the <literal>ON CONFLICT</literal> rule instead.  Such cases will leave
-         unused <quote>holes</quote> in the sequence of assigned values.
-         Thus, <productname>PostgreSQL</productname> sequence objects <emphasis>cannot
-         be used to obtain <quote>gapless</quote> sequences</emphasis>.
-        </para>
-       </important>
-
        <para>
         This function requires <literal>USAGE</literal>
         or <literal>UPDATE</literal> privilege on the sequence.
@@ -13772,13 +13754,6 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</func
         The result returned by <function>setval</function> is just the value of its
         second argument.
        </para>
-       <important>
-        <para>
-         Because sequences are non-transactional, changes made by
-         <function>setval</function> are not undone if the transaction rolls
-         back.
-        </para>
-       </important>
 
        <para>
         This function requires <literal>UPDATE</literal> privilege on the
@@ -13789,6 +13764,42 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</func
     </variablelist>
   </para>
 
+  <caution>
+   <para>
+    To avoid blocking concurrent transactions that obtain numbers from
+    the same sequence, the value obtained by <function>nextval</function>
+    is not reclaimed for re-use if the calling transaction later aborts.
+    This means that transaction aborts or database crashes can result in
+    gaps in the sequence of assigned values.  That can happen without a
+    transaction abort, too.  For example an <command>INSERT</command> with
+    an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
+    tuple, including doing any required <function>nextval</function>
+    calls, before detecting any conflict that would cause it to follow
+    the <literal>ON CONFLICT</literal> rule instead.
+    Thus, <productname>PostgreSQL</productname> sequence
+    objects <emphasis>cannot be used to obtain <quote>gapless</quote>
+    sequences</emphasis>.
+   </para>
+
+   <para>
+    Likewise, sequence state changes made by <function>setval</function>
+    are immediately visible to other transactions, and are not undone if
+    the calling transaction rolls back.
+   </para>
+
+   <para>
+    If the database cluster crashes before committing a transaction
+    containing a <function>nextval</function>
+    or <function>setval</function> call, the sequence state change might
+    not have made its way to persistent storage, so that it is uncertain
+    whether the sequence will have its original or updated state after the
+    cluster restarts.  This is harmless for usage of the sequence within
+    the database, since other effects of uncommitted transactions will not
+    be visible either.  However, if you wish to use a sequence value for
+    persistent outside-the-database purposes, make sure that the
+    <function>nextval</function> call has been committed before doing so.
+   </para>
+  </caution>
  </sect1>
 
 
