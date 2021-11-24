@@ -455,8 +455,8 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	 */
 	if (t_infomask & HEAP_HASNULL)
 	{
-		int			bits_str_len;
-		int			bits_len;
+		size_t		bits_str_len;
+		size_t		bits_len;
 
 		bits_len = BITMAPLEN(t_infomask2 & HEAP_NATTS_MASK) * BITS_PER_BYTE;
 		if (!t_bits_str)
@@ -468,7 +468,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (bits_len != bits_str_len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("unexpected length of t_bits string: %u, expected %u",
+					 errmsg("unexpected length of t_bits string: %zu, expected %zu",
 							bits_str_len, bits_len)));
 
 		/* do the conversion */
