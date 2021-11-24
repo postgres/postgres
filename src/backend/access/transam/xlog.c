@@ -924,7 +924,8 @@ static int	XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 						 int reqLen, XLogRecPtr targetRecPtr, char *readBuf);
 static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 										bool fetching_ckpt, XLogRecPtr tliRecPtr,
-										TimeLineID replayTLI);
+										TimeLineID replayTLI,
+										XLogRecPtr replayLSN);
 static void XLogShutdownWalRcv(void);
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
@@ -946,7 +947,8 @@ static bool PerformRecoveryXLogAction(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
 										XLogRecPtr RecPtr, int whichChkpt, bool report,
 										TimeLineID replayTLI);
-static bool rescanLatestTimeLine(TimeLineID replayTLI);
+static bool rescanLatestTimeLine(TimeLineID replayTLI,
+								 XLogRecPtr replayLSN);
 static void InitControlFile(uint64 sysidentifier);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
@@ -4620,7 +4622,7 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
  * one and returns 'true'.
  */
 static bool
-rescanLatestTimeLine(TimeLineID replayTLI)
+rescanLatestTimeLine(TimeLineID replayTLI, XLogRecPtr replayLSN)
 {
 	List	   *newExpectedTLEs;
 	bool		found;
@@ -4671,13 +4673,13 @@ rescanLatestTimeLine(TimeLineID replayTLI)
 	 * next timeline was forked off from it *after* the current recovery
 	 * location.
 	 */
-	if (currentTle->end < EndRecPtr)
+	if (currentTle->end < replayLSN)
 	{
 		ereport(LOG,
 				(errmsg("new timeline %u forked off current database system timeline %u before current recovery point %X/%X",
 						newtarget,
 						replayTLI,
-						LSN_FORMAT_ARGS(EndRecPtr))));
+						LSN_FORMAT_ARGS(replayLSN))));
 		return false;
 	}
 
@@ -12473,7 +12475,8 @@ retry:
 										 private->randAccess,
 										 private->fetching_ckpt,
 										 targetRecPtr,
-										 private->replayTLI))
+										 private->replayTLI,
+										 xlogreader->EndRecPtr))
 		{
 			if (readFile >= 0)
 				close(readFile);
@@ -12626,6 +12629,10 @@ next_record_is_invalid:
  * 'tliRecPtr' is the position of the WAL record we're interested in. It is
  * used to decide which timeline to stream the requested WAL from.
  *
+ * 'replayLSN' is the current replay LSN, so that if we scan for new
+ * timelines, we can reject a switch to a timeline that branched off before
+ * this point.
+ *
  * If the record is not immediately available, the function returns false
  * if we're not in standby mode. In standby mode, waits for it to become
  * available.
@@ -12638,7 +12645,7 @@ next_record_is_invalid:
 static bool
 WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 							bool fetching_ckpt, XLogRecPtr tliRecPtr,
-							TimeLineID replayTLI)
+							TimeLineID replayTLI, XLogRecPtr replayLSN)
 {
 	static TimestampTz last_fail_time = 0;
 	TimestampTz now;
@@ -12761,7 +12768,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 */
 					if (recoveryTargetTimeLineGoal == RECOVERY_TARGET_TIMELINE_LATEST)
 					{
-						if (rescanLatestTimeLine(replayTLI))
+						if (rescanLatestTimeLine(replayTLI, replayLSN))
 						{
 							currentSource = XLOG_FROM_ARCHIVE;
 							break;
@@ -12888,7 +12895,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						 */
 						if (recoveryTargetTimeLineGoal ==
 							RECOVERY_TARGET_TIMELINE_LATEST)
-							rescanLatestTimeLine(replayTLI);
+							rescanLatestTimeLine(replayTLI, replayLSN);
 
 						startWalReceiver = true;
 					}
