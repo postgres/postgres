@@ -557,7 +557,7 @@
     A simple <command>INSERT ... VALUES</command> command creates a
     trivial plan tree consisting of a single <literal>Result</literal>
     node, which computes just one result row, feeding that up
-    to<literal>ModifyTable</literal> to perform the insertion.
+    to <literal>ModifyTable</literal> to perform the insertion.
    </para>
 
   </sect1>
