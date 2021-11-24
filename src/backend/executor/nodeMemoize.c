@@ -368,37 +368,6 @@ remove_cache_entry(MemoizeState *mstate, MemoizeEntry *entry)
 }
 
 /*
- * cache_purge_all
- *		Remove all items from the cache
- */
-static void
-cache_purge_all(MemoizeState *mstate)
-{
-	uint64		evictions = mstate->hashtable->members;
-	PlanState *pstate = (PlanState *) mstate;
-
-	/*
-	 * Likely the most efficient way to remove all items is to just reset the
-	 * memory context for the cache and then rebuild a fresh hash table.  This
-	 * saves having to remove each item one by one and pfree each cached tuple
-	 */
-	MemoryContextReset(mstate->tableContext);
-
-	/* Make the hash table the same size as the original size */
-	build_hash_table(mstate, ((Memoize *) pstate->plan)->est_entries);
-
-	/* reset the LRU list */
-	dlist_init(&mstate->lru_list);
-	mstate->last_tuple = NULL;
-	mstate->entry = NULL;
-
-	mstate->mem_used = 0;
-
-	/* XXX should we add something new to track these purges? */
-	mstate->stats.cache_evictions += evictions; /* Update Stats */
-}
-
-/*
  * cache_reduce_memory
  *		Evict older and less recently used items from the cache in order to
  *		reduce the memory consumption back to something below the
@@ -1010,7 +979,6 @@ ExecInitMemoize(Memoize *node, EState *estate, int eflags)
 	 * getting the first tuple.  This allows us to mark it as so.
 	 */
 	mstate->singlerow = node->singlerow;
-	mstate->keyparamids = node->keyparamids;
 
 	/*
 	 * Record if the cache keys should be compared bit by bit, or logically
@@ -1114,12 +1082,6 @@ ExecReScanMemoize(MemoizeState *node)
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan);
 
-	/*
-	 * Purge the entire cache if a parameter changed that is not part of the
-	 * cache key.
-	 */
-	if (bms_nonempty_difference(outerPlan->chgParam, node->keyparamids))
-		cache_purge_all(node);
 }
 
 /*
