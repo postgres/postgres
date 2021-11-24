@@ -193,7 +193,6 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		{
 			/* If write didn't set errno, assume problem is no disk space */
 			dir_data->lasterrno = errno ? errno : ENOSPC;
-			(void) LZ4F_compressEnd(ctx, lz4buf, lz4bufsize, NULL);
 			(void) LZ4F_freeCompressionContext(ctx);
 			pg_free(lz4buf);
 			close(fd);
