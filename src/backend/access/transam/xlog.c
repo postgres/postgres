@@ -850,10 +850,6 @@ typedef struct XLogPageReadPrivate
 static TimestampTz XLogReceiptTime = 0;
 static XLogSource XLogReceiptSource = XLOG_FROM_ANY;
 
-/* State information for XLOG reading */
-static XLogRecPtr ReadRecPtr;	/* start of last record read */
-static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
-
 /*
  * Local copies of equivalent fields in the control file.  When running
  * crash recovery, minRecoveryPoint is set to InvalidXLogRecPtr as we
@@ -4475,8 +4471,6 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 		char	   *errormsg;
 
 		record = XLogReadRecord(xlogreader, &errormsg);
-		ReadRecPtr = xlogreader->ReadRecPtr;
-		EndRecPtr = xlogreader->EndRecPtr;
 		if (record == NULL)
 		{
 			/*
@@ -4505,7 +4499,7 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 			 * shouldn't loop anymore in that case.
 			 */
 			if (errormsg)
-				ereport(emode_for_corrupt_record(emode, EndRecPtr),
+				ereport(emode_for_corrupt_record(emode, xlogreader->EndRecPtr),
 						(errmsg_internal("%s", errormsg) /* already translated */ ));
 		}
 
@@ -4523,7 +4517,7 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 									   wal_segment_size);
 			XLogFileName(fname, xlogreader->seg.ws_tli, segno,
 						 wal_segment_size);
-			ereport(emode_for_corrupt_record(emode, EndRecPtr),
+			ereport(emode_for_corrupt_record(emode, xlogreader->EndRecPtr),
 					(errmsg("unexpected timeline ID %u in log segment %s, offset %u",
 							xlogreader->latestPageTLI,
 							fname,
@@ -4565,9 +4559,9 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 				/* initialize minRecoveryPoint to this record */
 				LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 				ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
-				if (ControlFile->minRecoveryPoint < EndRecPtr)
+				if (ControlFile->minRecoveryPoint < xlogreader->EndRecPtr)
 				{
-					ControlFile->minRecoveryPoint = EndRecPtr;
+					ControlFile->minRecoveryPoint = xlogreader->EndRecPtr;
 					ControlFile->minRecoveryPointTLI = replayTLI;
 				}
 				/* update local copy */
@@ -7501,7 +7495,7 @@ StartupXLOG(void)
 		if (checkPoint.redo < RecPtr)
 			XLogCtl->replayEndRecPtr = checkPoint.redo;
 		else
-			XLogCtl->replayEndRecPtr = EndRecPtr;
+			XLogCtl->replayEndRecPtr = xlogreader->EndRecPtr;
 		XLogCtl->replayEndTLI = replayTLI;
 		XLogCtl->lastReplayedEndRecPtr = XLogCtl->replayEndRecPtr;
 		XLogCtl->lastReplayedTLI = XLogCtl->replayEndTLI;
@@ -7557,7 +7551,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo starts at %X/%X",
-							LSN_FORMAT_ARGS(ReadRecPtr))));
+							LSN_FORMAT_ARGS(xlogreader->ReadRecPtr))));
 
 			/* Prepare to report progress of the redo phase. */
 			if (!StandbyMode)
@@ -7572,7 +7566,7 @@ StartupXLOG(void)
 
 				if (!StandbyMode)
 					ereport_startup_progress("redo in progress, elapsed time: %ld.%02d s, current LSN: %X/%X",
-											 LSN_FORMAT_ARGS(ReadRecPtr));
+											 LSN_FORMAT_ARGS(xlogreader->ReadRecPtr));
 
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG ||
@@ -7686,7 +7680,8 @@ StartupXLOG(void)
 					if (newReplayTLI != replayTLI)
 					{
 						/* Check that it's OK to switch to this TLI */
-						checkTimeLineSwitch(EndRecPtr, newReplayTLI,
+						checkTimeLineSwitch(xlogreader->EndRecPtr,
+											newReplayTLI,
 											prevReplayTLI, replayTLI);
 
 						/* Following WAL records should be run with new TLI */
@@ -7700,7 +7695,7 @@ StartupXLOG(void)
 				 * so that XLogFlush will update minRecoveryPoint correctly.
 				 */
 				SpinLockAcquire(&XLogCtl->info_lck);
-				XLogCtl->replayEndRecPtr = EndRecPtr;
+				XLogCtl->replayEndRecPtr = xlogreader->EndRecPtr;
 				XLogCtl->replayEndTLI = replayTLI;
 				SpinLockRelease(&XLogCtl->info_lck);
 
@@ -7732,7 +7727,7 @@ StartupXLOG(void)
 				 * successfully replayed.
 				 */
 				SpinLockAcquire(&XLogCtl->info_lck);
-				XLogCtl->lastReplayedEndRecPtr = EndRecPtr;
+				XLogCtl->lastReplayedEndRecPtr = xlogreader->EndRecPtr;
 				XLogCtl->lastReplayedTLI = replayTLI;
 				SpinLockRelease(&XLogCtl->info_lck);
 
@@ -7748,7 +7743,7 @@ StartupXLOG(void)
 				}
 
 				/* Remember this record as the last-applied one */
-				LastRec = ReadRecPtr;
+				LastRec = xlogreader->ReadRecPtr;
 
 				/* Allow read-only connections if we're consistent now */
 				CheckRecoveryConsistency();
@@ -7761,7 +7756,7 @@ StartupXLOG(void)
 					 * (possibly bogus) future WAL segments on the old
 					 * timeline.
 					 */
-					RemoveNonParentXlogFiles(EndRecPtr, replayTLI);
+					RemoveNonParentXlogFiles(xlogreader->EndRecPtr, replayTLI);
 
 					/*
 					 * Wake up any walsenders to notice that we are on a new
@@ -7829,7 +7824,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo done at %X/%X system usage: %s",
-							LSN_FORMAT_ARGS(ReadRecPtr),
+							LSN_FORMAT_ARGS(xlogreader->ReadRecPtr),
 							pg_rusage_show(&ru0))));
 			xtime = GetLatestXTime();
 			if (xtime)
@@ -7904,7 +7899,7 @@ StartupXLOG(void)
 	 */
 	XLogBeginRead(xlogreader, LastRec);
 	record = ReadRecord(xlogreader, PANIC, false, replayTLI);
-	EndOfLog = EndRecPtr;
+	EndOfLog = xlogreader->EndRecPtr;
 
 	/*
 	 * EndOfLogTLI is the TLI in the filename of the XLOG segment containing
@@ -8013,7 +8008,7 @@ StartupXLOG(void)
 		 * between here and writing the end-of-recovery record.
 		 */
 		writeTimeLineHistory(newTLI, recoveryTargetTLI,
-							 EndRecPtr, reason);
+							 xlogreader->EndRecPtr, reason);
 
 		/*
 		 * Since there might be a partial WAL segment named RECOVERYXLOG, get
@@ -9647,7 +9642,7 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
  * startup process.)
  */
 static void
-RecoveryRestartPoint(const CheckPoint *checkPoint)
+RecoveryRestartPoint(const CheckPoint *checkPoint, XLogReaderState *record)
 {
 	/*
 	 * Also refrain from creating a restartpoint if we have seen any
@@ -9670,8 +9665,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	 * work out the next time it wants to perform a restartpoint.
 	 */
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->lastCheckPointRecPtr = ReadRecPtr;
-	XLogCtl->lastCheckPointEndPtr = EndRecPtr;
+	XLogCtl->lastCheckPointRecPtr = record->ReadRecPtr;
+	XLogCtl->lastCheckPointEndPtr = record->EndRecPtr;
 	XLogCtl->lastCheckPoint = *checkPoint;
 	SpinLockRelease(&XLogCtl->info_lck);
 }
@@ -10468,7 +10463,7 @@ xlog_redo(XLogReaderState *record)
 					(errmsg("unexpected timeline ID %u (should be %u) in checkpoint record",
 							checkPoint.ThisTimeLineID, replayTLI)));
 
-		RecoveryRestartPoint(&checkPoint);
+		RecoveryRestartPoint(&checkPoint, record);
 	}
 	else if (info == XLOG_CHECKPOINT_ONLINE)
 	{
@@ -10524,7 +10519,7 @@ xlog_redo(XLogReaderState *record)
 					(errmsg("unexpected timeline ID %u (should be %u) in checkpoint record",
 							checkPoint.ThisTimeLineID, replayTLI)));
 
-		RecoveryRestartPoint(&checkPoint);
+		RecoveryRestartPoint(&checkPoint, record);
 	}
 	else if (info == XLOG_OVERWRITE_CONTRECORD)
 	{
@@ -10690,8 +10685,8 @@ xlog_redo(XLogReaderState *record)
 		if (!fpw)
 		{
 			SpinLockAcquire(&XLogCtl->info_lck);
-			if (XLogCtl->lastFpwDisableRecPtr < ReadRecPtr)
-				XLogCtl->lastFpwDisableRecPtr = ReadRecPtr;
+			if (XLogCtl->lastFpwDisableRecPtr < record->ReadRecPtr)
+				XLogCtl->lastFpwDisableRecPtr = record->ReadRecPtr;
 			SpinLockRelease(&XLogCtl->info_lck);
 		}
 
@@ -12586,7 +12581,7 @@ retry:
 		 * errmsg_internal() because the message was already translated.
 		 */
 		if (xlogreader->errormsg_buf[0])
-			ereport(emode_for_corrupt_record(emode, EndRecPtr),
+			ereport(emode_for_corrupt_record(emode, xlogreader->EndRecPtr),
 					(errmsg_internal("%s", xlogreader->errormsg_buf)));
 
 		/* reset any error XLogReaderValidatePageHeader() might have set */
