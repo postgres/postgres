@@ -103,6 +103,26 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
 
 DROP TABLE strtest;
 
+-- Exercise Memoize code that flushes the cache when a parameter changes which
+-- is not part of the cache key.
+
+-- Ensure we get a Memoize plan
+EXPLAIN (COSTS OFF)
+SELECT unique1 FROM tenk1 t0
+WHERE unique1 < 3
+  AND EXISTS (
+	SELECT 1 FROM tenk1 t1
+	INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred
+	WHERE t0.ten = t1.twenty AND t0.two <> t2.four OFFSET 0);
+
+-- Ensure the above query returns the correct result
+SELECT unique1 FROM tenk1 t0
+WHERE unique1 < 3
+  AND EXISTS (
+	SELECT 1 FROM tenk1 t1
+	INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred
+	WHERE t0.ten = t1.twenty AND t0.two <> t2.four OFFSET 0);
+
 RESET enable_seqscan;
 RESET enable_mergejoin;
 RESET work_mem;

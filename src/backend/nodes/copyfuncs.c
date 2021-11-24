@@ -973,6 +973,7 @@ _copyMemoize(const Memoize *from)
 	COPY_SCALAR_FIELD(singlerow);
 	COPY_SCALAR_FIELD(binary_mode);
 	COPY_SCALAR_FIELD(est_entries);
+	COPY_BITMAPSET_FIELD(keyparamids);
 
 	return newnode;
 }
