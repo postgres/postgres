@@ -124,9 +124,6 @@ typedef int Py_ssize_t;
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
 
-#include <compile.h>
-#include <eval.h>
-
 /* put back our *printf macros ... this must match src/include/port.h */
 #ifdef vsnprintf
 #undef vsnprintf
