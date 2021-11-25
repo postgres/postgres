@@ -121,9 +121,6 @@ typedef int Py_ssize_t;
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
 
-#include <compile.h>
-#include <eval.h>
-
 /* put back our snprintf and vsnprintf */
 #ifdef USE_REPL_SNPRINTF
 #ifdef snprintf
