@@ -94,6 +94,10 @@ ALTER TABLE test_replica_identity3 REPLICA IDENTITY USING INDEX test_replica_ide
 ALTER TABLE test_replica_identity3 ALTER COLUMN id TYPE bigint;
 \d test_replica_identity3
 
+-- ALTER TABLE DROP NOT NULL is not allowed for columns part of an index
+-- used as replica identity.
+ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
+
 DROP TABLE test_replica_identity;
 DROP TABLE test_replica_identity2;
 DROP TABLE test_replica_identity3;
