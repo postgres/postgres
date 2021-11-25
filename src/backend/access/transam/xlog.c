@@ -7577,8 +7577,8 @@ StartupXLOG(void)
 
 					initStringInfo(&buf);
 					appendStringInfo(&buf, "REDO @ %X/%X; LSN %X/%X: ",
-									 LSN_FORMAT_ARGS(ReadRecPtr),
-									 LSN_FORMAT_ARGS(EndRecPtr));
+									 LSN_FORMAT_ARGS(xlogreader->ReadRecPtr),
+									 LSN_FORMAT_ARGS(xlogreader->EndRecPtr));
 					xlog_outrec(&buf, xlogreader);
 					appendStringInfoString(&buf, " - ");
 					xlog_outdesc(&buf, xlogreader);
