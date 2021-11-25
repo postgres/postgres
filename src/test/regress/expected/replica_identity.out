@@ -223,6 +223,10 @@ ALTER TABLE test_replica_identity3 ALTER COLUMN id TYPE bigint;
 Indexes:
     "test_replica_identity3_id_key" UNIQUE, btree (id) REPLICA IDENTITY
 
+-- ALTER TABLE DROP NOT NULL is not allowed for columns part of an index
+-- used as replica identity.
+ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
+ERROR:  column "id" is in index used as replica identity
 DROP TABLE test_replica_identity;
 DROP TABLE test_replica_identity2;
 DROP TABLE test_replica_identity3;

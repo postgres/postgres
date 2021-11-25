@@ -6364,7 +6364,8 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 						colName, RelationGetRelationName(rel))));
 
 	/*
-	 * Check that the attribute is not in a primary key
+	 * Check that the attribute is not in a primary key or in an index used as
+	 * a replica identity.
 	 *
 	 * Note: we'll throw error even if the pkey index is not valid.
 	 */
@@ -6384,20 +6385,32 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		/* If the index is not a primary key, skip the check */
-		if (indexStruct->indisprimary)
+		/*
+		 * If the index is not a primary key or an index used as replica
+		 * identity, skip the check.
+		 */
+		if (indexStruct->indisprimary || indexStruct->indisreplident)
 		{
 			/*
-			 * Loop over each attribute in the primary key and see if it
-			 * matches the to-be-altered attribute
+			 * Loop over each attribute in the primary key or the index used
+			 * as replica identity and see if it matches the to-be-altered
+			 * attribute.
 			 */
 			for (i = 0; i < indexStruct->indnkeyatts; i++)
 			{
 				if (indexStruct->indkey.values[i] == attnum)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							 errmsg("column \"%s\" is in a primary key",
-									colName)));
+				{
+					if (indexStruct->indisprimary)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("column \"%s\" is in a primary key",
+										colName)));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+								 errmsg("column \"%s\" is in index used as replica identity",
+										colName)));
+				}
 			}
 		}
 
