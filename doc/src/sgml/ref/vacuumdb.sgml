@@ -397,7 +397,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Only calculate statistics for use by the optimizer (no vacuum),
-        like <option>--analyze-only</option>.  Run several (currently three)
+        like <option>--analyze-only</option>.  Run three
         stages of analyze; the first stage uses the lowest possible statistics
         target (see <xref linkend="guc-default-statistics-target"/>)
         to produce usable statistics faster, and subsequent stages build the
@@ -405,10 +405,10 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only useful to analyze a database that current has
-        no statistics or wholly incorrect ones, such as if it is newly
+        This option is only useful to analyze a database that currently has
+        no statistics or has wholly incorrect ones, such as if it is newly
         populated from a restored dump or by <command>pg_upgrade</command>.
-        Be aware that running this option in a database with existing
+        Be aware that running with this option in a database with existing
         statistics may cause the query optimizer choices to become
         transiently worse due to the low statistics targets of the early
         stages.
