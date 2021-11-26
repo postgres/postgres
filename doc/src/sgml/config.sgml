@@ -3988,6 +3988,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         to continue replication due to removal of required WAL files. You
         can see the WAL availability of replication slots
         in <link linkend="view-pg-replication-slots">pg_replication_slots</link>.
+        If this value is specified without units, it is taken as megabytes.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.
        </para>
        </listitem>
       </varlistentry>
