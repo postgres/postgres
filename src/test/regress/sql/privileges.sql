@@ -32,6 +32,7 @@ CREATE USER regress_priv_user5;
 CREATE USER regress_priv_user5;	-- duplicate
 CREATE USER regress_priv_user6;
 CREATE USER regress_priv_user7;
+CREATE ROLE regress_priv_role;
 
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
@@ -52,6 +53,13 @@ CREATE FUNCTION leak(integer,integer) RETURNS boolean
 ALTER FUNCTION leak(integer,integer) OWNER TO regress_priv_user1;
 
 -- test owner privileges
+
+GRANT regress_priv_role TO regress_priv_user1 WITH ADMIN OPTION GRANTED BY CURRENT_ROLE;
+REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY foo; -- error
+REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY regress_priv_user2; -- error
+REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY CURRENT_USER;
+REVOKE regress_priv_role FROM regress_priv_user1 GRANTED BY CURRENT_ROLE;
+DROP ROLE regress_priv_role;
 
 SET SESSION AUTHORIZATION regress_priv_user1;
 SELECT session_user, current_user;
