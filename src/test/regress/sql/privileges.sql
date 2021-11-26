@@ -32,10 +32,39 @@ CREATE USER regress_priv_user5;
 CREATE USER regress_priv_user5;	-- duplicate
 CREATE USER regress_priv_user6;
 CREATE USER regress_priv_user7;
+CREATE USER regress_priv_user8;
+CREATE USER regress_priv_user9;
+CREATE USER regress_priv_user10;
 CREATE ROLE regress_priv_role;
 
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
+GRANT pg_read_all_settings TO regress_priv_user8 WITH ADMIN OPTION;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+GRANT pg_read_all_settings TO regress_priv_user9 WITH ADMIN OPTION;
+
+SET SESSION AUTHORIZATION regress_priv_user9;
+GRANT pg_read_all_settings TO regress_priv_user10;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+REVOKE pg_read_all_settings FROM regress_priv_user10;
+REVOKE ADMIN OPTION FOR pg_read_all_settings FROM regress_priv_user9;
+REVOKE pg_read_all_settings FROM regress_priv_user9;
+
+RESET SESSION AUTHORIZATION;
+REVOKE ADMIN OPTION FOR pg_read_all_settings FROM regress_priv_user8;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+SET ROLE pg_read_all_settings;
+RESET ROLE;
+
+RESET SESSION AUTHORIZATION;
+REVOKE pg_read_all_settings FROM regress_priv_user8;
+
+DROP USER regress_priv_user10;
+DROP USER regress_priv_user9;
+DROP USER regress_priv_user8;
 
 CREATE GROUP regress_priv_group1;
 CREATE GROUP regress_priv_group2 WITH USER regress_priv_user1, regress_priv_user2;
