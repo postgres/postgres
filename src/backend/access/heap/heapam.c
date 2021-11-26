@@ -3179,7 +3179,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	bool		have_tuple_lock = false;
 	bool		iscombo;
 	bool		use_hot_update = false;
-	bool		hot_attrs_checked = false;
 	bool		key_intact;
 	bool		all_visible_cleared = false;
 	bool		all_visible_cleared_new = false;
@@ -3228,31 +3227,14 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	key_attrs = RelationGetIndexAttrBitmap(relation, INDEX_ATTR_BITMAP_KEY);
 	id_attrs = RelationGetIndexAttrBitmap(relation,
 										  INDEX_ATTR_BITMAP_IDENTITY_KEY);
-
+	interesting_attrs = NULL;
+	interesting_attrs = bms_add_members(interesting_attrs, hot_attrs);
+	interesting_attrs = bms_add_members(interesting_attrs, key_attrs);
+	interesting_attrs = bms_add_members(interesting_attrs, id_attrs);
 
 	block = ItemPointerGetBlockNumber(otid);
 	buffer = ReadBuffer(relation, block);
 	page = BufferGetPage(buffer);
-
-	interesting_attrs = NULL;
-
-	/*
-	 * If the page is already full, there is hardly any chance of doing a HOT
-	 * update on this page. It might be wasteful effort to look for index
-	 * column updates only to later reject HOT updates for lack of space in
-	 * the same page. So we be conservative and only fetch hot_attrs if the
-	 * page is not already full. Since we are already holding a pin on the
-	 * buffer, there is no chance that the buffer can get cleaned up
-	 * concurrently and even if that was possible, in the worst case we lose a
-	 * chance to do a HOT update.
-	 */
-	if (!PageIsFull(page))
-	{
-		interesting_attrs = bms_add_members(interesting_attrs, hot_attrs);
-		hot_attrs_checked = true;
-	}
-	interesting_attrs = bms_add_members(interesting_attrs, key_attrs);
-	interesting_attrs = bms_add_members(interesting_attrs, id_attrs);
 
 	/*
 	 * Before locking the buffer, pin the visibility map page if it appears to
@@ -3867,10 +3849,9 @@ l2:
 		/*
 		 * Since the new tuple is going into the same page, we might be able
 		 * to do a HOT update.  Check if any of the index columns have been
-		 * changed. If the page was already full, we may have skipped checking
-		 * for index columns, and also can't do a HOT update.
+		 * changed.
 		 */
-		if (hot_attrs_checked && !bms_overlap(modified_attrs, hot_attrs))
+		if (!bms_overlap(modified_attrs, hot_attrs))
 			use_hot_update = true;
 	}
 	else
