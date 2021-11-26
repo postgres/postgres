@@ -6734,7 +6734,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					   list_make1_oid(rel->rd_rel->reltype),
 					   0);
 
-	/* construct new attribute's pg_attribute entry */
+	/*
+	 * Construct new attribute's pg_attribute entry.  (Variable-length fields
+	 * are handled by InsertPgAttributeTuples().)
+	 */
 	attribute.attrelid = myrelid;
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
@@ -6757,8 +6760,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
 	attribute.attcollation = collOid;
-
-	/* attribute.attacl is handled by InsertPgAttributeTuples() */
 
 	ReleaseSysCache(typeTuple);
 
