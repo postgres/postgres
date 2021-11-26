@@ -415,7 +415,7 @@ restart:
 			 */
 			if (pageHeader->xlp_info & XLP_FIRST_IS_OVERWRITE_CONTRECORD)
 			{
-				state->overwrittenRecPtr = state->currRecPtr;
+				state->overwrittenRecPtr = RecPtr;
 				ResetDecoder(state);
 				RecPtr = targetPagePtr;
 				goto restart;
