@@ -3,39 +3,23 @@
  * vacuumlazy.c
  *	  Concurrent ("lazy") vacuuming.
  *
- *
- * The major space usage for LAZY VACUUM is storage for the array of dead tuple
- * TIDs.  We want to ensure we can vacuum even the very largest relations with
- * finite memory space usage.  To do that, we set upper bounds on the number of
- * tuples we will keep track of at once.
+ * The major space usage for vacuuming is storage for the array of dead TIDs
+ * that are to be removed from indexes.  We want to ensure we can vacuum even
+ * the very largest relations with finite memory space usage.  To do that, we
+ * set upper bounds on the number of TIDs we can keep track of at once.
  *
  * We are willing to use at most maintenance_work_mem (or perhaps
- * autovacuum_work_mem) memory space to keep track of dead tuples.  We
- * initially allocate an array of TIDs of that size, with an upper limit that
- * depends on table size (this limit ensures we don't allocate a huge area
- * uselessly for vacuuming small tables).  If the array threatens to overflow,
- * we suspend the heap scan phase and perform a pass of index cleanup and page
- * compaction, then resume the heap scan with an empty TID array.
+ * autovacuum_work_mem) memory space to keep track of dead TIDs.  We initially
+ * allocate an array of TIDs of that size, with an upper limit that depends on
+ * table size (this limit ensures we don't allocate a huge area uselessly for
+ * vacuuming small tables).  If the array threatens to overflow, we must call
+ * lazy_vacuum to vacuum indexes (and to vacuum the pages that we've pruned).
+ * This frees up the memory space dedicated to storing dead TIDs.
  *
- * If we're processing a table with no indexes, we can just vacuum each page
- * as we go; there's no need to save up multiple tuples to minimize the number
- * of index scans performed.  So we don't use maintenance_work_mem memory for
- * the TID array, just enough to hold as many heap tuples as fit on one page.
- *
- * Lazy vacuum supports parallel execution with parallel worker processes.  In
- * a parallel vacuum, we perform both index vacuum and index cleanup with
- * parallel worker processes.  Individual indexes are processed by one vacuum
- * process.  At the beginning of a lazy vacuum (at lazy_scan_heap) we prepare
- * the parallel context and initialize the DSM segment that contains shared
- * information as well as the memory space for storing dead tuples.  When
- * starting either index vacuum or index cleanup, we launch parallel worker
- * processes.  Once all indexes are processed the parallel worker processes
- * exit.  After that, the leader process re-initializes the parallel context
- * so that it can use the same DSM for multiple passes of index vacuum and
- * for performing index cleanup.  For updating the index statistics, we need
- * to update the system table and since updates are not allowed during
- * parallel mode we update the index statistics after exiting from the
- * parallel mode.
+ * In practice VACUUM will often complete its initial pass over the target
+ * heap relation without ever running out of space to store TIDs.  This means
+ * that there only needs to be one call to lazy_vacuum, after the initial pass
+ * completes.
  *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -123,13 +107,6 @@
  */
 #define VACUUM_FSM_EVERY_PAGES \
 	((BlockNumber) (((uint64) 8 * 1024 * 1024 * 1024) / BLCKSZ))
-
-/*
- * Guesstimation of number of dead tuples per page.  This is used to
- * provide an upper limit to memory allocated when vacuuming small
- * tables.
- */
-#define LAZY_ALLOC_TUPLES		MaxHeapTuplesPerPage
 
 /*
  * Before we consider skipping a page that's marked as clean in
@@ -472,8 +449,9 @@ static void restore_vacuum_error_info(LVRelState *vacrel,
 /*
  *	heap_vacuum_rel() -- perform VACUUM for one heap relation
  *
- *		This routine vacuums a single heap, cleans out its indexes, and
- *		updates its relpages and reltuples statistics.
+ *		This routine sets things up for and then calls lazy_scan_heap, where
+ *		almost all work actually takes place.  Finalizes everything after call
+ *		returns by managing rel truncation and updating pg_class statistics.
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
@@ -631,7 +609,10 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
-	/* Do the vacuuming */
+	/*
+	 * Call lazy_scan_heap to perform all required heap pruning, index
+	 * vacuuming, and heap vacuuming (plus related processing)
+	 */
 	lazy_scan_heap(vacrel, params, aggressive);
 
 	/* Done with indexes */
@@ -714,8 +695,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 *
 	 * Deliberately avoid telling the stats collector about LP_DEAD items that
 	 * remain in the table due to VACUUM bypassing index and heap vacuuming.
-	 * ANALYZE will consider the remaining LP_DEAD items to be dead tuples. It
-	 * seems like a good idea to err on the side of not vacuuming again too
+	 * ANALYZE will consider the remaining LP_DEAD items to be dead "tuples".
+	 * It seems like a good idea to err on the side of not vacuuming again too
 	 * soon in cases where the failsafe prevented significant amounts of heap
 	 * vacuuming.
 	 */
@@ -875,20 +856,40 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 }
 
 /*
- *	lazy_scan_heap() -- scan an open heap relation
+ *	lazy_scan_heap() -- workhorse function for VACUUM
  *
- *		This routine prunes each page in the heap, which will among other
- *		things truncate dead tuples to dead line pointers, defragment the
- *		page, and set commit status bits (see heap_page_prune).  It also builds
- *		lists of dead tuples and pages with free space, calculates statistics
- *		on the number of live tuples in the heap, and marks pages as
- *		all-visible if appropriate.  When done, or when we run low on space
- *		for dead-tuple TIDs, invoke lazy_vacuum to vacuum indexes and vacuum
- *		heap relation during its own second pass over the heap.
+ *		This routine prunes each page in the heap, and considers the need to
+ *		freeze remaining tuples with storage (not including pages that can be
+ *		skipped using the visibility map).  Also performs related maintenance
+ *		of the FSM and visibility map.  These steps all take place during an
+ *		initial pass over the target heap relation.
  *
- *		If there are no indexes then we can reclaim line pointers on the fly;
- *		dead line pointers need only be retained until all index pointers that
- *		reference them have been killed.
+ *		Also invokes lazy_vacuum_all_indexes to vacuum indexes, which largely
+ *		consists of deleting index tuples that point to LP_DEAD items left in
+ *		heap pages following pruning.  Earlier initial pass over the heap will
+ *		have collected the TIDs whose index tuples need to be removed.
+ *
+ *		Finally, invokes lazy_vacuum_heap_rel to vacuum heap pages, which
+ *		largely consists of marking LP_DEAD items (from collected TID array)
+ *		as LP_UNUSED.  This has to happen in a second, final pass over the
+ *		heap, to preserve a basic invariant that all index AMs rely on: no
+ *		extant index tuple can ever be allowed to contain a TID that points to
+ *		an LP_UNUSED line pointer in the heap.  We must disallow premature
+ *		recycling of line pointers to avoid index scans that get confused
+ *		about which TID points to which tuple immediately after recycling.
+ *		(Actually, this isn't a concern when target heap relation happens to
+ *		have no indexes, which allows us to safely apply the one-pass strategy
+ *		as an optimization).
+ *
+ *		In practice we often have enough space to fit all TIDs, and so won't
+ *		need to call lazy_vacuum more than once, after our initial pass over
+ *		the heap has totally finished.  Otherwise things are slightly more
+ *		complicated: our "initial pass" over the heap applies only to those
+ *		pages that were pruned before we needed to call lazy_vacuum, and our
+ *		"final pass" over the heap only vacuums these same heap pages.
+ *		However, we process indexes in full every time lazy_vacuum is called,
+ *		which makes index processing very inefficient when memory is in short
+ *		supply.
  */
 static void
 lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
@@ -1173,7 +1174,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 				vmbuffer = InvalidBuffer;
 			}
 
-			/* Remove the collected garbage tuples from table and indexes */
+			/* Perform a round of index and heap vacuuming */
 			vacrel->consider_bypass_optimization = false;
 			lazy_vacuum(vacrel);
 
@@ -1490,12 +1491,12 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		 * visible to everyone yet actually are, and the PD_ALL_VISIBLE flag
 		 * is correct.
 		 *
-		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
+		 * There should never be LP_DEAD items on a page with PD_ALL_VISIBLE
 		 * set, however.
 		 */
 		else if (prunestate.has_lpdead_items && PageIsAllVisible(page))
 		{
-			elog(WARNING, "page containing dead tuples is marked as all-visible in relation \"%s\" page %u",
+			elog(WARNING, "page containing LP_DEAD items is marked as all-visible in relation \"%s\" page %u",
 				 vacrel->relname, blkno);
 			PageClearAllVisible(page);
 			MarkBufferDirty(buf);
@@ -1585,7 +1586,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		vmbuffer = InvalidBuffer;
 	}
 
-	/* If any tuples need to be deleted, perform final vacuum cycle */
+	/* Perform a final round of index and heap vacuuming */
 	if (dead_tuples->num_tuples > 0)
 		lazy_vacuum(vacrel);
 
@@ -1816,13 +1817,14 @@ retry:
 		 * VACUUM can't run inside a transaction block, which makes some cases
 		 * impossible (e.g. in-progress insert from the same transaction).
 		 *
-		 * We treat LP_DEAD items a little differently, too -- we don't count
-		 * them as dead_tuples at all (we only consider new_dead_tuples).  The
-		 * outcome is no different because we assume that any LP_DEAD items we
-		 * encounter here will become LP_UNUSED inside lazy_vacuum_heap_page()
-		 * before we report anything to the stats collector. (Cases where we
-		 * bypass index vacuuming will violate our assumption, but the overall
-		 * impact of that should be negligible.)
+		 * We treat LP_DEAD items (which are the closest thing to DEAD tuples
+		 * that might be seen here) differently, too: we assume that they'll
+		 * become LP_UNUSED before VACUUM finishes.  This difference is only
+		 * superficial.  VACUUM effectively agrees with ANALYZE about DEAD
+		 * items, in the end.  VACUUM won't remember LP_DEAD items, but only
+		 * because they're not supposed to be left behind when it is done.
+		 * (Cases where we bypass index vacuuming will violate this optimistic
+		 * assumption, but the overall impact of that should be negligible.)
 		 */
 		switch (res)
 		{
@@ -2169,7 +2171,7 @@ lazy_vacuum(LVRelState *vacrel)
 		/*
 		 * Failsafe case.
 		 *
-		 * we attempted index vacuuming, but didn't finish a full round/full
+		 * We attempted index vacuuming, but didn't finish a full round/full
 		 * index scan.  This happens when relfrozenxid or relminmxid is too
 		 * far in the past.
 		 *
@@ -3448,8 +3450,8 @@ compute_max_dead_tuples(BlockNumber relblocks, bool hasindex)
 		maxtuples = Min(maxtuples, MAXDEADTUPLES(MaxAllocSize));
 
 		/* curious coding here to ensure the multiplication can't overflow */
-		if ((BlockNumber) (maxtuples / LAZY_ALLOC_TUPLES) > relblocks)
-			maxtuples = relblocks * LAZY_ALLOC_TUPLES;
+		if ((BlockNumber) (maxtuples / MaxHeapTuplesPerPage) > relblocks)
+			maxtuples = relblocks * MaxHeapTuplesPerPage;
 
 		/* stay sane if small maintenance_work_mem */
 		maxtuples = Max(maxtuples, MaxHeapTuplesPerPage);
