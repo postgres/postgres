@@ -1274,8 +1274,8 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		 * By here we definitely have enough dead_tuples space for whatever
 		 * LP_DEAD tids are on this page, we have the visibility map page set
 		 * up in case we need to set this page's all_visible/all_frozen bit,
-		 * and we have a super-exclusive lock.  Any tuples on this page are
-		 * now sure to be "counted" by this VACUUM.
+		 * and we have a cleanup lock.  Any tuples on this page are now sure
+		 * to be "counted" by this VACUUM.
 		 *
 		 * One last piece of preamble needs to take place before we can prune:
 		 * we need to consider new and empty pages.
@@ -1524,8 +1524,8 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		}
 
 		/*
-		 * Final steps for block: drop super-exclusive lock, record free space
-		 * in the FSM
+		 * Final steps for block: drop cleanup lock, record free space in the
+		 * FSM
 		 */
 		if (prunestate.has_lpdead_items && vacrel->do_index_vacuuming)
 		{
@@ -2377,8 +2377,8 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
  *	lazy_vacuum_heap_page() -- free page's LP_DEAD items listed in the
  *						  vacrel->dead_tuples array.
  *
- * Caller must have an exclusive buffer lock on the buffer (though a
- * super-exclusive lock is also acceptable).
+ * Caller must have an exclusive buffer lock on the buffer (though a full
+ * cleanup lock is also acceptable).
  *
  * tupindex is the index in vacrel->dead_tuples of the first dead tuple for
  * this page.  We assume the rest follow sequentially.  The return value is
