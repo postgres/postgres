@@ -7339,7 +7339,7 @@ StartupXLOG(void)
 				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
 			}
 		}
-		ControlFile->time = (pg_time_t) time(NULL);
+
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
 
@@ -8199,7 +8199,6 @@ StartupXLOG(void)
 	 */
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 	ControlFile->state = DB_IN_PRODUCTION;
-	ControlFile->time = (pg_time_t) time(NULL);
 
 	SpinLockAcquire(&XLogCtl->info_lck);
 	XLogCtl->SharedRecoveryState = RECOVERY_STATE_DONE;
@@ -9142,7 +9141,6 @@ CreateCheckPoint(int flags)
 	{
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 		ControlFile->state = DB_SHUTDOWNING;
-		ControlFile->time = (pg_time_t) time(NULL);
 		UpdateControlFile();
 		LWLockRelease(ControlFileLock);
 	}
@@ -9412,7 +9410,6 @@ CreateCheckPoint(int flags)
 		ControlFile->state = DB_SHUTDOWNED;
 	ControlFile->checkPoint = ProcLastRecPtr;
 	ControlFile->checkPointCopy = checkPoint;
-	ControlFile->time = (pg_time_t) time(NULL);
 	/* crash recovery should always recover to the end of WAL */
 	ControlFile->minRecoveryPoint = InvalidXLogRecPtr;
 	ControlFile->minRecoveryPointTLI = 0;
@@ -9539,7 +9536,6 @@ CreateEndOfRecoveryRecord(void)
 	 * changes to this point.
 	 */
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	ControlFile->time = (pg_time_t) time(NULL);
 	ControlFile->minRecoveryPoint = recptr;
 	ControlFile->minRecoveryPointTLI = xlrec.ThisTimeLineID;
 	UpdateControlFile();
@@ -9740,7 +9736,6 @@ CreateRestartPoint(int flags)
 		{
 			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 			ControlFile->state = DB_SHUTDOWNED_IN_RECOVERY;
-			ControlFile->time = (pg_time_t) time(NULL);
 			UpdateControlFile();
 			LWLockRelease(ControlFileLock);
 		}
@@ -9801,7 +9796,6 @@ CreateRestartPoint(int flags)
 	{
 		ControlFile->checkPoint = lastCheckPointRecPtr;
 		ControlFile->checkPointCopy = lastCheckPoint;
-		ControlFile->time = (pg_time_t) time(NULL);
 
 		/*
 		 * Ensure minRecoveryPoint is past the checkpoint record.  Normally,
