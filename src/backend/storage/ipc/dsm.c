@@ -33,6 +33,7 @@
 #endif
 #include <sys/stat.h>
 
+#include "common/pg_prng.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
@@ -180,7 +181,8 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	{
 		Assert(dsm_control_address == NULL);
 		Assert(dsm_control_mapped_size == 0);
-		dsm_control_handle = random() << 1; /* Even numbers only */
+		/* Use even numbers only */
+		dsm_control_handle = pg_prng_uint32(&pg_global_prng_state) << 1;
 		if (dsm_control_handle == DSM_HANDLE_INVALID)
 			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, dsm_control_handle, segsize,
@@ -536,7 +538,8 @@ dsm_create(Size size, int flags)
 		for (;;)
 		{
 			Assert(seg->mapped_address == NULL && seg->mapped_size == 0);
-			seg->handle = random() << 1;	/* Even numbers only */
+			/* Use even numbers only */
+			seg->handle = pg_prng_uint32(&pg_global_prng_state) << 1;
 			if (seg->handle == DSM_HANDLE_INVALID)	/* Reserve sentinel */
 				continue;
 			if (dsm_impl_op(DSM_OP_CREATE, seg->handle, size, &seg->impl_private,
@@ -1237,7 +1240,7 @@ make_main_region_dsm_handle(int slot)
 	 */
 	handle = 1;
 	handle |= slot << 1;
-	handle |= random() << (pg_leftmost_one_pos32(dsm_control->maxitems) + 1);
+	handle |= pg_prng_uint32(&pg_global_prng_state) << (pg_leftmost_one_pos32(dsm_control->maxitems) + 1);
 	return handle;
 }
 

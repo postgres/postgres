@@ -22,6 +22,7 @@
 #ifndef GEQO_H
 #define GEQO_H
 
+#include "common/pg_prng.h"
 #include "nodes/pathnodes.h"
 #include "optimizer/geqo_gene.h"
 
@@ -73,7 +74,7 @@ extern double Geqo_seed;		/* 0 .. 1 */
 typedef struct
 {
 	List	   *initial_rels;	/* the base relations we are joining */
-	unsigned short random_state[3]; /* state for pg_erand48() */
+	pg_prng_state random_state; /* PRNG state */
 } GeqoPrivateData;
 
 

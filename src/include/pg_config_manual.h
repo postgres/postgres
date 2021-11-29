@@ -235,17 +235,6 @@
 #define DEFAULT_EVENT_SOURCE  "PostgreSQL"
 
 /*
- * The random() function is expected to yield values between 0 and
- * MAX_RANDOM_VALUE.  Currently, all known implementations yield
- * 0..2^31-1, so we just hardwire this constant.  We could do a
- * configure test if it proves to be necessary.  CAUTION: Think not to
- * replace this with RAND_MAX.  RAND_MAX defines the maximum value of
- * the older rand() function, which is often different from --- and
- * considerably inferior to --- random().
- */
-#define MAX_RANDOM_VALUE  PG_INT32_MAX
-
-/*
  * On PPC machines, decide whether to use the mutex hint bit in LWARX
  * instructions.  Setting the hint bit will slightly improve spinlock
  * performance on POWER6 and later machines, but does nothing before that,

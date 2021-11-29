@@ -92,6 +92,7 @@
 #include "catalog/pg_tablespace.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
+#include "common/pg_prng.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/pg_iovec.h"
@@ -2939,7 +2940,8 @@ SetTempTablespaces(Oid *tableSpaces, int numSpaces)
 	 * available tablespaces.
 	 */
 	if (numSpaces > 1)
-		nextTempTableSpace = random() % numSpaces;
+		nextTempTableSpace = pg_prng_uint64_range(&pg_global_prng_state,
+												  0, numSpaces - 1);
 	else
 		nextTempTableSpace = 0;
 }

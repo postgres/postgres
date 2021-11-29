@@ -19,6 +19,7 @@
 #include "access/nbtxlog.h"
 #include "access/transam.h"
 #include "access/xloginsert.h"
+#include "common/pg_prng.h"
 #include "lib/qunique.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
@@ -965,7 +966,7 @@ _bt_findinsertloc(Relation rel,
 
 			if (P_RIGHTMOST(opaque) ||
 				_bt_compare(rel, itup_key, page, P_HIKEY) != 0 ||
-				random() <= (MAX_RANDOM_VALUE / 100))
+				pg_prng_uint32(&pg_global_prng_state) <= (PG_UINT32_MAX / 100))
 				break;
 
 			_bt_stepright(rel, insertstate, stack);

@@ -445,9 +445,6 @@
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
 
-/* Define to 1 if you have the `random' function. */
-#undef HAVE_RANDOM
-
 /* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H
 
@@ -511,9 +508,6 @@
 
 /* Define to 1 if you have spinlocks. */
 #undef HAVE_SPINLOCKS
-
-/* Define to 1 if you have the `srandom' function. */
-#undef HAVE_SRANDOM
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H

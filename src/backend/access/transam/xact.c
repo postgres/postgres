@@ -37,6 +37,7 @@
 #include "commands/async.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
+#include "common/pg_prng.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "libpq/pqsignal.h"
@@ -1990,7 +1991,7 @@ StartTransaction(void)
 	/* Determine if statements are logged in this transaction */
 	xact_is_sampled = log_xact_sample_rate != 0 &&
 		(log_xact_sample_rate == 1 ||
-		 random() <= log_xact_sample_rate * MAX_RANDOM_VALUE);
+		 pg_prng_double(&pg_global_prng_state) <= log_xact_sample_rate);
 
 	/*
 	 * initialize current transaction state fields

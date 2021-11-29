@@ -1858,8 +1858,6 @@ AC_REPLACE_FUNCS(m4_normalize([
 	mkdtemp
 	pread
 	pwrite
-	random
-	srandom
 	strlcat
 	strlcpy
 	strnlen

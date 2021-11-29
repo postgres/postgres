@@ -66,6 +66,7 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "common/pg_prng.h"
 #include "common/restricted_token.h"
 #include "common/string.h"
 #include "common/username.h"
@@ -880,9 +881,10 @@ choose_dsm_implementation(void)
 {
 #ifdef HAVE_SHM_OPEN
 	int			ntries = 10;
+	pg_prng_state prng_state;
 
-	/* Initialize random(); this function is its only user in this program. */
-	srandom((unsigned int) (getpid() ^ time(NULL)));
+	/* Initialize prng; this function is its only user in this program. */
+	pg_prng_seed(&prng_state, (uint64) (getpid() ^ time(NULL)));
 
 	while (ntries > 0)
 	{
@@ -890,7 +892,7 @@ choose_dsm_implementation(void)
 		char		name[64];
 		int			fd;
 
-		handle = random();
+		handle = pg_prng_uint32(&prng_state);
 		snprintf(name, 64, "/PostgreSQL.%u", handle);
 		if ((fd = shm_open(name, O_CREAT | O_RDWR | O_EXCL, 0600)) != -1)
 		{

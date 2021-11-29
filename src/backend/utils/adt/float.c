@@ -21,6 +21,7 @@
 
 #include "catalog/pg_type.h"
 #include "common/int.h"
+#include "common/pg_prng.h"
 #include "common/shortest_dec.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -65,7 +66,7 @@ float8		degree_c_one = 1.0;
 
 /* State for drandom() and setseed() */
 static bool drandom_seed_set = false;
-static unsigned short drandom_seed[3] = {0, 0, 0};
+static pg_prng_state drandom_seed;
 
 /* Local function prototypes */
 static double sind_q1(double x);
@@ -2762,22 +2763,20 @@ drandom(PG_FUNCTION_ARGS)
 		 * Should that fail for some reason, we fall back on a lower-quality
 		 * seed based on current time and PID.
 		 */
-		if (!pg_strong_random(drandom_seed, sizeof(drandom_seed)))
+		if (unlikely(!pg_prng_strong_seed(&drandom_seed)))
 		{
 			TimestampTz now = GetCurrentTimestamp();
 			uint64		iseed;
 
 			/* Mix the PID with the most predictable bits of the timestamp */
 			iseed = (uint64) now ^ ((uint64) MyProcPid << 32);
-			drandom_seed[0] = (unsigned short) iseed;
-			drandom_seed[1] = (unsigned short) (iseed >> 16);
-			drandom_seed[2] = (unsigned short) (iseed >> 32);
+			pg_prng_seed(&drandom_seed, iseed);
 		}
 		drandom_seed_set = true;
 	}
 
-	/* pg_erand48 produces desired result range [0.0 - 1.0) */
-	result = pg_erand48(drandom_seed);
+	/* pg_prng_double produces desired result range [0.0 - 1.0) */
+	result = pg_prng_double(&drandom_seed);
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -2790,7 +2789,6 @@ Datum
 setseed(PG_FUNCTION_ARGS)
 {
 	float8		seed = PG_GETARG_FLOAT8(0);
-	uint64		iseed;
 
 	if (seed < -1 || seed > 1 || isnan(seed))
 		ereport(ERROR,
@@ -2798,11 +2796,7 @@ setseed(PG_FUNCTION_ARGS)
 				 errmsg("setseed parameter %g is out of allowed range [-1,1]",
 						seed)));
 
-	/* Use sign bit + 47 fractional bits to fill drandom_seed[] */
-	iseed = (int64) (seed * (float8) UINT64CONST(0x7FFFFFFFFFFF));
-	drandom_seed[0] = (unsigned short) iseed;
-	drandom_seed[1] = (unsigned short) (iseed >> 16);
-	drandom_seed[2] = (unsigned short) (iseed >> 32);
+	pg_prng_fseed(&drandom_seed, seed);
 	drandom_seed_set = true;
 
 	PG_RETURN_VOID();
