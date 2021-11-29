@@ -1088,7 +1088,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"TEMPORARY", NULL, NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE TEMPORARY
 																		 * TABLE ... */
 	{"TEXT SEARCH", NULL, NULL, NULL},
-	{"TRANSFORM", NULL, NULL, NULL},
+	{"TRANSFORM", NULL, NULL, NULL, THING_NO_ALTER},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
 	{"TYPE", NULL, NULL, &Query_for_list_of_datatypes},
 	{"UNIQUE", NULL, NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE UNIQUE
@@ -1754,7 +1754,10 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER FOREIGN DATA WRAPPER <name> */
 	else if (Matches("ALTER", "FOREIGN", "DATA", "WRAPPER", MatchAny))
-		COMPLETE_WITH("HANDLER", "VALIDATOR", "OPTIONS", "OWNER TO", "RENAME TO");
+		COMPLETE_WITH("HANDLER", "VALIDATOR", "NO",
+					  "OPTIONS", "OWNER TO", "RENAME TO");
+	else if (Matches("ALTER", "FOREIGN", "DATA", "WRAPPER", MatchAny, "NO"))
+		COMPLETE_WITH("HANDLER", "VALIDATOR");
 
 	/* ALTER FOREIGN TABLE <name> */
 	else if (Matches("ALTER", "FOREIGN", "TABLE", MatchAny))
@@ -1907,9 +1910,12 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("DEFAULT", "NOT NULL", "SCHEMA");
 	/* ALTER SEQUENCE <name> */
 	else if (Matches("ALTER", "SEQUENCE", MatchAny))
-		COMPLETE_WITH("INCREMENT", "MINVALUE", "MAXVALUE", "RESTART", "NO",
-					  "CACHE", "CYCLE", "SET SCHEMA", "OWNED BY", "OWNER TO",
-					  "RENAME TO");
+		COMPLETE_WITH("AS", "INCREMENT", "MINVALUE", "MAXVALUE", "RESTART",
+					  "NO", "CACHE", "CYCLE", "SET SCHEMA", "OWNED BY",
+					  "OWNER TO", "RENAME TO");
+	/* ALTER SEQUENCE <name> AS */
+	else if (TailMatches("ALTER", "SEQUENCE", MatchAny, "AS"))
+		COMPLETE_WITH_CS("smallint", "integer", "bigint");
 	/* ALTER SEQUENCE <name> NO */
 	else if (Matches("ALTER", "SEQUENCE", MatchAny, "NO"))
 		COMPLETE_WITH("MINVALUE", "MAXVALUE", "CYCLE");
@@ -1935,6 +1941,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN' UNION SELECT 'TO'");
 	else if (Matches("ALTER", "VIEW", MatchAny, "ALTER|RENAME", "COLUMN"))
 		COMPLETE_WITH_ATTR(prev3_wd, "");
+	/* ALTER VIEW xxx ALTER [ COLUMN ] yyy */
+	else if (Matches("ALTER", "VIEW", MatchAny, "ALTER", MatchAny) ||
+			 Matches("ALTER", "VIEW", MatchAny, "ALTER", "COLUMN", MatchAny))
+		COMPLETE_WITH("SET DEFAULT", "DROP DEFAULT");
 	/* ALTER VIEW xxx RENAME yyy */
 	else if (Matches("ALTER", "VIEW", MatchAny, "RENAME", MatchAnyExcept("TO")))
 		COMPLETE_WITH("TO");
