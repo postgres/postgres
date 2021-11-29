@@ -26,7 +26,11 @@ typedef struct pg_prng_state
  * Callers not needing local PRNG series may use this global state vector,
  * after initializing it with one of the pg_prng_...seed functions.
  */
+#ifndef FRONTEND
 extern PGDLLIMPORT pg_prng_state pg_global_prng_state;
+#else
+extern pg_prng_state pg_global_prng_state;
+#endif
 
 extern void pg_prng_seed(pg_prng_state *state, uint64 seed);
 extern void pg_prng_fseed(pg_prng_state *state, double fseed);
