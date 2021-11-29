@@ -957,9 +957,6 @@ CREATE MATERIALIZED VIEW sales_summary AS
     WHERE invoice_date &lt; CURRENT_DATE
     GROUP BY
       seller_no,
-      invoice_date
-    ORDER BY
-      seller_no,
       invoice_date;
 
 CREATE UNIQUE INDEX sales_summary_seller
