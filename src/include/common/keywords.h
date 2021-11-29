@@ -22,14 +22,8 @@
 #define TYPE_FUNC_NAME_KEYWORD	2
 #define RESERVED_KEYWORD		3
 
-#ifndef FRONTEND
 extern PGDLLIMPORT const ScanKeywordList ScanKeywords;
 extern PGDLLIMPORT const uint8 ScanKeywordCategories[];
 extern PGDLLIMPORT const bool ScanKeywordBareLabel[];
-#else
-extern const ScanKeywordList ScanKeywords;
-extern const uint8 ScanKeywordCategories[];
-extern const bool ScanKeywordBareLabel[];
-#endif
 
 #endif							/* KEYWORDS_H */

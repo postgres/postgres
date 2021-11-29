@@ -1312,10 +1312,22 @@ extern long long strtoll(const char *str, char **endptr, int base);
 extern unsigned long long strtoull(const char *str, char **endptr, int base);
 #endif
 
-/* no special DLL markers on most ports */
+/*
+ * Use "extern PGDLLIMPORT ..." to declare variables that are defined
+ * in the core backend and need to be accessible by loadable modules.
+ * No special marking is required on most ports.
+ */
 #ifndef PGDLLIMPORT
 #define PGDLLIMPORT
 #endif
+
+/*
+ * Use "extern PGDLLEXPORT ..." to declare functions that are defined in
+ * loadable modules and need to be callable by the core backend.  (Usually,
+ * this is not necessary because our build process automatically exports
+ * such symbols, but sometimes manual marking is required.)
+ * No special marking is required on most ports.
+ */
 #ifndef PGDLLEXPORT
 #define PGDLLEXPORT
 #endif
