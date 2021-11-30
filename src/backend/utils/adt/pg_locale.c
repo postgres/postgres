@@ -1068,7 +1068,7 @@ get_iso_localename(const char *winlocname)
 						LOCALE_NAME_MAX_LENGTH);
 
 	/*
-	 * If the lc_messages is already an Unix-style string, we have a direct
+	 * If the lc_messages is already a Unix-style string, we have a direct
 	 * match with LOCALE_SNAME, e.g. en-US, en_US.
 	 */
 	ret_val = GetLocaleInfoEx(wc_locale_name, LOCALE_SNAME, (LPWSTR) &buffer,

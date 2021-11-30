@@ -692,7 +692,7 @@ User Locks (Advisory Locks)
 User locks are handled totally on the application side as long term
 cooperative locks which may extend beyond the normal transaction boundaries.
 Their purpose is to indicate to an application that someone is `working'
-on an item.  So it is possible to put an user lock on a tuple's oid,
+on an item.  So it is possible to put a user lock on a tuple's oid,
 retrieve the tuple, work on it for an hour and then update it and remove
 the lock.  While the lock is active other clients can still read and write
 the tuple but they can be aware that it has been locked at the application
