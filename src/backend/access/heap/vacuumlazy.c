@@ -955,7 +955,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	lazy_check_wraparound_failsafe(vacrel);
 
 	/*
-	 * Allocate the space for dead tuples.  Note that this handles parallel
+	 * Allocate the space for dead_items.  Note that this handles parallel
 	 * VACUUM initialization as part of allocating shared memory space used
 	 * for dead_items.
 	 */
@@ -1359,7 +1359,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 		 * Prune and freeze tuples.
 		 *
 		 * Accumulates details of remaining LP_DEAD line pointers on page in
-		 * dead tuple list.  This includes LP_DEAD line pointers that we
+		 * dead_items array.  This includes LP_DEAD line pointers that we
 		 * pruned ourselves, as well as existing LP_DEAD line pointers that
 		 * were pruned some time earlier.  Also considers freezing XIDs in the
 		 * tuple headers of remaining items with storage.
