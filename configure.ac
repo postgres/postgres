@@ -1132,7 +1132,7 @@ if test "$with_python" = yes; then
   PGAC_CHECK_PYTHON_EMBED_SETUP
 fi
 
-if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
+if test x"$cross_compiling" = x"yes" && test -z "$with_system_tzdata"; then
   PGAC_PATH_PROGS(ZIC, zic)
   if test -z "$ZIC"; then
     AC_MSG_ERROR([
@@ -2287,6 +2287,8 @@ if test x"$with_ssl" = x"openssl" ; then
   AC_MSG_RESULT([OpenSSL])
 elif test x"$PORTNAME" = x"win32" ; then
   AC_MSG_RESULT([Windows native])
+elif test x"$cross_compiling" = x"yes"; then
+  AC_MSG_RESULT([assuming /dev/urandom])
 else
   AC_MSG_RESULT([/dev/urandom])
   AC_CHECK_FILE([/dev/urandom], [], [])

@@ -10474,7 +10474,7 @@ $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
 
 fi
 
-if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
+if test x"$cross_compiling" = x"yes" && test -z "$with_system_tzdata"; then
   if test -z "$ZIC"; then
   for ac_prog in zic
 do
@@ -18679,6 +18679,9 @@ $as_echo "OpenSSL" >&6; }
 elif test x"$PORTNAME" = x"win32" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Windows native" >&5
 $as_echo "Windows native" >&6; }
+elif test x"$cross_compiling" = x"yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming /dev/urandom" >&5
+$as_echo "assuming /dev/urandom" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: /dev/urandom" >&5
 $as_echo "/dev/urandom" >&6; }
