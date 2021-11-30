@@ -49,7 +49,7 @@ $node->start;
 
 # Configure server for SSL connections, with password handling.
 configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
-	"scram-sha-256", "pass", "scram-sha-256");
+	"scram-sha-256", 'password' => "pass", 'password_enc' => "scram-sha-256");
 switch_server_cert($node, 'server-cn-only');
 $ENV{PGPASSWORD} = "pass";
 $common_connstr =
