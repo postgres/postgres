@@ -289,7 +289,7 @@ int
 _pgfstat64(int fileno, struct stat *buf)
 {
 	HANDLE		hFile = (HANDLE) _get_osfhandle(fileno);
-	char		path[MAX_PATH];
+	BY_HANDLE_FILE_INFORMATION fiData;
 
 	if (hFile == INVALID_HANDLE_VALUE || buf == NULL)
 	{
@@ -306,7 +306,7 @@ _pgfstat64(int fileno, struct stat *buf)
 	if ((fileno == _fileno(stdin) ||
 		 fileno == _fileno(stdout) ||
 		 fileno == _fileno(stderr)) &&
-		GetFinalPathNameByHandleA(hFile, path, MAX_PATH, VOLUME_NAME_NT) == 0)
+		!GetFileInformationByHandle(hFile, &fiData))
 	{
 		memset(buf, 0, sizeof(*buf));
 		buf->st_mode = _S_IFCHR;
