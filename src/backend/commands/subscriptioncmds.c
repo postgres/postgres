@@ -32,6 +32,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "pgstat.h"
 #include "replication/logicallauncher.h"
 #include "replication/origin.h"
 #include "replication/slot.h"
@@ -1204,7 +1205,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * Since dropping a replication slot is not transactional, the replication
 	 * slot stays dropped even if the transaction rolls back.  So we cannot
 	 * run DROP SUBSCRIPTION inside a transaction block if dropping the
-	 * replication slot.
+	 * replication slot.  Also, in this case, we report a message for dropping
+	 * the subscription to the stats collector.
 	 *
 	 * XXX The command name should really be something like "DROP SUBSCRIPTION
 	 * of a subscription that is associated with a replication slot", but we
@@ -1376,6 +1378,18 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		walrcv_disconnect(wrconn);
 	}
 	PG_END_TRY();
+
+	/*
+	 * Send a message for dropping this subscription to the stats collector.
+	 * We can safely report dropping the subscription statistics here if the
+	 * subscription is associated with a replication slot since we cannot run
+	 * DROP SUBSCRIPTION inside a transaction block.  Subscription statistics
+	 * will be removed later by (auto)vacuum either if it's not associated
+	 * with a replication slot or if the message for dropping the subscription
+	 * gets lost.
+	 */
+	if (slotname)
+		pgstat_report_subscription_drop(subid);
 
 	table_close(rel, NoLock);
 }
