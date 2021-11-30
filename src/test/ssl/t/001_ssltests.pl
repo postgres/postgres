@@ -39,28 +39,31 @@ my $common_connstr;
 # The client's private key must not be world-readable, so take a copy
 # of the key stored in the code tree and update its permissions.
 #
-# This changes ssl/client.key to ssl/client_tmp.key etc for the rest
-# of the tests.
+# This changes to using keys stored in a temporary path for the rest of
+# the tests. To get the full path for inclusion in connection strings, the
+# %key hash can be interrogated.
+my %key;
 my @keys = (
-	"client",               "client-revoked",
-	"client-der",           "client-encrypted-pem",
-	"client-encrypted-der", "client-dn");
-foreach my $key (@keys)
+	"client.key",               "client-revoked.key",
+	"client-der.key",           "client-encrypted-pem.key",
+	"client-encrypted-der.key", "client-dn.key");
+foreach my $keyfile (@keys)
 {
-	copy("ssl/${key}.key", "ssl/${key}_tmp.key")
+	copy("ssl/${keyfile}", "${PostgreSQL::Test::Utils::tmp_check}/${keyfile}")
 	  or die
-	  "couldn't copy ssl/${key}.key to ssl/${key}_tmp.key for permissions change: $!";
-	chmod 0600, "ssl/${key}_tmp.key"
-	  or die "failed to change permissions on ssl/${key}_tmp.key: $!";
+	  "couldn't copy ssl/${keyfile} to ${PostgreSQL::Test::Utils::tmp_check}/${keyfile} for permissions change: $!";
+	chmod 0600, "${PostgreSQL::Test::Utils::tmp_check}/${keyfile}"
+	  or die "failed to change permissions on ${PostgreSQL::Test::Utils::tmp_check}/${keyfile}: $!";
+
+	$key{$keyfile} = "${PostgreSQL::Test::Utils::tmp_check}/$keyfile";
 }
 
 # Also make a copy of that explicitly world-readable.  We can't
 # necessarily rely on the file in the source tree having those
-# permissions.  Add it to @keys to include it in the final clean
-# up phase.
-copy("ssl/client.key", "ssl/client_wrongperms_tmp.key");
-chmod 0644, "ssl/client_wrongperms_tmp.key";
-push @keys, 'client_wrongperms';
+# permissions.
+copy("ssl/client.key", "${PostgreSQL::Test::Utils::tmp_check}/client_wrongperms.key");
+chmod 0644, "${PostgreSQL::Test::Utils::tmp_check}/client_wrongperms.key";
+$key{'client_wrongperms.key'} = "${PostgreSQL::Test::Utils::tmp_check}/client_wrongperms.key";
 
 #### Set up the server.
 
@@ -399,34 +402,34 @@ $node->connect_fails(
 
 # correct client cert in unencrypted PEM
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 	"certificate authorization succeeds with correct client cert in PEM format"
 );
 
 # correct client cert in unencrypted DER
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-der_tmp.key",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-der.key'}",
 	"certificate authorization succeeds with correct client cert in DER format"
 );
 
 # correct client cert in encrypted PEM
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='dUmmyP^#+'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-encrypted-pem.key'} sslpassword='dUmmyP^#+'",
 	"certificate authorization succeeds with correct client cert in encrypted PEM format"
 );
 
 # correct client cert in encrypted DER
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-der_tmp.key sslpassword='dUmmyP^#+'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-encrypted-der.key'} sslpassword='dUmmyP^#+'",
 	"certificate authorization succeeds with correct client cert in encrypted DER format"
 );
 
 # correct client cert in encrypted PEM with wrong password
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='wrong'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-encrypted-pem.key'} sslpassword='wrong'",
 	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format",
 	expected_stderr =>
-	  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!
+	  qr!\Qprivate key file "$key{'client-encrypted-pem.key'}": bad decrypt\E!
 );
 
 
@@ -434,7 +437,7 @@ $node->connect_fails(
 my $dn_connstr = "$common_connstr dbname=certdb_dn";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=$key{'client-dn.key'}",
 	"certificate authorization succeeds with DN mapping",
 	log_like => [
 		qr/connection authenticated: identity="CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG" method=cert/
@@ -444,14 +447,14 @@ $node->connect_ok(
 $dn_connstr = "$common_connstr dbname=certdb_dn_re";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=$key{'client-dn.key'}",
 	"certificate authorization succeeds with DN regex mapping");
 
 # same thing but using explicit CN
 $dn_connstr = "$common_connstr dbname=certdb_cn";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=ssl/client-dn_tmp.key",
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt sslkey=$key{'client-dn.key'}",
 	"certificate authorization succeeds with CN mapping",
 	# the full DN should still be used as the authenticated identity
 	log_like => [
@@ -469,18 +472,18 @@ TODO:
 
 	# correct client cert in encrypted PEM with empty password
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword=''",
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-encrypted-pem.key'} sslpassword=''",
 		"certificate authorization fails with correct client cert and empty password in encrypted PEM format",
 		expected_stderr =>
-		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!
+		  qr!\Qprivate key file "$key{'client-encrypted-pem.key'}": processing error\E!
 	);
 
 	# correct client cert in encrypted PEM with no password
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key",
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client-encrypted-pem.key'}",
 		"certificate authorization fails with correct client cert and no password in encrypted PEM format",
 		expected_stderr =>
-		  qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!
+		  qr!\Qprivate key file "$key{'client-encrypted-pem.key'}": processing error\E!
 	);
 
 }
@@ -522,7 +525,7 @@ command_like(
 		'-P',
 		'null=_null_',
 		'-d',
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
@@ -536,16 +539,16 @@ SKIP:
 	skip "Permissions check not enforced on Windows", 2 if ($windows_os);
 
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client_wrongperms.key'}",
 		"certificate authorization fails because of file permissions",
 		expected_stderr =>
-		  qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!
+		  qr!\Qprivate key file "$key{'client_wrongperms.key'}" has group or world access\E!
 	);
 }
 
 # client cert belonging to another user
 $node->connect_fails(
-	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 	"certificate authorization fails with client cert belonging to another user",
 	expected_stderr =>
 	  qr/certificate authentication failed for user "anotheruser"/,
@@ -555,7 +558,7 @@ $node->connect_fails(
 
 # revoked client cert
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
+	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=$key{'client-revoked.key'}",
 	"certificate authorization fails with revoked client cert",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
 	# revoked certificates should not authenticate the user
@@ -568,13 +571,13 @@ $common_connstr =
   "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=verifydb hostaddr=$SERVERHOSTADDR";
 
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 	"auth_option clientcert=verify-full succeeds with matching username and Common Name",
 	# verify-full does not provide authentication
 	log_unlike => [qr/connection authenticated:/],);
 
 $node->connect_fails(
-	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	"$common_connstr user=anotheruser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 	"auth_option clientcert=verify-full fails with mismatching username and Common Name",
 	expected_stderr =>
 	  qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,
@@ -584,7 +587,7 @@ $node->connect_fails(
 # Check that connecting with auth-optionverify-ca in pg_hba :
 # works, when username doesn't match Common Name
 $node->connect_ok(
-	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
+	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt sslkey=$key{'client.key'}",
 	"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name",
 	# verify-full does not provide authentication
 	log_unlike => [qr/connection authenticated:/],);
@@ -592,7 +595,7 @@ $node->connect_ok(
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
 $common_connstr =
-  "user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+  "user=ssltestuser dbname=certdb sslkey=$key{'client.key'} sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 $node->connect_ok(
 	"$common_connstr sslmode=require sslcert=ssl/client+client_ca.crt",
@@ -608,12 +611,6 @@ switch_server_cert($node, 'server-cn-only', undef, undef,
 
 # revoked client cert
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=ssl/client-revoked_tmp.key",
+	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=$key{'client-revoked.key'}",
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
-
-# clean up
-foreach my $key (@keys)
-{
-	unlink("ssl/${key}_tmp.key");
-}

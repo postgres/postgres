@@ -95,7 +95,7 @@ $node->connect_fails(
 # because channel binding is not performed.  Note that ssl/client.key may
 # be used in a different test, so the name of this temporary client key
 # is chosen here to be unique.
-my $client_tmp_key = "ssl/client_scram_tmp.key";
+my $client_tmp_key = "${PostgreSQL::Test::Utils::tmp_check}/client_scram.key";
 copy("ssl/client.key", $client_tmp_key);
 chmod 0600, $client_tmp_key;
 $node->connect_fails(
@@ -112,8 +112,5 @@ $node->connect_ok(
 	log_like => [
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
 	]);
-
-# clean up
-unlink($client_tmp_key);
 
 done_testing($number_of_tests);
