@@ -7058,7 +7058,7 @@ void
 process_pending_request(AsyncRequest *areq)
 {
 	ForeignScanState *node = (ForeignScanState *) areq->requestee;
-	PgFdwScanState *fsstate PG_USED_FOR_ASSERTS_ONLY = (PgFdwScanState *) node->fdw_state;
+	PgFdwScanState *fsstate = (PgFdwScanState *) node->fdw_state;
 
 	/* The request would have been pending for a callback */
 	Assert(areq->callback_pending);
