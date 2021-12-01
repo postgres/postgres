@@ -13,11 +13,6 @@ REGRESS = uuid_ossp
 
 SHLIB_LINK += $(UUID_LIBS)
 
-# We copy some needed files verbatim from pgcrypto
-pgcrypto_src = $(top_srcdir)/contrib/pgcrypto
-
-PG_CPPFLAGS = -I$(pgcrypto_src)
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

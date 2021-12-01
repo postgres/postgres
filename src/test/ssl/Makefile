@@ -9,6 +9,8 @@
 #
 #-------------------------------------------------------------------------
 
+EXTRA_INSTALL = contrib/sslinfo
+
 subdir = src/test/ssl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global

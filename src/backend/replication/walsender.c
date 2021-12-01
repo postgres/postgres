@@ -230,7 +230,7 @@ static void WalSndShutdown(void) pg_attribute_noreturn();
 static void XLogSendPhysical(void);
 static void XLogSendLogical(void);
 static void WalSndDone(WalSndSendDataCallback send_data);
-static XLogRecPtr GetStandbyFlushRecPtr(void);
+static XLogRecPtr GetStandbyFlushRecPtr(TimeLineID *tli);
 static void IdentifySystem(void);
 static void ReadReplicationSlot(ReadReplicationSlotCmd *cmd);
 static void CreateReplicationSlot(CreateReplicationSlotCmd *cmd);
@@ -385,6 +385,7 @@ IdentifySystem(void)
 	TupleDesc	tupdesc;
 	Datum		values[4];
 	bool		nulls[4];
+	TimeLineID	currTLI;
 
 	/*
 	 * Reply with a result set with one row, four columns. First col is system
@@ -397,12 +398,9 @@ IdentifySystem(void)
 
 	am_cascading_walsender = RecoveryInProgress();
 	if (am_cascading_walsender)
-	{
-		/* this also updates ThisTimeLineID */
-		logptr = GetStandbyFlushRecPtr();
-	}
+		logptr = GetStandbyFlushRecPtr(&currTLI);
 	else
-		logptr = GetFlushRecPtr();
+		logptr = GetFlushRecPtr(&currTLI);
 
 	snprintf(xloc, sizeof(xloc), "%X/%X", LSN_FORMAT_ARGS(logptr));
 
@@ -441,7 +439,7 @@ IdentifySystem(void)
 	values[0] = CStringGetTextDatum(sysid);
 
 	/* column 2: timeline */
-	values[1] = Int32GetDatum(ThisTimeLineID);
+	values[1] = Int32GetDatum(currTLI);
 
 	/* column 3: wal location */
 	values[2] = CStringGetTextDatum(xloc);
@@ -537,7 +535,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 			if (RecoveryInProgress())
 				(void) GetXLogReplayRecPtr(&current_timeline);
 			else
-				current_timeline = ThisTimeLineID;
+				current_timeline = GetWALInsertionTimeLine();
 
 			timeline_history = readTimeLineHistory(current_timeline);
 			slots_position_timeline = tliOfPointInHistory(slot_contents.data.restart_lsn,
@@ -671,6 +669,7 @@ StartReplication(StartReplicationCmd *cmd)
 {
 	StringInfoData buf;
 	XLogRecPtr	FlushPtr;
+	TimeLineID	FlushTLI;
 
 	/* create xlogreader for physical replication */
 	xlogreader =
@@ -682,7 +681,8 @@ StartReplication(StartReplicationCmd *cmd)
 	if (!xlogreader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of memory"),
+				 errdetail("Failed while allocating a WAL reading processor.")));
 
 	/*
 	 * We assume here that we're logging enough information in the WAL for
@@ -710,24 +710,20 @@ StartReplication(StartReplicationCmd *cmd)
 
 	/*
 	 * Select the timeline. If it was given explicitly by the client, use
-	 * that. Otherwise use the timeline of the last replayed record, which is
-	 * kept in ThisTimeLineID.
+	 * that. Otherwise use the timeline of the last replayed record.
 	 */
 	am_cascading_walsender = RecoveryInProgress();
 	if (am_cascading_walsender)
-	{
-		/* this also updates ThisTimeLineID */
-		FlushPtr = GetStandbyFlushRecPtr();
-	}
+		FlushPtr = GetStandbyFlushRecPtr(&FlushTLI);
 	else
-		FlushPtr = GetFlushRecPtr();
+		FlushPtr = GetFlushRecPtr(&FlushTLI);
 
 	if (cmd->timeline != 0)
 	{
 		XLogRecPtr	switchpoint;
 
 		sendTimeLine = cmd->timeline;
-		if (sendTimeLine == ThisTimeLineID)
+		if (sendTimeLine == FlushTLI)
 		{
 			sendTimeLineIsHistoric = false;
 			sendTimeLineValidUpto = InvalidXLogRecPtr;
@@ -742,7 +738,7 @@ StartReplication(StartReplicationCmd *cmd)
 			 * Check that the timeline the client requested exists, and the
 			 * requested start location is on that timeline.
 			 */
-			timeLineHistory = readTimeLineHistory(ThisTimeLineID);
+			timeLineHistory = readTimeLineHistory(FlushTLI);
 			switchpoint = tliSwitchPoint(cmd->timeline, timeLineHistory,
 										 &sendTimeLineNextTLI);
 			list_free_deep(timeLineHistory);
@@ -781,7 +777,7 @@ StartReplication(StartReplicationCmd *cmd)
 	}
 	else
 	{
-		sendTimeLine = ThisTimeLineID;
+		sendTimeLine = FlushTLI;
 		sendTimeLineValidUpto = InvalidXLogRecPtr;
 		sendTimeLineIsHistoric = false;
 	}
@@ -909,9 +905,16 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 	int			count;
 	WALReadError errinfo;
 	XLogSegNo	segno;
+	TimeLineID	currTLI = GetWALInsertionTimeLine();
 
-	XLogReadDetermineTimeline(state, targetPagePtr, reqLen);
-	sendTimeLineIsHistoric = (state->currTLI != ThisTimeLineID);
+	/*
+	 * Since logical decoding is only permitted on a primary server, we know
+	 * that the current timeline ID can't be changing any more. If we did this
+	 * on a standby, we'd have to worry about the values we compute here
+	 * becoming invalid due to a promotion or timeline change.
+	 */
+	XLogReadDetermineTimeline(state, targetPagePtr, reqLen, currTLI);
+	sendTimeLineIsHistoric = (state->currTLI != currTLI);
 	sendTimeLine = state->currTLI;
 	sendTimeLineValidUpto = state->currTLIValidUntil;
 	sendTimeLineNextTLI = state->nextTLI;
@@ -1487,7 +1490,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 
 	/* Get a more recent flush pointer. */
 	if (!RecoveryInProgress())
-		RecentFlushPtr = GetFlushRecPtr();
+		RecentFlushPtr = GetFlushRecPtr(NULL);
 	else
 		RecentFlushPtr = GetXLogReplayRecPtr(NULL);
 
@@ -1521,7 +1524,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 
 		/* Update our idea of the currently flushed position. */
 		if (!RecoveryInProgress())
-			RecentFlushPtr = GetFlushRecPtr();
+			RecentFlushPtr = GetFlushRecPtr(NULL);
 		else
 			RecentFlushPtr = GetXLogReplayRecPtr(NULL);
 
@@ -2683,6 +2686,8 @@ XLogSendPhysical(void)
 	}
 	else if (am_cascading_walsender)
 	{
+		TimeLineID	SendRqstTLI;
+
 		/*
 		 * Streaming the latest timeline on a standby.
 		 *
@@ -2702,14 +2707,12 @@ XLogSendPhysical(void)
 		 */
 		bool		becameHistoric = false;
 
-		SendRqstPtr = GetStandbyFlushRecPtr();
+		SendRqstPtr = GetStandbyFlushRecPtr(&SendRqstTLI);
 
 		if (!RecoveryInProgress())
 		{
-			/*
-			 * We have been promoted. RecoveryInProgress() updated
-			 * ThisTimeLineID to the new current timeline.
-			 */
+			/* We have been promoted. */
+			SendRqstTLI = GetWALInsertionTimeLine();
 			am_cascading_walsender = false;
 			becameHistoric = true;
 		}
@@ -2717,10 +2720,9 @@ XLogSendPhysical(void)
 		{
 			/*
 			 * Still a cascading standby. But is the timeline we're sending
-			 * still the one recovery is recovering from? ThisTimeLineID was
-			 * updated by the GetStandbyFlushRecPtr() call above.
+			 * still the one recovery is recovering from?
 			 */
-			if (sendTimeLine != ThisTimeLineID)
+			if (sendTimeLine != SendRqstTLI)
 				becameHistoric = true;
 		}
 
@@ -2733,7 +2735,7 @@ XLogSendPhysical(void)
 			 */
 			List	   *history;
 
-			history = readTimeLineHistory(ThisTimeLineID);
+			history = readTimeLineHistory(SendRqstTLI);
 			sendTimeLineValidUpto = tliSwitchPoint(sendTimeLine, history, &sendTimeLineNextTLI);
 
 			Assert(sendTimeLine < sendTimeLineNextTLI);
@@ -2756,7 +2758,7 @@ XLogSendPhysical(void)
 		 * primary: if the primary subsequently crashes and restarts, standbys
 		 * must not have applied any WAL that got lost on the primary.
 		 */
-		SendRqstPtr = GetFlushRecPtr();
+		SendRqstPtr = GetFlushRecPtr(NULL);
 	}
 
 	/*
@@ -2978,7 +2980,8 @@ XLogSendLogical(void)
 
 	/* xlog record was invalid */
 	if (errm != NULL)
-		elog(ERROR, "%s", errm);
+		elog(ERROR, "could not find record while sending logically-decoded data: %s",
+			 errm);
 
 	if (record != NULL)
 	{
@@ -2997,9 +3000,9 @@ XLogSendLogical(void)
 	 * we only need to update flushPtr if EndRecPtr is past it.
 	 */
 	if (flushPtr == InvalidXLogRecPtr)
-		flushPtr = GetFlushRecPtr();
+		flushPtr = GetFlushRecPtr(NULL);
 	else if (logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
-		flushPtr = GetFlushRecPtr();
+		flushPtr = GetFlushRecPtr(NULL);
 
 	/* If EndRecPtr is still past our flushPtr, it means we caught up. */
 	if (logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
@@ -3069,11 +3072,11 @@ WalSndDone(WalSndSendDataCallback send_data)
  * can be sent to the standby. This should only be called when in recovery,
  * ie. we're streaming to a cascaded standby.
  *
- * As a side-effect, ThisTimeLineID is updated to the TLI of the last
+ * As a side-effect, *tli is updated to the TLI of the last
  * replayed WAL record.
  */
 static XLogRecPtr
-GetStandbyFlushRecPtr(void)
+GetStandbyFlushRecPtr(TimeLineID *tli)
 {
 	XLogRecPtr	replayPtr;
 	TimeLineID	replayTLI;
@@ -3090,10 +3093,10 @@ GetStandbyFlushRecPtr(void)
 	receivePtr = GetWalRcvFlushRecPtr(NULL, &receiveTLI);
 	replayPtr = GetXLogReplayRecPtr(&replayTLI);
 
-	ThisTimeLineID = replayTLI;
+	*tli = replayTLI;
 
 	result = replayPtr;
-	if (receiveTLI == ThisTimeLineID && receivePtr > replayPtr)
+	if (receiveTLI == replayTLI && receivePtr > replayPtr)
 		result = receivePtr;
 
 	return result;

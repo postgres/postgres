@@ -29,14 +29,6 @@
 #include <arpa/inet.h>
 #endif
 
-#include <openssl/ssl.h>
-#include <openssl/dh.h>
-#include <openssl/conf.h>
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ec.h>
-#endif
-
-#include "common/openssl.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -44,6 +36,21 @@
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+
+/*
+ * These SSL-related #includes must come after all system-provided headers.
+ * This ensures that OpenSSL can take care of conflicts with Windows'
+ * <wincrypt.h> by #undef'ing the conflicting macros.  (We don't directly
+ * include <wincrypt.h>, but some other Windows headers do.)
+ */
+#include "common/openssl.h"
+#include <openssl/conf.h>
+#include <openssl/dh.h>
+#ifndef OPENSSL_NO_ECDH
+#include <openssl/ec.h>
+#endif
+#include <openssl/x509v3.h>
+
 
 /* default init hook can be overridden by a shared library */
 static void default_openssl_tls_init(SSL_CTX *context, bool isServerStart);

@@ -98,7 +98,9 @@ extern void wal_segment_open(XLogReaderState *state,
 extern void wal_segment_close(XLogReaderState *state);
 
 extern void XLogReadDetermineTimeline(XLogReaderState *state,
-									  XLogRecPtr wantPage, uint32 wantLength);
+									  XLogRecPtr wantPage,
+									  uint32 wantLength,
+									  TimeLineID currTLI);
 
 extern void WALReadRaiseError(WALReadError *errinfo);
 

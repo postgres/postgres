@@ -45,16 +45,26 @@
  * defines for dynamic linking on Win32 platform
  */
 
+/*
+ * Variables declared in the core backend and referenced by loadable
+ * modules need to be marked "dllimport" in the core build, but
+ * "dllexport" when the declaration is read in a loadable module.
+ * No special markings should be used when compiling frontend code.
+ */
+#ifndef FRONTEND
 #ifdef BUILDING_DLL
 #define PGDLLIMPORT __declspec (dllexport)
 #else
 #define PGDLLIMPORT __declspec (dllimport)
 #endif
+#endif
 
+/*
+ * Under MSVC, functions exported by a loadable module must be marked
+ * "dllexport".  Other compilers don't need that.
+ */
 #ifdef _MSC_VER
 #define PGDLLEXPORT __declspec (dllexport)
-#else
-#define PGDLLEXPORT
 #endif
 
 /*

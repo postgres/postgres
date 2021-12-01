@@ -1583,7 +1583,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 MemoizePath *
 create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					List *param_exprs, List *hash_operators,
-					bool singlerow, double calls)
+					bool singlerow, bool binary_mode, double calls)
 {
 	MemoizePath *pathnode = makeNode(MemoizePath);
 
@@ -1603,6 +1603,7 @@ create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->hash_operators = hash_operators;
 	pathnode->param_exprs = param_exprs;
 	pathnode->singlerow = singlerow;
+	pathnode->binary_mode = binary_mode;
 	pathnode->calls = calls;
 
 	/*
@@ -3942,6 +3943,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 													mpath->param_exprs,
 													mpath->hash_operators,
 													mpath->singlerow,
+													mpath->binary_mode,
 													mpath->calls);
 			}
 		default:

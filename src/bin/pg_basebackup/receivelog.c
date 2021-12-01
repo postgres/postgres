@@ -70,7 +70,12 @@ mark_file_as_archived(StreamCtl *stream, const char *fname)
 		return false;
 	}
 
-	stream->walmethod->close(f, CLOSE_NORMAL);
+	if (stream->walmethod->close(f, CLOSE_NORMAL) != 0)
+	{
+		pg_log_error("could not close archive status file \"%s\": %s",
+					 tmppath, stream->walmethod->getlasterror());
+		return false;
+	}
 
 	return true;
 }
@@ -109,7 +114,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	 * When streaming to tar, no file with this name will exist before, so we
 	 * never have to verify a size.
 	 */
-	if (stream->walmethod->compression() == 0 &&
+	if (stream->walmethod->compression_method() == COMPRESSION_NONE &&
 		stream->walmethod->existsfile(fn))
 	{
 		size = stream->walmethod->get_file_size(fn);
@@ -1133,7 +1138,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 		if (stream->walmethod->write(walfile, copybuf + hdr_len + bytes_written,
 									 bytes_to_write) != bytes_to_write)
 		{
-			pg_log_error("could not write %u bytes to WAL file \"%s\": %s",
+			pg_log_error("could not write %d bytes to WAL file \"%s\": %s",
 						 bytes_to_write, current_walfile_name,
 						 stream->walmethod->getlasterror());
 			return false;

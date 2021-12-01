@@ -23,6 +23,11 @@
   on the current database.
  </para>
 
+ <para>
+  <filename>pgcrypto</filename> requires OpenSSL and won't be installed if
+  OpenSSL support was not selected when PostgreSQL was built.
+ </para>
+
  <sect2>
   <title>General Hashing Functions</title>
 
@@ -44,9 +49,8 @@ digest(data bytea, type text) returns bytea
     Standard algorithms are <literal>md5</literal>, <literal>sha1</literal>,
     <literal>sha224</literal>, <literal>sha256</literal>,
     <literal>sha384</literal> and <literal>sha512</literal>.
-    If <filename>pgcrypto</filename> was built with
-    <productname>OpenSSL</productname>, more algorithms are available, as
-    detailed in <xref linkend="pgcrypto-with-without-openssl"/>.
+    Moreover, any digest algorithm <productname>OpenSSL</productname> supports
+    is automatically picked up.
    </para>
 
    <para>
@@ -764,7 +768,7 @@ pgp_sym_encrypt(data, psw, 'compress-algo=1, cipher-algo=aes256')
     Which cipher algorithm to use.
    </para>
 <literallayout>
-Values: bf, aes128, aes192, aes256 (OpenSSL-only: <literal>3des</literal>, <literal>cast5</literal>)
+Values: bf, aes128, aes192, aes256, 3des, cast5
 Default: aes128
 Applies to: pgp_sym_encrypt, pgp_pub_encrypt
 </literallayout>
@@ -1163,76 +1167,9 @@ gen_random_uuid() returns uuid
    </para>
 
    <para>
-    When compiled with <productname>OpenSSL</productname>, there will be
-    more algorithms available. Also public-key encryption functions will
-    be faster as <productname>OpenSSL</productname> has more optimized
-    BIGNUM functions.
+    <filename>pgcrypto</filename> requires <productname>OpenSSL</productname>.
+    Otherwise, it will not be built or installed.
    </para>
-
-   <table id="pgcrypto-with-without-openssl">
-    <title>Summary of Functionality with and without OpenSSL</title>
-    <tgroup cols="3">
-     <thead>
-      <row>
-       <entry>Functionality</entry>
-       <entry>Built-in</entry>
-       <entry>With OpenSSL</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>MD5</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>SHA1</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>SHA224/256/384/512</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>Other digest algorithms</entry>
-       <entry>no</entry>
-       <entry>yes (Note 1)</entry>
-      </row>
-      <row>
-       <entry>Blowfish</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>AES</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>DES/3DES/CAST5</entry>
-       <entry>no</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>Raw encryption</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>PGP Symmetric encryption</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-      <row>
-       <entry>PGP Public-Key encryption</entry>
-       <entry>yes</entry>
-       <entry>yes</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
 
    <para>
     When compiled against <productname>OpenSSL</productname> 3.0.0 and later
@@ -1240,21 +1177,6 @@ gen_random_uuid() returns uuid
     <filename>openssl.cnf</filename> configuration file in order to use older
     ciphers like DES or Blowfish.
    </para>
-
-   <para>
-    Notes:
-   </para>
-
-   <orderedlist>
-    <listitem>
-     <para>
-      Any digest algorithm <productname>OpenSSL</productname> supports
-      is automatically picked up.
-      This is not possible with ciphers, which need to be supported
-      explicitly.
-     </para>
-    </listitem>
-   </orderedlist>
   </sect3>
 
   <sect3>
@@ -1400,31 +1322,6 @@ gen_random_uuid() returns uuid
       <entry>Blowfish crypt</entry>
       <entry>Solar Designer</entry>
       <entry>www.openwall.com</entry>
-     </row>
-     <row>
-      <entry>Blowfish cipher</entry>
-      <entry>Simon Tatham</entry>
-      <entry>PuTTY</entry>
-     </row>
-     <row>
-      <entry>Rijndael cipher</entry>
-      <entry>Brian Gladman</entry>
-      <entry>OpenBSD sys/crypto</entry>
-     </row>
-     <row>
-      <entry>MD5 hash and SHA1</entry>
-      <entry>WIDE Project</entry>
-      <entry>KAME kame/sys/crypto</entry>
-     </row>
-     <row>
-      <entry>SHA256/384/512</entry>
-      <entry>Aaron D. Gifford</entry>
-      <entry>OpenBSD sys/crypto</entry>
-     </row>
-     <row>
-      <entry>BIGNUM math</entry>
-      <entry>Michael J. Fromberger</entry>
-      <entry>dartmouth.edu/~sting/sw/imath</entry>
      </row>
     </tbody>
    </tgroup>

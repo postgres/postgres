@@ -2100,7 +2100,7 @@ WITH outermost(x) AS (
 )
 SELECT * FROM outermost ORDER BY 1;
 ERROR:  relation "outermost" does not exist
-LINE 4:          SELECT * FROM outermost  
+LINE 4:          SELECT * FROM outermost  -- fail
                                ^
 DETAIL:  There is a WITH item named "outermost", but it cannot be referenced from this part of the query.
 HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
@@ -2124,7 +2124,7 @@ WITH RECURSIVE outermost(x) AS (
 )
 SELECT * FROM outermost ORDER BY 1;
 ERROR:  recursive reference to query "outermost" must not appear within a subquery
-LINE 2:   WITH innermost as (SELECT 2 FROM outermost) 
+LINE 2:   WITH innermost as (SELECT 2 FROM outermost) -- fail
                                            ^
 --
 -- This test will fail with the old implementation of PARAM_EXEC parameter

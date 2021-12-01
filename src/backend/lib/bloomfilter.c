@@ -81,8 +81,7 @@ static inline uint32 mod_m(uint32 a, uint64 m);
  * distinct seed value on every call makes it unlikely that the same false
  * positives will reoccur when the same set is fingerprinted a second time.
  * Callers that don't care about this pass a constant as their seed, typically
- * 0.  Callers can use a pseudo-random seed in the range of 0 - INT_MAX by
- * calling random().
+ * 0.  Callers can also use a pseudo-random seed, eg from pg_prng_uint64().
  */
 bloom_filter *
 bloom_create(int64 total_elems, int bloom_work_mem, uint64 seed)

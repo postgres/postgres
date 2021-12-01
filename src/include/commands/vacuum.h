@@ -40,7 +40,7 @@
 
 /*
  * bulkdelete can be performed in parallel.  This option can be used by
- * IndexAm's that need to scan the index to delete the tuples.
+ * index AMs that need to scan indexes to delete tuples.
  */
 #define VACUUM_OPTION_PARALLEL_BULKDEL		(1 << 0)
 

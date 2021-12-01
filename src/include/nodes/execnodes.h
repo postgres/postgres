@@ -2109,8 +2109,12 @@ typedef struct MemoizeState
 								 * NULL if 'last_tuple' is NULL. */
 	bool		singlerow;		/* true if the cache entry is to be marked as
 								 * complete after caching the first tuple. */
+	bool		binary_mode;	/* true when cache key should be compared bit
+								 * by bit, false when using hash equality ops */
 	MemoizeInstrumentation stats;	/* execution statistics */
 	SharedMemoizeInfo *shared_info; /* statistics for parallel workers */
+	Bitmapset	   *keyparamids; /* Param->paramids of expressions belonging to
+								  * param_exprs */
 } MemoizeState;
 
 /* ----------------

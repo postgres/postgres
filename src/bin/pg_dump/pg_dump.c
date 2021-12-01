@@ -2088,13 +2088,42 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer insertStmt = NULL;
+	char	   *attgenerated;
 	PGresult   *res;
-	int			nfields;
+	int			nfields,
+				i;
 	int			rows_per_statement = dopt->dump_inserts;
 	int			rows_this_statement = 0;
 
-	appendPQExpBuffer(q, "DECLARE _pg_dump_cursor CURSOR FOR "
-					  "SELECT * FROM ONLY %s",
+	/*
+	 * If we're going to emit INSERTs with column names, the most efficient
+	 * way to deal with generated columns is to exclude them entirely.  For
+	 * INSERTs without column names, we have to emit DEFAULT rather than the
+	 * actual column value --- but we can save a few cycles by fetching nulls
+	 * rather than the uninteresting-to-us value.
+	 */
+	attgenerated = (char *) pg_malloc(tbinfo->numatts * sizeof(char));
+	appendPQExpBufferStr(q, "DECLARE _pg_dump_cursor CURSOR FOR SELECT ");
+	nfields = 0;
+	for (i = 0; i < tbinfo->numatts; i++)
+	{
+		if (tbinfo->attisdropped[i])
+			continue;
+		if (tbinfo->attgenerated[i] && dopt->column_inserts)
+			continue;
+		if (nfields > 0)
+			appendPQExpBufferStr(q, ", ");
+		if (tbinfo->attgenerated[i])
+			appendPQExpBufferStr(q, "NULL");
+		else
+			appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+		attgenerated[nfields] = tbinfo->attgenerated[i];
+		nfields++;
+	}
+	/* Servers before 9.4 will complain about zero-column SELECT */
+	if (nfields == 0)
+		appendPQExpBufferStr(q, "NULL");
+	appendPQExpBuffer(q, " FROM ONLY %s",
 					  fmtQualifiedDumpable(tbinfo));
 	if (tdinfo->filtercond)
 		appendPQExpBuffer(q, " %s", tdinfo->filtercond);
@@ -2105,14 +2134,19 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 	{
 		res = ExecuteSqlQuery(fout, "FETCH 100 FROM _pg_dump_cursor",
 							  PGRES_TUPLES_OK);
-		nfields = PQnfields(res);
+
+		/* cross-check field count, allowing for dummy NULL if any */
+		if (nfields != PQnfields(res) &&
+			!(nfields == 0 && PQnfields(res) == 1))
+			fatal("wrong number of fields retrieved from table \"%s\"",
+				  tbinfo->dobj.name);
 
 		/*
 		 * First time through, we build as much of the INSERT statement as
 		 * possible in "insertStmt", which we can then just print for each
-		 * statement. If the table happens to have zero columns then this will
-		 * be a complete statement, otherwise it will end in "VALUES" and be
-		 * ready to have the row's column values printed.
+		 * statement. If the table happens to have zero dumpable columns then
+		 * this will be a complete statement, otherwise it will end in
+		 * "VALUES" and be ready to have the row's column values printed.
 		 */
 		if (insertStmt == NULL)
 		{
@@ -2191,7 +2225,7 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 			{
 				if (field > 0)
 					archputs(", ", fout);
-				if (tbinfo->attgenerated[field])
+				if (attgenerated[field])
 				{
 					archputs("DEFAULT", fout);
 					continue;
@@ -2296,6 +2330,7 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 	destroyPQExpBuffer(q);
 	if (insertStmt != NULL)
 		destroyPQExpBuffer(insertStmt);
+	free(attgenerated);
 
 	return 1;
 }
@@ -4194,7 +4229,7 @@ getPublicationNamespaces(Archive *fout)
 			continue;
 
 		/* OK, make a DumpableObject for this relationship */
-		pubsinfo[j].dobj.objType = DO_PUBLICATION_REL_IN_SCHEMA;
+		pubsinfo[j].dobj.objType = DO_PUBLICATION_TABLE_IN_SCHEMA;
 		pubsinfo[j].dobj.catId.tableoid =
 			atooid(PQgetvalue(res, i, i_tableoid));
 		pubsinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
@@ -4563,7 +4598,7 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	/* Build list of quoted publications and append them to query. */
 	if (!parsePGArray(subinfo->subpublications, &pubnames, &npubnames))
-		fatal("could not parse subpublications array");
+		fatal("could not parse %s array", "subpublications");
 
 	publications = createPQExpBuffer();
 	for (i = 0; i < npubnames; i++)
@@ -10331,7 +10366,7 @@ dumpDumpableObject(Archive *fout, const DumpableObject *dobj)
 		case DO_PUBLICATION_REL:
 			dumpPublicationTable(fout, (const PublicationRelInfo *) dobj);
 			break;
-		case DO_PUBLICATION_REL_IN_SCHEMA:
+		case DO_PUBLICATION_TABLE_IN_SCHEMA:
 			dumpPublicationNamespace(fout,
 									 (const PublicationSchemaInfo *) dobj);
 			break;
@@ -12238,7 +12273,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proallargtypes, &allargtypes, &nitems) ||
 			nitems < finfo->nargs)
 		{
-			pg_log_warning("could not parse proallargtypes array");
+			pg_log_warning("could not parse %s array", "proallargtypes");
 			if (allargtypes)
 				free(allargtypes);
 			allargtypes = NULL;
@@ -12254,7 +12289,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proargmodes, &argmodes, &nitems) ||
 			nitems != nallargs)
 		{
-			pg_log_warning("could not parse proargmodes array");
+			pg_log_warning("could not parse %s array", "proargmodes");
 			if (argmodes)
 				free(argmodes);
 			argmodes = NULL;
@@ -12268,7 +12303,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (!parsePGArray(proargnames, &argnames, &nitems) ||
 			nitems != nallargs)
 		{
-			pg_log_warning("could not parse proargnames array");
+			pg_log_warning("could not parse %s array", "proargnames");
 			if (argnames)
 				free(argnames);
 			argnames = NULL;
@@ -12278,7 +12313,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	if (proconfig && *proconfig)
 	{
 		if (!parsePGArray(proconfig, &configitems, &nconfigitems))
-			fatal("could not parse proconfig array");
+			fatal("could not parse %s array", "proconfig");
 	}
 	else
 	{
@@ -18190,9 +18225,9 @@ processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 			int			j;
 
 			if (!parsePGArray(extconfig, &extconfigarray, &nconfigitems))
-				fatal("could not parse extension configuration array");
+				fatal("could not parse %s array", "extconfig");
 			if (!parsePGArray(extcondition, &extconditionarray, &nconditionitems))
-				fatal("could not parse extension condition array");
+				fatal("could not parse %s array", "extcondition");
 			if (nconfigitems != nconditionitems)
 				fatal("mismatched number of configurations and conditions for extension");
 
@@ -18559,7 +18594,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_POLICY:
 			case DO_PUBLICATION:
 			case DO_PUBLICATION_REL:
-			case DO_PUBLICATION_REL_IN_SCHEMA:
+			case DO_PUBLICATION_TABLE_IN_SCHEMA:
 			case DO_SUBSCRIPTION:
 				/* Post-data objects: must come after the post-data boundary */
 				addObjectDependency(dobj, postDataBound->dumpId);
@@ -18820,5 +18855,5 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 	res = appendReloptionsArray(buffer, reloptions, prefix, fout->encoding,
 								fout->std_strings);
 	if (!res)
-		pg_log_warning("could not parse reloptions array");
+		pg_log_warning("could not parse %s array", "reloptions");
 }

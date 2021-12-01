@@ -799,9 +799,12 @@ typedef struct Memoize
 	bool		singlerow;		/* true if the cache entry should be marked as
 								 * complete after we store the first tuple in
 								 * it. */
+	bool		binary_mode;	/* true when cache key should be compared bit
+								 * by bit, false when using hash equality ops */
 	uint32		est_entries;	/* The maximum number of entries that the
 								 * planner expects will fit in the cache, or 0
 								 * if unknown */
+	Bitmapset   *keyparamids;	/* paramids from param_exprs */
 } Memoize;
 
 /* ----------------

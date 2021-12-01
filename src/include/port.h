@@ -37,6 +37,11 @@ typedef SOCKET pgsocket;
 #define PGINVALID_SOCKET INVALID_SOCKET
 #endif
 
+/* if platform lacks socklen_t, we assume this will work */
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif
+
 /* non-blocking */
 extern bool pg_set_noblock(pgsocket sock);
 extern bool pg_set_block(pgsocket sock);
@@ -357,11 +362,6 @@ extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
 #define pgoff_t off_t
 #endif
 
-extern double pg_erand48(unsigned short xseed[3]);
-extern long pg_lrand48(void);
-extern long pg_jrand48(unsigned short xseed[3]);
-extern void pg_srand48(long seed);
-
 #ifndef HAVE_FLS
 extern int	fls(int mask);
 #endif
@@ -447,20 +447,12 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 extern size_t strnlen(const char *str, size_t maxlen);
 #endif
 
-#if !defined(HAVE_RANDOM)
-extern long random(void);
-#endif
-
 #ifndef HAVE_SETENV
 extern int	setenv(const char *name, const char *value, int overwrite);
 #endif
 
 #ifndef HAVE_UNSETENV
 extern int	unsetenv(const char *name);
-#endif
-
-#ifndef HAVE_SRANDOM
-extern void srandom(unsigned int seed);
 #endif
 
 #ifndef HAVE_DLOPEN

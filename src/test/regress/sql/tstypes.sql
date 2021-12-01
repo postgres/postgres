@@ -17,6 +17,7 @@ SELECT $$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector;
 SELECT tsvectorin(tsvectorout($$'\\as' ab\c ab\\c AB\\\c ab\\\\c$$::tsvector));
 SELECT '''w'':4A,3B,2C,1D,5 a:8';
 SELECT 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
+SELECT $$'' '1' '2'$$::tsvector;  -- error, empty lexeme is not allowed
 
 --Base tsquery test
 SELECT '1'::tsquery;
@@ -239,7 +240,7 @@ SELECT ts_delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3':
 SELECT ts_delete('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector, ARRAY['spaceship','leya','rebel']);
 SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel']);
 SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel','rebel']);
-SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel', NULL]);
+SELECT ts_delete('base hidden rebel spaceship strike'::tsvector, ARRAY['spaceship','leya','rebel', '', NULL]);
 
 SELECT unnest('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D strike:3'::tsvector);
 SELECT unnest('base hidden rebel spaceship strike'::tsvector);
@@ -251,7 +252,9 @@ SELECT tsvector_to_array('base:7 hidden:6 rebel:1 spaceship:2,33A,34B,35C,36D st
 SELECT tsvector_to_array('base hidden rebel spaceship strike'::tsvector);
 
 SELECT array_to_tsvector(ARRAY['base','hidden','rebel','spaceship','strike']);
+-- null and empty string are disallowed, since we mustn't make an empty lexeme
 SELECT array_to_tsvector(ARRAY['base','hidden','rebel','spaceship', NULL]);
+SELECT array_to_tsvector(ARRAY['base','hidden','rebel','spaceship', '']);
 -- array_to_tsvector must sort and de-dup
 SELECT array_to_tsvector(ARRAY['foo','bar','baz','bar']);
 
@@ -260,8 +263,7 @@ SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c');
 SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a}');
 SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a}');
 SELECT setweight('a:1,3A asd:1C w:5,6,12B,13A zxc:81,222A,567'::tsvector, 'c', '{a,zxc}');
-SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', '{a,zxc}');
-SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', ARRAY['a', 'zxc', NULL]);
+SELECT setweight('a asd w:5,6,12B,13A zxc'::tsvector, 'c', ARRAY['a', 'zxc', '', NULL]);
 
 SELECT ts_filter('base:7A empir:17 evil:15 first:11 galact:16 hidden:6A rebel:1A spaceship:2A strike:3A victori:12 won:9'::tsvector, '{a}');
 SELECT ts_filter('base hidden rebel spaceship strike'::tsvector, '{a}');

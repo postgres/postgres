@@ -23,3 +23,5 @@ sources and then tested.
 
 Either way, this test initializes, starts, and stops several test Postgres
 clusters.
+
+See src/test/perl/README for more info about running these tests.

@@ -26,7 +26,6 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
-#include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
 

@@ -3179,7 +3179,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	bool		have_tuple_lock = false;
 	bool		iscombo;
 	bool		use_hot_update = false;
-	bool		hot_attrs_checked = false;
 	bool		key_intact;
 	bool		all_visible_cleared = false;
 	bool		all_visible_cleared_new = false;
@@ -3224,35 +3223,18 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 * Note that we get copies of each bitmap, so we need not worry about
 	 * relcache flush happening midway through.
 	 */
-	hot_attrs = RelationGetIndexAttrBitmap(relation, INDEX_ATTR_BITMAP_ALL);
+	hot_attrs = RelationGetIndexAttrBitmap(relation, INDEX_ATTR_BITMAP_HOT_BLOCKING);
 	key_attrs = RelationGetIndexAttrBitmap(relation, INDEX_ATTR_BITMAP_KEY);
 	id_attrs = RelationGetIndexAttrBitmap(relation,
 										  INDEX_ATTR_BITMAP_IDENTITY_KEY);
-
+	interesting_attrs = NULL;
+	interesting_attrs = bms_add_members(interesting_attrs, hot_attrs);
+	interesting_attrs = bms_add_members(interesting_attrs, key_attrs);
+	interesting_attrs = bms_add_members(interesting_attrs, id_attrs);
 
 	block = ItemPointerGetBlockNumber(otid);
 	buffer = ReadBuffer(relation, block);
 	page = BufferGetPage(buffer);
-
-	interesting_attrs = NULL;
-
-	/*
-	 * If the page is already full, there is hardly any chance of doing a HOT
-	 * update on this page. It might be wasteful effort to look for index
-	 * column updates only to later reject HOT updates for lack of space in
-	 * the same page. So we be conservative and only fetch hot_attrs if the
-	 * page is not already full. Since we are already holding a pin on the
-	 * buffer, there is no chance that the buffer can get cleaned up
-	 * concurrently and even if that was possible, in the worst case we lose a
-	 * chance to do a HOT update.
-	 */
-	if (!PageIsFull(page))
-	{
-		interesting_attrs = bms_add_members(interesting_attrs, hot_attrs);
-		hot_attrs_checked = true;
-	}
-	interesting_attrs = bms_add_members(interesting_attrs, key_attrs);
-	interesting_attrs = bms_add_members(interesting_attrs, id_attrs);
 
 	/*
 	 * Before locking the buffer, pin the visibility map page if it appears to
@@ -3867,10 +3849,9 @@ l2:
 		/*
 		 * Since the new tuple is going into the same page, we might be able
 		 * to do a HOT update.  Check if any of the index columns have been
-		 * changed. If the page was already full, we may have skipped checking
-		 * for index columns, and also can't do a HOT update.
+		 * changed.
 		 */
-		if (hot_attrs_checked && !bms_overlap(modified_attrs, hot_attrs))
+		if (!bms_overlap(modified_attrs, hot_attrs))
 			use_hot_update = true;
 	}
 	else
@@ -7253,6 +7234,63 @@ index_delete_prefetch_buffer(Relation rel,
 #endif
 
 /*
+ * Helper function for heap_index_delete_tuples.  Checks for index corruption
+ * involving an invalid TID in index AM caller's index page.
+ *
+ * This is an ideal place for these checks.  The index AM must hold a buffer
+ * lock on the index page containing the TIDs we examine here, so we don't
+ * have to worry about concurrent VACUUMs at all.  We can be sure that the
+ * index is corrupt when htid points directly to an LP_UNUSED item or
+ * heap-only tuple, which is not the case during standard index scans.
+ */
+static inline void
+index_delete_check_htid(TM_IndexDeleteOp *delstate,
+						Page page, OffsetNumber maxoff,
+						ItemPointer htid, TM_IndexStatus *istatus)
+{
+	OffsetNumber indexpagehoffnum = ItemPointerGetOffsetNumber(htid);
+	ItemId		iid;
+
+	Assert(OffsetNumberIsValid(istatus->idxoffnum));
+
+	if (unlikely(indexpagehoffnum > maxoff))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("heap tid from index tuple (%u,%u) points past end of heap page line pointer array at offset %u of block %u in index \"%s\"",
+								 ItemPointerGetBlockNumber(htid),
+								 indexpagehoffnum,
+								 istatus->idxoffnum, delstate->iblknum,
+								 RelationGetRelationName(delstate->irel))));
+
+	iid = PageGetItemId(page, indexpagehoffnum);
+	if (unlikely(!ItemIdIsUsed(iid)))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("heap tid from index tuple (%u,%u) points to unused heap page item at offset %u of block %u in index \"%s\"",
+								 ItemPointerGetBlockNumber(htid),
+								 indexpagehoffnum,
+								 istatus->idxoffnum, delstate->iblknum,
+								 RelationGetRelationName(delstate->irel))));
+
+	if (ItemIdHasStorage(iid))
+	{
+		HeapTupleHeader htup;
+
+		Assert(ItemIdIsNormal(iid));
+		htup = (HeapTupleHeader) PageGetItem(page, iid);
+
+		if (unlikely(HeapTupleHeaderIsHeapOnly(htup)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("heap tid from index tuple (%u,%u) points to heap-only tuple at offset %u of block %u in index \"%s\"",
+									 ItemPointerGetBlockNumber(htid),
+									 indexpagehoffnum,
+									 istatus->idxoffnum, delstate->iblknum,
+									 RelationGetRelationName(delstate->irel))));
+	}
+}
+
+/*
  * heapam implementation of tableam's index_delete_tuples interface.
  *
  * This helper function is called by index AMs during index tuple deletion.
@@ -7446,6 +7484,14 @@ heap_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
 			maxoff = PageGetMaxOffsetNumber(page);
 		}
 
+		/*
+		 * In passing, detect index corruption involving an index page with a
+		 * TID that points to a location in the heap that couldn't possibly be
+		 * correct.  We only do this with actual TIDs from caller's index page
+		 * (not items reached by traversing through a HOT chain).
+		 */
+		index_delete_check_htid(delstate, page, maxoff, htid, istatus);
+
 		if (istatus->knowndeletable)
 			Assert(!delstate->bottomup && !istatus->promising);
 		else
@@ -7586,7 +7632,7 @@ index_delete_sort_cmp(TM_IndexDelete *deltid1, TM_IndexDelete *deltid2)
 			return (pos1 < pos2) ? -1 : 1;
 	}
 
-	pg_unreachable();
+	Assert(false);
 
 	return 0;
 }

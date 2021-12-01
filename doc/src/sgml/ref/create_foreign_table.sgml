@@ -69,8 +69,8 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    myschema.mytable ...</literal>) then the table is created in the specified
    schema.  Otherwise it is created in the current schema.
    The name of the foreign table must be
-   distinct from the name of any other foreign table, table, sequence, index,
-   view, or materialized view in the same schema.
+   distinct from the name of any other relation (table, sequence, index, view,
+   materialized view, or foreign table) in the same schema.
   </para>
 
   <para>

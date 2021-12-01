@@ -27,7 +27,7 @@ SERVERS := server-cn-and-alt-names \
 	server-multiple-alt-names \
 	server-no-names \
 	server-revoked
-CLIENTS := client client-dn client-revoked
+CLIENTS := client client-dn client-revoked client_ext
 
 #
 # To add a new non-standard key, add it to SPECIAL_KEYS and then add a recipe

@@ -169,13 +169,13 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 			case PUBLICATIONOBJ_TABLE:
 				*rels = lappend(*rels, pubobj->pubtable);
 				break;
-			case PUBLICATIONOBJ_REL_IN_SCHEMA:
+			case PUBLICATIONOBJ_TABLE_IN_SCHEMA:
 				schemaid = get_namespace_oid(pubobj->name, false);
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
-			case PUBLICATIONOBJ_CURRSCHEMA:
+			case PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA:
 				search_path = fetch_search_path(false);
 				if (search_path == NIL) /* nothing valid in search_path? */
 					ereport(ERROR,
@@ -214,7 +214,7 @@ CheckObjSchemaNotAlreadyInPublication(List *rels, List *schemaidlist,
 
 		if (list_member_oid(schemaidlist, relSchemaId))
 		{
-			if (checkobjtype == PUBLICATIONOBJ_REL_IN_SCHEMA)
+			if (checkobjtype == PUBLICATIONOBJ_TABLE_IN_SCHEMA)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("cannot add schema \"%s\" to publication",
@@ -613,7 +613,7 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 		rels = OpenReliIdList(reloids);
 
 		CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
-											  PUBLICATIONOBJ_REL_IN_SCHEMA);
+											  PUBLICATIONOBJ_TABLE_IN_SCHEMA);
 
 		CloseTableList(rels);
 		PublicationAddSchemas(pubform->oid, schemaidlist, false, stmt);

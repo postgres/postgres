@@ -541,6 +541,12 @@ BaseInit(void)
 	 * file shutdown hook can report temporary file statistics.
 	 */
 	InitTemporaryFileAccess();
+
+	/*
+	 * Initialize local buffers for WAL record construction, in case we
+	 * ever try to insert XLOG.
+	 */
+	InitXLogInsert();
 }
 
 
@@ -670,8 +676,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	EnablePortalManager();
 
 	/* Initialize status reporting */
-	if (!bootstrap)
-		pgstat_beinit();
+	pgstat_beinit();
 
 	/*
 	 * Load relcache entries for the shared system catalogs.  This must create

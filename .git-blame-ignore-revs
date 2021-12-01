@@ -110,6 +110,9 @@ be060cbcd42737693f6fd425db4c139121181cce # 2016-03-09 13:51:11 -0500
 d0cd7bda97a626049aa7d247374909c52399c413 # 2016-02-04 22:30:08 -0500
 # postgres_fdw: pgindent run.
 
+8d290c8ec6c182a4df1d089c21fe84c7912f01fe # 2016-01-17 19:13:18 -0500
+# Re-pgindent a few files.
+
 befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:44:57 -0400
 # Revert 9.5 pgindent changes to atomics directory files
 

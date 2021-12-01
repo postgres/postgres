@@ -63,10 +63,6 @@ geqo_selection(PlannerInfo *root, Chromosome *momma, Chromosome *daddy,
 	/*
 	 * Ensure we have selected different genes, except if pool size is only
 	 * one, when we can't.
-	 *
-	 * This code was observed to hang up in an infinite loop when the
-	 * platform's implementation of erand48() was broken.  We now always use
-	 * our own version.
 	 */
 	if (pool->size > 1)
 	{
@@ -95,11 +91,11 @@ linear_rand(PlannerInfo *root, int pool_size, double bias)
 	double		max = (double) pool_size;
 
 	/*
-	 * If geqo_rand() returns exactly 1.0 then we will get exactly max from
-	 * this equation, whereas we need 0 <= index < max.  Also it seems
-	 * possible that roundoff error might deliver values slightly outside the
-	 * range; in particular avoid passing a value slightly less than 0 to
-	 * sqrt(). If we get a bad value just try again.
+	 * geqo_rand() is not supposed to return 1.0, but if it does then we will
+	 * get exactly max from this equation, whereas we need 0 <= index < max.
+	 * Also it seems possible that roundoff error might deliver values
+	 * slightly outside the range; in particular avoid passing a value
+	 * slightly less than 0 to sqrt().  If we get a bad value just try again.
 	 */
 	do
 	{

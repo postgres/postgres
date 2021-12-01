@@ -17,6 +17,7 @@
 #include "access/xlogdefs.h"
 #include "catalog/pg_subscription.h"
 #include "datatype/timestamp.h"
+#include "storage/fileset.h"
 #include "storage/lock.h"
 #include "storage/spin.h"
 

@@ -12,9 +12,9 @@
 #ifndef BACKUP_MANIFEST_H
 #define BACKUP_MANIFEST_H
 
-#include "access/xlogdefs.h"
 #include "common/checksum_helper.h"
 #include "pgtime.h"
+#include "replication/basebackup_sink.h"
 #include "storage/buffile.h"
 
 typedef enum manifest_option
@@ -47,7 +47,8 @@ extern void AddWALInfoToBackupManifest(backup_manifest_info *manifest,
 									   XLogRecPtr startptr,
 									   TimeLineID starttli, XLogRecPtr endptr,
 									   TimeLineID endtli);
-extern void SendBackupManifest(backup_manifest_info *manifest);
+
+extern void SendBackupManifest(backup_manifest_info *manifest, bbsink *sink);
 extern void FreeBackupManifest(backup_manifest_info *manifest);
 
 #endif

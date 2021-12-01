@@ -233,6 +233,13 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   <command>ATTACH</command>ing a table into a partition tree whose root is
+   published using a publication with <literal>publish_via_partition_root</literal>
+   set to <literal>true</literal> does not result in the table's existing contents
+   being replicated.
+  </para>
+
+  <para>
    <command>COPY ... FROM</command> commands are published
    as <command>INSERT</command> operations.
   </para>
@@ -302,6 +309,8 @@ CREATE PUBLICATION sales_publication FOR ALL TABLES IN SCHEMA marketing, sales;
   <simplelist type="inline">
    <member><xref linkend="sql-alterpublication"/></member>
    <member><xref linkend="sql-droppublication"/></member>
+   <member><xref linkend="sql-createsubscription"/></member>
+   <member><xref linkend="sql-altersubscription"/></member>
   </simplelist>
  </refsect1>
 </refentry>

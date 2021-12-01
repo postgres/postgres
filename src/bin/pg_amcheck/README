@@ -17,3 +17,5 @@ You can use "make installcheck" if you previously did "make install".
 In that case, the code in the installation tree is tested.  With
 "make check", a temporary installation tree is built from the current
 sources and then tested.
+
+See src/test/perl/README for more info about running these tests.

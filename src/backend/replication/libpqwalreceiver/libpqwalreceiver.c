@@ -128,8 +128,8 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 {
 	WalReceiverConn *conn;
 	PostgresPollingStatusType status;
-	const char *keys[5];
-	const char *vals[5];
+	const char *keys[6];
+	const char *vals[6];
 	int			i = 0;
 
 	/*
@@ -153,8 +153,20 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	vals[i] = appname;
 	if (logical)
 	{
+		/* Tell the publisher to translate to our encoding */
 		keys[++i] = "client_encoding";
 		vals[i] = GetDatabaseEncodingName();
+
+		/*
+		 * Force assorted GUC parameters to settings that ensure that the
+		 * publisher will output data values in a form that is unambiguous to
+		 * the subscriber.  (We don't want to modify the subscriber's GUC
+		 * settings, since that might surprise user-defined code running in
+		 * the subscriber, such as triggers.)  This should match what pg_dump
+		 * does.
+		 */
+		keys[++i] = "options";
+		vals[i] = "-c datestyle=ISO -c intervalstyle=postgres -c extra_float_digits=3";
 	}
 	keys[++i] = NULL;
 	vals[i] = NULL;

@@ -3026,7 +3026,7 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 	struct addrinfo hint;
 	struct addrinfo *serveraddrs;
 	int			port;
-	ACCEPT_TYPE_ARG3 addrsize;
+	socklen_t	addrsize;
 	fd_set		fdset;
 	struct timeval endtime;
 	int			i,

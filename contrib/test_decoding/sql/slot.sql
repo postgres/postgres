@@ -28,6 +28,12 @@ end';
 SELECT pg_drop_replication_slot('regression_slot_t');
 SELECT pg_drop_replication_slot('regression_slot_t2');
 
+-- monitoring functions for slot directories
+SELECT count(*) >= 0 AS ok FROM pg_ls_logicalmapdir();
+SELECT count(*) >= 0 AS ok FROM pg_ls_logicalsnapdir();
+SELECT count(*) >= 0 AS ok FROM pg_ls_replslotdir('regression_slot_p');
+SELECT count(*) >= 0 AS ok FROM pg_ls_replslotdir('not_existing_slot'); -- fails
+
 -- permanent slot has survived
 SELECT pg_drop_replication_slot('regression_slot_p');
 

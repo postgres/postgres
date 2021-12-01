@@ -634,6 +634,9 @@
    <varlistentry>
     <term>
      <varname>pg_stat_statements.max</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>pg_stat_statements.max</varname> configuration parameter</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -654,6 +657,9 @@
    <varlistentry>
     <term>
      <varname>pg_stat_statements.track</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>pg_stat_statements.track</varname> configuration parameter</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -673,6 +679,9 @@
    <varlistentry>
     <term>
      <varname>pg_stat_statements.track_utility</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>pg_stat_statements.track_utility</varname> configuration parameter</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -690,6 +699,9 @@
    <varlistentry>
     <term>
      <varname>pg_stat_statements.track_planning</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>pg_stat_statements.track_planning</varname> configuration parameter</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -709,6 +721,9 @@
    <varlistentry>
     <term>
      <varname>pg_stat_statements.save</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>pg_stat_statements.save</varname> configuration parameter</primary>
+     </indexterm>
     </term>
 
     <listitem>

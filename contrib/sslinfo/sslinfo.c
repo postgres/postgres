@@ -19,6 +19,17 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
+/*
+ * On Windows, <wincrypt.h> includes a #define for X509_NAME, which breaks our
+ * ability to use OpenSSL's version of that symbol if <wincrypt.h> is pulled
+ * in after <openssl/ssl.h> ... and, at least on some builds, it is.  We
+ * can't reliably fix that by re-ordering #includes, because libpq/libpq-be.h
+ * #includes <openssl/ssl.h>.  Instead, just zap the #define again here.
+ */
+#ifdef X509_NAME
+#undef X509_NAME
+#endif
+
 PG_MODULE_MAGIC;
 
 static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);

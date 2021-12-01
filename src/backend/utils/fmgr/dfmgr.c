@@ -331,6 +331,21 @@ incompatible_module_error(const char *libname,
 	}
 
 	/*
+	 * Similarly, if the ABI extra field doesn't match, error out.  Other
+	 * fields below might also mismatch, but that isn't useful information if
+	 * you're using the wrong product altogether.
+	 */
+	if (strcmp(module_magic_data->abi_extra, magic_data.abi_extra) != 0)
+	{
+		ereport(ERROR,
+				(errmsg("incompatible library \"%s\": ABI mismatch",
+						libname),
+				 errdetail("Server has ABI \"%s\", library has \"%s\".",
+						   magic_data.abi_extra,
+						   module_magic_data->abi_extra)));
+	}
+
+	/*
 	 * Otherwise, spell out which fields don't agree.
 	 *
 	 * XXX this code has to be adjusted any time the set of fields in a magic

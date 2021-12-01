@@ -508,13 +508,14 @@ pg_xact_commit_timestamp_origin(PG_FUNCTION_ARGS)
 /*
  * Number of shared CommitTS buffers.
  *
- * We use a very similar logic as for the number of CLOG buffers; see comments
- * in CLOGShmemBuffers.
+ * We use a very similar logic as for the number of CLOG buffers (except we
+ * scale up twice as fast with shared buffers, and the maximum is twice as
+ * high); see comments in CLOGShmemBuffers.
  */
 Size
 CommitTsShmemBuffers(void)
 {
-	return Min(16, Max(4, NBuffers / 1024));
+	return Min(256, Max(4, NBuffers / 256));
 }
 
 /*

@@ -1214,6 +1214,20 @@ static void
 plpgsql_exec_error_callback(void *arg)
 {
 	PLpgSQL_execstate *estate = (PLpgSQL_execstate *) arg;
+	int			err_lineno;
+
+	/*
+	 * If err_var is set, report the variable's declaration line number.
+	 * Otherwise, if err_stmt is set, report the err_stmt's line number.  When
+	 * err_stmt is not set, we're in function entry/exit, or some such place
+	 * not attached to a specific line number.
+	 */
+	if (estate->err_var != NULL)
+		err_lineno = estate->err_var->lineno;
+	else if (estate->err_stmt != NULL)
+		err_lineno = estate->err_stmt->lineno;
+	else
+		err_lineno = 0;
 
 	if (estate->err_text != NULL)
 	{
@@ -1222,13 +1236,8 @@ plpgsql_exec_error_callback(void *arg)
 		 * actually need it.  Therefore, places that set up err_text should
 		 * use gettext_noop() to ensure the strings get recorded in the
 		 * message dictionary.
-		 *
-		 * If both err_text and err_stmt are set, use the err_text as
-		 * description, but report the err_stmt's line number.  When err_stmt
-		 * is not set, we're in function entry/exit, or some such place not
-		 * attached to a specific line number.
 		 */
-		if (estate->err_stmt != NULL)
+		if (err_lineno > 0)
 		{
 			/*
 			 * translator: last %s is a phrase such as "during statement block
@@ -1236,7 +1245,7 @@ plpgsql_exec_error_callback(void *arg)
 			 */
 			errcontext("PL/pgSQL function %s line %d %s",
 					   estate->func->fn_signature,
-					   estate->err_stmt->lineno,
+					   err_lineno,
 					   _(estate->err_text));
 		}
 		else
@@ -1250,12 +1259,12 @@ plpgsql_exec_error_callback(void *arg)
 					   _(estate->err_text));
 		}
 	}
-	else if (estate->err_stmt != NULL)
+	else if (estate->err_stmt != NULL && err_lineno > 0)
 	{
 		/* translator: last %s is a plpgsql statement type name */
 		errcontext("PL/pgSQL function %s line %d at %s",
 				   estate->func->fn_signature,
-				   estate->err_stmt->lineno,
+				   err_lineno,
 				   plpgsql_stmt_typename(estate->err_stmt));
 	}
 	else
@@ -1643,7 +1652,12 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		 * Note that we currently don't support promise datums within blocks,
 		 * only at a function's outermost scope, so we needn't handle those
 		 * here.
+		 *
+		 * Since RECFIELD isn't a supported case either, it's okay to cast the
+		 * PLpgSQL_datum to PLpgSQL_variable.
 		 */
+		estate->err_var = (PLpgSQL_variable *) datum;
+
 		switch (datum->dtype)
 		{
 			case PLPGSQL_DTYPE_VAR:
@@ -1716,6 +1730,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				elog(ERROR, "unrecognized dtype: %d", datum->dtype);
 		}
 	}
+
+	estate->err_var = NULL;
 
 	if (block->exceptions)
 	{
@@ -4041,6 +4057,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->eval_econtext = NULL;
 
 	estate->err_stmt = NULL;
+	estate->err_var = NULL;
 	estate->err_text = NULL;
 
 	estate->plugin_info = NULL;

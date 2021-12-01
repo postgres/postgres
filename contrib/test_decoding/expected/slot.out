@@ -48,6 +48,27 @@ SELECT pg_drop_replication_slot('regression_slot_t');
 ERROR:  replication slot "regression_slot_t" does not exist
 SELECT pg_drop_replication_slot('regression_slot_t2');
 ERROR:  replication slot "regression_slot_t2" does not exist
+-- monitoring functions for slot directories
+SELECT count(*) >= 0 AS ok FROM pg_ls_logicalmapdir();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) >= 0 AS ok FROM pg_ls_logicalsnapdir();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) >= 0 AS ok FROM pg_ls_replslotdir('regression_slot_p');
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) >= 0 AS ok FROM pg_ls_replslotdir('not_existing_slot'); -- fails
+ERROR:  replication slot "not_existing_slot" does not exist
 -- permanent slot has survived
 SELECT pg_drop_replication_slot('regression_slot_p');
  pg_drop_replication_slot 

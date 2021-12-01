@@ -1691,7 +1691,7 @@ func_get_detail(List *funcname,
 
 				ndelete = list_length(defaults) - best_candidate->ndargs;
 				if (ndelete > 0)
-					defaults = list_copy_tail(defaults, ndelete);
+					defaults = list_delete_first_n(defaults, ndelete);
 				*argdefaults = defaults;
 			}
 		}

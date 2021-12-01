@@ -726,18 +726,13 @@ sub fetchTests
 		if ($m =~ /contrib\/pgcrypto/)
 		{
 
-			# pgcrypto is special since the tests depend on the
+			# pgcrypto is special since some tests depend on the
 			# configuration of the build
 
-			my $cftests =
-			  $config->{openssl}
-			  ? GetTests("OSSL_TESTS", $m)
-			  : GetTests("INT_TESTS",  $m);
 			my $pgptests =
 			  $config->{zlib}
 			  ? GetTests("ZLIB_TST",     $m)
 			  : GetTests("ZLIB_OFF_TST", $m);
-			$t =~ s/\$\(CF_TESTS\)/$cftests/;
 			$t =~ s/\$\(CF_PGP_TESTS\)/$pgptests/;
 		}
 	}

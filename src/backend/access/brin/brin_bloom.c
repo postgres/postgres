@@ -49,7 +49,7 @@
  * We use a scheme requiring only two functions described in this paper:
  *
  * Less Hashing, Same Performance:Building a Better Bloom Filter
- * Adam Kirsch, Michael Mitzenmacher†, Harvard School of Engineering and
+ * Adam Kirsch, Michael Mitzenmacher, Harvard School of Engineering and
  * Applied Sciences, Cambridge, Massachusetts [DOI 10.1002/rsa.20208]
  *
  * The two hash functions h1 and h2 are calculated using hard-coded seeds,

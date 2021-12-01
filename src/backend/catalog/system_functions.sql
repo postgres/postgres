@@ -639,6 +639,10 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM publ
 
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_replication_slot(text) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_subscription_worker(oid) FROM public;
+
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_subscription_worker(oid, oid) FROM public;
+
 REVOKE EXECUTE ON FUNCTION lo_import(text) FROM public;
 
 REVOKE EXECUTE ON FUNCTION lo_import(text, oid) FROM public;
@@ -701,6 +705,12 @@ REVOKE EXECUTE ON FUNCTION pg_ls_dir(text,boolean,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_log_backend_memory_contexts(integer) FROM PUBLIC;
 
+REVOKE EXECUTE ON FUNCTION pg_ls_logicalsnapdir() FROM PUBLIC;
+
+REVOKE EXECUTE ON FUNCTION pg_ls_logicalmapdir() FROM PUBLIC;
+
+REVOKE EXECUTE ON FUNCTION pg_ls_replslotdir(text) FROM PUBLIC;
+
 --
 -- We also set up some things as accessible to standard roles.
 --
@@ -714,6 +724,12 @@ GRANT EXECUTE ON FUNCTION pg_ls_archive_statusdir() TO pg_monitor;
 GRANT EXECUTE ON FUNCTION pg_ls_tmpdir() TO pg_monitor;
 
 GRANT EXECUTE ON FUNCTION pg_ls_tmpdir(oid) TO pg_monitor;
+
+GRANT EXECUTE ON FUNCTION pg_ls_logicalsnapdir() TO pg_monitor;
+
+GRANT EXECUTE ON FUNCTION pg_ls_logicalmapdir() TO pg_monitor;
+
+GRANT EXECUTE ON FUNCTION pg_ls_replslotdir(text) TO pg_monitor;
 
 GRANT pg_read_all_settings TO pg_monitor;
 

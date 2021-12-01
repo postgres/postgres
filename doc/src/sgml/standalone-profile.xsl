@@ -60,10 +60,6 @@ variant without links and references to the main documentation.
   <xsl:text>the documentation</xsl:text>
 </xsl:template>
 
-<xsl:template match="xref[@linkend='pgcrypto']">
-  <xsl:text>pgcrypto</xsl:text>
-</xsl:template>
-
 <xsl:template match="xref[@linkend='plpython-python23']">
   <xsl:text>the </xsl:text><application>PL/Python</application><xsl:text> documentation</xsl:text>
 </xsl:template>

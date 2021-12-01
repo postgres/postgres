@@ -17,6 +17,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/tsmapi.h"
+#include "common/pg_prng.h"
 #include "executor/executor.h"
 #include "executor/nodeSamplescan.h"
 #include "miscadmin.h"
@@ -154,7 +155,7 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 * do this just once, since the seed shouldn't change over rescans.
 	 */
 	if (tsc->repeatable == NULL)
-		scanstate->seed = random();
+		scanstate->seed = pg_prng_uint32(&pg_global_prng_state);
 
 	/*
 	 * Finally, initialize the TABLESAMPLE method handler.

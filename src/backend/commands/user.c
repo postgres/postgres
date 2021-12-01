@@ -1270,7 +1270,18 @@ GrantRole(GrantRoleStmt *stmt)
 
 
 	if (stmt->grantor)
+	{
 		grantor = get_rolespec_oid(stmt->grantor, false);
+
+		/*
+		 * Currently, this clause is only for SQL compatibility, not very
+		 * interesting otherwise.
+		 */
+		if (grantor != GetUserId())
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("grantor must be current user")));
+	}
 	else
 		grantor = GetUserId();
 

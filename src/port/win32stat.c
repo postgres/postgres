@@ -289,11 +289,31 @@ int
 _pgfstat64(int fileno, struct stat *buf)
 {
 	HANDLE		hFile = (HANDLE) _get_osfhandle(fileno);
+	BY_HANDLE_FILE_INFORMATION fiData;
 
 	if (hFile == INVALID_HANDLE_VALUE || buf == NULL)
 	{
 		errno = EINVAL;
 		return -1;
+	}
+
+	/*
+	 * Check if the fileno is a data stream.  If so, unless it has been
+	 * redirected to a file, getting information through its HANDLE will fail,
+	 * so emulate its stat information in the most appropriate way and return
+	 * it instead.
+	 */
+	if ((fileno == _fileno(stdin) ||
+		 fileno == _fileno(stdout) ||
+		 fileno == _fileno(stderr)) &&
+		!GetFileInformationByHandle(hFile, &fiData))
+	{
+		memset(buf, 0, sizeof(*buf));
+		buf->st_mode = _S_IFCHR;
+		buf->st_dev = fileno;
+		buf->st_rdev = fileno;
+		buf->st_nlink = 1;
+		return 0;
 	}
 
 	/*

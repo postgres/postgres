@@ -320,6 +320,8 @@ begin_startup_progress_phase(void)
 	if (log_startup_progress_interval == 0)
 		return;
 
+	disable_timeout(STARTUP_PROGRESS_TIMEOUT, false);
+	startup_progress_timer_expired = false;
 	startup_progress_phase_start_time = GetCurrentTimestamp();
 	fin_time = TimestampTzPlusMilliseconds(startup_progress_phase_start_time,
 										   log_startup_progress_interval);

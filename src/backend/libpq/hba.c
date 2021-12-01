@@ -500,7 +500,7 @@ tokenize_file(const char *filename, FILE *file, List **tok_lines, int elevel)
 		/* Collect the next input line, handling backslash continuations */
 		resetStringInfo(&buf);
 
-		while (pg_get_line_append(file, &buf))
+		while (pg_get_line_append(file, &buf, NULL))
 		{
 			/* Strip trailing newline, including \r in case we're on Windows */
 			buf.len = pg_strip_crlf(buf.data);

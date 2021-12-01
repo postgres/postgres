@@ -70,12 +70,18 @@ check_publication_add_relation(Relation targetrel)
 				 errdetail("This operation is not supported for system tables.")));
 
 	/* UNLOGGED and TEMP relations cannot be part of publication. */
-	if (!RelationIsPermanent(targetrel))
+	if (targetrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot add relation \"%s\" to publication",
 						RelationGetRelationName(targetrel)),
-				 errdetail("Temporary and unlogged relations cannot be replicated.")));
+				 errdetail("This operation is not supported for temporary tables.")));
+	else if (targetrel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot add relation \"%s\" to publication",
+						RelationGetRelationName(targetrel)),
+				 errdetail("This operation is not supported for unlogged tables.")));
 }
 
 /*

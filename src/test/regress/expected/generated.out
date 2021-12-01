@@ -928,7 +928,7 @@ CREATE TRIGGER gtest2a BEFORE INSERT OR UPDATE ON gtest26
   WHEN (NEW.b < 0)  -- error
   EXECUTE PROCEDURE gtest_trigger_func();
 ERROR:  BEFORE trigger's WHEN condition cannot reference NEW generated columns
-LINE 3:   WHEN (NEW.b < 0)  
+LINE 3:   WHEN (NEW.b < 0)  -- error
                 ^
 DETAIL:  Column "b" is a generated column.
 CREATE TRIGGER gtest2b BEFORE INSERT OR UPDATE ON gtest26
@@ -936,7 +936,7 @@ CREATE TRIGGER gtest2b BEFORE INSERT OR UPDATE ON gtest26
   WHEN (NEW.* IS NOT NULL)  -- error
   EXECUTE PROCEDURE gtest_trigger_func();
 ERROR:  BEFORE trigger's WHEN condition cannot reference NEW generated columns
-LINE 3:   WHEN (NEW.* IS NOT NULL)  
+LINE 3:   WHEN (NEW.* IS NOT NULL)  -- error
                 ^
 DETAIL:  A whole-row reference is used and the table contains generated columns.
 CREATE TRIGGER gtest2 BEFORE INSERT ON gtest26

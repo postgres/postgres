@@ -12920,8 +12920,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Converts an array of lexemes to a <type>tsvector</type>.
-        The given strings are used as-is without further processing.
+        Converts an array of text strings to a <type>tsvector</type>.
+        The given strings are used as lexemes as-is, without further
+        processing.  Array elements must not be empty strings
+        or <literal>NULL</literal>.
        </para>
        <para>
         <literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal>
@@ -13104,6 +13106,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         Assigns the specified <parameter>weight</parameter> to elements
         of the <parameter>vector</parameter> that are listed
         in <parameter>lexemes</parameter>.
+        The strings in <parameter>lexemes</parameter> are taken as lexemes
+        as-is, without further processing.  Strings that do not match any
+        lexeme in <parameter>vector</parameter> are ignored.
        </para>
        <para>
         <literal>setweight('fat:2,4 cat:3 rat:5,6B'::tsvector, 'A', '{cat,rat}')</literal>
@@ -13265,6 +13270,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        <para>
         Removes any occurrence of the given <parameter>lexeme</parameter>
         from the <parameter>vector</parameter>.
+        The <parameter>lexeme</parameter> string is treated as a lexeme as-is,
+        without further processing.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal>
@@ -13281,6 +13288,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         Removes any occurrences of the lexemes
         in <parameter>lexemes</parameter>
         from the <parameter>vector</parameter>.
+        The strings in <parameter>lexemes</parameter> are taken as lexemes
+        as-is, without further processing.  Strings that do not match any
+        lexeme in <parameter>vector</parameter> are ignored.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal>
@@ -17635,24 +17645,37 @@ SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</fu
   <caution>
    <para>
     To avoid blocking concurrent transactions that obtain numbers from
-    the same sequence, a <function>nextval</function> operation is never
-    rolled back; that is, once a value has been fetched it is considered
-    used and will not be returned again.  This is true even if the
-    surrounding transaction later aborts, or if the calling query ends
-    up not using the value.  For example an <command>INSERT</command> with
+    the same sequence, the value obtained by <function>nextval</function>
+    is not reclaimed for re-use if the calling transaction later aborts.
+    This means that transaction aborts or database crashes can result in
+    gaps in the sequence of assigned values.  That can happen without a
+    transaction abort, too.  For example an <command>INSERT</command> with
     an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
     tuple, including doing any required <function>nextval</function>
     calls, before detecting any conflict that would cause it to follow
-    the <literal>ON CONFLICT</literal> rule instead.  Such cases will leave
-    unused <quote>holes</quote> in the sequence of assigned values.
+    the <literal>ON CONFLICT</literal> rule instead.
     Thus, <productname>PostgreSQL</productname> sequence
     objects <emphasis>cannot be used to obtain <quote>gapless</quote>
     sequences</emphasis>.
    </para>
 
    <para>
-    Likewise, any sequence state changes made by <function>setval</function>
-    are not undone if the transaction rolls back.
+    Likewise, sequence state changes made by <function>setval</function>
+    are immediately visible to other transactions, and are not undone if
+    the calling transaction rolls back.
+   </para>
+
+   <para>
+    If the database cluster crashes before committing a transaction
+    containing a <function>nextval</function>
+    or <function>setval</function> call, the sequence state change might
+    not have made its way to persistent storage, so that it is uncertain
+    whether the sequence will have its original or updated state after the
+    cluster restarts.  This is harmless for usage of the sequence within
+    the database, since other effects of uncommitted transactions will not
+    be visible either.  However, if you wish to use a sequence value for
+    persistent outside-the-database purposes, make sure that the
+    <function>nextval</function> call has been committed before doing so.
    </para>
   </caution>
 
@@ -27405,6 +27428,79 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
        <para>
         This function is restricted to superusers by default, but other users
         can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_logicalsnapdir</primary>
+        </indexterm>
+        <function>pg_ls_logicalsnapdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_logical/snapshots</filename>
+        directory. Filenames beginning with a dot, directories, and other
+        special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_logicalmapdir</primary>
+        </indexterm>
+        <function>pg_ls_logicalmapdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_logical/mappings</filename>
+        directory. Filenames beginning with a dot, directories, and other
+        special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_replslotdir</primary>
+        </indexterm>
+        <function>pg_ls_replslotdir</function> ( <parameter>slot_name</parameter> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_replslot/slot_name</filename>
+        directory, where <parameter>slot_name</parameter> is the name of the
+        replication slot provided as input of the function. Filenames beginning
+        with a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
        </para></entry>
       </row>
      </tbody>

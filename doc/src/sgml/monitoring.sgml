@@ -627,6 +627,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_subscription_workers</structname><indexterm><primary>pg_stat_subscription_workers</primary></indexterm></entry>
+      <entry>One row per subscription worker, showing statistics about errors
+      that occurred on that subscription worker.
+      See <link linkend="monitoring-pg-stat-subscription-workers">
+      <structname>pg_stat_subscription_workers</structname></link> for details.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -1569,7 +1578,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for subplan nodes of an <literal>Append</literal> plan
        node to be ready.</entry>
      </row>
-    <row>
+     <row>
+      <entry><literal>ArchiveCleanupCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-archive-cleanup-command"/> to
+       complete.</entry>
+     </row>
+     <row>
+      <entry><literal>ArchiveCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-archive-command"/> to
+       complete.</entry>
+     </row>
+     <row>
       <entry><literal>BackendTermination</literal></entry>
       <entry>Waiting for the termination of another backend.</entry>
      </row>
@@ -1748,6 +1767,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        tablespace.</entry>
      </row>
      <row>
+      <entry><literal>RecoveryEndCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-recovery-end-command"/> to
+       complete.</entry>
+     </row>
+     <row>
       <entry><literal>RecoveryPause</literal></entry>
       <entry>Waiting for recovery to be resumed.</entry>
      </row>
@@ -1760,6 +1784,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>ReplicationSlotDrop</literal></entry>
       <entry>Waiting for a replication slot to become inactive so it can be
        dropped.</entry>
+     </row>
+     <row>
+      <entry><literal>RestoreCommand</literal></entry>
+      <entry>Waiting for <xref linkend="guc-restore-command"/> to
+       complete.</entry>
      </row>
      <row>
       <entry><literal>SafeSnapshot</literal></entry>
@@ -3028,6 +3057,128 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        sender
       </para></entry>
      </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-subscription-workers">
+  <title><structname>pg_stat_subscription_workers</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_subscription_workers</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_subscription_workers</structname> view will contain
+   one row per subscription worker on which errors have occurred, for workers
+   applying logical replication changes and workers handling the initial data
+   copy of the subscribed tables.  The statistics entry is removed when the
+   corresponding subscription is dropped.
+  </para>
+
+  <table id="pg-stat-subscription-workers" xreflabel="pg_stat_subscription_workers">
+   <title><structname>pg_stat_subscription_workers</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the subscription
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the subscription
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subrelid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the relation that the worker is synchronizing; null for the
+       main apply worker
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the relation that the worker was processing when the
+       error occurred
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_command</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of command being applied when the error occurred.  This field
+       is null if the error was reported during the initial data copy.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_xid</structfield> <type>xid</type>
+      </para>
+      <para>
+       Transaction ID of the publisher node being applied when the error
+       occurred.  This field is null if the error was reported
+       during the initial data copy.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_count</structfield> <type>uint8</type>
+      </para>
+      <para>
+       Number of consecutive times the error occurred
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_message</structfield> <type>text</type>
+      </para>
+      <para>
+       The error message
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_error_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Last time at which this error occurred
+      </para></entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -5154,6 +5305,32 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <para>
          This function is restricted to superusers by default, but other users
          can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+          <primary>pg_stat_reset_subscription_worker</primary>
+        </indexterm>
+        <function>pg_stat_reset_subscription_worker</function> ( <parameter>subid</parameter> <type>oid</type> <optional>, <parameter>relid</parameter> <type>oid</type> </optional> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets the statistics of subscription workers running on the
+        subscription with <parameter>subid</parameter> shown in the
+        <structname>pg_stat_subscription_workers</structname> view.  If the
+        argument <parameter>relid</parameter> is not <literal>NULL</literal>,
+        resets statistics of the subscription worker handling the initial data
+        copy of the relation with <parameter>relid</parameter>.  Otherwise,
+        resets the subscription worker statistics of the main apply worker.
+        If the argument <parameter>relid</parameter> is omitted, resets the
+        statistics of all subscription workers running on the subscription
+        with <parameter>subid</parameter>.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
        </para></entry>
       </row>
      </tbody>

@@ -353,8 +353,13 @@ initializeInput(int flags)
 
 		useReadline = true;
 
-		/* these two things must be done in this order: */
+		/* set appropriate values for Readline's global variables */
 		initialize_readline();
+
+		/* set comment-begin to a useful value for SQL */
+		(void) rl_variable_bind("comment-begin", "-- ");
+
+		/* this reads ~/.inputrc, so do it after rl_variable_bind */
 		rl_initialize();
 
 		useHistory = true;

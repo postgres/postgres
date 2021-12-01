@@ -264,14 +264,37 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--compression-method=<replaceable class="parameter">method</replaceable></option></term>
+      <listitem>
+       <para>
+        Enables compression of write-ahead logs using the specified method.
+        Supported values <literal>gzip</literal>, <literal>lz4</literal>
+        (if <productname>PostgreSQL</productname> was compiled with
+        <option>--with-lz4</option>), and <literal>none</literal>.
+       </para>
+
+       <para>
+        The suffix <filename>.gz</filename> will automatically be added to
+        all filenames when using <literal>gzip</literal>, and the suffix
+        <filename>.lz4</filename> is added when using <literal>lz4</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
       <listitem>
        <para>
-        Enables gzip compression of write-ahead logs, and specifies the
-        compression level (0 through 9, 0 being no compression and 9 being best
-        compression).  The suffix <filename>.gz</filename> will
-        automatically be added to all filenames.
+        Specifies the compression level (<literal>1</literal> through
+        <literal>9</literal>, <literal>1</literal> being worst compression
+        and <literal>9</literal> being best compression) for WAL segments
+        compressed with <application>gzip</application>.
+       </para>
+
+       <para>
+        This option requires <option>--compression-method</option> to be
+        specified with <literal>gzip</literal>.
        </para>
       </listitem>
      </varlistentry>

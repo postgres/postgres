@@ -150,6 +150,20 @@ DROP TABLE testpub_tbl4;
 
 -- fail - view
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
+
+CREATE TEMPORARY TABLE testpub_temptbl(a int);
+-- fail - temporary table
+CREATE PUBLICATION testpub_fortemptbl FOR TABLE testpub_temptbl;
+DROP TABLE testpub_temptbl;
+
+CREATE UNLOGGED TABLE testpub_unloggedtbl(a int);
+-- fail - unlogged table
+CREATE PUBLICATION testpub_forunloggedtbl FOR TABLE testpub_unloggedtbl;
+DROP TABLE testpub_unloggedtbl;
+
+-- fail - system table
+CREATE PUBLICATION testpub_forsystemtbl FOR TABLE pg_publication;
+
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;
 RESET client_min_messages;

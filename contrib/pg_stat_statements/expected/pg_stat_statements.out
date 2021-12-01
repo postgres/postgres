@@ -101,7 +101,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 ------------------------------------------------------------------------------+-------+------
  PREPARE pgss_test (int) AS SELECT $1, $2 LIMIT $3                            |     1 |    1
  SELECT $1                                                                   +|     4 |    4
-                                                                             +|       | 
+   -- multiline                                                              +|       | 
    AS "text"                                                                  |       | 
  SELECT $1 + $2                                                               |     2 |    2
  SELECT $1 + $2 + $3 AS "add"                                                 |     3 |    3

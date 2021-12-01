@@ -36,6 +36,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "common/pg_prng.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
@@ -290,8 +291,8 @@ get_normal_pair(float8 *x1, float8 *x2)
 
 	do
 	{
-		u1 = (float8) random() / (float8) MAX_RANDOM_VALUE;
-		u2 = (float8) random() / (float8) MAX_RANDOM_VALUE;
+		u1 = pg_prng_double(&pg_global_prng_state);
+		u2 = pg_prng_double(&pg_global_prng_state);
 
 		v1 = (2.0 * u1) - 1.0;
 		v2 = (2.0 * u2) - 1.0;

@@ -235,6 +235,8 @@ static bool check_recovery_target_lsn(char **newval, void **extra, GucSource sou
 static void assign_recovery_target_lsn(const char *newval, void *extra);
 static bool check_primary_slot_name(char **newval, void **extra, GucSource source);
 static bool check_default_with_oids(bool *newval, void **extra, GucSource source);
+static void check_reserved_prefixes(const char *varName);
+static List *reserved_class_prefix = NIL;
 
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
@@ -1034,7 +1036,8 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"enable_incremental_sort", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of incremental sort steps."),
-			NULL
+			NULL,
+			GUC_EXPLAIN
 		},
 		&enable_incremental_sort,
 		true,
@@ -1223,7 +1226,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"ssl_passphrase_command_supports_reload", PGC_SIGHUP, CONN_AUTH_SSL,
-			gettext_noop("Also use ssl_passphrase_command during server reload."),
+			gettext_noop("Controls whether ssl_passphrase_command is called during server reload."),
 			NULL
 		},
 		&ssl_passphrase_command_supports_reload,
@@ -2944,8 +2947,8 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"commit_siblings", PGC_USERSET, WAL_SETTINGS,
-			gettext_noop("Sets the minimum concurrent open transactions before performing "
-						 "commit_delay."),
+			gettext_noop("Sets the minimum number of concurrent open transactions "
+						 "required before performing commit_delay."),
 			NULL
 		},
 		&CommitSiblings,
@@ -3298,10 +3301,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_freeze_max_age,
 
-		/*
-		 * see pg_resetwal and vacuum_failsafe_age if you change the
-		 * upper-limit value.
-		 */
+		/* see vacuum_failsafe_age if you change the upper-limit value. */
 		200000000, 100000, 2000000000,
 		NULL, NULL, NULL
 	},
@@ -3403,7 +3403,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SSL,
+		{"ssl_renegotiation_limit", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("SSL renegotiation is no longer supported; this can only be 0."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE,
@@ -4673,7 +4673,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"compute_query_id", PGC_SUSET, STATS_MONITORING,
-			gettext_noop("Compute query identifiers."),
+			gettext_noop("Enables in-core computation of query identifiers."),
 			NULL
 		},
 		&compute_query_id,
@@ -4837,7 +4837,8 @@ static struct config_enum ConfigureNamesEnum[] =
 		{"trace_recovery_messages", PGC_SIGHUP, DEVELOPER_OPTIONS,
 			gettext_noop("Enables logging of recovery-related debugging information."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
-						 " the level, the fewer messages are sent.")
+						 " the level, the fewer messages are sent."),
+			GUC_NOT_IN_SAMPLE,
 		},
 		&trace_recovery_messages,
 
@@ -8756,6 +8757,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
 									 action, true, 0, false);
+			check_reserved_prefixes(stmt->name);
 			break;
 		case VAR_SET_MULTI:
 
@@ -8841,6 +8843,8 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
 									 action, true, 0, false);
+
+			check_reserved_prefixes(stmt->name);
 			break;
 		case VAR_RESET_ALL:
 			ResetAllOptions();
@@ -9327,6 +9331,7 @@ EmitWarningsOnPlaceholders(const char *className)
 {
 	int			classLen = strlen(className);
 	int			i;
+	MemoryContext	oldcontext;
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -9342,8 +9347,49 @@ EmitWarningsOnPlaceholders(const char *className)
 							var->name)));
 		}
 	}
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	reserved_class_prefix = lappend(reserved_class_prefix, pstrdup(className));
+	MemoryContextSwitchTo(oldcontext);
 }
 
+/*
+ * Check a setting name against prefixes previously reserved by
+ * EmitWarningsOnPlaceholders() and throw a warning if matching.
+ */
+static void
+check_reserved_prefixes(const char *varName)
+{
+	char	   *sep = strchr(varName, GUC_QUALIFIER_SEPARATOR);
+
+	if (sep)
+	{
+		size_t		classLen = sep - varName;
+		ListCell   *lc;
+
+		foreach(lc, reserved_class_prefix)
+		{
+			char	   *rcprefix = lfirst(lc);
+
+			if (strncmp(varName, rcprefix, classLen) == 0)
+			{
+				for (int i = 0; i < num_guc_variables; i++)
+				{
+					struct config_generic *var = guc_variables[i];
+
+					if ((var->flags & GUC_CUSTOM_PLACEHOLDER) != 0 &&
+						strcmp(varName, var->name) == 0)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+								 errmsg("unrecognized configuration parameter \"%s\"", var->name),
+								 errdetail("\"%.*s\" is a reserved prefix.", (int) classLen, var->name)));
+					}
+				}
+			}
+		}
+	}
+}
 
 /*
  * SHOW command

@@ -33,7 +33,7 @@ SELECT * FROM test_assign_booltrue(true, true);
 
 SELECT * FROM test_assign_booltrue(false, true);
 ERROR:  value for domain booltrue violates check constraint "booltrue_check"
-CONTEXT:  PL/pgSQL function test_assign_booltrue(boolean,boolean) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_booltrue(boolean,boolean) line 2 during statement block local variable initialization
 SELECT * FROM test_assign_booltrue(true, false);
 ERROR:  value for domain booltrue violates check constraint "booltrue_check"
 CONTEXT:  PL/pgSQL function test_assign_booltrue(boolean,boolean) line 4 at assignment
@@ -76,7 +76,7 @@ ERROR:  value for domain uint2 violates check constraint "uint2_check"
 CONTEXT:  PL/pgSQL function test_assign_uint2(integer,integer) line 4 at assignment
 SELECT * FROM test_assign_uint2(-100, 50);
 ERROR:  value for domain uint2 violates check constraint "uint2_check"
-CONTEXT:  PL/pgSQL function test_assign_uint2(integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_uint2(integer,integer) line 2 during statement block local variable initialization
 SELECT * FROM test_assign_uint2(null, 1);
  test_assign_uint2 
 -------------------
@@ -115,7 +115,7 @@ SELECT * FROM test_assign_nnint(10, 20);
 
 SELECT * FROM test_assign_nnint(null, 20);
 ERROR:  domain nnint does not allow null values
-CONTEXT:  PL/pgSQL function test_assign_nnint(integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_nnint(integer,integer) line 2 during statement block local variable initialization
 SELECT * FROM test_assign_nnint(10, null);
 ERROR:  domain nnint does not allow null values
 CONTEXT:  PL/pgSQL function test_assign_nnint(integer,integer) line 4 at assignment
@@ -168,7 +168,7 @@ ERROR:  value for domain ordered_pair_domain violates check constraint "ordered_
 CONTEXT:  PL/pgSQL function test_assign_ordered_pair_domain(integer,integer,integer) line 4 at assignment
 SELECT * FROM test_assign_ordered_pair_domain(2,1,3);
 ERROR:  value for domain ordered_pair_domain violates check constraint "ordered_pair_domain_check"
-CONTEXT:  PL/pgSQL function test_assign_ordered_pair_domain(integer,integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_ordered_pair_domain(integer,integer,integer) line 2 during statement block local variable initialization
 --
 -- Arrays of domains
 --
@@ -276,7 +276,7 @@ ERROR:  domain nnint does not allow null values
 CONTEXT:  PL/pgSQL function test_assign_nnint_container(integer,integer,integer) line 4 at assignment
 SELECT * FROM test_assign_nnint_container(1,null,3);
 ERROR:  domain nnint does not allow null values
-CONTEXT:  PL/pgSQL function test_assign_nnint_container(integer,integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_nnint_container(integer,integer,integer) line 2 during statement block local variable initialization
 -- Since core system allows this:
 SELECT null::nnint_container;
  nnint_container 
@@ -356,7 +356,7 @@ ERROR:  value for domain ordered_named_pair violates check constraint "ordered_n
 CONTEXT:  PL/pgSQL function test_assign_ordered_named_pair(integer,integer,integer) line 4 at assignment
 SELECT * FROM test_assign_ordered_named_pair(2,1,3);
 ERROR:  value for domain ordered_named_pair violates check constraint "ordered_named_pair_check"
-CONTEXT:  PL/pgSQL function test_assign_ordered_named_pair(integer,integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_ordered_named_pair(integer,integer,integer) line 2 during statement block local variable initialization
 CREATE FUNCTION build_ordered_named_pairs(i int, j int) RETURNS ordered_named_pair[] AS $$
 begin
 return array[row(i, j), row(i, j+1)];
@@ -388,7 +388,7 @@ SELECT * FROM test_assign_ordered_named_pairs(1,2,3);
 
 SELECT * FROM test_assign_ordered_named_pairs(2,1,3);
 ERROR:  value for domain ordered_named_pair violates check constraint "ordered_named_pair_check"
-CONTEXT:  PL/pgSQL function test_assign_ordered_named_pairs(integer,integer,integer) line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function test_assign_ordered_named_pairs(integer,integer,integer) line 2 during statement block local variable initialization
 SELECT * FROM test_assign_ordered_named_pairs(1,2,0);  -- should fail someday
  test_assign_ordered_named_pairs 
 ---------------------------------

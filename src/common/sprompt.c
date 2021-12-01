@@ -37,6 +37,22 @@
 char *
 simple_prompt(const char *prompt, bool echo)
 {
+	return simple_prompt_extended(prompt, echo, NULL);
+}
+
+/*
+ * simple_prompt_extended
+ *
+ * This is the same as simple_prompt(), except that prompt_ctx can
+ * optionally be provided to allow this function to be canceled via an
+ * existing SIGINT signal handler that will longjmp to the specified place
+ * only when *(prompt_ctx->enabled) is true.  If canceled, this function
+ * returns an empty string, and prompt_ctx->canceled is set to true.
+ */
+char *
+simple_prompt_extended(const char *prompt, bool echo,
+					   PromptInterruptContext *prompt_ctx)
+{
 	char	   *result;
 	FILE	   *termin,
 			   *termout;
@@ -126,7 +142,7 @@ simple_prompt(const char *prompt, bool echo)
 		fflush(termout);
 	}
 
-	result = pg_get_line(termin);
+	result = pg_get_line(termin, prompt_ctx);
 
 	/* If we failed to read anything, just return an empty string */
 	if (result == NULL)
@@ -147,6 +163,12 @@ simple_prompt(const char *prompt, bool echo)
 		fputs("\n", termout);
 		fflush(termout);
 #endif
+	}
+	else if (prompt_ctx && prompt_ctx->canceled)
+	{
+		/* also echo \n if prompt was canceled */
+		fputs("\n", termout);
+		fflush(termout);
 	}
 
 	if (termin != stdin)

@@ -46,8 +46,9 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <replaceable class="param
    specified schema.  Otherwise it is created in the current schema.
    Temporary sequences exist in a special schema, so a schema name cannot be
    given when creating a temporary sequence.
-   The sequence name must be distinct from the name of any other sequence,
-   table, index, view, or foreign table in the same schema.
+   The sequence name must be distinct from the name of any other relation
+   (table, sequence, index, view, materialized view, or foreign table) in
+   the same schema.
   </para>
 
   <para>

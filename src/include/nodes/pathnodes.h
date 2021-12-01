@@ -1515,6 +1515,8 @@ typedef struct MemoizePath
 	List	   *param_exprs;	/* cache keys */
 	bool		singlerow;		/* true if the cache entry is to be marked as
 								 * complete after caching the first record. */
+	bool		binary_mode;	/* true when cache key should be compared bit
+								 * by bit, false when using hash equality ops */
 	Cardinality	calls;			/* expected number of rescans */
 	uint32		est_entries;	/* The maximum number of entries that the
 								 * planner expects will fit in the cache, or 0
@@ -2122,8 +2124,9 @@ typedef struct RestrictInfo
 	Selectivity left_mcvfreq;	/* left side's most common val's freq */
 	Selectivity right_mcvfreq;	/* right side's most common val's freq */
 
-	/* hash equality operator used for memoize nodes, else InvalidOid */
-	Oid			hasheqoperator;
+	/* hash equality operators used for memoize nodes, else InvalidOid */
+	Oid			left_hasheqoperator;
+	Oid			right_hasheqoperator;
 } RestrictInfo;
 
 /*

@@ -46,13 +46,16 @@ PostgreSQL documentation
    Creating a database cluster consists of creating the directories in
    which the database data will live, generating the shared catalog
    tables (tables that belong to the whole cluster rather than to any
-   particular database), and creating the <literal>template1</literal>
-   and <literal>postgres</literal> databases. When you later create a
-   new database, everything in the <literal>template1</literal> database is
-   copied.  (Therefore, anything installed in <literal>template1</literal>
-   is automatically copied into each database created later.)
+   particular database), and creating the <literal>postgres</literal>,
+   <literal>template1</literal>, and <literal>template0</literal> databases.
    The <literal>postgres</literal> database is a default database meant
    for use by users, utilities and third party applications.
+   <literal>template1</literal> and <literal>template0</literal> are
+   meant as source databases to be copied by later <command>CREATE
+   DATABASE</command> commands.  <literal>template0</literal> should never
+   be modified, but you can add objects to <literal>template1</literal>,
+   which by default will be copied into databases created later.  See
+   <xref linkend="manage-ag-templatedbs"/> for more details.
   </para>
 
   <para>
@@ -88,7 +91,7 @@ PostgreSQL documentation
    collation order (<literal>LC_COLLATE</literal>) and character set classes
    (<literal>LC_CTYPE</literal>, e.g., upper, lower, digit) can be set separately
    for a database when it is created. <command>initdb</command> determines
-   those settings for the <literal>template1</literal> database, which will
+   those settings for the template databases, which will
    serve as the default for all other databases.
   </para>
 
@@ -184,9 +187,9 @@ PostgreSQL documentation
       <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
        <para>
-        Selects the encoding of the template database. This will also
+        Selects the encoding of the template databases. This will also
         be the default encoding of any database you create later,
-        unless you override it there.  The default is derived from the locale, or
+        unless you override it then.  The default is derived from the locale, or
         <literal>SQL_ASCII</literal> if that does not work. The character sets supported by
         the <productname>PostgreSQL</productname> server are described
         in <xref linkend="multibyte-charset-supported"/>.

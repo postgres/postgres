@@ -136,15 +136,21 @@ CREATE DATABASE <replaceable>name</replaceable>;
   </para>
 
   <para>
-   A second database,
-   <literal>template1</literal>,<indexterm><primary>template1</primary></indexterm>
-   is also created during database cluster initialization.  Whenever a
+   Two additional databases,
+   <literal>template1</literal><indexterm><primary>template1</primary></indexterm>
+   and
+   <literal>template0</literal>,<indexterm><primary>template0</primary></indexterm>
+   are also created during database cluster initialization.  Whenever a
    new database is created within the
    cluster, <literal>template1</literal> is essentially cloned.
    This means that any changes you make in <literal>template1</literal> are
    propagated to all subsequently created databases. Because of this,
    avoid creating objects in <literal>template1</literal> unless you want them
-   propagated to every newly created database.  More details
+   propagated to every newly created database.
+   <literal>template0</literal> is meant as a pristine copy of the original
+   contents of <literal>template1</literal>.  It can be cloned instead
+   of <literal>template1</literal> when it is important to make a database
+   without any such site-local additions.  More details
    appear in <xref linkend="manage-ag-templatedbs"/>.
   </para>
 

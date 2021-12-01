@@ -27,6 +27,7 @@
 #endif
 
 #include "common/int128.h"
+#include "common/pg_prng.h"
 
 /*
  * We assume the parts of this union are laid out compatibly.
@@ -62,26 +63,10 @@ my_int128_compare(int128 x, int128 y)
 }
 
 /*
- * Get a random uint64 value.
- * We don't assume random() is good for more than 16 bits.
- */
-static uint64
-get_random_uint64(void)
-{
-	uint64		x;
-
-	x = (uint64) (random() & 0xFFFF) << 48;
-	x |= (uint64) (random() & 0xFFFF) << 32;
-	x |= (uint64) (random() & 0xFFFF) << 16;
-	x |= (uint64) (random() & 0xFFFF);
-	return x;
-}
-
-/*
  * Main program.
  *
  * Generates a lot of random numbers and tests the implementation for each.
- * The results should be reproducible, since we don't call srandom().
+ * The results should be reproducible, since we use a fixed PRNG seed.
  *
  * You can give a loop count if you don't like the default 1B iterations.
  */
@@ -90,6 +75,8 @@ main(int argc, char **argv)
 {
 	long		count;
 
+	pg_prng_seed(&pg_global_prng_state, 0);
+
 	if (argc >= 2)
 		count = strtol(argv[1], NULL, 0);
 	else
@@ -97,9 +84,9 @@ main(int argc, char **argv)
 
 	while (count-- > 0)
 	{
-		int64		x = get_random_uint64();
-		int64		y = get_random_uint64();
-		int64		z = get_random_uint64();
+		int64		x = pg_prng_uint64(&pg_global_prng_state);
+		int64		y = pg_prng_uint64(&pg_global_prng_state);
+		int64		z = pg_prng_uint64(&pg_global_prng_state);
 		test128		t1;
 		test128		t2;
 
@@ -151,7 +138,7 @@ main(int argc, char **argv)
 		t1.hl.hi = x;
 		t1.hl.lo = y;
 		t2.hl.hi = z;
-		t2.hl.lo = get_random_uint64();
+		t2.hl.lo = pg_prng_uint64(&pg_global_prng_state);
 
 		if (my_int128_compare(t1.i128, t2.i128) !=
 			int128_compare(t1.I128, t2.I128))

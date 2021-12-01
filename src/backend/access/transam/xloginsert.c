@@ -123,7 +123,8 @@ static MemoryContext xloginsert_cxt;
 
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 									   XLogRecPtr RedoRecPtr, bool doPageWrites,
-									   XLogRecPtr *fpw_lsn, int *num_fpi);
+									   XLogRecPtr *fpw_lsn, int *num_fpi,
+									   bool *topxid_included);
 static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
 									uint16 hole_length, char *dest, uint16 *dlen);
 
@@ -208,10 +209,6 @@ void
 XLogResetInsertion(void)
 {
 	int			i;
-
-	/* reset the subxact assignment flag (if needed) */
-	if (curinsert_flags & XLOG_INCLUDE_XID)
-		MarkSubTransactionAssigned();
 
 	for (i = 0; i < max_registered_block_id; i++)
 		registered_buffers[i].in_use = false;
@@ -409,8 +406,6 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
  * - XLOG_MARK_UNIMPORTANT, to signal that the record is not important for
  *	 durability, which allows to avoid triggering WAL archiving and other
  *	 background activity.
- * - XLOG_INCLUDE_XID, a message-passing hack between XLogRecordAssemble
- *	 and XLogResetInsertion.
  */
 void
 XLogSetRecordFlags(uint8 flags)
@@ -465,6 +460,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 	{
 		XLogRecPtr	RedoRecPtr;
 		bool		doPageWrites;
+		bool		topxid_included = false;
 		XLogRecPtr	fpw_lsn;
 		XLogRecData *rdt;
 		int			num_fpi = 0;
@@ -477,9 +473,10 @@ XLogInsert(RmgrId rmid, uint8 info)
 		GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 
 		rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
-								 &fpw_lsn, &num_fpi);
+								 &fpw_lsn, &num_fpi, &topxid_included);
 
-		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpi);
+		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpi,
+								  topxid_included);
 	} while (EndPos == InvalidXLogRecPtr);
 
 	XLogResetInsertion();
@@ -498,11 +495,14 @@ XLogInsert(RmgrId rmid, uint8 info)
  * of all of them, *fpw_lsn is set to the lowest LSN among such pages. This
  * signals that the assembled record is only good for insertion on the
  * assumption that the RedoRecPtr and doPageWrites values were up-to-date.
+ *
+ * *topxid_included is set if the topmost transaction ID is logged with the
+ * current subtransaction.
  */
 static XLogRecData *
 XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
-				   XLogRecPtr *fpw_lsn, int *num_fpi)
+				   XLogRecPtr *fpw_lsn, int *num_fpi, bool *topxid_included)
 {
 	XLogRecData *rdt;
 	uint32		total_len = 0;
@@ -788,12 +788,12 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	}
 
 	/* followed by toplevel XID, if not already included in previous record */
-	if (IsSubTransactionAssignmentPending())
+	if (IsSubxactTopXidLogPending())
 	{
 		TransactionId xid = GetTopTransactionIdIfAny();
 
-		/* update the flag (later used by XLogResetInsertion) */
-		XLogSetRecordFlags(XLOG_INCLUDE_XID);
+		/* Set the flag that the top xid is included in the WAL */
+		*topxid_included = true;
 
 		*(scratch++) = (char) XLR_BLOCK_ID_TOPLEVEL_XID;
 		memcpy(scratch, &xid, sizeof(TransactionId));

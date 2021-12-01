@@ -369,7 +369,6 @@ $node->append_conf('postgresql.conf',
 $node->reload;
 
 # test expressions
-# command 1..3 and 23 depend on random seed which is used to call srandom.
 $node->pgbench(
 	'--random-seed=5432 -t 1 -Dfoo=-10.1 -Dbla=false -Di=+3 -Dn=null -Dt=t -Df=of -Dd=1.0',
 	0,
@@ -378,9 +377,9 @@ $node->pgbench(
 		qr{setting random seed to 5432\b},
 
 		# After explicit seeding, the four random checks (1-3,20) are
-		# deterministic
-		qr{command=1.: int 13\b},      # uniform random
-		qr{command=2.: int 116\b},     # exponential random
+		# deterministic; but see also magic values in checks 111,113.
+		qr{command=1.: int 17\b},      # uniform random
+		qr{command=2.: int 104\b},     # exponential random
 		qr{command=3.: int 1498\b},    # gaussian random
 		qr{command=4.: int 4\b},
 		qr{command=5.: int 5\b},
@@ -394,7 +393,7 @@ $node->pgbench(
 		qr{command=15.: double 15\b},
 		qr{command=16.: double 16\b},
 		qr{command=17.: double 17\b},
-		qr{command=20.: int 1\b},    # zipfian random
+		qr{command=20.: int 3\b},    # zipfian random
 		qr{command=21.: double -27\b},
 		qr{command=22.: double 1024\b},
 		qr{command=23.: double 1\b},
@@ -448,6 +447,7 @@ $node->pgbench(
 		qr{command=109.: boolean true\b},
 		qr{command=110.: boolean true\b},
 		qr{command=111.: boolean true\b},
+		qr{command=113.: boolean true\b},
 	],
 	'pgbench expressions',
 	{
@@ -591,8 +591,17 @@ SELECT :v0, :v1, :v2, :v3;
 \set t debug(0 <= :p and :p < :size and :p = permute(:v + :size, :size) and :p <> permute(:v + 1, :size))
 -- actual values
 \set t debug(permute(:v, 1) = 0)
-\set t debug(permute(0, 2, 5432) = 0 and permute(1, 2, 5432) = 1 and \
-             permute(0, 2, 5435) = 1 and permute(1, 2, 5435) = 0)
+\set t debug(permute(0, 2, 5431) = 0 and permute(1, 2, 5431) = 1 and \
+             permute(0, 2, 5433) = 1 and permute(1, 2, 5433) = 0)
+-- check permute's portability across architectures
+\set size debug(:max - 10)
+\set t debug(permute(:size-1, :size, 5432) = 520382784483822430 and \
+             permute(:size-2, :size, 5432) = 1143715004660802862 and \
+             permute(:size-3, :size, 5432) = 447293596416496998 and \
+             permute(:size-4, :size, 5432) = 916527772266572956 and \
+             permute(:size-5, :size, 5432) = 2763809008686028849 and \
+             permute(:size-6, :size, 5432) = 8648551549198294572 and \
+             permute(:size-7, :size, 5432) = 4542876852200565125)
 }
 	});
 

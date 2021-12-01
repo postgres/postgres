@@ -36,7 +36,7 @@ typedef int16 AttrNumber;
 
 /*
  * AttrNumberIsForUserDefinedAttr
- *		True iff the attribute number corresponds to an user defined attribute.
+ *		True iff the attribute number corresponds to a user defined attribute.
  */
 #define AttrNumberIsForUserDefinedAttr(attributeNumber) \
 	((bool) ((attributeNumber) > 0))

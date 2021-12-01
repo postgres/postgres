@@ -3795,22 +3795,42 @@ end;
 $outer$;
 
 -- Check variable scoping -- a var is not available in its own or prior
--- default expressions.
+-- default expressions, but it is available in later ones.
 
-create function scope_test() returns int as $$
+do $$
+declare x int := x + 1;  -- error
+begin
+  raise notice 'x = %', x;
+end;
+$$;
+
+do $$
+declare y int := x + 1;  -- error
+        x int := 42;
+begin
+  raise notice 'x = %, y = %', x, y;
+end;
+$$;
+
+do $$
+declare x int := 42;
+        y int := x + 1;
+begin
+  raise notice 'x = %, y = %', x, y;
+end;
+$$;
+
+do $$
 declare x int := 42;
 begin
   declare y int := x + 1;
           x int := x + 2;
+          z int := x * 10;
   begin
-    return x * 100 + y;
+    raise notice 'x = %, y = %, z = %', x, y, z;
   end;
 end;
-$$ language plpgsql;
-
-select scope_test();
-
-drop function scope_test();
+$$;
 
 -- Check handling of conflicts between plpgsql vars and table columns.
 

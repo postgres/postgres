@@ -47,7 +47,7 @@ my @contrib_excludes = (
 	'hstore_plperl',    'hstore_plpython',
 	'intagg',           'jsonb_plperl',
 	'jsonb_plpython',   'ltree_plpython',
-	'pgcrypto',         'sepgsql',
+	'sepgsql',
 	'brin',             'test_extensions',
 	'test_misc',        'test_pg_dump',
 	'snapshot_too_old', 'unsafe_tests');
@@ -99,9 +99,9 @@ sub mkvcbuild
 	$solution = CreateSolution($vsVersion, $config);
 
 	our @pgportfiles = qw(
-	  chklocale.c explicit_bzero.c fls.c getpeereid.c getrusage.c inet_aton.c random.c
-	  srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
-	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
+	  chklocale.c explicit_bzero.c fls.c getpeereid.c getrusage.c inet_aton.c
+	  getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
+	  snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
 	  dirent.c dlopen.c getopt.c getopt_long.c link.c
 	  pread.c preadv.c pwrite.c pwritev.c pg_bitutils.c
 	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
@@ -127,9 +127,9 @@ sub mkvcbuild
 	  config_info.c controldata_utils.c d2s.c encnames.c exec.c
 	  f2s.c file_perm.c file_utils.c hashfn.c ip.c jsonapi.c
 	  keywords.c kwlookup.c link-canary.c md5_common.c
-	  pg_get_line.c pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
-	  saslprep.c scram-common.c string.c stringinfo.c unicode_norm.c username.c
-	  wait_error.c wchar.c);
+	  pg_get_line.c pg_lzcompress.c pg_prng.c pgfnames.c psprintf.c relpath.c
+	  rmtree.c saslprep.c scram-common.c string.c stringinfo.c unicode_norm.c
+	  username.c wait_error.c wchar.c);
 
 	if ($solution->{options}->{openssl})
 	{
@@ -373,7 +373,11 @@ sub mkvcbuild
 	}
 
 	my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
+	# This list of files has to match BBOBJS in pg_basebackup's Makefile.
 	$pgbasebackup->AddFile('src/bin/pg_basebackup/pg_basebackup.c');
+	$pgbasebackup->AddFile('src/bin/pg_basebackup/bbstreamer_file.c');
+	$pgbasebackup->AddFile('src/bin/pg_basebackup/bbstreamer_inject.c');
+	$pgbasebackup->AddFile('src/bin/pg_basebackup/bbstreamer_tar.c');
 	$pgbasebackup->AddLibrary('ws2_32.lib');
 
 	my $pgreceivewal = AddSimpleFrontend('pg_basebackup', 1);
@@ -440,48 +444,13 @@ sub mkvcbuild
 
 	if (!$solution->{options}->{openssl})
 	{
-		push @contrib_excludes, 'sslinfo', 'ssl_passphrase_callback';
+		push @contrib_excludes, 'sslinfo', 'ssl_passphrase_callback', 'pgcrypto';
 	}
 
 	if (!$solution->{options}->{uuid})
 	{
 		push @contrib_excludes, 'uuid-ossp';
 	}
-
-	# AddProject() does not recognize the constructs used to populate OBJS in
-	# the pgcrypto Makefile, so it will discover no files.
-	my $pgcrypto =
-	  $solution->AddProject('pgcrypto', 'dll', 'crypto', 'contrib/pgcrypto');
-	$pgcrypto->AddFiles(
-		'contrib/pgcrypto', 'pgcrypto.c',
-		'px.c',             'px-hmac.c',
-		'px-crypt.c',       'crypt-gensalt.c',
-		'crypt-blowfish.c', 'crypt-des.c',
-		'crypt-md5.c',      'mbuf.c',
-		'pgp.c',            'pgp-armor.c',
-		'pgp-cfb.c',        'pgp-compress.c',
-		'pgp-decrypt.c',    'pgp-encrypt.c',
-		'pgp-info.c',       'pgp-mpi.c',
-		'pgp-pubdec.c',     'pgp-pubenc.c',
-		'pgp-pubkey.c',     'pgp-s2k.c',
-		'pgp-pgsql.c');
-	if ($solution->{options}->{openssl})
-	{
-		$pgcrypto->AddFiles('contrib/pgcrypto', 'openssl.c',
-			'pgp-mpi-openssl.c');
-	}
-	else
-	{
-		$pgcrypto->AddFiles(
-			'contrib/pgcrypto', 'internal.c',
-			'internal-sha2.c',  'blf.c',
-			'rijndael.c',       'pgp-mpi-internal.c',
-			'imath.c');
-	}
-	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddLibrary('ws2_32.lib');
-	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
-	GenerateContribSqlFiles('pgcrypto', $mf);
 
 	foreach my $subdir ('contrib', 'src/test/modules')
 	{
@@ -795,7 +764,7 @@ sub mkvcbuild
 		}
 	}
 
-	$mf =
+	my $mf =
 	  Project::read_file('src/backend/utils/mb/conversion_procs/Makefile');
 	$mf =~ s{\\\r?\n}{}g;
 	$mf =~ m{SUBDIRS\s*=\s*(.*)$}m
