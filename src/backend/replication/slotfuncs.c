@@ -414,7 +414,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 			XLByteToSeg(slot_contents.data.restart_lsn, targetSeg, wal_segment_size);
 
-			/* determine how many segments slots can be kept by slots */
+			/* determine how many segments can be kept by slots */
 			slotKeepSegs = XLogMBVarToSegs(max_slot_wal_keep_size_mb, wal_segment_size);
 			/* ditto for wal_keep_size */
 			keepSegs = XLogMBVarToSegs(wal_keep_size_mb, wal_segment_size);
