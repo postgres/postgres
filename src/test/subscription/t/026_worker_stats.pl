@@ -6,31 +6,38 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 5;
+use Test::More tests => 3;
 
 # Test if the error reported on pg_stat_subscription_workers view is expected.
 sub test_subscription_error
 {
-    my ($node, $relname, $xid, $expected_error, $msg) = @_;
+    my ($node, $relname, $command, $xid, $by_apply_worker, $errmsg_prefix, $msg)
+	= @_;
 
     my $check_sql = qq[
-SELECT count(1) > 0 FROM pg_stat_subscription_workers
-WHERE last_error_relid = '$relname'::regclass];
-    $check_sql .= " AND last_error_xid = '$xid'::xid;" if $xid ne '';
-
-    # Wait for the error statistics to be updated.
-    $node->poll_query_until(
-	'postgres', $check_sql,
-) or die "Timed out while waiting for statistics to be updated";
-
-    my $result = $node->safe_psql(
-	'postgres',
-	qq[
-SELECT subname, last_error_command, last_error_relid::regclass, last_error_count > 0
+SELECT count(1) > 0
 FROM pg_stat_subscription_workers
-WHERE last_error_relid = '$relname'::regclass;
-]);
-    is($result, $expected_error, $msg);
+WHERE last_error_relid = '$relname'::regclass
+    AND starts_with(last_error_message, '$errmsg_prefix')];
+
+    # subrelid
+    $check_sql .= $by_apply_worker
+	? qq[ AND subrelid IS NULL]
+	: qq[ AND subrelid = '$relname'::regclass];
+
+    # last_error_command
+    $check_sql .= $command eq ''
+	? qq[ AND last_error_command IS NULL]
+	: qq[ AND last_error_command = '$command'];
+
+    # last_error_xid
+    $check_sql .= $xid eq ''
+	? qq[ AND last_error_xid IS NULL]
+	: qq[ AND last_error_xid = '$xid'::xid];
+
+    # Wait for the particular error statistics to be reported.
+    $node->poll_query_until('postgres', $check_sql,
+) or die "Timed out while waiting for " . $msg;
 }
 
 # Create publisher node.
@@ -89,7 +96,7 @@ is($result, qq(0), 'check no subscription error');
 # infinite error loop due to violating the unique constraint.
 $node_subscriber->safe_psql(
     'postgres',
-    "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub WITH (streaming = off);");
+    "CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub;");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
@@ -117,14 +124,16 @@ INSERT INTO test_tab1 VALUES (1);
 SELECT pg_current_xact_id()::xid;
 COMMIT;
 ]);
-test_subscription_error($node_subscriber, 'test_tab1', $xid,
-			qq(tap_sub|INSERT|test_tab1|t),
-			'check the error reported by the apply worker');
+test_subscription_error($node_subscriber, 'test_tab1', 'INSERT', $xid,
+			1,	# check apply worker error
+			qq(duplicate key value violates unique constraint),
+			'error reported by the apply worker');
 
 # Check the table sync worker's error in the view.
-test_subscription_error($node_subscriber, 'test_tab2', '',
-			qq(tap_sub||test_tab2|t),
-			'check the error reported by the table sync worker');
+test_subscription_error($node_subscriber, 'test_tab2', '', '',
+			0,	# check tablesync worker error
+			qq(duplicate key value violates unique constraint),
+			'the error reported by the table sync worker');
 
 # Test for resetting subscription worker statistics.
 # Truncate test_tab1 and test_tab2 so that applying changes and table sync can
