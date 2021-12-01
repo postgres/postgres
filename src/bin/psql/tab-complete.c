@@ -3322,12 +3322,16 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("VIEW");
 	else if (Matches("DROP", "MATERIALIZED", "VIEW"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	else if (Matches("DROP", "MATERIALIZED", "VIEW", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/* DROP OWNED BY */
 	else if (Matches("DROP", "OWNED"))
 		COMPLETE_WITH("BY");
 	else if (Matches("DROP", "OWNED", "BY"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+	else if (Matches("DROP", "OWNED", "BY", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/* DROP TEXT SEARCH */
 	else if (Matches("DROP", "TEXT", "SEARCH"))
@@ -3368,6 +3372,8 @@ psql_completion(const char *text, int start, int end)
 		completion_info_charp = prev2_wd;
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_policy);
 	}
+	else if (Matches("DROP", "POLICY", MatchAny, "ON", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/* DROP RULE */
 	else if (Matches("DROP", "RULE", MatchAny))
@@ -3378,6 +3384,21 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_rule);
 	}
 	else if (Matches("DROP", "RULE", MatchAny, "ON", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
+
+	/* DROP TRANSFORM */
+	else if (Matches("DROP", "TRANSFORM"))
+		COMPLETE_WITH("FOR");
+	else if (Matches("DROP", "TRANSFORM", "FOR"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
+	else if (Matches("DROP", "TRANSFORM", "FOR", MatchAny))
+		COMPLETE_WITH("LANGUAGE");
+	else if (Matches("DROP", "TRANSFORM", "FOR", MatchAny, "LANGUAGE"))
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_languages);
+	}
+	else if (Matches("DROP", "TRANSFORM", "FOR", MatchAny, "LANGUAGE", MatchAny))
 		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 /* EXECUTE */
