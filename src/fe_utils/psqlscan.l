@@ -378,12 +378,11 @@ other			.
 					/*
 					 * Note that the whitespace rule includes both true
 					 * whitespace and single-line ("--" style) comments.
-					 * We suppress whitespace at the start of the query
-					 * buffer.  We also suppress all single-line comments,
-					 * which is pretty dubious but is the historical
-					 * behavior.
+					 * We suppress whitespace until we have collected some
+					 * non-whitespace data.  (This interacts with some
+					 * decisions in MainLoop(); see there for details.)
 					 */
-					if (!(output_buf->len == 0 || yytext[0] == '-'))
+					if (output_buf->len > 0)
 						ECHO;
 				}
 
