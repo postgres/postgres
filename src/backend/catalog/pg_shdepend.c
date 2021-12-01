@@ -65,6 +65,7 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
@@ -1507,6 +1508,8 @@ shdepReassignOwned(List *roleids, Oid newrole)
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
+			MemoryContext cxt,
+						oldcxt;
 
 			/*
 			 * We only operate on shared objects and objects in the current
@@ -1523,6 +1526,18 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			/* We leave non-owner dependencies alone */
 			if (sdepForm->deptype != SHARED_DEPENDENCY_OWNER)
 				continue;
+
+			/*
+			 * The various ALTER OWNER routines tend to leak memory in
+			 * CurrentMemoryContext.  That's not a problem when they're only
+			 * called once per command; but in this usage where we might be
+			 * touching many objects, it can amount to a serious memory leak.
+			 * Fix that by running each call in a short-lived context.
+			 */
+			cxt = AllocSetContextCreate(CurrentMemoryContext,
+										"shdepReassignOwned",
+										ALLOCSET_DEFAULT_SIZES);
+			oldcxt = MemoryContextSwitchTo(cxt);
 
 			/* Issue the appropriate ALTER OWNER call */
 			switch (sdepForm->classid)
@@ -1612,6 +1627,11 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					elog(ERROR, "unexpected classid %u", sdepForm->classid);
 					break;
 			}
+
+			/* Clean up */
+			MemoryContextSwitchTo(oldcxt);
+			MemoryContextDelete(cxt);
+
 			/* Make sure the next iteration will see my changes */
 			CommandCounterIncrement();
 		}
