@@ -235,6 +235,8 @@ static bool check_recovery_target_lsn(char **newval, void **extra, GucSource sou
 static void assign_recovery_target_lsn(const char *newval, void *extra);
 static bool check_primary_slot_name(char **newval, void **extra, GucSource source);
 static bool check_default_with_oids(bool *newval, void **extra, GucSource source);
+static void check_reserved_prefixes(const char *varName);
+static List *reserved_class_prefix = NIL;
 
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
@@ -8755,6 +8757,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
 									 action, true, 0, false);
+			check_reserved_prefixes(stmt->name);
 			break;
 		case VAR_SET_MULTI:
 
@@ -8840,6 +8843,8 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
 									 PGC_S_SESSION,
 									 action, true, 0, false);
+
+			check_reserved_prefixes(stmt->name);
 			break;
 		case VAR_RESET_ALL:
 			ResetAllOptions();
@@ -9326,6 +9331,7 @@ EmitWarningsOnPlaceholders(const char *className)
 {
 	int			classLen = strlen(className);
 	int			i;
+	MemoryContext	oldcontext;
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -9341,8 +9347,49 @@ EmitWarningsOnPlaceholders(const char *className)
 							var->name)));
 		}
 	}
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	reserved_class_prefix = lappend(reserved_class_prefix, pstrdup(className));
+	MemoryContextSwitchTo(oldcontext);
 }
 
+/*
+ * Check a setting name against prefixes previously reserved by
+ * EmitWarningsOnPlaceholders() and throw a warning if matching.
+ */
+static void
+check_reserved_prefixes(const char *varName)
+{
+	char	   *sep = strchr(varName, GUC_QUALIFIER_SEPARATOR);
+
+	if (sep)
+	{
+		size_t		classLen = sep - varName;
+		ListCell   *lc;
+
+		foreach(lc, reserved_class_prefix)
+		{
+			char	   *rcprefix = lfirst(lc);
+
+			if (strncmp(varName, rcprefix, classLen) == 0)
+			{
+				for (int i = 0; i < num_guc_variables; i++)
+				{
+					struct config_generic *var = guc_variables[i];
+
+					if ((var->flags & GUC_CUSTOM_PLACEHOLDER) != 0 &&
+						strcmp(varName, var->name) == 0)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+								 errmsg("unrecognized configuration parameter \"%s\"", var->name),
+								 errdetail("\"%.*s\" is a reserved prefix.", (int) classLen, var->name)));
+					}
+				}
+			}
+		}
+	}
+}
 
 /*
  * SHOW command
