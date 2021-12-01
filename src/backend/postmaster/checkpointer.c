@@ -384,11 +384,7 @@ CheckpointerMain(void)
 			bool		ckpt_performed = false;
 			bool		do_restartpoint;
 
-			/*
-			 * Check if we should perform a checkpoint or a restartpoint. As a
-			 * side-effect, RecoveryInProgress() initializes TimeLineID if
-			 * it's not set yet.
-			 */
+			/* Check if we should perform a checkpoint or a restartpoint. */
 			do_restartpoint = RecoveryInProgress();
 
 			/*

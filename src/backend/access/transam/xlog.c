@@ -8391,8 +8391,8 @@ PerformRecoveryXLogAction(void)
  * Unlike testing InRecovery, this works in any process that's connected to
  * shared memory.
  *
- * As a side-effect, we initialize the local TimeLineID and RedoRecPtr
- * variables the first time we see that recovery is finished.
+ * As a side-effect, we initialize the local RedoRecPtr variable the first
+ * time we see that recovery is finished.
  */
 bool
 RecoveryInProgress(void)
