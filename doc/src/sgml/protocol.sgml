@@ -2809,8 +2809,10 @@ The commands accepted in replication mode are:
       than <literal>pg_default</literal> and <literal>pg_global</literal>. The data in
       the CopyOutResponse results will be a tar format (following the
       <quote>ustar interchange format</quote> specified in the POSIX 1003.1-2008
-      standard) dump of the tablespace contents, except that the two trailing
-      blocks of zeroes specified in the standard are omitted.
+      standard) dump of the tablespace contents. Prior to
+      <literal>PostgreSQL</literal> 15, the server omitted the two trailing
+      blocks of zeroes specified in the standard, but this is no longer the
+      case.
       After the tar data is complete, and if a backup manifest was requested,
       another CopyOutResponse result is sent, containing the manifest data for the
       current base backup. In any case, a final ordinary result set will be
