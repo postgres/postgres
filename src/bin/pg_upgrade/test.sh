@@ -186,16 +186,11 @@ if "$MAKE" -C "$oldsrc" installcheck; then
 
 	# before dumping, get rid of objects not feasible in later versions
 	if [ "$newsrc" != "$oldsrc" ]; then
-		fix_sql=""
-		case $oldpgversion in
-			804??)
-				fix_sql="DROP FUNCTION public.myfunc(integer);"
-				;;
-		esac
-		fix_sql="$fix_sql
-				 DROP FUNCTION IF EXISTS
-					public.oldstyle_length(integer, text);	-- last in 9.6";
-		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
+		# This SQL script has its own idea of the cleanup that needs to be
+		# done on the cluster to-be-upgraded, and includes version checks.
+		# Note that this uses the script stored on the new branch.
+		psql -X -d regression -f "$newsrc/src/bin/pg_upgrade/upgrade_adapt.sql" \
+			|| psql_fix_sql_status=$?
 	fi
 
 	pg_dumpall --no-sync -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
