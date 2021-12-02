@@ -17164,19 +17164,7 @@ $as_echo "#define HAVE_RL_FILENAME_QUOTING_FUNCTION 1" >>confdefs.h
 
 fi
 
-  for ac_func in rl_completion_matches rl_filename_completion_function rl_reset_screen_size
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-  for ac_func in append_history history_truncate_file
+  for ac_func in append_history history_truncate_file rl_completion_matches rl_filename_completion_function rl_reset_screen_size rl_variable_bind
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

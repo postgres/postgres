@@ -2001,8 +2001,14 @@ LIBS="$LIBS_including_readline"
 
 if test "$with_readline" = yes; then
   PGAC_READLINE_VARIABLES
-  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function rl_reset_screen_size])
-  AC_CHECK_FUNCS([append_history history_truncate_file])
+  AC_CHECK_FUNCS(m4_normalize([
+	append_history
+	history_truncate_file
+	rl_completion_matches
+	rl_filename_completion_function
+	rl_reset_screen_size
+	rl_variable_bind
+  ]))
 fi
 
 

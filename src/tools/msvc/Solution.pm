@@ -354,6 +354,7 @@ sub GenerateFiles
 		HAVE_RL_FILENAME_QUOTE_CHARACTERS        => undef,
 		HAVE_RL_FILENAME_QUOTING_FUNCTION        => undef,
 		HAVE_RL_RESET_SCREEN_SIZE                => undef,
+		HAVE_RL_VARIABLE_BIND                    => undef,
 		HAVE_SECURITY_PAM_APPL_H                 => undef,
 		HAVE_SETENV                              => undef,
 		HAVE_SETPROCTITLE                        => undef,
