@@ -175,42 +175,11 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	# Before dumping, tweak the database of the old instance depending
 	# on its version.
 	if [ "$newsrc" != "$oldsrc" ]; then
-		fix_sql=""
-		# Get rid of objects not feasible in later versions
-		case $oldpgversion in
-			804??)
-				fix_sql="DROP FUNCTION public.myfunc(integer);"
-				;;
-		esac
-
-		# Last appeared in v9.6
-		if [ $oldpgversion -lt 100000 ]; then
-			fix_sql="$fix_sql
-					 DROP FUNCTION IF EXISTS
-						public.oldstyle_length(integer, text);"
-		fi
-		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
-
-		# WITH OIDS is not supported anymore in v12, so remove support
-		# for any relations marked as such.
-		if [ $oldpgversion -lt 120000 ]; then
-			fix_sql="DO \$stmt\$
-				DECLARE
-					rec text;
-				BEGIN
-				FOR rec in
-					SELECT oid::regclass::text
-					FROM pg_class
-					WHERE relname !~ '^pg_'
-						AND relhasoids
-						AND relkind in ('r','m')
-					ORDER BY 1
-				LOOP
-					execute 'ALTER TABLE ' || rec || ' SET WITHOUT OIDS';
-				END LOOP;
-				END; \$stmt\$;"
-			psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
-		fi
+		# This SQL script has its own idea of the cleanup that needs to be
+		# done on the cluster to-be-upgraded, and includes version checks.
+		# Note that this uses the script stored on the new branch.
+		psql -X -d regression -f "$newsrc/src/bin/pg_upgrade/upgrade_adapt.sql" \
+			|| psql_fix_sql_status=$?
 
 		# Handling of --extra-float-digits gets messy after v12.
 		# Note that this changes the dumps from the old and new
