@@ -626,7 +626,8 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 
 		ereport(elevel,
 				(errcode(sqlstate),
-				 message_primary ? errmsg_internal("%s", message_primary) :
+				 (message_primary != NULL && message_primary[0] != '\0') ?
+				 errmsg_internal("%s", message_primary) :
 				 errmsg("could not obtain message string for remote error"),
 				 message_detail ? errdetail_internal("%s", message_detail) : 0,
 				 message_hint ? errhint("%s", message_hint) : 0,
