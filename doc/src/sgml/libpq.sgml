@@ -1600,7 +1600,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>sslcrl</literal></term>
       <listitem>
        <para>
-        This parameter specifies the file name of the SSL certificate
+        This parameter specifies the file name of the SSL server certificate
         revocation list (CRL).  Certificates listed in this file, if it
         exists, will be rejected while attempting to authenticate the
         server's certificate.  The default is

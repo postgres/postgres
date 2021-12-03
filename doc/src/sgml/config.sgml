@@ -1192,7 +1192,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies the name of the file containing the SSL server certificate
+        Specifies the name of the file containing the SSL client certificate
         revocation list (CRL).
         Relative paths are relative to the data directory.
         This parameter can only be set in the <filename>postgresql.conf</filename>
