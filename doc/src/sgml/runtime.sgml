@@ -2340,7 +2340,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    you wish to avoid storing them on clients (assuming the root and
    intermediate certificates were created with <literal>v3_ca</literal>
    extensions).  Certificate Revocation List (CRL) entries are also
-   checked if the parameter <xref linkend="guc-ssl-crl-file"/> is set.
+   checked if the parameter <xref linkend="guc-ssl-crl-file"/> or
+   <xref linkend="guc-ssl-crl-dir"/> is set.
   </para>
 
   <para>
