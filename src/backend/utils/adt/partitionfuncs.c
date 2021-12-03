@@ -45,9 +45,7 @@ check_rel_can_be_partition(Oid relid)
 	relispartition = get_rel_relispartition(relid);
 
 	/* Only allow relation types that can appear in partition trees. */
-	if (!relispartition &&
-		relkind != RELKIND_PARTITIONED_TABLE &&
-		relkind != RELKIND_PARTITIONED_INDEX)
+	if (!relispartition && !RELKIND_HAS_PARTITIONS(relkind))
 		return false;
 
 	return true;
@@ -143,8 +141,7 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 			nulls[1] = true;
 
 		/* isleaf */
-		values[2] = BoolGetDatum(relkind != RELKIND_PARTITIONED_TABLE &&
-								 relkind != RELKIND_PARTITIONED_INDEX);
+		values[2] = BoolGetDatum(!RELKIND_HAS_PARTITIONS(relkind));
 
 		/* level */
 		if (relid != rootrelid)

@@ -198,6 +198,31 @@ DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeInd
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
 
+#define RELKIND_HAS_PARTITIONS(relkind) \
+	((relkind) == RELKIND_PARTITIONED_TABLE || \
+	 (relkind) == RELKIND_PARTITIONED_INDEX)
+
+/*
+ * Relation kinds that support tablespaces: All relation kinds with storage
+ * support tablespaces, except that we don't support moving sequences around
+ * into different tablespaces.  Partitioned tables and indexes don't have
+ * physical storage, but they have a tablespace settings so that their
+ * children can inherit it.
+ */
+#define RELKIND_HAS_TABLESPACE(relkind) \
+	((RELKIND_HAS_STORAGE(relkind) || RELKIND_HAS_PARTITIONS(relkind)) \
+	 && (relkind) != RELKIND_SEQUENCE)
+
+/*
+ * Relation kinds with a table access method (rd_tableam).  Although sequences
+ * use the heap table AM, they are enough of a special case in most uses that
+ * they are not included here.
+ */
+#define RELKIND_HAS_TABLE_AM(relkind) \
+	((relkind) == RELKIND_RELATION || \
+	 (relkind) == RELKIND_TOASTVALUE || \
+	 (relkind) == RELKIND_MATVIEW)
+
 extern int errdetail_relkind_not_supported(char relkind);
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */

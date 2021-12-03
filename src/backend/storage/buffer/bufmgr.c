@@ -2934,37 +2934,26 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
-	switch (relation->rd_rel->relkind)
+	if (RELKIND_HAS_TABLE_AM(relation->rd_rel->relkind))
 	{
-		case RELKIND_SEQUENCE:
-		case RELKIND_INDEX:
-			return smgrnblocks(RelationGetSmgr(relation), forkNum);
+		/*
+		 * Not every table AM uses BLCKSZ wide fixed size blocks.
+		 * Therefore tableam returns the size in bytes - but for the
+		 * purpose of this routine, we want the number of blocks.
+		 * Therefore divide, rounding up.
+		 */
+		uint64		szbytes;
 
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_MATVIEW:
-			{
-				/*
-				 * Not every table AM uses BLCKSZ wide fixed size blocks.
-				 * Therefore tableam returns the size in bytes - but for the
-				 * purpose of this routine, we want the number of blocks.
-				 * Therefore divide, rounding up.
-				 */
-				uint64		szbytes;
+		szbytes = table_relation_size(relation, forkNum);
 
-				szbytes = table_relation_size(relation, forkNum);
-
-				return (szbytes + (BLCKSZ - 1)) / BLCKSZ;
-			}
-		case RELKIND_VIEW:
-		case RELKIND_COMPOSITE_TYPE:
-		case RELKIND_FOREIGN_TABLE:
-		case RELKIND_PARTITIONED_INDEX:
-		case RELKIND_PARTITIONED_TABLE:
-		default:
-			Assert(false);
-			break;
+		return (szbytes + (BLCKSZ - 1)) / BLCKSZ;
 	}
+	else if (RELKIND_HAS_STORAGE(relation->rd_rel->relkind))
+	{
+			return smgrnblocks(RelationGetSmgr(relation), forkNum);
+	}
+	else
+		Assert(false);
 
 	return 0;					/* keep compiler quiet */
 }

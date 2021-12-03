@@ -252,14 +252,13 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary tables of other sessions")));
 
-	switch (rel->rd_rel->relkind)
+	if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind) ||
+		rel->rd_rel->relkind == RELKIND_SEQUENCE)
 	{
-		case RELKIND_RELATION:
-		case RELKIND_MATVIEW:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_SEQUENCE:
 			return pgstat_heap(rel, fcinfo);
-		case RELKIND_INDEX:
+	}
+	else if (rel->rd_rel->relkind == RELKIND_INDEX)
+	{
 			switch (rel->rd_rel->relam)
 			{
 				case BTREE_AM_OID:
@@ -288,9 +287,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("index \"%s\" (%s) is not supported",
 							RelationGetRelationName(rel), err)));
-			break;
-
-		default:
+	}
+	else
+	{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot get tuple-level statistics for relation \"%s\"",

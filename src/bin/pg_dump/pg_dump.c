@@ -16480,17 +16480,26 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 
 	if (tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 	{
+		char	   *tablespace = NULL;
 		char	   *tableam = NULL;
 
-		if (tbinfo->relkind == RELKIND_RELATION ||
-			tbinfo->relkind == RELKIND_MATVIEW)
+		/*
+		 * _selectTablespace() relies on tablespace-enabled objects in the
+		 * default tablespace to have a tablespace of "" (empty string) versus
+		 * non-tablespace-enabled objects to have a tablespace of NULL.
+		 * getTables() sets tbinfo->reltablespace to "" for the default
+		 * tablespace (not NULL).
+		 */
+		if (RELKIND_HAS_TABLESPACE(tbinfo->relkind))
+			tablespace = tbinfo->reltablespace;
+
+		if (RELKIND_HAS_TABLE_AM(tbinfo->relkind))
 			tableam = tbinfo->amname;
 
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = tbinfo->dobj.name,
 								  .namespace = tbinfo->dobj.namespace->dobj.name,
-								  .tablespace = (tbinfo->relkind == RELKIND_VIEW) ?
-								  NULL : tbinfo->reltablespace,
+								  .tablespace = tablespace,
 								  .tableam = tableam,
 								  .owner = tbinfo->rolname,
 								  .description = reltypename,
