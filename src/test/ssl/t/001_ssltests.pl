@@ -504,6 +504,7 @@ if ($? == 0)
 	if ($Config{ivsize} == 8)
 	{
 		$serialno =~ s/^serial=//;
+		$serialno =~ s/\s+//g;
 		$serialno = hex($serialno);
 	}
 	else
