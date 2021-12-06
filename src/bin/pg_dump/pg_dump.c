@@ -735,10 +735,10 @@ main(int argc, char **argv)
 
 
 	/*
-	 * We allow the server to be back to 8.0, and up to any minor release of
+	 * We allow the server to be back to 8.4, and up to any minor release of
 	 * our own major version.  (See also version check in pg_dumpall.c.)
 	 */
-	fout->minRemoteVersion = 80000;
+	fout->minRemoteVersion = 80400;
 	fout->maxRemoteVersion = (PG_VERSION_NUM / 100) * 100 + 99;
 
 	fout->numWorkers = numWorkers;
@@ -6812,13 +6812,15 @@ getInherits(Archive *fout, int *numInherits)
 void
 getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 {
-	int			i,
-				j;
 	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer tbloids = createPQExpBuffer();
 	PGresult   *res;
+	int			ntups;
+	int			curtblindx;
 	IndxInfo   *indxinfo;
 	int			i_tableoid,
 				i_oid,
+				i_indrelid,
 				i_indexname,
 				i_parentidx,
 				i_indexdef,
@@ -6838,9 +6840,17 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_indreloptions,
 				i_indstatcols,
 				i_indstatvals;
-	int			ntups;
 
-	for (i = 0; i < numTables; i++)
+	/*
+	 * We want to perform just one query against pg_index.  However, we
+	 * mustn't try to select every row of the catalog and then sort it out on
+	 * the client side, because some of the server-side functions we need
+	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
+	 * build an array of the OIDs of tables we care about (and now have lock
+	 * on!), and use a WHERE clause to constrain which rows are selected.
+	 */
+	appendPQExpBufferChar(tbloids, '{');
+	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
@@ -6853,232 +6863,270 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		if (!tbinfo->interesting)
 			continue;
 
-		pg_log_info("reading indexes for table \"%s.%s\"",
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->dobj.name);
+		/* OK, we need info for this table */
+		if (tbloids->len > 1)	/* do we have more than the '{'? */
+			appendPQExpBufferChar(tbloids, ',');
+		appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+	}
+	appendPQExpBufferChar(tbloids, '}');
+
+	/*
+	 * The point of the messy-looking outer join is to find a constraint that
+	 * is related by an internal dependency link to the index. If we find one,
+	 * create a CONSTRAINT entry linked to the INDEX entry.  We assume an
+	 * index won't have more than one internal dependency.
+	 *
+	 * As of 9.0 we don't need to look at pg_depend but can check for a match
+	 * to pg_constraint.conindid.  The check on conrelid is redundant but
+	 * useful because that column is indexed while conindid is not.
+	 */
+	if (fout->remoteVersion >= 110000)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT t.tableoid, t.oid, i.indrelid, "
+						  "t.relname AS indexname, "
+						  "inh.inhparent AS parentidx, "
+						  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+						  "i.indnkeyatts AS indnkeyatts, "
+						  "i.indnatts AS indnatts, "
+						  "i.indkey, i.indisclustered, "
+						  "i.indisreplident, "
+						  "c.contype, c.conname, "
+						  "c.condeferrable, c.condeferred, "
+						  "c.tableoid AS contableoid, "
+						  "c.oid AS conoid, "
+						  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+						  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+						  "t.reloptions AS indreloptions, "
+						  "(SELECT pg_catalog.array_agg(attnum ORDER BY attnum) "
+						  "  FROM pg_catalog.pg_attribute "
+						  "  WHERE attrelid = i.indexrelid AND "
+						  "    attstattarget >= 0) AS indstatcols,"
+						  "(SELECT pg_catalog.array_agg(attstattarget ORDER BY attnum) "
+						  "  FROM pg_catalog.pg_attribute "
+						  "  WHERE attrelid = i.indexrelid AND "
+						  "    attstattarget >= 0) AS indstatvals "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_index i ON (src.tbloid = i.indrelid) "
+						  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+						  "JOIN pg_catalog.pg_class t2 ON (t2.oid = i.indrelid) "
+						  "LEFT JOIN pg_catalog.pg_constraint c "
+						  "ON (i.indrelid = c.conrelid AND "
+						  "i.indexrelid = c.conindid AND "
+						  "c.contype IN ('p','u','x')) "
+						  "LEFT JOIN pg_catalog.pg_inherits inh "
+						  "ON (inh.inhrelid = indexrelid) "
+						  "WHERE (i.indisvalid OR t2.relkind = 'p') "
+						  "AND i.indisready "
+						  "ORDER BY i.indrelid, indexname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 90400)
+	{
+		/*
+		 * the test on indisready is necessary in 9.2, and harmless in
+		 * earlier/later versions
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tableoid, t.oid, i.indrelid, "
+						  "t.relname AS indexname, "
+						  "0 AS parentidx, "
+						  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+						  "i.indnatts AS indnkeyatts, "
+						  "i.indnatts AS indnatts, "
+						  "i.indkey, i.indisclustered, "
+						  "i.indisreplident, "
+						  "c.contype, c.conname, "
+						  "c.condeferrable, c.condeferred, "
+						  "c.tableoid AS contableoid, "
+						  "c.oid AS conoid, "
+						  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+						  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+						  "t.reloptions AS indreloptions, "
+						  "'' AS indstatcols, "
+						  "'' AS indstatvals "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_index i ON (src.tbloid = i.indrelid) "
+						  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+						  "LEFT JOIN pg_catalog.pg_constraint c "
+						  "ON (i.indrelid = c.conrelid AND "
+						  "i.indexrelid = c.conindid AND "
+						  "c.contype IN ('p','u','x')) "
+						  "WHERE i.indisvalid AND i.indisready "
+						  "ORDER BY i.indrelid, indexname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 90000)
+	{
+		/*
+		 * the test on indisready is necessary in 9.2, and harmless in
+		 * earlier/later versions
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tableoid, t.oid, i.indrelid, "
+						  "t.relname AS indexname, "
+						  "0 AS parentidx, "
+						  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+						  "i.indnatts AS indnkeyatts, "
+						  "i.indnatts AS indnatts, "
+						  "i.indkey, i.indisclustered, "
+						  "false AS indisreplident, "
+						  "c.contype, c.conname, "
+						  "c.condeferrable, c.condeferred, "
+						  "c.tableoid AS contableoid, "
+						  "c.oid AS conoid, "
+						  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+						  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+						  "t.reloptions AS indreloptions, "
+						  "'' AS indstatcols, "
+						  "'' AS indstatvals "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_index i ON (src.tbloid = i.indrelid) "
+						  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+						  "LEFT JOIN pg_catalog.pg_constraint c "
+						  "ON (i.indrelid = c.conrelid AND "
+						  "i.indexrelid = c.conindid AND "
+						  "c.contype IN ('p','u','x')) "
+						  "WHERE i.indisvalid AND i.indisready "
+						  "ORDER BY i.indrelid, indexname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 80200)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT t.tableoid, t.oid, i.indrelid, "
+						  "t.relname AS indexname, "
+						  "0 AS parentidx, "
+						  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+						  "i.indnatts AS indnkeyatts, "
+						  "i.indnatts AS indnatts, "
+						  "i.indkey, i.indisclustered, "
+						  "false AS indisreplident, "
+						  "c.contype, c.conname, "
+						  "c.condeferrable, c.condeferred, "
+						  "c.tableoid AS contableoid, "
+						  "c.oid AS conoid, "
+						  "null AS condef, "
+						  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+						  "t.reloptions AS indreloptions, "
+						  "'' AS indstatcols, "
+						  "'' AS indstatvals "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_index i ON (src.tbloid = i.indrelid) "
+						  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+						  "LEFT JOIN pg_catalog.pg_depend d "
+						  "ON (d.classid = t.tableoid "
+						  "AND d.objid = t.oid "
+						  "AND d.deptype = 'i') "
+						  "LEFT JOIN pg_catalog.pg_constraint c "
+						  "ON (d.refclassid = c.tableoid "
+						  "AND d.refobjid = c.oid) "
+						  "WHERE i.indisvalid "
+						  "ORDER BY i.indrelid, indexname",
+						  tbloids->data);
+	}
+	else
+	{
+		appendPQExpBuffer(query,
+						  "SELECT t.tableoid, t.oid, i.indrelid, "
+						  "t.relname AS indexname, "
+						  "0 AS parentidx, "
+						  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+						  "t.relnatts AS indnkeyatts, "
+						  "t.relnatts AS indnatts, "
+						  "i.indkey, i.indisclustered, "
+						  "false AS indisreplident, "
+						  "c.contype, c.conname, "
+						  "c.condeferrable, c.condeferred, "
+						  "c.tableoid AS contableoid, "
+						  "c.oid AS conoid, "
+						  "null AS condef, "
+						  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+						  "null AS indreloptions, "
+						  "'' AS indstatcols, "
+						  "'' AS indstatvals "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_index i ON (src.tbloid = i.indrelid) "
+						  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+						  "LEFT JOIN pg_catalog.pg_depend d "
+						  "ON (d.classid = t.tableoid "
+						  "AND d.objid = t.oid "
+						  "AND d.deptype = 'i') "
+						  "LEFT JOIN pg_catalog.pg_constraint c "
+						  "ON (d.refclassid = c.tableoid "
+						  "AND d.refobjid = c.oid) "
+						  "ORDER BY i.indrelid, indexname",
+						  tbloids->data);
+	}
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_indrelid = PQfnumber(res, "indrelid");
+	i_indexname = PQfnumber(res, "indexname");
+	i_parentidx = PQfnumber(res, "parentidx");
+	i_indexdef = PQfnumber(res, "indexdef");
+	i_indnkeyatts = PQfnumber(res, "indnkeyatts");
+	i_indnatts = PQfnumber(res, "indnatts");
+	i_indkey = PQfnumber(res, "indkey");
+	i_indisclustered = PQfnumber(res, "indisclustered");
+	i_indisreplident = PQfnumber(res, "indisreplident");
+	i_contype = PQfnumber(res, "contype");
+	i_conname = PQfnumber(res, "conname");
+	i_condeferrable = PQfnumber(res, "condeferrable");
+	i_condeferred = PQfnumber(res, "condeferred");
+	i_contableoid = PQfnumber(res, "contableoid");
+	i_conoid = PQfnumber(res, "conoid");
+	i_condef = PQfnumber(res, "condef");
+	i_tablespace = PQfnumber(res, "tablespace");
+	i_indreloptions = PQfnumber(res, "indreloptions");
+	i_indstatcols = PQfnumber(res, "indstatcols");
+	i_indstatvals = PQfnumber(res, "indstatvals");
+
+	indxinfo = (IndxInfo *) pg_malloc(ntups * sizeof(IndxInfo));
+
+	/*
+	 * Outer loop iterates once per table, not once per row.  Incrementing of
+	 * j is handled by the inner loop.
+	 */
+	curtblindx = -1;
+	for (int j = 0; j < ntups;)
+	{
+		Oid			indrelid = atooid(PQgetvalue(res, j, i_indrelid));
+		TableInfo  *tbinfo = NULL;
+		int			numinds;
+
+		/* Count rows for this table */
+		for (numinds = 1; numinds < ntups - j; numinds++)
+			if (atooid(PQgetvalue(res, j + numinds, i_indrelid)) != indrelid)
+				break;
 
 		/*
-		 * The point of the messy-looking outer join is to find a constraint
-		 * that is related by an internal dependency link to the index. If we
-		 * find one, create a CONSTRAINT entry linked to the INDEX entry.  We
-		 * assume an index won't have more than one internal dependency.
-		 *
-		 * As of 9.0 we don't need to look at pg_depend but can check for a
-		 * match to pg_constraint.conindid.  The check on conrelid is
-		 * redundant but useful because that column is indexed while conindid
-		 * is not.
+		 * Locate the associated TableInfo; we rely on tblinfo[] being in OID
+		 * order.
 		 */
-		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 110000)
+		while (++curtblindx < numTables)
 		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "inh.inhparent AS parentidx, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "i.indnkeyatts AS indnkeyatts, "
-							  "i.indnatts AS indnatts, "
-							  "i.indkey, i.indisclustered, "
-							  "i.indisreplident, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "t.reloptions AS indreloptions, "
-							  "(SELECT pg_catalog.array_agg(attnum ORDER BY attnum) "
-							  "  FROM pg_catalog.pg_attribute "
-							  "  WHERE attrelid = i.indexrelid AND "
-							  "    attstattarget >= 0) AS indstatcols,"
-							  "(SELECT pg_catalog.array_agg(attstattarget ORDER BY attnum) "
-							  "  FROM pg_catalog.pg_attribute "
-							  "  WHERE attrelid = i.indexrelid AND "
-							  "    attstattarget >= 0) AS indstatvals "
-							  "FROM pg_catalog.pg_index i "
-							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "JOIN pg_catalog.pg_class t2 ON (t2.oid = i.indrelid) "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (i.indrelid = c.conrelid AND "
-							  "i.indexrelid = c.conindid AND "
-							  "c.contype IN ('p','u','x')) "
-							  "LEFT JOIN pg_catalog.pg_inherits inh "
-							  "ON (inh.inhrelid = indexrelid) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "AND (i.indisvalid OR t2.relkind = 'p') "
-							  "AND i.indisready "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
+			tbinfo = &tblinfo[curtblindx];
+			if (tbinfo->dobj.catId.oid == indrelid)
+				break;
 		}
-		else if (fout->remoteVersion >= 90400)
-		{
-			/*
-			 * the test on indisready is necessary in 9.2, and harmless in
-			 * earlier/later versions
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "0 AS parentidx, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "i.indnatts AS indnkeyatts, "
-							  "i.indnatts AS indnatts, "
-							  "i.indkey, i.indisclustered, "
-							  "i.indisreplident, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "t.reloptions AS indreloptions, "
-							  "'' AS indstatcols, "
-							  "'' AS indstatvals "
-							  "FROM pg_catalog.pg_index i "
-							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (i.indrelid = c.conrelid AND "
-							  "i.indexrelid = c.conindid AND "
-							  "c.contype IN ('p','u','x')) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "AND i.indisvalid AND i.indisready "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 90000)
-		{
-			/*
-			 * the test on indisready is necessary in 9.2, and harmless in
-			 * earlier/later versions
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "0 AS parentidx, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "i.indnatts AS indnkeyatts, "
-							  "i.indnatts AS indnatts, "
-							  "i.indkey, i.indisclustered, "
-							  "false AS indisreplident, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "t.reloptions AS indreloptions, "
-							  "'' AS indstatcols, "
-							  "'' AS indstatvals "
-							  "FROM pg_catalog.pg_index i "
-							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (i.indrelid = c.conrelid AND "
-							  "i.indexrelid = c.conindid AND "
-							  "c.contype IN ('p','u','x')) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "AND i.indisvalid AND i.indisready "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 80200)
-		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "0 AS parentidx, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "i.indnatts AS indnkeyatts, "
-							  "i.indnatts AS indnatts, "
-							  "i.indkey, i.indisclustered, "
-							  "false AS indisreplident, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "null AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "t.reloptions AS indreloptions, "
-							  "'' AS indstatcols, "
-							  "'' AS indstatvals "
-							  "FROM pg_catalog.pg_index i "
-							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_depend d "
-							  "ON (d.classid = t.tableoid "
-							  "AND d.objid = t.oid "
-							  "AND d.deptype = 'i') "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (d.refclassid = c.tableoid "
-							  "AND d.refobjid = c.oid) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "AND i.indisvalid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			appendPQExpBuffer(query,
-							  "SELECT t.tableoid, t.oid, "
-							  "t.relname AS indexname, "
-							  "0 AS parentidx, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
-							  "t.relnatts AS indnkeyatts, "
-							  "t.relnatts AS indnatts, "
-							  "i.indkey, i.indisclustered, "
-							  "false AS indisreplident, "
-							  "c.contype, c.conname, "
-							  "c.condeferrable, c.condeferred, "
-							  "c.tableoid AS contableoid, "
-							  "c.oid AS conoid, "
-							  "null AS condef, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
-							  "null AS indreloptions, "
-							  "'' AS indstatcols, "
-							  "'' AS indstatvals "
-							  "FROM pg_catalog.pg_index i "
-							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_depend d "
-							  "ON (d.classid = t.tableoid "
-							  "AND d.objid = t.oid "
-							  "AND d.deptype = 'i') "
-							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (d.refclassid = c.tableoid "
-							  "AND d.refobjid = c.oid) "
-							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "ORDER BY indexname",
-							  tbinfo->dobj.catId.oid);
-		}
+		if (curtblindx >= numTables)
+			fatal("unrecognized table OID %u", indrelid);
+		/* cross-check that we only got requested tables */
+		if (!tbinfo->hasindex ||
+			!tbinfo->interesting)
+			fatal("unexpected index data for table \"%s\"",
+				  tbinfo->dobj.name);
 
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		/* Save data for this table */
+		tbinfo->indexes = indxinfo + j;
+		tbinfo->numIndexes = numinds;
 
-		ntups = PQntuples(res);
-
-		i_tableoid = PQfnumber(res, "tableoid");
-		i_oid = PQfnumber(res, "oid");
-		i_indexname = PQfnumber(res, "indexname");
-		i_parentidx = PQfnumber(res, "parentidx");
-		i_indexdef = PQfnumber(res, "indexdef");
-		i_indnkeyatts = PQfnumber(res, "indnkeyatts");
-		i_indnatts = PQfnumber(res, "indnatts");
-		i_indkey = PQfnumber(res, "indkey");
-		i_indisclustered = PQfnumber(res, "indisclustered");
-		i_indisreplident = PQfnumber(res, "indisreplident");
-		i_contype = PQfnumber(res, "contype");
-		i_conname = PQfnumber(res, "conname");
-		i_condeferrable = PQfnumber(res, "condeferrable");
-		i_condeferred = PQfnumber(res, "condeferred");
-		i_contableoid = PQfnumber(res, "contableoid");
-		i_conoid = PQfnumber(res, "conoid");
-		i_condef = PQfnumber(res, "condef");
-		i_tablespace = PQfnumber(res, "tablespace");
-		i_indreloptions = PQfnumber(res, "indreloptions");
-		i_indstatcols = PQfnumber(res, "indstatcols");
-		i_indstatvals = PQfnumber(res, "indstatvals");
-
-		tbinfo->indexes = indxinfo =
-			(IndxInfo *) pg_malloc(ntups * sizeof(IndxInfo));
-		tbinfo->numIndexes = ntups;
-
-		for (j = 0; j < ntups; j++)
+		for (int c = 0; c < numinds; c++, j++)
 		{
 			char		contype;
 
@@ -7147,11 +7195,12 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				indxinfo[j].indexconstraint = 0;
 			}
 		}
-
-		PQclear(res);
 	}
 
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(tbloids);
 }
 
 /*
@@ -7238,22 +7287,31 @@ getExtendedStatistics(Archive *fout)
 void
 getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 {
-	int			i,
-				j;
-	ConstraintInfo *constrinfo;
-	PQExpBuffer query;
+	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer tbloids = createPQExpBuffer();
 	PGresult   *res;
+	int			ntups;
+	int			curtblindx;
+	TableInfo  *tbinfo = NULL;
+	ConstraintInfo *constrinfo;
 	int			i_contableoid,
 				i_conoid,
+				i_conrelid,
 				i_conname,
 				i_confrelid,
 				i_conindid,
 				i_condef;
-	int			ntups;
 
-	query = createPQExpBuffer();
-
-	for (i = 0; i < numTables; i++)
+	/*
+	 * We want to perform just one query against pg_constraint.  However, we
+	 * mustn't try to select every row of the catalog and then sort it out on
+	 * the client side, because some of the server-side functions we need
+	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
+	 * build an array of the OIDs of tables we care about (and now have lock
+	 * on!), and use a WHERE clause to constrain which rows are selected.
+	 */
+	appendPQExpBufferChar(tbloids, '{');
+	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
@@ -7266,95 +7324,118 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 			!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 			continue;
 
-		pg_log_info("reading foreign key constraints for table \"%s.%s\"",
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->dobj.name);
+		/* OK, we need info for this table */
+		if (tbloids->len > 1)	/* do we have more than the '{'? */
+			appendPQExpBufferChar(tbloids, ',');
+		appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+	}
+	appendPQExpBufferChar(tbloids, '}');
 
-		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 110000)
-			appendPQExpBuffer(query,
-							  "SELECT tableoid, oid, conname, confrelid, conindid, "
-							  "pg_catalog.pg_get_constraintdef(oid) AS condef "
-							  "FROM pg_catalog.pg_constraint "
-							  "WHERE conrelid = '%u'::pg_catalog.oid "
-							  "AND conparentid = 0 "
-							  "AND contype = 'f'",
-							  tbinfo->dobj.catId.oid);
-		else
-			appendPQExpBuffer(query,
-							  "SELECT tableoid, oid, conname, confrelid, 0 as conindid, "
-							  "pg_catalog.pg_get_constraintdef(oid) AS condef "
-							  "FROM pg_catalog.pg_constraint "
-							  "WHERE conrelid = '%u'::pg_catalog.oid "
-							  "AND contype = 'f'",
-							  tbinfo->dobj.catId.oid);
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+	appendPQExpBufferStr(query,
+						 "SELECT c.tableoid, c.oid, "
+						 "conrelid, conname, confrelid, ");
+	if (fout->remoteVersion >= 110000)
+		appendPQExpBufferStr(query, "conindid, ");
+	else
+		appendPQExpBufferStr(query, "0 AS conindid, ");
+	appendPQExpBuffer(query,
+					  "pg_catalog.pg_get_constraintdef(c.oid) AS condef\n"
+					  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+					  "JOIN pg_catalog.pg_constraint c ON (src.tbloid = c.conrelid)\n"
+					  "WHERE contype = 'f' ",
+					  tbloids->data);
+	if (fout->remoteVersion >= 110000)
+		appendPQExpBufferStr(query,
+							 "AND conparentid = 0 ");
+	appendPQExpBufferStr(query,
+						 "ORDER BY conrelid, conname");
 
-		ntups = PQntuples(res);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
-		i_contableoid = PQfnumber(res, "tableoid");
-		i_conoid = PQfnumber(res, "oid");
-		i_conname = PQfnumber(res, "conname");
-		i_confrelid = PQfnumber(res, "confrelid");
-		i_conindid = PQfnumber(res, "conindid");
-		i_condef = PQfnumber(res, "condef");
+	ntups = PQntuples(res);
 
-		constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
+	i_contableoid = PQfnumber(res, "tableoid");
+	i_conoid = PQfnumber(res, "oid");
+	i_conrelid = PQfnumber(res, "conrelid");
+	i_conname = PQfnumber(res, "conname");
+	i_confrelid = PQfnumber(res, "confrelid");
+	i_conindid = PQfnumber(res, "conindid");
+	i_condef = PQfnumber(res, "condef");
 
-		for (j = 0; j < ntups; j++)
+	constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
+
+	curtblindx = -1;
+	for (int j = 0; j < ntups; j++)
+	{
+		Oid			conrelid = atooid(PQgetvalue(res, j, i_conrelid));
+		TableInfo  *reftable;
+
+		/*
+		 * Locate the associated TableInfo; we rely on tblinfo[] being in OID
+		 * order.
+		 */
+		if (tbinfo == NULL || tbinfo->dobj.catId.oid != conrelid)
 		{
-			TableInfo  *reftable;
-
-			constrinfo[j].dobj.objType = DO_FK_CONSTRAINT;
-			constrinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
-			constrinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
-			AssignDumpId(&constrinfo[j].dobj);
-			constrinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
-			constrinfo[j].dobj.namespace = tbinfo->dobj.namespace;
-			constrinfo[j].contable = tbinfo;
-			constrinfo[j].condomain = NULL;
-			constrinfo[j].contype = 'f';
-			constrinfo[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
-			constrinfo[j].confrelid = atooid(PQgetvalue(res, j, i_confrelid));
-			constrinfo[j].conindex = 0;
-			constrinfo[j].condeferrable = false;
-			constrinfo[j].condeferred = false;
-			constrinfo[j].conislocal = true;
-			constrinfo[j].separate = true;
-
-			/*
-			 * Restoring an FK that points to a partitioned table requires
-			 * that all partition indexes have been attached beforehand.
-			 * Ensure that happens by making the constraint depend on each
-			 * index partition attach object.
-			 */
-			reftable = findTableByOid(constrinfo[j].confrelid);
-			if (reftable && reftable->relkind == RELKIND_PARTITIONED_TABLE)
+			while (++curtblindx < numTables)
 			{
-				Oid			indexOid = atooid(PQgetvalue(res, j, i_conindid));
+				tbinfo = &tblinfo[curtblindx];
+				if (tbinfo->dobj.catId.oid == conrelid)
+					break;
+			}
+			if (curtblindx >= numTables)
+				fatal("unrecognized table OID %u", conrelid);
+		}
 
-				if (indexOid != InvalidOid)
+		constrinfo[j].dobj.objType = DO_FK_CONSTRAINT;
+		constrinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
+		constrinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
+		AssignDumpId(&constrinfo[j].dobj);
+		constrinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
+		constrinfo[j].dobj.namespace = tbinfo->dobj.namespace;
+		constrinfo[j].contable = tbinfo;
+		constrinfo[j].condomain = NULL;
+		constrinfo[j].contype = 'f';
+		constrinfo[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
+		constrinfo[j].confrelid = atooid(PQgetvalue(res, j, i_confrelid));
+		constrinfo[j].conindex = 0;
+		constrinfo[j].condeferrable = false;
+		constrinfo[j].condeferred = false;
+		constrinfo[j].conislocal = true;
+		constrinfo[j].separate = true;
+
+		/*
+		 * Restoring an FK that points to a partitioned table requires that
+		 * all partition indexes have been attached beforehand. Ensure that
+		 * happens by making the constraint depend on each index partition
+		 * attach object.
+		 */
+		reftable = findTableByOid(constrinfo[j].confrelid);
+		if (reftable && reftable->relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			Oid			indexOid = atooid(PQgetvalue(res, j, i_conindid));
+
+			if (indexOid != InvalidOid)
+			{
+				for (int k = 0; k < reftable->numIndexes; k++)
 				{
-					for (int k = 0; k < reftable->numIndexes; k++)
-					{
-						IndxInfo   *refidx;
+					IndxInfo   *refidx;
 
-						/* not our index? */
-						if (reftable->indexes[k].dobj.catId.oid != indexOid)
-							continue;
+					/* not our index? */
+					if (reftable->indexes[k].dobj.catId.oid != indexOid)
+						continue;
 
-						refidx = &reftable->indexes[k];
-						addConstrChildIdxDeps(&constrinfo[j].dobj, refidx);
-						break;
-					}
+					refidx = &reftable->indexes[k];
+					addConstrChildIdxDeps(&constrinfo[j].dobj, refidx);
+					break;
 				}
 			}
 		}
-
-		PQclear(res);
 	}
 
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(tbloids);
 }
 
 /*
@@ -7598,13 +7679,15 @@ getRules(Archive *fout, int *numRules)
 void
 getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 {
-	int			i,
-				j;
 	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer tbloids = createPQExpBuffer();
 	PGresult   *res;
+	int			ntups;
+	int			curtblindx;
 	TriggerInfo *tginfo;
 	int			i_tableoid,
 				i_oid,
+				i_tgrelid,
 				i_tgname,
 				i_tgfname,
 				i_tgtype,
@@ -7619,9 +7702,17 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_tgdeferrable,
 				i_tginitdeferred,
 				i_tgdef;
-	int			ntups;
 
-	for (i = 0; i < numTables; i++)
+	/*
+	 * We want to perform just one query against pg_trigger.  However, we
+	 * mustn't try to select every row of the catalog and then sort it out on
+	 * the client side, because some of the server-side functions we need
+	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
+	 * build an array of the OIDs of tables we care about (and now have lock
+	 * on!), and use a WHERE clause to constrain which rows are selected.
+	 */
+	appendPQExpBufferChar(tbloids, '{');
+	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
@@ -7629,143 +7720,178 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 			continue;
 
-		pg_log_info("reading triggers for table \"%s.%s\"",
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->dobj.name);
+		/* OK, we need info for this table */
+		if (tbloids->len > 1)	/* do we have more than the '{'? */
+			appendPQExpBufferChar(tbloids, ',');
+		appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+	}
+	appendPQExpBufferChar(tbloids, '}');
 
-		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 130000)
+	if (fout->remoteVersion >= 130000)
+	{
+		/*
+		 * NB: think not to use pretty=true in pg_get_triggerdef.  It could
+		 * result in non-forward-compatible dumps of WHEN clauses due to
+		 * under-parenthesization.
+		 *
+		 * NB: We need to see tgisinternal triggers in partitions, in case the
+		 * tgenabled flag has been changed from the parent.
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, t.tgname, "
+						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+						  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal\n"
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "LEFT JOIN pg_catalog.pg_trigger u ON (u.oid = t.tgparentid) "
+						  "WHERE (NOT t.tgisinternal OR t.tgenabled != u.tgenabled) "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 110000)
+	{
+		/*
+		 * NB: We need to see tgisinternal triggers in partitions, in case the
+		 * tgenabled flag has been changed from the parent. No tgparentid in
+		 * version 11-12, so we have to match them via pg_depend.
+		 *
+		 * See above about pretty=true in pg_get_triggerdef.
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, t.tgname, "
+						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+						  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "LEFT JOIN pg_catalog.pg_depend AS d ON "
+						  " d.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
+						  " d.refclassid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
+						  " d.objid = t.oid "
+						  "LEFT JOIN pg_catalog.pg_trigger AS pt ON pt.oid = refobjid "
+						  "WHERE (NOT t.tgisinternal OR t.tgenabled != pt.tgenabled) "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 90000)
+	{
+		/* See above about pretty=true in pg_get_triggerdef */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, t.tgname, "
+						  "t.tgfoid::pg_catalog.regproc AS tgfname, "
+						  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
+						  "t.tgenabled, false as tgisinternal, "
+						  "t.tableoid, t.oid "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "WHERE NOT tgisinternal "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+	else if (fout->remoteVersion >= 80300)
+	{
+		/*
+		 * We ignore triggers that are tied to a foreign-key constraint
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, tgname, "
+						  "tgfoid::pg_catalog.regproc AS tgfname, "
+						  "tgtype, tgnargs, tgargs, tgenabled, "
+						  "false as tgisinternal, "
+						  "tgisconstraint, tgconstrname, tgdeferrable, "
+						  "tgconstrrelid, tginitdeferred, t.tableoid, t.oid, "
+						  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "WHERE tgconstraint = 0 "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+	else
+	{
+		/*
+		 * We ignore triggers that are tied to a foreign-key constraint, but
+		 * in these versions we have to grovel through pg_constraint to find
+		 * out
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT t.tgrelid, tgname, "
+						  "tgfoid::pg_catalog.regproc AS tgfname, "
+						  "tgtype, tgnargs, tgargs, tgenabled, "
+						  "false as tgisinternal, "
+						  "tgisconstraint, tgconstrname, tgdeferrable, "
+						  "tgconstrrelid, tginitdeferred, t.tableoid, t.oid, "
+						  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_trigger t ON (src.tbloid = t.tgrelid) "
+						  "WHERE (NOT tgisconstraint "
+						  " OR NOT EXISTS"
+						  "  (SELECT 1 FROM pg_catalog.pg_depend d "
+						  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
+						  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f')) "
+						  "ORDER BY t.tgrelid, t.tgname",
+						  tbloids->data);
+	}
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_oid = PQfnumber(res, "oid");
+	i_tgrelid = PQfnumber(res, "tgrelid");
+	i_tgname = PQfnumber(res, "tgname");
+	i_tgfname = PQfnumber(res, "tgfname");
+	i_tgtype = PQfnumber(res, "tgtype");
+	i_tgnargs = PQfnumber(res, "tgnargs");
+	i_tgargs = PQfnumber(res, "tgargs");
+	i_tgisconstraint = PQfnumber(res, "tgisconstraint");
+	i_tgconstrname = PQfnumber(res, "tgconstrname");
+	i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
+	i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
+	i_tgenabled = PQfnumber(res, "tgenabled");
+	i_tgisinternal = PQfnumber(res, "tgisinternal");
+	i_tgdeferrable = PQfnumber(res, "tgdeferrable");
+	i_tginitdeferred = PQfnumber(res, "tginitdeferred");
+	i_tgdef = PQfnumber(res, "tgdef");
+
+	tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
+
+	/*
+	 * Outer loop iterates once per table, not once per row.  Incrementing of
+	 * j is handled by the inner loop.
+	 */
+	curtblindx = -1;
+	for (int j = 0; j < ntups;)
+	{
+		Oid			tgrelid = atooid(PQgetvalue(res, j, i_tgrelid));
+		TableInfo  *tbinfo = NULL;
+		int			numtrigs;
+
+		/* Count rows for this table */
+		for (numtrigs = 1; numtrigs < ntups - j; numtrigs++)
+			if (atooid(PQgetvalue(res, j + numtrigs, i_tgrelid)) != tgrelid)
+				break;
+
+		/*
+		 * Locate the associated TableInfo; we rely on tblinfo[] being in OID
+		 * order.
+		 */
+		while (++curtblindx < numTables)
 		{
-			/*
-			 * NB: think not to use pretty=true in pg_get_triggerdef.  It
-			 * could result in non-forward-compatible dumps of WHEN clauses
-			 * due to under-parenthesization.
-			 *
-			 * NB: We need to see tgisinternal triggers in partitions, in case
-			 * the tgenabled flag has been changed from the parent.
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
-							  "FROM pg_catalog.pg_trigger t "
-							  "LEFT JOIN pg_catalog.pg_trigger u ON u.oid = t.tgparentid "
-							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT t.tgisinternal OR t.tgenabled != u.tgenabled)",
-							  tbinfo->dobj.catId.oid);
+			tbinfo = &tblinfo[curtblindx];
+			if (tbinfo->dobj.catId.oid == tgrelid)
+				break;
 		}
-		else if (fout->remoteVersion >= 110000)
-		{
-			/*
-			 * NB: We need to see tgisinternal triggers in partitions, in case
-			 * the tgenabled flag has been changed from the parent. No
-			 * tgparentid in version 11-12, so we have to match them via
-			 * pg_depend.
-			 *
-			 * See above about pretty=true in pg_get_triggerdef.
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, t.tableoid, t.oid, t.tgisinternal "
-							  "FROM pg_catalog.pg_trigger t "
-							  "LEFT JOIN pg_catalog.pg_depend AS d ON "
-							  " d.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
-							  " d.refclassid = 'pg_catalog.pg_trigger'::pg_catalog.regclass AND "
-							  " d.objid = t.oid "
-							  "LEFT JOIN pg_catalog.pg_trigger AS pt ON pt.oid = refobjid "
-							  "WHERE t.tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT t.tgisinternal%s)",
-							  tbinfo->dobj.catId.oid,
-							  tbinfo->ispartition ?
-							  " OR t.tgenabled != pt.tgenabled" : "");
-		}
-		else if (fout->remoteVersion >= 90000)
-		{
-			/* See above about pretty=true in pg_get_triggerdef */
-			appendPQExpBuffer(query,
-							  "SELECT t.tgname, "
-							  "t.tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid, false) AS tgdef, "
-							  "t.tgenabled, false as tgisinternal, "
-							  "t.tableoid, t.oid "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND NOT tgisinternal",
-							  tbinfo->dobj.catId.oid);
-		}
-		else if (fout->remoteVersion >= 80300)
-		{
-			/*
-			 * We ignore triggers that are tied to a foreign-key constraint
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT tgname, "
-							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "tgtype, tgnargs, tgargs, tgenabled, "
-							  "false as tgisinternal, "
-							  "tgisconstraint, tgconstrname, tgdeferrable, "
-							  "tgconstrrelid, tginitdeferred, tableoid, oid, "
-							  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND tgconstraint = 0",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			/*
-			 * We ignore triggers that are tied to a foreign-key constraint,
-			 * but in these versions we have to grovel through pg_constraint
-			 * to find out
-			 */
-			appendPQExpBuffer(query,
-							  "SELECT tgname, "
-							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "tgtype, tgnargs, tgargs, tgenabled, "
-							  "false as tgisinternal, "
-							  "tgisconstraint, tgconstrname, tgdeferrable, "
-							  "tgconstrrelid, tginitdeferred, tableoid, oid, "
-							  "tgconstrrelid::pg_catalog.regclass AS tgconstrrelname "
-							  "FROM pg_catalog.pg_trigger t "
-							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND (NOT tgisconstraint "
-							  " OR NOT EXISTS"
-							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
-							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
-							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
-							  tbinfo->dobj.catId.oid);
-		}
+		if (curtblindx >= numTables)
+			fatal("unrecognized table OID %u", tgrelid);
 
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		/* Save data for this table */
+		tbinfo->triggers = tginfo + j;
+		tbinfo->numTriggers = numtrigs;
 
-		ntups = PQntuples(res);
-
-		i_tableoid = PQfnumber(res, "tableoid");
-		i_oid = PQfnumber(res, "oid");
-		i_tgname = PQfnumber(res, "tgname");
-		i_tgfname = PQfnumber(res, "tgfname");
-		i_tgtype = PQfnumber(res, "tgtype");
-		i_tgnargs = PQfnumber(res, "tgnargs");
-		i_tgargs = PQfnumber(res, "tgargs");
-		i_tgisconstraint = PQfnumber(res, "tgisconstraint");
-		i_tgconstrname = PQfnumber(res, "tgconstrname");
-		i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
-		i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
-		i_tgenabled = PQfnumber(res, "tgenabled");
-		i_tgisinternal = PQfnumber(res, "tgisinternal");
-		i_tgdeferrable = PQfnumber(res, "tgdeferrable");
-		i_tginitdeferred = PQfnumber(res, "tginitdeferred");
-		i_tgdef = PQfnumber(res, "tgdef");
-
-		tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
-
-		tbinfo->numTriggers = ntups;
-		tbinfo->triggers = tginfo;
-
-		for (j = 0; j < ntups; j++)
+		for (int c = 0; c < numtrigs; c++, j++)
 		{
 			tginfo[j].dobj.objType = DO_TRIGGER;
 			tginfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
@@ -7828,11 +7954,12 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 				}
 			}
 		}
-
-		PQclear(res);
 	}
 
+	PQclear(res);
+
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(tbloids);
 }
 
 /*
@@ -8286,12 +8413,6 @@ getTransforms(Archive *fout, int *numTransforms)
  *	  for each interesting table, read info about its attributes
  *	  (names, types, default values, CHECK constraints, etc)
  *
- * This is implemented in a very inefficient way right now, looping
- * through the tblinfo and doing a join per table to find the attrs and their
- * types.  However, because we want type names and so forth to be named
- * relative to the schema of each table, we couldn't do it in just one
- * query.  (Maybe one query per schema?)
- *
  *	modifies tblinfo
  */
 void
@@ -8299,6 +8420,12 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 {
 	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer tbloids = createPQExpBuffer();
+	PQExpBuffer checkoids = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups;
+	int			curtblindx;
+	int			i_attrelid;
 	int			i_attnum;
 	int			i_attname;
 	int			i_atttypname;
@@ -8320,12 +8447,21 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_attmissingval;
 	int			i_atthasdef;
 
+	/*
+	 * We want to perform just one query against pg_attribute, and then just
+	 * one against pg_attrdef (for DEFAULTs) and one against pg_constraint
+	 * (for CHECK constraints).  However, we mustn't try to select every row
+	 * of those catalogs and then sort it out on the client side, because some
+	 * of the server-side functions we need would be unsafe to apply to tables
+	 * we don't have lock on.  Hence, we build an array of the OIDs of tables
+	 * we care about (and now have lock on!), and use a WHERE clause to
+	 * constrain which rows are selected.
+	 */
+	appendPQExpBufferChar(tbloids, '{');
+	appendPQExpBufferChar(checkoids, '{');
 	for (int i = 0; i < numTables; i++)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
-		PGresult   *res;
-		int			ntups;
-		bool		hasdefaults;
 
 		/* Don't bother to collect info for sequences */
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
@@ -8335,390 +8471,499 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		if (!tbinfo->interesting)
 			continue;
 
-		/* find all the user attributes and their types */
+		/* OK, we need info for this table */
+		if (tbloids->len > 1)	/* do we have more than the '{'? */
+			appendPQExpBufferChar(tbloids, ',');
+		appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
+
+		if (tbinfo->ncheck > 0)
+		{
+			/* Also make a list of the ones with check constraints */
+			if (checkoids->len > 1) /* do we have more than the '{'? */
+				appendPQExpBufferChar(checkoids, ',');
+			appendPQExpBuffer(checkoids, "%u", tbinfo->dobj.catId.oid);
+		}
+	}
+	appendPQExpBufferChar(tbloids, '}');
+	appendPQExpBufferChar(checkoids, '}');
+
+	/* find all the user attributes and their types */
+	appendPQExpBufferStr(q,
+						 "SELECT\n"
+						 "a.attrelid,\n"
+						 "a.attnum,\n"
+						 "a.attname,\n"
+						 "a.atttypmod,\n"
+						 "a.attstattarget,\n"
+						 "a.attstorage,\n"
+						 "t.typstorage,\n"
+						 "a.attnotnull,\n"
+						 "a.atthasdef,\n"
+						 "a.attisdropped,\n"
+						 "a.attlen,\n"
+						 "a.attalign,\n"
+						 "a.attislocal,\n"
+						 "pg_catalog.format_type(t.oid, a.atttypmod) AS atttypname,\n");
+
+	if (fout->remoteVersion >= 90000)
+		appendPQExpBufferStr(q,
+							 "array_to_string(a.attoptions, ', ') AS attoptions,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "'' AS attoptions,\n");
+
+	if (fout->remoteVersion >= 90100)
+	{
+		/*
+		 * Since we only want to dump COLLATE clauses for attributes whose
+		 * collation is different from their type's default, we use a CASE
+		 * here to suppress uninteresting attcollations cheaply.
+		 */
+		appendPQExpBufferStr(q,
+							 "CASE WHEN a.attcollation <> t.typcollation "
+							 "THEN a.attcollation ELSE 0 END AS attcollation,\n");
+	}
+	else
+		appendPQExpBufferStr(q,
+							 "0 AS attcollation,\n");
+
+	if (fout->remoteVersion >= 140000)
+		appendPQExpBufferStr(q,
+							 "a.attcompression AS attcompression,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "'' AS attcompression,\n");
+
+	if (fout->remoteVersion >= 90200)
+		appendPQExpBufferStr(q,
+							 "pg_catalog.array_to_string(ARRAY("
+							 "SELECT pg_catalog.quote_ident(option_name) || "
+							 "' ' || pg_catalog.quote_literal(option_value) "
+							 "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
+							 "ORDER BY option_name"
+							 "), E',\n    ') AS attfdwoptions,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "'' AS attfdwoptions,\n");
+
+	if (fout->remoteVersion >= 100000)
+		appendPQExpBufferStr(q,
+							 "a.attidentity,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "'' AS attidentity,\n");
+
+	if (fout->remoteVersion >= 110000)
+		appendPQExpBufferStr(q,
+							 "CASE WHEN a.atthasmissing AND NOT a.attisdropped "
+							 "THEN a.attmissingval ELSE null END AS attmissingval,\n");
+	else
+		appendPQExpBufferStr(q,
+							 "NULL AS attmissingval,\n");
+
+	if (fout->remoteVersion >= 120000)
+		appendPQExpBufferStr(q,
+							 "a.attgenerated\n");
+	else
+		appendPQExpBufferStr(q,
+							 "'' AS attgenerated\n");
+
+	/* need left join to pg_type to not fail on dropped columns ... */
+	appendPQExpBuffer(q,
+					  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+					  "JOIN pg_catalog.pg_attribute a ON (src.tbloid = a.attrelid) "
+					  "LEFT JOIN pg_catalog.pg_type t "
+					  "ON (a.atttypid = t.oid)\n"
+					  "WHERE a.attnum > 0::pg_catalog.int2\n"
+					  "ORDER BY a.attrelid, a.attnum",
+					  tbloids->data);
+
+	res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_attrelid = PQfnumber(res, "attrelid");
+	i_attnum = PQfnumber(res, "attnum");
+	i_attname = PQfnumber(res, "attname");
+	i_atttypname = PQfnumber(res, "atttypname");
+	i_atttypmod = PQfnumber(res, "atttypmod");
+	i_attstattarget = PQfnumber(res, "attstattarget");
+	i_attstorage = PQfnumber(res, "attstorage");
+	i_typstorage = PQfnumber(res, "typstorage");
+	i_attidentity = PQfnumber(res, "attidentity");
+	i_attgenerated = PQfnumber(res, "attgenerated");
+	i_attisdropped = PQfnumber(res, "attisdropped");
+	i_attlen = PQfnumber(res, "attlen");
+	i_attalign = PQfnumber(res, "attalign");
+	i_attislocal = PQfnumber(res, "attislocal");
+	i_attnotnull = PQfnumber(res, "attnotnull");
+	i_attoptions = PQfnumber(res, "attoptions");
+	i_attcollation = PQfnumber(res, "attcollation");
+	i_attcompression = PQfnumber(res, "attcompression");
+	i_attfdwoptions = PQfnumber(res, "attfdwoptions");
+	i_attmissingval = PQfnumber(res, "attmissingval");
+	i_atthasdef = PQfnumber(res, "atthasdef");
+
+	/* Within the next loop, we'll accumulate OIDs of tables with defaults */
+	resetPQExpBuffer(tbloids);
+	appendPQExpBufferChar(tbloids, '{');
+
+	/*
+	 * Outer loop iterates once per table, not once per row.  Incrementing of
+	 * r is handled by the inner loop.
+	 */
+	curtblindx = -1;
+	for (int r = 0; r < ntups;)
+	{
+		Oid			attrelid = atooid(PQgetvalue(res, r, i_attrelid));
+		TableInfo  *tbinfo = NULL;
+		int			numatts;
+		bool		hasdefaults;
+
+		/* Count rows for this table */
+		for (numatts = 1; numatts < ntups - r; numatts++)
+			if (atooid(PQgetvalue(res, r + numatts, i_attrelid)) != attrelid)
+				break;
 
 		/*
-		 * we must read the attribute names in attribute number order! because
-		 * we will use the attnum to index into the attnames array later.
+		 * Locate the associated TableInfo; we rely on tblinfo[] being in OID
+		 * order.
 		 */
-		pg_log_info("finding the columns and types of table \"%s.%s\"",
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->dobj.name);
-
-		resetPQExpBuffer(q);
-
-		appendPQExpBufferStr(q,
-							 "SELECT\n"
-							 "a.attnum,\n"
-							 "a.attname,\n"
-							 "a.atttypmod,\n"
-							 "a.attstattarget,\n"
-							 "a.attstorage,\n"
-							 "t.typstorage,\n"
-							 "a.attnotnull,\n"
-							 "a.atthasdef,\n"
-							 "a.attisdropped,\n"
-							 "a.attlen,\n"
-							 "a.attalign,\n"
-							 "a.attislocal,\n"
-							 "pg_catalog.format_type(t.oid, a.atttypmod) AS atttypname,\n");
-
-		if (fout->remoteVersion >= 90000)
-			appendPQExpBufferStr(q,
-								 "array_to_string(a.attoptions, ', ') AS attoptions,\n");
-		else
-			appendPQExpBufferStr(q,
-								 "'' AS attoptions,\n");
-
-		if (fout->remoteVersion >= 90100)
+		while (++curtblindx < numTables)
 		{
-			/*
-			 * Since we only want to dump COLLATE clauses for attributes whose
-			 * collation is different from their type's default, we use a CASE
-			 * here to suppress uninteresting attcollations cheaply.
-			 */
-			appendPQExpBufferStr(q,
-								 "CASE WHEN a.attcollation <> t.typcollation "
-								 "THEN a.attcollation ELSE 0 END AS attcollation,\n");
+			tbinfo = &tblinfo[curtblindx];
+			if (tbinfo->dobj.catId.oid == attrelid)
+				break;
 		}
-		else
-			appendPQExpBufferStr(q,
-								 "0 AS attcollation,\n");
+		if (curtblindx >= numTables)
+			fatal("unrecognized table OID %u", attrelid);
+		/* cross-check that we only got requested tables */
+		if (tbinfo->relkind == RELKIND_SEQUENCE ||
+			!tbinfo->interesting)
+			fatal("unexpected column data for table \"%s\"",
+				  tbinfo->dobj.name);
 
-		if (fout->remoteVersion >= 140000)
-			appendPQExpBuffer(q,
-							  "a.attcompression AS attcompression,\n");
-		else
-			appendPQExpBuffer(q,
-							  "'' AS attcompression,\n");
-
-		if (fout->remoteVersion >= 90200)
-			appendPQExpBufferStr(q,
-								 "pg_catalog.array_to_string(ARRAY("
-								 "SELECT pg_catalog.quote_ident(option_name) || "
-								 "' ' || pg_catalog.quote_literal(option_value) "
-								 "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
-								 "ORDER BY option_name"
-								 "), E',\n    ') AS attfdwoptions,\n");
-		else
-			appendPQExpBufferStr(q,
-								 "'' AS attfdwoptions,\n");
-
-		if (fout->remoteVersion >= 100000)
-			appendPQExpBufferStr(q,
-								 "a.attidentity,\n");
-		else
-			appendPQExpBufferStr(q,
-								 "'' AS attidentity,\n");
-
-		if (fout->remoteVersion >= 110000)
-			appendPQExpBufferStr(q,
-								 "CASE WHEN a.atthasmissing AND NOT a.attisdropped "
-								 "THEN a.attmissingval ELSE null END AS attmissingval,\n");
-		else
-			appendPQExpBufferStr(q,
-								 "NULL AS attmissingval,\n");
-
-		if (fout->remoteVersion >= 120000)
-			appendPQExpBufferStr(q,
-								 "a.attgenerated\n");
-		else
-			appendPQExpBufferStr(q,
-								 "'' AS attgenerated\n");
-
-		/* need left join here to not fail on dropped columns ... */
-		appendPQExpBuffer(q,
-						  "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
-						  "ON a.atttypid = t.oid\n"
-						  "WHERE a.attrelid = '%u'::pg_catalog.oid "
-						  "AND a.attnum > 0::pg_catalog.int2\n"
-						  "ORDER BY a.attnum",
-						  tbinfo->dobj.catId.oid);
-
-		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
-
-		ntups = PQntuples(res);
-
-		tbinfo->numatts = ntups;
-		tbinfo->attnames = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->atttypnames = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->atttypmod = (int *) pg_malloc(ntups * sizeof(int));
-		tbinfo->attstattarget = (int *) pg_malloc(ntups * sizeof(int));
-		tbinfo->attstorage = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->typstorage = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attidentity = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attgenerated = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attisdropped = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->attlen = (int *) pg_malloc(ntups * sizeof(int));
-		tbinfo->attalign = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attislocal = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->attoptions = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
-		tbinfo->attcompression = (char *) pg_malloc(ntups * sizeof(char));
-		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->attmissingval = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
+		/* Save data for this table */
+		tbinfo->numatts = numatts;
+		tbinfo->attnames = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->atttypnames = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->atttypmod = (int *) pg_malloc(numatts * sizeof(int));
+		tbinfo->attstattarget = (int *) pg_malloc(numatts * sizeof(int));
+		tbinfo->attstorage = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->typstorage = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->attidentity = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->attgenerated = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->attisdropped = (bool *) pg_malloc(numatts * sizeof(bool));
+		tbinfo->attlen = (int *) pg_malloc(numatts * sizeof(int));
+		tbinfo->attalign = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->attislocal = (bool *) pg_malloc(numatts * sizeof(bool));
+		tbinfo->attoptions = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->attcollation = (Oid *) pg_malloc(numatts * sizeof(Oid));
+		tbinfo->attcompression = (char *) pg_malloc(numatts * sizeof(char));
+		tbinfo->attfdwoptions = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->attmissingval = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->notnull = (bool *) pg_malloc(numatts * sizeof(bool));
+		tbinfo->inhNotNull = (bool *) pg_malloc(numatts * sizeof(bool));
+		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(numatts * sizeof(AttrDefInfo *));
 		hasdefaults = false;
 
-		i_attnum = PQfnumber(res, "attnum");
-		i_attname = PQfnumber(res, "attname");
-		i_atttypname = PQfnumber(res, "atttypname");
-		i_atttypmod = PQfnumber(res, "atttypmod");
-		i_attstattarget = PQfnumber(res, "attstattarget");
-		i_attstorage = PQfnumber(res, "attstorage");
-		i_typstorage = PQfnumber(res, "typstorage");
-		i_attidentity = PQfnumber(res, "attidentity");
-		i_attgenerated = PQfnumber(res, "attgenerated");
-		i_attisdropped = PQfnumber(res, "attisdropped");
-		i_attlen = PQfnumber(res, "attlen");
-		i_attalign = PQfnumber(res, "attalign");
-		i_attislocal = PQfnumber(res, "attislocal");
-		i_attnotnull = PQfnumber(res, "attnotnull");
-		i_attoptions = PQfnumber(res, "attoptions");
-		i_attcollation = PQfnumber(res, "attcollation");
-		i_attcompression = PQfnumber(res, "attcompression");
-		i_attfdwoptions = PQfnumber(res, "attfdwoptions");
-		i_attmissingval = PQfnumber(res, "attmissingval");
-		i_atthasdef = PQfnumber(res, "atthasdef");
-
-		for (int j = 0; j < ntups; j++)
+		for (int j = 0; j < numatts; j++, r++)
 		{
-			if (j + 1 != atoi(PQgetvalue(res, j, i_attnum)))
+			if (j + 1 != atoi(PQgetvalue(res, r, i_attnum)))
 				fatal("invalid column numbering in table \"%s\"",
 					  tbinfo->dobj.name);
-			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, j, i_attname));
-			tbinfo->atttypnames[j] = pg_strdup(PQgetvalue(res, j, i_atttypname));
-			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
-			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
-			tbinfo->attstorage[j] = *(PQgetvalue(res, j, i_attstorage));
-			tbinfo->typstorage[j] = *(PQgetvalue(res, j, i_typstorage));
-			tbinfo->attidentity[j] = *(PQgetvalue(res, j, i_attidentity));
-			tbinfo->attgenerated[j] = *(PQgetvalue(res, j, i_attgenerated));
+			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, r, i_attname));
+			tbinfo->atttypnames[j] = pg_strdup(PQgetvalue(res, r, i_atttypname));
+			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, r, i_atttypmod));
+			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, r, i_attstattarget));
+			tbinfo->attstorage[j] = *(PQgetvalue(res, r, i_attstorage));
+			tbinfo->typstorage[j] = *(PQgetvalue(res, r, i_typstorage));
+			tbinfo->attidentity[j] = *(PQgetvalue(res, r, i_attidentity));
+			tbinfo->attgenerated[j] = *(PQgetvalue(res, r, i_attgenerated));
 			tbinfo->needs_override = tbinfo->needs_override || (tbinfo->attidentity[j] == ATTRIBUTE_IDENTITY_ALWAYS);
-			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
-			tbinfo->attlen[j] = atoi(PQgetvalue(res, j, i_attlen));
-			tbinfo->attalign[j] = *(PQgetvalue(res, j, i_attalign));
-			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
-			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
-			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, j, i_attoptions));
-			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, i_attcollation));
-			tbinfo->attcompression[j] = *(PQgetvalue(res, j, i_attcompression));
-			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, j, i_attfdwoptions));
-			tbinfo->attmissingval[j] = pg_strdup(PQgetvalue(res, j, i_attmissingval));
+			tbinfo->attisdropped[j] = (PQgetvalue(res, r, i_attisdropped)[0] == 't');
+			tbinfo->attlen[j] = atoi(PQgetvalue(res, r, i_attlen));
+			tbinfo->attalign[j] = *(PQgetvalue(res, r, i_attalign));
+			tbinfo->attislocal[j] = (PQgetvalue(res, r, i_attislocal)[0] == 't');
+			tbinfo->notnull[j] = (PQgetvalue(res, r, i_attnotnull)[0] == 't');
+			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, r, i_attoptions));
+			tbinfo->attcollation[j] = atooid(PQgetvalue(res, r, i_attcollation));
+			tbinfo->attcompression[j] = *(PQgetvalue(res, r, i_attcompression));
+			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, r, i_attfdwoptions));
+			tbinfo->attmissingval[j] = pg_strdup(PQgetvalue(res, r, i_attmissingval));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
-			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
+			if (PQgetvalue(res, r, i_atthasdef)[0] == 't')
 				hasdefaults = true;
 			/* these flags will be set in flagInhAttrs() */
 			tbinfo->inhNotNull[j] = false;
 		}
 
-		PQclear(res);
-
-		/*
-		 * Get info about column defaults.  This is skipped for a data-only
-		 * dump, as it is only needed for table schemas.
-		 */
-		if (!dopt->dataOnly && hasdefaults)
+		if (hasdefaults)
 		{
-			AttrDefInfo *attrdefs;
-			int			numDefaults;
-
-			pg_log_info("finding default expressions of table \"%s.%s\"",
-						tbinfo->dobj.namespace->dobj.name,
-						tbinfo->dobj.name);
-
-			printfPQExpBuffer(q, "SELECT tableoid, oid, adnum, "
-							  "pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc "
-							  "FROM pg_catalog.pg_attrdef "
-							  "WHERE adrelid = '%u'::pg_catalog.oid",
-							  tbinfo->dobj.catId.oid);
-
-			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
-
-			numDefaults = PQntuples(res);
-			attrdefs = (AttrDefInfo *) pg_malloc(numDefaults * sizeof(AttrDefInfo));
-
-			for (int j = 0; j < numDefaults; j++)
-			{
-				int			adnum;
-
-				adnum = atoi(PQgetvalue(res, j, 2));
-
-				if (adnum <= 0 || adnum > ntups)
-					fatal("invalid adnum value %d for table \"%s\"",
-						  adnum, tbinfo->dobj.name);
-
-				/*
-				 * dropped columns shouldn't have defaults, but just in case,
-				 * ignore 'em
-				 */
-				if (tbinfo->attisdropped[adnum - 1])
-					continue;
-
-				attrdefs[j].dobj.objType = DO_ATTRDEF;
-				attrdefs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
-				attrdefs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
-				AssignDumpId(&attrdefs[j].dobj);
-				attrdefs[j].adtable = tbinfo;
-				attrdefs[j].adnum = adnum;
-				attrdefs[j].adef_expr = pg_strdup(PQgetvalue(res, j, 3));
-
-				attrdefs[j].dobj.name = pg_strdup(tbinfo->dobj.name);
-				attrdefs[j].dobj.namespace = tbinfo->dobj.namespace;
-
-				attrdefs[j].dobj.dump = tbinfo->dobj.dump;
-
-				/*
-				 * Figure out whether the default/generation expression should
-				 * be dumped as part of the main CREATE TABLE (or similar)
-				 * command or as a separate ALTER TABLE (or similar) command.
-				 * The preference is to put it into the CREATE command, but in
-				 * some cases that's not possible.
-				 */
-				if (tbinfo->attgenerated[adnum - 1])
-				{
-					/*
-					 * Column generation expressions cannot be dumped
-					 * separately, because there is no syntax for it.  The
-					 * !shouldPrintColumn case below will be tempted to set
-					 * them to separate if they are attached to an inherited
-					 * column without a local definition, but that would be
-					 * wrong and unnecessary, because generation expressions
-					 * are always inherited, so there is no need to set them
-					 * again in child tables, and there is no syntax for it
-					 * either.  By setting separate to false here we prevent
-					 * the "default" from being processed as its own dumpable
-					 * object, and flagInhAttrs() will remove it from the
-					 * table when it detects that it belongs to an inherited
-					 * column.
-					 */
-					attrdefs[j].separate = false;
-				}
-				else if (tbinfo->relkind == RELKIND_VIEW)
-				{
-					/*
-					 * Defaults on a VIEW must always be dumped as separate
-					 * ALTER TABLE commands.
-					 */
-					attrdefs[j].separate = true;
-				}
-				else if (!shouldPrintColumn(dopt, tbinfo, adnum - 1))
-				{
-					/* column will be suppressed, print default separately */
-					attrdefs[j].separate = true;
-				}
-				else
-				{
-					attrdefs[j].separate = false;
-				}
-
-				if (!attrdefs[j].separate)
-				{
-					/*
-					 * Mark the default as needing to appear before the table,
-					 * so that any dependencies it has must be emitted before
-					 * the CREATE TABLE.  If this is not possible, we'll
-					 * change to "separate" mode while sorting dependencies.
-					 */
-					addObjectDependency(&tbinfo->dobj,
-										attrdefs[j].dobj.dumpId);
-				}
-
-				tbinfo->attrdefs[adnum - 1] = &attrdefs[j];
-			}
-			PQclear(res);
+			/* Collect OIDs of interesting tables that have defaults */
+			if (tbloids->len > 1)	/* do we have more than the '{'? */
+				appendPQExpBufferChar(tbloids, ',');
+			appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
 		}
+	}
 
-		/*
-		 * Get info about table CHECK constraints.  This is skipped for a
-		 * data-only dump, as it is only needed for table schemas.
-		 */
-		if (tbinfo->ncheck > 0 && !dopt->dataOnly)
+	PQclear(res);
+
+	/*
+	 * Now get info about column defaults.  This is skipped for a data-only
+	 * dump, as it is only needed for table schemas.
+	 */
+	if (!dopt->dataOnly && tbloids->len > 1)
+	{
+		AttrDefInfo *attrdefs;
+		int			numDefaults;
+		TableInfo  *tbinfo = NULL;
+
+		pg_log_info("finding table default expressions");
+
+		appendPQExpBufferChar(tbloids, '}');
+
+		printfPQExpBuffer(q, "SELECT a.tableoid, a.oid, adrelid, adnum, "
+						  "pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc\n"
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_attrdef a ON (src.tbloid = a.adrelid)\n"
+						  "ORDER BY a.adrelid, a.adnum",
+						  tbloids->data);
+
+		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+
+		numDefaults = PQntuples(res);
+		attrdefs = (AttrDefInfo *) pg_malloc(numDefaults * sizeof(AttrDefInfo));
+
+		curtblindx = -1;
+		for (int j = 0; j < numDefaults; j++)
 		{
-			ConstraintInfo *constrs;
-			int			numConstrs;
+			Oid			adtableoid = atooid(PQgetvalue(res, j, 0));
+			Oid			adoid = atooid(PQgetvalue(res, j, 1));
+			Oid			adrelid = atooid(PQgetvalue(res, j, 2));
+			int			adnum = atoi(PQgetvalue(res, j, 3));
+			char	   *adsrc = PQgetvalue(res, j, 4);
 
-			pg_log_info("finding check constraints for table \"%s.%s\"",
-						tbinfo->dobj.namespace->dobj.name,
-						tbinfo->dobj.name);
+			/*
+			 * Locate the associated TableInfo; we rely on tblinfo[] being in
+			 * OID order.
+			 */
+			if (tbinfo == NULL || tbinfo->dobj.catId.oid != adrelid)
+			{
+				while (++curtblindx < numTables)
+				{
+					tbinfo = &tblinfo[curtblindx];
+					if (tbinfo->dobj.catId.oid == adrelid)
+						break;
+				}
+				if (curtblindx >= numTables)
+					fatal("unrecognized table OID %u", adrelid);
+			}
 
-			resetPQExpBuffer(q);
-			if (fout->remoteVersion >= 90200)
+			if (adnum <= 0 || adnum > tbinfo->numatts)
+				fatal("invalid adnum value %d for table \"%s\"",
+					  adnum, tbinfo->dobj.name);
+
+			/*
+			 * dropped columns shouldn't have defaults, but just in case,
+			 * ignore 'em
+			 */
+			if (tbinfo->attisdropped[adnum - 1])
+				continue;
+
+			attrdefs[j].dobj.objType = DO_ATTRDEF;
+			attrdefs[j].dobj.catId.tableoid = adtableoid;
+			attrdefs[j].dobj.catId.oid = adoid;
+			AssignDumpId(&attrdefs[j].dobj);
+			attrdefs[j].adtable = tbinfo;
+			attrdefs[j].adnum = adnum;
+			attrdefs[j].adef_expr = pg_strdup(adsrc);
+
+			attrdefs[j].dobj.name = pg_strdup(tbinfo->dobj.name);
+			attrdefs[j].dobj.namespace = tbinfo->dobj.namespace;
+
+			attrdefs[j].dobj.dump = tbinfo->dobj.dump;
+
+			/*
+			 * Figure out whether the default/generation expression should be
+			 * dumped as part of the main CREATE TABLE (or similar) command or
+			 * as a separate ALTER TABLE (or similar) command. The preference
+			 * is to put it into the CREATE command, but in some cases that's
+			 * not possible.
+			 */
+			if (tbinfo->attgenerated[adnum - 1])
 			{
 				/*
-				 * convalidated is new in 9.2 (actually, it is there in 9.1,
-				 * but it wasn't ever false for check constraints until 9.2).
+				 * Column generation expressions cannot be dumped separately,
+				 * because there is no syntax for it.  The !shouldPrintColumn
+				 * case below will be tempted to set them to separate if they
+				 * are attached to an inherited column without a local
+				 * definition, but that would be wrong and unnecessary,
+				 * because generation expressions are always inherited, so
+				 * there is no need to set them again in child tables, and
+				 * there is no syntax for it either.  By setting separate to
+				 * false here we prevent the "default" from being processed as
+				 * its own dumpable object, and flagInhAttrs() will remove it
+				 * from the table when it detects that it belongs to an
+				 * inherited column.
 				 */
-				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-								  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "conislocal, convalidated "
-								  "FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = '%u'::pg_catalog.oid "
-								  "   AND contype = 'c' "
-								  "ORDER BY conname",
-								  tbinfo->dobj.catId.oid);
+				attrdefs[j].separate = false;
 			}
-			else if (fout->remoteVersion >= 80400)
+			else if (tbinfo->relkind == RELKIND_VIEW)
 			{
-				/* conislocal is new in 8.4 */
-				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-								  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "conislocal, true AS convalidated "
-								  "FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = '%u'::pg_catalog.oid "
-								  "   AND contype = 'c' "
-								  "ORDER BY conname",
-								  tbinfo->dobj.catId.oid);
+				/*
+				 * Defaults on a VIEW must always be dumped as separate ALTER
+				 * TABLE commands.
+				 */
+				attrdefs[j].separate = true;
+			}
+			else if (!shouldPrintColumn(dopt, tbinfo, adnum - 1))
+			{
+				/* column will be suppressed, print default separately */
+				attrdefs[j].separate = true;
 			}
 			else
 			{
-				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
-								  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "true AS conislocal, true AS convalidated "
-								  "FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = '%u'::pg_catalog.oid "
-								  "   AND contype = 'c' "
-								  "ORDER BY conname",
-								  tbinfo->dobj.catId.oid);
+				attrdefs[j].separate = false;
 			}
 
-			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+			if (!attrdefs[j].separate)
+			{
+				/*
+				 * Mark the default as needing to appear before the table, so
+				 * that any dependencies it has must be emitted before the
+				 * CREATE TABLE.  If this is not possible, we'll change to
+				 * "separate" mode while sorting dependencies.
+				 */
+				addObjectDependency(&tbinfo->dobj,
+									attrdefs[j].dobj.dumpId);
+			}
 
-			numConstrs = PQntuples(res);
-			if (numConstrs != tbinfo->ncheck)
+			tbinfo->attrdefs[adnum - 1] = &attrdefs[j];
+		}
+
+		PQclear(res);
+	}
+
+	/*
+	 * Get info about table CHECK constraints.  This is skipped for a
+	 * data-only dump, as it is only needed for table schemas.
+	 */
+	if (!dopt->dataOnly && checkoids->len > 2)
+	{
+		ConstraintInfo *constrs;
+		int			numConstrs;
+		int			i_tableoid;
+		int			i_oid;
+		int			i_conrelid;
+		int			i_conname;
+		int			i_consrc;
+		int			i_conislocal;
+		int			i_convalidated;
+
+		pg_log_info("finding table check constraints");
+
+		resetPQExpBuffer(q);
+		appendPQExpBufferStr(q,
+							 "SELECT c.tableoid, c.oid, conrelid, conname, "
+							 "pg_catalog.pg_get_constraintdef(c.oid) AS consrc, ");
+		if (fout->remoteVersion >= 90200)
+		{
+			/*
+			 * convalidated is new in 9.2 (actually, it is there in 9.1, but
+			 * it wasn't ever false for check constraints until 9.2).
+			 */
+			appendPQExpBufferStr(q,
+								 "conislocal, convalidated ");
+		}
+		else if (fout->remoteVersion >= 80400)
+		{
+			/* conislocal is new in 8.4 */
+			appendPQExpBufferStr(q,
+								 "conislocal, true AS convalidated ");
+		}
+		else
+		{
+			appendPQExpBufferStr(q,
+								 "true AS conislocal, true AS convalidated ");
+		}
+		appendPQExpBuffer(q,
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(tbloid)\n"
+						  "JOIN pg_catalog.pg_constraint c ON (src.tbloid = c.conrelid)\n"
+						  "WHERE contype = 'c' "
+						  "ORDER BY c.conrelid, c.conname",
+						  checkoids->data);
+
+		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+
+		numConstrs = PQntuples(res);
+		constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
+
+		i_tableoid = PQfnumber(res, "tableoid");
+		i_oid = PQfnumber(res, "oid");
+		i_conrelid = PQfnumber(res, "conrelid");
+		i_conname = PQfnumber(res, "conname");
+		i_consrc = PQfnumber(res, "consrc");
+		i_conislocal = PQfnumber(res, "conislocal");
+		i_convalidated = PQfnumber(res, "convalidated");
+
+		/* As above, this loop iterates once per table, not once per row */
+		curtblindx = -1;
+		for (int j = 0; j < numConstrs;)
+		{
+			Oid			conrelid = atooid(PQgetvalue(res, j, i_conrelid));
+			TableInfo  *tbinfo = NULL;
+			int			numcons;
+
+			/* Count rows for this table */
+			for (numcons = 1; numcons < numConstrs - j; numcons++)
+				if (atooid(PQgetvalue(res, j + numcons, i_conrelid)) != conrelid)
+					break;
+
+			/*
+			 * Locate the associated TableInfo; we rely on tblinfo[] being in
+			 * OID order.
+			 */
+			while (++curtblindx < numTables)
+			{
+				tbinfo = &tblinfo[curtblindx];
+				if (tbinfo->dobj.catId.oid == conrelid)
+					break;
+			}
+			if (curtblindx >= numTables)
+				fatal("unrecognized table OID %u", conrelid);
+
+			if (numcons != tbinfo->ncheck)
 			{
 				pg_log_error(ngettext("expected %d check constraint on table \"%s\" but found %d",
 									  "expected %d check constraints on table \"%s\" but found %d",
 									  tbinfo->ncheck),
-							 tbinfo->ncheck, tbinfo->dobj.name, numConstrs);
+							 tbinfo->ncheck, tbinfo->dobj.name, numcons);
 				pg_log_error("(The system catalogs might be corrupted.)");
 				exit_nicely(1);
 			}
 
-			constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
-			tbinfo->checkexprs = constrs;
+			tbinfo->checkexprs = constrs + j;
 
-			for (int j = 0; j < numConstrs; j++)
+			for (int c = 0; c < numcons; c++, j++)
 			{
-				bool		validated = PQgetvalue(res, j, 5)[0] == 't';
+				bool		validated = PQgetvalue(res, j, i_convalidated)[0] == 't';
 
 				constrs[j].dobj.objType = DO_CONSTRAINT;
-				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
-				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
+				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
+				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
 				AssignDumpId(&constrs[j].dobj);
-				constrs[j].dobj.name = pg_strdup(PQgetvalue(res, j, 2));
+				constrs[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
 				constrs[j].dobj.namespace = tbinfo->dobj.namespace;
 				constrs[j].contable = tbinfo;
 				constrs[j].condomain = NULL;
 				constrs[j].contype = 'c';
-				constrs[j].condef = pg_strdup(PQgetvalue(res, j, 3));
+				constrs[j].condef = pg_strdup(PQgetvalue(res, j, i_consrc));
 				constrs[j].confrelid = InvalidOid;
 				constrs[j].conindex = 0;
 				constrs[j].condeferrable = false;
 				constrs[j].condeferred = false;
-				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
+				constrs[j].conislocal = (PQgetvalue(res, j, i_conislocal)[0] == 't');
 
 				/*
 				 * An unvalidated constraint needs to be dumped separately, so
@@ -8748,11 +8993,14 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				 * constraint must be split out from the table definition.
 				 */
 			}
-			PQclear(res);
 		}
+
+		PQclear(res);
 	}
 
 	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(tbloids);
+	destroyPQExpBuffer(checkoids);
 }
 
 /*
