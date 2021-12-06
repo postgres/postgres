@@ -85,8 +85,13 @@ typedef enum
 	DO_SUBSCRIPTION
 } DumpableObjectType;
 
-/* component types of an object which can be selected for dumping */
-typedef uint32 DumpComponents;	/* a bitmask of dump object components */
+/*
+ * DumpComponents is a bitmask of the potentially dumpable components of
+ * a database object: its core definition, plus optional attributes such
+ * as ACL, comments, etc.  The NONE and ALL symbols are convenient
+ * shorthands.
+ */
+typedef uint32 DumpComponents;
 #define DUMP_COMPONENT_NONE			(0)
 #define DUMP_COMPONENT_DEFINITION	(1 << 0)
 #define DUMP_COMPONENT_DATA			(1 << 1)
@@ -131,8 +136,9 @@ typedef struct _dumpableObject
 	DumpId		dumpId;			/* assigned by AssignDumpId() */
 	char	   *name;			/* object name (should never be NULL) */
 	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
-	DumpComponents dump;		/* bitmask of components to dump */
+	DumpComponents dump;		/* bitmask of components requested to dump */
 	DumpComponents dump_contains;	/* as above, but for contained objects */
+	DumpComponents components;	/* bitmask of components available to dump */
 	bool		ext_member;		/* true if object is member of extension */
 	bool		depends_on_ext; /* true if object depends on an extension */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
@@ -289,6 +295,7 @@ typedef struct _tableInfo
 	uint32		toast_frozenxid;	/* toast table's relfrozenxid, if any */
 	uint32		toast_minmxid;	/* toast table's relminmxid */
 	int			ncheck;			/* # of CHECK expressions */
+	Oid			reltype;		/* OID of table's composite type, if any */
 	char	   *reloftype;		/* underlying type for typed table */
 	Oid			foreign_server; /* foreign server oid, if applicable */
 	/* these two are set only if table is a sequence owned by a column: */

@@ -584,6 +584,8 @@ AssignDumpId(DumpableObject *dobj)
 	dobj->namespace = NULL;		/* may be set later */
 	dobj->dump = DUMP_COMPONENT_ALL;	/* default assumption */
 	dobj->dump_contains = DUMP_COMPONENT_ALL;	/* default assumption */
+	/* All objects have definitions; we may set more components bits later */
+	dobj->components = DUMP_COMPONENT_DEFINITION;
 	dobj->ext_member = false;	/* default assumption */
 	dobj->depends_on_ext = false;	/* default assumption */
 	dobj->dependencies = NULL;
