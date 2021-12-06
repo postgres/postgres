@@ -315,6 +315,7 @@ typedef struct _tableInfo
 	int			owning_col;		/* attr # of column owning sequence */
 	bool		is_identity_sequence;
 	int			relpages;		/* table's size in pages (from pg_class) */
+	int			toastpages;		/* toast table's size in pages, if any */
 
 	bool		interesting;	/* true if need to collect more data */
 	bool		dummy_view;		/* view's real definition must be postponed */

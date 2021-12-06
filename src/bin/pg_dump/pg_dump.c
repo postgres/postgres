@@ -2467,13 +2467,26 @@ dumpTableData(Archive *fout, const TableDataInfo *tdinfo)
 		/*
 		 * Set the TocEntry's dataLength in case we are doing a parallel dump
 		 * and want to order dump jobs by table size.  We choose to measure
-		 * dataLength in table pages during dump, so no scaling is needed.
+		 * dataLength in table pages (including TOAST pages) during dump, so
+		 * no scaling is needed.
+		 *
 		 * However, relpages is declared as "integer" in pg_class, and hence
 		 * also in TableInfo, but it's really BlockNumber a/k/a unsigned int.
 		 * Cast so that we get the right interpretation of table sizes
 		 * exceeding INT_MAX pages.
 		 */
 		te->dataLength = (BlockNumber) tbinfo->relpages;
+		te->dataLength += (BlockNumber) tbinfo->toastpages;
+
+		/*
+		 * If pgoff_t is only 32 bits wide, the above refinement is useless,
+		 * and instead we'd better worry about integer overflow.  Clamp to
+		 * INT_MAX if the correct result exceeds that.
+		 */
+		if (sizeof(te->dataLength) == 4 &&
+			(tbinfo->relpages < 0 || tbinfo->toastpages < 0 ||
+			 te->dataLength < 0))
+			te->dataLength = INT_MAX;
 	}
 
 	destroyPQExpBuffer(copyBuf);
@@ -6254,6 +6267,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_relhasindex;
 	int			i_relhasrules;
 	int			i_relpages;
+	int			i_toastpages;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
@@ -6303,6 +6317,7 @@ getTables(Archive *fout, int *numTables)
 					  "(%s c.relowner) AS rolname, "
 					  "c.relchecks, "
 					  "c.relhasindex, c.relhasrules, c.relpages, "
+					  "tc.relpages AS toastpages, "
 					  "d.refobjid AS owning_tab, "
 					  "d.refobjsubid AS owning_col, "
 					  "tsp.spcname AS reltablespace, ",
@@ -6459,17 +6474,14 @@ getTables(Archive *fout, int *numTables)
 							 "LEFT JOIN pg_am am ON (c.relam = am.oid)\n");
 
 	/*
-	 * We don't need any data from the TOAST table before 8.2.
-	 *
 	 * We purposefully ignore toast OIDs for partitioned tables; the reason is
 	 * that versions 10 and 11 have them, but later versions do not, so
 	 * emitting them causes the upgrade to fail.
 	 */
-	if (fout->remoteVersion >= 80200)
-		appendPQExpBufferStr(query,
-							 "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid"
-							 " AND tc.relkind = " CppAsString2(RELKIND_TOASTVALUE)
-							 " AND c.relkind <> " CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n");
+	appendPQExpBufferStr(query,
+						 "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid"
+						 " AND tc.relkind = " CppAsString2(RELKIND_TOASTVALUE)
+						 " AND c.relkind <> " CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n");
 
 	/*
 	 * Restrict to interesting relkinds (in particular, not indexes).  Not all
@@ -6520,6 +6532,7 @@ getTables(Archive *fout, int *numTables)
 	i_relhasindex = PQfnumber(res, "relhasindex");
 	i_relhasrules = PQfnumber(res, "relhasrules");
 	i_relpages = PQfnumber(res, "relpages");
+	i_toastpages = PQfnumber(res, "toastpages");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
@@ -6581,6 +6594,10 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
 		tblinfo[i].relpages = atoi(PQgetvalue(res, i, i_relpages));
+		if (PQgetisnull(res, i, i_toastpages))
+			tblinfo[i].toastpages = 0;
+		else
+			tblinfo[i].toastpages = atoi(PQgetvalue(res, i, i_toastpages));
 		if (PQgetisnull(res, i, i_owning_tab))
 		{
 			tblinfo[i].owning_tab = InvalidOid;
@@ -10407,7 +10424,7 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 				 * about is allowing blob dumping to be parallelized, not just
 				 * getting a smarter estimate for the single TOC entry.)
 				 */
-				te->dataLength = MaxBlockNumber;
+				te->dataLength = INT_MAX;
 			}
 			break;
 		case DO_POLICY:
