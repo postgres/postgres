@@ -727,6 +727,69 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 
 
 /*
+ * Append one element to the text representation of a 1-dimensional Postgres
+ * array.
+ *
+ * The caller must provide the initial '{' and closing '}' of the array.
+ * This function handles all else, including insertion of commas and
+ * quoting of values.
+ *
+ * We assume that typdelim is ','.
+ */
+void
+appendPGArray(PQExpBuffer buffer, const char *value)
+{
+	bool		needquote;
+	const char *tmp;
+
+	if (buffer->data[buffer->len - 1] != '{')
+		appendPQExpBufferChar(buffer, ',');
+
+	/* Decide if we need quotes; this should match array_out()'s choices. */
+	if (value[0] == '\0')
+		needquote = true;		/* force quotes for empty string */
+	else if (pg_strcasecmp(value, "NULL") == 0)
+		needquote = true;		/* force quotes for literal NULL */
+	else
+		needquote = false;
+
+	if (!needquote)
+	{
+		for (tmp = value; *tmp; tmp++)
+		{
+			char		ch = *tmp;
+
+			if (ch == '"' || ch == '\\' ||
+				ch == '{' || ch == '}' || ch == ',' ||
+			/* these match array_isspace(): */
+				ch == ' ' || ch == '\t' || ch == '\n' ||
+				ch == '\r' || ch == '\v' || ch == '\f')
+			{
+				needquote = true;
+				break;
+			}
+		}
+	}
+
+	if (needquote)
+	{
+		appendPQExpBufferChar(buffer, '"');
+		for (tmp = value; *tmp; tmp++)
+		{
+			char		ch = *tmp;
+
+			if (ch == '"' || ch == '\\')
+				appendPQExpBufferChar(buffer, '\\');
+			appendPQExpBufferChar(buffer, ch);
+		}
+		appendPQExpBufferChar(buffer, '"');
+	}
+	else
+		appendPQExpBufferStr(buffer, value);
+}
+
+
+/*
  * Format a reloptions array and append it to the given buffer.
  *
  * "prefix" is prepended to the option names; typically it's "" or "toast.".

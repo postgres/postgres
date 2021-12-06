@@ -146,16 +146,36 @@ typedef struct _dumpableObject
 	int			allocDeps;		/* allocated size of dependencies[] */
 } DumpableObject;
 
+/*
+ * Object types that have ACLs must store them in a DumpableAcl sub-struct,
+ * which must immediately follow the DumpableObject base struct.
+ *
+ * Note: when dumping from a pre-9.2 server, which lacks the acldefault()
+ * function, acldefault will be NULL or empty.
+ */
+typedef struct _dumpableAcl
+{
+	char	   *acl;			/* the object's actual ACL string */
+	char	   *acldefault;		/* default ACL for the object's type & owner */
+	/* these fields come from the object's pg_init_privs entry, if any: */
+	char		privtype;		/* entry type, 'i' or 'e'; 0 if no entry */
+	char	   *initprivs;		/* the object's initial ACL string, or NULL */
+} DumpableAcl;
+
+/* Generic struct that can be used to access any object type having an ACL */
+typedef struct _dumpableObjectWithAcl
+{
+	DumpableObject dobj;
+	DumpableAcl dacl;
+} DumpableObjectWithAcl;
+
 typedef struct _namespaceInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	bool		create;			/* CREATE SCHEMA, or just set owner? */
 	Oid			nspowner;
 	char	   *rolname;		/* name of owner, or empty string */
-	char	   *nspacl;
-	char	   *rnspacl;
-	char	   *initnspacl;
-	char	   *initrnspacl;
 } NamespaceInfo;
 
 typedef struct _extensionInfo
@@ -171,6 +191,7 @@ typedef struct _extensionInfo
 typedef struct _typeInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 
 	/*
 	 * Note: dobj.name is the raw pg_type.typname entry.  ftypname is the
@@ -179,10 +200,6 @@ typedef struct _typeInfo
 	 */
 	char	   *ftypname;
 	char	   *rolname;		/* name of owner, or empty string */
-	char	   *typacl;
-	char	   *rtypacl;
-	char	   *inittypacl;
-	char	   *initrtypacl;
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
@@ -207,15 +224,12 @@ typedef struct _shellTypeInfo
 typedef struct _funcInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *rolname;		/* name of owner, or empty string */
 	Oid			lang;
 	int			nargs;
 	Oid		   *argtypes;
 	Oid			prorettype;
-	char	   *proacl;
-	char	   *rproacl;
-	char	   *initproacl;
-	char	   *initrproacl;
 } FuncInfo;
 
 /* AggInfo is a superset of FuncInfo */
@@ -270,11 +284,8 @@ typedef struct _tableInfo
 	 * These fields are collected for every table in the database.
 	 */
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *rolname;		/* name of owner, or empty string */
-	char	   *relacl;
-	char	   *rrelacl;
-	char	   *initrelacl;
-	char	   *initrrelacl;
 	char		relkind;
 	char		relpersistence; /* relation persistence */
 	bool		relispopulated; /* relation is populated */
@@ -286,6 +297,7 @@ typedef struct _tableInfo
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
+	bool		hascolumnACLs;	/* do any columns have non-default ACLs? */
 	bool		rowsec;			/* is row security enabled? */
 	bool		forcerowsec;	/* is row security forced? */
 	bool		hasoids;		/* does it have OIDs? */
@@ -478,14 +490,11 @@ typedef struct _constraintInfo
 typedef struct _procLangInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	bool		lanpltrusted;
 	Oid			lanplcallfoid;
 	Oid			laninline;
 	Oid			lanvalidator;
-	char	   *lanacl;
-	char	   *rlanacl;
-	char	   *initlanacl;
-	char	   *initrlanacl;
 	char	   *lanowner;		/* name of owner, or empty string */
 } ProcLangInfo;
 
@@ -550,49 +559,37 @@ typedef struct _cfgInfo
 typedef struct _fdwInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *rolname;
 	char	   *fdwhandler;
 	char	   *fdwvalidator;
 	char	   *fdwoptions;
-	char	   *fdwacl;
-	char	   *rfdwacl;
-	char	   *initfdwacl;
-	char	   *initrfdwacl;
 } FdwInfo;
 
 typedef struct _foreignServerInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *rolname;
 	Oid			srvfdw;
 	char	   *srvtype;
 	char	   *srvversion;
-	char	   *srvacl;
-	char	   *rsrvacl;
-	char	   *initsrvacl;
-	char	   *initrsrvacl;
 	char	   *srvoptions;
 } ForeignServerInfo;
 
 typedef struct _defaultACLInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *defaclrole;
 	char		defaclobjtype;
-	char	   *defaclacl;
-	char	   *rdefaclacl;
-	char	   *initdefaclacl;
-	char	   *initrdefaclacl;
 } DefaultACLInfo;
 
 typedef struct _blobInfo
 {
 	DumpableObject dobj;
+	DumpableAcl dacl;
 	char	   *rolname;
-	char	   *blobacl;
-	char	   *rblobacl;
-	char	   *initblobacl;
-	char	   *initrblobacl;
 } BlobInfo;
 
 /*
