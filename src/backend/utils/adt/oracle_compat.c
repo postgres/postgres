@@ -999,9 +999,25 @@ ascii(PG_FUNCTION_ARGS)
 Datum
 chr			(PG_FUNCTION_ARGS)
 {
-	uint32		cvalue = PG_GETARG_UINT32(0);
+	int32		arg = PG_GETARG_INT32(0);
+	uint32		cvalue;
 	text	   *result;
 	int			encoding = GetDatabaseEncoding();
+
+	/*
+	 * Error out on arguments that make no sense or that we can't validly
+	 * represent in the encoding.
+	 */
+	if (arg < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("character number must be positive")));
+	else if (arg == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("null character not permitted")));
+
+	cvalue = arg;
 
 	if (encoding == PG_UTF8 && cvalue > 127)
 	{
@@ -1017,7 +1033,7 @@ chr			(PG_FUNCTION_ARGS)
 		if (cvalue > 0x0010ffff)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("requested character too large for encoding: %d",
+					 errmsg("requested character too large for encoding: %u",
 							cvalue)));
 
 		if (cvalue > 0xffff)
@@ -1058,28 +1074,19 @@ chr			(PG_FUNCTION_ARGS)
 		if (!pg_utf8_islegal(wch, bytes))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("requested character not valid for encoding: %d",
+					 errmsg("requested character not valid for encoding: %u",
 							cvalue)));
 	}
 	else
 	{
 		bool		is_mb;
 
-		/*
-		 * Error out on arguments that make no sense or that we can't validly
-		 * represent in the encoding.
-		 */
-		if (cvalue == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("null character not permitted")));
-
 		is_mb = pg_encoding_max_length(encoding) > 1;
 
 		if ((is_mb && (cvalue > 127)) || (!is_mb && (cvalue > 255)))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("requested character too large for encoding: %d",
+					 errmsg("requested character too large for encoding: %u",
 							cvalue)));
 
 		result = (text *) palloc(VARHDRSZ + 1);

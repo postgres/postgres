@@ -3193,7 +3193,7 @@ retcomposite(PG_FUNCTION_ARGS)
         oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
         /* total number of tuples to be returned */
-        funcctx->max_calls = PG_GETARG_UINT32(0);
+        funcctx->max_calls = PG_GETARG_INT32(0);
 
         /* Build a tuple descriptor for our result type */
         if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
