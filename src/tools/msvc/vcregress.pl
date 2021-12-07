@@ -55,6 +55,21 @@ copy("$Config/autoinc/autoinc.dll",               "src/test/regress");
 copy("$Config/regress/regress.dll",               "src/test/regress");
 copy("$Config/dummy_seclabel/dummy_seclabel.dll", "src/test/regress");
 
+# Configuration settings used by TAP tests
+$ENV{with_openssl} = $config->{openssl} ? 'yes' : 'no';
+$ENV{with_ldap} = $config->{ldap} ? 'yes' : 'no';
+$ENV{with_icu} = $config->{icu} ? 'yes' : 'no';
+$ENV{with_gssapi} = $config->{gss} ? 'yes' : 'no';
+$ENV{with_krb_srvnam} = $config->{krb_srvnam} || 'postgres';
+$ENV{with_readline} = 'no';
+
+# These values are defaults that can be overridden by the calling environment
+# (see buildenv.pl processing above).
+# c.f. src/Makefile.global.in and configure.ac
+$ENV{TAR} ||= 'tar';
+$ENV{LZ4} ||= 'lz4';
+$ENV{GZIP_PROGRAM} ||= 'gzip';
+
 $ENV{PATH} = "$topdir/$Config/libpq;$ENV{PATH}";
 
 if ($ENV{PERL5LIB})
