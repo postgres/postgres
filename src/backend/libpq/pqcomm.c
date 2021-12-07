@@ -296,7 +296,8 @@ socket_close(int code, Datum arg)
 		 * not yet sent to the client.  (This is a flat-out violation of the
 		 * TCP RFCs, but count on Microsoft not to care about that.)  To get
 		 * the spec-compliant "graceful shutdown" behavior, we must invoke
-		 * closesocket() explicitly.
+		 * closesocket() explicitly.  When using OpenSSL, it seems that clean
+		 * shutdown also requires an explicit shutdown() call.
 		 *
 		 * This code runs late enough during process shutdown that we should
 		 * have finished all externally-visible shutdown activities, so that
@@ -304,6 +305,7 @@ socket_close(int code, Datum arg)
 		 * Windows too.  But it's a lot more fragile than the other way.
 		 */
 #ifdef WIN32
+		shutdown(MyProcPort->sock, SD_SEND);
 		closesocket(MyProcPort->sock);
 #endif
 
