@@ -757,6 +757,44 @@ SELECT * from FKTABLE;
 
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
+-- Test for ON DELETE SET NULL/DEFAULT (column_list);
+CREATE TABLE PKTABLE (tid int, id int, PRIMARY KEY (tid, id));
+CREATE TABLE FKTABLE (tid int, id int, foo int, FOREIGN KEY (tid, id) REFERENCES PKTABLE ON DELETE SET NULL (bar));
+ERROR:  column "bar" referenced in foreign key constraint does not exist
+CREATE TABLE FKTABLE (tid int, id int, foo int, FOREIGN KEY (tid, id) REFERENCES PKTABLE ON DELETE SET NULL (foo));
+ERROR:  column "foo" referenced in ON DELETE SET action must be part of foreign key
+CREATE TABLE FKTABLE (tid int, id int, foo int, FOREIGN KEY (tid, foo) REFERENCES PKTABLE ON UPDATE SET NULL (foo));
+ERROR:  a column list with SET NULL is only supported for ON DELETE actions
+LINE 1: ...oo int, FOREIGN KEY (tid, foo) REFERENCES PKTABLE ON UPDATE ...
+                                                             ^
+CREATE TABLE FKTABLE (
+  tid int, id int,
+  fk_id_del_set_null int,
+  fk_id_del_set_default int DEFAULT 0,
+  FOREIGN KEY (tid, fk_id_del_set_null) REFERENCES PKTABLE ON DELETE SET NULL (fk_id_del_set_null),
+  FOREIGN KEY (tid, fk_id_del_set_default) REFERENCES PKTABLE ON DELETE SET DEFAULT (fk_id_del_set_default)
+);
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'fktable'::regclass::oid ORDER BY oid;
+                                                pg_get_constraintdef                                                
+--------------------------------------------------------------------------------------------------------------------
+ FOREIGN KEY (tid, fk_id_del_set_null) REFERENCES pktable(tid, id) ON DELETE SET NULL (fk_id_del_set_null)
+ FOREIGN KEY (tid, fk_id_del_set_default) REFERENCES pktable(tid, id) ON DELETE SET DEFAULT (fk_id_del_set_default)
+(2 rows)
+
+INSERT INTO PKTABLE VALUES (1, 0), (1, 1), (1, 2);
+INSERT INTO FKTABLE VALUES
+  (1, 1, 1, NULL),
+  (1, 2, NULL, 2);
+DELETE FROM PKTABLE WHERE id = 1 OR id = 2;
+SELECT * FROM FKTABLE ORDER BY id;
+ tid | id | fk_id_del_set_null | fk_id_del_set_default 
+-----+----+--------------------+-----------------------
+   1 |  1 |                    |                      
+   1 |  2 |                    |                     0
+(2 rows)
+
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
 ERROR:  column "ftest2" referenced in foreign key constraint does not exist
@@ -1734,6 +1772,39 @@ SELECT * FROM fk_partitioned_fk WHERE b = 142857;
  2501 | 142857
 (1 row)
 
+-- ON DELETE SET NULL column_list
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
+  REFERENCES fk_notpartitioned_pk
+  ON DELETE SET NULL (a);
+BEGIN;
+DELETE FROM fk_notpartitioned_pk WHERE b = 142857;
+SELECT * FROM fk_partitioned_fk WHERE a IS NOT NULL OR b IS NOT NULL ORDER BY a NULLS LAST;
+  a   |   b    
+------+--------
+ 2502 |       
+      | 142857
+(2 rows)
+
+ROLLBACK;
+-- ON DELETE SET DEFAULT column_list
+ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
+  REFERENCES fk_notpartitioned_pk
+  ON DELETE SET DEFAULT (a);
+BEGIN;
+DELETE FROM fk_partitioned_fk;
+DELETE FROM fk_notpartitioned_pk;
+INSERT INTO fk_notpartitioned_pk VALUES (500, 100000), (2501, 100000);
+INSERT INTO fk_partitioned_fk VALUES (500, 100000);
+DELETE FROM fk_notpartitioned_pk WHERE a = 500;
+SELECT * FROM fk_partitioned_fk ORDER BY a;
+  a   |   b    
+------+--------
+ 2501 | 100000
+(1 row)
+
+ROLLBACK;
 -- ON UPDATE/DELETE CASCADE
 ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)

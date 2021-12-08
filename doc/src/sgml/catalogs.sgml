@@ -2710,6 +2710,18 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confdelsetcols</structfield> <type>int2[]</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       If a foreign key with a <literal>SET NULL</literal> or <literal>SET
+       DEFAULT</literal> delete action, the columns that will be updated.
+       If null, all of the referencing columns will be updated.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>conexclop</structfield> <type>oid[]</type>
        (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
       </para>

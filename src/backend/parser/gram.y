@@ -141,6 +141,19 @@ typedef struct GroupClause
 	List   *list;
 } GroupClause;
 
+/* Private structs for the result of key_actions and key_action productions */
+typedef struct KeyAction
+{
+	char action;
+	List *cols;
+} KeyAction;
+
+typedef struct KeyActions
+{
+	KeyAction *updateAction;
+	KeyAction *deleteAction;
+} KeyActions;
+
 /* ConstraintAttributeSpec yields an integer bitmask of these flags: */
 #define CAS_NOT_DEFERRABLE			0x01
 #define CAS_DEFERRABLE				0x02
@@ -265,6 +278,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	struct SelectLimit	*selectlimit;
 	SetQuantifier	 setquantifier;
 	struct GroupClause  *groupclause;
+	struct KeyActions	*keyactions;
+	struct KeyAction	*keyaction;
 }
 
 %type <node>	stmt toplevel_stmt schema_stmt routine_body_stmt
@@ -570,7 +585,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		column_compression opt_column_compression
 %type <list>	ColQualList
 %type <node>	ColConstraint ColConstraintElem ConstraintAttr
-%type <ival>	key_actions key_delete key_match key_update key_action
+%type <ival>	key_match
+%type <keyaction> key_delete key_update key_action
+%type <keyactions> key_actions
 %type <ival>	ConstraintAttributeSpec ConstraintAttributeElem
 %type <str>		ExistingIndex
 
@@ -3690,8 +3707,9 @@ ColConstraintElem:
 					n->fk_attrs = NIL;
 					n->pk_attrs = $3;
 					n->fk_matchtype = $4;
-					n->fk_upd_action = (char) ($5 >> 8);
-					n->fk_del_action = (char) ($5 & 0xFF);
+					n->fk_upd_action = ($5)->updateAction->action;
+					n->fk_del_action = ($5)->deleteAction->action;
+					n->fk_del_set_cols = ($5)->deleteAction->cols;
 					n->skip_validation = false;
 					n->initially_valid = true;
 					$$ = (Node *)n;
@@ -3901,8 +3919,9 @@ ConstraintElem:
 					n->fk_attrs = $4;
 					n->pk_attrs = $8;
 					n->fk_matchtype = $9;
-					n->fk_upd_action = (char) ($10 >> 8);
-					n->fk_del_action = (char) ($10 & 0xFF);
+					n->fk_upd_action = ($10)->updateAction->action;
+					n->fk_del_action = ($10)->deleteAction->action;
+					n->fk_del_set_cols = ($10)->deleteAction->cols;
 					processCASbits($11, @11, "FOREIGN KEY",
 								   &n->deferrable, &n->initdeferred,
 								   &n->skip_validation, NULL,
@@ -3980,37 +3999,106 @@ OptWhereClause:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/*
- * We combine the update and delete actions into one value temporarily
- * for simplicity of parsing, and then break them down again in the
- * calling production.  update is in the left 8 bits, delete in the right.
- * Note that NOACTION is the default.
- */
 key_actions:
 			key_update
-				{ $$ = ($1 << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
+				{
+					KeyActions *n = palloc(sizeof(KeyActions));
+					n->updateAction = $1;
+					n->deleteAction = palloc(sizeof(KeyAction));
+					n->deleteAction->action = FKCONSTR_ACTION_NOACTION;
+					n->deleteAction->cols = NIL;
+					$$ = n;
+				}
 			| key_delete
-				{ $$ = (FKCONSTR_ACTION_NOACTION << 8) | ($1 & 0xFF); }
+				{
+					KeyActions *n = palloc(sizeof(KeyActions));
+					n->updateAction = palloc(sizeof(KeyAction));
+					n->updateAction->action = FKCONSTR_ACTION_NOACTION;
+					n->updateAction->cols = NIL;
+					n->deleteAction = $1;
+					$$ = n;
+				}
 			| key_update key_delete
-				{ $$ = ($1 << 8) | ($2 & 0xFF); }
+				{
+					KeyActions *n = palloc(sizeof(KeyActions));
+					n->updateAction = $1;
+					n->deleteAction = $2;
+					$$ = n;
+				}
 			| key_delete key_update
-				{ $$ = ($2 << 8) | ($1 & 0xFF); }
+				{
+					KeyActions *n = palloc(sizeof(KeyActions));
+					n->updateAction = $2;
+					n->deleteAction = $1;
+					$$ = n;
+				}
 			| /*EMPTY*/
-				{ $$ = (FKCONSTR_ACTION_NOACTION << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
+				{
+					KeyActions *n = palloc(sizeof(KeyActions));
+					n->updateAction = palloc(sizeof(KeyAction));
+					n->updateAction->action = FKCONSTR_ACTION_NOACTION;
+					n->updateAction->cols = NIL;
+					n->deleteAction = palloc(sizeof(KeyAction));
+					n->deleteAction->action = FKCONSTR_ACTION_NOACTION;
+					n->deleteAction->cols = NIL;
+					$$ = n;
+				}
 		;
 
-key_update: ON UPDATE key_action		{ $$ = $3; }
+key_update: ON UPDATE key_action
+				{
+					if (($3)->cols)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("a column list with %s is only supported for ON DELETE actions",
+										($3)->action == FKCONSTR_ACTION_SETNULL ? "SET NULL" : "SET DEFAULT"),
+								 parser_errposition(@1)));
+					$$ = $3;
+				}
 		;
 
-key_delete: ON DELETE_P key_action		{ $$ = $3; }
+key_delete: ON DELETE_P key_action
+				{
+					$$ = $3;
+				}
 		;
 
 key_action:
-			NO ACTION					{ $$ = FKCONSTR_ACTION_NOACTION; }
-			| RESTRICT					{ $$ = FKCONSTR_ACTION_RESTRICT; }
-			| CASCADE					{ $$ = FKCONSTR_ACTION_CASCADE; }
-			| SET NULL_P				{ $$ = FKCONSTR_ACTION_SETNULL; }
-			| SET DEFAULT				{ $$ = FKCONSTR_ACTION_SETDEFAULT; }
+			NO ACTION
+				{
+					KeyAction *n = palloc(sizeof(KeyAction));
+					n->action = FKCONSTR_ACTION_NOACTION;
+					n->cols = NIL;
+					$$ = n;
+				}
+			| RESTRICT
+				{
+					KeyAction *n = palloc(sizeof(KeyAction));
+					n->action = FKCONSTR_ACTION_RESTRICT;
+					n->cols = NIL;
+					$$ = n;
+				}
+			| CASCADE
+				{
+					KeyAction *n = palloc(sizeof(KeyAction));
+					n->action = FKCONSTR_ACTION_CASCADE;
+					n->cols = NIL;
+					$$ = n;
+				}
+			| SET NULL_P opt_column_list
+				{
+					KeyAction *n = palloc(sizeof(KeyAction));
+					n->action = FKCONSTR_ACTION_SETNULL;
+					n->cols = $3;
+					$$ = n;
+				}
+			| SET DEFAULT opt_column_list
+				{
+					KeyAction *n = palloc(sizeof(KeyAction));
+					n->action = FKCONSTR_ACTION_SETDEFAULT;
+					n->cols = $3;
+					$$ = n;
+				}
 		;
 
 OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }

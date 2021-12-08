@@ -138,7 +138,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 <phrase><replaceable class="parameter">referential_action</replaceable> in a <literal>FOREIGN KEY</literal>/<literal>REFERENCES</literal> constraint is:</phrase>
 
-{ NO ACTION | RESTRICT | CASCADE | SET NULL | SET DEFAULT }
+{ NO ACTION | RESTRICT | CASCADE | SET NULL [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] | SET DEFAULT [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] }
 </synopsis>
  </refsynopsisdiv>
 

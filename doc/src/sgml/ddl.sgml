@@ -1084,9 +1084,40 @@ CREATE TABLE order_items (
    </para>
 
    <para>
+    The actions <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>
+    can take a column list to specify which columns to set.  Normally, all
+    columns of the foreign-key constraint are set; setting only a subset is
+    useful in some special cases.  Consider the following example:
+<programlisting>
+CREATE TABLE tenants (
+    tenant_id integer PRIMARY KEY
+);
+
+CREATE TABLE users (
+    tenant_id integer REFERENCES tenants ON DELETE CASCADE,
+    user_id integer NOT NULL,
+    PRIMARY KEY (tenant_id, user_id)
+);
+
+CREATE TABLE posts (
+    tenant_id integer REFERENCES tenants ON DELETE CASCADE,
+    post_id integer NOT NULL,
+    author_id integer,
+    PRIMARY KEY (tenant_id, post_id),
+    FOREIGN KEY (tenant_id, author_id) REFERENCES users ON DELETE SET NULL <emphasis>(author_id)</emphasis>
+);
+</programlisting>
+    Without the specification of the column, the foreign key would also set
+    the column <literal>tenant_id</literal> to null, but that column is still
+    required as part of the primary key.
+   </para>
+
+   <para>
     Analogous to <literal>ON DELETE</literal> there is also
     <literal>ON UPDATE</literal> which is invoked when a referenced
-    column is changed (updated).  The possible actions are the same.
+    column is changed (updated).  The possible actions are the same,
+    except that column lists cannot be specified for <literal>SET
+    NULL</literal> and <literal>SET DEFAULT</literal>.
     In this case, <literal>CASCADE</literal> means that the updated values of the
     referenced column(s) should be copied into the referencing row(s).
    </para>

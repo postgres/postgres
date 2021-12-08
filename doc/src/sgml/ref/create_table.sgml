@@ -108,7 +108,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 <phrase><replaceable class="parameter">referential_action</replaceable> in a <literal>FOREIGN KEY</literal>/<literal>REFERENCES</literal> constraint is:</phrase>
 
-{ NO ACTION | RESTRICT | CASCADE | SET NULL | SET DEFAULT }
+{ NO ACTION | RESTRICT | CASCADE | SET NULL [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] | SET DEFAULT [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] }
 </synopsis>
 
  </refsynopsisdiv>
@@ -1169,19 +1169,23 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        </varlistentry>
 
        <varlistentry>
-        <term><literal>SET NULL</literal></term>
+        <term><literal>SET NULL [ ( <replaceable>column_name</replaceable> [, ... ] ) ]</literal></term>
         <listitem>
          <para>
-          Set the referencing column(s) to null.
+          Set all of the referencing columns, or a specified subset of the
+          referencing columns, to null. A subset of columns can only be
+          specified for <literal>ON DELETE</literal> actions.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>SET DEFAULT</literal></term>
+        <term><literal>SET DEFAULT [ ( <replaceable>column_name</replaceable> [, ... ] ) ]</literal></term>
         <listitem>
          <para>
-          Set the referencing column(s) to their default values.
+          Set all of the referencing columns, or a specified subset of the
+          referencing columns, to their default values. A subset of columns
+          can only be specified for <literal>ON DELETE</literal> actions.
           (There must be a row in the referenced table matching the default
           values, if they are not null, or the operation will fail.)
          </para>
@@ -2219,6 +2223,16 @@ CREATE TABLE cities_partdef
 
    <para>
     The <literal>EXCLUDE</literal> constraint type is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Foreign-Key Constraint Actions</title>
+
+   <para>
+    The ability to specify column lists in the foreign-key actions
+    <literal>SET DEFAULT</literal> and <literal>SET NULL</literal> is a
     <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>

@@ -829,6 +829,8 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 											  0,
 											  ' ',
 											  ' ',
+											  NULL,
+											  0,
 											  ' ',
 											  NULL, /* no exclusion */
 											  NULL, /* no check constraint */

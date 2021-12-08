@@ -1969,6 +1969,8 @@ index_constraint_create(Relation heapRelation,
 								   0,
 								   ' ',
 								   ' ',
+								   NULL,
+								   0,
 								   ' ',
 								   indexInfo->ii_ExclusionOps,
 								   NULL,	/* no check constraint */
