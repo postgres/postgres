@@ -14,6 +14,8 @@
 #ifndef BE_GSSAPI_COMMON_H
 #define BE_GSSAPI_COMMON_H
 
+#ifdef ENABLE_GSS
+
 #if defined(HAVE_GSSAPI_H)
 #include <gssapi.h>
 #else
@@ -22,5 +24,7 @@
 
 extern void pg_GSS_error(const char *errmsg,
 						 OM_uint32 maj_stat, OM_uint32 min_stat);
+
+#endif							/* ENABLE_GSS */
 
 #endif							/* BE_GSSAPI_COMMON_H */
