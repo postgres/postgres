@@ -1709,10 +1709,12 @@ toast_save_datum(Relation rel, Datum value,
 	}
 
 	/*
-	 * Done - close toast relation and its indexes
+	 * Done - close toast relation and its indexes but keep the lock until
+	 * commit, so as a concurrent reindex done directly on the toast relation
+	 * would be able to wait for this transaction.
 	 */
-	toast_close_indexes(toastidxs, num_indexes, RowExclusiveLock);
-	table_close(toastrel, RowExclusiveLock);
+	toast_close_indexes(toastidxs, num_indexes, NoLock);
+	table_close(toastrel, NoLock);
 
 	/*
 	 * Create the TOAST pointer value that we'll return
@@ -1790,11 +1792,13 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	}
 
 	/*
-	 * End scan and close relations
+	 * End scan and close relations but keep the lock until commit, so as a
+	 * concurrent reindex done directly on the toast relation would be able to
+	 * wait for this transaction.
 	 */
 	systable_endscan_ordered(toastscan);
-	toast_close_indexes(toastidxs, num_indexes, RowExclusiveLock);
-	table_close(toastrel, RowExclusiveLock);
+	toast_close_indexes(toastidxs, num_indexes, NoLock);
+	table_close(toastrel, NoLock);
 }
 
 
