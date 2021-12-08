@@ -2075,16 +2075,18 @@ memcpy(destination->data, buffer, 40);
     </para>
 
     <para>
-     <xref linkend="xfunc-c-type-table"/> specifies which C type
-     corresponds to which SQL type when writing a C-language function
-     that uses a built-in type of <productname>PostgreSQL</productname>.
+     <xref linkend="xfunc-c-type-table"/> shows the C types
+     corresponding to many of the built-in SQL data types
+     of <productname>PostgreSQL</productname>.
      The <quote>Defined In</quote> column gives the header file that
      needs to be included to get the type definition.  (The actual
      definition might be in a different file that is included by the
      listed file.  It is recommended that users stick to the defined
      interface.)  Note that you should always include
-     <filename>postgres.h</filename> first in any source file, because
-     it declares a number of things that you will need anyway.
+     <filename>postgres.h</filename> first in any source file of server
+     code, because it declares a number of things that you will need
+     anyway, and because including other headers first can cause
+     portability issues.
     </para>
 
      <table tocentry="1" id="xfunc-c-type-table">
@@ -2140,28 +2142,28 @@ memcpy(destination->data, buffer, 40);
          <entry><filename>utils/date.h</filename></entry>
         </row>
         <row>
-         <entry><type>smallint</type> (<type>int2</type>)</entry>
+         <entry><type>float4</type> (<type>real</type>)</entry>
+         <entry><type>float4</type></entry>
+        <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>float8</type> (<type>double precision</type>)</entry>
+         <entry><type>float8</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>int2</type> (<type>smallint</type>)</entry>
          <entry><type>int16</type></entry>
          <entry><filename>postgres.h</filename></entry>
         </row>
         <row>
-         <entry><type>int2vector</type></entry>
-         <entry><type>int2vector*</type></entry>
-         <entry><filename>postgres.h</filename></entry>
-        </row>
-        <row>
-         <entry><type>integer</type> (<type>int4</type>)</entry>
+         <entry><type>int4</type> (<type>integer</type>)</entry>
          <entry><type>int32</type></entry>
          <entry><filename>postgres.h</filename></entry>
         </row>
         <row>
-         <entry><type>real</type> (<type>float4</type>)</entry>
-         <entry><type>float4*</type></entry>
-        <entry><filename>postgres.h</filename></entry>
-        </row>
-        <row>
-         <entry><type>double precision</type> (<type>float8</type>)</entry>
-         <entry><type>float8*</type></entry>
+         <entry><type>int8</type> (<type>bigint</type>)</entry>
+         <entry><type>int64</type></entry>
          <entry><filename>postgres.h</filename></entry>
         </row>
         <row>
@@ -2178,6 +2180,11 @@ memcpy(destination->data, buffer, 40);
          <entry><type>name</type></entry>
          <entry><type>Name</type></entry>
          <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>numeric</type></entry>
+         <entry><type>Numeric</type></entry>
+         <entry><filename>utils/numeric.h</filename></entry>
         </row>
         <row>
          <entry><type>oid</type></entry>
@@ -2201,7 +2208,7 @@ memcpy(destination->data, buffer, 40);
         </row>
         <row>
          <entry><type>regproc</type></entry>
-         <entry><type>regproc</type></entry>
+         <entry><type>RegProcedure</type></entry>
          <entry><filename>postgres.h</filename></entry>
         </row>
         <row>
@@ -2227,6 +2234,11 @@ memcpy(destination->data, buffer, 40);
         <row>
          <entry><type>timestamp</type></entry>
          <entry><type>Timestamp</type></entry>
+         <entry><filename>datatype/timestamp.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>timestamp with time zone</type></entry>
+         <entry><type>TimestampTz</type></entry>
          <entry><filename>datatype/timestamp.h</filename></entry>
         </row>
         <row>
