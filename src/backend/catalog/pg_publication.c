@@ -487,6 +487,10 @@ GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt)
 	systable_endscan(scan);
 	table_close(pubrelsrel, AccessShareLock);
 
+	/* Now sort and de-duplicate the result list */
+	list_sort(result, list_oid_cmp);
+	list_deduplicate_oid(result);
+
 	return result;
 }
 
