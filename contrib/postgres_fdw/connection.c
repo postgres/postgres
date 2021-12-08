@@ -104,7 +104,7 @@ static bool pgfdw_cancel_query(PGconn *conn);
 static bool pgfdw_exec_cleanup_query(PGconn *conn, const char *query,
 									 bool ignore_errors);
 static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
-									 PGresult **result);
+									 PGresult **result, bool *timed_out);
 static void pgfdw_abort_cleanup(ConnCacheEntry *entry, const char *sql,
 								bool toplevel);
 static bool UserMappingPasswordRequired(UserMapping *user);
@@ -1154,6 +1154,7 @@ pgfdw_cancel_query(PGconn *conn)
 	char		errbuf[256];
 	PGresult   *result = NULL;
 	TimestampTz endtime;
+	bool		timed_out;
 
 	/*
 	 * If it takes too long to cancel the query and discard the result, assume
@@ -1180,8 +1181,19 @@ pgfdw_cancel_query(PGconn *conn)
 	}
 
 	/* Get and discard the result of the query. */
-	if (pgfdw_get_cleanup_result(conn, endtime, &result))
+	if (pgfdw_get_cleanup_result(conn, endtime, &result, &timed_out))
+	{
+		if (timed_out)
+			ereport(WARNING,
+					(errmsg("could not get result of cancel request due to timeout")));
+		else
+			ereport(WARNING,
+					(errcode(ERRCODE_CONNECTION_FAILURE),
+					 errmsg("could not get result of cancel request: %s",
+							pchomp(PQerrorMessage(conn)))));
+
 		return false;
+	}
 	PQclear(result);
 
 	return true;
@@ -1204,6 +1216,7 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
 {
 	PGresult   *result = NULL;
 	TimestampTz endtime;
+	bool		timed_out;
 
 	/*
 	 * If it takes too long to execute a cleanup query, assume the connection
@@ -1224,8 +1237,17 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
 	}
 
 	/* Get the result of the query. */
-	if (pgfdw_get_cleanup_result(conn, endtime, &result))
+	if (pgfdw_get_cleanup_result(conn, endtime, &result, &timed_out))
+	{
+		if (timed_out)
+			ereport(WARNING,
+					(errmsg("could not get query result due to timeout"),
+					 query ? errcontext("remote SQL command: %s", query) : 0));
+		else
+			pgfdw_report_error(WARNING, NULL, conn, false, query);
+
 		return false;
+	}
 
 	/* Issue a warning if not successful. */
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
@@ -1245,14 +1267,18 @@ pgfdw_exec_cleanup_query(PGconn *conn, const char *query, bool ignore_errors)
  * side back to the appropriate state.
  *
  * endtime is the time at which we should give up and assume the remote
- * side is dead.  Returns true if the timeout expired, otherwise false.
- * Sets *result except in case of a timeout.
+ * side is dead.  Returns true if the timeout expired or connection trouble
+ * occurred, false otherwise.  Sets *result except in case of a timeout.
+ * Sets timed_out to true only when the timeout expired.
  */
 static bool
-pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
+pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result,
+						 bool *timed_out)
 {
-	volatile bool timed_out = false;
+	volatile bool failed = false;
 	PGresult   *volatile last_res = NULL;
+
+	*timed_out = false;
 
 	/* In what follows, do not leak any PGresults on an error. */
 	PG_TRY();
@@ -1271,7 +1297,8 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 				cur_timeout = TimestampDifferenceMilliseconds(now, endtime);
 				if (cur_timeout <= 0)
 				{
-					timed_out = true;
+					*timed_out = true;
+					failed = true;
 					goto exit;
 				}
 
@@ -1290,8 +1317,8 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime, PGresult **result)
 				{
 					if (!PQconsumeInput(conn))
 					{
-						/* connection trouble; treat the same as a timeout */
-						timed_out = true;
+						/* connection trouble */
+						failed = true;
 						goto exit;
 					}
 				}
@@ -1313,11 +1340,11 @@ exit:	;
 	}
 	PG_END_TRY();
 
-	if (timed_out)
+	if (failed)
 		PQclear(last_res);
 	else
 		*result = last_res;
-	return timed_out;
+	return failed;
 }
 
 /*
