@@ -1,0 +1,775 @@
+Parsed test spec with 2 sessions
+
+starting permutation: lrex1 ins1 retab2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lrex1 ins1 reind2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lrex1 upd1 retab2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 upd1 reind2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 del1 retab2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lrex1 del1 reind2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lrex1 dro1 retab2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lrex1 dro1 reind2 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast_idx" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lrex1 retab2 dro1 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lrex1 reind2 dro1 end1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lsha1 ins1 retab2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lsha1 ins1 reind2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lsha1 upd1 retab2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 upd1 reind2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 del1 retab2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lsha1 del1 reind2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lsha1 dro1 retab2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lsha1 dro1 reind2 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast_idx" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lsha1 retab2 dro1 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lsha1 reind2 dro1 end1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lexc1 ins1 retab2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lexc1 ins1 reind2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+ 3|3333333333
+(3 rows)
+
+
+starting permutation: lexc1 upd1 retab2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 upd1 reind2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|4444444444
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 del1 retab2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lexc1 del1 reind2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+(1 row)
+
+
+starting permutation: lexc1 dro1 retab2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step end1: COMMIT;
+step retab2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lexc1 dro1 reind2 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step end1: COMMIT;
+step reind2: <... completed>
+ERROR:  relation "pg_toast.reind_con_toast_idx" does not exist
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lexc1 retab2 dro1 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lexc1 reind2 dro1 end1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step end1: COMMIT;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+ERROR:  relation "reind_con_wide" does not exist
+
+starting permutation: lrex1 ins1 retab2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 ins1 reind2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 upd1 retab2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 upd1 reind2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 del1 retab2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 del1 reind2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 dro1 retab2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 dro1 reind2 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 retab2 dro1 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lrex1 reind2 dro1 rol1 sel2
+step lrex1: lock TABLE reind_con_wide in ROW EXCLUSIVE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 ins1 retab2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 ins1 reind2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 upd1 retab2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 upd1 reind2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 del1 retab2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 del1 reind2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 dro1 retab2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 dro1 reind2 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 retab2 dro1 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lsha1 reind2 dro1 rol1 sel2
+step lsha1: lock TABLE reind_con_wide in SHARE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 ins1 retab2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 ins1 reind2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step ins1: INSERT INTO reind_con_wide SELECT 3, repeat('3', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i);
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 upd1 retab2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 upd1 reind2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step upd1: UPDATE reind_con_wide SET data = (SELECT repeat('4', 11) || string_agg(g.i::text || random()::text, '') FROM generate_series(1, 500) g(i)) WHERE id = 1;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 del1 retab2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 del1 reind2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step del1: DELETE FROM reind_con_wide WHERE id = 2;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 dro1 retab2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast; <waiting ...>
+step rol1: ROLLBACK;
+step retab2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 dro1 reind2 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step dro1: DROP TABLE reind_con_wide;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx; <waiting ...>
+step rol1: ROLLBACK;
+step reind2: <... completed>
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 retab2 dro1 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step retab2: REINDEX TABLE CONCURRENTLY pg_toast.reind_con_toast;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
+
+starting permutation: lexc1 reind2 dro1 rol1 sel2
+step lexc1: lock TABLE reind_con_wide in EXCLUSIVE MODE;
+step reind2: REINDEX INDEX CONCURRENTLY pg_toast.reind_con_toast_idx;
+step dro1: DROP TABLE reind_con_wide;
+step rol1: ROLLBACK;
+step sel2: SELECT id, substr(data, 1, 10) FROM reind_con_wide ORDER BY id;
+id|    substr
+--+----------
+ 1|1111111111
+ 2|2222222222
+(2 rows)
+
