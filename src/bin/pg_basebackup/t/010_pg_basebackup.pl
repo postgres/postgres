@@ -268,7 +268,8 @@ SKIP:
 {
 	my $tar = $ENV{TAR};
 	skip "no tar program available", 1
-	  if (!defined $tar || $tar eq '');
+	  if (!defined $tar || $tar eq ''
+		  || system_log($tar, '--version') != 0);
 
 	my $node2 = PostgreSQL::Test::Cluster->new('replica');
 
