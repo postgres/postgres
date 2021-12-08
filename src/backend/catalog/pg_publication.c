@@ -193,6 +193,36 @@ is_publishable_relation(Relation rel)
 	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
 }
 
+/*
+ * Returns true if any schema is associated with the publication, false if no
+ * schema is associated with the publication.
+ */
+bool
+is_schema_publication(Oid pubid)
+{
+	Relation	pubschsrel;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	HeapTuple	tup;
+	bool		result = false;
+
+	pubschsrel = table_open(PublicationNamespaceRelationId, AccessShareLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_publication_namespace_pnpubid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pubid));
+
+	scan = systable_beginscan(pubschsrel,
+							  PublicationNamespacePnnspidPnpubidIndexId,
+							  true, NULL, 1, &scankey);
+	tup = systable_getnext(scan);
+	result = HeapTupleIsValid(tup);
+
+	systable_endscan(scan);
+	table_close(pubschsrel, AccessShareLock);
+
+	return result;
+}
 
 /*
  * SQL-callable variant of the above

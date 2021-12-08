@@ -122,6 +122,7 @@ extern List *GetPubPartitionOptionRelations(List *result,
 											Oid relid);
 
 extern bool is_publishable_relation(Relation rel);
+extern bool is_schema_publication(Oid pubid);
 extern ObjectAddress publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 											  bool if_not_exists);
 extern ObjectAddress publication_add_schema(Oid pubid, Oid schemaid,

@@ -218,6 +218,21 @@ DROP PUBLICATION testpub2;
 DROP PUBLICATION testpub3;
 
 SET ROLE regress_publication_user;
+CREATE ROLE regress_publication_user3;
+GRANT regress_publication_user2 TO regress_publication_user3;
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub4 FOR ALL TABLES IN SCHEMA pub_test;
+RESET client_min_messages;
+ALTER PUBLICATION testpub4 OWNER TO regress_publication_user3;
+SET ROLE regress_publication_user3;
+-- fail - new owner must be superuser
+ALTER PUBLICATION testpub4 owner to regress_publication_user2; -- fail
+ALTER PUBLICATION testpub4 owner to regress_publication_user; -- ok
+
+SET ROLE regress_publication_user;
+DROP PUBLICATION testpub4;
+DROP ROLE regress_publication_user3;
+
 REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;
 
 DROP TABLE testpub_parted;
