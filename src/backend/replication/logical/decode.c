@@ -876,8 +876,8 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	if (two_phase && !skip_xact)
 	{
 		ReorderBufferFinishPrepared(ctx->reorder, xid, buf->origptr, buf->endptr,
-									abort_time, origin_id, origin_lsn,
 									InvalidXLogRecPtr,
+									abort_time, origin_id, origin_lsn,
 									parsed->twophase_gid, false);
 	}
 	else
