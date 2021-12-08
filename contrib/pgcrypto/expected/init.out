@@ -2,21 +2,6 @@
 -- init pgcrypto
 --
 CREATE EXTENSION pgcrypto;
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
--- check for encoding fn's
-SELECT encode('foo', 'hex');
- encode 
---------
- 666f6f
-(1 row)
-
-SELECT decode('666f6f', 'hex');
- decode 
---------
- foo
-(1 row)
-
 -- check error handling
 select gen_salt('foo');
 ERROR:  gen_salt: Unknown salt algorithm

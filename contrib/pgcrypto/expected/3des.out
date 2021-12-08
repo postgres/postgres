@@ -1,70 +1,64 @@
 --
 -- 3DES cipher
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 -- test vector from somewhere
-SELECT encode(encrypt(
-decode('80 00 00 00 00 00 00 00', 'hex'),
-decode('01 01 01 01 01 01 01 01
-	01 01 01 01 01 01 01 01
-	01 01 01 01 01 01 01 01', 'hex'),
-'3des-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 95f8a5e5dd31d900
+SELECT encrypt('\x8000000000000000',
+               '\x010101010101010101010101010101010101010101010101',
+               '3des-ecb/pad:none');
+      encrypt       
+--------------------
+ \x95f8a5e5dd31d900
 (1 row)
 
--- val 95 F8 A5 E5 DD 31 D9 00
-select encode(	encrypt('', 'foo', '3des'), 'hex');
-      encode      
-------------------
- 752111e37a2d7ac3
+select encrypt('', 'foo', '3des');
+      encrypt       
+--------------------
+ \x752111e37a2d7ac3
 (1 row)
 
 -- 10 bytes key
-select encode(	encrypt('foo', '0123456789', '3des'), 'hex');
-      encode      
-------------------
- d2fb8baa1717cb02
+select encrypt('foo', '0123456789', '3des');
+      encrypt       
+--------------------
+ \xd2fb8baa1717cb02
 (1 row)
 
 -- 22 bytes key
-select encode(	encrypt('foo', '0123456789012345678901', '3des'), 'hex');
-      encode      
-------------------
- a44360e699269817
+select encrypt('foo', '0123456789012345678901', '3des');
+      encrypt       
+--------------------
+ \xa44360e699269817
 (1 row)
 
 -- decrypt
-select decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des');
- decrypt 
----------
+select encode(decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des'), 'escape');
+ encode 
+--------
  foo
 (1 row)
 
 -- iv
-select encode(encrypt_iv('foo', '0123456', 'abcd', '3des'), 'hex');
-      encode      
-------------------
- 50735067b073bb93
+select encrypt_iv('foo', '0123456', 'abcd', '3des');
+     encrypt_iv     
+--------------------
+ \x50735067b073bb93
 (1 row)
 
-select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', '3des');
- decrypt_iv 
-------------
+select encode(decrypt_iv('\x50735067b073bb93', '0123456', 'abcd', '3des'), 'escape');
+ encode 
+--------
  foo
 (1 row)
 
 -- long message
-select encode(encrypt('Lets try a longer message.', '0123456789012345678901', '3des'), 'hex');
-                              encode                              
-------------------------------------------------------------------
- b71e3422269d0ded19468f33d65cd663c28e0871984792a7b3ba0ddcecec8d2c
+select encrypt('Lets try a longer message.', '0123456789012345678901', '3des');
+                              encrypt                               
+--------------------------------------------------------------------
+ \xb71e3422269d0ded19468f33d65cd663c28e0871984792a7b3ba0ddcecec8d2c
 (1 row)
 
-select decrypt(encrypt('Lets try a longer message.', '0123456789012345678901', '3des'), '0123456789012345678901', '3des');
-          decrypt           
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789012345678901', '3des'), '0123456789012345678901', '3des'), 'escape');
+           encode           
 ----------------------------
  Lets try a longer message.
 (1 row)

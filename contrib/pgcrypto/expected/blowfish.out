@@ -1,174 +1,141 @@
 --
 -- Blowfish cipher
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 -- some standard Blowfish testvalues
-SELECT encode(encrypt(
-decode('0000000000000000', 'hex'),
-decode('0000000000000000', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 4ef997456198dd78
+SELECT encrypt('\x0000000000000000', '\x0000000000000000', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x4ef997456198dd78
 (1 row)
 
-SELECT encode(encrypt(
-decode('ffffffffffffffff', 'hex'),
-decode('ffffffffffffffff', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 51866fd5b85ecb8a
+SELECT encrypt('\xffffffffffffffff', '\xffffffffffffffff', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x51866fd5b85ecb8a
 (1 row)
 
-SELECT encode(encrypt(
-decode('1000000000000001', 'hex'),
-decode('3000000000000000', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 7d856f9a613063f2
+SELECT encrypt('\x1000000000000001', '\x3000000000000000', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x7d856f9a613063f2
 (1 row)
 
-SELECT encode(encrypt(
-decode('1111111111111111', 'hex'),
-decode('1111111111111111', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 2466dd878b963c9d
+SELECT encrypt('\x1111111111111111', '\x1111111111111111', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x2466dd878b963c9d
 (1 row)
 
-SELECT encode(encrypt(
-decode('0123456789abcdef', 'hex'),
-decode('fedcba9876543210', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 0aceab0fc6a0a28d
+SELECT encrypt('\x0123456789abcdef', '\xfedcba9876543210', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x0aceab0fc6a0a28d
 (1 row)
 
-SELECT encode(encrypt(
-decode('01a1d6d039776742', 'hex'),
-decode('fedcba9876543210', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 3273b8badc9e9e15
+SELECT encrypt('\x01a1d6d039776742', '\xfedcba9876543210', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x3273b8badc9e9e15
 (1 row)
 
-SELECT encode(encrypt(
-decode('ffffffffffffffff', 'hex'),
-decode('0000000000000000', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 014933e0cdaff6e4
+SELECT encrypt('\xffffffffffffffff', '\x0000000000000000', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x014933e0cdaff6e4
 (1 row)
 
 -- setkey
-SELECT encode(encrypt(
-decode('fedcba9876543210', 'hex'),
-decode('f0e1d2c3b4a5968778695a4b3c2d1e0f', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- 93142887ee3be15c
+SELECT encrypt('\xfedcba9876543210', '\xf0e1d2c3b4a5968778695a4b3c2d1e0f', 'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \x93142887ee3be15c
 (1 row)
 
 -- with padding
-SELECT encode(encrypt(
-decode('01234567890123456789', 'hex'),
-decode('33443344334433443344334433443344', 'hex'),
-'bf-ecb'), 'hex');
-              encode              
-----------------------------------
- 0d04a43a20456dee5ede6ed9e4dcaaa6
+SELECT encrypt('\x01234567890123456789', '\x33443344334433443344334433443344', 'bf-ecb');
+              encrypt               
+------------------------------------
+ \x0d04a43a20456dee5ede6ed9e4dcaaa6
 (1 row)
 
 -- cbc
 -- 28 bytes key
-SELECT encode(encrypt(
-decode('6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5', 'hex'),
-decode('37363534333231204e6f77206973207468652074696d6520666f7220', 'hex'),
-'bf-cbc'), 'hex');
-                              encode                              
-------------------------------------------------------------------
- 4f2beb748c4f689ec755edb9dc252a41b93a3786850b4c75d6a702b6a8e48825
+SELECT encrypt('\x6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5',
+               '\x37363534333231204e6f77206973207468652074696d6520666f7220',
+               'bf-cbc');
+                              encrypt                               
+--------------------------------------------------------------------
+ \x4f2beb748c4f689ec755edb9dc252a41b93a3786850b4c75d6a702b6a8e48825
 (1 row)
 
 -- 29 bytes key
-SELECT encode(encrypt(
-decode('6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5ff92cc', 'hex'),
-decode('37363534333231204e6f77206973207468652074696d6520666f722000', 'hex'),
-'bf-cbc'), 'hex');
-                                      encode                                      
-----------------------------------------------------------------------------------
- 3ea6357a0ee7fad6d0c4b63464f2aafa40c2e91b4b7e1bba8114932fd92b5c8f111e7e50e7b2e541
+SELECT encrypt('\x6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5ff92cc',
+               '\x37363534333231204e6f77206973207468652074696d6520666f722000',
+               'bf-cbc');
+                                      encrypt                                       
+------------------------------------------------------------------------------------
+ \x3ea6357a0ee7fad6d0c4b63464f2aafa40c2e91b4b7e1bba8114932fd92b5c8f111e7e50e7b2e541
 (1 row)
 
 -- blowfish-448
-SELECT encode(encrypt(
-decode('fedcba9876543210', 'hex'),
-decode('f0e1d2c3b4a5968778695a4b3c2d1e0f001122334455667704689104c2fd3b2f584023641aba61761f1f1f1f0e0e0e0effffffffffffffff', 'hex'),
-'bf-ecb/pad:none'), 'hex');
-      encode      
-------------------
- c04504012e4e1f53
+SELECT encrypt('\xfedcba9876543210',
+               '\xf0e1d2c3b4a5968778695a4b3c2d1e0f001122334455667704689104c2fd3b2f584023641aba61761f1f1f1f0e0e0e0effffffffffffffff',
+               'bf-ecb/pad:none');
+      encrypt       
+--------------------
+ \xc04504012e4e1f53
 (1 row)
 
--- result: c04504012e4e1f53
 -- empty data
-select encode(encrypt('', 'foo', 'bf'), 'hex');
-      encode      
-------------------
- 1871949bb2311c8e
+select encrypt('', 'foo', 'bf');
+      encrypt       
+--------------------
+ \x1871949bb2311c8e
 (1 row)
 
 -- 10 bytes key
-select encode(encrypt('foo', '0123456789', 'bf'), 'hex');
-      encode      
-------------------
- 42f58af3b2c03f46
+select encrypt('foo', '0123456789', 'bf');
+      encrypt       
+--------------------
+ \x42f58af3b2c03f46
 (1 row)
 
 -- 22 bytes key
-select encode(encrypt('foo', '0123456789012345678901', 'bf'), 'hex');
-      encode      
-------------------
- 86ab6f0bc72b5f22
+select encrypt('foo', '0123456789012345678901', 'bf');
+      encrypt       
+--------------------
+ \x86ab6f0bc72b5f22
 (1 row)
 
 -- decrypt
-select decrypt(encrypt('foo', '0123456', 'bf'), '0123456', 'bf');
- decrypt 
----------
+select encode(decrypt(encrypt('foo', '0123456', 'bf'), '0123456', 'bf'), 'escape');
+ encode 
+--------
  foo
 (1 row)
 
 -- iv
-select encode(encrypt_iv('foo', '0123456', 'abcd', 'bf'), 'hex');
-      encode      
-------------------
- 95c7e89322525d59
+select encrypt_iv('foo', '0123456', 'abcd', 'bf');
+     encrypt_iv     
+--------------------
+ \x95c7e89322525d59
 (1 row)
 
-select decrypt_iv(decode('95c7e89322525d59', 'hex'), '0123456', 'abcd', 'bf');
- decrypt_iv 
-------------
+select encode(decrypt_iv('\x95c7e89322525d59', '0123456', 'abcd', 'bf'), 'escape');
+ encode 
+--------
  foo
 (1 row)
 
 -- long message
-select encode(encrypt('Lets try a longer message.', '0123456789', 'bf'), 'hex');
-                              encode                              
-------------------------------------------------------------------
- a76059f7a1b627b5b84080d9beb337714c7a7f8b70300023e5feb6dfa6813536
+select encrypt('Lets try a longer message.', '0123456789', 'bf');
+                              encrypt                               
+--------------------------------------------------------------------
+ \xa76059f7a1b627b5b84080d9beb337714c7a7f8b70300023e5feb6dfa6813536
 (1 row)
 
-select decrypt(encrypt('Lets try a longer message.', '0123456789', 'bf'), '0123456789', 'bf');
-          decrypt           
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'bf'), '0123456789', 'bf'), 'escape');
+           encode           
 ----------------------------
  Lets try a longer message.
 (1 row)

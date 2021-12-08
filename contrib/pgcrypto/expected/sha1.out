@@ -1,45 +1,45 @@
 --
 -- SHA1 message digest
 --
-SELECT encode(digest('', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- da39a3ee5e6b4b0d3255bfef95601890afd80709
+SELECT digest('', 'sha1');
+                   digest                   
+--------------------------------------------
+ \xda39a3ee5e6b4b0d3255bfef95601890afd80709
 (1 row)
 
-SELECT encode(digest('a', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8
+SELECT digest('a', 'sha1');
+                   digest                   
+--------------------------------------------
+ \x86f7e437faa5a7fce15d1ddcb9eaeaea377667b8
 (1 row)
 
-SELECT encode(digest('abc', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- a9993e364706816aba3e25717850c26c9cd0d89d
+SELECT digest('abc', 'sha1');
+                   digest                   
+--------------------------------------------
+ \xa9993e364706816aba3e25717850c26c9cd0d89d
 (1 row)
 
-SELECT encode(digest('message digest', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- c12252ceda8be8994d5fa0290a47231c1d16aae3
+SELECT digest('message digest', 'sha1');
+                   digest                   
+--------------------------------------------
+ \xc12252ceda8be8994d5fa0290a47231c1d16aae3
 (1 row)
 
-SELECT encode(digest('abcdefghijklmnopqrstuvwxyz', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- 32d10c7b8cf96570ca04ce37f2a19d84240d3a89
+SELECT digest('abcdefghijklmnopqrstuvwxyz', 'sha1');
+                   digest                   
+--------------------------------------------
+ \x32d10c7b8cf96570ca04ce37f2a19d84240d3a89
 (1 row)
 
-SELECT encode(digest('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- 761c457bf73b14d27e9e9265c46f4b4dda11f940
+SELECT digest('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'sha1');
+                   digest                   
+--------------------------------------------
+ \x761c457bf73b14d27e9e9265c46f4b4dda11f940
 (1 row)
 
-SELECT encode(digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'sha1'), 'hex');
-                  encode                  
-------------------------------------------
- 50abf5706a150990a08b2c5ea40fa0e585554732
+SELECT digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'sha1');
+                   digest                   
+--------------------------------------------
+ \x50abf5706a150990a08b2c5ea40fa0e585554732
 (1 row)
 

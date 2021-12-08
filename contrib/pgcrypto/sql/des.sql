@@ -1,29 +1,24 @@
 --
 -- DES cipher
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 
 -- no official test vectors atm
 
 -- from blowfish.sql
-SELECT encode(encrypt(
-decode('0123456789abcdef', 'hex'),
-decode('fedcba9876543210', 'hex'),
-'des-ecb/pad:none'), 'hex');
+SELECT encrypt('\x0123456789abcdef', '\xfedcba9876543210', 'des-ecb/pad:none');
 
 -- empty data
-select encode(	encrypt('', 'foo', 'des'), 'hex');
+select encrypt('', 'foo', 'des');
 -- 8 bytes key
-select encode(	encrypt('foo', '01234589', 'des'), 'hex');
+select encrypt('foo', '01234589', 'des');
 
 -- decrypt
-select decrypt(encrypt('foo', '0123456', 'des'), '0123456', 'des');
+select encode(decrypt(encrypt('foo', '0123456', 'des'), '0123456', 'des'), 'escape');
 
 -- iv
-select encode(encrypt_iv('foo', '0123456', 'abcd', 'des'), 'hex');
-select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', 'des');
+select encrypt_iv('foo', '0123456', 'abcd', 'des');
+select encode(decrypt_iv('\x50735067b073bb93', '0123456', 'abcd', 'des'), 'escape');
 
 -- long message
-select encode(encrypt('Lets try a longer message.', '01234567', 'des'), 'hex');
-select decrypt(encrypt('Lets try a longer message.', '01234567', 'des'), '01234567', 'des');
+select encrypt('Lets try a longer message.', '01234567', 'des');
+select encode(decrypt(encrypt('Lets try a longer message.', '01234567', 'des'), '01234567', 'des'), 'escape');
