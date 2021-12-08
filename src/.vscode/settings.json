@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "float.h": "c",
+        "rangetypes.h": "c"
+    }
+}

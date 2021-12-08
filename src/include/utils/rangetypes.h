@@ -65,6 +65,19 @@ typedef struct
 	bool		lower;			/* this is the lower (vs upper) bound */
 } RangeBound;
 
+/* 
+ * PROJECT_ULB
+ * Helper struct and functions, maybe it's in the wrong file, idk ¯\_(ツ)_/¯
+ */
+typedef struct RangeBoundIdx {
+	RangeBound  bound;
+	int         idx;
+} RangeBoundIdx;
+typedef struct DoubleRangeBound {
+	RangeBound lb;
+	RangeBound ub;
+} DoubleRangeBound;
+
 /*
  * fmgr macros for range type objects
  */
