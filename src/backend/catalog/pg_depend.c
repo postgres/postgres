@@ -180,7 +180,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
  * Passing false is a guarantee that the object is newly created, and so
  * could not already be a member of any extension.
  *
- * Note: isReplace = true is typically used when updating a object in
+ * Note: isReplace = true is typically used when updating an object in
  * CREATE OR REPLACE and similar commands.  The net effect is that if an
  * extension script uses such a command on a pre-existing free-standing
  * object, the object will be absorbed into the extension.  If the object

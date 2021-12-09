@@ -6977,7 +6977,7 @@ EXEC SQL CLOSE cursor_name;
     <title>Compatibility</title>
 
     <para>
-     <command>DECLARE STATEMENT</command> is a extension of the SQL standard,
+     <command>DECLARE STATEMENT</command> is an extension of the SQL standard,
      but can be used in famous DBMSs.
     </para>
    </refsect1>
