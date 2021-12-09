@@ -55,8 +55,11 @@ static double calc_areasel(TypeCacheEntry *typcache, VariableStatData *vardata,
 static double calc_areajoinsel(TypeCacheEntry *typcache, VariableStatData *vardata,
 						       const RangeType *constval, Oid operator);
 static double calc_positionsel(TypeCacheEntry *typcache, VariableStatData *vardata,
-						  const RangeType *constval, Oid operator);
-// static double default_geo_range_selectivity(Oid operator);
+						       const RangeType *constval, Oid operator);
+static void calc_proba_full_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound binlow2,
+                                    RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff);
+static void calc_proba_part_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound binlow2,
+                                    RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff);
 
 /*
  * Selectivity for operators that depend on area, such as "overlap".
@@ -96,7 +99,7 @@ areajoinsel(PG_FUNCTION_ARGS)
     RangeBound          *hist1_lower,
                         *hist2_lower,
                         upper;
-    float8              *begin1,
+    int                 *begin1,
                         *end1,
                         *continue1,
                         *type4_1,
@@ -107,13 +110,15 @@ areajoinsel(PG_FUNCTION_ARGS)
     Form_pg_statistic   stats1 = NULL;
     TypeCacheEntry      *typcache = NULL;
     bool                join_is_reversed,
-                        empty;
+                        empty,
+                        has_subdiff;
 
     get_join_variables(root, args, sjinfo,
                        &vardata1, &vardata2, &join_is_reversed);
 
     typcache = range_get_typcache(fcinfo, vardata1.vartype);
     opfuncoid = get_opcode(operator);
+    has_subdiff = OidIsValid(typcache->rng_subdiff_finfo.fn_oid);
 
     memset(&sslot1_hist, 0, sizeof(sslot1_hist));
     memset(&sslot1_val, 0, sizeof(sslot1_val));
@@ -134,7 +139,7 @@ areajoinsel(PG_FUNCTION_ARGS)
             !get_attstatsslot(&sslot1_val, vardata1.statsTuple,
                              STATISTIC_KIND_RANGE_TYPE_HISTOGRAM,
                              InvalidOid, ATTSTATSSLOT_VALUES) ||
-            !get_attstatsslot(&sslot2_val, vardata2.statsTuple,
+            !get_attstatsslot(&sslot2_hist, vardata2.statsTuple,
                              STATISTIC_KIND_BOUNDS_HISTOGRAM,
                              InvalidOid, ATTSTATSSLOT_VALUES) ||
             !get_attstatsslot(&sslot2_val, vardata2.statsTuple,
@@ -172,42 +177,179 @@ areajoinsel(PG_FUNCTION_ARGS)
     nvals2 = sslot2_val.nvalues;
     nvals1 = nvals1/4;  // This will then be equal to the number of bins or equivalently (nhist1-1)
     nvals2 = nvals2/4;
-    begin1 = (float8 *) palloc(sizeof(float8) * nvals1);
-    end1 = (float8 *) palloc(sizeof(float8) * nvals1);
-    continue1 = (float8 *) palloc(sizeof(float8) * nvals1);
-    type4_1 = (float8 *) palloc(sizeof(float8) * nvals1);
-    begin2 = (float8 *) palloc(sizeof(float8) * nvals2);
-    end2 = (float8 *) palloc(sizeof(float8) * nvals1);
-    continue2 = (float8 *) palloc(sizeof(float8) * nvals1);
-    type4_2 = (float8 *) palloc(sizeof(float8) * nvals1);
+    begin1 = (int *) palloc(sizeof(int) * nvals1);
+    end1 = (int *) palloc(sizeof(int) * nvals1);
+    continue1 = (int *) palloc(sizeof(int) * nvals1);
+    type4_1 = (int *) palloc(sizeof(int) * nvals1);
+    begin2 = (int *) palloc(sizeof(int) * nvals2);
+    end2 = (int *) palloc(sizeof(int) * nvals1);
+    continue2 = (int *) palloc(sizeof(int) * nvals1);
+    type4_2 = (int *) palloc(sizeof(int) * nvals1);
 
     for (i = 0; i < nvals1; i++)
     {
-        begin1[i] = DatumGetFloat8(sslot1_val.values[i*4]);
-        end1[i] = DatumGetFloat8(sslot1_val.values[i*4+1]);
-        continue1[i] = DatumGetFloat8(sslot1_val.values[i*4+2]);
-        type4_1[i] = DatumGetFloat8(sslot1_val.values[i*4+3]);
+        begin1[i] = (int) DatumGetFloat8(sslot1_val.values[i*4]);
+        end1[i] = (int) DatumGetFloat8(sslot1_val.values[i*4+1]);
+        continue1[i] = (int) DatumGetFloat8(sslot1_val.values[i*4+2]);
+        type4_1[i] = (int) DatumGetFloat8(sslot1_val.values[i*4+3]);
     }
 
     for (i = 0; i < nvals2; i++)
     {
-        begin2[i] = DatumGetFloat8(sslot2_val.values[i*4]);
-        end2[i] = DatumGetFloat8(sslot2_val.values[i*4+1]);
-        continue2[i] = DatumGetFloat8(sslot2_val.values[i*4+2]);
-        type4_2[i] = DatumGetFloat8(sslot2_val.values[i*4+3]);
+        begin2[i] = (int) DatumGetFloat8(sslot2_val.values[i*4]);
+        end2[i] = (int) DatumGetFloat8(sslot2_val.values[i*4+1]);
+        continue2[i] = (int) DatumGetFloat8(sslot2_val.values[i*4+2]);
+        type4_2[i] = (int) DatumGetFloat8(sslot2_val.values[i*4+3]);
     }
 
-    for (i = 0; i < nvals1; i++)
+    int hist1_idx = 0, hist2_idx = 0;  // Corresponds to the bin number we are analysing for each histogram
+    int type1_1, type2_1, type3_1, type1_2, type2_2, type3_2;
+    int sumint;
+    double result, sumdouble;
+    double probabilities[16];
+    double count[16];
+
+    /* Find the first overlapping bins of the histogram */
+    while (range_cmp_bounds(typcache, &(hist1_lower[hist1_idx+1]), &(hist2_lower[hist2_idx])) < 0)
     {
-        printf("%f - %f - %f - %f\n", begin1[i], end1[i], continue1[i], type4_1[i]);
-        printf("%f - %f - %f - %f\n\n", begin2[i], end2[i], continue2[i], type4_2[i]);
+        printf("%d\n", DatumGetInt16(hist1_lower[hist1_idx+1].val));
+        printf("%d\n", DatumGetInt16(hist2_lower[hist2_idx+1].val));
+        hist1_idx++;
+    }
+    while (range_cmp_bounds(typcache, &(hist1_lower[hist1_idx]), &(hist2_lower[hist2_idx+0])) > 0)
+    {
+        hist2_idx++;
     }
 
-    printf("hist_lower = [");
+    do
+    {
+        /* Compute the number of type 1/2/3 for each bin */
+        type2_1 = end1[hist1_idx] - type4_1[hist1_idx];
+        type3_1 = begin1[hist1_idx] - type4_1[hist1_idx];
+        type1_1 = continue1[hist1_idx] - type2_1;
+
+        type2_2 = end2[hist2_idx] - type4_2[hist2_idx];
+        type3_2 = begin2[hist2_idx] - type4_2[hist2_idx];
+        type1_2 = continue2[hist2_idx] - type2_2;
+
+        /* Case : There is entire overlap */
+        if((range_cmp_bounds(typcache, &(hist1_lower[hist1_idx]), &(hist2_lower[hist2_idx])) <= 0 &&
+           range_cmp_bounds(typcache, &(hist1_lower[hist1_idx+1]), &(hist2_lower[hist2_idx+1])) >= 0) ||
+           (range_cmp_bounds(typcache, &(hist1_lower[hist1_idx]), &(hist2_lower[hist2_idx])) <= 0 &&
+           range_cmp_bounds(typcache, &(hist1_lower[hist1_idx+1]), &(hist2_lower[hist2_idx+1])) >= 0))
+        {
+            if (hist1_lower[hist1_idx].infinite || hist1_lower[hist1_idx+1].infinite ||
+            hist2_lower[hist2_idx].infinite || hist2_lower[hist2_idx+1].infinite)
+            {
+                calc_proba_full_overlap(typcache, hist1_lower[hist1_idx], hist2_lower[hist2_idx],
+                                        hist1_lower[hist1_idx+1], hist2_lower[hist2_idx+1],
+                                        probabilities, false);
+            }
+            else
+            {
+                calc_proba_full_overlap(typcache, hist1_lower[hist1_idx], hist2_lower[hist2_idx],
+                                        hist1_lower[hist1_idx+1], hist2_lower[hist2_idx+1],
+                                        probabilities, has_subdiff);
+            }
+        }
+        /* Case : 2 overlaps entirely 1 */
+        else if(false)
+        {
+            if (hist1_lower[hist1_idx].infinite || hist1_lower[hist1_idx+1].infinite ||
+            hist2_lower[hist2_idx].infinite || hist2_lower[hist2_idx+1].infinite)
+            {
+                calc_proba_part_overlap(typcache, hist1_lower[hist1_idx], hist2_lower[hist2_idx],
+                                        hist1_lower[hist1_idx+1], hist2_lower[hist2_idx+1],
+                                        probabilities, false);
+            }
+            else
+            {
+                calc_proba_part_overlap(typcache, hist1_lower[hist1_idx], hist2_lower[hist2_idx],
+                                        hist1_lower[hist1_idx+1], hist2_lower[hist2_idx+1],
+                                        probabilities, has_subdiff);
+            }
+        }
+
+        /* Count the number of resulting overlaps */
+        count[0] = probabilities[0] * type1_1 * type1_2; //1x1
+        count[1] = probabilities[1] * type1_1 * type2_2; //1x2
+        count[2] = probabilities[2] * type1_1 * type3_2; //1x3
+        count[3] = probabilities[3] * type1_1 * type4_2[hist2_idx]; //1x4
+        count[4] = probabilities[4] * type2_1 * type1_2; //2x1
+        count[5] = probabilities[5] * type2_1 * type2_2; //2x2
+        count[6] = probabilities[6] * type2_1 * type3_2; //2x3
+        count[7] = probabilities[7] * type2_1 * type4_2[hist2_idx]; //2x4
+        count[8] = probabilities[8] * type3_1 * type1_2; //3x1
+        count[9] = probabilities[9] * type3_1 * type2_2; //3x2
+        count[10] = probabilities[10] * type3_1 * type3_2; //3x3
+        count[11] = probabilities[11] * type3_1 * type4_2[hist2_idx]; //3x4
+        count[12] = probabilities[12] * type4_1[hist1_idx] * type1_2; //4x1
+        count[13] = probabilities[13] * type4_1[hist1_idx] * type2_2; //4x2
+        count[14] = probabilities[14] * type4_1[hist1_idx] * type3_2; //4x3
+        count[15] = probabilities[15] * type4_1[hist1_idx] * type4_2[hist2_idx]; //4x4
+
+        printf("%f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f\n\n",
+        probabilities[0], probabilities[1], probabilities[2], probabilities[3], probabilities[4], probabilities[5],
+        probabilities[6], probabilities[7], probabilities[8], probabilities[9], probabilities[10], probabilities[11],
+        probabilities[12], probabilities[13], probabilities[14], probabilities[15]);
+        sumint = (type1_1+type2_1+type3_1+type4_1[hist1_idx]) * (type1_2+type2_2+type3_2+type4_2[hist2_idx]);
+        sumdouble = 0;
+        for (i = 0; i < 16; i++)
+        {
+            sumdouble += count[i];
+        }
+        //printf("%f\n", sumdouble);
+        //fflush(stdout);
+        result += sumdouble * sumint;
+        // need to divide result by bins+1 et the end
+
+        // after that I can get the selectivity by dividing by the nb of rows1*rows2
+        // maybe should count the number of begins in each histogram to get the nb of rows ?
+
+        /* Go to next bin */
+        empty = range_cmp_bounds(typcache, &(hist1_lower[hist1_idx+1]), &(hist2_lower[hist2_idx+1]));
+        if (empty == 0)
+        {
+            hist1_idx++;
+            hist2_idx++;
+        }
+        else if (empty > 0)
+        {
+            hist2_idx++;
+        }
+        else
+        {
+            hist1_idx++;
+        }
+    } while (hist1_idx < nhist1-1 && hist2_idx < nhist2-1);
+    
+    printf("Guessed nb of rows : %f\n", result);
+    fflush(stdout);
+
+
+    // Print things
+
+    /*for (i = 0; i < nvals1; i++)
+    {
+        printf("%d - %d - %d - %d\n", begin1[i], end1[i], continue1[i], type4_1[i]);
+        // Would probably not work if the two joins tables were not the same
+        // printf("%f - %f - %f - %f\n\n", begin2[i], end2[i], continue2[i], type4_2[i]);
+    }*/
+
+    printf("hist1_lower = [");
     for (i = 0; i < nhist1; i++)
     {
         printf("%d", DatumGetInt16(hist1_lower[i].val));
         if (i < nhist1 - 1)
+            printf(", ");
+    }
+    printf("]\n");
+
+    printf("hist2_lower = [");
+    for (i = 0; i < nhist1; i++)
+    {
+        printf("%d", DatumGetInt16(hist2_lower[i].val));
+        if (i < nhist2 - 1)
             printf(", ");
     }
     printf("]\n");
@@ -274,4 +416,128 @@ Datum
 contjoinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT8(0.001);
+}
+
+static void
+calc_proba_full_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound binlow2,
+                        RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff)
+{
+    double S1, S2, S3, size;
+    fflush(stdout);
+    /* Swap values to have the lowest one in binlow1 */
+    if (range_cmp_bounds(typcache, &binlow1, &binlow2) > 0)
+    {
+        RangeBound temp;
+        temp = binlow1;
+        binlow1 = binlow2;
+        binlow2 = temp;
+        temp = binup1;
+        binup1 = binup2;
+        binup2 = temp;
+    }
+    if (has_subdiff)
+    {
+        size = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup1.val, binlow1.val));
+        S1 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binlow2.val, binlow1.val));
+        S2 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup2.val, binlow2.val));
+        S3 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup1.val, binup2.val));
+        S1 = S1/size;
+        S2 = S2/size;
+        S3 = S3/size;
+    }
+    else  /* Take default values */
+    {
+        S1 = 0.33;
+        S2 = 0.34;
+        S3 = 0.33;
+    }
+
+    probabilities[0] = 0; // 1x1
+    probabilities[1] = 0; // 1x2
+    probabilities[2] = 1.0; // 1x3
+    probabilities[3] = 1.0; // 1x4
+    probabilities[4] = 0; // 2x1
+    probabilities[5] = 0; // 2x2
+    probabilities[6] = (1.0/2)*S2; // 2x3
+    probabilities[7] = (2.0/3)*S2; // 2x4
+    probabilities[8] = S2; // 3x1
+    probabilities[9] = (1.0/2)*S2; // 3x2
+    probabilities[10] = S2; // 3x3
+    probabilities[11] = (2.0/3)*S2; // 3x4
+    probabilities[12] = S2*S2 + 2*S2*S3; // 4x1 
+    probabilities[13] = (2.0/3)*S2*S2 + S2*S3; // 4x2
+    probabilities[14] = 1.0 - S1*S1 - S3*S3 - (1.0/3)*S2*S2 - S1*S2; // 4x3
+    probabilities[15] = (4.0/3)*S1*S2 + 2*S1*S3 + (2.0/3)*S2*S2 + (4.0/3)*S1*S3; // 4x4
+}
+
+static void
+calc_proba_part_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound binlow2,
+                        RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff)
+{
+    double S1, S2_1, S2_2, S3, size_1, size_2;
+    /* Swap values to have the lowest one in binlow1 */
+    if (range_cmp_bounds(typcache, &binlow1, &binlow2) > 0)
+    {
+        RangeBound temp;
+        temp = binlow1;
+        binlow1 = binlow2;
+        binlow2 = temp;
+        temp = binup1;
+        binup1 = binup2;
+        binup2 = temp;
+    }
+    if (has_subdiff) {
+        size_1 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup1.val, binlow1.val));
+        size_2 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup2.val, binlow2.val));
+        S1 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binlow2.val, binlow1.val));
+        S2_1 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup2.val, binlow2.val));
+        S3 = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+                                                typcache->rng_collation, 
+                                                binup1.val, binup2.val));
+        S1 = S1/size_1; // Is in fact the probability S1_1, but I know S1_2 is zero
+        S2_2 = S2_1/size_2;
+        S2_1 = S2_1/size_1;
+        S3 = S3/size_2; // Is in fact the probability S3_2, but I know S3_1 is zero
+    }
+    else /* Take default values */
+    {
+        S1 = 0.5;
+        S3 = 0.5;
+        S2_1 = 0.5;
+        S2_2 = 0.5;
+    }
+
+    probabilities[0] = 0; // 1x1
+    probabilities[1] = 0; // 1x2
+    probabilities[2] = S2_2; // 1x3
+    probabilities[3] = 1 - S3*S3; // 1x4
+    probabilities[4] = 0; // 2x1
+    probabilities[5] = 0; // 2x2
+    probabilities[6] = (1/2)*S2_1*S2_2; // 2x3
+    probabilities[7] = (2/3)*S2_1*S2_2*S2_2 + S2_1*S2_2*S3; // 2x4
+    probabilities[8] = 0; // 3x1
+    probabilities[9] = (1/2)*S2_1*S2_2 + S2_1*S3; // 3x2
+    probabilities[10] = S2_2; // 3x3
+    probabilities[11] = (2/3)*S2_2*S2_2 + 2*S2_2*S3; // 3x4
+    probabilities[12] = S2_1*S2_1; // 4x1 
+    probabilities[13] = (2/3)*S2_1*S2_1; // 4x2
+    probabilities[14] = (2/3)*S2_1*S2_1; // 4x3
+    probabilities[15] = (4/3)*S1*S2_1*S2_2*S2_2 + (2/3)*S2_1*S2_1*S2_2*S2_2 +
+                        2*S1*S2_1*S2_2*S3 + (4/3)*S2_1*S2_1*S2_2*S3; // 4x4
 }

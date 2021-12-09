@@ -416,7 +416,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				}
 				/* Count the values for begin/type4 */
 				special_info_range[4*bin]++;
-				if (range_cmp_bounds(typcache, &(lowers[i].ub), &bin_lb) <= 0)
+				if (range_cmp_bounds(typcache, &(lowers[i].ub), &bin_lb) <= 0 || bin == num_hist-2)
 				{
 					special_info_range[4*bin+3]++;
 				}
