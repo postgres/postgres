@@ -474,6 +474,10 @@ DROP PUBLICATION pub;
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
 
+-- Table publication that includes both the parent table and the child table
+ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
+SELECT * FROM pg_publication_tables;
+
 DROP PUBLICATION pub;
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);

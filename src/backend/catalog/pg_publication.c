@@ -142,7 +142,7 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
  * the publication.
  */
 static List *
-filter_partitions(List *relids, List *schemarelids)
+filter_partitions(List *relids)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -161,16 +161,8 @@ filter_partitions(List *relids, List *schemarelids)
 		{
 			Oid			ancestor = lfirst_oid(lc2);
 
-			/*
-			 * Check if the parent table exists in the published table list.
-			 *
-			 * XXX As of now, we do this if the partition relation or the
-			 * partition relation's ancestor is present in schema publication
-			 * relations.
-			 */
-			if (list_member_oid(relids, ancestor) &&
-				(list_member_oid(schemarelids, relid) ||
-				 list_member_oid(schemarelids, ancestor)))
+			/* Check if the parent table exists in the published table list. */
+			if (list_member_oid(relids, ancestor))
 			{
 				skip = true;
 				break;
@@ -913,22 +905,17 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 															PUBLICATION_PART_ROOT :
 															PUBLICATION_PART_LEAF);
 			tables = list_concat_unique_oid(relids, schemarelids);
-			if (schemarelids && publication->pubviaroot)
-			{
-				/*
-				 * If the publication publishes partition changes via their
-				 * respective root partitioned tables, we must exclude
-				 * partitions in favor of including the root partitioned
-				 * tables. Otherwise, the function could return both the child
-				 * and parent tables which could cause data of the child table
-				 * to be double-published on the subscriber side.
-				 *
-				 * XXX As of now, we do this when a publication has associated
-				 * schema or for all tables publication. See
-				 * GetAllTablesPublicationRelations().
-				 */
-				tables = filter_partitions(tables, schemarelids);
-			}
+
+			/*
+			 * If the publication publishes partition changes via their
+			 * respective root partitioned tables, we must exclude partitions
+			 * in favor of including the root partitioned tables. Otherwise,
+			 * the function could return both the child and parent tables
+			 * which could cause data of the child table to be
+			 * double-published on the subscriber side.
+			 */
+			if (publication->pubviaroot)
+				tables = filter_partitions(tables);
 		}
 
 		funcctx->user_fctx = (void *) tables;
