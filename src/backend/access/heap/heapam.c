@@ -8448,7 +8448,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed,
 /*
  * Handles XLOG_HEAP2_PRUNE record type.
  *
- * Acquires a super-exclusive lock.
+ * Acquires a full cleanup lock.
  */
 static void
 heap_xlog_prune(XLogReaderState *record)
@@ -8534,7 +8534,7 @@ heap_xlog_prune(XLogReaderState *record)
 /*
  * Handles XLOG_HEAP2_VACUUM record type.
  *
- * Acquires an exclusive lock only.
+ * Acquires an ordinary exclusive lock only.
  */
 static void
 heap_xlog_vacuum(XLogReaderState *record)

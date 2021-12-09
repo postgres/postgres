@@ -701,7 +701,7 @@ compactify_tuples(itemIdCompact itemidbase, int nitems, Page page, bool presorte
  * there is, in general, a good chance that even large groups of unused line
  * pointers that we see here will be recycled quickly.
  *
- * Caller had better have a super-exclusive lock on page's buffer.  As a side
+ * Caller had better have a full cleanup lock on page's buffer.  As a side
  * effect the page's PD_HAS_FREE_LINES hint bit will be set or unset as
  * needed.
  */
@@ -820,9 +820,9 @@ PageRepairFragmentation(Page page)
  * arbitrary, but it seems like a good idea to avoid leaving a PageIsEmpty()
  * page behind.
  *
- * Caller can have either an exclusive lock or a super-exclusive lock on
- * page's buffer.  The page's PD_HAS_FREE_LINES hint bit will be set or unset
- * based on whether or not we leave behind any remaining LP_UNUSED items.
+ * Caller can have either an exclusive lock or a full cleanup lock on page's
+ * buffer.  The page's PD_HAS_FREE_LINES hint bit will be set or unset based
+ * on whether or not we leave behind any remaining LP_UNUSED items.
  */
 void
 PageTruncateLinePointerArray(Page page)

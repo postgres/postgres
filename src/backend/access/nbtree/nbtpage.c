@@ -1115,8 +1115,7 @@ _bt_conditionallockbuf(Relation rel, Buffer buf)
 }
 
 /*
- *	_bt_upgradelockbufcleanup() -- upgrade lock to super-exclusive/cleanup
- *	lock.
+ *	_bt_upgradelockbufcleanup() -- upgrade lock to a full cleanup lock.
  */
 void
 _bt_upgradelockbufcleanup(Relation rel, Buffer buf)
@@ -1147,7 +1146,7 @@ _bt_pageinit(Page page, Size size)
 /*
  * Delete item(s) from a btree leaf page during VACUUM.
  *
- * This routine assumes that the caller has a super-exclusive write lock on
+ * This routine assumes that the caller already has a full cleanup lock on
  * the buffer.  Also, the given deletable and updatable arrays *must* be
  * sorted in ascending order.
  *

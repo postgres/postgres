@@ -238,7 +238,7 @@ typedef struct xl_heap_update
  * Note that nunused is not explicitly stored, but may be found by reference
  * to the total record length.
  *
- * Requires a super-exclusive lock.
+ * Acquires a full cleanup lock.
  */
 typedef struct xl_heap_prune
 {
@@ -252,9 +252,9 @@ typedef struct xl_heap_prune
 
 /*
  * The vacuum page record is similar to the prune record, but can only mark
- * already dead items as unused
+ * already LP_DEAD items LP_UNUSED (during VACUUM's second heap pass)
  *
- * Used by heap vacuuming only.  Does not require a super-exclusive lock.
+ * Acquires an ordinary exclusive lock only.
  */
 typedef struct xl_heap_vacuum
 {
