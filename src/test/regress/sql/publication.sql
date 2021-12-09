@@ -97,6 +97,10 @@ UPDATE testpub_parted2 SET a = 2;
 ALTER PUBLICATION testpub_forparted DROP TABLE testpub_parted;
 -- works again, because update is no longer replicated
 UPDATE testpub_parted2 SET a = 2;
+-- publication includes both the parent table and the child table
+ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted, testpub_parted2;
+-- only parent is listed as being in publication, not the partition
+SELECT * FROM pg_publication_tables;
 DROP TABLE testpub_parted1, testpub_parted2;
 DROP PUBLICATION testpub_forparted, testpub_forparted1;
 
