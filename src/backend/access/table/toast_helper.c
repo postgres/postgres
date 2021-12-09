@@ -33,7 +33,7 @@
  * All of these arrays should have a length equal to tupleDesc->natts.
  *
  * On return, toast_flags and toast_attr will have been initialized.
- * toast_flags is just a single uint8, but toast_attr is an caller-provided
+ * toast_flags is just a single uint8, but toast_attr is a caller-provided
  * array with a length equal to tupleDesc->natts.  The caller need not
  * perform any initialization of the array before calling this function.
  */
