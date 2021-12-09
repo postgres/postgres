@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 62;
+use Test::More tests => 63;
 
 # setup
 
@@ -409,10 +409,15 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION pub_all SET (publish_via_partition_root = true)");
 # Note: tab3_1's parent is not in the publication, in which case its
-# changes are published using own identity.
+# changes are published using own identity. For tab2, even though both parent
+# and child tables are present but changes will be replicated via the parent's
+# identity and only once.
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION pub_viaroot FOR TABLE tab2, tab3_1 WITH (publish_via_partition_root = true)"
+	"CREATE PUBLICATION pub_viaroot FOR TABLE tab2, tab2_1, tab3_1 WITH (publish_via_partition_root = true)"
 );
+
+# prepare data for the initial sync
+$node_publisher->safe_psql('postgres', "INSERT INTO tab2 VALUES (1)");
 
 # subscriber 1
 $node_subscriber1->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
@@ -465,12 +470,17 @@ $node_subscriber1->poll_query_until('postgres', $synced_query)
 $node_subscriber2->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
+# check that data is synced correctly
+$result = $node_subscriber1->safe_psql('postgres',
+	"SELECT c, a FROM tab2");
+is( $result, qq(sub1_tab2|1), 'initial data synced for pub_viaroot');
+
 # insert
 $node_publisher->safe_psql('postgres', "INSERT INTO tab1 VALUES (1), (0)");
 $node_publisher->safe_psql('postgres', "INSERT INTO tab1_1 (a) VALUES (3)");
 $node_publisher->safe_psql('postgres', "INSERT INTO tab1_2 VALUES (5)");
 $node_publisher->safe_psql('postgres',
-	"INSERT INTO tab2 VALUES (1), (0), (3), (5)");
+	"INSERT INTO tab2 VALUES (0), (3), (5)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab3 VALUES (1), (0), (3), (5)");
 
