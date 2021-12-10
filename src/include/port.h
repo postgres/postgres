@@ -299,6 +299,7 @@ extern bool rmtree(const char *path, bool rmtopdir);
  * passing of other special options.
  */
 #define		O_DIRECT	0x80000000
+extern HANDLE pgwin32_open_handle(const char *, int, bool);
 extern int	pgwin32_open(const char *, int,...);
 extern FILE *pgwin32_fopen(const char *, const char *);
 #define		open(a,b,c) pgwin32_open(a,b,c)

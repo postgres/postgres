@@ -19,53 +19,6 @@
 #include <windows.h>
 
 /*
- * In order to support MinGW and MSVC2013 we use NtQueryInformationFile as an
- * alternative for GetFileInformationByHandleEx. It is loaded from the ntdll
- * library.
- */
-#if _WIN32_WINNT < 0x0600
-#include <winternl.h>
-
-#if !defined(__MINGW32__) && !defined(__MINGW64__)
-/* MinGW includes this in <winternl.h>, but it is missing in MSVC */
-typedef struct _FILE_STANDARD_INFORMATION
-{
-	LARGE_INTEGER AllocationSize;
-	LARGE_INTEGER EndOfFile;
-	ULONG		NumberOfLinks;
-	BOOLEAN		DeletePending;
-	BOOLEAN		Directory;
-} FILE_STANDARD_INFORMATION;
-#define FileStandardInformation 5
-#endif							/* !defined(__MINGW32__) &&
-								 * !defined(__MINGW64__) */
-
-typedef NTSTATUS (NTAPI * PFN_NTQUERYINFORMATIONFILE)
-			(IN HANDLE FileHandle,
-			 OUT PIO_STATUS_BLOCK IoStatusBlock,
-			 OUT PVOID FileInformation,
-			 IN ULONG Length,
-			 IN FILE_INFORMATION_CLASS FileInformationClass);
-
-static PFN_NTQUERYINFORMATIONFILE _NtQueryInformationFile = NULL;
-
-static HMODULE ntdll = NULL;
-
-/*
- * Load DLL file just once regardless of how many functions we load/call in it.
- */
-static void
-LoadNtdll(void)
-{
-	if (ntdll != NULL)
-		return;
-	ntdll = LoadLibraryEx("ntdll.dll", NULL, 0);
-}
-
-#endif							/* _WIN32_WINNT < 0x0600 */
-
-
-/*
  * Convert a FILETIME struct into a 64 bit time_t.
  */
 static __time64_t
@@ -162,120 +115,18 @@ int
 _pgstat64(const char *name, struct stat *buf)
 {
 	/*
-	 * We must use a handle so lstat() returns the information of the target
-	 * file.  To have a reliable test for ERROR_DELETE_PENDING, we use
-	 * NtQueryInformationFile from Windows 2000 or
-	 * GetFileInformationByHandleEx from Server 2008 / Vista.
+	 * Our open wrapper will report STATUS_DELETE_PENDING as ENOENT.  We
+	 * request FILE_FLAG_BACKUP_SEMANTICS so that we can open directories too,
+	 * for limited purposes.  We use the private handle-based version, so we
+	 * don't risk running out of fds.
 	 */
-	SECURITY_ATTRIBUTES sa;
 	HANDLE		hFile;
 	int			ret;
-#if _WIN32_WINNT < 0x0600
-	IO_STATUS_BLOCK ioStatus;
-	FILE_STANDARD_INFORMATION standardInfo;
-#else
-	FILE_STANDARD_INFO standardInfo;
-#endif
 
-	if (name == NULL || buf == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
-	/* fast not-exists check */
-	if (GetFileAttributes(name) == INVALID_FILE_ATTRIBUTES)
-	{
-		_dosmaperr(GetLastError());
-		return -1;
-	}
-
-	/* get a file handle as lightweight as we can */
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.bInheritHandle = TRUE;
-	sa.lpSecurityDescriptor = NULL;
-	hFile = CreateFile(name,
-					   GENERIC_READ,
-					   (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE),
-					   &sa,
-					   OPEN_EXISTING,
-					   (FILE_FLAG_NO_BUFFERING | FILE_FLAG_BACKUP_SEMANTICS |
-						FILE_FLAG_OVERLAPPED),
-					   NULL);
+	hFile = pgwin32_open_handle(name, O_RDONLY, true);
 	if (hFile == INVALID_HANDLE_VALUE)
-	{
-		DWORD		err = GetLastError();
-
-		CloseHandle(hFile);
-		_dosmaperr(err);
 		return -1;
-	}
 
-	memset(&standardInfo, 0, sizeof(standardInfo));
-
-#if _WIN32_WINNT < 0x0600
-	if (_NtQueryInformationFile == NULL)
-	{
-		/* First time through: load ntdll.dll and find NtQueryInformationFile */
-		LoadNtdll();
-		if (ntdll == NULL)
-		{
-			DWORD		err = GetLastError();
-
-			CloseHandle(hFile);
-			_dosmaperr(err);
-			return -1;
-		}
-
-		_NtQueryInformationFile = (PFN_NTQUERYINFORMATIONFILE) (pg_funcptr_t)
-			GetProcAddress(ntdll, "NtQueryInformationFile");
-		if (_NtQueryInformationFile == NULL)
-		{
-			DWORD		err = GetLastError();
-
-			CloseHandle(hFile);
-			_dosmaperr(err);
-			return -1;
-		}
-	}
-
-	if (!NT_SUCCESS(_NtQueryInformationFile(hFile, &ioStatus, &standardInfo,
-											sizeof(standardInfo),
-											FileStandardInformation)))
-	{
-		DWORD		err = GetLastError();
-
-		CloseHandle(hFile);
-		_dosmaperr(err);
-		return -1;
-	}
-#else
-	if (!GetFileInformationByHandleEx(hFile, FileStandardInfo, &standardInfo,
-									  sizeof(standardInfo)))
-	{
-		DWORD		err = GetLastError();
-
-		CloseHandle(hFile);
-		_dosmaperr(err);
-		return -1;
-	}
-#endif							/* _WIN32_WINNT < 0x0600 */
-
-	if (standardInfo.DeletePending)
-	{
-		/*
-		 * File has been deleted, but is not gone from the filesystem yet.
-		 * This can happen when some process with FILE_SHARE_DELETE has it
-		 * open, and it will be fully removed once that handle is closed.
-		 * Meanwhile, we can't open it, so indicate that the file just doesn't
-		 * exist.
-		 */
-		CloseHandle(hFile);
-		errno = ENOENT;
-		return -1;
-	}
-
-	/* At last we can invoke fileinfo_to_stat */
 	ret = fileinfo_to_stat(hFile, buf);
 
 	CloseHandle(hFile);

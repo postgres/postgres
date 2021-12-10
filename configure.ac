@@ -1941,6 +1941,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32common)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
+  AC_LIBOBJ(win32ntdll)
   AC_LIBOBJ(win32security)
   AC_LIBOBJ(win32setlocale)
   AC_LIBOBJ(win32stat)
