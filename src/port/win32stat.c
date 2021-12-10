@@ -115,84 +115,18 @@ int
 _pgstat64(const char *name, struct stat *buf)
 {
 	/*
-	 * We must use a handle so lstat() returns the information of the target
-	 * file.  To have a reliable test for ERROR_DELETE_PENDING, this uses a
-	 * method similar to open() with a loop using stat() and some waits when
-	 * facing ERROR_ACCESS_DENIED.
+	 * Our open wrapper will report STATUS_DELETE_PENDING as ENOENT.  We
+	 * request FILE_FLAG_BACKUP_SEMANTICS so that we can open directories too,
+	 * for limited purposes.  We use the private handle-based version, so we
+	 * don't risk running out of fds.
 	 */
-	SECURITY_ATTRIBUTES sa;
 	HANDLE		hFile;
 	int			ret;
-	int			loops = 0;
 
-	if (name == NULL || buf == NULL)
-	{
-		errno = EINVAL;
+	hFile = pgwin32_open_handle(name, O_RDONLY, true);
+	if (hFile == INVALID_HANDLE_VALUE)
 		return -1;
-	}
-	/* fast not-exists check */
-	if (GetFileAttributes(name) == INVALID_FILE_ATTRIBUTES)
-	{
-		DWORD		err = GetLastError();
 
-		if (err != ERROR_ACCESS_DENIED)
-		{
-			_dosmaperr(err);
-			return -1;
-		}
-	}
-
-	/* get a file handle as lightweight as we can */
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.bInheritHandle = TRUE;
-	sa.lpSecurityDescriptor = NULL;
-	while ((hFile = CreateFile(name,
-							   GENERIC_READ,
-							   (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE),
-							   &sa,
-							   OPEN_EXISTING,
-							   (FILE_FLAG_NO_BUFFERING | FILE_FLAG_BACKUP_SEMANTICS |
-								FILE_FLAG_OVERLAPPED),
-							   NULL)) == INVALID_HANDLE_VALUE)
-	{
-		DWORD		err = GetLastError();
-
-		/*
-		 * ERROR_ACCESS_DENIED is returned if the file is deleted but not yet
-		 * gone (Windows NT status code is STATUS_DELETE_PENDING).  In that
-		 * case we want to wait a bit and try again, giving up after 1 second
-		 * (since this condition should never persist very long).  However,
-		 * there are other commonly-hit cases that return ERROR_ACCESS_DENIED,
-		 * so care is needed.  In particular that happens if we try to open a
-		 * directory, or of course if there's an actual file-permissions
-		 * problem.  To distinguish these cases, try a stat().  In the
-		 * delete-pending case, it will either also get STATUS_DELETE_PENDING,
-		 * or it will see the file as gone and fail with ENOENT.  In other
-		 * cases it will usually succeed.  The only somewhat-likely case where
-		 * this coding will uselessly wait is if there's a permissions problem
-		 * with a containing directory, which we hope will never happen in any
-		 * performance-critical code paths.
-		 */
-		if (err == ERROR_ACCESS_DENIED)
-		{
-			if (loops < 10)
-			{
-				struct microsoft_native_stat st;
-
-				if (microsoft_native_stat(name, &st) != 0)
-				{
-					pg_usleep(100000);
-					loops++;
-					continue;
-				}
-			}
-		}
-
-		_dosmaperr(err);
-		return -1;
-	}
-
-	/* At last we can invoke fileinfo_to_stat */
 	ret = fileinfo_to_stat(hFile, buf);
 
 	CloseHandle(hFile);

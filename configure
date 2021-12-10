@@ -16639,6 +16639,12 @@ esac
 esac
 
   case " $LIBOBJS " in
+  *" win32ntdll.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32ntdll.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" win32security.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32security.$ac_objext"
  ;;
