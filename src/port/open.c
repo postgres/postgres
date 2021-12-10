@@ -13,16 +13,19 @@
 
 #ifdef WIN32
 
+#define UMDF_USING_NTSTATUS
+
 #ifndef FRONTEND
 #include "postgres.h"
 #else
 #include "postgres_fe.h"
 #endif
 
+#include "port/win32ntdll.h"
+
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/stat.h>
-
 
 static int
 openFlagsToCreateFileFlags(int openFlags)
@@ -56,38 +59,25 @@ openFlagsToCreateFileFlags(int openFlags)
 }
 
 /*
- *	 - file attribute setting, based on fileMode?
+ * Internal function used by pgwin32_open() and _pgstat64().  When
+ * backup_semantics is true, directories may be opened (for limited uses).  On
+ * failure, INVALID_HANDLE_VALUE is returned and errno is set.
  */
-int
-pgwin32_open(const char *fileName, int fileFlags,...)
+HANDLE
+pgwin32_open_handle(const char *fileName, int fileFlags, bool backup_semantics)
 {
-	int			fd;
-	HANDLE		h = INVALID_HANDLE_VALUE;
+	HANDLE		h;
 	SECURITY_ATTRIBUTES sa;
 	int			loops = 0;
+
+	if (initialize_ntdll() < 0)
+		return INVALID_HANDLE_VALUE;
 
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
 						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
 						 (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
-#ifndef FRONTEND
-	Assert(pgwin32_signal_event != NULL);	/* small chance of pg_usleep() */
-#endif
-
-#ifdef FRONTEND
-
-	/*
-	 * Since PostgreSQL 12, those concurrent-safe versions of open() and
-	 * fopen() can be used by frontends, having as side-effect to switch the
-	 * file-translation mode from O_TEXT to O_BINARY if none is specified.
-	 * Caller may want to enforce the binary or text mode, but if nothing is
-	 * defined make sure that the default mode maps with what versions older
-	 * than 12 have been doing.
-	 */
-	if ((fileFlags & O_BINARY) == 0)
-		fileFlags |= O_TEXT;
-#endif
 
 	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
@@ -102,6 +92,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 						   &sa,
 						   openFlagsToCreateFileFlags(fileFlags),
 						   FILE_ATTRIBUTE_NORMAL |
+						   (backup_semantics ? FILE_FLAG_BACKUP_SEMANTICS : 0) |
 						   ((fileFlags & O_RANDOM) ? FILE_FLAG_RANDOM_ACCESS : 0) |
 						   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
 						   ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
@@ -140,37 +131,54 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 		/*
 		 * ERROR_ACCESS_DENIED is returned if the file is deleted but not yet
 		 * gone (Windows NT status code is STATUS_DELETE_PENDING).  In that
-		 * case we want to wait a bit and try again, giving up after 1 second
-		 * (since this condition should never persist very long).  However,
-		 * there are other commonly-hit cases that return ERROR_ACCESS_DENIED,
-		 * so care is needed.  In particular that happens if we try to open a
-		 * directory, or of course if there's an actual file-permissions
-		 * problem.  To distinguish these cases, try a stat().  In the
-		 * delete-pending case, it will either also get STATUS_DELETE_PENDING,
-		 * or it will see the file as gone and fail with ENOENT.  In other
-		 * cases it will usually succeed.  The only somewhat-likely case where
-		 * this coding will uselessly wait is if there's a permissions problem
-		 * with a containing directory, which we hope will never happen in any
-		 * performance-critical code paths.
+		 * case, we'd better ask for the NT status too so we can translate it
+		 * to a more Unix-like error.  We hope that nothing clobbers the NT
+		 * status in between the internal NtCreateFile() call and CreateFile()
+		 * returning.
+		 *
+		 * If there's no O_CREAT flag, then we'll pretend the file is
+		 * invisible.  With O_CREAT, we have no choice but to report that
+		 * there's a file in the way (which wouldn't happen on Unix).
 		 */
-		if (err == ERROR_ACCESS_DENIED)
+		if (err == ERROR_ACCESS_DENIED &&
+			pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
 		{
-			if (loops < 10)
-			{
-				struct stat st;
-
-				if (stat(fileName, &st) != 0)
-				{
-					pg_usleep(100000);
-					loops++;
-					continue;
-				}
-			}
+			if (fileFlags & O_CREAT)
+				err = ERROR_FILE_EXISTS;
+			else
+				err = ERROR_FILE_NOT_FOUND;
 		}
 
 		_dosmaperr(err);
-		return -1;
+		return INVALID_HANDLE_VALUE;
 	}
+
+	return h;
+}
+
+int
+pgwin32_open(const char *fileName, int fileFlags,...)
+{
+	HANDLE		h;
+	int			fd;
+
+	h = pgwin32_open_handle(fileName, fileFlags, false);
+	if (h == INVALID_HANDLE_VALUE)
+		return -1;
+
+#ifdef FRONTEND
+
+	/*
+	 * Since PostgreSQL 12, those concurrent-safe versions of open() and
+	 * fopen() can be used by frontends, having as side-effect to switch the
+	 * file-translation mode from O_TEXT to O_BINARY if none is specified.
+	 * Caller may want to enforce the binary or text mode, but if nothing is
+	 * defined make sure that the default mode maps with what versions older
+	 * than 12 have been doing.
+	 */
+	if ((fileFlags & O_BINARY) == 0)
+		fileFlags |= O_TEXT;
+#endif
 
 	/* _open_osfhandle will, on error, set errno accordingly */
 	if ((fd = _open_osfhandle((intptr_t) h, fileFlags & O_APPEND)) < 0)
