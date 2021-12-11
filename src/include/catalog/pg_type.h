@@ -294,6 +294,7 @@ DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index, 2704, TypeNameNspIndexId, on pg_
 #define  TYPCATEGORY_USER		'U'
 #define  TYPCATEGORY_BITSTRING	'V' /* er ... "varbit"? */
 #define  TYPCATEGORY_UNKNOWN	'X'
+#define  TYPCATEGORY_INTERNAL	'Z'
 
 #define  TYPALIGN_CHAR			'c' /* char alignment (i.e. unaligned) */
 #define  TYPALIGN_SHORT			's' /* short alignment (typically 2 bytes) */

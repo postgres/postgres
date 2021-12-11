@@ -361,7 +361,8 @@ INSERT INTO caster (citext)        VALUES ('f'::char);
 
 INSERT INTO caster (chr)           VALUES ('f'::text);
 INSERT INTO caster (text)          VALUES ('f'::"char");
-INSERT INTO caster (chr)           VALUES ('f'::citext);
+INSERT INTO caster (chr)           VALUES ('f'::citext);  -- requires cast
+INSERT INTO caster (chr)           VALUES ('f'::citext::text);
 INSERT INTO caster (citext)        VALUES ('f'::"char");
 
 INSERT INTO caster (name)          VALUES ('foo'::text);

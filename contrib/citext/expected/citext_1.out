@@ -1089,7 +1089,12 @@ INSERT INTO caster (char)          VALUES ('f'::citext);
 INSERT INTO caster (citext)        VALUES ('f'::char);
 INSERT INTO caster (chr)           VALUES ('f'::text);
 INSERT INTO caster (text)          VALUES ('f'::"char");
-INSERT INTO caster (chr)           VALUES ('f'::citext);
+INSERT INTO caster (chr)           VALUES ('f'::citext);  -- requires cast
+ERROR:  column "chr" is of type "char" but expression is of type citext
+LINE 1: INSERT INTO caster (chr)           VALUES ('f'::citext);
+                                                   ^
+HINT:  You will need to rewrite or cast the expression.
+INSERT INTO caster (chr)           VALUES ('f'::citext::text);
 INSERT INTO caster (citext)        VALUES ('f'::"char");
 INSERT INTO caster (name)          VALUES ('foo'::text);
 INSERT INTO caster (text)          VALUES ('foo'::name);
