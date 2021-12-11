@@ -60,6 +60,7 @@ static void calc_proba_full_overlap(TypeCacheEntry *typcache, RangeBound binlow1
                                     RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff);
 static void calc_proba_part_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound binlow2,
                                     RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff);
+static void swapprobabilities(double * probabilities);
 
 /*
  * Selectivity for operators that depend on area, such as "overlap".
@@ -283,15 +284,17 @@ areajoinsel(PG_FUNCTION_ARGS)
         count[14] = probabilities[14] * type4_1[hist1_idx] * type3_2; //4x3
         count[15] = probabilities[15] * type4_1[hist1_idx] * type4_2[hist2_idx]; //4x4
 
-        /*printf("%f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f\n",
-        probabilities[0], probabilities[1], probabilities[2], probabilities[3], probabilities[4], probabilities[5],
-        probabilities[6], probabilities[7], probabilities[8], probabilities[9], probabilities[10], probabilities[11],
-        probabilities[12], probabilities[13], probabilities[14], probabilities[15]);*/
         for (i = 0; i < 16; i++)
         {
             sum_overlaps += count[i];
         }
-        printf("Guess total nb rows currently : %f\n\n", sum_overlaps);
+        printf("idx : %d, %d\n", hist1_idx, hist2_idx);
+        printf("%f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f - %f\n",
+        probabilities[0], probabilities[1], probabilities[2], probabilities[3], probabilities[4], probabilities[5],
+        probabilities[6], probabilities[7], probabilities[8], probabilities[9], probabilities[10], probabilities[11],
+        probabilities[12], probabilities[13], probabilities[14], probabilities[15]);
+        printf("Guess total nb rows currently : %f\n", sum_overlaps);
+        fflush(stdout);
 
         /* Go to next bin */
         res = range_cmp_bounds(typcache, &(hist1_lower[hist1_idx+1]), &(hist2_lower[hist2_idx+1]));
@@ -393,9 +396,11 @@ calc_proba_full_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound
                         RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff)
 {
     double S1, S2, S3, size;
+    bool swapped;
     fflush(stdout);
     /* Swap values to have the lowest one in binlow1 or the highest in binup1 of the two lows are equal */
-    if (range_cmp_bounds(typcache, &binlow1, &binlow2) > 0 || range_cmp_bounds(typcache, &binup1, &binup2) < 0)
+    swapped = range_cmp_bounds(typcache, &binlow1, &binlow2) > 0 || range_cmp_bounds(typcache, &binup1, &binup2) < 0;
+    if (swapped)
     {
         RangeBound temp;
         temp = binlow1;
@@ -446,6 +451,11 @@ calc_proba_full_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound
     probabilities[13] = (2.0/3.0)*S2*S2 + S2*S3; // 4x2
     probabilities[14] = 1.0 - S1*S1 - S3*S3 - (1.0/3.0)*S2*S2 - S1*S2; // 4x3
     probabilities[15] = (4.0/3.0)*S1*S2 + 2*S1*S3 + (2.0/3.0)*S2*S2 + (4.0/3.0)*S1*S3; // 4x4
+
+    if (swapped)
+    {
+        swapprobabilities(probabilities);
+    }
 }
 
 static void
@@ -453,8 +463,10 @@ calc_proba_part_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound
                         RangeBound binup1, RangeBound binup2, double * probabilities, bool has_subdiff)
 {
     double S1, S2_1, S2_2, S3, size_1, size_2;
+    bool swapped;
     /* Swap values to have the lowest one in binlow1 */
-    if (range_cmp_bounds(typcache, &binlow1, &binlow2) > 0)
+    swapped = range_cmp_bounds(typcache, &binlow1, &binlow2) > 0;
+    if (swapped)
     {
         RangeBound temp;
         temp = binlow1;
@@ -507,4 +519,39 @@ calc_proba_part_overlap(TypeCacheEntry *typcache, RangeBound binlow1, RangeBound
     probabilities[14] = (2.0/3.0)*S2_1*S2_1; // 4x3
     probabilities[15] = (4.0/3.0)*S1*S2_1*S2_2*S2_2 + (2.0/3)*S2_1*S2_1*S2_2*S2_2 +
                         2.0*S1*S2_1*S2_2*S3 + (4.0/3.0)*S2_1*S2_1*S2_2*S3; // 4x4
+
+    if (swapped)
+    {
+        swapprobabilities(probabilities);
+    }
+}
+
+static void
+swapprobabilities(double * probabilities)
+{
+    float temp;
+    /* swap 2x1 and 1x2 */
+    temp = probabilities[1];
+    probabilities[1] = probabilities[4];
+    probabilities[4] = temp;
+    /* swap 3x1 and 1x3 */
+    temp = probabilities[2];
+    probabilities[2] = probabilities[8];
+    probabilities[8] = temp;
+    /* swap 4x1 and 1x4 */
+    temp = probabilities[3];
+    probabilities[3] = probabilities[12];
+    probabilities[12] = temp;
+    /* swap 2x3 and 3x2 */
+    temp = probabilities[6];
+    probabilities[6] = probabilities[9];
+    probabilities[9] = temp;
+    /* swap 4x2 and 4x2 */
+    temp = probabilities[7];
+    probabilities[7] = probabilities[13];
+    probabilities[13] = temp;
+    /* swap 3x4 and 4x3 */
+    temp = probabilities[11];
+    probabilities[11] = probabilities[14];
+    probabilities[14] = temp;
 }
