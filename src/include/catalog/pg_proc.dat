@@ -10938,3 +10938,9 @@
   prosrc => 'unicode_is_normalized' },
 
 ]
+
+# my added function
+{ oid => '10000', descr => 'join selectivity for range overlaps operator',
+  proname => 'rangeoverlapsjoinsel', provolatile => 's', prorettype => 'float8',
+  proargtypes => 'internal oid internal int2 internal',
+  prosrc => 'rangeoverlapsjoinsel' },

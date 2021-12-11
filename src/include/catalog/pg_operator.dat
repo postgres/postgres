@@ -3159,7 +3159,7 @@
   oprname => '&&', oprleft => 'anyrange', oprright => 'anyrange',
   oprresult => 'bool', oprcom => '&&(anyrange,anyrange)',
   oprcode => 'range_overlaps', oprrest => 'rangesel',
-  oprjoin => 'areajoinsel' },
+  oprjoin => 'rangeoverlapsjoinsel' },
 { oid => '3889', oid_symbol => 'OID_RANGE_CONTAINS_ELEM_OP',
   descr => 'contains',
   oprname => '@>', oprleft => 'anyrange', oprright => 'anyelement',

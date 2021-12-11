@@ -31,10 +31,21 @@
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 
+// hadiii -> ...
+typedef struct SimpleRange
+{
+    int         start;
+    int         end;
+    int         length;
+} SimpleRange;
+
+
 static int	float8_qsort_cmp(const void *a1, const void *a2);
 static int	range_bound_qsort_cmp(const void *a1, const void *a2, void *arg);
 static void compute_range_stats(VacAttrStats *stats,
 								AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
+
+void accumulate_range_in_slot_percentage(float8 s_min, float8 s_max, SimpleRange *range, float8 *value_to_add_to);
 
 /*
  * range_typanalyze -- typanalyze function for range columns
@@ -90,6 +101,30 @@ range_bound_qsort_cmp(const void *a1, const void *a2, void *arg)
 	return range_cmp_bounds(typcache, b1, b2);
 }
 
+
+// hadiii -> ...
+void accumulate_range_in_slot_percentage(float8 s_min, float8 s_max, SimpleRange *range, float8 *acc) {
+    int r_min =     range->start;
+    int r_max =     range->end;
+    int r_length =  range->length;
+
+    float8 cv = 0;
+
+    if(s_max < r_min || s_min > r_max)
+        cv = 0;
+    else if(s_min <= r_min && s_max >= r_max)
+        cv = 1;
+    else if(s_min > r_min && s_max < r_max)
+        cv = (float8)(s_max - s_min) / r_length;
+    else if(s_min <= r_min)
+        cv = (float8)(s_max - r_min) / r_length;
+    else if(s_max >= r_max)
+        cv = (float8)(r_max - s_min) / r_length;
+
+    *acc += cv;
+}
+
+
 /*
  * compute_range_stats() -- compute statistics for a range column
  */
@@ -116,6 +151,19 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	lowers = (RangeBound *) palloc(sizeof(RangeBound) * samplerows);
 	uppers = (RangeBound *) palloc(sizeof(RangeBound) * samplerows);
 	lengths = (float8 *) palloc(sizeof(float8) * samplerows);
+
+    // hadiii -> ...
+    int         sample_lower = 0;
+    int         sample_upper = 0;
+    int         SLOTS_COUNT = 20;
+    int         slot_length = 0;
+    // hadiii -> ...
+    SimpleRange *simple_ranges = (SimpleRange *) palloc(sizeof(SimpleRange) * samplerows);
+    
+    float8 *hist_bins = (float8 *) palloc(sizeof(float8) * SLOTS_COUNT + 1);
+    float8 *slots_values = (float8 *) palloc(sizeof(float8) * SLOTS_COUNT);
+    Datum *hist_bins_values = (Datum *) palloc(sizeof(Datum) * SLOTS_COUNT + 1);
+    Datum *datum_slot_values = (Datum *) palloc(sizeof(Datum) * SLOTS_COUNT);
 
 	/* Loop over the sample ranges. */
 	for (range_no = 0; range_no < samplerows; range_no++)
@@ -148,11 +196,34 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		range = DatumGetRangeTypeP(value);
 		range_deserialize(typcache, range, &lower, &upper, &empty);
 
+        /*
+            - read the hist from a selectivity function
+            - make the estimator in the same order done in python
+            - alter the operator to use the new estimations
+            - make some tests
+            - ask Hind and Luka to prepare a report
+            - finalize the report
+        */
+
 		if (!empty)
 		{
 			/* Remember bounds and length for further usage in histograms */
 			lowers[non_empty_cnt] = lower;
 			uppers[non_empty_cnt] = upper;
+
+            // hadiii -> ...
+            int d_lower = DatumGetInt16(lower.val);
+            int d_upper = DatumGetInt16(upper.val);
+
+            if(d_lower < sample_lower) sample_lower = d_lower;
+            if(d_upper > sample_upper) sample_upper = d_upper;
+
+            simple_ranges[range_no].start = d_lower;
+            simple_ranges[range_no].end = d_upper;
+            simple_ranges[range_no].length = d_upper - d_lower;
+            
+            slot_length = (sample_upper - sample_lower) / SLOTS_COUNT;
+
 
 			if (lower.infinite || upper.infinite)
 			{
@@ -249,6 +320,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 																	   &lowers[pos],
 																	   &uppers[pos],
 																	   false));
+
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))
@@ -349,8 +421,60 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
+    printf("slot_length: %d\n", slot_length);
+    printf("sample_lower: %d\n", sample_lower);
+
+    // hadii
+    for(int i = 0; i <= SLOTS_COUNT; i++) {
+        hist_bins[i] = (float8)(i * slot_length) + sample_lower;
+        if(i == SLOTS_COUNT)
+            hist_bins[i] = sample_upper;
+
+        printf("hist_bins[%d]: %f\n", i, hist_bins[i]);
+        hist_bins_values[i] = Float8GetDatum(hist_bins[i]);            
+    }
+
+    stats->stakind[slot_idx] = STATISTIC_KIND_BINS_HISTOGRAM;
+    stats->stavalues[slot_idx] = hist_bins_values;
+    stats->numvalues[slot_idx] = SLOTS_COUNT + 1;
+    stats->statypid[slot_idx] = FLOAT8OID;
+    stats->statyplen[slot_idx] = sizeof(float8);
+    stats->statypbyval[slot_idx] = FLOAT8PASSBYVAL;
+
+    slot_idx++;
+
+    // hadii: fill in the histograms
+    for(int i = 0; i < samplerows; i++) {
+        SimpleRange curr_range = simple_ranges[i];
+        for(int j = 1; j < SLOTS_COUNT; j++) {
+
+            float8 slot_min = hist_bins[j];
+            float8 slot_max = hist_bins[j + 1];
+
+            accumulate_range_in_slot_percentage(slot_min, slot_max, &curr_range, &slots_values[j]);
+        }
+    }  
+
+    // hadii
+    for(int i = 0; i < SLOTS_COUNT; i++) {
+        float8 curr_slot_value = slots_values[i];
+
+        printf("curr_slot_value[%d]: %f\n", i, curr_slot_value);
+        datum_slot_values[i] = Float8GetDatum(curr_slot_value);            
+    }
+
+    stats->stakind[slot_idx] = STATISTIC_KIND_BINS_VALUES_HISTOGRAM;
+    stats->stavalues[slot_idx] = datum_slot_values;
+    stats->numvalues[slot_idx] = SLOTS_COUNT;
+    stats->statypid[slot_idx] = FLOAT8OID;
+    stats->statyplen[slot_idx] = sizeof(float8);
+    stats->statypbyval[slot_idx] = FLOAT8PASSBYVAL;
+
 	/*
 	 * We don't need to bother cleaning up any of our temporary palloc's. The
 	 * hashtable should also go away, as it used a child memory context.
 	 */
+
+    // hadiii -> 443
+    fflush(stdout);
 }

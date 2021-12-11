@@ -52,6 +52,12 @@
 #define DEFAULT_UNK_SEL			0.005
 #define DEFAULT_NOT_UNK_SEL		(1.0 - DEFAULT_UNK_SEL)
 
+// project needed struct
+typedef struct HistSlot {
+    float8      lower;
+    float8      upper;
+    float8     value;
+} HistSlot;
 
 /*
  * Clamp a computed probability estimate (which may suffer from roundoff or

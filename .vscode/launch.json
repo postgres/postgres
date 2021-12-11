@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug PostgreSQL",
+            "type": "lldb",
+            "request": "attach",
+            "program": "/usr/local/pgsql/bin/postgres",
+            "pid": "${command:pickMyProcess}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "targetArchitecture": "x86_64"
+        }
+    ]
+}
