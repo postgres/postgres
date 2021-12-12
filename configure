@@ -25530,8 +25530,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -25669,8 +25671,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -25780,8 +25784,10 @@ int does_int64_snprintf_work()
     return 0;			/* either multiply or snprintf is busted */
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_snprintf_work());
+  return (! does_int64_snprintf_work());
 }
 _ACEOF
 rm -f conftest$ac_exeext
