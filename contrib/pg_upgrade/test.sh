@@ -18,7 +18,8 @@ export PGPORT
 # Run a given "initdb" binary and overlay the regression testing
 # authentication configuration.
 standard_initdb() {
-	"$1"
+	# Specify "-A trust" explicitly to suppress initdb's warning.
+	"$1" -A trust
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
@@ -126,9 +127,6 @@ logdir=`pwd`/log
 rm -rf "$logdir"
 mkdir "$logdir"
 
-# enable echo so the user can see what is being executed
-set -x
-
 standard_initdb "$oldbindir"/initdb
 $oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
@@ -199,10 +197,6 @@ esac
 
 pg_dumpall -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
-
-# no need to echo commands anymore
-set +x
-echo
 
 if [ -n "$pg_dumpall2_status" ]; then
 	echo "pg_dumpall of post-upgrade database cluster failed"
