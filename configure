@@ -13757,8 +13757,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
@@ -13839,8 +13841,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
@@ -13915,8 +13919,10 @@ int does_int64_snprintf_work()
     return 0;			/* either multiply or snprintf is busted */
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_snprintf_work());
+  return (! does_int64_snprintf_work());
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
