@@ -713,7 +713,10 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 	if (RANGE_HAS_LBOUND(flags))
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
 	if (RANGE_HAS_UBOUND(flags))
+	{
+		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
+	}
 	len = (ptr - begin) + sizeof(RangeType) + sizeof(uint8);
 
 	range = palloc0(len);
