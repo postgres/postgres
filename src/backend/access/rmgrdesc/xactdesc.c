@@ -16,6 +16,7 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
+#include "replication/origin.h"
 #include "storage/sinval.h"
 #include "storage/standbydefs.h"
 #include "utils/timestamp.h"
@@ -299,6 +300,9 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 							   parsed.tsId,
 							   XactCompletionRelcacheInitFileInval(parsed.xinfo));
 
+	if (XactCompletionApplyFeedback(parsed.xinfo))
+		appendStringInfoString(buf, "; apply_feedback");
+
 	if (XactCompletionForceSyncCommit(parsed.xinfo))
 		appendStringInfoString(buf, "; sync");
 
@@ -312,7 +316,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 }
 
 static void
-xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
+xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec, RepOriginId origin_id)
 {
 	xl_xact_parsed_abort parsed;
 
@@ -326,10 +330,18 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec)
 
 	xact_desc_relations(buf, "rels", parsed.nrels, parsed.xnodes);
 	xact_desc_subxacts(buf, parsed.nsubxacts, parsed.subxacts);
+
+	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
+	{
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+						 origin_id,
+						 LSN_FORMAT_ARGS(parsed.origin_lsn),
+						 timestamptz_to_str(parsed.origin_timestamp));
+	}
 }
 
 static void
-xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec)
+xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, RepOriginId origin_id)
 {
 	xl_xact_parsed_prepare parsed;
 
@@ -345,6 +357,16 @@ xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec)
 
 	standby_desc_invalidations(buf, parsed.nmsgs, parsed.msgs, parsed.dbId,
 							   parsed.tsId, xlrec->initfileinval);
+
+	/*
+	 * Check if the replication origin has been set in this record in the
+	 * same way as PrepareRedoAdd().
+	 */
+	if (origin_id != InvalidRepOriginId)
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+						 origin_id,
+						 LSN_FORMAT_ARGS(parsed.origin_lsn),
+						 timestamptz_to_str(parsed.origin_timestamp));
 }
 
 static void
@@ -375,13 +397,15 @@ xact_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
 
-		xact_desc_abort(buf, XLogRecGetInfo(record), xlrec);
+		xact_desc_abort(buf, XLogRecGetInfo(record), xlrec,
+						XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_PREPARE)
 	{
 		xl_xact_prepare *xlrec = (xl_xact_prepare *) rec;
 
-		xact_desc_prepare(buf, XLogRecGetInfo(record), xlrec);
+		xact_desc_prepare(buf, XLogRecGetInfo(record), xlrec,
+						  XLogRecGetOrigin(record));
 	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{
