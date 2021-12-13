@@ -129,8 +129,13 @@ do{T *u_=(A),*v_=u_+(N)-1;while(u_<v_){T xch=*u_;*u_++=*v_;*v_--=xch;}}while(0)
 #define CLAMP(Z) s_clamp(Z)
 #else
 #define CLAMP(Z) \
-do{mp_int z_=(Z);mp_size uz_=MP_USED(z_);mp_digit *dz_=MP_DIGITS(z_)+uz_-1;\
-while(uz_ > 1 && (*dz_-- == 0)) --uz_;MP_USED(z_)=uz_;}while(0)
+do{ \
+  mp_int z_=(Z); \
+  mp_size uz_=MP_USED(z_); \
+  mp_digit *dz_=MP_DIGITS(z_)+uz_-1; \
+  while(uz_ > 1 && (*dz_-- == 0)) --uz_; \
+  MP_USED(z_)=uz_; \
+}while(0)
 #endif
 
 #undef MIN
