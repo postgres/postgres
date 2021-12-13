@@ -154,7 +154,6 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 			proc_exit(1);
 
 		case WalWriterProcess:
-			InitXLOGAccess();
 			WalWriterMain();
 			proc_exit(1);
 
