@@ -9124,6 +9124,8 @@ RestoreGUCState(void *gucstate)
 		if (varsourcefile[0])
 			read_gucstate_binary(&srcptr, srcend,
 								 &varsourceline, sizeof(varsourceline));
+		else
+			varsourceline = 0;
 		read_gucstate_binary(&srcptr, srcend,
 							 &varsource, sizeof(varsource));
 		read_gucstate_binary(&srcptr, srcend,
