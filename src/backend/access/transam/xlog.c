@@ -6601,6 +6601,7 @@ StartupXLOG(void)
 			 */
 			ereport(PANIC,
 					(errmsg("could not locate a valid checkpoint record")));
+			abort();			/* NOTREACHED */
 		}
 		else
 		{
@@ -6614,8 +6615,11 @@ StartupXLOG(void)
 				InRecovery = true;		/* force recovery even if SHUTDOWNED */
 			}
 			else
+			{
 				ereport(PANIC,
 					 (errmsg("could not locate a valid checkpoint record")));
+				abort();		/* NOTREACHED */
+			}
 		}
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
