@@ -381,8 +381,6 @@
   castcontext => 'a', castmethod => 'f' },
 { castsource => 'lseg', casttarget => 'point', castfunc => 'point(lseg)',
   castcontext => 'e', castmethod => 'f' },
-{ castsource => 'path', casttarget => 'point', castfunc => 'point(path)',
-  castcontext => 'e', castmethod => 'f' },
 { castsource => 'path', casttarget => 'polygon', castfunc => 'polygon(path)',
   castcontext => 'a', castmethod => 'f' },
 { castsource => 'box', casttarget => 'point', castfunc => 'point(box)',

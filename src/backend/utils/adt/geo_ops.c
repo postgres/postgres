@@ -2532,44 +2532,6 @@ dist_bs(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(box_closept_lseg(NULL, box, lseg));
 }
 
-/*
- * Distance from a line to a box
- */
-Datum
-dist_lb(PG_FUNCTION_ARGS)
-{
-#ifdef NOT_USED
-	LINE	   *line = PG_GETARG_LINE_P(0);
-	BOX		   *box = PG_GETARG_BOX_P(1);
-#endif
-
-	/* need to think about this one for a while */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"dist_lb\" not implemented")));
-
-	PG_RETURN_NULL();
-}
-
-/*
- * Distance from a box to a line
- */
-Datum
-dist_bl(PG_FUNCTION_ARGS)
-{
-#ifdef NOT_USED
-	BOX		   *box = PG_GETARG_BOX_P(0);
-	LINE	   *line = PG_GETARG_LINE_P(1);
-#endif
-
-	/* need to think about this one for a while */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"dist_bl\" not implemented")));
-
-	PG_RETURN_NULL();
-}
-
 static float8
 dist_cpoly_internal(CIRCLE *circle, POLYGON *poly)
 {
@@ -2947,48 +2909,6 @@ close_pb(PG_FUNCTION_ARGS)
 	PG_RETURN_POINT_P(result);
 }
 
-
-/* close_sl()
- * Closest point on line to line segment.
- *
- * XXX THIS CODE IS WRONG
- * The code is actually calculating the point on the line segment
- *	which is backwards from the routine naming convention.
- * Copied code to new routine close_ls() but haven't fixed this one yet.
- * - thomas 1998-01-31
- */
-Datum
-close_sl(PG_FUNCTION_ARGS)
-{
-#ifdef NOT_USED
-	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
-	LINE	   *line = PG_GETARG_LINE_P(1);
-	Point	   *result;
-	float8		d1,
-				d2;
-
-	result = (Point *) palloc(sizeof(Point));
-
-	if (lseg_interpt_line(result, lseg, line))
-		PG_RETURN_POINT_P(result);
-
-	d1 = line_closept_point(NULL, line, &lseg->p[0]);
-	d2 = line_closept_point(NULL, line, &lseg->p[1]);
-	if (float8_lt(d1, d2))
-		*result = lseg->p[0];
-	else
-		*result = lseg->p[1];
-
-	PG_RETURN_POINT_P(result);
-#endif
-
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"close_sl\" not implemented")));
-
-	PG_RETURN_NULL();
-}
-
 /*
  * Closest point on line segment to line.
  *
@@ -3119,22 +3039,6 @@ close_sb(PG_FUNCTION_ARGS)
 	PG_RETURN_POINT_P(result);
 }
 
-
-Datum
-close_lb(PG_FUNCTION_ARGS)
-{
-#ifdef NOT_USED
-	LINE	   *line = PG_GETARG_LINE_P(0);
-	BOX		   *box = PG_GETARG_BOX_P(1);
-#endif
-
-	/* think about this one for a while */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"close_lb\" not implemented")));
-
-	PG_RETURN_NULL();
-}
 
 /*---------------------------------------------------------------------
  *		on_
@@ -4502,20 +4406,6 @@ path_div_pt(PG_FUNCTION_ARGS)
 	PG_RETURN_PATH_P(path);
 }
 
-
-Datum
-path_center(PG_FUNCTION_ARGS)
-{
-#ifdef NOT_USED
-	PATH	   *path = PG_GETARG_PATH_P(0);
-#endif
-
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"path_center\" not implemented")));
-
-	PG_RETURN_NULL();
-}
 
 Datum
 path_poly(PG_FUNCTION_ARGS)
