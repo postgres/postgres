@@ -155,10 +155,14 @@ main(int argc, char **argv)
 
 	for (i = 0; i < nconns; i++)
 	{
+		const char *sessionname;
+
 		if (i == 0)
-			conns[i].sessionname = "control connection";
+			sessionname = "control connection";
 		else
-			conns[i].sessionname = testspec->sessions[i - 1]->name;
+			sessionname = testspec->sessions[i - 1]->name;
+
+		conns[i].sessionname = sessionname;
 
 		conns[i].conn = PQconnectdb(conninfo);
 		if (PQstatus(conns[i].conn) != CONNECTION_OK)
@@ -182,6 +186,26 @@ main(int argc, char **argv)
 			PQsetNoticeProcessor(conns[i].conn,
 								 blackholeNoticeProcessor,
 								 NULL);
+
+		/*
+		 * Similarly, append the session name to application_name to make it
+		 * easier to map spec file sessions to log output and
+		 * pg_stat_activity. The reason to append instead of just setting the
+		 * name is that we don't know the name of the test currently running.
+		 */
+		res = PQexecParams(conns[i].conn,
+						   "SELECT set_config('application_name',\n"
+						   "  current_setting('application_name') || '/' || $1,\n"
+						   "  false)",
+						   1, NULL,
+						   &sessionname,
+						   NULL, NULL, 0);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, "setting of application name failed: %s",
+					PQerrorMessage(conns[i].conn));
+			exit(1);
+		}
 
 		/* Save each connection's backend PID for subsequent use. */
 		conns[i].backend_pid = PQbackendPID(conns[i].conn);
