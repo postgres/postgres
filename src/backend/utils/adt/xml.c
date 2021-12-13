@@ -1884,7 +1884,7 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 	return buf.data;
 #else							/* not USE_LIBXML */
 	NO_XML_SUPPORT();
-	return NULL;
+	return "";
 #endif   /* not USE_LIBXML */
 }
 
