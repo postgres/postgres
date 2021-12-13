@@ -3798,11 +3798,9 @@ poly_same(PG_FUNCTION_ARGS)
 /*-----------------------------------------------------------------
  * Determine if polygon A overlaps polygon B
  *-----------------------------------------------------------------*/
-Datum
-poly_overlap(PG_FUNCTION_ARGS)
+static bool
+poly_overlap_internal(POLYGON *polya, POLYGON *polyb)
 {
-	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	Assert(polya->npts > 0 && polyb->npts > 0);
@@ -3853,6 +3851,18 @@ poly_overlap(PG_FUNCTION_ARGS)
 					  point_inside(polyb->p, polya->npts, polya->p));
 		}
 	}
+
+	return result;
+}
+
+Datum
+poly_overlap(PG_FUNCTION_ARGS)
+{
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
+
+	result = poly_overlap_internal(polya, polyb);
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
@@ -4071,16 +4081,63 @@ pt_contained_poly(PG_FUNCTION_ARGS)
 Datum
 poly_distance(PG_FUNCTION_ARGS)
 {
-#ifdef NOT_USED
 	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
-#endif
+	float8		min = 0.0;		/* initialize to keep compiler quiet */
+	bool		have_min = false;
+	float8		tmp;
+	int			i,
+				j;
+	LSEG		seg1,
+				seg2;
 
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("function \"poly_distance\" not implemented")));
+	/*
+	 * Distance is zero if polygons overlap.  We must check this because the
+	 * path distance will not give the right answer if one poly is entirely
+	 * within the other.
+	 */
+	if (poly_overlap_internal(polya, polyb))
+		PG_RETURN_FLOAT8(0.0);
 
-	PG_RETURN_NULL();
+	/*
+	 * When they don't overlap, the distance calculation is identical to that
+	 * for closed paths (i.e., we needn't care about the fact that polygons
+	 * include their contained areas).  See path_distance().
+	 */
+	for (i = 0; i < polya->npts; i++)
+	{
+		int			iprev;
+
+		if (i > 0)
+			iprev = i - 1;
+		else
+			iprev = polya->npts - 1;
+
+		for (j = 0; j < polyb->npts; j++)
+		{
+			int			jprev;
+
+			if (j > 0)
+				jprev = j - 1;
+			else
+				jprev = polyb->npts - 1;
+
+			statlseg_construct(&seg1, &polya->p[iprev], &polya->p[i]);
+			statlseg_construct(&seg2, &polyb->p[jprev], &polyb->p[j]);
+
+			tmp = lseg_closept_lseg(NULL, &seg1, &seg2);
+			if (!have_min || float8_lt(tmp, min))
+			{
+				min = tmp;
+				have_min = true;
+			}
+		}
+	}
+
+	if (!have_min)
+		PG_RETURN_NULL();
+
+	PG_RETURN_FLOAT8(min);
 }
 
 
