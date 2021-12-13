@@ -6764,19 +6764,18 @@ local0.*    /var/log/postgresql
        <para>
         Causes each action executed by autovacuum to be logged if it ran for at
         least the specified amount of time.  Setting this to zero logs
-        all autovacuum actions. <literal>-1</literal> (the default) disables
-        logging autovacuum actions.
-        If this value is specified without units, it is taken as milliseconds.
+        all autovacuum actions. <literal>-1</literal> disables logging autovacuum
+        actions. If this value is specified without units, it is taken as milliseconds.
         For example, if you set this to
         <literal>250ms</literal> then all automatic vacuums and analyzes that run
         250ms or longer will be logged.  In addition, when this parameter is
         set to any value other than <literal>-1</literal>, a message will be
         logged if an autovacuum action is skipped due to a conflicting lock or a
-        concurrently dropped relation.  Enabling this parameter can be helpful
-        in tracking autovacuum activity.  This parameter can only be set in
-        the <filename>postgresql.conf</filename> file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
+        concurrently dropped relation. The default is <literal>10min</literal>.
+        Enabling this parameter can be helpful in tracking autovacuum activity.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line; but the setting can be overridden for
+        individual tables by changing table storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -6793,7 +6792,7 @@ local0.*    /var/log/postgresql
         Some statistics are included in the log messages, including the number
         of buffers written and the time spent writing them.
         This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line. The default is off.
+        file or on the server command line. The default is on.
        </para>
       </listitem>
      </varlistentry>
