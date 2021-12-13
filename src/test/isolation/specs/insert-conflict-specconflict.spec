@@ -47,7 +47,6 @@ session controller
 setup
 {
     SET default_transaction_isolation = 'read committed';
-    SET application_name = 'isolation/insert-conflict-specconflict-controller';
 }
 step controller_locks {SELECT pg_advisory_lock(sess, lock), sess, lock FROM generate_series(1, 2) a(sess), generate_series(1,3) b(lock);}
 step controller_unlock_1_1 { SELECT pg_advisory_unlock(1, 1); }
@@ -66,7 +65,7 @@ step controller_print_speculative_locks {
     WHERE
         locktype IN ('spectoken', 'transactionid')
         AND pa.datname = current_database()
-        AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
+        AND pa.application_name LIKE 'isolation/insert-conflict-specconflict/s%'
     ORDER BY 1, 2, 3, 4;
 }
 
@@ -75,7 +74,6 @@ setup
 {
     SET default_transaction_isolation = 'read committed';
     SET spec.session = 1;
-    SET application_name = 'isolation/insert-conflict-specconflict-s1';
 }
 step s1_begin  { BEGIN; }
 step s1_create_non_unique_index { CREATE INDEX upserttest_key_idx ON upserttest((blurt_and_lock_4(key))); }
@@ -90,7 +88,6 @@ setup
 {
     SET default_transaction_isolation = 'read committed';
     SET spec.session = 2;
-    SET application_name = 'isolation/insert-conflict-specconflict-s2';
 }
 step s2_begin  { BEGIN; }
 step s2_upsert { INSERT INTO upserttest(key, data) VALUES('k1', 'inserted s2') ON CONFLICT (blurt_and_lock_123(key)) DO UPDATE SET data = upserttest.data || ' with conflict update s2'; }
