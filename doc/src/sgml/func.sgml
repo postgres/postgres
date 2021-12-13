@@ -10976,7 +10976,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </para>
        <para>
         Computes the center point.
-        Available for <type>box</type>, <type>lseg</type>, <type>path</type>,
+        Available for <type>box</type>, <type>lseg</type>,
         <type>polygon</type>, <type>circle</type>.
        </para>
        <para>
@@ -11042,8 +11042,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         (<type>point</type>, <type>line</type>),
         (<type>lseg</type>, <type>box</type>),
         (<type>lseg</type>, <type>lseg</type>),
-        (<type>lseg</type>, <type>line</type>),
-        (<type>line</type>, <type>box</type>),
         (<type>line</type>, <type>lseg</type>).
        </para>
        <para>
@@ -11063,7 +11061,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         of <type>point</type> with another geometric type, and for
         these additional pairs of types:
         (<type>box</type>, <type>lseg</type>),
-        (<type>box</type>, <type>line</type>),
         (<type>lseg</type>, <type>line</type>),
         (<type>polygon</type>, <type>circle</type>)
         (and the commutator cases).
