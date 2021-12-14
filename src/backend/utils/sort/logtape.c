@@ -343,7 +343,7 @@ ltsReadFillBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 static inline void
 swap_nodes(long *heap, unsigned long a, unsigned long b)
 {
-	unsigned long swap;
+	long		swap;
 
 	swap = heap[a];
 	heap[a] = heap[b];
@@ -357,7 +357,7 @@ left_offset(unsigned long i)
 }
 
 static inline unsigned long
-right_offset(unsigned i)
+right_offset(unsigned long i)
 {
 	return 2 * i + 2;
 }
