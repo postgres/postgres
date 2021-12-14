@@ -19,7 +19,6 @@
 
 static void sift_down(binaryheap *heap, int node_off);
 static void sift_up(binaryheap *heap, int node_off);
-static inline void swap_nodes(binaryheap *heap, int a, int b);
 
 /*
  * binaryheap_allocate
@@ -173,24 +172,28 @@ binaryheap_first(binaryheap *heap)
 Datum
 binaryheap_remove_first(binaryheap *heap)
 {
+	Datum		result;
+
 	Assert(!binaryheap_empty(heap) && heap->bh_has_heap_property);
 
+	/* extract the root node, which will be the result */
+	result = heap->bh_nodes[0];
+
+	/* easy if heap contains one element */
 	if (heap->bh_size == 1)
 	{
 		heap->bh_size--;
-		return heap->bh_nodes[0];
+		return result;
 	}
 
 	/*
-	 * Swap the root and last nodes, decrease the size of the heap (i.e.
-	 * remove the former root node) and sift the new root node down to its
-	 * correct position.
+	 * Remove the last node, placing it in the vacated root entry, and sift
+	 * the new root node down to its correct position.
 	 */
-	swap_nodes(heap, 0, heap->bh_size - 1);
-	heap->bh_size--;
+	heap->bh_nodes[0] = heap->bh_nodes[--heap->bh_size];
 	sift_down(heap, 0);
 
-	return heap->bh_nodes[heap->bh_size];
+	return result;
 }
 
 /*
@@ -212,48 +215,46 @@ binaryheap_replace_first(binaryheap *heap, Datum d)
 }
 
 /*
- * Swap the contents of two nodes.
- */
-static inline void
-swap_nodes(binaryheap *heap, int a, int b)
-{
-	Datum		swap;
-
-	swap = heap->bh_nodes[a];
-	heap->bh_nodes[a] = heap->bh_nodes[b];
-	heap->bh_nodes[b] = swap;
-}
-
-/*
  * Sift a node up to the highest position it can hold according to the
  * comparator.
  */
 static void
 sift_up(binaryheap *heap, int node_off)
 {
+	Datum		node_val = heap->bh_nodes[node_off];
+
+	/*
+	 * Within the loop, the node_off'th array entry is a "hole" that
+	 * notionally holds node_val, but we don't actually store node_val there
+	 * till the end, saving some unnecessary data copying steps.
+	 */
 	while (node_off != 0)
 	{
 		int			cmp;
 		int			parent_off;
+		Datum		parent_val;
 
 		/*
 		 * If this node is smaller than its parent, the heap condition is
 		 * satisfied, and we're done.
 		 */
 		parent_off = parent_offset(node_off);
-		cmp = heap->bh_compare(heap->bh_nodes[node_off],
-							   heap->bh_nodes[parent_off],
+		parent_val = heap->bh_nodes[parent_off];
+		cmp = heap->bh_compare(node_val,
+							   parent_val,
 							   heap->bh_arg);
 		if (cmp <= 0)
 			break;
 
 		/*
-		 * Otherwise, swap the node and its parent and go on to check the
-		 * node's new parent.
+		 * Otherwise, swap the parent value with the hole, and go on to check
+		 * the node's new parent.
 		 */
-		swap_nodes(heap, node_off, parent_off);
+		heap->bh_nodes[node_off] = parent_val;
 		node_off = parent_off;
 	}
+	/* Re-fill the hole */
+	heap->bh_nodes[node_off] = node_val;
 }
 
 /*
@@ -263,6 +264,13 @@ sift_up(binaryheap *heap, int node_off)
 static void
 sift_down(binaryheap *heap, int node_off)
 {
+	Datum		node_val = heap->bh_nodes[node_off];
+
+	/*
+	 * Within the loop, the node_off'th array entry is a "hole" that
+	 * notionally holds node_val, but we don't actually store node_val there
+	 * till the end, saving some unnecessary data copying steps.
+	 */
 	while (true)
 	{
 		int			left_off = left_offset(node_off);
@@ -271,14 +279,14 @@ sift_down(binaryheap *heap, int node_off)
 
 		/* Is the left child larger than the parent? */
 		if (left_off < heap->bh_size &&
-			heap->bh_compare(heap->bh_nodes[node_off],
+			heap->bh_compare(node_val,
 							 heap->bh_nodes[left_off],
 							 heap->bh_arg) < 0)
 			swap_off = left_off;
 
 		/* Is the right child larger than the parent? */
 		if (right_off < heap->bh_size &&
-			heap->bh_compare(heap->bh_nodes[node_off],
+			heap->bh_compare(node_val,
 							 heap->bh_nodes[right_off],
 							 heap->bh_arg) < 0)
 		{
@@ -298,10 +306,12 @@ sift_down(binaryheap *heap, int node_off)
 			break;
 
 		/*
-		 * Otherwise, swap the node with the child that violates the heap
+		 * Otherwise, swap the hole with the child that violates the heap
 		 * property; then go on to check its children.
 		 */
-		swap_nodes(heap, swap_off, node_off);
+		heap->bh_nodes[node_off] = heap->bh_nodes[swap_off];
 		node_off = swap_off;
 	}
+	/* Re-fill the hole */
+	heap->bh_nodes[node_off] = node_val;
 }
