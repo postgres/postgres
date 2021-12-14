@@ -904,13 +904,10 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 						StartTransaction(&AH->public);
 
 						/*
-						 * If the server version is >= 8.4, make sure we issue
-						 * TRUNCATE with ONLY so that child tables are not
-						 * wiped.
+						 * Issue TRUNCATE with ONLY so that child tables are
+						 * not wiped.
 						 */
-						ahprintf(AH, "TRUNCATE TABLE %s%s;\n\n",
-								 (PQserverVersion(AH->connection) >= 80400 ?
-								  "ONLY " : ""),
+						ahprintf(AH, "TRUNCATE TABLE ONLY %s;\n\n",
 								 fmtQualifiedId(te->namespace, te->tag));
 					}
 
