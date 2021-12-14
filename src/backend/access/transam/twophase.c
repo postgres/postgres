@@ -1129,7 +1129,6 @@ EndPrepare(GlobalTransaction gxact)
 
 	if (replorigin)
 	{
-		Assert(replorigin_session_origin_lsn != InvalidXLogRecPtr);
 		hdr->origin_lsn = replorigin_session_origin_lsn;
 		hdr->origin_timestamp = replorigin_session_origin_timestamp;
 	}
