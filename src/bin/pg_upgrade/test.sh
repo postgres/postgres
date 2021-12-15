@@ -202,9 +202,6 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 		# update references to old source tree's regress.so etc
 		fix_sql=""
 		case $oldpgversion in
-			804??)
-				fix_sql="UPDATE pg_proc SET probin = replace(probin::text, '$oldsrc', '$newsrc')::bytea WHERE probin LIKE '$oldsrc%';"
-				;;
 			*)
 				fix_sql="UPDATE pg_proc SET probin = replace(probin, '$oldsrc', '$newsrc') WHERE probin LIKE '$oldsrc%';"
 				;;

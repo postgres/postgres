@@ -46,13 +46,10 @@ get_tablespace_paths(void)
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
-			 "SELECT	%s "
+			 "SELECT pg_catalog.pg_tablespace_location(oid) AS spclocation "
 			 "FROM	pg_catalog.pg_tablespace "
 			 "WHERE	spcname != 'pg_default' AND "
-			 "		spcname != 'pg_global'",
-	/* 9.2 removed the spclocation column */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
-			 "spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
+			 "		spcname != 'pg_global'");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -105,15 +102,10 @@ get_tablespace_paths(void)
 static void
 set_tablespace_directory_suffix(ClusterInfo *cluster)
 {
-	if (GET_MAJOR_VERSION(cluster->major_version) <= 804)
-		cluster->tablespace_suffix = pg_strdup("");
-	else
-	{
-		/* This cluster has a version-specific subdirectory */
+	/* This cluster has a version-specific subdirectory */
 
-		/* The leading slash is needed to start a new directory. */
-		cluster->tablespace_suffix = psprintf("/PG_%s_%d",
-											  cluster->major_version_str,
-											  cluster->controldata.cat_ver);
-	}
+	/* The leading slash is needed to start a new directory. */
+	cluster->tablespace_suffix = psprintf("/PG_%s_%d",
+										  cluster->major_version_str,
+										  cluster->controldata.cat_ver);
 }

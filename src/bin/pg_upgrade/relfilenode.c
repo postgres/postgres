@@ -137,16 +137,7 @@ static void
 transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 {
 	int			mapnum;
-	bool		vm_crashsafe_match = true;
 	bool		vm_must_add_frozenbit = false;
-
-	/*
-	 * Do the old and new cluster disagree on the crash-safetiness of the vm
-	 * files?  If so, do not copy them.
-	 */
-	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_CRASHSAFE_CAT_VER &&
-		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
-		vm_crashsafe_match = false;
 
 	/*
 	 * Do we need to rewrite visibilitymap?
@@ -167,8 +158,7 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 			 * Copy/link any fsm and vm files, if they exist
 			 */
 			transfer_relfile(&maps[mapnum], "_fsm", vm_must_add_frozenbit);
-			if (vm_crashsafe_match)
-				transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
+			transfer_relfile(&maps[mapnum], "_vm", vm_must_add_frozenbit);
 		}
 	}
 }
