@@ -1307,6 +1307,8 @@ LSEG
 LUID
 LVDeadTuples
 LVPagePruneState
+LVParallelIndStats
+LVParallelIndVacStatus
 LVParallelState
 LVRelState
 LVSavedErrInfo
