@@ -7519,9 +7519,6 @@ StartupXLOG(void)
 		/* Also ensure XLogReceiptTime has a sane value */
 		XLogReceiptTime = GetCurrentTimestamp();
 
-		/* Allow ProcSendSignal() to find us, for buffer pin wakeups. */
-		PublishStartupProcessInformation();
-
 		/*
 		 * Let postmaster know we've started redo now, so that it can launch
 		 * the archiver if necessary.

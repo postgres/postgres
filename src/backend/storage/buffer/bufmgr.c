@@ -1899,11 +1899,11 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 				BUF_STATE_GET_REFCOUNT(buf_state) == 1)
 			{
 				/* we just released the last pin other than the waiter's */
-				int			wait_backend_pid = buf->wait_backend_pid;
+				int			wait_backend_pgprocno = buf->wait_backend_pgprocno;
 
 				buf_state &= ~BM_PIN_COUNT_WAITER;
 				UnlockBufHdr(buf, buf_state);
-				ProcSendSignal(wait_backend_pid);
+				ProcSendSignal(wait_backend_pgprocno);
 			}
 			else
 				UnlockBufHdr(buf, buf_state);
@@ -3980,7 +3980,7 @@ UnlockBuffers(void)
 		 * got a cancel/die interrupt before getting the signal.
 		 */
 		if ((buf_state & BM_PIN_COUNT_WAITER) != 0 &&
-			buf->wait_backend_pid == MyProcPid)
+			buf->wait_backend_pgprocno == MyProc->pgprocno)
 			buf_state &= ~BM_PIN_COUNT_WAITER;
 
 		UnlockBufHdr(buf, buf_state);
@@ -4116,7 +4116,7 @@ LockBufferForCleanup(Buffer buffer)
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			elog(ERROR, "multiple backends attempting to wait for pincount 1");
 		}
-		bufHdr->wait_backend_pid = MyProcPid;
+		bufHdr->wait_backend_pgprocno = MyProc->pgprocno;
 		PinCountWaitBuf = bufHdr;
 		buf_state |= BM_PIN_COUNT_WAITER;
 		UnlockBufHdr(bufHdr, buf_state);
@@ -4187,7 +4187,7 @@ LockBufferForCleanup(Buffer buffer)
 		 */
 		buf_state = LockBufHdr(bufHdr);
 		if ((buf_state & BM_PIN_COUNT_WAITER) != 0 &&
-			bufHdr->wait_backend_pid == MyProcPid)
+			bufHdr->wait_backend_pgprocno == MyProc->pgprocno)
 			buf_state &= ~BM_PIN_COUNT_WAITER;
 		UnlockBufHdr(bufHdr, buf_state);
 

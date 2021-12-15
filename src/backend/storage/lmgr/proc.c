@@ -177,8 +177,6 @@ InitProcGlobal(void)
 	ProcGlobal->autovacFreeProcs = NULL;
 	ProcGlobal->bgworkerFreeProcs = NULL;
 	ProcGlobal->walsenderFreeProcs = NULL;
-	ProcGlobal->startupProc = NULL;
-	ProcGlobal->startupProcPid = 0;
 	ProcGlobal->startupBufferPinWaitBufId = -1;
 	ProcGlobal->walwriterLatch = NULL;
 	ProcGlobal->checkpointerLatch = NULL;
@@ -622,21 +620,6 @@ InitAuxiliaryProcess(void)
 	 * Arrange to clean up at process exit.
 	 */
 	on_shmem_exit(AuxiliaryProcKill, Int32GetDatum(proctype));
-}
-
-/*
- * Record the PID and PGPROC structures for the Startup process, for use in
- * ProcSendSignal().  See comments there for further explanation.
- */
-void
-PublishStartupProcessInformation(void)
-{
-	SpinLockAcquire(ProcStructLock);
-
-	ProcGlobal->startupProc = MyProc;
-	ProcGlobal->startupProcPid = MyProcPid;
-
-	SpinLockRelease(ProcStructLock);
 }
 
 /*
@@ -1903,38 +1886,15 @@ ProcWaitForSignal(uint32 wait_event_info)
 }
 
 /*
- * ProcSendSignal - send a signal to a backend identified by PID
+ * ProcSendSignal - set the latch of a backend identified by pgprocno
  */
 void
-ProcSendSignal(int pid)
+ProcSendSignal(int pgprocno)
 {
-	PGPROC	   *proc = NULL;
+	if (pgprocno < 0 || pgprocno >= ProcGlobal->allProcCount)
+		elog(ERROR, "pgprocno out of range");
 
-	if (RecoveryInProgress())
-	{
-		SpinLockAcquire(ProcStructLock);
-
-		/*
-		 * Check to see whether it is the Startup process we wish to signal.
-		 * This call is made by the buffer manager when it wishes to wake up a
-		 * process that has been waiting for a pin in so it can obtain a
-		 * cleanup lock using LockBufferForCleanup(). Startup is not a normal
-		 * backend, so BackendPidGetProc() will not return any pid at all. So
-		 * we remember the information for this special case.
-		 */
-		if (pid == ProcGlobal->startupProcPid)
-			proc = ProcGlobal->startupProc;
-
-		SpinLockRelease(ProcStructLock);
-	}
-
-	if (proc == NULL)
-		proc = BackendPidGetProc(pid);
-
-	if (proc != NULL)
-	{
-		SetLatch(&proc->procLatch);
-	}
+	SetLatch(&ProcGlobal->allProcs[pgprocno].procLatch);
 }
 
 /*

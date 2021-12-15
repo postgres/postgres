@@ -359,9 +359,6 @@ typedef struct PROC_HDR
 	Latch	   *checkpointerLatch;
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
-	/* The proc of the Startup process, since not in ProcArray */
-	PGPROC	   *startupProc;
-	int			startupProcPid;
 	/* Buffer id of the buffer that Startup process waits for pin on, or -1 */
 	int			startupBufferPinWaitBufId;
 } PROC_HDR;
@@ -402,7 +399,6 @@ extern void InitProcess(void);
 extern void InitProcessPhase2(void);
 extern void InitAuxiliaryProcess(void);
 
-extern void PublishStartupProcessInformation(void);
 extern void SetStartupBufferPinWaitBufId(int bufid);
 extern int	GetStartupBufferPinWaitBufId(void);
 
@@ -418,7 +414,7 @@ extern bool IsWaitingForLock(void);
 extern void LockErrorCleanup(void);
 
 extern void ProcWaitForSignal(uint32 wait_event_info);
-extern void ProcSendSignal(int pid);
+extern void ProcSendSignal(int pgprocno);
 
 extern PGPROC *AuxiliaryPidGetProc(int pid);
 
