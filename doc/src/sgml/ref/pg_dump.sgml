@@ -387,7 +387,7 @@ PostgreSQL documentation
         but to abort the dump.
        </para>
        <para>
-        For a consistent backup, the database server needs to support
+        To perform a parallel dump, the database server needs to support
         synchronized snapshots, a feature that was introduced in
         <productname>PostgreSQL</productname> 9.2 for primary servers and 10
         for standbys. With this feature, database clients can ensure they see
@@ -927,18 +927,6 @@ PostgreSQL documentation
         faster, but means that a subsequent operating system crash can leave
         the dump corrupt.  Generally, this option is useful for testing
         but should not be used when dumping data from production installation.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--no-synchronized-snapshots</option></term>
-      <listitem>
-       <para>
-        This option allows running <command>pg_dump -j</command> against a
-        pre-v10 standby server, at the cost of possibly producing an
-        inconsistent dump.  See the documentation of the <option>-j</option>
-        parameter for more details.
        </para>
       </listitem>
      </varlistentry>

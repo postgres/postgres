@@ -175,7 +175,6 @@ typedef struct _dumpOptions
 	int			no_security_labels;
 	int			no_publications;
 	int			no_subscriptions;
-	int			no_synchronized_snapshots;
 	int			no_toast_compression;
 	int			no_unlogged_table_data;
 	int			serializable_deferrable;
