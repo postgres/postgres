@@ -171,7 +171,7 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 
 		/* If we called lookup_rowtype_tupdesc, release the pin it took */
 		if (type_id == RECORDOID)
-			DecrTupleDescRefCount(tupdesc);
+			ReleaseTupleDesc(tupdesc);
 	}
 	else
 	{
@@ -854,7 +854,7 @@ expanded_record_fetch_tupdesc(ExpandedRecordHeader *erh)
 		tupdesc->tdrefcount++;
 
 		/* Release the pin lookup_rowtype_tupdesc acquired */
-		DecrTupleDescRefCount(tupdesc);
+		ReleaseTupleDesc(tupdesc);
 	}
 	else
 	{
