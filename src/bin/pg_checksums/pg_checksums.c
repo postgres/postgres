@@ -192,7 +192,7 @@ skipfile(const char *fn)
 }
 
 static void
-scan_file(const char *fn, BlockNumber segmentno)
+scan_file(const char *fn, int segmentno)
 {
 	PGAlignedBlock buf;
 	PageHeader	header = (PageHeader) buf.data;
@@ -370,7 +370,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 			char		fnonly[MAXPGPATH];
 			char	   *forkpath,
 					   *segmentpath;
-			BlockNumber segmentno = 0;
+			int			segmentno = 0;
 
 			if (skipfile(de->d_name))
 				continue;
