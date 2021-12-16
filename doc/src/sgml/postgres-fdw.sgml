@@ -936,6 +936,16 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       Note that change of this parameter doesn't affect any existing
       connections until they are re-established.
      </para>
+     <para>
+      <varname>postgres_fdw.application_name</varname> can be any string
+      of any length and contain even non-ASCII characters.  However when
+      it's passed to and used as <varname>application_name</varname>
+      in a foreign server, note that it will be truncated to less than
+      <symbol>NAMEDATALEN</symbol> characters and any characters other
+      than printable ASCII ones in it will be replaced with question
+      marks (<literal>?</literal>).
+      See <xref linkend="guc-application-name"/> for details.
+     </para>
     </listitem>
    </varlistentry>
   </variablelist>
