@@ -993,7 +993,7 @@ Query_for_index_of_table \
 
 /*
  * These object types were introduced later than our support cutoff of
- * server version 7.4.  We use the VersionedQuery infrastructure so that
+ * server version 9.2.  We use the VersionedQuery infrastructure so that
  * we don't send certain-to-fail queries to older servers.
  */
 
@@ -2911,7 +2911,7 @@ psql_completion(const char *text, int start, int end)
 			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM"))
 		COMPLETE_WITH("FOR");
 	else if (Matches("CREATE", "TRANSFORM", "FOR") ||
-			 Matches("CREATE","OR", "REPLACE", "TRANSFORM", "FOR"))
+			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM", "FOR"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 	else if (Matches("CREATE", "TRANSFORM", "FOR", MatchAny) ||
 			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM", "FOR", MatchAny))
