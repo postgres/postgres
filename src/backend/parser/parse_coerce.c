@@ -766,7 +766,15 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 	if (hideInputCoercion)
 		hide_coercion_node(node);
 
-	pathtype = find_typmod_coercion_function(targetTypeId, &funcId);
+	/*
+	 * A negative typmod means that no actual coercion is needed, but we still
+	 * want a RelabelType to ensure that the expression exposes the intended
+	 * typmod.
+	 */
+	if (targetTypMod < 0)
+		pathtype = COERCION_PATH_NONE;
+	else
+		pathtype = find_typmod_coercion_function(targetTypeId, &funcId);
 
 	if (pathtype != COERCION_PATH_NONE)
 	{

@@ -84,6 +84,22 @@ create view numeric_view as
 
 explain (verbose, costs off) select * from numeric_view;
 
+-- bpchar, lacking planner support for its length coercion function,
+-- could behave differently
+
+create table bpchar_tbl (f1 character(16) unique, f2 bpchar);
+
+create view bpchar_view as
+  select
+    f1, f1::character(14) as f114, f1::bpchar as f1n,
+    f2, f2::character(14) as f214, f2::bpchar as f2n
+  from bpchar_tbl;
+
+\d+ bpchar_view
+
+explain (verbose, costs off) select * from bpchar_view
+  where f1::bpchar = 'foo';
+
 rollback;
 
 
