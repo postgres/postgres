@@ -149,9 +149,6 @@ typedef struct _dumpableObject
 /*
  * Object types that have ACLs must store them in a DumpableAcl sub-struct,
  * which must immediately follow the DumpableObject base struct.
- *
- * Note: when dumping from a pre-9.2 server, which lacks the acldefault()
- * function, acldefault will be NULL or empty.
  */
 typedef struct _dumpableAcl
 {

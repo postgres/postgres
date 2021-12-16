@@ -11444,19 +11444,17 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 
 	/*
 	 * See backend/commands/functioncmds.c for details of how the 'AS' clause
-	 * is used.  In 8.4 and up, an unused probin is NULL (here ""); previous
-	 * versions would set it to "-".  There are no known cases in which prosrc
-	 * is unused, so the tests below for "-" are probably useless.
+	 * is used.
 	 */
 	if (prosqlbody)
 	{
 		appendPQExpBufferStr(asPart, prosqlbody);
 	}
-	else if (probin[0] != '\0' && strcmp(probin, "-") != 0)
+	else if (probin[0] != '\0')
 	{
 		appendPQExpBufferStr(asPart, "AS ");
 		appendStringLiteralAH(asPart, probin, fout);
-		if (strcmp(prosrc, "-") != 0)
+		if (prosrc[0] != '\0')
 		{
 			appendPQExpBufferStr(asPart, ", ");
 
@@ -11473,15 +11471,12 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	}
 	else
 	{
-		if (strcmp(prosrc, "-") != 0)
-		{
-			appendPQExpBufferStr(asPart, "AS ");
-			/* with no bin, dollar quote src unconditionally if allowed */
-			if (dopt->disable_dollar_quoting)
-				appendStringLiteralAH(asPart, prosrc, fout);
-			else
-				appendStringLiteralDQ(asPart, prosrc, NULL);
-		}
+		appendPQExpBufferStr(asPart, "AS ");
+		/* with no bin, dollar quote src unconditionally if allowed */
+		if (dopt->disable_dollar_quoting)
+			appendStringLiteralAH(asPart, prosrc, fout);
+		else
+			appendStringLiteralDQ(asPart, prosrc, NULL);
 	}
 
 	nallargs = finfo->nargs;	/* unless we learn different from allargs */

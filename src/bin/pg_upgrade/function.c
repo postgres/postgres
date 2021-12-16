@@ -55,7 +55,6 @@ get_loadable_libraries(void)
 	PGresult  **ress;
 	int			totaltups;
 	int			dbnum;
-	bool		found_public_plpython_handler = false;
 
 	ress = (PGresult **) pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
@@ -79,67 +78,8 @@ get_loadable_libraries(void)
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
-		/*
-		 * Systems that install plpython before 8.1 have
-		 * plpython_call_handler() defined in the "public" schema, causing
-		 * pg_dump to dump it.  However that function still references
-		 * "plpython" (no "2"), so it throws an error on restore.  This code
-		 * checks for the problem function, reports affected databases to the
-		 * user and explains how to remove them. 8.1 git commit:
-		 * e0dedd0559f005d60c69c9772163e69c204bac69
-		 * http://archives.postgresql.org/pgsql-hackers/2012-03/msg01101.php
-		 * http://archives.postgresql.org/pgsql-bugs/2012-05/msg00206.php
-		 */
-		if (GET_MAJOR_VERSION(old_cluster.major_version) <= 900)
-		{
-			PGresult   *res;
-
-			res = executeQueryOrDie(conn,
-									"SELECT 1 "
-									"FROM pg_catalog.pg_proc p "
-									"    JOIN pg_catalog.pg_namespace n "
-									"    ON pronamespace = n.oid "
-									"WHERE proname = 'plpython_call_handler' AND "
-									"nspname = 'public' AND "
-									"prolang = %u AND "
-									"probin = '$libdir/plpython' AND "
-									"p.oid >= %u;",
-									ClanguageId,
-									FirstNormalObjectId);
-			if (PQntuples(res) > 0)
-			{
-				if (!found_public_plpython_handler)
-				{
-					pg_log(PG_WARNING,
-						   "\nThe old cluster has a \"plpython_call_handler\" function defined\n"
-						   "in the \"public\" schema which is a duplicate of the one defined\n"
-						   "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
-						   "in psql:\n"
-						   "\n"
-						   "    \\df *.plpython_call_handler\n"
-						   "\n"
-						   "The \"public\" schema version of this function was created by a\n"
-						   "pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
-						   "to complete because it references a now-obsolete \"plpython\"\n"
-						   "shared object file.  You can remove the \"public\" schema version\n"
-						   "of this function by running the following command:\n"
-						   "\n"
-						   "    DROP FUNCTION public.plpython_call_handler()\n"
-						   "\n"
-						   "in each affected database:\n"
-						   "\n");
-				}
-				pg_log(PG_WARNING, "    %s\n", active_db->db_name);
-				found_public_plpython_handler = true;
-			}
-			PQclear(res);
-		}
-
 		PQfinish(conn);
 	}
-
-	if (found_public_plpython_handler)
-		pg_fatal("Remove the problem functions from the old cluster to continue.\n");
 
 	os_info.libraries = (LibraryInfo *) pg_malloc(totaltups * sizeof(LibraryInfo));
 	totaltups = 0;
@@ -209,22 +149,6 @@ check_loadable_libraries(void)
 		/* Did the library name change?  Probe it. */
 		if (libnum == 0 || strcmp(lib, os_info.libraries[libnum - 1].name) != 0)
 		{
-			/*
-			 * In Postgres 9.0, Python 3 support was added, and to do that, a
-			 * plpython2u language was created with library name plpython2.so
-			 * as a symbolic link to plpython.so.  In Postgres 9.1, only the
-			 * plpython2.so library was created, and both plpythonu and
-			 * plpython2u point to it.  For this reason, any reference to
-			 * library name "plpython" in an old PG <= 9.1 cluster must look
-			 * for "plpython2" in the new cluster.
-			 */
-			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 900 &&
-				strcmp(lib, "$libdir/plpython") == 0)
-			{
-				lib = "$libdir/plpython2";
-				llen = strlen(lib);
-			}
-
 			strcpy(cmd, "LOAD '");
 			PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
 			strcat(cmd, "'");

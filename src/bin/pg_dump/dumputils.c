@@ -39,8 +39,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *		TABLE, SEQUENCE, FUNCTION, PROCEDURE, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
  *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT)
  *	acls: the ACL string fetched from the database
- *	baseacls: the initial ACL string for this object; can be
- *		NULL or empty string to indicate "not available from server"
+ *	baseacls: the initial ACL string for this object
  *	owner: username of object owner (will be passed through fmtId); can be
  *		NULL or empty string to indicate "no owner known"
  *	prefix: string to prefix to each generated command; typically empty
@@ -104,17 +103,14 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 		return false;
 	}
 
-	/* Parse the baseacls, if provided */
-	if (baseacls && *baseacls != '\0')
+	/* Parse the baseacls too */
+	if (!parsePGArray(baseacls, &baseitems, &nbaseitems))
 	{
-		if (!parsePGArray(baseacls, &baseitems, &nbaseitems))
-		{
-			if (aclitems)
-				free(aclitems);
-			if (baseitems)
-				free(baseitems);
-			return false;
-		}
+		if (aclitems)
+			free(aclitems);
+		if (baseitems)
+			free(baseitems);
+		return false;
 	}
 
 	/*
