@@ -295,12 +295,12 @@ parse_snapshot(const char *str)
 	char	   *endp;
 	StringInfo	buf;
 
-	xmin = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
+	xmin = FullTransactionIdFromU64(strtou64(str, &endp, 10));
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
 
-	xmax = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
+	xmax = FullTransactionIdFromU64(strtou64(str, &endp, 10));
 	if (*endp != ':')
 		goto bad_format;
 	str = endp + 1;
@@ -318,7 +318,7 @@ parse_snapshot(const char *str)
 	while (*str != '\0')
 	{
 		/* read next value */
-		val = FullTransactionIdFromU64(pg_strtouint64(str, &endp, 10));
+		val = FullTransactionIdFromU64(strtou64(str, &endp, 10));
 		str = endp;
 
 		/* require the input to be in order */

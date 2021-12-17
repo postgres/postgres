@@ -158,7 +158,7 @@ xid8in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_FULLTRANSACTIONID(FullTransactionIdFromU64(pg_strtouint64(str, NULL, 0)));
+	PG_RETURN_FULLTRANSACTIONID(FullTransactionIdFromU64(strtou64(str, NULL, 0)));
 }
 
 Datum
