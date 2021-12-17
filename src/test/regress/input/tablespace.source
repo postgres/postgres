@@ -388,7 +388,7 @@ CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE regress_tblspace;
 ALTER TABLE testschema.tablespace_acl OWNER TO regress_tablespace_user2;
 
 SET SESSION ROLE regress_tablespace_user2;
-CREATE TEMP TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
+CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
 ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 REINDEX (TABLESPACE regress_tblspace) TABLE tablespace_table; -- fail
 REINDEX (TABLESPACE regress_tblspace, CONCURRENTLY) TABLE tablespace_table; -- fail
@@ -409,6 +409,3 @@ DROP SCHEMA testschema CASCADE;
 
 DROP ROLE regress_tablespace_user1;
 DROP ROLE regress_tablespace_user2;
-
--- Rest of this suite can use the public schema freely.
-GRANT ALL ON SCHEMA public TO public;
