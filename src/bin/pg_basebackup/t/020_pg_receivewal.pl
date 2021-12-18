@@ -39,7 +39,7 @@ $primary->command_fails_like(
 		'--compress',    '1'
 	],
 	qr/\Qpg_receivewal: error: cannot use --compress with --compression-method=none/,
-	'failure if --compress spwcified with --compression-method=none');
+	'failure if --compress specified with --compression-method=none');
 
 # Slot creation and drop
 my $slot_name = 'test';
