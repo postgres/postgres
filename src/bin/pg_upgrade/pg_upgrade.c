@@ -169,11 +169,14 @@ main(int argc, char **argv)
 			  new_cluster.pgdata);
 	check_ok();
 
-	prep_status("Sync data directory to disk");
-	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
-			  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
-			  new_cluster.pgdata);
-	check_ok();
+	if (user_opts.do_sync)
+	{
+		prep_status("Sync data directory to disk");
+		exec_prog(UTILITY_LOG_FILE, NULL, true, true,
+				  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
+				  new_cluster.pgdata);
+		check_ok();
+	}
 
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 

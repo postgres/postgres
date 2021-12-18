@@ -43,6 +43,7 @@ parseCommandLine(int argc, char *argv[])
 		{"new-datadir", required_argument, NULL, 'D'},
 		{"old-bindir", required_argument, NULL, 'b'},
 		{"new-bindir", required_argument, NULL, 'B'},
+		{"no-sync", no_argument, NULL, 'N'},
 		{"old-options", required_argument, NULL, 'o'},
 		{"new-options", required_argument, NULL, 'O'},
 		{"old-port", required_argument, NULL, 'p'},
@@ -66,6 +67,7 @@ parseCommandLine(int argc, char *argv[])
 	char	  **filename;
 	time_t		run_time = time(NULL);
 
+	user_opts.do_sync = true;
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
 	os_info.progname = get_progname(argv[0]);
@@ -101,7 +103,7 @@ parseCommandLine(int argc, char *argv[])
 	if (os_user_effective_id == 0)
 		pg_fatal("%s: cannot be run as root\n", os_info.progname);
 
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rs:U:v",
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:kNo:O:p:P:rs:U:v",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -132,6 +134,10 @@ parseCommandLine(int argc, char *argv[])
 
 			case 'k':
 				user_opts.transfer_mode = TRANSFER_MODE_LINK;
+				break;
+
+			case 'N':
+				user_opts.do_sync = false;
 				break;
 
 			case 'o':
@@ -286,6 +292,7 @@ usage(void)
 	printf(_("  -D, --new-datadir=DATADIR     new cluster data directory\n"));
 	printf(_("  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"));
 	printf(_("  -k, --link                    link instead of copying files to new cluster\n"));
+	printf(_("  -N, --no-sync                 do not wait for changes to be written safely to disk\n"));
 	printf(_("  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"));
 	printf(_("  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"));
 	printf(_("  -p, --old-port=PORT           old cluster port number (default %d)\n"), old_cluster.port);
