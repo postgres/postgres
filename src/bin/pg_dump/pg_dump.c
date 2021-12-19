@@ -11305,9 +11305,6 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	char	   *funcargs;
 	char	   *funciargs;
 	char	   *funcresult;
-	char	   *proallargtypes;
-	char	   *proargmodes;
-	char	   *proargnames;
 	char	   *protrftypes;
 	char	   *prokind;
 	char	   *provolatile;
@@ -11320,10 +11317,6 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	char	   *prosupport;
 	char	   *proparallel;
 	char	   *lanname;
-	int			nallargs;
-	char	  **allargtypes = NULL;
-	char	  **argmodes = NULL;
-	char	  **argnames = NULL;
 	char	  **configitems = NULL;
 	int			nconfigitems = 0;
 	const char *keyword;
@@ -11364,6 +11357,9 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		if (fout->remoteVersion >= 90500)
 			appendPQExpBufferStr(query,
 								 "array_to_string(protrftypes, ' ') AS protrftypes,\n");
+		else
+			appendPQExpBufferStr(query,
+								 "NULL AS protrftypes,\n");
 
 		if (fout->remoteVersion >= 90600)
 			appendPQExpBufferStr(query,
@@ -11425,11 +11421,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
 	funciargs = PQgetvalue(res, 0, PQfnumber(res, "funciargs"));
 	funcresult = PQgetvalue(res, 0, PQfnumber(res, "funcresult"));
-	proallargtypes = proargmodes = proargnames = NULL;
-	if (PQfnumber(res, "protrftypes") != -1)
-		protrftypes = PQgetvalue(res, 0, PQfnumber(res, "protrftypes"));
-	else
-		protrftypes = NULL;
+	protrftypes = PQgetvalue(res, 0, PQfnumber(res, "protrftypes"));
 	prokind = PQgetvalue(res, 0, PQfnumber(res, "prokind"));
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
@@ -11479,53 +11471,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 			appendStringLiteralDQ(asPart, prosrc, NULL);
 	}
 
-	nallargs = finfo->nargs;	/* unless we learn different from allargs */
-
-	if (proallargtypes && *proallargtypes)
-	{
-		int			nitems = 0;
-
-		if (!parsePGArray(proallargtypes, &allargtypes, &nitems) ||
-			nitems < finfo->nargs)
-		{
-			pg_log_warning("could not parse %s array", "proallargtypes");
-			if (allargtypes)
-				free(allargtypes);
-			allargtypes = NULL;
-		}
-		else
-			nallargs = nitems;
-	}
-
-	if (proargmodes && *proargmodes)
-	{
-		int			nitems = 0;
-
-		if (!parsePGArray(proargmodes, &argmodes, &nitems) ||
-			nitems != nallargs)
-		{
-			pg_log_warning("could not parse %s array", "proargmodes");
-			if (argmodes)
-				free(argmodes);
-			argmodes = NULL;
-		}
-	}
-
-	if (proargnames && *proargnames)
-	{
-		int			nitems = 0;
-
-		if (!parsePGArray(proargnames, &argnames, &nitems) ||
-			nitems != nallargs)
-		{
-			pg_log_warning("could not parse %s array", "proargnames");
-			if (argnames)
-				free(argnames);
-			argnames = NULL;
-		}
-	}
-
-	if (proconfig && *proconfig)
+	if (*proconfig)
 	{
 		if (!parsePGArray(proconfig, &configitems, &nconfigitems))
 			fatal("could not parse %s array", "proconfig");
@@ -11571,7 +11517,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 
-	if (protrftypes != NULL && strcmp(protrftypes, "") != 0)
+	if (*protrftypes)
 	{
 		Oid		   *typeids = palloc(FUNC_MAX_ARGS * sizeof(Oid));
 		int			i;
@@ -11749,12 +11695,6 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 		free(funcfullsig);
 	free(funcsig_tag);
 	free(qual_funcsig);
-	if (allargtypes)
-		free(allargtypes);
-	if (argmodes)
-		free(argmodes);
-	if (argnames)
-		free(argnames);
 	if (configitems)
 		free(configitems);
 }

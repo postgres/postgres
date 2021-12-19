@@ -122,10 +122,6 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	 * strings are the work of aclitemout(), it should be OK in practice.
 	 * Besides, a false mismatch will just cause the output to be a little
 	 * more verbose than it really needed to be.
-	 *
-	 * (If we weren't given a base ACL, this stanza winds up with all the
-	 * ACL's items in grantitems and nothing in revokeitems.  It's not worth
-	 * special-casing that.)
 	 */
 	grantitems = (char **) pg_malloc(naclitems * sizeof(char *));
 	for (i = 0; i < naclitems; i++)
@@ -173,60 +169,30 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	secondsql = createPQExpBuffer();
 
 	/*
-	 * If we weren't given baseacls information, we just revoke everything and
-	 * then grant what's listed in the ACL.  This avoids having to embed
-	 * detailed knowledge about what the defaults are/were, and it's not very
-	 * expensive since servers lacking acldefault() are now rare.
-	 *
-	 * Otherwise, we need only revoke what's listed in revokeitems.
+	 * Build REVOKE statements for ACLs listed in revokeitems[].
 	 */
-	if (baseacls == NULL || *baseacls == '\0')
+	for (i = 0; i < nrevokeitems; i++)
 	{
-		/* We assume the old defaults only involved the owner and PUBLIC */
-		appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
-		if (subname)
-			appendPQExpBuffer(firstsql, "(%s)", subname);
-		appendPQExpBuffer(firstsql, " ON %s ", type);
-		if (nspname && *nspname)
-			appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-		appendPQExpBuffer(firstsql, "%s FROM PUBLIC;\n", name);
-		if (owner)
+		if (!parseAclItem(revokeitems[i],
+						  type, name, subname, remoteVersion,
+						  grantee, grantor, privs, NULL))
 		{
-			appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
-			if (subname)
-				appendPQExpBuffer(firstsql, "(%s)", subname);
-			appendPQExpBuffer(firstsql, " ON %s ", type);
+			ok = false;
+			break;
+		}
+
+		if (privs->len > 0)
+		{
+			appendPQExpBuffer(firstsql, "%sREVOKE %s ON %s ",
+							  prefix, privs->data, type);
 			if (nspname && *nspname)
 				appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-			appendPQExpBuffer(firstsql, "%s FROM %s;\n", name, fmtId(owner));
-		}
-	}
-	else
-	{
-		/* Scan individual REVOKE ACL items */
-		for (i = 0; i < nrevokeitems; i++)
-		{
-			if (!parseAclItem(revokeitems[i],
-							  type, name, subname, remoteVersion,
-							  grantee, grantor, privs, NULL))
-			{
-				ok = false;
-				break;
-			}
-
-			if (privs->len > 0)
-			{
-				appendPQExpBuffer(firstsql, "%sREVOKE %s ON %s ",
-								  prefix, privs->data, type);
-				if (nspname && *nspname)
-					appendPQExpBuffer(firstsql, "%s.", fmtId(nspname));
-				appendPQExpBuffer(firstsql, "%s FROM ", name);
-				if (grantee->len == 0)
-					appendPQExpBufferStr(firstsql, "PUBLIC;\n");
-				else
-					appendPQExpBuffer(firstsql, "%s;\n",
-									  fmtId(grantee->data));
-			}
+			appendPQExpBuffer(firstsql, "%s FROM ", name);
+			if (grantee->len == 0)
+				appendPQExpBufferStr(firstsql, "PUBLIC;\n");
+			else
+				appendPQExpBuffer(firstsql, "%s;\n",
+								  fmtId(grantee->data));
 		}
 	}
 
