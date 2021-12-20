@@ -7353,10 +7353,26 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 <!-- end re_syntax.n man page -->
 
    <sect3 id="posix-vs-xquery">
-   <title>Differences from XQuery (<literal>LIKE_REGEX</literal>)</title>
+   <title>Differences from SQL Standard and XQuery</title>
 
    <indexterm zone="posix-vs-xquery">
-    <primary><literal>LIKE_REGEX</literal></primary>
+    <primary>LIKE_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>OCCURRENCES_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>POSITION_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>SUBSTRING_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>TRANSLATE_REGEX</primary>
    </indexterm>
 
    <indexterm zone="posix-vs-xquery">
@@ -7364,16 +7380,75 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    </indexterm>
 
     <para>
-     Since SQL:2008, the SQL standard includes
-     a <literal>LIKE_REGEX</literal> operator that performs pattern
+     Since SQL:2008, the SQL standard includes regular expression operators
+     and functions that performs pattern
      matching according to the XQuery regular expression
-     standard.  <productname>PostgreSQL</productname> does not yet
-     implement this operator, but you can get very similar behavior using
-     the <function>regexp_match()</function> function, since XQuery
-     regular expressions are quite close to the ARE syntax described above.
+     standard:
+     <itemizedlist>
+      <listitem><para><literal>LIKE_REGEX</literal></para></listitem>
+      <listitem><para><literal>OCCURRENCES_REGEX</literal></para></listitem>
+      <listitem><para><literal>POSITION_REGEX</literal></para></listitem>
+      <listitem><para><literal>SUBSTRING_REGEX</literal></para></listitem>
+      <listitem><para><literal>TRANSLATE_REGEX</literal></para></listitem>
+     </itemizedlist>
+     <productname>PostgreSQL</productname> does not currently implement these
+     operators and functions.  You can get approximately equivalent
+     functionality in each case as shown in <xref
+     linkend="functions-regexp-sql-table"/>.  (Various optional clauses on
+     both sides have been omitted in this table.)
+    </para>
+
+    <table id="functions-regexp-sql-table">
+     <title>Regular Expression Functions Equivalencies</title>
+
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>SQL standard</entry>
+        <entry>PostgreSQL</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal><replaceable>string</replaceable> LIKE_REGEX <replaceable>pattern</replaceable></literal></entry>
+        <entry><literal>regexp_like(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal> or <literal><replaceable>string</replaceable> ~ <replaceable>pattern</replaceable></literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable></literal></entry>
+        <entry><literal>regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>)</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+     Regular expression functions similar to those provided by PostgreSQL are
+     also available in a number of other SQL implementations, whereas the
+     SQL-standard functions are not as widely implemented.  Some of the
+     details of the regular expression syntax will likely differ in each
+     implementation.
     </para>
 
     <para>
+     The SQL-standard operators and functions use XQuery regular expressions,
+     which are quite close to the ARE syntax described above.
      Notable differences between the existing POSIX-based
      regular-expression feature and XQuery regular expressions include:
 

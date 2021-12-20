@@ -323,11 +323,11 @@ F821	Local table references			NO
 F831	Full cursor update			NO	
 F831	Full cursor update	01	Updatable scrollable cursors	NO	
 F831	Full cursor update	02	Updatable ordered cursors	NO	
-F841	LIKE_REGEX predicate			NO	
-F842	OCCURRENCES_REGEX function			NO	
-F843	POSITION_REGEX function			NO	
-F844	SUBSTRING_REGEX function			NO	
-F845	TRANSLATE_REGEX function			NO	
+F841	LIKE_REGEX predicate			NO	consider regexp_like()
+F842	OCCURRENCES_REGEX function			NO	consider regexp_matches()
+F843	POSITION_REGEX function			NO	consider regexp_instr()
+F844	SUBSTRING_REGEX function			NO	consider regexp_substr()
+F845	TRANSLATE_REGEX function			NO	consider regexp_replace()
 F846	Octet support in regular expression operators			NO	
 F847	Nonconstant regular expressions			NO	
 F850	Top-level <order by clause> in <query expression>			YES	
