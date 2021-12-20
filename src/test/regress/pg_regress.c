@@ -746,6 +746,14 @@ initialize_environment(void)
 	 */
 	setenv("PGAPPNAME", "pg_regress", 1);
 
+	/*
+	 * Set variables that the test scripts may need to refer to.
+	 */
+	setenv("PG_ABS_SRCDIR", inputdir, 1);
+	setenv("PG_ABS_BUILDDIR", outputdir, 1);
+	setenv("PG_LIBDIR", dlpath, 1);
+	setenv("PG_DLSUFFIX", DLSUFFIX, 1);
+
 	if (nolocale)
 	{
 		/*

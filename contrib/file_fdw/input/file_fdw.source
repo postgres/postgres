@@ -2,6 +2,9 @@
 -- Test foreign-data wrapper file_fdw.
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
 -- Clean up in case a prior regression run failed
 SET client_min_messages TO 'warning';
 DROP ROLE IF EXISTS regress_file_fdw_superuser, regress_file_fdw_user, regress_no_priv_user;
@@ -13,6 +16,22 @@ CREATE ROLE regress_no_priv_user LOGIN;                 -- has priv but no user 
 
 -- Install file_fdw
 CREATE EXTENSION file_fdw;
+
+-- create function to filter unstable results of EXPLAIN
+CREATE FUNCTION explain_filter(text) RETURNS setof text
+LANGUAGE plpgsql AS
+$$
+declare
+    ln text;
+begin
+    for ln in execute $1
+    loop
+        -- Remove the path portion of foreign file names
+        ln := regexp_replace(ln, 'Foreign File: .*/([a-z.]+)$', 'Foreign File: .../\1');
+        return next ln;
+    end loop;
+end;
+$$;
 
 -- regress_file_fdw_superuser owns fdw-related objects
 SET ROLE regress_file_fdw_superuser;
@@ -61,33 +80,39 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 ');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 
+\set filename :abs_srcdir '/data/agg.data'
 CREATE FOREIGN TABLE agg_text (
 	a	int2 CHECK (a >= 0),
 	b	float4
 ) SERVER file_server
-OPTIONS (format 'text', filename '@abs_srcdir@/data/agg.data', delimiter '	', null '\N');
+OPTIONS (format 'text', filename :'filename', delimiter '	', null '\N');
 GRANT SELECT ON agg_text TO regress_file_fdw_user;
+
+\set filename :abs_srcdir '/data/agg.csv'
 CREATE FOREIGN TABLE agg_csv (
 	a	int2,
 	b	float4
 ) SERVER file_server
-OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+OPTIONS (format 'csv', filename :'filename', header 'true', delimiter ';', quote '@', escape '"', null '');
 ALTER FOREIGN TABLE agg_csv ADD CHECK (a >= 0);
+
+\set filename :abs_srcdir '/data/agg.bad'
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
 ) SERVER file_server
-OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', delimiter ';', quote '@', escape '"', null '');
+OPTIONS (format 'csv', filename :'filename', header 'true', delimiter ';', quote '@', escape '"', null '');
 ALTER FOREIGN TABLE agg_bad ADD CHECK (a >= 0);
 
 -- per-column options tests
+\set filename :abs_srcdir '/data/text.csv'
 CREATE FOREIGN TABLE text_csv (
     word1 text OPTIONS (force_not_null 'true'),
     word2 text OPTIONS (force_not_null 'off'),
     word3 text OPTIONS (force_null 'true'),
     word4 text OPTIONS (force_null 'off')
 ) SERVER file_server
-OPTIONS (format 'text', filename '@abs_srcdir@/data/text.csv', null 'NULL');
+OPTIONS (format 'text', filename :'filename', null 'NULL');
 SELECT * FROM text_csv; -- ERROR
 ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
 \pset null _null_
@@ -119,7 +144,7 @@ SELECT * FROM agg_bad;               -- ERROR
 
 -- misc query tests
 \t on
-EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
+SELECT explain_filter('EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv');
 \t off
 PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
 EXECUTE st(100);
@@ -143,12 +168,12 @@ COPY agg_csv FROM STDIN;
 
 -- constraint exclusion tests
 \t on
-EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
+SELECT explain_filter('EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0');
 \t off
 SELECT * FROM agg_csv WHERE a < 0;
 SET constraint_exclusion = 'on';
 \t on
-EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0;
+SELECT explain_filter('EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0');
 \t off
 SELECT * FROM agg_csv WHERE a < 0;
 RESET constraint_exclusion;
@@ -170,14 +195,17 @@ DROP TABLE agg;
 -- declarative partitioning tests
 SET ROLE regress_file_fdw_superuser;
 CREATE TABLE pt (a int, b text) partition by list (a);
+\set filename :abs_srcdir '/data/list1.csv'
 CREATE FOREIGN TABLE p1 partition of pt for values in (1) SERVER file_server
-OPTIONS (format 'csv', filename '@abs_srcdir@/data/list1.csv', delimiter ',');
+OPTIONS (format 'csv', filename :'filename', delimiter ',');
 CREATE TABLE p2 partition of pt for values in (2);
 SELECT tableoid::regclass, * FROM pt;
 SELECT tableoid::regclass, * FROM p1;
 SELECT tableoid::regclass, * FROM p2;
-COPY pt FROM '@abs_srcdir@/data/list2.bad' with (format 'csv', delimiter ','); -- ERROR
-COPY pt FROM '@abs_srcdir@/data/list2.csv' with (format 'csv', delimiter ',');
+\set filename :abs_srcdir '/data/list2.bad'
+COPY pt FROM :'filename' with (format 'csv', delimiter ','); -- ERROR
+\set filename :abs_srcdir '/data/list2.csv'
+COPY pt FROM :'filename' with (format 'csv', delimiter ',');
 SELECT tableoid::regclass, * FROM pt;
 SELECT tableoid::regclass, * FROM p1;
 SELECT tableoid::regclass, * FROM p2;
@@ -190,8 +218,9 @@ SELECT tableoid::regclass, * FROM p2;
 DROP TABLE pt;
 
 -- generated column tests
+\set filename :abs_srcdir '/data/list1.csv'
 CREATE FOREIGN TABLE gft1 (a int, b text, c text GENERATED ALWAYS AS ('foo') STORED) SERVER file_server
-OPTIONS (format 'csv', filename '@abs_srcdir@/data/list1.csv', delimiter ',');
+OPTIONS (format 'csv', filename :'filename', delimiter ',');
 SELECT a, c FROM gft1;
 DROP FOREIGN TABLE gft1;
 
@@ -204,7 +233,7 @@ SET ROLE regress_no_priv_user;
 SELECT * FROM agg_text ORDER BY a;   -- ERROR
 SET ROLE regress_file_fdw_user;
 \t on
-EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
+SELECT explain_filter('EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0');
 \t off
 -- file FDW allows foreign tables to be accessed without user mapping
 DROP USER MAPPING FOR regress_file_fdw_user SERVER file_server;

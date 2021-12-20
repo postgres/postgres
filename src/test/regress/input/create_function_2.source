@@ -1,6 +1,14 @@
 --
 -- CREATE_FUNCTION_2
 --
+
+-- directory path and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+
 CREATE FUNCTION hobbies(person)
    RETURNS setof hobbies_r
    AS 'select * from hobbies_r where person = $1.name'
@@ -64,25 +72,25 @@ CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
 
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT;
 
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT;
 
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT;
 
 CREATE FUNCTION reverse_name(name)
    RETURNS name
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT;
 
 --
 -- Function dynamic loading
 --
-LOAD '@libdir@/regress@DLSUFFIX@';
+LOAD :'regresslib';

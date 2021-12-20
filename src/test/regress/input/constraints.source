@@ -8,6 +8,9 @@
 --  - EXCLUDE clauses
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
 --
 -- DEFAULT syntax
 --
@@ -239,11 +242,13 @@ CREATE TABLE COPY_TBL (x INT, y TEXT, z INT,
 	CONSTRAINT COPY_CON
 	CHECK (x > 3 AND y <> 'check failed' AND x < 7 ));
 
-COPY COPY_TBL FROM '@abs_srcdir@/data/constro.data';
+\set filename :abs_srcdir '/data/constro.data'
+COPY COPY_TBL FROM :'filename';
 
 SELECT * FROM COPY_TBL;
 
-COPY COPY_TBL FROM '@abs_srcdir@/data/constrf.data';
+\set filename :abs_srcdir '/data/constrf.data'
+COPY COPY_TBL FROM :'filename';
 
 SELECT * FROM COPY_TBL;
 

@@ -7,6 +7,8 @@
 --  - UNIQUE clauses
 --  - EXCLUDE clauses
 --
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
 --
 -- DEFAULT syntax
 --
@@ -346,7 +348,8 @@ SELECT * FROM INSERT_TBL;
 CREATE TABLE COPY_TBL (x INT, y TEXT, z INT,
 	CONSTRAINT COPY_CON
 	CHECK (x > 3 AND y <> 'check failed' AND x < 7 ));
-COPY COPY_TBL FROM '@abs_srcdir@/data/constro.data';
+\set filename :abs_srcdir '/data/constro.data'
+COPY COPY_TBL FROM :'filename';
 SELECT * FROM COPY_TBL;
  x |       y       | z 
 ---+---------------+---
@@ -354,7 +357,8 @@ SELECT * FROM COPY_TBL;
  6 | OK            | 4
 (2 rows)
 
-COPY COPY_TBL FROM '@abs_srcdir@/data/constrf.data';
+\set filename :abs_srcdir '/data/constrf.data'
+COPY COPY_TBL FROM :'filename';
 ERROR:  new row for relation "copy_tbl" violates check constraint "copy_con"
 DETAIL:  Failing row contains (7, check failed, 6).
 CONTEXT:  COPY copy_tbl, line 2: "7	check failed	6"

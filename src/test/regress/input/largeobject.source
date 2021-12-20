@@ -2,6 +2,10 @@
 -- Test large object support
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+\getenv abs_builddir PG_ABS_BUILDDIR
+
 -- ensure consistent test output regardless of the default bytea format
 SET bytea_output TO escape;
 
@@ -124,16 +128,13 @@ BEGIN;
 SELECT lo_open(loid, x'40000'::int) from lotest_stash_values;
 ABORT;
 
-DO $$
-DECLARE
-  loid oid;
-BEGIN
-  SELECT tbl.loid INTO loid FROM lotest_stash_values tbl;
-  PERFORM lo_export(loid, '@abs_builddir@/results/invalid/path');
-EXCEPTION
-  WHEN UNDEFINED_FILE THEN RAISE NOTICE 'could not open file, as expected';
-END;
-$$;
+\set filename :abs_builddir '/results/invalid/path'
+\set dobody 'DECLARE loid oid; BEGIN '
+\set dobody :dobody 'SELECT tbl.loid INTO loid FROM lotest_stash_values tbl; '
+\set dobody :dobody 'PERFORM lo_export(loid, ' :'filename' '); '
+\set dobody :dobody 'EXCEPTION WHEN UNDEFINED_FILE THEN '
+\set dobody :dobody 'RAISE NOTICE ''could not open file, as expected''; END'
+DO :'dobody';
 
 -- Test truncation.
 BEGIN;
@@ -183,7 +184,8 @@ SELECT lo_unlink(loid) from lotest_stash_values;
 
 TRUNCATE lotest_stash_values;
 
-INSERT INTO lotest_stash_values (loid) SELECT lo_import('@abs_srcdir@/data/tenk.data');
+\set filename :abs_srcdir '/data/tenk.data'
+INSERT INTO lotest_stash_values (loid) SELECT lo_import(:'filename');
 
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
@@ -212,14 +214,16 @@ SELECT loread(fd, 36) FROM lotest_stash_values;
 SELECT lo_close(fd) FROM lotest_stash_values;
 END;
 
-SELECT lo_export(loid, '@abs_builddir@/results/lotest.txt') FROM lotest_stash_values;
+\set filename :abs_builddir '/results/lotest.txt'
+SELECT lo_export(loid, :'filename') FROM lotest_stash_values;
 
-\lo_import '@abs_builddir@/results/lotest.txt'
+\lo_import :filename
 
 \set newloid :LASTOID
 
 -- just make sure \lo_export does not barf
-\lo_export :newloid '@abs_builddir@/results/lotest2.txt'
+\set filename :abs_builddir '/results/lotest2.txt'
+\lo_export :newloid :filename
 
 -- This is a hack to test that export/import are reversible
 -- This uses knowledge about the inner workings of large object mechanism
@@ -234,7 +238,8 @@ TRUNCATE lotest_stash_values;
 
 \lo_unlink :newloid
 
-\lo_import '@abs_builddir@/results/lotest.txt'
+\set filename :abs_builddir '/results/lotest.txt'
+\lo_import :filename
 
 \set newloid_1 :LASTOID
 

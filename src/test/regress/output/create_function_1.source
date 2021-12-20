@@ -1,26 +1,30 @@
 --
 -- CREATE_FUNCTION_1
 --
+-- directory path and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
 -- Create C functions needed by create_type.sql
 CREATE FUNCTION widget_in(cstring)
    RETURNS widget
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  type "widget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION widget_out(widget)
    RETURNS cstring
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type widget is only a shell
 CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  type "city_budget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION int44out(city_budget)
    RETURNS cstring
-   AS '@libdir@/regress@DLSUFFIX@'
+   AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type city_budget is only a shell

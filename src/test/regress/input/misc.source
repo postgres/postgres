@@ -2,6 +2,10 @@
 -- MISC
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+\getenv abs_builddir PG_ABS_BUILDDIR
+
 --
 -- BTREE
 --
@@ -51,25 +55,27 @@ DROP TABLE tmp;
 --
 -- copy
 --
-COPY onek TO '@abs_builddir@/results/onek.data';
+\set filename :abs_builddir '/results/onek.data'
+COPY onek TO :'filename';
 
 DELETE FROM onek;
 
-COPY onek FROM '@abs_builddir@/results/onek.data';
+COPY onek FROM :'filename';
 
 SELECT unique1 FROM onek WHERE unique1 < 2 ORDER BY unique1;
 
 DELETE FROM onek2;
 
-COPY onek2 FROM '@abs_builddir@/results/onek.data';
+COPY onek2 FROM :'filename';
 
 SELECT unique1 FROM onek2 WHERE unique1 < 2 ORDER BY unique1;
 
-COPY BINARY stud_emp TO '@abs_builddir@/results/stud_emp.data';
+\set filename :abs_builddir '/results/stud_emp.data'
+COPY BINARY stud_emp TO :'filename';
 
 DELETE FROM stud_emp;
 
-COPY BINARY stud_emp FROM '@abs_builddir@/results/stud_emp.data';
+COPY BINARY stud_emp FROM :'filename';
 
 SELECT * FROM stud_emp;
 
