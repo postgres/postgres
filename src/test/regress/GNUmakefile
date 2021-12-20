@@ -69,19 +69,12 @@ all: all-lib
 # Ensure parallel safety if a build is started in this directory
 $(OBJS): | submake-libpgport submake-generated-headers
 
-# Test input and expected files.  These are created by pg_regress itself, so we
-# don't have a rule to create them.  We do need rules to clean them however.
-input_files = $(patsubst $(srcdir)/input/%.source,sql/%.sql, $(wildcard $(srcdir)/input/*.source))
-output_files := $(patsubst $(srcdir)/output/%.source,expected/%.out, $(wildcard $(srcdir)/output/*.source))
-
 
 # not installed by default
 
 regress_data_files = \
-	$(filter-out $(addprefix $(srcdir)/,$(output_files)),$(wildcard $(srcdir)/expected/*.out)) \
-	$(wildcard $(srcdir)/input/*.source) \
-	$(wildcard $(srcdir)/output/*.source) \
-	$(filter-out $(addprefix $(srcdir)/,$(input_files)),$(wildcard $(srcdir)/sql/*.sql)) \
+	$(wildcard $(srcdir)/sql/*.sql) \
+	$(wildcard $(srcdir)/expected/*.out) \
 	$(wildcard $(srcdir)/data/*.data) \
 	$(srcdir)/parallel_schedule $(srcdir)/resultmap
 
@@ -162,6 +155,5 @@ clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
-	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
 	rm -rf $(pg_regress_clean_files)

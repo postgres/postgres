@@ -8,8 +8,6 @@ PGFILEDESC = "file_fdw - foreign data wrapper for files"
 
 REGRESS = file_fdw
 
-EXTRA_CLEAN = sql/file_fdw.sql expected/file_fdw.out
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
