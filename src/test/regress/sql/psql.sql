@@ -141,6 +141,18 @@ select 'drop table gexec_test', 'select ''2000-01-01''::date as party_over'
 
 \unset FETCH_COUNT
 
+-- \setenv, \getenv
+
+-- ensure MYVAR isn't set
+\setenv MYVAR
+-- in which case, reading it doesn't change the target
+\getenv res MYVAR
+\echo :res
+-- now set it
+\setenv MYVAR 'environment value'
+\getenv res MYVAR
+\echo :res
+
 -- show all pset options
 \pset
 

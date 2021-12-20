@@ -2238,6 +2238,28 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\getenv <replaceable class="parameter">psql_var</replaceable> <replaceable class="parameter">env_var</replaceable></literal></term>
+
+        <listitem>
+        <para>
+         Gets the value of the environment
+         variable <replaceable class="parameter">env_var</replaceable>
+         and assigns it to the <application>psql</application>
+         variable <replaceable class="parameter">psql_var</replaceable>.
+         If <replaceable class="parameter">env_var</replaceable> is
+         not defined in the <application>psql</application> process's
+         environment, <replaceable class="parameter">psql_var</replaceable>
+         is not changed.  Example:
+<programlisting>
+=&gt; <userinput>\getenv home HOME</userinput>
+=&gt; <userinput>\echo :home</userinput>
+/home/postgres
+</programlisting></para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\gexec</literal></term>
 
         <listitem>

@@ -98,6 +98,8 @@ static backslashResult process_command_g_options(char *first_option,
 												 bool active_branch,
 												 const char *cmd);
 static backslashResult exec_command_gdesc(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_getenv(PsqlScanState scan_state, bool active_branch,
+										   const char *cmd);
 static backslashResult exec_command_gexec(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_gset(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_help(PsqlScanState scan_state, bool active_branch);
@@ -348,6 +350,8 @@ exec_command(const char *cmd,
 		status = exec_command_g(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "gdesc") == 0)
 		status = exec_command_gdesc(scan_state, active_branch);
+	else if (strcmp(cmd, "getenv") == 0)
+		status = exec_command_getenv(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "gexec") == 0)
 		status = exec_command_gexec(scan_state, active_branch);
 	else if (strcmp(cmd, "gset") == 0)
@@ -1479,6 +1483,43 @@ exec_command_gdesc(PsqlScanState scan_state, bool active_branch)
 	}
 
 	return status;
+}
+
+/*
+ * \getenv -- set variable from environment variable
+ */
+static backslashResult
+exec_command_getenv(PsqlScanState scan_state, bool active_branch,
+					const char *cmd)
+{
+	bool		success = true;
+
+	if (active_branch)
+	{
+		char	   *myvar = psql_scan_slash_option(scan_state,
+												   OT_NORMAL, NULL, false);
+		char	   *envvar = psql_scan_slash_option(scan_state,
+													OT_NORMAL, NULL, false);
+
+		if (!myvar || !envvar)
+		{
+			pg_log_error("\\%s: missing required argument", cmd);
+			success = false;
+		}
+		else
+		{
+			char	   *envval = getenv(envvar);
+
+			if (envval && !SetVariable(pset.vars, myvar, envval))
+				success = false;
+		}
+		free(myvar);
+		free(envvar);
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return success ? PSQL_CMD_SKIP_LINE : PSQL_CMD_ERROR;
 }
 
 /*

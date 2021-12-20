@@ -282,6 +282,18 @@ select '2000-01-01'::date as party_over
 (1 row)
 
 \unset FETCH_COUNT
+-- \setenv, \getenv
+-- ensure MYVAR isn't set
+\setenv MYVAR
+-- in which case, reading it doesn't change the target
+\getenv res MYVAR
+\echo :res
+:res
+-- now set it
+\setenv MYVAR 'environment value'
+\getenv res MYVAR
+\echo :res
+environment value
 -- show all pset options
 \pset
 border                   1
