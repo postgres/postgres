@@ -166,7 +166,7 @@ slashUsage(unsigned short int pager)
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(136, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(137, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -309,6 +309,7 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Operating System\n"));
 	fprintf(output, _("  \\cd [DIR]              change the current working directory\n"));
+	fprintf(output, _("  \\getenv PSQLVAR ENVVAR fetch environment variable\n"));
 	fprintf(output, _("  \\setenv NAME [VALUE]   set or unset environment variable\n"));
 	fprintf(output, _("  \\timing [on|off]       toggle timing of commands (currently %s)\n"),
 			ON(pset.timing));
