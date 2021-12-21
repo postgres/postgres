@@ -322,6 +322,8 @@ _PG_init(void)
 							   0,
 							   NULL, NULL, NULL);
 
+	EmitWarningsOnPlaceholders("worker_spi");
+
 	/* set up common data for all our workers */
 	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |

@@ -469,4 +469,6 @@ _PG_init(void)
 							   NULL,
 							   NULL,
 							   NULL);
+
+	EmitWarningsOnPlaceholders("postgres_fdw");
 }

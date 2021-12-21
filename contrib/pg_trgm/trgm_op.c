@@ -100,6 +100,8 @@ _PG_init(void)
 							 NULL,
 							 NULL,
 							 NULL);
+
+	EmitWarningsOnPlaceholders("pg_trgm");
 }
 
 /*

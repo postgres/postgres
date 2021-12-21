@@ -67,6 +67,9 @@ _PG_init(void)
 							NULL,
 							NULL,
 							NULL);
+
+	EmitWarningsOnPlaceholders("auth_delay");
+
 	/* Install Hooks */
 	original_client_auth_hook = ClientAuthentication_hook;
 	ClientAuthentication_hook = auth_delay_checks;

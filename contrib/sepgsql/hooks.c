@@ -455,6 +455,8 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
+	EmitWarningsOnPlaceholders("sepgsql");
+
 	/* Initialize userspace access vector cache */
 	sepgsql_avc_init();
 

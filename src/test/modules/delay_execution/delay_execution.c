@@ -91,6 +91,8 @@ _PG_init(void)
 							NULL,
 							NULL);
 
+	EmitWarningsOnPlaceholders("delay_execution");
+
 	/* Install our hook */
 	prev_planner_hook = planner_hook;
 	planner_hook = delay_execution_planner;
