@@ -15,6 +15,7 @@
 #define VACUUM_H
 
 #include "access/htup.h"
+#include "access/genam.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -230,6 +231,21 @@ typedef struct VacuumParams
 	int			nworkers;
 } VacuumParams;
 
+/*
+ * VacDeadItems stores TIDs whose index tuples are deleted by index vacuuming.
+ */
+typedef struct VacDeadItems
+{
+	int			max_items;		/* # slots allocated in array */
+	int			num_items;		/* current # of entries */
+
+	/* Sorted array of TIDs to delete from indexes */
+	ItemPointerData items[FLEXIBLE_ARRAY_MEMBER];
+} VacDeadItems;
+
+#define MAXDEADITEMS(avail_mem) \
+	(((avail_mem) - offsetof(VacDeadItems, items)) / sizeof(ItemPointerData))
+
 /* GUC parameters */
 extern PGDLLIMPORT int default_statistics_target;	/* PGDLLIMPORT for PostGIS */
 extern int	vacuum_freeze_min_age;
@@ -282,6 +298,12 @@ extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 									 bits32 options, bool verbose,
 									 LOCKMODE lmode);
+extern IndexBulkDeleteResult *vac_bulkdel_one_index(IndexVacuumInfo *ivinfo,
+													IndexBulkDeleteResult *istat,
+													VacDeadItems *dead_items);
+extern IndexBulkDeleteResult *vac_cleanup_one_index(IndexVacuumInfo *ivinfo,
+													IndexBulkDeleteResult *istat);
+extern Size vac_max_items_to_alloc_size(int max_items);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation,

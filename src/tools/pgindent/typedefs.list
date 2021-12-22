@@ -1305,7 +1305,6 @@ LPVOID
 LPWSTR
 LSEG
 LUID
-LVDeadTuples
 LVPagePruneState
 LVParallelIndStats
 LVParallelIndVacStatus
@@ -2800,6 +2799,7 @@ UserMapping
 UserOpts
 VacAttrStats
 VacAttrStatsP
+VacDeadItems
 VacErrPhase
 VacOptValue
 VacuumParams
