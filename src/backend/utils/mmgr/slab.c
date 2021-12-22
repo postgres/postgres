@@ -671,7 +671,7 @@ SlabStats(MemoryContext context,
 		char		stats_string[200];
 
 		snprintf(stats_string, sizeof(stats_string),
-				 "%zu total in %zd blocks; %zu free (%zd chunks); %zu used",
+				 "%zu total in %zu blocks; %zu free (%zu chunks); %zu used",
 				 totalspace, nblocks, freespace, freechunks,
 				 totalspace - freespace);
 		printfunc(context, passthru, stats_string, print_to_stderr);

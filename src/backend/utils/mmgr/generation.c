@@ -703,7 +703,7 @@ GenerationStats(MemoryContext context,
 		char		stats_string[200];
 
 		snprintf(stats_string, sizeof(stats_string),
-				 "%zu total in %zd blocks (%zd chunks); %zu free (%zd chunks); %zu used",
+				 "%zu total in %zu blocks (%zu chunks); %zu free (%zu chunks); %zu used",
 				 totalspace, nblocks, nchunks, freespace,
 				 nfreechunks, totalspace - freespace);
 		printfunc(context, passthru, stats_string, print_to_stderr);
