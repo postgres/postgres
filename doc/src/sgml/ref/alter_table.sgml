@@ -872,16 +872,51 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This form changes the information which is written to the write-ahead log
       to identify rows which are updated or deleted.  This option has no effect
-      except when logical replication is in use.  <literal>DEFAULT</literal>
-      (the default for non-system tables) records the
-      old values of the columns of the primary key, if any.  <literal>USING INDEX</literal>
-      records the old values of the columns covered by the named index, which
-      must be unique, not partial, not deferrable, and include only columns marked
-      <literal>NOT NULL</literal>.  <literal>FULL</literal> records the old values of all columns
-      in the row.  <literal>NOTHING</literal> records no information about the old row.
-      (This is the default for system tables.)
+      except when logical replication is in use.
       In all cases, no old values are logged unless at least one of the columns
       that would be logged differs between the old and new versions of the row.
+     <variablelist>
+      <varlistentry>
+       <term><literal>DEFAULT</literal></term>
+       <listitem>
+        <para>
+         Records the old values of the columns of the primary key, if any.
+         This is the default for non-system tables. 
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>USING INDEX <replaceable class="parameter">index_name</replaceable></literal></term>
+       <listitem>
+        <para>
+         Records the old values of the columns covered by the named index,
+         that must be unique, not partial, not deferrable, and include only
+         columns marked <literal>NOT NULL</literal>. If this index is
+         dropped, the behavior is the same as <literal>NOTHING</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>FULL</literal></term>
+       <listitem>
+        <para>
+         Records the old values of all columns in the row.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>NOTHING</literal></term>
+       <listitem>
+        <para>
+         Records no information about the old row. This is the default for
+         system tables.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
      </para>
     </listitem>
    </varlistentry>
