@@ -67,7 +67,7 @@
 /*
  * Depth of the on-disk tree. We need to be able to address 2^32-1 blocks,
  * and 1626 is the smallest number that satisfies X^3 >= 2^32-1. Likewise,
- * 216 is the smallest number that satisfies X^4 >= 2^32-1. In practice,
+ * 256 is the smallest number that satisfies X^4 >= 2^32-1. In practice,
  * this means that 4096 bytes is the smallest BLCKSZ that we can get away
  * with a 3-level tree, and 512 is the smallest we support.
  */
