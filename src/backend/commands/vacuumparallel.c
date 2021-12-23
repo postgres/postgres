@@ -137,8 +137,10 @@ typedef struct PVIndStats
 	IndexBulkDeleteResult istat;
 } PVIndStats;
 
-/* Struct for maintaining a parallel vacuum state. */
-typedef struct ParallelVacuumState
+/*
+ * Struct for maintaining a parallel vacuum state. typedef appears in vacuum.h.
+ */
+struct ParallelVacuumState
 {
 	/* NULL for worker processes */
 	ParallelContext *pcxt;
@@ -195,7 +197,7 @@ typedef struct ParallelVacuumState
 	char	   *relname;
 	char	   *indname;
 	PVIndVacStatus status;
-} ParallelVacuumState;
+};
 
 static int	parallel_vacuum_compute_workers(Relation *indrels, int nindexes, int nrequested,
 											bool *will_parallel_vacuum);
