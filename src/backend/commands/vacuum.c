@@ -7,8 +7,9 @@
  * commands, (b) code to compute various vacuum thresholds, and (c) index
  * vacuum code.
  *
- * VACUUM for heap AM is implemented in vacuumlazy.c, ANALYZE in analyze.c, and
- * VACUUM FULL is a variant of CLUSTER, handled in cluster.c.
+ * VACUUM for heap AM is implemented in vacuumlazy.c, parallel vacuum in
+ * vacuumparallel.c, ANALYZE in analyze.c, and VACUUM FULL is a variant of
+ * CLUSTER, handled in cluster.c.
  *
  *
  * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group

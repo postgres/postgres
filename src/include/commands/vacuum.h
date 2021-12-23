@@ -16,6 +16,7 @@
 
 #include "access/htup.h"
 #include "access/genam.h"
+#include "access/parallel.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -62,6 +63,9 @@
 
 /* value for checking vacuum flags */
 #define VACUUM_OPTION_MAX_VALID_VALUE		((1 << 3) - 1)
+
+/* Abstract type for parallel vacuum state */
+typedef struct ParallelVacuumState ParallelVacuumState;
 
 /*----------
  * ANALYZE builds one of these structs for each attribute (column) that is
@@ -304,6 +308,22 @@ extern IndexBulkDeleteResult *vac_bulkdel_one_index(IndexVacuumInfo *ivinfo,
 extern IndexBulkDeleteResult *vac_cleanup_one_index(IndexVacuumInfo *ivinfo,
 													IndexBulkDeleteResult *istat);
 extern Size vac_max_items_to_alloc_size(int max_items);
+
+/* in commands/vacuumparallel.c */
+extern ParallelVacuumState *parallel_vacuum_init(Relation rel, Relation *indrels,
+												 int nindexes, int nrequested_workers,
+												 int max_items, int elevel,
+												 BufferAccessStrategy bstrategy);
+extern void parallel_vacuum_end(ParallelVacuumState *pvs, IndexBulkDeleteResult **istats);
+extern VacDeadItems *parallel_vacuum_get_dead_items(ParallelVacuumState *pvs);
+extern void parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs,
+												long num_table_tuples,
+												int num_index_scans);
+extern void parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs,
+												long num_table_tuples,
+												int num_index_scans,
+												bool estimated_count);
+extern void parallel_vacuum_main(dsm_segment *seg, shm_toc *toc);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, RangeVar *relation,
