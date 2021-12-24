@@ -18,6 +18,7 @@
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
+#include "libpq/libpq-be.h"
 #include "postgres_fdw.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -443,6 +444,67 @@ ExtractExtensionList(const char *extensionsString, bool warnOnMissing)
 
 	list_free(extlist);
 	return extensionOids;
+}
+
+/*
+ * Replace escape sequences beginning with % character in the given
+ * application_name with status information, and return it.
+ *
+ * This function always returns a palloc'd string, so the caller is
+ * responsible for pfreeing it.
+ */
+char *
+process_pgfdw_appname(const char *appname)
+{
+	const char *p;
+	StringInfoData buf;
+
+	Assert(MyProcPort != NULL);
+
+	initStringInfo(&buf);
+
+	for (p = appname; *p != '\0'; p++)
+	{
+		if (*p != '%')
+		{
+			/* literal char, just copy */
+			appendStringInfoChar(&buf, *p);
+			continue;
+		}
+
+		/* must be a '%', so skip to the next char */
+		p++;
+		if (*p == '\0')
+			break;				/* format error - ignore it */
+		else if (*p == '%')
+		{
+			/* string contains %% */
+			appendStringInfoChar(&buf, '%');
+			continue;
+		}
+
+		/* process the option */
+		switch (*p)
+		{
+			case 'a':
+				appendStringInfoString(&buf, application_name);
+				break;
+			case 'd':
+				appendStringInfoString(&buf, MyProcPort->database_name);
+				break;
+			case 'p':
+				appendStringInfo(&buf, "%d", MyProcPid);
+				break;
+			case 'u':
+				appendStringInfoString(&buf, MyProcPort->user_name);
+				break;
+			default:
+				/* format error - ignore it */
+				break;
+		}
+	}
+
+	return buf.data;
 }
 
 /*

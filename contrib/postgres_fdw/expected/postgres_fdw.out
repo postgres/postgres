@@ -10825,3 +10825,35 @@ ERROR:  invalid value for integer option "batch_size": 100$%$#$#
 ALTER FOREIGN DATA WRAPPER postgres_fdw OPTIONS (nonexistent 'fdw');
 ERROR:  invalid option "nonexistent"
 HINT:  There are no valid options in this context.
+-- ===================================================================
+-- test postgres_fdw.application_name GUC
+-- ===================================================================
+-- Close all the existing cached connections so that new connection
+-- will be established with new setting of postgres_fdw.application_name.
+SELECT 1 FROM postgres_fdw_disconnect_all();
+ ?column? 
+----------
+        1
+(1 row)
+
+-- Add some escape sequences into postgres_fdw.application_name
+-- so as to test that they are replaced with status information expectedly.
+SET postgres_fdw.application_name TO '%a%u%d%p%%';
+BEGIN;
+SELECT 1 FROM ft6 LIMIT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT count(*) FROM pg_stat_activity
+  WHERE application_name = current_setting('application_name') ||
+    CURRENT_USER || current_database() || pg_backend_pid() || '%';
+ count 
+-------
+     1
+(1 row)
+
+COMMIT;
+--Clean up
+RESET postgres_fdw.application_name;

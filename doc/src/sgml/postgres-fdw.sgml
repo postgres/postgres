@@ -132,6 +132,20 @@
      </listitem>
      <listitem>
       <para>
+       <literal>application_name</literal> - this may appear in
+       <emphasis>either or both</emphasis> a connection and
+       <xref linkend="guc-pgfdw-application-name"/>.
+       If both are present, <varname>postgres_fdw.application_name</varname>
+       overrides the connection setting.
+       Unlike <application>libpq</application>,
+       <filename>postgres_fdw</filename> allows
+       <varname>application_name</varname> to include
+       <quote>escape sequences</quote>.
+       See <xref linkend="guc-pgfdw-application-name"/> for details.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
        <literal>fallback_application_name</literal> (always set to
        <literal>postgres_fdw</literal>)
       </para>
@@ -920,7 +934,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   <title>Configuration Parameters</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="guc-pgfdw-application-name" xreflabel="postgres_fdw.application_name">
     <term>
      <varname>postgres_fdw.application_name</varname> (<type>string</type>)
      <indexterm>
@@ -946,6 +960,57 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       marks (<literal>?</literal>).
       See <xref linkend="guc-application-name"/> for details.
      </para>
+
+     <para>
+      <literal>%</literal> characters begin <quote>escape sequences</quote>
+      that are replaced with status information as outlined below.
+      Unrecognized escapes are ignored. Other characters are copied straight
+      to the application name. Note that it's not allowed to specify a
+      plus/minus sign or a numeric literal after the <literal>%</literal>
+      and before the option, for alignment and padding.
+     </para>
+
+     <informaltable>
+      <tgroup cols="2">
+       <thead>
+        <row>
+         <entry>Escape</entry>
+         <entry>Effect</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry><literal>%a</literal></entry>
+         <entry>Application name in local server</entry>
+        </row>
+        <row>
+         <entry><literal>%u</literal></entry>
+         <entry>User name in local server</entry>
+        </row>
+        <row>
+         <entry><literal>%d</literal></entry>
+         <entry>Database name in local server</entry>
+        </row>
+        <row>
+         <entry><literal>%p</literal></entry>
+         <entry>Process ID of backend in local server</entry>
+        </row>
+        <row>
+         <entry><literal>%%</literal></entry>
+         <entry>Literal %</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </informaltable>
+
+     <para>
+      For example, suppose user <literal>local_user</literal> establishes
+      a connection from database <literal>local_db</literal> to
+      <literal>foreign_db</literal> as user <literal>foreign_user</literal>,
+      the setting <literal>'db=%d, user=%u'</literal> is replaced with
+      <literal>'db=local_db, user=local_user'</literal>.
+     </para>
+
     </listitem>
    </varlistentry>
   </variablelist>

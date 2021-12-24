@@ -348,6 +348,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 	{
 		const char **keywords;
 		const char **values;
+		char	   *appname = NULL;
 		int			n;
 
 		/*
@@ -381,6 +382,39 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 			keywords[n] = "application_name";
 			values[n] = pgfdw_application_name;
 			n++;
+		}
+
+		/*
+		 * Search the parameter arrays to find application_name setting, and
+		 * replace escape sequences in it with status information if found.
+		 * The arrays are searched backwards because the last value is used if
+		 * application_name is repeatedly set.
+		 */
+		for (int i = n - 1; i >= 0; i--)
+		{
+			if (strcmp(keywords[i], "application_name") == 0 &&
+				*(values[i]) != '\0')
+			{
+				/*
+				 * Use this application_name setting if it's not empty string
+				 * even after any escape sequences in it are replaced.
+				 */
+				appname = process_pgfdw_appname(values[i]);
+				if (appname[0] != '\0')
+				{
+					values[i] = appname;
+					break;
+				}
+
+				/*
+				 * This empty application_name is not used, so we set
+				 * values[i] to NULL and keep searching the array to find the
+				 * next one.
+				 */
+				values[i] = NULL;
+				pfree(appname);
+				appname = NULL;
+			}
 		}
 
 		/* Use "postgres_fdw" as fallback_application_name */
@@ -452,6 +486,8 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		/* Prepare new session for use */
 		configure_remote_session(conn);
 
+		if (appname != NULL)
+			pfree(appname);
 		pfree(keywords);
 		pfree(values);
 	}
