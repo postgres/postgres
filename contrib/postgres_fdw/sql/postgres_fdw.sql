@@ -3452,24 +3452,3 @@ CREATE FOREIGN TABLE inv_bsz (c1 int )
 
 -- No option is allowed to be specified at foreign data wrapper level
 ALTER FOREIGN DATA WRAPPER postgres_fdw OPTIONS (nonexistent 'fdw');
-
--- ===================================================================
--- test postgres_fdw.application_name GUC
--- ===================================================================
--- Close all the existing cached connections so that new connection
--- will be established with new setting of postgres_fdw.application_name.
-SELECT 1 FROM postgres_fdw_disconnect_all();
-
--- Add some escape sequences into postgres_fdw.application_name
--- so as to test that they are replaced with status information expectedly.
-SET postgres_fdw.application_name TO '%a%u%d%p%%';
-
-BEGIN;
-SELECT 1 FROM ft6 LIMIT 1;
-SELECT count(*) FROM pg_stat_activity
-  WHERE application_name = current_setting('application_name') ||
-    CURRENT_USER || current_database() || pg_backend_pid() || '%';
-COMMIT;
-
---Clean up
-RESET postgres_fdw.application_name;
