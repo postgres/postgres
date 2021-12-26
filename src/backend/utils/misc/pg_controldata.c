@@ -79,8 +79,8 @@ pg_control_system(PG_FUNCTION_ARGS)
 Datum
 pg_control_checkpoint(PG_FUNCTION_ARGS)
 {
-	Datum		values[19];
-	bool		nulls[19];
+	Datum		values[18];
+	bool		nulls[18];
 	TupleDesc	tupdesc;
 	HeapTuple	htup;
 	ControlFileData *ControlFile;
