@@ -3730,7 +3730,12 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 		appendPQExpBuffer(&buf,
 						  ",\n  c2.relname as \"%s\"",
 						  gettext_noop("Table"));
-		cols_so_far++;
+
+		appendPQExpBuffer(&buf,
+						  ",\n  i.indisvalid as \"%s\"",
+						  gettext_noop("Valid"));
+
+		cols_so_far+=2;
 	}
 
 	if (verbose)
