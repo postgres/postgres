@@ -231,7 +231,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	MarkGUCPrefixReserved("auto_explain");
+	EmitWarningsOnPlaceholders("auto_explain");
 
 	/* Install hooks. */
 	prev_ExecutorStart = ExecutorStart_hook;

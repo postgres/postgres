@@ -68,7 +68,7 @@ _PG_init(void)
 							NULL,
 							NULL);
 
-	MarkGUCPrefixReserved("auth_delay");
+	EmitWarningsOnPlaceholders("auth_delay");
 
 	/* Install Hooks */
 	original_client_auth_hook = ClientAuthentication_hook;

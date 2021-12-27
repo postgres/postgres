@@ -91,7 +91,7 @@ _PG_init(void)
 							NULL,
 							NULL);
 
-	MarkGUCPrefixReserved("delay_execution");
+	EmitWarningsOnPlaceholders("delay_execution");
 
 	/* Install our hook */
 	prev_planner_hook = planner_hook;

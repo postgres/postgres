@@ -163,15 +163,6 @@ SHOW custom."bad-guc";
 SET special."weird name" = 'foo';  -- could be allowed, but we choose not to
 SHOW special."weird name";
 
--- Check what happens when you try to set a "custom" GUC within the
--- namespace of an extension.
-SET plpgsql.bogus_setting = 42;  -- allowed if plpgsql is not loaded yet
-LOAD 'plpgsql';  -- this will now warn about it
-SET plpgsql.extra_foo_warnings = false;  -- but now, it's an error
-SHOW plpgsql.extra_foo_warnings;
-SET plpgsql.bogus_setting = 43;  -- you can still use the pre-existing variable
-SHOW plpgsql.bogus_setting;
-
 --
 -- Test DISCARD TEMP
 --

@@ -101,7 +101,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	MarkGUCPrefixReserved("pg_trgm");
+	EmitWarningsOnPlaceholders("pg_trgm");
 }
 
 /*

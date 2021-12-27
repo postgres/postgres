@@ -49,7 +49,7 @@ _PG_init(void)
 							   NULL,
 							   NULL);
 
-	MarkGUCPrefixReserved("ssl_passphrase");
+	EmitWarningsOnPlaceholders("ssl_passphrase");
 
 	if (ssl_passphrase)
 		openssl_tls_init_hook = set_rot13;

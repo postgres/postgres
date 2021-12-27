@@ -474,8 +474,8 @@ _PG_init(void)
 							   PGC_SUSET, 0,
 							   NULL, NULL, NULL);
 
-	MarkGUCPrefixReserved("pltcl");
-	MarkGUCPrefixReserved("pltclu");
+	EmitWarningsOnPlaceholders("pltcl");
+	EmitWarningsOnPlaceholders("pltclu");
 
 	pltcl_pm_init_done = true;
 }

@@ -148,8 +148,6 @@ extern bool optimize_bounded_sort;
 
 static int	GUC_check_errcode_value;
 
-static List *reserved_class_prefix = NIL;
-
 /* global variables for check hook support */
 char	   *GUC_check_errmsg_string;
 char	   *GUC_check_errdetail_string;
@@ -5569,44 +5567,18 @@ find_option(const char *name, bool create_placeholders, bool skip_errors,
 		 * doesn't contain a separator, don't assume that it was meant to be a
 		 * placeholder.
 		 */
-		const char *sep = strchr(name, GUC_QUALIFIER_SEPARATOR);
-
-		if (sep != NULL)
+		if (strchr(name, GUC_QUALIFIER_SEPARATOR) != NULL)
 		{
-			size_t		classLen = sep - name;
-			ListCell   *lc;
-
-			/* The name must be syntactically acceptable ... */
-			if (!valid_custom_variable_name(name))
-			{
-				if (!skip_errors)
-					ereport(elevel,
-							(errcode(ERRCODE_INVALID_NAME),
-							 errmsg("invalid configuration parameter name \"%s\"",
-									name),
-							 errdetail("Custom parameter names must be two or more simple identifiers separated by dots.")));
-				return NULL;
-			}
-			/* ... and it must not match any previously-reserved prefix */
-			foreach(lc, reserved_class_prefix)
-			{
-				const char *rcprefix = lfirst(lc);
-
-				if (strlen(rcprefix) == classLen &&
-					strncmp(name, rcprefix, classLen) == 0)
-				{
-					if (!skip_errors)
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_NAME),
-								 errmsg("invalid configuration parameter name \"%s\"",
-										name),
-								 errdetail("\"%s\" is a reserved prefix.",
-										   rcprefix)));
-					return NULL;
-				}
-			}
-			/* OK, create it */
-			return add_placeholder_variable(name, elevel);
+			if (valid_custom_variable_name(name))
+				return add_placeholder_variable(name, elevel);
+			/* A special error message seems desirable here */
+			if (!skip_errors)
+				ereport(elevel,
+						(errcode(ERRCODE_INVALID_NAME),
+						 errmsg("invalid configuration parameter name \"%s\"",
+								name),
+						 errdetail("Custom parameter names must be two or more simple identifiers separated by dots.")));
+			return NULL;
 		}
 	}
 
@@ -9360,21 +9332,15 @@ DefineCustomEnumVariable(const char *name,
 }
 
 /*
- * Mark the given GUC prefix as "reserved".
- *
- * This prints warnings if there are any existing placeholders matching
- * the prefix, and then prevents new ones from being created.
  * Extensions should call this after they've defined all of their custom
  * GUCs, to help catch misspelled config-file entries.
  */
 void
-MarkGUCPrefixReserved(const char *className)
+EmitWarningsOnPlaceholders(const char *className)
 {
 	int			classLen = strlen(className);
 	int			i;
-	MemoryContext oldcontext;
 
-	/* Check for existing placeholders. */
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *var = guc_variables[i];
@@ -9389,11 +9355,6 @@ MarkGUCPrefixReserved(const char *className)
 							var->name)));
 		}
 	}
-
-	/* And remember the name so we can prevent future mistakes. */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	reserved_class_prefix = lappend(reserved_class_prefix, pstrdup(className));
-	MemoryContextSwitchTo(oldcontext);
 }
 
 

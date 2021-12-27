@@ -136,7 +136,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	MarkGUCPrefixReserved("pg_prewarm");
+	EmitWarningsOnPlaceholders("pg_prewarm");
 
 	RequestAddinShmemSpace(MAXALIGN(sizeof(AutoPrewarmSharedState)));
 

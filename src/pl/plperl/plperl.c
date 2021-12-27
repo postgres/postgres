@@ -453,7 +453,7 @@ _PG_init(void)
 							   PGC_SUSET, 0,
 							   NULL, NULL, NULL);
 
-	MarkGUCPrefixReserved("plperl");
+	EmitWarningsOnPlaceholders("plperl");
 
 	/*
 	 * Create hash tables.
