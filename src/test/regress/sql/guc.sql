@@ -163,6 +163,15 @@ SHOW custom."bad-guc";
 SET special."weird name" = 'foo';  -- could be allowed, but we choose not to
 SHOW special."weird name";
 
+-- Check what happens when you try to set a "custom" GUC within the
+-- namespace of an extension.
+SET plpgsql.bogus_setting = 42;  -- allowed if plpgsql is not loaded yet
+LOAD 'plpgsql';  -- this will now warn about it
+SET plpgsql.extra_foo_warnings = false;  -- but now, it's an error
+SHOW plpgsql.extra_foo_warnings;
+SET plpgsql.bogus_setting = 43;  -- you can still use the pre-existing variable
+SHOW plpgsql.bogus_setting;
+
 --
 -- Test DISCARD TEMP
 --
@@ -311,14 +320,3 @@ reset check_function_bodies;
 set default_with_oids to f;
 -- Should not allow to set it to true.
 set default_with_oids to t;
-
--- test SET unrecognized parameter
-SET foo = false;  -- no such setting
-
--- test setting a parameter with a registered prefix (plpgsql)
-SET plpgsql.extra_foo_warnings = false;  -- no such setting
-SHOW plpgsql.extra_foo_warnings;  -- but the parameter is set
-
--- cleanup
-RESET foo;
-RESET plpgsql.extra_foo_warnings;
