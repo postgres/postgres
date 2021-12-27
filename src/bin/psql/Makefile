@@ -23,6 +23,7 @@ REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
+LDFLAGS += -Wl,-rpath,'../../interfaces/libpq'
 
 OBJS = \
 	$(WIN32RES) \
