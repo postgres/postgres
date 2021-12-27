@@ -1,3 +1,5 @@
+./psql -h /var/run/postgresql
+
 PostgreSQL Database Management System
 =====================================
 
