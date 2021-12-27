@@ -9360,11 +9360,15 @@ DefineCustomEnumVariable(const char *name,
 }
 
 /*
+ * Mark the given GUC prefix as "reserved".
+ *
+ * This prints warnings if there are any existing placeholders matching
+ * the prefix, and then prevents new ones from being created.
  * Extensions should call this after they've defined all of their custom
- * GUCs, to help catch misspelled config-file entries,
+ * GUCs, to help catch misspelled config-file entries.
  */
 void
-EmitWarningsOnPlaceholders(const char *className)
+MarkGUCPrefixReserved(const char *className)
 {
 	int			classLen = strlen(className);
 	int			i;

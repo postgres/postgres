@@ -532,5 +532,5 @@ _PG_init(void)
 							   NULL,
 							   NULL);
 
-	EmitWarningsOnPlaceholders("postgres_fdw");
+	MarkGUCPrefixReserved("postgres_fdw");
 }

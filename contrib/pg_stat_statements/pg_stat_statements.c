@@ -437,7 +437,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	EmitWarningsOnPlaceholders("pg_stat_statements");
+	MarkGUCPrefixReserved("pg_stat_statements");
 
 	/*
 	 * Request additional shared resources.  (These are no-ops if we're not in

@@ -354,7 +354,10 @@ extern void DefineCustomEnumVariable(const char *name,
 									 GucEnumAssignHook assign_hook,
 									 GucShowHook show_hook);
 
-extern void EmitWarningsOnPlaceholders(const char *className);
+extern void MarkGUCPrefixReserved(const char *className);
+
+/* old name for MarkGUCPrefixReserved, for backwards compatibility: */
+#define EmitWarningsOnPlaceholders(className) MarkGUCPrefixReserved(className)
 
 extern const char *GetConfigOption(const char *name, bool missing_ok,
 								   bool restrict_privileged);
