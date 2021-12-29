@@ -10714,13 +10714,13 @@ xlog_block_info(StringInfo buf, XLogReaderState *record)
 
 		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 		if (forknum != MAIN_FORKNUM)
-			appendStringInfo(buf, "; blkref #%u: rel %u/%u/%u, fork %u, blk %u",
+			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, fork %u, blk %u",
 							 block_id,
 							 rnode.spcNode, rnode.dbNode, rnode.relNode,
 							 forknum,
 							 blk);
 		else
-			appendStringInfo(buf, "; blkref #%u: rel %u/%u/%u, blk %u",
+			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, blk %u",
 							 block_id,
 							 rnode.spcNode, rnode.dbNode, rnode.relNode,
 							 blk);

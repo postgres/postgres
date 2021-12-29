@@ -382,11 +382,11 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 		if (errinfo.wre_errno != 0)
 		{
 			errno = errinfo.wre_errno;
-			fatal_error("could not read from file %s, offset %u: %m",
+			fatal_error("could not read from file %s, offset %d: %m",
 						fname, errinfo.wre_off);
 		}
 		else
-			fatal_error("could not read from file %s, offset %u: read %d of %d",
+			fatal_error("could not read from file %s, offset %d: read %d of %d",
 						fname, errinfo.wre_off, errinfo.wre_read,
 						errinfo.wre_req);
 	}
@@ -518,13 +518,13 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 
 			XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 			if (forknum != MAIN_FORKNUM)
-				printf(", blkref #%u: rel %u/%u/%u fork %s blk %u",
+				printf(", blkref #%d: rel %u/%u/%u fork %s blk %u",
 					   block_id,
 					   rnode.spcNode, rnode.dbNode, rnode.relNode,
 					   forkNames[forknum],
 					   blk);
 			else
-				printf(", blkref #%u: rel %u/%u/%u blk %u",
+				printf(", blkref #%d: rel %u/%u/%u blk %u",
 					   block_id,
 					   rnode.spcNode, rnode.dbNode, rnode.relNode,
 					   blk);
@@ -548,7 +548,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				continue;
 
 			XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
-			printf("\tblkref #%u: rel %u/%u/%u fork %s blk %u",
+			printf("\tblkref #%d: rel %u/%u/%u fork %s blk %u",
 				   block_id,
 				   rnode.spcNode, rnode.dbNode, rnode.relNode,
 				   forkNames[forknum],
@@ -943,7 +943,7 @@ main(int argc, char **argv)
 					private.startptr = (uint64) xlogid << 32 | xrecoff;
 				break;
 			case 't':
-				if (sscanf(optarg, "%d", &private.timeline) != 1)
+				if (sscanf(optarg, "%u", &private.timeline) != 1)
 				{
 					pg_log_error("could not parse timeline \"%s\"", optarg);
 					goto bad_argument;
