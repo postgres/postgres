@@ -184,14 +184,12 @@ static inline void dumpComment(Archive *fout, const char *type,
 							   const char *name, const char *namespace,
 							   const char *owner, CatalogId catalogId,
 							   int subid, DumpId dumpId);
-static int	findComments(Archive *fout, Oid classoid, Oid objoid,
-						 CommentItem **items);
+static int	findComments(Oid classoid, Oid objoid, CommentItem **items);
 static void collectComments(Archive *fout);
 static void dumpSecLabel(Archive *fout, const char *type, const char *name,
 						 const char *namespace, const char *owner,
 						 CatalogId catalogId, int subid, DumpId dumpId);
-static int	findSecLabels(Archive *fout, Oid classoid, Oid objoid,
-						  SecLabelItem **items);
+static int	findSecLabels(Oid classoid, Oid objoid, SecLabelItem **items);
 static void collectSecLabels(Archive *fout);
 static void dumpDumpableObject(Archive *fout, DumpableObject *dobj);
 static void dumpNamespace(Archive *fout, const NamespaceInfo *nspinfo);
@@ -203,7 +201,8 @@ static void dumpRangeType(Archive *fout, const TypeInfo *tyinfo);
 static void dumpUndefinedType(Archive *fout, const TypeInfo *tyinfo);
 static void dumpDomain(Archive *fout, const TypeInfo *tyinfo);
 static void dumpCompositeType(Archive *fout, const TypeInfo *tyinfo);
-static void dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo);
+static void dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo,
+										 PGresult *res);
 static void dumpShellType(Archive *fout, const ShellTypeInfo *stinfo);
 static void dumpProcLang(Archive *fout, const ProcLangInfo *plang);
 static void dumpFunc(Archive *fout, const FuncInfo *finfo);
@@ -9154,7 +9153,7 @@ dumpCommentExtended(Archive *fout, const char *type,
 	}
 
 	/* Search for comments associated with catalogId, using table */
-	ncomments = findComments(fout, catalogId.tableoid, catalogId.oid,
+	ncomments = findComments(catalogId.tableoid, catalogId.oid,
 							 &comments);
 
 	/* Is there one matching the subid? */
@@ -9260,8 +9259,7 @@ dumpTableComment(Archive *fout, const TableInfo *tbinfo,
 		return;
 
 	/* Search for comments associated with relation, using table */
-	ncomments = findComments(fout,
-							 tbinfo->dobj.catId.tableoid,
+	ncomments = findComments(tbinfo->dobj.catId.tableoid,
 							 tbinfo->dobj.catId.oid,
 							 &comments);
 
@@ -9341,8 +9339,7 @@ dumpTableComment(Archive *fout, const TableInfo *tbinfo,
  * one search.
  */
 static int
-findComments(Archive *fout, Oid classoid, Oid objoid,
-			 CommentItem **items)
+findComments(Oid classoid, Oid objoid, CommentItem **items)
 {
 	CommentItem *middle = NULL;
 	CommentItem *low;
@@ -10740,7 +10737,7 @@ dumpCompositeType(Archive *fout, const TypeInfo *tyinfo)
 		 */
 		appendPQExpBufferStr(query,
 							 "PREPARE dumpCompositeType(pg_catalog.oid) AS\n"
-							 "SELECT a.attname, "
+							 "SELECT a.attname, a.attnum, "
 							 "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
 							 "a.attlen, a.attalign, a.attisdropped, "
 							 "CASE WHEN a.attcollation <> at.typcollation "
@@ -10891,6 +10888,10 @@ dumpCompositeType(Archive *fout, const TypeInfo *tyinfo)
 				tyinfo->dobj.namespace->dobj.name,
 				tyinfo->rolname, &tyinfo->dacl);
 
+	/* Dump any per-column comments */
+	if (tyinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpCompositeTypeColComments(fout, tyinfo, res);
+
 	PQclear(res);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(dropped);
@@ -10898,77 +10899,51 @@ dumpCompositeType(Archive *fout, const TypeInfo *tyinfo)
 	destroyPQExpBuffer(query);
 	free(qtypname);
 	free(qualtypname);
-
-	/* Dump any per-column comments */
-	if (tyinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-		dumpCompositeTypeColComments(fout, tyinfo);
 }
 
 /*
  * dumpCompositeTypeColComments
  *	  writes out to fout the queries to recreate comments on the columns of
- *	  a user-defined stand-alone composite type
+ *	  a user-defined stand-alone composite type.
+ *
+ * The caller has already made a query to collect the names and attnums
+ * of the type's columns, so we just pass that result into here rather
+ * than reading them again.
  */
 static void
-dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo)
+dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo,
+							 PGresult *res)
 {
 	CommentItem *comments;
 	int			ncomments;
-	PGresult   *res;
 	PQExpBuffer query;
 	PQExpBuffer target;
-	Oid			pgClassOid;
 	int			i;
 	int			ntups;
 	int			i_attname;
 	int			i_attnum;
+	int			i_attisdropped;
 
 	/* do nothing, if --no-comments is supplied */
 	if (fout->dopt->no_comments)
 		return;
 
-	query = createPQExpBuffer();
-
-	appendPQExpBuffer(query,
-					  "SELECT c.tableoid, a.attname, a.attnum "
-					  "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
-					  "WHERE c.oid = '%u' AND c.oid = a.attrelid "
-					  "  AND NOT a.attisdropped "
-					  "ORDER BY a.attnum ",
-					  tyinfo->typrelid);
-
-	/* Fetch column attnames */
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	ntups = PQntuples(res);
-	if (ntups < 1)
-	{
-		PQclear(res);
-		destroyPQExpBuffer(query);
-		return;
-	}
-
-	pgClassOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "tableoid")));
-
 	/* Search for comments associated with type's pg_class OID */
-	ncomments = findComments(fout,
-							 pgClassOid,
-							 tyinfo->typrelid,
+	ncomments = findComments(RelationRelationId, tyinfo->typrelid,
 							 &comments);
 
 	/* If no comments exist, we're done */
 	if (ncomments <= 0)
-	{
-		PQclear(res);
-		destroyPQExpBuffer(query);
 		return;
-	}
 
 	/* Build COMMENT ON statements */
+	query = createPQExpBuffer();
 	target = createPQExpBuffer();
 
+	ntups = PQntuples(res);
 	i_attnum = PQfnumber(res, "attnum");
 	i_attname = PQfnumber(res, "attname");
+	i_attisdropped = PQfnumber(res, "attisdropped");
 	while (ncomments > 0)
 	{
 		const char *attname;
@@ -10976,7 +10951,8 @@ dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo)
 		attname = NULL;
 		for (i = 0; i < ntups; i++)
 		{
-			if (atoi(PQgetvalue(res, i, i_attnum)) == comments->objsubid)
+			if (atoi(PQgetvalue(res, i, i_attnum)) == comments->objsubid &&
+				PQgetvalue(res, i, i_attisdropped)[0] != 't')
 			{
 				attname = PQgetvalue(res, i, i_attname);
 				break;
@@ -11013,7 +10989,6 @@ dumpCompositeTypeColComments(Archive *fout, const TypeInfo *tyinfo)
 		ncomments--;
 	}
 
-	PQclear(res);
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(target);
 }
@@ -14254,7 +14229,7 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 	}
 
 	/* Search for security labels associated with catalogId, using table */
-	nlabels = findSecLabels(fout, catalogId.tableoid, catalogId.oid, &labels);
+	nlabels = findSecLabels(catalogId.tableoid, catalogId.oid, &labels);
 
 	query = createPQExpBuffer();
 
@@ -14321,8 +14296,7 @@ dumpTableSecLabel(Archive *fout, const TableInfo *tbinfo, const char *reltypenam
 		return;
 
 	/* Search for comments associated with relation, using table */
-	nlabels = findSecLabels(fout,
-							tbinfo->dobj.catId.tableoid,
+	nlabels = findSecLabels(tbinfo->dobj.catId.tableoid,
 							tbinfo->dobj.catId.oid,
 							&labels);
 
@@ -14386,7 +14360,7 @@ dumpTableSecLabel(Archive *fout, const TableInfo *tbinfo, const char *reltypenam
  * found with one search.
  */
 static int
-findSecLabels(Archive *fout, Oid classoid, Oid objoid, SecLabelItem **items)
+findSecLabels(Oid classoid, Oid objoid, SecLabelItem **items)
 {
 	SecLabelItem *middle = NULL;
 	SecLabelItem *low;
