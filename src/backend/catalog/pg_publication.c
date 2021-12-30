@@ -287,7 +287,7 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	Datum		values[Natts_pg_publication_rel];
 	bool		nulls[Natts_pg_publication_rel];
 	Oid			relid = RelationGetRelid(targetrel->relation);
-	Oid			prrelid;
+	Oid			pubreloid;
 	Publication *pub = GetPublication(pubid);
 	ObjectAddress myself,
 				referenced;
@@ -320,9 +320,9 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	prrelid = GetNewOidWithIndex(rel, PublicationRelObjectIndexId,
-								 Anum_pg_publication_rel_oid);
-	values[Anum_pg_publication_rel_oid - 1] = ObjectIdGetDatum(prrelid);
+	pubreloid = GetNewOidWithIndex(rel, PublicationRelObjectIndexId,
+								   Anum_pg_publication_rel_oid);
+	values[Anum_pg_publication_rel_oid - 1] = ObjectIdGetDatum(pubreloid);
 	values[Anum_pg_publication_rel_prpubid - 1] =
 		ObjectIdGetDatum(pubid);
 	values[Anum_pg_publication_rel_prrelid - 1] =
@@ -334,7 +334,8 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
-	ObjectAddressSet(myself, PublicationRelRelationId, prrelid);
+	/* Register dependencies as needed */
+	ObjectAddressSet(myself, PublicationRelRelationId, pubreloid);
 
 	/* Add dependency on the publication */
 	ObjectAddressSet(referenced, PublicationRelationId, pubid);

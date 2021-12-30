@@ -509,9 +509,10 @@ RESET SEARCH_PATH;
 -- check create publication on CURRENT_SCHEMA where TABLE/ALL TABLES in SCHEMA
 -- is not specified
 CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
-ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
                                                   ^
+DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
 -- check create publication on CURRENT_SCHEMA along with FOR TABLE
 CREATE PUBLICATION testpub_forschema1 FOR TABLE CURRENT_SCHEMA;
 ERROR:  syntax error at or near "CURRENT_SCHEMA"
@@ -778,9 +779,10 @@ Tables from schemas:
 -- fail specifying table without any of 'FOR ALL TABLES IN SCHEMA' or
 --'FOR TABLE' or 'FOR ALL TABLES'
 CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
-ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
                                              ^
+DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
 DROP VIEW testpub_view;
 DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;

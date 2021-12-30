@@ -9750,14 +9750,14 @@ PublicationObjSpec:
 			| ALL TABLES IN_P SCHEMA ColId
 				{
 					$$ = makeNode(PublicationObjSpec);
-					$$->pubobjtype = PUBLICATIONOBJ_TABLE_IN_SCHEMA;
+					$$->pubobjtype = PUBLICATIONOBJ_TABLES_IN_SCHEMA;
 					$$->name = $5;
 					$$->location = @5;
 				}
 			| ALL TABLES IN_P SCHEMA CURRENT_SCHEMA
 				{
 					$$ = makeNode(PublicationObjSpec);
-					$$->pubobjtype = PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA;
+					$$->pubobjtype = PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA;
 					$$->location = @5;
 				}
 			| ColId
@@ -17411,7 +17411,8 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 	if (pubobj->pubobjtype == PUBLICATIONOBJ_CONTINUATION)
 		ereport(ERROR,
 				errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)"),
+				errmsg("invalid publication object list"),
+				errdetail("One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name."),
 				parser_errposition(pubobj->location));
 
 	foreach(cell, pubobjspec_list)
@@ -17433,23 +17434,24 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 			{
 				/* convert it to PublicationTable */
 				PublicationTable *pubtable = makeNode(PublicationTable);
-				pubtable->relation = makeRangeVar(NULL, pubobj->name,
-												  pubobj->location);
+
+				pubtable->relation =
+					makeRangeVar(NULL, pubobj->name, pubobj->location);
 				pubobj->pubtable = pubtable;
 				pubobj->name = NULL;
 			}
 		}
-		else if (pubobj->pubobjtype == PUBLICATIONOBJ_TABLE_IN_SCHEMA ||
-				 pubobj->pubobjtype == PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA)
+		else if (pubobj->pubobjtype == PUBLICATIONOBJ_TABLES_IN_SCHEMA ||
+				 pubobj->pubobjtype == PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA)
 		{
 			/*
 			 * We can distinguish between the different type of schema
 			 * objects based on whether name and pubtable is set.
 			 */
 			if (pubobj->name)
-				pubobj->pubobjtype = PUBLICATIONOBJ_TABLE_IN_SCHEMA;
+				pubobj->pubobjtype = PUBLICATIONOBJ_TABLES_IN_SCHEMA;
 			else if (!pubobj->name && !pubobj->pubtable)
-				pubobj->pubobjtype = PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA;
+				pubobj->pubobjtype = PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA;
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),

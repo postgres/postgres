@@ -40,8 +40,8 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_tablespace.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/storage.h"
@@ -15625,7 +15625,6 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 	}
 	else
 		elog(ERROR, "unexpected identity type %u", stmt->identity_type);
-
 
 	/* Check that the index exists */
 	indexOid = get_relname_relid(stmt->name, rel->rd_rel->relnamespace);
