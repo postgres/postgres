@@ -7284,7 +7284,6 @@ RevokeRoleStmt:
 					n->admin_opt = false;
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
-					n->grantor = $5;
 					n->behavior = $6;
 					$$ = (Node*)n;
 				}
@@ -7295,7 +7294,6 @@ RevokeRoleStmt:
 					n->admin_opt = true;
 					n->granted_roles = $5;
 					n->grantee_roles = $7;
-					n->grantor = $8;
 					n->behavior = $9;
 					$$ = (Node*)n;
 				}
