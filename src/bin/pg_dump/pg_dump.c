@@ -3847,10 +3847,15 @@ getPublications(Archive *fout, int *numPublications)
 static void
 dumpPublication(Archive *fout, const PublicationInfo *pubinfo)
 {
+	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer delq;
 	PQExpBuffer query;
 	char	   *qpubname;
 	bool		first = true;
+
+	/* Do nothing in data-only dump */
+	if (dopt->dataOnly)
+		return;
 
 	delq = createPQExpBuffer();
 	query = createPQExpBuffer();
@@ -4112,12 +4117,14 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 static void
 dumpPublicationNamespace(Archive *fout, const PublicationSchemaInfo *pubsinfo)
 {
+	DumpOptions *dopt = fout->dopt;
 	NamespaceInfo *schemainfo = pubsinfo->pubschema;
 	PublicationInfo *pubinfo = pubsinfo->publication;
 	PQExpBuffer query;
 	char	   *tag;
 
-	if (!(pubsinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
+	/* Do nothing in data-only dump */
+	if (dopt->dataOnly)
 		return;
 
 	tag = psprintf("%s %s", pubinfo->dobj.name, schemainfo->dobj.name);
@@ -4131,13 +4138,16 @@ dumpPublicationNamespace(Archive *fout, const PublicationSchemaInfo *pubsinfo)
 	 * There is no point in creating drop query as the drop is done by schema
 	 * drop.
 	 */
-	ArchiveEntry(fout, pubsinfo->dobj.catId, pubsinfo->dobj.dumpId,
-				 ARCHIVE_OPTS(.tag = tag,
-							  .namespace = schemainfo->dobj.name,
-							  .owner = pubinfo->rolname,
-							  .description = "PUBLICATION TABLES IN SCHEMA",
-							  .section = SECTION_POST_DATA,
-							  .createStmt = query->data));
+	if (pubsinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+		ArchiveEntry(fout, pubsinfo->dobj.catId, pubsinfo->dobj.dumpId,
+					 ARCHIVE_OPTS(.tag = tag,
+								  .namespace = schemainfo->dobj.name,
+								  .owner = pubinfo->rolname,
+								  .description = "PUBLICATION TABLES IN SCHEMA",
+								  .section = SECTION_POST_DATA,
+								  .createStmt = query->data));
+
+	/* These objects can't currently have comments or seclabels */
 
 	free(tag);
 	destroyPQExpBuffer(query);
@@ -4150,10 +4160,15 @@ dumpPublicationNamespace(Archive *fout, const PublicationSchemaInfo *pubsinfo)
 static void
 dumpPublicationTable(Archive *fout, const PublicationRelInfo *pubrinfo)
 {
+	DumpOptions *dopt = fout->dopt;
 	PublicationInfo *pubinfo = pubrinfo->publication;
 	TableInfo  *tbinfo = pubrinfo->pubtable;
 	PQExpBuffer query;
 	char	   *tag;
+
+	/* Do nothing in data-only dump */
+	if (dopt->dataOnly)
+		return;
 
 	tag = psprintf("%s %s", pubinfo->dobj.name, tbinfo->dobj.name);
 
@@ -4179,6 +4194,8 @@ dumpPublicationTable(Archive *fout, const PublicationRelInfo *pubrinfo)
 								  .description = "PUBLICATION TABLE",
 								  .section = SECTION_POST_DATA,
 								  .createStmt = query->data));
+
+	/* These objects can't currently have comments or seclabels */
 
 	free(tag);
 	destroyPQExpBuffer(query);
@@ -4339,6 +4356,7 @@ getSubscriptions(Archive *fout)
 static void
 dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 {
+	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer delq;
 	PQExpBuffer query;
 	PQExpBuffer publications;
@@ -4347,6 +4365,10 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 	int			npubnames = 0;
 	int			i;
 	char		two_phase_disabled[] = {LOGICALREP_TWOPHASE_STATE_DISABLED, '\0'};
+
+	/* Do nothing in data-only dump */
+	if (dopt->dataOnly)
+		return;
 
 	delq = createPQExpBuffer();
 	query = createPQExpBuffer();
