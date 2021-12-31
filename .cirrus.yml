@@ -1,0 +1,547 @@
+# CI configuration file for CI utilizing cirrus-ci.org
+#
+# For instructions on how to enable the CI integration in a repository and
+# further details, see src/tools/ci/README
+
+
+env:
+  # Source of images / containers
+  GCP_PROJECT: pg-ci-images
+  IMAGE_PROJECT: $GCP_PROJECT
+  CONTAINER_REPO: us-docker.pkg.dev/${GCP_PROJECT}/ci
+
+  # The lower depth accelerates git clone. Use a bit of depth so that
+  # concurrent tasks and retrying older jobs has a chance of working.
+  CIRRUS_CLONE_DEPTH: 500
+  # Useful to be able to analyse what in a script takes long
+  CIRRUS_LOG_TIMESTAMP: true
+
+  CCACHE_MAXSIZE: "250M"
+
+  # target to test, for all but windows
+  CHECK: check-world PROVE_FLAGS=$PROVE_FLAGS
+  CHECKFLAGS: -Otarget
+  PROVE_FLAGS: --timer
+  PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
+  TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
+  PG_TEST_EXTRA: kerberos ldap ssl
+
+
+# What files to preserve in case tests fail
+on_failure: &on_failure
+  log_artifacts:
+    path: "**/**.log"
+    type: text/plain
+  regress_diffs_artifacts:
+    path: "**/**.diffs"
+    type: text/plain
+  tap_artifacts:
+    path: "**/regress_log_*"
+    type: text/plain
+
+
+task:
+  name: FreeBSD - 13
+
+  env:
+    # FreeBSD on GCP is slow when running with larger number of CPUS /
+    # jobs. Using one more job than cpus seems to work best.
+    CPUS: 2
+    BUILD_JOBS: 3
+    TEST_JOBS: 3
+
+    CCACHE_DIR: /tmp/ccache_dir
+
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
+
+  compute_engine_instance:
+    image_project: $IMAGE_PROJECT
+    image: family/pg-ci-freebsd-13-0
+    platform: freebsd
+    cpu: $CPUS
+    memory: 2G
+    disk: 50
+
+  sysinfo_script: |
+    id
+    uname -a
+    ulimit -a -H && ulimit -a -S
+    export
+
+  ccache_cache:
+    folder: $CCACHE_DIR
+  # Workaround around performance issues due to 32KB block size
+  repartition_script: src/tools/ci/gcp_freebsd_repartition.sh
+  create_user_script: |
+    pw useradd postgres
+    chown -R postgres:postgres .
+    mkdir -p ${CCACHE_DIR}
+    chown -R postgres:postgres ${CCACHE_DIR}
+  setup_cores_script: |
+    mkdir -m 770 /tmp/cores
+    chown root:postgres /tmp/cores
+    sysctl kern.corefile='/tmp/cores/%N.%P.core'
+
+  # NB: Intentionally build without --with-llvm. The freebsd image size is
+  # already large enough to make VM startup slow, and even without llvm
+  # freebsd already takes longer than other platforms except for windows.
+  configure_script: |
+    su postgres <<-EOF
+      ./configure \
+        --enable-cassert --enable-debug --enable-tap-tests \
+        --enable-nls \
+        \
+        --with-gssapi \
+        --with-icu \
+        --with-ldap \
+        --with-libxml \
+        --with-libxslt \
+        --with-lz4 \
+        --with-pam \
+        --with-perl \
+        --with-python \
+        --with-ssl=openssl \
+        --with-tcl --with-tclconfig=/usr/local/lib/tcl8.6/ \
+        --with-uuid=bsd \
+        \
+        --with-includes=/usr/local/include \
+        --with-libs=/usr/local/lib \
+        \
+        CC="ccache cc" \
+        CXX="ccache c++" \
+        CFLAGS="-O0 -ggdb"
+    EOF
+  build_script: su postgres -c "gmake -s -j${BUILD_JOBS} world-bin"
+  upload_caches: ccache
+
+  # The use of script avoids make -Otarget complaints about fcntl() on
+  # platforms without support for locking pipes. See also
+  # https://savannah.gnu.org/bugs/?60774
+  # script uses pseudo-ttys, which do support locking.
+  test_world_script:
+    - su postgres -c "time script test.log gmake -s -j${TEST_JOBS} ${CHECK} ${CHECKFLAGS}"
+
+  on_failure:
+    <<: *on_failure
+    cores_script: src/tools/ci/cores_backtrace.sh freebsd /tmp/cores
+
+
+# configure feature flags, shared between the task running the linux tests and
+# the CompilerWarnings task
+LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
+  --with-gssapi
+  --with-icu
+  --with-ldap
+  --with-libxml
+  --with-libxslt
+  --with-llvm
+  --with-lz4
+  --with-pam
+  --with-perl
+  --with-python
+  --with-selinux
+  --with-ssl=openssl
+  --with-systemd
+  --with-tcl --with-tclconfig=/usr/lib/tcl8.6/
+  --with-uuid=ossp
+
+
+task:
+  name: Linux - Debian Bullseye
+
+  env:
+    CPUS: 4
+    BUILD_JOBS: 4
+    TEST_JOBS: 8 # experimentally derived to be a decent choice
+
+    CCACHE_DIR: /tmp/ccache_dir
+    DEBUGINFOD_URLS: "https://debuginfod.debian.net"
+
+    LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
+
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
+
+  compute_engine_instance:
+    image_project: $IMAGE_PROJECT
+    image: family/pg-ci-bullseye
+    platform: linux
+    cpu: $CPUS
+    memory: 2G
+
+  ccache_cache:
+    folder: ${CCACHE_DIR}
+
+  sysinfo_script: |
+    id
+    uname -a
+    cat /proc/cmdline
+    ulimit -a -H && ulimit -a -S
+    export
+  create_user_script: |
+    useradd -m postgres
+    chown -R postgres:postgres .
+    mkdir -p ${CCACHE_DIR}
+    chown -R postgres:postgres ${CCACHE_DIR}
+    echo '* - memlock 134217728' > /etc/security/limits.d/postgres.conf
+    su postgres -c "ulimit -l -H && ulimit -l -S"
+  setup_cores_script: |
+    mkdir -m 770 /tmp/cores
+    chown root:postgres /tmp/cores
+    sysctl kernel.core_pattern='/tmp/cores/%e-%s-%p.core'
+
+  configure_script: |
+    su postgres <<-EOF
+      ./configure \
+        --enable-cassert --enable-debug --enable-tap-tests \
+        --enable-nls \
+        \
+        ${LINUX_CONFIGURE_FEATURES} \
+        \
+        CC="ccache gcc" \
+        CXX="ccache g++" \
+        CLANG="ccache clang" \
+        CFLAGS="-O0 -ggdb" \
+        CXXFLAGS="-O0 -ggdb"
+    EOF
+  build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
+  upload_caches: ccache
+
+  test_world_script: |
+    su postgres <<-EOF
+      ulimit -c unlimited # default is 0
+      make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
+    EOF
+
+  on_failure:
+    <<: *on_failure
+    cores_script: src/tools/ci/cores_backtrace.sh linux /tmp/cores
+
+
+task:
+  name: macOS - Monterey
+
+  env:
+    CPUS: 12 # always get that much for cirrusci macOS instances
+    BUILD_JOBS: $CPUS
+    TEST_JOBS: $CPUS # already fast enough to not be worth tuning
+
+    CIRRUS_WORKING_DIR: ${HOME}/pgsql/
+    CCACHE_DIR: ${HOME}/ccache
+    HOMEBREW_CACHE: ${HOME}/homebrew-cache
+    PERL5LIB: ${HOME}/perl5/lib/perl5
+
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
+
+  osx_instance:
+    image: monterey-base
+
+  sysinfo_script: |
+    id
+    export
+    ulimit -a -H && ulimit -a -S
+
+  setup_cores_script:
+    - mkdir ${HOME}/cores
+    - sudo sysctl kern.corefile="${HOME}/cores/core.%P"
+
+  perl_cache:
+    folder: ~/perl5
+  cpan_install_script:
+    - perl -mIPC::Run -e 1 || cpan -T IPC::Run
+    - perl -mIO::Pty -e 1 || cpan -T IO::Pty
+  upload_caches: perl
+
+
+  # XXX: Could we instead install homebrew into a cached directory? The
+  # homebrew installation takes a good bit of time every time, even if the
+  # packages do not need to be downloaded.
+  homebrew_cache:
+    folder: $HOMEBREW_CACHE
+  homebrew_install_script: |
+    brew install \
+      ccache \
+      icu4c \
+      krb5 \
+      llvm \
+      lz4 \
+      make \
+      openldap \
+      openssl \
+      python \
+      tcl-tk
+
+    brew cleanup -s # to reduce cache size
+  upload_caches: homebrew
+
+  ccache_cache:
+    folder: $CCACHE_DIR
+  configure_script: |
+    brewpath="/usr/local"
+    INCLUDES="${brewpath}/include:${INCLUDES}"
+    LIBS="${brewpath}/lib:${LIBS}"
+
+    for pkg in icu4c krb5 openldap openssl ; do
+      pkgpath="${brewpath}/opt/${pkg}"
+      INCLUDES="${pkgpath}/include:${INCLUDES}"
+      LIBS="${pkgpath}/lib:${LIBS}"
+      PKG_CONFIG_PATH="${pkgpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    done
+
+    export PKG_CONFIG_PATH
+
+    ./configure \
+      --enable-cassert --enable-debug --enable-tap-tests \
+      --enable-nls \
+      \
+      --with-bonjour \
+      --with-gssapi \
+      --with-icu \
+      --with-ldap \
+      --with-libxml \
+      --with-libxslt \
+      --with-lz4 \
+      --with-perl \
+      --with-python \
+      --with-ssl=openssl \
+      --with-tcl --with-tclconfig=${brewpath}/opt/tcl-tk/lib/ \
+      --with-uuid=e2fs \
+      \
+      --prefix=${HOME}/install \
+      --with-includes="${INCLUDES}" \
+      --with-libs="${LIBS}" \
+      \
+      CC="ccache cc" \
+      CXX="ccache c++" \
+      CLANG="ccache ${brewpath}/llvm/bin/ccache" \
+      CFLAGS="-O0 -ggdb" \
+      CXXFLAGS="-O0 -ggdb" \
+      \
+      LLVM_CONFIG=${brewpath}/llvm/bin/llvm-config \
+      PYTHON=python3
+  build_script: gmake -s -j${BUILD_JOBS} world-bin
+  upload_caches: ccache
+
+  test_world_script: |
+    ulimit -c unlimited # default is 0
+    ulimit -n 1024 # default is 256, pretty low
+    # See freebsd use of script for explanation
+    script test.log gmake -s -j${TEST_JOBS} ${CHECK} ${CHECKFLAGS}
+
+  on_failure:
+    <<: *on_failure
+    cores_script: src/tools/ci/cores_backtrace.sh macos "${HOME}/cores"
+
+
+task:
+  name: Windows - Server 2019, VS 2019
+
+  env:
+    # Half the allowed per-user CPU cores
+    CPUS: 4
+
+    # Our windows infrastructure doesn't have test concurrency above the level
+    # of a single vcregress test target. Due to that, it's useful to run prove
+    # with multiple jobs. For the other tasks it isn't, because two sources
+    # (make and prove) of concurrency can overload machines.
+    #
+    # The concrete choice of 10 is based on a small bit of experimentation and
+    # likely can be improved upon further.
+    PROVE_FLAGS: -j10 --timer
+
+    # The default cirrus working dir is in a directory msbuild complains about
+    CIRRUS_WORKING_DIR: "c:/cirrus"
+    # Avoid re-installing over and over
+    NO_TEMP_INSTALL: 1
+    # git's tar doesn't deal with drive letters, see
+    # https://postgr.es/m/b6782dc3-a7b0-ed56-175f-f8f54cb08d67%40dunslane.net
+    TAR: "c:/windows/system32/tar.exe"
+    # Avoids port conflicts between concurrent tap test runs
+    PG_TEST_USE_UNIX_SOCKETS: 1
+    PG_REGRESS_SOCK_DIR: "c:/cirrus/"
+    # Use parallelism, disable file tracker, we're never going to rebuild...
+    MSBFLAGS: -m -verbosity:minimal /p:TrackFileAccess=false
+
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
+
+  windows_container:
+    image: $CONTAINER_REPO/windows_ci_vs_2019:latest
+    cpu: $CPUS
+    memory: 4G
+
+  sysinfo_script: |
+    chcp
+    systeminfo
+    powershell -Command get-psdrive -psprovider filesystem
+    set
+
+  configure_script:
+    # copy errors out when using forward slashes
+    - copy src\tools\ci\windows_build_config.pl src\tools\msvc\config.pl
+    - vcvarsall x64
+    - perl src/tools/msvc/mkvcbuild.pl
+  build_script:
+    - vcvarsall x64
+    - msbuild %MSBFLAGS% pgsql.sln
+  tempinstall_script:
+    # Installation on windows currently only completely works from src/tools/msvc
+    - cd src/tools/msvc && perl install.pl %CIRRUS_WORKING_DIR%/tmp_install
+
+  test_regress_parallel_script:
+    - perl src/tools/msvc/vcregress.pl check parallel
+  startcreate_script:
+    # paths to binaries need backslashes
+    - tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log
+    - echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
+    - tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
+  test_pl_script:
+    - perl src/tools/msvc/vcregress.pl plcheck
+  test_isolation_script:
+    - perl src/tools/msvc/vcregress.pl isolationcheck
+  test_modules_script:
+    - perl src/tools/msvc/vcregress.pl modulescheck
+  test_contrib_script:
+    - perl src/tools/msvc/vcregress.pl contribcheck
+  stop_script:
+    - tmp_install\bin\pg_ctl.exe stop -D tmp_check/db -l tmp_check/postmaster.log
+  test_ssl_script:
+    - set with_ssl=openssl
+    - perl src/tools/msvc/vcregress.pl taptest ./src/test/ssl/
+  test_subscription_script:
+    - perl src/tools/msvc/vcregress.pl taptest ./src/test/subscription/
+  test_authentication_script:
+    - perl src/tools/msvc/vcregress.pl taptest ./src/test/authentication/
+  test_recovery_script:
+    - perl src/tools/msvc/vcregress.pl recoverycheck
+  test_bin_script:
+    - perl src/tools/msvc/vcregress.pl bincheck
+  test_pg_upgrade_script:
+    - perl src/tools/msvc/vcregress.pl upgradecheck
+  test_ecpg_script:
+    # tries to build additional stuff
+    - vcvarsall x64
+    # References ecpg_regression.proj in the current dir
+    - cd src/tools/msvc
+    - perl vcregress.pl ecpgcheck
+
+  on_failure: *on_failure
+
+
+task:
+  name: CompilerWarnings
+
+  # To limit unnecessary work only run this once the normal linux test succeeds
+  depends_on:
+    - Linux - Debian Bullseye
+
+  env:
+    CPUS: 4
+    BUILD_JOBS: 4
+
+    # Use larger ccache cache, as this task compiles with multiple compilers /
+    # flag combinations
+    CCACHE_SIZE: "1GB"
+    CCACHE_DIR: "/tmp/ccache_dir"
+
+    LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
+
+  # task that did not run, count as a success, so we need to recheck Linux'
+  # condition here ...
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
+
+  container:
+    image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
+    cpu: $CPUS
+
+  sysinfo_script: |
+    id
+    uname -a
+    cat /proc/cmdline
+    ulimit -a -H && ulimit -a -S
+    gcc -v
+    clang -v
+    export
+
+  ccache_cache:
+    folder: $CCACHE_DIR
+
+  ###
+  # Test that code can be built with gcc/clang without warnings
+  ###
+
+  setup_script: echo "COPT=-Werror" > src/Makefile.custom
+
+  # Trace probes have a history of getting accidentally broken. Use the
+  # different compilers to build with different combinations of dtrace on/off
+  # and cassert on/off.
+
+  # gcc, cassert off, dtrace on
+  always:
+    gcc_warning_script: |
+      time ./configure \
+        --cache gcc.cache \
+        --enable-dtrace \
+        ${LINUX_CONFIGURE_FEATURES} \
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} world-bin
+
+  # gcc, cassert on, dtrace off
+  always:
+    gcc_a_warning_script: |
+      time ./configure \
+        --cache gcc.cache \
+        --enable-cassert \
+        ${LINUX_CONFIGURE_FEATURES} \
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} world-bin
+
+  # clang, cassert off, dtrace off
+  always:
+    clang_warning_script: |
+      time ./configure \
+        --cache clang.cache \
+        ${LINUX_CONFIGURE_FEATURES} \
+        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} world-bin
+
+  # clang, cassert on, dtrace on
+  always:
+    clang_a_warning_script: |
+      time ./configure \
+        --cache clang.cache \
+        --enable-cassert \
+        --enable-dtrace \
+        ${LINUX_CONFIGURE_FEATURES} \
+        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} world-bin
+
+  # cross-compile to windows
+  always:
+    mingw_cross_warning_script: |
+      time ./configure \
+        --host=x86_64-w64-mingw32 \
+        --enable-cassert \
+        CC="ccache x86_64-w64-mingw32-gcc" \
+        CXX="ccache x86_64-w64-mingw32-g++"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} world-bin
+
+  ###
+  # Verify docs can be built
+  ###
+  # XXX: Only do this if there have been changes in doc/ since last build
+  always:
+    docs_build_script: |
+      time ./configure \
+        --cache gcc.cache \
+        CC="ccache gcc" \
+        CXX="ccache g++" \
+        CLANG="ccache clang"
+      make -s -j${BUILD_JOBS} clean
+      time make -s -j${BUILD_JOBS} -C doc
+
+  always:
+    upload_caches: ccache
