@@ -427,7 +427,8 @@ typedef struct IndexScan
  * indextlist, which represents the contents of the index as a targetlist
  * with one TLE per index column.  Vars appearing in this list reference
  * the base table, and this is the only field in the plan node that may
- * contain such Vars.
+ * contain such Vars.  Note however that index columns that the AM can't
+ * reconstruct are replaced by null Consts in indextlist.
  * ----------------
  */
 typedef struct IndexOnlyScan
