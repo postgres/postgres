@@ -142,6 +142,17 @@ and p <@ box(point(5,5), point(6, 6));
 
 drop index gist_tbl_multi_index;
 
+-- Test that we don't try to return the value of a non-returnable
+-- column in an index-only scan.  (This isn't GIST-specific, but
+-- it only applies to index AMs that can return some columns and not
+-- others, so GIST with appropriate opclasses is a convenient test case.)
+create index gist_tbl_multi_index on gist_tbl using gist (circle(p,1), p);
+explain (verbose, costs off)
+select circle(p,1) from gist_tbl
+where p <@ box(point(5, 5), point(5.3, 5.3));
+select circle(p,1) from gist_tbl
+where p <@ box(point(5, 5), point(5.3, 5.3));
+
 -- Clean up
 reset enable_seqscan;
 reset enable_bitmapscan;
