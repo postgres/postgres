@@ -1089,7 +1089,7 @@ primary_slot_name = 'node_a_slot'
     servers.  Waiting for confirmation increases the user's confidence that the
     changes will not be lost in the event of server crashes but it also
     necessarily increases the response time for the requesting transaction.
-    The minimum wait time is the round-trip time between primary to standby.
+    The minimum wait time is the round-trip time between primary and standby.
    </para>
 
    <para>
