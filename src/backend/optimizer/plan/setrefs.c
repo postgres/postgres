@@ -1142,8 +1142,26 @@ set_indexonlyscan_references(PlannerInfo *root,
 							 int rtoffset)
 {
 	indexed_tlist *index_itlist;
+	List	   *stripped_indextlist;
+	ListCell   *lc;
 
-	index_itlist = build_tlist_index(plan->indextlist);
+	/*
+	 * Vars in the plan node's targetlist, qual, and recheckqual must only
+	 * reference columns that the index AM can actually return.  To ensure
+	 * this, remove non-returnable columns (which are marked as resjunk) from
+	 * the indexed tlist.  We can just drop them because the indexed_tlist
+	 * machinery pays attention to TLE resnos, not physical list position.
+	 */
+	stripped_indextlist = NIL;
+	foreach(lc, plan->indextlist)
+	{
+		TargetEntry *indextle = (TargetEntry *) lfirst(lc);
+
+		if (!indextle->resjunk)
+			stripped_indextlist = lappend(stripped_indextlist, indextle);
+	}
+
+	index_itlist = build_tlist_index(stripped_indextlist);
 
 	plan->scan.scanrelid += rtoffset;
 	plan->scan.plan.targetlist = (List *)
@@ -1156,6 +1174,13 @@ set_indexonlyscan_references(PlannerInfo *root,
 	plan->scan.plan.qual = (List *)
 		fix_upper_expr(root,
 					   (Node *) plan->scan.plan.qual,
+					   index_itlist,
+					   INDEX_VAR,
+					   rtoffset,
+					   NUM_EXEC_QUAL((Plan *) plan));
+	plan->recheckqual = (List *)
+		fix_upper_expr(root,
+					   (Node *) plan->recheckqual,
 					   index_itlist,
 					   INDEX_VAR,
 					   rtoffset,

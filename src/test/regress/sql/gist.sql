@@ -153,6 +153,17 @@ where p <@ box(point(5, 5), point(5.3, 5.3));
 select circle(p,1) from gist_tbl
 where p <@ box(point(5, 5), point(5.3, 5.3));
 
+-- Similarly, test that index rechecks involving a non-returnable column
+-- are done correctly.
+explain (verbose, costs off)
+select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
+select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
+
+-- This case isn't supported, but it should at least EXPLAIN correctly.
+explain (verbose, costs off)
+select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
+select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
+
 -- Clean up
 reset enable_seqscan;
 reset enable_bitmapscan;

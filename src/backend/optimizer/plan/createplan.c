@@ -20,7 +20,6 @@
 #include <math.h>
 
 #include "access/sysattr.h"
-#include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
@@ -189,10 +188,10 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 								 ScanDirection indexscandir);
 static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
 										 Index scanrelid, Oid indexid,
-										 List *indexqual, List *indexorderby,
+										 List *indexqual, List *recheckqual,
+										 List *indexorderby,
 										 List *indextlist,
 										 ScanDirection indexscandir);
-static List *make_indexonly_tlist(IndexOptInfo *indexinfo);
 static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indexid,
 											  List *indexqual,
 											  List *indexqualorig);
@@ -623,7 +622,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 		if (best_path->pathtype == T_IndexOnlyScan)
 		{
 			/* For index-only scan, the preferred tlist is the index's */
-			tlist = copyObject(make_indexonly_tlist(((IndexPath *) best_path)->indexinfo));
+			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
 
 			/*
 			 * Transfer sortgroupref data to the replacement tlist, if
@@ -2934,7 +2933,8 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *indexclauses = best_path->indexclauses;
 	List	   *indexorderbys = best_path->indexorderbys;
 	Index		baserelid = best_path->path.parent->relid;
-	Oid			indexoid = best_path->indexinfo->indexoid;
+	IndexOptInfo *indexinfo = best_path->indexinfo;
+	Oid			indexoid = indexinfo->indexoid;
 	List	   *qpqual;
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
@@ -3064,6 +3064,24 @@ create_indexscan_plan(PlannerInfo *root,
 		}
 	}
 
+	/*
+	 * For an index-only scan, we must mark indextlist entries as resjunk if
+	 * they are columns that the index AM can't return; this cues setrefs.c to
+	 * not generate references to those columns.
+	 */
+	if (indexonly)
+	{
+		int			i = 0;
+
+		foreach(l, indexinfo->indextlist)
+		{
+			TargetEntry *indextle = (TargetEntry *) lfirst(l);
+
+			indextle->resjunk = !indexinfo->canreturn[i];
+			i++;
+		}
+	}
+
 	/* Finally ready to build the plan node */
 	if (indexonly)
 		scan_plan = (Scan *) make_indexonlyscan(tlist,
@@ -3071,8 +3089,9 @@ create_indexscan_plan(PlannerInfo *root,
 												baserelid,
 												indexoid,
 												fixed_indexquals,
+												stripped_indexquals,
 												fixed_indexorderbys,
-												make_indexonly_tlist(best_path->indexinfo),
+												indexinfo->indextlist,
 												best_path->indexscandir);
 	else
 		scan_plan = (Scan *) make_indexscan(tlist,
@@ -5444,6 +5463,7 @@ make_indexonlyscan(List *qptlist,
 				   Index scanrelid,
 				   Oid indexid,
 				   List *indexqual,
+				   List *recheckqual,
 				   List *indexorderby,
 				   List *indextlist,
 				   ScanDirection indexscandir)
@@ -5458,58 +5478,12 @@ make_indexonlyscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->indexid = indexid;
 	node->indexqual = indexqual;
+	node->recheckqual = recheckqual;
 	node->indexorderby = indexorderby;
 	node->indextlist = indextlist;
 	node->indexorderdir = indexscandir;
 
 	return node;
-}
-
-/*
- * make_indexonly_tlist
- *
- * Construct the indextlist for an IndexOnlyScan plan node.
- * We must replace any column that can't be returned by the index AM
- * with a null Const of the appropriate datatype.  This is necessary
- * to prevent setrefs.c from trying to use the value of such a column,
- * and anyway it makes the indextlist a better representative of what
- * the indexscan will really return.  (We do this here, not where the
- * IndexOptInfo is originally constructed, because earlier planner
- * steps need to know what is in such columns.)
- */
-static List *
-make_indexonly_tlist(IndexOptInfo *indexinfo)
-{
-	List	   *result;
-	int			i;
-	ListCell   *lc;
-
-	/* We needn't work hard for the common case of btrees. */
-	if (indexinfo->relam == BTREE_AM_OID)
-		return indexinfo->indextlist;
-
-	result = NIL;
-	i = 0;
-	foreach(lc, indexinfo->indextlist)
-	{
-		TargetEntry *indextle = (TargetEntry *) lfirst(lc);
-
-		if (indexinfo->canreturn[i])
-			result = lappend(result, indextle);
-		else
-		{
-			TargetEntry *newtle = makeNode(TargetEntry);
-			Node	   *texpr = (Node *) indextle->expr;
-
-			memcpy(newtle, indextle, sizeof(TargetEntry));
-			newtle->expr = (Expr *) makeNullConst(exprType(texpr),
-												  exprTypmod(texpr),
-												  exprCollation(texpr));
-			result = lappend(result, newtle);
-		}
-		i++;
-	}
-	return result;
 }
 
 static BitmapIndexScan *

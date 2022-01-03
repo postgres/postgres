@@ -420,15 +420,28 @@ typedef struct IndexScan
  * index-only scan, in which the data comes from the index not the heap.
  * Because of this, *all* Vars in the plan node's targetlist, qual, and
  * index expressions reference index columns and have varno = INDEX_VAR.
- * Hence we do not need separate indexqualorig and indexorderbyorig lists,
- * since their contents would be equivalent to indexqual and indexorderby.
+ *
+ * We could almost use indexqual directly against the index's output tuple
+ * when rechecking lossy index operators, but that won't work for quals on
+ * index columns that are not retrievable.  Hence, recheckqual is needed
+ * for rechecks: it expresses the same condition as indexqual, but using
+ * only index columns that are retrievable.  (We will not generate an
+ * index-only scan if this is not possible.  An example is that if an
+ * index has table column "x" in a retrievable index column "ind1", plus
+ * an expression f(x) in a non-retrievable column "ind2", an indexable
+ * query on f(x) will use "ind2" in indexqual and f(ind1) in recheckqual.
+ * Without the "ind1" column, an index-only scan would be disallowed.)
+ *
+ * We don't currently need a recheckable equivalent of indexorderby,
+ * because we don't support lossy operators in index ORDER BY.
  *
  * To help EXPLAIN interpret the index Vars for display, we provide
  * indextlist, which represents the contents of the index as a targetlist
  * with one TLE per index column.  Vars appearing in this list reference
  * the base table, and this is the only field in the plan node that may
- * contain such Vars.  Note however that index columns that the AM can't
- * reconstruct are replaced by null Consts in indextlist.
+ * contain such Vars.  Also, for the convenience of setrefs.c, TLEs in
+ * indextlist are marked as resjunk if they correspond to columns that
+ * the index AM cannot reconstruct.
  * ----------------
  */
 typedef struct IndexOnlyScan
@@ -436,6 +449,7 @@ typedef struct IndexOnlyScan
 	Scan		scan;
 	Oid			indexid;		/* OID of index to scan */
 	List	   *indexqual;		/* list of index quals (usually OpExprs) */
+	List	   *recheckqual;	/* index quals in recheckable form */
 	List	   *indexorderby;	/* list of index ORDER BY exprs */
 	List	   *indextlist;		/* TargetEntry list describing index's cols */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
