@@ -1191,10 +1191,6 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 /*
  * Store some statistics for a statement.
  *
- * If queryId is 0 then this is a utility statement for which we couldn't
- * compute a queryId during parse analysis, and we should compute a suitable
- * queryId internally.
- *
  * If jstate is not NULL then we're trying to create an entry for which
  * we have no statistics as yet; we just want to record the normalized
  * query string.  total_time, rows, bufusage and walusage are ignored in this
