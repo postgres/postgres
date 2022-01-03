@@ -9828,7 +9828,7 @@ AlterPublicationStmt:
 					n->pubname = $3;
 					n->pubobjects = $5;
 					preprocess_pubobj_list(n->pubobjects, yyscanner);
-					n->action = DEFELEM_ADD;
+					n->action = AP_AddObjects;
 					$$ = (Node *)n;
 				}
 			| ALTER PUBLICATION name SET pub_obj_list
@@ -9837,7 +9837,7 @@ AlterPublicationStmt:
 					n->pubname = $3;
 					n->pubobjects = $5;
 					preprocess_pubobj_list(n->pubobjects, yyscanner);
-					n->action = DEFELEM_SET;
+					n->action = AP_SetObjects;
 					$$ = (Node *)n;
 				}
 			| ALTER PUBLICATION name DROP pub_obj_list
@@ -9846,7 +9846,7 @@ AlterPublicationStmt:
 					n->pubname = $3;
 					n->pubobjects = $5;
 					preprocess_pubobj_list(n->pubobjects, yyscanner);
-					n->action = DEFELEM_DROP;
+					n->action = AP_DropObjects;
 					$$ = (Node *)n;
 				}
 		;

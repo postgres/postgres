@@ -3674,6 +3674,13 @@ typedef struct CreatePublicationStmt
 	bool		for_all_tables; /* Special publication for all tables in db */
 } CreatePublicationStmt;
 
+typedef enum AlterPublicationAction
+{
+	AP_AddObjects,				/* add objects to publication */
+	AP_DropObjects,				/* remove objects from publication */
+	AP_SetObjects				/* set list of objects */
+} AlterPublicationAction;
+
 typedef struct AlterPublicationStmt
 {
 	NodeTag		type;
@@ -3688,8 +3695,8 @@ typedef struct AlterPublicationStmt
 	 */
 	List	   *pubobjects;		/* Optional list of publication objects */
 	bool		for_all_tables; /* Special publication for all tables in db */
-	DefElemAction action;		/* What action to perform with the
-								 * tables/schemas */
+	AlterPublicationAction action;	/* What action to perform with the given
+									 * objects */
 } AlterPublicationStmt;
 
 typedef struct CreateSubscriptionStmt

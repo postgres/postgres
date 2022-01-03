@@ -503,12 +503,12 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 	 * possible that user has not specified any tables in which case we need
 	 * to remove all the existing tables.
 	 */
-	if (!tables && stmt->action != DEFELEM_SET)
+	if (!tables && stmt->action != AP_SetObjects)
 		return;
 
 	rels = OpenTableList(tables);
 
-	if (stmt->action == DEFELEM_ADD)
+	if (stmt->action == AP_AddObjects)
 	{
 		List	   *schemas = NIL;
 
@@ -521,9 +521,9 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 											  PUBLICATIONOBJ_TABLE);
 		PublicationAddTables(pubid, rels, false, stmt);
 	}
-	else if (stmt->action == DEFELEM_DROP)
+	else if (stmt->action == AP_DropObjects)
 		PublicationDropTables(pubid, rels, false);
-	else						/* DEFELEM_SET */
+	else						/* AP_SetObjects */
 	{
 		List	   *oldrelids = GetPublicationRelations(pubid,
 														PUBLICATION_PART_ROOT);
@@ -598,7 +598,7 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 	 * possible that user has not specified any schemas in which case we need
 	 * to remove all the existing schemas.
 	 */
-	if (!schemaidlist && stmt->action != DEFELEM_SET)
+	if (!schemaidlist && stmt->action != AP_SetObjects)
 		return;
 
 	/*
@@ -606,7 +606,7 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 	 * concurrent schema deletion.
 	 */
 	LockSchemaList(schemaidlist);
-	if (stmt->action == DEFELEM_ADD)
+	if (stmt->action == AP_AddObjects)
 	{
 		List	   *rels;
 		List	   *reloids;
@@ -620,9 +620,9 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 		CloseTableList(rels);
 		PublicationAddSchemas(pubform->oid, schemaidlist, false, stmt);
 	}
-	else if (stmt->action == DEFELEM_DROP)
+	else if (stmt->action == AP_DropObjects)
 		PublicationDropSchemas(pubform->oid, schemaidlist, false);
-	else						/* DEFELEM_SET */
+	else						/* AP_SetObjects */
 	{
 		List	   *oldschemaids = GetPublicationSchemas(pubform->oid);
 		List	   *delschemas = NIL;
@@ -657,7 +657,7 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 {
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
 
-	if ((stmt->action == DEFELEM_ADD || stmt->action == DEFELEM_SET) &&
+	if ((stmt->action == AP_AddObjects || stmt->action == AP_SetObjects) &&
 		schemaidlist && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
