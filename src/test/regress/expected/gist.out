@@ -340,6 +340,37 @@ where p <@ box(point(5, 5), point(5.3, 5.3));
  <(5.3,5.3),1>
 (7 rows)
 
+-- Similarly, test that index rechecks involving a non-returnable column
+-- are done correctly.
+explain (verbose, costs off)
+select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Index Only Scan using gist_tbl_multi_index on public.gist_tbl
+   Output: p
+   Index Cond: ((circle(gist_tbl.p, '1'::double precision)) @> '<(0,0),0.95>'::circle)
+(3 rows)
+
+select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
+   p   
+-------
+ (0,0)
+(1 row)
+
+-- This case isn't supported, but it should at least EXPLAIN correctly.
+explain (verbose, costs off)
+select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Limit
+   Output: p, ((circle(p, '1'::double precision) <-> '(0,0)'::point))
+   ->  Index Only Scan using gist_tbl_multi_index on public.gist_tbl
+         Output: p, (circle(p, '1'::double precision) <-> '(0,0)'::point)
+         Order By: ((circle(gist_tbl.p, '1'::double precision)) <-> '(0,0)'::point)
+(5 rows)
+
+select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
+ERROR:  lossy distance functions are not supported in index-only scans
 -- Clean up
 reset enable_seqscan;
 reset enable_bitmapscan;
