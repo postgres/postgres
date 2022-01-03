@@ -2308,6 +2308,8 @@ finalize_plan(PlannerInfo *root, Plan *plan,
 		case T_IndexOnlyScan:
 			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexqual,
 							  &context);
+			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->recheckqual,
+							  &context);
 			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexorderby,
 							  &context);
 
