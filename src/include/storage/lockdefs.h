@@ -45,7 +45,7 @@ typedef int LOCKMODE;
 #define AccessExclusiveLock		8	/* ALTER TABLE, DROP TABLE, VACUUM FULL,
 									 * and unqualified LOCK TABLE */
 
-#define MaxLockMode				8
+#define MaxLockMode				8	/* highest standard lock mode */
 
 
 /* WAL representation of an AccessExclusiveLock on a table */
