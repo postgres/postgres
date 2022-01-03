@@ -1807,7 +1807,6 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 	bool		result;
 	Bitmapset  *attrs_used = NULL;
 	Bitmapset  *index_canreturn_attrs = NULL;
-	Bitmapset  *index_cannotreturn_attrs = NULL;
 	ListCell   *lc;
 	int			i;
 
@@ -1847,11 +1846,7 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 
 	/*
 	 * Construct a bitmapset of columns that the index can return back in an
-	 * index-only scan.  If there are multiple index columns containing the
-	 * same attribute, all of them must be capable of returning the value,
-	 * since we might recheck operators on any of them.  (Potentially we could
-	 * be smarter about that, but it's such a weird situation that it doesn't
-	 * seem worth spending a lot of sweat on.)
+	 * index-only scan.
 	 */
 	for (i = 0; i < index->ncolumns; i++)
 	{
@@ -1868,21 +1863,13 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 			index_canreturn_attrs =
 				bms_add_member(index_canreturn_attrs,
 							   attno - FirstLowInvalidHeapAttributeNumber);
-		else
-			index_cannotreturn_attrs =
-				bms_add_member(index_cannotreturn_attrs,
-							   attno - FirstLowInvalidHeapAttributeNumber);
 	}
-
-	index_canreturn_attrs = bms_del_members(index_canreturn_attrs,
-											index_cannotreturn_attrs);
 
 	/* Do we have all the necessary attributes? */
 	result = bms_is_subset(attrs_used, index_canreturn_attrs);
 
 	bms_free(attrs_used);
 	bms_free(index_canreturn_attrs);
-	bms_free(index_cannotreturn_attrs);
 
 	return result;
 }
