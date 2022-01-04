@@ -5095,7 +5095,8 @@ failed:
 		 * this assert is slightly different from the equivalent one in
 		 * heap_delete and heap_update.
 		 */
-		Assert(HeapTupleWouldBlock || !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
+		Assert((result == HeapTupleWouldBlock) ||
+			   !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
 		hufd->ctid = tuple->t_data->t_ctid;
 		hufd->xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
 		if (result == HeapTupleSelfUpdated)
