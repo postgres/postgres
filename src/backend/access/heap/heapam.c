@@ -5087,7 +5087,15 @@ failed:
 	{
 		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated ||
 			   result == HeapTupleWouldBlock);
-		Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
+
+		/*
+		 * When locking a tuple under LockWaitSkip semantics and we fail with
+		 * HeapTupleWouldBlock above, it's possible for concurrent transactions
+		 * to release the lock and set HEAP_XMAX_INVALID in the meantime.  So
+		 * this assert is slightly different from the equivalent one in
+		 * heap_delete and heap_update.
+		 */
+		Assert(HeapTupleWouldBlock || !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
 		hufd->ctid = tuple->t_data->t_ctid;
 		hufd->xmax = HeapTupleHeaderGetUpdateXid(tuple->t_data);
 		if (result == HeapTupleSelfUpdated)
