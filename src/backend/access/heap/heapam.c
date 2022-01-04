@@ -4528,7 +4528,15 @@ failed:
 	{
 		Assert(result == TM_SelfModified || result == TM_Updated ||
 			   result == TM_Deleted || result == TM_WouldBlock);
-		Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
+
+		/*
+		 * When locking a tuple under LockWaitSkip semantics and we fail with
+		 * TM_WouldBlock above, it's possible for concurrent transactions to
+		 * release the lock and set HEAP_XMAX_INVALID in the meantime.  So
+		 * this assert is slightly different from the equivalent one in
+		 * heap_delete and heap_update.
+		 */
+		Assert(TM_WouldBlock || !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
 		Assert(result != TM_Updated ||
 			   !ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid));
 		tmfd->ctid = tuple->t_data->t_ctid;
