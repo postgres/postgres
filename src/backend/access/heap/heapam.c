@@ -4536,7 +4536,8 @@ failed:
 		 * this assert is slightly different from the equivalent one in
 		 * heap_delete and heap_update.
 		 */
-		Assert(TM_WouldBlock || !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
+		Assert((result == TM_WouldBlock) ||
+			   !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
 		Assert(result != TM_Updated ||
 			   !ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid));
 		tmfd->ctid = tuple->t_data->t_ctid;
