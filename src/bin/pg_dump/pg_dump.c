@@ -2779,34 +2779,21 @@ dumpDatabase(Archive *fout)
 	/*
 	 * Fetch the database-level properties for this database.
 	 */
+	appendPQExpBuffer(dbQry, "SELECT tableoid, oid, datname, "
+					  "datdba, "
+					  "pg_encoding_to_char(encoding) AS encoding, "
+					  "datcollate, datctype, datfrozenxid, "
+					  "datacl, acldefault('d', datdba) AS acldefault, "
+					  "datistemplate, datconnlimit, ");
 	if (fout->remoteVersion >= 90300)
-	{
-		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, datname, "
-						  "datdba, "
-						  "pg_encoding_to_char(encoding) AS encoding, "
-						  "datcollate, datctype, datfrozenxid, datminmxid, "
-						  "datacl, acldefault('d', datdba) AS acldefault, "
-						  "datistemplate, datconnlimit, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
-						  "shobj_description(oid, 'pg_database') AS description "
-
-						  "FROM pg_database "
-						  "WHERE datname = current_database()");
-	}
+		appendPQExpBuffer(dbQry, "datminmxid, ");
 	else
-	{
-		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, datname, "
-						  "datdba, "
-						  "pg_encoding_to_char(encoding) AS encoding, "
-						  "datcollate, datctype, datfrozenxid, 0 AS datminmxid, "
-						  "datacl, acldefault('d', datdba) AS acldefault, "
-						  "datistemplate, datconnlimit, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
-						  "shobj_description(oid, 'pg_database') AS description "
-
-						  "FROM pg_database "
-						  "WHERE datname = current_database()");
-	}
+		appendPQExpBuffer(dbQry, "0 AS datminmxid, ");
+	appendPQExpBuffer(dbQry,
+					  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
+					  "shobj_description(oid, 'pg_database') AS description "
+					  "FROM pg_database "
+					  "WHERE datname = current_database()");
 
 	res = ExecuteSqlQueryForSingleRow(fout, dbQry->data);
 
