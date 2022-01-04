@@ -1262,8 +1262,6 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 	state->bs_bdesc = brin_build_desc(idxRel);
 	state->bs_dtuple = brin_new_memtuple(state->bs_bdesc);
 
-	brin_memtuple_initialize(state->bs_dtuple, state->bs_bdesc);
-
 	return state;
 }
 
