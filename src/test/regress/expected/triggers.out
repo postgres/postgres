@@ -2105,7 +2105,7 @@ select tgrelid::regclass::text, tgname, tgfoid::regproc, tgenabled, tgisinternal
   tgrelid  | tgname |     tgfoid      | tgenabled | tgisinternal 
 -----------+--------+-----------------+-----------+--------------
  trigpart  | trg1   | trigger_nothing | O         | f
- trigpart1 | trg1   | trigger_nothing | O         | t
+ trigpart1 | trg1   | trigger_nothing | O         | f
 (2 rows)
 
 create table trigpart3 (like trigpart);
@@ -3311,7 +3311,7 @@ NOTICE:  hello from funcA
 create or replace trigger my_trig
   after insert on parted_trig_1
   for each row execute procedure funcB();  -- should fail
-ERROR:  trigger "my_trig" for relation "parted_trig_1" is an internal trigger
+ERROR:  trigger "my_trig" for relation "parted_trig_1" is an internal or a child trigger
 insert into parted_trig (a) values (50);
 NOTICE:  hello from funcA
 drop trigger my_trig on parted_trig;

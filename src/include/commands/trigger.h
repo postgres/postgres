@@ -160,6 +160,10 @@ extern ObjectAddress CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *que
 										   Node *whenClause, bool isInternal, bool in_partition,
 										   char trigger_fires_when);
 
+extern void TriggerSetParentTrigger(Relation trigRel,
+									Oid childTrigId,
+									Oid parentTrigId,
+									Oid childTableId);
 extern void RemoveTriggerById(Oid trigOid);
 extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
 

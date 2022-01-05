@@ -443,7 +443,7 @@ typedef struct _triggerInfo
 	Oid			tgconstrrelid;
 	char	   *tgconstrrelname;
 	char		tgenabled;
-	bool		tgisinternal;
+	bool		tgispartition;
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	char	   *tgdef;
