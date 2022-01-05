@@ -1,8 +1,16 @@
 /*
- * This test is for Linux/glibc systems and others that implement proper
- * locale classification of Unicode characters with high code values.
+ * This test is for Linux/glibc systems (conceivably it could be run on
+ * others that implement proper classification of high Unicode characters).
  * It must be run in a database with UTF8 encoding and a Unicode-aware locale.
  */
+
+SELECT getdatabaseencoding() <> 'UTF8' OR
+       current_setting('lc_ctype') = 'C' OR
+       version() !~ 'linux-gnu'
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
 
 SET client_encoding TO UTF8;
 
