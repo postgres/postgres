@@ -11,7 +11,7 @@ DATA = citext--1.4.sql \
 	citext--1.0--1.1.sql
 PGFILEDESC = "citext - case-insensitive character string data type"
 
-REGRESS = citext
+REGRESS = citext citext_utf8
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

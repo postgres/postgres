@@ -1,0 +1,146 @@
+/*
+ * This test must be run in a database with UTF-8 encoding
+ * and a Unicode-aware locale.
+ */
+SELECT getdatabaseencoding() <> 'UTF8' OR
+       current_setting('lc_ctype') = 'C'
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+set client_encoding = utf8;
+-- CREATE EXTENSION IF NOT EXISTS citext;
+-- Multibyte sanity tests.
+SELECT 'À'::citext =  'À'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'À'::citext =  'à'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'À'::text   =  'à'::text   AS f; -- text wins.
+ f 
+---
+ f
+(1 row)
+
+SELECT 'À'::citext <> 'B'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test combining characters making up canonically equivalent strings.
+SELECT 'Ä'::text   <> 'Ä'::text   AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'Ä'::citext <> 'Ä'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test the Turkish dotted I. The lowercase is a single byte while the
+-- uppercase is multibyte. This is why the comparison code can't be optimized
+-- to compare string lengths.
+SELECT 'i'::citext = 'İ'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Regression.
+SELECT 'láska'::citext <> 'laská'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'Ask Bjørn Hansen'::citext = 'Ask Bjørn Hansen'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'Ask Bjørn Hansen'::citext = 'ASK BJØRN HANSEN'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'Ask Bjørn Hansen'::citext <> 'Ask Bjorn Hansen'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'Ask Bjørn Hansen'::citext <> 'ASK BJORN HANSEN'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'Ask Bjørn Hansen'::citext) = 0 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'ask bjørn hansen'::citext) = 0 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'ASK BJØRN HANSEN'::citext) = 0 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_cmp('Ask Bjørn Hansen'::citext, 'Ask Bjorn Hansen'::citext) > 0 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT citext_cmp('Ask Bjorn Hansen'::citext, 'Ask Bjørn Hansen'::citext) < 0 AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test ~<~ and ~<=~
+SELECT 'à'::citext ~<~  'À'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'à'::citext ~<=~ 'À'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test ~>~ and ~>=~
+SELECT 'à'::citext ~>~  'À'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'à'::citext ~>=~ 'À'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
