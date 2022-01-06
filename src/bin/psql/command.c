@@ -811,7 +811,7 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				success = describeRoles(pattern, show_verbose, show_system);
 				break;
 			case 'l':
-				success = do_lo_list();
+				success = listLargeObjects(show_verbose);
 				break;
 			case 'L':
 				success = listLanguages(pattern, show_verbose, show_system);
@@ -1963,7 +1963,9 @@ exec_command_lo(PsqlScanState scan_state, bool active_branch, const char *cmd)
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
-			success = do_lo_list();
+			success = listLargeObjects(false);
+		else if (strcmp(cmd + 3, "list+") == 0)
+			success = listLargeObjects(true);
 
 		else if (strcmp(cmd + 3, "unlink") == 0)
 		{

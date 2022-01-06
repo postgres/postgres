@@ -9,27 +9,25 @@
 -- ensure consistent test output regardless of the default bytea format
 SET bytea_output TO escape;
 
+-- Test ALTER LARGE OBJECT OWNER, GRANT, COMMENT
+CREATE ROLE regress_lo_user;
+SELECT lo_create(42);
+ALTER LARGE OBJECT 42 OWNER TO regress_lo_user;
+GRANT SELECT ON LARGE OBJECT 42 TO public;
+COMMENT ON LARGE OBJECT 42 IS 'the ultimate answer';
+
+-- Test psql's \lo_list et al (we assume no other LOs exist yet)
+\lo_list
+\lo_list+
+\lo_unlink 42
+\dl
+
 -- Load a file
 CREATE TABLE lotest_stash_values (loid oid, fd integer);
 -- lo_creat(mode integer) returns oid
 -- The mode arg to lo_creat is unused, some vestigal holdover from ancient times
 -- returns the large object id
 INSERT INTO lotest_stash_values (loid) SELECT lo_creat(42);
-
--- Test ALTER LARGE OBJECT
-CREATE ROLE regress_lo_user;
-DO $$
-  BEGIN
-    EXECUTE 'ALTER LARGE OBJECT ' || (select loid from lotest_stash_values)
-		|| ' OWNER TO regress_lo_user';
-  END
-$$;
-SELECT
-	rol.rolname
-FROM
-	lotest_stash_values s
-	JOIN pg_largeobject_metadata lo ON s.loid = lo.oid
-	JOIN pg_authid rol ON lo.lomowner = rol.oid;
 
 -- NOTE: large objects require transactions
 BEGIN;

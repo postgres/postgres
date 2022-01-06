@@ -2146,7 +2146,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>LARGE OBJECT</literal></entry>
       <entry><literal>rw</literal></entry>
       <entry>none</entry>
-      <entry></entry>
+      <entry><literal>\dl+</literal></entry>
      </row>
      <row>
       <entry><literal>SCHEMA</literal></entry>

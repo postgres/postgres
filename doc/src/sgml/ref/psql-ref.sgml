@@ -1681,11 +1681,14 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dl</literal></term>
+        <term><literal>\dl[+]</literal></term>
         <listitem>
         <para>
         This is an alias for <command>\lo_list</command>, which shows a
         list of large objects.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>
@@ -2610,12 +2613,15 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\lo_list</literal></term>
+        <term><literal>\lo_list[+]</literal></term>
         <listitem>
         <para>
         Shows a list of all <productname>PostgreSQL</productname>
         large objects currently stored in the database,
         along with any comments provided for them.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>

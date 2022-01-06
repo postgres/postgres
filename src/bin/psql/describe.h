@@ -139,5 +139,7 @@ extern bool listOpFamilyOperators(const char *accessMethod_pattern,
 extern bool listOpFamilyFunctions(const char *access_method_pattern,
 								  const char *family_pattern, bool verbose);
 
+/* \dl or \lo_list */
+extern bool listLargeObjects(bool verbose);
 
 #endif							/* DESCRIBE_H */
