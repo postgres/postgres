@@ -524,7 +524,8 @@ LogStreamerMain(logstreamer_param *param)
 													stream.do_sync);
 	else
 		stream.walmethod = CreateWalTarMethod(param->xlog,
-											  COMPRESSION_NONE, /* ignored */
+											  (compresslevel > 0) ?
+											  COMPRESSION_GZIP : COMPRESSION_NONE,
 											  compresslevel,
 											  stream.do_sync);
 
