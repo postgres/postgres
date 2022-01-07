@@ -10,7 +10,7 @@ use File::Path qw(rmtree);
 use Fcntl qw(:seek);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 110;
+use Test::More tests => 113;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -624,3 +624,38 @@ rmtree("$tempdir/backup_corrupt4");
 
 $node->safe_psql('postgres', "DROP TABLE corrupt1;");
 $node->safe_psql('postgres', "DROP TABLE corrupt2;");
+
+note "Testing pg_basebackup with compression methods";
+
+# Check ZLIB compression if available.
+SKIP:
+{
+	skip "postgres was not built with ZLIB support", 3
+	  if (!check_pg_config("#define HAVE_LIBZ 1"));
+
+	$node->command_ok(
+		[
+			'pg_basebackup',        '-D',
+			"$tempdir/backup_gzip", '--compress',
+			'1',                    '--no-sync',
+			'--format',             't'
+		],
+		'pg_basebackup with --compress');
+
+	# Verify that the stored files are generated with their expected
+	# names.
+	my @zlib_files = glob "$tempdir/backup_gzip/*.tar.gz";
+	is(scalar(@zlib_files), 2,
+		"two files created with gzip (base.tar.gz and pg_wal.tar.gz)");
+
+	# Check the integrity of the files generated.
+	my $gzip = $ENV{GZIP_PROGRAM};
+	skip "program gzip is not found in your system", 1
+	  if ( !defined $gzip
+		|| $gzip eq ''
+		|| system_log($gzip, '--version') != 0);
+
+	my $gzip_is_valid = system_log($gzip, '--test', @zlib_files);
+	is($gzip_is_valid, 0, "gzip verified the integrity of compressed data");
+	rmtree("$tempdir/backup_gzip");
+}
