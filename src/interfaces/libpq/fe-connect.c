@@ -3919,8 +3919,7 @@ internal_ping(PGconn *conn)
 		return PQPING_NO_RESPONSE;
 
 	/*
-	 * Report PQPING_REJECT if server says it's not accepting connections. (We
-	 * distinguish this case mainly for the convenience of pg_ctl.)
+	 * Report PQPING_REJECT if server says it's not accepting connections.
 	 */
 	if (strcmp(conn->last_sqlstate, ERRCODE_CANNOT_CONNECT_NOW) == 0)
 		return PQPING_REJECT;
