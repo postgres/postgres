@@ -506,6 +506,7 @@ sub contribcheck
 		# these configuration-based exclusions must match Install.pm
 		next if ($module eq "uuid-ossp"  && !defined($config->{uuid}));
 		next if ($module eq "sslinfo"    && !defined($config->{openssl}));
+		next if ($module eq "pgcrypto"   && !defined($config->{openssl}));
 		next if ($module eq "xml2"       && !defined($config->{xml}));
 		next if ($module =~ /_plperl$/   && !defined($config->{perl}));
 		next if ($module =~ /_plpython$/ && !defined($config->{python}));
