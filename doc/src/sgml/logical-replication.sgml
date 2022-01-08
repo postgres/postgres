@@ -336,7 +336,7 @@
    cause replication conflicts, as will enabled
    <link linkend="ddl-rowsecurity">row-level security</link> on target tables
    that the subscription owner is subject to, without regard to whether any
-   policy would ordinary reject the <command>INSERT</command>,
+   policy would ordinarily reject the <command>INSERT</command>,
    <command>UPDATE</command>, <command>DELETE</command> or
    <command>TRUNCATE</command> which is being replicated.  This restriction on
    row-level security may be lifted in a future version of

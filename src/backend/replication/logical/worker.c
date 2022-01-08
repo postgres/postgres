@@ -1991,6 +1991,12 @@ FindReplTupleInLocalRel(EState *estate, Relation localrel,
 	Oid			idxoid;
 	bool		found;
 
+	/*
+	 * Regardless of the top-level operation, we're performing a read here, so
+	 * check for SELECT privileges.
+	 */
+	TargetPrivilegesCheck(localrel, ACL_SELECT);
+
 	*localslot = table_slot_create(localrel, &estate->es_tupleTable);
 
 	idxoid = GetRelationIdentityOrPK(localrel);
