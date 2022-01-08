@@ -75,8 +75,8 @@ SELECT * FROM chartmp WHERE a BETWEEN '31a' AND '31c';
 (2 rows)
 
 SELECT * FROM chartmp WHERE a BETWEEN '31a' AND '31c';
-  a   
-------
- 31b0
+                a                 
+----------------------------------
+ 31b0                            
 (1 row)
 
