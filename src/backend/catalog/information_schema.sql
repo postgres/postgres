@@ -2,7 +2,7 @@
  * SQL Information Schema
  * as defined in ISO/IEC 9075-11:2016
  *
- * Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *
  * src/backend/catalog/information_schema.sql
  *

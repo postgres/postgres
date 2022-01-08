@@ -2,7 +2,7 @@
  *
  * pg_waldump.c - decode and display WAL
  *
- * Copyright (c) 2013-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_waldump/pg_waldump.c

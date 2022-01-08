@@ -3,7 +3,7 @@
  * jsonb_util.c
  *	  converting between Jsonb and JsonbValues, and iterating.
  *
- * Copyright (c) 2014-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

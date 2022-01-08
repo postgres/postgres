@@ -1,7 +1,7 @@
 /*
  * PostgreSQL System Functions
  *
- * Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * src/backend/catalog/system_functions.sql
  *

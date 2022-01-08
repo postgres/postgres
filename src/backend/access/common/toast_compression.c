@@ -3,7 +3,7 @@
  * toast_compression.c
  *	  Functions for toast compression.
  *
- * Copyright (c) 2021, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

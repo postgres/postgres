@@ -3,7 +3,7 @@
  * blinsert.c
  *		Bloom index build and insert functions.
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/bloom/blinsert.c

@@ -2,7 +2,7 @@
  *	common.h
  *		Common support routines for bin/scripts/
  *
- *	Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *
  *	src/bin/scripts/common.h
  */

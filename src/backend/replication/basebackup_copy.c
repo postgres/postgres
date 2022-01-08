@@ -4,7 +4,7 @@
  *	  send basebackup archives using one COPY OUT operation per
  *	  tablespace, and an additional COPY OUT for the backup manifest
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/basebackup_copy.c

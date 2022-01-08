@@ -5,7 +5,7 @@
  *	to control oid and relfilenode assignment, and do other special
  *	hacks needed for pg_upgrade.
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/backend/utils/adt/pg_upgrade_support.c
  */
 

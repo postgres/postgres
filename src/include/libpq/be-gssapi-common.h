@@ -3,7 +3,7 @@
  * be-gssapi-common.h
  *       Definitions for GSSAPI authentication and encryption handling
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/be-gssapi-common.h

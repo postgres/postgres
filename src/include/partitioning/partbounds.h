@@ -2,7 +2,7 @@
  *
  * partbounds.h
  *
- * Copyright (c) 2007-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2022, PostgreSQL Global Development Group
  *
  * src/include/partitioning/partbounds.h
  *

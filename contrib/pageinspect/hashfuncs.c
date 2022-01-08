@@ -2,7 +2,7 @@
  * hashfuncs.c
  *		Functions to investigate the content of HASH indexes
  *
- * Copyright (c) 2017-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/pageinspect/hashfuncs.c
