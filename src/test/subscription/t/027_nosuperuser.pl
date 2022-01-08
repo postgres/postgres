@@ -10,7 +10,7 @@ use Test::More tests => 100;
 my ($node_publisher, $node_subscriber, $publisher_connstr, $result, $offset);
 $offset = 0;
 
-sub publish_insert($$)
+sub publish_insert
 {
   my ($tbl, $new_i) = @_;
   $node_publisher->safe_psql('postgres', qq(
@@ -19,7 +19,7 @@ sub publish_insert($$)
   ));
 }
 
-sub publish_update($$$)
+sub publish_update
 {
   my ($tbl, $old_i, $new_i) = @_;
   $node_publisher->safe_psql('postgres', qq(
@@ -28,7 +28,7 @@ sub publish_update($$$)
   ));
 }
 
-sub publish_delete($$)
+sub publish_delete
 {
   my ($tbl, $old_i) = @_;
   $node_publisher->safe_psql('postgres', qq(
@@ -37,7 +37,7 @@ sub publish_delete($$)
   ));
 }
 
-sub expect_replication($$$$$)
+sub expect_replication
 {
   my ($tbl, $cnt, $min, $max, $testname) = @_;
   $node_publisher->wait_for_catchup('admin_sub');
@@ -46,7 +46,7 @@ sub expect_replication($$$$$)
   is ($result, "$cnt|$min|$max", $testname);
 }
 
-sub expect_failure($$$$$$)
+sub expect_failure
 {
   my ($tbl, $cnt, $min, $max, $re, $testname) = @_;
   $offset = $node_subscriber->wait_for_log($re, $offset);
@@ -55,28 +55,28 @@ sub expect_failure($$$$$$)
   is ($result, "$cnt|$min|$max", $testname);
 }
 
-sub revoke_superuser($)
+sub revoke_superuser
 {
   my ($role) = @_;
   $node_subscriber->safe_psql('postgres', qq(
   ALTER ROLE $role NOSUPERUSER));
 }
 
-sub grant_superuser($)
+sub grant_superuser
 {
   my ($role) = @_;
   $node_subscriber->safe_psql('postgres', qq(
   ALTER ROLE $role SUPERUSER));
 }
 
-sub revoke_bypassrls($)
+sub revoke_bypassrls
 {
   my ($role) = @_;
   $node_subscriber->safe_psql('postgres', qq(
   ALTER ROLE $role NOBYPASSRLS));
 }
 
-sub grant_bypassrls($)
+sub grant_bypassrls
 {
   my ($role) = @_;
   $node_subscriber->safe_psql('postgres', qq(
