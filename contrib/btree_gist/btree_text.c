@@ -90,6 +90,76 @@ static gbtree_vinfo tinfo =
 	NULL
 };
 
+/* bpchar needs its own comparison rules */
+
+static bool
+gbt_bpchargt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetBool(DirectFunctionCall2Coll(bpchargt,
+												collation,
+												PointerGetDatum(a),
+												PointerGetDatum(b)));
+}
+
+static bool
+gbt_bpcharge(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetBool(DirectFunctionCall2Coll(bpcharge,
+												collation,
+												PointerGetDatum(a),
+												PointerGetDatum(b)));
+}
+
+static bool
+gbt_bpchareq(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetBool(DirectFunctionCall2Coll(bpchareq,
+												collation,
+												PointerGetDatum(a),
+												PointerGetDatum(b)));
+}
+
+static bool
+gbt_bpcharle(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetBool(DirectFunctionCall2Coll(bpcharle,
+												collation,
+												PointerGetDatum(a),
+												PointerGetDatum(b)));
+}
+
+static bool
+gbt_bpcharlt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetBool(DirectFunctionCall2Coll(bpcharlt,
+												collation,
+												PointerGetDatum(a),
+												PointerGetDatum(b)));
+}
+
+static int32
+gbt_bpcharcmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
+{
+	return DatumGetInt32(DirectFunctionCall2Coll(bpcharcmp,
+												 collation,
+												 PointerGetDatum(a),
+												 PointerGetDatum(b)));
+}
+
+static gbtree_vinfo bptinfo =
+{
+	gbt_t_bpchar,
+	0,
+	false,
+	gbt_bpchargt,
+	gbt_bpcharge,
+	gbt_bpchareq,
+	gbt_bpcharle,
+	gbt_bpcharlt,
+	gbt_bpcharcmp,
+	NULL
+};
+
 
 /**************************************************
  * Text ops
@@ -112,29 +182,8 @@ gbt_text_compress(PG_FUNCTION_ARGS)
 Datum
 gbt_bpchar_compress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval;
-
-	if (tinfo.eml == 0)
-	{
-		tinfo.eml = pg_database_encoding_max_length();
-	}
-
-	if (entry->leafkey)
-	{
-
-		Datum		d = DirectFunctionCall1(rtrim1, entry->key);
-		GISTENTRY	trim;
-
-		gistentryinit(trim, d,
-					  entry->rel, entry->page,
-					  entry->offset, true);
-		retval = gbt_var_compress(&trim, &tinfo);
-	}
-	else
-		retval = entry;
-
-	PG_RETURN_POINTER(retval);
+	/* This should never have been distinct from gbt_text_compress */
+	return gbt_text_compress(fcinfo);
 }
 
 
@@ -179,18 +228,17 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	bool		retval;
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
-	void	   *trim = (void *) DatumGetPointer(DirectFunctionCall1(rtrim1, PointerGetDatum(query)));
 
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	if (tinfo.eml == 0)
+	if (bptinfo.eml == 0)
 	{
-		tinfo.eml = pg_database_encoding_max_length();
+		bptinfo.eml = pg_database_encoding_max_length();
 	}
 
-	retval = gbt_var_consistent(&r, trim, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
+	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
+								GIST_LEAF(entry), &bptinfo, fcinfo->flinfo);
 	PG_RETURN_BOOL(retval);
 }
 
