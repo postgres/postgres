@@ -2879,16 +2879,16 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf,
 							  "SELECT oid, "
 							  "stxrelid::pg_catalog.regclass, "
-							  "stxnamespace::pg_catalog.regnamespace AS nsp, "
+							  "stxnamespace::pg_catalog.regnamespace::pg_catalog.text AS nsp, "
 							  "stxname,\n"
 							  "pg_catalog.pg_get_statisticsobjdef_columns(oid) AS columns,\n"
 							  "  'd' = any(stxkind) AS ndist_enabled,\n"
 							  "  'f' = any(stxkind) AS deps_enabled,\n"
 							  "  'm' = any(stxkind) AS mcv_enabled,\n"
 							  "stxstattarget\n"
-							  "FROM pg_catalog.pg_statistic_ext stat\n"
+							  "FROM pg_catalog.pg_statistic_ext\n"
 							  "WHERE stxrelid = '%s'\n"
-							  "ORDER BY 1;",
+							  "ORDER BY nsp, stxname;",
 							  oid);
 
 			result = PSQLexec(buf.data);
@@ -2990,7 +2990,7 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBufferStr(&buf, "  stxstattarget\n");
 			else
 				appendPQExpBufferStr(&buf, "  -1 AS stxstattarget\n");
-			appendPQExpBuffer(&buf, "FROM pg_catalog.pg_statistic_ext stat\n"
+			appendPQExpBuffer(&buf, "FROM pg_catalog.pg_statistic_ext\n"
 							  "WHERE stxrelid = '%s'\n"
 							  "ORDER BY 1;",
 							  oid);
@@ -4726,7 +4726,7 @@ listExtendedStats(const char *pattern)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT \n"
-					  "es.stxnamespace::pg_catalog.regnamespace::text AS \"%s\", \n"
+					  "es.stxnamespace::pg_catalog.regnamespace::pg_catalog.text AS \"%s\", \n"
 					  "es.stxname AS \"%s\", \n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"));
@@ -4773,7 +4773,7 @@ listExtendedStats(const char *pattern)
 
 	processSQLNamePattern(pset.db, &buf, pattern,
 						  false, false,
-						  "es.stxnamespace::pg_catalog.regnamespace::text", "es.stxname",
+						  "es.stxnamespace::pg_catalog.regnamespace::pg_catalog.text", "es.stxname",
 						  NULL, "pg_catalog.pg_statistics_obj_is_visible(es.oid)");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
