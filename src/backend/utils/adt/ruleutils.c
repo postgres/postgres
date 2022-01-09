@@ -2561,6 +2561,12 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
  * the one specified by the second parameter.  This is sufficient for
  * partial indexes, column default expressions, etc.  We also support
  * Var-free expressions, for which the OID can be InvalidOid.
+ *
+ * We expect this function to work, or throw a reasonably clean error,
+ * for any node tree that can appear in a catalog pg_node_tree column.
+ * Query trees, such as those appearing in pg_rewrite.ev_action, are
+ * not supported.  Nor are expressions in more than one relation, which
+ * can appear in places like pg_rewrite.ev_qual.
  * ----------
  */
 Datum
@@ -2622,17 +2628,53 @@ static text *
 pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 {
 	Node	   *node;
+	Node	   *tst;
+	Relids		relids;
 	List	   *context;
 	char	   *exprstr;
 	char	   *str;
 
-	/* Convert input TEXT object to C string */
+	/* Convert input pg_node_tree (really TEXT) object to C string */
 	exprstr = text_to_cstring(expr);
 
 	/* Convert expression to node tree */
 	node = (Node *) stringToNode(exprstr);
 
 	pfree(exprstr);
+
+	/*
+	 * Throw error if the input is a querytree rather than an expression tree.
+	 * While we could support queries here, there seems no very good reason
+	 * to.  In most such catalog columns, we'll see a List of Query nodes, or
+	 * even nested Lists, so drill down to a non-List node before checking.
+	 */
+	tst = node;
+	while (tst && IsA(tst, List))
+		tst = linitial((List *) tst);
+	if (tst && IsA(tst, Query))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input is a query, not an expression")));
+
+	/*
+	 * Throw error if the expression contains Vars we won't be able to
+	 * deparse.
+	 */
+	relids = pull_varnos(NULL, node);
+	if (OidIsValid(relid))
+	{
+		if (!bms_is_subset(relids, bms_make_singleton(1)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("expression contains variables of more than one relation")));
+	}
+	else
+	{
+		if (!bms_is_empty(relids))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("expression contains variables")));
+	}
 
 	/* Prepare deparse context if needed */
 	if (OidIsValid(relid))
