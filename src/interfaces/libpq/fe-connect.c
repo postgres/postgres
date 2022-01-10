@@ -7267,14 +7267,21 @@ bool
 pqGetHomeDirectory(char *buf, int bufsize)
 {
 #ifndef WIN32
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	const char *home;
 
-	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-	if (pwd == NULL)
-		return false;
-	strlcpy(buf, pwd->pw_dir, bufsize);
+	home = getenv("HOME");
+	if (home == NULL || home[0] == '\0')
+	{
+		char		pwdbuf[BUFSIZ];
+		struct passwd pwdstr;
+		struct passwd *pwd = NULL;
+
+		(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
+		if (pwd == NULL)
+			return false;
+		home = pwd->pw_dir;
+	}
+	strlcpy(buf, home, bufsize);
 	return true;
 #else
 	char		tmppath[MAX_PATH];

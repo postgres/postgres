@@ -807,14 +807,25 @@ bool
 get_home_path(char *ret_path)
 {
 #ifndef WIN32
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	/*
+	 * We first consult $HOME.  If that's unset, try to get the info from
+	 * <pwd.h>.
+	 */
+	const char *home;
 
-	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-	if (pwd == NULL)
-		return false;
-	strlcpy(ret_path, pwd->pw_dir, MAXPGPATH);
+	home = getenv("HOME");
+	if (home == NULL || home[0] == '\0')
+	{
+		char		pwdbuf[BUFSIZ];
+		struct passwd pwdstr;
+		struct passwd *pwd = NULL;
+
+		(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
+		if (pwd == NULL)
+			return false;
+		home = pwd->pw_dir;
+	}
+	strlcpy(ret_path, home, MAXPGPATH);
 	return true;
 #else
 	char	   *tmppath;
