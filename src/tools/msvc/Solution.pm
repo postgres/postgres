@@ -397,6 +397,7 @@ sub GenerateFiles
 		HAVE_SYS_EPOLL_H                         => undef,
 		HAVE_SYS_EVENT_H                         => undef,
 		HAVE_SYS_IPC_H                           => undef,
+		HAVE_SYS_PERSONALITY_H                   => undef,
 		HAVE_SYS_PRCTL_H                         => undef,
 		HAVE_SYS_PROCCTL_H                       => undef,
 		HAVE_SYS_PSTAT_H                         => undef,
