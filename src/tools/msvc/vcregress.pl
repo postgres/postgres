@@ -313,7 +313,7 @@ sub mangle_plpython3
 					s/([ [{])u'/$1'/g;
 					s/def next/def __next__/g;
 					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
-					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
+					s/EXTENSION (\S*?)plpython2?u/EXTENSION $1plpython3u/g;
 					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
 				  }
 				  for ($contents);
