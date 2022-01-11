@@ -487,11 +487,22 @@ parse_extension_control_file(ExtensionControlFile *control,
 
 	if ((file = AllocateFile(filename, "r")) == NULL)
 	{
-		if (version && errno == ENOENT)
+		if (errno == ENOENT)
 		{
-			/* no auxiliary file for this version */
-			pfree(filename);
-			return;
+			/* no complaint for missing auxiliary file */
+			if (version)
+			{
+				pfree(filename);
+				return;
+			}
+
+			/* missing control file indicates extension is not installed */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("extension \"%s\" is not available", control->name),
+					 errdetail("Could not open extension control file \"%s\": %m.",
+							   filename),
+					 errhint("The extension must first be installed on the system where PostgreSQL is running.")));
 		}
 		ereport(ERROR,
 				(errcode_for_file_access(),
