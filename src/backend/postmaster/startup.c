@@ -32,6 +32,7 @@
 #include "storage/procsignal.h"
 #include "storage/standby.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/timeout.h"
 
 
@@ -200,6 +201,10 @@ HandleStartupProcInterrupts(void)
 	/* Process barrier events */
 	if (ProcSignalBarrierPending)
 		ProcessProcSignalBarrier();
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }
 
 

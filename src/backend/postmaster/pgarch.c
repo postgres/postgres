@@ -50,6 +50,7 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 
 
@@ -861,8 +862,9 @@ pgarch_die(int code, Datum arg)
  * Interrupt handler for WAL archiver process.
  *
  * This is called in the loops pgarch_MainLoop and pgarch_ArchiverCopyLoop.
- * It checks for barrier events and config update, but not shutdown request
- * because how to handle shutdown request is different between those loops.
+ * It checks for barrier events, config update and request for logging of
+ * memory contexts, but not shutdown request because how to handle
+ * shutdown request is different between those loops.
  */
 static void
 HandlePgArchInterrupts(void)
@@ -875,4 +877,8 @@ HandlePgArchInterrupts(void)
 		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 	}
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }

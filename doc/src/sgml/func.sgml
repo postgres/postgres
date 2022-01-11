@@ -25421,7 +25421,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
        </para>
        <para>
         Requests to log the memory contexts of the backend with the
-        specified process ID.  These memory contexts will be logged at
+        specified process ID.  This function can send the request to
+        backends and auxiliary processes except logger and statistics
+        collector.  These memory contexts will be logged at
         <literal>LOG</literal> message level. They will appear in
         the server log based on the log configuration set
         (See <xref linkend="runtime-config-logging"/> for more information),

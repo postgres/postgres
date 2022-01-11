@@ -306,4 +306,8 @@ HandleWalWriterInterrupts(void)
 
 		proc_exit(0);
 	}
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }
