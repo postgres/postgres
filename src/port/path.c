@@ -815,16 +815,7 @@ get_home_path(char *ret_path)
 
 	home = getenv("HOME");
 	if (home == NULL || home[0] == '\0')
-	{
-		char		pwdbuf[BUFSIZ];
-		struct passwd pwdstr;
-		struct passwd *pwd = NULL;
-
-		(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-		if (pwd == NULL)
-			return false;
-		home = pwd->pw_dir;
-	}
+		return pg_get_user_home_dir(geteuid(), ret_path, MAXPGPATH);
 	strlcpy(ret_path, home, MAXPGPATH);
 	return true;
 #else

@@ -34,6 +34,14 @@
 #include "port/pg_bswap.h"
 
 
+#ifdef FRONTEND
+static int	pqGethostbyname(const char *name,
+							struct hostent *resultbuf,
+							char *buffer, size_t buflen,
+							struct hostent **result,
+							int *herrno);
+#endif
+
 #ifdef WIN32
 /*
  * The native routines may or may not exist on the Windows platform we are on,
@@ -394,3 +402,39 @@ getnameinfo(const struct sockaddr *sa, int salen,
 
 	return 0;
 }
+
+/*
+ * Wrapper around gethostbyname() or gethostbyname_r() to mimic
+ * POSIX gethostbyname_r() behaviour, if it is not available or required.
+ */
+#ifdef FRONTEND
+static int
+pqGethostbyname(const char *name,
+				struct hostent *resultbuf,
+				char *buffer, size_t buflen,
+				struct hostent **result,
+				int *herrno)
+{
+#if defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETHOSTBYNAME_R)
+
+	/*
+	 * broken (well early POSIX draft) gethostbyname_r() which returns 'struct
+	 * hostent *'
+	 */
+	*result = gethostbyname_r(name, resultbuf, buffer, buflen, herrno);
+	return (*result == NULL) ? -1 : 0;
+#else
+
+	/* no gethostbyname_r(), just use gethostbyname() */
+	*result = gethostbyname(name);
+
+	if (*result != NULL)
+		*herrno = h_errno;
+
+	if (*result != NULL)
+		return 0;
+	else
+		return -1;
+#endif
+}
+#endif							/* FRONTEND */

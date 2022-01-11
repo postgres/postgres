@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <pwd.h>
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */

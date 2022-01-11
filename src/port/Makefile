@@ -84,6 +84,10 @@ libpgport.a: $(OBJS)
 	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
+# getaddrinfo.o and getaddrinfo_shlib.o need PTHREAD_CFLAGS (but getaddrinfo_srv.o does not)
+getaddrinfo.o: CFLAGS+=$(PTHREAD_CFLAGS)
+getaddrinfo_shlib.o: CFLAGS+=$(PTHREAD_CFLAGS)
+
 # thread.o and thread_shlib.o need PTHREAD_CFLAGS (but thread_srv.o does not)
 thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
 thread_shlib.o: CFLAGS+=$(PTHREAD_CFLAGS)

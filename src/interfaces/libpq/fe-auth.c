@@ -35,7 +35,6 @@
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
-#include <pwd.h>
 #endif
 
 #include "common/md5.h"
@@ -1099,14 +1098,17 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 
 
 /*
- * pg_fe_getauthname
+ * pg_fe_getusername
  *
- * Returns a pointer to malloc'd space containing whatever name the user
- * has authenticated to the system.  If there is an error, return NULL,
- * and append a suitable error message to *errorMessage if that's not NULL.
+ * Returns a pointer to malloc'd space containing the name of the
+ * specified user_id.  If there is an error, return NULL, and append
+ * a suitable error message to *errorMessage if that's not NULL.
+ *
+ * Caution: on Windows, the user_id argument is ignored, and we always
+ * fetch the current user's name.
  */
 char *
-pg_fe_getauthname(PQExpBuffer errorMessage)
+pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 {
 	char	   *result = NULL;
 	const char *name = NULL;
@@ -1116,17 +1118,13 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	char		username[256 + 1];
 	DWORD		namesize = sizeof(username);
 #else
-	uid_t		user_id = geteuid();
 	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pw = NULL;
-	int			pwerr;
 #endif
 
 	/*
 	 * Some users are using configure --enable-thread-safety-force, so we
 	 * might as well do the locking within our library to protect
-	 * pqGetpwuid(). In fact, application developers can use getpwuid() in
+	 * getpwuid(). In fact, application developers can use getpwuid() in
 	 * their application if they use the locking call we provide, or install
 	 * their own locking function using PQregisterThreadLock().
 	 */
@@ -1140,21 +1138,10 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 						  libpq_gettext("user name lookup failure: error code %lu\n"),
 						  GetLastError());
 #else
-	pwerr = pqGetpwuid(user_id, &pwdstr, pwdbuf, sizeof(pwdbuf), &pw);
-	if (pw != NULL)
-		name = pw->pw_name;
+	if (pg_get_user_name(user_id, pwdbuf, sizeof(pwdbuf)))
+		name = pwdbuf;
 	else if (errorMessage)
-	{
-		if (pwerr != 0)
-			appendPQExpBuffer(errorMessage,
-							  libpq_gettext("could not look up local user ID %d: %s\n"),
-							  (int) user_id,
-							  strerror_r(pwerr, pwdbuf, sizeof(pwdbuf)));
-		else
-			appendPQExpBuffer(errorMessage,
-							  libpq_gettext("local user with ID %d does not exist\n"),
-							  (int) user_id);
-	}
+		appendPQExpBuffer(errorMessage, "%s\n", pwdbuf);
 #endif
 
 	if (name)
@@ -1168,6 +1155,23 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	pgunlock_thread();
 
 	return result;
+}
+
+/*
+ * pg_fe_getauthname
+ *
+ * Returns a pointer to malloc'd space containing whatever name the user
+ * has authenticated to the system.  If there is an error, return NULL,
+ * and append a suitable error message to *errorMessage if that's not NULL.
+ */
+char *
+pg_fe_getauthname(PQExpBuffer errorMessage)
+{
+#ifdef WIN32
+	return pg_fe_getusername(0, errorMessage);
+#else
+	return pg_fe_getusername(geteuid(), errorMessage);
+#endif
 }
 
 

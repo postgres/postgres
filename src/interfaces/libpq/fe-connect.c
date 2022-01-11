@@ -2813,10 +2813,7 @@ keep_going:						/* We will come back to here until there is
 					IS_AF_UNIX(conn->raddr.addr.ss_family))
 				{
 #ifndef WIN32
-					char		pwdbuf[BUFSIZ];
-					struct passwd pass_buf;
-					struct passwd *pass;
-					int			passerr;
+					char	   *remote_username;
 #endif
 					uid_t		uid;
 					gid_t		gid;
@@ -2839,28 +2836,20 @@ keep_going:						/* We will come back to here until there is
 					}
 
 #ifndef WIN32
-					passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
-					if (pass == NULL)
-					{
-						if (passerr != 0)
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("could not look up local user ID %d: %s\n"),
-											  (int) uid,
-											  strerror_r(passerr, sebuf, sizeof(sebuf)));
-						else
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("local user with ID %d does not exist\n"),
-											  (int) uid);
-						goto error_return;
-					}
+					remote_username = pg_fe_getusername(uid,
+														&conn->errorMessage);
+					if (remote_username == NULL)
+						goto error_return;	/* message already logged */
 
-					if (strcmp(pass->pw_name, conn->requirepeer) != 0)
+					if (strcmp(remote_username, conn->requirepeer) != 0)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"),
-										  conn->requirepeer, pass->pw_name);
+										  conn->requirepeer, remote_username);
+						free(remote_username);
 						goto error_return;
 					}
+					free(remote_username);
 #else							/* WIN32 */
 					/* should have failed with ENOSYS above */
 					Assert(false);
@@ -7271,16 +7260,7 @@ pqGetHomeDirectory(char *buf, int bufsize)
 
 	home = getenv("HOME");
 	if (home == NULL || home[0] == '\0')
-	{
-		char		pwdbuf[BUFSIZ];
-		struct passwd pwdstr;
-		struct passwd *pwd = NULL;
-
-		(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-		if (pwd == NULL)
-			return false;
-		home = pwd->pw_dir;
-	}
+		return pg_get_user_home_dir(geteuid(), buf, bufsize);
 	strlcpy(buf, home, bufsize);
 	return true;
 #else

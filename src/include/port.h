@@ -14,8 +14,6 @@
 #define PG_PORT_H
 
 #include <ctype.h>
-#include <netdb.h>
-#include <pwd.h>
 
 /*
  * Windows has enough specialized port stuff that we push most of it off
@@ -484,17 +482,11 @@ extern char *dlerror(void);
 #define RTLD_GLOBAL 0
 #endif
 
-/* thread.h */
+/* thread.c */
 #ifndef WIN32
-extern int	pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
-					   size_t buflen, struct passwd **result);
+extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);
+extern bool pg_get_user_home_dir(uid_t user_id, char *buffer, size_t buflen);
 #endif
-
-extern int	pqGethostbyname(const char *name,
-							struct hostent *resultbuf,
-							char *buffer, size_t buflen,
-							struct hostent **result,
-							int *herrno);
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
 					 int (*cmp) (const void *, const void *));
