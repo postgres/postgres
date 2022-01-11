@@ -101,7 +101,8 @@ int_sha2_update(PX_MD *h, const uint8 *data, unsigned dlen)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_update(ctx, data, dlen) < 0)
-		elog(ERROR, "could not update %s context", "SHA2");
+		elog(ERROR, "could not update %s context: %s", "SHA2",
+			 pg_cryptohash_error(ctx));
 }
 
 static void
@@ -110,7 +111,8 @@ int_sha2_reset(PX_MD *h)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", "SHA2");
+		elog(ERROR, "could not initialize %s context: %s", "SHA2",
+			 pg_cryptohash_error(ctx));
 }
 
 static void
@@ -119,7 +121,8 @@ int_sha2_finish(PX_MD *h, uint8 *dst)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_final(ctx, dst, h->result_size(h)) < 0)
-		elog(ERROR, "could not finalize %s context", "SHA2");
+		elog(ERROR, "could not finalize %s context: %s", "SHA2",
+			 pg_cryptohash_error(ctx));
 }
 
 static void

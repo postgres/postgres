@@ -25,7 +25,8 @@
 extern void pg_be_scram_get_mechanisms(Port *port, StringInfo buf);
 extern void *pg_be_scram_init(Port *port, const char *selected_mech, const char *shadow_pass);
 extern int	pg_be_scram_exchange(void *opaq, const char *input, int inputlen,
-								 char **output, int *outputlen, char **logdetail);
+								 char **output, int *outputlen,
+								 const char **logdetail);
 
 /* Routines to handle and check SCRAM-SHA-256 secret */
 extern char *pg_be_scram_build_secret(const char *password);

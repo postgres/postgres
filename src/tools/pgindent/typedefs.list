@@ -3330,6 +3330,7 @@ pg_conv_map
 pg_crc32
 pg_crc32c
 pg_cryptohash_ctx
+pg_cryptohash_errno
 pg_cryptohash_type
 pg_ctype_cache
 pg_enc

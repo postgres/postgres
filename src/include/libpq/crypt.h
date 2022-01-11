@@ -35,12 +35,13 @@ extern PasswordType get_password_type(const char *shadow_pass);
 extern char *encrypt_password(PasswordType target_type, const char *role,
 							  const char *password);
 
-extern char *get_role_password(const char *role, char **logdetail);
+extern char *get_role_password(const char *role, const char **logdetail);
 
 extern int	md5_crypt_verify(const char *role, const char *shadow_pass,
 							 const char *client_pass, const char *md5_salt,
-							 int md5_salt_len, char **logdetail);
+							 int md5_salt_len, const char **logdetail);
 extern int	plain_crypt_verify(const char *role, const char *shadow_pass,
-							   const char *client_pass, char **logdetail);
+							   const char *client_pass,
+							   const char **logdetail);
 
 #endif
