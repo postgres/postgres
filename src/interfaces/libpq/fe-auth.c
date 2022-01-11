@@ -790,6 +790,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		case AUTH_REQ_MD5:
 			{
 				char	   *crypt_pwd2;
+				const char *errstr = NULL;
 
 				/* Allocate enough space for two MD5 hashes */
 				crypt_pwd = malloc(2 * (MD5_PASSWD_LEN + 1));
@@ -802,14 +803,21 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 
 				crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
 				if (!pg_md5_encrypt(password, conn->pguser,
-									strlen(conn->pguser), crypt_pwd2))
+									strlen(conn->pguser), crypt_pwd2,
+									&errstr))
 				{
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("could not encrypt password: %s\n"),
+									  errstr);
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
 				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"), md5Salt,
-									4, crypt_pwd))
+									4, crypt_pwd, &errstr))
 				{
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("could not encrypt password: %s\n"),
+									  errstr);
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
@@ -1175,12 +1183,13 @@ char *
 PQencryptPassword(const char *passwd, const char *user)
 {
 	char	   *crypt_pwd;
+	const char *errstr = NULL;
 
 	crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
 	if (!crypt_pwd)
 		return NULL;
 
-	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
+	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
 	{
 		free(crypt_pwd);
 		return NULL;
@@ -1287,8 +1296,13 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
 		if (crypt_pwd)
 		{
-			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
+			const char *errstr = NULL;
+
+			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
 			{
+				appendPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not encrypt password: %s\n"),
+								  errstr);
 				free(crypt_pwd);
 				crypt_pwd = NULL;
 			}

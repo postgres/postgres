@@ -126,11 +126,11 @@ typedef struct pg_be_sasl_mech
 	int			(*exchange) (void *state,
 							 const char *input, int inputlen,
 							 char **output, int *outputlen,
-							 char **logdetail);
+							 const char **logdetail);
 } pg_be_sasl_mech;
 
 /* Common implementation for auth.c */
 extern int	CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port,
-						  char *shadow_pass, char **logdetail);
+						  char *shadow_pass, const char **logdetail);
 
 #endif							/* PG_SASL_H */

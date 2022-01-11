@@ -111,7 +111,8 @@ static void scram_get_mechanisms(Port *port, StringInfo buf);
 static void *scram_init(Port *port, const char *selected_mech,
 						const char *shadow_pass);
 static int	scram_exchange(void *opaq, const char *input, int inputlen,
-						   char **output, int *outputlen, char **logdetail);
+						   char **output, int *outputlen,
+						   const char **logdetail);
 
 /* Mechanism declaration */
 const pg_be_sasl_mech pg_be_scram_mech = {
@@ -335,7 +336,7 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
  */
 static int
 scram_exchange(void *opaq, const char *input, int inputlen,
-			   char **output, int *outputlen, char **logdetail)
+			   char **output, int *outputlen, const char **logdetail)
 {
 	scram_state *state = (scram_state *) opaq;
 	int			result;

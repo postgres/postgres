@@ -50,7 +50,7 @@
  */
 int
 CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
-			  char **logdetail)
+			  const char **logdetail)
 {
 	StringInfoData sasl_mechs;
 	int			mtype;
