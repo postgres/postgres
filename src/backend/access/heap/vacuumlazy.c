@@ -1898,7 +1898,13 @@ retry:
 }
 
 /*
- * Remove the collected garbage tuples from the table and its indexes.
+ * Main entry point for index vacuuming and heap vacuuming.
+ *
+ * Removes items collected in dead_items from table's indexes, then marks the
+ * same items LP_UNUSED in the heap.  See the comments above lazy_scan_heap
+ * for full details.
+ *
+ * Also empties dead_items, freeing up space for later TIDs.
  *
  * We may choose to bypass index vacuuming at this point, though only when the
  * ongoing VACUUM operation will definitely only have one index scan/round of
