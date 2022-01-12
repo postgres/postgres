@@ -4862,3 +4862,51 @@ SELECT t1.*, t2.* FROM alpha t1 INNER JOIN beta t2 ON (t1.a = t2.a AND t1.b = t2
   1 | 209 | 0009 |  1 | 209 | 0009
 (8 rows)
 
+-- partitionwise join with fractional paths
+CREATE TABLE fract_t (id BIGINT, PRIMARY KEY (id)) PARTITION BY RANGE (id);
+CREATE TABLE fract_t0 PARTITION OF fract_t FOR VALUES FROM ('0') TO ('1000');
+CREATE TABLE fract_t1 PARTITION OF fract_t FOR VALUES FROM ('1000') TO ('2000');
+-- insert data
+INSERT INTO fract_t (id) (SELECT generate_series(0, 1999));
+ANALYZE fract_t;
+-- verify plan; nested index only scans
+SET max_parallel_workers_per_gather = 0;
+SET enable_partitionwise_join = on;
+EXPLAIN (COSTS OFF)
+SELECT * FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY id ASC LIMIT 10;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Limit
+   ->  Merge Append
+         Sort Key: x.id
+         ->  Merge Left Join
+               Merge Cond: (x_1.id = y_1.id)
+               ->  Index Only Scan using fract_t0_pkey on fract_t0 x_1
+               ->  Index Only Scan using fract_t0_pkey on fract_t0 y_1
+         ->  Merge Left Join
+               Merge Cond: (x_2.id = y_2.id)
+               ->  Index Only Scan using fract_t1_pkey on fract_t1 x_2
+               ->  Index Only Scan using fract_t1_pkey on fract_t1 y_2
+(11 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY id DESC LIMIT 10;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Limit
+   ->  Merge Append
+         Sort Key: x.id DESC
+         ->  Nested Loop Left Join
+               ->  Index Only Scan Backward using fract_t0_pkey on fract_t0 x_1
+               ->  Index Only Scan using fract_t0_pkey on fract_t0 y_1
+                     Index Cond: (id = x_1.id)
+         ->  Nested Loop Left Join
+               ->  Index Only Scan Backward using fract_t1_pkey on fract_t1 x_2
+               ->  Index Only Scan using fract_t1_pkey on fract_t1 y_2
+                     Index Cond: (id = x_2.id)
+(11 rows)
+
+-- cleanup
+DROP TABLE fract_t;
+RESET max_parallel_workers_per_gather;
+RESET enable_partitionwise_join;
