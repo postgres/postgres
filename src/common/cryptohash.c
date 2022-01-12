@@ -252,7 +252,7 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 /*
  * pg_cryptohash_error
  *
- * Returns a static string providing errors about an error that
+ * Returns a static string providing details about an error that
  * happened during a computation.
  */
 const char *
