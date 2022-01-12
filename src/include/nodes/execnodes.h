@@ -142,6 +142,8 @@ typedef struct ExprState
  *		Unique				is it a unique index?
  *		OpclassOptions		opclass-specific options, or NULL if none
  *		ReadyForInserts		is it valid for inserts?
+ *		CheckedUnchanged	IndexUnchanged status determined yet?
+ *		IndexUnchanged		aminsert hint, cached for retail inserts
  *		Concurrent			are we doing a concurrent index build?
  *		BrokenHotChain		did we detect any broken HOT chains?
  *		ParallelWorkers		# of workers requested (excludes leader)
@@ -172,6 +174,8 @@ typedef struct IndexInfo
 	Datum	   *ii_OpclassOptions;	/* array with one entry per column */
 	bool		ii_Unique;
 	bool		ii_ReadyForInserts;
+	bool		ii_CheckedUnchanged;
+	bool		ii_IndexUnchanged;
 	bool		ii_Concurrent;
 	bool		ii_BrokenHotChain;
 	int			ii_ParallelWorkers;
