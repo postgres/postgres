@@ -136,11 +136,6 @@ static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 static bool index_recheck_constraint(Relation index, Oid *constr_procs,
 									 Datum *existing_values, bool *existing_isnull,
 									 Datum *new_values);
-static bool index_unchanged_by_update(ResultRelInfo *resultRelInfo,
-									  EState *estate, IndexInfo *indexInfo,
-									  Relation indexRelation);
-static bool index_expression_changed_walker(Node *node,
-											Bitmapset *allUpdatedCols);
 
 /* ----------------------------------------------------------------
  *		ExecOpenIndices
@@ -406,11 +401,12 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 		 * There's definitely going to be an index_insert() call for this
 		 * index.  If we're being called as part of an UPDATE statement,
 		 * consider if the 'indexUnchanged' = true hint should be passed.
+		 *
+		 * XXX We always assume that the hint should be passed for an UPDATE.
+		 * This is a workaround for a bug in PostgreSQL 14.  In practice this
+		 * won't make much difference for current users of the hint.
 		 */
-		indexUnchanged = update && index_unchanged_by_update(resultRelInfo,
-															 estate,
-															 indexInfo,
-															 indexRelation);
+		indexUnchanged = update;
 
 		satisfiesConstraint =
 			index_insert(indexRelation, /* index relation */
@@ -922,123 +918,4 @@ index_recheck_constraint(Relation index, Oid *constr_procs,
 	}
 
 	return true;
-}
-
-/*
- * Check if ExecInsertIndexTuples() should pass indexUnchanged hint.
- *
- * When the executor performs an UPDATE that requires a new round of index
- * tuples, determine if we should pass 'indexUnchanged' = true hint for one
- * single index.
- */
-static bool
-index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
-						  IndexInfo *indexInfo, Relation indexRelation)
-{
-	Bitmapset  *updatedCols = ExecGetUpdatedCols(resultRelInfo, estate);
-	Bitmapset  *extraUpdatedCols = ExecGetExtraUpdatedCols(resultRelInfo, estate);
-	Bitmapset  *allUpdatedCols;
-	bool		hasexpression = false;
-	List	   *idxExprs;
-
-	/*
-	 * Check for indexed attribute overlap with updated columns.
-	 *
-	 * Only do this for key columns.  A change to a non-key column within an
-	 * INCLUDE index should not be counted here.  Non-key column values are
-	 * opaque payload state to the index AM, a little like an extra table TID.
-	 */
-	for (int attr = 0; attr < indexInfo->ii_NumIndexKeyAttrs; attr++)
-	{
-		int			keycol = indexInfo->ii_IndexAttrNumbers[attr];
-
-		if (keycol <= 0)
-		{
-			/*
-			 * Skip expressions for now, but remember to deal with them later
-			 * on
-			 */
-			hasexpression = true;
-			continue;
-		}
-
-		if (bms_is_member(keycol - FirstLowInvalidHeapAttributeNumber,
-						  updatedCols) ||
-			bms_is_member(keycol - FirstLowInvalidHeapAttributeNumber,
-						  extraUpdatedCols))
-		{
-			/* Changed key column -- don't hint for this index */
-			return false;
-		}
-	}
-
-	/*
-	 * When we get this far and index has no expressions, return true so that
-	 * index_insert() call will go on to pass 'indexUnchanged' = true hint.
-	 *
-	 * The _absence_ of an indexed key attribute that overlaps with updated
-	 * attributes (in addition to the total absence of indexed expressions)
-	 * shows that the index as a whole is logically unchanged by UPDATE.
-	 */
-	if (!hasexpression)
-		return true;
-
-	/*
-	 * Need to pass only one bms to expression_tree_walker helper function.
-	 * Avoid allocating memory in common case where there are no extra cols.
-	 */
-	if (!extraUpdatedCols)
-		allUpdatedCols = updatedCols;
-	else
-		allUpdatedCols = bms_union(updatedCols, extraUpdatedCols);
-
-	/*
-	 * We have to work slightly harder in the event of indexed expressions,
-	 * but the principle is the same as before: try to find columns (Vars,
-	 * actually) that overlap with known-updated columns.
-	 *
-	 * If we find any matching Vars, don't pass hint for index.  Otherwise
-	 * pass hint.
-	 */
-	idxExprs = RelationGetIndexExpressions(indexRelation);
-	hasexpression = index_expression_changed_walker((Node *) idxExprs,
-													allUpdatedCols);
-	list_free(idxExprs);
-	if (extraUpdatedCols)
-		bms_free(allUpdatedCols);
-
-	if (hasexpression)
-		return false;
-
-	return true;
-}
-
-/*
- * Indexed expression helper for index_unchanged_by_update().
- *
- * Returns true when Var that appears within allUpdatedCols located.
- */
-static bool
-index_expression_changed_walker(Node *node, Bitmapset *allUpdatedCols)
-{
-	if (node == NULL)
-		return false;
-
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (bms_is_member(var->varattno - FirstLowInvalidHeapAttributeNumber,
-						  allUpdatedCols))
-		{
-			/* Var was updated -- indicates that we should not hint */
-			return true;
-		}
-
-		/* Still haven't found a reason to not pass the hint */
-		return false;
-	}
-
-	return expression_tree_walker(node, index_expression_changed_walker,
-								  (void *) allUpdatedCols);
 }
