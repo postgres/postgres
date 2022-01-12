@@ -227,6 +227,7 @@ extern int	sepgsql_set_mode(int new_mode);
 extern bool sepgsql_getenforce(void);
 
 extern void sepgsql_audit_log(bool denied,
+							  bool enforcing,
 							  const char *scontext,
 							  const char *tcontext,
 							  uint16 tclass,
