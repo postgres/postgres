@@ -442,6 +442,18 @@ extern void DebugFileOpen(void);
 extern char *unpack_sql_state(int sql_state);
 extern bool in_error_recursion_trouble(void);
 
+/* Common functions shared across destinations */
+extern void reset_formatted_start_time(void);
+extern char *get_formatted_start_time(void);
+extern char *get_formatted_log_time(void);
+extern const char *get_backend_type_for_log(void);
+extern bool check_log_of_query(ErrorData *edata);
+extern const char *error_severity(int elevel);
+extern void write_pipe_chunks(char *data, int len, int dest);
+
+/* Destination-specific functions */
+extern void write_csvlog(ErrorData *edata);
+
 #ifdef HAVE_SYSLOG
 extern void set_syslog_parameters(const char *ident, int facility);
 #endif

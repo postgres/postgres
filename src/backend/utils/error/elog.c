@@ -175,15 +175,10 @@ static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static pg_noinline void set_backtrace(ErrorData *edata, int num_skip);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 static void write_console(const char *line, int len);
-static void setup_formatted_log_time(void);
-static void setup_formatted_start_time(void);
 static const char *process_log_prefix_padding(const char *p, int *padding);
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
-static void write_csvlog(ErrorData *edata);
 static void send_message_to_server_log(ErrorData *edata);
-static void write_pipe_chunks(char *data, int len, int dest);
 static void send_message_to_frontend(ErrorData *edata);
-static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 
 
@@ -2289,13 +2284,22 @@ write_console(const char *line, int len)
 }
 
 /*
- * setup formatted_log_time, for consistent times between CSV and regular logs
+ * get_formatted_log_time -- compute and get the log timestamp.
+ *
+ * The timestamp is computed if not set yet, so as it is kept consistent
+ * among all the log destinations that require it to be consistent.  Note
+ * that the computed timestamp is returned in a static buffer, not
+ * palloc()'d.
  */
-static void
-setup_formatted_log_time(void)
+char *
+get_formatted_log_time(void)
 {
 	pg_time_t	stamp_time;
 	char		msbuf[13];
+
+	/* leave if already computed */
+	if (formatted_log_time[0] != '\0')
+		return formatted_log_time;
 
 	if (!saved_timeval_set)
 	{
@@ -2318,15 +2322,33 @@ setup_formatted_log_time(void)
 	/* 'paste' milliseconds into place... */
 	sprintf(msbuf, ".%03d", (int) (saved_timeval.tv_usec / 1000));
 	memcpy(formatted_log_time + 19, msbuf, 4);
+
+	return formatted_log_time;
 }
 
 /*
- * setup formatted_start_time
+ * reset_formatted_start_time -- reset the start timestamp
  */
-static void
-setup_formatted_start_time(void)
+void
+reset_formatted_start_time(void)
+{
+	formatted_start_time[0] = '\0';
+}
+
+/*
+ * get_formatted_start_time -- compute and get the start timestamp.
+ *
+ * The timestamp is computed if not set yet.  Note that the computed
+ * timestamp is returned in a static buffer, not palloc()'d.
+ */
+char *
+get_formatted_start_time(void)
 {
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
+
+	/* leave if already computed */
+	if (formatted_start_time[0] != '\0')
+		return formatted_start_time;
 
 	/*
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
@@ -2336,6 +2358,49 @@ setup_formatted_start_time(void)
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
 				"%Y-%m-%d %H:%M:%S %Z",
 				pg_localtime(&stamp_time, log_timezone));
+
+	return formatted_start_time;
+}
+
+/*
+ * check_log_of_query -- check if a query can be logged
+ */
+bool
+check_log_of_query(ErrorData *edata)
+{
+	/* log required? */
+	if (!is_log_level_output(edata->elevel, log_min_error_statement))
+		return false;
+
+	/* query log wanted? */
+	if (edata->hide_stmt)
+		return false;
+
+	/* query string available? */
+	if (debug_query_string == NULL)
+		return false;
+
+	return true;
+}
+
+/*
+ * get_backend_type_for_log -- backend type for log entries
+ *
+ * Returns a pointer to a static buffer, not palloc()'d.
+ */
+const char *
+get_backend_type_for_log(void)
+{
+	const char *backend_type_str;
+
+	if (MyProcPid == PostmasterPid)
+		backend_type_str = "postmaster";
+	else if (MyBackendType == B_BG_WORKER)
+		backend_type_str = MyBgworkerEntry->bgw_type;
+	else
+		backend_type_str = GetBackendTypeDesc(MyBackendType);
+
+	return backend_type_str;
 }
 
 /*
@@ -2397,7 +2462,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 	{
 		log_line_number = 0;
 		log_my_pid = MyProcPid;
-		formatted_start_time[0] = '\0';
+		reset_formatted_start_time();
 	}
 	log_line_number++;
 
@@ -2466,14 +2531,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				break;
 			case 'b':
 				{
-					const char *backend_type_str;
-
-					if (MyProcPid == PostmasterPid)
-						backend_type_str = "postmaster";
-					else if (MyBackendType == B_BG_WORKER)
-						backend_type_str = MyBgworkerEntry->bgw_type;
-					else
-						backend_type_str = GetBackendTypeDesc(MyBackendType);
+					const char *backend_type_str = get_backend_type_for_log();
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, backend_type_str);
@@ -2561,7 +2619,10 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 					appendStringInfo(buf, "%ld", log_line_number);
 				break;
 			case 'm':
-				setup_formatted_log_time();
+				/* force a log timestamp reset */
+				formatted_log_time[0] = '\0';
+				(void) get_formatted_log_time();
+
 				if (padding != 0)
 					appendStringInfo(buf, "%*s", padding, formatted_log_time);
 				else
@@ -2602,12 +2663,14 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				}
 				break;
 			case 's':
-				if (formatted_start_time[0] == '\0')
-					setup_formatted_start_time();
-				if (padding != 0)
-					appendStringInfo(buf, "%*s", padding, formatted_start_time);
-				else
-					appendStringInfoString(buf, formatted_start_time);
+				{
+					char	   *start_time = get_formatted_start_time();
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, start_time);
+					else
+						appendStringInfoString(buf, start_time);
+				}
 				break;
 			case 'i':
 				if (MyProcPort)
@@ -2758,7 +2821,7 @@ appendCSVLiteral(StringInfo buf, const char *data)
  * Constructs the error message, depending on the Errordata it gets, in a CSV
  * format which is described in doc/src/sgml/config.sgml.
  */
-static void
+void
 write_csvlog(ErrorData *edata)
 {
 	StringInfoData buf;
@@ -2779,23 +2842,14 @@ write_csvlog(ErrorData *edata)
 	{
 		log_line_number = 0;
 		log_my_pid = MyProcPid;
-		formatted_start_time[0] = '\0';
+		reset_formatted_start_time();
 	}
 	log_line_number++;
 
 	initStringInfo(&buf);
 
-	/*
-	 * timestamp with milliseconds
-	 *
-	 * Check if the timestamp is already calculated for the syslog message,
-	 * and use it if so.  Otherwise, get the current timestamp.  This is done
-	 * to put same timestamp in both syslog and csvlog messages.
-	 */
-	if (formatted_log_time[0] == '\0')
-		setup_formatted_log_time();
-
-	appendStringInfoString(&buf, formatted_log_time);
+	/* timestamp with milliseconds */
+	appendStringInfoString(&buf, get_formatted_log_time());
 	appendStringInfoChar(&buf, ',');
 
 	/* username */
@@ -2853,9 +2907,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* session start timestamp */
-	if (formatted_start_time[0] == '\0')
-		setup_formatted_start_time();
-	appendStringInfoString(&buf, formatted_start_time);
+	appendStringInfoString(&buf, get_formatted_start_time());
 	appendStringInfoChar(&buf, ',');
 
 	/* Virtual transaction id */
@@ -2906,10 +2958,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* user query --- only reported if not disabled by the caller */
-	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
-		debug_query_string != NULL &&
-		!edata->hide_stmt)
-		print_stmt = true;
+	print_stmt = check_log_of_query(edata);
 	if (print_stmt)
 		appendCSVLiteral(&buf, debug_query_string);
 	appendStringInfoChar(&buf, ',');
@@ -2943,13 +2992,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* backend type */
-	if (MyProcPid == PostmasterPid)
-		appendCSVLiteral(&buf, "postmaster");
-	else if (MyBackendType == B_BG_WORKER)
-		appendCSVLiteral(&buf, MyBgworkerEntry->bgw_type);
-	else
-		appendCSVLiteral(&buf, GetBackendTypeDesc(MyBackendType));
-
+	appendCSVLiteral(&buf, get_backend_type_for_log());
 	appendStringInfoChar(&buf, ',');
 
 	/* leader PID */
@@ -3101,9 +3144,7 @@ send_message_to_server_log(ErrorData *edata)
 	/*
 	 * If the user wants the query that generated this error logged, do it.
 	 */
-	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
-		debug_query_string != NULL &&
-		!edata->hide_stmt)
+	if (check_log_of_query(edata))
 	{
 		log_line_prefix(&buf, edata);
 		appendStringInfoString(&buf, _("STATEMENT:  "));
@@ -3233,7 +3274,7 @@ send_message_to_server_log(ErrorData *edata)
  * warning from ignoring write()'s result, so do a little dance with casting
  * rc to void to shut up the compiler.
  */
-static void
+void
 write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
@@ -3469,7 +3510,7 @@ send_message_to_frontend(ErrorData *edata)
  * The string is not localized here, but we mark the strings for translation
  * so that callers can invoke _() on the result.
  */
-static const char *
+const char *
 error_severity(int elevel)
 {
 	const char *prefix;
