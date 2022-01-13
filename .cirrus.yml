@@ -358,8 +358,13 @@ task:
     # Avoids port conflicts between concurrent tap test runs
     PG_TEST_USE_UNIX_SOCKETS: 1
     PG_REGRESS_SOCK_DIR: "c:/cirrus/"
-    # Use parallelism, disable file tracker, we're never going to rebuild...
-    MSBFLAGS: -m -verbosity:minimal /p:TrackFileAccess=false
+    # -m enables parallelism
+    # verbosity:minimal + Summary reduce verbosity, while keeping a summary of
+    #   errors/warnings
+    # ForceNoAlign prevents msbuild from introducing line-breaks for long lines
+    # disable file tracker, we're never going to rebuild, and it slows down the
+    #   build
+    MSBFLAGS: -m -verbosity:minimal "-consoleLoggerParameters:Summary;ForceNoAlign" /p:TrackFileAccess=false -nologo
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
