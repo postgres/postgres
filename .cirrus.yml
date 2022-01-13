@@ -395,7 +395,7 @@ task:
     - perl src/tools/msvc/vcregress.pl check parallel
   startcreate_script:
     # paths to binaries need backslashes
-    - tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log
+    - tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log --options=--no-sync
     - echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
     - tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
   test_pl_script:
