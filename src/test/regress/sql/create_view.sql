@@ -565,6 +565,11 @@ select * from tt17v;
 select pg_get_viewdef('tt17v', true);
 select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
 
+create table tt15v_log(o tt15v, n tt15v, incr bool);
+create rule updlog as on update to tt15v do also
+  insert into tt15v_log values(old, new, row(old,old) < row(new,new));
+\d+ tt15v
+
 -- check unique-ification of overlength names
 
 create view tt18v as
