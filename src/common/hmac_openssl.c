@@ -50,9 +50,7 @@
 #define FREE(ptr) free(ptr)
 #endif							/* FRONTEND */
 
-/*
- * Internal structure for pg_hmac_ctx->data with this implementation.
- */
+/* Internal pg_hmac_ctx structure */
 struct pg_hmac_ctx
 {
 	HMAC_CTX   *hmacctx;
