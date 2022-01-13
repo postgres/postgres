@@ -1293,11 +1293,13 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	 */
 	if (strcmp(algorithm, "scram-sha-256") == 0)
 	{
-		crypt_pwd = pg_fe_scram_build_secret(passwd);
-		/* We assume the only possible failure is OOM */
+		const char *errstr = NULL;
+
+		crypt_pwd = pg_fe_scram_build_secret(passwd, &errstr);
 		if (!crypt_pwd)
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("out of memory\n"));
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not encrypt password: %s\n"),
+							  errstr);
 	}
 	else if (strcmp(algorithm, "md5") == 0)
 	{
