@@ -1972,7 +1972,7 @@
   </glossentry>
 
   <glossentry id="glossary-wal-receiver">
-   <glossterm>WAL receiver</glossterm>
+   <glossterm>WAL receiver (process)</glossterm>
    <glossdef>
     <para>
      An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
