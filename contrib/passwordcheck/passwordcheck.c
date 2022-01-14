@@ -74,7 +74,7 @@ check_password(const char *username,
 		 *
 		 * We only check for username = password.
 		 */
-		const char *logdetail = NULL;
+		char	   *logdetail;
 
 		if (plain_crypt_verify(username, shadow_pass, username, &logdetail) == STATUS_OK)
 			ereport(ERROR,

@@ -765,7 +765,6 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		case AUTH_REQ_MD5:
 			{
 				char	   *crypt_pwd2;
-				const char *errstr = NULL;
 
 				/* Allocate enough space for two MD5 hashes */
 				crypt_pwd = malloc(2 * (MD5_PASSWD_LEN + 1));
@@ -778,21 +777,14 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 
 				crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
 				if (!pg_md5_encrypt(password, conn->pguser,
-									strlen(conn->pguser), crypt_pwd2,
-									&errstr))
+									strlen(conn->pguser), crypt_pwd2))
 				{
-					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not encrypt password: %s\n"),
-									  errstr);
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
 				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"), md5Salt,
-									4, crypt_pwd, &errstr))
+									4, crypt_pwd))
 				{
-					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not encrypt password: %s\n"),
-									  errstr);
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
@@ -1158,13 +1150,12 @@ char *
 PQencryptPassword(const char *passwd, const char *user)
 {
 	char	   *crypt_pwd;
-	const char *errstr = NULL;
 
 	crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
 	if (!crypt_pwd)
 		return NULL;
 
-	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
+	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
 	{
 		free(crypt_pwd);
 		return NULL;
@@ -1265,30 +1256,18 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	if (strcmp(algorithm, "scram-sha-256") == 0)
 	{
 		crypt_pwd = pg_fe_scram_build_secret(passwd);
-		/* We assume the only possible failure is OOM */
-		if (!crypt_pwd)
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("out of memory\n"));
 	}
 	else if (strcmp(algorithm, "md5") == 0)
 	{
 		crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
 		if (crypt_pwd)
 		{
-			const char *errstr = NULL;
-
-			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
+			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
 			{
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not encrypt password: %s\n"),
-								  errstr);
 				free(crypt_pwd);
 				crypt_pwd = NULL;
 			}
 		}
-		else
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("out of memory\n"));
 	}
 	else
 	{
@@ -1297,6 +1276,10 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 						  algorithm);
 		return NULL;
 	}
+
+	if (!crypt_pwd)
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("out of memory\n"));
 
 	return crypt_pwd;
 }

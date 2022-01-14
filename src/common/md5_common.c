@@ -67,7 +67,7 @@ bytesToHex(uint8 b[16], char *s)
  */
 
 bool
-pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
+pg_md5_hash(const void *buff, size_t len, char *hexsum)
 {
 	uint8		sum[MD5_DIGEST_LENGTH];
 	pg_cryptohash_ctx *ctx;
@@ -80,7 +80,6 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
 		pg_cryptohash_update(ctx, buff, len) < 0 ||
 		pg_cryptohash_final(ctx, sum, sizeof(sum)) < 0)
 	{
-		*errstr = pg_cryptohash_error(ctx);
 		pg_cryptohash_free(ctx);
 		return false;
 	}
@@ -91,23 +90,18 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
 }
 
 bool
-pg_md5_binary(const void *buff, size_t len, void *outbuf, const char **errstr)
+pg_md5_binary(const void *buff, size_t len, void *outbuf)
 {
 	pg_cryptohash_ctx *ctx;
 
-	*errstr = NULL;
 	ctx = pg_cryptohash_create(PG_MD5);
 	if (ctx == NULL)
-	{
-		*errstr = pg_cryptohash_error(NULL);	/* returns OOM */
 		return false;
-	}
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, buff, len) < 0 ||
 		pg_cryptohash_final(ctx, outbuf, MD5_DIGEST_LENGTH) < 0)
 	{
-		*errstr = pg_cryptohash_error(ctx);
 		pg_cryptohash_free(ctx);
 		return false;
 	}
@@ -124,12 +118,11 @@ pg_md5_binary(const void *buff, size_t len, void *outbuf, const char **errstr)
  * Output format is "md5" followed by a 32-hex-digit MD5 checksum.
  * Hence, the output buffer "buf" must be at least 36 bytes long.
  *
- * Returns true if okay, false on error with *errstr providing some
- * error context.
+ * Returns true if okay, false on error (out of memory).
  */
 bool
 pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
-			   char *buf, const char **errstr)
+			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
 
@@ -138,10 +131,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	bool		ret;
 
 	if (!crypt_buf)
-	{
-		*errstr = _("out of memory");
 		return false;
-	}
 
 	/*
 	 * Place salt at the end because it may be known by users trying to crack
@@ -151,7 +141,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	memcpy(crypt_buf + passwd_len, salt, salt_len);
 
 	strcpy(buf, "md5");
-	ret = pg_md5_hash(crypt_buf, passwd_len + salt_len, buf + 3, errstr);
+	ret = pg_md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
 
 	free(crypt_buf);
 

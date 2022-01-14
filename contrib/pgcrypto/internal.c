@@ -89,8 +89,7 @@ int_md5_update(PX_MD *h, const uint8 *data, unsigned dlen)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_update(ctx, data, dlen) < 0)
-		elog(ERROR, "could not update %s context: %s", "MD5",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not update %s context", "MD5");
 }
 
 static void
@@ -99,8 +98,7 @@ int_md5_reset(PX_MD *h)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context: %s", "MD5",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not initialize %s context", "MD5");
 }
 
 static void
@@ -109,8 +107,7 @@ int_md5_finish(PX_MD *h, uint8 *dst)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_final(ctx, dst, h->result_size(h)) < 0)
-		elog(ERROR, "could not finalize %s context: %s", "MD5",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not finalize %s context", "MD5");
 }
 
 static void
@@ -142,8 +139,7 @@ int_sha1_update(PX_MD *h, const uint8 *data, unsigned dlen)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_update(ctx, data, dlen) < 0)
-		elog(ERROR, "could not update %s context: %s", "SHA1",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not update %s context", "SHA1");
 }
 
 static void
@@ -152,8 +148,7 @@ int_sha1_reset(PX_MD *h)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context: %s", "SHA1",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not initialize %s context", "SHA1");
 }
 
 static void
@@ -162,8 +157,7 @@ int_sha1_finish(PX_MD *h, uint8 *dst)
 	pg_cryptohash_ctx *ctx = (pg_cryptohash_ctx *) h->p.ptr;
 
 	if (pg_cryptohash_final(ctx, dst, h->result_size(h)) < 0)
-		elog(ERROR, "could not finalize %s context: %s", "SHA1",
-			 pg_cryptohash_error(ctx));
+		elog(ERROR, "could not finalize %s context", "SHA1");
 }
 
 static void

@@ -393,7 +393,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (password)
 	{
 		char	   *shadow_pass;
-		const char *logdetail = NULL;
+		char	   *logdetail;
 
 		/*
 		 * Don't allow an empty password. Libpq treats an empty password the
@@ -835,7 +835,7 @@ AlterRole(AlterRoleStmt *stmt)
 	if (password)
 	{
 		char	   *shadow_pass;
-		const char *logdetail = NULL;
+		char	   *logdetail;
 
 		/* Like in CREATE USER, don't allow an empty password. */
 		if (password[0] == '\0' ||
