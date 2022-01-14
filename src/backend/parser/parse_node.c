@@ -426,6 +426,14 @@ make_const(ParseState *pstate, A_Const *aconst)
 			}
 			break;
 
+		case T_Boolean:
+			val = BoolGetDatum(boolVal(&aconst->val));
+
+			typeid = BOOLOID;
+			typelen = 1;
+			typebyval = true;
+			break;
+
 		case T_String:
 
 			/*

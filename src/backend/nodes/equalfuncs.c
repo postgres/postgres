@@ -3139,6 +3139,14 @@ _equalFloat(const Float *a, const Float *b)
 }
 
 static bool
+_equalBoolean(const Boolean *a, const Boolean *b)
+{
+	COMPARE_SCALAR_FIELD(boolval);
+
+	return true;
+}
+
+static bool
 _equalString(const String *a, const String *b)
 {
 	COMPARE_STRING_FIELD(sval);
@@ -3373,6 +3381,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_Float:
 			retval = _equalFloat(a, b);
+			break;
+		case T_Boolean:
+			retval = _equalBoolean(a, b);
 			break;
 		case T_String:
 			retval = _equalString(a, b);

@@ -217,17 +217,17 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (dpassword && dpassword->arg)
 		password = strVal(dpassword->arg);
 	if (dissuper)
-		issuper = intVal(dissuper->arg) != 0;
+		issuper = boolVal(dissuper->arg);
 	if (dinherit)
-		inherit = intVal(dinherit->arg) != 0;
+		inherit = boolVal(dinherit->arg);
 	if (dcreaterole)
-		createrole = intVal(dcreaterole->arg) != 0;
+		createrole = boolVal(dcreaterole->arg);
 	if (dcreatedb)
-		createdb = intVal(dcreatedb->arg) != 0;
+		createdb = boolVal(dcreatedb->arg);
 	if (dcanlogin)
-		canlogin = intVal(dcanlogin->arg) != 0;
+		canlogin = boolVal(dcanlogin->arg);
 	if (disreplication)
-		isreplication = intVal(disreplication->arg) != 0;
+		isreplication = boolVal(disreplication->arg);
 	if (dconnlimit)
 	{
 		connlimit = intVal(dconnlimit->arg);
@@ -245,7 +245,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
 	if (dbypassRLS)
-		bypassrls = intVal(dbypassRLS->arg) != 0;
+		bypassrls = boolVal(dbypassRLS->arg);
 
 	/* Check some permissions first */
 	if (issuper)
@@ -700,37 +700,37 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	 */
 	if (dissuper)
 	{
-		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(intVal(dissuper->arg));
+		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(boolVal(dissuper->arg));
 		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
 	}
 
 	if (dinherit)
 	{
-		new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(intVal(dinherit->arg));
+		new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(boolVal(dinherit->arg));
 		new_record_repl[Anum_pg_authid_rolinherit - 1] = true;
 	}
 
 	if (dcreaterole)
 	{
-		new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(intVal(dcreaterole->arg));
+		new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(boolVal(dcreaterole->arg));
 		new_record_repl[Anum_pg_authid_rolcreaterole - 1] = true;
 	}
 
 	if (dcreatedb)
 	{
-		new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(intVal(dcreatedb->arg));
+		new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(boolVal(dcreatedb->arg));
 		new_record_repl[Anum_pg_authid_rolcreatedb - 1] = true;
 	}
 
 	if (dcanlogin)
 	{
-		new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(intVal(dcanlogin->arg));
+		new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(boolVal(dcanlogin->arg));
 		new_record_repl[Anum_pg_authid_rolcanlogin - 1] = true;
 	}
 
 	if (disreplication)
 	{
-		new_record[Anum_pg_authid_rolreplication - 1] = BoolGetDatum(intVal(disreplication->arg));
+		new_record[Anum_pg_authid_rolreplication - 1] = BoolGetDatum(boolVal(disreplication->arg));
 		new_record_repl[Anum_pg_authid_rolreplication - 1] = true;
 	}
 
@@ -779,7 +779,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 
 	if (dbypassRLS)
 	{
-		new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(intVal(dbypassRLS->arg));
+		new_record[Anum_pg_authid_rolbypassrls - 1] = BoolGetDatum(boolVal(dbypassRLS->arg));
 		new_record_repl[Anum_pg_authid_rolbypassrls - 1] = true;
 	}
 

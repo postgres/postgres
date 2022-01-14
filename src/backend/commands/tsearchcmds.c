@@ -1742,6 +1742,15 @@ buildDefItem(const char *name, const char *val, bool was_quoted)
 			return makeDefElem(pstrdup(name),
 							   (Node *) makeFloat(pstrdup(val)),
 							   -1);
+
+		if (strcmp(val, "true") == 0)
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeBoolean(true),
+							   -1);
+		if (strcmp(val, "false") == 0)
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeBoolean(false),
+							   -1);
 	}
 	/* Just make it a string */
 	return makeDefElem(pstrdup(name),

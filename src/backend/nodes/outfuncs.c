@@ -3435,6 +3435,12 @@ _outFloat(StringInfo str, const Float *node)
 }
 
 static void
+_outBoolean(StringInfo str, const Boolean *node)
+{
+	appendStringInfoString(str, node->boolval ? "true" : "false");
+}
+
+static void
 _outString(StringInfo str, const String *node)
 {
 	/*
@@ -3846,6 +3852,8 @@ outNode(StringInfo str, const void *obj)
 		_outInteger(str, (Integer *) obj);
 	else if (IsA(obj, Float))
 		_outFloat(str, (Float *) obj);
+	else if (IsA(obj, Boolean))
+		_outBoolean(str, (Boolean *) obj);
 	else if (IsA(obj, String))
 		_outString(str, (String *) obj);
 	else if (IsA(obj, BitString))

@@ -3577,6 +3577,7 @@ raw_expression_tree_walker(Node *node,
 		case T_SQLValueFunction:
 		case T_Integer:
 		case T_Float:
+		case T_Boolean:
 		case T_String:
 		case T_BitString:
 		case T_ParamRef:

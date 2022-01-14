@@ -235,7 +235,7 @@ debackslash(const char *token, int length)
  * nodeTokenType -
  *	  returns the type of the node token contained in token.
  *	  It returns one of the following valid NodeTags:
- *		T_Integer, T_Float, T_String, T_BitString
+ *		T_Integer, T_Float, T_Boolean, T_String, T_BitString
  *	  and some of its own:
  *		RIGHT_PAREN, LEFT_PAREN, LEFT_BRACE, OTHER_TOKEN
  *
@@ -283,6 +283,8 @@ nodeTokenType(const char *token, int length)
 		retval = RIGHT_PAREN;
 	else if (*token == '{')
 		retval = LEFT_BRACE;
+	else if (strcmp(token, "true") == 0 || strcmp(token, "false") == 0)
+		retval = T_Boolean;
 	else if (*token == '"' && length > 1 && token[length - 1] == '"')
 		retval = T_String;
 	else if (*token == 'b')
@@ -298,7 +300,7 @@ nodeTokenType(const char *token, int length)
  *
  * This routine applies some semantic knowledge on top of the purely
  * lexical tokenizer pg_strtok().   It can read
- *	* Value token nodes (integers, floats, or strings);
+ *	* Value token nodes (integers, floats, booleans, or strings);
  *	* General nodes (via parseNodeString() from readfuncs.c);
  *	* Lists of the above;
  *	* Lists of integers or OIDs.
@@ -437,6 +439,9 @@ nodeRead(const char *token, int tok_len)
 				fval[tok_len] = '\0';
 				result = (Node *) makeFloat(fval);
 			}
+			break;
+		case T_Boolean:
+			result = (Node *) makeBoolean(token[0] == 't');
 			break;
 		case T_String:
 			/* need to remove leading and trailing quotes, and backslashes */

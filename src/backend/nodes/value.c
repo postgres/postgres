@@ -43,6 +43,18 @@ makeFloat(char *numericStr)
 }
 
 /*
+ *	makeBoolean
+ */
+Boolean *
+makeBoolean(bool val)
+{
+	Boolean	   *v = makeNode(Boolean);
+
+	v->boolval = val;
+	return v;
+}
+
+/*
  *	makeString
  *
  * Caller is responsible for passing a palloc'd string.

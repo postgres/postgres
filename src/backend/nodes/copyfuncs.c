@@ -2750,6 +2750,9 @@ _copyA_Const(const A_Const *from)
 			case T_Float:
 				COPY_STRING_FIELD(val.fval.fval);
 				break;
+			case T_Boolean:
+				COPY_SCALAR_FIELD(val.boolval.boolval);
+				break;
 			case T_String:
 				COPY_STRING_FIELD(val.sval.sval);
 				break;
@@ -4949,6 +4952,16 @@ _copyFloat(const Float *from)
 	return newnode;
 }
 
+static Boolean *
+_copyBoolean(const Boolean *from)
+{
+	Boolean	   *newnode = makeNode(Boolean);
+
+	COPY_SCALAR_FIELD(boolval);
+
+	return newnode;
+}
+
 static String *
 _copyString(const String *from)
 {
@@ -5355,6 +5368,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_Float:
 			retval = _copyFloat(from);
+			break;
+		case T_Boolean:
+			retval = _copyBoolean(from);
 			break;
 		case T_String:
 			retval = _copyString(from);

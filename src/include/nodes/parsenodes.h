@@ -304,6 +304,7 @@ typedef struct A_Const
 		Node		node;
 		Integer		ival;
 		Float		fval;
+		Boolean		boolval;
 		String		sval;
 		BitString	bsval;
 	}			val;
