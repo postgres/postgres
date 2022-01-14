@@ -3421,7 +3421,7 @@ _outA_Expr(StringInfo str, const A_Expr *node)
 static void
 _outInteger(StringInfo str, const Integer *node)
 {
-	appendStringInfo(str, "%d", node->val);
+	appendStringInfo(str, "%d", node->ival);
 }
 
 static void
@@ -3431,7 +3431,7 @@ _outFloat(StringInfo str, const Float *node)
 	 * We assume the value is a valid numeric literal and so does not
 	 * need quoting.
 	 */
-	appendStringInfoString(str, node->val);
+	appendStringInfoString(str, node->fval);
 }
 
 static void
@@ -3442,8 +3442,8 @@ _outString(StringInfo str, const String *node)
 	 * but we don't want it to do anything with an empty string.
 	 */
 	appendStringInfoChar(str, '"');
-	if (node->val[0] != '\0')
-		outToken(str, node->val);
+	if (node->sval[0] != '\0')
+		outToken(str, node->sval);
 	appendStringInfoChar(str, '"');
 }
 
@@ -3451,7 +3451,7 @@ static void
 _outBitString(StringInfo str, const BitString *node)
 {
 	/* internal representation already has leading 'b' */
-	appendStringInfoString(str, node->val);
+	appendStringInfoString(str, node->bsval);
 }
 
 static void

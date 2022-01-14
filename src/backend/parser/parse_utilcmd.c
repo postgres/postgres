@@ -603,7 +603,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		qstring = quote_qualified_identifier(snamespace, sname);
 		snamenode = makeNode(A_Const);
 		snamenode->val.node.type = T_String;
-		snamenode->val.sval.val = qstring;
+		snamenode->val.sval.sval = qstring;
 		snamenode->location = -1;
 		castnode = makeNode(TypeCast);
 		castnode->typeName = SystemTypeName("regclass");

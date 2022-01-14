@@ -28,7 +28,7 @@
 typedef struct Integer
 {
 	NodeTag		type;
-	int			val;
+	int			ival;
 } Integer;
 
 /*
@@ -45,24 +45,24 @@ typedef struct Integer
 typedef struct Float
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *fval;
 } Float;
 
 typedef struct String
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *sval;
 } String;
 
 typedef struct BitString
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *bsval;
 } BitString;
 
-#define intVal(v)		(castNode(Integer, v)->val)
-#define floatVal(v)		atof(castNode(Float, v)->val)
-#define strVal(v)		(castNode(String, v)->val)
+#define intVal(v)		(castNode(Integer, v)->ival)
+#define floatVal(v)		atof(castNode(Float, v)->fval)
+#define strVal(v)		(castNode(String, v)->sval)
 
 extern Integer *makeInteger(int i);
 extern Float *makeFloat(char *numericStr);

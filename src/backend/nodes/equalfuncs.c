@@ -3125,7 +3125,7 @@ _equalList(const List *a, const List *b)
 static bool
 _equalInteger(const Integer *a, const Integer *b)
 {
-	COMPARE_SCALAR_FIELD(val);
+	COMPARE_SCALAR_FIELD(ival);
 
 	return true;
 }
@@ -3133,7 +3133,7 @@ _equalInteger(const Integer *a, const Integer *b)
 static bool
 _equalFloat(const Float *a, const Float *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(fval);
 
 	return true;
 }
@@ -3141,7 +3141,7 @@ _equalFloat(const Float *a, const Float *b)
 static bool
 _equalString(const String *a, const String *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(sval);
 
 	return true;
 }
@@ -3149,7 +3149,7 @@ _equalString(const String *a, const String *b)
 static bool
 _equalBitString(const BitString *a, const BitString *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(bsval);
 
 	return true;
 }

@@ -1719,7 +1719,7 @@ zone_value:
 					if ($3 != NIL)
 					{
 						A_Const *n = (A_Const *) linitial($3);
-						if ((n->val.ival.val & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+						if ((n->val.ival.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
@@ -16667,7 +16667,7 @@ makeStringConst(char *str, int location)
 	A_Const *n = makeNode(A_Const);
 
 	n->val.sval.type = T_String;
-	n->val.sval.val = str;
+	n->val.sval.sval = str;
 	n->location = location;
 
    return (Node *)n;
@@ -16687,7 +16687,7 @@ makeIntConst(int val, int location)
 	A_Const *n = makeNode(A_Const);
 
 	n->val.ival.type = T_Integer;
-	n->val.ival.val = val;
+	n->val.ival.ival = val;
 	n->location = location;
 
    return (Node *)n;
@@ -16699,7 +16699,7 @@ makeFloatConst(char *str, int location)
 	A_Const *n = makeNode(A_Const);
 
 	n->val.fval.type = T_Float;
-	n->val.fval.val = str;
+	n->val.fval.fval = str;
 	n->location = location;
 
    return (Node *)n;
@@ -16711,7 +16711,7 @@ makeBitStringConst(char *str, int location)
 	A_Const *n = makeNode(A_Const);
 
 	n->val.bsval.type = T_BitString;
-	n->val.bsval.val = str;
+	n->val.bsval.bsval = str;
 	n->location = location;
 
    return (Node *)n;
@@ -16736,16 +16736,16 @@ makeAConst(Node *v, int location)
 	switch (v->type)
 	{
 		case T_Float:
-			n = makeFloatConst(castNode(Float, v)->val, location);
+			n = makeFloatConst(castNode(Float, v)->fval, location);
 			break;
 
 		case T_Integer:
-			n = makeIntConst(castNode(Integer, v)->val, location);
+			n = makeIntConst(castNode(Integer, v)->ival, location);
 			break;
 
 		case T_String:
 		default:
-			n = makeStringConst(castNode(String, v)->val, location);
+			n = makeStringConst(castNode(String, v)->sval, location);
 			break;
 	}
 
@@ -17049,7 +17049,7 @@ doNegate(Node *n, int location)
 
 		if (IsA(&con->val, Integer))
 		{
-			con->val.ival.val = -con->val.ival.val;
+			con->val.ival.ival = -con->val.ival.ival;
 			return n;
 		}
 		if (IsA(&con->val, Float))
@@ -17065,14 +17065,14 @@ doNegate(Node *n, int location)
 static void
 doNegateFloat(Float *v)
 {
-	char   *oldval = v->val;
+	char   *oldval = v->fval;
 
 	if (*oldval == '+')
 		oldval++;
 	if (*oldval == '-')
-		v->val = oldval+1;	/* just strip the '-' */
+		v->fval = oldval+1;	/* just strip the '-' */
 	else
-		v->val = psprintf("-%s", oldval);
+		v->fval = psprintf("-%s", oldval);
 }
 
 static Node *

@@ -376,7 +376,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 	switch (nodeTag(&aconst->val))
 	{
 		case T_Integer:
-			val = Int32GetDatum(aconst->val.ival.val);
+			val = Int32GetDatum(intVal(&aconst->val));
 
 			typeid = INT4OID;
 			typelen = sizeof(int32);
@@ -385,7 +385,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 
 		case T_Float:
 			/* could be an oversize integer as well as a float ... */
-			if (scanint8(aconst->val.fval.val, true, &val64))
+			if (scanint8(aconst->val.fval.fval, true, &val64))
 			{
 				/*
 				 * It might actually fit in int32. Probably only INT_MIN can
@@ -415,7 +415,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 				/* arrange to report location if numeric_in() fails */
 				setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
 				val = DirectFunctionCall3(numeric_in,
-										  CStringGetDatum(aconst->val.fval.val),
+										  CStringGetDatum(aconst->val.fval.fval),
 										  ObjectIdGetDatum(InvalidOid),
 										  Int32GetDatum(-1));
 				cancel_parser_errposition_callback(&pcbstate);
@@ -432,7 +432,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 			 * We assume here that UNKNOWN's internal representation is the
 			 * same as CSTRING
 			 */
-			val = CStringGetDatum(aconst->val.sval.val);
+			val = CStringGetDatum(strVal(&aconst->val));
 
 			typeid = UNKNOWNOID;	/* will be coerced later */
 			typelen = -2;		/* cstring-style varwidth type */
@@ -443,7 +443,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 			/* arrange to report location if bit_in() fails */
 			setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
 			val = DirectFunctionCall3(bit_in,
-									  CStringGetDatum(aconst->val.bsval.val),
+									  CStringGetDatum(aconst->val.bsval.bsval),
 									  ObjectIdGetDatum(InvalidOid),
 									  Int32GetDatum(-1));
 			cancel_parser_errposition_callback(&pcbstate);

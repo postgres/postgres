@@ -58,7 +58,7 @@ defGetString(DefElem *def)
 		case T_Integer:
 			return psprintf("%ld", (long) intVal(def->arg));
 		case T_Float:
-			return castNode(Float, def->arg)->val;
+			return castNode(Float, def->arg)->fval;
 		case T_String:
 			return strVal(def->arg);
 		case T_TypeName:
@@ -201,7 +201,7 @@ defGetInt64(DefElem *def)
 			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
-													 CStringGetDatum(castNode(Float, def->arg)->val)));
+													 CStringGetDatum(castNode(Float, def->arg)->fval)));
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
