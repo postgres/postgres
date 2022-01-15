@@ -2636,6 +2636,10 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "FOREIGN", "DATA", "WRAPPER", MatchAny))
 		COMPLETE_WITH("HANDLER", "VALIDATOR", "OPTIONS");
 
+	/* CREATE FOREIGN TABLE */
+	else if (Matches("CREATE", "FOREIGN", "TABLE", MatchAny))
+		COMPLETE_WITH("(", "PARTITION OF");
+
 	/* CREATE INDEX --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
 	else if (TailMatches("CREATE", "UNIQUE"))
