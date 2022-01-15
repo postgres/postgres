@@ -967,10 +967,13 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
 
 	/*
-	 * When dealing with inheritance trees, ignore extended stats (which were
-	 * built without data from child rels, and thus do not represent them).
+	 * When dealing with regular inheritance trees, ignore extended stats
+	 * (which were built without data from child rels, and thus do not
+	 * represent them). For partitioned tables data there's no data in the
+	 * non-leaf relations, so we build stats only for the inheritance tree.
+	 * So for partitioned tables we do consider extended stats.
 	 */
-	if (rte->inh)
+	if (rte->inh && rte->relkind != RELKIND_PARTITIONED_TABLE)
 		return 1.0;
 
 	/* check if there's any stats that might be useful for us. */
