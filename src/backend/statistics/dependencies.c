@@ -24,6 +24,7 @@
 #include "nodes/pathnodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "parser/parsetree.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
 #include "utils/bytea.h"
@@ -1213,6 +1214,14 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	MVDependency **dependencies;
 	int			ndependencies;
 	int			i;
+	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
+
+	/*
+	 * When dealing with inheritance trees, ignore extended stats (which were
+	 * built without data from child rels, and thus do not represent them).
+	 */
+	if (rte->inh)
+		return 1.0;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
