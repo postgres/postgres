@@ -182,7 +182,7 @@ typedef struct VacAttrStats
 /* flag bits for VacuumParams->options */
 #define VACOPT_VACUUM 0x01		/* do VACUUM */
 #define VACOPT_ANALYZE 0x02		/* do ANALYZE */
-#define VACOPT_VERBOSE 0x04		/* print progress info */
+#define VACOPT_VERBOSE 0x04		/* output INFO instrumentation messages */
 #define VACOPT_FREEZE 0x08		/* FREEZE option */
 #define VACOPT_FULL 0x10		/* FULL (non-concurrent) vacuum */
 #define VACOPT_SKIP_LOCKED 0x20 /* skip if cannot get lock */
@@ -222,8 +222,8 @@ typedef struct VacuumParams
 											 * whole table */
 	bool		is_wraparound;	/* force a for-wraparound vacuum */
 	int			log_min_duration;	/* minimum execution threshold in ms at
-									 * which  verbose logs are activated, -1
-									 * to use default */
+									 * which autovacuum is logged, -1 to use
+									 * default */
 	VacOptValue index_cleanup;	/* Do index vacuum and cleanup */
 	VacOptValue truncate;		/* Truncate empty pages at the end */
 

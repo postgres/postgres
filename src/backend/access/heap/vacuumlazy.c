@@ -171,10 +171,11 @@ typedef struct LVRelState
 	/* Error reporting state */
 	char	   *relnamespace;
 	char	   *relname;
-	char	   *indname;
+	char	   *indname;		/* Current index name */
 	BlockNumber blkno;			/* used only for heap operations */
 	OffsetNumber offnum;		/* used only for heap operations */
 	VacErrPhase phase;
+	bool		verbose;		/* VACUUM VERBOSE? */
 
 	/*
 	 * State managed by lazy_scan_heap() follows.
@@ -237,9 +238,6 @@ typedef struct LVSavedErrInfo
 	VacErrPhase phase;
 } LVSavedErrInfo;
 
-/* elevel controls whole VACUUM's verbosity */
-static int	elevel = -1;
-
 
 /* non-export function prototypes */
 static void lazy_scan_heap(LVRelState *vacrel, VacuumParams *params,
@@ -299,6 +297,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				BufferAccessStrategy bstrategy)
 {
 	LVRelState *vacrel;
+	bool		verbose,
+				instrument;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	WalUsage	walusage_start = pgWalUsage;
@@ -324,8 +324,10 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	TransactionId FreezeLimit;
 	MultiXactId MultiXactCutoff;
 
-	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+	verbose = (params->options & VACOPT_VERBOSE) != 0;
+	instrument = (verbose || (IsAutoVacuumWorkerProcess() &&
+							  params->log_min_duration >= 0));
+	if (instrument)
 	{
 		pg_rusage_init(&ru0);
 		starttime = GetCurrentTimestamp();
@@ -335,11 +337,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			startwritetime = pgStatBlockWriteTime;
 		}
 	}
-
-	if (params->options & VACOPT_VERBOSE)
-		elevel = INFO;
-	else
-		elevel = DEBUG2;
 
 	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
 								  RelationGetRelid(rel));
@@ -365,14 +362,54 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
 		aggressive = true;
 
+	/*
+	 * Setup error traceback support for ereport() first.  The idea is to set
+	 * up an error context callback to display additional information on any
+	 * error during a vacuum.  During different phases of vacuum, we update
+	 * the state so that the error context callback always display current
+	 * information.
+	 *
+	 * Copy the names of heap rel into local memory for error reporting
+	 * purposes, too.  It isn't always safe to assume that we can get the name
+	 * of each rel.  It's convenient for code in lazy_scan_heap to always use
+	 * these temp copies.
+	 */
 	vacrel = (LVRelState *) palloc0(sizeof(LVRelState));
+	vacrel->relnamespace = get_namespace_name(RelationGetNamespace(rel));
+	vacrel->relname = pstrdup(RelationGetRelationName(rel));
+	vacrel->indname = NULL;
+	vacrel->phase = VACUUM_ERRCB_PHASE_UNKNOWN;
+	vacrel->verbose = verbose;
+	errcallback.callback = vacuum_error_callback;
+	errcallback.arg = vacrel;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
+	if (verbose)
+	{
+		Assert(!IsAutoVacuumWorkerProcess());
+		if (aggressive)
+			ereport(INFO,
+					(errmsg("aggressively vacuuming \"%s.%s.%s\"",
+							get_database_name(MyDatabaseId),
+							vacrel->relnamespace, vacrel->relname)));
+		else
+			ereport(INFO,
+					(errmsg("vacuuming \"%s.%s.%s\"",
+							get_database_name(MyDatabaseId),
+							vacrel->relnamespace, vacrel->relname)));
+	}
 
-	/* Set up high level stuff about rel */
+	/* Set up high level stuff about rel and its indexes */
 	vacrel->rel = rel;
 	vac_open_indexes(vacrel->rel, RowExclusiveLock, &vacrel->nindexes,
 					 &vacrel->indrels);
-	vacrel->failsafe_active = false;
-	vacrel->consider_bypass_optimization = true;
+	if (instrument && vacrel->nindexes > 0)
+	{
+		/* Copy index names used by instrumentation (not error reporting) */
+		indnames = palloc(sizeof(char *) * vacrel->nindexes);
+		for (int i = 0; i < vacrel->nindexes; i++)
+			indnames[i] = pstrdup(RelationGetRelationName(vacrel->indrels[i]));
+	}
 
 	/*
 	 * The index_cleanup param either disables index vacuuming and cleanup or
@@ -386,6 +423,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	Assert(params->index_cleanup != VACOPTVALUE_UNSPECIFIED);
 	Assert(params->truncate != VACOPTVALUE_UNSPECIFIED &&
 		   params->truncate != VACOPTVALUE_AUTO);
+	vacrel->failsafe_active = false;
+	vacrel->consider_bypass_optimization = true;
 	vacrel->do_index_vacuuming = true;
 	vacrel->do_index_cleanup = true;
 	vacrel->do_rel_truncate = (params->truncate != VACOPTVALUE_DISABLED);
@@ -415,37 +454,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	vacrel->OldestXmin = OldestXmin;
 	vacrel->FreezeLimit = FreezeLimit;
 	vacrel->MultiXactCutoff = MultiXactCutoff;
-
-	vacrel->relnamespace = get_namespace_name(RelationGetNamespace(rel));
-	vacrel->relname = pstrdup(RelationGetRelationName(rel));
-	vacrel->indname = NULL;
-	vacrel->phase = VACUUM_ERRCB_PHASE_UNKNOWN;
-
-	/* Save index names iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0 &&
-		vacrel->nindexes > 0)
-	{
-		indnames = palloc(sizeof(char *) * vacrel->nindexes);
-		for (int i = 0; i < vacrel->nindexes; i++)
-			indnames[i] =
-				pstrdup(RelationGetRelationName(vacrel->indrels[i]));
-	}
-
-	/*
-	 * Setup error traceback support for ereport().  The idea is to set up an
-	 * error context callback to display additional information on any error
-	 * during a vacuum.  During different phases of vacuum (heap scan, heap
-	 * vacuum, index vacuum, index clean up, heap truncate), we update the
-	 * error context callback to display appropriate information.
-	 *
-	 * Note that the index vacuum and heap vacuum phases may be called
-	 * multiple times in the middle of the heap scan phase.  So the old phase
-	 * information is restored at the end of those phases.
-	 */
-	errcallback.callback = vacuum_error_callback;
-	errcallback.arg = vacrel;
-	errcallback.previous = error_context_stack;
-	error_context_stack = &errcallback;
 
 	/*
 	 * Call lazy_scan_heap to perform all required heap pruning, index
@@ -477,11 +485,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	if (should_attempt_truncation(vacrel))
 	{
-		/*
-		 * Update error traceback information.  This is the last phase during
-		 * which we add context information to errors, so we don't need to
-		 * revert to the previous phase.
-		 */
 		update_vacuum_error_info(vacrel, NULL, VACUUM_ERRCB_PHASE_TRUNCATE,
 								 vacrel->nonempty_pages,
 								 InvalidOffsetNumber);
@@ -544,12 +547,11 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 						 vacrel->new_dead_tuples);
 	pgstat_progress_end_command();
 
-	/* and log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+	if (instrument)
 	{
 		TimestampTz endtime = GetCurrentTimestamp();
 
-		if (params->log_min_duration == 0 ||
+		if (verbose || params->log_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, endtime,
 									   params->log_min_duration))
 		{
@@ -572,12 +574,17 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 					(secs + usecs / 1000000.0);
 			}
 
-			/*
-			 * This is pretty messy, but we split it up so that we can skip
-			 * emitting individual parts of the message when not applicable.
-			 */
 			initStringInfo(&buf);
-			if (params->is_wraparound)
+			if (verbose)
+			{
+				/*
+				 * Aggressiveness already reported earlier, in dedicated
+				 * VACUUM VERBOSE ereport
+				 */
+				Assert(!params->is_wraparound);
+				msgfmt = _("finished vacuuming \"%s.%s.%s\": index scans: %d\n");
+			}
+			else if (params->is_wraparound)
 			{
 				/*
 				 * While it's possible for a VACUUM to be both is_wraparound
@@ -676,7 +683,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 (unsigned long long) walusage.wal_bytes);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
-			ereport(LOG,
+			ereport(verbose ? INFO : LOG,
 					(errmsg_internal("%s", buf.data)));
 			pfree(buf.data);
 		}
@@ -688,7 +695,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		if (vacrel->indstats[i])
 			pfree(vacrel->indstats[i]);
 
-		if (indnames && indnames[i])
+		if (instrument)
 			pfree(indnames[i]);
 	}
 }
@@ -738,10 +745,8 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 				next_unskippable_block,
 				next_failsafe_block,
 				next_fsm_block_to_vacuum;
-	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		skipping_blocks;
-	StringInfoData buf;
 	const int	initprog_index[] = {
 		PROGRESS_VACUUM_PHASE,
 		PROGRESS_VACUUM_TOTAL_HEAP_BLKS,
@@ -749,19 +754,6 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	};
 	int64		initprog_val[3];
 	GlobalVisState *vistest;
-
-	pg_rusage_init(&ru0);
-
-	if (aggressive)
-		ereport(elevel,
-				(errmsg("aggressively vacuuming \"%s.%s\"",
-						vacrel->relnamespace,
-						vacrel->relname)));
-	else
-		ereport(elevel,
-				(errmsg("vacuuming \"%s.%s\"",
-						vacrel->relnamespace,
-						vacrel->relname)));
 
 	nblocks = RelationGetNumberOfBlocks(vacrel->rel);
 	next_unskippable_block = 0;
@@ -1453,52 +1445,6 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	/* Update index statistics */
 	if (vacrel->nindexes > 0 && vacrel->do_index_cleanup)
 		update_index_statistics(vacrel);
-
-	/*
-	 * When the table has no indexes (i.e. in the one-pass strategy case),
-	 * make log report that lazy_vacuum_heap_rel would've made had there been
-	 * indexes.  (As in the two-pass strategy case, only make this report when
-	 * there were LP_DEAD line pointers vacuumed in lazy_vacuum_heap_page.)
-	 */
-	if (vacrel->nindexes == 0 && vacrel->lpdead_item_pages > 0)
-		ereport(elevel,
-				(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
-						vacrel->relname, (long long) vacrel->lpdead_items,
-						vacrel->lpdead_item_pages)));
-
-	/*
-	 * Make a log report summarizing pruning and freezing.
-	 *
-	 * The autovacuum specific logging in heap_vacuum_rel summarizes an entire
-	 * VACUUM operation, whereas each VACUUM VERBOSE log report generally
-	 * summarizes a single round of index/heap vacuuming (or rel truncation).
-	 * It wouldn't make sense to report on pruning or freezing while following
-	 * that convention, though.  You can think of this log report as a summary
-	 * of our first pass over the heap.
-	 */
-	initStringInfo(&buf);
-	appendStringInfo(&buf,
-					 _("%lld dead row versions cannot be removed yet, oldest xmin: %u\n"),
-					 (long long) vacrel->new_dead_tuples, vacrel->OldestXmin);
-	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins, ",
-									"Skipped %u pages due to buffer pins, ",
-									vacrel->pinskipped_pages),
-					 vacrel->pinskipped_pages);
-	appendStringInfo(&buf, ngettext("%u frozen page.\n",
-									"%u frozen pages.\n",
-									vacrel->frozenskipped_pages),
-					 vacrel->frozenskipped_pages);
-	appendStringInfo(&buf, _("%s."), pg_rusage_show(&ru0));
-
-	ereport(elevel,
-			(errmsg("table \"%s.%s\": found %lld removable, %lld nonremovable row versions in %u out of %u pages",
-					vacrel->relnamespace,
-					vacrel->relname,
-					(long long) vacrel->tuples_deleted,
-					(long long) vacrel->num_tuples, vacrel->scanned_pages,
-					nblocks),
-			 errdetail_internal("%s", buf.data)));
-	pfree(buf.data);
 }
 
 /*
@@ -1995,11 +1941,6 @@ lazy_vacuum(LVRelState *vacrel)
 		 * calls.)
 		 */
 		vacrel->do_index_vacuuming = false;
-		ereport(elevel,
-				(errmsg("table \"%s\": index scan bypassed: %u pages from table (%.2f%% of total) have %lld dead item identifiers",
-						vacrel->relname, vacrel->lpdead_item_pages,
-						100.0 * vacrel->lpdead_item_pages / vacrel->rel_pages,
-						(long long) vacrel->lpdead_items)));
 	}
 	else if (lazy_vacuum_all_indexes(vacrel))
 	{
@@ -2142,7 +2083,6 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 {
 	int			index;
 	BlockNumber vacuumed_pages;
-	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
 	LVSavedErrInfo saved_err_info;
 
@@ -2159,7 +2099,6 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 							 VACUUM_ERRCB_PHASE_VACUUM_HEAP,
 							 InvalidBlockNumber, InvalidOffsetNumber);
 
-	pg_rusage_init(&ru0);
 	vacuumed_pages = 0;
 
 	index = 0;
@@ -2206,10 +2145,9 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 		   (index == vacrel->lpdead_items &&
 			vacuumed_pages == vacrel->lpdead_item_pages));
 
-	ereport(elevel,
+	ereport(DEBUG2,
 			(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
-					vacrel->relname, (long long) index, vacuumed_pages),
-			 errdetail_internal("%s", pg_rusage_show(&ru0))));
+					vacrel->relname, (long long) index, vacuumed_pages)));
 
 	/* Revert to the previous phase information for error traceback */
 	restore_vacuum_error_info(vacrel, &saved_err_info);
@@ -2519,7 +2457,7 @@ lazy_vacuum_one_index(Relation indrel, IndexBulkDeleteResult *istat,
 	ivinfo.analyze_only = false;
 	ivinfo.report_progress = false;
 	ivinfo.estimated_count = true;
-	ivinfo.message_level = elevel;
+	ivinfo.message_level = DEBUG2;
 	ivinfo.num_heap_tuples = reltuples;
 	ivinfo.strategy = vacrel->bstrategy;
 
@@ -2567,7 +2505,7 @@ lazy_cleanup_one_index(Relation indrel, IndexBulkDeleteResult *istat,
 	ivinfo.analyze_only = false;
 	ivinfo.report_progress = false;
 	ivinfo.estimated_count = estimated_count;
-	ivinfo.message_level = elevel;
+	ivinfo.message_level = DEBUG2;
 
 	ivinfo.num_heap_tuples = reltuples;
 	ivinfo.strategy = vacrel->bstrategy;
@@ -2653,10 +2591,6 @@ lazy_truncate_heap(LVRelState *vacrel)
 	 */
 	do
 	{
-		PGRUsage	ru0;
-
-		pg_rusage_init(&ru0);
-
 		/*
 		 * We need full exclusive lock on the relation in order to do
 		 * truncation. If we can't get it, give up rather than waiting --- we
@@ -2684,7 +2618,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 				 * We failed to establish the lock in the specified number of
 				 * retries. This means we give up truncating.
 				 */
-				ereport(elevel,
+				ereport(vacrel->verbose ? INFO : DEBUG2,
 						(errmsg("\"%s\": stopping truncate due to conflicting lock request",
 								vacrel->relname)));
 				return;
@@ -2754,12 +2688,10 @@ lazy_truncate_heap(LVRelState *vacrel)
 		vacrel->pages_removed += orig_rel_pages - new_rel_pages;
 		vacrel->rel_pages = new_rel_pages;
 
-		ereport(elevel,
+		ereport(vacrel->verbose ? INFO : DEBUG2,
 				(errmsg("table \"%s\": truncated %u to %u pages",
 						vacrel->relname,
-						orig_rel_pages, new_rel_pages),
-				 errdetail_internal("%s",
-									pg_rusage_show(&ru0))));
+						orig_rel_pages, new_rel_pages)));
 		orig_rel_pages = new_rel_pages;
 	} while (new_rel_pages > vacrel->nonempty_pages && lock_waiter_detected);
 }
@@ -2818,7 +2750,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 			{
 				if (LockHasWaitersRelation(vacrel->rel, AccessExclusiveLock))
 				{
-					ereport(elevel,
+					ereport(vacrel->verbose ? INFO : DEBUG2,
 							(errmsg("table \"%s\": suspending truncate due to conflicting lock request",
 									vacrel->relname)));
 
@@ -2985,7 +2917,8 @@ dead_items_alloc(LVRelState *vacrel, int nworkers)
 		else
 			vacrel->pvs = parallel_vacuum_init(vacrel->rel, vacrel->indrels,
 											   vacrel->nindexes, nworkers,
-											   max_items, elevel,
+											   max_items,
+											   vacrel->verbose ? INFO : DEBUG2,
 											   vacrel->bstrategy);
 
 		/* If parallel mode started, dead_items space is allocated in DSM */

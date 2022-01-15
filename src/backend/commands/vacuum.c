@@ -268,7 +268,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	/* user-invoked vacuum is never "for wraparound" */
 	params.is_wraparound = false;
 
-	/* user-invoked vacuum never uses this parameter */
+	/* user-invoked vacuum uses VACOPT_VERBOSE instead of log_min_duration */
 	params.log_min_duration = -1;
 
 	/* Now go through the common routine */
@@ -2275,10 +2275,6 @@ IndexBulkDeleteResult *
 vac_bulkdel_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat,
 					  VacDeadItems *dead_items)
 {
-	PGRUsage	ru0;
-
-	pg_rusage_init(&ru0);
-
 	/* Do bulk deletion */
 	istat = index_bulk_delete(ivinfo, istat, vac_tid_reaped,
 							  (void *) dead_items);
@@ -2286,8 +2282,7 @@ vac_bulkdel_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat,
 	ereport(ivinfo->message_level,
 			(errmsg("scanned index \"%s\" to remove %d row versions",
 					RelationGetRelationName(ivinfo->index),
-					dead_items->num_items),
-			 errdetail_internal("%s", pg_rusage_show(&ru0))));
+					dead_items->num_items)));
 
 	return istat;
 }
@@ -2300,14 +2295,9 @@ vac_bulkdel_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat,
 IndexBulkDeleteResult *
 vac_cleanup_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat)
 {
-	PGRUsage	ru0;
-
-	pg_rusage_init(&ru0);
-
 	istat = index_vacuum_cleanup(ivinfo, istat);
 
 	if (istat)
-	{
 		ereport(ivinfo->message_level,
 				(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 						RelationGetRelationName(ivinfo->index),
@@ -2315,13 +2305,10 @@ vac_cleanup_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat)
 						istat->num_pages),
 				 errdetail("%.0f index row versions were removed.\n"
 						   "%u index pages were newly deleted.\n"
-						   "%u index pages are currently deleted, of which %u are currently reusable.\n"
-						   "%s.",
+						   "%u index pages are currently deleted, of which %u are currently reusable.",
 						   istat->tuples_removed,
 						   istat->pages_newly_deleted,
-						   istat->pages_deleted, istat->pages_free,
-						   pg_rusage_show(&ru0))));
-	}
+						   istat->pages_deleted, istat->pages_free)));
 
 	return istat;
 }

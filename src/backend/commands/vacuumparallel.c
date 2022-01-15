@@ -55,7 +55,8 @@
 typedef struct PVShared
 {
 	/*
-	 * Target table relid and log level.  These fields are not modified during
+	 * Target table relid and log level (for messages about parallel workers
+	 * launched during VACUUM VERBOSE).  These fields are not modified during
 	 * the parallel vacuum.
 	 */
 	Oid			relid;
@@ -830,7 +831,7 @@ parallel_vacuum_process_one_index(ParallelVacuumState *pvs, Relation indrel,
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
 	ivinfo.report_progress = false;
-	ivinfo.message_level = pvs->shared->elevel;
+	ivinfo.message_level = DEBUG2;
 	ivinfo.estimated_count = pvs->shared->estimated_count;
 	ivinfo.num_heap_tuples = pvs->shared->reltuples;
 	ivinfo.strategy = pvs->bstrategy;
