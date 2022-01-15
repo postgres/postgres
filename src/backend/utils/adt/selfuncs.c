@@ -3913,6 +3913,14 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	Oid			statOid = InvalidOid;
 	MVNDistinct *stats;
 	StatisticExtInfo *matched_info = NULL;
+	RangeTblEntry		*rte = planner_rt_fetch(rel->relid, root);
+
+	/*
+	 * When dealing with inheritance trees, ignore extended stats (which were
+	 * built without data from child rels, and thus do not represent them).
+	 */
+	if (rte->inh)
+		return false;
 
 	/* bail out immediately if the table has no extended statistics */
 	if (!rel->statlist)
@@ -5222,6 +5230,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		foreach(slist, onerel->statlist)
 		{
 			StatisticExtInfo *info = (StatisticExtInfo *) lfirst(slist);
+			RangeTblEntry	 *rte = planner_rt_fetch(onerel->relid, root);
 			ListCell   *expr_item;
 			int			pos;
 
@@ -5230,6 +5239,14 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			 * from extended stats, or for an index in the preceding loop).
 			 */
 			if (vardata->statsTuple)
+				break;
+
+			/*
+			 * When dealing with inheritance trees, ignore extended stats (which
+			 * were built without data from child rels, and so do not represent
+			 * them).
+			 */
+			if (rte->inh)
 				break;
 
 			/* skip stats without per-expression stats */
