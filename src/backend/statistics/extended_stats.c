@@ -30,6 +30,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "parser/parsetree.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "statistics/extended_stats_internal.h"
@@ -1694,6 +1695,14 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 	List	  **list_exprs;		/* expressions matched to any statistic */
 	int			listidx;
 	Selectivity sel = (is_or) ? 0.0 : 1.0;
+	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
+
+	/*
+	 * When dealing with inheritance trees, ignore extended stats (which were
+	 * built without data from child rels, and thus do not represent them).
+	 */
+	if (rte->inh)
+		return sel;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_MCV))
