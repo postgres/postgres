@@ -130,9 +130,6 @@ installcheck-parallel: all
 installcheck-tests: all
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(TESTS) $(EXTRA_TESTS)
 
-standbycheck: all
-	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
-
 # old interfaces follow...
 
 runcheck: check
