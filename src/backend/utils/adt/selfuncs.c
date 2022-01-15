@@ -3641,6 +3641,14 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	Oid			statOid = InvalidOid;
 	MVNDistinct *stats;
 	Bitmapset  *matched = NULL;
+	RangeTblEntry		*rte = planner_rt_fetch(rel->relid, root);
+
+	/*
+	 * When dealing with inheritance trees, ignore extended stats (which were
+	 * built without data from child rels, and thus do not represent them).
+	 */
+	if (rte->inh)
+		return false;
 
 	/* bail out immediately if the table has no extended statistics */
 	if (!rel->statlist)
