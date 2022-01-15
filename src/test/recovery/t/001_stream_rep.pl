@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 53;
+use Test::More tests => 55;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -42,7 +42,7 @@ $node_standby_2->init_from_backup($node_standby_1, $backup_name,
 	has_streaming => 1);
 $node_standby_2->start;
 
-# Create some content on primary and check its presence in standby 1
+# Create some content on primary and check its presence in standby nodes
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1002) AS a");
 
@@ -61,6 +61,24 @@ $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "standby 2: $result\n";
 is($result, qq(1002), 'check streamed content on standby 2');
+
+# Likewise, but for a sequence
+$node_primary->safe_psql('postgres',
+	"CREATE SEQUENCE seq1; SELECT nextval('seq1')");
+
+# Wait for standbys to catch up
+$node_primary->wait_for_catchup($node_standby_1, 'replay',
+	$node_primary->lsn('insert'));
+$node_standby_1->wait_for_catchup($node_standby_2, 'replay',
+	$node_standby_1->lsn('replay'));
+
+$result = $node_standby_1->safe_psql('postgres', "SELECT * FROM seq1");
+print "standby 1: $result\n";
+is($result, qq(33|0|t), 'check streamed sequence content on standby 1');
+
+$result = $node_standby_2->safe_psql('postgres', "SELECT * FROM seq1");
+print "standby 2: $result\n";
+is($result, qq(33|0|t), 'check streamed sequence content on standby 2');
 
 # Check that only READ-only queries can run on standbys
 is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
