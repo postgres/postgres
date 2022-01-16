@@ -464,6 +464,16 @@ select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
 select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
 
 --
+-- Test that we don't try to hash nested records (bug #17363)
+-- (Hashing could be supported, but for now we don't)
+--
+
+explain (verbose, costs off)
+select row(row(row(1))) = any (select row(row(1)));
+
+select row(row(row(1))) = any (select row(row(1)));
+
+--
 -- Test case for premature memory release during hashing of subplan output
 --
 

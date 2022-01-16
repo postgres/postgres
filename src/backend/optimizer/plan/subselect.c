@@ -848,10 +848,10 @@ hash_ok_operator(OpExpr *expr)
 	/* quick out if not a binary operator */
 	if (list_length(expr->args) != 2)
 		return false;
-	if (opid == ARRAY_EQ_OP)
+	if (opid == ARRAY_EQ_OP ||
+		opid == RECORD_EQ_OP)
 	{
-		/* array_eq is strict, but must check input type to ensure hashable */
-		/* XXX record_eq will need same treatment when it becomes hashable */
+		/* these are strict, but must check input type to ensure hashable */
 		Node	   *leftarg = linitial(expr->args);
 
 		return op_hashjoinable(opid, exprType(leftarg));

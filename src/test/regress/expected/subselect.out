@@ -790,6 +790,29 @@ select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
 (1 row)
 
 --
+-- Test that we don't try to hash nested records (bug #17363)
+-- (Hashing could be supported, but for now we don't)
+--
+explain (verbose, costs off)
+select row(row(row(1))) = any (select row(row(1)));
+                QUERY PLAN                 
+-------------------------------------------
+ Result
+   Output: (SubPlan 1)
+   SubPlan 1
+     ->  Materialize
+           Output: '("(1)")'::record
+           ->  Result
+                 Output: '("(1)")'::record
+(7 rows)
+
+select row(row(row(1))) = any (select row(row(1)));
+ ?column? 
+----------
+ t
+(1 row)
+
+--
 -- Test case for premature memory release during hashing of subplan output
 --
 select '1'::text in (select '1'::name union all select '1'::name);
