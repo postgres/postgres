@@ -763,11 +763,11 @@ static const struct cachedesc cacheinfo[] = {
 		32
 	},
 	{StatisticExtDataRelationId,	/* STATEXTDATASTXOID */
-		StatisticExtDataStxoidIndexId,
-		1,
+		StatisticExtDataStxoidInhIndexId,
+		2,
 		{
 			Anum_pg_statistic_ext_data_stxoid,
-			0,
+			Anum_pg_statistic_ext_data_stxdinherit,
 			0,
 			0
 		},

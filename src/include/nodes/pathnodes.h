@@ -934,6 +934,7 @@ typedef struct StatisticExtInfo
 	NodeTag		type;
 
 	Oid			statOid;		/* OID of the statistics row */
+	bool		inherit;		/* includes child relations */
 	RelOptInfo *rel;			/* back-link to statistic's table */
 	char		kind;			/* statistics kind of this entry */
 	Bitmapset  *keys;			/* attnums of the columns covered */

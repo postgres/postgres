@@ -30,6 +30,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic_ext.h"
+#include "catalog/pg_statistic_ext_data.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -1277,6 +1278,87 @@ get_relation_constraints(PlannerInfo *root,
 }
 
 /*
+ * Try loading data for the statistics object.
+ *
+ * We don't know if the data (specified by statOid and inh value) exist.
+ * The result is stored in stainfos list.
+ */
+static void
+get_relation_statistics_worker(List **stainfos, RelOptInfo *rel,
+							   Oid statOid, bool inh,
+							   Bitmapset *keys, List *exprs)
+{
+	Form_pg_statistic_ext_data dataForm;
+	HeapTuple	dtup;
+
+	dtup = SearchSysCache2(STATEXTDATASTXOID,
+						   ObjectIdGetDatum(statOid), BoolGetDatum(inh));
+	if (!HeapTupleIsValid(dtup))
+		return;
+
+	dataForm = (Form_pg_statistic_ext_data) GETSTRUCT(dtup);
+
+	/* add one StatisticExtInfo for each kind built */
+	if (statext_is_kind_built(dtup, STATS_EXT_NDISTINCT))
+	{
+		StatisticExtInfo *info = makeNode(StatisticExtInfo);
+
+		info->statOid = statOid;
+		info->inherit = dataForm->stxdinherit;
+		info->rel = rel;
+		info->kind = STATS_EXT_NDISTINCT;
+		info->keys = bms_copy(keys);
+		info->exprs = exprs;
+
+		*stainfos = lappend(*stainfos, info);
+	}
+
+	if (statext_is_kind_built(dtup, STATS_EXT_DEPENDENCIES))
+	{
+		StatisticExtInfo *info = makeNode(StatisticExtInfo);
+
+		info->statOid = statOid;
+		info->inherit = dataForm->stxdinherit;
+		info->rel = rel;
+		info->kind = STATS_EXT_DEPENDENCIES;
+		info->keys = bms_copy(keys);
+		info->exprs = exprs;
+
+		*stainfos = lappend(*stainfos, info);
+	}
+
+	if (statext_is_kind_built(dtup, STATS_EXT_MCV))
+	{
+		StatisticExtInfo *info = makeNode(StatisticExtInfo);
+
+		info->statOid = statOid;
+		info->inherit = dataForm->stxdinherit;
+		info->rel = rel;
+		info->kind = STATS_EXT_MCV;
+		info->keys = bms_copy(keys);
+		info->exprs = exprs;
+
+		*stainfos = lappend(*stainfos, info);
+	}
+
+	if (statext_is_kind_built(dtup, STATS_EXT_EXPRESSIONS))
+	{
+		StatisticExtInfo *info = makeNode(StatisticExtInfo);
+
+		info->statOid = statOid;
+		info->inherit = dataForm->stxdinherit;
+		info->rel = rel;
+		info->kind = STATS_EXT_EXPRESSIONS;
+		info->keys = bms_copy(keys);
+		info->exprs = exprs;
+
+		*stainfos = lappend(*stainfos, info);
+	}
+
+	ReleaseSysCache(dtup);
+}
+
+/*
  * get_relation_statistics
  *		Retrieve extended statistics defined on the table.
  *
@@ -1299,7 +1381,6 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 		Oid			statOid = lfirst_oid(l);
 		Form_pg_statistic_ext staForm;
 		HeapTuple	htup;
-		HeapTuple	dtup;
 		Bitmapset  *keys = NULL;
 		List	   *exprs = NIL;
 		int			i;
@@ -1308,10 +1389,6 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 		if (!HeapTupleIsValid(htup))
 			elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 		staForm = (Form_pg_statistic_ext) GETSTRUCT(htup);
-
-		dtup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(statOid));
-		if (!HeapTupleIsValid(dtup))
-			elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 
 		/*
 		 * First, build the array of columns covered.  This is ultimately
@@ -1324,6 +1401,11 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 		/*
 		 * Preprocess expressions (if any). We read the expressions, run them
 		 * through eval_const_expressions, and fix the varnos.
+		 *
+		 * XXX We don't know yet if there are any data for this stats object,
+		 * with either stxdinherit value. But it's reasonable to assume there
+		 * is at least one of those, possibly both. So it's better to process
+		 * keys and expressions here.
 		 */
 		{
 			bool		isnull;
@@ -1364,61 +1446,13 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 			}
 		}
 
-		/* add one StatisticExtInfo for each kind built */
-		if (statext_is_kind_built(dtup, STATS_EXT_NDISTINCT))
-		{
-			StatisticExtInfo *info = makeNode(StatisticExtInfo);
+		/* extract statistics for possible values of stxdinherit flag */
 
-			info->statOid = statOid;
-			info->rel = rel;
-			info->kind = STATS_EXT_NDISTINCT;
-			info->keys = bms_copy(keys);
-			info->exprs = exprs;
+		get_relation_statistics_worker(&stainfos, rel, statOid, true, keys, exprs);
 
-			stainfos = lappend(stainfos, info);
-		}
-
-		if (statext_is_kind_built(dtup, STATS_EXT_DEPENDENCIES))
-		{
-			StatisticExtInfo *info = makeNode(StatisticExtInfo);
-
-			info->statOid = statOid;
-			info->rel = rel;
-			info->kind = STATS_EXT_DEPENDENCIES;
-			info->keys = bms_copy(keys);
-			info->exprs = exprs;
-
-			stainfos = lappend(stainfos, info);
-		}
-
-		if (statext_is_kind_built(dtup, STATS_EXT_MCV))
-		{
-			StatisticExtInfo *info = makeNode(StatisticExtInfo);
-
-			info->statOid = statOid;
-			info->rel = rel;
-			info->kind = STATS_EXT_MCV;
-			info->keys = bms_copy(keys);
-			info->exprs = exprs;
-
-			stainfos = lappend(stainfos, info);
-		}
-
-		if (statext_is_kind_built(dtup, STATS_EXT_EXPRESSIONS))
-		{
-			StatisticExtInfo *info = makeNode(StatisticExtInfo);
-
-			info->statOid = statOid;
-			info->rel = rel;
-			info->kind = STATS_EXT_EXPRESSIONS;
-			info->keys = bms_copy(keys);
-			info->exprs = exprs;
-
-			stainfos = lappend(stainfos, info);
-		}
+		get_relation_statistics_worker(&stainfos, rel, statOid, false, keys, exprs);
 
 		ReleaseSysCache(htup);
-		ReleaseSysCache(dtup);
 		bms_free(keys);
 	}
 

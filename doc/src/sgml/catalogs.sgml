@@ -7522,6 +7522,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
+   Normally there is one entry, with <structfield>stxdinherit</structfield> =
+   <literal>false</literal>, for each statistics object that has been analyzed.
+   If the table has inheritance children, a second entry with
+   <structfield>stxdinherit</structfield> = <literal>true</literal> is also created.
+   This row represents the statistics object over the inheritance tree, i.e.,
+   statistics for the data you'd see with
+   <literal>SELECT * FROM <replaceable>table</replaceable>*</literal>,
+   whereas the <structfield>stxdinherit</structfield> = <literal>false</literal> row
+   represents the results of
+   <literal>SELECT * FROM ONLY <replaceable>table</replaceable></literal>.
+  </para>
+
+  <para>
    Like <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>,
    <structname>pg_statistic_ext_data</structname> should not be
    readable by the public, since the contents might be considered sensitive.
@@ -7557,6 +7570,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Extended statistics object containing the definition for this data
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stxdinherit</structfield> <type>bool</type>
+      </para>
+      <para>
+       If true, the stats include inheritance child columns, not just the
+       values in the specified relation
       </para></entry>
      </row>
 

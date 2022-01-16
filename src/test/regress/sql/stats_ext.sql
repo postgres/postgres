@@ -91,10 +91,9 @@ ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
 \d ab1
 ANALYZE ab1;
-SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
-  FROM pg_statistic_ext s, pg_statistic_ext_data d
- WHERE s.stxname = 'ab1_a_b_stats'
-   AND d.stxoid = s.oid;
+SELECT stxname, stxdndistinct, stxddependencies, stxdmcv, stxdinherit
+  FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
+ WHERE s.stxname = 'ab1_a_b_stats';
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
 \d+ ab1
 -- partial analyze doesn't build stats either
@@ -126,12 +125,14 @@ SELECT * FROM check_estimated_rows('SELECT a, b FROM stxdinh* GROUP BY 1, 2');
 SELECT * FROM check_estimated_rows('SELECT a, b FROM stxdinh* WHERE a = 0 AND b = 0');
 CREATE STATISTICS stxdinh ON a, b FROM stxdinh;
 VACUUM ANALYZE stxdinh, stxdinh1, stxdinh2;
--- Since the stats object does not include inherited stats, it should not
--- affect the estimates
+-- See if the extended stats affect the estimates
 SELECT * FROM check_estimated_rows('SELECT a, b FROM stxdinh* GROUP BY 1, 2');
 -- Dependencies are applied at individual relations (within append), so
 -- this estimate changes a bit because we improve estimates for the parent
 SELECT * FROM check_estimated_rows('SELECT a, b FROM stxdinh* WHERE a = 0 AND b = 0');
+-- Ensure correct (non-inherited) stats are applied to inherited query
+SELECT * FROM check_estimated_rows('SELECT a, b FROM ONLY stxdinh GROUP BY 1, 2');
+SELECT * FROM check_estimated_rows('SELECT a, b FROM ONLY stxdinh WHERE a = 0 AND b = 0');
 DROP TABLE stxdinh, stxdinh1, stxdinh2;
 
 -- Ensure inherited stats ARE applied to inherited query in partitioned table
