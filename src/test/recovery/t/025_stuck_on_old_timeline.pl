@@ -101,8 +101,7 @@ $node_cascade->start;
 $node_standby->safe_psql('postgres', "CREATE TABLE tab_int AS SELECT 1 AS a");
 
 # Wait for the replication to catch up
-$node_standby->wait_for_catchup($node_cascade, 'replay',
-	$node_standby->lsn('insert'));
+$node_standby->wait_for_catchup($node_cascade);
 
 # Check that cascading standby has the new content
 my $result =

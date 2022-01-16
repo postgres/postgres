@@ -103,8 +103,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	COMMIT;");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
@@ -150,8 +149,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
@@ -187,8 +185,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(201);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",

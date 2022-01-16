@@ -88,8 +88,7 @@ $node_replica->start;
 # db and associated slot.
 is($node_primary->psql('postgres', 'DROP DATABASE dropme'),
 	0, 'dropped DB with logical slot OK on primary');
-$node_primary->wait_for_catchup($node_replica, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_replica);
 is( $node_replica->safe_psql(
 		'postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']),
 	'',

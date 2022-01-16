@@ -2496,21 +2496,26 @@ sub lsn
 
 =item $node->wait_for_catchup(standby_name, mode, target_lsn)
 
-Wait for the node with application_name standby_name (usually from node->name,
-also works for logical subscriptions)
-until its replication location in pg_stat_replication equals or passes the
-upstream's WAL insert point at the time this function is called. By default
-the replay_lsn is waited for, but 'mode' may be specified to wait for any of
-sent|write|flush|replay. The connection catching up must be in a streaming
-state.
+Wait for the replication connection with application_name standby_name until
+its 'mode' replication column in pg_stat_replication equals or passes the
+specified or default target_lsn.  By default the replay_lsn is waited for,
+but 'mode' may be specified to wait for any of sent|write|flush|replay.
+The replication connection must be in a streaming state.
+
+When doing physical replication, the standby is usually identified by
+passing its PostgreSQL::Test::Cluster instance.  When doing logical
+replication, standby_name identifies a subscription.
+
+The default value of target_lsn is $node->lsn('write'), which ensures
+that the standby has caught up to what has been committed on the primary.
+If you pass an explicit value of target_lsn, it should almost always be
+the primary's write LSN; so this parameter is seldom needed except when
+querying some intermediate replication node rather than the primary.
 
 If there is no active replication connection from this peer, waits until
 poll_query_until timeout.
 
 Requires that the 'postgres' db exists and is accessible.
-
-target_lsn may be any arbitrary lsn, but is typically $primary_node->lsn('insert').
-If omitted, pg_current_wal_lsn() is used.
 
 This is not a test. It die()s on failure.
 
@@ -2531,23 +2536,18 @@ sub wait_for_catchup
 	{
 		$standby_name = $standby_name->name;
 	}
-	my $lsn_expr;
-	if (defined($target_lsn))
+	if (!defined($target_lsn))
 	{
-		$lsn_expr = "'$target_lsn'";
-	}
-	else
-	{
-		$lsn_expr = 'pg_current_wal_lsn()';
+		$target_lsn = $self->lsn('write');
 	}
 	print "Waiting for replication conn "
 	  . $standby_name . "'s "
 	  . $mode
 	  . "_lsn to pass "
-	  . $lsn_expr . " on "
+	  . $target_lsn . " on "
 	  . $self->name . "\n";
 	my $query =
-	  qq[SELECT $lsn_expr <= ${mode}_lsn AND state = 'streaming' FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
+	  qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming' FROM pg_catalog.pg_stat_replication WHERE application_name = '$standby_name';];
 	$self->poll_query_until('postgres', $query)
 	  or croak "timed out waiting for catchup";
 	print "done\n";
