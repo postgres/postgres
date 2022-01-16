@@ -280,25 +280,40 @@ do { \
 	matches = rl_completion_matches(text, complete_from_query); \
 } while (0)
 
+/*
+ * libedit will typically include the literal's leading single quote in
+ * "text", while readline will not.  Adapt our offered strings to fit.
+ * But include a quote if there's not one just before "text", to get the
+ * user off to the right start.
+ */
 #define COMPLETE_WITH_ENUM_VALUE(type) \
 do { \
 	char   *_completion_schema; \
 	char   *_completion_type; \
+	bool	use_quotes; \
 \
 	_completion_schema = strtokx(type, " \t\n\r", ".", "\"", 0, \
 								 false, false, pset.encoding); \
 	(void) strtokx(NULL, " \t\n\r", ".", "\"", 0, \
 				   false, false, pset.encoding); \
 	_completion_type = strtokx(NULL, " \t\n\r", ".", "\"", 0, \
-							   false, false, pset.encoding);  \
-	if (_completion_type == NULL)\
+							   false, false, pset.encoding); \
+	use_quotes = (text[0] == '\'' || \
+				  start == 0 || rl_line_buffer[start - 1] != '\''); \
+	if (_completion_type == NULL) \
 	{ \
-		completion_charp = Query_for_list_of_enum_values; \
+		if (use_quotes) \
+			completion_charp = Query_for_list_of_enum_values_quoted; \
+		else \
+			completion_charp = Query_for_list_of_enum_values_unquoted; \
 		completion_info_charp = type; \
 	} \
 	else \
 	{ \
-		completion_charp = Query_for_list_of_enum_values_with_schema; \
+		if (use_quotes) \
+			completion_charp = Query_for_list_of_enum_values_with_schema_quoted; \
+		else \
+			completion_charp = Query_for_list_of_enum_values_with_schema_unquoted; \
 		completion_info_charp = _completion_type; \
 		completion_info_charp2 = _completion_schema; \
 	} \
@@ -654,7 +669,7 @@ static const SchemaQuery Query_for_list_of_statistics = {
 "   AND (pg_catalog.quote_ident(nspname)='%s' "\
 "        OR '\"' || nspname || '\"' ='%s') "
 
-#define Query_for_list_of_enum_values \
+#define Query_for_list_of_enum_values_quoted \
 "SELECT pg_catalog.quote_literal(enumlabel) "\
 "  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t "\
 " WHERE t.oid = e.enumtypid "\
@@ -663,12 +678,32 @@ static const SchemaQuery Query_for_list_of_statistics = {
 "        OR '\"' || typname || '\"'='%s') "\
 "   AND pg_catalog.pg_type_is_visible(t.oid)"
 
-#define Query_for_list_of_enum_values_with_schema \
+#define Query_for_list_of_enum_values_unquoted \
+"SELECT enumlabel "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t "\
+" WHERE t.oid = e.enumtypid "\
+"   AND substring(enumlabel,1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
+"   AND pg_catalog.pg_type_is_visible(t.oid)"
+
+#define Query_for_list_of_enum_values_with_schema_quoted \
 "SELECT pg_catalog.quote_literal(enumlabel) "\
 "  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
 " WHERE t.oid = e.enumtypid "\
 "   AND n.oid = t.typnamespace "\
 "   AND substring(pg_catalog.quote_literal(enumlabel),1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
+"   AND (pg_catalog.quote_ident(nspname)='%s' "\
+"        OR '\"' || nspname || '\"' ='%s') "
+
+#define Query_for_list_of_enum_values_with_schema_unquoted \
+"SELECT enumlabel "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
+" WHERE t.oid = e.enumtypid "\
+"   AND n.oid = t.typnamespace "\
+"   AND substring(enumlabel,1,%d)='%s' "\
 "   AND (pg_catalog.quote_ident(typname)='%s' "\
 "        OR '\"' || typname || '\"'='%s') "\
 "   AND (pg_catalog.quote_ident(nspname)='%s' "\
@@ -3934,8 +3969,12 @@ psql_completion(const char *text, int start, int end)
 	if (matches == NULL)
 	{
 		COMPLETE_WITH_CONST(true, "");
+		/* Also, prevent Readline from appending stuff to the non-match */
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 		rl_completion_append_character = '\0';
+#endif
+#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
+		rl_completion_suppress_quote = 1;
 #endif
 	}
 
