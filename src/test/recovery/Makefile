@@ -20,7 +20,7 @@ REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
 export REGRESS_SHLIB
 
 # required for 027_stream_regress.pl
-REGRESS_OUTPUTDIR=$(abs_top_builddir)/src/test/recovery
+REGRESS_OUTPUTDIR=$(abs_top_builddir)/src/test/recovery/tmp_check
 export REGRESS_OUTPUTDIR
 
 check:

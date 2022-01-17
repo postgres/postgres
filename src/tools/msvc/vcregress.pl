@@ -536,7 +536,7 @@ sub recoverycheck
 {
 	InstallTemp();
 
-	$ENV{REGRESS_OUTPUTDIR} = "$topdir/src/test/recovery";
+	$ENV{REGRESS_OUTPUTDIR} = "$topdir/src/test/recovery/tmp_check";
 
 	my $mstat  = 0;
 	my $dir    = "$topdir/src/test/recovery";
