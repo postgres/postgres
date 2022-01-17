@@ -436,6 +436,7 @@ extern bool syslog_split_messages;
 #define LOG_DESTINATION_SYSLOG	 2
 #define LOG_DESTINATION_EVENTLOG 4
 #define LOG_DESTINATION_CSVLOG	 8
+#define LOG_DESTINATION_JSONLOG	16
 
 /* Other exported functions */
 extern void DebugFileOpen(void);
@@ -453,6 +454,7 @@ extern void write_pipe_chunks(char *data, int len, int dest);
 
 /* Destination-specific functions */
 extern void write_csvlog(ErrorData *edata);
+extern void write_jsonlog(ErrorData *edata);
 
 #ifdef HAVE_SYSLOG
 extern void set_syslog_parameters(const char *ident, int facility);

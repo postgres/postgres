@@ -5931,7 +5931,8 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         <productname>PostgreSQL</productname> supports several methods
          for logging server messages, including
-         <systemitem>stderr</systemitem>, <systemitem>csvlog</systemitem> and
+         <systemitem>stderr</systemitem>, <systemitem>csvlog</systemitem>,
+         <systemitem>jsonlog</systemitem>, and
          <systemitem>syslog</systemitem>. On Windows,
          <systemitem>eventlog</systemitem> is also supported. Set this
          parameter to a list of desired log destinations separated by
@@ -5950,25 +5951,35 @@ SELECT * FROM parent WHERE key = 2400;
         CSV-format log output.
        </para>
        <para>
-        When either <systemitem>stderr</systemitem> or
-        <systemitem>csvlog</systemitem> are included, the file
-        <filename>current_logfiles</filename> is created to record the location
-        of the log file(s) currently in use by the logging collector and the
-        associated logging destination. This provides a convenient way to
-        find the logs currently in use by the instance. Here is an example of
-        this file's content:
+        If <systemitem>jsonlog</systemitem> is included in
+        <varname>log_destination</varname>, log entries are output in
+        <acronym>JSON</acronym> format, which is convenient for loading logs
+        into programs.
+        See <xref linkend="runtime-config-logging-jsonlog"/> for details.
+        <xref linkend="guc-logging-collector"/> must be enabled to generate
+        JSON-format log output.
+       </para>
+       <para>
+        When either <systemitem>stderr</systemitem>,
+        <systemitem>csvlog</systemitem> or <systemitem>jsonlog</systemitem> are
+        included, the file <filename>current_logfiles</filename> is created to
+        record the location of the log file(s) currently in use by the logging
+        collector and the associated logging destination. This provides a
+        convenient way to find the logs currently in use by the instance. Here
+        is an example of this file's content:
 <programlisting>
 stderr log/postgresql.log
 csvlog log/postgresql.csv
+jsonlog log/postgresql.json
 </programlisting>
 
         <filename>current_logfiles</filename> is recreated when a new log file
         is created as an effect of rotation, and
         when <varname>log_destination</varname> is reloaded.  It is removed when
-        neither <systemitem>stderr</systemitem>
-        nor <systemitem>csvlog</systemitem> are included
-        in <varname>log_destination</varname>, and when the logging collector is
-        disabled.
+        none of <systemitem>stderr</systemitem>,
+        <systemitem>csvlog</systemitem> or <systemitem>jsonlog</systemitem> are
+        included in <varname>log_destination</varname>, and when the logging
+        collector is disabled.
        </para>
 
        <note>
@@ -6103,6 +6114,13 @@ local0.*    /var/log/postgresql
         If CSV-format output is enabled in <varname>log_destination</varname>,
         <literal>.csv</literal> will be appended to the timestamped
         log file name to create the file name for CSV-format output.
+        (If <varname>log_filename</varname> ends in <literal>.log</literal>, the suffix is
+        replaced instead.)
+       </para>
+       <para>
+        If JSON-format output is enabled in <varname>log_destination</varname>,
+        <literal>.json</literal> will be appended to the timestamped
+        log file name to create the file name for JSON-format output.
         (If <varname>log_filename</varname> ends in <literal>.log</literal>, the suffix is
         replaced instead.)
        </para>
@@ -7466,6 +7484,187 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </listitem>
         </orderedlist>
       </para>
+    </sect2>
+     <sect2 id="runtime-config-logging-jsonlog">
+     <title>Using JSON-Format Log Output</title>
+
+     <para>
+      Including <literal>jsonlog</literal> in the
+      <varname>log_destination</varname> list provides a convenient way to
+      import log files into many different programs. This option emits log
+      lines in (<acronym>JSON</acronym>) format.
+     </para>
+
+     <para>
+      String fields with null values are excluded from output.
+      Additional fields may be added in the future. User applications that
+      process <literal>jsonlog</literal> output should ignore unknown fields.
+     </para>
+
+     <para>
+      Each log line is serialized as a JSON object as of the following
+      set of keys with their values.
+     </para>
+
+     <table>
+      <title>Keys and values of JSON log entries</title>
+      <tgroup cols="3">
+       <thead>
+        <row>
+         <entry>Key name</entry>
+         <entry>Type</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry><literal>timestamp</literal></entry>
+         <entry>string</entry>
+         <entry>Time stamp with milliseconds</entry>
+        </row>
+        <row>
+         <entry><literal>user</literal></entry>
+         <entry>string</entry>
+         <entry>User name</entry>
+        </row>
+        <row>
+         <entry><literal>dbname</literal></entry>
+         <entry>string</entry>
+         <entry>Database name</entry>
+        </row>
+        <row>
+         <entry><literal>pid</literal></entry>
+         <entry>number</entry>
+         <entry>Process ID</entry>
+        </row>
+        <row>
+         <entry><literal>remote_host</literal></entry>
+         <entry>string</entry>
+         <entry>Client host</entry>
+        </row>
+        <row>
+         <entry><literal>remote_port</literal></entry>
+         <entry>number</entry>
+         <entry>Client port</entry>
+        </row>
+        <row>
+         <entry><literal>session_id</literal></entry>
+         <entry>string</entry>
+         <entry>Session ID</entry>
+        </row>
+        <row>
+         <entry><literal>line_num</literal></entry>
+         <entry>number</entry>
+         <entry>Per-session line number</entry>
+        </row>
+        <row>
+         <entry><literal>ps</literal></entry>
+         <entry>string</entry>
+         <entry>Current ps display</entry>
+        </row>
+        <row>
+         <entry><literal>session_start</literal></entry>
+         <entry>string</entry>
+         <entry>Session start time</entry>
+        </row>
+        <row>
+         <entry><literal>vxid</literal></entry>
+         <entry>string</entry>
+         <entry>Virtual transaction ID</entry>
+        </row>
+        <row>
+         <entry><literal>txid</literal></entry>
+         <entry>string</entry>
+         <entry>Regular transaction ID</entry>
+        </row>
+        <row>
+         <entry><literal>error_severity</literal></entry>
+         <entry>string</entry>
+         <entry>Error severity</entry>
+        </row>
+        <row>
+         <entry><literal>state_code</literal></entry>
+         <entry>string</entry>
+         <entry>SQLSTATE code</entry>
+        </row>
+        <row>
+         <entry><literal>message</literal></entry>
+         <entry>string</entry>
+         <entry>Error message</entry>
+        </row>
+        <row>
+         <entry><literal>detail</literal></entry>
+         <entry>string</entry>
+         <entry>Error message detail</entry>
+        </row>
+        <row>
+         <entry><literal>hint</literal></entry>
+         <entry>string</entry>
+         <entry>Error message hint</entry>
+        </row>
+        <row>
+         <entry><literal>internal_query</literal></entry>
+         <entry>string</entry>
+         <entry>Internal query that led to the error</entry>
+        </row>
+        <row>
+         <entry><literal>internal_position</literal></entry>
+         <entry>number</entry>
+         <entry>Cursor index into internal query</entry>
+        </row>
+        <row>
+         <entry><literal>context</literal></entry>
+         <entry>string</entry>
+         <entry>Error context</entry>
+        </row>
+        <row>
+         <entry><literal>statement</literal></entry>
+         <entry>string</entry>
+         <entry>Client-supplied query string</entry>
+        </row>
+        <row>
+         <entry><literal>cursor_position</literal></entry>
+         <entry>string</entry>
+         <entry>Cursor index into query string</entry>
+        </row>
+        <row>
+         <entry><literal>func_name</literal></entry>
+         <entry>string</entry>
+         <entry>Error location function name</entry>
+        </row>
+        <row>
+         <entry><literal>file_name</literal></entry>
+         <entry>string</entry>
+         <entry>File name of error location</entry>
+        </row>
+        <row>
+         <entry><literal>file_line_num</literal></entry>
+         <entry>number</entry>
+         <entry>File line number of the error location</entry>
+        </row>
+        <row>
+         <entry><literal>application_name</literal></entry>
+         <entry>string</entry>
+         <entry>Client application name</entry>
+        </row>
+        <row>
+         <entry><literal>backend_type</literal></entry>
+         <entry>string</entry>
+         <entry>Type of backend</entry>
+        </row>
+        <row>
+         <entry><literal>leader_pid</literal></entry>
+         <entry>number</entry>
+         <entry>Process ID of leader for active parallel workers</entry>
+        </row>
+        <row>
+         <entry><literal>query_id</literal></entry>
+         <entry>number</entry>
+         <entry>Query ID</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
     </sect2>
 
    <sect2>

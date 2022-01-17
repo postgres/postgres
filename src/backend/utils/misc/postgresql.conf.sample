@@ -432,14 +432,15 @@
 # - Where to Log -
 
 #log_destination = 'stderr'		# Valid values are combinations of
-					# stderr, csvlog, syslog, and eventlog,
-					# depending on platform.  csvlog
-					# requires logging_collector to be on.
+					# stderr, csvlog, jsonlog, syslog, and
+					# eventlog, depending on platform.
+					# csvlog and jsonlog require
+					# logging_collector to be on.
 
 # This is used when logging to stderr:
-#logging_collector = off		# Enable capturing of stderr and csvlog
-					# into log files. Required to be on for
-					# csvlogs.
+#logging_collector = off		# Enable capturing of stderr, jsonlog
+					# and csvlog into log files. Required
+					# to be on for csvlogs and jsonlogs.
 					# (change requires restart)
 
 # These are only used if logging_collector is on:

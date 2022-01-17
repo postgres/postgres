@@ -843,11 +843,13 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 	{
 		logfmt = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-		if (strcmp(logfmt, "stderr") != 0 && strcmp(logfmt, "csvlog") != 0)
+		if (strcmp(logfmt, "stderr") != 0 &&
+			strcmp(logfmt, "csvlog") != 0 &&
+			strcmp(logfmt, "jsonlog") != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("log format \"%s\" is not supported", logfmt),
-					 errhint("The supported log formats are \"stderr\" and \"csvlog\".")));
+					 errhint("The supported log formats are \"stderr\", \"csvlog\", and \"jsonlog\".")));
 	}
 
 	fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");

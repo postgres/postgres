@@ -2984,6 +2984,22 @@ send_message_to_server_log(ErrorData *edata)
 			fallback_to_stderr = true;
 	}
 
+	/* Write to JSON log, if enabled */
+	if (Log_destination & LOG_DESTINATION_JSONLOG)
+	{
+		/*
+		 * Send JSON data if it's safe to do so (syslogger doesn't need the
+		 * pipe).  If this is not possible, fallback to an entry written to
+		 * stderr.
+		 */
+		if (redirection_done || MyBackendType == B_LOGGER)
+		{
+			write_jsonlog(edata);
+		}
+		else
+			fallback_to_stderr = true;
+	}
+
 	/*
 	 * Write to stderr, if enabled or if required because of a previous
 	 * limitation.
@@ -3059,6 +3075,8 @@ write_pipe_chunks(char *data, int len, int dest)
 		p.proto.flags |= PIPE_PROTO_DEST_STDERR;
 	else if (dest == LOG_DESTINATION_CSVLOG)
 		p.proto.flags |= PIPE_PROTO_DEST_CSVLOG;
+	else if (dest == LOG_DESTINATION_JSONLOG)
+		p.proto.flags |= PIPE_PROTO_DEST_JSONLOG;
 
 	/* write all but the last chunk */
 	while (len > PIPE_MAX_PAYLOAD)
