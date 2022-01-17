@@ -289,6 +289,17 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl'
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>wal_consistency_checking</literal></term>
+     <listitem>
+      <para>
+       Uses <literal>wal_consistency_checking=all</literal> while running
+       certain tests under <filename>src/test/recovery</filename>.  Not
+       enabled by default because it is resource intensive.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
 
    Tests for features that are not supported by the current build

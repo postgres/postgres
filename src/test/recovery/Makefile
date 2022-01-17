@@ -15,9 +15,13 @@ subdir = src/test/recovery
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-# required for 017_shm.pl
+# required for 017_shm.pl and 027_stream_regress.pl
 REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
 export REGRESS_SHLIB
+
+# required for 027_stream_regress.pl
+REGRESS_OUTPUTDIR=$(abs_top_builddir)/src/test/recovery
+export REGRESS_OUTPUTDIR
 
 check:
 	$(prove_check)
