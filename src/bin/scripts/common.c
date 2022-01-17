@@ -23,6 +23,19 @@
 #include "fe_utils/string_utils.h"
 
 
+/*
+ * Write a simple string to stderr --- must be safe in a signal handler.
+ * We ignore the write() result since there's not much we could do about it.
+ * Certain compilers make that harder than it ought to be.
+ */
+#define write_stderr(str) \
+	do { \
+		const char *str_ = (str); \
+		int		rc_; \
+		rc_ = write(fileno(stderr), str_, strlen(str_)); \
+		(void) rc_; \
+	} while (0)
+
 #define PQmblenBounded(s, e)  strnlen(s, PQmblen(s, e))
 
 static PGcancel *volatile cancelConn = NULL;
@@ -485,10 +498,13 @@ handle_sigint(SIGNAL_ARGS)
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 		{
 			CancelRequested = true;
-			fprintf(stderr, _("Cancel request sent\n"));
+			write_stderr("Cancel request sent\n");
 		}
 		else
-			fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
+		{
+			write_stderr("Could not send cancel request: ");
+			write_stderr(errbuf);
+		}
 	}
 	else
 		CancelRequested = true;
@@ -522,11 +538,14 @@ consoleHandler(DWORD dwCtrlType)
 		{
 			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 			{
-				fprintf(stderr, _("Cancel request sent\n"));
 				CancelRequested = true;
+				write_stderr("Cancel request sent\n");
 			}
 			else
-				fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
+			{
+				write_stderr("Could not send cancel request: ");
+				write_stderr(errbuf);
+			}
 		}
 		else
 			CancelRequested = true;
