@@ -4627,73 +4627,105 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 								 bool is_index)
 {
+	PQExpBuffer upgrade_query = createPQExpBuffer();
+	PGresult   *upgrade_res;
+	Oid			relfilenode;
+	Oid			toast_oid;
+	Oid			toast_relfilenode;
+	char		relkind;
+	Oid			toast_index_oid;
+	Oid			toast_index_relfilenode;
+
+	/*
+	 * Preserve the OID and relfilenode of the table, table's index, table's
+	 * toast table and toast table's index if any.
+	 *
+	 * One complexity is that the current table definition might not require
+	 * the creation of a TOAST table, but the old database might have a TOAST
+	 * table that was created earlier, before some wide columns were dropped.
+	 * By setting the TOAST oid we force creation of the TOAST heap and index
+	 * by the new backend, so we can copy the files during binary upgrade
+	 * without worrying about this case.
+	 */
+	appendPQExpBuffer(upgrade_query,
+					  "SELECT c.relkind, c.relfilenode, c.reltoastrelid, ct.relfilenode AS toast_relfilenode, i.indexrelid, cti.relfilenode AS toast_index_relfilenode "
+					  "FROM pg_catalog.pg_class c LEFT JOIN "
+					  "pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
+					  "LEFT JOIN pg_catalog.pg_class ct ON (c.reltoastrelid = ct.oid) "
+					  "LEFT JOIN pg_catalog.pg_class AS cti ON (i.indexrelid = cti.oid) "
+					  "WHERE c.oid = '%u'::pg_catalog.oid;",
+					  pg_class_oid);
+
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
+
+	relkind = *PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relkind"));
+
+	relfilenode = atooid(PQgetvalue(upgrade_res, 0,
+									PQfnumber(upgrade_res, "relfilenode")));
+	toast_oid = atooid(PQgetvalue(upgrade_res, 0,
+								  PQfnumber(upgrade_res, "reltoastrelid")));
+	toast_relfilenode = atooid(PQgetvalue(upgrade_res, 0,
+										  PQfnumber(upgrade_res, "toast_relfilenode")));
+	toast_index_oid = atooid(PQgetvalue(upgrade_res, 0,
+										PQfnumber(upgrade_res, "indexrelid")));
+	toast_index_relfilenode = atooid(PQgetvalue(upgrade_res, 0,
+												PQfnumber(upgrade_res, "toast_index_relfilenode")));
+
 	appendPQExpBufferStr(upgrade_buffer,
-						 "\n-- For binary upgrade, must preserve pg_class oids\n");
+						 "\n-- For binary upgrade, must preserve pg_class oids and relfilenodes\n");
 
 	if (!is_index)
 	{
-		PQExpBuffer upgrade_query = createPQExpBuffer();
-		PGresult   *upgrade_res;
-		Oid			pg_class_reltoastrelid;
-		char		pg_class_relkind;
-		Oid			pg_index_indexrelid;
-
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT pg_catalog.binary_upgrade_set_next_heap_pg_class_oid('%u'::pg_catalog.oid);\n",
 						  pg_class_oid);
 
 		/*
-		 * Preserve the OIDs of the table's toast table and index, if any.
-		 * Indexes cannot have toast tables, so we need not make this probe in
-		 * the index code path.
-		 *
-		 * One complexity is that the current table definition might not
-		 * require the creation of a TOAST table, but the old database might
-		 * have a TOAST table that was created earlier, before some wide
-		 * columns were dropped.  By setting the TOAST oid we force creation
-		 * of the TOAST heap and index by the new backend, so we can copy the
-		 * files during binary upgrade without worrying about this case.
+		 * Not every relation has storage. Also, in a pre-v12 database,
+		 * partitioned tables have a relfilenode, which should not be preserved
+		 * when upgrading.
 		 */
-		appendPQExpBuffer(upgrade_query,
-						  "SELECT c.reltoastrelid, c.relkind, i.indexrelid "
-						  "FROM pg_catalog.pg_class c LEFT JOIN "
-						  "pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
-						  "WHERE c.oid = '%u'::pg_catalog.oid;",
-						  pg_class_oid);
-
-		upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
-
-		pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0,
-												   PQfnumber(upgrade_res, "reltoastrelid")));
-		pg_class_relkind = *PQgetvalue(upgrade_res, 0,
-									   PQfnumber(upgrade_res, "relkind"));
-		pg_index_indexrelid = atooid(PQgetvalue(upgrade_res, 0,
-												PQfnumber(upgrade_res, "indexrelid")));
+		if (OidIsValid(relfilenode) && relkind != RELKIND_PARTITIONED_TABLE)
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT pg_catalog.binary_upgrade_set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
+							  relfilenode);
 
 		/*
 		 * In a pre-v12 database, partitioned tables might be marked as having
 		 * toast tables, but we should ignore them if so.
 		 */
-		if (OidIsValid(pg_class_reltoastrelid) &&
-			pg_class_relkind != RELKIND_PARTITIONED_TABLE)
+		if (OidIsValid(toast_oid) &&
+			relkind != RELKIND_PARTITIONED_TABLE)
 		{
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_toast_pg_class_oid('%u'::pg_catalog.oid);\n",
-							  pg_class_reltoastrelid);
+							  toast_oid);
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT pg_catalog.binary_upgrade_set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
+							  toast_relfilenode);
 
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_index_pg_class_oid('%u'::pg_catalog.oid);\n",
-							  pg_index_indexrelid);
+							  toast_index_oid);
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT pg_catalog.binary_upgrade_set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+							  toast_index_relfilenode);
 		}
 
 		PQclear(upgrade_res);
 		destroyPQExpBuffer(upgrade_query);
 	}
 	else
+	{
+		/* Preserve the OID and relfilenode of the index */
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT pg_catalog.binary_upgrade_set_next_index_pg_class_oid('%u'::pg_catalog.oid);\n",
 						  pg_class_oid);
+		appendPQExpBuffer(upgrade_buffer,
+						  "SELECT pg_catalog.binary_upgrade_set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+						  relfilenode);
+	}
 
 	appendPQExpBufferChar(upgrade_buffer, '\n');
 }
