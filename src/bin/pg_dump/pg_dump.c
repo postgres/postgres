@@ -389,6 +389,7 @@ main(int argc, char **argv)
 		{"if-exists", no_argument, &dopt.if_exists, 1},
 		{"inserts", no_argument, NULL, 9},
 		{"lock-wait-timeout", required_argument, NULL, 2},
+		{"no-table-access-method", no_argument, &dopt.outputNoTableAm, 1},
 		{"no-tablespaces", no_argument, &dopt.outputNoTablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"load-via-partition-root", no_argument, &dopt.load_via_partition_root, 1},
@@ -933,6 +934,7 @@ main(int argc, char **argv)
 	ropt->superuser = dopt.outputSuperuser;
 	ropt->createDB = dopt.outputCreateDB;
 	ropt->noOwner = dopt.outputNoOwner;
+	ropt->noTableAm = dopt.outputNoTableAm;
 	ropt->noTablespace = dopt.outputNoTablespaces;
 	ropt->disable_triggers = dopt.disable_triggers;
 	ropt->use_setsessauth = dopt.use_setsessauth;
@@ -1038,6 +1040,7 @@ help(const char *progname)
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
+	printf(_("  --no-table-access-method     do not dump table access methods\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-toast-compression       do not dump TOAST compression methods\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));

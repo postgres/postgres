@@ -93,6 +93,7 @@ typedef struct _restoreOptions
 {
 	int			createDB;		/* Issue commands to create the database */
 	int			noOwner;		/* Don't try to match original object owner */
+	int			noTableAm;		/* Don't issue table-AM-related commands */
 	int			noTablespace;	/* Don't issue tablespace-related commands */
 	int			disable_triggers;	/* disable triggers during data-only
 									 * restore */
@@ -179,6 +180,7 @@ typedef struct _dumpOptions
 	int			no_unlogged_table_data;
 	int			serializable_deferrable;
 	int			disable_triggers;
+	int			outputNoTableAm;
 	int			outputNoTablespaces;
 	int			use_setsessauth;
 	int			enable_row_security;
