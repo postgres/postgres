@@ -283,7 +283,8 @@ nodeTokenType(const char *token, int length)
 		retval = RIGHT_PAREN;
 	else if (*token == '{')
 		retval = LEFT_BRACE;
-	else if (strcmp(token, "true") == 0 || strcmp(token, "false") == 0)
+	else if ((length == 4 && strncmp(token, "true", 4) == 0) ||
+			 (length == 5 && strncmp(token, "false", 5) == 0))
 		retval = T_Boolean;
 	else if (*token == '"' && length > 1 && token[length - 1] == '"')
 		retval = T_String;
