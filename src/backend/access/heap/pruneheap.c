@@ -269,6 +269,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 {
 	int			ndeleted = 0;
 	Page		page = BufferGetPage(buffer);
+	BlockNumber blockno = BufferGetBlockNumber(buffer);
 	OffsetNumber offnum,
 				maxoff;
 	PruneState	prstate;
@@ -335,7 +336,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 		htup = (HeapTupleHeader) PageGetItem(page, itemid);
 		tup.t_data = htup;
 		tup.t_len = ItemIdGetLength(itemid);
-		ItemPointerSet(&(tup.t_self), BufferGetBlockNumber(buffer), offnum);
+		ItemPointerSet(&(tup.t_self), blockno, offnum);
 
 		/*
 		 * Set the offset number so that we can display it along with any
