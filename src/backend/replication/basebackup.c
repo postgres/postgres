@@ -53,6 +53,12 @@
  */
 #define SINK_BUFFER_LENGTH			Max(32768, BLCKSZ)
 
+typedef enum
+{
+	BACKUP_TARGET_COMPAT,
+	BACKUP_TARGET_CLIENT
+} backup_target_type;
+
 typedef struct
 {
 	const char *label;
@@ -62,6 +68,7 @@ typedef struct
 	bool		includewal;
 	uint32		maxrate;
 	bool		sendtblspcmapfile;
+	backup_target_type target;
 	backup_manifest_option manifest;
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
@@ -694,8 +701,10 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_noverify_checksums = false;
 	bool		o_manifest = false;
 	bool		o_manifest_checksums = false;
+	bool		o_target = false;
 
 	MemSet(opt, 0, sizeof(*opt));
+	opt->target = BACKUP_TARGET_COMPAT;
 	opt->manifest = MANIFEST_OPTION_NO;
 	opt->manifest_checksum_type = CHECKSUM_TYPE_CRC32C;
 
@@ -836,6 +845,22 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 								optval)));
 			o_manifest_checksums = true;
 		}
+		else if (strcmp(defel->defname, "target") == 0)
+		{
+			char	   *optval = defGetString(defel);
+
+			if (o_target)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("duplicate option \"%s\"", defel->defname)));
+			if (strcmp(optval, "client") == 0)
+				opt->target = BACKUP_TARGET_CLIENT;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("unrecognized target: \"%s\"", optval)));
+			o_target = true;
+		}
 		else
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
@@ -881,8 +906,15 @@ SendBaseBackup(BaseBackupCmd *cmd)
 		set_ps_display(activitymsg);
 	}
 
-	/* Create a basic basebackup sink. */
-	sink = bbsink_copytblspc_new();
+	/*
+	 * If the TARGET option was specified, then we can use the new copy-stream
+	 * protocol. If not, we must fall back to the old and less capable
+	 * copy-tablespace protocol.
+	 */
+	if (opt.target != BACKUP_TARGET_COMPAT)
+		sink = bbsink_copystream_new();
+	else
+		sink = bbsink_copytblspc_new();
 
 	/* Set up network throttling, if client requested it */
 	if (opt.maxrate > 0)

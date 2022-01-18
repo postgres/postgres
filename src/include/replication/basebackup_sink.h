@@ -282,6 +282,7 @@ extern void bbsink_forward_end_backup(bbsink *sink, XLogRecPtr endptr,
 extern void bbsink_forward_cleanup(bbsink *sink);
 
 /* Constructors for various types of sinks. */
+extern bbsink *bbsink_copystream_new(void);
 extern bbsink *bbsink_copytblspc_new(void);
 extern bbsink *bbsink_progress_new(bbsink *next, bool estimate_backup_size);
 extern bbsink *bbsink_throttle_new(bbsink *next, uint32 maxrate);
