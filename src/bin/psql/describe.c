@@ -2953,22 +2953,45 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 						  "SELECT t.tgname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid%s), "
-						  "t.tgenabled, %s, %s\n"
-						  "FROM pg_catalog.pg_trigger t\n"
-						  "WHERE t.tgrelid = '%s' AND ",
+						  "t.tgenabled, %s,\n",
 						  (pset.sversion >= 90000 ? ", true" : ""),
 						  (pset.sversion >= 90000 ? "t.tgisinternal" :
 						   pset.sversion >= 80300 ?
 						   "t.tgconstraint <> 0 AS tgisinternal" :
-						   "false AS tgisinternal"),
-						  (pset.sversion >= 130000 ?
-						   "(SELECT (NULLIF(a.relid, t.tgrelid))::pg_catalog.regclass"
-						   " FROM pg_catalog.pg_trigger AS u, "
-						   "      pg_catalog.pg_partition_ancestors(t.tgrelid) AS a"
-						   " WHERE u.tgname = t.tgname AND u.tgrelid = a.relid"
-						   "       AND u.tgparentid = 0) AS parent" :
-						   "NULL AS parent"),
+						   "false AS tgisinternal"));
+
+		/*
+		 * Detect whether each trigger is inherited, and if so, get the name
+		 * of the topmost table it's inherited from.  We have no easy way to
+		 * do that pre-v13, for lack of the tgparentid column.  Even with
+		 * tgparentid, a straightforward search for the topmost parent would
+		 * require a recursive CTE, which seems unduly expensive.  We cheat a
+		 * bit by assuming parent triggers will match by tgname; then, joining
+		 * with pg_partition_ancestors() allows the planner to make use of
+		 * pg_trigger_tgrelid_tgname_index if it wishes.  We ensure we find
+		 * the correct topmost parent by stopping at the first-in-partition-
+		 * ancestry-order trigger that has tgparentid = 0.  (There might be
+		 * unrelated, non-inherited triggers with the same name further up the
+		 * stack, so this is important.)
+		 */
+		if (pset.sversion >= 130000)
+			appendPQExpBufferStr(&buf,
+								 "  CASE WHEN t.tgparentid != 0 THEN\n"
+								 "    (SELECT u.tgrelid::pg_catalog.regclass\n"
+								 "     FROM pg_catalog.pg_trigger AS u,\n"
+								 "          pg_catalog.pg_partition_ancestors(t.tgrelid) WITH ORDINALITY AS a(relid, depth)\n"
+								 "     WHERE u.tgname = t.tgname AND u.tgrelid = a.relid\n"
+								 "           AND u.tgparentid = 0\n"
+								 "     ORDER BY a.depth LIMIT 1)\n"
+								 "  END AS parent\n");
+		else
+			appendPQExpBufferStr(&buf, "  NULL AS parent\n");
+
+		appendPQExpBuffer(&buf,
+						  "FROM pg_catalog.pg_trigger t\n"
+						  "WHERE t.tgrelid = '%s' AND ",
 						  oid);
+
 		if (pset.sversion >= 110000)
 			appendPQExpBufferStr(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D') \n"
 								 "    OR EXISTS (SELECT 1 FROM pg_catalog.pg_depend WHERE objid = t.oid \n"
