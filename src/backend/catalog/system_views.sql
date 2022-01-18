@@ -841,7 +841,10 @@ CREATE VIEW pg_stat_activity AS
             s.backend_xmin,
             S.query_id,
             S.query,
-            S.backend_type
+            S.backend_type,
+            S.active_time,
+            S.idle_in_transaction_time,
+            S.idle_time
     FROM pg_stat_get_activity(NULL) AS S
         LEFT JOIN pg_database AS D ON (S.datid = D.oid)
         LEFT JOIN pg_authid AS U ON (S.usesysid = U.oid);

@@ -1076,6 +1076,7 @@ extern PgStat_Counter pgStatBlockWriteTime;
  * pgstat_report_activity().
  */
 extern PgStat_Counter pgStatActiveTime;
+extern PgStat_Counter pgStatIdleTime;
 extern PgStat_Counter pgStatTransactionIdleTime;
 
 
@@ -1187,7 +1188,9 @@ extern void pgstat_initstats(Relation rel);
 	(pgStatBlockWriteTime += (n))
 #define pgstat_count_conn_active_time(n)							\
 	(pgStatActiveTime += (n))
-#define pgstat_count_conn_txn_idle_time(n)							\
+#define pgstat_count_conn_idle_time(n)							\
+	(pgStatIdleTime += (n))
+#define pgstat_count_conn_txn_idle_time(n)					\
 	(pgStatTransactionIdleTime += (n))
 
 extern void pgstat_count_heap_insert(Relation rel, PgStat_Counter n);

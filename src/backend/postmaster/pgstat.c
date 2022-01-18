@@ -250,6 +250,7 @@ PgStat_Counter pgStatBlockReadTime = 0;
 PgStat_Counter pgStatBlockWriteTime = 0;
 static PgStat_Counter pgLastSessionReportTime = 0;
 PgStat_Counter pgStatActiveTime = 0;
+PgStat_Counter pgStatIdleTime = 0;
 PgStat_Counter pgStatTransactionIdleTime = 0;
 SessionEndType pgStatSessionEndCause = DISCONNECT_NORMAL;
 
@@ -1040,7 +1041,7 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now)
 		pgStatBlockReadTime = 0;
 		pgStatBlockWriteTime = 0;
 		pgStatActiveTime = 0;
-		pgStatTransactionIdleTime = 0;
+		pgStatIdleTime = 0;
 	}
 	else
 	{
