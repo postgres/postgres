@@ -1315,4 +1315,4 @@ DROP TABLE oer_test;
 -- ECHO errors
 \set ECHO errors
 SELECT * FROM notexists;
-\set ECHO none
+\set ECHO all
