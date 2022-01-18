@@ -103,7 +103,7 @@ INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
 ERROR:  null value in column "i" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 -- Do an aggressive vacuum to prevent page-skipping.
-VACUUM FREEZE reloptions_test;
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) reloptions_test;
 SELECT pg_relation_size('reloptions_test') > 0;
  ?column? 
 ----------
@@ -129,7 +129,7 @@ INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
 ERROR:  null value in column "i" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 -- Do an aggressive vacuum to prevent page-skipping.
-VACUUM FREEZE reloptions_test;
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) reloptions_test;
 SELECT pg_relation_size('reloptions_test') = 0;
  ?column? 
 ----------
