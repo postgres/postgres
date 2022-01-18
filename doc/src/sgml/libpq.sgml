@@ -5707,8 +5707,8 @@ int PQrequestCancel(PGconn *conn);
        <structname>PGconn</structname> object, and in case of failure stores the
        error message in the <structname>PGconn</structname> object (whence it can
        be retrieved by <xref linkend="libpq-PQerrorMessage"/>).  Although
-       the functionality is the same, this approach creates hazards for
-       multiple-thread programs and signal handlers, since it is possible
+       the functionality is the same, this approach is not safe within
+       multiple-thread programs or signal handlers, since it is possible
        that overwriting the <structname>PGconn</structname>'s error message will
        mess up the operation currently in progress on the connection.
       </para>
