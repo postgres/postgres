@@ -2122,6 +2122,20 @@ Triggers:
 alter table trigpart attach partition trigpart3 FOR VALUES FROM (2000) to (3000); -- fail
 ERROR:  trigger "trg1" for relation "trigpart3" already exists
 drop table trigpart3;
+-- check display of unrelated triggers
+create trigger samename after delete on trigpart execute function trigger_nothing();
+create trigger samename after delete on trigpart1 execute function trigger_nothing();
+\d trigpart1
+             Table "public.trigpart1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: trigpart FOR VALUES FROM (0) TO (1000)
+Triggers:
+    samename AFTER DELETE ON trigpart1 FOR EACH STATEMENT EXECUTE FUNCTION trigger_nothing()
+    trg1 AFTER INSERT ON trigpart1 FOR EACH ROW EXECUTE FUNCTION trigger_nothing(), ON TABLE trigpart
+
 drop table trigpart;
 drop function trigger_nothing();
 --

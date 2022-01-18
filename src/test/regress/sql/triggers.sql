@@ -1428,6 +1428,11 @@ create trigger trg1 after insert on trigpart3 for each row execute procedure tri
 alter table trigpart attach partition trigpart3 FOR VALUES FROM (2000) to (3000); -- fail
 drop table trigpart3;
 
+-- check display of unrelated triggers
+create trigger samename after delete on trigpart execute function trigger_nothing();
+create trigger samename after delete on trigpart1 execute function trigger_nothing();
+\d trigpart1
+
 drop table trigpart;
 drop function trigger_nothing();
 
