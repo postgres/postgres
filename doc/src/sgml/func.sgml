@@ -25091,7 +25091,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </para>
        <para>
         Looks up a replication origin by name and returns the internal ID. If
-        no such replication origin is found an error is thrown.
+        no such replication origin is found, <literal>NULL</literal> is
+        returned.
        </para></entry>
       </row>
 
