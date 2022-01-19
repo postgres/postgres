@@ -1875,7 +1875,7 @@ build-postgresql:
          language becomes available.  See
          <xref linkend="plpython-python23"/>
          for more information.  If this is not set, the following are probed
-         in this order: <literal>python python3 python2</literal>.
+         in this order: <literal>python3 python python2</literal>.
         </para>
        </listitem>
       </varlistentry>

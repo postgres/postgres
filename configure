@@ -10279,7 +10279,7 @@ fi
 
 if test "$with_python" = yes; then
   if test -z "$PYTHON"; then
-  for ac_prog in python python3 python2
+  for ac_prog in python3 python python2
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
