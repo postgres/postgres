@@ -783,6 +783,11 @@ sub start
 	{
 		print "# pg_ctl start failed; logfile:\n";
 		print TestLib::slurp_file($self->logfile);
+
+		# pg_ctl could have timed out, so check to see if there's a pid file;
+		# otherwise our END block will fail to shut down the new postmaster.
+		$self->_update_pid(-1);
+
 		BAIL_OUT("pg_ctl start failed") unless $params{fail_ok};
 		return 0;
 	}
@@ -1047,7 +1052,10 @@ archive_command = '$copy_command'
 	return;
 }
 
-# Internal method
+# Internal method to update $self->{_pid}
+# $is_running = 1: pid file should be there
+# $is_running = 0: pid file should NOT be there
+# $is_running = -1: we aren't sure
 sub _update_pid
 {
 	my ($self, $is_running) = @_;
@@ -1062,7 +1070,7 @@ sub _update_pid
 		close $pidfile;
 
 		# If we found a pidfile when there shouldn't be one, complain.
-		BAIL_OUT("postmaster.pid unexpectedly present") unless $is_running;
+		BAIL_OUT("postmaster.pid unexpectedly present") if $is_running == 0;
 		return;
 	}
 
@@ -1070,7 +1078,7 @@ sub _update_pid
 	print "# No postmaster PID for node \"$name\"\n";
 
 	# Complain if we expected to find a pidfile.
-	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running;
+	BAIL_OUT("postmaster.pid unexpectedly not present") if $is_running == 1;
 	return;
 }
 
