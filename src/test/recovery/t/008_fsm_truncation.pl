@@ -17,7 +17,6 @@ $node_primary->init(allows_streaming => 1);
 
 $node_primary->append_conf(
 	'postgresql.conf', qq{
-fsync = on
 wal_log_hints = on
 max_prepared_transactions = 5
 autovacuum = off
