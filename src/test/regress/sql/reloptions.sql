@@ -55,7 +55,7 @@ ALTER TABLE reloptions_test RESET (fillfactor=12);
 -- Test vacuum_truncate option
 DROP TABLE reloptions_test;
 
-CREATE TABLE reloptions_test(i INT NOT NULL, j text)
+CREATE TEMP TABLE reloptions_test(i INT NOT NULL, j text)
 	WITH (vacuum_truncate=false,
 	toast.vacuum_truncate=false,
 	autovacuum_enabled=false);
