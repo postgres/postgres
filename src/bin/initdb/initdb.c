@@ -1842,13 +1842,6 @@ make_template0(FILE *cmdfd)
 		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n\n",
 
 		/*
-		 * We use the OID of template0 to determine datlastsysoid
-		 */
-		"UPDATE pg_database SET datlastsysoid = "
-		"    (SELECT oid FROM pg_database "
-		"    WHERE datname = 'template0');\n\n",
-
-		/*
 		 * Explicitly revoke public create-schema and create-temp-table
 		 * privileges in template1 and template0; else the latter would be on
 		 * by default

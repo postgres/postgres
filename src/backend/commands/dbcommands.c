@@ -84,8 +84,7 @@ static void movedb_failure_callback(int code, Datum arg);
 static bool get_db_info(const char *name, LOCKMODE lockmode,
 						Oid *dbIdP, Oid *ownerIdP,
 						int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
-						Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
-						MultiXactId *dbMinMultiP,
+						TransactionId *dbFrozenXidP, MultiXactId *dbMinMultiP,
 						Oid *dbTablespace, char **dbCollate, char **dbCtype);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
@@ -108,7 +107,6 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	char	   *src_ctype = NULL;
 	bool		src_istemplate;
 	bool		src_allowconn;
-	Oid			src_lastsysoid = InvalidOid;
 	TransactionId src_frozenxid = InvalidTransactionId;
 	MultiXactId src_minmxid = InvalidMultiXactId;
 	Oid			src_deftablespace;
@@ -318,7 +316,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
-					 &src_istemplate, &src_allowconn, &src_lastsysoid,
+					 &src_istemplate, &src_allowconn,
 					 &src_frozenxid, &src_minmxid, &src_deftablespace,
 					 &src_collate, &src_ctype))
 		ereport(ERROR,
@@ -532,7 +530,6 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(dballowconnections);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
-	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
 	new_record[Anum_pg_database_datminmxid - 1] = TransactionIdGetDatum(src_minmxid);
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
@@ -802,7 +799,7 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -1001,7 +998,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	rel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
@@ -1114,7 +1111,7 @@ movedb(const char *dbname, const char *tblspcname)
 	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
+					 NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -1757,8 +1754,7 @@ static bool
 get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
-			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
-			MultiXactId *dbMinMultiP,
+			TransactionId *dbFrozenXidP, MultiXactId *dbMinMultiP,
 			Oid *dbTablespace, char **dbCollate, char **dbCtype)
 {
 	bool		result = false;
@@ -1839,9 +1835,6 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* allowing connections? */
 				if (dbAllowConnP)
 					*dbAllowConnP = dbform->datallowconn;
-				/* last system OID used in database */
-				if (dbLastSysOidP)
-					*dbLastSysOidP = dbform->datlastsysoid;
 				/* limit of frozen XIDs */
 				if (dbFrozenXidP)
 					*dbFrozenXidP = dbform->datfrozenxid;

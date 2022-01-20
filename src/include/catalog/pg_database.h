@@ -55,9 +55,6 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* max connections allowed (-1=no limit) */
 	int32		datconnlimit;
 
-	/* highest OID to consider a system OID */
-	Oid			datlastsysoid;
-
 	/* all Xids < this are frozen in this DB */
 	TransactionId datfrozenxid;
 
