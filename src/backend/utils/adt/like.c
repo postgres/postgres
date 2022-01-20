@@ -150,7 +150,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 static inline int
 GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation)
 {
-	if (collation && !lc_ctype_is_c(collation) && collation != DEFAULT_COLLATION_OID)
+	if (collation && !lc_ctype_is_c(collation))
 	{
 		pg_locale_t locale = pg_newlocale_from_collation(collation);
 
@@ -178,28 +178,27 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	pg_locale_t locale = 0;
 	bool		locale_is_c = false;
 
+	if (!OidIsValid(collation))
+	{
+		/*
+		 * This typically means that the parser could not resolve a
+		 * conflict of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for ILIKE"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
 	if (lc_ctype_is_c(collation))
 		locale_is_c = true;
-	else if (collation != DEFAULT_COLLATION_OID)
-	{
-		if (!OidIsValid(collation))
-		{
-			/*
-			 * This typically means that the parser could not resolve a
-			 * conflict of implicit collations, so report it that way.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INDETERMINATE_COLLATION),
-					 errmsg("could not determine which collation to use for ILIKE"),
-					 errhint("Use the COLLATE clause to set the collation explicitly.")));
-		}
+	else
 		locale = pg_newlocale_from_collation(collation);
 
-		if (locale && !locale->deterministic)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("nondeterministic collations are not supported for ILIKE")));
-	}
+	if (locale && !locale->deterministic)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("nondeterministic collations are not supported for ILIKE")));
 
 	/*
 	 * For efficiency reasons, in the single byte case we don't call lower()
