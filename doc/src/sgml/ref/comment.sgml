@@ -91,6 +91,11 @@ COMMENT ON
   </para>
 
   <para>
+   A <literal>SHARE UPDATE EXCLUSIVE</literal> lock is acquired on the
+   object to be commented.
+  </para>
+
+  <para>
    For most kinds of object, only the object's owner can set the comment.
    Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</literal> is
    that you must be superuser to comment on a superuser role, or have the
