@@ -4,8 +4,9 @@ REM src/tools/msvc/clean.bat
 set DIST=0
 if "%1"=="dist" set DIST=1
 
-set D=%CD%
-if exist ..\msvc if exist ..\..\..\src cd ..\..\..
+setlocal
+
+cd "%~dp0\..\..\.."
 
 if exist debug rd /s /q debug
 if exist release rd /s /q release
@@ -134,7 +135,7 @@ REM Clean up datafiles built with contrib
 REM cd contrib
 REM for /r %%f in (*.sql) do if exist %%f.in del %%f
 
-cd %D%
+cd "%~dp0"
 
 REM Clean up ecpg regression test files
 msbuild ecpg_regression.proj /NoLogo /v:q %MSBFLAGS% /t:clean
