@@ -950,7 +950,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>,
-         <command>CREATE STATISTICS</> and
+         <command>CREATE STATISTICS</>, <command>COMMENT ON</> and
          <command>ALTER TABLE VALIDATE</command> and other
          <command>ALTER TABLE</command> variants (for full details see
          <xref linkend="SQL-ALTERTABLE">).
