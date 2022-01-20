@@ -950,11 +950,12 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</command>, <command>CREATE INDEX CONCURRENTLY</command>,
+         <command>CREATE STATISTICS</command>, <command>COMMENT ON</command>,
          <command>REINDEX CONCURRENTLY</command>,
-         <command>CREATE STATISTICS</command>, and certain <command>ALTER
-         INDEX</command> and <command>ALTER TABLE</command> variants (for full
-         details see <xref linkend="sql-alterindex"/> and <xref
-         linkend="sql-altertable"/>).
+         and certain <command>ALTER INDEX</command> and
+         <command>ALTER TABLE</command> variants
+         (for full details see <xref linkend="sql-alterindex"/> and
+         <xref linkend="sql-altertable"/>).
         </para>
        </listitem>
       </varlistentry>
