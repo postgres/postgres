@@ -1273,7 +1273,14 @@ PQenv2encoding(void)
 static void
 libpq_binddomain()
 {
-	static bool already_bound = false;
+	/*
+	 * If multiple threads come through here at about the same time, it's okay
+	 * for more than one of them to call bindtextdomain().  But it's not okay
+	 * for any of them to return to caller before bindtextdomain() is
+	 * complete, so don't set the flag till that's done.  Use "volatile" just
+	 * to be sure the compiler doesn't try to get cute.
+	 */
+	static volatile bool already_bound = false;
 
 	if (!already_bound)
 	{
@@ -1285,12 +1292,12 @@ libpq_binddomain()
 #endif
 		const char *ldir;
 
-		already_bound = true;
 		/* No relocatable lookup here because the binary could be anywhere */
 		ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
 		bindtextdomain(PG_TEXTDOMAIN("libpq"), ldir);
+		already_bound = true;
 #ifdef WIN32
 		SetLastError(save_errno);
 #else
