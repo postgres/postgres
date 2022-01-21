@@ -491,7 +491,14 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 char *
 ecpg_gettext(const char *msgid)
 {
-	static bool already_bound = false;
+	/*
+	 * If multiple threads come through here at about the same time, it's okay
+	 * for more than one of them to call bindtextdomain().  But it's not okay
+	 * for any of them to reach dgettext() before bindtextdomain() is
+	 * complete, so don't set the flag till that's done.  Use "volatile" just
+	 * to be sure the compiler doesn't try to get cute.
+	 */
+	static volatile bool already_bound = false;
 
 	if (!already_bound)
 	{
@@ -503,12 +510,12 @@ ecpg_gettext(const char *msgid)
 #endif
 		const char *ldir;
 
-		already_bound = true;
 		/* No relocatable lookup here because the binary could be anywhere */
 		ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
 		bindtextdomain(PG_TEXTDOMAIN("ecpglib"), ldir);
+		already_bound = true;
 #ifdef WIN32
 		SetLastError(save_errno);
 #else
