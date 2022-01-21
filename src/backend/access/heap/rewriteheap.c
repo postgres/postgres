@@ -1282,4 +1282,7 @@ CheckPointLogicalRewriteHeap(void)
 		}
 	}
 	FreeDir(mappings_dir);
+
+	/* persist directory entries to disk */
+	fsync_fname("pg_logical/mappings", true);
 }
