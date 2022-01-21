@@ -123,6 +123,7 @@ static bool showprogress = false;
 static bool estimatesize = true;
 static int	verbose = 0;
 static int	compresslevel = 0;
+static WalCompressionMethod compressmethod = COMPRESSION_NONE;
 static IncludeWal includewal = STREAM_WAL;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
@@ -379,7 +380,8 @@ usage(void)
 	printf(_("  -X, --wal-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
 	printf(_("  -z, --gzip             compress tar output\n"));
-	printf(_("  -Z, --compress=0-9     compress tar output with given compression level\n"));
+	printf(_("  -Z, --compress={gzip,none}[:LEVEL] or [LEVEL]\n"
+			 "                         compress tar output with given compression method or level\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
 			 "                         set fast or spread checkpointing\n"));
@@ -544,8 +546,7 @@ LogStreamerMain(logstreamer_param *param)
 													stream.do_sync);
 	else
 		stream.walmethod = CreateWalTarMethod(param->xlog,
-											  (compresslevel != 0) ?
-											  COMPRESSION_GZIP : COMPRESSION_NONE,
+											  compressmethod,
 											  compresslevel,
 											  stream.do_sync);
 
@@ -937,6 +938,81 @@ parse_max_rate(char *src)
 }
 
 /*
+ * Utility wrapper to parse the values specified for -Z/--compress.
+ * *methodres and *levelres will be optionally filled with values coming
+ * from the parsed results.
+ */
+static void
+parse_compress_options(char *src, WalCompressionMethod *methodres,
+					   int *levelres)
+{
+	char	   *sep;
+	int			firstlen;
+	char	   *firstpart = NULL;
+
+	/* check if the option is split in two */
+	sep = strchr(src, ':');
+
+	/*
+	 * The first part of the option value could be a method name, or just a
+	 * level value.
+	 */
+	firstlen = (sep != NULL) ? (sep - src) : strlen(src);
+	firstpart = pg_malloc(firstlen + 1);
+	strncpy(firstpart, src, firstlen);
+	firstpart[firstlen] = '\0';
+
+	/*
+	 * Check if the first part of the string matches with a supported
+	 * compression method.
+	 */
+	if (pg_strcasecmp(firstpart, "gzip") == 0)
+		*methodres = COMPRESSION_GZIP;
+	else if (pg_strcasecmp(firstpart, "none") == 0)
+		*methodres = COMPRESSION_NONE;
+	else
+	{
+		/*
+		 * It does not match anything known, so check for the
+		 * backward-compatible case of only an integer where the implied
+		 * compression method changes depending on the level value.
+		 */
+		if (!option_parse_int(firstpart, "-Z/--compress", 0,
+							  INT_MAX, levelres))
+			exit(1);
+
+		*methodres = (*levelres > 0) ?
+			COMPRESSION_GZIP : COMPRESSION_NONE;
+		return;
+	}
+
+	if (sep == NULL)
+	{
+		/*
+		 * The caller specified a method without a colon separator, so let any
+		 * subsequent checks assign a default level.
+		 */
+		return;
+	}
+
+	/* Check the contents after the colon separator. */
+	sep++;
+	if (*sep == '\0')
+	{
+		pg_log_error("no compression level defined for method %s", firstpart);
+		exit(1);
+	}
+
+	/*
+	 * For any of the methods currently supported, the data after the
+	 * separator can just be an integer.
+	 */
+	if (!option_parse_int(sep, "-Z/--compress", 0, INT_MAX,
+						  levelres))
+		exit(1);
+}
+
+/*
  * Read a stream of COPY data and invoke the provided callback for each
  * chunk.
  */
@@ -996,7 +1072,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 					 bool is_recovery_guc_supported,
 					 bool expect_unterminated_tarfile)
 {
-	bbstreamer *streamer;
+	bbstreamer *streamer = NULL;
 	bbstreamer *manifest_inject_streamer = NULL;
 	bool		inject_manifest;
 	bool		must_parse_archive;
@@ -1055,19 +1131,22 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 			archive_file = NULL;
 		}
 
+		if (compressmethod == COMPRESSION_NONE)
+			streamer = bbstreamer_plain_writer_new(archive_filename,
+												   archive_file);
 #ifdef HAVE_LIBZ
-		if (compresslevel != 0)
+		else if (compressmethod == COMPRESSION_GZIP)
 		{
 			strlcat(archive_filename, ".gz", sizeof(archive_filename));
 			streamer = bbstreamer_gzip_writer_new(archive_filename,
 												  archive_file,
 												  compresslevel);
 		}
-		else
 #endif
-			streamer = bbstreamer_plain_writer_new(archive_filename,
-												   archive_file);
-
+		else
+		{
+			Assert(false);		/* not reachable */
+		}
 
 		/*
 		 * If we need to parse the archive for whatever reason, then we'll
@@ -2279,11 +2358,11 @@ main(int argc, char **argv)
 #else
 				compresslevel = 1;	/* will be rejected below */
 #endif
+				compressmethod = COMPRESSION_GZIP;
 				break;
 			case 'Z':
-				if (!option_parse_int(optarg, "-Z/--compress", 0, 9,
-									  &compresslevel))
-					exit(1);
+				parse_compress_options(optarg, &compressmethod,
+									   &compresslevel);
 				break;
 			case 'c':
 				if (pg_strcasecmp(optarg, "fast") == 0)
@@ -2412,7 +2491,7 @@ main(int argc, char **argv)
 	/*
 	 * Compression doesn't make sense unless tar format is in use.
 	 */
-	if (format == 'p' && compresslevel != 0)
+	if (format == 'p' && compressmethod != COMPRESSION_NONE)
 	{
 		if (backup_target == NULL)
 			pg_log_error("only tar mode backups can be compressed");
@@ -2516,14 +2595,43 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifndef HAVE_LIBZ
-	/* Sanity checks for compression level. */
-	if (compresslevel != 0)
+	/* Sanity checks for compression-related options. */
+	switch (compressmethod)
 	{
-		pg_log_error("this build does not support compression");
-		exit(1);
-	}
+		case COMPRESSION_NONE:
+			if (compresslevel != 0)
+			{
+				pg_log_error("cannot use compression level with method %s",
+							 "none");
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+						progname);
+				exit(1);
+			}
+			break;
+		case COMPRESSION_GZIP:
+#ifdef HAVE_LIBZ
+			if (compresslevel == 0)
+			{
+				pg_log_info("no value specified for compression level, switching to default");
+				compresslevel = Z_DEFAULT_COMPRESSION;
+			}
+			if (compresslevel > 9)
+			{
+				pg_log_error("compression level %d of method %s higher than maximum of 9",
+							 compresslevel, "gzip");
+				exit(1);
+			}
+#else
+			pg_log_error("this build does not support compression with %s",
+						 "gzip");
+			exit(1);
 #endif
+			break;
+		case COMPRESSION_LZ4:
+			/* option not supported */
+			Assert(false);
+			break;
+	}
 
 	/*
 	 * Sanity checks for progress reporting options.

@@ -398,14 +398,23 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <listitem>
        <para>
-        Enables gzip compression of tar file output, and specifies the
+        Enables compression of tar file output, and specifies the
         compression level (0 through 9, 0 being no compression and 9 being best
         compression). Compression is only available when using the tar
         format, and the suffix <filename>.gz</filename> will
         automatically be added to all tar filenames.
+       </para>
+       <para>
+        The compression method can be set to either <literal>gzip</literal>
+        for compression with <application>gzip</application>, or
+        <literal>none</literal> for no compression. A compression level
+        can be optionally specified, by appending the level number after a
+        colon (<literal>:</literal>).
        </para>
       </listitem>
      </varlistentry>
@@ -942,6 +951,16 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_basebackup -D backup/data -T /opt/ts=$(pwd)/backup/ts</userinput>
 </screen></para>
+
+  <para>
+   To create a backup of a local server with one tar file for each tablespace
+   compressed with <application>gzip</application> at level 9, stored in the
+   directory <filename>backup</filename>:
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -D backup -Ft --compress=gzip:9</userinput>
+</screen>
+  </para>
+
  </refsect1>
 
  <refsect1>

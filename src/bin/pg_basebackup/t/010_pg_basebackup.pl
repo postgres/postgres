@@ -10,7 +10,7 @@ use File::Path qw(rmtree);
 use Fcntl qw(:seek);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 135;
+use Test::More tests => 143;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -37,6 +37,20 @@ my $pgdata = $node->data_dir;
 
 $node->command_fails(['pg_basebackup'],
 	'pg_basebackup needs target directory specified');
+
+# Sanity checks for options
+$node->command_fails_like(
+	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none:1' ],
+	qr/\Qpg_basebackup: error: cannot use compression level with method none/,
+	'failure if method "none" specified with compression level');
+$node->command_fails_like(
+	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none+' ],
+	qr/\Qpg_basebackup: error: invalid value "none+" for option/,
+	'failure on incorrect separator to define compression level');
+$node->command_fails_like(
+	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none:' ],
+	qr/\Qpg_basebackup: error: no compression level defined for method none/,
+	'failure on missing compression level value');
 
 # Some Windows ANSI code pages may reject this filename, in which case we
 # quietly proceed without this bit of test coverage.
@@ -699,7 +713,7 @@ note "Testing pg_basebackup with compression methods";
 # Check ZLIB compression if available.
 SKIP:
 {
-	skip "postgres was not built with ZLIB support", 5
+	skip "postgres was not built with ZLIB support", 7
 	  if (!check_pg_config("#define HAVE_LIBZ 1"));
 
 	$node->command_ok(
@@ -717,15 +731,28 @@ SKIP:
 			'--format',              't'
 		],
 		'pg_basebackup with --gzip');
+	$node->command_ok(
+		[
+			@pg_basebackup_defs,     '-D',
+			"$tempdir/backup_gzip3", '--compress',
+			'gzip:1',                '--format',
+			't'
+		],
+		'pg_basebackup with --compress=gzip:1');
 
 	# Verify that the stored files are generated with their expected
 	# names.
 	my @zlib_files = glob "$tempdir/backup_gzip/*.tar.gz";
 	is(scalar(@zlib_files), 2,
-		"two files created with --compress (base.tar.gz and pg_wal.tar.gz)");
+		"two files created with --compress=NUM (base.tar.gz and pg_wal.tar.gz)"
+	);
 	my @zlib_files2 = glob "$tempdir/backup_gzip2/*.tar.gz";
 	is(scalar(@zlib_files2), 2,
 		"two files created with --gzip (base.tar.gz and pg_wal.tar.gz)");
+	my @zlib_files3 = glob "$tempdir/backup_gzip3/*.tar.gz";
+	is(scalar(@zlib_files3), 2,
+		"two files created with --compress=gzip:NUM (base.tar.gz and pg_wal.tar.gz)"
+	);
 
 	# Check the integrity of the files generated.
 	my $gzip = $ENV{GZIP_PROGRAM};
@@ -735,8 +762,9 @@ SKIP:
 		|| system_log($gzip, '--version') != 0);
 
 	my $gzip_is_valid =
-	  system_log($gzip, '--test', @zlib_files, @zlib_files2);
+	  system_log($gzip, '--test', @zlib_files, @zlib_files2, @zlib_files3);
 	is($gzip_is_valid, 0, "gzip verified the integrity of compressed data");
 	rmtree("$tempdir/backup_gzip");
 	rmtree("$tempdir/backup_gzip2");
+	rmtree("$tempdir/backup_gzip3");
 }
