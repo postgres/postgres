@@ -7291,7 +7291,6 @@ RevokeRoleStmt:
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
 					n->database = $5;
-					n->grantor = $6;
 					n->behavior = $7;
 					$$ = (Node*)n;
 				}
@@ -7303,7 +7302,6 @@ RevokeRoleStmt:
 					n->granted_roles = $5;
 					n->grantee_roles = $7;
 					n->database = $8;
-					n->grantor = $9;
 					n->behavior = $10;
 					$$ = (Node*)n;
 				}
