@@ -4,7 +4,7 @@
  *
  * Entrypoints of the hooks in PostgreSQL, and dispatches the callbacks.
  *
- * Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -454,6 +454,8 @@ _PG_init(void)
 							 NULL,
 							 NULL,
 							 NULL);
+
+	EmitWarningsOnPlaceholders("sepgsql");
 
 	/* Initialize userspace access vector cache */
 	sepgsql_avc_init();

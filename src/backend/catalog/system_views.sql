@@ -1,7 +1,7 @@
 /*
  * PostgreSQL System Views
  *
- * Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * src/backend/catalog/system_views.sql
  *
@@ -266,6 +266,7 @@ CREATE VIEW pg_stats_ext WITH (security_barrier) AS
            ) AS attnames,
            pg_get_statisticsobjdef_expressions(s.oid) as exprs,
            s.stxkind AS kinds,
+           sd.stxdinherit AS inherited,
            sd.stxdndistinct AS n_distinct,
            sd.stxddependencies AS dependencies,
            m.most_common_vals,
@@ -298,6 +299,7 @@ CREATE VIEW pg_stats_ext_exprs WITH (security_barrier) AS
            s.stxname AS statistics_name,
            pg_get_userbyid(s.stxowner) AS statistics_owner,
            stat.expr,
+           sd.stxdinherit AS inherited,
            (stat.a).stanullfrac AS null_frac,
            (stat.a).stawidth AS avg_width,
            (stat.a).stadistinct AS n_distinct,

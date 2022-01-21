@@ -3,7 +3,7 @@
  * backup_manifest.c
  *	  code for generating and sending a backup manifest
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/backup_manifest.c
@@ -68,7 +68,8 @@ InitializeBackupManifest(backup_manifest_info *manifest,
 		manifest->buffile = BufFileCreateTemp(false);
 		manifest->manifest_ctx = pg_cryptohash_create(PG_SHA256);
 		if (pg_cryptohash_init(manifest->manifest_ctx) < 0)
-			elog(ERROR, "failed to initialize checksum of backup manifest");
+			elog(ERROR, "failed to initialize checksum of backup manifest: %s",
+				 pg_cryptohash_error(manifest->manifest_ctx));
 	}
 
 	manifest->manifest_size = UINT64CONST(0);
@@ -311,7 +312,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
  * Finalize the backup manifest, and send it to the client.
  */
 void
-SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
+SendBackupManifest(backup_manifest_info *manifest, bbsink * sink)
 {
 	uint8		checksumbuf[PG_SHA256_DIGEST_LENGTH];
 	char		checksumstringbuf[PG_SHA256_DIGEST_STRING_LENGTH];
@@ -334,7 +335,8 @@ SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
 	manifest->still_checksumming = false;
 	if (pg_cryptohash_final(manifest->manifest_ctx, checksumbuf,
 							sizeof(checksumbuf)) < 0)
-		elog(ERROR, "failed to finalize checksum of backup manifest");
+		elog(ERROR, "failed to finalize checksum of backup manifest: %s",
+			 pg_cryptohash_error(manifest->manifest_ctx));
 	AppendStringToManifest(manifest, "\"Manifest-Checksum\": \"");
 
 	hex_encode((char *) checksumbuf, sizeof checksumbuf, checksumstringbuf);
@@ -391,7 +393,8 @@ AppendStringToManifest(backup_manifest_info *manifest, char *s)
 	if (manifest->still_checksumming)
 	{
 		if (pg_cryptohash_update(manifest->manifest_ctx, (uint8 *) s, len) < 0)
-			elog(ERROR, "failed to update checksum of backup manifest");
+			elog(ERROR, "failed to update checksum of backup manifest: %s",
+				 pg_cryptohash_error(manifest->manifest_ctx));
 	}
 	BufFileWrite(manifest->buffile, s, len);
 	manifest->manifest_size += len;

@@ -331,13 +331,28 @@
   </para>
 
   <para>
-   A conflict will produce an error and will stop the replication; it must be
-   resolved manually by the user.  Details about the conflict can be found in
-   the subscriber's server log.
+   Logical replication operations are performed with the privileges of the role
+   which owns the subscription.  Permissions failures on target tables will
+   cause replication conflicts, as will enabled
+   <link linkend="ddl-rowsecurity">row-level security</link> on target tables
+   that the subscription owner is subject to, without regard to whether any
+   policy would ordinarily reject the <command>INSERT</command>,
+   <command>UPDATE</command>, <command>DELETE</command> or
+   <command>TRUNCATE</command> which is being replicated.  This restriction on
+   row-level security may be lifted in a future version of
+   <productname>PostgreSQL</productname>.
   </para>
 
   <para>
-   The resolution can be done either by changing data on the subscriber so
+   A conflict will produce an error and will stop the replication; it must be
+   resolved manually by the user.  Details about the conflict can be found in
+   <link linkend="monitoring-pg-stat-subscription-workers">
+   <structname>pg_stat_subscription_workers</structname></link> and the
+   subscriber's server log.
+  </para>
+
+  <para>
+   The resolution can be done either by changing data or permissions on the subscriber so
    that it does not conflict with the incoming change or by skipping the
    transaction that conflicts with the existing data.  The transaction can be
    skipped by calling the <link linkend="pg-replication-origin-advance">
@@ -530,9 +545,9 @@
 
   <para>
    A user able to modify the schema of subscriber-side tables can execute
-   arbitrary code as a superuser.  Limit ownership
-   and <literal>TRIGGER</literal> privilege on such tables to roles that
-   superusers trust.  Moreover, if untrusted users can create tables, use only
+   arbitrary code as the role which owns any subscription which modifies those tables.  Limit ownership
+   and <literal>TRIGGER</literal> privilege on such tables to trusted roles.
+   Moreover, if untrusted users can create tables, use only
    publications that list tables explicitly.  That is to say, create a
    subscription <literal>FOR ALL TABLES</literal> or
    <literal>FOR ALL TABLES IN SCHEMA</literal> only when superusers trust
@@ -576,13 +591,20 @@
 
   <para>
    The subscription apply process will run in the local database with the
-   privileges of a superuser.
+   privileges of the subscription owner.
   </para>
 
   <para>
-   Privileges are only checked once at the start of a replication connection.
-   They are not re-checked as each change record is read from the publisher,
-   nor are they re-checked for each change when applied.
+   On the publisher, privileges are only checked once at the start of a
+   replication connection and are not re-checked as each change record is read.
+  </para>
+
+  <para>
+   On the subscriber, the subscription owner's privileges are re-checked for
+   each transaction when applied. If a worker is in the process of applying a
+   transaction when the ownership of the subscription is changed by a
+   concurrent transaction, the application of the current transaction will
+   continue under the old owner's privileges.
   </para>
  </sect1>
 

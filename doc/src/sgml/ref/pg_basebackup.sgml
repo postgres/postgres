@@ -225,6 +225,36 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-t <replaceable class="parameter">target</replaceable></option></term>
+      <term><option>--target=<replaceable class="parameter">target</replaceable></option></term>
+      <listitem>
+
+       <para>
+        Instructs the server where to place the base backup. The default target
+        is <literal>client</literal>, which specifies that the backup should
+        be sent to the machine where <application>pg_basebackup</application>
+        is running. If the target is instead set to
+        <literal>server:/some/path</literal>, the backup will be stored on
+        the machine where the server is running in the
+        <literal>/some/path</literal> directory. Storing a backup on the
+        server requires superuser privileges. If the target is set to
+        <literal>blackhole</literal>, the contents are discarded and not
+        stored anywhere. This should only be used for testing purposes, as you
+        will not end up with an actual backup.
+       </para>
+
+       <para>
+        Since WAL streaming is implemented by
+        <application>pg_basebackup</application> rather than by the server,
+        this option cannot be used together with <literal>-Xstream</literal>.
+        Since that is the default, when this option is specified, you must also
+        specify either <literal>-Xfetch</literal> or <literal>-Xnone</literal>.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
       <term><option>--tablespace-mapping=<replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
       <listitem>
@@ -368,14 +398,23 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <listitem>
        <para>
-        Enables gzip compression of tar file output, and specifies the
+        Enables compression of tar file output, and specifies the
         compression level (0 through 9, 0 being no compression and 9 being best
         compression). Compression is only available when using the tar
         format, and the suffix <filename>.gz</filename> will
         automatically be added to all tar filenames.
+       </para>
+       <para>
+        The compression method can be set to either <literal>gzip</literal>
+        for compression with <application>gzip</application>, or
+        <literal>none</literal> for no compression. A compression level
+        can be optionally specified, by appending the level number after a
+        colon (<literal>:</literal>).
        </para>
       </listitem>
      </varlistentry>
@@ -912,6 +951,16 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_basebackup -D backup/data -T /opt/ts=$(pwd)/backup/ts</userinput>
 </screen></para>
+
+  <para>
+   To create a backup of a local server with one tar file for each tablespace
+   compressed with <application>gzip</application> at level 9, stored in the
+   directory <filename>backup</filename>:
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -D backup -Ft --compress=gzip:9</userinput>
+</screen>
+  </para>
+
  </refsect1>
 
  <refsect1>

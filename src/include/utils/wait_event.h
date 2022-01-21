@@ -2,7 +2,7 @@
  * wait_event.h
  *	  Definitions related to wait event reporting
  *
- * Copyright (c) 2001-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2022, PostgreSQL Global Development Group
  *
  * src/include/utils/wait_event.h
  * ----------
@@ -157,6 +157,8 @@ typedef enum
 typedef enum
 {
 	WAIT_EVENT_BASEBACKUP_READ = PG_WAIT_IO,
+	WAIT_EVENT_BASEBACKUP_SYNC,
+	WAIT_EVENT_BASEBACKUP_WRITE,
 	WAIT_EVENT_BUFFILE_READ,
 	WAIT_EVENT_BUFFILE_WRITE,
 	WAIT_EVENT_BUFFILE_TRUNCATE,

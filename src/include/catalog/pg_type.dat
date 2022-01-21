@@ -3,7 +3,7 @@
 # pg_type.dat
 #    Initial contents of the pg_type system catalog.
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/pg_type.dat
@@ -42,7 +42,7 @@
   typinput => 'byteain', typoutput => 'byteaout', typreceive => 'bytearecv',
   typsend => 'byteasend', typalign => 'i', typstorage => 'x' },
 { oid => '18', array_type_oid => '1002', descr => 'single character',
-  typname => 'char', typlen => '1', typbyval => 't', typcategory => 'S',
+  typname => 'char', typlen => '1', typbyval => 't', typcategory => 'Z',
   typinput => 'charin', typoutput => 'charout', typreceive => 'charrecv',
   typsend => 'charsend', typalign => 'c' },
 { oid => '19', array_type_oid => '1003',
@@ -145,24 +145,24 @@
   typsend => 'xml_send', typalign => 'i', typstorage => 'x' },
 { oid => '194', descr => 'string representing an internal node tree',
   typname => 'pg_node_tree', typlen => '-1', typbyval => 'f',
-  typcategory => 'S', typinput => 'pg_node_tree_in',
+  typcategory => 'Z', typinput => 'pg_node_tree_in',
   typoutput => 'pg_node_tree_out', typreceive => 'pg_node_tree_recv',
   typsend => 'pg_node_tree_send', typalign => 'i', typstorage => 'x',
   typcollation => 'default' },
 { oid => '3361', descr => 'multivariate ndistinct coefficients',
   typname => 'pg_ndistinct', typlen => '-1', typbyval => 'f',
-  typcategory => 'S', typinput => 'pg_ndistinct_in',
+  typcategory => 'Z', typinput => 'pg_ndistinct_in',
   typoutput => 'pg_ndistinct_out', typreceive => 'pg_ndistinct_recv',
   typsend => 'pg_ndistinct_send', typalign => 'i', typstorage => 'x',
   typcollation => 'default' },
 { oid => '3402', descr => 'multivariate dependencies',
   typname => 'pg_dependencies', typlen => '-1', typbyval => 'f',
-  typcategory => 'S', typinput => 'pg_dependencies_in',
+  typcategory => 'Z', typinput => 'pg_dependencies_in',
   typoutput => 'pg_dependencies_out', typreceive => 'pg_dependencies_recv',
   typsend => 'pg_dependencies_send', typalign => 'i', typstorage => 'x',
   typcollation => 'default' },
 { oid => '5017', descr => 'multivariate MCV list',
-  typname => 'pg_mcv_list', typlen => '-1', typbyval => 'f', typcategory => 'S',
+  typname => 'pg_mcv_list', typlen => '-1', typbyval => 'f', typcategory => 'Z',
   typinput => 'pg_mcv_list_in', typoutput => 'pg_mcv_list_out',
   typreceive => 'pg_mcv_list_recv', typsend => 'pg_mcv_list_send',
   typalign => 'i', typstorage => 'x', typcollation => 'default' },
@@ -681,13 +681,13 @@
   typalign => 'd', typstorage => 'x' },
 { oid => '4600', descr => 'BRIN bloom summary',
   typname => 'pg_brin_bloom_summary', typlen => '-1', typbyval => 'f',
-  typcategory => 'S', typinput => 'brin_bloom_summary_in',
+  typcategory => 'Z', typinput => 'brin_bloom_summary_in',
   typoutput => 'brin_bloom_summary_out',
   typreceive => 'brin_bloom_summary_recv', typsend => 'brin_bloom_summary_send',
   typalign => 'i', typstorage => 'x', typcollation => 'default' },
 { oid => '4601', descr => 'BRIN minmax-multi summary',
   typname => 'pg_brin_minmax_multi_summary', typlen => '-1', typbyval => 'f',
-  typcategory => 'S', typinput => 'brin_minmax_multi_summary_in',
+  typcategory => 'Z', typinput => 'brin_minmax_multi_summary_in',
   typoutput => 'brin_minmax_multi_summary_out',
   typreceive => 'brin_minmax_multi_summary_recv',
   typsend => 'brin_minmax_multi_summary_send', typalign => 'i',

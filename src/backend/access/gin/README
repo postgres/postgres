@@ -396,7 +396,7 @@ leafs. If first stage detects at least one empty page, then at the second stage
 ginScanToDelete() deletes empty pages.
 
 ginScanToDelete() traverses the whole tree in depth-first manner.  It starts
-from the super-exclusive lock on the tree root.  This lock prevents all the
+from the full cleanup lock on the tree root.  This lock prevents all the
 concurrent insertions into this tree while we're deleting pages.  However,
 there are still might be some in-progress readers, who traversed root before
 we locked it.

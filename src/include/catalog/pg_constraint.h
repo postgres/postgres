@@ -4,7 +4,7 @@
  *	  definition of the "constraint" system catalog (pg_constraint)
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_constraint.h
@@ -139,6 +139,12 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	Oid			conffeqop[1] BKI_LOOKUP(pg_operator);
 
 	/*
+	 * If a foreign key with an ON DELETE SET NULL/DEFAULT action, the subset
+	 * of conkey to updated.  If null, all columns are updated.
+	 */
+	int16		confdelsetcols[1];
+
+	/*
 	 * If an exclusion constraint, the OIDs of the exclusion operators for
 	 * each column of the constraint
 	 */
@@ -220,6 +226,8 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  int foreignNKeys,
 								  char foreignUpdateType,
 								  char foreignDeleteType,
+								  const int16 *fkDeleteSetCols,
+								  int numFkDeleteSetCols,
 								  char foreignMatchType,
 								  const Oid *exclOp,
 								  Node *conExpr,
@@ -254,7 +262,8 @@ extern Bitmapset *get_primary_key_attnos(Oid relid, bool deferrableOk,
 										 Oid *constraintOid);
 extern void DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 									   AttrNumber *conkey, AttrNumber *confkey,
-									   Oid *pf_eq_oprs, Oid *pp_eq_oprs, Oid *ff_eq_oprs);
+									   Oid *pf_eq_oprs, Oid *pp_eq_oprs, Oid *ff_eq_oprs,
+									   int *num_fk_del_set_cols, AttrNumber *fk_del_set_cols);
 
 extern bool check_functional_grouping(Oid relid,
 									  Index varno, Index varlevelsup,

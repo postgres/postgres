@@ -3,7 +3,7 @@
  *
  *	information support functions
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/info.c
  */
 
@@ -118,15 +118,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 * Verify that rels of same OID have same name.  The namespace name
 		 * should always match, but the relname might not match for TOAST
 		 * tables (and, therefore, their indexes).
-		 *
-		 * TOAST table names initially match the heap pg_class oid, but
-		 * pre-9.0 they can change during certain commands such as CLUSTER, so
-		 * don't insist on a match if old cluster is < 9.0.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
-			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
-			 (GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
-			  strcmp(old_rel->nspname, "pg_toast") != 0)))
+			strcmp(old_rel->relname, new_rel->relname) != 0)
 		{
 			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
 				   "old name \"%s.%s\", new name \"%s.%s\"\n",
@@ -199,14 +193,8 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	map->old_db_oid = old_db->db_oid;
 	map->new_db_oid = new_db->db_oid;
 
-	/*
-	 * old_relfilenode might differ from pg_class.oid (and hence
-	 * new_relfilenode) because of CLUSTER, REINDEX, or VACUUM FULL.
-	 */
-	map->old_relfilenode = old_rel->relfilenode;
-
-	/* new_relfilenode will match old and new pg_class.oid */
-	map->new_relfilenode = new_rel->relfilenode;
+	/* relfilenode is preserved across old and new cluster */
+	map->relfilenode = old_rel->relfilenode;
 
 	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;
@@ -278,27 +266,6 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			   reloid, db->db_name, reldesc);
 }
 
-
-void
-print_maps(FileNameMap *maps, int n_maps, const char *db_name)
-{
-	if (log_opts.verbose)
-	{
-		int			mapnum;
-
-		pg_log(PG_VERBOSE, "mappings for database \"%s\":\n", db_name);
-
-		for (mapnum = 0; mapnum < n_maps; mapnum++)
-			pg_log(PG_VERBOSE, "%s.%s: %u to %u\n",
-				   maps[mapnum].nspname, maps[mapnum].relname,
-				   maps[mapnum].old_relfilenode,
-				   maps[mapnum].new_relfilenode);
-
-		pg_log(PG_VERBOSE, "\n\n");
-	}
-}
-
-
 /*
  * get_db_and_rel_infos()
  *
@@ -352,16 +319,13 @@ get_db_infos(ClusterInfo *cluster)
 
 	snprintf(query, sizeof(query),
 			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, "
-			 "%s AS spclocation "
+			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation "
 			 "FROM pg_catalog.pg_database d "
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 " ON d.dattablespace = t.oid "
 			 "WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
-			 "ORDER BY 2",
-	/* 9.2 removed the spclocation column */
-			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid)");
+			 "ORDER BY 2");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -492,7 +456,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "SELECT all_rels.*, n.nspname, c.relname, "
-			 "  c.relfilenode, c.reltablespace, %s "
+			 "  c.relfilenode, c.reltablespace, "
+			 "  pg_catalog.pg_tablespace_location(t.oid) AS spclocation "
 			 "FROM (SELECT * FROM regular_heap "
 			 "      UNION ALL "
 			 "      SELECT * FROM toast_heap "
@@ -504,11 +469,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "     ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "     ON c.reltablespace = t.oid "
-			 "ORDER BY 1;",
-	/* 9.2 removed the pg_tablespace.spclocation column */
-			 (GET_MAJOR_VERSION(cluster->major_version) >= 902) ?
-			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation" :
-			 "t.spclocation");
+			 "ORDER BY 1;");
 
 	res = executeQueryOrDie(conn, "%s", query);
 

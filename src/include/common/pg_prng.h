@@ -2,7 +2,7 @@
  *
  * Pseudo-Random Number Generator
  *
- * Copyright (c) 2021, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2022, PostgreSQL Global Development Group
  *
  * src/include/common/pg_prng.h
  *

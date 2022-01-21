@@ -3,7 +3,7 @@
 # GNUmakefile--
 #    Makefile for src/test/regress (the regression tests)
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/test/regress/GNUmakefile
@@ -69,19 +69,12 @@ all: all-lib
 # Ensure parallel safety if a build is started in this directory
 $(OBJS): | submake-libpgport submake-generated-headers
 
-# Test input and expected files.  These are created by pg_regress itself, so we
-# don't have a rule to create them.  We do need rules to clean them however.
-input_files = $(patsubst $(srcdir)/input/%.source,sql/%.sql, $(wildcard $(srcdir)/input/*.source))
-output_files := $(patsubst $(srcdir)/output/%.source,expected/%.out, $(wildcard $(srcdir)/output/*.source))
-
 
 # not installed by default
 
 regress_data_files = \
-	$(filter-out $(addprefix $(srcdir)/,$(output_files)),$(wildcard $(srcdir)/expected/*.out)) \
-	$(wildcard $(srcdir)/input/*.source) \
-	$(wildcard $(srcdir)/output/*.source) \
-	$(filter-out $(addprefix $(srcdir)/,$(input_files)),$(wildcard $(srcdir)/sql/*.sql)) \
+	$(wildcard $(srcdir)/sql/*.sql) \
+	$(wildcard $(srcdir)/expected/*.out) \
 	$(wildcard $(srcdir)/data/*.data) \
 	$(srcdir)/parallel_schedule $(srcdir)/resultmap
 
@@ -119,7 +112,7 @@ submake-contrib-spi: | submake-libpgport submake-generated-headers
 ## Run tests
 ##
 
-REGRESS_OPTS = --dlpath=. --max-concurrent-tests=20 --make-testtablespace-dir \
+REGRESS_OPTS = --dlpath=. --max-concurrent-tests=20 \
 	$(EXTRA_REGRESS_OPTS)
 
 check: all
@@ -136,9 +129,6 @@ installcheck-parallel: all
 
 installcheck-tests: all
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(TESTS) $(EXTRA_TESTS)
-
-standbycheck: all
-	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 
@@ -162,6 +152,4 @@ clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
-	rm -f $(output_files) $(input_files)
-	rm -rf testtablespace
 	rm -rf $(pg_regress_clean_files)

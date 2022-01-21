@@ -7353,10 +7353,26 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 <!-- end re_syntax.n man page -->
 
    <sect3 id="posix-vs-xquery">
-   <title>Differences from XQuery (<literal>LIKE_REGEX</literal>)</title>
+   <title>Differences from SQL Standard and XQuery</title>
 
    <indexterm zone="posix-vs-xquery">
-    <primary><literal>LIKE_REGEX</literal></primary>
+    <primary>LIKE_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>OCCURRENCES_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>POSITION_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>SUBSTRING_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>TRANSLATE_REGEX</primary>
    </indexterm>
 
    <indexterm zone="posix-vs-xquery">
@@ -7364,16 +7380,75 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
    </indexterm>
 
     <para>
-     Since SQL:2008, the SQL standard includes
-     a <literal>LIKE_REGEX</literal> operator that performs pattern
+     Since SQL:2008, the SQL standard includes regular expression operators
+     and functions that performs pattern
      matching according to the XQuery regular expression
-     standard.  <productname>PostgreSQL</productname> does not yet
-     implement this operator, but you can get very similar behavior using
-     the <function>regexp_match()</function> function, since XQuery
-     regular expressions are quite close to the ARE syntax described above.
+     standard:
+     <itemizedlist>
+      <listitem><para><literal>LIKE_REGEX</literal></para></listitem>
+      <listitem><para><literal>OCCURRENCES_REGEX</literal></para></listitem>
+      <listitem><para><literal>POSITION_REGEX</literal></para></listitem>
+      <listitem><para><literal>SUBSTRING_REGEX</literal></para></listitem>
+      <listitem><para><literal>TRANSLATE_REGEX</literal></para></listitem>
+     </itemizedlist>
+     <productname>PostgreSQL</productname> does not currently implement these
+     operators and functions.  You can get approximately equivalent
+     functionality in each case as shown in <xref
+     linkend="functions-regexp-sql-table"/>.  (Various optional clauses on
+     both sides have been omitted in this table.)
+    </para>
+
+    <table id="functions-regexp-sql-table">
+     <title>Regular Expression Functions Equivalencies</title>
+
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>SQL standard</entry>
+        <entry>PostgreSQL</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal><replaceable>string</replaceable> LIKE_REGEX <replaceable>pattern</replaceable></literal></entry>
+        <entry><literal>regexp_like(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal> or <literal><replaceable>string</replaceable> ~ <replaceable>pattern</replaceable></literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable></literal></entry>
+        <entry><literal>regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>)</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+     Regular expression functions similar to those provided by PostgreSQL are
+     also available in a number of other SQL implementations, whereas the
+     SQL-standard functions are not as widely implemented.  Some of the
+     details of the regular expression syntax will likely differ in each
+     implementation.
     </para>
 
     <para>
+     The SQL-standard operators and functions use XQuery regular expressions,
+     which are quite close to the ARE syntax described above.
      Notable differences between the existing POSIX-based
      regular-expression feature and XQuery regular expressions include:
 
@@ -10976,7 +11051,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </para>
        <para>
         Computes the center point.
-        Available for <type>box</type>, <type>lseg</type>, <type>path</type>,
+        Available for <type>box</type>, <type>lseg</type>,
         <type>polygon</type>, <type>circle</type>.
        </para>
        <para>
@@ -11042,8 +11117,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         (<type>point</type>, <type>line</type>),
         (<type>lseg</type>, <type>box</type>),
         (<type>lseg</type>, <type>lseg</type>),
-        (<type>lseg</type>, <type>line</type>),
-        (<type>line</type>, <type>box</type>),
         (<type>line</type>, <type>lseg</type>).
        </para>
        <para>
@@ -11063,7 +11136,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         of <type>point</type> with another geometric type, and for
         these additional pairs of types:
         (<type>box</type>, <type>lseg</type>),
-        (<type>box</type>, <type>line</type>),
         (<type>lseg</type>, <type>line</type>),
         (<type>polygon</type>, <type>circle</type>)
         (and the commutator cases).
@@ -22374,10 +22446,12 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
         format, <function>pg_current_logfile</function> without an argument
         returns the path of the file having the first format found in the
         ordered list: <literal>stderr</literal>,
-        <literal>csvlog</literal>.  <literal>NULL</literal> is returned
-        if no log file has any of these formats.
+        <literal>csvlog</literal>, <literal>jsonlog</literal>.
+        <literal>NULL</literal> is returned if no log file has any of these
+        formats.
         To request information about a specific log file format, supply
-        either <literal>csvlog</literal> or <literal>stderr</literal> as the
+        either <literal>csvlog</literal>, <literal>jsonlog</literal> or
+        <literal>stderr</literal> as the
         value of the optional parameter. The result is <literal>NULL</literal>
         if the log format requested is not configured in
         <xref linkend="guc-log-destination"/>.
@@ -25349,7 +25423,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
        </para>
        <para>
         Requests to log the memory contexts of the backend with the
-        specified process ID.  These memory contexts will be logged at
+        specified process ID.  This function can send the request to
+        backends and auxiliary processes except logger and statistics
+        collector.  These memory contexts will be logged at
         <literal>LOG</literal> message level. They will appear in
         the server log based on the log configuration set
         (See <xref linkend="runtime-config-logging"/> for more information),
@@ -26448,7 +26524,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        </para>
        <para>
         Looks up a replication origin by name and returns the internal ID. If
-        no such replication origin is found an error is thrown.
+        no such replication origin is found, <literal>NULL</literal> is
+        returned.
        </para></entry>
       </row>
 

@@ -748,8 +748,8 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
 
   <para>
    Index expressions are relatively expensive to maintain, because the
-   derived expression(s) must be computed for each row upon insertion
-   and whenever it is updated.  However, the index expressions are
+   derived expression(s) must be computed for each row insertion
+   and non-HOT update.  However, the index expressions are
    <emphasis>not</emphasis> recomputed during an indexed search, since they are
    already stored in the index.  In both examples above, the system
    sees the query as just <literal>WHERE indexedcolumn = 'constant'</literal>

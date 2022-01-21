@@ -72,12 +72,6 @@ select ' ( " a " " a ", " z " " z " )  '::textrange;
  ("  a   a ","  z   z  ")
 (1 row)
 
-select '(,z)'::textrange;
- textrange 
------------
- (,z)
-(1 row)
-
 select '(a,)'::textrange;
  textrange 
 -----------

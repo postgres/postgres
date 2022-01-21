@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/ecpg/test/pg_regress_ecpg.c
@@ -166,9 +166,14 @@ ecpg_start_test(const char *testname,
 	snprintf(inprg, sizeof(inprg), "%s/%s", inputdir, testname);
 	snprintf(insource, sizeof(insource), "%s.c", testname);
 
+	/* make a version of the test name that has dashes in place of slashes */
 	initStringInfo(&testname_dash);
 	appendStringInfoString(&testname_dash, testname);
-	replace_string(&testname_dash, "/", "-");
+	for (char *c = testname_dash.data; *c != '\0'; c++)
+	{
+		if (*c == '/')
+			*c = '-';
+	}
 
 	snprintf(expectfile_stdout, sizeof(expectfile_stdout),
 			 "%s/expected/%s.stdout",

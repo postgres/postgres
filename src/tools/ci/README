@@ -1,0 +1,63 @@
+Postgres Continuous Integration (CI)
+====================================
+
+Postgres has two forms of CI:
+
+1) All supported branches in the main postgres repository are continuously
+   tested via the buildfarm. As this covers only the main repository, it
+   cannot be used during development of features.
+
+   For details see https://buildfarm.postgresql.org/
+
+2) For not yet merged development work, CI can be enabled for some git hosting
+   providers. This allows developers to test patches on a number of platforms
+   before they are merged (or even submitted).
+
+
+Configuring CI on personal repositories
+=======================================
+
+Currently postgres contains CI support utilizing cirrus-ci. cirrus-ci
+currently is only available for github.
+
+
+Enabling cirrus-ci in a github repository
+=========================================
+
+To enable cirrus-ci on a repository, go to
+https://github.com/marketplace/cirrus-ci and select "Public
+Repositories". Then "Install it for free" and "Complete order". The next page
+allows to configure which repositories cirrus-ci has access to. Choose the
+relevant repository and "Install".
+
+See also https://cirrus-ci.org/guide/quick-start/
+
+Once enabled on a repository, future commits and pull-requests in that
+repository will automatically trigger CI builds. These are visible from the
+commit history / PRs, and can also be viewed in the cirrus-ci UI at
+https://cirrus-ci.com/github/<username>/<reponame>/
+
+
+Images used for CI
+==================
+
+To keep CI times tolerable, most platforms use pre-generated images. Some
+platforms use containers, others use full VMs. Images for both are generated
+separately from CI runs, otherwise each git repository that is being tested
+would need to build its own set of containers, which would be wasteful (both
+in space and time.
+
+These images are built, on a daily basis, from the specifications in
+github.com/anarazel/pg-vm-images/
+
+
+Controlling CI via commit messages
+==================================
+
+The behavior of CI can be controlled by special content in commit
+messages. Currently the following controls are available:
+
+- ci-os-only: {(freebsd|linux|macos|windows)}
+
+  Only runs CI on operating systems specified. This can be useful when
+  addressing portability issues affecting only a subset of platforms.

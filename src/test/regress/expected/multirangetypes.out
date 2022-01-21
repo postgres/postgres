@@ -97,6 +97,12 @@ select ' {( " a " " a ", " z " " z " )  }'::textmultirange;
  {("  a   a ","  z   z  ")}
 (1 row)
 
+select textrange('\\\\', repeat('a', 200))::textmultirange;
+                                                                                                        textrange                                                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {["\\\\\\\\",aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)}
+(1 row)
+
 select '{(,z)}'::textmultirange;
  textmultirange 
 ----------------
@@ -289,10 +295,10 @@ select textmultirange(textrange('a', 'c'), textrange('f', 'g'));
  {[a,c),[f,g)}
 (1 row)
 
-select textmultirange(textrange('a', 'c'), textrange('b', 'd'));
- textmultirange 
-----------------
- {[a,d)}
+select textmultirange(textrange('\\\\', repeat('a', 200)), textrange('c', 'd'));
+                                                                                                        textmultirange                                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {["\\\\\\\\",aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),[c,d)}
 (1 row)
 
 --
@@ -361,6 +367,13 @@ select unnest(textmultirange(textrange('a', 'b'), textrange('d', 'e')));
 --------
  [a,b)
  [d,e)
+(2 rows)
+
+select unnest(textmultirange(textrange('\\\\', repeat('a', 200)), textrange('c', 'd')));
+                                                                                                        unnest                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ ["\\\\\\\\",aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+ [c,d)
 (2 rows)
 
 --

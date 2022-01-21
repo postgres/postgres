@@ -3,7 +3,7 @@
  * varlena.c
  *	  Functions for the variable-length built-in types.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1200,7 +1200,7 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 
 	check_collation_set(collid);
 
-	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
 
 	if (mylocale && !mylocale->deterministic)
@@ -1556,10 +1556,9 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 		char		a2buf[TEXTBUFLEN];
 		char	   *a1p,
 				   *a2p;
-		pg_locale_t mylocale = 0;
+		pg_locale_t mylocale;
 
-		if (collid != DEFAULT_COLLATION_OID)
-			mylocale = pg_newlocale_from_collation(collid);
+		mylocale = pg_newlocale_from_collation(collid);
 
 		/*
 		 * memcmp() can't tell us which of two unequal strings sorts first,
@@ -1776,13 +1775,18 @@ Datum
 texteq(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GET_COLLATION();
+	bool		locale_is_c = false;
+	pg_locale_t	mylocale = 0;
 	bool		result;
 
 	check_collation_set(collid);
 
-	if (lc_collate_is_c(collid) ||
-		collid == DEFAULT_COLLATION_OID ||
-		pg_newlocale_from_collation(collid)->deterministic)
+	if (lc_collate_is_c(collid))
+		locale_is_c = true;
+	else
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (locale_is_c || !mylocale || mylocale->deterministic)
 	{
 		Datum		arg1 = PG_GETARG_DATUM(0);
 		Datum		arg2 = PG_GETARG_DATUM(1);
@@ -1830,13 +1834,18 @@ Datum
 textne(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GET_COLLATION();
+	bool		locale_is_c = false;
+	pg_locale_t	mylocale = 0;
 	bool		result;
 
 	check_collation_set(collid);
 
-	if (lc_collate_is_c(collid) ||
-		collid == DEFAULT_COLLATION_OID ||
-		pg_newlocale_from_collation(collid)->deterministic)
+	if (lc_collate_is_c(collid))
+		locale_is_c = true;
+	else
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (locale_is_c || !mylocale || mylocale->deterministic)
 	{
 		Datum		arg1 = PG_GETARG_DATUM(0);
 		Datum		arg2 = PG_GETARG_DATUM(1);
@@ -1947,7 +1956,7 @@ text_starts_with(PG_FUNCTION_ARGS)
 
 	check_collation_set(collid);
 
-	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
 
 	if (mylocale && !mylocale->deterministic)
@@ -2061,8 +2070,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 		 * we'll figure out the collation based on the locale id and cache the
 		 * result.
 		 */
-		if (collid != DEFAULT_COLLATION_OID)
-			locale = pg_newlocale_from_collation(collid);
+		locale = pg_newlocale_from_collation(collid);
 
 		/*
 		 * There is a further exception on Windows.  When the database

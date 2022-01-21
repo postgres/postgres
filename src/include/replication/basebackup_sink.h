@@ -17,7 +17,7 @@
  * single task e.g. command progress reporting, throttling, or
  * communication with the client.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * src/include/replication/basebackup_sink.h
  *
@@ -282,8 +282,10 @@ extern void bbsink_forward_end_backup(bbsink *sink, XLogRecPtr endptr,
 extern void bbsink_forward_cleanup(bbsink *sink);
 
 /* Constructors for various types of sinks. */
+extern bbsink *bbsink_copystream_new(bool send_to_client);
 extern bbsink *bbsink_copytblspc_new(void);
 extern bbsink *bbsink_progress_new(bbsink *next, bool estimate_backup_size);
+extern bbsink *bbsink_server_new(bbsink *next, char *pathname);
 extern bbsink *bbsink_throttle_new(bbsink *next, uint32 maxrate);
 
 /* Extra interface functions for progress reporting. */

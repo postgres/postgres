@@ -3,7 +3,7 @@
  * syslogger.h
  *	  Exports from postmaster/syslogger.c.
  *
- * Copyright (c) 2004-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2022, PostgreSQL Global Development Group
  *
  * src/include/postmaster/syslogger.h
  *
@@ -64,6 +64,7 @@ typedef union
 /* log destinations */
 #define PIPE_PROTO_DEST_STDERR	0x10
 #define PIPE_PROTO_DEST_CSVLOG	0x20
+#define PIPE_PROTO_DEST_JSONLOG	0x40
 
 /* GUC options */
 extern bool Logging_collector;

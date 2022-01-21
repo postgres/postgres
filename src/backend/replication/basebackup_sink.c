@@ -3,7 +3,7 @@
  * basebackup_sink.c
  *	  Default implementations for bbsink (basebackup sink) callbacks.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * src/backend/replication/basebackup_sink.c
  *

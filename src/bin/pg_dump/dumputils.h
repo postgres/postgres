@@ -5,7 +5,7 @@
  * Basically this is stuff that is useful in both pg_dump and pg_dumpall.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/dumputils.h
@@ -37,25 +37,21 @@
 
 
 extern bool buildACLCommands(const char *name, const char *subname, const char *nspname,
-							 const char *type, const char *acls, const char *racls,
+							 const char *type, const char *acls, const char *baseacls,
 							 const char *owner, const char *prefix, int remoteVersion,
 							 PQExpBuffer sql);
 extern bool buildDefaultACLCommands(const char *type, const char *nspname,
-									const char *acls, const char *racls,
-									const char *initacls, const char *initracls,
+									const char *acls, const char *acldefault,
 									const char *owner,
 									int remoteVersion,
 									PQExpBuffer sql);
+
+extern void quoteAclUserName(PQExpBuffer output, const char *input);
+
 extern void buildShSecLabelQuery(const char *catalog_name,
 								 Oid objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
 							PQExpBuffer buffer, const char *objtype, const char *objname);
-
-extern void buildACLQueries(PQExpBuffer acl_subquery, PQExpBuffer racl_subquery,
-							PQExpBuffer init_acl_subquery, PQExpBuffer init_racl_subquery,
-							const char *acl_column, const char *acl_owner,
-							const char *initprivs_expr,
-							const char *obj_kind, bool binary_upgrade);
 
 extern bool variable_is_guc_list_quote(const char *name);
 

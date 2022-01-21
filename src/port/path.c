@@ -3,7 +3,7 @@
  * path.c
  *	  portable path handling routines
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -807,14 +807,16 @@ bool
 get_home_path(char *ret_path)
 {
 #ifndef WIN32
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	/*
+	 * We first consult $HOME.  If that's unset, try to get the info from
+	 * <pwd.h>.
+	 */
+	const char *home;
 
-	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-	if (pwd == NULL)
-		return false;
-	strlcpy(ret_path, pwd->pw_dir, MAXPGPATH);
+	home = getenv("HOME");
+	if (home == NULL || home[0] == '\0')
+		return pg_get_user_home_dir(geteuid(), ret_path, MAXPGPATH);
+	strlcpy(ret_path, home, MAXPGPATH);
 	return true;
 #else
 	char	   *tmppath;

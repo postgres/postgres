@@ -4,7 +4,7 @@
  *	  prototypes for functions in backend/catalog/heap.c
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/heap.h
@@ -59,7 +59,8 @@ extern Relation heap_create(const char *relname,
 							bool mapped_relation,
 							bool allow_system_table_mods,
 							TransactionId *relfrozenxid,
-							MultiXactId *relminmxid);
+							MultiXactId *relminmxid,
+							bool create_storage);
 
 extern Oid	heap_create_with_catalog(const char *relname,
 									 Oid relnamespace,

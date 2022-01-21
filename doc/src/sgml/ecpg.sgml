@@ -4732,7 +4732,6 @@ encoding = 0 (type: 5)
 datistemplate = t (type: 1)
 datallowconn = t (type: 1)
 datconnlimit = -1 (type: 5)
-datlastsysoid = 11510 (type: 1)
 datfrozenxid = 379 (type: 1)
 dattablespace = 1663 (type: 1)
 datconfig =  (type: 1)
@@ -4757,7 +4756,6 @@ encoding = 0 (type: 5)
 datistemplate = f (type: 1)
 datallowconn = t (type: 1)
 datconnlimit = -1 (type: 5)
-datlastsysoid = 11510 (type: 1)
 datfrozenxid = 379 (type: 1)
 dattablespace = 1663 (type: 1)
 datconfig =  (type: 1)
@@ -6977,7 +6975,7 @@ EXEC SQL CLOSE cursor_name;
     <title>Compatibility</title>
 
     <para>
-     <command>DECLARE STATEMENT</command> is a extension of the SQL standard,
+     <command>DECLARE STATEMENT</command> is an extension of the SQL standard,
      but can be used in famous DBMSs.
     </para>
    </refsect1>

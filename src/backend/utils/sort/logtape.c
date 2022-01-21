@@ -66,7 +66,7 @@
  * There will always be the same number of runs as input tapes, and the same
  * number of input tapes as participants (worker Tuplesortstates).
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -340,16 +340,6 @@ ltsReadFillBuffer(LogicalTape *lt)
 	return (lt->nbytes > 0);
 }
 
-static inline void
-swap_nodes(long *heap, unsigned long a, unsigned long b)
-{
-	unsigned long swap;
-
-	swap = heap[a];
-	heap[a] = heap[b];
-	heap[b] = swap;
-}
-
 static inline unsigned long
 left_offset(unsigned long i)
 {
@@ -357,7 +347,7 @@ left_offset(unsigned long i)
 }
 
 static inline unsigned long
-right_offset(unsigned i)
+right_offset(unsigned long i)
 {
 	return 2 * i + 2;
 }
@@ -390,31 +380,33 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 	long	   *heap = lts->freeBlocks;
 	long		blocknum;
 	int			heapsize;
-	unsigned long pos;
+	long		holeval;
+	unsigned long holepos;
 
 	/* freelist empty; allocate a new block */
 	if (lts->nFreeBlocks == 0)
 		return lts->nBlocksAllocated++;
 
+	/* easy if heap contains one element */
 	if (lts->nFreeBlocks == 1)
 	{
 		lts->nFreeBlocks--;
 		return lts->freeBlocks[0];
 	}
 
-	/* take top of minheap */
+	/* remove top of minheap */
 	blocknum = heap[0];
 
-	/* replace with end of minheap array */
-	heap[0] = heap[--lts->nFreeBlocks];
+	/* we'll replace it with end of minheap array */
+	holeval = heap[--lts->nFreeBlocks];
 
 	/* sift down */
-	pos = 0;
+	holepos = 0;				/* holepos is where the "hole" is */
 	heapsize = lts->nFreeBlocks;
 	while (true)
 	{
-		unsigned long left = left_offset(pos);
-		unsigned long right = right_offset(pos);
+		unsigned long left = left_offset(holepos);
+		unsigned long right = right_offset(holepos);
 		unsigned long min_child;
 
 		if (left < heapsize && right < heapsize)
@@ -426,12 +418,13 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 		else
 			break;
 
-		if (heap[min_child] >= heap[pos])
+		if (heap[min_child] >= holeval)
 			break;
 
-		swap_nodes(heap, min_child, pos);
-		pos = min_child;
+		heap[holepos] = heap[min_child];
+		holepos = min_child;
 	}
+	heap[holepos] = holeval;
 
 	return blocknum;
 }
@@ -483,7 +476,7 @@ static void
 ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
 	long	   *heap;
-	unsigned long pos;
+	unsigned long holepos;
 
 	/*
 	 * Do nothing if we're no longer interested in remembering free space.
@@ -508,24 +501,23 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 											lts->freeBlocksLen * sizeof(long));
 	}
 
+	/* create a "hole" at end of minheap array */
 	heap = lts->freeBlocks;
-	pos = lts->nFreeBlocks;
-
-	/* place entry at end of minheap array */
-	heap[pos] = blocknum;
+	holepos = lts->nFreeBlocks;
 	lts->nFreeBlocks++;
 
-	/* sift up */
-	while (pos != 0)
+	/* sift up to insert blocknum */
+	while (holepos != 0)
 	{
-		unsigned long parent = parent_offset(pos);
+		unsigned long parent = parent_offset(holepos);
 
-		if (heap[parent] < heap[pos])
+		if (heap[parent] < blocknum)
 			break;
 
-		swap_nodes(heap, parent, pos);
-		pos = parent;
+		heap[holepos] = heap[parent];
+		holepos = parent;
 	}
+	heap[holepos] = blocknum;
 }
 
 /*

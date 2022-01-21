@@ -176,4 +176,54 @@ FROM prevstats AS pr;
 
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
+
+-- test BRIN index doesn't block HOT update - we include this test here, as it
+-- relies on statistics collector and so it may occasionally fail, especially
+-- on slower systems
+CREATE TABLE brin_hot (
+        id  integer PRIMARY KEY,
+        val integer NOT NULL
+) WITH (autovacuum_enabled = off, fillfactor = 70);
+
+INSERT INTO brin_hot SELECT *, 0 FROM generate_series(1, 235);
+CREATE INDEX val_brin ON brin_hot using brin(val);
+
+CREATE FUNCTION wait_for_hot_stats() RETURNS void AS $$
+DECLARE
+        start_time timestamptz := clock_timestamp();
+        updated bool;
+BEGIN
+        -- we don't want to wait forever; loop will exit after 30 seconds
+        FOR i IN 1 .. 300 LOOP
+                SELECT (pg_stat_get_tuples_hot_updated('brin_hot'::regclass::oid) > 0) INTO updated;
+                EXIT WHEN updated;
+
+                -- wait a little
+                PERFORM pg_sleep_for('100 milliseconds');
+                -- reset stats snapshot so we can test again
+                PERFORM pg_stat_clear_snapshot();
+        END LOOP;
+        -- report time waited in postmaster log (where it won't change test output)
+        RAISE log 'wait_for_hot_stats delayed % seconds',
+          EXTRACT(epoch FROM clock_timestamp() - start_time);
+END
+$$ LANGUAGE plpgsql;
+
+UPDATE brin_hot SET val = -3 WHERE id = 42;
+
+-- We can't just call wait_for_hot_stats() at this point, because we only
+-- transmit stats when the session goes idle, and we probably didn't
+-- transmit the last couple of counts yet thanks to the rate-limiting logic
+-- in pgstat_report_stat().  But instead of waiting for the rate limiter's
+-- timeout to elapse, let's just start a new session.  The old one will
+-- then send its stats before dying.
+\c -
+
+SELECT wait_for_hot_stats();
+SELECT pg_stat_get_tuples_hot_updated('brin_hot'::regclass::oid);
+
+DROP TABLE brin_hot;
+DROP FUNCTION wait_for_hot_stats();
+
+
 -- End of Stats Test

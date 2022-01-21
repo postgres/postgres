@@ -80,7 +80,7 @@
  * general, after logging in, but let's do what we can here.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/libpq/auth-scram.c
@@ -111,7 +111,8 @@ static void scram_get_mechanisms(Port *port, StringInfo buf);
 static void *scram_init(Port *port, const char *selected_mech,
 						const char *shadow_pass);
 static int	scram_exchange(void *opaq, const char *input, int inputlen,
-						   char **output, int *outputlen, char **logdetail);
+						   char **output, int *outputlen,
+						   const char **logdetail);
 
 /* Mechanism declaration */
 const pg_be_sasl_mech pg_be_scram_mech = {
@@ -335,7 +336,7 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
  */
 static int
 scram_exchange(void *opaq, const char *input, int inputlen,
-			   char **output, int *outputlen, char **logdetail)
+			   char **output, int *outputlen, const char **logdetail)
 {
 	scram_state *state = (scram_state *) opaq;
 	int			result;
@@ -464,6 +465,7 @@ pg_be_scram_build_secret(const char *password)
 	pg_saslprep_rc rc;
 	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
+	const char *errstr = NULL;
 
 	/*
 	 * Normalize the password with SASLprep.  If that doesn't work, because
@@ -481,7 +483,8 @@ pg_be_scram_build_secret(const char *password)
 				 errmsg("could not generate random salt")));
 
 	result = scram_build_secret(saltbuf, SCRAM_DEFAULT_SALT_LEN,
-								SCRAM_DEFAULT_ITERATIONS, password);
+								SCRAM_DEFAULT_ITERATIONS, password,
+								&errstr);
 
 	if (prep_password)
 		pfree(prep_password);
@@ -508,6 +511,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	uint8		computed_key[SCRAM_KEY_LEN];
 	char	   *prep_password;
 	pg_saslprep_rc rc;
+	const char *errstr = NULL;
 
 	if (!parse_scram_secret(secret, &iterations, &encoded_salt,
 							stored_key, server_key))
@@ -538,10 +542,10 @@ scram_verify_plain_password(const char *username, const char *password,
 
 	/* Compute Server Key based on the user-supplied plaintext password */
 	if (scram_SaltedPassword(password, salt, saltlen, iterations,
-							 salted_password) < 0 ||
-		scram_ServerKey(salted_password, computed_key) < 0)
+							 salted_password, &errstr) < 0 ||
+		scram_ServerKey(salted_password, computed_key, &errstr) < 0)
 	{
-		elog(ERROR, "could not compute server key");
+		elog(ERROR, "could not compute server key: %s", errstr);
 	}
 
 	if (prep_password)
@@ -1112,6 +1116,7 @@ verify_client_proof(scram_state *state)
 	uint8		client_StoredKey[SCRAM_KEY_LEN];
 	pg_hmac_ctx *ctx = pg_hmac_create(PG_SHA256);
 	int			i;
+	const char *errstr = NULL;
 
 	/*
 	 * Calculate ClientSignature.  Note that we don't log directly a failure
@@ -1132,7 +1137,8 @@ verify_client_proof(scram_state *state)
 					   strlen(state->client_final_message_without_proof)) < 0 ||
 		pg_hmac_final(ctx, ClientSignature, sizeof(ClientSignature)) < 0)
 	{
-		elog(ERROR, "could not calculate client signature");
+		elog(ERROR, "could not calculate client signature: %s",
+			 pg_hmac_error(ctx));
 	}
 
 	pg_hmac_free(ctx);
@@ -1142,8 +1148,8 @@ verify_client_proof(scram_state *state)
 		ClientKey[i] = state->ClientProof[i] ^ ClientSignature[i];
 
 	/* Hash it one more time, and compare with StoredKey */
-	if (scram_H(ClientKey, SCRAM_KEY_LEN, client_StoredKey) < 0)
-		elog(ERROR, "could not hash stored key");
+	if (scram_H(ClientKey, SCRAM_KEY_LEN, client_StoredKey, &errstr) < 0)
+		elog(ERROR, "could not hash stored key: %s", errstr);
 
 	if (memcmp(client_StoredKey, state->StoredKey, SCRAM_KEY_LEN) != 0)
 		return false;
@@ -1388,7 +1394,8 @@ build_server_final_message(scram_state *state)
 					   strlen(state->client_final_message_without_proof)) < 0 ||
 		pg_hmac_final(ctx, ServerSignature, sizeof(ServerSignature)) < 0)
 	{
-		elog(ERROR, "could not calculate server signature");
+		elog(ERROR, "could not calculate server signature: %s",
+			 pg_hmac_error(ctx));
 	}
 
 	pg_hmac_free(ctx);

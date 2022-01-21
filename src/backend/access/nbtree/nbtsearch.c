@@ -4,7 +4,7 @@
  *	  Search code for postgres btrees.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -50,16 +50,11 @@ static inline void _bt_initialize_more_data(BTScanOpaque so, ScanDirection dir);
 /*
  *	_bt_drop_lock_and_maybe_pin()
  *
- * Unlock the buffer; and if it is safe to release the pin, do that, too.  It
- * is safe if the scan is using an MVCC snapshot and the index is WAL-logged.
+ * Unlock the buffer; and if it is safe to release the pin, do that, too.
  * This will prevent vacuum from stalling in a blocked state trying to read a
- * page when a cursor is sitting on it -- at least in many important cases.
+ * page when a cursor is sitting on it.
  *
- * Set the buffer to invalid if the pin is released, since the buffer may be
- * re-used.  If we need to go back to this block (for example, to apply
- * LP_DEAD hints) we must get a fresh reference to the buffer.  Hopefully it
- * will remain in shared memory for as long as it takes to scan the index
- * buffer page.
+ * See nbtree/README section on making concurrent TID recycling safe.
  */
 static void
 _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)

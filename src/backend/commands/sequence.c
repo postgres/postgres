@@ -3,7 +3,7 @@
  * sequence.c
  *	  PostgreSQL sequences support code.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1401,7 +1401,7 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 	/* CYCLE */
 	if (is_cycled != NULL)
 	{
-		seqform->seqcycle = intVal(is_cycled->arg);
+		seqform->seqcycle = boolVal(is_cycled->arg);
 		Assert(BoolIsValid(seqform->seqcycle));
 		seqdataform->log_cnt = 0;
 	}
@@ -1739,7 +1739,7 @@ sequence_options(Oid relid)
 	options = lappend(options,
 					  makeDefElem("cache", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqcache)), -1));
 	options = lappend(options,
-					  makeDefElem("cycle", (Node *) makeInteger(pgsform->seqcycle), -1));
+					  makeDefElem("cycle", (Node *) makeBoolean(pgsform->seqcycle), -1));
 	options = lappend(options,
 					  makeDefElem("increment", (Node *) makeFloat(psprintf(INT64_FORMAT, pgsform->seqincrement)), -1));
 	options = lappend(options,

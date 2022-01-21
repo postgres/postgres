@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress.c
@@ -439,181 +439,6 @@ string_matches_pattern(const char *str, const char *pattern)
 }
 
 /*
- * Replace all occurrences of "replace" in "string" with "replacement".
- * The StringInfo will be suitably enlarged if necessary.
- *
- * Note: this is optimized on the assumption that most calls will find
- * no more than one occurrence of "replace", and quite likely none.
- */
-void
-replace_string(StringInfo string, const char *replace, const char *replacement)
-{
-	int			pos = 0;
-	char	   *ptr;
-
-	while ((ptr = strstr(string->data + pos, replace)) != NULL)
-	{
-		/* Must copy the remainder of the string out of the StringInfo */
-		char	   *suffix = pg_strdup(ptr + strlen(replace));
-
-		/* Truncate StringInfo at start of found string ... */
-		string->len = ptr - string->data;
-		/* ... and append the replacement (this restores the trailing '\0') */
-		appendStringInfoString(string, replacement);
-		/* Next search should start after the replacement */
-		pos = string->len;
-		/* Put back the remainder of the string */
-		appendStringInfoString(string, suffix);
-		free(suffix);
-	}
-}
-
-/*
- * Convert *.source found in the "source" directory, replacing certain tokens
- * in the file contents with their intended values, and put the resulting files
- * in the "dest" directory, replacing the ".source" prefix in their names with
- * the given suffix.
- */
-static void
-convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const char *dest_subdir, const char *suffix)
-{
-	char		testtablespace[MAXPGPATH];
-	char		indir[MAXPGPATH];
-	char		outdir_sub[MAXPGPATH];
-	char	  **name;
-	char	  **names;
-	int			count = 0;
-
-	snprintf(indir, MAXPGPATH, "%s/%s", inputdir, source_subdir);
-
-	/* Check that indir actually exists and is a directory */
-	if (!directory_exists(indir))
-	{
-		/*
-		 * No warning, to avoid noise in tests that do not have these
-		 * directories; for example, ecpg, contrib and src/pl.
-		 */
-		return;
-	}
-
-	names = pgfnames(indir);
-	if (!names)
-		/* Error logged in pgfnames */
-		exit(2);
-
-	/* Create the "dest" subdirectory if not present */
-	snprintf(outdir_sub, MAXPGPATH, "%s/%s", dest_dir, dest_subdir);
-	if (!directory_exists(outdir_sub))
-		make_directory(outdir_sub);
-
-	/* We might need to replace @testtablespace@ */
-	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
-
-	/* finally loop on each file and do the replacement */
-	for (name = names; *name; name++)
-	{
-		char		srcfile[MAXPGPATH];
-		char		destfile[MAXPGPATH];
-		char		prefix[MAXPGPATH];
-		FILE	   *infile,
-				   *outfile;
-		StringInfoData line;
-
-		/* reject filenames not finishing in ".source" */
-		if (strlen(*name) < 8)
-			continue;
-		if (strcmp(*name + strlen(*name) - 7, ".source") != 0)
-			continue;
-
-		count++;
-
-		/* build the full actual paths to open */
-		snprintf(prefix, strlen(*name) - 6, "%s", *name);
-		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest_subdir,
-				 prefix, suffix);
-
-		infile = fopen(srcfile, "r");
-		if (!infile)
-		{
-			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-					progname, srcfile, strerror(errno));
-			exit(2);
-		}
-		outfile = fopen(destfile, "w");
-		if (!outfile)
-		{
-			fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
-					progname, destfile, strerror(errno));
-			exit(2);
-		}
-
-		initStringInfo(&line);
-
-		while (pg_get_line_buf(infile, &line))
-		{
-			replace_string(&line, "@abs_srcdir@", inputdir);
-			replace_string(&line, "@abs_builddir@", outputdir);
-			replace_string(&line, "@testtablespace@", testtablespace);
-			replace_string(&line, "@libdir@", dlpath);
-			replace_string(&line, "@DLSUFFIX@", DLSUFFIX);
-			fputs(line.data, outfile);
-		}
-
-		pfree(line.data);
-		fclose(infile);
-		fclose(outfile);
-	}
-
-	/*
-	 * If we didn't process any files, complain because it probably means
-	 * somebody neglected to pass the needed --inputdir argument.
-	 */
-	if (count <= 0)
-	{
-		fprintf(stderr, _("%s: no *.source files found in \"%s\"\n"),
-				progname, indir);
-		exit(2);
-	}
-
-	pgfnames_cleanup(names);
-}
-
-/* Create the .sql and .out files from the .source files, if any */
-static void
-convert_sourcefiles(void)
-{
-	convert_sourcefiles_in("input", outputdir, "sql", "sql");
-	convert_sourcefiles_in("output", outputdir, "expected", "out");
-}
-
-/*
- * Clean out the test tablespace dir, or create it if it doesn't exist.
- *
- * On Windows, doing this cleanup here makes it possible to run the
- * regression tests under a Windows administrative user account with the
- * restricted token obtained when starting pg_regress.
- */
-static void
-prepare_testtablespace_dir(void)
-{
-	char		testtablespace[MAXPGPATH];
-
-	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
-
-	if (directory_exists(testtablespace))
-	{
-		if (!rmtree(testtablespace, true))
-		{
-			fprintf(stderr, _("\n%s: could not remove test tablespace \"%s\"\n"),
-					progname, testtablespace);
-			exit(2);
-		}
-	}
-	make_directory(testtablespace);
-}
-
-/*
  * Scan resultmap file to find which platform-specific expected files to use.
  *
  * The format of each line of the file is
@@ -745,6 +570,14 @@ initialize_environment(void)
 	 * override this, but if it doesn't, we have something useful in place.)
 	 */
 	setenv("PGAPPNAME", "pg_regress", 1);
+
+	/*
+	 * Set variables that the test scripts may need to refer to.
+	 */
+	setenv("PG_ABS_SRCDIR", inputdir, 1);
+	setenv("PG_ABS_BUILDDIR", outputdir, 1);
+	setenv("PG_LIBDIR", dlpath, 1);
+	setenv("PG_DLSUFFIX", DLSUFFIX, 1);
 
 	if (nolocale)
 	{
@@ -928,7 +761,6 @@ initialize_environment(void)
 			printf(_("(using postmaster on Unix socket, default port)\n"));
 	}
 
-	convert_sourcefiles();
 	load_resultmap();
 }
 
@@ -1245,6 +1077,10 @@ spawn_process(const char *cmdline)
 	fflush(stderr);
 	if (logfile)
 		fflush(logfile);
+
+#ifdef EXEC_BACKEND
+	pg_disable_aslr();
+#endif
 
 	pid = fork();
 	if (pid == -1)
@@ -2152,7 +1988,6 @@ help(void)
 	printf(_("      --launcher=CMD            use CMD as launcher of psql\n"));
 	printf(_("      --load-extension=EXT      load the named extension before running the\n"));
 	printf(_("                                tests; can appear multiple times\n"));
-	printf(_("      --make-testtablespace-dir create testtablespace directory\n"));
 	printf(_("      --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                                (default is 0, meaning unlimited)\n"));
 	printf(_("      --max-concurrent-tests=N  maximum number of concurrent tests in schedule\n"));
@@ -2211,12 +2046,10 @@ regression_main(int argc, char *argv[],
 		{"load-extension", required_argument, NULL, 22},
 		{"config-auth", required_argument, NULL, 24},
 		{"max-concurrent-tests", required_argument, NULL, 25},
-		{"make-testtablespace-dir", no_argument, NULL, 26},
 		{NULL, 0, NULL, 0}
 	};
 
 	bool		use_unix_sockets;
-	bool		make_testtablespace_dir = false;
 	_stringlist *sl;
 	int			c;
 	int			i;
@@ -2342,9 +2175,6 @@ regression_main(int argc, char *argv[],
 			case 25:
 				max_concurrent_tests = atoi(optarg);
 				break;
-			case 26:
-				make_testtablespace_dir = true;
-				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -2396,9 +2226,6 @@ regression_main(int argc, char *argv[],
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 	unlimit_core_size();
 #endif
-
-	if (make_testtablespace_dir)
-		prepare_testtablespace_dir();
 
 	if (temp_instance)
 	{

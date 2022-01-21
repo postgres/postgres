@@ -1681,11 +1681,14 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dl</literal></term>
+        <term><literal>\dl[+]</literal></term>
         <listitem>
         <para>
         This is an alias for <command>\lo_list</command>, which shows a
         list of large objects.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>
@@ -2238,6 +2241,28 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\getenv <replaceable class="parameter">psql_var</replaceable> <replaceable class="parameter">env_var</replaceable></literal></term>
+
+        <listitem>
+        <para>
+         Gets the value of the environment
+         variable <replaceable class="parameter">env_var</replaceable>
+         and assigns it to the <application>psql</application>
+         variable <replaceable class="parameter">psql_var</replaceable>.
+         If <replaceable class="parameter">env_var</replaceable> is
+         not defined in the <application>psql</application> process's
+         environment, <replaceable class="parameter">psql_var</replaceable>
+         is not changed.  Example:
+<programlisting>
+=&gt; <userinput>\getenv home HOME</userinput>
+=&gt; <userinput>\echo :home</userinput>
+/home/postgres
+</programlisting></para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\gexec</literal></term>
 
         <listitem>
@@ -2588,12 +2613,15 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\lo_list</literal></term>
+        <term><literal>\lo_list[+]</literal></term>
         <listitem>
         <para>
         Shows a list of all <productname>PostgreSQL</productname>
         large objects currently stored in the database,
         along with any comments provided for them.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>

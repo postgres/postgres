@@ -1,47 +1,32 @@
 --
 -- Cast5 cipher
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 
 -- test vectors from RFC2144
 
 -- 128 bit key
-SELECT encode(encrypt(
-decode('01 23 45 67 89 AB CD EF', 'hex'),
-decode('01 23 45 67 12 34 56 78 23 45 67 89 34 56 78 9A', 'hex'),
-'cast5-ecb/pad:none'), 'hex');
--- result: 23 8B 4F E5 84 7E 44 B2
+SELECT encrypt('\x0123456789ABCDEF', '\x0123456712345678234567893456789A', 'cast5-ecb/pad:none');
 
 -- 80 bit key
-SELECT encode(encrypt(
-decode('01 23 45 67 89 AB CD EF', 'hex'),
-decode('01 23 45 67 12 34 56 78 23 45', 'hex'),
-'cast5-ecb/pad:none'), 'hex');
--- result: EB 6A 71 1A 2C 02 27 1B
+SELECT encrypt('\x0123456789ABCDEF', '\x01234567123456782345', 'cast5-ecb/pad:none');
 
 -- 40 bit key
-SELECT encode(encrypt(
-decode('01 23 45 67 89 AB CD EF', 'hex'),
-decode('01 23 45 67 12', 'hex'),
-'cast5-ecb/pad:none'), 'hex');
--- result: 7A C8 16 D1 6E 9B 30 2E
+SELECT encrypt('\x0123456789ABCDEF', '\x0123456712', 'cast5-ecb/pad:none');
 
 -- cbc
 
 -- empty data
-select encode(	encrypt('', 'foo', 'cast5'), 'hex');
+select encrypt('', 'foo', 'cast5');
 -- 10 bytes key
-select encode(	encrypt('foo', '0123456789', 'cast5'), 'hex');
+select encrypt('foo', '0123456789', 'cast5');
 
 -- decrypt
-select decrypt(encrypt('foo', '0123456', 'cast5'), '0123456', 'cast5');
+select encode(decrypt(encrypt('foo', '0123456', 'cast5'), '0123456', 'cast5'), 'escape');
 
 -- iv
-select encode(encrypt_iv('foo', '0123456', 'abcd', 'cast5'), 'hex');
-select decrypt_iv(decode('384a970695ce016a', 'hex'),
-                '0123456', 'abcd', 'cast5');
+select encrypt_iv('foo', '0123456', 'abcd', 'cast5');
+select encode(decrypt_iv('\x384a970695ce016a', '0123456', 'abcd', 'cast5'), 'escape');
 
 -- long message
-select encode(encrypt('Lets try a longer message.', '0123456789', 'cast5'), 'hex');
-select decrypt(encrypt('Lets try a longer message.', '0123456789', 'cast5'), '0123456789', 'cast5');
+select encrypt('Lets try a longer message.', '0123456789', 'cast5');
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'cast5'), '0123456789', 'cast5'), 'escape');

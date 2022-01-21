@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -42,7 +42,8 @@ $node->start;
 $node->safe_psql('postgres',
 	    "CREATE TABLE tab1 (f1 int, f2 text);\n"
 	  . "CREATE TABLE mytab123 (f1 int, f2 text);\n"
-	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n");
+	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
+	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz');\n");
 
 # Developers would not appreciate this test adding a bunch of junk to
 # their ~/.psql_history, so be sure to redirect history into a temp file.
@@ -220,6 +221,16 @@ check_completion(
 	"\t\t",
 	qr|afile123'? +'?(tmp_check/)?afile456|,
 	"offer multiple file choices");
+
+clear_line();
+
+# check enum label completion
+# some versions of readline/libedit require two tabs here, some only need one
+# also, some versions will offer quotes, some will not
+check_completion(
+	"ALTER TYPE enum1 RENAME VALUE 'ba\t\t",
+	qr|'?bar'? +'?baz'?|,
+	"offer multiple enum choices");
 
 clear_line();
 

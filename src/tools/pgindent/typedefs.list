@@ -1305,13 +1305,9 @@ LPVOID
 LPWSTR
 LSEG
 LUID
-LVDeadTuples
 LVPagePruneState
-LVParallelState
 LVRelState
 LVSavedErrInfo
-LVShared
-LVSharedIndStats
 LWLock
 LWLockHandle
 LWLockMode
@@ -1774,7 +1770,10 @@ PTIterationArray
 PTOKEN_PRIVILEGES
 PTOKEN_USER
 PUTENVPROC
+PVIndStats
+PvIndVacStatus
 PVOID
+PVShared
 PX_Alias
 PX_Cipher
 PX_Combo
@@ -1808,6 +1807,7 @@ ParallelSlotResultHandler
 ParallelState
 ParallelTableScanDesc
 ParallelTableScanDescData
+ParallelVacuumState
 ParallelWorkerContext
 ParallelWorkerInfo
 Param
@@ -2798,6 +2798,7 @@ UserMapping
 UserOpts
 VacAttrStats
 VacAttrStatsP
+VacDeadItems
 VacErrPhase
 VacOptValue
 VacuumParams
@@ -3349,6 +3350,7 @@ pg_conv_map
 pg_crc32
 pg_crc32c
 pg_cryptohash_ctx
+pg_cryptohash_errno
 pg_cryptohash_type
 pg_ctype_cache
 pg_enc
@@ -3359,6 +3361,7 @@ pg_fe_sasl_mech
 pg_funcptr_t
 pg_gssinfo
 pg_hmac_ctx
+pg_hmac_errno
 pg_int64
 pg_local_to_utf_combined
 pg_locale_t

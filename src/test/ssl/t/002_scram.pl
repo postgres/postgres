@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test SCRAM authentication and TLS channel binding types
 
@@ -102,6 +102,7 @@ copy("ssl/client.key", "$cert_tempdir/client_scram.key")
   "couldn't copy ssl/client_key to $cert_tempdir/client_scram.key for permission change: $!";
 chmod 0600, "$cert_tempdir/client_scram.key"
   or die "failed to change permissions on $cert_tempdir/client_scram.key: $!";
+$client_tmp_key =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 $node->connect_fails(
 	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR dbname=certdb user=ssltestuser channel_binding=require",
 	"Cert authentication and channel_binding=require",

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for timeline switch
 use strict;
@@ -38,8 +38,7 @@ $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 
 # Wait until standby has replayed enough data on standby 1
-$node_primary->wait_for_catchup($node_standby_1, 'replay',
-	$node_primary->lsn('write'));
+$node_primary->wait_for_catchup($node_standby_1);
 
 # Stop and remove primary
 $node_primary->teardown_node;
@@ -64,8 +63,7 @@ $node_standby_2->restart;
 # to ensure that the timeline switch has been done.
 $node_standby_1->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
-$node_standby_1->wait_for_catchup($node_standby_2, 'replay',
-	$node_standby_1->lsn('write'));
+$node_standby_1->wait_for_catchup($node_standby_2);
 
 my $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
@@ -103,8 +101,7 @@ $node_primary_2->promote;
 $node_standby_3->start;
 $node_primary_2->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT 1 AS a");
-$node_primary_2->wait_for_catchup($node_standby_3, 'replay',
-	$node_primary_2->lsn('write'));
+$node_primary_2->wait_for_catchup($node_standby_3);
 
 my $result_2 =
   $node_standby_3->safe_psql('postgres', "SELECT count(*) FROM tab_int");

@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/tab-complete.c
  */
@@ -278,25 +278,40 @@ do { \
 	matches = rl_completion_matches(text, complete_from_query); \
 } while (0)
 
+/*
+ * libedit will typically include the literal's leading single quote in
+ * "text", while readline will not.  Adapt our offered strings to fit.
+ * But include a quote if there's not one just before "text", to get the
+ * user off to the right start.
+ */
 #define COMPLETE_WITH_ENUM_VALUE(type) \
 do { \
 	char   *_completion_schema; \
 	char   *_completion_type; \
+	bool	use_quotes; \
 \
 	_completion_schema = strtokx(type, " \t\n\r", ".", "\"", 0, \
 								 false, false, pset.encoding); \
 	(void) strtokx(NULL, " \t\n\r", ".", "\"", 0, \
 				   false, false, pset.encoding); \
 	_completion_type = strtokx(NULL, " \t\n\r", ".", "\"", 0, \
-							   false, false, pset.encoding);  \
-	if (_completion_type == NULL)\
+							   false, false, pset.encoding); \
+	use_quotes = (text[0] == '\'' || \
+				  start == 0 || rl_line_buffer[start - 1] != '\''); \
+	if (_completion_type == NULL) \
 	{ \
-		completion_charp = Query_for_list_of_enum_values; \
+		if (use_quotes) \
+			completion_charp = Query_for_list_of_enum_values_quoted; \
+		else \
+			completion_charp = Query_for_list_of_enum_values_unquoted; \
 		completion_info_charp = type; \
 	} \
 	else \
 	{ \
-		completion_charp = Query_for_list_of_enum_values_with_schema; \
+		if (use_quotes) \
+			completion_charp = Query_for_list_of_enum_values_with_schema_quoted; \
+		else \
+			completion_charp = Query_for_list_of_enum_values_with_schema_unquoted; \
 		completion_info_charp = _completion_type; \
 		completion_info_charp2 = _completion_schema; \
 	} \
@@ -678,7 +693,7 @@ static const SchemaQuery Query_for_list_of_collations = {
 "   AND (pg_catalog.quote_ident(nspname)='%s' "\
 "        OR '\"' || nspname || '\"' ='%s') "
 
-#define Query_for_list_of_enum_values \
+#define Query_for_list_of_enum_values_quoted \
 "SELECT pg_catalog.quote_literal(enumlabel) "\
 "  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t "\
 " WHERE t.oid = e.enumtypid "\
@@ -687,12 +702,32 @@ static const SchemaQuery Query_for_list_of_collations = {
 "        OR '\"' || typname || '\"'='%s') "\
 "   AND pg_catalog.pg_type_is_visible(t.oid)"
 
-#define Query_for_list_of_enum_values_with_schema \
+#define Query_for_list_of_enum_values_unquoted \
+"SELECT enumlabel "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t "\
+" WHERE t.oid = e.enumtypid "\
+"   AND substring(enumlabel,1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
+"   AND pg_catalog.pg_type_is_visible(t.oid)"
+
+#define Query_for_list_of_enum_values_with_schema_quoted \
 "SELECT pg_catalog.quote_literal(enumlabel) "\
 "  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
 " WHERE t.oid = e.enumtypid "\
 "   AND n.oid = t.typnamespace "\
 "   AND substring(pg_catalog.quote_literal(enumlabel),1,%d)='%s' "\
+"   AND (pg_catalog.quote_ident(typname)='%s' "\
+"        OR '\"' || typname || '\"'='%s') "\
+"   AND (pg_catalog.quote_ident(nspname)='%s' "\
+"        OR '\"' || nspname || '\"' ='%s') "
+
+#define Query_for_list_of_enum_values_with_schema_unquoted \
+"SELECT enumlabel "\
+"  FROM pg_catalog.pg_enum e, pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
+" WHERE t.oid = e.enumtypid "\
+"   AND n.oid = t.typnamespace "\
+"   AND substring(enumlabel,1,%d)='%s' "\
 "   AND (pg_catalog.quote_ident(typname)='%s' "\
 "        OR '\"' || typname || '\"'='%s') "\
 "   AND (pg_catalog.quote_ident(nspname)='%s' "\
@@ -787,6 +822,15 @@ Query_for_index_of_table \
 " WHERE c1.oid=conrelid and (%d = pg_catalog.length('%s'))"\
 "       and pg_catalog.quote_ident(c1.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c1.oid)"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_constraint_of_table_not_validated \
+"SELECT pg_catalog.quote_ident(conname) "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_constraint con "\
+" WHERE c1.oid=conrelid and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(c1.relname)='%s'"\
+"       and pg_catalog.pg_table_is_visible(c1.oid)" \
+"       and not con.convalidated"
 
 #define Query_for_all_table_constraints \
 "SELECT pg_catalog.quote_ident(conname) "\
@@ -993,7 +1037,7 @@ Query_for_index_of_table \
 
 /*
  * These object types were introduced later than our support cutoff of
- * server version 7.4.  We use the VersionedQuery infrastructure so that
+ * server version 9.2.  We use the VersionedQuery infrastructure so that
  * we don't send certain-to-fail queries to older servers.
  */
 
@@ -1519,7 +1563,7 @@ psql_completion(const char *text, int start, int end)
 		"\\echo", "\\edit", "\\ef", "\\elif", "\\else", "\\encoding",
 		"\\endif", "\\errverbose", "\\ev",
 		"\\f",
-		"\\g", "\\gdesc", "\\gexec", "\\gset", "\\gx",
+		"\\g", "\\gdesc", "\\getenv", "\\gexec", "\\gset", "\\gx",
 		"\\help", "\\html",
 		"\\if", "\\include", "\\include_relative", "\\ir",
 		"\\list", "\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
@@ -2165,15 +2209,17 @@ psql_completion(const char *text, int start, int end)
 	/* If we have ALTER TABLE <sth> DROP COLUMN, provide list of columns */
 	else if (Matches("ALTER", "TABLE", MatchAny, "DROP", "COLUMN"))
 		COMPLETE_WITH_ATTR(prev3_wd, "");
-
-	/*
-	 * If we have ALTER TABLE <sth> ALTER|DROP|RENAME|VALIDATE CONSTRAINT,
-	 * provide list of constraints
-	 */
-	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER|DROP|RENAME|VALIDATE", "CONSTRAINT"))
+	/* ALTER TABLE <sth> ALTER|DROP|RENAME CONSTRAINT <constraint> */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER|DROP|RENAME", "CONSTRAINT"))
 	{
 		completion_info_charp = prev3_wd;
 		COMPLETE_WITH_QUERY(Query_for_constraint_of_table);
+	}
+	/* ALTER TABLE <sth> VALIDATE CONSTRAINT <non-validated constraint> */
+	else if (Matches("ALTER", "TABLE", MatchAny, "VALIDATE", "CONSTRAINT"))
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_constraint_of_table_not_validated);
 	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny) ||
@@ -2625,6 +2671,10 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "FOREIGN", "DATA", "WRAPPER", MatchAny))
 		COMPLETE_WITH("HANDLER", "VALIDATOR", "OPTIONS");
 
+	/* CREATE FOREIGN TABLE */
+	else if (Matches("CREATE", "FOREIGN", "TABLE", MatchAny))
+		COMPLETE_WITH("(", "PARTITION OF");
+
 	/* CREATE INDEX --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
 	else if (TailMatches("CREATE", "UNIQUE"))
@@ -2911,7 +2961,7 @@ psql_completion(const char *text, int start, int end)
 			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM"))
 		COMPLETE_WITH("FOR");
 	else if (Matches("CREATE", "TRANSFORM", "FOR") ||
-			 Matches("CREATE","OR", "REPLACE", "TRANSFORM", "FOR"))
+			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM", "FOR"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 	else if (Matches("CREATE", "TRANSFORM", "FOR", MatchAny) ||
 			 Matches("CREATE", "OR", "REPLACE", "TRANSFORM", "FOR", MatchAny))
@@ -4402,8 +4452,12 @@ psql_completion(const char *text, int start, int end)
 	if (matches == NULL)
 	{
 		COMPLETE_WITH_CONST(true, "");
+		/* Also, prevent Readline from appending stuff to the non-match */
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 		rl_completion_append_character = '\0';
+#endif
+#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
+		rl_completion_suppress_quote = 1;
 #endif
 	}
 

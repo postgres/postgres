@@ -3,7 +3,7 @@
  * heapam.c
  *	  heap access method code
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -4751,7 +4751,16 @@ failed:
 	{
 		Assert(result == TM_SelfModified || result == TM_Updated ||
 			   result == TM_Deleted || result == TM_WouldBlock);
-		Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
+
+		/*
+		 * When locking a tuple under LockWaitSkip semantics and we fail with
+		 * TM_WouldBlock above, it's possible for concurrent transactions to
+		 * release the lock and set HEAP_XMAX_INVALID in the meantime.  So
+		 * this assert is slightly different from the equivalent one in
+		 * heap_delete and heap_update.
+		 */
+		Assert((result == TM_WouldBlock) ||
+			   !(tuple->t_data->t_infomask & HEAP_XMAX_INVALID));
 		Assert(result != TM_Updated ||
 			   !ItemPointerEquals(&tuple->t_self, &tuple->t_data->t_ctid));
 		tmfd->ctid = tuple->t_data->t_ctid;
@@ -8448,7 +8457,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed,
 /*
  * Handles XLOG_HEAP2_PRUNE record type.
  *
- * Acquires a super-exclusive lock.
+ * Acquires a full cleanup lock.
  */
 static void
 heap_xlog_prune(XLogReaderState *record)
@@ -8534,7 +8543,7 @@ heap_xlog_prune(XLogReaderState *record)
 /*
  * Handles XLOG_HEAP2_VACUUM record type.
  *
- * Acquires an exclusive lock only.
+ * Acquires an ordinary exclusive lock only.
  */
 static void
 heap_xlog_vacuum(XLogReaderState *record)

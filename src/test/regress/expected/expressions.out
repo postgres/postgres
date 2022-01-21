@@ -194,6 +194,42 @@ explain (verbose, costs off) select * from numeric_view;
    Output: numeric_tbl.f1, (numeric_tbl.f1)::numeric(16,4), (numeric_tbl.f1)::numeric, numeric_tbl.f2, (numeric_tbl.f2)::numeric(16,4), numeric_tbl.f2
 (2 rows)
 
+-- bpchar, lacking planner support for its length coercion function,
+-- could behave differently
+create table bpchar_tbl (f1 character(16) unique, f2 bpchar);
+create view bpchar_view as
+  select
+    f1, f1::character(14) as f114, f1::bpchar as f1n,
+    f2, f2::character(14) as f214, f2::bpchar as f2n
+  from bpchar_tbl;
+\d+ bpchar_view
+                            View "public.bpchar_view"
+ Column |     Type      | Collation | Nullable | Default | Storage  | Description 
+--------+---------------+-----------+----------+---------+----------+-------------
+ f1     | character(16) |           |          |         | extended | 
+ f114   | character(14) |           |          |         | extended | 
+ f1n    | bpchar        |           |          |         | extended | 
+ f2     | bpchar        |           |          |         | extended | 
+ f214   | character(14) |           |          |         | extended | 
+ f2n    | bpchar        |           |          |         | extended | 
+View definition:
+ SELECT bpchar_tbl.f1,
+    bpchar_tbl.f1::character(14) AS f114,
+    bpchar_tbl.f1::bpchar AS f1n,
+    bpchar_tbl.f2,
+    bpchar_tbl.f2::character(14) AS f214,
+    bpchar_tbl.f2 AS f2n
+   FROM bpchar_tbl;
+
+explain (verbose, costs off) select * from bpchar_view
+  where f1::bpchar = 'foo';
+                                                                   QUERY PLAN                                                                   
+------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using bpchar_tbl_f1_key on public.bpchar_tbl
+   Output: bpchar_tbl.f1, (bpchar_tbl.f1)::character(14), (bpchar_tbl.f1)::bpchar, bpchar_tbl.f2, (bpchar_tbl.f2)::character(14), bpchar_tbl.f2
+   Index Cond: ((bpchar_tbl.f1)::bpchar = 'foo'::bpchar)
+(3 rows)
+
 rollback;
 --
 -- Tests for ScalarArrayOpExpr with a hashfn

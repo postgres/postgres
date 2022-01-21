@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Tests of pg_shmem.h functions
@@ -206,6 +206,9 @@ sub poll_start
 
 		# Wait 0.1 second before retrying.
 		usleep(100_000);
+
+		# Clean up in case the start attempt just timed out or some such.
+		$node->stop('fast', fail_ok => 1);
 
 		$attempts++;
 	}

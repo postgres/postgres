@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test primary/standby scenario where the track_commit_timestamp GUC is
 # repeatedly toggled on and off.

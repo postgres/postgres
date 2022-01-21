@@ -311,14 +311,3 @@ reset check_function_bodies;
 set default_with_oids to f;
 -- Should not allow to set it to true.
 set default_with_oids to t;
-
--- test SET unrecognized parameter
-SET foo = false;  -- no such setting
-
--- test setting a parameter with a registered prefix (plpgsql)
-SET plpgsql.extra_foo_warnings = false;  -- no such setting
-SHOW plpgsql.extra_foo_warnings;  -- but the parameter is set
-
--- cleanup
-RESET foo;
-RESET plpgsql.extra_foo_warnings;

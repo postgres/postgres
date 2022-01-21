@@ -2631,6 +2631,41 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
+        <term><literal>TARGET</literal> <replaceable>'target'</replaceable></term>
+        <listitem>
+         <para>
+          Tells the server where to send the backup. If not specified,
+          the legacy base backup protocol will be used. Otherwise, the new
+          protocol will be used, as described below.
+         </para>
+
+         <para>
+          If the target is <literal>client</literal>, the backup data is
+          sent to the client. If it is <literal>server</literal>, the backup
+          data is written to the server at the pathname specified by the
+          <literal>TARGET_DETAIL</literal> option. If it is
+          <literal>blackhole</literal>, the backup data is not sent
+          anywhere; it is simply discarded.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>TARGET_DETAIL</literal> <replaceable>'detail'</replaceable></term>
+        <listitem>
+         <para>
+          Provides additional information about the backup target.
+         </para>
+
+         <para>
+          Currently, this option can only be used when the backup target is
+          <literal>server</literal>. It specifies the server directory
+          to which the backup should be written.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>PROGRESS [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
@@ -2805,19 +2840,113 @@ The commands accepted in replication mode are:
 
      <para>
       After the second regular result set, one or more CopyOutResponse results
-      will be sent, one for the main data directory and one for each additional tablespace other
-      than <literal>pg_default</literal> and <literal>pg_global</literal>. The data in
-      the CopyOutResponse results will be a tar format (following the
-      <quote>ustar interchange format</quote> specified in the POSIX 1003.1-2008
-      standard) dump of the tablespace contents. Prior to
+      will be sent. If the <literal>TARGET</literal> option is not specified,
+      the legacy base backup protocol will be used. In this mode,
+      there will be one CopyOutResponse for the main directory, one for each
+      additional tablespace other than <literal>pg_default</literal> and
+      <literal>pg_global</literal>, and one for the backup manifested if
+      requested. The main data directory and any additional tablespaces will
+      be sent in tar format (following the <quote>ustar interchange
+      format</quote> specified in the POSIX 1003.1-2008 standard), and
+      the manifest will sent as a plain file.  Prior to
       <literal>PostgreSQL</literal> 15, the server omitted the two trailing
       blocks of zeroes specified in the standard, but this is no longer the
       case.
-      After the tar data is complete, and if a backup manifest was requested,
-      another CopyOutResponse result is sent, containing the manifest data for the
-      current base backup. In any case, a final ordinary result set will be
-      sent, containing the WAL end position of the backup, in the same format as
-      the start position.
+     </para>
+ 
+     <para>
+      New applications should specify the <literal>TARGET</literal> option.
+      When that option is used, a single CopyOutResponse will be sent, and
+      the payload of each CopyData message will contain a message in one of
+      the following formats:
+     </para>
+
+     <para>
+      <variablelist>
+
+      <varlistentry>
+        <term>new archive (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('n')</term>
+            <listitem><para>
+              Identifes the messaage as indicating the start of a new archive.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>String</term>
+            <listitem><para>
+              The file name for this archive.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>String</term>
+            <listitem><para>
+              For the main data directory, an empty string. For other
+              tablespaces, the full path to the directory from which this
+              archive was created.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>manifest (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('m')</term>
+            <listitem><para>
+              Identifes the message as indicating the start of the backup
+              manifest.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>archive or manifest data (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('d')</term>
+            <listitem><para>
+              Identifes the message as containing archive or manifest data.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Byte<replaceable>n</replaceable></term>
+            <listitem><para>
+              Data bytes.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>progress report (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('p')</term>
+            <listitem><para>
+              Identifes the message as a progress report.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Int64</term>
+            <listitem><para>
+              The number of bytes from the current tablespace for which
+              processing has been completed.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      </variablelist>
+     </para>
+
+     <para>
+      After the CopyOutResponse, or all such responses, have been sent, a
+      final ordinary result set will be sent, containing the WAL end position
+      of the backup, in the same format as the start position.
      </para>
 
      <para>

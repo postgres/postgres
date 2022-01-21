@@ -9,7 +9,7 @@
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
  * contrib/dblink/dblink.c
- * Copyright (c) 2001-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2022, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -2801,7 +2801,8 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 
 	ereport(level,
 			(errcode(sqlstate),
-			 message_primary ? errmsg_internal("%s", message_primary) :
+			 (message_primary != NULL && message_primary[0] != '\0') ?
+			 errmsg_internal("%s", message_primary) :
 			 errmsg("could not obtain message string for remote error"),
 			 message_detail ? errdetail_internal("%s", message_detail) : 0,
 			 message_hint ? errhint("%s", message_hint) : 0,

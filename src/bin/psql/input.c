@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.c
  */
@@ -356,8 +356,10 @@ initializeInput(int flags)
 		/* set appropriate values for Readline's global variables */
 		initialize_readline();
 
+#ifdef HAVE_RL_VARIABLE_BIND
 		/* set comment-begin to a useful value for SQL */
 		(void) rl_variable_bind("comment-begin", "-- ");
+#endif
 
 		/* this reads ~/.inputrc, so do it after rl_variable_bind */
 		rl_initialize();

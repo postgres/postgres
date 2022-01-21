@@ -137,7 +137,7 @@
    </biblioentry>
 
    <biblioentry id="sqltr-19075-6">
-    <title><ulink url="https://standards.iso.org/ittf/PubliclyAvailableStandards/c067367_ISO_IEC_TR_19075-6_2017.zip">SQL Technical Report</ulink></title>
+    <title>SQL Technical Report</title>
     <subtitle>Part 6: SQL support for JavaScript Object
       Notation (JSON)</subtitle>
     <edition>First Edition</edition>

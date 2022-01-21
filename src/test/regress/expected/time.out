@@ -161,11 +161,11 @@ SELECT EXTRACT(HOUR        FROM TIME '2020-05-26 13:30:25.575401');
 (1 row)
 
 SELECT EXTRACT(DAY         FROM TIME '2020-05-26 13:30:25.575401');  -- error
-ERROR:  "time" units "day" not recognized
+ERROR:  unit "day" not supported for type time without time zone
 SELECT EXTRACT(FORTNIGHT   FROM TIME '2020-05-26 13:30:25.575401');  -- error
-ERROR:  "time" units "fortnight" not recognized
+ERROR:  unit "fortnight" not recognized for type time without time zone
 SELECT EXTRACT(TIMEZONE    FROM TIME '2020-05-26 13:30:25.575401');  -- error
-ERROR:  "time" units "timezone" not recognized
+ERROR:  unit "timezone" not supported for type time without time zone
 SELECT EXTRACT(EPOCH       FROM TIME '2020-05-26 13:30:25.575401');
    extract    
 --------------

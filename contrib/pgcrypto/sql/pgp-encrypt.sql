@@ -1,8 +1,6 @@
 --
 -- PGP encrypt
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 
 select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'), 'key');
 
@@ -30,7 +28,7 @@ select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'),
 select pgp_sym_decrypt(pgp_sym_encrypt_bytea('Binary', 'baz'), 'baz');
 
 -- text as bytea
-select pgp_sym_decrypt_bytea(pgp_sym_encrypt('Text', 'baz'), 'baz');
+select encode(pgp_sym_decrypt_bytea(pgp_sym_encrypt('Text', 'baz'), 'baz'), 'escape');
 
 
 -- algorithm change
@@ -95,12 +93,12 @@ select pgp_sym_decrypt(
 	'key', 'expect-disable-mdc=1');
 
 -- crlf
-select encode(pgp_sym_decrypt_bytea(
+select pgp_sym_decrypt_bytea(
 	pgp_sym_encrypt(E'1\n2\n3\r\n', 'key', 'convert-crlf=1'),
-	'key'), 'hex');
+	'key');
 
 -- conversion should be lossless
-select encode(digest(pgp_sym_decrypt(
+select digest(pgp_sym_decrypt(
   pgp_sym_encrypt(E'\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
-	'key', 'convert-crlf=1'), 'sha1'), 'hex') as result,
-  encode(digest(E'\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
+	'key', 'convert-crlf=1'), 'sha1') as result,
+  digest(E'\r\n0\n1\r\r\n\n2\r', 'sha1') as expect;

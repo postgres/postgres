@@ -3,7 +3,7 @@
  * syscache.c
  *	  System cache management routines
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -774,11 +774,11 @@ static const struct cachedesc cacheinfo[] = {
 		32
 	},
 	{StatisticExtDataRelationId,	/* STATEXTDATASTXOID */
-		StatisticExtDataStxoidIndexId,
-		1,
+		StatisticExtDataStxoidInhIndexId,
+		2,
 		{
 			Anum_pg_statistic_ext_data_stxoid,
-			0,
+			Anum_pg_statistic_ext_data_stxdinherit,
 			0,
 			0
 		},

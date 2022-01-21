@@ -1681,6 +1681,22 @@ select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
  4567890123456789 | -4567890123456789
 (5 rows)
 
+create table tt15v_log(o tt15v, n tt15v, incr bool);
+create rule updlog as on update to tt15v do also
+  insert into tt15v_log values(old, new, row(old,old) < row(new,new));
+\d+ tt15v
+                             View "testviewschm2.tt15v"
+ Column |      Type       | Collation | Nullable | Default | Storage  | Description 
+--------+-----------------+-----------+----------+---------+----------+-------------
+ row    | nestedcomposite |           |          |         | extended | 
+View definition:
+ SELECT ROW(i.*::int8_tbl)::nestedcomposite AS "row"
+   FROM int8_tbl i;
+Rules:
+ updlog AS
+    ON UPDATE TO tt15v DO  INSERT INTO tt15v_log (o, n, incr)
+  VALUES (old.*::tt15v, new.*::tt15v, (ROW(old.*::tt15v, old.*::tt15v) < ROW(new.*::tt15v, new.*::tt15v)))
+
 -- check unique-ification of overlength names
 create view tt18v as
   select * from int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy
@@ -1994,7 +2010,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 73 other objects
+NOTICE:  drop cascades to 74 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2058,6 +2074,7 @@ drop cascades to type nestedcomposite
 drop cascades to view tt15v
 drop cascades to view tt16v
 drop cascades to view tt17v
+drop cascades to table tt15v_log
 drop cascades to view tt18v
 drop cascades to view tt19v
 drop cascades to view tt20v

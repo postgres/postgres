@@ -8,7 +8,7 @@
  *	  This file contains only the public interface routines.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1161,9 +1161,9 @@ backtrack:
 					nhtidslive;
 
 		/*
-		 * Trade in the initial read lock for a super-exclusive write lock on
-		 * this page.  We must get such a lock on every leaf page over the
-		 * course of the vacuum scan, whether or not it actually contains any
+		 * Trade in the initial read lock for a full cleanup lock on this
+		 * page.  We must get such a lock on every leaf page over the course
+		 * of the vacuum scan, whether or not it actually contains any
 		 * deletable tuples --- see nbtree/README.
 		 */
 		_bt_upgradelockbufcleanup(rel, buf);

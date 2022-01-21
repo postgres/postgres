@@ -72,6 +72,175 @@ $$;
 --
 -- UTF-8
 --
+-- The description column must be unique.
+CREATE TABLE utf8_verification_inputs (inbytes bytea, description text PRIMARY KEY);
+insert into utf8_verification_inputs  values
+  ('\x66006f',	'NUL byte'),
+  ('\xaf',		'bare continuation'),
+  ('\xc5',		'missing second byte in 2-byte char'),
+  ('\xc080',	'smallest 2-byte overlong'),
+  ('\xc1bf',	'largest 2-byte overlong'),
+  ('\xc280',	'next 2-byte after overlongs'),
+  ('\xdfbf',	'largest 2-byte'),
+  ('\xe9af',	'missing third byte in 3-byte char'),
+  ('\xe08080',	'smallest 3-byte overlong'),
+  ('\xe09fbf',	'largest 3-byte overlong'),
+  ('\xe0a080',	'next 3-byte after overlong'),
+  ('\xed9fbf',	'last before surrogates'),
+  ('\xeda080',	'smallest surrogate'),
+  ('\xedbfbf',	'largest surrogate'),
+  ('\xee8080',	'next after surrogates'),
+  ('\xefbfbf',	'largest 3-byte'),
+  ('\xf1afbf',	'missing fourth byte in 4-byte char'),
+  ('\xf0808080',	'smallest 4-byte overlong'),
+  ('\xf08fbfbf',	'largest 4-byte overlong'),
+  ('\xf0908080',	'next 4-byte after overlong'),
+  ('\xf48fbfbf',	'largest 4-byte'),
+  ('\xf4908080',	'smallest too large'),
+  ('\xfa9a9a8a8a',	'5-byte');
+-- Test UTF-8 verification slow path
+select description, (test_conv(inbytes, 'utf8', 'utf8')).* from utf8_verification_inputs;
+            description             |   result   |   errorat    |                             error                              
+------------------------------------+------------+--------------+----------------------------------------------------------------
+ NUL byte                           | \x66       | \x006f       | invalid byte sequence for encoding "UTF8": 0x00
+ bare continuation                  | \x         | \xaf         | invalid byte sequence for encoding "UTF8": 0xaf
+ missing second byte in 2-byte char | \x         | \xc5         | invalid byte sequence for encoding "UTF8": 0xc5
+ smallest 2-byte overlong           | \x         | \xc080       | invalid byte sequence for encoding "UTF8": 0xc0 0x80
+ largest 2-byte overlong            | \x         | \xc1bf       | invalid byte sequence for encoding "UTF8": 0xc1 0xbf
+ next 2-byte after overlongs        | \xc280     |              | 
+ largest 2-byte                     | \xdfbf     |              | 
+ missing third byte in 3-byte char  | \x         | \xe9af       | invalid byte sequence for encoding "UTF8": 0xe9 0xaf
+ smallest 3-byte overlong           | \x         | \xe08080     | invalid byte sequence for encoding "UTF8": 0xe0 0x80 0x80
+ largest 3-byte overlong            | \x         | \xe09fbf     | invalid byte sequence for encoding "UTF8": 0xe0 0x9f 0xbf
+ next 3-byte after overlong         | \xe0a080   |              | 
+ last before surrogates             | \xed9fbf   |              | 
+ smallest surrogate                 | \x         | \xeda080     | invalid byte sequence for encoding "UTF8": 0xed 0xa0 0x80
+ largest surrogate                  | \x         | \xedbfbf     | invalid byte sequence for encoding "UTF8": 0xed 0xbf 0xbf
+ next after surrogates              | \xee8080   |              | 
+ largest 3-byte                     | \xefbfbf   |              | 
+ missing fourth byte in 4-byte char | \x         | \xf1afbf     | invalid byte sequence for encoding "UTF8": 0xf1 0xaf 0xbf
+ smallest 4-byte overlong           | \x         | \xf0808080   | invalid byte sequence for encoding "UTF8": 0xf0 0x80 0x80 0x80
+ largest 4-byte overlong            | \x         | \xf08fbfbf   | invalid byte sequence for encoding "UTF8": 0xf0 0x8f 0xbf 0xbf
+ next 4-byte after overlong         | \xf0908080 |              | 
+ largest 4-byte                     | \xf48fbfbf |              | 
+ smallest too large                 | \x         | \xf4908080   | invalid byte sequence for encoding "UTF8": 0xf4 0x90 0x80 0x80
+ 5-byte                             | \x         | \xfa9a9a8a8a | invalid byte sequence for encoding "UTF8": 0xfa
+(23 rows)
+
+-- Test UTF-8 verification with ASCII padding appended to provide
+-- coverage for algorithms that work on multiple bytes at a time.
+-- The error message for a sequence starting with a 4-byte lead
+-- will contain all 4 bytes if they are present, so various
+-- expressions below add 3 ASCII bytes to the end to ensure
+-- consistent error messages.
+-- The number 64 below needs to be at least the value of STRIDE_LENGTH in wchar.c.
+-- Test multibyte verification in fast path
+with test_bytes as (
+  select
+    inbytes,
+    description,
+    (test_conv(inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from utf8_verification_inputs
+), test_padded as (
+  select
+    description,
+    (test_conv(inbytes || repeat('.', 64)::bytea, 'utf8', 'utf8')).error
+  from test_bytes
+)
+select
+  description,
+  b.error as orig_error,
+  p.error as error_after_padding
+from test_padded p
+join test_bytes b
+using (description)
+where p.error is distinct from b.error
+order by description;
+ description | orig_error | error_after_padding 
+-------------+------------+---------------------
+(0 rows)
+
+-- Test ASCII verification in fast path where incomplete
+-- UTF-8 sequences fall at the end of the preceding chunk.
+with test_bytes as (
+  select
+    inbytes,
+    description,
+    (test_conv(inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from utf8_verification_inputs
+), test_padded as (
+  select
+    description,
+    (test_conv(repeat('.', 64 - length(inbytes))::bytea || inbytes || repeat('.', 64)::bytea, 'utf8', 'utf8')).error
+  from test_bytes
+)
+select
+  description,
+  b.error as orig_error,
+  p.error as error_after_padding
+from test_padded p
+join test_bytes b
+using (description)
+where p.error is distinct from b.error
+order by description;
+ description | orig_error | error_after_padding 
+-------------+------------+---------------------
+(0 rows)
+
+-- Test cases where UTF-8 sequences within short text
+-- come after the fast path returns.
+with test_bytes as (
+  select
+    inbytes,
+    description,
+    (test_conv(inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from utf8_verification_inputs
+), test_padded as (
+  select
+    description,
+    (test_conv(repeat('.', 64)::bytea || inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from test_bytes
+)
+select
+  description,
+  b.error as orig_error,
+  p.error as error_after_padding
+from test_padded p
+join test_bytes b
+using (description)
+where p.error is distinct from b.error
+order by description;
+ description | orig_error | error_after_padding 
+-------------+------------+---------------------
+(0 rows)
+
+-- Test cases where incomplete UTF-8 sequences fall at the
+-- end of the part checked by the fast path.
+with test_bytes as (
+  select
+    inbytes,
+    description,
+    (test_conv(inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from utf8_verification_inputs
+), test_padded as (
+  select
+    description,
+    (test_conv(repeat('.', 64 - length(inbytes))::bytea || inbytes || repeat('.', 3)::bytea, 'utf8', 'utf8')).error
+  from test_bytes
+)
+select
+  description,
+  b.error as orig_error,
+  p.error as error_after_padding
+from test_padded p
+join test_bytes b
+using (description)
+where p.error is distinct from b.error
+order by description;
+ description | orig_error | error_after_padding 
+-------------+------------+---------------------
+(0 rows)
+
 CREATE TABLE utf8_inputs (inbytes bytea, description text);
 insert into utf8_inputs  values
   ('\x666f6f',		'valid, pure ASCII'),

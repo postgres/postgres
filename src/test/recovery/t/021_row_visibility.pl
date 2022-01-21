@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Checks that snapshots on standbys behave in a minimally reasonable
 # way.
@@ -76,8 +76,7 @@ ok( send_query_and_wait(
 #
 $node_primary->psql('postgres',
 	"INSERT INTO test_visibility VALUES ('first insert')");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -98,8 +97,7 @@ UPDATE test_visibility SET data = 'first update' RETURNING data;
 	'UPDATE');
 
 $node_primary->psql('postgres', "SELECT txid_current();");  # ensure WAL flush
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -112,8 +110,7 @@ ok( send_query_and_wait(
 #
 ok(send_query_and_wait(\%psql_primary, q[COMMIT;], qr/^COMMIT$/m), 'COMMIT');
 
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -142,8 +139,7 @@ PREPARE TRANSACTION 'will_abort';
 		qr/^PREPARE TRANSACTION$/m),
 	'prepared will_abort');
 
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -154,8 +150,7 @@ ok( send_query_and_wait(
 # For some variation, finish prepared xacts via separate connections
 $node_primary->safe_psql('postgres', "COMMIT PREPARED 'will_commit';");
 $node_primary->safe_psql('postgres', "ROLLBACK PREPARED 'will_abort';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,

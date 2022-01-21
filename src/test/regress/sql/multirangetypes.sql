@@ -25,6 +25,7 @@ select '{}'::textmultirange;
 select '  {}  '::textmultirange;
 select ' { empty, empty }  '::textmultirange;
 select ' {( " a " " a ", " z " " z " )  }'::textmultirange;
+select textrange('\\\\', repeat('a', 200))::textmultirange;
 select '{(,z)}'::textmultirange;
 select '{(a,)}'::textmultirange;
 select '{[,z]}'::textmultirange;
@@ -63,7 +64,7 @@ select '{(a,a)}'::textmultirange;
 select textmultirange();
 select textmultirange(textrange('a', 'c'));
 select textmultirange(textrange('a', 'c'), textrange('f', 'g'));
-select textmultirange(textrange('a', 'c'), textrange('b', 'd'));
+select textmultirange(textrange('\\\\', repeat('a', 200)), textrange('c', 'd'));
 
 --
 -- test casts, both a built-in range type and a user-defined one:
@@ -82,6 +83,7 @@ select textrange(null, null)::textmultirange;
 --
 select unnest(int4multirange(int4range('5', '6'), int4range('1', '2')));
 select unnest(textmultirange(textrange('a', 'b'), textrange('d', 'e')));
+select unnest(textmultirange(textrange('\\\\', repeat('a', 200)), textrange('c', 'd')));
 
 --
 -- create some test data and test the operators

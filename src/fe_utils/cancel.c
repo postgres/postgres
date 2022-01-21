@@ -6,7 +6,7 @@
  * handler for SIGINT.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/fe-utils/cancel.c
@@ -41,6 +41,13 @@
  * a database connection to the backend.
  */
 static PGcancel *volatile cancelConn = NULL;
+
+/*
+ * Predetermined localized error strings --- needed to avoid trying
+ * to call gettext() from a signal handler.
+ */
+static const char *cancel_sent_msg = NULL;
+static const char *cancel_not_sent_msg = NULL;
 
 /*
  * CancelRequested is set when we receive SIGINT (or local equivalent).
@@ -158,11 +165,11 @@ handle_sigint(SIGNAL_ARGS)
 	{
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 		{
-			write_stderr(_("Cancel request sent\n"));
+			write_stderr(cancel_sent_msg);
 		}
 		else
 		{
-			write_stderr(_("Could not send cancel request: "));
+			write_stderr(cancel_not_sent_msg);
 			write_stderr(errbuf);
 		}
 	}
@@ -179,6 +186,9 @@ void
 setup_cancel_handler(void (*callback) (void))
 {
 	cancel_callback = callback;
+	cancel_sent_msg = _("Cancel request sent\n");
+	cancel_not_sent_msg = _("Could not send cancel request: ");
+
 	pqsignal(SIGINT, handle_sigint);
 }
 
@@ -203,11 +213,11 @@ consoleHandler(DWORD dwCtrlType)
 		{
 			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 			{
-				write_stderr(_("Cancel request sent\n"));
+				write_stderr(cancel_sent_msg);
 			}
 			else
 			{
-				write_stderr(_("Could not send cancel request: "));
+				write_stderr(cancel_not_sent_msg);
 				write_stderr(errbuf);
 			}
 		}
@@ -225,6 +235,8 @@ void
 setup_cancel_handler(void (*callback) (void))
 {
 	cancel_callback = callback;
+	cancel_sent_msg = _("Cancel request sent\n");
+	cancel_not_sent_msg = _("Could not send cancel request: ");
 
 	InitializeCriticalSection(&cancelConnLock);
 

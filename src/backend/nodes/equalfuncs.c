@@ -18,7 +18,7 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2726,6 +2726,7 @@ _equalConstraint(const Constraint *a, const Constraint *b)
 	COMPARE_SCALAR_FIELD(fk_matchtype);
 	COMPARE_SCALAR_FIELD(fk_upd_action);
 	COMPARE_SCALAR_FIELD(fk_del_action);
+	COMPARE_NODE_FIELD(fk_del_set_cols);
 	COMPARE_NODE_FIELD(old_conpfeqop);
 	COMPARE_SCALAR_FIELD(old_pktable_oid);
 	COMPARE_SCALAR_FIELD(skip_validation);
@@ -3125,7 +3126,7 @@ _equalList(const List *a, const List *b)
 static bool
 _equalInteger(const Integer *a, const Integer *b)
 {
-	COMPARE_SCALAR_FIELD(val);
+	COMPARE_SCALAR_FIELD(ival);
 
 	return true;
 }
@@ -3133,7 +3134,15 @@ _equalInteger(const Integer *a, const Integer *b)
 static bool
 _equalFloat(const Float *a, const Float *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(fval);
+
+	return true;
+}
+
+static bool
+_equalBoolean(const Boolean *a, const Boolean *b)
+{
+	COMPARE_SCALAR_FIELD(boolval);
 
 	return true;
 }
@@ -3141,7 +3150,7 @@ _equalFloat(const Float *a, const Float *b)
 static bool
 _equalString(const String *a, const String *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(sval);
 
 	return true;
 }
@@ -3149,7 +3158,7 @@ _equalString(const String *a, const String *b)
 static bool
 _equalBitString(const BitString *a, const BitString *b)
 {
-	COMPARE_STRING_FIELD(val);
+	COMPARE_STRING_FIELD(bsval);
 
 	return true;
 }
@@ -3373,6 +3382,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_Float:
 			retval = _equalFloat(a, b);
+			break;
+		case T_Boolean:
+			retval = _equalBoolean(a, b);
 			break;
 		case T_String:
 			retval = _equalString(a, b);

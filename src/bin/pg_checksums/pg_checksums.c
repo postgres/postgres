@@ -4,7 +4,7 @@
  *	  Checks, enables or disables page level checksums for an offline
  *	  cluster
  *
- * Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_checksums/pg_checksums.c
@@ -192,7 +192,7 @@ skipfile(const char *fn)
 }
 
 static void
-scan_file(const char *fn, BlockNumber segmentno)
+scan_file(const char *fn, int segmentno)
 {
 	PGAlignedBlock buf;
 	PageHeader	header = (PageHeader) buf.data;
@@ -370,7 +370,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 			char		fnonly[MAXPGPATH];
 			char	   *forkpath,
 					   *segmentpath;
-			BlockNumber segmentno = 0;
+			int			segmentno = 0;
 
 			if (skipfile(de->d_name))
 				continue;

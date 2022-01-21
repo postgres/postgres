@@ -4,7 +4,7 @@
  *
  *	  Routines for tsearch manipulation commands
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1741,6 +1741,15 @@ buildDefItem(const char *name, const char *val, bool was_quoted)
 		if (errno == 0 && *endptr == '\0')
 			return makeDefElem(pstrdup(name),
 							   (Node *) makeFloat(pstrdup(val)),
+							   -1);
+
+		if (strcmp(val, "true") == 0)
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeBoolean(true),
+							   -1);
+		if (strcmp(val, "false") == 0)
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeBoolean(false),
 							   -1);
 	}
 	/* Just make it a string */

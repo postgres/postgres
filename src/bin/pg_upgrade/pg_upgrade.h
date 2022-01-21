@@ -1,7 +1,7 @@
 /*
  *	pg_upgrade.h
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/pg_upgrade.h
  */
 
@@ -89,19 +89,7 @@ extern char *output_files[];
 
 
 /*
- * postmaster/postgres -b (binary_upgrade) flag added during PG 9.1
- * development
- */
-#define BINARY_UPGRADE_SERVER_FLAG_CAT_VER 201104251
-
-/*
- *	Visibility map changed with this 9.2 commit,
- *	8f9fe6edce358f7904e0db119416b4d1080a83aa; pick later catalog version.
- */
-#define VISIBILITY_MAP_CRASHSAFE_CAT_VER 201107031
-
-/*
- * The format of visibility map is changed with this 9.6 commit,
+ * The format of visibility map was changed with this 9.6 commit.
  */
 #define VISIBILITY_MAP_FROZEN_BIT_CAT_VER 201603011
 
@@ -159,13 +147,7 @@ typedef struct
 	const char *new_tablespace_suffix;
 	Oid			old_db_oid;
 	Oid			new_db_oid;
-
-	/*
-	 * old/new relfilenodes might differ for pg_largeobject(_metadata) indexes
-	 * due to VACUUM FULL or REINDEX.  Other relfilenodes are preserved.
-	 */
-	Oid			old_relfilenode;
-	Oid			new_relfilenode;
+	Oid			relfilenode;
 	/* the rest are used only for logging and error reporting */
 	char	   *nspname;		/* namespaces */
 	char	   *relname;
@@ -291,6 +273,7 @@ typedef struct
 {
 	bool		check;			/* true -> ask user for permission to make
 								 * changes */
+	bool		do_sync;		/* flush changes to disk */
 	transferMode transfer_mode; /* copy files or link them? */
 	int			jobs;			/* number of processes/threads to use */
 	char	   *socketdir;		/* directory to use for Unix sockets */
@@ -390,8 +373,6 @@ FileNameMap *gen_db_file_maps(DbInfo *old_db,
 							  DbInfo *new_db, int *nmaps, const char *old_pgdata,
 							  const char *new_pgdata);
 void		get_db_and_rel_infos(ClusterInfo *cluster);
-void		print_maps(FileNameMap *maps, int n,
-					   const char *db_name);
 
 /* option.c */
 
@@ -447,8 +428,6 @@ bool		check_for_data_types_usage(ClusterInfo *cluster,
 bool		check_for_data_type_usage(ClusterInfo *cluster,
 									  const char *type_name,
 									  const char *output_path);
-void		new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
-													 bool check_mode);
 void		old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 void		old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster);
 void		old_9_6_invalidate_hash_indexes(ClusterInfo *cluster,

@@ -89,7 +89,7 @@ ALTER TABLE reloptions_test RESET (fillfactor=12);
 ERROR:  RESET must not include values for parameters
 -- Test vacuum_truncate option
 DROP TABLE reloptions_test;
-CREATE TABLE reloptions_test(i INT NOT NULL, j text)
+CREATE TEMP TABLE reloptions_test(i INT NOT NULL, j text)
 	WITH (vacuum_truncate=false,
 	toast.vacuum_truncate=false,
 	autovacuum_enabled=false);
@@ -103,7 +103,7 @@ INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
 ERROR:  null value in column "i" of relation "reloptions_test" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 -- Do an aggressive vacuum to prevent page-skipping.
-VACUUM FREEZE reloptions_test;
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) reloptions_test;
 SELECT pg_relation_size('reloptions_test') > 0;
  ?column? 
 ----------
@@ -129,7 +129,7 @@ INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
 ERROR:  null value in column "i" of relation "reloptions_test" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 -- Do an aggressive vacuum to prevent page-skipping.
-VACUUM FREEZE reloptions_test;
+VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) reloptions_test;
 SELECT pg_relation_size('reloptions_test') = 0;
  ?column? 
 ----------

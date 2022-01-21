@@ -1,72 +1,72 @@
 --
 -- HMAC-MD5
 --
-SELECT encode(hmac(
+SELECT hmac(
 'Hi There',
-decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 9294727a3638bb1c13f48ef8158bfc9d
+'\x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x9294727a3638bb1c13f48ef8158bfc9d
 (1 row)
 
 -- 2
-SELECT encode(hmac(
+SELECT hmac(
 'Jefe',
 'what do ya want for nothing?',
-'md5'), 'hex');
-              encode              
-----------------------------------
- 813aead7c4a34bff01a16d61368e7c13
+'md5');
+                hmac                
+------------------------------------
+ \x813aead7c4a34bff01a16d61368e7c13
 (1 row)
 
 -- 3
-SELECT encode(hmac(
-decode('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'hex'),
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 56be34521d144c88dbb8c733f0e8b3f6
+SELECT hmac(
+'\xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'::bytea,
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x56be34521d144c88dbb8c733f0e8b3f6
 (1 row)
 
 -- 4
-SELECT encode(hmac(
-decode('cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', 'hex'),
-decode('0102030405060708090a0b0c0d0e0f10111213141516171819', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 697eaf0aca3a3aea3a75164746ffaa79
+SELECT hmac(
+'\xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd'::bytea,
+'\x0102030405060708090a0b0c0d0e0f10111213141516171819'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x697eaf0aca3a3aea3a75164746ffaa79
 (1 row)
 
 -- 5
-SELECT encode(hmac(
+SELECT hmac(
 'Test With Truncation',
-decode('0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 56461ef2342edc00f9bab995690efd4c
+'\x0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x56461ef2342edc00f9bab995690efd4c
 (1 row)
 
 -- 6
-SELECT encode(hmac(
+SELECT hmac(
 'Test Using Larger Than Block-Size Key - Hash Key First',
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd
 (1 row)
 
 -- 7
-SELECT encode(hmac(
+SELECT hmac(
 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data',
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'md5'), 'hex');
-              encode              
-----------------------------------
- 6f630fad67cda0ee1fb1f562db3aa53e
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'md5');
+                hmac                
+------------------------------------
+ \x6f630fad67cda0ee1fb1f562db3aa53e
 (1 row)
 

@@ -13,7 +13,7 @@
  * estimates are already available in pg_statistic.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -146,14 +146,15 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
  *		Load the ndistinct value for the indicated pg_statistic_ext tuple
  */
 MVNDistinct *
-statext_ndistinct_load(Oid mvoid)
+statext_ndistinct_load(Oid mvoid, bool inh)
 {
 	MVNDistinct *result;
 	bool		isnull;
 	Datum		ndist;
 	HeapTuple	htup;
 
-	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
+	htup = SearchSysCache2(STATEXTDATASTXOID,
+						   ObjectIdGetDatum(mvoid), BoolGetDatum(inh));
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
 

@@ -4,7 +4,7 @@
  *	Catalog routines used by pg_dump; long ago these were shared
  *	by another dump tool, but not anymore.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -584,6 +584,8 @@ AssignDumpId(DumpableObject *dobj)
 	dobj->namespace = NULL;		/* may be set later */
 	dobj->dump = DUMP_COMPONENT_ALL;	/* default assumption */
 	dobj->dump_contains = DUMP_COMPONENT_ALL;	/* default assumption */
+	/* All objects have definitions; we may set more components bits later */
+	dobj->components = DUMP_COMPONENT_DEFINITION;
 	dobj->ext_member = false;	/* default assumption */
 	dobj->depends_on_ext = false;	/* default assumption */
 	dobj->dependencies = NULL;

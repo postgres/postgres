@@ -3,7 +3,7 @@
  * checksum_helper.c
  *	  Compute a checksum of any of various types using common routines
  *
- * Portions Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/common/checksum_helper.c

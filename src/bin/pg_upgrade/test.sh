@@ -6,7 +6,7 @@
 # runs the regression tests (to put in some data), runs pg_dumpall,
 # runs pg_upgrade, runs pg_dumpall again, compares the dumps.
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 
 set -e
@@ -181,53 +181,11 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	# Before dumping, tweak the database of the old instance depending
 	# on its version.
 	if [ "$newsrc" != "$oldsrc" ]; then
-		fix_sql=""
-		# Get rid of objects not feasible in later versions
-		case $oldpgversion in
-			804??)
-				fix_sql="DROP FUNCTION public.myfunc(integer);"
-				;;
-		esac
-
-		# Last appeared in v9.6
-		if [ $oldpgversion -lt 100000 ]; then
-			fix_sql="$fix_sql
-					 DROP FUNCTION IF EXISTS
-						public.oldstyle_length(integer, text);"
-		fi
-		# Last appeared in v13
-		if [ $oldpgversion -lt 140000 ]; then
-			fix_sql="$fix_sql
-				 DROP FUNCTION IF EXISTS
-					public.putenv(text);	-- last in v13
-				 DROP OPERATOR IF EXISTS	-- last in v13
-					public.#@# (pg_catalog.int8, NONE),
-					public.#%# (pg_catalog.int8, NONE),
-					public.!=- (pg_catalog.int8, NONE),
-					public.#@%# (pg_catalog.int8, NONE);"
-		fi
-		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
-
-		# WITH OIDS is not supported anymore in v12, so remove support
-		# for any relations marked as such.
-		if [ $oldpgversion -lt 120000 ]; then
-			fix_sql="DO \$stmt\$
-				DECLARE
-					rec text;
-				BEGIN
-				FOR rec in
-					SELECT oid::regclass::text
-					FROM pg_class
-					WHERE relname !~ '^pg_'
-						AND relhasoids
-						AND relkind in ('r','m')
-					ORDER BY 1
-				LOOP
-					execute 'ALTER TABLE ' || rec || ' SET WITHOUT OIDS';
-				END LOOP;
-				END; \$stmt\$;"
-			psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
-		fi
+		# This SQL script has its own idea of the cleanup that needs to be
+		# done on the cluster to-be-upgraded, and includes version checks.
+		# Note that this uses the script stored on the new branch.
+		psql -X -d regression -f "$newsrc/src/bin/pg_upgrade/upgrade_adapt.sql" \
+			|| psql_fix_sql_status=$?
 
 		# Handling of --extra-float-digits gets messy after v12.
 		# Note that this changes the dumps from the old and new
@@ -244,9 +202,6 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 		# update references to old source tree's regress.so etc
 		fix_sql=""
 		case $oldpgversion in
-			804??)
-				fix_sql="UPDATE pg_proc SET probin = replace(probin::text, '$oldsrc', '$newsrc')::bytea WHERE probin LIKE '$oldsrc%';"
-				;;
 			*)
 				fix_sql="UPDATE pg_proc SET probin = replace(probin, '$oldsrc', '$newsrc') WHERE probin LIKE '$oldsrc%';"
 				;;
@@ -278,7 +233,7 @@ PGDATA="$BASE_PGDATA"
 
 standard_initdb 'initdb'
 
-pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "$PGDATA" -b "$oldbindir" -p "$PGPORT" -P "$PGPORT"
+pg_upgrade $PG_UPGRADE_OPTS --no-sync -d "${PGDATA}.old" -D "$PGDATA" -b "$oldbindir" -p "$PGPORT" -P "$PGPORT"
 
 # make sure all directories and files have group permissions, on Unix hosts
 # Windows hosts don't support Unix-y permissions.

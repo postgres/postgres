@@ -7,7 +7,7 @@
  *	AccessExclusiveLocks and starting snapshots for Hot Standby mode.
  *	Plus conflict recovery processing.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1182,7 +1182,7 @@ standby_redo(XLogReaderState *record)
  * starting to accumulate changes at a point just prior to when we derive
  * the snapshot on the primary, then ignore duplicates when we later apply
  * the snapshot from the running xacts record. This is implemented during
- * CreateCheckpoint() where we use the logical checkpoint location as
+ * CreateCheckPoint() where we use the logical checkpoint location as
  * our starting point and then write the running xacts record immediately
  * before writing the main checkpoint WAL record. Since we always start
  * up from a checkpoint and are immediately at our starting point, we

@@ -41,6 +41,9 @@ SELECT num_nulls();
 
 SELECT pg_log_backend_memory_contexts(pg_backend_pid());
 
+SELECT pg_log_backend_memory_contexts(pid) FROM pg_stat_activity
+  WHERE backend_type = 'checkpointer';
+
 CREATE ROLE regress_log_memory;
 
 SELECT has_function_privilege('regress_log_memory',

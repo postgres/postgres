@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Testing streaming replication where standby is promoted and a new cascading
 # standby (without WAL) is connected to the promoted standby.  Both archiving
@@ -101,8 +101,7 @@ $node_cascade->start;
 $node_standby->safe_psql('postgres', "CREATE TABLE tab_int AS SELECT 1 AS a");
 
 # Wait for the replication to catch up
-$node_standby->wait_for_catchup($node_cascade, 'replay',
-	$node_standby->lsn('insert'));
+$node_standby->wait_for_catchup($node_cascade);
 
 # Check that cascading standby has the new content
 my $result =

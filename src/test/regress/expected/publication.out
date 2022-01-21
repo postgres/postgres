@@ -373,6 +373,21 @@ ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- ok
 DROP PUBLICATION testpub2;
 DROP PUBLICATION testpub3;
 SET ROLE regress_publication_user;
+CREATE ROLE regress_publication_user3;
+GRANT regress_publication_user2 TO regress_publication_user3;
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub4 FOR ALL TABLES IN SCHEMA pub_test;
+RESET client_min_messages;
+ALTER PUBLICATION testpub4 OWNER TO regress_publication_user3;
+SET ROLE regress_publication_user3;
+-- fail - new owner must be superuser
+ALTER PUBLICATION testpub4 owner to regress_publication_user2; -- fail
+ERROR:  permission denied to change owner of publication "testpub4"
+HINT:  The owner of a FOR ALL TABLES IN SCHEMA publication must be a superuser.
+ALTER PUBLICATION testpub4 owner to regress_publication_user; -- ok
+SET ROLE regress_publication_user;
+DROP PUBLICATION testpub4;
+DROP ROLE regress_publication_user3;
 REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;
 DROP TABLE testpub_parted;
 DROP TABLE testpub_tbl1;
@@ -494,9 +509,10 @@ RESET SEARCH_PATH;
 -- check create publication on CURRENT_SCHEMA where TABLE/ALL TABLES in SCHEMA
 -- is not specified
 CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
-ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_forschema1 FOR CURRENT_SCHEMA;
                                                   ^
+DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
 -- check create publication on CURRENT_SCHEMA along with FOR TABLE
 CREATE PUBLICATION testpub_forschema1 FOR TABLE CURRENT_SCHEMA;
 ERROR:  syntax error at or near "CURRENT_SCHEMA"
@@ -763,9 +779,10 @@ Tables from schemas:
 -- fail specifying table without any of 'FOR ALL TABLES IN SCHEMA' or
 --'FOR TABLE' or 'FOR ALL TABLES'
 CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
-ERROR:  TABLE/ALL TABLES IN SCHEMA should be specified before the table/schema name(s)
+ERROR:  invalid publication object list
 LINE 1: CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
                                              ^
+DETAIL:  One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name.
 DROP VIEW testpub_view;
 DROP PUBLICATION testpub_default;
 DROP PUBLICATION testpib_ins_trunct;
@@ -814,6 +831,14 @@ SELECT * FROM pg_publication_tables;
  pub     | sch2       | tbl1_part1
 (1 row)
 
+-- Table publication that includes both the parent table and the child table
+ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
+SELECT * FROM pg_publication_tables;
+ pubname | schemaname | tablename 
+---------+------------+-----------
+ pub     | sch1       | tbl1
+(1 row)
+
 DROP PUBLICATION pub;
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
@@ -826,6 +851,14 @@ SELECT * FROM pg_publication_tables;
 DROP PUBLICATION pub;
 -- Table publication that does not include the parent table
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
+SELECT * FROM pg_publication_tables;
+ pubname | schemaname | tablename  
+---------+------------+------------
+ pub     | sch2       | tbl1_part1
+(1 row)
+
+-- Table publication that includes both the parent table and the child table
+ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
 SELECT * FROM pg_publication_tables;
  pubname | schemaname | tablename  
 ---------+------------+------------

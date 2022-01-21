@@ -3,7 +3,7 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1944,26 +1944,17 @@ setKeepalivesCount(PGconn *conn)
 /*
  * Enable keepalives and set the keepalive values on Win32,
  * where they are always set in one batch.
+ *
+ * CAUTION: This needs to be signal safe, since it's used by PQcancel.
  */
 static int
-setKeepalivesWin32(PGconn *conn)
+setKeepalivesWin32(pgsocket sock, int idle, int interval)
 {
 	struct tcp_keepalive ka;
 	DWORD		retsize;
-	int			idle = 0;
-	int			interval = 0;
 
-	if (conn->keepalives_idle &&
-		!parse_int_param(conn->keepalives_idle, &idle, conn,
-						 "keepalives_idle"))
-		return 0;
 	if (idle <= 0)
 		idle = 2 * 60 * 60;		/* 2 hours = default */
-
-	if (conn->keepalives_interval &&
-		!parse_int_param(conn->keepalives_interval, &interval, conn,
-						 "keepalives_interval"))
-		return 0;
 	if (interval <= 0)
 		interval = 1;			/* 1 second = default */
 
@@ -1971,7 +1962,7 @@ setKeepalivesWin32(PGconn *conn)
 	ka.keepalivetime = idle * 1000;
 	ka.keepaliveinterval = interval * 1000;
 
-	if (WSAIoctl(conn->sock,
+	if (WSAIoctl(sock,
 				 SIO_KEEPALIVE_VALS,
 				 (LPVOID) &ka,
 				 sizeof(ka),
@@ -1981,6 +1972,26 @@ setKeepalivesWin32(PGconn *conn)
 				 NULL,
 				 NULL)
 		!= 0)
+		return 0;
+	return 1;
+}
+
+static int
+prepKeepalivesWin32(PGconn *conn)
+{
+	int			idle = -1;
+	int			interval = -1;
+
+	if (conn->keepalives_idle &&
+		!parse_int_param(conn->keepalives_idle, &idle, conn,
+						 "keepalives_idle"))
+		return 0;
+	if (conn->keepalives_interval &&
+		!parse_int_param(conn->keepalives_interval, &interval, conn,
+						 "keepalives_interval"))
+		return 0;
+
+	if (!setKeepalivesWin32(conn->sock, idle, interval))
 	{
 		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("%s(%s) failed: error code %d\n"),
@@ -2644,7 +2655,7 @@ keep_going:						/* We will come back to here until there is
 							err = 1;
 #else							/* WIN32 */
 #ifdef SIO_KEEPALIVE_VALS
-						else if (!setKeepalivesWin32(conn))
+						else if (!prepKeepalivesWin32(conn))
 							err = 1;
 #endif							/* SIO_KEEPALIVE_VALS */
 #endif							/* WIN32 */
@@ -2813,10 +2824,7 @@ keep_going:						/* We will come back to here until there is
 					IS_AF_UNIX(conn->raddr.addr.ss_family))
 				{
 #ifndef WIN32
-					char		pwdbuf[BUFSIZ];
-					struct passwd pass_buf;
-					struct passwd *pass;
-					int			passerr;
+					char	   *remote_username;
 #endif
 					uid_t		uid;
 					gid_t		gid;
@@ -2839,28 +2847,20 @@ keep_going:						/* We will come back to here until there is
 					}
 
 #ifndef WIN32
-					passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
-					if (pass == NULL)
-					{
-						if (passerr != 0)
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("could not look up local user ID %d: %s\n"),
-											  (int) uid,
-											  strerror_r(passerr, sebuf, sizeof(sebuf)));
-						else
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("local user with ID %d does not exist\n"),
-											  (int) uid);
-						goto error_return;
-					}
+					remote_username = pg_fe_getusername(uid,
+														&conn->errorMessage);
+					if (remote_username == NULL)
+						goto error_return;	/* message already logged */
 
-					if (strcmp(pass->pw_name, conn->requirepeer) != 0)
+					if (strcmp(remote_username, conn->requirepeer) != 0)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"),
-										  conn->requirepeer, pass->pw_name);
+										  conn->requirepeer, remote_username);
+						free(remote_username);
 						goto error_return;
 					}
+					free(remote_username);
 #else							/* WIN32 */
 					/* should have failed with ENOSYS above */
 					Assert(false);
@@ -3919,8 +3919,7 @@ internal_ping(PGconn *conn)
 		return PQPING_NO_RESPONSE;
 
 	/*
-	 * Report PQPING_REJECT if server says it's not accepting connections. (We
-	 * distinguish this case mainly for the convenience of pg_ctl.)
+	 * Report PQPING_REJECT if server says it's not accepting connections.
 	 */
 	if (strcmp(conn->last_sqlstate, ERRCODE_CANNOT_CONNECT_NOW) == 0)
 		return PQPING_REJECT;
@@ -4392,8 +4391,53 @@ PQgetCancel(PGconn *conn)
 	memcpy(&cancel->raddr, &conn->raddr, sizeof(SockAddr));
 	cancel->be_pid = conn->be_pid;
 	cancel->be_key = conn->be_key;
+	/* We use -1 to indicate an unset connection option */
+	cancel->pgtcp_user_timeout = -1;
+	cancel->keepalives = -1;
+	cancel->keepalives_idle = -1;
+	cancel->keepalives_interval = -1;
+	cancel->keepalives_count = -1;
+	if (conn->pgtcp_user_timeout != NULL)
+	{
+		if (!parse_int_param(conn->pgtcp_user_timeout,
+							 &cancel->pgtcp_user_timeout,
+							 conn, "tcp_user_timeout"))
+			goto fail;
+	}
+	if (conn->keepalives != NULL)
+	{
+		if (!parse_int_param(conn->keepalives,
+							 &cancel->keepalives,
+							 conn, "keepalives"))
+			goto fail;
+	}
+	if (conn->keepalives_idle != NULL)
+	{
+		if (!parse_int_param(conn->keepalives_idle,
+							 &cancel->keepalives_idle,
+							 conn, "keepalives_idle"))
+			goto fail;
+	}
+	if (conn->keepalives_interval != NULL)
+	{
+		if (!parse_int_param(conn->keepalives_interval,
+							 &cancel->keepalives_interval,
+							 conn, "keepalives_interval"))
+			goto fail;
+	}
+	if (conn->keepalives_count != NULL)
+	{
+		if (!parse_int_param(conn->keepalives_count,
+							 &cancel->keepalives_count,
+							 conn, "keepalives_count"))
+			goto fail;
+	}
 
 	return cancel;
+
+fail:
+	free(cancel);
+	return NULL;
 }
 
 /* PQfreeCancel: free a cancel structure */
@@ -4406,13 +4450,35 @@ PQfreeCancel(PGcancel *cancel)
 
 
 /*
- * PQcancel and PQrequestCancel: attempt to request cancellation of the
- * current operation.
+ * Sets an integer socket option on a TCP socket, if the provided value is
+ * not negative.  Returns false if setsockopt fails for some reason.
+ *
+ * CAUTION: This needs to be signal safe, since it's used by PQcancel.
+ */
+#if defined(TCP_USER_TIMEOUT) || !defined(WIN32)
+static bool
+optional_setsockopt(int fd, int protoid, int optid, int value)
+{
+	if (value < 0)
+		return true;
+	if (setsockopt(fd, protoid, optid, (char *) &value, sizeof(value)) < 0)
+		return false;
+	return true;
+}
+#endif
+
+
+/*
+ * PQcancel: request query cancel
  *
  * The return value is true if the cancel request was successfully
  * dispatched, false if not (in which case an error message is available).
  * Note: successful dispatch is no guarantee that there will be any effect at
  * the backend.  The application must read the operation result as usual.
+ *
+ * On failure, an error message is stored in *errbuf, which must be of size
+ * errbufsize (recommended size is 256 bytes).  *errbuf is not changed on
+ * success return.
  *
  * CAUTION: we want this routine to be safely callable from a signal handler
  * (for example, an application might want to call it in a SIGINT handler).
@@ -4421,17 +4487,12 @@ PQfreeCancel(PGcancel *cancel)
  * just as dangerous.  We avoid sprintf here for that reason.  Building up
  * error messages with strcpy/strcat is tedious but should be quite safe.
  * We also save/restore errno in case the signal handler support doesn't.
- *
- * internal_cancel() is an internal helper function to make code-sharing
- * between the two versions of the cancel function possible.
  */
-static int
-internal_cancel(SockAddr *raddr, int be_pid, int be_key,
-				char *errbuf, int errbufsize)
+int
+PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 {
 	int			save_errno = SOCK_ERRNO;
 	pgsocket	tmpsock = PGINVALID_SOCKET;
-	char		sebuf[PG_STRERROR_R_BUFLEN];
 	int			maxlen;
 	struct
 	{
@@ -4439,18 +4500,98 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 		CancelRequestPacket cp;
 	}			crp;
 
+	if (!cancel)
+	{
+		strlcpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
+		/* strlcpy probably doesn't change errno, but be paranoid */
+		SOCK_ERRNO_SET(save_errno);
+		return false;
+	}
+
 	/*
 	 * We need to open a temporary connection to the postmaster. Do this with
 	 * only kernel calls.
 	 */
-	if ((tmpsock = socket(raddr->addr.ss_family, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
+	if ((tmpsock = socket(cancel->raddr.addr.ss_family, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		strlcpy(errbuf, "PQcancel() -- socket() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
+
+	/*
+	 * Since this connection will only be used to send a single packet of
+	 * data, we don't need NODELAY.  We also don't set the socket to
+	 * nonblocking mode, because the API definition of PQcancel requires the
+	 * cancel to be sent in a blocking way.
+	 *
+	 * We do set socket options related to keepalives and other TCP timeouts.
+	 * This ensures that this function does not block indefinitely when
+	 * reasonable keepalive and timeout settings have been provided.
+	 */
+	if (!IS_AF_UNIX(cancel->raddr.addr.ss_family) &&
+		cancel->keepalives != 0)
+	{
+#ifndef WIN32
+		if (!optional_setsockopt(tmpsock, SOL_SOCKET, SO_KEEPALIVE, 1))
+		{
+			strlcpy(errbuf, "PQcancel() -- setsockopt(SO_KEEPALIVE) failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+
+#ifdef PG_TCP_KEEPALIVE_IDLE
+		if (!optional_setsockopt(tmpsock, IPPROTO_TCP, PG_TCP_KEEPALIVE_IDLE,
+								 cancel->keepalives_idle))
+		{
+			strlcpy(errbuf, "PQcancel() -- setsockopt(" PG_TCP_KEEPALIVE_IDLE_STR ") failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+#endif
+
+#ifdef TCP_KEEPINTVL
+		if (!optional_setsockopt(tmpsock, IPPROTO_TCP, TCP_KEEPINTVL,
+								 cancel->keepalives_interval))
+		{
+			strlcpy(errbuf, "PQcancel() -- setsockopt(TCP_KEEPINTVL) failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+#endif
+
+#ifdef TCP_KEEPCNT
+		if (!optional_setsockopt(tmpsock, IPPROTO_TCP, TCP_KEEPCNT,
+								 cancel->keepalives_count))
+		{
+			strlcpy(errbuf, "PQcancel() -- setsockopt(TCP_KEEPCNT) failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+#endif
+
+#else							/* WIN32 */
+
+#ifdef SIO_KEEPALIVE_VALS
+		if (!setKeepalivesWin32(tmpsock,
+								cancel->keepalives_idle,
+								cancel->keepalives_interval))
+		{
+			strlcpy(errbuf, "PQcancel() -- WSAIoctl(SIO_KEEPALIVE_VALS) failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+#endif							/* SIO_KEEPALIVE_VALS */
+#endif							/* WIN32 */
+
+		/* TCP_USER_TIMEOUT works the same way on Unix and Windows */
+#ifdef TCP_USER_TIMEOUT
+		if (!optional_setsockopt(tmpsock, IPPROTO_TCP, TCP_USER_TIMEOUT,
+								 cancel->pgtcp_user_timeout))
+		{
+			strlcpy(errbuf, "PQcancel() -- setsockopt(TCP_USER_TIMEOUT) failed: ", errbufsize);
+			goto cancel_errReturn;
+		}
+#endif
+	}
+
 retry3:
-	if (connect(tmpsock, (struct sockaddr *) &raddr->addr,
-				raddr->salen) < 0)
+	if (connect(tmpsock, (struct sockaddr *) &cancel->raddr.addr,
+				cancel->raddr.salen) < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
@@ -4459,16 +4600,12 @@ retry3:
 		goto cancel_errReturn;
 	}
 
-	/*
-	 * We needn't set nonblocking I/O or NODELAY options here.
-	 */
-
 	/* Create and send the cancel request packet. */
 
 	crp.packetlen = pg_hton32((uint32) sizeof(crp));
 	crp.cp.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
-	crp.cp.backendPID = pg_hton32(be_pid);
-	crp.cp.cancelAuthCode = pg_hton32(be_key);
+	crp.cp.backendPID = pg_hton32(cancel->be_pid);
+	crp.cp.cancelAuthCode = pg_hton32(cancel->be_key);
 
 retry4:
 	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
@@ -4510,8 +4647,25 @@ cancel_errReturn:
 	maxlen = errbufsize - strlen(errbuf) - 2;
 	if (maxlen >= 0)
 	{
-		strncat(errbuf, SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)),
-				maxlen);
+		/*
+		 * We can't invoke strerror here, since it's not signal-safe.  Settle
+		 * for printing the decimal value of errno.  Even that has to be done
+		 * the hard way.
+		 */
+		int			val = SOCK_ERRNO;
+		char		buf[32];
+		char	   *bufp;
+
+		bufp = buf + sizeof(buf) - 1;
+		*bufp = '\0';
+		do
+		{
+			*(--bufp) = (val % 10) + '0';
+			val /= 10;
+		} while (val > 0);
+		bufp -= 6;
+		memcpy(bufp, "error ", 6);
+		strncat(errbuf, bufp, maxlen);
 		strcat(errbuf, "\n");
 	}
 	if (tmpsock != PGINVALID_SOCKET)
@@ -4520,27 +4674,6 @@ cancel_errReturn:
 	return false;
 }
 
-/*
- * PQcancel: request query cancel
- *
- * Returns true if able to send the cancel request, false if not.
- *
- * On failure, an error message is stored in *errbuf, which must be of size
- * errbufsize (recommended size is 256 bytes).  *errbuf is not changed on
- * success return.
- */
-int
-PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
-{
-	if (!cancel)
-	{
-		strlcpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
-		return false;
-	}
-
-	return internal_cancel(&cancel->raddr, cancel->be_pid, cancel->be_key,
-						   errbuf, errbufsize);
-}
 
 /*
  * PQrequestCancel: old, not thread-safe function for requesting query cancel
@@ -4558,6 +4691,7 @@ int
 PQrequestCancel(PGconn *conn)
 {
 	int			r;
+	PGcancel   *cancel;
 
 	/* Check we have an open connection */
 	if (!conn)
@@ -4573,8 +4707,19 @@ PQrequestCancel(PGconn *conn)
 		return false;
 	}
 
-	r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
-						conn->errorMessage.data, conn->errorMessage.maxlen);
+	cancel = PQgetCancel(conn);
+	if (cancel)
+	{
+		r = PQcancel(cancel, conn->errorMessage.data,
+					 conn->errorMessage.maxlen);
+		PQfreeCancel(cancel);
+	}
+	else
+	{
+		strlcpy(conn->errorMessage.data, "out of memory",
+				conn->errorMessage.maxlen);
+		r = false;
+	}
 
 	if (!r)
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
@@ -7268,14 +7413,12 @@ bool
 pqGetHomeDirectory(char *buf, int bufsize)
 {
 #ifndef WIN32
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	const char *home;
 
-	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-	if (pwd == NULL)
-		return false;
-	strlcpy(buf, pwd->pw_dir, bufsize);
+	home = getenv("HOME");
+	if (home == NULL || home[0] == '\0')
+		return pg_get_user_home_dir(geteuid(), buf, bufsize);
+	strlcpy(buf, home, bufsize);
 	return true;
 #else
 	char		tmppath[MAX_PATH];

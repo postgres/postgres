@@ -1129,15 +1129,15 @@ SELECT EXTRACT(DECADE FROM DATE '0012-12-31 BC'); --  -2
 -- all possible fields
 --
 SELECT EXTRACT(MICROSECONDS  FROM DATE '2020-08-11');
-ERROR:  date units "microseconds" not supported
+ERROR:  unit "microseconds" not supported for type date
 SELECT EXTRACT(MILLISECONDS  FROM DATE '2020-08-11');
-ERROR:  date units "milliseconds" not supported
+ERROR:  unit "milliseconds" not supported for type date
 SELECT EXTRACT(SECOND        FROM DATE '2020-08-11');
-ERROR:  date units "second" not supported
+ERROR:  unit "second" not supported for type date
 SELECT EXTRACT(MINUTE        FROM DATE '2020-08-11');
-ERROR:  date units "minute" not supported
+ERROR:  unit "minute" not supported for type date
 SELECT EXTRACT(HOUR          FROM DATE '2020-08-11');
-ERROR:  date units "hour" not supported
+ERROR:  unit "hour" not supported for type date
 SELECT EXTRACT(DAY           FROM DATE '2020-08-11');
  extract 
 ---------
@@ -1235,11 +1235,11 @@ SELECT EXTRACT(DOY           FROM DATE '2020-08-11');
 (1 row)
 
 SELECT EXTRACT(TIMEZONE      FROM DATE '2020-08-11');
-ERROR:  date units "timezone" not supported
+ERROR:  unit "timezone" not supported for type date
 SELECT EXTRACT(TIMEZONE_M    FROM DATE '2020-08-11');
-ERROR:  date units "timezone_m" not supported
+ERROR:  unit "timezone_m" not supported for type date
 SELECT EXTRACT(TIMEZONE_H    FROM DATE '2020-08-11');
-ERROR:  date units "timezone_h" not supported
+ERROR:  unit "timezone_h" not supported for type date
 SELECT EXTRACT(EPOCH         FROM DATE '2020-08-11');
   extract   
 ------------
@@ -1462,7 +1462,7 @@ SELECT EXTRACT(EPOCH      FROM DATE 'infinity');    --  Infinity
 -- wrong fields from non-finite date:
 --
 SELECT EXTRACT(MICROSEC  FROM DATE 'infinity');     -- error
-ERROR:  date units "microsec" not recognized
+ERROR:  unit "microsec" not recognized for type date
 -- test constructors
 select make_date(2013, 7, 15);
  make_date  

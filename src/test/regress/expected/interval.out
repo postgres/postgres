@@ -963,9 +963,9 @@ SELECT f1,
 (10 rows)
 
 SELECT EXTRACT(FORTNIGHT FROM INTERVAL '2 days');  -- error
-ERROR:  interval units "fortnight" not recognized
+ERROR:  unit "fortnight" not recognized for type interval
 SELECT EXTRACT(TIMEZONE FROM INTERVAL '2 days');  -- error
-ERROR:  interval units "timezone" not supported
+ERROR:  unit "timezone" not supported for type interval
 SELECT EXTRACT(DECADE FROM INTERVAL '100 y');
  extract 
 ---------

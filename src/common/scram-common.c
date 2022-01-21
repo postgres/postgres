@@ -6,7 +6,7 @@
  * backend, for implement the Salted Challenge Response Authentication
  * Mechanism (SCRAM), per IETF's RFC 5802.
  *
- * Portions Copyright (c) 2017-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/scram-common.c
@@ -28,12 +28,13 @@
  * Calculate SaltedPassword.
  *
  * The password should already be normalized by SASLprep.  Returns 0 on
- * success, -1 on failure.
+ * success, -1 on failure with *errstr pointing to a message about the
+ * error details.
  */
 int
 scram_SaltedPassword(const char *password,
 					 const char *salt, int saltlen, int iterations,
-					 uint8 *result)
+					 uint8 *result, const char **errstr)
 {
 	int			password_len = strlen(password);
 	uint32		one = pg_hton32(1);
@@ -44,7 +45,10 @@ scram_SaltedPassword(const char *password,
 	pg_hmac_ctx *hmac_ctx = pg_hmac_create(PG_SHA256);
 
 	if (hmac_ctx == NULL)
+	{
+		*errstr = pg_hmac_error(NULL);	/* returns OOM */
 		return -1;
+	}
 
 	/*
 	 * Iterate hash calculation of HMAC entry using given salt.  This is
@@ -58,6 +62,7 @@ scram_SaltedPassword(const char *password,
 		pg_hmac_update(hmac_ctx, (uint8 *) &one, sizeof(uint32)) < 0 ||
 		pg_hmac_final(hmac_ctx, Ui_prev, sizeof(Ui_prev)) < 0)
 	{
+		*errstr = pg_hmac_error(hmac_ctx);
 		pg_hmac_free(hmac_ctx);
 		return -1;
 	}
@@ -71,6 +76,7 @@ scram_SaltedPassword(const char *password,
 			pg_hmac_update(hmac_ctx, (uint8 *) Ui_prev, SCRAM_KEY_LEN) < 0 ||
 			pg_hmac_final(hmac_ctx, Ui, sizeof(Ui)) < 0)
 		{
+			*errstr = pg_hmac_error(hmac_ctx);
 			pg_hmac_free(hmac_ctx);
 			return -1;
 		}
@@ -87,21 +93,26 @@ scram_SaltedPassword(const char *password,
 
 /*
  * Calculate SHA-256 hash for a NULL-terminated string. (The NULL terminator is
- * not included in the hash).  Returns 0 on success, -1 on failure.
+ * not included in the hash).  Returns 0 on success, -1 on failure with *errstr
+ * pointing to a message about the error details.
  */
 int
-scram_H(const uint8 *input, int len, uint8 *result)
+scram_H(const uint8 *input, int len, uint8 *result, const char **errstr)
 {
 	pg_cryptohash_ctx *ctx;
 
 	ctx = pg_cryptohash_create(PG_SHA256);
 	if (ctx == NULL)
+	{
+		*errstr = pg_cryptohash_error(NULL);	/* returns OOM */
 		return -1;
+	}
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, input, len) < 0 ||
 		pg_cryptohash_final(ctx, result, SCRAM_KEY_LEN) < 0)
 	{
+		*errstr = pg_cryptohash_error(ctx);
 		pg_cryptohash_free(ctx);
 		return -1;
 	}
@@ -111,20 +122,26 @@ scram_H(const uint8 *input, int len, uint8 *result)
 }
 
 /*
- * Calculate ClientKey.  Returns 0 on success, -1 on failure.
+ * Calculate ClientKey.  Returns 0 on success, -1 on failure with *errstr
+ * pointing to a message about the error details.
  */
 int
-scram_ClientKey(const uint8 *salted_password, uint8 *result)
+scram_ClientKey(const uint8 *salted_password, uint8 *result,
+				const char **errstr)
 {
 	pg_hmac_ctx *ctx = pg_hmac_create(PG_SHA256);
 
 	if (ctx == NULL)
+	{
+		*errstr = pg_hmac_error(NULL);	/* returns OOM */
 		return -1;
+	}
 
 	if (pg_hmac_init(ctx, salted_password, SCRAM_KEY_LEN) < 0 ||
 		pg_hmac_update(ctx, (uint8 *) "Client Key", strlen("Client Key")) < 0 ||
 		pg_hmac_final(ctx, result, SCRAM_KEY_LEN) < 0)
 	{
+		*errstr = pg_hmac_error(ctx);
 		pg_hmac_free(ctx);
 		return -1;
 	}
@@ -134,20 +151,26 @@ scram_ClientKey(const uint8 *salted_password, uint8 *result)
 }
 
 /*
- * Calculate ServerKey.  Returns 0 on success, -1 on failure.
+ * Calculate ServerKey.  Returns 0 on success, -1 on failure with *errstr
+ * pointing to a message about the error details.
  */
 int
-scram_ServerKey(const uint8 *salted_password, uint8 *result)
+scram_ServerKey(const uint8 *salted_password, uint8 *result,
+				const char **errstr)
 {
 	pg_hmac_ctx *ctx = pg_hmac_create(PG_SHA256);
 
 	if (ctx == NULL)
+	{
+		*errstr = pg_hmac_error(NULL);	/* returns OOM */
 		return -1;
+	}
 
 	if (pg_hmac_init(ctx, salted_password, SCRAM_KEY_LEN) < 0 ||
 		pg_hmac_update(ctx, (uint8 *) "Server Key", strlen("Server Key")) < 0 ||
 		pg_hmac_final(ctx, result, SCRAM_KEY_LEN) < 0)
 	{
+		*errstr = pg_hmac_error(ctx);
 		pg_hmac_free(ctx);
 		return -1;
 	}
@@ -164,10 +187,13 @@ scram_ServerKey(const uint8 *salted_password, uint8 *result)
  *
  * If iterations is 0, default number of iterations is used.  The result is
  * palloc'd or malloc'd, so caller is responsible for freeing it.
+ *
+ * On error, returns NULL and sets *errstr to point to a message about the
+ * error details.
  */
 char *
 scram_build_secret(const char *salt, int saltlen, int iterations,
-				   const char *password)
+				   const char *password, const char **errstr)
 {
 	uint8		salted_password[SCRAM_KEY_LEN];
 	uint8		stored_key[SCRAM_KEY_LEN];
@@ -185,15 +211,17 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 
 	/* Calculate StoredKey and ServerKey */
 	if (scram_SaltedPassword(password, salt, saltlen, iterations,
-							 salted_password) < 0 ||
-		scram_ClientKey(salted_password, stored_key) < 0 ||
-		scram_H(stored_key, SCRAM_KEY_LEN, stored_key) < 0 ||
-		scram_ServerKey(salted_password, server_key) < 0)
+							 salted_password, errstr) < 0 ||
+		scram_ClientKey(salted_password, stored_key, errstr) < 0 ||
+		scram_H(stored_key, SCRAM_KEY_LEN, stored_key, errstr) < 0 ||
+		scram_ServerKey(salted_password, server_key, errstr) < 0)
 	{
+		/* errstr is filled already here */
 #ifdef FRONTEND
 		return NULL;
 #else
-		elog(ERROR, "could not calculate stored key and server key");
+		elog(ERROR, "could not calculate stored key and server key: %s",
+			 *errstr);
 #endif
 	}
 
@@ -215,7 +243,10 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 #ifdef FRONTEND
 	result = malloc(maxlen);
 	if (!result)
+	{
+		*errstr = _("out of memory");
 		return NULL;
+	}
 #else
 	result = palloc(maxlen);
 #endif
@@ -226,11 +257,12 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 	encoded_result = pg_b64_encode(salt, saltlen, p, encoded_salt_len);
 	if (encoded_result < 0)
 	{
+		*errstr = _("could not encode salt");
 #ifdef FRONTEND
 		free(result);
 		return NULL;
 #else
-		elog(ERROR, "could not encode salt");
+		elog(ERROR, "%s", *errstr);
 #endif
 	}
 	p += encoded_result;
@@ -241,11 +273,12 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 								   encoded_stored_len);
 	if (encoded_result < 0)
 	{
+		*errstr = _("could not encode stored key");
 #ifdef FRONTEND
 		free(result);
 		return NULL;
 #else
-		elog(ERROR, "could not encode stored key");
+		elog(ERROR, "%s", *errstr);
 #endif
 	}
 
@@ -257,11 +290,12 @@ scram_build_secret(const char *salt, int saltlen, int iterations,
 								   encoded_server_len);
 	if (encoded_result < 0)
 	{
+		*errstr = _("could not encode server key");
 #ifdef FRONTEND
 		free(result);
 		return NULL;
 #else
-		elog(ERROR, "could not encode server key");
+		elog(ERROR, "%s", *errstr);
 #endif
 	}
 

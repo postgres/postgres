@@ -3,7 +3,7 @@
  * scram-common.h
  *		Declarations for helper functions used for SCRAM authentication
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/scram-common.h
@@ -47,12 +47,16 @@
 #define SCRAM_DEFAULT_ITERATIONS	4096
 
 extern int	scram_SaltedPassword(const char *password, const char *salt,
-								 int saltlen, int iterations, uint8 *result);
-extern int	scram_H(const uint8 *str, int len, uint8 *result);
-extern int	scram_ClientKey(const uint8 *salted_password, uint8 *result);
-extern int	scram_ServerKey(const uint8 *salted_password, uint8 *result);
+								 int saltlen, int iterations, uint8 *result,
+								 const char **errstr);
+extern int	scram_H(const uint8 *str, int len, uint8 *result,
+					const char **errstr);
+extern int	scram_ClientKey(const uint8 *salted_password, uint8 *result,
+							const char **errstr);
+extern int	scram_ServerKey(const uint8 *salted_password, uint8 *result,
+							const char **errstr);
 
 extern char *scram_build_secret(const char *salt, int saltlen, int iterations,
-								const char *password);
+								const char *password, const char **errstr);
 
 #endif							/* SCRAM_COMMON_H */

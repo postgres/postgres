@@ -3,7 +3,7 @@
  * verify_heapam.c
  *	  Functions to check postgresql heap relations for corruption
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  *	  contrib/amcheck/verify_heapam.c
  *-------------------------------------------------------------------------
@@ -306,9 +306,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	/*
 	 * Check that a relation's relkind and access method are both supported.
 	 */
-	if (ctx.rel->rd_rel->relkind != RELKIND_RELATION &&
-		ctx.rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		ctx.rel->rd_rel->relkind != RELKIND_TOASTVALUE &&
+	if (!RELKIND_HAS_TABLE_AM(ctx.rel->rd_rel->relkind) &&
 		ctx.rel->rd_rel->relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

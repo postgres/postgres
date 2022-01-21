@@ -9,7 +9,7 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -1310,6 +1310,19 @@ extern long long strtoll(const char *str, char **endptr, int base);
 
 #if defined(HAVE_STRTOULL) && !HAVE_DECL_STRTOULL
 extern unsigned long long strtoull(const char *str, char **endptr, int base);
+#endif
+
+/*
+ * Thin wrappers that convert strings to exactly 64-bit integers, matching our
+ * definition of int64.  (For the naming, compare that POSIX has
+ * strtoimax()/strtoumax() which return intmax_t/uintmax_t.)
+ */
+#ifdef HAVE_LONG_INT_64
+#define strtoi64(str, endptr, base) ((int64) strtol(str, endptr, base))
+#define strtou64(str, endptr, base) ((uint64) strtoul(str, endptr, base))
+#else
+#define strtoi64(str, endptr, base) ((int64) strtoll(str, endptr, base))
+#define strtou64(str, endptr, base) ((uint64) strtoull(str, endptr, base))
 #endif
 
 /*

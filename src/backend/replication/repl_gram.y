@@ -3,7 +3,7 @@
  *
  * repl_gram.y				- Parser for the replication commands
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -212,7 +212,7 @@ base_backup_legacy_opt:
 			| K_PROGRESS
 				{
 				  $$ = makeDefElem("progress",
-								   (Node *)makeInteger(true), -1);
+								   (Node *)makeBoolean(true), -1);
 				}
 			| K_FAST
 				{
@@ -222,12 +222,12 @@ base_backup_legacy_opt:
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
-								   (Node *)makeInteger(true), -1);
+								   (Node *)makeBoolean(true), -1);
 				}
 			| K_NOWAIT
 				{
 				  $$ = makeDefElem("wait",
-								   (Node *)makeInteger(false), -1);
+								   (Node *)makeBoolean(false), -1);
 				}
 			| K_MAX_RATE UCONST
 				{
@@ -237,12 +237,12 @@ base_backup_legacy_opt:
 			| K_TABLESPACE_MAP
 				{
 				  $$ = makeDefElem("tablespace_map",
-								   (Node *)makeInteger(true), -1);
+								   (Node *)makeBoolean(true), -1);
 				}
 			| K_NOVERIFY_CHECKSUMS
 				{
 				  $$ = makeDefElem("verify_checksums",
-								   (Node *)makeInteger(false), -1);
+								   (Node *)makeBoolean(false), -1);
 				}
 			| K_MANIFEST SCONST
 				{
@@ -313,12 +313,12 @@ create_slot_legacy_opt:
 			| K_RESERVE_WAL
 				{
 				  $$ = makeDefElem("reserve_wal",
-								   (Node *)makeInteger(true), -1);
+								   (Node *)makeBoolean(true), -1);
 				}
 			| K_TWO_PHASE
 				{
 				  $$ = makeDefElem("two_phase",
-								   (Node *)makeInteger(true), -1);
+								   (Node *)makeBoolean(true), -1);
 				}
 			;
 

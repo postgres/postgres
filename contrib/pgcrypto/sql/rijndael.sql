@@ -1,63 +1,60 @@
 --
 -- AES cipher (aka Rijndael-128, -192, or -256)
 --
--- ensure consistent test output regardless of the default bytea format
-SET bytea_output TO escape;
 
 -- some standard Rijndael testvalues
-SELECT encode(encrypt(
-decode('00112233445566778899aabbccddeeff', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f', 'hex'),
-'aes-ecb/pad:none'), 'hex');
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff',
+'\x000102030405060708090a0b0c0d0e0f',
+'aes-ecb/pad:none');
 
-SELECT encode(encrypt(
-decode('00112233445566778899aabbccddeeff', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f1011121314151617', 'hex'),
-'aes-ecb/pad:none'), 'hex');
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff',
+'\x000102030405060708090a0b0c0d0e0f1011121314151617',
+'aes-ecb/pad:none');
 
-SELECT encode(encrypt(
-decode('00112233445566778899aabbccddeeff', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', 'hex'),
-'aes-ecb/pad:none'), 'hex');
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+'aes-ecb/pad:none');
 
 -- cbc
-SELECT encode(encrypt(
-decode('00112233445566778899aabbccddeeff', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', 'hex'),
-'aes-cbc/pad:none'), 'hex');
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+'aes-cbc/pad:none');
 
 -- key padding
 
-SELECT encode(encrypt(
-decode('0011223344', 'hex'),
-decode('000102030405', 'hex'),
-'aes-cbc'), 'hex');
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405',
+'aes-cbc');
 
-SELECT encode(encrypt(
-decode('0011223344', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f10111213', 'hex'),
-'aes-cbc'), 'hex');
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405060708090a0b0c0d0e0f10111213',
+'aes-cbc');
 
-SELECT encode(encrypt(
-decode('0011223344', 'hex'),
-decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b', 'hex'),
-'aes-cbc'), 'hex');
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b',
+'aes-cbc');
 
 -- empty data
-select encode(encrypt('', 'foo', 'aes'), 'hex');
+select encrypt('', 'foo', 'aes');
 -- 10 bytes key
-select encode(encrypt('foo', '0123456789', 'aes'), 'hex');
+select encrypt('foo', '0123456789', 'aes');
 -- 22 bytes key
-select encode(encrypt('foo', '0123456789012345678901', 'aes'), 'hex');
+select encrypt('foo', '0123456789012345678901', 'aes');
 
 -- decrypt
-select decrypt(encrypt('foo', '0123456', 'aes'), '0123456', 'aes');
+select encode(decrypt(encrypt('foo', '0123456', 'aes'), '0123456', 'aes'), 'escape');
 
 -- iv
-select encode(encrypt_iv('foo', '0123456', 'abcd', 'aes'), 'hex');
-select decrypt_iv(decode('2c24cb7da91d6d5699801268b0f5adad', 'hex'),
-		'0123456', 'abcd', 'aes');
+select encrypt_iv('foo', '0123456', 'abcd', 'aes');
+select encode(decrypt_iv('\x2c24cb7da91d6d5699801268b0f5adad', '0123456', 'abcd', 'aes'), 'escape');
 
 -- long message
-select encode(encrypt('Lets try a longer message.', '0123456789', 'aes'), 'hex');
-select decrypt(encrypt('Lets try a longer message.', '0123456789', 'aes'), '0123456789', 'aes');
+select encrypt('Lets try a longer message.', '0123456789', 'aes');
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'aes'), '0123456789', 'aes'), 'escape');

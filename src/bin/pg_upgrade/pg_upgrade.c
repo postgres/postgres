@@ -3,7 +3,7 @@
  *
  *	main source file
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
@@ -15,12 +15,13 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	While pg_class.oid and pg_class.relfilenode are initially the same
- *	in a cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM
- *	FULL.  In the new cluster, pg_class.oid and pg_class.relfilenode will
- *	be the same and will match the old pg_class.oid value.  Because of
- *	this, old/new pg_class.relfilenode values will not match if CLUSTER,
- *	REINDEX, or VACUUM FULL have been performed in the old cluster.
+ *	While pg_class.oid and pg_class.relfilenode are initially the same in a
+ *	cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM FULL. We
+ *	control assignments of pg_class.relfilenode because we want the filenames
+ *	to match between the old and new cluster.
+ *
+ *	We control assignment of pg_tablespace.oid because we want the oid to match
+ *	between the old and new cluster.
  *
  *	We control all assignments of pg_type.oid because these oids are stored
  *	in user composite type values.
@@ -169,11 +170,14 @@ main(int argc, char **argv)
 			  new_cluster.pgdata);
 	check_ok();
 
-	prep_status("Sync data directory to disk");
-	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
-			  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
-			  new_cluster.pgdata);
-	check_ok();
+	if (user_opts.do_sync)
+	{
+		prep_status("Sync data directory to disk");
+		exec_prog(UTILITY_LOG_FILE, NULL, true, true,
+				  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
+				  new_cluster.pgdata);
+		check_ok();
+	}
 
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 

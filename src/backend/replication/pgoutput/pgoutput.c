@@ -3,7 +3,7 @@
  * pgoutput.c
  *		Logical Replication output plugin
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/replication/pgoutput/pgoutput.c
@@ -1119,8 +1119,6 @@ static RelationSyncEntry *
 get_rel_sync_entry(PGOutputData *data, Oid relid)
 {
 	RelationSyncEntry *entry;
-	bool		am_partition = get_rel_relispartition(relid);
-	char		relkind = get_rel_relkind(relid);
 	bool		found;
 	MemoryContext oldctx;
 
@@ -1160,6 +1158,8 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		List	   *schemaPubids = GetSchemaPublications(schemaId);
 		ListCell   *lc;
 		Oid			publish_as_relid = relid;
+		bool		am_partition = get_rel_relispartition(relid);
+		char		relkind = get_rel_relkind(relid);
 
 		/* Reload publications if needed before use. */
 		if (!publications_valid)

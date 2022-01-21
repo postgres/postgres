@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -39,7 +39,7 @@ $primary->command_fails_like(
 		'--compress',    '1'
 	],
 	qr/\Qpg_receivewal: error: cannot use --compress with --compression-method=none/,
-	'failure if --compress spwcified with --compression-method=none');
+	'failure if --compress specified with --compression-method=none');
 
 # Slot creation and drop
 my $slot_name = 'test';
@@ -290,7 +290,7 @@ $standby->psql(
 	"CREATE_REPLICATION_SLOT $archive_slot PHYSICAL (RESERVE_WAL)",
 	replication => 1);
 # Wait for standby catchup
-$primary->wait_for_catchup($standby, 'replay', $primary->lsn('write'));
+$primary->wait_for_catchup($standby);
 # Get a walfilename from before the promotion to make sure it is archived
 # after promotion
 my $standby_slot = $standby->slot($archive_slot);

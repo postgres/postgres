@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 package Mkvcbuild;
 
@@ -106,8 +106,9 @@ sub mkvcbuild
 	  pread.c preadv.c pwrite.c pwritev.c pg_bitutils.c
 	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
 	  pqsignal.c mkdtemp.c qsort.c qsort_arg.c bsearch_arg.c quotes.c system.c
-	  strerror.c tar.c thread.c
-	  win32env.c win32error.c win32security.c win32setlocale.c win32stat.c);
+	  strerror.c tar.c
+	  win32env.c win32error.c win32ntdll.c
+	  win32security.c win32setlocale.c win32stat.c);
 
 	push(@pgportfiles, 'strtof.c') if ($vsVersion < '14.00');
 

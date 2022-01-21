@@ -3,7 +3,7 @@
  * fe-auth-scram.c
  *	   The front-end (client) implementation of SCRAM authentication.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -80,10 +80,11 @@ static bool read_server_first_message(fe_scram_state *state, char *input);
 static bool read_server_final_message(fe_scram_state *state, char *input);
 static char *build_client_first_message(fe_scram_state *state);
 static char *build_client_final_message(fe_scram_state *state);
-static bool verify_server_signature(fe_scram_state *state, bool *match);
+static bool verify_server_signature(fe_scram_state *state, bool *match,
+									const char **errstr);
 static bool calculate_client_proof(fe_scram_state *state,
 								   const char *client_final_message_without_proof,
-								   uint8 *result);
+								   uint8 *result, const char **errstr);
 
 /*
  * Initialize SCRAM exchange status.
@@ -211,6 +212,7 @@ scram_exchange(void *opaq, char *input, int inputlen,
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 	PGconn	   *conn = state->conn;
+	const char *errstr = NULL;
 
 	*done = false;
 	*success = false;
@@ -273,10 +275,10 @@ scram_exchange(void *opaq, char *input, int inputlen,
 			 * Verify server signature, to make sure we're talking to the
 			 * genuine server.
 			 */
-			if (!verify_server_signature(state, success))
+			if (!verify_server_signature(state, success, &errstr))
 			{
-				appendPQExpBufferStr(&conn->errorMessage,
-									 libpq_gettext("could not verify server signature\n"));
+				appendPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not verify server signature: %s\n"), errstr);
 				goto error;
 			}
 
@@ -469,6 +471,7 @@ build_client_final_message(fe_scram_state *state)
 	uint8		client_proof[SCRAM_KEY_LEN];
 	char	   *result;
 	int			encoded_len;
+	const char *errstr = NULL;
 
 	initPQExpBuffer(&buf);
 
@@ -572,11 +575,12 @@ build_client_final_message(fe_scram_state *state)
 	/* Append proof to it, to form client-final-message. */
 	if (!calculate_client_proof(state,
 								state->client_final_message_without_proof,
-								client_proof))
+								client_proof, &errstr))
 	{
 		termPQExpBuffer(&buf);
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("could not calculate client proof\n"));
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not calculate client proof: %s\n"),
+						  errstr);
 		return NULL;
 	}
 
@@ -782,12 +786,13 @@ read_server_final_message(fe_scram_state *state, char *input)
 
 /*
  * Calculate the client proof, part of the final exchange message sent
- * by the client.  Returns true on success, false on failure.
+ * by the client.  Returns true on success, false on failure with *errstr
+ * pointing to a message about the error details.
  */
 static bool
 calculate_client_proof(fe_scram_state *state,
 					   const char *client_final_message_without_proof,
-					   uint8 *result)
+					   uint8 *result, const char **errstr)
 {
 	uint8		StoredKey[SCRAM_KEY_LEN];
 	uint8		ClientKey[SCRAM_KEY_LEN];
@@ -797,17 +802,27 @@ calculate_client_proof(fe_scram_state *state,
 
 	ctx = pg_hmac_create(PG_SHA256);
 	if (ctx == NULL)
+	{
+		*errstr = pg_hmac_error(NULL);	/* returns OOM */
 		return false;
+	}
 
 	/*
 	 * Calculate SaltedPassword, and store it in 'state' so that we can reuse
 	 * it later in verify_server_signature.
 	 */
 	if (scram_SaltedPassword(state->password, state->salt, state->saltlen,
-							 state->iterations, state->SaltedPassword) < 0 ||
-		scram_ClientKey(state->SaltedPassword, ClientKey) < 0 ||
-		scram_H(ClientKey, SCRAM_KEY_LEN, StoredKey) < 0 ||
-		pg_hmac_init(ctx, StoredKey, SCRAM_KEY_LEN) < 0 ||
+							 state->iterations, state->SaltedPassword,
+							 errstr) < 0 ||
+		scram_ClientKey(state->SaltedPassword, ClientKey, errstr) < 0 ||
+		scram_H(ClientKey, SCRAM_KEY_LEN, StoredKey, errstr) < 0)
+	{
+		/* errstr is already filled here */
+		pg_hmac_free(ctx);
+		return false;
+	}
+
+	if (pg_hmac_init(ctx, StoredKey, SCRAM_KEY_LEN) < 0 ||
 		pg_hmac_update(ctx,
 					   (uint8 *) state->client_first_message_bare,
 					   strlen(state->client_first_message_bare)) < 0 ||
@@ -821,6 +836,7 @@ calculate_client_proof(fe_scram_state *state,
 					   strlen(client_final_message_without_proof)) < 0 ||
 		pg_hmac_final(ctx, ClientSignature, sizeof(ClientSignature)) < 0)
 	{
+		*errstr = pg_hmac_error(ctx);
 		pg_hmac_free(ctx);
 		return false;
 	}
@@ -836,10 +852,12 @@ calculate_client_proof(fe_scram_state *state,
  * Validate the server signature, received as part of the final exchange
  * message received from the server.  *match tracks if the server signature
  * matched or not. Returns true if the server signature got verified, and
- * false for a processing error.
+ * false for a processing error with *errstr pointing to a message about the
+ * error details.
  */
 static bool
-verify_server_signature(fe_scram_state *state, bool *match)
+verify_server_signature(fe_scram_state *state, bool *match,
+						const char **errstr)
 {
 	uint8		expected_ServerSignature[SCRAM_KEY_LEN];
 	uint8		ServerKey[SCRAM_KEY_LEN];
@@ -847,11 +865,20 @@ verify_server_signature(fe_scram_state *state, bool *match)
 
 	ctx = pg_hmac_create(PG_SHA256);
 	if (ctx == NULL)
+	{
+		*errstr = pg_hmac_error(NULL);	/* returns OOM */
 		return false;
+	}
 
-	if (scram_ServerKey(state->SaltedPassword, ServerKey) < 0 ||
+	if (scram_ServerKey(state->SaltedPassword, ServerKey, errstr) < 0)
+	{
+		/* errstr is filled already */
+		pg_hmac_free(ctx);
+		return false;
+	}
+
 	/* calculate ServerSignature */
-		pg_hmac_init(ctx, ServerKey, SCRAM_KEY_LEN) < 0 ||
+	if (pg_hmac_init(ctx, ServerKey, SCRAM_KEY_LEN) < 0 ||
 		pg_hmac_update(ctx,
 					   (uint8 *) state->client_first_message_bare,
 					   strlen(state->client_first_message_bare)) < 0 ||
@@ -866,6 +893,7 @@ verify_server_signature(fe_scram_state *state, bool *match)
 		pg_hmac_final(ctx, expected_ServerSignature,
 					  sizeof(expected_ServerSignature)) < 0)
 	{
+		*errstr = pg_hmac_error(ctx);
 		pg_hmac_free(ctx);
 		return false;
 	}
@@ -883,9 +911,12 @@ verify_server_signature(fe_scram_state *state, bool *match)
 
 /*
  * Build a new SCRAM secret.
+ *
+ * On error, returns NULL and sets *errstr to point to a message about the
+ * error details.
  */
 char *
-pg_fe_scram_build_secret(const char *password)
+pg_fe_scram_build_secret(const char *password, const char **errstr)
 {
 	char	   *prep_password;
 	pg_saslprep_rc rc;
@@ -899,20 +930,25 @@ pg_fe_scram_build_secret(const char *password)
 	 */
 	rc = pg_saslprep(password, &prep_password);
 	if (rc == SASLPREP_OOM)
+	{
+		*errstr = _("out of memory");
 		return NULL;
+	}
 	if (rc == SASLPREP_SUCCESS)
 		password = (const char *) prep_password;
 
 	/* Generate a random salt */
 	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
+		*errstr = _("failed to generate random salt");
 		if (prep_password)
 			free(prep_password);
 		return NULL;
 	}
 
 	result = scram_build_secret(saltbuf, SCRAM_DEFAULT_SALT_LEN,
-								SCRAM_DEFAULT_ITERATIONS, password);
+								SCRAM_DEFAULT_ITERATIONS, password,
+								errstr);
 
 	if (prep_password)
 		free(prep_password);

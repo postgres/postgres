@@ -4,7 +4,7 @@
  *		PostgreSQL write-ahead log manager
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlog.c
@@ -107,7 +107,7 @@ char	   *wal_consistency_checking_string = NULL;
 bool	   *wal_consistency_checking = NULL;
 bool		wal_init_zero = true;
 bool		wal_recycle = true;
-bool		log_checkpoints = false;
+bool		log_checkpoints = true;
 int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
 int			CommitDelay = 0;	/* precommit delay in microseconds */
@@ -350,8 +350,14 @@ XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
  * hold an insertion lock).  See XLogInsertRecord for details.  We are also
  * allowed to update from XLogCtl->RedoRecPtr if we hold the info_lck;
- * see GetRedoRecPtr.  A freshly spawned backend obtains the value during
- * InitXLOGAccess.
+ * see GetRedoRecPtr.
+ *
+ * NB: Code that uses this variable must be prepared not only for the
+ * possibility that it may be arbitrarily out of date, but also for the
+ * possibility that it might be set to InvalidXLogRecPtr. We used to
+ * initialize it as a side effect of the first call to RecoveryInProgress(),
+ * which meant that most code that might use it could assume that it had a
+ * real if perhaps stale value. That's no longer the case.
  */
 static XLogRecPtr RedoRecPtr;
 
@@ -359,6 +365,12 @@ static XLogRecPtr RedoRecPtr;
  * doPageWrites is this backend's local copy of (forcePageWrites ||
  * fullPageWrites).  It is used together with RedoRecPtr to decide whether
  * a full-page image of a page need to be taken.
+ *
+ * NB: Initially this is false, and there's no guarantee that it will be
+ * initialized to any other value before it is first used. Any code that
+ * makes use of it must recheck the value after obtaining a WALInsertLock,
+ * and respond appropriately if it turns out that the previous value wasn't
+ * accurate.
  */
 static bool doPageWrites;
 
@@ -7507,9 +7519,6 @@ StartupXLOG(void)
 		/* Also ensure XLogReceiptTime has a sane value */
 		XLogReceiptTime = GetCurrentTimestamp();
 
-		/* Allow ProcSendSignal() to find us, for buffer pin wakeups. */
-		PublishStartupProcessInformation();
-
 		/*
 		 * Let postmaster know we've started redo now, so that it can launch
 		 * the archiver if necessary.
@@ -8390,9 +8399,6 @@ PerformRecoveryXLogAction(void)
  *
  * Unlike testing InRecovery, this works in any process that's connected to
  * shared memory.
- *
- * As a side-effect, we initialize the local RedoRecPtr variable the first
- * time we see that recovery is finished.
  */
 bool
 RecoveryInProgress(void)
@@ -8413,23 +8419,6 @@ RecoveryInProgress(void)
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
 		LocalRecoveryInProgress = (xlogctl->SharedRecoveryState != RECOVERY_STATE_DONE);
-
-		/*
-		 * Initialize TimeLineID and RedoRecPtr when we discover that recovery
-		 * is finished. InitPostgres() relies upon this behaviour to ensure
-		 * that InitXLOGAccess() is called at backend startup.  (If you change
-		 * this, see also LocalSetXLogInsertAllowed.)
-		 */
-		if (!LocalRecoveryInProgress)
-		{
-			/*
-			 * If we just exited recovery, make sure we read TimeLineID and
-			 * RedoRecPtr after SharedRecoveryState (for machines with weak
-			 * memory ordering).
-			 */
-			pg_memory_barrier();
-			InitXLOGAccess();
-		}
 
 		/*
 		 * Note: We don't need a memory barrier when we're still in recovery.
@@ -8547,9 +8536,6 @@ LocalSetXLogInsertAllowed(void)
 
 	LocalXLogInsertAllowed = 1;
 
-	/* Initialize as RecoveryInProgress() would do when switching state */
-	InitXLOGAccess();
-
 	return oldXLogAllowed;
 }
 
@@ -8657,25 +8643,6 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 }
 
 /*
- * This must be called in a backend process before creating WAL records
- * (except in a standalone backend, which does StartupXLOG instead).  We need
- * to initialize the local copy of RedoRecPtr.
- */
-void
-InitXLOGAccess(void)
-{
-	XLogCtlInsert *Insert = &XLogCtl->Insert;
-
-	/* set wal_segment_size */
-	wal_segment_size = ControlFile->xlog_seg_size;
-
-	/* Use GetRedoRecPtr to copy the RedoRecPtr safely */
-	(void) GetRedoRecPtr();
-	/* Also update our copy of doPageWrites. */
-	doPageWrites = (Insert->fullPageWrites || Insert->forcePageWrites);
-}
-
-/*
  * Return the current Redo pointer from shared memory.
  *
  * As a side-effect, the local RedoRecPtr copy is updated.
@@ -8706,8 +8673,9 @@ GetRedoRecPtr(void)
  * full-page image to be included in the WAL record.
  *
  * The returned values are cached copies from backend-private memory, and
- * possibly out-of-date.  XLogInsertRecord will re-check them against
- * up-to-date values, while holding the WAL insert lock.
+ * possibly out-of-date or, indeed, uninitalized, in which case they will
+ * be InvalidXLogRecPtr and false, respectively.  XLogInsertRecord will
+ * re-check them against up-to-date values, while holding the WAL insert lock.
  */
 void
 GetFullPageWriteInfo(XLogRecPtr *RedoRecPtr_p, bool *doPageWrites_p)
@@ -10746,13 +10714,13 @@ xlog_block_info(StringInfo buf, XLogReaderState *record)
 
 		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 		if (forknum != MAIN_FORKNUM)
-			appendStringInfo(buf, "; blkref #%u: rel %u/%u/%u, fork %u, blk %u",
+			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, fork %u, blk %u",
 							 block_id,
 							 rnode.spcNode, rnode.dbNode, rnode.relNode,
 							 forknum,
 							 blk);
 		else
-			appendStringInfo(buf, "; blkref #%u: rel %u/%u/%u, blk %u",
+			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, blk %u",
 							 block_id,
 							 rnode.spcNode, rnode.dbNode, rnode.relNode,
 							 blk);

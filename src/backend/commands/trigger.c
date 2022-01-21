@@ -3,7 +3,7 @@
  * trigger.c
  *	  PostgreSQL TRIGGERs support code.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -132,8 +132,10 @@ static bool before_stmt_triggers_fired(Oid relid, CmdType cmdType);
  * given, stmt->funcname is ignored.
  *
  * parentTriggerOid, if nonzero, is a trigger that begets this one; so that
- * if that trigger is dropped, this one should be too.  (This is passed as
- * Invalid by most callers; it's set here when recursing on a partition.)
+ * if that trigger is dropped, this one should be too.  There are two cases
+ * when a nonzero value is passed for this: 1) when this function recurses to
+ * create the trigger on partitions, 2) when creating child foreign key
+ * triggers; see CreateFKCheckTrigger() and createForeignKeyActionTriggers().
  *
  * If whenClause is passed, it is an already-transformed expression for
  * WHEN.  In this case, we ignore any that may come in stmt->whenClause.
@@ -202,6 +204,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 	bool		trigger_exists = false;
 	Oid			existing_constraint_oid = InvalidOid;
 	bool		existing_isInternal = false;
+	bool		existing_isClone = false;
 
 	if (OidIsValid(relOid))
 		rel = table_open(relOid, ShareRowExclusiveLock);
@@ -741,6 +744,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 			trigoid = oldtrigger->oid;
 			existing_constraint_oid = oldtrigger->tgconstraint;
 			existing_isInternal = oldtrigger->tgisinternal;
+			existing_isClone = OidIsValid(oldtrigger->tgparentid);
 			trigger_exists = true;
 			/* copy the tuple to use in CatalogTupleUpdate() */
 			tuple = heap_copytuple(tuple);
@@ -767,17 +771,16 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 							stmt->trigname, RelationGetRelationName(rel))));
 
 		/*
-		 * An internal trigger cannot be replaced by a user-defined trigger.
-		 * However, skip this test when in_partition, because then we're
-		 * recursing from a partitioned table and the check was made at the
-		 * parent level.  Child triggers will always be marked "internal" (so
-		 * this test does protect us from the user trying to replace a child
-		 * trigger directly).
+		 * An internal trigger or a child trigger (isClone) cannot be replaced
+		 * by a user-defined trigger.  However, skip this test when
+		 * in_partition, because then we're recursing from a partitioned table
+		 * and the check was made at the parent level.
 		 */
-		if (existing_isInternal && !isInternal && !in_partition)
+		if ((existing_isInternal || existing_isClone) &&
+			!isInternal && !in_partition)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("trigger \"%s\" for relation \"%s\" is an internal trigger",
+					 errmsg("trigger \"%s\" for relation \"%s\" is an internal or a child trigger",
 							stmt->trigname, RelationGetRelationName(rel))));
 
 		/*
@@ -829,6 +832,8 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 											  0,
 											  ' ',
 											  ' ',
+											  NULL,
+											  0,
 											  ' ',
 											  NULL, /* no exclusion */
 											  NULL, /* no check constraint */
@@ -874,7 +879,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	values[Anum_pg_trigger_tgenabled - 1] = trigger_fires_when;
-	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal || in_partition);
+	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal);
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
 	values[Anum_pg_trigger_tgconstraint - 1] = ObjectIdGetDatum(constraintOid);
@@ -1241,6 +1246,82 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 	table_close(rel, NoLock);
 
 	return myself;
+}
+
+/*
+ * TriggerSetParentTrigger
+ *		Set a partition's trigger as child of its parent trigger,
+ *		or remove the linkage if parentTrigId is InvalidOid.
+ *
+ * This updates the constraint's pg_trigger row to show it as inherited, and
+ * adds PARTITION dependencies to prevent the trigger from being deleted
+ * on its own.  Alternatively, reverse that.
+ */
+void
+TriggerSetParentTrigger(Relation trigRel,
+						Oid childTrigId,
+						Oid parentTrigId,
+						Oid childTableId)
+{
+	SysScanDesc tgscan;
+	ScanKeyData skey[1];
+	Form_pg_trigger trigForm;
+	HeapTuple	tuple,
+				newtup;
+	ObjectAddress depender;
+	ObjectAddress referenced;
+
+	/*
+	 * Find the trigger to delete.
+	 */
+	ScanKeyInit(&skey[0],
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(childTrigId));
+
+	tgscan = systable_beginscan(trigRel, TriggerOidIndexId, true,
+								NULL, 1, skey);
+
+	tuple = systable_getnext(tgscan);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "could not find tuple for trigger %u", childTrigId);
+	newtup = heap_copytuple(tuple);
+	trigForm = (Form_pg_trigger) GETSTRUCT(newtup);
+	if (OidIsValid(parentTrigId))
+	{
+		/* don't allow setting parent for a constraint that already has one */
+		if (OidIsValid(trigForm->tgparentid))
+			elog(ERROR, "trigger %u already has a parent trigger",
+				 childTrigId);
+
+		trigForm->tgparentid = parentTrigId;
+
+		CatalogTupleUpdate(trigRel, &tuple->t_self, newtup);
+
+		ObjectAddressSet(depender, TriggerRelationId, childTrigId);
+
+		ObjectAddressSet(referenced, TriggerRelationId, parentTrigId);
+		recordDependencyOn(&depender, &referenced, DEPENDENCY_PARTITION_PRI);
+
+		ObjectAddressSet(referenced, RelationRelationId, childTableId);
+		recordDependencyOn(&depender, &referenced, DEPENDENCY_PARTITION_SEC);
+	}
+	else
+	{
+		trigForm->tgparentid = InvalidOid;
+
+		CatalogTupleUpdate(trigRel, &tuple->t_self, newtup);
+
+		deleteDependencyRecordsForClass(TriggerRelationId, childTrigId,
+										TriggerRelationId,
+										DEPENDENCY_PARTITION_PRI);
+		deleteDependencyRecordsForClass(TriggerRelationId, childTrigId,
+										RelationRelationId,
+										DEPENDENCY_PARTITION_SEC);
+	}
+
+	heap_freetuple(newtup);
+	systable_endscan(tgscan);
 }
 
 

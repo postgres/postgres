@@ -403,7 +403,7 @@ SELECT pg_get_functiondef('functest_S_13'::regproc);
   LANGUAGE sql                                            +
  BEGIN ATOMIC                                             +
   SELECT 1;                                               +
-  SELECT false AS bool;                                   +
+  SELECT false;                                           +
  END                                                      +
  
 (1 row)

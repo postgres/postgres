@@ -4,7 +4,7 @@
  *	  Functions for dealing with encrypted passwords stored in
  *	  pg_authid.rolpassword.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/libpq/crypt.c
@@ -34,7 +34,7 @@
  * sent to the client, to avoid giving away user information!
  */
 char *
-get_role_password(const char *role, char **logdetail)
+get_role_password(const char *role, const char **logdetail)
 {
 	TimestampTz vuntil = 0;
 	HeapTuple	roleTup;
@@ -116,6 +116,7 @@ encrypt_password(PasswordType target_type, const char *role,
 {
 	PasswordType guessed_type = get_password_type(password);
 	char	   *encrypted_password;
+	const char *errstr = NULL;
 
 	if (guessed_type != PASSWORD_TYPE_PLAINTEXT)
 	{
@@ -132,8 +133,8 @@ encrypt_password(PasswordType target_type, const char *role,
 			encrypted_password = palloc(MD5_PASSWD_LEN + 1);
 
 			if (!pg_md5_encrypt(password, role, strlen(role),
-								encrypted_password))
-				elog(ERROR, "password encryption failed");
+								encrypted_password, &errstr))
+				elog(ERROR, "password encryption failed: %s", errstr);
 			return encrypted_password;
 
 		case PASSWORD_TYPE_SCRAM_SHA_256:
@@ -159,17 +160,18 @@ encrypt_password(PasswordType target_type, const char *role,
  * 'client_pass' is the response given by the remote user to the MD5 challenge.
  * 'md5_salt' is the salt used in the MD5 authentication challenge.
  *
- * In the error case, optionally store a palloc'd string at *logdetail
- * that will be sent to the postmaster log (but not the client).
+ * In the error case, save a string at *logdetail that will be sent to the
+ * postmaster log (but not the client).
  */
 int
 md5_crypt_verify(const char *role, const char *shadow_pass,
 				 const char *client_pass,
 				 const char *md5_salt, int md5_salt_len,
-				 char **logdetail)
+				 const char **logdetail)
 {
 	int			retval;
 	char		crypt_pwd[MD5_PASSWD_LEN + 1];
+	const char *errstr = NULL;
 
 	Assert(md5_salt_len > 0);
 
@@ -183,16 +185,13 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
 
 	/*
 	 * Compute the correct answer for the MD5 challenge.
-	 *
-	 * We do not bother setting logdetail for any pg_md5_encrypt failure
-	 * below: the only possible error is out-of-memory, which is unlikely, and
-	 * if it did happen adding a psprintf call would only make things worse.
 	 */
 	/* stored password already encrypted, only do salt */
 	if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
 						md5_salt, md5_salt_len,
-						crypt_pwd))
+						crypt_pwd, &errstr))
 	{
+		*logdetail = errstr;
 		return STATUS_ERROR;
 	}
 
@@ -215,15 +214,16 @@ md5_crypt_verify(const char *role, const char *shadow_pass,
  * pg_authid.rolpassword.
  * 'client_pass' is the password given by the remote user.
  *
- * In the error case, optionally store a palloc'd string at *logdetail
- * that will be sent to the postmaster log (but not the client).
+ * In the error case, store a string at *logdetail that will be sent to the
+ * postmaster log (but not the client).
  */
 int
 plain_crypt_verify(const char *role, const char *shadow_pass,
 				   const char *client_pass,
-				   char **logdetail)
+				   const char **logdetail)
 {
 	char		crypt_client_pass[MD5_PASSWD_LEN + 1];
+	const char *errstr = NULL;
 
 	/*
 	 * Client sent password in plaintext.  If we have an MD5 hash stored, hash
@@ -251,14 +251,10 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 			if (!pg_md5_encrypt(client_pass,
 								role,
 								strlen(role),
-								crypt_client_pass))
+								crypt_client_pass,
+								&errstr))
 			{
-				/*
-				 * We do not bother setting logdetail for pg_md5_encrypt
-				 * failure: the only possible error is out-of-memory, which is
-				 * unlikely, and if it did happen adding a psprintf call would
-				 * only make things worse.
-				 */
+				*logdetail = errstr;
 				return STATUS_ERROR;
 			}
 			if (strcmp(crypt_client_pass, shadow_pass) == 0)

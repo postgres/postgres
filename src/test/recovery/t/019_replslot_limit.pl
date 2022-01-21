@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for replication slot limit
 # Ensure that max_slot_wal_keep_size limits the number of WAL files to
@@ -49,8 +49,7 @@ $node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
 $node_standby->start;
 
 # Wait until standby has replayed enough data
-my $start_lsn = $node_primary->lsn('write');
-$node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
+$node_primary->wait_for_catchup($node_standby);
 
 # Stop standby
 $node_standby->stop;
@@ -84,8 +83,7 @@ is($result, "reserved|t", 'check that slot is working');
 # The standby can reconnect to primary
 $node_standby->start;
 
-$start_lsn = $node_primary->lsn('write');
-$node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
+$node_primary->wait_for_catchup($node_standby);
 
 $node_standby->stop;
 
@@ -115,8 +113,7 @@ is($result, "reserved",
 
 # The standby can reconnect to primary
 $node_standby->start;
-$start_lsn = $node_primary->lsn('write');
-$node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->stop;
 
 # wal_keep_size overrides max_slot_wal_keep_size
@@ -135,8 +132,7 @@ $result = $node_primary->safe_psql('postgres',
 
 # The standby can reconnect to primary
 $node_standby->start;
-$start_lsn = $node_primary->lsn('write');
-$node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->stop;
 
 # Advance WAL again without checkpoint, reducing remain by 6 MB.
@@ -163,8 +159,7 @@ is($result, "unreserved|t",
 # The standby still can connect to primary before a checkpoint
 $node_standby->start;
 
-$start_lsn = $node_primary->lsn('write');
-$node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
+$node_primary->wait_for_catchup($node_standby);
 
 $node_standby->stop;
 
@@ -334,7 +329,7 @@ $node_standby3->init_from_backup($node_primary3, $backup_name,
 	has_streaming => 1);
 $node_standby3->append_conf('postgresql.conf', "primary_slot_name = 'rep3'");
 $node_standby3->start;
-$node_primary3->wait_for_catchup($node_standby3->name, 'replay');
+$node_primary3->wait_for_catchup($node_standby3);
 my $senderpid = $node_primary3->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walsender'");
 like($senderpid, qr/^[0-9]+$/, "have walsender pid $senderpid");

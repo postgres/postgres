@@ -68,7 +68,7 @@ PostgreSQL documentation
  </para>
 
   <para>
-   pg_upgrade supports upgrades from 8.4.X and later to the current
+   pg_upgrade supports upgrades from 9.2.X and later to the current
    major release of <productname>PostgreSQL</productname>, including snapshot and beta releases.
   </para>
  </refsect1>
@@ -128,6 +128,22 @@ PostgreSQL documentation
       <term><option>--link</option></term>
       <listitem><para>use hard links instead of copying files to the new
       cluster</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N</option></term>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>pg_upgrade</command> will wait for all files
+        of the upgraded cluster to be written safely to disk.  This option
+        causes <command>pg_upgrade</command> to return without waiting, which
+        is faster, but means that a subsequent operating system crash can leave
+        the synchronized data directory corrupt.  Generally, this option is
+        useful for testing but should not be used on a production
+        installation.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>
@@ -798,21 +814,6 @@ psql --username=postgres --file=script.sql postgres
     <member><type>regprocedure</type></member>
    </simplelist>
    (<type>regclass</type>, <type>regrole</type>, and <type>regtype</type> can be upgraded.)
-  </para>
-
-  <para>
-   If you are upgrading a pre-<productname>PostgreSQL</productname> 9.2 cluster
-   that uses a configuration-file-only directory, you must pass the
-   real data directory location to <application>pg_upgrade</application>, and
-   pass the configuration directory location to the server, e.g.,
-   <literal>-d /real-data-directory -o '-D /configuration-directory'</literal>.
-  </para>
-
-  <para>
-   If using a pre-9.1 old server that is using a non-default Unix-domain
-   socket directory or a default that differs from the default of the
-   new cluster, set <envar>PGHOST</envar> to point to the old server's socket
-   location.  (This is not relevant on Windows.)
   </para>
 
   <para>

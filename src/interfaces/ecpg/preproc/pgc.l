@@ -10,7 +10,7 @@
  * only here to simplify syncing this file with scan.l.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -737,7 +737,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 <xui>{dquote}	{
 					BEGIN(state_before_str_start);
-					if (literallen == 2) /* "U&" */
+					if (literallen == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
 					/* The backend will truncate the identifier here. We do not as it does not change the result. */
 					base_yylval.str = psprintf("U&\"%s\"", literalbuf);

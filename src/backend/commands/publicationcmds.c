@@ -3,7 +3,7 @@
  * publicationcmds.c
  *		publication manipulation
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -48,7 +48,7 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
-static List *OpenReliIdList(List *relids);
+static List *OpenRelIdList(List *relids);
 static List *OpenTableList(List *tables);
 static void CloseTableList(List *rels);
 static void LockSchemaList(List *schemalist);
@@ -169,13 +169,13 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 			case PUBLICATIONOBJ_TABLE:
 				*rels = lappend(*rels, pubobj->pubtable);
 				break;
-			case PUBLICATIONOBJ_TABLE_IN_SCHEMA:
+			case PUBLICATIONOBJ_TABLES_IN_SCHEMA:
 				schemaid = get_namespace_oid(pubobj->name, false);
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
-			case PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA:
+			case PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA:
 				search_path = fetch_search_path(false);
 				if (search_path == NIL) /* nothing valid in search_path? */
 					ereport(ERROR,
@@ -214,7 +214,7 @@ CheckObjSchemaNotAlreadyInPublication(List *rels, List *schemaidlist,
 
 		if (list_member_oid(schemaidlist, relSchemaId))
 		{
-			if (checkobjtype == PUBLICATIONOBJ_TABLE_IN_SCHEMA)
+			if (checkobjtype == PUBLICATIONOBJ_TABLES_IN_SCHEMA)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("cannot add schema \"%s\" to publication",
@@ -499,15 +499,16 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 	Oid			pubid = pubform->oid;
 
 	/*
-	 * It is quite possible that for the SET case user has not specified any
-	 * tables in which case we need to remove all the existing tables.
+	 * Nothing to do if no objects, except in SET: for that it is quite
+	 * possible that user has not specified any tables in which case we need
+	 * to remove all the existing tables.
 	 */
-	if (!tables && stmt->action != DEFELEM_SET)
+	if (!tables && stmt->action != AP_SetObjects)
 		return;
 
 	rels = OpenTableList(tables);
 
-	if (stmt->action == DEFELEM_ADD)
+	if (stmt->action == AP_AddObjects)
 	{
 		List	   *schemas = NIL;
 
@@ -520,9 +521,9 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 											  PUBLICATIONOBJ_TABLE);
 		PublicationAddTables(pubid, rels, false, stmt);
 	}
-	else if (stmt->action == DEFELEM_DROP)
+	else if (stmt->action == AP_DropObjects)
 		PublicationDropTables(pubid, rels, false);
-	else						/* DEFELEM_SET */
+	else						/* AP_SetObjects */
 	{
 		List	   *oldrelids = GetPublicationRelations(pubid,
 														PUBLICATION_PART_ROOT);
@@ -593,10 +594,11 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
 
 	/*
-	 * It is quite possible that for the SET case user has not specified any
-	 * schemas in which case we need to remove all the existing schemas.
+	 * Nothing to do if no objects, except in SET: for that it is quite
+	 * possible that user has not specified any schemas in which case we need
+	 * to remove all the existing schemas.
 	 */
-	if (!schemaidlist && stmt->action != DEFELEM_SET)
+	if (!schemaidlist && stmt->action != AP_SetObjects)
 		return;
 
 	/*
@@ -604,23 +606,23 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 	 * concurrent schema deletion.
 	 */
 	LockSchemaList(schemaidlist);
-	if (stmt->action == DEFELEM_ADD)
+	if (stmt->action == AP_AddObjects)
 	{
 		List	   *rels;
 		List	   *reloids;
 
 		reloids = GetPublicationRelations(pubform->oid, PUBLICATION_PART_ROOT);
-		rels = OpenReliIdList(reloids);
+		rels = OpenRelIdList(reloids);
 
 		CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
-											  PUBLICATIONOBJ_TABLE_IN_SCHEMA);
+											  PUBLICATIONOBJ_TABLES_IN_SCHEMA);
 
 		CloseTableList(rels);
 		PublicationAddSchemas(pubform->oid, schemaidlist, false, stmt);
 	}
-	else if (stmt->action == DEFELEM_DROP)
+	else if (stmt->action == AP_DropObjects)
 		PublicationDropSchemas(pubform->oid, schemaidlist, false);
-	else						/* DEFELEM_SET */
+	else						/* AP_SetObjects */
 	{
 		List	   *oldschemaids = GetPublicationSchemas(pubform->oid);
 		List	   *delschemas = NIL;
@@ -655,7 +657,7 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 {
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
 
-	if ((stmt->action == DEFELEM_ADD || stmt->action == DEFELEM_SET) &&
+	if ((stmt->action == AP_AddObjects || stmt->action == AP_SetObjects) &&
 		schemaidlist && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -813,7 +815,7 @@ RemovePublicationById(Oid pubid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for publication %u", pubid);
 
-	pubform = (Form_pg_publication)GETSTRUCT(tup);
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
 
 	/* Invalidate relcache so that publication info is rebuilt. */
 	if (pubform->puballtables)
@@ -868,7 +870,7 @@ RemovePublicationSchemaById(Oid psoid)
  * add them to a publication.
  */
 static List *
-OpenReliIdList(List *relids)
+OpenRelIdList(List *relids)
 {
 	ListCell   *lc;
 	List	   *rels = NIL;
@@ -1192,6 +1194,13 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 					 errmsg("permission denied to change owner of publication \"%s\"",
 							NameStr(form->pubname)),
 					 errhint("The owner of a FOR ALL TABLES publication must be a superuser.")));
+
+		if (!superuser_arg(newOwnerId) && is_schema_publication(form->oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to change owner of publication \"%s\"",
+							NameStr(form->pubname)),
+					 errhint("The owner of a FOR ALL TABLES IN SCHEMA publication must be a superuser.")));
 	}
 
 	form->pubowner = newOwnerId;

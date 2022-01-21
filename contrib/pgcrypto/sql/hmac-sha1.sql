@@ -2,43 +2,43 @@
 -- HMAC-SHA1
 --
 
-SELECT encode(hmac(
+SELECT hmac(
 'Hi There',
-decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),
-'sha1'), 'hex');
+'\x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'::bytea,
+'sha1');
 
 -- 2
-SELECT encode(hmac(
+SELECT hmac(
 'Jefe',
 'what do ya want for nothing?',
-'sha1'), 'hex');
+'sha1');
 
 -- 3
-SELECT encode(hmac(
-decode('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'hex'),
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'sha1'), 'hex');
+SELECT hmac(
+'\xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'::bytea,
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'sha1');
 
 -- 4
-SELECT encode(hmac(
-decode('cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', 'hex'),
-decode('0102030405060708090a0b0c0d0e0f10111213141516171819', 'hex'),
-'sha1'), 'hex');
+SELECT hmac(
+'\xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd'::bytea,
+'\x0102030405060708090a0b0c0d0e0f10111213141516171819'::bytea,
+'sha1');
 
 -- 5
-SELECT encode(hmac(
+SELECT hmac(
 'Test With Truncation',
-decode('0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c', 'hex'),
-'sha1'), 'hex');
+'\x0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'::bytea,
+'sha1');
 
 -- 6
-SELECT encode(hmac(
+SELECT hmac(
 'Test Using Larger Than Block-Size Key - Hash Key First',
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'sha1'), 'hex');
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'sha1');
 
 -- 7
-SELECT encode(hmac(
+SELECT hmac(
 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data',
-decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
-'sha1'), 'hex');
+'\xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'::bytea,
+'sha1');

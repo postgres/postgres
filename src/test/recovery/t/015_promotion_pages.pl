@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for promotion handling with WAL records generated post-promotion
 # before the first checkpoint is generated.  This test case checks for
@@ -44,7 +44,7 @@ $alpha->safe_psql('postgres', 'checkpoint');
 # problematic WAL records.
 $alpha->safe_psql('postgres', 'vacuum verbose test1');
 # Wait for last record to have been replayed on the standby.
-$alpha->wait_for_catchup($bravo, 'replay', $alpha->lsn('insert'));
+$alpha->wait_for_catchup($bravo);
 
 # Now force a checkpoint on the standby. This seems unnecessary but for "some"
 # reason, the previous checkpoint on the primary does not reflect on the standby
@@ -60,7 +60,7 @@ $alpha->safe_psql('postgres',
 $alpha->safe_psql('postgres', 'truncate test2');
 
 # Wait again for all records to be replayed.
-$alpha->wait_for_catchup($bravo, 'replay', $alpha->lsn('insert'));
+$alpha->wait_for_catchup($bravo);
 
 # Do the promotion, which reinitializes minRecoveryPoint in the control
 # file so as WAL is replayed up to the end.

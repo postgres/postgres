@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Verify that pg_verifybackup handles hex-encoded filenames correctly.
 
@@ -19,7 +19,7 @@ $primary->command_ok(
 	[
 		'pg_basebackup', '-D',
 		$backup_path,    '--no-sync',
-		'--manifest-force-encode'
+		'-cfast',        '--manifest-force-encode'
 	],
 	"backup ok with forced hex encoding");
 

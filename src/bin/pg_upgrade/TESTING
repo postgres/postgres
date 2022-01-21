@@ -55,16 +55,6 @@ Here are the steps needed to create a regression database dump file:
         Commands like CREATE TRIGGER and ALTER TABLE sometimes have
         differences.
 
-    d)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
-
-    e)  For pre-9.0, remove 'regex_flavor'
-
-    f)  For pre-9.0, adjust extra_float_digits
-        Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
-        databases, and extra_float_digits=-3 for >= 9.0 databases.
-        It is necessary to modify 9.0 pg_dump to always use -3, and
-        modify the pre-9.0 old server to accept extra_float_digits=-3.
-
 Once the dump is created, it can be repeatedly loaded into the old
 database, upgraded, and dumped out of the new database, and then
 compared to the original version. To test the dump file, perform these

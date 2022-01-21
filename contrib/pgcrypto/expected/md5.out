@@ -1,45 +1,45 @@
 --
 -- MD5 message digest
 --
-SELECT encode(digest('', 'md5'), 'hex');
-              encode              
-----------------------------------
- d41d8cd98f00b204e9800998ecf8427e
+SELECT digest('', 'md5');
+               digest               
+------------------------------------
+ \xd41d8cd98f00b204e9800998ecf8427e
 (1 row)
 
-SELECT encode(digest('a', 'md5'), 'hex');
-              encode              
-----------------------------------
- 0cc175b9c0f1b6a831c399e269772661
+SELECT digest('a', 'md5');
+               digest               
+------------------------------------
+ \x0cc175b9c0f1b6a831c399e269772661
 (1 row)
 
-SELECT encode(digest('abc', 'md5'), 'hex');
-              encode              
-----------------------------------
- 900150983cd24fb0d6963f7d28e17f72
+SELECT digest('abc', 'md5');
+               digest               
+------------------------------------
+ \x900150983cd24fb0d6963f7d28e17f72
 (1 row)
 
-SELECT encode(digest('message digest', 'md5'), 'hex');
-              encode              
-----------------------------------
- f96b697d7cb7938d525a2f31aaf161d0
+SELECT digest('message digest', 'md5');
+               digest               
+------------------------------------
+ \xf96b697d7cb7938d525a2f31aaf161d0
 (1 row)
 
-SELECT encode(digest('abcdefghijklmnopqrstuvwxyz', 'md5'), 'hex');
-              encode              
-----------------------------------
- c3fcd3d76192e4007dfb496cca67e13b
+SELECT digest('abcdefghijklmnopqrstuvwxyz', 'md5');
+               digest               
+------------------------------------
+ \xc3fcd3d76192e4007dfb496cca67e13b
 (1 row)
 
-SELECT encode(digest('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'md5'), 'hex');
-              encode              
-----------------------------------
- d174ab98d277d9f5a5611c2c9f419d9f
+SELECT digest('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'md5');
+               digest               
+------------------------------------
+ \xd174ab98d277d9f5a5611c2c9f419d9f
 (1 row)
 
-SELECT encode(digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'md5'), 'hex');
-              encode              
-----------------------------------
- 57edf4a22be3c955ac49da2e2107b67a
+SELECT digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'md5');
+               digest               
+------------------------------------
+ \x57edf4a22be3c955ac49da2e2107b67a
 (1 row)
 

@@ -3,7 +3,7 @@
 # pg_proc.dat
 #    Initial contents of the pg_proc system catalog.
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/pg_proc.dat
@@ -658,9 +658,6 @@
 { oid => '225',
   proname => 'lseg_center', prorettype => 'point', proargtypes => 'lseg',
   prosrc => 'lseg_center' },
-{ oid => '226',
-  proname => 'path_center', prorettype => 'point', proargtypes => 'path',
-  prosrc => 'path_center' },
 { oid => '227',
   proname => 'poly_center', prorettype => 'point', proargtypes => 'polygon',
   prosrc => 'poly_center' },
@@ -1460,12 +1457,6 @@
 { oid => '702',
   proname => 'dist_lp', prorettype => 'float8', proargtypes => 'line point',
   prosrc => 'dist_lp' },
-{ oid => '726',
-  proname => 'dist_lb', prorettype => 'float8', proargtypes => 'line box',
-  prosrc => 'dist_lb' },
-{ oid => '703',
-  proname => 'dist_bl', prorettype => 'float8', proargtypes => 'box line',
-  prosrc => 'dist_bl' },
 { oid => '727',
   proname => 'dist_sl', prorettype => 'float8', proargtypes => 'lseg line',
   prosrc => 'dist_sl' },
@@ -1970,12 +1961,6 @@
 { oid => '961',
   proname => 'close_pl', prorettype => 'point', proargtypes => 'point line',
   prosrc => 'close_pl' },
-{ oid => '962',
-  proname => 'close_sl', prorettype => 'point', proargtypes => 'lseg line',
-  prosrc => 'close_sl' },
-{ oid => '963',
-  proname => 'close_lb', prorettype => 'point', proargtypes => 'line box',
-  prosrc => 'close_lb' },
 
 { oid => '964', descr => 'large object unlink (delete)',
   proname => 'lo_unlink', provolatile => 'v', proparallel => 'u',
@@ -2305,8 +2290,8 @@
   proname => 'interval_in', provolatile => 's', prorettype => 'interval',
   proargtypes => 'cstring oid int4', prosrc => 'interval_in' },
 { oid => '1161', descr => 'I/O',
-  proname => 'interval_out', prorettype => 'cstring', proargtypes => 'interval',
-  prosrc => 'interval_out' },
+  proname => 'interval_out', provolatile => 's', prorettype => 'cstring',
+  proargtypes => 'interval', prosrc => 'interval_out' },
 { oid => '2903', descr => 'I/O typmod',
   proname => 'intervaltypmodin', prorettype => 'int4',
   proargtypes => '_cstring', prosrc => 'intervaltypmodin' },
@@ -3213,9 +3198,6 @@
 { oid => '1532', descr => 'center of',
   proname => 'point', prorettype => 'point', proargtypes => 'lseg',
   prosrc => 'lseg_center' },
-{ oid => '1533', descr => 'center of',
-  proname => 'point', prorettype => 'point', proargtypes => 'path',
-  prosrc => 'path_center' },
 { oid => '1534', descr => 'center of',
   proname => 'point', prorettype => 'point', proargtypes => 'box',
   prosrc => 'box_center' },
@@ -11058,6 +11040,22 @@
   proname => 'binary_upgrade_set_missing_value', provolatile => 'v',
   proparallel => 'u', prorettype => 'void', proargtypes => 'oid text text',
   prosrc => 'binary_upgrade_set_missing_value' },
+{ oid => '4545', descr => 'for use by pg_upgrade',
+  proname => 'binary_upgrade_set_next_heap_relfilenode', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
+  prosrc => 'binary_upgrade_set_next_heap_relfilenode' },
+{ oid => '4546', descr => 'for use by pg_upgrade',
+  proname => 'binary_upgrade_set_next_index_relfilenode', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
+  prosrc => 'binary_upgrade_set_next_index_relfilenode' },
+{ oid => '4547', descr => 'for use by pg_upgrade',
+  proname => 'binary_upgrade_set_next_toast_relfilenode', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
+  prosrc => 'binary_upgrade_set_next_toast_relfilenode' },
+{ oid => '4548', descr => 'for use by pg_upgrade',
+  proname => 'binary_upgrade_set_next_pg_tablespace_oid', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
+  prosrc => 'binary_upgrade_set_next_pg_tablespace_oid' },
 
 # conversion functions
 { oid => '4302',

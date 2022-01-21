@@ -2,7 +2,7 @@
  * worker.c
  *	   PostgreSQL logical replication worker (apply)
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/worker.c
@@ -179,6 +179,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "tcop/tcopprot.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/dynahash.h"
@@ -189,6 +190,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/rls.h"
 #include "utils/syscache.h"
 #include "utils/timeout.h"
 
@@ -1531,6 +1533,38 @@ GetRelationIdentityOrPK(Relation rel)
 }
 
 /*
+ * Check that we (the subscription owner) have sufficient privileges on the
+ * target relation to perform the given operation.
+ */
+static void
+TargetPrivilegesCheck(Relation rel, AclMode mode)
+{
+	Oid				relid;
+	AclResult		aclresult;
+
+	relid = RelationGetRelid(rel);
+	aclresult = pg_class_aclcheck(relid, GetUserId(), mode);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult,
+					   get_relkind_objtype(rel->rd_rel->relkind),
+					   get_rel_name(relid));
+
+	/*
+	 * We lack the infrastructure to honor RLS policies.  It might be possible
+	 * to add such infrastructure here, but tablesync workers lack it, too, so
+	 * we don't bother.  RLS does not ordinarily apply to TRUNCATE commands,
+	 * but it seems dangerous to replicate a TRUNCATE and then refuse to
+	 * replicate subsequent INSERTs, so we forbid all commands the same.
+	 */
+	if (check_enable_rls(relid, InvalidOid, false) == RLS_ENABLED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
+						GetUserNameFromId(GetUserId(), true),
+						RelationGetRelationName(rel))));
+}
+
+/*
  * Handle INSERT message.
  */
 
@@ -1613,6 +1647,7 @@ apply_handle_insert_internal(ApplyExecutionData *edata,
 	ExecOpenIndices(relinfo, false);
 
 	/* Do the insert. */
+	TargetPrivilegesCheck(relinfo->ri_RelationDesc, ACL_INSERT);
 	ExecSimpleRelationInsert(relinfo, estate, remoteslot);
 
 	/* Cleanup. */
@@ -1796,6 +1831,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 		EvalPlanQualSetSlot(&epqstate, remoteslot);
 
 		/* Do the actual update. */
+		TargetPrivilegesCheck(relinfo->ri_RelationDesc, ACL_UPDATE);
 		ExecSimpleRelationUpdate(relinfo, estate, &epqstate, localslot,
 								 remoteslot);
 	}
@@ -1917,6 +1953,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 		EvalPlanQualSetSlot(&epqstate, localslot);
 
 		/* Do the actual delete. */
+		TargetPrivilegesCheck(relinfo->ri_RelationDesc, ACL_DELETE);
 		ExecSimpleRelationDelete(relinfo, estate, &epqstate, localslot);
 	}
 	else
@@ -1953,6 +1990,12 @@ FindReplTupleInLocalRel(EState *estate, Relation localrel,
 {
 	Oid			idxoid;
 	bool		found;
+
+	/*
+	 * Regardless of the top-level operation, we're performing a read here, so
+	 * check for SELECT privileges.
+	 */
+	TargetPrivilegesCheck(localrel, ACL_SELECT);
 
 	*localslot = table_slot_create(localrel, &estate->es_tupleTable);
 
@@ -2110,6 +2153,8 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					ExecOpenIndices(partrelinfo, false);
 
 					EvalPlanQualSetSlot(&epqstate, remoteslot_part);
+					TargetPrivilegesCheck(partrelinfo->ri_RelationDesc,
+										  ACL_UPDATE);
 					ExecSimpleRelationUpdate(partrelinfo, estate, &epqstate,
 											 localslot, remoteslot_part);
 					ExecCloseIndices(partrelinfo);
@@ -2236,6 +2281,7 @@ apply_handle_truncate(StringInfo s)
 		}
 
 		remote_rels = lappend(remote_rels, rel);
+		TargetPrivilegesCheck(rel->localrel, ACL_TRUNCATE);
 		rels = lappend(rels, rel->localrel);
 		relids = lappend_oid(relids, rel->localreloid);
 		if (RelationIsLogicallyLogged(rel->localrel))
@@ -2273,6 +2319,7 @@ apply_handle_truncate(StringInfo s)
 					continue;
 				}
 
+				TargetPrivilegesCheck(childrel, ACL_TRUNCATE);
 				rels = lappend(rels, childrel);
 				part_rels = lappend(part_rels, childrel);
 				relids = lappend_oid(relids, childrelid);
@@ -2915,6 +2962,7 @@ maybe_reread_subscription(void)
 		strcmp(newsub->slotname, MySubscription->slotname) != 0 ||
 		newsub->binary != MySubscription->binary ||
 		newsub->stream != MySubscription->stream ||
+		newsub->owner != MySubscription->owner ||
 		!equal(newsub->publications, MySubscription->publications))
 	{
 		ereport(LOG,

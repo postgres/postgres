@@ -2105,7 +2105,7 @@ select tgrelid::regclass::text, tgname, tgfoid::regproc, tgenabled, tgisinternal
   tgrelid  | tgname |     tgfoid      | tgenabled | tgisinternal 
 -----------+--------+-----------------+-----------+--------------
  trigpart  | trg1   | trigger_nothing | O         | f
- trigpart1 | trg1   | trigger_nothing | O         | t
+ trigpart1 | trg1   | trigger_nothing | O         | f
 (2 rows)
 
 create table trigpart3 (like trigpart);
@@ -2122,6 +2122,20 @@ Triggers:
 alter table trigpart attach partition trigpart3 FOR VALUES FROM (2000) to (3000); -- fail
 ERROR:  trigger "trg1" for relation "trigpart3" already exists
 drop table trigpart3;
+-- check display of unrelated triggers
+create trigger samename after delete on trigpart execute function trigger_nothing();
+create trigger samename after delete on trigpart1 execute function trigger_nothing();
+\d trigpart1
+             Table "public.trigpart1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: trigpart FOR VALUES FROM (0) TO (1000)
+Triggers:
+    samename AFTER DELETE ON trigpart1 FOR EACH STATEMENT EXECUTE FUNCTION trigger_nothing()
+    trg1 AFTER INSERT ON trigpart1 FOR EACH ROW EXECUTE FUNCTION trigger_nothing(), ON TABLE trigpart
+
 drop table trigpart;
 drop function trigger_nothing();
 --
@@ -3311,7 +3325,7 @@ NOTICE:  hello from funcA
 create or replace trigger my_trig
   after insert on parted_trig_1
   for each row execute procedure funcB();  -- should fail
-ERROR:  trigger "my_trig" for relation "parted_trig_1" is an internal trigger
+ERROR:  trigger "my_trig" for relation "parted_trig_1" is an internal or a child trigger
 insert into parted_trig (a) values (50);
 NOTICE:  hello from funcA
 drop trigger my_trig on parted_trig;

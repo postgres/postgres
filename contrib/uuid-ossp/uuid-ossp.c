@@ -2,7 +2,7 @@
  *
  * UUID generation functions using the BSD, E2FS or OSSP UUID library
  *
- * Copyright (c) 2007-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2022, PostgreSQL Global Development Group
  *
  * Portions Copyright (c) 2009 Andrew Gierth
  *
@@ -319,14 +319,17 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 					pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_MD5);
 
 					if (pg_cryptohash_init(ctx) < 0)
-						elog(ERROR, "could not initialize %s context", "MD5");
+						elog(ERROR, "could not initialize %s context: %s", "MD5",
+							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_update(ctx, ns, sizeof(uu)) < 0 ||
 						pg_cryptohash_update(ctx, (unsigned char *) ptr, len) < 0)
-						elog(ERROR, "could not update %s context", "MD5");
+						elog(ERROR, "could not update %s context: %s", "MD5",
+							 pg_cryptohash_error(ctx));
 					/* we assume sizeof MD5 result is 16, same as UUID size */
 					if (pg_cryptohash_final(ctx, (unsigned char *) &uu,
 											sizeof(uu)) < 0)
-						elog(ERROR, "could not finalize %s context", "MD5");
+						elog(ERROR, "could not finalize %s context: %s", "MD5",
+							 pg_cryptohash_error(ctx));
 					pg_cryptohash_free(ctx);
 				}
 				else
@@ -335,12 +338,15 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 					unsigned char sha1result[SHA1_DIGEST_LENGTH];
 
 					if (pg_cryptohash_init(ctx) < 0)
-						elog(ERROR, "could not initialize %s context", "SHA1");
+						elog(ERROR, "could not initialize %s context: %s", "SHA1",
+							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_update(ctx, ns, sizeof(uu)) < 0 ||
 						pg_cryptohash_update(ctx, (unsigned char *) ptr, len) < 0)
-						elog(ERROR, "could not update %s context", "SHA1");
+						elog(ERROR, "could not update %s context: %s", "SHA1",
+							 pg_cryptohash_error(ctx));
 					if (pg_cryptohash_final(ctx, sha1result, sizeof(sha1result)) < 0)
-						elog(ERROR, "could not finalize %s context", "SHA1");
+						elog(ERROR, "could not finalize %s context: %s", "SHA1",
+							 pg_cryptohash_error(ctx));
 					pg_cryptohash_free(ctx);
 
 					memcpy(&uu, sha1result, sizeof(uu));

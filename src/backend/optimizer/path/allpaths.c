@@ -3,7 +3,7 @@
  * allpaths.c
  *	  Routines to find possible search paths for processing a query
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1716,6 +1716,7 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 		List	   *pathkeys = (List *) lfirst(lcp);
 		List	   *startup_subpaths = NIL;
 		List	   *total_subpaths = NIL;
+		List	   *fractional_subpaths = NIL;
 		bool		startup_neq_total = false;
 		ListCell   *lcr;
 		bool		match_partition_order;
@@ -1745,7 +1746,8 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 		{
 			RelOptInfo *childrel = (RelOptInfo *) lfirst(lcr);
 			Path	   *cheapest_startup,
-					   *cheapest_total;
+					   *cheapest_total,
+					   *cheapest_fractional = NULL;
 
 			/* Locate the right paths, if they are available. */
 			cheapest_startup =
@@ -1774,6 +1776,37 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			}
 
 			/*
+			 * When building a fractional path, determine a cheapest fractional
+			 * path for each child relation too. Looking at startup and total
+			 * costs is not enough, because the cheapest fractional path may be
+			 * dominated by two separate paths (one for startup, one for total).
+			 *
+			 * When needed (building fractional path), determine the cheapest
+			 * fractional path too.
+			 */
+			if (root->tuple_fraction > 0)
+			{
+				double	path_fraction = (1.0 / root->tuple_fraction);
+
+				cheapest_fractional =
+					get_cheapest_fractional_path_for_pathkeys(childrel->pathlist,
+															  pathkeys,
+															  NULL,
+															  path_fraction);
+
+				/*
+				 * If we found no path with matching pathkeys, use the cheapest
+				 * total path instead.
+				 *
+				 * XXX We might consider partially sorted paths too (with an
+				 * incremental sort on top). But we'd have to build all the
+				 * incremental paths, do the costing etc.
+				 */
+				if (!cheapest_fractional)
+					cheapest_fractional = cheapest_total;
+			}
+
+			/*
 			 * Notice whether we actually have different paths for the
 			 * "cheapest" and "total" cases; frequently there will be no point
 			 * in two create_merge_append_path() calls.
@@ -1799,6 +1832,12 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 
 				startup_subpaths = lappend(startup_subpaths, cheapest_startup);
 				total_subpaths = lappend(total_subpaths, cheapest_total);
+
+				if (cheapest_fractional)
+				{
+					cheapest_fractional = get_singleton_append_subpath(cheapest_fractional);
+					fractional_subpaths = lappend(fractional_subpaths, cheapest_fractional);
+				}
 			}
 			else if (match_partition_order_desc)
 			{
@@ -1812,6 +1851,12 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 
 				startup_subpaths = lcons(cheapest_startup, startup_subpaths);
 				total_subpaths = lcons(cheapest_total, total_subpaths);
+
+				if (cheapest_fractional)
+				{
+					cheapest_fractional = get_singleton_append_subpath(cheapest_fractional);
+					fractional_subpaths = lcons(cheapest_fractional, fractional_subpaths);
+				}
 			}
 			else
 			{
@@ -1823,6 +1868,10 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 										  &startup_subpaths, NULL);
 				accumulate_append_subpath(cheapest_total,
 										  &total_subpaths, NULL);
+
+				if (cheapest_fractional)
+					accumulate_append_subpath(cheapest_fractional,
+											  &fractional_subpaths, NULL);
 			}
 		}
 
@@ -1849,6 +1898,17 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 														  0,
 														  false,
 														  -1));
+
+			if (fractional_subpaths)
+				add_path(rel, (Path *) create_append_path(root,
+														  rel,
+														  fractional_subpaths,
+														  NIL,
+														  pathkeys,
+														  NULL,
+														  0,
+														  false,
+														  -1));
 		}
 		else
 		{
@@ -1862,6 +1922,13 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 				add_path(rel, (Path *) create_merge_append_path(root,
 																rel,
 																total_subpaths,
+																pathkeys,
+																NULL));
+
+			if (fractional_subpaths)
+				add_path(rel, (Path *) create_merge_append_path(root,
+																rel,
+																fractional_subpaths,
 																pathkeys,
 																NULL));
 		}

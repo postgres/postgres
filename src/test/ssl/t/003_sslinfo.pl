@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -44,6 +44,7 @@ copy("ssl/client_ext.key", "$cert_tempdir/client_ext.key")
   "couldn't copy ssl/client_ext.key to $cert_tempdir/client_ext.key for permissions change: $!";
 chmod 0600, "$cert_tempdir/client_ext.key"
   or die "failed to change permissions on $cert_tempdir/client_ext.key: $!";
+$client_tmp_key =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 
 #### Set up the server.
 

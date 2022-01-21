@@ -13,7 +13,7 @@
  * "delta" type.  Delta rows will be deleted by this worker and their values
  * aggregated into the total.
  *
- * Copyright (c) 2013-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/worker_spi/worker_spi.c
@@ -321,6 +321,8 @@ _PG_init(void)
 							   PGC_POSTMASTER,
 							   0,
 							   NULL, NULL, NULL);
+
+	EmitWarningsOnPlaceholders("worker_spi");
 
 	/* set up common data for all our workers */
 	memset(&worker, 0, sizeof(worker));

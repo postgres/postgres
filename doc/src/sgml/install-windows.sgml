@@ -517,6 +517,40 @@ $ENV{PROVE_FLAGS}='--timer --jobs 2'
 $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
 </programlisting>
   </para>
+
+  <para>
+   Some of the TAP tests depend on a set of external commands that would
+   optionally trigger tests related to them. Each one of those variables
+   can be set or unset in <filename>buildenv.pl</filename>:
+   <variablelist>
+    <varlistentry>
+     <term><varname>GZIP_PROGRAM</varname></term>
+     <listitem><para>
+       Path to a <application>gzip</application> command. The default is
+       <literal>gzip</literal>, that would be the command found in
+      <varname>PATH</varname>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>LZ4</varname></term>
+     <listitem><para>
+      Path to a <application>lz4</application> command. The default is
+      <literal>lz4</literal>, that would be the command found in
+      <varname>PATH</varname>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>TAR</varname></term>
+     <listitem><para>
+      Path to a <application>tar</application> command. The default is
+      <literal>tar</literal>, that would be the command found in
+      <varname>PATH</varname>.
+     </para></listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </sect2>
 
  </sect1>

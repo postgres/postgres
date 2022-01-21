@@ -29,8 +29,8 @@ We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.
 
 We are currently synced with the Snowball git commit
-4764395431c8f2a0b4fe18b816ab1fc966a45837 (tag v2.1.0)
-of 2021-01-21.
+48a67a2831005f49c48ec29a5837640e23e54e6b (tag v2.2.0)
+of 2021-11-10.
 
 To update the PostgreSQL sources from a new Snowball version:
 

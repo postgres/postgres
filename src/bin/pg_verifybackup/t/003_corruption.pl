@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Verify that various forms of corruption are detected by pg_verifybackup.
 
@@ -114,7 +114,7 @@ for my $scenario (@scenario)
 		local $ENV{MSYS2_ARG_CONV_EXCL} = $source_ts_prefix;
 		$primary->command_ok(
 			[
-				'pg_basebackup', '-D', $backup_path, '--no-sync',
+				'pg_basebackup', '-D', $backup_path, '--no-sync', '-cfast',
 				'-T', "${source_ts_path}=${backup_ts_path}"
 			],
 			"base backup ok");

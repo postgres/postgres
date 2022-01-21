@@ -6,7 +6,7 @@
  * Unfortunately neither (re)setting the C++ new handler, nor the LLVM OOM
  * handler are exposed to C. Therefore this file wraps the necessary code.
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/jit/llvm/llvmjit_error.cpp
@@ -84,7 +84,7 @@ llvm_leave_fatal_on_oom(void)
 }
 
 /*
- * Are we currently in an fatal-on-oom section? Useful to skip cleanup in case
+ * Are we currently in a fatal-on-oom section? Useful to skip cleanup in case
  * of errors.
  */
 bool

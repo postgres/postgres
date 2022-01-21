@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/common.c
  */
@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <pwd.h>
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
@@ -1200,7 +1201,6 @@ SendQuery(const char *query)
 	bool		OK = false;
 	int			i;
 	bool		on_error_rollback_savepoint = false;
-	static bool on_error_rollback_warning = false;
 
 	if (!pset.db)
 	{
@@ -1264,28 +1264,16 @@ SendQuery(const char *query)
 		(pset.cur_cmd_interactive ||
 		 pset.on_error_rollback == PSQL_ERROR_ROLLBACK_ON))
 	{
-		if (on_error_rollback_warning == false && pset.sversion < 80000)
+		results = PQexec(pset.db, "SAVEPOINT pg_psql_temporary_savepoint");
+		if (PQresultStatus(results) != PGRES_COMMAND_OK)
 		{
-			char		sverbuf[32];
-
-			pg_log_warning("The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.",
-						   formatPGVersionNumber(pset.sversion, false,
-												 sverbuf, sizeof(sverbuf)));
-			on_error_rollback_warning = true;
-		}
-		else
-		{
-			results = PQexec(pset.db, "SAVEPOINT pg_psql_temporary_savepoint");
-			if (PQresultStatus(results) != PGRES_COMMAND_OK)
-			{
-				pg_log_info("%s", PQerrorMessage(pset.db));
-				ClearOrSaveResult(results);
-				ResetCancelConn();
-				goto sendquery_cleanup;
-			}
+			pg_log_info("%s", PQerrorMessage(pset.db));
 			ClearOrSaveResult(results);
-			on_error_rollback_savepoint = true;
+			ResetCancelConn();
+			goto sendquery_cleanup;
 		}
+		ClearOrSaveResult(results);
+		on_error_rollback_savepoint = true;
 	}
 
 	if (pset.gdesc_flag)

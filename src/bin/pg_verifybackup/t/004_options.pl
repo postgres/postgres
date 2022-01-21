@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Verify the behavior of assorted pg_verifybackup options.
 
@@ -17,7 +17,7 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 my $backup_path = $primary->backup_dir . '/test_options';
-$primary->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync' ],
+$primary->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync', '-cfast' ],
 	"base backup ok");
 
 # Verify that pg_verifybackup -q succeeds and produces no output.

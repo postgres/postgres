@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Test using a standby server as the source.
@@ -74,7 +74,7 @@ $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 values ('in A, before promotion')");
 $node_a->safe_psql('postgres', 'CHECKPOINT');
 
-my $lsn = $node_a->lsn('insert');
+my $lsn = $node_a->lsn('write');
 $node_a->wait_for_catchup('node_b', 'write', $lsn);
 $node_b->wait_for_catchup('node_c', 'write', $lsn);
 
@@ -93,8 +93,7 @@ $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 VALUES ('in A, after C was promoted')");
 
 # make sure it's replicated to B before we continue
-$lsn = $node_a->lsn('insert');
-$node_a->wait_for_catchup('node_b', 'replay', $lsn);
+$node_a->wait_for_catchup('node_b');
 
 # Also insert a new row in the standby, which won't be present in the
 # old primary.
@@ -161,8 +160,7 @@ in A, after C was promoted
 $node_a->safe_psql('postgres',
 	"INSERT INTO tbl1 values ('in A, after rewind')");
 
-$lsn = $node_a->lsn('insert');
-$node_b->wait_for_catchup('node_c', 'replay', $lsn);
+$node_b->wait_for_catchup('node_c', 'replay', $node_a->lsn('write'));
 
 check_query(
 	'SELECT * FROM tbl1',

@@ -3,7 +3,7 @@
  * signal.c
  *	  Microsoft Windows Win32 Signal Emulation Functions
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32/signal.c
@@ -52,7 +52,17 @@ static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 void
 pg_usleep(long microsec)
 {
-	Assert(pgwin32_signal_event != NULL);
+	if (unlikely(pgwin32_signal_event == NULL))
+	{
+		/*
+		 * If we're reached by pgwin32_open_handle() early in startup before
+		 * the signal event is set up, just fall back to a regular
+		 * non-interruptible sleep.
+		 */
+		SleepEx((microsec < 500 ? 1 : (microsec + 500) / 1000), FALSE);
+		return;
+	}
+
 	if (WaitForSingleObject(pgwin32_signal_event,
 							(microsec < 500 ? 1 : (microsec + 500) / 1000))
 		== WAIT_OBJECT_0)

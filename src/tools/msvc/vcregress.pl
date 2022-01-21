@@ -1,6 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # src/tools/msvc/vcregress.pl
 
@@ -30,6 +30,13 @@ my $tmp_installdir = "$topdir/tmp_install";
 do './src/tools/msvc/config_default.pl';
 do './src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
+# These values are defaults that can be overridden by the calling environment
+# (see buildenv.pl processing below).
+# c.f. src/Makefile.global.in and configure.ac
+$ENV{GZIP_PROGRAM} ||= 'gzip';
+$ENV{LZ4} ||= 'lz4';
+$ENV{TAR} ||= 'tar';
+
 # buildenv.pl is for specifying the build environment settings
 # it should contain lines like:
 # $ENV{PATH} = "c:/path/to/bison/bin;$ENV{PATH}";
@@ -58,6 +65,14 @@ copy("$Config/refint/refint.dll",                 "src/test/regress");
 copy("$Config/autoinc/autoinc.dll",               "src/test/regress");
 copy("$Config/regress/regress.dll",               "src/test/regress");
 copy("$Config/dummy_seclabel/dummy_seclabel.dll", "src/test/regress");
+
+# Configuration settings used by TAP tests
+$ENV{with_ssl} = $config->{openssl} ? 'openssl' : 'no';
+$ENV{with_ldap} = $config->{ldap} ? 'yes' : 'no';
+$ENV{with_icu} = $config->{icu} ? 'yes' : 'no';
+$ENV{with_gssapi} = $config->{gss} ? 'yes' : 'no';
+$ENV{with_krb_srvnam} = $config->{krb_srvnam} || 'postgres';
+$ENV{with_readline} = 'no';
 
 $ENV{PATH} = "$topdir/$Config/libpq;$ENV{PATH}";
 
@@ -118,7 +133,6 @@ sub installcheck_internal
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
 		"--max-concurrent-tests=20",
-		"--make-testtablespace-dir",
 		"--encoding=SQL_ASCII",
 		"--no-locale");
 	push(@args, $maxconn) if $maxconn;
@@ -153,7 +167,6 @@ sub check
 		"--bindir=",
 		"--schedule=${schedule}_schedule",
 		"--max-concurrent-tests=20",
-		"--make-testtablespace-dir",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
 		"--temp-instance=./tmp_check");
@@ -332,7 +345,7 @@ sub mangle_plpython3
 					s/([ [{])u'/$1'/g;
 					s/def next/def __next__/g;
 					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
-					s/EXTENSION ([^ ]*_)*plpython2?u/EXTENSION $1plpython3u/g;
+					s/EXTENSION (\S*?)plpython2?u/EXTENSION $1plpython3u/g;
 					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
 				  }
 				  for ($contents);
@@ -491,6 +504,7 @@ sub contribcheck
 		# these configuration-based exclusions must match Install.pm
 		next if ($module eq "uuid-ossp"  && !defined($config->{uuid}));
 		next if ($module eq "sslinfo"    && !defined($config->{openssl}));
+		next if ($module eq "pgcrypto"   && !defined($config->{openssl}));
 		next if ($module eq "xml2"       && !defined($config->{xml}));
 		next if ($module =~ /_plperl$/   && !defined($config->{perl}));
 		next if ($module =~ /_plpython$/ && !defined($config->{python}));
@@ -521,6 +535,8 @@ sub modulescheck
 sub recoverycheck
 {
 	InstallTemp();
+
+	$ENV{REGRESS_OUTPUTDIR} = "$topdir/src/test/recovery/tmp_check";
 
 	my $mstat  = 0;
 	my $dir    = "$topdir/src/test/recovery";
@@ -633,7 +649,9 @@ sub upgradecheck
 	print "\nSetting up new cluster\n\n";
 	standard_initdb() or exit 1;
 	print "\nRunning pg_upgrade\n\n";
-	@args = ('pg_upgrade', '-d', "$data.old", '-D', $data, '-b', $bindir);
+	@args = (
+		'pg_upgrade', '-d', "$data.old", '-D', $data, '-b', $bindir,
+		'--no-sync');
 	system(@args) == 0 or exit 1;
 	print "\nStarting new cluster\n\n";
 	@args = ('pg_ctl', '-l', "$logdir/postmaster2.log", 'start');

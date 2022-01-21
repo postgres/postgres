@@ -166,53 +166,40 @@ that the incoming item doesn't fit on the split page where it needs to go!
 Deleting index tuples during VACUUM
 -----------------------------------
 
-Before deleting a leaf item, we get a super-exclusive lock on the target
+Before deleting a leaf item, we get a full cleanup lock on the target
 page, so that no other backend has a pin on the page when the deletion
 starts.  This is not necessary for correctness in terms of the btree index
 operations themselves; as explained above, index scans logically stop
 "between" pages and so can't lose their place.  The reason we do it is to
-provide an interlock between VACUUM and indexscans.  Since VACUUM deletes
-index entries before reclaiming heap tuple line pointers, the
-super-exclusive lock guarantees that VACUUM can't reclaim for re-use a
-line pointer that an indexscanning process might be about to visit.  This
-guarantee works only for simple indexscans that visit the heap in sync
-with the index scan, not for bitmap scans.  We only need the guarantee
-when using non-MVCC snapshot rules; when using an MVCC snapshot, it
-doesn't matter if the heap tuple is replaced with an unrelated tuple at
-the same TID, because the new tuple won't be visible to our scan anyway.
-Therefore, a scan using an MVCC snapshot which has no other confounding
-factors will not hold the pin after the page contents are read.  The
-current reasons for exceptions, where a pin is still needed, are if the
-index is not WAL-logged or if the scan is an index-only scan.  If later
-work allows the pin to be dropped for all cases we will be able to
-simplify the vacuum code, since the concept of a super-exclusive lock
-for btree indexes will no longer be needed.
+provide an interlock between VACUUM and index scans that are not prepared
+to deal with concurrent TID recycling when visiting the heap.  Since only
+VACUUM can ever mark pointed-to items LP_UNUSED in the heap, and since
+this only ever happens _after_ btbulkdelete returns, having index scans
+hold on to the pin (used when reading from the leaf page) until _after_
+they're done visiting the heap (for TIDs from pinned leaf page) prevents
+concurrent TID recycling.  VACUUM cannot get a conflicting cleanup lock
+until the index scan is totally finished processing its leaf page.
+
+This approach is fairly coarse, so we avoid it whenever possible.  In
+practice most index scans won't hold onto their pin, and so won't block
+VACUUM.  These index scans must deal with TID recycling directly, which is
+more complicated and not always possible.  See later section on making
+concurrent TID recycling safe.
+
+Opportunistic index tuple deletion performs almost the same page-level
+modifications while only holding an exclusive lock.  This is safe because
+there is no question of TID recycling taking place later on -- only VACUUM
+can make TIDs recyclable.  See also simple deletion and bottom-up
+deletion, below.
 
 Because a pin is not always held, and a page can be split even while
 someone does hold a pin on it, it is possible that an indexscan will
 return items that are no longer stored on the page it has a pin on, but
 rather somewhere to the right of that page.  To ensure that VACUUM can't
-prematurely remove such heap tuples, we require btbulkdelete to obtain a
-super-exclusive lock on every leaf page in the index, even pages that
-don't contain any deletable tuples.  Any scan which could yield incorrect
-results if the tuple at a TID matching the scan's range and filter
-conditions were replaced by a different tuple while the scan is in
-progress must hold the pin on each index page until all index entries read
-from the page have been processed.  This guarantees that the btbulkdelete
-call cannot return while any indexscan is still holding a copy of a
-deleted index tuple if the scan could be confused by that.  Note that this
-requirement does not say that btbulkdelete must visit the pages in any
-particular order.  (See also simple deletion and bottom-up deletion,
-below.)
-
-There is no such interlocking for deletion of items in internal pages,
-since backends keep no lock nor pin on a page they have descended past.
-Hence, when a backend is ascending the tree using its stack, it must
-be prepared for the possibility that the item it wants is to the left of
-the recorded position (but it can't have moved left out of the recorded
-page).  Since we hold a lock on the lower page (per L&Y) until we have
-re-found the parent item that links to it, we can be assured that the
-parent item does still exist and can't have been deleted.
+prematurely make TIDs recyclable in this scenario, we require btbulkdelete
+to obtain a cleanup lock on every leaf page in the index, even pages that
+don't contain any deletable tuples.  Note that this requirement does not
+say that btbulkdelete must visit the pages in any particular order.
 
 VACUUM's linear scan, concurrent page splits
 --------------------------------------------
@@ -453,6 +440,55 @@ whenever it is subsequently taken from the FSM for reuse.  The deleted
 page's contents will be overwritten by the split operation (it will become
 the new right sibling page).
 
+Making concurrent TID recycling safe
+------------------------------------
+
+As explained in the earlier section about deleting index tuples during
+VACUUM, we implement a locking protocol that allows individual index scans
+to avoid concurrent TID recycling.  Index scans opt-out (and so drop their
+leaf page pin when visiting the heap) whenever it's safe to do so, though.
+Dropping the pin early is useful because it avoids blocking progress by
+VACUUM.  This is particularly important with index scans used by cursors,
+since idle cursors sometimes stop for relatively long periods of time.  In
+extreme cases, a client application may hold on to an idle cursors for
+hours or even days.  Blocking VACUUM for that long could be disastrous.
+
+Index scans that don't hold on to a buffer pin are protected by holding an
+MVCC snapshot instead.  This more limited interlock prevents wrong answers
+to queries, but it does not prevent concurrent TID recycling itself (only
+holding onto the leaf page pin while accessing the heap ensures that).
+
+Index-only scans can never drop their buffer pin, since they are unable to
+tolerate having a referenced TID become recyclable.  Index-only scans
+typically just visit the visibility map (not the heap proper), and so will
+not reliably notice that any stale TID reference (for a TID that pointed
+to a dead-to-all heap item at first) was concurrently marked LP_UNUSED in
+the heap by VACUUM.  This could easily allow VACUUM to set the whole heap
+page to all-visible in the visibility map immediately afterwards.  An MVCC
+snapshot is only sufficient to avoid problems during plain index scans
+because they must access granular visibility information from the heap
+proper.  A plain index scan will even recognize LP_UNUSED items in the
+heap (items that could be recycled but haven't been just yet) as "not
+visible" -- even when the heap page is generally considered all-visible.
+
+LP_DEAD setting of index tuples by the kill_prior_tuple optimization
+(described in full in simple deletion, below) is also more complicated for
+index scans that drop their leaf page pins.  We must be careful to avoid
+LP_DEAD-marking any new index tuple that looks like a known-dead index
+tuple because it happens to share the same TID, following concurrent TID
+recycling.  It's just about possible that some other session inserted a
+new, unrelated index tuple, on the same leaf page, which has the same
+original TID.  It would be totally wrong to LP_DEAD-set this new,
+unrelated index tuple.
+
+We handle this kill_prior_tuple race condition by having affected index
+scans conservatively assume that any change to the leaf page at all
+implies that it was reached by btbulkdelete in the interim period when no
+buffer pin was held.  This is implemented by not setting any LP_DEAD bits
+on the leaf page at all when the page's LSN has changed.  (That won't work
+with an unlogged index, so for now we don't ever apply the "don't hold
+onto pin" optimization there.)
+
 Fastpath For Index Insertion
 ----------------------------
 
@@ -517,22 +553,6 @@ takes place at some point before the page finally splits.  That's all
 that's required for the deletion process to perform granular removal of
 groups of dead TIDs from posting list tuples (without the situation ever
 being allowed to get out of hand).
-
-It's sufficient to have an exclusive lock on the index page, not a
-super-exclusive lock, to do deletion of LP_DEAD items.  It might seem
-that this breaks the interlock between VACUUM and indexscans, but that is
-not so: as long as an indexscanning process has a pin on the page where
-the index item used to be, VACUUM cannot complete its btbulkdelete scan
-and so cannot remove the heap tuple.  This is another reason why
-btbulkdelete has to get a super-exclusive lock on every leaf page, not only
-the ones where it actually sees items to delete.
-
-LP_DEAD setting by index scans cannot be sure that a TID whose index tuple
-it had planned on LP_DEAD-setting has not been recycled by VACUUM if it
-drops its pin in the meantime.  It must conservatively also remember the
-LSN of the page, and only act to set LP_DEAD bits when the LSN has not
-changed at all. (Avoiding dropping the pin entirely also makes it safe, of
-course.)
 
 Bottom-Up deletion
 ------------------
@@ -733,23 +753,21 @@ because it allows running applications to continue while the standby
 changes state into a normally running server.
 
 The interlocking required to avoid returning incorrect results from
-non-MVCC scans is not required on standby nodes. We still get a
-super-exclusive lock ("cleanup lock") when replaying VACUUM records
-during recovery, but recovery does not need to lock every leaf page
-(only those leaf pages that have items to delete). That is safe because
-HeapTupleSatisfiesUpdate(), HeapTupleSatisfiesSelf(),
-HeapTupleSatisfiesDirty() and HeapTupleSatisfiesVacuum() are only ever
-used during write transactions, which cannot exist on the standby. MVCC
-scans are already protected by definition, so HeapTupleSatisfiesMVCC()
-is not a problem. The optimizer looks at the boundaries of value ranges
-using HeapTupleSatisfiesNonVacuumable() with an index-only scan, which
-is also safe. That leaves concern only for HeapTupleSatisfiesToast().
+non-MVCC scans is not required on standby nodes. We still get a full
+cleanup lock when replaying VACUUM records during recovery, but recovery
+does not need to lock every leaf page (only those leaf pages that have
+items to delete) -- that's sufficient to avoid breaking index-only scans
+during recovery (see section above about making TID recycling safe). That
+leaves concern only for plain index scans. (XXX: Not actually clear why
+this is totally unnecessary during recovery.)
 
-HeapTupleSatisfiesToast() doesn't use MVCC semantics, though that's
-because it doesn't need to - if the main heap row is visible then the
-toast rows will also be visible. So as long as we follow a toast
-pointer from a visible (live) tuple the corresponding toast rows
-will also be visible, so we do not need to recheck MVCC on them.
+MVCC snapshot plain index scans are always safe, for the same reasons that
+they're safe during original execution.  HeapTupleSatisfiesToast() doesn't
+use MVCC semantics, though that's because it doesn't need to - if the main
+heap row is visible then the toast rows will also be visible. So as long
+as we follow a toast pointer from a visible (live) tuple the corresponding
+toast rows will also be visible, so we do not need to recheck MVCC on
+them.
 
 Other Things That Are Handy to Know
 -----------------------------------

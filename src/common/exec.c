@@ -4,7 +4,7 @@
  *		Functions for finding and validating executable files
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,6 +24,14 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef EXEC_BACKEND
+#if defined(HAVE_SYS_PERSONALITY_H)
+#include <sys/personality.h>
+#elif defined(HAVE_SYS_PROCCTL_H)
+#include <sys/procctl.h>
+#endif
+#endif
 
 /*
  * Hacky solution to allow expressing both frontend and backend error reports
@@ -469,6 +477,31 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		setenv("PGSYSCONFDIR", path, 0);
 	}
 }
+
+#ifdef EXEC_BACKEND
+/*
+ * For the benefit of PostgreSQL developers testing EXEC_BACKEND on Unix
+ * systems (code paths normally exercised only on Windows), provide a way to
+ * disable address space layout randomization, if we know how on this platform.
+ * Otherwise, backends may fail to attach to shared memory at the fixed address
+ * chosen by the postmaster.  (See also the macOS-specific hack in
+ * sysv_shmem.c.)
+ */
+int
+pg_disable_aslr(void)
+{
+#if defined(HAVE_SYS_PERSONALITY_H)
+	return personality(ADDR_NO_RANDOMIZE);
+#elif defined(HAVE_SYS_PROCCTL_H) && defined(PROC_ASLR_FORCE_DISABLE)
+	int			data = PROC_ASLR_FORCE_DISABLE;
+
+	return procctl(P_PID, 0, PROC_ASLR_CTL, &data);
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
+}
+#endif
 
 #ifdef WIN32
 

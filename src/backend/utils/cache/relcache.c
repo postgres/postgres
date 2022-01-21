@@ -3,7 +3,7 @@
  * relcache.c
  *	  POSTGRES relation descriptor cache code
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1203,30 +1203,14 @@ retry:
 	/*
 	 * initialize access method information
 	 */
-	switch (relation->rd_rel->relkind)
-	{
-		case RELKIND_INDEX:
-		case RELKIND_PARTITIONED_INDEX:
-			Assert(relation->rd_rel->relam != InvalidOid);
-			RelationInitIndexAccessInfo(relation);
-			break;
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_MATVIEW:
-			Assert(relation->rd_rel->relam != InvalidOid);
-			RelationInitTableAccessMethod(relation);
-			break;
-		case RELKIND_SEQUENCE:
-			Assert(relation->rd_rel->relam == InvalidOid);
-			RelationInitTableAccessMethod(relation);
-			break;
-		case RELKIND_VIEW:
-		case RELKIND_COMPOSITE_TYPE:
-		case RELKIND_FOREIGN_TABLE:
-		case RELKIND_PARTITIONED_TABLE:
-			Assert(relation->rd_rel->relam == InvalidOid);
-			break;
-	}
+	if (relation->rd_rel->relkind == RELKIND_INDEX ||
+		relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+		RelationInitIndexAccessInfo(relation);
+	else if (RELKIND_HAS_TABLE_AM(relation->rd_rel->relkind) ||
+			 relation->rd_rel->relkind == RELKIND_SEQUENCE)
+		RelationInitTableAccessMethod(relation);
+	else
+		Assert(relation->rd_rel->relam == InvalidOid);
 
 	/* extract reloptions if any */
 	RelationParseRelOptions(relation, pg_class_tuple);
@@ -1444,6 +1428,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	/*
 	 * Look up the index's access method, save the OID of its handler function
 	 */
+	Assert(relation->rd_rel->relam != InvalidOid);
 	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(relation->rd_rel->relam));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for access method %u",
@@ -1803,6 +1788,7 @@ RelationInitTableAccessMethod(Relation relation)
 		 * seem prudent to show that in the catalog. So just overwrite it
 		 * here.
 		 */
+		Assert(relation->rd_rel->relam == InvalidOid);
 		relation->rd_amhandler = F_HEAP_TABLEAM_HANDLER;
 	}
 	else if (IsCatalogRelation(relation))
@@ -3638,10 +3624,7 @@ RelationBuildLocalRelation(const char *relname,
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_SEQUENCE ||
-		relkind == RELKIND_TOASTVALUE ||
-		relkind == RELKIND_MATVIEW)
+	if (RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_SEQUENCE)
 		RelationInitTableAccessMethod(rel);
 
 	/*
@@ -3730,32 +3713,25 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 	newrnode = relation->rd_node;
 	newrnode.relNode = newrelfilenode;
 
-	switch (relation->rd_rel->relkind)
+	if (RELKIND_HAS_TABLE_AM(relation->rd_rel->relkind))
 	{
-		case RELKIND_INDEX:
-		case RELKIND_SEQUENCE:
-			{
-				/* handle these directly, at least for now */
-				SMgrRelation srel;
+		table_relation_set_new_filenode(relation, &newrnode,
+										persistence,
+										&freezeXid, &minmulti);
+	}
+	else if (RELKIND_HAS_STORAGE(relation->rd_rel->relkind))
+	{
+		/* handle these directly, at least for now */
+		SMgrRelation srel;
 
-				srel = RelationCreateStorage(newrnode, persistence);
-				smgrclose(srel);
-			}
-			break;
-
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_MATVIEW:
-			table_relation_set_new_filenode(relation, &newrnode,
-											persistence,
-											&freezeXid, &minmulti);
-			break;
-
-		default:
-			/* we shouldn't be called for anything else */
-			elog(ERROR, "relation \"%s\" does not have storage",
-				 RelationGetRelationName(relation));
-			break;
+		srel = RelationCreateStorage(newrnode, persistence);
+		smgrclose(srel);
+	}
+	else
+	{
+		/* we shouldn't be called for anything else */
+		elog(ERROR, "relation \"%s\" does not have storage",
+			 RelationGetRelationName(relation));
 	}
 
 	/*
@@ -4207,10 +4183,7 @@ RelationCacheInitializePhase3(void)
 
 		/* Reload tableam data if needed */
 		if (relation->rd_tableam == NULL &&
-			(relation->rd_rel->relkind == RELKIND_RELATION ||
-			 relation->rd_rel->relkind == RELKIND_SEQUENCE ||
-			 relation->rd_rel->relkind == RELKIND_TOASTVALUE ||
-			 relation->rd_rel->relkind == RELKIND_MATVIEW))
+			(RELKIND_HAS_TABLE_AM(relation->rd_rel->relkind) || relation->rd_rel->relkind == RELKIND_SEQUENCE))
 		{
 			RelationInitTableAccessMethod(relation);
 			Assert(relation->rd_tableam != NULL);
@@ -4619,7 +4592,7 @@ RelationGetFKeyList(Relation relation)
 								   info->conkey,
 								   info->confkey,
 								   info->conpfeqop,
-								   NULL, NULL);
+								   NULL, NULL, NULL, NULL);
 
 		/* Add FK's node to the result list */
 		result = lappend(result, info);
@@ -6127,10 +6100,7 @@ load_relcache_init_file(bool shared)
 				nailed_rels++;
 
 			/* Load table AM data */
-			if (rel->rd_rel->relkind == RELKIND_RELATION ||
-				rel->rd_rel->relkind == RELKIND_SEQUENCE ||
-				rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
-				rel->rd_rel->relkind == RELKIND_MATVIEW)
+			if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind) || rel->rd_rel->relkind == RELKIND_SEQUENCE)
 				RelationInitTableAccessMethod(rel);
 
 			Assert(rel->rd_index == NULL);

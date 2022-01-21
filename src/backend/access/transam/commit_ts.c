@@ -15,7 +15,7 @@
  * re-perform the status update on redo; so we need make no additional XLOG
  * entry here.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/commit_ts.c
@@ -168,7 +168,9 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 	 * subxid not on the previous page as head.  This way, we only have to
 	 * lock/modify each SLRU page once.
 	 */
-	for (i = 0, headxid = xid;;)
+	headxid = xid;
+	i = 0;
+	for (;;)
 	{
 		int			pageno = TransactionIdToCTsPage(headxid);
 		int			j;
@@ -184,7 +186,7 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 							 pageno);
 
 		/* if we wrote out all subxids, we're done. */
-		if (j + 1 >= nsubxids)
+		if (j >= nsubxids)
 			break;
 
 		/*
@@ -192,7 +194,7 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 		 * just wrote.
 		 */
 		headxid = subxids[j];
-		i += j - i + 1;
+		i = j + 1;
 	}
 
 	/* update the cached value in shared memory */

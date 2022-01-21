@@ -4,7 +4,7 @@
  *	  Declarations for operations on built-in types.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/builtins.h
@@ -53,7 +53,6 @@ extern int	pg_ltoa(int32 l, char *a);
 extern int	pg_lltoa(int64 ll, char *a);
 extern char *pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth);
 extern char *pg_ultostr(char *str, uint32 value);
-extern uint64 pg_strtouint64(const char *str, char **endptr, int base);
 
 /* oid.c */
 extern oidvector *buildoidvector(const Oid *oids, int n);
