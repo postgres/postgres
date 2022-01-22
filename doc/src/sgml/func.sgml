@@ -3511,6 +3511,84 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>starts_with</primary>
+        </indexterm>
+        <function>starts_with</function> ( <parameter>string</parameter> <type>text</type>, <parameter>prefix</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if <parameter>string</parameter> starts
+        with <parameter>prefix</parameter>.
+       </para>
+       <para>
+        <literal>starts_with('alphabet', 'alph')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-string-to-array">
+         <primary>string_to_array</primary>
+        </indexterm>
+        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and forms the resulting fields
+        into a <type>text</type> array.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate element in the array.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+        See also <link linkend="function-array-to-string"><function>array_to_string</function></link>.
+       </para>
+       <para>
+        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
+        <returnvalue>{xx,NULL,zz}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_to_table</primary>
+        </indexterm>
+        <function>string_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and returns the resulting fields
+        as a set of <type>text</type> rows.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate row of the result.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>string_to_table('xx~^~yy~^~zz', '~^~', 'yy')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ xx
+ NULL
+ zz
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>strpos</primary>
         </indexterm>
         <function>strpos</function> ( <parameter>string</parameter> <type>text</type>, <parameter>substring</parameter> <type>text</type> )
@@ -3553,83 +3631,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>substr('alphabet', 3, 2)</literal>
         <returnvalue>ph</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>starts_with</primary>
-        </indexterm>
-        <function>starts_with</function> ( <parameter>string</parameter> <type>text</type>, <parameter>prefix</parameter> <type>text</type> )
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Returns true if <parameter>string</parameter> starts
-        with <parameter>prefix</parameter>.
-       </para>
-       <para>
-        <literal>starts_with('alphabet', 'alph')</literal>
-        <returnvalue>t</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>string_to_array</primary>
-        </indexterm>
-        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
-        <returnvalue>text[]</returnvalue>
-       </para>
-       <para>
-        Splits the <parameter>string</parameter> at occurrences
-        of <parameter>delimiter</parameter> and forms the resulting fields
-        into a <type>text</type> array.
-        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
-        each character in the <parameter>string</parameter> will become a
-        separate element in the array.
-        If <parameter>delimiter</parameter> is an empty string, then
-        the <parameter>string</parameter> is treated as a single field.
-        If <parameter>null_string</parameter> is supplied and is
-        not <literal>NULL</literal>, fields matching that string are
-        replaced by <literal>NULL</literal>.
-       </para>
-       <para>
-        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
-        <returnvalue>{xx,NULL,zz}</returnvalue>
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>string_to_table</primary>
-        </indexterm>
-        <function>string_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
-        <returnvalue>setof text</returnvalue>
-       </para>
-       <para>
-        Splits the <parameter>string</parameter> at occurrences
-        of <parameter>delimiter</parameter> and returns the resulting fields
-        as a set of <type>text</type> rows.
-        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
-        each character in the <parameter>string</parameter> will become a
-        separate row of the result.
-        If <parameter>delimiter</parameter> is an empty string, then
-        the <parameter>string</parameter> is treated as a single field.
-        If <parameter>null_string</parameter> is supplied and is
-        not <literal>NULL</literal>, fields matching that string are
-        replaced by <literal>NULL</literal>.
-       </para>
-       <para>
-        <literal>string_to_table('xx~^~yy~^~zz', '~^~', 'yy')</literal>
-        <returnvalue></returnvalue>
-<programlisting>
- xx
- NULL
- zz
-</programlisting>
        </para></entry>
       </row>
 
@@ -18452,7 +18453,7 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
+        <indexterm id="function-array-to-string">
          <primary>array_to_string</primary>
         </indexterm>
         <function>array_to_string</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
@@ -18465,6 +18466,7 @@ SELECT NULLIF(value, '(none)') ...
         If <parameter>null_string</parameter> is given and is
         not <literal>NULL</literal>, then <literal>NULL</literal> array
         entries are represented by that string; otherwise, they are omitted.
+        See also <link linkend="function-string-to-array"><function>string_to_array</function></link>.
        </para>
        <para>
         <literal>array_to_string(ARRAY[1, 2, 3, NULL, 5], ',', '*')</literal>
@@ -18583,18 +18585,6 @@ SELECT NULLIF(value, '(none)') ...
      </tbody>
     </tgroup>
    </table>
-
-   <note>
-    <para>
-     There are two differences in the behavior of <function>string_to_array</function>
-     from pre-9.1 versions of <productname>PostgreSQL</productname>.
-     First, it will return an empty (zero-element) array rather
-     than <literal>NULL</literal> when the input string is of zero length.
-     Second, if the delimiter string is <literal>NULL</literal>, the function
-     splits the input into individual characters, rather than
-     returning <literal>NULL</literal> as before.
-    </para>
-   </note>
 
    <para>
     See also <xref linkend="functions-aggregate"/> about the aggregate
