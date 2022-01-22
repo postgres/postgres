@@ -245,29 +245,21 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    in a role to one or more other roles.  Membership in a role is significant
    because it conveys the privileges granted to a role to each of its
    members.  Membership is effective cluster-wide unless otherwise constrained
-   through the use of a database-specific clause.
+   through the use of a database-specific clause.  Both database-specific and cluster-wide
+   versions of a role membership grant may exist at the same time.  In the event that
+   multiple grants apply, the membership privileges conferred are additive.
   </para>
-
-  <note>
-    <para>
-     Database-specific role membership was introduced in PostgreSQL version 15.  In
-     earlier versions, role membership was always considered to be cluster-wide.  Both
-     database-specific and cluster-wide versions of a role membership grant may exist
-     at the same time.  In the event that multiple grants apply, the membership
-     privileges conferred are additive.
-    </para>
-  </note>
 
   <para>
    If <literal>IN DATABASE <replaceable class="parameter">database_name</replaceable></literal>
    is specified, membership in <replaceable class="parameter">role_name</replaceable>
-   will be effective when the recipient is connected to the database specified by
+   will be effective only when the recipient is connected to the database specified by
    <replaceable class="parameter">database_name</replaceable>.
   </para>
 
   <para>
    If <literal>IN CURRENT DATABASE</literal> is specified, the membership in
-   <replaceable class="parameter">role_name</replaceable> will be effective when the
+   <replaceable class="parameter">role_name</replaceable> will be effective only when the
    recipient is connected to the same database that the grant was issued in.
   </para>
 
