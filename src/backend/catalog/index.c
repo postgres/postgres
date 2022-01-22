@@ -1436,6 +1436,7 @@ index_constraint_create(Relation heapRelation,
 		HeapTuple	indexTuple;
 		Form_pg_index indexForm;
 		bool		dirty = false;
+		bool		marked_as_primary = false;
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -1449,6 +1450,7 @@ index_constraint_create(Relation heapRelation,
 		{
 			indexForm->indisprimary = true;
 			dirty = true;
+			marked_as_primary = true;
 		}
 
 		if (deferrable && indexForm->indimmediate)
@@ -1460,6 +1462,15 @@ index_constraint_create(Relation heapRelation,
 		if (dirty)
 		{
 			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
+
+			/*
+			 * When we mark an existing index as primary, force a relcache
+			 * flush on its parent table, so that all sessions will become
+			 * aware that the table now has a primary key.  This is important
+			 * because it affects some replication behaviors.
+			 */
+			if (marked_as_primary)
+				CacheInvalidateRelcache(heapRelation);
 
 			InvokeObjectPostAlterHookArg(IndexRelationId, indexRelationId, 0,
 										 InvalidOid, is_internal);

@@ -105,6 +105,19 @@ ALTER PUBLICATION testpub_default DROP TABLE pub_test.testpub_nopk;
 
 \d+ testpub_tbl1
 
+-- verify relation cache invalidation when a primary key is added using
+-- an existing index
+CREATE TABLE pub_test.testpub_addpk (id int not null, data int);
+ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_addpk;
+INSERT INTO pub_test.testpub_addpk VALUES(1, 11);
+CREATE UNIQUE INDEX testpub_addpk_id_idx ON pub_test.testpub_addpk(id);
+-- fail:
+UPDATE pub_test.testpub_addpk SET id = 2;
+ALTER TABLE pub_test.testpub_addpk ADD PRIMARY KEY USING INDEX testpub_addpk_id_idx;
+-- now it should work:
+UPDATE pub_test.testpub_addpk SET id = 2;
+DROP TABLE pub_test.testpub_addpk;
+
 -- permissions
 SET ROLE regress_publication_user2;
 CREATE PUBLICATION testpub2;  -- fail
