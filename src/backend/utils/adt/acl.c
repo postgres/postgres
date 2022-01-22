@@ -4708,6 +4708,48 @@ has_rolinherit(Oid roleid)
 
 
 /*
+ * Appends role memberships to the list of roles
+ */
+static void
+append_role_memberships(List *roles_list, bool *is_admin, Oid admin_of,
+				   Oid memberid, Oid targetDatabaseId, Oid databaseId)
+{
+	CatCList   *memlist;
+	int			i;
+
+	/* Find roles that memberid is directly a member of */
+	memlist = SearchSysCacheList2(AUTHMEMDBMEMROLE,
+									ObjectIdGetDatum(targetDatabaseId),
+									ObjectIdGetDatum(memberid));
+	for (i = 0; i < memlist->n_members; i++)
+	{
+		HeapTuple	tup = &memlist->members[i]->tuple;
+		Oid			otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+
+		/*
+		 * While otherid==InvalidOid shouldn't appear in the catalog, the
+		 * OidIsValid() avoids crashing if that arises. This reports if
+		 * the admin option has been granted.
+		 */
+		if (otherid == admin_of &&
+			((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
+			((Form_pg_auth_members) GETSTRUCT(tup))->dbid == databaseId &&
+			OidIsValid(admin_of))
+			*is_admin = true;
+
+		/*
+		 * Even though there shouldn't be any loops in the membership
+		 * graph, we must test for having already seen this role. It is
+		 * legal for instance to have both A->B and A->C->B.
+		 */
+		roles_list = list_append_unique_oid(roles_list, otherid);
+	}
+	ReleaseSysCacheList(memlist);
+
+}
+
+
+/*
  * Get a list of roles that the specified roleid is a member of
  *
  * Type ROLERECURSE_PRIVS recurses only through roles that have rolinherit
@@ -4773,68 +4815,15 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	foreach(l, roles_list)
 	{
 		Oid			memberid = lfirst_oid(l);
-		CatCList   *memlist;
-		int			i;
 
 		if (type == ROLERECURSE_PRIVS && !has_rolinherit(memberid))
 			continue;			/* ignore non-inheriting roles */
 
 		/* Find roles that memberid is directly a member of globally */
-		memlist = SearchSysCacheList2(AUTHMEMDBMEMROLE,
-										ObjectIdGetDatum(InvalidOid),
-									  ObjectIdGetDatum(memberid));
-		for (i = 0; i < memlist->n_members; i++)
-		{
-			HeapTuple	tup = &memlist->members[i]->tuple;
-			Oid			otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+		append_role_memberships(roles_list, is_admin, admin_of, memberid, InvalidOid, InvalidOid);
 
-			/*
-			 * While otherid==InvalidOid shouldn't appear in the catalog, the
-			 * OidIsValid() avoids crashing if that arises. This reports if
-			 * the admin option has been granted globally.
-			 */
-			if (otherid == admin_of &&
-				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
-				OidIsValid(admin_of))
-				*is_admin = true;
-
-			/*
-			 * Even though there shouldn't be any loops in the membership
-			 * graph, we must test for having already seen this role. It is
-			 * legal for instance to have both A->B and A->C->B.
-			 */
-			roles_list = list_append_unique_oid(roles_list, otherid);
-		}
-		ReleaseSysCacheList(memlist);
-
-		/* Find roles that memberid is directly a member of for the current database */
-		memlist = SearchSysCacheList2(AUTHMEMDBMEMROLE,
-										ObjectIdGetDatum(MyDatabaseId),
-									  ObjectIdGetDatum(memberid));
-		for (i = 0; i < memlist->n_members; i++)
-		{
-			HeapTuple	tup = &memlist->members[i]->tuple;
-			Oid			otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
-
-			/*
-			 * While otherid==InvalidOid shouldn't appear in the catalog, the
-			 * OidIsValid() avoids crashing if that arises. This reports if
-			 * the admin option has been granted for a specific database.
-			 */
-			if (otherid == admin_of &&
-				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
-				((Form_pg_auth_members) GETSTRUCT(tup))->dbid == databaseId &&
-				OidIsValid(admin_of))
-				*is_admin = true;
-
-			/*
-			 * Even though there shouldn't be any loops in the membership
-			 * graph, we must test for having already seen this role. It is
-			 * legal for instance to have both A->B and A->C->B.
-			 */
-			roles_list = list_append_unique_oid(roles_list, otherid);
-		}
-		ReleaseSysCacheList(memlist);
+		/* Find roles that memberid is directly a member of in the current database */
+		append_role_memberships(roles_list, is_admin, admin_of, memberid, MyDatabaseId, databaseId);
 
 		/* implement pg_database_owner implicit membership */
 		if (memberid == dba && OidIsValid(dba))
