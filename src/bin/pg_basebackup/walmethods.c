@@ -445,7 +445,17 @@ dir_close(Walfile f, WalCloseMethod method)
 			snprintf(tmppath2, sizeof(tmppath2), "%s/%s",
 					 dir_data->basedir, filename2);
 			pg_free(filename2);
-			r = durable_rename(tmppath, tmppath2);
+			if (dir_data->sync)
+				r = durable_rename(tmppath, tmppath2);
+			else
+			{
+				if (rename(tmppath, tmppath2) != 0)
+				{
+					pg_log_error("could not rename file \"%s\" to \"%s\": %m",
+								 tmppath, tmppath2);
+					r = -1;
+				}
+			}
 		}
 		else if (method == CLOSE_UNLINK)
 		{

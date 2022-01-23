@@ -2201,9 +2201,21 @@ BaseBackup(void)
 		snprintf(tmp_filename, MAXPGPATH, "%s/backup_manifest.tmp", basedir);
 		snprintf(filename, MAXPGPATH, "%s/backup_manifest", basedir);
 
-		/* durable_rename emits its own log message in case of failure */
-		if (durable_rename(tmp_filename, filename) != 0)
-			exit(1);
+		if (do_sync)
+		{
+			/* durable_rename emits its own log message in case of failure */
+			if (durable_rename(tmp_filename, filename) != 0)
+				exit(1);
+		}
+		else
+		{
+			if (rename(tmp_filename, filename) != 0)
+			{
+				pg_log_error("could not rename file \"%s\" to \"%s\": %m",
+							 tmp_filename, filename);
+				exit(1);
+			}
+		}
 	}
 
 	if (verbose)
