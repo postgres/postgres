@@ -4714,7 +4714,6 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 		}
 
 		PQclear(upgrade_res);
-		destroyPQExpBuffer(upgrade_query);
 	}
 	else
 	{
@@ -4728,6 +4727,8 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	}
 
 	appendPQExpBufferChar(upgrade_buffer, '\n');
+
+	destroyPQExpBuffer(upgrade_query);
 }
 
 /*

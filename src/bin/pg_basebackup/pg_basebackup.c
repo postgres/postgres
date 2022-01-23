@@ -948,7 +948,7 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 {
 	char	   *sep;
 	int			firstlen;
-	char	   *firstpart = NULL;
+	char	   *firstpart;
 
 	/* check if the option is split in two */
 	sep = strchr(src, ':');
@@ -959,7 +959,7 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 	 */
 	firstlen = (sep != NULL) ? (sep - src) : strlen(src);
 	firstpart = pg_malloc(firstlen + 1);
-	strncpy(firstpart, src, firstlen);
+	memcpy(firstpart, src, firstlen);
 	firstpart[firstlen] = '\0';
 
 	/*
@@ -983,6 +983,8 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 
 		*methodres = (*levelres > 0) ?
 			COMPRESSION_GZIP : COMPRESSION_NONE;
+
+		free(firstpart);
 		return;
 	}
 
@@ -992,6 +994,7 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 		 * The caller specified a method without a colon separator, so let any
 		 * subsequent checks assign a default level.
 		 */
+		free(firstpart);
 		return;
 	}
 
@@ -1010,6 +1013,8 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 	if (!option_parse_int(sep, "-Z/--compress", 0, INT_MAX,
 						  levelres))
 		exit(1);
+
+	free(firstpart);
 }
 
 /*

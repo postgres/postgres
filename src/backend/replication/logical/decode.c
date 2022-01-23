@@ -498,7 +498,7 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			if (!TransactionIdIsValid(xid))
 				break;
 
-			SnapBuildProcessChange(builder, xid, buf->origptr);
+			(void) SnapBuildProcessChange(builder, xid, buf->origptr);
 			ReorderBufferXidSetCatalogChanges(ctx->reorder, xid, buf->origptr);
 			break;
 
