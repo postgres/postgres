@@ -657,6 +657,8 @@ AlterStatistics(AlterStatsStmt *stmt)
 	rel = table_open(StatisticExtRelationId, RowExclusiveLock);
 
 	oldtup = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(stxoid));
+	if (!HeapTupleIsValid(oldtup))
+		elog(ERROR, "cache lookup failed for extended statistics object %u", stxoid);
 
 	/* Must be owner of the existing statistics object */
 	if (!pg_statistics_object_ownercheck(stxoid, GetUserId()))
