@@ -1258,7 +1258,7 @@ sort_inner_and_outer(PlannerInfo *root,
 
 	foreach(l, all_pathkeys)
 	{
-		List	   *front_pathkey = (List *) lfirst(l);
+		PathKey	   *front_pathkey = (PathKey *) lfirst(l);
 		List	   *cur_mergeclauses;
 		List	   *outerkeys;
 		List	   *innerkeys;
