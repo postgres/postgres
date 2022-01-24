@@ -25,8 +25,6 @@
 /* Result of the parsing is returned here */
 Node *replication_parse_result;
 
-static SQLCmd *make_sqlcmd(void);
-
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -59,7 +57,6 @@ static SQLCmd *make_sqlcmd(void);
 %token <str> SCONST IDENT
 %token <uintval> UCONST
 %token <recptr> RECPTR
-%token T_WORD
 
 /* Keyword tokens. */
 %token K_BASE_BACKUP
@@ -91,7 +88,7 @@ static SQLCmd *make_sqlcmd(void);
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
-				timeline_history show sql_cmd
+				timeline_history show
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
@@ -124,7 +121,6 @@ command:
 			| drop_replication_slot
 			| timeline_history
 			| show
-			| sql_cmd
 			;
 
 /*
@@ -400,25 +396,6 @@ plugin_opt_arg:
 			| /* EMPTY */					{ $$ = NULL; }
 		;
 
-sql_cmd:
-			IDENT							{ $$ = (Node *) make_sqlcmd(); }
-		;
 %%
-
-static SQLCmd *
-make_sqlcmd(void)
-{
-	SQLCmd *cmd = makeNode(SQLCmd);
-	int tok;
-
-	/* Just move lexer to the end of command. */
-	for (;;)
-	{
-		tok = yylex();
-		if (tok == ';' || tok == 0)
-			break;
-	}
-	return cmd;
-}
 
 #include "repl_scanner.c"

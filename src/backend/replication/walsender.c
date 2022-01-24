@@ -1453,7 +1453,8 @@ exec_replication_command(const char *cmd_string)
 	 */
 	if (MyWalSnd->state == WALSNDSTATE_STOPPING)
 		ereport(ERROR,
-				(errmsg("cannot execute new commands while WAL sender is in stopping mode")));
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot execute new commands while WAL sender is in stopping mode")));
 
 	/*
 	 * CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot until the next
@@ -1464,7 +1465,7 @@ exec_replication_command(const char *cmd_string)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Parse the command.
+	 * Prepare to parse and execute the command.
 	 */
 	cmd_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Replication command context",
@@ -1472,6 +1473,31 @@ exec_replication_command(const char *cmd_string)
 	old_context = MemoryContextSwitchTo(cmd_context);
 
 	replication_scanner_init(cmd_string);
+
+	/*
+	 * Is it a WalSender command?
+	 */
+	if (!replication_scanner_is_replication_command())
+	{
+		/* Nope; clean up and get out. */
+		replication_scanner_finish();
+
+		MemoryContextSwitchTo(old_context);
+		MemoryContextDelete(cmd_context);
+
+		/* XXX this is a pretty random place to make this check */
+		if (MyDatabaseId == InvalidOid)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot execute SQL commands in WAL sender for physical replication")));
+
+		/* Tell the caller that this wasn't a WalSender command. */
+		return false;
+	}
+
+	/*
+	 * Looks like a WalSender command, so parse it.
+	 */
 	parse_rc = replication_yyparse();
 	if (parse_rc != 0)
 		ereport(ERROR,
@@ -1481,23 +1507,6 @@ exec_replication_command(const char *cmd_string)
 	replication_scanner_finish();
 
 	cmd_node = replication_parse_result;
-
-	/*
-	 * If it's a SQL command, just clean up our mess and return false; the
-	 * caller will take care of executing it.
-	 */
-	if (IsA(cmd_node, SQLCmd))
-	{
-		if (MyDatabaseId == InvalidOid)
-			ereport(ERROR,
-					(errmsg("cannot execute SQL commands in WAL sender for physical replication")));
-
-		MemoryContextSwitchTo(old_context);
-		MemoryContextDelete(cmd_context);
-
-		/* Tell the caller that this wasn't a WalSender command. */
-		return false;
-	}
 
 	/*
 	 * Report query to various monitoring facilities.  For this purpose, we
