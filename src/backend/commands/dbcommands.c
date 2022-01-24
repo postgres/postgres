@@ -115,7 +115,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	HeapTuple	tuple;
 	Datum		new_record[Natts_pg_database];
 	bool		new_record_nulls[Natts_pg_database];
-	Oid			dboid;
+	Oid			dboid = InvalidOid;
 	Oid			datdba;
 	ListCell   *option;
 	DefElem    *dtablespacename = NULL;
@@ -214,6 +214,30 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 errmsg("LOCATION is not supported anymore"),
 					 errhint("Consider using tablespaces instead."),
 					 parser_errposition(pstate, defel->location)));
+		}
+		else if (strcmp(defel->defname, "oid") == 0)
+		{
+			dboid = defGetInt32(defel);
+
+			/*
+			 * We don't normally permit new databases to be created with
+			 * system-assigned OIDs. pg_upgrade tries to preserve database
+			 * OIDs, so we can't allow any database to be created with an
+			 * OID that might be in use in a freshly-initialized cluster
+			 * created by some future version. We assume all such OIDs will
+			 * be from the system-managed OID range.
+			 *
+			 * As an exception, however, we permit any OID to be assigned when
+			 * allow_system_table_mods=on (so that initdb can assign system
+			 * OIDs to template0 and postgres) or when performing a binary
+			 * upgrade (so that pg_upgrade can preserve whatever OIDs it finds
+			 * in the source cluster).
+			 */
+			if (dboid < FirstNormalObjectId &&
+				!allowSystemTableMods && !IsBinaryUpgrade)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE)),
+						errmsg("OIDs less than %u are reserved for system objects", FirstNormalObjectId));
 		}
 		else
 			ereport(ERROR,
@@ -502,11 +526,34 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 */
 	pg_database_rel = table_open(DatabaseRelationId, RowExclusiveLock);
 
-	do
+	/*
+	 * If database OID is configured, check if the OID is already in use or
+	 * data directory already exists.
+	 */
+	if (OidIsValid(dboid))
 	{
-		dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
-								   Anum_pg_database_oid);
-	} while (check_db_file_conflict(dboid));
+		char	   *existing_dbname = get_database_name(dboid);
+
+		if (existing_dbname != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE)),
+					errmsg("database OID %u is already in use by database \"%s\"",
+						   dboid, existing_dbname));
+
+		if (check_db_file_conflict(dboid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE)),
+					errmsg("data directory with the specified OID %u already exists", dboid));
+	}
+	else
+	{
+		/* Select an OID for the new database if is not explicitly configured. */
+		do
+		{
+			dboid = GetNewOidWithIndex(pg_database_rel, DatabaseOidIndexId,
+									   Anum_pg_database_oid);
+		} while (check_db_file_conflict(dboid));
+	}
 
 	/*
 	 * Insert a new tuple into pg_database.  This establishes our ownership of

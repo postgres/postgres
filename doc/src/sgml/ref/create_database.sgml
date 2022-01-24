@@ -31,7 +31,8 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ]
-           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ] ]
+           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
+           [ OID [=] <replaceable class="parameter">oid</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -203,6 +204,21 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term><replaceable class="parameter">oid</replaceable></term>
+       <listitem>
+        <para>
+         The object identifier to be used for the new database. If this
+         parameter is not specified, the database will choose a suitable
+         OID automatically. This parameter is primarily intended for internal
+         use by <application>pg_upgrade</application>, and only
+         <application>pg_upgrade</application> can specify a value less
+         than 16384.
+        </para>
+       </listitem>
+      </varlistentry>
+
     </variablelist>
 
   <para>

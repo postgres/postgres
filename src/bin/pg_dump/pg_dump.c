@@ -2838,8 +2838,16 @@ dumpDatabase(Archive *fout)
 	 * are left to the DATABASE PROPERTIES entry, so that they can be applied
 	 * after reconnecting to the target DB.
 	 */
-	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
-					  qdatname);
+	if (dopt->binary_upgrade)
+	{
+		appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0 OID = %u",
+						  qdatname, dbCatId.oid);
+	}
+	else
+	{
+		appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
+						  qdatname);
+	}
 	if (strlen(encoding) > 0)
 	{
 		appendPQExpBufferStr(creaQry, " ENCODING = ");

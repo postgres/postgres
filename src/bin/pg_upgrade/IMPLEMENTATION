@@ -86,7 +86,7 @@ by pg_dumpall --- this script effectively creates the complete
 user-defined metadata from the old cluster to the new cluster.  It
 preserves the relfilenode numbers so TOAST and other references
 to relfilenodes in user data is preserved.  (See binary-upgrade usage
-in pg_dump).
+in pg_dump). We choose to preserve tablespace and database OIDs as well.
 
 Finally, pg_upgrade links or copies each user-defined table and its
 supporting indexes and toast tables from the old cluster to the new

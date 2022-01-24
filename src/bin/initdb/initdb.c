@@ -59,6 +59,7 @@
 #include "sys/mman.h"
 #endif
 
+#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h" /* pgrminclude ignore */
@@ -1838,8 +1839,23 @@ static void
 make_template0(FILE *cmdfd)
 {
 	const char *const *line;
+
+	/*
+	 * pg_upgrade tries to preserve database OIDs across upgrades. It's smart
+	 * enough to drop and recreate a conflicting database with the same name,
+	 * but if the same OID were used for one system-created database in the
+	 * old cluster and a different system-created database in the new cluster,
+	 * it would fail. To avoid that, assign a fixed OID to template0 rather
+	 * than letting the server choose one.
+	 *
+	 * (Note that, while the user could have dropped and recreated these
+	 * objects in the old cluster, the problem scenario only exists if the OID
+	 * that is in use in the old cluster is also used in the new cluster - and
+	 * the new cluster should be the result of a fresh initdb.)
+	 */
 	static const char *const template0_setup[] = {
-		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false;\n\n",
+		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false OID = "
+		CppAsString2(Template0ObjectId) ";\n\n",
 
 		/*
 		 * Explicitly revoke public create-schema and create-temp-table
@@ -1869,8 +1885,10 @@ static void
 make_postgres(FILE *cmdfd)
 {
 	const char *const *line;
+
+	/* Assign a fixed OID to postgres, for the same reasons as template0 */
 	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres;\n\n",
+		"CREATE DATABASE postgres OID = " CppAsString2(PostgresObjectId) ";\n\n",
 		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		NULL
 	};

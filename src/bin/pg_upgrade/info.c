@@ -190,10 +190,8 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		map->new_tablespace_suffix = new_cluster.tablespace_suffix;
 	}
 
-	map->old_db_oid = old_db->db_oid;
-	map->new_db_oid = new_db->db_oid;
-
-	/* relfilenode is preserved across old and new cluster */
+	/* DB oid and relfilenodes are preserved between old and new cluster */
+	map->db_oid = old_db->db_oid;
 	map->relfilenode = old_rel->relfilenode;
 
 	/* used only for logging and error reporting, old/new are identical */
@@ -324,8 +322,7 @@ get_db_infos(ClusterInfo *cluster)
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 " ON d.dattablespace = t.oid "
 			 "WHERE d.datallowconn = true "
-	/* we don't preserve pg_database.oid so we sort by name */
-			 "ORDER BY 2");
+			 "ORDER BY 1");
 
 	res = executeQueryOrDie(conn, "%s", query);
 

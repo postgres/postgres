@@ -145,8 +145,7 @@ typedef struct
 	const char *new_tablespace;
 	const char *old_tablespace_suffix;
 	const char *new_tablespace_suffix;
-	Oid			old_db_oid;
-	Oid			new_db_oid;
+	Oid			db_oid;
 	Oid			relfilenode;
 	/* the rest are used only for logging and error reporting */
 	char	   *nspname;		/* namespaces */
