@@ -19,6 +19,7 @@ $primary->start;
 
 my $have_zlib = check_pg_config("#define HAVE_LIBZ 1");
 my $backup_path = $primary->backup_dir . '/server-backup';
+my $real_backup_path = PostgreSQL::Test::Utils::perl2host($backup_path);
 my $extract_path = $primary->backup_dir . '/extracted-backup';
 
 my @test_configuration = (
@@ -52,7 +53,7 @@ for my $tc (@test_configuration)
 		# Take a server-side backup.
 		my @backup = (
 			'pg_basebackup', '--no-sync', '-cfast', '--target',
-			"server:$backup_path", '-Xfetch'
+			"server:$real_backup_path", '-Xfetch'
 		);
 		push @backup, @{$tc->{'backup_flags'}};
 		$primary->command_ok(\@backup,
