@@ -68,6 +68,27 @@ if test "$PORTNAME" = win32 ; then
 fi
 AC_MSG_RESULT([$python_includespec])
 
+python_ways=`${PYTHON} -c "
+import distutils.sysconfig as ds
+import os
+import sysconfig as s
+print('ds.get_python_inc(False): %s' % ds.get_python_inc(False))
+print('s path include: %s' % s.get_path('include'))
+print('ds.get_python_inc(True): %s' % ds.get_python_inc(True))
+print('s path platinclude: %s' % s.get_path('platinclude'))
+print('ds var INCLUDEPY: %s' % ds.get_config_var('INCLUDEPY'))
+print('s var INCLUDEPY: %s' % s.get_config_var('INCLUDEPY'))
+print('ds var CONFINCLUDEPY: %s' % ds.get_config_var('CONFINCLUDEPY'))
+print('s var CONFINCLUDEPY: %s' % s.get_config_var('CONFINCLUDEPY'))
+print('')
+print('ds get_python_inc(False)/Python.h exists: %s' % os.path.exists(os.path.join(ds.get_python_inc(False), 'Python.h')))
+print('ds get_python_inc(True)/Python.h exists: %s' % os.path.exists(os.path.join(ds.get_python_inc(True), 'Python.h')))
+print('s var INCLUDEPY/Python.h exists: %s' % os.path.exists(os.path.join(ds.get_config_var('INCLUDEPY'), 'Python.h')))
+print('s var CONFINCLUDEPY/Python.h exists: %s' % os.path.exists(os.path.join(ds.get_config_var('CONFINCLUDEPY'), 'Python.h')))
+"` 2>/dev/null
+AC_MSG_NOTICE([python include paths, different approaches:
+$python_ways])
+
 AC_SUBST(python_majorversion)[]dnl
 AC_SUBST(python_version)[]dnl
 AC_SUBST(python_includespec)[]dnl
