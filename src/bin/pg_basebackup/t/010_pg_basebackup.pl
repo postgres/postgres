@@ -516,7 +516,7 @@ $node->command_ok(
 	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'none' ],
 	'backup target blackhole');
 $node->command_ok(
-	[ @pg_basebackup_defs, '--target', "server:$tempdir/backuponserver", '-X', 'none' ],
+	[ @pg_basebackup_defs, '--target', "server:$real_tempdir/backuponserver", '-X', 'none' ],
 	'backup target server');
 ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created');
 rmtree("$tempdir/backuponserver");
