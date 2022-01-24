@@ -2720,6 +2720,28 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
+        <term><literal>COMPRESSION</literal> <replaceable>'method'</replaceable></term>
+        <listitem>
+         <para>
+          Instructs the server to compress the backup using the specified
+          method. Currently, the only supported method is
+          <literal>gzip</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>COMPRESSION_LEVEL</literal> <replaceable>level</replaceable></term>
+        <listitem>
+         <para>
+          Specifies the compression level to be used. This should only be
+          used in conjunction with the <literal>COMPRESSION</literal> option.
+          The value should be an integer between 1 and 9.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>MAX_RATE</literal> <replaceable>rate</replaceable></term>
         <listitem>
          <para>

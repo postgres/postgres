@@ -18,6 +18,7 @@ OBJS = \
 	backup_manifest.o \
 	basebackup.o \
 	basebackup_copy.o \
+	basebackup_gzip.o \
 	basebackup_progress.o \
 	basebackup_server.o \
 	basebackup_sink.o \
