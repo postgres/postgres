@@ -121,6 +121,7 @@ extern int	replication_yylex(void);
 extern void replication_yyerror(const char *str) pg_attribute_noreturn();
 extern void replication_scanner_init(const char *query_string);
 extern void replication_scanner_finish(void);
+extern bool replication_scanner_is_replication_command(void);
 
 extern Node *replication_parse_result;
 
