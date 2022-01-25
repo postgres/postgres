@@ -3978,7 +3978,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition.
      It is recommended to drop the now-redundant <literal>CHECK</literal>
      constraint after the <command>ATTACH PARTITION</command> is complete.  If
-     the table being attached is itself a partitioned table then each of its
+     the table being attached is itself a partitioned table, then each of its
      sub-partitions will be recursively locked and scanned until either a
      suitable <literal>CHECK</literal> constraint is encountered or the leaf
      partitions are reached.
@@ -3993,7 +3993,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      the partition being attached.  This operation will be performed whilst
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on the <literal>
      DEFAULT</literal> partition.  If the <literal>DEFAULT</literal> partition
-     is itself a partitioned table then each of its partitions will be
+     is itself a partitioned table, then each of its partitions will be
      recursively checked in the same way as the table being attached, as
      mentioned above.
     </para>

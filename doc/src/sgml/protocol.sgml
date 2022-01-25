@@ -2070,7 +2070,7 @@ The commands accepted in replication mode are:
       streaming starts on timeline <replaceable class="parameter">tli</replaceable>;
       otherwise, the server's current timeline is selected. The server can
       reply with an error, for example if the requested section of WAL has already
-      been recycled. On success, server responds with a CopyBothResponse
+      been recycled. On success, the server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 

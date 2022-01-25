@@ -7577,8 +7577,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         This parameter specifies the default table access method to use when
         creating tables or materialized views if the <command>CREATE</command>
         command does not explicitly specify an access method, or when
-        <command>SELECT ... INTO</command> is used, which does not allow to
-        specify a table access method. The default is <literal>heap</literal>.
+        <command>SELECT ... INTO</command> is used, which does not allow
+        specifying a table access method. The default is <literal>heap</literal>.
        </para>
       </listitem>
      </varlistentry>
