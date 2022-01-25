@@ -2706,7 +2706,6 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 	 */
 	if (LogwrtResult.Flush < WriteRqst.Flush &&
 		LogwrtResult.Flush < LogwrtResult.Write)
-
 	{
 		/*
 		 * Could get here without iterating above loop, in which case we might

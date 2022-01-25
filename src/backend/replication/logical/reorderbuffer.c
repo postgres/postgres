@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/replication/reorderbuffer.c
+ *	  src/backend/replication/logical/reorderbuffer.c
  *
  * NOTES
  *	  This module gets handed individual pieces of transactions in the order

@@ -1337,7 +1337,7 @@ nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
     <title>Multivariate MCV Lists</title>
 
     <para>
-     Another type of statistics stored for each column are most-common value
+     Another type of statistic stored for each column are most-common value
      lists.  This allows very accurate estimates for individual columns, but
      may result in significant misestimates for queries with conditions on
      multiple columns.

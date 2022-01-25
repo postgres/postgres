@@ -1319,7 +1319,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 			GinScanKey	key = so->keys + i;
 
 			/*
-			 * If we're considering a lossy page, skip excludeOnly keys,  They
+			 * If we're considering a lossy page, skip excludeOnly keys. They
 			 * can't exclude the whole page anyway.
 			 */
 			if (ItemPointerIsLossyPage(item) && key->excludeOnly)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/optimizer/path/appendinfo.c
+ *	  src/backend/optimizer/util/appendinfo.c
  *
  *-------------------------------------------------------------------------
  */

@@ -53,7 +53,7 @@ ERROR:  permission denied: "pg_description" is a system catalog
 CREATE TABLE foo (a oid, b oid, c int, FOREIGN KEY (a, b, c) REFERENCES pg_description);
 ERROR:  permission denied: "pg_description" is a system catalog
 -- RangeVarCallbackOwnsRelation()
-CREATE INDEX pg_descripton_test_index ON pg_description (description);
+CREATE INDEX pg_description_test_index ON pg_description (description);
 ERROR:  permission denied: "pg_description" is a system catalog
 -- RangeVarCallbackForAlterRelation()
 ALTER TABLE pg_description RENAME TO pg_comment;
@@ -151,7 +151,7 @@ CREATE TABLE foo (a oid, b oid, c int, FOREIGN KEY (a, b, c) REFERENCES pg_descr
 ROLLBACK;
 -- RangeVarCallbackOwnsRelation()
 BEGIN;
-CREATE INDEX pg_descripton_test_index ON pg_description (description);
+CREATE INDEX pg_description_test_index ON pg_description (description);
 ROLLBACK;
 -- RangeVarCallbackForAlterRelation()
 BEGIN;

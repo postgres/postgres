@@ -131,9 +131,9 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
      <para>
       When a partitioned table is published via schema level publication, all
-      of its existing and future partitions irrespective of it being from the
-      publication schema or not are implicitly considered to be part of the
-      publication. So, even operations that are performed directly on a
+      of its existing and future partitions are implicitly considered to be part of the
+      publication, regardless of whether they are from the publication schema or not.
+      So, even operations that are performed directly on a
       partition are also published via publications that its ancestors are
       part of.
      </para>
@@ -195,7 +195,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
   <para>
    If <literal>FOR TABLE</literal>, <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal> is not specified, then the
+   <literal>FOR ALL TABLES IN SCHEMA</literal> are not specified, then the
    publication starts out with an empty set of tables.  That is useful if
    tables or schemas are to be added later.
   </para>

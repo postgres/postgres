@@ -1071,7 +1071,7 @@ CREATE TABLE order_items (
     represent independent objects, then <literal>RESTRICT</literal> or
     <literal>NO ACTION</literal> is more appropriate; an application that
     actually wants to delete both objects would then have to be explicit about
-    this and run two delete options.  In the above example, order items are
+    this and run two delete commands.  In the above example, order items are
     part of an order, and it is convenient if they are deleted automatically
     if an order is deleted.  But products and orders are different things, and
     so making a deletion of a product automatically cause the deletion of some
@@ -4044,7 +4044,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on that partition.
      It is recommended to drop the now-redundant <literal>CHECK</literal>
      constraint after the <command>ATTACH PARTITION</command> is complete.  If
-     the table being attached is itself a partitioned table then each of its
+     the table being attached is itself a partitioned table, then each of its
      sub-partitions will be recursively locked and scanned until either a
      suitable <literal>CHECK</literal> constraint is encountered or the leaf
      partitions are reached.
@@ -4059,7 +4059,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
      the partition being attached.  This operation will be performed whilst
      holding an <literal>ACCESS EXCLUSIVE</literal> lock on the <literal>
      DEFAULT</literal> partition.  If the <literal>DEFAULT</literal> partition
-     is itself a partitioned table then each of its partitions will be
+     is itself a partitioned table, then each of its partitions will be
      recursively checked in the same way as the table being attached, as
      mentioned above.
     </para>

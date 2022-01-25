@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/postmaster/wait_event.c
+ *	  src/backend/utils/activity/wait_event.c
  *
  * NOTES
  *

@@ -1489,22 +1489,6 @@
    </glossdef>
   </glossentry>
 
-  <glossentry id="glossary-startup-process">
-   <glossterm>Startup process</glossterm>
-   <glossdef>
-    <para>
-     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
-     that replays WAL during crash recovery and in a
-     <glossterm linkend="glossary-replication">physical replica</glossterm>.
-    </para>
-    <para>
-     (The name is historical: the startup process was named before
-     replication was implemented; the name refers to its task as it
-     relates to the server startup following a crash.)
-    </para>
-   </glossdef>
-  </glossentry>
-
   <glossentry id="glossary-sql-object">
    <glossterm>SQL object</glossterm>
     <glossdef>
@@ -1561,6 +1545,22 @@
   <glossentry>
    <glossterm>Standby (server)</glossterm>
    <glosssee otherterm="glossary-replica" />
+  </glossentry>
+
+  <glossentry id="glossary-startup-process">
+   <glossterm>Startup process</glossterm>
+   <glossdef>
+    <para>
+     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
+     that replays WAL during crash recovery and in a
+     <glossterm linkend="glossary-replication">physical replica</glossterm>.
+    </para>
+    <para>
+     (The name is historical: the startup process was named before
+     replication was implemented; the name refers to its task as it
+     relates to the server startup following a crash.)
+    </para>
+   </glossdef>
   </glossentry>
 
   <glossentry id="glossary-stats-collector">

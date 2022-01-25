@@ -958,7 +958,7 @@ compare_datums_simple(Datum a, Datum b, SortSupport ssup)
  * build_attnums_array
  *		Transforms a bitmap into an array of AttrNumber values.
  *
- * This is used for extended statistics only, so all the attribute must be
+ * This is used for extended statistics only, so all the attributes must be
  * user-defined. That means offsetting by FirstLowInvalidHeapAttributeNumber
  * is not necessary here (and when querying the bitmap).
  */

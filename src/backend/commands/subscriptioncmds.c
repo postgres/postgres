@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		subscriptioncmds.c
+ *		src/backend/commands/subscriptioncmds.c
  *
  *-------------------------------------------------------------------------
  */

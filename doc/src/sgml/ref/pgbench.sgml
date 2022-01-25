@@ -220,8 +220,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             data is generated in <command>pgbench</command> client and then
             sent to the server. This uses the client/server bandwidth
             extensively through a <command>COPY</command>.
-            <command>pgbench</command> uses the FREEZE option with 14 or later
-            versions of <productname>PostgreSQL</productname> to speed up
+            <command>pgbench</command> uses the FREEZE option with version 14 or later
+            of <productname>PostgreSQL</productname> to speed up
             subsequent <command>VACUUM</command>, unless partitions are enabled.
             Using <literal>g</literal> causes logging to print one message
             every 100,000 rows while generating data for the

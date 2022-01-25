@@ -955,8 +955,8 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       of any length and contain even non-ASCII characters.  However when
       it's passed to and used as <varname>application_name</varname>
       in a foreign server, note that it will be truncated to less than
-      <symbol>NAMEDATALEN</symbol> characters and any characters other
-      than printable ASCII ones in it will be replaced with question
+      <symbol>NAMEDATALEN</symbol> characters and anything other than
+      than printable ASCII characters will be replaced with question
       marks (<literal>?</literal>).
       See <xref linkend="guc-application-name"/> for details.
      </para>
@@ -981,19 +981,19 @@ postgres=# SELECT postgres_fdw_disconnect_all();
        <tbody>
         <row>
          <entry><literal>%a</literal></entry>
-         <entry>Application name in local server</entry>
+         <entry>Application name on local server</entry>
         </row>
         <row>
          <entry><literal>%u</literal></entry>
-         <entry>User name in local server</entry>
+         <entry>User name on local server</entry>
         </row>
         <row>
          <entry><literal>%d</literal></entry>
-         <entry>Database name in local server</entry>
+         <entry>Database name on local server</entry>
         </row>
         <row>
          <entry><literal>%p</literal></entry>
-         <entry>Process ID of backend in local server</entry>
+         <entry>Process ID of backend on local server</entry>
         </row>
         <row>
          <entry><literal>%%</literal></entry>

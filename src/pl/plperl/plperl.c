@@ -334,7 +334,7 @@ hek2cstr(HE *he)
 	SAVETMPS;
 
 	/*-------------------------
-	 * Unfortunately,  while HeUTF8 is true for most things > 256, for values
+	 * Unfortunately, while HeUTF8 is true for most things > 256, for values
 	 * 128..255 it's not, but perl will treat them as unicode code points if
 	 * the utf8 flag is not set ( see The "Unicode Bug" in perldoc perlunicode
 	 * for more)

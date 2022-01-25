@@ -82,9 +82,8 @@ PostgreSQL documentation
     <listitem>
      <para>
       First, scan the directory where the WAL segment files are written and
-      find the newest completed segment file, using as starting point the
-      beginning of the next WAL segment file. This is calculated independently
-      on the compression method used to compress each segment.
+      find the newest completed segment file, using as the starting point the
+      beginning of the next WAL segment file.
      </para>
     </listitem>
 
@@ -93,7 +92,7 @@ PostgreSQL documentation
       If a starting point cannot be calculated with the previous method,
       and if a replication slot is used, an extra
       <command>READ_REPLICATION_SLOT</command> command is issued to retrieve
-      the slot's <literal>restart_lsn</literal> to use as starting point.
+      the slot's <literal>restart_lsn</literal> to use as the starting point.
       This option is only available when streaming write-ahead logs from
       <productname>PostgreSQL</productname> 15 and up.
      </para>
@@ -103,7 +102,7 @@ PostgreSQL documentation
      <para>
       If a starting point cannot be calculated with the previous method,
       the latest WAL flush location is used as reported by the server from
-      a <literal>IDENTIFY_SYSTEM</literal> command.
+      an <literal>IDENTIFY_SYSTEM</literal> command.
      </para>
     </listitem>
    </orderedlist>
@@ -268,7 +267,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Enables compression of write-ahead logs using the specified method.
-        Supported values <literal>gzip</literal>, <literal>lz4</literal>
+        Supported values are <literal>gzip</literal>, <literal>lz4</literal>
         (if <productname>PostgreSQL</productname> was compiled with
         <option>--with-lz4</option>), and <literal>none</literal>.
        </para>

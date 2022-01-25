@@ -274,7 +274,6 @@ SyncPostCheckpoint(void)
 }
 
 /*
-
  *	ProcessSyncRequests() -- Process queued fsync requests.
  */
 void

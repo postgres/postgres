@@ -253,7 +253,7 @@ typedef struct IndexAmRoutine
    access method blocks <acronym>HOT</acronym> when an indexed attribute is
    updated. Access methods without pointers to individual tuples (like
    <acronym>BRIN</acronym>) may allow <acronym>HOT</acronym> even in this
-   case. This does not apply to attributes referenced in index predicates,
+   case. This does not apply to attributes referenced in index predicates;
    an update of such attribute always disables <acronym>HOT</acronym>.
   </para>
 

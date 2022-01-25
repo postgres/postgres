@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/postmaster/backend_status.c
+ *	  src/backend/utils/activity/backend_status.c
  * ----------
  */
 #include "postgres.h"

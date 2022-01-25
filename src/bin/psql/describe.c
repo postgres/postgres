@@ -2652,8 +2652,8 @@ describeOneTableDetails(const char *schemaname,
 
 					/*
 					 * When printing kinds we ignore expression statistics,
-					 * which is used only internally and can't be specified by
-					 * user. We don't print the kinds when either none are
+					 * which are used only internally and can't be specified
+					 * by user. We don't print the kinds when none are
 					 * specified (in which case it has to be statistics on a
 					 * single expr) or when all are specified (in which case
 					 * we assume it's expanded by CREATE STATISTICS).

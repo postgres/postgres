@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/optimizer/path/inherit.c
+ *	  src/backend/optimizer/util/inherit.c
  *
  *-------------------------------------------------------------------------
  */

@@ -9,7 +9,7 @@
  * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/logicalfuncs.c
+ *	  src/backend/replication/logical/logicalfuncs.c
  *-------------------------------------------------------------------------
  */
 

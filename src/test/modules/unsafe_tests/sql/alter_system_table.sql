@@ -55,7 +55,7 @@ ALTER TABLE pg_description ALTER COLUMN description SET STATISTICS -1;
 CREATE TABLE foo (a oid, b oid, c int, FOREIGN KEY (a, b, c) REFERENCES pg_description);
 
 -- RangeVarCallbackOwnsRelation()
-CREATE INDEX pg_descripton_test_index ON pg_description (description);
+CREATE INDEX pg_description_test_index ON pg_description (description);
 
 -- RangeVarCallbackForAlterRelation()
 ALTER TABLE pg_description RENAME TO pg_comment;
@@ -161,7 +161,7 @@ ROLLBACK;
 
 -- RangeVarCallbackOwnsRelation()
 BEGIN;
-CREATE INDEX pg_descripton_test_index ON pg_description (description);
+CREATE INDEX pg_description_test_index ON pg_description (description);
 ROLLBACK;
 
 -- RangeVarCallbackForAlterRelation()

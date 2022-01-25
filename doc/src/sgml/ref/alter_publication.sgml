@@ -50,7 +50,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    tables/schemas that were present in the publication will be removed.  The
    <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
    remove one or more tables/schemas from the publication.  Note that adding
-   tables/schemas to a publication that is already subscribed to will require a
+   tables/schemas to a publication that is already subscribed to will require an
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
    subscribing side in order to become effective.
   </para>
@@ -82,7 +82,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   <para>
    Adding/Setting a table that is part of schema specified in
    <literal>ALL TABLES IN SCHEMA</literal>, adding/setting a schema to a
-   publication that already has a table that is part of specified schema or
+   publication that already has a table that is part of the specified schema or
    adding/setting a table to a publication that already has a table's schema as
    part of the specified schema is not supported.
   </para>

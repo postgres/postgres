@@ -8354,7 +8354,7 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 
 /*
  * Build a heap tuple representing the configured REPLICA IDENTITY to represent
- * the old tuple in a UPDATE or DELETE.
+ * the old tuple in an UPDATE or DELETE.
  *
  * Returns NULL if there's no need to log an identity or if there's no suitable
  * key defined.

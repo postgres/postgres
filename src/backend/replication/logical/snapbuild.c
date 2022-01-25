@@ -110,7 +110,7 @@
  * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/snapbuild.c
+ *	  src/backend/replication/logical/snapbuild.c
  *
  *-------------------------------------------------------------------------
  */

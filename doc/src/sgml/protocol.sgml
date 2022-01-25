@@ -2101,7 +2101,7 @@ The commands accepted in replication mode are:
     </term>
     <listitem>
      <para>
-      Read some information associated to a replication slot. Returns a tuple
+      Read some information associated with a replication slot. Returns a tuple
       with <literal>NULL</literal> values if the replication slot does not
       exist. This command is currently only supported for physical replication
       slots.
@@ -2133,7 +2133,7 @@ The commands accepted in replication mode are:
         <term><literal>restart_tli</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
-          The timeline ID associated to <literal>restart_lsn</literal>,
+          The timeline ID associated with <literal>restart_lsn</literal>,
           following the current timeline history.
          </para>
         </listitem>
@@ -2155,7 +2155,7 @@ The commands accepted in replication mode are:
       streaming starts on timeline <replaceable class="parameter">tli</replaceable>;
       otherwise, the server's current timeline is selected. The server can
       reply with an error, for example if the requested section of WAL has already
-      been recycled. On success, server responds with a CopyBothResponse
+      been recycled. On success, the server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 
@@ -2516,7 +2516,7 @@ The commands accepted in replication mode are:
 
      <para>
       The server can reply with an error, for example if the
-      slot does not exist. On success, server responds with a CopyBothResponse
+      slot does not exist. On success, the server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 
@@ -6680,7 +6680,7 @@ not line breaks.
 <para>
 This section describes the detailed format of each logical replication
 message.  These messages are either returned by the replication slot SQL
-interface or are sent by a walsender.  In the case of a walsender they are
+interface or are sent by a walsender.  In the case of a walsender, they are
 encapsulated inside replication protocol WAL messages as described in
 <xref linkend="protocol-replication"/>, and generally obey the same message
 flow as physical replication.

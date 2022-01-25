@@ -538,7 +538,6 @@ sub recoverycheck
 
 	$ENV{REGRESS_OUTPUTDIR} = "$topdir/src/test/recovery/tmp_check";
 
-	my $mstat  = 0;
 	my $dir    = "$topdir/src/test/recovery";
 	my $status = tap_check($dir);
 	exit $status if $status;
@@ -717,7 +716,6 @@ sub fetchRegressOpts
 # list is returned if the module does not need to run anything.
 sub fetchTests
 {
-
 	my $handle;
 	open($handle, '<', "GNUmakefile")
 	  || open($handle, '<', "Makefile")
@@ -783,7 +781,7 @@ sub InstallTemp
 sub usage
 {
 	print STDERR
-	  "Usage: vcregress.pl <mode> [ <arg>]\n\n",
+	  "Usage: vcregress.pl <mode> [<arg>]\n\n",
 	  "Options for <mode>:\n",
 	  "  bincheck       run tests of utilities in src/bin/\n",
 	  "  check          deploy instance and run regression tests on it\n",
