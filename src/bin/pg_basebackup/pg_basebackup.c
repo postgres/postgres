@@ -391,7 +391,7 @@ usage(void)
 	printf(_("  -X, --wal-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
 	printf(_("  -z, --gzip             compress tar output\n"));
-	printf(_("  -Z, --compress={gzip,none}[:LEVEL] or [LEVEL]\n"
+	printf(_("  -Z, --compress={[{client,server}-]gzip,none}[:LEVEL] or [LEVEL]\n"
 			 "                         compress tar output with given compression method or level\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"

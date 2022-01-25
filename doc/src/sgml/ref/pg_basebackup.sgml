@@ -398,9 +398,9 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
-      <term><option>-Z <replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
+      <term><option>-Z [{client|server}-]<replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
-      <term><option>--compress=[[{<replaceable class="parameter">client|server</replaceable>-}]<replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
+      <term><option>--compress=[{client|server}-]<replaceable class="parameter">method</replaceable></option>[:<replaceable>level</replaceable>]</term>
       <listitem>
        <para>
         Requests compression of the backup. If <literal>client</literal> or
@@ -441,8 +441,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-c <replaceable class="parameter">fast|spread</replaceable></option></term>
-      <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
+      <term><option>-c {fast|spread}</option></term>
+      <term><option>--checkpoint={fast|spread}</option></term>
       <listitem>
        <para>
         Sets checkpoint mode to fast (immediate) or spread (the default)
