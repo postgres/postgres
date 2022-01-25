@@ -83,9 +83,8 @@ PostgreSQL documentation
     <listitem>
      <para>
       First, scan the directory where the WAL segment files are written and
-      find the newest completed segment file, using as starting point the
-      beginning of the next WAL segment file. This is calculated independently
-      on the compression method used to compress each segment.
+      find the newest completed segment file, using as the starting point the
+      beginning of the next WAL segment file.
      </para>
     </listitem>
 
@@ -93,7 +92,7 @@ PostgreSQL documentation
      <para>
       If a starting point cannot be calculated with the previous method,
       the latest WAL flush location is used as reported by the server from
-      a <literal>IDENTIFY_SYSTEM</literal> command.
+      an <literal>IDENTIFY_SYSTEM</literal> command.
      </para>
     </listitem>
    </orderedlist>
