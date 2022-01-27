@@ -1746,7 +1746,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER COLLATION <name> */
 	else if (Matches("ALTER", "COLLATION", MatchAny))
-		COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA");
+		COMPLETE_WITH("OWNER TO", "REFRESH VERSION", "RENAME TO", "SET SCHEMA");
 
 	/* ALTER CONVERSION <name> */
 	else if (Matches("ALTER", "CONVERSION", MatchAny))
