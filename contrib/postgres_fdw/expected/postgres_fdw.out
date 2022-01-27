@@ -10800,6 +10800,43 @@ DROP TABLE base_tbl1;
 DROP TABLE base_tbl2;
 DROP TABLE result_tbl;
 DROP TABLE join_tbl;
+-- Test that an asynchronous fetch is processed before restarting the scan in
+-- ReScanForeignScan
+CREATE TABLE base_tbl (a int, b int);
+INSERT INTO base_tbl VALUES (1, 11), (2, 22), (3, 33);
+CREATE FOREIGN TABLE foreign_tbl (b int)
+  SERVER loopback OPTIONS (table_name 'base_tbl');
+CREATE FOREIGN TABLE foreign_tbl2 () INHERITS (foreign_tbl)
+  SERVER loopback OPTIONS (table_name 'base_tbl');
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Seq Scan on public.base_tbl
+   Output: base_tbl.a
+   Filter: (SubPlan 1)
+   SubPlan 1
+     ->  Result
+           Output: base_tbl.a
+           ->  Append
+                 ->  Async Foreign Scan on public.foreign_tbl foreign_tbl_1
+                       Remote SQL: SELECT NULL FROM public.base_tbl
+                 ->  Async Foreign Scan on public.foreign_tbl2 foreign_tbl_2
+                       Remote SQL: SELECT NULL FROM public.base_tbl
+(11 rows)
+
+SELECT a FROM base_tbl WHERE a IN (SELECT a FROM foreign_tbl);
+ a 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+-- Clean up
+DROP FOREIGN TABLE foreign_tbl CASCADE;
+NOTICE:  drop cascades to foreign table foreign_tbl2
+DROP TABLE base_tbl;
 ALTER SERVER loopback OPTIONS (DROP async_capable);
 ALTER SERVER loopback2 OPTIONS (DROP async_capable);
 -- ===================================================================

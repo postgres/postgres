@@ -1652,6 +1652,18 @@ postgresReScanForeignScan(ForeignScanState *node)
 		return;
 
 	/*
+	 * If the node is async-capable, and an asynchronous fetch for it has been
+	 * begun, the asynchronous fetch might not have yet completed.  Check if
+	 * the node is async-capable, and an asynchronous fetch for it is still in
+	 * progress; if so, complete the asynchronous fetch before restarting the
+	 * scan.
+	 */
+	if (fsstate->async_capable &&
+		fsstate->conn_state->pendingAreq &&
+		fsstate->conn_state->pendingAreq->requestee == (PlanState *) node)
+		fetch_more_data(node);
+
+	/*
 	 * If any internal parameters affecting this node have changed, we'd
 	 * better destroy and recreate the cursor.  Otherwise, rewinding it should
 	 * be good enough.  If we've only fetched zero or one batch, we needn't
@@ -6999,6 +7011,8 @@ produce_tuple_asynchronously(AsyncRequest *areq, bool fetch)
 		ExecAsyncRequestDone(areq, result);
 		return;
 	}
+
+	/* We must have run out of tuples */
 	Assert(fsstate->next_tuple >= fsstate->num_tuples);
 
 	/* Fetch some more tuples, if we've not detected EOF yet */
