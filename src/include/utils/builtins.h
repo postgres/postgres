@@ -85,6 +85,7 @@ extern void text_to_cstring_buffer(const text *src, char *dst, size_t dst_len);
 
 /* xid.c */
 extern int	xidComparator(const void *arg1, const void *arg2);
+extern int	xidLogicalComparator(const void *arg1, const void *arg2);
 
 /* inet_cidr_ntop.c */
 extern char *inet_cidr_ntop(int af, const void *src, int bits,
