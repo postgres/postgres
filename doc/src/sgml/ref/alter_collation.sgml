@@ -144,7 +144,7 @@ HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg
    <para>
     When using Windows for collations, version information is only available
     for collations defined with BCP 47 language tags such as
-    <literal>en-US</literal>. 
+    <literal>en-US</literal>.
    </para>
   </note>
   <para>
