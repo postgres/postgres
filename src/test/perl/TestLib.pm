@@ -220,6 +220,29 @@ sub perl2host
 	return $dir . $leaf;
 }
 
+=pod
+
+=item has_wal_read_bug()
+
+Returns true if $tmp_check is subject to a sparc64+ext4 bug that causes WAL
+readers to see zeros if another process simultaneously wrote the same offsets.
+Consult this in tests that fail frequently on affected configurations.  The
+bug has made streaming standbys fail to advance, reporting corrupt WAL.  It
+has made COMMIT PREPARED fail with "could not read two-phase state from WAL".
+Non-WAL PostgreSQL reads haven't been affected, likely because those readers
+and writers have buffering systems in common.  See
+https://postgr.es/m/20220116210241.GC756210@rfd.leadboat.com for details.
+
+=cut
+
+sub has_wal_read_bug
+{
+	return
+	     $Config{osname} eq 'linux'
+	  && $Config{archname} =~ /^sparc/
+	  && !run_log([ qw(df -x ext4), $tmp_check ], '>', '/dev/null', '2>&1');
+}
+
 sub system_log
 {
 	print("# Running: " . join(" ", @_) . "\n");
