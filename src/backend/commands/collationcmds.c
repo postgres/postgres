@@ -129,17 +129,29 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 	{
 		Oid			collid;
 		HeapTuple	tp;
+		Datum		datum;
+		bool		isnull;
 
 		collid = get_collation_oid(defGetQualifiedName(fromEl), false);
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 
-		collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
-		collctype = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collctype));
 		collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
 		collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
 		collencoding = ((Form_pg_collation) GETSTRUCT(tp))->collencoding;
+
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+		if (!isnull)
+			collcollate = TextDatumGetCString(datum);
+		else
+			collcollate = NULL;
+
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
+		if (!isnull)
+			collctype = TextDatumGetCString(datum);
+		else
+			collctype = NULL;
 
 		ReleaseSysCache(tp);
 
@@ -314,7 +326,7 @@ AlterCollation(AlterCollationStmt *stmt)
 	Oid			collOid;
 	HeapTuple	tup;
 	Form_pg_collation collForm;
-	Datum		collversion;
+	Datum		datum;
 	bool		isnull;
 	char	   *oldversion;
 	char	   *newversion;
@@ -332,11 +344,12 @@ AlterCollation(AlterCollationStmt *stmt)
 		elog(ERROR, "cache lookup failed for collation %u", collOid);
 
 	collForm = (Form_pg_collation) GETSTRUCT(tup);
-	collversion = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion,
-								  &isnull);
-	oldversion = isnull ? NULL : TextDatumGetCString(collversion);
+	datum = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collversion, &isnull);
+	oldversion = isnull ? NULL : TextDatumGetCString(datum);
 
-	newversion = get_collation_actual_version(collForm->collprovider, NameStr(collForm->collcollate));
+	datum = SysCacheGetAttr(COLLOID, tup, Anum_pg_collation_collcollate, &isnull);
+	Assert(!isnull);
+	newversion = get_collation_actual_version(collForm->collprovider, TextDatumGetCString(datum));
 
 	/* cannot change from NULL to non-NULL or vice versa */
 	if ((!oldversion && newversion) || (oldversion && !newversion))
@@ -383,8 +396,9 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GETARG_OID(0);
 	HeapTuple	tp;
-	char	   *collcollate;
 	char		collprovider;
+	Datum		datum;
+	bool		isnull;
 	char	   *version;
 
 	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
@@ -393,12 +407,13 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("collation with OID %u does not exist", collid)));
 
-	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
 	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
 
-	ReleaseSysCache(tp);
+	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+	Assert(!isnull);
+	version = get_collation_actual_version(collprovider, TextDatumGetCString(datum));
 
-	version = get_collation_actual_version(collprovider, collcollate);
+	ReleaseSysCache(tp);
 
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
@@ -546,7 +561,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 #ifdef READ_LOCALE_A_OUTPUT
 	{
 		FILE	   *locale_a_handle;
-		char		localebuf[NAMEDATALEN]; /* we assume ASCII so this is fine */
+		char		localebuf[LOCALE_NAME_BUFLEN];
 		int			nvalid = 0;
 		Oid			collid;
 		CollAliasData *aliases;
@@ -570,7 +585,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		{
 			size_t		len;
 			int			enc;
-			char		alias[NAMEDATALEN];
+			char		alias[LOCALE_NAME_BUFLEN];
 
 			len = strlen(localebuf);
 

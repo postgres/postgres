@@ -58,9 +58,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	HeapTuple	tup;
 	Datum		values[Natts_pg_collation];
 	bool		nulls[Natts_pg_collation];
-	NameData	name_name,
-				name_collate,
-				name_ctype;
+	NameData	name_name;
 	Oid			oid;
 	ObjectAddress myself,
 				referenced;
@@ -163,10 +161,8 @@ CollationCreate(const char *collname, Oid collnamespace,
 	values[Anum_pg_collation_collprovider - 1] = CharGetDatum(collprovider);
 	values[Anum_pg_collation_collisdeterministic - 1] = BoolGetDatum(collisdeterministic);
 	values[Anum_pg_collation_collencoding - 1] = Int32GetDatum(collencoding);
-	namestrcpy(&name_collate, collcollate);
-	values[Anum_pg_collation_collcollate - 1] = NameGetDatum(&name_collate);
-	namestrcpy(&name_ctype, collctype);
-	values[Anum_pg_collation_collctype - 1] = NameGetDatum(&name_ctype);
+	values[Anum_pg_collation_collcollate - 1] = CStringGetTextDatum(collcollate);
+	values[Anum_pg_collation_collctype - 1] = CStringGetTextDatum(collctype);
 	if (collversion)
 		values[Anum_pg_collation_collversion - 1] = CStringGetTextDatum(collversion);
 	else

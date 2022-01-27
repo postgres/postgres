@@ -39,9 +39,9 @@ CATALOG(pg_collation,3456,CollationRelationId)
 	char		collprovider;	/* see constants below */
 	bool		collisdeterministic BKI_DEFAULT(t);
 	int32		collencoding;	/* encoding for this collation; -1 = "all" */
-	NameData	collcollate;	/* LC_COLLATE setting */
-	NameData	collctype;		/* LC_CTYPE setting */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	text		collcollate BKI_FORCE_NOT_NULL;		/* LC_COLLATE setting */
+	text		collctype BKI_FORCE_NOT_NULL;		/* LC_CTYPE setting */
 	text		collversion BKI_DEFAULT(_null_);	/* provider-dependent
 													 * version of collation
 													 * data */

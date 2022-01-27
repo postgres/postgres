@@ -34,6 +34,8 @@
 #endif
 #endif
 
+/* use for libc locale names */
+#define LOCALE_NAME_BUFLEN 128
 
 /* GUC settings */
 extern char *locale_messages;

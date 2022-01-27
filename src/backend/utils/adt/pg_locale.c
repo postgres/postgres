@@ -179,7 +179,7 @@ pg_perm_setlocale(int category, const char *locale)
 	 */
 	if (category == LC_CTYPE)
 	{
-		static char save_lc_ctype[NAMEDATALEN + 20];
+		static char save_lc_ctype[LOCALE_NAME_BUFLEN];
 
 		/* copy setlocale() return value before callee invokes it again */
 		strlcpy(save_lc_ctype, result, sizeof(save_lc_ctype));
@@ -1288,17 +1288,21 @@ lookup_collation_cache(Oid collation, bool set_flags)
 	{
 		/* Attempt to set the flags */
 		HeapTuple	tp;
-		Form_pg_collation collform;
+		Datum		datum;
+		bool		isnull;
 		const char *collcollate;
 		const char *collctype;
 
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collation);
-		collform = (Form_pg_collation) GETSTRUCT(tp);
 
-		collcollate = NameStr(collform->collcollate);
-		collctype = NameStr(collform->collctype);
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+		Assert(!isnull);
+		collcollate = TextDatumGetCString(datum);
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
+		Assert(!isnull);
+		collctype = TextDatumGetCString(datum);
 
 		cache_entry->collate_is_c = ((strcmp(collcollate, "C") == 0) ||
 									 (strcmp(collcollate, "POSIX") == 0));
@@ -1484,7 +1488,7 @@ pg_newlocale_from_collation(Oid collid)
 		const char *collctype pg_attribute_unused();
 		struct pg_locale_struct result;
 		pg_locale_t resultp;
-		Datum		collversion;
+		Datum		datum;
 		bool		isnull;
 
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
@@ -1492,8 +1496,12 @@ pg_newlocale_from_collation(Oid collid)
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 		collform = (Form_pg_collation) GETSTRUCT(tp);
 
-		collcollate = NameStr(collform->collcollate);
-		collctype = NameStr(collform->collctype);
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+		Assert(!isnull);
+		collcollate = TextDatumGetCString(datum);
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
+		Assert(!isnull);
+		collctype = TextDatumGetCString(datum);
 
 		/* We'll fill in the result struct locally before allocating memory */
 		memset(&result, 0, sizeof(result));
@@ -1587,12 +1595,14 @@ pg_newlocale_from_collation(Oid collid)
 #endif							/* not USE_ICU */
 		}
 
-		collversion = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
 									  &isnull);
 		if (!isnull)
 		{
 			char	   *actual_versionstr;
 			char	   *collversionstr;
+
+			collversionstr = TextDatumGetCString(datum);
 
 			actual_versionstr = get_collation_actual_version(collform->collprovider, collcollate);
 			if (!actual_versionstr)
@@ -1606,7 +1616,6 @@ pg_newlocale_from_collation(Oid collid)
 						(errmsg("collation \"%s\" has no actual version, but a version was specified",
 								NameStr(collform->collname))));
 			}
-			collversionstr = TextDatumGetCString(collversion);
 
 			if (strcmp(actual_versionstr, collversionstr) != 0)
 				ereport(WARNING,

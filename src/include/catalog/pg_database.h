@@ -40,12 +40,6 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* character encoding */
 	int32		encoding;
 
-	/* LC_COLLATE setting */
-	NameData	datcollate;
-
-	/* LC_CTYPE setting */
-	NameData	datctype;
-
 	/* allowed as CREATE DATABASE template? */
 	bool		datistemplate;
 
@@ -65,6 +59,12 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	Oid			dattablespace BKI_LOOKUP(pg_tablespace);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	/* LC_COLLATE setting */
+	text		datcollate BKI_FORCE_NOT_NULL;
+
+	/* LC_CTYPE setting */
+	text		datctype BKI_FORCE_NOT_NULL;
+
 	/* access permissions */
 	aclitem		datacl[1];
 #endif
