@@ -147,6 +147,32 @@ xidComparator(const void *arg1, const void *arg2)
 	return 0;
 }
 
+/*
+ * xidLogicalComparator
+ *		qsort comparison function for XIDs
+ *
+ * This is used to compare only XIDs from the same epoch (e.g. for backends
+ * running at the same time). So there must be only normal XIDs, so there's
+ * no issue with triangle inequality.
+ */
+int
+xidLogicalComparator(const void *arg1, const void *arg2)
+{
+	TransactionId xid1 = *(const TransactionId *) arg1;
+	TransactionId xid2 = *(const TransactionId *) arg2;
+
+	Assert(TransactionIdIsNormal(xid1));
+	Assert(TransactionIdIsNormal(xid2));
+
+	if (TransactionIdPrecedes(xid1, xid2))
+		return -1;
+
+	if (TransactionIdPrecedes(xid2, xid1))
+		return 1;
+
+	return 0;
+}
+
 /*****************************************************************************
  *	 COMMAND IDENTIFIER ROUTINES											 *
  *****************************************************************************/
