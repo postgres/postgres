@@ -58,6 +58,7 @@ my $extra_opts = $ENV{EXTRA_REGRESS_OPTS} || "";
 system_or_bail($ENV{PG_REGRESS} . " $extra_opts " .
 			   "--dlpath=\"$dlpath\" " .
 			   "--bindir= " .
+			   "--host=" . $node_primary->host . " " .
 			   "--port=" . $node_primary->port . " " .
 			   "--schedule=../regress/parallel_schedule " .
 			   "--max-concurrent-tests=20 " .
