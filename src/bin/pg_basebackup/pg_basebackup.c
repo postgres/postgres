@@ -1919,7 +1919,7 @@ BaseBackup(void)
 		}
 		AppendStringCommandOption(&buf, use_new_option_syntax,
 								  "COMPRESSION", compressmethodstr);
-		if (compresslevel != 0 && compresslevel != Z_DEFAULT_COMPRESSION)
+		if (compresslevel >= 1) /* not 0 or Z_DEFAULT_COMPRESSION */
 			AppendIntegerCommandOption(&buf, use_new_option_syntax,
 									   "COMPRESSION_LEVEL", compresslevel);
 	}
