@@ -142,7 +142,8 @@ BEGIN
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 	# Check if this environment is MSYS2.
-	$is_msys2 = $^O eq 'msys' && `uname -or` =~ /^[2-9].*Msys/;
+	$is_msys2 = $windows_os && -x '/usr/bin/uname'  &&
+	  `uname -or` =~ /^[2-9].*Msys/;
 
 	if ($windows_os)
 	{
