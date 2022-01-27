@@ -11,6 +11,8 @@ use TestLib;
 
 use Test::More tests => 6;
 
+local $TODO = 'filesystem bug' if TestLib::has_wal_read_bug;
+
 my ($node, $result);
 
 #
