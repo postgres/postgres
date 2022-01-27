@@ -1871,6 +1871,12 @@ BaseBackup(void)
 			exit(1);
 		}
 
+		if (writerecoveryconf)
+		{
+			pg_log_error("recovery configuration cannot be written when a backup target is used");
+			exit(1);
+		}
+
 		AppendPlainCommandOption(&buf, use_new_option_syntax, "TABLESPACE_MAP");
 
 		if ((colon = strchr(backup_target, ':')) == NULL)
@@ -1913,7 +1919,7 @@ BaseBackup(void)
 		}
 		AppendStringCommandOption(&buf, use_new_option_syntax,
 								  "COMPRESSION", compressmethodstr);
-		if (compresslevel != 0)
+		if (compresslevel != 0 && compresslevel != Z_DEFAULT_COMPRESSION)
 			AppendIntegerCommandOption(&buf, use_new_option_syntax,
 									   "COMPRESSION_LEVEL", compresslevel);
 	}
