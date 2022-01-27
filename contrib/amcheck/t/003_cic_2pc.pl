@@ -11,6 +11,8 @@ use PostgreSQL::Test::Utils;
 
 use Test::More tests => 5;
 
+local $TODO = 'filesystem bug' if PostgreSQL::Test::Utils::has_wal_read_bug;
+
 my ($node, $result);
 
 #
