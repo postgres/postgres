@@ -116,8 +116,8 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 static void EndCopy(CopyToState cstate);
 static void ClosePipeToProgram(CopyToState cstate);
 static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
-static void CopyAttributeOutText(CopyToState cstate, char *string);
-static void CopyAttributeOutCSV(CopyToState cstate, char *string,
+static void CopyAttributeOutText(CopyToState cstate, const char *string);
+static void CopyAttributeOutCSV(CopyToState cstate, const char *string,
 								bool use_quote, bool single_attr);
 
 /* Low-level communications functions */
@@ -1009,10 +1009,10 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 	} while (0)
 
 static void
-CopyAttributeOutText(CopyToState cstate, char *string)
+CopyAttributeOutText(CopyToState cstate, const char *string)
 {
-	char	   *ptr;
-	char	   *start;
+	const char *ptr;
+	const char *start;
 	char		c;
 	char		delimc = cstate->opts.delim[0];
 
@@ -1162,11 +1162,11 @@ CopyAttributeOutText(CopyToState cstate, char *string)
  * CSV-style escaping
  */
 static void
-CopyAttributeOutCSV(CopyToState cstate, char *string,
+CopyAttributeOutCSV(CopyToState cstate, const char *string,
 					bool use_quote, bool single_attr)
 {
-	char	   *ptr;
-	char	   *start;
+	const char *ptr;
+	const char *start;
 	char		c;
 	char		delimc = cstate->opts.delim[0];
 	char		quotec = cstate->opts.quote[0];
@@ -1194,7 +1194,7 @@ CopyAttributeOutCSV(CopyToState cstate, char *string,
 			use_quote = true;
 		else
 		{
-			char	   *tptr = ptr;
+			const char *tptr = ptr;
 
 			while ((c = *tptr) != '\0')
 			{
