@@ -160,6 +160,18 @@ this is just a line full of junk that would error out if parsed
 
 copy copytest3 to stdout csv header;
 
+create temp table copytest4 (
+	c1 int,
+	"colname with tab: 	" text);
+
+copy copytest4 from stdin (header);
+this is just a line full of junk that would error out if parsed
+1	a
+2	b
+\.
+
+copy copytest4 to stdout (header);
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,

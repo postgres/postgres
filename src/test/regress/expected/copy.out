@@ -120,6 +120,14 @@ copy copytest3 to stdout csv header;
 c1,"col with , comma","col with "" quote"
 1,a,1
 2,b,2
+create temp table copytest4 (
+	c1 int,
+	"colname with tab: 	" text);
+copy copytest4 from stdin (header);
+copy copytest4 to stdout (header);
+c1	colname with tab: \t
+1	a
+2	b
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,

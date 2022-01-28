@@ -277,7 +277,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       Specifies that the file contains a header line with the names of each
       column in the file.  On output, the first line contains the column
       names from the table, and on input, the first line is ignored.
-      This option is allowed only when using <literal>CSV</literal> format.
+      This option is not allowed when using <literal>binary</literal> format.
      </para>
     </listitem>
    </varlistentry>

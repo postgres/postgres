@@ -555,10 +555,10 @@ ProcessCopyOptions(ParseState *pstate,
 				 errmsg("COPY delimiter cannot be \"%s\"", opts_out->delim)));
 
 	/* Check header */
-	if (!opts_out->csv_mode && opts_out->header_line)
+	if (opts_out->binary && opts_out->header_line)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY HEADER available only in CSV mode")));
+				 errmsg("cannot specify HEADER in BINARY mode")));
 
 	/* Check quote */
 	if (!opts_out->csv_mode && opts_out->quote != NULL)

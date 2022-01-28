@@ -50,14 +50,12 @@ CREATE USER MAPPING FOR regress_no_priv_user SERVER file_server;
 -- validator tests
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
 ERROR:  COPY format "xml" not recognized
-CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', header 'true');      -- ERROR
-ERROR:  COPY HEADER available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
 ERROR:  COPY quote available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
 ERROR:  COPY escape available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
-ERROR:  COPY HEADER available only in CSV mode
+ERROR:  cannot specify HEADER in BINARY mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', quote ':');        -- ERROR
 ERROR:  COPY quote available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', escape ':');       -- ERROR
