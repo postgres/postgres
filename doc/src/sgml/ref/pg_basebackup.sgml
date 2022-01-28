@@ -428,8 +428,11 @@ PostgreSQL documentation
        </para>
        <para>
         When the tar format is used, the suffix <filename>.gz</filename> will
-        automatically be added to all tar filenames. Compression is not
-        available in plain format.
+        automatically be added to all tar filenames. When the plain format is
+        used, client-side compression may not be specified, but it is
+        still possible to request server-side compression. If this is done,
+        the server will compress the backup for transmission, and the
+        client will decompress and extract it.
        </para>
       </listitem>
      </varlistentry>

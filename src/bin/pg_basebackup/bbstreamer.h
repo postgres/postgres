@@ -205,6 +205,7 @@ extern bbstreamer *bbstreamer_extractor_new(const char *basepath,
 											const char *(*link_map) (const char *),
 											void (*report_output_file) (const char *));
 
+extern bbstreamer *bbstreamer_gzip_decompressor_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_parser_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_terminator_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_archiver_new(bbstreamer *next);

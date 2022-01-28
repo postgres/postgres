@@ -1113,7 +1113,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	bbstreamer *streamer = NULL;
 	bbstreamer *manifest_inject_streamer = NULL;
 	bool		inject_manifest;
-	bool		is_tar;
+	bool		is_tar,
+				is_tar_gz;
 	bool		must_parse_archive;
 	int			archive_name_len = strlen(archive_name);
 
@@ -1128,6 +1129,10 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	is_tar = (archive_name_len > 4 &&
 			  strcmp(archive_name + archive_name_len - 4, ".tar") == 0);
 
+	/* Is this a gzip archive? */
+	is_tar_gz = (archive_name_len > 8 &&
+				 strcmp(archive_name + archive_name_len - 3, ".gz") == 0);
+
 	/*
 	 * We have to parse the archive if (1) we're suppose to extract it, or if
 	 * (2) we need to inject backup_manifest or recovery configuration into it.
@@ -1137,7 +1142,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		(spclocation == NULL && writerecoveryconf));
 
 	/* At present, we only know how to parse tar archives. */
-	if (must_parse_archive && !is_tar)
+	if (must_parse_archive && !is_tar && !is_tar_gz)
 	{
 		pg_log_error("unable to parse archive: %s", archive_name);
 		pg_log_info("only tar archives can be parsed");
@@ -1194,7 +1199,6 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 			compressloc != COMPRESS_LOCATION_CLIENT)
 			streamer = bbstreamer_plain_writer_new(archive_filename,
 												   archive_file);
-#ifdef HAVE_LIBZ
 		else if (compressmethod == COMPRESSION_GZIP)
 		{
 			strlcat(archive_filename, ".gz", sizeof(archive_filename));
@@ -1202,7 +1206,6 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 												  archive_file,
 												  compresslevel);
 		}
-#endif
 		else
 		{
 			Assert(false);		/* not reachable */
@@ -1250,6 +1253,14 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		streamer = bbstreamer_tar_parser_new(streamer);
 	else if (expect_unterminated_tarfile)
 		streamer = bbstreamer_tar_terminator_new(streamer);
+
+	/*
+	 * If the user has requested a server compressed archive along with archive
+	 * extraction at client then we need to decompress it.
+	 */
+	if (format == 'p' && compressmethod == COMPRESSION_GZIP &&
+			compressloc == COMPRESS_LOCATION_SERVER)
+		streamer = bbstreamer_gzip_decompressor_new(streamer);
 
 	/* Return the results. */
 	*manifest_inject_streamer_p = manifest_inject_streamer;

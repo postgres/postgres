@@ -11,10 +11,6 @@
 
 #include "postgres_fe.h"
 
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#endif
-
 #include <unistd.h>
 
 #include "bbstreamer.h"
@@ -29,15 +25,6 @@ typedef struct bbstreamer_plain_writer
 	FILE	   *file;
 	bool		should_close_file;
 } bbstreamer_plain_writer;
-
-#ifdef HAVE_LIBZ
-typedef struct bbstreamer_gzip_writer
-{
-	bbstreamer	base;
-	char	   *pathname;
-	gzFile		gzfile;
-}			bbstreamer_gzip_writer;
-#endif
 
 typedef struct bbstreamer_extractor
 {
@@ -61,22 +48,6 @@ const bbstreamer_ops bbstreamer_plain_writer_ops = {
 	.finalize = bbstreamer_plain_writer_finalize,
 	.free = bbstreamer_plain_writer_free
 };
-
-#ifdef HAVE_LIBZ
-static void bbstreamer_gzip_writer_content(bbstreamer *streamer,
-										   bbstreamer_member *member,
-										   const char *data, int len,
-										   bbstreamer_archive_context context);
-static void bbstreamer_gzip_writer_finalize(bbstreamer *streamer);
-static void bbstreamer_gzip_writer_free(bbstreamer *streamer);
-static const char *get_gz_error(gzFile gzf);
-
-const bbstreamer_ops bbstreamer_gzip_writer_ops = {
-	.content = bbstreamer_gzip_writer_content,
-	.finalize = bbstreamer_gzip_writer_finalize,
-	.free = bbstreamer_gzip_writer_free
-};
-#endif
 
 static void bbstreamer_extractor_content(bbstreamer *streamer,
 										 bbstreamer_member *member,
@@ -194,159 +165,6 @@ bbstreamer_plain_writer_free(bbstreamer *streamer)
 	pfree(mystreamer->pathname);
 	pfree(mystreamer);
 }
-
-/*
- * Create a bbstreamer that just compresses data using gzip, and then writes
- * it to a file.
- *
- * As in the case of bbstreamer_plain_writer_new, pathname is always used
- * for error reporting purposes; if file is NULL, it is also the opened and
- * closed so that the data may be written there.
- */
-bbstreamer *
-bbstreamer_gzip_writer_new(char *pathname, FILE *file, int compresslevel)
-{
-#ifdef HAVE_LIBZ
-	bbstreamer_gzip_writer *streamer;
-
-	streamer = palloc0(sizeof(bbstreamer_gzip_writer));
-	*((const bbstreamer_ops **) &streamer->base.bbs_ops) =
-		&bbstreamer_gzip_writer_ops;
-
-	streamer->pathname = pstrdup(pathname);
-
-	if (file == NULL)
-	{
-		streamer->gzfile = gzopen(pathname, "wb");
-		if (streamer->gzfile == NULL)
-		{
-			pg_log_error("could not create compressed file \"%s\": %m",
-						 pathname);
-			exit(1);
-		}
-	}
-	else
-	{
-		int			fd = dup(fileno(file));
-
-		if (fd < 0)
-		{
-			pg_log_error("could not duplicate stdout: %m");
-			exit(1);
-		}
-
-		streamer->gzfile = gzdopen(fd, "wb");
-		if (streamer->gzfile == NULL)
-		{
-			pg_log_error("could not open output file: %m");
-			exit(1);
-		}
-	}
-
-	if (gzsetparams(streamer->gzfile, compresslevel,
-					Z_DEFAULT_STRATEGY) != Z_OK)
-	{
-		pg_log_error("could not set compression level %d: %s",
-					 compresslevel, get_gz_error(streamer->gzfile));
-		exit(1);
-	}
-
-	return &streamer->base;
-#else
-	pg_log_error("this build does not support compression");
-	exit(1);
-#endif
-}
-
-#ifdef HAVE_LIBZ
-/*
- * Write archive content to gzip file.
- */
-static void
-bbstreamer_gzip_writer_content(bbstreamer *streamer,
-							   bbstreamer_member *member, const char *data,
-							   int len, bbstreamer_archive_context context)
-{
-	bbstreamer_gzip_writer *mystreamer;
-
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
-
-	if (len == 0)
-		return;
-
-	errno = 0;
-	if (gzwrite(mystreamer->gzfile, data, len) != len)
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		pg_log_error("could not write to compressed file \"%s\": %s",
-					 mystreamer->pathname, get_gz_error(mystreamer->gzfile));
-		exit(1);
-	}
-}
-
-/*
- * End-of-archive processing when writing to a gzip file consists of just
- * calling gzclose.
- *
- * It makes no difference whether we opened the file or the caller did it,
- * because libz provides no way of avoiding a close on the underling file
- * handle. Notice, however, that bbstreamer_gzip_writer_new() uses dup() to
- * work around this issue, so that the behavior from the caller's viewpoint
- * is the same as for bbstreamer_plain_writer.
- */
-static void
-bbstreamer_gzip_writer_finalize(bbstreamer *streamer)
-{
-	bbstreamer_gzip_writer *mystreamer;
-
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
-
-	errno = 0;					/* in case gzclose() doesn't set it */
-	if (gzclose(mystreamer->gzfile) != 0)
-	{
-		pg_log_error("could not close compressed file \"%s\": %m",
-					 mystreamer->pathname);
-		exit(1);
-	}
-
-	mystreamer->gzfile = NULL;
-}
-
-/*
- * Free memory associated with this bbstreamer.
- */
-static void
-bbstreamer_gzip_writer_free(bbstreamer *streamer)
-{
-	bbstreamer_gzip_writer *mystreamer;
-
-	mystreamer = (bbstreamer_gzip_writer *) streamer;
-
-	Assert(mystreamer->base.bbs_next == NULL);
-	Assert(mystreamer->gzfile == NULL);
-
-	pfree(mystreamer->pathname);
-	pfree(mystreamer);
-}
-
-/*
- * Helper function for libz error reporting.
- */
-static const char *
-get_gz_error(gzFile gzf)
-{
-	int			errnum;
-	const char *errmsg;
-
-	errmsg = gzerror(gzf, &errnum);
-	if (errnum == Z_ERRNO)
-		return strerror(errno);
-	else
-		return errmsg;
-}
-#endif
 
 /*
  * Create a bbstreamer that extracts an archive.

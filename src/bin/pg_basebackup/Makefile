@@ -38,6 +38,7 @@ OBJS = \
 BBOBJS = \
 	pg_basebackup.o \
 	bbstreamer_file.o \
+	bbstreamer_gzip.o \
 	bbstreamer_inject.o \
 	bbstreamer_tar.o
 
