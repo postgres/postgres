@@ -25,19 +25,14 @@
  */
 #include "postgres.h"
 
-#include <fcntl.h>
-#include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "lib/binaryheap.h"
 #include "libpq/pqsignal.h"
-#include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/pgarch.h"
@@ -504,132 +499,24 @@ pgarch_ArchiverCopyLoop(void)
 static bool
 pgarch_archiveXlog(char *xlog)
 {
-	char		xlogarchcmd[MAXPGPATH];
 	char		pathname[MAXPGPATH];
 	char		activitymsg[MAXFNAMELEN + 16];
-	char	   *dp;
-	char	   *endp;
-	const char *sp;
-	int			rc;
+	bool		ret;
 
 	snprintf(pathname, MAXPGPATH, XLOGDIR "/%s", xlog);
-
-	/*
-	 * construct the command to be executed
-	 */
-	dp = xlogarchcmd;
-	endp = xlogarchcmd + MAXPGPATH - 1;
-	*endp = '\0';
-
-	for (sp = XLogArchiveCommand; *sp; sp++)
-	{
-		if (*sp == '%')
-		{
-			switch (sp[1])
-			{
-				case 'p':
-					/* %p: relative path of source file */
-					sp++;
-					strlcpy(dp, pathname, endp - dp);
-					make_native_path(dp);
-					dp += strlen(dp);
-					break;
-				case 'f':
-					/* %f: filename of source file */
-					sp++;
-					strlcpy(dp, xlog, endp - dp);
-					dp += strlen(dp);
-					break;
-				case '%':
-					/* convert %% to a single % */
-					sp++;
-					if (dp < endp)
-						*dp++ = *sp;
-					break;
-				default:
-					/* otherwise treat the % as not special */
-					if (dp < endp)
-						*dp++ = *sp;
-					break;
-			}
-		}
-		else
-		{
-			if (dp < endp)
-				*dp++ = *sp;
-		}
-	}
-	*dp = '\0';
-
-	ereport(DEBUG3,
-			(errmsg_internal("executing archive command \"%s\"",
-							 xlogarchcmd)));
 
 	/* Report archive activity in PS display */
 	snprintf(activitymsg, sizeof(activitymsg), "archiving %s", xlog);
 	set_ps_display(activitymsg);
 
-	pgstat_report_wait_start(WAIT_EVENT_ARCHIVE_COMMAND);
-	rc = system(xlogarchcmd);
-	pgstat_report_wait_end();
-
-	if (rc != 0)
-	{
-		/*
-		 * If either the shell itself, or a called command, died on a signal,
-		 * abort the archiver.  We do this because system() ignores SIGINT and
-		 * SIGQUIT while waiting; so a signal is very likely something that
-		 * should have interrupted us too.  Also die if the shell got a hard
-		 * "command not found" type of error.  If we overreact it's no big
-		 * deal, the postmaster will just start the archiver again.
-		 */
-		int			lev = wait_result_is_any_signal(rc, true) ? FATAL : LOG;
-
-		if (WIFEXITED(rc))
-		{
-			ereport(lev,
-					(errmsg("archive command failed with exit code %d",
-							WEXITSTATUS(rc)),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
-		}
-		else if (WIFSIGNALED(rc))
-		{
-#if defined(WIN32)
-			ereport(lev,
-					(errmsg("archive command was terminated by exception 0x%X",
-							WTERMSIG(rc)),
-					 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
-#else
-			ereport(lev,
-					(errmsg("archive command was terminated by signal %d: %s",
-							WTERMSIG(rc), pg_strsignal(WTERMSIG(rc))),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
-#endif
-		}
-		else
-		{
-			ereport(lev,
-					(errmsg("archive command exited with unrecognized status %d",
-							rc),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
-		}
-
+	ret = shell_archive_file(xlog, pathname);
+	if (ret)
+		snprintf(activitymsg, sizeof(activitymsg), "last was %s", xlog);
+	else
 		snprintf(activitymsg, sizeof(activitymsg), "failed on %s", xlog);
-		set_ps_display(activitymsg);
-
-		return false;
-	}
-	elog(DEBUG1, "archived write-ahead log file \"%s\"", xlog);
-
-	snprintf(activitymsg, sizeof(activitymsg), "last was %s", xlog);
 	set_ps_display(activitymsg);
 
-	return true;
+	return ret;
 }
 
 /*

@@ -23,6 +23,7 @@ OBJS = \
 	pgarch.o \
 	pgstat.o \
 	postmaster.o \
+	shell_archive.o \
 	startup.o \
 	syslogger.o \
 	walwriter.o

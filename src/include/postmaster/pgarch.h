@@ -33,4 +33,7 @@ extern void PgArchiverMain(void) pg_attribute_noreturn();
 extern void PgArchWakeup(void);
 extern void PgArchForceDirScan(void);
 
+/* in shell_archive.c */
+extern bool shell_archive_file(const char *file, const char *path);
+
 #endif							/* _PGARCH_H */
