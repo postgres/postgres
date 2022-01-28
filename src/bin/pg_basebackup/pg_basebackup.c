@@ -966,6 +966,12 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 	int			firstlen;
 	char	   *firstpart;
 
+	/*
+	 * clear 'levelres' so that if there are multiple compression options,
+	 * the last one fully overrides the earlier ones
+	 */
+	*levelres = 0;
+
 	/* check if the option is split in two */
 	sep = strchr(src, ':');
 
