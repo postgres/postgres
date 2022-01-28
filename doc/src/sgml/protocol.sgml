@@ -2647,6 +2647,11 @@ The commands accepted in replication mode are:
           <literal>blackhole</literal>, the backup data is not sent
           anywhere; it is simply discarded.
          </para>
+
+         <para>
+          The <literal>server</literal> target requires superuser privilege or
+          being granted the <literal>pg_write_server_files</literal> role.
+         </para>
         </listitem>
        </varlistentry>
 
