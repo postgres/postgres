@@ -17,7 +17,6 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
-my $have_zlib = check_pg_config("#define HAVE_LIBZ 1");
 my $backup_path = $primary->backup_dir . '/server-backup';
 my $real_backup_path = PostgreSQL::Test::Utils::perl2host($backup_path);
 my $extract_path = $primary->backup_dir . '/extracted-backup';
