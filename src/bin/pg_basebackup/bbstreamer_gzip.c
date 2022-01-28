@@ -11,6 +11,8 @@
 
 #include "postgres_fe.h"
 
+#include <unistd.h>
+
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif

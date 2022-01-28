@@ -36,7 +36,7 @@ for my $tc (@test_configuration)
 	my $method = $tc->{'compression_method'};
 
 	SKIP: {
-		skip "$method compression not supported by this build", 3
+		skip "$method compression not supported by this build", 2
 			if ! $tc->{'enabled'};
 
 		# Take backup with server compression enabled.
