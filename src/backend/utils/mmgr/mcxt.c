@@ -1042,8 +1042,14 @@ ProcessLogMemoryContextInterrupt(void)
 {
 	LogMemoryContextPending = false;
 
-	ereport(LOG,
-			(errmsg("logging memory contexts of PID %d", MyProcPid)));
+	/*
+	 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
+	 * connected client.
+	 */
+	ereport(LOG_SERVER_ONLY,
+			(errhidestmt(true),
+			 errhidecontext(true),
+			 errmsg("logging memory contexts of PID %d", MyProcPid)));
 
 	/*
 	 * When a backend process is consuming huge memory, logging all its memory
