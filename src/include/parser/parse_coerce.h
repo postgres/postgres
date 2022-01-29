@@ -70,6 +70,7 @@ extern Oid	select_common_type(ParseState *pstate, List *exprs,
 extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
 								   Oid targetTypeId,
 								   const char *context);
+extern bool verify_common_type(Oid common_type, List *exprs);
 
 extern int32 select_common_typmod(ParseState *pstate, List *exprs, Oid common_type);
 
