@@ -101,3 +101,19 @@ explain (verbose, costs off) select * from bpchar_view
   where f1::bpchar = 'foo';
 
 rollback;
+
+
+--
+-- Ordinarily, IN/NOT IN can be converted to a ScalarArrayOpExpr
+-- with a suitably-chosen array type.
+--
+explain (verbose, costs off)
+select random() IN (1, 4, 8.0);
+explain (verbose, costs off)
+select random()::int IN (1, 4, 8.0);
+-- However, if there's not a common supertype for the IN elements,
+-- we should instead try to produce "x = v1 OR x = v2 OR ...".
+-- In most cases that'll fail for lack of all the requisite = operators,
+-- but it can succeed sometimes.  So this should complain about lack of
+-- an = operator, not about cast failure.
+select '(0,0)'::point in ('(0,0,0,0)'::box, point(0,0));

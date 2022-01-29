@@ -311,6 +311,8 @@ SELECT ARRAY[[['hello','world']]] || ARRAY[[['happy','birthday']]] AS "ARRAY";
 SELECT ARRAY[[1,2],[3,4]] || ARRAY[5,6] AS "{{1,2},{3,4},{5,6}}";
 SELECT ARRAY[0,0] || ARRAY[1,1] || ARRAY[2,2] AS "{0,0,1,1,2,2}";
 SELECT 0 || ARRAY[1,2] || 3 AS "{0,1,2,3}";
+SELECT array_agg(x) || array_agg(x) FROM (VALUES (ROW(1,2)), (ROW(3,4))) v(x);
+SELECT ROW(1,2) || array_agg(x) FROM (VALUES (ROW(3,4)), (ROW(5,6))) v(x);
 
 SELECT * FROM array_op_test WHERE i @> '{32}' ORDER BY seqno;
 SELECT * FROM array_op_test WHERE i && '{32}' ORDER BY seqno;
