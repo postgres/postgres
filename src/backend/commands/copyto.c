@@ -657,8 +657,6 @@ BeginCopyTo(ParseState *pstate,
 
 	cstate->copy_dest = COPY_FILE;	/* default */
 
-	MemoryContextSwitchTo(oldcontext);
-
 	if (pipe)
 	{
 		progress_vals[1] = PROGRESS_COPY_TYPE_PIPE;
