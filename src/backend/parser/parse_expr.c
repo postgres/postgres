@@ -1121,6 +1121,11 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		allexprs = list_concat(list_make1(lexpr), rnonvars);
 		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
 
+		/* We have to verify that the selected type actually works */
+		if (OidIsValid(scalar_type) &&
+			!verify_common_type(scalar_type, allexprs))
+			scalar_type = InvalidOid;
+
 		/*
 		 * Do we have an array type to use?  Aside from the case where there
 		 * isn't one, we don't risk using ScalarArrayOpExpr when the common
