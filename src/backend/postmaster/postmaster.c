@@ -1014,10 +1014,8 @@ PostmasterMain(int argc, char *argv[])
 	LocalProcessControlFile(false);
 
 	/*
-	 * Register the apply launcher.  Since it registers a background worker,
-	 * it needs to be called before InitializeMaxBackends(), and it's probably
-	 * a good idea to call it before any modules had chance to take the
-	 * background worker slots.
+	 * Register the apply launcher.  It's probably a good idea to call this
+	 * before any modules had a chance to take the background worker slots.
 	 */
 	ApplyLauncherRegister();
 
@@ -1038,8 +1036,8 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Now that loadable modules have had their chance to register background
-	 * workers, calculate MaxBackends.
+	 * Now that loadable modules have had their chance to alter any GUCs,
+	 * calculate MaxBackends.
 	 */
 	InitializeMaxBackends();
 
