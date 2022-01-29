@@ -191,8 +191,8 @@ typedef struct LVRelState
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	BlockNumber pinskipped_pages;	/* # of pages skipped due to a pin */
 	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
-	BlockNumber tupcount_pages; /* pages whose tuples we counted */
-	BlockNumber pages_removed;	/* pages remove by truncation */
+	BlockNumber tupcount_pages; /* # pages whose tuples we counted */
+	BlockNumber removed_pages;	/* # pages removed by relation truncation */
 	BlockNumber lpdead_item_pages;	/* # pages with LP_DEAD items */
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 
@@ -610,7 +610,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 vacrel->relname,
 							 vacrel->num_index_scans);
 			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u skipped due to pins, %u skipped frozen\n"),
-							 vacrel->pages_removed,
+							 vacrel->removed_pages,
 							 vacrel->rel_pages,
 							 vacrel->pinskipped_pages,
 							 vacrel->frozenskipped_pages);
@@ -620,7 +620,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 (long long) vacrel->new_rel_tuples,
 							 (long long) vacrel->new_dead_tuples,
 							 OldestXmin);
-			orig_rel_pages = vacrel->rel_pages + vacrel->pages_removed;
+			orig_rel_pages = vacrel->rel_pages + vacrel->removed_pages;
 			if (orig_rel_pages > 0)
 			{
 				if (vacrel->do_index_vacuuming)
@@ -764,7 +764,7 @@ lazy_scan_heap(LVRelState *vacrel, VacuumParams *params, bool aggressive)
 	vacrel->pinskipped_pages = 0;
 	vacrel->frozenskipped_pages = 0;
 	vacrel->tupcount_pages = 0;
-	vacrel->pages_removed = 0;
+	vacrel->removed_pages = 0;
 	vacrel->lpdead_item_pages = 0;
 	vacrel->nonempty_pages = 0;
 
@@ -2685,7 +2685,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 		 * without also touching reltuples, since the tuple count wasn't
 		 * changed by the truncation.
 		 */
-		vacrel->pages_removed += orig_rel_pages - new_rel_pages;
+		vacrel->removed_pages += orig_rel_pages - new_rel_pages;
 		vacrel->rel_pages = new_rel_pages;
 
 		ereport(vacrel->verbose ? INFO : DEBUG2,
