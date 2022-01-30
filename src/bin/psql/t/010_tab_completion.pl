@@ -40,10 +40,11 @@ $node->start;
 
 # set up a few database objects
 $node->safe_psql('postgres',
-	    "CREATE TABLE tab1 (f1 int, f2 text);\n"
+	    "CREATE TABLE tab1 (f1 int primary key, f2 text);\n"
 	  . "CREATE TABLE mytab123 (f1 int, f2 text);\n"
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
-	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz');\n");
+	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
+	  . "CREATE TYPE enum1 AS ENUM ('foo', 'bar', 'baz', 'BLACK');\n");
 
 # Developers would not appreciate this test adding a bunch of junk to
 # their ~/.psql_history, so be sure to redirect history into a temp file.
@@ -176,10 +177,84 @@ check_completion("2\t", qr/246 /,
 
 clear_query();
 
+# check handling of quoted names
+check_completion(
+	"select * from \"my\t",
+	qr/select \* from "my\a?tab/,
+	"complete \"my<tab> to \"mytab when there are multiple choices");
+
+check_completion(
+	"\t\t",
+	qr/"mytab123" +"mytab246"/,
+	"offer multiple quoted table choices");
+
+check_completion("2\t", qr/246" /,
+	"finish completion of one of multiple quoted table choices");
+
+clear_query();
+
+# check handling of mixed-case names
+check_completion(
+	"select * from \"mi\t",
+	qr/"mixedName"/,
+	"complete a mixed-case name");
+
+clear_query();
+
+# check case folding
+check_completion(
+	"select * from TAB\t",
+	qr/tab1 /,
+	"automatically fold case");
+
+clear_query();
+
 # check case-sensitive keyword replacement
 # note: various versions of readline/libedit handle backspacing
 # differently, so just check that the replacement comes out correctly
 check_completion("\\DRD\t", qr/drds /, "complete \\DRD<tab> to \\drds");
+
+clear_query();
+
+# check completion of a schema-qualified name
+check_completion(
+	"select * from pub\t",
+	qr/public\./,
+	"complete schema when relevant");
+
+check_completion(
+	"tab\t",
+	qr/tab1 /,
+	"complete schema-qualified name");
+
+clear_query();
+
+check_completion(
+	"select * from PUBLIC.t\t",
+	qr/public\.tab1 /,
+	"automatically fold case in schema-qualified name");
+
+clear_query();
+
+# check interpretation of referenced names
+check_completion(
+	"alter table tab1 drop constraint \t",
+	qr/tab1_pkey /,
+	"complete index name for referenced table");
+
+clear_query();
+
+check_completion(
+	"alter table TAB1 drop constraint \t",
+	qr/tab1_pkey /,
+	"complete index name for referenced table, with downcasing");
+
+clear_query();
+
+check_completion(
+	"alter table public.\"tab1\" drop constraint \t",
+	qr/tab1_pkey /,
+	"complete index name for referenced table, with schema and quoting");
 
 clear_query();
 
@@ -233,6 +308,23 @@ check_completion(
 	"offer multiple enum choices");
 
 clear_line();
+
+# enum labels are case sensitive, so this should complete BLACK immediately
+check_completion(
+	"ALTER TYPE enum1 RENAME VALUE 'B\t",
+	qr|BLACK|,
+	"enum labels are case sensitive");
+
+clear_line();
+
+# check completion of a keyword offered in addition to object names
+# (that code path currently doesn't preserve case of what's typed)
+check_completion(
+	"comment on constraint foo on dom\t",
+	qr|DOMAIN|,
+	"offer keyword in addition to query result");
+
+clear_query();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
 $timer->start(5);
