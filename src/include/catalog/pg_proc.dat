@@ -6096,6 +6096,11 @@
   proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}',
   proargnames => '{name,setting,unit,category,short_desc,extra_desc,context,vartype,source,min_val,max_val,enumvals,boot_val,reset_val,sourcefile,sourceline,pending_restart}',
   prosrc => 'show_all_settings' },
+
+{ oid => '8921', descr => 'return flags for specified GUC',
+  proname => 'pg_settings_get_flags', provolatile => 's', prorettype => '_text',
+  proargtypes => 'text', prosrc => 'pg_settings_get_flags' },
+
 { oid => '3329', descr => 'show config file settings',
   proname => 'pg_show_all_file_settings', prorows => '1000', proretset => 't',
   provolatile => 'v', prorettype => 'record', proargtypes => '',

@@ -23862,6 +23862,43 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_settings_get_flags</primary>
+        </indexterm>
+        <function>pg_settings_get_flags</function> ( <parameter>guc</parameter> <type>text</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Returns an array of the flags associated with the given GUC, or
+        <literal>NULL</literal> if it does not exist. The result is
+        an empty array if the GUC exists but there are no flags to show.
+        Only the most useful flags are exposed, as of the following:
+        <simplelist>
+         <member>
+          <literal>EXPLAIN</literal>: parameters included in
+          <command>EXPLAIN (SETTINGS)</command> commands.
+         </member>
+         <member>
+          <literal>NO_SHOW_ALL</literal>: parameters excluded from
+          <command>SHOW ALL</command> commands.
+         </member>
+         <member>
+          <literal>NO_RESET_ALL</literal>: parameters excluded from
+          <command>RESET ALL</command> commands.
+         </member>
+         <member>
+          <literal>NOT_IN_SAMPLE</literal>: parameters not included in
+          <filename>postgresql.conf</filename> by default.
+         </member>
+         <member>
+          <literal>RUNTIME_COMPUTED</literal>: runtime-computed parameters.
+         </member>
+        </simplelist>
+       </para></entry>
+      </row>
+      
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_tablespace_databases</primary>
         </indexterm>
         <function>pg_tablespace_databases</function> ( <parameter>tablespace</parameter> <type>oid</type> )
