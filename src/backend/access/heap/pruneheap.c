@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/transam.h"
 #include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pgstat.h"

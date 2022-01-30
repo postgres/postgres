@@ -14,6 +14,7 @@
 
 #include "access/heapam.h"
 #include "access/visibilitymap.h"
+#include "access/xloginsert.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_proc_d.h"
 #include "miscadmin.h"

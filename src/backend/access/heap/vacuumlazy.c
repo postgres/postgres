@@ -44,6 +44,7 @@
 #include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "catalog/storage.h"
 #include "commands/dbcommands.h"

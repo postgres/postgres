@@ -13,7 +13,6 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
-#include "access/xloginsert.h"
 #include "access/xlogreader.h"
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"

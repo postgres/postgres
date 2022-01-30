@@ -74,6 +74,7 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
+#include "access/xloginsert.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "funcapi.h"

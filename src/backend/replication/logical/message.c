@@ -32,6 +32,7 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "replication/logical.h"

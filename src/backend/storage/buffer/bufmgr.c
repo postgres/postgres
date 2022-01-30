@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "access/tableam.h"
+#include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
