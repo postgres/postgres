@@ -299,11 +299,11 @@ static char *strip_trailing_ws(const char *msg);
 static OP  *pp_require_safe(pTHX);
 static void activate_interpreter(plperl_interp_desc *interp_desc);
 
-#if defined(WIN32) && PERL_VERSION_LT(5, 28, 0)
+#if defined(WIN32) && PERL_VERSION < 28
 static char *setlocale_perl(int category, char *locale);
 #else
 #define setlocale_perl(a,b)  Perl_setlocale(a,b)
-#endif							/* defined(WIN32) && PERL_VERSION_LT(5, 28, 0) */
+#endif							/* defined(WIN32) && PERL_VERSION < 28 */
 
 /*
  * Decrement the refcount of the given SV within the active Perl interpreter
@@ -4162,7 +4162,7 @@ plperl_inline_callback(void *arg)
  *
  * Starting in 5.28, perl exposes Perl_setlocale to do so.
  */
-#if defined(WIN32) && PERL_VERSION_LT(5, 28, 0)
+#if defined(WIN32) && PERL_VERSION < 28
 static char *
 setlocale_perl(int category, char *locale)
 {
@@ -4230,4 +4230,4 @@ setlocale_perl(int category, char *locale)
 
 	return RETVAL;
 }
-#endif							/* defined(WIN32) && PERL_VERSION_LT(5, 28, 0) */
+#endif							/* defined(WIN32) && PERL_VERSION < 28 */
