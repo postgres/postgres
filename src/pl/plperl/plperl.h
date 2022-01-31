@@ -86,9 +86,6 @@
 #endif							/* USE_REPL_SNPRINTF */
 
 /* perl version and platform portability */
-#define NEED_eval_pv
-#define NEED_newRV_noinc
-#define NEED_sv_2pv_flags
 #include "ppport.h"
 
 /* perl may have a different width of "bool", don't buy it */
