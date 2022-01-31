@@ -407,6 +407,7 @@ loop:
 #undef DO_SORT
 #undef DO_SWAP
 #undef DO_SWAPN
+#undef ST_CHECK_FOR_INTERRUPTS
 #undef ST_COMPARATOR_TYPE_NAME
 #undef ST_COMPARE
 #undef ST_COMPARE_ARG_TYPE
