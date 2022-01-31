@@ -531,6 +531,16 @@ int44out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+PG_FUNCTION_INFO_V1(test_canonicalize_path);
+Datum
+test_canonicalize_path(PG_FUNCTION_ARGS)
+{
+	char	   *path = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	canonicalize_path(path);
+	PG_RETURN_TEXT_P(cstring_to_text(path));
+}
+
 PG_FUNCTION_INFO_V1(make_tuple_indirect);
 Datum
 make_tuple_indirect(PG_FUNCTION_ARGS)

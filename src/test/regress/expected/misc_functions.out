@@ -134,6 +134,141 @@ LINE 1: SELECT num_nulls();
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 --
+-- canonicalize_path()
+--
+SELECT test_canonicalize_path('/');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/./abc/def/');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/./../abc/def');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/./../../abc/def/');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/abc/.././def/ghi');
+ test_canonicalize_path 
+------------------------
+ /def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('/abc/./../def/ghi//');
+ test_canonicalize_path 
+------------------------
+ /def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../..');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../../..');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../../../../ghi/jkl');
+ test_canonicalize_path 
+------------------------
+ /ghi/jkl
+(1 row)
+
+SELECT test_canonicalize_path('.');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('./');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('./abc/..');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('abc/../');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('abc/../def');
+ test_canonicalize_path 
+------------------------
+ def
+(1 row)
+
+SELECT test_canonicalize_path('..');
+ test_canonicalize_path 
+------------------------
+ ..
+(1 row)
+
+SELECT test_canonicalize_path('../abc/def');
+ test_canonicalize_path 
+------------------------
+ ../abc/def
+(1 row)
+
+SELECT test_canonicalize_path('../abc/..');
+ test_canonicalize_path 
+------------------------
+ ..
+(1 row)
+
+SELECT test_canonicalize_path('../abc/../def');
+ test_canonicalize_path 
+------------------------
+ ../def
+(1 row)
+
+SELECT test_canonicalize_path('../abc/../../def/ghi');
+ test_canonicalize_path 
+------------------------
+ ../../def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('./abc/./def/.');
+ test_canonicalize_path 
+------------------------
+ abc/def
+(1 row)
+
+SELECT test_canonicalize_path('./abc/././def/.');
+ test_canonicalize_path 
+------------------------
+ abc/def
+(1 row)
+
+SELECT test_canonicalize_path('./abc/./def/.././ghi/../../../jkl/mno');
+ test_canonicalize_path 
+------------------------
+ ../jkl/mno
+(1 row)
+
+--
 -- pg_log_backend_memory_contexts()
 --
 -- Memory contexts are logged and they are not returned to the function.

@@ -28,3 +28,7 @@ CREATE FUNCTION int44out(city_budget)
    AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type city_budget is only a shell
+CREATE FUNCTION test_canonicalize_path(text)
+   RETURNS text
+   AS :'regresslib'
+   LANGUAGE C STRICT IMMUTABLE;
