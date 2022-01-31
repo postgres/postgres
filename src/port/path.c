@@ -494,27 +494,21 @@ canonicalize_path(char *path)
  * Detect whether a path contains any parent-directory references ("..")
  *
  * The input *must* have been put through canonicalize_path previously.
- *
- * This is a bit tricky because we mustn't be fooled by "..a.." (legal)
- * nor "C:.." (legal on Unix but not Windows).
  */
 bool
 path_contains_parent_reference(const char *path)
 {
-	int			path_len;
-
+	/*
+	 * Once canonicalized, an absolute path cannot contain any ".." at all,
+	 * while a relative path could contain ".."(s) only at the start.  So it
+	 * is sufficient to check the start of the path, after skipping any
+	 * Windows drive/network specifier.
+	 */
 	path = skip_drive(path);	/* C: shouldn't affect our conclusion */
 
-	path_len = strlen(path);
-
-	/*
-	 * ".." could be the whole path; otherwise, if it's present it must be at
-	 * the beginning, in the middle, or at the end.
-	 */
-	if (strcmp(path, "..") == 0 ||
-		strncmp(path, "../", 3) == 0 ||
-		strstr(path, "/../") != NULL ||
-		(path_len >= 3 && strcmp(path + path_len - 3, "/..") == 0))
+	if (path[0] == '.' &&
+		path[1] == '.' &&
+		(path[2] == '\0' || path[2] == '/'))
 		return true;
 
 	return false;
@@ -522,10 +516,11 @@ path_contains_parent_reference(const char *path)
 
 /*
  * Detect whether a path is only in or below the current working directory.
+ *
+ * The input *must* have been put through canonicalize_path previously.
+ *
  * An absolute path that matches the current working directory should
- * return false (we only want relative to the cwd).  We don't allow
- * "/../" even if that would keep us under the cwd (it is too hard to
- * track that).
+ * return false (we only want relative to the cwd).
  */
 bool
 path_is_relative_and_below_cwd(const char *path)
