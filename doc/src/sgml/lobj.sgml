@@ -138,19 +138,50 @@
     <title>Creating a Large Object</title>
 
     <para>
-     <indexterm><primary>lo_creat</primary></indexterm>
+     <indexterm><primary>lo_create</primary></indexterm>
      The function
+<synopsis>
+Oid lo_create(PGconn *conn, Oid lobjId);
+</synopsis>
+     creates a new large object.  The OID to be assigned can be
+     specified by <replaceable class="parameter">lobjId</replaceable>;
+     if so, failure occurs if that OID is already in use for some large
+     object.  If <replaceable class="parameter">lobjId</replaceable>
+     is <symbol>InvalidOid</symbol> (zero) then <function>lo_create</function>
+     assigns an unused OID.
+     The return value is the OID that was assigned to the new large object,
+     or <symbol>InvalidOid</symbol> (zero) on failure.
+    </para>
+
+    <para>
+     An example:
+<programlisting>
+inv_oid = lo_create(conn, desired_oid);
+</programlisting>
+    </para>
+
+    <para>
+     <indexterm><primary>lo_creat</primary></indexterm>
+     The older function
 <synopsis>
 Oid lo_creat(PGconn *conn, int mode);
 </synopsis>
-     creates a new large object.
+     also creates a new large object, always assigning an unused OID.
      The return value is the OID that was assigned to the new large object,
      or <symbol>InvalidOid</symbol> (zero) on failure.
+    </para>
 
-     <replaceable class="parameter">mode</replaceable> is unused and
-     ignored as of <productname>PostgreSQL</productname> 8.1; however, for
-     backward compatibility with earlier releases it is best to
-     set it to <symbol>INV_READ</symbol>, <symbol>INV_WRITE</symbol>,
+    <para>
+     In <productname>PostgreSQL</productname> releases 8.1 and later,
+     the <replaceable class="parameter">mode</replaceable> is ignored,
+     so that <function>lo_creat</function> is exactly equivalent to
+     <function>lo_create</function> with a zero second argument.
+     However, there is little reason to use <function>lo_creat</function>
+     unless you need to work with servers older than 8.1.
+     To work with such an old server, you must
+     use <function>lo_creat</function> not <function>lo_create</function>,
+     and you must set <replaceable class="parameter">mode</replaceable> to
+     one of <symbol>INV_READ</symbol>, <symbol>INV_WRITE</symbol>,
      or <symbol>INV_READ</symbol> <literal>|</literal> <symbol>INV_WRITE</symbol>.
      (These symbolic constants are defined
      in the header file <filename>libpq/libpq-fs.h</filename>.)
@@ -160,35 +191,6 @@ Oid lo_creat(PGconn *conn, int mode);
      An example:
 <programlisting>
 inv_oid = lo_creat(conn, INV_READ|INV_WRITE);
-</programlisting>
-    </para>
-
-    <para>
-     <indexterm><primary>lo_create</primary></indexterm>
-     The function
-<synopsis>
-Oid lo_create(PGconn *conn, Oid lobjId);
-</synopsis>
-     also creates a new large object.  The OID to be assigned can be
-     specified by <replaceable class="parameter">lobjId</replaceable>;
-     if so, failure occurs if that OID is already in use for some large
-     object.  If <replaceable class="parameter">lobjId</replaceable>
-     is <symbol>InvalidOid</symbol> (zero) then <function>lo_create</function> assigns an unused
-     OID (this is the same behavior as <function>lo_creat</function>).
-     The return value is the OID that was assigned to the new large object,
-     or <symbol>InvalidOid</symbol> (zero) on failure.
-    </para>
-
-    <para>
-     <function>lo_create</function> is new as of <productname>PostgreSQL</productname>
-     8.1; if this function is run against an older server version, it will
-     fail and return <symbol>InvalidOid</symbol>.
-    </para>
-
-    <para>
-     An example:
-<programlisting>
-inv_oid = lo_create(conn, desired_oid);
 </programlisting>
     </para>
    </sect2>
