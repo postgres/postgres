@@ -1320,9 +1320,11 @@ initialize_readline(void)
 	rl_basic_word_break_characters = WORD_BREAKS;
 
 	/*
-	 * We should include '"' in rl_completer_quote_characters too, but that
-	 * will require some upgrades to how we handle quoted identifiers, so
-	 * that's for another day.
+	 * Ideally we'd include '"' in rl_completer_quote_characters too, which
+	 * should allow us to complete quoted identifiers that include spaces.
+	 * However, the library support for rl_completer_quote_characters is
+	 * presently too inconsistent to want to mess with that.  (Note in
+	 * particular that libedit has this variable but completely ignores it.)
 	 */
 	rl_completer_quote_characters = "'";
 
@@ -2059,7 +2061,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("SET", "RESET");
 	else if (Matches("ALTER", "SYSTEM", "SET|RESET"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_alter_system_set_vars,
-								 "all");
+								 "ALL");
 	else if (Matches("ALTER", "SYSTEM", "SET", MatchAny))
 		COMPLETE_WITH("TO");
 	/* ALTER VIEW <name> */
@@ -4039,16 +4041,18 @@ psql_completion(const char *text, int start, int end)
 	/* Complete with a variable name */
 	else if (TailMatches("SET|RESET") && !TailMatches("UPDATE", MatchAny, "SET"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_set_vars,
-								 "constraints",
-								 "transaction",
-								 "session",
-								 "role",
-								 "tablespace",
-								 "all");
+								 "CONSTRAINTS",
+								 "TRANSACTION",
+								 "SESSION",
+								 "ROLE",
+								 "TABLESPACE",
+								 "ALL");
 	else if (Matches("SHOW"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_show_vars,
-								 "session authorization",
-								 "all");
+								 "SESSION AUTHORIZATION",
+								 "ALL");
+	else if (Matches("SHOW", "SESSION"))
+		COMPLETE_WITH("AUTHORIZATION");
 	/* Complete "SET TRANSACTION" */
 	else if (Matches("SET", "TRANSACTION"))
 		COMPLETE_WITH("SNAPSHOT", "ISOLATION LEVEL", "READ", "DEFERRABLE", "NOT DEFERRABLE");
@@ -4742,7 +4746,8 @@ _complete_from_query(const char *simple_query,
 {
 	static int	list_index,
 				num_schema_only,
-				num_other;
+				num_query_other,
+				num_keywords;
 	static PGresult *result = NULL;
 	static bool non_empty_object;
 	static bool schemaquoted;
@@ -4765,7 +4770,8 @@ _complete_from_query(const char *simple_query,
 		/* Reset static state, ensuring no memory leaks */
 		list_index = 0;
 		num_schema_only = 0;
-		num_other = 0;
+		num_query_other = 0;
+		num_keywords = 0;
 		PQclear(result);
 		result = NULL;
 
@@ -4986,7 +4992,10 @@ _complete_from_query(const char *simple_query,
 
 			/* In verbatim mode, we return all the items as-is */
 			if (verbatim)
+			{
+				num_query_other++;
 				return pg_strdup(item);
+			}
 
 			/*
 			 * In normal mode, a name requiring quoting will be returned only
@@ -5007,7 +5016,7 @@ _complete_from_query(const char *simple_query,
 			if (item == NULL && nsp != NULL)
 				num_schema_only++;
 			else
-				num_other++;
+				num_query_other++;
 
 			return requote_identifier(nsp, item, schemaquoted, objectquoted);
 		}
@@ -5031,8 +5040,12 @@ _complete_from_query(const char *simple_query,
 				list_index++;
 				if (pg_strncasecmp(text, item, strlen(text)) == 0)
 				{
-					num_other++;
-					return pg_strdup(item);
+					num_keywords++;
+					/* Match keyword case if we are returning only keywords */
+					if (num_schema_only == 0 && num_query_other == 0)
+						return pg_strdup_keyword_case(item, text);
+					else
+						return pg_strdup(item);
 				}
 			}
 		}
@@ -5049,8 +5062,12 @@ _complete_from_query(const char *simple_query,
 				list_index++;
 				if (pg_strncasecmp(text, item, strlen(text)) == 0)
 				{
-					num_other++;
-					return pg_strdup(item);
+					num_keywords++;
+					/* Match keyword case if we are returning only keywords */
+					if (num_schema_only == 0 && num_query_other == 0)
+						return pg_strdup_keyword_case(item, text);
+					else
+						return pg_strdup(item);
 				}
 			}
 		}
@@ -5062,7 +5079,7 @@ _complete_from_query(const char *simple_query,
 	 * completion subject text, which is not what we want.
 	 */
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
-	if (num_schema_only > 0 && num_other == 0)
+	if (num_schema_only > 0 && num_query_other == 0 && num_keywords == 0)
 		rl_completion_append_character = '\0';
 #endif
 

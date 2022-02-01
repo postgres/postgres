@@ -40,7 +40,7 @@ $node->start;
 
 # set up a few database objects
 $node->safe_psql('postgres',
-	    "CREATE TABLE tab1 (f1 int primary key, f2 text);\n"
+	    "CREATE TABLE tab1 (c1 int primary key, c2 text);\n"
 	  . "CREATE TABLE mytab123 (f1 int, f2 text);\n"
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
 	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
@@ -317,14 +317,30 @@ check_completion(
 
 clear_line();
 
-# check completion of a keyword offered in addition to object names
-# (that code path currently doesn't preserve case of what's typed)
-check_completion(
-	"comment on constraint foo on dom\t",
-	qr|DOMAIN|,
-	"offer keyword in addition to query result");
+# check completion of a keyword offered in addition to object names;
+# such a keyword should obey COMP_KEYWORD_CASE once only keyword
+# completions are possible
+foreach (
+	[ 'lower',          'CO', 'column' ],
+	[ 'upper',          'co', 'COLUMN' ],
+	[ 'preserve-lower', 'co', 'column' ],
+	[ 'preserve-upper', 'CO', 'COLUMN' ],)
+{
+	my ($case, $in, $out) = @$_;
 
-clear_query();
+	check_completion(
+		"\\set COMP_KEYWORD_CASE $case\n",
+		qr/postgres=#/,
+		"set completion case to '$case'");
+	check_completion("alter table tab1 rename c\t\t",
+		qr|COLUMN|,
+		"offer keyword COLUMN for input c<TAB>, COMP_KEYWORD_CASE = $case");
+	clear_query();
+	check_completion("alter table tab1 rename $in\t\t\t",
+		qr|$out|,
+		"offer keyword $out for input $in<TAB>, COMP_KEYWORD_CASE = $case");
+	clear_query();
+}
 
 # send psql an explicit \q to shut it down, else pty won't close properly
 $timer->start(5);
