@@ -570,14 +570,14 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
-	new_record[Anum_pg_database_datcollate - 1] = CStringGetTextDatum(dbcollate);
-	new_record[Anum_pg_database_datctype - 1] = CStringGetTextDatum(dbctype);
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(dballowconnections);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
 	new_record[Anum_pg_database_datminmxid - 1] = TransactionIdGetDatum(src_minmxid);
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
+	new_record[Anum_pg_database_datcollate - 1] = CStringGetTextDatum(dbcollate);
+	new_record[Anum_pg_database_datctype - 1] = CStringGetTextDatum(dbctype);
 
 	/*
 	 * We deliberately set datacl to default (NULL), rather than copying it
