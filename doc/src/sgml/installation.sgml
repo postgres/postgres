@@ -195,10 +195,10 @@ su - postgres
       To build the <application>PL/Python</application> server programming
       language, you need a <productname>Python</productname>
       installation with the header files and
-      the <application>distutils</application> module.  The minimum
-      required version is <productname>Python</productname> 2.4.
+      the <application>sysconfig</application> module.  The minimum
+      required version is <productname>Python</productname> 2.7.
       <productname>Python 3</productname> is supported if it's
-      version 3.1 or later; but see
+      version 3.2 or later; but see
       <xref linkend="plpython-python23"/>
       when using Python 3.
      </para>

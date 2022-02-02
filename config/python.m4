@@ -37,32 +37,25 @@ python_majorversion=`echo "$python_fullversion" | sed '[s/^\([0-9]*\).*/\1/]'`
 python_minorversion=`echo "$python_fullversion" | sed '[s/^[0-9]*\.\([0-9]*\).*/\1/]'`
 python_version=`echo "$python_fullversion" | sed '[s/^\([0-9]*\.[0-9]*\).*/\1/]'`
 # Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 4; then
-  AC_MSG_ERROR([Python version $python_version is too old (version 2.4 or later is required)])
+if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 7; then
+  AC_MSG_ERROR([Python version $python_version is too old (version 2.7 or later is required)])
 fi
 
-AC_MSG_CHECKING([for Python distutils module])
-if "${PYTHON}" -c 'import distutils' 2>&AS_MESSAGE_LOG_FD
+AC_MSG_CHECKING([for Python sysconfig module])
+if "${PYTHON}" -c 'import sysconfig' 2>&AS_MESSAGE_LOG_FD
 then
     AC_MSG_RESULT(yes)
 else
     AC_MSG_RESULT(no)
-    AC_MSG_ERROR([distutils module not found])
+    AC_MSG_ERROR([sysconfig module not found])
 fi
 
 AC_MSG_CHECKING([Python configuration directory])
-python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
+python_configdir=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBPL'))))"`
 AC_MSG_RESULT([$python_configdir])
 
-AC_MSG_CHECKING([Python include directories])
-python_includespec=`${PYTHON} -c "
-import distutils.sysconfig
-a = '-I' + distutils.sysconfig.get_python_inc(False)
-b = '-I' + distutils.sysconfig.get_python_inc(True)
-if a == b:
-    print(a)
-else:
-    print(a + ' ' + b)"`
+AC_MSG_CHECKING([Python include directory])
+python_includespec=`${PYTHON} -c "import sysconfig; print('-I' + sysconfig.get_config_var('INCLUDEPY'))"`
 if test "$PORTNAME" = win32 ; then
     python_includespec=`echo $python_includespec | sed 's,[[\]],/,g'`
 fi
@@ -96,8 +89,8 @@ AC_DEFUN([PGAC_CHECK_PYTHON_EMBED_SETUP],
 [AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 AC_MSG_CHECKING([how to link an embedded Python application])
 
-python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
-python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
+python_libdir=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBDIR'))))"`
+python_ldlibrary=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LDLIBRARY'))))"`
 
 # If LDLIBRARY exists and has a shlib extension, use it verbatim.
 ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
@@ -109,11 +102,11 @@ else
 	# Otherwise, guess the base name of the shlib.
 	# LDVERSION was added in Python 3.2, before that use VERSION,
 	# or failing that, $python_version from _PGAC_CHECK_PYTHON_DIRS.
-	python_ldversion=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDVERSION'))))"`
+	python_ldversion=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LDVERSION'))))"`
 	if test x"${python_ldversion}" != x""; then
 		ldlibrary="python${python_ldversion}"
 	else
-		python_version_var=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('VERSION'))))"`
+		python_version_var=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('VERSION'))))"`
 		if test x"${python_version_var}" != x""; then
 			ldlibrary="python${python_version_var}"
 		else
@@ -173,7 +166,7 @@ PL/Python.])
 fi
 python_libspec="-L${python_libdir} -l${ldlibrary}"
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
+python_additional_libs=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 
 AC_MSG_RESULT([${python_libspec} ${python_additional_libs}])
 
