@@ -20,7 +20,7 @@ else
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
-$node_primary->adjust_conf('postgresql.conf', 'max_connections', '25', 1);
+$node_primary->adjust_conf('postgresql.conf', 'max_connections', '25');
 $node_primary->append_conf('postgresql.conf', 'max_prepared_transactions = 10');
 
 # WAL consistency checking is resource intensive so require opt-in with the
@@ -48,6 +48,8 @@ $node_standby_1->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby_1->append_conf('postgresql.conf',
     "primary_slot_name = standby_1");
+$node_standby_1->append_conf('postgresql.conf',
+	'max_standby_streaming_delay = 600s');
 $node_standby_1->start;
 
 my $dlpath = PostgreSQL::Test::Utils::perl2host(dirname($ENV{REGRESS_SHLIB}));
