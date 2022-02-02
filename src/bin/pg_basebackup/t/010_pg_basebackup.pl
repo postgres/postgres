@@ -10,7 +10,7 @@ use File::Path qw(rmtree);
 use Fcntl qw(:seek);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 143;
+use Test::More;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -521,6 +521,15 @@ $node->command_ok(
 ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created');
 rmtree("$tempdir/backuponserver");
 
+$node->command_ok(
+	[qw(createuser --replication --role=pg_write_server_files backupuser)],
+	'create backup user');
+$node->command_ok(
+	[ @pg_basebackup_defs, '-U', 'backupuser', '--target', "server:$real_tempdir/backuponserver", '-X', 'none' ],
+	'backup target server');
+ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created as non-superuser');
+rmtree("$tempdir/backuponserver");
+
 $node->command_fails(
 	[
 		@pg_basebackup_defs,         '-D',
@@ -768,3 +777,5 @@ SKIP:
 	rmtree("$tempdir/backup_gzip2");
 	rmtree("$tempdir/backup_gzip3");
 }
+
+done_testing();

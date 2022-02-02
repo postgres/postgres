@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "catalog/pg_authid.h"
 #include "miscadmin.h"
 #include "replication/basebackup.h"
@@ -67,10 +68,12 @@ bbsink_server_new(bbsink *next, char *pathname)
 	sink->base.bbs_next = next;
 
 	/* Replication permission is not sufficient in this case. */
+	StartTransactionCommand();
 	if (!is_member_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser or a member of the pg_write_server_files role to create server backup")));
+	CommitTransactionCommand();
 
 	/*
 	 * It's not a good idea to store your backups in the same directory that
