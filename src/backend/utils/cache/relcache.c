@@ -2274,6 +2274,7 @@ RelationReloadIndexInfo(Relation relation)
 		 * the array fields are allowed to change, though.
 		 */
 		relation->rd_index->indisunique = index->indisunique;
+		relation->rd_index->indnullsnotdistinct = index->indnullsnotdistinct;
 		relation->rd_index->indisprimary = index->indisprimary;
 		relation->rd_index->indisexclusion = index->indisexclusion;
 		relation->rd_index->indimmediate = index->indimmediate;

@@ -1444,6 +1444,9 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	{
 		appendStringInfoChar(&buf, ')');
 
+		if (idxrec->indnullsnotdistinct)
+			appendStringInfo(&buf, " NULLS NOT DISTINCT");
+
 		/*
 		 * If it has options, append "WITH (options)"
 		 */
@@ -2312,9 +2315,20 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				/* Start off the constraint definition */
 				if (conForm->contype == CONSTRAINT_PRIMARY)
-					appendStringInfoString(&buf, "PRIMARY KEY (");
+					appendStringInfoString(&buf, "PRIMARY KEY ");
 				else
-					appendStringInfoString(&buf, "UNIQUE (");
+					appendStringInfoString(&buf, "UNIQUE ");
+
+				indexId = conForm->conindid;
+
+				indtup = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
+				if (!HeapTupleIsValid(indtup))
+					elog(ERROR, "cache lookup failed for index %u", indexId);
+				if (conForm->contype == CONSTRAINT_UNIQUE &&
+					((Form_pg_index) GETSTRUCT(indtup))->indnullsnotdistinct)
+					appendStringInfoString(&buf, "NULLS NOT DISTINCT ");
+
+				appendStringInfoString(&buf, "(");
 
 				/* Fetch and build target column list */
 				val = SysCacheGetAttr(CONSTROID, tup,
@@ -2327,12 +2341,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				appendStringInfoChar(&buf, ')');
 
-				indexId = conForm->conindid;
-
 				/* Build including column list (from pg_index.indkeys) */
-				indtup = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
-				if (!HeapTupleIsValid(indtup))
-					elog(ERROR, "cache lookup failed for index %u", indexId);
 				val = SysCacheGetAttr(INDEXRELID, indtup,
 									  Anum_pg_index_indnatts, &isnull);
 				if (isnull)

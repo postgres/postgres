@@ -208,6 +208,7 @@ extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
 extern Tuplesortstate *tuplesort_begin_index_btree(Relation heapRel,
 												   Relation indexRel,
 												   bool enforceUnique,
+												   bool uniqueNullsNotDistinct,
 												   int workMem, SortCoordinate coordinate,
 												   bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation heapRel,

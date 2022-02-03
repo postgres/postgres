@@ -173,6 +173,7 @@ typedef struct IndexInfo
 	uint16	   *ii_UniqueStrats;	/* array with one entry per column */
 	Datum	   *ii_OpclassOptions;	/* array with one entry per column */
 	bool		ii_Unique;
+	bool		ii_NullsNotDistinct;
 	bool		ii_ReadyForInserts;
 	bool		ii_CheckedUnchanged;
 	bool		ii_IndexUnchanged;

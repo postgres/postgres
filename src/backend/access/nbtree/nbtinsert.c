@@ -398,9 +398,9 @@ _bt_search_insert(Relation rel, BTInsertState insertstate)
  * _bt_findinsertloc() to reuse most of the binary search work we do
  * here.
  *
- * Do not call here when there are NULL values in scan key.  NULL should be
- * considered unequal to NULL when checking for duplicates, but we are not
- * prepared to handle that correctly.
+ * This code treats NULLs as equal, unlike the default semantics for unique
+ * indexes.  So do not call here when there are NULL values in scan key and
+ * the index uses the default NULLS DISTINCT mode.
  */
 static TransactionId
 _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,

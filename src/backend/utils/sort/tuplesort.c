@@ -459,6 +459,7 @@ struct Tuplesortstate
 
 	/* These are specific to the index_btree subcase: */
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
+	bool		uniqueNullsNotDistinct;	/* unique constraint null treatment */
 
 	/* These are specific to the index_hash subcase: */
 	uint32		high_mask;		/* masks for sortable part of hash code */
@@ -1065,6 +1066,7 @@ Tuplesortstate *
 tuplesort_begin_index_btree(Relation heapRel,
 							Relation indexRel,
 							bool enforceUnique,
+							bool uniqueNullsNotDistinct,
 							int workMem,
 							SortCoordinate coordinate,
 							bool randomAccess)
@@ -1103,6 +1105,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	state->heapRel = heapRel;
 	state->indexRel = indexRel;
 	state->enforceUnique = enforceUnique;
+	state->uniqueNullsNotDistinct = uniqueNullsNotDistinct;
 
 	indexScanKey = _bt_mkscankey(indexRel, NULL);
 
@@ -4200,14 +4203,15 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 
 	/*
 	 * If btree has asked us to enforce uniqueness, complain if two equal
-	 * tuples are detected (unless there was at least one NULL field).
+	 * tuples are detected (unless there was at least one NULL field and NULLS
+	 * NOT DISTINCT was not set).
 	 *
 	 * It is sufficient to make the test here, because if two tuples are equal
 	 * they *must* get compared at some stage of the sort --- otherwise the
 	 * sort algorithm wouldn't have checked whether one must appear before the
 	 * other.
 	 */
-	if (state->enforceUnique && !equal_hasnull)
+	if (state->enforceUnique && !(!state->uniqueNullsNotDistinct && equal_hasnull))
 	{
 		Datum		values[INDEX_MAX_KEYS];
 		bool		isnull[INDEX_MAX_KEYS];

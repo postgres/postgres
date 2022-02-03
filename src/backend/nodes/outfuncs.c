@@ -2775,6 +2775,7 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_UINT_FIELD(oldCreateSubid);
 	WRITE_UINT_FIELD(oldFirstRelfilenodeSubid);
 	WRITE_BOOL_FIELD(unique);
+	WRITE_BOOL_FIELD(nulls_not_distinct);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
 	WRITE_BOOL_FIELD(deferrable);
@@ -3713,6 +3714,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_UNIQUE:
 			appendStringInfoString(str, "UNIQUE");
+			WRITE_BOOL_FIELD(nulls_not_distinct);
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(including);
 			WRITE_NODE_FIELD(options);

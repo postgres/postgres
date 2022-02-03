@@ -89,6 +89,7 @@ typedef struct BTSpool
 	Relation	heap;
 	Relation	index;
 	bool		isunique;
+	bool		nulls_not_distinct;
 } BTSpool;
 
 /*
@@ -106,6 +107,7 @@ typedef struct BTShared
 	Oid			heaprelid;
 	Oid			indexrelid;
 	bool		isunique;
+	bool		nulls_not_distinct;
 	bool		isconcurrent;
 	int			scantuplesortstates;
 
@@ -206,6 +208,7 @@ typedef struct BTLeader
 typedef struct BTBuildState
 {
 	bool		isunique;
+	bool		nulls_not_distinct;
 	bool		havedead;
 	Relation	heap;
 	BTSpool    *spool;
@@ -307,6 +310,7 @@ btbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 #endif							/* BTREE_BUILD_STATS */
 
 	buildstate.isunique = indexInfo->ii_Unique;
+	buildstate.nulls_not_distinct = indexInfo->ii_NullsNotDistinct;
 	buildstate.havedead = false;
 	buildstate.heap = heap;
 	buildstate.spool = NULL;
@@ -380,6 +384,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	btspool->heap = heap;
 	btspool->index = index;
 	btspool->isunique = indexInfo->ii_Unique;
+	btspool->nulls_not_distinct = indexInfo->ii_NullsNotDistinct;
 
 	/* Save as primary spool */
 	buildstate->spool = btspool;
@@ -429,6 +434,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	 */
 	buildstate->spool->sortstate =
 		tuplesort_begin_index_btree(heap, index, buildstate->isunique,
+									buildstate->nulls_not_distinct,
 									maintenance_work_mem, coordinate,
 									false);
 
@@ -468,7 +474,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 		 * full, so we give it only work_mem
 		 */
 		buildstate->spool2->sortstate =
-			tuplesort_begin_index_btree(heap, index, false, work_mem,
+			tuplesort_begin_index_btree(heap, index, false, false, work_mem,
 										coordinate2, false);
 	}
 
@@ -1554,6 +1560,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	btshared->heaprelid = RelationGetRelid(btspool->heap);
 	btshared->indexrelid = RelationGetRelid(btspool->index);
 	btshared->isunique = btspool->isunique;
+	btshared->nulls_not_distinct = btspool->nulls_not_distinct;
 	btshared->isconcurrent = isconcurrent;
 	btshared->scantuplesortstates = scantuplesortstates;
 	ConditionVariableInit(&btshared->workersdonecv);
@@ -1747,6 +1754,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 	leaderworker->heap = buildstate->spool->heap;
 	leaderworker->index = buildstate->spool->index;
 	leaderworker->isunique = buildstate->spool->isunique;
+	leaderworker->nulls_not_distinct = buildstate->spool->nulls_not_distinct;
 
 	/* Initialize second spool, if required */
 	if (!btleader->btshared->isunique)
@@ -1846,6 +1854,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	btspool->heap = heapRel;
 	btspool->index = indexRel;
 	btspool->isunique = btshared->isunique;
+	btspool->nulls_not_distinct = btshared->nulls_not_distinct;
 
 	/* Look up shared state private to tuplesort.c */
 	sharedsort = shm_toc_lookup(toc, PARALLEL_KEY_TUPLESORT, false);
@@ -1928,6 +1937,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 	btspool->sortstate = tuplesort_begin_index_btree(btspool->heap,
 													 btspool->index,
 													 btspool->isunique,
+													 btspool->nulls_not_distinct,
 													 sortmem, coordinate,
 													 false);
 
@@ -1950,13 +1960,14 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 		coordinate2->nParticipants = -1;
 		coordinate2->sharedsort = sharedsort2;
 		btspool2->sortstate =
-			tuplesort_begin_index_btree(btspool->heap, btspool->index, false,
+			tuplesort_begin_index_btree(btspool->heap, btspool->index, false, false,
 										Min(sortmem, work_mem), coordinate2,
 										false);
 	}
 
 	/* Fill in buildstate for _bt_build_callback() */
 	buildstate.isunique = btshared->isunique;
+	buildstate.nulls_not_distinct = btshared->nulls_not_distinct;
 	buildstate.havedead = false;
 	buildstate.heap = btspool->heap;
 	buildstate.spool = btspool;

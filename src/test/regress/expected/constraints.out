@@ -446,6 +446,29 @@ SELECT * FROM UNIQUE_TBL;
 (7 rows)
 
 DROP TABLE UNIQUE_TBL;
+CREATE TABLE UNIQUE_TBL (i int UNIQUE NULLS NOT DISTINCT, t text);
+INSERT INTO UNIQUE_TBL VALUES (1, 'one');
+INSERT INTO UNIQUE_TBL VALUES (2, 'two');
+INSERT INTO UNIQUE_TBL VALUES (1, 'three');
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(1) already exists.
+INSERT INTO UNIQUE_TBL VALUES (4, 'four');
+INSERT INTO UNIQUE_TBL VALUES (5, 'one');
+INSERT INTO UNIQUE_TBL (t) VALUES ('six');
+INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(null) already exists.
+SELECT * FROM UNIQUE_TBL;
+ i |  t   
+---+------
+ 1 | one
+ 2 | two
+ 4 | four
+ 5 | one
+   | six
+(5 rows)
+
+DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
 	UNIQUE(i,t));
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');

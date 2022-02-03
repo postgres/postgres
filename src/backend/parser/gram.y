@@ -625,6 +625,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <ival>	opt_window_exclusion_clause
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
+%type <boolean> opt_unique_null_treatment
 %type <ival>	generated_when override_kind
 %type <partspec>	PartitionSpec OptPartitionSpec
 %type <partelem>	part_elem
@@ -3623,15 +3624,16 @@ ColConstraintElem:
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| UNIQUE opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = !$2;
 					n->keys = NULL;
-					n->options = $2;
+					n->options = $3;
 					n->indexname = NULL;
-					n->indexspace = $3;
+					n->indexspace = $4;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY opt_definition OptConsTableSpace
@@ -3714,6 +3716,12 @@ ColConstraintElem:
 					n->initially_valid = true;
 					$$ = (Node *)n;
 				}
+		;
+
+opt_unique_null_treatment:
+			NULLS_P DISTINCT		{ $$ = true; }
+			| NULLS_P NOT DISTINCT	{ $$ = false; }
+			| /*EMPTY*/				{ $$ = true; }
 		;
 
 generated_when:
@@ -3828,18 +3836,19 @@ ConstraintElem:
 					n->initially_valid = !n->skip_validation;
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->keys = $3;
-					n->including = $5;
-					n->options = $6;
+					n->nulls_not_distinct = !$2;
+					n->keys = $4;
+					n->including = $6;
+					n->options = $7;
 					n->indexname = NULL;
-					n->indexspace = $7;
-					processCASbits($8, @8, "UNIQUE",
+					n->indexspace = $8;
+					processCASbits($9, @9, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -7411,7 +7420,7 @@ defacl_privilege_target:
 
 IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 			ON relation_expr access_method_clause '(' index_params ')'
-			opt_include opt_reloptions OptTableSpace where_clause
+			opt_include opt_unique_null_treatment opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -7421,9 +7430,10 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->accessMethod = $8;
 					n->indexParams = $10;
 					n->indexIncludingParams = $12;
-					n->options = $13;
-					n->tableSpace = $14;
-					n->whereClause = $15;
+					n->nulls_not_distinct = !$13;
+					n->options = $14;
+					n->tableSpace = $15;
+					n->whereClause = $16;
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
@@ -7441,7 +7451,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 				}
 			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS name
 			ON relation_expr access_method_clause '(' index_params ')'
-			opt_include opt_reloptions OptTableSpace where_clause
+			opt_include opt_unique_null_treatment opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -7451,9 +7461,10 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->accessMethod = $11;
 					n->indexParams = $13;
 					n->indexIncludingParams = $15;
-					n->options = $16;
-					n->tableSpace = $17;
-					n->whereClause = $18;
+					n->nulls_not_distinct = !$16;
+					n->options = $17;
+					n->tableSpace = $18;
+					n->whereClause = $19;
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
@@ -13802,7 +13813,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					else
 						$$ = (Node *) makeA_Expr(AEXPR_OP_ALL, $2, $1, $5, @2);
 				}
-			| UNIQUE select_with_parens
+			| UNIQUE opt_unique_null_treatment select_with_parens
 				{
 					/* Not sure how to get rid of the parentheses
 					 * but there are lots of shift/reduce errors without them.

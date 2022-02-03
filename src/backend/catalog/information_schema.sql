@@ -1838,7 +1838,11 @@ CREATE VIEW table_constraints AS
              AS is_deferrable,
            CAST(CASE WHEN c.condeferred THEN 'YES' ELSE 'NO' END AS yes_or_no)
              AS initially_deferred,
-           CAST('YES' AS yes_or_no) AS enforced
+           CAST('YES' AS yes_or_no) AS enforced,
+           CAST(CASE WHEN c.contype = 'u'
+                     THEN CASE WHEN (SELECT NOT indnullsnotdistinct FROM pg_index WHERE indexrelid = conindid) THEN 'YES' ELSE 'NO' END
+                     END
+                AS yes_or_no) AS nulls_distinct
 
     FROM pg_namespace nc,
          pg_namespace nr,
@@ -1868,7 +1872,8 @@ CREATE VIEW table_constraints AS
            CAST('CHECK' AS character_data) AS constraint_type,
            CAST('NO' AS yes_or_no) AS is_deferrable,
            CAST('NO' AS yes_or_no) AS initially_deferred,
-           CAST('YES' AS yes_or_no) AS enforced
+           CAST('YES' AS yes_or_no) AS enforced,
+           CAST(NULL AS yes_or_no) AS nulls_distinct
 
     FROM pg_namespace nr,
          pg_class r,

@@ -6899,6 +6899,18 @@ ORDER BY c.ordinal_position;
        <literal>YES</literal>)
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>nulls_distinct</structfield> <type>yes_or_no</type>
+      </para>
+      <para>
+       If the constraint is a unique constraint, then <literal>YES</literal>
+       if the constraint treats nulls as distinct or <literal>NO</literal> if
+       it treats nulls as not distinct, otherwise null for other types of
+       constraints.
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

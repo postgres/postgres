@@ -228,6 +228,7 @@ F263	Comma-separated predicates in simple CASE expression			NO
 F271	Compound character literals			YES	
 F281	LIKE enhancements			YES	
 F291	UNIQUE predicate			NO	
+F292	UNIQUE null treatment			YES	SQL:202x draft
 F301	CORRESPONDING in query expressions			NO	
 F302	INTERSECT table operator			YES	
 F302	INTERSECT table operator	01	INTERSECT DISTINCT table operator	YES	

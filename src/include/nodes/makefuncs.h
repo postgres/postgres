@@ -96,7 +96,7 @@ extern List *make_ands_implicit(Expr *clause);
 
 extern IndexInfo *makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid,
 								List *expressions, List *predicates,
-								bool unique, bool isready, bool concurrent);
+								bool unique, bool nulls_not_distinct, bool isready, bool concurrent);
 
 extern DefElem *makeDefElem(char *name, Node *arg, int location);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,

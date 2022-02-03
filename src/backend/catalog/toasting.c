@@ -301,6 +301,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	indexInfo->ii_ExclusionStrats = NULL;
 	indexInfo->ii_OpclassOptions = NULL;
 	indexInfo->ii_Unique = true;
+	indexInfo->ii_NullsNotDistinct = false;
 	indexInfo->ii_ReadyForInserts = true;
 	indexInfo->ii_CheckedUnchanged = false;
 	indexInfo->ii_IndexUnchanged = false;

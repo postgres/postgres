@@ -2181,6 +2181,11 @@ describeOneTableDetails(const char *schemaname,
 		else
 			appendPQExpBufferStr(&buf, "false AS indisreplident,\n");
 
+		if (pset.sversion >= 150000)
+			appendPQExpBufferStr(&buf, "i.indnullsnotdistinct,\n");
+		else
+			appendPQExpBufferStr(&buf, "false AS indnullsnotdistinct,\n");
+
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
 						  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
@@ -2205,14 +2210,20 @@ describeOneTableDetails(const char *schemaname,
 			char	   *deferrable = PQgetvalue(result, 0, 4);
 			char	   *deferred = PQgetvalue(result, 0, 5);
 			char	   *indisreplident = PQgetvalue(result, 0, 6);
-			char	   *indamname = PQgetvalue(result, 0, 7);
-			char	   *indtable = PQgetvalue(result, 0, 8);
-			char	   *indpred = PQgetvalue(result, 0, 9);
+			char	   *indnullsnotdistinct = PQgetvalue(result, 0, 7);
+			char	   *indamname = PQgetvalue(result, 0, 8);
+			char	   *indtable = PQgetvalue(result, 0, 9);
+			char	   *indpred = PQgetvalue(result, 0, 10);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
 			else if (strcmp(indisunique, "t") == 0)
-				printfPQExpBuffer(&tmpbuf, _("unique, "));
+			{
+				printfPQExpBuffer(&tmpbuf, _("unique"));
+				if (strcmp(indnullsnotdistinct, "t") == 0)
+					appendPQExpBufferStr(&tmpbuf, _(" nulls not distinct"));
+				appendPQExpBuffer(&tmpbuf, _(", "));
+			}
 			else
 				resetPQExpBuffer(&tmpbuf);
 			appendPQExpBuffer(&tmpbuf, "%s, ", indamname);
