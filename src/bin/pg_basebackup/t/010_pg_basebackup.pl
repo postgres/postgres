@@ -31,7 +31,8 @@ my @pg_basebackup_defs = ('pg_basebackup', '--no-sync', '-cfast');
 umask(0077);
 
 # Initialize node without replication settings
-$node->init(extra => ['--data-checksums']);
+$node->init(extra => ['--data-checksums'],
+			auth_extra => [ '--create-role', 'backupuser' ]);
 $node->start;
 my $pgdata = $node->data_dir;
 
