@@ -366,6 +366,14 @@ task:
     #   build
     MSBFLAGS: -m -verbosity:minimal "-consoleLoggerParameters:Summary;ForceNoAlign" /p:TrackFileAccess=false -nologo
 
+    # If tests hang forever, cirrus eventually times out. In that case log
+    # output etc is not uploaded, making the problem hard to debug. Of course
+    # tests internally should have shorter timeouts, but that's proven to not
+    # be sufficient. 15min currently is fast enough to finish individual test
+    # "suites".
+    T_C: "\"C:/Program Files/Git/usr/bin/timeout.exe\" -v -k60s 15m"
+
+
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
   windows_container:
@@ -391,42 +399,43 @@ task:
     # Installation on windows currently only completely works from src/tools/msvc
     - cd src/tools/msvc && perl install.pl %CIRRUS_WORKING_DIR%/tmp_install
 
-  test_regress_parallel_script:
-    - perl src/tools/msvc/vcregress.pl check parallel
-  startcreate_script:
-    # paths to binaries need backslashes
-    - tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log --options=--no-sync
-    - echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
-    - tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
-  test_pl_script:
-    - perl src/tools/msvc/vcregress.pl plcheck
-  test_isolation_script:
-    - perl src/tools/msvc/vcregress.pl isolationcheck
-  test_modules_script:
-    - perl src/tools/msvc/vcregress.pl modulescheck
-  test_contrib_script:
-    - perl src/tools/msvc/vcregress.pl contribcheck
-  stop_script:
-    - tmp_install\bin\pg_ctl.exe stop -D tmp_check/db -l tmp_check/postmaster.log
-  test_ssl_script:
-    - set with_ssl=openssl
-    - perl src/tools/msvc/vcregress.pl taptest ./src/test/ssl/
-  test_subscription_script:
-    - perl src/tools/msvc/vcregress.pl taptest ./src/test/subscription/
-  test_authentication_script:
-    - perl src/tools/msvc/vcregress.pl taptest ./src/test/authentication/
-  test_recovery_script:
-    - perl src/tools/msvc/vcregress.pl recoverycheck
-  test_bin_script:
-    - perl src/tools/msvc/vcregress.pl bincheck
-  test_pg_upgrade_script:
-    - perl src/tools/msvc/vcregress.pl upgradecheck
-  test_ecpg_script:
-    # tries to build additional stuff
-    - vcvarsall x64
-    # References ecpg_regression.proj in the current dir
-    - cd src/tools/msvc
-    - perl vcregress.pl ecpgcheck
+  test_regress_parallel_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl check parallel
+  startcreate_script: |
+    rem paths to binaries need backslashes
+    tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log --options=--no-sync
+    echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
+    tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
+
+  test_pl_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl plcheck
+  test_isolation_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl isolationcheck
+  test_modules_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl modulescheck
+  test_contrib_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl contribcheck
+  stop_script: |
+    tmp_install\bin\pg_ctl.exe stop -D tmp_check/db -l tmp_check/postmaster.log
+  test_ssl_script: |
+    set with_ssl=openssl
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/ssl/
+  test_subscription_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/subscription/
+  test_authentication_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/authentication/
+  test_recovery_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl recoverycheck
+  test_bin_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl bincheck
+  test_pg_upgrade_script: |
+    %T_C% perl src/tools/msvc/vcregress.pl upgradecheck
+  test_ecpg_script: |
+    rem tries to build additional stuff
+    vcvarsall x64
+    rem References ecpg_regression.proj in the current dir
+    cd src/tools/msvc
+    %T_C% perl vcregress.pl ecpgcheck
 
   on_failure: *on_failure
 
