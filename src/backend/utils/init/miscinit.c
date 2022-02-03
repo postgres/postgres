@@ -38,6 +38,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/interrupt.h"
+#include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"

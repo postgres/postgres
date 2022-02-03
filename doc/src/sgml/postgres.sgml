@@ -233,6 +233,7 @@ break is not needed in a wider output rendering.
   &bgworker;
   &logicaldecoding;
   &replication-origins;
+  &archive-modules;
 
  </part>
 

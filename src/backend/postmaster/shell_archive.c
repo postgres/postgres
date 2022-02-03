@@ -2,6 +2,10 @@
  *
  * shell_archive.c
  *
+ * This archiving function uses a user-specified shell command (the
+ * archive_command GUC) to copy write-ahead log files.  It is used as the
+ * default, but other modules may define their own custom archiving logic.
+ *
  * Copyright (c) 2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
@@ -17,7 +21,25 @@
 #include "pgstat.h"
 #include "postmaster/pgarch.h"
 
-bool
+static bool shell_archive_configured(void);
+static bool shell_archive_file(const char *file, const char *path);
+
+void
+shell_archive_init(ArchiveModuleCallbacks *cb)
+{
+	AssertVariableIsOfType(&shell_archive_init, ArchiveModuleInit);
+
+	cb->check_configured_cb = shell_archive_configured;
+	cb->archive_file_cb = shell_archive_file;
+}
+
+static bool
+shell_archive_configured(void)
+{
+	return XLogArchiveCommand[0] != '\0';
+}
+
+static bool
 shell_archive_file(const char *file, const char *path)
 {
 	char		xlogarchcmd[MAXPGPATH];

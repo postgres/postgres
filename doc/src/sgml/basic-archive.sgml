@@ -1,0 +1,81 @@
+<!-- doc/src/sgml/basic-archive.sgml -->
+
+<sect1 id="basic-archive" xreflabel="basic_archive">
+ <title>basic_archive</title>
+
+ <indexterm zone="basic-archive">
+  <primary>basic_archive</primary>
+ </indexterm>
+
+ <para>
+  <filename>basic_archive</filename> is an example of an archive module.  This
+  module copies completed WAL segment files to the specified directory.  This
+  may not be especially useful, but it can serve as a starting point for
+  developing your own archive module.  For more information about archive
+  modules, see <xref linkend="archive-modules"/>.
+ </para>
+
+ <para>
+  In order to function, this module must be loaded via
+  <xref linkend="guc-archive-library"/>, and <xref linkend="guc-archive-mode"/>
+  must be enabled.
+ </para>
+
+ <sect2>
+  <title>Configuration Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <varname>basic_archive.archive_directory</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>basic_archive.archive_directory</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The directory where the server should copy WAL segment files.  This
+      directory must already exist.  The default is an empty string, which
+      effectively halts WAL archiving, but if <xref linkend="guc-archive-mode"/>
+      is enabled, the server will accumulate WAL segment files in the
+      expectation that a value will soon be provided.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   These parameters must be set in <filename>postgresql.conf</filename>.
+   Typical usage might be:
+  </para>
+
+<programlisting>
+# postgresql.conf
+archive_mode = 'on'
+archive_library = 'basic_archive'
+basic_archive.archive_directory = '/path/to/archive/directory'
+</programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Notes</title>
+
+  <para>
+   Server crashes may leave temporary files with the prefix
+   <filename>archtemp</filename> in the archive directory.  It is recommended to
+   delete such files before restarting the server after a crash.  It is safe to
+   remove such files while the server is running as long as they are unrelated
+   to any archiving still in progress, but users should use extra caution when
+   doing so.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   Nathan Bossart
+  </para>
+ </sect2>
+
+</sect1>

@@ -99,6 +99,7 @@ CREATE EXTENSION <replaceable>module_name</replaceable>;
  &amcheck;
  &auth-delay;
  &auto-explain;
+ &basic-archive;
  &bloom;
  &btree-gin;
  &btree-gist;

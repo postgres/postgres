@@ -8831,7 +8831,7 @@ ShutdownXLOG(int code, Datum arg)
 		 * process one more time at the end of shutdown). The checkpoint
 		 * record will go to the next XLOG file and won't be archived (yet).
 		 */
-		if (XLogArchivingActive() && XLogArchiveCommandSet())
+		if (XLogArchivingActive())
 			RequestXLogSwitch(false);
 
 		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);

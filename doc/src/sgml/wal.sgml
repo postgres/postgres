@@ -636,7 +636,7 @@
    WAL files plus one additional WAL file are
    kept at all times. Also, if WAL archiving is used, old segments cannot be
    removed or recycled until they are archived. If WAL archiving cannot keep up
-   with the pace that WAL is generated, or if <varname>archive_command</varname>
+   with the pace that WAL is generated, or if <varname>archive_library</varname>
    fails repeatedly, old WAL files will accumulate in <filename>pg_wal</filename>
    until the situation is resolved. A slow or failed standby server that
    uses a replication slot will have the same effect (see
