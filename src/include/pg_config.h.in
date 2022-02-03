@@ -460,10 +460,6 @@
 /* Define to 1 if you have the `readv' function. */
 #undef HAVE_READV
 
-/* Define to 1 if you have the global variable
-   'rl_completion_append_character'. */
-#undef HAVE_RL_COMPLETION_APPEND_CHARACTER
-
 /* Define to 1 if you have the `rl_completion_matches' function. */
 #undef HAVE_RL_COMPLETION_MATCHES
 

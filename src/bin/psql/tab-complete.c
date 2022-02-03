@@ -1674,9 +1674,7 @@ psql_completion(const char *text, int start, int end)
 	completion_last_char = (end > start) ? text[end - start - 1] : '\0';
 
 	/* We usually want the append character to be a space. */
-#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 	rl_completion_append_character = ' ';
-#endif
 
 	/* Clear a few things. */
 	completion_charp = NULL;
@@ -4547,9 +4545,7 @@ psql_completion(const char *text, int start, int end)
 	{
 		COMPLETE_WITH_CONST(true, "");
 		/* Also, prevent Readline from appending stuff to the non-match */
-#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 		rl_completion_append_character = '\0';
-#endif
 #ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
 		rl_completion_suppress_quote = 1;
 #endif
@@ -5078,10 +5074,8 @@ _complete_from_query(const char *simple_query,
 	 * space afterwards.  Otherwise the schema will stop being part of the
 	 * completion subject text, which is not what we want.
 	 */
-#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 	if (num_schema_only > 0 && num_query_other == 0 && num_keywords == 0)
 		rl_completion_append_character = '\0';
-#endif
 
 	/* No more matches, so free the result structure and return null */
 	PQclear(result);
@@ -5368,10 +5362,8 @@ complete_from_files(const char *text, int state)
 
 			Assert(*retend == '\'');
 			*retend = '/';
-			/* Try to prevent libedit from adding a space, too */
-#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
+			/* Prevent libedit from adding a space, too */
 			rl_completion_append_character = '\0';
-#endif
 		}
 	}
 
