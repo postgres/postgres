@@ -44,7 +44,6 @@ ForeignNext(ForeignScanState *node)
 	TupleTableSlot *slot;
 	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
-	EState	   *estate = node->ss.ps.state;
 	MemoryContext oldcontext;
 
 	/* Call the Iterate function in short-lived context */
@@ -55,7 +54,7 @@ ForeignNext(ForeignScanState *node)
 		 * direct modifications cannot be re-evaluated, so shouldn't get here
 		 * during EvalPlanQual processing
 		 */
-		Assert(estate->es_epq_active == NULL);
+		Assert(node->ss.ps.state->es_epq_active == NULL);
 
 		slot = node->fdwroutine->IterateDirectModify(node);
 	}
