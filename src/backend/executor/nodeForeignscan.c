@@ -55,8 +55,7 @@ ForeignNext(ForeignScanState *node)
 		 * direct modifications cannot be re-evaluated, so shouldn't get here
 		 * during EvalPlanQual processing
 		 */
-		if (estate->es_epq_active != NULL)
-			elog(ERROR, "cannot re-evaluate a Foreign Update or Delete during EvalPlanQual");
+		Assert(estate->es_epq_active == NULL);
 
 		slot = node->fdwroutine->IterateDirectModify(node);
 	}
@@ -121,6 +120,15 @@ static TupleTableSlot *
 ExecForeignScan(PlanState *pstate)
 {
 	ForeignScanState *node = castNode(ForeignScanState, pstate);
+	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
+	EState	   *estate = node->ss.ps.state;
+
+	/*
+	 * Ignore direct modifications when EvalPlanQual is active --- they are
+	 * irrelevant for EvalPlanQual rechecking
+	 */
+	if (estate->es_epq_active != NULL && plan->operation != CMD_SELECT)
+		return NULL;
 
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) ForeignNext,
@@ -265,9 +273,12 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	{
 		/*
 		 * Direct modifications cannot be re-evaluated by EvalPlanQual, so
-		 * don't bother preparing the FDW.  There can be ForeignScan nodes in
-		 * the EvalPlanQual subtree, but ExecForeignScan should never be
-		 * called on them when EvalPlanQual is active.
+		 * don't bother preparing the FDW.
+		 *
+		 * In case of an inherited UPDATE/DELETE with foreign targets there
+		 * can be direct-modify ForeignScan nodes in the EvalPlanQual subtree,
+		 * so we need to ignore such ForeignScan nodes during EvalPlanQual
+		 * processing.  See also ExecForeignScan/ExecReScanForeignScan.
 		 */
 		if (estate->es_epq_active == NULL)
 			fdwroutine->BeginDirectModify(scanstate, eflags);
@@ -321,7 +332,16 @@ ExecEndForeignScan(ForeignScanState *node)
 void
 ExecReScanForeignScan(ForeignScanState *node)
 {
+	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
+	EState	   *estate = node->ss.ps.state;
 	PlanState  *outerPlan = outerPlanState(node);
+
+	/*
+	 * Ignore direct modifications when EvalPlanQual is active --- they are
+	 * irrelevant for EvalPlanQual rechecking
+	 */
+	if (estate->es_epq_active != NULL && plan->operation != CMD_SELECT)
+		return;
 
 	node->fdwroutine->ReScanForeignScan(node);
 
