@@ -6,12 +6,12 @@
  <para>
   The following conventions are used in the synopsis of a command:
   brackets (<literal>[</literal> and <literal>]</literal>) indicate
-  optional parts.  (In the synopsis of a Tcl command, question marks
-  (<literal>?</literal>) are used instead, as is usual in Tcl.)  Braces
+  optional parts.  Braces
   (<literal>{</literal> and <literal>}</literal>) and vertical lines
   (<literal>|</literal>) indicate that you must choose one
   alternative.  Dots (<literal>...</literal>) mean that the preceding element
-  can be repeated.
+  can be repeated.  All other symbols, including parentheses, should be
+  taken literally.
  </para>
 
  <para>
