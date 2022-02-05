@@ -348,9 +348,31 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     constraints on foreign tables, it does assume that they are correct
     for purposes of query optimization.  If there are rows visible in the
     foreign table that do not satisfy a declared constraint, queries on
-    the table might produce incorrect answers.  It is the user's
+    the table might produce errors or incorrect answers.  It is the user's
     responsibility to ensure that the constraint definition matches
     reality.
+   </para>
+
+   <caution>
+    <para>
+     When a foreign table is used as a partition of a partitioned table,
+     there is an implicit constraint that its contents must satisfy the
+     partitioning rule.  Again, it is the user's responsibility to ensure
+     that that is true, which is best done by installing a matching
+     constraint on the remote server.
+    </para>
+   </caution>
+
+   <para>
+    Within a partitioned table containing foreign-table partitions,
+    an <command>UPDATE</command> that changes the partition key value can
+    cause a row to be moved from a local partition to a foreign-table
+    partition, provided the foreign data wrapper supports tuple routing.
+    However it is not currently possible to move a row from a
+    foreign-table partition to another partition.
+    An <command>UPDATE</command> that would require doing that will fail
+    due to the partitioning constraint, assuming that that is properly
+    enforced by the remote server.
    </para>
 
    <para>
@@ -361,12 +383,6 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     not enforced that a query of the foreign table returns values for stored
     generated columns that are consistent with the generation expression.
     Again, this might result in incorrect query results.
-   </para>
-
-   <para>
-    While rows can be moved from local partitions to a foreign-table partition
-    (provided the foreign data wrapper supports tuple routing), they cannot be
-    moved from a foreign-table partition to another partition.
    </para>
  </refsect1>
 
