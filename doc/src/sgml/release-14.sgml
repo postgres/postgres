@@ -42,29 +42,6 @@
 
     <listitem>
 <!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: master [18b87b201] 2022-01-13 18:13:41 -0800
-Branch: REL_14_STABLE [dad1539ae] 2022-01-14 10:56:12 -0800
--->
-     <para>
-      Fix corruption of HOT chains when a RECENTLY_DEAD tuple changes
-      state to fully DEAD during page pruning (Andres Freund)
-     </para>
-
-     <para>
-      This happens when the last transaction that could <quote>see</quote>
-      the tuple ends while the page is being pruned.  It was then possible
-      to remove a tuple that is pointed to by a redirect item elsewhere on
-      the page.  While that causes no immediate problem, when the item slot
-      is re-used by some new tuple, that tuple would be thought to be part
-      of the pre-existing HOT chain, creating a form of index corruption.
-      If this seems to have affected a table, <command>REINDEX</command>
-      should repair the damage.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [f99870dd8] 2021-12-08 11:01:08 +0900
 Branch: REL_14_STABLE [64ab21f0e] 2021-12-08 11:01:14 +0900
@@ -85,6 +62,30 @@ Branch: REL_12_STABLE [5ed74d874] 2021-12-08 11:01:23 +0900
       The fix is to make TOAST updates hold the table lock according to the
       normal rule.  Any existing corrupted indexes can be repaired by
       reindexing again.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [18b87b201] 2022-01-13 18:13:41 -0800
+Branch: REL_14_STABLE [dad1539ae] 2022-01-14 10:56:12 -0800
+-->
+     <para>
+      Fix corruption of HOT chains when a RECENTLY_DEAD tuple changes
+      state to fully DEAD during page pruning (Andres Freund)
+     </para>
+
+     <para>
+      It was possible for <command>VACUUM</command> to remove a
+      recently-dead tuple while leaving behind a redirect item that
+      pointed to it.  When the tuple's item slot is later re-used by
+      some new tuple, that tuple would be seen as part of the
+      pre-existing HOT chain, creating a form of index corruption.
+      If this has happened, reindexing the table should repair the
+      damage.  However, this is an extremely low-probability scenario,
+      so we do not recommend reindexing just on the chance that it might
+      have happened.
      </para>
     </listitem>
 
@@ -446,9 +447,11 @@ Branch: REL_10_STABLE [9211c2e38] 2022-01-15 18:30:45 +0100
       A previous bug fix disabled building of extended statistics for
       old-style inheritance trees, but it also prevented building them for
       partitioned tables, which was an unnecessary restriction.
-      If you have created statistics objects for partitioned tables, you
-      may wish to explicitly <command>ANALYZE</command> those tables after
-      installing this update, rather than waiting for auto-analyze to do it.
+      This change allows <command>ANALYZE</command> to compute values for
+      statistics objects for partitioned tables.  (But note that
+      autovacuum does not process partitioned tables as such, so you must
+      periodically issue manual <command>ANALYZE</command> on the
+      partitioned table if you want to maintain such statistics.)
      </para>
     </listitem>
 
@@ -467,12 +470,10 @@ Branch: REL_10_STABLE [ff0e7c7e8] 2022-01-15 03:05:06 +0100
      </para>
 
      <para>
-      A previous bug fix disabled building of extended statistics for
-      old-style inheritance trees, but any existing statistics data was
-      not removed, and that data would become more and more out-of-date
-      over time.  Adjust the planner to ignore such data.  Extended
-      statistics for the individual child tables are still built and used,
-      however.
+      Currently, extended statistics values are only computed locally for
+      each table, not for entire inheritance trees.  However the values
+      were mistakenly consulted when planning queries across inheritance
+      trees, possibly resulting in worse-than-default estimates.
      </para>
     </listitem>
 
@@ -569,9 +570,9 @@ Branch: master [f4e7ae2b8] 2021-11-20 14:29:56 -0500
 Branch: REL_14_STABLE [6d07cbc50] 2021-11-20 14:29:56 -0500
 -->
      <para>
-      Fix failure of SP-GiST indexes when indexed column's data type is
-      binary-compatible with the declared input type of the operator class
-      (Tom Lane)
+      Fix failure of SP-GiST indexes when the indexed column's data type
+      is binary-compatible with the declared input type of the operator
+      class (Tom Lane)
      </para>
 
      <para>
@@ -848,7 +849,7 @@ Branch: REL_10_STABLE [3bc46e4e9] 2021-11-12 14:55:32 -0500
       This agrees with the documented behavior, and avoids probable
       permissions failure if <command>SET ROLE</command> or <command>SET
       SESSION AUTHORIZATION</command> has been done since the session began.
-      To reduce confusion, the role name to be acted on is now always
+      To prevent confusion, the role name to be acted on is now
       included in the password prompt.
      </para>
     </listitem>
@@ -1052,14 +1053,14 @@ Branch: REL_10_STABLE [b21986908] 2022-01-08 14:54:39 -0500
 
      <para>
       Index-only scans returned column values with trailing spaces
-      removed, which is not the expected behavior.  That happens because
-      that's how it's stored in the index.  This fix changes the logic to
-      store <type>char(<replaceable>N</replaceable>)</type> values with
-      the expected amount of space padding.  The behavior of the index
-      will not change immediately unless you <command>REINDEX</command>
-      it; otherwise space-stripped values will be gradually replaced over
-      time during updates.  Queries that do not use index-only scan plans
-      will be unaffected in any case.
+      removed, which is not the expected behavior.  That happened because
+      that's how the data was stored in the index.  This fix changes the
+      code to store <type>char(<replaceable>N</replaceable>)</type> values
+      with the expected amount of space padding.
+      The behavior of such an index will not change immediately unless
+      you <command>REINDEX</command> it; otherwise space-stripped values
+      will be gradually replaced over time during updates.  Queries that
+      do not use index-only scan plans will be unaffected in any case.
      </para>
     </listitem>
 
