@@ -768,8 +768,8 @@ psql --username=postgres --file=script.sql postgres
 
   <para>
    <application>pg_upgrade</application> creates various working files, such
-   as schema dumps, in the current working directory.  For security, be sure
-   that that directory is not readable or writable by any other users.
+   as schema dumps, stored within <literal>pg_upgrade_output.d</literal> in
+   the directory of the new cluster.
   </para>
 
   <para>

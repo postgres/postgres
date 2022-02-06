@@ -45,9 +45,7 @@ uninstall:
 clean distclean maintainer-clean:
 	rm -f pg_upgrade$(X) $(OBJS)
 	rm -rf delete_old_cluster.sh log/ tmp_check/ \
-	       loadable_libraries.txt reindex_hash.sql \
-	       pg_upgrade_dump_globals.sql \
-	       pg_upgrade_dump_*.custom pg_upgrade_*.log
+	       reindex_hash.sql
 
 # When $(MAKE) is present, make automatically infers that this is a
 # recursive make. which is not actually what we want here, as that

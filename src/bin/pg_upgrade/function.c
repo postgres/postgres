@@ -128,7 +128,8 @@ check_loadable_libraries(void)
 
 	prep_status("Checking for presence of required libraries");
 
-	snprintf(output_path, sizeof(output_path), "loadable_libraries.txt");
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir, "loadable_libraries.txt");
 
 	/*
 	 * Now we want to sort the library names into order.  This avoids multiple
