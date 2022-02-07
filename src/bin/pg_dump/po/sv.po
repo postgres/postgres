@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:45+0000\n"
-"PO-Revision-Date: 2021-11-07 20:58+0100\n"
+"POT-Creation-Date: 2021-11-08 22:57+0000\n"
+"PO-Revision-Date: 2021-11-09 06:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1540,7 +1540,7 @@ msgstr "  -s, --schema-only            dumpa bara scheman, inte data\n"
 #: pg_dump.c:959
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
-msgstr "  -S, --superuser=NAME         superanvändarens namn för textformatdumpar\n"
+msgstr "  -S, --superuser=NAME         namn på superuser för textformatdumpar\n"
 
 #: pg_dump.c:960
 #, c-format
@@ -2308,7 +2308,7 @@ msgstr "  -r, --roles-only             dumpa endast roller, inte databaser eller
 #: pg_dumpall.c:594
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för användning i dumpen\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för användning i dumpen\n"
 
 #: pg_dumpall.c:595
 #, c-format
@@ -2562,7 +2562,7 @@ msgstr "  -s, --schema-only            återställ bara scheman, inte data\n"
 #: pg_restore.c:475
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för att slå av utlösare\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för att slå av utlösare\n"
 
 #: pg_restore.c:476
 #, c-format

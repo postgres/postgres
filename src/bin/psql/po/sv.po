@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:43+0000\n"
-"PO-Revision-Date: 2021-11-07 21:00+0100\n"
+"POT-Creation-Date: 2021-11-12 20:56+0000\n"
+"PO-Revision-Date: 2021-11-12 23:29+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -54,7 +54,7 @@ msgid "pclose failed: %s"
 msgstr "pclose misslyckades: %s"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 command.c:3146 command.c:3195 command.c:3305
+#: ../../common/fe_memutils.c:98 command.c:3154 command.c:3203 command.c:3313
 #: input.c:227 mainloop.c:82 mainloop.c:276
 #, c-format
 msgid "out of memory\n"
@@ -186,12 +186,12 @@ msgstr "Du är uppkopplad mot databas \"%s\" som användare \"%s\" via uttag i \
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Du är uppkopplad upp mot databas \"%s\" som användare \"%s\" på värd \"%s\" på port \"%s\".\n"
 
-#: command.c:896 command.c:986 command.c:1095 command.c:2504
+#: command.c:896 command.c:986 command.c:1095 command.c:2512
 #, c-format
 msgid "no query buffer\n"
 msgstr "ingen frågebuffert\n"
 
-#: command.c:929 command.c:4972
+#: command.c:929 command.c:4980
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "ogiltigt radnummer: %s\n"
@@ -215,7 +215,7 @@ msgstr "Servern (version %s) stöder inte redigering av vydefinitioner.\n"
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: ogiltigt kodningsnamn eller konverteringsprocedur hittades inte\n"
 
-#: command.c:1247 command.c:1869 command.c:3142 command.c:3327 command.c:5074
+#: command.c:1247 command.c:1880 command.c:3150 command.c:3335 command.c:5082
 #: common.c:175 common.c:246 common.c:557 common.c:1356 common.c:1384
 #: common.c:1485 copy.c:492 copy.c:711 large_obj.c:156 large_obj.c:191
 #: large_obj.c:253
@@ -231,8 +231,8 @@ msgstr "slut på minne"
 msgid "There is no previous error."
 msgstr "Det finns inget tidigare fel."
 
-#: command.c:1425 command.c:1730 command.c:1744 command.c:1761 command.c:1921
-#: command.c:2158 command.c:2471 command.c:2511
+#: command.c:1425 command.c:1730 command.c:1744 command.c:1761 command.c:1929
+#: command.c:2166 command.c:2479 command.c:2519
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: obligatoriskt argument saknas\n"
@@ -266,120 +266,121 @@ msgstr "\\endif: ingen matchande \\if\n"
 msgid "Query buffer is empty."
 msgstr "Frågebufferten är tom."
 
-#: command.c:1847
-msgid "Enter new password: "
-msgstr "Mata in nytt lösenord: "
+#: command.c:1862
+#, c-format
+msgid "Enter new password for user \"%s\": "
+msgstr "Mata in nytt lösenord för användare \"%s\": "
 
-#: command.c:1848
+#: command.c:1865
 msgid "Enter it again: "
 msgstr "Mata in det igen: "
 
-#: command.c:1852
+#: command.c:1869
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Lösenorden stämde inte överens.\n"
 
-#: command.c:1951
+#: command.c:1959
 #, c-format
 msgid "\\%s: could not read value for variable\n"
 msgstr "\\%s: kunde inte läsa värde på varibeln\n"
 
-#: command.c:2054
+#: command.c:2062
 msgid "Query buffer reset (cleared)."
 msgstr "Frågebufferten har blivit borttagen."
 
-#: command.c:2076
+#: command.c:2084
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Skrev historiken till fil \"%s\".\n"
 
-#: command.c:2163
+#: command.c:2171
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\"\n"
 msgstr "\\%s: omgivningsvariabelnamn får ej innehålla \"=\"\n"
 
-#: command.c:2219
+#: command.c:2227
 #, c-format
 msgid "The server (version %s) does not support showing function source.\n"
 msgstr "Servern (version %s) stöder inte visning av funktionskällkod.\n"
 
-#: command.c:2226
+#: command.c:2234
 #, c-format
 msgid "function name is required\n"
 msgstr "funktionsnamn krävs\n"
 
-#: command.c:2313
+#: command.c:2321
 #, c-format
 msgid "The server (version %s) does not support showing view definitions.\n"
 msgstr "Servern (version %s) stöder inte visning av vydefinitioner.\n"
 
-#: command.c:2320
+#: command.c:2328
 #, c-format
 msgid "view name is required\n"
 msgstr "vynamn krävs\n"
 
-#: command.c:2443
+#: command.c:2451
 msgid "Timing is on."
 msgstr "Tidtagning är på."
 
-#: command.c:2445
+#: command.c:2453
 msgid "Timing is off."
 msgstr "Tidtagning är av."
 
-#: command.c:2530 command.c:2558 command.c:3704 command.c:3707 command.c:3710
-#: command.c:3716 command.c:3718 command.c:3744 command.c:3754 command.c:3766
-#: command.c:3780 command.c:3797 command.c:3855 common.c:71 copy.c:332
+#: command.c:2538 command.c:2566 command.c:3712 command.c:3715 command.c:3718
+#: command.c:3724 command.c:3726 command.c:3752 command.c:3762 command.c:3774
+#: command.c:3788 command.c:3805 command.c:3863 common.c:71 copy.c:332
 #: copy.c:392 copy.c:405 psqlscanslash.l:763 psqlscanslash.l:774
 #: psqlscanslash.l:784
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:2942 startup.c:205
+#: command.c:2950 startup.c:205
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: command.c:2947 startup.c:207
+#: command.c:2955 startup.c:207
 #, c-format
 msgid "Password for user %s: "
 msgstr "Lösenord för användare %s: "
 
-#: command.c:3001
+#: command.c:3009
 #, c-format
 msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr "Alla anslutningsparametrar måste anges då ingen databasuppkoppling är gjord\n"
 
-#: command.c:3333
+#: command.c:3341
 #, c-format
 msgid "Previous connection kept\n"
 msgstr "Föregående förbindelse bevarad\n"
 
-#: command.c:3339
+#: command.c:3347
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:3380
+#: command.c:3388
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\" via uttag i \"%s\" på port \"%s\".\n"
 
-#: command.c:3383
+#: command.c:3391
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\" på värd \"%s\" på port \"%s\".\n"
 
-#: command.c:3387
+#: command.c:3395
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\".\n"
 
-#: command.c:3420
+#: command.c:3428
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, server %s)\n"
 
-#: command.c:3428
+#: command.c:3436
 #, c-format
 msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
@@ -388,24 +389,24 @@ msgstr ""
 "VARNING: %s huvudversion %s, server huvudversion %s.\n"
 "         En del psql-finesser kommer kanske inte fungera.\n"
 
-#: command.c:3466
+#: command.c:3474
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "SSL-anslutning (protokoll: %s, krypto: %s, bitar: %s, komprimering: %s)\n"
 
-#: command.c:3467 command.c:3468 command.c:3469
+#: command.c:3475 command.c:3476 command.c:3477
 msgid "unknown"
 msgstr "okänd"
 
-#: command.c:3470 help.c:45
+#: command.c:3478 help.c:45
 msgid "off"
 msgstr "av"
 
-#: command.c:3470 help.c:45
+#: command.c:3478 help.c:45
 msgid "on"
 msgstr "på"
 
-#: command.c:3490
+#: command.c:3498
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -416,239 +417,239 @@ msgstr ""
 "         8-bitars tecken kommer troligen inte fungera korrekt. Se psql:s\n"
 "         referensmanual i sektionen \"Notes for Windows users\" för mer detaljer.\n"
 
-#: command.c:3594
+#: command.c:3602
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr "omgivningsvariabeln PSQL_EDITOR_LINENUMBER_ARG måste ange ett radnummer\n"
 
-#: command.c:3623
+#: command.c:3631
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "kunde inte starta editorn \"%s\"\n"
 
-#: command.c:3625
+#: command.c:3633
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "kunde inte starta /bin/sh\n"
 
-#: command.c:3662
+#: command.c:3670
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "kunde inte hitta temp-katalog: %s\n"
 
-#: command.c:3689
+#: command.c:3697
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "kunde inte öppna temporär fil \"%s\": %s\n"
 
-#: command.c:3984
+#: command.c:3992
 #, c-format
 msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
 msgstr "\\pset: tillåtna format är unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
 
-#: command.c:4002
+#: command.c:4010
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: tillåtna linjestilar är ascii, old-ascii, unicode\n"
 
-#: command.c:4017
+#: command.c:4025
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double\n"
 msgstr "\\pset: tillåtna Unicode-ramstilar är single, double\n"
 
-#: command.c:4032
+#: command.c:4040
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double\n"
 msgstr "\\pset: tillåtna Unicode-kolumnlinjestilar ärsingle, double\n"
 
-#: command.c:4047
+#: command.c:4055
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
 msgstr "\\pset: tillåtna Unicode-rubriklinjestilar är single, double\n"
 
-#: command.c:4212 command.c:4391
+#: command.c:4220 command.c:4399
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: okänd parameter: %s\n"
 
-#: command.c:4230
+#: command.c:4238
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Ramstil är %d.\n"
 
-#: command.c:4236
+#: command.c:4244
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "Målvidd är inte satt.\n"
 
-#: command.c:4238
+#: command.c:4246
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "Målvidd är %d.\n"
 
-#: command.c:4245
+#: command.c:4253
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Utökad visning är på.\n"
 
-#: command.c:4247
+#: command.c:4255
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "Utökad visning används automatiskt.\n"
 
-#: command.c:4249
+#: command.c:4257
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Utökad visning är av.\n"
 
-#: command.c:4256 command.c:4264
+#: command.c:4264 command.c:4272
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Fältseparatorn är noll-byte.\n"
 
-#: command.c:4258
+#: command.c:4266
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Fältseparatorn är \"%s\".\n"
 
-#: command.c:4271
+#: command.c:4279
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Standard sidfot är på.\n"
 
-#: command.c:4273
+#: command.c:4281
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Standard sidfot är av.\n"
 
-#: command.c:4279
+#: command.c:4287
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Utdataformatet är \"%s\".\n"
 
-#: command.c:4285
+#: command.c:4293
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Linjestil är %s.\n"
 
-#: command.c:4292
+#: command.c:4300
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-visare är \"%s\".\n"
 
-#: command.c:4300
+#: command.c:4308
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "Lokal-anpassad numerisk utdata är på.\n"
 
-#: command.c:4302
+#: command.c:4310
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "Lokal-anpassad numerisk utdata är av.\n"
 
-#: command.c:4309
+#: command.c:4317
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Siduppdelare är på för lång utdata.\n"
 
-#: command.c:4311
+#: command.c:4319
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Siduppdelare används alltid.\n"
 
-#: command.c:4313
+#: command.c:4321
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "Siduppdelare är av.\n"
 
-#: command.c:4319
+#: command.c:4327
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
 msgstr[0] "Siduppdelare kommer inte användas för färre än %d linje.\n"
 msgstr[1] "Siduppdelare kommer inte användas för färre än %d linjer.\n"
 
-#: command.c:4329 command.c:4339
+#: command.c:4337 command.c:4347
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Postseparatorn är noll-byte.\n"
 
-#: command.c:4331
+#: command.c:4339
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Postseparatorn är <nyrad>.\n"
 
-#: command.c:4333
+#: command.c:4341
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Postseparatorn är \"%s\".\n"
 
-#: command.c:4346
+#: command.c:4354
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Tabellattributen är \"%s\".\n"
 
-#: command.c:4349
+#: command.c:4357
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Tabellattributen är ej satta.\n"
 
-#: command.c:4356
+#: command.c:4364
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titeln är \"%s\".\n"
 
-#: command.c:4358
+#: command.c:4366
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Titeln är inte satt.\n"
 
-#: command.c:4365
+#: command.c:4373
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Visa bara tupler är på.\n"
 
-#: command.c:4367
+#: command.c:4375
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Visa bara tupler är av.\n"
 
-#: command.c:4373
+#: command.c:4381
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "Unicode-ramstil är \"%s\".\n"
 
-#: command.c:4379
+#: command.c:4387
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "Unicode-kolumnLinjestil är \"%s\".\n"
 
-#: command.c:4385
+#: command.c:4393
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "Unicode-rubriklinjestil är \"%s\".\n"
 
-#: command.c:4545
+#: command.c:4553
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: misslyckades\n"
 
-#: command.c:4570 common.c:770
+#: command.c:4578 common.c:770
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch kan inte användas på en tom fråga\n"
 
-#: command.c:4611
+#: command.c:4619
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (varje %gs)\n"
 
-#: command.c:4614
+#: command.c:4622
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (varje %gs)\n"
 
-#: command.c:4668 command.c:4675 common.c:670 common.c:677 common.c:1339
+#: command.c:4676 command.c:4683 common.c:670 common.c:677 common.c:1339
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -661,12 +662,12 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: command.c:4867
+#: command.c:4875
 #, c-format
 msgid "\"%s.%s\" is not a view\n"
 msgstr "\"%s.%s\" är inte en vy\n"
 
-#: command.c:4883
+#: command.c:4891
 #, c-format
 msgid "could not parse reloptions array\n"
 msgstr "kunde inte parsa arrayen reloptions\n"
