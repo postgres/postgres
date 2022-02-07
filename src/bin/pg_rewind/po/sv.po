@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:26+0000\n"
-"PO-Revision-Date: 2021-11-07 07:17+0100\n"
+"POT-Creation-Date: 2021-11-08 22:49+0000\n"
+"PO-Revision-Date: 2021-11-09 06:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -540,7 +540,7 @@ msgstr "kan inte köras av \"root\"\n"
 #: pg_rewind.c:200
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "Du måste köra %s som PostgreSQL:s superanvändare.\n"
+msgstr "Du måste köra %s som PostgreSQL:s superuser.\n"
 
 #: pg_rewind.c:211
 #, c-format
