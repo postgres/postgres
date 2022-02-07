@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 07:16+0000\n"
-"PO-Revision-Date: 2021-11-07 10:54+0100\n"
+"POT-Creation-Date: 2021-11-08 22:28+0000\n"
+"PO-Revision-Date: 2021-11-09 06:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1471,7 +1471,7 @@ msgstr "  -s, --schema-only            dumpa bara scheman, inte data\n"
 #: pg_dump.c:1018
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
-msgstr "  -S, --superuser=NAME         superanvändarens namn för textformatdumpar\n"
+msgstr "  -S, --superuser=NAME         namn på superuser för textformatdumpar\n"
 
 #: pg_dump.c:1019
 #, c-format
@@ -1824,7 +1824,7 @@ msgstr "ägare av publicering \"%s\" verkar vara ogiltig"
 #: pg_dump.c:4233
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
-msgstr "prenumerationer har inte dumpats få aktuell användare inte är en superanvändare"
+msgstr "prenumerationer har inte dumpats få aktuell användare inte är en superuser"
 
 #: pg_dump.c:4287
 #, c-format
@@ -2305,7 +2305,7 @@ msgstr "  -r, --roles-only             dumpa endast roller, inte databaser eller
 #: pg_dumpall.c:634
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för användning i dumpen\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för användning i dumpen\n"
 
 #: pg_dumpall.c:635
 #, c-format
@@ -2549,7 +2549,7 @@ msgstr "  -s, --schema-only            återställ bara scheman, inte data\n"
 #: pg_restore.c:488
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för att slå av utlösare\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för att slå av utlösare\n"
 
 #: pg_restore.c:489
 #, c-format

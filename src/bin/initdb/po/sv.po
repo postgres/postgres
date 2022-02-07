@@ -1,5 +1,5 @@
 # Swedish message translation file for initdb
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Magnus Hagander <magnus@hagander.net>, 2007.
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-09 08:46+0000\n"
-"PO-Revision-Date: 2020-05-09 13:56+0200\n"
+"POT-Creation-Date: 2021-11-08 22:28+0000\n"
+"PO-Revision-Date: 2021-11-09 06:30+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -390,7 +390,7 @@ msgstr "Kontrollera din installation eller ange korrekt sökväg med flaggan -L.
 
 #: initdb.c:1482
 msgid "Enter new superuser password: "
-msgstr "Mata in ett nytt lösenord för superanvändaren: "
+msgstr "Mata in ett nytt lösenord för superuser: "
 
 #: initdb.c:1483
 msgid "Enter it again: "
@@ -497,17 +497,17 @@ msgstr ""
 #: initdb.c:2293
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla förbindelser\n"
+msgstr "  -A, --auth=METOD          förvald autentiseringsmetod för alla anslutningar\n"
 
 #: initdb.c:2294
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
-msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-förbindelser\n"
+msgstr "      --auth-host=METOD     autentiseringsmetod för TCP/IP-anslutningar\n"
 
 #: initdb.c:2295
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "      --auth-local=METOD    autentiseringsmetod för förbindelser via unix-uttag\n"
+msgstr "      --auth-local=METOD    autentiseringsmetod för anslutningar via unix-uttag\n"
 
 #: initdb.c:2296
 #, c-format
@@ -550,7 +550,7 @@ msgstr "      --no-locale           samma som --locale=C\n"
 #: initdb.c:2305
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr "      --pwfile=FIL          läser lösenord för superanvändare från fil\n"
+msgstr "      --pwfile=FIL          läser lösenord för superuser från fil\n"
 
 #: initdb.c:2306
 #, c-format
@@ -564,12 +564,12 @@ msgstr ""
 #: initdb.c:2308
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NAMN       namn på databasens superanvändare\n"
+msgstr "  -U, --username=NAMN       namn på databasens superuser\n"
 
 #: initdb.c:2309
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr "  -W, --pwprompt            efterfråga lösenord för superanvändare\n"
+msgstr "  -W, --pwprompt            efterfråga lösenord för superuser\n"
 
 #: initdb.c:2310
 #, c-format
@@ -987,11 +987,11 @@ msgstr ""
 "flaggor -A eller --auth-local och --auth-host nästa gång du kör initdb.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3293
+#: initdb.c:3296
 msgid "logfile"
 msgstr "loggfil"
 
-#: initdb.c:3295
+#: initdb.c:3298
 #, c-format
 msgid ""
 "\n"
@@ -1005,24 +1005,3 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
-
-#~ msgid "could not load advapi32.dll: error code %lu"
-#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"
-
-#~ msgid ""
-#~ "The program \"postgres\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Programmet \"postgres\" hittades av \"%s\",\n"
-#~ "men det är inte byggt i samma version som %s.\n"
-#~ "Kontrollera din installation."
-
-#~ msgid ""
-#~ "The program \"postgres\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Programmet \"postgres\" behövs av %s men kunde inte hittas\n"
-#~ "i samma katalog som \"%s\".\n"
-#~ "Kontrollera din installation."

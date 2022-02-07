@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 07:15+0000\n"
-"PO-Revision-Date: 2021-11-07 10:55+0100\n"
+"POT-Creation-Date: 2021-11-08 22:27+0000\n"
+"PO-Revision-Date: 2021-11-09 06:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -156,7 +156,7 @@ msgstr "kan inte köras av \"root\""
 #: pg_resetwal.c:362
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
-msgstr "Du måste köra %s som PostgreSQL:s superanvändare."
+msgstr "Du måste köra %s som PostgreSQL:s superuser."
 
 #: pg_resetwal.c:373
 #, c-format

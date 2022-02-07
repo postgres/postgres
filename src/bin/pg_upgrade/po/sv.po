@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 10:27+0000\n"
-"PO-Revision-Date: 2021-11-07 15:05+0100\n"
+"POT-Creation-Date: 2021-11-08 22:27+0000\n"
+"PO-Revision-Date: 2021-11-09 06:33+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1192,7 +1192,7 @@ msgstr "  -s, --socketdir=KAT           uttagskatalog (standard är aktuell kata
 #: option.c:306
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
-msgstr "  -U, --username=NAMN           klustrets superanvändare (standard \"%s\")\n"
+msgstr "  -U, --username=NAMN           klustrets superuser (standard \"%s\")\n"
 
 #: option.c:307
 #, c-format
@@ -1703,7 +1703,7 @@ msgstr ""
 "rättighetstabell för stora onbjekt så standardrättigheter måste ges för\n"
 "alla stora objekt. Filen\n"
 "    %s\n"
-"kan köras med psql av databasens superanvändare för att sätta\n"
+"kan köras med psql av databasens superuser för att sätta\n"
 "standardrättigheter.\n"
 "\n"
 
@@ -1793,8 +1793,8 @@ msgstr ""
 "format i ditt gamla och nya kluster så de måste omindexeras med\n"
 "kommandot REINDEX. Filen\n"
 "    %s\n"
-"kan köras med psql av databasens superanvändare och kommer återskapa\n"
-"alla ogiltiga index; innan dess så kommer inget av dess index användas.\n"
+"kan köras med psql av databasens superuser och kommer återskapa alla\n"
+"ogiltiga index; innan dess så kommer inget av dess index användas.\n"
 "\n"
 
 #: version.c:451
@@ -1847,5 +1847,5 @@ msgstr ""
 "Din installation innehåller utökningar som skall updateras med kommandot\n"
 "ALTER EXTENSION. Filen\n"
 "    %s\n"
-"kan köras med psql av databasens superanvändare och kommer uppdatera\n"
+"kan köras med psql av databasens superuser och kommer uppdatera\n"
 "dessa utökningar.\n"

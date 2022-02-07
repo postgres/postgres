@@ -1,14 +1,14 @@
 # SWEDISH message translation file for ecpglib
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-10 02:39+0000\n"
-"PO-Revision-Date: 2020-04-10 07:44+0200\n"
+"POT-Creation-Date: 2021-11-08 22:21+0000\n"
+"PO-Revision-Date: 2021-11-07 10:36+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -21,7 +21,7 @@ msgstr ""
 msgid "empty message text"
 msgstr "tom meddelandetext"
 
-#: connect.c:401 connect.c:430 connect.c:653
+#: connect.c:401 connect.c:430 connect.c:660
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
