@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-11-06 22:17+0000\n"
-"PO-Revision-Date: 2021-11-07 06:55+0100\n"
+"PO-Revision-Date: 2021-11-09 06:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1476,7 +1476,7 @@ msgstr "  -s, --schema-only            dumpa bara scheman, inte data\n"
 #: pg_dump.c:1046
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
-msgstr "  -S, --superuser=NAME         superanvändarens namn för textformatdumpar\n"
+msgstr "  -S, --superuser=NAME         namn på superuser för textformatdumpar\n"
 
 #: pg_dump.c:1047
 #, c-format
@@ -1839,7 +1839,7 @@ msgstr "ägare av publicering \"%s\" verkar vara ogiltig"
 #: pg_dump.c:4321
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
-msgstr "prenumerationer har inte dumpats få aktuell användare inte är en superanvändare"
+msgstr "prenumerationer har inte dumpats få aktuell användare inte är en superuser"
 
 #: pg_dump.c:4392
 #, c-format
@@ -2345,7 +2345,7 @@ msgstr "  -r, --roles-only             dumpa endast roller, inte databaser eller
 #: pg_dumpall.c:639
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för användning i dumpen\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för användning i dumpen\n"
 
 #: pg_dumpall.c:640
 #, c-format
@@ -2584,7 +2584,7 @@ msgstr "  -s, --schema-only            återställ bara scheman, inte data\n"
 #: pg_restore.c:488
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
-msgstr "  -S, --superuser=NAMN         superanvändarens namn för att slå av utlösare\n"
+msgstr "  -S, --superuser=NAMN         namn på superuser för att slå av utlösare\n"
 
 #: pg_restore.c:489
 #, c-format

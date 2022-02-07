@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-07 22:47+0000\n"
-"PO-Revision-Date: 2021-09-20 11:56+0200\n"
+"POT-Creation-Date: 2021-11-08 10:17+0000\n"
+"PO-Revision-Date: 2021-11-08 11:55+0100\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -1824,391 +1824,386 @@ msgstr "αποθηκεύει μεγάλων αντικειμένων"
 msgid "error reading large object %u: %s"
 msgstr "σφάλμα κατά την ανάγνωση %u μεγάλου αντικειμένου: %s"
 
-#: pg_dump.c:3700
+#: pg_dump.c:3732
 #, c-format
-msgid "reading row security enabled for table \"%s.%s\""
-msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα «%s.%s»"
+msgid "reading row-level security policies"
+msgstr "διαβάζει πολιτικές ασφαλείας επιπέδου σειράς"
 
-#: pg_dump.c:3731
-#, c-format
-msgid "reading policies for table \"%s.%s\""
-msgstr "ανάγνωση πολιτικών για τον πίνακα «%s.%s»"
-
-#: pg_dump.c:3883
+#: pg_dump.c:3875
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "μη αναμενόμενος τύπος εντολής πολιτικής: %c"
 
-#: pg_dump.c:4037
+#: pg_dump.c:4029
 #, c-format
 msgid "owner of publication \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της δημοσίευσης «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:4329
+#: pg_dump.c:4321
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "οι συνδρομές δεν απορρίπτονται, επειδή ο τρέχων χρήστης δεν είναι υπερχρήστης"
 
-#: pg_dump.c:4400
+#: pg_dump.c:4392
 #, c-format
 msgid "owner of subscription \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της συνδρομής «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:4443
+#: pg_dump.c:4435
 #, c-format
 msgid "could not parse subpublications array"
 msgstr "δεν ήταν δυνατή η ανάλυση της συστοιχίας υποδημοσιεύσεων"
 
-#: pg_dump.c:4801
+#: pg_dump.c:4793
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "δεν ήταν δυνατή η εύρεση γονικής επέκτασης για %s %s"
 
-#: pg_dump.c:4933
+#: pg_dump.c:4925
 #, c-format
 msgid "owner of schema \"%s\" appears to be invalid"
 msgstr "ο κάτοχος του σχήματος «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:4956
+#: pg_dump.c:4948
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "το σχήμα με %u OID δεν υπάρχει"
 
-#: pg_dump.c:5285
+#: pg_dump.c:5278
 #, c-format
 msgid "owner of data type \"%s\" appears to be invalid"
 msgstr "ο κάτοχος του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5369
+#: pg_dump.c:5362
 #, c-format
 msgid "owner of operator \"%s\" appears to be invalid"
 msgstr "ο κάτοχος του χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5668
+#: pg_dump.c:5661
 #, c-format
 msgid "owner of operator class \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της κλάσης χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5751
+#: pg_dump.c:5744
 #, c-format
 msgid "owner of operator family \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της οικογένειας χειριστών «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5919
+#: pg_dump.c:5912
 #, c-format
 msgid "owner of aggregate function \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της συνάρτησης συγκεντρωτικών αποτελεσμάτων «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:6178
+#: pg_dump.c:6171
 #, c-format
 msgid "owner of function \"%s\" appears to be invalid"
 msgstr "ο κάτοχος της συνάρτησης «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:7005
+#: pg_dump.c:6998
 #, c-format
 msgid "owner of table \"%s\" appears to be invalid"
 msgstr "ο κάτοχος του πίνακα «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:7047 pg_dump.c:17436
+#: pg_dump.c:7040 pg_dump.c:17473
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικός πίνακας με OID %u της ακολουθίας με OID %u δεν βρέθηκε"
 
-#: pg_dump.c:7186
+#: pg_dump.c:7179
 #, c-format
 msgid "reading indexes for table \"%s.%s\""
 msgstr "ανάγνωση ευρετηρίων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:7600
+#: pg_dump.c:7593
 #, c-format
 msgid "reading foreign key constraints for table \"%s.%s\""
 msgstr "ανάγνωση περιορισμών ξένου κλειδιού για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:7879
+#: pg_dump.c:7872
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικός πίνακας με OID %u της καταχώρησης pg_rewrite με OID %u δεν βρέθηκε"
 
-#: pg_dump.c:7962
+#: pg_dump.c:7956
 #, c-format
 msgid "reading triggers for table \"%s.%s\""
 msgstr "ανάγνωση εναυσμάτων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:8095
+#: pg_dump.c:8138
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
 msgstr "το ερώτημα παρήγαγε null πίνακα αναφοράς για το έναυσμα ξένου κλειδιού «%s» στον πίνακα «%s» (OID του πίνακα: %u)"
 
-#: pg_dump.c:8645
+#: pg_dump.c:8688
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\""
 msgstr "εύρεση των στηλών και των τύπων του πίνακα «%s.%s»"
 
-#: pg_dump.c:8769
+#: pg_dump.c:8812
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "μη έγκυρη αρίθμηση στηλών στον πίνακα «%s»"
 
-#: pg_dump.c:8808
+#: pg_dump.c:8851
 #, c-format
 msgid "finding default expressions of table \"%s.%s\""
 msgstr "εύρεση προεπιλεγμένων εκφράσεων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:8830
+#: pg_dump.c:8873
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "μη έγκυρη τιμή adnum %d για τον πίνακα «%s»"
 
-#: pg_dump.c:8923
+#: pg_dump.c:8966
 #, c-format
 msgid "finding check constraints for table \"%s.%s\""
 msgstr "εύρεση περιορισμών ελέγχου για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:8972
+#: pg_dump.c:9015
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "αναμενόμενος %d περιορισμός ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
 msgstr[1] "αναμενόμενοι %d περιορισμοί ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
 
-#: pg_dump.c:8976
+#: pg_dump.c:9019
 #, c-format
 msgid "(The system catalogs might be corrupted.)"
 msgstr "(Οι κατάλογοι συστήματος ενδέχεται να είναι αλλοιωμένοι.)"
 
-#: pg_dump.c:10561
+#: pg_dump.c:10621
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "typtype του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρο"
 
-#: pg_dump.c:11913
+#: pg_dump.c:11969
 #, c-format
 msgid "bogus value in proargmodes array"
 msgstr "πλαστή τιμή στη συστοιχία proargmodes"
 
-#: pg_dump.c:12220
+#: pg_dump.c:12271
 #, c-format
 msgid "could not parse proallargtypes array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proallargtypes"
 
-#: pg_dump.c:12236
+#: pg_dump.c:12287
 #, c-format
 msgid "could not parse proargmodes array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proargmodes"
 
-#: pg_dump.c:12250
+#: pg_dump.c:12301
 #, c-format
 msgid "could not parse proargnames array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proargnames"
 
-#: pg_dump.c:12260
+#: pg_dump.c:12311
 #, c-format
 msgid "could not parse proconfig array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proconfig"
 
-#: pg_dump.c:12340
+#: pg_dump.c:12387
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "μη αναγνωρίσιμη τιμή provolatile για τη συνάρτηση «%s»"
 
-#: pg_dump.c:12390 pg_dump.c:14341
+#: pg_dump.c:12437 pg_dump.c:14378
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "μη αναγνωρίσιμη τιμή proparallel για τη συνάρτηση «%s»"
 
-#: pg_dump.c:12529 pg_dump.c:12638 pg_dump.c:12645
+#: pg_dump.c:12576 pg_dump.c:12682 pg_dump.c:12689
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "δεν ήταν δυνατή η εύρεση ορισμού συνάντησης για την συνάρτηση με OID %u"
 
-#: pg_dump.c:12568
+#: pg_dump.c:12615
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "πλαστή τιμή στο πεδίο pg_cast.castfunc ή pg_cast.castmethod"
 
-#: pg_dump.c:12571
+#: pg_dump.c:12618
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "πλαστή τιμή στο πεδίο pg_cast.castmethod"
 
-#: pg_dump.c:12664
+#: pg_dump.c:12708
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "πλαστός ορισμός μετασχηματισμού, τουλάχιστον μία από trffromsql και trftosql θα πρέπει να είναι μη μηδενική"
 
-#: pg_dump.c:12681
+#: pg_dump.c:12725
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "πλαστή τιμή στο πεδίο pg_transform.trffromsql"
 
-#: pg_dump.c:12702
+#: pg_dump.c:12746
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "πλαστή τιμή στο πεδίοpg_transform.trftosql"
 
-#: pg_dump.c:12854
+#: pg_dump.c:12897
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "χειριστές postfix δεν υποστηρίζεται πλέον (χειριστής «%s»)"
 
-#: pg_dump.c:13024
+#: pg_dump.c:13067
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "δεν ήταν δυνατή η εύρεση χειριστή με OID %s"
 
-#: pg_dump.c:13092
+#: pg_dump.c:13135
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "μη έγκυρος τύπος «%c» για την μεθόδο πρόσβασης «%s»"
 
-#: pg_dump.c:13846
+#: pg_dump.c:13889
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "μη αναγνωρίσιμος πάροχος συρραφής: %s"
 
-#: pg_dump.c:14260
+#: pg_dump.c:14297
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "μη αναγνωρίσιμη τιμή aggfinalmodify για το συγκεντρωτικό «%s»"
 
-#: pg_dump.c:14316
+#: pg_dump.c:14353
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "μη αναγνωρίσιμη τιμή aggmfinalmodify για το συγκεντρωτικό «%s»"
 
-#: pg_dump.c:15038
+#: pg_dump.c:15075
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "μη αναγνωρίσιμος τύπος αντικειμένου σε προεπιλεγμένα δικαιώματα: %d"
 
-#: pg_dump.c:15056
+#: pg_dump.c:15093
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "δεν ήταν δυνατή η ανάλυση της προεπιλεγμένης λίστας ACL (%s)"
 
-#: pg_dump.c:15141
+#: pg_dump.c:15178
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)"
 msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής λίστας ACL GRANT (%s) ή της αρχικής λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
-#: pg_dump.c:15149
+#: pg_dump.c:15186
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)"
 msgstr "δεν ήταν δυνατή η ανάλυση της λίστας GRANT ACL (%s) ή της λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
-#: pg_dump.c:15664
+#: pg_dump.c:15701
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» δεν επέστρεψε δεδομένα"
 
-#: pg_dump.c:15667
+#: pg_dump.c:15704
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» επέστρεψε περισσότερους από έναν ορισμούς"
 
-#: pg_dump.c:15674
+#: pg_dump.c:15711
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ο ορισμός της όψης «%s» φαίνεται να είναι κενός (μηδενικό μήκος)"
 
-#: pg_dump.c:15758
+#: pg_dump.c:15795
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας «%s»)"
 
-#: pg_dump.c:16623
+#: pg_dump.c:16660
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "μη έγκυρος αριθμός στήλης %d για τον πίνακα «%s»"
 
-#: pg_dump.c:16700
+#: pg_dump.c:16737
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "δεν ήταν δυνατή η ανάλυση στηλών στατιστικής ευρετηρίου"
 
-#: pg_dump.c:16702
+#: pg_dump.c:16739
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "δεν ήταν δυνατή η ανάλυση ευρετηρίου στατιστικών τιμών"
 
-#: pg_dump.c:16704
+#: pg_dump.c:16741
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "ασυμφωνία αριθμού στηλών και τιμών για στατιστικά στοιχεία ευρετηρίου"
 
-#: pg_dump.c:16921
+#: pg_dump.c:16958
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "λείπει ευρετήριο για τον περιορισμό «%s»"
 
-#: pg_dump.c:17146
+#: pg_dump.c:17183
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "μη αναγνωρίσιμος τύπος περιορισμού: %c"
 
-#: pg_dump.c:17278 pg_dump.c:17501
+#: pg_dump.c:17315 pg_dump.c:17538
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμή (αναμένεται 1)"
 msgstr[1] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμές (αναμένεται 1)"
 
-#: pg_dump.c:17312
+#: pg_dump.c:17349
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "μη αναγνωρίσιμος τύπος ακολουθίας: %s"
 
-#: pg_dump.c:17599
+#: pg_dump.c:17636
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "μη αναγνωρίσιμος τύπος tgtype: %d"
 
-#: pg_dump.c:17673
+#: pg_dump.c:17710
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "μη έγκυρη συμβολοσειρά παραμέτρου (%s) για το έναυσμα «%s» στον πίνακα «%s»"
 
-#: pg_dump.c:17909
+#: pg_dump.c:17979
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "ερώτημα για τη λήψη κανόνα «%s» για τον πίνακα «%s» απέτυχε: επιστράφηκε εσφαλμένος αριθμός γραμμών"
 
-#: pg_dump.c:18071
+#: pg_dump.c:18141
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "δεν ήταν δυνατή η εύρεση της αναφερόμενης επέκτασης %u"
 
-#: pg_dump.c:18162
+#: pg_dump.c:18232
 #, c-format
 msgid "could not parse extension configuration array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας ρύθμισεων επέκτασης"
 
-#: pg_dump.c:18164
+#: pg_dump.c:18234
 #, c-format
 msgid "could not parse extension condition array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας προϋποθέσεων επέκτασης"
 
-#: pg_dump.c:18166
+#: pg_dump.c:18236
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "ασυμφωνία αριθμού διαμορφώσεων και συνθηκών για επέκταση"
 
-#: pg_dump.c:18298
+#: pg_dump.c:18368
 #, c-format
 msgid "reading dependency data"
 msgstr "ανάγνωση δεδομένων εξάρτησης"
 
-#: pg_dump.c:18391
+#: pg_dump.c:18461
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "δεν αναφέρεται αντικείμενο %u %u"
 
-#: pg_dump.c:18402
+#: pg_dump.c:18472
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "μη αναφερόμενο αντικείμενο %u %u"
 
-#: pg_dump.c:18776
+#: pg_dump.c:18861
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας reloptions"
@@ -2690,23 +2685,29 @@ msgstr ""
 "Εάν δεν παρέχεται όνομα αρχείου εισόδου, τότε χρησιμοποιείται η τυπική είσοδος.\n"
 "\n"
 
-#~ msgid "pclose failed: %m"
-#~ msgstr "απέτυχε η εντολή pclose:  %m"
-
-#~ msgid "WSAStartup failed: %d"
-#~ msgstr "WSAStartup απέτυχε: %d"
-
-#~ msgid "select() failed: %m"
-#~ msgstr "απέτυχε το select(): %m"
-
-#~ msgid "could not write to large object (result: %lu, expected: %lu)"
-#~ msgstr "δεν ήταν δυνατή η εγγραφή σε μεγάλο αντικείμενο (αποτέλεσμα: %lu, αναμένεται: %lu)"
-
-#~ msgid "connection to database \"%s\" failed: %s"
-#~ msgstr "σύνδεση στη βάση δεδομένων «%s» απέτυχε: %s"
+#~ msgid "could not connect to database \"%s\": %s"
+#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»: %s"
 
 #~ msgid "aggregate function %s could not be dumped correctly for this database version; ignored"
 #~ msgstr "δεν ήταν δυνατή η σωστή απόθεση της συνάρτησης συγκεντρωτικών αποτελεσμάτων %s για αυτήν την έκδοση της βάσης δεδομένων· παραβλέπεται"
 
-#~ msgid "could not connect to database \"%s\": %s"
-#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»: %s"
+#~ msgid "connection to database \"%s\" failed: %s"
+#~ msgstr "σύνδεση στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#~ msgid "could not write to large object (result: %lu, expected: %lu)"
+#~ msgstr "δεν ήταν δυνατή η εγγραφή σε μεγάλο αντικείμενο (αποτέλεσμα: %lu, αναμένεται: %lu)"
+
+#~ msgid "select() failed: %m"
+#~ msgstr "απέτυχε το select(): %m"
+
+#~ msgid "WSAStartup failed: %d"
+#~ msgstr "WSAStartup απέτυχε: %d"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "απέτυχε η εντολή pclose:  %m"
+
+#~ msgid "reading policies for table \"%s.%s\""
+#~ msgstr "ανάγνωση πολιτικών για τον πίνακα «%s.%s»"
+
+#~ msgid "reading row security enabled for table \"%s.%s\""
+#~ msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα «%s.%s»"

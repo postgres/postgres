@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-05 06:39+0000\n"
-"PO-Revision-Date: 2021-08-20 11:38+0200\n"
+"POT-Creation-Date: 2021-11-08 10:09+0000\n"
+"PO-Revision-Date: 2021-11-08 12:19+0100\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "X-Generator: Poedit 3.0\n"
 
 #: pl_comp.c:438 pl_handler.c:496
@@ -65,53 +65,53 @@ msgstr "μεταγλώτηση της συνάρτησης PL/pgSQL «%s» κο�
 msgid "parameter name \"%s\" used more than once"
 msgstr "όνομα παραμέτρου «%s» χρησιμοποιείται περισσότερες από μία φορές"
 
-#: pl_comp.c:1137
+#: pl_comp.c:1139
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "αναφορά στήλης «%s» είναι αμφίσημη"
 
-#: pl_comp.c:1139
+#: pl_comp.c:1141
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Θα μπορούσε να αναφέρεται είτε σε μεταβλητή PL/pgSQL είτε σε στήλη πίνακα."
 
-#: pl_comp.c:1322 pl_exec.c:5172 pl_exec.c:5345 pl_exec.c:5432 pl_exec.c:5523
-#: pl_exec.c:6530
+#: pl_comp.c:1324 pl_exec.c:5190 pl_exec.c:5363 pl_exec.c:5450 pl_exec.c:5541
+#: pl_exec.c:6562
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "η εγγραφή «%s» δεν έχει πεδίο «%s»"
 
-#: pl_comp.c:1816
+#: pl_comp.c:1818
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "η σχέση «%s» δεν υπάρχει"
 
-#: pl_comp.c:1823 pl_comp.c:1865
+#: pl_comp.c:1825 pl_comp.c:1867
 #, c-format
 msgid "relation \"%s\" does not have a composite type"
 msgstr "η σχέση «%s» δεν έχει συνθετικό τύπο"
 
-#: pl_comp.c:1931
+#: pl_comp.c:1933
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "η μεταβλητή «%s» έχει ψευδο-τύπο %s"
 
-#: pl_comp.c:2120
+#: pl_comp.c:2122
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "τύπος «%s» είναι μόνο ένα κέλυφος"
 
-#: pl_comp.c:2202 pl_exec.c:6831
+#: pl_comp.c:2204 pl_exec.c:6863
 #, c-format
 msgid "type %s is not composite"
 msgstr "τύπος %s δεν είναι συνθετικός"
 
-#: pl_comp.c:2250 pl_comp.c:2303
+#: pl_comp.c:2252 pl_comp.c:2305
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "μη αναγνωρίσιμη συνθήκη εξαίρεσης «%s»"
 
-#: pl_comp.c:2524
+#: pl_comp.c:2526
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "δεν ήταν δυνατός ο προσδιορισμός του πραγματικού τύπου παραμέτρου για την πολυμορφική συνάρτηση «%s»"
@@ -137,7 +137,7 @@ msgstr "ο έλεγχος έφθασε στο τέλος συνάρτησης χ
 msgid "while casting return value to function's return type"
 msgstr "κατά τη διάρκεια cast της τιμής επιστροφής στον τύπο επιστροφής της συνάρτησης"
 
-#: pl_exec.c:636 pl_exec.c:3638
+#: pl_exec.c:636 pl_exec.c:3637
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "set-valued συνάρτηση καλείται σε περιεχόμενο που δεν μπορεί να δεχτεί ένα σύνολο"
@@ -146,7 +146,7 @@ msgstr "set-valued συνάρτηση καλείται σε περιεχόμεν
 msgid "during function exit"
 msgstr "κατά τη διάρκεια εξόδου συνάρτησης"
 
-#: pl_exec.c:817 pl_exec.c:881 pl_exec.c:3436
+#: pl_exec.c:817 pl_exec.c:881 pl_exec.c:3434
 msgid "returned record type does not match expected record type"
 msgstr "ο επιστρεφόμενος τύπος εγγραφής δεν ταιριάζει με τον αναμενόμενο τύπο εγγραφής"
 
@@ -207,294 +207,299 @@ msgstr "κατά τη διάρκεια εξόδου μπλοκ δήλωσης"
 msgid "during exception cleanup"
 msgstr "κατά τη διάρκεια καθαρισμού εξαίρεσης"
 
-#: pl_exec.c:2336
+#: pl_exec.c:2334
 #, c-format
 msgid "procedure parameter \"%s\" is an output parameter but corresponding argument is not writable"
 msgstr "η παράμετρος διαδικασίας «%s» είναι παράμετρος εξόδου, αλλά το αντίστοιχο όρισμα δεν είναι εγγράψιμο"
 
-#: pl_exec.c:2341
+#: pl_exec.c:2339
 #, c-format
 msgid "procedure parameter %d is an output parameter but corresponding argument is not writable"
 msgstr "η παράμετρος διαδικασίας %d είναι παράμετρος εξόδου, αλλά το αντίστοιχο όρισμα δεν είναι εγγράψιμο"
 
-#: pl_exec.c:2375
+#: pl_exec.c:2373
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr "GET STACKED DIAGNOSTICS δεν είναι δυνατό να χρησιμοποιηθεί εκτός ενός χειριστή εξαιρέσεων"
 
-#: pl_exec.c:2575
+#: pl_exec.c:2573
 #, c-format
 msgid "case not found"
 msgstr "υπόθεση δεν βρέθηκε"
 
-#: pl_exec.c:2576
+#: pl_exec.c:2574
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "Η δήλωση CASE δεν περιέχει τμήμα ELSE."
 
-#: pl_exec.c:2669
+#: pl_exec.c:2667
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "το κατώτατο όριο του βρόχου FOR δεν μπορεί να είναι null"
 
-#: pl_exec.c:2685
+#: pl_exec.c:2683
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "το ανώνοτατο όριο του βρόχου FOR δεν μπορεί να είναι null"
 
-#: pl_exec.c:2703
+#: pl_exec.c:2701
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "η τιμή BY του βρόχου FOR δεν μπορεί να είναι null"
 
-#: pl_exec.c:2709
+#: pl_exec.c:2707
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "η τιμή BY του βρόχου FOR πρέπει να είναι μεγαλύτερη του μηδενός"
 
-#: pl_exec.c:2843 pl_exec.c:4608
+#: pl_exec.c:2841 pl_exec.c:4626
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "ο δρομέας «%s» βρίσκεται ήδη σε χρήση"
 
-#: pl_exec.c:2866 pl_exec.c:4673
+#: pl_exec.c:2864 pl_exec.c:4691
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "δίνονται ορίσματα σε δρομέα χωρίς ορίσματα"
 
-#: pl_exec.c:2885 pl_exec.c:4692
+#: pl_exec.c:2883 pl_exec.c:4710
 #, c-format
 msgid "arguments required for cursor"
 msgstr "επιβάλλονται ορίσματα για τον δρομέα"
 
-#: pl_exec.c:2972
+#: pl_exec.c:2970
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "η έκφραση FOREACH πρέπει να μην είναι null"
 
-#: pl_exec.c:2987
+#: pl_exec.c:2985
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "η έκφραση FOREACH πρέπει αποδώσει μία συστοιχία, όχι ένα τύπο %s"
 
-#: pl_exec.c:3004
+#: pl_exec.c:3002
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "η διάσταση (%d) του slice βρίσκεται εκτός του έγκυρου εύρους 0.. %d"
 
-#: pl_exec.c:3031
+#: pl_exec.c:3029
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "η μεταβλητή βρόχου FOREACH ... SLICE πρέπει να είναι τύπου συστοιχίας"
 
-#: pl_exec.c:3035
+#: pl_exec.c:3033
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "η μεταβλητή βρόχου FOREACH δεν πρέπει να είναι τύπου συστοιχίας"
 
-#: pl_exec.c:3197 pl_exec.c:3254 pl_exec.c:3429
+#: pl_exec.c:3195 pl_exec.c:3252 pl_exec.c:3427
 #, c-format
 msgid "cannot return non-composite value from function returning composite type"
 msgstr "δεν είναι δυνατή η επιστροφή μη-σύνθετης τιμής από σύνθετο τύπο συνάρτησης που επιστρέφει σύνθετο τύπο"
 
-#: pl_exec.c:3293 pl_gram.y:3310
+#: pl_exec.c:3291 pl_gram.y:3310
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "δεν είναι δυνατή η χρήση RETURN NEXT σε συνάρτηση non-SETOF"
 
-#: pl_exec.c:3334 pl_exec.c:3466
+#: pl_exec.c:3332 pl_exec.c:3464
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "εσφαλμένος τύπος αποτελέσματος που παρέχεται στο RETURN NEXT"
 
-#: pl_exec.c:3372 pl_exec.c:3393
+#: pl_exec.c:3370 pl_exec.c:3391
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "εσφαλμένος τύπος εγγραφής που παρέχεται στο RETURN NEXT"
 
-#: pl_exec.c:3485
+#: pl_exec.c:3483
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "το RETURN NEXT πρέπει να έχει παράμετρο"
 
-#: pl_exec.c:3513 pl_gram.y:3374
+#: pl_exec.c:3511 pl_gram.y:3374
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "δεν είναι δυνατή η χρήση RETURN QUERY σε συνάρτηση non-SETOF"
 
-#: pl_exec.c:3531
+#: pl_exec.c:3529
 msgid "structure of query does not match function result type"
 msgstr "η δομή του ερωτήματος δεν ταιριάζει με τον τύπο αποτελέσματος της συνάρτησης"
 
-#: pl_exec.c:3564 pl_exec.c:5736
-#, c-format
-msgid "query \"%s\" is not a SELECT"
-msgstr "ερώτημα «%s» δεν είναι SELECT"
-
-#: pl_exec.c:3586 pl_exec.c:4386 pl_exec.c:8567
+#: pl_exec.c:3584 pl_exec.c:4404 pl_exec.c:8604
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "η παράμετρος συμβολοσειράς ερωτήματος του EXECUTE είναι null"
 
-#: pl_exec.c:3666 pl_exec.c:3804
+#: pl_exec.c:3665 pl_exec.c:3803
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "επιλογή RAISE που έχει ήδη καθοριστεί: %s"
 
-#: pl_exec.c:3700
+#: pl_exec.c:3699
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "RAISE χωρίς παραμέτρους δεν μπορεί να χρησιμοποιηθεί εκτός ενός δείκτη χειρισμού εξαιρέσεων"
 
-#: pl_exec.c:3794
+#: pl_exec.c:3793
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "η επιλογή δήλωσης RAISE δεν μπορεί να είναι null"
 
-#: pl_exec.c:3864
+#: pl_exec.c:3863
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3919
+#: pl_exec.c:3918
 #, c-format
 msgid "assertion failed"
 msgstr "η επιβεβαίωση απέτυχε"
 
-#: pl_exec.c:4259 pl_exec.c:4447
+#: pl_exec.c:4277 pl_exec.c:4465
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "δεν είναι δυνατό το COPY to/from τον πελάτη σε PL/pgSQL"
 
-#: pl_exec.c:4265
+#: pl_exec.c:4283
 #, c-format
 msgid "unsupported transaction command in PL/pgSQL"
 msgstr "μη υποστηριζόμενη συναλλαγή σε PL/pgSQL"
 
-#: pl_exec.c:4288 pl_exec.c:4476
+#: pl_exec.c:4306 pl_exec.c:4494
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "το INTO χρησιμοποιείται με μια εντολή που δεν μπορεί να επιστρέψει δεδομένα"
 
-#: pl_exec.c:4311 pl_exec.c:4499
+#: pl_exec.c:4329 pl_exec.c:4517
 #, c-format
 msgid "query returned no rows"
 msgstr "το ερώτημα επέστρεψε καθόλου γραμμές"
 
-#: pl_exec.c:4333 pl_exec.c:4518
+#: pl_exec.c:4351 pl_exec.c:4536 pl_exec.c:5685
 #, c-format
 msgid "query returned more than one row"
 msgstr "ερώτημα επέστρεψε περισσότερες από μία γραμμές"
 
-#: pl_exec.c:4335
+#: pl_exec.c:4353
 #, c-format
 msgid "Make sure the query returns a single row, or use LIMIT 1."
 msgstr "Βεβαιωθείτε ότι το ερώτημα επιστρέφει μία μόνο γραμμή ή χρησιμοποιήστε το LIMIT 1."
 
-#: pl_exec.c:4351
+#: pl_exec.c:4369
 #, c-format
 msgid "query has no destination for result data"
 msgstr "το ερώτημα δεν έχει προορισμό για τα δεδομένα αποτελεσμάτων"
 
-#: pl_exec.c:4352
+#: pl_exec.c:4370
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Εάν θέλετε να απορρίψετε τα αποτελέσματα ενός SELECT, χρησιμοποιήστε την επιλογή PERFORM."
 
-#: pl_exec.c:4439
+#: pl_exec.c:4457
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "EXECUTE of SELECT ... INTO  δεν έχει υλοποιηθεί"
 
-#: pl_exec.c:4440
+#: pl_exec.c:4458
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "Ίσως θέλετε να χρησιμοποιήσετε το EXECUTE ... INTO ή EXECUTE CREATE TABLE ... AS αντ' αυτού."
 
-#: pl_exec.c:4453
+#: pl_exec.c:4471
 #, c-format
 msgid "EXECUTE of transaction commands is not implemented"
 msgstr "EXECUTE εντολών συναλλαγής δεν έχει εφαρμοσθεί"
 
-#: pl_exec.c:4754 pl_exec.c:4842
+#: pl_exec.c:4772 pl_exec.c:4860
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "η μεταβλήτη «%s» του δρομέα είναι κενή"
 
-#: pl_exec.c:4765 pl_exec.c:4853
+#: pl_exec.c:4783 pl_exec.c:4871
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "ο δρομέας «%s» δεν υπάρχει"
 
-#: pl_exec.c:4778
+#: pl_exec.c:4796
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "η σχετική ή η απόλυτη θέση δρομέα είναι null"
 
-#: pl_exec.c:5022 pl_exec.c:5117
+#: pl_exec.c:5040 pl_exec.c:5135
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "δεν είναι δυνατή η αντιστοίχιση τιμής null στη μεταβλητή «%s» δηλωμένης ως NOT NULL"
 
-#: pl_exec.c:5098
+#: pl_exec.c:5116
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "δεν είναι δυνατή η αντιστοίχιση μη-σύνθετης τιμής σε μεταβλητή σειράς"
 
-#: pl_exec.c:5130
+#: pl_exec.c:5148
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "δεν είναι δυνατή η αντιστοίχιση μη-σύνθετης τιμής σε μεταβλητή εγγραφής"
 
-#: pl_exec.c:5181
+#: pl_exec.c:5199
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "δεν είναι δυνατή η ανάθεση στη στήλη συστήματος «%s»"
 
-#: pl_exec.c:5630
+#: pl_exec.c:5648
 #, c-format
-msgid "query \"%s\" did not return data"
-msgstr "το ερώτημα «%s» δεν επέστρεψε δεδομένα"
+msgid "query did not return data"
+msgstr "το ερώτημα δεν επέστρεψε δεδομένα"
 
-#: pl_exec.c:5638
+#: pl_exec.c:5649 pl_exec.c:5661 pl_exec.c:5686 pl_exec.c:5762 pl_exec.c:5767
 #, c-format
-msgid "query \"%s\" returned %d column"
-msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] "το ερώτημα «%s» επέστρεψε %d στήλη"
-msgstr[1] "το ερώτημα «%s» επέστρεψε %d στήλες"
+msgid "query: %s"
+msgstr "ερώτημα: %s"
 
-#: pl_exec.c:5666
+#: pl_exec.c:5657
 #, c-format
-msgid "query \"%s\" returned more than one row"
-msgstr "το ερώτημα «%s» επέστρεψε περισσότερες από μία γραμμές"
+msgid "query returned %d column"
+msgid_plural "query returned %d columns"
+msgstr[0] "το ερώτημα επέστρεψε %d στήλη"
+msgstr[1] "το ερώτημα επέστρεψε %d στήλες"
 
-#: pl_exec.c:6544 pl_exec.c:6584 pl_exec.c:6624
+#: pl_exec.c:5761
+#, c-format
+msgid "query is SELECT INTO, but it should be plain SELECT"
+msgstr "το ερώτημα είναι SELECT INTO, αλλά θα έπρεπε να είναι απλό SELECT"
+
+#: pl_exec.c:5766
+#, c-format
+msgid "query is not a SELECT"
+msgstr "ερώτημα δεν είναι SELECT"
+
+#: pl_exec.c:6576 pl_exec.c:6616 pl_exec.c:6656
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "ο τύπος παραμέτρου %d (%s) δεν συμφωνεί με αυτόν κατά την προετοιμασία του σχεδίου (%s)"
 
-#: pl_exec.c:7035 pl_exec.c:7069 pl_exec.c:7143 pl_exec.c:7169
+#: pl_exec.c:7067 pl_exec.c:7101 pl_exec.c:7175 pl_exec.c:7201
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "ο αριθμός των πεδίων προέλευσης και προορισμού στην ανάθεση δεν συμφωνεί"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7037 pl_exec.c:7071 pl_exec.c:7145 pl_exec.c:7171
+#: pl_exec.c:7069 pl_exec.c:7103 pl_exec.c:7177 pl_exec.c:7203
 #, c-format
 msgid "%s check of %s is active."
 msgstr "%s έλεγχος του %s είναι ενεργός."
 
-#: pl_exec.c:7041 pl_exec.c:7075 pl_exec.c:7149 pl_exec.c:7175
+#: pl_exec.c:7073 pl_exec.c:7107 pl_exec.c:7181 pl_exec.c:7207
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr "Βεβαιωθείτε ότι το ερώτημα επιστρέφει την ακριβή λίστα στηλών."
 
-#: pl_exec.c:7562
+#: pl_exec.c:7594
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "η εγγραφή «%s» δεν έχει ανατεθεί ακόμα"
 
-#: pl_exec.c:7563
+#: pl_exec.c:7595
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "Η δομή πλειάδας μίας εγγραφής που δεν έχει ακόμη ανατεθεί είναι απροσδιόριστη."
@@ -840,3 +845,6 @@ msgstr "«%s» στο τέλος εισόδου"
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s σε ή κοντά σε «%s»"
+
+#~ msgid "query \"%s\" returned more than one row"
+#~ msgstr "το ερώτημα «%s» επέστρεψε περισσότερες από μία γραμμές"

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-07-09 06:47+0000\n"
-"PO-Revision-Date: 2021-07-09 10:34+0200\n"
+"POT-Creation-Date: 2021-11-03 18:16+0000\n"
+"PO-Revision-Date: 2021-11-05 11:25+0100\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -295,7 +295,7 @@ msgstr "ο κατάλογος δεδομένων «%s» δεν αφαιρείτ�
 #: initdb.c:591
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
-msgstr "κατάλογος WAL «%s» δεν αφαιρέθηκε κατά απαίτηση του χρήστη"
+msgstr "ο κατάλογος WAL «%s» δεν αφαιρέθηκε κατά απαίτηση του χρήστη"
 
 #: initdb.c:609
 #, c-format
@@ -593,13 +593,13 @@ msgstr ""
 
 #: initdb.c:2269
 #, c-format
-msgid "      --clobber-cache       use cache-clobbering debug option\n"
-msgstr "      --clobber-cache       χρησιμοποίησε την επιλογή εντοπισμού σφαλμάτων cache-clobbering\n"
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               δημιούργησε πολλές καταγραφές αποσφαλμάτωσης\n"
 
 #: initdb.c:2270
 #, c-format
-msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug               δημιούργησε πολλές καταγραφές αποσφαλμάτωσης\n"
+msgid "      --discard-caches      set debug_discard_caches=1\n"
+msgstr "      --discard-caches      όρισε debug_discard_caches=1\n"
 
 #: initdb.c:2271
 #, c-format
@@ -704,7 +704,7 @@ msgstr ""
 #: initdb.c:2368
 #, c-format
 msgid "could not set environment"
-msgstr "Δεν ήταν δυνατή η ρύθμιση περιβάλλοντος"
+msgstr "δεν ήταν δυνατή η ρύθμιση περιβάλλοντος"
 
 #: initdb.c:2388
 #, c-format
@@ -1020,3 +1020,6 @@ msgstr ""
 
 #~ msgid "pclose failed: %m"
 #~ msgstr "απέτυχε η εντολή pclose: %m"
+
+#~ msgid "      --clobber-cache       use cache-clobbering debug option\n"
+#~ msgstr "      --clobber-cache       χρησιμοποίησε την επιλογή εντοπισμού σφαλμάτων cache-clobbering\n"

@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-20 09:09+0000\n"
-"PO-Revision-Date: 2021-08-26 10:57+0200\n"
+"POT-Creation-Date: 2021-11-03 18:09+0000\n"
+"PO-Revision-Date: 2021-11-05 11:17+0100\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
-"Language-Team: \n"
 "X-Generator: Poedit 3.0\n"
 
 #: descriptor.c:64
@@ -379,195 +379,195 @@ msgstr "δεν επιτρέπεται εκκινητής σε ορισμό τύ�
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "το όνομα τύπου «string» είναι δεσμευμένο σε λειτουργία Informix"
 
-#: preproc.y:552 preproc.y:17676
+#: preproc.y:552 preproc.y:17675
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "ο τύπος «%s» έχει ήδη οριστεί"
 
-#: preproc.y:577 preproc.y:18311 preproc.y:18636 variable.c:621
+#: preproc.y:577 preproc.y:18310 preproc.y:18635 variable.c:621
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "οι πολυδιάστατες συστυχίες για απλούς τύπους δεδομένων δεν υποστηρίζονται"
 
-#: preproc.y:600
+#: preproc.y:599
 #, c-format
-msgid "connection %s is overwritten with %s by declare statement %s."
-msgstr "η σύνδεση %s αντικαθίσταται με %s από δήλωση πρότασης %s."
+msgid "connection %s is overwritten with %s by DECLARE statement %s"
+msgstr "η σύνδεση %s αντικαθίσταται με %s από τη δήλωση DECLARE %s"
 
-#: preproc.y:1754
+#: preproc.y:1753
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση CLOSE DATABASE"
 
-#: preproc.y:2002
+#: preproc.y:2001
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση CONNECT"
 
-#: preproc.y:2042
+#: preproc.y:2041
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση DISCONNECT"
 
-#: preproc.y:2097
+#: preproc.y:2096
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση SET CONNECTION"
 
-#: preproc.y:2119
+#: preproc.y:2118
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση TYPE"
 
-#: preproc.y:2128
+#: preproc.y:2127
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση VAR"
 
-#: preproc.y:2135
+#: preproc.y:2134
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση WHENEVER"
 
-#: preproc.y:2212 preproc.y:2384 preproc.y:2389 preproc.y:2512 preproc.y:4144
-#: preproc.y:4808 preproc.y:5341 preproc.y:5679 preproc.y:5979 preproc.y:7515
-#: preproc.y:9083 preproc.y:9088 preproc.y:11916
+#: preproc.y:2211 preproc.y:2383 preproc.y:2388 preproc.y:2511 preproc.y:4143
+#: preproc.y:4807 preproc.y:5340 preproc.y:5678 preproc.y:5978 preproc.y:7514
+#: preproc.y:9082 preproc.y:9087 preproc.y:11915
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "μη υποστηριζόμενο χαρακτηριστικό που θα προωθηθεί στον διακομιστή"
 
-#: preproc.y:2770
+#: preproc.y:2769
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL δεν είναι υλοποιημένο"
 
-#: preproc.y:3465
+#: preproc.y:3464
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN δεν είναι υλοποιημένο"
 
-#: preproc.y:10015 preproc.y:17251
+#: preproc.y:10014 preproc.y:17250
 #, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
 msgstr "το «database» δεν μπορεί να χρησιμοποιηθεί ως όνομα δρομέα σε λειτουργία INFORMIX"
 
-#: preproc.y:10022 preproc.y:17261
+#: preproc.y:10021 preproc.y:17260
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "η χρήση της μεταβλητής «%s» σε διαφορετικές δηλώσεις προτάσεων δεν υποστηρίζεται"
 
-#: preproc.y:10024 preproc.y:17263
+#: preproc.y:10023 preproc.y:17262
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "ο δρομέας «%s» έχει ήδη οριστεί"
 
-#: preproc.y:10498
+#: preproc.y:10497
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "μη υποστηριζόμενη πλέον σύνταξη LIMIT #,# που θα προωθηθεί στον διακομιστή"
 
-#: preproc.y:10831 preproc.y:10838
+#: preproc.y:10830 preproc.y:10837
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "υποερώτημα σε FROM πρέπει να έχει ένα alias"
 
-#: preproc.y:16943 preproc.y:16950
+#: preproc.y:16942 preproc.y:16949
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS δεν δύναται να ορίσει INTO"
 
-#: preproc.y:16986
+#: preproc.y:16985
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "ανέμενε «@», βρήκε «%s»."
 
-#: preproc.y:16998
+#: preproc.y:16997
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "μόνο τα πρωτόκολλα \"TCP\" και \"UNIX\" και ο τύπος βάσης δεδομένων «postgresql» υποστηρίζονται"
 
-#: preproc.y:17001
+#: preproc.y:17000
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "ανέμενε «://», βρήκε «%s»."
 
-#: preproc.y:17006
+#: preproc.y:17005
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "οι υποδοχές πεδίου-Unix λειτουργούν μόνο στο «localhost» αλλά όχι στο «%s»"
 
-#: preproc.y:17032
+#: preproc.y:17031
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "ανέμενε «postgresql», βρήκε «%s»."
 
-#: preproc.y:17035
+#: preproc.y:17034
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "άκυρη επιλογή σύνδεσης: %s"
 
-#: preproc.y:17044
+#: preproc.y:17043
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "ανέμενε «@» ή «://», βρήκε «%s»."
 
-#: preproc.y:17119 preproc.y:17137
+#: preproc.y:17118 preproc.y:17136
 #, c-format
 msgid "invalid data type"
 msgstr "μη έγκυρος τύπος δεδομένων"
 
-#: preproc.y:17148 preproc.y:17165
+#: preproc.y:17147 preproc.y:17164
 #, c-format
 msgid "incomplete statement"
 msgstr "ανολοκλήρωτη δήλωση"
 
-#: preproc.y:17151 preproc.y:17168
+#: preproc.y:17150 preproc.y:17167
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "μη αναγνωρίσιμο διακριτικό «%s»"
 
-#: preproc.y:17213
+#: preproc.y:17212
 #, c-format
 msgid "name \"%s\" is already declared"
 msgstr "το όνομα «%s» έχει ήδη δηλωθεί"
 
-#: preproc.y:17479
+#: preproc.y:17478
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "μόνο οι αριθμητικοί και δεκαδικοί τύποι δεδομένων έχουν όρισμα ακρίβειας/κλίμακας"
 
-#: preproc.y:17491
+#: preproc.y:17490
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "προδιαγραφές διαστήματος δεν επιτρέπονται εδώ"
 
-#: preproc.y:17651 preproc.y:17703
+#: preproc.y:17650 preproc.y:17702
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "πάρα πολλά επίπεδα σε ένθετο ορισμό δομής/ένωσης"
 
-#: preproc.y:17826
+#: preproc.y:17825
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "δείκτες σε varchar δεν είναι υλοποιημένοι"
 
-#: preproc.y:18277
+#: preproc.y:18276
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "δεν επιτρέπεται αρχικοποιητής σε εντολή EXEC SQL VAR"
 
-#: preproc.y:18594
+#: preproc.y:18593
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "δεν επιτρέπονται δείκτες συστάδων για είσοδο"
 
-#: preproc.y:18781
+#: preproc.y:18780
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "δεν επιτρέπεται χειριστής σε ορισμό μεταβλητής"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:18822
+#: preproc.y:18821
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s σε ή κοντά σε «%s»"
