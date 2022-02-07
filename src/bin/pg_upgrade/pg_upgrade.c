@@ -754,5 +754,5 @@ cleanup(void)
 
 	/* Remove dump and log files? */
 	if (!log_opts.retain)
-		rmtree(log_opts.basedir, true);
+		(void) rmtree(log_opts.basedir, true);
 }
