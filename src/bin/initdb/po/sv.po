@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:15+0000\n"
-"PO-Revision-Date: 2021-11-07 09:53+0100\n"
+"POT-Creation-Date: 2021-11-08 22:38+0000\n"
+"PO-Revision-Date: 2021-11-09 06:30+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -385,7 +385,7 @@ msgstr "Kontrollera din installation eller ange korrekt sökväg med flaggan -L.
 
 #: initdb.c:1511
 msgid "Enter new superuser password: "
-msgstr "Mata in ett nytt lösenord för superanvändaren: "
+msgstr "Mata in ett nytt lösenord för superuser: "
 
 #: initdb.c:1512
 msgid "Enter it again: "
@@ -545,7 +545,7 @@ msgstr "      --no-locale           samma som --locale=C\n"
 #: initdb.c:2369
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr "      --pwfile=FIL          läser lösenord för superanvändare från fil\n"
+msgstr "      --pwfile=FIL          läser lösenord för superuser från fil\n"
 
 #: initdb.c:2370
 #, c-format
@@ -559,12 +559,12 @@ msgstr ""
 #: initdb.c:2372
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NAMN       namn på databasens superanvändare\n"
+msgstr "  -U, --username=NAMN       namn på databasens superuser\n"
 
 #: initdb.c:2373
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr "  -W, --pwprompt            efterfråga lösenord för superanvändare\n"
+msgstr "  -W, --pwprompt            efterfråga lösenord för superuser\n"
 
 #: initdb.c:2374
 #, c-format

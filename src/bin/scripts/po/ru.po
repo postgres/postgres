@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 05:24+0300\n"
+"POT-Creation-Date: 2022-02-07 11:23+0300\n"
 "PO-Revision-Date: 2021-11-08 05:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -265,31 +265,31 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: common.c:87 common.c:145
+#: common.c:100 common.c:158
 msgid "Password: "
 msgstr "Пароль: "
 
-#: common.c:132
+#: common.c:145
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "не удалось подключиться к базе %s (нехватка памяти)"
 
-#: common.c:159
+#: common.c:172
 #, c-format
 msgid "could not connect to database %s: %s"
 msgstr "не удалось подключиться к базе %s: %s"
 
-#: common.c:215 common.c:241
+#: common.c:228 common.c:254
 #, c-format
 msgid "query failed: %s"
 msgstr "ошибка при выполнении запроса: %s"
 
-#: common.c:216 common.c:242
+#: common.c:229 common.c:255
 #, c-format
 msgid "query was: %s"
 msgstr "запрос: %s"
 
-#: common.c:358
+#: common.c:371
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -298,36 +298,26 @@ msgstr[1] "запрос вернул %d строки вместо одной: %s
 msgstr[2] "запрос вернул %d строк вместо одной: %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:383
+#: common.c:396
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:385
+#: common.c:398
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:395
+#: common.c:408
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s - да/%s - нет) "
 
-#: common.c:409
+#: common.c:422
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Пожалуйста, введите \"%s\" или \"%s\".\n"
-
-#: common.c:488 common.c:525
-#, c-format
-msgid "Cancel request sent\n"
-msgstr "Сигнал отмены отправлен\n"
-
-#: common.c:491 common.c:529
-#, c-format
-msgid "Could not send cancel request: %s"
-msgstr "Отправить сигнал отмены не удалось: %s"
 
 #: createdb.c:149
 #, c-format
@@ -1173,6 +1163,12 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "Cancel request sent\n"
+#~ msgstr "Сигнал отмены отправлен\n"
+
+#~ msgid "Could not send cancel request: %s"
+#~ msgstr "Отправить сигнал отмены не удалось: %s"
 
 #~ msgid "%s: %s"
 #~ msgstr "%s: %s"

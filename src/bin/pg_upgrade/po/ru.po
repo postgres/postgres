@@ -1,14 +1,14 @@
 # Russian message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2021, 2022.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-09 23:05+0300\n"
-"PO-Revision-Date: 2021-09-06 07:39+0300\n"
+"PO-Revision-Date: 2022-01-19 16:26+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1979,7 +1979,7 @@ msgstr ""
 "\n"
 "В вашей инсталляции используются хеш-индексы. Эти индексы имеют разные\n"
 "внутренние форматы в старом и новом кластерах, поэтому их необходимо\n"
-"перестроить с помощью команды REINDEX.  Скрипт\n"
+"перестроить с помощью команды REINDEX. Скрипт\n"
 "    %s\n"
 "будучи выполненным администратором БД в psql, пересоздаст все неправильные\n"
 "индексы; до этого никакие хеш-индексы не будут использоваться.\n"
@@ -2034,7 +2034,7 @@ msgid ""
 msgstr ""
 "\n"
 "В вашей инсталляции есть расширения, которые надо обновить\n"
-"командой ALTER EXTENSION.  Выполните скрипт\n"
+"командой ALTER EXTENSION. Скрипт\n"
 "    %s\n"
 "будучи выполненным администратором БД в psql, обновит все\n"
 "эти расширения.\n"

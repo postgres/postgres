@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-10-05 15:08+0000\n"
-"PO-Revision-Date: 2021-10-06 11:32+0200\n"
+"POT-Creation-Date: 2021-12-30 05:10+0000\n"
+"PO-Revision-Date: 2021-12-30 17:14+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -71,7 +71,7 @@ msgid "pclose failed: %m"
 msgstr "échec de pclose : %m"
 
 #: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
-#: command.c:1219 command.c:3054 command.c:3103 command.c:3220 input.c:228
+#: command.c:1219 command.c:3062 command.c:3111 command.c:3228 input.c:228
 #: mainloop.c:82 mainloop.c:386
 #, c-format
 msgid "out of memory"
@@ -223,12 +223,12 @@ msgstr "Vous êtes connecté à la base de données « %s » en tant qu'utilisat
 msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Vous êtes connecté à la base de données « %s » en tant qu'utilisateur « %s » sur l'hôte « %s » via le port « %s ».\n"
 
-#: command.c:931 command.c:1027 command.c:2412
+#: command.c:931 command.c:1027 command.c:2420
 #, c-format
 msgid "no query buffer"
 msgstr "aucun tampon de requête"
 
-#: command.c:964 command.c:4987
+#: command.c:964 command.c:4995
 #, c-format
 msgid "invalid line number: %s"
 msgstr "numéro de ligne invalide : %s"
@@ -252,7 +252,7 @@ msgstr "Aucun changement"
 msgid "%s: invalid encoding name or conversion procedure not found"
 msgstr "%s : nom d'encodage invalide ou procédure de conversion introuvable"
 
-#: command.c:1215 command.c:1854 command.c:3050 command.c:3242 command.c:5089
+#: command.c:1215 command.c:1865 command.c:3058 command.c:3250 command.c:5097
 #: common.c:177 common.c:226 common.c:537 common.c:1385 common.c:1413
 #: common.c:1522 common.c:1625 common.c:1663 copy.c:490 copy.c:709 help.c:63
 #: large_obj.c:157 large_obj.c:192 large_obj.c:254 startup.c:303
@@ -264,8 +264,8 @@ msgstr "%s"
 msgid "There is no previous error."
 msgstr "Il n'y a pas d'erreur précédente."
 
-#: command.c:1410 command.c:1715 command.c:1729 command.c:1746 command.c:1906
-#: command.c:2143 command.c:2379 command.c:2419
+#: command.c:1410 command.c:1715 command.c:1729 command.c:1746 command.c:1914
+#: command.c:2151 command.c:2387 command.c:2427
 #, c-format
 msgid "\\%s: missing required argument"
 msgstr "\\%s : argument requis manquant"
@@ -299,129 +299,130 @@ msgstr "\\endif : pas de \\if correspondant"
 msgid "Query buffer is empty."
 msgstr "Le tampon de requête est vide."
 
-#: command.c:1832
-msgid "Enter new password: "
-msgstr "Saisissez le nouveau mot de passe : "
+#: command.c:1847
+#, c-format
+msgid "Enter new password for user \"%s\": "
+msgstr "Saisir le nouveau mot de passe de l'utilisateur « %s » : "
 
-#: command.c:1833
+#: command.c:1850
 msgid "Enter it again: "
 msgstr "Saisissez-le à nouveau : "
 
-#: command.c:1837
+#: command.c:1854
 #, c-format
 msgid "Passwords didn't match."
 msgstr "Les mots de passe ne sont pas identiques."
 
-#: command.c:1936
+#: command.c:1944
 #, c-format
 msgid "\\%s: could not read value for variable"
 msgstr "\\%s : n'a pas pu lire la valeur pour la variable"
 
-#: command.c:2039
+#: command.c:2047
 msgid "Query buffer reset (cleared)."
 msgstr "Le tampon de requête a été effacé."
 
-#: command.c:2061
+#: command.c:2069
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Historique sauvegardé dans le fichier « %s ».\n"
 
-#: command.c:2148
+#: command.c:2156
 #, c-format
 msgid "\\%s: environment variable name must not contain \"=\""
 msgstr "\\%s : le nom de la variable d'environnement ne doit pas contenir « = »"
 
-#: command.c:2209
+#: command.c:2217
 #, c-format
 msgid "The server (version %s) does not support showing function source."
 msgstr "Le serveur (version %s) ne supporte pas l'affichage du code de la fonction."
 
-#: command.c:2212
+#: command.c:2220
 #, c-format
 msgid "The server (version %s) does not support showing view definitions."
 msgstr "Le serveur (version %s) ne supporte pas l'affichage des définitions de vues."
 
-#: command.c:2219
+#: command.c:2227
 #, c-format
 msgid "function name is required"
 msgstr "le nom de la fonction est requis"
 
-#: command.c:2221
+#: command.c:2229
 #, c-format
 msgid "view name is required"
 msgstr "le nom de la vue est requis"
 
-#: command.c:2351
+#: command.c:2359
 msgid "Timing is on."
 msgstr "Chronométrage activé."
 
-#: command.c:2353
+#: command.c:2361
 msgid "Timing is off."
 msgstr "Chronométrage désactivé."
 
-#: command.c:2438 command.c:2466 command.c:3650 command.c:3653 command.c:3656
-#: command.c:3662 command.c:3664 command.c:3690 command.c:3700 command.c:3712
-#: command.c:3726 command.c:3743 command.c:3801 common.c:73 copy.c:333
+#: command.c:2446 command.c:2474 command.c:3658 command.c:3661 command.c:3664
+#: command.c:3670 command.c:3672 command.c:3698 command.c:3708 command.c:3720
+#: command.c:3734 command.c:3751 command.c:3809 common.c:73 copy.c:333
 #: copy.c:405 psqlscanslash.l:786 psqlscanslash.l:797 psqlscanslash.l:807
 #, c-format
 msgid "%s: %m"
 msgstr "%s : %m"
 
-#: command.c:2850 startup.c:240 startup.c:291
+#: command.c:2858 startup.c:240 startup.c:291
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: command.c:2855 startup.c:288
+#: command.c:2863 startup.c:288
 #, c-format
 msgid "Password for user %s: "
 msgstr "Mot de passe pour l'utilisateur %s : "
 
-#: command.c:2909
+#: command.c:2917
 #, c-format
 msgid "All connection parameters must be supplied because no database connection exists"
 msgstr "Tous les paramètres de connexion doivent être fournis car il n'existe pas de connexion à une base de données"
 
-#: command.c:3248
+#: command.c:3256
 #, c-format
 msgid "Previous connection kept"
 msgstr "Connexion précédente conservée"
 
-#: command.c:3254
+#: command.c:3262
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect : %s"
 
-#: command.c:3301
+#: command.c:3309
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
 msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » à l'adresse « %s » via le port « %s ».\n"
 
-#: command.c:3304
+#: command.c:3312
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » via le socket dans « %s » via le port « %s ».\n"
 
-#: command.c:3310
+#: command.c:3318
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
 msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » sur l'hôte « %s » (adresse « %s » ) via le port « %s ».\n"
 
-#: command.c:3313
+#: command.c:3321
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s » sur l'hôte « %s » via le port « %s ».\n"
 
-#: command.c:3318
+#: command.c:3326
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s ».\n"
 
-#: command.c:3351
+#: command.c:3359
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, serveur %s)\n"
 
-#: command.c:3359
+#: command.c:3367
 #, c-format
 msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
@@ -430,29 +431,29 @@ msgstr ""
 "ATTENTION : %s version majeure %s, version majeure du serveur %s.\n"
 "         Certaines fonctionnalités de psql pourraient ne pas fonctionner.\n"
 
-#: command.c:3398
+#: command.c:3406
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "Connexion SSL (protocole : %s, chiffrement : %s, bits : %s, compression : %s)\n"
 
-#: command.c:3399 command.c:3400 command.c:3401
+#: command.c:3407 command.c:3408 command.c:3409
 msgid "unknown"
 msgstr "inconnu"
 
-#: command.c:3402 help.c:46
+#: command.c:3410 help.c:46
 msgid "off"
 msgstr "désactivé"
 
-#: command.c:3402 help.c:46
+#: command.c:3410 help.c:46
 msgid "on"
 msgstr "activé"
 
-#: command.c:3416
+#: command.c:3424
 #, c-format
 msgid "GSSAPI-encrypted connection\n"
 msgstr "connexion chiffrée avec GSSAPI\n"
 
-#: command.c:3436
+#: command.c:3444
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -464,259 +465,259 @@ msgstr ""
 "            Voir la section « Notes aux utilisateurs de Windows » de la page\n"
 "            référence de psql pour les détails.\n"
 
-#: command.c:3540
+#: command.c:3548
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number"
 msgstr "la variable d'environnement PSQL_EDITOR_LINENUMBER_ARG doit être définie avec un numéro de ligne"
 
-#: command.c:3569
+#: command.c:3577
 #, c-format
 msgid "could not start editor \"%s\""
 msgstr "n'a pas pu exécuter l'éditeur « %s »"
 
-#: command.c:3571
+#: command.c:3579
 #, c-format
 msgid "could not start /bin/sh"
 msgstr "n'a pas pu exécuter /bin/sh"
 
-#: command.c:3608
+#: command.c:3616
 #, c-format
 msgid "could not locate temporary directory: %s"
 msgstr "n'a pas pu localiser le répertoire temporaire : %s"
 
-#: command.c:3635
+#: command.c:3643
 #, c-format
 msgid "could not open temporary file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier temporaire « %s » : %m"
 
-#: command.c:3949
+#: command.c:3957
 #, c-format
 msgid "\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\""
 msgstr "\\pset: abréviation ambigüe : « %s » correspond à « %s » comme à « %s »"
 
-#: command.c:3969
+#: command.c:3977
 #, c-format
 msgid "\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
 msgstr "\\pset : les formats autorisés sont aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
 
-#: command.c:3988
+#: command.c:3996
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode"
 msgstr "\\pset: les styles de lignes autorisés sont ascii, old-ascii, unicode"
 
-#: command.c:4003
+#: command.c:4011
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double"
 msgstr "\\pset : les styles autorisés de ligne de bordure Unicode sont single, double"
 
-#: command.c:4018
+#: command.c:4026
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double"
 msgstr "\\pset : les styles autorisés pour la ligne de colonne Unicode sont single, double"
 
-#: command.c:4033
+#: command.c:4041
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double"
 msgstr "\\pset : les styles autorisés pour la ligne d'en-tête Unicode sont single, double"
 
-#: command.c:4076
+#: command.c:4084
 #, c-format
 msgid "\\pset: csv_fieldsep must be a single one-byte character"
 msgstr "\\pset: csv_fieldsep doit être un unique caractère d'un octet"
 
-#: command.c:4081
+#: command.c:4089
 #, c-format
 msgid "\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return"
 msgstr "\\pset: csv_fieldsep ne peut pas être un guillemet, un retour à la ligne ou un retour chariot"
 
-#: command.c:4218 command.c:4404
+#: command.c:4226 command.c:4412
 #, c-format
 msgid "\\pset: unknown option: %s"
 msgstr "\\pset : option inconnue : %s"
 
-#: command.c:4236
+#: command.c:4244
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Le style de bordure est %d.\n"
 
-#: command.c:4242
+#: command.c:4250
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "La largeur cible n'est pas configuré.\n"
 
-#: command.c:4244
+#: command.c:4252
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "La largeur cible est %d.\n"
 
-#: command.c:4251
+#: command.c:4259
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Affichage étendu activé.\n"
 
-#: command.c:4253
+#: command.c:4261
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "L'affichage étendu est utilisé automatiquement.\n"
 
-#: command.c:4255
+#: command.c:4263
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Affichage étendu désactivé.\n"
 
-#: command.c:4261
+#: command.c:4269
 #, c-format
 msgid "Field separator for CSV is \"%s\".\n"
 msgstr "Le séparateur de champs pour un CSV est « %s ».\n"
 
-#: command.c:4269 command.c:4277
+#: command.c:4277 command.c:4285
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "Le séparateur de champs est l'octet zéro.\n"
 
-#: command.c:4271
+#: command.c:4279
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Le séparateur de champs est « %s ».\n"
 
-#: command.c:4284
+#: command.c:4292
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "Le bas de page pas défaut est activé.\n"
 
-#: command.c:4286
+#: command.c:4294
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "Le bas de page par défaut est désactivé.\n"
 
-#: command.c:4292
+#: command.c:4300
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Le format de sortie est %s.\n"
 
-#: command.c:4298
+#: command.c:4306
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Le style de ligne est %s.\n"
 
-#: command.c:4305
+#: command.c:4313
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "L'affichage de null est « %s ».\n"
 
-#: command.c:4313
+#: command.c:4321
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "L'affichage de la sortie numérique adaptée à la locale est activé.\n"
 
-#: command.c:4315
+#: command.c:4323
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "L'affichage de la sortie numérique adaptée à la locale est désactivé.\n"
 
-#: command.c:4322
+#: command.c:4330
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "Le paginateur est utilisé pour les affichages longs.\n"
 
-#: command.c:4324
+#: command.c:4332
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "Le paginateur est toujours utilisé.\n"
 
-#: command.c:4326
+#: command.c:4334
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "L'utilisation du paginateur est désactivé.\n"
 
-#: command.c:4332
+#: command.c:4340
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
 msgstr[0] "Le paginateur ne sera pas utilisé pour moins que %d ligne.\n"
 msgstr[1] "Le paginateur ne sera pas utilisé pour moins que %d lignes.\n"
 
-#: command.c:4342 command.c:4352
+#: command.c:4350 command.c:4360
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "Le séparateur d'enregistrements est l'octet zéro.\n"
 
-#: command.c:4344
+#: command.c:4352
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "Le séparateur d'enregistrement est <saut de ligne>.\n"
 
-#: command.c:4346
+#: command.c:4354
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
-#: command.c:4359
+#: command.c:4367
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Les attributs de la table sont « %s ».\n"
 
-#: command.c:4362
+#: command.c:4370
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Les attributs de la table ne sont pas définis.\n"
 
-#: command.c:4369
+#: command.c:4377
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Le titre est « %s ».\n"
 
-#: command.c:4371
+#: command.c:4379
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Le titre n'est pas défini.\n"
 
-#: command.c:4378
+#: command.c:4386
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "L'affichage des tuples seuls est activé.\n"
 
-#: command.c:4380
+#: command.c:4388
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "L'affichage des tuples seuls est désactivé.\n"
 
-#: command.c:4386
+#: command.c:4394
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "Le style de bordure Unicode est « %s ».\n"
 
-#: command.c:4392
+#: command.c:4400
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "Le style de ligne Unicode est « %s ».\n"
 
-#: command.c:4398
+#: command.c:4406
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "Le style d'en-tête Unicode est « %s ».\n"
 
-#: command.c:4560
+#: command.c:4568
 #, c-format
 msgid "\\!: failed"
 msgstr "\\! : échec"
 
-#: command.c:4585 common.c:797
+#: command.c:4593 common.c:797
 #, c-format
 msgid "\\watch cannot be used with an empty query"
 msgstr "\\watch ne peut pas être utilisé avec une requête vide"
 
-#: command.c:4626
+#: command.c:4634
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (chaque %gs)\n"
 
-#: command.c:4629
+#: command.c:4637
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (chaque %gs)\n"
 
-#: command.c:4683 command.c:4690 common.c:697 common.c:704 common.c:1368
+#: command.c:4691 command.c:4698 common.c:697 common.c:704 common.c:1368
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -729,12 +730,12 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: command.c:4882
+#: command.c:4890
 #, c-format
 msgid "\"%s.%s\" is not a view"
 msgstr "« %s.%s » n'est pas une vue"
 
-#: command.c:4898
+#: command.c:4906
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "n'a pas pu analyser le tableau reloptions"
@@ -2291,8 +2292,7 @@ msgstr ""
 #: help.c:85
 #, c-format
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
-msgstr ""
-"  -f, --file=FICHIER     exécute les commandes du fichier, puis quitte\n"
+msgstr "  -f, --file=FICHIER     exécute les commandes du fichier, puis quitte\n"
 
 #: help.c:86
 #, c-format
@@ -2434,8 +2434,7 @@ msgstr ""
 #: help.c:112
 #, c-format
 msgid "      --csv                CSV (Comma-Separated Values) table output mode\n"
-msgstr ""
-"      --csv              mode d'affichage CSV (valeurs séparées par des virgules)\n"
+msgstr "      --csv              mode d'affichage CSV (valeurs séparées par des virgules)\n"
 
 #: help.c:113
 #, c-format
@@ -2474,8 +2473,7 @@ msgstr ""
 #: help.c:120
 #, c-format
 msgid "  -t, --tuples-only        print rows only\n"
-msgstr ""
-"  -t, --tuples-only      affiche seulement les lignes (-P tuples_only)\n"
+msgstr "  -t, --tuples-only      affiche seulement les lignes (-P tuples_only)\n"
 
 #: help.c:121
 #, c-format
@@ -2547,8 +2545,7 @@ msgstr ""
 #: help.c:142
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
-msgstr ""
-"  -w, --no-password      ne demande jamais un mot de passe\n"
+msgstr "  -w, --no-password      ne demande jamais un mot de passe\n"
 
 #: help.c:143
 #, c-format
@@ -6350,17 +6347,20 @@ msgstr ""
 "valeur « %s » non reconnue pour « %s »\n"
 "Les valeurs disponibles sont : %s."
 
-#~ msgid "using_list"
-#~ msgstr "liste_using"
+#~ msgid "    \"%s\""
+#~ msgstr "    « %s »"
 
-#~ msgid "from_list"
-#~ msgstr "liste_from"
+#~ msgid "  \"%s\" IN %s %s"
+#~ msgstr "  \"%s\" DANS %s %s"
 
-#~ msgid "normal"
-#~ msgstr "normal"
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help          affiche cette aide, puis quitte\n"
 
-#~ msgid "Procedure"
-#~ msgstr "Procédure"
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version       affiche la version, puis quitte\n"
+
+#~ msgid "  -?, --help               show this help, then exit\n"
+#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
 
 #~ msgid "  SERVER_VERSION_NAME  server's version (short string)\n"
 #~ msgstr "  SERVER_VERSION_NAME  version du serveur (chaîne courte)\n"
@@ -6374,153 +6374,20 @@ msgstr ""
 #~ msgid "  VERSION_NUM        psql's version (numeric format)\n"
 #~ msgstr "  VERSION_NUM        version de psql (format numérique)\n"
 
-#~ msgid "attribute"
-#~ msgstr "attribut"
-
-#~ msgid "No per-database role settings support in this server version.\n"
-#~ msgstr "Pas de supprot des paramètres rôle par base de données pour la version de ce serveur.\n"
-
-#~ msgid "No matching settings found.\n"
-#~ msgstr "Aucun paramètre correspondant trouvé.\n"
-
-#~ msgid "No settings found.\n"
-#~ msgstr "Aucun paramètre trouvé.\n"
-
-#~ msgid "No matching relations found.\n"
-#~ msgstr "Aucune relation correspondante trouvée.\n"
-
-#~ msgid "No relations found.\n"
-#~ msgstr "Aucune relation trouvée.\n"
-
-#~ msgid "Password encryption failed.\n"
-#~ msgstr "Échec du chiffrement du mot de passe.\n"
-
-#~ msgid "\\%s: error while setting variable\n"
-#~ msgstr "\\%s : erreur lors de l'initialisation de la variable\n"
-
-#~ msgid "+ opt(%d) = |%s|\n"
-#~ msgstr "+ opt(%d) = |%s|\n"
-
-#~ msgid "could not set variable \"%s\"\n"
-#~ msgstr "n'a pas pu initialiser la variable « %s »\n"
-
-#~ msgid "Modifiers"
-#~ msgstr "Modificateurs"
-
-#~ msgid "collate %s"
-#~ msgstr "collationnement %s"
-
-#~ msgid "not null"
-#~ msgstr "non NULL"
-
-#~ msgid "default %s"
-#~ msgstr "Par défaut, %s"
-
-#~ msgid "Modifier"
-#~ msgstr "Modificateur"
-
-#~ msgid "Object Description"
-#~ msgstr "Description d'un objet"
-
-#~ msgid "%s: could not set variable \"%s\"\n"
-#~ msgstr "%s : n'a pas pu initialiser la variable « %s »\n"
-
-#~ msgid "Watch every %lds\t%s"
-#~ msgstr "Vérifier chaque %lds\t%s"
-
-#~ msgid "Showing locale-adjusted numeric output."
-#~ msgstr "Affichage de la sortie numérique adaptée à la locale."
-
-#~ msgid "Showing only tuples."
-#~ msgstr "Affichage des tuples seuls."
-
-#~ msgid "could not get current user name: %s\n"
-#~ msgstr "n'a pas pu obtenir le nom d'utilisateur courant : %s\n"
-
-#~ msgid "agg_name"
-#~ msgstr "nom_d_agrégat"
-
-#~ msgid "agg_type"
-#~ msgstr "type_aggrégat"
-
-#~ msgid "input_data_type"
-#~ msgstr "type_de_données_en_entrée"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
-
-#~ msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr "%s : pg_strdup : ne peut pas dupliquer le pointeur null (erreur interne)\n"
-
-#~ msgid "  \\l[+]                  list all databases\n"
-#~ msgstr "  \\l[+]                affiche la liste des bases de données\n"
-
-#~ msgid "\\%s: error\n"
-#~ msgstr "\\%s : erreur\n"
-
-#~ msgid "\\copy: %s"
-#~ msgstr "\\copy : %s"
-
-#~ msgid "\\copy: unexpected response (%d)\n"
-#~ msgstr "\\copy : réponse inattendue (%d)\n"
-
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help          affiche cette aide, puis quitte\n"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version       affiche la version, puis quitte\n"
-
-#~ msgid "contains support for command-line editing"
-#~ msgstr "contient une gestion avancée de la ligne de commande"
-
-#~ msgid "data type"
-#~ msgstr "type de données"
-
-#~ msgid "column"
-#~ msgstr "colonne"
-
-#~ msgid "new_column"
-#~ msgstr "nouvelle_colonne"
-
-#~ msgid "tablespace"
-#~ msgstr "tablespace"
-
-#~ msgid " on host \"%s\""
-#~ msgstr " sur l'hôte « %s »"
-
-#~ msgid " at port \"%s\""
-#~ msgstr " sur le port « %s »"
-
-#~ msgid " as user \"%s\""
-#~ msgstr " comme utilisateur « %s »"
-
-#~ msgid "define a new constraint trigger"
-#~ msgstr "définir une nouvelle contrainte de déclenchement"
-
-#~ msgid "Exclusion constraints:"
-#~ msgstr "Contraintes d'exclusion :"
-
-#~ msgid "rolename"
-#~ msgstr "nom_rôle"
-
-#~ msgid "number"
-#~ msgstr "numéro"
-
-#~ msgid "  \"%s\" IN %s %s"
-#~ msgstr "  \"%s\" DANS %s %s"
-
-#~ msgid "(1 row)"
-#~ msgid_plural "(%lu rows)"
-#~ msgstr[0] "(1 ligne)"
-#~ msgstr[1] "(%lu lignes)"
-
-#~ msgid ""
-#~ "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
-#~ "                 list tables/indexes/sequences/views/system tables\n"
+#~ msgid "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"
 #~ msgstr ""
-#~ "  \\d{t|i|s|v|S} [MODÈLE] (ajouter « + » pour plus de détails)\n"
-#~ "                       affiche la liste des\n"
-#~ "                       tables/index/séquences/vues/tables système\n"
+#~ "  \\dFd [MODÈLE]        affiche la liste des dictionnaires de la recherche\n"
+#~ "                       de texte (ajouter « + » pour plus de détails)\n"
+
+#~ msgid "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
+#~ msgstr ""
+#~ "  \\dFp [MODÈLE]        affiche la liste des analyseurs de la recherche de\n"
+#~ "                       texte (ajouter « + » pour plus de détails)\n"
+
+#~ msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+#~ msgstr ""
+#~ "  \\dT [MODÈLE]         affiche la liste des types de données (ajouter « + »\n"
+#~ "                       pour plus de détails)\n"
 
 #~ msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 #~ msgstr ""
@@ -6532,38 +6399,144 @@ msgstr ""
 #~ "  \\df [MODÈLE]         affiche la liste des fonctions (ajouter « + » pour\n"
 #~ "                       plus de détails)\n"
 
-#~ msgid "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"
-#~ msgstr ""
-#~ "  \\dFd [MODÈLE]        affiche la liste des dictionnaires de la recherche\n"
-#~ "                       de texte (ajouter « + » pour plus de détails)\n"
-
-#~ msgid "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
-#~ msgstr ""
-#~ "  \\dFp [MODÈLE]        affiche la liste des analyseurs de la recherche de\n"
-#~ "                       texte (ajouter « + » pour plus de détails)\n"
-
 #~ msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\dn [MODÈLE]         affiche la liste des schémas (ajouter « + » pour\n"
 #~ "                       plus de détails)\n"
 
-#~ msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+#~ msgid ""
+#~ "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
+#~ "                 list tables/indexes/sequences/views/system tables\n"
 #~ msgstr ""
-#~ "  \\dT [MODÈLE]         affiche la liste des types de données (ajouter « + »\n"
-#~ "                       pour plus de détails)\n"
+#~ "  \\d{t|i|s|v|S} [MODÈLE] (ajouter « + » pour plus de détails)\n"
+#~ "                       affiche la liste des\n"
+#~ "                       tables/index/séquences/vues/tables système\n"
 
 #~ msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\l                   affiche la liste des bases de données (ajouter « + »\n"
 #~ "                       pour plus de détails)\n"
 
+#~ msgid "  \\l[+]                  list all databases\n"
+#~ msgstr "  \\l[+]                affiche la liste des bases de données\n"
+
 #~ msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 #~ msgstr ""
 #~ "  \\z [MODÈLE]          affiche la liste des privilèges d'accès aux tables,\n"
 #~ "                       vues et séquences (identique à \\dp)\n"
 
+#~ msgid " as user \"%s\""
+#~ msgstr " comme utilisateur « %s »"
+
+#~ msgid " at port \"%s\""
+#~ msgstr " sur le port « %s »"
+
+#~ msgid " on host \"%s\""
+#~ msgstr " sur l'hôte « %s »"
+
+#~ msgid "%s\n"
+#~ msgstr "%s\n"
+
+#~ msgid "%s: %s\n"
+#~ msgstr "%s : %s\n"
+
+#~ msgid "%s: could not open log file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s » : %s\n"
+
+#~ msgid "%s: could not set variable \"%s\"\n"
+#~ msgstr "%s : n'a pas pu initialiser la variable « %s »\n"
+
+#~ msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
+#~ msgstr "%s : pg_strdup : ne peut pas dupliquer le pointeur null (erreur interne)\n"
+
+#~ msgid "(1 row)"
+#~ msgid_plural "(%lu rows)"
+#~ msgstr[0] "(1 ligne)"
+#~ msgstr[1] "(%lu lignes)"
+
+#~ msgid "(No rows)\n"
+#~ msgstr "(Aucune ligne)\n"
+
+#~ msgid "+ opt(%d) = |%s|\n"
+#~ msgstr "+ opt(%d) = |%s|\n"
+
+#~ msgid "?%c? \"%s.%s\""
+#~ msgstr "?%c? « %s.%s »"
+
+#~ msgid "Access privileges for database \"%s\""
+#~ msgstr "Droits d'accès pour la base de données « %s »"
+
 #~ msgid "Copy, Large Object\n"
 #~ msgstr "Copie, « Large Object »\n"
+
+#~ msgid "Enter new password: "
+#~ msgstr "Saisissez le nouveau mot de passe : "
+
+#~ msgid "Exclusion constraints:"
+#~ msgstr "Contraintes d'exclusion :"
+
+#~ msgid "Invalid command \\%s. Try \\? for help.\n"
+#~ msgstr "Commande \\%s invalide. Essayez \\? pour l'aide-mémoire.\n"
+
+#~ msgid "Modifier"
+#~ msgstr "Modificateur"
+
+#~ msgid "Modifiers"
+#~ msgstr "Modificateurs"
+
+#~ msgid "No matching relations found.\n"
+#~ msgstr "Aucune relation correspondante trouvée.\n"
+
+#~ msgid "No matching settings found.\n"
+#~ msgstr "Aucun paramètre correspondant trouvé.\n"
+
+#~ msgid "No per-database role settings support in this server version.\n"
+#~ msgstr "Pas de supprot des paramètres rôle par base de données pour la version de ce serveur.\n"
+
+#~ msgid "No relations found.\n"
+#~ msgstr "Aucune relation trouvée.\n"
+
+#~ msgid "No settings found.\n"
+#~ msgstr "Aucun paramètre trouvé.\n"
+
+#~ msgid "Object Description"
+#~ msgstr "Description d'un objet"
+
+#~ msgid "Password encryption failed.\n"
+#~ msgstr "Échec du chiffrement du mot de passe.\n"
+
+#~ msgid "Procedure"
+#~ msgstr "Procédure"
+
+#~ msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgstr "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "SSL connection (unknown cipher)\n"
+#~ msgstr "Connexion SSL (chiffrement inconnu)\n"
+
+#~ msgid "Showing locale-adjusted numeric output."
+#~ msgstr "Affichage de la sortie numérique adaptée à la locale."
+
+#~ msgid "Showing only tuples."
+#~ msgstr "Affichage des tuples seuls."
+
+#~ msgid "Value"
+#~ msgstr "Valeur"
+
+#~ msgid ""
+#~ "WARNING:  You are connected to a server with major version %d.%d,\n"
+#~ "but your %s client is major version %d.%d.  Some backslash commands,\n"
+#~ "such as \\d, might not work properly.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "ATTENTION : vous êtes connecté sur un serveur dont la version majeure est\n"
+#~ "%d.%d alors que votre client %s est en version majeure %d.%d. Certaines\n"
+#~ "commandes avec antislashs, comme \\d, peuvent ne pas fonctionner\n"
+#~ "correctement.\n"
+#~ "\n"
+
+#~ msgid "Watch every %lds\t%s"
+#~ msgstr "Vérifier chaque %lds\t%s"
 
 #~ msgid ""
 #~ "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
@@ -6579,77 +6552,26 @@ msgstr ""
 #~ "Bienvenue dans %s %s, l'interface interactive de PostgreSQL.\n"
 #~ "\n"
 
-#~ msgid ""
-#~ "WARNING:  You are connected to a server with major version %d.%d,\n"
-#~ "but your %s client is major version %d.%d.  Some backslash commands,\n"
-#~ "such as \\d, might not work properly.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "ATTENTION : vous êtes connecté sur un serveur dont la version majeure est\n"
-#~ "%d.%d alors que votre client %s est en version majeure %d.%d. Certaines\n"
-#~ "commandes avec antislashs, comme \\d, peuvent ne pas fonctionner\n"
-#~ "correctement.\n"
-#~ "\n"
+#~ msgid "\\%s: error\n"
+#~ msgstr "\\%s : erreur\n"
 
-#~ msgid "Access privileges for database \"%s\""
-#~ msgstr "Droits d'accès pour la base de données « %s »"
+#~ msgid "\\%s: error while setting variable\n"
+#~ msgstr "\\%s : erreur lors de l'initialisation de la variable\n"
 
-#~ msgid "?%c? \"%s.%s\""
-#~ msgstr "?%c? « %s.%s »"
+#~ msgid "\\copy: %s"
+#~ msgstr "\\copy : %s"
 
-#~ msgid "    \"%s\""
-#~ msgstr "    « %s »"
+#~ msgid "\\copy: unexpected response (%d)\n"
+#~ msgstr "\\copy : réponse inattendue (%d)\n"
 
-#~ msgid "(No rows)\n"
-#~ msgstr "(Aucune ligne)\n"
+#~ msgid "agg_name"
+#~ msgstr "nom_d_agrégat"
 
-#~ msgid "  -?, --help               show this help, then exit\n"
-#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+#~ msgid "agg_type"
+#~ msgstr "type_aggrégat"
 
-#~ msgid "SSL connection (unknown cipher)\n"
-#~ msgstr "Connexion SSL (chiffrement inconnu)\n"
-
-#~ msgid "serialtype"
-#~ msgstr "serialtype"
-
-#~ msgid "statistic_type"
-#~ msgstr "type_statistique"
-
-#~ msgid "Value"
-#~ msgstr "Valeur"
-
-#~ msgid "%s: could not open log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s » : %s\n"
-
-#~ msgid "string_literal"
-#~ msgstr "littéral_chaîne"
-
-#~ msgid "unterminated quoted string\n"
-#~ msgstr "chaîne entre guillemets non terminée\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-#~ msgstr "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "%s\n"
-#~ msgstr "%s\n"
-
-#~ msgid "could not close pipe to external command: %s\n"
-#~ msgstr "n'a pas pu fermer le fichier pipe vers la commande externe : %s\n"
-
-#~ msgid "could not stat file \"%s\": %s\n"
-#~ msgstr "n'a pas pu tester le fichier « %s » : %s\n"
-
-#~ msgid "could not execute command \"%s\": %s\n"
-#~ msgstr "n'a pas pu exécuter la commande « %s » : %s\n"
-
-#~ msgid "could not open temporary file \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier temporaire « %s » : %s\n"
-
-#~ msgid "%s: %s\n"
-#~ msgstr "%s : %s\n"
-
-#~ msgid "Invalid command \\%s. Try \\? for help.\n"
-#~ msgstr "Commande \\%s invalide. Essayez \\? pour l'aide-mémoire.\n"
+#~ msgid "attribute"
+#~ msgstr "attribut"
 
 #~ msgid "child process was terminated by signal %d"
 #~ msgstr "le processus fils a été terminé par le signal %d"
@@ -6657,20 +6579,98 @@ msgstr ""
 #~ msgid "child process was terminated by signal %s"
 #~ msgstr "le processus fils a été terminé par le signal %s"
 
-#~ msgid "pclose failed: %s"
-#~ msgstr "échec de pclose : %s"
+#~ msgid "collate %s"
+#~ msgstr "collationnement %s"
 
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
+#~ msgid "column"
+#~ msgstr "colonne"
+
+#~ msgid "contains support for command-line editing"
+#~ msgstr "contient une gestion avancée de la ligne de commande"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #~ msgid "could not change directory to \"%s\": %s"
 #~ msgstr "n'a pas pu changer le répertoire par « %s » : %s"
 
-#~ msgid "could not identify current directory: %s"
-#~ msgstr "n'a pas pu identifier le répertoire courant : %s"
+#~ msgid "could not close pipe to external command: %s\n"
+#~ msgstr "n'a pas pu fermer le fichier pipe vers la commande externe : %s\n"
 
 #~ msgid "could not connect to server: %s"
 #~ msgstr "n'a pas pu se connecter au serveur : %s"
 
+#~ msgid "could not execute command \"%s\": %s\n"
+#~ msgstr "n'a pas pu exécuter la commande « %s » : %s\n"
+
+#~ msgid "could not get current user name: %s\n"
+#~ msgstr "n'a pas pu obtenir le nom d'utilisateur courant : %s\n"
+
+#~ msgid "could not identify current directory: %s"
+#~ msgstr "n'a pas pu identifier le répertoire courant : %s"
+
+#~ msgid "could not open temporary file \"%s\": %s\n"
+#~ msgstr "n'a pas pu ouvrir le fichier temporaire « %s » : %s\n"
+
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
+
+#~ msgid "could not set variable \"%s\"\n"
+#~ msgstr "n'a pas pu initialiser la variable « %s »\n"
+
+#~ msgid "could not stat file \"%s\": %s\n"
+#~ msgstr "n'a pas pu tester le fichier « %s » : %s\n"
+
+#~ msgid "data type"
+#~ msgstr "type de données"
+
+#~ msgid "default %s"
+#~ msgstr "Par défaut, %s"
+
+#~ msgid "define a new constraint trigger"
+#~ msgstr "définir une nouvelle contrainte de déclenchement"
+
+#~ msgid "from_list"
+#~ msgstr "liste_from"
+
+#~ msgid "input_data_type"
+#~ msgstr "type_de_données_en_entrée"
+
 #~ msgid "lock a named relation (table, etc)"
 #~ msgstr "verrouille une relation nommée (table, etc)"
+
+#~ msgid "new_column"
+#~ msgstr "nouvelle_colonne"
+
+#~ msgid "normal"
+#~ msgstr "normal"
+
+#~ msgid "not null"
+#~ msgstr "non NULL"
+
+#~ msgid "number"
+#~ msgstr "numéro"
+
+#~ msgid "pclose failed: %s"
+#~ msgstr "échec de pclose : %s"
+
+#~ msgid "rolename"
+#~ msgstr "nom_rôle"
+
+#~ msgid "serialtype"
+#~ msgstr "serialtype"
+
+#~ msgid "statistic_type"
+#~ msgstr "type_statistique"
+
+#~ msgid "string_literal"
+#~ msgstr "littéral_chaîne"
+
+#~ msgid "tablespace"
+#~ msgstr "tablespace"
+
+#~ msgid "unterminated quoted string\n"
+#~ msgstr "chaîne entre guillemets non terminée\n"
+
+#~ msgid "using_list"
+#~ msgstr "liste_using"

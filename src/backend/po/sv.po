@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:13+0000\n"
-"PO-Revision-Date: 2021-11-07 23:08+0100\n"
+"POT-Creation-Date: 2021-11-12 20:36+0000\n"
+"PO-Revision-Date: 2021-11-12 18:32+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -83,7 +83,7 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 #: access/heap/rewriteheap.c:1208 access/heap/rewriteheap.c:1311
 #: access/transam/timeline.c:391 access/transam/timeline.c:437
 #: access/transam/timeline.c:515 access/transam/twophase.c:1362
-#: access/transam/twophase.c:1797 access/transam/xlog.c:3353
+#: access/transam/twophase.c:1807 access/transam/xlog.c:3353
 #: access/transam/xlog.c:3521 access/transam/xlog.c:3526
 #: access/transam/xlog.c:3848 access/transam/xlog.c:4646
 #: access/transam/xlog.c:5606 access/transam/xlogfuncs.c:675
@@ -143,7 +143,7 @@ msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
 #: ../common/controldata_utils.c:221 ../common/controldata_utils.c:224
-#: access/transam/twophase.c:1770 access/transam/twophase.c:1779
+#: access/transam/twophase.c:1780 access/transam/twophase.c:1789
 #: access/transam/xlog.c:10787 access/transam/xlog.c:10825
 #: access/transam/xlog.c:11238 access/transam/xlogfuncs.c:729
 #: postmaster/syslogger.c:1500 postmaster/syslogger.c:1513
@@ -156,7 +156,7 @@ msgstr "kunde inte skriva fil \"%s\": %m"
 #: ../common/file_utils.c:297 ../common/file_utils.c:367
 #: access/heap/rewriteheap.c:981 access/heap/rewriteheap.c:1202
 #: access/heap/rewriteheap.c:1305 access/transam/timeline.c:431
-#: access/transam/timeline.c:509 access/transam/twophase.c:1791
+#: access/transam/timeline.c:509 access/transam/twophase.c:1801
 #: access/transam/xlog.c:3346 access/transam/xlog.c:3515
 #: access/transam/xlog.c:4639 access/transam/xlog.c:10305
 #: access/transam/xlog.c:10331 replication/logical/snapbuild.c:1667
@@ -208,9 +208,9 @@ msgstr "pclose misslyckades: %m"
 #: ../port/path.c:685 access/transam/twophase.c:1455 access/transam/xlog.c:6444
 #: lib/dshash.c:246 lib/stringinfo.c:283 libpq/auth.c:1470 libpq/auth.c:1538
 #: libpq/auth.c:2056 libpq/be-secure-gssapi.c:520 postmaster/bgworker.c:350
-#: postmaster/bgworker.c:984 postmaster/postmaster.c:2498
-#: postmaster/postmaster.c:4113 postmaster/postmaster.c:4810
-#: postmaster/postmaster.c:5595 postmaster/postmaster.c:5955
+#: postmaster/bgworker.c:984 postmaster/postmaster.c:2524
+#: postmaster/postmaster.c:4139 postmaster/postmaster.c:4836
+#: postmaster/postmaster.c:5621 postmaster/postmaster.c:5981
 #: replication/libpqwalreceiver/libpqwalreceiver.c:280
 #: replication/logical/logical.c:179 storage/buffer/localbuf.c:436
 #: storage/file/fd.c:797 storage/file/fd.c:1193 storage/file/fd.c:1354
@@ -941,7 +941,7 @@ msgstr "kunde inte skriva till fil \"%s\", skrev %d av %d: %m."
 #: access/transam/xlog.c:3278 access/transam/xlog.c:3450
 #: access/transam/xlog.c:4618 access/transam/xlog.c:10778
 #: access/transam/xlog.c:10816 access/transam/xlog.c:11221
-#: access/transam/xlogfuncs.c:723 postmaster/postmaster.c:4577
+#: access/transam/xlogfuncs.c:723 postmaster/postmaster.c:4603
 #: replication/logical/origin.c:582 replication/slot.c:1271
 #: storage/file/copydir.c:167 storage/smgr/md.c:204 utils/time/snapmgr.c:1344
 #, c-format
@@ -962,8 +962,8 @@ msgstr "kunde inte söka (seek) till slutet av filen \"%s\": %m"
 #: access/heap/rewriteheap.c:1189 access/transam/timeline.c:383
 #: access/transam/timeline.c:423 access/transam/timeline.c:501
 #: access/transam/xlog.c:3334 access/transam/xlog.c:3506
-#: access/transam/xlog.c:4630 postmaster/postmaster.c:4587
-#: postmaster/postmaster.c:4597 replication/logical/origin.c:594
+#: access/transam/xlog.c:4630 postmaster/postmaster.c:4613
+#: postmaster/postmaster.c:4623 replication/logical/origin.c:594
 #: replication/logical/origin.c:636 replication/logical/origin.c:655
 #: replication/logical/snapbuild.c:1643 replication/slot.c:1306
 #: storage/file/buffile.c:502 storage/file/copydir.c:207
@@ -975,7 +975,7 @@ msgstr "kunde inte söka (seek) till slutet av filen \"%s\": %m"
 msgid "could not write to file \"%s\": %m"
 msgstr "kunde inte skriva till fil \"%s\": %m"
 
-#: access/heap/rewriteheap.c:1279 access/transam/twophase.c:1730
+#: access/heap/rewriteheap.c:1279 access/transam/twophase.c:1740
 #: access/transam/xlogarchive.c:119 access/transam/xlogarchive.c:466
 #: postmaster/postmaster.c:1298 postmaster/syslogger.c:1466
 #: replication/logical/origin.c:570 replication/logical/reorderbuffer.c:2858
@@ -1567,12 +1567,12 @@ msgstr "Sätt max_prepared_transactions till ett ickenollvärde."
 msgid "transaction identifier \"%s\" is already in use"
 msgstr "transaktionsidentifierare \"%s\" används redan"
 
-#: access/transam/twophase.c:418 access/transam/twophase.c:2489
+#: access/transam/twophase.c:418 access/transam/twophase.c:2499
 #, c-format
 msgid "maximum number of prepared transactions reached"
 msgstr "maximalt antal förberedda transaktioner har uppnåtts"
 
-#: access/transam/twophase.c:419 access/transam/twophase.c:2490
+#: access/transam/twophase.c:419 access/transam/twophase.c:2500
 #, c-format
 msgid "Increase max_prepared_transactions (currently %d)."
 msgstr "Öka max_prepared_transactions (nu %d)."
@@ -1590,7 +1590,7 @@ msgstr "rättighet saknas för att slutföra förberedd transaktion"
 #: access/transam/twophase.c:604
 #, c-format
 msgid "Must be superuser or the user that prepared the transaction."
-msgstr "Måste vara superanvändare eller den användare som förberedde transaktionen"
+msgstr "Måste vara superuser eller den användare som förberedde transaktionen"
 
 #: access/transam/twophase.c:615
 #, c-format
@@ -1644,59 +1644,64 @@ msgstr "beräknad CRC-checksumma matchar inte värdet som är lagrat i filen \"%
 msgid "Failed while allocating a WAL reading processor."
 msgstr "Millslyckades vid allokering av en WAL-läs-processor."
 
-#: access/transam/twophase.c:1470
+#: access/transam/twophase.c:1472
+#, c-format
+msgid "could not read two-phase state from WAL at %X/%X: %s"
+msgstr "kunde inte läsa tvåfas-status från WAL vid %X/%X: %s"
+
+#: access/transam/twophase.c:1479
 #, c-format
 msgid "could not read two-phase state from WAL at %X/%X"
 msgstr "kunde inte läsa tvåfas-status från WAL vid %X/%X"
 
-#: access/transam/twophase.c:1478
+#: access/transam/twophase.c:1488
 #, c-format
 msgid "expected two-phase state data is not present in WAL at %X/%X"
 msgstr "förväntad tvåfas-statusdata finns inte i WAL vid %X/%X"
 
-#: access/transam/twophase.c:1758
+#: access/transam/twophase.c:1768
 #, c-format
 msgid "could not recreate file \"%s\": %m"
 msgstr "kan inte återskapa fil \"%s\": %m"
 
-#: access/transam/twophase.c:1885
+#: access/transam/twophase.c:1895
 #, c-format
 msgid "%u two-phase state file was written for a long-running prepared transaction"
 msgid_plural "%u two-phase state files were written for long-running prepared transactions"
 msgstr[0] "%u tvåfas-statusfil skrevs för långkörande förberedd transkation"
 msgstr[1] "%u tvåfas-statusfiler skrevs för långkörande förberedda transaktioner"
 
-#: access/transam/twophase.c:2119
+#: access/transam/twophase.c:2129
 #, c-format
 msgid "recovering prepared transaction %u from shared memory"
 msgstr "återskapar förberedd transaktion %u från delat minne"
 
-#: access/transam/twophase.c:2210
+#: access/transam/twophase.c:2220
 #, c-format
 msgid "removing stale two-phase state file for transaction %u"
 msgstr "tar bort död tvåfas-statusfil för transaktioon %u"
 
-#: access/transam/twophase.c:2217
+#: access/transam/twophase.c:2227
 #, c-format
 msgid "removing stale two-phase state from memory for transaction %u"
 msgstr "tar bort död tvåfas-statusfil från minne för transaktion %u"
 
-#: access/transam/twophase.c:2230
+#: access/transam/twophase.c:2240
 #, c-format
 msgid "removing future two-phase state file for transaction %u"
 msgstr "tar bort framtida tvåfas-statusfil för transaktion %u"
 
-#: access/transam/twophase.c:2237
+#: access/transam/twophase.c:2247
 #, c-format
 msgid "removing future two-phase state from memory for transaction %u"
 msgstr "tar bort framtida tvåfas-statusfil från minne för transaktion %u"
 
-#: access/transam/twophase.c:2262
+#: access/transam/twophase.c:2272
 #, c-format
 msgid "corrupted two-phase state file for transaction %u"
 msgstr "korrupt tvåfas-statusfil för transaktion %u"
 
-#: access/transam/twophase.c:2267
+#: access/transam/twophase.c:2277
 #, c-format
 msgid "corrupted two-phase state in memory for transaction %u"
 msgstr "korrupt tvåfas-status i minnet för transaktion %u"
@@ -3292,7 +3297,7 @@ msgstr "språket \"%s\" är inte betrott"
 #: catalog/aclchk.c:2668
 #, c-format
 msgid "GRANT and REVOKE are not allowed on untrusted languages, because only superusers can use untrusted languages."
-msgstr "GRANT och REVOKE är inte tillåtna på icke betrodda språk då bara superanvändare kan använda icke betrodda språk."
+msgstr "GRANT och REVOKE är inte tillåtna på icke betrodda språk då bara en superuser kan använda icke betrodda språk."
 
 #: catalog/aclchk.c:3182
 #, c-format
@@ -3760,7 +3765,7 @@ msgstr "statistikobjekt med OID %u finns inte"
 #: catalog/catalog.c:498
 #, c-format
 msgid "must be superuser to call pg_nextoid()"
-msgstr "måste vara superanvändare för att anropa pg_nextoid()"
+msgstr "måste vara superuser för att anropa pg_nextoid()"
 
 #: catalog/catalog.c:506
 #, c-format
@@ -4423,7 +4428,7 @@ msgstr "måste vara ägaren till typ %s eller typ %s"
 #: catalog/objectaddress.c:2457 catalog/objectaddress.c:2474
 #, c-format
 msgid "must be superuser"
-msgstr "måste vara superanvändare"
+msgstr "måste vara en superuser"
 
 #: catalog/objectaddress.c:2464
 #, c-format
@@ -5490,12 +5495,12 @@ msgstr "textsökkonfiguration \"%s\" finns redan i schema \"%s\""
 #: commands/alter.c:216
 #, c-format
 msgid "must be superuser to rename %s"
-msgstr "måste vara superanvändare för att döpa om %s"
+msgstr "måste vara en superuser för att döpa om %s"
 
 #: commands/alter.c:735
 #, c-format
 msgid "must be superuser to set schema of %s"
-msgstr "måste vara superanvändare för att sätta schema för %s"
+msgstr "måste vara en superuser för att sätta schema för %s"
 
 #: commands/amcmds.c:59
 #, c-format
@@ -5505,7 +5510,7 @@ msgstr "rättighet saknas för att skapa accessmetod \"%s\""
 #: commands/amcmds.c:61
 #, c-format
 msgid "Must be superuser to create an access method."
-msgstr "Måste vara superanvändare för att skapa accessmetod."
+msgstr "Måste vara en superuser för att skapa accessmetod."
 
 #: commands/amcmds.c:70
 #, c-format
@@ -5762,7 +5767,7 @@ msgstr "kunde inte konvertera lokalnamn \"%s\" till språktagg: %s"
 #: commands/collationcmds.c:546
 #, c-format
 msgid "must be superuser to import system collations"
-msgstr "måste vara superanvändare för att importera systemjämförelser"
+msgstr "måste vara en superuser för att importera systemjämförelser"
 
 #: commands/collationcmds.c:574 commands/copy.c:1898 commands/copy.c:3535
 #: libpq/be-secure-common.c:80
@@ -5863,7 +5868,7 @@ msgstr "oväntad meddelandetyp 0x%02X under COPY från stdin"
 #: commands/copy.c:862
 #, c-format
 msgid "must be superuser or a member of the pg_execute_server_program role to COPY to or from an external program"
-msgstr "måste vara superanvändare eller medlem i rollen pg_execute_server_program för att göra COPY till eller från ett externt program"
+msgstr "måste vara en superuser eller medlem i rollen pg_execute_server_program för att göra COPY till eller från ett externt program"
 
 #: commands/copy.c:863 commands/copy.c:872 commands/copy.c:879
 #, c-format
@@ -5873,12 +5878,12 @@ msgstr "Vem som helst can göra COPY till stdout eller från stdin. psql's \\cop
 #: commands/copy.c:871
 #, c-format
 msgid "must be superuser or a member of the pg_read_server_files role to COPY from a file"
-msgstr "måste vara superanvändare eller medlem i rollen pg_read_server_files för att göra COPY från en fil"
+msgstr "måste vara en superuser eller medlem i rollen pg_read_server_files för att göra COPY från en fil"
 
 #: commands/copy.c:878
 #, c-format
 msgid "must be superuser or a member of the pg_write_server_files role to COPY to a file"
-msgstr "måste vara superanvändare eller medlem i rollen pg_write_server_files för att göra COPY till en fil"
+msgstr "måste vara superuser eller medlem i rollen pg_write_server_files för att göra COPY till en fil"
 
 #: commands/copy.c:962
 #, c-format
@@ -6785,7 +6790,7 @@ msgstr "rättighet saknas för att skapa händelseutlösare \"%s\""
 #: commands/event_trigger.c:189
 #, c-format
 msgid "Must be superuser to create an event trigger."
-msgstr "Måste vara superanvändare för att skapa en händelsutlösare."
+msgstr "Måste vara superuser för att skapa en händelsutlösare."
 
 #: commands/event_trigger.c:198
 #, c-format
@@ -6827,7 +6832,7 @@ msgstr "rättighet saknas för att byta ägare på händelseutlösare \"%s\""
 #: commands/event_trigger.c:627
 #, c-format
 msgid "The owner of an event trigger must be a superuser."
-msgstr "Ägaren för en händelseutlösare måste vara en superanvändare."
+msgstr "Ägaren för en händelseutlösare måste vara en superuser."
 
 #: commands/event_trigger.c:1465
 #, c-format
@@ -6969,7 +6974,7 @@ msgstr "rättighet saknas för att skapa utökning \"%s\""
 #: commands/extension.c:810
 #, c-format
 msgid "Must be superuser to create this extension."
-msgstr "Måste vara superanvändare för att skapa denna utökning."
+msgstr "Måste vara superuser för att skapa denna utökning."
 
 #: commands/extension.c:814
 #, c-format
@@ -6979,7 +6984,7 @@ msgstr "rättighet saknas för att uppdatera utökning \"%s\""
 #: commands/extension.c:816
 #, c-format
 msgid "Must be superuser to update this extension."
-msgstr "Måste vara superanvändare för att uppdatera denna utökning."
+msgstr "Måste vara superuser för att uppdatera denna utökning."
 
 #: commands/extension.c:1113
 #, c-format
@@ -7119,12 +7124,12 @@ msgstr "rättighet saknas för att byta ägare på främmande data-omvandlare \"
 #: commands/foreigncmds.c:226
 #, c-format
 msgid "Must be superuser to change owner of a foreign-data wrapper."
-msgstr "Måste vara superanvändare för att byta ägare på en främmande data-omvandlare."
+msgstr "Måste vara superuser för att byta ägare på en främmande data-omvandlare."
 
 #: commands/foreigncmds.c:234
 #, c-format
 msgid "The owner of a foreign-data wrapper must be a superuser."
-msgstr "Ägaren av en främmande data-omvandlare måste vara en superanvändare."
+msgstr "Ägaren av en främmande data-omvandlare måste vara en superuser."
 
 #: commands/foreigncmds.c:294 commands/foreigncmds.c:715 foreign/foreign.c:701
 #, c-format
@@ -7139,7 +7144,7 @@ msgstr "rättighet saknas för att skapa främmande data-omvandlare \"%s\""
 #: commands/foreigncmds.c:590
 #, c-format
 msgid "Must be superuser to create a foreign-data wrapper."
-msgstr "Måste vara superanvändare för att skapa främmande data-omvandlare."
+msgstr "Måste vara superuser för att skapa främmande data-omvandlare."
 
 #: commands/foreigncmds.c:705
 #, c-format
@@ -7149,7 +7154,7 @@ msgstr "rättighet saknas för att ändra främmande data-omvandlare \"%s\""
 #: commands/foreigncmds.c:707
 #, c-format
 msgid "Must be superuser to alter a foreign-data wrapper."
-msgstr "Måste vara superanvändare för att ändra främmande data-omvandlare."
+msgstr "Måste vara superuser för att ändra främmande data-omvandlare."
 
 #: commands/foreigncmds.c:738
 #, c-format
@@ -7314,7 +7319,7 @@ msgstr "supportfunktion %s måste returnera typ %s"
 #: commands/functioncmds.c:684
 #, c-format
 msgid "must be superuser to specify a support function"
-msgstr "måste vara superanvändare för att ange en supportfunktion"
+msgstr "måste vara en superuser för att ange en supportfunktion"
 
 #: commands/functioncmds.c:800
 #, c-format
@@ -7355,7 +7360,7 @@ msgstr "Använd CREATE EXTENSION för att ladda in språket i databasen."
 #: commands/functioncmds.c:1032 commands/functioncmds.c:1311
 #, c-format
 msgid "only superuser can define a leakproof function"
-msgstr "bara superanvändare kan definiera en leakproof-funktion"
+msgstr "bara en superuser kan definiera en leakproof-funktion"
 
 #: commands/functioncmds.c:1081
 #, c-format
@@ -7435,7 +7440,7 @@ msgstr "typomvandlingsfunktionen får inte returnera en mängd"
 #: commands/functioncmds.c:1647
 #, c-format
 msgid "must be superuser to create a cast WITHOUT FUNCTION"
-msgstr "måste vara superanvändaren för att skapa en typomvandling WITHOUT FUNCTION"
+msgstr "måste vara superuser för att skapa en typomvandling WITHOUT FUNCTION"
 
 #: commands/functioncmds.c:1662
 #, c-format
@@ -7885,7 +7890,7 @@ msgstr "operatorfamilj \"%s\" för accessmetod \"%s\" finns redan"
 #: commands/opclasscmds.c:412
 #, c-format
 msgid "must be superuser to create an operator class"
-msgstr "måste vara superanvändare för att skapa en operatorklass"
+msgstr "måste vara en superuser för att skapa en operatorklass"
 
 #: commands/opclasscmds.c:485 commands/opclasscmds.c:864
 #: commands/opclasscmds.c:988
@@ -7927,12 +7932,12 @@ msgstr "Operatorklassen \"%s\" är redan standard."
 #: commands/opclasscmds.c:760
 #, c-format
 msgid "must be superuser to create an operator family"
-msgstr "måste vara superanvändare för att skapa en operatorfamilj"
+msgstr "måste vara en superuser för att skapa en operatorfamilj"
 
 #: commands/opclasscmds.c:818
 #, c-format
 msgid "must be superuser to alter an operator family"
-msgstr "måste vara superanvändare för att ändra en operatorfamilj"
+msgstr "måste vara en superuser för att ändra en operatorfamilj"
 
 #: commands/opclasscmds.c:873
 #, c-format
@@ -8229,7 +8234,7 @@ msgstr "Språken som stöds listas i systemkatalogen pg_pltemplate."
 #: commands/proclang.c:260
 #, c-format
 msgid "must be superuser to create custom procedural language"
-msgstr "måste vara superanvändare för att skapa ett eget procedurspråk"
+msgstr "måste vara en superuser för att skapa ett eget procedurspråk"
 
 #: commands/proclang.c:279 commands/trigger.c:719 commands/typecmds.c:458
 #: commands/typecmds.c:475
@@ -8255,7 +8260,7 @@ msgstr "okänd publiceringsparameter: \"%s\""
 #: commands/publicationcmds.c:165
 #, c-format
 msgid "must be superuser to create FOR ALL TABLES publication"
-msgstr "måste vara superanvändare för att skapa en FOR ALL TABLES-publicering"
+msgstr "måste vara en superuser för att skapa en FOR ALL TABLES-publicering"
 
 #: commands/publicationcmds.c:346
 #, c-format
@@ -8280,7 +8285,7 @@ msgstr "rättighet saknas för att byta ägare på publicering \"%s\""
 #: commands/publicationcmds.c:705
 #, c-format
 msgid "The owner of a FOR ALL TABLES publication must be a superuser."
-msgstr "Ägaren av en FOR ALL TABLES-publicering måste vara en superanvändare."
+msgstr "Ägaren av en FOR ALL TABLES-publicering måste vara en superuser."
 
 #: commands/schemacmds.c:106 commands/schemacmds.c:282
 #, c-format
@@ -8310,7 +8315,7 @@ msgstr "måste ange leverantör när multipla säkerhetsetikettleverantörer har
 #: commands/seclabel.c:82
 #, c-format
 msgid "security label provider \"%s\" is not loaded"
-msgstr "åsäkerhetsetikettleverantör \"%s\" har inte laddats"
+msgstr "leverantör \"%s\" för säkerhetsetiketter har inte laddats"
 
 #: commands/sequence.c:140
 #, c-format
@@ -8491,7 +8496,7 @@ msgstr "duplicerade kolumnnamn i statistikdefinition"
 #: commands/statscmds.c:310
 #, c-format
 msgid "unrecognized statistics kind \"%s\""
-msgstr "okänd statistiksort \"%s\""
+msgstr "okänd statistiktyp \"%s\""
 
 #: commands/subscriptioncmds.c:191
 #, c-format
@@ -8520,10 +8525,10 @@ msgstr "publiceringsnamn \"%s\" använt mer än en gång"
 #: commands/subscriptioncmds.c:361
 #, c-format
 msgid "must be superuser to create subscriptions"
-msgstr "måste vara superanvändare för att skapa prenumerationer"
+msgstr "måste vara en superuser för att skapa prenumerationer"
 
 #: commands/subscriptioncmds.c:453 commands/subscriptioncmds.c:547
-#: replication/logical/tablesync.c:850 replication/logical/worker.c:1746
+#: replication/logical/tablesync.c:850 replication/logical/worker.c:1749
 #, c-format
 msgid "could not connect to the publisher: %s"
 msgstr "kunde inte ansluta till publicerare: %s"
@@ -8614,7 +8619,7 @@ msgstr "rättighet saknas för att byta ägare på prenumeration \"%s\""
 #: commands/subscriptioncmds.c:1067
 #, c-format
 msgid "The owner of a subscription must be a superuser."
-msgstr "Ägaren av en prenumeration måste vara en superanvändare."
+msgstr "Ägaren av en prenumeration måste vara en superuser."
 
 #: commands/subscriptioncmds.c:1182
 #, c-format
@@ -10066,7 +10071,7 @@ msgstr "rättighet saknas för att skapa tabellutrymme \"%s\""
 #: commands/tablespace.c:252
 #, c-format
 msgid "Must be superuser to create a tablespace."
-msgstr "Måste vara superanvändare för att skapa ett tabellutrymme."
+msgstr "Måste vara en superuser för att skapa ett tabellutrymme."
 
 #: commands/tablespace.c:268
 #, c-format
@@ -10451,7 +10456,7 @@ msgstr "funktion %s skall returnera typ %s"
 #: commands/tsearchcmds.c:192
 #, c-format
 msgid "must be superuser to create text search parsers"
-msgstr "måste vara superanvändare för att skapa textsökparser"
+msgstr "måste vara en superuser för att skapa textsökparser"
 
 #: commands/tsearchcmds.c:245
 #, c-format
@@ -10491,7 +10496,7 @@ msgstr "textsökmall krävs"
 #: commands/tsearchcmds.c:753
 #, c-format
 msgid "must be superuser to create text search templates"
-msgstr "måste vara superanvändare för att skapa textsökmallar"
+msgstr "måste vara en superuser för att skapa textsökmallar"
 
 #: commands/tsearchcmds.c:795
 #, c-format
@@ -10541,7 +10546,7 @@ msgstr "ogiltigt parameterlistformat \"%s\""
 #: commands/typecmds.c:184
 #, c-format
 msgid "must be superuser to create a base type"
-msgstr "måste vara superanvändare för att skapa en bastyp"
+msgstr "måste vara en superuser för att skapa en bastyp"
 
 #: commands/typecmds.c:291 commands/typecmds.c:1469
 #, c-format
@@ -10837,17 +10842,17 @@ msgstr "SYSID kan inte längre anges"
 #: commands/user.c:294
 #, c-format
 msgid "must be superuser to create superusers"
-msgstr "måste vara superanvändare för att skapa superanvändare"
+msgstr "måste vara en superuser för att skapa nya superuser"
 
 #: commands/user.c:301
 #, c-format
 msgid "must be superuser to create replication users"
-msgstr "måste vara superanvändare för att skapa replikeringsanvändare"
+msgstr "måste vara en superuser för att skapa replikeringsanvändare"
 
 #: commands/user.c:308 commands/user.c:736
 #, c-format
 msgid "must be superuser to change bypassrls attribute"
-msgstr "måste vara superanvändare för ändra bypassrls-attribut"
+msgstr "måste vara en superuser för ändra bypassrls-attribut"
 
 #: commands/user.c:315
 #, c-format
@@ -10884,7 +10889,7 @@ msgstr "pg_authid OID-värde är ej satt i binärt uppgraderingsläge"
 #: commands/user.c:1633
 #, c-format
 msgid "must be superuser to alter superusers"
-msgstr "måste vara superanvändare för att ändra superanvändare"
+msgstr "måste vara en superuser för att ändra en superuser"
 
 #: commands/user.c:729
 #, c-format
@@ -10899,7 +10904,7 @@ msgstr "rättighet saknas"
 #: commands/user.c:983
 #, c-format
 msgid "must be superuser to alter settings globally"
-msgstr "måste vara superanvändare för att ändra globala inställningar"
+msgstr "måste vara en superuser för att ändra globala inställningar"
 
 #: commands/user.c:1005
 #, c-format
@@ -10937,7 +10942,7 @@ msgstr "sessionsanvändaren kan inte tas bort"
 #: commands/user.c:1076
 #, c-format
 msgid "must be superuser to drop superusers"
-msgstr "måste vara superanvändare för att ta bort superanvändare"
+msgstr "måste vara en superuser för att ta bort en superuser"
 
 #: commands/user.c:1092
 #, c-format
@@ -10957,7 +10962,7 @@ msgstr "aktuella användaren kan inte döpas om"
 #: commands/user.c:1260
 #, c-format
 msgid "must be superuser to rename superusers"
-msgstr "måste vara superanvändare för att döpa om superanvändare"
+msgstr "måste vara en superuser för att döpa om en superúser"
 
 #: commands/user.c:1267
 #, c-format
@@ -10992,7 +10997,7 @@ msgstr "måste ha \"admin option\" på roll \"%s\""
 #: commands/user.c:1514
 #, c-format
 msgid "must be superuser to set grantor"
-msgstr "måste vara superanvändare för att sätta fullmaktsgivare"
+msgstr "måste vara en superuser för att sätta fullmaktsgivare"
 
 #: commands/user.c:1539
 #, c-format
@@ -11037,12 +11042,12 @@ msgstr "VACUUM-flagga DISABLE_PAGE_SKIPPING kan inte anges med FULL"
 #: commands/vacuum.c:511
 #, c-format
 msgid "skipping \"%s\" --- only superuser can vacuum it"
-msgstr "hoppar över \"%s\" --- bara superanvändare kan städa den"
+msgstr "hoppar över \"%s\" --- bara en superuser kan städa den"
 
 #: commands/vacuum.c:515
 #, c-format
 msgid "skipping \"%s\" --- only superuser or database owner can vacuum it"
-msgstr "hoppar över \"%s\" --- bara superanvändare eller databasägaren kan städa den"
+msgstr "hoppar över \"%s\" --- bara en superuser eller databasägaren kan städa den"
 
 #: commands/vacuum.c:519
 #, c-format
@@ -11052,12 +11057,12 @@ msgstr "hoppar över \"%s\" --- bara tabell eller databasägaren kan köra vacuu
 #: commands/vacuum.c:534
 #, c-format
 msgid "skipping \"%s\" --- only superuser can analyze it"
-msgstr "hoppar över \"%s\" --- bara superanvändare kan analysera den"
+msgstr "hoppar över \"%s\" --- bara superuser kan analysera den"
 
 #: commands/vacuum.c:538
 #, c-format
 msgid "skipping \"%s\" --- only superuser or database owner can analyze it"
-msgstr "hoppar över \"%s\" --- bara superanvändare eller databasägaren kan analysera den"
+msgstr "hoppar över \"%s\" --- bara superuser eller databasägaren kan analysera den"
 
 #: commands/vacuum.c:542
 #, c-format
@@ -11725,12 +11730,12 @@ msgstr "rader returnerade av funktion är inte alla av samma radtyp"
 #: executor/execSRF.c:363 executor/execSRF.c:657
 #, c-format
 msgid "table-function protocol for materialize mode was not followed"
-msgstr "tabellfunktionsprotokoll för materialiserat läge följdes inte"
+msgstr "protokoll för tabellfunktion i materialiserat läge följdes inte"
 
 #: executor/execSRF.c:370 executor/execSRF.c:675
 #, c-format
 msgid "unrecognized table-function returnMode: %d"
-msgstr "okänt tabellfunktions-returnMode: %d"
+msgstr "okänd returnMode för tabellfunktion: %d"
 
 #: executor/execSRF.c:884
 #, c-format
@@ -13502,7 +13507,7 @@ msgstr "SSL-bibliotek stöder inte certifikatåterkallningslistor."
 #: libpq/be-secure-openssl.c:332
 #, c-format
 msgid "could not load SSL certificate revocation list file \"%s\": %s"
-msgstr "kunde inte ladda certifikatåterkallningslistfil \"%s\" för SSL-certifikat: %s"
+msgstr "kunde inte ladda fil \"%s\" med certifikatåterkallningslista för SSL: %s"
 
 #: libpq/be-secure-openssl.c:388
 #, c-format
@@ -14132,27 +14137,27 @@ msgstr "det finns ingen klientanslutning"
 msgid "could not receive data from client: %m"
 msgstr "kunde inte ta emot data från klient: %m"
 
-#: libpq/pqcomm.c:1217 tcop/postgres.c:4096
+#: libpq/pqcomm.c:1229 tcop/postgres.c:4096
 #, c-format
 msgid "terminating connection because protocol synchronization was lost"
 msgstr "stänger anslutning då protokollsynkroniseringen tappades"
 
-#: libpq/pqcomm.c:1283
+#: libpq/pqcomm.c:1295
 #, c-format
 msgid "unexpected EOF within message length word"
 msgstr "oväntat EOF inom meddelandelängdord"
 
-#: libpq/pqcomm.c:1294
+#: libpq/pqcomm.c:1306
 #, c-format
 msgid "invalid message length"
 msgstr "ogiltig meddelandelängd"
 
-#: libpq/pqcomm.c:1316 libpq/pqcomm.c:1329
+#: libpq/pqcomm.c:1328 libpq/pqcomm.c:1341
 #, c-format
 msgid "incomplete message from client"
 msgstr "inkomplett meddelande från klient"
 
-#: libpq/pqcomm.c:1462
+#: libpq/pqcomm.c:1474
 #, c-format
 msgid "could not send data to client: %m"
 msgstr "kunde inte skicka data till klient: %m"
@@ -16143,7 +16148,7 @@ msgstr "kan inte indexera typ %s då det inte är en array"
 #: parser/parse_node.c:362 parser/parse_node.c:399
 #, c-format
 msgid "array subscript must have type integer"
-msgstr "arrayindex måste ha typen integer"
+msgstr "array-index måste ha typen integer"
 
 #: parser/parse_node.c:430
 #, c-format
@@ -17203,7 +17208,7 @@ msgstr "Det misslyckade arkiveringskommandot var: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "arkiveringskommandot terminerades med avbrott 0x%X"
 
-#: postmaster/pgarch.c:658 postmaster/postmaster.c:3682
+#: postmaster/pgarch.c:658 postmaster/postmaster.c:3708
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Se C-include-fil \"ntstatus.h\" för en beskrivning av det hexdecimala värdet."
@@ -17505,371 +17510,386 @@ msgstr "ogiltig längd på startuppaket"
 msgid "failed to send SSL negotiation response: %m"
 msgstr "misslyckades att skicka SSL-förhandlingssvar: %m"
 
-#: postmaster/postmaster.c:2060
+#: postmaster/postmaster.c:2047
+#, c-format
+msgid "received unencrypted data after SSL request"
+msgstr "tog emot okrypterad data efter SSL-förfrågan"
+
+#: postmaster/postmaster.c:2048 postmaster/postmaster.c:2092
+#, c-format
+msgid "This could be either a client-software bug or evidence of an attempted man-in-the-middle attack."
+msgstr "Detta kan antingen vara en bug i klientens mjukvara eller bevis på ett försök att utföra en attack av typen man-in-the-middle."
+
+#: postmaster/postmaster.c:2073
 #, c-format
 msgid "failed to send GSSAPI negotiation response: %m"
 msgstr "misslyckades att skicka GSSAPI-förhandlingssvar: %m"
 
-#: postmaster/postmaster.c:2089
+#: postmaster/postmaster.c:2091
+#, c-format
+msgid "received unencrypted data after GSSAPI encryption request"
+msgstr "tog emot okrypterad data efter GSSAPI-krypteringsförfrågan"
+
+#: postmaster/postmaster.c:2115
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "inget stöd för framändans protokoll %u.%u: servern stöder %u.0 till %u.%u"
 
-#: postmaster/postmaster.c:2153 utils/misc/guc.c:6538 utils/misc/guc.c:6574
+#: postmaster/postmaster.c:2179 utils/misc/guc.c:6538 utils/misc/guc.c:6574
 #: utils/misc/guc.c:6644 utils/misc/guc.c:7995 utils/misc/guc.c:10858
 #: utils/misc/guc.c:10899
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ogiltigt värde för parameter \"%s\": \"%s\""
 
-#: postmaster/postmaster.c:2156
+#: postmaster/postmaster.c:2182
 #, c-format
 msgid "Valid values are: \"false\", 0, \"true\", 1, \"database\"."
 msgstr "Giltiga värden är: \"false\", 0, \"true\", 1, \"database\"."
 
-#: postmaster/postmaster.c:2201
+#: postmaster/postmaster.c:2227
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "ogiltig startpaketlayout: förväntade en terminator som sista byte"
 
-#: postmaster/postmaster.c:2239
+#: postmaster/postmaster.c:2265
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "inget PostgreSQL-användarnamn angivet i startuppaketet"
 
-#: postmaster/postmaster.c:2298
+#: postmaster/postmaster.c:2324
 #, c-format
 msgid "the database system is starting up"
 msgstr "databassystemet startar upp"
 
-#: postmaster/postmaster.c:2303
+#: postmaster/postmaster.c:2329
 #, c-format
 msgid "the database system is shutting down"
 msgstr "databassystemet stänger ner"
 
-#: postmaster/postmaster.c:2308
+#: postmaster/postmaster.c:2334
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "databassystemet är återställningsläge"
 
-#: postmaster/postmaster.c:2313 storage/ipc/procarray.c:293
+#: postmaster/postmaster.c:2339 storage/ipc/procarray.c:293
 #: storage/ipc/sinvaladt.c:298 storage/lmgr/proc.c:363
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "ledsen, för många klienter"
 
-#: postmaster/postmaster.c:2403
+#: postmaster/postmaster.c:2429
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "fel nyckel i avbrytbegäran för process %d"
 
-#: postmaster/postmaster.c:2415
+#: postmaster/postmaster.c:2441
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "PID %d i avbrytbegäran matchade inte någon process"
 
-#: postmaster/postmaster.c:2661
+#: postmaster/postmaster.c:2687
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "mottog SIGHUP, läser om konfigurationsfiler"
 
 #. translator: %s is a configuration file
-#: postmaster/postmaster.c:2687 postmaster/postmaster.c:2691
+#: postmaster/postmaster.c:2713 postmaster/postmaster.c:2717
 #, c-format
 msgid "%s was not reloaded"
 msgstr "%s laddades inte om"
 
-#: postmaster/postmaster.c:2701
+#: postmaster/postmaster.c:2727
 #, c-format
 msgid "SSL configuration was not reloaded"
 msgstr "SSL-konfiguration laddades inte om"
 
-#: postmaster/postmaster.c:2757
+#: postmaster/postmaster.c:2783
 #, c-format
 msgid "received smart shutdown request"
 msgstr "tog emot förfrågan om att stänga ner smart"
 
-#: postmaster/postmaster.c:2803
+#: postmaster/postmaster.c:2829
 #, c-format
 msgid "received fast shutdown request"
 msgstr "tog emot förfrågan om att stänga ner snabbt"
 
-#: postmaster/postmaster.c:2821
+#: postmaster/postmaster.c:2847
 #, c-format
 msgid "aborting any active transactions"
 msgstr "avbryter aktiva transaktioner"
 
-#: postmaster/postmaster.c:2845
+#: postmaster/postmaster.c:2871
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "mottog begäran för omedelbar nedstängning"
 
-#: postmaster/postmaster.c:2920
+#: postmaster/postmaster.c:2946
 #, c-format
 msgid "shutdown at recovery target"
 msgstr "nedstängs vid återställningsmål"
 
-#: postmaster/postmaster.c:2936 postmaster/postmaster.c:2959
+#: postmaster/postmaster.c:2962 postmaster/postmaster.c:2985
 msgid "startup process"
 msgstr "uppstartprocess"
 
-#: postmaster/postmaster.c:2939
+#: postmaster/postmaster.c:2965
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "avbryter uppstart på grund av fel i startprocessen"
 
-#: postmaster/postmaster.c:3001
+#: postmaster/postmaster.c:3027
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "databassystemet är redo att ta emot anslutningar"
 
-#: postmaster/postmaster.c:3022
+#: postmaster/postmaster.c:3048
 msgid "background writer process"
 msgstr "bakgrundsskrivarprocess"
 
-#: postmaster/postmaster.c:3076
+#: postmaster/postmaster.c:3102
 msgid "checkpointer process"
 msgstr "checkpoint-process"
 
-#: postmaster/postmaster.c:3092
+#: postmaster/postmaster.c:3118
 msgid "WAL writer process"
 msgstr "WAL-skrivarprocess"
 
-#: postmaster/postmaster.c:3107
+#: postmaster/postmaster.c:3133
 msgid "WAL receiver process"
 msgstr "WAL-mottagarprocess"
 
-#: postmaster/postmaster.c:3122
+#: postmaster/postmaster.c:3148
 msgid "autovacuum launcher process"
 msgstr "autovacuum-startprocess"
 
-#: postmaster/postmaster.c:3137
+#: postmaster/postmaster.c:3163
 msgid "archiver process"
 msgstr "arkiveringsprocess"
 
-#: postmaster/postmaster.c:3153
+#: postmaster/postmaster.c:3179
 msgid "statistics collector process"
 msgstr "statistikinsamlingsprocess"
 
-#: postmaster/postmaster.c:3167
+#: postmaster/postmaster.c:3193
 msgid "system logger process"
 msgstr "system-logg-process"
 
-#: postmaster/postmaster.c:3231
+#: postmaster/postmaster.c:3257
 #, c-format
 msgid "background worker \"%s\""
 msgstr "bakgrundsarbetare \"%s\""
 
-#: postmaster/postmaster.c:3315 postmaster/postmaster.c:3335
-#: postmaster/postmaster.c:3342 postmaster/postmaster.c:3360
+#: postmaster/postmaster.c:3341 postmaster/postmaster.c:3361
+#: postmaster/postmaster.c:3368 postmaster/postmaster.c:3386
 msgid "server process"
 msgstr "serverprocess"
 
-#: postmaster/postmaster.c:3414
+#: postmaster/postmaster.c:3440
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "avslutar andra aktiva serverprocesser"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3669
+#: postmaster/postmaster.c:3695
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) avslutade med felkod %d"
 
-#: postmaster/postmaster.c:3671 postmaster/postmaster.c:3683
-#: postmaster/postmaster.c:3693 postmaster/postmaster.c:3704
+#: postmaster/postmaster.c:3697 postmaster/postmaster.c:3709
+#: postmaster/postmaster.c:3719 postmaster/postmaster.c:3730
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Misslyckad process körde: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3680
+#: postmaster/postmaster.c:3706
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) terminerades av avbrott 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3690
+#: postmaster/postmaster.c:3716
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) terminerades av signal %d: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3702
+#: postmaster/postmaster.c:3728
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) avslutade med okänd status %d"
 
-#: postmaster/postmaster.c:3917
+#: postmaster/postmaster.c:3943
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "ej normal databasnedstängning"
 
-#: postmaster/postmaster.c:3957
+#: postmaster/postmaster.c:3983
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "alla serverprocesser är avslutade; initierar på nytt"
 
-#: postmaster/postmaster.c:4127 postmaster/postmaster.c:5559
-#: postmaster/postmaster.c:5946
+#: postmaster/postmaster.c:4153 postmaster/postmaster.c:5585
+#: postmaster/postmaster.c:5972
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "kunde inte skapa slumpad avbrytningsnyckel"
 
-#: postmaster/postmaster.c:4181
+#: postmaster/postmaster.c:4207
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "kunde inte fork():a ny process for uppkoppling: %m"
 
-#: postmaster/postmaster.c:4223
+#: postmaster/postmaster.c:4249
 msgid "could not fork new process for connection: "
 msgstr "kunde inte fork():a ny process for uppkoppling: "
 
-#: postmaster/postmaster.c:4341
+#: postmaster/postmaster.c:4367
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "ansluting mottagen: värd=%s port=%s"
 
-#: postmaster/postmaster.c:4346
+#: postmaster/postmaster.c:4372
 #, c-format
 msgid "connection received: host=%s"
 msgstr "ansluting mottagen: värd=%s"
 
-#: postmaster/postmaster.c:4616
+#: postmaster/postmaster.c:4642
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "kunde inte köra serverprocess \"%s\": %m"
 
-#: postmaster/postmaster.c:4769
+#: postmaster/postmaster.c:4795
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr "ger upp efter för många försök att reservera delat minne"
 
-#: postmaster/postmaster.c:4770
+#: postmaster/postmaster.c:4796
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "Detta kan orsakas av ASLR eller antivirusprogram."
 
-#: postmaster/postmaster.c:4969
+#: postmaster/postmaster.c:4995
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "SSL-konfigurering kunde inte laddas i barnprocess"
 
-#: postmaster/postmaster.c:5101
+#: postmaster/postmaster.c:5127
 #, c-format
 msgid "Please report this to <pgsql-bugs@lists.postgresql.org>."
 msgstr "Vänligen rapportera detta till <pgsql-bugs@lists.postgresql.org>."
 
-#: postmaster/postmaster.c:5188
+#: postmaster/postmaster.c:5214
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "databassystemet är redo att ta emot read-only-anslutningar"
 
-#: postmaster/postmaster.c:5487
+#: postmaster/postmaster.c:5513
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "kunde inte starta startup-processen: %m"
 
-#: postmaster/postmaster.c:5491
+#: postmaster/postmaster.c:5517
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "kunde inte starta process för bakgrundsskrivare: %m"
 
-#: postmaster/postmaster.c:5495
+#: postmaster/postmaster.c:5521
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "kunde inte fork:a bakgrundsprocess: %m"
 
-#: postmaster/postmaster.c:5499
+#: postmaster/postmaster.c:5525
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "kunde inte fork:a WAL-skrivprocess: %m"
 
-#: postmaster/postmaster.c:5503
+#: postmaster/postmaster.c:5529
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "kunde inte fork:a WAL-mottagarprocess: %m"
 
-#: postmaster/postmaster.c:5507
+#: postmaster/postmaster.c:5533
 #, c-format
 msgid "could not fork process: %m"
 msgstr "kunde inte fork:a process: %m"
 
-#: postmaster/postmaster.c:5704 postmaster/postmaster.c:5727
+#: postmaster/postmaster.c:5730 postmaster/postmaster.c:5753
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "krav på databasanslutning fanns inte med vid registering"
 
-#: postmaster/postmaster.c:5711 postmaster/postmaster.c:5734
+#: postmaster/postmaster.c:5737 postmaster/postmaster.c:5760
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "ogiltigt processläge i bakgrundsarbetare"
 
-#: postmaster/postmaster.c:5807
+#: postmaster/postmaster.c:5833
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "startar bakgrundsarbetarprocess \"%s\""
 
-#: postmaster/postmaster.c:5819
+#: postmaster/postmaster.c:5845
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "kunde inte starta (fork) arbetarprocess: %m"
 
-#: postmaster/postmaster.c:5932
+#: postmaster/postmaster.c:5958
 #, c-format
 msgid "no slot available for new worker process"
 msgstr "ingen slot tillgänglig för ny arbetsprocess"
 
-#: postmaster/postmaster.c:6267
+#: postmaster/postmaster.c:6293
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "kunde inte duplicera uttag (socket) %d för att använda i backend: felkod %d"
 
-#: postmaster/postmaster.c:6299
+#: postmaster/postmaster.c:6325
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "kunde inte skapa ärvt uttag (socket): felkod %d\n"
 
-#: postmaster/postmaster.c:6328
+#: postmaster/postmaster.c:6354
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "kunde inte öppna bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6335
+#: postmaster/postmaster.c:6361
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "kunde inte läsa från bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6344
+#: postmaster/postmaster.c:6370
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "kunde inte ta bort fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6361
+#: postmaster/postmaster.c:6387
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "kunde inte mappa in vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6370
+#: postmaster/postmaster.c:6396
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "kunde inte avmappa vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6377
+#: postmaster/postmaster.c:6403
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "kunde inte stänga \"handle\" till backend:ens parametervariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6541
+#: postmaster/postmaster.c:6567
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "kunde inte läsa avslutningskod för process\n"
 
-#: postmaster/postmaster.c:6546
+#: postmaster/postmaster.c:6572
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "kunde inte skicka barnets avslutningsstatus\n"
@@ -18109,7 +18129,7 @@ msgstr "fel vid nestängning av strömmande COPY: %s"
 #: replication/libpqwalreceiver/libpqwalreceiver.c:535
 #, c-format
 msgid "error reading result of streaming command: %s"
-msgstr "fel vid läsning av resultat från strömmningskommando: %s"
+msgstr "fel vid läsning av resultat från strömningskommando: %s"
 
 #: replication/libpqwalreceiver/libpqwalreceiver.c:543
 #: replication/libpqwalreceiver/libpqwalreceiver.c:777
@@ -18261,7 +18281,7 @@ msgstr "slot \"%s\", utdata-plugin \"%s\", i callback:en %s"
 #: replication/logical/logicalfuncs.c:114 replication/slotfuncs.c:34
 #, c-format
 msgid "must be superuser or replication role to use replication slots"
-msgstr "måste vara superanvändare eller replikeringsroll för att använda replikeringsslottar"
+msgstr "måste vara superuser eller replikeringsroll för att använda replikeringsslottar"
 
 #: replication/logical/logicalfuncs.c:153
 #, c-format
@@ -18384,7 +18404,7 @@ msgstr "Källnamn som startar med \"pg_\" är reserverade."
 #: replication/logical/relation.c:269
 #, c-format
 msgid "logical replication target relation \"%s.%s\" does not exist"
-msgstr "logisk replikeringsmålrelation \"%s.%s\" finns inte"
+msgstr "destinationsrelation \"%s.%s\" för logisk replikering finns inte"
 
 #: replication/logical/relation.c:312
 #, c-format
@@ -18394,7 +18414,7 @@ msgstr "logisk replikeringsmålrelation \"%s.%s\" saknar några replikerade kolu
 #: replication/logical/relation.c:352
 #, c-format
 msgid "logical replication target relation \"%s.%s\" uses system columns in REPLICA IDENTITY index"
-msgstr "logisk replikeringsmålrelation \"%s.%s\" använder systemkolumner i REPLICA IDENTITY-index"
+msgstr "destinationsrelation \"%s.%s\" för logisk replikering använder systemkolumner i REPLICA IDENTITY-index"
 
 #: replication/logical/reorderbuffer.c:2529
 #, c-format
@@ -18536,82 +18556,82 @@ msgstr "processar fjärrdata för replikeringsmålrelation \"%s.%s\" kolumn \"%s
 msgid "ORIGIN message sent out of order"
 msgstr "ORIGIN-meddelande skickat i fel ordning"
 
-#: replication/logical/worker.c:664
+#: replication/logical/worker.c:667
 #, c-format
 msgid "publisher did not send replica identity column expected by the logical replication target relation \"%s.%s\""
 msgstr "publicerare skickade inte identitetskolumn för replika som förväntades av den logiska replikeringens målrelation \"%s.%s\""
 
-#: replication/logical/worker.c:671
+#: replication/logical/worker.c:674
 #, c-format
 msgid "logical replication target relation \"%s.%s\" has neither REPLICA IDENTITY index nor PRIMARY KEY and published relation does not have REPLICA IDENTITY FULL"
 msgstr "logisk replikeringsmålrelation \"%s.%s\" har varken REPLICA IDENTITY-index eller PRIMARY KEY och den publicerade relationen har inte REPLICA IDENTITY FULL"
 
-#: replication/logical/worker.c:1029
+#: replication/logical/worker.c:1032
 #, c-format
 msgid "invalid logical replication message type \"%c\""
 msgstr "ogiltig logisk replikeringsmeddelandetyp \"%c\""
 
-#: replication/logical/worker.c:1172
+#: replication/logical/worker.c:1175
 #, c-format
 msgid "data stream from publisher has ended"
 msgstr "dataströmmen från publiceraren har avslutats"
 
-#: replication/logical/worker.c:1327
+#: replication/logical/worker.c:1330
 #, c-format
 msgid "terminating logical replication worker due to timeout"
 msgstr "avslutar logisk replikeringsarbetare på grund av timeout"
 
-#: replication/logical/worker.c:1473
+#: replication/logical/worker.c:1476
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will stop because the subscription was removed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer stoppa då prenumerationen har tagits bort"
 
-#: replication/logical/worker.c:1487
+#: replication/logical/worker.c:1490
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will stop because the subscription was disabled"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer stoppa då prenumerationen har stängts av"
 
-#: replication/logical/worker.c:1501
+#: replication/logical/worker.c:1504
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will restart because the connection information was changed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer starta om då uppkopplingsinformationen ändrats"
 
-#: replication/logical/worker.c:1515
+#: replication/logical/worker.c:1518
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will restart because subscription was renamed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer starta om då prenumerationen bytt namn"
 
-#: replication/logical/worker.c:1532
+#: replication/logical/worker.c:1535
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will restart because the replication slot name was changed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer starta om då replikeringsslotten bytt namn"
 
-#: replication/logical/worker.c:1546
+#: replication/logical/worker.c:1549
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will restart because subscription's publications were changed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer starta om då prenumerationens publiceringar ändrats"
 
-#: replication/logical/worker.c:1656
+#: replication/logical/worker.c:1659
 #, c-format
 msgid "logical replication apply worker for subscription %u will not start because the subscription was removed during startup"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration %u kommer inte starta då prenumerationen togs bort under uppstart"
 
-#: replication/logical/worker.c:1668
+#: replication/logical/worker.c:1671
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will not start because the subscription was disabled during startup"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer inte starta då prenumerationen stänges av under uppstart"
 
-#: replication/logical/worker.c:1686
+#: replication/logical/worker.c:1689
 #, c-format
 msgid "logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started"
 msgstr "logisk replikerings tabellsynkroniseringsarbetare för prenumeration \"%s\", tabell \"%s\" har startat"
 
-#: replication/logical/worker.c:1690
+#: replication/logical/worker.c:1693
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" has started"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" har startat"
 
-#: replication/logical/worker.c:1729
+#: replication/logical/worker.c:1732
 #, c-format
 msgid "subscription has no replication slot set"
 msgstr "prenumeration har ingen replikeringsslot angiven"
@@ -19920,7 +19940,7 @@ msgstr "kunde inte skicka signal till process %d: %m"
 #: storage/ipc/signalfuncs.c:118
 #, c-format
 msgid "must be a superuser to cancel superuser query"
-msgstr "måste vara superanvändare för att avbryta superanvändares fråga"
+msgstr "måste vara superuser för att avbryta en superusers fråga"
 
 #: storage/ipc/signalfuncs.c:123
 #, c-format
@@ -19930,7 +19950,7 @@ msgstr "måste vara medlem i den roll vars fråga håller på att avbrytas eller
 #: storage/ipc/signalfuncs.c:142
 #, c-format
 msgid "must be a superuser to terminate superuser process"
-msgstr "måste vara superanvändare för stoppa superanvändares process"
+msgstr "måste vara superuser för stoppa en superusers process"
 
 #: storage/ipc/signalfuncs.c:147
 #, c-format
@@ -19940,7 +19960,7 @@ msgstr "måste vara medlem i den roll vars process håller på att avslutas elle
 #: storage/ipc/signalfuncs.c:183
 #, c-format
 msgid "must be superuser to rotate log files with adminpack 1.0"
-msgstr "måste vara superanvändare för att rotera loggfiler med adminpack 1.0"
+msgstr "måste vara superuser för att rotera loggfiler med adminpack 1.0"
 
 #. translator: %s is a SQL function name
 #: storage/ipc/signalfuncs.c:185 utils/adt/genfile.c:252
@@ -20699,7 +20719,7 @@ msgstr "kan inte köra %s inom säkerhetsbegränsad operation"
 #: tcop/utility.c:760
 #, c-format
 msgid "must be superuser to do CHECKPOINT"
-msgstr "måste vara superanvändare för att göra CHECKPOINT"
+msgstr "måste vara superuser för att göra CHECKPOINT"
 
 #: tsearch/dict_ispell.c:52 tsearch/dict_thesaurus.c:624
 #, c-format
@@ -22025,7 +22045,7 @@ msgstr "fillängd är för stor"
 #: utils/adt/genfile.c:250
 #, c-format
 msgid "must be superuser to read files with adminpack 1.0"
-msgstr "måste vara superanvändare för att läsa filer med adminpack 1.0"
+msgstr "måste vara superuser för att läsa filer med adminpack 1.0"
 
 #: utils/adt/geo_ops.c:979 utils/adt/geo_ops.c:1025
 #, c-format
@@ -22546,7 +22566,7 @@ msgstr "jsonpaths arrayväljare med wildcard kan bara applcieras på en array"
 #: utils/adt/jsonpath_exec.c:694
 #, c-format
 msgid "jsonpath array subscript is out of bounds"
-msgstr "jsonpaths array-index är utanför giltigt område"
+msgstr "array-index för jsonpath är utanför giltigt område"
 
 #: utils/adt/jsonpath_exec.c:751
 #, c-format
@@ -22601,7 +22621,7 @@ msgstr "jsonpaths elementmetod .%s() kan bara appliceras på ett numeriskt värd
 #: utils/adt/jsonpath_exec.c:1740
 #, c-format
 msgid "jsonpath item method .%s() can only be applied to an object"
-msgstr "jsonpaths elementmetod .%s() kan bara appliceras på ett objekt"
+msgstr "elementmetod .%s() för jsonpath kan bara appliceras på ett objekt"
 
 #: utils/adt/jsonpath_exec.c:1923
 #, c-format
@@ -22611,12 +22631,12 @@ msgstr "kunde inte hitta jsonpath-variabel \"%s\""
 #: utils/adt/jsonpath_exec.c:2170
 #, c-format
 msgid "jsonpath array subscript is not a single numeric value"
-msgstr "jsonpaths  array-index är inte ett ensamt numeriskt värde"
+msgstr "array-index för jsonpath är inte ett ensamt numeriskt värde"
 
 #: utils/adt/jsonpath_exec.c:2182
 #, c-format
 msgid "jsonpath array subscript is out of integer range"
-msgstr "jsonpaths array-index är utanför giltigt interval för integer"
+msgstr "array-index för jsonpath är utanför giltigt interval för integer"
 
 #: utils/adt/levenshtein.c:133
 #, c-format
@@ -24572,22 +24592,22 @@ msgstr "nya replikeringsanslutningar tillåts inte under databasnedstängning"
 #: utils/init/postinit.c:794
 #, c-format
 msgid "must be superuser to connect during database shutdown"
-msgstr "måste vara superanvändare för att ansluta när databasen håller på att stängas ner"
+msgstr "måste vara superuser för att ansluta när databasen håller på att stängas ner"
 
 #: utils/init/postinit.c:804
 #, c-format
 msgid "must be superuser to connect in binary upgrade mode"
-msgstr "måste vara superanvändare för att ansluta i binärt uppgraderingsläger"
+msgstr "måste vara superuser för att ansluta i binärt uppgraderingsläger"
 
 #: utils/init/postinit.c:817
 #, c-format
 msgid "remaining connection slots are reserved for non-replication superuser connections"
-msgstr "resterande anslutningsslottar är reserverade för superanvändaranslutningar utan replikering"
+msgstr "resterande anslutningsslottar är reserverade för superuser-anslutningar utan replikering"
 
 #: utils/init/postinit.c:827
 #, c-format
 msgid "must be superuser or replication role to start walsender"
-msgstr "måste vara superanvändare eller replikeringsroll för att starta \"walsender\""
+msgstr "måste vara superuser eller replikeringsroll för att starta \"walsender\""
 
 #: utils/init/postinit.c:896
 #, c-format
@@ -24976,7 +24996,7 @@ msgstr "Denna algoritm försöker utföra planering utan fullständig sökning."
 
 #: utils/misc/guc.c:1069
 msgid "Shows whether the current user is a superuser."
-msgstr "Visar om den aktuella användaren är en superanvändare."
+msgstr "Visar om den aktuella användaren är en superuser."
 
 #: utils/misc/guc.c:1079
 msgid "Enables advertising the server via Bonjour."
@@ -25444,7 +25464,7 @@ msgstr "Sätter maximalt antal samtidiga anslutningar."
 
 #: utils/misc/guc.c:2142
 msgid "Sets the number of connection slots reserved for superusers."
-msgstr "Sätter antalet anslutningsslottar som reserverats för superanvändare."
+msgstr "Sätter antalet anslutningsslottar som reserverats för superusers."
 
 #: utils/misc/guc.c:2156
 msgid "Sets the number of shared memory buffers used by the server."
@@ -26552,7 +26572,7 @@ msgstr "kan inte sätta parameter \"%s\" inom en security-definer-funktion"
 #: utils/misc/guc.c:7537 utils/misc/guc.c:7587 utils/misc/guc.c:9002
 #, c-format
 msgid "must be superuser or a member of pg_read_all_settings to examine \"%s\""
-msgstr "måste vara superanvändare eller medlem i pg_read_all_settings för att undersöka \"%s\""
+msgstr "måste vara superuser eller medlem i pg_read_all_settings för att undersöka \"%s\""
 
 #: utils/misc/guc.c:7678
 #, c-format
@@ -26562,7 +26582,7 @@ msgstr "SET %s tar bara ett argument"
 #: utils/misc/guc.c:7926
 #, c-format
 msgid "must be superuser to execute ALTER SYSTEM command"
-msgstr "måste vara superanvändare för att köra kommandot ALTER SYSTEM"
+msgstr "måste vara superuser för att köra kommandot ALTER SYSTEM"
 
 #: utils/misc/guc.c:8011
 #, c-format

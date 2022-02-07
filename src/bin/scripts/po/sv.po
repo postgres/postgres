@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-07 09:15+0000\n"
-"PO-Revision-Date: 2021-11-07 15:07+0100\n"
+"POT-Creation-Date: 2021-11-08 22:38+0000\n"
+"PO-Revision-Date: 2021-11-09 06:34+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -471,7 +471,7 @@ msgstr "Lösenorden stämde inte överens.\n"
 
 #: createuser.c:230
 msgid "Shall the new role be a superuser?"
-msgstr "Skall den nya rollen vara en superanvändare?"
+msgstr "Skall den nya rollen vara en superuser?"
 
 #: createuser.c:245
 msgid "Shall the new role be allowed to create databases?"
@@ -567,12 +567,12 @@ msgstr "  -R, --no-createrole       rollen kan inte skapa roller (standard)\n"
 #: createuser.c:375
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
-msgstr "  -s, --superuser           rollen blir en superanvändare\n"
+msgstr "  -s, --superuser           rollen blir en superuser\n"
 
 #: createuser.c:376
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
-msgstr "  -S, --no-superuser        rollen blir inte superanvändare (standard)\n"
+msgstr "  -S, --no-superuser        rollen blir inte superuser (standard)\n"
 
 #: createuser.c:378
 #, c-format
