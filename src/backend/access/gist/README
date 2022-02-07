@@ -26,6 +26,7 @@ The current implementation of GiST supports:
   * Concurrency
   * Recovery support via WAL logging
   * Buffering build algorithm
+  * Sorted build method
 
 The support for concurrency implemented in PostgreSQL was developed based on
 the paper "Access Methods for Next-Generation Database Systems" by
@@ -413,6 +414,21 @@ the new buffers will always be siblings of buffers that haven't been fully
 emptied yet; tuples never move upwards in the tree. The final emptying loops
 through buffers at a given level until all buffers at that level have been
 emptied, and then moves down to the next level.
+
+Sorted build method
+-------------------
+
+Sort all input tuples, pack them into GiST leaf pages in the sorted order,
+and create downlinks and internal pages as we go. This method builds the index
+from the bottom up, similar to how the B-tree index is built.
+
+The sorted method is used if the operator classes for all columns have a
+"sortsupport" defined. Otherwise, we fall back on inserting tuples one by one
+with optional buffering.
+
+Sorting GiST build requires good linearization of the sort opclass. That is not
+always the case in multidimensional data. To tackle the anomalies, we buffer
+index tuples and apply a picksplit function that can be multidimensional-aware.
 
 Bulk delete algorithm (VACUUM)
 ------------------------------

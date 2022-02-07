@@ -33,14 +33,13 @@ COMMIT;
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
  itemoffset |   ctid    | itemlen | dead |       keys        
 ------------+-----------+---------+------+-------------------
-          1 | (1,65535) |      40 | f    | (p)=((166,166))
-          2 | (2,65535) |      40 | f    | (p)=((332,332))
-          3 | (3,65535) |      40 | f    | (p)=((498,498))
-          4 | (4,65535) |      40 | f    | (p)=((664,664))
-          5 | (5,65535) |      40 | f    | (p)=((830,830))
-          6 | (6,65535) |      40 | f    | (p)=((996,996))
-          7 | (7,65535) |      40 | f    | (p)=((1000,1000))
-(7 rows)
+          1 | (1,65535) |      40 | f    | (p)=((185,185))
+          2 | (2,65535) |      40 | f    | (p)=((370,370))
+          3 | (3,65535) |      40 | f    | (p)=((555,555))
+          4 | (4,65535) |      40 | f    | (p)=((740,740))
+          5 | (5,65535) |      40 | f    | (p)=((870,870))
+          6 | (6,65535) |      40 | f    | (p)=((1000,1000))
+(6 rows)
 
 SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 1), 'test_gist_idx') LIMIT 5;
  itemoffset | ctid  | itemlen | dead |    keys     
@@ -63,7 +62,6 @@ SELECT itemoffset, ctid, itemlen FROM gist_page_items_bytea(get_raw_page('test_g
           4 | (4,65535) |      40
           5 | (5,65535) |      40
           6 | (6,65535) |      40
-          7 | (7,65535) |      40
-(7 rows)
+(6 rows)
 
 DROP TABLE test_gist;
