@@ -1,5 +1,5 @@
 --
--- CREATE FUNCTION
+-- CREATE_FUNCTION_SQL
 --
 -- Assorted tests using SQL-language functions
 --
