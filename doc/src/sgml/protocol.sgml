@@ -3041,17 +3041,6 @@ The commands accepted in replication mode are:
      </para>
     </listitem>
   </varlistentry>
-
-  <varlistentry>
-    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ] [ <literal>MANIFEST</literal> <replaceable>manifest_option</replaceable> ] [ <literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable> ]
-    </term>
-    <listitem>
-     <para>
-      For compatibility with older releases, this alternative syntax for
-      the <literal>BASE_BACKUP</literal> command is still supported.
-     </para>
-    </listitem>
-  </varlistentry>
 </variablelist>
 
 </para>

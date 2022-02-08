@@ -67,15 +67,7 @@ Node *replication_parse_result;
 %token K_CREATE_REPLICATION_SLOT
 %token K_DROP_REPLICATION_SLOT
 %token K_TIMELINE_HISTORY
-%token K_LABEL
-%token K_PROGRESS
-%token K_FAST
 %token K_WAIT
-%token K_NOWAIT
-%token K_MAX_RATE
-%token K_WAL
-%token K_TABLESPACE_MAP
-%token K_NOVERIFY_CHECKSUMS
 %token K_TIMELINE
 %token K_PHYSICAL
 %token K_LOGICAL
@@ -86,15 +78,13 @@ Node *replication_parse_result;
 %token K_EXPORT_SNAPSHOT
 %token K_NOEXPORT_SNAPSHOT
 %token K_USE_SNAPSHOT
-%token K_MANIFEST
-%token K_MANIFEST_CHECKSUMS
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
 				read_replication_slot timeline_history show
-%type <list>	base_backup_legacy_opt_list generic_option_list
-%type <defelt>	base_backup_legacy_opt generic_option
+%type <list>	generic_option_list
+%type <defelt>	generic_option
 %type <uintval>	opt_timeline
 %type <list>	plugin_options plugin_opt_list
 %type <defelt>	plugin_opt_elem
@@ -167,15 +157,7 @@ var_name:	IDENT	{ $$ = $1; }
 		;
 
 /*
- * BASE_BACKUP ( option [ 'value' ] [, ...] )
- *
- * We also still support the legacy syntax:
- *
- * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT]
- * [MAX_RATE %d] [TABLESPACE_MAP] [NOVERIFY_CHECKSUMS]
- * [MANIFEST %s] [MANIFEST_CHECKSUMS %s]
- *
- * Future options should be supported only using the new syntax.
+ * BASE_BACKUP [ ( option [ 'value' ] [, ...] ) ]
  */
 base_backup:
 			K_BASE_BACKUP '(' generic_option_list ')'
@@ -184,71 +166,10 @@ base_backup:
 					cmd->options = $3;
 					$$ = (Node *) cmd;
 				}
-			| K_BASE_BACKUP base_backup_legacy_opt_list
+			| K_BASE_BACKUP
 				{
 					BaseBackupCmd *cmd = makeNode(BaseBackupCmd);
-					cmd->options = $2;
 					$$ = (Node *) cmd;
-				}
-			;
-
-base_backup_legacy_opt_list:
-			base_backup_legacy_opt_list base_backup_legacy_opt
-				{ $$ = lappend($1, $2); }
-			| /* EMPTY */
-				{ $$ = NIL; }
-			;
-
-base_backup_legacy_opt:
-			K_LABEL SCONST
-				{
-				  $$ = makeDefElem("label",
-								   (Node *)makeString($2), -1);
-				}
-			| K_PROGRESS
-				{
-				  $$ = makeDefElem("progress",
-								   (Node *)makeBoolean(true), -1);
-				}
-			| K_FAST
-				{
-				  $$ = makeDefElem("checkpoint",
-								   (Node *)makeString("fast"), -1);
-				}
-			| K_WAL
-				{
-				  $$ = makeDefElem("wal",
-								   (Node *)makeBoolean(true), -1);
-				}
-			| K_NOWAIT
-				{
-				  $$ = makeDefElem("wait",
-								   (Node *)makeBoolean(false), -1);
-				}
-			| K_MAX_RATE UCONST
-				{
-				  $$ = makeDefElem("max_rate",
-								   (Node *)makeInteger($2), -1);
-				}
-			| K_TABLESPACE_MAP
-				{
-				  $$ = makeDefElem("tablespace_map",
-								   (Node *)makeBoolean(true), -1);
-				}
-			| K_NOVERIFY_CHECKSUMS
-				{
-				  $$ = makeDefElem("verify_checksums",
-								   (Node *)makeBoolean(false), -1);
-				}
-			| K_MANIFEST SCONST
-				{
-				  $$ = makeDefElem("manifest",
-								   (Node *)makeString($2), -1);
-				}
-			| K_MANIFEST_CHECKSUMS SCONST
-				{
-				  $$ = makeDefElem("manifest_checksums",
-								   (Node *)makeString($2), -1);
 				}
 			;
 
@@ -481,15 +402,7 @@ ident_or_keyword:
 			| K_CREATE_REPLICATION_SLOT	{ $$ = "create_replication_slot"; }
 			| K_DROP_REPLICATION_SLOT		{ $$ = "drop_replication_slot"; }
 			| K_TIMELINE_HISTORY			{ $$ = "timeline_history"; }
-			| K_LABEL						{ $$ = "label"; }
-			| K_PROGRESS					{ $$ = "progress"; }
-			| K_FAST						{ $$ = "fast"; }
 			| K_WAIT						{ $$ = "wait"; }
-			| K_NOWAIT						{ $$ = "nowait"; }
-			| K_MAX_RATE					{ $$ = "max_rate"; }
-			| K_WAL							{ $$ = "wal"; }
-			| K_TABLESPACE_MAP				{ $$ = "tablespace_map"; }
-			| K_NOVERIFY_CHECKSUMS			{ $$ = "noverify_checksums"; }
 			| K_TIMELINE					{ $$ = "timeline"; }
 			| K_PHYSICAL					{ $$ = "physical"; }
 			| K_LOGICAL						{ $$ = "logical"; }
@@ -500,8 +413,6 @@ ident_or_keyword:
 			| K_EXPORT_SNAPSHOT				{ $$ = "export_snapshot"; }
 			| K_NOEXPORT_SNAPSHOT			{ $$ = "noexport_snapshot"; }
 			| K_USE_SNAPSHOT				{ $$ = "use_snapshot"; }
-			| K_MANIFEST					{ $$ = "manifest"; }
-			| K_MANIFEST_CHECKSUMS			{ $$ = "manifest_checksums"; }
 		;
 
 %%
