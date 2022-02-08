@@ -257,7 +257,7 @@
 	(&MainLWLockArray[PREDICATELOCK_MANAGER_LWLOCK_OFFSET + (i)].lock)
 
 #define NPREDICATELOCKTARGETENTS() \
-	mul_size(max_predicate_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
+	mul_size(max_predicate_locks_per_xact, add_size(GetMaxBackends(), max_prepared_xacts))
 
 #define SxactIsOnFinishedList(sxact) (!SHMQueueIsDetached(&((sxact)->finishedLink)))
 
@@ -1222,7 +1222,7 @@ InitPredicateLocks(void)
 	 * Compute size for serializable transaction hashtable. Note these
 	 * calculations must agree with PredicateLockShmemSize!
 	 */
-	max_table_size = (MaxBackends + max_prepared_xacts);
+	max_table_size = (GetMaxBackends() + max_prepared_xacts);
 
 	/*
 	 * Allocate a list to hold information on transactions participating in
@@ -1375,7 +1375,7 @@ PredicateLockShmemSize(void)
 	size = add_size(size, size / 10);
 
 	/* transaction list */
-	max_table_size = MaxBackends + max_prepared_xacts;
+	max_table_size = GetMaxBackends() + max_prepared_xacts;
 	max_table_size *= 10;
 	size = add_size(size, PredXactListDataSize);
 	size = add_size(size, mul_size((Size) max_table_size,
@@ -1907,7 +1907,7 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	{
 		++(PredXact->WritableSxactCount);
 		Assert(PredXact->WritableSxactCount <=
-			   (MaxBackends + max_prepared_xacts));
+			   (GetMaxBackends() + max_prepared_xacts));
 	}
 
 	MySerializableXact = sxact;
@@ -5111,7 +5111,7 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 		{
 			++(PredXact->WritableSxactCount);
 			Assert(PredXact->WritableSxactCount <=
-				   (MaxBackends + max_prepared_xacts));
+				   (GetMaxBackends() + max_prepared_xacts));
 		}
 
 		/*

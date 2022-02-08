@@ -172,7 +172,6 @@ extern PGDLLIMPORT char *DataDir;
 extern PGDLLIMPORT int data_directory_mode;
 
 extern PGDLLIMPORT int NBuffers;
-extern PGDLLIMPORT int MaxBackends;
 extern PGDLLIMPORT int MaxConnections;
 extern PGDLLIMPORT int max_worker_processes;
 extern PGDLLIMPORT int max_parallel_workers;
@@ -457,6 +456,8 @@ extern AuxProcType MyAuxProcType;
 /* in utils/init/postinit.c */
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
 extern void InitializeMaxBackends(void);
+extern int GetMaxBackends(void);
+extern void SetMaxBackends(int max_backends);
 extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 						 Oid useroid, char *out_dbname, bool override_allow_connections);
 extern void BaseInit(void);

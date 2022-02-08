@@ -27,18 +27,6 @@
 
 
 /* ----------
- * Total number of backends including auxiliary
- *
- * We reserve a slot for each possible BackendId, plus one for each
- * possible auxiliary process type.  (This scheme assumes there is not
- * more than one of any auxiliary process type at a time.) MaxBackends
- * includes autovacuum workers and background workers as well.
- * ----------
- */
-#define NumBackendStatSlots (MaxBackends + NUM_AUXPROCTYPES)
-
-
-/* ----------
  * GUC parameters
  * ----------
  */
@@ -75,7 +63,22 @@ static MemoryContext backendStatusSnapContext;
 static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_read_current_status(void);
 static void pgstat_setup_backend_status_context(void);
+static inline int GetNumBackendStatSlots(void);
 
+
+/*
+ * Retrieve the total number of backends including auxiliary
+ *
+ * We reserve a slot for each possible BackendId, plus one for each possible
+ * auxiliary process type.  (This scheme assumes there is not more than one of
+ * any auxiliary process type at a time.)  MaxBackends includes autovacuum
+ * workers and background workers as well.
+ */
+static inline int
+GetNumBackendStatSlots(void)
+{
+	return GetMaxBackends() + NUM_AUXPROCTYPES;
+}
 
 /*
  * Report shared-memory space needed by CreateSharedBackendStatus.
@@ -84,27 +87,28 @@ Size
 BackendStatusShmemSize(void)
 {
 	Size		size;
+	int			numBackendStatSlots = GetNumBackendStatSlots();
 
 	/* BackendStatusArray: */
-	size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+	size = mul_size(sizeof(PgBackendStatus), numBackendStatSlots);
 	/* BackendAppnameBuffer: */
 	size = add_size(size,
-					mul_size(NAMEDATALEN, NumBackendStatSlots));
+					mul_size(NAMEDATALEN, numBackendStatSlots));
 	/* BackendClientHostnameBuffer: */
 	size = add_size(size,
-					mul_size(NAMEDATALEN, NumBackendStatSlots));
+					mul_size(NAMEDATALEN, numBackendStatSlots));
 	/* BackendActivityBuffer: */
 	size = add_size(size,
-					mul_size(pgstat_track_activity_query_size, NumBackendStatSlots));
+					mul_size(pgstat_track_activity_query_size, numBackendStatSlots));
 #ifdef USE_SSL
 	/* BackendSslStatusBuffer: */
 	size = add_size(size,
-					mul_size(sizeof(PgBackendSSLStatus), NumBackendStatSlots));
+					mul_size(sizeof(PgBackendSSLStatus), numBackendStatSlots));
 #endif
 #ifdef ENABLE_GSS
 	/* BackendGssStatusBuffer: */
 	size = add_size(size,
-					mul_size(sizeof(PgBackendGSSStatus), NumBackendStatSlots));
+					mul_size(sizeof(PgBackendGSSStatus), numBackendStatSlots));
 #endif
 	return size;
 }
@@ -120,9 +124,10 @@ CreateSharedBackendStatus(void)
 	bool		found;
 	int			i;
 	char	   *buffer;
+	int			numBackendStatSlots = GetNumBackendStatSlots();
 
 	/* Create or attach to the shared array */
-	size = mul_size(sizeof(PgBackendStatus), NumBackendStatSlots);
+	size = mul_size(sizeof(PgBackendStatus), numBackendStatSlots);
 	BackendStatusArray = (PgBackendStatus *)
 		ShmemInitStruct("Backend Status Array", size, &found);
 
@@ -135,7 +140,7 @@ CreateSharedBackendStatus(void)
 	}
 
 	/* Create or attach to the shared appname buffer */
-	size = mul_size(NAMEDATALEN, NumBackendStatSlots);
+	size = mul_size(NAMEDATALEN, numBackendStatSlots);
 	BackendAppnameBuffer = (char *)
 		ShmemInitStruct("Backend Application Name Buffer", size, &found);
 
@@ -145,7 +150,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_appname pointers. */
 		buffer = BackendAppnameBuffer;
-		for (i = 0; i < NumBackendStatSlots; i++)
+		for (i = 0; i < numBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_appname = buffer;
 			buffer += NAMEDATALEN;
@@ -153,7 +158,7 @@ CreateSharedBackendStatus(void)
 	}
 
 	/* Create or attach to the shared client hostname buffer */
-	size = mul_size(NAMEDATALEN, NumBackendStatSlots);
+	size = mul_size(NAMEDATALEN, numBackendStatSlots);
 	BackendClientHostnameBuffer = (char *)
 		ShmemInitStruct("Backend Client Host Name Buffer", size, &found);
 
@@ -163,7 +168,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_clienthostname pointers. */
 		buffer = BackendClientHostnameBuffer;
-		for (i = 0; i < NumBackendStatSlots; i++)
+		for (i = 0; i < numBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_clienthostname = buffer;
 			buffer += NAMEDATALEN;
@@ -172,7 +177,7 @@ CreateSharedBackendStatus(void)
 
 	/* Create or attach to the shared activity buffer */
 	BackendActivityBufferSize = mul_size(pgstat_track_activity_query_size,
-										 NumBackendStatSlots);
+										 numBackendStatSlots);
 	BackendActivityBuffer = (char *)
 		ShmemInitStruct("Backend Activity Buffer",
 						BackendActivityBufferSize,
@@ -184,7 +189,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_activity pointers. */
 		buffer = BackendActivityBuffer;
-		for (i = 0; i < NumBackendStatSlots; i++)
+		for (i = 0; i < numBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_activity_raw = buffer;
 			buffer += pgstat_track_activity_query_size;
@@ -193,7 +198,7 @@ CreateSharedBackendStatus(void)
 
 #ifdef USE_SSL
 	/* Create or attach to the shared SSL status buffer */
-	size = mul_size(sizeof(PgBackendSSLStatus), NumBackendStatSlots);
+	size = mul_size(sizeof(PgBackendSSLStatus), numBackendStatSlots);
 	BackendSslStatusBuffer = (PgBackendSSLStatus *)
 		ShmemInitStruct("Backend SSL Status Buffer", size, &found);
 
@@ -205,7 +210,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_sslstatus pointers. */
 		ptr = BackendSslStatusBuffer;
-		for (i = 0; i < NumBackendStatSlots; i++)
+		for (i = 0; i < numBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_sslstatus = ptr;
 			ptr++;
@@ -215,7 +220,7 @@ CreateSharedBackendStatus(void)
 
 #ifdef ENABLE_GSS
 	/* Create or attach to the shared GSSAPI status buffer */
-	size = mul_size(sizeof(PgBackendGSSStatus), NumBackendStatSlots);
+	size = mul_size(sizeof(PgBackendGSSStatus), numBackendStatSlots);
 	BackendGssStatusBuffer = (PgBackendGSSStatus *)
 		ShmemInitStruct("Backend GSS Status Buffer", size, &found);
 
@@ -227,7 +232,7 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_gssstatus pointers. */
 		ptr = BackendGssStatusBuffer;
-		for (i = 0; i < NumBackendStatSlots; i++)
+		for (i = 0; i < numBackendStatSlots; i++)
 		{
 			BackendStatusArray[i].st_gssstatus = ptr;
 			ptr++;
@@ -251,7 +256,7 @@ pgstat_beinit(void)
 	/* Initialize MyBEEntry */
 	if (MyBackendId != InvalidBackendId)
 	{
-		Assert(MyBackendId >= 1 && MyBackendId <= MaxBackends);
+		Assert(MyBackendId >= 1 && MyBackendId <= GetMaxBackends());
 		MyBEEntry = &BackendStatusArray[MyBackendId - 1];
 	}
 	else
@@ -267,7 +272,7 @@ pgstat_beinit(void)
 		 * MaxBackends + AuxBackendType + 1 as the index of the slot for an
 		 * auxiliary process.
 		 */
-		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
+		MyBEEntry = &BackendStatusArray[GetMaxBackends() + MyAuxProcType];
 	}
 
 	/* Set up a process-exit hook to clean up */
@@ -739,6 +744,7 @@ pgstat_read_current_status(void)
 	PgBackendGSSStatus *localgssstatus;
 #endif
 	int			i;
+	int			numBackendStatSlots = GetNumBackendStatSlots();
 
 	if (localBackendStatusTable)
 		return;					/* already done */
@@ -755,32 +761,32 @@ pgstat_read_current_status(void)
 	 */
 	localtable = (LocalPgBackendStatus *)
 		MemoryContextAlloc(backendStatusSnapContext,
-						   sizeof(LocalPgBackendStatus) * NumBackendStatSlots);
+						   sizeof(LocalPgBackendStatus) * numBackendStatSlots);
 	localappname = (char *)
 		MemoryContextAlloc(backendStatusSnapContext,
-						   NAMEDATALEN * NumBackendStatSlots);
+						   NAMEDATALEN * numBackendStatSlots);
 	localclienthostname = (char *)
 		MemoryContextAlloc(backendStatusSnapContext,
-						   NAMEDATALEN * NumBackendStatSlots);
+						   NAMEDATALEN * numBackendStatSlots);
 	localactivity = (char *)
 		MemoryContextAllocHuge(backendStatusSnapContext,
-							   pgstat_track_activity_query_size * NumBackendStatSlots);
+							   pgstat_track_activity_query_size * numBackendStatSlots);
 #ifdef USE_SSL
 	localsslstatus = (PgBackendSSLStatus *)
 		MemoryContextAlloc(backendStatusSnapContext,
-						   sizeof(PgBackendSSLStatus) * NumBackendStatSlots);
+						   sizeof(PgBackendSSLStatus) * numBackendStatSlots);
 #endif
 #ifdef ENABLE_GSS
 	localgssstatus = (PgBackendGSSStatus *)
 		MemoryContextAlloc(backendStatusSnapContext,
-						   sizeof(PgBackendGSSStatus) * NumBackendStatSlots);
+						   sizeof(PgBackendGSSStatus) * numBackendStatSlots);
 #endif
 
 	localNumBackends = 0;
 
 	beentry = BackendStatusArray;
 	localentry = localtable;
-	for (i = 1; i <= NumBackendStatSlots; i++)
+	for (i = 1; i <= numBackendStatSlots; i++)
 	{
 		/*
 		 * Follow the protocol of retrying if st_changecount changes while we
@@ -893,9 +899,10 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 {
 	PgBackendStatus *beentry;
 	int			i;
+	int			max_backends = GetMaxBackends();
 
 	beentry = BackendStatusArray;
-	for (i = 1; i <= MaxBackends; i++)
+	for (i = 1; i <= max_backends; i++)
 	{
 		/*
 		 * Although we expect the target backend's entry to be stable, that
@@ -971,6 +978,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 {
 	volatile PgBackendStatus *beentry;
 	int			i;
+	int			max_backends = GetMaxBackends();
 
 	beentry = BackendStatusArray;
 
@@ -981,7 +989,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 	if (beentry == NULL || BackendActivityBuffer == NULL)
 		return NULL;
 
-	for (i = 1; i <= MaxBackends; i++)
+	for (i = 1; i <= max_backends; i++)
 	{
 		if (beentry->st_procpid == pid)
 		{

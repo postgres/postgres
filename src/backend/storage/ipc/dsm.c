@@ -166,7 +166,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 
 	/* Determine size for new control segment. */
 	maxitems = PG_DYNSHMEM_FIXED_SLOTS
-		+ PG_DYNSHMEM_SLOTS_PER_BACKEND * MaxBackends;
+		+ PG_DYNSHMEM_SLOTS_PER_BACKEND * GetMaxBackends();
 	elog(DEBUG2, "dynamic shared memory system will support %u segments",
 		 maxitems);
 	segsize = dsm_control_bytes_needed(maxitems);

@@ -205,7 +205,7 @@ SInvalShmemSize(void)
 	Size		size;
 
 	size = offsetof(SISeg, procState);
-	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
+	size = add_size(size, mul_size(sizeof(ProcState), GetMaxBackends()));
 
 	return size;
 }
@@ -231,7 +231,7 @@ CreateSharedInvalidationState(void)
 	shmInvalBuffer->maxMsgNum = 0;
 	shmInvalBuffer->nextThreshold = CLEANUP_MIN;
 	shmInvalBuffer->lastBackend = 0;
-	shmInvalBuffer->maxBackends = MaxBackends;
+	shmInvalBuffer->maxBackends = GetMaxBackends();
 	SpinLockInit(&shmInvalBuffer->msgnumLock);
 
 	/* The buffer[] array is initially all unused, so we need not fill it */

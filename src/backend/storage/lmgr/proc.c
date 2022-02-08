@@ -103,7 +103,7 @@ ProcGlobalShmemSize(void)
 {
 	Size		size = 0;
 	Size		TotalProcs =
-	add_size(MaxBackends, add_size(NUM_AUXILIARY_PROCS, max_prepared_xacts));
+	add_size(GetMaxBackends(), add_size(NUM_AUXILIARY_PROCS, max_prepared_xacts));
 
 	/* ProcGlobal */
 	size = add_size(size, sizeof(PROC_HDR));
@@ -127,7 +127,7 @@ ProcGlobalSemas(void)
 	 * We need a sema per backend (including autovacuum), plus one for each
 	 * auxiliary process.
 	 */
-	return MaxBackends + NUM_AUXILIARY_PROCS;
+	return GetMaxBackends() + NUM_AUXILIARY_PROCS;
 }
 
 /*
@@ -162,7 +162,8 @@ InitProcGlobal(void)
 	int			i,
 				j;
 	bool		found;
-	uint32		TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS + max_prepared_xacts;
+	int			max_backends = GetMaxBackends();
+	uint32		TotalProcs = max_backends + NUM_AUXILIARY_PROCS + max_prepared_xacts;
 
 	/* Create the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
@@ -195,7 +196,7 @@ InitProcGlobal(void)
 	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
-	ProcGlobal->allProcCount = MaxBackends + NUM_AUXILIARY_PROCS;
+	ProcGlobal->allProcCount = max_backends + NUM_AUXILIARY_PROCS;
 
 	/*
 	 * Allocate arrays mirroring PGPROC fields in a dense manner. See
@@ -221,7 +222,7 @@ InitProcGlobal(void)
 		 * dummy PGPROCs don't need these though - they're never associated
 		 * with a real process
 		 */
-		if (i < MaxBackends + NUM_AUXILIARY_PROCS)
+		if (i < max_backends + NUM_AUXILIARY_PROCS)
 		{
 			procs[i].sem = PGSemaphoreCreate();
 			InitSharedLatch(&(procs[i].procLatch));
@@ -258,7 +259,7 @@ InitProcGlobal(void)
 			ProcGlobal->bgworkerFreeProcs = &procs[i];
 			procs[i].procgloballist = &ProcGlobal->bgworkerFreeProcs;
 		}
-		else if (i < MaxBackends)
+		else if (i < max_backends)
 		{
 			/* PGPROC for walsender, add to walsenderFreeProcs list */
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->walsenderFreeProcs;
@@ -286,8 +287,8 @@ InitProcGlobal(void)
 	 * Save pointers to the blocks of PGPROC structures reserved for auxiliary
 	 * processes and prepared transactions.
 	 */
-	AuxiliaryProcs = &procs[MaxBackends];
-	PreparedXactProcs = &procs[MaxBackends + NUM_AUXILIARY_PROCS];
+	AuxiliaryProcs = &procs[max_backends];
+	PreparedXactProcs = &procs[max_backends + NUM_AUXILIARY_PROCS];
 
 	/* Create ProcStructLock spinlock, too */
 	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));

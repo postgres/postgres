@@ -6260,7 +6260,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->query_id_enabled = query_id_enabled;
 	param->max_safe_fds = max_safe_fds;
 
-	param->MaxBackends = MaxBackends;
+	param->MaxBackends = GetMaxBackends();
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
@@ -6494,7 +6494,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	query_id_enabled = param->query_id_enabled;
 	max_safe_fds = param->max_safe_fds;
 
-	MaxBackends = param->MaxBackends;
+	SetMaxBackends(param->MaxBackends);
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;
