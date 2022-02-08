@@ -283,7 +283,6 @@ extern void bbsink_forward_cleanup(bbsink *sink);
 
 /* Constructors for various types of sinks. */
 extern bbsink *bbsink_copystream_new(bool send_to_client);
-extern bbsink *bbsink_copytblspc_new(void);
 extern bbsink *bbsink_gzip_new(bbsink *next, int compresslevel);
 extern bbsink *bbsink_progress_new(bbsink *next, bool estimate_backup_size);
 extern bbsink *bbsink_server_new(bbsink *next, char *pathname);

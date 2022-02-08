@@ -56,7 +56,6 @@
 typedef enum
 {
 	BACKUP_TARGET_BLACKHOLE,
-	BACKUP_TARGET_COMPAT,
 	BACKUP_TARGET_CLIENT,
 	BACKUP_TARGET_SERVER
 } backup_target_type;
@@ -719,7 +718,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_compression_level = false;
 
 	MemSet(opt, 0, sizeof(*opt));
-	opt->target = BACKUP_TARGET_COMPAT;
+	opt->target = BACKUP_TARGET_CLIENT;
 	opt->manifest = MANIFEST_OPTION_NO;
 	opt->manifest_checksum_type = CHECKSUM_TYPE_CRC32C;
 	opt->compression = BACKUP_COMPRESSION_NONE;
@@ -992,16 +991,11 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	 * protocol. If the target is specifically 'client' then set up to stream
 	 * the backup to the client; otherwise, it's being sent someplace else and
 	 * should not be sent to the client.
-	 *
-	 * If the TARGET option was not specified, we must fall back to the older
-	 * and less capable copy-tablespace protocol.
 	 */
 	if (opt.target == BACKUP_TARGET_CLIENT)
 		sink = bbsink_copystream_new(true);
-	else if (opt.target != BACKUP_TARGET_COMPAT)
-		sink = bbsink_copystream_new(false);
 	else
-		sink = bbsink_copytblspc_new();
+		sink = bbsink_copystream_new(false);
 
 	/*
 	 * If a non-default backup target is in use, arrange to send the data
@@ -1012,7 +1006,6 @@ SendBaseBackup(BaseBackupCmd *cmd)
 		case BACKUP_TARGET_BLACKHOLE:
 			/* Nothing to do, just discard data. */
 			break;
-		case BACKUP_TARGET_COMPAT:
 		case BACKUP_TARGET_CLIENT:
 			/* Nothing to do, handling above is sufficient. */
 			break;

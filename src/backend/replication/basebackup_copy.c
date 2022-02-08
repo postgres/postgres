@@ -3,25 +3,18 @@
  * basebackup_copy.c
  *	  send basebackup archives using COPY OUT
  *
- * We have two different ways of doing this.
+ * We send a result set with information about the tabelspaces to be included
+ * in the backup before starting COPY OUT. Then, we start a single COPY OUT
+ * operation and transmits all the archives and the manifest if present during
+ * the course of that single COPY OUT. Each CopyData message begins with a
+ * type byte, allowing us to signal the start of a new archive, or the
+ * manifest, by some means other than ending the COPY stream. This also allows
+ * for future protocol extensions, since we can include arbitrary information
+ * in the message stream as long as we're certain that the client will know
+ * what to do with it.
  *
- * 'copytblspc' is an older method still supported for compatibility
- * with releases prior to v15. In this method, a separate COPY OUT
- * operation is used for each tablespace. The manifest, if it is sent,
- * uses an additional COPY OUT operation.
- *
- * 'copystream' sends a starts a single COPY OUT operation and transmits
- * all the archives and the manifest if present during the course of that
- * single COPY OUT. Each CopyData message begins with a type byte,
- * allowing us to signal the start of a new archive, or the manifest,
- * by some means other than ending the COPY stream. This also allows
- * this protocol to be extended more easily, since we can include
- * arbitrary information in the message stream as long as we're certain
- * that the client will know what to do with it.
- *
- * Regardless of which method is used, we sent a result set with
- * information about the tabelspaces to be included in the backup before
- * starting COPY OUT. This result has the same format in every method.
+ * An older method that sent each archive using a separate COPY OUT
+ * operation is no longer supported.
  *
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
@@ -87,20 +80,7 @@ static void bbsink_copystream_end_backup(bbsink *sink, XLogRecPtr endptr,
 										 TimeLineID endtli);
 static void bbsink_copystream_cleanup(bbsink *sink);
 
-static void bbsink_copytblspc_begin_backup(bbsink *sink);
-static void bbsink_copytblspc_begin_archive(bbsink *sink,
-											const char *archive_name);
-static void bbsink_copytblspc_archive_contents(bbsink *sink, size_t len);
-static void bbsink_copytblspc_end_archive(bbsink *sink);
-static void bbsink_copytblspc_begin_manifest(bbsink *sink);
-static void bbsink_copytblspc_manifest_contents(bbsink *sink, size_t len);
-static void bbsink_copytblspc_end_manifest(bbsink *sink);
-static void bbsink_copytblspc_end_backup(bbsink *sink, XLogRecPtr endptr,
-										 TimeLineID endtli);
-static void bbsink_copytblspc_cleanup(bbsink *sink);
-
 static void SendCopyOutResponse(void);
-static void SendCopyData(const char *data, size_t len);
 static void SendCopyDone(void);
 static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
 static void SendTablespaceList(List *tablespaces);
@@ -116,18 +96,6 @@ const bbsink_ops bbsink_copystream_ops = {
 	.end_manifest = bbsink_copystream_end_manifest,
 	.end_backup = bbsink_copystream_end_backup,
 	.cleanup = bbsink_copystream_cleanup
-};
-
-const bbsink_ops bbsink_copytblspc_ops = {
-	.begin_backup = bbsink_copytblspc_begin_backup,
-	.begin_archive = bbsink_copytblspc_begin_archive,
-	.archive_contents = bbsink_copytblspc_archive_contents,
-	.end_archive = bbsink_copytblspc_end_archive,
-	.begin_manifest = bbsink_copytblspc_begin_manifest,
-	.manifest_contents = bbsink_copytblspc_manifest_contents,
-	.end_manifest = bbsink_copytblspc_end_manifest,
-	.end_backup = bbsink_copytblspc_end_backup,
-	.cleanup = bbsink_copytblspc_cleanup
 };
 
 /*
@@ -339,115 +307,6 @@ bbsink_copystream_cleanup(bbsink *sink)
 }
 
 /*
- * Create a new 'copytblspc' bbsink.
- */
-bbsink *
-bbsink_copytblspc_new(void)
-{
-	bbsink	   *sink = palloc0(sizeof(bbsink));
-
-	*((const bbsink_ops **) &sink->bbs_ops) = &bbsink_copytblspc_ops;
-
-	return sink;
-}
-
-/*
- * Begin backup.
- */
-static void
-bbsink_copytblspc_begin_backup(bbsink *sink)
-{
-	bbsink_state *state = sink->bbs_state;
-
-	/* Create a suitable buffer. */
-	sink->bbs_buffer = palloc(sink->bbs_buffer_length);
-
-	/* Tell client the backup start location. */
-	SendXlogRecPtrResult(state->startptr, state->starttli);
-
-	/* Send client a list of tablespaces. */
-	SendTablespaceList(state->tablespaces);
-
-	/* Send a CommandComplete message */
-	pq_puttextmessage('C', "SELECT");
-}
-
-/*
- * Each archive is set as a separate stream of COPY data, and thus begins
- * with a CopyOutResponse message.
- */
-static void
-bbsink_copytblspc_begin_archive(bbsink *sink, const char *archive_name)
-{
-	SendCopyOutResponse();
-}
-
-/*
- * Each chunk of data within the archive is sent as a CopyData message.
- */
-static void
-bbsink_copytblspc_archive_contents(bbsink *sink, size_t len)
-{
-	SendCopyData(sink->bbs_buffer, len);
-}
-
-/*
- * The archive is terminated by a CopyDone message.
- */
-static void
-bbsink_copytblspc_end_archive(bbsink *sink)
-{
-	SendCopyDone();
-}
-
-/*
- * The backup manifest is sent as a separate stream of COPY data, and thus
- * begins with a CopyOutResponse message.
- */
-static void
-bbsink_copytblspc_begin_manifest(bbsink *sink)
-{
-	SendCopyOutResponse();
-}
-
-/*
- * Each chunk of manifest data is sent using a CopyData message.
- */
-static void
-bbsink_copytblspc_manifest_contents(bbsink *sink, size_t len)
-{
-	SendCopyData(sink->bbs_buffer, len);
-}
-
-/*
- * When we've finished sending the manifest, send a CopyDone message.
- */
-static void
-bbsink_copytblspc_end_manifest(bbsink *sink)
-{
-	SendCopyDone();
-}
-
-/*
- * Send end-of-backup wire protocol messages.
- */
-static void
-bbsink_copytblspc_end_backup(bbsink *sink, XLogRecPtr endptr,
-							 TimeLineID endtli)
-{
-	SendXlogRecPtrResult(endptr, endtli);
-}
-
-/*
- * Cleanup.
- */
-static void
-bbsink_copytblspc_cleanup(bbsink *sink)
-{
-	/* Nothing to do. */
-}
-
-/*
  * Send a CopyOutResponse message.
  */
 static void
@@ -459,15 +318,6 @@ SendCopyOutResponse(void)
 	pq_sendbyte(&buf, 0);		/* overall format */
 	pq_sendint16(&buf, 0);		/* natts */
 	pq_endmessage(&buf);
-}
-
-/*
- * Send a CopyData message.
- */
-static void
-SendCopyData(const char *data, size_t len)
-{
-	pq_putmessage('d', data, len);
 }
 
 /*
