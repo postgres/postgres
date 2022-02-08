@@ -2,63 +2,37 @@
 -- CREATE_MISC
 --
 
--- CLASS POPULATION
---	(any resemblance to real life is purely coincidental)
 --
+-- a is the type root
+-- b and c inherit from a (one-level single inheritance)
+-- d inherits from b and c (two-level multiple inheritance)
+-- e inherits from c (two-level single inheritance)
+-- f inherits from e (three-level single inheritance)
+--
+CREATE TABLE a_star (
+	class		char,
+	a 			int4
+);
 
-INSERT INTO tenk2 SELECT * FROM tenk1;
+CREATE TABLE b_star (
+	b 			text
+) INHERITS (a_star);
 
-CREATE TABLE onek2 AS SELECT * FROM onek;
+CREATE TABLE c_star (
+	c 			name
+) INHERITS (a_star);
 
-INSERT INTO fast_emp4000 SELECT * FROM slow_emp4000;
+CREATE TABLE d_star (
+	d 			float8
+) INHERITS (b_star, c_star);
 
-SELECT *
-   INTO TABLE Bprime
-   FROM tenk1
-   WHERE unique2 < 1000;
+CREATE TABLE e_star (
+	e 			int2
+) INHERITS (c_star);
 
-INSERT INTO hobbies_r (name, person)
-   SELECT 'posthacking', p.name
-   FROM person* p
-   WHERE p.name = 'mike' or p.name = 'jeff';
-
-INSERT INTO hobbies_r (name, person)
-   SELECT 'basketball', p.name
-   FROM person p
-   WHERE p.name = 'joe' or p.name = 'sally';
-
-INSERT INTO hobbies_r (name) VALUES ('skywalking');
-
-INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
-
-INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
-
-INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
-
-INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
-
-INSERT INTO city VALUES
-('Podunk', '(1,2),(3,4)', '100,127,1000'),
-('Gotham', '(1000,34),(1100,334)', '123456,127,-1000,6789');
-TABLE city;
-
-SELECT *
-   INTO TABLE ramp
-   FROM road
-   WHERE name ~ '.*Ramp';
-
-INSERT INTO ihighway
-   SELECT *
-   FROM road
-   WHERE name ~ 'I- .*';
-
-INSERT INTO shighway
-   SELECT *
-   FROM road
-   WHERE name ~ 'State Hwy.*';
-
-UPDATE shighway
-   SET surface = 'asphalt';
+CREATE TABLE f_star (
+	f 			polygon
+) INHERITS (e_star);
 
 INSERT INTO a_star (class, a) VALUES ('a', 1);
 
@@ -200,18 +174,85 @@ ANALYZE d_star;
 ANALYZE e_star;
 ANALYZE f_star;
 
-
 --
--- for internal portal (cursor) tests
+-- inheritance stress test
 --
-CREATE TABLE iportaltest (
-	i		int4,
-	d		float4,
-	p		polygon
-);
+SELECT * FROM a_star*;
 
-INSERT INTO iportaltest (i, d, p)
-   VALUES (1, 3.567, '(3.0,1.0),(4.0,2.0)'::polygon);
+SELECT *
+   FROM b_star* x
+   WHERE x.b = text 'bumble' or x.a < 3;
 
-INSERT INTO iportaltest (i, d, p)
-   VALUES (2, 89.05, '(4.0,2.0),(3.0,1.0)'::polygon);
+SELECT class, a
+   FROM c_star* x
+   WHERE x.c ~ text 'hi';
+
+SELECT class, b, c
+   FROM d_star* x
+   WHERE x.a < 100;
+
+SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
+
+SELECT * FROM f_star* x WHERE x.c ISNULL;
+
+-- grouping and aggregation on inherited sets have been busted in the past...
+
+SELECT sum(a) FROM a_star*;
+
+SELECT class, sum(a) FROM a_star* GROUP BY class ORDER BY class;
+
+
+ALTER TABLE f_star RENAME COLUMN f TO ff;
+
+ALTER TABLE e_star* RENAME COLUMN e TO ee;
+
+ALTER TABLE d_star* RENAME COLUMN d TO dd;
+
+ALTER TABLE c_star* RENAME COLUMN c TO cc;
+
+ALTER TABLE b_star* RENAME COLUMN b TO bb;
+
+ALTER TABLE a_star* RENAME COLUMN a TO aa;
+
+SELECT class, aa
+   FROM a_star* x
+   WHERE aa ISNULL;
+
+-- As of Postgres 7.1, ALTER implicitly recurses,
+-- so this should be same as ALTER a_star*
+
+ALTER TABLE a_star RENAME COLUMN aa TO foo;
+
+SELECT class, foo
+   FROM a_star* x
+   WHERE x.foo >= 2;
+
+ALTER TABLE a_star RENAME COLUMN foo TO aa;
+
+SELECT *
+   from a_star*
+   WHERE aa < 1000;
+
+ALTER TABLE f_star ADD COLUMN f int4;
+
+UPDATE f_star SET f = 10;
+
+ALTER TABLE e_star* ADD COLUMN e int4;
+
+--UPDATE e_star* SET e = 42;
+
+SELECT * FROM e_star*;
+
+ALTER TABLE a_star* ADD COLUMN a text;
+
+-- That ALTER TABLE should have added TOAST tables.
+SELECT relname, reltoastrelid <> 0 AS has_toast_table
+   FROM pg_class
+   WHERE oid::regclass IN ('a_star', 'c_star')
+   ORDER BY 1;
+
+--UPDATE b_star*
+--   SET a = text 'gazpacho'
+--   WHERE aa > 4;
+
+SELECT class, aa, a FROM a_star*;

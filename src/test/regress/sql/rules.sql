@@ -776,11 +776,11 @@ drop table cchild;
 \a\t
 
 SELECT viewname, definition FROM pg_views
-WHERE schemaname IN ('pg_catalog', 'public')
+WHERE schemaname = 'pg_catalog'
 ORDER BY viewname;
 
 SELECT tablename, rulename, definition FROM pg_rules
-WHERE schemaname IN ('pg_catalog', 'public')
+WHERE schemaname = 'pg_catalog'
 ORDER BY tablename, rulename;
 
 -- restore normal output mode

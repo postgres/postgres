@@ -3043,36 +3043,42 @@ SELECT * FROM parent;
 -- check EXPLAIN VERBOSE for a wCTE with RETURNING
 EXPLAIN (VERBOSE, COSTS OFF)
 WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
-DELETE FROM a USING wcte WHERE aa = q2;
-                         QUERY PLAN                         
-------------------------------------------------------------
- Delete on public.a
-   Delete on public.a a_1
-   Delete on public.b a_2
-   Delete on public.c a_3
-   Delete on public.d a_4
+DELETE FROM a_star USING wcte WHERE aa = q2;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Delete on public.a_star
+   Delete on public.a_star a_star_1
+   Delete on public.b_star a_star_2
+   Delete on public.c_star a_star_3
+   Delete on public.d_star a_star_4
+   Delete on public.e_star a_star_5
+   Delete on public.f_star a_star_6
    CTE wcte
      ->  Insert on public.int8_tbl
            Output: int8_tbl.q2
            ->  Result
                  Output: '42'::bigint, '47'::bigint
    ->  Hash Join
-         Output: wcte.*, a.tableoid, a.ctid
-         Hash Cond: (a.aa = wcte.q2)
+         Output: wcte.*, a_star.tableoid, a_star.ctid
+         Hash Cond: (a_star.aa = wcte.q2)
          ->  Append
-               ->  Seq Scan on public.a a_1
-                     Output: a_1.aa, a_1.tableoid, a_1.ctid
-               ->  Seq Scan on public.b a_2
-                     Output: a_2.aa, a_2.tableoid, a_2.ctid
-               ->  Seq Scan on public.c a_3
-                     Output: a_3.aa, a_3.tableoid, a_3.ctid
-               ->  Seq Scan on public.d a_4
-                     Output: a_4.aa, a_4.tableoid, a_4.ctid
+               ->  Seq Scan on public.a_star a_star_1
+                     Output: a_star_1.aa, a_star_1.tableoid, a_star_1.ctid
+               ->  Seq Scan on public.b_star a_star_2
+                     Output: a_star_2.aa, a_star_2.tableoid, a_star_2.ctid
+               ->  Seq Scan on public.c_star a_star_3
+                     Output: a_star_3.aa, a_star_3.tableoid, a_star_3.ctid
+               ->  Seq Scan on public.d_star a_star_4
+                     Output: a_star_4.aa, a_star_4.tableoid, a_star_4.ctid
+               ->  Seq Scan on public.e_star a_star_5
+                     Output: a_star_5.aa, a_star_5.tableoid, a_star_5.ctid
+               ->  Seq Scan on public.f_star a_star_6
+                     Output: a_star_6.aa, a_star_6.tableoid, a_star_6.ctid
          ->  Hash
                Output: wcte.*, wcte.q2
                ->  CTE Scan on wcte
                      Output: wcte.*, wcte.q2
-(26 rows)
+(32 rows)
 
 -- error cases
 -- data-modifying WITH tries to use its own output

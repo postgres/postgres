@@ -3,6 +3,9 @@
 -- Create ancillary data structures (i.e. indices)
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
 --
 -- BTREE
 --
@@ -44,22 +47,6 @@ COMMENT ON INDEX six IS 'good index';
 COMMENT ON INDEX six IS NULL;
 
 --
--- BTREE ascending/descending cases
---
--- we load int4/text from pure descending data (each key is a new
--- low key) and name/f8 from pure ascending data (each key is a new
--- high key).  we had a bug where new low keys would sometimes be
--- "lost".
---
-CREATE INDEX bt_i4_index ON bt_i4_heap USING btree (seqno int4_ops);
-
-CREATE INDEX bt_name_index ON bt_name_heap USING btree (seqno name_ops);
-
-CREATE INDEX bt_txt_index ON bt_txt_heap USING btree (seqno text_ops);
-
-CREATE INDEX bt_f8_index ON bt_f8_heap USING btree (seqno float8_ops);
-
---
 -- BTREE partial indices
 --
 CREATE INDEX onek2_u1_prtl ON onek2 USING btree(unique1 int4_ops)
@@ -74,12 +61,27 @@ CREATE INDEX onek2_stu1_prtl ON onek2 USING btree(stringu1 name_ops)
 --
 -- GiST (rtree-equivalent opclasses only)
 --
+
+CREATE TABLE slow_emp4000 (
+	home_base	 box
+);
+
+CREATE TABLE fast_emp4000 (
+	home_base	 box
+);
+
+\set filename :abs_srcdir '/data/rect.data'
+COPY slow_emp4000 FROM :'filename';
+
+INSERT INTO fast_emp4000 SELECT * FROM slow_emp4000;
+
+ANALYZE slow_emp4000;
+ANALYZE fast_emp4000;
+
 CREATE INDEX grect2ind ON fast_emp4000 USING gist (home_base);
 
-CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
-
-CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
-
+-- we want to work with a point_tbl that includes a null
+CREATE TEMP TABLE point_tbl AS SELECT * FROM public.point_tbl;
 INSERT INTO POINT_TBL(f1) VALUES (NULL);
 
 CREATE INDEX gpointind ON point_tbl USING gist (f1);
@@ -113,12 +115,6 @@ SELECT * FROM fast_emp4000
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-
-SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
-    ORDER BY (poly_center(f1))[0];
-
-SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY area(f1);
 
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
 
@@ -174,18 +170,6 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-
-EXPLAIN (COSTS OFF)
-SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
-    ORDER BY (poly_center(f1))[0];
-SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
-    ORDER BY (poly_center(f1))[0];
-
-EXPLAIN (COSTS OFF)
-SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY area(f1);
-SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY area(f1);
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
@@ -274,6 +258,21 @@ RESET enable_bitmapscan;
 -- Note: GIN currently supports only bitmap scans, not plain indexscans
 --
 
+CREATE TABLE array_index_op_test (
+	seqno		int4,
+	i			int4[],
+	t			text[]
+);
+
+\set filename :abs_srcdir '/data/array.data'
+COPY array_index_op_test FROM :'filename';
+ANALYZE array_index_op_test;
+
+SELECT * FROM array_index_op_test WHERE i = '{NULL}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{NULL}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{NULL}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
+
 SET enable_seqscan = OFF;
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
@@ -295,10 +294,6 @@ SELECT * FROM array_index_op_test WHERE i = '{}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i @> '{}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i <@ '{}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i = '{NULL}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i @> '{NULL}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i && '{NULL}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 
 CREATE INDEX textarrayidx ON array_index_op_test USING gin (t);
 
@@ -331,8 +326,6 @@ SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t = '{}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i = '{NULL}' ORDER BY seqno;
-SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 
 RESET enable_seqscan;
 RESET enable_indexscan;
@@ -362,14 +355,6 @@ CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
 --
 -- HASH
 --
-CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
-
-CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
-
-CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
-
-CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops) WITH (fillfactor=60);
-
 CREATE UNLOGGED TABLE unlogged_hash_table (id int4);
 CREATE INDEX unlogged_hash_index ON unlogged_hash_table USING hash (id int4_ops);
 DROP TABLE unlogged_hash_table;
@@ -484,15 +469,6 @@ CREATE UNIQUE INDEX covering_pkey on covering_index_heap (f1,f2) INCLUDE(f3);
 ALTER TABLE covering_index_heap ADD CONSTRAINT covering_pkey PRIMARY KEY USING INDEX
 covering_pkey;
 DROP TABLE covering_index_heap;
-
-
---
--- Also try building functional, expressional, and partial indexes on
--- tables that already contain data.
---
-create unique index hash_f8_index_1 on hash_f8_heap(abs(random));
-create unique index hash_f8_index_2 on hash_f8_heap((seqno + 1), random);
-create unique index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
 
 --
 -- Try some concurrent index builds
@@ -769,8 +745,6 @@ SELECT count(*) FROM dupindexcols
 --
 -- Check ordering of =ANY indexqual results (bug in 9.2.0)
 --
-
-vacuum tenk1;		-- ensure we get consistent plans here
 
 explain (costs off)
 SELECT unique1 FROM tenk1

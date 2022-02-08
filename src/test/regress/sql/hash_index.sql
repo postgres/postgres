@@ -1,8 +1,70 @@
 --
 -- HASH_INDEX
--- grep 843938989 hash.data
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
+CREATE TABLE hash_i4_heap (
+	seqno 		int4,
+	random 		int4
+);
+
+CREATE TABLE hash_name_heap (
+	seqno 		int4,
+	random 		name
+);
+
+CREATE TABLE hash_txt_heap (
+	seqno 		int4,
+	random 		text
+);
+
+CREATE TABLE hash_f8_heap (
+	seqno		int4,
+	random 		float8
+);
+
+\set filename :abs_srcdir '/data/hash.data'
+COPY hash_i4_heap FROM :'filename';
+COPY hash_name_heap FROM :'filename';
+COPY hash_txt_heap FROM :'filename';
+COPY hash_f8_heap FROM :'filename';
+
+-- the data in this file has a lot of duplicates in the index key
+-- fields, leading to long bucket chains and lots of table expansion.
+-- this is therefore a stress test of the bucket overflow code (unlike
+-- the data in hash.data, which has unique index keys).
+--
+-- \set filename :abs_srcdir '/data/hashovfl.data'
+-- COPY hash_ovfl_heap FROM :'filename';
+
+ANALYZE hash_i4_heap;
+ANALYZE hash_name_heap;
+ANALYZE hash_txt_heap;
+ANALYZE hash_f8_heap;
+
+CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
+
+CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
+
+CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
+
+CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops)
+  WITH (fillfactor=60);
+
+--
+-- Also try building functional, expressional, and partial indexes on
+-- tables that already contain data.
+--
+create unique index hash_f8_index_1 on hash_f8_heap(abs(random));
+create unique index hash_f8_index_2 on hash_f8_heap((seqno + 1), random);
+create unique index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
+
+--
+-- hash index
+-- grep 843938989 hash.data
+--
 SELECT * FROM hash_i4_heap
    WHERE hash_i4_heap.random = 843938989;
 

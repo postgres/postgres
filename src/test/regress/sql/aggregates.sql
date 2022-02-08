@@ -2,8 +2,23 @@
 -- AGGREGATES
 --
 
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
 -- avoid bit-exact output here because operations may not be bit-exact.
 SET extra_float_digits = 0;
+
+-- prepare some test data
+CREATE TABLE aggtest (
+	a 			int2,
+	b			float4
+);
+
+\set filename :abs_srcdir '/data/agg.data'
+COPY aggtest FROM :'filename';
+
+ANALYZE aggtest;
+
 
 SELECT avg(four) AS avg_1 FROM onek;
 

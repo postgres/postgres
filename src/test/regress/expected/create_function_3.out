@@ -666,6 +666,30 @@ SELECT * FROM voidtest5(3);
 -----------
 (0 rows)
 
+-- Things that shouldn't work:
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT ''not an integer'';';
+ERROR:  return type mismatch in function declared to return integer
+DETAIL:  Actual return type is text.
+CONTEXT:  SQL function "test1"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'not even SQL';
+ERROR:  syntax error at or near "not"
+LINE 2:     AS 'not even SQL';
+                ^
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT 1, 2, 3;';
+ERROR:  return type mismatch in function declared to return integer
+DETAIL:  Final statement must return exactly one column.
+CONTEXT:  SQL function "test1"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'SELECT $2;';
+ERROR:  there is no parameter $2
+LINE 2:     AS 'SELECT $2;';
+                       ^
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS 'a', 'b';
+ERROR:  only one AS item needed for language "sql"
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
 NOTICE:  drop cascades to 29 other objects

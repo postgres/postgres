@@ -2,6 +2,12 @@
 -- Test the LOCK statement
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
 -- Setup
 CREATE SCHEMA lock_schema1;
 SET search_path = lock_schema1;
@@ -136,4 +142,10 @@ DROP ROLE regress_rol_lock1;
 
 -- atomic ops tests
 RESET search_path;
+
+CREATE FUNCTION test_atomic_ops()
+    RETURNS bool
+    AS :'regresslib'
+    LANGUAGE C;
+
 SELECT test_atomic_ops();

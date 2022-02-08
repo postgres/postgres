@@ -4,16 +4,43 @@
 --	(this also tests the query rewrite system)
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION interpt_pp(path, path)
+    RETURNS point
+    AS :'regresslib'
+    LANGUAGE C STRICT;
+
+CREATE TABLE real_city (
+	pop			int4,
+	cname		text,
+	outline 	path
+);
+
+\set filename :abs_srcdir '/data/real_city.data'
+COPY real_city FROM :'filename';
+ANALYZE real_city;
+
+SELECT *
+   INTO TABLE ramp
+   FROM ONLY road
+   WHERE name ~ '.*Ramp';
+
 CREATE VIEW street AS
    SELECT r.name, r.thepath, c.cname AS cname
    FROM ONLY road r, real_city c
-   WHERE c.outline ## r.thepath;
+   WHERE c.outline ?# r.thepath;
 
 CREATE VIEW iexit AS
    SELECT ih.name, ih.thepath,
 	interpt_pp(ih.thepath, r.thepath) AS exit
    FROM ihighway ih, ramp r
-   WHERE ih.thepath ## r.thepath;
+   WHERE ih.thepath ?# r.thepath;
 
 CREATE VIEW toyemp AS
    SELECT name, age, location, 12*salary AS annualsal

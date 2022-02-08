@@ -2,9 +2,23 @@
 -- MISC
 --
 
--- directory paths are passed to us in environment variables
+-- directory paths and dlsuffix are passed to us in environment variables
 \getenv abs_srcdir PG_ABS_SRCDIR
 \getenv abs_builddir PG_ABS_BUILDDIR
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS :'regresslib'
+   LANGUAGE C STRICT;
+
+CREATE FUNCTION reverse_name(name)
+   RETURNS name
+   AS :'regresslib'
+   LANGUAGE C STRICT;
 
 --
 -- BTREE
@@ -31,6 +45,10 @@ UPDATE onek
 -- systems.    This non-func update stuff needs to be examined
 -- more closely.  			- jolly (2/22/96)
 --
+SELECT two, stringu1, ten, string4
+   INTO TABLE tmp
+   FROM onek;
+
 UPDATE tmp
    SET stringu1 = reverse_name(onek.stringu1)
    FROM onek
@@ -58,127 +76,116 @@ DROP TABLE tmp;
 \set filename :abs_builddir '/results/onek.data'
 COPY onek TO :'filename';
 
-DELETE FROM onek;
+CREATE TEMP TABLE onek_copy (LIKE onek);
 
-COPY onek FROM :'filename';
+COPY onek_copy FROM :'filename';
 
-SELECT unique1 FROM onek WHERE unique1 < 2 ORDER BY unique1;
+SELECT * FROM onek EXCEPT ALL SELECT * FROM onek_copy;
 
-DELETE FROM onek2;
-
-COPY onek2 FROM :'filename';
-
-SELECT unique1 FROM onek2 WHERE unique1 < 2 ORDER BY unique1;
+SELECT * FROM onek_copy EXCEPT ALL SELECT * FROM onek;
 
 \set filename :abs_builddir '/results/stud_emp.data'
 COPY BINARY stud_emp TO :'filename';
 
-DELETE FROM stud_emp;
+CREATE TEMP TABLE stud_emp_copy (LIKE stud_emp);
 
-COPY BINARY stud_emp FROM :'filename';
+COPY BINARY stud_emp_copy FROM :'filename';
 
-SELECT * FROM stud_emp;
-
--- COPY aggtest FROM stdin;
--- 56	7.8
--- 100	99.097
--- 0	0.09561
--- 42	324.78
--- .
--- COPY aggtest TO stdout;
-
+SELECT * FROM stud_emp_copy;
 
 --
--- inheritance stress test
+-- test data for postquel functions
 --
-SELECT * FROM a_star*;
 
-SELECT *
-   FROM b_star* x
-   WHERE x.b = text 'bumble' or x.a < 3;
+CREATE TABLE hobbies_r (
+	name		text,
+	person 		text
+);
 
-SELECT class, a
-   FROM c_star* x
-   WHERE x.c ~ text 'hi';
+CREATE TABLE equipment_r (
+	name 		text,
+	hobby		text
+);
 
-SELECT class, b, c
-   FROM d_star* x
-   WHERE x.a < 100;
+INSERT INTO hobbies_r (name, person)
+   SELECT 'posthacking', p.name
+   FROM person* p
+   WHERE p.name = 'mike' or p.name = 'jeff';
 
-SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
+INSERT INTO hobbies_r (name, person)
+   SELECT 'basketball', p.name
+   FROM person p
+   WHERE p.name = 'joe' or p.name = 'sally';
 
-SELECT * FROM f_star* x WHERE x.c ISNULL;
+INSERT INTO hobbies_r (name) VALUES ('skywalking');
 
--- grouping and aggregation on inherited sets have been busted in the past...
+INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
 
-SELECT sum(a) FROM a_star*;
+INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
 
-SELECT class, sum(a) FROM a_star* GROUP BY class ORDER BY class;
+INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
 
-
-ALTER TABLE f_star RENAME COLUMN f TO ff;
-
-ALTER TABLE e_star* RENAME COLUMN e TO ee;
-
-ALTER TABLE d_star* RENAME COLUMN d TO dd;
-
-ALTER TABLE c_star* RENAME COLUMN c TO cc;
-
-ALTER TABLE b_star* RENAME COLUMN b TO bb;
-
-ALTER TABLE a_star* RENAME COLUMN a TO aa;
-
-SELECT class, aa
-   FROM a_star* x
-   WHERE aa ISNULL;
-
--- As of Postgres 7.1, ALTER implicitly recurses,
--- so this should be same as ALTER a_star*
-
-ALTER TABLE a_star RENAME COLUMN aa TO foo;
-
-SELECT class, foo
-   FROM a_star* x
-   WHERE x.foo >= 2;
-
-ALTER TABLE a_star RENAME COLUMN foo TO aa;
-
-SELECT *
-   from a_star*
-   WHERE aa < 1000;
-
-ALTER TABLE f_star ADD COLUMN f int4;
-
-UPDATE f_star SET f = 10;
-
-ALTER TABLE e_star* ADD COLUMN e int4;
-
---UPDATE e_star* SET e = 42;
-
-SELECT * FROM e_star*;
-
-ALTER TABLE a_star* ADD COLUMN a text;
-
--- That ALTER TABLE should have added TOAST tables.
-SELECT relname, reltoastrelid <> 0 AS has_toast_table
-   FROM pg_class
-   WHERE oid::regclass IN ('a_star', 'c_star')
-   ORDER BY 1;
-
---UPDATE b_star*
---   SET a = text 'gazpacho'
---   WHERE aa > 4;
-
-SELECT class, aa, a FROM a_star*;
-
-
---
--- versions
---
+INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
 
 --
 -- postquel functions
 --
+
+CREATE FUNCTION hobbies(person)
+   RETURNS setof hobbies_r
+   AS 'select * from hobbies_r where person = $1.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION hobby_construct(text, text)
+   RETURNS hobbies_r
+   AS 'select $1 as name, $2 as hobby'
+   LANGUAGE SQL;
+
+CREATE FUNCTION hobby_construct_named(name text, hobby text)
+   RETURNS hobbies_r
+   AS 'select name, hobby'
+   LANGUAGE SQL;
+
+CREATE FUNCTION hobbies_by_name(hobbies_r.name%TYPE)
+   RETURNS hobbies_r.person%TYPE
+   AS 'select person from hobbies_r where name = $1'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment(hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = $1.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = equipment_named.hobby.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named_ambiguous_1a(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = equipment_named_ambiguous_1a.hobby.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named_ambiguous_1b(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = hobby.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named_ambiguous_1c(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = hobby.name'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named_ambiguous_2a(hobby text)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = equipment_named_ambiguous_2a.hobby'
+   LANGUAGE SQL;
+
+CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = hobby'
+   LANGUAGE SQL;
+
 --
 -- mike does post_hacking,
 -- joe and sally play basketball, and

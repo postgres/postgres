@@ -2,7 +2,12 @@
 -- VARCHAR
 --
 
-CREATE TABLE VARCHAR_TBL(f1 varchar(1));
+--
+-- Build a table for testing
+-- (This temporarily hides the table created in test_setup.sql)
+--
+
+CREATE TEMP TABLE VARCHAR_TBL(f1 varchar(1));
 
 INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
 
@@ -54,13 +59,10 @@ DROP TABLE VARCHAR_TBL;
 --
 -- Now test longer arrays of char
 --
+-- This varchar_tbl was already created and filled in test_setup.sql.
+-- Here we just try to insert bad values.
+--
 
-CREATE TABLE VARCHAR_TBL(f1 varchar(4));
-
-INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
-INSERT INTO VARCHAR_TBL (f1) VALUES ('ab');
-INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('abcde');
-INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd    ');
 
 SELECT * FROM VARCHAR_TBL;

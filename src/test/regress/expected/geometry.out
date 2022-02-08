@@ -5236,3 +5236,63 @@ SELECT c.f1, p.f1, c.f1 <-> p.f1 FROM CIRCLE_TBL c, POLYGON_TBL p;
  <(3,5),NaN>    | ((0,1),(0,1))              |            NaN
 (56 rows)
 
+-- Check index behavior for circles
+CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+      f1       
+---------------
+ <(1,2),3>
+ <(1,3),5>
+ <(1,2),100>
+ <(100,1),115>
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+                  QUERY PLAN                  
+----------------------------------------------
+ Sort
+   Sort Key: (area(f1))
+   ->  Seq Scan on circle_tbl
+         Filter: (f1 && '<(1,-2),1>'::circle)
+(4 rows)
+
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+      f1       
+---------------
+ <(1,2),3>
+ <(1,3),5>
+ <(1,2),100>
+ <(100,1),115>
+(4 rows)
+
+-- Check index behavior for polygons
+CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+         f1          
+---------------------
+ ((2,0),(2,4),(0,0))
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Sort Key: ((poly_center(f1))[0])
+   ->  Seq Scan on polygon_tbl
+         Filter: (f1 @> '((1,1),(2,2),(2,1))'::polygon)
+(4 rows)
+
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+         f1          
+---------------------
+ ((2,0),(2,4),(0,0))
+(1 row)
+

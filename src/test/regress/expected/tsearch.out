@@ -1,3 +1,5 @@
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
 --
 -- Sanity checks for text search catalogs
 --
@@ -55,6 +57,14 @@ WHERE
 -------+-------+--------+--------------+----------+---------
 (0 rows)
 
+-- Load some test data
+CREATE TABLE test_tsvector(
+	t text,
+	a tsvector
+);
+\set filename :abs_srcdir '/data/tsearch.data'
+COPY test_tsvector FROM :'filename';
+ANALYZE test_tsvector;
 -- test basic text search behavior without indexes, then with
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
  count 

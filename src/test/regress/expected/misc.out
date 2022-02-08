@@ -1,9 +1,20 @@
 --
 -- MISC
 --
--- directory paths are passed to us in environment variables
+-- directory paths and dlsuffix are passed to us in environment variables
 \getenv abs_srcdir PG_ABS_SRCDIR
 \getenv abs_builddir PG_ABS_BUILDDIR
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS :'regresslib'
+   LANGUAGE C STRICT;
+CREATE FUNCTION reverse_name(name)
+   RETURNS name
+   AS :'regresslib'
+   LANGUAGE C STRICT;
 --
 -- BTREE
 --
@@ -25,6 +36,9 @@ UPDATE onek
 -- systems.    This non-func update stuff needs to be examined
 -- more closely.  			- jolly (2/22/96)
 --
+SELECT two, stringu1, ten, string4
+   INTO TABLE tmp
+   FROM onek;
 UPDATE tmp
    SET stringu1 = reverse_name(onek.stringu1)
    FROM onek
@@ -46,29 +60,23 @@ DROP TABLE tmp;
 --
 \set filename :abs_builddir '/results/onek.data'
 COPY onek TO :'filename';
-DELETE FROM onek;
-COPY onek FROM :'filename';
-SELECT unique1 FROM onek WHERE unique1 < 2 ORDER BY unique1;
- unique1 
----------
-       0
-       1
-(2 rows)
+CREATE TEMP TABLE onek_copy (LIKE onek);
+COPY onek_copy FROM :'filename';
+SELECT * FROM onek EXCEPT ALL SELECT * FROM onek_copy;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+(0 rows)
 
-DELETE FROM onek2;
-COPY onek2 FROM :'filename';
-SELECT unique1 FROM onek2 WHERE unique1 < 2 ORDER BY unique1;
- unique1 
----------
-       0
-       1
-(2 rows)
+SELECT * FROM onek_copy EXCEPT ALL SELECT * FROM onek;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+(0 rows)
 
 \set filename :abs_builddir '/results/stud_emp.data'
 COPY BINARY stud_emp TO :'filename';
-DELETE FROM stud_emp;
-COPY BINARY stud_emp FROM :'filename';
-SELECT * FROM stud_emp;
+CREATE TEMP TABLE stud_emp_copy (LIKE stud_emp);
+COPY BINARY stud_emp_copy FROM :'filename';
+SELECT * FROM stud_emp_copy;
  name  | age |  location  | salary | manager | gpa | percent 
 -------+-----+------------+--------+---------+-----+---------
  jeff  |  23 | (8,7.7)    |    600 | sharon  | 3.5 |        
@@ -76,386 +84,79 @@ SELECT * FROM stud_emp;
  linda |  19 | (0.9,6.1)  |    100 |         | 2.9 |        
 (3 rows)
 
--- COPY aggtest FROM stdin;
--- 56	7.8
--- 100	99.097
--- 0	0.09561
--- 42	324.78
--- .
--- COPY aggtest TO stdout;
 --
--- inheritance stress test
+-- test data for postquel functions
 --
-SELECT * FROM a_star*;
- class | a  
--------+----
- a     |  1
- a     |  2
- a     |   
- b     |  3
- b     |  4
- b     |   
- b     |   
- c     |  5
- c     |  6
- c     |   
- c     |   
- d     |  7
- d     |  8
- d     |  9
- d     | 10
- d     |   
- d     | 11
- d     | 12
- d     | 13
- d     |   
- d     |   
- d     |   
- d     | 14
- d     |   
- d     |   
- d     |   
- d     |   
- e     | 15
- e     | 16
- e     | 17
- e     |   
- e     | 18
- e     |   
- e     |   
- f     | 19
- f     | 20
- f     | 21
- f     | 22
- f     |   
- f     | 24
- f     | 25
- f     | 26
- f     |   
- f     |   
- f     |   
- f     | 27
- f     |   
- f     |   
- f     |   
- f     |   
-(50 rows)
-
-SELECT *
-   FROM b_star* x
-   WHERE x.b = text 'bumble' or x.a < 3;
- class | a |   b    
--------+---+--------
- b     |   | bumble
-(1 row)
-
-SELECT class, a
-   FROM c_star* x
-   WHERE x.c ~ text 'hi';
- class | a  
--------+----
- c     |  5
- c     |   
- d     |  7
- d     |  8
- d     | 10
- d     |   
- d     | 12
- d     |   
- d     |   
- d     |   
- e     | 15
- e     | 16
- e     |   
- e     |   
- f     | 19
- f     | 20
- f     | 21
- f     |   
- f     | 24
- f     |   
- f     |   
- f     |   
-(22 rows)
-
-SELECT class, b, c
-   FROM d_star* x
-   WHERE x.a < 100;
- class |    b    |     c      
--------+---------+------------
- d     | grumble | hi sunita
- d     | stumble | hi koko
- d     | rumble  | 
- d     |         | hi kristin
- d     | fumble  | 
- d     |         | hi avi
- d     |         | 
- d     |         | 
-(8 rows)
-
-SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
- class |      c      
--------+-------------
- e     | hi carol
- e     | hi bob
- e     | hi michelle
- e     | hi elisa
- f     | hi claire
- f     | hi mike
- f     | hi marcel
- f     | hi keith
- f     | hi marc
- f     | hi allison
- f     | hi jeff
- f     | hi carl
-(12 rows)
-
-SELECT * FROM f_star* x WHERE x.c ISNULL;
- class | a  | c |  e  |                     f                     
--------+----+---+-----+-------------------------------------------
- f     | 22 |   |  -7 | ((111,555),(222,666),(333,777),(444,888))
- f     | 25 |   |  -9 | 
- f     | 26 |   |     | ((11111,33333),(22222,44444))
- f     |    |   | -11 | ((1111111,3333333),(2222222,4444444))
- f     | 27 |   |     | 
- f     |    |   | -12 | 
- f     |    |   |     | ((11111111,33333333),(22222222,44444444))
- f     |    |   |     | 
-(8 rows)
-
--- grouping and aggregation on inherited sets have been busted in the past...
-SELECT sum(a) FROM a_star*;
- sum 
------
- 355
-(1 row)
-
-SELECT class, sum(a) FROM a_star* GROUP BY class ORDER BY class;
- class | sum 
--------+-----
- a     |   3
- b     |   7
- c     |  11
- d     |  84
- e     |  66
- f     | 184
-(6 rows)
-
-ALTER TABLE f_star RENAME COLUMN f TO ff;
-ALTER TABLE e_star* RENAME COLUMN e TO ee;
-ALTER TABLE d_star* RENAME COLUMN d TO dd;
-ALTER TABLE c_star* RENAME COLUMN c TO cc;
-ALTER TABLE b_star* RENAME COLUMN b TO bb;
-ALTER TABLE a_star* RENAME COLUMN a TO aa;
-SELECT class, aa
-   FROM a_star* x
-   WHERE aa ISNULL;
- class | aa 
--------+----
- a     |   
- b     |   
- b     |   
- c     |   
- c     |   
- d     |   
- d     |   
- d     |   
- d     |   
- d     |   
- d     |   
- d     |   
- d     |   
- e     |   
- e     |   
- e     |   
- f     |   
- f     |   
- f     |   
- f     |   
- f     |   
- f     |   
- f     |   
- f     |   
-(24 rows)
-
--- As of Postgres 7.1, ALTER implicitly recurses,
--- so this should be same as ALTER a_star*
-ALTER TABLE a_star RENAME COLUMN aa TO foo;
-SELECT class, foo
-   FROM a_star* x
-   WHERE x.foo >= 2;
- class | foo 
--------+-----
- a     |   2
- b     |   3
- b     |   4
- c     |   5
- c     |   6
- d     |   7
- d     |   8
- d     |   9
- d     |  10
- d     |  11
- d     |  12
- d     |  13
- d     |  14
- e     |  15
- e     |  16
- e     |  17
- e     |  18
- f     |  19
- f     |  20
- f     |  21
- f     |  22
- f     |  24
- f     |  25
- f     |  26
- f     |  27
-(25 rows)
-
-ALTER TABLE a_star RENAME COLUMN foo TO aa;
-SELECT *
-   from a_star*
-   WHERE aa < 1000;
- class | aa 
--------+----
- a     |  1
- a     |  2
- b     |  3
- b     |  4
- c     |  5
- c     |  6
- d     |  7
- d     |  8
- d     |  9
- d     | 10
- d     | 11
- d     | 12
- d     | 13
- d     | 14
- e     | 15
- e     | 16
- e     | 17
- e     | 18
- f     | 19
- f     | 20
- f     | 21
- f     | 22
- f     | 24
- f     | 25
- f     | 26
- f     | 27
-(26 rows)
-
-ALTER TABLE f_star ADD COLUMN f int4;
-UPDATE f_star SET f = 10;
-ALTER TABLE e_star* ADD COLUMN e int4;
---UPDATE e_star* SET e = 42;
-SELECT * FROM e_star*;
- class | aa |     cc      | ee  | e 
--------+----+-------------+-----+---
- e     | 15 | hi carol    |  -1 |  
- e     | 16 | hi bob      |     |  
- e     | 17 |             |  -2 |  
- e     |    | hi michelle |  -3 |  
- e     | 18 |             |     |  
- e     |    | hi elisa    |     |  
- e     |    |             |  -4 |  
- f     | 19 | hi claire   |  -5 |  
- f     | 20 | hi mike     |  -6 |  
- f     | 21 | hi marcel   |     |  
- f     | 22 |             |  -7 |  
- f     |    | hi keith    |  -8 |  
- f     | 24 | hi marc     |     |  
- f     | 25 |             |  -9 |  
- f     | 26 |             |     |  
- f     |    | hi allison  | -10 |  
- f     |    | hi jeff     |     |  
- f     |    |             | -11 |  
- f     | 27 |             |     |  
- f     |    | hi carl     |     |  
- f     |    |             | -12 |  
- f     |    |             |     |  
- f     |    |             |     |  
-(23 rows)
-
-ALTER TABLE a_star* ADD COLUMN a text;
-NOTICE:  merging definition of column "a" for child "d_star"
--- That ALTER TABLE should have added TOAST tables.
-SELECT relname, reltoastrelid <> 0 AS has_toast_table
-   FROM pg_class
-   WHERE oid::regclass IN ('a_star', 'c_star')
-   ORDER BY 1;
- relname | has_toast_table 
----------+-----------------
- a_star  | t
- c_star  | t
-(2 rows)
-
---UPDATE b_star*
---   SET a = text 'gazpacho'
---   WHERE aa > 4;
-SELECT class, aa, a FROM a_star*;
- class | aa | a 
--------+----+---
- a     |  1 | 
- a     |  2 | 
- a     |    | 
- b     |  3 | 
- b     |  4 | 
- b     |    | 
- b     |    | 
- c     |  5 | 
- c     |  6 | 
- c     |    | 
- c     |    | 
- d     |  7 | 
- d     |  8 | 
- d     |  9 | 
- d     | 10 | 
- d     |    | 
- d     | 11 | 
- d     | 12 | 
- d     | 13 | 
- d     |    | 
- d     |    | 
- d     |    | 
- d     | 14 | 
- d     |    | 
- d     |    | 
- d     |    | 
- d     |    | 
- e     | 15 | 
- e     | 16 | 
- e     | 17 | 
- e     |    | 
- e     | 18 | 
- e     |    | 
- e     |    | 
- f     | 19 | 
- f     | 20 | 
- f     | 21 | 
- f     | 22 | 
- f     |    | 
- f     | 24 | 
- f     | 25 | 
- f     | 26 | 
- f     |    | 
- f     |    | 
- f     |    | 
- f     | 27 | 
- f     |    | 
- f     |    | 
- f     |    | 
- f     |    | 
-(50 rows)
-
---
--- versions
---
+CREATE TABLE hobbies_r (
+	name		text,
+	person 		text
+);
+CREATE TABLE equipment_r (
+	name 		text,
+	hobby		text
+);
+INSERT INTO hobbies_r (name, person)
+   SELECT 'posthacking', p.name
+   FROM person* p
+   WHERE p.name = 'mike' or p.name = 'jeff';
+INSERT INTO hobbies_r (name, person)
+   SELECT 'basketball', p.name
+   FROM person p
+   WHERE p.name = 'joe' or p.name = 'sally';
+INSERT INTO hobbies_r (name) VALUES ('skywalking');
+INSERT INTO equipment_r (name, hobby) VALUES ('advil', 'posthacking');
+INSERT INTO equipment_r (name, hobby) VALUES ('peet''s coffee', 'posthacking');
+INSERT INTO equipment_r (name, hobby) VALUES ('hightops', 'basketball');
+INSERT INTO equipment_r (name, hobby) VALUES ('guts', 'skywalking');
 --
 -- postquel functions
 --
+CREATE FUNCTION hobbies(person)
+   RETURNS setof hobbies_r
+   AS 'select * from hobbies_r where person = $1.name'
+   LANGUAGE SQL;
+CREATE FUNCTION hobby_construct(text, text)
+   RETURNS hobbies_r
+   AS 'select $1 as name, $2 as hobby'
+   LANGUAGE SQL;
+CREATE FUNCTION hobby_construct_named(name text, hobby text)
+   RETURNS hobbies_r
+   AS 'select name, hobby'
+   LANGUAGE SQL;
+CREATE FUNCTION hobbies_by_name(hobbies_r.name%TYPE)
+   RETURNS hobbies_r.person%TYPE
+   AS 'select person from hobbies_r where name = $1'
+   LANGUAGE SQL;
+NOTICE:  type reference hobbies_r.name%TYPE converted to text
+NOTICE:  type reference hobbies_r.person%TYPE converted to text
+CREATE FUNCTION equipment(hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = $1.name'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = equipment_named.hobby.name'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named_ambiguous_1a(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = equipment_named_ambiguous_1a.hobby.name'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named_ambiguous_1b(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = hobby.name'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named_ambiguous_1c(hobby hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = hobby.name'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named_ambiguous_2a(hobby text)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = equipment_named_ambiguous_2a.hobby'
+   LANGUAGE SQL;
+CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where equipment_r.hobby = hobby'
+   LANGUAGE SQL;
 --
 -- mike does post_hacking,
 -- joe and sally play basketball, and

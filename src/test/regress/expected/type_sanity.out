@@ -731,28 +731,23 @@ CREATE TABLE tab_core_types AS SELECT
   'n'::information_schema.sql_identifier,
   'now'::information_schema.time_stamp,
   'YES'::information_schema.yes_or_no,
-  'venus'::planets,
-  'i16'::insenum,
   '(1,2)'::int4range, '{(1,2)}'::int4multirange,
   '(3,4)'::int8range, '{(3,4)}'::int8multirange,
-  '(1,2)'::float8range, '{(1,2)}'::float8multirange,
   '(3,4)'::numrange, '{(3,4)}'::nummultirange,
-  '(a,b)'::textrange, '{(a,b)}'::textmultirange,
-  '(12.34, 56.78)'::cashrange, '{(12.34, 56.78)}'::cashmultirange,
   '(2020-01-02, 2021-02-03)'::daterange,
   '{(2020-01-02, 2021-02-03)}'::datemultirange,
   '(2020-01-02 03:04:05, 2021-02-03 06:07:08)'::tsrange,
   '{(2020-01-02 03:04:05, 2021-02-03 06:07:08)}'::tsmultirange,
   '(2020-01-02 03:04:05, 2021-02-03 06:07:08)'::tstzrange,
-  '{(2020-01-02 03:04:05, 2021-02-03 06:07:08)}'::tstzmultirange,
-  arrayrange(ARRAY[1,2], ARRAY[2,1]),
-  arraymultirange(arrayrange(ARRAY[1,2], ARRAY[2,1]));
+  '{(2020-01-02 03:04:05, 2021-02-03 06:07:08)}'::tstzmultirange;
 -- Sanity check on the previous table, checking that all core types are
 -- included in this table.
-SELECT oid, typname, typtype, typelem, typarray, typarray
+SELECT oid, typname, typtype, typelem, typarray
   FROM pg_type t
-  WHERE typtype NOT IN ('p', 'c') AND
-    -- reg* types cannot be pg_upgraded, so discard them.
+  WHERE oid < 16384 AND
+    -- Exclude pseudotypes and composite types.
+    typtype NOT IN ('p', 'c') AND
+    -- These reg* types cannot be pg_upgraded, so discard them.
     oid != ALL(ARRAY['regproc', 'regprocedure', 'regoper',
                      'regoperator', 'regconfig', 'regdictionary',
                      'regnamespace', 'regcollation']::regtype[]) AND
@@ -772,7 +767,7 @@ SELECT oid, typname, typtype, typelem, typarray, typarray
                     WHERE a.atttypid=t.oid AND
                           a.attnum > 0 AND
                           a.attrelid='tab_core_types'::regclass);
- oid | typname | typtype | typelem | typarray | typarray 
------+---------+---------+---------+----------+----------
+ oid | typname | typtype | typelem | typarray 
+-----+---------+---------+---------+----------
 (0 rows)
 

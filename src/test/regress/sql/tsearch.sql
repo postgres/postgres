@@ -1,3 +1,6 @@
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
 --
 -- Sanity checks for text search catalogs
 --
@@ -38,6 +41,17 @@ RIGHT JOIN pg_ts_config_map AS m
     ON (tt.cfgid=m.mapcfg AND tt.tokid=m.maptokentype)
 WHERE
     tt.cfgid IS NULL OR tt.tokid IS NULL;
+
+-- Load some test data
+CREATE TABLE test_tsvector(
+	t text,
+	a tsvector
+);
+
+\set filename :abs_srcdir '/data/tsearch.data'
+COPY test_tsvector FROM :'filename';
+
+ANALYZE test_tsvector;
 
 -- test basic text search behavior without indexes, then with
 

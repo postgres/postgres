@@ -2,13 +2,8 @@
 -- INT8
 -- Test int8 64-bit integers.
 --
-CREATE TABLE INT8_TBL(q1 int8, q2 int8);
-INSERT INTO INT8_TBL VALUES('  123   ','  456');
-INSERT INTO INT8_TBL VALUES('123   ','4567890123456789');
-INSERT INTO INT8_TBL VALUES('4567890123456789','123');
-INSERT INTO INT8_TBL VALUES(+4567890123456789,'4567890123456789');
-INSERT INTO INT8_TBL VALUES('+4567890123456789','-4567890123456789');
--- bad inputs
+-- int8_tbl was already created and filled in test_setup.sql.
+-- Here we just try to insert bad values.
 INSERT INTO INT8_TBL(q1) VALUES ('      ');
 ERROR:  invalid input syntax for type bigint: "      "
 LINE 1: INSERT INTO INT8_TBL(q1) VALUES ('      ');

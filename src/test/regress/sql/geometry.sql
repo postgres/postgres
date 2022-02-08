@@ -497,3 +497,29 @@ SELECT c.f1, p.f1, c.f1 / p.f1 FROM CIRCLE_TBL c, POINT_TBL p WHERE p.f1 ~= '(0,
 
 -- Distance to polygon
 SELECT c.f1, p.f1, c.f1 <-> p.f1 FROM CIRCLE_TBL c, POLYGON_TBL p;
+
+-- Check index behavior for circles
+
+CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
+
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+
+-- Check index behavior for polygons
+
+CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
+
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+SELECT * FROM polygon_tbl WHERE f1 @> '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];

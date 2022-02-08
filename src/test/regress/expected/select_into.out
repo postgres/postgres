@@ -162,9 +162,9 @@ DROP TABLE easi, easi2;
 --
 -- Disallowed uses of SELECT ... INTO.  All should fail
 --
-DECLARE foo CURSOR FOR SELECT 1 INTO b;
+DECLARE foo CURSOR FOR SELECT 1 INTO int4_tbl;
 ERROR:  SELECT ... INTO is not allowed here
-LINE 1: DECLARE foo CURSOR FOR SELECT 1 INTO b;
+LINE 1: DECLARE foo CURSOR FOR SELECT 1 INTO int4_tbl;
                                              ^
 COPY (SELECT 1 INTO frak UNION SELECT 2) TO 'blob';
 ERROR:  COPY (SELECT INTO) is not supported
@@ -172,12 +172,12 @@ SELECT * FROM (SELECT 1 INTO f) bar;
 ERROR:  SELECT ... INTO is not allowed here
 LINE 1: SELECT * FROM (SELECT 1 INTO f) bar;
                                      ^
-CREATE VIEW foo AS SELECT 1 INTO b;
+CREATE VIEW foo AS SELECT 1 INTO int4_tbl;
 ERROR:  views must not contain SELECT INTO
-INSERT INTO b SELECT 1 INTO f;
+INSERT INTO int4_tbl SELECT 1 INTO f;
 ERROR:  SELECT ... INTO is not allowed here
-LINE 1: INSERT INTO b SELECT 1 INTO f;
-                                    ^
+LINE 1: INSERT INTO int4_tbl SELECT 1 INTO f;
+                                           ^
 -- Test CREATE TABLE AS ... IF NOT EXISTS
 CREATE TABLE ctas_ine_tbl AS SELECT 1;
 CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0; -- error

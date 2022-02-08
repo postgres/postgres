@@ -9,9 +9,10 @@ SELECT char 'c' = char 'c' AS true;
 
 --
 -- Build a table for testing
+-- (This temporarily hides the table created in test_setup.sql)
 --
 
-CREATE TABLE CHAR_TBL(f1 char);
+CREATE TEMP TABLE CHAR_TBL(f1 char);
 
 INSERT INTO CHAR_TBL (f1) VALUES ('a');
 
@@ -63,13 +64,10 @@ DROP TABLE CHAR_TBL;
 --
 -- Now test longer arrays of char
 --
+-- This char_tbl was already created and filled in test_setup.sql.
+-- Here we just try to insert bad values.
+--
 
-CREATE TABLE CHAR_TBL(f1 char(4));
-
-INSERT INTO CHAR_TBL (f1) VALUES ('a');
-INSERT INTO CHAR_TBL (f1) VALUES ('ab');
-INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
-INSERT INTO CHAR_TBL (f1) VALUES ('abcd    ');
 
 SELECT * FROM CHAR_TBL;

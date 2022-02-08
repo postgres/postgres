@@ -1,18 +1,12 @@
 --
 -- INT4
 --
-CREATE TABLE INT4_TBL(f1 int4);
-INSERT INTO INT4_TBL(f1) VALUES ('   0  ');
-INSERT INTO INT4_TBL(f1) VALUES ('123456     ');
-INSERT INTO INT4_TBL(f1) VALUES ('    -123456');
+-- int4_tbl was already created and filled in test_setup.sql.
+-- Here we just try to insert bad values.
 INSERT INTO INT4_TBL(f1) VALUES ('34.5');
 ERROR:  invalid input syntax for type integer: "34.5"
 LINE 1: INSERT INTO INT4_TBL(f1) VALUES ('34.5');
                                          ^
--- largest and smallest values
-INSERT INTO INT4_TBL(f1) VALUES ('2147483647');
-INSERT INTO INT4_TBL(f1) VALUES ('-2147483647');
--- bad input values -- should give errors
 INSERT INTO INT4_TBL(f1) VALUES ('1000000000000');
 ERROR:  value "1000000000000" is out of range for type integer
 LINE 1: INSERT INTO INT4_TBL(f1) VALUES ('1000000000000');
