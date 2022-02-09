@@ -43,6 +43,9 @@
 #ifdef HAVE_SYS_EVENT_H
 #include <sys/event.h>
 #endif
+#ifdef HAVE_SYS_SIGNALFD_H
+#include <sys/signalfd.h>
+#endif
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -69,7 +72,7 @@
 #if defined(WAIT_USE_EPOLL) || defined(WAIT_USE_POLL) || \
 	defined(WAIT_USE_KQUEUE) || defined(WAIT_USE_WIN32)
 /* don't overwrite manual choice */
-#elif defined(HAVE_SYS_EPOLL_H)
+#elif defined(HAVE_SYS_EPOLL_H) && defined(HAVE_SYS_SIGNALFD_H)
 #define WAIT_USE_EPOLL
 #elif defined(HAVE_KQUEUE)
 #define WAIT_USE_KQUEUE
@@ -79,10 +82,6 @@
 #define WAIT_USE_WIN32
 #else
 #error "no wait set implementation available"
-#endif
-
-#ifdef WAIT_USE_EPOLL
-#include <sys/signalfd.h>
 #endif
 
 /* typedef in latch.h */
