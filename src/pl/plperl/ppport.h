@@ -15077,6 +15077,13 @@ DPPP_(my_croak_xs_usage)(const CV *const cv, const char *const params)
 # endif
 #endif
 
+/*
+ * This implementation of eval_pv fails on compilers that don't allow
+ * statements nested within expressions.  However, we don't care about the bug
+ * it's trying to fix, because we only call eval_pv with croak_on_error=0.
+ * So, pending an upstream fix for this, just remove it.
+ */
+#ifdef NOT_USED
 /* Older Perl versions have broken croak_on_error=1 */
 #if (PERL_BCDVERSION < 0x5031002)
 # ifdef eval_pv
@@ -15088,6 +15095,7 @@ DPPP_(my_croak_xs_usage)(const CV *const cv, const char *const params)
 #  endif
 # endif
 #endif
+#endif /* NOT_USED */
 
 /* This is backport for Perl 5.3.97d and older which do not provide perl_eval_pv */
 #ifndef eval_pv
