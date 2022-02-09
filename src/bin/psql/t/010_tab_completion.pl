@@ -339,8 +339,7 @@ check_completion(
 clear_line();
 
 # check completion of a keyword offered in addition to object names;
-# such a keyword should obey COMP_KEYWORD_CASE once only keyword
-# completions are possible
+# such a keyword should obey COMP_KEYWORD_CASE
 foreach (
 	[ 'lower',          'CO', 'column' ],
 	[ 'upper',          'co', 'COLUMN' ],
@@ -353,10 +352,6 @@ foreach (
 		"\\set COMP_KEYWORD_CASE $case\n",
 		qr/postgres=#/,
 		"set completion case to '$case'");
-	check_completion("alter table tab1 rename c\t\t",
-		qr|COLUMN|,
-		"offer keyword COLUMN for input c<TAB>, COMP_KEYWORD_CASE = $case");
-	clear_query();
 	check_completion("alter table tab1 rename $in\t\t\t",
 		qr|$out|,
 		"offer keyword $out for input $in<TAB>, COMP_KEYWORD_CASE = $case");
@@ -407,6 +402,23 @@ check_completion(
 	qr/intervalstyle TO/,
 	"complete a GUC name");
 check_completion(" iso\t", qr/iso_8601 /, "complete a GUC enum value");
+
+clear_query();
+
+# same, for qualified GUC names
+check_completion(
+	"DO \$\$begin end\$\$ LANGUAGE plpgsql;\n",
+	qr/postgres=# /,
+	"load plpgsql extension");
+
+check_completion("set plpg\t", qr/plpg\a?sql\./,
+	"complete prefix of a GUC name");
+check_completion(
+	"var\t\t",
+	qr/variable_conflict TO/,
+	"complete a qualified GUC name");
+check_completion(" USE_C\t",
+	qr/use_column/, "complete a qualified GUC enum value");
 
 clear_query();
 
