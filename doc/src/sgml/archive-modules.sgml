@@ -17,7 +17,7 @@
  <para>
   When a custom <xref linkend="guc-archive-library"/> is configured, PostgreSQL
   will submit completed WAL files to the module, and the server will avoid
-  recyling or removing these WAL files until the module indicates that the files
+  recycling or removing these WAL files until the module indicates that the files
   were successfully archived.  It is ultimately up to the module to decide what
   to do with each WAL file, but many recommendations are listed at
   <xref linkend="backup-archiving-wal"/>.
