@@ -2494,6 +2494,7 @@ ReadToc(ArchiveHandle *AH)
 	int			depIdx;
 	int			depSize;
 	TocEntry   *te;
+	bool		is_supported;
 
 	AH->tocCount = ReadInt(AH);
 	AH->maxDumpId = 0;
@@ -2574,7 +2575,20 @@ ReadToc(ArchiveHandle *AH)
 			te->tableam = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
-		if (AH->version < K_VERS_1_9 || strcmp(ReadStr(AH), "true") == 0)
+		is_supported = true;
+		if (AH->version < K_VERS_1_9)
+			is_supported = false;
+		else
+		{
+				tmp = ReadStr(AH);
+
+				if (strcmp(tmp, "true") == 0)
+					is_supported = false;
+
+				free(tmp);
+		}
+
+		if (!is_supported)
 			pg_log_warning("restoring tables WITH OIDS is not supported anymore");
 
 		/* Read TOC entry dependencies */
