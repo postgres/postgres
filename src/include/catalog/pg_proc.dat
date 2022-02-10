@@ -203,6 +203,12 @@
 { oid => '5071', descr => 'convert xid8 to xid',
   proname => 'xid', prorettype => 'xid', proargtypes => 'xid8',
   prosrc => 'xid8toxid' },
+{ oid => '5097', descr => 'larger of two',
+  proname => 'xid8_larger', prorettype => 'xid8', proargtypes => 'xid8 xid8',
+  prosrc => 'xid8_larger' },
+{ oid => '5098', descr => 'smaller of two',
+  proname => 'xid8_smaller', prorettype => 'xid8', proargtypes => 'xid8 xid8',
+  prosrc => 'xid8_smaller' },
 { oid => '69',
   proname => 'cideq', proleakproof => 't', prorettype => 'bool',
   proargtypes => 'cid cid', prosrc => 'cideq' },
@@ -6564,6 +6570,9 @@
 { oid => '4189', descr => 'maximum value of all pg_lsn input values',
   proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'pg_lsn',
   proargtypes => 'pg_lsn', prosrc => 'aggregate_dummy' },
+{ oid => '5099', descr => 'maximum value of all xid8 input values',
+  proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'xid8',
+  proargtypes => 'xid8', prosrc => 'aggregate_dummy' },
 
 { oid => '2131', descr => 'minimum value of all bigint input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
@@ -6631,6 +6640,9 @@
 { oid => '4190', descr => 'minimum value of all pg_lsn input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'pg_lsn',
   proargtypes => 'pg_lsn', prosrc => 'aggregate_dummy' },
+{ oid => '5100', descr => 'minimum value of all xid8 input values',
+  proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'xid8',
+  proargtypes => 'xid8', prosrc => 'aggregate_dummy' },
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',

@@ -286,6 +286,30 @@ xid8cmp(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(-1);
 }
 
+Datum
+xid8_larger(PG_FUNCTION_ARGS)
+{
+	FullTransactionId fxid1 = PG_GETARG_FULLTRANSACTIONID(0);
+	FullTransactionId fxid2 = PG_GETARG_FULLTRANSACTIONID(1);
+
+	if (FullTransactionIdFollows(fxid1, fxid2))
+		PG_RETURN_FULLTRANSACTIONID(fxid1);
+	else
+		PG_RETURN_FULLTRANSACTIONID(fxid2);
+}
+
+Datum
+xid8_smaller(PG_FUNCTION_ARGS)
+{
+	FullTransactionId fxid1 = PG_GETARG_FULLTRANSACTIONID(0);
+	FullTransactionId fxid2 = PG_GETARG_FULLTRANSACTIONID(1);
+
+	if (FullTransactionIdPrecedes(fxid1, fxid2))
+		PG_RETURN_FULLTRANSACTIONID(fxid1);
+	else
+		PG_RETURN_FULLTRANSACTIONID(fxid2);
+}
+
 /*****************************************************************************
  *	 COMMAND IDENTIFIER ROUTINES											 *
  *****************************************************************************/
