@@ -6524,8 +6524,6 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	}
 	appendPQExpBufferChar(tbloids, '}');
 
-	resetPQExpBuffer(query);
-
 	appendPQExpBuffer(query,
 					  "SELECT t.tableoid, t.oid, i.indrelid, "
 					  "t.relname AS indexname, "
