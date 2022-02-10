@@ -285,7 +285,7 @@ typedef struct MultiXactStateData
  * Pointers to the state data in shared memory
  *
  * The index of the last element of the OldestMemberMXactId and
- * OldestVisibleMXacId arrays can be obtained with GetMaxOldestSlot().
+ * OldestVisibleMXactId arrays can be obtained with GetMaxOldestSlot().
  */
 static MultiXactStateData *MultiXactState;
 static MultiXactId *OldestMemberMXactId;
