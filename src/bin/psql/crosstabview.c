@@ -77,7 +77,7 @@ typedef struct _avl_tree
 } avl_tree;
 
 
-static bool printCrosstab(const PGresult *results,
+static bool printCrosstab(const PGresult *result,
 						  int num_columns, pivot_field *piv_columns, int field_for_columns,
 						  int num_rows, pivot_field *piv_rows, int field_for_rows,
 						  int field_for_data);
@@ -100,7 +100,7 @@ static int	rankCompare(const void *a, const void *b);
  * then call printCrosstab() for the actual output.
  */
 bool
-PrintResultsInCrosstab(const PGresult *res)
+PrintResultInCrosstab(const PGresult *res)
 {
 	bool		retval = false;
 	avl_tree	piv_columns;
@@ -261,7 +261,7 @@ PrintResultsInCrosstab(const PGresult *res)
 		rankSort(num_columns, array_columns);
 
 	/*
-	 * Fourth part: print the crosstab'ed results.
+	 * Fourth part: print the crosstab'ed result.
 	 */
 	retval = printCrosstab(res,
 						   num_columns, array_columns, field_for_columns,
@@ -282,7 +282,7 @@ error_return:
  * if successful, false otherwise.
  */
 static bool
-printCrosstab(const PGresult *results,
+printCrosstab(const PGresult *result,
 			  int num_columns, pivot_field *piv_columns, int field_for_columns,
 			  int num_rows, pivot_field *piv_rows, int field_for_rows,
 			  int field_for_data)
@@ -301,9 +301,9 @@ printCrosstab(const PGresult *results,
 
 	/* The name of the first column is kept unchanged by the pivoting */
 	printTableAddHeader(&cont,
-						PQfname(results, field_for_rows),
+						PQfname(result, field_for_rows),
 						false,
-						column_type_alignment(PQftype(results,
+						column_type_alignment(PQftype(result,
 													  field_for_rows)));
 
 	/*
@@ -318,7 +318,7 @@ printCrosstab(const PGresult *results,
 	/*
 	 * The display alignment depends on its PQftype().
 	 */
-	col_align = column_type_alignment(PQftype(results, field_for_data));
+	col_align = column_type_alignment(PQftype(result, field_for_data));
 
 	for (i = 0; i < num_columns; i++)
 	{
@@ -346,7 +346,7 @@ printCrosstab(const PGresult *results,
 	/*
 	 * Step 3: fill in the content cells.
 	 */
-	for (rn = 0; rn < PQntuples(results); rn++)
+	for (rn = 0; rn < PQntuples(result); rn++)
 	{
 		int			row_number;
 		int			col_number;
@@ -355,8 +355,8 @@ printCrosstab(const PGresult *results,
 		pivot_field elt;
 
 		/* Find target row */
-		if (!PQgetisnull(results, rn, field_for_rows))
-			elt.name = PQgetvalue(results, rn, field_for_rows);
+		if (!PQgetisnull(result, rn, field_for_rows))
+			elt.name = PQgetvalue(result, rn, field_for_rows);
 		else
 			elt.name = NULL;
 		rp = (pivot_field *) bsearch(&elt,
@@ -368,8 +368,8 @@ printCrosstab(const PGresult *results,
 		row_number = rp->rank;
 
 		/* Find target column */
-		if (!PQgetisnull(results, rn, field_for_columns))
-			elt.name = PQgetvalue(results, rn, field_for_columns);
+		if (!PQgetisnull(result, rn, field_for_columns))
+			elt.name = PQgetvalue(result, rn, field_for_columns);
 		else
 			elt.name = NULL;
 
@@ -402,8 +402,8 @@ printCrosstab(const PGresult *results,
 				goto error;
 			}
 
-			cont.cells[idx] = !PQgetisnull(results, rn, field_for_data) ?
-				PQgetvalue(results, rn, field_for_data) :
+			cont.cells[idx] = !PQgetisnull(result, rn, field_for_data) ?
+				PQgetvalue(result, rn, field_for_data) :
 				(popt.nullPrint ? popt.nullPrint : "");
 		}
 	}

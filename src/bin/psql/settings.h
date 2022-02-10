@@ -94,9 +94,9 @@ typedef struct _psqlSettings
 	printQueryOpt *gsavepopt;	/* if not null, saved print format settings */
 
 	char	   *gset_prefix;	/* one-shot prefix argument for \gset */
-	bool		gdesc_flag;		/* one-shot request to describe query results */
-	bool		gexec_flag;		/* one-shot request to execute query results */
-	bool		crosstab_flag;	/* one-shot request to crosstab results */
+	bool		gdesc_flag;		/* one-shot request to describe query result */
+	bool		gexec_flag;		/* one-shot request to execute query result */
+	bool		crosstab_flag;	/* one-shot request to crosstab result */
 	char	   *ctv_args[4];	/* \crosstabview arguments */
 
 	bool		notty;			/* stdin or stdout is not a tty (as determined

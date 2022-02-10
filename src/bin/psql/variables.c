@@ -45,7 +45,7 @@ valid_variable_name(const char *name)
  * that serves as list header.
  *
  * The list entries are kept in name order (according to strcmp).  This
- * is mainly to make the results of PrintVariables() more pleasing.
+ * is mainly to make the output of PrintVariables() more pleasing.
  */
 VariableSpace
 CreateVariableSpace(void)

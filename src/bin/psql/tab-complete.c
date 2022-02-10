@@ -228,9 +228,9 @@ static bool completion_force_quote; /* true to force-quote filenames */
 /*
  * A few macros to ease typing. You can use these to complete the given
  * string with
- * 1) The results from a query you pass it. (Perhaps one of those below?)
+ * 1) The result from a query you pass it. (Perhaps one of those below?)
  *	  We support both simple and versioned queries.
- * 2) The results from a schema query you pass it.
+ * 2) The result from a schema query you pass it.
  *	  We support both simple and versioned schema queries.
  * 3) The items from a null-pointer-terminated list (with or without
  *	  case-sensitive comparison); if the list is constant you can build it
