@@ -8,8 +8,8 @@ use File::Basename;
 
 if (PostgreSQL::Test::Utils::has_wal_read_bug)
 {
-	# We'd prefer to use "local $TODO", but the bug causes this test file to
-	# die(), not merely to fail.
+	# We'd prefer to use Test::More->builder->todo_start, but the bug causes
+	# this test file to die(), not merely to fail.
 	plan skip_all => 'filesystem bug';
 }
 else
