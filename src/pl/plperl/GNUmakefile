@@ -48,7 +48,7 @@ lib$(perlwithver).a: $(perlwithver).def
 	dlltool --dllname $(perlwithver).dll --def $(perlwithver).def --output-lib lib$(perlwithver).a
 
 $(perlwithver).def: $(PERLDLL)
-	pexports $^ > $@
+	gendef - $^ > $@
 
 endif # win32
 
