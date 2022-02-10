@@ -725,7 +725,7 @@ AcceptInvalidationMessages(void)
 		if (!in_recursion)
 		{
 			in_recursion = true;
-			InvalidateSystemCaches();
+			InvalidateSystemCachesExtended(true);
 			in_recursion = false;
 		}
 	}
