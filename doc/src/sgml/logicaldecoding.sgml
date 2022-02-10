@@ -458,6 +458,7 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeTruncateCB truncate_cb;
     LogicalDecodeCommitCB commit_cb;
     LogicalDecodeMessageCB message_cb;
+    LogicalDecodeSequenceCB sequence_cb;
     LogicalDecodeFilterByOriginCB filter_by_origin_cb;
     LogicalDecodeShutdownCB shutdown_cb;
     LogicalDecodeFilterPrepareCB filter_prepare_cb;
@@ -472,6 +473,7 @@ typedef struct OutputPluginCallbacks
     LogicalDecodeStreamCommitCB stream_commit_cb;
     LogicalDecodeStreamChangeCB stream_change_cb;
     LogicalDecodeStreamMessageCB stream_message_cb;
+    LogicalDecodeStreamSequenceCB stream_sequence_cb;
     LogicalDecodeStreamTruncateCB stream_truncate_cb;
 } OutputPluginCallbacks;
 
@@ -481,9 +483,11 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
      and <function>commit_cb</function> callbacks are required,
      while <function>startup_cb</function>,
      <function>filter_by_origin_cb</function>, <function>truncate_cb</function>,
-     and <function>shutdown_cb</function> are optional.
-     If <function>truncate_cb</function> is not set but a
+     <function>sequence_cb</function>, and <function>shutdown_cb</function> are
+     optional. If <function>truncate_cb</function> is not set but a
      <command>TRUNCATE</command> is to be decoded, the action will be ignored.
+     Similarly, if <function>sequence_cb</function> is not set and a sequence
+     change is to be decoded, the action will be ignored.
     </para>
 
     <para>
@@ -492,7 +496,8 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
      <function>stream_stop_cb</function>, <function>stream_abort_cb</function>,
      <function>stream_commit_cb</function>, <function>stream_change_cb</function>,
      and <function>stream_prepare_cb</function>
-     are required, while <function>stream_message_cb</function> and
+     are required, while <function>stream_message_cb</function>,
+     <function>stream_sequence_cb</function>, and
      <function>stream_truncate_cb</function> are optional.
     </para>
 
@@ -808,6 +813,35 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
      </para>
     </sect3>
 
+    <sect3 id="logicaldecoding-output-plugin-sequence">
+     <title>Sequence Callback</title>
+
+     <para>
+      The optional <function>sequence_cb</function> callback is called for
+      actions that update a sequence value.
+<programlisting>
+typedef void (*LogicalDecodeSequenceCB) (struct LogicalDecodingContext *ctx,
+                                         ReorderBufferTXN *txn,
+                                         XLogRecPtr sequence_lsn,
+                                         Relation rel,
+                                         bool transactional,
+                                         int64 last_value,
+                                         int64 log_cnt,
+                                         bool is_called);
+</programlisting>
+      The <parameter>txn</parameter> parameter contains meta information about
+      the transaction the sequence change is part of. Note however that for
+      non-transactional increments, the transaction may be either NULL or not
+      NULL, depending on if the transaction already has XID assigned.
+      The <parameter>sequence_lsn</parameter> has WAL location of the sequence
+      update. The <parameter>transactional</parameter> says if the sequence has
+      to be replayed as part of the transaction or directly.
+
+      The <parameter>last_value</parameter>, <parameter>log_cnt</parameter> and
+      <parameter>is_called</parameter> parameters describe the sequence change.
+     </para>
+    </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-filter-prepare">
      <title>Prepare Filter Callback</title>
 
@@ -1017,6 +1051,26 @@ typedef void (*LogicalDecodeStreamMessageCB) (struct LogicalDecodingContext *ctx
      </para>
     </sect3>
 
+    <sect3 id="logicaldecoding-output-plugin-stream-sequence">
+     <title>Stream Sequence Callback</title>
+     <para>
+      The optional <function>stream_sequence_cb</function> callback is called
+      for actions that change a sequence in a block of streamed changes
+      (demarcated by <function>stream_start_cb</function> and
+      <function>stream_stop_cb</function> calls).
+<programlisting>
+typedef void (*LogicalDecodeStreamSequenceCB) (struct LogicalDecodingContext *ctx,
+                                               ReorderBufferTXN *txn,
+                                               XLogRecPtr sequence_lsn,
+                                               Relation rel,
+                                               bool transactional,
+                                               int64 last_value,
+                                               int64 log_cnt,
+                                               bool is_called);
+</programlisting>
+     </para>
+    </sect3>
+
     <sect3 id="logicaldecoding-output-plugin-stream-truncate">
      <title>Stream Truncate Callback</title>
      <para>
@@ -1197,8 +1251,9 @@ OutputPluginWrite(ctx, true);
     in-progress transactions. There are multiple required streaming callbacks
     (<function>stream_start_cb</function>, <function>stream_stop_cb</function>,
     <function>stream_abort_cb</function>, <function>stream_commit_cb</function>
-    and <function>stream_change_cb</function>) and two optional callbacks
-    (<function>stream_message_cb</function> and <function>stream_truncate_cb</function>).
+    and <function>stream_change_cb</function>) and multiple optional callbacks
+    (<function>stream_message_cb</function>, <function>stream_sequence_cb</function>,
+    and <function>stream_truncate_cb</function>).
     Also, if streaming of two-phase commands is to be supported, then additional
     callbacks must be provided. (See <xref linkend="logicaldecoding-two-phase-commits"/>
     for details).
