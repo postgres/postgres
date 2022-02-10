@@ -388,7 +388,7 @@ $node->connect_fails(
 note "running server tests";
 
 $common_connstr =
-  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
+  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR host=localhost";
 
 # no client cert
 $node->connect_fails(
@@ -538,7 +538,7 @@ $node->connect_fails(
 # works, iff username matches Common Name
 # fails, iff username doesn't match Common Name.
 $common_connstr =
-  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=verifydb hostaddr=$SERVERHOSTADDR";
+  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=verifydb hostaddr=$SERVERHOSTADDR host=localhost";
 
 $node->connect_ok(
 	"$common_connstr user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
@@ -565,7 +565,7 @@ $node->connect_ok(
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
 $common_connstr =
-  "user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+  "user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR host=localhost";
 
 $node->connect_ok(
 	"$common_connstr sslmode=require sslcert=ssl/client+client_ca.crt",
