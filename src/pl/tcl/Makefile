@@ -44,7 +44,7 @@ lib$(tclwithver).a: $(tclwithver).def
 	dlltool --dllname $(tclwithver).dll --def $(tclwithver).def --output-lib lib$(tclwithver).a
 
 $(tclwithver).def: $(TCLDLL)
-	pexports $^ > $@
+	gendef - $^ > $@
 
 endif # win32
 
