@@ -1633,6 +1633,7 @@ SignalBackends(void)
 	int32	   *pids;
 	BackendId  *ids;
 	int			count;
+	int			max_backends = GetMaxBackends();
 
 	/*
 	 * Identify backends that we need to signal.  We don't want to send
@@ -1642,8 +1643,8 @@ SignalBackends(void)
 	 * XXX in principle these pallocs could fail, which would be bad. Maybe
 	 * preallocate the arrays?  They're not that large, though.
 	 */
-	pids = (int32 *) palloc(GetMaxBackends() * sizeof(int32));
-	ids = (BackendId *) palloc(GetMaxBackends() * sizeof(BackendId));
+	pids = (int32 *) palloc(max_backends * sizeof(int32));
+	ids = (BackendId *) palloc(max_backends * sizeof(BackendId));
 	count = 0;
 
 	LWLockAcquire(NotifyQueueLock, LW_EXCLUSIVE);

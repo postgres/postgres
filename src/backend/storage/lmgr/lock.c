@@ -2924,6 +2924,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 	LWLock	   *partitionLock;
 	int			count = 0;
 	int			fast_count = 0;
+	int			max_backends = GetMaxBackends();
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
@@ -2942,12 +2943,12 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 			vxids = (VirtualTransactionId *)
 				MemoryContextAlloc(TopMemoryContext,
 								   sizeof(VirtualTransactionId) *
-								   (GetMaxBackends() + max_prepared_xacts + 1));
+								   (max_backends + max_prepared_xacts + 1));
 	}
 	else
 		vxids = (VirtualTransactionId *)
 			palloc0(sizeof(VirtualTransactionId) *
-					(GetMaxBackends() + max_prepared_xacts + 1));
+					(max_backends + max_prepared_xacts + 1));
 
 	/* Compute hash code and partition lock, and look up conflicting modes. */
 	hashcode = LockTagHashCode(locktag);
@@ -3104,7 +3105,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 
 	LWLockRelease(partitionLock);
 
-	if (count > GetMaxBackends() + max_prepared_xacts)	/* should never happen */
+	if (count > max_backends + max_prepared_xacts)	/* should never happen */
 		elog(PANIC, "too many conflicting locks found");
 
 	vxids[count].backendId = InvalidBackendId;
