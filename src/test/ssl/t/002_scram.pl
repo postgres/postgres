@@ -53,7 +53,7 @@ configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
 switch_server_cert($node, 'server-cn-only');
 $ENV{PGPASSWORD} = "pass";
 $common_connstr =
-  "dbname=trustdb sslmode=require sslcert=invalid sslrootcert=invalid hostaddr=$SERVERHOSTADDR";
+  "dbname=trustdb sslmode=require sslcert=invalid sslrootcert=invalid hostaddr=$SERVERHOSTADDR host=localhost";
 
 # Default settings
 $node->connect_ok(
@@ -104,7 +104,7 @@ chmod 0600, "$cert_tempdir/client_scram.key"
   or die "failed to change permissions on $cert_tempdir/client_scram.key: $!";
 $client_tmp_key =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 $node->connect_fails(
-	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR dbname=certdb user=ssltestuser channel_binding=require",
+	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR host=localhost dbname=certdb user=ssltestuser channel_binding=require",
 	"Cert authentication and channel_binding=require",
 	expected_stderr =>
 	  qr/channel binding required, but server authenticated client without channel binding/
@@ -112,7 +112,7 @@ $node->connect_fails(
 
 # Certificate verification at the connection level should still work fine.
 $node->connect_ok(
-	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR dbname=verifydb user=ssltestuser",
+	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR host=localhost dbname=verifydb user=ssltestuser",
 	"SCRAM with clientcert=verify-full",
 	log_like => [
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/

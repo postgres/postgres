@@ -67,7 +67,7 @@ configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
-  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR " .
+  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR host=localhost " .
   "user=ssltestuser sslcert=ssl/client_ext.crt sslkey=$client_tmp_key";
 
 # Make sure we can connect even though previous test suites have established this
@@ -98,7 +98,7 @@ is($result, 't', "ssl_client_cert_present() for connection with cert");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_cert_present();",
   connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
-  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser");
+  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, 'f', "ssl_client_cert_present() for connection without cert");
 
 $result = $node->safe_psql("certdb",
@@ -113,7 +113,7 @@ is($result, '3', "ssl_client_dn_field() for an invalid field");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_dn_field('commonName');",
   connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
-  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser");
+  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, '', "ssl_client_dn_field() for connection without cert");
 
 $result = $node->safe_psql("certdb",
