@@ -1609,11 +1609,11 @@ pg_newlocale_from_collation(Oid collid)
 			{
 				/*
 				 * This could happen when specifying a version in CREATE
-				 * COLLATION for a libc locale, or manually creating a mess in
-				 * the catalogs.
+				 * COLLATION but the provider does not support versioning, or
+				 * manually creating a mess in the catalogs.
 				 */
 				ereport(ERROR,
-						(errmsg("collation \"%s\" has no actual version, but a version was specified",
+						(errmsg("collation \"%s\" has no actual version, but a version was recorded",
 								NameStr(collform->collname))));
 			}
 
