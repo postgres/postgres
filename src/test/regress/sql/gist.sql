@@ -159,6 +159,11 @@ explain (verbose, costs off)
 select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
 select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
 
+-- Also check that use_physical_tlist doesn't trigger in such cases.
+explain (verbose, costs off)
+select count(*) from gist_tbl;
+select count(*) from gist_tbl;
+
 -- This case isn't supported, but it should at least EXPLAIN correctly.
 explain (verbose, costs off)
 select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
