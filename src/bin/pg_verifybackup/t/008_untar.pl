@@ -11,7 +11,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 6;
+use Test::More tests => 9;
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -35,6 +35,14 @@ my @test_configuration = (
 		'decompress_program' => $ENV{'GZIP_PROGRAM'},
 		'decompress_flags' => [ '-d' ],
 		'enabled' => check_pg_config("#define HAVE_LIBZ 1")
+	},
+	{
+		'compression_method' => 'lz4',
+		'backup_flags' => ['--compress', 'server-lz4'],
+		'backup_archive' => 'base.tar.lz4',
+		'decompress_program' => $ENV{'LZ4'},
+		'decompress_flags' => [ '-d', '-m'],
+		'enabled' => check_pg_config("#define HAVE_LIBLZ4 1")
 	}
 );
 

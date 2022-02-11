@@ -391,7 +391,7 @@ usage(void)
 	printf(_("  -X, --wal-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
 	printf(_("  -z, --gzip             compress tar output\n"));
-	printf(_("  -Z, --compress={[{client,server}-]gzip,none}[:LEVEL] or [LEVEL]\n"
+	printf(_("  -Z, --compress={[{client,server}-]gzip,lz4,none}[:LEVEL] or [LEVEL]\n"
 			 "                         compress tar output with given compression method or level\n"));
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
@@ -1001,6 +1001,11 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 	else if (pg_strcasecmp(firstpart, "server-gzip") == 0)
 	{
 		*methodres = COMPRESSION_GZIP;
+		*locationres = COMPRESS_LOCATION_SERVER;
+	}
+	else if (pg_strcasecmp(firstpart, "server-lz4") == 0)
+	{
+		*methodres = COMPRESSION_LZ4;
 		*locationres = COMPRESS_LOCATION_SERVER;
 	}
 	else if (pg_strcasecmp(firstpart, "none") == 0)
@@ -1930,6 +1935,9 @@ BaseBackup(void)
 			case COMPRESSION_GZIP:
 				compressmethodstr = "gzip";
 				break;
+			case COMPRESSION_LZ4:
+				compressmethodstr = "lz4";
+				break;
 			default:
 				Assert(false);
 				break;
@@ -2772,8 +2780,12 @@ main(int argc, char **argv)
 			}
 			break;
 		case COMPRESSION_LZ4:
-			/* option not supported */
-			Assert(false);
+			if (compresslevel > 12)
+			{
+				pg_log_error("compression level %d of method %s higher than maximum of 12",
+							 compresslevel, "lz4");
+				exit(1);
+			}
 			break;
 	}
 

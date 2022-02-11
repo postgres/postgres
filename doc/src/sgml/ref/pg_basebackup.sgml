@@ -417,10 +417,13 @@ PostgreSQL documentation
         specify <literal>-Xfetch</literal>.
        </para>
        <para>
-        The compression method can be set to either <literal>gzip</literal>
-        for compression with <application>gzip</application>, or
-        <literal>none</literal> for no compression. A compression level
-        can be optionally specified, by appending the level number after a
+        The compression method can be set to <literal>gzip</literal> for
+        compression with <application>gzip</application>, or
+        <literal>lz4</literal> for compression with
+        <application>lz4</application>, or <literal>none</literal> for no
+        compression. However, <literal>lz4</literal> can be currently only
+        used with <literal>server</literal>. A compression level can be
+        optionally specified, by appending the level number after a
         colon (<literal>:</literal>). If no level is specified, the default
         compression level will be used. If only a level is specified without
         mentioning an algorithm, <literal>gzip</literal> compression will
@@ -428,12 +431,13 @@ PostgreSQL documentation
         used if the level is 0.
        </para>
        <para>
-        When the tar format is used, the suffix <filename>.gz</filename> will
-        automatically be added to all tar filenames. When the plain format is
-        used, client-side compression may not be specified, but it is
-        still possible to request server-side compression. If this is done,
-        the server will compress the backup for transmission, and the
-        client will decompress and extract it.
+        When the tar format is used with <literal>gzip</literal> or
+        <literal>lz4</literal>, the suffix <filename>.gz</filename> or
+        <filename>.lz4</filename> will automatically be added to all tar
+        filenames. When the plain format is used, client-side compression may
+        not be specified, but it is still possible to request server-side
+        compression. If this is done, the server will compress the backup for
+        transmission, and the client will decompress and extract it.
        </para>
       </listitem>
      </varlistentry>

@@ -2724,8 +2724,8 @@ The commands accepted in replication mode are:
         <listitem>
          <para>
           Instructs the server to compress the backup using the specified
-          method. Currently, the only supported method is
-          <literal>gzip</literal>.
+          method. Currently, the supported methods are <literal>gzip</literal>
+          and <literal>lz4</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -2736,7 +2736,8 @@ The commands accepted in replication mode are:
          <para>
           Specifies the compression level to be used. This should only be
           used in conjunction with the <literal>COMPRESSION</literal> option.
-          The value should be an integer between 1 and 9.
+          For <literal>gzip</literal> the value should be an integer between 1
+          and 9, and for <literal>lz4</literal> it should be between 1 and 12.
          </para>
         </listitem>
        </varlistentry>
