@@ -560,9 +560,14 @@ LogStreamerMain(logstreamer_param *param)
 											  COMPRESSION_NONE,
 											  compresslevel,
 											  stream.do_sync);
-	else
+	else if (compressmethod == COMPRESSION_GZIP)
 		stream.walmethod = CreateWalTarMethod(param->xlog,
 											  compressmethod,
+											  compresslevel,
+											  stream.do_sync);
+	else
+		stream.walmethod = CreateWalTarMethod(param->xlog,
+											  COMPRESSION_NONE,
 											  compresslevel,
 											  stream.do_sync);
 
@@ -1003,6 +1008,16 @@ parse_compress_options(char *src, WalCompressionMethod *methodres,
 		*methodres = COMPRESSION_GZIP;
 		*locationres = COMPRESS_LOCATION_SERVER;
 	}
+	else if (pg_strcasecmp(firstpart, "lz4") == 0)
+	{
+		*methodres = COMPRESSION_LZ4;
+		*locationres = COMPRESS_LOCATION_UNSPECIFIED;
+	}
+	else if (pg_strcasecmp(firstpart, "client-lz4") == 0)
+	{
+		*methodres = COMPRESSION_LZ4;
+		*locationres = COMPRESS_LOCATION_CLIENT;
+	}
 	else if (pg_strcasecmp(firstpart, "server-lz4") == 0)
 	{
 		*methodres = COMPRESSION_LZ4;
@@ -1125,7 +1140,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	bbstreamer *manifest_inject_streamer = NULL;
 	bool		inject_manifest;
 	bool		is_tar,
-				is_tar_gz;
+				is_tar_gz,
+				is_tar_lz4;
 	bool		must_parse_archive;
 	int			archive_name_len = strlen(archive_name);
 
@@ -1144,6 +1160,10 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	is_tar_gz = (archive_name_len > 8 &&
 				 strcmp(archive_name + archive_name_len - 3, ".gz") == 0);
 
+	/* Is this a LZ4 archive? */
+	is_tar_lz4 = (archive_name_len > 8 &&
+				  strcmp(archive_name + archive_name_len - 4, ".lz4") == 0);
+
 	/*
 	 * We have to parse the archive if (1) we're suppose to extract it, or if
 	 * (2) we need to inject backup_manifest or recovery configuration into it.
@@ -1153,7 +1173,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		(spclocation == NULL && writerecoveryconf));
 
 	/* At present, we only know how to parse tar archives. */
-	if (must_parse_archive && !is_tar && !is_tar_gz)
+	if (must_parse_archive && !is_tar && !is_tar_gz && !is_tar_lz4)
 	{
 		pg_log_error("unable to parse archive: %s", archive_name);
 		pg_log_info("only tar archives can be parsed");
@@ -1217,6 +1237,14 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 												  archive_file,
 												  compresslevel);
 		}
+		else if (compressmethod == COMPRESSION_LZ4)
+		{
+			strlcat(archive_filename, ".lz4", sizeof(archive_filename));
+			streamer = bbstreamer_plain_writer_new(archive_filename,
+												   archive_file);
+			streamer = bbstreamer_lz4_compressor_new(streamer,
+													 compresslevel);
+		}
 		else
 		{
 			Assert(false);		/* not reachable */
@@ -1269,9 +1297,13 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	 * If the user has requested a server compressed archive along with archive
 	 * extraction at client then we need to decompress it.
 	 */
-	if (format == 'p' && compressmethod == COMPRESSION_GZIP &&
-			compressloc == COMPRESS_LOCATION_SERVER)
-		streamer = bbstreamer_gzip_decompressor_new(streamer);
+	if (format == 'p' && compressloc == COMPRESS_LOCATION_SERVER)
+	{
+		if (compressmethod == COMPRESSION_GZIP)
+			streamer = bbstreamer_gzip_decompressor_new(streamer);
+		else if (compressmethod == COMPRESSION_LZ4)
+			streamer = bbstreamer_lz4_decompressor_new(streamer);
+	}
 
 	/* Return the results. */
 	*manifest_inject_streamer_p = manifest_inject_streamer;
