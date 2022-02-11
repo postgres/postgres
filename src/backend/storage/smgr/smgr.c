@@ -41,6 +41,7 @@ typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
 	void		(*smgr_shutdown) (void);	/* may be NULL */
+	void		(*smgr_release) (void); /* may be NULL */
 	void		(*smgr_open) (SMgrRelation reln);
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
@@ -69,6 +70,7 @@ static const f_smgr smgrsw[] = {
 	{
 		.smgr_init = mdinit,
 		.smgr_shutdown = NULL,
+		.smgr_release = mdrelease,
 		.smgr_open = mdopen,
 		.smgr_close = mdclose,
 		.smgr_create = mdcreate,
@@ -692,4 +694,20 @@ AtEOXact_SMgr(void)
 
 		smgrclose(rel);
 	}
+}
+
+/*
+ * This routine is called when we are ordered to release all open files by a
+ * ProcSignalBarrier.
+ */
+bool
+ProcessBarrierSmgrRelease(void)
+{
+	for (int i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_release)
+			smgrsw[i].smgr_release();
+	}
+
+	return true;
 }

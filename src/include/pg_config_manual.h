@@ -153,6 +153,17 @@
 #endif
 
 /*
+ * If USE_BARRIER_SMGRRELEASE is defined, certain code paths that unlink
+ * directories will ask other backends to close all smgr file descriptors.
+ * This is enabled on Windows, because otherwise unlinked but still open files
+ * can prevent rmdir(containing_directory) from succeeding.  On other
+ * platforms, it can be defined to exercise those code paths.
+ */
+#if defined(WIN32)
+#define USE_BARRIER_SMGRRELEASE
+#endif
+
+/*
  * Define this if your operating system supports link()
  */
 #if !defined(WIN32) && !defined(__CYGWIN__)
