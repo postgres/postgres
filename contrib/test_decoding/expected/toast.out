@@ -52,7 +52,7 @@ CREATE TABLE toasted_copy (
 );
 ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 \copy toasted_copy FROM STDIN
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                                   substr                                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN
@@ -316,7 +316,7 @@ SELECT pg_column_size(toasted_key) > 2^16 FROM toasted_several;
  t
 (1 row)
 
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                                regexp_replace                                                                                               
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN
@@ -327,7 +327,7 @@ SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_sl
 -- test update of a toasted key without changing it
 UPDATE toasted_several SET toasted_col1 = toasted_key;
 UPDATE toasted_several SET toasted_col2 = toasted_col1;
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                                regexp_replace                                                                                               
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN
@@ -350,7 +350,7 @@ UPDATE toasted_several SET toasted_col1 = toasted_col2 WHERE id = 1;
 DELETE FROM toasted_several WHERE id = 1;
 COMMIT;
 DROP TABLE toasted_several;
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0')
 WHERE data NOT LIKE '%INSERT: %';
                                                                                                regexp_replace                                                                                               
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -373,7 +373,7 @@ INSERT INTO tbl1 VALUES(1, repeat('a', 4000)) ;
 ALTER TABLE tbl1 ADD COLUMN id serial primary key;
 INSERT INTO tbl2 VALUES(1);
 commit;
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                                   substr                                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN

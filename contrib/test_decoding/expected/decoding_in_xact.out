@@ -58,7 +58,7 @@ SELECT pg_current_xact_id() = '0';
 
 -- don't show yet, haven't committed
 INSERT INTO nobarf(data) VALUES('2');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                            data                            
 -----------------------------------------------------------
  BEGIN

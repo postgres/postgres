@@ -72,9 +72,9 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_d
 -- origin tx
 INSERT INTO origin_tbl(data) VALUES ('will be replicated and decoded and decoded again');
 INSERT INTO target_tbl(data)
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 -- as is normal, the insert into target_tbl shows up
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                     data                                                                                    
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN

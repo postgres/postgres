@@ -13,7 +13,7 @@ teardown
 session "s0"
 setup { SET synchronous_commit=on; }
 step "s0init" {SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');}
-step "s0start" {SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');}
+step "s0start" {SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'include-sequences', 'false');}
 step "s0alter" {ALTER TABLE do_write ADD column ts timestamptz; }
 step "s0w" { INSERT INTO do_write DEFAULT VALUES; }
 

@@ -35,7 +35,7 @@ SELECT pg_relation_size((SELECT reltoastrelid FROM pg_class WHERE oid = 'pg_shde
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 CREATE TABLE replication_example(id SERIAL PRIMARY KEY, somedata int, text varchar(120));
 INSERT INTO replication_example(somedata) VALUES (1);
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 BEGIN;
 INSERT INTO replication_example(somedata) VALUES (2);
@@ -98,7 +98,7 @@ VACUUM FULL pg_proc; VACUUM FULL pg_description; VACUUM FULL pg_shdescription; V
 INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (8, 6, 1);
 VACUUM FULL pg_proc; VACUUM FULL pg_description; VACUUM FULL pg_shdescription; VACUUM FULL iamalargetable;
 INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (9, 7, 1);
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 SELECT pg_drop_replication_slot('regression_slot');
 DROP TABLE IF EXISTS replication_example;

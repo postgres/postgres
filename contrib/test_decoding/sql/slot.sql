@@ -50,7 +50,7 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot2', 'test_
 
 INSERT INTO replication_example(somedata, text) VALUES (1, 3);
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot1', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot1', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 SELECT data FROM pg_logical_slot_get_changes('regression_slot2', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
 INSERT INTO replication_example(somedata, text) VALUES (1, 4);

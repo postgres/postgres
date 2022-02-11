@@ -35,7 +35,7 @@ init
 step s2c: COMMIT;
 step s1insert: INSERT INTO do_write DEFAULT VALUES;
 step s1checkpoint: CHECKPOINT;
-step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
+step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'include-sequences', 'false');
 data                                                                
 --------------------------------------------------------------------
 BEGIN                                                               
@@ -46,7 +46,7 @@ COMMIT
 step s1insert: INSERT INTO do_write DEFAULT VALUES;
 step s1alter: ALTER TABLE do_write ADD COLUMN addedbys1 int;
 step s1insert: INSERT INTO do_write DEFAULT VALUES;
-step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false');
+step s1start: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', 'false', 'include-sequences', 'false');
 data                                                                                        
 --------------------------------------------------------------------------------------------
 BEGIN                                                                                       

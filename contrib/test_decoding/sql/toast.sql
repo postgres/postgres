@@ -264,7 +264,7 @@ ALTER TABLE toasted_copy ALTER COLUMN data SET STORAGE EXTERNAL;
 202	untoasted199
 203	untoasted200
 \.
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- test we can decode "old" tuples bigger than the max heap tuple size correctly
 DROP TABLE IF EXISTS toasted_several;
@@ -287,13 +287,13 @@ UPDATE pg_attribute SET attstorage = 'x' WHERE attrelid = 'toasted_several_pkey'
 INSERT INTO toasted_several(toasted_key) VALUES(repeat('9876543210', 10000));
 SELECT pg_column_size(toasted_key) > 2^16 FROM toasted_several;
 
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- test update of a toasted key without changing it
 UPDATE toasted_several SET toasted_col1 = toasted_key;
 UPDATE toasted_several SET toasted_col2 = toasted_col1;
 
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 /*
  * update with large tuplebuf, in a transaction large enough to force to spool to disk
@@ -306,7 +306,7 @@ COMMIT;
 
 DROP TABLE toasted_several;
 
-SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+SELECT regexp_replace(data, '^(.{100}).*(.{100})$', '\1..\2') FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0')
 WHERE data NOT LIKE '%INSERT: %';
 
 /*
@@ -322,6 +322,6 @@ INSERT INTO tbl1 VALUES(1, repeat('a', 4000)) ;
 ALTER TABLE tbl1 ADD COLUMN id serial primary key;
 INSERT INTO tbl2 VALUES(1);
 commit;
-SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 SELECT pg_drop_replication_slot('regression_slot');
