@@ -2,9 +2,10 @@
 # to page pins. We absolutely need to avoid setting reltuples=0 in
 # such cases, since that interferes badly with planning.
 #
-# Expected result in second permutation is 20 tuples rather than 21 as
-# for the others, because vacuum should leave the previous result
-# (from before the insert) in place.
+# Expected result for all three permutation is 21 tuples, including
+# the second permutation.  VACUUM is able to count the concurrently
+# inserted tuple in its final reltuples, even when a cleanup lock
+# cannot be acquired on the affected heap page.
 
 setup {
     create table smalltbl
