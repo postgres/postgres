@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 14;
+use Test::More;
 
 program_help_ok('clusterdb');
 program_version_ok('clusterdb');
@@ -34,3 +34,5 @@ $node->issues_sql_like(
 
 $node->command_ok([qw(clusterdb --echo --verbose dbname=template1)],
 	'clusterdb with connection string');
+
+done_testing();

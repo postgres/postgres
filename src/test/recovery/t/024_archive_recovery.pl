@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 # Initialize and start node with wal_level = replica and WAL archiving
@@ -101,3 +101,5 @@ test_recovery_wal_level_minimal('archive_recovery', 'archive recovery', 0);
 
 # Test for standby server
 test_recovery_wal_level_minimal('standby', 'standby', 1);
+
+done_testing();

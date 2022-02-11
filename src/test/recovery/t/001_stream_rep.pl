@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 55;
+use Test::More;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -529,3 +529,5 @@ ok( ($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
 my $primary_data = $node_primary->data_dir;
 ok(!-f "$primary_data/pg_wal/$segment_removed",
 	"WAL segment $segment_removed recycled after physical slot advancing");
+
+done_testing();

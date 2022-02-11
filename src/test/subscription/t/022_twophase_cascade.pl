@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 41;
+use Test::More;
 
 ###############################
 # Setup a cascade of pub/sub nodes.
@@ -394,3 +394,5 @@ is($result, qq(0), 'check replication slot was dropped on publisher node A');
 $node_C->stop('fast');
 $node_B->stop('fast');
 $node_A->stop('fast');
+
+done_testing();

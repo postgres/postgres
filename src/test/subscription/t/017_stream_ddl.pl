@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 # Create publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -127,3 +127,5 @@ is($result, qq(5005|5002|4005|3004|5),
 
 $node_subscriber->stop;
 $node_publisher->stop;
+
+done_testing();

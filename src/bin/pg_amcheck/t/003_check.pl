@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
-use Test::More tests => 63;
+use Test::More;
 
 my ($node, $port, %corrupt_page, %remove_relation);
 
@@ -517,3 +517,5 @@ $node->command_checks_all(
 	[ @cmd, '-d', 'db1', '-d', 'db2', '-d', 'db3', '-S', 's*' ],
 	0, [$no_output_re], [$no_output_re],
 	'pg_amcheck excluding all corrupt schemas');
+
+done_testing();

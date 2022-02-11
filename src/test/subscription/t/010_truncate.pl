@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 14;
+use Test::More;
 
 # setup
 
@@ -239,3 +239,5 @@ is($result, qq(0||), 'truncate replicated for multiple subscriptions');
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT deadlocks FROM pg_stat_database WHERE datname='postgres'");
 is($result, qq(0), 'no deadlocks detected');
+
+done_testing();

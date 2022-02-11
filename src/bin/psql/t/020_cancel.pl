@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
@@ -64,3 +64,5 @@ SKIP: {
 	ok(!$result, 'query failed as expected');
 	like($stderr, qr/canceling statement due to user request/, 'query was canceled');
 }
+
+done_testing();

@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 31;
+use Test::More;
 
 my $node_primary;
 my $node_standby;
@@ -80,3 +80,5 @@ for my $i (1 .. 10)
 	);
 	test_index_replay("insert $i");
 }
+
+done_testing();

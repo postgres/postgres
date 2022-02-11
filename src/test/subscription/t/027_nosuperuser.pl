@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 14;
+use Test::More;
 
 my ($node_publisher, $node_subscriber, $publisher_connstr, $result, $offset);
 $offset = 0;
@@ -278,3 +278,5 @@ publish_delete("alice.unpartitioned", 17);
 expect_replication(
     "alice.unpartitioned", 2, 23, 25,
     "nosuperuser nobypassrls table owner can replicate delete into unpartitioned despite rls");
+
+done_testing();

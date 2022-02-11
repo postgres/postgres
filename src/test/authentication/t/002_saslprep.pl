@@ -15,10 +15,6 @@ if (!$use_unix_sockets)
 	plan skip_all =>
 	  "authentication tests cannot run without Unix-domain sockets";
 }
-else
-{
-	plan tests => 12;
-}
 
 # Delete pg_hba.conf from the given node, add a new entry to it
 # and then execute a reload to refresh it.
@@ -117,3 +113,5 @@ test_login($node, 'saslpreptest6_role', "foobar",     2);
 test_login($node, 'saslpreptest7_role', "foo\xd8\xa71bar", 0);
 test_login($node, 'saslpreptest7_role', "foo1\xd8\xa7bar", 2);
 test_login($node, 'saslpreptest7_role', "foobar",          2);
+
+done_testing();

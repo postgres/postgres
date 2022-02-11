@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 program_help_ok('pg_resetwal');
 program_version_ok('pg_resetwal');
@@ -28,3 +28,5 @@ SKIP:
 	ok(check_mode_recursive($node->data_dir, 0700, 0600),
 		'check PGDATA permissions');
 }
+
+done_testing();

@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
-use Test::More tests => 272;
+use Test::More;
 
 my ($node, $result);
 
@@ -283,3 +283,5 @@ sub check_all_options_uncorrupted
 		}
 	}
 }
+
+done_testing();

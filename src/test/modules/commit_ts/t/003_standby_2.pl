@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Utils;
-use Test::More tests => 4;
+use Test::More;
 use PostgreSQL::Test::Cluster;
 
 my $bkplabel = 'backup';
@@ -65,3 +65,5 @@ my $standby_ts = $standby->safe_psql('postgres',
 );
 isnt($standby_ts, '',
 	"standby gives valid value ($standby_ts) after promotion");
+
+done_testing();

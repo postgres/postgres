@@ -27,7 +27,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -176,4 +176,4 @@ $node_a->teardown_node;
 $node_b->teardown_node;
 $node_c->teardown_node;
 
-exit(0);
+done_testing();

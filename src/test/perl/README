@@ -54,8 +54,7 @@ Each test script should begin with:
     use warnings;
     use PostgreSQL::Test::Cluster;
     use PostgreSQL::Test::Utils;
-    # Replace with the number of tests to execute:
-    use Test::More tests => 1;
+    use Test::More;
 
 then it will generally need to set up one or more nodes, run commands
 against them and evaluate the results. For example:
@@ -68,6 +67,10 @@ against them and evaluate the results. For example:
     is($ret, '1', 'SELECT 1 returns 1');
 
     $node->stop('fast');
+
+Each test script should end with:
+
+	done_testing();
 
 Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
 #39185 by not using the "$" regular expression metacharacter in qr// when also

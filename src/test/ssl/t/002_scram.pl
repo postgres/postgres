@@ -30,8 +30,6 @@ my $SERVERHOSTCIDR = '127.0.0.1/32';
 my $supports_tls_server_end_point =
   check_pg_config("#define HAVE_X509_GET_SIGNATURE_NID 1");
 
-my $number_of_tests = $supports_tls_server_end_point ? 11 : 12;
-
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
 
@@ -118,4 +116,4 @@ $node->connect_ok(
 		qr/connection authenticated: identity="ssltestuser" method=scram-sha-256/
 	]);
 
-done_testing($number_of_tests);
+done_testing();

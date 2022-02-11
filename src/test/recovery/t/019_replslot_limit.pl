@@ -11,7 +11,7 @@ use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
 
 use File::Path qw(rmtree);
-use Test::More tests => $PostgreSQL::Test::Utils::windows_os ? 16 : 20;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 $ENV{PGDATABASE} = 'postgres';
@@ -421,3 +421,5 @@ sub find_in_log
 
 	return $log =~ m/$pat/;
 }
+
+done_testing();

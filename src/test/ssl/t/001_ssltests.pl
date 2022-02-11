@@ -19,10 +19,6 @@ if ($ENV{with_ssl} ne 'openssl')
 {
 	plan skip_all => 'OpenSSL not supported by this build';
 }
-else
-{
-	plan tests => 110;
-}
 
 #### Some configuration
 
@@ -619,3 +615,5 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt sslkey=$key{'client-revoked.key'}",
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
+
+done_testing();

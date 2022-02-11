@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 my $tempdir       = PostgreSQL::Test::Utils::tempdir;
 
@@ -25,3 +25,5 @@ command_exit_is([ 'pg_ctl', 'status', '-D', $node->data_dir ],
 	0, 'pg_ctl status with server running');
 
 system_or_bail 'pg_ctl', 'stop', '-D', $node->data_dir;
+
+done_testing();

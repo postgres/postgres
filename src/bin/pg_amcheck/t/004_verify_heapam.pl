@@ -297,7 +297,6 @@ close($file)
 $node->start;
 
 # Ok, Xids and page layout look ok.  We can run corruption tests.
-plan tests => 19;
 
 # Check that pg_amcheck runs against the uncorrupted table without error.
 $node->command_ok(
@@ -528,3 +527,5 @@ $node->command_checks_all(
 
 $node->teardown_node;
 $node->clean_node;
+
+done_testing();

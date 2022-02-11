@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 20;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -97,3 +97,5 @@ $result = $node->psql('postgres', "DROP TABLESPACE regress_ts4");
 ok($result == 0, 'drop tablespace 4');
 
 $node->stop;
+
+done_testing();

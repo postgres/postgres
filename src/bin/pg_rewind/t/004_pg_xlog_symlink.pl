@@ -9,7 +9,7 @@ use warnings;
 use File::Copy;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Utils;
-use Test::More tests => 5;
+use Test::More;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -76,4 +76,4 @@ in standby, after promotion
 run_test('local');
 run_test('remote');
 
-exit(0);
+done_testing();

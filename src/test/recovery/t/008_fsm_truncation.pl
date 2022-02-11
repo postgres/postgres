@@ -10,7 +10,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
@@ -96,3 +96,5 @@ is( $node_standby->psql(
 		qq{insert into testtab select generate_series(1,1000), 'foo';}),
 	0,
 	'INSERT succeeds with truncated relation FSM');
+
+done_testing();

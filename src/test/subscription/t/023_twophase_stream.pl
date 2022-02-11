@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 18;
+use Test::More;
 
 ###############################
 # Setup
@@ -282,3 +282,5 @@ is($result, qq(0), 'check replication origin was dropped on subscriber');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

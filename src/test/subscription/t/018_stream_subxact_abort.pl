@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 4;
+use Test::More;
 
 # Create publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -131,3 +131,5 @@ is($result, qq(2500|0), 'check rollback was reflected on subscriber');
 
 $node_subscriber->stop;
 $node_publisher->stop;
+
+done_testing();

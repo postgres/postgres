@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 42;
+use Test::More;
 
 program_help_ok('pg_archivecleanup');
 program_version_ok('pg_archivecleanup');
@@ -101,3 +101,5 @@ sub run_check
 run_check('',                 'pg_archivecleanup');
 run_check('.partial',         'pg_archivecleanup with .partial file');
 run_check('.00000020.backup', 'pg_archivecleanup with .backup file');
+
+done_testing();

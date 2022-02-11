@@ -26,7 +26,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 13;
+use Test::More;
 use File::Copy;
 use IPC::Run ();
 use Scalar::Util qw(blessed);
@@ -196,3 +196,5 @@ is($stdout, $final_expected_output_bb,
 	'got same output from walsender via pg_recvlogical on before_basebackup');
 
 $node_replica->teardown_node();
+
+done_testing();

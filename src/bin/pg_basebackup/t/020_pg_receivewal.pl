@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 42;
+use Test::More;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -334,3 +334,5 @@ ok(-e "$timeline_dir/$walfile_after_promotion",
 	"WAL segment $walfile_after_promotion archived after timeline jump");
 ok(-e "$timeline_dir/00000002.history",
 	"timeline history file archived after timeline jump");
+
+done_testing();

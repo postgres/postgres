@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 
 # Find the largest LSN in the set of pages part of the given relation
 # file.  This is used for offline checks of page consistency.  The LSN
@@ -139,3 +139,5 @@ die "No minRecoveryPoint in control file found\n"
 # the pages on disk.
 ok($offline_recovery_lsn ge $offline_max_lsn,
 	"Check offline that table data is consistent with minRecoveryPoint");
+
+done_testing();

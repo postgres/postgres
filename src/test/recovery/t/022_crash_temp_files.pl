@@ -14,11 +14,6 @@ if ($Config{osname} eq 'MSWin32')
 	plan skip_all => 'tests hang on Windows';
 	exit;
 }
-else
-{
-	plan tests => 9;
-}
-
 
 # To avoid hanging while expecting some specific input from a psql
 # instance being driven by us, add a timeout high enough that it
@@ -275,3 +270,5 @@ sub pump_until
 	}
 	return 1;
 }
+
+done_testing();

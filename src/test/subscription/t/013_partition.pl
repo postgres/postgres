@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 63;
+use Test::More;
 
 # setup
 
@@ -740,3 +740,5 @@ ok( $logfile =~
 # $node_subscriber1->append_conf('postgresql.conf',
 # 	"log_min_messages = warning");
 # $node_subscriber1->reload;
+
+done_testing();

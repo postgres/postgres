@@ -10,7 +10,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 25;
+use Test::More;
 
 # Start up the server and take a backup.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
@@ -105,3 +105,5 @@ command_fails_like(
 	],
 	qr/could not open directory/,
 	'nonexistent backup directory');
+
+done_testing();

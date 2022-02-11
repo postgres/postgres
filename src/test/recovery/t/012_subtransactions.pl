@@ -7,7 +7,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 # Setup primary node
 my $node_primary = PostgreSQL::Test::Cluster->new("primary");
@@ -214,3 +214,5 @@ $node_primary->psql(
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
+
+done_testing();

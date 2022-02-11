@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 # Test if the error reported on pg_stat_subscription_workers view is expected.
 sub test_subscription_error
@@ -161,3 +161,5 @@ is($result, q(0), 'no error after dropping subscription');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

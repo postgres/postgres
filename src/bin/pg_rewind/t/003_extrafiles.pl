@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 5;
+use Test::More;
 
 use File::Find;
 
@@ -103,4 +103,4 @@ sub run_test
 run_test('local');
 run_test('remote');
 
-exit(0);
+done_testing();

@@ -12,10 +12,6 @@ if ($PostgreSQL::Test::Utils::is_msys2)
 {
 	plan skip_all => 'High bit name tests fail on Msys2';
 }
-else
-{
-	plan tests => 14;
-}
 
 # We're going to use byte sequences that aren't valid UTF-8 strings.  Use
 # LATIN1, which accepts any byte and has a conversion from each byte to UTF-8.
@@ -229,3 +225,5 @@ $cmdline_node->run_log(
 ok($result,
 	'restore full dump with command-line options for connection parameters');
 is($stderr, '', 'no dump errors');
+
+done_testing();

@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 11;
+use Test::More;
 
 program_help_ok('dropuser');
 program_version_ok('dropuser');
@@ -24,3 +24,5 @@ $node->issues_sql_like(
 
 $node->command_fails([ 'dropuser', 'regress_nonexistent' ],
 	'fails with nonexistent user');
+
+done_testing();

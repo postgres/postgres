@@ -8,7 +8,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 10;
+use Test::More;
 use Config;
 
 # Initialize primary node
@@ -208,3 +208,5 @@ sub send_query_and_wait
 
 	return 1;
 }
+
+done_testing();

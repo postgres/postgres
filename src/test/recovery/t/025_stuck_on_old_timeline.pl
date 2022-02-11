@@ -13,7 +13,7 @@ use PostgreSQL::Test::Utils;
 
 use File::Basename;
 use FindBin;
-use Test::More tests => 1;
+use Test::More;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -108,3 +108,5 @@ my $result =
   $node_cascade->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "cascade: $result\n";
 is($result, 1, 'check streamed content on cascade standby');
+
+done_testing();

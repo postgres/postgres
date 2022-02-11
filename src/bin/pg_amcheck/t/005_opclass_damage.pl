@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 5;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('test');
 $node->init;
@@ -57,3 +57,5 @@ $node->command_checks_all(
 	[],
 	'pg_amcheck all schemas, tables and indexes reports fickleidx corruption'
 );
+
+done_testing();

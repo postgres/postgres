@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 25;
+use Test::More;
 
 program_help_ok('psql');
 program_version_ok('psql');
@@ -80,3 +80,5 @@ psql_like(
 	'handling of unexpected PQresultStatus',
 	'START_REPLICATION 0/0',
 	undef, qr/unexpected PQresultStatus: 8$/);
+
+done_testing();

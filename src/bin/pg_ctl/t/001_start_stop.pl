@@ -9,7 +9,7 @@ use Fcntl ':mode';
 use File::stat qw{lstat};
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 24;
+use Test::More;
 
 my $tempdir       = PostgreSQL::Test::Utils::tempdir;
 my $tempdir_short = PostgreSQL::Test::Utils::tempdir_short;
@@ -111,3 +111,5 @@ command_ok([ 'pg_ctl', 'restart', '-D', "$tempdir/data" ],
 	'pg_ctl restart with server running');
 
 system_or_bail 'pg_ctl', 'stop', '-D', "$tempdir/data";
+
+done_testing();

@@ -7,7 +7,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -110,3 +110,5 @@ $node_standby2->poll_query_until('postgres',
 $node_standby2->promote;
 $node_standby2->poll_query_until('postgres', "SELECT NOT pg_is_in_recovery()")
   or die "Timed out while waiting for promotion to finish";
+
+done_testing();

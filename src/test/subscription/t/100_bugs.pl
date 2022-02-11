@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 7;
+use Test::More;
 
 # Bug #15114
 
@@ -306,3 +306,5 @@ is( $node_subscriber->safe_psql(
 
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
+
+done_testing();

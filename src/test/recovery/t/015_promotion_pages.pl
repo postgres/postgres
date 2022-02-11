@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 
 # Initialize primary node
 my $alpha = PostgreSQL::Test::Cluster->new('alpha');
@@ -85,3 +85,5 @@ $bravo->start;
 my $psql_out;
 $bravo->psql('postgres', "SELECT count(*) FROM test1", stdout => \$psql_out);
 is($psql_out, '1000', "Check that table state is correct");
+
+done_testing();

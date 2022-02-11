@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 2;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -17,3 +17,5 @@ $node->issues_sql_like(
 	[ 'reindexdb', '-a' ],
 	qr/statement: REINDEX.*statement: REINDEX/s,
 	'reindex all databases');
+
+done_testing();

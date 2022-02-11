@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 76;
+use Test::More;
 
 # Test set-up
 my ($node, $port);
@@ -268,3 +268,5 @@ $node->command_checks_all(
 		qr/pg_amcheck: error: no relations to check/
 	],
 	'schema exclusion pattern overrides all inclusion patterns');
+
+done_testing();

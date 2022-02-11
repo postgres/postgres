@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 14;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 # Extract the file name of a $format from the contents of
@@ -136,3 +136,5 @@ check_log_pattern('csvlog',  $new_current_logfiles, 'syntax error', $node);
 check_log_pattern('jsonlog', $new_current_logfiles, 'syntax error', $node);
 
 $node->stop();
+
+done_testing();

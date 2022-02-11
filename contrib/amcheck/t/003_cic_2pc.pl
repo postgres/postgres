@@ -9,7 +9,7 @@ use Config;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 
-use Test::More tests => 5;
+use Test::More;
 
 Test::More->builder->todo_start('filesystem bug')
   if PostgreSQL::Test::Utils::has_wal_read_bug;

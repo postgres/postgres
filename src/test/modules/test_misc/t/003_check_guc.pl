@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -106,3 +106,5 @@ foreach my $param (@sample_intersect)
 		"found GUC $param in postgresql.conf.sample, marked as NOT_IN_SAMPLE\n"
 	);
 }
+
+done_testing();

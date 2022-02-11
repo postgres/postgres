@@ -11,7 +11,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 
 use Fcntl qw(:seek);
-use Test::More tests => 66;
+use Test::More;
 
 
 # Utility routine to create and check a table with corrupted checksums
@@ -257,3 +257,5 @@ fail_corrupt($node, "99990_vm");
 fail_corrupt($node, "99990_init.123");
 fail_corrupt($node, "99990_fsm.123");
 fail_corrupt($node, "99990_vm.123");
+
+done_testing();

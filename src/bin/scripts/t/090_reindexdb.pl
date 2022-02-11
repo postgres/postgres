@@ -6,7 +6,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 58;
+use Test::More;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
@@ -199,3 +199,5 @@ $node->command_checks_all(
 		qr/^reindexdb: warning: cannot reindex system catalogs concurrently, skipping all/s
 	],
 	'parallel reindexdb for system with --concurrently skips catalogs');
+
+done_testing();

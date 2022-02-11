@@ -6,7 +6,7 @@ use warnings;
 
 use Config;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 #########################################
 # Basic checks
@@ -26,3 +26,5 @@ command_fails_like(
 	[ 'pg_test_fsync', '--secs-per-test', '0' ],
 	qr/\Qpg_test_fsync: error: --secs-per-test must be in range 1..4294967295\E/,
 	'pg_test_fsync: --secs-per-test must be in range');
+
+done_testing();

@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 
 # setup
 
@@ -64,3 +64,5 @@ is( $result, qq(1|22
 3|66
 4|88
 6|132), 'generated columns replicated');
+
+done_testing();

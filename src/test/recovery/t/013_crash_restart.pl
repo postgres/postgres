@@ -18,9 +18,6 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 use Config;
 
-plan tests => 18;
-
-
 # To avoid hanging while expecting some specific input from a psql
 # instance being driven by us, add a timeout high enough that it
 # should never trigger even on very slow machines, unless something
@@ -272,3 +269,5 @@ sub pump_until
 	return 1;
 
 }
+
+done_testing();

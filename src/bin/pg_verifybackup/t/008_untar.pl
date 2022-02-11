@@ -11,7 +11,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 9;
+use Test::More;
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -110,3 +110,5 @@ for my $tc (@test_configuration)
 		rmtree($extract_path);
 	}
 }
+
+done_testing();

@@ -12,10 +12,6 @@ if (PostgreSQL::Test::Utils::has_wal_read_bug)
 	# this test file to die(), not merely to fail.
 	plan skip_all => 'filesystem bug';
 }
-else
-{
-	plan tests => 4;
-}
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -91,3 +87,5 @@ command_ok(
 
 $node_standby_1->stop;
 $node_primary->stop;
+
+done_testing();

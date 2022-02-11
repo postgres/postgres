@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Utils;
-use Test::More tests => 8;
+use Test::More;
 
 #########################################
 # Basic checks
@@ -13,3 +13,5 @@ use Test::More tests => 8;
 program_help_ok('oid2name');
 program_version_ok('oid2name');
 program_options_handling_ok('oid2name');
+
+done_testing();

@@ -18,10 +18,6 @@ if ($ENV{with_ssl} ne 'openssl')
 {
 	plan skip_all => 'OpenSSL not supported by this build';
 }
-else
-{
-	plan tests => 13;
-}
 
 #### Some configuration
 
@@ -135,3 +131,5 @@ $result = $node->safe_psql("certdb",
   "SELECT value, critical FROM ssl_extension_info() WHERE name = 'basicConstraints';",
   connstr => $common_connstr);
 is($result, 'CA:FALSE|t', 'extract extension from cert');
+
+done_testing();

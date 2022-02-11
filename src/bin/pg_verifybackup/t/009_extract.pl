@@ -11,8 +11,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 6;
-
+use Test::More;
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
@@ -64,3 +63,5 @@ for my $tc (@test_configuration)
 	# Remove backup immediately to save disk space.
 	rmtree($backup_path);
 }
+
+done_testing();

@@ -10,7 +10,7 @@ use Config;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 44;
+use Test::More;
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -290,3 +290,5 @@ sub cleanup_search_directory_fails
 	chmod(0700, $pathname) || die "chmod $pathname: $!";
 	return;
 }
+
+done_testing();

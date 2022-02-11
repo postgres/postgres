@@ -8,7 +8,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 6;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -54,3 +54,5 @@ command_checks_all(
 		qr/\Qpg_resetwal: warning: pg_control specifies invalid WAL segment size (0 bytes); proceed with caution\E/
 	],
 	'processes zero WAL segment size');
+
+done_testing();

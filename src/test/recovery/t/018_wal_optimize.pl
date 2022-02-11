@@ -14,7 +14,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 38;
+use Test::More;
 
 sub check_orphan_relfilenodes
 {
@@ -399,3 +399,5 @@ wal_skip_threshold = 0
 # Run same test suite for multiple wal_level values.
 run_wal_optimize("minimal");
 run_wal_optimize("replica");
+
+done_testing();
