@@ -357,6 +357,22 @@ select p from gist_tbl where circle(p,1) @> circle(point(0,0),0.95);
  (0,0)
 (1 row)
 
+-- Also check that use_physical_tlist doesn't trigger in such cases.
+explain (verbose, costs off)
+select count(*) from gist_tbl;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Index Only Scan using gist_tbl_multi_index on public.gist_tbl
+(3 rows)
+
+select count(*) from gist_tbl;
+ count 
+-------
+ 10001
+(1 row)
+
 -- This case isn't supported, but it should at least EXPLAIN correctly.
 explain (verbose, costs off)
 select p from gist_tbl order by circle(p,1) <-> point(0,0) limit 1;
