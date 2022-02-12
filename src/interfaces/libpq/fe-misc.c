@@ -777,19 +777,19 @@ definitelyFailed:
  * (putting it in conn->inBuffer) in any situation where we can't send
  * all the specified data immediately.
  *
- * Upon write failure, conn->write_failed is set and the error message is
- * saved in conn->write_err_msg, but we clear the output buffer and return
- * zero anyway; this is because callers should soldier on until it's possible
- * to read from the server and check for an error message.  write_err_msg
- * should be reported only when we are unable to obtain a server error first.
- * (Thus, a -1 result is returned only for an internal *read* failure.)
+ * If a socket-level write failure occurs, conn->write_failed is set and the
+ * error message is saved in conn->write_err_msg, but we clear the output
+ * buffer and return zero anyway; this is because callers should soldier on
+ * until we have read what we can from the server and checked for an error
+ * message.  write_err_msg should be reported only when we are unable to
+ * obtain a server error first.  Much of that behavior is implemented at
+ * lower levels, but this function deals with some edge cases.
  */
 static int
 pqSendSome(PGconn *conn, int len)
 {
 	char	   *ptr = conn->outBuffer;
 	int			remaining = conn->outCount;
-	int			oldmsglen = conn->errorMessage.len;
 	int			result = 0;
 
 	/*
@@ -817,7 +817,7 @@ pqSendSome(PGconn *conn, int len)
 	if (conn->sock == PGINVALID_SOCKET)
 	{
 		conn->write_failed = true;
-		/* Insert error message into conn->write_err_msg, if possible */
+		/* Store error message in conn->write_err_msg, if possible */
 		/* (strdup failure is OK, we'll cope later) */
 		conn->write_err_msg = strdup(libpq_gettext("connection not open\n"));
 		/* Discard queued data; no chance it'll ever be sent */
@@ -859,24 +859,6 @@ pqSendSome(PGconn *conn, int len)
 					continue;
 
 				default:
-					/* pqsecure_write set the error message for us */
-					conn->write_failed = true;
-
-					/*
-					 * Transfer error message to conn->write_err_msg, if
-					 * possible (strdup failure is OK, we'll cope later).
-					 *
-					 * We only want to transfer whatever has been appended to
-					 * conn->errorMessage since we entered this routine.
-					 */
-					if (!PQExpBufferBroken(&conn->errorMessage))
-					{
-						conn->write_err_msg = strdup(conn->errorMessage.data +
-													 oldmsglen);
-						conn->errorMessage.len = oldmsglen;
-						conn->errorMessage.data[oldmsglen] = '\0';
-					}
-
 					/* Discard queued data; no chance it'll ever be sent */
 					conn->outCount = 0;
 
@@ -886,7 +868,18 @@ pqSendSome(PGconn *conn, int len)
 						if (pqReadData(conn) < 0)
 							return -1;
 					}
-					return 0;
+
+					/*
+					 * Lower-level code should already have filled
+					 * conn->write_err_msg (and set conn->write_failed) or
+					 * conn->errorMessage.  In the former case, we pretend
+					 * there's no problem; the write_failed condition will be
+					 * dealt with later.  Otherwise, report the error now.
+					 */
+					if (conn->write_failed)
+						return 0;
+					else
+						return -1;
 			}
 		}
 		else
