@@ -30,15 +30,11 @@ env:
 # What files to preserve in case tests fail
 on_failure: &on_failure
   log_artifacts:
-    path: "**/**.log"
+    paths:
+      - "**/*.log"
+      - "**/.diffs"
+      - "**/regress_log_*"
     type: text/plain
-  regress_diffs_artifacts:
-    path: "**/**.diffs"
-    type: text/plain
-  tap_artifacts:
-    path: "**/regress_log_*"
-    type: text/plain
-
 
 task:
   name: FreeBSD - 13
@@ -440,7 +436,7 @@ task:
   on_failure:
     <<: *on_failure
     crashlog_artifacts:
-      path: "crashlog-**.txt"
+      path: "crashlog-*.txt"
       type: text/plain
 
 
