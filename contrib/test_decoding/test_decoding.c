@@ -774,9 +774,20 @@ pg_decode_sequence(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 				   int64 last_value, int64 log_cnt, bool is_called)
 {
 	TestDecodingData *data = ctx->output_plugin_private;
+	TestDecodingTxnData *txndata = txn->output_plugin_private;
 
 	if (!data->include_sequences)
 		return;
+
+	/* output BEGIN if we haven't yet, but only for the transactional case */
+	if (transactional)
+	{
+		if (data->skip_empty_xacts && !txndata->xact_wrote_changes)
+		{
+			pg_output_begin(ctx, data, txn, false);
+		}
+		txndata->xact_wrote_changes = true;
+	}
 
 	OutputPluginPrepareWrite(ctx, true);
 	appendStringInfoString(ctx->out, "sequence ");
@@ -994,9 +1005,20 @@ pg_decode_stream_sequence(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 						  int64 last_value, int64 log_cnt, bool is_called)
 {
 	TestDecodingData *data = ctx->output_plugin_private;
+	TestDecodingTxnData *txndata = txn->output_plugin_private;
 
 	if (!data->include_sequences)
 		return;
+
+	/* output BEGIN if we haven't yet, but only for the transactional case */
+	if (transactional)
+	{
+		if (data->skip_empty_xacts && !txndata->xact_wrote_changes)
+		{
+			pg_output_begin(ctx, data, txn, false);
+		}
+		txndata->xact_wrote_changes = true;
+	}
 
 	OutputPluginPrepareWrite(ctx, true);
 	appendStringInfoString(ctx->out, "streaming sequence ");
