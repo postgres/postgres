@@ -1682,7 +1682,7 @@ my_sock_write(BIO *h, const char *buf, int size)
 
 	res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
-	if (res <= 0)
+	if (res < 0)
 	{
 		/* If we were interrupted, tell caller to retry */
 		switch (SOCK_ERRNO)
