@@ -283,6 +283,8 @@ extern void vac_update_relstats(Relation relation,
 								bool hasindex,
 								TransactionId frozenxid,
 								MultiXactId minmulti,
+								bool *frozenxid_updated,
+								bool *minmulti_updated,
 								bool in_outer_xact);
 extern void vacuum_set_xid_limits(Relation rel,
 								  int freeze_min_age, int freeze_table_age,

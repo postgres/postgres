@@ -199,6 +199,7 @@ typedef struct LVRelState
 	BlockNumber frozenskipped_pages;	/* # frozen pages skipped via VM */
 	BlockNumber removed_pages;	/* # pages removed by relation truncation */
 	BlockNumber lpdead_item_pages;	/* # pages with LP_DEAD items */
+	BlockNumber missed_dead_pages;	/* # pages with missed dead tuples */
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 
 	/* Statistics output by us, for table */
@@ -212,8 +213,8 @@ typedef struct LVRelState
 	/* Counters that follow are only for scanned_pages */
 	int64		tuples_deleted; /* # deleted from table */
 	int64		lpdead_items;	/* # deleted from indexes */
-	int64		new_dead_tuples;	/* new estimated total # of dead items in
-									 * table */
+	int64		recently_dead_tuples;	/* # dead, but not yet removable */
+	int64		missed_dead_tuples; /* # removable, but not removed */
 	int64		num_tuples;		/* total number of nonremovable tuples */
 	int64		live_tuples;	/* live tuples (reltuples estimate) */
 } LVRelState;
@@ -318,6 +319,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				write_rate;
 	bool		aggressive,
 				skipwithvm;
+	bool		frozenxid_updated,
+				minmulti_updated;
 	BlockNumber orig_rel_pages;
 	char	  **indnames = NULL;
 	TransactionId xidFullScanLimit;
@@ -539,9 +542,11 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	{
 		/* Cannot advance relfrozenxid/relminmxid */
 		Assert(!aggressive);
+		frozenxid_updated = minmulti_updated = false;
 		vac_update_relstats(rel, new_rel_pages, new_live_tuples,
 							new_rel_allvisible, vacrel->nindexes > 0,
-							InvalidTransactionId, InvalidMultiXactId, false);
+							InvalidTransactionId, InvalidMultiXactId,
+							NULL, NULL, false);
 	}
 	else
 	{
@@ -549,7 +554,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			   orig_rel_pages);
 		vac_update_relstats(rel, new_rel_pages, new_live_tuples,
 							new_rel_allvisible, vacrel->nindexes > 0,
-							FreezeLimit, MultiXactCutoff, false);
+							FreezeLimit, MultiXactCutoff,
+							&frozenxid_updated, &minmulti_updated, false);
 	}
 
 	/*
@@ -565,7 +571,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	pgstat_report_vacuum(RelationGetRelid(rel),
 						 rel->rd_rel->relisshared,
 						 Max(new_live_tuples, 0),
-						 vacrel->new_dead_tuples);
+						 vacrel->recently_dead_tuples +
+						 vacrel->missed_dead_tuples);
 	pgstat_progress_end_command();
 
 	if (instrument)
@@ -578,6 +585,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		{
 			StringInfoData buf;
 			char	   *msgfmt;
+			int32		diff;
 
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 
@@ -629,16 +637,40 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 vacrel->relnamespace,
 							 vacrel->relname,
 							 vacrel->num_index_scans);
-			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u skipped frozen\n"),
+			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u scanned (%.2f%% of total)\n"),
 							 vacrel->removed_pages,
 							 vacrel->rel_pages,
-							 vacrel->frozenskipped_pages);
+							 vacrel->scanned_pages,
+							 orig_rel_pages == 0 ? 0 :
+							 100.0 * vacrel->scanned_pages / orig_rel_pages);
 			appendStringInfo(&buf,
-							 _("tuples: %lld removed, %lld remain, %lld are dead but not yet removable, oldest xmin: %u\n"),
+							 _("tuples: %lld removed, %lld remain, %lld are dead but not yet removable\n"),
 							 (long long) vacrel->tuples_deleted,
 							 (long long) vacrel->new_rel_tuples,
-							 (long long) vacrel->new_dead_tuples,
-							 OldestXmin);
+							 (long long) vacrel->recently_dead_tuples);
+			if (vacrel->missed_dead_tuples > 0)
+				appendStringInfo(&buf,
+								 _("tuples missed: %lld dead from %u pages not removed due to cleanup lock contention\n"),
+								 (long long) vacrel->missed_dead_tuples,
+								 vacrel->missed_dead_pages);
+			diff = (int32) (ReadNextTransactionId() - OldestXmin);
+			appendStringInfo(&buf,
+							 _("removable cutoff: %u, older by %d xids when operation ended\n"),
+							 OldestXmin, diff);
+			if (frozenxid_updated)
+			{
+				diff = (int32) (FreezeLimit - vacrel->relfrozenxid);
+				appendStringInfo(&buf,
+								 _("new relfrozenxid: %u, which is %d xids ahead of previous value\n"),
+								 FreezeLimit, diff);
+			}
+			if (minmulti_updated)
+			{
+				diff = (int32) (MultiXactCutoff - vacrel->relminmxid);
+				appendStringInfo(&buf,
+								 _("new relminmxid: %u, which is %d mxids ahead of previous value\n"),
+								 MultiXactCutoff, diff);
+			}
 			if (orig_rel_pages > 0)
 			{
 				if (vacrel->do_index_vacuuming)
@@ -779,13 +811,15 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	vacrel->frozenskipped_pages = 0;
 	vacrel->removed_pages = 0;
 	vacrel->lpdead_item_pages = 0;
+	vacrel->missed_dead_pages = 0;
 	vacrel->nonempty_pages = 0;
 
 	/* Initialize instrumentation counters */
 	vacrel->num_index_scans = 0;
 	vacrel->tuples_deleted = 0;
 	vacrel->lpdead_items = 0;
-	vacrel->new_dead_tuples = 0;
+	vacrel->recently_dead_tuples = 0;
+	vacrel->missed_dead_tuples = 0;
 	vacrel->num_tuples = 0;
 	vacrel->live_tuples = 0;
 
@@ -1331,7 +1365,8 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	 * (unlikely) scenario that new_live_tuples is -1, take it as zero.
 	 */
 	vacrel->new_rel_tuples =
-		Max(vacrel->new_live_tuples, 0) + vacrel->new_dead_tuples;
+		Max(vacrel->new_live_tuples, 0) + vacrel->recently_dead_tuples +
+		vacrel->missed_dead_tuples;
 
 	/*
 	 * Release any remaining pin on visibility map page.
@@ -1539,7 +1574,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	HTSV_Result res;
 	int			tuples_deleted,
 				lpdead_items,
-				new_dead_tuples,
+				recently_dead_tuples,
 				num_tuples,
 				live_tuples;
 	int			nnewlpdead;
@@ -1556,7 +1591,7 @@ retry:
 	/* Initialize (or reset) page-level counters */
 	tuples_deleted = 0;
 	lpdead_items = 0;
-	new_dead_tuples = 0;
+	recently_dead_tuples = 0;
 	num_tuples = 0;
 	live_tuples = 0;
 
@@ -1715,11 +1750,11 @@ retry:
 			case HEAPTUPLE_RECENTLY_DEAD:
 
 				/*
-				 * If tuple is recently deleted then we must not remove it
-				 * from relation.  (We only remove items that are LP_DEAD from
+				 * If tuple is recently dead then we must not remove it from
+				 * the relation.  (We only remove items that are LP_DEAD from
 				 * pruning.)
 				 */
-				new_dead_tuples++;
+				recently_dead_tuples++;
 				prunestate->all_visible = false;
 				break;
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
@@ -1895,7 +1930,7 @@ retry:
 	/* Finally, add page-local counts to whole-VACUUM counts */
 	vacrel->tuples_deleted += tuples_deleted;
 	vacrel->lpdead_items += lpdead_items;
-	vacrel->new_dead_tuples += new_dead_tuples;
+	vacrel->recently_dead_tuples += recently_dead_tuples;
 	vacrel->num_tuples += num_tuples;
 	vacrel->live_tuples += live_tuples;
 }
@@ -1932,7 +1967,8 @@ lazy_scan_noprune(LVRelState *vacrel,
 	int			lpdead_items,
 				num_tuples,
 				live_tuples,
-				new_dead_tuples;
+				recently_dead_tuples,
+				missed_dead_tuples;
 	HeapTupleHeader tupleheader;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
 
@@ -1944,7 +1980,8 @@ lazy_scan_noprune(LVRelState *vacrel,
 	lpdead_items = 0;
 	num_tuples = 0;
 	live_tuples = 0;
-	new_dead_tuples = 0;
+	recently_dead_tuples = 0;
+	missed_dead_tuples = 0;
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber;
@@ -2018,16 +2055,15 @@ lazy_scan_noprune(LVRelState *vacrel,
 				/*
 				 * There is some useful work for pruning to do, that won't be
 				 * done due to failure to get a cleanup lock.
-				 *
-				 * TODO Add dedicated instrumentation for this case
 				 */
+				missed_dead_tuples++;
 				break;
 			case HEAPTUPLE_RECENTLY_DEAD:
 
 				/*
-				 * Count in new_dead_tuples, just like lazy_scan_prune
+				 * Count in recently_dead_tuples, just like lazy_scan_prune
 				 */
-				new_dead_tuples++;
+				recently_dead_tuples++;
 				break;
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
 
@@ -2063,7 +2099,7 @@ lazy_scan_noprune(LVRelState *vacrel,
 			 */
 			*hastup = true;
 			num_tuples += lpdead_items;
-			/* TODO HEAPTUPLE_DEAD style instrumentation needed here, too */
+			missed_dead_tuples += lpdead_items;
 		}
 
 		*recordfreespace = true;
@@ -2112,9 +2148,12 @@ lazy_scan_noprune(LVRelState *vacrel,
 	/*
 	 * Finally, add relevant page-local counts to whole-VACUUM counts
 	 */
-	vacrel->new_dead_tuples += new_dead_tuples;
+	vacrel->recently_dead_tuples += recently_dead_tuples;
+	vacrel->missed_dead_tuples += missed_dead_tuples;
 	vacrel->num_tuples += num_tuples;
 	vacrel->live_tuples += live_tuples;
+	if (missed_dead_tuples > 0)
+		vacrel->missed_dead_pages++;
 
 	/* Caller won't need to call lazy_scan_prune with same page */
 	return true;
@@ -2193,8 +2232,8 @@ lazy_vacuum(LVRelState *vacrel)
 		 * dead_items space is not CPU cache resident.
 		 *
 		 * We don't take any special steps to remember the LP_DEAD items (such
-		 * as counting them in new_dead_tuples report to the stats collector)
-		 * when the optimization is applied.  Though the accounting used in
+		 * as counting them in our final report to the stats collector) when
+		 * the optimization is applied.  Though the accounting used in
 		 * analyze.c's acquire_sample_rows() will recognize the same LP_DEAD
 		 * items as dead rows in its own stats collector report, that's okay.
 		 * The discrepancy should be negligible.  If this optimization is ever
@@ -3321,7 +3360,7 @@ update_index_statistics(LVRelState *vacrel)
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-							false);
+							NULL, NULL, false);
 	}
 }
 

@@ -1315,6 +1315,7 @@ vac_update_relstats(Relation relation,
 					BlockNumber num_all_visible_pages,
 					bool hasindex, TransactionId frozenxid,
 					MultiXactId minmulti,
+					bool *frozenxid_updated, bool *minmulti_updated,
 					bool in_outer_xact)
 {
 	Oid			relid = RelationGetRelid(relation);
@@ -1390,22 +1391,30 @@ vac_update_relstats(Relation relation,
 	 * This should match vac_update_datfrozenxid() concerning what we consider
 	 * to be "in the future".
 	 */
+	if (frozenxid_updated)
+		*frozenxid_updated = false;
 	if (TransactionIdIsNormal(frozenxid) &&
 		pgcform->relfrozenxid != frozenxid &&
 		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
 		 TransactionIdPrecedes(ReadNextTransactionId(),
 							   pgcform->relfrozenxid)))
 	{
+		if (frozenxid_updated)
+			*frozenxid_updated = true;
 		pgcform->relfrozenxid = frozenxid;
 		dirty = true;
 	}
 
 	/* Similarly for relminmxid */
+	if (minmulti_updated)
+		*minmulti_updated = false;
 	if (MultiXactIdIsValid(minmulti) &&
 		pgcform->relminmxid != minmulti &&
 		(MultiXactIdPrecedes(pgcform->relminmxid, minmulti) ||
 		 MultiXactIdPrecedes(ReadNextMultiXactId(), pgcform->relminmxid)))
 	{
+		if (minmulti_updated)
+			*minmulti_updated = true;
 		pgcform->relminmxid = minmulti;
 		dirty = true;
 	}
