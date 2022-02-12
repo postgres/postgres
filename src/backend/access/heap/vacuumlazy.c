@@ -323,8 +323,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				minmulti_updated;
 	BlockNumber orig_rel_pages;
 	char	  **indnames = NULL;
-	TransactionId xidFullScanLimit;
-	MultiXactId mxactFullScanLimit;
 	BlockNumber new_rel_pages;
 	BlockNumber new_rel_allvisible;
 	double		new_live_tuples;
@@ -352,24 +350,24 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
 								  RelationGetRelid(rel));
 
-	vacuum_set_xid_limits(rel,
-						  params->freeze_min_age,
-						  params->freeze_table_age,
-						  params->multixact_freeze_min_age,
-						  params->multixact_freeze_table_age,
-						  &OldestXmin, &FreezeLimit, &xidFullScanLimit,
-						  &MultiXactCutoff, &mxactFullScanLimit);
-
 	/*
-	 * We request an aggressive scan if the table's frozen Xid is now older
-	 * than or equal to the requested Xid full-table scan limit; or if the
-	 * table's minimum MultiXactId is older than or equal to the requested
-	 * mxid full-table scan limit; or if DISABLE_PAGE_SKIPPING was specified.
+	 * Get OldestXmin cutoff, which is used to determine which deleted tuples
+	 * are considered DEAD, not just RECENTLY_DEAD.  Also get related cutoffs
+	 * used to determine which XIDs/MultiXactIds will be frozen.
+	 *
+	 * If this is an aggressive VACUUM, then we're strictly required to freeze
+	 * any and all XIDs from before FreezeLimit, so that we will be able to
+	 * safely advance relfrozenxid up to FreezeLimit below (we must be able to
+	 * advance relminmxid up to MultiXactCutoff, too).
 	 */
-	aggressive = TransactionIdPrecedesOrEquals(rel->rd_rel->relfrozenxid,
-											   xidFullScanLimit);
-	aggressive |= MultiXactIdPrecedesOrEquals(rel->rd_rel->relminmxid,
-											  mxactFullScanLimit);
+	aggressive = vacuum_set_xid_limits(rel,
+									   params->freeze_min_age,
+									   params->freeze_table_age,
+									   params->multixact_freeze_min_age,
+									   params->multixact_freeze_table_age,
+									   &OldestXmin, &FreezeLimit,
+									   &MultiXactCutoff);
+
 	skipwithvm = true;
 	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
 	{

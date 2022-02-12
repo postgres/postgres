@@ -857,8 +857,7 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * not to be aggressive about this.
 	 */
 	vacuum_set_xid_limits(OldHeap, 0, 0, 0, 0,
-						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff,
-						  NULL);
+						  &OldestXmin, &FreezeXid, &MultiXactCutoff);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
