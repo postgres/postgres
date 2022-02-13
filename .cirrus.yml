@@ -32,7 +32,7 @@ on_failure: &on_failure
   log_artifacts:
     paths:
       - "**/*.log"
-      - "**/.diffs"
+      - "**/*.diffs"
       - "**/regress_log_*"
     type: text/plain
 
