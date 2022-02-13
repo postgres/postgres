@@ -536,8 +536,6 @@ sub recoverycheck
 {
 	InstallTemp();
 
-	$ENV{REGRESS_OUTPUTDIR} = "$topdir/src/test/recovery/tmp_check";
-
 	my $dir    = "$topdir/src/test/recovery";
 	my $status = tap_check($dir);
 	exit $status if $status;

@@ -49,7 +49,7 @@ $node_standby_1->append_conf('postgresql.conf',
 $node_standby_1->start;
 
 my $dlpath = PostgreSQL::Test::Utils::perl2host(dirname($ENV{REGRESS_SHLIB}));
-my $outputdir = PostgreSQL::Test::Utils::perl2host($ENV{REGRESS_OUTPUTDIR});
+my $outputdir = PostgreSQL::Test::Utils::perl2host($PostgreSQL::Test::Utils::tmp_check);
 
 # Run the regression tests against the primary.
 my $extra_opts = $ENV{EXTRA_REGRESS_OPTS} || "";
