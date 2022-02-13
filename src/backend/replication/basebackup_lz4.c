@@ -66,6 +66,7 @@ bbsink_lz4_new(bbsink *next, int compresslevel)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("lz4 compression is not supported by this build")));
+	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_lz4 *sink;
 

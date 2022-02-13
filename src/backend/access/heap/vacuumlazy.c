@@ -1112,7 +1112,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 			if (lazy_scan_noprune(vacrel, buf, blkno, page, &hastup,
 								  &recordfreespace))
 			{
-				Size		freespace;
+				Size		freespace = 0;
 
 				/*
 				 * Processed page successfully (without cleanup lock) -- just

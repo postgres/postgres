@@ -38,7 +38,7 @@ static const char *RmgrNames[RM_MAX_ID + 1] = {
 static void extractPageInfo(XLogReaderState *record);
 
 static int	xlogreadfd = -1;
-static XLogSegNo xlogreadsegno = -1;
+static XLogSegNo xlogreadsegno = 0;
 static char xlogfpath[MAXPGPATH];
 
 typedef struct XLogPageReadPrivate
