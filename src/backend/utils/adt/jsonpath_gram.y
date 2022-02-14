@@ -232,7 +232,7 @@ array_accessor:
 	;
 
 any_level:
-	INT_P							{ $$ = pg_atoi($1.val, 4, 0); }
+	INT_P							{ $$ = pg_strtoint32($1.val); }
 	| LAST_P						{ $$ = -1; }
 	;
 
