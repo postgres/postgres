@@ -43,7 +43,6 @@ extern void namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
 
 /* numutils.c */
-extern int32 pg_atoi(const char *s, int size, int c);
 extern int16 pg_strtoint16(const char *s);
 extern int32 pg_strtoint32(const char *s);
 extern int64 pg_strtoint64(const char *s);
