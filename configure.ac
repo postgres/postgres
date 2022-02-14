@@ -1485,6 +1485,7 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
 fi
 
+PGAC_PATH_PROGS(LZ4, lz4)
 if test "$with_lz4" = yes; then
   AC_CHECK_HEADERS(lz4.h, [], [AC_MSG_ERROR([lz4.h header file is required for LZ4])])
 fi

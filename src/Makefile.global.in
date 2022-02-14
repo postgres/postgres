@@ -350,7 +350,7 @@ XGETTEXT = @XGETTEXT@
 
 GZIP	= gzip
 BZIP2	= bzip2
-LZ4	= lz4
+LZ4	= @LZ4@
 
 DOWNLOAD = wget -O $@ --no-use-server-timestamps
 #DOWNLOAD = curl -o $@

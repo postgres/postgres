@@ -54,8 +54,9 @@ for my $tc (@test_configuration)
 		skip "$method compression not supported by this build", 3
 			if ! $tc->{'enabled'};
 		skip "no decompressor available for $method", 3
-			if exists $tc->{'decompress_program'} &&
-			!defined $tc->{'decompress_program'};
+		  if exists $tc->{'decompress_program'}
+		  && (!defined $tc->{'decompress_program'}
+		    || $tc->{'decompress_program'} eq '');
 
 		# Take a server-side backup.
 		my @backup = (
