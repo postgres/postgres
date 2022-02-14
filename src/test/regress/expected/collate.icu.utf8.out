@@ -1085,6 +1085,10 @@ DROP ROLE regress_test_role;
 -- ALTER
 ALTER COLLATION "en-x-icu" REFRESH VERSION;
 NOTICE:  version has not changed
+-- also test for database while we are here
+SELECT current_database() AS datname \gset
+ALTER DATABASE :"datname" REFRESH COLLATION VERSION;
+NOTICE:  version has not changed
 -- dependencies
 CREATE COLLATION test0 FROM "C";
 CREATE TABLE collate_dep_test1 (a int, b text COLLATE test0);

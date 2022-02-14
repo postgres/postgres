@@ -10465,6 +10465,12 @@ AlterDatabaseStmt:
 														(Node *)makeString($6), @6));
 					$$ = (Node *)n;
 				 }
+			| ALTER DATABASE name REFRESH COLLATION VERSION_P
+				 {
+					AlterDatabaseRefreshCollStmt *n = makeNode(AlterDatabaseRefreshCollStmt);
+					n->dbname = $3;
+					$$ = (Node *)n;
+				 }
 		;
 
 AlterDatabaseSetStmt:

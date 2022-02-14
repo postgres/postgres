@@ -1858,6 +1858,18 @@ make_template0(FILE *cmdfd)
 		CppAsString2(Template0ObjectId) ";\n\n",
 
 		/*
+		 * template0 shouldn't have any collation-dependent objects, so unset
+		 * the collation version.  This disables collation version checks when
+		 * making a new database from it.
+		 */
+		"UPDATE pg_database SET datcollversion = NULL WHERE datname = 'template0';\n\n",
+
+		/*
+		 * While we are here, do set the collation version on template1.
+		 */
+		"UPDATE pg_database SET datcollversion = pg_database_collation_actual_version(oid) WHERE datname = 'template1';\n\n",
+
+		/*
 		 * Explicitly revoke public create-schema and create-temp-table
 		 * privileges in template1 and template0; else the latter would be on
 		 * by default

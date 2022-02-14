@@ -2761,6 +2761,7 @@ dumpDatabase(Archive *fout)
 				i_acldefault,
 				i_datistemplate,
 				i_datconnlimit,
+				i_datcollversion,
 				i_tablespace;
 	CatalogId	dbCatId;
 	DumpId		dbDumpId;
@@ -2792,6 +2793,10 @@ dumpDatabase(Archive *fout)
 		appendPQExpBuffer(dbQry, "datminmxid, ");
 	else
 		appendPQExpBuffer(dbQry, "0 AS datminmxid, ");
+	if (fout->remoteVersion >= 150000)
+		appendPQExpBuffer(dbQry, "datcollversion, ");
+	else
+		appendPQExpBuffer(dbQry, "NULL AS datcollversion, ");
 	appendPQExpBuffer(dbQry,
 					  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
@@ -2813,6 +2818,7 @@ dumpDatabase(Archive *fout)
 	i_acldefault = PQfnumber(res, "acldefault");
 	i_datistemplate = PQfnumber(res, "datistemplate");
 	i_datconnlimit = PQfnumber(res, "datconnlimit");
+	i_datcollversion = PQfnumber(res, "datcollversion");
 	i_tablespace = PQfnumber(res, "tablespace");
 
 	dbCatId.tableoid = atooid(PQgetvalue(res, 0, i_tableoid));
@@ -2869,6 +2875,21 @@ dumpDatabase(Archive *fout)
 		{
 			appendPQExpBufferStr(creaQry, " LC_CTYPE = ");
 			appendStringLiteralAH(creaQry, ctype, fout);
+		}
+	}
+
+	/*
+	 * For binary upgrade, carry over the collation version.  For normal
+	 * dump/restore, omit the version, so that it is computed upon restore.
+	 */
+	if (dopt->binary_upgrade)
+	{
+		if (!PQgetisnull(res, 0, i_datcollversion))
+		{
+			appendPQExpBufferStr(creaQry, " COLLATION_VERSION = ");
+			appendStringLiteralAH(creaQry,
+								  PQgetvalue(res, 0, i_datcollversion),
+								  fout);
 		}
 	}
 

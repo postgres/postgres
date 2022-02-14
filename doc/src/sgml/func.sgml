@@ -27064,6 +27064,24 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_database_collation_actual_version</primary>
+        </indexterm>
+        <function>pg_database_collation_actual_version</function> ( <type>oid</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the actual version of the database's collation as it is currently
+        installed in the operating system.  If this is different from the
+        value in
+        <structname>pg_database</structname>.<structfield>datcollversion</structfield>,
+        then objects depending on the collation might need to be rebuilt.  See
+        also <xref linkend="sql-alterdatabase"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_import_system_collations</primary>
         </indexterm>
         <function>pg_import_system_collations</function> ( <parameter>schema</parameter> <type>regnamespace</type> )

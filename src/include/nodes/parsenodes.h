@@ -3308,6 +3308,12 @@ typedef struct AlterDatabaseStmt
 	List	   *options;		/* List of DefElem nodes */
 } AlterDatabaseStmt;
 
+typedef struct AlterDatabaseRefreshCollStmt
+{
+	NodeTag		type;
+	char	   *dbname;
+} AlterDatabaseRefreshCollStmt;
+
 typedef struct AlterDatabaseSetStmt
 {
 	NodeTag		type;

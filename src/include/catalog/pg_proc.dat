@@ -11627,6 +11627,11 @@
   proname => 'pg_collation_actual_version', procost => '100',
   provolatile => 'v', prorettype => 'text', proargtypes => 'oid',
   prosrc => 'pg_collation_actual_version' },
+{ oid => '9167',
+  descr => 'get actual version of database collation from operating system',
+  proname => 'pg_database_collation_actual_version', procost => '100',
+  provolatile => 'v', prorettype => 'text', proargtypes => 'oid',
+  prosrc => 'pg_database_collation_actual_version' },
 
 # system management/monitoring related functions
 { oid => '3353', descr => 'list files in the log directory',

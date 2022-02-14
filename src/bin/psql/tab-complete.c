@@ -1849,7 +1849,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER DATABASE <name> */
 	else if (Matches("ALTER", "DATABASE", MatchAny))
-		COMPLETE_WITH("RESET", "SET", "OWNER TO", "RENAME TO",
+		COMPLETE_WITH("RESET", "SET", "OWNER TO", "REFRESH COLLATION VERSION", "RENAME TO",
 					  "IS_TEMPLATE", "ALLOW_CONNECTIONS",
 					  "CONNECTION LIMIT");
 

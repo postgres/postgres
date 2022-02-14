@@ -35,6 +35,8 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> OWNER TO { <rep
 
 ALTER DATABASE <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable>
 
+ALTER DATABASE <replaceable class="parameter">name</replaceable> REFRESH COLLATION VERSION
+
 ALTER DATABASE <replaceable class="parameter">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="parameter">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
@@ -167,6 +169,16 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
 
      <para>
       This form of the command cannot be executed inside a transaction block.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>REFRESH COLLATION VERSION</literal></term>
+    <listitem>
+     <para>
+      Update the database collation version.  See <xref
+      linkend="sql-altercollation-notes"/> for background.
      </para>
     </listitem>
    </varlistentry>
