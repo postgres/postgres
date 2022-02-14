@@ -26,7 +26,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
-#include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/varbit.h"
@@ -353,7 +352,6 @@ make_const(ParseState *pstate, A_Const *aconst)
 {
 	Const	   *con;
 	Datum		val;
-	int64		val64;
 	Oid			typeid;
 	int			typelen;
 	bool		typebyval;
@@ -384,8 +382,15 @@ make_const(ParseState *pstate, A_Const *aconst)
 			break;
 
 		case T_Float:
+		{
 			/* could be an oversize integer as well as a float ... */
-			if (scanint8(aconst->val.fval.fval, true, &val64))
+
+			int64		val64;
+			char	   *endptr;
+
+			errno = 0;
+			val64 = strtoi64(aconst->val.fval.fval, &endptr, 10);
+			if (errno == 0 && *endptr == '\0')
 			{
 				/*
 				 * It might actually fit in int32. Probably only INT_MIN can
@@ -425,6 +430,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 				typebyval = false;
 			}
 			break;
+		}
 
 		case T_Boolean:
 			val = BoolGetDatum(boolVal(&aconst->val));

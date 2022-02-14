@@ -787,8 +787,8 @@ is_an_int(const char *str)
 /*
  * strtoint64 -- convert a string to 64-bit integer
  *
- * This function is a slightly modified version of scanint8() from
- * src/backend/utils/adt/int8.c.
+ * This function is a slightly modified version of pg_strtoint64() from
+ * src/backend/utils/adt/numutils.c.
  *
  * The function returns whether the conversion worked, and if so
  * "*result" is set to the result.

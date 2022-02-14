@@ -21,7 +21,6 @@
 #include "replication/logicalproto.h"
 #include "replication/origin.h"
 #include "replication/pgoutput.h"
-#include "utils/int8.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -207,7 +206,8 @@ parse_output_parameters(List *options, PGOutputData *data)
 		/* Check each param, whether or not we recognize it */
 		if (strcmp(defel->defname, "proto_version") == 0)
 		{
-			int64		parsed;
+			unsigned long parsed;
+			char	   *endptr;
 
 			if (protocol_version_given)
 				ereport(ERROR,
@@ -215,12 +215,14 @@ parse_output_parameters(List *options, PGOutputData *data)
 						 errmsg("conflicting or redundant options")));
 			protocol_version_given = true;
 
-			if (!scanint8(strVal(defel->arg), true, &parsed))
+			errno = 0;
+			parsed = strtoul(strVal(defel->arg), &endptr, 10);
+			if (errno != 0 || *endptr != '\0')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid proto_version")));
 
-			if (parsed > PG_UINT32_MAX || parsed < 0)
+			if (parsed > PG_UINT32_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("proto_version \"%s\" out of range",

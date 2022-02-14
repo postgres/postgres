@@ -46,6 +46,7 @@ extern int	namestrcmp(Name name, const char *str);
 extern int32 pg_atoi(const char *s, int size, int c);
 extern int16 pg_strtoint16(const char *s);
 extern int32 pg_strtoint32(const char *s);
+extern int64 pg_strtoint64(const char *s);
 extern int	pg_itoa(int16 i, char *a);
 extern int	pg_ultoa_n(uint32 l, char *a);
 extern int	pg_ulltoa_n(uint64 l, char *a);
