@@ -232,8 +232,18 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 		aip->ai_addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(path);
 	}
 
+	/*
+	 * The standard recommendation for filling sun_len is to set it to the
+	 * struct size (independently of the actual path length).  However, that
+	 * draws an integer-overflow warning on AIX 7.1, where sun_len is just
+	 * uint8 yet the struct size exceeds 255 bytes.  It's likely that nothing
+	 * is paying attention to sun_len on that platform, but we have to do
+	 * something with it.  To suppress the warning, clamp the struct size to
+	 * what will fit in sun_len.
+	 */
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
-	unp->sun_len = sizeof(struct sockaddr_un);
+	unp->sun_len = Min(sizeof(struct sockaddr_un),
+					   ((size_t) 1 << (sizeof(unp->sun_len) * BITS_PER_BYTE)) - 1);
 #endif
 
 	return 0;
