@@ -204,7 +204,7 @@ pq_init(void)
 				(errmsg("could not set socket to nonblocking mode: %m")));
 #endif
 
-	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, 3);
+	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, FeBeWaitSetNEvents);
 	socket_pos = AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE,
 								   MyProcPort->sock, NULL, NULL);
 	latch_pos = AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, PGINVALID_SOCKET,
@@ -1960,33 +1960,33 @@ pq_settcpusertimeout(int timeout, Port *port)
 bool
 pq_check_connection(void)
 {
-#if defined(POLLRDHUP)
-	/*
-	 * POLLRDHUP is a Linux extension to poll(2) to detect sockets closed by
-	 * the other end.  We don't have a portable way to do that without
-	 * actually trying to read or write data on other systems.  We don't want
-	 * to read because that would be confused by pipelined queries and COPY
-	 * data. Perhaps in future we'll try to write a heartbeat message instead.
-	 */
-	struct pollfd pollfd;
+	WaitEvent	events[FeBeWaitSetNEvents];
 	int			rc;
 
-	pollfd.fd = MyProcPort->sock;
-	pollfd.events = POLLOUT | POLLIN | POLLRDHUP;
-	pollfd.revents = 0;
+	/*
+	 * It's OK to modify the socket event filter without restoring, because
+	 * all FeBeWaitSet socket wait sites do the same.
+	 */
+	ModifyWaitEvent(FeBeWaitSet, FeBeWaitSetSocketPos, WL_SOCKET_CLOSED, NULL);
 
-	rc = poll(&pollfd, 1, 0);
-
-	if (rc < 0)
+retry:
+	rc = WaitEventSetWait(FeBeWaitSet, 0, events, lengthof(events), 0);
+	for (int i = 0; i < rc; ++i)
 	{
-		ereport(COMMERROR,
-				(errcode_for_socket_access(),
-				 errmsg("could not poll socket: %m")));
-		return false;
+		if (events[i].events & WL_SOCKET_CLOSED)
+			return false;
+		if (events[i].events & WL_LATCH_SET)
+		{
+			/*
+			 * A latch event might be preventing other events from being
+			 * reported.  Reset it and poll again.  No need to restore it
+			 * because no code should expect latches to survive across
+			 * CHECK_FOR_INTERRUPTS().
+			 */
+			 ResetLatch(MyLatch);
+			 goto retry;
+		}
 	}
-	else if (rc == 1 && (pollfd.revents & (POLLHUP | POLLRDHUP)))
-		return false;
-#endif
 
 	return true;
 }
