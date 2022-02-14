@@ -574,8 +574,12 @@ ExecReScanIndexScan(IndexScanState *node)
 	/* flush the reorder queue */
 	if (node->iss_ReorderQueue)
 	{
+		HeapTuple	tuple;
 		while (!pairingheap_is_empty(node->iss_ReorderQueue))
-			reorderqueue_pop(node);
+		{
+			tuple = reorderqueue_pop(node);
+			heap_freetuple(tuple);
+		}
 	}
 
 	/* reset index scan */
