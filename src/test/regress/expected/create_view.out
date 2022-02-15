@@ -54,27 +54,27 @@ CREATE VIEW key_dependent_view_no_cols AS
 --
 -- CREATE OR REPLACE VIEW
 --
-CREATE TABLE viewtest_tbl (a int, b int);
+CREATE TABLE viewtest_tbl (a int, b int, c numeric(10,1), d text COLLATE "C");
 COPY viewtest_tbl FROM stdin;
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl;
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl WHERE a > 10;
 SELECT * FROM viewtest;
- a  | b  
-----+----
- 15 | 20
- 20 | 25
+ a  | b  |  c  |   d   
+----+----+-----+-------
+ 15 | 20 | 3.3 | xyzz
+ 20 | 25 | 4.4 | xyzzy
 (2 rows)
 
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+	SELECT a, b, c, d FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
 SELECT * FROM viewtest;
- a  | b  
-----+----
- 20 | 25
- 15 | 20
- 10 | 15
+ a  | b  |  c  |   d   
+----+----+-----+-------
+ 20 | 25 | 4.4 | xyzzy
+ 15 | 20 | 3.3 | xyzz
+ 10 | 15 | 2.2 | xyz
 (3 rows)
 
 -- should fail
@@ -88,11 +88,19 @@ ERROR:  cannot change name of view column "a" to "?column?"
 HINT:  Use ALTER VIEW ... RENAME COLUMN ... to change name of view column instead.
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b::numeric FROM viewtest_tbl;
+	SELECT a, b::numeric, c, d FROM viewtest_tbl;
 ERROR:  cannot change data type of view column "b" from integer to numeric
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c::numeric(10,2), d FROM viewtest_tbl;
+ERROR:  cannot change data type of view column "c" from numeric(10,1) to numeric(10,2)
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c, d COLLATE "POSIX" FROM viewtest_tbl;
+ERROR:  cannot change collation of view column "d" from "C" to "POSIX"
 -- should work
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b, 0 AS c FROM viewtest_tbl;
+	SELECT a, b, c, d, 0 AS e FROM viewtest_tbl;
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
 -- tests for temporary views

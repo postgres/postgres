@@ -67,12 +67,13 @@ CREATE VIEW key_dependent_view_no_cols AS
 -- CREATE OR REPLACE VIEW
 --
 
-CREATE TABLE viewtest_tbl (a int, b int);
+CREATE TABLE viewtest_tbl (a int, b int, c numeric(10,1), d text COLLATE "C");
+
 COPY viewtest_tbl FROM stdin;
-5	10
-10	15
-15	20
-20	25
+5	10	1.1	xy
+10	15	2.2	xyz
+15	20	3.3	xyzz
+20	25	4.4	xyzzy
 \.
 
 CREATE OR REPLACE VIEW viewtest AS
@@ -84,7 +85,7 @@ CREATE OR REPLACE VIEW viewtest AS
 SELECT * FROM viewtest;
 
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+	SELECT a, b, c, d FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
 
 SELECT * FROM viewtest;
 
@@ -98,11 +99,19 @@ CREATE OR REPLACE VIEW viewtest AS
 
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b::numeric FROM viewtest_tbl;
+	SELECT a, b::numeric, c, d FROM viewtest_tbl;
+
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c::numeric(10,2), d FROM viewtest_tbl;
+
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c, d COLLATE "POSIX" FROM viewtest_tbl;
 
 -- should work
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b, 0 AS c FROM viewtest_tbl;
+	SELECT a, b, c, d, 0 AS e FROM viewtest_tbl;
 
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
