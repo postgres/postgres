@@ -36,6 +36,7 @@ use File::Compare;
 # Initialize and start primary node with WAL archiving
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(has_archiving => 1, allows_streaming => 1);
+$node_primary->append_conf('postgresql.conf', 'log_min_messages=debug1');
 $node_primary->start;
 
 # Take a backup.
@@ -69,6 +70,7 @@ $node_standby->init_from_backup(
 	has_archiving => 1,
 	has_restoring => 0);
 $node_standby->append_conf('postgresql.conf', 'archive_mode = always');
+$node_standby->append_conf('postgresql.conf', 'log_min_messages=debug1');
 $node_standby->start;
 $node_primary->wait_for_catchup($node_standby);
 
