@@ -225,9 +225,9 @@ make_outputdirs(char *pgdata)
 	log_opts.basedir = (char *) pg_malloc(MAXPGPATH);
 	snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
 	log_opts.dumpdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s", pgdata, LOG_OUTPUTDIR);
+	snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s", pgdata, DUMP_OUTPUTDIR);
 	log_opts.logdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.logdir, MAXPGPATH, "%s/%s", pgdata, DUMP_OUTPUTDIR);
+	snprintf(log_opts.logdir, MAXPGPATH, "%s/%s", pgdata, LOG_OUTPUTDIR);
 
 	if (mkdir(log_opts.basedir, pg_dir_create_mode))
 		pg_fatal("could not create directory \"%s\": %m\n", log_opts.basedir);
