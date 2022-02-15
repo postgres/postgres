@@ -43,6 +43,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "replication/slot.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
@@ -626,6 +627,12 @@ BaseInit(void)
 	 * ever try to insert XLOG.
 	 */
 	InitXLogInsert();
+
+	/*
+	 * Initialize replication slots after pgstat. The exit hook might need to
+	 * drop ephemeral slots, which in turn triggers stats reporting.
+	 */
+	ReplicationSlotInitialize();
 }
 
 

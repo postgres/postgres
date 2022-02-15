@@ -46,6 +46,7 @@
 #include "pgstat.h"
 #include "replication/slot.h"
 #include "storage/fd.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
@@ -99,6 +100,7 @@ ReplicationSlot *MyReplicationSlot = NULL;
 int			max_replication_slots = 0;	/* the maximum number of replication
 										 * slots */
 
+static void ReplicationSlotShmemExit(int code, Datum arg);
 static void ReplicationSlotDropAcquired(void);
 static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 
@@ -158,6 +160,29 @@ ReplicationSlotsShmemInit(void)
 			ConditionVariableInit(&slot->active_cv);
 		}
 	}
+}
+
+/*
+ * Register the callback for replication slot cleanup and releasing.
+ */
+void
+ReplicationSlotInitialize(void)
+{
+	before_shmem_exit(ReplicationSlotShmemExit, 0);
+}
+
+/*
+ * Release and cleanup replication slots.
+ */
+static void
+ReplicationSlotShmemExit(int code, Datum arg)
+{
+	/* Make sure active replication slots are released */
+	if (MyReplicationSlot != NULL)
+		ReplicationSlotRelease();
+
+	/* Also cleanup all the temporary slots. */
+	ReplicationSlotCleanup();
 }
 
 /*

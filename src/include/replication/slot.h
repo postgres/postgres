@@ -206,6 +206,7 @@ extern void ReplicationSlotSave(void);
 extern void ReplicationSlotMarkDirty(void);
 
 /* misc stuff */
+extern void ReplicationSlotInitialize(void);
 extern bool ReplicationSlotValidateName(const char *name, int elevel);
 extern void ReplicationSlotReserveWal(void);
 extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
