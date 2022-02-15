@@ -1167,7 +1167,7 @@ tsCompareString(char *a, int lena, char *b, int lenb, bool prefix)
 	}
 	else
 	{
-		cmp = memcmp(a, b, Min(lena, lenb));
+		cmp = memcmp(a, b, Min((unsigned int) lena, (unsigned int) lenb));
 
 		if (prefix)
 		{
