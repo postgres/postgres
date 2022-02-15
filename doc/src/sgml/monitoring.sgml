@@ -3422,7 +3422,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_archived_wal</structfield> <type>text</type>
       </para>
       <para>
-       Name of the last WAL file successfully archived
+       Name of the WAL file most recently successfully archived
       </para></entry>
      </row>
 
@@ -3431,7 +3431,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_archived_time</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Time of the last successful archive operation
+       Time of the most recent successful archive operation
       </para></entry>
      </row>
 
@@ -3449,7 +3449,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_failed_wal</structfield> <type>text</type>
       </para>
       <para>
-       Name of the WAL file of the last failed archival operation
+       Name of the WAL file of the most recent failed archival operation
       </para></entry>
      </row>
 
@@ -3458,7 +3458,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_failed_time</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Time of the last failed archival operation
+       Time of the most recent failed archival operation
       </para></entry>
      </row>
 
@@ -3473,6 +3473,15 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+    Normally, WAL files are archived in order, oldest to newest, but that is
+    not guaranteed, and does not hold under special circumstances like when
+    promoting a standby or after crash recovery. Therefore it is not safe to
+    assume that all files older than
+    <structfield>last_archived_wal</structfield> have also been successfully
+    archived.
+  </para>
 
  </sect2>
 
