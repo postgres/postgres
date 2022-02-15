@@ -2793,8 +2793,13 @@ lazy_cleanup_one_index(Relation indrel, IndexBulkDeleteResult *istat,
  * an AccessExclusive lock must be replayed on any hot standby, where it can
  * be particularly disruptive.
  *
- * Also don't attempt it if wraparound failsafe is in effect.  It's hard to
- * predict how long lazy_truncate_heap will take.  Don't take any chances.
+ * Also don't attempt it if wraparound failsafe is in effect.  The entire
+ * system might be refusing to allocate new XIDs at this point.  The system
+ * definitely won't return to normal unless and until VACUUM actually advances
+ * the oldest relfrozenxid -- which hasn't happened for target rel just yet.
+ * If lazy_truncate_heap attempted to acquire an AccessExclusiveLock to
+ * truncate the table under these circumstances, an XID exhaustion error might
+ * make it impossible for VACUUM to fix the underlying XID exhaustion problem.
  * There is very little chance of truncation working out when the failsafe is
  * in effect in any case.  lazy_scan_prune makes the optimistic assumption
  * that any LP_DEAD items it encounters will always be LP_UNUSED by the time
