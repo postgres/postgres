@@ -767,9 +767,8 @@ SKIP:
 	# Check the integrity of the files generated.
 	my $gzip = $ENV{GZIP_PROGRAM};
 	skip "program gzip is not found in your system", 1
-	  if ( !defined $gzip
-		|| $gzip eq ''
-		|| system_log($gzip, '--version') != 0);
+	  if (!defined $gzip
+		|| $gzip eq '');
 
 	my $gzip_is_valid =
 	  system_log($gzip, '--test', @zlib_files, @zlib_files2, @zlib_files3);

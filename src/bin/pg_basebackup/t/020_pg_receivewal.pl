@@ -129,9 +129,8 @@ SKIP:
 	# available.
 	my $gzip = $ENV{GZIP_PROGRAM};
 	skip "program gzip is not found in your system", 1
-	  if ( !defined $gzip
-		|| $gzip eq ''
-		|| system_log($gzip, '--version') != 0);
+	  if (!defined $gzip
+		|| $gzip eq '');
 
 	my $gzip_is_valid = system_log($gzip, '--test', @zlib_wals);
 	is($gzip_is_valid, 0,
@@ -185,9 +184,8 @@ SKIP:
 	# command.
 	my $lz4 = $ENV{LZ4};
 	skip "program lz4 is not found in your system", 1
-	  if ( !defined $lz4
-		|| $lz4 eq ''
-		|| system_log($lz4, '--version') != 0);
+	  if (!defined $lz4
+		|| $lz4 eq '');
 
 	my $lz4_is_valid = system_log($lz4, '-t', @lz4_wals);
 	is($lz4_is_valid, 0,
