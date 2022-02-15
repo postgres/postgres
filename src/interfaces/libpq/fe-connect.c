@@ -1694,7 +1694,7 @@ static void
 emitHostIdentityInfo(PGconn *conn, const char *host_addr)
 {
 #ifdef HAVE_UNIX_SOCKETS
-	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+	if (conn->raddr.addr.ss_family == AF_UNIX)
 	{
 		char		service[NI_MAXHOST];
 
@@ -1758,7 +1758,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 					  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)));
 
 #ifdef HAVE_UNIX_SOCKETS
-	if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+	if (conn->raddr.addr.ss_family == AF_UNIX)
 		appendPQExpBufferStr(&conn->errorMessage,
 							 libpq_gettext("\tIs the server running locally and accepting connections on that socket?\n"));
 	else
@@ -2590,7 +2590,7 @@ keep_going:						/* We will come back to here until there is
 					 * TCP sockets, nonblock mode, close-on-exec.  Try the
 					 * next address if any of this fails.
 					 */
-					if (!IS_AF_UNIX(addr_cur->ai_family))
+					if (addr_cur->ai_family != AF_UNIX)
 					{
 						if (!connectNoDelay(conn))
 						{
@@ -2619,7 +2619,7 @@ keep_going:						/* We will come back to here until there is
 					}
 #endif							/* F_SETFD */
 
-					if (!IS_AF_UNIX(addr_cur->ai_family))
+					if (addr_cur->ai_family != AF_UNIX)
 					{
 #ifndef WIN32
 						int			on = 1;
@@ -2821,7 +2821,7 @@ keep_going:						/* We will come back to here until there is
 				 * Unix-domain socket.
 				 */
 				if (conn->requirepeer && conn->requirepeer[0] &&
-					IS_AF_UNIX(conn->raddr.addr.ss_family))
+					conn->raddr.addr.ss_family == AF_UNIX)
 				{
 #ifndef WIN32
 					char	   *remote_username;
@@ -2867,7 +2867,7 @@ keep_going:						/* We will come back to here until there is
 #endif							/* WIN32 */
 				}
 
-				if (IS_AF_UNIX(conn->raddr.addr.ss_family))
+				if (conn->raddr.addr.ss_family == AF_UNIX)
 				{
 					/* Don't request SSL or GSSAPI over Unix sockets */
 #ifdef USE_SSL
@@ -4528,7 +4528,7 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 	 * This ensures that this function does not block indefinitely when
 	 * reasonable keepalive and timeout settings have been provided.
 	 */
-	if (!IS_AF_UNIX(cancel->raddr.addr.ss_family) &&
+	if (cancel->raddr.addr.ss_family != AF_UNIX &&
 		cancel->keepalives != 0)
 	{
 #ifndef WIN32

@@ -18,12 +18,6 @@
 #include "libpq/pqcomm.h"		/* pgrminclude ignore */
 
 
-#ifdef	HAVE_UNIX_SOCKETS
-#define IS_AF_UNIX(fam) ((fam) == AF_UNIX)
-#else
-#define IS_AF_UNIX(fam) (0)
-#endif
-
 extern int	pg_getaddrinfo_all(const char *hostname, const char *servname,
 							   const struct addrinfo *hintp,
 							   struct addrinfo **result);

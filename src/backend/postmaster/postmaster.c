@@ -2085,7 +2085,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 
 #ifdef USE_SSL
 		/* No SSL when disabled or on Unix sockets */
-		if (!LoadedSSL || IS_AF_UNIX(port->laddr.addr.ss_family))
+		if (!LoadedSSL || port->laddr.addr.ss_family == AF_UNIX)
 			SSLok = 'N';
 		else
 			SSLok = 'S';		/* Support for SSL */
@@ -2134,7 +2134,7 @@ retry1:
 
 #ifdef ENABLE_GSS
 		/* No GSSAPI encryption when on Unix socket */
-		if (!IS_AF_UNIX(port->laddr.addr.ss_family))
+		if (port->laddr.addr.ss_family != AF_UNIX)
 			GSSok = 'G';
 #endif
 
