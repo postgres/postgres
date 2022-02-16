@@ -1895,10 +1895,10 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 	allParamTypes = ObjectIdGetDatum(rangeArrayOid);
 	allParameterTypes = construct_array(&allParamTypes,
 										1, OIDOID,
-										sizeof(Oid), true, 'i');
+										sizeof(Oid), true, TYPALIGN_INT);
 	paramModes = CharGetDatum(FUNC_PARAM_VARIADIC);
 	parameterModes = construct_array(&paramModes, 1, CHAROID,
-									 1, true, 'c');
+									 1, true, TYPALIGN_CHAR);
 	myself = ProcedureCreate(name,	/* name: same as multirange type */
 							 namespace,
 							 false, /* replace */
