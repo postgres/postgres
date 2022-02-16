@@ -913,7 +913,9 @@ static void VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec,
 									  XLogReaderState *state);
 static int	LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
-static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn);
+static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn,
+												  XLogRecPtr missingContrecPtr,
+												  TimeLineID newTLI);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static void KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo);
 static XLogRecPtr XLogGetReplicationSlotMinimumLSN(void);
@@ -2294,18 +2296,6 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, TimeLineID tli, bool opportunistic)
 		 */
 		if (!Insert->forcePageWrites)
 			NewPage->xlp_info |= XLP_BKP_REMOVABLE;
-
-		/*
-		 * If a record was found to be broken at the end of recovery, and
-		 * we're going to write on the page where its first contrecord was
-		 * lost, set the XLP_FIRST_IS_OVERWRITE_CONTRECORD flag on the page
-		 * header.  See CreateOverwriteContrecordRecord().
-		 */
-		if (missingContrecPtr == NewPageBeginPtr)
-		{
-			NewPage->xlp_info |= XLP_FIRST_IS_OVERWRITE_CONTRECORD;
-			missingContrecPtr = InvalidXLogRecPtr;
-		}
 
 		/*
 		 * If first page of an XLOG segment file, make it a long header.
@@ -8149,7 +8139,7 @@ StartupXLOG(void)
 	if (!XLogRecPtrIsInvalid(abortedRecPtr))
 	{
 		Assert(!XLogRecPtrIsInvalid(missingContrecPtr));
-		CreateOverwriteContrecordRecord(abortedRecPtr);
+		CreateOverwriteContrecordRecord(abortedRecPtr, missingContrecPtr, newTLI);
 		abortedRecPtr = InvalidXLogRecPtr;
 		missingContrecPtr = InvalidXLogRecPtr;
 	}
@@ -9530,26 +9520,69 @@ CreateEndOfRecoveryRecord(void)
  * skip the record it was reading, and pass back the LSN of the skipped
  * record, so that its caller can verify (on "replay" of that record) that the
  * XLOG_OVERWRITE_CONTRECORD matches what was effectively overwritten.
+ *
+ * 'aborted_lsn' is the beginning position of the record that was incomplete.
+ * It is included in the WAL record.  'pagePtr' and 'newTLI' point to the
+ * beginning of the XLOG page where the record is to be inserted.  They must
+ * match the current WAL insert position, they're passed here just so that we
+ * can verify that.
  */
 static XLogRecPtr
-CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn)
+CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn, XLogRecPtr pagePtr,
+								TimeLineID newTLI)
 {
 	xl_overwrite_contrecord xlrec;
 	XLogRecPtr	recptr;
+	XLogPageHeader pagehdr;
+	XLogRecPtr	startPos;
 
-	/* sanity check */
+	/* sanity checks */
 	if (!RecoveryInProgress())
 		elog(ERROR, "can only be used at end of recovery");
+	if (pagePtr % XLOG_BLCKSZ != 0)
+		elog(ERROR, "invalid position for missing continuation record %X/%X",
+			 LSN_FORMAT_ARGS(pagePtr));
 
-	xlrec.overwritten_lsn = aborted_lsn;
-	xlrec.overwrite_time = GetCurrentTimestamp();
+	/* The current WAL insert position should be right after the page header */
+	startPos = pagePtr;
+	if (XLogSegmentOffset(startPos, wal_segment_size) == 0)
+		startPos += SizeOfXLogLongPHD;
+	else
+		startPos += SizeOfXLogShortPHD;
+	recptr = GetXLogInsertRecPtr();
+	if (recptr != startPos)
+		elog(ERROR, "invalid WAL insert position %X/%X for OVERWRITE_CONTRECORD",
+			 LSN_FORMAT_ARGS(recptr));
 
 	START_CRIT_SECTION();
 
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xl_overwrite_contrecord));
+	/*
+	 * Initialize the XLOG page header (by GetXLogBuffer), and set the
+	 * XLP_FIRST_IS_OVERWRITE_CONTRECORD flag.
+	 *
+	 * No other backend is allowed to write WAL yet, so acquiring the WAL
+	 * insertion lock is just pro forma.
+	 */
+	WALInsertLockAcquire();
+	pagehdr = (XLogPageHeader) GetXLogBuffer(pagePtr, newTLI);
+	pagehdr->xlp_info |= XLP_FIRST_IS_OVERWRITE_CONTRECORD;
+	WALInsertLockRelease();
 
+	/*
+	 * Insert the XLOG_OVERWRITE_CONTRECORD record as the first record on the
+	 * page.  We know it becomes the first record, because no other backend is
+	 * allowed to write WAL yet.
+	 */
+	XLogBeginInsert();
+	xlrec.overwritten_lsn = aborted_lsn;
+	xlrec.overwrite_time = GetCurrentTimestamp();
+	XLogRegisterData((char *) &xlrec, sizeof(xl_overwrite_contrecord));
 	recptr = XLogInsert(RM_XLOG_ID, XLOG_OVERWRITE_CONTRECORD);
+
+	/* check that the record was inserted to the right place */
+	if (ProcLastRecPtr != startPos)
+		elog(ERROR, "OVERWRITE_CONTRECORD was inserted to unexpected position %X/%X",
+			 LSN_FORMAT_ARGS(ProcLastRecPtr));
 
 	XLogFlush(recptr);
 
