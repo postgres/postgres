@@ -892,7 +892,7 @@ static MemoryContext walDebugCxt = NULL;
 
 static void readRecoverySignalFile(void);
 static void validateRecoveryParameters(void);
-static void exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog,
+static void XLogInitNewTimeline(TimeLineID endTLI, XLogRecPtr endOfLog,
 								TimeLineID newTLI);
 static void CleanupAfterArchiveRecovery(TimeLineID EndOfLogTLI,
 										XLogRecPtr EndOfLog,
@@ -5681,10 +5681,10 @@ validateRecoveryParameters(void)
 }
 
 /*
- * Exit archive-recovery state
+ * Initialize the first WAL segment on new timeline.
  */
 static void
-exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog, TimeLineID newTLI)
+XLogInitNewTimeline(TimeLineID endTLI, XLogRecPtr endOfLog, TimeLineID newTLI)
 {
 	char		xlogfname[MAXFNAMELEN];
 	XLogSegNo	endLogSegNo;
@@ -5694,24 +5694,9 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog, TimeLineID newTLI)
 	Assert(endTLI != newTLI);
 
 	/*
-	 * We are no longer in archive recovery state.
-	 */
-	InArchiveRecovery = false;
-
-	/*
 	 * Update min recovery point one last time.
 	 */
 	UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
-
-	/*
-	 * If the ending log segment is still open, close it (to avoid problems on
-	 * Windows with trying to rename or delete an open file).
-	 */
-	if (readFile >= 0)
-	{
-		close(readFile);
-		readFile = -1;
-	}
 
 	/*
 	 * Calculate the last segment on the old timeline, and the first segment
@@ -5769,19 +5754,6 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog, TimeLineID newTLI)
 	 */
 	XLogFileName(xlogfname, newTLI, startLogSegNo, wal_segment_size);
 	XLogArchiveCleanup(xlogfname);
-
-	/*
-	 * Remove the signal files out of the way, so that we don't accidentally
-	 * re-enter archive recovery mode in a subsequent crash.
-	 */
-	if (standby_signal_file_found)
-		durable_unlink(STANDBY_SIGNAL_FILE, FATAL);
-
-	if (recovery_signal_file_found)
-		durable_unlink(RECOVERY_SIGNAL_FILE, FATAL);
-
-	ereport(LOG,
-			(errmsg("archive recovery complete")));
 }
 
 /*
@@ -6681,11 +6653,12 @@ StartupXLOG(void)
 	TimeLineID	EndOfLogTLI;
 	TimeLineID	replayTLI,
 				newTLI;
+	bool		performedWalRecovery;
+	char	   *recoveryStopReason;
 	XLogRecord *record;
 	TransactionId oldestActiveXID;
 	bool		backupEndRequired = false;
 	bool		backupFromStandby = false;
-	DBState		dbstate_at_startup;
 	XLogReaderState *xlogreader;
 	XLogPageReadPrivate private;
 	bool		promoted = false;
@@ -6797,6 +6770,8 @@ StartupXLOG(void)
 		RemoveTempXlogFiles();
 		SyncDataDirectory();
 	}
+
+	/*---- BEGIN InitWalRecovery ----*/
 
 	/*
 	 * Initialize on the assumption we want to recover to the latest timeline
@@ -7055,20 +7030,6 @@ StartupXLOG(void)
 	}
 
 	/*
-	 * Clear out any old relcache cache files.  This is *necessary* if we do
-	 * any WAL replay, since that would probably result in the cache files
-	 * being out of sync with database reality.  In theory we could leave them
-	 * in place if the database had been cleanly shut down, but it seems
-	 * safest to just remove them always and let them be rebuilt during the
-	 * first backend startup.  These files needs to be removed from all
-	 * directories including pg_tblspc, however the symlinks are created only
-	 * after reading tablespace_map file in case of archive recovery from
-	 * backup, so needs to clear old relcache files here after creating
-	 * symlinks.
-	 */
-	RelationCacheInitFileRemove();
-
-	/*
 	 * If the location of the checkpoint record is not on the expected
 	 * timeline in the history of the requested timeline, we cannot proceed:
 	 * the backup is not part of the history of the requested timeline.
@@ -7130,9 +7091,112 @@ StartupXLOG(void)
 			(errmsg_internal("commit timestamp Xid oldest/newest: %u/%u",
 							 checkPoint.oldestCommitTsXid,
 							 checkPoint.newestCommitTsXid)));
+
+	/* sanity checks on the checkpoint record */
 	if (!TransactionIdIsNormal(XidFromFullTransactionId(checkPoint.nextXid)))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
+	if (checkPoint.redo > checkPointLoc)
+		ereport(PANIC,
+				(errmsg("invalid redo in checkpoint record")));
+
+	/*
+	 * Check whether we need to force recovery from WAL.  If it appears to
+	 * have been a clean shutdown and we did not have a recovery signal file,
+	 * then assume no recovery needed.
+	 */
+	if (checkPoint.redo < checkPointLoc)
+	{
+		if (wasShutdown)
+			ereport(PANIC,
+					(errmsg("invalid redo record in shutdown checkpoint")));
+		InRecovery = true;
+	}
+	else if (ControlFile->state != DB_SHUTDOWNED)
+		InRecovery = true;
+	else if (ArchiveRecoveryRequested)
+	{
+		/* force recovery due to presence of recovery signal file */
+		InRecovery = true;
+	}
+
+	/*
+	 * If recovery is needed, update our in-memory copy of pg_control to show
+	 * that we are recovering and to show the selected checkpoint as the place
+	 * we are starting from. We also mark pg_control with any minimum recovery
+	 * stop point obtained from a backup history file.
+	 *
+	 * We don't write the changes to disk yet, though. Only do that after
+	 * initializing various subsystems.
+	 */
+	if (InRecovery)
+	{
+		DBState		dbstate_at_startup;
+
+		dbstate_at_startup = ControlFile->state;
+		if (InArchiveRecovery)
+		{
+			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("database system was not properly shut down; "
+							"automatic recovery in progress")));
+			if (recoveryTargetTLI > ControlFile->checkPointCopy.ThisTimeLineID)
+				ereport(LOG,
+						(errmsg("crash recovery starts in timeline %u "
+								"and has target timeline %u",
+								ControlFile->checkPointCopy.ThisTimeLineID,
+								recoveryTargetTLI)));
+			ControlFile->state = DB_IN_CRASH_RECOVERY;
+		}
+		ControlFile->checkPoint = checkPointLoc;
+		ControlFile->checkPointCopy = checkPoint;
+		if (InArchiveRecovery)
+		{
+			/* initialize minRecoveryPoint if not set yet */
+			if (ControlFile->minRecoveryPoint < checkPoint.redo)
+			{
+				ControlFile->minRecoveryPoint = checkPoint.redo;
+				ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
+			}
+		}
+
+		/*
+		 * Set backupStartPoint if we're starting recovery from a base backup.
+		 *
+		 * Also set backupEndPoint and use minRecoveryPoint as the backup end
+		 * location if we're starting recovery from a base backup which was
+		 * taken from a standby. In this case, the database system status in
+		 * pg_control must indicate that the database was already in recovery.
+		 * Usually that will be DB_IN_ARCHIVE_RECOVERY but also can be
+		 * DB_SHUTDOWNED_IN_RECOVERY if recovery previously was interrupted
+		 * before reaching this point; e.g. because restore_command or
+		 * primary_conninfo were faulty.
+		 *
+		 * Any other state indicates that the backup somehow became corrupted
+		 * and we can't sensibly continue with recovery.
+		 */
+		if (haveBackupLabel)
+		{
+			ControlFile->backupStartPoint = checkPoint.redo;
+			ControlFile->backupEndRequired = backupEndRequired;
+
+			if (backupFromStandby)
+			{
+				if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY &&
+					dbstate_at_startup != DB_SHUTDOWNED_IN_RECOVERY)
+					ereport(FATAL,
+							(errmsg("backup_label contains data inconsistent with control file"),
+							 errhint("This means that the backup is corrupted and you will "
+									 "have to use another backup for recovery.")));
+				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
+			}
+		}
+	}
+
+	/*---- END InitWalRecovery ----*/
 
 	/* initialize shared memory variables from the checkpoint record */
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
@@ -7145,6 +7209,20 @@ StartupXLOG(void)
 	SetCommitTsLimit(checkPoint.oldestCommitTsXid,
 					 checkPoint.newestCommitTsXid);
 	XLogCtl->ckptFullXid = checkPoint.nextXid;
+
+	/*
+	 * Clear out any old relcache cache files.  This is *necessary* if we do
+	 * any WAL replay, since that would probably result in the cache files
+	 * being out of sync with database reality.  In theory we could leave them
+	 * in place if the database had been cleanly shut down, but it seems
+	 * safest to just remove them always and let them be rebuilt during the
+	 * first backend startup.  These files needs to be removed from all
+	 * directories including pg_tblspc, however the symlinks are created only
+	 * after reading tablespace_map file in case of archive recovery from
+	 * backup, so needs to clear old relcache files here after creating
+	 * symlinks.
+	 */
+	RelationCacheInitFileRemove();
 
 	/*
 	 * Initialize replication slots, before there's a chance to remove
@@ -7230,30 +7308,6 @@ StartupXLOG(void)
 	RedoRecPtr = XLogCtl->RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
 	doPageWrites = lastFullPageWrites;
 
-	if (RecPtr < checkPoint.redo)
-		ereport(PANIC,
-				(errmsg("invalid redo in checkpoint record")));
-
-	/*
-	 * Check whether we need to force recovery from WAL.  If it appears to
-	 * have been a clean shutdown and we did not have a recovery signal file,
-	 * then assume no recovery needed.
-	 */
-	if (checkPoint.redo < RecPtr)
-	{
-		if (wasShutdown)
-			ereport(PANIC,
-					(errmsg("invalid redo record in shutdown checkpoint")));
-		InRecovery = true;
-	}
-	else if (ControlFile->state != DB_SHUTDOWNED)
-		InRecovery = true;
-	else if (ArchiveRecoveryRequested)
-	{
-		/* force recovery due to presence of recovery signal file */
-		InRecovery = true;
-	}
-
 	/*
 	 * Start recovery assuming that the final record isn't lost.
 	 */
@@ -7265,110 +7319,23 @@ StartupXLOG(void)
 	{
 		int			rmid;
 
+		/* Initialize state for RecoveryInProgress() */
+		SpinLockAcquire(&XLogCtl->info_lck);
+		if (InArchiveRecovery)
+			XLogCtl->SharedRecoveryState = RECOVERY_STATE_ARCHIVE;
+		else
+			XLogCtl->SharedRecoveryState = RECOVERY_STATE_CRASH;
+		SpinLockRelease(&XLogCtl->info_lck);
+
 		/*
 		 * Update pg_control to show that we are recovering and to show the
 		 * selected checkpoint as the place we are starting from. We also mark
 		 * pg_control with any minimum recovery stop point obtained from a
 		 * backup history file.
-		 */
-		dbstate_at_startup = ControlFile->state;
-		if (InArchiveRecovery)
-		{
-			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
-
-			SpinLockAcquire(&XLogCtl->info_lck);
-			XLogCtl->SharedRecoveryState = RECOVERY_STATE_ARCHIVE;
-			SpinLockRelease(&XLogCtl->info_lck);
-		}
-		else
-		{
-			ereport(LOG,
-					(errmsg("database system was not properly shut down; "
-							"automatic recovery in progress")));
-			if (recoveryTargetTLI > ControlFile->checkPointCopy.ThisTimeLineID)
-				ereport(LOG,
-						(errmsg("crash recovery starts in timeline %u "
-								"and has target timeline %u",
-								ControlFile->checkPointCopy.ThisTimeLineID,
-								recoveryTargetTLI)));
-			ControlFile->state = DB_IN_CRASH_RECOVERY;
-
-			SpinLockAcquire(&XLogCtl->info_lck);
-			XLogCtl->SharedRecoveryState = RECOVERY_STATE_CRASH;
-			SpinLockRelease(&XLogCtl->info_lck);
-		}
-		ControlFile->checkPoint = checkPointLoc;
-		ControlFile->checkPointCopy = checkPoint;
-		if (InArchiveRecovery)
-		{
-			/* initialize minRecoveryPoint if not set yet */
-			if (ControlFile->minRecoveryPoint < checkPoint.redo)
-			{
-				ControlFile->minRecoveryPoint = checkPoint.redo;
-				ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
-			}
-		}
-
-		/*
-		 * Set backupStartPoint if we're starting recovery from a base backup.
 		 *
-		 * Also set backupEndPoint and use minRecoveryPoint as the backup end
-		 * location if we're starting recovery from a base backup which was
-		 * taken from a standby. In this case, the database system status in
-		 * pg_control must indicate that the database was already in recovery.
-		 * Usually that will be DB_IN_ARCHIVE_RECOVERY but also can be
-		 * DB_SHUTDOWNED_IN_RECOVERY if recovery previously was interrupted
-		 * before reaching this point; e.g. because restore_command or
-		 * primary_conninfo were faulty.
-		 *
-		 * Any other state indicates that the backup somehow became corrupted
-		 * and we can't sensibly continue with recovery.
+		 * No need to hold ControlFileLock yet, we aren't up far enough.
 		 */
-		if (haveBackupLabel)
-		{
-			ControlFile->backupStartPoint = checkPoint.redo;
-			ControlFile->backupEndRequired = backupEndRequired;
-
-			if (backupFromStandby)
-			{
-				if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY &&
-					dbstate_at_startup != DB_SHUTDOWNED_IN_RECOVERY)
-					ereport(FATAL,
-							(errmsg("backup_label contains data inconsistent with control file"),
-							 errhint("This means that the backup is corrupted and you will "
-									 "have to use another backup for recovery.")));
-				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
-			}
-		}
-
-		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
-
-		/*
-		 * Initialize our local copy of minRecoveryPoint.  When doing crash
-		 * recovery we want to replay up to the end of WAL.  Particularly, in
-		 * the case of a promoted standby minRecoveryPoint value in the
-		 * control file is only updated after the first checkpoint.  However,
-		 * if the instance crashes before the first post-recovery checkpoint
-		 * is completed then recovery will use a stale location causing the
-		 * startup process to think that there are still invalid page
-		 * references when checking for data consistency.
-		 */
-		if (InArchiveRecovery)
-		{
-			minRecoveryPoint = ControlFile->minRecoveryPoint;
-			minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
-		}
-		else
-		{
-			minRecoveryPoint = InvalidXLogRecPtr;
-			minRecoveryPointTLI = 0;
-		}
-
-		/*
-		 * Reset pgstat data, because it may be invalid after recovery.
-		 */
-		pgstat_reset_all();
 
 		/*
 		 * If there was a backup label file, it's done its job and the info
@@ -7396,6 +7363,32 @@ StartupXLOG(void)
 			unlink(TABLESPACE_MAP_OLD);
 			durable_rename(TABLESPACE_MAP, TABLESPACE_MAP_OLD, FATAL);
 		}
+
+		/*
+		 * Initialize our local copy of minRecoveryPoint.  When doing crash
+		 * recovery we want to replay up to the end of WAL.  Particularly, in
+		 * the case of a promoted standby minRecoveryPoint value in the
+		 * control file is only updated after the first checkpoint.  However,
+		 * if the instance crashes before the first post-recovery checkpoint
+		 * is completed then recovery will use a stale location causing the
+		 * startup process to think that there are still invalid page
+		 * references when checking for data consistency.
+		 */
+		if (InArchiveRecovery)
+		{
+			minRecoveryPoint = ControlFile->minRecoveryPoint;
+			minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
+		}
+		else
+		{
+			minRecoveryPoint = InvalidXLogRecPtr;
+			minRecoveryPointTLI = 0;
+		}
+
+		/*
+		 * Reset pgstat data, because it may be invalid after recovery.
+		 */
+		pgstat_reset_all();
 
 		/* Check that the GUCs used to generate the WAL allow recovery */
 		CheckRequiredParameterValues();
@@ -7480,12 +7473,7 @@ StartupXLOG(void)
 			}
 		}
 
-		/* Initialize resource managers */
-		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
-		{
-			if (RmgrTable[rmid].rm_startup != NULL)
-				RmgrTable[rmid].rm_startup();
-		}
+		/*---- BEGIN PerformWalRecovery ----*/
 
 		/*
 		 * Initialize shared variables for tracking progress of WAL replay, as
@@ -7493,7 +7481,7 @@ StartupXLOG(void)
 		 * checkpoint record itself, if it's a shutdown checkpoint).
 		 */
 		SpinLockAcquire(&XLogCtl->info_lck);
-		if (checkPoint.redo < RecPtr)
+		if (checkPoint.redo < checkPointLoc)
 			XLogCtl->replayEndRecPtr = checkPoint.redo;
 		else
 			XLogCtl->replayEndRecPtr = xlogreader->EndRecPtr;
@@ -7525,7 +7513,7 @@ StartupXLOG(void)
 		 * Find the first record that logically follows the checkpoint --- it
 		 * might physically precede it, though.
 		 */
-		if (checkPoint.redo < RecPtr)
+		if (checkPoint.redo < checkPointLoc)
 		{
 			/* back up to find the record */
 			XLogBeginRead(xlogreader, checkPoint.redo);
@@ -7534,6 +7522,7 @@ StartupXLOG(void)
 		else
 		{
 			/* just have to read next record after CheckPoint */
+			Assert(RecPtr == checkPointLoc);
 			record = ReadRecord(xlogreader, LOG, false, replayTLI);
 		}
 
@@ -7546,6 +7535,13 @@ StartupXLOG(void)
 			pg_rusage_init(&ru0);
 
 			InRedo = true;
+
+			/* Initialize resource managers */
+			for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
+			{
+				if (RmgrTable[rmid].rm_startup != NULL)
+					RmgrTable[rmid].rm_startup();
+			}
 
 			ereport(LOG,
 					(errmsg("redo starts at %X/%X",
@@ -7849,7 +7845,12 @@ StartupXLOG(void)
 			!reachedRecoveryTarget)
 			ereport(FATAL,
 					(errmsg("recovery ended before configured recovery target was reached")));
+
+		/*---- END PerformWalRecovery ----*/
+		performedWalRecovery = true;
 	}
+
+	/*---- BEGIN FinishWalRecovery ----*/
 
 	/*
 	 * Kill WAL receiver, if it's still running, before we continue to write
@@ -7858,23 +7859,6 @@ StartupXLOG(void)
 	 * start writing WAL.
 	 */
 	XLogShutdownWalRcv();
-
-	/*
-	 * Reset unlogged relations to the contents of their INIT fork. This is
-	 * done AFTER recovery is complete so as to include any unlogged relations
-	 * created during recovery, but BEFORE recovery is marked as having
-	 * completed successfully. Otherwise we'd not retry if any of the post
-	 * end-of-recovery steps fail.
-	 */
-	if (InRecovery)
-		ResetUnloggedRelations(UNLOGGED_RELATION_INIT);
-
-	/*
-	 * We don't need the latch anymore. It's not strictly necessary to disown
-	 * it, but let's do it for the sake of tidiness.
-	 */
-	if (ArchiveRecoveryRequested)
-		DisownLatch(&XLogCtl->recoveryWakeupLatch);
 
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming
@@ -7907,6 +7891,32 @@ StartupXLOG(void)
 	 * timeline.
 	 */
 	EndOfLogTLI = xlogreader->seg.ws_tli;
+
+	if (ArchiveRecoveryRequested)
+	{
+		/*
+		 * We are no longer in archive recovery state.
+		 *
+		 * We are now done reading the old WAL.  Turn off archive fetching if
+		 * it was active.
+		 */
+		Assert(InArchiveRecovery);
+		InArchiveRecovery = false;
+
+		/*
+		 * If the ending log segment is still open, close it (to avoid
+		 * problems on Windows with trying to rename or delete an open file).
+		 */
+		if (readFile >= 0)
+		{
+			close(readFile);
+			readFile = -1;
+		}
+	}
+
+	recoveryStopReason = getRecoveryStopReason();
+
+	/*---- END FinishWalRecovery ----*/
 
 	/*
 	 * Complain if we did not roll forward far enough to render the backup
@@ -7945,6 +7955,16 @@ StartupXLOG(void)
 	}
 
 	/*
+	 * Reset unlogged relations to the contents of their INIT fork. This is
+	 * done AFTER recovery is complete so as to include any unlogged relations
+	 * created during recovery, but BEFORE recovery is marked as having
+	 * completed successfully. Otherwise we'd not retry if any of the post
+	 * end-of-recovery steps fail.
+	 */
+	if (InRecovery)
+		ResetUnloggedRelations(UNLOGGED_RELATION_INIT);
+
+	/*
 	 * Pre-scan prepared transactions to find out the range of XIDs present.
 	 * This information is not quite needed yet, but it is positioned here so
 	 * as potential problems are detected before any on-disk change is done.
@@ -7952,8 +7972,8 @@ StartupXLOG(void)
 	oldestActiveXID = PrescanPreparedTransactions(NULL, NULL);
 
 	/*
-	 * Allow ordinary WAL segment creation before any exitArchiveRecovery(),
-	 * which sometimes creates a segment, and after the last ReadRecord().
+	 * Allow ordinary WAL segment creation before possibly switching to a new
+	 * timeline, which creates a new segment, and after the last ReadRecord().
 	 */
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 	XLogCtl->InstallXLogFileSegmentActive = true;
@@ -7962,11 +7982,11 @@ StartupXLOG(void)
 	/*
 	 * Consider whether we need to assign a new timeline ID.
 	 *
-	 * If we are doing an archive recovery, we always assign a new ID.  This
-	 * handles a couple of issues.  If we stopped short of the end of WAL
-	 * during recovery, then we are clearly generating a new timeline and must
-	 * assign it a unique new ID.  Even if we ran to the end, modifying the
-	 * current last segment is problematic because it may result in trying to
+	 * If we did archive recovery, we always assign a new ID.  This handles a
+	 * couple of issues.  If we stopped short of the end of WAL during
+	 * recovery, then we are clearly generating a new timeline and must assign
+	 * it a unique new ID.  Even if we ran to the end, modifying the current
+	 * last segment is problematic because it may result in trying to
 	 * overwrite an already-archived copy of that segment, and we encourage
 	 * DBAs to make their archive_commands reject that.  We can dodge the
 	 * problem by making the new active segment have a new timeline ID.
@@ -7976,24 +7996,26 @@ StartupXLOG(void)
 	newTLI = replayTLI;
 	if (ArchiveRecoveryRequested)
 	{
-		char	   *reason;
-		char		recoveryPath[MAXPGPATH];
-
-		Assert(InArchiveRecovery);
-
 		newTLI = findNewestTimeLine(recoveryTargetTLI) + 1;
 		ereport(LOG,
 				(errmsg("selected new timeline ID: %u", newTLI)));
 
-		reason = getRecoveryStopReason();
+		/*
+		 * Make a writable copy of the last WAL segment.  (Note that we also
+		 * have a copy of the last block of the old WAL in readBuf; we will
+		 * use that below.)
+		 */
+		XLogInitNewTimeline(EndOfLogTLI, EndOfLog, newTLI);
 
 		/*
-		 * We are now done reading the old WAL.  Turn off archive fetching if
-		 * it was active, and make a writable copy of the last WAL segment.
-		 * (Note that we also have a copy of the last block of the old WAL in
-		 * readBuf; we will use that below.)
+		 * Remove the signal files out of the way, so that we don't
+		 * accidentally re-enter archive recovery mode in a subsequent crash.
 		 */
-		exitArchiveRecovery(EndOfLogTLI, EndOfLog, newTLI);
+		if (standby_signal_file_found)
+			durable_unlink(STANDBY_SIGNAL_FILE, FATAL);
+
+		if (recovery_signal_file_found)
+			durable_unlink(RECOVERY_SIGNAL_FILE, FATAL);
 
 		/*
 		 * Write the timeline history file, and have it archived. After this
@@ -8006,18 +8028,10 @@ StartupXLOG(void)
 		 * between here and writing the end-of-recovery record.
 		 */
 		writeTimeLineHistory(newTLI, recoveryTargetTLI,
-							 xlogreader->EndRecPtr, reason);
+							 EndOfLog, recoveryStopReason);
 
-		/*
-		 * Since there might be a partial WAL segment named RECOVERYXLOG, get
-		 * rid of it.
-		 */
-		snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYXLOG");
-		unlink(recoveryPath);	/* ignore any error */
-
-		/* Get rid of any remaining recovered timeline-history file, too */
-		snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYHISTORY");
-		unlink(recoveryPath);	/* ignore any error */
+		ereport(LOG,
+				(errmsg("archive recovery complete")));
 	}
 
 	/* Save the selected TimeLineID in shared memory, too */
@@ -8124,6 +8138,8 @@ StartupXLOG(void)
 	/* Reload shared-memory state for prepared transactions */
 	RecoverPreparedTransactions();
 
+	/*---- BEGIN ShutdownWalRecovery ----*/
+
 	/* Shut down xlogreader */
 	if (readFile >= 0)
 	{
@@ -8131,6 +8147,31 @@ StartupXLOG(void)
 		readFile = -1;
 	}
 	XLogReaderFree(xlogreader);
+
+	if (ArchiveRecoveryRequested)
+	{
+		char		recoveryPath[MAXPGPATH];
+
+		/*
+		 * Since there might be a partial WAL segment named RECOVERYXLOG, get
+		 * rid of it.
+		 */
+		snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYXLOG");
+		unlink(recoveryPath);	/* ignore any error */
+
+		/* Get rid of any remaining recovered timeline-history file, too */
+		snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYHISTORY");
+		unlink(recoveryPath);	/* ignore any error */
+	}
+
+	/*
+	 * We don't need the latch anymore. It's not strictly necessary to disown
+	 * it, but let's do it for the sake of tidiness.
+	 */
+	if (ArchiveRecoveryRequested)
+		DisownLatch(&XLogCtl->recoveryWakeupLatch);
+
+	/*---- END ShutdownWalRecovery ----*/
 
 	/* Enable WAL writes for this backend only. */
 	LocalSetXLogInsertAllowed();
@@ -8154,14 +8195,8 @@ StartupXLOG(void)
 
 	/*
 	 * Emit checkpoint or end-of-recovery record in XLOG, if required.
-	 *
-	 * XLogCtl->lastReplayedEndRecPtr will be a valid LSN if and only if we
-	 * entered recovery. Even if we ultimately replayed no WAL records, it
-	 * will have been initialized based on where replay was due to start.  We
-	 * don't need a lock to access this, since this can't change any more by
-	 * the time we reach this code.
 	 */
-	if (!XLogRecPtrIsInvalid(XLogCtl->lastReplayedEndRecPtr))
+	if (performedWalRecovery)
 		promoted = PerformRecoveryXLogAction();
 
 	/*
