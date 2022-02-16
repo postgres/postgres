@@ -911,7 +911,7 @@ static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI,
 								TimeLineID prevTLI, TimeLineID replayTLI);
 static void VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec,
 									  XLogReaderState *state);
-static int LocalSetXLogInsertAllowed(void);
+static int	LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
 static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
@@ -5814,38 +5814,38 @@ CleanupAfterArchiveRecovery(TimeLineID EndOfLogTLI, XLogRecPtr EndOfLog,
 	 * We switched to a new timeline. Clean up segments on the old timeline.
 	 *
 	 * If there are any higher-numbered segments on the old timeline, remove
-	 * them. They might contain valid WAL, but they might also be pre-allocated
-	 * files containing garbage. In any case, they are not part of the new
-	 * timeline's history so we don't need them.
+	 * them. They might contain valid WAL, but they might also be
+	 * pre-allocated files containing garbage. In any case, they are not part
+	 * of the new timeline's history so we don't need them.
 	 */
 	RemoveNonParentXlogFiles(EndOfLog, newTLI);
 
 	/*
 	 * If the switch happened in the middle of a segment, what to do with the
 	 * last, partial segment on the old timeline? If we don't archive it, and
-	 * the server that created the WAL never archives it either (e.g. because it
-	 * was hit by a meteor), it will never make it to the archive. That's OK
-	 * from our point of view, because the new segment that we created with the
-	 * new TLI contains all the WAL from the old timeline up to the switch
+	 * the server that created the WAL never archives it either (e.g. because
+	 * it was hit by a meteor), it will never make it to the archive. That's
+	 * OK from our point of view, because the new segment that we created with
+	 * the new TLI contains all the WAL from the old timeline up to the switch
 	 * point. But if you later try to do PITR to the "missing" WAL on the old
-	 * timeline, recovery won't find it in the archive. It's physically present
-	 * in the new file with new TLI, but recovery won't look there when it's
-	 * recovering to the older timeline. On the other hand, if we archive the
-	 * partial segment, and the original server on that timeline is still
-	 * running and archives the completed version of the same segment later, it
-	 * will fail. (We used to do that in 9.4 and below, and it caused such
-	 * problems).
+	 * timeline, recovery won't find it in the archive. It's physically
+	 * present in the new file with new TLI, but recovery won't look there
+	 * when it's recovering to the older timeline. On the other hand, if we
+	 * archive the partial segment, and the original server on that timeline
+	 * is still running and archives the completed version of the same segment
+	 * later, it will fail. (We used to do that in 9.4 and below, and it
+	 * caused such problems).
 	 *
-	 * As a compromise, we rename the last segment with the .partial suffix, and
-	 * archive it. Archive recovery will never try to read .partial segments, so
-	 * they will normally go unused. But in the odd PITR case, the administrator
-	 * can copy them manually to the pg_wal directory (removing the suffix).
-	 * They can be useful in debugging, too.
+	 * As a compromise, we rename the last segment with the .partial suffix,
+	 * and archive it. Archive recovery will never try to read .partial
+	 * segments, so they will normally go unused. But in the odd PITR case,
+	 * the administrator can copy them manually to the pg_wal directory
+	 * (removing the suffix). They can be useful in debugging, too.
 	 *
 	 * If a .done or .ready file already exists for the old timeline, however,
-	 * we had already determined that the segment is complete, so we can let it
-	 * be archived normally. (In particular, if it was restored from the archive
-	 * to begin with, it's expected to have a .done file).
+	 * we had already determined that the segment is complete, so we can let
+	 * it be archived normally. (In particular, if it was restored from the
+	 * archive to begin with, it's expected to have a .done file).
 	 */
 	if (XLogSegmentOffset(EndOfLog, wal_segment_size) != 0 &&
 		XLogArchivingActive())
@@ -7657,10 +7657,10 @@ StartupXLOG(void)
 				 * Before replaying this record, check if this record causes
 				 * the current timeline to change. The record is already
 				 * considered to be part of the new timeline, so we update
-				 * replayTLI before replaying it. That's important so
-				 * that replayEndTLI, which is recorded as the minimum
-				 * recovery point's TLI if recovery stops after this record,
-				 * is set correctly.
+				 * replayTLI before replaying it. That's important so that
+				 * replayEndTLI, which is recorded as the minimum recovery
+				 * point's TLI if recovery stops after this record, is set
+				 * correctly.
 				 */
 				if (record->xl_rmid == RM_XLOG_ID)
 				{
@@ -8166,10 +8166,10 @@ StartupXLOG(void)
 	 * Emit checkpoint or end-of-recovery record in XLOG, if required.
 	 *
 	 * XLogCtl->lastReplayedEndRecPtr will be a valid LSN if and only if we
-	 * entered recovery. Even if we ultimately replayed no WAL records, it will
-	 * have been initialized based on where replay was due to start.  We don't
-	 * need a lock to access this, since this can't change any more by the time
-	 * we reach this code.
+	 * entered recovery. Even if we ultimately replayed no WAL records, it
+	 * will have been initialized based on where replay was due to start.  We
+	 * don't need a lock to access this, since this can't change any more by
+	 * the time we reach this code.
 	 */
 	if (!XLogRecPtrIsInvalid(XLogCtl->lastReplayedEndRecPtr))
 		promoted = PerformRecoveryXLogAction();
@@ -8357,15 +8357,15 @@ PerformRecoveryXLogAction(void)
 	/*
 	 * Perform a checkpoint to update all our recovery activity to disk.
 	 *
-	 * Note that we write a shutdown checkpoint rather than an on-line one. This
-	 * is not particularly critical, but since we may be assigning a new TLI,
-	 * using a shutdown checkpoint allows us to have the rule that TLI only
-	 * changes in shutdown checkpoints, which allows some extra error checking
-	 * in xlog_redo.
+	 * Note that we write a shutdown checkpoint rather than an on-line one.
+	 * This is not particularly critical, but since we may be assigning a new
+	 * TLI, using a shutdown checkpoint allows us to have the rule that TLI
+	 * only changes in shutdown checkpoints, which allows some extra error
+	 * checking in xlog_redo.
 	 *
-	 * In promotion, only create a lightweight end-of-recovery record instead of
-	 * a full checkpoint. A checkpoint is requested later, after we're fully out
-	 * of recovery mode and already accepting queries.
+	 * In promotion, only create a lightweight end-of-recovery record instead
+	 * of a full checkpoint. A checkpoint is requested later, after we're
+	 * fully out of recovery mode and already accepting queries.
 	 */
 	if (ArchiveRecoveryRequested && IsUnderPostmaster &&
 		LocalPromoteIsTriggered)
@@ -8375,11 +8375,11 @@ PerformRecoveryXLogAction(void)
 		/*
 		 * Insert a special WAL record to mark the end of recovery, since we
 		 * aren't doing a checkpoint. That means that the checkpointer process
-		 * may likely be in the middle of a time-smoothed restartpoint and could
-		 * continue to be for minutes after this.  That sounds strange, but the
-		 * effect is roughly the same and it would be stranger to try to come
-		 * out of the restartpoint and then checkpoint. We request a checkpoint
-		 * later anyway, just for safety.
+		 * may likely be in the middle of a time-smoothed restartpoint and
+		 * could continue to be for minutes after this.  That sounds strange,
+		 * but the effect is roughly the same and it would be stranger to try
+		 * to come out of the restartpoint and then checkpoint. We request a
+		 * checkpoint later anyway, just for safety.
 		 */
 		CreateEndOfRecoveryRecord();
 	}
@@ -8531,7 +8531,7 @@ XLogInsertAllowed(void)
 static int
 LocalSetXLogInsertAllowed(void)
 {
-	int		oldXLogAllowed = LocalXLogInsertAllowed;
+	int			oldXLogAllowed = LocalXLogInsertAllowed;
 
 	LocalXLogInsertAllowed = 1;
 
@@ -8718,8 +8718,8 @@ GetFlushRecPtr(TimeLineID *insertTLI)
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	/*
-	 * If we're writing and flushing WAL, the time line can't be changing,
-	 * so no lock is required.
+	 * If we're writing and flushing WAL, the time line can't be changing, so
+	 * no lock is required.
 	 */
 	if (insertTLI)
 		*insertTLI = XLogCtl->InsertTimeLineID;
