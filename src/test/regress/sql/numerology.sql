@@ -17,7 +17,6 @@ SELECT 0.0e1a;
 SELECT 0.0e;
 SELECT 0.0e+a;
 PREPARE p1 AS SELECT $1a;
-EXECUTE p1(1);
 
 --
 -- Test implicit type conversions

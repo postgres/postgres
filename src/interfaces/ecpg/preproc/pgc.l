@@ -353,7 +353,7 @@ operator		{op_chars}+
  *
  * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
  *
- * {realfail1} and {realfail2} are added to prevent the need for scanner
+ * {realfail} is added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
 digit			[0-9]
@@ -362,10 +362,14 @@ integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
 decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
-realfail1		({integer}|{decimal})[Ee]
-realfail2		({integer}|{decimal})[Ee][-+]
+realfail		({integer}|{decimal})[Ee][-+]
+
+integer_junk	{integer}{ident_start}
+decimal_junk	{decimal}{ident_start}
+real_junk		{real}{ident_start}
 
 param			\${integer}
+param_junk		\${integer}{ident_start}
 
 /* special characters for other dbms */
 /* we have to react differently in compat mode */
@@ -917,6 +921,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					base_yylval.ival = atol(yytext+1);
 					return PARAM;
 				}
+{param_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after parameter");
+				}
 
 {ip}			{
 					base_yylval.str = mm_strdup(yytext);
@@ -941,22 +948,31 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					base_yylval.str = mm_strdup(yytext);
 					return FCONST;
 				}
-{realfail1}		{
+{realfail}		{
 					/*
-					 * throw back the [Ee], and figure out whether what
+					 * throw back the [Ee][+-], and figure out whether what
 					 * remains is an {integer} or {decimal}.
 					 */
-					yyless(yyleng - 1);
-					return process_integer_literal(yytext, &base_yylval);
-				}
-{realfail2}		{
-					/* throw back the [Ee][+-], and proceed as above */
 					yyless(yyleng - 2);
 					return process_integer_literal(yytext, &base_yylval);
 				}
 } /* <C,SQL> */
 
 <SQL>{
+	/*
+	 * Note that some trailing junk is valid in C (such as 100LL), so we
+	 * contain this to SQL mode.
+	 */
+{integer_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+{decimal_junk}	{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+{real_junk}		{
+					mmfatal(PARSE_ERROR, "trailing junk after numeric literal");
+				}
+
 :{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
 					base_yylval.str = mm_strdup(yytext+1);
 					return CVARIABLE;

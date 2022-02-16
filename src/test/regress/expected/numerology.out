@@ -6,64 +6,45 @@
 -- Trailing junk in numeric literals
 --
 SELECT 123abc;
- abc 
------
- 123
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "123a"
+LINE 1: SELECT 123abc;
+               ^
 SELECT 0x0o;
- x0o 
------
-   0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "0x"
+LINE 1: SELECT 0x0o;
+               ^
 SELECT 1_2_3;
- _2_3 
-------
-    1
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "1_"
+LINE 1: SELECT 1_2_3;
+               ^
 SELECT 0.a;
- a 
----
- 0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "0.a"
+LINE 1: SELECT 0.a;
+               ^
 SELECT 0.0a;
-  a  
------
- 0.0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "0.0a"
+LINE 1: SELECT 0.0a;
+               ^
 SELECT .0a;
-  a  
------
- 0.0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near ".0a"
+LINE 1: SELECT .0a;
+               ^
 SELECT 0.0e1a;
- a 
----
- 0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "0.0e1a"
+LINE 1: SELECT 0.0e1a;
+               ^
 SELECT 0.0e;
-  e  
------
- 0.0
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "0.0e"
+LINE 1: SELECT 0.0e;
+               ^
 SELECT 0.0e+a;
-ERROR:  syntax error at or near "+"
+ERROR:  trailing junk after numeric literal at or near "0.0e+"
 LINE 1: SELECT 0.0e+a;
-                   ^
+               ^
 PREPARE p1 AS SELECT $1a;
-EXECUTE p1(1);
- a 
----
- 1
-(1 row)
-
+ERROR:  trailing junk after parameter at or near "$1a"
+LINE 1: PREPARE p1 AS SELECT $1a;
+                             ^
 --
 -- Test implicit type conversions
 -- This fails for Postgres v6.1 (and earlier?)

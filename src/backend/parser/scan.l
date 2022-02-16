@@ -387,7 +387,7 @@ operator		{op_chars}+
  *
  * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
  *
- * {realfail1} and {realfail2} are added to prevent the need for scanner
+ * {realfail} is added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
 digit			[0-9]
@@ -396,10 +396,14 @@ integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
 decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
-realfail1		({integer}|{decimal})[Ee]
-realfail2		({integer}|{decimal})[Ee][-+]
+realfail		({integer}|{decimal})[Ee][-+]
+
+integer_junk	{integer}{ident_start}
+decimal_junk	{decimal}{ident_start}
+real_junk		{real}{ident_start}
 
 param			\${integer}
+param_junk		\${integer}{ident_start}
 
 other			.
 
@@ -974,6 +978,10 @@ other			.
 					yylval->ival = atol(yytext + 1);
 					return PARAM;
 				}
+{param_junk}	{
+					SET_YYLLOC();
+					yyerror("trailing junk after parameter");
+				}
 
 {integer}		{
 					SET_YYLLOC();
@@ -995,20 +1003,21 @@ other			.
 					yylval->str = pstrdup(yytext);
 					return FCONST;
 				}
-{realfail1}		{
-					/*
-					 * throw back the [Ee], and figure out whether what
-					 * remains is an {integer} or {decimal}.
-					 */
-					yyless(yyleng - 1);
+{realfail}		{
 					SET_YYLLOC();
-					return process_integer_literal(yytext, yylval);
+					yyerror("trailing junk after numeric literal");
 				}
-{realfail2}		{
-					/* throw back the [Ee][+-], and proceed as above */
-					yyless(yyleng - 2);
+{integer_junk}	{
 					SET_YYLLOC();
-					return process_integer_literal(yytext, yylval);
+					yyerror("trailing junk after numeric literal");
+				}
+{decimal_junk}	{
+					SET_YYLLOC();
+					yyerror("trailing junk after numeric literal");
+				}
+{real_junk}		{
+					SET_YYLLOC();
+					yyerror("trailing junk after numeric literal");
 				}
 
 
