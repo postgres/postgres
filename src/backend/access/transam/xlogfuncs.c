@@ -19,8 +19,8 @@
 #include <unistd.h>
 
 #include "access/htup_details.h"
-#include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"

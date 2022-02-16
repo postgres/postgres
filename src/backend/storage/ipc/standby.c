@@ -20,6 +20,7 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xloginsert.h"
+#include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "pgstat.h"

@@ -23,6 +23,7 @@
 #include <signal.h>
 
 #include "access/xlog_internal.h"
+#include "access/xlogrecovery.h"
 #include "pgstat.h"
 #include "postmaster/startup.h"
 #include "replication/walreceiver.h"

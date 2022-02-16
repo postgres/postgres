@@ -38,6 +38,7 @@
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "access/xlogrecovery.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"

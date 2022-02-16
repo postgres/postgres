@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/xlog.h"
+#include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
