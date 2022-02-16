@@ -63,9 +63,10 @@
  <para>
   Now you need only <command>SELECT</command> from a foreign table to access
   the data stored in its underlying remote table.  You can also modify
-  the remote table using <command>INSERT</command>, <command>UPDATE</command>, or
-  <command>DELETE</command>.  (Of course, the remote user you have specified
-  in your user mapping must have privileges to do these things.)
+  the remote table using <command>INSERT</command>, <command>UPDATE</command>,
+  <command>DELETE</command>, or <command>COPY</command>.  (Of course, the
+  remote user you have specified in your user mapping must have privileges to
+  do these things.)
  </para>
 
  <para>
