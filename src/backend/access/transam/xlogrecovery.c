@@ -840,69 +840,75 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 	}
 
 	/*
-	 * Update pg_control to show that we are recovering and to show the
-	 * selected checkpoint as the place we are starting from. We also mark
-	 * pg_control with any minimum recovery stop point obtained from a backup
-	 * history file.
+	 * If recovery is needed, update our in-memory copy of pg_control to show
+	 * that we are recovering and to show the selected checkpoint as the place
+	 * we are starting from. We also mark pg_control with any minimum recovery
+	 * stop point obtained from a backup history file.
+	 *
+	 * We don't write the changes to disk yet, though. Only do that after
+	 * initializing various subsystems.
 	 */
-	if (InArchiveRecovery)
+	if (InRecovery)
 	{
-		ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
-	}
-	else
-	{
-		ereport(LOG,
-				(errmsg("database system was not properly shut down; "
-						"automatic recovery in progress")));
-		if (recoveryTargetTLI > ControlFile->checkPointCopy.ThisTimeLineID)
-			ereport(LOG,
-					(errmsg("crash recovery starts in timeline %u "
-							"and has target timeline %u",
-							ControlFile->checkPointCopy.ThisTimeLineID,
-							recoveryTargetTLI)));
-		ControlFile->state = DB_IN_CRASH_RECOVERY;
-	}
-	ControlFile->checkPoint = CheckPointLoc;
-	ControlFile->checkPointCopy = checkPoint;
-	if (InArchiveRecovery)
-	{
-		/* initialize minRecoveryPoint if not set yet */
-		if (ControlFile->minRecoveryPoint < checkPoint.redo)
+		if (InArchiveRecovery)
 		{
-			ControlFile->minRecoveryPoint = checkPoint.redo;
-			ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
+			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
 		}
-	}
-
-	/*
-	 * Set backupStartPoint if we're starting recovery from a base backup.
-	 *
-	 * Also set backupEndPoint and use minRecoveryPoint as the backup end
-	 * location if we're starting recovery from a base backup which was taken
-	 * from a standby. In this case, the database system status in pg_control
-	 * must indicate that the database was already in recovery. Usually that
-	 * will be DB_IN_ARCHIVE_RECOVERY but also can be
-	 * DB_SHUTDOWNED_IN_RECOVERY if recovery previously was interrupted before
-	 * reaching this point; e.g. because restore_command or primary_conninfo
-	 * were faulty.
-	 *
-	 * Any other state indicates that the backup somehow became corrupted and
-	 * we can't sensibly continue with recovery.
-	 */
-	if (haveBackupLabel)
-	{
-		ControlFile->backupStartPoint = checkPoint.redo;
-		ControlFile->backupEndRequired = backupEndRequired;
-
-		if (backupFromStandby)
+		else
 		{
-			if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY &&
-				dbstate_at_startup != DB_SHUTDOWNED_IN_RECOVERY)
-				ereport(FATAL,
-						(errmsg("backup_label contains data inconsistent with control file"),
-						 errhint("This means that the backup is corrupted and you will "
-								 "have to use another backup for recovery.")));
-			ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
+			ereport(LOG,
+					(errmsg("database system was not properly shut down; "
+							"automatic recovery in progress")));
+			if (recoveryTargetTLI > ControlFile->checkPointCopy.ThisTimeLineID)
+				ereport(LOG,
+						(errmsg("crash recovery starts in timeline %u "
+								"and has target timeline %u",
+								ControlFile->checkPointCopy.ThisTimeLineID,
+								recoveryTargetTLI)));
+			ControlFile->state = DB_IN_CRASH_RECOVERY;
+		}
+		ControlFile->checkPoint = CheckPointLoc;
+		ControlFile->checkPointCopy = checkPoint;
+		if (InArchiveRecovery)
+		{
+			/* initialize minRecoveryPoint if not set yet */
+			if (ControlFile->minRecoveryPoint < checkPoint.redo)
+			{
+				ControlFile->minRecoveryPoint = checkPoint.redo;
+				ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
+			}
+		}
+
+		/*
+		 * Set backupStartPoint if we're starting recovery from a base backup.
+		 *
+		 * Also set backupEndPoint and use minRecoveryPoint as the backup end
+		 * location if we're starting recovery from a base backup which was
+		 * taken from a standby. In this case, the database system status in
+		 * pg_control must indicate that the database was already in recovery.
+		 * Usually that will be DB_IN_ARCHIVE_RECOVERY but also can be
+		 * DB_SHUTDOWNED_IN_RECOVERY if recovery previously was interrupted
+		 * before reaching this point; e.g. because restore_command or
+		 * primary_conninfo were faulty.
+		 *
+		 * Any other state indicates that the backup somehow became corrupted
+		 * and we can't sensibly continue with recovery.
+		 */
+		if (haveBackupLabel)
+		{
+			ControlFile->backupStartPoint = checkPoint.redo;
+			ControlFile->backupEndRequired = backupEndRequired;
+
+			if (backupFromStandby)
+			{
+				if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY &&
+					dbstate_at_startup != DB_SHUTDOWNED_IN_RECOVERY)
+					ereport(FATAL,
+							(errmsg("backup_label contains data inconsistent with control file"),
+							 errhint("This means that the backup is corrupted and you will "
+									 "have to use another backup for recovery.")));
+				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;
+			}
 		}
 	}
 
