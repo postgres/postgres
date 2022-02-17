@@ -1239,6 +1239,25 @@ vac_estimate_reltuples(Relation relation,
 		return old_rel_tuples;
 
 	/*
+	 * When successive VACUUM commands scan the same few pages again and
+	 * again, without anything from the table really changing, there is a risk
+	 * that our beliefs about tuple density will gradually become distorted.
+	 * It's particularly important to avoid becoming confused in this way due
+	 * to vacuumlazy.c implementation details.  For example, the tendency for
+	 * our caller to always scan the last heap page should not ever cause us
+	 * to believe that every page in the table must be just like the last
+	 * page.
+	 *
+	 * We apply a heuristic to avoid these problems: if the relation is
+	 * exactly the same size as it was at the end of the last VACUUM, and only
+	 * a few of its pages (less than a quasi-arbitrary threshold of 2%) were
+	 * scanned by this VACUUM, assume that reltuples has not changed at all.
+	 */
+	if (old_rel_pages == total_pages &&
+		scanned_pages < (double) total_pages * 0.02)
+		return old_rel_tuples;
+
+	/*
 	 * If old density is unknown, we can't do much except scale up
 	 * scanned_tuples to match total_pages.
 	 */
