@@ -311,7 +311,7 @@ The returned path uses forward slashes but has no trailing slash.
 sub perl2host
 {
 	my ($subject) = @_;
-	return $subject unless $Config{osname} eq 'msys';
+	return $subject;
 	if ($is_msys2)
 	{
 		# get absolute, windows type path
