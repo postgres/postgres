@@ -10280,7 +10280,7 @@ fi
 
 if test "$with_python" = yes; then
   if test -z "$PYTHON"; then
-  for ac_prog in python python3 python2
+  for ac_prog in python3 python
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -10346,8 +10346,8 @@ python_majorversion=`echo "$python_fullversion" | sed 's/^\([0-9]*\).*/\1/'`
 python_minorversion=`echo "$python_fullversion" | sed 's/^[0-9]*\.\([0-9]*\).*/\1/'`
 python_version=`echo "$python_fullversion" | sed 's/^\([0-9]*\.[0-9]*\).*/\1/'`
 # Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 7; then
-  as_fn_error $? "Python version $python_version is too old (version 2.7 or later is required)" "$LINENO" 5
+if test "$python_majorversion" -lt 3; then
+  as_fn_error $? "Python version $python_version is too old (version 3 or later is required)" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python sysconfig module" >&5

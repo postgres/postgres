@@ -9,6 +9,9 @@
 # Look for Python and set the output variable 'PYTHON' if found,
 # fail otherwise.
 #
+# Since we are supporting only Python 3.x, prefer python3 to plain python.  If
+# the latter exists at all, it very possibly points to python2.
+
 # As the Python 3 transition happens and PEP 394 isn't updated, we
 # need to cater to systems that don't have unversioned "python" by
 # default.  Some systems ship with "python3" by default and perhaps
@@ -16,7 +19,7 @@
 # "python2" and "python3", in which case it's reasonable to prefer the
 # newer version.
 AC_DEFUN([PGAC_PATH_PYTHON],
-[PGAC_PATH_PROGS(PYTHON, [python python3 python2])
+[PGAC_PATH_PROGS(PYTHON, [python3 python])
 AC_ARG_VAR(PYTHON, [Python program])dnl
 if test x"$PYTHON" = x""; then
   AC_MSG_ERROR([Python not found])
@@ -37,8 +40,8 @@ python_majorversion=`echo "$python_fullversion" | sed '[s/^\([0-9]*\).*/\1/]'`
 python_minorversion=`echo "$python_fullversion" | sed '[s/^[0-9]*\.\([0-9]*\).*/\1/]'`
 python_version=`echo "$python_fullversion" | sed '[s/^\([0-9]*\.[0-9]*\).*/\1/]'`
 # Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 7; then
-  AC_MSG_ERROR([Python version $python_version is too old (version 2.7 or later is required)])
+if test "$python_majorversion" -lt 3; then
+  AC_MSG_ERROR([Python version $python_version is too old (version 3 or later is required)])
 fi
 
 AC_MSG_CHECKING([for Python sysconfig module])

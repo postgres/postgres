@@ -136,7 +136,7 @@
   to specify the location of your <productname>Python</productname> installation,
   put the following in <filename>config.pl</filename>:
 <programlisting>
-$config->{python} = 'c:\python26';
+$config->{python} = 'c:\python310';
 </programlisting>
   You only need to specify those parameters that are different from what's in
   <filename>config_default.pl</filename>.

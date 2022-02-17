@@ -490,6 +490,10 @@ sub mkvcbuild
 		  if (!(defined($pyprefix) && defined($pyver)));
 
 		my $pymajorver = substr($pyver, 0, 1);
+
+		die "Python version $pyver is too old (version 3 or later is required)"
+		  if int($pymajorver) < 3;
+
 		my $plpython = $solution->AddProject('plpython' . $pymajorver,
 			'dll', 'PLs', 'src/pl/plpython');
 		$plpython->AddIncludeDir($pyprefix . '/include');
