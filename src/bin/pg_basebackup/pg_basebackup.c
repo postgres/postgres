@@ -164,7 +164,7 @@ static bool found_tablespace_dirs = false;
 static uint64 totalsize_kb;
 static uint64 totaldone;
 static int	tablespacecount;
-static const char *progress_filename;
+static char *progress_filename = NULL;
 
 /* Pipe to communicate with background wal receiver process */
 #ifndef WIN32
@@ -775,11 +775,22 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 
 /*
  * Callback to update our notion of the current filename.
+ *
+ * No other code should modify progress_filename!
  */
 static void
 progress_update_filename(const char *filename)
 {
-	progress_filename = filename;
+	/* We needn't maintain this variable if not doing verbose reports. */
+	if (showprogress && verbose)
+	{
+		if (progress_filename)
+			free(progress_filename);
+		if (filename)
+			progress_filename = pg_strdup(filename);
+		else
+			progress_filename = NULL;
+	}
 }
 
 /*
@@ -1258,7 +1269,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		 */
 		if (must_parse_archive)
 			streamer = bbstreamer_tar_archiver_new(streamer);
-		progress_filename = archive_filename;
+		progress_update_filename(archive_filename);
 	}
 
 	/*
@@ -1662,7 +1673,7 @@ ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
 										  expect_unterminated_tarfile);
 	state.tablespacenum = tablespacenum;
 	ReceiveCopyData(conn, ReceiveTarCopyChunk, &state);
-	progress_filename = NULL;
+	progress_update_filename(NULL);
 
 	/*
 	 * The decision as to whether we need to inject the backup manifest into
@@ -2161,7 +2172,7 @@ BaseBackup(void)
 
 	if (showprogress)
 	{
-		progress_filename = NULL;
+		progress_update_filename(NULL);
 		progress_report(PQntuples(res), true, true);
 	}
 
