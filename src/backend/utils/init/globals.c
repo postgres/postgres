@@ -122,7 +122,7 @@ int			IntervalStyle = INTSTYLE_POSTGRES;
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;
 int			work_mem = 4096;
-double		hash_mem_multiplier = 1.0;
+double		hash_mem_multiplier = 2.0;
 int			maintenance_work_mem = 65536;
 int			max_parallel_maintenance_workers = 2;
 

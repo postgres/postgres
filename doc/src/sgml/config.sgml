@@ -1849,9 +1849,8 @@ include_dir 'conf.d'
         operations can use.  The final limit is determined by
         multiplying <varname>work_mem</varname> by
         <varname>hash_mem_multiplier</varname>.  The default value is
-        1.0, which makes hash-based operations subject to the same
-        simple <varname>work_mem</varname> maximum as sort-based
-        operations.
+        2.0, which makes hash-based operations use twice the usual
+        <varname>work_mem</varname> base amount.
        </para>
        <para>
         Consider increasing <varname>hash_mem_multiplier</varname> in
@@ -1859,7 +1858,7 @@ include_dir 'conf.d'
         occurrence, especially when simply increasing
         <varname>work_mem</varname> results in memory pressure (memory
         pressure typically takes the form of intermittent out of
-        memory errors).  A setting of 1.5 or 2.0 may be effective with
+        memory errors).  The default setting of 2.0 is often effective with
         mixed workloads.  Higher settings in the range of 2.0 - 8.0 or
         more may be effective in environments where
         <varname>work_mem</varname> has already been increased to 40MB

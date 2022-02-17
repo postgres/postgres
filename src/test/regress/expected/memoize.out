@@ -90,8 +90,9 @@ WHERE t1.unique1 < 1000;
   1000 | 9.5000000000000000
 (1 row)
 
--- Reduce work_mem so that we see some cache evictions
+-- Reduce work_mem and hash_mem_multiplier so that we see some cache evictions
 SET work_mem TO '64kB';
+SET hash_mem_multiplier TO 1.0;
 SET enable_mergejoin TO off;
 -- Ensure we get some evictions.  We're unable to validate the hits and misses
 -- here as the number of entries that fit in the cache at once will vary
@@ -238,6 +239,7 @@ WHERE unique1 < 3
 RESET enable_seqscan;
 RESET enable_mergejoin;
 RESET work_mem;
+RESET hash_mem_multiplier;
 RESET enable_bitmapscan;
 RESET enable_hashjoin;
 -- Test parallel plans with Memoize
