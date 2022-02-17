@@ -10206,8 +10206,6 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	tuplestore_donestoring(tupstore);
-
 	return (Datum) 0;
 }
 

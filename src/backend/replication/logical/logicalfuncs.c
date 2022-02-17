@@ -296,8 +296,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		tuplestore_donestoring(tupstore);
-
 		/*
 		 * Logical decoding could have clobbered CurrentResourceOwner during
 		 * transaction management, so restore the executor's value.  (This is

@@ -605,7 +605,5 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 
 	LWLockRelease(ShmemIndexLock);
 
-	tuplestore_donestoring(tupstore);
-
 	return (Datum) 0;
 }

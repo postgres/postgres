@@ -56,7 +56,7 @@ extern void tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple);
 extern void tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 								 Datum *values, bool *isnull);
 
-/* tuplestore_donestoring() used to be required, but is no longer used */
+/* Backwards compatibility macro */
 #define tuplestore_donestoring(state)	((void) 0)
 
 extern int	tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags);

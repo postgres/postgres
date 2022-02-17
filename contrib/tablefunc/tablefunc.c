@@ -943,8 +943,6 @@ get_crosstab_tuplestore(char *sql,
 		/* internal error */
 		elog(ERROR, "get_crosstab_tuplestore: SPI_finish() failed");
 
-	tuplestore_donestoring(tupstore);
-
 	return tupstore;
 }
 

@@ -1803,13 +1803,11 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	/* clean up and return the tuplestore */
 	LWLockRelease(pgss->lock);
 
 	if (qbuffer)
 		free(qbuffer);
 
-	tuplestore_donestoring(tupstore);
 }
 
 /* Number of output arguments (columns) for pg_stat_statements_info */

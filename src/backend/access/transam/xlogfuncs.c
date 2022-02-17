@@ -252,7 +252,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 	values[0] = LSNGetDatum(stoppoint);
 
 	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-	tuplestore_donestoring(tupstore);
 
 	return (Datum) 0;
 }

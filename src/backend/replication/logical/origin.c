@@ -1568,8 +1568,6 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	tuplestore_donestoring(tupstore);
-
 	LWLockRelease(ReplicationOriginLock);
 
 #undef REPLICATION_ORIGIN_PROGRESS_COLS

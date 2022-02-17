@@ -778,9 +778,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
-
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;

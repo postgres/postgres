@@ -555,9 +555,6 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
-
 	MemoryContextSwitchTo(oldcontext);
 }
 

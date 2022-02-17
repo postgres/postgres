@@ -4855,8 +4855,6 @@ text_to_table(PG_FUNCTION_ARGS)
 
 	(void) split_text(fcinfo, &tstate);
 
-	tuplestore_donestoring(tstate.tupstore);
-
 	rsi->returnMode = SFRM_Materialize;
 	rsi->setResult = tstate.tupstore;
 	rsi->setDesc = tstate.tupdesc;

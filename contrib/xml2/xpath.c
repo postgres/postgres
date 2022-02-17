@@ -783,8 +783,6 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	pg_xml_done(xmlerrcxt, false);
 
-	tuplestore_donestoring(tupstore);
-
 	SPI_finish();
 
 	rsinfo->setResult = tupstore;

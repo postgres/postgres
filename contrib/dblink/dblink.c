@@ -1005,8 +1005,6 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 			/* clean up GUC settings, if we changed any */
 			restoreLocalGucs(nestlevel);
 
-			/* clean up and return the tuplestore */
-			tuplestore_donestoring(tupstore);
 		}
 	}
 	PG_FINALLY();
@@ -1987,9 +1985,6 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 		PQfreemem(notify);
 		PQconsumeInput(conn);
 	}
-
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
 
 	return (Datum) 0;
 }

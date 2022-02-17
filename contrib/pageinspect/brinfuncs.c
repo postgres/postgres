@@ -325,9 +325,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	/* clean up and return the tuplestore */
 	brin_free_desc(bdesc);
-	tuplestore_donestoring(tupstore);
 	index_close(indexRel, AccessShareLock);
 
 	return (Datum) 0;

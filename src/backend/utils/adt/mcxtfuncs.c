@@ -152,9 +152,6 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 	PutMemoryContextsStatsTupleStore(tupstore, tupdesc,
 									 TopMemoryContext, NULL, 0);
 
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
-
 	return (Datum) 0;
 }
 
