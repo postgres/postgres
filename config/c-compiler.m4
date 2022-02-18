@@ -396,6 +396,28 @@ fi])# PGAC_CHECK_BUILTIN_FUNC
 
 
 
+# PGAC_CHECK_BUILTIN_FUNC_PTR
+# -----------------------
+# Like PGAC_CHECK_BUILTIN_FUNC, except that the function is assumed to
+# return a pointer type, and the argument(s) should be given literally.
+# This handles some cases that PGAC_CHECK_BUILTIN_FUNC doesn't.
+AC_DEFUN([PGAC_CHECK_BUILTIN_FUNC_PTR],
+[AC_CACHE_CHECK(for $1, pgac_cv$1,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([
+void *
+call$1(void)
+{
+    return $1($2);
+}], [])],
+[pgac_cv$1=yes],
+[pgac_cv$1=no])])
+if test x"${pgac_cv$1}" = xyes ; then
+AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE$1]), 1,
+                   [Define to 1 if your compiler understands $1.])
+fi])# PGAC_CHECK_BUILTIN_FUNC_PTR
+
+
+
 # PGAC_PROG_VARCC_VARFLAGS_OPT
 # -----------------------
 # Given a compiler, variable name and a string, check if the compiler
