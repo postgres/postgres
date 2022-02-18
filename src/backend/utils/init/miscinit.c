@@ -93,13 +93,12 @@ InitPostmasterChild(void)
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	/*
-	 * Set reference point for stack-depth checking. We re-do that even in the
-	 * !EXEC_BACKEND case, because there are some edge cases where processes
-	 * are started with an alternative stack (e.g. starting bgworkers when
-	 * running postgres using the rr debugger, as bgworkers are launched from
-	 * signal handlers).
+	 * Set reference point for stack-depth checking.  This might seem
+	 * redundant in !EXEC_BACKEND builds; but it's not because the postmaster
+	 * launches its children from signal handlers, so we might be running on
+	 * an alternative stack.
 	 */
-	set_stack_base();
+	(void) set_stack_base();
 
 	InitProcessGlobals();
 

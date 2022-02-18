@@ -419,6 +419,7 @@ sub GenerateFiles
 		HAVE__BUILTIN_CLZ                        => undef,
 		HAVE__BUILTIN_CONSTANT_P                 => undef,
 		HAVE__BUILTIN_CTZ                        => undef,
+		HAVE__BUILTIN_FRAME_ADDRESS              => undef,
 		HAVE__BUILTIN_OP_OVERFLOW                => undef,
 		HAVE__BUILTIN_POPCOUNT                   => undef,
 		HAVE__BUILTIN_TYPES_COMPATIBLE_P         => undef,
