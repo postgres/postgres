@@ -2933,10 +2933,7 @@ maybe_reread_subscription(void)
 		proc_exit(0);
 	}
 
-	/*
-	 * Exit if the subscription was disabled. This normally should not happen
-	 * as the worker gets killed during ALTER SUBSCRIPTION ... DISABLE.
-	 */
+	/* Exit if the subscription was disabled. */
 	if (!newsub->enabled)
 	{
 		ereport(LOG,
