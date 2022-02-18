@@ -19758,6 +19758,7 @@ fi
   # installation than perl, eg on MSys, so we have to check using prove.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl modules required for TAP tests" >&5
 $as_echo_n "checking for Perl modules required for TAP tests... " >&6; }
+  __CONFIG_HOST_OS__=$host_os; export __CONFIG_HOST_OS__
   modulestderr=`"$PROVE" "$srcdir/config/check_modules.pl" 2>&1 >/dev/null`
   if test $? -eq 0; then
     # log the module version details, but don't show them interactively
