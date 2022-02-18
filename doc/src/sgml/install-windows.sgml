@@ -308,6 +308,15 @@ $ENV{MSBFLAGS}="/m";
     </varlistentry>
 
     <varlistentry>
+     <term><productname>ZSTD</productname></term>
+     <listitem><para>
+      Required for supporting <productname>ZSTD</productname> compression
+      method. Binaries and source can be downloaded from
+      <ulink url="https://github.com/facebook/zstd/releases"></ulink>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><productname>OpenSSL</productname></term>
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from

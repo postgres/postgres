@@ -986,6 +986,15 @@ build-postgresql:
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-zstd</option></term>
+       <listitem>
+        <para>
+         Build with <productname>ZSTD</productname> compression support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-ssl=<replaceable>LIBRARY</replaceable></option>
        <indexterm>
         <primary>OpenSSL</primary>
