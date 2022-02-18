@@ -10910,6 +10910,26 @@ SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
  t
 (1 row)
 
+-- Test %c (session ID) and %C (cluster name) escape sequences.
+SET postgres_fdw.application_name TO 'fdw_%C%c';
+SELECT 1 FROM ft6 LIMIT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT pg_terminate_backend(pid, 180000) FROM pg_stat_activity
+  WHERE application_name =
+    substring('fdw_' || current_setting('cluster_name') ||
+      to_hex(trunc(EXTRACT(EPOCH FROM (SELECT backend_start FROM
+      pg_stat_get_activity(pg_backend_pid()))))::integer) || '.' ||
+      to_hex(pg_backend_pid())
+      for current_setting('max_identifier_length')::int);
+ pg_terminate_backend 
+----------------------
+ t
+(1 row)
+
 --Clean up
 RESET postgres_fdw.application_name;
 RESET debug_discard_caches;

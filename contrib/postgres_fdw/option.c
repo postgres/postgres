@@ -489,6 +489,12 @@ process_pgfdw_appname(const char *appname)
 			case 'a':
 				appendStringInfoString(&buf, application_name);
 				break;
+			case 'c':
+				appendStringInfo(&buf, "%lx.%x", (long) (MyStartTime), MyProcPid);
+				break;
+			case 'C':
+				appendStringInfoString(&buf, cluster_name);
+				break;
 			case 'd':
 				appendStringInfoString(&buf, MyProcPort->database_name);
 				break;

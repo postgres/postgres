@@ -985,6 +985,20 @@ postgres=# SELECT postgres_fdw_disconnect_all();
          <entry>Application name on local server</entry>
         </row>
         <row>
+         <entry><literal>%c</literal></entry>
+         <entry>
+          Session ID on local server
+          (see <xref linkend="guc-log-line-prefix"/> for details)
+         </entry>
+        </row>
+        <row>
+         <entry><literal>%C</literal></entry>
+         <entry>
+          Cluster name in local server
+          (see <xref linkend="guc-cluster-name"/> for details)
+         </entry>
+        </row>
+        <row>
          <entry><literal>%u</literal></entry>
          <entry>User name on local server</entry>
         </row>
