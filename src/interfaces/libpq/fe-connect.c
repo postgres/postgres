@@ -3685,7 +3685,7 @@ keep_going:						/* We will come back to here until there is
 				 * (and it seems some clients expect it to be empty after a
 				 * successful connection).
 				 */
-				resetPQExpBuffer(&conn->errorMessage);
+				pqClearConnErrorState(conn);
 
 				/* We are open for business! */
 				conn->status = CONNECTION_OK;
@@ -4231,7 +4231,7 @@ closePGconn(PGconn *conn)
 
 	/*
 	 * Close the connection, reset all transient state, flush I/O buffers.
-	 * Note that this includes clearing conn->errorMessage; we're no longer
+	 * Note that this includes clearing conn's error state; we're no longer
 	 * interested in any failures associated with the old connection, and we
 	 * want a clean slate for any new connection attempt.
 	 */
@@ -4241,7 +4241,7 @@ closePGconn(PGconn *conn)
 	conn->xactStatus = PQTRANS_IDLE;
 	conn->pipelineStatus = PQ_PIPELINE_OFF;
 	pqClearAsyncResult(conn);	/* deallocate result */
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 	release_conn_addrinfo(conn);
 
 	/* Reset all state obtained from server, too */
@@ -5236,7 +5236,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
  * Returns 0 on success, nonzero on failure.  On failure, if errorMessage
  * isn't null, also store an error message there.  (Note: the only reason
  * this function and related ones don't dump core on errorMessage == NULL
- * is the undocumented fact that printfPQExpBuffer does nothing when passed
+ * is the undocumented fact that appendPQExpBuffer does nothing when passed
  * a null PQExpBuffer pointer.)
  */
 static int

@@ -44,6 +44,13 @@ char	   *const pgresStatus[] = {
 	"PGRES_PIPELINE_ABORTED"
 };
 
+/* We return this if we're unable to make a PGresult at all */
+static const PGresult OOM_result = {
+	.resultStatus = PGRES_FATAL_ERROR,
+	.client_encoding = PG_SQL_ASCII,
+	.errMsg = "out of memory\n",
+};
+
 /*
  * static state needed by PQescapeString and PQescapeBytea; initialize to
  * values that result in backward-compatible behavior
@@ -141,6 +148,10 @@ static int	pqPipelineFlush(PGconn *conn);
  *	 returns a newly allocated, initialized PGresult with given status.
  *	 If conn is not NULL and status indicates an error, the conn's
  *	 errorMessage is copied.  Also, any PGEvents are copied from the conn.
+ *
+ * Note: the logic to copy the conn's errorMessage is now vestigial;
+ * no internal caller uses it.  However, that behavior is documented for
+ * outside callers, so we'd better keep it.
  */
 PGresult *
 PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
@@ -191,7 +202,8 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 				/* non-error cases */
 				break;
 			default:
-				pqSetResultError(result, &conn->errorMessage);
+				/* we intentionally do not use or modify errorReported here */
+				pqSetResultError(result, &conn->errorMessage, 0);
 				break;
 		}
 
@@ -235,8 +247,12 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
 {
 	int			i;
 
+	/* Fail if argument is NULL or OOM_result */
+	if (!res || (const PGresult *) res == &OOM_result)
+		return false;
+
 	/* If attrs already exist, they cannot be overwritten. */
-	if (!res || res->numAttributes > 0)
+	if (res->numAttributes > 0)
 		return false;
 
 	/* ignore no-op request */
@@ -435,7 +451,11 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	PGresAttValue *attval;
 	const char *errmsg = NULL;
 
-	/* Note that this check also protects us against null "res" */
+	/* Fail if argument is NULL or OOM_result */
+	if (!res || (const PGresult *) res == &OOM_result)
+		return false;
+
+	/* Invalid field_num? */
 	if (!check_field_number(res, field_num))
 		return false;
 
@@ -519,6 +539,10 @@ fail:
 void *
 PQresultAlloc(PGresult *res, size_t nBytes)
 {
+	/* Fail if argument is NULL or OOM_result */
+	if (!res || (const PGresult *) res == &OOM_result)
+		return NULL;
+
 	return pqResultAlloc(res, nBytes, true);
 }
 
@@ -657,9 +681,12 @@ pqResultStrdup(PGresult *res, const char *str)
 /*
  * pqSetResultError -
  *		assign a new error message to a PGresult
+ *
+ * Copy text from errorMessage buffer beginning at given offset
+ * (it's caller's responsibility that offset is valid)
  */
 void
-pqSetResultError(PGresult *res, PQExpBuffer errorMessage)
+pqSetResultError(PGresult *res, PQExpBuffer errorMessage, int offset)
 {
 	char	   *msg;
 
@@ -674,7 +701,7 @@ pqSetResultError(PGresult *res, PQExpBuffer errorMessage)
 	 * at a constant "out of memory" string.
 	 */
 	if (!PQExpBufferBroken(errorMessage))
-		msg = pqResultStrdup(res, errorMessage->data);
+		msg = pqResultStrdup(res, errorMessage->data + offset);
 	else
 		msg = NULL;
 	if (msg)
@@ -693,9 +720,14 @@ PQclear(PGresult *res)
 	PGresult_data *block;
 	int			i;
 
+	/* As a convenience, do nothing for a NULL pointer */
 	if (!res)
 		return;
+	/* Also, do nothing if the argument is OOM_result */
+	if ((const PGresult *) res == &OOM_result)
+		return;
 
+	/* Close down any events we may have */
 	for (i = 0; i < res->nEvents; i++)
 	{
 		/* only send DESTROY to successfully-initialized event procs */
@@ -748,24 +780,39 @@ pqClearAsyncResult(PGconn *conn)
 	if (conn->result)
 		PQclear(conn->result);
 	conn->result = NULL;
+	conn->error_result = false;
 	if (conn->next_result)
 		PQclear(conn->next_result);
 	conn->next_result = NULL;
 }
 
 /*
- * This subroutine deletes any existing async result, sets conn->result
- * to a PGresult with status PGRES_FATAL_ERROR, and stores the current
- * contents of conn->errorMessage into that result.
+ * pqSaveErrorResult -
+ *	  remember that we have an error condition
+ *
+ * In much of libpq, reporting an error just requires appending text to
+ * conn->errorMessage and returning a failure code to one's caller.
+ * Where returning a failure code is impractical, instead call this
+ * function to remember that an error needs to be reported.
+ *
+ * (It might seem that appending text to conn->errorMessage should be
+ * sufficient, but we can't rely on that working under out-of-memory
+ * conditions.  The OOM hazard is also why we don't try to make a new
+ * PGresult right here.)
  */
 void
 pqSaveErrorResult(PGconn *conn)
 {
+	/* Drop any pending result ... */
 	pqClearAsyncResult(conn);
-	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+	/* ... and set flag to remember to make an error result later */
+	conn->error_result = true;
 }
 
 /*
+ * pqSaveWriteError -
+ *	  report a write failure
+ *
  * As above, after appending conn->write_err_msg to whatever other error we
  * have.  This is used when we've detected a write failure and have exhausted
  * our chances of reporting something else instead.
@@ -792,24 +839,79 @@ pqSaveWriteError(PGconn *conn)
 }
 
 /*
- * This subroutine prepares an async result object for return to the caller.
+ * pqPrepareAsyncResult -
+ *	  prepare the current async result object for return to the caller
+ *
  * If there is not already an async result object, build an error object
  * using whatever is in conn->errorMessage.  In any case, clear the async
- * result storage.
+ * result storage, and update our notion of how much error text has been
+ * returned to the application.
  */
 PGresult *
 pqPrepareAsyncResult(PGconn *conn)
 {
 	PGresult   *res;
 
-	/*
-	 * conn->result is the PGresult to return.  If it is NULL (which probably
-	 * shouldn't happen) we assume there is an appropriate error message in
-	 * conn->errorMessage.
-	 */
 	res = conn->result;
-	if (!res)
-		res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+	if (res)
+	{
+		/*
+		 * If the pre-existing result is an ERROR (presumably something
+		 * received from the server), assume that it represents whatever is in
+		 * conn->errorMessage, and advance errorReported.
+		 */
+		if (res->resultStatus == PGRES_FATAL_ERROR)
+			conn->errorReported = conn->errorMessage.len;
+	}
+	else
+	{
+		/*
+		 * We get here after internal-to-libpq errors.  We should probably
+		 * always have error_result = true, but if we don't, gin up some error
+		 * text.
+		 */
+		if (!conn->error_result)
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("no error text available\n"));
+
+		/* Paranoia: be sure errorReported offset is sane */
+		if (conn->errorReported < 0 ||
+			conn->errorReported >= conn->errorMessage.len)
+			conn->errorReported = 0;
+
+		/*
+		 * Make a PGresult struct for the error.  We temporarily lie about the
+		 * result status, so that PQmakeEmptyPGresult doesn't uselessly copy
+		 * all of conn->errorMessage.
+		 */
+		res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+		if (res)
+		{
+			/*
+			 * Report whatever new error text we have, and advance
+			 * errorReported.
+			 */
+			res->resultStatus = PGRES_FATAL_ERROR;
+			pqSetResultError(res, &conn->errorMessage, conn->errorReported);
+			conn->errorReported = conn->errorMessage.len;
+		}
+		else
+		{
+			/*
+			 * Ouch, not enough memory for a PGresult.  Fortunately, we have a
+			 * card up our sleeve: we can use the static OOM_result.  Casting
+			 * away const here is a bit ugly, but it seems best to declare
+			 * OOM_result as const, in hopes it will be allocated in read-only
+			 * storage.
+			 */
+			res = unconstify(PGresult *, &OOM_result);
+
+			/*
+			 * Don't advance errorReported.  Perhaps we'll be able to report
+			 * the text later.
+			 */
+		}
+	}
 
 	/*
 	 * Replace conn->result with next_result, if any.  In the normal case
@@ -818,6 +920,7 @@ pqPrepareAsyncResult(PGconn *conn)
 	 * it was before we created the current single-row result.
 	 */
 	conn->result = conn->next_result;
+	conn->error_result = false; /* next_result is never an error */
 	conn->next_result = NULL;
 
 	return res;
@@ -1278,7 +1381,7 @@ pqAppendCmdQueueEntry(PGconn *conn, PGcmdQueueEntry *entry)
 			 */
 			if (conn->asyncStatus == PGASYNC_IDLE)
 			{
-				resetPQExpBuffer(&conn->errorMessage);
+				pqClearConnErrorState(conn);
 				pqPipelineProcessQueue(conn);
 			}
 			break;
@@ -1626,10 +1729,10 @@ PQsendQueryStart(PGconn *conn, bool newQuery)
 		return false;
 
 	/*
-	 * If this is the beginning of a query cycle, reset the error buffer.
+	 * If this is the beginning of a query cycle, reset the error state.
 	 */
 	if (newQuery)
-		resetPQExpBuffer(&conn->errorMessage);
+		pqClearConnErrorState(conn);
 
 	/* Don't try to send if we know there's no live connection. */
 	if (conn->status != CONNECTION_OK)
@@ -1687,8 +1790,8 @@ PQsendQueryStart(PGconn *conn, bool newQuery)
 
 		/* reset single-row processing mode */
 		conn->singleRowMode = false;
-
 	}
+
 	/* ready to send command message */
 	return true;
 }
@@ -1884,7 +1987,7 @@ PQsetSingleRowMode(PGconn *conn)
 		(conn->cmd_queue_head->queryclass != PGQUERY_SIMPLE &&
 		 conn->cmd_queue_head->queryclass != PGQUERY_EXTENDED))
 		return 0;
-	if (conn->result)
+	if (conn->result || conn->error_result)
 		return 0;
 
 	/* OK, set flag */
@@ -2015,10 +2118,7 @@ PQgetResult(PGconn *conn)
 			pqWait(true, false, conn) ||
 			pqReadData(conn) < 0)
 		{
-			/*
-			 * conn->errorMessage has been set by pqWait or pqReadData. We
-			 * want to append it to any already-received error message.
-			 */
+			/* Report the error saved by pqWait or pqReadData */
 			pqSaveErrorResult(conn);
 			conn->asyncStatus = PGASYNC_IDLE;
 			return pqPrepareAsyncResult(conn);
@@ -2053,7 +2153,7 @@ PQgetResult(PGconn *conn)
 				 * is the start of the results of the next query, clear any
 				 * prior error message.
 				 */
-				resetPQExpBuffer(&conn->errorMessage);
+				pqClearConnErrorState(conn);
 				pqPipelineProcessQueue(conn);
 			}
 			break;
@@ -2117,7 +2217,9 @@ PQgetResult(PGconn *conn)
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("unexpected asyncStatus: %d\n"),
 							  (int) conn->asyncStatus);
-			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+			pqSaveErrorResult(conn);
+			conn->asyncStatus = PGASYNC_IDLE;	/* try to restore valid state */
+			res = pqPrepareAsyncResult(conn);
 			break;
 	}
 
@@ -2268,9 +2370,9 @@ PQexecStart(PGconn *conn)
 	}
 
 	/*
-	 * Since this is the beginning of a query cycle, reset the error buffer.
+	 * Since this is the beginning of a query cycle, reset the error state.
 	 */
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	/*
 	 * Silently discard any prior query result that application didn't eat.
@@ -2825,9 +2927,9 @@ PQfn(PGconn *conn,
 		return NULL;
 
 	/*
-	 * Since this is the beginning of a query cycle, reset the error buffer.
+	 * Since this is the beginning of a query cycle, reset the error state.
 	 */
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 	{
@@ -2837,7 +2939,7 @@ PQfn(PGconn *conn,
 	}
 
 	if (conn->sock == PGINVALID_SOCKET || conn->asyncStatus != PGASYNC_IDLE ||
-		conn->result != NULL)
+		conn->result || conn->error_result)
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 libpq_gettext("connection in wrong state\n"));
@@ -3707,9 +3809,9 @@ PQsetnonblocking(PGconn *conn, int arg)
 	 * behavior. this is ok because either they are making a transition _from_
 	 * or _to_ blocking mode, either way we can block them.
 	 *
-	 * Clear errorMessage in case pqFlush adds to it.
+	 * Clear error state in case pqFlush adds to it.
 	 */
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	/* if we are going from blocking to non-blocking flush here */
 	if (pqFlush(conn))
@@ -3901,7 +4003,7 @@ PQescapeStringConn(PGconn *conn,
 		return 0;
 	}
 
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	return PQescapeStringInternal(conn, to, from, length, error,
 								  conn->client_encoding,
@@ -3939,7 +4041,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	if (!conn)
 		return NULL;
 
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	/* Scan the string for characters that must be escaped. */
 	for (s = str; (s - str) < len && *s != '\0'; ++s)
@@ -4204,7 +4306,7 @@ PQescapeByteaConn(PGconn *conn,
 	if (!conn)
 		return NULL;
 
-	resetPQExpBuffer(&conn->errorMessage);
+	pqClearConnErrorState(conn);
 
 	return PQescapeByteaInternal(conn, from, from_length, to_length,
 								 conn->std_strings,
