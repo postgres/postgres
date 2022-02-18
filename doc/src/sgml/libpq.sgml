@@ -7183,12 +7183,11 @@ typedef struct
       <para>
        The connection reset event is fired on completion of
        <xref linkend="libpq-PQreset"/> or <function>PQresetPoll</function>.  In
-       both cases, the event is only fired if the reset was successful.  If
-       the event procedure fails, the entire connection reset will fail; the
-       <structname>PGconn</structname> is put into
-       <literal>CONNECTION_BAD</literal> status and
-       <function>PQresetPoll</function> will return
-       <literal>PGRES_POLLING_FAILED</literal>.
+       both cases, the event is only fired if the reset was successful.
+       The return value of the event procedure is ignored
+       in <productname>PostgreSQL</productname> v15 and later.
+       With earlier versions, however, it's important to return success
+       (nonzero) or the connection will be aborted.
 
 <synopsis>
 typedef struct
