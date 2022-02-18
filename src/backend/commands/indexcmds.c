@@ -129,7 +129,7 @@ typedef struct ReindexErrorInfo
  *		prospective index definition, such that the existing index storage
  *		could become the storage of the new index, avoiding a rebuild.
  *
- * 'heapRelation': the relation the index would apply to.
+ * 'oldId': the OID of the existing index
  * 'accessMethodName': name of the AM to use.
  * 'attributeList': a list of IndexElem specifying columns and expressions
  *		to index on.
