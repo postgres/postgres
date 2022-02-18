@@ -14,10 +14,10 @@ $node->start;
 
 # Create a couple of directories to use as tablespaces.
 my $basedir = $node->basedir();
-my $TS1_LOCATION = PostgreSQL::Test::Utils::perl2host("$basedir/ts1");
+my $TS1_LOCATION = "$basedir/ts1";
 $TS1_LOCATION =~ s/\/\.\//\//g; # collapse foo/./bar to foo/bar
 mkdir($TS1_LOCATION);
-my $TS2_LOCATION = PostgreSQL::Test::Utils::perl2host("$basedir/ts2");
+my $TS2_LOCATION = "$basedir/ts2";
 $TS2_LOCATION =~ s/\/\.\//\//g;
 mkdir($TS2_LOCATION);
 

@@ -19,12 +19,10 @@ $node->start;
 # for partitioned tables.
 my $ts = $node->basedir . '/regress_pgbench_tap_1_ts_dir';
 mkdir $ts or die "cannot create directory $ts";
-# this takes care of WIN-specific path issues
-my $ets = PostgreSQL::Test::Utils::perl2host($ts);
 
 # the next commands will issue a syntax error if the path contains a "'"
 $node->safe_psql('postgres',
-	"CREATE TABLESPACE regress_pgbench_tap_1_ts LOCATION '$ets';");
+	"CREATE TABLESPACE regress_pgbench_tap_1_ts LOCATION '$ts';");
 
 # Test concurrent OID generation via pg_enum_oid_index.  This indirectly
 # exercises LWLock and spinlock concurrency.

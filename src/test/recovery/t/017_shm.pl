@@ -112,7 +112,7 @@ log_ipcs();
 $gnat->start;
 log_ipcs();
 
-my $regress_shlib = PostgreSQL::Test::Utils::perl2host($ENV{REGRESS_SHLIB});
+my $regress_shlib = $ENV{REGRESS_SHLIB};
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void

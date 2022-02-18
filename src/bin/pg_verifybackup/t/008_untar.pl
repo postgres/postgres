@@ -18,7 +18,6 @@ $primary->init(allows_streaming => 1);
 $primary->start;
 
 my $backup_path = $primary->backup_dir . '/server-backup';
-my $real_backup_path = PostgreSQL::Test::Utils::perl2host($backup_path);
 my $extract_path = $primary->backup_dir . '/extracted-backup';
 
 my @test_configuration = (
@@ -61,7 +60,7 @@ for my $tc (@test_configuration)
 		# Take a server-side backup.
 		my @backup = (
 			'pg_basebackup', '--no-sync', '-cfast', '--target',
-			"server:$real_backup_path", '-Xfetch'
+			"server:$backup_path", '-Xfetch'
 		);
 		push @backup, @{$tc->{'backup_flags'}};
 		$primary->command_ok(\@backup,

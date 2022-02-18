@@ -94,7 +94,7 @@ $node->connect_fails(
 # be used in a different test, so the name of this temporary client key
 # is chosen here to be unique.
 my $cert_tempdir = PostgreSQL::Test::Utils::tempdir();
-my $client_tmp_key = PostgreSQL::Test::Utils::perl2host("$cert_tempdir/client_scram.key");
+my $client_tmp_key = "$cert_tempdir/client_scram.key";
 copy("ssl/client.key", "$cert_tempdir/client_scram.key")
   or die
   "couldn't copy ssl/client_key to $cert_tempdir/client_scram.key for permission change: $!";

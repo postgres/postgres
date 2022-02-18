@@ -34,7 +34,7 @@ my $common_connstr;
 # The client's private key must not be world-readable, so take a copy
 # of the key stored in the code tree and update its permissions.
 my $cert_tempdir = PostgreSQL::Test::Utils::tempdir();
-my $client_tmp_key = PostgreSQL::Test::Utils::perl2host("$cert_tempdir/client_ext.key");
+my $client_tmp_key = "$cert_tempdir/client_ext.key";
 copy("ssl/client_ext.key", "$cert_tempdir/client_ext.key")
   or die
   "couldn't copy ssl/client_ext.key to $cert_tempdir/client_ext.key for permissions change: $!";

@@ -261,13 +261,11 @@ $node->start;
 # for the tablespace directories, which hopefully won't run afoul of
 # the 99 character length limit.
 my $sys_tempdir = PostgreSQL::Test::Utils::tempdir_short;
-my $real_sys_tempdir = PostgreSQL::Test::Utils::perl2host($sys_tempdir) . "/tempdir";
-my $shorter_tempdir =  $sys_tempdir . "/tempdir";
-dir_symlink "$tempdir", $shorter_tempdir;
+my $real_sys_tempdir = "$sys_tempdir/tempdir";
+dir_symlink "$tempdir", $real_sys_tempdir;
 
 mkdir "$tempdir/tblspc1";
 my $realTsDir    = "$real_sys_tempdir/tblspc1";
-my $real_tempdir = PostgreSQL::Test::Utils::perl2host($tempdir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc1 LOCATION '$realTsDir';");
 $node->safe_psql('postgres',
@@ -346,7 +344,7 @@ my $tblSpc1Id = basename(
 foreach my $filename (@tempRelationFiles)
 {
 	append_to_file(
-		"$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename",
+		"$real_sys_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename",
 		'TEMP_RELATION');
 }
 
@@ -358,7 +356,7 @@ $node->command_ok(
 	[
 		@pg_basebackup_defs, '-D',
 		"$tempdir/backup1",  '-Fp',
-		"-T$realTsDir=$real_tempdir/tbackup/tblspc1",
+		"-T$realTsDir=$tempdir/tbackup/tblspc1",
 	],
 	'plain format with tablespaces succeeds with tablespace mapping');
 ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
@@ -406,7 +404,7 @@ foreach my $filename (@tempRelationFiles)
 
 	# Also remove temp relation files or tablespace drop will fail.
 	my $filepath =
-	  "$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename";
+	  "$real_sys_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename";
 
 	unlink($filepath)
 	  or BAIL_OUT("unable to unlink $filepath");
@@ -428,7 +426,7 @@ $node->command_ok(
 	[
 		@pg_basebackup_defs, '-D',
 		"$tempdir/backup3",  '-Fp',
-		"-T$realTsDir=$real_tempdir/tbackup/tbl\\=spc2",
+		"-T$realTsDir=$tempdir/tbackup/tbl\\=spc2",
 	],
 	'mapping tablespace with = sign in path');
 ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');
@@ -517,7 +515,7 @@ $node->command_ok(
 	[ @pg_basebackup_defs, '--target', 'blackhole', '-X', 'none' ],
 	'backup target blackhole');
 $node->command_ok(
-	[ @pg_basebackup_defs, '--target', "server:$real_tempdir/backuponserver", '-X', 'none' ],
+	[ @pg_basebackup_defs, '--target', "server:$tempdir/backuponserver", '-X', 'none' ],
 	'backup target server');
 ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created');
 rmtree("$tempdir/backuponserver");
@@ -526,7 +524,7 @@ $node->command_ok(
 	[qw(createuser --replication --role=pg_write_server_files backupuser)],
 	'create backup user');
 $node->command_ok(
-	[ @pg_basebackup_defs, '-U', 'backupuser', '--target', "server:$real_tempdir/backuponserver", '-X', 'none' ],
+	[ @pg_basebackup_defs, '-U', 'backupuser', '--target', "server:$tempdir/backuponserver", '-X', 'none' ],
 	'backup target server');
 ok(-f "$tempdir/backuponserver/base.tar", 'backup tar was created as non-superuser');
 rmtree("$tempdir/backuponserver");

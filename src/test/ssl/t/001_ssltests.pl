@@ -51,7 +51,7 @@ foreach my $keyfile (@keys)
 	  "couldn't copy ssl/$keyfile to $cert_tempdir/$keyfile for permissions change: $!";
 	chmod 0600, "$cert_tempdir/$keyfile"
 	  or die "failed to change permissions on $cert_tempdir/$keyfile: $!";
-	$key{$keyfile} = PostgreSQL::Test::Utils::perl2host("$cert_tempdir/$keyfile");
+	$key{$keyfile} = "$cert_tempdir/$keyfile";
 	$key{$keyfile} =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 }
 
@@ -63,7 +63,7 @@ copy("ssl/client.key", "$cert_tempdir/client_wrongperms.key")
   "couldn't copy ssl/client_key to $cert_tempdir/client_wrongperms.key for permission change: $!";
 chmod 0644, "$cert_tempdir/client_wrongperms.key"
   or die "failed to change permissions on $cert_tempdir/client_wrongperms.key: $!";
-$key{'client_wrongperms.key'} = PostgreSQL::Test::Utils::perl2host("$cert_tempdir/client_wrongperms.key");
+$key{'client_wrongperms.key'} = "$cert_tempdir/client_wrongperms.key";
 $key{'client_wrongperms.key'} =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 #### Set up the server.
 

@@ -24,7 +24,6 @@ PostgreSQL::Test::Utils - helper module for writing PostgreSQL's C<prove> tests.
 
   # Miscellanea
   print "on Windows" if $PostgreSQL::Test::Utils::windows_os;
-  my $path = PostgreSQL::Test::Utils::perl2host($backup_dir);
   ok(check_mode_recursive($stream_dir, 0700, 0600),
     "check stream dir permissions");
   PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'QUIT', $slow_pid);
@@ -293,61 +292,6 @@ sub tempdir_short
 {
 
 	return File::Temp::tempdir(CLEANUP => 1);
-}
-
-=pod
-
-=item perl2host()
-
-Translate a virtual file name to a host file name.  Currently, this is a no-op
-except for the case of Perl=msys and host=mingw32.  The subject need not
-exist, but its parent or grandparent directory must exist unless cygpath is
-available.
-
-The returned path uses forward slashes but has no trailing slash.
-
-=cut
-
-sub perl2host
-{
-	my ($subject) = @_;
-	return $subject;
-	if ($is_msys2)
-	{
-		# get absolute, windows type path
-		my $path = qx{cygpath -a -m "$subject"};
-		if (!$?)
-		{
-			chomp $path;
-			$path =~ s!/$!!;
-			return $path if $path;
-		}
-		# fall through if this didn't work.
-	}
-	my $here = cwd;
-	my $leaf;
-	if (chdir $subject)
-	{
-		$leaf = '';
-	}
-	else
-	{
-		$leaf = '/' . basename $subject;
-		my $parent = dirname $subject;
-		if (!chdir $parent)
-		{
-			$leaf   = '/' . basename($parent) . $leaf;
-			$parent = dirname $parent;
-			chdir $parent or die "could not chdir \"$parent\": $!";
-		}
-	}
-
-	# this odd way of calling 'pwd -W' is the only way that seems to work.
-	my $dir = qx{sh -c "pwd -W"};
-	chomp $dir;
-	$dir =~ s!/$!!;
-	chdir $here;
-	return $dir . $leaf;
 }
 
 =pod
@@ -727,8 +671,6 @@ sub dir_symlink
 	my $newname = shift;
 	if ($windows_os)
 	{
-		$oldname = perl2host($oldname);
-		$newname = perl2host($newname);
 		$oldname =~ s,/,\\,g;
 		$newname =~ s,/,\\,g;
 		my $cmd = qq{mklink /j "$newname" "$oldname"};

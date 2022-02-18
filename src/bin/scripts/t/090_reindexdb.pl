@@ -21,7 +21,6 @@ $ENV{PGOPTIONS} = '--client-min-messages=WARNING';
 # Create a tablespace for testing.
 my $tbspace_path = $node->basedir . '/regress_reindex_tbspace';
 mkdir $tbspace_path or die "cannot create directory $tbspace_path";
-$tbspace_path = PostgreSQL::Test::Utils::perl2host($tbspace_path);
 my $tbspace_name = 'reindex_tbspace';
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE $tbspace_name LOCATION '$tbspace_path';");
