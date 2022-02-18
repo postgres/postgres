@@ -1769,6 +1769,9 @@ PGAC_CHECK_BUILTIN_FUNC([__builtin_bswap64], [long int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_clz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_ctz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_popcount], [unsigned int x])
+# __builtin_frame_address may draw a diagnostic for non-constant argument,
+# so it needs a different test function.
+PGAC_CHECK_BUILTIN_FUNC_PTR([__builtin_frame_address], [0])
 
 # We require 64-bit fseeko() to be available, but run this check anyway
 # in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
