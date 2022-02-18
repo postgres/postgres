@@ -184,6 +184,7 @@ PQresultInstanceData(const PGresult *result, PGEventProc proc)
 int
 PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 {
+	int			result = true;
 	int			i;
 
 	if (!res)
@@ -191,19 +192,20 @@ PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 
 	for (i = 0; i < res->nEvents; i++)
 	{
+		/* It's possible event was already fired, if so don't repeat it */
 		if (!res->events[i].resultInitialized)
 		{
 			PGEventResultCreate evt;
 
 			evt.conn = conn;
 			evt.result = res;
-			if (!res->events[i].proc(PGEVT_RESULTCREATE, &evt,
-									 res->events[i].passThrough))
-				return false;
-
-			res->events[i].resultInitialized = true;
+			if (res->events[i].proc(PGEVT_RESULTCREATE, &evt,
+									res->events[i].passThrough))
+				res->events[i].resultInitialized = true;
+			else
+				result = false;
 		}
 	}
 
-	return true;
+	return result;
 }

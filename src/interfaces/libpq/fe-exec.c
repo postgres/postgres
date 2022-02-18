@@ -363,19 +363,16 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Okay, trigger PGEVT_RESULTCOPY event */
 	for (i = 0; i < dest->nEvents; i++)
 	{
+		/* We don't fire events that had some previous failure */
 		if (src->events[i].resultInitialized)
 		{
 			PGEventResultCopy evt;
 
 			evt.src = src;
 			evt.dest = dest;
-			if (!dest->events[i].proc(PGEVT_RESULTCOPY, &evt,
-									  dest->events[i].passThrough))
-			{
-				PQclear(dest);
-				return NULL;
-			}
-			dest->events[i].resultInitialized = true;
+			if (dest->events[i].proc(PGEVT_RESULTCOPY, &evt,
+									 dest->events[i].passThrough))
+				dest->events[i].resultInitialized = true;
 		}
 	}
 
@@ -2124,29 +2121,9 @@ PQgetResult(PGconn *conn)
 			break;
 	}
 
-	if (res)
-	{
-		int			i;
-
-		for (i = 0; i < res->nEvents; i++)
-		{
-			PGEventResultCreate evt;
-
-			evt.conn = conn;
-			evt.result = res;
-			if (!res->events[i].proc(PGEVT_RESULTCREATE, &evt,
-									 res->events[i].passThrough))
-			{
-				appendPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"),
-								  res->events[i].name);
-				pqSetResultError(res, &conn->errorMessage);
-				res->resultStatus = PGRES_FATAL_ERROR;
-				break;
-			}
-			res->events[i].resultInitialized = true;
-		}
-	}
+	/* Time to fire PGEVT_RESULTCREATE events, if there are any */
+	if (res && res->nEvents > 0)
+		(void) PQfireResultCreateEvents(conn, res);
 
 	return res;
 }

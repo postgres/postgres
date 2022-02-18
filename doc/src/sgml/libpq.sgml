@@ -6831,6 +6831,7 @@ PGresult *PQcopyResult(const PGresult *src, int flags);
       <literal>PG_COPYRES_EVENTS</literal> specifies copying the source
       result's events.  (But any instance data associated with the source
       is not copied.)
+      The event procedures receive <literal>PGEVT_RESULTCOPY</literal> events.
      </para>
     </listitem>
    </varlistentry>
@@ -7126,7 +7127,7 @@ defaultNoticeProcessor(void *arg, const char *message)
    <xref linkend="libpq-PQinstanceData"/>,
    <xref linkend="libpq-PQsetInstanceData"/>,
    <xref linkend="libpq-PQresultInstanceData"/> and
-   <function>PQsetResultInstanceData</function> functions.  Note that
+   <xref linkend="libpq-PQresultSetInstanceData"/> functions.  Note that
    unlike the pass-through pointer, instance data of a <structname>PGconn</structname>
    is not automatically inherited by <structname>PGresult</structname>s created from
    it.  <application>libpq</application> does not know what pass-through
@@ -7154,7 +7155,7 @@ defaultNoticeProcessor(void *arg, const char *message)
        is called.  It is the ideal time to initialize any
        <literal>instanceData</literal> an event procedure may need.  Only one
        register event will be fired per event handler per connection.  If the
-       event procedure fails, the registration is aborted.
+       event procedure fails (returns zero), the registration is cancelled.
 
 <synopsis>
 typedef struct
@@ -7261,11 +7262,11 @@ typedef struct
        <parameter>conn</parameter> is the connection used to generate the
        result.  This is the ideal place to initialize any
        <literal>instanceData</literal> that needs to be associated with the
-       result.  If the event procedure fails, the result will be cleared and
-       the failure will be propagated.  The event procedure must not try to
-       <xref linkend="libpq-PQclear"/> the result object for itself.  When returning a
-       failure code, all cleanup must be performed as no
-       <literal>PGEVT_RESULTDESTROY</literal> event will be sent.
+       result.  If an event procedure fails (returns zero), that event
+       procedure will be ignored for the remaining lifetime of the result;
+       that is, it will not receive <literal>PGEVT_RESULTCOPY</literal>
+       or <literal>PGEVT_RESULTDESTROY</literal> events for this result or
+       results copied from it.
       </para>
      </listitem>
     </varlistentry>
@@ -7295,12 +7296,12 @@ typedef struct
        <parameter>src</parameter> result is what was copied while the
        <parameter>dest</parameter> result is the copy destination.  This event
        can be used to provide a deep copy of <literal>instanceData</literal>,
-       since <literal>PQcopyResult</literal> cannot do that.  If the event
-       procedure fails, the entire copy operation will fail and the
-       <parameter>dest</parameter> result will be cleared.   When returning a
-       failure code, all cleanup must be performed as no
-       <literal>PGEVT_RESULTDESTROY</literal> event will be sent for the
-       destination result.
+       since <literal>PQcopyResult</literal> cannot do that.  If an event
+       procedure fails (returns zero), that event procedure will be
+       ignored for the remaining lifetime of the new result; that is, it
+       will not receive <literal>PGEVT_RESULTCOPY</literal>
+       or <literal>PGEVT_RESULTDESTROY</literal> events for that result or
+       results copied from it.
       </para>
      </listitem>
     </varlistentry>
@@ -7618,7 +7619,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
             mydata *res_data = dup_mydata(conn_data);
 
             /* associate app specific data with result (copy it from conn) */
-            PQsetResultInstanceData(e->result, myEventProc, res_data);
+            PQresultSetInstanceData(e->result, myEventProc, res_data);
             break;
         }
 
@@ -7629,7 +7630,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
             mydata *dest_data = dup_mydata(src_data);
 
             /* associate app specific data with result (copy it from a result) */
-            PQsetResultInstanceData(e->dest, myEventProc, dest_data);
+            PQresultSetInstanceData(e->dest, myEventProc, dest_data);
             break;
         }
 
