@@ -979,8 +979,6 @@ build-postgresql:
        <listitem>
         <para>
          Build with <productname>LZ4</productname> compression support.
-         This allows the use of <productname>LZ4</productname> for
-         compression of table and WAL data.
         </para>
        </listitem>
       </varlistentry>

@@ -300,9 +300,8 @@ $ENV{MSBFLAGS}="/m";
     <varlistentry>
      <term><productname>LZ4</productname></term>
      <listitem><para>
-      Required for supporting <productname>LZ4</productname> compression
-      method for compressing table or WAL data. Binaries and source can be
-      downloaded from
+      Required for supporting <productname>LZ4</productname> compression.
+      Binaries and source can be downloaded from
       <ulink url="https://github.com/lz4/lz4/releases"></ulink>.
      </para></listitem>
     </varlistentry>
