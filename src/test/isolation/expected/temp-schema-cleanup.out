@@ -1,0 +1,115 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_create_temp_objects s1_discard_temp s2_check_schema
+step s1_create_temp_objects: 
+
+    -- create function large enough to be toasted, to ensure we correctly clean those up, a prior bug
+    -- https://postgr.es/m/CAOFAq3BU5Mf2TTvu8D9n_ZOoFAeQswuzk7yziAb7xuw_qyw5gw%40mail.gmail.com
+    SELECT exec(format($outer$
+        CREATE OR REPLACE FUNCTION pg_temp.long() RETURNS text LANGUAGE sql AS $body$ SELECT %L; $body$$outer$,
+	(SELECT string_agg(g.i::text||':'||random()::text, '|') FROM generate_series(1, 100) g(i))));
+
+    -- The above bug requirs function removal to happen after a catalog
+    -- invalidation. dependency.c sorts objects in descending oid order so
+    -- that newer objects are deleted before older objects, so create a
+    -- table after.
+    CREATE TEMPORARY TABLE invalidate_catalog_cache();
+
+    -- test non-temp function is dropped when depending on temp table
+    CREATE TEMPORARY TABLE just_give_me_a_type(id serial primary key);
+
+    CREATE FUNCTION uses_a_temp_type(just_give_me_a_type) RETURNS int LANGUAGE sql AS $$SELECT 1;$$;
+
+exec
+----
+    
+(1 row)
+
+step s1_discard_temp: 
+    DISCARD TEMP;
+
+step s2_check_schema: 
+    SELECT oid::regclass FROM pg_class WHERE relnamespace = (SELECT oid FROM s1_temp_schema);
+    SELECT oid::regproc FROM pg_proc WHERE pronamespace = (SELECT oid FROM s1_temp_schema);
+    SELECT oid::regproc FROM pg_type WHERE typnamespace = (SELECT oid FROM s1_temp_schema);
+
+oid
+---
+(0 rows)
+
+oid
+---
+(0 rows)
+
+oid
+---
+(0 rows)
+
+
+starting permutation: s1_advisory s2_advisory s1_create_temp_objects s1_exit s2_check_schema
+step s1_advisory: 
+    SELECT pg_advisory_lock('pg_namespace'::regclass::int8);
+
+pg_advisory_lock
+----------------
+                
+(1 row)
+
+step s2_advisory: 
+    SELECT pg_advisory_lock('pg_namespace'::regclass::int8);
+ <waiting ...>
+step s1_create_temp_objects: 
+
+    -- create function large enough to be toasted, to ensure we correctly clean those up, a prior bug
+    -- https://postgr.es/m/CAOFAq3BU5Mf2TTvu8D9n_ZOoFAeQswuzk7yziAb7xuw_qyw5gw%40mail.gmail.com
+    SELECT exec(format($outer$
+        CREATE OR REPLACE FUNCTION pg_temp.long() RETURNS text LANGUAGE sql AS $body$ SELECT %L; $body$$outer$,
+	(SELECT string_agg(g.i::text||':'||random()::text, '|') FROM generate_series(1, 100) g(i))));
+
+    -- The above bug requirs function removal to happen after a catalog
+    -- invalidation. dependency.c sorts objects in descending oid order so
+    -- that newer objects are deleted before older objects, so create a
+    -- table after.
+    CREATE TEMPORARY TABLE invalidate_catalog_cache();
+
+    -- test non-temp function is dropped when depending on temp table
+    CREATE TEMPORARY TABLE just_give_me_a_type(id serial primary key);
+
+    CREATE FUNCTION uses_a_temp_type(just_give_me_a_type) RETURNS int LANGUAGE sql AS $$SELECT 1;$$;
+
+exec
+----
+    
+(1 row)
+
+step s1_exit: 
+    SELECT pg_terminate_backend(pg_backend_pid());
+
+FATAL:  terminating connection due to administrator command
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+step s2_advisory: <... completed>
+pg_advisory_lock
+----------------
+                
+(1 row)
+
+step s2_check_schema: 
+    SELECT oid::regclass FROM pg_class WHERE relnamespace = (SELECT oid FROM s1_temp_schema);
+    SELECT oid::regproc FROM pg_proc WHERE pronamespace = (SELECT oid FROM s1_temp_schema);
+    SELECT oid::regproc FROM pg_type WHERE typnamespace = (SELECT oid FROM s1_temp_schema);
+
+oid
+---
+(0 rows)
+
+oid
+---
+(0 rows)
+
+oid
+---
+(0 rows)
+
