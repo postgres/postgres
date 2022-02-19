@@ -660,5 +660,14 @@ init_toast_snapshot(Snapshot toast_snapshot)
 	if (snapshot == NULL)
 		elog(ERROR, "cannot fetch toast data without an active snapshot");
 
+	/*
+	 * Catalog snapshots can be returned by GetOldestSnapshot() even if not
+	 * registered or active. That easily hides bugs around not having a
+	 * snapshot set up - most of the time there is a valid catalog
+	 * snapshot. So additionally insist that the current snapshot is
+	 * registered or active.
+	 */
+	Assert(HaveRegisteredOrActiveSnapshot());
+
 	InitToastSnapshot(*toast_snapshot, snapshot->lsn, snapshot->whenTaken);
 }

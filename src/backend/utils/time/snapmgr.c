@@ -1625,6 +1625,32 @@ ThereAreNoPriorRegisteredSnapshots(void)
 	return false;
 }
 
+/*
+ * HaveRegisteredOrActiveSnapshots
+ *		Is there any registered or active snapshot?
+ *
+ * NB: Unless pushed or active, the cached catalog snapshot will not cause
+ * this function to return true. That allows this function to be used in
+ * checks enforcing a longer-lived snapshot.
+ */
+bool
+HaveRegisteredOrActiveSnapshot(void)
+{
+	if (ActiveSnapshot != NULL)
+		return true;
+
+	/*
+	 * The catalog snapshot is in RegisteredSnapshots when valid, but can be
+	 * removed at any time due to invalidation processing. If explicitly
+	 * registered more than one snapshot has to be in RegisteredSnapshots.
+	 */
+	if (pairingheap_is_empty(&RegisteredSnapshots) ||
+		!pairingheap_is_singular(&RegisteredSnapshots))
+		return false;
+
+	return CatalogSnapshot == NULL;
+}
+
 
 /*
  * Return a timestamp that is exactly on a minute boundary.
