@@ -38,6 +38,7 @@ test: eval-plan-qual-trigger
 test: lock-update-delete
 test: lock-update-traversal
 test: inherit-temp
+test: temp-schema-cleanup
 test: insert-conflict-do-nothing
 test: insert-conflict-do-nothing-2
 test: insert-conflict-do-update
