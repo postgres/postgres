@@ -56,6 +56,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
@@ -4075,9 +4076,11 @@ RemoveTempRelationsCallback(int code, Datum arg)
 		/* Need to ensure we have a usable transaction. */
 		AbortOutOfAnyTransaction();
 		StartTransactionCommand();
+		PushActiveSnapshot(GetTransactionSnapshot());
 
 		RemoveTempRelations(myTempNamespace);
 
+		PopActiveSnapshot();
 		CommitTransactionCommand();
 	}
 }
