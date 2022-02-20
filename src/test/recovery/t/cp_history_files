@@ -7,11 +7,4 @@ use warnings;
 die "wrong number of arguments" if @ARGV != 2;
 my ($source, $target) = @ARGV;
 exit if $source !~ /history/;
-if ($^O eq 'msys')
-{
-    # make a windows path look like an msys path if necessary
-    $source =~ s!^([A-Za-z]):!'/' . lc($1)!e;
-    $source =~ s!\\!/!g;
-}
-
 copy($source, $target) or die "couldn't copy $source to $target: $!";

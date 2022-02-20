@@ -182,9 +182,6 @@ sub send_query_and_wait
 	$$psql{run}->pump_nb();
 	while (1)
 	{
-		# See PostgreSQL::Test::Cluster.pm's psql()
-		$$psql{stdout} =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
-
 		last if $$psql{stdout} =~ /$untl/;
 
 		if ($psql_timeout->is_expired)
