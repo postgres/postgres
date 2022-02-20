@@ -5286,6 +5286,8 @@ StartupXLOG(void)
 		PerformWalRecovery();
 		performedWalRecovery = true;
 	}
+	else
+		performedWalRecovery = false;
 
 	/*
 	 * Finish WAL recovery.
