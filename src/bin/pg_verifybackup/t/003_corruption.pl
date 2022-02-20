@@ -15,7 +15,7 @@ $master->start;
 
 # Include a user-defined tablespace in the hopes of detecting problems in that
 # area.
-my $source_ts_path   = TestLib::perl2host(TestLib::tempdir_short());
+my $source_ts_path   = TestLib::tempdir_short();
 my $source_ts_prefix = $source_ts_path;
 $source_ts_prefix =~ s!(^[A-Z]:/[^/]*)/.*!$1!;
 
@@ -104,7 +104,7 @@ for my $scenario (@scenario)
 
 		# Take a backup and check that it verifies OK.
 		my $backup_path    = $master->backup_dir . '/' . $name;
-		my $backup_ts_path = TestLib::perl2host(TestLib::tempdir_short());
+		my $backup_ts_path = TestLib::tempdir_short();
 		# The tablespace map parameter confuses Msys2, which tries to mangle
 		# it. Tell it not to.
 		# See https://www.msys2.org/wiki/Porting/#filesystem-namespaces
