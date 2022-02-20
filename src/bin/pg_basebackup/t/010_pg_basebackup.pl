@@ -239,13 +239,11 @@ $node->start;
 # for the tablespace directories, which hopefully won't run afoul of
 # the 99 character length limit.
 my $sys_tempdir = TestLib::tempdir_short;
-my $real_sys_tempdir = TestLib::perl2host($sys_tempdir) . "/tempdir";
-my $shorter_tempdir =  $sys_tempdir . "/tempdir";
-dir_symlink "$tempdir", $shorter_tempdir;
+my $real_sys_tempdir = "$sys_tempdir/tempdir";
+dir_symlink "$tempdir", $real_sys_tempdir;
 
 mkdir "$tempdir/tblspc1";
 my $realTsDir    = "$real_sys_tempdir/tblspc1";
-my $real_tempdir = TestLib::perl2host($tempdir);
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc1 LOCATION '$realTsDir';");
 $node->safe_psql('postgres',
@@ -324,7 +322,7 @@ my $tblSpc1Id = basename(
 foreach my $filename (@tempRelationFiles)
 {
 	append_to_file(
-		"$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename",
+		"$real_sys_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename",
 		'TEMP_RELATION');
 }
 
@@ -334,9 +332,9 @@ $node->command_fails(
 
 $node->command_ok(
 	[
-		'pg_basebackup',    '-D',
-		"$tempdir/backup1", '-Fp',
-		"-T$realTsDir=$real_tempdir/tbackup/tblspc1"
+		'pg_basebackup', '-D',
+		"$tempdir/backup1",  '-Fp',
+		"-T$realTsDir=$tempdir/tbackup/tblspc1",
 	],
 	'plain format with tablespaces succeeds with tablespace mapping');
 ok(-d "$tempdir/tbackup/tblspc1", 'tablespace was relocated');
@@ -384,7 +382,7 @@ foreach my $filename (@tempRelationFiles)
 
 	# Also remove temp relation files or tablespace drop will fail.
 	my $filepath =
-	  "$shorter_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename";
+	  "$real_sys_tempdir/tblspc1/$tblSpc1Id/$postgresOid/$filename";
 
 	unlink($filepath)
 	  or BAIL_OUT("unable to unlink $filepath");
@@ -404,9 +402,9 @@ $node->safe_psql('postgres',
 $realTsDir =~ s/=/\\=/;
 $node->command_ok(
 	[
-		'pg_basebackup',    '-D',
-		"$tempdir/backup3", '-Fp',
-		"-T$realTsDir=$real_tempdir/tbackup/tbl\\=spc2"
+		'pg_basebackup', '-D',
+		"$tempdir/backup3",  '-Fp',
+		"-T$realTsDir=$tempdir/tbackup/tbl\\=spc2",
 	],
 	'mapping tablespace with = sign in path');
 ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');

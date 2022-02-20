@@ -60,7 +60,6 @@ wal_skip_threshold = 0
 	# Setup
 	my $tablespace_dir = $node->basedir . '/tablespace_other';
 	mkdir($tablespace_dir);
-	$tablespace_dir = TestLib::perl2host($tablespace_dir);
 	my $result;
 
 	# Test redo of CREATE TABLESPACE.
@@ -152,7 +151,6 @@ wal_skip_threshold = 0
 		$copy_file, qq(20000,30000
 20001,30001
 20002,30002));
-	$copy_file = TestLib::perl2host($copy_file);
 
 	# Test truncation with inserted tuples using both INSERT and COPY.  Tuples
 	# inserted after the truncation should be seen.
