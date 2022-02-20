@@ -28,7 +28,7 @@ $node_primary->init(allows_streaming => 1, has_archiving => 1);
 # Note: consistent use of forward slashes here avoids any escaping problems
 # that arise from use of backslashes. That means we need to double-quote all
 # the paths in the archive_command
-my $perlbin = TestLib::perl2host($^X);
+my $perlbin = $^X;
 $perlbin =~ s!\\!/!g if $TestLib::windows_os;
 my $archivedir_primary = $node_primary->archive_dir;
 $archivedir_primary =~ s!\\!/!g if $TestLib::windows_os;

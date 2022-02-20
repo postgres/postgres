@@ -102,7 +102,7 @@ log_ipcs();
 # Scenarios involving no postmaster.pid, dead postmaster, and a live backend.
 # Use a regress.c function to emulate the responsiveness of a backend working
 # through a CPU-intensive task.
-my $regress_shlib = TestLib::perl2host($ENV{REGRESS_SHLIB});
+my $regress_shlib = $ENV{REGRESS_SHLIB};
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void
