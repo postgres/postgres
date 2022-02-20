@@ -814,9 +814,7 @@ sub kill9
 	my $name = $self->name;
 	return unless defined $self->{_pid};
 	print "### Killing node \"$name\" using signal 9\n";
-	# kill(9, ...) fails under msys Perl 5.8.8, so fall back on pg_ctl.
-	kill(9, $self->{_pid})
-	  or TestLib::system_or_bail('pg_ctl', 'kill', 'KILL', $self->{_pid});
+	kill(9, $self->{_pid});
 	$self->{_pid} = undef;
 	return;
 }
@@ -1558,19 +1556,13 @@ sub psql
 		}
 	};
 
-	# Note: on Windows, IPC::Run seems to convert \r\n to \n in program output
-	# if we're using native Perl, but not if we're using MSys Perl.  So do it
-	# by hand in the latter case, here and elsewhere.
-
 	if (defined $$stdout)
 	{
-		$$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp $$stdout;
 	}
 
 	if (defined $$stderr)
 	{
-		$$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp $$stderr;
 	}
 
@@ -1878,9 +1870,7 @@ sub poll_query_until
 		my $result = IPC::Run::run $cmd, '<', \$query,
 		  '>', \$stdout, '2>', \$stderr;
 
-		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stdout);
-		$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stderr);
 
 		if ($stdout eq $expected && $stderr eq '')
@@ -2336,9 +2326,6 @@ sub pg_recvlogical_upto
 			  unless wantarray;
 		}
 	};
-
-	$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
-	$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 
 	if (wantarray)
 	{
