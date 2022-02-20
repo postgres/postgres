@@ -459,8 +459,8 @@ TupleHashTableHash_internal(struct tuplehash_hash *tb,
 		Datum		attr;
 		bool		isNull;
 
-		/* rotate hashkey left 1 bit at each step */
-		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
+		/* combine successive hashkeys by rotating */
+		hashkey = pg_rotate_left32(hashkey, 1);
 
 		attr = slot_getattr(slot, att, &isNull);
 

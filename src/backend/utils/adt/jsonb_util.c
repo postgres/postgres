@@ -18,6 +18,7 @@
 #include "common/hashfn.h"
 #include "common/jsonapi.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/json.h"
@@ -1342,7 +1343,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 	 * the previous value left 1 bit, then XOR'ing in the new
 	 * key/value/element's hash value.
 	 */
-	*hash = (*hash << 1) | (*hash >> 31);
+	*hash = pg_rotate_left32(*hash, 1);
 	*hash ^= tmp;
 }
 

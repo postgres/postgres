@@ -38,6 +38,7 @@
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
@@ -2772,7 +2773,7 @@ hash_multirange(PG_FUNCTION_ARGS)
 		/* Merge hashes of flags and bounds */
 		range_hash = hash_uint32((uint32) flags);
 		range_hash ^= lower_hash;
-		range_hash = (range_hash << 1) | (range_hash >> 31);
+		range_hash = pg_rotate_left32(range_hash, 1);
 		range_hash ^= upper_hash;
 
 		/*

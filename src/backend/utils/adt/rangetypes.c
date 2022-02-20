@@ -35,6 +35,7 @@
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/lsyscache.h"
@@ -1363,7 +1364,7 @@ hash_range(PG_FUNCTION_ARGS)
 	/* Merge hashes of flags and bounds */
 	result = hash_uint32((uint32) flags);
 	result ^= lower_hash;
-	result = (result << 1) | (result >> 31);
+	result = pg_rotate_left32(result, 1);
 	result ^= upper_hash;
 
 	PG_RETURN_INT32(result);

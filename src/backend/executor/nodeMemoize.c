@@ -166,8 +166,8 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 	{
 		for (int i = 0; i < numkeys; i++)
 		{
-			/* rotate hashkey left 1 bit at each step */
-			hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
+			/* combine successive hashkeys by rotating */
+			hashkey = pg_rotate_left32(hashkey, 1);
 
 			if (!pslot->tts_isnull[i])	/* treat nulls as having hash key 0 */
 			{
@@ -189,8 +189,8 @@ MemoizeHash_hash(struct memoize_hash *tb, const MemoizeKey *key)
 
 		for (int i = 0; i < numkeys; i++)
 		{
-			/* rotate hashkey left 1 bit at each step */
-			hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
+			/* combine successive hashkeys by rotating */
+			hashkey = pg_rotate_left32(hashkey, 1);
 
 			if (!pslot->tts_isnull[i])	/* treat nulls as having hash key 0 */
 			{
