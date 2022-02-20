@@ -710,7 +710,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If this is either a bootstrap process nor a standalone backend, start
+	 * If this is either a bootstrap process or a standalone backend, start
 	 * up the XLOG machinery, and register to have it closed down at exit.
 	 * In other cases, the startup process is responsible for starting up
 	 * the XLOG machinery, and the checkpointer for closing it down.
