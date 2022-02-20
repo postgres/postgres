@@ -4687,6 +4687,7 @@ PQrequestCancel(PGconn *conn)
 				"PQrequestCancel() -- connection is not open\n",
 				conn->errorMessage.maxlen);
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
+		conn->errorReported = 0;
 
 		return false;
 	}
@@ -4706,7 +4707,10 @@ PQrequestCancel(PGconn *conn)
 	}
 
 	if (!r)
+	{
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
+		conn->errorReported = 0;
+	}
 
 	return r;
 }
