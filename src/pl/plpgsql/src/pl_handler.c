@@ -197,7 +197,7 @@ _PG_init(void)
 							   plpgsql_extra_errors_assign_hook,
 							   NULL);
 
-	EmitWarningsOnPlaceholders("plpgsql");
+	MarkGUCPrefixReserved("plpgsql");
 
 	plpgsql_HashTableInit();
 	RegisterXactCallback(plpgsql_xact_cb, NULL);

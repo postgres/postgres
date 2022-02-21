@@ -69,7 +69,7 @@ _PG_init(void)
 							   0,
 							   check_archive_directory, NULL, NULL);
 
-	EmitWarningsOnPlaceholders("basic_archive");
+	MarkGUCPrefixReserved("basic_archive");
 
 	basic_archive_context = AllocSetContextCreate(TopMemoryContext,
 												  "basic_archive",
