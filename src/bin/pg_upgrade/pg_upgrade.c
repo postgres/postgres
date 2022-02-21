@@ -381,7 +381,7 @@ create_new_objects(void)
 {
 	int			dbnum;
 
-	prep_status("Restoring database schemas in the new cluster\n");
+	prep_status_progress("Restoring database schemas in the new cluster");
 
 	/*
 	 * We cannot process the template1 database concurrently with others,

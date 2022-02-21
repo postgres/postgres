@@ -32,13 +32,13 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	switch (user_opts.transfer_mode)
 	{
 		case TRANSFER_MODE_CLONE:
-			pg_log(PG_REPORT, "Cloning user relation files\n");
+			prep_status_progress("Cloning user relation files");
 			break;
 		case TRANSFER_MODE_COPY:
-			pg_log(PG_REPORT, "Copying user relation files\n");
+			prep_status_progress("Copying user relation files");
 			break;
 		case TRANSFER_MODE_LINK:
-			pg_log(PG_REPORT, "Linking user relation files\n");
+			prep_status_progress("Linking user relation files");
 			break;
 	}
 

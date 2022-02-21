@@ -207,6 +207,8 @@ parseCommandLine(int argc, char *argv[])
 	if (log_opts.verbose)
 		pg_log(PG_REPORT, "Running in verbose mode\n");
 
+	log_opts.isatty = isatty(fileno(stdout));
+
 	/* Turn off read-only mode;  add prefix to PGOPTIONS? */
 	if (getenv("PGOPTIONS"))
 	{

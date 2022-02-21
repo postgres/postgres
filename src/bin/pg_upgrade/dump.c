@@ -29,7 +29,7 @@ generate_old_dump(void)
 			  GLOBALS_DUMP_FILE);
 	check_ok();
 
-	prep_status("Creating dump of database schemas\n");
+	prep_status_progress("Creating dump of database schemas");
 
 	/* create per-db dump files */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
