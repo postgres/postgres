@@ -53,7 +53,8 @@
 #define PXE_KEY_TOO_BIG				-7
 #define PXE_CIPHER_INIT				-8
 #define PXE_HASH_UNUSABLE_FOR_HMAC	-9
-#define PXE_DEV_READ_ERROR			-10
+/* -10 is unused */
+/* -11 is unused */
 #define PXE_BUG						-12
 #define PXE_ARGUMENT_ERROR			-13
 #define PXE_UNKNOWN_SALT_ALGO		-14
