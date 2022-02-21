@@ -439,8 +439,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 			ereport(WARNING,
 					(errmsg("database \"%s\" has no actual collation version, but a version was recorded",
 							name)));
-
-		if (strcmp(actual_versionstr, collversionstr) != 0)
+		else if (strcmp(actual_versionstr, collversionstr) != 0)
 			ereport(WARNING,
 					(errmsg("database \"%s\" has a collation version mismatch",
 							name),
