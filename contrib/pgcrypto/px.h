@@ -58,7 +58,7 @@
 #define PXE_ARGUMENT_ERROR			-13
 #define PXE_UNKNOWN_SALT_ALGO		-14
 #define PXE_BAD_SALT_ROUNDS			-15
-#define PXE_MCRYPT_INTERNAL			-16
+/* -16 is unused */
 #define PXE_NO_RANDOM				-17
 #define PXE_DECRYPT_FAILED			-18
 #define PXE_ENCRYPT_FAILED			-19

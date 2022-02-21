@@ -55,7 +55,6 @@ static const struct error_desc px_err_list[] = {
 	{PXE_ARGUMENT_ERROR, "Illegal argument to function"},
 	{PXE_UNKNOWN_SALT_ALGO, "Unknown salt algorithm"},
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
-	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
 	{PXE_NO_RANDOM, "Failed to generate strong random bits"},
 	{PXE_DECRYPT_FAILED, "Decryption failed"},
 	{PXE_ENCRYPT_FAILED, "Encryption failed"},
