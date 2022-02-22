@@ -51,7 +51,7 @@ typedef struct ReorderBufferTupleBuf
  * respectively.  They're used by INSERT .. ON CONFLICT .. UPDATE.  Users of
  * logical decoding don't have to care about these.
  */
-enum ReorderBufferChangeType
+typedef enum ReorderBufferChangeType
 {
 	REORDER_BUFFER_CHANGE_INSERT,
 	REORDER_BUFFER_CHANGE_UPDATE,
@@ -66,7 +66,7 @@ enum ReorderBufferChangeType
 	REORDER_BUFFER_CHANGE_INTERNAL_SPEC_ABORT,
 	REORDER_BUFFER_CHANGE_TRUNCATE,
 	REORDER_BUFFER_CHANGE_SEQUENCE
-};
+} ReorderBufferChangeType;
 
 /* forward declaration */
 struct ReorderBufferTXN;
@@ -83,7 +83,7 @@ typedef struct ReorderBufferChange
 	XLogRecPtr	lsn;
 
 	/* The type of change. */
-	enum ReorderBufferChangeType action;
+	ReorderBufferChangeType action;
 
 	/* Transaction this change belongs to. */
 	struct ReorderBufferTXN *txn;

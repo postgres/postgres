@@ -2879,17 +2879,21 @@ describeOneTableDetails(const char *schemaname,
 			{
 				printfPQExpBuffer(&buf,
 								  "SELECT pubname\n"
+								  "		, NULL\n"
 								  "FROM pg_catalog.pg_publication p\n"
 								  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
 								  "		JOIN pg_catalog.pg_class pc ON pc.relnamespace = pn.pnnspid\n"
 								  "WHERE pc.oid ='%s' and pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "UNION\n"
 								  "SELECT pubname\n"
+								  "		, pg_get_expr(pr.prqual, c.oid)\n"
 								  "FROM pg_catalog.pg_publication p\n"
 								  "		JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
+								  "		JOIN pg_catalog.pg_class c ON c.oid = pr.prrelid\n"
 								  "WHERE pr.prrelid = '%s'\n"
 								  "UNION\n"
 								  "SELECT pubname\n"
+								  "		, NULL\n"
 								  "FROM pg_catalog.pg_publication p\n"
 								  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "ORDER BY 1;",
@@ -2899,11 +2903,13 @@ describeOneTableDetails(const char *schemaname,
 			{
 				printfPQExpBuffer(&buf,
 								  "SELECT pubname\n"
+								  "		, NULL\n"
 								  "FROM pg_catalog.pg_publication p\n"
 								  "JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
 								  "WHERE pr.prrelid = '%s'\n"
 								  "UNION ALL\n"
 								  "SELECT pubname\n"
+								  "		, NULL\n"
 								  "FROM pg_catalog.pg_publication p\n"
 								  "WHERE p.puballtables AND pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "ORDER BY 1;",
@@ -2924,6 +2930,11 @@ describeOneTableDetails(const char *schemaname,
 			{
 				printfPQExpBuffer(&buf, "    \"%s\"",
 								  PQgetvalue(result, i, 0));
+
+				/* row filter (if any) */
+				if (!PQgetisnull(result, i, 1))
+					appendPQExpBuffer(&buf, " WHERE %s",
+									  PQgetvalue(result, i, 1));
 
 				printTableAddFooter(&cont, buf.data);
 			}
@@ -5874,8 +5885,12 @@ addFooterToPublicationDesc(PQExpBuffer buf, char *footermsg,
 	for (i = 0; i < count; i++)
 	{
 		if (!singlecol)
+		{
 			printfPQExpBuffer(buf, "    \"%s.%s\"", PQgetvalue(res, i, 0),
 							  PQgetvalue(res, i, 1));
+			if (!PQgetisnull(res, i, 2))
+				appendPQExpBuffer(buf, " WHERE %s", PQgetvalue(res, i, 2));
+		}
 		else
 			printfPQExpBuffer(buf, "    \"%s\"", PQgetvalue(res, i, 0));
 
@@ -6004,8 +6019,15 @@ describePublications(const char *pattern)
 		{
 			/* Get the tables for the specified publication */
 			printfPQExpBuffer(&buf,
-							  "SELECT n.nspname, c.relname\n"
-							  "FROM pg_catalog.pg_class c,\n"
+							  "SELECT n.nspname, c.relname");
+			if (pset.sversion >= 150000)
+				appendPQExpBufferStr(&buf,
+									 ", pg_get_expr(pr.prqual, c.oid)");
+			else
+				appendPQExpBufferStr(&buf,
+									 ", NULL");
+			appendPQExpBuffer(&buf,
+							  "\nFROM pg_catalog.pg_class c,\n"
 							  "     pg_catalog.pg_namespace n,\n"
 							  "     pg_catalog.pg_publication_rel pr\n"
 							  "WHERE c.relnamespace = n.oid\n"

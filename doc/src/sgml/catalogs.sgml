@@ -6325,6 +6325,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        Reference to relation
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+      <structfield>prqual</structfield> <type>pg_node_tree</type>
+      </para>
+      <para>Expression tree (in <function>nodeToString()</function>
+      representation) for the relation's publication qualifying condition. Null
+      if there is no publication qualifying condition.</para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

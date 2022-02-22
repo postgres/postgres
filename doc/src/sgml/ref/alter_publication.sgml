@@ -30,7 +30,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
-    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ... ]
+    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
     ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
@@ -52,7 +52,9 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    remove one or more tables/schemas from the publication.  Note that adding
    tables/schemas to a publication that is already subscribed to will require an
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
-   subscribing side in order to become effective.
+   subscribing side in order to become effective. Note also that the combination
+   of <literal>DROP</literal> with a <literal>WHERE</literal> clause is not
+   allowed.
   </para>
 
   <para>
@@ -110,6 +112,12 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
       specified, the table and all its descendant tables (if any) are
       affected.  Optionally, <literal>*</literal> can be specified after the table
       name to explicitly indicate that descendant tables are included.
+      If the optional <literal>WHERE</literal> clause is specified, rows for
+      which the <replaceable class="parameter">expression</replaceable>
+      evaluates to false or null will not be published. Note that parentheses
+      are required around the expression. The
+      <replaceable class="parameter">expression</replaceable> is evaluated with
+      the role used for the replication connection.
      </para>
     </listitem>
    </varlistentry>

@@ -163,8 +163,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
          <para>
           Specifies whether to copy pre-existing data in the publications
           that are being subscribed to when the replication starts.
-          The default is <literal>true</literal>.  (Previously-subscribed
-          tables are not copied.)
+          The default is <literal>true</literal>.
+         </para>
+         <para>
+          Previously subscribed tables are not copied, even if a table's row
+          filter <literal>WHERE</literal> clause has since been modified.
          </para>
         </listitem>
        </varlistentry>

@@ -28,7 +28,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
-    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ... ]
+    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
     ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
@@ -76,6 +76,14 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       This does not apply to a partitioned table, however.  The partitions of
       a partitioned table are always implicitly considered part of the
       publication, so they are never explicitly added to the publication.
+     </para>
+
+     <para>
+      If the optional <literal>WHERE</literal> clause is specified, rows for
+      which the <replaceable class="parameter">expression</replaceable>
+      evaluates to false or null will not be published. Note that parentheses
+      are required around the expression. It has no effect on
+      <literal>TRUNCATE</literal> commands.
      </para>
 
      <para>
@@ -226,6 +234,22 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   A <literal>WHERE</literal> (i.e. row filter) expression must contain only
+   columns that are covered by the <literal>REPLICA IDENTITY</literal>, in
+   order for <command>UPDATE</command> and <command>DELETE</command> operations
+   to be published. For publication of <command>INSERT</command> operations,
+   any column may be used in the <literal>WHERE</literal> expression. The
+   <literal>WHERE</literal> clause allows simple expressions that don't have
+   user-defined functions, user-defined operators, user-defined types,
+   user-defined collations, non-immutable built-in functions, or references to
+   system columns.
+   If your publication contains a partitioned table, the publication parameter
+   <literal>publish_via_partition_root</literal> determines if it uses the
+   partition's row filter (if the parameter is false, the default) or the root
+   partitioned table's row filter.
+  </para>
+
+  <para>
    For an <command>INSERT ... ON CONFLICT</command> command, the publication will
    publish the operation that actually results from the command.  So depending
    of the outcome, it may be published as either <command>INSERT</command> or
@@ -247,6 +271,11 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <para>
    <acronym>DDL</acronym> operations are not published.
   </para>
+
+  <para>
+   The <literal>WHERE</literal> clause expression is executed with the role used
+   for the replication connection.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -256,6 +285,13 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    Create a publication that publishes all changes in two tables:
 <programlisting>
 CREATE PUBLICATION mypublication FOR TABLE users, departments;
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that publishes all changes from active departments:
+<programlisting>
+CREATE PUBLICATION active_departments FOR TABLE departments WHERE (active IS TRUE);
 </programlisting>
   </para>
 

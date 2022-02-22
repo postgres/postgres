@@ -26,6 +26,7 @@
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_publication_rel.h"
@@ -36,6 +37,10 @@
 #include "commands/publicationcmds.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
+#include "parser/parse_collate.h"
+#include "parser/parse_relation.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/array.h"
@@ -47,6 +52,19 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+
+/*
+ * Information used to validate the columns in the row filter expression. See
+ * contain_invalid_rfcolumn_walker for details.
+ */
+typedef struct rf_context
+{
+	Bitmapset  *bms_replident;	/* bitset of replica identity columns */
+	bool		pubviaroot;		/* true if we are validating the parent
+								 * relation's row filter */
+	Oid			relid;			/* relid of the relation */
+	Oid			parentid;		/* relid of the parent relation */
+} rf_context;
 
 static List *OpenRelIdList(List *relids);
 static List *OpenTableList(List *tables);
@@ -235,6 +253,362 @@ CheckObjSchemaNotAlreadyInPublication(List *rels, List *schemaidlist,
 }
 
 /*
+ * Returns true if any of the columns used in the row filter WHERE expression is
+ * not part of REPLICA IDENTITY, false otherwise.
+ */
+static bool
+contain_invalid_rfcolumn_walker(Node *node, rf_context *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		AttrNumber	attnum = var->varattno;
+
+		/*
+		 * If pubviaroot is true, we are validating the row filter of the
+		 * parent table, but the bitmap contains the replica identity
+		 * information of the child table. So, get the column number of the
+		 * child table as parent and child column order could be different.
+		 */
+		if (context->pubviaroot)
+		{
+			char	   *colname = get_attname(context->parentid, attnum, false);
+
+			attnum = get_attnum(context->relid, colname);
+		}
+
+		if (!bms_is_member(attnum - FirstLowInvalidHeapAttributeNumber,
+						   context->bms_replident))
+			return true;
+	}
+
+	return expression_tree_walker(node, contain_invalid_rfcolumn_walker,
+								  (void *) context);
+}
+
+/*
+ * Check if all columns referenced in the filter expression are part of the
+ * REPLICA IDENTITY index or not.
+ *
+ * Returns true if any invalid column is found.
+ */
+bool
+contain_invalid_rfcolumn(Oid pubid, Relation relation, List *ancestors,
+						 bool pubviaroot)
+{
+	HeapTuple	rftuple;
+	Oid			relid = RelationGetRelid(relation);
+	Oid			publish_as_relid = RelationGetRelid(relation);
+	bool		result = false;
+	Datum		rfdatum;
+	bool		rfisnull;
+
+	/*
+	 * FULL means all columns are in the REPLICA IDENTITY, so all columns are
+	 * allowed in the row filter and we can skip the validation.
+	 */
+	if (relation->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
+		return false;
+
+	/*
+	 * For a partition, if pubviaroot is true, find the topmost ancestor that
+	 * is published via this publication as we need to use its row filter
+	 * expression to filter the partition's changes.
+	 *
+	 * Note that even though the row filter used is for an ancestor, the
+	 * REPLICA IDENTITY used will be for the actual child table.
+	 */
+	if (pubviaroot && relation->rd_rel->relispartition)
+	{
+		publish_as_relid = GetTopMostAncestorInPublication(pubid, ancestors);
+
+		if (!OidIsValid(publish_as_relid))
+			publish_as_relid = relid;
+	}
+
+	rftuple = SearchSysCache2(PUBLICATIONRELMAP,
+							  ObjectIdGetDatum(publish_as_relid),
+							  ObjectIdGetDatum(pubid));
+
+	if (!HeapTupleIsValid(rftuple))
+		return false;
+
+	rfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, rftuple,
+							  Anum_pg_publication_rel_prqual,
+							  &rfisnull);
+
+	if (!rfisnull)
+	{
+		rf_context	context = {0};
+		Node	   *rfnode;
+		Bitmapset  *bms = NULL;
+
+		context.pubviaroot = pubviaroot;
+		context.parentid = publish_as_relid;
+		context.relid = relid;
+
+		/* Remember columns that are part of the REPLICA IDENTITY */
+		bms = RelationGetIndexAttrBitmap(relation,
+										 INDEX_ATTR_BITMAP_IDENTITY_KEY);
+
+		context.bms_replident = bms;
+		rfnode = stringToNode(TextDatumGetCString(rfdatum));
+		result = contain_invalid_rfcolumn_walker(rfnode, &context);
+
+		bms_free(bms);
+		pfree(rfnode);
+	}
+
+	ReleaseSysCache(rftuple);
+
+	return result;
+}
+
+/* check_functions_in_node callback */
+static bool
+contain_mutable_or_user_functions_checker(Oid func_id, void *context)
+{
+	return (func_volatile(func_id) != PROVOLATILE_IMMUTABLE ||
+			func_id >= FirstNormalObjectId);
+}
+
+/*
+ * Check if the node contains any unallowed object. See
+ * check_simple_rowfilter_expr_walker.
+ *
+ * Returns the error detail message in errdetail_msg for unallowed expressions.
+ */
+static void
+expr_allowed_in_node(Node *node, ParseState *pstate, char **errdetail_msg)
+{
+	if (IsA(node, List))
+	{
+		/*
+		 * OK, we don't need to perform other expr checks for List nodes
+		 * because those are undefined for List.
+		 */
+		return;
+	}
+
+	if (exprType(node) >= FirstNormalObjectId)
+		*errdetail_msg = _("User-defined types are not allowed.");
+	else if (check_functions_in_node(node, contain_mutable_or_user_functions_checker,
+									 (void *) pstate))
+		*errdetail_msg = _("User-defined or built-in mutable functions are not allowed.");
+	else if (exprCollation(node) >= FirstNormalObjectId ||
+			 exprInputCollation(node) >= FirstNormalObjectId)
+		*errdetail_msg = _("User-defined collations are not allowed.");
+}
+
+/*
+ * The row filter walker checks if the row filter expression is a "simple
+ * expression".
+ *
+ * It allows only simple or compound expressions such as:
+ * - (Var Op Const)
+ * - (Var Op Var)
+ * - (Var Op Const) AND/OR (Var Op Const)
+ * - etc
+ * (where Var is a column of the table this filter belongs to)
+ *
+ * The simple expression has the following restrictions:
+ * - User-defined operators are not allowed;
+ * - User-defined functions are not allowed;
+ * - User-defined types are not allowed;
+ * - User-defined collations are not allowed;
+ * - Non-immutable built-in functions are not allowed;
+ * - System columns are not allowed.
+ *
+ * NOTES
+ *
+ * We don't allow user-defined functions/operators/types/collations because
+ * (a) if a user drops a user-defined object used in a row filter expression or
+ * if there is any other error while using it, the logical decoding
+ * infrastructure won't be able to recover from such an error even if the
+ * object is recreated again because a historic snapshot is used to evaluate
+ * the row filter;
+ * (b) a user-defined function can be used to access tables that could have
+ * unpleasant results because a historic snapshot is used. That's why only
+ * immutable built-in functions are allowed in row filter expressions.
+ *
+ * We don't allow system columns because currently, we don't have that
+ * information in the tuple passed to downstream. Also, as we don't replicate
+ * those to subscribers, there doesn't seem to be a need for a filter on those
+ * columns.
+ *
+ * We can allow other node types after more analysis and testing.
+ */
+static bool
+check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
+{
+	char	   *errdetail_msg = NULL;
+
+	if (node == NULL)
+		return false;
+
+	switch (nodeTag(node))
+	{
+		case T_Var:
+			/* System columns are not allowed. */
+			if (((Var *) node)->varattno < InvalidAttrNumber)
+				errdetail_msg = _("System columns are not allowed.");
+			break;
+		case T_OpExpr:
+		case T_DistinctExpr:
+		case T_NullIfExpr:
+			/* OK, except user-defined operators are not allowed. */
+			if (((OpExpr *) node)->opno >= FirstNormalObjectId)
+				errdetail_msg = _("User-defined operators are not allowed.");
+			break;
+		case T_ScalarArrayOpExpr:
+			/* OK, except user-defined operators are not allowed. */
+			if (((ScalarArrayOpExpr *) node)->opno >= FirstNormalObjectId)
+				errdetail_msg = _("User-defined operators are not allowed.");
+
+			/*
+			 * We don't need to check the hashfuncid and negfuncid of
+			 * ScalarArrayOpExpr as those functions are only built for a
+			 * subquery.
+			 */
+			break;
+		case T_RowCompareExpr:
+			{
+				ListCell   *opid;
+
+				/* OK, except user-defined operators are not allowed. */
+				foreach(opid, ((RowCompareExpr *) node)->opnos)
+				{
+					if (lfirst_oid(opid) >= FirstNormalObjectId)
+					{
+						errdetail_msg = _("User-defined operators are not allowed.");
+						break;
+					}
+				}
+			}
+			break;
+		case T_Const:
+		case T_FuncExpr:
+		case T_BoolExpr:
+		case T_RelabelType:
+		case T_CollateExpr:
+		case T_CaseExpr:
+		case T_CaseTestExpr:
+		case T_ArrayExpr:
+		case T_RowExpr:
+		case T_CoalesceExpr:
+		case T_MinMaxExpr:
+		case T_XmlExpr:
+		case T_NullTest:
+		case T_BooleanTest:
+		case T_List:
+			/* OK, supported */
+			break;
+		default:
+			errdetail_msg = _("Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations and immutable built-in functions.");
+			break;
+	}
+
+	/*
+	 * For all the supported nodes, check the types, functions, and collations
+	 * used in the nodes.
+	 */
+	if (!errdetail_msg)
+		expr_allowed_in_node(node, pstate, &errdetail_msg);
+
+	if (errdetail_msg)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("invalid publication WHERE expression"),
+				 errdetail("%s", errdetail_msg),
+				 parser_errposition(pstate, exprLocation(node))));
+
+	return expression_tree_walker(node, check_simple_rowfilter_expr_walker,
+								  (void *) pstate);
+}
+
+/*
+ * Check if the row filter expression is a "simple expression".
+ *
+ * See check_simple_rowfilter_expr_walker for details.
+ */
+static bool
+check_simple_rowfilter_expr(Node *node, ParseState *pstate)
+{
+	return check_simple_rowfilter_expr_walker(node, pstate);
+}
+
+/*
+ * Transform the publication WHERE expression for all the relations in the list,
+ * ensuring it is coerced to boolean and necessary collation information is
+ * added if required, and add a new nsitem/RTE for the associated relation to
+ * the ParseState's namespace list.
+ *
+ * Also check the publication row filter expression and throw an error if
+ * anything not permitted or unexpected is encountered.
+ */
+static void
+TransformPubWhereClauses(List *tables, const char *queryString,
+						 bool pubviaroot)
+{
+	ListCell   *lc;
+
+	foreach(lc, tables)
+	{
+		ParseNamespaceItem *nsitem;
+		Node	   *whereclause = NULL;
+		ParseState *pstate;
+		PublicationRelInfo *pri = (PublicationRelInfo *) lfirst(lc);
+
+		if (pri->whereClause == NULL)
+			continue;
+
+		/*
+		 * If the publication doesn't publish changes via the root partitioned
+		 * table, the partition's row filter will be used. So disallow using
+		 * WHERE clause on partitioned table in this case.
+		 */
+		if (!pubviaroot &&
+			pri->relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot use publication WHERE clause for relation \"%s\"",
+							RelationGetRelationName(pri->relation)),
+					 errdetail("WHERE clause cannot be used for a partitioned table when %s is false.",
+							   "publish_via_partition_root")));
+
+		pstate = make_parsestate(NULL);
+		pstate->p_sourcetext = queryString;
+
+		nsitem = addRangeTableEntryForRelation(pstate, pri->relation,
+											   AccessShareLock, NULL,
+											   false, false);
+
+		addNSItemToQuery(pstate, nsitem, false, true, true);
+
+		whereclause = transformWhereClause(pstate,
+										   copyObject(pri->whereClause),
+										   EXPR_KIND_WHERE,
+										   "PUBLICATION WHERE");
+
+		/* Fix up collation information */
+		assign_expr_collations(pstate, whereclause);
+
+		/*
+		 * We allow only simple expressions in row filters. See
+		 * check_simple_rowfilter_expr_walker.
+		 */
+		check_simple_rowfilter_expr(whereclause, pstate);
+
+		free_parsestate(pstate);
+
+		pri->whereClause = whereclause;
+	}
+}
+
+/*
  * Create new publication.
  */
 ObjectAddress
@@ -346,6 +720,10 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 			rels = OpenTableList(relations);
 			CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
 												  PUBLICATIONOBJ_TABLE);
+
+			TransformPubWhereClauses(rels, pstate->p_sourcetext,
+									 publish_via_partition_root);
+
 			PublicationAddTables(puboid, rels, true, NULL);
 			CloseTableList(rels);
 		}
@@ -392,12 +770,73 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	bool		publish_via_partition_root;
 	ObjectAddress obj;
 	Form_pg_publication pubform;
+	List	   *root_relids = NIL;
+	ListCell   *lc;
 
 	parse_publication_options(pstate,
 							  stmt->options,
 							  &publish_given, &pubactions,
 							  &publish_via_partition_root_given,
 							  &publish_via_partition_root);
+
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
+	/*
+	 * If the publication doesn't publish changes via the root partitioned
+	 * table, the partition's row filter will be used. So disallow using WHERE
+	 * clause on partitioned table in this case.
+	 */
+	if (!pubform->puballtables && publish_via_partition_root_given &&
+		!publish_via_partition_root)
+	{
+		/*
+		 * Lock the publication so nobody else can do anything with it. This
+		 * prevents concurrent alter to add partitioned table(s) with WHERE
+		 * clause(s) which we don't allow when not publishing via root.
+		 */
+		LockDatabaseObject(PublicationRelationId, pubform->oid, 0,
+						   AccessShareLock);
+
+		root_relids = GetPublicationRelations(pubform->oid,
+											  PUBLICATION_PART_ROOT);
+
+		foreach(lc, root_relids)
+		{
+			HeapTuple	rftuple;
+			Oid			relid = lfirst_oid(lc);
+
+			rftuple = SearchSysCache2(PUBLICATIONRELMAP,
+									  ObjectIdGetDatum(relid),
+									  ObjectIdGetDatum(pubform->oid));
+
+			if (HeapTupleIsValid(rftuple) &&
+				!heap_attisnull(rftuple, Anum_pg_publication_rel_prqual, NULL))
+			{
+				HeapTuple	tuple;
+
+				tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+				if (HeapTupleIsValid(tuple))
+				{
+					Form_pg_class relform = (Form_pg_class) GETSTRUCT(tuple);
+
+					if (relform->relkind == RELKIND_PARTITIONED_TABLE)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("cannot set %s for publication \"%s\"",
+										"publish_via_partition_root = false",
+										stmt->pubname),
+								 errdetail("The publication contains a WHERE clause for a partitioned table \"%s\" "
+										   "which is not allowed when %s is false.",
+										   NameStr(relform->relname),
+										   "publish_via_partition_root")));
+
+					ReleaseSysCache(tuple);
+				}
+
+				ReleaseSysCache(rftuple);
+			}
+		}
+	}
 
 	/* Everything ok, form a new tuple. */
 	memset(values, 0, sizeof(values));
@@ -450,8 +889,21 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 		 * invalidate all partitions contained in the respective partition
 		 * trees, not just those explicitly mentioned in the publication.
 		 */
-		relids = GetPublicationRelations(pubform->oid,
-										 PUBLICATION_PART_ALL);
+		if (root_relids == NIL)
+			relids = GetPublicationRelations(pubform->oid,
+											 PUBLICATION_PART_ALL);
+		else
+		{
+			/*
+			 * We already got tables explicitly mentioned in the publication.
+			 * Now get all partitions for the partitioned table in the list.
+			 */
+			foreach(lc, root_relids)
+				relids = GetPubPartitionOptionRelations(relids,
+														PUBLICATION_PART_ALL,
+														lfirst_oid(lc));
+		}
+
 		schemarelids = GetAllSchemaPublicationRelations(pubform->oid,
 														PUBLICATION_PART_ALL);
 		relids = list_concat_unique_oid(relids, schemarelids);
@@ -492,7 +944,8 @@ InvalidatePublicationRels(List *relids)
  */
 static void
 AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
-					   List *tables, List *schemaidlist)
+					   List *tables, List *schemaidlist,
+					   const char *queryString)
 {
 	List	   *rels = NIL;
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
@@ -519,6 +972,9 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 		schemas = list_concat_copy(schemaidlist, GetPublicationSchemas(pubid));
 		CheckObjSchemaNotAlreadyInPublication(rels, schemas,
 											  PUBLICATIONOBJ_TABLE);
+
+		TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
+
 		PublicationAddTables(pubid, rels, false, stmt);
 	}
 	else if (stmt->action == AP_DropObjects)
@@ -533,37 +989,76 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 		CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
 											  PUBLICATIONOBJ_TABLE);
 
-		/* Calculate which relations to drop. */
+		TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
+
+		/*
+		 * To recreate the relation list for the publication, look for
+		 * existing relations that do not need to be dropped.
+		 */
 		foreach(oldlc, oldrelids)
 		{
 			Oid			oldrelid = lfirst_oid(oldlc);
 			ListCell   *newlc;
+			PublicationRelInfo *oldrel;
 			bool		found = false;
+			HeapTuple	rftuple;
+			bool		rfisnull = true;
+			Node	   *oldrelwhereclause = NULL;
+
+			/* look up the cache for the old relmap */
+			rftuple = SearchSysCache2(PUBLICATIONRELMAP,
+									  ObjectIdGetDatum(oldrelid),
+									  ObjectIdGetDatum(pubid));
+
+			if (HeapTupleIsValid(rftuple))
+			{
+				Datum		whereClauseDatum;
+
+				whereClauseDatum = SysCacheGetAttr(PUBLICATIONRELMAP, rftuple,
+												   Anum_pg_publication_rel_prqual,
+												   &rfisnull);
+				if (!rfisnull)
+					oldrelwhereclause = stringToNode(TextDatumGetCString(whereClauseDatum));
+
+				ReleaseSysCache(rftuple);
+			}
 
 			foreach(newlc, rels)
 			{
 				PublicationRelInfo *newpubrel;
 
 				newpubrel = (PublicationRelInfo *) lfirst(newlc);
+
+				/*
+				 * Check if any of the new set of relations matches with the
+				 * existing relations in the publication. Additionally, if the
+				 * relation has an associated WHERE clause, check the WHERE
+				 * expressions also match. Drop the rest.
+				 */
 				if (RelationGetRelid(newpubrel->relation) == oldrelid)
 				{
-					found = true;
-					break;
+					if (equal(oldrelwhereclause, newpubrel->whereClause))
+					{
+						found = true;
+						break;
+					}
 				}
 			}
-			/* Not yet in the list, open it and add to the list */
+
+			if (oldrelwhereclause)
+				pfree(oldrelwhereclause);
+
+			/*
+			 * Add the non-matched relations to a list so that they can be
+			 * dropped.
+			 */
 			if (!found)
 			{
-				Relation	oldrel;
-				PublicationRelInfo *pubrel;
-
-				/* Wrap relation into PublicationRelInfo */
-				oldrel = table_open(oldrelid, ShareUpdateExclusiveLock);
-
-				pubrel = palloc(sizeof(PublicationRelInfo));
-				pubrel->relation = oldrel;
-
-				delrels = lappend(delrels, pubrel);
+				oldrel = palloc(sizeof(PublicationRelInfo));
+				oldrel->whereClause = NULL;
+				oldrel->relation = table_open(oldrelid,
+											  ShareUpdateExclusiveLock);
+				delrels = lappend(delrels, oldrel);
 			}
 		}
 
@@ -720,11 +1215,14 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 	{
 		List	   *relations = NIL;
 		List	   *schemaidlist = NIL;
+		Oid			pubid = pubform->oid;
 
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
 								   &schemaidlist);
 
 		CheckAlterPublication(stmt, tup, relations, schemaidlist);
+
+		heap_freetuple(tup);
 
 		/*
 		 * Lock the publication so nobody else can do anything with it. This
@@ -734,22 +1232,24 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 		 * addition of schema(s) for which there is any corresponding table
 		 * being added by this command.
 		 */
-		LockDatabaseObject(PublicationRelationId, pubform->oid, 0,
+		LockDatabaseObject(PublicationRelationId, pubid, 0,
 						   AccessExclusiveLock);
 
 		/*
 		 * It is possible that by the time we acquire the lock on publication,
 		 * concurrent DDL has removed it. We can test this by checking the
-		 * existence of publication.
+		 * existence of publication. We get the tuple again to avoid the risk
+		 * of any publication option getting changed.
 		 */
-		if (!SearchSysCacheExists1(PUBLICATIONOID,
-								   ObjectIdGetDatum(pubform->oid)))
+		tup = SearchSysCacheCopy1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
+		if (!HeapTupleIsValid(tup))
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),
 					errmsg("publication \"%s\" does not exist",
 						   stmt->pubname));
 
-		AlterPublicationTables(stmt, tup, relations, schemaidlist);
+		AlterPublicationTables(stmt, tup, relations, schemaidlist,
+							   pstate->p_sourcetext);
 		AlterPublicationSchemas(stmt, tup, schemaidlist);
 	}
 
@@ -901,6 +1401,7 @@ OpenTableList(List *tables)
 	List	   *relids = NIL;
 	List	   *rels = NIL;
 	ListCell   *lc;
+	List	   *relids_with_rf = NIL;
 
 	/*
 	 * Open, share-lock, and check all the explicitly-specified relations
@@ -928,14 +1429,25 @@ OpenTableList(List *tables)
 		 */
 		if (list_member_oid(relids, myrelid))
 		{
+			/* Disallow duplicate tables if there are any with row filters. */
+			if (t->whereClause || list_member_oid(relids_with_rf, myrelid))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("conflicting or redundant WHERE clauses for table \"%s\"",
+								RelationGetRelationName(rel))));
+
 			table_close(rel, ShareUpdateExclusiveLock);
 			continue;
 		}
 
 		pub_rel = palloc(sizeof(PublicationRelInfo));
 		pub_rel->relation = rel;
+		pub_rel->whereClause = t->whereClause;
 		rels = lappend(rels, pub_rel);
 		relids = lappend_oid(relids, myrelid);
+
+		if (t->whereClause)
+			relids_with_rf = lappend_oid(relids_with_rf, myrelid);
 
 		/*
 		 * Add children of this rel, if requested, so that they too are added
@@ -963,19 +1475,39 @@ OpenTableList(List *tables)
 				 * tables.
 				 */
 				if (list_member_oid(relids, childrelid))
+				{
+					/*
+					 * We don't allow to specify row filter for both parent
+					 * and child table at the same time as it is not very
+					 * clear which one should be given preference.
+					 */
+					if (childrelid != myrelid &&
+						(t->whereClause || list_member_oid(relids_with_rf, childrelid)))
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_OBJECT),
+								 errmsg("conflicting or redundant WHERE clauses for table \"%s\"",
+										RelationGetRelationName(rel))));
+
 					continue;
+				}
 
 				/* find_all_inheritors already got lock */
 				rel = table_open(childrelid, NoLock);
 				pub_rel = palloc(sizeof(PublicationRelInfo));
 				pub_rel->relation = rel;
+				/* child inherits WHERE clause from parent */
+				pub_rel->whereClause = t->whereClause;
 				rels = lappend(rels, pub_rel);
 				relids = lappend_oid(relids, childrelid);
+
+				if (t->whereClause)
+					relids_with_rf = lappend_oid(relids_with_rf, childrelid);
 			}
 		}
 	}
 
 	list_free(relids);
+	list_free(relids_with_rf);
 
 	return rels;
 }
@@ -995,6 +1527,8 @@ CloseTableList(List *rels)
 		pub_rel = (PublicationRelInfo *) lfirst(lc);
 		table_close(pub_rel->relation, NoLock);
 	}
+
+	list_free_deep(rels);
 }
 
 /*
@@ -1089,6 +1623,11 @@ PublicationDropTables(Oid pubid, List *rels, bool missing_ok)
 					 errmsg("relation \"%s\" is not part of the publication",
 							RelationGetRelationName(rel))));
 		}
+
+		if (pubrel->whereClause)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("cannot use a WHERE clause when removing a table from a publication")));
 
 		ObjectAddressSet(obj, PublicationRelRelationId, prid);
 		performDeletion(&obj, DROP_CASCADE, 0);

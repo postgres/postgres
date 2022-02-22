@@ -14,6 +14,7 @@
 #define LOGICAL_PROTO_H
 
 #include "access/xact.h"
+#include "executor/tuptable.h"
 #include "replication/reorderbuffer.h"
 #include "utils/rel.h"
 
@@ -206,17 +207,19 @@ extern void logicalrep_write_origin(StringInfo out, const char *origin,
 									XLogRecPtr origin_lsn);
 extern char *logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn);
 extern void logicalrep_write_insert(StringInfo out, TransactionId xid,
-									Relation rel, HeapTuple newtuple,
+									Relation rel,
+									TupleTableSlot *newslot,
 									bool binary);
 extern LogicalRepRelId logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup);
 extern void logicalrep_write_update(StringInfo out, TransactionId xid,
-									Relation rel, HeapTuple oldtuple,
-									HeapTuple newtuple, bool binary);
+									Relation rel,
+									TupleTableSlot *oldslot,
+									TupleTableSlot *newslot, bool binary);
 extern LogicalRepRelId logicalrep_read_update(StringInfo in,
 											  bool *has_oldtuple, LogicalRepTupleData *oldtup,
 											  LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, TransactionId xid,
-									Relation rel, HeapTuple oldtuple,
+									Relation rel, TupleTableSlot *oldtuple,
 									bool binary);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
 											  LogicalRepTupleData *oldtup);

@@ -161,7 +161,7 @@ typedef struct RelationData
 	Bitmapset  *rd_idattr;		/* included in replica identity index */
 	Bitmapset  *rd_hotblockingattr;	/* cols blocking HOT update */
 
-	PublicationActions *rd_pubactions;	/* publication actions */
+	PublicationDesc *rd_pubdesc;	/* publication descriptor, or NULL */
 
 	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.

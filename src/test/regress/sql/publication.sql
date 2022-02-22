@@ -134,6 +134,242 @@ UPDATE testpub_parted2 SET a = 2;
 DROP TABLE testpub_parted1, testpub_parted2;
 DROP PUBLICATION testpub_forparted, testpub_forparted1;
 
+-- Tests for row filters
+CREATE TABLE testpub_rf_tbl1 (a integer, b text);
+CREATE TABLE testpub_rf_tbl2 (c text, d integer);
+CREATE TABLE testpub_rf_tbl3 (e integer);
+CREATE TABLE testpub_rf_tbl4 (g text);
+CREATE TABLE testpub_rf_tbl5 (a xml);
+CREATE SCHEMA testpub_rf_schema1;
+CREATE TABLE testpub_rf_schema1.testpub_rf_tbl5 (h integer);
+CREATE SCHEMA testpub_rf_schema2;
+CREATE TABLE testpub_rf_schema2.testpub_rf_tbl6 (i integer);
+SET client_min_messages = 'ERROR';
+-- Firstly, test using the option publish='insert' because the row filter
+-- validation of referenced columns is less strict than for delete/update.
+CREATE PUBLICATION testpub5 FOR TABLE testpub_rf_tbl1, testpub_rf_tbl2 WHERE (c <> 'test' AND d < 5) WITH (publish = 'insert');
+RESET client_min_messages;
+\dRp+ testpub5
+ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl3 WHERE (e > 1000 AND e < 2000);
+\dRp+ testpub5
+ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl2;
+\dRp+ testpub5
+-- remove testpub_rf_tbl1 and add testpub_rf_tbl3 again (another WHERE expression)
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (e > 300 AND e < 500);
+\dRp+ testpub5
+-- test \d <tablename> (now it displays filter information)
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_rf_yes FOR TABLE testpub_rf_tbl1 WHERE (a > 1) WITH (publish = 'insert');
+CREATE PUBLICATION testpub_rf_no FOR TABLE testpub_rf_tbl1;
+RESET client_min_messages;
+\d testpub_rf_tbl1
+DROP PUBLICATION testpub_rf_yes, testpub_rf_no;
+-- some more syntax tests to exercise other parser pathways
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_syntax1 FOR TABLE testpub_rf_tbl1, ONLY testpub_rf_tbl3 WHERE (e < 999) WITH (publish = 'insert');
+RESET client_min_messages;
+\dRp+ testpub_syntax1
+DROP PUBLICATION testpub_syntax1;
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_syntax2 FOR TABLE testpub_rf_tbl1, testpub_rf_schema1.testpub_rf_tbl5 WHERE (h < 999) WITH (publish = 'insert');
+RESET client_min_messages;
+\dRp+ testpub_syntax2
+DROP PUBLICATION testpub_syntax2;
+-- fail - schemas don't allow WHERE clause
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_syntax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1 WHERE (a = 123);
+CREATE PUBLICATION testpub_syntax3 FOR ALL TABLES IN SCHEMA testpub_rf_schema1, testpub_rf_schema1 WHERE (a = 123);
+RESET client_min_messages;
+-- fail - duplicate tables are not allowed if that table has any WHERE clause
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_tbl1 WHERE (a = 1), testpub_rf_tbl1 WITH (publish = 'insert');
+CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_tbl1, testpub_rf_tbl1 WHERE (a = 2) WITH (publish = 'insert');
+RESET client_min_messages;
+-- fail - publication WHERE clause must be boolean
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (1234);
+-- fail - aggregate functions not allowed in WHERE clause
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (e < AVG(e));
+-- fail - user-defined operators are not allowed
+CREATE FUNCTION testpub_rf_func1(integer, integer) RETURNS boolean AS $$ SELECT hashint4($1) > $2 $$ LANGUAGE SQL;
+CREATE OPERATOR =#> (PROCEDURE = testpub_rf_func1, LEFTARG = integer, RIGHTARG = integer);
+CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl3 WHERE (e =#> 27);
+-- fail - user-defined functions are not allowed
+CREATE FUNCTION testpub_rf_func2() RETURNS integer AS $$ BEGIN RETURN 123; END; $$ LANGUAGE plpgsql;
+ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl1 WHERE (a >= testpub_rf_func2());
+-- fail - non-immutable functions are not allowed. random() is volatile.
+ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl1 WHERE (a < random());
+-- fail - user-defined collations are not allowed
+CREATE COLLATION user_collation FROM "C";
+ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl1 WHERE (b < '2' COLLATE user_collation);
+-- ok - NULLIF is allowed
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (NULLIF(1,2) = a);
+-- ok - built-in operators are allowed
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (a IS NULL);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE ((a > 5) IS FALSE);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (a IS DISTINCT FROM 5);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE ((a, a + 1) < (2, 3));
+-- ok - built-in type coercions between two binary compatible datatypes are allowed
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (b::varchar < '2');
+-- ok - immutable built-in functions are allowed
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl4 WHERE (length(g) < 6);
+-- fail - user-defined types are not allowed
+CREATE TYPE rf_bug_status AS ENUM ('new', 'open', 'closed');
+CREATE TABLE rf_bug (id serial, description text, status rf_bug_status);
+CREATE PUBLICATION testpub6 FOR TABLE rf_bug WHERE (status = 'open') WITH (publish = 'insert');
+DROP TABLE rf_bug;
+DROP TYPE rf_bug_status;
+-- fail - row filter expression is not simple
+CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELECT generate_series(1,5)));
+-- fail - system columns are not allowed
+CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE ('(0,1)'::tid = ctid);
+-- ok - conditional expressions are allowed
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl5 WHERE (a IS DOCUMENT);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl5 WHERE (xmlexists('//foo[text() = ''bar'']' PASSING BY VALUE a));
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (NULLIF(1, 2) = a);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (CASE a WHEN 5 THEN true ELSE false END);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (COALESCE(b, 'foo') = 'foo');
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (GREATEST(a, 10) > 10);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (a IN (2, 4, 6));
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (ARRAY[a] <@ ARRAY[2, 4, 6]);
+ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl1 WHERE (ROW(a, 2) IS NULL);
+-- fail - WHERE not allowed in DROP
+ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl1 WHERE (e < 27);
+-- fail - cannot ALTER SET table which is a member of a pre-existing schema
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub6 FOR ALL TABLES IN SCHEMA testpub_rf_schema2;
+ALTER PUBLICATION testpub6 SET ALL TABLES IN SCHEMA testpub_rf_schema2, TABLE testpub_rf_schema2.testpub_rf_tbl6 WHERE (i < 99);
+RESET client_min_messages;
+
+DROP TABLE testpub_rf_tbl1;
+DROP TABLE testpub_rf_tbl2;
+DROP TABLE testpub_rf_tbl3;
+DROP TABLE testpub_rf_tbl4;
+DROP TABLE testpub_rf_tbl5;
+DROP TABLE testpub_rf_schema1.testpub_rf_tbl5;
+DROP TABLE testpub_rf_schema2.testpub_rf_tbl6;
+DROP SCHEMA testpub_rf_schema1;
+DROP SCHEMA testpub_rf_schema2;
+DROP PUBLICATION testpub5;
+DROP PUBLICATION testpub6;
+DROP OPERATOR =#>(integer, integer);
+DROP FUNCTION testpub_rf_func1(integer, integer);
+DROP FUNCTION testpub_rf_func2();
+DROP COLLATION user_collation;
+
+-- ======================================================
+-- More row filter tests for validating column references
+CREATE TABLE rf_tbl_abcd_nopk(a int, b int, c int, d int);
+CREATE TABLE rf_tbl_abcd_pk(a int, b int, c int, d int, PRIMARY KEY(a,b));
+CREATE TABLE rf_tbl_abcd_part_pk (a int PRIMARY KEY, b int) PARTITION by RANGE (a);
+CREATE TABLE rf_tbl_abcd_part_pk_1 (b int, a int PRIMARY KEY);
+ALTER TABLE rf_tbl_abcd_part_pk ATTACH PARTITION rf_tbl_abcd_part_pk_1 FOR VALUES FROM (1) TO (10);
+
+-- Case 1. REPLICA IDENTITY DEFAULT (means use primary key or nothing)
+-- 1a. REPLICA IDENTITY is DEFAULT and table has a PK.
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub6 FOR TABLE rf_tbl_abcd_pk WHERE (a > 99);
+RESET client_min_messages;
+-- ok - "a" is a PK col
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (b > 99);
+-- ok - "b" is a PK col
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (c > 99);
+-- fail - "c" is not part of the PK
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (d > 99);
+-- fail - "d" is not part of the PK
+UPDATE rf_tbl_abcd_pk SET a = 1;
+-- 1b. REPLICA IDENTITY is DEFAULT and table has no PK
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_nopk WHERE (a > 99);
+-- fail - "a" is not part of REPLICA IDENTITY
+UPDATE rf_tbl_abcd_nopk SET a = 1;
+
+-- Case 2. REPLICA IDENTITY FULL
+ALTER TABLE rf_tbl_abcd_pk REPLICA IDENTITY FULL;
+ALTER TABLE rf_tbl_abcd_nopk REPLICA IDENTITY FULL;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (c > 99);
+-- ok - "c" is in REPLICA IDENTITY now even though not in PK
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_nopk WHERE (a > 99);
+-- ok - "a" is in REPLICA IDENTITY now
+UPDATE rf_tbl_abcd_nopk SET a = 1;
+
+-- Case 3. REPLICA IDENTITY NOTHING
+ALTER TABLE rf_tbl_abcd_pk REPLICA IDENTITY NOTHING;
+ALTER TABLE rf_tbl_abcd_nopk REPLICA IDENTITY NOTHING;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (a > 99);
+-- fail - "a" is in PK but it is not part of REPLICA IDENTITY NOTHING
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (c > 99);
+-- fail - "c" is not in PK and not in REPLICA IDENTITY NOTHING
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_nopk WHERE (a > 99);
+-- fail - "a" is not in REPLICA IDENTITY NOTHING
+UPDATE rf_tbl_abcd_nopk SET a = 1;
+
+-- Case 4. REPLICA IDENTITY INDEX
+ALTER TABLE rf_tbl_abcd_pk ALTER COLUMN c SET NOT NULL;
+CREATE UNIQUE INDEX idx_abcd_pk_c ON rf_tbl_abcd_pk(c);
+ALTER TABLE rf_tbl_abcd_pk REPLICA IDENTITY USING INDEX idx_abcd_pk_c;
+ALTER TABLE rf_tbl_abcd_nopk ALTER COLUMN c SET NOT NULL;
+CREATE UNIQUE INDEX idx_abcd_nopk_c ON rf_tbl_abcd_nopk(c);
+ALTER TABLE rf_tbl_abcd_nopk REPLICA IDENTITY USING INDEX idx_abcd_nopk_c;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (a > 99);
+-- fail - "a" is in PK but it is not part of REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_pk WHERE (c > 99);
+-- ok - "c" is not in PK but it is part of REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_pk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_nopk WHERE (a > 99);
+-- fail - "a" is not in REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_nopk SET a = 1;
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_nopk WHERE (c > 99);
+-- ok - "c" is part of REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_nopk SET a = 1;
+
+-- Tests for partitioned table
+
+-- set PUBLISH_VIA_PARTITION_ROOT to false and test row filter for partitioned
+-- table
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
+-- fail - cannot use row filter for partitioned table
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk WHERE (a > 99);
+-- ok - can use row filter for partition
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 WHERE (a > 99);
+-- ok - "a" is a PK col
+UPDATE rf_tbl_abcd_part_pk SET a = 1;
+-- set PUBLISH_VIA_PARTITION_ROOT to true and test row filter for partitioned
+-- table
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=1);
+-- ok - can use row filter for partitioned table
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk WHERE (a > 99);
+-- ok - "a" is a PK col
+UPDATE rf_tbl_abcd_part_pk SET a = 1;
+-- fail - cannot set PUBLISH_VIA_PARTITION_ROOT to false if any row filter is
+-- used for partitioned table
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
+-- Now change the root filter to use a column "b"
+-- (which is not in the replica identity)
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 WHERE (b > 99);
+-- ok - we don't have row filter for partitioned table.
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
+-- fail - "b" is not in REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_part_pk SET a = 1;
+-- set PUBLISH_VIA_PARTITION_ROOT to true
+-- can use row filter for partitioned table
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=1);
+-- ok - can use row filter for partitioned table
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk WHERE (b > 99);
+-- fail - "b" is not in REPLICA IDENTITY INDEX
+UPDATE rf_tbl_abcd_part_pk SET a = 1;
+
+DROP PUBLICATION testpub6;
+DROP TABLE rf_tbl_abcd_pk;
+DROP TABLE rf_tbl_abcd_nopk;
+DROP TABLE rf_tbl_abcd_part_pk;
+-- ======================================================
+
 -- Test cache invalidation FOR ALL TABLES publication
 SET client_min_messages = 'ERROR';
 CREATE TABLE testpub_tbl4(a int);

@@ -208,6 +208,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           that are being subscribed to when the replication starts.
           The default is <literal>true</literal>.
          </para>
+         <para>
+          If the publications contain <literal>WHERE</literal> clauses, it
+          will affect what data is copied. Refer to the
+          <xref linkend="sql-createsubscription-notes" /> for details.
+         </para>
         </listitem>
        </varlistentry>
 
@@ -293,7 +298,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-createsubscription-notes" xreflabel="Notes">
   <title>Notes</title>
 
   <para>
@@ -319,6 +324,26 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    the parameter <literal>create_slot = false</literal>.  This is an
    implementation restriction that might be lifted in a future release.
   </para>
+
+  <para>
+   If any table in the publication has a <literal>WHERE</literal> clause, rows
+   for which the <replaceable class="parameter">expression</replaceable>
+   evaluates to false or null will not be published. If the subscription has
+   several publications in which the same table has been published with
+   different <literal>WHERE</literal> clauses, a row will be published if any
+   of the expressions (referring to that publish operation) are satisfied. In
+   the case of different <literal>WHERE</literal> clauses, if one of the
+   publications has no <literal>WHERE</literal> clause (referring to that
+   publish operation) or the publication is declared as
+   <literal>FOR ALL TABLES</literal> or
+   <literal>FOR ALL TABLES IN SCHEMA</literal>, rows are always published
+   regardless of the definition of the other expressions.
+   If the subscriber is a <productname>PostgreSQL</productname> version before
+   15 then any row filtering is ignored during the initial data synchronization
+   phase. For this case, the user might want to consider deleting any initially
+   copied data that would be incompatible with subsequent filtering.
+  </para>
+
  </refsect1>
 
  <refsect1>

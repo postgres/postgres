@@ -31,8 +31,8 @@
 
 static void logicalrep_write_attrs(StringInfo out, Relation rel);
 static void logicalrep_write_tuple(StringInfo out, Relation rel,
-								   HeapTuple tuple, bool binary);
-
+								   TupleTableSlot *slot,
+								   bool binary);
 static void logicalrep_read_attrs(StringInfo in, LogicalRepRelation *rel);
 static void logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple);
 
@@ -398,7 +398,7 @@ logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn)
  */
 void
 logicalrep_write_insert(StringInfo out, TransactionId xid, Relation rel,
-						HeapTuple newtuple, bool binary)
+						TupleTableSlot *newslot, bool binary)
 {
 	pq_sendbyte(out, LOGICAL_REP_MSG_INSERT);
 
@@ -410,7 +410,7 @@ logicalrep_write_insert(StringInfo out, TransactionId xid, Relation rel,
 	pq_sendint32(out, RelationGetRelid(rel));
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
-	logicalrep_write_tuple(out, rel, newtuple, binary);
+	logicalrep_write_tuple(out, rel, newslot, binary);
 }
 
 /*
@@ -442,7 +442,8 @@ logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup)
  */
 void
 logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
-						HeapTuple oldtuple, HeapTuple newtuple, bool binary)
+						TupleTableSlot *oldslot, TupleTableSlot *newslot,
+						bool binary)
 {
 	pq_sendbyte(out, LOGICAL_REP_MSG_UPDATE);
 
@@ -457,17 +458,17 @@ logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
 	/* use Oid as relation identifier */
 	pq_sendint32(out, RelationGetRelid(rel));
 
-	if (oldtuple != NULL)
+	if (oldslot != NULL)
 	{
 		if (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
 			pq_sendbyte(out, 'O');	/* old tuple follows */
 		else
 			pq_sendbyte(out, 'K');	/* old key follows */
-		logicalrep_write_tuple(out, rel, oldtuple, binary);
+		logicalrep_write_tuple(out, rel, oldslot, binary);
 	}
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
-	logicalrep_write_tuple(out, rel, newtuple, binary);
+	logicalrep_write_tuple(out, rel, newslot, binary);
 }
 
 /*
@@ -516,7 +517,7 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
  */
 void
 logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
-						HeapTuple oldtuple, bool binary)
+						TupleTableSlot *oldslot, bool binary)
 {
 	Assert(rel->rd_rel->relreplident == REPLICA_IDENTITY_DEFAULT ||
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
@@ -536,7 +537,7 @@ logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 	else
 		pq_sendbyte(out, 'K');	/* old key follows */
 
-	logicalrep_write_tuple(out, rel, oldtuple, binary);
+	logicalrep_write_tuple(out, rel, oldslot, binary);
 }
 
 /*
@@ -749,11 +750,12 @@ logicalrep_read_typ(StringInfo in, LogicalRepTyp *ltyp)
  * Write a tuple to the outputstream, in the most efficient format possible.
  */
 static void
-logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binary)
+logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
+					   bool binary)
 {
 	TupleDesc	desc;
-	Datum		values[MaxTupleAttributeNumber];
-	bool		isnull[MaxTupleAttributeNumber];
+	Datum	   *values;
+	bool	   *isnull;
 	int			i;
 	uint16		nliveatts = 0;
 
@@ -767,11 +769,9 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 	}
 	pq_sendint16(out, nliveatts);
 
-	/* try to allocate enough memory from the get-go */
-	enlargeStringInfo(out, tuple->t_len +
-					  nliveatts * (1 + 4));
-
-	heap_deform_tuple(tuple, desc, values, isnull);
+	slot_getallattrs(slot);
+	values = slot->tts_values;
+	isnull = slot->tts_isnull;
 
 	/* Write the values */
 	for (i = 0; i < desc->natts; i++)
