@@ -310,11 +310,18 @@ sub WriteItemDefinitionGroup
 	  : ($self->{type} eq "dll" ? 'DynamicLibrary' : 'StaticLibrary');
 	my $libs = $self->GetAdditionalLinkerDependencies($cfgname, ';');
 
-	my $targetmachine =
-	  $self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';
+	my $targetmachine;
+	if ($self->{platform} eq 'Win32') {
+		$targetmachine = 'MachineX86';
+	} elsif ($self->{platform} eq 'ARM64'){
+		$targetmachine = 'MachineARM64';
+	} else {
+		$targetmachine = 'MachineX64';
+	}
 
 	my $includes = join ';', @{$self->{includes}}, "";
-
+	# arm64 linker only supports dynamic base address
+	my $cfgrandbaseaddress = $self->{platform} eq 'ARM64' ? 'true' : 'false';
 	print $f <<EOF;
   <ItemDefinitionGroup Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'">
     <ClCompile>
@@ -347,7 +354,7 @@ sub WriteItemDefinitionGroup
       <ProgramDatabaseFile>.\\$cfgname\\$self->{name}\\$self->{name}.pdb</ProgramDatabaseFile>
       <GenerateMapFile>false</GenerateMapFile>
       <MapFileName>.\\$cfgname\\$self->{name}\\$self->{name}.map</MapFileName>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <RandomizedBaseAddress>$cfgrandbaseaddress</RandomizedBaseAddress>
       <!-- Permit links to MinGW-built, 32-bit DLLs (default before VS2012). -->
       <ImageHasSafeExceptionHandlers/>
       <SubSystem>Console</SubSystem>

@@ -114,8 +114,13 @@ sub mkvcbuild
 
 	if ($vsVersion >= '9.00')
 	{
-		push(@pgportfiles, 'pg_crc32c_sse42_choose.c');
-		push(@pgportfiles, 'pg_crc32c_sse42.c');
+		if ($solution->{platform} eq 'ARM64') {
+			push(@pgportfiles, 'pg_crc32c_armv8_choose.c');
+			push(@pgportfiles, 'pg_crc32c_armv8.c');
+		} else {
+			push(@pgportfiles, 'pg_crc32c_sse42_choose.c');
+			push(@pgportfiles, 'pg_crc32c_sse42.c');
+		}
 		push(@pgportfiles, 'pg_crc32c_sb8.c');
 	}
 	else

@@ -120,9 +120,9 @@ sub writedef
 	{
 		my $isdata = $def->{$f} eq 'data';
 
-		# Strip the leading underscore for win32, but not x64
+		# Strip the leading underscore for win32, but not x64 and arm64
 		$f =~ s/^_//
-		  unless ($platform eq "x64");
+		  unless ($platform ne "Win32");
 
 		# Emit just the name if it's a function symbol, or emit the name
 		# decorated with the DATA option for variables.
@@ -144,13 +144,13 @@ sub usage
 {
 	die(    "Usage: gendef.pl <modulepath> <platform>\n"
 		  . "    modulepath: path to dir with obj files, no trailing slash"
-		  . "    platform: Win32 | x64");
+		  . "    platform: Win32 | x64 | ARM64");
 }
 
 usage()
   unless scalar(@ARGV) == 2
   && ( ($ARGV[0] =~ /\\([^\\]+$)/)
-	&& ($ARGV[1] eq 'Win32' || $ARGV[1] eq 'x64'));
+	&& ($ARGV[1] eq 'Win32' || $ARGV[1] eq 'x64' || $ARGV[1] eq 'ARM64'));
 my $defname  = uc $1;
 my $deffile  = "$ARGV[0]/$defname.def";
 my $platform = $ARGV[1];
