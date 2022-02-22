@@ -7680,9 +7680,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         method is not acceptable.  In this case, in-core computation
         must be always disabled.
         Valid values are <literal>off</literal> (always disabled),
-        <literal>on</literal> (always enabled) and <literal>auto</literal>,
+        <literal>on</literal> (always enabled), <literal>auto</literal>,
         which lets modules such as <xref linkend="pgstatstatements"/>
-        automatically enable it.
+        automatically enable it, and <literal>regress</literal> which
+        has the same effect as <literal>auto</literal>, except that the
+        query identifier is hidden in the <literal>EXPLAIN</literal> output
+        to facilitate automated regression testing.
         The default is <literal>auto</literal>.
        </para>
        <note>
