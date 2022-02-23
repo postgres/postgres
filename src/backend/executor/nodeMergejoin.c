@@ -1143,7 +1143,7 @@ ExecMergeJoin(PlanState *pstate)
 				break;
 
 				/*----------------------------------------------------------
-				 * EXEC_MJ_SKIP means compare tuples and if they do not
+				 * EXEC_MJ_SKIP_TEST means compare tuples and if they do not
 				 * match, skip whichever is lesser.
 				 *
 				 * For example:
@@ -1199,8 +1199,8 @@ ExecMergeJoin(PlanState *pstate)
 				break;
 
 				/*
-				 * SKIPOUTER_ADVANCE: advance over an outer tuple that is
-				 * known not to join to any inner tuple.
+				 * EXEC_MJ_SKIPOUTER_ADVANCE: advance over an outer tuple that
+				 * is known not to join to any inner tuple.
 				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this outer tuple.
@@ -1261,8 +1261,8 @@ ExecMergeJoin(PlanState *pstate)
 				break;
 
 				/*
-				 * SKIPINNER_ADVANCE: advance over an inner tuple that is
-				 * known not to join to any outer tuple.
+				 * EXEC_MJ_SKIPINNER_ADVANCE: advance over an inner tuple that
+				 * is known not to join to any outer tuple.
 				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this inner tuple.
