@@ -73,6 +73,7 @@ our @EXPORT = qw(
   system_log
   run_log
   run_command
+  pump_until
 
   command_ok
   command_fails
@@ -404,6 +405,28 @@ sub run_command
 	chomp($stdout);
 	chomp($stderr);
 	return ($stdout, $stderr);
+}
+
+=pod
+
+=item pump_until(proc, timeout, stream, until)
+
+Pump until string is matched on the specified stream, or timeout occurs.
+
+=cut
+
+sub pump_until
+{
+	my ($proc, $timeout, $stream, $until) = @_;
+	$proc->pump_nb();
+	while (1)
+	{
+		last if $$stream =~ /$until/;
+		return 0 if ($timeout->is_expired);
+		return 0 if (not $proc->pumpable());
+		$proc->pump();
+	}
+	return 1;
 }
 
 =pod

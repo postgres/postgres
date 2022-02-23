@@ -57,7 +57,7 @@ my $killme = IPC::Run::start(
 $killme_stdin .= q[
 SELECT pg_backend_pid();
 ];
-ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
+ok(pump_until($killme, $psql_timeout, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
 	'acquired pid for SIGKILL');
 my $pid = $killme_stdout;
 chomp($pid);
@@ -86,7 +86,7 @@ BEGIN;
 INSERT INTO tab_crash (a) VALUES(1);
 SELECT $$insert-tuple-to-lock-next-insert$$;
 ];
-pump_until($killme2, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
+pump_until($killme2, $psql_timeout, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
 $killme_stdout2 = '';
 $killme_stderr2 = '';
 
@@ -99,7 +99,7 @@ BEGIN;
 SELECT $$in-progress-before-sigkill$$;
 INSERT INTO tab_crash (a) SELECT i FROM generate_series(1, 5000) s(i);
 ];
-ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
+ok(pump_until($killme, $psql_timeout, \$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
@@ -121,7 +121,7 @@ END; $c$;
 SELECT $$insert-tuple-lock-waiting$$;
 ];
 
-pump_until($killme2, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
+pump_until($killme2, $psql_timeout, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
 $killme_stdout2 = '';
 $killme_stderr2 = '';
 
@@ -158,7 +158,7 @@ $killme->run();
 $killme_stdin .= q[
 SELECT pg_backend_pid();
 ];
-ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
+ok(pump_until($killme, $psql_timeout, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
 	'acquired pid for SIGKILL');
 $pid = $killme_stdout;
 chomp($pid);
@@ -175,7 +175,7 @@ BEGIN;
 INSERT INTO tab_crash (a) VALUES(1);
 SELECT $$insert-tuple-to-lock-next-insert$$;
 ];
-pump_until($killme2, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
+pump_until($killme2, $psql_timeout, \$killme_stdout2, qr/insert-tuple-to-lock-next-insert/m);
 $killme_stdout2 = '';
 $killme_stderr2 = '';
 
@@ -188,7 +188,7 @@ BEGIN;
 SELECT $$in-progress-before-sigkill$$;
 INSERT INTO tab_crash (a) SELECT i FROM generate_series(1, 5000) s(i);
 ];
-ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
+ok(pump_until($killme, $psql_timeout, \$killme_stdout, qr/in-progress-before-sigkill/m),
 	'insert in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
@@ -210,7 +210,7 @@ END; $c$;
 SELECT $$insert-tuple-lock-waiting$$;
 ];
 
-pump_until($killme2, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
+pump_until($killme2, $psql_timeout, \$killme_stdout2, qr/insert-tuple-lock-waiting/m);
 $killme_stdout2 = '';
 $killme_stderr2 = '';
 
@@ -241,34 +241,5 @@ is( $node->safe_psql(
 	'temporary file was removed');
 
 $node->stop();
-
-# Pump until string is matched, or timeout occurs
-sub pump_until
-{
-	my ($proc, $stream, $untl) = @_;
-	$proc->pump_nb();
-	while (1)
-	{
-		last if $$stream =~ /$untl/;
-		if ($psql_timeout->is_expired)
-		{
-			diag("aborting wait: program timed out");
-			diag("stream contents: >>", $$stream, "<<");
-			diag("pattern searched for: ", $untl);
-
-			return 0;
-		}
-		if (not $proc->pumpable())
-		{
-			diag("aborting wait: program died");
-			diag("stream contents: >>", $$stream, "<<");
-			diag("pattern searched for: ", $untl);
-
-			return 0;
-		}
-		$proc->pump();
-	}
-	return 1;
-}
 
 done_testing();
