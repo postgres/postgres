@@ -102,21 +102,10 @@ sub check_query
 	  ],
 	  '>', \$stdout, '2>', \$stderr;
 
-	# We don't use ok() for the exit code and stderr, because we want this
-	# check to be just a single test.
-	if (!$result)
-	{
-		fail("$test_name: psql exit code");
-	}
-	elsif ($stderr ne '')
-	{
-		diag $stderr;
-		fail("$test_name: psql no stderr");
-	}
-	else
-	{
-		is($stdout, $expected_stdout, "$test_name: query result matches");
-	}
+	is($result, 1, "$test_name: psql exit code");
+	is($stderr, '', "$test_name: psql no stderr");
+	is($stdout, $expected_stdout, "$test_name: query result matches");
+
 	return;
 }
 
