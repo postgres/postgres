@@ -5390,13 +5390,13 @@ valid_custom_variable_name(const char *name)
 			name_start = true;
 		}
 		else if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-						"abcdefghijklmnopqrstuvwxyz", *p) != NULL ||
+						"abcdefghijklmnopqrstuvwxyz_", *p) != NULL ||
 				 IS_HIGHBIT_SET(*p))
 		{
 			/* okay as first or non-first character */
 			name_start = false;
 		}
-		else if (!name_start && strchr("0123456789_$", *p) != NULL)
+		else if (!name_start && strchr("0123456789$", *p) != NULL)
 			 /* okay as non-first character */ ;
 		else
 			return false;
