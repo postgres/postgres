@@ -174,6 +174,8 @@ static int	bgpipe[2] = {-1, -1};
 /* Handle to child process */
 static pid_t bgchild = -1;
 static bool in_log_streamer = false;
+/* Flag to indicate if child process exited unexpectedly */
+static volatile sig_atomic_t bgchild_exited = false;
 
 /* End position for xlog streaming, empty string if unknown yet */
 static XLogRecPtr xlogendptr;
@@ -278,6 +280,18 @@ disconnect_atexit(void)
 
 #ifndef WIN32
 /*
+ * If the bgchild exits prematurely and raises a SIGCHLD signal, we can abort
+ * processing rather than wait until the backup has finished and error out at
+ * that time. On Windows, we use a background thread which can communicate
+ * without the need for a signal handler.
+ */
+static void
+sigchld_handler(SIGNAL_ARGS)
+{
+	bgchild_exited = true;
+}
+
+/*
  * On windows, our background thread dies along with the process. But on
  * Unix, if we have started a subprocess, we want to kill it off so it
  * doesn't remain running trying to stream data.
@@ -285,7 +299,7 @@ disconnect_atexit(void)
 static void
 kill_bgchild_atexit(void)
 {
-	if (bgchild > 0)
+	if (bgchild > 0 && !bgchild_exited)
 		kill(bgchild, SIGTERM);
 }
 #endif
@@ -572,17 +586,28 @@ LogStreamerMain(logstreamer_param *param)
 											  stream.do_sync);
 
 	if (!ReceiveXlogStream(param->bgconn, &stream))
-
+	{
 		/*
 		 * Any errors will already have been reported in the function process,
 		 * but we need to tell the parent that we didn't shutdown in a nice
 		 * way.
 		 */
+#ifdef WIN32
+		/*
+		 * In order to signal the main thread of an ungraceful exit we
+		 * set the same flag that we use on Unix to signal SIGCHLD.
+		 */
+		bgchild_exited = true;
+#endif
 		return 1;
+	}
 
 	if (!stream.walmethod->finish())
 	{
 		pg_log_error("could not finish writing WAL files: %m");
+#ifdef WIN32
+		bgchild_exited = true;
+#endif
 		return 1;
 	}
 
@@ -1131,6 +1156,12 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 		{
 			pg_log_error("could not read COPY data: %s",
 						 PQerrorMessage(conn));
+			exit(1);
+		}
+
+		if (bgchild_exited)
+		{
+			pg_log_error("background process terminated unexpectedly");
 			exit(1);
 		}
 
@@ -2881,6 +2912,18 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	atexit(disconnect_atexit);
+
+#ifndef WIN32
+	/*
+	 * Trap SIGCHLD to be able to handle the WAL stream process exiting. There
+	 * is no SIGCHLD on Windows, there we rely on the background thread setting
+	 * the signal variable on unexpected but graceful exit. If the WAL stream
+	 * thread crashes on Windows it will bring down the entire process as it's
+	 * a thread, so there is nothing to catch should that happen. A crash on
+	 * UNIX will be caught by the signal handler.
+	 */
+	pqsignal(SIGCHLD, sigchld_handler);
+#endif
 
 	/*
 	 * Set umask so that directories/files are created with the same

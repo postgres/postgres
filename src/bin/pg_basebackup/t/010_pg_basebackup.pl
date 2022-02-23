@@ -776,4 +776,38 @@ SKIP:
 	rmtree("$tempdir/backup_gzip3");
 }
 
+# Test background stream process terminating before the basebackup has
+# finished, the main process should exit gracefully with an error message on
+# stderr. To reduce the risk of timing related issues we invoke the base
+# backup with rate throttling enabled.
+$node->safe_psql('postgres',
+	q{CREATE TABLE t AS SELECT a FROM generate_series(1,10000) AS a;});
+
+my $sigchld_bb_timeout = IPC::Run::timer(60);
+my ($sigchld_bb_stdin, $sigchld_bb_stdout, $sigchld_bb_stderr) = ('', '', '');
+my $sigchld_bb = IPC::Run::start(
+	[
+		@pg_basebackup_defs, '--wal-method=stream', '-D', "$tempdir/sigchld",
+		'--max-rate=32', '-d', $node->connstr('postgres')
+	],
+	'<',
+	\$sigchld_bb_stdin,
+	'>',
+	\$sigchld_bb_stdout,
+	'2>',
+	\$sigchld_bb_stderr,
+	$sigchld_bb_timeout);
+
+is($node->poll_query_until('postgres',
+	"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE " .
+	"application_name = '010_pg_basebackup.pl' AND wait_event = 'WalSenderMain' " .
+	"AND backend_type = 'walsender' AND query ~ 'START_REPLICATION'"),
+	"1",
+	"Walsender killed");
+
+ok(pump_until($sigchld_bb, $sigchld_bb_timeout, \$sigchld_bb_stderr,
+  qr/background process terminated unexpectedly/),
+  'background process exit message');
+$sigchld_bb->finish();
+
 done_testing();
