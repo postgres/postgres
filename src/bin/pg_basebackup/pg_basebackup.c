@@ -700,8 +700,16 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	bgchild = fork();
 	if (bgchild == 0)
 	{
+		int			ret;
+
 		/* in child process */
-		exit(LogStreamerMain(param));
+		ret = LogStreamerMain(param);
+
+		/* temp debugging aid to analyze 019_replslot_limit failures */
+		if (verbose)
+			pg_log_info("log streamer with pid %d exiting", getpid());
+
+		exit(ret);
 	}
 	else if (bgchild < 0)
 	{
