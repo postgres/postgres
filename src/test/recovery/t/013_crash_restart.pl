@@ -28,7 +28,7 @@ my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(allows_streaming => 1);
 $node->start();
 
-# by default PostgreSQL::Test::Cluster doesn't doesn't restart after a crash
+# by default PostgreSQL::Test::Cluster doesn't restart after a crash
 $node->safe_psql(
 	'postgres',
 	q[ALTER SYSTEM SET restart_after_crash = 1;
