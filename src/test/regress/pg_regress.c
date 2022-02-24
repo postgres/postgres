@@ -774,7 +774,7 @@ fmtHba(const char *raw)
 	const char *rp;
 	char	   *wp;
 
-	wp = ret = realloc(ret, 3 + strlen(raw) * 2);
+	wp = ret = pg_realloc(ret, 3 + strlen(raw) * 2);
 
 	*wp++ = '"';
 	for (rp = raw; *rp; rp++)
