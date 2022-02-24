@@ -677,6 +677,8 @@ is( $result, qq(16
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_rowfilter_toast SET b = '1'");
 
+$node_publisher->wait_for_catchup($appname);
+
 # Check expected replicated rows for tab_rowfilter_toast
 # tab_rowfilter_toast filter: (a = repeat('1234567890', 200) AND b < '10')
 # UPDATE old  (repeat('1234567890', 200) ,'1234567890')  NO
