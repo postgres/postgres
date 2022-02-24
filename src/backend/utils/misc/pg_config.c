@@ -26,14 +26,10 @@ pg_config(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Tuplestorestate *tupstore;
-	HeapTuple	tuple;
 	TupleDesc	tupdesc;
-	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	ConfigData *configdata;
 	size_t		configdata_len;
-	char	   *values[2];
 	int			i = 0;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -41,65 +37,38 @@ pg_config(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize) ||
-		rsinfo->expectedDesc == NULL)
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
-	/* get the requested return tuple description */
-	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	/* Build tuplestore to hold the result rows */
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-	/*
-	 * Check to make sure we have a reasonable tuple descriptor
-	 */
-	if (tupdesc->natts != 2 ||
-		TupleDescAttr(tupdesc, 0)->atttypid != TEXTOID ||
-		TupleDescAttr(tupdesc, 1)->atttypid != TEXTOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("query-specified return tuple and "
-						"function return type are not compatible")));
-
-	/* OK to use it */
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-	/* let the caller know we're sending back a tuplestore */
-	rsinfo->returnMode = SFRM_Materialize;
-
-	/* initialize our tuplestore */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
 
 	configdata = get_configdata(my_exec_path, &configdata_len);
 	for (i = 0; i < configdata_len; i++)
 	{
-		values[0] = configdata[i].name;
-		values[1] = configdata[i].setting;
+		Datum		values[2];
+		bool		nulls[2];
 
-		tuple = BuildTupleFromCStrings(attinmeta, values);
-		tuplestore_puttuple(tupstore, tuple);
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+
+		values[0] = CStringGetTextDatum(configdata[i].name);
+		values[1] = CStringGetTextDatum(configdata[i].setting);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
-
-	/*
-	 * no longer need the tuple descriptor reference created by
-	 * TupleDescGetAttInMetadata()
-	 */
-	ReleaseTupleDesc(tupdesc);
-
-	rsinfo->setResult = tupstore;
-
-	/*
-	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
-	 * rsinfo->setDesc is set to the tuple description that we actually used
-	 * to build our tuples with, so the caller can verify we did what it was
-	 * expecting.
-	 */
-	rsinfo->setDesc = tupdesc;
-	MemoryContextSwitchTo(oldcontext);
 
 	return (Datum) 0;
 }

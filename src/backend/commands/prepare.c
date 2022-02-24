@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
 #include "commands/prepare.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
@@ -716,29 +717,12 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
 	/* need to build tuplestore in query context */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	/*
-	 * build tupdesc for result tuples. This must match the definition of the
-	 * pg_prepared_statements view in system_views.sql
-	 */
-	tupdesc = CreateTemplateTupleDesc(7);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepare_time",
-					   TIMESTAMPTZOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "parameter_types",
-					   REGTYPEARRAYOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "generic_plans",
-					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "custom_plans",
-					   INT8OID, -1, 0);
 
 	/*
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.
@@ -747,6 +731,9 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
 
 	/* generate junk in short-term context */
 	MemoryContextSwitchTo(oldcontext);
@@ -777,10 +764,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 		}
 	}
-
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
 
 	return (Datum) 0;
 }

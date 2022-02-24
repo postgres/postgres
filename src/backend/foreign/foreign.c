@@ -499,17 +499,19 @@ IsImportableForeignTable(const char *tablename,
 
 
 /*
- * deflist_to_tuplestore - Helper function to convert DefElem list to
- * tuplestore usable in SRF.
+ * pg_options_to_table - Convert options array to name/value table
+ *
+ * This is useful to provide details for information_schema and pg_dump.
  */
-static void
-deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
+Datum
+pg_options_to_table(PG_FUNCTION_ARGS)
 {
+	Datum		array = PG_GETARG_DATUM(0);
 	ListCell   *cell;
+	List	   *options;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
-	Datum		values[2];
-	bool		nulls[2];
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
@@ -524,6 +526,9 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
+	options = untransformRelOptions(array);
+	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -536,9 +541,13 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
+	MemoryContextSwitchTo(oldcontext);
+
 	foreach(cell, options)
 	{
 		DefElem    *def = lfirst(cell);
+		Datum		values[2];
+		bool		nulls[2];
 
 		values[0] = CStringGetTextDatum(def->defname);
 		nulls[0] = false;
@@ -554,22 +563,6 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 		}
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-
-/*
- * Convert options array to name/value table.  Useful for information
- * schema and pg_dump.
- */
-Datum
-pg_options_to_table(PG_FUNCTION_ARGS)
-{
-	Datum		array = PG_GETARG_DATUM(0);
-
-	deflist_to_tuplestore((ReturnSetInfo *) fcinfo->resultinfo,
-						  untransformRelOptions(array));
 
 	return (Datum) 0;
 }

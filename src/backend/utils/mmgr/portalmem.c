@@ -21,6 +21,7 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/portalcmds.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "utils/builtins.h"
@@ -1152,23 +1153,8 @@ pg_cursor(PG_FUNCTION_ARGS)
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	/*
-	 * build tupdesc for result tuples. This must match the definition of the
-	 * pg_cursors view in system_views.sql
-	 */
-	tupdesc = CreateTemplateTupleDesc(6);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
-					   TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "is_holdable",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_binary",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "is_scrollable",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "creation_time",
-					   TIMESTAMPTZOID, -1, 0);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
 	/*
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.
@@ -1177,6 +1163,9 @@ pg_cursor(PG_FUNCTION_ARGS)
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
 
 	/* generate junk in short-term context */
 	MemoryContextSwitchTo(oldcontext);
