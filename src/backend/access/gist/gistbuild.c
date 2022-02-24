@@ -467,6 +467,18 @@ gist_indexsortbuild(GISTBuildState *state)
 
 	pfree(levelstate->pages[0]);
 	pfree(levelstate);
+
+	/*
+	 * When we WAL-logged index pages, we must nonetheless fsync index files.
+	 * Since we're building outside shared buffers, a CHECKPOINT occurring
+	 * during the build has no way to flush the previously written data to
+	 * disk (indeed it won't know the index even exists).  A crash later on
+	 * would replay WAL from the checkpoint, therefore it wouldn't replay our
+	 * earlier WAL entries. If we do not fsync those pages here, they might
+	 * still not be on disk when the crash occurs.
+	 */
+	if (RelationNeedsWAL(state->indexrel))
+		smgrimmedsync(RelationGetSmgr(state->indexrel), MAIN_FORKNUM);
 }
 
 /*
