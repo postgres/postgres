@@ -1927,21 +1927,19 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
-		rsi->expectedDesc == NULL)
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsi->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	rsi->returnMode = SFRM_Materialize;
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("function returning record called in context "
-						"that cannot accept type record")));
+		elog(ERROR, "return type must be a row type");
 
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 
@@ -2039,13 +2037,15 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
-		rsi->expectedDesc == NULL)
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsi->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	rsi->returnMode = SFRM_Materialize;
 
@@ -2227,13 +2227,16 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsi->allowedModes & SFRM_Materialize) ||
 		rsi->expectedDesc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	rsi->returnMode = SFRM_Materialize;
 
@@ -2336,13 +2339,16 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsi->allowedModes & SFRM_Materialize) ||
 		rsi->expectedDesc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	rsi->returnMode = SFRM_Materialize;
 
@@ -3798,12 +3804,15 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0)
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsi->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	rsi->returnMode = SFRM_Materialize;
 

@@ -2414,12 +2414,15 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (prodesc->fn_retisset)
 	{
 		/* Check context before allowing the call to go through */
-		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-			(rsi->allowedModes & SFRM_Materialize) == 0)
+		if (!rsi || !IsA(rsi, ReturnSetInfo))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that "
-							"cannot accept a set")));
+					 errmsg("set-valued function called in context that cannot accept a set")));
+
+		if (!(rsi->allowedModes & SFRM_Materialize))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("materialize mode required, but it is not allowed in this context")));
 	}
 
 	activate_interpreter(prodesc->interp);
