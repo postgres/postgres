@@ -213,10 +213,9 @@ typedef struct LVRelState
 	/* Counters that follow are only for scanned_pages */
 	int64		tuples_deleted; /* # deleted from table */
 	int64		lpdead_items;	/* # deleted from indexes */
+	int64		live_tuples;	/* # live tuples remaining */
 	int64		recently_dead_tuples;	/* # dead, but not yet removable */
 	int64		missed_dead_tuples; /* # removable, but not removed */
-	int64		num_tuples;		/* total number of nonremovable tuples */
-	int64		live_tuples;	/* live tuples (reltuples estimate) */
 } LVRelState;
 
 /*
@@ -816,10 +815,9 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	vacrel->num_index_scans = 0;
 	vacrel->tuples_deleted = 0;
 	vacrel->lpdead_items = 0;
+	vacrel->live_tuples = 0;
 	vacrel->recently_dead_tuples = 0;
 	vacrel->missed_dead_tuples = 0;
-	vacrel->num_tuples = 0;
-	vacrel->live_tuples = 0;
 
 	vistest = GlobalVisTestFor(vacrel->rel);
 
@@ -1572,9 +1570,8 @@ lazy_scan_prune(LVRelState *vacrel,
 	HTSV_Result res;
 	int			tuples_deleted,
 				lpdead_items,
-				recently_dead_tuples,
-				num_tuples,
-				live_tuples;
+				live_tuples,
+				recently_dead_tuples;
 	int			nnewlpdead;
 	int			nfrozen;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
@@ -1589,9 +1586,8 @@ retry:
 	/* Initialize (or reset) page-level counters */
 	tuples_deleted = 0;
 	lpdead_items = 0;
-	recently_dead_tuples = 0;
-	num_tuples = 0;
 	live_tuples = 0;
+	recently_dead_tuples = 0;
 
 	/*
 	 * Prune all HOT-update chains in this page.
@@ -1788,8 +1784,7 @@ retry:
 		 * Check tuple left behind after pruning to see if needs to be frozen
 		 * now.
 		 */
-		num_tuples++;
-		prunestate->hastup = true;
+		prunestate->hastup = true;	/* page won't be truncatable */
 		if (heap_prepare_freeze_tuple(tuple.t_data,
 									  vacrel->relfrozenxid,
 									  vacrel->relminmxid,
@@ -1928,9 +1923,8 @@ retry:
 	/* Finally, add page-local counts to whole-VACUUM counts */
 	vacrel->tuples_deleted += tuples_deleted;
 	vacrel->lpdead_items += lpdead_items;
-	vacrel->recently_dead_tuples += recently_dead_tuples;
-	vacrel->num_tuples += num_tuples;
 	vacrel->live_tuples += live_tuples;
+	vacrel->recently_dead_tuples += recently_dead_tuples;
 }
 
 /*
@@ -1963,7 +1957,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 	OffsetNumber offnum,
 				maxoff;
 	int			lpdead_items,
-				num_tuples,
 				live_tuples,
 				recently_dead_tuples,
 				missed_dead_tuples;
@@ -1976,7 +1969,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 	*recordfreespace = false;	/* for now */
 
 	lpdead_items = 0;
-	num_tuples = 0;
 	live_tuples = 0;
 	recently_dead_tuples = 0;
 	missed_dead_tuples = 0;
@@ -2031,7 +2023,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 			vacrel->freeze_cutoffs_valid = false;
 		}
 
-		num_tuples++;
 		ItemPointerSet(&(tuple.t_self), blkno, offnum);
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
@@ -2096,7 +2087,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 			 * forever, for vanishingly little benefit.)
 			 */
 			*hastup = true;
-			num_tuples += lpdead_items;
 			missed_dead_tuples += lpdead_items;
 		}
 
@@ -2146,10 +2136,9 @@ lazy_scan_noprune(LVRelState *vacrel,
 	/*
 	 * Finally, add relevant page-local counts to whole-VACUUM counts
 	 */
+	vacrel->live_tuples += live_tuples;
 	vacrel->recently_dead_tuples += recently_dead_tuples;
 	vacrel->missed_dead_tuples += missed_dead_tuples;
-	vacrel->num_tuples += num_tuples;
-	vacrel->live_tuples += live_tuples;
 	if (missed_dead_tuples > 0)
 		vacrel->missed_dead_pages++;
 
