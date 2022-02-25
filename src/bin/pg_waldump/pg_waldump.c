@@ -207,15 +207,12 @@ search_directory(const char *directory, const char *fname)
 									 WalSegSz),
 							fname, WalSegSz);
 		}
+		else if (r < 0)
+			fatal_error("could not read file \"%s\": %s",
+						fname, strerror(errno));
 		else
-		{
-			if (errno != 0)
-				fatal_error("could not read file \"%s\": %s",
-							fname, strerror(errno));
-			else
-				fatal_error("could not read file \"%s\": read %d of %zu",
-							fname, r, (Size) XLOG_BLCKSZ);
-		}
+			fatal_error("could not read file \"%s\": read %d of %zu",
+						fname, r, (Size) XLOG_BLCKSZ);
 		close(fd);
 		return true;
 	}
