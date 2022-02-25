@@ -7141,7 +7141,7 @@ heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple)
  */
 bool
 heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
-						MultiXactId cutoff_multi, Buffer buf)
+						MultiXactId cutoff_multi)
 {
 	TransactionId xid;
 

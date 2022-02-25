@@ -2015,7 +2015,7 @@ lazy_scan_noprune(LVRelState *vacrel,
 		tupleheader = (HeapTupleHeader) PageGetItem(page, itemid);
 		if (heap_tuple_needs_freeze(tupleheader,
 									vacrel->FreezeLimit,
-									vacrel->MultiXactCutoff, buf))
+									vacrel->MultiXactCutoff))
 		{
 			if (vacrel->aggressive)
 			{
