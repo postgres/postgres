@@ -210,8 +210,10 @@ search_directory(const char *directory, const char *fname)
 	if (fd >= 0)
 	{
 		PGAlignedXLogBlock buf;
+		int			r;
 
-		if (read(fd, buf.data, XLOG_BLCKSZ) == XLOG_BLCKSZ)
+		r = read(fd, buf.data, XLOG_BLCKSZ);
+		if (r == XLOG_BLCKSZ)
 		{
 			XLogLongPageHeader longhdr = (XLogLongPageHeader) buf.data;
 
@@ -223,14 +225,12 @@ search_directory(const char *directory, const char *fname)
 									 WalSegSz),
 							fname, WalSegSz);
 		}
+		else if (r < 0)
+			fatal_error("could not read file \"%s\": %s",
+						fname, strerror(errno));
 		else
-		{
-			if (errno != 0)
-				fatal_error("could not read file \"%s\": %s",
-							fname, strerror(errno));
-			else
-				fatal_error("not enough data in file \"%s\"", fname);
-		}
+			fatal_error("not enough data in file \"%s\"", fname);
+
 		close(fd);
 		return true;
 	}
