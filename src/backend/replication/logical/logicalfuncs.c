@@ -40,7 +40,7 @@
 #include "utils/regproc.h"
 #include "utils/resowner.h"
 
-/* private date for writing out data */
+/* Private data for writing out data */
 typedef struct DecodingOutputState
 {
 	Tuplestorestate *tupstore;
