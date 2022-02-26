@@ -1262,6 +1262,23 @@ ShutdownPostgres(int code, Datum arg)
 	 * them explicitly.
 	 */
 	LockReleaseAll(USER_LOCKMETHOD, true);
+
+	/*
+	 * temp debugging aid to analyze 019_replslot_limit failures
+	 *
+	 * If an error were thrown outside of a transaction nothing up to now
+	 * would have released lwlocks. We probably will add an
+	 * LWLockReleaseAll(). But for now make it easier to understand such cases
+	 * by warning if any lwlocks are held.
+	 */
+#ifdef USE_ASSERT_CHECKING
+	{
+		int held_lwlocks = LWLockHeldCount();
+		if (held_lwlocks)
+			elog(WARNING, "holding %d lwlocks at the end of ShutdownPostgres()",
+				 held_lwlocks);
+	}
+#endif
 }
 
 

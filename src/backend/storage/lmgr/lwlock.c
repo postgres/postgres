@@ -1945,3 +1945,10 @@ LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
 	}
 	return false;
 }
+
+/* temp debugging aid to analyze 019_replslot_limit failures */
+int
+LWLockHeldCount(void)
+{
+	return num_held_lwlocks;
+}

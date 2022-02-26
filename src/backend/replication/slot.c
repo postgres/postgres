@@ -569,6 +569,10 @@ restart:
 		if (!s->in_use)
 			continue;
 
+		/* unlocked read of active_pid is ok for debugging purposes */
+		elog(DEBUG3, "temporary replication slot cleanup: %d in use, active_pid: %d",
+			 i, s->active_pid);
+
 		SpinLockAcquire(&s->mutex);
 		if (s->active_pid == MyProcPid)
 		{
@@ -629,6 +633,9 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
 
+	/* temp debugging aid to analyze 019_replslot_limit failures */
+	elog(DEBUG3, "replication slot drop: %s: begin", NameStr(slot->data.name));
+
 	/*
 	 * If some other backend ran this code concurrently with us, we might try
 	 * to delete a slot with a certain name while someone else was trying to
@@ -678,6 +685,9 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						path, tmppath)));
 	}
+
+	elog(DEBUG3, "replication slot drop: %s: removed on-disk",
+		 NameStr(slot->data.name));
 
 	/*
 	 * The slot is definitely gone.  Lock out concurrent scans of the array
@@ -734,6 +744,9 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 * a slot while we're still cleaning up the detritus of the old one.
 	 */
 	LWLockRelease(ReplicationSlotAllocationLock);
+
+	elog(DEBUG3, "replication slot drop: %s: done",
+		 NameStr(slot->data.name));
 }
 
 /*

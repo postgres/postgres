@@ -335,7 +335,23 @@ $node_standby3->start;
 $node_primary3->wait_for_catchup($node_standby3);
 my $senderpid = $node_primary3->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walsender'");
-like($senderpid, qr/^[0-9]+$/, "have walsender pid $senderpid");
+
+# We've seen occasional cases where multiple walsender pids are active. An
+# immediate shutdown may hide evidence of a locking bug. So if multiple
+# walsenders are observed, shut down in fast mode, and collect some more
+# information.
+if (not like($senderpid, qr/^[0-9]+$/, "have walsender pid $senderpid"))
+{
+	my ($stdout, $stderr);
+	$node_primary3->psql('postgres',
+						 "\\a\\t\nSELECT * FROM pg_stat_activity",
+						 stdout => \$stdout, stderr => \$stderr);
+	diag $stdout, $stderr;
+	$node_primary3->stop('fast');
+	$node_standby3->stop('fast');
+	die "could not determine walsender pid, can't continue";
+}
+
 my $receiverpid = $node_standby3->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walreceiver'");
 like($receiverpid, qr/^[0-9]+$/, "have walreceiver pid $receiverpid");
