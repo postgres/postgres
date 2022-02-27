@@ -571,7 +571,7 @@ restart:
 
 		/* unlocked read of active_pid is ok for debugging purposes */
 		elog(DEBUG3, "temporary replication slot cleanup: %d in use, active_pid: %d",
-			 i, s->active_pid);
+			 i, (int) s->active_pid);
 
 		SpinLockAcquire(&s->mutex);
 		if (s->active_pid == MyProcPid)
