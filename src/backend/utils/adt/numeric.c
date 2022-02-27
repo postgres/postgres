@@ -8605,31 +8605,25 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 			/* As above, need do nothing more when quotient digit is 0 */
 			if (qhat > 0)
 			{
+				NumericDigit *dividend_j = &dividend[j];
+
 				/*
 				 * Multiply the divisor by qhat, and subtract that from the
-				 * working dividend.  "carry" tracks the multiplication,
-				 * "borrow" the subtraction (could we fold these together?)
+				 * working dividend.  The multiplication and subtraction are
+				 * folded together here, noting that qhat <= NBASE (since it
+				 * might be one too large), and so the intermediate result
+				 * "tmp_result" is in the range [-NBASE^2, NBASE - 1], and
+				 * "borrow" is in the range [0, NBASE].
 				 */
-				carry = 0;
 				borrow = 0;
 				for (i = var2ndigits; i >= 0; i--)
 				{
-					carry += divisor[i] * qhat;
-					borrow -= carry % NBASE;
-					carry = carry / NBASE;
-					borrow += dividend[j + i];
-					if (borrow < 0)
-					{
-						dividend[j + i] = borrow + NBASE;
-						borrow = -1;
-					}
-					else
-					{
-						dividend[j + i] = borrow;
-						borrow = 0;
-					}
+					int			tmp_result;
+
+					tmp_result = dividend_j[i] - borrow - divisor[i] * qhat;
+					borrow = (NBASE - 1 - tmp_result) / NBASE;
+					dividend_j[i] = tmp_result + borrow * NBASE;
 				}
-				Assert(carry == 0);
 
 				/*
 				 * If we got a borrow out of the top dividend digit, then
@@ -8645,15 +8639,15 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 					carry = 0;
 					for (i = var2ndigits; i >= 0; i--)
 					{
-						carry += dividend[j + i] + divisor[i];
+						carry += dividend_j[i] + divisor[i];
 						if (carry >= NBASE)
 						{
-							dividend[j + i] = carry - NBASE;
+							dividend_j[i] = carry - NBASE;
 							carry = 1;
 						}
 						else
 						{
-							dividend[j + i] = carry;
+							dividend_j[i] = carry;
 							carry = 0;
 						}
 					}
