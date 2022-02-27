@@ -137,8 +137,14 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h '$(DESTDIR)$(includedir_internal)'
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
-installcheck:
-	$(MAKE) -C test $@
+test-build:
+	$(MAKE) -C test all
+
+check: test-build all
+	PATH="$(CURDIR)/test:$$PATH" && $(prove_check)
+
+installcheck: test-build all
+	PATH="$(CURDIR)/test:$$PATH" && $(prove_installcheck)
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)' '$(DESTDIR)$(datadir)'
@@ -153,6 +159,7 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	$(MAKE) -C test $@
+	rm -rf tmp_check
 	rm -f $(OBJS) pthread.h libpq-refs-stamp
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
