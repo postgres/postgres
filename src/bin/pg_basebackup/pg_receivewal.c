@@ -240,7 +240,7 @@ get_destination_dir(char *dest_folder)
 	dir = opendir(dest_folder);
 	if (dir == NULL)
 	{
-		pg_log_error("could not open directory \"%s\": %m", basedir);
+		pg_log_error("could not open directory \"%s\": %m", dest_folder);
 		exit(1);
 	}
 
