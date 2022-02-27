@@ -551,6 +551,8 @@ static void div_var(const NumericVar *var1, const NumericVar *var2,
 					int rscale, bool round);
 static void div_var_fast(const NumericVar *var1, const NumericVar *var2,
 						 NumericVar *result, int rscale, bool round);
+static void div_var_int(const NumericVar *var, int ival, int ival_weight,
+						NumericVar *result, int rscale, bool round);
 static int	select_div_scale(const NumericVar *var1, const NumericVar *var2);
 static void mod_var(const NumericVar *var1, const NumericVar *var2,
 					NumericVar *result);
@@ -8451,8 +8453,33 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 				 errmsg("division by zero")));
 
 	/*
-	 * Now result zero check
+	 * If the divisor has just one or two digits, delegate to div_var_int(),
+	 * which uses fast short division.
 	 */
+	if (var2ndigits <= 2)
+	{
+		int			idivisor;
+		int			idivisor_weight;
+
+		idivisor = var2->digits[0];
+		idivisor_weight = var2->weight;
+		if (var2ndigits == 2)
+		{
+			idivisor = idivisor * NBASE + var2->digits[1];
+			idivisor_weight--;
+		}
+		if (var2->sign == NUMERIC_NEG)
+			idivisor = -idivisor;
+
+		div_var_int(var1, idivisor, idivisor_weight, result, rscale, round);
+		return;
+	}
+
+	/*
+	 * Otherwise, perform full long division.
+	 */
+
+	/* Result zero check */
 	if (var1ndigits == 0)
 	{
 		zero_var(result);
@@ -8510,23 +8537,6 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	alloc_var(result, res_ndigits);
 	res_digits = result->digits;
 
-	if (var2ndigits == 1)
-	{
-		/*
-		 * If there's only a single divisor digit, we can use a fast path (cf.
-		 * Knuth section 4.3.1 exercise 16).
-		 */
-		divisor1 = divisor[1];
-		carry = 0;
-		for (i = 0; i < res_ndigits; i++)
-		{
-			carry = carry * NBASE + dividend[i + 1];
-			res_digits[i] = carry / divisor1;
-			carry = carry % divisor1;
-		}
-	}
-	else
-	{
 		/*
 		 * The full multiple-place algorithm is taken from Knuth volume 2,
 		 * Algorithm 4.3.1D.
@@ -8659,7 +8669,6 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 			/* And we're done with this quotient digit */
 			res_digits[j] = qhat;
 		}
-	}
 
 	pfree(dividend);
 
@@ -8735,8 +8744,33 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 				 errmsg("division by zero")));
 
 	/*
-	 * Now result zero check
+	 * If the divisor has just one or two digits, delegate to div_var_int(),
+	 * which uses fast short division.
 	 */
+	if (var2ndigits <= 2)
+	{
+		int			idivisor;
+		int			idivisor_weight;
+
+		idivisor = var2->digits[0];
+		idivisor_weight = var2->weight;
+		if (var2ndigits == 2)
+		{
+			idivisor = idivisor * NBASE + var2->digits[1];
+			idivisor_weight--;
+		}
+		if (var2->sign == NUMERIC_NEG)
+			idivisor = -idivisor;
+
+		div_var_int(var1, idivisor, idivisor_weight, result, rscale, round);
+		return;
+	}
+
+	/*
+	 * Otherwise, perform full long division.
+	 */
+
+	/* Result zero check */
 	if (var1ndigits == 0)
 	{
 		zero_var(result);
@@ -9004,6 +9038,118 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 		trunc_var(result, rscale);
 
 	/* Strip leading and trailing zeroes */
+	strip_var(result);
+}
+
+
+/*
+ * div_var_int() -
+ *
+ *	Divide a numeric variable by a 32-bit integer with the specified weight.
+ *	The quotient var / (ival * NBASE^ival_weight) is stored in result.
+ */
+static void
+div_var_int(const NumericVar *var, int ival, int ival_weight,
+			NumericVar *result, int rscale, bool round)
+{
+	NumericDigit *var_digits = var->digits;
+	int			var_ndigits = var->ndigits;
+	int			res_sign;
+	int			res_weight;
+	int			res_ndigits;
+	NumericDigit *res_buf;
+	NumericDigit *res_digits;
+	uint32		divisor;
+	int			i;
+
+	/* Guard against division by zero */
+	if (ival == 0)
+		ereport(ERROR,
+				errcode(ERRCODE_DIVISION_BY_ZERO),
+				errmsg("division by zero"));
+
+	/* Result zero check */
+	if (var_ndigits == 0)
+	{
+		zero_var(result);
+		result->dscale = rscale;
+		return;
+	}
+
+	/*
+	 * Determine the result sign, weight and number of digits to calculate.
+	 * The weight figured here is correct if the emitted quotient has no
+	 * leading zero digits; otherwise strip_var() will fix things up.
+	 */
+	if (var->sign == NUMERIC_POS)
+		res_sign = ival > 0 ? NUMERIC_POS : NUMERIC_NEG;
+	else
+		res_sign = ival > 0 ? NUMERIC_NEG : NUMERIC_POS;
+	res_weight = var->weight - ival_weight;
+	/* The number of accurate result digits we need to produce: */
+	res_ndigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS;
+	/* ... but always at least 1 */
+	res_ndigits = Max(res_ndigits, 1);
+	/* If rounding needed, figure one more digit to ensure correct result */
+	if (round)
+		res_ndigits++;
+
+	res_buf = digitbuf_alloc(res_ndigits + 1);
+	res_buf[0] = 0;				/* spare digit for later rounding */
+	res_digits = res_buf + 1;
+
+	/*
+	 * Now compute the quotient digits.  This is the short division algorithm
+	 * described in Knuth volume 2, section 4.3.1 exercise 16, except that we
+	 * allow the divisor to exceed the internal base.
+	 *
+	 * In this algorithm, the carry from one digit to the next is at most
+	 * divisor - 1.  Therefore, while processing the next digit, carry may
+	 * become as large as divisor * NBASE - 1, and so it requires a 64-bit
+	 * integer if this exceeds UINT_MAX.
+	 */
+	divisor = Abs(ival);
+
+	if (divisor <= UINT_MAX / NBASE)
+	{
+		/* carry cannot overflow 32 bits */
+		uint32		carry = 0;
+
+		for (i = 0; i < res_ndigits; i++)
+		{
+			carry = carry * NBASE + (i < var_ndigits ? var_digits[i] : 0);
+			res_digits[i] = (NumericDigit) (carry / divisor);
+			carry = carry % divisor;
+		}
+	}
+	else
+	{
+		/* carry may exceed 32 bits */
+		uint64		carry = 0;
+
+		for (i = 0; i < res_ndigits; i++)
+		{
+			carry = carry * NBASE + (i < var_ndigits ? var_digits[i] : 0);
+			res_digits[i] = (NumericDigit) (carry / divisor);
+			carry = carry % divisor;
+		}
+	}
+
+	/* Store the quotient in result */
+	digitbuf_free(result->buf);
+	result->ndigits = res_ndigits;
+	result->buf = res_buf;
+	result->digits = res_digits;
+	result->weight = res_weight;
+	result->sign = res_sign;
+
+	/* Round or truncate to target rscale (and set result->dscale) */
+	if (round)
+		round_var(result, rscale);
+	else
+		trunc_var(result, rscale);
+
+	/* Strip leading/trailing zeroes */
 	strip_var(result);
 }
 
@@ -9783,7 +9929,7 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 {
 	NumericVar	x;
 	NumericVar	elem;
-	NumericVar	ni;
+	int			ni;
 	double		val;
 	int			dweight;
 	int			ndiv2;
@@ -9792,7 +9938,6 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	init_var(&x);
 	init_var(&elem);
-	init_var(&ni);
 
 	set_var_from_var(arg, &x);
 
@@ -9820,15 +9965,13 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	/*
 	 * Reduce x to the range -0.01 <= x <= 0.01 (approximately) by dividing by
-	 * 2^n, to improve the convergence rate of the Taylor series.
+	 * 2^ndiv2, to improve the convergence rate of the Taylor series.
+	 *
+	 * Note that the overflow check above ensures that Abs(x) < 6000, which
+	 * means that ndiv2 <= 20 here.
 	 */
 	if (Abs(val) > 0.01)
 	{
-		NumericVar	tmp;
-
-		init_var(&tmp);
-		set_var_from_var(&const_two, &tmp);
-
 		ndiv2 = 1;
 		val /= 2;
 
@@ -9836,13 +9979,10 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 		{
 			ndiv2++;
 			val /= 2;
-			add_var(&tmp, &tmp, &tmp);
 		}
 
 		local_rscale = x.dscale + ndiv2;
-		div_var_fast(&x, &tmp, &x, local_rscale, true);
-
-		free_var(&tmp);
+		div_var_int(&x, 1 << ndiv2, 0, &x, local_rscale, true);
 	}
 	else
 		ndiv2 = 0;
@@ -9870,16 +10010,16 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 	add_var(&const_one, &x, result);
 
 	mul_var(&x, &x, &elem, local_rscale);
-	set_var_from_var(&const_two, &ni);
-	div_var_fast(&elem, &ni, &elem, local_rscale, true);
+	ni = 2;
+	div_var_int(&elem, ni, 0, &elem, local_rscale, true);
 
 	while (elem.ndigits != 0)
 	{
 		add_var(result, &elem, result);
 
 		mul_var(&elem, &x, &elem, local_rscale);
-		add_var(&ni, &const_one, &ni);
-		div_var_fast(&elem, &ni, &elem, local_rscale, true);
+		ni++;
+		div_var_int(&elem, ni, 0, &elem, local_rscale, true);
 	}
 
 	/*
@@ -9899,7 +10039,6 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	free_var(&x);
 	free_var(&elem);
-	free_var(&ni);
 }
 
 
@@ -9993,7 +10132,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 {
 	NumericVar	x;
 	NumericVar	xx;
-	NumericVar	ni;
+	int			ni;
 	NumericVar	elem;
 	NumericVar	fact;
 	int			nsqrt;
@@ -10012,7 +10151,6 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	init_var(&x);
 	init_var(&xx);
-	init_var(&ni);
 	init_var(&elem);
 	init_var(&fact);
 
@@ -10073,13 +10211,13 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	set_var_from_var(result, &xx);
 	mul_var(result, result, &x, local_rscale);
 
-	set_var_from_var(&const_one, &ni);
+	ni = 1;
 
 	for (;;)
 	{
-		add_var(&ni, &const_two, &ni);
+		ni += 2;
 		mul_var(&xx, &x, &xx, local_rscale);
-		div_var_fast(&xx, &ni, &elem, local_rscale, true);
+		div_var_int(&xx, ni, 0, &elem, local_rscale, true);
 
 		if (elem.ndigits == 0)
 			break;
@@ -10095,7 +10233,6 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	free_var(&x);
 	free_var(&xx);
-	free_var(&ni);
 	free_var(&elem);
 	free_var(&fact);
 }
