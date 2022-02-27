@@ -1,0 +1,244 @@
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
+use strict;
+use warnings;
+
+use PostgreSQL::Test::Utils;
+use Test::More;
+use IPC::Run;
+
+
+# List of URIs tests. For each test the first element is the input string, the
+# second the expected stdout and the third the expected stderr.
+my @tests = (
+	[
+		q{postgresql://uri-user:secret@host:12345/db},
+		q{user='uri-user' password='secret' dbname='db' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://uri-user@host:12345/db},
+		q{user='uri-user' dbname='db' host='host' port='12345' (inet)}, q{},
+	],
+	[
+		q{postgresql://uri-user@host/db},
+		q{user='uri-user' dbname='db' host='host' (inet)}, q{},
+	],
+	[
+		q{postgresql://host:12345/db},
+		q{dbname='db' host='host' port='12345' (inet)}, q{},
+	],
+	[ q{postgresql://host/db}, q{dbname='db' host='host' (inet)}, q{}, ],
+	[
+		q{postgresql://uri-user@host:12345/},
+		q{user='uri-user' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://uri-user@host/},
+		q{user='uri-user' host='host' (inet)},
+		q{},
+	],
+	[ q{postgresql://uri-user@},   q{user='uri-user' (local)},         q{}, ],
+	[ q{postgresql://host:12345/}, q{host='host' port='12345' (inet)}, q{}, ],
+	[ q{postgresql://host:12345},  q{host='host' port='12345' (inet)}, q{}, ],
+	[ q{postgresql://host/db},     q{dbname='db' host='host' (inet)},  q{}, ],
+	[ q{postgresql://host/},       q{host='host' (inet)},              q{}, ],
+	[ q{postgresql://host},        q{host='host' (inet)},              q{}, ],
+	[ q{postgresql://},            q{(local)},                         q{}, ],
+	[
+		q{postgresql://?hostaddr=127.0.0.1}, q{hostaddr='127.0.0.1' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://example.com?hostaddr=63.1.2.4},
+		q{host='example.com' hostaddr='63.1.2.4' (inet)},
+		q{},
+	],
+	[ q{postgresql://%68ost/}, q{host='host' (inet)}, q{}, ],
+	[
+		q{postgresql://host/db?user=uri-user},
+		q{user='uri-user' dbname='db' host='host' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://host/db?user=uri-user&port=12345},
+		q{user='uri-user' dbname='db' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://host/db?u%73er=someotheruser&port=12345},
+		q{user='someotheruser' dbname='db' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://host/db?u%7aer=someotheruser&port=12345}, q{},
+		q{uri-regress: invalid URI query parameter: "uzer"},
+	],
+	[
+		q{postgresql://host:12345?user=uri-user},
+		q{user='uri-user' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://host?user=uri-user},
+		q{user='uri-user' host='host' (inet)},
+		q{},
+	],
+	[ q{postgresql://host?}, q{host='host' (inet)}, q{}, ],
+	[
+		q{postgresql://[::1]:12345/db},
+		q{dbname='db' host='::1' port='12345' (inet)},
+		q{},
+	],
+	[ q{postgresql://[::1]/db}, q{dbname='db' host='::1' (inet)}, q{}, ],
+	[
+		q{postgresql://[2001:db8::1234]/}, q{host='2001:db8::1234' (inet)},
+		q{},
+	],
+	[
+		q{postgresql://[200z:db8::1234]/}, q{host='200z:db8::1234' (inet)},
+		q{},
+	],
+	[ q{postgresql://[::1]}, q{host='::1' (inet)},   q{}, ],
+	[ q{postgres://},        q{(local)},             q{}, ],
+	[ q{postgres:///},       q{(local)},             q{}, ],
+	[ q{postgres:///db},     q{dbname='db' (local)}, q{}, ],
+	[
+		q{postgres://uri-user@/db}, q{user='uri-user' dbname='db' (local)},
+		q{},
+	],
+	[
+		q{postgres://?host=/path/to/socket/dir},
+		q{host='/path/to/socket/dir' (local)},
+		q{},
+	],
+	[
+		q{postgresql://host?uzer=}, q{},
+		q{uri-regress: invalid URI query parameter: "uzer"},
+	],
+	[
+		q{postgre://},
+		q{},
+		q{uri-regress: missing "=" after "postgre://" in connection info string},
+	],
+	[
+		q{postgres://[::1},
+		q{},
+		q{uri-regress: end of string reached when looking for matching "]" in IPv6 host address in URI: "postgres://[::1"},
+	],
+	[
+		q{postgres://[]},
+		q{},
+		q{uri-regress: IPv6 host address may not be empty in URI: "postgres://[]"},
+	],
+	[
+		q{postgres://[::1]z},
+		q{},
+		q{uri-regress: unexpected character "z" at position 17 in URI (expected ":" or "/"): "postgres://[::1]z"},
+	],
+	[
+		q{postgresql://host?zzz},
+		q{},
+		q{uri-regress: missing key/value separator "=" in URI query parameter: "zzz"},
+	],
+	[
+		q{postgresql://host?value1&value2},
+		q{},
+		q{uri-regress: missing key/value separator "=" in URI query parameter: "value1"},
+	],
+	[
+		q{postgresql://host?key=key=value},
+		q{},
+		q{uri-regress: extra key/value separator "=" in URI query parameter: "key"},
+	],
+	[
+		q{postgres://host?dbname=%XXfoo}, q{},
+		q{uri-regress: invalid percent-encoded token: "%XXfoo"},
+	],
+	[
+		q{postgresql://a%00b},
+		q{},
+		q{uri-regress: forbidden value %00 in percent-encoded value: "a%00b"},
+	],
+	[
+		q{postgresql://%zz}, q{},
+		q{uri-regress: invalid percent-encoded token: "%zz"},
+	],
+	[
+		q{postgresql://%1}, q{},
+		q{uri-regress: invalid percent-encoded token: "%1"},
+	],
+	[
+		q{postgresql://%}, q{},
+		q{uri-regress: invalid percent-encoded token: "%"},
+	],
+	[ q{postgres://@host},   q{host='host' (inet)},   q{}, ],
+	[ q{postgres://host:/},  q{host='host' (inet)},   q{}, ],
+	[ q{postgres://:12345/}, q{port='12345' (local)}, q{}, ],
+	[
+		q{postgres://otheruser@?host=/no/such/directory},
+		q{user='otheruser' host='/no/such/directory' (local)},
+		q{},
+	],
+	[
+		q{postgres://otheruser@/?host=/no/such/directory},
+		q{user='otheruser' host='/no/such/directory' (local)},
+		q{},
+	],
+	[
+		q{postgres://otheruser@:12345?host=/no/such/socket/path},
+		q{user='otheruser' host='/no/such/socket/path' port='12345' (local)},
+		q{},
+	],
+	[
+		q{postgres://otheruser@:12345/db?host=/path/to/socket},
+		q{user='otheruser' dbname='db' host='/path/to/socket' port='12345' (local)},
+		q{},
+	],
+	[
+		q{postgres://:12345/db?host=/path/to/socket},
+		q{dbname='db' host='/path/to/socket' port='12345' (local)},
+		q{},
+	],
+	[
+		q{postgres://:12345?host=/path/to/socket},
+		q{host='/path/to/socket' port='12345' (local)},
+		q{},
+	],
+	[
+		q{postgres://%2Fvar%2Flib%2Fpostgresql/dbname},
+		q{dbname='dbname' host='/var/lib/postgresql' (local)},
+		q{},
+	]);
+
+# test to run for each of the above test definitions
+sub test_uri
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my $uri;
+	my %expect;
+	my %result;
+
+	($uri, $expect{stdout}, $expect{stderr}) = @$_;
+
+	$expect{'exit'} = $expect{stderr} eq '';
+
+	my $cmd = [ 'uri-regress', $uri ];
+	$result{exit} = IPC::Run::run $cmd, '>', \$result{stdout}, '2>',
+	  \$result{stderr};
+
+	chomp($result{stdout});
+	chomp($result{stderr});
+
+	# use is_deeply so there's one test result for each test above, without
+	# loosing the information whether stdout/stderr mismatched.
+	is_deeply(\%result, \%expect, $uri);
+}
+
+foreach (@tests)
+{
+	test_uri($_);
+}
+
+done_testing();

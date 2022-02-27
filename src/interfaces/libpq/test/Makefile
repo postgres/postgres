@@ -1,3 +1,5 @@
+# src/interfaces/libpq/test/Makefile
+
 subdir = src/interfaces/libpq/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
@@ -13,10 +15,5 @@ PROGS = uri-regress
 
 all: $(PROGS)
 
-installcheck: all
-	SRCDIR='$(top_srcdir)' SUBDIR='$(subdir)' \
-		   $(PERL) $(top_srcdir)/$(subdir)/regress.pl
-
 clean distclean maintainer-clean:
 	rm -f $(PROGS) *.o
-	rm -f regress.out regress.diff
