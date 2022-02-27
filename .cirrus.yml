@@ -565,20 +565,6 @@ task:
       time make -s -j${BUILD_JOBS} world-bin
 
   ###
-  # Verify docs can be built
-  ###
-  # XXX: Only do this if there have been changes in doc/ since last build
-  always:
-    docs_build_script: |
-      time ./configure \
-        --cache gcc.cache \
-        CC="ccache gcc" \
-        CXX="ccache g++" \
-        CLANG="ccache clang"
-      make -s -j${BUILD_JOBS} clean
-      time make -s -j${BUILD_JOBS} -C doc
-
-  ###
   # Verify headerscheck / cpluspluscheck succeed
   #
   # - Don't use ccache, the files are uncacheable, polluting ccache's
@@ -603,3 +589,35 @@ task:
 
   always:
     upload_caches: ccache
+
+
+###
+# Verify docs can be built
+###
+
+task:
+  name: Documentation
+
+  env:
+    CPUS: 1
+    BUILD_JOBS: 1
+
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(docs|html).*'
+  skip: "!changesInclude('.cirrus.yml', 'doc/**')"
+
+  container:
+    image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
+    cpu: $CPUS
+    memory: 2G
+
+  sysinfo_script: |
+    id
+    uname -a
+    cat /proc/cmdline
+    ulimit -a -H && ulimit -a -S
+    export
+
+  # Exercise HTML and other docs:
+  docs_build_script: |
+    time ./configure
+    make -s -j${BUILD_JOBS} -C doc
