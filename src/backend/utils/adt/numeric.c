@@ -8323,7 +8323,7 @@ mul_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	 */
 	for (i1 = Min(var1ndigits - 1, res_ndigits - 3); i1 >= 0; i1--)
 	{
-		int			var1digit = var1digits[i1];
+		NumericDigit var1digit = var1digits[i1];
 
 		if (var1digit == 0)
 			continue;
@@ -8908,13 +8908,22 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 			 * which would make the new value simply div[qi] mod vardigits[0].
 			 * The lower-order terms in qdigit can change this result by not
 			 * more than about twice INT_MAX/NBASE, so overflow is impossible.
+			 *
+			 * This inner loop is the performance bottleneck for division, so
+			 * code it in the same way as the inner loop of mul_var() so that
+			 * it can be auto-vectorized.  We cast qdigit to NumericDigit
+			 * before multiplying to allow the compiler to generate more
+			 * efficient code (using 16-bit multiplication), which is safe
+			 * since we know that the quotient digit is off by at most one, so
+			 * there is no overflow risk.
 			 */
 			if (qdigit != 0)
 			{
 				int			istop = Min(var2ndigits, div_ndigits - qi + 1);
+				int		   *div_qi = &div[qi];
 
 				for (i = 0; i < istop; i++)
-					div[qi + i] -= qdigit * var2digits[i];
+					div_qi[i] -= ((NumericDigit) qdigit) * var2digits[i];
 			}
 		}
 
