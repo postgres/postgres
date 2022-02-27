@@ -1,0 +1,23 @@
+#! /bin/sh
+# Copy HTML which differ between $old and $new into $outdir
+set -e
+
+old=$1
+new=$2
+outdir=$3
+
+mkdir "$outdir"
+cp "$new"/src/sgml/html/*.css "$new"/src/sgml/html/*.svg "$outdir"
+
+changed=`git diff --no-index --name-only "$old"/src/sgml/html "$new"/src/sgml/html` ||
+	[ $? -eq 1 ]
+
+for f in $changed
+do
+	# Avoid removed files
+	[ -f "$f" ] || continue
+
+	cp -v "$f" "$outdir"
+done
+
+exit 0

@@ -592,7 +592,7 @@ task:
 
 
 ###
-# Verify docs can be built
+# Verify docs can be built, and (only on cfbot) upload changed docs as artifacts
 ###
 
 task:
@@ -603,7 +603,7 @@ task:
     BUILD_JOBS: 1
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(docs|html).*'
-  skip: "!changesInclude('.cirrus.yml', 'doc/**')"
+  #skip: "!changesInclude('.cirrus.yml', 'doc/**', 'src/tools/ci/copy-changed-docs')"
 
   container:
     image: $CONTAINER_REPO/linux_debian_bullseye_ci:latest
@@ -616,8 +616,23 @@ task:
     cat /proc/cmdline
     ulimit -a -H && ulimit -a -S
     export
+    git diff --name-only "$BASE_COMMIT"
 
   # Exercise HTML and other docs:
   docs_build_script: |
     time ./configure
     make -s -j${BUILD_JOBS} -C doc
+    cp -r doc new-docs
+
+    # Build HTML docs from the base commit.
+    git checkout "$BASE_COMMIT" -- doc
+    #html-stamp
+    make -s -C doc clean
+    make -s -C doc html
+    cp -r doc old-docs
+
+  copy_changed_docs_script: |
+    src/tools/ci/copy-changed-docs "old-docs" "new-docs" "html_docs"
+
+  html_docs_artifacts:
+    paths: ['html_docs/*.html', 'html_docs/*.png', 'html_docs/*.css']
