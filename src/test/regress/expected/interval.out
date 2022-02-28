@@ -396,6 +396,10 @@ SELECT justify_days(interval '6 months 36 days 5 hours 4 minutes 3 seconds') as 
  @ 7 mons 6 days 5 hours 4 mins 3 secs
 (1 row)
 
+SELECT justify_hours(interval '2147483647 days 24 hrs');
+ERROR:  interval out of range
+SELECT justify_days(interval '2147483647 months 30 days');
+ERROR:  interval out of range
 -- test justify_interval()
 SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
   1 month -1 hour   
@@ -403,6 +407,38 @@ SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
  @ 29 days 23 hours
 (1 row)
 
+SELECT justify_interval(interval '2147483647 days 24 hrs');
+       justify_interval        
+-------------------------------
+ @ 5965232 years 4 mons 8 days
+(1 row)
+
+SELECT justify_interval(interval '-2147483648 days -24 hrs');
+         justify_interval          
+-----------------------------------
+ @ 5965232 years 4 mons 9 days ago
+(1 row)
+
+SELECT justify_interval(interval '2147483647 months 30 days');
+ERROR:  interval out of range
+SELECT justify_interval(interval '-2147483648 months -30 days');
+ERROR:  interval out of range
+SELECT justify_interval(interval '2147483647 months 30 days -24 hrs');
+         justify_interval         
+----------------------------------
+ @ 178956970 years 7 mons 29 days
+(1 row)
+
+SELECT justify_interval(interval '-2147483648 months -30 days 24 hrs');
+           justify_interval           
+--------------------------------------
+ @ 178956970 years 8 mons 29 days ago
+(1 row)
+
+SELECT justify_interval(interval '2147483647 months -30 days 1440 hrs');
+ERROR:  interval out of range
+SELECT justify_interval(interval '-2147483648 months 30 days -1440 hrs');
+ERROR:  interval out of range
 -- test fractional second input, and detection of duplicate units
 SET DATESTYLE = 'ISO';
 SET IntervalStyle TO postgres;
