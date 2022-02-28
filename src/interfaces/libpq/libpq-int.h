@@ -393,6 +393,7 @@ struct pg_conn
 	char	   *ssl_min_protocol_version;	/* minimum TLS protocol version */
 	char	   *ssl_max_protocol_version;	/* maximum TLS protocol version */
 	char	   *target_session_attrs;	/* desired session properties */
+	char	   *require_auth;	/* name of the expected auth method */
 
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
@@ -454,6 +455,9 @@ struct pg_conn
 	bool		write_failed;	/* have we had a write failure on sock? */
 	char	   *write_err_msg;	/* write error message, or NULL if OOM */
 
+	bool		auth_required;	/* require an authentication challenge from the server? */
+	uint32		allowed_auth_methods;	/* bitmask of acceptable AuthRequest codes */
+
 	/* Transient state needed while establishing connection */
 	PGTargetServerType target_server_type;	/* desired session properties */
 	bool		try_next_addr;	/* time to advance to next address/host? */
@@ -508,6 +512,9 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	bool		error_result;	/* do we need to make an ERROR result? */
 	PGresult   *next_result;	/* next result (used in single-row mode) */
+
+	bool		client_finished_auth; /* have we finished our half of the
+									   * authentication exchange? */
 
 	/* Assorted state for SASL, SSL, GSS, etc */
 	const pg_fe_sasl_mech *sasl;

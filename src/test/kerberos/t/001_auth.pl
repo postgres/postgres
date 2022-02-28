@@ -307,6 +307,24 @@ test_query(
 	'gssencmode=require',
 	'sending 100K lines works');
 
+# require_auth=gss should succeed...
+$node->connect_ok(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=disable require_auth=gss",
+	"GSS authentication can be requested: works with GSS auth without encryption");
+$node->connect_ok(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=gss",
+	"GSS authentication can be requested: works with GSS auth with encryption");
+
+# ...and require_auth=sspi should fail.
+$node->connect_fails(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=disable require_auth=sspi",
+	"SSPI authentication can be requested: fails with GSS auth without encryption",
+	expected_stderr => qr/server requested GSSAPI authentication/);
+$node->connect_fails(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=sspi",
+	"SSPI authentication can be requested: fails with GSS auth with encryption",
+	expected_stderr => qr/server did not complete authentication/);
+
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',
 	qq{hostgssenc all all $hostaddr/32 gss map=mymap});
@@ -334,6 +352,14 @@ test_access(
 );
 test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=disable',
 	'fails with GSS encryption disabled and hostgssenc hba');
+
+# require_auth=gss should succeed.
+$node->connect_ok(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=gss",
+	"GSS authentication can be requested: works with GSS encryption");
+$node->connect_ok(
+	$node->connstr('postgres') . " user=test1 host=$host hostaddr=$hostaddr gssencmode=require require_auth=gss,scram-sha-256",
+	"multiple authentication types can be requested: works with GSS encryption");
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',

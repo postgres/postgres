@@ -477,7 +477,6 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
-
 /*
  * OpenSSL-specific wrapper around
  * pq_verify_peer_name_matches_certificate_name(), converting the ASN1_STRING
