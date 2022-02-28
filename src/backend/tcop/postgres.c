@@ -43,7 +43,6 @@
 #include "commands/async.h"
 #include "commands/prepare.h"
 #include "common/pg_prng.h"
-#include "executor/spi.h"
 #include "jit/jit.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -4263,7 +4262,6 @@ PostgresMain(const char *dbname, const char *username)
 			WalSndErrorCleanup();
 
 		PortalErrorCleanup();
-		SPICleanup();
 
 		/*
 		 * We can't release replication slots inside AbortTransaction() as we

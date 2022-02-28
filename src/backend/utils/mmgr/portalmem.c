@@ -1261,7 +1261,7 @@ HoldPinnedPortals(void)
 			 */
 			if (portal->strategy != PORTAL_ONE_SELECT)
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("cannot perform transaction commands inside a cursor loop that is not read-only")));
 
 			/* Verify it's in a suitable state to be held */

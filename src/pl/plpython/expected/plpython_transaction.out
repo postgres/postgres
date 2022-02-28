@@ -55,8 +55,11 @@ for i in range(0, 10):
 return 1
 $$;
 SELECT transaction_test2();
-ERROR:  invalid transaction termination
-CONTEXT:  PL/Python function "transaction_test2"
+ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "transaction_test2", line 5, in <module>
+    plpy.commit()
+PL/Python function "transaction_test2"
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -70,7 +73,7 @@ plpy.execute("CALL transaction_test1()")
 return 1
 $$;
 SELECT transaction_test3();
-ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+ERROR:  spiexceptions.InvalidTransactionTermination: spiexceptions.InvalidTransactionTermination: invalid transaction termination
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "transaction_test3", line 2, in <module>
     plpy.execute("CALL transaction_test1()")
@@ -88,7 +91,7 @@ plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
 return 1
 $$;
 SELECT transaction_test4();
-ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+ERROR:  spiexceptions.InvalidTransactionTermination: spiexceptions.InvalidTransactionTermination: invalid transaction termination
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "transaction_test4", line 2, in <module>
     plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
@@ -100,8 +103,11 @@ s.enter()
 plpy.commit()
 $$;
 WARNING:  forcibly aborting a subtransaction that has not been exited
-ERROR:  cannot commit while a subtransaction is active
-CONTEXT:  PL/Python anonymous code block
+ERROR:  spiexceptions.InvalidTransactionTermination: cannot commit while a subtransaction is active
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 4, in <module>
+    plpy.commit()
+PL/Python anonymous code block
 -- commit inside cursor loop
 CREATE TABLE test2 (x int);
 INSERT INTO test2 VALUES (0), (1), (2), (3), (4);
@@ -190,6 +196,55 @@ SELECT * FROM pg_cursors;
  name | statement | is_holdable | is_binary | is_scrollable | creation_time 
 ------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
+
+-- check handling of an error during COMMIT
+CREATE TABLE testpk (id int PRIMARY KEY);
+CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
+DO LANGUAGE plpythonu $$
+# this insert will fail during commit:
+plpy.execute("INSERT INTO testfk VALUES (0)")
+plpy.commit()
+plpy.warning('should not get here')
+$$;
+ERROR:  spiexceptions.ForeignKeyViolation: insert or update on table "testfk" violates foreign key constraint "testfk_f1_fkey"
+DETAIL:  Key (f1)=(0) is not present in table "testpk".
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 4, in <module>
+    plpy.commit()
+PL/Python anonymous code block
+SELECT * FROM testpk;
+ id 
+----
+(0 rows)
+
+SELECT * FROM testfk;
+ f1 
+----
+(0 rows)
+
+DO LANGUAGE plpythonu $$
+# this insert will fail during commit:
+plpy.execute("INSERT INTO testfk VALUES (0)")
+try:
+    plpy.commit()
+except Exception as e:
+    plpy.info('sqlstate: %s' % (e.sqlstate))
+# these inserts should work:
+plpy.execute("INSERT INTO testpk VALUES (1)")
+plpy.execute("INSERT INTO testfk VALUES (1)")
+$$;
+INFO:  sqlstate: 23503
+SELECT * FROM testpk;
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM testfk;
+ f1 
+----
+  1
+(1 row)
 
 DROP TABLE test1;
 DROP TABLE test2;
