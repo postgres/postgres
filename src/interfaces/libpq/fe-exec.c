@@ -1380,10 +1380,7 @@ pqAppendCmdQueueEntry(PGconn *conn, PGcmdQueueEntry *entry)
 			 * state, we don't have to do anything.
 			 */
 			if (conn->asyncStatus == PGASYNC_IDLE)
-			{
-				pqClearConnErrorState(conn);
 				pqPipelineProcessQueue(conn);
-			}
 			break;
 	}
 }
@@ -1730,8 +1727,10 @@ PQsendQueryStart(PGconn *conn, bool newQuery)
 
 	/*
 	 * If this is the beginning of a query cycle, reset the error state.
+	 * However, in pipeline mode with something already queued, the error
+	 * buffer belongs to that command and we shouldn't clear it.
 	 */
-	if (newQuery)
+	if (newQuery && conn->cmd_queue_head == NULL)
 		pqClearConnErrorState(conn);
 
 	/* Don't try to send if we know there's no live connection. */
@@ -2149,11 +2148,8 @@ PQgetResult(PGconn *conn)
 				/*
 				 * We're about to return the NULL that terminates the round of
 				 * results from the current query; prepare to send the results
-				 * of the next query when we're called next.  Also, since this
-				 * is the start of the results of the next query, clear any
-				 * prior error message.
+				 * of the next query when we're called next.
 				 */
-				pqClearConnErrorState(conn);
 				pqPipelineProcessQueue(conn);
 			}
 			break;
@@ -2362,17 +2358,20 @@ PQexecStart(PGconn *conn)
 	if (!conn)
 		return false;
 
+	/*
+	 * Since this is the beginning of a query cycle, reset the error state.
+	 * However, in pipeline mode with something already queued, the error
+	 * buffer belongs to that command and we shouldn't clear it.
+	 */
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
+
 	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 libpq_gettext("synchronous command execution functions are not allowed in pipeline mode\n"));
 		return false;
 	}
-
-	/*
-	 * Since this is the beginning of a query cycle, reset the error state.
-	 */
-	pqClearConnErrorState(conn);
 
 	/*
 	 * Silently discard any prior query result that application didn't eat.
@@ -2928,8 +2927,11 @@ PQfn(PGconn *conn,
 
 	/*
 	 * Since this is the beginning of a query cycle, reset the error state.
+	 * However, in pipeline mode with something already queued, the error
+	 * buffer belongs to that command and we shouldn't clear it.
 	 */
-	pqClearConnErrorState(conn);
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
 
 	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 	{
@@ -3098,6 +3100,12 @@ pqPipelineProcessQueue(PGconn *conn)
 	if (conn->pipelineStatus == PQ_PIPELINE_OFF ||
 		conn->cmd_queue_head == NULL)
 		return;
+
+	/*
+	 * Reset the error state.  This and the next couple of steps correspond to
+	 * what PQsendQueryStart didn't do for this query.
+	 */
+	pqClearConnErrorState(conn);
 
 	/* Initialize async result-accumulation state */
 	pqClearAsyncResult(conn);
@@ -3809,9 +3817,11 @@ PQsetnonblocking(PGconn *conn, int arg)
 	 * behavior. this is ok because either they are making a transition _from_
 	 * or _to_ blocking mode, either way we can block them.
 	 *
-	 * Clear error state in case pqFlush adds to it.
+	 * Clear error state in case pqFlush adds to it, unless we're actively
+	 * pipelining, in which case it seems best not to.
 	 */
-	pqClearConnErrorState(conn);
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
 
 	/* if we are going from blocking to non-blocking flush here */
 	if (pqFlush(conn))
@@ -4003,7 +4013,8 @@ PQescapeStringConn(PGconn *conn,
 		return 0;
 	}
 
-	pqClearConnErrorState(conn);
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
 
 	return PQescapeStringInternal(conn, to, from, length, error,
 								  conn->client_encoding,
@@ -4041,7 +4052,8 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	if (!conn)
 		return NULL;
 
-	pqClearConnErrorState(conn);
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
 
 	/* Scan the string for characters that must be escaped. */
 	for (s = str; (s - str) < len && *s != '\0'; ++s)
@@ -4306,7 +4318,8 @@ PQescapeByteaConn(PGconn *conn,
 	if (!conn)
 		return NULL;
 
-	pqClearConnErrorState(conn);
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
 
 	return PQescapeByteaInternal(conn, from, from_length, to_length,
 								 conn->std_strings,
