@@ -135,6 +135,14 @@ typedef enum
 typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 								 SubTransactionId parentSubid, void *arg);
 
+/* Data structure for Save/RestoreTransactionCharacteristics */
+typedef struct SavedTransactionCharacteristics
+{
+	int			save_XactIsoLevel;
+	bool		save_XactReadOnly;
+	bool		save_XactDeferrable;
+} SavedTransactionCharacteristics;
+
 
 /* ----------------
  *		transaction-related XLOG entries
@@ -399,8 +407,8 @@ extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
 extern void ForceSyncCommit(void);
 extern void StartTransactionCommand(void);
-extern void SaveTransactionCharacteristics(void);
-extern void RestoreTransactionCharacteristics(void);
+extern void SaveTransactionCharacteristics(SavedTransactionCharacteristics *s);
+extern void RestoreTransactionCharacteristics(const SavedTransactionCharacteristics *s);
 extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);

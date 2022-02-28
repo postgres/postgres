@@ -228,6 +228,7 @@ static void
 _SPI_commit(bool chain)
 {
 	MemoryContext oldcontext = CurrentMemoryContext;
+	SavedTransactionCharacteristics savetc;
 
 	/*
 	 * Complain if we are in a context that doesn't permit transaction
@@ -255,9 +256,8 @@ _SPI_commit(bool chain)
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot commit while a subtransaction is active")));
 
-	/* XXX this ain't re-entrant enough for my taste */
 	if (chain)
-		SaveTransactionCharacteristics();
+		SaveTransactionCharacteristics(&savetc);
 
 	/* Catch any error occurring during the COMMIT */
 	PG_TRY();
@@ -281,7 +281,7 @@ _SPI_commit(bool chain)
 		/* Immediately start a new transaction */
 		StartTransactionCommand();
 		if (chain)
-			RestoreTransactionCharacteristics();
+			RestoreTransactionCharacteristics(&savetc);
 
 		MemoryContextSwitchTo(oldcontext);
 
@@ -305,7 +305,7 @@ _SPI_commit(bool chain)
 		/* ... and start a new one */
 		StartTransactionCommand();
 		if (chain)
-			RestoreTransactionCharacteristics();
+			RestoreTransactionCharacteristics(&savetc);
 
 		MemoryContextSwitchTo(oldcontext);
 
@@ -333,6 +333,7 @@ static void
 _SPI_rollback(bool chain)
 {
 	MemoryContext oldcontext = CurrentMemoryContext;
+	SavedTransactionCharacteristics savetc;
 
 	/* see under SPI_commit() */
 	if (_SPI_current->atomic)
@@ -346,9 +347,8 @@ _SPI_rollback(bool chain)
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot roll back while a subtransaction is active")));
 
-	/* XXX this ain't re-entrant enough for my taste */
 	if (chain)
-		SaveTransactionCharacteristics();
+		SaveTransactionCharacteristics(&savetc);
 
 	/* Catch any error occurring during the ROLLBACK */
 	PG_TRY();
@@ -373,7 +373,7 @@ _SPI_rollback(bool chain)
 		/* Immediately start a new transaction */
 		StartTransactionCommand();
 		if (chain)
-			RestoreTransactionCharacteristics();
+			RestoreTransactionCharacteristics(&savetc);
 
 		MemoryContextSwitchTo(oldcontext);
 
@@ -398,7 +398,7 @@ _SPI_rollback(bool chain)
 		/* ... and start a new one */
 		StartTransactionCommand();
 		if (chain)
-			RestoreTransactionCharacteristics();
+			RestoreTransactionCharacteristics(&savetc);
 
 		MemoryContextSwitchTo(oldcontext);
 
