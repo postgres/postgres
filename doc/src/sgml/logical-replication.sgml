@@ -346,9 +346,7 @@
   <para>
    A conflict will produce an error and will stop the replication; it must be
    resolved manually by the user.  Details about the conflict can be found in
-   <link linkend="monitoring-pg-stat-subscription-workers">
-   <structname>pg_stat_subscription_workers</structname></link> and the
-   subscriber's server log.
+   the subscriber's server log.
   </para>
 
   <para>

@@ -1264,25 +1264,12 @@ GRANT SELECT (oid, subdbid, subname, subowner, subenabled, subbinary,
               substream, subtwophasestate, subslotname, subsynccommit, subpublications)
     ON pg_subscription TO public;
 
-CREATE VIEW pg_stat_subscription_workers AS
+CREATE VIEW pg_stat_subscription_stats AS
     SELECT
-        w.subid,
+        ss.subid,
         s.subname,
-        w.subrelid,
-        w.last_error_relid,
-        w.last_error_command,
-        w.last_error_xid,
-        w.last_error_count,
-        w.last_error_message,
-        w.last_error_time
-    FROM (SELECT
-              oid as subid,
-              NULL as relid
-          FROM pg_subscription
-          UNION ALL
-          SELECT
-              srsubid as subid,
-              srrelid as relid
-          FROM pg_subscription_rel) sr,
-          LATERAL pg_stat_get_subscription_worker(sr.subid, sr.relid) w
-          JOIN pg_subscription s ON (w.subid = s.oid);
+        ss.apply_error_count,
+        ss.sync_error_count,
+        ss.stats_reset
+    FROM pg_subscription as s,
+         pg_stat_get_subscription_stats(s.oid) as ss;

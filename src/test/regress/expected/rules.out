@@ -2072,24 +2072,13 @@ pg_stat_subscription| SELECT su.oid AS subid,
     st.latest_end_time
    FROM (pg_subscription su
      LEFT JOIN pg_stat_get_subscription(NULL::oid) st(subid, relid, pid, received_lsn, last_msg_send_time, last_msg_receipt_time, latest_end_lsn, latest_end_time) ON ((st.subid = su.oid)));
-pg_stat_subscription_workers| SELECT w.subid,
+pg_stat_subscription_stats| SELECT ss.subid,
     s.subname,
-    w.subrelid,
-    w.last_error_relid,
-    w.last_error_command,
-    w.last_error_xid,
-    w.last_error_count,
-    w.last_error_message,
-    w.last_error_time
-   FROM ( SELECT pg_subscription.oid AS subid,
-            NULL::oid AS relid
-           FROM pg_subscription
-        UNION ALL
-         SELECT pg_subscription_rel.srsubid AS subid,
-            pg_subscription_rel.srrelid AS relid
-           FROM pg_subscription_rel) sr,
-    (LATERAL pg_stat_get_subscription_worker(sr.subid, sr.relid) w(subid, subrelid, last_error_relid, last_error_command, last_error_xid, last_error_count, last_error_message, last_error_time)
-     JOIN pg_subscription s ON ((w.subid = s.oid)));
+    ss.apply_error_count,
+    ss.sync_error_count,
+    ss.stats_reset
+   FROM pg_subscription s,
+    LATERAL pg_stat_get_subscription_stats(s.oid) ss(subid, apply_error_count, sync_error_count, stats_reset);
 pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.indexrelid,
     pg_stat_all_indexes.schemaname,

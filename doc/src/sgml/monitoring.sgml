@@ -628,11 +628,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_subscription_workers</structname><indexterm><primary>pg_stat_subscription_workers</primary></indexterm></entry>
-      <entry>One row per subscription worker, showing statistics about errors
-      that occurred on that subscription worker.
-      See <link linkend="monitoring-pg-stat-subscription-workers">
-      <structname>pg_stat_subscription_workers</structname></link> for details.
+      <entry><structname>pg_stat_subscription_stats</structname><indexterm><primary>pg_stat_subscription_stats</primary></indexterm></entry>
+      <entry>One row per subscription, showing statistics about errors.
+      See <link linkend="monitoring-pg-stat-subscription-stats">
+      <structname>pg_stat_subscription_stats</structname></link> for details.
       </entry>
      </row>
 
@@ -3063,23 +3062,20 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
  </sect2>
 
- <sect2 id="monitoring-pg-stat-subscription-workers">
-  <title><structname>pg_stat_subscription_workers</structname></title>
+ <sect2 id="monitoring-pg-stat-subscription-stats">
+  <title><structname>pg_stat_subscription_stats</structname></title>
 
   <indexterm>
-   <primary>pg_stat_subscription_workers</primary>
+   <primary>pg_stat_subscription_stats</primary>
   </indexterm>
 
   <para>
-   The <structname>pg_stat_subscription_workers</structname> view will contain
-   one row per subscription worker on which errors have occurred, for workers
-   applying logical replication changes and workers handling the initial data
-   copy of the subscribed tables.  The statistics entry is removed when the
-   corresponding subscription is dropped.
+   The <structname>pg_stat_subscription_stats</structname> view will contain
+   one row per subscription.
   </para>
 
-  <table id="pg-stat-subscription-workers" xreflabel="pg_stat_subscription_workers">
-   <title><structname>pg_stat_subscription_workers</structname> View</title>
+  <table id="pg-stat-subscription-stats" xreflabel="pg_stat_subscription_stats">
+   <title><structname>pg_stat_subscription_stats</structname> View</title>
    <tgroup cols="1">
     <thead>
      <row>
@@ -3113,72 +3109,31 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>subrelid</structfield> <type>oid</type>
+       <structfield>apply_error_count</structfield> <type>bigint</type>
       </para>
       <para>
-       OID of the relation that the worker is synchronizing; null for the
-       main apply worker
+       Number of times an error occurred while applying changes
       </para></entry>
      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_relid</structfield> <type>oid</type>
+       <structfield>sync_error_count</structfield> <type>bigint</type>
       </para>
       <para>
-       OID of the relation that the worker was processing when the
-       error occurred
+       Number of times an error occurred during the initial table
+       synchronization
       </para></entry>
      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_command</structfield> <type>text</type>
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Name of command being applied when the error occurred.  This field
-       is null if the error was reported during the initial data copy.
+       Time at which these statistics were last reset
       </para></entry>
      </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_xid</structfield> <type>xid</type>
-      </para>
-      <para>
-       Transaction ID of the publisher node being applied when the error
-       occurred.  This field is null if the error was reported
-       during the initial data copy.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_count</structfield> <type>uint8</type>
-      </para>
-      <para>
-       Number of consecutive times the error occurred
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_message</structfield> <type>text</type>
-      </para>
-      <para>
-       The error message
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_time</structfield> <type>timestamp with time zone</type>
-      </para>
-      <para>
-       Last time at which this error occurred
-      </para></entry>
-     </row>
-
     </tbody>
    </tgroup>
   </table>
@@ -5320,22 +5275,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-          <primary>pg_stat_reset_subscription_worker</primary>
+          <primary>pg_stat_reset_subscription_stats</primary>
         </indexterm>
-        <function>pg_stat_reset_subscription_worker</function> ( <parameter>subid</parameter> <type>oid</type> <optional>, <parameter>relid</parameter> <type>oid</type> </optional> )
+        <function>pg_stat_reset_subscription_stats</function> ( <type>oid</type> )
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Resets the statistics of subscription workers running on the
-        subscription with <parameter>subid</parameter> shown in the
-        <structname>pg_stat_subscription_workers</structname> view.  If the
-        argument <parameter>relid</parameter> is not <literal>NULL</literal>,
-        resets statistics of the subscription worker handling the initial data
-        copy of the relation with <parameter>relid</parameter>.  Otherwise,
-        resets the subscription worker statistics of the main apply worker.
-        If the argument <parameter>relid</parameter> is omitted, resets the
-        statistics of all subscription workers running on the subscription
-        with <parameter>subid</parameter>.
+        Resets statistics for a single subscription shown in the
+        <structname>pg_stat_subscription_stats</structname> view to zero. If
+        the argument is <literal>NULL</literal>, reset statistics for all
+        subscriptions.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

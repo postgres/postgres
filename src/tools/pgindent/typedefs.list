@@ -1943,9 +1943,10 @@ PgStat_MsgResetreplslotcounter
 PgStat_MsgResetsharedcounter
 PgStat_MsgResetsinglecounter
 PgStat_MsgResetslrucounter
+PgStat_MsgResetsubcounter
 PgStat_MsgSLRU
-PgStat_MsgSubscriptionPurge
-PgStat_MsgSubWorkerError
+PgStat_MsgSubscriptionDrop
+PgStat_MsgSubscriptionError
 PgStat_MsgTabpurge
 PgStat_MsgTabstat
 PgStat_MsgTempFile
@@ -1957,8 +1958,7 @@ PgStat_Single_Reset_Type
 PgStat_StatDBEntry
 PgStat_StatFuncEntry
 PgStat_StatReplSlotEntry
-PgStat_StatSubWorkerEntry
-PgStat_StatSubWorkerKey
+PgStat_StatSubEntry
 PgStat_StatTabEntry
 PgStat_SubXactStatus
 PgStat_TableCounts
