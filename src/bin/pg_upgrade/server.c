@@ -11,6 +11,7 @@
 
 #include "common/connect.h"
 #include "fe_utils/string_utils.h"
+#include "libpq/pqcomm.h"
 #include "pg_upgrade.h"
 
 static PGconn *get_db_conn(ClusterInfo *cluster, const char *db_name);
@@ -368,7 +369,7 @@ check_pghost_envvar(void)
 			if (value && strlen(value) > 0 &&
 			/* check for 'local' host values */
 				(strcmp(value, "localhost") != 0 && strcmp(value, "127.0.0.1") != 0 &&
-				 strcmp(value, "::1") != 0 && value[0] != '/'))
+				 strcmp(value, "::1") != 0 && !is_unixsock_path(value)))
 				pg_fatal("libpq environment variable %s has a non-local server value: %s\n",
 						 option->envvar, value);
 		}
