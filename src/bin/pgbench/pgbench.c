@@ -5598,11 +5598,11 @@ printResults(StatsData *total,
 		return;
 
 	if (throttle_delay && latency_limit)
-		printf("number of transactions skipped: " INT64_FORMAT " (%.3f %%)\n",
+		printf("number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
 			   total->skipped, 100.0 * total->skipped / total->cnt);
 
 	if (latency_limit)
-		printf("number of transactions above the %.1f ms latency limit: " INT64_FORMAT "/" INT64_FORMAT " (%.3f %%)\n",
+		printf("number of transactions above the %.1f ms latency limit: " INT64_FORMAT "/" INT64_FORMAT " (%.3f%%)\n",
 			   latency_limit / 1000.0, latency_late, ntx,
 			   (ntx > 0) ? 100.0 * latency_late / ntx : 0.0);
 
