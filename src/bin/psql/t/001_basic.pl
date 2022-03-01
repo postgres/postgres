@@ -60,7 +60,7 @@ foreach my $arg (qw(commands variables))
 }
 
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
+$node->init(extra => [ '--locale=C', '--encoding=UTF8' ]);
 $node->append_conf(
 	'postgresql.conf', q{
 wal_level = 'logical'
@@ -79,5 +79,40 @@ psql_fails_like(
 	'START_REPLICATION 0/0',
 	qr/unexpected PQresultStatus: 8$/,
 	'handling of unexpected PQresultStatus');
+
+# test \timing
+psql_like(
+	$node,
+	'\timing on
+SELECT 1',
+	qr/^1$
+^Time: \d+.\d\d\d ms/m,
+	'\timing');
+
+# test that ENCODING variable is set and that it is updated when
+# client encoding is changed
+psql_like(
+	$node,
+	'\echo :ENCODING
+set client_encoding = LATIN1;
+\echo :ENCODING',
+	qr/^UTF8$
+^LATIN1$/m,
+	'ENCODING variable is set and updated');
+
+# test LISTEN/NOTIFY
+psql_like(
+	$node,
+	'LISTEN foo;
+NOTIFY foo;',
+	qr/^Asynchronous notification "foo" received from server process with PID \d+\.$/,
+	'notification');
+
+psql_like(
+	$node,
+	"LISTEN foo;
+NOTIFY foo, 'bar';",
+	qr/^Asynchronous notification "foo" with payload "bar" received from server process with PID \d+\.$/,
+	'notification with payload');
 
 done_testing();
