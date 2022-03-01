@@ -23,6 +23,7 @@
 #include "common/restricted_token.h"
 #include "common/string.h"
 #include "fe_utils/recovery_gen.h"
+#include "fe_utils/string_utils.h"
 #include "file_ops.h"
 #include "filemap.h"
 #include "getopt_long.h"
@@ -1016,8 +1017,8 @@ getRestoreCommand(const char *argv0)
 {
 	int			rc;
 	char		postgres_exec_path[MAXPGPATH],
-				postgres_cmd[MAXPGPATH],
 				cmd_output[MAXPGPATH];
+	PQExpBuffer postgres_cmd;
 
 	if (!restore_wal)
 		return;
@@ -1051,11 +1052,19 @@ getRestoreCommand(const char *argv0)
 	 * Build a command able to retrieve the value of GUC parameter
 	 * restore_command, if set.
 	 */
-	snprintf(postgres_cmd, sizeof(postgres_cmd),
-			 "\"%s\" -D \"%s\" -C restore_command",
-			 postgres_exec_path, datadir_target);
+	postgres_cmd = createPQExpBuffer();
 
-	if (!pipe_read_line(postgres_cmd, cmd_output, sizeof(cmd_output)))
+	/* path to postgres, properly quoted */
+	appendShellString(postgres_cmd, postgres_exec_path);
+
+	/* add -D switch, with properly quoted data directory */
+	appendPQExpBufferStr(postgres_cmd, " -D ");
+	appendShellString(postgres_cmd, datadir_target);
+
+	/* add -C switch, for restore_command */
+	appendPQExpBufferStr(postgres_cmd, " -C restore_command");
+
+	if (!pipe_read_line(postgres_cmd->data, cmd_output, sizeof(cmd_output)))
 		exit(1);
 
 	(void) pg_strip_crlf(cmd_output);
@@ -1067,6 +1076,8 @@ getRestoreCommand(const char *argv0)
 
 	pg_log_debug("using for rewind restore_command = \'%s\'",
 				 restore_command);
+
+	destroyPQExpBuffer(postgres_cmd);
 }
 
 
@@ -1080,7 +1091,7 @@ ensureCleanShutdown(const char *argv0)
 	int			ret;
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		exec_path[MAXPGPATH];
-	char		cmd[MAXCMDLEN];
+	PQExpBuffer postgres_cmd;
 
 	/* locate postgres binary */
 	if ((ret = find_other_exec(argv0, "postgres",
@@ -1119,14 +1130,26 @@ ensureCleanShutdown(const char *argv0)
 	 * fsync here.  This makes the recovery faster, and the target data folder
 	 * is synced at the end anyway.
 	 */
-	snprintf(cmd, MAXCMDLEN, "\"%s\" --single -F -D \"%s\" template1 < \"%s\"",
-			 exec_path, datadir_target, DEVNULL);
+	postgres_cmd = createPQExpBuffer();
 
-	if (system(cmd) != 0)
+	/* path to postgres, properly quoted */
+	appendShellString(postgres_cmd, exec_path);
+
+	/* add set of options with properly quoted data directory */
+	appendPQExpBufferStr(postgres_cmd, " --single -F -D ");
+	appendShellString(postgres_cmd, datadir_target);
+
+	/* finish with the database name, and a properly quoted redirection */
+	appendPQExpBufferStr(postgres_cmd, " template1 < ");
+	appendShellString(postgres_cmd, DEVNULL);
+
+	if (system(postgres_cmd->data) != 0)
 	{
 		pg_log_error("postgres single-user mode in target cluster failed");
-		pg_fatal("Command was: %s", cmd);
+		pg_fatal("Command was: %s", postgres_cmd->data);
 	}
+
+	destroyPQExpBuffer(postgres_cmd);
 }
 
 static void
