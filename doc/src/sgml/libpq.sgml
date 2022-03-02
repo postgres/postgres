@@ -8397,21 +8397,33 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <para>
    If the server attempts to verify the identity of the
    client by requesting the client's leaf certificate,
-   <application>libpq</application> will send the certificates stored in
+   <application>libpq</application> will send the certificate(s) stored in
    file <filename>~/.postgresql/postgresql.crt</filename> in the user's home
    directory.  The certificates must chain to the root certificate trusted
    by the server.  A matching
    private key file <filename>~/.postgresql/postgresql.key</filename> must also
-   be present. The private
-   key file must not allow any access to world or group; achieve this by the
-   command <command>chmod 0600 ~/.postgresql/postgresql.key</command>.
+   be present.
    On Microsoft Windows these files are named
    <filename>%APPDATA%\postgresql\postgresql.crt</filename> and
-   <filename>%APPDATA%\postgresql\postgresql.key</filename>, and there
-   is no special permissions check since the directory is presumed secure.
+   <filename>%APPDATA%\postgresql\postgresql.key</filename>.
    The location of the certificate and key files can be overridden by the
-   connection parameters <literal>sslcert</literal> and <literal>sslkey</literal> or the
+   connection parameters <literal>sslcert</literal>
+   and <literal>sslkey</literal>, or by the
    environment variables <envar>PGSSLCERT</envar> and <envar>PGSSLKEY</envar>.
+  </para>
+
+  <para>
+   On Unix systems, the permissions on the private key file must disallow
+   any access to world or group; achieve this by a command such as
+   <command>chmod 0600 ~/.postgresql/postgresql.key</command>.
+   Alternatively, the file can be owned by root and have group read access
+   (that is, <literal>0640</literal> permissions).  That setup is intended
+   for installations where certificate and key files are managed by the
+   operating system.  The user of <application>libpq</application> should
+   then be made a member of the group that has access to those certificate
+   and key files.  (On Microsoft Windows, there is no file permissions
+   check, since the <filename>%APPDATA%\postgresql</filename> directory is
+   presumed secure.)
   </para>
 
   <para>
