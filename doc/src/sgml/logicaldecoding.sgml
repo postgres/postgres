@@ -342,7 +342,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     <title>Exported Snapshots</title>
     <para>
      When a new replication slot is created using the streaming replication
-     interface (see <xref linkend="protocol-replication-create-slot"/>), a
+     interface (see <xref linkend="protocol-replication-create-replication-slot"/>), a
      snapshot is exported
      (see <xref linkend="functions-snapshot-synchronization"/>), which will show
      exactly the state of the database after which all changes will be
