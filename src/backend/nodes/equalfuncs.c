@@ -977,6 +977,42 @@ _equalJsonArrayQueryConstructor(const JsonArrayQueryConstructor *a,
 }
 
 static bool
+_equalJsonFuncExpr(const JsonFuncExpr *a, const JsonFuncExpr *b)
+{
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_NODE_FIELD(common);
+	COMPARE_NODE_FIELD(output);
+	COMPARE_NODE_FIELD(on_empty);
+	COMPARE_NODE_FIELD(on_error);
+	COMPARE_SCALAR_FIELD(wrapper);
+	COMPARE_SCALAR_FIELD(omit_quotes);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalJsonCommon(const JsonCommon *a, const JsonCommon *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(pathspec);
+	COMPARE_STRING_FIELD(pathname);
+	COMPARE_NODE_FIELD(passing);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalJsonArgument(const JsonArgument *a, const JsonArgument *b)
+{
+	COMPARE_NODE_FIELD(val);
+	COMPARE_STRING_FIELD(name);
+
+	return true;
+}
+
+static bool
 _equalJsonIsPredicate(const JsonIsPredicate *a,
 					  const JsonIsPredicate *b)
 {
@@ -984,6 +1020,76 @@ _equalJsonIsPredicate(const JsonIsPredicate *a,
 	COMPARE_SCALAR_FIELD(value_type);
 	COMPARE_SCALAR_FIELD(unique_keys);
 	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+/*
+ * _equalJsonBehavior
+ */
+static bool
+_equalJsonBehavior(const JsonBehavior *a, const JsonBehavior *b)
+{
+	COMPARE_SCALAR_FIELD(btype);
+	COMPARE_NODE_FIELD(default_expr);
+
+	return true;
+}
+
+/*
+ * _equalJsonExpr
+ */
+static bool
+_equalJsonExpr(const JsonExpr *a, const JsonExpr *b)
+{
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_NODE_FIELD(formatted_expr);
+	COMPARE_NODE_FIELD(result_coercion);
+	COMPARE_NODE_FIELD(format);
+	COMPARE_NODE_FIELD(path_spec);
+	COMPARE_NODE_FIELD(passing_values);
+	COMPARE_NODE_FIELD(passing_names);
+	COMPARE_NODE_FIELD(returning);
+	COMPARE_NODE_FIELD(on_error);
+	COMPARE_NODE_FIELD(on_empty);
+	COMPARE_NODE_FIELD(coercions);
+	COMPARE_SCALAR_FIELD(wrapper);
+	COMPARE_SCALAR_FIELD(omit_quotes);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+/*
+ * _equalJsonCoercion
+ */
+static bool
+_equalJsonCoercion(const JsonCoercion *a, const JsonCoercion *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_SCALAR_FIELD(via_populate);
+	COMPARE_SCALAR_FIELD(via_io);
+	COMPARE_SCALAR_FIELD(collation);
+
+	return true;
+}
+
+/*
+ * _equalJsonItemCoercions
+ */
+static bool
+_equalJsonItemCoercions(const JsonItemCoercions *a, const JsonItemCoercions *b)
+{
+	COMPARE_NODE_FIELD(null);
+	COMPARE_NODE_FIELD(string);
+	COMPARE_NODE_FIELD(numeric);
+	COMPARE_NODE_FIELD(boolean);
+	COMPARE_NODE_FIELD(date);
+	COMPARE_NODE_FIELD(time);
+	COMPARE_NODE_FIELD(timetz);
+	COMPARE_NODE_FIELD(timestamp);
+	COMPARE_NODE_FIELD(timestamptz);
+	COMPARE_NODE_FIELD(composite);
 
 	return true;
 }
@@ -3561,6 +3667,18 @@ equal(const void *a, const void *b)
 		case T_JsonIsPredicate:
 			retval = _equalJsonIsPredicate(a, b);
 			break;
+		case T_JsonBehavior:
+			retval = _equalJsonBehavior(a, b);
+			break;
+		case T_JsonExpr:
+			retval = _equalJsonExpr(a, b);
+			break;
+		case T_JsonCoercion:
+			retval = _equalJsonCoercion(a, b);
+			break;
+		case T_JsonItemCoercions:
+			retval = _equalJsonItemCoercions(a, b);
+			break;
 
 			/*
 			 * RELATION NODES
@@ -4173,6 +4291,15 @@ equal(const void *a, const void *b)
 			break;
 		case T_JsonArrayAgg:
 			retval = _equalJsonArrayAgg(a, b);
+			break;
+		case T_JsonFuncExpr:
+			retval = _equalJsonFuncExpr(a, b);
+			break;
+		case T_JsonCommon:
+			retval = _equalJsonCommon(a, b);
+			break;
+		case T_JsonArgument:
+			retval = _equalJsonArgument(a, b);
 			break;
 
 		default:

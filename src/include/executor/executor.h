@@ -265,6 +265,8 @@ ExecProcNode(PlanState *node)
  */
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern ExprState *ExecInitExprWithParams(Expr *node, ParamListInfo ext_params);
+extern ExprState *ExecInitExprWithCaseValue(Expr *node, PlanState *parent,
+						  Datum *caseval, bool *casenull);
 extern ExprState *ExecInitQual(List *qual, PlanState *parent);
 extern ExprState *ExecInitCheck(List *qual, PlanState *parent);
 extern List *ExecInitExprList(List *nodes, PlanState *parent);

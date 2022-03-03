@@ -2360,6 +2360,12 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;
 
+			case EEOP_JSONEXPR:
+				build_EvalXFunc(b, mod, "ExecEvalJson",
+								v_state, op, v_econtext);
+				LLVMBuildBr(b, opblocks[opno + 1]);
+				break;
+
 			case EEOP_LAST:
 				Assert(false);
 				break;

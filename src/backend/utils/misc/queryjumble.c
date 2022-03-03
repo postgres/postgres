@@ -785,6 +785,27 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				APP_JUMB(pred->value_type);
 			}
 			break;
+		case T_JsonExpr:
+			{
+				JsonExpr    *jexpr = (JsonExpr *) node;
+
+				APP_JUMB(jexpr->op);
+				JumbleExpr(jstate, jexpr->formatted_expr);
+				JumbleExpr(jstate, jexpr->path_spec);
+				foreach(temp, jexpr->passing_names)
+				{
+					APP_JUMB_STRING(lfirst_node(String, temp)->sval);
+				}
+				JumbleExpr(jstate, (Node *) jexpr->passing_values);
+				if (jexpr->on_empty)
+				{
+					APP_JUMB(jexpr->on_empty->btype);
+					JumbleExpr(jstate, jexpr->on_empty->default_expr);
+				}
+				APP_JUMB(jexpr->on_error->btype);
+				JumbleExpr(jstate, jexpr->on_error->default_expr);
+			}
+			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{

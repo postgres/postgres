@@ -1023,11 +1023,6 @@ typedef struct NUMProc
 			   *L_currency_symbol;
 } NUMProc;
 
-/* Return flags for DCH_from_char() */
-#define DCH_DATED	0x01
-#define DCH_TIMED	0x02
-#define DCH_ZONED	0x04
-
 /* ----------
  * Functions
  * ----------
@@ -6671,4 +6666,44 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_finish;
 	PG_RETURN_TEXT_P(result);
+}
+
+int
+datetime_format_flags(const char *fmt_str, bool *have_error)
+{
+	bool		incache;
+	int			fmt_len = strlen(fmt_str);
+	int			result;
+	FormatNode *format;
+
+	if (fmt_len > DCH_CACHE_SIZE)
+	{
+		/*
+		 * Allocate new memory if format picture is bigger than static cache
+		 * and do not use cache (call parser always)
+		 */
+		incache = false;
+
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
+
+		parse_format(format, fmt_str, DCH_keywords,
+					 DCH_suff, DCH_index, DCH_FLAG, NULL);
+	}
+	else
+	{
+		/*
+		 * Use cache buffers
+		 */
+		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, false);
+
+		incache = true;
+		format = ent->format;
+	}
+
+	result = DCH_datetime_type(format, have_error);
+
+	if (!incache)
+		pfree(format);
+
+	return result;
 }

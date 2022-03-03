@@ -1595,6 +1595,23 @@ typedef struct TriggerTransition
 /* Nodes for SQL/JSON support */
 
 /*
+ * JsonQuotes -
+ *		representation of [KEEP|OMIT] QUOTES clause for JSON_QUERY()
+ */
+typedef enum JsonQuotes
+{
+	JS_QUOTES_UNSPEC,			/* unspecified */
+	JS_QUOTES_KEEP,				/* KEEP QUOTES */
+	JS_QUOTES_OMIT				/* OMIT QUOTES */
+} JsonQuotes;
+
+/*
+ * JsonPathSpec -
+ *		representation of JSON path constant
+ */
+typedef char *JsonPathSpec;
+
+/*
  * JsonOutput -
  *		representation of JSON output clause (RETURNING type [FORMAT format])
  */
@@ -1604,6 +1621,48 @@ typedef struct JsonOutput
 	TypeName   *typeName;		/* RETURNING type name, if specified */
 	JsonReturning *returning;	/* RETURNING FORMAT clause and type Oids */
 } JsonOutput;
+
+/*
+ * JsonArgument -
+ *		representation of argument from JSON PASSING clause
+ */
+typedef struct JsonArgument
+{
+	NodeTag		type;
+	JsonValueExpr *val;			/* argument value expression */
+	char	   *name;			/* argument name */
+} JsonArgument;
+
+/*
+ * JsonCommon -
+ *		representation of common syntax of functions using JSON path
+ */
+typedef struct JsonCommon
+{
+	NodeTag		type;
+	JsonValueExpr *expr;		/* context item expression */
+	Node	   *pathspec;		/* JSON path specification expression */
+	char	   *pathname;		/* path name, if any */
+	List	   *passing;		/* list of PASSING clause arguments, if any */
+	int			location;		/* token location, or -1 if unknown */
+} JsonCommon;
+
+/*
+ * JsonFuncExpr -
+ *		untransformed representation of JSON function expressions
+ */
+typedef struct JsonFuncExpr
+{
+	NodeTag		type;
+	JsonExprOp	op;				/* expression type */
+	JsonCommon *common;			/* common syntax */
+	JsonOutput *output;			/* output clause, if specified */
+	JsonBehavior *on_empty;		/* ON EMPTY behavior, if specified */
+	JsonBehavior *on_error;		/* ON ERROR behavior, if specified */
+	JsonWrapper	wrapper;		/* array wrapper behavior (JSON_QUERY only) */
+	bool		omit_quotes;	/* omit or keep quotes? (JSON_QUERY only) */
+	int			location;		/* token location, or -1 if unknown */
+} JsonFuncExpr;
 
 /*
  * JsonKeyValue -

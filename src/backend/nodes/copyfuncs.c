@@ -2492,6 +2492,90 @@ _copyJsonArrayQueryConstructor(const JsonArrayQueryConstructor *from)
 }
 
 /*
+ * _copyJsonExpr
+ */
+static JsonExpr *
+_copyJsonExpr(const JsonExpr *from)
+{
+	JsonExpr    *newnode = makeNode(JsonExpr);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_NODE_FIELD(formatted_expr);
+	COPY_NODE_FIELD(result_coercion);
+	COPY_NODE_FIELD(format);
+	COPY_NODE_FIELD(path_spec);
+	COPY_NODE_FIELD(passing_values);
+	COPY_NODE_FIELD(passing_names);
+	COPY_NODE_FIELD(returning);
+	COPY_NODE_FIELD(on_error);
+	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(coercions);
+	COPY_SCALAR_FIELD(wrapper);
+	COPY_SCALAR_FIELD(omit_quotes);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonCoercion
+ */
+static JsonCoercion *
+_copyJsonCoercion(const JsonCoercion *from)
+{
+	JsonCoercion *newnode = makeNode(JsonCoercion);
+
+	COPY_NODE_FIELD(expr);
+	COPY_SCALAR_FIELD(via_populate);
+	COPY_SCALAR_FIELD(via_io);
+	COPY_SCALAR_FIELD(collation);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonItemCoercions
+ */
+static JsonItemCoercions *
+_copyJsonItemCoercions(const JsonItemCoercions *from)
+{
+	JsonItemCoercions *newnode = makeNode(JsonItemCoercions);
+
+	COPY_NODE_FIELD(null);
+	COPY_NODE_FIELD(string);
+	COPY_NODE_FIELD(numeric);
+	COPY_NODE_FIELD(boolean);
+	COPY_NODE_FIELD(date);
+	COPY_NODE_FIELD(time);
+	COPY_NODE_FIELD(timetz);
+	COPY_NODE_FIELD(timestamp);
+	COPY_NODE_FIELD(timestamptz);
+	COPY_NODE_FIELD(composite);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonFuncExpr
+ */
+static JsonFuncExpr *
+_copyJsonFuncExpr(const JsonFuncExpr *from)
+{
+	JsonFuncExpr   *newnode = makeNode(JsonFuncExpr);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_NODE_FIELD(common);
+	COPY_NODE_FIELD(output);
+	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(on_error);
+	COPY_SCALAR_FIELD(wrapper);
+	COPY_SCALAR_FIELD(omit_quotes);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
  * _copyJsonIsPredicate
  */
 static JsonIsPredicate *
@@ -2504,6 +2588,51 @@ _copyJsonIsPredicate(const JsonIsPredicate *from)
 	COPY_SCALAR_FIELD(value_type);
 	COPY_SCALAR_FIELD(unique_keys);
 	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonBehavior
+ */
+static JsonBehavior *
+_copyJsonBehavior(const JsonBehavior *from)
+{
+	JsonBehavior   *newnode = makeNode(JsonBehavior);
+
+	COPY_SCALAR_FIELD(btype);
+	COPY_NODE_FIELD(default_expr);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonCommon
+ */
+static JsonCommon *
+_copyJsonCommon(const JsonCommon *from)
+{
+	JsonCommon	   *newnode = makeNode(JsonCommon);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(pathspec);
+	COPY_STRING_FIELD(pathname);
+	COPY_NODE_FIELD(passing);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonArgument
+ */
+static JsonArgument *
+_copyJsonArgument(const JsonArgument *from)
+{
+	JsonArgument   *newnode = makeNode(JsonArgument);
+
+	COPY_NODE_FIELD(val);
+	COPY_STRING_FIELD(name);
 
 	return newnode;
 }
@@ -5644,6 +5773,27 @@ copyObjectImpl(const void *from)
 			break;
 		case T_JsonIsPredicate:
 			retval = _copyJsonIsPredicate(from);
+			break;
+		case T_JsonFuncExpr:
+			retval = _copyJsonFuncExpr(from);
+			break;
+		case T_JsonExpr:
+			retval = _copyJsonExpr(from);
+			break;
+		case T_JsonCommon:
+			retval = _copyJsonCommon(from);
+			break;
+		case T_JsonBehavior:
+			retval = _copyJsonBehavior(from);
+			break;
+		case T_JsonArgument:
+			retval = _copyJsonArgument(from);
+			break;
+		case T_JsonCoercion:
+			retval = _copyJsonCoercion(from);
+			break;
+		case T_JsonItemCoercions:
+			retval = _copyJsonItemCoercions(from);
 			break;
 
 			/*

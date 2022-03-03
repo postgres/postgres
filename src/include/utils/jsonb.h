@@ -407,6 +407,9 @@ extern char *JsonbToCString(StringInfo out, JsonbContainer *in,
 							int estimated_len);
 extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
 								  int estimated_len);
+extern Jsonb *JsonbMakeEmptyArray(void);
+extern Jsonb *JsonbMakeEmptyObject(void);
+extern char *JsonbUnquote(Jsonb *jb);
 extern bool JsonbExtractScalar(JsonbContainer *jbc, JsonbValue *res);
 extern const char *JsonbTypeName(JsonbValue *jb);
 

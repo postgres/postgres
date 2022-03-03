@@ -1,0 +1,15 @@
+-- JSON_EXISTS
+SELECT JSON_EXISTS(NULL FORMAT JSON, '$');
+ERROR:  JSON_EXISTS() is not yet implemented for json type
+LINE 1: SELECT JSON_EXISTS(NULL FORMAT JSON, '$');
+               ^
+-- JSON_VALUE
+SELECT JSON_VALUE(NULL FORMAT JSON, '$');
+ERROR:  JSON_VALUE() is not yet implemented for json type
+LINE 1: SELECT JSON_VALUE(NULL FORMAT JSON, '$');
+               ^
+-- JSON_QUERY
+SELECT JSON_QUERY(NULL FORMAT JSON, '$');
+ERROR:  JSON_QUERY() is not yet implemented for json type
+LINE 1: SELECT JSON_QUERY(NULL FORMAT JSON, '$');
+               ^

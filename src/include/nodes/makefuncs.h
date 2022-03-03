@@ -109,6 +109,7 @@ extern VacuumRelation *makeVacuumRelation(RangeVar *relation, Oid oid, List *va_
 extern JsonFormat *makeJsonFormat(JsonFormatType type, JsonEncoding encoding,
 								  int location);
 extern JsonValueExpr *makeJsonValueExpr(Expr *expr, JsonFormat *format);
+extern JsonBehavior *makeJsonBehavior(JsonBehaviorType type, Node *expr);
 extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 JsonValueType vtype, bool unique_keys,

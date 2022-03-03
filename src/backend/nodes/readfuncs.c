@@ -1493,6 +1493,84 @@ _readJsonConstructorExpr(void)
 }
 
 /*
+ * _readJsonBehavior
+ */
+static JsonBehavior *
+_readJsonBehavior(void)
+{
+	READ_LOCALS(JsonBehavior);
+
+	READ_ENUM_FIELD(btype, JsonBehaviorType);
+	READ_NODE_FIELD(default_expr);
+
+	READ_DONE();
+}
+
+/*
+ * _readJsonExpr
+ */
+static JsonExpr *
+_readJsonExpr(void)
+{
+	READ_LOCALS(JsonExpr);
+
+	READ_ENUM_FIELD(op, JsonExprOp);
+	READ_NODE_FIELD(formatted_expr);
+	READ_NODE_FIELD(result_coercion);
+	READ_NODE_FIELD(format);
+	READ_NODE_FIELD(path_spec);
+	READ_NODE_FIELD(passing_values);
+	READ_NODE_FIELD(passing_names);
+	READ_NODE_FIELD(returning);
+	READ_NODE_FIELD(on_error);
+	READ_NODE_FIELD(on_empty);
+	READ_NODE_FIELD(coercions);
+	READ_ENUM_FIELD(wrapper, JsonWrapper);
+	READ_BOOL_FIELD(omit_quotes);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readJsonCoercion
+ */
+static JsonCoercion *
+_readJsonCoercion(void)
+{
+	READ_LOCALS(JsonCoercion);
+
+	READ_NODE_FIELD(expr);
+	READ_BOOL_FIELD(via_populate);
+	READ_BOOL_FIELD(via_io);
+	READ_OID_FIELD(collation);
+
+	READ_DONE();
+}
+
+/*
+ * _readJsonItemCoercions
+ */
+static JsonItemCoercions *
+_readJsonItemCoercions(void)
+{
+	READ_LOCALS(JsonItemCoercions);
+
+	READ_NODE_FIELD(null);
+	READ_NODE_FIELD(string);
+	READ_NODE_FIELD(numeric);
+	READ_NODE_FIELD(boolean);
+	READ_NODE_FIELD(date);
+	READ_NODE_FIELD(time);
+	READ_NODE_FIELD(timetz);
+	READ_NODE_FIELD(timestamp);
+	READ_NODE_FIELD(timestamptz);
+	READ_NODE_FIELD(composite);
+
+	READ_DONE();
+}
+
+/*
  * _readJsonIsPredicate
  */
 static JsonIsPredicate *
@@ -3108,6 +3186,14 @@ parseNodeString(void)
 		return_value = _readJsonConstructorExpr();
 	else if (MATCH("JSONISPREDICATE", 15))
 		return_value = _readJsonIsPredicate();
+	else if (MATCH("JSONBEHAVIOR", 12))
+		return_value = _readJsonBehavior();
+	else if (MATCH("JSONEXPR", 8))
+		return_value = _readJsonExpr();
+	else if (MATCH("JSONCOERCION", 12))
+		return_value = _readJsonCoercion();
+	else if (MATCH("JSONITEMCOERCIONS", 17))
+		return_value = _readJsonItemCoercions();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);
