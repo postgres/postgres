@@ -4743,7 +4743,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         log file by reducing the value of this parameter. On a system with
         low WAL activity, increasing it reduces the amount of requests necessary
         to access WAL archives, something useful for example in cloud
-        environments where the amount of times an infrastructure is accessed
+        environments where the number of times an infrastructure is accessed
         is taken into account.
        </para>
       </listitem>

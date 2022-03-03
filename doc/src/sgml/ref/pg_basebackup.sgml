@@ -440,7 +440,7 @@ PostgreSQL documentation
         <literal>-Xstream</literal>, <literal>pg_wal.tar</literal> will
         be compressed using <literal>gzip</literal> if client-side gzip
         compression is selected, but will not be compressed if server-side
-        compresion or LZ4 compresion is selected.
+        compression or LZ4 compression is selected.
        </para>
       </listitem>
      </varlistentry>

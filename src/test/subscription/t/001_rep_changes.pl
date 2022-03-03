@@ -418,7 +418,7 @@ is( $result, qq(11.11|baz|1
 # application_name to ensure that the walsender is (re)started.
 #
 # Not all of these are registered as tests as we need to poll for a change
-# but the test suite will fail none the less when something goes wrong.
+# but the test suite will fail nonetheless when something goes wrong.
 my $oldpid = $node_publisher->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
 );

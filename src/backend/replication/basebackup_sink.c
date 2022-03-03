@@ -18,7 +18,7 @@
  * Forward begin_backup callback.
  *
  * Only use this implementation if you want the bbsink you're implementing to
- * share a buffer with the succesor bbsink.
+ * share a buffer with the successor bbsink.
  */
 void
 bbsink_forward_begin_backup(bbsink *sink)
@@ -43,7 +43,7 @@ bbsink_forward_begin_archive(bbsink *sink, const char *archive_name)
 /*
  * Forward archive_contents callback.
  *
- * Code that wants to use this should initalize its own bbs_buffer and
+ * Code that wants to use this should initialize its own bbs_buffer and
  * bbs_buffer_length fields to the values from the successor sink. In cases
  * where the buffer isn't shared, the data needs to be copied before forwarding
  * the callback. We don't do try to do that here, because there's really no

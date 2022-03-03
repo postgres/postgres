@@ -180,7 +180,7 @@ CREATE FUNCTION functest_S_13() RETURNS boolean
         SELECT false;
     END;
 
--- check display of function argments in sub-SELECT
+-- check display of function arguments in sub-SELECT
 CREATE TABLE functest1 (i int);
 CREATE FUNCTION functest_S_16(a int, b int) RETURNS void
     LANGUAGE SQL

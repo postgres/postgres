@@ -3102,7 +3102,7 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 	ListCell   *lc;
 	List	   *context;
 	StringInfoData keystr;
-	char	   *seperator = "";
+	char	   *separator = "";
 	bool		useprefix;
 	int64		memPeakKb;
 
@@ -3123,11 +3123,11 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
 
-		appendStringInfoString(&keystr, seperator);
+		appendStringInfoString(&keystr, separator);
 
 		appendStringInfoString(&keystr, deparse_expression(expr, context,
 														   useprefix, false));
-		seperator = ", ";
+		separator = ", ";
 	}
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)

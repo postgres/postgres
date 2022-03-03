@@ -4183,7 +4183,7 @@ initGenerateDataClientSide(PGconn *con)
 	 * accounts is big enough to be worth using COPY and tracking runtime
 	 */
 
-	/* use COPY with FREEZE on v14 and later without partioning */
+	/* use COPY with FREEZE on v14 and later without partitioning */
 	if (partitions == 0 && PQserverVersion(con) >= 140000)
 		copy_statement = "copy pgbench_accounts from stdin with (freeze on)";
 	else

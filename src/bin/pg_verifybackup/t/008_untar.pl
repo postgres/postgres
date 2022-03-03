@@ -87,7 +87,7 @@ for my $tc (@test_configuration)
 
 		SKIP: {
 			my $tar = $ENV{TAR};
-			# don't check for a working tar here, to accomodate various odd
+			# don't check for a working tar here, to accommodate various odd
 			# cases such as AIX. If tar doesn't work the init_from_backup below
 			# will fail.
 			skip "no tar program available", 1

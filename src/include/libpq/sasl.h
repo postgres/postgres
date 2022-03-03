@@ -62,7 +62,7 @@ typedef struct pg_be_sasl_mech
 	 * must return a pointer to its allocated state, which will be passed
 	 * as-is as the first argument to the other callbacks.
 	 *
-	 * Input paramters:
+	 * Input parameters:
 	 *
 	 *	port:        The client Port.
 	 *
