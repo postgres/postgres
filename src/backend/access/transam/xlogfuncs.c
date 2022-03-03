@@ -165,42 +165,19 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup_v2(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+#define PG_STOP_BACKUP_V2_COLS 3
 	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	Datum		values[3];
-	bool		nulls[3];
+	Datum		values[PG_STOP_BACKUP_V2_COLS];
+	bool		nulls[PG_STOP_BACKUP_V2_COLS];
 
 	bool		exclusive = PG_GETARG_BOOL(0);
 	bool		waitforarchive = PG_GETARG_BOOL(1);
 	XLogRecPtr	stoppoint;
 	SessionBackupState status = get_backup_status();
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Build a tuple descriptor for our result type */
+	/* Initialize attributes information in the tuple descriptor */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
 
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
@@ -251,9 +228,8 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 	/* Stoppoint is included on both exclusive and nonexclusive backups */
 	values[0] = LSNGetDatum(stoppoint);
 
-	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-
-	return (Datum) 0;
+	/* Returns the record as Datum */
+	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
 }
 
 /*

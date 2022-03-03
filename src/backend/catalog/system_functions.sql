@@ -384,7 +384,7 @@ CREATE OR REPLACE FUNCTION
 CREATE OR REPLACE FUNCTION pg_stop_backup (
         exclusive boolean, wait_for_archive boolean DEFAULT true,
         OUT lsn pg_lsn, OUT labelfile text, OUT spcmapfile text)
-  RETURNS SETOF record STRICT VOLATILE LANGUAGE internal as 'pg_stop_backup_v2'
+  RETURNS record STRICT VOLATILE LANGUAGE internal as 'pg_stop_backup_v2'
   PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION
