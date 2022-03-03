@@ -2298,6 +2298,52 @@ _copyOnConflictExpr(const OnConflictExpr *from)
 	return newnode;
 }
 
+
+/*
+ * _copyJsonFormat
+ */
+static JsonFormat *
+_copyJsonFormat(const JsonFormat *from)
+{
+	JsonFormat *newnode = makeNode(JsonFormat);
+
+	COPY_SCALAR_FIELD(format_type);
+	COPY_SCALAR_FIELD(encoding);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonReturning
+ */
+static JsonReturning *
+_copyJsonReturning(const JsonReturning *from)
+{
+	JsonReturning *newnode = makeNode(JsonReturning);
+
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(typid);
+	COPY_SCALAR_FIELD(typmod);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonValueExpr
+ */
+static JsonValueExpr *
+_copyJsonValueExpr(const JsonValueExpr *from)
+{
+	JsonValueExpr  *newnode = makeNode(JsonValueExpr);
+
+	COPY_NODE_FIELD(raw_expr);
+	COPY_NODE_FIELD(formatted_expr);
+	COPY_NODE_FIELD(format);
+
+	return newnode;
+}
+
 /* ****************************************************************
  *						pathnodes.h copy functions
  *
@@ -5349,6 +5395,15 @@ copyObjectImpl(const void *from)
 			break;
 		case T_OnConflictExpr:
 			retval = _copyOnConflictExpr(from);
+			break;
+		case T_JsonFormat:
+			retval = _copyJsonFormat(from);
+			break;
+		case T_JsonReturning:
+			retval = _copyJsonReturning(from);
+			break;
+		case T_JsonValueExpr:
+			retval = _copyJsonValueExpr(from);
 			break;
 
 			/*

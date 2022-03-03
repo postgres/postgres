@@ -201,6 +201,9 @@ typedef enum NodeTag
 	T_FromExpr,
 	T_OnConflictExpr,
 	T_IntoClause,
+	T_JsonFormat,
+	T_JsonReturning,
+	T_JsonValueExpr,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
@@ -491,6 +494,7 @@ typedef enum NodeTag
 	T_VacuumRelation,
 	T_PublicationObjSpec,
 	T_PublicationTable,
+	T_JsonOutput,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)

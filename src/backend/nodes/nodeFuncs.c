@@ -250,6 +250,13 @@ exprType(const Node *expr)
 		case T_PlaceHolderVar:
 			type = exprType((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
+		case T_JsonValueExpr:
+			{
+				const JsonValueExpr *jve = (const JsonValueExpr *) expr;
+
+				type = exprType((Node *) (jve->formatted_expr ? jve->formatted_expr : jve->raw_expr));
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			type = InvalidOid;	/* keep compiler quiet */
@@ -482,6 +489,8 @@ exprTypmod(const Node *expr)
 			return ((const SetToDefault *) expr)->typeMod;
 		case T_PlaceHolderVar:
 			return exprTypmod((Node *) ((const PlaceHolderVar *) expr)->phexpr);
+		case T_JsonValueExpr:
+			return exprTypmod((Node *) ((const JsonValueExpr *) expr)->formatted_expr);
 		default:
 			break;
 	}
@@ -958,6 +967,9 @@ exprCollation(const Node *expr)
 		case T_PlaceHolderVar:
 			coll = exprCollation((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
+		case T_JsonValueExpr:
+			coll = exprCollation((Node *) ((const JsonValueExpr *) expr)->formatted_expr);
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			coll = InvalidOid;	/* keep compiler quiet */
@@ -1169,6 +1181,10 @@ exprSetCollation(Node *expr, Oid collation)
 		case T_NextValueExpr:
 			/* NextValueExpr's result is an integer type ... */
 			Assert(!OidIsValid(collation)); /* ... so never set a collation */
+			break;
+		case T_JsonValueExpr:
+			exprSetCollation((Node *) ((JsonValueExpr *) expr)->formatted_expr,
+							 collation);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
@@ -1615,6 +1631,9 @@ exprLocation(const Node *expr)
 			break;
 		case T_PartitionRangeDatum:
 			loc = ((const PartitionRangeDatum *) expr)->location;
+			break;
+		case T_JsonValueExpr:
+			loc = exprLocation((Node *) ((const JsonValueExpr *) expr)->raw_expr);
 			break;
 		default:
 			/* for any other node type it's just unknown... */
@@ -2350,6 +2369,16 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *jve = (JsonValueExpr *) node;
+
+				if (walker(jve->raw_expr, context))
+					return true;
+				if (walker(jve->formatted_expr, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2680,6 +2709,7 @@ expression_tree_mutator(Node *node,
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 		case T_CTESearchClause:
+		case T_JsonFormat:
 			return (Node *) copyObject(node);
 		case T_WithCheckOption:
 			{
@@ -3311,6 +3341,28 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_JsonReturning:
+			{
+				JsonReturning *jr = (JsonReturning *) node;
+				JsonReturning *newnode;
+
+				FLATCOPY(newnode, jr, JsonReturning);
+				MUTATE(newnode->format, jr->format, JsonFormat *);
+
+				return (Node *) newnode;
+			}
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *jve = (JsonValueExpr *) node;
+				JsonValueExpr *newnode;
+
+				FLATCOPY(newnode, jve, JsonValueExpr);
+				MUTATE(newnode->raw_expr, jve->raw_expr, Expr *);
+				MUTATE(newnode->formatted_expr, jve->formatted_expr, Expr *);
+				MUTATE(newnode->format, jve->format, JsonFormat *);
+
+				return (Node *) newnode;
+			}
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -4019,6 +4071,20 @@ raw_expression_tree_walker(Node *node,
 		case T_CommonTableExpr:
 			/* search_clause and cycle_clause are not interesting here */
 			return walker(((CommonTableExpr *) node)->ctequery, context);
+		case T_JsonReturning:
+			return walker(((JsonReturning *) node)->format, context);
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *jve = (JsonValueExpr *) node;
+
+				if (walker(jve->raw_expr, context))
+					return true;
+				if (walker(jve->formatted_expr, context))
+					return true;
+				if (walker(jve->format, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
