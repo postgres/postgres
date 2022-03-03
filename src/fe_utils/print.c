@@ -913,7 +913,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 			more_col_wrapping = col_count;
 			curr_nl_line = 0;
-			memset(header_done, false, col_count * sizeof(bool));
+			if (col_count > 0)
+				memset(header_done, false, col_count * sizeof(bool));
 			while (more_col_wrapping)
 			{
 				if (opt_border == 2)
