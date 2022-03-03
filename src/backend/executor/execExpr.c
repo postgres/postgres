@@ -47,6 +47,8 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/json.h"
+#include "utils/jsonb.h"
 #include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
@@ -2460,6 +2462,12 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				{
 					ExecInitExprRec(ctor->func, state, resv, resnull);
 				}
+				else if ((ctor->type == JSCTOR_JSON_PARSE && !ctor->unique) ||
+						 ctor->type == JSCTOR_JSON_SERIALIZE)
+				{
+					/* Use the value of the first argument as a result */
+					ExecInitExprRec(linitial(args), state, resv, resnull);
+				}
 				else
 				{
 					scratch.opcode = EEOP_JSON_CONSTRUCTOR;
@@ -2490,6 +2498,43 @@ ExecInitExprRec(Expr *node, ExprState *state,
 											&scratch.d.json_constructor.arg_nulls[argno]);
 						}
 						argno++;
+					}
+
+					/* prepare type cache for datum_to_json[b]() */
+					if (ctor->type == JSCTOR_JSON_SCALAR)
+					{
+						bool		is_jsonb =
+							ctor->returning->format->format_type == JS_FORMAT_JSONB;
+
+						scratch.d.json_constructor.arg_type_cache =
+							palloc(sizeof(*scratch.d.json_constructor.arg_type_cache) * nargs);
+
+						for (int i = 0; i < nargs; i++)
+						{
+							int			category;
+							Oid			outfuncid;
+							Oid			typid = scratch.d.json_constructor.arg_types[i];
+
+							if (is_jsonb)
+							{
+								JsonbTypeCategory jbcat;
+
+								jsonb_categorize_type(typid, &jbcat, &outfuncid);
+
+								category = (int) jbcat;
+							}
+							else
+							{
+								JsonTypeCategory jscat;
+
+								json_categorize_type(typid, &jscat, &outfuncid);
+
+								category = (int) jscat;
+							}
+
+							scratch.d.json_constructor.arg_type_cache[i].outfuncid = outfuncid;
+							scratch.d.json_constructor.arg_type_cache[i].category = category;
+						}
 					}
 
 					ExprEvalPushStep(state, &scratch);

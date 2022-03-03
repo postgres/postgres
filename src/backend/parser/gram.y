@@ -568,7 +568,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	copy_options
 
 %type <typnam>	Typename SimpleTypename ConstTypename
-				GenericType Numeric opt_float
+				GenericType Numeric opt_float JsonType
 				Character ConstCharacter
 				CharacterWithLength CharacterWithoutLength
 				ConstDatetime ConstInterval
@@ -656,6 +656,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 					json_value_func_expr
 					json_query_expr
 					json_exists_predicate
+					json_parse_expr
+					json_scalar_expr
+					json_serialize_expr
 					json_api_common_syntax
 					json_context_item
 					json_argument
@@ -776,7 +779,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN JSON JSON_ARRAY JSON_ARRAYAGG JSON_EXISTS JSON_OBJECT JSON_OBJECTAGG
-	JSON_QUERY JSON_VALUE
+	JSON_QUERY JSON_SCALAR JSON_SERIALIZE JSON_VALUE
 
 	KEY KEYS KEEP
 
@@ -13345,6 +13348,7 @@ SimpleTypename:
 					$$->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
 											 makeIntConst($3, @3));
 				}
+			| JsonType								{ $$ = $1; }
 		;
 
 /* We have a separate ConstTypename to allow defaulting fixed-length
@@ -13363,6 +13367,7 @@ ConstTypename:
 			| ConstBit								{ $$ = $1; }
 			| ConstCharacter						{ $$ = $1; }
 			| ConstDatetime							{ $$ = $1; }
+			| JsonType								{ $$ = $1; }
 		;
 
 /*
@@ -13731,6 +13736,13 @@ interval_second:
 				}
 		;
 
+JsonType:
+			JSON
+				{
+					$$ = SystemTypeName("json");
+					$$->location = @1;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -15596,8 +15608,42 @@ json_func_expr:
 			| json_value_func_expr
 			| json_query_expr
 			| json_exists_predicate
+			| json_parse_expr
+			| json_scalar_expr
+			| json_serialize_expr
 		;
 
+json_parse_expr:
+			JSON '(' json_value_expr json_key_uniqueness_constraint_opt ')'
+				{
+					JsonParseExpr *n = makeNode(JsonParseExpr);
+					n->expr = (JsonValueExpr *) $3;
+					n->unique_keys = $4;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+json_scalar_expr:
+			JSON_SCALAR '(' a_expr ')'
+				{
+					JsonScalarExpr *n = makeNode(JsonScalarExpr);
+					n->expr = (Expr *) $3;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+json_serialize_expr:
+			JSON_SERIALIZE '(' json_value_expr json_output_clause_opt ')'
+				{
+					JsonSerializeExpr *n = makeNode(JsonSerializeExpr);
+					n->expr = (JsonValueExpr *) $3;
+					n->output = (JsonOutput *) $4;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
 
 json_value_func_expr:
 			JSON_VALUE '('
@@ -16654,7 +16700,6 @@ unreserved_keyword:
 			| INSTEAD
 			| INVOKER
 			| ISOLATION
-			| JSON
 			| KEEP
 			| KEY
 			| KEYS
@@ -16872,12 +16917,15 @@ col_name_keyword:
 			| INT_P
 			| INTEGER
 			| INTERVAL
+			| JSON
 			| JSON_ARRAY
 			| JSON_ARRAYAGG
 			| JSON_EXISTS
 			| JSON_OBJECT
 			| JSON_OBJECTAGG
 			| JSON_QUERY
+			| JSON_SCALAR
+			| JSON_SERIALIZE
 			| JSON_VALUE
 			| LEAST
 			| NATIONAL
@@ -17243,6 +17291,8 @@ bare_label_keyword:
 			| JSON_OBJECT
 			| JSON_OBJECTAGG
 			| JSON_QUERY
+			| JSON_SCALAR
+			| JSON_SERIALIZE
 			| JSON_VALUE
 			| KEEP
 			| KEY

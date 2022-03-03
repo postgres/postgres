@@ -3982,7 +3982,7 @@ ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op)
 		 * JSON text validation.
 		 */
 		if (res && (pred->unique_keys || exprtype == TEXTOID))
-			res = json_validate(json, pred->unique_keys);
+			res = json_validate(json, pred->unique_keys, false);
 	}
 	else if (exprtype == JSONBOID)
 	{
@@ -4527,6 +4527,46 @@ ExecEvalJsonConstructor(ExprState *state, ExprEvalStep *op,
 										 op->d.json_constructor.arg_types,
 										 op->d.json_constructor.constructor->absent_on_null,
 										 op->d.json_constructor.constructor->unique);
+	else if (ctor->type == JSCTOR_JSON_SCALAR)
+	{
+		if (op->d.json_constructor.arg_nulls[0])
+		{
+			res = (Datum) 0;
+			isnull = true;
+		}
+		else
+		{
+			Datum		value = op->d.json_constructor.arg_values[0];
+			int			category = op->d.json_constructor.arg_type_cache[0].category;
+			Oid			outfuncid = op->d.json_constructor.arg_type_cache[0].outfuncid;
+
+			if (is_jsonb)
+				res = to_jsonb_worker(value, category, outfuncid);
+			else
+				res = to_json_worker(value, category, outfuncid);
+		}
+	}
+	else if (ctor->type == JSCTOR_JSON_PARSE)
+	{
+		if (op->d.json_constructor.arg_nulls[0])
+		{
+			res = (Datum) 0;
+			isnull = true;
+		}
+		else
+		{
+			Datum		value = op->d.json_constructor.arg_values[0];
+			text	   *js = DatumGetTextP(value);
+
+			if (is_jsonb)
+				res = jsonb_from_text(js, true);
+			else
+			{
+				(void) json_validate(js, true, true);
+				res = value;
+			}
+		}
+	}
 	else
 	{
 		res = (Datum) 0;

@@ -2346,6 +2346,50 @@ _copyJsonValueExpr(const JsonValueExpr *from)
 }
 
 /*
+ * _copyJsonParseExpr
+ */
+static JsonParseExpr *
+_copyJsonParseExpr(const JsonParseExpr *from)
+{
+	JsonParseExpr  *newnode = makeNode(JsonParseExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_SCALAR_FIELD(unique_keys);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonScalarExpr
+ */
+static JsonScalarExpr *
+_copyJsonScalarExpr(const JsonScalarExpr *from)
+{
+	JsonScalarExpr *newnode = makeNode(JsonScalarExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyJsonSerializeExpr
+ */
+static JsonSerializeExpr *
+_copyJsonSerializeExpr(const JsonSerializeExpr *from)
+{
+	JsonSerializeExpr *newnode = makeNode(JsonSerializeExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
  * _copyJsonConstructorExpr
  */
 static JsonConstructorExpr *
@@ -5743,6 +5787,15 @@ copyObjectImpl(const void *from)
 			break;
 		case T_JsonValueExpr:
 			retval = _copyJsonValueExpr(from);
+			break;
+		case T_JsonParseExpr:
+			retval = _copyJsonParseExpr(from);
+			break;
+		case T_JsonScalarExpr:
+			retval = _copyJsonScalarExpr(from);
+			break;
+		case T_JsonSerializeExpr:
+			retval = _copyJsonSerializeExpr(from);
 			break;
 		case T_JsonKeyValue:
 			retval = _copyJsonKeyValue(from);

@@ -30,21 +30,6 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
-typedef enum					/* type categories for datum_to_json */
-{
-	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
-	JSONTYPE_BOOL,				/* boolean (built-in types only) */
-	JSONTYPE_NUMERIC,			/* numeric (ditto) */
-	JSONTYPE_DATE,				/* we use special formatting for datetimes */
-	JSONTYPE_TIMESTAMP,
-	JSONTYPE_TIMESTAMPTZ,
-	JSONTYPE_JSON,				/* JSON itself (and JSONB) */
-	JSONTYPE_ARRAY,				/* array */
-	JSONTYPE_COMPOSITE,			/* composite */
-	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
-	JSONTYPE_OTHER				/* all else */
-} JsonTypeCategory;
-
 /* Common context for key uniqueness check */
 typedef struct HTAB *JsonUniqueCheckState;	/* hash table for key names */
 
@@ -99,9 +84,6 @@ static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 							  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
 								   bool use_line_feeds);
-static void json_categorize_type(Oid typoid,
-								 JsonTypeCategory *tcategory,
-								 Oid *outfuncoid);
 static void datum_to_json(Datum val, bool is_null, StringInfo result,
 						  JsonTypeCategory tcategory, Oid outfuncoid,
 						  bool key_scalar);
@@ -180,7 +162,7 @@ json_recv(PG_FUNCTION_ARGS)
  * output function OID.  If the returned category is JSONTYPE_CAST, we
  * return the OID of the type->JSON cast function instead.
  */
-static void
+void
 json_categorize_type(Oid typoid,
 					 JsonTypeCategory *tcategory,
 					 Oid *outfuncoid)
@@ -762,6 +744,16 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
+Datum
+to_json_worker(Datum val, JsonTypeCategory tcategory, Oid outfuncoid)
+{
+	StringInfo	result = makeStringInfo();
+
+	datum_to_json(val, false, result, tcategory, outfuncoid, false);
+
+	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+}
+
 bool
 to_json_is_immutable(Oid typoid)
 {
@@ -802,7 +794,6 @@ to_json(PG_FUNCTION_ARGS)
 {
 	Datum		val = PG_GETARG_DATUM(0);
 	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	StringInfo	result;
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
 
@@ -814,11 +805,7 @@ to_json(PG_FUNCTION_ARGS)
 	json_categorize_type(val_type,
 						 &tcategory, &outfuncoid);
 
-	result = makeStringInfo();
-
-	datum_to_json(val, false, result, tcategory, outfuncoid, false);
-
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_DATUM(to_json_worker(val, tcategory, outfuncoid));
 }
 
 /*
@@ -1712,7 +1699,7 @@ json_unique_object_field_start(void *_state, char *field, bool isnull)
 
 /* Validate JSON text and additionally check key uniqueness */
 bool
-json_validate(text *json, bool check_unique_keys)
+json_validate(text *json, bool check_unique_keys, bool throw_error)
 {
 	JsonLexContext *lex = makeJsonLexContext(json, check_unique_keys);
 	JsonSemAction uniqueSemAction = {0};
@@ -1736,10 +1723,22 @@ json_validate(text *json, bool check_unique_keys)
 	result = pg_parse_json(lex, check_unique_keys ? &uniqueSemAction : &nullSemAction);
 
 	if (result != JSON_SUCCESS)
+	{
+		if (throw_error)
+			json_ereport_error(result, lex);
+
 		return false;	/* invalid json */
+	}
 
 	if (check_unique_keys && !state.unique)
+	{
+		if (throw_error)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
+					 errmsg("duplicate JSON object key value")));
+
 		return false;	/* not unique keys */
+	}
 
 	return true;	/* ok */
 }

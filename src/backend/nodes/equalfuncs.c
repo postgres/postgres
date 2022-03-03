@@ -872,6 +872,35 @@ _equalJsonValueExpr(const JsonValueExpr *a, const JsonValueExpr *b)
 }
 
 static bool
+_equalJsonParseExpr(const JsonParseExpr *a, const JsonParseExpr *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_SCALAR_FIELD(unique_keys);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalJsonScalarExpr(const JsonScalarExpr *a, const JsonScalarExpr *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalJsonSerializeExpr(const JsonSerializeExpr *a, const JsonSerializeExpr *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(output);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalJsonConstructorExpr(const JsonConstructorExpr *a, const JsonConstructorExpr *b)
 {
 	COMPARE_SCALAR_FIELD(type);
@@ -3660,6 +3689,15 @@ equal(const void *a, const void *b)
 			break;
 		case T_JsonValueExpr:
 			retval = _equalJsonValueExpr(a, b);
+			break;
+		case T_JsonParseExpr:
+			retval = _equalJsonParseExpr(a, b);
+			break;
+		case T_JsonScalarExpr:
+			retval = _equalJsonScalarExpr(a, b);
+			break;
+		case T_JsonSerializeExpr:
+			retval = _equalJsonSerializeExpr(a, b);
 			break;
 		case T_JsonConstructorExpr:
 			retval = _equalJsonConstructorExpr(a, b);
