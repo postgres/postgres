@@ -311,7 +311,7 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 	/*
 	 * copy the scan key, if appropriate
 	 */
-	if (key != NULL)
+	if (key != NULL && scan->rs_nkeys > 0)
 		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
 
 	/*

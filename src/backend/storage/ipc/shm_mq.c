@@ -748,8 +748,11 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 
 		/* Copy as much as we can. */
 		Assert(mqh->mqh_partial_bytes + rb <= nbytes);
-		memcpy(&mqh->mqh_buffer[mqh->mqh_partial_bytes], rawdata, rb);
-		mqh->mqh_partial_bytes += rb;
+		if (rb > 0)
+		{
+			memcpy(&mqh->mqh_buffer[mqh->mqh_partial_bytes], rawdata, rb);
+			mqh->mqh_partial_bytes += rb;
+		}
 
 		/*
 		 * Update count of bytes that can be consumed, accounting for

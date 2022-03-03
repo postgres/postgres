@@ -5093,8 +5093,9 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	{
 		if (TransactionIdIsValid(s->transactionId))
 			workspace[i++] = s->transactionId;
-		memcpy(&workspace[i], s->childXids,
-			   s->nChildXids * sizeof(TransactionId));
+		if (s->nChildXids > 0)
+			memcpy(&workspace[i], s->childXids,
+				   s->nChildXids * sizeof(TransactionId));
 		i += s->nChildXids;
 	}
 	Assert(i == nxids);
