@@ -85,6 +85,7 @@ static Node *transformJsonArrayQueryConstructor(ParseState *pstate,
 												JsonArrayQueryConstructor *ctor);
 static Node *transformJsonObjectAgg(ParseState *pstate, JsonObjectAgg *agg);
 static Node *transformJsonArrayAgg(ParseState *pstate, JsonArrayAgg *agg);
+static Node *transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *p);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
 									List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
@@ -330,6 +331,10 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 		case T_JsonArrayAgg:
 			result = transformJsonArrayAgg(pstate, (JsonArrayAgg *) expr);
+			break;
+
+		case T_JsonIsPredicate:
+			result = transformJsonIsPredicate(pstate, (JsonIsPredicate *) expr);
 			break;
 
 		default:
@@ -3868,4 +3873,75 @@ transformJsonArrayConstructor(ParseState *pstate, JsonArrayConstructor *ctor)
 	return makeJsonConstructorExpr(pstate, JSCTOR_JSON_ARRAY, args, NULL,
 								   returning, false, ctor->absent_on_null,
 								   ctor->location);
+}
+
+static Node *
+transformJsonParseArg(ParseState *pstate, Node *jsexpr, JsonFormat *format,
+					  Oid *exprtype)
+{
+	Node	   *raw_expr = transformExprRecurse(pstate, jsexpr);
+	Node	   *expr = raw_expr;
+
+	*exprtype = exprType(expr);
+
+	/* prepare input document */
+	if (*exprtype == BYTEAOID)
+	{
+		JsonValueExpr *jve;
+
+		expr = makeCaseTestExpr(raw_expr);
+		expr = makeJsonByteaToTextConversion(expr, format, exprLocation(expr));
+		*exprtype = TEXTOID;
+
+		jve = makeJsonValueExpr((Expr *) raw_expr, format);
+
+		jve->formatted_expr = (Expr *) expr;
+		expr = (Node *) jve;
+	}
+	else
+	{
+		char		typcategory;
+		bool		typispreferred;
+
+		get_type_category_preferred(*exprtype, &typcategory, &typispreferred);
+
+		if (*exprtype == UNKNOWNOID || typcategory == TYPCATEGORY_STRING)
+		{
+			expr = coerce_to_target_type(pstate, (Node *) expr, *exprtype,
+										 TEXTOID, -1,
+										 COERCION_IMPLICIT,
+										 COERCE_IMPLICIT_CAST, -1);
+			*exprtype = TEXTOID;
+		}
+
+		if (format->encoding != JS_ENC_DEFAULT)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 parser_errposition(pstate, format->location),
+					 errmsg("cannot use JSON FORMAT ENCODING clause for non-bytea input types")));
+	}
+
+	return expr;
+}
+
+/*
+ * Transform IS JSON predicate into
+ * json[b]_is_valid(json, value_type [, check_key_uniqueness]) call.
+ */
+static Node *
+transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred)
+{
+	Oid			exprtype;
+	Node	   *expr = transformJsonParseArg(pstate, pred->expr, pred->format,
+											 &exprtype);
+
+	/* make resulting expression */
+	if (exprtype != TEXTOID && exprtype != JSONOID && exprtype != JSONBOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot use type %s in IS JSON predicate",
+						format_type_be(exprtype))));
+
+	return makeJsonIsPredicate(expr, NULL, pred->value_type,
+							   pred->unique_keys, pred->location);
 }

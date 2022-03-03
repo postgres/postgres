@@ -1797,6 +1797,17 @@ _outJsonConstructorExpr(StringInfo str, const JsonConstructorExpr *node)
 	WRITE_LOCATION_FIELD(location);
 }
 
+static void
+_outJsonIsPredicate(StringInfo str, const JsonIsPredicate *node)
+{
+	WRITE_NODE_TYPE("JSONISPREDICATE");
+
+	WRITE_NODE_FIELD(expr);
+	WRITE_ENUM_FIELD(value_type, JsonValueType);
+	WRITE_BOOL_FIELD(unique_keys);
+	WRITE_LOCATION_FIELD(location);
+}
+
 /*****************************************************************************
  *
  *	Stuff from pathnodes.h.
@@ -4629,6 +4640,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_JsonConstructorExpr:
 				_outJsonConstructorExpr(str, obj);
+				break;
+			case T_JsonIsPredicate:
+				_outJsonIsPredicate(str, obj);
 				break;
 
 			default:

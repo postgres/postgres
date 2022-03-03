@@ -505,6 +505,7 @@ typedef enum NodeTag
 	T_JsonAggConstructor,
 	T_JsonObjectAgg,
 	T_JsonArrayAgg,
+	T_JsonIsPredicate,
 	T_JsonKeyValue,
 	T_JsonOutput,
 

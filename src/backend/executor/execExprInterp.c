@@ -73,6 +73,7 @@
 #include "utils/expandedrecord.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
+#include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
@@ -480,6 +481,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_WINDOW_FUNC,
 		&&CASE_EEOP_SUBPLAN,
 		&&CASE_EEOP_JSON_CONSTRUCTOR,
+		&&CASE_EEOP_IS_JSON,
 		&&CASE_EEOP_AGG_STRICT_DESERIALIZE,
 		&&CASE_EEOP_AGG_DESERIALIZE,
 		&&CASE_EEOP_AGG_STRICT_INPUT_CHECK_ARGS,
@@ -1796,6 +1798,14 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* too complex for an inline implementation */
 			ExecEvalJsonConstructor(state, op, econtext);
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_IS_JSON)
+		{
+			/* too complex for an inline implementation */
+			ExecEvalJsonIsPredicate(state, op);
+
 			EEO_NEXT();
 		}
 
@@ -3907,6 +3917,91 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 			elog(ERROR, "unrecognized XML operation");
 			break;
 	}
+}
+
+void
+ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op)
+{
+	JsonIsPredicate *pred = op->d.is_json.pred;
+	Datum		js = *op->resvalue;
+	Oid			exprtype;
+	bool		res;
+
+	if (*op->resnull)
+	{
+		*op->resvalue = BoolGetDatum(false);
+		return;
+	}
+
+	exprtype = exprType(pred->expr);
+
+	if (exprtype == TEXTOID || exprtype == JSONOID)
+	{
+		text	   *json = DatumGetTextP(js);
+
+		if (pred->value_type == JS_TYPE_ANY)
+			res = true;
+		else
+		{
+			switch (json_get_first_token(json, false))
+			{
+				case JSON_TOKEN_OBJECT_START:
+					res = pred->value_type == JS_TYPE_OBJECT;
+					break;
+				case JSON_TOKEN_ARRAY_START:
+					res = pred->value_type == JS_TYPE_ARRAY;
+					break;
+				case JSON_TOKEN_STRING:
+				case JSON_TOKEN_NUMBER:
+				case JSON_TOKEN_TRUE:
+				case JSON_TOKEN_FALSE:
+				case JSON_TOKEN_NULL:
+					res = pred->value_type == JS_TYPE_SCALAR;
+					break;
+				default:
+					res = false;
+					break;
+			}
+		}
+
+		/*
+		 * Do full parsing pass only for uniqueness check or for
+		 * JSON text validation.
+		 */
+		if (res && (pred->unique_keys || exprtype == TEXTOID))
+			res = json_validate(json, pred->unique_keys);
+	}
+	else if (exprtype == JSONBOID)
+	{
+		if (pred->value_type == JS_TYPE_ANY)
+			res = true;
+		else
+		{
+			Jsonb	   *jb = DatumGetJsonbP(js);
+
+			switch (pred->value_type)
+			{
+				case JS_TYPE_OBJECT:
+					res = JB_ROOT_IS_OBJECT(jb);
+					break;
+				case JS_TYPE_ARRAY:
+					res = JB_ROOT_IS_ARRAY(jb) && !JB_ROOT_IS_SCALAR(jb);
+					break;
+				case JS_TYPE_SCALAR:
+					res = JB_ROOT_IS_ARRAY(jb) && JB_ROOT_IS_SCALAR(jb);
+					break;
+				default:
+					res = false;
+					break;
+			}
+		}
+
+		/* Key uniqueness check is redundant for jsonb */
+	}
+	else
+		res = false;
+
+	*op->resvalue = BoolGetDatum(res);
 }
 
 /*

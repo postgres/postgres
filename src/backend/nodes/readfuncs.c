@@ -1493,6 +1493,22 @@ _readJsonConstructorExpr(void)
 }
 
 /*
+ * _readJsonIsPredicate
+ */
+static JsonIsPredicate *
+_readJsonIsPredicate()
+{
+	READ_LOCALS(JsonIsPredicate);
+
+	READ_NODE_FIELD(expr);
+	READ_ENUM_FIELD(value_type, JsonValueType);
+	READ_BOOL_FIELD(unique_keys);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
  *	Stuff from pathnodes.h.
  *
  * Mostly we don't need to read planner nodes back in again, but some
@@ -3090,6 +3106,8 @@ parseNodeString(void)
 		return_value = _readJsonValueExpr();
 	else if (MATCH("JSONCTOREXPR", 12))
 		return_value = _readJsonConstructorExpr();
+	else if (MATCH("JSONISPREDICATE", 15))
+		return_value = _readJsonIsPredicate();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

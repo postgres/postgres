@@ -1317,6 +1317,32 @@ typedef struct JsonConstructorExpr
 	int			location;
 } JsonConstructorExpr;
 
+/*
+ * JsonValueType -
+ *		representation of JSON item type in IS JSON predicate
+ */
+typedef enum JsonValueType
+{
+	JS_TYPE_ANY,				/* IS JSON [VALUE] */
+	JS_TYPE_OBJECT,				/* IS JSON OBJECT */
+	JS_TYPE_ARRAY,				/* IS JSON ARRAY*/
+	JS_TYPE_SCALAR				/* IS JSON SCALAR */
+} JsonValueType;
+
+/*
+ * JsonIsPredicate -
+ *		untransformed representation of IS JSON predicate
+ */
+typedef struct JsonIsPredicate
+{
+	NodeTag		type;
+	Node	   *expr;			/* untransformed expression */
+	JsonFormat *format;			/* FORMAT clause, if specified */
+	JsonValueType value_type;	/* JSON item type */
+	bool		unique_keys;	/* check key uniqueness? */
+	int			location;		/* token location, or -1 if unknown */
+} JsonIsPredicate;
+
 /* ----------------
  * NullTest
  *

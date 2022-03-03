@@ -2513,6 +2513,19 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			}
 			break;
 
+		case T_JsonIsPredicate:
+			{
+				JsonIsPredicate *pred = (JsonIsPredicate *) node;
+
+				ExecInitExprRec((Expr *) pred->expr, state, resv, resnull);
+
+				scratch.opcode = EEOP_IS_JSON;
+				scratch.d.is_json.pred = pred;
+
+				ExprEvalPushStep(state, &scratch);
+				break;
+			}
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));

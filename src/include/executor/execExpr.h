@@ -240,6 +240,7 @@ typedef enum ExprEvalOp
 	EEOP_WINDOW_FUNC,
 	EEOP_SUBPLAN,
 	EEOP_JSON_CONSTRUCTOR,
+	EEOP_IS_JSON,
 
 	/* aggregation related nodes */
 	EEOP_AGG_STRICT_DESERIALIZE,
@@ -680,6 +681,12 @@ typedef struct ExprEvalStep
 			int			nargs;
 		}			json_constructor;
 
+		/* for EEOP_IS_JSON */
+		struct
+		{
+					JsonIsPredicate *pred;	/* original expression node */
+		}			is_json;
+
 	}			d;
 } ExprEvalStep;
 
@@ -774,6 +781,7 @@ extern void ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op,
 extern void ExecEvalConstraintNotNull(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalConstraintCheck(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalGroupingFunc(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalSubPlan(ExprState *state, ExprEvalStep *op,
 							ExprContext *econtext);

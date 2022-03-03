@@ -976,6 +976,18 @@ _equalJsonArrayQueryConstructor(const JsonArrayQueryConstructor *a,
 	return true;
 }
 
+static bool
+_equalJsonIsPredicate(const JsonIsPredicate *a,
+					  const JsonIsPredicate *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_SCALAR_FIELD(value_type);
+	COMPARE_SCALAR_FIELD(unique_keys);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
 /*
  * Stuff from pathnodes.h
  */
@@ -3545,6 +3557,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_JsonConstructorExpr:
 			retval = _equalJsonConstructorExpr(a, b);
+			break;
+		case T_JsonIsPredicate:
+			retval = _equalJsonIsPredicate(a, b);
 			break;
 
 			/*
