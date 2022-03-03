@@ -297,8 +297,9 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	if (all_xact_same_page && xid == MyProc->xid &&
 		nsubxids <= THRESHOLD_SUBTRANS_CLOG_OPT &&
 		nsubxids == MyProc->subxidStatus.count &&
-		memcmp(subxids, MyProc->subxids.xids,
-			   nsubxids * sizeof(TransactionId)) == 0)
+		(nsubxids == 0 ||
+		 memcmp(subxids, MyProc->subxids.xids,
+				nsubxids * sizeof(TransactionId)) == 0))
 	{
 		/*
 		 * If we can immediately acquire XactSLRULock, we update the status of
