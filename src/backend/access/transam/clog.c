@@ -296,8 +296,9 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	if (all_xact_same_page && xid == MyPgXact->xid &&
 		nsubxids <= THRESHOLD_SUBTRANS_CLOG_OPT &&
 		nsubxids == MyPgXact->nxids &&
-		memcmp(subxids, MyProc->subxids.xids,
-			   nsubxids * sizeof(TransactionId)) == 0)
+		(nsubxids == 0 ||
+		 memcmp(subxids, MyProc->subxids.xids,
+				nsubxids * sizeof(TransactionId)) == 0))
 	{
 		/*
 		 * If we can immediately acquire CLogControlLock, we update the status
