@@ -841,6 +841,36 @@ _equalOnConflictExpr(const OnConflictExpr *a, const OnConflictExpr *b)
 	return true;
 }
 
+static bool
+_equalJsonFormat(const JsonFormat *a, const JsonFormat *b)
+{
+	COMPARE_SCALAR_FIELD(format_type);
+	COMPARE_SCALAR_FIELD(encoding);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalJsonReturning(const JsonReturning *a, const JsonReturning *b)
+{
+	COMPARE_NODE_FIELD(format);
+	COMPARE_SCALAR_FIELD(typid);
+	COMPARE_SCALAR_FIELD(typmod);
+
+	return true;
+}
+
+static bool
+_equalJsonValueExpr(const JsonValueExpr *a, const JsonValueExpr *b)
+{
+	COMPARE_NODE_FIELD(raw_expr);
+	COMPARE_NODE_FIELD(formatted_expr);
+	COMPARE_NODE_FIELD(format);
+
+	return true;
+}
+
 /*
  * Stuff from pathnodes.h
  */
@@ -3358,6 +3388,15 @@ equal(const void *a, const void *b)
 			break;
 		case T_JoinExpr:
 			retval = _equalJoinExpr(a, b);
+			break;
+		case T_JsonFormat:
+			retval = _equalJsonFormat(a, b);
+			break;
+		case T_JsonReturning:
+			retval = _equalJsonReturning(a, b);
+			break;
+		case T_JsonValueExpr:
+			retval = _equalJsonValueExpr(a, b);
 			break;
 
 			/*

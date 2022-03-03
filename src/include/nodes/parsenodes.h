@@ -1553,6 +1553,19 @@ typedef struct TriggerTransition
 	bool		isTable;
 } TriggerTransition;
 
+/* Nodes for SQL/JSON support */
+
+/*
+ * JsonOutput -
+ *		representation of JSON output clause (RETURNING type [FORMAT format])
+ */
+typedef struct JsonOutput
+{
+	NodeTag		type;
+	TypeName   *typeName;		/* RETURNING type name, if specified */
+	JsonReturning returning;	/* RETURNING FORMAT clause and type Oids */
+} JsonOutput;
+
 /*****************************************************************************
  *		Raw Grammar Output Statements
  *****************************************************************************/

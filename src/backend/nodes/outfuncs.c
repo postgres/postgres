@@ -1751,6 +1751,36 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 	WRITE_NODE_FIELD(exclRelTlist);
 }
 
+static void
+_outJsonFormat(StringInfo str, const JsonFormat *node)
+{
+	WRITE_NODE_TYPE("JSONFORMAT");
+
+	WRITE_ENUM_FIELD(format_type, JsonFormatType);
+	WRITE_ENUM_FIELD(encoding, JsonEncoding);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outJsonReturning(StringInfo str, const JsonReturning *node)
+{
+	WRITE_NODE_TYPE("JSONRETURNING");
+
+	WRITE_NODE_FIELD(format);
+	WRITE_OID_FIELD(typid);
+	WRITE_INT_FIELD(typmod);
+}
+
+static void
+_outJsonValueExpr(StringInfo str, const JsonValueExpr *node)
+{
+	WRITE_NODE_TYPE("JSONVALUEEXPR");
+
+	WRITE_NODE_FIELD(raw_expr);
+	WRITE_NODE_FIELD(formatted_expr);
+	WRITE_NODE_FIELD(format);
+}
+
 /*****************************************************************************
  *
  *	Stuff from pathnodes.h.
@@ -4536,6 +4566,15 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
+				break;
+			case T_JsonFormat:
+				_outJsonFormat(str, obj);
+				break;
+			case T_JsonReturning:
+				_outJsonReturning(str, obj);
+				break;
+			case T_JsonValueExpr:
+				_outJsonValueExpr(str, obj);
 				break;
 
 			default:
