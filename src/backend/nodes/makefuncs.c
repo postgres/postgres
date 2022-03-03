@@ -872,3 +872,18 @@ makeJsonEncoding(char *name)
 
 	return JS_ENC_DEFAULT;
 }
+
+/*
+ * makeJsonKeyValue -
+ *	  creates a JsonKeyValue node
+ */
+Node *
+makeJsonKeyValue(Node *key, Node *value)
+{
+	JsonKeyValue *n = makeNode(JsonKeyValue);
+
+	n->key = (Expr *) key;
+	n->value = castNode(JsonValueExpr, value);
+
+	return (Node *) n;
+}

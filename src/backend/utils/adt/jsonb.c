@@ -14,6 +14,7 @@
 
 #include "access/htup_details.h"
 #include "access/transam.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
@@ -1126,6 +1127,39 @@ add_jsonb(Datum val, bool is_null, JsonbInState *result,
 	datum_to_jsonb(val, is_null, result, tcategory, outfuncoid, key_scalar);
 }
 
+bool
+to_jsonb_is_immutable(Oid typoid)
+{
+	JsonbTypeCategory tcategory;
+	Oid			outfuncoid;
+
+	jsonb_categorize_type(typoid, &tcategory, &outfuncoid);
+
+	switch (tcategory)
+	{
+		case JSONBTYPE_BOOL:
+		case JSONBTYPE_JSON:
+		case JSONBTYPE_JSONB:
+			return true;
+
+		case JSONBTYPE_DATE:
+		case JSONBTYPE_TIMESTAMP:
+		case JSONBTYPE_TIMESTAMPTZ:
+			return false;
+
+		case JSONBTYPE_ARRAY:
+			return false;	/* TODO recurse into elements */
+
+		case JSONBTYPE_COMPOSITE:
+			return false;	/* TODO recurse into fields */
+
+		case JSONBTYPE_NUMERIC:
+		case JSONBTYPE_JSONCAST:
+		default:
+			return func_volatile(outfuncoid) == PROVOLATILE_IMMUTABLE;
+	}
+}
+
 /*
  * SQL function to_jsonb(anyvalue)
  */
@@ -1153,24 +1187,12 @@ to_jsonb(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
 }
 
-/*
- * SQL function jsonb_build_object(variadic "any")
- */
 Datum
-jsonb_build_object(PG_FUNCTION_ARGS)
+jsonb_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+						  bool absent_on_null, bool unique_keys)
 {
-	int			nargs;
 	int			i;
 	JsonbInState result;
-	Datum	   *args;
-	bool	   *nulls;
-	Oid		   *types;
-
-	/* build argument values to build the object */
-	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
-
-	if (nargs < 0)
-		PG_RETURN_NULL();
 
 	if (nargs % 2 != 0)
 		ereport(ERROR,
@@ -1183,14 +1205,25 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 	memset(&result, 0, sizeof(JsonbInState));
 
 	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	result.parseState->unique_keys = unique_keys;
+	result.parseState->skip_nulls = absent_on_null;
 
 	for (i = 0; i < nargs; i += 2)
 	{
 		/* process key */
+		bool		skip;
+
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("argument %d: key must not be null", i + 1)));
+
+		/* skip null values if absent_on_null */
+		skip = absent_on_null && nulls[i + 1];
+
+		/* we need to save skipped keys for the key uniqueness check */
+		if (skip && !unique_keys)
+			continue;
 
 		add_jsonb(args[i], false, &result, types[i], true);
 
@@ -1200,7 +1233,26 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 
 	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	return JsonbPGetDatum(JsonbValueToJsonb(result.res));
+}
+
+/*
+ * SQL function jsonb_build_object(variadic "any")
+ */
+Datum
+jsonb_build_object(PG_FUNCTION_ARGS)
+{
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+	/* build argument values to build the object */
+	int			nargs = extract_variadic_args(fcinfo, 0, true,
+											  &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(jsonb_build_object_worker(nargs, args, nulls, types, false, false));
 }
 
 /*
@@ -1219,36 +1271,49 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
 }
 
-/*
- * SQL function jsonb_build_array(variadic "any")
- */
 Datum
-jsonb_build_array(PG_FUNCTION_ARGS)
+jsonb_build_array_worker(int nargs, Datum *args, bool *nulls, Oid *types,
+						 bool absent_on_null)
 {
-	int			nargs;
 	int			i;
 	JsonbInState result;
-	Datum	   *args;
-	bool	   *nulls;
-	Oid		   *types;
-
-	/* build argument values to build the array */
-	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
-
-	if (nargs < 0)
-		PG_RETURN_NULL();
 
 	memset(&result, 0, sizeof(JsonbInState));
 
 	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
 
 	for (i = 0; i < nargs; i++)
+	{
+		if (absent_on_null && nulls[i])
+			continue;
+
 		add_jsonb(args[i], nulls[i], &result, types[i], false);
+	}
 
 	result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	return JsonbPGetDatum(JsonbValueToJsonb(result.res));
 }
+
+/*
+ * SQL function jsonb_build_array(variadic "any")
+ */
+Datum
+jsonb_build_array(PG_FUNCTION_ARGS)
+{
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+	/* build argument values to build the object */
+	int			nargs = extract_variadic_args(fcinfo, 0, true,
+											  &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(jsonb_build_array_worker(nargs, args, nulls, types, false));
+}
+
 
 /*
  * degenerate case of jsonb_build_array where it gets 0 arguments.
@@ -1490,6 +1555,8 @@ clone_parse_state(JsonbParseState *state)
 	{
 		ocursor->contVal = icursor->contVal;
 		ocursor->size = icursor->size;
+		ocursor->unique_keys = icursor->unique_keys;
+		ocursor->skip_nulls = icursor->skip_nulls;
 		icursor = icursor->next;
 		if (icursor == NULL)
 			break;
@@ -1501,12 +1568,8 @@ clone_parse_state(JsonbParseState *state)
 	return result;
 }
 
-
-/*
- * jsonb_agg aggregate function
- */
-Datum
-jsonb_agg_transfn(PG_FUNCTION_ARGS)
+static Datum
+jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 {
 	MemoryContext oldcontext,
 				aggcontext;
@@ -1553,6 +1616,9 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 		state = (JsonbAggState *) PG_GETARG_POINTER(0);
 		result = state->res;
 	}
+
+	if (absent_on_null && PG_ARGISNULL(1))
+		PG_RETURN_POINTER(state);
 
 	/* turn the argument into jsonb in the normal function context */
 
@@ -1623,6 +1689,24 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(state);
 }
 
+/*
+ * jsonb_agg aggregate function
+ */
+Datum
+jsonb_agg_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_agg_transfn_worker(fcinfo, false);
+}
+
+/*
+ * jsonb_agg_strict aggregate function
+ */
+Datum
+jsonb_agg_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_agg_transfn_worker(fcinfo, true);
+}
+
 Datum
 jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 {
@@ -1655,11 +1739,9 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(out);
 }
 
-/*
- * jsonb_object_agg aggregate function
- */
-Datum
-jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
+static Datum
+jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
+								bool absent_on_null, bool unique_keys)
 {
 	MemoryContext oldcontext,
 				aggcontext;
@@ -1673,6 +1755,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 			   *jbval;
 	JsonbValue	v;
 	JsonbIteratorToken type;
+	bool		skip;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -1692,6 +1775,9 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 		state->res = result;
 		result->res = pushJsonbValue(&result->parseState,
 									 WJB_BEGIN_OBJECT, NULL);
+		result->parseState->unique_keys = unique_keys;
+		result->parseState->skip_nulls = absent_on_null;
+
 		MemoryContextSwitchTo(oldcontext);
 
 		arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
@@ -1726,6 +1812,15 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field name must not be null")));
+
+	/*
+	 * Skip null values if absent_on_null unless key uniqueness check is
+	 * needed (because we must save keys in this case).
+	 */
+	skip = absent_on_null && PG_ARGISNULL(2);
+
+	if (skip && !unique_keys)
+		PG_RETURN_POINTER(state);
 
 	val = PG_GETARG_DATUM(1);
 
@@ -1782,6 +1877,16 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 WJB_KEY, &v);
+
+				if (skip)
+				{
+					v.type = jbvNull;
+					result->res = pushJsonbValue(&result->parseState,
+												 WJB_VALUE, &v);
+					MemoryContextSwitchTo(oldcontext);
+					PG_RETURN_POINTER(state);
+				}
+
 				break;
 			case WJB_END_ARRAY:
 				break;
@@ -1852,6 +1957,43 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	PG_RETURN_POINTER(state);
+}
+
+/*
+ * jsonb_object_agg aggregate function
+ */
+Datum
+jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_object_agg_transfn_worker(fcinfo, false, false);
+}
+
+
+/*
+ * jsonb_object_agg_strict aggregate function
+ */
+Datum
+jsonb_object_agg_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_object_agg_transfn_worker(fcinfo, true, false);
+}
+
+/*
+ * jsonb_object_agg_unique aggregate function
+ */
+Datum
+jsonb_object_agg_unique_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_object_agg_transfn_worker(fcinfo, false, true);
+}
+
+/*
+ * jsonb_object_agg_unique_strict aggregate function
+ */
+Datum
+jsonb_object_agg_unique_strict_transfn(PG_FUNCTION_ARGS)
+{
+	return jsonb_object_agg_transfn_worker(fcinfo, true, true);
 }
 
 Datum

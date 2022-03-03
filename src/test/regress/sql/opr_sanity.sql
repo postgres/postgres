@@ -854,8 +854,10 @@ WHERE a.aggfnoid = p.oid AND
          NOT binary_coercible(p.proargtypes[1], ptr.proargtypes[2]))
      OR (p.pronargs > 2 AND
          NOT binary_coercible(p.proargtypes[2], ptr.proargtypes[3]))
-     -- we could carry the check further, but 3 args is enough for now
-     OR (p.pronargs > 3)
+     OR (p.pronargs > 3 AND
+         NOT binary_coercible(p.proargtypes[3], ptr.proargtypes[4]))
+     -- we could carry the check further, but 4 args is enough for now
+     OR (p.pronargs > 4)
     );
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.

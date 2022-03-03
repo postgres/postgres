@@ -1781,6 +1781,21 @@ _outJsonValueExpr(StringInfo str, const JsonValueExpr *node)
 	WRITE_NODE_FIELD(format);
 }
 
+static void
+_outJsonConstructorExpr(StringInfo str, const JsonConstructorExpr *node)
+{
+	WRITE_NODE_TYPE("JSONCTOREXPR");
+
+	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(func);
+	WRITE_NODE_FIELD(coercion);
+	WRITE_INT_FIELD(type);
+	WRITE_NODE_FIELD(returning);
+	WRITE_BOOL_FIELD(unique);
+	WRITE_BOOL_FIELD(absent_on_null);
+	WRITE_LOCATION_FIELD(location);
+}
+
 /*****************************************************************************
  *
  *	Stuff from pathnodes.h.
@@ -4575,6 +4590,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_JsonValueExpr:
 				_outJsonValueExpr(str, obj);
+				break;
+			case T_JsonConstructorExpr:
+				_outJsonConstructorExpr(str, obj);
 				break;
 
 			default:

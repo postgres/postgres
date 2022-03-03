@@ -1957,6 +1957,19 @@ FigureColnameInternal(Node *node, char **name)
 		case T_XmlSerialize:
 			*name = "xmlserialize";
 			return 2;
+		case T_JsonObjectConstructor:
+			*name = "json_object";
+			return 2;
+		case T_JsonArrayConstructor:
+		case T_JsonArrayQueryConstructor:
+			*name = "json_array";
+			return 2;
+		case T_JsonObjectAgg:
+			*name = "json_objectagg";
+			return 2;
+		case T_JsonArrayAgg:
+			*name = "json_arrayagg";
+			return 2;
 		default:
 			break;
 	}

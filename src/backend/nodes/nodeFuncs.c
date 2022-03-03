@@ -257,6 +257,9 @@ exprType(const Node *expr)
 				type = exprType((Node *) (jve->formatted_expr ? jve->formatted_expr : jve->raw_expr));
 			}
 			break;
+		case T_JsonConstructorExpr:
+			type = ((const JsonConstructorExpr *) expr)->returning->typid;
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			type = InvalidOid;	/* keep compiler quiet */
@@ -491,6 +494,8 @@ exprTypmod(const Node *expr)
 			return exprTypmod((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 		case T_JsonValueExpr:
 			return exprTypmod((Node *) ((const JsonValueExpr *) expr)->formatted_expr);
+		case T_JsonConstructorExpr:
+			return -1; /* ((const JsonConstructorExpr *) expr)->returning->typmod; */
 		default:
 			break;
 	}
@@ -970,6 +975,16 @@ exprCollation(const Node *expr)
 		case T_JsonValueExpr:
 			coll = exprCollation((Node *) ((const JsonValueExpr *) expr)->formatted_expr);
 			break;
+		case T_JsonConstructorExpr:
+			{
+				const JsonConstructorExpr *ctor = (const JsonConstructorExpr *) expr;
+
+				if (ctor->coercion)
+					coll = exprCollation((Node *) ctor->coercion);
+				else
+					coll = InvalidOid;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			coll = InvalidOid;	/* keep compiler quiet */
@@ -1185,6 +1200,16 @@ exprSetCollation(Node *expr, Oid collation)
 		case T_JsonValueExpr:
 			exprSetCollation((Node *) ((JsonValueExpr *) expr)->formatted_expr,
 							 collation);
+			break;
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *ctor = (JsonConstructorExpr *) expr;
+
+				if (ctor->coercion)
+					exprSetCollation((Node *) ctor->coercion, collation);
+				else
+					Assert(!OidIsValid(collation)); /* result is always a json[b] type */
+			}
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
@@ -1634,6 +1659,9 @@ exprLocation(const Node *expr)
 			break;
 		case T_JsonValueExpr:
 			loc = exprLocation((Node *) ((const JsonValueExpr *) expr)->raw_expr);
+			break;
+		case T_JsonConstructorExpr:
+			loc = ((const JsonConstructorExpr *) expr)->location;
 			break;
 		default:
 			/* for any other node type it's just unknown... */
@@ -2376,6 +2404,18 @@ expression_tree_walker(Node *node,
 				if (walker(jve->raw_expr, context))
 					return true;
 				if (walker(jve->formatted_expr, context))
+					return true;
+			}
+			break;
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+
+				if (walker(ctor->args, context))
+					return true;
+				if (walker(ctor->func, context))
+					return true;
+				if (walker(ctor->coercion, context))
 					return true;
 			}
 			break;
@@ -3363,6 +3403,19 @@ expression_tree_mutator(Node *node,
 
 				return (Node *) newnode;
 			}
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *jve = (JsonConstructorExpr *) node;
+				JsonConstructorExpr *newnode;
+
+				FLATCOPY(newnode, jve, JsonConstructorExpr);
+				MUTATE(newnode->args, jve->args, List *);
+				MUTATE(newnode->func, jve->func, Expr *);
+				MUTATE(newnode->coercion, jve->coercion, Expr *);
+				MUTATE(newnode->returning, jve->returning, JsonReturning *);
+
+				return (Node *) newnode;
+			}
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3637,6 +3690,7 @@ raw_expression_tree_walker(Node *node,
 		case T_ParamRef:
 		case T_A_Const:
 		case T_A_Star:
+		case T_JsonFormat:
 			/* primitive node types with no subnodes */
 			break;
 		case T_Alias:
@@ -4082,6 +4136,104 @@ raw_expression_tree_walker(Node *node,
 				if (walker(jve->formatted_expr, context))
 					return true;
 				if (walker(jve->format, context))
+					return true;
+			}
+			break;
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+
+				if (walker(ctor->args, context))
+					return true;
+				if (walker(ctor->func, context))
+					return true;
+				if (walker(ctor->coercion, context))
+					return true;
+				if (walker(ctor->returning, context))
+					return true;
+			}
+			break;
+		case T_JsonOutput:
+			{
+				JsonOutput *out = (JsonOutput *) node;
+
+				if (walker(out->typeName, context))
+					return true;
+				if (walker(out->returning, context))
+					return true;
+			}
+			break;
+		case T_JsonKeyValue:
+			{
+				JsonKeyValue *jkv = (JsonKeyValue *) node;
+
+				if (walker(jkv->key, context))
+					return true;
+				if (walker(jkv->value, context))
+					return true;
+			}
+			break;
+		case T_JsonObjectConstructor:
+			{
+				JsonObjectConstructor *joc = (JsonObjectConstructor *) node;
+
+				if (walker(joc->output, context))
+					return true;
+				if (walker(joc->exprs, context))
+					return true;
+			}
+			break;
+		case T_JsonArrayConstructor:
+			{
+				JsonArrayConstructor *jac = (JsonArrayConstructor *) node;
+
+				if (walker(jac->output, context))
+					return true;
+				if (walker(jac->exprs, context))
+					return true;
+			}
+			break;
+		case T_JsonAggConstructor:
+			{
+				JsonAggConstructor *ctor = (JsonAggConstructor *) node;
+
+				if (walker(ctor->output, context))
+					return true;
+				if (walker(ctor->agg_order, context))
+					return true;
+				if (walker(ctor->agg_filter, context))
+					return true;
+				if (walker(ctor->over, context))
+					return true;
+			}
+			break;
+		case T_JsonObjectAgg:
+			{
+				JsonObjectAgg *joa = (JsonObjectAgg *) node;
+
+				if (walker(joa->constructor, context))
+					return true;
+				if (walker(joa->arg, context))
+					return true;
+			}
+			break;
+		case T_JsonArrayAgg:
+			{
+				JsonArrayAgg *jaa = (JsonArrayAgg *) node;
+
+				if (walker(jaa->constructor, context))
+					return true;
+				if (walker(jaa->arg, context))
+					return true;
+			}
+			break;
+		case T_JsonArrayQueryConstructor:
+			{
+				JsonArrayQueryConstructor *jaqc = (JsonArrayQueryConstructor *) node;
+
+				if (walker(jaqc->output, context))
+					return true;
+				if (walker(jaqc->query, context))
 					return true;
 			}
 			break;

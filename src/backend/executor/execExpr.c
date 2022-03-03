@@ -2450,6 +2450,69 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+				List	   *args = ctor->args;
+				ListCell   *lc;
+				int			nargs = list_length(args);
+				int			argno = 0;
+
+				if (ctor->func)
+				{
+					ExecInitExprRec(ctor->func, state, resv, resnull);
+				}
+				else
+				{
+					scratch.opcode = EEOP_JSON_CONSTRUCTOR;
+					scratch.d.json_constructor.constructor = ctor;
+					scratch.d.json_constructor.arg_values = palloc(sizeof(Datum) * nargs);
+					scratch.d.json_constructor.arg_nulls = palloc(sizeof(bool) * nargs);
+					scratch.d.json_constructor.arg_types = palloc(sizeof(Oid) * nargs);
+					scratch.d.json_constructor.nargs = nargs;
+
+					foreach(lc, args)
+					{
+						Expr	   *arg = (Expr *) lfirst(lc);
+
+						scratch.d.json_constructor.arg_types[argno] = exprType((Node *) arg);
+
+						if (IsA(arg, Const))
+						{
+							/* Don't evaluate const arguments every round */
+							Const	   *con = (Const *) arg;
+
+							scratch.d.json_constructor.arg_values[argno] = con->constvalue;
+							scratch.d.json_constructor.arg_nulls[argno] = con->constisnull;
+						}
+						else
+						{
+							ExecInitExprRec(arg, state,
+											&scratch.d.json_constructor.arg_values[argno],
+											&scratch.d.json_constructor.arg_nulls[argno]);
+						}
+						argno++;
+					}
+
+					ExprEvalPushStep(state, &scratch);
+				}
+
+				if (ctor->coercion)
+				{
+					Datum	   *innermost_caseval = state->innermost_caseval;
+					bool	   *innermost_isnull = state->innermost_casenull;
+
+					state->innermost_caseval = resv;
+					state->innermost_casenull = resnull;
+
+					ExecInitExprRec(ctor->coercion, state, resv, resnull);
+
+					state->innermost_caseval = innermost_caseval;
+					state->innermost_casenull = innermost_isnull;
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
