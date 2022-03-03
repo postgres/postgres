@@ -198,7 +198,7 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 		ivbuf = palloc0(ivs);
 		if (ivlen > ivs)
 			memcpy(ivbuf, iv, ivs);
-		else
+		else if (ivlen > 0)
 			memcpy(ivbuf, iv, ivlen);
 	}
 
