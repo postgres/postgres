@@ -63,9 +63,7 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 	CachedPlanSource *plansource;
 	Oid		   *argtypes = NULL;
 	int			nargs;
-	Query	   *query;
 	List	   *query_list;
-	int			i;
 
 	/*
 	 * Disallow empty-string statement name (conflicts with protocol-level
@@ -97,6 +95,7 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 
 	if (nargs)
 	{
+		int			i;
 		ListCell   *l;
 
 		argtypes = (Oid *) palloc(nargs * sizeof(Oid));
@@ -115,44 +114,10 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 	 * Analyze the statement using these parameter types (any parameters
 	 * passed in from above us will not be visible to it), allowing
 	 * information about unknown parameters to be deduced from context.
+	 * Rewrite the query. The result could be 0, 1, or many queries.
 	 */
-	query = parse_analyze_varparams(rawstmt, pstate->p_sourcetext,
-									&argtypes, &nargs);
-
-	/*
-	 * Check that all parameter types were determined.
-	 */
-	for (i = 0; i < nargs; i++)
-	{
-		Oid			argtype = argtypes[i];
-
-		if (argtype == InvalidOid || argtype == UNKNOWNOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
-					 errmsg("could not determine data type of parameter $%d",
-							i + 1)));
-	}
-
-	/*
-	 * grammar only allows PreparableStmt, so this check should be redundant
-	 */
-	switch (query->commandType)
-	{
-		case CMD_SELECT:
-		case CMD_INSERT:
-		case CMD_UPDATE:
-		case CMD_DELETE:
-			/* OK */
-			break;
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
-					 errmsg("utility statements cannot be prepared")));
-			break;
-	}
-
-	/* Rewrite the query. The result could be 0, 1, or many queries. */
-	query_list = QueryRewrite(query);
+	query_list = pg_analyze_and_rewrite_varparams(rawstmt, pstate->p_sourcetext,
+												  &argtypes, &nargs, NULL);
 
 	/* Finish filling in the CachedPlanSource */
 	CompleteCachedPlan(plansource,
