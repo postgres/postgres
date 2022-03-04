@@ -35,7 +35,7 @@
 
 typedef struct FixedParamState
 {
-	Oid		   *paramTypes;		/* array of parameter type OIDs */
+	const Oid  *paramTypes;		/* array of parameter type OIDs */
 	int			numParams;		/* number of array entries */
 } FixedParamState;
 
@@ -64,8 +64,8 @@ static bool query_contains_extern_params_walker(Node *node, void *context);
  * Set up to process a query containing references to fixed parameters.
  */
 void
-parse_fixed_parameters(ParseState *pstate,
-					   Oid *paramTypes, int numParams)
+setup_parse_fixed_parameters(ParseState *pstate,
+					   const Oid *paramTypes, int numParams)
 {
 	FixedParamState *parstate = palloc(sizeof(FixedParamState));
 
@@ -80,7 +80,7 @@ parse_fixed_parameters(ParseState *pstate,
  * Set up to process a query containing references to variable parameters.
  */
 void
-parse_variable_parameters(ParseState *pstate,
+setup_parse_variable_parameters(ParseState *pstate,
 						  Oid **paramTypes, int *numParams)
 {
 	VarParamState *parstate = palloc(sizeof(VarParamState));

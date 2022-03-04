@@ -637,8 +637,8 @@ pg_parse_query(const char *query_string)
  * NOTE: for reasons mentioned above, this must be separate from raw parsing.
  */
 List *
-pg_analyze_and_rewrite(RawStmt *parsetree, const char *query_string,
-					   Oid *paramTypes, int numParams,
+pg_analyze_and_rewrite_fixedparams(RawStmt *parsetree, const char *query_string,
+					   const Oid *paramTypes, int numParams,
 					   QueryEnvironment *queryEnv)
 {
 	Query	   *query;
@@ -652,7 +652,7 @@ pg_analyze_and_rewrite(RawStmt *parsetree, const char *query_string,
 	if (log_parser_stats)
 		ResetUsage();
 
-	query = parse_analyze(parsetree, query_string, paramTypes, numParams,
+	query = parse_analyze_fixedparams(parsetree, query_string, paramTypes, numParams,
 						  queryEnv);
 
 	if (log_parser_stats)
@@ -669,12 +669,13 @@ pg_analyze_and_rewrite(RawStmt *parsetree, const char *query_string,
 }
 
 /*
- * Do parse analysis and rewriting.  This is the same as pg_analyze_and_rewrite
- * except that external-parameter resolution is determined by parser callback
- * hooks instead of a fixed list of parameter datatypes.
+ * Do parse analysis and rewriting.  This is the same as
+ * pg_analyze_and_rewrite_fixedparams except that, instead of a fixed list of
+ * parameter datatypes, a parser callback is supplied that can do
+ * external-parameter resolution and possibly other things.
  */
 List *
-pg_analyze_and_rewrite_params(RawStmt *parsetree,
+pg_analyze_and_rewrite_withcb(RawStmt *parsetree,
 							  const char *query_string,
 							  ParserSetupHook parserSetup,
 							  void *parserSetupArg,
@@ -1125,7 +1126,7 @@ exec_simple_query(const char *query_string)
 		else
 			oldcontext = MemoryContextSwitchTo(MessageContext);
 
-		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
+		querytree_list = pg_analyze_and_rewrite_fixedparams(parsetree, query_string,
 												NULL, 0, NULL);
 
 		plantree_list = pg_plan_queries(querytree_list, query_string,

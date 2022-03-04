@@ -96,7 +96,7 @@ static bool test_raw_expression_coverage(Node *node, void *context);
 
 
 /*
- * parse_analyze
+ * parse_analyze_fixedparams
  *		Analyze a raw parse tree and transform it to Query form.
  *
  * Optionally, information about $n parameter types can be supplied.
@@ -107,8 +107,8 @@ static bool test_raw_expression_coverage(Node *node, void *context);
  * a dummy CMD_UTILITY Query node.
  */
 Query *
-parse_analyze(RawStmt *parseTree, const char *sourceText,
-			  Oid *paramTypes, int numParams,
+parse_analyze_fixedparams(RawStmt *parseTree, const char *sourceText,
+			  const Oid *paramTypes, int numParams,
 			  QueryEnvironment *queryEnv)
 {
 	ParseState *pstate = make_parsestate(NULL);
@@ -120,7 +120,7 @@ parse_analyze(RawStmt *parseTree, const char *sourceText,
 	pstate->p_sourcetext = sourceText;
 
 	if (numParams > 0)
-		parse_fixed_parameters(pstate, paramTypes, numParams);
+		setup_parse_fixed_parameters(pstate, paramTypes, numParams);
 
 	pstate->p_queryEnv = queryEnv;
 
@@ -158,7 +158,7 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 
 	pstate->p_sourcetext = sourceText;
 
-	parse_variable_parameters(pstate, paramTypes, numParams);
+	setup_parse_variable_parameters(pstate, paramTypes, numParams);
 
 	query = transformTopLevelStmt(pstate, parseTree);
 

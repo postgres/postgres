@@ -757,7 +757,7 @@ execute_sql_string(const char *sql)
 		/* Be sure parser can see any DDL done so far */
 		CommandCounterIncrement();
 
-		stmt_list = pg_analyze_and_rewrite(parsetree,
+		stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
 										   sql,
 										   NULL,
 										   0,

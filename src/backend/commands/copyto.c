@@ -439,7 +439,7 @@ BeginCopyTo(ParseState *pstate,
 		 * Run parse analysis and rewrite.  Note this also acquires sufficient
 		 * locks on the source table(s).
 		 */
-		rewritten = pg_analyze_and_rewrite(raw_query,
+		rewritten = pg_analyze_and_rewrite_fixedparams(raw_query,
 										   pstate->p_sourcetext, NULL, 0,
 										   NULL);
 

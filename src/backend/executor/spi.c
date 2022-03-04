@@ -2258,7 +2258,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		if (plan->parserSetup != NULL)
 		{
 			Assert(plan->nargs == 0);
-			stmt_list = pg_analyze_and_rewrite_params(parsetree,
+			stmt_list = pg_analyze_and_rewrite_withcb(parsetree,
 													  src,
 													  plan->parserSetup,
 													  plan->parserSetupArg,
@@ -2266,7 +2266,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		}
 		else
 		{
-			stmt_list = pg_analyze_and_rewrite(parsetree,
+			stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
 											   src,
 											   plan->argtypes,
 											   plan->nargs,
@@ -2495,7 +2495,7 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 			else if (plan->parserSetup != NULL)
 			{
 				Assert(plan->nargs == 0);
-				stmt_list = pg_analyze_and_rewrite_params(parsetree,
+				stmt_list = pg_analyze_and_rewrite_withcb(parsetree,
 														  src,
 														  plan->parserSetup,
 														  plan->parserSetupArg,
@@ -2503,7 +2503,7 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 			}
 			else
 			{
-				stmt_list = pg_analyze_and_rewrite(parsetree,
+				stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
 												   src,
 												   plan->argtypes,
 												   plan->nargs,
