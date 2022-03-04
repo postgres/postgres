@@ -115,7 +115,7 @@ typedef BlockIdData *BlockId;	/* block identifier */
 #define BlockIdGetBlockNumber(blockId) \
 ( \
 	AssertMacro(BlockIdIsValid(blockId)), \
-	(BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) \
+	((((BlockNumber) (blockId)->bi_hi) << 16) | ((BlockNumber) (blockId)->bi_lo)) \
 )
 
 #endif							/* BLOCK_H */
