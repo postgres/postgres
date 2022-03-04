@@ -263,6 +263,12 @@ Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl2" WHERE ((c <> 'test'::text) AND (d < 5))
 
+\d testpub_rf_tbl3
+          Table "public.testpub_rf_tbl3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ e      | integer |           |          | 
+
 ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl3 WHERE (e > 1000 AND e < 2000);
 \dRp+ testpub5
                                     Publication testpub5
@@ -273,6 +279,14 @@ Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl2" WHERE ((c <> 'test'::text) AND (d < 5))
     "public.testpub_rf_tbl3" WHERE ((e > 1000) AND (e < 2000))
+
+\d testpub_rf_tbl3
+          Table "public.testpub_rf_tbl3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ e      | integer |           |          | 
+Publications:
+    "testpub5" WHERE ((e > 1000) AND (e < 2000))
 
 ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl2;
 \dRp+ testpub5
@@ -293,6 +307,14 @@ ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (e > 300 AND e < 500)
  regress_publication_user | f          | t       | f       | f       | f         | f
 Tables:
     "public.testpub_rf_tbl3" WHERE ((e > 300) AND (e < 500))
+
+\d testpub_rf_tbl3
+          Table "public.testpub_rf_tbl3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ e      | integer |           |          | 
+Publications:
+    "testpub5" WHERE ((e > 300) AND (e < 500))
 
 -- test \d <tablename> (now it displays filter information)
 SET client_min_messages = 'ERROR';
