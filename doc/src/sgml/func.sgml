@@ -25726,7 +25726,7 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
           <parameter>exclusive</parameter> <type>boolean</type>
           <optional>, <parameter>wait_for_archive</parameter> <type>boolean</type>
           </optional> )
-        <returnvalue>setof record</returnvalue>
+        <returnvalue>record</returnvalue>
         ( <parameter>lsn</parameter> <type>pg_lsn</type>,
         <parameter>labelfile</parameter> <type>text</type>,
         <parameter>spcmapfile</parameter> <type>text</type> )
