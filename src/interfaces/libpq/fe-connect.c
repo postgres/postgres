@@ -1115,6 +1115,11 @@ connectOptions2(PGconn *conn)
 		{
 			if (ch->host)
 				free(ch->host);
+
+			/*
+			 * This bit selects the default host location.  If you change
+			 * this, see also pg_regress.
+			 */
 #ifdef HAVE_UNIX_SOCKETS
 			if (DEFAULT_PGSOCKET_DIR[0])
 			{
