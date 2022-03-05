@@ -3092,7 +3092,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     (The first <quote>public</quote> is the schema, the second
     <quote>public</quote> means <quote>every user</quote>.  In the
     first sense it is an identifier, in the second sense it is a
-    key word, hence the different capitalization; recall the
+    keyword, hence the different capitalization; recall the
     guidelines from <xref linkend="sql-syntax-identifiers"/>.)
    </para>
   </sect2>
