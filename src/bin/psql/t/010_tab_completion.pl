@@ -89,7 +89,7 @@ close $FH;
 my $in  = '';
 my $out = '';
 
-my $timer = timer(5);
+my $timer = timer($TestLib::timeout_default);
 
 my $h = $node->interactive_psql('postgres', \$in, \$out, $timer);
 
@@ -106,7 +106,7 @@ sub check_completion
 	# reset output collector
 	$out = "";
 	# restart per-command timer
-	$timer->start(5);
+	$timer->start($TestLib::timeout_default);
 	# send the data to be sent
 	$in .= $send;
 	# wait ...
@@ -232,7 +232,7 @@ check_completion(
 clear_line();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
-$timer->start(5);
+$timer->start($TestLib::timeout_default);
 $in .= "\\q\n";
 finish $h or die "psql returned $?";
 $timer->reset;

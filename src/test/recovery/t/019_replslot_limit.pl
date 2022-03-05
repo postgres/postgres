@@ -293,7 +293,7 @@ my @result =
 		 SELECT pg_switch_wal();
 		 CHECKPOINT;
 		 SELECT 'finished';",
-		timeout => '60'));
+		timeout => $TestLib::timeout_default));
 is($result[1], 'finished', 'check if checkpoint command is not blocked');
 
 #####################################

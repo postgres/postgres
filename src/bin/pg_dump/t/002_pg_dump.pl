@@ -271,7 +271,8 @@ my %pgdump_runs = (
 			'--no-sync',
 			"--file=$tempdir/only_dump_test_table.sql",
 			'--table=dump_test.test_table',
-			'--lock-wait-timeout=1000000',
+			'--lock-wait-timeout='
+			  . (1000 * $TestLib::timeout_default),
 			'postgres',
 		],
 	},
