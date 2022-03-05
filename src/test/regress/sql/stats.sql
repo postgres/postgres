@@ -33,7 +33,10 @@ declare
   updated3 bool;
   updated4 bool;
 begin
-  -- we don't want to wait forever; loop will exit after 30 seconds
+  -- We don't want to wait forever.  No timeout suffices if the OS drops our
+  -- stats traffic because an earlier test file left a full UDP buffer.
+  -- Hence, don't use PG_TEST_TIMEOUT_DEFAULT, which may be large for
+  -- can't-happen timeouts.  Exit after 30 seconds.
   for i in 1 .. 300 loop
 
     -- With parallel query, the seqscan and indexscan on tenk2 might be done

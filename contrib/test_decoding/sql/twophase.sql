@@ -69,7 +69,10 @@ FROM pg_locks
 WHERE locktype = 'relation'
   AND relation = 'test_prepared1'::regclass;
 -- The above CLUSTER command shouldn't cause a timeout on 2pc decoding.
-SET statement_timeout = '180s';
+\set env_timeout ''
+\getenv env_timeout PG_TEST_TIMEOUT_DEFAULT
+SELECT COALESCE(NULLIF(:'env_timeout', ''), '180') || 's' AS timeout \gset
+SET statement_timeout = :'timeout';
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 RESET statement_timeout;
 COMMIT PREPARED 'test_prepared_lock';
