@@ -33,7 +33,8 @@ PostgresNode - class representing PostgreSQL server instance
   my ($stdout, $stderr, $timed_out);
   my $cmdret = $node->psql('postgres', 'SELECT pg_sleep(600)',
 	  stdout => \$stdout, stderr => \$stderr,
-	  timeout => 180, timed_out => \$timed_out,
+	  timeout => $TestLib::timeout_default,
+	  timed_out => \$timed_out,
 	  extra_params => ['--single-transaction'],
 	  on_error_die => 1)
   print "Sleep timed out" if $timed_out;
@@ -1650,7 +1651,8 @@ e.g.
 	my ($stdout, $stderr, $timed_out);
 	my $cmdret = $node->psql('postgres', 'SELECT pg_sleep(600)',
 		stdout => \$stdout, stderr => \$stderr,
-		timeout => 180, timed_out => \$timed_out,
+		timeout => $TestLib::timeout_default,
+		timed_out => \$timed_out,
 		extra_params => ['--single-transaction'])
 
 will set $cmdret to undef and $timed_out to a true value.
@@ -1824,7 +1826,8 @@ scalar reference.  This allows the caller to act on other parts of the system
 while idling this backend.
 
 The specified timer object is attached to the harness, as well.  It's caller's
-responsibility to select the timeout length, and to restart the timer after
+responsibility to set the timeout length (usually
+$TestLib::timeout_default), and to restart the timer after
 each command if the timeout is per-command.
 
 psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
@@ -1912,9 +1915,10 @@ The process's stdin is sourced from the $stdin scalar reference,
 and its stdout and stderr go to the $stdout scalar reference.
 ptys are used so that psql thinks it's being called interactively.
 
-The specified timer object is attached to the harness, as well.
-It's caller's responsibility to select the timeout length, and to
-restart the timer after each command if the timeout is per-command.
+The specified timer object is attached to the harness, as well.  It's caller's
+responsibility to set the timeout length (usually
+$TestLib::timeout_default), and to restart the timer after
+each command if the timeout is per-command.
 
 psql is invoked in tuples-only unaligned mode with reading of B<.psqlrc>
 disabled.  That may be overridden by passing extra psql parameters.
@@ -2227,7 +2231,7 @@ sub connect_fails
 Run B<$query> repeatedly, until it returns the B<$expected> result
 ('t', or SQL boolean true, by default).
 Continues polling if B<psql> returns an error result.
-Times out after 180 seconds.
+Times out after $TestLib::timeout_default seconds.
 Returns 1 if successful, 0 if timed out.
 
 =cut
@@ -2245,7 +2249,7 @@ sub poll_query_until
 		'-d',                             $self->connstr($dbname)
 	];
 	my ($stdout, $stderr);
-	my $max_attempts = 180 * 10;
+	my $max_attempts = 10 * $TestLib::timeout_default;
 	my $attempts     = 0;
 
 	while ($attempts < $max_attempts)
@@ -2267,8 +2271,8 @@ sub poll_query_until
 		$attempts++;
 	}
 
-	# The query result didn't change in 180 seconds. Give up. Print the
-	# output from the last attempt, hopefully that's useful for debugging.
+	# Give up. Print the output from the last attempt, hopefully that's useful
+	# for debugging.
 	diag qq(poll_query_until timed out executing this query:
 $query
 expecting this output:

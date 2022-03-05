@@ -91,8 +91,8 @@ our @EXPORT = qw(
   $use_unix_sockets
 );
 
-our ($windows_os, $is_msys2, $use_unix_sockets, $tmp_check, $log_path,
-	$test_logfile);
+our ($windows_os, $is_msys2, $use_unix_sockets, $timeout_default,
+	$tmp_check, $log_path, $test_logfile);
 
 BEGIN
 {
@@ -157,6 +157,10 @@ BEGIN
 	# supported, but it can be overridden if desired.
 	$use_unix_sockets =
 	  (!$windows_os || defined $ENV{PG_TEST_USE_UNIX_SOCKETS});
+
+	$timeout_default = $ENV{PG_TEST_TIMEOUT_DEFAULT};
+	$timeout_default = 180
+	  if not defined $timeout_default or $timeout_default eq '';
 }
 
 =pod

@@ -98,7 +98,8 @@ $node_primary->safe_psql('postgres',
 );
 
 my $stdout_recv = $node_primary->pg_recvlogical_upto(
-	'postgres', 'test_slot', $endpos, 180,
+	'postgres', 'test_slot', $endpos,
+	$TestLib::timeout_default,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);
@@ -110,7 +111,8 @@ $node_primary->poll_query_until('postgres',
 ) or die "slot never became inactive";
 
 $stdout_recv = $node_primary->pg_recvlogical_upto(
-	'postgres', 'test_slot', $endpos, 180,
+	'postgres', 'test_slot', $endpos,
+	$TestLib::timeout_default,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);

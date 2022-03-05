@@ -20,11 +20,7 @@ else
 }
 
 
-# To avoid hanging while expecting some specific input from a psql
-# instance being driven by us, add a timeout high enough that it
-# should never trigger even on very slow machines, unless something
-# is really wrong.
-my $psql_timeout = IPC::Run::timer(60);
+my $psql_timeout = IPC::Run::timer($TestLib::timeout_default);
 
 my $node = get_new_node('node_crash');
 $node->init();
