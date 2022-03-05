@@ -875,6 +875,7 @@ static bool
 _equalJsonParseExpr(const JsonParseExpr *a, const JsonParseExpr *b)
 {
 	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(output);
 	COMPARE_SCALAR_FIELD(unique_keys);
 	COMPARE_LOCATION_FIELD(location);
 
@@ -885,6 +886,7 @@ static bool
 _equalJsonScalarExpr(const JsonScalarExpr *a, const JsonScalarExpr *b)
 {
 	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(output);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;

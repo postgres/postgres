@@ -10092,8 +10092,9 @@ get_json_constructor_options(JsonConstructorExpr *ctor, StringInfo buf)
 	if (ctor->unique)
 		appendStringInfoString(buf, " WITH UNIQUE KEYS");
 
-	if (ctor->type != JSCTOR_JSON_PARSE &&
-		ctor->type != JSCTOR_JSON_SCALAR)
+	if (!((ctor->type == JSCTOR_JSON_PARSE ||
+		   ctor->type == JSCTOR_JSON_SCALAR) &&
+		  ctor->returning->typid == JSONOID))
 		get_json_returning(ctor->returning, buf, true);
 }
 

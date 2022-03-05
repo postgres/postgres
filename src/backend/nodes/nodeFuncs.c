@@ -4364,9 +4364,25 @@ raw_expression_tree_walker(Node *node,
 			}
 			break;
 		case T_JsonParseExpr:
-			return walker(((JsonParseExpr *) node)->expr, context);
+			{
+				JsonParseExpr *jpe = (JsonParseExpr *) node;
+
+				if (walker(jpe->expr, context))
+					return true;
+				if (walker(jpe->output, context))
+					return true;
+			}
+			break;
 		case T_JsonScalarExpr:
-			return walker(((JsonScalarExpr *) node)->expr, context);
+			{
+				JsonScalarExpr *jse = (JsonScalarExpr *) node;
+
+				if (walker(jse->expr, context))
+					return true;
+				if (walker(jse->output, context))
+					return true;
+			}
+			break;
 		case T_JsonSerializeExpr:
 			{
 				JsonSerializeExpr *jse = (JsonSerializeExpr *) node;

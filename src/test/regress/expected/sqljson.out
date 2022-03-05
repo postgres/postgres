@@ -113,6 +113,49 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' WITHOUT UNIQUE KEYS);
    Output: JSON('123'::json)
 (2 rows)
 
+SELECT JSON('123' RETURNING text);
+ERROR:  cannot use RETURNING type text in JSON()
+LINE 1: SELECT JSON('123' RETURNING text);
+                                    ^
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123');
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' RETURNING json);
+         QUERY PLAN          
+-----------------------------
+ Result
+   Output: JSON('123'::json)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON('123' RETURNING jsonb);
+                  QUERY PLAN                  
+----------------------------------------------
+ Result
+   Output: JSON('123'::jsonb RETURNING jsonb)
+(2 rows)
+
+SELECT pg_typeof(JSON('123'));
+ pg_typeof 
+-----------
+ json
+(1 row)
+
+SELECT pg_typeof(JSON('123' RETURNING json));
+ pg_typeof 
+-----------
+ json
+(1 row)
+
+SELECT pg_typeof(JSON('123' RETURNING jsonb));
+ pg_typeof 
+-----------
+ jsonb
+(1 row)
+
 -- JSON_SCALAR()
 SELECT JSON_SCALAR();
 ERROR:  syntax error at or near ")"
@@ -202,6 +245,20 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SCALAR('123');
 ------------------------------------
  Result
    Output: JSON_SCALAR('123'::text)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SCALAR(123 RETURNING json);
+         QUERY PLAN         
+----------------------------
+ Result
+   Output: JSON_SCALAR(123)
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SCALAR(123 RETURNING jsonb);
+                 QUERY PLAN                 
+--------------------------------------------
+ Result
+   Output: JSON_SCALAR(123 RETURNING jsonb)
 (2 rows)
 
 -- JSON_SERIALIZE()

@@ -2354,6 +2354,7 @@ _copyJsonParseExpr(const JsonParseExpr *from)
 	JsonParseExpr  *newnode = makeNode(JsonParseExpr);
 
 	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
 	COPY_SCALAR_FIELD(unique_keys);
 	COPY_LOCATION_FIELD(location);
 
@@ -2369,6 +2370,7 @@ _copyJsonScalarExpr(const JsonScalarExpr *from)
 	JsonScalarExpr *newnode = makeNode(JsonScalarExpr);
 
 	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;

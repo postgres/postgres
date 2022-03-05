@@ -4450,18 +4450,47 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 	return (Node *) jsexpr;
 }
 
+static JsonReturning *
+transformJsonConstructorRet(ParseState *pstate, JsonOutput *output, const char *fname)
+{
+	JsonReturning *returning;
+
+	if (output)
+	{
+		returning = transformJsonOutput(pstate, output, false);
+
+		Assert(OidIsValid(returning->typid));
+
+		if (returning->typid != JSONOID && returning->typid != JSONBOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("cannot use RETURNING type %s in %s",
+							format_type_be(returning->typid), fname),
+					 parser_errposition(pstate, output->typeName->location)));
+	}
+	else
+	{
+		Oid			targettype = JSONOID;
+		JsonFormatType format = JS_FORMAT_JSON;
+
+		returning = makeNode(JsonReturning);
+		returning->format = makeJsonFormat(format, JS_ENC_DEFAULT, -1);
+		returning->typid = targettype;
+		returning->typmod = -1;
+	}
+
+	return returning;
+}
+
 /*
  * Transform a JSON() expression.
  */
 static Node *
 transformJsonParseExpr(ParseState *pstate, JsonParseExpr *jsexpr)
 {
-	JsonReturning *returning = makeNode(JsonReturning);
+	JsonReturning *returning = transformJsonConstructorRet(pstate, jsexpr->output,
+													"JSON()");
 	Node	   *arg;
-
-	returning->format = makeJsonFormat(JS_FORMAT_JSON, JS_ENC_DEFAULT, -1);
-	returning->typid = JSONOID;
-	returning->typmod = -1;
 
 	if (jsexpr->unique_keys)
 	{
@@ -4502,12 +4531,9 @@ transformJsonParseExpr(ParseState *pstate, JsonParseExpr *jsexpr)
 static Node *
 transformJsonScalarExpr(ParseState *pstate, JsonScalarExpr *jsexpr)
 {
-	JsonReturning *returning = makeNode(JsonReturning);
 	Node	   *arg = transformExprRecurse(pstate, (Node *) jsexpr->expr);
-
-	returning->format = makeJsonFormat(JS_FORMAT_JSON, JS_ENC_DEFAULT, -1);
-	returning->typid = JSONOID;
-	returning->typmod = -1;
+	JsonReturning *returning = transformJsonConstructorRet(pstate, jsexpr->output,
+													"JSON_SCALAR()");
 
 	if (exprType(arg) == UNKNOWNOID)
 		arg = coerce_to_specific_type(pstate, arg, TEXTOID, "JSON_SCALAR");

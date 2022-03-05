@@ -15614,21 +15614,24 @@ json_func_expr:
 		;
 
 json_parse_expr:
-			JSON '(' json_value_expr json_key_uniqueness_constraint_opt ')'
+			JSON '(' json_value_expr json_key_uniqueness_constraint_opt
+					 json_returning_clause_opt ')'
 				{
 					JsonParseExpr *n = makeNode(JsonParseExpr);
 					n->expr = (JsonValueExpr *) $3;
 					n->unique_keys = $4;
+					n->output = (JsonOutput *) $5;
 					n->location = @1;
 					$$ = (Node *) n;
 				}
 		;
 
 json_scalar_expr:
-			JSON_SCALAR '(' a_expr ')'
+			JSON_SCALAR '(' a_expr json_returning_clause_opt ')'
 				{
 					JsonScalarExpr *n = makeNode(JsonScalarExpr);
 					n->expr = (Expr *) $3;
+					n->output = (JsonOutput *) $4;
 					n->location = @1;
 					$$ = (Node *) n;
 				}
