@@ -370,6 +370,11 @@ task:
     # "suites".
     T_C: "\"C:/Program Files/Git/usr/bin/timeout.exe\" -v -k60s 15m"
 
+    # Temporarily work around cirrus-ci bug causing processes started from a
+    # script to be killed, even if intentionally running in background. See
+    # https://github.com/cirruslabs/cirrus-ci-agent/issues/218
+    # https://postgr.es/m/CA%2BhUKGKx7k14n2nAALSvv6M_AB6oHasNBA65X6Dvo8hwfi9y0A%40mail.gmail.com
+    CIRRUS_AGENT_VERSION: 1.73.2
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
