@@ -45,7 +45,7 @@ our @EXPORT = qw(
   $windows_os
 );
 
-our ($windows_os, $tmp_check, $log_path, $test_logfile);
+our ($windows_os, $timeout_default, $tmp_check, $log_path, $test_logfile);
 
 BEGIN
 {
@@ -92,6 +92,10 @@ BEGIN
 		require Win32API::File;
 		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle));
 	}
+
+	$timeout_default = $ENV{PG_TEST_TIMEOUT_DEFAULT};
+	$timeout_default = 180
+	  if not defined $timeout_default or $timeout_default eq '';
 }
 
 INIT

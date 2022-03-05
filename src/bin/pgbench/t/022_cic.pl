@@ -18,7 +18,8 @@ my ($node, $result);
 #
 $node = get_new_node('CIC_test');
 $node->init;
-$node->append_conf('postgresql.conf', 'lock_timeout = 180000');
+$node->append_conf('postgresql.conf',
+	'lock_timeout = ' . (1000 * $TestLib::timeout_default));
 $node->start;
 $node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
 $node->safe_psql('postgres', q(CREATE INDEX idx ON tbl(i)));
@@ -48,7 +49,7 @@ $node->safe_psql(
 # Run background pgbench with CIC. We cannot mix-in this script into single
 # pgbench: CIC will deadlock with itself occasionally.
 my $pgbench_out   = '';
-my $pgbench_timer = IPC::Run::timeout(180);
+my $pgbench_timer = IPC::Run::timeout($TestLib::timeout_default);
 my $pgbench_h     = $node->background_pgbench(
 	'--no-vacuum --client=1 --transactions=200',
 	{

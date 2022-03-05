@@ -22,7 +22,8 @@ my ($node, $result);
 $node = get_new_node('CIC_2PC_test');
 $node->init;
 $node->append_conf('postgresql.conf', 'max_prepared_transactions = 10');
-$node->append_conf('postgresql.conf', 'lock_timeout = 180000');
+$node->append_conf('postgresql.conf',
+	'lock_timeout = ' . (1000 * $TestLib::timeout_default));
 $node->start;
 $node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
 $node->safe_psql(
@@ -55,7 +56,7 @@ $node->safe_psql(
 
 my $main_in    = '';
 my $main_out   = '';
-my $main_timer = IPC::Run::timeout(180);
+my $main_timer = IPC::Run::timeout($TestLib::timeout_default);
 
 my $main_h =
   $node->background_psql('postgres', \$main_in, \$main_out,
@@ -69,7 +70,7 @@ pump $main_h until $main_out =~ /syncpoint1/ || $main_timer->is_expired;
 
 my $cic_in    = '';
 my $cic_out   = '';
-my $cic_timer = IPC::Run::timeout(180);
+my $cic_timer = IPC::Run::timeout($TestLib::timeout_default);
 my $cic_h =
   $node->background_psql('postgres', \$cic_in, \$cic_out,
 	$cic_timer, on_error_stop => 1);
@@ -131,9 +132,10 @@ PREPARE TRANSACTION 'persists_forever';
 ));
 $node->restart;
 
-my $reindex_in    = '';
-my $reindex_out   = '';
-my $reindex_timer = IPC::Run::timeout(180);
+my $reindex_in  = '';
+my $reindex_out = '';
+my $reindex_timer =
+  IPC::Run::timeout($TestLib::timeout_default);
 my $reindex_h =
   $node->background_psql('postgres', \$reindex_in, \$reindex_out,
 	$reindex_timer, on_error_stop => 1);
@@ -161,7 +163,7 @@ $node->safe_psql('postgres', q(REINDEX TABLE tbl;));
 # Run background pgbench with CIC. We cannot mix-in this script into single
 # pgbench: CIC will deadlock with itself occasionally.
 my $pgbench_out   = '';
-my $pgbench_timer = IPC::Run::timeout(180);
+my $pgbench_timer = IPC::Run::timeout($TestLib::timeout_default);
 my $pgbench_h     = $node->background_pgbench(
 	'--no-vacuum --client=1 --transactions=100',
 	{
