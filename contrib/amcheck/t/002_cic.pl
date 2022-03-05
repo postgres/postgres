@@ -18,7 +18,8 @@ my ($node, $result);
 #
 $node = get_new_node('CIC_test');
 $node->init;
-$node->append_conf('postgresql.conf', 'lock_timeout = 180000');
+$node->append_conf('postgresql.conf',
+	'lock_timeout = ' . (1000 * $TestLib::timeout_default));
 $node->start;
 $node->safe_psql('postgres', q(CREATE EXTENSION amcheck));
 $node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
