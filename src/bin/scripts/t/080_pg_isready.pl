@@ -18,8 +18,8 @@ my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
 
-# use a long timeout for the benefit of very slow buildfarm machines
-$node->command_ok([qw(pg_isready --timeout=60)],
+$node->command_ok(
+	[ 'pg_isready', "--timeout=$PostgreSQL::Test::Utils::timeout_default" ],
 	'succeeds with server running');
 
 done_testing();

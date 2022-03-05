@@ -15,11 +15,7 @@ if ($Config{osname} eq 'MSWin32')
 	exit;
 }
 
-# To avoid hanging while expecting some specific input from a psql
-# instance being driven by us, add a timeout high enough that it
-# should never trigger even on very slow machines, unless something
-# is really wrong.
-my $psql_timeout = IPC::Run::timer(60);
+my $psql_timeout = IPC::Run::timer($PostgreSQL::Test::Utils::timeout_default);
 
 my $node = PostgreSQL::Test::Cluster->new('node_crash');
 $node->init();

@@ -81,8 +81,8 @@ sub test_recovery_wal_level_minimal
 			$recovery_node->logfile,  'start'
 		]);
 
-	# Wait up to 180s for postgres to terminate
-	foreach my $i (0 .. 1800)
+	# wait for postgres to terminate
+	foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 	{
 		last if !-f $recovery_node->data_dir . '/postmaster.pid';
 		usleep(100_000);

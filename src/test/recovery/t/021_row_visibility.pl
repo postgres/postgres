@@ -32,11 +32,8 @@ $node_standby->init_from_backup($node_primary, $backup_name,
 $node_standby->append_conf('postgresql.conf', 'max_prepared_transactions=10');
 $node_standby->start;
 
-# To avoid hanging while expecting some specific input from a psql
-# instance being driven by us, add a timeout high enough that it
-# should never trigger even on very slow machines, unless something
-# is really wrong.
-my $psql_timeout = IPC::Run::timer(300);
+my $psql_timeout =
+  IPC::Run::timer(2 * $PostgreSQL::Test::Utils::timeout_default);
 
 # One psql to primary and standby each, for all queries. That allows
 # to check uncommitted changes being replicated and such.

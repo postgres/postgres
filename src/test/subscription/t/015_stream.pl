@@ -58,7 +58,7 @@ is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 my $in  = '';
 my $out = '';
 
-my $timer = IPC::Run::timeout(180);
+my $timer = IPC::Run::timeout($PostgreSQL::Test::Utils::timeout_default);
 
 my $h = $node_publisher->background_psql('postgres', \$in, \$out, $timer,
 	on_error_stop => 0);

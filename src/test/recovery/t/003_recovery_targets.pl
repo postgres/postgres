@@ -172,8 +172,8 @@ run_log(
 		$node_standby->logfile, 'start'
 	]);
 
-# wait up to 180s for postgres to terminate
-foreach my $i (0 .. 1800)
+# wait for postgres to terminate
+foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 {
 	last if !-f $node_standby->data_dir . '/postmaster.pid';
 	usleep(100_000);

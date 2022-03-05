@@ -39,7 +39,7 @@ sub check_log_pattern
 	my $node     = shift;
 	my $lfname   = fetch_file_name($logfiles, $format);
 
-	my $max_attempts = 180 * 10;
+	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
 
 	my $logcontents;
 	for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
@@ -78,7 +78,7 @@ $node->start();
 $node->psql('postgres', 'SELECT 1/0');
 
 # might need to retry if logging collector process is slow...
-my $max_attempts = 180 * 10;
+my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
 
 my $current_logfiles;
 for (my $attempts = 0; $attempts < $max_attempts; $attempts++)

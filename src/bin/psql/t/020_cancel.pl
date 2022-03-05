@@ -46,12 +46,13 @@ SKIP: {
 	my $psql_pid;
 	until (-s "$tempdir/psql.pid" and ($psql_pid = PostgreSQL::Test::Utils::slurp_file("$tempdir/psql.pid")) =~ /^\d+\n/s)
 	{
-		($count++ < 180 * 100) or die "pid file did not appear";
+		($count++ < 100 * $PostgreSQL::Test::Utils::timeout_default)
+		  or die "pid file did not appear";
 		usleep(10_000)
 	}
 
 	# Send sleep command and wait until the server has registered it
-	$stdin = "select pg_sleep(180);\n";
+	$stdin = "select pg_sleep($PostgreSQL::Test::Utils::timeout_default);\n";
 	pump $h while length $stdin;
 	$node->poll_query_until('postgres', q{SELECT (SELECT count(*) FROM pg_stat_activity WHERE query ~ '^select pg_sleep') > 0;})
 	  or die "timed out";

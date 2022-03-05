@@ -291,7 +291,7 @@ my @result =
 		 SELECT pg_switch_wal();
 		 CHECKPOINT;
 		 SELECT 'finished';",
-		timeout => '60'));
+		timeout => $PostgreSQL::Test::Utils::timeout_default));
 is($result[1], 'finished', 'check if checkpoint command is not blocked');
 
 $node_primary2->stop;
@@ -362,7 +362,7 @@ $logstart = get_log_size($node_primary3);
 kill 'STOP', $senderpid, $receiverpid;
 advance_wal($node_primary3, 2);
 
-my $max_attempts = 180;
+my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
 	if (find_in_log(
@@ -385,7 +385,7 @@ $node_primary3->poll_query_until('postgres',
 	"lost")
   or die "timed out waiting for slot to be lost";
 
-$max_attempts = 180;
+$max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
 	if (find_in_log(
