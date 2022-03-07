@@ -42,6 +42,14 @@ my @test_configuration = (
 		'decompress_flags' => [ '-d' ],
 		'output_file' => 'base.tar',
 		'enabled' => check_pg_config("#define HAVE_LIBLZ4 1")
+	},
+	{
+		'compression_method' => 'zstd',
+		'backup_flags' => ['--compress', 'client-zstd:5'],
+		'backup_archive' => 'base.tar.zst',
+		'decompress_program' => $ENV{'ZSTD'},
+		'decompress_flags' => [ '-d' ],
+		'enabled' => check_pg_config("#define HAVE_LIBZSTD 1")
 	}
 );
 

@@ -44,6 +44,7 @@ BBOBJS = \
 	bbstreamer_gzip.o \
 	bbstreamer_inject.o \
 	bbstreamer_lz4.o \
+	bbstreamer_zstd.o \
 	bbstreamer_tar.o
 
 all: pg_basebackup pg_receivewal pg_recvlogical

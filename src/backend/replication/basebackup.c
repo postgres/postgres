@@ -64,7 +64,8 @@ typedef enum
 {
 	BACKUP_COMPRESSION_NONE,
 	BACKUP_COMPRESSION_GZIP,
-	BACKUP_COMPRESSION_LZ4
+	BACKUP_COMPRESSION_LZ4,
+	BACKUP_COMPRESSION_ZSTD
 } basebackup_compression_type;
 
 typedef struct
@@ -906,6 +907,8 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				opt->compression = BACKUP_COMPRESSION_GZIP;
 			else if (strcmp(optval, "lz4") == 0)
 				opt->compression = BACKUP_COMPRESSION_LZ4;
+			else if (strcmp(optval, "zstd") == 0)
+				opt->compression = BACKUP_COMPRESSION_ZSTD;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1026,6 +1029,8 @@ SendBaseBackup(BaseBackupCmd *cmd)
 		sink = bbsink_gzip_new(sink, opt.compression_level);
 	else if (opt.compression == BACKUP_COMPRESSION_LZ4)
 		sink = bbsink_lz4_new(sink, opt.compression_level);
+	else if (opt.compression == BACKUP_COMPRESSION_ZSTD)
+		sink = bbsink_zstd_new(sink, opt.compression_level);
 
 	/* Set up progress reporting. */
 	sink = bbsink_progress_new(sink, opt.progress);

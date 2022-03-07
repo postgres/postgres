@@ -904,6 +904,10 @@ main(int argc, char **argv)
 			exit(1);
 #endif
 			break;
+		case COMPRESSION_ZSTD:
+			pg_log_error("compression with %s is not yet supported", "ZSTD");
+			exit(1);
+
 	}
 
 

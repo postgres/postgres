@@ -209,6 +209,9 @@ extern bbstreamer *bbstreamer_gzip_decompressor_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_lz4_compressor_new(bbstreamer *next,
 												 int compresslevel);
 extern bbstreamer *bbstreamer_lz4_decompressor_new(bbstreamer *next);
+extern bbstreamer *bbstreamer_zstd_compressor_new(bbstreamer *next,
+												  int compresslevel);
+extern bbstreamer *bbstreamer_zstd_decompressor_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_parser_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_terminator_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_tar_archiver_new(bbstreamer *next);

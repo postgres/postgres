@@ -285,6 +285,7 @@ extern void bbsink_forward_cleanup(bbsink *sink);
 extern bbsink *bbsink_copystream_new(bool send_to_client);
 extern bbsink *bbsink_gzip_new(bbsink *next, int compresslevel);
 extern bbsink *bbsink_lz4_new(bbsink *next, int compresslevel);
+extern bbsink *bbsink_zstd_new(bbsink *next, int compresslevel);
 extern bbsink *bbsink_progress_new(bbsink *next, bool estimate_backup_size);
 extern bbsink *bbsink_server_new(bbsink *next, char *pathname);
 extern bbsink *bbsink_throttle_new(bbsink *next, uint32 maxrate);

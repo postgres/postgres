@@ -417,30 +417,33 @@ PostgreSQL documentation
         specify <literal>-Xfetch</literal>.
        </para>
        <para>
-        The compression method can be set to <literal>gzip</literal> or
-        <literal>lz4</literal>, or <literal>none</literal> for no
-        compression. A compression level can be optionally specified, by
-        appending the level number after a colon (<literal>:</literal>). If no
-        level is specified, the default compression level will be used. If
-        only a level is specified without mentioning an algorithm,
-        <literal>gzip</literal> compression will be used if the level is
-        greater than 0, and no compression will be used if the level is 0.
+        The compression method can be set to <literal>gzip</literal>,
+        <literal>lz4</literal>, <literal>zstd</literal>, or
+        <literal>none</literal> for no compression. A compression level can
+        optionally be specified, by appending the level number after a colon
+        (<literal>:</literal>). If no level is specified, the default
+        compression level will be used. If only a level is specified without
+        mentioning an algorithm, <literal>gzip</literal> compression will be
+        used if the level is greater than 0, and no compression will be used if
+        the level is 0.
        </para>
        <para>
-        When the tar format is used with <literal>gzip</literal> or
-        <literal>lz4</literal>, the suffix <filename>.gz</filename> or
-        <filename>.lz4</filename> will automatically be added to all tar
-        filenames. When the plain format is used, client-side compression may
-        not be specified, but it is still possible to request server-side
-        compression. If this is done, the server will compress the backup for
-        transmission, and the client will decompress and extract it.
+        When the tar format is used with <literal>gzip</literal>,
+        <literal>lz4</literal>, or <literal>zstd</literal>, the suffix
+        <filename>.gz</filename>, <filename>.lz4</filename>, or
+        <filename>.zst</filename>, respectively, will be automatically added to
+        all tar filenames. When the plain format is used, client-side
+        compression may not be specified, but it is still possible to request
+        server-side compression. If this is done, the server will compress the
+        backup for transmission, and the client will decompress and extract it.
        </para>
        <para>
         When this option is used in combination with
         <literal>-Xstream</literal>, <literal>pg_wal.tar</literal> will
         be compressed using <literal>gzip</literal> if client-side gzip
-        compression is selected, but will not be compressed if server-side
-        compresion or LZ4 compresion is selected.
+        compression is selected, but will not be compressed if any other
+        compression algorithm is selected, or if server-side compression
+        is selected.
        </para>
       </listitem>
      </varlistentry>

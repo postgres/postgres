@@ -10,6 +10,7 @@ export TAR
 # name.
 export GZIP_PROGRAM=$(GZIP)
 export LZ4=$(LZ4)
+export ZSTD=$(ZSTD)
 
 subdir = src/bin/pg_verifybackup
 top_builddir = ../../..
