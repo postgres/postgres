@@ -19,6 +19,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -27,6 +28,7 @@
 #include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 #include "utils/typcache.h"
 
 
@@ -52,6 +54,73 @@ static bool resolve_polymorphic_tupdesc(TupleDesc tupdesc,
 										oidvector *declared_args,
 										Node *call_expr);
 static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
+
+
+/*
+ * SetSingleFuncCall
+ *
+ * Helper function to build the state of a set-returning function used
+ * in the context of a single call with materialize mode.  This code
+ * includes sanity checks on ReturnSetInfo, creates the Tuplestore and
+ * the TupleDesc used with the function and stores them into the
+ * function's ReturnSetInfo.
+ *
+ * "flags" can be set to SRF_SINGLE_USE_EXPECTED, to use the tuple
+ * descriptor coming from expectedDesc, which is the tuple descriptor
+ * expected by the caller.  SRF_SINGLE_BLESS can be set to complete the
+ * information associated to the tuple descriptor, which is necessary
+ * in some cases  where the tuple descriptor comes from a transient
+ * RECORD datatype.
+ */
+void
+SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
+{
+	bool		random_access;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	Tuplestorestate *tupstore;
+	MemoryContext old_context,
+				per_query_ctx;
+	TupleDesc	stored_tupdesc;
+
+	/* check to see if caller supports returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize) ||
+		((flags & SRF_SINGLE_USE_EXPECTED) != 0 && rsinfo->expectedDesc == NULL))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/*
+	 * Store the tuplestore and the tuple descriptor in ReturnSetInfo.  This
+	 * must be done in the per-query memory context.
+	 */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	old_context = MemoryContextSwitchTo(per_query_ctx);
+
+	/* build a tuple descriptor for our result type */
+	if ((flags & SRF_SINGLE_USE_EXPECTED) != 0)
+		stored_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	else
+	{
+		if (get_call_result_type(fcinfo, NULL, &stored_tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+	}
+
+	/* If requested, bless the tuple descriptor */
+	if ((flags & SRF_SINGLE_BLESS) != 0)
+		BlessTupleDesc(stored_tupdesc);
+
+	random_access = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+
+	tupstore = tuplestore_begin_heap(random_access, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = stored_tupdesc;
+	MemoryContextSwitchTo(old_context);
+}
 
 
 /*

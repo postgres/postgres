@@ -537,39 +537,13 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 {
 #define PG_GET_SHMEM_SIZES_COLS 4
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	HASH_SEQ_STATUS hstat;
 	ShmemIndexEnt *ent;
 	Size		named_allocated = 0;
 	Datum		values[PG_GET_SHMEM_SIZES_COLS];
 	bool		nulls[PG_GET_SHMEM_SIZES_COLS];
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, 0);
 
 	LWLockAcquire(ShmemIndexLock, LW_SHARED);
 
@@ -585,7 +559,8 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 		values[3] = Int64GetDatum(ent->allocated_size);
 		named_allocated += ent->allocated_size;
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
 	}
 
 	/* output shared memory allocated but not counted via the shmem index */
@@ -593,7 +568,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	nulls[1] = true;
 	values[2] = Int64GetDatum(ShmemSegHdr->freeoffset - named_allocated);
 	values[3] = values[2];
-	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
 	/* output as-of-yet unused shared memory */
 	nulls[0] = true;
@@ -601,7 +576,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	nulls[1] = false;
 	values[2] = Int64GetDatum(ShmemSegHdr->totalsize - ShmemSegHdr->freeoffset);
 	values[3] = values[2];
-	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
 	LWLockRelease(ShmemIndexLock);
 

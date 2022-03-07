@@ -1685,8 +1685,8 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	if (parsedline->auth_method == uaCert)
 	{
 		/*
-		 * For auth method cert, client certificate validation is mandatory, and it implies
-		 * the level of verify-full.
+		 * For auth method cert, client certificate validation is mandatory,
+		 * and it implies the level of verify-full.
 		 */
 		parsedline->clientcert = clientCertFull;
 	}
@@ -2703,47 +2703,19 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 Datum
 pg_hba_file_rules(PG_FUNCTION_ARGS)
 {
-	Tuplestorestate *tuple_store;
-	TupleDesc	tupdesc;
-	MemoryContext old_cxt;
 	ReturnSetInfo *rsi;
 
 	/*
-	 * We must use the Materialize mode to be safe against HBA file changes
-	 * while the cursor is open. It's also more efficient than having to look
-	 * up our current position in the parsed list every time.
+	 * Build tuplestore to hold the result rows.  We must use the Materialize
+	 * mode to be safe against HBA file changes while the cursor is open.
+	 * It's also more efficient than having to look up our current position in
+	 * the parsed list every time.
 	 */
-	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-
-	/* Check to see if caller supports us returning a tuplestore */
-	if (rsi == NULL || !IsA(rsi, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsi->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	rsi->returnMode = SFRM_Materialize;
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	/* Build tuplestore to hold the result rows */
-	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-
-	tuple_store =
-		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
-	rsi->setDesc = tupdesc;
-	rsi->setResult = tuple_store;
-
-	MemoryContextSwitchTo(old_cxt);
+	SetSingleFuncCall(fcinfo, 0);
 
 	/* Fill the tuplestore */
-	fill_hba_view(tuple_store, tupdesc);
+	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+	fill_hba_view(rsi->setResult, rsi->setDesc);
 
 	PG_RETURN_NULL();
 }
