@@ -1321,6 +1321,8 @@ sequence_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (info != XLOG_SEQ_LOG)
 		elog(ERROR, "unexpected RM_SEQ_ID record type: %u", info);
 
+	ReorderBufferProcessXid(ctx->reorder, XLogRecGetXid(r), buf->origptr);
+
 	/*
 	 * If we don't have snapshot or we are just fast-forwarding, there is no
 	 * point in decoding messages.
