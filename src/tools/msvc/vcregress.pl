@@ -314,55 +314,6 @@ sub taptest
 	return;
 }
 
-sub mangle_plpython3
-{
-	my $tests = shift;
-	mkdir "results" unless -d "results";
-	mkdir "sql/python3";
-	mkdir "results/python3";
-	mkdir "expected/python3";
-
-	foreach my $test (@$tests)
-	{
-		local $/ = undef;
-		foreach my $dir ('sql', 'expected')
-		{
-			my $extension = ($dir eq 'sql' ? 'sql' : 'out');
-
-			my @files =
-			  glob("$dir/$test.$extension $dir/${test}_[0-9].$extension");
-			foreach my $file (@files)
-			{
-				open(my $handle, '<', $file)
-				  || die "test file $file not found";
-				my $contents = <$handle>;
-				close($handle);
-				do
-				{
-					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
-					s/<type 'long'>/<class 'int'>/g;
-					s/([0-9][0-9]*)L/$1/g;
-					s/([ [{])u"/$1"/g;
-					s/([ [{])u'/$1'/g;
-					s/def next/def __next__/g;
-					s/LANGUAGE plpython2?u/LANGUAGE plpython3u/g;
-					s/EXTENSION (\S*?)plpython2?u/EXTENSION $1plpython3u/g;
-					s/installing required extension "plpython2u"/installing required extension "plpython3u"/g;
-				  }
-				  for ($contents);
-				my $base = basename $file;
-				open($handle, '>', "$dir/python3/$base")
-				  || die "opening python 3 file for $file";
-				print $handle $contents;
-				close($handle);
-			}
-		}
-	}
-	do { s!^!python3/!; }
-	  foreach (@$tests);
-	return @$tests;
-}
-
 sub plcheck
 {
 	chdir "$topdir/src/pl";
@@ -386,8 +337,7 @@ sub plcheck
 		if ($lang eq 'plpython')
 		{
 			next
-			  unless -d "$topdir/$Config/plpython2"
-			  || -d "$topdir/$Config/plpython3";
+			  unless -d "$topdir/$Config/plpython3";
 			$lang = 'plpythonu';
 		}
 		else
@@ -397,8 +347,6 @@ sub plcheck
 		my @lang_args = ("--load-extension=$lang");
 		chdir $dir;
 		my @tests = fetchTests();
-		@tests = mangle_plpython3(\@tests)
-		  if $lang eq 'plpythonu' && -d "$topdir/$Config/plpython3";
 		if ($lang eq 'plperl')
 		{
 
@@ -461,28 +409,6 @@ sub subdircheck
 	}
 
 	my @opts = fetchRegressOpts();
-
-	# Special processing for python transform modules, see their respective
-	# Makefiles for more details regarding Python-version specific
-	# dependencies.
-	if ($module =~ /_plpython$/)
-	{
-		die "Python not enabled in configuration"
-		  if !defined($config->{python});
-
-		@opts = grep { $_ !~ /plpythonu/ } @opts;
-
-		if (-d "$topdir/$Config/plpython2")
-		{
-			push @opts, "--load-extension=plpythonu";
-			push @opts, '--load-extension=' . $module . 'u';
-		}
-		else
-		{
-			# must be python 3
-			@tests = mangle_plpython3(\@tests);
-		}
-	}
 
 	print "============================================================\n";
 	print "Checking $module\n";

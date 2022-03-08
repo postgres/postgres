@@ -1,8 +1,8 @@
-CREATE EXTENSION hstore_plpython2u CASCADE;
-NOTICE:  installing required extension "plpython2u"
+CREATE EXTENSION hstore_plpython3u CASCADE;
+NOTICE:  installing required extension "plpython3u"
 -- test hstore -> python
 CREATE FUNCTION test1(val hstore) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
@@ -18,7 +18,7 @@ INFO:  [('aa', 'bb'), ('cc', None)]
 
 -- the same with the versioned language name
 CREATE FUNCTION test1n(val hstore) RETURNS int
-LANGUAGE plpython2u
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
@@ -34,7 +34,7 @@ INFO:  [('aa', 'bb'), ('cc', None)]
 
 -- test hstore[] -> python
 CREATE FUNCTION test1arr(val hstore[]) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert(val == [{'aa': 'bb', 'cc': None}, {'dd': 'ee'}])
@@ -48,7 +48,7 @@ SELECT test1arr(array['aa=>bb, cc=>NULL'::hstore, 'dd=>ee']);
 
 -- test python -> hstore
 CREATE FUNCTION test2(a int, b text) RETURNS hstore
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 val = {'a': a, 'b': b, 'c': None}
@@ -65,14 +65,14 @@ SELECT test2(1, 'boo');
 CREATE OR REPLACE FUNCTION public.test2(a integer, b text)
  RETURNS hstore
  TRANSFORM FOR TYPE hstore
- LANGUAGE plpythonu
+ LANGUAGE plpython3u
 AS $function$
 val = {'a': a, 'b': b, 'c': None}
 return val
 $function$
 -- test python -> hstore[]
 CREATE FUNCTION test2arr() RETURNS hstore[]
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 val = [{'a': 1, 'b': 'boo', 'c': None}, {'d': 2}]
@@ -87,7 +87,7 @@ SELECT test2arr();
 -- test python -> domain over hstore
 CREATE DOMAIN hstore_foo AS hstore CHECK(VALUE ? 'foo');
 CREATE FUNCTION test2dom(fn text) RETURNS hstore_foo
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 return {'a': 1, fn: 'boo', 'c': None}
@@ -104,7 +104,7 @@ CONTEXT:  while creating return value
 PL/Python function "test2dom"
 -- test as part of prepare/execute
 CREATE FUNCTION test3() RETURNS void
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 rv = plpy.execute("SELECT 'aa=>bb, cc=>NULL'::hstore AS col1")
@@ -131,7 +131,7 @@ SELECT * FROM test1;
 (1 row)
 
 CREATE FUNCTION test4() RETURNS trigger
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert(TD["new"] == {'a': 1, 'b': {'aa': 'bb', 'cc': None}})

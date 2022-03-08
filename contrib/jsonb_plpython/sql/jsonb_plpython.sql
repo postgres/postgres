@@ -1,8 +1,8 @@
-CREATE EXTENSION jsonb_plpython2u CASCADE;
+CREATE EXTENSION jsonb_plpython3u CASCADE;
 
 -- test jsonb -> python dict
 CREATE FUNCTION test1(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, dict)
@@ -15,7 +15,7 @@ SELECT test1('{"a": 1, "c": "NULL"}'::jsonb);
 -- test jsonb -> python dict
 -- complex dict with dicts as value
 CREATE FUNCTION test1complex(val jsonb) RETURNS int
-LANGUAGE plpython2u
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, dict)
@@ -29,7 +29,7 @@ SELECT test1complex('{"d": {"d": 1}}'::jsonb);
 -- test jsonb[] -> python dict
 -- dict with array as value
 CREATE FUNCTION test1arr(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, dict)
@@ -42,7 +42,7 @@ SELECT test1arr('{"d":[12, 1]}'::jsonb);
 -- test jsonb[] -> python list
 -- simple list
 CREATE FUNCTION test2arr(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, list)
@@ -55,7 +55,7 @@ SELECT test2arr('[12, 1]'::jsonb);
 -- test jsonb[] -> python list
 -- array of dicts
 CREATE FUNCTION test3arr(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert isinstance(val, list)
@@ -67,7 +67,7 @@ SELECT test3arr('[{"a": 1, "b": 2}, {"c": 3,"d": 4}]'::jsonb);
 
 -- test jsonb int -> python int
 CREATE FUNCTION test1int(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert(val == 1)
@@ -78,7 +78,7 @@ SELECT test1int('1'::jsonb);
 
 -- test jsonb string -> python string
 CREATE FUNCTION test1string(val jsonb) RETURNS text
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert(val == "a")
@@ -89,7 +89,7 @@ SELECT test1string('"a"'::jsonb);
 
 -- test jsonb null -> python None
 CREATE FUNCTION test1null(val jsonb) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 assert(val == None)
@@ -100,7 +100,7 @@ SELECT test1null('null'::jsonb);
 
 -- test python -> jsonb
 CREATE FUNCTION roundtrip(val jsonb) RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 as $$
 return val
@@ -129,7 +129,7 @@ SELECT roundtrip('["string", "string2"]'::jsonb);
 
 -- complex numbers -> jsonb
 CREATE FUNCTION testComplexNumbers() RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 x = 1 + 2j
@@ -140,7 +140,7 @@ SELECT testComplexNumbers();
 
 -- range -> jsonb
 CREATE FUNCTION testRange() RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 x = range(3)
@@ -151,7 +151,7 @@ SELECT testRange();
 
 -- 0xff -> jsonb
 CREATE FUNCTION testDecimal() RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 x = 0xff
@@ -162,7 +162,7 @@ SELECT testDecimal();
 
 -- tuple -> jsonb
 CREATE FUNCTION testTuple() RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 x = (1, 'String', None)
@@ -173,7 +173,7 @@ SELECT testTuple();
 
 -- interesting dict -> jsonb
 CREATE FUNCTION test_dict1() RETURNS jsonb
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE jsonb
 AS $$
 x = {"a": 1, None: 2, 33: 3}

@@ -6,7 +6,7 @@
 CREATE FUNCTION python_syntax_error() RETURNS text
         AS
 '.syntaxerror'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 ERROR:  could not compile PL/Python function "python_syntax_error"
 DETAIL:  SyntaxError: invalid syntax (<string>, line 2)
 /* With check_function_bodies = false the function should get defined
@@ -16,7 +16,7 @@ SET check_function_bodies = false;
 CREATE FUNCTION python_syntax_error() RETURNS text
         AS
 '.syntaxerror'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 SELECT python_syntax_error();
 ERROR:  could not compile PL/Python function "python_syntax_error"
 DETAIL:  SyntaxError: invalid syntax (<string>, line 2)
@@ -30,7 +30,7 @@ RESET check_function_bodies;
 CREATE FUNCTION sql_syntax_error() RETURNS text
         AS
 'plpy.execute("syntax error")'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 SELECT sql_syntax_error();
 ERROR:  spiexceptions.SyntaxError: syntax error at or near "syntax"
 LINE 1: syntax error
@@ -45,7 +45,7 @@ PL/Python function "sql_syntax_error"
 CREATE FUNCTION exception_index_invalid(text) RETURNS text
 	AS
 'return args[1]'
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT exception_index_invalid('test');
 ERROR:  IndexError: list index out of range
 CONTEXT:  Traceback (most recent call last):
@@ -58,7 +58,7 @@ CREATE FUNCTION exception_index_invalid_nested() RETURNS text
 	AS
 'rv = plpy.execute("SELECT test5(''foo'')")
 return rv[0]'
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT exception_index_invalid_nested();
 ERROR:  spiexceptions.UndefinedFunction: function test5(unknown) does not exist
 LINE 1: SELECT test5('foo')
@@ -81,7 +81,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT invalid_type_uncaught('rick');
 ERROR:  spiexceptions.UndefinedObject: type "test" does not exist
 CONTEXT:  Traceback (most recent call last):
@@ -105,7 +105,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT invalid_type_caught('rick');
 NOTICE:  type "test" does not exist
  invalid_type_caught 
@@ -129,7 +129,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT invalid_type_reraised('rick');
 ERROR:  plpy.Error: type "test" does not exist
 CONTEXT:  Traceback (most recent call last):
@@ -147,7 +147,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT valid_type('rick');
  valid_type 
 ------------
@@ -170,7 +170,7 @@ def fun3():
 fun3()
 return "not reached"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT nested_error();
 ERROR:  plpy.Error: boom
 CONTEXT:  Traceback (most recent call last):
@@ -199,7 +199,7 @@ def fun3():
 fun3()
 return "not reached"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT nested_error_raise();
 ERROR:  plpy.Error: boom
 CONTEXT:  Traceback (most recent call last):
@@ -228,7 +228,7 @@ def fun3():
 fun3()
 return "you''ve been warned"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 SELECT nested_warning();
 WARNING:  boom
    nested_warning   
@@ -241,9 +241,9 @@ WARNING:  boom
 CREATE FUNCTION toplevel_attribute_error() RETURNS void AS
 $$
 plpy.nonexistent
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT toplevel_attribute_error();
-ERROR:  AttributeError: 'module' object has no attribute 'nonexistent'
+ERROR:  AttributeError: module 'plpy' has no attribute 'nonexistent'
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "toplevel_attribute_error", line 2, in <module>
     plpy.nonexistent
@@ -261,7 +261,7 @@ def third():
   plpy.execute("select sql_error()")
 
 first()
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 CREATE OR REPLACE FUNCTION sql_error() RETURNS void AS $$
 begin
   select 1/0;
@@ -274,7 +274,7 @@ end
 $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION sql_from_python_error() RETURNS void AS $$
 plpy.execute("select sql_error()")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT python_traceback();
 ERROR:  spiexceptions.DivisionByZero: division by zero
 CONTEXT:  Traceback (most recent call last):
@@ -325,7 +325,7 @@ except spiexceptions.NotNullViolation as e:
     plpy.notice("Violated the NOT NULL constraint, sqlstate %s" % e.sqlstate)
 except spiexceptions.UniqueViolation as e:
     plpy.notice("Violated the UNIQUE constraint, sqlstate %s" % e.sqlstate)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT specific_exception(2);
  specific_exception 
 --------------------
@@ -351,7 +351,7 @@ NOTICE:  Violated the UNIQUE constraint, sqlstate 23505
 CREATE FUNCTION python_unique_violation() RETURNS void AS $$
 plpy.execute("insert into specific values (1)")
 plpy.execute("insert into specific values (1)")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 CREATE FUNCTION catch_python_unique_violation() RETURNS text AS $$
 begin
     begin
@@ -374,7 +374,7 @@ CREATE FUNCTION manual_subxact() RETURNS void AS $$
 plpy.execute("savepoint save")
 plpy.execute("create table foo(x integer)")
 plpy.execute("rollback to save")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT manual_subxact();
 ERROR:  plpy.SPIError: SPI_execute failed: SPI_ERROR_TRANSACTION
 CONTEXT:  Traceback (most recent call last):
@@ -389,7 +389,7 @@ rollback = plpy.prepare("rollback to save")
 plpy.execute(save)
 plpy.execute("create table foo(x integer)")
 plpy.execute(rollback)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT manual_subxact_prepared();
 ERROR:  plpy.SPIError: SPI_execute_plan failed: SPI_ERROR_TRANSACTION
 CONTEXT:  Traceback (most recent call last):
@@ -400,7 +400,7 @@ PL/Python function "manual_subxact_prepared"
  */
 CREATE FUNCTION plpy_raise_spiexception() RETURNS void AS $$
 raise plpy.spiexceptions.DivisionByZero()
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 DO $$
 BEGIN
 	SELECT plpy_raise_spiexception();
@@ -414,7 +414,7 @@ CREATE FUNCTION plpy_raise_spiexception_override() RETURNS void AS $$
 exc = plpy.spiexceptions.DivisionByZero()
 exc.sqlstate = 'SILLY'
 raise exc
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 DO $$
 BEGIN
 	SELECT plpy_raise_spiexception_override();
@@ -425,18 +425,18 @@ $$ LANGUAGE plpgsql;
 /* test the context stack trace for nested execution levels
  */
 CREATE FUNCTION notice_innerfunc() RETURNS int AS $$
-plpy.execute("DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$")
+plpy.execute("DO LANGUAGE plpython3u $x$ plpy.notice('inside DO') $x$")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 CREATE FUNCTION notice_outerfunc() RETURNS int AS $$
 plpy.execute("SELECT notice_innerfunc()")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 \set SHOW_CONTEXT always
 SELECT notice_outerfunc();
 NOTICE:  inside DO
 CONTEXT:  PL/Python anonymous code block
-SQL statement "DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$"
+SQL statement "DO LANGUAGE plpython3u $x$ plpy.notice('inside DO') $x$"
 PL/Python function "notice_innerfunc"
 SQL statement "SELECT notice_innerfunc()"
 PL/Python function "notice_outerfunc"

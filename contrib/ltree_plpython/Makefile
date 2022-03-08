@@ -10,7 +10,6 @@ EXTENSION = ltree_plpython3u
 DATA = ltree_plpython3u--1.0.sql
 
 REGRESS = ltree_plpython
-REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 PG_CPPFLAGS = $(python_includespec) -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'
 
@@ -37,9 +36,4 @@ SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
 
 REGRESS_OPTS += --load-extension=ltree
-ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-extension=plpythonu --load-extension=ltree_plpythonu
-endif
 EXTRA_INSTALL += contrib/ltree
-
-include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk

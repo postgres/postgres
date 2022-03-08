@@ -12,7 +12,6 @@ EXTENSION = jsonb_plpython3u
 DATA = jsonb_plpython3u--1.0.sql
 
 REGRESS = jsonb_plpython
-REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -33,9 +32,3 @@ else
 rpathdir = $(python_libdir)
 SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
-
-ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-extension=plpythonu --load-extension=jsonb_plpythonu
-endif
-
-include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk

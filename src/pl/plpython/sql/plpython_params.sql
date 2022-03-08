@@ -4,13 +4,13 @@
 
 CREATE FUNCTION test_param_names0(integer, integer) RETURNS int AS $$
 return args[0] + args[1]
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION test_param_names1(a0 integer, a1 text) RETURNS boolean AS $$
 assert a0 == args[0]
 assert a1 == args[1]
 return True
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION test_param_names2(u users) RETURNS text AS $$
 assert u == args[0]
@@ -22,7 +22,7 @@ if isinstance(u, dict):
 else:
     s = str(u)
 return s
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 -- use deliberately wrong parameter names
 CREATE FUNCTION test_param_names3(a0 integer) RETURNS boolean AS $$
@@ -32,7 +32,7 @@ try:
 except NameError as e:
 	assert e.args[0].find("a1") > -1
 	return True
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 
 SELECT test_param_names0(2,7);
