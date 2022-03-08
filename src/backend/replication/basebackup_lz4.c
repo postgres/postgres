@@ -193,7 +193,7 @@ bbsink_lz4_archive_contents(bbsink *sink, size_t avail_in)
 	 * LZ4F_compressBound(), ask the next sink to process the data so that we
 	 * can empty the buffer.
 	 */
-	if ((mysink->base.bbs_next->bbs_buffer_length - mysink->bytes_written) <=
+	if ((mysink->base.bbs_next->bbs_buffer_length - mysink->bytes_written) <
 		avail_in_bound)
 	{
 		bbsink_archive_contents(sink->bbs_next, mysink->bytes_written);
@@ -238,7 +238,7 @@ bbsink_lz4_end_archive(bbsink *sink)
 
 	Assert(mysink->base.bbs_next->bbs_buffer_length >= lz4_footer_bound);
 
-	if ((mysink->base.bbs_next->bbs_buffer_length - mysink->bytes_written) <=
+	if ((mysink->base.bbs_next->bbs_buffer_length - mysink->bytes_written) <
 		lz4_footer_bound)
 	{
 		bbsink_archive_contents(sink->bbs_next, mysink->bytes_written);
