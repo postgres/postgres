@@ -243,7 +243,7 @@ $$
 plpy.nonexistent
 $$ LANGUAGE plpython3u;
 SELECT toplevel_attribute_error();
-ERROR:  AttributeError: 'module' object has no attribute 'nonexistent'
+ERROR:  AttributeError: module 'plpy' has no attribute 'nonexistent'
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "toplevel_attribute_error", line 2, in <module>
     plpy.nonexistent
