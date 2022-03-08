@@ -5,6 +5,7 @@
 #ifndef PLPY_PLPYMODULE_H
 #define PLPY_PLPYMODULE_H
 
+#include "plpython.h"
 #include "utils/hsearch.h"
 
 /* A hash table mapping sqlstates to exceptions, for speedy lookup */
