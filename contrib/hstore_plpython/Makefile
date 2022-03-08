@@ -6,8 +6,8 @@ OBJS = \
 	hstore_plpython.o
 PGFILEDESC = "hstore_plpython - hstore transform for plpython"
 
-EXTENSION = hstore_plpythonu hstore_plpython2u hstore_plpython3u
-DATA = hstore_plpythonu--1.0.sql hstore_plpython2u--1.0.sql hstore_plpython3u--1.0.sql
+EXTENSION = hstore_plpython3u
+DATA = hstore_plpython3u--1.0.sql
 
 REGRESS = hstore_plpython
 REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
