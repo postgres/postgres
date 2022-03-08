@@ -607,7 +607,7 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 		return;
 
 	/*
-	 * This is either UPDATE OR DELETE and there is no replica identity.
+	 * This is UPDATE/DELETE and there is no replica identity.
 	 *
 	 * Check if the table publishes UPDATES or DELETES.
 	 */
