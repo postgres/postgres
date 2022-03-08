@@ -1494,10 +1494,6 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 							bool showtext)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	Oid			userid = GetUserId();
 	bool		is_allowed_role = false;
 	char	   *qbuffer = NULL;
@@ -1516,30 +1512,14 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Switch into long-lived context to construct returned data structures */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
+	SetSingleFuncCall(fcinfo, 0);
 
 	/*
 	 * Check we have the expected number of output arguments.  Aside from
 	 * being a good safety check, we need a kluge here to detect API version
 	 * 1.1, which was wedged into the code in an ill-considered way.
 	 */
-	switch (tupdesc->natts)
+	switch (rsinfo->setDesc->natts)
 	{
 		case PG_STAT_STATEMENTS_COLS_V1_0:
 			if (api_version != PGSS_V1_0)
@@ -1570,13 +1550,6 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		default:
 			elog(ERROR, "incorrect number of output arguments");
 	}
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * We'd like to load the query text file (if needed) while not holding any
@@ -1800,7 +1773,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 					 api_version == PGSS_V1_9 ? PG_STAT_STATEMENTS_COLS_V1_9 :
 					 -1 /* fail if you forget to update this assert */ ));
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
 	LWLockRelease(pgss->lock);

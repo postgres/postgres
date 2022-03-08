@@ -126,9 +126,6 @@ brin_page_items(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Oid			indexRelid = PG_GETARG_OID(1);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	MemoryContext oldcontext;
-	Tuplestorestate *tupstore;
 	Relation	indexRel;
 	brin_column_state **columns;
 	BrinDesc   *bdesc;
@@ -143,29 +140,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	/* Build tuplestore to hold the result rows */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, 0);
 
 	indexRel = index_open(indexRelid, AccessShareLock);
 	bdesc = brin_build_desc(indexRel);
@@ -251,7 +226,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 			int			att = attno - 1;
 
 			values[0] = UInt16GetDatum(offset);
-			switch (TupleDescAttr(tupdesc, 1)->atttypid)
+			switch (TupleDescAttr(rsinfo->setDesc, 1)->atttypid)
 			{
 				case INT8OID:
 					values[1] = Int64GetDatum((int64) dtup->bt_blkno);
@@ -301,7 +276,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 			}
 		}
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
 		/*
 		 * If the item was unused, jump straight to the next one; otherwise,
