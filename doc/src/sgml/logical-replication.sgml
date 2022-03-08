@@ -352,11 +352,26 @@
   <para>
    The resolution can be done either by changing data or permissions on the subscriber so
    that it does not conflict with the incoming change or by skipping the
-   transaction that conflicts with the existing data.  The transaction can be
-   skipped by calling the <link linkend="pg-replication-origin-advance">
+   transaction that conflicts with the existing data.  When a conflict produces
+   an error, the replication won't proceed, and the logical replication worker will
+   emit the following kind of message to the subscriber's server log:
+<screen>
+ERROR:  duplicate key value violates unique constraint "test_pkey"
+DETAIL:  Key (c)=(1) already exists.
+CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/14C0378
+</screen>
+   The LSN of the transaction that contains the change violating the constraint and
+   the replication origin name can be found from the server log (LSN 0/14C0378 and
+   replication origin <literal>pg_16395</literal> in the above case).  To skip the
+   transaction, the subscription needs to be disabled temporarily by
+   <command>ALTER SUBSCRIPTION ... DISABLE</command> first. Then, the transaction
+   can be skipped by calling the
+   <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function with
-   a <parameter>node_name</parameter> corresponding to the subscription name,
-   and a position.  The current position of origins can be seen in the
+   the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>) and the
+   next LSN of the transaction's LSN (i.e., LSN 0/14C0379).  After that the replication
+   can be resumed by <command>ALTER SUBSCRIPTION ... ENABLE</command>.  The current
+   position of origins can be seen in the
    <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
   </para>
