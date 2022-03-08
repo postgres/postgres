@@ -9,10 +9,8 @@ PG_MODULE_MAGIC;
 extern void _PG_init(void);
 
 /* Linkage to functions in plpython module */
-#if PY_MAJOR_VERSION >= 3
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t) (const char *s, Py_ssize_t size);
 static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;
-#endif
 
 
 /*
@@ -22,12 +20,10 @@ void
 _PG_init(void)
 {
 	/* Asserts verify that typedefs above match original declarations */
-#if PY_MAJOR_VERSION >= 3
 	AssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
 	PLyUnicode_FromStringAndSize_p = (PLyUnicode_FromStringAndSize_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyUnicode_FromStringAndSize",
 							   true, NULL);
-#endif
 }
 
 
@@ -54,7 +50,7 @@ ltree_to_plpython(PG_FUNCTION_ARGS)
 	curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
-		PyList_SetItem(list, i, PyString_FromStringAndSize(curlevel->name, curlevel->len));
+		PyList_SetItem(list, i, PLyUnicode_FromStringAndSize(curlevel->name, curlevel->len));
 		curlevel = LEVEL_NEXT(curlevel);
 	}
 

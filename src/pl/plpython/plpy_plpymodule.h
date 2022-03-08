@@ -11,9 +11,7 @@
 extern HTAB *PLy_spi_exceptions;
 
 
-#if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_plpy(void);
-#endif
 extern void PLy_init_plpy(void);
 
 #endif							/* PLPY_PLPYMODULE_H */

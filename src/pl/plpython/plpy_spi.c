@@ -90,9 +90,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			int32		typmod;
 
 			optr = PySequence_GetItem(list, i);
-			if (PyString_Check(optr))
-				sptr = PyString_AsString(optr);
-			else if (PyUnicode_Check(optr))
+			if (PyUnicode_Check(optr))
 				sptr = PLyUnicode_AsString(optr);
 			else
 			{
@@ -186,7 +184,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	if (list != NULL)
 	{
-		if (!PySequence_Check(list) || PyString_Check(list) || PyUnicode_Check(list))
+		if (!PySequence_Check(list) || PyUnicode_Check(list))
 		{
 			PLy_exception_set(PyExc_TypeError, "plpy.execute takes a sequence as its second argument");
 			return NULL;
@@ -205,7 +203,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
-		sv = PyString_AsString(so);
+		sv = PLyUnicode_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -360,7 +358,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 		return NULL;
 	}
 	Py_DECREF(result->status);
-	result->status = PyInt_FromLong(status);
+	result->status = PyLong_FromLong(status);
 
 	if (status > 0 && tuptable == NULL)
 	{

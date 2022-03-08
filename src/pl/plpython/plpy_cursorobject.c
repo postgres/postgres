@@ -40,7 +40,7 @@ static PyTypeObject PLy_CursorType = {
 	.tp_name = "PLyCursor",
 	.tp_basicsize = sizeof(PLyCursorObject),
 	.tp_dealloc = PLy_cursor_dealloc,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	.tp_doc = PLy_cursor_doc,
 	.tp_iter = PyObject_SelfIter,
 	.tp_iternext = PLy_cursor_iternext,
@@ -150,7 +150,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 
 	if (args)
 	{
-		if (!PySequence_Check(args) || PyString_Check(args) || PyUnicode_Check(args))
+		if (!PySequence_Check(args) || PyUnicode_Check(args))
 		{
 			PLy_exception_set(PyExc_TypeError, "plpy.cursor takes a sequence as its second argument");
 			return NULL;
@@ -169,7 +169,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 
 		if (!so)
 			PLy_elog(ERROR, "could not execute plan");
-		sv = PyString_AsString(so);
+		sv = PLyUnicode_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
 								 "Expected sequence of %d argument, got %d: %s",
 								 "Expected sequence of %d arguments, got %d: %s",
@@ -410,7 +410,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 		SPI_cursor_fetch(portal, true, count);
 
 		Py_DECREF(ret->status);
-		ret->status = PyInt_FromLong(SPI_OK_FETCH);
+		ret->status = PyLong_FromLong(SPI_OK_FETCH);
 
 		Py_DECREF(ret->nrows);
 		ret->nrows = PyLong_FromUnsignedLongLong(SPI_processed);
