@@ -716,12 +716,9 @@ UPDATE table_name SET jsonb_field[1]['a'] = '1';
   </para>
 
   <para>
-   The extensions for PL/Python are called <literal>jsonb_plpythonu</literal>,
-   <literal>jsonb_plpython2u</literal>, and
-   <literal>jsonb_plpython3u</literal> (see <xref
-   linkend="plpython-python23"/> for the PL/Python naming convention).  If you
-   use them, <type>jsonb</type> values are mapped to Python dictionaries,
-   lists, and scalars, as appropriate.
+   The extension for PL/Python is called <literal>jsonb_plpython3u</literal>.
+   If you use it, <type>jsonb</type> values are mapped to Python
+   dictionaries, lists, and scalars, as appropriate.
   </para>
 
   <para>

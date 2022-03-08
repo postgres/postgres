@@ -14,8 +14,7 @@
 
  <para>
   To install PL/Python in a particular database, use
-  <literal>CREATE EXTENSION plpythonu</literal> (but
-  see also <xref linkend="plpython-python23"/>).
+  <literal>CREATE EXTENSION plpython3u</literal>.
  </para>
 
   <tip>
@@ -28,14 +27,14 @@
  <para>
   PL/Python is only available as an <quote>untrusted</quote> language, meaning
   it does not offer any way of restricting what users can do in it and
-  is therefore named <literal>plpythonu</literal>.  A trusted
+  is therefore named <literal>plpython3u</literal>.  A trusted
   variant <literal>plpython</literal> might become available in the future
   if a secure execution mechanism is developed in Python.  The
   writer of a function in untrusted PL/Python must take care that the
   function cannot be used to do anything unwanted, since it will be
   able to do anything that could be done by a user logged in as the
   database administrator.  Only superusers can create functions in
-  untrusted languages such as <literal>plpythonu</literal>.
+  untrusted languages such as <literal>plpython3u</literal>.
  </para>
 
  <note>
@@ -46,140 +45,6 @@
    packages might find PL/Python in a separate subpackage.
   </para>
  </note>
-
- <sect1 id="plpython-python23">
-  <title>Python 2 vs. Python 3</title>
-
-  <para>
-   PL/Python supports both the Python 2 and Python 3 language
-   variants.  (The PostgreSQL installation instructions might contain
-   more precise information about the exact supported minor versions
-   of Python.)  Because the Python 2 and Python 3 language variants
-   are incompatible in some important aspects, the following naming
-   and transitioning scheme is used by PL/Python to avoid mixing them:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      The PostgreSQL language named <literal>plpython2u</literal>
-      implements PL/Python based on the Python 2 language variant.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The PostgreSQL language named <literal>plpython3u</literal>
-      implements PL/Python based on the Python 3 language variant.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The language named <literal>plpythonu</literal> implements
-      PL/Python based on the default Python language variant, which is
-      currently Python 2.  (This default is independent of what any
-      local Python installations might consider to be
-      their <quote>default</quote>, for example,
-      what <filename>/usr/bin/python</filename> might be.)  The
-      default will probably be changed to Python 3 in a distant future
-      release of PostgreSQL, depending on the progress of the
-      migration to Python 3 in the Python community.
-     </para>
-    </listitem>
-   </itemizedlist>
-
-   This scheme is analogous to the recommendations in <ulink
-   url="https://www.python.org/dev/peps/pep-0394/">PEP 394</ulink> regarding the
-   naming and transitioning of the <command>python</command> command.
-  </para>
-
-  <para>
-   It depends on the build configuration or the installed packages
-   whether PL/Python for Python 2 or Python 3 or both are available.
-  </para>
-
-  <tip>
-   <para>
-    The built variant depends on which Python version was found during
-    the installation or which version was explicitly set using
-    the <envar>PYTHON</envar> environment variable;
-    see <xref linkend="install-procedure"/>.  To make both variants of
-    PL/Python available in one installation, the source tree has to be
-    configured and built twice.
-   </para>
-  </tip>
-
-  <para>
-   This results in the following usage and migration strategy:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      Existing users and users who are currently not interested in
-      Python 3 use the language name <literal>plpythonu</literal> and
-      don't have to change anything for the foreseeable future.  It is
-      recommended to gradually <quote>future-proof</quote> the code
-      via migration to Python 2.6/2.7 to simplify the eventual
-      migration to Python 3.
-     </para>
-
-     <para>
-      In practice, many PL/Python functions will migrate to Python 3
-      with few or no changes.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Users who know that they have heavily Python 2 dependent code
-      and don't plan to ever change it can make use of
-      the <literal>plpython2u</literal> language name.  This will
-      continue to work into the very distant future, until Python 2
-      support might be completely dropped by PostgreSQL.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Users who want to dive into Python 3 can use
-      the <literal>plpython3u</literal> language name, which will keep
-      working forever by today's standards.  In the distant future,
-      when Python 3 might become the default, they might like to
-      remove the <quote>3</quote> for aesthetic reasons.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Daredevils, who want to build a Python-3-only operating system
-      environment, can change the contents of
-      <literal>plpythonu</literal>'s extension control and script files
-      to make <literal>plpythonu</literal> be equivalent
-      to <literal>plpython3u</literal>, keeping in mind that this
-      would make their installation incompatible with most of the rest
-      of the world.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   See also the
-   document <ulink url="https://docs.python.org/3/whatsnew/3.0.html">What's
-   New In Python 3.0</ulink> for more information about porting to
-   Python 3.
-  </para>
-
-  <para>
-   It is not allowed to use PL/Python based on Python 2 and PL/Python
-   based on Python 3 in the same session, because the symbols in the
-   dynamic modules would clash, which could result in crashes of the
-   PostgreSQL server process.  There is a check that prevents mixing
-   Python major versions in a session, which will abort the session if
-   a mismatch is detected.  It is possible, however, to use both
-   PL/Python variants in the same database, from separate sessions.
-  </para>
- </sect1>
 
  <sect1 id="plpython-funcs">
   <title>PL/Python Functions</title>
@@ -193,7 +58,7 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-list<
   RETURNS <replaceable>return-type</replaceable>
 AS $$
   # PL/Python function body
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
   </para>
 
@@ -225,7 +90,7 @@ AS $$
   if a &gt; b:
     return a
   return b
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
    The Python code that is given as the body of the function definition
@@ -255,7 +120,7 @@ CREATE FUNCTION pystrip(x text)
 AS $$
   x = x.strip()  # error
   return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
    because assigning to <varname>x</varname>
    makes <varname>x</varname> a local variable for the entire block,
@@ -271,7 +136,7 @@ AS $$
   global x
   x = x.strip()  # ok now
   return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
    But it is advisable not to rely on this implementation detail of
    PL/Python.  It is better to treat the function parameters as
@@ -303,11 +168,8 @@ $$ LANGUAGE plpythonu;
 
      <listitem>
       <para>
-       PostgreSQL <type>smallint</type> and <type>int</type> are
-       converted to Python <type>int</type>.
-       PostgreSQL <type>bigint</type> and <type>oid</type> are converted
-       to <type>long</type> in Python 2 and to <type>int</type> in
-       Python 3.
+       PostgreSQL <type>smallint</type>, <type>int</type>, <type>bigint</type>
+       and <type>oid</type> are converted to Python <type>int</type>.
       </para>
      </listitem>
 
@@ -335,19 +197,15 @@ $$ LANGUAGE plpythonu;
 
      <listitem>
       <para>
-       PostgreSQL <type>bytea</type> is converted to
-       Python <type>str</type> in Python 2 and to <type>bytes</type>
-       in Python 3.  In Python 2, the string should be treated as a
-       byte sequence without any character encoding.
+       PostgreSQL <type>bytea</type> is converted to Python <type>bytes</type>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       All other data types, including the PostgreSQL character string
-       types, are converted to a Python <type>str</type>.  In Python
-       2, this string will be in the PostgreSQL server encoding; in
-       Python 3, it will be a Unicode string like all strings.
+       All other data types, including the PostgreSQL character string types,
+       are converted to a Python <type>str</type> (in Unicode like all Python
+       strings).
       </para>
      </listitem>
 
@@ -375,10 +233,10 @@ $$ LANGUAGE plpythonu;
 
      <listitem>
       <para>
-       When the PostgreSQL return type is <type>bytea</type>, the
-       return value will be converted to a string (Python 2) or bytes
-       (Python 3) using the respective Python built-ins, with the
-       result being converted to <type>bytea</type>.
+       When the PostgreSQL return type is <type>bytea</type>, the return value
+       will be converted to Python <type>bytes</type> using the respective
+       Python built-ins, with the result being converted to
+       <type>bytea</type>.
       </para>
      </listitem>
 
@@ -393,14 +251,8 @@ $$ LANGUAGE plpythonu;
       </para>
 
       <para>
-       Strings in Python 2 are required to be in the PostgreSQL server
-       encoding when they are passed to PostgreSQL.  Strings that are
-       not valid in the current server encoding will raise an error,
-       but not all encoding mismatches can be detected, so garbage
-       data can still result when this is not done correctly.  Unicode
-       strings are converted to the correct encoding automatically, so
-       it can be safer and more convenient to use those.  In Python 3,
-       all strings are Unicode strings.
+       Strings are automatically converted to the PostgreSQL server encoding
+       when they are passed to PostgreSQL.
       </para>
      </listitem>
 
@@ -440,7 +292,7 @@ AS $$
   if a &gt; b:
     return a
   return b
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
    As shown above, to return an SQL null value from a PL/Python
@@ -461,10 +313,10 @@ CREATE FUNCTION return_arr()
   RETURNS int[]
 AS $$
 return [1, 2, 3, 4, 5]
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT return_arr();
- return_arr  
+ return_arr
 -------------
  {1,2,3,4,5}
 (1 row)
@@ -479,11 +331,11 @@ SELECT return_arr();
 CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
 INFO:  ([[1, 2, 3], [4, 5, 6]], &lt;type 'list'&gt;)
- test_type_conversion_array_int4 
+ test_type_conversion_array_int4
 ---------------------------------
  {{1,2,3},{4,5,6}}
 (1 row)
@@ -506,7 +358,7 @@ CREATE FUNCTION return_str_arr()
   RETURNS varchar[]
 AS $$
 return "hello"
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT return_str_arr();
  return_str_arr
@@ -540,7 +392,7 @@ AS $$
   if (e["age"] &lt; 30) and (e["salary"] &gt; 100000):
     return True
   return False
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
   </para>
 
@@ -574,7 +426,7 @@ CREATE FUNCTION make_pair (name text, value integer)
 AS $$
   return ( name, value )
   # or alternatively, as list: return [ name, value ]
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
        To return an SQL null for any column, insert <symbol>None</symbol> at
@@ -600,7 +452,7 @@ CREATE FUNCTION make_pair (name text, value integer)
   RETURNS named_value
 AS $$
   return { "name": name, "value": value }
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
        Any extra dictionary key/value pairs are ignored. Missing keys are
@@ -633,7 +485,7 @@ AS $$
   nv.name = name
   nv.value = value
   return nv
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
       </para>
      </listitem>
@@ -646,7 +498,7 @@ $$ LANGUAGE plpythonu;
 <programlisting>
 CREATE FUNCTION multiout_simple(OUT i integer, OUT j integer) AS $$
 return (1, 2)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT * FROM multiout_simple();
 </programlisting>
@@ -657,7 +509,7 @@ SELECT * FROM multiout_simple();
 <programlisting>
 CREATE PROCEDURE python_triple(INOUT a integer, INOUT b integer) AS $$
 return (a * 3, b * 3)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CALL python_triple(5, 10);
 </programlisting>
@@ -693,7 +545,7 @@ AS $$
   # return tuple containing lists as composite types
   # all other combinations work also
   return ( [ how, "World" ], [ how, "PostgreSQL" ], [ how, "PL/Python" ] )
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
       </para>
      </listitem>
@@ -724,7 +576,7 @@ AS $$
       return ( self.how, self.who[self.ndx] )
 
   return producer(how, [ "World", "PostgreSQL", "PL/Python" ])
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
       </para>
      </listitem>
@@ -740,7 +592,7 @@ CREATE FUNCTION greet (how text)
 AS $$
   for who in [ "World", "PostgreSQL", "PL/Python" ]:
     yield ( how, who )
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
       </para>
@@ -756,7 +608,7 @@ $$ LANGUAGE plpythonu;
 <programlisting>
 CREATE FUNCTION multiout_simple_setof(n integer, OUT integer, OUT integer) RETURNS SETOF record AS $$
 return [(1, 2)] * n
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT * FROM multiout_simple_setof(3);
 </programlisting>
@@ -794,7 +646,7 @@ SELECT * FROM multiout_simple_setof(3);
 <programlisting>
 DO $$
     # PL/Python code
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
 
    An anonymous code block receives no arguments, and whatever value it
@@ -1089,7 +941,7 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
         plan = plpy.prepare("SELECT 1")
         SD["plan"] = plan
     # rest of function
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
      </para>
     </listitem>
@@ -1132,7 +984,7 @@ for row in plpy.cursor("select num from largetable"):
     if row['num'] % 2:
          odd += 1
 return odd
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION count_odd_fetch(batch_size integer) RETURNS integer AS $$
 odd = 0
@@ -1145,7 +997,7 @@ while True:
         if row['num'] % 2:
             odd += 1
 return odd
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION count_odd_prepared() RETURNS integer AS $$
 odd = 0
@@ -1153,7 +1005,7 @@ plan = plpy.prepare("select num from largetable where num % $1 &lt;&gt; 0", ["in
 rows = list(plpy.cursor(plan, [2]))  # or: = list(plan.cursor([2]))
 
 return len(rows)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
      </para>
 
@@ -1198,7 +1050,7 @@ CREATE FUNCTION try_adding_joe() RETURNS text AS $$
         return "something went wrong"
     else:
         return "Joe added"
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
    </para>
 
@@ -1231,7 +1083,7 @@ except plpy.SPIError as e:
     return "other error, SQLSTATE %s" % e.sqlstate
 else:
     return "fraction inserted"
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
     Note that because all exceptions from
     the <literal>plpy.spiexceptions</literal> module inherit
@@ -1280,7 +1132,7 @@ else:
     result = "funds transferred correctly"
 plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
 plpy.execute(plan, [result])
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
     If the second <literal>UPDATE</literal> statement results in an
     exception being raised, this function will report the error, but
@@ -1312,7 +1164,7 @@ else:
     result = "funds transferred correctly"
 plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
 plpy.execute(plan, [result])
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 </programlisting>
     Note that the use of <literal>try/catch</literal> is still
     required.  Otherwise the exception would propagate to the top of
@@ -1327,44 +1179,6 @@ $$ LANGUAGE plpythonu;
     database access.  A regular Python exception raised inside an
     explicit subtransaction block would also cause the subtransaction
     to be rolled back.
-   </para>
-  </sect2>
-
-  <sect2>
-   <title>Older Python Versions</title>
-
-   <para>
-    Context managers syntax using the <literal>with</literal> keyword
-    is available by default in Python 2.6.  For compatibility with
-    older Python versions, you can call the
-    subtransaction manager's <literal>__enter__</literal> and
-    <literal>__exit__</literal> functions using the
-    <literal>enter</literal> and <literal>exit</literal> convenience
-    aliases.  The example function that transfers funds could be
-    written as:
-<programlisting>
-CREATE FUNCTION transfer_funds_old() RETURNS void AS $$
-try:
-    subxact = plpy.subtransaction()
-    subxact.enter()
-    try:
-        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
-        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
-    except:
-        import sys
-        subxact.exit(*sys.exc_info())
-        raise
-    else:
-        subxact.exit(None, None, None)
-except plpy.SPIError as e:
-    result = "error transferring funds: %s" % e.args
-else:
-    result = "funds transferred correctly"
-
-plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
-plpy.execute(plan, [result])
-$$ LANGUAGE plpythonu;
-</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -1389,7 +1203,7 @@ $$ LANGUAGE plpythonu;
    Here is an example:
 <programlisting>
 CREATE PROCEDURE transaction_test1()
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 AS $$
 for i in range(0, 10):
     plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
@@ -1465,7 +1279,7 @@ CREATE FUNCTION raise_custom_exception() RETURNS void AS $$
 plpy.error("custom exception message",
            detail="some info about exception",
            hint="hint for users")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 =# SELECT raise_custom_exception();
 ERROR:  plpy.Error: custom exception message
@@ -1493,6 +1307,17 @@ plpy.execute("UPDATE tbl SET %s = %s WHERE key = %s" % (
     plpy.quote_nullable(newvalue),
     plpy.quote_literal(keyvalue)))
 </programlisting>
+  </para>
+ </sect1>
+
+ <sect1 id="plpython-python23">
+  <title>Python 2 vs. Python 3</title>
+
+  <para>
+   PL/Python supports only Python 3. Past versions of
+   <productname>PostgreSQL</productname> supported Python 2, using the
+   <literal>plpythonu</literal> and <literal>plpython2u</literal> language
+   names.
   </para>
  </sect1>
 

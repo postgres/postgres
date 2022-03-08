@@ -349,7 +349,7 @@ COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';
 COMMENT ON TEXT SEARCH DICTIONARY swedish IS 'Snowball stemmer for Swedish language';
 COMMENT ON TEXT SEARCH PARSER my_parser IS 'Splits text into words';
 COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
-COMMENT ON TRANSFORM FOR hstore LANGUAGE plpythonu IS 'Transform between hstore and Python dict';
+COMMENT ON TRANSFORM FOR hstore LANGUAGE plpython3u IS 'Transform between hstore and Python dict';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';

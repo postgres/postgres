@@ -101,9 +101,9 @@ DROP TRANSFORM [ IF EXISTS ] FOR <replaceable>type_name</replaceable> LANGUAGE <
 
   <para>
    To drop the transform for type <type>hstore</type> and language
-   <literal>plpythonu</literal>:
+   <literal>plpython3u</literal>:
 <programlisting>
-DROP TRANSFORM FOR hstore LANGUAGE plpythonu;
+DROP TRANSFORM FOR hstore LANGUAGE plpython3u;
 </programlisting></para>
  </refsect1>
 

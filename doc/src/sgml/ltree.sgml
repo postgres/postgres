@@ -826,19 +826,15 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
   <title>Transforms</title>
 
   <para>
-   Additional extensions are available that implement transforms for
-   the <type>ltree</type> type for PL/Python.  The extensions are
-   called <literal>ltree_plpythonu</literal>, <literal>ltree_plpython2u</literal>,
-   and <literal>ltree_plpython3u</literal>
-   (see <xref linkend="plpython-python23"/> for the PL/Python naming
-   convention).  If you install these transforms and specify them when
+   The <literal>ltree_plpython3u</literal> extension implements transforms for
+   the <type>ltree</type> type for PL/Python. If installed and specified when
    creating a function, <type>ltree</type> values are mapped to Python lists.
    (The reverse is currently not supported, however.)
   </para>
 
   <caution>
    <para>
-    It is strongly recommended that the transform extensions be installed in
+    It is strongly recommended that the transform extension be installed in
     the same schema as <filename>ltree</filename>.  Otherwise there are
     installation-time security hazards if a transform extension's schema
     contains objects defined by a hostile user.
