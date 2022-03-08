@@ -19,7 +19,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 
 -- check that we're detecting a streaming rep slot used for logical decoding
 SELECT 'init' FROM pg_create_physical_replication_slot('repl');
-SELECT data FROM pg_logical_slot_get_changes('repl', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('repl', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 SELECT pg_drop_replication_slot('repl');
 
 
@@ -68,7 +68,7 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 
 ALTER TABLE replication_example ALTER COLUMN somenum TYPE int4 USING (somenum::int4);
 -- check that this doesn't produce any changes from the heap rewrite
-SELECT count(data) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT count(data) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 INSERT INTO replication_example(somedata, somenum) VALUES (5, 1);
 
@@ -82,7 +82,7 @@ INSERT INTO replication_example(somedata, somenum, zaphod1) VALUES (6, 4, 2);
 COMMIT;
 
 -- show changes
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- ON CONFLICT DO UPDATE support
 BEGIN;
@@ -91,7 +91,7 @@ INSERT INTO replication_example(id, somedata, somenum) SELECT i, i, i FROM gener
 COMMIT;
 
 /* display results */
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 CREATE TABLE tr_unique(id2 serial unique NOT NULL, data int);
 INSERT INTO tr_unique(data) VALUES(10);
@@ -104,7 +104,7 @@ INSERT INTO tr_pkey(data) VALUES(1);
 DELETE FROM tr_pkey;
 
 /* display results */
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 /*
  * check that disk spooling works (also for logical messages)
@@ -136,7 +136,7 @@ DROP TABLE spoolme;
 COMMIT;
 
 SELECT data
-FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0')
 WHERE data ~ 'UPDATE';
 
 -- check that a large, spooled, upsert works
@@ -145,7 +145,7 @@ SELECT g.i, -g.i FROM generate_series(8000, 12000) g(i)
 ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data;
 
 SELECT substring(data, 1, 29), count(*)
-FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') WITH ORDINALITY
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0') WITH ORDINALITY
 GROUP BY 1
 ORDER BY min(ordinality);
 
@@ -202,7 +202,7 @@ RELEASE SAVEPOINT subtop;
 INSERT INTO tr_sub(path) VALUES ('2-top-#1');
 COMMIT;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- make sure rollbacked subtransactions aren't decoded
 BEGIN;
@@ -215,7 +215,7 @@ ROLLBACK TO SAVEPOINT b;
 INSERT INTO tr_sub(path) VALUES ('3-top-2-#2');
 COMMIT;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- test whether a known, but not yet logged toplevel xact, followed by a
 -- subxact commit is handled correctly
@@ -234,7 +234,7 @@ INSERT INTO tr_sub(path) VALUES ('5-top-1-#1');
 COMMIT;
 
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- check that DDL in aborted subtransactions handled correctly
 CREATE TABLE tr_sub_ddl(data int);
@@ -247,7 +247,7 @@ ALTER TABLE tr_sub_ddl ALTER COLUMN data TYPE bigint;
 INSERT INTO tr_sub_ddl VALUES(43);
 COMMIT;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 
 /*
@@ -410,10 +410,10 @@ WHERE id = 1;
 -- make sure we decode correctly even if the toast table is gone
 DROP TABLE toasttable;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- done, free logical replication slot
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 SELECT pg_drop_replication_slot('regression_slot');
 

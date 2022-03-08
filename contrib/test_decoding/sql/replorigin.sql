@@ -60,7 +60,7 @@ BEGIN;
 -- setup transaction origin
 SELECT pg_replication_origin_xact_setup('0/aabbccdd', '2013-01-01 00:00');
 INSERT INTO target_tbl(data)
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1', 'include-sequences', '0');
 COMMIT;
 
 -- check replication progress for the session is correct
@@ -79,11 +79,11 @@ SELECT pg_replication_origin_progress('regress_test_decoding: regression_slot', 
 SELECT pg_replication_origin_session_reset();
 
 -- and magically the replayed xact will be filtered!
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1', 'include-sequences', '0');
 
 --but new original changes still show up
 INSERT INTO origin_tbl(data) VALUES ('will be replicated');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1',  'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1',  'only-local', '1', 'include-sequences', '0');
 
 SELECT pg_drop_replication_slot('regression_slot');
 SELECT pg_replication_origin_drop('regress_test_decoding: regression_slot');
@@ -114,7 +114,7 @@ SELECT local_id, external_id,
        remote_lsn <> '0/0' AS valid_remote_lsn,
        local_lsn <> '0/0' AS valid_local_lsn
        FROM pg_replication_origin_status;
-SELECT data FROM pg_logical_slot_get_changes('regression_slot_no_lsn', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot_no_lsn', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0', 'include-sequences', '0');
 -- Clean up
 SELECT pg_replication_origin_session_reset();
 SELECT pg_drop_replication_slot('regression_slot_no_lsn');

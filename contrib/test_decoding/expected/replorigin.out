@@ -110,7 +110,7 @@ SELECT pg_replication_origin_xact_setup('0/aabbccdd', '2013-01-01 00:00');
 (1 row)
 
 INSERT INTO target_tbl(data)
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1', 'include-sequences', '0');
 COMMIT;
 -- check replication progress for the session is correct
 SELECT pg_replication_origin_session_progress(false);
@@ -154,14 +154,14 @@ SELECT pg_replication_origin_progress('regress_test_decoding: regression_slot', 
 SELECT pg_replication_origin_session_reset();
 ERROR:  no replication origin is configured
 -- and magically the replayed xact will be filtered!
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'only-local', '1', 'include-sequences', '0');
  data 
 ------
 (0 rows)
 
 --but new original changes still show up
 INSERT INTO origin_tbl(data) VALUES ('will be replicated');
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1',  'only-local', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1',  'only-local', '1', 'include-sequences', '0');
                                       data                                      
 --------------------------------------------------------------------------------
  BEGIN
@@ -227,7 +227,7 @@ SELECT local_id, external_id,
         1 | regress_test_decoding: regression_slot_no_lsn | f                | t
 (1 row)
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot_no_lsn', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot_no_lsn', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0', 'include-sequences', '0');
                                         data                                         
 -------------------------------------------------------------------------------------
  BEGIN

@@ -90,7 +90,7 @@ COMMIT;
 -- make old files go away
 CHECKPOINT;
 
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
 
 -- trigger repeated rewrites of a system catalog with a toast table,
 -- that previously was buggy: 20180914021046.oi7dm4ra3ot2g2kt@alap3.anarazel.de

@@ -115,7 +115,7 @@ INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (7, 5
 COMMIT;
 -- make old files go away
 CHECKPOINT;
-SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'include-sequences', '0');
                                                                                        data                                                                                       
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  BEGIN
