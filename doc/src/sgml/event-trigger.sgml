@@ -288,6 +288,14 @@
         <entry align="center"></entry>
        </row>
        <row>
+        <entry align="left"><literal>ALTER ROUTINE</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="left"></entry>
+       </row>
+       <row>
         <entry align="left"><literal>ALTER SCHEMA</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
@@ -846,6 +854,14 @@
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>-</literal></entry>
         <entry align="center"></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>DROP ROUTINE</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="left"></entry>
        </row>
        <row>
         <entry align="left"><literal>DROP RULE</literal></entry>
