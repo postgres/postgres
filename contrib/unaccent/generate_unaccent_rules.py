@@ -26,32 +26,13 @@
 # [1] https://www.unicode.org/Public/${UNICODE_VERSION}/ucd/UnicodeData.txt
 # [2] https://raw.githubusercontent.com/unicode-org/cldr/${TAG}/common/transforms/Latin-ASCII.xml
 
-# BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
-# The approach is to be Python3 compatible with Python2 "backports".
-from __future__ import print_function
-from __future__ import unicode_literals
-# END: Python 2/3 compatibility - remove when Python 2 compatibility dropped
-
 import argparse
 import codecs
 import re
 import sys
 import xml.etree.ElementTree as ET
 
-# BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
-if sys.version_info[0] <= 2:
-    # Encode stdout as UTF-8, so we can just print to it
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-
-    # Map Python 2's chr to unichr
-    chr = unichr
-
-    # Python 2 and 3 compatible bytes call
-    def bytes(source, encoding='ascii', errors='strict'):
-        return source.encode(encoding=encoding, errors=errors)
-else:
-# END: Python 2/3 compatibility - remove when Python 2 compatibility dropped
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
+sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
 
 # The ranges of Unicode characters that we consider to be "plain letters".
 # For now we are being conservative by including only Latin and Greek.  This
@@ -213,12 +194,12 @@ def special_cases():
     charactersSet = set()
 
     # Cyrillic
-    charactersSet.add((0x0401, u"\u0415")) # CYRILLIC CAPITAL LETTER IO
-    charactersSet.add((0x0451, u"\u0435")) # CYRILLIC SMALL LETTER IO
+    charactersSet.add((0x0401, "\u0415")) # CYRILLIC CAPITAL LETTER IO
+    charactersSet.add((0x0451, "\u0435")) # CYRILLIC SMALL LETTER IO
 
     # Symbols of "Letterlike Symbols" Unicode Block (U+2100 to U+214F)
-    charactersSet.add((0x2103, u"\xb0C")) # DEGREE CELSIUS
-    charactersSet.add((0x2109, u"\xb0F")) # DEGREE FAHRENHEIT
+    charactersSet.add((0x2103, "\xb0C")) # DEGREE CELSIUS
+    charactersSet.add((0x2109, "\xb0F")) # DEGREE FAHRENHEIT
     charactersSet.add((0x2117, "(P)")) # SOUND RECORDING COPYRIGHT
 
     return charactersSet
