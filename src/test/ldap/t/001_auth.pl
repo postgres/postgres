@@ -40,6 +40,11 @@ elsif ($^O eq 'freebsd')
 	$slapd           = '/usr/local/libexec/slapd';
 	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
 }
+elsif ($^O eq 'openbsd')
+{
+	$slapd           = '/usr/local/libexec/slapd';
+	$ldap_schema_dir = '/usr/local/share/examples/openldap/schema';
+}
 else
 {
 	plan skip_all => "ldap tests not supported on $^O or dependencies not installed";
