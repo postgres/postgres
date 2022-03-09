@@ -736,12 +736,8 @@ pg_analyze_and_rewrite_withcb(RawStmt *parsetree,
 							  void *parserSetupArg,
 							  QueryEnvironment *queryEnv)
 {
-	ParseState *pstate;
 	Query	   *query;
 	List	   *querytree_list;
-	JumbleState *jstate = NULL;
-
-	Assert(query_string != NULL);	/* required as of 8.4 */
 
 	TRACE_POSTGRESQL_QUERY_REWRITE_START(query_string);
 
@@ -751,22 +747,8 @@ pg_analyze_and_rewrite_withcb(RawStmt *parsetree,
 	if (log_parser_stats)
 		ResetUsage();
 
-	pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = query_string;
-	pstate->p_queryEnv = queryEnv;
-	(*parserSetup) (pstate, parserSetupArg);
-
-	query = transformTopLevelStmt(pstate, parsetree);
-
-	if (IsQueryIdEnabled())
-		jstate = JumbleQuery(query, query_string);
-
-	if (post_parse_analyze_hook)
-		(*post_parse_analyze_hook) (pstate, query, jstate);
-
-	free_parsestate(pstate);
-
-	pgstat_report_query_id(query->queryId, false);
+	query = parse_analyze_withcb(parsetree, query_string, parserSetup, parserSetupArg,
+								 queryEnv);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");

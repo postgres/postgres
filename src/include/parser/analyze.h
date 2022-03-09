@@ -14,6 +14,7 @@
 #ifndef ANALYZE_H
 #define ANALYZE_H
 
+#include "nodes/params.h"
 #include "parser/parse_node.h"
 #include "utils/queryjumble.h"
 
@@ -28,6 +29,10 @@ extern Query *parse_analyze_fixedparams(RawStmt *parseTree, const char *sourceTe
 							const Oid *paramTypes, int numParams, QueryEnvironment *queryEnv);
 extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 									  Oid **paramTypes, int *numParams, QueryEnvironment *queryEnv);
+extern Query *parse_analyze_withcb(RawStmt *parseTree, const char *sourceText,
+								   ParserSetupHook parserSetup,
+								   void *parserSetupArg,
+								   QueryEnvironment *queryEnv);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 								CommonTableExpr *parentCTE,
