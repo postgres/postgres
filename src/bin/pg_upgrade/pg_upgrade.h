@@ -429,7 +429,6 @@ void		pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noret
 void		end_progress_output(void);
 void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);
 void		prep_status_progress(const char *fmt,...) pg_attribute_printf(1, 2);
-void		check_ok(void);
 unsigned int str2uint(const char *str);
 
 
