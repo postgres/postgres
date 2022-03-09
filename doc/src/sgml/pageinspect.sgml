@@ -31,9 +31,11 @@
       relation and returns a copy as a <type>bytea</type> value.  This allows a
       single time-consistent copy of the block to be obtained.
       <replaceable>fork</replaceable> should be <literal>'main'</literal> for
-      the main data fork, <literal>'fsm'</literal> for the free space map,
-      <literal>'vm'</literal> for the visibility map, or <literal>'init'</literal>
-      for the initialization fork.
+      the main data fork, <literal>'fsm'</literal> for the
+      <link linkend="storage-fsm">free space map</link>,
+      <literal>'vm'</literal> for the
+      <link linkend="storage-vm">visibility map</link>, or
+      <literal>'init'</literal> for the initialization fork.
      </para>
     </listitem>
    </varlistentry>
@@ -136,7 +138,7 @@ test=# SELECT page_checksum(get_raw_page('pg_class', 0), 0);
     <listitem>
      <para>
       <function>fsm_page_contents</function> shows the internal node structure
-      of an FSM page.  For example:
+      of an <acronym>FSM</acronym> page.  For example:
 <screen>
 test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
 </screen>
@@ -147,7 +149,7 @@ test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
      </para>
      <para>
       See <filename>src/backend/storage/freespace/README</filename> for more
-      information on the structure of an FSM page.
+      information on the structure of an <acronym>FSM</acronym> page.
      </para>
     </listitem>
    </varlistentry>
