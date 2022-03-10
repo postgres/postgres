@@ -59,6 +59,21 @@ typedef struct dshash_parameters
 struct dshash_table_item;
 typedef struct dshash_table_item dshash_table_item;
 
+/*
+ * Sequential scan state. The detail is exposed to let users know the storage
+ * size but it should be considered as an opaque type by callers.
+ */
+typedef struct dshash_seq_status
+{
+	dshash_table *hash_table;	/* dshash table working on */
+	int			curbucket;		/* bucket number we are at */
+	int			nbuckets;		/* total number of buckets in the dshash */
+	dshash_table_item *curitem; /* item we are currently at */
+	dsa_pointer pnextitem;		/* dsa-pointer to the next item */
+	int			curpartition;	/* partition number we are at */
+	bool		exclusive;		/* locking mode */
+} dshash_seq_status;
+
 /* Creating, sharing and destroying from hash tables. */
 extern dshash_table *dshash_create(dsa_area *area,
 								   const dshash_parameters *params,
@@ -79,6 +94,14 @@ extern void *dshash_find_or_insert(dshash_table *hash_table,
 extern bool dshash_delete_key(dshash_table *hash_table, const void *key);
 extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
 extern void dshash_release_lock(dshash_table *hash_table, void *entry);
+
+/* seq scan support */
+extern void dshash_seq_init(dshash_seq_status *status, dshash_table *hash_table,
+							bool exclusive);
+extern void *dshash_seq_next(dshash_seq_status *status);
+extern void dshash_seq_term(dshash_seq_status *status);
+extern void dshash_delete_current(dshash_seq_status *status);
+extern void *dshash_get_current(dshash_seq_status *status);
 
 /* Convenience hash and compare functions wrapping memcmp and tag_hash. */
 extern int	dshash_memcmp(const void *a, const void *b, size_t size, void *arg);

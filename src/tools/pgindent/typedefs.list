@@ -3103,6 +3103,7 @@ dshash_hash
 dshash_hash_function
 dshash_parameters
 dshash_partition
+dshash_seq_status
 dshash_table
 dshash_table_control
 dshash_table_handle
