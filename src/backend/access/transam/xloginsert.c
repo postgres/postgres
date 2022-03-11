@@ -19,6 +19,10 @@
 
 #include "postgres.h"
 
+#ifdef USE_LZ4
+#include <lz4.h>
+#endif
+
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -38,7 +42,6 @@
  * backup block image.
  */
 #ifdef USE_LZ4
-#include <lz4.h>
 #define	LZ4_MAX_BLCKSZ		LZ4_COMPRESSBOUND(BLCKSZ)
 #else
 #define LZ4_MAX_BLCKSZ		0
