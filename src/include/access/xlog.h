@@ -75,7 +75,8 @@ typedef enum WalCompression
 {
 	WAL_COMPRESSION_NONE = 0,
 	WAL_COMPRESSION_PGLZ,
-	WAL_COMPRESSION_LZ4
+	WAL_COMPRESSION_LZ4,
+	WAL_COMPRESSION_ZSTD
 } WalCompression;
 
 /* Recovery states */

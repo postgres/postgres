@@ -23,6 +23,10 @@
 #include <lz4.h>
 #endif
 
+#ifdef USE_ZSTD
+#include <zstd.h>
+#endif
+
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -47,9 +51,16 @@
 #define LZ4_MAX_BLCKSZ		0
 #endif
 
+#ifdef USE_ZSTD
+#define ZSTD_MAX_BLCKSZ		ZSTD_COMPRESSBOUND(BLCKSZ)
+#else
+#define ZSTD_MAX_BLCKSZ		0
+#endif
+
 #define PGLZ_MAX_BLCKSZ		PGLZ_MAX_OUTPUT(BLCKSZ)
 
-#define COMPRESS_BUFSIZE	Max(PGLZ_MAX_BLCKSZ, LZ4_MAX_BLCKSZ)
+/* Buffer size required to store a compressed version of backup block image */
+#define COMPRESS_BUFSIZE	Max(Max(PGLZ_MAX_BLCKSZ, LZ4_MAX_BLCKSZ), ZSTD_MAX_BLCKSZ)
 
 /*
  * For each block reference registered with XLogRegisterBuffer, we fill in
@@ -698,6 +709,14 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 #endif
 						break;
 
+					case WAL_COMPRESSION_ZSTD:
+#ifdef USE_ZSTD
+						bimg.bimg_info |= BKPIMAGE_COMPRESS_ZSTD;
+#else
+						elog(ERROR, "zstd is not supported by this build");
+#endif
+						break;
+
 					case WAL_COMPRESSION_NONE:
 						Assert(false);	/* cannot happen */
 						break;
@@ -903,6 +922,17 @@ XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 				len = -1;		/* failure */
 #else
 			elog(ERROR, "LZ4 is not supported by this build");
+#endif
+			break;
+
+		case WAL_COMPRESSION_ZSTD:
+#ifdef USE_ZSTD
+			len = ZSTD_compress(dest, COMPRESS_BUFSIZE, source, orig_len,
+								ZSTD_CLEVEL_DEFAULT);
+			if (ZSTD_isError(len))
+				len = -1;		/* failure */
+#else
+			elog(ERROR, "zstd is not supported by this build");
 #endif
 			break;
 

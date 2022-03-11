@@ -149,8 +149,11 @@ typedef struct XLogRecordBlockImageHeader
 /* compression methods supported */
 #define BKPIMAGE_COMPRESS_PGLZ	0x04
 #define BKPIMAGE_COMPRESS_LZ4	0x08
+#define BKPIMAGE_COMPRESS_ZSTD	0x10
+
 #define	BKPIMAGE_COMPRESSED(info) \
-	((info & (BKPIMAGE_COMPRESS_PGLZ | BKPIMAGE_COMPRESS_LZ4)) != 0)
+	((info & (BKPIMAGE_COMPRESS_PGLZ | BKPIMAGE_COMPRESS_LZ4 | \
+			  BKPIMAGE_COMPRESS_ZSTD)) != 0)
 
 /*
  * Extra header information used when page image has "hole" and

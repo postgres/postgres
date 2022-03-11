@@ -21,6 +21,9 @@
 #ifdef USE_LZ4
 #include <lz4.h>
 #endif
+#ifdef USE_ZSTD
+#include <zstd.h>
+#endif
 
 #include "access/transam.h"
 #include "access/xlog_internal.h"
@@ -1616,6 +1619,23 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 			report_invalid_record(record, "image at %X/%X compressed with %s not supported by build, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  "LZ4",
+								  block_id);
+			return false;
+#endif
+		}
+		else if ((bkpb->bimg_info & BKPIMAGE_COMPRESS_ZSTD) != 0)
+		{
+#ifdef USE_ZSTD
+			size_t		decomp_result = ZSTD_decompress(tmp.data,
+														BLCKSZ - bkpb->hole_length,
+														ptr, bkpb->bimg_len);
+
+			if (ZSTD_isError(decomp_result))
+				decomp_success = false;
+#else
+			report_invalid_record(record, "image at %X/%X compressed with %s not supported by build, block %d",
+								  LSN_FORMAT_ARGS(record->ReadRecPtr),
+								  "zstd",
 								  block_id);
 			return false;
 #endif

@@ -562,6 +562,8 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 						method = "pglz";
 					else if ((bimg_info & BKPIMAGE_COMPRESS_LZ4) != 0)
 						method = "lz4";
+					else if ((bimg_info & BKPIMAGE_COMPRESS_ZSTD) != 0)
+						method = "zstd";
 					else
 						method = "unknown";
 

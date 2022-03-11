@@ -551,6 +551,9 @@ static const struct config_enum_entry wal_compression_options[] = {
 #ifdef USE_LZ4
 	{"lz4", WAL_COMPRESSION_LZ4, false},
 #endif
+#ifdef USE_ZSTD
+	{"zstd", WAL_COMPRESSION_ZSTD, false},
+#endif
 	{"on", WAL_COMPRESSION_PGLZ, false},
 	{"off", WAL_COMPRESSION_NONE, false},
 	{"true", WAL_COMPRESSION_PGLZ, true},

@@ -273,6 +273,14 @@ su - postgres
 
     <listitem>
      <para>
+      You need <productname>zstd</productname>, if you want to support
+      compression of data with this method; see
+      <xref linkend="guc-wal-compression"/>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       To build the <productname>PostgreSQL</productname> documentation,
       there is a separate set of requirements; see
       <xref linkend="docguide-toolsets"/>.

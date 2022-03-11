@@ -3154,10 +3154,13 @@ include_dir 'conf.d'
         server compresses full page images written to WAL when
         <xref linkend="guc-full-page-writes"/> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
-        The supported methods are <literal>pglz</literal> and
-        <literal>lz4</literal> (if <productname>PostgreSQL</productname> was
-        compiled with <option>--with-lz4</option>). The default value is
-        <literal>off</literal>. Only superusers can change this setting.
+        The supported methods are <literal>pglz</literal>,
+        <literal>lz4</literal> (if <productname>PostgreSQL</productname>
+        was compiled with <option>--with-lz4</option>) and
+        <literal>zstd</literal> (if <productname>PostgreSQL</productname>
+        was compiled with <option>--with-zstd</option>) and
+        The default value is <literal>off</literal>.
+        Only superusers can change this setting.
        </para>
 
        <para>
