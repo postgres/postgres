@@ -1126,8 +1126,13 @@ get_constraint_name(Oid conoid)
  *		Given the OID of a unique, primary-key, or exclusion constraint,
  *		return the OID of the underlying index.
  *
- * Return InvalidOid if the index couldn't be found; this suggests the
- * given OID is bogus, but we leave it to caller to decide what to do.
+ * Returns InvalidOid if the constraint could not be found or is of
+ * the wrong type.
+ *
+ * The intent of this function is to return the index "owned" by the
+ * specified constraint.  Therefore we must check contype, since some
+ * pg_constraint entries (e.g. for foreign-key constraints) store the
+ * OID of an index that is referenced but not owned by the constraint.
  */
 Oid
 get_constraint_index(Oid conoid)
@@ -1140,7 +1145,12 @@ get_constraint_index(Oid conoid)
 		Form_pg_constraint contup = (Form_pg_constraint) GETSTRUCT(tp);
 		Oid			result;
 
-		result = contup->conindid;
+		if (contup->contype == CONSTRAINT_UNIQUE ||
+			contup->contype == CONSTRAINT_PRIMARY ||
+			contup->contype == CONSTRAINT_EXCLUSION)
+			result = contup->conindid;
+		else
+			result = InvalidOid;
 		ReleaseSysCache(tp);
 		return result;
 	}

@@ -2958,6 +2958,24 @@ update bar1 set a = a + 1;
 
 /* End test case for bug #16242 */
 
+/* Test case for bug #17409 */
+
+create table attbl (p1 int constraint pk_attbl primary key);
+create table atref (c1 int references attbl(p1));
+cluster attbl using pk_attbl;
+alter table attbl alter column p1 set data type bigint;
+alter table atref alter column c1 set data type bigint;
+drop table attbl, atref;
+
+create table attbl (p1 int constraint pk_attbl primary key);
+alter table attbl replica identity using index pk_attbl;
+create table atref (c1 int references attbl(p1));
+alter table attbl alter column p1 set data type bigint;
+alter table atref alter column c1 set data type bigint;
+drop table attbl, atref;
+
+/* End test case for bug #17409 */
+
 -- Test that ALTER TABLE rewrite preserves a clustered index
 -- for normal indexes and indexes on constraints.
 create table alttype_cluster (a int);
