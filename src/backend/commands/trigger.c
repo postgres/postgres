@@ -3772,6 +3772,16 @@ static AfterTriggersTableData *GetAfterTriggersTableData(Oid relid,
 														 CmdType cmdType);
 static TupleTableSlot *GetAfterTriggersStoreSlot(AfterTriggersTableData *table,
 												 TupleDesc tupdesc);
+static Tuplestorestate *GetAfterTriggersTransitionTable(int event,
+														TupleTableSlot *oldslot,
+														TupleTableSlot *newslot,
+														TransitionCaptureState *transition_capture);
+static void TransitionTableAddTuple(EState *estate,
+									TransitionCaptureState *transition_capture,
+									ResultRelInfo *relinfo,
+									TupleTableSlot *slot,
+									TupleTableSlot *original_insert_tuple,
+									Tuplestorestate *tuplestore);
 static void AfterTriggerFreeQuery(AfterTriggersQueryData *qs);
 static SetConstraintState SetConstraintStateCreate(int numalloc);
 static SetConstraintState SetConstraintStateCopy(SetConstraintState state);
@@ -5158,6 +5168,92 @@ AfterTriggerEndSubXact(bool isCommit)
 	}
 }
 
+/*
+ * Get the transition table for the given event and depending on whether we are
+ * processing the old or the new tuple.
+ */
+static Tuplestorestate *
+GetAfterTriggersTransitionTable(int event,
+								TupleTableSlot *oldslot,
+								TupleTableSlot *newslot,
+								TransitionCaptureState *transition_capture)
+{
+	Tuplestorestate *tuplestore = NULL;
+	bool		delete_old_table = transition_capture->tcs_delete_old_table;
+	bool		update_old_table = transition_capture->tcs_update_old_table;
+	bool		update_new_table = transition_capture->tcs_update_new_table;
+	bool		insert_new_table = transition_capture->tcs_insert_new_table;
+
+	/*
+	 * For INSERT events NEW should be non-NULL, for DELETE events OLD should
+	 * be non-NULL, whereas for UPDATE events normally both OLD and NEW are
+	 * non-NULL.  But for UPDATE events fired for capturing transition tuples
+	 * during UPDATE partition-key row movement, OLD is NULL when the event is
+	 * for a row being inserted, whereas NEW is NULL when the event is for a
+	 * row being deleted.
+	 */
+	Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
+			 TupIsNull(oldslot)));
+	Assert(!(event == TRIGGER_EVENT_INSERT && insert_new_table &&
+			 TupIsNull(newslot)));
+
+	if (!TupIsNull(oldslot))
+	{
+		Assert(TupIsNull(newslot));
+		if (event == TRIGGER_EVENT_DELETE && delete_old_table)
+			tuplestore = transition_capture->tcs_private->old_tuplestore;
+		else if (event == TRIGGER_EVENT_UPDATE && update_old_table)
+			tuplestore = transition_capture->tcs_private->old_tuplestore;
+	}
+	else if (!TupIsNull(newslot))
+	{
+		Assert(TupIsNull(oldslot));
+		if (event == TRIGGER_EVENT_INSERT && insert_new_table)
+			tuplestore = transition_capture->tcs_private->new_tuplestore;
+		else if (event == TRIGGER_EVENT_UPDATE && update_new_table)
+			tuplestore = transition_capture->tcs_private->new_tuplestore;
+	}
+
+	return tuplestore;
+}
+
+/*
+ * Add the given heap tuple to the given tuplestore, applying the conversion
+ * map if necessary.
+ *
+ * If original_insert_tuple is given, we can add that tuple without conversion.
+ */
+static void
+TransitionTableAddTuple(EState *estate,
+						TransitionCaptureState *transition_capture,
+						ResultRelInfo *relinfo,
+						TupleTableSlot *slot,
+						TupleTableSlot *original_insert_tuple,
+						Tuplestorestate *tuplestore)
+{
+	TupleConversionMap *map;
+
+	/*
+	 * Nothing needs to be done if we don't have a tuplestore.
+	 */
+	if (tuplestore == NULL)
+		return;
+
+	if (original_insert_tuple)
+		tuplestore_puttupleslot(tuplestore, original_insert_tuple);
+	else if ((map = ExecGetChildToRootMap(relinfo)) != NULL)
+	{
+		AfterTriggersTableData *table = transition_capture->tcs_private;
+		TupleTableSlot *storeslot;
+
+		storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
+		execute_attr_map_slot(map->attrMap, slot, storeslot);
+		tuplestore_puttupleslot(tuplestore, storeslot);
+	}
+	else
+		tuplestore_puttupleslot(tuplestore, slot);
+}
+
 /* ----------
  * AfterTriggerEnlargeQueryState()
  *
@@ -5650,7 +5746,6 @@ AfterTriggerPendingOnRel(Oid relid)
 	return false;
 }
 
-
 /* ----------
  * AfterTriggerSaveEvent()
  *
@@ -5709,68 +5804,39 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	 */
 	if (row_trigger && transition_capture != NULL)
 	{
-		TupleTableSlot *original_insert_tuple = transition_capture->tcs_original_insert_tuple;
-		TupleConversionMap *map = ExecGetChildToRootMap(relinfo);
-		bool		delete_old_table = transition_capture->tcs_delete_old_table;
-		bool		update_old_table = transition_capture->tcs_update_old_table;
-		bool		update_new_table = transition_capture->tcs_update_new_table;
-		bool		insert_new_table = transition_capture->tcs_insert_new_table;
 
 		/*
-		 * For INSERT events NEW should be non-NULL, for DELETE events OLD
-		 * should be non-NULL, whereas for UPDATE events normally both OLD and
-		 * NEW are non-NULL.  But for UPDATE events fired for capturing
-		 * transition tuples during UPDATE partition-key row movement, OLD is
-		 * NULL when the event is for a row being inserted, whereas NEW is
-		 * NULL when the event is for a row being deleted.
+		 * Capture the old tuple in the appropriate transition table based on
+		 * the event.
 		 */
-		Assert(!(event == TRIGGER_EVENT_DELETE && delete_old_table &&
-				 TupIsNull(oldslot)));
-		Assert(!(event == TRIGGER_EVENT_INSERT && insert_new_table &&
-				 TupIsNull(newslot)));
-
-		if (!TupIsNull(oldslot) &&
-			((event == TRIGGER_EVENT_DELETE && delete_old_table) ||
-			 (event == TRIGGER_EVENT_UPDATE && update_old_table)))
+		if (!TupIsNull(oldslot))
 		{
 			Tuplestorestate *old_tuplestore;
 
-			old_tuplestore = transition_capture->tcs_private->old_tuplestore;
-
-			if (map != NULL)
-			{
-				AfterTriggersTableData *table = transition_capture->tcs_private;
-				TupleTableSlot *storeslot;
-
-				storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
-				execute_attr_map_slot(map->attrMap, oldslot, storeslot);
-				tuplestore_puttupleslot(old_tuplestore, storeslot);
-			}
-			else
-				tuplestore_puttupleslot(old_tuplestore, oldslot);
+			old_tuplestore = GetAfterTriggersTransitionTable(event,
+															 oldslot,
+															 NULL,
+															 transition_capture);
+			TransitionTableAddTuple(estate, transition_capture, relinfo,
+									oldslot, NULL, old_tuplestore);
 		}
-		if (!TupIsNull(newslot) &&
-			((event == TRIGGER_EVENT_INSERT && insert_new_table) ||
-			 (event == TRIGGER_EVENT_UPDATE && update_new_table)))
+
+		/*
+		 * Capture the new tuple in the appropriate transition table based on
+		 * the event.
+		 */
+		if (!TupIsNull(newslot))
 		{
 			Tuplestorestate *new_tuplestore;
 
-			new_tuplestore = transition_capture->tcs_private->new_tuplestore;
-
-			if (original_insert_tuple != NULL)
-				tuplestore_puttupleslot(new_tuplestore,
-										original_insert_tuple);
-			else if (map != NULL)
-			{
-				AfterTriggersTableData *table = transition_capture->tcs_private;
-				TupleTableSlot *storeslot;
-
-				storeslot = GetAfterTriggersStoreSlot(table, map->outdesc);
-				execute_attr_map_slot(map->attrMap, newslot, storeslot);
-				tuplestore_puttupleslot(new_tuplestore, storeslot);
-			}
-			else
-				tuplestore_puttupleslot(new_tuplestore, newslot);
+			new_tuplestore = GetAfterTriggersTransitionTable(event,
+															 NULL,
+															 newslot,
+															 transition_capture);
+			TransitionTableAddTuple(estate, transition_capture, relinfo,
+									newslot,
+									transition_capture->tcs_original_insert_tuple,
+									new_tuplestore);
 		}
 
 		/*
