@@ -2417,7 +2417,7 @@ The commands accepted in replication mode are:
       <variablelist>
       <varlistentry id="protocol-replication-hot-standby-feedback-message">
       <term>
-          Hot Standby feedback message (F)
+          Hot standby feedback message (F)
       </term>
       <listitem>
       <para>
@@ -2428,7 +2428,7 @@ The commands accepted in replication mode are:
       </term>
       <listitem>
       <para>
-          Identifies the message as a Hot Standby feedback message.
+          Identifies the message as a hot standby feedback message.
       </para>
       </listitem>
       </varlistentry>
@@ -2451,7 +2451,7 @@ The commands accepted in replication mode are:
       <para>
           The standby's current global xmin, excluding the catalog_xmin from any
           replication slots. If both this value and the following
-          catalog_xmin are 0 this is treated as a notification that Hot Standby
+          catalog_xmin are 0 this is treated as a notification that hot standby
           feedback will no longer be sent on this connection. Later non-zero
           messages may reinitiate the feedback mechanism.
       </para>

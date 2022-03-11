@@ -548,8 +548,8 @@ protocol to make nodes agree on a serializable transactional order.
    rollforward will take considerably longer, so that technique only
    offers a solution for disaster recovery, not high availability.
    A standby server can also be used for read-only queries, in which case
-   it is called a Hot Standby server. See <xref linkend="hot-standby"/> for
-   more information.
+   it is called a <firstterm>hot standby</firstterm> server. See 
+   <xref linkend="hot-standby"/> for more information.
   </para>
 
   <indexterm zone="high-availability">
@@ -1032,7 +1032,7 @@ primary_slot_name = 'node_a_slot'
    </para>
 
    <para>
-    Hot Standby feedback propagates upstream, whatever the cascaded arrangement.
+    Hot standby feedback propagates upstream, whatever the cascaded arrangement.
    </para>
 
    <para>
@@ -1499,16 +1499,16 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
   <title>Hot Standby</title>
 
   <indexterm zone="high-availability">
-   <primary>Hot Standby</primary>
+   <primary>hot standby</primary>
   </indexterm>
 
    <para>
-    Hot Standby is the term used to describe the ability to connect to
+    Hot standby is the term used to describe the ability to connect to
     the server and run read-only queries while the server is in archive
     recovery or standby mode. This
     is useful both for replication purposes and for restoring a backup
     to a desired state with great precision.
-    The term Hot Standby also refers to the ability of the server to move
+    The term hot standby also refers to the ability of the server to move
     from recovery through to normal operation while users continue running
     queries and/or keep their connections open.
    </para>
@@ -1623,7 +1623,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
        being executed during recovery.  This restriction applies even to
        temporary tables, because table rows cannot be read or written without
        assigning a transaction ID, which is currently not possible in a
-       Hot Standby environment.
+       hot standby environment.
       </para>
      </listitem>
      <listitem>
@@ -1703,7 +1703,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    <para>
     In normal operation, <quote>read-only</quote> transactions are allowed to
     use <command>LISTEN</command> and <command>NOTIFY</command>,
-    so Hot Standby sessions operate under slightly tighter
+    so hot standby sessions operate under slightly tighter
     restrictions than ordinary read-only sessions.  It is possible that some
     of these restrictions might be loosened in a future release.
    </para>
@@ -1746,7 +1746,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    There are also additional types of conflict that can occur with Hot Standby.
+    There are also additional types of conflict that can occur with hot standby.
     These conflicts are <emphasis>hard conflicts</emphasis> in the sense that queries
     might need to be canceled and, in some cases, sessions disconnected to resolve them.
     The user is provided with several ways to handle these
@@ -1947,8 +1947,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     If <varname>hot_standby</varname> is <literal>on</literal> in <filename>postgresql.conf</filename>
     (the default value) and there is a
     <link linkend="file-standby-signal"><filename>standby.signal</filename></link><indexterm><primary>standby.signal</primary><secondary>for hot standby</secondary></indexterm>
-    file present, the server will run in Hot Standby mode.
-    However, it may take some time for Hot Standby connections to be allowed,
+    file present, the server will run in hot standby mode.
+    However, it may take some time for hot standby connections to be allowed,
     because the server will not accept connections until it has completed
     sufficient recovery to provide a consistent state against which queries
     can run.  During this period,
@@ -2282,7 +2282,7 @@ HINT:  You can then restart the server after making the necessary configuration 
    <title>Caveats</title>
 
    <para>
-    There are several limitations of Hot Standby.
+    There are several limitations of hot standby.
     These can and probably will be fixed in future releases:
 
   <itemizedlist>
@@ -2299,7 +2299,7 @@ HINT:  You can then restart the server after making the necessary configuration 
     <para>
      Valid starting points for standby queries are generated at each
      checkpoint on the primary. If the standby is shut down while the primary
-     is in a shutdown state, it might not be possible to re-enter Hot Standby
+     is in a shutdown state, it might not be possible to re-enter hot standby
      until the primary is started up, so that it generates further starting
      points in the WAL logs.  This situation isn't a problem in the most
      common situations where it might happen. Generally, if the primary is

@@ -1741,7 +1741,7 @@ SELECT pg_advisory_lock(q.id) FROM
 
    <para>
     Support for the Serializable transaction isolation level has not yet
-    been added to Hot Standby replication targets (described in
+    been added to hot standby replication targets (described in
     <xref linkend="hot-standby"/>).  The strictest isolation level currently
     supported in hot standby mode is Repeatable Read.  While performing all
     permanent database writes within Serializable transactions on the

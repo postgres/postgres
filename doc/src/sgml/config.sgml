@@ -4553,7 +4553,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        When Hot Standby is active, this parameter determines how long the
+        When hot standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
@@ -4585,7 +4585,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        When Hot Standby is active, this parameter determines how long the
+        When hot standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
@@ -10890,7 +10890,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Enables logging of recovery-related debugging output that otherwise
         would not be logged. This parameter allows the user to override the
         normal setting of <xref linkend="guc-log-min-messages"/>, but only for
-        specific messages. This is intended for use in debugging Hot Standby.
+        specific messages. This is intended for use in debugging hot standby.
         Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
         <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, <literal>DEBUG1</literal>, and
         <literal>LOG</literal>.  The default, <literal>LOG</literal>, does not affect
