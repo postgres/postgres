@@ -1224,17 +1224,17 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	is_tar = (archive_name_len > 4 &&
 			  strcmp(archive_name + archive_name_len - 4, ".tar") == 0);
 
-	/* Is this a gzip archive? */
-	is_tar_gz = (archive_name_len > 8 &&
-				 strcmp(archive_name + archive_name_len - 3, ".gz") == 0);
+	/* Is this a .tar.gz archive? */
+	is_tar_gz = (archive_name_len > 7 &&
+				 strcmp(archive_name + archive_name_len - 7, ".tar.gz") == 0);
 
-	/* Is this a LZ4 archive? */
+	/* Is this a .tar.lz4 archive? */
 	is_tar_lz4 = (archive_name_len > 8 &&
-				  strcmp(archive_name + archive_name_len - 4, ".lz4") == 0);
+				  strcmp(archive_name + archive_name_len - 8, ".tar.lz4") == 0);
 
-	/* Is this a ZSTD archive? */
+	/* Is this a .tar.zst archive? */
 	is_tar_zstd = (archive_name_len > 8 &&
-				   strcmp(archive_name + archive_name_len - 4, ".zst") == 0);
+				   strcmp(archive_name + archive_name_len - 8, ".tar.zst") == 0);
 
 	/* Is this any kind of compressed tar? */
 	is_compressed_tar = is_tar_gz || is_tar_lz4 || is_tar_zstd;
