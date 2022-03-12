@@ -3158,7 +3158,7 @@ include_dir 'conf.d'
         <literal>lz4</literal> (if <productname>PostgreSQL</productname>
         was compiled with <option>--with-lz4</option>) and
         <literal>zstd</literal> (if <productname>PostgreSQL</productname>
-        was compiled with <option>--with-zstd</option>) and
+        was compiled with <option>--with-zstd</option>).
         The default value is <literal>off</literal>.
         Only superusers can change this setting.
        </para>
