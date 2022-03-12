@@ -167,9 +167,10 @@ typedef struct LVRelState
 	MultiXactId relminmxid;
 	double		old_live_tuples;	/* previous value of pg_class.reltuples */
 
-	/* VACUUM operation's cutoff for pruning */
+	/* VACUUM operation's cutoffs for freezing and pruning */
 	TransactionId OldestXmin;
-	/* VACUUM operation's cutoff for freezing XIDs and MultiXactIds */
+	GlobalVisState *vistest;
+	/* VACUUM operation's target cutoffs for freezing XIDs and MultiXactIds */
 	TransactionId FreezeLimit;
 	MultiXactId MultiXactCutoff;
 	/* Are FreezeLimit/MultiXactCutoff still valid? */
@@ -185,8 +186,6 @@ typedef struct LVRelState
 	bool		verbose;		/* VACUUM VERBOSE? */
 
 	/*
-	 * State managed by lazy_scan_heap() follows.
-	 *
 	 * dead_items stores TIDs whose index tuples are deleted by index
 	 * vacuuming. Each TID points to an LP_DEAD line pointer from a heap page
 	 * that has been processed by lazy_scan_prune.  Also needed by
@@ -252,7 +251,6 @@ static bool lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf,
 								   bool sharelock, Buffer vmbuffer);
 static void lazy_scan_prune(LVRelState *vacrel, Buffer buf,
 							BlockNumber blkno, Page page,
-							GlobalVisState *vistest,
 							LVPagePruneState *prunestate);
 static bool lazy_scan_noprune(LVRelState *vacrel, Buffer buf,
 							  BlockNumber blkno, Page page,
@@ -281,7 +279,7 @@ static void dead_items_alloc(LVRelState *vacrel, int nworkers);
 static void dead_items_cleanup(LVRelState *vacrel);
 static bool heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
 									 TransactionId *visibility_cutoff_xid, bool *all_frozen);
-static void update_index_statistics(LVRelState *vacrel);
+static void update_relstats_all_indexes(LVRelState *vacrel);
 static void vacuum_error_callback(void *arg);
 static void update_vacuum_error_info(LVRelState *vacrel,
 									 LVSavedErrInfo *saved_vacrel,
@@ -296,7 +294,8 @@ static void restore_vacuum_error_info(LVRelState *vacrel,
  *
  *		This routine sets things up for and then calls lazy_scan_heap, where
  *		almost all work actually takes place.  Finalizes everything after call
- *		returns by managing rel truncation and updating pg_class statistics.
+ *		returns by managing relation truncation and updating rel's pg_class
+ *		entry. (Also updates pg_class entries for any indexes that need it.)
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
@@ -468,9 +467,51 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	vacrel->relminmxid = rel->rd_rel->relminmxid;
 	vacrel->old_live_tuples = rel->rd_rel->reltuples;
 
-	/* Set cutoffs for entire VACUUM */
+	/* Initialize page counters explicitly (be tidy) */
+	vacrel->scanned_pages = 0;
+	vacrel->frozenskipped_pages = 0;
+	vacrel->removed_pages = 0;
+	vacrel->lpdead_item_pages = 0;
+	vacrel->missed_dead_pages = 0;
+	vacrel->nonempty_pages = 0;
+	/* dead_items_alloc allocates vacrel->dead_items later on */
+
+	/* Allocate/initialize output statistics state */
+	vacrel->new_rel_tuples = 0;
+	vacrel->new_live_tuples = 0;
+	vacrel->indstats = (IndexBulkDeleteResult **)
+		palloc0(vacrel->nindexes * sizeof(IndexBulkDeleteResult *));
+
+	/* Initialize remaining counters (be tidy) */
+	vacrel->num_index_scans = 0;
+	vacrel->tuples_deleted = 0;
+	vacrel->lpdead_items = 0;
+	vacrel->live_tuples = 0;
+	vacrel->recently_dead_tuples = 0;
+	vacrel->missed_dead_tuples = 0;
+
+	/*
+	 * Determine the extent of the blocks that we'll scan in lazy_scan_heap,
+	 * and finalize cutoffs used for freezing and pruning in lazy_scan_prune.
+	 *
+	 * We expect vistest will always make heap_page_prune remove any deleted
+	 * tuple whose xmax is < OldestXmin.  lazy_scan_prune must never become
+	 * confused about whether a tuple should be frozen or removed.  (In the
+	 * future we might want to teach lazy_scan_prune to recompute vistest from
+	 * time to time, to increase the number of dead tuples it can prune away.)
+	 *
+	 * We must determine rel_pages _after_ OldestXmin has been established.
+	 * lazy_scan_heap's physical heap scan (scan of pages < rel_pages) is
+	 * thereby guaranteed to not miss any tuples with XIDs < OldestXmin. These
+	 * XIDs must at least be considered for freezing (though not necessarily
+	 * frozen) during its scan.
+	 */
+	vacrel->rel_pages = orig_rel_pages = RelationGetNumberOfBlocks(rel);
 	vacrel->OldestXmin = OldestXmin;
+	vacrel->vistest = GlobalVisTestFor(rel);
+	/* FreezeLimit controls XID freezing (always <= OldestXmin) */
 	vacrel->FreezeLimit = FreezeLimit;
+	/* MultiXactCutoff controls MXID freezing */
 	vacrel->MultiXactCutoff = MultiXactCutoff;
 	/* Track if cutoffs became invalid (possible in !aggressive case only) */
 	vacrel->freeze_cutoffs_valid = true;
@@ -481,21 +522,21 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	lazy_scan_heap(vacrel, params->nworkers);
 
-	/* Done with indexes */
+	/*
+	 * Update pg_class entries for each of rel's indexes where appropriate.
+	 *
+	 * Unlike the later update to rel's pg_class entry, this is not critical.
+	 * Maintains relpages/reltuples statistics used by the planner only.
+	 */
+	if (vacrel->do_index_cleanup)
+		update_relstats_all_indexes(vacrel);
+
+	/* Done with rel's indexes */
 	vac_close_indexes(vacrel->nindexes, vacrel->indrels, NoLock);
 
-	/*
-	 * Optionally truncate the relation.  But remember the relation size used
-	 * by lazy_scan_heap for later first.
-	 */
-	orig_rel_pages = vacrel->rel_pages;
+	/* Optionally truncate rel */
 	if (should_attempt_truncation(vacrel))
-	{
-		update_vacuum_error_info(vacrel, NULL, VACUUM_ERRCB_PHASE_TRUNCATE,
-								 vacrel->nonempty_pages,
-								 InvalidOffsetNumber);
 		lazy_truncate_heap(vacrel);
-	}
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
@@ -505,7 +546,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 								 PROGRESS_VACUUM_PHASE_FINAL_CLEANUP);
 
 	/*
-	 * Update statistics in pg_class.
+	 * Prepare to update rel's pg_class entry.
 	 *
 	 * In principle new_live_tuples could be -1 indicating that we (still)
 	 * don't know the tuple count.  In practice that probably can't happen,
@@ -517,22 +558,19 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	new_rel_pages = vacrel->rel_pages;	/* After possible rel truncation */
 	new_live_tuples = vacrel->new_live_tuples;
-
 	visibilitymap_count(rel, &new_rel_allvisible, NULL);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
 
 	/*
+	 * Now actually update rel's pg_class entry.
+	 *
 	 * Aggressive VACUUM must reliably advance relfrozenxid (and relminmxid).
 	 * We are able to advance relfrozenxid in a non-aggressive VACUUM too,
 	 * provided we didn't skip any all-visible (not all-frozen) pages using
 	 * the visibility map, and assuming that we didn't fail to get a cleanup
 	 * lock that made it unsafe with respect to FreezeLimit (or perhaps our
 	 * MultiXactCutoff) established for VACUUM operation.
-	 *
-	 * NB: We must use orig_rel_pages, not vacrel->rel_pages, since we want
-	 * the rel_pages used by lazy_scan_heap, which won't match when we
-	 * happened to truncate the relation afterwards.
 	 */
 	if (vacrel->scanned_pages + vacrel->frozenskipped_pages < orig_rel_pages ||
 		!vacrel->freeze_cutoffs_valid)
@@ -787,7 +825,7 @@ static void
 lazy_scan_heap(LVRelState *vacrel, int nworkers)
 {
 	VacDeadItems *dead_items;
-	BlockNumber nblocks,
+	BlockNumber nblocks = vacrel->rel_pages,
 				blkno,
 				next_unskippable_block,
 				next_failsafe_block,
@@ -800,29 +838,6 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		PROGRESS_VACUUM_MAX_DEAD_TUPLES
 	};
 	int64		initprog_val[3];
-	GlobalVisState *vistest;
-
-	nblocks = RelationGetNumberOfBlocks(vacrel->rel);
-	vacrel->rel_pages = nblocks;
-	vacrel->scanned_pages = 0;
-	vacrel->frozenskipped_pages = 0;
-	vacrel->removed_pages = 0;
-	vacrel->lpdead_item_pages = 0;
-	vacrel->missed_dead_pages = 0;
-	vacrel->nonempty_pages = 0;
-
-	/* Initialize instrumentation counters */
-	vacrel->num_index_scans = 0;
-	vacrel->tuples_deleted = 0;
-	vacrel->lpdead_items = 0;
-	vacrel->live_tuples = 0;
-	vacrel->recently_dead_tuples = 0;
-	vacrel->missed_dead_tuples = 0;
-
-	vistest = GlobalVisTestFor(vacrel->rel);
-
-	vacrel->indstats = (IndexBulkDeleteResult **)
-		palloc0(vacrel->nindexes * sizeof(IndexBulkDeleteResult *));
 
 	/*
 	 * Do failsafe precheck before calling dead_items_alloc.  This ensures
@@ -880,9 +895,9 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	 * might leave some dead tuples lying around, but the next vacuum will
 	 * find them.  But even when aggressive *is* set, it's still OK if we miss
 	 * a page whose all-frozen marking has just been cleared.  Any new XIDs
-	 * just added to that page are necessarily newer than the GlobalXmin we
-	 * computed, so they'll have no effect on the value to which we can safely
-	 * set relfrozenxid.  A similar argument applies for MXIDs and relminmxid.
+	 * just added to that page are necessarily >= vacrel->OldestXmin, and so
+	 * they'll have no effect on the value to which we can safely set
+	 * relfrozenxid.  A similar argument applies for MXIDs and relminmxid.
 	 */
 	next_unskippable_block = 0;
 	if (vacrel->skipwithvm)
@@ -1153,7 +1168,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		 * were pruned some time earlier.  Also considers freezing XIDs in the
 		 * tuple headers of remaining items with storage.
 		 */
-		lazy_scan_prune(vacrel, buf, blkno, page, vistest, &prunestate);
+		lazy_scan_prune(vacrel, buf, blkno, page, &prunestate);
 
 		Assert(!prunestate.all_visible || !prunestate.has_lpdead_items);
 
@@ -1392,15 +1407,11 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		lazy_cleanup_all_indexes(vacrel);
 
 	/*
-	 * Free resources managed by dead_items_alloc.  This will end parallel
-	 * mode when needed (it must end before updating index statistics as we
-	 * can't write in parallel mode).
+	 * Free resources managed by dead_items_alloc.  This ends parallel mode in
+	 * passing when necessary.
 	 */
 	dead_items_cleanup(vacrel);
-
-	/* Update index statistics */
-	if (vacrel->nindexes > 0 && vacrel->do_index_cleanup)
-		update_index_statistics(vacrel);
+	Assert(!IsInParallelMode());
 }
 
 /*
@@ -1559,7 +1570,6 @@ lazy_scan_prune(LVRelState *vacrel,
 				Buffer buf,
 				BlockNumber blkno,
 				Page page,
-				GlobalVisState *vistest,
 				LVPagePruneState *prunestate)
 {
 	Relation	rel = vacrel->rel;
@@ -1598,7 +1608,7 @@ retry:
 	 * lpdead_items's final value can be thought of as the number of tuples
 	 * that were deleted from indexes.
 	 */
-	tuples_deleted = heap_page_prune(rel, buf, vistest,
+	tuples_deleted = heap_page_prune(rel, buf, vacrel->vistest,
 									 InvalidTransactionId, 0, &nnewlpdead,
 									 &vacrel->offnum);
 
@@ -2292,8 +2302,6 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
 	Assert(vacrel->nindexes > 0);
 	Assert(vacrel->do_index_vacuuming);
 	Assert(vacrel->do_index_cleanup);
-	Assert(TransactionIdIsNormal(vacrel->relfrozenxid));
-	Assert(MultiXactIdIsValid(vacrel->relminmxid));
 
 	/* Precheck for XID wraparound emergencies */
 	if (lazy_check_wraparound_failsafe(vacrel))
@@ -2604,6 +2612,9 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 static bool
 lazy_check_wraparound_failsafe(LVRelState *vacrel)
 {
+	Assert(TransactionIdIsNormal(vacrel->relfrozenxid));
+	Assert(MultiXactIdIsValid(vacrel->relminmxid));
+
 	/* Don't warn more than once per VACUUM */
 	if (vacrel->failsafe_active)
 		return true;
@@ -2644,6 +2655,10 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 static void
 lazy_cleanup_all_indexes(LVRelState *vacrel)
 {
+	double		reltuples = vacrel->new_rel_tuples;
+	bool		estimated_count = vacrel->scanned_pages < vacrel->rel_pages;
+
+	Assert(vacrel->do_index_cleanup);
 	Assert(vacrel->nindexes > 0);
 
 	/* Report that we are now cleaning up indexes */
@@ -2652,10 +2667,6 @@ lazy_cleanup_all_indexes(LVRelState *vacrel)
 
 	if (!ParallelVacuumIsActive(vacrel))
 	{
-		double		reltuples = vacrel->new_rel_tuples;
-		bool		estimated_count =
-		vacrel->scanned_pages < vacrel->rel_pages;
-
 		for (int idx = 0; idx < vacrel->nindexes; idx++)
 		{
 			Relation	indrel = vacrel->indrels[idx];
@@ -2669,9 +2680,9 @@ lazy_cleanup_all_indexes(LVRelState *vacrel)
 	else
 	{
 		/* Outsource everything to parallel variant */
-		parallel_vacuum_cleanup_all_indexes(vacrel->pvs, vacrel->new_rel_tuples,
+		parallel_vacuum_cleanup_all_indexes(vacrel->pvs, reltuples,
 											vacrel->num_index_scans,
-											(vacrel->scanned_pages < vacrel->rel_pages));
+											estimated_count);
 	}
 }
 
@@ -2797,27 +2808,23 @@ lazy_cleanup_one_index(Relation indrel, IndexBulkDeleteResult *istat,
  * Also don't attempt it if we are doing early pruning/vacuuming, because a
  * scan which cannot find a truncated heap page cannot determine that the
  * snapshot is too old to read that page.
- *
- * This is split out so that we can test whether truncation is going to be
- * called for before we actually do it.  If you change the logic here, be
- * careful to depend only on fields that lazy_scan_heap updates on-the-fly.
  */
 static bool
 should_attempt_truncation(LVRelState *vacrel)
 {
 	BlockNumber possibly_freeable;
 
-	if (!vacrel->do_rel_truncate || vacrel->failsafe_active)
+	if (!vacrel->do_rel_truncate || vacrel->failsafe_active ||
+		old_snapshot_threshold >= 0)
 		return false;
 
 	possibly_freeable = vacrel->rel_pages - vacrel->nonempty_pages;
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
-		 possibly_freeable >= vacrel->rel_pages / REL_TRUNCATE_FRACTION) &&
-		old_snapshot_threshold < 0)
+		 possibly_freeable >= vacrel->rel_pages / REL_TRUNCATE_FRACTION))
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 /*
@@ -2834,6 +2841,10 @@ lazy_truncate_heap(LVRelState *vacrel)
 	/* Report that we are now truncating */
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
 								 PROGRESS_VACUUM_PHASE_TRUNCATE);
+
+	/* Update error traceback information one last time */
+	update_vacuum_error_info(vacrel, NULL, VACUUM_ERRCB_PHASE_TRUNCATE,
+							 vacrel->nonempty_pages, InvalidOffsetNumber);
 
 	/*
 	 * Loop until no more truncating can be done.
@@ -3328,13 +3339,13 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
  * Update index statistics in pg_class if the statistics are accurate.
  */
 static void
-update_index_statistics(LVRelState *vacrel)
+update_relstats_all_indexes(LVRelState *vacrel)
 {
 	Relation   *indrels = vacrel->indrels;
 	int			nindexes = vacrel->nindexes;
 	IndexBulkDeleteResult **indstats = vacrel->indstats;
 
-	Assert(!IsInParallelMode());
+	Assert(vacrel->do_index_cleanup);
 
 	for (int idx = 0; idx < nindexes; idx++)
 	{
