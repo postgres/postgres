@@ -6417,7 +6417,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * are older than the specified cutoff XID and cutoff MultiXactId.  If so,
  * setup enough state (in the *frz output argument) to later execute and
  * WAL-log what we would need to do, and return true.  Return false if nothing
- * is to be changed.  In addition, set *totally_frozen_p to true if the tuple
+ * is to be changed.  In addition, set *totally_frozen to true if the tuple
  * will be totally frozen after these operations are performed and false if
  * more freezing will eventually be required.
  *
@@ -6445,7 +6445,7 @@ bool
 heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 						  TransactionId relfrozenxid, TransactionId relminmxid,
 						  TransactionId cutoff_xid, TransactionId cutoff_multi,
-						  xl_heap_freeze_tuple *frz, bool *totally_frozen_p)
+						  xl_heap_freeze_tuple *frz, bool *totally_frozen)
 {
 	bool		changed = false;
 	bool		xmax_already_frozen = false;
@@ -6645,8 +6645,8 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 		}
 	}
 
-	*totally_frozen_p = (xmin_frozen &&
-						 (freeze_xmax || xmax_already_frozen));
+	*totally_frozen = (xmin_frozen &&
+					   (freeze_xmax || xmax_already_frozen));
 	return changed;
 }
 
