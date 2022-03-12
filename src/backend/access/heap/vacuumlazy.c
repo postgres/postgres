@@ -825,7 +825,7 @@ static void
 lazy_scan_heap(LVRelState *vacrel, int nworkers)
 {
 	VacDeadItems *dead_items;
-	BlockNumber nblocks = vacrel->rel_pages,
+	BlockNumber rel_pages = vacrel->rel_pages,
 				blkno,
 				next_unskippable_block,
 				next_failsafe_block,
@@ -858,7 +858,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 
 	/* Report that we're scanning the heap, advertising total # of blocks */
 	initprog_val[0] = PROGRESS_VACUUM_PHASE_SCAN_HEAP;
-	initprog_val[1] = nblocks;
+	initprog_val[1] = rel_pages;
 	initprog_val[2] = dead_items->max_items;
 	pgstat_progress_update_multi_param(3, initprog_index, initprog_val);
 
@@ -882,9 +882,9 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	 * Before entering the main loop, establish the invariant that
 	 * next_unskippable_block is the next block number >= blkno that we can't
 	 * skip based on the visibility map, either all-visible for a regular scan
-	 * or all-frozen for an aggressive scan.  We set it to nblocks if there's
-	 * no such block.  We also set up the skipping_blocks flag correctly at
-	 * this stage.
+	 * or all-frozen for an aggressive scan.  We set it to rel_pages when
+	 * there's no such block.  We also set up the skipping_blocks flag
+	 * correctly at this stage.
 	 *
 	 * Note: The value returned by visibilitymap_get_status could be slightly
 	 * out-of-date, since we make this test before reading the corresponding
@@ -902,7 +902,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	next_unskippable_block = 0;
 	if (vacrel->skipwithvm)
 	{
-		while (next_unskippable_block < nblocks)
+		while (next_unskippable_block < rel_pages)
 		{
 			uint8		vmstatus;
 
@@ -929,7 +929,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	else
 		skipping_blocks = false;
 
-	for (blkno = 0; blkno < nblocks; blkno++)
+	for (blkno = 0; blkno < rel_pages; blkno++)
 	{
 		Buffer		buf;
 		Page		page;
@@ -947,7 +947,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 			next_unskippable_block++;
 			if (vacrel->skipwithvm)
 			{
-				while (next_unskippable_block < nblocks)
+				while (next_unskippable_block < rel_pages)
 				{
 					uint8		vmskipflags;
 
@@ -992,7 +992,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 			/*
 			 * The current page can be skipped if we've seen a long enough run
 			 * of skippable blocks to justify skipping it -- provided it's not
-			 * the last page in the relation (according to rel_pages/nblocks).
+			 * the last page in the relation (according to rel_pages).
 			 *
 			 * We always scan the table's last page to determine whether it
 			 * has tuples or not, even if it would otherwise be skipped. This
@@ -1000,7 +1000,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 			 * on the table to attempt a truncation that just fails
 			 * immediately because there are tuples on the last page.
 			 */
-			if (skipping_blocks && blkno < nblocks - 1)
+			if (skipping_blocks && blkno < rel_pages - 1)
 			{
 				/*
 				 * Tricky, tricky.  If this is in aggressive vacuum, the page
@@ -1367,7 +1367,7 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	vacrel->blkno = InvalidBlockNumber;
 
 	/* now we can compute the new value for pg_class.reltuples */
-	vacrel->new_live_tuples = vac_estimate_reltuples(vacrel->rel, nblocks,
+	vacrel->new_live_tuples = vac_estimate_reltuples(vacrel->rel, rel_pages,
 													 vacrel->scanned_pages,
 													 vacrel->live_tuples);
 
