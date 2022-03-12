@@ -51,10 +51,13 @@ begin
 end;
 $$;
 
--- Also, disable JIT, or we'll get different output on machines
--- where that's been forced on
+-- Disable JIT, or we'll get different output on machines where that's been
+-- forced on
 set jit = off;
 
+-- Similarly, disable track_io_timing, to avoid output differences when
+-- enabled.
+set track_io_timing = off;
 
 -- Simple cases
 
