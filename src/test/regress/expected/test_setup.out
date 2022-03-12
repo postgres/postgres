@@ -7,6 +7,13 @@
 \getenv dlsuffix PG_DLSUFFIX
 \set regresslib :libdir '/regress' :dlsuffix
 --
+-- synchronous_commit=off delays when hint bits may be set. Some plans change
+-- depending on the number of all-visible pages, which in turn can be
+-- influenced by the delayed hint bits. Force synchronous_commit=on to avoid
+-- that source of variability.
+--
+SET synchronous_commit = on;
+--
 -- Postgres formerly made the public schema read/write by default,
 -- and most of the core regression tests still expect that.
 --
