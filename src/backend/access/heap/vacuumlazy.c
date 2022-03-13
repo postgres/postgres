@@ -676,7 +676,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 vacrel->removed_pages,
 							 vacrel->rel_pages,
 							 vacrel->scanned_pages,
-							 orig_rel_pages == 0 ? 0 :
+							 orig_rel_pages == 0 ? 100.0 :
 							 100.0 * vacrel->scanned_pages / orig_rel_pages);
 			appendStringInfo(&buf,
 							 _("tuples: %lld removed, %lld remain, %lld are dead but not yet removable\n"),
