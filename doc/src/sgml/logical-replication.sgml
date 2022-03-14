@@ -364,8 +364,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    the replication origin name can be found from the server log (LSN 0/14C0378 and
    replication origin <literal>pg_16395</literal> in the above case).  To skip the
    transaction, the subscription needs to be disabled temporarily by
-   <command>ALTER SUBSCRIPTION ... DISABLE</command> first. Then, the transaction
-   can be skipped by calling the
+   <command>ALTER SUBSCRIPTION ... DISABLE</command> first or alternatively, the
+   subscription can be used with the <literal>disable_on_error</literal> option.
+   Then, the transaction can be skipped by calling the
    <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function with
    the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>) and the
