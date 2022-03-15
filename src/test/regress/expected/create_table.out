@@ -811,7 +811,7 @@ create table parted_notnull_inh_test1 partition of parted_notnull_inh_test (a no
 insert into parted_notnull_inh_test (b) values (null);
 ERROR:  null value in column "b" of relation "parted_notnull_inh_test1" violates not-null constraint
 DETAIL:  Failing row contains (1, null).
--- note that while b's default is overriden, a's default is preserved
+-- note that while b's default is overridden, a's default is preserved
 \d parted_notnull_inh_test1
       Table "public.parted_notnull_inh_test1"
  Column |  Type   | Collation | Nullable | Default 

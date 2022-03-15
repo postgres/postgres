@@ -1372,9 +1372,9 @@ sub _set_pg_version
 #    local %ENV = $self->_get_env{[%extra_settings]);
 #
 # A copy of the environment is taken and node's host and port settings are
-# added as PGHOST and PGPORT, Then the extra settings (if any) are applied.
-# Any setting in %extra_settings with a value that is undefined is deleted
-# the remainder are# set. Then the PATH and (DY)LD_LIBRARY_PATH are adjusted
+# added as PGHOST and PGPORT, then the extra settings (if any) are applied.
+# Any setting in %extra_settings with a value that is undefined is deleted;
+# the remainder are set. Then the PATH and (DY)LD_LIBRARY_PATH are adjusted
 # if the node's install path is set, and the copy environment is returned.
 #
 # The install path set in new() needs to be a directory containing

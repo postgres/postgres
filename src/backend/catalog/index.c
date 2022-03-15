@@ -918,7 +918,7 @@ index_create(Relation heapRelation,
 			indexRelationId = binary_upgrade_next_index_pg_class_oid;
 			binary_upgrade_next_index_pg_class_oid = InvalidOid;
 
-			/* Overide the index relfilenode */
+			/* Override the index relfilenode */
 			if ((relkind == RELKIND_INDEX) &&
 				(!OidIsValid(binary_upgrade_next_index_pg_class_relfilenode)))
 				ereport(ERROR,

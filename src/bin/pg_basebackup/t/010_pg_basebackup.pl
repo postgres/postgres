@@ -22,7 +22,7 @@ my $node = PostgreSQL::Test::Cluster->new('main');
 
 # For nearly all pg_basebackup invocations some options should be specified,
 # to keep test times reasonable. Using @pg_basebackup_defs as the first
-# element of the array passed to to IPC::Run interpolate the array (as it is
+# element of the array passed to IPC::Run interpolate the array (as it is
 # not a reference to an array)...
 my @pg_basebackup_defs = ('pg_basebackup', '--no-sync', '-cfast');
 
@@ -287,7 +287,7 @@ is(scalar(@tblspc_tars), 1, 'one tablespace tar was created');
 SKIP:
 {
 	my $tar = $ENV{TAR};
-	# don't check for a working tar here, to accomodate various odd
+	# don't check for a working tar here, to accommodate various odd
 	# cases such as AIX. If tar doesn't work the init_from_backup below
 	# will fail.
 	skip "no tar program available", 1

@@ -1003,7 +1003,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       it's passed to and used as <varname>application_name</varname>
       in a foreign server, note that it will be truncated to less than
       <symbol>NAMEDATALEN</symbol> characters and anything other than
-      than printable ASCII characters will be replaced with question
+      printable ASCII characters will be replaced with question
       marks (<literal>?</literal>).
       See <xref linkend="guc-application-name"/> for details.
      </para>

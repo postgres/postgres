@@ -247,7 +247,7 @@ startup_hacks(const char *progname)
 		 * leaving the default in place would make debugging harder.
 		 *
 		 * MINGW's own C runtime doesn't have _set_abort_behavior(). When
-		 * targetting Microsoft's UCRT with mingw, it never links to the debug
+		 * targeting Microsoft's UCRT with mingw, it never links to the debug
 		 * version of the library and thus doesn't need the call to
 		 * _set_abort_behavior() either.
 		 */

@@ -1722,7 +1722,7 @@ GetCopyDataEnd(size_t r, char *copybuf, size_t cursor)
  *
  * As a debugging aid, we try to give some hint about what kind of message
  * provoked the failure. Perhaps this is not detailed enough, but it's not
- * clear that it's worth expending any more code on what shoud be a
+ * clear that it's worth expending any more code on what should be a
  * can't-happen case.
  */
 static void

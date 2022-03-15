@@ -69,7 +69,7 @@ typedef struct
 	/*
 	 * Tuple visibility is only computed once for each tuple, for correctness
 	 * and efficiency reasons; see comment in heap_page_prune() for
-	 * details. This is of type int8[,] intead of HTSV_Result[], so we can use
+	 * details. This is of type int8[,] instead of HTSV_Result[], so we can use
 	 * -1 to indicate no visibility has been computed, e.g. for LP_DEAD items.
 	 *
 	 * Same indexing as ->marked.

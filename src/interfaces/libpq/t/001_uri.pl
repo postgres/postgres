@@ -232,7 +232,7 @@ sub test_uri
 	chomp($result{stderr});
 
 	# use is_deeply so there's one test result for each test above, without
-	# loosing the information whether stdout/stderr mismatched.
+	# losing the information whether stdout/stderr mismatched.
 	is_deeply(\%result, \%expect, $uri);
 }
 

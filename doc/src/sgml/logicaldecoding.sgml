@@ -832,10 +832,10 @@ typedef void (*LogicalDecodeSequenceCB) (struct LogicalDecodingContext *ctx,
       The <parameter>txn</parameter> parameter contains meta information about
       the transaction the sequence change is part of. Note however that for
       non-transactional increments, the transaction may be either NULL or not
-      NULL, depending on if the transaction already has XID assigned.
-      The <parameter>sequence_lsn</parameter> has WAL location of the sequence
-      update. The <parameter>transactional</parameter> says if the sequence has
-      to be replayed as part of the transaction or directly.
+      NULL, depending on if the transaction already has an XID assigned.
+      The <parameter>sequence_lsn</parameter> has the WAL location of the
+      sequence update. <parameter>transactional</parameter> says if the
+      sequence has to be replayed as part of the transaction or directly.
 
       The <parameter>last_value</parameter>, <parameter>log_cnt</parameter> and
       <parameter>is_called</parameter> parameters describe the sequence change.
@@ -1264,7 +1264,7 @@ OutputPluginWrite(ctx, true);
     streamed in blocks demarcated by <function>stream_start_cb</function>
     and <function>stream_stop_cb</function> callbacks. Once all the decoded
     changes are transmitted, the transaction can be committed using the
-    the <function>stream_commit_cb</function> callback
+    <function>stream_commit_cb</function> callback
     (or possibly aborted using the <function>stream_abort_cb</function> callback).
     If two-phase commits are supported, the transaction can be prepared using the
     <function>stream_prepare_cb</function> callback,

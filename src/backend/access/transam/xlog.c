@@ -5870,7 +5870,7 @@ GetRedoRecPtr(void)
  * full-page image to be included in the WAL record.
  *
  * The returned values are cached copies from backend-private memory, and
- * possibly out-of-date or, indeed, uninitalized, in which case they will
+ * possibly out-of-date or, indeed, uninitialized, in which case they will
  * be InvalidXLogRecPtr and false, respectively.  XLogInsertRecord will
  * re-check them against up-to-date values, while holding the WAL insert lock.
  */
