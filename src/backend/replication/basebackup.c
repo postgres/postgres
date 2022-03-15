@@ -28,6 +28,7 @@
 #include "postmaster/syslogger.h"
 #include "replication/basebackup.h"
 #include "replication/basebackup_sink.h"
+#include "replication/basebackup_target.h"
 #include "replication/backup_manifest.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
@@ -55,13 +56,6 @@
 
 typedef enum
 {
-	BACKUP_TARGET_BLACKHOLE,
-	BACKUP_TARGET_CLIENT,
-	BACKUP_TARGET_SERVER
-} backup_target_type;
-
-typedef enum
-{
 	BACKUP_COMPRESSION_NONE,
 	BACKUP_COMPRESSION_GZIP,
 	BACKUP_COMPRESSION_LZ4,
@@ -77,8 +71,9 @@ typedef struct
 	bool		includewal;
 	uint32		maxrate;
 	bool		sendtblspcmapfile;
-	backup_target_type target;
-	char	   *target_detail;
+	bool		send_to_client;
+	bool		use_copytblspc;
+	BaseBackupTargetHandle *target_handle;
 	backup_manifest_option manifest;
 	basebackup_compression_type	compression;
 	int			compression_level;
@@ -715,12 +710,12 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	bool		o_manifest_checksums = false;
 	bool		o_target = false;
 	bool		o_target_detail = false;
-	char	   *target_str = "compat";	/* placate compiler */
+	char	   *target_str = NULL;
+	char	   *target_detail_str = NULL;
 	bool		o_compression = false;
 	bool		o_compression_level = false;
 
 	MemSet(opt, 0, sizeof(*opt));
-	opt->target = BACKUP_TARGET_CLIENT;
 	opt->manifest = MANIFEST_OPTION_NO;
 	opt->manifest_checksum_type = CHECKSUM_TYPE_CRC32C;
 	opt->compression = BACKUP_COMPRESSION_NONE;
@@ -864,22 +859,11 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		}
 		else if (strcmp(defel->defname, "target") == 0)
 		{
-			target_str = defGetString(defel);
-
 			if (o_target)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			if (strcmp(target_str, "blackhole") == 0)
-				opt->target = BACKUP_TARGET_BLACKHOLE;
-			else if (strcmp(target_str, "client") == 0)
-				opt->target = BACKUP_TARGET_CLIENT;
-			else if (strcmp(target_str, "server") == 0)
-				opt->target = BACKUP_TARGET_SERVER;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unrecognized target: \"%s\"", target_str)));
+			target_str = defGetString(defel);
 			o_target = true;
 		}
 		else if (strcmp(defel->defname, "target_detail") == 0)
@@ -890,7 +874,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->target_detail = optval;
+			target_detail_str = optval;
 			o_target_detail = true;
 		}
 		else if (strcmp(defel->defname, "compression") == 0)
@@ -942,22 +926,28 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 					 errmsg("manifest checksums require a backup manifest")));
 		opt->manifest_checksum_type = CHECKSUM_TYPE_NONE;
 	}
-	if (opt->target == BACKUP_TARGET_SERVER)
+
+	if (target_str == NULL)
 	{
-		if (opt->target_detail == NULL)
+		if (target_detail_str != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("target '%s' requires a target detail",
-							target_str)));
+					 errmsg("target detail cannot be used without target")));
+		opt->use_copytblspc = true;
+		opt->send_to_client = true;
 	}
-	else
+	else if (strcmp(target_str, "client") == 0)
 	{
-		if (opt->target_detail != NULL)
+		if (target_detail_str != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("target '%s' does not accept a target detail",
 							target_str)));
+		opt->send_to_client = true;
 	}
+	else
+		opt->target_handle =
+			BaseBackupGetTargetHandle(target_str, target_detail_str);
 
 	if (o_compression_level && !o_compression)
 		ereport(ERROR,
@@ -993,32 +983,14 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	}
 
 	/*
-	 * If the TARGET option was specified, then we can use the new copy-stream
-	 * protocol. If the target is specifically 'client' then set up to stream
-	 * the backup to the client; otherwise, it's being sent someplace else and
-	 * should not be sent to the client.
+	 * If the target is specifically 'client' then set up to stream the backup
+	 * to the client; otherwise, it's being sent someplace else and should not
+	 * be sent to the client. BaseBackupGetSink has the job of setting up a
+	 * sink to send the backup data wherever it needs to go.
 	 */
-	if (opt.target == BACKUP_TARGET_CLIENT)
-		sink = bbsink_copystream_new(true);
-	else
-		sink = bbsink_copystream_new(false);
-
-	/*
-	 * If a non-default backup target is in use, arrange to send the data
-	 * wherever it needs to go.
-	 */
-	switch (opt.target)
-	{
-		case BACKUP_TARGET_BLACKHOLE:
-			/* Nothing to do, just discard data. */
-			break;
-		case BACKUP_TARGET_CLIENT:
-			/* Nothing to do, handling above is sufficient. */
-			break;
-		case BACKUP_TARGET_SERVER:
-			sink = bbsink_server_new(sink, opt.target_detail);
-			break;
-	}
+	sink = bbsink_copystream_new(opt.send_to_client);
+	if (opt.target_handle != NULL)
+		sink = BaseBackupGetSink(opt.target_handle, sink);
 
 	/* Set up network throttling, if client requested it */
 	if (opt.maxrate > 0)

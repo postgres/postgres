@@ -24,7 +24,6 @@ OBJS = \
 	basebackup_progress.o \
 	basebackup_server.o \
 	basebackup_sink.o \
-	basebackup_target.o \
 	basebackup_throttle.o \
 	repl_gram.o \
 	slot.o \
