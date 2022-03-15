@@ -13,7 +13,7 @@
 
 #include <unistd.h>
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 #include <lz4frame.h>
 #endif
 
@@ -22,7 +22,7 @@
 #include "common/file_perm.h"
 #include "common/string.h"
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 typedef struct bbstreamer_lz4_frame
 {
 	bbstreamer	base;
@@ -69,7 +69,7 @@ const bbstreamer_ops bbstreamer_lz4_decompressor_ops = {
 bbstreamer *
 bbstreamer_lz4_compressor_new(bbstreamer *next, int compresslevel)
 {
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	bbstreamer_lz4_frame   *streamer;
 	LZ4F_errorCode_t		ctxError;
 	LZ4F_preferences_t	   *prefs;
@@ -114,7 +114,7 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, int compresslevel)
 #endif
 }
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 /*
  * Compress the input data to output buffer.
  *
@@ -280,7 +280,7 @@ bbstreamer_lz4_compressor_free(bbstreamer *streamer)
 bbstreamer *
 bbstreamer_lz4_decompressor_new(bbstreamer *next)
 {
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	bbstreamer_lz4_frame	*streamer;
 	LZ4F_errorCode_t		ctxError;
 
@@ -309,7 +309,7 @@ bbstreamer_lz4_decompressor_new(bbstreamer *next)
 #endif
 }
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 /*
  * Decompress the input data to output buffer until we run out of input
  * data. Each time the output buffer is full, pass on the decompressed data

@@ -12,13 +12,13 @@
  */
 #include "postgres.h"
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 #include <lz4frame.h>
 #endif
 
 #include "replication/basebackup_sink.h"
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 
 typedef struct bbsink_lz4
 {
@@ -62,7 +62,7 @@ const bbsink_ops bbsink_lz4_ops = {
 bbsink *
 bbsink_lz4_new(bbsink *next, int compresslevel)
 {
-#ifndef HAVE_LIBLZ4
+#ifndef USE_LZ4
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("lz4 compression is not supported by this build")));
@@ -87,7 +87,7 @@ bbsink_lz4_new(bbsink *next, int compresslevel)
 #endif
 }
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 
 /*
  * Begin backup.

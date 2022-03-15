@@ -18,7 +18,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 #include <lz4frame.h>
 #endif
 #ifdef HAVE_LIBZ
@@ -70,7 +70,7 @@ typedef struct DirectoryMethodFile
 #ifdef HAVE_LIBZ
 	gzFile		gzfp;
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	LZ4F_compressionContext_t ctx;
 	size_t		lz4bufsize;
 	void	   *lz4buf;
@@ -114,7 +114,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 #ifdef HAVE_LIBZ
 	gzFile		gzfp = NULL;
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	LZ4F_compressionContext_t ctx = NULL;
 	size_t		lz4bufsize = 0;
 	void	   *lz4buf = NULL;
@@ -160,7 +160,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		}
 	}
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	if (dir_data->compression_method == COMPRESSION_LZ4)
 	{
 		size_t		ctx_out;
@@ -245,7 +245,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 				gzclose(gzfp);
 			else
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 			if (dir_data->compression_method == COMPRESSION_LZ4)
 			{
 				(void) LZ4F_compressEnd(ctx, lz4buf, lz4bufsize, NULL);
@@ -265,7 +265,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	if (dir_data->compression_method == COMPRESSION_GZIP)
 		f->gzfp = gzfp;
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	if (dir_data->compression_method == COMPRESSION_LZ4)
 	{
 		f->ctx = ctx;
@@ -306,7 +306,7 @@ dir_write(Walfile f, const void *buf, size_t count)
 	}
 	else
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	if (dir_data->compression_method == COMPRESSION_LZ4)
 	{
 		size_t		chunk;
@@ -394,7 +394,7 @@ dir_close(Walfile f, WalCloseMethod method)
 	}
 	else
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	if (dir_data->compression_method == COMPRESSION_LZ4)
 	{
 		size_t		compressed;
@@ -487,7 +487,7 @@ dir_close(Walfile f, WalCloseMethod method)
 	if (r != 0)
 		dir_data->lasterrno = errno;
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	pg_free(df->lz4buf);
 	/* supports free on NULL */
 	LZ4F_freeCompressionContext(df->ctx);
@@ -523,7 +523,7 @@ dir_sync(Walfile f)
 		}
 	}
 #endif
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 	if (dir_data->compression_method == COMPRESSION_LZ4)
 	{
 		DirectoryMethodFile *df = (DirectoryMethodFile *) f;

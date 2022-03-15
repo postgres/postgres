@@ -30,12 +30,12 @@ my @test_configuration = (
 	{
 		'compression_method' => 'lz4',
 		'backup_flags' => ['--compress', 'server-lz4:5'],
-		'enabled' => check_pg_config("#define HAVE_LIBLZ4 1")
+		'enabled' => check_pg_config("#define USE_LZ4 1")
 	},
 	{
 		'compression_method' => 'zstd',
 		'backup_flags' => ['--compress', 'server-zstd:5'],
-		'enabled' => check_pg_config("#define HAVE_LIBZSTD 1")
+		'enabled' => check_pg_config("#define USE_ZSTD 1")
 	}
 );
 

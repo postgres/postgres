@@ -141,7 +141,7 @@ SKIP:
 SKIP:
 {
 	skip "postgres was not built with LZ4 support", 5
-	  if (!check_pg_config("#define HAVE_LIBLZ4 1"));
+	  if (!check_pg_config("#define USE_LZ4 1"));
 
 	# Generate more WAL including one completed, compressed segment.
 	$primary->psql('postgres', 'SELECT pg_switch_wal();');

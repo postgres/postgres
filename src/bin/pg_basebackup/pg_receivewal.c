@@ -32,7 +32,7 @@
 #include "receivelog.h"
 #include "streamutil.h"
 
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 #include "lz4frame.h"
 #endif
 
@@ -382,7 +382,7 @@ FindStreamingStart(uint32 *tli)
 		}
 		else if (!ispartial && wal_compression_method == COMPRESSION_LZ4)
 		{
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 #define LZ4_CHUNK_SZ	64 * 1024	/* 64kB as maximum chunk size read */
 			int			fd;
 			ssize_t		r;
@@ -889,7 +889,7 @@ main(int argc, char **argv)
 #endif
 			break;
 		case COMPRESSION_LZ4:
-#ifdef HAVE_LIBLZ4
+#ifdef USE_LZ4
 			if (compresslevel != 0)
 			{
 				pg_log_error("cannot use --compress with --compression-method=%s",

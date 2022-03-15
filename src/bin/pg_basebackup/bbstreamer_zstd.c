@@ -13,14 +13,14 @@
 
 #include <unistd.h>
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 #include <zstd.h>
 #endif
 
 #include "bbstreamer.h"
 #include "common/logging.h"
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 
 typedef struct bbstreamer_zstd_frame
 {
@@ -65,7 +65,7 @@ const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
 bbstreamer *
 bbstreamer_zstd_compressor_new(bbstreamer *next, int compresslevel)
 {
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
 
 	Assert(next != NULL);
@@ -99,7 +99,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, int compresslevel)
 #endif
 }
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 /*
  * Compress the input data to output buffer.
  *
@@ -225,7 +225,7 @@ bbstreamer_zstd_compressor_free(bbstreamer *streamer)
 bbstreamer *
 bbstreamer_zstd_decompressor_new(bbstreamer *next)
 {
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
 
 	Assert(next != NULL);
@@ -257,7 +257,7 @@ bbstreamer_zstd_decompressor_new(bbstreamer *next)
 #endif
 }
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 /*
  * Decompress the input data to output buffer until we run out of input
  * data. Each time the output buffer is full, pass on the decompressed data

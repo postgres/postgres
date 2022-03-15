@@ -3743,7 +3743,7 @@ if ($collation_check_stderr !~ /ERROR: /)
 }
 
 # Determine whether build supports LZ4.
-my $supports_lz4 = check_pg_config("#define HAVE_LIBLZ4 1");
+my $supports_lz4 = check_pg_config("#define USE_LZ4 1");
 
 # Create additional databases for mutations of schema public
 $node->psql('postgres', 'create database regress_pg_dump_test;');

@@ -12,13 +12,13 @@
  */
 #include "postgres.h"
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 #include <zstd.h>
 #endif
 
 #include "replication/basebackup_sink.h"
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 
 typedef struct bbsink_zstd
 {
@@ -61,7 +61,7 @@ const bbsink_ops bbsink_zstd_ops = {
 bbsink *
 bbsink_zstd_new(bbsink *next, int compresslevel)
 {
-#ifndef HAVE_LIBZSTD
+#ifndef USE_ZSTD
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("zstd compression is not supported by this build")));
@@ -86,7 +86,7 @@ bbsink_zstd_new(bbsink *next, int compresslevel)
 #endif
 }
 
-#ifdef HAVE_LIBZSTD
+#ifdef USE_ZSTD
 
 /*
  * Begin backup.
