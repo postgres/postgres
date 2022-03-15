@@ -124,6 +124,14 @@ from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
 select count(*) >= 0 as ok from pg_ls_archive_statusdir();
 
 select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
+-- Test missing_ok (second argument)
+select pg_ls_dir('does not exist', false, false); -- error
+select pg_ls_dir('does not exist', true, false); -- ok
+-- Test include_dot_dirs (third argument)
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, true) as ls where ls = '.';
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, false) as ls where ls = '.';
 
 select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
 
