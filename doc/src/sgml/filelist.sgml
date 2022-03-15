@@ -114,6 +114,7 @@
 <!ENTITY auth-delay      SYSTEM "auth-delay.sgml">
 <!ENTITY auto-explain    SYSTEM "auto-explain.sgml">
 <!ENTITY basic-archive   SYSTEM "basic-archive.sgml">
+<!ENTITY basebackup-to-shell SYSTEM "basebackup-to-shell.sgml">
 <!ENTITY bloom           SYSTEM "bloom.sgml">
 <!ENTITY btree-gin       SYSTEM "btree-gin.sgml">
 <!ENTITY btree-gist      SYSTEM "btree-gist.sgml">
