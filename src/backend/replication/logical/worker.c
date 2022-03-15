@@ -3387,7 +3387,7 @@ TwoPhaseTransactionGid(Oid subid, TransactionId xid, char *gid, int szgid)
 static void
 start_table_sync(XLogRecPtr *origin_startpos, char **myslotname)
 {
-	char	   *syncslotname;
+	char	   *syncslotname = NULL;
 
 	Assert(am_tablesync_worker());
 
