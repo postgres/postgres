@@ -229,11 +229,13 @@ int			ltree_strncasecmp(const char *a, const char *b, size_t s);
 
 /* GiST support for ltree */
 
-#define SIGLEN_MAX		GISTMaxIndexKeySize
-#define SIGLEN_DEFAULT	(2 * sizeof(int32))
 #define BITBYTE 8
-#define SIGLEN	(sizeof(int32) * SIGLENINT)
 #define SIGLENBIT(siglen) ((siglen) * BITBYTE)
+#define LTREE_SIGLEN_DEFAULT	(2 * sizeof(int32))
+#define LTREE_SIGLEN_MAX		GISTMaxIndexKeySize
+#define LTREE_GET_SIGLEN()		(PG_HAS_OPCLASS_OPTIONS() ? \
+								 ((LtreeGistOptions *) PG_GET_OPCLASS_OPTIONS())->siglen : \
+								 LTREE_SIGLEN_DEFAULT)
 
 typedef unsigned char *BITVECP;
 
