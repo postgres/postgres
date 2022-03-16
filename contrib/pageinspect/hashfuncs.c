@@ -417,8 +417,10 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	indexRel = index_open(indexRelid, AccessShareLock);
 
 	if (!IS_HASH(indexRel))
-		elog(ERROR, "relation \"%s\" is not a hash index",
-			 RelationGetRelationName(indexRel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(indexRel), "hash")));
 
 	if (RELATION_IS_OTHER_TEMP(indexRel))
 		ereport(ERROR,

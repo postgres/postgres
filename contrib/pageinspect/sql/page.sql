@@ -82,3 +82,12 @@ select t_bits, t_data from heap_page_items(get_raw_page('test8', 0));
 select tuple_data_split('test8'::regclass, t_data, t_infomask, t_infomask2, t_bits)
     from heap_page_items(get_raw_page('test8', 0));
 drop table test8;
+
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT fsm_page_contents('aaa'::bytea);
+SELECT page_checksum('bbb'::bytea, 0);
+SELECT page_header('ccc'::bytea);
+\set VERBOSITY default

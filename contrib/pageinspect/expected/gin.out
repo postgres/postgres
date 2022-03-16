@@ -36,3 +36,14 @@ FROM gin_leafpage_items(get_raw_page('test1_y_idx',
 ?column? | t
 
 DROP TABLE test1;
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT gin_leafpage_items('aaa'::bytea);
+ERROR:  invalid page size
+SELECT gin_metapage_info('bbb'::bytea);
+ERROR:  invalid page size
+SELECT gin_page_opaque_info('ccc'::bytea);
+ERROR:  invalid page size
+\set VERBOSITY default
