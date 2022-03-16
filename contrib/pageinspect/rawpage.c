@@ -218,7 +218,6 @@ Datum
 page_header(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-	int			raw_page_size;
 
 	TupleDesc	tupdesc;
 
@@ -235,18 +234,7 @@ page_header(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-	/*
-	 * Check that enough data was supplied, so that we don't try to access
-	 * fields outside the supplied buffer.
-	 */
-	if (raw_page_size < SizeOfPageHeaderData)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page too small (%d bytes)", raw_page_size)));
-
-	page = (PageHeader) VARDATA(raw_page);
+	page = (PageHeader) get_page_from_raw(raw_page);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -299,25 +287,14 @@ page_checksum(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	uint32		blkno = PG_GETARG_INT32(1);
-	int			raw_page_size;
-	PageHeader	page;
+	Page		page;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-	/*
-	 * Check that the supplied page is of the right size.
-	 */
-	if (raw_page_size != BLCKSZ)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("incorrect size of input page (%d bytes)", raw_page_size)));
-
-	page = (PageHeader) VARDATA(raw_page);
+	page = get_page_from_raw(raw_page);
 
 	PG_RETURN_INT16(pg_checksum_page((char *) page, blkno));
 }

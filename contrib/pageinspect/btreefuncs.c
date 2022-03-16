@@ -184,8 +184,10 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "relation \"%s\" is not a btree index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(rel), "btree")));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -434,8 +436,10 @@ bt_page_items(PG_FUNCTION_ARGS)
 		rel = relation_openrv(relrv, AccessShareLock);
 
 		if (!IS_INDEX(rel) || !IS_BTREE(rel))
-			elog(ERROR, "relation \"%s\" is not a btree index",
-				 RelationGetRelationName(rel));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a %s index",
+							RelationGetRelationName(rel), "btree")));
 
 		/*
 		 * Reject attempts to read non-local temporary relations; we would be
@@ -522,7 +526,6 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 	Datum		result;
 	FuncCallContext *fctx;
 	struct user_args *uargs;
-	int			raw_page_size;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -535,19 +538,12 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 		MemoryContext mctx;
 		TupleDesc	tupleDesc;
 
-		raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-		if (raw_page_size < SizeOfPageHeaderData)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page too small (%d bytes)", raw_page_size)));
-
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		uargs = palloc(sizeof(struct user_args));
 
-		uargs->page = VARDATA(raw_page);
+		uargs->page = get_page_from_raw(raw_page);
 
 		uargs->offset = FirstOffsetNumber;
 
@@ -625,8 +621,10 @@ bt_metap(PG_FUNCTION_ARGS)
 	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "relation \"%s\" is not a btree index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(rel), "btree")));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be

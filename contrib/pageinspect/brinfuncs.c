@@ -16,6 +16,7 @@
 #include "access/brin_tuple.h"
 #include "access/htup_details.h"
 #include "catalog/index.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
@@ -31,6 +32,8 @@ PG_FUNCTION_INFO_V1(brin_page_items);
 PG_FUNCTION_INFO_V1(brin_metapage_info);
 PG_FUNCTION_INFO_V1(brin_revmap_data);
 
+#define IS_BRIN(r) ((r)->rd_rel->relam == BRIN_AM_OID)
+
 typedef struct brin_column_state
 {
 	int			nstored;
@@ -45,8 +48,7 @@ Datum
 brin_page_type(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
-	Page		page = VARDATA(raw_page);
-	int			raw_page_size;
+	Page		page;
 	char	   *type;
 
 	if (!superuser())
@@ -54,14 +56,7 @@ brin_page_type(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-	if (raw_page_size != BLCKSZ)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page too small"),
-				 errdetail("Expected size %d, got %d",
-						   BLCKSZ, raw_page_size)));
+	page = get_page_from_raw(raw_page);
 
 	switch (BrinPageType(page))
 	{
@@ -89,19 +84,7 @@ brin_page_type(PG_FUNCTION_ARGS)
 static Page
 verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
-	Page		page;
-	int			raw_page_size;
-
-	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
-
-	if (raw_page_size != BLCKSZ)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input page too small"),
-				 errdetail("Expected size %d, got %d",
-						   BLCKSZ, raw_page_size)));
-
-	page = VARDATA(raw_page);
+	Page		page = get_page_from_raw(raw_page);
 
 	/* verify the special space says this page is what we want */
 	if (BrinPageType(page) != type)
@@ -169,6 +152,13 @@ brin_page_items(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	indexRel = index_open(indexRelid, AccessShareLock);
+
+	if (!IS_BRIN(indexRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(indexRel), "BRIN")));
+
 	bdesc = brin_build_desc(indexRel);
 
 	/* minimally verify the page we got */
