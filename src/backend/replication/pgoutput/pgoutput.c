@@ -1039,6 +1039,7 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		List	   *pubids = GetRelationPublications(relid);
 		ListCell   *lc;
 		Oid			publish_as_relid = relid;
+		int			publish_ancestor_level = 0;
 		bool		am_partition = get_rel_relispartition(relid);
 		char		relkind = get_rel_relkind(relid);
 
@@ -1064,11 +1065,28 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 			Publication *pub = lfirst(lc);
 			bool		publish = false;
 
+			/*
+			 * Under what relid should we publish changes in this publication?
+			 * We'll use the top-most relid across all publications. Also track
+			 * the ancestor level for this publication.
+			 */
+			Oid			pub_relid = relid;
+			int			ancestor_level = 0;
+
+			/*
+			 * If this is a FOR ALL TABLES publication, pick the partition root
+			 * and set the ancestor level accordingly.
+			 */
 			if (pub->alltables)
 			{
 				publish = true;
 				if (pub->pubviaroot && am_partition)
-					publish_as_relid = llast_oid(get_partition_ancestors(relid));
+				{
+					List	   *ancestors = get_partition_ancestors(relid);
+
+					pub_relid = llast_oid(ancestors);
+					ancestor_level = list_length(ancestors);
+				}
 			}
 
 			if (!publish)
@@ -1085,6 +1103,7 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 				{
 					List	   *ancestors = get_partition_ancestors(relid);
 					ListCell   *lc2;
+					int			level = 0;
 
 					/*
 					 * Find the "topmost" ancestor that is in this
@@ -1094,12 +1113,17 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 					{
 						Oid			ancestor = lfirst_oid(lc2);
 
+						level++;
+
 						if (list_member_oid(GetRelationPublications(ancestor),
 											pub->oid))
 						{
 							ancestor_published = true;
 							if (pub->pubviaroot)
-								publish_as_relid = ancestor;
+							{
+								pub_relid = ancestor;
+								ancestor_level = level;
+							}
 						}
 					}
 				}
@@ -1120,11 +1144,21 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 				entry->pubactions.pubupdate |= pub->pubactions.pubupdate;
 				entry->pubactions.pubdelete |= pub->pubactions.pubdelete;
 				entry->pubactions.pubtruncate |= pub->pubactions.pubtruncate;
-			}
 
-			if (entry->pubactions.pubinsert && entry->pubactions.pubupdate &&
-				entry->pubactions.pubdelete && entry->pubactions.pubtruncate)
-				break;
+				/*
+				 * We want to publish the changes as the top-most ancestor
+				 * across all publications. So we need to check if the
+				 * already calculated level is higher than the new one. If
+				 * yes, we can ignore the new value (as it's a child).
+				 * Otherwise the new value is an ancestor, so we keep it.
+				 */
+				if (publish_ancestor_level > ancestor_level)
+					continue;
+
+				/* The new value is an ancestor, so let's keep it. */
+				publish_as_relid = pub_relid;
+				publish_ancestor_level = ancestor_level;
+			}
 		}
 
 		list_free(pubids);
