@@ -130,7 +130,7 @@ ltree_same(PG_FUNCTION_ARGS)
 	ltree_gist *a = (ltree_gist *) PG_GETARG_POINTER(0);
 	ltree_gist *b = (ltree_gist *) PG_GETARG_POINTER(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = LTREE_GET_SIGLEN();
 
 	*result = false;
 	if (LTG_ISONENODE(a) != LTG_ISONENODE(b))
@@ -190,7 +190,7 @@ ltree_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = LTREE_GET_SIGLEN();
 	BITVECP		base = palloc0(siglen);
 	int32		i,
 				j;
@@ -260,7 +260,7 @@ ltree_penalty(PG_FUNCTION_ARGS)
 	ltree_gist *origval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	ltree_gist *newval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = LTREE_GET_SIGLEN();
 	int32		cmpr,
 				cmpl;
 
@@ -292,7 +292,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = LTREE_GET_SIGLEN();
 	OffsetNumber j;
 	int32		i;
 	RIX		   *array;
@@ -618,7 +618,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	int			siglen = LTREE_GET_ASIGLEN();
+	int			siglen = LTREE_GET_SIGLEN();
 	ltree_gist *key = (ltree_gist *) DatumGetPointer(entry->key);
 	void	   *query = NULL;
 	bool		res = false;
@@ -724,7 +724,7 @@ ltree_gist_options(PG_FUNCTION_ARGS)
 	init_local_reloptions(relopts, sizeof(LtreeGistOptions));
 	add_local_int_reloption(relopts, "siglen",
 							"signature length in bytes",
-							SIGLEN_DEFAULT, 1, SIGLEN_MAX,
+							LTREE_SIGLEN_DEFAULT, 1, LTREE_SIGLEN_MAX,
 							offsetof(LtreeGistOptions, siglen));
 
 	PG_RETURN_VOID();
