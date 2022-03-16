@@ -152,7 +152,9 @@ InitSync(void)
  * counter is incremented here.
  *
  * This must be called *before* the checkpoint REDO point is determined.
- * That ensures that we won't delete files too soon.
+ * That ensures that we won't delete files too soon.  Since this calls
+ * AbsorbSyncRequests(), which performs memory allocations, it cannot be
+ * called within a critical section.
  *
  * Note that we can't do anything here that depends on the assumption
  * that the checkpoint will be completed.
@@ -160,6 +162,16 @@ InitSync(void)
 void
 SyncPreCheckpoint(void)
 {
+	/*
+	 * Operations such as DROP TABLESPACE assume that the next checkpoint will
+	 * process all recently forwarded unlink requests, but if they aren't
+	 * absorbed prior to advancing the cycle counter, they won't be processed
+	 * until a future checkpoint.  The following absorb ensures that any
+	 * unlink requests forwarded before the checkpoint began will be processed
+	 * in the current checkpoint.
+	 */
+	AbsorbSyncRequests();
+
 	/*
 	 * Any unlink requests arriving after this point will be assigned the next
 	 * cycle counter, and won't be unlinked until next checkpoint.
