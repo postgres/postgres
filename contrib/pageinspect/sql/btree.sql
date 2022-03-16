@@ -21,4 +21,17 @@ SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 0));
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 1));
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 2));
 
+-- Failure when using a non-btree index.
+CREATE INDEX test1_a_hash ON test1 USING hash(a);
+SELECT bt_metap('test1_a_hash');
+SELECT bt_page_stats('test1_a_hash', 0);
+SELECT bt_page_items('test1_a_hash', 0);
+
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT bt_page_items('aaa'::bytea);
+\set VERBOSITY default
+
 DROP TABLE test1;

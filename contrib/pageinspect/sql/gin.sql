@@ -19,3 +19,12 @@ FROM gin_leafpage_items(get_raw_page('test1_y_idx',
                          current_setting('block_size')::bigint)::int - 1));
 
 DROP TABLE test1;
+
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT gin_leafpage_items('aaa'::bytea);
+SELECT gin_metapage_info('bbb'::bytea);
+SELECT gin_page_opaque_info('ccc'::bytea);
+\set VERBOSITY default

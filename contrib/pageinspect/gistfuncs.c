@@ -14,6 +14,7 @@
 #include "access/htup.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pageinspect.h"
@@ -27,6 +28,8 @@
 PG_FUNCTION_INFO_V1(gist_page_opaque_info);
 PG_FUNCTION_INFO_V1(gist_page_items);
 PG_FUNCTION_INFO_V1(gist_page_items_bytea);
+
+#define IS_GIST(r) ((r)->rd_rel->relam == GIST_AM_OID)
 
 #define ItemPointerGetDatum(X)	 PointerGetDatum(X)
 
@@ -173,6 +176,12 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 	/* Open the relation */
 	indexRel = index_open(indexRelid, AccessShareLock);
+
+	if (!IS_GIST(indexRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(indexRel), "GiST")));
 
 	page = get_page_from_raw(raw_page);
 

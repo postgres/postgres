@@ -70,4 +70,19 @@ tids       |
 
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 2));
 ERROR:  block number 2 is out of range for relation "test1_a_idx"
+-- Failure when using a non-btree index.
+CREATE INDEX test1_a_hash ON test1 USING hash(a);
+SELECT bt_metap('test1_a_hash');
+ERROR:  "test1_a_hash" is not a btree index
+SELECT bt_page_stats('test1_a_hash', 0);
+ERROR:  "test1_a_hash" is not a btree index
+SELECT bt_page_items('test1_a_hash', 0);
+ERROR:  "test1_a_hash" is not a btree index
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT bt_page_items('aaa'::bytea);
+ERROR:  invalid page size
+\set VERBOSITY default
 DROP TABLE test1;

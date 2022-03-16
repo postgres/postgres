@@ -163,4 +163,21 @@ SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 4));
 
 SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 5));
 ERROR:  page is not a hash bucket or overflow page
+-- Failure with non-hash index
+CREATE INDEX test_hash_a_btree ON test_hash USING btree (a);
+SELECT hash_bitmap_info('test_hash_a_btree', 0);
+ERROR:  "test_hash_a_btree" is not a hash index
+-- Failure with incorrect page size
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes.
+\set VERBOSITY terse
+SELECT hash_metapage_info('aaa'::bytea);
+ERROR:  invalid page size
+SELECT hash_page_items('bbb'::bytea);
+ERROR:  invalid page size
+SELECT hash_page_stats('ccc'::bytea);
+ERROR:  invalid page size
+SELECT hash_page_type('ddd'::bytea);
+ERROR:  invalid page size
+\set VERBOSITY default
 DROP TABLE test_hash;
