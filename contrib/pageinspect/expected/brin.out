@@ -48,4 +48,8 @@ SELECT * FROM brin_page_items(get_raw_page('test1_a_idx', 2), 'test1_a_idx')
           1 |      0 |      1 | f        | f        | f           | {1 .. 1}
 (1 row)
 
+-- Failure for non-BRIN index.
+CREATE INDEX test1_a_btree ON test1 (a);
+SELECT brin_page_items(get_raw_page('test1_a_btree', 0), 'test1_a_btree');
+ERROR:  "test1_a_btree" is not a BRIN index
 DROP TABLE test1;
