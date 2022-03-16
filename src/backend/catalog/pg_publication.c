@@ -277,16 +277,21 @@ GetPubPartitionOptionRelations(List *result, PublicationPartOpt pub_partopt,
 
 /*
  * Returns the relid of the topmost ancestor that is published via this
- * publication if any, otherwise returns InvalidOid.
+ * publication if any and set its ancestor level to ancestor_level,
+ * otherwise returns InvalidOid.
+ *
+ * The ancestor_level value allows us to compare the results for multiple
+ * publications, and decide which value is higher up.
  *
  * Note that the list of ancestors should be ordered such that the topmost
  * ancestor is at the end of the list.
  */
 Oid
-GetTopMostAncestorInPublication(Oid puboid, List *ancestors)
+GetTopMostAncestorInPublication(Oid puboid, List *ancestors, int *ancestor_level)
 {
 	ListCell   *lc;
 	Oid			topmost_relid = InvalidOid;
+	int			level = 0;
 
 	/*
 	 * Find the "topmost" ancestor that is in this publication.
@@ -297,13 +302,25 @@ GetTopMostAncestorInPublication(Oid puboid, List *ancestors)
 		List	   *apubids = GetRelationPublications(ancestor);
 		List	   *aschemaPubids = NIL;
 
+		level++;
+
 		if (list_member_oid(apubids, puboid))
+		{
 			topmost_relid = ancestor;
+
+			if (ancestor_level)
+				*ancestor_level = level;
+		}
 		else
 		{
 			aschemaPubids = GetSchemaPublications(get_rel_namespace(ancestor));
 			if (list_member_oid(aschemaPubids, puboid))
+			{
 				topmost_relid = ancestor;
+
+				if (ancestor_level)
+					*ancestor_level = level;
+			}
 		}
 
 		list_free(apubids);

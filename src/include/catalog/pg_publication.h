@@ -134,7 +134,8 @@ extern List *GetAllSchemaPublicationRelations(Oid puboid,
 extern List *GetPubPartitionOptionRelations(List *result,
 											PublicationPartOpt pub_partopt,
 											Oid relid);
-extern Oid	GetTopMostAncestorInPublication(Oid puboid, List *ancestors);
+extern Oid	GetTopMostAncestorInPublication(Oid puboid, List *ancestors,
+											int *ancestor_level);
 
 extern bool is_publishable_relation(Relation rel);
 extern bool is_schema_publication(Oid pubid);

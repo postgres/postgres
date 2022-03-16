@@ -323,7 +323,8 @@ contain_invalid_rfcolumn(Oid pubid, Relation relation, List *ancestors,
 	 */
 	if (pubviaroot && relation->rd_rel->relispartition)
 	{
-		publish_as_relid = GetTopMostAncestorInPublication(pubid, ancestors);
+		publish_as_relid
+			= GetTopMostAncestorInPublication(pubid, ancestors, NULL);
 
 		if (!OidIsValid(publish_as_relid))
 			publish_as_relid = relid;
