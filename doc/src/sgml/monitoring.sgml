@@ -2224,7 +2224,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting during base backup when throttling activity.</entry>
      </row>
      <row>
-      <entry><literal>CheckpointerWriteDelay</literal></entry>
+      <entry><literal>CheckpointWriteDelay</literal></entry>
       <entry>Waiting between writes while performing a checkpoint.</entry>
      </row>
      <row>
