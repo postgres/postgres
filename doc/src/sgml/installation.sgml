@@ -41,7 +41,7 @@ make
 su
 make install
 adduser postgres
-mkdir /usr/local/pgsql/data
+mkdir -p /usr/local/pgsql/data
 chown postgres /usr/local/pgsql/data
 su - postgres
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
