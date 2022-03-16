@@ -30,6 +30,7 @@
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/md.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
@@ -606,7 +607,8 @@ RegisterSyncRequest(const FileTag *ftag, SyncRequestType type,
 		if (ret || (!ret && !retryOnError))
 			break;
 
-		pg_usleep(10000L);
+		WaitLatch(NULL, WL_EXIT_ON_PM_DEATH | WL_TIMEOUT, 10,
+				  WAIT_EVENT_REGISTER_SYNC_REQUEST);
 	}
 
 	return ret;
