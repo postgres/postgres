@@ -3889,6 +3889,9 @@ pgstat_get_wait_timeout(WaitEventTimeout w)
 		case WAIT_EVENT_RECOVERY_APPLY_DELAY:
 			event_name = "RecoveryApplyDelay";
 			break;
+		case WAIT_EVENT_REGISTER_SYNC_REQUEST:
+			event_name = "RegisterSyncRequest";
+			break;
 			/* no default case, so that compiler will warn */
 	}
 
