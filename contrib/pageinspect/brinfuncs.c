@@ -372,14 +372,14 @@ brin_revmap_data(PG_FUNCTION_ARGS)
 		MemoryContext mctx;
 		Page		page;
 
-		/* minimally verify the page we got */
-		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REVMAP, "revmap");
-
 		/* create a function context for cross-call persistence */
 		fctx = SRF_FIRSTCALL_INIT();
 
 		/* switch to memory context appropriate for multiple function calls */
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+
+		/* minimally verify the page we got */
+		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REVMAP, "revmap");
 
 		state = palloc(sizeof(*state));
 		state->tids = ((RevmapContents *) PageGetContents(page))->rm_tids;
