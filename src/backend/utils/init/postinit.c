@@ -318,6 +318,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	bool		isnull;
 	char	   *collate;
 	char	   *ctype;
+	char	   *iculocale;
 
 	/* Fetch our pg_database row normally, via syscache */
 	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
@@ -420,6 +421,24 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 						   " which is not recognized by setlocale().", ctype),
 				 errhint("Recreate the database with another locale or install the missing locale.")));
 
+	if (dbform->datlocprovider == COLLPROVIDER_ICU)
+	{
+		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticulocale, &isnull);
+		Assert(!isnull);
+		iculocale = TextDatumGetCString(datum);
+		make_icu_collator(iculocale, &default_locale);
+	}
+	else
+		iculocale = NULL;
+
+	default_locale.provider = dbform->datlocprovider;
+	/*
+	 * Default locale is currently always deterministic.  Nondeterministic
+	 * locales currently don't support pattern matching, which would break a
+	 * lot of things if applied globally.
+	 */
+	default_locale.deterministic = true;
+
 	/*
 	 * Check collation version.  See similar code in
 	 * pg_newlocale_from_collation().  Note that here we warn instead of error
@@ -434,7 +453,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 		collversionstr = TextDatumGetCString(datum);
 
-		actual_versionstr = get_collation_actual_version(COLLPROVIDER_LIBC, collate);
+		actual_versionstr = get_collation_actual_version(dbform->datlocprovider, dbform->datlocprovider == COLLPROVIDER_ICU ? iculocale : collate);
 		if (!actual_versionstr)
 			ereport(WARNING,
 					(errmsg("database \"%s\" has no actual collation version, but a version was recorded",

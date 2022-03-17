@@ -2753,8 +2753,10 @@ dumpDatabase(Archive *fout)
 				i_datname,
 				i_datdba,
 				i_encoding,
+				i_datlocprovider,
 				i_collate,
 				i_ctype,
+				i_daticulocale,
 				i_frozenxid,
 				i_minmxid,
 				i_datacl,
@@ -2769,8 +2771,10 @@ dumpDatabase(Archive *fout)
 	const char *datname,
 			   *dba,
 			   *encoding,
+			   *datlocprovider,
 			   *collate,
 			   *ctype,
+			   *iculocale,
 			   *datistemplate,
 			   *datconnlimit,
 			   *tablespace;
@@ -2794,9 +2798,9 @@ dumpDatabase(Archive *fout)
 	else
 		appendPQExpBuffer(dbQry, "0 AS datminmxid, ");
 	if (fout->remoteVersion >= 150000)
-		appendPQExpBuffer(dbQry, "datcollversion, ");
+		appendPQExpBuffer(dbQry, "datlocprovider, daticulocale, datcollversion, ");
 	else
-		appendPQExpBuffer(dbQry, "NULL AS datcollversion, ");
+		appendPQExpBuffer(dbQry, "'c' AS datlocprovider, NULL AS daticulocale, NULL AS datcollversion, ");
 	appendPQExpBuffer(dbQry,
 					  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
@@ -2810,8 +2814,10 @@ dumpDatabase(Archive *fout)
 	i_datname = PQfnumber(res, "datname");
 	i_datdba = PQfnumber(res, "datdba");
 	i_encoding = PQfnumber(res, "encoding");
+	i_datlocprovider = PQfnumber(res, "datlocprovider");
 	i_collate = PQfnumber(res, "datcollate");
 	i_ctype = PQfnumber(res, "datctype");
+	i_daticulocale = PQfnumber(res, "daticulocale");
 	i_frozenxid = PQfnumber(res, "datfrozenxid");
 	i_minmxid = PQfnumber(res, "datminmxid");
 	i_datacl = PQfnumber(res, "datacl");
@@ -2826,8 +2832,13 @@ dumpDatabase(Archive *fout)
 	datname = PQgetvalue(res, 0, i_datname);
 	dba = getRoleName(PQgetvalue(res, 0, i_datdba));
 	encoding = PQgetvalue(res, 0, i_encoding);
+	datlocprovider = PQgetvalue(res, 0, i_datlocprovider);
 	collate = PQgetvalue(res, 0, i_collate);
 	ctype = PQgetvalue(res, 0, i_ctype);
+	if (!PQgetisnull(res, 0, i_daticulocale))
+		iculocale = PQgetvalue(res, 0, i_daticulocale);
+	else
+		iculocale = NULL;
 	frozenxid = atooid(PQgetvalue(res, 0, i_frozenxid));
 	minmxid = atooid(PQgetvalue(res, 0, i_minmxid));
 	dbdacl.acl = PQgetvalue(res, 0, i_datacl);
@@ -2859,6 +2870,16 @@ dumpDatabase(Archive *fout)
 		appendPQExpBufferStr(creaQry, " ENCODING = ");
 		appendStringLiteralAH(creaQry, encoding, fout);
 	}
+
+	appendPQExpBufferStr(creaQry, " LOCALE_PROVIDER = ");
+	if (datlocprovider[0] == 'c')
+		appendPQExpBufferStr(creaQry, "libc");
+	else if (datlocprovider[0] == 'i')
+		appendPQExpBufferStr(creaQry, "icu");
+	else
+		fatal("unrecognized locale provider: %s",
+			  datlocprovider);
+
 	if (strlen(collate) > 0 && strcmp(collate, ctype) == 0)
 	{
 		appendPQExpBufferStr(creaQry, " LOCALE = ");
@@ -2876,6 +2897,11 @@ dumpDatabase(Archive *fout)
 			appendPQExpBufferStr(creaQry, " LC_CTYPE = ");
 			appendStringLiteralAH(creaQry, ctype, fout);
 		}
+	}
+	if (iculocale)
+	{
+		appendPQExpBufferStr(creaQry, " ICU_LOCALE = ");
+		appendStringLiteralAH(creaQry, iculocale, fout);
 	}
 
 	/*

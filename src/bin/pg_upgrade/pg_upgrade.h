@@ -171,6 +171,8 @@ typedef struct
 											 * path */
 	char	   *db_collate;
 	char	   *db_ctype;
+	char		db_collprovider;
+	char	   *db_iculocale;
 	int			db_encoding;
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 } DbInfo;

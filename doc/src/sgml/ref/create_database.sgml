@@ -28,6 +28,8 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
+           [ ICU_LOCALE [=] <replaceable class="parameter">icu_locale</replaceable> ]
+           [ LOCALE_PROVIDER [=] <replaceable class="parameter">locale_provider</replaceable> ]
            [ COLLATION_VERSION = <replaceable>collation_version</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
@@ -156,6 +158,29 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         database. This affects the categorization of characters, e.g., lower,
         upper and digit. The default is to use the character classification of
         the template database. See below for additional restrictions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">icu_locale</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the ICU locale ID if the ICU locale provider is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>locale_provider</replaceable></term>
+
+      <listitem>
+       <para>
+        Specifies the provider to use for the default collation in this
+        database.  Possible values are:
+        <literal>icu</literal>,<indexterm><primary>ICU</primary></indexterm>
+        <literal>libc</literal>.  <literal>libc</literal> is the default.  The
+        available choices depend on the operating system and build options.
        </para>
       </listitem>
      </varlistentry>
@@ -312,6 +337,13 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    result in a database that is corrupt according to the new settings.
    <literal>template0</literal>, however, is known to not contain any data or
    indexes that would be affected.
+  </para>
+
+  <para>
+   There is currently no option to use a database locale with nondeterministic
+   comparisons (see <link linkend="sql-createcollation"><command>CREATE
+   COLLATION</command></link> for an explanation).  If this is needed, then
+   per-column collations would need to be used.
   </para>
 
   <para>

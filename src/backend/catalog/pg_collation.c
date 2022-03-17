@@ -49,6 +49,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 				bool collisdeterministic,
 				int32 collencoding,
 				const char *collcollate, const char *collctype,
+				const char *colliculocale,
 				const char *collversion,
 				bool if_not_exists,
 				bool quiet)
@@ -66,8 +67,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	AssertArg(collname);
 	AssertArg(collnamespace);
 	AssertArg(collowner);
-	AssertArg(collcollate);
-	AssertArg(collctype);
+	AssertArg((collcollate && collctype) || colliculocale);
 
 	/*
 	 * Make sure there is no existing collation of same name & encoding.
@@ -161,8 +161,18 @@ CollationCreate(const char *collname, Oid collnamespace,
 	values[Anum_pg_collation_collprovider - 1] = CharGetDatum(collprovider);
 	values[Anum_pg_collation_collisdeterministic - 1] = BoolGetDatum(collisdeterministic);
 	values[Anum_pg_collation_collencoding - 1] = Int32GetDatum(collencoding);
-	values[Anum_pg_collation_collcollate - 1] = CStringGetTextDatum(collcollate);
-	values[Anum_pg_collation_collctype - 1] = CStringGetTextDatum(collctype);
+	if (collcollate)
+		values[Anum_pg_collation_collcollate - 1] = CStringGetTextDatum(collcollate);
+	else
+		nulls[Anum_pg_collation_collcollate - 1] = true;
+	if (collctype)
+		values[Anum_pg_collation_collctype - 1] = CStringGetTextDatum(collctype);
+	else
+		nulls[Anum_pg_collation_collctype - 1] = true;
+	if (colliculocale)
+		values[Anum_pg_collation_colliculocale - 1] = CStringGetTextDatum(colliculocale);
+	else
+		nulls[Anum_pg_collation_colliculocale - 1] = true;
 	if (collversion)
 		values[Anum_pg_collation_collversion - 1] = CStringGetTextDatum(collversion);
 	else

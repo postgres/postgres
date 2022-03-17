@@ -896,6 +896,18 @@ listAllDbs(const char *pattern, bool verbose)
 					  gettext_noop("Encoding"),
 					  gettext_noop("Collate"),
 					  gettext_noop("Ctype"));
+	if (pset.sversion >= 150000)
+		appendPQExpBuffer(&buf,
+						  "       d.daticulocale as \"%s\",\n"
+						  "       CASE d.datlocprovider WHEN 'c' THEN 'libc' WHEN 'i' THEN 'icu' END AS \"%s\",\n",
+						  gettext_noop("ICU Locale"),
+						  gettext_noop("Locale Provider"));
+	else
+		appendPQExpBuffer(&buf,
+						  "       d.datcollate as \"%s\",\n"
+						  "       'libc' AS \"%s\",\n",
+						  gettext_noop("ICU Locale"),
+						  gettext_noop("Locale Provider"));
 	appendPQExpBufferStr(&buf, "       ");
 	printACLColumn(&buf, "d.datacl");
 	if (verbose)
@@ -4625,7 +4637,7 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, false, true, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -4638,6 +4650,15 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Name"),
 					  gettext_noop("Collate"),
 					  gettext_noop("Ctype"));
+
+	if (pset.sversion >= 150000)
+		appendPQExpBuffer(&buf,
+						  ",\n       c.colliculocale AS \"%s\"",
+						  gettext_noop("ICU Locale"));
+	else
+		appendPQExpBuffer(&buf,
+						  ",\n       c.collcollate AS \"%s\"",
+						  gettext_noop("ICU Locale"));
 
 	if (pset.sversion >= 100000)
 		appendPQExpBuffer(&buf,

@@ -366,13 +366,11 @@ $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
 do $$
 BEGIN
-  EXECUTE 'CREATE COLLATION test1 (provider = icu, lc_collate = ' ||
-          quote_literal(current_setting('lc_collate')) ||
-          ', lc_ctype = ' ||
-          quote_literal(current_setting('lc_ctype')) || ');';
+  EXECUTE 'CREATE COLLATION test1 (provider = icu, locale = ' ||
+          quote_literal(current_setting('lc_collate')) || ');';
 END
 $$;
-CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
+CREATE COLLATION test3 (provider = icu, lc_collate = 'en_US.utf8'); -- fail, needs "locale"
 CREATE COLLATION testx (provider = icu, locale = 'nonsense'); /* never fails with ICU */  DROP COLLATION testx;
 
 CREATE COLLATION test4 FROM nonsense;

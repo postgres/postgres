@@ -40,6 +40,9 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* character encoding */
 	int32		encoding;
 
+	/* locale provider, see pg_collation.collprovider */
+	char		datlocprovider;
+
 	/* allowed as CREATE DATABASE template? */
 	bool		datistemplate;
 
@@ -64,6 +67,9 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 
 	/* LC_CTYPE setting */
 	text		datctype BKI_FORCE_NOT_NULL;
+
+	/* ICU locale ID */
+	text		daticulocale;
 
 	/* provider-dependent version of collation data */
 	text		datcollversion BKI_DEFAULT(_null_);

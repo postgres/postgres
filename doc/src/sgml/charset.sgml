@@ -277,6 +277,108 @@ initdb --locale=sv_SE
   </sect2>
 
   <sect2>
+   <title>Selecting Locales</title>
+
+   <para>
+    Locales can be selected in different scopes depending on requirements.
+    The above overview showed how locales are specified using
+    <command>initdb</command> to set the defaults for the entire cluster.  The
+    following list shows where locales can be selected.  Each item provides
+    the defaults for the subsequent items, and each lower item allows
+    overriding the defaults on a finer granularity.
+   </para>
+
+   <orderedlist>
+    <listitem>
+     <para>
+      As explained above, the environment of the operating system provides the
+      defaults for the locales of a newly initialized database cluster.  In
+      many cases, this is enough: If the operating system is configured for
+      the desired language/territory, then
+      <productname>PostgreSQL</productname> will by default also behave
+      according to that locale.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      As shown above, command-line options for <command>initdb</command>
+      specify the locale settings for a newly initialized database cluster.
+      Use this if the operating system does not have the locale configuration
+      you want for your database system.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A locale can be selected separately for each database.  The SQL command
+      <command>CREATE DATABASE</command> and its command-line equivalent
+      <command>createdb</command> have options for that.  Use this for example
+      if a database cluster houses databases for multiple tennants with
+      different requirements.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Locale settings can be made for individual table columns.  This uses an
+      SQL object called <firstterm>collation</firstterm> and is explained in
+      <xref linkend="collation"/>.  Use this for example to sort data in
+      different languages or customize the sort order of a particular table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Finally, locales can be selected for an individual query.  Again, this
+      uses SQL collation objects.  This could be used to change the sort order
+      based on run-time choices or for ad-hoc experimentation.
+     </para>
+    </listitem>
+   </orderedlist>
+  </sect2>
+
+  <sect2>
+   <title>Locale Providers</title>
+
+   <para>
+    <productname>PostgreSQL</productname> supports multiple <firstterm>locale
+    providers</firstterm>.  This specifies which library supplies the locale
+    data.  One standard provider name is <literal>libc</literal>, which uses
+    the locales provided by the operating system C library.  These are the
+    locales that most tools provided by the operating system use.  Another
+    provider is <literal>icu</literal>, which uses the external
+    ICU<indexterm><primary>ICU</primary></indexterm> library.  ICU locales can
+    only be used if support for ICU was configured when PostgreSQL was built.
+   </para>
+
+   <para>
+    The commands and tools that select the locale settings, as described
+    above, each have an option to select the locale provider.  The examples
+    shown earlier all use the <literal>libc</literal> provider, which is the
+    default.  Here is an example to initialize a database cluster using the
+    ICU provider:
+<programlisting>
+initdb --locale-provider=icu --icu-locale=en
+</programlisting>
+    See the description of the respective commands and programs for the
+    respective details.  Note that you can mix locale providers on different
+    granularities, for example use <literal>libc</literal> by default for the
+    cluster but have one database that uses the <literal>icu</literal>
+    provider, and then have collation objects using either provider within
+    those databases.
+   </para>
+
+   <para>
+    Which locale provider to use depends on individual requirements.  For most
+    basic uses, either provider will give adequate results.  For the libc
+    provider, it depends on what the operating system offers; some operating
+    systems are better than others.  For advanced uses, ICU offers more locale
+    variants and customization options.
+   </para>
+  </sect2>
+
+  <sect2>
    <title>Problems</title>
 
    <para>

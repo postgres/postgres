@@ -53,6 +53,8 @@ clean distclean maintainer-clean:
 	rm -f common.o $(WIN32RES)
 	rm -rf tmp_check
 
+export with_icu
+
 check:
 	$(prove_check)
 

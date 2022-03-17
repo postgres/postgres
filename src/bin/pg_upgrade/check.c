@@ -10,6 +10,7 @@
 #include "postgres_fe.h"
 
 #include "catalog/pg_authid_d.h"
+#include "catalog/pg_collation.h"
 #include "fe_utils/string_utils.h"
 #include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
@@ -349,6 +350,18 @@ check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb)
 	if (!equivalent_locale(LC_CTYPE, olddb->db_ctype, newdb->db_ctype))
 		pg_fatal("lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
 				 olddb->db_name, olddb->db_ctype, newdb->db_ctype);
+	if (olddb->db_collprovider != newdb->db_collprovider)
+		pg_fatal("locale providers for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name,
+				 collprovider_name(olddb->db_collprovider),
+				 collprovider_name(newdb->db_collprovider));
+	if ((olddb->db_iculocale == NULL && newdb->db_iculocale != NULL) ||
+		(olddb->db_iculocale != NULL && newdb->db_iculocale == NULL) ||
+		(olddb->db_iculocale != NULL && newdb->db_iculocale != NULL && strcmp(olddb->db_iculocale, newdb->db_iculocale) != 0))
+		pg_fatal("ICU locale values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name,
+				 olddb->db_iculocale ? olddb->db_iculocale : "(null)",
+				 newdb->db_iculocale ? newdb->db_iculocale : "(null)");
 }
 
 /*

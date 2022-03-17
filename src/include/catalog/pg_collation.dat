@@ -14,8 +14,7 @@
 
 { oid => '100', oid_symbol => 'DEFAULT_COLLATION_OID',
   descr => 'database\'s default collation',
-  collname => 'default', collprovider => 'd', collencoding => '-1',
-  collcollate => '', collctype => '' },
+  collname => 'default', collprovider => 'd', collencoding => '-1' },
 { oid => '950', oid_symbol => 'C_COLLATION_OID',
   descr => 'standard C collation',
   collname => 'C', collprovider => 'c', collencoding => '-1',

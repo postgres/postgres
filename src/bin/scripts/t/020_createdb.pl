@@ -25,8 +25,36 @@ $node->issues_sql_like(
 	qr/statement: CREATE DATABASE foobar2 ENCODING 'LATIN1'/,
 	'create database with encoding');
 
+if ($ENV{with_icu} eq 'yes')
+{
+	# This fails because template0 uses libc provider and has no ICU
+	# locale set.  It would succeed if template0 used the icu
+	# provider.  XXX Maybe split into multiple tests?
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		'create database with ICU fails without ICU locale specified');
+
+	$node->issues_sql_like(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=en', 'foobar5' ],
+		qr/statement: CREATE DATABASE foobar5 .* LOCALE_PROVIDER icu ICU_LOCALE 'en'/,
+		'create database with ICU locale specified');
+
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=@colNumeric=lower', 'foobarX' ],
+		'fails for invalid ICU locale');
+}
+else
+{
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		'create database with ICU fails since no ICU support');
+}
+
 $node->command_fails([ 'createdb', 'foobar1' ],
 	'fails if database already exists');
+
+$node->command_fails([ 'createdb', '-T', 'template0', '--locale-provider=xyz', 'foobarX' ],
+	'fails for invalid locale provider');
 
 # Check use of templates with shared dependencies copied from the template.
 my ($ret, $stdout, $stderr) = $node->psql(

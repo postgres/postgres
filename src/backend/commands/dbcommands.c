@@ -86,7 +86,8 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 						Oid *dbIdP, Oid *ownerIdP,
 						int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 						TransactionId *dbFrozenXidP, MultiXactId *dbMinMultiP,
-						Oid *dbTablespace, char **dbCollate, char **dbCtype,
+						Oid *dbTablespace, char **dbCollate, char **dbCtype, char **dbIculocale,
+						char *dbLocProvider,
 						char **dbCollversion);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
@@ -107,6 +108,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	int			src_encoding = -1;
 	char	   *src_collate = NULL;
 	char	   *src_ctype = NULL;
+	char	   *src_iculocale = NULL;
+	char		src_locprovider;
 	char	   *src_collversion = NULL;
 	bool		src_istemplate;
 	bool		src_allowconn;
@@ -128,6 +131,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	DefElem    *dlocale = NULL;
 	DefElem    *dcollate = NULL;
 	DefElem    *dctype = NULL;
+	DefElem    *diculocale = NULL;
+	DefElem	   *dlocprovider = NULL;
 	DefElem    *distemplate = NULL;
 	DefElem    *dallowconnections = NULL;
 	DefElem    *dconnlimit = NULL;
@@ -137,6 +142,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	const char *dbtemplate = NULL;
 	char	   *dbcollate = NULL;
 	char	   *dbctype = NULL;
+	char	   *dbiculocale = NULL;
+	char		dblocprovider = '\0';
 	char	   *canonname;
 	int			encoding = -1;
 	bool		dbistemplate = false;
@@ -193,6 +200,18 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 			if (dctype)
 				errorConflictingDefElem(defel, pstate);
 			dctype = defel;
+		}
+		else if (strcmp(defel->defname, "icu_locale") == 0)
+		{
+			if (diculocale)
+				errorConflictingDefElem(defel, pstate);
+			diculocale = defel;
+		}
+		else if (strcmp(defel->defname, "locale_provider") == 0)
+		{
+			if (dlocprovider)
+				errorConflictingDefElem(defel, pstate);
+			dlocprovider = defel;
 		}
 		else if (strcmp(defel->defname, "is_template") == 0)
 		{
@@ -257,12 +276,6 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 parser_errposition(pstate, defel->location)));
 	}
 
-	if (dlocale && (dcollate || dctype))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("conflicting or redundant options"),
-				 errdetail("LOCALE cannot be specified together with LC_COLLATE or LC_CTYPE.")));
-
 	if (downer && downer->arg)
 		dbowner = defGetString(downer);
 	if (dtemplate && dtemplate->arg)
@@ -304,6 +317,31 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dbcollate = defGetString(dcollate);
 	if (dctype && dctype->arg)
 		dbctype = defGetString(dctype);
+	if (diculocale && diculocale->arg)
+		dbiculocale = defGetString(diculocale);
+	if (dlocprovider && dlocprovider->arg)
+	{
+		char	   *locproviderstr = defGetString(dlocprovider);
+
+		if (pg_strcasecmp(locproviderstr, "icu") == 0)
+			dblocprovider = COLLPROVIDER_ICU;
+		else if (pg_strcasecmp(locproviderstr, "libc") == 0)
+			dblocprovider = COLLPROVIDER_LIBC;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("unrecognized locale provider: %s",
+							locproviderstr)));
+	}
+	if (diculocale && dblocprovider != COLLPROVIDER_ICU)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("ICU locale cannot be specified unless locale provider is ICU")));
+	if (dblocprovider == COLLPROVIDER_ICU && !dbiculocale)
+	{
+		if (dlocale && dlocale->arg)
+			dbiculocale = defGetString(dlocale);
+	}
 	if (distemplate && distemplate->arg)
 		dbistemplate = defGetBoolean(distemplate);
 	if (dallowconnections && dallowconnections->arg)
@@ -355,7 +393,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_allowconn,
 					 &src_frozenxid, &src_minmxid, &src_deftablespace,
-					 &src_collate, &src_ctype, &src_collversion))
+					 &src_collate, &src_ctype, &src_iculocale, &src_locprovider,
+					 &src_collversion))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("template database \"%s\" does not exist",
@@ -381,6 +420,10 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dbcollate = src_collate;
 	if (dbctype == NULL)
 		dbctype = src_ctype;
+	if (dbiculocale == NULL)
+		dbiculocale = src_iculocale;
+	if (dblocprovider == '\0')
+		dblocprovider = src_locprovider;
 
 	/* Some encodings are client only */
 	if (!PG_VALID_BE_ENCODING(encoding))
@@ -401,6 +444,37 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	dbctype = canonname;
 
 	check_encoding_locale_matches(encoding, dbcollate, dbctype);
+
+	if (dblocprovider == COLLPROVIDER_ICU)
+	{
+		/*
+		 * This would happen if template0 uses the libc provider but the new
+		 * database uses icu.
+		 */
+		if (!dbiculocale)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ICU locale must be specified")));
+	}
+
+	if (dblocprovider == COLLPROVIDER_ICU)
+	{
+#ifdef USE_ICU
+		UErrorCode  status;
+
+		status = U_ZERO_ERROR;
+		ucol_open(dbiculocale, &status);
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errmsg("could not open collator for locale \"%s\": %s",
+							dbiculocale, u_errorName(status))));
+#else
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ICU is not supported in this build"), \
+				 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
+#endif
+	}
 
 	/*
 	 * Check that the new encoding and locale settings match the source
@@ -435,6 +509,25 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 errmsg("new LC_CTYPE (%s) is incompatible with the LC_CTYPE of the template database (%s)",
 							dbctype, src_ctype),
 					 errhint("Use the same LC_CTYPE as in the template database, or use template0 as template.")));
+
+		if (dblocprovider != src_locprovider)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("new locale provider (%s) does not match locale provider of the template database (%s)",
+							collprovider_name(dblocprovider), collprovider_name(src_locprovider)),
+					 errhint("Use the same locale provider as in the template database, or use template0 as template.")));
+
+		if (dblocprovider == COLLPROVIDER_ICU)
+		{
+			Assert(dbiculocale);
+			Assert(src_iculocale);
+			if (strcmp(dbiculocale, src_iculocale) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("new ICU locale (%s) is incompatible with the ICU locale of the template database (%s)",
+								dbiculocale, src_iculocale),
+						 errhint("Use the same ICU locale as in the template database, or use template0 as template.")));
+		}
 	}
 
 	/*
@@ -453,7 +546,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	{
 		char	   *actual_versionstr;
 
-		actual_versionstr = get_collation_actual_version(COLLPROVIDER_LIBC, dbcollate);
+		actual_versionstr = get_collation_actual_version(dblocprovider, dblocprovider == COLLPROVIDER_ICU ? dbiculocale : dbcollate);
 		if (!actual_versionstr)
 			ereport(ERROR,
 					(errmsg("template database \"%s\" has a collation version, but no actual collation version could be determined",
@@ -481,7 +574,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * collation version, which is normally only the case for template0.
 	 */
 	if (dbcollversion == NULL)
-		dbcollversion = get_collation_actual_version(COLLPROVIDER_LIBC, dbcollate);
+		dbcollversion = get_collation_actual_version(dblocprovider, dblocprovider == COLLPROVIDER_ICU ? dbiculocale : dbcollate);
 
 	/* Resolve default tablespace for new database */
 	if (dtablespacename && dtablespacename->arg)
@@ -620,6 +713,9 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	 * block on the unique index, and fail after we commit).
 	 */
 
+	Assert((dblocprovider == COLLPROVIDER_ICU && dbiculocale) ||
+		   (dblocprovider != COLLPROVIDER_ICU && !dbiculocale));
+
 	/* Form tuple */
 	MemSet(new_record, 0, sizeof(new_record));
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
@@ -629,6 +725,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
+	new_record[Anum_pg_database_datlocprovider - 1] = CharGetDatum(dblocprovider);
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(dballowconnections);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
@@ -637,6 +734,10 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 	new_record[Anum_pg_database_datcollate - 1] = CStringGetTextDatum(dbcollate);
 	new_record[Anum_pg_database_datctype - 1] = CStringGetTextDatum(dbctype);
+	if (dbiculocale)
+		new_record[Anum_pg_database_daticulocale - 1] = CStringGetTextDatum(dbiculocale);
+	else
+		new_record_nulls[Anum_pg_database_daticulocale - 1] = true;
 	if (dbcollversion)
 		new_record[Anum_pg_database_datcollversion - 1] = CStringGetTextDatum(dbcollversion);
 	else
@@ -907,7 +1008,7 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -1109,7 +1210,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	rel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
@@ -1222,7 +1323,7 @@ movedb(const char *dbname, const char *tblspcname)
 	pgdbrel = table_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -1755,9 +1856,10 @@ AlterDatabaseRefreshColl(AlterDatabaseRefreshCollStmt *stmt)
 	datum = heap_getattr(tuple, Anum_pg_database_datcollversion, RelationGetDescr(rel), &isnull);
 	oldversion = isnull ? NULL : TextDatumGetCString(datum);
 
-	datum = heap_getattr(tuple, Anum_pg_database_datcollate, RelationGetDescr(rel), &isnull);
-	Assert(!isnull);
-	newversion = get_collation_actual_version(COLLPROVIDER_LIBC, TextDatumGetCString(datum));
+	datum = heap_getattr(tuple, datForm->datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate, RelationGetDescr(rel), &isnull);
+	if (isnull)
+		elog(ERROR, "unexpected null in pg_database");
+	newversion = get_collation_actual_version(datForm->datlocprovider, TextDatumGetCString(datum));
 
 	/* cannot change from NULL to non-NULL or vice versa */
 	if ((!oldversion && newversion) || (oldversion && !newversion))
@@ -1943,6 +2045,7 @@ pg_database_collation_actual_version(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);
 	HeapTuple	tp;
+	char		datlocprovider;
 	Datum		datum;
 	bool		isnull;
 	char	   *version;
@@ -1953,9 +2056,12 @@ pg_database_collation_actual_version(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("database with OID %u does not exist", dbid)));
 
-	datum = SysCacheGetAttr(DATABASEOID, tp, Anum_pg_database_datcollate, &isnull);
-	Assert(!isnull);
-	version = get_collation_actual_version(COLLPROVIDER_LIBC, TextDatumGetCString(datum));
+	datlocprovider = ((Form_pg_database) GETSTRUCT(tp))->datlocprovider;
+
+	datum = SysCacheGetAttr(DATABASEOID, tp, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate, &isnull);
+	if (isnull)
+		elog(ERROR, "unexpected null in pg_database");
+	version = get_collation_actual_version(datlocprovider, TextDatumGetCString(datum));
 
 	ReleaseSysCache(tp);
 
@@ -1981,7 +2087,8 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			TransactionId *dbFrozenXidP, MultiXactId *dbMinMultiP,
-			Oid *dbTablespace, char **dbCollate, char **dbCtype,
+			Oid *dbTablespace, char **dbCollate, char **dbCtype, char **dbIculocale,
+			char *dbLocProvider,
 			char **dbCollversion)
 {
 	bool		result = false;
@@ -2075,6 +2182,8 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;
 				/* default locale settings for this database */
+				if (dbLocProvider)
+					*dbLocProvider = dbform->datlocprovider;
 				if (dbCollate)
 				{
 					datum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datcollate, &isnull);
@@ -2086,6 +2195,14 @@ get_db_info(const char *name, LOCKMODE lockmode,
 					datum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datctype, &isnull);
 					Assert(!isnull);
 					*dbCtype = TextDatumGetCString(datum);
+				}
+				if (dbIculocale)
+				{
+					datum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_daticulocale, &isnull);
+					if (isnull)
+						*dbIculocale = NULL;
+					else
+						*dbIculocale = TextDatumGetCString(datum);
 				}
 				if (dbCollversion)
 				{

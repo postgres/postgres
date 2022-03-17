@@ -86,30 +86,45 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <command>initdb</command> initializes the database cluster's default
-   locale and character set encoding. The character set encoding,
-   collation order (<literal>LC_COLLATE</literal>) and character set classes
-   (<literal>LC_CTYPE</literal>, e.g., upper, lower, digit) can be set separately
-   for a database when it is created. <command>initdb</command> determines
-   those settings for the template databases, which will
-   serve as the default for all other databases.
+   <command>initdb</command> initializes the database cluster's default locale
+   and character set encoding. These can also be set separately for each
+   database when it is created. <command>initdb</command> determines those
+   settings for the template databases, which will serve as the default for
+   all other databases.  By default, <command>initdb</command> uses the
+   locale provider <literal>libc</literal>, takes the locale settings from
+   the environment, and determines the encoding from the locale settings.
+   This is almost always sufficient, unless there are special requirements.
   </para>
 
   <para>
-   To alter the default collation order or character set classes, use the
-   <option>--lc-collate</option> and <option>--lc-ctype</option> options.
-   Collation orders other than <literal>C</literal> or <literal>POSIX</literal> also have
-   a performance penalty.  For these reasons it is important to choose the
-   right locale when running <command>initdb</command>.
+   To choose a different locale for the cluster, use the option
+   <option>--locale</option>.  There are also individual options
+   <option>--lc-*</option> (see below) to set values for the individual locale
+   categories.  Note that inconsistent settings for different locale
+   categories can give nonsensical results, so this should be used with care.
   </para>
 
   <para>
-   The remaining locale categories can be changed later when the server
-   is started.  You can also use <option>--locale</option> to set the
-   default for all locale categories, including collation order and
-   character set classes. All server locale values (<literal>lc_*</literal>) can
-   be displayed via <command>SHOW ALL</command>.
-   More details can be found in <xref linkend="locale"/>.
+   Alternatively, the ICU library can be used to provide locale services.
+   (Again, this only sets the default for subsequently created databases.)  To
+   select this option, specify <literal>--locale-provider=icu</literal>.
+   To chose the specific ICU locale ID to apply, use the option
+   <option>--icu-locale</option>.  Note that
+   for implementation reasons and to support legacy code,
+   <command>initdb</command> will still select and initialize libc locale
+   settings when the ICU locale provider is used.
+  </para>
+
+  <para>
+   When <command>initdb</command> runs, it will print out the locale settings
+   it has chosen.  If you have complex requirements or specified multiple
+   options, it is advisable to check that the result matches what was
+   intended.
+  </para>
+
+  <para>
+   More details about locale settings can be found in <xref
+   linkend="locale"/>.
   </para>
 
   <para>
@@ -210,6 +225,15 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>--icu-locale=<replaceable>locale</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the ICU locale ID, if the ICU locale provider is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-data-checksums" xreflabel="data checksums">
       <term><option>-k</option></term>
       <term><option>--data-checksums</option></term>
@@ -260,6 +284,18 @@ PostgreSQL documentation
       <listitem>
        <para>
         Equivalent to <option>--locale=C</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--locale-provider={<literal>libc</literal>|<literal>icu</literal>}</option></term>
+      <listitem>
+       <para>
+        This option sets the locale provider for databases created in the
+        new cluster.  It can be overridden in the <command>CREATE
+        DATABASE</command> command when new databases are subsequently
+        created.  The default is <literal>libc</literal>.
        </para>
       </listitem>
      </varlistentry>

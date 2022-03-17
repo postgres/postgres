@@ -93,4 +93,31 @@ SKIP:
 		'check PGDATA permissions');
 }
 
+# Locale provider tests
+
+if ($ENV{with_icu} eq 'yes')
+{
+	command_fails_like(['initdb', '--no-sync', '--locale-provider=icu', "$tempdir/data2"],
+		qr/initdb: error: ICU locale must be specified/,
+		'locale provider ICU requires --icu-locale');
+
+	command_ok(['initdb', '--no-sync', '--locale-provider=icu', '--icu-locale=en', "$tempdir/data3"],
+		'option --icu-locale');
+
+	command_fails_like(['initdb', '--no-sync', '--locale-provider=icu', '--icu-locale=@colNumeric=lower', "$tempdir/dataX"],
+		qr/initdb: error: could not open collator for locale/,
+		'fails for invalid ICU locale');
+}
+else
+{
+	command_fails(['initdb', '--no-sync', '--locale-provider=icu', "$tempdir/data2"],
+				  'locale provider ICU fails since no ICU support');
+}
+
+command_fails(['initdb', '--no-sync', '--locale-provider=xyz', "$tempdir/dataX"],
+			  'fails for invalid locale provider');
+
+command_fails(['initdb', '--no-sync', '--locale-provider=libc', '--icu-locale=en', "$tempdir/dataX"],
+			  'fails for invalid option combination');
+
 done_testing();
