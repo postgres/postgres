@@ -2279,8 +2279,8 @@ pullup_replace_vars_callback(Var *var,
 		 * If generating an expansion for a var of a named rowtype (ie, this
 		 * is a plain relation RTE), then we must include dummy items for
 		 * dropped columns.  If the var is RECORD (ie, this is a JOIN), then
-		 * omit dropped columns. Either way, attach column names to the
-		 * RowExpr for use of ruleutils.c.
+		 * omit dropped columns.  In the latter case, attach column names to
+		 * the RowExpr for use of the executor and ruleutils.c.
 		 *
 		 * In order to be able to cache the results, we always generate the
 		 * expansion with varlevelsup = 0, and then adjust if needed.
@@ -2301,7 +2301,7 @@ pullup_replace_vars_callback(Var *var,
 		rowexpr->args = fields;
 		rowexpr->row_typeid = var->vartype;
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;
-		rowexpr->colnames = colnames;
+		rowexpr->colnames = (var->vartype == RECORDOID) ? colnames : NIL;
 		rowexpr->location = var->location;
 		newnode = (Node *) rowexpr;
 

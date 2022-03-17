@@ -809,6 +809,7 @@ flatten_join_alias_vars_mutator(Node *node,
 			rowexpr->args = fields;
 			rowexpr->row_typeid = var->vartype;
 			rowexpr->row_format = COERCE_IMPLICIT_CAST;
+			/* vartype will always be RECORDOID, so we always need colnames */
 			rowexpr->colnames = colnames;
 			rowexpr->location = var->location;
 
