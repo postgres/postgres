@@ -237,6 +237,11 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_child (b text) INHERITS (tab_rowfilter_inherited)"
 );
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_viaroot_part (a int) PARTITION BY RANGE (a)");
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_viaroot_part_1 PARTITION OF tab_rowfilter_viaroot_part FOR VALUES FROM (1) TO (20)"
+);
 
 # setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
@@ -282,6 +287,11 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_inherited (a int)");
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_child (b text) INHERITS (tab_rowfilter_inherited)"
+);
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_viaroot_part (a int)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_viaroot_part_1 (a int)"
 );
 
 # setup logical replication
@@ -330,6 +340,15 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_inherits FOR TABLE tab_rowfilter_inherited WHERE (a > 15)"
 );
 
+# two publications, each publishing the partition through a different ancestor, with
+# different row filters
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_viaroot_1 FOR TABLE tab_rowfilter_viaroot_part WHERE (a > 15) WITH (publish_via_partition_root)"
+);
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_viaroot_2 FOR TABLE tab_rowfilter_viaroot_part_1 WHERE (a < 15) WITH (publish_via_partition_root)"
+);
+
 #
 # The following INSERTs are executed before the CREATE SUBSCRIPTION, so these
 # SQL commands are for testing the initial data copy using logical replication.
@@ -376,7 +395,7 @@ $node_publisher->safe_psql('postgres',
 );
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1"
 );
 
 $node_publisher->wait_for_catchup($appname);
@@ -534,6 +553,8 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_inherited (a) VALUES (14), (16)");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_child (a, b) VALUES (13, '13'), (17, '17')");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_rowfilter_viaroot_part (a) VALUES (14), (15), (16)");
 
 $node_publisher->wait_for_catchup($appname);
 
@@ -687,6 +708,30 @@ $result =
   $node_subscriber->safe_psql('postgres',
 	"SELECT a = repeat('1234567890', 200), b FROM tab_rowfilter_toast");
 is($result, qq(t|1), 'check replicated rows to tab_rowfilter_toast');
+
+# Check expected replicated rows for tab_rowfilter_viaroot_part and
+# tab_rowfilter_viaroot_part_1. We should replicate only rows matching
+# the row filter for the top-level ancestor:
+#
+# tab_rowfilter_viaroot_part filter is: (a > 15)
+# - INSERT (14)        NO, 14 < 15
+# - INSERT (15)        NO, 15 = 15
+# - INSERT (16)        YES, 16 > 15
+$result =
+  $node_subscriber->safe_psql('postgres',
+	"SELECT a FROM tab_rowfilter_viaroot_part");
+is( $result, qq(16),
+	'check replicated rows to tab_rowfilter_viaroot_part'
+);
+
+# Check there is no data in tab_rowfilter_viaroot_part_1 because rows are
+# replicated via the top most parent table tab_rowfilter_viaroot_part
+$result =
+  $node_subscriber->safe_psql('postgres',
+	"SELECT a FROM tab_rowfilter_viaroot_part_1");
+is( $result, qq(),
+	'check replicated rows to tab_rowfilter_viaroot_part_1'
+);
 
 # Testcase end: FOR TABLE with row filter publications
 # ======================================================

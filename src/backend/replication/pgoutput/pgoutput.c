@@ -1890,8 +1890,6 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 				entry->pubactions.pubdelete |= pub->pubactions.pubdelete;
 				entry->pubactions.pubtruncate |= pub->pubactions.pubtruncate;
 
-				rel_publications = lappend(rel_publications, pub);
-
 				/*
 				 * We want to publish the changes as the top-most ancestor
 				 * across all publications. So we need to check if the
@@ -1902,9 +1900,27 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 				if (publish_ancestor_level > ancestor_level)
 					continue;
 
-				/* The new value is an ancestor, so let's keep it. */
-				publish_as_relid = pub_relid;
-				publish_ancestor_level = ancestor_level;
+				/*
+				 * If we found an ancestor higher up in the tree, discard
+				 * the list of publications through which we replicate it,
+				 * and use the new ancestor.
+				 */
+				if (publish_ancestor_level < ancestor_level)
+				{
+					publish_as_relid = pub_relid;
+					publish_ancestor_level = ancestor_level;
+
+					/* reset the publication list for this relation */
+					rel_publications = NIL;
+				}
+				else
+				{
+					/* Same ancestor level, has to be the same OID. */
+					Assert(publish_as_relid == pub_relid);
+				}
+
+				/* Track publications for this ancestor. */
+				rel_publications = lappend(rel_publications, pub);
 			}
 		}
 
