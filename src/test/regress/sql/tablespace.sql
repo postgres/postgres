@@ -22,6 +22,10 @@ DROP TABLESPACE regress_tblspacewith;
 
 -- create a tablespace we can use
 CREATE TABLESPACE regress_tblspace LOCATION '';
+-- This returns a relative path as of an effect of allow_in_place_tablespaces,
+-- masking the tablespace OID used in the path name.
+SELECT regexp_replace(pg_tablespace_location(oid), '(pg_tblspc)/(\d+)', '\1/NNN')
+  FROM pg_tablespace  WHERE spcname = 'regress_tblspace';
 
 -- try setting and resetting some properties for the new tablespace
 ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0, seq_page_cost = 1.1);
