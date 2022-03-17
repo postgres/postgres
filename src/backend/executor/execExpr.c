@@ -1913,16 +1913,16 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				{
 					/* generic record, use types of given expressions */
 					tupdesc = ExecTypeFromExprList(rowexpr->args);
+					/* ... but adopt RowExpr's column aliases */
+					ExecTypeSetColNames(tupdesc, rowexpr->colnames);
+					/* Bless the tupdesc so it can be looked up later */
+					BlessTupleDesc(tupdesc);
 				}
 				else
 				{
 					/* it's been cast to a named type, use that */
 					tupdesc = lookup_rowtype_tupdesc_copy(rowexpr->row_typeid, -1);
 				}
-				/* In either case, adopt RowExpr's column aliases */
-				ExecTypeSetColNames(tupdesc, rowexpr->colnames);
-				/* Bless the tupdesc in case it's now of type RECORD */
-				BlessTupleDesc(tupdesc);
 
 				/*
 				 * In the named-type case, the tupdesc could have more columns

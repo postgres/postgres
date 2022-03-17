@@ -417,12 +417,10 @@ select longname(f) from fullname f;
 --
 
 select row_to_json(i) from int8_tbl i;
+-- since "i" is of type "int8_tbl", attaching aliases doesn't change anything:
 select row_to_json(i) from int8_tbl i(x,y);
 
-create temp view vv1 as select * from int8_tbl;
-select row_to_json(i) from vv1 i;
-select row_to_json(i) from vv1 i(x,y);
-
+-- in these examples, we'll report the exposed column names of the subselect:
 select row_to_json(ss) from
   (select q1, q2 from int8_tbl) as ss;
 select row_to_json(ss) from

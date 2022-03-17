@@ -2022,51 +2022,40 @@ ExecTypeFromExprList(List *exprList)
 }
 
 /*
- * ExecTypeSetColNames - set column names in a TupleDesc
+ * ExecTypeSetColNames - set column names in a RECORD TupleDesc
  *
  * Column names must be provided as an alias list (list of String nodes).
- *
- * For some callers, the supplied tupdesc has a named rowtype (not RECORD)
- * and it is moderately likely that the alias list matches the column names
- * already present in the tupdesc.  If we do change any column names then
- * we must reset the tupdesc's type to anonymous RECORD; but we avoid doing
- * so if no names change.
  */
 void
 ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 {
-	bool		modified = false;
 	int			colno = 0;
 	ListCell   *lc;
+
+	/* It's only OK to change col names in a not-yet-blessed RECORD type */
+	Assert(typeInfo->tdtypeid == RECORDOID);
+	Assert(typeInfo->tdtypmod < 0);
 
 	foreach(lc, namesList)
 	{
 		char	   *cname = strVal(lfirst(lc));
 		Form_pg_attribute attr;
 
-		/* Guard against too-long names list */
+		/* Guard against too-long names list (probably can't happen) */
 		if (colno >= typeInfo->natts)
 			break;
 		attr = TupleDescAttr(typeInfo, colno);
 		colno++;
 
-		/* Ignore empty aliases (these must be for dropped columns) */
-		if (cname[0] == '\0')
+		/*
+		 * Do nothing for empty aliases or dropped columns (these cases
+		 * probably can't arise in RECORD types, either)
+		 */
+		if (cname[0] == '\0' || attr->attisdropped)
 			continue;
 
-		/* Change tupdesc only if alias is actually different */
-		if (strcmp(cname, NameStr(attr->attname)) != 0)
-		{
-			namestrcpy(&(attr->attname), cname);
-			modified = true;
-		}
-	}
-
-	/* If we modified the tupdesc, it's now a new record type */
-	if (modified)
-	{
-		typeInfo->tdtypeid = RECORDOID;
-		typeInfo->tdtypmod = -1;
+		/* OK, assign the column name */
+		namestrcpy(&(attr->attname), cname);
 	}
 }
 
