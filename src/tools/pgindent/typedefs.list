@@ -1460,6 +1460,7 @@ MinimalTupleTableSlot
 MinmaxMultiOpaque
 MinmaxOpaque
 ModifyTable
+ModifyTableContext
 ModifyTablePath
 ModifyTableState
 MorphOpaque
@@ -2793,6 +2794,7 @@ UnlistenStmt
 UnpackTarState
 UnresolvedTup
 UnresolvedTupData
+UpdateContext
 UpdateStmt
 UpperRelationKind
 UpperUniquePath
