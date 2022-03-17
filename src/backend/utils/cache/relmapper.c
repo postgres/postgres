@@ -137,8 +137,10 @@ static void apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode,
 static void merge_map_updates(RelMapFile *map, const RelMapFile *updates,
 							  bool add_okay);
 static void load_relmap_file(bool shared, bool lock_held);
-static void write_relmap_file(bool shared, RelMapFile *newmap,
-							  bool write_wal, bool send_sinval, bool preserve_files,
+static void read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held,
+							 int elevel);
+static void write_relmap_file(RelMapFile *newmap, bool write_wal,
+							  bool send_sinval, bool preserve_files,
 							  Oid dbid, Oid tsid, const char *dbpath);
 static void perform_relmap_update(bool shared, const RelMapFile *updates);
 
@@ -568,9 +570,9 @@ RelationMapFinishBootstrap(void)
 	Assert(pending_local_updates.num_mappings == 0);
 
 	/* Write the files; no WAL or sinval needed */
-	write_relmap_file(true, &shared_map, false, false, false,
-					  InvalidOid, GLOBALTABLESPACE_OID, NULL);
-	write_relmap_file(false, &local_map, false, false, false,
+	write_relmap_file(&shared_map, false, false, false,
+					  InvalidOid, GLOBALTABLESPACE_OID, "global");
+	write_relmap_file(&local_map, false, false, false,
 					  MyDatabaseId, MyDatabaseTableSpace, DatabasePath);
 }
 
@@ -687,39 +689,48 @@ RestoreRelationMap(char *startAddress)
 }
 
 /*
- * load_relmap_file -- load data from the shared or local map file
+ * load_relmap_file -- load the shared or local map file
  *
- * Because the map file is essential for access to core system catalogs,
- * failure to read it is a fatal error.
+ * Because these files are essential for access to core system catalogs,
+ * failure to load either of them is a fatal error.
  *
  * Note that the local case requires DatabasePath to be set up.
  */
 static void
 load_relmap_file(bool shared, bool lock_held)
 {
-	RelMapFile *map;
+	if (shared)
+		read_relmap_file(&shared_map, "global", lock_held, FATAL);
+	else
+		read_relmap_file(&local_map, DatabasePath, lock_held, FATAL);
+}
+
+/*
+ * read_relmap_file -- load data from any relation mapper file
+ *
+ * dbpath must be the relevant database path, or "global" for shared relations.
+ *
+ * RelationMappingLock will be acquired released unless lock_held = true.
+ *
+ * Errors will be reported at the indicated elevel, which should be at least
+ * ERROR.
+ */
+static void
+read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
+{
 	char		mapfilename[MAXPGPATH];
 	pg_crc32c	crc;
 	int			fd;
 	int			r;
 
-	if (shared)
-	{
-		snprintf(mapfilename, sizeof(mapfilename), "global/%s",
-				 RELMAPPER_FILENAME);
-		map = &shared_map;
-	}
-	else
-	{
-		snprintf(mapfilename, sizeof(mapfilename), "%s/%s",
-				 DatabasePath, RELMAPPER_FILENAME);
-		map = &local_map;
-	}
+	Assert(elevel >= ERROR);
 
-	/* Read data ... */
+	/* Open the target file. */
+	snprintf(mapfilename, sizeof(mapfilename), "%s/%s", dbpath,
+			 RELMAPPER_FILENAME);
 	fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
 	if (fd < 0)
-		ereport(FATAL,
+		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
 						mapfilename)));
@@ -734,16 +745,17 @@ load_relmap_file(bool shared, bool lock_held)
 	if (!lock_held)
 		LWLockAcquire(RelationMappingLock, LW_SHARED);
 
+	/* Now read the data. */
 	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
 	r = read(fd, map, sizeof(RelMapFile));
 	if (r != sizeof(RelMapFile))
 	{
 		if (r < 0)
-			ereport(FATAL,
+			ereport(elevel,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m", mapfilename)));
 		else
-			ereport(FATAL,
+			ereport(elevel,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							mapfilename, r, sizeof(RelMapFile))));
@@ -754,7 +766,7 @@ load_relmap_file(bool shared, bool lock_held)
 		LWLockRelease(RelationMappingLock);
 
 	if (CloseTransientFile(fd) != 0)
-		ereport(FATAL,
+		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m",
 						mapfilename)));
@@ -763,7 +775,7 @@ load_relmap_file(bool shared, bool lock_held)
 	if (map->magic != RELMAPPER_FILEMAGIC ||
 		map->num_mappings < 0 ||
 		map->num_mappings > MAX_MAPPINGS)
-		ereport(FATAL,
+		ereport(elevel,
 				(errmsg("relation mapping file \"%s\" contains invalid data",
 						mapfilename)));
 
@@ -773,7 +785,7 @@ load_relmap_file(bool shared, bool lock_held)
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, map->crc))
-		ereport(FATAL,
+		ereport(elevel,
 				(errmsg("relation mapping file \"%s\" contains incorrect checksum",
 						mapfilename)));
 }
@@ -795,16 +807,16 @@ load_relmap_file(bool shared, bool lock_held)
  *
  * Because this may be called during WAL replay when MyDatabaseId,
  * DatabasePath, etc aren't valid, we require the caller to pass in suitable
- * values.  The caller is also responsible for being sure no concurrent
- * map update could be happening.
+ * values. Pass dbpath as "global" for the shared map.
+ *
+ * The caller is also responsible for being sure no concurrent map update
+ * could be happening.
  */
 static void
-write_relmap_file(bool shared, RelMapFile *newmap,
-				  bool write_wal, bool send_sinval, bool preserve_files,
-				  Oid dbid, Oid tsid, const char *dbpath)
+write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
+				  bool preserve_files, Oid dbid, Oid tsid, const char *dbpath)
 {
 	int			fd;
-	RelMapFile *realmap;
 	char		mapfilename[MAXPGPATH];
 
 	/*
@@ -822,19 +834,8 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	 * Open the target file.  We prefer to do this before entering the
 	 * critical section, so that an open() failure need not force PANIC.
 	 */
-	if (shared)
-	{
-		snprintf(mapfilename, sizeof(mapfilename), "global/%s",
-				 RELMAPPER_FILENAME);
-		realmap = &shared_map;
-	}
-	else
-	{
-		snprintf(mapfilename, sizeof(mapfilename), "%s/%s",
-				 dbpath, RELMAPPER_FILENAME);
-		realmap = &local_map;
-	}
-
+	snprintf(mapfilename, sizeof(mapfilename), "%s/%s",
+			 dbpath, RELMAPPER_FILENAME);
 	fd = OpenTransientFile(mapfilename, O_WRONLY | O_CREAT | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
@@ -934,16 +935,6 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		}
 	}
 
-	/*
-	 * Success, update permanent copy.  During bootstrap, we might be working
-	 * on the permanent copy itself, in which case skip the memcpy() to avoid
-	 * invoking nominally-undefined behavior.
-	 */
-	if (realmap != newmap)
-		memcpy(realmap, newmap, sizeof(RelMapFile));
-	else
-		Assert(!send_sinval);	/* must be bootstrapping */
-
 	/* Critical section done */
 	if (write_wal)
 		END_CRIT_SECTION();
@@ -990,10 +981,19 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 	merge_map_updates(&newmap, updates, allowSystemTableMods);
 
 	/* Write out the updated map and do other necessary tasks */
-	write_relmap_file(shared, &newmap, true, true, true,
+	write_relmap_file(&newmap, true, true, true,
 					  (shared ? InvalidOid : MyDatabaseId),
 					  (shared ? GLOBALTABLESPACE_OID : MyDatabaseTableSpace),
-					  DatabasePath);
+					  (shared ? "global" : DatabasePath));
+
+	/*
+	 * We succesfully wrote the updated file, so it's now safe to rely on the
+	 * new values in this process, too.
+	 */
+	if (shared)
+		memcpy(&shared_map, &newmap, sizeof(RelMapFile));
+	else
+		memcpy(&local_map, &newmap, sizeof(RelMapFile));
 
 	/* Now we can release the lock */
 	LWLockRelease(RelationMappingLock);
@@ -1033,8 +1033,7 @@ relmap_redo(XLogReaderState *record)
 		 * but grab the lock to interlock against load_relmap_file().
 		 */
 		LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
-		write_relmap_file((xlrec->dbid == InvalidOid), &newmap,
-						  false, true, false,
+		write_relmap_file(&newmap, false, true, false,
 						  xlrec->dbid, xlrec->tsid, dbpath);
 		LWLockRelease(RelationMappingLock);
 
