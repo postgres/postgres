@@ -23,4 +23,10 @@
  */
 #if !defined(__aarch64__) && !defined(__aarch64)
 #define PG_DISABLE_64_BIT_ATOMICS
+#else
+/*
+ * Architecture Reference Manual for ARMv8 states aligned read/write to/from
+ * general purpose register is atomic.
+ */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY
 #endif  /* __aarch64__ || __aarch64 */
