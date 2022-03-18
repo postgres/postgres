@@ -16,7 +16,7 @@ $node1->init;
 $node1->start;
 
 $node1->safe_psql('postgres',
-	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu LOCALE 'C' ICU_LOCALE 'en-u-kf-upper' TEMPLATE template0});
+	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu LOCALE 'C' ICU_LOCALE 'en-u-kf-upper' ENCODING 'UTF8' TEMPLATE template0});
 
 $node1->safe_psql('dbicu',
 q{
