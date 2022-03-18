@@ -23924,13 +23924,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
        </para>
        <para>
         Returns the file system path that this tablespace is located in.
-       </para>
-       <para>
-        A relative path to the data directory is returned for tablespaces
-        created when <xref linkend="guc-allow-in-place-tablespaces"/> is
-        enabled.
-       </para>
-       </entry>
+       </para></entry>
       </row>
 
       <row>
