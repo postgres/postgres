@@ -19,6 +19,10 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#ifdef USE_LZ4
+#include <lz4frame.h>
+#endif
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
@@ -31,10 +35,6 @@
 #include "libpq-fe.h"
 #include "receivelog.h"
 #include "streamutil.h"
-
-#ifdef USE_LZ4
-#include "lz4frame.h"
-#endif
 
 /* Time to sleep between reconnection attempts */
 #define RECONNECT_SLEEP_TIME 5
